@@ -16,6 +16,9 @@ import { z } from 'zod';
 export const clientEnvSchema = z.object({
   EXPO_PUBLIC_SUPABASE_URL: z.url(),
   EXPO_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1),
+  // Optional: without it, error reporting is simply off (local dev, CI).
+  // A DSN is an ingest address, not a secret, so it may ship in the client.
+  EXPO_PUBLIC_SENTRY_DSN: z.url().optional(),
 });
 
 export const serverEnvSchema = clientEnvSchema.extend({
