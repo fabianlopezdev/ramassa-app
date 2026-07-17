@@ -1,0 +1,69 @@
+# Conventions — `@ramassa/shared`
+
+This package is the single source of truth both apps consume (ADR-015). It is the
+physical home of the DRY rules in the workflow contract: if a value, type, schema,
+or client belongs to both apps, it lives here and is never duplicated.
+
+Every later issue cites this page. Read it before adding anything.
+
+## Naming
+
+- **Self-descriptive long names over comments.** `autoHideFlagThreshold`, not
+  `threshold` with a comment. `createMmkvSessionStorage`, not `makeStorage`. A
+  reader should understand a symbol from its name alone.
+- **Comments only for the genuinely unclear** — the _why_ a name cannot carry: a
+  non-obvious constraint, a platform quirk, a link to the ADR that explains a
+  decision. Never restate what the code already says.
+- **kebab-case file names**, `camelCase` values and functions, `PascalCase` types.
+
+## Reading (functional, DRY, SOLID)
+
+- **Functions, not classes**, for logic. Factories return plain objects or typed
+  clients (`createSupabaseClient`, `create*SessionStorage`). The one class here is
+  `EnvironmentValidationError`, because it _is_ an `Error`.
+- **Dependency injection over hard imports** across platform boundaries. The
+  Supabase factory takes a storage adapter; it does not import `react-native-mmkv`,
+  so the native module never reaches the web bundle. Env parsers take the env
+  source, so the same code validates `process.env` and `import.meta.env`.
+- **Single responsibility per module**: `tokens/` (design values), `env.ts`
+  (boot-time validation), `schemas/` (zod validation), `lib/supabase.ts` (client).
+
+## The four hard rules this package enforces
+
+1. **Design tokens only.** No raw hex code, pixel value, or radius anywhere else in
+   the codebase, ever. Reference `@ramassa/shared/tokens`. The mobile NativeWind
+   config and the admin Tailwind theme both derive from it; changing a token
+   changes both apps. That is the acceptance test.
+2. **Zod is the single validation source.** Every form and every Edge Function
+   payload gets a schema in `schemas/`. The client validates for UX; the server
+   re-validates the same schema for security. External responses are parsed.
+3. **Env is validated at boot, fail-fast.** Each app calls `parseClientEnv` /
+   `parseServerEnv` at startup. A missing or malformed variable throws
+   `EnvironmentValidationError`, which names every offending key. The client schema
+   never references server-only secrets, so they cannot leak into a client bundle.
+4. **One Supabase client factory.** Auth, persistence, and typing are identical
+   across apps; only the injected session storage differs (MMKV on mobile,
+   localStorage on web).
+
+## Layout
+
+```
+packages/shared/
+  index.ts            barrel re-export (prefer subpath imports in app code)
+  tokens/             design tokens + tokensToCssVariables (admin CSS bridge)
+  env.ts              zod-validated client/server env, fail-fast
+  schemas/            base zod schemas; feature schemas land here per issue
+  lib/supabase.ts     typed client factory + platform storage adapters
+  types/database.ts   generated Supabase types (RAPP-10 regenerates; placeholder)
+```
+
+## Imports
+
+Use the subpath exports:
+
+```ts
+import { parseClientEnv } from '@ramassa/shared/env';
+import { localizedTextSchema } from '@ramassa/shared/schemas';
+import { createMmkvSessionStorage, createSupabaseClient } from '@ramassa/shared/supabase';
+import { tokens } from '@ramassa/shared/tokens';
+```

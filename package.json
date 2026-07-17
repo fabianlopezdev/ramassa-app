@@ -11,7 +11,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit && bun run --cwd apps/mobile typecheck && bun run --cwd apps/admin typecheck",
+    "typecheck": "tsc --noEmit && bun run --cwd packages/shared typecheck && bun run --cwd apps/mobile typecheck && bun run --cwd apps/admin typecheck",
     "test": "bun test"
   },
   "devDependencies": {
