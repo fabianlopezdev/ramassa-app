@@ -1,0 +1,11 @@
+{
+  "appName": "Ramassà",
+  "fallbackSentinel": "només en català",
+  "languageName": {
+    "ca": "Català",
+    "es": "Español",
+    "en": "English",
+    "ar": "العربية",
+    "fa": "فارسی"
+  }
+}

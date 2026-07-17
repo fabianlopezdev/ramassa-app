@@ -45,6 +45,25 @@ Every later issue cites this page. Read it before adding anything.
    across apps; only the injected session storage differs (MMKV on mobile,
    localStorage on web).
 
+## i18n and RTL (standing rules, RAPP-11)
+
+1. **Logical properties only, never `left`/`right`.** Every style and Tailwind
+   class uses `start`/`end` (`ps-`/`pe-`, `ms-`/`me-`, `text-start`,
+   `items-start`, `rounded-s-*`...), so Arabic and Farsi lay out correctly with
+   zero per-language styling (ADR-006). Physical `left`/`right` classes and
+   `marginLeft`-style properties are forbidden in components.
+2. **No hardcoded user-facing strings.** Every string a user can see goes
+   through a translation key (`i18next/no-literal-string` fails lint and CI on
+   JSX literals). Locale resources live in `i18n/locales/<language>/` as
+   namespaced JSON per feature; a key lands in ALL five languages (ca es en ar
+   fa) in the same change, with Catalan as the guaranteed-complete fallback.
+3. **One i18n factory.** Both apps call `createI18n` from
+   `@ramassa/shared/i18n` and differ only in the injected language storage
+   (MMKV / localStorage) and device-language source, mirroring the Supabase
+   factory pattern.
+4. **Direction is derived, never stored.** `isRtlLanguage` / `useLanguage`
+   answer direction questions; nothing persists an `isRtl` flag.
+
 ## Database (migrations & generated types)
 
 Two standing rules, established by RAPP-10:
