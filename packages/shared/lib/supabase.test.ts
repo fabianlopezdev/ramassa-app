@@ -11,7 +11,7 @@ function fakeMmkv(): MmkvLike {
   return {
     getString: (key) => store.get(key),
     set: (key, value) => void store.set(key, value),
-    delete: (key) => void store.delete(key),
+    remove: (key) => store.delete(key),
   };
 }
 

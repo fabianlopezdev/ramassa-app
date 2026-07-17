@@ -56,7 +56,7 @@ export function createLocalStorageSessionStorage(): SupabaseSessionStorage {
 export interface MmkvLike {
   getString(key: string): string | undefined;
   set(key: string, value: string): void;
-  delete(key: string): void;
+  remove(key: string): boolean;
 }
 
 /**
@@ -66,6 +66,6 @@ export function createMmkvSessionStorage(mmkv: MmkvLike): SupabaseSessionStorage
   return {
     getItem: (key) => mmkv.getString(key) ?? null,
     setItem: (key, value) => mmkv.set(key, value),
-    removeItem: (key) => mmkv.delete(key),
+    removeItem: (key) => void mmkv.remove(key),
   };
 }

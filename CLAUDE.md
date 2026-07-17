@@ -25,7 +25,7 @@ bunx supabase studio                           # Local DB admin
 - **Backend**: Supabase (EU region Frankfurt) — PostgreSQL, Auth, Storage, Realtime, Edge Functions
 - **Styling**: NativeWind (Tailwind CSS for React Native)
 - **State**: TanStack React Query + MMKV
-- **i18n**: react-i18next + expo-localization (CA, ES, EN — RTL-ready)
+- **i18n**: react-i18next + expo-localization, 5 languages (CA default, ES, EN, AR, FA) with full RTL (ADR-006, RAPP-11); shared factory in `packages/shared/i18n`
 - **Package manager**: bun (never npm/npx)
 
 ## Code Conventions

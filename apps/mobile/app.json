@@ -34,8 +34,43 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
         }
+      ],
+      "expo-localization",
+      [
+        "expo-font",
+        {
+          "ios": {
+            "fonts": [
+              "./assets/fonts/NotoKufiArabic-Regular.ttf",
+              "./assets/fonts/NotoKufiArabic-Bold.ttf",
+              "./assets/fonts/Vazirmatn-Regular.ttf",
+              "./assets/fonts/Vazirmatn-Bold.ttf"
+            ]
+          },
+          "android": {
+            "fonts": [
+              {
+                "fontFamily": "Noto Kufi Arabic",
+                "fontDefinitions": [
+                  { "path": "./assets/fonts/NotoKufiArabic-Regular.ttf", "weight": 400 },
+                  { "path": "./assets/fonts/NotoKufiArabic-Bold.ttf", "weight": 700 }
+                ]
+              },
+              {
+                "fontFamily": "Vazirmatn",
+                "fontDefinitions": [
+                  { "path": "./assets/fonts/Vazirmatn-Regular.ttf", "weight": 400 },
+                  { "path": "./assets/fonts/Vazirmatn-Bold.ttf", "weight": 700 }
+                ]
+              }
+            ]
+          }
+        }
       ]
     ],
+    "extra": {
+      "supportsRTL": true
+    },
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
