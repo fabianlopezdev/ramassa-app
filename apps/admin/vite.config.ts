@@ -46,7 +46,10 @@ export default defineConfig({
     // (release builds); local dev and CI build without it.
     sentryTanstackStart({
       org: 'fabulous-apps',
-      project: 'ramassa-admin',
+      // Sentry auto-named the admin project from its platform; this is its real
+      // slug (verified via a source-map upload, RAPP-12). Rename in Sentry ->
+      // update here if it ever becomes `ramassa-admin`.
+      project: 'javascript-tanstackstart-react',
       authToken: process.env.SENTRY_AUTH_TOKEN,
       telemetry: false,
     }),
