@@ -12,7 +12,10 @@
     "format:check": "prettier --check .",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit && bun run --cwd packages/shared typecheck && bun run --cwd apps/mobile typecheck && bun run --cwd apps/admin typecheck",
-    "test": "bun test"
+    "test": "bun test",
+    "db:reset": "supabase db reset",
+    "db:test": "supabase test db",
+    "db:types": "supabase gen types typescript --local > packages/shared/types/database.ts"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.2.1",
