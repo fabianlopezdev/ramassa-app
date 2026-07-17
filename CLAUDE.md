@@ -49,304 +49,64 @@ bunx supabase studio                           # Local DB admin
 
 ---
 
-## Workflow Contract (agreed 2026-07-16, supersedes conflicting rules below)
+## Workflow Contract (agreed 2026-07-16, updated 2026-07-17)
 
-1. **The live plan is the vault, not tasks/plan.md.** Every unit of work is a vault issue (`second-brain/10-Projects/Ramassa-App/issues/`, RAPP-5..71). Work top of the dependency order; set `state:` as you go. `tasks/plan.md` is historical.
+1. **The live plan is the vault, not tasks/plan.md.** Every unit of work is a vault issue (`second-brain/10-Projects/Ramassa-App/issues/`, RAPP-5..72). Work top of the dependency order; set `state:` as you go. `tasks/plan.md` is historical.
 2. **Commits reference their issue.** Subject line format: `<type>(scope): <description> (RAPP-N)`. No commit without an issue ID.
 3. **TDD.** Tests are written FIRST, per the issue's TDD plan. A failing test precedes the implementation.
 4. **Gates before every commit**: prettier, eslint, tsc --noEmit, bun test. Enforced by lefthook + commitlint (NOT husky/lint-staged; see RAPP-5).
-5. **`/react-native-perfection` runs at PHASE CLOSURE, not per task.** It is too slow per-commit. Each phase ends with a closure issue (RAPP-20, 28, 37, 40, 46, 49, 53, 56, 61, 69): full sweep -> closing commit -> cumulative Maestro QA (Android emulator primary + iOS) -> QA report on the closure issue. The per-task rule in "Development Workflow" below is superseded.
+5. **`/react-native-perfection` runs at PHASE CLOSURE, not per task.** It is too slow per-commit. Each phase ends with a closure issue (RAPP-20, 28, 37, 40, 46, 49, 53, 56, 61, 69): full sweep -> closing commit -> cumulative Maestro QA (Android emulator primary + iOS) -> QA report on the closure issue.
 6. **Zod is the single validation source** (`packages/shared/schemas/`): forms validate for UX, server re-validates for security, external API responses are parsed, `process.env` is validated at boot.
 7. **Errors are typed, never generic.** AppError taxonomy with stable codes (`AUTH/*`, `UPLOAD/*`...), `safeAsync` returning `Result<T, AppError>`, PII-redacting structured logger, Sentry on all three runtimes (mobile/admin/workers) with release = commit SHA. User-facing errors: translated + short code shown.
 8. **Design tokens only** (`packages/shared/tokens/`): no magic numbers, no raw colors/radii/spacing in components. Self-descriptive long names over comments; comments only where names cannot carry the meaning.
 9. **Dev DB is local Supabase (Docker)**, prod is Frankfurt. Never develop or run QA against prod. Every migration ships with RLS denial tests, seeds, factories, and RGPD-deletion coverage in the same issue.
-10. **Docs at latest versions**: each issue pins versions pulled at authoring (2026-07-16); verify against current official docs at execution.
-11. **Skills are preventive, not corrective (2026-07-16).** Every issue carries a "Skills to apply" section; consult those skills BEFORE writing the code they govern. Standing matrix: any mobile screen -> `/expo-router` + `/vercel-react-native-skills` + `/vercel-react-best-practices` (core React applies fully to RN, not only web) + `/vercel-composition-patterns` when designing reusable component APIs; any data fetching -> `/expo-data-fetching`; any DB work -> `/supabase-postgres-best-practices` (mandatory) + `/supabase`; any Worker -> `/wrangler` + `/workers-best-practices`; admin perf -> `/web-perf`; key player-facing flows and every phase closure -> `/critique` (UX evaluation against the low-literacy persona). RAPP-65 and the closure sweeps VERIFY; they are never the first application.
+10. **Docs at latest versions**: each issue pins versions pulled at authoring; verify against current official docs at execution.
+11. **Skills are preventive, not corrective (2026-07-16).** Every issue carries a "Skills to apply" section; consult those skills BEFORE writing the code they govern. The issue's list is authoritative; the Skills table below is the standing matrix behind those lists. RAPP-65 and the closure sweeps VERIFY; they are never the first application.
 12. **Platform baseline: Expo SDK 57, React 19, React New Architecture (`newArchEnabled: true`). Never opt out.** Reanimated 4 requires it; check New-Architecture compatibility before adding any native library.
-13. **Admin framework is TanStack Start (ADR-016, 2026-07-17) and its work is OFFICIAL-DOCS-FIRST (hard rule).** Any issue implementing TanStack Start or TanStack Router code MUST consult https://tanstack.com/start/latest and https://tanstack.com/router/latest (context7 or live fetch) at execution time, BEFORE writing the code, and verify every API against the installed version. The framework is young and moving; training-data knowledge is presumed stale. Where this file or SPEC.md still says "Next.js" for the admin, read TanStack Start; OpenNext is deleted from the plan.
+13. **Admin framework is TanStack Start (ADR-016, 2026-07-17) and its work is OFFICIAL-DOCS-FIRST (hard rule).** Any issue implementing TanStack Start or TanStack Router code MUST consult https://tanstack.com/start/latest and https://tanstack.com/router/latest (context7 or live fetch) at execution time, BEFORE writing the code, and verify every API against the installed version. The framework is young and moving; training-data knowledge is presumed stale. Where SPEC.md still says "Next.js" for the admin, read TanStack Start; OpenNext is deleted from the plan.
 14. **Premium feel is a system (RAPP-70).** All microinteractions come from the shared primitives (PressableScale, FadeSlideIn, SuccessPop, ShakeOnError, SkeletonPulse) and the haptic vocabulary in `packages/shared`; motion timings only from motion tokens. Per-feature bar: press feedback on every touchable, entrance animation on content lists, success haptic + animation on completed primary actions, shake + warning haptic on validation errors, skeletons not spinners. Everything respects reduce-motion. No ad-hoc Animated/Reanimated code in feature screens.
+15. **Only the skills below exist for this project (2026-07-17, RAPP-72).** This is the complete, issue-enforced set. Do not reach for other skills (lifecycle/process skills included) unless a vault issue adds them first.
 
-## Development Workflow — Skill Lifecycle
+## Skills — the enforced set (standing matrix)
 
-This project follows a disciplined skill-based workflow. Every new feature, vertical slice, or significant change MUST follow this lifecycle. No shortcuts.
+The authoritative list per unit of work is the issue's "Skills to apply" section. This table is the matrix those lists are drawn from. Consult a skill BEFORE writing the code it governs.
 
-### For a NEW FEATURE or VERTICAL SLICE
+| Skill                                 | Trigger                                                                     | Notes                                                                                                 |
+| ------------------------------------- | --------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Official TanStack docs (hard rule 13) | ANY TanStack Start / TanStack Router code                                   | https://tanstack.com/start/latest + https://tanstack.com/router/latest, at execution, before coding   |
+| `/expo-router`                        | Mobile navigation, routes, layouts, tabs, modals, headers                   | File-based routing, native Stack, NativeTabs, Link previews                                           |
+| `/vercel-react-native-skills`         | Any mobile screen: RN perf, lists, re-renders, animations, native APIs      | Runs with every mobile screen issue                                                                   |
+| `/vercel-react-best-practices`        | Any React code (mobile AND admin)                                           | Core React practices; applies fully to RN; ignore Next.js-specific guidance (admin is TanStack Start) |
+| `/vercel-composition-patterns`        | Designing any reusable component API (tables, forms, editors)               |                                                                                                       |
+| `/expo-data-fetching`                 | ANY network request, React Query, caching, offline                          |                                                                                                       |
+| `/supabase-postgres-best-practices`   | ANY database work: migrations, RLS, queries, indexes, functions, encryption | MANDATORY for all DB work, no exceptions                                                              |
+| `/supabase`                           | Supabase client code, auth flows, Edge Functions, Realtime, storage         |                                                                                                       |
+| `/cloudflare`                         | R2 uploads, Pages config, Workers, general CF infra                         |                                                                                                       |
+| `/wrangler`                           | Cloudflare Workers development (translation worker, image compression)      |                                                                                                       |
+| `/workers-best-practices`             | Writing or modifying Cloudflare Workers code                                |                                                                                                       |
+| `/web-perf`                           | Admin app (TanStack Start) performance, bundle size, loading                |                                                                                                       |
+| `/dataviz`                            | Any chart, graph, stat tile, or dashboard visualization in the admin        | Added 2026-07-17 (RAPP-72) for the dashboard-heavy admin screens (RAPP-39, RAPP-62)                   |
+| `/critique`                           | Key player-facing flows and every phase closure                             | UX evaluation against the low-literacy persona                                                        |
+| `/react-native-perfection`            | PHASE-CLOSURE sweeps only (contract rule 5)                                 | 9-step RN pipeline: structure, a11y, i18n, perf, composition, adversarial check                       |
+| `/expo-project-structure`             | Scaffolding the mobile app (RAPP-7) only                                    | Never use to restructure an existing app                                                              |
+| `/expo-tailwind-setup`                | NativeWind/Tailwind setup (RAPP-7) only                                     | See RAPP-7: prescribes preview/nightly deps — version decision required before use                    |
+| `/deepsec-security-audit`             | Security audit (RAPP-67) only                                               |                                                                                                       |
+| `/eas-app-stores`                     | Release builds, submission, versioning (RAPP-68) only                       |                                                                                                       |
 
-Run these skills in order. Do not skip steps. Commit after each task within a slice (not at the end).
+**Rule: when in doubt, run the skill.** Running an unnecessary skill wastes 2 minutes. Missing a necessary one can introduce bugs that take hours to find.
 
-```
-New feature arrives
-    │
-    ├─ 1. /agent-skills:spec-driven-development
-    │     Write or update the spec. Define what we're building,
-    │     acceptance criteria, and success conditions.
-    │     Output: updated SPEC.md or feature spec document
-    │
-    ├─ 2. /agent-skills:planning-and-task-breakdown
-    │     Break the spec into S/M sized tasks with:
-    │     - Acceptance criteria per task
-    │     - Verification steps per task
-    │     - Dependency ordering
-    │     - Checkpoints between phases
-    │     Output: implementation plan with task list
-    │
-    │  ┌─────────────────────────────────────────────────┐
-    │  │  FOR EACH TASK in the plan, repeat steps 3-8:   │
-    │  └─────────────────────────────────────────────────┘
-    │
-    ├─ 3. /agent-skills:incremental-implementation
-    │     Build one vertical slice at a time.
-    │     Each slice = schema + API + UI, working end-to-end.
-    │     Never build all DB, then all API, then all UI.
-    │
-    ├─ 4. /agent-skills:test-driven-development
-    │     Write failing test → make it pass → refactor.
-    │     Run alongside step 3, not after.
-    │     Coverage target: 70% (business logic, not layout).
-    │
-    ├─ 5a. /react-native-perfection
-    │      SUPERSEDED by Workflow Contract rule 5 (2026-07-16):
-    │      runs as a FULL SWEEP at each phase-closure issue, not per task.
-    │      9-step pipeline: structural → a11y/i18n → setup →
-    │      data fetching → composition → RN perf → React perf →
-    │      adversarial verification → report.
-    │
-    ├─ 5b. PLATFORM SKILLS (run whichever apply to the task):
-    │      /supabase-postgres-best-practices
-    │        → Run when: ANY database work (migrations, RLS policies, queries,
-    │          indexes, functions). Ensures PostgreSQL best practices,
-    │          proper indexing, RLS correctness, encryption implementation.
-    │        → THIS IS MANDATORY for all DB work. No exceptions.
-    │      /supabase
-    │        → Run when: Supabase client code, auth flows, Edge Functions,
-    │          Realtime subscriptions, storage operations.
-    │      /cloudflare
-    │        → Run when: R2 uploads, Pages deployment, Workers.
-    │      /wrangler
-    │        → Run when: Cloudflare Workers development (auto-translation worker,
-    │          image compression worker).
-    │      /workers-best-practices
-    │        → Run when: Writing or modifying Cloudflare Workers code.
-    │      /web-perf
-    │        → Run when: Admin app (TanStack Start) performance work.
-    │      Multiple skills can apply to one task. Run ALL that are relevant.
-    │
-    ├─ 6. /commit
-    │     Pre-commit hooks run: prettier → eslint → tsc → tests.
-    │     Atomic commit: one logical change per commit.
-    │     Conventional message: type(scope): description (RAPP-N)
-    │     COMMIT AFTER EVERY TASK. Do not batch multiple tasks.
-    │
-    │  └─────── (repeat steps 3-6 for each task) ──────┘
-    │
-    ├─ 7. /agent-skills:code-review-and-quality
-    │     Five-axis review after the full feature is complete:
-    │     correctness, readability, architecture, security, performance.
-    │     Run BEFORE merging to main, not after.
-    │
-    ├─ 8. /agent-skills:security-and-hardening
-    │     CRITICAL for this project (RGPD, refugee data).
-    │     OWASP checks, input validation, RLS verification,
-    │     encryption of sensitive fields, auth flow audit.
-    │
-    ├─ 9. /agent-skills:code-simplification
-    │     Review for unnecessary complexity.
-    │     Can this be done in fewer lines?
-    │     Are abstractions earning their weight?
-    │
-    ├─ 10. /agent-skills:documentation-and-adrs
-    │      Document architectural decisions (ADRs).
-    │      Update SPEC.md if scope changed.
-    │
-    └─ 11. /agent-skills:shipping-and-launch
-           Pre-launch checklist, monitoring, rollback plan.
-           Only for production deployments.
-```
+**Multiple skills per task is normal.** A database migration + Edge Function + mobile UI update = `/supabase-postgres-best-practices` + `/supabase` + the mobile-screen set. Run all that apply.
 
-**The inner loop is the key discipline:**
+## ADR Enforcement
 
-```
-  Implement task → Write tests → Run platform skills → /commit
-  Implement task → Write tests → Run platform skills → /commit
-  Implement task → Write tests → Run platform skills → /commit
-  ...
-  Feature complete → Review → Security → Simplify → Merge
+At every phase closure (and any time a decision is made mid-phase):
 
-  "Run platform skills" means:
-    Mobile code?  → /react-native-perfection
-    DB work?      → /supabase-postgres-best-practices (ALWAYS)
-    Supabase?     → /supabase
-    Workers?      → /wrangler + /workers-best-practices
-    Admin perf?   → /web-perf
-    Multiple apply? → Run ALL of them.
-```
-
-Every commit is a safe rollback point. If something breaks, `git revert` the last commit — you lose at most one task's worth of work.
-
-### For a BUG FIX
-
-```
-Bug reported
-    │
-    ├─ 1. /agent-skills:debugging-and-error-recovery
-    │     Reproduce → localize → fix → guard
-    │
-    ├─ 2. /agent-skills:test-driven-development
-    │     Write a test that reproduces the bug FIRST,
-    │     then fix it, then verify the test passes.
-    │
-    ├─ 3. Run platform skills on all files touched by the fix:
-    │     Mobile? → /react-native-perfection
-    │     DB?     → /supabase-postgres-best-practices
-    │     etc.    → Run ALL that apply
-    │
-    ├─ 4. /agent-skills:code-review-and-quality
-    │     Review the fix before merging.
-    │
-    └─ 5. /commit
-          fix: description of what was fixed
-```
-
-### For a REFACTOR or OPTIMIZATION
-
-```
-Refactor needed
-    │
-    ├─ 1. /agent-skills:performance-optimization (if perf)
-    │     Measure first. Only optimize what matters.
-    │     Never optimize without benchmarks.
-    │
-    ├─ 2. /agent-skills:planning-and-task-breakdown
-    │     Even refactors need a plan. Define scope.
-    │
-    │  ┌── FOR EACH STEP in the refactor: ──┐
-    │  │                                     │
-    ├─ 3. /agent-skills:incremental-implementation
-    │     Refactor in small, verifiable steps.
-    │
-    ├─ 4. /agent-skills:test-driven-development
-    │     Existing tests must keep passing.
-    │     Add tests for any uncovered paths found.
-    │
-    ├─ 5. Run platform skills on all files touched by this step.
-    │     (same rules as inner loop: mobile → /react-native-perfection,
-    │      DB → /supabase-postgres-best-practices, etc.)
-    │
-    ├─ 6. /commit
-    │     Atomic commit for each refactor step.
-    │  │                                     │
-    │  └─────────────────────────────────────┘
-    │
-    ├─ 7. /agent-skills:code-review-and-quality
-    │     Review before merging.
-    │
-    └─ 8. /agent-skills:code-simplification
-          Final simplification pass.
-```
-
-### For UI WORK
-
-```
-UI feature
-    │
-    ├─ 1. /agent-skills:frontend-ui-engineering
-    │     Production-quality UI with accessibility.
-    │     Large tap targets, high contrast, screen reader labels.
-    │     CRITICAL: users have low digital literacy.
-    │
-    ├─ 2. Platform skills:
-    │     Mobile UI? → /react-native-perfection <all-ui-files>
-    │       MANDATORY. 9-step pipeline: structural → a11y/i18n →
-    │       setup → data fetching → composition → RN perf →
-    │       React perf → adversarial verification → report.
-    │     Admin UI (TanStack Start)? → /web-perf + official TanStack docs (hard rule 13)
-    │       Performance and best practices for the web admin panel.
-    │
-    ├─ 3. /agent-skills:browser-testing-with-devtools
-    │     Runtime verification with Chrome DevTools MCP.
-    │     Visual regression, layout checks.
-    │
-    ├─ 4. /commit
-    │     Commit each UI component/screen separately.
-    │
-    └─ (then follow review steps 7-11 from new feature flow)
-```
-
-### For API / DATABASE WORK
-
-```
-API or database change
-    │
-    ├─ 1. /agent-skills:api-and-interface-design
-    │     Stable interfaces with clear contracts.
-    │     Define the contract BEFORE implementation.
-    │
-    ├─ 2. /agent-skills:source-driven-development
-    │     Verify against Supabase/Expo official docs.
-    │     Don't rely on training data — check current docs.
-    │
-    ├─ 3. Platform skills (MANDATORY):
-    │     /supabase-postgres-best-practices
-    │       → ALWAYS run for any DB work. Indexes, RLS, queries,
-    │         migrations, encryption. Non-negotiable.
-    │     /supabase
-    │       → Run for Supabase client code, auth, Edge Functions,
-    │         Realtime, storage operations.
-    │     /cloudflare + /wrangler + /workers-best-practices
-    │       → Run when touching R2 uploads or Cloudflare Workers.
-    │
-    └─ (then follow steps 3-8 from new feature flow)
-```
-
-### Context Management
-
-When starting any session or when context gets complex:
-
-```
-/agent-skills:context-engineering
-```
-
-Load the right context at the right time. Read SPEC.md, relevant source files, and the specific phase/task you're working on. Don't flood context with the entire codebase.
-
-### ADR Enforcement
-
-At every **checkpoint commit** (Checkpoints A, B, C, D, etc.), before proceeding to the next phase:
-
-1. Review all decisions made since the last checkpoint
+1. Review all decisions made since the last closure
 2. For any new architecture decision (technology choice, structural decision, deliberate rejection of a simpler approach), create an ADR in `docs/adr/`
 3. Update `docs/adr/README.md` index table
 4. Follow the template in `docs/adr/README.md`
 
 ADRs are NOT for code conventions (those go in CLAUDE.md) or UX principles (those go in SPEC.md). They capture _why_ we chose approach A over approach B when the choice wasn't obvious.
-
----
-
-## Platform Skills Reference
-
-These skills are MANDATORY when touching their domain. Not optional. Not "nice to have." If a skill applies, it MUST be run before committing.
-
-| Skill                               | Trigger                                                                     | What it does                                                                                                                            |
-| ----------------------------------- | --------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| `/react-native-perfection`          | Any `.tsx`/`.ts` in `apps/mobile/`                                          | 9-step RN pipeline: structure, a11y, i18n, perf, composition, adversarial check. Per contract rule 5: PHASE-CLOSURE sweep, not per task |
-| `/expo-router`                      | Mobile navigation, routes, layouts, tabs, modals, headers                   | File-based routing, native Stack, NativeTabs, Link previews. (Replaces the retired `building-native-ui`)                                |
-| `/expo-project-structure`           | Scaffolding the app (RAPP-7) only                                           | Folder layout for a NEW Expo app. Never use to restructure an existing app                                                              |
-| `/expo-tailwind-setup`              | NativeWind/Tailwind setup + styling config                                  | Tailwind v4 + react-native-css + NativeWind v5. **See RAPP-7: prescribes preview/nightly deps — version decision required before use**  |
-| `/expo-data-fetching`               | ANY network request, React Query, caching, offline                          | Fetch/RQ/SWR patterns, error handling, offline support, Router data loaders. (Replaces `native-data-fetching`)                          |
-| `/expo-ui`, `/expo-native-ui`       | Native UI components (SwiftUI/Jetpack Compose bridges)                      | Consider for premium native feel; evaluate against RAPP-70 primitives                                                                   |
-| `/eas-app-stores`                   | Release builds, submission, versioning (RAPP-68)                            | eas.json profiles, build/submit, TestFlight. (Replaces `expo-deployment`)                                                               |
-| `/eas-workflows`                    | EAS CI/CD YAML, if used alongside GitHub Actions                            | `.eas/workflows/` pipelines                                                                                                             |
-| `/expo-dev-client`                  | If a native module forces a dev client                                      | Build/distribute dev clients locally or via TestFlight                                                                                  |
-| `/expo-upgrade`                     | Future SDK upgrades (post-launch)                                           | SDK upgrade paths, dependency fixes. (Replaces `upgrading-expo`)                                                                        |
-| `/supabase-postgres-best-practices` | ANY database work: migrations, RLS, queries, indexes, functions, encryption | PostgreSQL best practices, indexing, RLS correctness, query optimization                                                                |
-| `/supabase`                         | Supabase client code, auth flows, Edge Functions, Realtime, storage         | Supabase SDK best practices, auth patterns, real-time subscriptions                                                                     |
-| `/cloudflare`                       | R2 uploads, Pages config, Workers, general CF infra                         | Cloudflare platform best practices                                                                                                      |
-| `/wrangler`                         | Cloudflare Workers development (translation worker, image compression)      | Wrangler CLI and Workers development patterns                                                                                           |
-| `/workers-best-practices`           | Writing or modifying Cloudflare Workers code                                | Workers runtime best practices, performance, error handling                                                                             |
-| `/web-perf`                         | Admin app (TanStack Start) performance, bundle size, loading                | Web performance optimization, Core Web Vitals                                                                                           |
-
-**Rule: when in doubt, run the skill.** Running an unnecessary skill wastes 2 minutes. Missing a necessary one can introduce bugs that take hours to find.
-
-**Multiple skills per task is normal.** A database migration + Edge Function + mobile UI update = `/supabase-postgres-best-practices` + `/supabase` + `/react-native-perfection`. Run all three.
 
 ---
 
@@ -384,35 +144,9 @@ Work pattern:
   Implement slice → Test → Verify → Commit → Next slice
 ```
 
-### Pre-Commit Flow (Automated via lefthook + commitlint; per RAPP-5, supersedes the husky config below)
+### Pre-Commit Gates (lefthook + commitlint, set up in RAPP-5)
 
-Every commit automatically runs these checks. If ANY step fails, the commit is blocked until all errors are resolved.
-
-```
-Developer runs /commit or git commit
-    │
-    ├─ 1. Prettier (format)
-    │     bunx prettier --write --check staged files
-    │     Auto-fixes formatting. Re-stages fixed files.
-    │
-    ├─ 2. ESLint (lint)
-    │     bunx eslint --fix staged .ts/.tsx files
-    │     Auto-fixes what it can. Fails on remaining errors.
-    │
-    ├─ 3. TypeScript (type check)
-    │     bunx tsc --noEmit
-    │     Zero type errors allowed. Fix before proceeding.
-    │
-    ├─ 4. Tests (affected)
-    │     bun test --findRelatedTests staged files
-    │     Only tests related to changed files. Must pass.
-    │
-    └─ 5. Commit
-          Only after ALL checks pass.
-          Conventional commit message: type: description
-```
-
-**Configuration (set up in RAPP-5):** `lefthook.yml` at repo root runs prettier check, eslint, `tsc --noEmit`, and `bun test` on staged workspaces as pre-commit; commitlint as commit-msg hook enforces conventional format + `(RAPP-N)`. See RAPP-5 in the vault for the acceptance tests (all four gate rejections verified).
+`lefthook.yml` at repo root runs prettier check, eslint, `tsc --noEmit`, and `bun test` on staged files as pre-commit; commitlint as commit-msg hook enforces conventional format + required scope + `(RAPP-N)` at the end of the subject. If ANY gate fails, the commit is blocked. See RAPP-5 in the vault for the acceptance tests (all four gate rejections verified).
 
 ### Change Summaries
 
