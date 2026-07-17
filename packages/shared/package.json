@@ -1,0 +1,26 @@
+{
+  "name": "@ramassa/shared",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Single source of truth consumed by both apps: design tokens, env validation, the Supabase client factory, and base zod schemas (ADR-015).",
+  "exports": {
+    ".": "./index.ts",
+    "./tokens": "./tokens/index.ts",
+    "./env": "./env.ts",
+    "./schemas": "./schemas/index.ts",
+    "./supabase": "./lib/supabase.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.110.7",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.14",
+    "typescript": "~5.9.3"
+  }
+}
