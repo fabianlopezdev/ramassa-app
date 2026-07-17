@@ -15,6 +15,8 @@ export default tseslint.config(
       '**/.open-next/',
       '**/out/',
       '**/coverage/',
+      '**/.tanstack/',
+      '**/routeTree.gen.ts',
     ],
   },
   js.configs.recommended,

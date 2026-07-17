@@ -2,3 +2,6 @@
 # which requires hoisted installs (bun defaults to isolated in workspaces).
 [install]
 linker = "hoisted"
+
+[test]
+preload = ["./tests/setup/happy-dom.ts"]
