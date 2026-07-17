@@ -66,3 +66,5 @@ At every checkpoint commit (Checkpoints A, B, C, D in the Phase 1 plan, and equi
 | 014 | [Forum auto-hide at 3 flags](014-forum-auto-hide.md)                           | Accepted          | 2026-04-09 |
 | 015 | [Shared design tokens](015-shared-design-tokens.md)                            | Accepted          | 2026-04-09 |
 | 016 | [TanStack Start for the admin app](016-tanstack-start-admin.md)                | Accepted          | 2026-07-17 |
+| 017 | [NativeWind 4 stable over v5 preview](017-nativewind-4-stable.md)              | Accepted          | 2026-07-17 |
+| 018 | [bun hoisted linker for the monorepo](018-bun-hoisted-linker.md)               | Accepted          | 2026-07-17 |

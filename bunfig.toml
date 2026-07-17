@@ -1,0 +1,4 @@
+# Metro and Babel resolve transitive packages by walking node_modules,
+# which requires hoisted installs (bun defaults to isolated in workspaces).
+[install]
+linker = "hoisted"
