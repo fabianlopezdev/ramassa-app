@@ -6,6 +6,7 @@
  */
 
 export * from './errors';
+export * from './logger';
 export * from './tokens';
 export * from './env';
 export * from './i18n';

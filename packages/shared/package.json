@@ -7,6 +7,7 @@
   "exports": {
     ".": "./index.ts",
     "./errors": "./errors/index.ts",
+    "./logger": "./logger/index.ts",
     "./tokens": "./tokens/index.ts",
     "./env": "./env.ts",
     "./i18n": "./i18n/index.ts",
