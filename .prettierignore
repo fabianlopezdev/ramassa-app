@@ -1,0 +1,14 @@
+node_modules/
+.venv/
+**/.venv/
+.claude/skills/
+excalidraw-diagram/
+.expo/
+dist/
+.next/
+.open-next/
+out/
+coverage/
+supabase/.branches/
+supabase/.temp/
+bun.lock

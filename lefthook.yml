@@ -1,0 +1,20 @@
+pre-commit:
+  parallel: true
+  commands:
+    format:
+      glob: '*.{ts,tsx,js,jsx,mjs,cjs,json,md,yml,yaml,css}'
+      run: bunx prettier --check {staged_files}
+    lint:
+      glob: '*.{ts,tsx,js,jsx,mjs,cjs}'
+      run: bunx eslint {staged_files}
+    typecheck:
+      glob: '*.{ts,tsx}'
+      run: bunx tsc --noEmit
+    test:
+      glob: '*.{ts,tsx}'
+      run: bun test
+
+commit-msg:
+  commands:
+    commitlint:
+      run: bunx commitlint --edit {1}

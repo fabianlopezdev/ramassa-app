@@ -1,0 +1,43 @@
+# Dependencies
+node_modules/
+.venv/
+**/.venv/
+
+# Environment (never commit real env files)
+.env
+.env.*
+!.env.example
+
+# Expo
+.expo/
+dist/
+expo-env.d.ts
+web-build/
+
+# Next.js
+.next/
+.open-next/
+out/
+
+# Supabase local state
+supabase/.branches/
+supabase/.temp/
+
+# EAS artifacts
+*.ipa
+*.aab
+*.apk
+*.tar.gz
+
+# Test coverage
+coverage/
+
+# OS
+.DS_Store
+
+# Local tool state
+.claude/settings.local.json
+
+# Local skill/reference assets with their own git repos
+excalidraw-diagram
+.claude/skills/excalidraw-diagram
