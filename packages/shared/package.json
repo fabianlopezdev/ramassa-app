@@ -6,6 +6,7 @@
   "description": "Single source of truth consumed by both apps: design tokens, env validation, the Supabase client factory, and base zod schemas (ADR-015).",
   "exports": {
     ".": "./index.ts",
+    "./errors": "./errors/index.ts",
     "./tokens": "./tokens/index.ts",
     "./env": "./env.ts",
     "./i18n": "./i18n/index.ts",
