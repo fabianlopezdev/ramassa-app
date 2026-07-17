@@ -1,4 +1,5 @@
 import { fileURLToPath } from 'node:url';
+import { sentryTanstackStart } from '@sentry/tanstackstart-react/vite';
 import tailwindcss from '@tailwindcss/vite';
 import { tanstackStart } from '@tanstack/react-start/plugin/vite';
 import viteReact from '@vitejs/plugin-react';
@@ -36,5 +37,18 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
-  plugins: [ramassaTokensCss(), tailwindcss(), tanstackStart(), viteReact()],
+  plugins: [
+    ramassaTokensCss(),
+    tailwindcss(),
+    tanstackStart(),
+    viteReact(),
+    // Source-map upload (RAPP-12): active only when SENTRY_AUTH_TOKEN is set
+    // (release builds); local dev and CI build without it.
+    sentryTanstackStart({
+      org: 'fabulous-apps',
+      project: 'ramassa-admin',
+      authToken: process.env.SENTRY_AUTH_TOKEN,
+      telemetry: false,
+    }),
+  ],
 });

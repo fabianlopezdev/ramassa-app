@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@fontsource-variable/geist": "^5.2.9",
+    "@sentry/tanstackstart-react": "^10.66.0",
     "@tanstack/react-router": "^1.170.18",
     "@tanstack/react-start": "^1.168.28",
     "class-variance-authority": "^0.7.1",
