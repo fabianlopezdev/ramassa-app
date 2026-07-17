@@ -6,10 +6,10 @@
  */
 
 import { Button } from '@/components/ui/button';
-import { i18n } from '@/lib/i18n';
+import { createAdminI18n, resolveClientLanguage } from '@/lib/i18n';
 import { logger } from '@/lib/observability';
 import type { ErrorComponentProps } from '@tanstack/react-router';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { I18nextProvider, useTranslation } from 'react-i18next';
 import { getErrorMessageKey, toAppError } from '@ramassa/shared/errors';
 
@@ -38,6 +38,9 @@ function ErrorFallbackContent({ error, reset }: ErrorComponentProps) {
 }
 
 export function ErrorFallback(props: ErrorComponentProps) {
+  // Own instance because this mounts outside the root route's provider; the
+  // language is resolved client-side (cookie, then browser languages).
+  const [i18n] = useState(() => createAdminI18n(resolveClientLanguage()));
   return (
     <I18nextProvider i18n={i18n}>
       <ErrorFallbackContent {...props} />

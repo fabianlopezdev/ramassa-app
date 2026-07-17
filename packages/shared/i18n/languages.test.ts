@@ -5,6 +5,7 @@ import {
   getLanguageFontFamilyKey,
   isRtlLanguage,
   isSupportedLanguage,
+  parseAcceptLanguageHeader,
   resolveInitialLanguage,
   RTL_LANGUAGES,
   SUPPORTED_LANGUAGES,
@@ -83,5 +84,36 @@ describe('resolveInitialLanguage', () => {
       'ca',
     );
     expect(resolveInitialLanguage({ persistedLanguage: null, deviceLanguages: [] })).toBe('ca');
+  });
+});
+
+describe('parseAcceptLanguageHeader', () => {
+  test('returns an empty list for a missing or empty header', () => {
+    expect(parseAcceptLanguageHeader(undefined)).toEqual([]);
+    expect(parseAcceptLanguageHeader('')).toEqual([]);
+  });
+
+  test('preserves header order when no q-values are given', () => {
+    expect(parseAcceptLanguageHeader('es-ES,ca,en')).toEqual(['es-ES', 'ca', 'en']);
+  });
+
+  test('orders by q-value, highest first, defaulting missing q to 1', () => {
+    expect(parseAcceptLanguageHeader('en;q=0.5,ar,es;q=0.8')).toEqual(['ar', 'es', 'en']);
+  });
+
+  test('drops wildcards and q=0 entries', () => {
+    expect(parseAcceptLanguageHeader('*;q=0.1,fa,en;q=0')).toEqual(['fa']);
+  });
+
+  test('tolerates whitespace and malformed q-values', () => {
+    expect(parseAcceptLanguageHeader(' es-ES , en; q=broken ')).toEqual(['es-ES', 'en']);
+  });
+
+  test('feeds resolveInitialLanguage the browser preference order', () => {
+    const language = resolveInitialLanguage({
+      persistedLanguage: null,
+      deviceLanguages: parseAcceptLanguageHeader('fr;q=0.9,ar;q=0.8,en;q=0.7'),
+    });
+    expect(language).toBe('ar');
   });
 });
