@@ -1,6 +1,6 @@
 # 003. OpenNext for admin hosting on Cloudflare Workers
 
-**Status:** Accepted
+**Status:** Superseded by [016 — TanStack Start for the admin app](016-tanstack-start-admin.md) (2026-07-17)
 **Date:** 2026-04-09
 
 ## Context

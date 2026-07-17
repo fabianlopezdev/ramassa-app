@@ -20,7 +20,8 @@ bunx supabase studio                           # Local DB admin
 
 ## Tech Stack
 
-- **Mobile**: Expo SDK 52+ / React Native / Expo Router
+- **Mobile**: Expo SDK 57 / React Native / Expo Router
+- **Admin web**: TanStack Start (Vite, TanStack Router file routes) + shadcn/ui, deployed natively to Cloudflare Workers via `@cloudflare/vite-plugin` (ADR-016; replaced Next.js + OpenNext on 2026-07-17)
 - **Backend**: Supabase (EU region Frankfurt) — PostgreSQL, Auth, Storage, Realtime, Edge Functions
 - **Styling**: NativeWind (Tailwind CSS for React Native)
 - **State**: TanStack React Query + MMKV
@@ -50,7 +51,7 @@ bunx supabase studio                           # Local DB admin
 
 ## Workflow Contract (agreed 2026-07-16, supersedes conflicting rules below)
 
-1. **The live plan is the vault, not tasks/plan.md.** Every unit of work is a vault issue (`second-brain/10-Projects/Ramassa-App/issues/`, RAPP-5..69). Work top of the dependency order; set `state:` as you go. `tasks/plan.md` is historical.
+1. **The live plan is the vault, not tasks/plan.md.** Every unit of work is a vault issue (`second-brain/10-Projects/Ramassa-App/issues/`, RAPP-5..71). Work top of the dependency order; set `state:` as you go. `tasks/plan.md` is historical.
 2. **Commits reference their issue.** Subject line format: `<type>(scope): <description> (RAPP-N)`. No commit without an issue ID.
 3. **TDD.** Tests are written FIRST, per the issue's TDD plan. A failing test precedes the implementation.
 4. **Gates before every commit**: prettier, eslint, tsc --noEmit, bun test. Enforced by lefthook + commitlint (NOT husky/lint-staged; see RAPP-5).
@@ -62,7 +63,8 @@ bunx supabase studio                           # Local DB admin
 10. **Docs at latest versions**: each issue pins versions pulled at authoring (2026-07-16); verify against current official docs at execution.
 11. **Skills are preventive, not corrective (2026-07-16).** Every issue carries a "Skills to apply" section; consult those skills BEFORE writing the code they govern. Standing matrix: any mobile screen -> `/expo-router` + `/vercel-react-native-skills` + `/vercel-react-best-practices` (core React applies fully to RN, not only web) + `/vercel-composition-patterns` when designing reusable component APIs; any data fetching -> `/expo-data-fetching`; any DB work -> `/supabase-postgres-best-practices` (mandatory) + `/supabase`; any Worker -> `/wrangler` + `/workers-best-practices`; admin perf -> `/web-perf`; key player-facing flows and every phase closure -> `/critique` (UX evaluation against the low-literacy persona). RAPP-65 and the closure sweeps VERIFY; they are never the first application.
 12. **Platform baseline: Expo SDK 57, React 19, React New Architecture (`newArchEnabled: true`). Never opt out.** Reanimated 4 requires it; check New-Architecture compatibility before adding any native library.
-13. **Premium feel is a system (RAPP-70).** All microinteractions come from the shared primitives (PressableScale, FadeSlideIn, SuccessPop, ShakeOnError, SkeletonPulse) and the haptic vocabulary in `packages/shared`; motion timings only from motion tokens. Per-feature bar: press feedback on every touchable, entrance animation on content lists, success haptic + animation on completed primary actions, shake + warning haptic on validation errors, skeletons not spinners. Everything respects reduce-motion. No ad-hoc Animated/Reanimated code in feature screens.
+13. **Admin framework is TanStack Start (ADR-016, 2026-07-17) and its work is OFFICIAL-DOCS-FIRST (hard rule).** Any issue implementing TanStack Start or TanStack Router code MUST consult https://tanstack.com/start/latest and https://tanstack.com/router/latest (context7 or live fetch) at execution time, BEFORE writing the code, and verify every API against the installed version. The framework is young and moving; training-data knowledge is presumed stale. Where this file or SPEC.md still says "Next.js" for the admin, read TanStack Start; OpenNext is deleted from the plan.
+14. **Premium feel is a system (RAPP-70).** All microinteractions come from the shared primitives (PressableScale, FadeSlideIn, SuccessPop, ShakeOnError, SkeletonPulse) and the haptic vocabulary in `packages/shared`; motion timings only from motion tokens. Per-feature bar: press feedback on every touchable, entrance animation on content lists, success haptic + animation on completed primary actions, shake + warning haptic on validation errors, skeletons not spinners. Everything respects reduce-motion. No ad-hoc Animated/Reanimated code in feature screens.
 
 ## Development Workflow — Skill Lifecycle
 
@@ -126,7 +128,7 @@ New feature arrives
     │      /workers-best-practices
     │        → Run when: Writing or modifying Cloudflare Workers code.
     │      /web-perf
-    │        → Run when: Admin app (Next.js) performance work.
+    │        → Run when: Admin app (TanStack Start) performance work.
     │      Multiple skills can apply to one task. Run ALL that are relevant.
     │
     ├─ 6. /commit
@@ -257,7 +259,7 @@ UI feature
     │       MANDATORY. 9-step pipeline: structural → a11y/i18n →
     │       setup → data fetching → composition → RN perf →
     │       React perf → adversarial verification → report.
-    │     Admin UI (Next.js)? → /web-perf
+    │     Admin UI (TanStack Start)? → /web-perf + official TanStack docs (hard rule 13)
     │       Performance and best practices for the web admin panel.
     │
     ├─ 3. /agent-skills:browser-testing-with-devtools
@@ -340,7 +342,7 @@ These skills are MANDATORY when touching their domain. Not optional. Not "nice t
 | `/cloudflare`                       | R2 uploads, Pages config, Workers, general CF infra                         | Cloudflare platform best practices                                                                                                      |
 | `/wrangler`                         | Cloudflare Workers development (translation worker, image compression)      | Wrangler CLI and Workers development patterns                                                                                           |
 | `/workers-best-practices`           | Writing or modifying Cloudflare Workers code                                | Workers runtime best practices, performance, error handling                                                                             |
-| `/web-perf`                         | Admin app (Next.js) performance, bundle size, loading                       | Web performance optimization, Core Web Vitals                                                                                           |
+| `/web-perf`                         | Admin app (TanStack Start) performance, bundle size, loading                | Web performance optimization, Core Web Vitals                                                                                           |
 
 **Rule: when in doubt, run the skill.** Running an unnecessary skill wastes 2 minutes. Missing a necessary one can introduce bugs that take hours to find.
 

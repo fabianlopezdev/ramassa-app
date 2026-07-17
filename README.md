@@ -15,7 +15,7 @@ bun run dev:admin              # Admin web dev server
 ```
 apps/
   mobile/          Expo SDK 55+ — player mobile app + web export
-  admin/           Next.js (App Router) — staff admin + entity portal
+  admin/           TanStack Start (Vite, file routes) — staff admin + entity portal
 packages/
   shared/          Types, hooks, i18n, Supabase client, design tokens
 supabase/
@@ -54,8 +54,8 @@ bunx eas build --platform android --profile preview  # Android build
 ## Tech Stack
 
 - **Mobile:** Expo / React Native / NativeWind / Expo Router
-- **Admin:** Next.js / Tailwind CSS / shadcn/ui
+- **Admin:** TanStack Start / TanStack Router / Tailwind CSS / shadcn/ui (ADR-016)
 - **Backend:** Supabase (EU Frankfurt) — PostgreSQL, Auth, Realtime, Edge Functions
 - **Media:** Cloudflare R2
-- **Hosting:** Cloudflare Workers (admin via OpenNext) + Pages (player web)
+- **Hosting:** Cloudflare Workers (admin, native via `@cloudflare/vite-plugin`) + Pages (player web)
 - **Languages:** CA, ES, EN, AR, FA — full RTL support

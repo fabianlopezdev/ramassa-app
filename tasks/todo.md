@@ -1,3 +1,5 @@
+> [!warning] HISTORICAL (superseded 2026-07-16 by the vault issue plan, RAPP-5..71; see CLAUDE.md Workflow Contract rule 1). Framework note 2026-07-17: admin is now TanStack Start, not Next.js (ADR-016); Next/OpenNext references below are stale.
+
 # Phase 1: Task List — Monorepo Scaffold, Auth & Infrastructure
 
 ## Foundation (Tasks 1-5)

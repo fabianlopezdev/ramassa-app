@@ -48,20 +48,21 @@ At every checkpoint commit (Checkpoints A, B, C, D in the Phase 1 plan, and equi
 
 ## Index
 
-| #   | Title                                                                          | Status   | Date       |
-| --- | ------------------------------------------------------------------------------ | -------- | ---------- |
-| 001 | [Monorepo split: Expo + Next.js](001-monorepo-split.md)                        | Accepted | 2026-04-09 |
-| 002 | [Cloudflare R2 for media storage](002-cloudflare-r2-media.md)                  | Accepted | 2026-04-09 |
-| 003 | [OpenNext for admin hosting](003-opennext-admin-hosting.md)                    | Accepted | 2026-04-09 |
-| 004 | [pgcrypto encryption from day 1](004-encryption-day-one.md)                    | Accepted | 2026-04-09 |
-| 005 | [Magic link auth + password fallback](005-magic-link-auth.md)                  | Accepted | 2026-04-09 |
-| 006 | [5 languages with RTL from day 1](006-five-languages-rtl.md)                   | Accepted | 2026-04-09 |
-| 007 | [Pluggable auto-translation provider](007-pluggable-translation.md)            | Accepted | 2026-04-09 |
-| 008 | [Expo Web for player web interface](008-expo-web-player.md)                    | Accepted | 2026-04-09 |
-| 009 | [PostgreSQL RLS over app-layer auth](009-rls-over-app-auth.md)                 | Accepted | 2026-04-09 |
-| 010 | [White-label org_id from day 1](010-white-label-org-id.md)                     | Accepted | 2026-04-09 |
-| 011 | [Supabase EU Frankfurt for RGPD](011-supabase-eu-rgpd.md)                      | Accepted | 2026-04-09 |
-| 012 | [Feedback drawer over self-management groups](012-feedback-drawer.md)          | Accepted | 2026-04-09 |
-| 013 | [Client-side image compression before upload](013-client-image-compression.md) | Accepted | 2026-04-09 |
-| 014 | [Forum auto-hide at 3 flags](014-forum-auto-hide.md)                           | Accepted | 2026-04-09 |
-| 015 | [Shared design tokens](015-shared-design-tokens.md)                            | Accepted | 2026-04-09 |
+| #   | Title                                                                          | Status            | Date       |
+| --- | ------------------------------------------------------------------------------ | ----------------- | ---------- |
+| 001 | [Monorepo split: Expo + Next.js](001-monorepo-split.md)                        | Accepted          | 2026-04-09 |
+| 002 | [Cloudflare R2 for media storage](002-cloudflare-r2-media.md)                  | Accepted          | 2026-04-09 |
+| 003 | [OpenNext for admin hosting](003-opennext-admin-hosting.md)                    | Superseded by 016 | 2026-04-09 |
+| 004 | [pgcrypto encryption from day 1](004-encryption-day-one.md)                    | Accepted          | 2026-04-09 |
+| 005 | [Magic link auth + password fallback](005-magic-link-auth.md)                  | Accepted          | 2026-04-09 |
+| 006 | [5 languages with RTL from day 1](006-five-languages-rtl.md)                   | Accepted          | 2026-04-09 |
+| 007 | [Pluggable auto-translation provider](007-pluggable-translation.md)            | Accepted          | 2026-04-09 |
+| 008 | [Expo Web for player web interface](008-expo-web-player.md)                    | Accepted          | 2026-04-09 |
+| 009 | [PostgreSQL RLS over app-layer auth](009-rls-over-app-auth.md)                 | Accepted          | 2026-04-09 |
+| 010 | [White-label org_id from day 1](010-white-label-org-id.md)                     | Accepted          | 2026-04-09 |
+| 011 | [Supabase EU Frankfurt for RGPD](011-supabase-eu-rgpd.md)                      | Accepted          | 2026-04-09 |
+| 012 | [Feedback drawer over self-management groups](012-feedback-drawer.md)          | Accepted          | 2026-04-09 |
+| 013 | [Client-side image compression before upload](013-client-image-compression.md) | Accepted          | 2026-04-09 |
+| 014 | [Forum auto-hide at 3 flags](014-forum-auto-hide.md)                           | Accepted          | 2026-04-09 |
+| 015 | [Shared design tokens](015-shared-design-tokens.md)                            | Accepted          | 2026-04-09 |
+| 016 | [TanStack Start for the admin app](016-tanstack-start-admin.md)                | Accepted          | 2026-07-17 |

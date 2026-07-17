@@ -3,6 +3,8 @@
 **Status:** Accepted
 **Date:** 2026-04-09
 
+> [!note] Amended 2026-07-17 (ADR-016 / RAPP-71): the admin framework is now **TanStack Start**, not Next.js. This ADR's core decision stands; read "Next.js" as "TanStack Start" for the admin app.
+
 ## Context
 
 Two separate apps (Expo mobile, Next.js admin) need consistent branding. White-label support requires runtime color overrides per organization. Raw hex codes and pixel values scattered across components would make theming impossible.

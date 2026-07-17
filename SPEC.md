@@ -1,5 +1,7 @@
 # Spec & Plan: App Ramassa
 
+> [!note] Amended 2026-07-17 (ADR-016 / RAPP-71): the admin + entity portal framework is **TanStack Start** (was Next.js + OpenNext). References below have been updated; the detailed admin route tree keeps its old naming and is mapped to TanStack Router conventions at scaffold (RAPP-8).
+
 ## Context
 
 AE Ramassa is a football club and NGO in Barcelona that runs an inclusive women's football program for 35+ refugee, asylum-seeking, and migrant women. All coordination currently happens via WhatsApp groups — overloaded, chaotic, and impossible to extract impact data from. Staff spend hours on manual attendance tracking, surveys, and individual messages that get lost in the noise.
@@ -32,29 +34,29 @@ Build a cross-platform application (mobile + web) that:
 
 Based on research of real-world production teams, React Native Web is not suitable for complex admin dashboards (data tables, charts, rich forms). The project uses a **monorepo split**:
 
-| App                       | Technology          | Purpose                                          | Primary Users   |
-| ------------------------- | ------------------- | ------------------------------------------------ | --------------- |
-| **Mobile + Player Web**   | Expo (React Native) | Mobile app (Android/iOS) + player web experience | Players         |
-| **Admin + Entity Portal** | Next.js + shadcn/ui | Staff CMS, entity portal, desktop-optimized      | Staff, Entities |
-| **Shared Package**        | TypeScript          | Supabase client, types, hooks, i18n, constants   | Both apps       |
+| App                       | Technology                 | Purpose                                          | Primary Users   |
+| ------------------------- | -------------------------- | ------------------------------------------------ | --------------- |
+| **Mobile + Player Web**   | Expo (React Native)        | Mobile app (Android/iOS) + player web experience | Players         |
+| **Admin + Entity Portal** | TanStack Start + shadcn/ui | Staff CMS, entity portal, desktop-optimized      | Staff, Entities |
+| **Shared Package**        | TypeScript                 | Supabase client, types, hooks, i18n, constants   | Both apps       |
 
 **Why this split:**
 
 - Expo excels at mobile + simple web screens (player-facing)
-- Next.js + shadcn/ui excels at desktop admin interfaces (data tables, forms, dashboards, charts)
+- TanStack Start + shadcn/ui excels at desktop admin interfaces (data tables, forms, dashboards, charts)
 - Shared package prevents business logic duplication (Supabase queries, types, translations)
 - Each tool is used for what it does best — no fighting the framework
 
 ### Infrastructure — Two Providers Only
 
-| Service                                         | Provider                          | Purpose                             | Cost             |
-| ----------------------------------------------- | --------------------------------- | ----------------------------------- | ---------------- |
-| **Database + Auth + Realtime + Edge Functions** | Supabase (EU — Frankfurt)         | Core backend                        | $25/month (Pro)  |
-| **Media Storage**                               | Cloudflare R2                     | Photos, videos, documents           | Free tier (10GB) |
-| **Web Hosting (Admin)**                         | Cloudflare Workers (via OpenNext) | Next.js admin app                   | Free             |
-| **Web Hosting (Player)**                        | Cloudflare Pages                  | Expo web export                     | Free             |
-| **Serverless Processing**                       | Cloudflare Workers                | Image compression, auto-translation | Free tier        |
-| **Mobile Builds**                               | EAS (Expo)                        | Android/iOS builds                  | Free tier        |
+| Service                                         | Provider                                | Purpose                             | Cost             |
+| ----------------------------------------------- | --------------------------------------- | ----------------------------------- | ---------------- |
+| **Database + Auth + Realtime + Edge Functions** | Supabase (EU — Frankfurt)               | Core backend                        | $25/month (Pro)  |
+| **Media Storage**                               | Cloudflare R2                           | Photos, videos, documents           | Free tier (10GB) |
+| **Web Hosting (Admin)**                         | Cloudflare Workers (native Vite plugin) | TanStack Start admin app            | Free             |
+| **Web Hosting (Player)**                        | Cloudflare Pages                        | Expo web export                     | Free             |
+| **Serverless Processing**                       | Cloudflare Workers                      | Image compression, auto-translation | Free tier        |
+| **Mobile Builds**                               | EAS (Expo)                              | Android/iOS builds                  | Free tier        |
 
 **Total infrastructure cost: ~$25/month** at current scale (50-200 users).
 
@@ -69,13 +71,13 @@ Based on research of real-world production teams, React Native Web is not suitab
 
 ### Platform Strategy
 
-| Platform          | Technology               | Primary Users       | Purpose                                                                                      |
-| ----------------- | ------------------------ | ------------------- | -------------------------------------------------------------------------------------------- |
-| **Android app**   | Expo (React Native)      | Players (primary)   | Main interface for participants. Most users are on Android.                                  |
-| **iOS app**       | Expo (React Native)      | Players (secondary) | Same features as Android. Secondary priority.                                                |
-| **Player web**    | Expo Web (same codebase) | Players             | Browser fallback for players who can't/won't install the app.                                |
-| **Admin web**     | Next.js + shadcn/ui      | Staff               | Full CMS: content management, participant management, analytics, reports. Desktop-optimized. |
-| **Entity portal** | Next.js + shadcn/ui      | Social entities     | Referrals, course submissions, impact tracking. Desktop-optimized.                           |
+| Platform          | Technology                 | Primary Users       | Purpose                                                                                      |
+| ----------------- | -------------------------- | ------------------- | -------------------------------------------------------------------------------------------- |
+| **Android app**   | Expo (React Native)        | Players (primary)   | Main interface for participants. Most users are on Android.                                  |
+| **iOS app**       | Expo (React Native)        | Players (secondary) | Same features as Android. Secondary priority.                                                |
+| **Player web**    | Expo Web (same codebase)   | Players             | Browser fallback for players who can't/won't install the app.                                |
+| **Admin web**     | TanStack Start + shadcn/ui | Staff               | Full CMS: content management, participant management, analytics, reports. Desktop-optimized. |
+| **Entity portal** | TanStack Start + shadcn/ui | Social entities     | Referrals, course submissions, impact tracking. Desktop-optimized.                           |
 
 **Key design principle:** Mobile-first for player screens, desktop-first for admin/entity screens.
 
@@ -156,7 +158,7 @@ These are not guidelines — they are enforced during code review and `/react-na
 
 ### 2. Staff Ramassa — Role: `staff` / `admin`
 
-**Interface:** Next.js admin web app (desktop) + Expo mobile app for field work (attendance)
+**Interface:** TanStack Start admin web app (desktop) + Expo mobile app for field work (attendance)
 **Tech level:** Medium-high
 
 **Content Management (Full CMS — no developer needed):**
@@ -219,7 +221,7 @@ These are not guidelines — they are enforced during code review and `/react-na
 
 ### 3. Social Entities (Entitats Socials) — Role: `entity`
 
-**Interface:** Next.js admin web app (entity portal section, desktop)
+**Interface:** TanStack Start admin web app (entity portal section, desktop)
 **Tech level:** Medium
 
 | Capability                     | Description                                                                                                                                                                                                                                                                                                                                                                                                                    |
@@ -334,7 +336,7 @@ Decision deferred to implementation time. The architecture supports any combinat
 - [ ] Social entities can offer courses/resources for the services directory
 - [ ] Onboarding flow collects all required profile data (name, DOB, address, NIE/passport, nationality, reference entity, dependents, clothing/shoe sizes)
 - [ ] App works in Catalan, Spanish, English, Arabic, and Farsi with full RTL support
-- [ ] Web admin is responsive and desktop-optimized (Next.js + shadcn/ui)
+- [ ] Web admin is responsive and desktop-optimized (TanStack Start + shadcn/ui)
 - [ ] Player web is responsive and mobile-friendly (Expo Web)
 - [ ] RGPD-compliant: terms acceptance, data viewing, deletion request
 - [ ] WCAG AA accessibility compliance on all player-facing screens
@@ -345,27 +347,27 @@ Decision deferred to implementation time. The architecture supports any combinat
 
 ## Tech Stack
 
-| Layer                    | Technology                              | Why                                                                        |
-| ------------------------ | --------------------------------------- | -------------------------------------------------------------------------- |
-| **Mobile App**           | Expo SDK 52+ / React Native             | Cross-platform (Android + iOS). OTA updates via EAS.                       |
-| **Player Web**           | Expo Web (same codebase)                | Players access via browser. Simple screens that work well on RN Web.       |
-| **Admin Web**            | Next.js (App Router) + shadcn/ui        | Desktop-optimized CMS. Data tables, forms, dashboards, charts.             |
-| **Admin Styling**        | Tailwind CSS + shadcn/ui                | Polished, accessible component library.                                    |
-| **Mobile Styling**       | NativeWind (Tailwind for RN)            | Utility-first, RTL-ready (`start`/`end`). Fast iteration.                  |
-| **Backend**              | Supabase (EU — Frankfurt)               | Auth, PostgreSQL, Realtime, Edge Functions. EU-hosted. RGPD.               |
-| **Database**             | PostgreSQL (via Supabase)               | Relational model. SQL for reporting. Row-Level Security. Full-text search. |
-| **Auth**                 | Supabase Auth                           | Magic links (email) + password fallback. Free.                             |
-| **Media Storage**        | Cloudflare R2                           | Zero egress fees. 10GB free. Upload via presigned URLs.                    |
-| **Web Hosting (Admin)**  | Cloudflare Workers (via OpenNext)       | Free. Full Node.js runtime for Next.js.                                    |
-| **Web Hosting (Player)** | Cloudflare Pages                        | Free. Static Expo web export.                                              |
-| **Serverless**           | Cloudflare Workers                      | Image compression, auto-translation. Free tier.                            |
-| **Push Notifications**   | Expo Push API + Supabase Edge Functions | Store push tokens. Trigger from Edge Functions.                            |
-| **i18n**                 | react-i18next + expo-localization       | CA, ES, EN, AR, FA. Full RTL support. Shared translation files.            |
-| **State/Cache**          | TanStack React Query + MMKV (mobile)    | Offline resilience. Optimistic updates. Persistent cache.                  |
-| **Navigation (Mobile)**  | Expo Router (file-based)                | Deep linking. Convention over configuration.                               |
-| **Navigation (Admin)**   | Next.js App Router                      | File-based routing. Server components where beneficial.                    |
-| **Search**               | PostgreSQL full-text search             | Built into Supabase. No external service needed at this scale.             |
-| **Auto-Translation**     | Cloudflare Worker + translation API     | Staff writes once, system suggests 4 translations. Cents/month.            |
+| Layer                    | Technology                                     | Why                                                                        |
+| ------------------------ | ---------------------------------------------- | -------------------------------------------------------------------------- |
+| **Mobile App**           | Expo SDK 52+ / React Native                    | Cross-platform (Android + iOS). OTA updates via EAS.                       |
+| **Player Web**           | Expo Web (same codebase)                       | Players access via browser. Simple screens that work well on RN Web.       |
+| **Admin Web**            | TanStack Start (TanStack Router) + shadcn/ui   | Desktop-optimized CMS. Data tables, forms, dashboards, charts.             |
+| **Admin Styling**        | Tailwind CSS + shadcn/ui                       | Polished, accessible component library.                                    |
+| **Mobile Styling**       | NativeWind (Tailwind for RN)                   | Utility-first, RTL-ready (`start`/`end`). Fast iteration.                  |
+| **Backend**              | Supabase (EU — Frankfurt)                      | Auth, PostgreSQL, Realtime, Edge Functions. EU-hosted. RGPD.               |
+| **Database**             | PostgreSQL (via Supabase)                      | Relational model. SQL for reporting. Row-Level Security. Full-text search. |
+| **Auth**                 | Supabase Auth                                  | Magic links (email) + password fallback. Free.                             |
+| **Media Storage**        | Cloudflare R2                                  | Zero egress fees. 10GB free. Upload via presigned URLs.                    |
+| **Web Hosting (Admin)**  | Cloudflare Workers (`@cloudflare/vite-plugin`) | Free. `nodejs_compat` runtime for TanStack Start.                          |
+| **Web Hosting (Player)** | Cloudflare Pages                               | Free. Static Expo web export.                                              |
+| **Serverless**           | Cloudflare Workers                             | Image compression, auto-translation. Free tier.                            |
+| **Push Notifications**   | Expo Push API + Supabase Edge Functions        | Store push tokens. Trigger from Edge Functions.                            |
+| **i18n**                 | react-i18next + expo-localization              | CA, ES, EN, AR, FA. Full RTL support. Shared translation files.            |
+| **State/Cache**          | TanStack React Query + MMKV (mobile)           | Offline resilience. Optimistic updates. Persistent cache.                  |
+| **Navigation (Mobile)**  | Expo Router (file-based)                       | Deep linking. Convention over configuration.                               |
+| **Navigation (Admin)**   | TanStack Router (file routes)                  | File-based routing, fully typed. Server functions where beneficial.        |
+| **Search**               | PostgreSQL full-text search                    | Built into Supabase. No external service needed at this scale.             |
+| **Auto-Translation**     | Cloudflare Worker + translation API            | Staff writes once, system suggests 4 translations. Cents/month.            |
 
 ---
 
@@ -380,9 +382,9 @@ bun run dev:mobile                             # bunx expo start
 bun run build:android                          # bunx eas build --platform android --profile preview
 bun run test:mobile                            # bun test (mobile app tests)
 
-# Admin app (Next.js)
-bun run dev:admin                              # next dev
-bun run build:admin                            # next build
+# Admin app (TanStack Start)
+bun run dev:admin                              # vite dev
+bun run build:admin                            # vite build
 bun run test:admin                             # bun test (admin app tests)
 
 # Shared
@@ -446,8 +448,11 @@ ramassa/
         lib/                          # Mobile-specific config
       assets/                         # Images, fonts (including Arabic/Farsi fonts)
 
-    admin/                            # Next.js app (Staff CMS + Entity Portal)
-      app/                            # Next.js App Router
+    admin/                            # TanStack Start app (Staff CMS + Entity Portal; ADR-016)
+      src/routes/                     # TanStack Router file routes. NOTE (2026-07-17): the tree below
+                                      # is still written in the old Next.js App Router naming; map it to
+                                      # TanStack Router file-route conventions at scaffold (RAPP-8) per
+                                      # the official docs. Areas and screens are unchanged.
         (auth)/
           login/page.tsx              # Magic link login
         (admin)/                      # Staff/Admin routes — sidebar layout
@@ -1281,12 +1286,12 @@ NativeWind (`tailwind.config.ts` in mobile) and Tailwind (`tailwind.config.ts` i
 - **Pressable**: use `Pressable` (not `TouchableOpacity`)
 - **Styles**: never inline style objects — use NativeWind classes or hoisted `StyleSheet.create`
 
-### Admin App (Next.js)
+### Admin App (TanStack Start)
 
 - **shadcn/ui** components as the base design system
 - **Tailwind CSS** for custom styling (sourced from shared tokens)
-- **File naming**: Next.js App Router conventions (`page.tsx`, `layout.tsx`)
-- **Server Components** where possible, Client Components only when needed
+- **File naming**: TanStack Router file-route conventions (verify against https://tanstack.com/router/latest at scaffold; do not code from memory)
+- **Server functions** for privileged operations (RGPD-sensitive reads/writes); regular client components everywhere else (no RSC model)
 
 ### Example — Mobile Component (Expo)
 
@@ -1313,7 +1318,7 @@ export function EventCard({ event }: { event: Event }) {
 }
 ```
 
-### Example — Admin Component (Next.js + shadcn)
+### Example — Admin Component (TanStack Start + shadcn)
 
 ```tsx
 import { Badge } from '@/components/ui/badge';
@@ -1402,12 +1407,12 @@ export function FlaggedPostCard({ flag }: { flag: ForumFlag }) {
 
 1. Initialize monorepo structure (apps/mobile, apps/admin, packages/shared)
 2. Set up Expo project with TypeScript, NativeWind, Expo Router
-3. Set up Next.js project with TypeScript, Tailwind CSS, shadcn/ui
+3. Set up TanStack Start project with TypeScript, Tailwind CSS, shadcn/ui
 4. Set up shared package with Supabase client, types, i18n config
 5. Set up Supabase project (EU — Frankfurt), initial migration (`organizations`, `profiles`)
 6. Configure i18n with react-i18next (CA, ES, EN, AR, FA) with full RTL support
 7. Set up Cloudflare R2 bucket + presigned URL upload flow
-8. Set up Cloudflare deployment: Workers (via OpenNext) for admin, Pages for player web
+8. Set up Cloudflare deployment: Workers (native via `@cloudflare/vite-plugin`) for admin, Pages for player web
 9. Implement auth flow: magic link login (both apps) + admin-created account fallback
 10. Create layout shells: tab navigation (mobile) + sidebar navigation (admin) + entity portal layout
 11. Set up push notification token registration (mobile)
@@ -1514,7 +1519,7 @@ export function FlaggedPostCard({ flag }: { flag: ForumFlag }) {
 9. UI polish: loading states, empty states, error handling, responsive refinements
 10. Accessibility audit (WCAG AA, screen reader testing, RTL testing with Arabic/Farsi)
 11. Social media sharing (share activities/updates for visibility — lower priority)
-12. Web deployment finalization (Cloudflare Workers via OpenNext + Pages, domain setup)
+12. Web deployment finalization (Cloudflare Workers + Pages, domain setup)
 
 ---
 

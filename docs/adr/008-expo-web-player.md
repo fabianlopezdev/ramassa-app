@@ -3,6 +3,8 @@
 **Status:** Accepted
 **Date:** 2026-04-09
 
+> [!note] Amended 2026-07-17 (ADR-016 / RAPP-71): the admin framework is now **TanStack Start**, not Next.js. This ADR's core decision stands; read "Next.js" as "TanStack Start" for the admin app.
+
 ## Context
 
 Players need a browser fallback for when they can't install the mobile app. Maintaining a separate web codebase for player screens would double the frontend work.
