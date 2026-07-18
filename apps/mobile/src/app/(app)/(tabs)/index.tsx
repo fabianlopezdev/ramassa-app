@@ -1,9 +1,31 @@
+import { logout } from '@/lib/auth';
 import { safeAsync } from '@/lib/observability';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
 import { AppError } from '@ramassa/shared/errors';
+
+/**
+ * Signing out clears the session; the auth-state change flips the root
+ * navigator's guard and returns to `(auth)` with no manual navigation (RAPP-13).
+ */
+function SignOutButton() {
+  const { t } = useTranslation('auth');
+  const languageFontClass = useLanguageFontClass();
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={t('signOutAction')}
+      onPress={() => void logout()}
+      className="mt-xl min-h-recommended items-center justify-center rounded-md border border-neutral-300 px-lg active:opacity-80"
+    >
+      <Text className={`text-md font-medium text-neutral-800 ${languageFontClass}`}>
+        {t('signOutAction')}
+      </Text>
+    </Pressable>
+  );
+}
 
 /**
  * RAPP-12 acceptance drivers, dev builds only (the real dev menu is RAPP-19):
@@ -62,6 +84,7 @@ export default function HomeScreen() {
       <Text className={`mt-2 text-base text-neutral-500 ${languageFontClass}`}>
         {t('home:subtitle')}
       </Text>
+      <SignOutButton />
       {__DEV__ ? <DevForcedErrorTriggers /> : null}
     </View>
   );

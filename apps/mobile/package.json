@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "dependencies": {
     "@expo/ui": "~57.0.7",
+    "@hookform/resolvers": "5.4.0",
     "@sentry/react-native": "~7.11.0",
     "expo": "~57.0.7",
     "expo-constants": "~57.0.6",
@@ -23,6 +24,7 @@
     "nativewind": "4.2.6",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "react-hook-form": "7.81.0",
     "react-i18next": "17.0.10",
     "react-native": "0.86.0",
     "react-native-gesture-handler": "~2.32.0",

@@ -4,5 +4,6 @@ import { Stack } from 'expo-router/stack';
 export { ErrorFallback as ErrorBoundary } from '@/components/error-fallback';
 
 export default function AuthLayout() {
-  return <Stack />;
+  // The login screen renders its own heading, so no navigation header here.
+  return <Stack screenOptions={{ headerShown: false }} />;
 }

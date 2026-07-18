@@ -18,6 +18,10 @@ module.exports = {
       borderRadius: withPixelUnit(tokens.radius),
       fontSize: withPixelUnit(tokens.fontSize),
       fontFamily: tokens.fontFamily,
+      // WCAG AA touch targets (hard constraint): `min-h-min`/`min-w-min` = 48dp,
+      // `min-h-recommended`/`min-w-recommended` = 56dp for player-facing controls.
+      minHeight: withPixelUnit(tokens.tapTarget),
+      minWidth: withPixelUnit(tokens.tapTarget),
     },
   },
   plugins: [],

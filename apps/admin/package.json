@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@fontsource-variable/geist": "^5.2.9",
+    "@hookform/resolvers": "5.4.0",
     "@sentry/tanstackstart-react": "^10.66.0",
     "@tanstack/react-router": "^1.170.18",
     "@tanstack/react-start": "^1.168.28",
@@ -20,6 +21,7 @@
     "radix-ui": "^1.6.2",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "react-hook-form": "7.81.0",
     "react-i18next": "17.0.10",
     "shadcn": "^4.13.1",
     "tailwind-merge": "^3.6.0",
