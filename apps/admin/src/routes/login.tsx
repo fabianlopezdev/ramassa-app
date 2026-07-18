@@ -49,6 +49,7 @@ function LoginPage() {
         ) : mode === 'magic' ? (
           <div className="flex flex-col gap-4">
             <MagicLinkForm onSent={setSentToEmail} />
+            <p className="text-muted-foreground text-start text-sm">{t('auth:magicLinkHint')}</p>
             <Button variant="link" className="self-center" onClick={() => setMode('password')}>
               {t('auth:usePasswordInstead')}
             </Button>

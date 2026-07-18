@@ -94,8 +94,12 @@ export default function LoginScreen() {
           {sentToEmail ? (
             <MagicLinkSent email={sentToEmail} onBack={() => setSentToEmail(null)} />
           ) : mode === 'magic' ? (
-            <View className="gap-lg">
+            <View className="gap-md">
               <MagicLinkForm onSent={setSentToEmail} />
+              {/* Reassurance for players who worry they have no password (persona). */}
+              <Text className={`text-start text-sm text-neutral-500 ${languageFontClass}`}>
+                {t('auth:magicLinkHint')}
+              </Text>
               <AuthLink label={t('auth:usePasswordInstead')} onPress={() => switchTo('password')} />
             </View>
           ) : (
