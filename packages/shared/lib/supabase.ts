@@ -33,6 +33,11 @@ export function createSupabaseClient(config: SupabaseClientConfig): SupabaseClie
       // Mobile has no URL to inspect; the admin handles the magic-link callback
       // route explicitly, so URL session detection is off in both apps.
       detectSessionInUrl: false,
+      // Implicit flow (RAPP-13): the magic link returns tokens in the URL, which
+      // both apps validate and hand to `setSession` via `completeAuthCallback`.
+      // This avoids the PKCE code_verifier, which would break a link opened on a
+      // different device than the one that requested it.
+      flowType: 'implicit',
     },
   });
 }

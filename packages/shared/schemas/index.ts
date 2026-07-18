@@ -39,3 +39,6 @@ export type LocalizedText = z.infer<typeof localizedTextSchema>;
 export const uuidSchema = z.uuid();
 export const emailSchema = z.email();
 export const isoDateTimeSchema = z.iso.datetime();
+
+// Domain schemas compose from the primitives above and live in sibling files.
+export * from './auth';

@@ -12,7 +12,9 @@
     "./env": "./env.ts",
     "./i18n": "./i18n/index.ts",
     "./schemas": "./schemas/index.ts",
-    "./supabase": "./lib/supabase.ts"
+    "./supabase": "./lib/supabase.ts",
+    "./auth": "./auth/index.ts",
+    "./constants": "./lib/constants.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
