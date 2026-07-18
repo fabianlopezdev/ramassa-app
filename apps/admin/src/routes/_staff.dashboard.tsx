@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import { logout } from '@/lib/auth';
 import { safeAsync } from '@/lib/observability';
 import { createFileRoute } from '@tanstack/react-router';
 import { useState } from 'react';
@@ -44,10 +45,14 @@ function DevForcedErrorTriggers() {
 }
 
 function DashboardPage() {
-  const { t } = useTranslation('admin');
+  const { t } = useTranslation(['admin', 'auth']);
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center">
-      <h1 className="text-lg font-semibold text-neutral-900">{t('admin:dashboardTitle')}</h1>
+    <main className="flex min-h-screen flex-col items-center justify-center gap-6">
+      <h1 className="text-lg font-semibold text-foreground">{t('admin:dashboardTitle')}</h1>
+      {/* Signing out clears the session; RequireAuth then redirects to /login. */}
+      <Button variant="outline" onClick={() => void logout()}>
+        {t('auth:signOutAction')}
+      </Button>
       {import.meta.env.DEV ? <DevForcedErrorTriggers /> : null}
     </main>
   );

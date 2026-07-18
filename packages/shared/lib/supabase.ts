@@ -44,12 +44,26 @@ export function createSupabaseClient(config: SupabaseClientConfig): SupabaseClie
 
 /**
  * Web session storage backed by `localStorage`. Used by the admin app.
+ *
+ * SSR-safe: during the admin's server render (Cloudflare Workers) there is no
+ * `localStorage`, so reads return null (no session server-side) and writes
+ * no-op. The browser then hydrates, reads the persisted session, and the auth
+ * state resolves client-side — where the admin's route guards run (RAPP-13).
  */
 export function createLocalStorageSessionStorage(): SupabaseSessionStorage {
+  const isBrowser = () => typeof globalThis.localStorage !== 'undefined';
   return {
-    getItem: (key) => globalThis.localStorage.getItem(key),
-    setItem: (key, value) => globalThis.localStorage.setItem(key, value),
-    removeItem: (key) => globalThis.localStorage.removeItem(key),
+    getItem: (key) => (isBrowser() ? globalThis.localStorage.getItem(key) : null),
+    setItem: (key, value) => {
+      if (isBrowser()) {
+        globalThis.localStorage.setItem(key, value);
+      }
+    },
+    removeItem: (key) => {
+      if (isBrowser()) {
+        globalThis.localStorage.removeItem(key);
+      }
+    },
   };
 }
 

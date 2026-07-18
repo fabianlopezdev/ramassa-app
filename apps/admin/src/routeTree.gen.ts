@@ -13,6 +13,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as StaffRouteImport } from './routes/_staff'
 import { Route as EntityRouteImport } from './routes/_entity'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as StaffDashboardRouteImport } from './routes/_staff.dashboard'
 import { Route as EntityPortalRouteImport } from './routes/_entity.portal'
 
@@ -34,6 +35,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/auth/callback',
+  path: '/auth/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const StaffDashboardRoute = StaffDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -50,12 +56,14 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/portal': typeof EntityPortalRoute
   '/dashboard': typeof StaffDashboardRoute
+  '/auth/callback': typeof AuthCallbackRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/portal': typeof EntityPortalRoute
   '/dashboard': typeof StaffDashboardRoute
+  '/auth/callback': typeof AuthCallbackRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -65,12 +73,13 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/_entity/portal': typeof EntityPortalRoute
   '/_staff/dashboard': typeof StaffDashboardRoute
+  '/auth/callback': typeof AuthCallbackRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/portal' | '/dashboard'
+  fullPaths: '/' | '/login' | '/portal' | '/dashboard' | '/auth/callback'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/portal' | '/dashboard'
+  to: '/' | '/login' | '/portal' | '/dashboard' | '/auth/callback'
   id:
     | '__root__'
     | '/'
@@ -79,6 +88,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/_entity/portal'
     | '/_staff/dashboard'
+    | '/auth/callback'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -86,6 +96,7 @@ export interface RootRouteChildren {
   EntityRoute: typeof EntityRouteWithChildren
   StaffRoute: typeof StaffRouteWithChildren
   LoginRoute: typeof LoginRoute
+  AuthCallbackRoute: typeof AuthCallbackRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -116,6 +127,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/auth/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_staff/dashboard': {
@@ -161,6 +179,7 @@ const rootRouteChildren: RootRouteChildren = {
   EntityRoute: EntityRouteWithChildren,
   StaffRoute: StaffRouteWithChildren,
   LoginRoute: LoginRoute,
+  AuthCallbackRoute: AuthCallbackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

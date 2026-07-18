@@ -27,6 +27,11 @@ function ramassaTokensCss(): Plugin {
 // Deployment target is Cloudflare Workers (ADR-016). The @cloudflare/vite-plugin
 // and wrangler.jsonc are wired in RAPP-15; until then this config is dev-only.
 export default defineConfig({
+  // Expose the shared `EXPO_PUBLIC_*` Supabase vars (plus the default `VITE_*`)
+  // to `import.meta.env`, so the admin validates the SAME client env schema the
+  // mobile app does (RAPP-13). Server-only secrets carry neither prefix and stay
+  // out of the client bundle by construction.
+  envPrefix: ['VITE_', 'EXPO_PUBLIC_'],
   server: {
     port: 3000,
   },

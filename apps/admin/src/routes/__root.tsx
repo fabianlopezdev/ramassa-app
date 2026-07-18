@@ -1,8 +1,11 @@
+import { reportAuthError } from '@/lib/auth';
 import { createAdminI18n } from '@/lib/i18n';
 import { getRequestLanguage } from '@/lib/request-language';
+import { supabase } from '@/lib/supabase';
 import { createRootRoute, HeadContent, Outlet, Scripts } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 import { I18nextProvider } from 'react-i18next';
+import { AuthProvider } from '@ramassa/shared/auth';
 import { getLanguageDirection, type SupportedLanguage } from '@ramassa/shared/i18n';
 import appCss from '../styles/app.css?url';
 
@@ -45,7 +48,9 @@ function RootComponent() {
       </head>
       <body>
         <I18nextProvider i18n={i18n}>
-          <Outlet />
+          <AuthProvider client={supabase} onError={reportAuthError}>
+            <Outlet />
+          </AuthProvider>
         </I18nextProvider>
         <Scripts />
       </body>
