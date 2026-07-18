@@ -19,7 +19,12 @@ export interface SupabaseAuthErrorShape {
 
 const RATE_LIMIT_STATUS = 429;
 const rateLimitPattern = /rate limit|too many|over_email_send_rate|over_request_rate/i;
-const expiredOrInvalidLinkPattern = /expired|otp|invalid.*(token|link|otp)|token has expired/i;
+// Only a genuinely expired/invalid LINK, not any message that merely mentions
+// "otp": Supabase's send-step rejections ("Signups not allowed for otp") must
+// NOT read as "your link expired" (they map to the fallback instead). The
+// expired case is `otp_expired`, "Token has expired", "Email link is invalid
+// or has expired" — all caught by `expired`/`invalid`.
+const expiredOrInvalidLinkPattern = /expired|invalid.*(token|link|otp)|token has expired/i;
 const invalidCredentialsPattern = /invalid login credentials|invalid credentials/i;
 
 /**

@@ -23,6 +23,12 @@ test('invalid credentials map to AUTH-6', () => {
   ).toBe('AUTH-6');
 });
 
+test('a send-step "signups not allowed for otp" is NOT read as an expired link', () => {
+  // A magic-link request for an unregistered email (shouldCreateUser: false)
+  // is a plain failure, not an expired link — it must use the fallback.
+  expect(mapSupabaseAuthError({ message: 'Signups not allowed for otp' })).toBe('AUTH-1');
+});
+
 test('the fallback is used when nothing specific matches', () => {
   expect(mapSupabaseAuthError({ message: 'boom' })).toBe('AUTH-1');
   expect(mapSupabaseAuthError({ message: 'boom' }, 'AUTH-6')).toBe('AUTH-6');
