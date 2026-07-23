@@ -73,9 +73,16 @@ Preconditions (one-time):
    bunx wrangler secret put R2_SECRET_ACCESS_KEY --env production
    bunx wrangler secret put SENTRY_DSN           --env production   # optional
    ```
-4. **Production vars**: set `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, and
-   `ALLOWED_ORIGINS` for the `production` env in `wrangler.jsonc` once the
-   Frankfurt project and admin origin exist (RAPP-15).
+4. **Production vars**: set `R2_ACCOUNT_ID`, `SUPABASE_URL`,
+   `SUPABASE_PUBLISHABLE_KEY`, and `ALLOWED_ORIGINS` for the `production` env in
+   `wrangler.jsonc` once the Frankfurt project and admin origin exist.
+
+> [!note] Production runs on the **client's** Cloudflare account, not the dev
+> account (decided 2026-07-23; see the vault decision + migration issue). At
+> migration, create the buckets on the client's account, set the production
+> `R2_ACCOUNT_ID` to that account, and issue the R2 + deploy tokens there. The
+> account id is the only account-identity value in the config: the S3 endpoint
+> host is derived from it (`env.ts`), EU jurisdiction is fixed policy (ADR-011).
 
 Deploy (release = commit SHA, matching mobile/admin):
 

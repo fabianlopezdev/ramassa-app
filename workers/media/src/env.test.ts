@@ -4,7 +4,7 @@ import { parseWorkerEnv } from './env';
 const localEnv = {
   UPLOAD_MODE: 'local',
   R2_BUCKET_NAME: 'ramassa-media-dev',
-  R2_S3_ENDPOINT: 'https://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.eu.r2.cloudflarestorage.com',
+  R2_ACCOUNT_ID: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
   SUPABASE_URL: 'http://127.0.0.1:54321',
   SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_test',
   ALLOWED_ORIGINS: 'http://localhost:3000',
@@ -28,6 +28,18 @@ describe('parseWorkerEnv', () => {
     const config = parseWorkerEnv(presignedEnv);
     expect(config.uploadMode).toBe('r2-presigned');
     expect(config.r2AccessKeyId).toBe('key-id');
+  });
+
+  test('derives the EU-jurisdiction S3 endpoint from the account id (one value migrates)', () => {
+    const config = parseWorkerEnv(presignedEnv);
+    expect(config.accountId).toBe('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
+    expect(config.s3Endpoint).toBe(
+      'https://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.eu.r2.cloudflarestorage.com',
+    );
+  });
+
+  test('refuses a deployment with no account id', () => {
+    expect(() => parseWorkerEnv({ ...presignedEnv, R2_ACCOUNT_ID: '' })).toThrow(/R2_ACCOUNT_ID/);
   });
 
   test('refuses presigned mode without R2 credentials, naming the missing keys', () => {
