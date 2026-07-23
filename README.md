@@ -158,13 +158,13 @@ On a green CI run on `main`, the preview environment deploys automatically;
 production is `workflow_dispatch` (Actions → Deploy → Run workflow → production).
 It needs these **repository secrets** (Settings → Secrets and variables → Actions):
 
-| Secret                          | Purpose                                                                          |
-| ------------------------------- | -------------------------------------------------------------------------------- |
-| `CLOUDFLARE_API_TOKEN`          | Workers Scripts:Edit, Pages:Edit, Workers R2 Storage:Read, Account Settings:Read |
-| `CLOUDFLARE_ACCOUNT_ID`         | `c636c0649634aedd544d6a827b862d5a`                                               |
-| `EXPO_PUBLIC_SUPABASE_URL`      | baked into both builds (placeholder until RAPP-11 prod)                          |
-| `EXPO_PUBLIC_SUPABASE_ANON_KEY` | public anon/publishable key                                                      |
-| `SENTRY_AUTH_TOKEN`             | optional; enables admin source-map upload                                        |
+| Secret                          | Purpose                                                                                                                                             |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CLOUDFLARE_API_TOKEN`          | Account-scoped: Workers Scripts:Edit, Cloudflare Pages:Edit, Account Settings:Read (CI deploys admin + player web only, so no R2 permission needed) |
+| `CLOUDFLARE_ACCOUNT_ID`         | `c636c0649634aedd544d6a827b862d5a`                                                                                                                  |
+| `EXPO_PUBLIC_SUPABASE_URL`      | baked into both builds (placeholder until RAPP-11 prod)                                                                                             |
+| `EXPO_PUBLIC_SUPABASE_ANON_KEY` | public anon/publishable key                                                                                                                         |
+| `SENTRY_AUTH_TOKEN`             | optional; enables admin source-map upload                                                                                                           |
 
 Create the API token in the Cloudflare dashboard (Manage Account → API Tokens);
 Claude cannot create tokens or set repository secrets, so this step is manual.

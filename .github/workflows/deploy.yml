@@ -7,8 +7,9 @@ name: Deploy
 #     never automatic.
 #
 # Required repository secrets (set in GitHub → Settings → Secrets and variables):
-#   CLOUDFLARE_API_TOKEN   - scoped token: Workers Scripts:Edit, Pages:Edit,
-#                            Workers R2 Storage:Read, Account Settings:Read
+#   CLOUDFLARE_API_TOKEN   - account-scoped token: Workers Scripts:Edit,
+#                            Cloudflare Pages:Edit, Account Settings:Read.
+#                            (CI deploys admin + player web only — no R2 perm.)
 #   CLOUDFLARE_ACCOUNT_ID  - c636c0649634aedd544d6a827b862d5a
 #   EXPO_PUBLIC_SUPABASE_URL       - baked into both web builds at build time
 #   EXPO_PUBLIC_SUPABASE_ANON_KEY  - public anon/publishable key (safe to embed)
