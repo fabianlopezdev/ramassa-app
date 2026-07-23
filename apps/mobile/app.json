@@ -87,7 +87,14 @@
           }
         }
       ],
-      "@sentry/react-native"
+      "@sentry/react-native",
+      [
+        "expo-notifications",
+        {
+          "color": "#0077B6",
+          "defaultChannel": "default"
+        }
+      ]
     ],
     "extra": {
       "supportsRTL": true

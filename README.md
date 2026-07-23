@@ -168,3 +168,48 @@ It needs these **repository secrets** (Settings → Secrets and variables → Ac
 
 Create the API token in the Cloudflare dashboard (Manage Account → API Tokens);
 Claude cannot create tokens or set repository secrets, so this step is manual.
+
+## Push notifications (RAPP-17)
+
+Registration plumbing only: the app obtains an Expo push token after login and
+stores it in `push_tokens`, keyed to the profile and the device. **Sending**
+(targeting, templates, auto-translation) is Phase 3/8 and is not built yet.
+
+How it behaves:
+
+- On entering the signed-in area the app shows a **translated rationale first**,
+  then the OS prompt only if she accepts (SPEC UX rule: never a bare system
+  dialog). Declining is a real choice: the OS is never asked, so iOS's single
+  allotted prompt stays unspent, and the app is fully usable without push.
+- The token is re-checked on every app start and re-written only when it rotated.
+- One row per user per device (`unique (user_id, device_id)`), so a rotated token
+  updates in place instead of leaving an undeliverable duplicate.
+- Sign-out deletes this device's row _before_ ending the session (the delete is
+  RLS-scoped to `auth.uid()`), so the next person to sign in on the same device
+  does not inherit the previous user's notifications.
+
+### Blocked: link the project to EAS (manual, one-time)
+
+`getExpoPushTokenAsync` **requires an EAS projectId** (SDK 49+), and this project
+is not linked yet: there is no `extra.eas.projectId` and no `eas.json`. Until
+someone runs `eas init` under the Fabulous Apps Expo account, the app degrades
+gracefully (`skip: missing-project-id`) and simply never registers a token.
+Claude cannot create the EAS project, so this step is manual.
+
+```bash
+# from apps/mobile, signed in to the right Expo account
+bunx eas init
+```
+
+### Manual end-to-end proof (needs a physical device)
+
+Push **cannot** be received on the iOS Simulator (Apple does not support it); an
+Android emulator can, with FCM credentials. So this check needs real hardware and
+must be done by hand after the EAS link exists:
+
+1. Run a dev build on a physical device and sign in.
+2. Accept the rationale, then the OS prompt.
+3. Confirm the row landed: `select user_id, platform, device_id, updated_at from push_tokens;`
+4. Copy the token and send a test push from the Expo tool: https://expo.dev/notifications
+5. Verify it arrives with the app **foregrounded** and again **backgrounded**.
+6. Sign out, and confirm the row is gone.

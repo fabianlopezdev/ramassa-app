@@ -14,30 +14,35 @@ import arCommon from './locales/ar/common.json';
 import arErrors from './locales/ar/errors.json';
 import arHome from './locales/ar/home.json';
 import arNav from './locales/ar/nav.json';
+import arPush from './locales/ar/push.json';
 import caAdmin from './locales/ca/admin.json';
 import caAuth from './locales/ca/auth.json';
 import caCommon from './locales/ca/common.json';
 import caErrors from './locales/ca/errors.json';
 import caHome from './locales/ca/home.json';
 import caNav from './locales/ca/nav.json';
+import caPush from './locales/ca/push.json';
 import enAdmin from './locales/en/admin.json';
 import enAuth from './locales/en/auth.json';
 import enCommon from './locales/en/common.json';
 import enErrors from './locales/en/errors.json';
 import enHome from './locales/en/home.json';
 import enNav from './locales/en/nav.json';
+import enPush from './locales/en/push.json';
 import esAdmin from './locales/es/admin.json';
 import esAuth from './locales/es/auth.json';
 import esCommon from './locales/es/common.json';
 import esErrors from './locales/es/errors.json';
 import esHome from './locales/es/home.json';
 import esNav from './locales/es/nav.json';
+import esPush from './locales/es/push.json';
 import faAdmin from './locales/fa/admin.json';
 import faAuth from './locales/fa/auth.json';
 import faCommon from './locales/fa/common.json';
 import faErrors from './locales/fa/errors.json';
 import faHome from './locales/fa/home.json';
 import faNav from './locales/fa/nav.json';
+import faPush from './locales/fa/push.json';
 
 const resources = {
   ca: {
@@ -47,6 +52,7 @@ const resources = {
     admin: caAdmin,
     errors: caErrors,
     nav: caNav,
+    push: caPush,
   },
   es: {
     common: esCommon,
@@ -55,6 +61,7 @@ const resources = {
     admin: esAdmin,
     errors: esErrors,
     nav: esNav,
+    push: esPush,
   },
   en: {
     common: enCommon,
@@ -63,6 +70,7 @@ const resources = {
     admin: enAdmin,
     errors: enErrors,
     nav: enNav,
+    push: enPush,
   },
   ar: {
     common: arCommon,
@@ -71,6 +79,7 @@ const resources = {
     admin: arAdmin,
     errors: arErrors,
     nav: arNav,
+    push: arPush,
   },
   fa: {
     common: faCommon,
@@ -79,6 +88,7 @@ const resources = {
     admin: faAdmin,
     errors: faErrors,
     nav: faNav,
+    push: faPush,
   },
 };
 
