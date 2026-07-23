@@ -42,6 +42,32 @@ export function getLanguageFontFamilyKey(language: string): 'sans' | 'arabic' | 
 }
 
 /**
+ * Parses an `Accept-Language` header into a preference-ordered language-tag
+ * list, ready for `resolveInitialLanguage`'s `deviceLanguages`. Entries keep
+ * header order within the same quality; wildcards and `q=0` (explicitly
+ * unacceptable) entries are dropped; a malformed q-value counts as 1.
+ */
+export function parseAcceptLanguageHeader(header: string | undefined): string[] {
+  if (header === undefined || header.trim() === '') {
+    return [];
+  }
+
+  return header
+    .split(',')
+    .map((entry) => {
+      const [tag = '', ...parameters] = entry.trim().split(';');
+      const qParameter = parameters
+        .map((parameter) => parameter.trim())
+        .find((parameter) => parameter.startsWith('q='));
+      const parsedQuality = qParameter === undefined ? 1 : Number.parseFloat(qParameter.slice(2));
+      return { tag: tag.trim(), quality: Number.isNaN(parsedQuality) ? 1 : parsedQuality };
+    })
+    .filter(({ tag, quality }) => tag !== '' && tag !== '*' && quality > 0)
+    .sort((a, b) => b.quality - a.quality)
+    .map(({ tag }) => tag);
+}
+
+/**
  * Picks the language an app should boot in: an explicit earlier choice wins,
  * otherwise the first device language whose primary subtag we support (`es-ES`
  * matches `es`), otherwise Catalan.

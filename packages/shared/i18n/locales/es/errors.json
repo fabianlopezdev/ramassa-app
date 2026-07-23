@@ -1,0 +1,19 @@
+{
+  "AUTH-1": "No hemos podido iniciar la sesión. Vuelve a intentarlo.",
+  "AUTH-2": "La sesión ha caducado. Vuelve a entrar.",
+  "AUTH-3": "No tienes permiso para hacer esta acción.",
+  "AUTH-4": "Este enlace de inicio de sesión no es válido o ha caducado. Solicita uno nuevo.",
+  "AUTH-5": "Demasiados intentos. Espera un momento y vuelve a intentarlo.",
+  "AUTH-6": "Correo o contraseña incorrectos. Vuelve a intentarlo.",
+  "AUTH-7": "No se ha podido confiar en este enlace de inicio de sesión. Solicita uno nuevo.",
+  "DB-1": "No hemos podido guardar o cargar los datos. Vuelve a intentarlo.",
+  "DB-2": "No hemos encontrado lo que buscas.",
+  "NETWORK-1": "Sin conexión. Comprueba internet y vuelve a intentarlo.",
+  "SYNC-1": "No hemos podido sincronizar. Se volverá a intentar automáticamente.",
+  "UPLOAD-1": "No hemos podido subir el archivo. Vuelve a intentarlo.",
+  "VALIDATION-1": "Revisa los datos marcados y vuelve a intentarlo.",
+  "UNEXPECTED-1": "Algo ha fallado. Vuelve a intentarlo.",
+  "fallbackTitle": "Algo ha fallado",
+  "retry": "Volver a intentarlo",
+  "errorCodeLabel": "Código de error"
+}

@@ -28,6 +28,23 @@ Every later issue cites this page. Read it before adding anything.
 - **Single responsibility per module**: `tokens/` (design values), `env.ts`
   (boot-time validation), `schemas/` (zod validation), `lib/supabase.ts` (client).
 
+## Errors and logging (standing rules, RAPP-12)
+
+1. **Errors are typed, never generic.** App code throws `AppError` with a stable
+   `DOMAIN-N` code from `errors/codes.ts` (append-only registry); raw
+   `throw new Error` is lint-banned outside this package. Every code lands a
+   translated `errors:<code>` message in ALL five locales in the same change.
+2. **`safeAsync` wraps every failable async operation** and returns
+   `Result<T, AppError>` without ever rejecting. Each app exports a wired
+   version from its `lib/observability.ts` (logging + Sentry attached);
+   feature code imports THAT one, and never imports a Sentry SDK directly.
+3. **PII never enters logs or Sentry.** The logger redacts key- and
+   pattern-matched PII (names, phones, emails, addresses, DNI/NIE, document
+   numbers) before anything reaches a sink or reporter; only opaque IDs are
+   loggable. Redaction is tested against seeded fixtures, never assumed.
+4. **Error UIs show the code.** Fallback screens render the translated message
+   plus the short code (`AUTH-3`) so staff can report exactly what happened.
+
 ## The four hard rules this package enforces
 
 1. **Design tokens only.** No raw hex code, pixel value, or radius anywhere else in
@@ -86,6 +103,8 @@ packages/shared/
   tokens/             design tokens + tokensToCssVariables (admin CSS bridge)
   env.ts              zod-validated client/server env, fail-fast
   schemas/            base zod schemas; feature schemas land here per issue
+  errors/             AppError taxonomy (stable DOMAIN-N codes), Result, safeAsync
+  logger/             PII-redacting structured logger + ErrorReporter seam
   lib/supabase.ts     typed client factory + platform storage adapters
   types/database.ts   generated Supabase types (`bun run db:types`; never hand-edit)
 ```

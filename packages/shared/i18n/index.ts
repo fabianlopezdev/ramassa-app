@@ -11,6 +11,7 @@ export {
   getLanguageFontFamilyKey,
   isRtlLanguage,
   isSupportedLanguage,
+  parseAcceptLanguageHeader,
   resolveInitialLanguage,
   RTL_LANGUAGES,
   SUPPORTED_LANGUAGES,

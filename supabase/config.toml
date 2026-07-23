@@ -150,10 +150,22 @@ max_indexes = 5
 [auth]
 enabled = true
 # The base URL of your website. Used as an allow-list for redirects and for constructing URLs used
-# in emails.
-site_url = "http://127.0.0.1:3000"
-# A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
-additional_redirect_urls = ["https://127.0.0.1:3000"]
+# in emails. Local admin dev server (RAPP-13).
+site_url = "http://localhost:3000"
+# URLs auth is permitted to redirect to after a magic link (RAPP-13). Wildcards
+# match a path; the parser (packages/shared/auth/callback-url.ts) is the second,
+# stricter gate that also rejects any origin the app did not itself request.
+#   - admin dev (both localhost + 127.0.0.1 forms Vite may serve)
+#   - mobile deep link (custom `ramassa://` scheme, dev + production builds)
+# Production URLs (the deployed admin origin) are appended when hosting lands.
+additional_redirect_urls = [
+  "http://localhost:3000/auth/callback",
+  "http://localhost:3000/**",
+  "http://127.0.0.1:3000/auth/callback",
+  "http://127.0.0.1:3000/**",
+  "ramassa://auth/callback",
+  "ramassa://**",
+]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
 # JWT issuer URL. If not set, defaults to the local API URL (http://127.0.0.1:<port>/auth/v1).
@@ -222,6 +234,13 @@ max_frequency = "1s"
 otp_length = 6
 # Number of seconds before the email OTP expires (defaults to 1 hour).
 otp_expiry = 3600
+
+# Magic-link email (RAPP-13): Ramassà branding + Generalitat funding
+# acknowledgment, Catalan (the grant-mandated default language, ADR-006).
+# Content path is relative to the project root.
+[auth.email.template.magic_link]
+subject = "Inicia la sessió a Ramassà"
+content_path = "./supabase/templates/magic_link.html"
 
 # Use a production-ready SMTP server
 # [auth.email.smtp]

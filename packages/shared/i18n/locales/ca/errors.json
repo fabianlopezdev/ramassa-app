@@ -1,0 +1,19 @@
+{
+  "AUTH-1": "No hem pogut iniciar la sessió. Torna-ho a provar.",
+  "AUTH-2": "La sessió ha caducat. Torna a entrar.",
+  "AUTH-3": "No tens permís per fer aquesta acció.",
+  "AUTH-4": "Aquest enllaç d'inici de sessió no és vàlid o ha caducat. Demana'n un de nou.",
+  "AUTH-5": "Massa intents. Espera un moment i torna-ho a provar.",
+  "AUTH-6": "Correu o contrasenya incorrectes. Torna-ho a provar.",
+  "AUTH-7": "No s'ha pogut confiar en aquest enllaç d'inici de sessió. Demana'n un de nou.",
+  "DB-1": "No hem pogut desar o carregar les dades. Torna-ho a provar.",
+  "DB-2": "No hem trobat el que busques.",
+  "NETWORK-1": "Sense connexió. Comprova internet i torna-ho a provar.",
+  "SYNC-1": "No hem pogut sincronitzar. Es tornarà a provar automàticament.",
+  "UPLOAD-1": "No hem pogut pujar l'arxiu. Torna-ho a provar.",
+  "VALIDATION-1": "Revisa les dades marcades i torna-ho a provar.",
+  "UNEXPECTED-1": "Alguna cosa ha fallat. Torna-ho a provar.",
+  "fallbackTitle": "Alguna cosa ha fallat",
+  "retry": "Torna-ho a provar",
+  "errorCodeLabel": "Codi d'error"
+}

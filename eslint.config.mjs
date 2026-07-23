@@ -35,6 +35,29 @@ export default tseslint.config(
     },
   },
   {
+    // Errors are typed, never generic (RAPP-12, workflow contract rule 7):
+    // app code throws AppError from @ramassa/shared/errors so every failure
+    // carries a stable code, translated message, and Sentry-safe context.
+    // Tests, config files, and the errors/env modules themselves are exempt.
+    files: ['apps/*/src/**/*.{ts,tsx}', 'packages/*/**/*.{ts,tsx}'],
+    ignores: [
+      '**/*.test.ts',
+      '**/*.test.tsx',
+      'packages/shared/errors/**',
+      'packages/shared/env.ts',
+    ],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "ThrowStatement > NewExpression[callee.name='Error']",
+          message:
+            'Throw a typed AppError from @ramassa/shared/errors instead of a raw Error (RAPP-12).',
+        },
+      ],
+    },
+  },
+  {
     // Metro, Babel, and Tailwind configs must stay CommonJS: their consumers
     // (Metro bundler, Babel) load them with require().
     files: ['**/*.config.js', '**/babel.config.js', '**/metro.config.js'],
