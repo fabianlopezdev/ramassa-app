@@ -10,7 +10,7 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/expo.icon",
-      "bundleIdentifier": "com.fabs-and.ramassa",
+      "bundleIdentifier": "com.ramassa.app",
       "infoPlist": {
         "ExpoLocalization_supportsRTL": true
       }
@@ -23,7 +23,7 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.fabsand.ramassa"
+      "package": "com.ramassa.app"
     },
     "web": {
       "output": "single",

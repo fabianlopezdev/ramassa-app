@@ -64,7 +64,7 @@ test('an unsupported platform is skipped rather than stored with a wrong platfor
 
 test('a missing EAS projectId degrades gracefully instead of throwing', () => {
   // getExpoPushTokenAsync REQUIRES a projectId (SDK 49+). The project IS linked
-  // now (@fabulous-apps/ramassa), so this guards a build whose config lost the
+  // now, so this guards a build whose config lost the
   // link: it must boot and run normally, just without push.
   expect(decidePushRegistration({ ...ready, hasProjectId: false })).toEqual({
     kind: 'skip',

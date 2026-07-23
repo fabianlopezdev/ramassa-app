@@ -188,18 +188,23 @@ How it behaves:
   RLS-scoped to `auth.uid()`), so the next person to sign in on the same device
   does not inherit the previous user's notifications.
 
-### EAS project
+### EAS project (temporary dev account, transfers at handover)
 
-Linked to **`@fabulous-apps/ramassa`** (projectId `8c8deaa4-cc83-42e4-9572-6f0f0d933969`,
-set in `app.json` as `extra.eas.projectId`). `getExpoPushTokenAsync` requires it
-(SDK 49+); without it the app degrades quietly and never registers a token.
+Linked to the developer's Expo account for now (projectId
+`8c8deaa4-cc83-42e4-9572-6f0f0d933969`, set in `app.json` as
+`extra.eas.projectId`). `getExpoPushTokenAsync` requires it (SDK 49+); without it
+the app degrades quietly and never registers a token.
 
-Handover note: an Expo push token is attributed to the **projectId**, and that id
-does not change when a project is transferred between accounts or an account is
-renamed. So moving this project to a Ramassà-owned account later keeps every
-already-issued token valid. Expo does cap how many times a project can be
-transferred, and it needs Owner/Admin on both accounts (an escrow organization is
-the documented workaround), so transfer deliberately rather than casually.
+**Ramassà owns the published app** (decision 2026-07-23), so the identifiers are
+already Ramassà's: `com.ramassa.app` on both platforms. The EAS project, the
+Sentry org and the Cloudflare account are still on developer accounts and move at
+handover — see the migration issues in the tracker.
+
+Why transferring is safe: an Expo push token is attributed to the **projectId**,
+and that id does not change when a project moves between accounts or an account is
+renamed, so every already-issued token stays valid. Expo does cap how many times a
+project can be transferred and needs Owner/Admin on both accounts (an escrow
+organization is the documented workaround), so transfer deliberately.
 
 ### Credentials still needed
 
