@@ -13,33 +13,73 @@ import arAuth from './locales/ar/auth.json';
 import arCommon from './locales/ar/common.json';
 import arErrors from './locales/ar/errors.json';
 import arHome from './locales/ar/home.json';
+import arNav from './locales/ar/nav.json';
 import caAdmin from './locales/ca/admin.json';
 import caAuth from './locales/ca/auth.json';
 import caCommon from './locales/ca/common.json';
 import caErrors from './locales/ca/errors.json';
 import caHome from './locales/ca/home.json';
+import caNav from './locales/ca/nav.json';
 import enAdmin from './locales/en/admin.json';
 import enAuth from './locales/en/auth.json';
 import enCommon from './locales/en/common.json';
 import enErrors from './locales/en/errors.json';
 import enHome from './locales/en/home.json';
+import enNav from './locales/en/nav.json';
 import esAdmin from './locales/es/admin.json';
 import esAuth from './locales/es/auth.json';
 import esCommon from './locales/es/common.json';
 import esErrors from './locales/es/errors.json';
 import esHome from './locales/es/home.json';
+import esNav from './locales/es/nav.json';
 import faAdmin from './locales/fa/admin.json';
 import faAuth from './locales/fa/auth.json';
 import faCommon from './locales/fa/common.json';
 import faErrors from './locales/fa/errors.json';
 import faHome from './locales/fa/home.json';
+import faNav from './locales/fa/nav.json';
 
 const resources = {
-  ca: { common: caCommon, home: caHome, auth: caAuth, admin: caAdmin, errors: caErrors },
-  es: { common: esCommon, home: esHome, auth: esAuth, admin: esAdmin, errors: esErrors },
-  en: { common: enCommon, home: enHome, auth: enAuth, admin: enAdmin, errors: enErrors },
-  ar: { common: arCommon, home: arHome, auth: arAuth, admin: arAdmin, errors: arErrors },
-  fa: { common: faCommon, home: faHome, auth: faAuth, admin: faAdmin, errors: faErrors },
+  ca: {
+    common: caCommon,
+    home: caHome,
+    auth: caAuth,
+    admin: caAdmin,
+    errors: caErrors,
+    nav: caNav,
+  },
+  es: {
+    common: esCommon,
+    home: esHome,
+    auth: esAuth,
+    admin: esAdmin,
+    errors: esErrors,
+    nav: esNav,
+  },
+  en: {
+    common: enCommon,
+    home: enHome,
+    auth: enAuth,
+    admin: enAdmin,
+    errors: enErrors,
+    nav: enNav,
+  },
+  ar: {
+    common: arCommon,
+    home: arHome,
+    auth: arAuth,
+    admin: arAdmin,
+    errors: arErrors,
+    nav: arNav,
+  },
+  fa: {
+    common: faCommon,
+    home: faHome,
+    auth: faAuth,
+    admin: faAdmin,
+    errors: faErrors,
+    nav: faNav,
+  },
 };
 
 export interface CreateI18nOptions {

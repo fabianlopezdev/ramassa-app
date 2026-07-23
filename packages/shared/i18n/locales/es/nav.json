@@ -1,0 +1,31 @@
+{
+  "tabs": {
+    "home": "Inicio",
+    "events": "Calendario",
+    "community": "Comunidad",
+    "services": "Servicios",
+    "profile": "Perfil"
+  },
+  "staff": {
+    "dashboard": "Panel",
+    "participants": "Participantes",
+    "content": "Contenidos",
+    "attendance": "Asistencia",
+    "messages": "Mensajes",
+    "settings": "Configuración"
+  },
+  "entity": {
+    "referrals": "Derivaciones",
+    "services": "Servicios",
+    "events": "Eventos",
+    "messages": "Mensajes"
+  },
+  "a11y": {
+    "primary": "Navegación principal",
+    "staffSidebar": "Navegación del equipo",
+    "entityPortal": "Navegación del portal",
+    "toggleSidebar": "Mostrar u ocultar el menú lateral",
+    "sidebarLabel": "Menú lateral",
+    "sidebarDescription": "Menú de navegación lateral"
+  }
+}

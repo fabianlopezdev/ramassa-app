@@ -1,0 +1,31 @@
+{
+  "tabs": {
+    "home": "Inici",
+    "events": "Calendari",
+    "community": "Comunitat",
+    "services": "Serveis",
+    "profile": "Perfil"
+  },
+  "staff": {
+    "dashboard": "Tauler",
+    "participants": "Participants",
+    "content": "Continguts",
+    "attendance": "Assistència",
+    "messages": "Missatges",
+    "settings": "Configuració"
+  },
+  "entity": {
+    "referrals": "Derivacions",
+    "services": "Serveis",
+    "events": "Esdeveniments",
+    "messages": "Missatges"
+  },
+  "a11y": {
+    "primary": "Navegació principal",
+    "staffSidebar": "Navegació de l'equip",
+    "entityPortal": "Navegació del portal",
+    "toggleSidebar": "Mostra o amaga el menú lateral",
+    "sidebarLabel": "Menú lateral",
+    "sidebarDescription": "Menú de navegació lateral"
+  }
+}

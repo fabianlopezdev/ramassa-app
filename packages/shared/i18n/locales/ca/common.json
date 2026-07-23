@@ -1,6 +1,7 @@
 {
   "appName": "Ramassà",
   "back": "Enrere",
+  "close": "Tanca",
   "fallbackSentinel": "només en català",
   "languageName": {
     "ca": "Català",
