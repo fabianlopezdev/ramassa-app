@@ -1,0 +1,38 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "ramassa-admin",
+  // TanStack Start's server entry, run natively on Workers by
+  // @cloudflare/vite-plugin (ADR-016; no OpenNext adapter). `vite build` emits
+  // the Worker + client assets into dist/, and wrangler deploys them.
+  "main": "@tanstack/react-start/server-entry",
+  "compatibility_date": "2026-07-23",
+  // TanStack Start's SSR path uses Node built-ins; nodejs_compat provides them.
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1,
+  },
+  // NOTE on env (RAPP-9 / RAPP-13): the admin reads its Supabase config through
+  // `import.meta.env.EXPO_PUBLIC_*`, which Vite statically replaces at BUILD
+  // time (see vite.config.ts `envPrefix`), so those values are baked into the
+  // bundle by the deploy environment, NOT set as Worker vars here. Server-only
+  // secrets carry no client prefix and never enter this build. Runtime Worker
+  // vars/secrets are added here only when a server function needs one.
+  //
+  // Two-env model (RAPP-10). The Cloudflare Vite plugin selects the environment
+  // at BUILD time via `CLOUDFLARE_ENV` (the plugin flattens the chosen env into
+  // dist/server/wrangler.json; `wrangler deploy` then ships it, and a `--env`
+  // flag on deploy has no effect). See the `deploy:*` scripts in package.json.
+  // Preview is the default; production is a manual promote. workers.dev
+  // subdomains for now; the real domain is a later decision with Marc.
+  "env": {
+    "preview": {
+      "name": "ramassa-admin-preview",
+      "observability": { "enabled": true, "head_sampling_rate": 1 },
+    },
+    "production": {
+      "name": "ramassa-admin",
+      "observability": { "enabled": true, "head_sampling_rate": 1 },
+    },
+  },
+}

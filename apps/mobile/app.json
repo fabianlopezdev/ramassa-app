@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Ramassà",
+    "name": "Ramass\u00e0",
     "slug": "ramassa",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -22,7 +22,7 @@
       "package": "com.fabsand.ramassa"
     },
     "web": {
-      "output": "static",
+      "output": "single",
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [

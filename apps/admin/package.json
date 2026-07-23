@@ -4,9 +4,13 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev",
-    "build": "vite build",
+    "build": "vite build && tsc --noEmit",
     "typecheck": "tsc --noEmit",
-    "test": "bun test"
+    "test": "bun test",
+    "preview": "vite preview",
+    "deploy": "vite build && wrangler deploy",
+    "deploy:preview": "CLOUDFLARE_ENV=preview vite build && wrangler deploy",
+    "deploy:production": "CLOUDFLARE_ENV=production vite build && wrangler deploy"
   },
   "dependencies": {
     "@fontsource-variable/geist": "^5.2.9",
@@ -28,6 +32,7 @@
     "tw-animate-css": "^1.4.0"
   },
   "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.47.0",
     "@happy-dom/global-registrator": "^20.0.11",
     "@tailwindcss/vite": "^4.3.3",
     "@testing-library/react": "^16.3.0",
@@ -37,6 +42,7 @@
     "@vitejs/plugin-react": "^5.1.2",
     "tailwindcss": "^4.3.3",
     "typescript": "~5.9.3",
-    "vite": "^7.3.4"
+    "vite": "^7.3.4",
+    "wrangler": "^4.114.0"
   }
 }

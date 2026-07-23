@@ -1,0 +1,8 @@
+# Local Worker runtime vars for `vite preview` / `wrangler dev` (RAPP-15).
+# Copy to `.dev.vars` (gitignored). The admin reads its Supabase config through
+# `import.meta.env` (Vite-replaced at build from .env), so the Worker RUNTIME
+# needs no secrets: keep ONLY public client vars here, NEVER the service role
+# key or the Sentry auth token. Deployed Workers get vars via wrangler.jsonc
+# `vars` / `wrangler secret put`, never this file (it is not uploaded on deploy).
+EXPO_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
+EXPO_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH
