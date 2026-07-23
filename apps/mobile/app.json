@@ -1,7 +1,8 @@
 {
   "expo": {
-    "name": "Ramass\u00e0",
+    "name": "Ramassà",
     "slug": "ramassa",
+    "owner": "fabulous-apps",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -9,7 +10,10 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/expo.icon",
-      "bundleIdentifier": "com.fabs-and.ramassa"
+      "bundleIdentifier": "com.ramassa.app",
+      "infoPlist": {
+        "ExpoLocalization_supportsRTL": true
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -19,7 +23,7 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.fabsand.ramassa"
+      "package": "com.ramassa.app"
     },
     "web": {
       "output": "single",
@@ -87,10 +91,21 @@
           }
         }
       ],
-      "@sentry/react-native"
+      "@sentry/react-native",
+      [
+        "expo-notifications",
+        {
+          "color": "#0077B6",
+          "defaultChannel": "default"
+        }
+      ]
     ],
     "extra": {
-      "supportsRTL": true
+      "supportsRTL": true,
+      "router": {},
+      "eas": {
+        "projectId": "8c8deaa4-cc83-42e4-9572-6f0f0d933969"
+      }
     },
     "experiments": {
       "typedRoutes": true,

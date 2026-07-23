@@ -11,7 +11,7 @@
  */
 
 import { NoAdminAccess } from '@/components/auth/no-admin-access';
-import { roleLandingPath } from '@/lib/role-landing';
+import { resolveRouteAccess } from '@/lib/route-access';
 import { Navigate } from '@tanstack/react-router';
 import { type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -29,18 +29,23 @@ export function RequireAuth({
   const { t } = useTranslation('auth');
   const { session, role, isLoading } = useAuth();
 
-  if (isLoading) {
-    return <AuthLoading label={t('signingIn')} />;
+  // The role x area decision is a pure, exhaustively-tested function
+  // (route-access.ts); this component only maps its outcome to a rendered view.
+  const access = resolveRouteAccess({
+    isLoading,
+    hasSession: Boolean(session),
+    role,
+    allow,
+  });
+
+  switch (access.kind) {
+    case 'loading':
+      return <AuthLoading label={t('signingIn')} />;
+    case 'redirect':
+      return <Navigate to={access.to} />;
+    case 'no-access':
+      return <NoAdminAccess />;
+    case 'allow':
+      return <>{children}</>;
   }
-  if (!session || !role) {
-    return <Navigate to="/login" />;
-  }
-  if (!allow.includes(role)) {
-    const landing = roleLandingPath(role);
-    // No admin home for this role (a player): show a terminal "no access"
-    // state. Redirecting to a landing this same guard would reject again is
-    // what produced an infinite /dashboard -> /dashboard loop.
-    return landing === null ? <NoAdminAccess /> : <Navigate to={landing} />;
-  }
-  return <>{children}</>;
 }

@@ -1,0 +1,7 @@
+import { AdminPlaceholder } from '@/components/nav/admin-placeholder';
+import { createFileRoute } from '@tanstack/react-router';
+
+// Placeholder section for the staff content area (RAPP-16); the feature lands later.
+export const Route = createFileRoute('/_staff/content')({
+  component: () => <AdminPlaceholder titleKey="nav:staff.content" />,
+});

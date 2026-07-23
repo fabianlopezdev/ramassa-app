@@ -168,3 +168,61 @@ It needs these **repository secrets** (Settings → Secrets and variables → Ac
 
 Create the API token in the Cloudflare dashboard (Manage Account → API Tokens);
 Claude cannot create tokens or set repository secrets, so this step is manual.
+
+## Push notifications (RAPP-17)
+
+Registration plumbing only: the app obtains an Expo push token after login and
+stores it in `push_tokens`, keyed to the profile and the device. **Sending**
+(targeting, templates, auto-translation) is Phase 3/8 and is not built yet.
+
+How it behaves:
+
+- On entering the signed-in area the app shows a **translated rationale first**,
+  then the OS prompt only if she accepts (SPEC UX rule: never a bare system
+  dialog). Declining is a real choice: the OS is never asked, so iOS's single
+  allotted prompt stays unspent, and the app is fully usable without push.
+- The token is re-checked on every app start and re-written only when it rotated.
+- One row per user per device (`unique (user_id, device_id)`), so a rotated token
+  updates in place instead of leaving an undeliverable duplicate.
+- Sign-out deletes this device's row _before_ ending the session (the delete is
+  RLS-scoped to `auth.uid()`), so the next person to sign in on the same device
+  does not inherit the previous user's notifications.
+
+### EAS project (temporary dev account, transfers at handover)
+
+Linked to the developer's Expo account for now (projectId
+`8c8deaa4-cc83-42e4-9572-6f0f0d933969`, set in `app.json` as
+`extra.eas.projectId`). `getExpoPushTokenAsync` requires it (SDK 49+); without it
+the app degrades quietly and never registers a token.
+
+**Ramassà owns the published app** (decision 2026-07-23), so the identifiers are
+already Ramassà's: `com.ramassa.app` on both platforms. The EAS project, the
+Sentry org and the Cloudflare account are still on developer accounts and move at
+handover — see the migration issues in the tracker.
+
+Why transferring is safe: an Expo push token is attributed to the **projectId**,
+and that id does not change when a project moves between accounts or an account is
+renamed, so every already-issued token stays valid. Expo does cap how many times a
+project can be transferred and needs Owner/Admin on both accounts (an escrow
+organization is the documented workaround), so transfer deliberately.
+
+### Credentials still needed
+
+| Platform | Needed                                           | Who    |
+| -------- | ------------------------------------------------ | ------ |
+| Android  | FCM V1 credentials (service account JSON) in EAS | manual |
+| iOS      | APNs key — needs a paid Apple Developer account  | manual |
+
+### End-to-end proof
+
+Push works on a physical device, on an **iOS Simulator** (Xcode 14+, macOS 13+,
+iOS 16+), and on an **Android emulator with Google Play services**. Android needs
+a **development build** — remote notifications are unavailable in Expo Go on
+Android from SDK 53.
+
+1. Run a dev build (`bunx expo run:ios` / `bunx expo run:android`) and sign in.
+2. Accept the rationale, then the OS prompt.
+3. Confirm the row landed: `select user_id, platform, device_id, updated_at from push_tokens;`
+4. Copy the token and send a test push from https://expo.dev/notifications
+5. Verify it arrives with the app **foregrounded** and again **backgrounded**.
+6. Sign out, and confirm the row is gone.

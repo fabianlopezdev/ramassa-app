@@ -46,14 +46,16 @@ function DevForcedErrorTriggers() {
 
 function DashboardPage() {
   const { t } = useTranslation(['admin', 'auth']);
+  // A section, not a main: the staff layout's SidebarInset is already the
+  // page's single `main` landmark (RAPP-16).
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-6">
+    <section className="flex flex-col items-start gap-6 p-6">
       <h1 className="text-lg font-semibold text-foreground">{t('admin:dashboardTitle')}</h1>
       {/* Signing out clears the session; RequireAuth then redirects to /login. */}
       <Button variant="outline" onClick={() => void logout()}>
         {t('auth:signOutAction')}
       </Button>
       {import.meta.env.DEV ? <DevForcedErrorTriggers /> : null}
-    </main>
+    </section>
   );
 }

@@ -15,6 +15,7 @@ import {
 } from '@ramassa/shared/auth';
 import type { AppError, Result } from '@ramassa/shared/errors';
 import { logger, safeAsync } from './observability';
+import { removePushToken } from './push-notifications';
 import { supabase } from './supabase';
 
 /** Reports a role-lookup failure from the AuthProvider to the wired logger/Sentry. */
@@ -55,5 +56,15 @@ export function completeMagicLink(url: string): Promise<Result<void, AppError>> 
 }
 
 export function logout(): Promise<Result<void, AppError>> {
-  return safeAsync(() => sharedSignOut(supabase));
+  return safeAsync(async () => {
+    // Withdraw this device's push token BEFORE the session ends (RAPP-17). The
+    // delete is RLS-scoped to auth.uid(), so it is impossible once signed out,
+    // and skipping it would leave the next person to sign in on this device
+    // inheriting the previous user's notifications.
+    const { data } = await supabase.auth.getUser();
+    if (data.user) {
+      await removePushToken(data.user.id);
+    }
+    await sharedSignOut(supabase);
+  });
 }
