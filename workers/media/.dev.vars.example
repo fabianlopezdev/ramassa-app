@@ -1,0 +1,18 @@
+# Local Worker secrets (RAPP-14). Copy to `.dev.vars`, which is gitignored.
+# In deployed environments these are set with `wrangler secret put <NAME>`,
+# never in wrangler.jsonc.
+
+# R2 S3-API credentials, created in the Cloudflare dashboard
+# (R2 > API > Manage API tokens > Create User API token, Object Read & Write,
+# scoped to the ramassa-media-* buckets). Only needed when UPLOAD_MODE is
+# "r2-presigned"; local development defaults to UPLOAD_MODE "local".
+R2_ACCESS_KEY_ID=
+R2_SECRET_ACCESS_KEY=
+
+# Signs the loopback upload URLs used when UPLOAD_MODE is "local". Any random
+# string; it never leaves the dev machine. Generate one with:
+#   openssl rand -hex 32
+LOCAL_UPLOAD_SIGNING_SECRET=
+
+# Optional: without it, error reporting is off (matches mobile and admin).
+SENTRY_DSN=

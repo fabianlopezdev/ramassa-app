@@ -57,7 +57,8 @@ packages/
 supabase/
   migrations/      SQL migration files
   functions/       Supabase Edge Functions
-workers/           Cloudflare Workers (R2 uploads, auto-translation)
+workers/
+  media/           Presigned R2 upload Worker (RAPP-14) — see workers/media/README.md
 tasks/             Implementation plans and task lists
 docs/adr/          Architecture Decision Records
 ```

@@ -42,3 +42,4 @@ export const isoDateTimeSchema = z.iso.datetime();
 
 // Domain schemas compose from the primitives above and live in sibling files.
 export * from './auth';
+export * from './upload';

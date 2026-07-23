@@ -18,6 +18,8 @@ export default tseslint.config(
       '**/coverage/',
       '**/.tanstack/',
       '**/routeTree.gen.ts',
+      '**/.wrangler/',
+      '**/worker-configuration.d.ts',
     ],
   },
   js.configs.recommended,
@@ -39,12 +41,13 @@ export default tseslint.config(
     // app code throws AppError from @ramassa/shared/errors so every failure
     // carries a stable code, translated message, and Sentry-safe context.
     // Tests, config files, and the errors/env modules themselves are exempt.
-    files: ['apps/*/src/**/*.{ts,tsx}', 'packages/*/**/*.{ts,tsx}'],
+    files: ['apps/*/src/**/*.{ts,tsx}', 'packages/*/**/*.{ts,tsx}', 'workers/*/src/**/*.ts'],
     ignores: [
       '**/*.test.ts',
       '**/*.test.tsx',
       'packages/shared/errors/**',
       'packages/shared/env.ts',
+      'workers/*/src/env.ts',
     ],
     rules: {
       'no-restricted-syntax': [
