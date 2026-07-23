@@ -57,7 +57,8 @@ packages/
 supabase/
   migrations/      SQL migration files
   functions/       Supabase Edge Functions
-workers/           Cloudflare Workers (R2 uploads, auto-translation)
+workers/
+  media/           Presigned R2 upload Worker (RAPP-14) — see workers/media/README.md
 tasks/             Implementation plans and task lists
 docs/adr/          Architecture Decision Records
 ```
@@ -97,3 +98,73 @@ bunx eas build --platform android --profile preview  # Android build
 - **Media:** Cloudflare R2
 - **Hosting:** Cloudflare Workers (admin, native via `@cloudflare/vite-plugin`) + Pages (player web)
 - **Languages:** CA, ES, EN, AR, FA — full RTL support
+
+## Deployment (RAPP-15)
+
+Two front-end surfaces deploy to Cloudflare, native (no adapter): the **admin**
+(TanStack Start) to **Workers** via `@cloudflare/vite-plugin` (ADR-016), and the
+**player web** (Expo Web SPA, ADR-008) to **Pages**. The media Worker
+(`workers/media`) has its own runbook in `workers/media/README.md`.
+
+Two environments (RAPP-10): **preview** deploys automatically once CI is green on
+`main`; **production** is a manual promote. Default `workers.dev` / `pages.dev`
+URLs for now; a real domain is a later decision with Marc.
+
+Live URLs (preview):
+
+- Admin: `https://ramassa-admin-preview.<subdomain>.workers.dev`
+- Player web: `https://ramassa-player-web.pages.dev`
+
+### Build-time env (important)
+
+Both web builds read Supabase config through `import.meta.env.EXPO_PUBLIC_*`,
+which Vite/Expo **bake in at build time** (RAPP-9 / RAPP-13). So the values must
+be present when you run the build, not as runtime Worker vars. Only the **public**
+anon/publishable key is ever embedded; the service role key is server-only and
+never enters a web build. Until the production Supabase project exists (RAPP-11),
+pass placeholder values, the apps boot with no live backend.
+
+### Manual deploy
+
+```bash
+# Admin → Workers
+CLOUDFLARE_ENV=preview \
+  EXPO_PUBLIC_SUPABASE_URL=<url> EXPO_PUBLIC_SUPABASE_ANON_KEY=<anon> \
+  bun run --cwd apps/admin deploy:preview        # or deploy:production
+
+# Player web → Pages
+EXPO_PUBLIC_SUPABASE_URL=<url> EXPO_PUBLIC_SUPABASE_ANON_KEY=<anon> \
+  bun run --cwd apps/mobile web:export
+bunx wrangler pages deploy dist --project-name ramassa-player-web \
+  --branch preview --commit-dirty=true          # --branch main for production
+# (run the pages deploy from apps/mobile)
+```
+
+### Rollback
+
+```bash
+# Admin (Workers) — build the target env once so wrangler has the resolved config
+cd apps/admin && CLOUDFLARE_ENV=preview bunx vite build
+bunx wrangler versions list -c dist/server/wrangler.json
+bunx wrangler rollback <version-id> -c dist/server/wrangler.json
+
+# Player web (Pages) — promote a previous deployment from the dashboard, or
+bunx wrangler pages deployment list --project-name ramassa-player-web
+```
+
+### CI (`.github/workflows/deploy.yml`)
+
+On a green CI run on `main`, the preview environment deploys automatically;
+production is `workflow_dispatch` (Actions → Deploy → Run workflow → production).
+It needs these **repository secrets** (Settings → Secrets and variables → Actions):
+
+| Secret                          | Purpose                                                                                                                                             |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CLOUDFLARE_API_TOKEN`          | Account-scoped: Workers Scripts:Edit, Cloudflare Pages:Edit, Account Settings:Read (CI deploys admin + player web only, so no R2 permission needed) |
+| `CLOUDFLARE_ACCOUNT_ID`         | `c636c0649634aedd544d6a827b862d5a`                                                                                                                  |
+| `EXPO_PUBLIC_SUPABASE_URL`      | baked into both builds (placeholder until RAPP-11 prod)                                                                                             |
+| `EXPO_PUBLIC_SUPABASE_ANON_KEY` | public anon/publishable key                                                                                                                         |
+| `SENTRY_AUTH_TOKEN`             | optional; enables admin source-map upload                                                                                                           |
+
+Create the API token in the Cloudflare dashboard (Manage Account → API Tokens);
+Claude cannot create tokens or set repository secrets, so this step is manual.

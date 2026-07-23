@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    // The Workers runtime types replace the DOM lib entirely; `bun` is here for
+    // the test files, which run under bun like every other suite in the repo.
+    "types": ["./worker-configuration.d.ts", "bun"]
+  },
+  "include": ["**/*.ts"],
+  "exclude": ["node_modules"]
+}

@@ -1,4 +1,5 @@
 import { fileURLToPath } from 'node:url';
+import { cloudflare } from '@cloudflare/vite-plugin';
 import { sentryTanstackStart } from '@sentry/tanstackstart-react/vite';
 import tailwindcss from '@tailwindcss/vite';
 import { tanstackStart } from '@tanstack/react-start/plugin/vite';
@@ -24,8 +25,9 @@ function ramassaTokensCss(): Plugin {
   };
 }
 
-// Deployment target is Cloudflare Workers (ADR-016). The @cloudflare/vite-plugin
-// and wrangler.jsonc are wired in RAPP-15; until then this config is dev-only.
+// Deployment target is Cloudflare Workers (ADR-016), wired natively through
+// @cloudflare/vite-plugin + wrangler.jsonc (RAPP-15) with no adapter layer.
+// `vite build` emits the Worker; `wrangler deploy` ships it.
 export default defineConfig({
   // Expose the shared `EXPO_PUBLIC_*` Supabase vars (plus the default `VITE_*`)
   // to `import.meta.env`, so the admin validates the SAME client env schema the
@@ -45,6 +47,10 @@ export default defineConfig({
   plugins: [
     ramassaTokensCss(),
     tailwindcss(),
+    // `viteEnvironment: { name: 'ssr' }` tells the Cloudflare plugin to run
+    // TanStack Start's SSR environment on Workers (official hosting guide).
+    // It goes before tanstackStart() per that guide.
+    cloudflare({ viteEnvironment: { name: 'ssr' } }),
     tanstackStart(),
     viteReact(),
     // Source-map upload (RAPP-12): active only when SENTRY_AUTH_TOKEN is set

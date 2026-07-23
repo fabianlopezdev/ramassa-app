@@ -4,19 +4,22 @@
   "type": "module",
   "workspaces": [
     "apps/*",
-    "packages/*"
+    "packages/*",
+    "workers/*"
   ],
   "scripts": {
     "prepare": "lefthook install",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit && bun run --cwd packages/shared typecheck && bun run --cwd apps/mobile typecheck && bun run --cwd apps/admin typecheck",
+    "typecheck": "tsc --noEmit && bun run --cwd packages/shared typecheck && bun run --cwd apps/mobile typecheck && bun run --cwd apps/admin typecheck && bun run --cwd workers/media typecheck",
     "test": "bun test",
     "mobile:ios": "bun run --cwd apps/mobile ios",
     "mobile:android": "bun run --cwd apps/mobile android",
     "mobile:start": "bun run --cwd apps/mobile start",
     "admin:dev": "bun run --cwd apps/admin dev",
+    "media:dev": "bun run --cwd workers/media dev",
+    "media:deploy": "bun run --cwd workers/media deploy",
     "db:reset": "supabase db reset",
     "db:test": "supabase test db",
     "db:types": "supabase gen types typescript --local > packages/shared/types/database.ts"

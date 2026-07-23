@@ -51,6 +51,11 @@ export const errorCodeRegistry = defineCodes({
   'NETWORK-1': { domain: 'NETWORK', description: 'Network request failed' },
   'SYNC-1': { domain: 'SYNC', description: 'Offline sync failed' },
   'UPLOAD-1': { domain: 'UPLOAD', description: 'File upload failed' },
+  'UPLOAD-2': { domain: 'UPLOAD', description: 'File type is not allowed' },
+  'UPLOAD-3': { domain: 'UPLOAD', description: 'File is larger than the allowed size' },
+  'UPLOAD-4': { domain: 'UPLOAD', description: 'Too many uploads started (rate limited)' },
+  'UPLOAD-5': { domain: 'UPLOAD', description: 'Upload authorization expired before the transfer' },
+  'UPLOAD-6': { domain: 'UPLOAD', description: 'Storage rejected the upload' },
   'VALIDATION-1': { domain: 'VALIDATION', description: 'Input failed validation' },
   'UNEXPECTED-1': { domain: 'UNEXPECTED', description: 'Unexpected error' },
 });

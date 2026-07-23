@@ -1,0 +1,85 @@
+name: Deploy
+
+# Two-env deploy model (RAPP-15, ADR-016).
+#   - Every push to main deploys the PREVIEW environment automatically, after
+#     the CI quality gates have passed for that commit (workflow_run gate).
+#   - Promotion to PRODUCTION is a manual, deliberate action (workflow_dispatch),
+#     never automatic.
+#
+# Required repository secrets (set in GitHub → Settings → Secrets and variables):
+#   CLOUDFLARE_API_TOKEN   - account-scoped token: Workers Scripts:Edit,
+#                            Cloudflare Pages:Edit, Account Settings:Read.
+#                            (CI deploys admin + player web only — no R2 perm.)
+#   CLOUDFLARE_ACCOUNT_ID  - c636c0649634aedd544d6a827b862d5a
+#   EXPO_PUBLIC_SUPABASE_URL       - baked into both web builds at build time
+#   EXPO_PUBLIC_SUPABASE_ANON_KEY  - public anon/publishable key (safe to embed)
+#   SENTRY_AUTH_TOKEN      - optional; enables source-map upload on the admin build
+# Until the production Supabase project exists (RAPP-11), the two EXPO_PUBLIC_*
+# values are placeholders; the deployed apps boot but have no live backend yet.
+
+on:
+  # Auto-deploy preview once CI has gone green on a main commit.
+  workflow_run:
+    workflows: ['CI']
+    types: [completed]
+    branches: [main]
+  # Manual promote; choose the target environment.
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy'
+        type: choice
+        options: [preview, production]
+        default: preview
+
+concurrency:
+  group: deploy-${{ github.event.inputs.environment || 'preview' }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    # On workflow_run, only proceed if CI actually succeeded.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      # workflow_dispatch carries the chosen environment; the automatic
+      # workflow_run path is always preview.
+      TARGET_ENV: ${{ github.event.inputs.environment || 'preview' }}
+      EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
+      EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      # --- Admin (TanStack Start → Cloudflare Workers) ---
+      - name: Build admin (${{ env.TARGET_ENV }})
+        run: CLOUDFLARE_ENV=${{ env.TARGET_ENV }} bun run --cwd apps/admin build
+
+      - name: Deploy admin
+        run: bunx wrangler deploy
+        working-directory: apps/admin
+
+      # --- Player web (Expo Web SPA → Cloudflare Pages) ---
+      - name: Export player web
+        run: bun run --cwd apps/mobile web:export
+
+      - name: Deploy player web
+        # main branch = Pages production alias; the preview target deploys to a
+        # non-production branch alias so it never overwrites production.
+        run: >-
+          bunx wrangler pages deploy dist
+          --project-name ramassa-player-web
+          --branch ${{ env.TARGET_ENV == 'production' && 'main' || 'preview' }}
+          --commit-dirty=true
+        working-directory: apps/mobile

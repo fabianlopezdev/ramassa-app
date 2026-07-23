@@ -1,0 +1,29 @@
+{
+  "name": "@ramassa/media-worker",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Cloudflare Worker that mints short-TTL presigned R2 upload URLs for authenticated users (ADR-002, RAPP-14). It never touches file bytes in production: it authenticates, authorizes, validates, and signs.",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy --var SENTRY_RELEASE:$(git rev-parse HEAD)",
+    "deploy:production": "wrangler deploy --env production --var SENTRY_RELEASE:$(git rev-parse HEAD)",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test",
+    "types": "wrangler types",
+    "cors:dev": "wrangler r2 bucket cors set ramassa-media-dev --jurisdiction eu --file r2-cors.dev.json",
+    "cors:production": "wrangler r2 bucket cors set ramassa-media-production --jurisdiction eu --file r2-cors.production.json"
+  },
+  "dependencies": {
+    "@ramassa/shared": "workspace:*",
+    "@sentry/cloudflare": "^10.67.0",
+    "aws4fetch": "^1.0.20",
+    "jose": "^6.2.4",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.14",
+    "typescript": "~5.9.3",
+    "wrangler": "^4.113.0"
+  }
+}
