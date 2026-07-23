@@ -8,7 +8,9 @@ Mobile app (Expo/React Native) + web admin panel for AE Ramassa's inclusive wome
 
 ```
 bun install                                    # Install dependencies
-bunx expo start                                # Dev server
+bun run mobile:start                           # Expo dev server (runs in apps/mobile)
+bun run mobile:ios                             # Build + launch the iOS dev build
+bun run admin:dev                              # Admin dev server (localhost:3000)
 bunx eas build --platform android --profile preview  # Android build
 bun test                                       # Run tests
 bunx tsc --noEmit                              # Type check
@@ -27,6 +29,17 @@ bunx supabase studio                           # Local DB admin
 - **State**: TanStack React Query + MMKV
 - **i18n**: react-i18next + expo-localization, 5 languages (CA default, ES, EN, AR, FA) with full RTL (ADR-006, RAPP-11); shared factory in `packages/shared/i18n`
 - **Package manager**: bun (never npm/npx)
+
+> [!warning] NEVER run `expo` from the monorepo root.
+> This is a bun-workspaces monorepo; the Expo app is `apps/mobile`. Running
+> `bunx expo start|run:ios` from the repo root makes Expo treat the ROOT as the
+> app: it writes a stray root `app.json`, prebuilds a duplicate ~1.2 GB
+> `ios/ramassa.xcodeproj`, adds `expo`/`react-native` to the root
+> `package.json`, and rewrites `bun.lock`. That duplicate project has none of
+> the mobile app's autolinked native modules, so the app crashes at runtime with
+> `Cannot find native module 'ExpoLinking'`, and without `expo-dev-client` it
+> silently falls back to **Expo Go**, which cannot run this app (MMKV / Nitro
+> native modules). Always use the root scripts above, or `cd apps/mobile` first.
 
 ## Code Conventions
 
