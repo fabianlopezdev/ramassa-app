@@ -50,6 +50,11 @@ function RootNavigator() {
       <Stack.Protected guard={!session}>
         <Stack.Screen name="(auth)" />
       </Stack.Protected>
+      {/* Ungated on purpose: the magic link lands here while still signed out,
+          and Expo Router resolves the deep link as a route — without this the
+          link opens onto "Unmatched Route". The screen itself redirects once
+          the session (or the failure) is known. */}
+      <Stack.Screen name="auth/callback" />
     </Stack>
   );
 }
