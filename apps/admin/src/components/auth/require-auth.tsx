@@ -10,7 +10,8 @@
  * area.
  */
 
-import { roleLandingPath } from '@/lib/auth';
+import { NoAdminAccess } from '@/components/auth/no-admin-access';
+import { roleLandingPath } from '@/lib/role-landing';
 import { Navigate } from '@tanstack/react-router';
 import { type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -35,7 +36,11 @@ export function RequireAuth({
     return <Navigate to="/login" />;
   }
   if (!allow.includes(role)) {
-    return <Navigate to={roleLandingPath(role)} />;
+    const landing = roleLandingPath(role);
+    // No admin home for this role (a player): show a terminal "no access"
+    // state. Redirecting to a landing this same guard would reject again is
+    // what produced an infinite /dashboard -> /dashboard loop.
+    return landing === null ? <NoAdminAccess /> : <Navigate to={landing} />;
   }
   return <>{children}</>;
 }

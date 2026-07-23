@@ -1,7 +1,8 @@
 import { MagicLinkForm } from '@/components/auth/magic-link-form';
+import { NoAdminAccess } from '@/components/auth/no-admin-access';
 import { PasswordLoginForm } from '@/components/auth/password-login-form';
 import { Button } from '@/components/ui/button';
-import { roleLandingPath } from '@/lib/auth';
+import { roleLandingPath } from '@/lib/role-landing';
 import { createFileRoute, Navigate } from '@tanstack/react-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -19,9 +20,12 @@ function LoginPage() {
   const [mode, setMode] = useState<LoginMode>('magic');
   const [sentToEmail, setSentToEmail] = useState<string | null>(null);
 
-  // Already signed in (a resolved role): send them to their landing.
+  // Already signed in (a resolved role): send them to their landing. A role
+  // with no admin home (a player) gets the terminal no-access state instead of
+  // a redirect that would bounce straight back here.
   if (session && role) {
-    return <Navigate to={roleLandingPath(role)} />;
+    const landing = roleLandingPath(role);
+    return landing === null ? <NoAdminAccess /> : <Navigate to={landing} />;
   }
 
   return (

@@ -14,7 +14,6 @@ import {
   signOut as sharedSignOut,
 } from '@ramassa/shared/auth';
 import type { AppError, Result } from '@ramassa/shared/errors';
-import type { AppRole } from '@ramassa/shared/schemas';
 import { logger, safeAsync } from './observability';
 import { supabase } from './supabase';
 
@@ -23,11 +22,6 @@ const AUTH_CALLBACK_PATH = '/auth/callback';
 /** The callback URL on THIS origin (browser-only; login runs client-side). */
 function authRedirectTo(): string {
   return `${window.location.origin}${AUTH_CALLBACK_PATH}`;
-}
-
-/** Where each role lands after authenticating (staff/admin CMS vs entity portal). */
-export function roleLandingPath(role: AppRole | null): '/dashboard' | '/portal' {
-  return role === 'entity' ? '/portal' : '/dashboard';
 }
 
 export function sendMagicLink(email: string): Promise<Result<void, AppError>> {

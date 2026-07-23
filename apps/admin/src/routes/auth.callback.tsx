@@ -8,8 +8,10 @@
 
 import { AuthFormError } from '@/components/auth/auth-form-error';
 import { AuthLoading } from '@/components/auth/auth-loading';
+import { NoAdminAccess } from '@/components/auth/no-admin-access';
 import { Button } from '@/components/ui/button';
-import { completeMagicLink, roleLandingPath } from '@/lib/auth';
+import { completeMagicLink } from '@/lib/auth';
+import { roleLandingPath } from '@/lib/role-landing';
 import { createFileRoute, Navigate, useNavigate } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -42,9 +44,11 @@ function CallbackPage() {
     };
   }, []);
 
-  // Once the session lands (a resolved role), route to the right home.
+  // Once the session lands (a resolved role), route to the right home; a role
+  // with no admin home (a player) gets the terminal no-access state.
   if (session && role) {
-    return <Navigate to={roleLandingPath(role)} />;
+    const landing = roleLandingPath(role);
+    return landing === null ? <NoAdminAccess /> : <Navigate to={landing} />;
   }
 
   if (errorCode) {
