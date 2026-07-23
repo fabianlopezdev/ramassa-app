@@ -188,28 +188,36 @@ How it behaves:
   RLS-scoped to `auth.uid()`), so the next person to sign in on the same device
   does not inherit the previous user's notifications.
 
-### Blocked: link the project to EAS (manual, one-time)
+### EAS project
 
-`getExpoPushTokenAsync` **requires an EAS projectId** (SDK 49+), and this project
-is not linked yet: there is no `extra.eas.projectId` and no `eas.json`. Until
-someone runs `eas init` under the Fabulous Apps Expo account, the app degrades
-gracefully (`skip: missing-project-id`) and simply never registers a token.
-Claude cannot create the EAS project, so this step is manual.
+Linked to **`@fabulous-apps/ramassa`** (projectId `8c8deaa4-cc83-42e4-9572-6f0f0d933969`,
+set in `app.json` as `extra.eas.projectId`). `getExpoPushTokenAsync` requires it
+(SDK 49+); without it the app degrades quietly and never registers a token.
 
-```bash
-# from apps/mobile, signed in to the right Expo account
-bunx eas init
-```
+Handover note: an Expo push token is attributed to the **projectId**, and that id
+does not change when a project is transferred between accounts or an account is
+renamed. So moving this project to a Ramassà-owned account later keeps every
+already-issued token valid. Expo does cap how many times a project can be
+transferred, and it needs Owner/Admin on both accounts (an escrow organization is
+the documented workaround), so transfer deliberately rather than casually.
 
-### Manual end-to-end proof (needs a physical device)
+### Credentials still needed
 
-Push **cannot** be received on the iOS Simulator (Apple does not support it); an
-Android emulator can, with FCM credentials. So this check needs real hardware and
-must be done by hand after the EAS link exists:
+| Platform | Needed                                           | Who    |
+| -------- | ------------------------------------------------ | ------ |
+| Android  | FCM V1 credentials (service account JSON) in EAS | manual |
+| iOS      | APNs key — needs a paid Apple Developer account  | manual |
 
-1. Run a dev build on a physical device and sign in.
+### End-to-end proof
+
+Push works on a physical device, on an **iOS Simulator** (Xcode 14+, macOS 13+,
+iOS 16+), and on an **Android emulator with Google Play services**. Android needs
+a **development build** — remote notifications are unavailable in Expo Go on
+Android from SDK 53.
+
+1. Run a dev build (`bunx expo run:ios` / `bunx expo run:android`) and sign in.
 2. Accept the rationale, then the OS prompt.
 3. Confirm the row landed: `select user_id, platform, device_id, updated_at from push_tokens;`
-4. Copy the token and send a test push from the Expo tool: https://expo.dev/notifications
+4. Copy the token and send a test push from https://expo.dev/notifications
 5. Verify it arrives with the app **foregrounded** and again **backgrounded**.
 6. Sign out, and confirm the row is gone.

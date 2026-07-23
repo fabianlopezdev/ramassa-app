@@ -14,21 +14,23 @@ export type PushPlatform = 'android' | 'ios' | 'web';
 export type PushPermissionStatus = 'granted' | 'denied' | 'undetermined';
 
 export type PushSkipReason =
-  | 'no-session'
-  | 'unsupported-platform'
-  | 'not-a-physical-device'
-  | 'missing-project-id'
-  | 'permission-denied';
+  'no-session' | 'unsupported-platform' | 'missing-project-id' | 'permission-denied';
 
 export type PushRegistrationDecision =
   | { readonly kind: 'register' }
   | { readonly kind: 'request-permission' }
   | { readonly kind: 'skip'; readonly reason: PushSkipReason };
 
+/**
+ * Note there is deliberately NO physical-device check. Expo supports push on
+ * iOS Simulators (Xcode 14+, macOS 13+, iOS 16+) and on Android emulators with
+ * Google Play services, so gating on `Device.isDevice` would block simulator
+ * testing for no reason. Where a runtime genuinely cannot issue a token,
+ * `getExpoPushTokenAsync` rejects and safeAsync swallows it, which is the same
+ * quiet no-op a skip would have produced.
+ */
 export interface PushRegistrationInput {
   readonly hasSession: boolean;
-  /** Expo cannot mint a push token on a simulator/emulator. */
-  readonly isPhysicalDevice: boolean;
   /** `Platform.OS`, passed in so this module stays free of react-native. */
   readonly os: string;
   /** `getExpoPushTokenAsync` requires an EAS projectId (SDK 49+). */
@@ -50,12 +52,12 @@ export function resolvePushPlatform(os: string): PushPlatform | null {
 
 /**
  * Order matters: the earliest genuinely disqualifying condition wins, so the
- * reported reason is the real one (a signed-out simulator reports `no-session`,
- * not `not-a-physical-device`). Every non-register outcome is a QUIET skip:
- * push is optional and the app must stay fully usable without it.
+ * reported reason is the real one (a signed-out device reports `no-session`,
+ * not `permission-denied`). Every non-register outcome is a QUIET skip: push is
+ * optional and the app must stay fully usable without it.
  */
 export function decidePushRegistration(input: PushRegistrationInput): PushRegistrationDecision {
-  const { hasSession, isPhysicalDevice, os, hasProjectId, permission } = input;
+  const { hasSession, os, hasProjectId, permission } = input;
 
   if (!hasSession) {
     return { kind: 'skip', reason: 'no-session' };
@@ -63,10 +65,7 @@ export function decidePushRegistration(input: PushRegistrationInput): PushRegist
   if (resolvePushPlatform(os) === null) {
     return { kind: 'skip', reason: 'unsupported-platform' };
   }
-  if (!isPhysicalDevice) {
-    return { kind: 'skip', reason: 'not-a-physical-device' };
-  }
-  // The live path until someone runs `eas init`: degrade quietly, never throw.
+  // Guards a build whose config lost the EAS link: degrade quietly, never throw.
   if (!hasProjectId) {
     return { kind: 'skip', reason: 'missing-project-id' };
   }

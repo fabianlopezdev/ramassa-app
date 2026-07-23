@@ -9,7 +9,6 @@ import {
 
 const ready: PushRegistrationInput = {
   hasSession: true,
-  isPhysicalDevice: true,
   os: 'android',
   hasProjectId: true,
   permission: 'granted',
@@ -24,8 +23,15 @@ test('only android and ios resolve to a push platform', () => {
   expect(resolvePushPlatform('macos')).toBeNull();
 });
 
-test('a signed-in, permitted device on a real phone registers', () => {
+test('a signed-in, permitted device registers', () => {
   expect(decidePushRegistration(ready)).toEqual({ kind: 'register' });
+});
+
+test('a simulator is NOT disqualified: Expo supports push on modern simulators', () => {
+  // Regression guard. An earlier version gated on Device.isDevice, which would
+  // have blocked testing on an iOS Simulator (Xcode 14+, macOS 13+, iOS 16+) and
+  // on Android emulators with Play services, both of which Expo supports.
+  expect(decidePushRegistration({ ...ready, os: 'ios' })).toEqual({ kind: 'register' });
 });
 
 test('an undetermined permission asks first, so the rationale precedes the OS prompt', () => {
@@ -49,13 +55,6 @@ test('no session means no token: a token is always owned by a signed-in user', (
   });
 });
 
-test('a simulator is skipped: Expo cannot issue a push token without real hardware', () => {
-  expect(decidePushRegistration({ ...ready, isPhysicalDevice: false })).toEqual({
-    kind: 'skip',
-    reason: 'not-a-physical-device',
-  });
-});
-
 test('an unsupported platform is skipped rather than stored with a wrong platform', () => {
   expect(decidePushRegistration({ ...ready, os: 'web' })).toEqual({
     kind: 'skip',
@@ -64,17 +63,17 @@ test('an unsupported platform is skipped rather than stored with a wrong platfor
 });
 
 test('a missing EAS projectId degrades gracefully instead of throwing', () => {
-  // getExpoPushTokenAsync REQUIRES a projectId (SDK 49+). The project is not
-  // linked to EAS yet, so this is the live path today: the app must boot and run
-  // normally, just without push.
+  // getExpoPushTokenAsync REQUIRES a projectId (SDK 49+). The project IS linked
+  // now (@fabulous-apps/ramassa), so this guards a build whose config lost the
+  // link: it must boot and run normally, just without push.
   expect(decidePushRegistration({ ...ready, hasProjectId: false })).toEqual({
     kind: 'skip',
     reason: 'missing-project-id',
   });
 });
 
-test('session is checked before hardware, so signed-out simulators report the real reason', () => {
-  expect(decidePushRegistration({ ...ready, hasSession: false, isPhysicalDevice: false })).toEqual({
+test('session is checked first, so a signed-out device reports the real reason', () => {
+  expect(decidePushRegistration({ ...ready, hasSession: false, permission: 'denied' })).toEqual({
     kind: 'skip',
     reason: 'no-session',
   });
