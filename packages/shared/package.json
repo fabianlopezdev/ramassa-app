@@ -15,7 +15,8 @@
     "./supabase": "./lib/supabase.ts",
     "./auth": "./auth/index.ts",
     "./constants": "./lib/constants.ts",
-    "./upload-client": "./lib/upload-client.ts"
+    "./upload-client": "./lib/upload-client.ts",
+    "./testing": "./testing/index.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
