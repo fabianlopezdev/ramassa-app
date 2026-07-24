@@ -37,6 +37,34 @@ export default tseslint.config(
     },
   },
   {
+    // The developer menu (RAPP-19) is the one exception, and a narrow one: it
+    // is stripped from production bundles entirely, no user can ever reach it,
+    // and translating a debug readout into five languages would be waste.
+    // Scoped to the dev folder so the rule still covers every other component.
+    files: ['apps/*/src/components/dev/**/*.tsx'],
+    rules: {
+      'i18next/no-literal-string': 'off',
+    },
+  },
+  {
+    // The four modules that reach the dev menu (RAPP-19). They MUST use
+    // `require` inside a `__DEV__` branch: a static import would put the dev
+    // screen, the seeded roster, and the seed password into every production
+    // bundle, because Metro collects dependencies from the module graph rather
+    // than from what actually runs. Listed file by file, not by glob, so the
+    // exception stays visible and cannot quietly spread.
+    // `tests/dev-menu-production-gate.test.ts` enforces the shape.
+    files: [
+      'apps/*/src/app/dev-menu.tsx',
+      'apps/*/src/app/(app)/(tabs)/profile.tsx',
+      'apps/*/src/app/(auth)/login.tsx',
+      'apps/*/src/lib/observability.ts',
+    ],
+    rules: {
+      '@typescript-eslint/no-require-imports': 'off',
+    },
+  },
+  {
     // Errors are typed, never generic (RAPP-12, workflow contract rule 7):
     // app code throws AppError from @ramassa/shared/errors so every failure
     // carries a stable code, translated message, and Sentry-safe context.

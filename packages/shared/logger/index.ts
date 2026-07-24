@@ -1,5 +1,6 @@
 export { createNoopErrorReporter, type ErrorReporter } from './error-reporter';
 export {
+  consoleLogSink,
   createLogger,
   logLevels,
   type CreateLoggerOptions,
