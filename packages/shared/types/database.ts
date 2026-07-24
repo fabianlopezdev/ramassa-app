@@ -1,10 +1,3 @@
-/**
- * GENERATED FILE: do not edit by hand.
- *
- * Produced by `bun run db:types` (`supabase gen types typescript --local`).
- * Regenerate after every migration; that is a standing rule (CONVENTIONS.md).
- */
-
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type Database = {
@@ -172,6 +165,44 @@ export type Database = {
           },
         ];
       };
+      push_tokens: {
+        Row: {
+          created_at: string;
+          device_id: string;
+          id: string;
+          platform: string;
+          token: string;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          device_id: string;
+          id?: string;
+          platform: string;
+          token: string;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          device_id?: string;
+          id?: string;
+          platform?: string;
+          token?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'push_tokens_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -183,6 +214,10 @@ export type Database = {
       encrypt_field: { Args: { plaintext: string }; Returns: string };
       encryption_key: { Args: never; Returns: string };
       is_staff_or_admin: { Args: never; Returns: boolean };
+      user_is_in_current_org: {
+        Args: { target_user_id: string };
+        Returns: boolean;
+      };
     };
     Enums: {
       [_ in never]: never;

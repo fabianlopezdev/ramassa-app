@@ -1,0 +1,7 @@
+{
+  "rationaleTitle": "Would you like to get alerts?",
+  "rationaleBody": "We will let you know when there is a new training session, a schedule change, or a message from the team. Nothing else.",
+  "rationaleAccept": "Yes, turn them on",
+  "rationaleDecline": "Not now",
+  "deniedNotice": "You will not get alerts. You can turn them on any time in your phone settings."
+}

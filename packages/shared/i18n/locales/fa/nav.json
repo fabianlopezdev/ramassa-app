@@ -1,0 +1,31 @@
+{
+  "tabs": {
+    "home": "خانه",
+    "events": "رویدادها",
+    "community": "انجمن",
+    "services": "خدمات",
+    "profile": "پروفایل"
+  },
+  "staff": {
+    "dashboard": "داشبورد",
+    "participants": "شرکت‌کنندگان",
+    "content": "محتوا",
+    "attendance": "حضور و غیاب",
+    "messages": "پیام‌ها",
+    "settings": "تنظیمات"
+  },
+  "entity": {
+    "referrals": "ارجاع‌ها",
+    "services": "خدمات",
+    "events": "رویدادها",
+    "messages": "پیام‌ها"
+  },
+  "a11y": {
+    "primary": "ناوبری اصلی",
+    "staffSidebar": "ناوبری کارکنان",
+    "entityPortal": "ناوبری پورتال",
+    "toggleSidebar": "نمایش یا پنهان‌کردن نوار کناری",
+    "sidebarLabel": "نوار کناری",
+    "sidebarDescription": "منوی ناوبری کناری"
+  }
+}

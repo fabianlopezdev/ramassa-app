@@ -1,0 +1,31 @@
+{
+  "tabs": {
+    "home": "الرئيسية",
+    "events": "الفعاليات",
+    "community": "المجتمع",
+    "services": "الخدمات",
+    "profile": "الملف الشخصي"
+  },
+  "staff": {
+    "dashboard": "لوحة التحكم",
+    "participants": "المشاركات",
+    "content": "المحتوى",
+    "attendance": "الحضور",
+    "messages": "الرسائل",
+    "settings": "الإعدادات"
+  },
+  "entity": {
+    "referrals": "الإحالات",
+    "services": "الخدمات",
+    "events": "الفعاليات",
+    "messages": "الرسائل"
+  },
+  "a11y": {
+    "primary": "التنقل الرئيسي",
+    "staffSidebar": "تنقل الفريق",
+    "entityPortal": "تنقل البوابة",
+    "toggleSidebar": "إظهار أو إخفاء الشريط الجانبي",
+    "sidebarLabel": "الشريط الجانبي",
+    "sidebarDescription": "قائمة التنقل الجانبية"
+  }
+}

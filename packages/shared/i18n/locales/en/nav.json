@@ -1,0 +1,31 @@
+{
+  "tabs": {
+    "home": "Home",
+    "events": "Events",
+    "community": "Community",
+    "services": "Services",
+    "profile": "Profile"
+  },
+  "staff": {
+    "dashboard": "Dashboard",
+    "participants": "Participants",
+    "content": "Content",
+    "attendance": "Attendance",
+    "messages": "Messages",
+    "settings": "Settings"
+  },
+  "entity": {
+    "referrals": "Referrals",
+    "services": "Services",
+    "events": "Events",
+    "messages": "Messages"
+  },
+  "a11y": {
+    "primary": "Primary navigation",
+    "staffSidebar": "Staff navigation",
+    "entityPortal": "Portal navigation",
+    "toggleSidebar": "Toggle sidebar",
+    "sidebarLabel": "Sidebar",
+    "sidebarDescription": "Sidebar navigation menu"
+  }
+}

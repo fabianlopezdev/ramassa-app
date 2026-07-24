@@ -1,3 +1,4 @@
+import { TooltipProvider } from '@/components/ui/tooltip';
 import { reportAuthError } from '@/lib/auth';
 import { createAdminI18n } from '@/lib/i18n';
 import { getRequestLanguage } from '@/lib/request-language';
@@ -49,7 +50,13 @@ function RootComponent() {
       <body>
         <I18nextProvider i18n={i18n}>
           <AuthProvider client={supabase} onError={reportAuthError}>
-            <Outlet />
+            {/* Required by any shadcn Tooltip in the tree. The staff sidebar
+                shows its labels as tooltips when collapsed to the icon rail, and
+                a Tooltip without this provider THROWS rather than degrading, so
+                its absence crashed the whole staff area on load (RAPP-16). */}
+            <TooltipProvider>
+              <Outlet />
+            </TooltipProvider>
           </AuthProvider>
         </I18nextProvider>
         <Scripts />

@@ -14,8 +14,17 @@ import { Route as StaffRouteImport } from './routes/_staff'
 import { Route as EntityRouteImport } from './routes/_entity'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
+import { Route as StaffSettingsRouteImport } from './routes/_staff.settings'
+import { Route as StaffParticipantsRouteImport } from './routes/_staff.participants'
+import { Route as StaffMessagesRouteImport } from './routes/_staff.messages'
 import { Route as StaffDashboardRouteImport } from './routes/_staff.dashboard'
-import { Route as EntityPortalRouteImport } from './routes/_entity.portal'
+import { Route as StaffContentRouteImport } from './routes/_staff.content'
+import { Route as StaffAttendanceRouteImport } from './routes/_staff.attendance'
+import { Route as EntityPortalIndexRouteImport } from './routes/_entity.portal.index'
+import { Route as EntityPortalServicesRouteImport } from './routes/_entity.portal.services'
+import { Route as EntityPortalReferralsRouteImport } from './routes/_entity.portal.referrals'
+import { Route as EntityPortalMessagesRouteImport } from './routes/_entity.portal.messages'
+import { Route as EntityPortalEventsRouteImport } from './routes/_entity.portal.events'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -40,30 +49,93 @@ const AuthCallbackRoute = AuthCallbackRouteImport.update({
   path: '/auth/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StaffSettingsRoute = StaffSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => StaffRoute,
+} as any)
+const StaffParticipantsRoute = StaffParticipantsRouteImport.update({
+  id: '/participants',
+  path: '/participants',
+  getParentRoute: () => StaffRoute,
+} as any)
+const StaffMessagesRoute = StaffMessagesRouteImport.update({
+  id: '/messages',
+  path: '/messages',
+  getParentRoute: () => StaffRoute,
+} as any)
 const StaffDashboardRoute = StaffDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
   getParentRoute: () => StaffRoute,
 } as any)
-const EntityPortalRoute = EntityPortalRouteImport.update({
-  id: '/portal',
-  path: '/portal',
+const StaffContentRoute = StaffContentRouteImport.update({
+  id: '/content',
+  path: '/content',
+  getParentRoute: () => StaffRoute,
+} as any)
+const StaffAttendanceRoute = StaffAttendanceRouteImport.update({
+  id: '/attendance',
+  path: '/attendance',
+  getParentRoute: () => StaffRoute,
+} as any)
+const EntityPortalIndexRoute = EntityPortalIndexRouteImport.update({
+  id: '/portal/',
+  path: '/portal/',
+  getParentRoute: () => EntityRoute,
+} as any)
+const EntityPortalServicesRoute = EntityPortalServicesRouteImport.update({
+  id: '/portal/services',
+  path: '/portal/services',
+  getParentRoute: () => EntityRoute,
+} as any)
+const EntityPortalReferralsRoute = EntityPortalReferralsRouteImport.update({
+  id: '/portal/referrals',
+  path: '/portal/referrals',
+  getParentRoute: () => EntityRoute,
+} as any)
+const EntityPortalMessagesRoute = EntityPortalMessagesRouteImport.update({
+  id: '/portal/messages',
+  path: '/portal/messages',
+  getParentRoute: () => EntityRoute,
+} as any)
+const EntityPortalEventsRoute = EntityPortalEventsRouteImport.update({
+  id: '/portal/events',
+  path: '/portal/events',
   getParentRoute: () => EntityRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
-  '/portal': typeof EntityPortalRoute
+  '/attendance': typeof StaffAttendanceRoute
+  '/content': typeof StaffContentRoute
   '/dashboard': typeof StaffDashboardRoute
+  '/messages': typeof StaffMessagesRoute
+  '/participants': typeof StaffParticipantsRoute
+  '/settings': typeof StaffSettingsRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/portal/events': typeof EntityPortalEventsRoute
+  '/portal/messages': typeof EntityPortalMessagesRoute
+  '/portal/referrals': typeof EntityPortalReferralsRoute
+  '/portal/services': typeof EntityPortalServicesRoute
+  '/portal/': typeof EntityPortalIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
-  '/portal': typeof EntityPortalRoute
+  '/attendance': typeof StaffAttendanceRoute
+  '/content': typeof StaffContentRoute
   '/dashboard': typeof StaffDashboardRoute
+  '/messages': typeof StaffMessagesRoute
+  '/participants': typeof StaffParticipantsRoute
+  '/settings': typeof StaffSettingsRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/portal/events': typeof EntityPortalEventsRoute
+  '/portal/messages': typeof EntityPortalMessagesRoute
+  '/portal/referrals': typeof EntityPortalReferralsRoute
+  '/portal/services': typeof EntityPortalServicesRoute
+  '/portal': typeof EntityPortalIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -71,24 +143,70 @@ export interface FileRoutesById {
   '/_entity': typeof EntityRouteWithChildren
   '/_staff': typeof StaffRouteWithChildren
   '/login': typeof LoginRoute
-  '/_entity/portal': typeof EntityPortalRoute
+  '/_staff/attendance': typeof StaffAttendanceRoute
+  '/_staff/content': typeof StaffContentRoute
   '/_staff/dashboard': typeof StaffDashboardRoute
+  '/_staff/messages': typeof StaffMessagesRoute
+  '/_staff/participants': typeof StaffParticipantsRoute
+  '/_staff/settings': typeof StaffSettingsRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/_entity/portal/events': typeof EntityPortalEventsRoute
+  '/_entity/portal/messages': typeof EntityPortalMessagesRoute
+  '/_entity/portal/referrals': typeof EntityPortalReferralsRoute
+  '/_entity/portal/services': typeof EntityPortalServicesRoute
+  '/_entity/portal/': typeof EntityPortalIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/portal' | '/dashboard' | '/auth/callback'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/attendance'
+    | '/content'
+    | '/dashboard'
+    | '/messages'
+    | '/participants'
+    | '/settings'
+    | '/auth/callback'
+    | '/portal/events'
+    | '/portal/messages'
+    | '/portal/referrals'
+    | '/portal/services'
+    | '/portal/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/portal' | '/dashboard' | '/auth/callback'
+  to:
+    | '/'
+    | '/login'
+    | '/attendance'
+    | '/content'
+    | '/dashboard'
+    | '/messages'
+    | '/participants'
+    | '/settings'
+    | '/auth/callback'
+    | '/portal/events'
+    | '/portal/messages'
+    | '/portal/referrals'
+    | '/portal/services'
+    | '/portal'
   id:
     | '__root__'
     | '/'
     | '/_entity'
     | '/_staff'
     | '/login'
-    | '/_entity/portal'
+    | '/_staff/attendance'
+    | '/_staff/content'
     | '/_staff/dashboard'
+    | '/_staff/messages'
+    | '/_staff/participants'
+    | '/_staff/settings'
     | '/auth/callback'
+    | '/_entity/portal/events'
+    | '/_entity/portal/messages'
+    | '/_entity/portal/referrals'
+    | '/_entity/portal/services'
+    | '/_entity/portal/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -136,6 +254,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_staff/settings': {
+      id: '/_staff/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof StaffSettingsRouteImport
+      parentRoute: typeof StaffRoute
+    }
+    '/_staff/participants': {
+      id: '/_staff/participants'
+      path: '/participants'
+      fullPath: '/participants'
+      preLoaderRoute: typeof StaffParticipantsRouteImport
+      parentRoute: typeof StaffRoute
+    }
+    '/_staff/messages': {
+      id: '/_staff/messages'
+      path: '/messages'
+      fullPath: '/messages'
+      preLoaderRoute: typeof StaffMessagesRouteImport
+      parentRoute: typeof StaffRoute
+    }
     '/_staff/dashboard': {
       id: '/_staff/dashboard'
       path: '/dashboard'
@@ -143,33 +282,93 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StaffDashboardRouteImport
       parentRoute: typeof StaffRoute
     }
-    '/_entity/portal': {
-      id: '/_entity/portal'
+    '/_staff/content': {
+      id: '/_staff/content'
+      path: '/content'
+      fullPath: '/content'
+      preLoaderRoute: typeof StaffContentRouteImport
+      parentRoute: typeof StaffRoute
+    }
+    '/_staff/attendance': {
+      id: '/_staff/attendance'
+      path: '/attendance'
+      fullPath: '/attendance'
+      preLoaderRoute: typeof StaffAttendanceRouteImport
+      parentRoute: typeof StaffRoute
+    }
+    '/_entity/portal/': {
+      id: '/_entity/portal/'
       path: '/portal'
-      fullPath: '/portal'
-      preLoaderRoute: typeof EntityPortalRouteImport
+      fullPath: '/portal/'
+      preLoaderRoute: typeof EntityPortalIndexRouteImport
+      parentRoute: typeof EntityRoute
+    }
+    '/_entity/portal/services': {
+      id: '/_entity/portal/services'
+      path: '/portal/services'
+      fullPath: '/portal/services'
+      preLoaderRoute: typeof EntityPortalServicesRouteImport
+      parentRoute: typeof EntityRoute
+    }
+    '/_entity/portal/referrals': {
+      id: '/_entity/portal/referrals'
+      path: '/portal/referrals'
+      fullPath: '/portal/referrals'
+      preLoaderRoute: typeof EntityPortalReferralsRouteImport
+      parentRoute: typeof EntityRoute
+    }
+    '/_entity/portal/messages': {
+      id: '/_entity/portal/messages'
+      path: '/portal/messages'
+      fullPath: '/portal/messages'
+      preLoaderRoute: typeof EntityPortalMessagesRouteImport
+      parentRoute: typeof EntityRoute
+    }
+    '/_entity/portal/events': {
+      id: '/_entity/portal/events'
+      path: '/portal/events'
+      fullPath: '/portal/events'
+      preLoaderRoute: typeof EntityPortalEventsRouteImport
       parentRoute: typeof EntityRoute
     }
   }
 }
 
 interface EntityRouteChildren {
-  EntityPortalRoute: typeof EntityPortalRoute
+  EntityPortalEventsRoute: typeof EntityPortalEventsRoute
+  EntityPortalMessagesRoute: typeof EntityPortalMessagesRoute
+  EntityPortalReferralsRoute: typeof EntityPortalReferralsRoute
+  EntityPortalServicesRoute: typeof EntityPortalServicesRoute
+  EntityPortalIndexRoute: typeof EntityPortalIndexRoute
 }
 
 const EntityRouteChildren: EntityRouteChildren = {
-  EntityPortalRoute: EntityPortalRoute,
+  EntityPortalEventsRoute: EntityPortalEventsRoute,
+  EntityPortalMessagesRoute: EntityPortalMessagesRoute,
+  EntityPortalReferralsRoute: EntityPortalReferralsRoute,
+  EntityPortalServicesRoute: EntityPortalServicesRoute,
+  EntityPortalIndexRoute: EntityPortalIndexRoute,
 }
 
 const EntityRouteWithChildren =
   EntityRoute._addFileChildren(EntityRouteChildren)
 
 interface StaffRouteChildren {
+  StaffAttendanceRoute: typeof StaffAttendanceRoute
+  StaffContentRoute: typeof StaffContentRoute
   StaffDashboardRoute: typeof StaffDashboardRoute
+  StaffMessagesRoute: typeof StaffMessagesRoute
+  StaffParticipantsRoute: typeof StaffParticipantsRoute
+  StaffSettingsRoute: typeof StaffSettingsRoute
 }
 
 const StaffRouteChildren: StaffRouteChildren = {
+  StaffAttendanceRoute: StaffAttendanceRoute,
+  StaffContentRoute: StaffContentRoute,
   StaffDashboardRoute: StaffDashboardRoute,
+  StaffMessagesRoute: StaffMessagesRoute,
+  StaffParticipantsRoute: StaffParticipantsRoute,
+  StaffSettingsRoute: StaffSettingsRoute,
 }
 
 const StaffRouteWithChildren = StaffRoute._addFileChildren(StaffRouteChildren)

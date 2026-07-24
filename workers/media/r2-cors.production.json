@@ -2,7 +2,7 @@
   "rules": [
     {
       "allowed": {
-        "origins": ["https://ramassa-admin.fabapps.workers.dev"],
+        "origins": ["https://REPLACE_WITH_PRODUCTION_ADMIN_ORIGIN"],
         "methods": ["PUT"],
         "headers": ["content-type"]
       },
