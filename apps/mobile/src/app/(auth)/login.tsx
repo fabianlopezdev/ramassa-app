@@ -10,6 +10,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 type LoginMode = 'magic' | 'password';
 
+// Required inside a __DEV__ branch so nothing dev-only reaches a production
+// bundle (RAPP-19). It sits on the login screen too, not only on Profile: the
+// account switcher is most useful exactly when nobody is signed in.
+const DevMenuEntry = __DEV__
+  ? (require('@/components/dev/dev-menu-entry') as typeof import('@/components/dev/dev-menu-entry'))
+      .DevMenuEntry
+  : null;
+
 /** A quiet, link-styled action with a 48dp minimum target (mode switch, back). */
 function AuthLink({ label, onPress }: { label: string; onPress: () => void }) {
   const languageFontClass = useLanguageFontClass();
@@ -106,6 +114,12 @@ export default function LoginScreen() {
             <View className="gap-lg">
               <PasswordLoginForm />
               <AuthLink label={t('auth:useMagicLinkInstead')} onPress={() => switchTo('magic')} />
+            </View>
+          )}
+
+          {DevMenuEntry === null ? null : (
+            <View className="items-center">
+              <DevMenuEntry />
             </View>
           )}
         </ScrollView>

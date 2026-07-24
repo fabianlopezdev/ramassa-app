@@ -1,10 +1,7 @@
 import { logout } from '@/lib/auth';
-import { safeAsync } from '@/lib/observability';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
-import { AppError } from '@ramassa/shared/errors';
 
 /**
  * Signing out clears the session; the auth-state change flips the root
@@ -27,46 +24,6 @@ function SignOutButton() {
   );
 }
 
-/**
- * RAPP-12 acceptance drivers, dev builds only (the real dev menu is RAPP-19):
- * one button throws during render to exercise the ErrorBoundary chain, the
- * other fails inside safeAsync to exercise logger -> Sentry. Dev-only strings
- * are exempt from the no-literal-string rule: users never see them.
- */
-function DevForcedErrorTriggers() {
-  const [shouldThrowInRender, setShouldThrowInRender] = useState(false);
-
-  if (shouldThrowInRender) {
-    throw new AppError('UNEXPECTED-1', { message: 'forced render error (RAPP-12 dev trigger)' });
-  }
-
-  return (
-    <View className="mt-xl items-center gap-sm">
-      <Pressable
-        accessibilityRole="button"
-        className="rounded-md bg-error px-lg py-sm"
-        onPress={() => setShouldThrowInRender(true)}
-      >
-        {/* eslint-disable-next-line i18next/no-literal-string -- dev-only trigger */}
-        <Text className="font-bold text-white">DEV: crash render</Text>
-      </Pressable>
-      <Pressable
-        accessibilityRole="button"
-        className="rounded-md bg-warning px-lg py-sm"
-        onPress={() => {
-          void safeAsync(
-            () => Promise.reject(new Error('forced async failure (RAPP-12 dev trigger)')),
-            { code: 'NETWORK-1', context: { trigger: 'dev-button' } },
-          );
-        }}
-      >
-        {/* eslint-disable-next-line i18next/no-literal-string -- dev-only trigger */}
-        <Text className="font-bold text-neutral-900">DEV: fail safeAsync</Text>
-      </Pressable>
-    </View>
-  );
-}
-
 export default function HomeScreen() {
   const { t } = useTranslation(['home', 'common']);
   const languageFontClass = useLanguageFontClass();
@@ -85,7 +42,9 @@ export default function HomeScreen() {
         {t('home:subtitle')}
       </Text>
       <SignOutButton />
-      {__DEV__ ? <DevForcedErrorTriggers /> : null}
+      {/* The RAPP-12 forced-error buttons that used to sit here moved into the
+          dev menu's Errors section (RAPP-19), which their own comment said was
+          where they belonged once it existed. */}
     </View>
   );
 }

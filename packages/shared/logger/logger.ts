@@ -48,12 +48,17 @@ export interface CreateLoggerOptions {
   readonly baseContext?: Record<string, unknown>;
 }
 
-const consoleSink: LogSink = (entry) => {
+/**
+ * The default sink. Exported so an app can COMPOSE with it instead of replacing
+ * it: the mobile dev-menu log viewer (RAPP-19) adds its own buffer as a second
+ * sink in dev builds and still wants the Metro console output.
+ */
+export const consoleLogSink: LogSink = (entry) => {
   console[entry.level](`[${entry.level}] ${entry.message}`, entry.context);
 };
 
 export function createLogger(options: CreateLoggerOptions = {}): Logger {
-  const { minimumLevel = 'debug', sink = consoleSink, reporter, baseContext = {} } = options;
+  const { minimumLevel = 'debug', sink = consoleLogSink, reporter, baseContext = {} } = options;
 
   function log(level: LogLevel, message: string, context: LogContext = {}): void {
     if (levelRank[level] < levelRank[minimumLevel]) {
