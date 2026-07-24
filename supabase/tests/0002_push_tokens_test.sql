@@ -43,8 +43,12 @@ insert into public.push_tokens (user_id, token, platform, device_id) values
 
 -- Schema guarantees: dedupe per device ------------------------------------------
 
+-- Scoped to this file's own devices: the setup below runs as the superuser, which
+-- bypasses RLS and would otherwise also count the rows `supabase/seed.sql` seeds
+-- (RAPP-18). Every assertion further down runs under `set local role`, where RLS
+-- confines the caller to Org A and the seeded tenant is invisible.
 select is(
-  (select count(*) from public.push_tokens)::int, 2,
+  (select count(*) from public.push_tokens where device_id in ('device-a1', 'device-a2'))::int, 2,
   'setup: two tokens exist before RLS is applied'
 );
 

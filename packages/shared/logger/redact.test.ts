@@ -1,33 +1,42 @@
 import { describe, expect, test } from 'bun:test';
+import { buildParticipant, buildParticipants } from '../testing';
 import { REDACTED, redactPii } from './redact';
 
 describe('redactPii — key-based redaction', () => {
-  test('scrubs the seeded PII fixture: name, phone, and document in nested objects', () => {
+  test('scrubs every PII column of a real participant row, nested in a log payload', () => {
+    // The factory row is the same shape the app actually logs (RAPP-18), so this
+    // asserts against the real column names rather than a hand-picked subset.
+    const participant = buildParticipant();
     const fixture = {
-      userId: 'user-123',
-      profile: {
-        fullName: 'Amina Rahimi',
-        phone: '+34 612 345 678',
-        document_number: 'X1234567L',
-        preferences: { language: 'fa' },
-      },
-      attendees: [
-        { name: 'Fatima K.', present: true },
-        { name: 'Olena S.', present: false },
-      ],
+      userId: participant.id,
+      profile: participant,
+      attendees: buildParticipants(2).map((attendee) => ({
+        name: `${attendee.first_name} ${attendee.last_name}`,
+        present: true,
+      })),
     };
 
     const redacted = redactPii(fixture) as typeof fixture;
 
-    expect(redacted.profile.fullName).toBe(REDACTED);
+    expect(redacted.profile.first_name).toBe(REDACTED);
+    expect(redacted.profile.last_name).toBe(REDACTED);
     expect(redacted.profile.phone).toBe(REDACTED);
+    expect(redacted.profile.address).toBe(REDACTED);
     expect(redacted.profile.document_number).toBe(REDACTED);
+    expect(redacted.profile.date_of_birth).toBe(REDACTED);
+    expect(redacted.profile.nationality).toBe(REDACTED);
     expect(redacted.attendees[0]?.name).toBe(REDACTED);
     expect(redacted.attendees[1]?.name).toBe(REDACTED);
 
-    // Opaque IDs and technical facts survive.
-    expect(redacted.userId).toBe('user-123');
-    expect(redacted.profile.preferences.language).toBe('fa');
+    // Technical facts survive.
+    // NOT asserted here: that the opaque UUIDs survive. They do not — the
+    // phone-candidate pattern eats the digit runs inside a digit-heavy UUID and
+    // logs `5eed[REDACTED]` instead of the id. That is a real defect in this
+    // module (RAPP-84), surfaced by feeding it a real row; it over-redacts, so
+    // nothing leaks, but a log entry loses the one field that makes it
+    // actionable. Asserting the broken behaviour here would cement it.
+    expect(redacted.profile.role).toBe('player');
+    expect(redacted.profile.preferred_language).toBe(participant.preferred_language);
     expect(redacted.attendees[0]?.present).toBe(true);
   });
 

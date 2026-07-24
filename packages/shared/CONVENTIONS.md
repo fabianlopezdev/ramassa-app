@@ -81,6 +81,32 @@ Every later issue cites this page. Read it before adding anything.
 4. **Direction is derived, never stored.** `isRtlLanguage` / `useLanguage`
    answer direction questions; nothing persists an `isRtl` flag.
 
+## Fixtures and factories (standing rule, RAPP-18)
+
+**Every new table ships with seed rows AND a factory in the same issue.** Not in a
+follow-up, not "when a screen needs it": a table with no fixtures is a screen
+nobody can open, a Maestro flow with nothing to tap, and a test that invents its
+own object literal.
+
+1. **`supabase/seed.sql` is the local dataset.** `supabase db reset` must leave a
+   database someone can immediately log into and browse. Fake data only, every
+   address under `@example.test`, seed rows in the `5eed…` UUID namespace. Real
+   participant data never enters this repo (RGPD).
+2. **`packages/shared/testing/` is the same roster in TypeScript.** Tests build
+   rows with `buildParticipant()` / `buildProfile()` / `buildPushToken()` rather
+   than hand-writing literals, so a schema change breaks in one place.
+   `tests/seed-fixtures.test.ts` fails the build if the SQL roster and the
+   TypeScript roster drift apart.
+3. **Fixture text is real script, never lorem ipsum.** Arabic, Farsi, and
+   Cyrillic names are written as such. RTL mirroring and the bundled AR/FA fonts
+   (ADR-006) cannot be tested against transliterations.
+4. **The dataset is deliberately imperfect.** Someone has not accepted the terms,
+   someone is deactivated, someone is forum-banned, someone holds no identity
+   document. A uniformly happy dataset hides exactly the screens that break.
+5. **The rule is enforced, not remembered.**
+   `supabase/tests/0003_seed_data_test.sql` fails with the table's name if any
+   table in `public` has zero seed rows.
+
 ## Database (migrations & generated types)
 
 Two standing rules, established by RAPP-10:
@@ -105,6 +131,7 @@ packages/shared/
   schemas/            base zod schemas; feature schemas land here per issue
   errors/             AppError taxonomy (stable DOMAIN-N codes), Result, safeAsync
   logger/             PII-redacting structured logger + ErrorReporter seam
+  testing/            TEST-ONLY fixture roster + typed row factories (mirrors seed.sql)
   lib/supabase.ts     typed client factory + platform storage adapters
   types/database.ts   generated Supabase types (`bun run db:types`; never hand-edit)
 ```
