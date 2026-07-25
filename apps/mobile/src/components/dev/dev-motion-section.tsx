@@ -12,6 +12,9 @@ import { useReducedMotion } from 'react-native-reanimated';
 import type { AppErrorCode } from '@ramassa/shared/errors';
 import { DevButton, DevButtonRow, DevNote, DevRow, DevSection } from './dev-ui';
 
+/** The list size RAPP-70 names for its performance proof. */
+const STRESS_ROW_COUNT = 60;
+
 /**
  * The microinteractions gallery (RAPP-70 acceptance criterion).
  *
@@ -28,6 +31,10 @@ export function DevMotionSection() {
   const [successKey, setSuccessKey] = useState<number | null>(null);
   const [shakeCode, setShakeCode] = useState<AppErrorCode | null>(null);
   const [listRows, setListRows] = useState<readonly number[]>([1, 2, 3]);
+  // Scope item 6's measurement profile: a 60-item entrance is the load the
+  // issue names, and staggering that many is the worst case for the entrance
+  // primitive. Rendered only while the stress test is on.
+  const [stressKey, setStressKey] = useState<number | null>(null);
 
   function toggleHaptics() {
     const next = !hapticsOn;
@@ -131,6 +138,29 @@ export function DevMotionSection() {
         <DevButton label="Remove first" onPress={() => setListRows((rows) => rows.slice(1))} />
         <DevButton label="Reset rows" onPress={() => setListRows([1, 2, 3])} />
       </DevButtonRow>
+
+      <Text className="pt-xs text-sm font-semibold text-neutral-700">
+        Entrance stress test (60 rows)
+      </Text>
+      <DevNote>The RAPP-70 performance profile: 60 staggered entrances in one pass.</DevNote>
+      <DevButtonRow>
+        <DevButton
+          label="Run 60-row entrance"
+          onPress={() => setStressKey((key) => (key ?? 0) + 1)}
+        />
+        <DevButton label="Clear" onPress={() => setStressKey(null)} />
+      </DevButtonRow>
+      {stressKey === null ? null : (
+        <View key={stressKey} className="gap-xs" testID="dev-motion-stress-list">
+          {Array.from({ length: STRESS_ROW_COUNT }, (_unused, index) => (
+            <FadeSlideIn key={index} index={index}>
+              <View className="rounded-md bg-neutral-100 px-md py-sm">
+                <Text className="text-sm text-neutral-700">{`Stress row ${index + 1}`}</Text>
+              </View>
+            </FadeSlideIn>
+          ))}
+        </View>
+      )}
 
       <Text className="pt-xs text-sm font-semibold text-neutral-700">SkeletonPulse</Text>
       <View className="gap-xs">
