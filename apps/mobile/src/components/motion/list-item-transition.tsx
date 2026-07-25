@@ -1,6 +1,6 @@
 import { type ReactNode } from 'react';
 import Animated, {
-  FadeIn,
+  FadeInDown,
   FadeOut,
   LinearTransition,
   useReducedMotion,
@@ -19,6 +19,18 @@ import { motionTokens } from '@ramassa/shared/tokens/motion';
  * is driven natively rather than by animating our own `transform`, which is the
  * one case where letting the layout engine animate is correct, because the
  * positions genuinely changed.
+ *
+ * The entrance carries MOVEMENT, not just opacity. A plain `FadeIn` made an
+ * inserted row look like it simply materialized (found on device): removal reads
+ * as motion because the survivors slide up, but an insertion has nothing to
+ * slide, so a fade alone gives the eye nothing to follow. It now rises the same
+ * `entrance.translateY` distance `FadeSlideIn` uses, so a row arriving in a list
+ * and a list appearing for the first time move identically.
+ *
+ * `FadeInDown` despite the rise: Reanimated names these by the direction the
+ * animation travels FROM the offset, so `FadeInDown` starts BELOW (+25 by
+ * default) and moves up, while `FadeInUp` starts above and drops. The default
+ * offset is overridden with the token so this cannot drift from `FadeSlideIn`.
  *
  * Under reduce-motion, rows appear and disappear with no animation at all:
  * `undefined` (not a zero-duration animation) so Reanimated skips the layout
@@ -39,7 +51,10 @@ export function ListItemTransition({ children, className }: ListItemTransitionPr
   return (
     <Animated.View
       layout={LinearTransition.duration(motionTokens.duration.base)}
-      entering={FadeIn.duration(motionTokens.duration.base)}
+      entering={FadeInDown.duration(motionTokens.duration.base).withInitialValues({
+        opacity: 0,
+        transform: [{ translateY: motionTokens.entrance.translateY }],
+      })}
       exiting={FadeOut.duration(motionTokens.duration.fast)}
       className={className}
     >
