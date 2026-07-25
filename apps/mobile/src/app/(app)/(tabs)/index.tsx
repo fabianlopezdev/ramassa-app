@@ -1,7 +1,8 @@
+import { PressableScale } from '@/components/motion/pressable-scale';
 import { logout } from '@/lib/auth';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useTranslation } from 'react-i18next';
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 /**
  * Signing out clears the session; the auth-state change flips the root
@@ -11,16 +12,16 @@ function SignOutButton() {
   const { t } = useTranslation('auth');
   const languageFontClass = useLanguageFontClass();
   return (
-    <Pressable
-      accessibilityRole="button"
+    <PressableScale
       accessibilityLabel={t('signOutAction')}
       onPress={() => void logout()}
-      className="mt-xl min-h-recommended items-center justify-center rounded-md border border-neutral-300 px-lg active:opacity-80"
+      haptic="tapLight"
+      className="mt-xl min-h-recommended items-center justify-center rounded-md border border-neutral-300 px-lg"
     >
       <Text className={`text-md font-medium text-neutral-800 ${languageFontClass}`}>
         {t('signOutAction')}
       </Text>
-    </Pressable>
+    </PressableScale>
   );
 }
 

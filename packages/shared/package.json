@@ -16,7 +16,8 @@
     "./auth": "./auth/index.ts",
     "./constants": "./lib/constants.ts",
     "./upload-client": "./lib/upload-client.ts",
-    "./testing": "./testing/index.ts"
+    "./testing": "./testing/index.ts",
+    "./tokens/motion": "./tokens/motion.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

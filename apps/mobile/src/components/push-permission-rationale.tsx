@@ -1,6 +1,7 @@
+import { PressableScale } from '@/components/motion/pressable-scale';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useTranslation } from 'react-i18next';
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 /**
  * The explanation shown BEFORE the OS notification prompt (RAPP-17).
@@ -37,28 +38,28 @@ export function PushPermissionRationale({
         {t('push:rationaleBody')}
       </Text>
 
-      <Pressable
-        accessibilityRole="button"
+      <PressableScale
         accessibilityLabel={t('push:rationaleAccept')}
         onPress={onAccept}
-        className="mt-sm min-h-recommended items-center justify-center rounded-md bg-primary px-lg active:opacity-80"
+        haptic="tapLight"
+        className="mt-sm min-h-recommended items-center justify-center rounded-md bg-primary px-lg"
       >
         <Text className={`text-base font-semibold text-white ${languageFontClass}`}>
           {t('push:rationaleAccept')}
         </Text>
-      </Pressable>
+      </PressableScale>
 
       {/* Equal tap target, quieter styling: a real choice, not a dead end. */}
-      <Pressable
-        accessibilityRole="button"
+      <PressableScale
         accessibilityLabel={t('push:rationaleDecline')}
         onPress={onDecline}
-        className="min-h-recommended items-center justify-center rounded-md px-lg active:opacity-80"
+        haptic="selection"
+        className="min-h-recommended items-center justify-center rounded-md px-lg"
       >
         <Text className={`text-base font-medium text-neutral-600 ${languageFontClass}`}>
           {t('push:rationaleDecline')}
         </Text>
-      </Pressable>
+      </PressableScale>
     </View>
   );
 }
