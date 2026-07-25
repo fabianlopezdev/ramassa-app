@@ -6,6 +6,7 @@ import { DevEnvironmentSection } from './dev-environment-section';
 import { DevErrorsSection } from './dev-errors-section';
 import { DevLanguageSection } from './dev-language-section';
 import { DevLogsSection } from './dev-logs-section';
+import { DevMenuCloseButton } from './dev-menu-close-button';
 import { DevMotionSection } from './dev-motion-section';
 import { DevNavigationSection } from './dev-navigation-section';
 import { DevNetworkSection } from './dev-network-section';
@@ -26,7 +27,17 @@ import { DevPushSection } from './dev-push-section';
 export function DevMenuScreen() {
   return (
     <>
-      <Stack.Screen options={{ headerShown: true, title: 'Developer menu' }} />
+      {/* `headerBackVisible: false` so there is exactly ONE way out, always
+          present, instead of a native arrow that vanishes once signing in
+          unmounts the group this was pushed from (RAPP-87). */}
+      <Stack.Screen
+        options={{
+          headerShown: true,
+          title: 'Developer menu',
+          headerBackVisible: false,
+          headerLeft: () => <DevMenuCloseButton />,
+        }}
+      />
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
         className="flex-1 bg-neutral-50"
