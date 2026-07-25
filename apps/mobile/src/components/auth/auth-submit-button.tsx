@@ -2,10 +2,16 @@
  * The primary action button for the auth screens (RAPP-13): a 56dp target, a
  * busy state that disables and shows a spinner (so a slow network can't produce
  * a double submit), and an accessible label + state for screen readers.
+ *
+ * Retrofitted to `PressableScale` in RAPP-70: press feedback and the haptic
+ * vocabulary now come from the shared primitive rather than an `active:opacity`
+ * class, so every touchable in the app responds identically and respects
+ * reduce-motion. The disabled TREATMENT stays here: that is styling, not motion.
  */
 
+import { PressableScale } from '@/components/motion/pressable-scale';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { ActivityIndicator, Pressable, Text } from 'react-native';
+import { ActivityIndicator, Text, View } from 'react-native';
 import { tokens } from '@ramassa/shared/tokens';
 
 export interface AuthSubmitButtonProps {
@@ -17,21 +23,24 @@ export interface AuthSubmitButtonProps {
 
 export function AuthSubmitButton({ label, onPress, isLoading, disabled }: AuthSubmitButtonProps) {
   const languageFontClass = useLanguageFontClass();
-  const isInteractionBlocked = Boolean(disabled) || Boolean(isLoading);
+  const isBusy = Boolean(isLoading);
+  const isInteractionBlocked = Boolean(disabled) || isBusy;
 
   return (
-    <Pressable
-      accessibilityRole="button"
+    <PressableScale
       accessibilityLabel={label}
-      accessibilityState={{ disabled: isInteractionBlocked, busy: Boolean(isLoading) }}
-      disabled={isInteractionBlocked}
       onPress={onPress}
-      className={`min-h-recommended flex-row items-center justify-center gap-sm rounded-md bg-primary px-lg ${
-        isInteractionBlocked ? 'opacity-60' : 'active:opacity-80'
+      haptic="tapLight"
+      isDisabled={Boolean(disabled)}
+      isBusy={isBusy}
+      className={`min-h-recommended justify-center rounded-md bg-primary px-lg ${
+        isInteractionBlocked ? 'opacity-60' : ''
       }`}
     >
-      {isLoading ? <ActivityIndicator color={tokens.colors.white} /> : null}
-      <Text className={`text-lg font-bold text-white ${languageFontClass}`}>{label}</Text>
-    </Pressable>
+      <View className="flex-row items-center justify-center gap-sm">
+        {isBusy ? <ActivityIndicator color={tokens.colors.white} /> : null}
+        <Text className={`text-lg font-bold text-white ${languageFontClass}`}>{label}</Text>
+      </View>
+    </PressableScale>
   );
 }

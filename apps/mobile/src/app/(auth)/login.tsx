@@ -1,11 +1,13 @@
 import { AuthFormError } from '@/components/auth/auth-form-error';
 import { MagicLinkForm } from '@/components/auth/magic-link-form';
 import { PasswordLoginForm } from '@/components/auth/password-login-form';
+import { PressableScale } from '@/components/motion/pressable-scale';
+import { ShakeOnError } from '@/components/motion/shake-on-error';
 import { useAuthFlowStatus } from '@/lib/auth-flow-status';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 type LoginMode = 'magic' | 'password';
@@ -22,16 +24,16 @@ const DevMenuEntry = __DEV__
 function AuthLink({ label, onPress }: { label: string; onPress: () => void }) {
   const languageFontClass = useLanguageFontClass();
   return (
-    <Pressable
-      accessibilityRole="button"
+    <PressableScale
       accessibilityLabel={label}
       onPress={onPress}
-      className="min-h-min items-center justify-center py-sm active:opacity-70"
+      haptic="selection"
+      className="min-h-min items-center justify-center py-sm"
     >
       <Text className={`text-start text-md font-medium text-primary ${languageFontClass}`}>
         {label}
       </Text>
-    </Pressable>
+    </PressableScale>
   );
 }
 
@@ -97,7 +99,9 @@ export default function LoginScreen() {
             ) : null}
           </View>
 
-          <AuthFormError code={errorCode} />
+          <ShakeOnError errorCode={errorCode}>
+            <AuthFormError code={errorCode} />
+          </ShakeOnError>
 
           {sentToEmail ? (
             <MagicLinkSent email={sentToEmail} onBack={() => setSentToEmail(null)} />

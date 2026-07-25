@@ -1,0 +1,108 @@
+import type { HapticFeedback } from '@/lib/haptics/haptic-policy';
+import { playHaptic } from '@/lib/haptics/haptics';
+import type { ReactNode } from 'react';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import Animated, {
+  interpolate,
+  runOnJS,
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
+import { resolveDurationMs, resolvePressScale } from '@ramassa/shared/tokens/motion';
+
+/**
+ * The press response every touchable in the app shares (RAPP-70). The single
+ * cheapest thing that separates a premium app from a functional one: a control
+ * that answers the finger before the screen changes.
+ *
+ * Driven by `GestureDetector` rather than `Pressable`'s `onPressIn`/`onPressOut`
+ * because gesture callbacks are worklets that run on the UI thread: the scale
+ * responds even while the JS thread is busy, which on the low-end Android this
+ * app targets is most of the time. Only `transform` and `opacity` animate, so
+ * the GPU does the work and no layout pass runs.
+ *
+ * Built against Gesture Handler 2.32, the version Expo SDK 57 aligns to. 3.1.0
+ * was tried and reverted: its native module intercepts React Native's touch
+ * responder system, so NO touchable in the app fires, including a plain RN
+ * `Pressable` with no gesture-handler code in the tree at all. See RAPP-86 for
+ * the reproduction matrix. Nothing about that failure is visible to a type
+ * check or a test; it only shows on a device.
+ *
+ * The shared value stores press STATE (0 or 1) and the visuals are interpolated
+ * from it, so the state stays the single source of truth. `.get()`/`.set()` are
+ * used throughout for React Compiler compatibility (the app has it enabled).
+ *
+ * Reduce-motion is honoured by the token resolvers, not here: under it the
+ * scale target is 1 and the duration 0, so the press is instant and still.
+ */
+export interface PressableScaleProps {
+  readonly children: ReactNode;
+  readonly onPress: () => void;
+  /** Required: this is the only label a screen reader gets for the control. */
+  readonly accessibilityLabel: string;
+  /** Which feedback to fire on press. Omit for none (e.g. a nav row). */
+  readonly haptic?: HapticFeedback;
+  readonly className?: string;
+  readonly isDisabled?: boolean;
+  /** In-flight primary action: announced as busy and blocks a double submit. */
+  readonly isBusy?: boolean;
+}
+
+export function PressableScale({
+  children,
+  onPress,
+  accessibilityLabel,
+  haptic,
+  className,
+  isDisabled = false,
+  isBusy = false,
+}: PressableScaleProps) {
+  const isReducedMotion = useReducedMotion();
+  const pressed = useSharedValue(0);
+
+  const pressedScale = resolvePressScale(isReducedMotion);
+  const pressedOpacity = isReducedMotion ? 1 : 0.9;
+  const durationMs = resolveDurationMs('fast', isReducedMotion);
+
+  function handlePress() {
+    if (haptic !== undefined) {
+      playHaptic(haptic);
+    }
+    onPress();
+  }
+
+  const isInteractionBlocked = isDisabled || isBusy;
+
+  const tap = Gesture.Tap()
+    .enabled(!isInteractionBlocked)
+    .onBegin(() => {
+      pressed.set(withTiming(1, { duration: durationMs }));
+    })
+    .onFinalize(() => {
+      pressed.set(withTiming(0, { duration: durationMs }));
+    })
+    .onEnd(() => {
+      runOnJS(handlePress)();
+    });
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: interpolate(pressed.get(), [0, 1], [1, pressedScale]) }],
+    opacity: interpolate(pressed.get(), [0, 1], [1, pressedOpacity]),
+  }));
+
+  return (
+    <GestureDetector gesture={tap}>
+      <Animated.View
+        accessibilityRole="button"
+        accessibilityLabel={accessibilityLabel}
+        accessibilityState={{ disabled: isInteractionBlocked, busy: isBusy }}
+        style={animatedStyle}
+        className={className}
+      >
+        {children}
+      </Animated.View>
+    </GestureDetector>
+  );
+}

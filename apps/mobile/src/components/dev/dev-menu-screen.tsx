@@ -6,6 +6,7 @@ import { DevEnvironmentSection } from './dev-environment-section';
 import { DevErrorsSection } from './dev-errors-section';
 import { DevLanguageSection } from './dev-language-section';
 import { DevLogsSection } from './dev-logs-section';
+import { DevMotionSection } from './dev-motion-section';
 import { DevNavigationSection } from './dev-navigation-section';
 import { DevNetworkSection } from './dev-network-section';
 import { DevPushSection } from './dev-push-section';
@@ -35,6 +36,7 @@ export function DevMenuScreen() {
         <DevEnvironmentSection />
         <DevAccountsSection />
         <DevLanguageSection />
+        <DevMotionSection />
         <DevNavigationSection />
         <DevCacheSection />
         <DevNetworkSection />
