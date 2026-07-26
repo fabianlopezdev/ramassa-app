@@ -27,7 +27,9 @@ export function AuthFormError({ code }: { code: AppErrorCode | null }) {
       <Text className={`text-start text-md font-medium text-error ${languageFontClass}`}>
         {t(getErrorMessageKey(code))}
       </Text>
-      <Text className={`text-start text-sm text-neutral-500 ${languageFontClass}`}>
+      {/* Selectable for the same reason as the fallback screen: this code is what
+          gets reported, so it should be copiable rather than transcribed. */}
+      <Text selectable className={`text-start text-sm text-neutral-500 ${languageFontClass}`}>
         {t('errorCodeLabel')}: {code}
       </Text>
     </View>

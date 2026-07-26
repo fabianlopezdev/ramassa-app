@@ -36,6 +36,18 @@ import { motionTokens } from '@ramassa/shared/tokens/motion';
  * `undefined` (not a zero-duration animation) so Reanimated skips the layout
  * animation machinery entirely rather than running it instantly.
  */
+/**
+ * Built once at module scope. Reanimated builders are objects, so constructing
+ * them in the JSX allocates a new entering/exiting/layout config on every render
+ * of every row - the cost lands exactly where it hurts, in a long list.
+ */
+const ROW_LAYOUT = LinearTransition.duration(motionTokens.duration.base);
+const ROW_ENTERING = FadeInDown.duration(motionTokens.duration.base).withInitialValues({
+  opacity: 0,
+  transform: [{ translateY: motionTokens.entrance.translateY }],
+});
+const ROW_EXITING = FadeOut.duration(motionTokens.duration.fast);
+
 export interface ListItemTransitionProps {
   readonly children: ReactNode;
   readonly className?: string;
@@ -50,12 +62,9 @@ export function ListItemTransition({ children, className }: ListItemTransitionPr
 
   return (
     <Animated.View
-      layout={LinearTransition.duration(motionTokens.duration.base)}
-      entering={FadeInDown.duration(motionTokens.duration.base).withInitialValues({
-        opacity: 0,
-        transform: [{ translateY: motionTokens.entrance.translateY }],
-      })}
-      exiting={FadeOut.duration(motionTokens.duration.fast)}
+      layout={ROW_LAYOUT}
+      entering={ROW_ENTERING}
+      exiting={ROW_EXITING}
       className={className}
     >
       {children}

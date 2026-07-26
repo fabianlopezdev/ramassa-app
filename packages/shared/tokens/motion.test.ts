@@ -89,3 +89,14 @@ describe('platform neutrality', () => {
     );
   });
 });
+
+test('resolveSpring returns the SAME object for the same inputs (RAPP-20)', () => {
+  // A fresh object each call makes the config an unstable effect dependency, so
+  // the effect that plays a success haptic re-fires on every render. That bit
+  // reduce-motion users specifically: the reduced branch was the one allocating.
+  expect(resolveSpring('snappy', false)).toBe(resolveSpring('snappy', false));
+  expect(resolveSpring('snappy', true)).toBe(resolveSpring('snappy', true));
+  expect(resolveSpring('gentle', true)).toBe(resolveSpring('gentle', true));
+  // Still genuinely different configs, not one shared object.
+  expect(resolveSpring('snappy', true)).not.toBe(resolveSpring('snappy', false));
+});

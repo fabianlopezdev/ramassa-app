@@ -94,13 +94,23 @@ export function resolveShake(isReducedMotion: boolean): { offset: number; cycles
  * replaced by a timing: it still settles, but it never oscillates, which is the
  * part of a spring that reads as "motion" to someone who asked for less of it.
  */
+/**
+ * Critically-damped variants, computed ONCE. A spring config is handed straight
+ * to a `useEffect` dependency array, so it has to be referentially stable: when
+ * the reduced branch built a fresh object per call, the effect re-ran on every
+ * render and `SuccessPop` replayed its success haptic each time. Reduce-motion
+ * users were the only ones affected, which is the wrong way round.
+ */
+const criticallyDampedSprings: Record<MotionSpringName, MotionSpringConfig> = Object.fromEntries(
+  Object.entries(motionTokens.spring).map(([name, spring]) => [
+    name,
+    { ...spring, damping: 2 * Math.sqrt(spring.stiffness * spring.mass) },
+  ]),
+) as Record<MotionSpringName, MotionSpringConfig>;
+
 export function resolveSpring(
   name: MotionSpringName,
   isReducedMotion: boolean,
 ): MotionSpringConfig {
-  const spring = motionTokens.spring[name];
-  if (!isReducedMotion) {
-    return spring;
-  }
-  return { ...spring, damping: 2 * Math.sqrt(spring.stiffness * spring.mass) };
+  return isReducedMotion ? criticallyDampedSprings[name] : motionTokens.spring[name];
 }

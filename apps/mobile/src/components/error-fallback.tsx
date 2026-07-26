@@ -7,6 +7,7 @@
 
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { logger } from '@/lib/observability';
+import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AccessibilityInfo, Text, View } from 'react-native';
@@ -19,6 +20,7 @@ export interface ErrorFallbackProps {
 
 export function ErrorFallback({ error, retry }: ErrorFallbackProps) {
   const { t } = useTranslation('errors');
+  const languageFontClass = useLanguageFontClass();
   const appError = toAppError(error);
   const friendlyMessage = t(getErrorMessageKey(appError.code));
   const codeLine = `${t('errorCodeLabel')}: ${appError.code}`;
@@ -34,18 +36,27 @@ export function ErrorFallback({ error, retry }: ErrorFallbackProps) {
 
   return (
     <View className="flex-1 items-center justify-center gap-md bg-white p-lg">
-      <Text accessibilityRole="header" className="text-center text-2xl font-bold text-neutral-900">
+      <Text
+        accessibilityRole="header"
+        className={`text-center text-2xl font-bold text-neutral-900 ${languageFontClass}`}
+      >
         {t('fallbackTitle')}
       </Text>
-      <Text className="text-center text-lg text-neutral-700">{friendlyMessage}</Text>
-      <Text className="text-center text-sm text-neutral-500">{codeLine}</Text>
+      <Text className={`text-center text-lg text-neutral-700 ${languageFontClass}`}>
+        {friendlyMessage}
+      </Text>
+      {/* Selectable: staff read this code out to report a fault, and copying it
+          beats transcribing it. */}
+      <Text selectable className={`text-center text-sm text-neutral-500 ${languageFontClass}`}>
+        {codeLine}
+      </Text>
       <PressableScale
         accessibilityLabel={t('retry')}
         onPress={retry}
         haptic="tapLight"
         className="min-h-recommended items-center justify-center rounded-md bg-primary px-xl py-sm"
       >
-        <Text className="text-lg font-bold text-white">{t('retry')}</Text>
+        <Text className={`text-lg font-bold text-white ${languageFontClass}`}>{t('retry')}</Text>
       </PressableScale>
     </View>
   );

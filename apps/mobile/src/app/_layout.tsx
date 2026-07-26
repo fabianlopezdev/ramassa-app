@@ -23,6 +23,11 @@ import '../global.css';
 // a signed-in player never flashes the login screen on cold start (RAPP-13).
 void SplashScreen.preventAutoHideAsync();
 
+// Hoisted rather than inline: GestureHandlerRootView is not NativeWind-aware, so
+// it needs a real style object, and an inline one would be a fresh allocation on
+// every render of the root.
+const gestureRootStyle = { flex: 1 } as const;
+
 /** Root-level net: catches render crashes outside the zone boundaries. */
 export function ErrorBoundary(props: ErrorFallbackProps) {
   return (
@@ -84,7 +89,7 @@ function RootLayout() {
        GestureHandlerRootView". Found on device; no test or type check sees it,
        because it is a runtime tree requirement. It must stay OUTSIDE the
        providers so it covers the whole app including the modal above. */
-    <GestureHandlerRootView style={{ flex: 1 }}>
+    <GestureHandlerRootView style={gestureRootStyle}>
       <I18nextProvider i18n={i18n}>
         {/* Server-state cache for every screen that fetches (RAPP-19). Mounted
             above the auth provider so a future query can be keyed by session
