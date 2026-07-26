@@ -1,0 +1,80 @@
+appId: com.ramassa.app
+name: _sign-in
+# Signs in as a seeded player through the dev menu's account switcher, and pins
+# the capture language. A fragment: `smoke-auth` exercises this path as its
+# subject, the others just need to be past it.
+#
+# There is no client-side role to fake: role lives in `profiles.role`, resolved
+# from the session, so the switcher signs in for real against the local seeded
+# stack. That is also what makes it deterministic - `supabase db reset` rebuilds
+# exactly these accounts.
+env:
+  DEV_MENU_LABEL: Developer menu
+  ACCOUNTS_SECTION: Accounts and roles
+  LOCALE: ca
+  PLAYER_EMAIL: '{{player:email}}'
+  PUSH_DECLINE: '{{push:rationaleDecline}}'
+---
+- tapOn: '.*${DEV_MENU_LABEL}.*'
+- extendedWaitUntil:
+    visible: '.*${ACCOUNTS_SECTION}.*'
+    timeout: 30000
+# The push transition is interactive: a swipe landing while it still runs cancels
+# it and drops back, which reads exactly like "the menu never opened".
+- waitForAnimationToEnd:
+    timeout: 5000
+
+# A bounded swipe loop rather than `scrollUntilVisible`: that built-in reaches
+# this row on the Android emulator, leaves it plainly on screen, and still
+# reports it as not found. The row is matched on the ADDRESS alone because iOS
+# exposes the row's accessibility label and Android the text node inside it.
+- repeat:
+    times: 20
+    while:
+      notVisible: '.*${PLAYER_EMAIL}.*'
+    commands:
+      - swipe:
+          start: 50%, 75%
+          end: 50%, 35%
+      - waitForAnimationToEnd:
+          timeout: 1000
+# The loop stops the instant a sliver is on screen, which parks the row under the
+# navigation bar where a tap does not reach it. One smaller swipe lifts it clear.
+- swipe:
+    start: 50%, 75%
+    end: 50%, 45%
+- waitForAnimationToEnd:
+    timeout: 1000
+- tapOn: '.*${PLAYER_EMAIL}.*'
+- extendedWaitUntil:
+    visible: '.*Signed in as ${PLAYER_EMAIL}.*'
+    timeout: 30000
+
+# Signing in mounts the player area, which asks about notifications before the
+# system dialog. Decline: the OS is never asked, so iOS's single allotted prompt
+# stays unspent.
+- tapOn:
+    text: '^${PUSH_DECLINE}$'
+    optional: true
+
+# Pin the language. Without this the app follows the DEVICE locale, so a machine
+# set to English quietly produces an English "Catalan" run.
+- repeat:
+    times: 20
+    while:
+      notVisible: '^${LOCALE} \(.*\)$'
+    commands:
+      - swipe:
+          start: 50%, 75%
+          end: 50%, 35%
+      - waitForAnimationToEnd:
+          timeout: 1000
+- swipe:
+    start: 50%, 75%
+    end: 50%, 45%
+- waitForAnimationToEnd:
+    timeout: 1000
+- tapOn:
+    text: '^${LOCALE} \(.*\)$'
+- waitForAnimationToEnd:
+    timeout: 3000

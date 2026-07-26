@@ -22,7 +22,6 @@
 
 import { mkdir, readdir, rm } from 'node:fs/promises';
 import path from 'node:path';
-import { PARTICIPANT_FIXTURES, SEED_ACCOUNT_PASSWORD } from '@ramassa/shared/testing';
 import {
   expandHome,
   findFlow,
@@ -46,6 +45,7 @@ import {
   reverseMetroPort,
 } from './flow-capture/devices';
 import { assertClientSafe, resolveManifest, type FlowManifest } from './flow-capture/manifest';
+import { devClientUrl, withFixtures, writeResolvedFlow } from './flow-capture/resolve-flow';
 import {
   assertLocalSupabase,
   ensureMetro,
@@ -59,13 +59,6 @@ export interface CaptureOptions {
   readonly locale: Locale;
   readonly platform?: PlatformFlag;
 }
-
-/**
- * The seeded player every mobile flow signs in as unless a flow says otherwise.
- * Taken from the fixture roster rather than re-listed, so it cannot drift from
- * the seed SQL that `supabase db reset` rebuilds.
- */
-const capturePlayer = PARTICIPANT_FIXTURES[0];
 
 export async function captureFlow(slug: string, options: CaptureOptions): Promise<void> {
   const config = await loadFlowConfig();
@@ -152,7 +145,7 @@ async function captureMobilePass(
     SHOTS: shotsDir,
     SUFFIX: localeSuffix(options.locale),
     LOCALE: options.locale,
-    DEV_CLIENT_URL: devClientUrl(config),
+    DEV_CLIENT_URL: devClientUrl(config.scheme, config.metroPort),
   });
 
   try {
@@ -166,16 +159,6 @@ async function captureMobilePass(
   }
 
   await curate(path.join(repoRoot, shotsDir), destination);
-}
-
-/**
- * expo-dev-client only loads the app when it is handed the Metro URL; the plain
- * scheme opens the launcher instead. Percent-encoded because it is a query
- * parameter inside a deep link.
- */
-function devClientUrl(config: FlowConfig): string {
-  const metroUrl = encodeURIComponent(`http://localhost:${config.metroPort}`);
-  return `${config.scheme}://expo-development-client/?url=${metroUrl}`;
 }
 
 /**
@@ -237,78 +220,6 @@ async function captureWebPass(
   } finally {
     await preview.stop();
   }
-}
-
-/**
- * Adds the seeded credentials to the translation lookup, so a flow refers to the
- * account it signs in as the same way it refers to a label: by key. The roster
- * still comes from the fixtures the seed SQL is generated from.
- */
-function withFixtures(translate: Translator): Translator {
-  return (key: string) => {
-    if (key === 'player:email') return capturePlayer?.email ?? '';
-    if (key === 'player:password') return SEED_ACCOUNT_PASSWORD;
-    return translate(key);
-  };
-}
-
-/**
- * A Maestro flow declares everything variable about itself in its own `env:`
- * block: the translated text it drives the UI by, as `{{namespace:key}}`, and
- * the run-specific values (`SHOTS`, `LOCALE`, …) as readable defaults. This
- * rewrites that block for one run and writes the result to scratch.
- *
- * It has to be a rewrite rather than `maestro -e`: **a flow's own `env:` block
- * WINS over `-e`**, so passing overrides on the command line silently runs the
- * file's defaults instead — the failure looks like a selector that stopped
- * matching, not like a variable that was ignored.
- *
- * Only the header (everything above the `---`) is touched, so the flow's
- * commands are byte-identical to the committed file.
- */
-async function writeResolvedFlow(
-  flowFile: string,
-  translate: Translator,
-  runValues: Record<string, string>,
-): Promise<string> {
-  const source = await Bun.file(flowFile).text();
-  const separator = source.search(/^---$/m);
-  if (separator === -1) {
-    throw new Error(`${flowFile} has no "---" separating its header from its commands`);
-  }
-  const resolve = withFixtures(translate);
-  const seen = new Set<string>();
-
-  const header = source
-    .slice(0, separator)
-    .split('\n')
-    .map((line) => {
-      const match = /^(\s{2})([A-Z][A-Z0-9_]*):\s*(.*?)\s*$/.exec(line);
-      const key = match?.[2];
-      if (match === null || key === undefined) return line;
-      seen.add(key);
-      const declared = (match[3] ?? '').replace(/^['"]|['"]$/g, '');
-      return `${match[1]}${key}: ${quoteForYaml(runValues[key] ?? interpolate(declared, resolve))}`;
-    })
-    .join('\n');
-
-  const missing = Object.entries(runValues).filter(([key]) => !seen.has(key));
-  if (missing.length > 0) {
-    throw new Error(
-      `${path.basename(flowFile)} must declare ${missing.map(([key]) => key).join(', ')} ` +
-        'in its env block; a Maestro flow cannot pick up a variable it never names.',
-    );
-  }
-
-  const resolved = path.join(repoRoot, '.flow-shots', `${path.basename(flowFile)}`);
-  await mkdir(path.dirname(resolved), { recursive: true });
-  await Bun.write(resolved, header + source.slice(separator));
-  return resolved;
-}
-
-/** Single-quoted YAML: the only escape inside is a doubled quote. */
-function quoteForYaml(value: string): string {
-  return `'${value.replace(/'/g, "''")}'`;
 }
 
 /**

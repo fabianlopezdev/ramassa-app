@@ -1,0 +1,130 @@
+appId: com.ramassa.app
+name: smoke-i18n
+# Catalan -> Arabic -> Catalan, asserting the two things that actually break.
+#
+# 1. The LANGUAGE applied: the tab bar comes back in Arabic script, which also
+#    proves the bundled Arabic font resolved (a missing family shows as tofu, not
+#    as an error).
+# 2. The DIRECTION applied: React Native only flips layout direction on the next
+#    app start, so a switch that looks fine in the moment can be wrong until a
+#    relaunch. The dev menu renders "Native layout direction matches the
+#    language." only when `I18nManager.isRTL` agrees with the resolved language,
+#    so asserting that string after a relaunch is a direct check that RTL took.
+#
+# Both directions are exercised: a switch that cannot be undone is its own bug.
+env:
+  DEV_CLIENT_URL: ramassa://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081
+  DEV_MENU_LABEL: Developer menu
+  DIRECTION_OK: Native layout direction matches the language.
+  TAB_HOME_CA: '{{nav:tabs.home}}'
+  TAB_HOME_AR: الرئيسية
+  TAB_EVENTS_AR: الفعاليات
+  TAB_PROFILE_CA: '{{nav:tabs.profile}}'
+---
+- runFlow: _open-app.yaml
+- runFlow: _sign-in.yaml
+- runFlow: _relaunch.yaml
+
+# Baseline: Catalan, left to right.
+- assertVisible:
+    text: '^${TAB_HOME_CA}$'
+
+# Switch to Arabic from the dev menu on the profile tab.
+- tapOn:
+    text: '^${TAB_PROFILE_CA}$'
+- waitForAnimationToEnd:
+    timeout: 3000
+- tapOn: '.*${DEV_MENU_LABEL}.*'
+- waitForAnimationToEnd:
+    timeout: 5000
+- repeat:
+    times: 20
+    while:
+      notVisible: '^ar \(rtl\)$'
+    commands:
+      - swipe:
+          start: 50%, 75%
+          end: 50%, 35%
+      - waitForAnimationToEnd:
+          timeout: 1000
+- swipe:
+    start: 50%, 75%
+    end: 50%, 45%
+- waitForAnimationToEnd:
+    timeout: 1000
+- tapOn:
+    text: '^ar \(rtl\)$'
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# Relaunch, then assert the language AND the direction both took.
+- stopApp
+- openLink: ${DEV_CLIENT_URL}
+- waitForAnimationToEnd:
+    timeout: 12000
+- repeat:
+    times: 10
+    while:
+      notVisible: '^${TAB_HOME_AR}$'
+    commands:
+      - tapOn:
+          text: '^Close$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- extendedWaitUntil:
+    visible: '^${TAB_HOME_AR}$'
+    timeout: 240000
+- assertVisible:
+    text: '^${TAB_EVENTS_AR}$'
+- assertNotVisible:
+    text: '^${TAB_HOME_CA}$'
+
+# The direction readout lives in the dev menu, which is now reached through the
+# Arabic profile tab.
+- tapOn:
+    text: '^الملف الشخصي$'
+- waitForAnimationToEnd:
+    timeout: 3000
+- tapOn: '.*${DEV_MENU_LABEL}.*'
+- extendedWaitUntil:
+    visible: '.*${DIRECTION_OK}.*'
+    timeout: 30000
+
+# And back to Catalan, so the suite leaves the device as it found it.
+- repeat:
+    times: 20
+    while:
+      notVisible: '^ca \(ltr\)$'
+    commands:
+      - swipe:
+          start: 50%, 75%
+          end: 50%, 35%
+      - waitForAnimationToEnd:
+          timeout: 1000
+- swipe:
+    start: 50%, 75%
+    end: 50%, 45%
+- waitForAnimationToEnd:
+    timeout: 1000
+- tapOn:
+    text: '^ca \(ltr\)$'
+- waitForAnimationToEnd:
+    timeout: 3000
+- stopApp
+- openLink: ${DEV_CLIENT_URL}
+- waitForAnimationToEnd:
+    timeout: 12000
+- repeat:
+    times: 10
+    while:
+      notVisible: '^${TAB_HOME_CA}$'
+    commands:
+      - tapOn:
+          text: '^Close$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- extendedWaitUntil:
+    visible: '^${TAB_HOME_CA}$'
+    timeout: 240000

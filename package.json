@@ -24,7 +24,8 @@
     "db:test": "supabase test db",
     "db:types": "supabase gen types typescript --local > packages/shared/types/database.ts",
     "capture:flow": "bun run scripts/capture-flow.ts",
-    "capture:phase": "bun run scripts/capture-phase.ts"
+    "capture:phase": "bun run scripts/capture-phase.ts",
+    "qa:smoke": "bun run scripts/qa-smoke.ts"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.2.1",

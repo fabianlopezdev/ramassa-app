@@ -1,0 +1,44 @@
+appId: com.ramassa.app
+name: _open-app
+# A fragment, not a flow: every smoke flow starts here. Leading underscore so it
+# reads as a subflow rather than a suite member.
+#
+# Everything in this file is a workaround for the app under test being a
+# DEVELOPMENT build, which it has to be: the dev menu is what signs a flow in as
+# a seeded player and what pins the capture language, and both are __DEV__ only.
+#
+# `bun run qa:smoke` rewrites the env block below before running (a flow's own
+# env wins over `maestro -e`, so the values must be baked in).
+env:
+  DEV_CLIENT_URL: ramassa://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081
+  DEV_MENU_LABEL: Developer menu
+---
+# Clean install every run, so a smoke result never depends on what the previous
+# run left behind. The launch is a deep link because a plain `launchApp` lands on
+# the launcher's "searching for development servers" screen.
+- clearState
+- openLink: ${DEV_CLIENT_URL}
+
+# First launch after a state clear downloads the JS bundle, hence minutes.
+- extendedWaitUntil:
+    visible: '.*${DEV_MENU_LABEL}.*'
+    timeout: 240000
+
+# The development client shows an explainer sheet for its OWN menu a second or
+# two AFTER the app renders, so the wait below is waiting for it to APPEAR.
+# Dismiss by the ✕ ("Close" on both platforms), never by "Continue" (that opens
+# the client's tools menu) and never by the backdrop (a no-op on Android).
+- waitForAnimationToEnd:
+    timeout: 12000
+- repeat:
+    times: 4
+    while:
+      visible: '^Close$'
+    commands:
+      - tapOn:
+          text: '^Close$'
+      - waitForAnimationToEnd:
+          timeout: 3000
+- extendedWaitUntil:
+    visible: '.*${DEV_MENU_LABEL}.*'
+    timeout: 240000

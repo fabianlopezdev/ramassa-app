@@ -54,27 +54,51 @@ async function isIosBooted(udid: string): Promise<boolean> {
 
 /** Starts the named AVD if no emulator is attached and returns its adb serial. */
 export async function ensureAndroidDevice(avdName: string): Promise<string> {
-  const attached = await attachedEmulators();
-  const existing = attached[0];
-  if (existing !== undefined) return existing;
+  let serial = (await attachedEmulators())[0];
 
-  log(`· starting emulator ${avdName}`);
-  Bun.spawn(['emulator', '-avd', avdName], { stdout: 'ignore', stderr: 'ignore' }).unref();
-  await waitFor(`${avdName} to appear`, async () => (await attachedEmulators()).length > 0, {
-    timeoutMs: 300_000,
-    intervalMs: 2000,
-  });
-  const [serial] = await attachedEmulators();
-  if (serial === undefined) throw new Error(`Emulator ${avdName} never attached`);
+  if (serial === undefined) {
+    log(`· starting emulator ${avdName}`);
+    Bun.spawn(['emulator', '-avd', avdName], { stdout: 'ignore', stderr: 'ignore' }).unref();
+    await waitFor(`${avdName} to appear`, async () => (await attachedEmulators()).length > 0, {
+      timeoutMs: 300_000,
+      intervalMs: 2000,
+    });
+    serial = (await attachedEmulators())[0];
+    if (serial === undefined) throw new Error(`Emulator ${avdName} never attached`);
+  }
+
+  // Outside the branch above on purpose. An emulator someone else started is
+  // still an emulator that may be mid-boot, and adb reports it as `device` well
+  // before it can install anything. Skipping this wait for an already-attached
+  // emulator is what made Maestro fail three flows with "device is still
+  // booting", minutes into a run.
   await runOrThrow(['adb', '-s', serial, 'wait-for-device']);
+  await waitForAndroidBoot(serial);
+  return serial;
+}
+
+/**
+ * Two signals, because neither is reliable alone across system images: on this
+ * project's Pixel 8 image `sys.boot_completed` stays unset long after adb is
+ * answering, while `init.svc.bootanim` reports `running` until the device is
+ * genuinely usable. Whichever one this image exposes, the strict answer wins.
+ */
+async function waitForAndroidBoot(serial: string): Promise<void> {
+  const getProp = async (name: string): Promise<string> =>
+    (await run(['adb', '-s', serial, 'shell', 'getprop', name])).stdout.trim();
+
   await waitFor(
     `${serial} to finish booting`,
-    async () =>
-      (await run(['adb', '-s', serial, 'shell', 'getprop', 'sys.boot_completed'])).stdout.trim() ===
-      '1',
-    { timeoutMs: 300_000, intervalMs: 2000 },
+    async () => {
+      const [bootAnimation, bootCompleted] = await Promise.all([
+        getProp('init.svc.bootanim'),
+        getProp('sys.boot_completed'),
+      ]);
+      if (bootAnimation !== '') return bootAnimation === 'stopped';
+      return bootCompleted === '1';
+    },
+    { timeoutMs: 600_000, intervalMs: 3000 },
   );
-  return serial;
 }
 
 async function attachedEmulators(): Promise<readonly string[]> {
