@@ -25,7 +25,6 @@
  */
 
 import * as Haptics from 'expo-haptics';
-import { Platform } from 'react-native';
 import type { AppErrorCode } from '@ramassa/shared/errors';
 import { mmkvStorage } from '../storage';
 import { hapticForErrorCode, shouldPlayHaptic, type HapticFeedback } from './haptic-policy';
@@ -62,7 +61,9 @@ function runFeedback(feedback: HapticFeedback): Promise<void> {
  * not change what the UI does next.
  */
 export function playHaptic(feedback: HapticFeedback): void {
-  if (!shouldPlayHaptic({ isEnabled: areHapticsEnabled(), os: Platform.OS })) {
+  // `EXPO_OS` is inlined at bundle time, so the platform branch inside the pure
+  // policy folds away per platform instead of being decided at runtime.
+  if (!shouldPlayHaptic({ isEnabled: areHapticsEnabled(), os: process.env.EXPO_OS ?? '' })) {
     return;
   }
   void runFeedback(feedback).catch(() => {

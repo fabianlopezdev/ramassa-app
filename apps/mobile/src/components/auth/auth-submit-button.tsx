@@ -10,6 +10,7 @@
  */
 
 import { PressableScale } from '@/components/motion/pressable-scale';
+import { continuousCorners } from '@/lib/continuous-corners';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { tokens } from '@ramassa/shared/tokens';
@@ -33,6 +34,7 @@ export function AuthSubmitButton({ label, onPress, isLoading, disabled }: AuthSu
       haptic="tapLight"
       isDisabled={Boolean(disabled)}
       isBusy={isBusy}
+      style={continuousCorners}
       className={`min-h-recommended justify-center rounded-md bg-primary px-lg ${
         isInteractionBlocked ? 'opacity-60' : ''
       }`}

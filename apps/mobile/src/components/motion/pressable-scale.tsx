@@ -1,6 +1,7 @@
 import type { HapticFeedback } from '@/lib/haptics/haptic-policy';
 import { playHaptic } from '@/lib/haptics/haptics';
 import type { ReactNode } from 'react';
+import type { StyleProp, ViewStyle } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   interpolate,
@@ -45,6 +46,13 @@ export interface PressableScaleProps {
   /** Which feedback to fire on press. Omit for none (e.g. a nav row). */
   readonly haptic?: HapticFeedback;
   readonly className?: string;
+  /**
+   * For the handful of properties NativeWind cannot express (`borderCurve`, per
+   * contract rule 17). Composed with the press animation rather than replacing
+   * it, so a caller cannot accidentally switch the press response off. Pass a
+   * hoisted constant, never an object literal.
+   */
+  readonly style?: StyleProp<ViewStyle>;
   readonly isDisabled?: boolean;
   /** In-flight primary action: announced as busy and blocks a double submit. */
   readonly isBusy?: boolean;
@@ -56,6 +64,7 @@ export function PressableScale({
   accessibilityLabel,
   haptic,
   className,
+  style,
   isDisabled = false,
   isBusy = false,
 }: PressableScaleProps) {
@@ -98,7 +107,7 @@ export function PressableScale({
         accessibilityRole="button"
         accessibilityLabel={accessibilityLabel}
         accessibilityState={{ disabled: isInteractionBlocked, busy: isBusy }}
-        style={animatedStyle}
+        style={[animatedStyle, style]}
         className={className}
       >
         {children}

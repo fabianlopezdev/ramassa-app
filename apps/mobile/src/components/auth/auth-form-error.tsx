@@ -5,6 +5,7 @@
  * Announced assertively to screen readers because it reports a failed action.
  */
 
+import { continuousCorners } from '@/lib/continuous-corners';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
@@ -22,6 +23,7 @@ export function AuthFormError({ code }: { code: AppErrorCode | null }) {
     <View
       accessibilityRole="alert"
       accessibilityLiveRegion="assertive"
+      style={continuousCorners}
       className="gap-xs rounded-md bg-error/10 p-md"
     >
       <Text className={`text-start text-md font-medium text-error ${languageFontClass}`}>

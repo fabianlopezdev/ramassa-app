@@ -1,4 +1,5 @@
 import { PressableScale } from '@/components/motion/pressable-scale';
+import { continuousCorners } from '@/lib/continuous-corners';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
@@ -27,7 +28,11 @@ export function PushPermissionRationale({
   const languageFontClass = useLanguageFontClass();
 
   return (
-    <View className="gap-md rounded-lg bg-white p-lg" accessibilityRole="alert">
+    <View
+      className="gap-md rounded-lg bg-white p-lg"
+      style={continuousCorners}
+      accessibilityRole="alert"
+    >
       <Text
         accessibilityRole="header"
         className={`text-xl font-bold text-neutral-900 ${languageFontClass}`}
@@ -42,6 +47,7 @@ export function PushPermissionRationale({
         accessibilityLabel={t('push:rationaleAccept')}
         onPress={onAccept}
         haptic="tapLight"
+        style={continuousCorners}
         className="mt-sm min-h-recommended items-center justify-center rounded-md bg-primary px-lg"
       >
         <Text className={`text-base font-semibold text-white ${languageFontClass}`}>

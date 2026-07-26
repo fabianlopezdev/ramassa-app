@@ -8,7 +8,7 @@ import { useAuthFlowStatus } from '@/lib/auth-flow-status';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
+import { KeyboardAvoidingView, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 type LoginMode = 'magic' | 'password';
@@ -74,9 +74,10 @@ export default function LoginScreen() {
     <SafeAreaView className="flex-1 bg-white" edges={['top', 'bottom']}>
       <KeyboardAvoidingView
         className="flex-1"
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={process.env.EXPO_OS === 'ios' ? 'padding' : undefined}
       >
         <ScrollView
+          contentInsetAdjustmentBehavior="automatic"
           contentContainerClassName="grow justify-center p-lg"
           keyboardShouldPersistTaps="handled"
         >

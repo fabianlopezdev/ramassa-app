@@ -1,5 +1,6 @@
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { logout } from '@/lib/auth';
+import { continuousCorners } from '@/lib/continuous-corners';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
@@ -16,6 +17,7 @@ function SignOutButton() {
       accessibilityLabel={t('signOutAction')}
       onPress={() => void logout()}
       haptic="tapLight"
+      style={continuousCorners}
       className="mt-xl min-h-recommended items-center justify-center rounded-md border border-neutral-300 px-lg"
     >
       <Text className={`text-md font-medium text-neutral-800 ${languageFontClass}`}>
@@ -33,7 +35,7 @@ export default function HomeScreen() {
     <View className="flex-1 items-center justify-center bg-white">
       {/* Radius and color come from shared tokens (ADR-015): bg-primary and
           rounded-lg resolve to packages/shared/tokens via the NativeWind config. */}
-      <View className="rounded-lg bg-primary px-lg py-md">
+      <View className="rounded-lg bg-primary px-lg py-md" style={continuousCorners}>
         <Text className="text-2xl font-bold text-white">{t('common:appName')}</Text>
       </View>
       <Text className={`mt-2 text-xl text-neutral-900 ${languageFontClass}`}>
