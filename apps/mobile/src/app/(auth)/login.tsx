@@ -1,6 +1,7 @@
 import { AuthFormError } from '@/components/auth/auth-form-error';
 import { MagicLinkForm } from '@/components/auth/magic-link-form';
 import { PasswordLoginForm } from '@/components/auth/password-login-form';
+import { FormWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { ShakeOnError } from '@/components/motion/shake-on-error';
 import { useAuthFlowStatus } from '@/lib/auth-flow-status';
@@ -76,56 +77,63 @@ export default function LoginScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <ScrollView
-          contentContainerClassName="grow justify-center gap-xl p-lg"
+          contentContainerClassName="grow justify-center p-lg"
           keyboardShouldPersistTaps="handled"
         >
-          <View className="gap-xs">
-            <Text
-              accessibilityRole="header"
-              className={`text-start text-3xl font-bold text-primary ${languageFontClass}`}
-            >
-              {t('common:appName')}
-            </Text>
-            <Text
-              accessibilityRole="header"
-              className={`text-start text-2xl font-bold text-neutral-900 ${languageFontClass}`}
-            >
-              {t('auth:loginTitle')}
-            </Text>
-            {mode === 'magic' && !sentToEmail ? (
-              <Text className={`text-start text-md text-neutral-600 ${languageFontClass}`}>
-                {t('auth:loginSubtitle')}
+          {/* The column stops growing on a wide browser instead of spanning the
+              window (RAPP-80). Phone widths are below the breakpoint and unaffected. */}
+          <FormWidth className="gap-xl">
+            <View className="gap-xs">
+              <Text
+                accessibilityRole="header"
+                className={`text-start text-3xl font-bold text-primary ${languageFontClass}`}
+              >
+                {t('common:appName')}
               </Text>
-            ) : null}
-          </View>
-
-          <ShakeOnError errorCode={errorCode}>
-            <AuthFormError code={errorCode} />
-          </ShakeOnError>
-
-          {sentToEmail ? (
-            <MagicLinkSent email={sentToEmail} onBack={() => setSentToEmail(null)} />
-          ) : mode === 'magic' ? (
-            <View className="gap-md">
-              <MagicLinkForm onSent={setSentToEmail} />
-              {/* Reassurance for players who worry they have no password (persona). */}
-              <Text className={`text-start text-sm text-neutral-500 ${languageFontClass}`}>
-                {t('auth:magicLinkHint')}
+              <Text
+                accessibilityRole="header"
+                className={`text-start text-2xl font-bold text-neutral-900 ${languageFontClass}`}
+              >
+                {t('auth:loginTitle')}
               </Text>
-              <AuthLink label={t('auth:usePasswordInstead')} onPress={() => switchTo('password')} />
+              {mode === 'magic' && !sentToEmail ? (
+                <Text className={`text-start text-md text-neutral-600 ${languageFontClass}`}>
+                  {t('auth:loginSubtitle')}
+                </Text>
+              ) : null}
             </View>
-          ) : (
-            <View className="gap-lg">
-              <PasswordLoginForm />
-              <AuthLink label={t('auth:useMagicLinkInstead')} onPress={() => switchTo('magic')} />
-            </View>
-          )}
 
-          {DevMenuEntry === null ? null : (
-            <View className="items-center">
-              <DevMenuEntry />
-            </View>
-          )}
+            <ShakeOnError errorCode={errorCode}>
+              <AuthFormError code={errorCode} />
+            </ShakeOnError>
+
+            {sentToEmail ? (
+              <MagicLinkSent email={sentToEmail} onBack={() => setSentToEmail(null)} />
+            ) : mode === 'magic' ? (
+              <View className="gap-md">
+                <MagicLinkForm onSent={setSentToEmail} />
+                {/* Reassurance for players who worry they have no password (persona). */}
+                <Text className={`text-start text-sm text-neutral-500 ${languageFontClass}`}>
+                  {t('auth:magicLinkHint')}
+                </Text>
+                <AuthLink
+                  label={t('auth:usePasswordInstead')}
+                  onPress={() => switchTo('password')}
+                />
+              </View>
+            ) : (
+              <View className="gap-lg">
+                <PasswordLoginForm />
+                <AuthLink label={t('auth:useMagicLinkInstead')} onPress={() => switchTo('magic')} />
+              </View>
+            )}
+
+            {DevMenuEntry === null ? null : (
+              <View className="items-center">
+                <DevMenuEntry />
+              </View>
+            )}
+          </FormWidth>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

@@ -13,6 +13,7 @@
  * rendered) on a bad or expired link.
  */
 
+import { FormWidth } from '@/components/layout/content-width';
 import { useAuthFlowStatus } from '@/lib/auth-flow-status';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { router } from 'expo-router';
@@ -38,14 +39,15 @@ export default function AuthCallbackScreen() {
   }, [session, errorCode]);
 
   return (
-    <View
-      accessibilityLiveRegion="polite"
-      className="flex-1 items-center justify-center gap-md bg-white p-lg"
-    >
-      <ActivityIndicator color={tokens.colors.primary.DEFAULT} />
-      <Text className={`text-center text-md text-neutral-700 ${languageFontClass}`}>
-        {t('signingIn')}
-      </Text>
+    <View accessibilityLiveRegion="polite" className="flex-1 justify-center bg-white p-lg">
+      {/* Same ceiling as the sign-in screen it hands back to (RAPP-80), so the
+          message does not run the width of a desktop window. */}
+      <FormWidth className="items-center gap-md">
+        <ActivityIndicator color={tokens.colors.primary.DEFAULT} />
+        <Text className={`text-center text-md text-neutral-700 ${languageFontClass}`}>
+          {t('signingIn')}
+        </Text>
+      </FormWidth>
     </View>
   );
 }

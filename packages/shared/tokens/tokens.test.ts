@@ -12,6 +12,16 @@ test('tokens expose the full expected shape', () => {
   expect(tokens.fontFamily.farsi.length).toBeGreaterThan(0);
 });
 
+test('content widths keep a wide browser from stretching a phone layout (RAPP-80)', () => {
+  // The player app is the phone app exported to the browser (ADR-008), so on a
+  // desktop viewport a full-width form spans the whole window. These are the
+  // ceilings the layout container stops growing at.
+  expect(tokens.contentWidth.form).toBeLessThan(tokens.contentWidth.page);
+  // Both must clear the widest phone this app runs on, or the constraint would
+  // bind on a handset and change the native layout.
+  expect(tokens.contentWidth.form).toBeGreaterThan(440);
+});
+
 test('touch targets meet the WCAG AA hard constraint (min 48dp, recommended 56dp)', () => {
   expect(tokens.tapTarget.min).toBeGreaterThanOrEqual(48);
   expect(tokens.tapTarget.recommended).toBeGreaterThanOrEqual(56);
@@ -30,6 +40,7 @@ test('tokensToCssVariables derives CSS custom properties from the tokens', () =>
   expect(css).toContain('--ramassa-radius-lg: 16px;');
   expect(css).toContain('--ramassa-spacing-md: 16px;');
   expect(css).toContain('--ramassa-tap-target-recommended: 56px;');
+  expect(css).toContain('--ramassa-content-width-form: 480px;');
   expect(css).toContain('--ramassa-forum-auto-hide-flag-threshold: 3;');
 
   expect(css.startsWith(':root {')).toBe(true);
