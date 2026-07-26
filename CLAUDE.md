@@ -18,6 +18,8 @@ bunx eslint . --fix                            # Lint
 bunx prettier --write .                        # Format
 bunx supabase db push                          # Apply DB migrations
 bunx supabase studio                           # Local DB admin
+bun run capture:flow <slug>                    # Screenshot one flow into the vault canvas
+bun run capture:phase <n>                      # Re-shoot every flow a phase owns (closure gate)
 ```
 
 ## Tech Stack
@@ -79,6 +81,7 @@ bunx supabase studio                           # Local DB admin
 13. **Admin framework is TanStack Start (ADR-016, 2026-07-17) and its work is OFFICIAL-DOCS-FIRST (hard rule).** Any issue implementing TanStack Start or TanStack Router code MUST consult https://tanstack.com/start/latest and https://tanstack.com/router/latest (context7 or live fetch) at execution time, BEFORE writing the code, and verify every API against the installed version. The framework is young and moving; training-data knowledge is presumed stale. Where SPEC.md still says "Next.js" for the admin, read TanStack Start; OpenNext is deleted from the plan.
 14. **Premium feel is a system (RAPP-70).** All microinteractions come from the shared primitives (PressableScale, FadeSlideIn, SuccessPop, ShakeOnError, SkeletonPulse) and the haptic vocabulary in `packages/shared`; motion timings only from motion tokens. Per-feature bar: press feedback on every touchable, entrance animation on content lists, success haptic + animation on completed primary actions, shake + warning haptic on validation errors, skeletons not spinners. Everything respects reduce-motion. No ad-hoc Animated/Reanimated code in feature screens.
 15. **Only the skills below exist for this project (2026-07-17, RAPP-72).** This is the complete, issue-enforced set. Do not reach for other skills (lifecycle/process skills included) unless a vault issue adds them first.
+16. **Every user-facing flow is screenshot-captured as it is built (2026-07-23, RAPP-77/78).** The as-built truth lives in one canvas, `second-brain/10-Projects/Ramassa-App/flows/Ramassa-Flows.html`; `assets/flows/` (Excalidraw) is design-time intent, and where they disagree the canvas is right. **44 flows across three surfaces**, each owned by exactly one issue: 18 player (`surface: mobile`, phone bezels, captured with Maestro), 23 staff admin and 3 entity portal (`surface: admin` / `entity`, desktop browser frames, captured with Playwright via `capture-web.mjs`). **The 18 player flows are dual-captured**: every one is shot on phone bezels (iOS/Android) AND in a desktop browser under the step's `web:` key, because the player app also ships as a responsive web export (ADR-008) whose desktop layout deliberately differs (RAPP-80), and side-by-side is how a control that is fine full-width on a phone but stretches on desktop gets caught. That is a form-factor axis on the `mobile` surface, not a fourth surface. Feature issues carry a `## Flow capture` section naming their slug, surface and graph; the 10 closure issues carry a `## Flow canvas refresh` gate. Two stages: Tier A flows (all mobile, all entity, the 7 admin flows with client or funder value) are captured at their feature issue and refreshed post-sweep at closure; Tier B admin CRUD is captured once, at closure. Browser captures run against **local seeded Supabase only** (rule 9) — the harness refuses a non-localhost origin.
 
 ## Skills — the enforced set (standing matrix)
 
@@ -109,6 +112,80 @@ The authoritative list per unit of work is the issue's "Skills to apply" section
 **Rule: when in doubt, run the skill.** Running an unnecessary skill wastes 2 minutes. Missing a necessary one can introduce bugs that take hours to find.
 
 **Multiple skills per task is normal.** A database migration + Edge Function + mobile UI update = `/supabase-postgres-best-practices` + `/supabase` + the mobile-screen set. Run all that apply.
+
+## Flow capture — how the harness works, and what bit us
+
+Contract rule 16 says every user-facing flow is screenshot-captured. `bun run capture:flow <slug>`
+does the whole thing: boots the device, runs the flow, curates the shots into the vault, upserts the
+canvas. `bun run capture:phase <n>` does that for every flow a phase owns, which is the closure gate.
+
+**The moving parts**
+
+| Path                             | What it is                                                                                                                    |
+| -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `flows/flows.json`               | Every flow in the product: slug, owning phase, surface, client-facing title. Also the device names, the app id and the ports. |
+| `flows/<slug>.manifest.json`     | Authored once by the issue that builds the screens: the steps, the graph, the notes. The expensive part of a capture.         |
+| `maestro/flows/<slug>.yaml`      | The phone flow. One file per flow, both languages.                                                                            |
+| `maestro/web/<slug>.web.json`    | The browser flow, run through the flow-shots web harness.                                                                     |
+| `scripts/capture-flow.ts`        | The harness. Pure decisions live in `scripts/flow-capture/`; `tests/flow-capture.test.ts` covers them.                        |
+| `maestro/shots/`, `.flow-shots/` | Scratch. Gitignored — the curated copies live in the vault.                                                                   |
+
+**A player flow means three passes.** A bare `capture:flow` on a `mobile` flow runs iOS, Android AND
+the browser, because the player app also ships as a web export whose desktop layout differs
+(rule 16). `--platform ios|android|both|web` narrows it. Admin and entity flows are browser-only.
+
+**Never hardcode a screen name in a flow.** A flow declares the text it drives the UI by as
+`{{namespace:key}}` in its own `env:` block (or in the browser spec), and the harness resolves it
+against `packages/shared/i18n/locales/<locale>/`. That is what lets one flow file capture both the
+Catalan pass and the Arabic RTL pass, and it means a renamed translation key breaks the capture
+loudly instead of silently matching nothing.
+
+**Gotchas that cost a cycle here (in addition to everything in `~/.claude/skills/flow-shots/MAESTRO.md`):**
+
+1. **A development build does not start with `launchApp`.** It lands on the launcher's "searching
+   for development servers" screen. Open it with
+   `openLink: <scheme>://expo-development-client/?url=<percent-encoded metro url>`. With the URL
+   passed explicitly, `clearState` is safe (it wipes the stored Metro URL, which no longer matters).
+2. **The development client shows a one-time explainer sheet for its own menu** after a state clear,
+   a second or two AFTER the app has rendered — so it lands on top of the first thing the flow tries
+   to tap. Dismiss it with an optional `Continue` tap before interacting.
+3. **The app follows the SIMULATOR's locale, not Catalan**, until a language is persisted. A capture
+   that does not pin the language through the dev menu will happily produce an English "Catalan"
+   pass on an English machine. Pin it, then relaunch: React Native applies a layout-direction flip
+   on the next start only, so the RTL pass is only honest after a real restart.
+4. **`expo export --platform web` must be run with `--clear`.** `EXPO_PUBLIC_*` values are inlined at
+   transform time and Metro caches the transform by file content, not by env, so a warm cache
+   happily bakes the backend URL a PREVIOUS export saw. It produced a bundle pointing at a
+   placeholder host while `.env` said localhost, and the only symptom was a login failing as
+   "wrong password".
+5. **Browser captures need Playwright in this repo** (`bun add -d playwright`, `bunx playwright
+install chromium`); the flow-shots skill deliberately does not ship browser binaries.
+6. **A flow's own `env:` block WINS over `maestro -e`.** Passing overrides on the command line
+   silently runs the file's defaults instead, and the failure reads as a selector that stopped
+   matching rather than a variable that was ignored. The harness therefore rewrites that block and
+   runs a resolved copy of the flow out of `.flow-shots/`.
+7. **`scrollUntilVisible` is not usable on the Android emulator here.** It repeatedly reached the
+   target row, left it plainly on screen, and still reported it as not found, with and without
+   `visibilityPercentage` / `centerElement`. Use a bounded `repeat` + `notVisible` swipe loop, which
+   re-checks with the same matcher the tap uses.
+8. **A swipe loop stops the instant a sliver is on screen**, which parks the target 40px tall on the
+   bottom edge under the navigation bar, where a tap does not reach it and the flow then waits out
+   its timeout on an action that never happened. Follow the loop with one smaller settle swipe.
+9. **The status bar is frozen before every phone pass** (`simctl status_bar override` on iOS, system
+   UI demo mode on Android) so a re-capture differs only where the app differs. Without it every shot
+   carries a live clock and battery reading and no two runs are comparable.
+10. **Selector shapes differ per platform.** iOS exposes a row's accessibility label; Android exposes
+    the text nodes inside it. Match on the substring both carry (the email address, not
+    "Sign in as <address>").
+
+**Known gap:** on Android the development client draws a floating tools button over the app, so it
+appears in the top corner of every Android frame. iOS is clean. Tracked as its own issue; do not put
+an Android frame in front of the client until that is fixed.
+
+**Client-safe by construction.** Manifest titles, descriptions, step labels, edge labels and notes
+are read by the client and by funders: no issue IDs, no wikilinks, no vault paths. The harness
+refuses to build a canvas from a manifest that leaks one, and `tests/flow-capture.test.ts` checks
+every committed manifest. Captures also refuse to run against a non-private backend (rule 9).
 
 ## ADR Enforcement
 

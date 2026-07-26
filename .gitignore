@@ -34,6 +34,10 @@ supabase/.temp/
 *.apk
 *.tar.gz
 
+# Flow capture scratch (the curated screenshots live in the vault, RAPP-78)
+maestro/shots/
+.flow-shots/
+
 # Test coverage
 coverage/
 

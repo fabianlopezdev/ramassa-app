@@ -83,3 +83,7 @@ if (!profileResponse.ok) {
 
 console.log(`\n✓ Local ${role} ready\n  email:    ${email}\n  password: ${password}`);
 console.log(`  magic links arrive in Mailpit: http://127.0.0.1:54324\n`);
+
+// Marks this script as a module so its top-level `await` type-checks (the root
+// tsconfig covers `scripts/` since RAPP-78 put the capture harness there).
+export {};

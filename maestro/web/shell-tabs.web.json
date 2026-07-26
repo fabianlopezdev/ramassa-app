@@ -1,0 +1,29 @@
+{
+  "slug": "shell-tabs",
+  "viewport": { "width": 1440, "height": 900 },
+  "deviceScaleFactor": 2,
+  "timezoneId": "Europe/Madrid",
+  "settle": { "timeout": 6000, "interval": 150 },
+  "steps": [
+    {
+      "label": "auth-open",
+      "goto": "/login",
+      "click": "[aria-label=\"{{auth:usePasswordInstead}}\"]",
+      "waitFor": "[aria-label=\"{{auth:passwordLabel}}\"]"
+    },
+    {
+      "label": "auth-submit",
+      "fill": [
+        { "selector": "[aria-label=\"{{auth:emailLabel}}\"]", "value": "{{player:email}}" },
+        { "selector": "[aria-label=\"{{auth:passwordLabel}}\"]", "value": "{{player:password}}" }
+      ],
+      "click": "[aria-label=\"{{auth:passwordAction}}\"]",
+      "waitFor": "text={{home:title}}"
+    },
+    { "label": "home", "goto": "/", "waitFor": "text={{home:title}}" },
+    { "label": "events", "goto": "/events", "waitFor": "text={{nav:tabs.events}}" },
+    { "label": "community", "goto": "/community", "waitFor": "text={{nav:tabs.community}}" },
+    { "label": "services", "goto": "/services", "waitFor": "text={{nav:tabs.services}}" },
+    { "label": "profile", "goto": "/profile", "waitFor": "text={{nav:tabs.profile}}" }
+  ]
+}

@@ -1,0 +1,194 @@
+{
+  "app": "Ramassà",
+  "canvas": "Ramassa-Flows.html",
+  "vaultFlowsDir": "~/fabulousapps/second-brain/10-Projects/Ramassa-App/flows",
+  "flowShotsSkillDir": "~/.claude/skills/flow-shots",
+  "devices": {
+    "ios": "Ramassa Dev iPhone 17 Pro",
+    "android": "Ramassa_QA_Pixel_8"
+  },
+  "appId": "com.ramassa.app",
+  "scheme": "ramassa",
+  "metroPort": 8081,
+  "webPreviewPort": 4173,
+  "flows": [
+    { "slug": "auth-login", "phase": "1", "surface": "mobile", "title": "Inici de sessió" },
+    { "slug": "shell-tabs", "phase": "1", "surface": "mobile", "title": "Navegació principal" },
+    { "slug": "i18n-rtl", "phase": "1", "surface": "mobile", "title": "Idiomes i direcció RTL" },
+    { "slug": "admin-login", "phase": "1", "surface": "admin", "title": "Accés de l'equip" },
+
+    { "slug": "onboarding", "phase": "2", "surface": "mobile", "title": "Alta guiada" },
+    { "slug": "profile", "phase": "2", "surface": "mobile", "title": "Perfil de la jugadora" },
+    {
+      "slug": "admin-participants",
+      "phase": "2",
+      "surface": "admin",
+      "title": "Gestió de participants"
+    },
+    {
+      "slug": "admin-account-creation",
+      "phase": "2",
+      "surface": "admin",
+      "title": "Creació de comptes"
+    },
+    {
+      "slug": "admin-rgpd-lifecycle",
+      "phase": "2",
+      "surface": "admin",
+      "title": "Cicle de vida de les dades"
+    },
+    {
+      "slug": "admin-equipment",
+      "phase": "2",
+      "surface": "admin",
+      "title": "Control d'equipament"
+    },
+
+    { "slug": "home-feed", "phase": "3", "surface": "mobile", "title": "Inici i avisos" },
+    {
+      "slug": "events-signup",
+      "phase": "3",
+      "surface": "mobile",
+      "title": "Calendari i inscripcions"
+    },
+    { "slug": "knowledge-base", "phase": "3", "surface": "mobile", "title": "Base de coneixement" },
+    {
+      "slug": "story-submission",
+      "phase": "3",
+      "surface": "mobile",
+      "title": "Enviament d'històries"
+    },
+    { "slug": "admin-announcements", "phase": "3", "surface": "admin", "title": "Gestió d'avisos" },
+    { "slug": "admin-events", "phase": "3", "surface": "admin", "title": "Gestió d'esdeveniments" },
+    {
+      "slug": "admin-knowledge-base",
+      "phase": "3",
+      "surface": "admin",
+      "title": "Gestió de continguts informatius"
+    },
+    {
+      "slug": "admin-translation-review",
+      "phase": "3",
+      "surface": "admin",
+      "title": "Revisió de traduccions"
+    },
+
+    {
+      "slug": "attendance-marking",
+      "phase": "4",
+      "surface": "admin",
+      "title": "Registre d'assistència"
+    },
+    {
+      "slug": "admin-attendance-reports",
+      "phase": "4",
+      "surface": "admin",
+      "title": "Informes d'assistència"
+    },
+
+    {
+      "slug": "services-directory",
+      "phase": "5a",
+      "surface": "mobile",
+      "title": "Directori de serveis"
+    },
+    { "slug": "admin-services", "phase": "5a", "surface": "admin", "title": "Gestió de serveis" },
+    {
+      "slug": "admin-submission-review",
+      "phase": "5a",
+      "surface": "admin",
+      "title": "Revisió de propostes"
+    },
+    {
+      "slug": "entity-service-submission",
+      "phase": "5a",
+      "surface": "entity",
+      "title": "Proposta de servei d'una entitat"
+    },
+
+    { "slug": "messaging", "phase": "5b", "surface": "mobile", "title": "Missatges amb l'equip" },
+    {
+      "slug": "admin-conversations",
+      "phase": "5b",
+      "surface": "admin",
+      "title": "Gestió de converses"
+    },
+
+    { "slug": "forum", "phase": "6", "surface": "mobile", "title": "Fòrum de la comunitat" },
+    {
+      "slug": "forum-flagging",
+      "phase": "6",
+      "surface": "mobile",
+      "title": "Denúncia de publicacions"
+    },
+    { "slug": "media-gallery", "phase": "6", "surface": "mobile", "title": "Galeria d'imatges" },
+    {
+      "slug": "admin-forum-moderation",
+      "phase": "6",
+      "surface": "admin",
+      "title": "Moderació del fòrum"
+    },
+
+    {
+      "slug": "entity-referrals",
+      "phase": "7",
+      "surface": "entity",
+      "title": "Derivacions d'entitats"
+    },
+    { "slug": "entity-impact", "phase": "7", "surface": "entity", "title": "Impacte per entitat" },
+    {
+      "slug": "admin-entity-management",
+      "phase": "7",
+      "surface": "admin",
+      "title": "Gestió d'entitats"
+    },
+
+    {
+      "slug": "mentoring-request",
+      "phase": "8",
+      "surface": "mobile",
+      "title": "Sol·licitud de mentoria"
+    },
+    { "slug": "feedback", "phase": "8", "surface": "mobile", "title": "Bústia de suggeriments" },
+    {
+      "slug": "survey-response",
+      "phase": "8",
+      "surface": "mobile",
+      "title": "Resposta a enquestes"
+    },
+    { "slug": "admin-mentoring", "phase": "8", "surface": "admin", "title": "Gestió de mentories" },
+    {
+      "slug": "admin-feedback-inbox",
+      "phase": "8",
+      "surface": "admin",
+      "title": "Safata de suggeriments"
+    },
+    {
+      "slug": "admin-notifications",
+      "phase": "8",
+      "surface": "admin",
+      "title": "Enviament de notificacions"
+    },
+    { "slug": "admin-surveys", "phase": "8", "surface": "admin", "title": "Creació d'enquestes" },
+
+    {
+      "slug": "states-offline-error",
+      "phase": "9",
+      "surface": "mobile",
+      "title": "Estats sense connexió i d'error"
+    },
+    {
+      "slug": "admin-impact-dashboard",
+      "phase": "9",
+      "surface": "admin",
+      "title": "Tauler d'impacte"
+    },
+    {
+      "slug": "admin-export-audit",
+      "phase": "9",
+      "surface": "admin",
+      "title": "Exportacions i registre d'accessos"
+    },
+    { "slug": "admin-settings", "phase": "9", "surface": "admin", "title": "Configuració" }
+  ]
+}

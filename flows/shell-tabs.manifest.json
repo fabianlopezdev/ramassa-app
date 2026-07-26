@@ -1,0 +1,100 @@
+{
+  "app": "Ramassà",
+  "slug": "shell-tabs",
+  "title": "Navegació principal",
+  "surface": "mobile",
+  "description": "Les cinc pestanyes de l'app de les jugadores, abans que hi hagi contingut: Inici, Calendari, Comunitat, Serveis i Perfil. Cada pestanya porta sempre icona i text.",
+  "steps": [
+    {
+      "id": "home",
+      "label": "Inici",
+      "ios": "shell-tabs/ios/01-home.png",
+      "android": "shell-tabs/android/01-home.png",
+      "web": "shell-tabs/web/03-home.png"
+    },
+    {
+      "id": "events",
+      "label": "Calendari",
+      "ios": "shell-tabs/ios/02-events.png",
+      "android": "shell-tabs/android/02-events.png",
+      "web": "shell-tabs/web/04-events.png"
+    },
+    {
+      "id": "community",
+      "label": "Comunitat",
+      "ios": "shell-tabs/ios/03-community.png",
+      "android": "shell-tabs/android/03-community.png",
+      "web": "shell-tabs/web/05-community.png"
+    },
+    {
+      "id": "services",
+      "label": "Serveis",
+      "ios": "shell-tabs/ios/04-services.png",
+      "android": "shell-tabs/android/04-services.png",
+      "web": "shell-tabs/web/06-services.png"
+    },
+    {
+      "id": "profile",
+      "label": "Perfil",
+      "ios": "shell-tabs/ios/05-profile.png",
+      "android": "shell-tabs/android/05-profile.png",
+      "web": "shell-tabs/web/07-profile.png"
+    },
+    {
+      "id": "home-ar",
+      "label": "الرئيسية (àrab, dreta a esquerra)",
+      "ios": "shell-tabs/ios/01-home-ar.png",
+      "android": "shell-tabs/android/01-home-ar.png",
+      "web": "shell-tabs/web/03-home-ar.png"
+    },
+    {
+      "id": "events-ar",
+      "label": "الفعاليات",
+      "ios": "shell-tabs/ios/02-events-ar.png",
+      "android": "shell-tabs/android/02-events-ar.png",
+      "web": "shell-tabs/web/04-events-ar.png"
+    },
+    {
+      "id": "community-ar",
+      "label": "المجتمع",
+      "ios": "shell-tabs/ios/03-community-ar.png",
+      "android": "shell-tabs/android/03-community-ar.png",
+      "web": "shell-tabs/web/05-community-ar.png"
+    },
+    {
+      "id": "services-ar",
+      "label": "الخدمات",
+      "ios": "shell-tabs/ios/04-services-ar.png",
+      "android": "shell-tabs/android/04-services-ar.png",
+      "web": "shell-tabs/web/06-services-ar.png"
+    },
+    {
+      "id": "profile-ar",
+      "label": "الملف الشخصي",
+      "ios": "shell-tabs/ios/05-profile-ar.png",
+      "android": "shell-tabs/android/05-profile-ar.png",
+      "web": "shell-tabs/web/07-profile-ar.png"
+    }
+  ],
+  "edges": [
+    { "from": "home", "to": "events", "label": "Calendari" },
+    { "from": "home", "to": "community", "label": "Comunitat" },
+    { "from": "home", "to": "services", "label": "Serveis" },
+    { "from": "home", "to": "profile", "label": "Perfil" },
+    { "from": "home-ar", "to": "events-ar", "label": "الفعاليات" },
+    { "from": "home-ar", "to": "community-ar", "label": "المجتمع" },
+    { "from": "home-ar", "to": "services-ar", "label": "الخدمات" },
+    { "from": "home-ar", "to": "profile-ar", "label": "الملف الشخصي" }
+  ],
+  "nodes": [
+    {
+      "id": "note-rtl",
+      "type": "note",
+      "text": "En àrab i persa tota la interfície es reflecteix: la barra de pestanyes s'ordena de dreta a esquerra, però les icones no es giren."
+    }
+  ],
+  "notes": [
+    "Pantalles buides a propòsit: la navegació es construeix abans que el contingut, per poder comprovar els cinc apartats, les etiquetes traduïdes i la direcció de lectura des del primer dia.",
+    "Cada pestanya mostra icona I text. Només icona deixa fora qui té poca familiaritat amb apps; només text deixa fora qui encara no llegeix català."
+  ]
+}
