@@ -71,6 +71,15 @@ env:
 # Relaunch, then assert the language AND the direction both took.
 - stopApp
 - openLink: ${DEV_CLIENT_URL}
+# iOS asks "Open in <app>?" before it will follow a custom-scheme link, and
+# nothing dismisses that for you: the app never opens and the flow times out on
+# its first assertion, which reads as a bundle that would not load. Optional so
+# the identical line is a harmless no-op on Android, which does not ask.
+- tapOn:
+    text: '^Open$'
+    optional: true
+- waitForAnimationToEnd:
+    timeout: 3000
 - waitForAnimationToEnd:
     timeout: 12000
 - repeat:
@@ -161,6 +170,15 @@ env:
     selected: true
 - stopApp
 - openLink: ${DEV_CLIENT_URL}
+# iOS asks "Open in <app>?" before it will follow a custom-scheme link, and
+# nothing dismisses that for you: the app never opens and the flow times out on
+# its first assertion, which reads as a bundle that would not load. Optional so
+# the identical line is a harmless no-op on Android, which does not ask.
+- tapOn:
+    text: '^Open$'
+    optional: true
+- waitForAnimationToEnd:
+    timeout: 3000
 - waitForAnimationToEnd:
     timeout: 12000
 - repeat:

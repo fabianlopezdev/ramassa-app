@@ -51,20 +51,40 @@ env:
 - waitForAnimationToEnd:
     timeout: 3000
 
-# Signing in mounts the player area, which asks about notifications before the
-# system dialog. Decline: the OS is never asked, so iOS's single allotted prompt
-# stays unspent.
+# Close the dev menu. Signing in does NOT dismiss it: the session changes
+# underneath, the menu stays exactly where it is, and the account row simply
+# becomes the highlighted one. So there is nothing to wait for until the menu is
+# out of the way, and waiting for the player home while it is still open can
+# never pass.
 - tapOn:
-    text: '^${PUSH_DECLINE}$'
-    optional: true
+    text: '^Close$'
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# Mounting the player area asks about notifications before the system dialog, and
+# that sheet can land AFTER the first render, covering the very title being waited
+# on. Loop rather than tap once.
+- repeat:
+    times: 6
+    while:
+      notVisible: '.*${HOME_TITLE}.*'
+    commands:
+      - tapOn:
+          text: '^${PUSH_DECLINE}$'
+          optional: true
+      - tapOn:
+          text: '^Close$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
 
 # Assert the OUTCOME, not the dev menu's "Signed in as ..." line. That line is
-# local component state rendered after the account list, and a SUCCESSFUL sign-in
-# routes to the player area and unmounts the whole menu, destroying it. Asserting
-# on it means racing the very navigation that proves the thing worked, which
-# passed or failed by timing alone. Landing on the player home cannot be reached
-# any other way, so it is the honest proof, and a failed sign-in still fails here
-# because the menu simply stays put.
+# local component state rendered AFTER the whole account list, so it sits below
+# the row just tapped and no amount of waiting brings it into view. Landing on
+# the player home cannot happen without a session, so it is the honest proof, and
+# a failed sign-in still fails here because the app stays on the login screen.
+# Declining notifications above matters for iOS too: the OS is never asked, so
+# its single allotted prompt stays unspent.
 - extendedWaitUntil:
     visible: '.*${HOME_TITLE}.*'
     timeout: 120000

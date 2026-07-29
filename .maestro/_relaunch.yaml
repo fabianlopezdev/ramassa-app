@@ -10,6 +10,15 @@ env:
 ---
 - stopApp
 - openLink: ${DEV_CLIENT_URL}
+# iOS asks "Open in <app>?" before it will follow a custom-scheme link, and
+# nothing dismisses that for you: the app never opens and the flow times out on
+# its first assertion, which reads as a bundle that would not load. Optional so
+# the identical line is a harmless no-op on Android, which does not ask.
+- tapOn:
+    text: '^Open$'
+    optional: true
+- waitForAnimationToEnd:
+    timeout: 3000
 # Here the loop condition is the HOME SCREEN, not the sheet: after a relaunch the
 # Android emulator takes minutes to reload the bundle and the client's explainer
 # lands whenever it lands, so any fixed wait either fires before it or wastes
