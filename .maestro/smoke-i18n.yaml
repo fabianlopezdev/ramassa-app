@@ -16,6 +16,7 @@ env:
   DEV_CLIENT_URL: ramassa://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081
   DEV_MENU_LABEL: Developer menu
   DIRECTION_OK: Native layout direction matches the language.
+  MENU_SECTION: Environment
   TAB_HOME_CA: '{{nav:tabs.home}}'
   TAB_HOME_AR: الرئيسية
   TAB_EVENTS_AR: الفعاليات
@@ -43,19 +44,29 @@ env:
       notVisible: '^ar \(rtl\)$'
     commands:
       - swipe:
-          start: 50%, 75%
-          end: 50%, 35%
+          start: 50%, 70%
+          end: 50%, 50%
+          duration: 900
       - waitForAnimationToEnd:
-          timeout: 1000
+          timeout: 2500
 - swipe:
-    start: 50%, 75%
-    end: 50%, 45%
+    start: 50%, 65%
+    end: 50%, 55%
+    duration: 900
 - waitForAnimationToEnd:
-    timeout: 1000
+    timeout: 2500
 - tapOn:
     text: '^ar \(rtl\)$'
 - waitForAnimationToEnd:
     timeout: 3000
+# Assert WHAT was selected, immediately. A tap that reports COMPLETED has only
+# proved Maestro found the element and dispatched a touch at its reported
+# bounds; it has not proved the touch landed on that button. Checking here fails
+# on the tap, with the real selection in the artifact, instead of surfacing much
+# later as a tab bar in the wrong language.
+- assertVisible:
+    text: '^ar \(rtl\)$'
+    selected: true
 
 # Relaunch, then assert the language AND the direction both took.
 - stopApp
@@ -87,9 +98,36 @@ env:
 - waitForAnimationToEnd:
     timeout: 3000
 - tapOn: '.*${DEV_MENU_LABEL}.*'
+# The FIRST section, not the language one: the menu opens at the top and
+# "Language and direction" is several screens below the fold.
 - extendedWaitUntil:
-    visible: '.*${DIRECTION_OK}.*'
+    visible: '.*${MENU_SECTION}.*'
     timeout: 30000
+- waitForAnimationToEnd:
+    timeout: 5000
+# The readout lives in the language section, well below the fold. Asserting it
+# without scrolling fails on a menu that is rendering it perfectly, three
+# screens further down - which is how this read as an RTL bug when the layout
+# had in fact flipped correctly.
+- repeat:
+    times: 20
+    while:
+      notVisible: '.*${DIRECTION_OK}.*'
+    commands:
+      - swipe:
+          start: 50%, 70%
+          end: 50%, 50%
+          duration: 900
+      - waitForAnimationToEnd:
+          timeout: 2500
+# Settle before asserting. A `repeat while notVisible` exits the moment ONE
+# sampled frame matches, which during a fling is a frame the scroll has already
+# moved past: the loop saw the note, the momentum carried the menu to its
+# bottom, and the assert one command later found nothing. Every swipe in this
+# suite is a slow drag rather than a fling for the same reason.
+- waitForAnimationToEnd:
+    timeout: 3000
+- assertVisible: '.*${DIRECTION_OK}.*'
 
 # And back to Catalan, so the suite leaves the device as it found it.
 - repeat:
@@ -98,19 +136,29 @@ env:
       notVisible: '^ca \(ltr\)$'
     commands:
       - swipe:
-          start: 50%, 75%
-          end: 50%, 35%
+          start: 50%, 70%
+          end: 50%, 50%
+          duration: 900
       - waitForAnimationToEnd:
-          timeout: 1000
+          timeout: 2500
 - swipe:
-    start: 50%, 75%
-    end: 50%, 45%
+    start: 50%, 65%
+    end: 50%, 55%
+    duration: 900
 - waitForAnimationToEnd:
-    timeout: 1000
+    timeout: 2500
 - tapOn:
     text: '^ca \(ltr\)$'
 - waitForAnimationToEnd:
     timeout: 3000
+# Assert WHAT was selected, immediately. A tap that reports COMPLETED has only
+# proved Maestro found the element and dispatched a touch at its reported
+# bounds; it has not proved the touch landed on that button. Checking here fails
+# on the tap, with the real selection in the artifact, instead of surfacing much
+# later as a tab bar in the wrong language.
+- assertVisible:
+    text: '^ca \(ltr\)$'
+    selected: true
 - stopApp
 - openLink: ${DEV_CLIENT_URL}
 - waitForAnimationToEnd:

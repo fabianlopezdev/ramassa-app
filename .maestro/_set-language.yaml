@@ -1,0 +1,72 @@
+appId: com.ramassa.app
+name: _set-language
+# Pins the app language through the dev menu, from wherever the app currently is.
+#
+# A fragment of its own, and run by `_open-app.yaml` BEFORE anything is asserted,
+# because a fresh `clearState` leaves no persisted choice and the app then
+# follows the DEVICE locale. On an en-US emulator that renders the login screen
+# in English while the suite resolves its selectors in Catalan, which fails as
+# "Inici de sessio is not visible" and reads like a broken login screen rather
+# than a locale mismatch.
+#
+# The dev menu is reachable pre-auth on purpose: its entry sits on the login
+# screen too, exactly so the language can be pinned before anyone signs in.
+env:
+  DEV_MENU_LABEL: Developer menu
+  MENU_SECTION: Environment
+  LOCALE: ca
+---
+- tapOn: '.*${DEV_MENU_LABEL}.*'
+# Waits on the FIRST section, not the language one: the menu opens scrolled to
+# the top and "Language and direction" is several screens below the fold, so
+# waiting on it fails on a menu that opened perfectly.
+- extendedWaitUntil:
+    visible: '.*${MENU_SECTION}.*'
+    timeout: 30000
+# The menu opens with an interactive transition; a swipe that lands while it is
+# still running cancels it and drops back to where we started.
+- waitForAnimationToEnd:
+    timeout: 5000
+
+# A bounded swipe loop rather than `scrollUntilVisible`, which reaches rows on
+# the Android emulator, leaves them plainly on screen, and still reports them as
+# not found.
+- repeat:
+    times: 20
+    while:
+      notVisible: '^${LOCALE} \(.*\)$'
+    commands:
+      - swipe:
+          start: 50%, 70%
+          end: 50%, 50%
+          duration: 900
+      - waitForAnimationToEnd:
+          timeout: 2500
+# The loop stops the instant a sliver is on screen, which parks the button under
+# the navigation bar where a tap does not reach it. One smaller swipe lifts it clear.
+- swipe:
+    start: 50%, 65%
+    end: 50%, 55%
+    duration: 900
+- waitForAnimationToEnd:
+    timeout: 2500
+- tapOn:
+    text: '^${LOCALE} \(.*\)$'
+- waitForAnimationToEnd:
+    timeout: 3000
+# Assert WHAT was selected, immediately. A tap that reports COMPLETED has only
+# proved Maestro found the element and dispatched a touch at its reported
+# bounds; it has not proved the touch landed on that button. Checking here fails
+# on the tap, with the real selection in the artifact, instead of surfacing much
+# later as a tab bar in the wrong language.
+- assertVisible:
+    text: '^${LOCALE} \(.*\)$'
+    selected: true
+
+# Back to whatever screen the caller was on. The dev menu's own close control is
+# labelled in English at every language: it is a __DEV__ surface and is not
+# translated.
+- tapOn:
+    text: '^Close$'
+- waitForAnimationToEnd:
+    timeout: 3000

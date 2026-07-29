@@ -1,0 +1,59 @@
+{
+  "app": "Ramassà",
+  "slug": "i18n-rtl",
+  "title": "Idiomes i direcció RTL",
+  "surface": "mobile",
+  "description": "Cinc idiomes i dues direccions de lectura. Català, castellà i anglès s'escriuen d'esquerra a dreta; àrab i persa, de dreta a esquerra, i llavors tota la pantalla es reflecteix. El canvi d'idioma és immediat, però la direcció només s'aplica en tornar a obrir l'app, i aquesta seqüència ho mostra tal com passa.",
+  "steps": [
+    {
+      "id": "ca",
+      "label": "Català, esquerra a dreta",
+      "ios": "i18n-rtl/ios/01-ca.png",
+      "android": "i18n-rtl/android/01-ca.png",
+      "web": "i18n-rtl/web/03-home.png"
+    },
+    {
+      "id": "switcher",
+      "label": "Tria d'idioma",
+      "ios": "i18n-rtl/ios/02-switcher.png",
+      "android": "i18n-rtl/android/02-switcher.png"
+    },
+    {
+      "id": "ar-before-restart",
+      "label": "Àrab, abans de reiniciar",
+      "ios": "i18n-rtl/ios/03-ar-before-restart.png",
+      "android": "i18n-rtl/android/03-ar-before-restart.png"
+    },
+    {
+      "id": "ar-after-restart",
+      "label": "Àrab, després de reiniciar",
+      "ios": "i18n-rtl/ios/04-ar-after-restart.png",
+      "android": "i18n-rtl/android/04-ar-after-restart.png",
+      "web": "i18n-rtl/web/03-home-ar.png"
+    },
+    {
+      "id": "direction-readout",
+      "label": "Comprovació de la direcció",
+      "ios": "i18n-rtl/ios/05-direction-readout.png",
+      "android": "i18n-rtl/android/05-direction-readout.png"
+    },
+    {
+      "id": "profile-ar",
+      "label": "Perfil en àrab",
+      "web": "i18n-rtl/web/04-profile-ar.png"
+    }
+  ],
+  "edges": [
+    { "from": "ca", "to": "switcher", "label": "Canvia l'idioma" },
+    { "from": "switcher", "to": "ar-before-restart", "label": "Tria àrab" },
+    { "from": "ar-before-restart", "to": "ar-after-restart", "label": "Torna a obrir l'app" },
+    { "from": "ar-after-restart", "to": "direction-readout", "label": "Comprova la direcció" },
+    { "from": "ar-after-restart", "to": "profile-ar", "label": "Perfil" }
+  ],
+  "nodes": [],
+  "notes": [
+    "El pas del mig és el que costa d'explicar i per això té captura pròpia: en triar àrab els textos canvien de seguida, però la pantalla encara es llegeix d'esquerra a dreta. La direcció només s'aplica en tornar a obrir l'app. Qui no ho sàpiga pensarà que el reflex no funciona.",
+    "Al navegador no passa: la direcció s'aplica immediatament, perquè es fixa a la pàgina i no cal reiniciar res. La comparació entre el mòbil i el navegador d'aquesta mateixa pantalla ho deixa clar.",
+    "Els noms propis de les fitxes es mostren en el seu alfabet (àrab, persa, ciríl·lic) sense caixes buides: les tipografies d'aquests alfabets van dins de l'app, no es descarreguen."
+  ]
+}

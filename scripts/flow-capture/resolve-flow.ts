@@ -16,7 +16,11 @@
 
 import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
-import { PARTICIPANT_FIXTURES, SEED_ACCOUNT_PASSWORD } from '@ramassa/shared/testing';
+import {
+  PARTICIPANT_FIXTURES,
+  SEED_ACCOUNT_PASSWORD,
+  STAFF_FIXTURES,
+} from '@ramassa/shared/testing';
 import { repoRoot } from './config';
 import { interpolate, type Translator } from './translations';
 
@@ -27,14 +31,39 @@ import { interpolate, type Translator } from './translations';
  */
 export const capturePlayer = PARTICIPANT_FIXTURES[0];
 
+/** The seeded admin and entity contact the browser flows sign in as. */
+export const captureAdmin = STAFF_FIXTURES.find((person) => person.role === 'admin');
+export const captureEntity = STAFF_FIXTURES.find((person) => person.role === 'entity');
+
 /**
  * Adds the seeded credentials to the translation lookup, so a flow refers to the
  * account it signs in as the same way it refers to a label: by key.
+ *
+ * Three roles rather than one, because the admin surface routes BY role: the
+ * same URL is a staff dashboard for one account and a redirect for another, so
+ * a browser flow that can only sign in as a player cannot reach two thirds of
+ * the product. Taken from the fixture roster rather than re-listed, so they
+ * cannot drift from the seed SQL `supabase db reset` rebuilds.
  */
 export function withFixtures(translate: Translator): Translator {
+  const accounts: Record<string, string | undefined> = {
+    'player:email': capturePlayer?.email,
+    'staff:email': captureAdmin?.email,
+    'entity:email': captureEntity?.email,
+  };
   return (key: string) => {
-    if (key === 'player:email') return capturePlayer?.email ?? '';
-    if (key === 'player:password') return SEED_ACCOUNT_PASSWORD;
+    if (key in accounts) {
+      const email = accounts[key];
+      if (email === undefined) {
+        throw new Error(`No seeded account for "${key}"; the fixture roster changed shape.`);
+      }
+      return email;
+    }
+    // Explicit rather than a `:password` suffix test, which would also swallow
+    // any real translation key that happens to end that way.
+    if (key === 'player:password' || key === 'staff:password' || key === 'entity:password') {
+      return SEED_ACCOUNT_PASSWORD;
+    }
     return translate(key);
   };
 }

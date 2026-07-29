@@ -177,10 +177,34 @@ install chromium`); the flow-shots skill deliberately does not ship browser bina
 8. **A swipe loop stops the instant a sliver is on screen**, which parks the target 40px tall on the
    bottom edge under the navigation bar, where a tap does not reach it and the flow then waits out
    its timeout on an action that never happened. Follow the loop with one smaller settle swipe.
-9. **The status bar is frozen before every phone pass** (`simctl status_bar override` on iOS, system
-   UI demo mode on Android) so a re-capture differs only where the app differs. Without it every shot
-   carries a live clock and battery reading and no two runs are comparable.
-10. **Selector shapes differ per platform.** iOS exposes a row's accessibility label; Android exposes
+9. **Never let a swipe fling.** A `repeat while notVisible` exits on the FIRST sampled frame that
+   matches, and during a fling that is a frame the scroll has already moved past: the loop "found"
+   the target, the momentum carried the list to its bottom, and the very next command found
+   nothing. The same drift makes a tap land on the wrong control, because Maestro resolves an
+   element's bounds and dispatches the touch as two separate steps, and a wrapped button row moves
+   a whole row between them. That is how a tap on `ca (ltr)` reported COMPLETED and selected `fa`,
+   which looked exactly like an RTL bug and was not one. Swipe roughly a fifth of the screen with
+   an explicit `duration: 900`, and settle with `waitForAnimationToEnd` before any tap or assert.
+10. **Scrolling to something is one-way.** Reaching a row deep in a long list leaves the confirmation
+    that lives in the section header far above the fold, and nothing scrolls back on its own once the
+    swipes are drags. A flow that taps deep and then asserts near the top has to scroll back
+    deliberately.
+11. **Anything a flow needs to verify must be in the accessibility tree.** A selected state shown
+    only as a background colour is invisible to Maestro and to a screen reader alike, so the suite
+    could tap a language and had no way to check WHICH one it selected. `DevButton` carries
+    `accessibilityState.selected` for exactly this.
+12. **The dev menu opens at the top and is ten sections long.** Wait on the FIRST section
+    (`Environment`) to know it opened; waiting on a lower one fails on a menu that opened perfectly.
+13. **A dev client will happily run ANOTHER app's bundle.** It fetches JS from whatever server the
+    deep link names, and this machine runs several Metros. The failure is a native assertion inside
+    an unrelated library at `Running "main"` (here `jsi::Value::getString` in `libworklets`), never
+    "wrong bundle". The harness now identifies Metro by the `scheme` in its Expo manifest and steps
+    over servers that belong to other apps; if a dev build aborts on startup, check what is actually
+    listening on the port before reading any app code.
+14. **The status bar is frozen before every phone pass** (`simctl status_bar override` on iOS, system
+    UI demo mode on Android) so a re-capture differs only where the app differs. Without it every shot
+    carries a live clock and battery reading and no two runs are comparable.
+15. **Selector shapes differ per platform.** iOS exposes a row's accessibility label; Android exposes
     the text nodes inside it. Match on the substring both carry (the email address, not
     "Sign in as <address>").
 

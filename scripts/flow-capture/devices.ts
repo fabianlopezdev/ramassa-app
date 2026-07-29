@@ -195,6 +195,27 @@ export async function reverseMetroPort(serial: string, port: number): Promise<vo
   await runOrThrow(['adb', '-s', serial, 'reverse', `tcp:${port}`, `tcp:${port}`]);
 }
 
+/**
+ * The same tunnel for the local Supabase, which the app needs and which nothing
+ * else sets up.
+ *
+ * `expo run:android` reverses the METRO port and only that, so the backend was
+ * left to whatever address `.env` happened to hold. A loopback address is the
+ * EMULATOR itself and fails outright; a LAN address reaches the host but depends
+ * on the emulator's NAT and the host's current network, which is how a run in
+ * the middle of an otherwise green suite produced a single `AUTH-6` on sign-in
+ * (Sentry, 2026-07-29) while the attempts either side of it succeeded.
+ *
+ * Reversing the port makes `127.0.0.1` inside the emulator mean the host, so the
+ * address works for the same reason the Metro one does, rather than by being on
+ * the right wifi.
+ */
+export async function reverseSupabasePort(serial: string, supabaseUrl: string): Promise<void> {
+  const port = Number(new URL(supabaseUrl).port);
+  if (!Number.isFinite(port) || port === 0) return;
+  await runOrThrow(['adb', '-s', serial, 'reverse', `tcp:${port}`, `tcp:${port}`]);
+}
+
 export async function ensureAndroidApp(serial: string, appId: string): Promise<void> {
   const installed = await run(['adb', '-s', serial, 'shell', 'pm', 'path', appId]);
   if (installed.stdout.includes('package:')) return;

@@ -1,0 +1,33 @@
+{
+  "slug": "admin-login",
+  "viewport": { "width": 1440, "height": 900 },
+  "deviceScaleFactor": 2,
+  "timezoneId": "Europe/Madrid",
+  "settle": { "timeout": 6000, "interval": 150 },
+  "steps": [
+    {
+      "label": "login",
+      "goto": "/login",
+      "waitFor": "text={{admin:loginTitle}}"
+    },
+    {
+      "label": "password",
+      "click": "[aria-label=\"{{auth:usePasswordInstead}}\"]",
+      "waitFor": "[aria-label=\"{{auth:passwordLabel}}\"]"
+    },
+    {
+      "label": "staff-dashboard",
+      "fill": [
+        { "selector": "[aria-label=\"{{auth:emailLabel}}\"]", "value": "{{staff:email}}" },
+        { "selector": "[aria-label=\"{{auth:passwordLabel}}\"]", "value": "{{staff:password}}" }
+      ],
+      "click": "[aria-label=\"{{auth:passwordAction}}\"]",
+      "waitFor": "text={{admin:dashboardTitle}}"
+    },
+    {
+      "label": "staff-participants",
+      "goto": "/participants",
+      "waitFor": "text={{nav:staff.participants}}"
+    }
+  ]
+}

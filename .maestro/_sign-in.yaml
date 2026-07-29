@@ -1,7 +1,7 @@
 appId: com.ramassa.app
 name: _sign-in
-# Signs in as a seeded player through the dev menu's account switcher, and pins
-# the capture language. A fragment: `smoke-auth` exercises this path as its
+# Signs in as a seeded player through the dev menu's account switcher. A
+# fragment: `smoke-auth` exercises this path as its
 # subject, the others just need to be past it.
 #
 # There is no client-side role to fake: role lives in `profiles.role`, resolved
@@ -11,9 +11,9 @@ name: _sign-in
 env:
   DEV_MENU_LABEL: Developer menu
   ACCOUNTS_SECTION: Accounts and roles
-  LOCALE: ca
   PLAYER_EMAIL: '{{player:email}}'
   PUSH_DECLINE: '{{push:rationaleDecline}}'
+  HOME_TITLE: '{{home:title}}'
 ---
 - tapOn: '.*${DEV_MENU_LABEL}.*'
 - extendedWaitUntil:
@@ -34,21 +34,22 @@ env:
       notVisible: '.*${PLAYER_EMAIL}.*'
     commands:
       - swipe:
-          start: 50%, 75%
-          end: 50%, 35%
+          start: 50%, 70%
+          end: 50%, 50%
+          duration: 900
       - waitForAnimationToEnd:
-          timeout: 1000
+          timeout: 2500
 # The loop stops the instant a sliver is on screen, which parks the row under the
 # navigation bar where a tap does not reach it. One smaller swipe lifts it clear.
 - swipe:
-    start: 50%, 75%
-    end: 50%, 45%
+    start: 50%, 65%
+    end: 50%, 55%
+    duration: 900
 - waitForAnimationToEnd:
-    timeout: 1000
+    timeout: 2500
 - tapOn: '.*${PLAYER_EMAIL}.*'
-- extendedWaitUntil:
-    visible: '.*Signed in as ${PLAYER_EMAIL}.*'
-    timeout: 30000
+- waitForAnimationToEnd:
+    timeout: 3000
 
 # Signing in mounts the player area, which asks about notifications before the
 # system dialog. Decline: the OS is never asked, so iOS's single allotted prompt
@@ -57,24 +58,13 @@ env:
     text: '^${PUSH_DECLINE}$'
     optional: true
 
-# Pin the language. Without this the app follows the DEVICE locale, so a machine
-# set to English quietly produces an English "Catalan" run.
-- repeat:
-    times: 20
-    while:
-      notVisible: '^${LOCALE} \(.*\)$'
-    commands:
-      - swipe:
-          start: 50%, 75%
-          end: 50%, 35%
-      - waitForAnimationToEnd:
-          timeout: 1000
-- swipe:
-    start: 50%, 75%
-    end: 50%, 45%
-- waitForAnimationToEnd:
-    timeout: 1000
-- tapOn:
-    text: '^${LOCALE} \(.*\)$'
-- waitForAnimationToEnd:
-    timeout: 3000
+# Assert the OUTCOME, not the dev menu's "Signed in as ..." line. That line is
+# local component state rendered after the account list, and a SUCCESSFUL sign-in
+# routes to the player area and unmounts the whole menu, destroying it. Asserting
+# on it means racing the very navigation that proves the thing worked, which
+# passed or failed by timing alone. Landing on the player home cannot be reached
+# any other way, so it is the honest proof, and a failed sign-in still fails here
+# because the menu simply stays put.
+- extendedWaitUntil:
+    visible: '.*${HOME_TITLE}.*'
+    timeout: 120000

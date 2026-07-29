@@ -42,3 +42,8 @@ env:
 - extendedWaitUntil:
     visible: '.*${DEV_MENU_LABEL}.*'
     timeout: 240000
+
+# Language before assertions, never after: `clearState` leaves no persisted
+# choice, so until this runs the app is in the DEVICE's language and every
+# selector the suite resolved from Catalan misses.
+- runFlow: _set-language.yaml

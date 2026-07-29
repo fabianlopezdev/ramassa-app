@@ -86,30 +86,34 @@ env:
       notVisible: '.*${PLAYER_EMAIL}.*'
     commands:
       - swipe:
-          start: 50%, 75%
-          end: 50%, 35%
+          start: 50%, 70%
+          end: 50%, 50%
+          duration: 900
       - waitForAnimationToEnd:
-          timeout: 1000
+          timeout: 2500
 # The loop above stops the moment ANY sliver of the row is on screen, which in
 # practice leaves it 40px tall on the bottom edge, under the navigation bar,
 # where a tap does not reach it: the flow then waits out its timeout on a sign-in
 # that never happened. One more swipe lifts the row into the body of the list.
 - swipe:
-    start: 50%, 75%
-    end: 50%, 45%
+    start: 50%, 65%
+    end: 50%, 55%
+    duration: 900
 - waitForAnimationToEnd:
-    timeout: 1000
+    timeout: 2500
 - tapOn: '.*${PLAYER_EMAIL}.*'
-- extendedWaitUntil:
-    visible: '.*Signed in as ${PLAYER_EMAIL}.*'
-    timeout: 30000
-
-# Signing in mounts the player area, which asks about notifications BEFORE the
-# system dialog. Decline: the flow is capturing the tab shell, and the OS is
-# never asked, so iOS's single allotted prompt stays unspent.
+- waitForAnimationToEnd:
+    timeout: 3000
 - tapOn:
     text: '^${PUSH_DECLINE}$'
     optional: true
+# The OUTCOME, not the dev menu's "Signed in as ..." line: that line is local
+# component state, and a successful sign-in routes to the player area and
+# unmounts the menu that holds it, so asserting on it races the navigation that
+# proves the thing worked.
+- extendedWaitUntil:
+    visible: '.*${HOME_TITLE}.*'
+    timeout: 120000
 
 # Pin the capture language. Without this the app follows the SIMULATOR's locale,
 # so a machine set to English would quietly produce an English "Catalan" pass.
@@ -120,15 +124,17 @@ env:
       notVisible: '^${LOCALE} \(.*\)$'
     commands:
       - swipe:
-          start: 50%, 75%
-          end: 50%, 35%
+          start: 50%, 70%
+          end: 50%, 50%
+          duration: 900
       - waitForAnimationToEnd:
-          timeout: 1000
+          timeout: 2500
 - swipe:
-    start: 50%, 75%
-    end: 50%, 45%
+    start: 50%, 65%
+    end: 50%, 55%
+    duration: 900
 - waitForAnimationToEnd:
-    timeout: 1000
+    timeout: 2500
 - tapOn:
     text: '^${LOCALE} \(.*\)$'
 - waitForAnimationToEnd:

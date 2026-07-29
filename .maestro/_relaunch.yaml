@@ -29,6 +29,19 @@ env:
           optional: true
       - waitForAnimationToEnd:
           timeout: 3000
+# The loop above exits on the FIRST frame showing home, but the client's
+# explainer lands seconds AFTER the first render: it then covers the screen and
+# the wait below sits out its full timeout on a home screen that is there and
+# hidden. Sweep once more for a late sheet before asserting.
+- repeat:
+    times: 4
+    while:
+      visible: '^Close$'
+    commands:
+      - tapOn:
+          text: '^Close$'
+      - waitForAnimationToEnd:
+          timeout: 3000
 - extendedWaitUntil:
     visible: '.*${HOME_TITLE}.*'
     timeout: 240000

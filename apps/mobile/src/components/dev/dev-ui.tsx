@@ -52,6 +52,7 @@ interface DevButtonProps {
 function DevButtonBase({
   label,
   onPress,
+  isActive,
   className,
   textClassName,
 }: DevButtonProps & { className: string; textClassName: string }) {
@@ -59,6 +60,12 @@ function DevButtonBase({
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={label}
+      // Selection announced, not just coloured. A button whose only "on" signal
+      // is a background colour is invisible to a screen reader, and equally
+      // invisible to the Maestro suite: `smoke-i18n` could tap a language and
+      // had no way to check WHICH one it had actually selected, so a mis-landed
+      // tap surfaced ninety seconds later as an unrelated tab-bar assertion.
+      accessibilityState={isActive === undefined ? undefined : { selected: isActive }}
       onPress={onPress}
       className={`min-h-min items-center justify-center rounded-md px-md py-sm active:opacity-70 ${className}`}
     >
@@ -72,6 +79,7 @@ export function DevButton({ label, onPress, isActive = false }: DevButtonProps) 
     <DevButtonBase
       label={label}
       onPress={onPress}
+      isActive={isActive}
       className={isActive ? 'bg-primary' : 'bg-neutral-100'}
       textClassName={isActive ? 'text-white' : 'text-neutral-800'}
     />

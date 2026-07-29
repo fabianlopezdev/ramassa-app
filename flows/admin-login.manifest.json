@@ -1,0 +1,40 @@
+{
+  "app": "Ramassà",
+  "slug": "admin-login",
+  "title": "Accés de l'equip",
+  "surface": "admin",
+  "description": "Com entra l'equip de Ramassà a l'administració. Mateixa porta que per a les jugadores (enllaç per correu, amb contrasenya com a alternativa), però el que es troba a dins depèn del paper de cadascú: l'equip veu el tauler i el menú lateral complet.",
+  "steps": [
+    {
+      "id": "login",
+      "label": "Accés a l'administració",
+      "web": "admin-login/web/01-login.png"
+    },
+    {
+      "id": "password",
+      "label": "Alternativa amb contrasenya",
+      "web": "admin-login/web/02-password.png"
+    },
+    {
+      "id": "staff-dashboard",
+      "label": "Tauler de l'equip",
+      "web": "admin-login/web/03-staff-dashboard.png"
+    },
+    {
+      "id": "staff-participants",
+      "label": "Participants",
+      "web": "admin-login/web/04-staff-participants.png"
+    }
+  ],
+  "edges": [
+    { "from": "login", "to": "password", "label": "Tinc contrasenya" },
+    { "from": "password", "to": "staff-dashboard", "label": "Entra" },
+    { "from": "staff-dashboard", "to": "staff-participants", "label": "Participants" }
+  ],
+  "nodes": [],
+  "notes": [
+    "L'administració és un web, no una app: l'equip hi treballa des de l'ordinador, amb el menú lateral sempre visible. Per això aquestes captures són de navegador i no de mòbil.",
+    "El paper de cada persona es decideix al servidor, no al navegador: qui entra com a entitat no arriba al tauler de l'equip encara que n'escrigui l'adreça, i se'l porta al seu propi portal.",
+    "Les pantalles interiors encara són buides en aquesta fase: primer es construeix la navegació i el control d'accés, i el contingut hi va després."
+  ]
+}

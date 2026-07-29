@@ -43,6 +43,7 @@ import {
   pinAndroidStatusBar,
   pinIosStatusBar,
   reverseMetroPort,
+  reverseSupabasePort,
 } from './flow-capture/devices';
 import { assertClientSafe, resolveManifest, type FlowManifest } from './flow-capture/manifest';
 import { devClientUrl, withFixtures, writeResolvedFlow } from './flow-capture/resolve-flow';
@@ -136,6 +137,7 @@ async function captureMobilePass(
   const metro = await ensureMetro(config.metroPort, config.scheme);
   if (pass === 'android') {
     await reverseMetroPort(device, metro.port);
+    await reverseSupabasePort(device, process.env.EXPO_PUBLIC_SUPABASE_URL ?? '');
   }
   const shotsDir = path.join('maestro', 'shots', entry.slug, options.locale, pass);
   await rm(path.join(repoRoot, shotsDir), { recursive: true, force: true });

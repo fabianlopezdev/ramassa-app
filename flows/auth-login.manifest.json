@@ -1,0 +1,65 @@
+{
+  "app": "Ramassà",
+  "slug": "auth-login",
+  "title": "Inici de sessió",
+  "surface": "mobile",
+  "description": "La porta d'entrada de les jugadores. Per defecte s'entra amb un enllaç per correu, sense contrasenya; qui ja en tingui una pot fer servir l'alternativa. Es mostra en català i en àrab, de dreta a esquerra.",
+  "steps": [
+    {
+      "id": "login",
+      "label": "Inici de sessió",
+      "ios": "auth-login/ios/01-login.png",
+      "android": "auth-login/android/01-login.png",
+      "web": "auth-login/web/01-login.png"
+    },
+    {
+      "id": "password",
+      "label": "Alternativa amb contrasenya",
+      "ios": "auth-login/ios/02-password.png",
+      "android": "auth-login/android/02-password.png",
+      "web": "auth-login/web/02-password.png"
+    },
+    {
+      "id": "magic-sent",
+      "label": "Enllaç enviat",
+      "ios": "auth-login/ios/03-magic-sent.png",
+      "android": "auth-login/android/03-magic-sent.png",
+      "web": "auth-login/web/04-magic-sent.png"
+    },
+    {
+      "id": "login-ar",
+      "label": "تسجيل الدخول (àrab, dreta a esquerra)",
+      "ios": "auth-login/ios/01-login-ar.png",
+      "android": "auth-login/android/01-login-ar.png",
+      "web": "auth-login/web/01-login-ar.png"
+    },
+    {
+      "id": "password-ar",
+      "label": "كلمة المرور",
+      "ios": "auth-login/ios/02-password-ar.png",
+      "android": "auth-login/android/02-password-ar.png",
+      "web": "auth-login/web/02-password-ar.png"
+    },
+    {
+      "id": "magic-sent-ar",
+      "label": "تم إرسال الرابط",
+      "ios": "auth-login/ios/03-magic-sent-ar.png",
+      "android": "auth-login/android/03-magic-sent-ar.png",
+      "web": "auth-login/web/04-magic-sent-ar.png"
+    }
+  ],
+  "edges": [
+    { "from": "login", "to": "password", "label": "Tinc contrasenya" },
+    { "from": "password", "to": "login", "label": "Millor per correu" },
+    { "from": "login", "to": "magic-sent", "label": "Envia'm un enllaç" },
+    { "from": "login-ar", "to": "password-ar", "label": "كلمة المرور" },
+    { "from": "password-ar", "to": "login-ar", "label": "رابط بالبريد" },
+    { "from": "login-ar", "to": "magic-sent-ar", "label": "أرسل الرابط" }
+  ],
+  "nodes": [],
+  "notes": [
+    "L'enllaç per correu és l'opció per defecte a propòsit: una contrasenya més és una barrera per a qui fa servir el mòbil d'algú altre o canvia de telèfon sovint. La contrasenya queda com a alternativa, no com a camí principal.",
+    "El text sota el formulari explica per què no cal contrasenya. Sense aquesta frase, la pantalla sembla incompleta a qui espera els dos camps de sempre.",
+    "La pantalla és la primera que veu qualsevol persona, així que és també la primera prova de la direcció de lectura: en àrab i persa tot el bloc es reflecteix, incloent-hi l'alineació del text i la posició de l'etiqueta."
+  ]
+}

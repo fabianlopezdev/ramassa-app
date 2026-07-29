@@ -1,7 +1,14 @@
 /**
  * The cumulative Maestro regression suite (RAPP-20).
  *
- *   bun run qa:smoke [--platform ios|android|both]
+ *   bun run qa:smoke [--platform ios|android|both] [--only <substring>]
+ *
+ * `--only` narrows the run to the flows whose filename contains the substring.
+ * It exists for ITERATING on one failing flow: a suite pass is minutes per
+ * platform, and re-running all of it to see whether one selector now resolves
+ * is how a green suite ends up taking an afternoon. A closure run never passes
+ * it - the point of the suite is that everything earlier phases proved stays
+ * proved.
  *
  * Every phase closure adds flows here and runs the whole suite, so what an
  * earlier phase proved stays proved. Android is the primary target: the players
@@ -27,6 +34,7 @@ import {
   pinAndroidStatusBar,
   pinIosStatusBar,
   reverseMetroPort,
+  reverseSupabasePort,
 } from './flow-capture/devices';
 import { devClientUrl, writeResolvedFlow } from './flow-capture/resolve-flow';
 import { ensureMetro } from './flow-capture/servers';
@@ -66,6 +74,7 @@ async function runSuiteOn(
   const metro = await ensureMetro(config.metroPort, config.scheme);
   if (platform === 'android') {
     await reverseMetroPort(device, metro.port);
+    await reverseSupabasePort(device, process.env.EXPO_PUBLIC_SUPABASE_URL ?? '');
   }
 
   // Every fragment is resolved too, not just the suite members: `runFlow` reads
@@ -104,11 +113,21 @@ async function runSuiteOn(
   return results;
 }
 
-export async function runSmokeSuite(platforms: readonly ('ios' | 'android')[]): Promise<boolean> {
+export async function runSmokeSuite(
+  platforms: readonly ('ios' | 'android')[],
+  only?: string,
+): Promise<boolean> {
   const config = await loadFlowConfig();
-  const flows = suiteFlows(await readdir(suiteDir));
-  if (flows.length === 0) {
+  const all = suiteFlows(await readdir(suiteDir));
+  const flows = only === undefined ? all : all.filter((flow) => flow.includes(only));
+  if (all.length === 0) {
     throw new Error(`No smoke flows in ${suiteDir}`);
+  }
+  if (flows.length === 0) {
+    throw new Error(`No smoke flow matches --only ${only}. Have: ${all.join(', ')}`);
+  }
+  if (flows.length !== all.length) {
+    log(`· --only ${only}: running ${flows.length} of ${all.length} flows`);
   }
 
   const results: SmokeResult[] = [];
@@ -129,6 +148,12 @@ if (import.meta.main) {
   const argv = process.argv.slice(2);
   const index = argv.indexOf('--platform');
   const requested = index === -1 ? 'android' : argv[index + 1];
+  const onlyIndex = argv.indexOf('--only');
+  const only = onlyIndex === -1 ? undefined : argv[onlyIndex + 1];
+  if (onlyIndex !== -1 && (only === undefined || only.startsWith('--'))) {
+    console.error('--only needs a flow-name substring, e.g. --only i18n');
+    process.exit(1);
+  }
   const platforms =
     requested === 'both' ? (['android', 'ios'] as const) : ([requested] as ('ios' | 'android')[]);
   if (!platforms.every((platform) => platform === 'ios' || platform === 'android')) {
@@ -136,7 +161,7 @@ if (import.meta.main) {
     process.exit(1);
   }
   try {
-    process.exit((await runSmokeSuite(platforms)) ? 0 : 1);
+    process.exit((await runSmokeSuite(platforms, only)) ? 0 : 1);
   } catch (error) {
     console.error(`\n✗ ${error instanceof Error ? error.message : String(error)}\n`);
     process.exit(1);
