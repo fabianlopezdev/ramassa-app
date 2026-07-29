@@ -15,12 +15,28 @@ env:
   PUSH_DECLINE: '{{push:rationaleDecline}}'
   HOME_TITLE: '{{home:title}}'
 ---
-- tapOn: '.*${DEV_MENU_LABEL}.*'
-- extendedWaitUntil:
-    visible: '.*${ACCOUNTS_SECTION}.*'
-    timeout: 30000
-# The push transition is interactive: a swipe landing while it still runs cancels
-# it and drops back, which reads exactly like "the menu never opened".
+# Opening the dev menu is a LOOP, not one tap. A single tap is swallowed whenever
+# the client's explainer sheet is mid-flight over it, and the flow then waits out
+# its timeout on a login screen with the button plainly visible. The loop also
+# clears a late sheet, and it stops the instant the menu is actually open. The
+# section it waits on is the FIRST one: the menu opens scrolled to the top, so
+# waiting on a lower section fails on a menu that opened perfectly.
+- repeat:
+    times: 6
+    while:
+      notVisible: '.*${ACCOUNTS_SECTION}.*'
+    commands:
+      - tapOn:
+          text: '.*Close.*'
+          optional: true
+      - tapOn:
+          text: '.*${DEV_MENU_LABEL}.*'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- assertVisible: '.*${ACCOUNTS_SECTION}.*'
+# The menu opens with an interactive transition; a swipe landing while it is still
+# running cancels it and drops back to where we started.
 - waitForAnimationToEnd:
     timeout: 5000
 
@@ -52,14 +68,29 @@ env:
     timeout: 3000
 
 # Close the dev menu. Signing in does NOT dismiss it: the session changes
-# underneath, the menu stays exactly where it is, and the account row simply
-# becomes the highlighted one. So there is nothing to wait for until the menu is
-# out of the way, and waiting for the player home while it is still open can
-# never pass.
-- tapOn:
-    text: '^Close$'
-- waitForAnimationToEnd:
-    timeout: 3000
+# underneath and the tapped row simply becomes the highlighted one, so nothing
+# is waitable until the menu is out of the way.
+# Closing the menu is a LOOP too. Selecting a language re-renders the section, and
+# a tap dispatched into that re-render finds no `Close` in the hierarchy at all,
+# even though a screenshot taken a moment later shows it plainly.
+#
+# The loop keys on `Close` rather than on a section title. A section title is the
+# wrong proxy for "the menu is open": by this point the menu is scrolled down to
+# the language buttons, so the FIRST section is above the fold, the loop reads
+# that as already closed, runs zero times, and the assertion passes on a menu
+# still filling the screen. `Close` is pinned to the header and exists only while
+# the menu is open.
+- repeat:
+    times: 6
+    while:
+      visible: '.*Close.*'
+    commands:
+      - tapOn:
+          text: '.*Close.*'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- assertNotVisible: '.*Close.*'
 
 # Mounting the player area asks about notifications before the system dialog, and
 # that sheet can land AFTER the first render, covering the very title being waited
@@ -73,7 +104,7 @@ env:
           text: '^${PUSH_DECLINE}$'
           optional: true
       - tapOn:
-          text: '^Close$'
+          text: '.*Close.*'
           optional: true
       - waitForAnimationToEnd:
           timeout: 3000

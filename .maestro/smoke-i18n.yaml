@@ -88,7 +88,7 @@ env:
       notVisible: '^${TAB_HOME_AR}$'
     commands:
       - tapOn:
-          text: '^Close$'
+          text: '.*Close.*'
           optional: true
       - waitForAnimationToEnd:
           timeout: 3000
@@ -187,7 +187,7 @@ env:
       notVisible: '^${TAB_HOME_CA}$'
     commands:
       - tapOn:
-          text: '^Close$'
+          text: '.*Close.*'
           optional: true
       - waitForAnimationToEnd:
           timeout: 3000

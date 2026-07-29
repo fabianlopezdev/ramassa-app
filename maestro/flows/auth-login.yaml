@@ -56,10 +56,10 @@ env:
 - repeat:
     times: 4
     while:
-      visible: '^Close$'
+      visible: '.*Close.*'
     commands:
       - tapOn:
-          text: '^Close$'
+          text: '.*Close.*'
       - waitForAnimationToEnd:
           timeout: 3000
 
@@ -112,7 +112,7 @@ env:
     text: '^${LOCALE} \(.*\)$'
     selected: true
 - tapOn:
-    text: '^Close$'
+    text: '.*Close.*'
 - waitForAnimationToEnd:
     timeout: 3000
 
@@ -138,7 +138,7 @@ env:
       notVisible: '.*${LOGIN_TITLE}.*'
     commands:
       - tapOn:
-          text: '^Close$'
+          text: '.*Close.*'
           optional: true
       - waitForAnimationToEnd:
           timeout: 3000

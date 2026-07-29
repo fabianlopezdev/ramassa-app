@@ -42,10 +42,10 @@ env:
 - repeat:
     times: 4
     while:
-      visible: '^Close$'
+      visible: '.*Close.*'
     commands:
       - tapOn:
-          text: '^Close$'
+          text: '.*Close.*'
       - waitForAnimationToEnd:
           timeout: 3000
 - extendedWaitUntil:

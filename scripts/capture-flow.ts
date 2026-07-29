@@ -50,6 +50,7 @@ import { devClientUrl, withFixtures, writeResolvedFlow } from './flow-capture/re
 import {
   assertLocalSupabase,
   ensureMetro,
+  serveAdminApp,
   serveWebExport,
   type StoppableServer,
 } from './flow-capture/servers';
@@ -204,7 +205,15 @@ async function captureWebPass(
   await mkdir(path.dirname(resolvedSpecFile), { recursive: true });
   await Bun.write(resolvedSpecFile, `${JSON.stringify(resolvedSpec, null, 2)}\n`);
 
-  const preview: StoppableServer = await serveWebExport(config.webPreviewPort);
+  // The APP the flow belongs to, not "the web build". A player flow's browser
+  // pass is the Expo web export; an admin or entity flow is a different
+  // application on a different stack, and driving its spec against the player
+  // bundle finds none of its selectors.
+  const isPlayer = entry.surface === 'mobile';
+  const port = isPlayer ? config.webPreviewPort : config.adminPreviewPort;
+  const preview: StoppableServer = isPlayer
+    ? await serveWebExport(port)
+    : await serveAdminApp(port);
   try {
     await runOrThrow(
       [
@@ -213,7 +222,7 @@ async function captureWebPass(
         '--spec',
         resolvedSpecFile,
         '--base-url',
-        `http://localhost:${config.webPreviewPort}`,
+        `http://localhost:${port}`,
         '--out',
         destination,
       ],

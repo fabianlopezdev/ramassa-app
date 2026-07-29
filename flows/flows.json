@@ -11,6 +11,7 @@
   "scheme": "ramassa",
   "metroPort": 8081,
   "webPreviewPort": 4173,
+  "adminPreviewPort": 4174,
   "flows": [
     { "slug": "auth-login", "phase": "1", "surface": "mobile", "title": "Inici de sessió" },
     { "slug": "shell-tabs", "phase": "1", "surface": "mobile", "title": "Navegació principal" },

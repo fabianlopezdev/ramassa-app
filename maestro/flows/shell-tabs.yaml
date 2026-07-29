@@ -60,10 +60,10 @@ env:
 - repeat:
     times: 4
     while:
-      visible: '^Close$'
+      visible: '.*Close.*'
     commands:
       - tapOn:
-          text: '^Close$'
+          text: '.*Close.*'
       - waitForAnimationToEnd:
           timeout: 3000
 - extendedWaitUntil:
@@ -119,7 +119,7 @@ env:
 # out of the way, and waiting for the player home while it is still open can
 # never pass.
 - tapOn:
-    text: '^Close$'
+    text: '.*Close.*'
 - waitForAnimationToEnd:
     timeout: 3000
 
@@ -135,7 +135,7 @@ env:
           text: '^${PUSH_DECLINE}$'
           optional: true
       - tapOn:
-          text: '^Close$'
+          text: '.*Close.*'
           optional: true
       - waitForAnimationToEnd:
           timeout: 3000
@@ -202,7 +202,7 @@ env:
       notVisible: '.*${HOME_TITLE}.*'
     commands:
       - tapOn:
-          text: '^Close$'
+          text: '.*Close.*'
           optional: true
       - tapOn:
           text: '^${PUSH_DECLINE}$'

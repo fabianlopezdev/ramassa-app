@@ -43,6 +43,7 @@ export interface FlowConfig {
   readonly scheme: string;
   readonly metroPort: number;
   readonly webPreviewPort: number;
+  readonly adminPreviewPort: number;
   readonly flows: readonly FlowEntry[];
 }
 

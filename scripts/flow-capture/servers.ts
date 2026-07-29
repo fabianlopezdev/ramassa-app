@@ -13,6 +13,7 @@ import { repoRoot } from './config';
 import { log, runOrThrow, waitFor } from './shell';
 
 const mobileDir = path.join(repoRoot, 'apps', 'mobile');
+const adminDir = path.join(repoRoot, 'apps', 'admin');
 
 export interface StoppableServer {
   stop(): Promise<void>;
@@ -143,6 +144,48 @@ export async function serveWebExport(port: number): Promise<StoppableServer> {
     },
   });
   log(`· serving the web export on ${server.url.origin}`);
+  return {
+    stop: async () => {
+      await server.stop(true);
+    },
+  };
+}
+
+/**
+ * Builds the ADMIN app and serves it, for `admin` and `entity` flows.
+ *
+ * Not the player web export: those are two different applications on two
+ * different stacks, and an admin flow driven against the player bundle simply
+ * finds none of its selectors. `captureWebPass` served the player export for
+ * every browser flow, which is fine for the 18 player flows and wrong for the
+ * other 26.
+ *
+ * A production build rather than `vite dev`, for the same reason the player pass
+ * uses `expo export`: the screenshots go on a client-facing canvas, and a dev
+ * server is entitled to overlay whatever it likes on top of the app.
+ */
+export async function serveAdminApp(port: number): Promise<StoppableServer> {
+  log('· building the admin app for the browser');
+  await runOrThrow(['bun', 'run', 'build'], { cwd: adminDir, inherit: true });
+
+  const distDir = path.join(adminDir, 'dist', 'client');
+  const indexHtml = Bun.file(path.join(distDir, 'index.html'));
+  if (!(await indexHtml.exists())) {
+    throw new Error(`admin build produced no index.html in ${distDir}`);
+  }
+
+  const server = Bun.serve({
+    port,
+    fetch: async (request) => {
+      const { pathname } = new URL(request.url);
+      const asset = Bun.file(path.join(distDir, decodeURIComponent(pathname)));
+      if (pathname !== '/' && (await asset.exists())) {
+        return new Response(asset);
+      }
+      return new Response(indexHtml, { headers: { 'content-type': 'text/html' } });
+    },
+  });
+  log(`· serving the admin app on ${server.url.origin}`);
   return {
     stop: async () => {
       await server.stop(true);
