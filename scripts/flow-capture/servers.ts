@@ -18,22 +18,57 @@ export interface StoppableServer {
   stop(): Promise<void>;
 }
 
-const NOOP_SERVER: StoppableServer = { stop: async () => {} };
+/** A Metro this run can use, and the port it actually ended up on. */
+export interface MetroServer extends StoppableServer {
+  readonly port: number;
+}
 
-export async function ensureMetro(port: number): Promise<StoppableServer> {
-  if (await isMetroUp(port)) {
-    log(`· reusing the Metro server already on :${port}`);
-    return NOOP_SERVER;
+/**
+ * Metro for THIS app, on the preferred port when that port is free or already
+ * ours, and on the next free port when it is not.
+ *
+ * The identity check is the whole point. A dev client fetches its JS from
+ * whatever server the deep link names, and it will happily run another app's
+ * bundle inside this app's native binary: the JS loads, then the first native
+ * module whose JS and `.so` halves disagree aborts the process. That is what
+ * `react-native-worklets` did here, as a bare `jsi::Value::getString` assertion
+ * with no mention of a bundle anywhere in it, after this machine's OTHER
+ * project happened to claim 8081 first. A liveness probe cannot catch it,
+ * because the wrong server is alive.
+ */
+export async function ensureMetro(port: number, scheme: string): Promise<MetroServer> {
+  // Upward from the preferred port: ours is reused wherever it turns out to be,
+  // another app's is stepped over, and the first genuinely empty port is where
+  // this run starts its own.
+  let ourPort = port;
+  for (let candidate = port; candidate < port + 20; candidate += 1) {
+    const owner = await metroScheme(candidate);
+    if (owner === scheme) {
+      log(`· reusing the Metro server already on :${candidate}`);
+      return { port: candidate, stop: async () => {} };
+    }
+    if (owner !== undefined) {
+      log(`· :${candidate} belongs to another app (${owner}), leaving it alone`);
+      continue;
+    }
+    if (await isPortFree(candidate)) {
+      ourPort = candidate;
+      break;
+    }
   }
-  log(`· starting Metro on :${port}`);
-  const child = Bun.spawn(['bunx', 'expo', 'start', '--port', String(port)], {
+
+  log(`· starting Metro on :${ourPort}`);
+  const child = Bun.spawn(['bunx', 'expo', 'start', '--port', String(ourPort)], {
     cwd: mobileDir,
     stdout: 'ignore',
     stderr: 'ignore',
     stdin: 'ignore',
   });
-  await waitFor(`Metro on :${port}`, () => isMetroUp(port), { timeoutMs: 180_000 });
+  await waitFor(`Metro on :${ourPort}`, async () => (await metroScheme(ourPort)) === scheme, {
+    timeoutMs: 180_000,
+  });
   return {
+    port: ourPort,
     stop: async () => {
       child.kill();
       await child.exited;
@@ -41,12 +76,33 @@ export async function ensureMetro(port: number): Promise<StoppableServer> {
   };
 }
 
-async function isMetroUp(port: number): Promise<boolean> {
+/**
+ * The `scheme` of the app being served on a port, or undefined when nothing is
+ * listening. Read from the Expo manifest rather than from `/status`, which
+ * every Metro answers identically.
+ */
+async function metroScheme(port: number): Promise<string | undefined> {
   try {
-    const response = await fetch(`http://localhost:${port}/status`, {
-      signal: AbortSignal.timeout(2000),
+    const response = await fetch(`http://localhost:${port}/`, {
+      headers: { 'expo-platform': 'android', accept: 'application/expo+json,application/json' },
+      signal: AbortSignal.timeout(4000),
     });
-    return (await response.text()).includes('packager-status:running');
+    if (!response.ok) return undefined;
+    const manifest = (await response.json()) as {
+      extra?: { expoClient?: { scheme?: string | readonly string[] } };
+    };
+    const served = manifest.extra?.expoClient?.scheme;
+    return Array.isArray(served) ? served[0] : (served as string | undefined);
+  } catch {
+    return undefined;
+  }
+}
+
+async function isPortFree(port: number): Promise<boolean> {
+  try {
+    const probe = Bun.serve({ port, fetch: () => new Response() });
+    await probe.stop(true);
+    return true;
   } catch {
     return false;
   }

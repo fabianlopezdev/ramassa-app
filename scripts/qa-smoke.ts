@@ -63,9 +63,9 @@ async function runSuiteOn(
     await pinAndroidStatusBar(device);
   }
 
-  const metro = await ensureMetro(config.metroPort);
+  const metro = await ensureMetro(config.metroPort, config.scheme);
   if (platform === 'android') {
-    await reverseMetroPort(device, config.metroPort);
+    await reverseMetroPort(device, metro.port);
   }
 
   // Every fragment is resolved too, not just the suite members: `runFlow` reads
@@ -76,7 +76,7 @@ async function runSuiteOn(
   // the resolver treats an undeclared override as an authoring mistake - which
   // it is, for a capture flow, and that check is worth keeping.
   const translate = await loadTranslator('ca');
-  const clientUrl = devClientUrl(config.scheme, config.metroPort);
+  const clientUrl = devClientUrl(config.scheme, metro.port);
   for (const file of (await readdir(suiteDir)).filter((name) => name.endsWith('.yaml'))) {
     const source = path.join(suiteDir, file);
     const declaresClientUrl = (await Bun.file(source).text()).includes('DEV_CLIENT_URL:');

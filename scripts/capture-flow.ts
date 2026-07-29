@@ -133,9 +133,9 @@ async function captureMobilePass(
     await pinAndroidStatusBar(device);
   }
 
-  const metro = await ensureMetro(config.metroPort);
+  const metro = await ensureMetro(config.metroPort, config.scheme);
   if (pass === 'android') {
-    await reverseMetroPort(device, config.metroPort);
+    await reverseMetroPort(device, metro.port);
   }
   const shotsDir = path.join('maestro', 'shots', entry.slug, options.locale, pass);
   await rm(path.join(repoRoot, shotsDir), { recursive: true, force: true });
@@ -145,7 +145,7 @@ async function captureMobilePass(
     SHOTS: shotsDir,
     SUFFIX: localeSuffix(options.locale),
     LOCALE: options.locale,
-    DEV_CLIENT_URL: devClientUrl(config.scheme, config.metroPort),
+    DEV_CLIENT_URL: devClientUrl(config.scheme, metro.port),
   });
 
   try {

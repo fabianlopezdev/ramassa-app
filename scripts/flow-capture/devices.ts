@@ -54,16 +54,17 @@ async function isIosBooted(udid: string): Promise<boolean> {
 
 /** Starts the named AVD if no emulator is attached and returns its adb serial. */
 export async function ensureAndroidDevice(avdName: string): Promise<string> {
-  let serial = (await attachedEmulators())[0];
+  let serial = await findEmulatorRunning(avdName);
 
   if (serial === undefined) {
     log(`· starting emulator ${avdName}`);
     Bun.spawn(['emulator', '-avd', avdName], { stdout: 'ignore', stderr: 'ignore' }).unref();
-    await waitFor(`${avdName} to appear`, async () => (await attachedEmulators()).length > 0, {
-      timeoutMs: 300_000,
-      intervalMs: 2000,
-    });
-    serial = (await attachedEmulators())[0];
+    await waitFor(
+      `${avdName} to appear`,
+      async () => (await findEmulatorRunning(avdName)) !== undefined,
+      { timeoutMs: 300_000, intervalMs: 2000 },
+    );
+    serial = await findEmulatorRunning(avdName);
     if (serial === undefined) throw new Error(`Emulator ${avdName} never attached`);
   }
 
@@ -99,6 +100,24 @@ async function waitForAndroidBoot(serial: string): Promise<void> {
     },
     { timeoutMs: 600_000, intervalMs: 3000 },
   );
+}
+
+/**
+ * The emulator running THIS project's AVD, by name.
+ *
+ * Not "the first attached emulator": this machine routinely has another
+ * project's emulators running, and picking one of those would install this
+ * app onto it and run the suite against the wrong device. It is the same hazard
+ * `--device` exists to prevent one level down, and it has to be prevented here
+ * too.
+ */
+async function findEmulatorRunning(avdName: string): Promise<string | undefined> {
+  for (const serial of await attachedEmulators()) {
+    // `emu avd name` prints the name, then a line saying OK.
+    const { stdout } = await run(['adb', '-s', serial, 'emu', 'avd', 'name']);
+    if (stdout.split('\n')[0]?.trim() === avdName) return serial;
+  }
+  return undefined;
 }
 
 async function attachedEmulators(): Promise<readonly string[]> {
