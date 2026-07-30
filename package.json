@@ -45,5 +45,8 @@
   },
   "trustedDependencies": [
     "@sentry/cli"
-  ]
+  ],
+  "patchedDependencies": {
+    "expo-localization@57.0.1": "patches/expo-localization@57.0.1.patch"
+  }
 }
