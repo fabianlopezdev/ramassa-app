@@ -144,6 +144,14 @@ env:
     duration: 900
 - waitForAnimationToEnd:
     timeout: 2500
+# Settle before the tap. In the mirrored RTL layout the language buttons wrap
+# onto two rows and `ca (ltr)` sits DIRECTLY ABOVE `fa (rtl)` in the same column
+# (measured: ca [800,1955][994,2081], fa [806,2102][994,2228]). Bounds resolved
+# while the list is still easing therefore put the touch one row low, and the tap
+# reports COMPLETED having selected a different language. The `selected` check
+# below is what catches it when this is not enough.
+- waitForAnimationToEnd:
+    timeout: 3000
 - tapOn:
     text: '^ca \(ltr\)$'
 - waitForAnimationToEnd:
@@ -188,10 +196,26 @@ env:
 
 # 2. The switcher itself, so the canvas shows WHERE this lives and that all five
 # languages are offered, each labelled with its own reading direction.
-- tapOn:
-    text: '^${TAB_PROFILE}$'
-- waitForAnimationToEnd:
-    timeout: 3000
+# Reaching Profile is a LOOP, verified by the dev-menu entry, which is rendered
+# on Profile and nowhere else in the signed-in shell. A single tab tap can land
+# on the WRONG tab: the tab bar is a floating pill that animates into place after
+# a relaunch, and a touch dispatched against its pre-settle layout selects a
+# neighbour. Twice this put the app on Comunitat, where there is no dev-menu
+# entry, so the next six attempts to open the menu had nothing to tap and the
+# failure surfaced as "the menu will not open".
+- repeat:
+    times: 6
+    while:
+      notVisible: '.*${DEV_MENU_LABEL}.*'
+    commands:
+      - tapOn:
+          text: '^${TAB_PROFILE}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- extendedWaitUntil:
+    visible: '.*${DEV_MENU_LABEL}.*'
+    timeout: 15000
 - tapOn: '.*Developer menu.*'
 - extendedWaitUntil:
     visible: '.*Environment.*'
@@ -220,6 +244,14 @@ env:
 # 3. Arabic chosen, but BEFORE the restart: the labels are already Arabic while
 # the layout is still left to right. This is the state that confuses everyone,
 # which is exactly why it is worth a screenshot.
+# Settle before the tap. In the mirrored RTL layout the language buttons wrap
+# onto two rows and `ca (ltr)` sits DIRECTLY ABOVE `fa (rtl)` in the same column
+# (measured: ca [800,1955][994,2081], fa [806,2102][994,2228]). Bounds resolved
+# while the list is still easing therefore put the touch one row low, and the tap
+# reports COMPLETED having selected a different language. The `selected` check
+# below is what catches it when this is not enough.
+- waitForAnimationToEnd:
+    timeout: 3000
 - tapOn:
     text: '^ar \(rtl\)$'
 - waitForAnimationToEnd:
@@ -263,10 +295,26 @@ env:
 # 5. The readout that proves it, rather than asking anyone to eyeball a mirror:
 # the dev menu renders "matches the language" only when `I18nManager.isRTL`
 # agrees with the resolved direction.
-- tapOn:
-    text: '^${TAB_PROFILE_AR}$'
-- waitForAnimationToEnd:
-    timeout: 3000
+# Reaching Profile is a LOOP, verified by the dev-menu entry, which is rendered
+# on Profile and nowhere else in the signed-in shell. A single tab tap can land
+# on the WRONG tab: the tab bar is a floating pill that animates into place after
+# a relaunch, and a touch dispatched against its pre-settle layout selects a
+# neighbour. Twice this put the app on Comunitat, where there is no dev-menu
+# entry, so the next six attempts to open the menu had nothing to tap and the
+# failure surfaced as "the menu will not open".
+- repeat:
+    times: 6
+    while:
+      notVisible: '.*${DEV_MENU_LABEL}.*'
+    commands:
+      - tapOn:
+          text: '^${TAB_PROFILE_AR}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- extendedWaitUntil:
+    visible: '.*${DEV_MENU_LABEL}.*'
+    timeout: 15000
 - tapOn: '.*Developer menu.*'
 - extendedWaitUntil:
     visible: '.*Environment.*'
@@ -286,7 +334,9 @@ env:
           timeout: 2500
 - waitForAnimationToEnd:
     timeout: 3000
-- assertVisible: '.*Native layout direction matches the language..*'
+- extendedWaitUntil:
+    visible: '.*Native layout direction matches the language..*'
+    timeout: 15000
 - takeScreenshot: ${SHOTS}/05-direction-readout
 
 # Leave the device in Catalan. A switch that cannot be undone is its own bug, and
@@ -308,6 +358,14 @@ env:
     duration: 900
 - waitForAnimationToEnd:
     timeout: 2500
+# Settle before the tap. In the mirrored RTL layout the language buttons wrap
+# onto two rows and `ca (ltr)` sits DIRECTLY ABOVE `fa (rtl)` in the same column
+# (measured: ca [800,1955][994,2081], fa [806,2102][994,2228]). Bounds resolved
+# while the list is still easing therefore put the touch one row low, and the tap
+# reports COMPLETED having selected a different language. The `selected` check
+# below is what catches it when this is not enough.
+- waitForAnimationToEnd:
+    timeout: 3000
 - tapOn:
     text: '^ca \(ltr\)$'
 - waitForAnimationToEnd:

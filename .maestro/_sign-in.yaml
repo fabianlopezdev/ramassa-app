@@ -34,7 +34,9 @@ env:
           optional: true
       - waitForAnimationToEnd:
           timeout: 3000
-- assertVisible: '.*${ACCOUNTS_SECTION}.*'
+- extendedWaitUntil:
+    visible: '.*${ACCOUNTS_SECTION}.*'
+    timeout: 15000
 # The menu opens with an interactive transition; a swipe landing while it is still
 # running cancels it and drops back to where we started.
 - waitForAnimationToEnd:

@@ -5,7 +5,9 @@ import { mmkvStorage } from '@/lib/storage';
 import Constants from 'expo-constants';
 import { isDevice, modelName, osName, osVersion } from 'expo-device';
 import { useEffect, useState } from 'react';
+import { I18nManager } from 'react-native';
 import { useAuth } from '@ramassa/shared/auth';
+import { useLanguage } from '@ramassa/shared/i18n';
 import { DevRow, DevSection } from './dev-ui';
 
 /**
@@ -18,6 +20,7 @@ import { DevRow, DevSection } from './dev-ui';
  */
 export function DevEnvironmentSection() {
   const { user, role, session } = useAuth();
+  const { language, direction } = useLanguage();
   const [pushRegistration, setPushRegistration] = useState('resolving...');
 
   useEffect(() => {
@@ -58,11 +61,28 @@ export function DevEnvironmentSection() {
     pushRegistration,
   });
 
+  // Direction belongs HERE, in the first section, not only in the language
+  // section several screens down. It is the state that confuses everyone (React
+  // Native applies a direction flip on the next start only, so the app can be
+  // Arabic while still laying out left to right), and burying the readout meant
+  // it could only be seen by someone who already knew to scroll for it. It also
+  // makes the state assertable the moment the menu opens: reaching a control
+  // deep in a long ScrollView is genuinely unreliable, because the view
+  // hierarchy reports off-screen rows as present and every search then believes
+  // it has already arrived (RAPP-20).
+  const nativeDirection = I18nManager.isRTL ? 'rtl' : 'ltr';
+  const directionValue =
+    nativeDirection === direction
+      ? `${direction} (native matches)`
+      : `${direction} (native ${nativeDirection}, stale until restart)`;
+
   return (
     <DevSection title="Environment">
       {rows.map((row) => (
         <DevRow key={row.label} label={row.label} value={row.value} />
       ))}
+      <DevRow label="Language" value={language} />
+      <DevRow label="Layout direction" value={directionValue} />
     </DevSection>
   );
 }
