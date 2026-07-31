@@ -12,3 +12,11 @@
  * not remote brute force (rate limiting and Supabase Auth own that).
  */
 export const PASSWORD_MIN_LENGTH = 8;
+
+/**
+ * The terms-of-use version the wizard shows and records (RAPP-21). Bump it
+ * when the text changes; every acceptance stores the version it was shown, so
+ * a bump makes re-acceptance detectable without touching old records. Mirrors
+ * the seeded acceptances (SEED_TERMS_VERSION in testing/).
+ */
+export const CURRENT_TERMS_VERSION = '2026-07-01';

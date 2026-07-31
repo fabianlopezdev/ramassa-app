@@ -56,6 +56,13 @@ export interface PressableScaleProps {
   readonly isDisabled?: boolean;
   /** In-flight primary action: announced as busy and blocks a double submit. */
   readonly isBusy?: boolean;
+  /**
+   * Selection state for option-style controls (chips, language buttons).
+   * ANNOUNCED, not just painted: a selected state that is only a background
+   * colour is invisible to a screen reader, and to any test that must verify
+   * which option a tap actually landed on. Omit for plain buttons.
+   */
+  readonly isSelected?: boolean;
 }
 
 export function PressableScale({
@@ -67,6 +74,7 @@ export function PressableScale({
   style,
   isDisabled = false,
   isBusy = false,
+  isSelected,
 }: PressableScaleProps) {
   const isReducedMotion = useReducedMotion();
   const pressed = useSharedValue(0);
@@ -106,7 +114,11 @@ export function PressableScale({
       <Animated.View
         accessibilityRole="button"
         accessibilityLabel={accessibilityLabel}
-        accessibilityState={{ disabled: isInteractionBlocked, busy: isBusy }}
+        accessibilityState={{
+          disabled: isInteractionBlocked,
+          busy: isBusy,
+          ...(isSelected === undefined ? {} : { selected: isSelected }),
+        }}
         style={[animatedStyle, style]}
         className={className}
       >
