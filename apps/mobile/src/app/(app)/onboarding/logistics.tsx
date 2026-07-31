@@ -157,7 +157,9 @@ export default function LogisticsStepScreen() {
               />
               {isNoEntity ? null : (
                 <AuthTextField
-                  label={t('referenceEntityLabel')}
+                  // The question is already asked above the chip; repeating it
+                  // as the field's label read as two separate questions.
+                  label={t('referenceEntityPlaceholder')}
                   placeholder={t('referenceEntityPlaceholder')}
                   value={field.value ?? ''}
                   onChangeText={field.onChange}
