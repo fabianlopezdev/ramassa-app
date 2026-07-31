@@ -71,7 +71,10 @@ export default function DocumentationStepScreen() {
       onContinue={continueToLogistics}
       onBack={() => {
         persist('identity');
-        router.back();
+        // replace, not back(): after a resume the redirect REPLACED the route,
+        // so the stack has nothing under this screen and back() is a silent
+        // no-op. The draft, not the nav stack, is the wizard's source of truth.
+        router.replace('/onboarding');
       }}
     >
       <View className="gap-xs">

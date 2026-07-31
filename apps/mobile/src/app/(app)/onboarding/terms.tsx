@@ -121,7 +121,8 @@ export default function TermsStepScreen() {
       isContinueBusy={isSubmitting}
       onBack={() => {
         persist('logistics');
-        router.back();
+        // replace, not back(): a resumed stack has no history (see documentation.tsx).
+        router.replace('/onboarding/logistics');
       }}
     >
       <View className="rounded-md bg-neutral-50 p-md">

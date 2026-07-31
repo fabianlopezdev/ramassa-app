@@ -56,5 +56,6 @@
   "errorDependentsRange": "أخبرينا كم، بين 1 و15.",
   "completionFailed": "تعذّر حفظ بياناتك. حاولي مرة أخرى.",
   "cancelAction": "إلغاء",
-  "searchCountryPlaceholder": "ابحثي عن بلدك"
+  "searchCountryPlaceholder": "ابحثي عن بلدك",
+  "languageNativeName": "العربية"
 }

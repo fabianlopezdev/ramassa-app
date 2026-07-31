@@ -56,5 +56,6 @@
   "errorDependentsRange": "Tell us how many, between 1 and 15.",
   "completionFailed": "We could not save your details. Please try again.",
   "cancelAction": "Cancel",
-  "searchCountryPlaceholder": "Search your country"
+  "searchCountryPlaceholder": "Search your country",
+  "languageNativeName": "English"
 }

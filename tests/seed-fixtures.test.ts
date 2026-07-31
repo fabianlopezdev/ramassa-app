@@ -13,6 +13,7 @@
 
 import { expect, test } from 'bun:test';
 import {
+  ONBOARDING_ACCOUNT_EMAIL,
   PARTICIPANT_FIXTURES,
   SEED_ACCOUNT_PASSWORD,
   SEED_ORGANIZATION_ID,
@@ -35,7 +36,10 @@ test('every fixture identity in the shared roster is present in seed.sql', () =>
 
 test('seed.sql seeds exactly the roster: no extra accounts, none missing', () => {
   const seededEmails = new Set(seedSql.match(/[\w.+-]+@[\w.-]+\.test\b/g) ?? []);
-  expect([...seededEmails].sort()).toEqual(allFixtures.map((fixture) => fixture.email).sort());
+  // The onboarding drive account is auth-only ON PURPOSE: no profile, so the
+  // wizard gate fires for it. It is part of the seed contract, not roster drift.
+  const expected = [...allFixtures.map((fixture) => fixture.email), ONBOARDING_ACCOUNT_EMAIL];
+  expect([...seededEmails].sort()).toEqual(expected.sort());
 });
 
 test('seed.sql contains no email address outside the reserved fake domain', () => {

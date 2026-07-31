@@ -56,5 +56,6 @@
   "errorDependentsRange": "Indica quantes, entre 1 i 15.",
   "completionFailed": "No hem pogut guardar les teves dades. Torna-ho a provar.",
   "cancelAction": "Cancel·la",
-  "searchCountryPlaceholder": "Busca el teu país"
+  "searchCountryPlaceholder": "Busca el teu país",
+  "languageNativeName": "Català"
 }

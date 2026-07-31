@@ -56,5 +56,6 @@
   "errorDependentsRange": "بگویید چند نفر، بین ۱ و ۱۵.",
   "completionFailed": "ذخیره اطلاعات ممکن نشد. دوباره تلاش کنید.",
   "cancelAction": "انصراف",
-  "searchCountryPlaceholder": "کشورتان را جست‌وجو کنید"
+  "searchCountryPlaceholder": "کشورتان را جست‌وجو کنید",
+  "languageNativeName": "فارسی"
 }

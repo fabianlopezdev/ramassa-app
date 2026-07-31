@@ -232,6 +232,45 @@ from seed_roster r
 where r.ordinal in (11, 12)
 on conflict (user_id, device_id) do nothing;
 
+-- The wizard's test account (RAPP-21) -----------------------------------------------
+-- An auth user with NO profile row: the exact state of every brand-new player,
+-- which nothing else in the seeds provides (the roster all has profiles). The
+-- onboarding gate, the wizard flows and their captures all sign in as this
+-- account; completing the wizard locally creates its profile, and the next
+-- `db reset` removes it again, so the capture is reproducible forever.
+
+insert into auth.users (
+  instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
+  raw_app_meta_data, raw_user_meta_data, created_at, updated_at,
+  confirmation_token, recovery_token, email_change, email_change_token_new,
+  email_change_token_current, reauthentication_token
+)
+values (
+  '00000000-0000-0000-0000-000000000000',
+  '5eed0000-0000-4000-8000-000000000099',
+  'authenticated',
+  'authenticated',
+  'onboarding@example.test',
+  extensions.crypt('ramassa-dev-password', extensions.gen_salt('bf')),
+  now(),
+  '{"provider":"email","providers":["email"]}'::jsonb,
+  '{}'::jsonb,
+  now(), now(), '', '', '', '', '', ''
+)
+on conflict (id) do nothing;
+
+insert into auth.identities (
+  provider_id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at
+)
+values (
+  '5eed0000-0000-4000-8000-000000000099',
+  '5eed0000-0000-4000-8000-000000000099',
+  jsonb_build_object('sub', '5eed0000-0000-4000-8000-000000000099', 'email', 'onboarding@example.test'),
+  'email',
+  now(), now(), now()
+)
+on conflict (provider_id, provider) do nothing;
+
 -- Terms acceptances ----------------------------------------------------------------
 -- The consent EVENT behind each seeded player's `terms_accepted_at` (RAPP-21).
 -- Seeded in the language that player actually reads, because the whole point of

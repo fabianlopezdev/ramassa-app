@@ -17,6 +17,7 @@
 import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import {
+  ONBOARDING_ACCOUNT_EMAIL,
   PARTICIPANT_FIXTURES,
   SEED_ACCOUNT_PASSWORD,
   STAFF_FIXTURES,
@@ -50,6 +51,8 @@ export function withFixtures(translate: Translator): Translator {
     'player:email': capturePlayer?.email,
     'staff:email': captureAdmin?.email,
     'entity:email': captureEntity?.email,
+    // The profile-less account the wizard flows sign in as (RAPP-21).
+    'onboarding:email': ONBOARDING_ACCOUNT_EMAIL,
   };
   return (key: string) => {
     if (key in accounts) {
@@ -61,7 +64,12 @@ export function withFixtures(translate: Translator): Translator {
     }
     // Explicit rather than a `:password` suffix test, which would also swallow
     // any real translation key that happens to end that way.
-    if (key === 'player:password' || key === 'staff:password' || key === 'entity:password') {
+    if (
+      key === 'player:password' ||
+      key === 'staff:password' ||
+      key === 'entity:password' ||
+      key === 'onboarding:password'
+    ) {
       return SEED_ACCOUNT_PASSWORD;
     }
     return translate(key);

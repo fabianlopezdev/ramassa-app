@@ -17,12 +17,13 @@ import { useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
-import { LANGUAGE_NATIVE_NAMES, SUPPORTED_LANGUAGES } from '@ramassa/shared/i18n';
+import { LANGUAGE_NATIVE_NAMES, SUPPORTED_LANGUAGES, useLanguage } from '@ramassa/shared/i18n';
 import type { IdentityStep, LanguageCode } from '@ramassa/shared/schemas';
 
 export default function IdentityStepScreen() {
   const { t, i18n } = useTranslation('onboarding');
   const languageFontClass = useLanguageFontClass();
+  const { setLanguage } = useLanguage();
   const router = useRouter();
 
   // Loaded ONCE per mount: the draft is the mount-time snapshot, the form owns
@@ -229,7 +230,14 @@ export default function IdentityStepScreen() {
                   key={code}
                   label={LANGUAGE_NATIVE_NAMES[code]}
                   isSelected={field.value === code}
-                  onPress={() => field.onChange(code)}
+                  onPress={() => {
+                    field.onChange(code);
+                    // The app switches WITH the choice: a player picking
+                    // العربية must not finish the wizard in English. Text
+                    // flips immediately; the RTL layout flip lands on the
+                    // next start, which the resume path makes lossless.
+                    void setLanguage(code);
+                  }}
                 />
               ))}
             </View>

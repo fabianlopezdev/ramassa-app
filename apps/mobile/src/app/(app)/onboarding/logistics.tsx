@@ -74,7 +74,8 @@ export default function LogisticsStepScreen() {
       onContinue={continueToTerms}
       onBack={() => {
         persist('documentation');
-        router.back();
+        // replace, not back(): a resumed stack has no history (see documentation.tsx).
+        router.replace('/onboarding/documentation');
       }}
     >
       <Controller
