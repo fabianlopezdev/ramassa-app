@@ -18,7 +18,8 @@
     "./upload-client": "./lib/upload-client.ts",
     "./onboarding-drafts": "./lib/onboarding-drafts.ts",
     "./testing": "./testing/index.ts",
-    "./tokens/motion": "./tokens/motion.ts"
+    "./tokens/motion": "./tokens/motion.ts",
+    "./profile": "./profile/index.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
