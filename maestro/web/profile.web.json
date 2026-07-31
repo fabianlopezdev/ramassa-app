@@ -1,0 +1,75 @@
+{
+  "slug": "profile",
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "deviceScaleFactor": 2,
+  "timezoneId": "Europe/Madrid",
+  "settle": {
+    "timeout": 6000,
+    "interval": 150
+  },
+  "steps": [
+    {
+      "label": "auth-open",
+      "goto": "/login",
+      "click": "[aria-label=\"{{auth:usePasswordInstead}}\"]",
+      "waitFor": "[aria-label=\"{{auth:passwordLabel}}\"]"
+    },
+    {
+      "label": "auth-submit",
+      "fill": [
+        {
+          "selector": "[aria-label=\"{{auth:emailLabel}}\"]",
+          "value": "{{player:email}}"
+        },
+        {
+          "selector": "[aria-label=\"{{auth:passwordLabel}}\"]",
+          "value": "{{player:password}}"
+        }
+      ],
+      "click": "[aria-label=\"{{auth:passwordAction}}\"]",
+      "waitFor": "text={{home:title}} >> visible=true"
+    },
+    {
+      "label": "home",
+      "goto": "/",
+      "waitFor": "text={{home:title}} >> visible=true"
+    },
+    {
+      "label": "profile",
+      "waitFor": "text={{profile:intro}} >> visible=true",
+      "click": "text={{nav:tabs.profile}}"
+    },
+    {
+      "label": "edit",
+      "click": "[aria-label=\"{{profile:editAction}}\"]:visible",
+      "waitFor": "text={{onboarding:documentTypeLabel}} >> visible=true"
+    },
+    {
+      "label": "back-to-profile",
+      "click": "[aria-label=\"{{onboarding:backAction}}\"]:visible",
+      "waitFor": "text={{profile:intro}} >> visible=true"
+    },
+    {
+      "label": "language",
+      "waitFor": "text={{profile:languageLabel}} >> visible=true"
+    },
+    {
+      "label": "delete-request",
+      "click": "[aria-label=\"{{profile:deleteTitle}}\"]:visible",
+      "waitFor": "text={{profile:deleteReasonLabel}} >> visible=true"
+    },
+    {
+      "label": "back-from-delete",
+      "click": "[aria-label=\"{{onboarding:backAction}}\"]:visible",
+      "waitFor": "text={{profile:intro}} >> visible=true"
+    },
+    {
+      "label": "signed-out",
+      "click": "[aria-label=\"{{profile:signOutAction}}\"]:visible",
+      "waitFor": "text={{auth:loginTitle}} >> visible=true"
+    }
+  ]
+}

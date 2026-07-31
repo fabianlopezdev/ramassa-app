@@ -32,6 +32,14 @@ import { interpolate, type Translator } from './translations';
  */
 export const capturePlayer = PARTICIPANT_FIXTURES[0];
 
+/**
+ * A player with NO pending erasure request. The seed files one against the
+ * first participant so the staff queue is never empty, which means her profile
+ * shows the "we already received it" banner and the request FORM is
+ * unreachable. A capture of that form therefore has to sign in as someone else.
+ */
+export const capturePlayerWithoutRequest = PARTICIPANT_FIXTURES[1];
+
 /** The seeded admin and entity contact the browser flows sign in as. */
 export const captureAdmin = STAFF_FIXTURES.find((person) => person.role === 'admin');
 export const captureEntity = STAFF_FIXTURES.find((person) => person.role === 'entity');
@@ -49,6 +57,7 @@ export const captureEntity = STAFF_FIXTURES.find((person) => person.role === 'en
 export function withFixtures(translate: Translator): Translator {
   const accounts: Record<string, string | undefined> = {
     'player:email': capturePlayer?.email,
+    'playerWithoutRequest:email': capturePlayerWithoutRequest?.email,
     'staff:email': captureAdmin?.email,
     'entity:email': captureEntity?.email,
     // The profile-less account the wizard flows sign in as (RAPP-21).
@@ -66,6 +75,7 @@ export function withFixtures(translate: Translator): Translator {
     // any real translation key that happens to end that way.
     if (
       key === 'player:password' ||
+      key === 'playerWithoutRequest:password' ||
       key === 'staff:password' ||
       key === 'entity:password' ||
       key === 'onboarding:password'

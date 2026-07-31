@@ -1,0 +1,367 @@
+appId: com.ramassa.app
+name: profile
+# `bun run capture:flow profile` REWRITES this block per run (a flow's own env
+# wins over `maestro -e`, so the values have to be baked in, not passed
+# alongside) and that is how one file captures both the Catalan and the Arabic
+# pass. The `{{namespace:key}}` entries are resolved from the app's own locale
+# catalogs, so no screen name is ever hardcoded here.
+env:
+  SHOTS: maestro/shots/profile/ca/ios
+  SUFFIX: ''
+  LOCALE: ca
+  DEV_CLIENT_URL: ramassa://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081
+  # A participant with no pending erasure request: the seeded one has a request
+  # on file, so her profile shows the "already received" banner and the request
+  # form this flow has to photograph is not reachable at all.
+  PLAYER_EMAIL: '{{playerWithoutRequest:email}}'
+  PROFILE_TITLE: '{{profile:title}}'
+  EDIT_ACTION: '{{profile:editAction}}'
+  EDIT_TITLE: '{{profile:editTitle}}'
+  SAVE_ACTION: '{{profile:saveAction}}'
+  BACK: '{{onboarding:backAction}}'
+  LANGUAGE_LABEL: '{{profile:languageLabel}}'
+  DELETE_TITLE: '{{profile:deleteTitle}}'
+  DELETE_INTRO: '{{profile:deleteIntro}}'
+  SIGN_OUT: '{{profile:signOutAction}}'
+  LOGIN_TITLE: '{{auth:loginTitle}}'
+  PUSH_DECLINE: '{{push:rationaleDecline}}'
+  TAB_PROFILE: '{{nav:tabs.profile}}'
+  OWN_LANGUAGE: '{{onboarding:languageNativeName}}'
+---
+# The profile hub and everything reachable from it: what the organization holds
+# about a participant, the editor, the language switch (including the honest
+# restart prompt), the RGPD erasure request, and signing out.
+#
+# A hub with return edges rather than a sequence: every branch comes back to the
+# profile except sign-out, which is terminal by design.
+- clearState
+- openLink: ${DEV_CLIENT_URL}
+# iOS asks "Open in <app>?" before it follows a custom-scheme link; Android does
+# not, so the same line is a harmless no-op there.
+- tapOn:
+    text: '^Open$'
+    optional: true
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# First launch after clearing state downloads the JS bundle, hence minutes.
+- extendedWaitUntil:
+    visible: '.*Developer menu.*'
+    timeout: 240000
+- waitForAnimationToEnd:
+    timeout: 12000
+- repeat:
+    times: 4
+    while:
+      visible: '.*Close.*'
+    commands:
+      - tapOn:
+          text: '.*Close.*'
+      - waitForAnimationToEnd:
+          timeout: 3000
+
+# LANGUAGE FIRST, then sign in: after `clearState` the app follows the DEVICE
+# locale, so every resolved selector below matches nothing until it is pinned.
+- repeat:
+    times: 6
+    while:
+      notVisible: '.*Environment.*'
+    commands:
+      - tapOn:
+          text: '.*Developer menu.*'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- waitForAnimationToEnd:
+    timeout: 5000
+- repeat:
+    times: 20
+    while:
+      notVisible: '^${LOCALE} \(.*\)$'
+    commands:
+      - swipe:
+          start: 50%, 70%
+          end: 50%, 50%
+          duration: 900
+      - waitForAnimationToEnd:
+          timeout: 2500
+# The loop stops the moment ANY sliver of the button is on screen, which parks
+# it under the navigation bar where a tap does not reach it.
+- swipe:
+    start: 50%, 65%
+    end: 50%, 55%
+    duration: 900
+- waitForAnimationToEnd:
+    timeout: 2500
+- repeat:
+    times: 6
+    while:
+      notVisible:
+        text: '^${LOCALE} \(.*\)$'
+        selected: true
+    commands:
+      - tapOn:
+          text: '^${LOCALE} \(.*\)$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 2500
+- assertVisible:
+    text: '^${LOCALE} \(.*\)$'
+    selected: true
+
+# React Native applies a direction flip on the next start only, so the RTL pass
+# is only honest after a real relaunch.
+- repeat:
+    times: 6
+    while:
+      visible: '.*Close.*'
+    commands:
+      - tapOn:
+          text: '.*Close.*'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- stopApp
+- openLink: ${DEV_CLIENT_URL}
+- tapOn:
+    text: '^Open$'
+    optional: true
+- waitForAnimationToEnd:
+    timeout: 15000
+- repeat:
+    times: 4
+    while:
+      visible: '.*Close.*'
+    commands:
+      - tapOn:
+          text: '.*Close.*'
+      - waitForAnimationToEnd:
+          timeout: 3000
+
+# Sign in as a seeded player: this flow needs a real profile to display, and
+# role comes from the database, so the switcher signs in for real.
+- repeat:
+    times: 6
+    while:
+      notVisible: '.*Accounts and roles.*'
+    commands:
+      - tapOn:
+          text: '.*Developer menu.*'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- waitForAnimationToEnd:
+    timeout: 5000
+# Expand the roster first. The switcher shows one participant per LANGUAGE by
+# default, so any account chosen for a reason other than its language (here:
+# not having an erasure request on file) is simply not in that short list.
+- repeat:
+    times: 12
+    while:
+      notVisible: '.*Show all.*'
+    commands:
+      - swipe:
+          start: 50%, 70%
+          end: 50%, 50%
+          duration: 900
+      - waitForAnimationToEnd:
+          timeout: 2000
+- tapOn:
+    text: '.*Show all.*'
+    optional: true
+- waitForAnimationToEnd:
+    timeout: 2500
+- repeat:
+    times: 20
+    while:
+      notVisible: '.*${PLAYER_EMAIL}.*'
+    commands:
+      - swipe:
+          start: 50%, 70%
+          end: 50%, 50%
+          duration: 900
+      - waitForAnimationToEnd:
+          timeout: 2500
+- swipe:
+    start: 50%, 65%
+    end: 50%, 55%
+    duration: 900
+- waitForAnimationToEnd:
+    timeout: 2500
+- tapOn: '.*${PLAYER_EMAIL}.*'
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# Close the menu, clear the notifications rationale, and land on the tabs.
+- repeat:
+    times: 8
+    while:
+      notVisible: '^${TAB_PROFILE}$'
+    commands:
+      - tapOn:
+          text: '^${PUSH_DECLINE}$'
+          optional: true
+      - tapOn:
+          text: '.*Close.*'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- tapOn: '^${TAB_PROFILE}$'
+- extendedWaitUntil:
+    visible: '.*${PROFILE_TITLE}.*'
+    timeout: 120000
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# 1. The hub: what Ramassà holds about her, decrypted and in her language.
+- takeScreenshot: ${SHOTS}/01-profile${SUFFIX}
+
+# 2. The editor, built from the wizard's own controls.
+- repeat:
+    times: 8
+    while:
+      notVisible: '^${EDIT_ACTION}$'
+    commands:
+      - swipe:
+          start: 50%, 75%
+          end: 50%, 30%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 900
+- tapOn: '^${EDIT_ACTION}$'
+- extendedWaitUntil:
+    visible: '.*${EDIT_TITLE}.*'
+    timeout: 30000
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: ${SHOTS}/02-edit${SUFFIX}
+
+# Back WITHOUT saving: the cancel branch returns to the hub unchanged.
+# Returning to the hub, written to survive both platforms and its own worst
+# case. Android gets the system back, because under RTL the in-screen control
+# sits at the top right, exactly where the development client draws its
+# floating gear, and the tap opens the client's tools menu instead (a dev-build
+# overlay, not a product defect). iOS has no system back at all, so there the
+# in-screen control is the only way. The loop also closes the tools menu if it
+# did open, so one intercepted tap does not end the run.
+#
+# Anchored on the TAB, not the screen title: the profile is one long scroll and
+# returning keeps the position it was left at, so the title is usually
+# off-screen. The tab bar does not scroll and is hidden on the pushed screens,
+# which makes it the one honest "we are back" signal.
+- repeat:
+    times: 6
+    while:
+      notVisible: '^${TAB_PROFILE}$'
+    commands:
+      - tapOn:
+          text: '.*Close.*'
+          optional: true
+      - runFlow:
+          when:
+            platform: Android
+          commands:
+            - back
+      - tapOn:
+          text: '^${BACK}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 2500
+- extendedWaitUntil:
+    visible: '^${TAB_PROFILE}$'
+    timeout: 30000
+- waitForAnimationToEnd:
+    timeout: 2000
+
+# 3. The RGPD erasure request: asking is not doing, and the screen says so.
+- repeat:
+    times: 8
+    while:
+      notVisible: '^${DELETE_TITLE}$'
+    commands:
+      - swipe:
+          start: 50%, 75%
+          end: 50%, 30%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 900
+- tapOn: '^${DELETE_TITLE}$'
+- extendedWaitUntil:
+    visible: '.*${DELETE_INTRO}.*'
+    timeout: 30000
+- waitForAnimationToEnd:
+    timeout: 2500
+- takeScreenshot: ${SHOTS}/03-delete-request${SUFFIX}
+
+# Returning to the hub, written to survive both platforms and its own worst
+# case. Android gets the system back, because under RTL the in-screen control
+# sits at the top right, exactly where the development client draws its
+# floating gear, and the tap opens the client's tools menu instead (a dev-build
+# overlay, not a product defect). iOS has no system back at all, so there the
+# in-screen control is the only way. The loop also closes the tools menu if it
+# did open, so one intercepted tap does not end the run.
+#
+# Anchored on the TAB, not the screen title: the profile is one long scroll and
+# returning keeps the position it was left at, so the title is usually
+# off-screen. The tab bar does not scroll and is hidden on the pushed screens,
+# which makes it the one honest "we are back" signal.
+- repeat:
+    times: 6
+    while:
+      notVisible: '^${TAB_PROFILE}$'
+    commands:
+      - tapOn:
+          text: '.*Close.*'
+          optional: true
+      - runFlow:
+          when:
+            platform: Android
+          commands:
+            - back
+      - tapOn:
+          text: '^${BACK}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 2500
+- extendedWaitUntil:
+    visible: '^${TAB_PROFILE}$'
+    timeout: 30000
+- waitForAnimationToEnd:
+    timeout: 2000
+
+# 4. The language switch as it sits on the profile. What SWITCHING does (the
+# reading direction, the restart it needs) belongs to the i18n flow: doing it
+# here would leave every screen after it in the other language, and a Catalan
+# pass that ends on an Arabic login screen tells a reader nothing true.
+- repeat:
+    times: 8
+    while:
+      notVisible: '^${LANGUAGE_LABEL}$'
+    commands:
+      - swipe:
+          start: 50%, 75%
+          end: 50%, 30%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 900
+- takeScreenshot: ${SHOTS}/04-language${SUFFIX}
+
+# 5. Signing out is terminal: it ends at the door she came in through.
+- repeat:
+    times: 8
+    while:
+      notVisible: '^${SIGN_OUT}$'
+    commands:
+      - swipe:
+          start: 50%, 75%
+          end: 50%, 30%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 900
+- tapOn: '^${SIGN_OUT}$'
+- extendedWaitUntil:
+    visible: '.*${LOGIN_TITLE}.*'
+    timeout: 60000
+- waitForAnimationToEnd:
+    timeout: 2500
+- takeScreenshot: ${SHOTS}/05-signed-out${SUFFIX}
