@@ -232,6 +232,20 @@ from seed_roster r
 where r.ordinal in (11, 12)
 on conflict (user_id, device_id) do nothing;
 
+-- Terms acceptances ----------------------------------------------------------------
+-- The consent EVENT behind each seeded player's `terms_accepted_at` (RAPP-21).
+-- Seeded in the language that player actually reads, because the whole point of
+-- the record is which text in which language someone agreed to.
+
+insert into public.terms_acceptances (profile_id, terms_version, locale_shown)
+select
+  ('5eed0000-0000-4000-8000-' || lpad(r.ordinal::text, 12, '0'))::uuid,
+  '2026-07-01',
+  r.preferred_language
+from seed_roster r
+where r.app_role = 'player'
+on conflict do nothing;
+
 drop table seed_roster;
 
 end

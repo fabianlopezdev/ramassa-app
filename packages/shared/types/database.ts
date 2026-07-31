@@ -86,10 +86,12 @@ export type Database = {
           is_active: boolean;
           is_forum_banned: boolean;
           last_name: string;
+          media_consent_at: string | null;
           nationality: string | null;
           num_dependents: number;
           org_id: string;
           phone: string | null;
+          place_of_birth: string | null;
           postal_code: string | null;
           preferred_language: string;
           reference_contact_name: string | null;
@@ -114,10 +116,12 @@ export type Database = {
           is_active?: boolean;
           is_forum_banned?: boolean;
           last_name: string;
+          media_consent_at?: string | null;
           nationality?: string | null;
           num_dependents?: number;
           org_id: string;
           phone?: string | null;
+          place_of_birth?: string | null;
           postal_code?: string | null;
           preferred_language?: string;
           reference_contact_name?: string | null;
@@ -142,10 +146,12 @@ export type Database = {
           is_active?: boolean;
           is_forum_banned?: boolean;
           last_name?: string;
+          media_consent_at?: string | null;
           nationality?: string | null;
           num_dependents?: number;
           org_id?: string;
           phone?: string | null;
+          place_of_birth?: string | null;
           postal_code?: string | null;
           preferred_language?: string;
           reference_contact_name?: string | null;
@@ -203,14 +209,86 @@ export type Database = {
           },
         ];
       };
+      terms_acceptances: {
+        Row: {
+          accepted_at: string;
+          id: string;
+          locale_shown: string;
+          profile_id: string;
+          terms_version: string;
+        };
+        Insert: {
+          accepted_at?: string;
+          id?: string;
+          locale_shown: string;
+          profile_id: string;
+          terms_version: string;
+        };
+        Update: {
+          accepted_at?: string;
+          id?: string;
+          locale_shown?: string;
+          profile_id?: string;
+          terms_version?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'terms_acceptances_profile_id_fkey';
+            columns: ['profile_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
     };
     Views: {
       [_ in never]: never;
     };
     Functions: {
+      complete_onboarding: {
+        Args: { payload: Json };
+        Returns: {
+          address: string | null;
+          avatar_url: string | null;
+          city: string | null;
+          clothing_size: string | null;
+          created_at: string;
+          date_of_birth: string | null;
+          document_number: string | null;
+          document_type: string | null;
+          first_name: string;
+          has_dependents: boolean;
+          id: string;
+          is_active: boolean;
+          is_forum_banned: boolean;
+          last_name: string;
+          media_consent_at: string | null;
+          nationality: string | null;
+          num_dependents: number;
+          org_id: string;
+          phone: string | null;
+          place_of_birth: string | null;
+          postal_code: string | null;
+          preferred_language: string;
+          reference_contact_name: string | null;
+          reference_entity: string | null;
+          role: string;
+          shoe_size: string | null;
+          terms_accepted_at: string | null;
+          updated_at: string;
+        };
+        SetofOptions: {
+          from: '*';
+          to: 'profiles';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       current_app_role: { Args: never; Returns: string };
       current_org_id: { Args: never; Returns: string };
       decrypt_field: { Args: { ciphertext: string }; Returns: string };
+      default_organization_id: { Args: never; Returns: string };
       encrypt_field: { Args: { plaintext: string }; Returns: string };
       encryption_key: { Args: never; Returns: string };
       is_staff_or_admin: { Args: never; Returns: boolean };

@@ -36,6 +36,9 @@ export const SEED_ORGANIZATION_SLUG = 'ramassa';
  */
 export const SEED_ACCOUNT_PASSWORD = 'ramassa-dev-password';
 
+/** The terms version every seeded acceptance carries. Mirrors `supabase/seed.sql`. */
+export const SEED_TERMS_VERSION = '2026-07-01';
+
 /**
  * Seed user IDs are derived from an ordinal rather than listed, so the SQL and
  * the TypeScript can compute the same UUID without a shared table of literals.

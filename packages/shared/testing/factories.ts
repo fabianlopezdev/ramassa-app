@@ -26,6 +26,7 @@ import {
   PARTICIPANT_FIXTURES,
   SEED_ORGANIZATION_ID,
   SEED_ORGANIZATION_SLUG,
+  SEED_TERMS_VERSION,
   seedUserId,
   type PersonFixture,
 } from './fixtures';
@@ -33,6 +34,7 @@ import {
 export type OrganizationRow = Database['public']['Tables']['organizations']['Row'];
 export type ProfileRow = Database['public']['Tables']['profiles']['Row'];
 export type PushTokenRow = Database['public']['Tables']['push_tokens']['Row'];
+export type TermsAcceptanceRow = Database['public']['Tables']['terms_acceptances']['Row'];
 
 /** One fixed instant for every timestamp, so factory output is byte-stable. */
 const FIXTURE_TIMESTAMP = '2026-01-15T09:00:00+00:00';
@@ -151,6 +153,12 @@ export function buildProfileFromFixture(
     city: fixture.city,
     preferred_language: fixture.preferredLanguage,
     avatar_url: null,
+    place_of_birth: null,
+    // Media consent defaults to NOT granted, which is the only defensible
+    // default for an optional, revocable consent: a fixture that granted it by
+    // default would let a test pass while the app quietly assumed permission
+    // to publish a participant's photo.
+    media_consent_at: null,
     created_at: FIXTURE_TIMESTAMP,
     updated_at: FIXTURE_TIMESTAMP,
     ...derivedProfileFields(fixture),
@@ -169,6 +177,27 @@ export function buildPushToken(overrides: Partial<PushTokenRow> = {}): PushToken
     device_id: `seed-device-${pad(owner.ordinal, 4)}`,
     created_at: FIXTURE_TIMESTAMP,
     updated_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+/**
+ * A terms-acceptance event (RAPP-21). Defaults to the first roster participant
+ * accepting in HER language, not in Catalan: the record exists to prove which
+ * text someone actually read, so a fixture that always says 'ca' would make
+ * every test agree with itself while proving nothing about the multilingual
+ * case.
+ */
+export function buildTermsAcceptance(
+  overrides: Partial<TermsAcceptanceRow> = {},
+): TermsAcceptanceRow {
+  const participant = PARTICIPANT_FIXTURES[0]!;
+  return {
+    id: `5eed0000-0000-4000-8000-${String(participant.ordinal).padStart(12, '0')}`,
+    profile_id: `5eed0000-0000-4000-8000-${String(participant.ordinal).padStart(12, '0')}`,
+    terms_version: SEED_TERMS_VERSION,
+    locale_shown: participant.preferredLanguage,
+    accepted_at: FIXTURE_TIMESTAMP,
     ...overrides,
   };
 }
