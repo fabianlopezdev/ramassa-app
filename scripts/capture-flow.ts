@@ -312,6 +312,21 @@ async function upsertCanvas(context: {
     ],
     { cwd: repoRoot, inherit: true },
   );
+
+  // Corroborate in PIXELS, every time. The canvas is rebuilt on every capture,
+  // and a layout regression here ships an unreadable client-facing artifact:
+  // this renders the canvas in a real browser, checks every flow view and
+  // platform toggle for overlapping nodes, and keeps a screenshot per flow.
+  // Verifying the embedded numbers instead is how overlapping phones shipped.
+  await runOrThrow(
+    [
+      'node',
+      path.join(repoRoot, 'scripts', 'flow-capture', 'verify-canvas.mjs'),
+      '--canvas',
+      path.join(vaultFlowsDir, config.canvas),
+    ],
+    { cwd: repoRoot, inherit: true },
+  );
 }
 
 async function loadAuthoredManifest(slug: string): Promise<FlowManifest> {

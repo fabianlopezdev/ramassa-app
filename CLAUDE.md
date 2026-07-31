@@ -204,7 +204,15 @@ install chromium`); the flow-shots skill deliberately does not ship browser bina
 14. **The status bar is frozen before every phone pass** (`simctl status_bar override` on iOS, system
     UI demo mode on Android) so a re-capture differs only where the app differs. Without it every shot
     carries a live clock and battery reading and no two runs are comparable.
-15. **Selector shapes differ per platform.** iOS exposes a row's accessibility label; Android exposes
+15. **After ANY canvas layout or geometry change, verify with a real browser, not numbers.** Serve
+    the canvas over HTTP (Playwright blocks `file:`), walk every flow view and every platform
+    toggle, and check pairwise bounding-box intersections on the rendered `.react-flow__node`
+    elements - then look at a screenshot. Verifying the embedded positions JSON proved nothing:
+    the pitch was "fixed" while a second bug (mobile+web flows taking the desktop row height
+    under 560-tall phone frames) kept the canvas overlapping, and it shipped because nobody
+    looked at pixels. Also: `open` on an already-open HTML file does NOT reload the tab - stale
+    tabs show the previous build.
+16. **Selector shapes differ per platform.** iOS exposes a row's accessibility label; Android exposes
     the text nodes inside it. Match on the substring both carry (the email address, not
     "Sign in as <address>").
 

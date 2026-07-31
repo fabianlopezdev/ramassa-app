@@ -89,6 +89,14 @@ export default tseslint.config(
     },
   },
   {
+    // Plain-node ESM scripts (the canvas verifier). Run with `node`, not bun,
+    // so they get node's globals rather than the TS/react-native environment.
+    files: ['scripts/**/*.mjs'],
+    languageOptions: {
+      globals: globals.node,
+    },
+  },
+  {
     // Metro, Babel, and Tailwind configs must stay CommonJS: their consumers
     // (Metro bundler, Babel) load them with require().
     files: ['**/*.config.js', '**/babel.config.js', '**/metro.config.js'],
