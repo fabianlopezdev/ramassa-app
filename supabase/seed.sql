@@ -285,6 +285,24 @@ from seed_roster r
 where r.app_role = 'player'
 on conflict do nothing;
 
+-- Deletion requests ----------------------------------------------------------------
+-- One open RGPD erasure request (RAPP-22), so the staff queue that resolves them
+-- (RAPP-26) has something to show before anyone files one by hand, and so the
+-- participant-side "we received your request" state is reachable in the dev app.
+-- Deliberately ONE, and deliberately open: a resolved request proves nothing
+-- about the screen that has to display a pending one.
+
+insert into public.deletion_requests (profile_id, reason, state)
+select
+  ('5eed0000-0000-4000-8000-' || lpad(r.ordinal::text, 12, '0'))::uuid,
+  'Ja no puc venir a entrenar i prefereixo que esborreu les meves dades.',
+  'open'
+from seed_roster r
+where r.app_role = 'player'
+order by r.ordinal
+limit 1
+on conflict do nothing;
+
 drop table seed_roster;
 
 end

@@ -28,6 +28,54 @@ export type Database = {
   };
   public: {
     Tables: {
+      deletion_requests: {
+        Row: {
+          created_at: string;
+          id: string;
+          profile_id: string;
+          reason: string | null;
+          resolution_note: string | null;
+          resolved_at: string | null;
+          resolved_by: string | null;
+          state: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          profile_id: string;
+          reason?: string | null;
+          resolution_note?: string | null;
+          resolved_at?: string | null;
+          resolved_by?: string | null;
+          state?: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          profile_id?: string;
+          reason?: string | null;
+          resolution_note?: string | null;
+          resolved_at?: string | null;
+          resolved_by?: string | null;
+          state?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'deletion_requests_profile_id_fkey';
+            columns: ['profile_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'deletion_requests_resolved_by_fkey';
+            columns: ['resolved_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       organizations: {
         Row: {
           available_languages: string[];
@@ -291,7 +339,35 @@ export type Database = {
       default_organization_id: { Args: never; Returns: string };
       encrypt_field: { Args: { plaintext: string }; Returns: string };
       encryption_key: { Args: never; Returns: string };
+      get_own_profile: {
+        Args: never;
+        Returns: {
+          address: string;
+          avatar_url: string;
+          city: string;
+          clothing_size: string;
+          date_of_birth: string;
+          document_number: string;
+          document_type: string;
+          first_name: string;
+          has_dependents: boolean;
+          id: string;
+          last_name: string;
+          media_consent: boolean;
+          nationality: string;
+          num_dependents: number;
+          phone: string;
+          place_of_birth: string;
+          postal_code: string;
+          preferred_language: string;
+          reference_contact_name: string;
+          reference_entity: string;
+          shoe_size: string;
+          terms_accepted_at: string;
+        }[];
+      };
       is_staff_or_admin: { Args: never; Returns: boolean };
+      update_own_profile: { Args: { payload: Json }; Returns: undefined };
       user_is_in_current_org: {
         Args: { target_user_id: string };
         Returns: boolean;

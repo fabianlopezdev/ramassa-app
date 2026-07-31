@@ -35,6 +35,7 @@ export type OrganizationRow = Database['public']['Tables']['organizations']['Row
 export type ProfileRow = Database['public']['Tables']['profiles']['Row'];
 export type PushTokenRow = Database['public']['Tables']['push_tokens']['Row'];
 export type TermsAcceptanceRow = Database['public']['Tables']['terms_acceptances']['Row'];
+export type DeletionRequestRow = Database['public']['Tables']['deletion_requests']['Row'];
 
 /** One fixed instant for every timestamp, so factory output is byte-stable. */
 const FIXTURE_TIMESTAMP = '2026-01-15T09:00:00+00:00';
@@ -198,6 +199,30 @@ export function buildTermsAcceptance(
     terms_version: SEED_TERMS_VERSION,
     locale_shown: participant.preferredLanguage,
     accepted_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+/**
+ * An RGPD erasure request (RAPP-22). Defaults to OPEN and unresolved, because
+ * that is the state every screen has to handle: the participant's "we received
+ * it", and the staff queue that still has to answer it. A resolved fixture
+ * would let both of those go untested while still looking like coverage.
+ */
+export function buildDeletionRequest(
+  overrides: Partial<DeletionRequestRow> = {},
+): DeletionRequestRow {
+  const participant = PARTICIPANT_FIXTURES[0]!;
+  const profileId = `5eed0000-0000-4000-8000-${String(participant.ordinal).padStart(12, '0')}`;
+  return {
+    id: `5eed0000-0000-4000-8000-${String(900 + participant.ordinal).padStart(12, '0')}`,
+    profile_id: profileId,
+    reason: 'Ja no puc venir a entrenar i prefereixo que esborreu les meves dades.',
+    state: 'open',
+    resolution_note: null,
+    resolved_by: null,
+    resolved_at: null,
+    created_at: FIXTURE_TIMESTAMP,
     ...overrides,
   };
 }
