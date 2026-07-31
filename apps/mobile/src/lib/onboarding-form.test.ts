@@ -11,6 +11,7 @@ import { composeIsoBirthDate, identityFormSchema, logisticsFormSchema } from './
 const identityBase = {
   firstName: 'أمينة',
   lastName: 'الحسن',
+  placeOfBirth: 'حلب',
   nationality: 'Síria',
   preferredLanguage: 'ar' as const,
 };

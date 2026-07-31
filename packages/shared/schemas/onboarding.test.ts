@@ -57,9 +57,13 @@ describe('identityStepSchema', () => {
     ).toBe(true);
   });
 
-  test('place of birth is optional; empty string reads as absent', () => {
-    const parsed = identityStepSchema.parse({ ...validIdentity, placeOfBirth: '' });
-    expect(parsed.placeOfBirth).toBeUndefined();
+  test('place of birth is REQUIRED (Fabian, 2026-07-31): empty fails', () => {
+    expect(identityStepSchema.safeParse({ ...validIdentity, placeOfBirth: '' }).success).toBe(
+      false,
+    );
+    expect(identityStepSchema.safeParse({ ...validIdentity, placeOfBirth: '  ' }).success).toBe(
+      false,
+    );
   });
 
   test('rejects an empty first name and a 101-char name', () => {

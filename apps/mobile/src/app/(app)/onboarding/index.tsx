@@ -194,6 +194,7 @@ export default function IdentityStepScreen() {
             value={field.value ?? ''}
             onChangeText={field.onChange}
             onBlur={field.onBlur}
+            errorMessage={errors.placeOfBirth ? t('errorRequired') : undefined}
           />
         )}
       />

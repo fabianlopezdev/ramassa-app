@@ -11,7 +11,7 @@
   "dayLabel": "Day",
   "monthLabel": "Month",
   "yearLabel": "Year",
-  "placeOfBirthLabel": "Place of birth (optional)",
+  "placeOfBirthLabel": "Place of birth",
   "nationalityLabel": "Nationality",
   "preferredLanguageLabel": "Which language do you want the app in?",
   "documentationTitle": "Documents",

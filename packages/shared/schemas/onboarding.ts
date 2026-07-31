@@ -52,7 +52,9 @@ export const identityStepSchema = z.object({
       message: 'invalid date',
     })
     .refine((value) => ageInYears(value) >= MINIMUM_AGE_YEARS, { message: 'too young' }),
-  placeOfBirth: optionalText,
+  // Required since 2026-07-31 (Fabián): it was in Marc's kickoff field list,
+  // and the optional marking was a minimization judgement, since reversed.
+  placeOfBirth: z.string().trim().min(1).max(200),
   nationality: z.string().trim().min(1).max(100),
   preferredLanguage: languageCodeSchema,
 });
@@ -201,7 +203,7 @@ export function buildCompleteOnboardingPayload(steps: OnboardingSteps, terms: Te
     first_name: steps.identity.firstName,
     last_name: steps.identity.lastName,
     date_of_birth: steps.identity.dateOfBirth,
-    place_of_birth: steps.identity.placeOfBirth ?? null,
+    place_of_birth: steps.identity.placeOfBirth,
     nationality: steps.identity.nationality,
     preferred_language: steps.identity.preferredLanguage,
     document_type: steps.documentation.documentType,
