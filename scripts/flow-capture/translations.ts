@@ -26,12 +26,27 @@ export async function loadTranslator(locale: Locale): Promise<Translator> {
     catalogs.set(path.basename(file, '.json'), await Bun.file(path.join(dir, file)).json());
   }
 
+  // Country names live in the generated shared list, not in the locale
+  // catalogs, so the picker chips get their own virtual namespace:
+  // `{{country:SY}}` resolves to the same localized label the app renders.
+  const countries = (await Bun.file(
+    path.join(repoRoot, 'packages', 'shared', 'i18n', 'countries.json'),
+  ).json()) as readonly { code: string; names: Record<string, string> }[];
+
   return (key: string): string => {
     const separator = key.indexOf(':');
     if (separator === -1) {
       throw new Error(`Translation key "${key}" must be written as "namespace:dotted.path"`);
     }
     const namespace = key.slice(0, separator);
+    if (namespace === 'country') {
+      const code = key.slice(separator + 1);
+      const name = countries.find((entry) => entry.code === code)?.names[locale];
+      if (name === undefined) {
+        throw new Error(`No "${locale}" country name for code "${code}" in countries.json`);
+      }
+      return name;
+    }
     if (!catalogs.has(namespace)) {
       throw new Error(`No "${namespace}" catalog for locale "${locale}" in ${dir}`);
     }

@@ -1,6 +1,7 @@
 import { loginWithPassword, logout } from '@/lib/auth';
 import {
   DEV_ALL_PLAYER_ACCOUNTS,
+  DEV_ONBOARDING_CREDENTIALS,
   DEV_PLAYER_ACCOUNTS,
   DEV_STAFF_ACCOUNTS,
   type DevAccount,
@@ -71,7 +72,7 @@ export function DevAccountsSection() {
 
   const players = showsEveryPlayer ? DEV_ALL_PLAYER_ACCOUNTS : DEV_PLAYER_ACCOUNTS;
 
-  async function signInAs(account: DevAccount) {
+  async function signInAs(account: Pick<DevAccount, 'email' | 'password'>) {
     setStatus(`Signing in as ${account.email}...`);
     const result = await loginWithPassword(account.email, account.password);
     setStatus(
@@ -97,6 +98,29 @@ export function DevAccountsSection() {
           />
         ))}
       </View>
+
+      <Text className="pt-xs text-sm font-semibold text-neutral-700">Onboarding</Text>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`Sign in as ${DEV_ONBOARDING_CREDENTIALS.email}`}
+        onPress={() => void signInAs(DEV_ONBOARDING_CREDENTIALS)}
+        className={`min-h-recommended justify-center rounded-md border px-md py-sm active:opacity-70 ${
+          user?.email === DEV_ONBOARDING_CREDENTIALS.email
+            ? 'border-primary bg-primary-light/20'
+            : 'border-neutral-200 bg-white'
+        }`}
+      >
+        <Text className="text-start text-md font-semibold text-neutral-900">
+          New player (no profile yet)
+        </Text>
+        <Text className="text-start text-sm text-neutral-500">
+          Lands on the intake wizard. If it goes to the tabs instead, the wizard was completed:
+          reset with bun run db:reset.
+        </Text>
+        <Text className="text-start text-xs text-neutral-400">
+          {DEV_ONBOARDING_CREDENTIALS.email}
+        </Text>
+      </Pressable>
 
       <Text className="pt-xs text-sm font-semibold text-neutral-700">
         {showsEveryPlayer ? 'Players (all seeded)' : 'Players (one per language)'}

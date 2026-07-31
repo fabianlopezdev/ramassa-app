@@ -94,6 +94,7 @@ export default function IdentityStepScreen() {
         name="firstName"
         render={({ field }) => (
           <AuthTextField
+            testID="onboarding-first-name"
             label={t('firstNameLabel')}
             value={field.value}
             onChangeText={field.onChange}
@@ -110,6 +111,7 @@ export default function IdentityStepScreen() {
         name="lastName"
         render={({ field }) => (
           <AuthTextField
+            testID="onboarding-last-name"
             label={t('lastNameLabel')}
             value={field.value}
             onChangeText={field.onChange}
@@ -133,6 +135,7 @@ export default function IdentityStepScreen() {
               name="day"
               render={({ field }) => (
                 <AuthTextField
+                  testID="onboarding-day"
                   label={t('dayLabel')}
                   value={field.value}
                   onChangeText={field.onChange}
@@ -149,6 +152,7 @@ export default function IdentityStepScreen() {
               name="month"
               render={({ field }) => (
                 <AuthTextField
+                  testID="onboarding-month"
                   label={t('monthLabel')}
                   value={field.value}
                   onChangeText={field.onChange}
@@ -165,6 +169,7 @@ export default function IdentityStepScreen() {
               name="year"
               render={({ field }) => (
                 <AuthTextField
+                  testID="onboarding-year"
                   label={t('yearLabel')}
                   value={field.value}
                   onChangeText={field.onChange}
@@ -191,6 +196,7 @@ export default function IdentityStepScreen() {
         name="placeOfBirth"
         render={({ field }) => (
           <AuthTextField
+            testID="onboarding-place-of-birth"
             label={t('placeOfBirthLabel')}
             value={field.value ?? ''}
             onChangeText={field.onChange}

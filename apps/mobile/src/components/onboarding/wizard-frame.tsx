@@ -35,6 +35,22 @@ export interface WizardFrameProps {
   readonly onBack?: () => void;
 }
 
+/**
+ * The keyboard-aware wrapper, iOS only. On Android the platform resizes the
+ * window when the keyboard opens, so a KeyboardAvoidingView with no `behavior`
+ * is a pure no-op layer.
+ */
+function Frame({ children }: { readonly children: ReactNode }) {
+  if (Platform.OS !== 'ios') {
+    return <View className="flex-1">{children}</View>;
+  }
+  return (
+    <KeyboardAvoidingView className="flex-1" behavior="padding">
+      {children}
+    </KeyboardAvoidingView>
+  );
+}
+
 export function WizardFrame({
   stepNumber,
   title,
@@ -50,10 +66,11 @@ export function WizardFrame({
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={['top', 'bottom']}>
-      <KeyboardAvoidingView
-        className="flex-1"
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
+      {/* iOS only. On Android a KeyboardAvoidingView with no `behavior` does
+          nothing except add a layer (the platform resizes the window for the
+          keyboard already), and that extra layer showed up as a stack of
+          full-screen scroll containers over the real one. */}
+      <Frame>
         <View className="gap-sm px-lg pt-sm">
           <View className="min-h-min flex-row items-center justify-between">
             {onBack === undefined ? (
@@ -70,7 +87,15 @@ export function WizardFrame({
                 </Text>
               </PressableScale>
             )}
-            <Text className={`text-sm text-neutral-500 ${languageFontClass}`}>
+            {/* The testID is the one thing on a wizard screen that is both
+                always on screen (this header does not scroll) and identical in
+                every language, which is what the capture and QA suites anchor
+                on: the step TITLE scrolls away, so waiting on it reports "not
+                there yet" for a step that arrived fine. */}
+            <Text
+              testID={`wizard-step-${stepNumber}`}
+              className={`text-sm text-neutral-500 ${languageFontClass}`}
+            >
               {t('stepOf', { current: stepNumber, total: WIZARD_TOTAL_STEPS })}
             </Text>
           </View>
@@ -89,7 +114,14 @@ export function WizardFrame({
           </View>
         </View>
 
+        {/* `flex-1` is load-bearing, not decoration: without it the ScrollView
+            sizes itself to its CONTENT on Android, so its scroll range is zero
+            and everything past the first screenful is simply unreachable. It
+            hid in Catalan (which fits) and appeared in Arabic, whose longer
+            wrapping pushed the nationality picker, the language chips and the
+            Continue button off the bottom with no way to scroll to them. */}
         <ScrollView
+          className="flex-1"
           contentContainerClassName="grow gap-lg p-lg"
           keyboardShouldPersistTaps="handled"
         >
@@ -111,7 +143,7 @@ export function WizardFrame({
 
           <AuthSubmitButton label={continueLabel} onPress={onContinue} isLoading={isContinueBusy} />
         </ScrollView>
-      </KeyboardAvoidingView>
+      </Frame>
     </SafeAreaView>
   );
 }

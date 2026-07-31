@@ -21,6 +21,7 @@
 import { getLanguageFontFamilyKey, SUPPORTED_LANGUAGES } from '@ramassa/shared/i18n';
 import type { AppRole } from '@ramassa/shared/schemas';
 import {
+  ONBOARDING_ACCOUNT_EMAIL,
   PARTICIPANT_FIXTURES,
   SEED_ACCOUNT_PASSWORD,
   seedUserId,
@@ -92,3 +93,15 @@ export const DEV_ALL_PLAYER_ACCOUNTS: readonly DevAccount[] = PARTICIPANT_FIXTUR
 export const DEV_PLAYER_ACCOUNTS: readonly DevAccount[] = pickOneParticipantPerLanguage(
   PARTICIPANT_FIXTURES,
 ).map((fixture) => toDevAccount(fixture, 'player'));
+
+/**
+ * The seeded auth-only account with NO profile row, so signing in as it lands
+ * on the intake wizard instead of the tabs. Not a `DevAccount`: it has no
+ * role, name, or language until the wizard writes them. If the wizard was
+ * completed since the last `bun run db:reset`, the account HAS a profile and
+ * goes straight to the tabs; reset to get the wizard back.
+ */
+export const DEV_ONBOARDING_CREDENTIALS = {
+  email: ONBOARDING_ACCOUNT_EMAIL,
+  password: SEED_ACCOUNT_PASSWORD,
+} as const;

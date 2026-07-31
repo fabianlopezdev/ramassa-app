@@ -1,0 +1,154 @@
+{
+  "app": "Ramassà",
+  "slug": "onboarding",
+  "title": "Alta guiada",
+  "surface": "mobile",
+  "description": "El registre guiat que fa cada jugadora nova el primer cop que entra: identitat, documentació, contacte i equipament, i els termes. Quatre passos amb barra de progrés, respostes amb un toc (els països i les opcions són sempre seleccionables, mai text lliure), i un esborrany que sobreviu si l'app es tanca a mig camí. Es mostra en català i en àrab, de dreta a esquerra.",
+  "steps": [
+    {
+      "id": "identity",
+      "label": "Pas 1 · Qui ets?",
+      "ios": "onboarding/ios/01-identity.png",
+      "android": "onboarding/android/01-identity.png",
+      "web": "onboarding/web/03-identity.png"
+    },
+    {
+      "id": "identity-error",
+      "label": "Validació: falten dades",
+      "ios": "onboarding/ios/02-identity-error.png",
+      "android": "onboarding/android/02-identity-error.png",
+      "web": "onboarding/web/04-identity-error.png"
+    },
+    {
+      "id": "documentation",
+      "label": "Pas 2 · Documentació",
+      "ios": "onboarding/ios/03-documentation.png",
+      "android": "onboarding/android/03-documentation.png",
+      "web": "onboarding/web/06-documentation.png"
+    },
+    {
+      "id": "resume",
+      "label": "L'app es tanca i es reobre: es continua al mateix pas",
+      "ios": "onboarding/ios/04-resume.png",
+      "android": "onboarding/android/04-resume.png"
+    },
+    {
+      "id": "logistics",
+      "label": "Pas 3 · Contacte i equipament",
+      "ios": "onboarding/ios/05-logistics.png",
+      "android": "onboarding/android/05-logistics.png",
+      "web": "onboarding/web/08-logistics.png"
+    },
+    {
+      "id": "terms",
+      "label": "Pas 4 · Termes i consentiments",
+      "ios": "onboarding/ios/06-terms.png",
+      "android": "onboarding/android/06-terms.png",
+      "web": "onboarding/web/13-terms.png"
+    },
+    {
+      "id": "declined",
+      "label": "Ara no: surt conservant l'esborrany",
+      "ios": "onboarding/ios/07-declined.png",
+      "android": "onboarding/android/07-declined.png",
+      "web": "onboarding/web/14-declined.png"
+    },
+    {
+      "id": "identity-ar",
+      "label": "من أنتِ؟ (àrab, dreta a esquerra)",
+      "ios": "onboarding/ios/01-identity-ar.png",
+      "android": "onboarding/android/01-identity-ar.png",
+      "web": "onboarding/web/03-identity-ar.png"
+    },
+    {
+      "id": "identity-error-ar",
+      "label": "هذه المعلومة ناقصة",
+      "ios": "onboarding/ios/02-identity-error-ar.png",
+      "android": "onboarding/android/02-identity-error-ar.png",
+      "web": "onboarding/web/04-identity-error-ar.png"
+    },
+    {
+      "id": "documentation-ar",
+      "label": "الوثائق",
+      "ios": "onboarding/ios/03-documentation-ar.png",
+      "android": "onboarding/android/03-documentation-ar.png",
+      "web": "onboarding/web/06-documentation-ar.png"
+    },
+    {
+      "id": "resume-ar",
+      "label": "إغلاق التطبيق وإعادة فتحه: المتابعة من نفس الخطوة",
+      "ios": "onboarding/ios/04-resume-ar.png",
+      "android": "onboarding/android/04-resume-ar.png"
+    },
+    {
+      "id": "logistics-ar",
+      "label": "التواصل والتجهيزات",
+      "ios": "onboarding/ios/05-logistics-ar.png",
+      "android": "onboarding/android/05-logistics-ar.png",
+      "web": "onboarding/web/08-logistics-ar.png"
+    },
+    {
+      "id": "terms-ar",
+      "label": "الشروط والموافقات",
+      "ios": "onboarding/ios/06-terms-ar.png",
+      "android": "onboarding/android/06-terms-ar.png",
+      "web": "onboarding/web/13-terms-ar.png"
+    },
+    {
+      "id": "declined-ar",
+      "label": "ليس الآن",
+      "ios": "onboarding/ios/07-declined-ar.png",
+      "android": "onboarding/android/07-declined-ar.png",
+      "web": "onboarding/web/14-declined-ar.png"
+    }
+  ],
+  "edges": [
+    {
+      "from": "identity",
+      "to": "identity-error",
+      "label": "Continua sense omplir res",
+      "kind": "negative"
+    },
+    { "from": "identity", "to": "documentation", "label": "Continua" },
+    {
+      "from": "documentation",
+      "to": "identity",
+      "label": "Enrere (les dades es conserven)",
+      "kind": "neutral"
+    },
+    {
+      "from": "documentation",
+      "to": "resume",
+      "label": "L'app es tanca a mig camí",
+      "kind": "neutral"
+    },
+    { "from": "resume", "to": "logistics", "label": "Continua" },
+    { "from": "logistics", "to": "terms", "label": "Continua" },
+    { "from": "terms", "to": "declined", "label": "Ara no", "kind": "dismiss" },
+    {
+      "from": "identity-ar",
+      "to": "identity-error-ar",
+      "label": "متابعة بدون تعبئة",
+      "kind": "negative"
+    },
+    { "from": "identity-ar", "to": "documentation-ar", "label": "متابعة" },
+    { "from": "documentation-ar", "to": "identity-ar", "label": "رجوع", "kind": "neutral" },
+    {
+      "from": "documentation-ar",
+      "to": "resume-ar",
+      "label": "يُغلق التطبيق في المنتصف",
+      "kind": "neutral"
+    },
+    { "from": "resume-ar", "to": "logistics-ar", "label": "متابعة" },
+    { "from": "logistics-ar", "to": "terms-ar", "label": "متابعة" },
+    { "from": "terms-ar", "to": "declined-ar", "label": "ليس الآن", "kind": "dismiss" }
+  ],
+  "nodes": [],
+  "notes": [
+    "El registre no es completa mai durant la captura: l'última acció és \"Ara no\", que tanca la sessió conservant l'esborrany. Completar-lo escriuria un perfil i la porta d'entrada ja no tornaria a mostrar l'assistent.",
+    "Tot el que és enumerable es respon tocant, no escrivint: nacionalitat amb selector de país (llista completa amb cerca i els països més habituals fixats a dalt), tipus de document, talles i sí/no amb fitxes. Menys errors de tecleig i cap barrera per a qui llegeix poc.",
+    "Si l'app es tanca a mig registre, en tornar a obrir es continua exactament al mateix pas amb totes les dades: l'esborrany viu al dispositiu i s'esborra en acabar.",
+    "No tenir document d'identitat és una resposta de primera classe (\"No en tinc\"), mai un carreró sense sortida: el programa atén persones que encara no en tenen.",
+    "El lloc de naixement és obligatori i la nacionalitat es guarda amb un valor canònic únic per país, de manera que els informes agregats no es fragmenten per grafies diferents del mateix país."
+  ]
+}
