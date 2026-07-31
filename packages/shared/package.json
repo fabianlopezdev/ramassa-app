@@ -16,6 +16,7 @@
     "./auth": "./auth/index.ts",
     "./constants": "./lib/constants.ts",
     "./upload-client": "./lib/upload-client.ts",
+    "./onboarding-drafts": "./lib/onboarding-drafts.ts",
     "./testing": "./testing/index.ts",
     "./tokens/motion": "./tokens/motion.ts"
   },
