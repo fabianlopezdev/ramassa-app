@@ -107,3 +107,41 @@ export async function fetchProfileRole(client: Client, userId: string): Promise<
   }
   return role.data;
 }
+
+export interface ProfileSummary {
+  readonly role: AppRole;
+  readonly termsAcceptedAt: string | null;
+}
+
+/**
+ * The signed-in identity's profile, or NULL when no profile row exists yet.
+ *
+ * The null case is the whole reason this exists alongside fetchProfileRole: a
+ * brand-new player has a session but no profile until the onboarding wizard
+ * completes, and that is an EXPECTED state the gate routes on, not an error.
+ * `.single()` cannot express it (a missing row is an error to PostgREST), so
+ * this uses `.maybeSingle()` and reserves throwing for real failures - where
+ * the gate must NOT send the player to the wizard, because "we could not read
+ * the profile" is not evidence there is no profile.
+ */
+export async function fetchProfileSummary(
+  client: Client,
+  userId: string,
+): Promise<ProfileSummary | null> {
+  const { data, error } = await client
+    .from('profiles')
+    .select('role, terms_accepted_at')
+    .eq('id', userId)
+    .maybeSingle();
+  if (error) {
+    throw new AppError('DB-1', { message: error.message, context: { userId } });
+  }
+  if (data === null) {
+    return null;
+  }
+  const role = appRoleSchema.safeParse(data.role);
+  if (!role.success) {
+    throw new AppError('AUTH-1', { context: { userId, reason: 'unknown_role' } });
+  }
+  return { role: role.data, termsAcceptedAt: data.terms_accepted_at };
+}

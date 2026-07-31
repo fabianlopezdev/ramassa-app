@@ -5,6 +5,7 @@ import type { Database } from '../types/database';
 import {
   completeAuthCallback,
   fetchProfileRole,
+  fetchProfileSummary,
   requestMagicLink,
   signInWithPassword,
 } from './auth-actions';
@@ -32,6 +33,7 @@ function fakeProfileClient(result: { data: unknown; error: unknown }): Client {
     select: () => builder,
     eq: () => builder,
     single: async () => result,
+    maybeSingle: async () => result,
   };
   return { from: () => builder } as unknown as Client;
 }
@@ -128,6 +130,55 @@ test('fetchProfileRole rejects an unknown role value', async () => {
   try {
     await fetchProfileRole(fakeProfileClient({ data: { role: 'wizard' }, error: null }), 'user-1');
     throw new Error('expected fetchProfileRole to throw');
+  } catch (error) {
+    expect(isAppError(error)).toBe(true);
+  }
+});
+
+// fetchProfileSummary: the onboarding gate's data source. The distinction that
+// matters is MISSING ROW (an expected state for a brand-new player, returns
+// null) versus LOOKUP FAILURE (throws): conflating them either spams error
+// reporting for every new signup or, worse, routes an onboarded player back
+// into the wizard whenever the network flakes.
+
+test('fetchProfileSummary returns role and terms timestamp for an existing profile', async () => {
+  const summary = await fetchProfileSummary(
+    fakeProfileClient({
+      data: { role: 'player', terms_accepted_at: '2026-07-01T10:00:00Z' },
+      error: null,
+    }),
+    'user-1',
+  );
+  expect(summary).toEqual({ role: 'player', termsAcceptedAt: '2026-07-01T10:00:00Z' });
+});
+
+test('fetchProfileSummary returns null for a missing profile, without throwing', async () => {
+  const summary = await fetchProfileSummary(
+    fakeProfileClient({ data: null, error: null }),
+    'user-1',
+  );
+  expect(summary).toBeNull();
+});
+
+test('fetchProfileSummary throws a typed error on lookup failure', async () => {
+  try {
+    await fetchProfileSummary(
+      fakeProfileClient({ data: null, error: { message: 'boom' } }),
+      'user-1',
+    );
+    throw new Error('expected fetchProfileSummary to throw');
+  } catch (error) {
+    expect(isAppError(error)).toBe(true);
+  }
+});
+
+test('fetchProfileSummary rejects an unknown role value', async () => {
+  try {
+    await fetchProfileSummary(
+      fakeProfileClient({ data: { role: 'wizard', terms_accepted_at: null }, error: null }),
+      'user-1',
+    );
+    throw new Error('expected fetchProfileSummary to throw');
   } catch (error) {
     expect(isAppError(error)).toBe(true);
   }
