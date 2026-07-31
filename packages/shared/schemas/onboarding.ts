@@ -72,35 +72,47 @@ const NIE_PATTERN = /^[A-Z]\d{7}[A-Z]$/;
  * must not dead-end on the fact. The conditional requirement lives HERE so the
  * server re-validation enforces exactly what the form promised.
  */
-export const documentationStepSchema = z
-  .object({
-    documentType: z.enum(DOCUMENT_TYPES),
-    documentNumber: z
-      .string()
-      .trim()
-      .toUpperCase()
-      .max(50)
-      .optional()
-      .transform((value) => (value === '' ? undefined : value)),
-  })
-  .superRefine((step, context) => {
-    if (step.documentType === 'none') return;
-    if (step.documentNumber === undefined) {
-      context.addIssue({
-        code: 'custom',
-        path: ['documentNumber'],
-        message: 'required unless document type is none',
-      });
-      return;
-    }
-    if (step.documentType === 'nie' && !NIE_PATTERN.test(step.documentNumber)) {
-      context.addIssue({
-        code: 'custom',
-        path: ['documentNumber'],
-        message: 'a NIE is one letter, seven digits, one letter',
-      });
-    }
-  });
+/**
+ * The documentation FIELDS, separate from the step schema built on them, so the
+ * profile edit screen can compose the identical fields instead of re-declaring
+ * them (RAPP-22). A second declaration is how "valid" quietly comes to mean two
+ * different things for the same woman's NIE.
+ */
+export const documentationFields = z.object({
+  documentType: z.enum(DOCUMENT_TYPES),
+  documentNumber: z
+    .string()
+    .trim()
+    .toUpperCase()
+    .max(50)
+    .optional()
+    .transform((value) => (value === '' ? undefined : value)),
+});
+
+/** The conditional document rule, shared by intake and by editing. */
+export function refineDocumentNumber(
+  step: { documentType: DocumentType; documentNumber?: string },
+  context: z.RefinementCtx,
+): void {
+  if (step.documentType === 'none') return;
+  if (step.documentNumber === undefined) {
+    context.addIssue({
+      code: 'custom',
+      path: ['documentNumber'],
+      message: 'required unless document type is none',
+    });
+    return;
+  }
+  if (step.documentType === 'nie' && !NIE_PATTERN.test(step.documentNumber)) {
+    context.addIssue({
+      code: 'custom',
+      path: ['documentNumber'],
+      message: 'a NIE is one letter, seven digits, one letter',
+    });
+  }
+}
+
+export const documentationStepSchema = documentationFields.superRefine(refineDocumentNumber);
 export type DocumentationStep = z.infer<typeof documentationStepSchema>;
 
 export const CLOTHING_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'] as const;
@@ -132,41 +144,57 @@ const optionalPhone = z
  * "Cap / None" choice, distinct from the field being absent: the wizard
  * requires an ANSWER, not an entity.
  */
-export const logisticsStepSchema = z
-  .object({
-    phone: optionalPhone,
-    address: optionalText,
-    city: optionalText,
-    postalCode: z
-      .string()
-      .trim()
-      .optional()
-      .transform((value) => (value === '' ? undefined : value))
-      .refine((value) => value === undefined || /^\d{5}$/.test(value), {
-        message: 'a postal code is five digits',
-      }),
-    referenceEntity: z.string().trim().min(1).max(200).nullable(),
-    referenceContactName: optionalText,
-    hasDependents: z.boolean(),
-    numDependents: z.number().int().min(0).max(15).optional().default(0),
-    clothingSize: z.enum(CLOTHING_SIZES),
-    shoeSize: z.string().refine((value) => SHOE_SIZES.includes(value), {
-      message: 'expected an EU size between 34 and 46',
+export const logisticsFields = z.object({
+  phone: optionalPhone,
+  address: optionalText,
+  city: optionalText,
+  postalCode: z
+    .string()
+    .trim()
+    .optional()
+    .transform((value) => (value === '' ? undefined : value))
+    .refine((value) => value === undefined || /^\d{5}$/.test(value), {
+      message: 'a postal code is five digits',
     }),
-    avatarUrl: z.url().optional(),
-  })
-  .superRefine((step, context) => {
-    if (step.hasDependents && step.numDependents < 1) {
-      context.addIssue({
-        code: 'custom',
-        path: ['numDependents'],
-        message: 'how many, between 1 and 15',
-      });
-    }
-  })
-  // Without dependents the count is FORCED to 0, so a toggled-then-untoggled
-  // form cannot smuggle a stale count into the profile.
-  .transform((step) => (step.hasDependents ? step : { ...step, numDependents: 0 }));
+  referenceEntity: z.string().trim().min(1).max(200).nullable(),
+  referenceContactName: optionalText,
+  hasDependents: z.boolean(),
+  numDependents: z.number().int().min(0).max(15).optional().default(0),
+  clothingSize: z.enum(CLOTHING_SIZES),
+  shoeSize: z.string().refine((value) => SHOE_SIZES.includes(value), {
+    message: 'expected an EU size between 34 and 46',
+  }),
+  avatarUrl: z.url().optional(),
+});
+
+/** The dependants rule, shared by intake and by editing. */
+export function refineDependents(
+  step: { hasDependents: boolean; numDependents: number },
+  context: z.RefinementCtx,
+): void {
+  if (step.hasDependents && step.numDependents < 1) {
+    context.addIssue({
+      code: 'custom',
+      path: ['numDependents'],
+      message: 'how many, between 1 and 15',
+    });
+  }
+}
+
+/**
+ * Without dependants the count is FORCED to 0, so a toggled-then-untoggled form
+ * cannot smuggle a stale count through. Exported because the profile edit path
+ * has to apply the same normalization on its way to the RPC.
+ */
+export function normalizeDependents<T extends { hasDependents: boolean; numDependents: number }>(
+  step: T,
+): T {
+  return step.hasDependents ? step : { ...step, numDependents: 0 };
+}
+
+export const logisticsStepSchema = logisticsFields
+  .superRefine(refineDependents)
+  .transform(normalizeDependents);
 export type LogisticsStep = z.infer<typeof logisticsStepSchema>;
 
 /**
