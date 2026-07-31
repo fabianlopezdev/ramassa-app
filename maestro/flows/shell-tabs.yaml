@@ -69,26 +69,86 @@ env:
 - extendedWaitUntil:
     visible: '.*Developer menu.*'
     timeout: 240000
-- tapOn: '.*Developer menu.*'
+# LANGUAGE FIRST, then sign in. After `clearState` the app follows the
+# SIMULATOR's locale, so every Catalan-resolved selector below (the push decline,
+# the home title) matches nothing until the language is pinned: sign-in appeared
+# to hang when in fact it had succeeded behind an English notifications sheet.
+# The dev menu is reachable pre-auth precisely so this order is possible.
+- repeat:
+    times: 6
+    while:
+      notVisible: '.*Environment.*'
+    commands:
+      - tapOn:
+          text: '.*Developer menu.*'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- waitForAnimationToEnd:
+    timeout: 5000
+- repeat:
+    times: 20
+    while:
+      notVisible: '^${LOCALE} \(.*\)$'
+    commands:
+      - swipe:
+          start: 50%, 70%
+          end: 50%, 50%
+          duration: 900
+      - waitForAnimationToEnd:
+          timeout: 2500
+# Tap UNTIL selected: these small wrapped buttons drift between bounds-resolve
+# and touch, and a tap into the padding reports COMPLETED having done nothing.
+- repeat:
+    times: 6
+    while:
+      notVisible:
+        text: '^${LOCALE} \(.*\)$'
+        selected: true
+    commands:
+      - tapOn:
+          text: '^${LOCALE} \(.*\)$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 2500
+- assertVisible:
+    text: '^${LOCALE} \(.*\)$'
+    selected: true
+
+# Close and REOPEN rather than scrolling back: the account list sits above the
+# language buttons, and upward searches inside this menu cannot be trusted (the
+# hierarchy reports off-screen rows as present, so they exit before arriving).
+# A fresh push opens at the top. The direction has not flipped yet (that takes
+# the relaunch below), so the header and its close control are still present
+# even for the Arabic pass (RAPP-93 only bites once the layout is RTL).
+- repeat:
+    times: 6
+    while:
+      visible: '.*Close.*'
+    commands:
+      - tapOn:
+          text: '.*Close.*'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- repeat:
+    times: 6
+    while:
+      notVisible: '.*Accounts and roles.*'
+    commands:
+      - tapOn:
+          text: '.*Developer menu.*'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- waitForAnimationToEnd:
+    timeout: 5000
 
 # Sign in as a seeded player. Role lives in the database, so there is no flag to
 # fake: the switcher signs in for real against the local seeded stack. The row is
 # matched on the ADDRESS alone rather than on its "Sign in as <address>" label:
 # iOS exposes the row's accessibility label, Android exposes the address text
 # node inside it, and only the bare address matches on both.
-- extendedWaitUntil:
-    visible: '.*Accounts and roles.*'
-    timeout: 30000
-# The push transition is INTERACTIVE: a swipe that lands while it is still
-# running cancels it and drops back to the previous screen, which reads exactly
-# like "the menu never opened". Let it finish before scrolling.
-- waitForAnimationToEnd:
-    timeout: 5000
-# A bounded swipe loop rather than `scrollUntilVisible`. That built-in repeatedly
-# reached this row on the Android emulator, left it plainly on screen, and still
-# reported it as not found (with and without `visibilityPercentage` /
-# `centerElement`). `repeat` + `notVisible` re-checks with the same matcher the
-# tap uses, so what the loop waits for and what the tap needs cannot disagree.
 - repeat:
     times: 20
     while:
@@ -100,10 +160,9 @@ env:
           duration: 900
       - waitForAnimationToEnd:
           timeout: 2500
-# The loop above stops the moment ANY sliver of the row is on screen, which in
-# practice leaves it 40px tall on the bottom edge, under the navigation bar,
-# where a tap does not reach it: the flow then waits out its timeout on a sign-in
-# that never happened. One more swipe lifts the row into the body of the list.
+# The loop stops the moment ANY sliver of the row is on screen, which parks it
+# under the navigation bar where a tap does not reach it. One smaller swipe
+# lifts it into the body of the list.
 - swipe:
     start: 50%, 65%
     end: 50%, 55%
@@ -113,19 +172,10 @@ env:
 - tapOn: '.*${PLAYER_EMAIL}.*'
 - waitForAnimationToEnd:
     timeout: 3000
-# Close the dev menu. Signing in does NOT dismiss it: the session changes
-# underneath, the menu stays exactly where it is, and the account row simply
-# becomes the highlighted one. So there is nothing to wait for until the menu is
-# out of the way, and waiting for the player home while it is still open can
-# never pass.
-- tapOn:
-    text: '.*Close.*'
-- waitForAnimationToEnd:
-    timeout: 3000
 
-# Mounting the player area asks about notifications before the system dialog, and
-# that sheet can land AFTER the first render, covering the very title being waited
-# on. Loop rather than tap once.
+# Close the menu (signing in does not dismiss it), clear the notifications
+# rationale - now in the pinned language, so the decline actually matches - and
+# prove the OUTCOME: the player home, which cannot appear without a session.
 - repeat:
     times: 6
     while:
@@ -139,38 +189,9 @@ env:
           optional: true
       - waitForAnimationToEnd:
           timeout: 3000
-# The OUTCOME, not the dev menu's "Signed in as ..." line: that line is local
-# component state rendered after the whole account list, so it sits below the row
-# just tapped and waiting never brings it into view. Landing on the player home
-# cannot happen without a session.
 - extendedWaitUntil:
     visible: '.*${HOME_TITLE}.*'
     timeout: 120000
-
-# Pin the capture language. Without this the app follows the SIMULATOR's locale,
-# so a machine set to English would quietly produce an English "Catalan" pass.
-# The button reads "<code> (<direction>)".
-- repeat:
-    times: 20
-    while:
-      notVisible: '^${LOCALE} \(.*\)$'
-    commands:
-      - swipe:
-          start: 50%, 70%
-          end: 50%, 50%
-          duration: 900
-      - waitForAnimationToEnd:
-          timeout: 2500
-- swipe:
-    start: 50%, 65%
-    end: 50%, 55%
-    duration: 900
-- waitForAnimationToEnd:
-    timeout: 2500
-- tapOn:
-    text: '^${LOCALE} \(.*\)$'
-- waitForAnimationToEnd:
-    timeout: 3000
 
 # React Native applies a layout-direction flip on the next start only, so the
 # RTL pass is only honest after a real relaunch. Doing it for both locales keeps

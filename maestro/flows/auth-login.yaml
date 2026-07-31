@@ -16,7 +16,7 @@ env:
   USE_PASSWORD: '{{auth:usePasswordInstead}}'
   USE_MAGIC: '{{auth:useMagicLinkInstead}}'
   PASSWORD_LABEL: '{{auth:passwordLabel}}'
-  EMAIL_LABEL: '{{auth:emailLabel}}'
+  EMAIL_PLACEHOLDER: '{{auth:emailPlaceholder}}'
   MAGIC_SENT_TITLE: '{{auth:magicLinkSentTitle}}'
   PLAYER_EMAIL: '{{player:email}}'
 ---
@@ -172,9 +172,20 @@ env:
 
 # 3. The confirmation. A seeded address, so the local stack accepts it and the
 # screen shows a real address rather than a placeholder.
-- tapOn: '.*${EMAIL_LABEL}.*'
+# Tap the INPUT, found by its placeholder, not the label above it: tapping the
+# label text does not focus the field, `inputText` then types into nothing, and
+# the submit fails validation with an empty form - which is exactly how the
+# first run of this flow failed.
+- tapOn:
+    text: '^${EMAIL_PLACEHOLDER}$'
 - inputText: ${PLAYER_EMAIL}
-- hideKeyboard
+# NOT `hideKeyboard`: on Android that is a BACK press, and because `inputText`
+# types via adb without necessarily raising the IME, the BACK had no keyboard to
+# consume and closed the app (login is the root screen) - the emulator was found
+# sitting on the launcher. Tapping the title blurs the field on both platforms:
+# the ScrollView has keyboardShouldPersistTaps="handled".
+- tapOn:
+    text: '.*${LOGIN_TITLE}.*'
 - waitForAnimationToEnd:
     timeout: 2000
 - tapOn:

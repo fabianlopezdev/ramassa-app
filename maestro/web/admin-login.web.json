@@ -1,9 +1,15 @@
 {
   "slug": "admin-login",
-  "viewport": { "width": 1440, "height": 900 },
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
   "deviceScaleFactor": 2,
   "timezoneId": "Europe/Madrid",
-  "settle": { "timeout": 6000, "interval": 150 },
+  "settle": {
+    "timeout": 6000,
+    "interval": 150
+  },
   "steps": [
     {
       "label": "login",
@@ -12,16 +18,22 @@
     },
     {
       "label": "password",
-      "click": "[aria-label=\"{{auth:usePasswordInstead}}\"]",
-      "waitFor": "[aria-label=\"{{auth:passwordLabel}}\"]"
+      "click": "button:has-text(\"{{auth:usePasswordInstead}}\")",
+      "waitFor": "input[type=\"password\"]"
     },
     {
       "label": "staff-dashboard",
       "fill": [
-        { "selector": "[aria-label=\"{{auth:emailLabel}}\"]", "value": "{{staff:email}}" },
-        { "selector": "[aria-label=\"{{auth:passwordLabel}}\"]", "value": "{{staff:password}}" }
+        {
+          "selector": "input[type=\"email\"]",
+          "value": "{{staff:email}}"
+        },
+        {
+          "selector": "input[type=\"password\"]",
+          "value": "{{staff:password}}"
+        }
       ],
-      "click": "[aria-label=\"{{auth:passwordAction}}\"]",
+      "click": "button:has-text(\"{{auth:passwordAction}}\")",
       "waitFor": "text={{admin:dashboardTitle}}"
     },
     {

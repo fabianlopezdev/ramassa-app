@@ -168,27 +168,36 @@ export async function serveAdminApp(port: number): Promise<StoppableServer> {
   log('· building the admin app for the browser');
   await runOrThrow(['bun', 'run', 'build'], { cwd: adminDir, inherit: true });
 
-  const distDir = path.join(adminDir, 'dist', 'client');
-  const indexHtml = Bun.file(path.join(distDir, 'index.html'));
-  if (!(await indexHtml.exists())) {
-    throw new Error(`admin build produced no index.html in ${distDir}`);
-  }
-
-  const server = Bun.serve({
-    port,
-    fetch: async (request) => {
-      const { pathname } = new URL(request.url);
-      const asset = Bun.file(path.join(distDir, decodeURIComponent(pathname)));
-      if (pathname !== '/' && (await asset.exists())) {
-        return new Response(asset);
-      }
-      return new Response(indexHtml, { headers: { 'content-type': 'text/html' } });
-    },
+  // `vite preview`, not a static file server: TanStack Start is SSR, so the
+  // build emits a server entry and client assets but no index.html anywhere -
+  // the HTML exists only per-request. Preview runs the BUILT worker locally,
+  // which is the closest thing to the deployed app that can exist on this
+  // machine (rule 9 forbids capturing against anything but the local stack).
+  log(`· serving the built admin app on :${port}`);
+  const child = Bun.spawn(['bunx', 'vite', 'preview', '--port', String(port), '--strictPort'], {
+    cwd: adminDir,
+    stdout: 'ignore',
+    stderr: 'ignore',
+    stdin: 'ignore',
   });
-  log(`· serving the admin app on ${server.url.origin}`);
+  await waitFor(
+    `admin preview on :${port}`,
+    async () => {
+      try {
+        const response = await fetch(`http://localhost:${port}/login`, {
+          signal: AbortSignal.timeout(3000),
+        });
+        return response.ok;
+      } catch {
+        return false;
+      }
+    },
+    { timeoutMs: 120_000 },
+  );
   return {
     stop: async () => {
-      await server.stop(true);
+      child.kill();
+      await child.exited;
     },
   };
 }

@@ -15,12 +15,17 @@ env:
   LOCALE: ca
   DEV_CLIENT_URL: ramassa://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081
   PLAYER_EMAIL: '{{player:email}}'
+  DEV_MENU_LABEL: Developer menu
   HOME_TITLE: '{{home:title}}'
   PUSH_DECLINE: '{{push:rationaleDecline}}'
   TAB_HOME: '{{nav:tabs.home}}'
   TAB_PROFILE: '{{nav:tabs.profile}}'
   TAB_HOME_AR: الرئيسية
   TAB_PROFILE_AR: الملف الشخصي
+  # Hardcoded like the Arabic tab labels: selectors resolve from the Catalan
+  # catalog, and the notifications prompt reappears after every relaunch,
+  # covering the tab bar being waited on.
+  PUSH_DECLINE_AR: ليس الآن
 ---
 # Five languages, two reading directions, and the thing that is easy to get
 # wrong: React Native applies a layout-direction flip on the NEXT app start only,
@@ -65,10 +70,80 @@ env:
 - extendedWaitUntil:
     visible: '.*Developer menu.*'
     timeout: 240000
-- tapOn: '.*Developer menu.*'
-- extendedWaitUntil:
-    visible: '.*Accounts and roles.*'
-    timeout: 30000
+# LANGUAGE FIRST, then sign in. After `clearState` the app follows the
+# SIMULATOR's locale, so the Catalan-resolved selectors below (push decline,
+# home title) match nothing until Catalan is pinned: sign-in appeared to hang
+# when it had in fact succeeded behind an English notifications sheet.
+- repeat:
+    times: 6
+    while:
+      notVisible: '.*Environment.*'
+    commands:
+      - tapOn:
+          text: '.*Developer menu.*'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- waitForAnimationToEnd:
+    timeout: 5000
+- repeat:
+    times: 20
+    while:
+      notVisible: '^ca \(ltr\)$'
+    commands:
+      - swipe:
+          start: 50%, 70%
+          end: 50%, 50%
+          duration: 900
+      - waitForAnimationToEnd:
+          timeout: 2500
+# Tap UNTIL selected: a tap into re-render padding reports COMPLETED having
+# changed nothing, and the loop's condition IS the outcome.
+- repeat:
+    times: 6
+    while:
+      notVisible:
+        text: '^ca \(ltr\)$'
+        selected: true
+    commands:
+      - tapOn:
+          text: '^ca \(ltr\)$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 2500
+- assertVisible:
+    text: '^ca \(ltr\)$'
+    selected: true
+
+# Close and REOPEN rather than scrolling back up: the account list sits above
+# the language buttons and upward searches in this menu cannot be trusted (the
+# hierarchy reports off-screen rows as present). A fresh push opens at the top.
+- repeat:
+    times: 6
+    while:
+      visible: '.*Close.*'
+    commands:
+      - tapOn:
+          text: '.*Close.*'
+          optional: true
+      - tapOn:
+          text: '^${PUSH_DECLINE_AR}$'
+          optional: true
+      - tapOn:
+          text: '^${PUSH_DECLINE}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- repeat:
+    times: 6
+    while:
+      notVisible: '.*Accounts and roles.*'
+    commands:
+      - tapOn:
+          text: '.*Developer menu.*'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
 - waitForAnimationToEnd:
     timeout: 5000
 - repeat:
@@ -91,19 +166,9 @@ env:
 - tapOn: '.*${PLAYER_EMAIL}.*'
 - waitForAnimationToEnd:
     timeout: 3000
-# Close the dev menu. Signing in does NOT dismiss it: the session changes
-# underneath, the menu stays exactly where it is, and the account row simply
-# becomes the highlighted one. So there is nothing to wait for until the menu is
-# out of the way, and waiting for the player home while it is still open can
-# never pass.
-- tapOn:
-    text: '.*Close.*'
-- waitForAnimationToEnd:
-    timeout: 3000
 
-# Mounting the player area asks about notifications before the system dialog, and
-# that sheet can land AFTER the first render, covering the very title being waited
-# on. Loop rather than tap once.
+# Close the menu (signing in does not dismiss it), clear the notifications
+# rationale - in Catalan now, so the decline matches - and prove the OUTCOME.
 - repeat:
     times: 6
     while:
@@ -117,48 +182,11 @@ env:
           optional: true
       - waitForAnimationToEnd:
           timeout: 3000
-# The OUTCOME, not the dev menu's "Signed in as ..." line: that line is local
-# component state rendered after the whole account list, so it sits below the row
-# just tapped and waiting never brings it into view. Landing on the player home
-# cannot happen without a session.
 - extendedWaitUntil:
     visible: '.*${HOME_TITLE}.*'
     timeout: 120000
 
-# Pin Catalan and relaunch, so the baseline is a real left-to-right start rather
-# than whatever the device happened to be set to.
-- repeat:
-    times: 20
-    while:
-      notVisible: '^ca \(ltr\)$'
-    commands:
-      - swipe:
-          start: 50%, 70%
-          end: 50%, 50%
-          duration: 900
-      - waitForAnimationToEnd:
-          timeout: 2500
-- swipe:
-    start: 50%, 65%
-    end: 50%, 55%
-    duration: 900
-- waitForAnimationToEnd:
-    timeout: 2500
-# Settle before the tap. In the mirrored RTL layout the language buttons wrap
-# onto two rows and `ca (ltr)` sits DIRECTLY ABOVE `fa (rtl)` in the same column
-# (measured: ca [800,1955][994,2081], fa [806,2102][994,2228]). Bounds resolved
-# while the list is still easing therefore put the touch one row low, and the tap
-# reports COMPLETED having selected a different language. The `selected` check
-# below is what catches it when this is not enough.
-- waitForAnimationToEnd:
-    timeout: 3000
-- tapOn:
-    text: '^ca \(ltr\)$'
-- waitForAnimationToEnd:
-    timeout: 3000
-- assertVisible:
-    text: '^ca \(ltr\)$'
-    selected: true
+# Relaunch so the baseline of shot 1 is a real, settled left-to-right start.
 - stopApp
 - openLink: ${DEV_CLIENT_URL}
 # iOS asks "Open in <app>?" before it will follow a custom-scheme link, and
@@ -216,10 +244,28 @@ env:
 - extendedWaitUntil:
     visible: '.*${DEV_MENU_LABEL}.*'
     timeout: 15000
-- tapOn: '.*Developer menu.*'
-- extendedWaitUntil:
-    visible: '.*Environment.*'
-    timeout: 30000
+# Open the menu, then scroll BLIND to the top. Android reopens this menu at the
+# scroll position it was last left at (iOS's fresh push resets it), so asserting
+# on the first section fails on a menu that opened perfectly. A fixed count of
+# drags needs no condition and so cannot be fooled by a hierarchy that reports
+# off-screen rows as present; at the top the extra drags are a no-op.
+- repeat:
+    times: 6
+    while:
+      notVisible: '.*Accounts and roles.*'
+    commands:
+      - tapOn:
+          text: '.*${DEV_MENU_LABEL}.*'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- repeat:
+    times: 10
+    commands:
+      - swipe:
+          start: 50%, 40%
+          end: 50%, 70%
+          duration: 400
 - waitForAnimationToEnd:
     timeout: 5000
 - repeat:
@@ -252,10 +298,18 @@ env:
 # below is what catches it when this is not enough.
 - waitForAnimationToEnd:
     timeout: 3000
-- tapOn:
-    text: '^ar \(rtl\)$'
-- waitForAnimationToEnd:
-    timeout: 3000
+- repeat:
+    times: 6
+    while:
+      notVisible:
+        text: '^ar \(rtl\)$'
+        selected: true
+    commands:
+      - tapOn:
+          text: '^ar \(rtl\)$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 2500
 - assertVisible:
     text: '^ar \(rtl\)$'
     selected: true
@@ -282,6 +336,12 @@ env:
     commands:
       - tapOn:
           text: '.*Close.*'
+          optional: true
+      - tapOn:
+          text: '^${PUSH_DECLINE_AR}$'
+          optional: true
+      - tapOn:
+          text: '^${PUSH_DECLINE}$'
           optional: true
       - waitForAnimationToEnd:
           timeout: 3000
@@ -315,10 +375,28 @@ env:
 - extendedWaitUntil:
     visible: '.*${DEV_MENU_LABEL}.*'
     timeout: 15000
-- tapOn: '.*Developer menu.*'
-- extendedWaitUntil:
-    visible: '.*Environment.*'
-    timeout: 30000
+# Open the menu, then scroll BLIND to the top. Android reopens this menu at the
+# scroll position it was last left at (iOS's fresh push resets it), so asserting
+# on the first section fails on a menu that opened perfectly. A fixed count of
+# drags needs no condition and so cannot be fooled by a hierarchy that reports
+# off-screen rows as present; at the top the extra drags are a no-op.
+- repeat:
+    times: 6
+    while:
+      notVisible: '.*Accounts and roles.*'
+    commands:
+      - tapOn:
+          text: '.*${DEV_MENU_LABEL}.*'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- repeat:
+    times: 10
+    commands:
+      - swipe:
+          start: 50%, 40%
+          end: 50%, 70%
+          duration: 400
 - waitForAnimationToEnd:
     timeout: 5000
 - repeat:
@@ -352,24 +430,23 @@ env:
           duration: 900
       - waitForAnimationToEnd:
           timeout: 2500
-- swipe:
-    start: 50%, 65%
-    end: 50%, 55%
-    duration: 900
-- waitForAnimationToEnd:
-    timeout: 2500
-# Settle before the tap. In the mirrored RTL layout the language buttons wrap
-# onto two rows and `ca (ltr)` sits DIRECTLY ABOVE `fa (rtl)` in the same column
-# (measured: ca [800,1955][994,2081], fa [806,2102][994,2228]). Bounds resolved
-# while the list is still easing therefore put the touch one row low, and the tap
-# reports COMPLETED having selected a different language. The `selected` check
-# below is what catches it when this is not enough.
+# NO settle swipe before the tap: the loop above already stopped with the button
+# on screen, and an unconditional extra swipe moves it - measured, it scrolled
+# `ca (ltr)` clean out of the hierarchy. Just let the list come to rest.
 - waitForAnimationToEnd:
     timeout: 3000
-- tapOn:
-    text: '^ca \(ltr\)$'
-- waitForAnimationToEnd:
-    timeout: 3000
+- repeat:
+    times: 6
+    while:
+      notVisible:
+        text: '^ca \(ltr\)$'
+        selected: true
+    commands:
+      - tapOn:
+          text: '^ca \(ltr\)$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 2500
 - assertVisible:
     text: '^ca \(ltr\)$'
     selected: true

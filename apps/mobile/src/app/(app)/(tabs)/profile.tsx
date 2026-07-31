@@ -1,6 +1,6 @@
 import { ScreenPlaceholder } from '@/components/screen-placeholder';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, View } from 'react-native';
+import { ScrollView } from 'react-native';
 
 // The dev-menu entry, required inside a __DEV__ branch so neither the component
 // nor its label reaches a production bundle (RAPP-19). Settings will live on
@@ -27,12 +27,14 @@ export default function ProfileScreen() {
       contentContainerClassName="grow"
       contentInsetAdjustmentBehavior="automatic"
     >
-      <ScreenPlaceholder title={t('nav:tabs.profile')} />
-      {DevMenuEntry === null ? null : (
-        <View className="items-center px-lg pb-xl">
-          <DevMenuEntry />
-        </View>
-      )}
+      {/* The entry renders WITH the centred placeholder, not below it: content
+          sized to the viewport puts anything after the placeholder underneath
+          the floating tab bar - present in the hierarchy, invisible on screen.
+          A dev-only affordance on a placeholder screen can simply live centre
+          stage until RAPP-22 replaces this screen with real settings. */}
+      <ScreenPlaceholder title={t('nav:tabs.profile')}>
+        {DevMenuEntry === null ? null : <DevMenuEntry />}
+      </ScreenPlaceholder>
     </ScrollView>
   );
 }
