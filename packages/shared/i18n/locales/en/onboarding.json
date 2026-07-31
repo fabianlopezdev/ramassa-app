@@ -3,7 +3,6 @@
   "continueAction": "Continue",
   "backAction": "Back",
   "finishAction": "Finish and enter",
-
   "identityTitle": "Who are you?",
   "identityIntro": "Let's start with the basics. This only takes a moment.",
   "firstNameLabel": "First name",
@@ -15,7 +14,6 @@
   "placeOfBirthLabel": "Place of birth (optional)",
   "nationalityLabel": "Nationality",
   "preferredLanguageLabel": "Which language do you want the app in?",
-
   "documentationTitle": "Documents",
   "documentationIntro": "If you have an identity document, add it here. If you don't have one, that's fine: choose \"I don't have one\" and continue.",
   "documentTypeLabel": "Document type",
@@ -25,7 +23,6 @@
   "documentTypeNone": "I don't have one",
   "documentNumberLabel": "Document number",
   "documentReassurance": "Only the Ramassà team can see this, and it is stored encrypted.",
-
   "logisticsTitle": "Contact and kit",
   "logisticsIntro": "These details help us reach you and prepare your kit.",
   "phoneLabel": "Phone (optional)",
@@ -43,7 +40,6 @@
   "numDependentsLabel": "How many?",
   "clothingSizeLabel": "Clothing size",
   "shoeSizeLabel": "Shoe size (EU)",
-
   "termsTitle": "Terms and consents",
   "termsIntro": "One last thing: read and accept how we handle your data.",
   "termsBody": "Ramassà keeps your data to run the program's sports and community activity: training, events, kit, and staying in touch with you. Sensitive data (document, phone, address) is stored encrypted and only the Ramassà team can see it. We never share your data with anyone outside the program or use it for advertising. You can ask to see, correct or delete it at any time by talking to the team.",
@@ -51,7 +47,6 @@
   "mediaConsentLabel": "I'm happy to appear in community photos and stories (optional)",
   "mediaConsentHint": "You can change this any time from your profile.",
   "termsDeclineAction": "Not now",
-
   "errorRequired": "This is missing.",
   "errorTooYoung": "You need to be 16 or older. If you are younger, talk to the Ramassà team.",
   "errorInvalidDate": "That date is not valid.",
@@ -59,5 +54,7 @@
   "errorPhoneFormat": "Write the phone with its prefix, for example +34 600 111 222.",
   "errorPostalFormat": "A postal code is five digits.",
   "errorDependentsRange": "Tell us how many, between 1 and 15.",
-  "completionFailed": "We could not save your details. Please try again."
+  "completionFailed": "We could not save your details. Please try again.",
+  "cancelAction": "Cancel",
+  "searchCountryPlaceholder": "Search your country"
 }

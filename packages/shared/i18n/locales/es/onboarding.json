@@ -3,7 +3,6 @@
   "continueAction": "Continuar",
   "backAction": "Atrás",
   "finishAction": "Terminar y entrar",
-
   "identityTitle": "¿Quién eres?",
   "identityIntro": "Empezamos por los datos básicos. Solo tardarás un momento.",
   "firstNameLabel": "Nombre",
@@ -15,7 +14,6 @@
   "placeOfBirthLabel": "Lugar de nacimiento (opcional)",
   "nationalityLabel": "Nacionalidad",
   "preferredLanguageLabel": "¿En qué idioma quieres la app?",
-
   "documentationTitle": "Documentación",
   "documentationIntro": "Si tienes algún documento de identidad, indícalo aquí. Si no tienes, no pasa nada: elige \"No tengo\" y continúa.",
   "documentTypeLabel": "Tipo de documento",
@@ -25,7 +23,6 @@
   "documentTypeNone": "No tengo",
   "documentNumberLabel": "Número de documento",
   "documentReassurance": "Este dato solo lo ve el equipo de Ramassà y se guarda cifrado.",
-
   "logisticsTitle": "Contacto y equipación",
   "logisticsIntro": "Estos datos nos ayudan a contactarte y a preparar tu equipación.",
   "phoneLabel": "Teléfono (opcional)",
@@ -43,7 +40,6 @@
   "numDependentsLabel": "¿Cuántas?",
   "clothingSizeLabel": "Talla de ropa",
   "shoeSizeLabel": "Número de pie (EU)",
-
   "termsTitle": "Términos y consentimientos",
   "termsIntro": "Una última cosa: lee y acepta cómo tratamos tus datos.",
   "termsBody": "Ramassà guarda tus datos para organizar la actividad deportiva y comunitaria del programa: entrenamientos, eventos, equipación y comunicación contigo. Los datos sensibles (documento, teléfono, dirección) se guardan cifrados y solo los ve el equipo de Ramassà. No compartimos tus datos con nadie fuera del programa ni los usamos para publicidad. Puedes pedir verlos, corregirlos o borrarlos cuando quieras hablando con el equipo.",
@@ -51,7 +47,6 @@
   "mediaConsentLabel": "Acepto salir en fotos e historias de la comunidad (opcional)",
   "mediaConsentHint": "Puedes cambiarlo cuando quieras desde tu perfil.",
   "termsDeclineAction": "Ahora no",
-
   "errorRequired": "Falta este dato.",
   "errorTooYoung": "Debes tener 16 años o más. Si tienes menos, habla con el equipo de Ramassà.",
   "errorInvalidDate": "Esta fecha no es válida.",
@@ -59,5 +54,7 @@
   "errorPhoneFormat": "Escribe el teléfono con el prefijo, por ejemplo +34 600 111 222.",
   "errorPostalFormat": "Un código postal son cinco números.",
   "errorDependentsRange": "Indica cuántas, entre 1 y 15.",
-  "completionFailed": "No hemos podido guardar tus datos. Vuelve a intentarlo."
+  "completionFailed": "No hemos podido guardar tus datos. Vuelve a intentarlo.",
+  "cancelAction": "Cancelar",
+  "searchCountryPlaceholder": "Busca tu país"
 }

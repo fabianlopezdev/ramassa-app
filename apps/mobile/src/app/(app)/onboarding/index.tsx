@@ -5,6 +5,7 @@
  */
 
 import { AuthTextField } from '@/components/auth/auth-text-field';
+import { CountryPicker } from '@/components/onboarding/country-picker';
 import { OptionChip } from '@/components/onboarding/option-chip';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
 import { onboardingDraftStore } from '@/lib/onboarding';
@@ -196,15 +197,18 @@ export default function IdentityStepScreen() {
           />
         )}
       />
+      {/* A PICKER, not free text (RAPP-4 contract): nationality feeds
+          aggregate reporting, and a typo is a new reporting bucket. The stored
+          value is the canonical Catalan name from the shared list, identical
+          from every locale. */}
       <Controller
         control={control}
         name="nationality"
         render={({ field }) => (
-          <AuthTextField
+          <CountryPicker
             label={t('nationalityLabel')}
             value={field.value}
-            onChangeText={field.onChange}
-            onBlur={field.onBlur}
+            onChange={field.onChange}
             errorMessage={errors.nationality ? t('errorRequired') : undefined}
           />
         )}
