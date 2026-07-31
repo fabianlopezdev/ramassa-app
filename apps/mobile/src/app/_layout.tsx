@@ -6,6 +6,7 @@ import { reportAuthError } from '@/lib/auth';
 import { AuthFlowStatusProvider } from '@/lib/auth-flow-status';
 import { i18n } from '@/lib/i18n';
 import { wrapRootComponent } from '@/lib/observability';
+import { registerProfileQueries } from '@/lib/profile';
 import { queryClient } from '@/lib/query-client';
 import { supabase } from '@/lib/supabase';
 import { QueryClientProvider } from '@tanstack/react-query';
@@ -45,6 +46,13 @@ export function ErrorBoundary(props: ErrorFallbackProps) {
  */
 function RootNavigator() {
   const { session, isLoading } = useAuth();
+  // The profile query and its optimistic edit read the signed-in user's id, so
+  // they are registered here where the session lives rather than at module
+  // scope, and re-registered when the session changes (a device shared between
+  // two women must never serve one of them the other's cached profile).
+  useEffect(() => {
+    registerProfileQueries(() => session?.user.id ?? null);
+  }, [session]);
   // Screen transitions honour reduce-motion too (RAPP-70 scope item 5): the
   // native stack's default slide becomes a plain fade, which is the closest the
   // native navigator offers to "no movement". Set here rather than per screen so

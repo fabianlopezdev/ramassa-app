@@ -24,7 +24,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 export const WIZARD_TOTAL_STEPS = 4;
 
 export interface WizardFrameProps {
-  readonly stepNumber: number;
+  /**
+   * Omit outside the wizard. The profile edit screen reuses this frame for its
+   * header, keyboard handling and pinned action, but it is not step N of
+   * anything: showing a progress bar there would promise a sequence that does
+   * not exist.
+   */
+  readonly stepNumber?: number;
   readonly title: string;
   readonly intro?: string;
   readonly children: ReactNode;
@@ -92,26 +98,32 @@ export function WizardFrame({
                 every language, which is what the capture and QA suites anchor
                 on: the step TITLE scrolls away, so waiting on it reports "not
                 there yet" for a step that arrived fine. */}
-            <Text
-              testID={`wizard-step-${stepNumber}`}
-              className={`text-sm text-neutral-500 ${languageFontClass}`}
-            >
-              {t('stepOf', { current: stepNumber, total: WIZARD_TOTAL_STEPS })}
-            </Text>
+            {stepNumber === undefined ? (
+              <View />
+            ) : (
+              <Text
+                testID={`wizard-step-${stepNumber}`}
+                className={`text-sm text-neutral-500 ${languageFontClass}`}
+              >
+                {t('stepOf', { current: stepNumber, total: WIZARD_TOTAL_STEPS })}
+              </Text>
+            )}
           </View>
 
           {/* Four segments filling left to right (mirrored under RTL by the
               flex row itself), so progress reads without reading. */}
-          <View className="flex-row gap-xs" accessibilityElementsHidden>
-            {Array.from({ length: WIZARD_TOTAL_STEPS }, (_unused, index) => (
-              <View
-                key={index}
-                className={`h-xs flex-1 rounded-full ${
-                  index < stepNumber ? 'bg-primary' : 'bg-neutral-200'
-                }`}
-              />
-            ))}
-          </View>
+          {stepNumber === undefined ? null : (
+            <View className="flex-row gap-xs" accessibilityElementsHidden>
+              {Array.from({ length: WIZARD_TOTAL_STEPS }, (_unused, index) => (
+                <View
+                  key={index}
+                  className={`h-xs flex-1 rounded-full ${
+                    index < stepNumber ? 'bg-primary' : 'bg-neutral-200'
+                  }`}
+                />
+              ))}
+            </View>
+          )}
         </View>
 
         {/* `flex-1` is load-bearing, not decoration: without it the ScrollView

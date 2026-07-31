@@ -15,6 +15,7 @@ import arErrors from './locales/ar/errors.json';
 import arHome from './locales/ar/home.json';
 import arNav from './locales/ar/nav.json';
 import arOnboarding from './locales/ar/onboarding.json';
+import arProfile from './locales/ar/profile.json';
 import arPush from './locales/ar/push.json';
 import caAdmin from './locales/ca/admin.json';
 import caAuth from './locales/ca/auth.json';
@@ -23,6 +24,7 @@ import caErrors from './locales/ca/errors.json';
 import caHome from './locales/ca/home.json';
 import caNav from './locales/ca/nav.json';
 import caOnboarding from './locales/ca/onboarding.json';
+import caProfile from './locales/ca/profile.json';
 import caPush from './locales/ca/push.json';
 import enAdmin from './locales/en/admin.json';
 import enAuth from './locales/en/auth.json';
@@ -31,6 +33,7 @@ import enErrors from './locales/en/errors.json';
 import enHome from './locales/en/home.json';
 import enNav from './locales/en/nav.json';
 import enOnboarding from './locales/en/onboarding.json';
+import enProfile from './locales/en/profile.json';
 import enPush from './locales/en/push.json';
 import esAdmin from './locales/es/admin.json';
 import esAuth from './locales/es/auth.json';
@@ -39,6 +42,7 @@ import esErrors from './locales/es/errors.json';
 import esHome from './locales/es/home.json';
 import esNav from './locales/es/nav.json';
 import esOnboarding from './locales/es/onboarding.json';
+import esProfile from './locales/es/profile.json';
 import esPush from './locales/es/push.json';
 import faAdmin from './locales/fa/admin.json';
 import faAuth from './locales/fa/auth.json';
@@ -47,6 +51,7 @@ import faErrors from './locales/fa/errors.json';
 import faHome from './locales/fa/home.json';
 import faNav from './locales/fa/nav.json';
 import faOnboarding from './locales/fa/onboarding.json';
+import faProfile from './locales/fa/profile.json';
 import faPush from './locales/fa/push.json';
 
 const resources = {
@@ -58,6 +63,7 @@ const resources = {
     errors: caErrors,
     nav: caNav,
     onboarding: caOnboarding,
+    profile: caProfile,
     push: caPush,
   },
   es: {
@@ -68,6 +74,7 @@ const resources = {
     errors: esErrors,
     nav: esNav,
     onboarding: esOnboarding,
+    profile: esProfile,
     push: esPush,
   },
   en: {
@@ -78,6 +85,7 @@ const resources = {
     errors: enErrors,
     nav: enNav,
     onboarding: enOnboarding,
+    profile: enProfile,
     push: enPush,
   },
   ar: {
@@ -88,6 +96,7 @@ const resources = {
     errors: arErrors,
     nav: arNav,
     onboarding: arOnboarding,
+    profile: arProfile,
     push: arPush,
   },
   fa: {
@@ -98,6 +107,7 @@ const resources = {
     errors: faErrors,
     nav: faNav,
     onboarding: faOnboarding,
+    profile: faProfile,
     push: faPush,
   },
 };

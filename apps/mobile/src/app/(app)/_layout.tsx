@@ -26,6 +26,16 @@ export default function AppLayout() {
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Protected guard={!needsOnboarding}>
           <Stack.Screen name="(tabs)" />
+          {/* Pushed OVER the tabs, not inside them: the edit form and the
+              erasure request are full-screen tasks, and the floating tab bar
+              would sit on top of their primary action.
+
+              Flat route names, NOT a `profile/` directory: the tab itself is
+              already `/profile`, and a directory of the same name makes two
+              routes claim one path. The push then resolves to the tab and the
+              screen silently never opens. */}
+          <Stack.Screen name="profile-edit" />
+          <Stack.Screen name="profile-delete-data" />
         </Stack.Protected>
         <Stack.Protected guard={needsOnboarding}>
           <Stack.Screen name="onboarding" />
