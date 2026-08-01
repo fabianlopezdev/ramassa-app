@@ -12,6 +12,7 @@
  */
 
 import { expect, test } from 'bun:test';
+import { buildProfileFromFixture } from '../packages/shared/testing/factories';
 import {
   ONBOARDING_ACCOUNT_EMAIL,
   PARTICIPANT_FIXTURES,
@@ -60,4 +61,30 @@ test('the seed and the factories derive user IDs from the same namespace', () =>
 
 test('the shared dev password is the one seed.sql actually hashes', () => {
   expect(seedSql).toContain(SEED_ACCOUNT_PASSWORD);
+});
+
+/**
+ * Place of birth is DERIVED on both sides (RAPP-24): the seed maps a
+ * nationality to a birthplace in SQL, the factories map it in TypeScript, and
+ * two participants keep a NULL because profiles created before the field was
+ * required carry one.
+ *
+ * It is checked here because a drift is invisible until the staff edit form
+ * refuses to save a seeded participant: the form re-validates the intake rule,
+ * so a roster of NULLs makes every record uneditable and nothing says why.
+ */
+test('the seed and the factories agree on where each participant was born', () => {
+  for (const fixture of PARTICIPANT_FIXTURES) {
+    const built = buildProfileFromFixture(fixture);
+    if (built.place_of_birth === null) continue;
+    expect(seedSql).toContain(built.place_of_birth);
+  }
+});
+
+test('most seeded participants have a birthplace, and a couple deliberately do not', () => {
+  const places = PARTICIPANT_FIXTURES.map(
+    (fixture) => buildProfileFromFixture(fixture).place_of_birth,
+  );
+  expect(places.filter((place) => place === null).length).toBeGreaterThan(0);
+  expect(places.filter((place) => place !== null).length).toBeGreaterThan(places.length / 2);
 });

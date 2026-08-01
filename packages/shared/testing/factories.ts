@@ -52,6 +52,29 @@ const POSTAL_CODES_BY_CITY: Readonly<Record<string, string>> = {
 
 const CLOTHING_SIZES = ['S', 'M', 'L', 'XL'] as const;
 
+/**
+ * Where each roster nationality's participants were born, in the script they
+ * write it in. Mirrors the same map in `supabase/seed.sql`.
+ *
+ * A birthplace and not a city of residence: the two differ for everyone on this
+ * roster except the local player, and a fixture where they matched would let a
+ * screen that confused the two look correct.
+ */
+const PLACES_OF_BIRTH_BY_NATIONALITY: Readonly<Record<string, string>> = {
+  Síria: 'حلب',
+  Marroc: 'الرباط',
+  Tunísia: 'تونس',
+  Afganistan: 'کابل',
+  Iran: 'تهران',
+  Ucraïna: 'Київ',
+  Colòmbia: 'Medellín',
+  Perú: 'Cusco',
+  Bolívia: 'Oruro',
+  Veneçuela: 'Maracaibo',
+  Senegal: 'Dakar',
+  Gàmbia: 'Banjul',
+};
+
 const REFERRING_ENTITIES = [
   { entity: 'Creu Roja Osona', contact: 'Sílvia Bosch' },
   { entity: 'CEAR Catalunya', contact: 'Jordi Camps' },
@@ -66,11 +89,18 @@ const REFERRING_ENTITIES = [
 function derivedProfileFields(fixture: PersonFixture) {
   const { ordinal } = fixture;
   const hasNoDocument = ordinal % 5 === 0;
+  const hasNoPlaceOfBirth = ordinal % 11 === 0;
   const hasDependents = ordinal % 3 === 0;
   const referral = REFERRING_ENTITIES[ordinal % REFERRING_ENTITIES.length]!;
 
   return {
     date_of_birth: `${1985 + (ordinal % 15)}-${pad(1 + (ordinal % 12), 2)}-${pad(1 + (ordinal % 28), 2)}`,
+    // Two participants keep a NULL birthplace, as the seed leaves them: a
+    // profile created before the field was required carries one, and staff have
+    // to supply it before they can save anything else about her.
+    place_of_birth: hasNoPlaceOfBirth
+      ? null
+      : (PLACES_OF_BIRTH_BY_NATIONALITY[fixture.nationality] ?? 'Vic'),
     phone: `+346${pad(ordinal, 8)}`,
     address: `Carrer de Prova, ${ordinal}`,
     postal_code: POSTAL_CODES_BY_CITY[fixture.city] ?? '08500',
@@ -161,7 +191,6 @@ export function buildProfileFromFixture(
     city: fixture.city,
     preferred_language: fixture.preferredLanguage,
     avatar_url: null,
-    place_of_birth: null,
     // Media consent defaults to NOT granted, which is the only defensible
     // default for an optional, revocable consent: a fixture that granted it by
     // default would let a test pass while the app quietly assumed permission

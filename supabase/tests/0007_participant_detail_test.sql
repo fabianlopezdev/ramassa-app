@@ -27,8 +27,14 @@
 -- Self-contained where it can be, and otherwise honest about running against the
 -- seeded roster: the subject is Rosa Mamani (ordinal 26), who is seeded INACTIVE
 -- and holds an encrypted document, which is exactly the shape the toggle and the
--- decryption need. The seeds deliberately audit a DIFFERENT participant, so the
--- counts below describe only what this transaction did.
+-- decryption need.
+--
+-- Every count over `audit_log` and `participant_notes` is scoped by
+-- `created_at >= now()`, which in Postgres means "written by THIS transaction":
+-- `now()` is the transaction timestamp, and a row inserted inside the
+-- transaction carries exactly it. Without that scope the assertions counted
+-- everything the table held, and `bun run qa:web` (which drives the same screen
+-- against the same database) turned this file red by doing its job.
 
 begin;
 select plan(44);
@@ -90,7 +96,8 @@ select is(
   (select count(*) from public.audit_log
     where action = 'profile.view_sensitive'
       and target_id = '5eed0000-0000-4000-8000-000000000026'
-      and actor_id = '5eed0000-0000-4000-8000-000000000002')::int,
+      and actor_id = '5eed0000-0000-4000-8000-000000000002'
+      and created_at >= now())::int,
   2,
   'every decryption of a participant record writes its own audit row'
 );
@@ -99,6 +106,7 @@ select is(
   (select target_type from public.audit_log
     where action = 'profile.view_sensitive'
       and target_id = '5eed0000-0000-4000-8000-000000000026'
+      and created_at >= now()
     limit 1),
   'profile',
   'and the row says what kind of record was read'
@@ -113,7 +121,8 @@ select lives_ok(
 
 select is(
   (select count(*) from public.audit_log
-    where target_id = '5eed0000-0000-4000-8000-000000000026')::int,
+    where target_id = '5eed0000-0000-4000-8000-000000000026'
+      and created_at >= now())::int,
   2,
   '...and removes nothing: there is no DELETE policy on the audit log'
 );
@@ -171,7 +180,8 @@ set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", 
 
 select is(
   (select count(*) from public.audit_log
-    where target_id = '5eed0000-0000-4000-8000-000000000026')::int,
+    where target_id = '5eed0000-0000-4000-8000-000000000026'
+      and created_at >= now())::int,
   2,
   'and none of those refused reads wrote an audit row'
 );
@@ -215,7 +225,8 @@ select is_empty(
 select is(
   (select count(*) from public.audit_log
     where action = 'profile.update'
-      and target_id = '5eed0000-0000-4000-8000-000000000026')::int,
+      and target_id = '5eed0000-0000-4000-8000-000000000026'
+      and created_at >= now())::int,
   1,
   'an edit writes its own audit row'
 );
@@ -223,21 +234,24 @@ select is(
 select ok(
   (select changes ? 'city' and changes ? 'phone' from public.audit_log
     where action = 'profile.update'
-      and target_id = '5eed0000-0000-4000-8000-000000000026'),
+      and target_id = '5eed0000-0000-4000-8000-000000000026'
+      and created_at >= now()),
   'the audit row names the fields that actually changed'
 );
 
 select ok(
   (select not (changes ? 'nationality') from public.audit_log
     where action = 'profile.update'
-      and target_id = '5eed0000-0000-4000-8000-000000000026'),
+      and target_id = '5eed0000-0000-4000-8000-000000000026'
+      and created_at >= now()),
   'and does not name the fields that did not'
 );
 
 select is(
   (select changes -> 'city' from public.audit_log
     where action = 'profile.update'
-      and target_id = '5eed0000-0000-4000-8000-000000000026'),
+      and target_id = '5eed0000-0000-4000-8000-000000000026'
+      and created_at >= now()),
   '{"old": "Vic", "new": "Manlleu"}'::jsonb,
   'an ordinary field records what it went from and to'
 );
@@ -247,7 +261,8 @@ select is(
 select is(
   (select changes -> 'phone' from public.audit_log
     where action = 'profile.update'
-      and target_id = '5eed0000-0000-4000-8000-000000000026'),
+      and target_id = '5eed0000-0000-4000-8000-000000000026'
+      and created_at >= now()),
   '{"changed": true}'::jsonb,
   'an ENCRYPTED field records only that it changed: the audit is not a plaintext copy'
 );
@@ -297,7 +312,8 @@ select is(
 select is(
   (select changes from public.audit_log
     where action = 'profile.activate'
-      and target_id = '5eed0000-0000-4000-8000-000000000026'),
+      and target_id = '5eed0000-0000-4000-8000-000000000026'
+      and created_at >= now()),
   '{"is_active": {"old": false, "new": true}}'::jsonb,
   'the status change is audited with what it went from and to'
 );
@@ -331,7 +347,8 @@ select lives_ok(
 
 select cmp_ok(
   (select count(*) from public.participant_notes
-    where profile_id = '5eed0000-0000-4000-8000-000000000026')::int,
+    where profile_id = '5eed0000-0000-4000-8000-000000000026'
+      and created_at >= now())::int,
   '>=', 1,
   '...and removes nothing either'
 );

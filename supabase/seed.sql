@@ -172,7 +172,7 @@ on conflict (provider_id, provider) do nothing;
 -- uniformly happy dataset hides exactly the screens that break.
 
 insert into public.profiles (
-  id, org_id, role, first_name, last_name, date_of_birth, nationality,
+  id, org_id, role, first_name, last_name, date_of_birth, place_of_birth, nationality,
   address, city, postal_code, phone, document_type, document_number,
   reference_entity, reference_contact_name, has_dependents, num_dependents,
   clothing_size, shoe_size, preferred_language, is_active, is_forum_banned,
@@ -185,6 +185,33 @@ select
   r.first_name,
   r.last_name,
   make_date(1985 + (r.ordinal % 15), 1 + (r.ordinal % 12), 1 + (r.ordinal % 28)),
+  -- Where she was born, in the script she writes it in. Required at intake
+  -- since 2026-07-31 (RAPP-21), so a roster of NULLs would leave the staff edit
+  -- form (RAPP-24) unable to save ANY seeded participant without inventing a
+  -- birthplace first: the form re-validates the same rule the wizard applies.
+  --
+  -- Two participants keep a NULL on purpose. Profiles created before the field
+  -- existed carry one, and that case has its own behaviour (staff must supply
+  -- it before they can save anything else); a uniformly complete dataset would
+  -- hide it, exactly as the deactivated and undocumented rows exist to stop
+  -- their screens hiding.
+  case when r.ordinal % 11 = 0 then null else
+    case r.nationality
+      when 'Síria'      then 'حلب'
+      when 'Marroc'     then 'الرباط'
+      when 'Tunísia'    then 'تونس'
+      when 'Afganistan' then 'کابل'
+      when 'Iran'       then 'تهران'
+      when 'Ucraïna'    then 'Київ'
+      when 'Colòmbia'   then 'Medellín'
+      when 'Perú'       then 'Cusco'
+      when 'Bolívia'    then 'Oruro'
+      when 'Veneçuela'  then 'Maracaibo'
+      when 'Senegal'    then 'Dakar'
+      when 'Gàmbia'     then 'Banjul'
+      else 'Vic'
+    end
+  end,
   r.nationality,
   public.encrypt_field('Carrer de Prova, ' || r.ordinal),
   r.city,
