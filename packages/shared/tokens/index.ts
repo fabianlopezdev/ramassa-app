@@ -61,6 +61,16 @@ export const tokens = {
   // interactive element is at least `min`; player-facing controls aim for `recommended`.
   tapTarget: { min: 48, recommended: 56 },
 
+  // How wide a player screen's content is allowed to grow (RAPP-80). The player app
+  // is the phone app exported to the browser (ADR-008), so without a ceiling a form
+  // spans a whole desktop window: a single email field a metre wide. `form` is one
+  // column of inputs, `page` is a reading or listing column.
+  //
+  // Both sit above the widest handset this app runs on, so the ceiling can never
+  // bind on a phone and change the native layout. The layout container applies them
+  // from the `sm` breakpoint up for the same reason.
+  contentWidth: { form: 480, page: 768 },
+
   // Client-side upload ceilings, enforced before the R2 upload (ADR-013).
   upload: { maxImageBytes: 1_048_576, maxVideoBytes: 10_485_760 },
 
@@ -89,7 +99,7 @@ type TokenTree = { readonly [key: string]: TokenLeaf | TokenTree };
 export function tokensToCssVariables(source: TokenTree = tokens, prefix = 'ramassa'): string {
   const declarations: string[] = [];
 
-  const dimensionGroups = new Set(['spacing', 'radius', 'fontSize', 'tapTarget']);
+  const dimensionGroups = new Set(['spacing', 'radius', 'fontSize', 'tapTarget', 'contentWidth']);
 
   const walk = (value: unknown, path: string[], group: string | null): void => {
     if (Array.isArray(value)) {

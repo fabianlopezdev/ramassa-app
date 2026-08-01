@@ -9,6 +9,8 @@ export { AuthProvider, useAuth, type AuthProviderProps, type AuthState } from '.
 export {
   completeAuthCallback,
   fetchProfileRole,
+  fetchProfileSummary,
+  type ProfileSummary,
   requestMagicLink,
   signInWithPassword,
   signOut,

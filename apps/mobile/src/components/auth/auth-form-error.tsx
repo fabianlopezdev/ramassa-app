@@ -5,6 +5,7 @@
  * Announced assertively to screen readers because it reports a failed action.
  */
 
+import { continuousCorners } from '@/lib/continuous-corners';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
@@ -22,12 +23,15 @@ export function AuthFormError({ code }: { code: AppErrorCode | null }) {
     <View
       accessibilityRole="alert"
       accessibilityLiveRegion="assertive"
+      style={continuousCorners}
       className="gap-xs rounded-md bg-error/10 p-md"
     >
       <Text className={`text-start text-md font-medium text-error ${languageFontClass}`}>
         {t(getErrorMessageKey(code))}
       </Text>
-      <Text className={`text-start text-sm text-neutral-500 ${languageFontClass}`}>
+      {/* Selectable for the same reason as the fallback screen: this code is what
+          gets reported, so it should be copiable rather than transcribed. */}
+      <Text selectable className={`text-start text-sm text-neutral-500 ${languageFontClass}`}>
         {t('errorCodeLabel')}: {code}
       </Text>
     </View>

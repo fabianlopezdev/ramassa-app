@@ -26,13 +26,19 @@ import {
   PARTICIPANT_FIXTURES,
   SEED_ORGANIZATION_ID,
   SEED_ORGANIZATION_SLUG,
+  SEED_TERMS_VERSION,
   seedUserId,
+  STAFF_FIXTURES,
   type PersonFixture,
 } from './fixtures';
 
 export type OrganizationRow = Database['public']['Tables']['organizations']['Row'];
 export type ProfileRow = Database['public']['Tables']['profiles']['Row'];
 export type PushTokenRow = Database['public']['Tables']['push_tokens']['Row'];
+export type TermsAcceptanceRow = Database['public']['Tables']['terms_acceptances']['Row'];
+export type DeletionRequestRow = Database['public']['Tables']['deletion_requests']['Row'];
+export type ParticipantNoteRow = Database['public']['Tables']['participant_notes']['Row'];
+export type AuditLogRow = Database['public']['Tables']['audit_log']['Row'];
 
 /** One fixed instant for every timestamp, so factory output is byte-stable. */
 const FIXTURE_TIMESTAMP = '2026-01-15T09:00:00+00:00';
@@ -45,6 +51,29 @@ const POSTAL_CODES_BY_CITY: Readonly<Record<string, string>> = {
 };
 
 const CLOTHING_SIZES = ['S', 'M', 'L', 'XL'] as const;
+
+/**
+ * Where each roster nationality's participants were born, in the script they
+ * write it in. Mirrors the same map in `supabase/seed.sql`.
+ *
+ * A birthplace and not a city of residence: the two differ for everyone on this
+ * roster except the local player, and a fixture where they matched would let a
+ * screen that confused the two look correct.
+ */
+const PLACES_OF_BIRTH_BY_NATIONALITY: Readonly<Record<string, string>> = {
+  Síria: 'حلب',
+  Marroc: 'الرباط',
+  Tunísia: 'تونس',
+  Afganistan: 'کابل',
+  Iran: 'تهران',
+  Ucraïna: 'Київ',
+  Colòmbia: 'Medellín',
+  Perú: 'Cusco',
+  Bolívia: 'Oruro',
+  Veneçuela: 'Maracaibo',
+  Senegal: 'Dakar',
+  Gàmbia: 'Banjul',
+};
 
 const REFERRING_ENTITIES = [
   { entity: 'Creu Roja Osona', contact: 'Sílvia Bosch' },
@@ -60,11 +89,18 @@ const REFERRING_ENTITIES = [
 function derivedProfileFields(fixture: PersonFixture) {
   const { ordinal } = fixture;
   const hasNoDocument = ordinal % 5 === 0;
+  const hasNoPlaceOfBirth = ordinal % 11 === 0;
   const hasDependents = ordinal % 3 === 0;
   const referral = REFERRING_ENTITIES[ordinal % REFERRING_ENTITIES.length]!;
 
   return {
     date_of_birth: `${1985 + (ordinal % 15)}-${pad(1 + (ordinal % 12), 2)}-${pad(1 + (ordinal % 28), 2)}`,
+    // Two participants keep a NULL birthplace, as the seed leaves them: a
+    // profile created before the field was required carries one, and staff have
+    // to supply it before they can save anything else about her.
+    place_of_birth: hasNoPlaceOfBirth
+      ? null
+      : (PLACES_OF_BIRTH_BY_NATIONALITY[fixture.nationality] ?? 'Vic'),
     phone: `+346${pad(ordinal, 8)}`,
     address: `Carrer de Prova, ${ordinal}`,
     postal_code: POSTAL_CODES_BY_CITY[fixture.city] ?? '08500',
@@ -145,12 +181,21 @@ export function buildProfileFromFixture(
     id: seedUserId(fixture.ordinal),
     org_id: SEED_ORGANIZATION_ID,
     role: 'player',
+    // Postgres GENERATES this from the searchable fields (RAPP-23), so a
+    // fixture cannot meaningfully supply one: null stands for "whatever the
+    // database will derive", and no test should assert on it.
+    search_document: null,
     first_name: fixture.firstName,
     last_name: fixture.lastName,
     nationality: fixture.nationality,
     city: fixture.city,
     preferred_language: fixture.preferredLanguage,
     avatar_url: null,
+    // Media consent defaults to NOT granted, which is the only defensible
+    // default for an optional, revocable consent: a fixture that granted it by
+    // default would let a test pass while the app quietly assumed permission
+    // to publish a participant's photo.
+    media_consent_at: null,
     created_at: FIXTURE_TIMESTAMP,
     updated_at: FIXTURE_TIMESTAMP,
     ...derivedProfileFields(fixture),
@@ -169,6 +214,100 @@ export function buildPushToken(overrides: Partial<PushTokenRow> = {}): PushToken
     device_id: `seed-device-${pad(owner.ordinal, 4)}`,
     created_at: FIXTURE_TIMESTAMP,
     updated_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+/**
+ * A terms-acceptance event (RAPP-21). Defaults to the first roster participant
+ * accepting in HER language, not in Catalan: the record exists to prove which
+ * text someone actually read, so a fixture that always says 'ca' would make
+ * every test agree with itself while proving nothing about the multilingual
+ * case.
+ */
+export function buildTermsAcceptance(
+  overrides: Partial<TermsAcceptanceRow> = {},
+): TermsAcceptanceRow {
+  const participant = PARTICIPANT_FIXTURES[0]!;
+  return {
+    id: `5eed0000-0000-4000-8000-${String(participant.ordinal).padStart(12, '0')}`,
+    profile_id: `5eed0000-0000-4000-8000-${String(participant.ordinal).padStart(12, '0')}`,
+    terms_version: SEED_TERMS_VERSION,
+    locale_shown: participant.preferredLanguage,
+    accepted_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+/**
+ * An RGPD erasure request (RAPP-22). Defaults to OPEN and unresolved, because
+ * that is the state every screen has to handle: the participant's "we received
+ * it", and the staff queue that still has to answer it. A resolved fixture
+ * would let both of those go untested while still looking like coverage.
+ */
+export function buildDeletionRequest(
+  overrides: Partial<DeletionRequestRow> = {},
+): DeletionRequestRow {
+  const participant = PARTICIPANT_FIXTURES[0]!;
+  const profileId = `5eed0000-0000-4000-8000-${String(participant.ordinal).padStart(12, '0')}`;
+  return {
+    id: `5eed0000-0000-4000-8000-${String(900 + participant.ordinal).padStart(12, '0')}`,
+    profile_id: profileId,
+    reason: 'Ja no puc venir a entrenar i prefereixo que esborreu les meves dades.',
+    state: 'open',
+    resolution_note: null,
+    resolved_by: null,
+    resolved_at: null,
+    created_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+/**
+ * A staff note about a participant (RAPP-24). Defaults to the first roster
+ * participant written up by Marta Puig, because a note only means anything with
+ * an author: the table stores one so a thread reads as a conversation between
+ * colleagues, and a factory that invented an author id would let a broken
+ * author column look fine in every test.
+ */
+export function buildParticipantNote(
+  overrides: Partial<ParticipantNoteRow> = {},
+): ParticipantNoteRow {
+  const subject = PARTICIPANT_FIXTURES[0]!;
+  const author = STAFF_FIXTURES.find((person) => person.role === 'staff')!;
+  return {
+    id: seedUserId(700 + subject.ordinal),
+    profile_id: seedUserId(subject.ordinal),
+    author_id: seedUserId(author.ordinal),
+    body: 'Ha començat el curs de català als matins. Millor proposar-li els entrenaments de tarda.',
+    created_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+/**
+ * An access-audit entry (RAPP-24). Defaults to the VIEW action with no
+ * `changes`, which is the entry the screen produces most and the one whose
+ * shape matters: a view changed nothing, so recording a diff for it would be a
+ * lie the first reader of this table would believe.
+ *
+ * Note what a `changes` override may carry, and what it may never carry. The
+ * values of encrypted columns (document number, phone, address, postal code)
+ * are recorded as `{ changed: true }` and never as text, or the audit log
+ * becomes a plaintext mirror of exactly the fields ADR-004 encrypts.
+ */
+export function buildAuditLogEntry(overrides: Partial<AuditLogRow> = {}): AuditLogRow {
+  const subject = PARTICIPANT_FIXTURES[0]!;
+  const actor = STAFF_FIXTURES.find((person) => person.role === 'staff')!;
+  return {
+    id: seedUserId(800 + subject.ordinal),
+    org_id: SEED_ORGANIZATION_ID,
+    actor_id: seedUserId(actor.ordinal),
+    action: 'profile.view_sensitive',
+    target_type: 'profile',
+    target_id: seedUserId(subject.ordinal),
+    changes: null,
+    created_at: FIXTURE_TIMESTAMP,
     ...overrides,
   };
 }

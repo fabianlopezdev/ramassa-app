@@ -1,0 +1,816 @@
+appId: com.ramassa.app
+name: onboarding
+# `bun run capture:flow onboarding` REWRITES this block per run (a flow's own env
+# wins over `maestro -e`, so the values have to be baked in, not passed alongside)
+# and that is how one file captures both the Catalan and the Arabic pass. The
+# `{{namespace:key}}` entries are resolved from the app's own locale catalogs
+# (and `{{country:XX}}` from the generated country list), so no screen name is
+# ever hardcoded here. The literal values below are the defaults a hand-run gets.
+env:
+  SHOTS: maestro/shots/onboarding/ca/ios
+  SUFFIX: ''
+  LOCALE: ca
+  DEV_CLIENT_URL: ramassa://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081
+  ONBOARDING_EMAIL: '{{onboarding:email}}'
+  STEP1_TITLE: '{{onboarding:identityTitle}}'
+  STEP2_TITLE: '{{onboarding:documentationTitle}}'
+  STEP3_TITLE: '{{onboarding:logisticsTitle}}'
+  STEP4_TITLE: '{{onboarding:termsTitle}}'
+  CONTINUE: '{{onboarding:continueAction}}'
+  BACK: '{{onboarding:backAction}}'
+  DECLINE: '{{onboarding:termsDeclineAction}}'
+  ERROR_REQUIRED: '{{onboarding:errorRequired}}'
+  DOC_NONE: '{{onboarding:documentTypeNone}}'
+  ENTITY_NONE: '{{onboarding:referenceEntityNone}}'
+  NO_OPTION: '{{onboarding:noOption}}'
+  NATIONALITY_CHIP: '{{country:SY}}'
+  LOGIN_TITLE: '{{auth:loginTitle}}'
+  PUSH_DECLINE: '{{push:rationaleDecline}}'
+---
+# The guided intake wizard, captured WITHOUT ever completing it. Finishing would
+# write a profile for the drive account and the gate would then skip the wizard
+# on every later pass, so the flow ends by DECLINING the terms (which signs out
+# and keeps the draft) and the account stays profile-less and re-runnable. The
+# only thing that consumes the account's profile-lessness is a manual completion
+# run; after one of those, `bun run db:reset` (or deleting the profile row)
+# brings the wizard back.
+#
+# Non-linear on purpose: besides the four steps it captures the empty-submit
+# validation state, proves back-navigation keeps the data, kills and relaunches
+# the app mid-wizard to show the resume, and declines the terms at the end.
+#
+# A clean install every time, so the shots never depend on what a previous run
+# left behind. The launch is a deep link rather than `launchApp` on purpose:
+# this is a development build, and a plain launch lands on the dev launcher's
+# "searching for development servers" screen instead of the app.
+- clearState
+- openLink: ${DEV_CLIENT_URL}
+# iOS asks "Open in <app>?" before it will follow a custom-scheme link, and
+# nothing dismisses that for you. Optional so the identical line is a harmless
+# no-op on Android, which does not ask.
+- tapOn:
+    text: '^Open$'
+    optional: true
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# First launch after clearing state downloads the JS bundle, hence minutes.
+- extendedWaitUntil:
+    visible: '.*Developer menu.*'
+    timeout: 240000
+
+# The development client's explainer sheet lands a second or two AFTER the
+# first render. Dismiss by its ✕ ("Close" on both platforms), never by
+# "Continue" (that OPENS the client's tools menu) and never by the backdrop
+# (a no-op on Android).
+- waitForAnimationToEnd:
+    timeout: 12000
+- repeat:
+    times: 4
+    while:
+      visible: '.*Close.*'
+    commands:
+      - tapOn:
+          text: '.*Close.*'
+      - waitForAnimationToEnd:
+          timeout: 3000
+- extendedWaitUntil:
+    visible: '.*Developer menu.*'
+    timeout: 240000
+
+# LANGUAGE FIRST, then sign in. After `clearState` the app follows the DEVICE
+# locale, so every resolved selector below matches nothing until the language
+# is pinned. The dev menu is reachable pre-auth precisely so this is possible.
+- repeat:
+    times: 6
+    while:
+      notVisible: '.*Environment.*'
+    commands:
+      - tapOn:
+          text: '.*Developer menu.*'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- waitForAnimationToEnd:
+    timeout: 5000
+- repeat:
+    times: 20
+    while:
+      notVisible: '^${LOCALE} \(.*\)$'
+    commands:
+      - swipe:
+          start: 50%, 70%
+          end: 50%, 50%
+          duration: 900
+      - waitForAnimationToEnd:
+          timeout: 2500
+# The loop stops the moment ANY sliver of the button is on screen, which parks
+# it under the navigation bar where a tap does not reach it. One smaller swipe
+# lifts it into the body of the list.
+- swipe:
+    start: 50%, 65%
+    end: 50%, 55%
+    duration: 900
+- waitForAnimationToEnd:
+    timeout: 2500
+# Tap UNTIL selected: these small wrapped buttons drift between bounds-resolve
+# and touch, and a tap into the padding reports COMPLETED having done nothing.
+- repeat:
+    times: 6
+    while:
+      notVisible:
+        text: '^${LOCALE} \(.*\)$'
+        selected: true
+    commands:
+      - tapOn:
+          text: '^${LOCALE} \(.*\)$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 2500
+- assertVisible:
+    text: '^${LOCALE} \(.*\)$'
+    selected: true
+
+# The flip only applies on the next start, so the RTL pass is only honest after
+# a real relaunch. Done for both locales so the passes differ only in language.
+- repeat:
+    times: 6
+    while:
+      visible: '.*Close.*'
+    commands:
+      - tapOn:
+          text: '.*Close.*'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- stopApp
+- openLink: ${DEV_CLIENT_URL}
+- tapOn:
+    text: '^Open$'
+    optional: true
+- waitForAnimationToEnd:
+    timeout: 3000
+- waitForAnimationToEnd:
+    timeout: 12000
+# NOT "wait until Developer menu is visible": the explainer sheet's own body
+# says "This is the developer menu", so that text matches WHILE the sheet still
+# covers the app and the Close taps never run. Dismiss by Close while any sheet
+# is up, exactly like the first launch.
+- repeat:
+    times: 4
+    while:
+      visible: '.*Close.*'
+    commands:
+      - tapOn:
+          text: '.*Close.*'
+      - waitForAnimationToEnd:
+          timeout: 3000
+
+# Sign in as the profile-less onboarding account: the wizard gate is exactly
+# what fires for it. The row is in the dev menu's Accounts section, matched on
+# the ADDRESS alone (iOS exposes the row's accessibility label, Android the
+# address text node inside it; only the bare address matches on both).
+- repeat:
+    times: 6
+    while:
+      notVisible: '.*Accounts and roles.*'
+    commands:
+      - tapOn:
+          text: '.*Developer menu.*'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- waitForAnimationToEnd:
+    timeout: 5000
+- repeat:
+    times: 20
+    while:
+      notVisible: '.*${ONBOARDING_EMAIL}.*'
+    commands:
+      - swipe:
+          start: 50%, 70%
+          end: 50%, 50%
+          duration: 900
+      - waitForAnimationToEnd:
+          timeout: 2500
+# The loop stops the moment ANY sliver of the row is on screen; one smaller
+# swipe lifts it into the body of the list where a tap actually reaches it.
+- swipe:
+    start: 50%, 65%
+    end: 50%, 55%
+    duration: 900
+- waitForAnimationToEnd:
+    timeout: 2500
+- tapOn: '.*${ONBOARDING_EMAIL}.*'
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# Close the menu (signing in does not dismiss it) and wait for the wizard's
+# first step, which cannot appear without a session AND a missing profile.
+- repeat:
+    times: 6
+    while:
+      notVisible:
+        id: 'wizard-step-1'
+    commands:
+      - tapOn:
+          text: '^${PUSH_DECLINE}$'
+          optional: true
+      - tapOn:
+          text: '.*Close.*'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- extendedWaitUntil:
+    visible:
+      id: 'wizard-step-1'
+    timeout: 120000
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# 1. Step 1 as the player first sees it.
+- takeScreenshot: ${SHOTS}/01-identity${SUFFIX}
+
+# Scrolls swipe the MIDDLE of the screen, never near an edge: on Android both
+# screen edges are the system back-gesture zone, and an edge swipe there walks
+# the wizard backwards mid-run instead of scrolling it.
+#
+# Scroll-to-top is an unconditional burst of swipes rather than a loop keyed on
+# the title, because Android's hierarchy reports OFF-SCREEN text as present:
+# such a loop is satisfied instantly and never scrolls at all. Over-scrolling
+# at the top is a harmless no-op.
+#
+# Chip taps are then verified by SELECTED state rather than by the tap
+# reporting COMPLETED, because Android's hierarchy reports off-screen rows as
+# present: a tap can be dispatched at bounds that are not on screen.
+
+# 2. What an empty submit looks like: the button is reachable without filling
+# anything, and every missing field says so in the player's language.
+- repeat:
+    times: 12
+    while:
+      notVisible: '^${CONTINUE}$'
+    commands:
+      - swipe:
+          start: 50%, 45%
+          end: 50%, 15%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 1500
+- repeat:
+    times: 8
+    while:
+      notVisible: '.*${ERROR_REQUIRED}.*'
+    commands:
+      - tapOn:
+          text: '^${CONTINUE}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 2000
+      - swipe:
+          start: 50%, 45%
+          end: 50%, 20%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 1200
+- extendedWaitUntil:
+    visible: '.*${ERROR_REQUIRED}.*'
+    timeout: 15000
+# Back to the top for the shot AND for the typing that follows. Keyed on the
+# step TITLE, not the header testID: the header never scrolls, so a loop that
+# waits on it is satisfied at any scroll position and never scrolls at all.
+- repeat:
+    times: 8
+    commands:
+      - swipe:
+          start: 50%, 20%
+          end: 50%, 85%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 900
+- waitForAnimationToEnd:
+    timeout: 2000
+- takeScreenshot: ${SHOTS}/02-identity-error${SUFFIX}
+
+# Fill step 1. Fields are tapped by testID, which is the same in every locale;
+# names are typed in ASCII because Maestro's inputText cannot type non-ASCII
+# (the pgTAP suite already proves Arabic-script storage server-side).
+# The emulator's stylus-promo IME sheet may cover the form; Cancel closes it.
+- tapOn:
+    text: '^Cancel$'
+    optional: true
+- tapOn:
+    id: 'onboarding-first-name'
+- inputText: 'Amina'
+- tapOn:
+    text: '^Cancel$'
+    optional: true
+- tapOn:
+    id: 'onboarding-last-name'
+- inputText: 'Hasan'
+# With the keyboard up, anything in the lower half of the screen is BEHIND the
+# keys: a tap at those bounds presses a key instead of focusing the field (the
+# Arabic pass typed nothing into the whole date row this way; its longer intro
+# wrapping pushed the row a few points lower than the Catalan pass). Lift the
+# next row above the keyboard first; the 45%→25% band stays above the keys.
+- swipe:
+    start: 50%, 45%
+    end: 50%, 25%
+    duration: 600
+- waitForAnimationToEnd:
+    timeout: 1500
+- tapOn:
+    id: 'onboarding-day'
+- inputText: '14'
+- tapOn:
+    id: 'onboarding-month'
+- inputText: '03'
+- tapOn:
+    id: 'onboarding-year'
+- inputText: '1995'
+# Same lift for the place-of-birth field, one row further down.
+- swipe:
+    start: 50%, 45%
+    end: 50%, 25%
+    duration: 600
+- waitForAnimationToEnd:
+    timeout: 1500
+- tapOn:
+    id: 'onboarding-place-of-birth'
+- inputText: 'Aleppo'
+# The keyboard may still be up on iOS, and NOTHING here dismisses it on
+# purpose: `hideKeyboard` fails intermittently on iOS (it aborted an Arabic
+# pass) and tapping the title lands on stale off-screen bounds. The scroll
+# gestures below run from mid-screen, above the keys, and the chip loop
+# absorbs the one tap the scroll view swallows to dismiss the keyboard.
+- waitForAnimationToEnd:
+    timeout: 2000
+
+# Nationality is a PICKER: the answer is one tap on a pinned chip, matched by
+# the same localized label the app renders. Tap UNTIL selected, then assert:
+# a tap reporting COMPLETED only proves a touch was dispatched at the
+# reported bounds, not that it landed on the chip.
+- repeat:
+    times: 12
+    while:
+      notVisible: '^${NATIONALITY_CHIP}$'
+    commands:
+      - swipe:
+          start: 50%, 45%
+          end: 50%, 15%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 1500
+- repeat:
+    times: 4
+    while:
+      notVisible:
+        text: '^${NATIONALITY_CHIP}$'
+        selected: true
+    commands:
+      - tapOn:
+          text: '^${NATIONALITY_CHIP}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 2000
+- assertVisible:
+    text: '^${NATIONALITY_CHIP}$'
+    selected: true
+- repeat:
+    times: 12
+    while:
+      notVisible: '^${CONTINUE}$'
+    commands:
+      - swipe:
+          start: 50%, 45%
+          end: 50%, 15%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 1500
+- repeat:
+    times: 8
+    while:
+      notVisible:
+        id: 'wizard-step-2'
+    commands:
+      - tapOn:
+          text: '^${CONTINUE}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 2000
+      - swipe:
+          start: 50%, 45%
+          end: 50%, 20%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 1200
+- extendedWaitUntil:
+    visible:
+      id: 'wizard-step-2'
+    timeout: 20000
+- waitForAnimationToEnd:
+    timeout: 2000
+
+# 3. Step 2 as the player arrives at it, before anything is chosen.
+# Screenshots are taken from the TOP of the step: a transition can leave the
+# scroll position anywhere, and a canvas of half-scrolled screens is unreadable.
+- repeat:
+    times: 8
+    commands:
+      - swipe:
+          start: 50%, 20%
+          end: 50%, 85%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 900
+- waitForAnimationToEnd:
+    timeout: 1500
+- takeScreenshot: ${SHOTS}/03-documentation${SUFFIX}
+
+# Back keeps the data: return to step 1 and find the name still there.
+# Keyed off the PRESERVED VALUE, not the step title: coming back lands wherever
+# the scroll position was, so the title is often off-screen while the step is
+# perfectly present. Asserting the name proves both things that matter, that
+# this is step 1 and that nothing was lost on the way back.
+- repeat:
+    times: 8
+    while:
+      notVisible: '.*Amina.*'
+    commands:
+      - tapOn:
+          text: '^${BACK}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 2000
+      - swipe:
+          start: 50%, 20%
+          end: 50%, 85%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 1200
+- extendedWaitUntil:
+    visible: '.*Amina.*'
+    timeout: 20000
+- repeat:
+    times: 8
+    commands:
+      - swipe:
+          start: 50%, 20%
+          end: 50%, 85%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 900
+- assertVisible:
+    id: 'wizard-step-1'
+- repeat:
+    times: 12
+    while:
+      notVisible: '^${CONTINUE}$'
+    commands:
+      - swipe:
+          start: 50%, 45%
+          end: 50%, 15%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 1500
+- repeat:
+    times: 8
+    while:
+      notVisible:
+        id: 'wizard-step-2'
+    commands:
+      - tapOn:
+          text: '^${CONTINUE}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 2000
+      - swipe:
+          start: 50%, 45%
+          end: 50%, 20%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 1200
+- extendedWaitUntil:
+    visible:
+      id: 'wizard-step-2'
+    timeout: 20000
+
+# 4. Kill the app mid-wizard and reopen: the wizard resumes at the same step
+# with the draft intact, instead of starting over.
+- stopApp
+- openLink: ${DEV_CLIENT_URL}
+- tapOn:
+    text: '^Open$'
+    optional: true
+- waitForAnimationToEnd:
+    timeout: 3000
+- waitForAnimationToEnd:
+    timeout: 12000
+# Dismiss the dev client's explainer by Close while it is up; waiting on the
+# step title instead can exit early because the hierarchy reports the app's
+# text behind the sheet.
+- repeat:
+    times: 4
+    while:
+      visible: '.*Close.*'
+    commands:
+      - tapOn:
+          text: '.*Close.*'
+      - waitForAnimationToEnd:
+          timeout: 3000
+# A signed-in relaunch may also raise the push rationale, which occludes the
+# step title until declined.
+- repeat:
+    times: 8
+    while:
+      notVisible:
+        id: 'wizard-step-2'
+    commands:
+      - tapOn:
+          text: '^${PUSH_DECLINE}$'
+          optional: true
+      - tapOn:
+          text: '.*Close.*'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- extendedWaitUntil:
+    visible:
+      id: 'wizard-step-2'
+    timeout: 60000
+- waitForAnimationToEnd:
+    timeout: 2000
+# Screenshots are taken from the TOP of the step: a transition can leave the
+# scroll position anywhere, and a canvas of half-scrolled screens is unreadable.
+- repeat:
+    times: 8
+    commands:
+      - swipe:
+          start: 50%, 20%
+          end: 50%, 85%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 900
+- waitForAnimationToEnd:
+    timeout: 1500
+- takeScreenshot: ${SHOTS}/04-resume${SUFFIX}
+
+# Having no document is a first-class answer, so that is the path captured.
+- repeat:
+    times: 4
+    while:
+      notVisible:
+        text: '^${DOC_NONE}$'
+        selected: true
+    commands:
+      - tapOn:
+          text: '^${DOC_NONE}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 1500
+- assertVisible:
+    text: '^${DOC_NONE}$'
+    selected: true
+- repeat:
+    times: 12
+    while:
+      notVisible: '^${CONTINUE}$'
+    commands:
+      - swipe:
+          start: 50%, 45%
+          end: 50%, 15%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 1500
+- repeat:
+    times: 8
+    while:
+      notVisible:
+        id: 'wizard-step-3'
+    commands:
+      - tapOn:
+          text: '^${CONTINUE}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 2000
+      - swipe:
+          start: 50%, 45%
+          end: 50%, 20%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 1200
+- extendedWaitUntil:
+    visible:
+      id: 'wizard-step-3'
+    timeout: 20000
+- waitForAnimationToEnd:
+    timeout: 2000
+
+# 5. Step 3 as the player arrives at it.
+# Screenshots are taken from the TOP of the step: a transition can leave the
+# scroll position anywhere, and a canvas of half-scrolled screens is unreadable.
+- repeat:
+    times: 8
+    commands:
+      - swipe:
+          start: 50%, 20%
+          end: 50%, 85%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 900
+- waitForAnimationToEnd:
+    timeout: 1500
+- takeScreenshot: ${SHOTS}/05-logistics${SUFFIX}
+
+# Contact fields are optional; only the chip questions are answered.
+- repeat:
+    times: 12
+    while:
+      notVisible: '^${ENTITY_NONE}$'
+    commands:
+      - swipe:
+          start: 50%, 45%
+          end: 50%, 15%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 1500
+- repeat:
+    times: 4
+    while:
+      notVisible:
+        text: '^${ENTITY_NONE}$'
+        selected: true
+    commands:
+      - tapOn:
+          text: '^${ENTITY_NONE}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 1500
+- assertVisible:
+    text: '^${ENTITY_NONE}$'
+    selected: true
+- repeat:
+    times: 12
+    while:
+      notVisible: '^${NO_OPTION}$'
+    commands:
+      - swipe:
+          start: 50%, 45%
+          end: 50%, 15%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 1500
+- repeat:
+    times: 4
+    while:
+      notVisible:
+        text: '^${NO_OPTION}$'
+        selected: true
+    commands:
+      - tapOn:
+          text: '^${NO_OPTION}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 1500
+- assertVisible:
+    text: '^${NO_OPTION}$'
+    selected: true
+- repeat:
+    times: 12
+    while:
+      notVisible: '^M$'
+    commands:
+      - swipe:
+          start: 50%, 45%
+          end: 50%, 15%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 1500
+- repeat:
+    times: 4
+    while:
+      notVisible:
+        text: '^M$'
+        selected: true
+    commands:
+      - tapOn:
+          text: '^M$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 1500
+- assertVisible:
+    text: '^M$'
+    selected: true
+- repeat:
+    times: 12
+    while:
+      notVisible: '^38$'
+    commands:
+      - swipe:
+          start: 50%, 45%
+          end: 50%, 15%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 1500
+- repeat:
+    times: 4
+    while:
+      notVisible:
+        text: '^38$'
+        selected: true
+    commands:
+      - tapOn:
+          text: '^38$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 1500
+- assertVisible:
+    text: '^38$'
+    selected: true
+- repeat:
+    times: 12
+    while:
+      notVisible: '^${CONTINUE}$'
+    commands:
+      - swipe:
+          start: 50%, 45%
+          end: 50%, 15%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 1500
+- repeat:
+    times: 8
+    while:
+      notVisible:
+        id: 'wizard-step-4'
+    commands:
+      - tapOn:
+          text: '^${CONTINUE}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 2000
+      - swipe:
+          start: 50%, 45%
+          end: 50%, 20%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 1200
+- extendedWaitUntil:
+    visible:
+      id: 'wizard-step-4'
+    timeout: 20000
+- waitForAnimationToEnd:
+    timeout: 2000
+
+# 6. The terms, readable in full before anything is tapped.
+# Screenshots are taken from the TOP of the step: a transition can leave the
+# scroll position anywhere, and a canvas of half-scrolled screens is unreadable.
+- repeat:
+    times: 8
+    commands:
+      - swipe:
+          start: 50%, 20%
+          end: 50%, 85%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 900
+- waitForAnimationToEnd:
+    timeout: 1500
+- takeScreenshot: ${SHOTS}/06-terms${SUFFIX}
+
+# 7. Declining signs out (the app cannot hold a session for someone who has not
+# agreed to it holding their data) and keeps the draft. This is also what keeps
+# the account profile-less so the capture can run again.
+- repeat:
+    times: 12
+    while:
+      notVisible: '^${DECLINE}$'
+    commands:
+      - swipe:
+          start: 50%, 45%
+          end: 50%, 15%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 1500
+- repeat:
+    times: 8
+    while:
+      notVisible: '.*${LOGIN_TITLE}.*'
+    commands:
+      - tapOn:
+          text: '^${DECLINE}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 2000
+      - swipe:
+          start: 50%, 45%
+          end: 50%, 20%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 1200
+- extendedWaitUntil:
+    visible: '.*${LOGIN_TITLE}.*'
+    timeout: 60000
+- waitForAnimationToEnd:
+    timeout: 2000
+- takeScreenshot: ${SHOTS}/07-declined${SUFFIX}

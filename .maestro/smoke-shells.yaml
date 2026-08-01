@@ -1,0 +1,60 @@
+appId: com.ramassa.app
+name: smoke-shells
+# Every player tab is reachable and renders its labelled screen. This is the
+# regression net under the navigation shell: five tabs, each with an icon AND a
+# text label (icon-only fails low-literacy users, text-only fails non-native
+# speakers), and nothing crashing on the way round.
+env:
+  DEV_CLIENT_URL: ramassa://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081
+  DEV_MENU_LABEL: Developer menu
+  HOME_TITLE: '{{home:title}}'
+  TAB_HOME: '{{nav:tabs.home}}'
+  TAB_EVENTS: '{{nav:tabs.events}}'
+  TAB_COMMUNITY: '{{nav:tabs.community}}'
+  TAB_SERVICES: '{{nav:tabs.services}}'
+  TAB_PROFILE: '{{nav:tabs.profile}}'
+---
+- runFlow: _open-app.yaml
+- runFlow: _sign-in.yaml
+- runFlow: _relaunch.yaml
+
+# All five labels are present at once: this is the tab bar, not one screen.
+- assertVisible:
+    text: '^${TAB_HOME}$'
+- assertVisible:
+    text: '^${TAB_EVENTS}$'
+- assertVisible:
+    text: '^${TAB_COMMUNITY}$'
+- assertVisible:
+    text: '^${TAB_SERVICES}$'
+- assertVisible:
+    text: '^${TAB_PROFILE}$'
+
+# Each tab opens and renders its own header. The placeholder screens carry the
+# tab name as an accessibility header, so this asserts the SCREEN changed rather
+# than just that the tab bar exists.
+- tapOn:
+    text: '^${TAB_EVENTS}$'
+- extendedWaitUntil:
+    visible: '.*${TAB_EVENTS}.*'
+    timeout: 15000
+- tapOn:
+    text: '^${TAB_COMMUNITY}$'
+- extendedWaitUntil:
+    visible: '.*${TAB_COMMUNITY}.*'
+    timeout: 15000
+- tapOn:
+    text: '^${TAB_SERVICES}$'
+- extendedWaitUntil:
+    visible: '.*${TAB_SERVICES}.*'
+    timeout: 15000
+- tapOn:
+    text: '^${TAB_PROFILE}$'
+- extendedWaitUntil:
+    visible: '.*${TAB_PROFILE}.*'
+    timeout: 15000
+- tapOn:
+    text: '^${TAB_HOME}$'
+- extendedWaitUntil:
+    visible: '.*${HOME_TITLE}.*'
+    timeout: 15000

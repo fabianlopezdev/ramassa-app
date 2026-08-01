@@ -22,6 +22,10 @@ module.exports = {
       // `min-h-recommended`/`min-w-recommended` = 56dp for player-facing controls.
       minHeight: withPixelUnit(tokens.tapTarget),
       minWidth: withPixelUnit(tokens.tapTarget),
+      // Ceilings the player web layout stops growing at (RAPP-80): `max-w-form`
+      // for a column of inputs, `max-w-page` for a reading column. Phone-width
+      // viewports never reach them.
+      maxWidth: withPixelUnit(tokens.contentWidth),
     },
   },
   plugins: [],

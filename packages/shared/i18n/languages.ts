@@ -91,3 +91,16 @@ export function resolveInitialLanguage(options: {
 
   return DEFAULT_LANGUAGE;
 }
+
+/**
+ * Each language in ITS OWN name and script. Data, not translation: català is
+ * català to everyone, and a picker that shows "Arabic" to an Arabic speaker
+ * who cannot yet read Latin script has failed at its one job.
+ */
+export const LANGUAGE_NATIVE_NAMES: Record<SupportedLanguage, string> = {
+  ca: 'Català',
+  es: 'Español',
+  en: 'English',
+  ar: 'العربية',
+  fa: 'فارسی',
+};

@@ -6,6 +6,7 @@
  * owns the value via react-hook-form's Controller and passes it straight down.
  */
 
+import { continuousCorners } from '@/lib/continuous-corners';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { forwardRef } from 'react';
 import { Text, TextInput, View, type TextInputProps } from 'react-native';
@@ -31,6 +32,7 @@ export const AuthTextField = forwardRef<TextInput, AuthTextFieldProps>(function 
       <TextInput
         ref={ref}
         accessibilityLabel={label}
+        style={continuousCorners}
         placeholderTextColor={tokens.colors.neutral[400]}
         className={`min-h-recommended rounded-md border px-md text-start text-md text-neutral-900 ${
           hasError ? 'border-error' : 'border-neutral-300'

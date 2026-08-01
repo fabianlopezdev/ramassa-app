@@ -1,0 +1,198 @@
+appId: com.ramassa.app
+name: auth-login
+# `bun run capture:flow auth-login` REWRITES this block per run (a flow's own env
+# wins over `maestro -e`, so the values have to be baked in, not passed alongside)
+# and that is how one file captures both the Catalan and the Arabic pass. The
+# `{{namespace:key}}` entries are resolved from the app's own locale catalogs, so
+# no screen name is ever hardcoded here. The literal values below are the
+# defaults a hand-run gets.
+env:
+  SHOTS: maestro/shots/auth-login/ca/ios
+  SUFFIX: ''
+  LOCALE: ca
+  DEV_CLIENT_URL: ramassa://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081
+  LOGIN_TITLE: '{{auth:loginTitle}}'
+  MAGIC_ACTION: '{{auth:magicLinkAction}}'
+  USE_PASSWORD: '{{auth:usePasswordInstead}}'
+  USE_MAGIC: '{{auth:useMagicLinkInstead}}'
+  PASSWORD_LABEL: '{{auth:passwordLabel}}'
+  EMAIL_PLACEHOLDER: '{{auth:emailPlaceholder}}'
+  MAGIC_SENT_TITLE: '{{auth:magicLinkSentTitle}}'
+  PLAYER_EMAIL: '{{player:email}}'
+---
+# The way in, before anyone is signed in. Three states worth showing a client:
+# the magic-link default, the password fallback, and the "check your mail"
+# confirmation. Signing in itself is NOT captured here: that is `shell-tabs`,
+# which needs a session. This flow is deliberately the one that never has one.
+#
+# Clean install every run so the shots never depend on what a previous run left
+# behind. The launch is a deep link rather than `launchApp`: this is a
+# development build, and a plain launch lands on the launcher's "searching for
+# development servers" screen instead of the app.
+- clearState
+- openLink: ${DEV_CLIENT_URL}
+# iOS asks "Open in <app>?" before it will follow a custom-scheme link, and
+# nothing dismisses that for you: the app never opens and the flow times out on
+# its first assertion, which reads as a bundle that would not load. Optional so
+# the identical line is a harmless no-op on Android, which does not ask.
+- tapOn:
+    text: '^Open$'
+    optional: true
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# First launch after clearing state downloads the JS bundle, hence minutes.
+- extendedWaitUntil:
+    visible: '.*Developer menu.*'
+    timeout: 240000
+
+# The development client's explainer sheet for its OWN menu lands on top of the
+# app a second or two AFTER the first render, so a fixed delay loses the race on
+# one platform or the other. Dismiss by the ✕ ("Close" on both platforms), never
+# by "Continue" (that OPENS the client's tools menu) and never by the backdrop
+# (a no-op on Android, where the sheet then sits there indefinitely).
+- waitForAnimationToEnd:
+    timeout: 12000
+- repeat:
+    times: 4
+    while:
+      visible: '.*Close.*'
+    commands:
+      - tapOn:
+          text: '.*Close.*'
+      - waitForAnimationToEnd:
+          timeout: 3000
+
+# Pin the capture language BEFORE the first shot. Until a language is persisted
+# the app follows the DEVICE locale, so an English machine would quietly produce
+# an English "Catalan" pass. The dev menu is reachable pre-auth precisely so this
+# is possible on the login screen.
+#
+# Inlined rather than shared with the smoke suite's `_set-language.yaml`: the
+# harness writes a RESOLVED copy of this file to `.flow-shots/`, so any relative
+# `runFlow` would be resolved from there and miss. Capture flows are
+# self-contained for that reason.
+- extendedWaitUntil:
+    visible: '.*Developer menu.*'
+    timeout: 240000
+- tapOn: '.*Developer menu.*'
+# The FIRST section: the menu opens at the top and "Language and direction" is
+# several screens below the fold, so waiting on it fails on a menu that opened
+# perfectly.
+- extendedWaitUntil:
+    visible: '.*Environment.*'
+    timeout: 30000
+- waitForAnimationToEnd:
+    timeout: 5000
+- repeat:
+    times: 20
+    while:
+      notVisible: '^${LOCALE} \(.*\)$'
+    commands:
+      - swipe:
+          start: 50%, 70%
+          end: 50%, 50%
+          duration: 900
+      - waitForAnimationToEnd:
+          timeout: 2500
+- swipe:
+    start: 50%, 65%
+    end: 50%, 55%
+    duration: 900
+- waitForAnimationToEnd:
+    timeout: 2500
+- tapOn:
+    text: '^${LOCALE} \(.*\)$'
+- waitForAnimationToEnd:
+    timeout: 3000
+# Assert WHAT was selected. A tap reporting COMPLETED only proves Maestro found
+# the element and dispatched a touch at its reported bounds, not that the touch
+# landed there.
+- assertVisible:
+    text: '^${LOCALE} \(.*\)$'
+    selected: true
+- tapOn:
+    text: '.*Close.*'
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# The flip only applies on the next start, so the RTL pass is only honest after a
+# real relaunch. Done for both locales so the two passes differ in nothing but
+# the language.
+- stopApp
+- openLink: ${DEV_CLIENT_URL}
+# iOS asks "Open in <app>?" before it will follow a custom-scheme link, and
+# nothing dismisses that for you: the app never opens and the flow times out on
+# its first assertion, which reads as a bundle that would not load. Optional so
+# the identical line is a harmless no-op on Android, which does not ask.
+- tapOn:
+    text: '^Open$'
+    optional: true
+- waitForAnimationToEnd:
+    timeout: 3000
+- waitForAnimationToEnd:
+    timeout: 12000
+- repeat:
+    times: 10
+    while:
+      notVisible: '.*${LOGIN_TITLE}.*'
+    commands:
+      - tapOn:
+          text: '.*Close.*'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- extendedWaitUntil:
+    visible: '.*${LOGIN_TITLE}.*'
+    timeout: 240000
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# 1. The default way in: an email address and nothing else to remember.
+- takeScreenshot: ${SHOTS}/01-login${SUFFIX}
+
+# 2. The password fallback, for anyone who already set one.
+- tapOn:
+    text: '^${USE_PASSWORD}$'
+- extendedWaitUntil:
+    visible: '.*${PASSWORD_LABEL}.*'
+    timeout: 30000
+- waitForAnimationToEnd:
+    timeout: 2000
+- takeScreenshot: ${SHOTS}/02-password${SUFFIX}
+
+# Back to the magic-link form to send one for real.
+- tapOn:
+    text: '^${USE_MAGIC}$'
+- extendedWaitUntil:
+    visible: '^${MAGIC_ACTION}$'
+    timeout: 30000
+- waitForAnimationToEnd:
+    timeout: 2000
+
+# 3. The confirmation. A seeded address, so the local stack accepts it and the
+# screen shows a real address rather than a placeholder.
+# Tap the INPUT, found by its placeholder, not the label above it: tapping the
+# label text does not focus the field, `inputText` then types into nothing, and
+# the submit fails validation with an empty form - which is exactly how the
+# first run of this flow failed.
+- tapOn:
+    text: '^${EMAIL_PLACEHOLDER}$'
+- inputText: ${PLAYER_EMAIL}
+# NOT `hideKeyboard`: on Android that is a BACK press, and because `inputText`
+# types via adb without necessarily raising the IME, the BACK had no keyboard to
+# consume and closed the app (login is the root screen) - the emulator was found
+# sitting on the launcher. Tapping the title blurs the field on both platforms:
+# the ScrollView has keyboardShouldPersistTaps="handled".
+- tapOn:
+    text: '.*${LOGIN_TITLE}.*'
+- waitForAnimationToEnd:
+    timeout: 2000
+- tapOn:
+    text: '^${MAGIC_ACTION}$'
+- extendedWaitUntil:
+    visible: '.*${MAGIC_SENT_TITLE}.*'
+    timeout: 60000
+- waitForAnimationToEnd:
+    timeout: 2000
+- takeScreenshot: ${SHOTS}/03-magic-sent${SUFFIX}

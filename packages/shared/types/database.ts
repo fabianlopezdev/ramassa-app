@@ -28,6 +28,102 @@ export type Database = {
   };
   public: {
     Tables: {
+      audit_log: {
+        Row: {
+          action: string;
+          actor_id: string;
+          changes: Json | null;
+          created_at: string;
+          id: string;
+          org_id: string;
+          target_id: string;
+          target_type: string;
+        };
+        Insert: {
+          action: string;
+          actor_id: string;
+          changes?: Json | null;
+          created_at?: string;
+          id?: string;
+          org_id: string;
+          target_id: string;
+          target_type: string;
+        };
+        Update: {
+          action?: string;
+          actor_id?: string;
+          changes?: Json | null;
+          created_at?: string;
+          id?: string;
+          org_id?: string;
+          target_id?: string;
+          target_type?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'audit_log_actor_id_fkey';
+            columns: ['actor_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'audit_log_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      deletion_requests: {
+        Row: {
+          created_at: string;
+          id: string;
+          profile_id: string;
+          reason: string | null;
+          resolution_note: string | null;
+          resolved_at: string | null;
+          resolved_by: string | null;
+          state: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          profile_id: string;
+          reason?: string | null;
+          resolution_note?: string | null;
+          resolved_at?: string | null;
+          resolved_by?: string | null;
+          state?: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          profile_id?: string;
+          reason?: string | null;
+          resolution_note?: string | null;
+          resolved_at?: string | null;
+          resolved_by?: string | null;
+          state?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'deletion_requests_profile_id_fkey';
+            columns: ['profile_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'deletion_requests_resolved_by_fkey';
+            columns: ['resolved_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       organizations: {
         Row: {
           available_languages: string[];
@@ -70,6 +166,45 @@ export type Database = {
         };
         Relationships: [];
       };
+      participant_notes: {
+        Row: {
+          author_id: string;
+          body: string;
+          created_at: string;
+          id: string;
+          profile_id: string;
+        };
+        Insert: {
+          author_id: string;
+          body: string;
+          created_at?: string;
+          id?: string;
+          profile_id: string;
+        };
+        Update: {
+          author_id?: string;
+          body?: string;
+          created_at?: string;
+          id?: string;
+          profile_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'participant_notes_author_id_fkey';
+            columns: ['author_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'participant_notes_profile_id_fkey';
+            columns: ['profile_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       profiles: {
         Row: {
           address: string | null;
@@ -86,15 +221,18 @@ export type Database = {
           is_active: boolean;
           is_forum_banned: boolean;
           last_name: string;
+          media_consent_at: string | null;
           nationality: string | null;
           num_dependents: number;
           org_id: string;
           phone: string | null;
+          place_of_birth: string | null;
           postal_code: string | null;
           preferred_language: string;
           reference_contact_name: string | null;
           reference_entity: string | null;
           role: string;
+          search_document: unknown;
           shoe_size: string | null;
           terms_accepted_at: string | null;
           updated_at: string;
@@ -114,15 +252,18 @@ export type Database = {
           is_active?: boolean;
           is_forum_banned?: boolean;
           last_name: string;
+          media_consent_at?: string | null;
           nationality?: string | null;
           num_dependents?: number;
           org_id: string;
           phone?: string | null;
+          place_of_birth?: string | null;
           postal_code?: string | null;
           preferred_language?: string;
           reference_contact_name?: string | null;
           reference_entity?: string | null;
           role?: string;
+          search_document?: unknown;
           shoe_size?: string | null;
           terms_accepted_at?: string | null;
           updated_at?: string;
@@ -142,15 +283,18 @@ export type Database = {
           is_active?: boolean;
           is_forum_banned?: boolean;
           last_name?: string;
+          media_consent_at?: string | null;
           nationality?: string | null;
           num_dependents?: number;
           org_id?: string;
           phone?: string | null;
+          place_of_birth?: string | null;
           postal_code?: string | null;
           preferred_language?: string;
           reference_contact_name?: string | null;
           reference_entity?: string | null;
           role?: string;
+          search_document?: unknown;
           shoe_size?: string | null;
           terms_accepted_at?: string | null;
           updated_at?: string;
@@ -203,17 +347,175 @@ export type Database = {
           },
         ];
       };
+      terms_acceptances: {
+        Row: {
+          accepted_at: string;
+          id: string;
+          locale_shown: string;
+          profile_id: string;
+          terms_version: string;
+        };
+        Insert: {
+          accepted_at?: string;
+          id?: string;
+          locale_shown: string;
+          profile_id: string;
+          terms_version: string;
+        };
+        Update: {
+          accepted_at?: string;
+          id?: string;
+          locale_shown?: string;
+          profile_id?: string;
+          terms_version?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'terms_acceptances_profile_id_fkey';
+            columns: ['profile_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
     };
     Views: {
       [_ in never]: never;
     };
     Functions: {
+      complete_onboarding: {
+        Args: { payload: Json };
+        Returns: {
+          address: string | null;
+          avatar_url: string | null;
+          city: string | null;
+          clothing_size: string | null;
+          created_at: string;
+          date_of_birth: string | null;
+          document_number: string | null;
+          document_type: string | null;
+          first_name: string;
+          has_dependents: boolean;
+          id: string;
+          is_active: boolean;
+          is_forum_banned: boolean;
+          last_name: string;
+          media_consent_at: string | null;
+          nationality: string | null;
+          num_dependents: number;
+          org_id: string;
+          phone: string | null;
+          place_of_birth: string | null;
+          postal_code: string | null;
+          preferred_language: string;
+          reference_contact_name: string | null;
+          reference_entity: string | null;
+          role: string;
+          search_document: unknown;
+          shoe_size: string | null;
+          terms_accepted_at: string | null;
+          updated_at: string;
+        };
+        SetofOptions: {
+          from: '*';
+          to: 'profiles';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       current_app_role: { Args: never; Returns: string };
       current_org_id: { Args: never; Returns: string };
       decrypt_field: { Args: { ciphertext: string }; Returns: string };
+      default_organization_id: { Args: never; Returns: string };
       encrypt_field: { Args: { plaintext: string }; Returns: string };
       encryption_key: { Args: never; Returns: string };
+      get_own_profile: {
+        Args: never;
+        Returns: {
+          address: string;
+          avatar_url: string;
+          city: string;
+          clothing_size: string;
+          date_of_birth: string;
+          document_number: string;
+          document_type: string;
+          first_name: string;
+          has_dependents: boolean;
+          id: string;
+          last_name: string;
+          media_consent: boolean;
+          nationality: string;
+          num_dependents: number;
+          phone: string;
+          place_of_birth: string;
+          postal_code: string;
+          preferred_language: string;
+          reference_contact_name: string;
+          reference_entity: string;
+          shoe_size: string;
+          terms_accepted_at: string;
+        }[];
+      };
+      get_participant_profile: {
+        Args: { participant_id: string };
+        Returns: {
+          address: string;
+          avatar_url: string;
+          city: string;
+          clothing_size: string;
+          created_at: string;
+          date_of_birth: string;
+          document_number: string;
+          document_type: string;
+          first_name: string;
+          has_dependents: boolean;
+          id: string;
+          is_active: boolean;
+          is_forum_banned: boolean;
+          last_name: string;
+          media_consent: boolean;
+          nationality: string;
+          num_dependents: number;
+          phone: string;
+          place_of_birth: string;
+          postal_code: string;
+          preferred_language: string;
+          reference_contact_name: string;
+          reference_entity: string;
+          shoe_size: string;
+          terms_accepted_at: string;
+          updated_at: string;
+        }[];
+      };
+      immutable_unaccent: { Args: { value: string }; Returns: string };
       is_staff_or_admin: { Args: never; Returns: boolean };
+      participant_activity: {
+        Args: { participant_id: string };
+        Returns: {
+          detail: string;
+          id: string;
+          kind: string;
+          occurred_at: string;
+          title: string;
+        }[];
+      };
+      participant_filter_options: {
+        Args: never;
+        Returns: {
+          entities: string[];
+          nationalities: string[];
+        }[];
+      };
+      set_participant_active: {
+        Args: { next_is_active: boolean; participant_id: string };
+        Returns: undefined;
+      };
+      update_own_profile: { Args: { payload: Json }; Returns: undefined };
+      update_participant_profile: {
+        Args: { participant_id: string; payload: Json };
+        Returns: undefined;
+      };
       user_is_in_current_org: {
         Args: { target_user_id: string };
         Returns: boolean;

@@ -1,0 +1,258 @@
+{
+  "app": "Ramassà",
+  "slug": "admin-participants",
+  "title": "Gestió de participants",
+  "surface": "admin",
+  "description": "La pantalla de treball de l'equip: totes les participants de l'organització, amb cerca per text, filtres per entitat, nacionalitat, estat i persones a càrrec, ordenació per columna i paginació. Des del nom de cada participant s'obre la seva fitxa completa, amb les dades desxifrades, les notes de l'equip i la seva activitat al programa. Tot l'estat de la llista viu a l'adreça, així que una vista filtrada és un enllaç que es pot enviar a una companya.",
+  "steps": [
+    {
+      "id": "table",
+      "label": "La taula, tal com s'obre",
+      "web": "admin-participants/web/03-table.png"
+    },
+    {
+      "id": "search",
+      "label": "Cerca: \"torello\" (troba Torelló, sense accents)",
+      "web": "admin-participants/web/04-search.png"
+    },
+    {
+      "id": "filter-entity",
+      "label": "Filtre: derivades per Creu Roja Osona",
+      "web": "admin-participants/web/05-filter-entity.png"
+    },
+    {
+      "id": "filter-nationality",
+      "label": "Filtre: nacionalitat ucraïnesa",
+      "web": "admin-participants/web/06-filter-nationality.png"
+    },
+    {
+      "id": "filter-status",
+      "label": "Filtre: participants inactives",
+      "web": "admin-participants/web/07-filter-status.png"
+    },
+    {
+      "id": "filter-dependents",
+      "label": "Filtre: amb persones a càrrec",
+      "web": "admin-participants/web/08-filter-dependents.png"
+    },
+    {
+      "id": "sorted",
+      "label": "Ordenat per població, de la Z a la A",
+      "web": "admin-participants/web/09-sorted.png"
+    },
+    {
+      "id": "empty",
+      "label": "Cap resultat: diu què fer, no només que no n'hi ha",
+      "web": "admin-participants/web/10-empty.png"
+    },
+    {
+      "id": "detail",
+      "label": "Fitxa de la participant, oberta des del seu nom",
+      "web": "admin-participants/web/11-detail.png"
+    },
+    {
+      "id": "detail-edit",
+      "label": "Edició de la fitxa, amb les mateixes preguntes que l'alta",
+      "web": "admin-participants/web/12-detail-edit.png"
+    },
+    {
+      "id": "detail-notes",
+      "label": "Notes de l'equip: s'afegeixen, no es reescriuen",
+      "web": "admin-participants/web/13-detail-notes.png"
+    },
+    {
+      "id": "activity-attendance",
+      "label": "Activitat: assistència",
+      "web": "admin-participants/web/14-activity-attendance.png"
+    },
+    {
+      "id": "activity-signups",
+      "label": "Activitat: inscripcions a esdeveniments",
+      "web": "admin-participants/web/15-activity-signups.png"
+    },
+    {
+      "id": "activity-chat",
+      "label": "Activitat: xat amb l'equip",
+      "web": "admin-participants/web/16-activity-chat.png"
+    },
+    {
+      "id": "activity-forum",
+      "label": "Activitat: fòrum de la comunitat",
+      "web": "admin-participants/web/17-activity-forum.png"
+    },
+    {
+      "id": "activity-feedback",
+      "label": "Activitat: suggeriments",
+      "web": "admin-participants/web/18-activity-feedback.png"
+    },
+    {
+      "id": "activity-equipment",
+      "label": "Activitat: equipament lliurat",
+      "web": "admin-participants/web/19-activity-equipment.png"
+    }
+  ],
+  "edges": [
+    {
+      "from": "table",
+      "to": "search",
+      "label": "Escriu a la cerca"
+    },
+    {
+      "from": "table",
+      "to": "filter-entity",
+      "label": "Filtra per entitat",
+      "kind": "neutral"
+    },
+    {
+      "from": "table",
+      "to": "filter-nationality",
+      "label": "Filtra per nacionalitat",
+      "kind": "neutral"
+    },
+    {
+      "from": "table",
+      "to": "filter-status",
+      "label": "Filtra per estat",
+      "kind": "neutral"
+    },
+    {
+      "from": "table",
+      "to": "filter-dependents",
+      "label": "Filtra per persones a càrrec",
+      "kind": "neutral"
+    },
+    {
+      "from": "table",
+      "to": "sorted",
+      "label": "Ordena per població",
+      "kind": "neutral"
+    },
+    {
+      "from": "search",
+      "to": "empty",
+      "label": "Cap coincidència",
+      "kind": "negative"
+    },
+    {
+      "from": "empty",
+      "to": "table",
+      "label": "Treu els filtres",
+      "kind": "dismiss"
+    },
+    {
+      "from": "table",
+      "to": "detail",
+      "label": "Obre la fitxa des del nom"
+    },
+    {
+      "from": "detail",
+      "to": "detail-edit",
+      "label": "Edita la fitxa",
+      "kind": "neutral"
+    },
+    {
+      "from": "detail-edit",
+      "to": "detail",
+      "label": "Desa",
+      "kind": "positive"
+    },
+    {
+      "from": "detail",
+      "to": "detail-notes",
+      "label": "Afegeix una nota",
+      "kind": "positive"
+    },
+    {
+      "from": "detail-notes",
+      "to": "detail",
+      "label": "Torna a la fitxa",
+      "kind": "dismiss"
+    },
+    {
+      "from": "detail",
+      "to": "activity-attendance",
+      "label": "Assistència",
+      "kind": "neutral"
+    },
+    {
+      "from": "activity-attendance",
+      "to": "detail",
+      "label": "Torna a la fitxa",
+      "kind": "dismiss"
+    },
+    {
+      "from": "detail",
+      "to": "activity-signups",
+      "label": "Inscripcions",
+      "kind": "neutral"
+    },
+    {
+      "from": "activity-signups",
+      "to": "detail",
+      "label": "Torna a la fitxa",
+      "kind": "dismiss"
+    },
+    {
+      "from": "detail",
+      "to": "activity-chat",
+      "label": "Xat",
+      "kind": "neutral"
+    },
+    {
+      "from": "activity-chat",
+      "to": "detail",
+      "label": "Torna a la fitxa",
+      "kind": "dismiss"
+    },
+    {
+      "from": "detail",
+      "to": "activity-forum",
+      "label": "Fòrum",
+      "kind": "neutral"
+    },
+    {
+      "from": "activity-forum",
+      "to": "detail",
+      "label": "Torna a la fitxa",
+      "kind": "dismiss"
+    },
+    {
+      "from": "detail",
+      "to": "activity-feedback",
+      "label": "Suggeriments",
+      "kind": "neutral"
+    },
+    {
+      "from": "activity-feedback",
+      "to": "detail",
+      "label": "Torna a la fitxa",
+      "kind": "dismiss"
+    },
+    {
+      "from": "detail",
+      "to": "activity-equipment",
+      "label": "Equipament",
+      "kind": "neutral"
+    },
+    {
+      "from": "activity-equipment",
+      "to": "detail",
+      "label": "Torna a la fitxa",
+      "kind": "dismiss"
+    }
+  ],
+  "nodes": [],
+  "notes": [
+    "Tot l'estat de la taula viu a l'adreça: una vista filtrada es pot enviar per missatge, desar als preferits o recarregar sense perdre-la, i el botó de tornar enrere fa el que s'espera.",
+    "La cerca ignora accents en tots dos sentits: \"torello\" troba Torelló i \"Torelló\" també. Els noms en àrab, farsi i ciríl·lic es cerquen tal com s'escriuen, sense haver-los de transliterar.",
+    "La cerca NO inclou els camps xifrats (document, telèfon, adreça) i la pantalla ho diu. Fer-los cercables voldria dir guardar-ne una còpia en clar en algun lloc, que és precisament el que l'encriptació evita.",
+    "Cercar, filtrar, ordenar i paginar es fan a la base de dades, no al navegador: la llista està pensada per créixer fins a dues-centes participants.",
+    "Canviar un filtre torna a la primera pàgina. Quedar-se a la pàgina 7 després de reduir la llista a tres resultats mostraria una taula buida que sembla dir \"cap coincidència\".",
+    "Obrir la fitxa d'una participant queda registrat: qui l'ha consultat i quan. Ho fa la base de dades en la mateixa operació que desxifra les dades, així que no hi ha cap manera de consultar-les sense deixar-ne constància. La pantalla ho diu obertament a l'equip.",
+    "Les dades sensibles (document, telèfon, adreça, codi postal) es guarden xifrades i només es desxifren en aquesta pantalla, per a l'equip. Cap d'aquestes dades és cercable des de la llista.",
+    "Editar la fitxa fa les mateixes preguntes, amb les mateixes regles, que l'alta guiada de la participant. Els camps amb una llista tancada (nacionalitat, idioma, talles) es trien d'una llista, mai s'escriuen a mà.",
+    "Les notes de l'equip s'afegeixen i ja no es poden ni editar ni esborrar: són el registre del que sabia l'equip i quan. La participant no les veu.",
+    "Les pestanyes d'activitat encara són buides. S'aniran omplint amb l'assistència, les inscripcions, el xat, el fòrum, els suggeriments i l'equipament a mesura que aquestes parts del programa entrin en funcionament.",
+    "Totes les imatges són de dades de prova. Cap participant real apareix al mapa de pantalles."
+  ]
+}

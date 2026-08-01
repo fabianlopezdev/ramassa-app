@@ -1,0 +1,129 @@
+{
+  "slug": "admin-participants",
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "deviceScaleFactor": 2,
+  "timezoneId": "Europe/Madrid",
+  "settle": {
+    "timeout": 6000,
+    "interval": 150
+  },
+  "steps": [
+    {
+      "label": "auth-open",
+      "goto": "/login",
+      "click": "button:has-text(\"{{auth:usePasswordInstead}}\")",
+      "waitFor": "input[type=\"password\"]"
+    },
+    {
+      "label": "auth-submit",
+      "fill": [
+        {
+          "selector": "input[type=\"email\"]",
+          "value": "{{staff:email}}"
+        },
+        {
+          "selector": "input[type=\"password\"]",
+          "value": "{{staff:password}}"
+        }
+      ],
+      "click": "button:has-text(\"{{auth:passwordAction}}\")",
+      "waitFor": "text={{admin:dashboardTitle}}"
+    },
+    {
+      "label": "table",
+      "goto": "/participants",
+      "waitFor": "text={{participants:searchHint}} >> visible=true"
+    },
+    {
+      "label": "search",
+      "goto": "/participants?q=torello",
+      "waitFor": "text={{participants:searchHint}} >> visible=true"
+    },
+    {
+      "label": "filter-entity",
+      "goto": "/participants?entity=Creu%20Roja%20Osona",
+      "waitFor": "text={{participants:searchHint}} >> visible=true"
+    },
+    {
+      "label": "filter-nationality",
+      "goto": "/participants?nationality=Ucra%C3%AFna",
+      "waitFor": "text={{participants:searchHint}} >> visible=true"
+    },
+    {
+      "label": "filter-status",
+      "goto": "/participants?status=inactive",
+      "waitFor": "text={{participants:searchHint}} >> visible=true"
+    },
+    {
+      "label": "filter-dependents",
+      "goto": "/participants?dependents=with",
+      "waitFor": "text={{participants:searchHint}} >> visible=true"
+    },
+    {
+      "label": "sorted",
+      "goto": "/participants?sort=city&dir=desc",
+      "waitFor": "text={{participants:searchHint}} >> visible=true"
+    },
+    {
+      "label": "empty",
+      "goto": "/participants?q=zzzzzz",
+      "waitFor": "text={{participants:emptyTitle}} >> visible=true"
+    },
+    {
+      "label": "detail",
+      "goto": "/participants/5eed0000-0000-4000-8000-000000000025",
+      "waitFor": "text={{participants:accessLogged}} >> visible=true"
+    },
+    {
+      "label": "detail-edit",
+      "goto": "/participants/5eed0000-0000-4000-8000-000000000025",
+      "click": "button:has-text(\"{{participants:editAction}}\")",
+      "waitFor": "#participant-city >> visible=true"
+    },
+    {
+      "label": "detail-notes",
+      "goto": "/participants/5eed0000-0000-4000-8000-000000000025",
+      "waitFor": "text={{participants:notesAppendOnly}} >> visible=true",
+      "click": "#participant-note"
+    },
+    {
+      "label": "activity-attendance",
+      "goto": "/participants/5eed0000-0000-4000-8000-000000000025",
+      "click": "button[role=\"tab\"]:has-text(\"{{participants:activityAttendance}}\")",
+      "waitFor": "text={{participants:activityEmpty}} >> visible=true"
+    },
+    {
+      "label": "activity-signups",
+      "goto": "/participants/5eed0000-0000-4000-8000-000000000025",
+      "click": "button[role=\"tab\"]:has-text(\"{{participants:activityEventSignup}}\")",
+      "waitFor": "text={{participants:activityEmpty}} >> visible=true"
+    },
+    {
+      "label": "activity-chat",
+      "goto": "/participants/5eed0000-0000-4000-8000-000000000025",
+      "click": "button[role=\"tab\"]:has-text(\"{{participants:activityMessage}}\")",
+      "waitFor": "text={{participants:activityEmpty}} >> visible=true"
+    },
+    {
+      "label": "activity-forum",
+      "goto": "/participants/5eed0000-0000-4000-8000-000000000025",
+      "click": "button[role=\"tab\"]:has-text(\"{{participants:activityForumPost}}\")",
+      "waitFor": "text={{participants:activityEmpty}} >> visible=true"
+    },
+    {
+      "label": "activity-feedback",
+      "goto": "/participants/5eed0000-0000-4000-8000-000000000025",
+      "click": "button[role=\"tab\"]:has-text(\"{{participants:activityFeedback}}\")",
+      "waitFor": "text={{participants:activityEmpty}} >> visible=true"
+    },
+    {
+      "label": "activity-equipment",
+      "goto": "/participants/5eed0000-0000-4000-8000-000000000025",
+      "click": "button[role=\"tab\"]:has-text(\"{{participants:activityEquipment}}\")",
+      "waitFor": "text={{participants:activityEmpty}} >> visible=true"
+    }
+  ]
+}

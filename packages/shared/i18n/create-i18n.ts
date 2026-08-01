@@ -14,6 +14,9 @@ import arCommon from './locales/ar/common.json';
 import arErrors from './locales/ar/errors.json';
 import arHome from './locales/ar/home.json';
 import arNav from './locales/ar/nav.json';
+import arOnboarding from './locales/ar/onboarding.json';
+import arParticipants from './locales/ar/participants.json';
+import arProfile from './locales/ar/profile.json';
 import arPush from './locales/ar/push.json';
 import caAdmin from './locales/ca/admin.json';
 import caAuth from './locales/ca/auth.json';
@@ -21,6 +24,9 @@ import caCommon from './locales/ca/common.json';
 import caErrors from './locales/ca/errors.json';
 import caHome from './locales/ca/home.json';
 import caNav from './locales/ca/nav.json';
+import caOnboarding from './locales/ca/onboarding.json';
+import caParticipants from './locales/ca/participants.json';
+import caProfile from './locales/ca/profile.json';
 import caPush from './locales/ca/push.json';
 import enAdmin from './locales/en/admin.json';
 import enAuth from './locales/en/auth.json';
@@ -28,6 +34,9 @@ import enCommon from './locales/en/common.json';
 import enErrors from './locales/en/errors.json';
 import enHome from './locales/en/home.json';
 import enNav from './locales/en/nav.json';
+import enOnboarding from './locales/en/onboarding.json';
+import enParticipants from './locales/en/participants.json';
+import enProfile from './locales/en/profile.json';
 import enPush from './locales/en/push.json';
 import esAdmin from './locales/es/admin.json';
 import esAuth from './locales/es/auth.json';
@@ -35,6 +44,9 @@ import esCommon from './locales/es/common.json';
 import esErrors from './locales/es/errors.json';
 import esHome from './locales/es/home.json';
 import esNav from './locales/es/nav.json';
+import esOnboarding from './locales/es/onboarding.json';
+import esParticipants from './locales/es/participants.json';
+import esProfile from './locales/es/profile.json';
 import esPush from './locales/es/push.json';
 import faAdmin from './locales/fa/admin.json';
 import faAuth from './locales/fa/auth.json';
@@ -42,6 +54,9 @@ import faCommon from './locales/fa/common.json';
 import faErrors from './locales/fa/errors.json';
 import faHome from './locales/fa/home.json';
 import faNav from './locales/fa/nav.json';
+import faOnboarding from './locales/fa/onboarding.json';
+import faParticipants from './locales/fa/participants.json';
+import faProfile from './locales/fa/profile.json';
 import faPush from './locales/fa/push.json';
 
 const resources = {
@@ -52,6 +67,9 @@ const resources = {
     admin: caAdmin,
     errors: caErrors,
     nav: caNav,
+    onboarding: caOnboarding,
+    participants: caParticipants,
+    profile: caProfile,
     push: caPush,
   },
   es: {
@@ -61,6 +79,9 @@ const resources = {
     admin: esAdmin,
     errors: esErrors,
     nav: esNav,
+    onboarding: esOnboarding,
+    participants: esParticipants,
+    profile: esProfile,
     push: esPush,
   },
   en: {
@@ -70,6 +91,9 @@ const resources = {
     admin: enAdmin,
     errors: enErrors,
     nav: enNav,
+    onboarding: enOnboarding,
+    participants: enParticipants,
+    profile: enProfile,
     push: enPush,
   },
   ar: {
@@ -79,6 +103,9 @@ const resources = {
     admin: arAdmin,
     errors: arErrors,
     nav: arNav,
+    onboarding: arOnboarding,
+    participants: arParticipants,
+    profile: arProfile,
     push: arPush,
   },
   fa: {
@@ -88,6 +115,9 @@ const resources = {
     admin: faAdmin,
     errors: faErrors,
     nav: faNav,
+    onboarding: faOnboarding,
+    participants: faParticipants,
+    profile: faProfile,
     push: faPush,
   },
 };

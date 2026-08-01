@@ -1,0 +1,452 @@
+appId: com.ramassa.app
+name: i18n-rtl
+# `bun run capture:flow i18n-rtl` REWRITES this block per run (a flow's own env
+# wins over `maestro -e`, so the values have to be baked in, not passed alongside).
+# The `{{namespace:key}}` entries are resolved from the app's own locale catalogs,
+# so no screen name is ever hardcoded here.
+#
+# This flow is the ONE exception to the two-pass rule: it is ABOUT the language
+# switch, so it drives both languages itself in a single pass rather than being
+# run twice. `LOCALE`/`SUFFIX` still exist because the harness sets them, but the
+# Arabic shots here are named explicitly.
+env:
+  SHOTS: maestro/shots/i18n-rtl/ca/ios
+  SUFFIX: ''
+  LOCALE: ca
+  DEV_CLIENT_URL: ramassa://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081
+  PLAYER_EMAIL: '{{player:email}}'
+  DEV_MENU_LABEL: Developer menu
+  HOME_TITLE: '{{home:title}}'
+  PUSH_DECLINE: '{{push:rationaleDecline}}'
+  TAB_HOME: '{{nav:tabs.home}}'
+  TAB_PROFILE: '{{nav:tabs.profile}}'
+  TAB_HOME_AR: الرئيسية
+  TAB_PROFILE_AR: الملف الشخصي
+  # Hardcoded like the Arabic tab labels: selectors resolve from the Catalan
+  # catalog, and the notifications prompt reappears after every relaunch,
+  # covering the tab bar being waited on.
+  PUSH_DECLINE_AR: ليس الآن
+---
+# Five languages, two reading directions, and the thing that is easy to get
+# wrong: React Native applies a layout-direction flip on the NEXT app start only,
+# so a switch that looks right in the moment can still be laying out
+# left-to-right until a relaunch. The shots are before, after, and after the
+# relaunch, which is the only sequence that shows that honestly.
+- clearState
+- openLink: ${DEV_CLIENT_URL}
+# iOS asks "Open in <app>?" before it will follow a custom-scheme link, and
+# nothing dismisses that for you: the app never opens and the flow times out on
+# its first assertion, which reads as a bundle that would not load. Optional so
+# the identical line is a harmless no-op on Android, which does not ask.
+- tapOn:
+    text: '^Open$'
+    optional: true
+- waitForAnimationToEnd:
+    timeout: 3000
+- extendedWaitUntil:
+    visible: '.*Developer menu.*'
+    timeout: 240000
+
+# The development client's explainer sheet lands on top of the app a second or
+# two AFTER the first render. Dismiss by the ✕ ("Close" on both platforms), never
+# by "Continue" (that opens the client's tools menu) and never by the backdrop
+# (a no-op on Android).
+- waitForAnimationToEnd:
+    timeout: 12000
+- repeat:
+    times: 4
+    while:
+      visible: '.*Close.*'
+    commands:
+      - tapOn:
+          text: '.*Close.*'
+      - waitForAnimationToEnd:
+          timeout: 3000
+
+# Sign in as a seeded player, so the shots show the app rather than the login
+# screen. Inlined rather than shared with the smoke suite's fragments: the
+# harness writes a RESOLVED copy of this file to `.flow-shots/`, so a relative
+# `runFlow` would be resolved from there and miss.
+- extendedWaitUntil:
+    visible: '.*Developer menu.*'
+    timeout: 240000
+# LANGUAGE FIRST, then sign in. After `clearState` the app follows the
+# SIMULATOR's locale, so the Catalan-resolved selectors below (push decline,
+# home title) match nothing until Catalan is pinned: sign-in appeared to hang
+# when it had in fact succeeded behind an English notifications sheet.
+- repeat:
+    times: 6
+    while:
+      notVisible: '.*Environment.*'
+    commands:
+      - tapOn:
+          text: '.*Developer menu.*'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- waitForAnimationToEnd:
+    timeout: 5000
+- repeat:
+    times: 20
+    while:
+      notVisible: '^ca \(ltr\)$'
+    commands:
+      - swipe:
+          start: 50%, 70%
+          end: 50%, 50%
+          duration: 900
+      - waitForAnimationToEnd:
+          timeout: 2500
+# Tap UNTIL selected: a tap into re-render padding reports COMPLETED having
+# changed nothing, and the loop's condition IS the outcome.
+- repeat:
+    times: 6
+    while:
+      notVisible:
+        text: '^ca \(ltr\)$'
+        selected: true
+    commands:
+      - tapOn:
+          text: '^ca \(ltr\)$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 2500
+- assertVisible:
+    text: '^ca \(ltr\)$'
+    selected: true
+
+# Close and REOPEN rather than scrolling back up: the account list sits above
+# the language buttons and upward searches in this menu cannot be trusted (the
+# hierarchy reports off-screen rows as present). A fresh push opens at the top.
+- repeat:
+    times: 6
+    while:
+      visible: '.*Close.*'
+    commands:
+      - tapOn:
+          text: '.*Close.*'
+          optional: true
+      - tapOn:
+          text: '^${PUSH_DECLINE_AR}$'
+          optional: true
+      - tapOn:
+          text: '^${PUSH_DECLINE}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- repeat:
+    times: 6
+    while:
+      notVisible: '.*Accounts and roles.*'
+    commands:
+      - tapOn:
+          text: '.*Developer menu.*'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- waitForAnimationToEnd:
+    timeout: 5000
+- repeat:
+    times: 20
+    while:
+      notVisible: '.*${PLAYER_EMAIL}.*'
+    commands:
+      - swipe:
+          start: 50%, 70%
+          end: 50%, 50%
+          duration: 900
+      - waitForAnimationToEnd:
+          timeout: 2500
+- swipe:
+    start: 50%, 65%
+    end: 50%, 55%
+    duration: 900
+- waitForAnimationToEnd:
+    timeout: 2500
+- tapOn: '.*${PLAYER_EMAIL}.*'
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# Close the menu (signing in does not dismiss it), clear the notifications
+# rationale - in Catalan now, so the decline matches - and prove the OUTCOME.
+- repeat:
+    times: 6
+    while:
+      notVisible: '.*${HOME_TITLE}.*'
+    commands:
+      - tapOn:
+          text: '^${PUSH_DECLINE}$'
+          optional: true
+      - tapOn:
+          text: '.*Close.*'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- extendedWaitUntil:
+    visible: '.*${HOME_TITLE}.*'
+    timeout: 120000
+
+# Relaunch so the baseline of shot 1 is a real, settled left-to-right start.
+- stopApp
+- openLink: ${DEV_CLIENT_URL}
+# iOS asks "Open in <app>?" before it will follow a custom-scheme link, and
+# nothing dismisses that for you: the app never opens and the flow times out on
+# its first assertion, which reads as a bundle that would not load. Optional so
+# the identical line is a harmless no-op on Android, which does not ask.
+- tapOn:
+    text: '^Open$'
+    optional: true
+- waitForAnimationToEnd:
+    timeout: 3000
+- waitForAnimationToEnd:
+    timeout: 12000
+- repeat:
+    times: 10
+    while:
+      notVisible: '^${TAB_HOME}$'
+    commands:
+      - tapOn:
+          text: '.*Close.*'
+          optional: true
+      - tapOn:
+          text: '^${PUSH_DECLINE}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- extendedWaitUntil:
+    visible: '^${TAB_HOME}$'
+    timeout: 240000
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# 1. Catalan, left to right.
+- takeScreenshot: ${SHOTS}/01-ca
+
+# 2. The switcher itself, so the canvas shows WHERE this lives and that all five
+# languages are offered, each labelled with its own reading direction.
+# Reaching Profile is a LOOP, verified by the dev-menu entry, which is rendered
+# on Profile and nowhere else in the signed-in shell. A single tab tap can land
+# on the WRONG tab: the tab bar is a floating pill that animates into place after
+# a relaunch, and a touch dispatched against its pre-settle layout selects a
+# neighbour. Twice this put the app on Comunitat, where there is no dev-menu
+# entry, so the next six attempts to open the menu had nothing to tap and the
+# failure surfaced as "the menu will not open".
+- repeat:
+    times: 6
+    while:
+      notVisible: '.*${DEV_MENU_LABEL}.*'
+    commands:
+      - tapOn:
+          text: '^${TAB_PROFILE}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- extendedWaitUntil:
+    visible: '.*${DEV_MENU_LABEL}.*'
+    timeout: 15000
+# Open the menu, then scroll BLIND to the top. Android reopens this menu at the
+# scroll position it was last left at (iOS's fresh push resets it), so asserting
+# on the first section fails on a menu that opened perfectly. A fixed count of
+# drags needs no condition and so cannot be fooled by a hierarchy that reports
+# off-screen rows as present; at the top the extra drags are a no-op.
+- repeat:
+    times: 6
+    while:
+      notVisible: '.*Accounts and roles.*'
+    commands:
+      - tapOn:
+          text: '.*${DEV_MENU_LABEL}.*'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- repeat:
+    times: 10
+    commands:
+      - swipe:
+          start: 50%, 40%
+          end: 50%, 70%
+          duration: 400
+- waitForAnimationToEnd:
+    timeout: 5000
+- repeat:
+    times: 20
+    while:
+      notVisible: '^ar \(rtl\)$'
+    commands:
+      - swipe:
+          start: 50%, 70%
+          end: 50%, 50%
+          duration: 900
+      - waitForAnimationToEnd:
+          timeout: 2500
+- swipe:
+    start: 50%, 65%
+    end: 50%, 55%
+    duration: 900
+- waitForAnimationToEnd:
+    timeout: 2500
+- takeScreenshot: ${SHOTS}/02-switcher
+
+# 3. Arabic chosen, but BEFORE the restart: the labels are already Arabic while
+# the layout is still left to right. This is the state that confuses everyone,
+# which is exactly why it is worth a screenshot.
+# Settle before the tap. In the mirrored RTL layout the language buttons wrap
+# onto two rows and `ca (ltr)` sits DIRECTLY ABOVE `fa (rtl)` in the same column
+# (measured: ca [800,1955][994,2081], fa [806,2102][994,2228]). Bounds resolved
+# while the list is still easing therefore put the touch one row low, and the tap
+# reports COMPLETED having selected a different language. The `selected` check
+# below is what catches it when this is not enough.
+- waitForAnimationToEnd:
+    timeout: 3000
+- repeat:
+    times: 6
+    while:
+      notVisible:
+        text: '^ar \(rtl\)$'
+        selected: true
+    commands:
+      - tapOn:
+          text: '^ar \(rtl\)$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 2500
+- assertVisible:
+    text: '^ar \(rtl\)$'
+    selected: true
+- takeScreenshot: ${SHOTS}/03-ar-before-restart
+
+# 4. After the restart: the layout has mirrored too.
+- stopApp
+- openLink: ${DEV_CLIENT_URL}
+# iOS asks "Open in <app>?" before it will follow a custom-scheme link, and
+# nothing dismisses that for you: the app never opens and the flow times out on
+# its first assertion, which reads as a bundle that would not load. Optional so
+# the identical line is a harmless no-op on Android, which does not ask.
+- tapOn:
+    text: '^Open$'
+    optional: true
+- waitForAnimationToEnd:
+    timeout: 3000
+- waitForAnimationToEnd:
+    timeout: 12000
+- repeat:
+    times: 10
+    while:
+      notVisible: '^${TAB_HOME_AR}$'
+    commands:
+      - tapOn:
+          text: '.*Close.*'
+          optional: true
+      - tapOn:
+          text: '^${PUSH_DECLINE_AR}$'
+          optional: true
+      - tapOn:
+          text: '^${PUSH_DECLINE}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- extendedWaitUntil:
+    visible: '^${TAB_HOME_AR}$'
+    timeout: 240000
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: ${SHOTS}/04-ar-after-restart
+
+# 5. The readout that proves it, rather than asking anyone to eyeball a mirror:
+# the dev menu renders "matches the language" only when `I18nManager.isRTL`
+# agrees with the resolved direction.
+# Reaching Profile is a LOOP, verified by the dev-menu entry, which is rendered
+# on Profile and nowhere else in the signed-in shell. A single tab tap can land
+# on the WRONG tab: the tab bar is a floating pill that animates into place after
+# a relaunch, and a touch dispatched against its pre-settle layout selects a
+# neighbour. Twice this put the app on Comunitat, where there is no dev-menu
+# entry, so the next six attempts to open the menu had nothing to tap and the
+# failure surfaced as "the menu will not open".
+- repeat:
+    times: 6
+    while:
+      notVisible: '.*${DEV_MENU_LABEL}.*'
+    commands:
+      - tapOn:
+          text: '^${TAB_PROFILE_AR}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- extendedWaitUntil:
+    visible: '.*${DEV_MENU_LABEL}.*'
+    timeout: 15000
+# Open the menu, then scroll BLIND to the top. Android reopens this menu at the
+# scroll position it was last left at (iOS's fresh push resets it), so asserting
+# on the first section fails on a menu that opened perfectly. A fixed count of
+# drags needs no condition and so cannot be fooled by a hierarchy that reports
+# off-screen rows as present; at the top the extra drags are a no-op.
+- repeat:
+    times: 6
+    while:
+      notVisible: '.*Accounts and roles.*'
+    commands:
+      - tapOn:
+          text: '.*${DEV_MENU_LABEL}.*'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- repeat:
+    times: 10
+    commands:
+      - swipe:
+          start: 50%, 40%
+          end: 50%, 70%
+          duration: 400
+- waitForAnimationToEnd:
+    timeout: 5000
+- repeat:
+    times: 20
+    while:
+      notVisible: '.*Native layout direction matches the language..*'
+    commands:
+      - swipe:
+          start: 50%, 70%
+          end: 50%, 50%
+          duration: 900
+      - waitForAnimationToEnd:
+          timeout: 2500
+- waitForAnimationToEnd:
+    timeout: 3000
+- extendedWaitUntil:
+    visible: '.*Native layout direction matches the language..*'
+    timeout: 15000
+- takeScreenshot: ${SHOTS}/05-direction-readout
+
+# Leave the device in Catalan. A switch that cannot be undone is its own bug, and
+# the next flow to run should not inherit Arabic.
+- repeat:
+    times: 20
+    while:
+      notVisible: '^ca \(ltr\)$'
+    commands:
+      - swipe:
+          start: 50%, 70%
+          end: 50%, 50%
+          duration: 900
+      - waitForAnimationToEnd:
+          timeout: 2500
+# NO settle swipe before the tap: the loop above already stopped with the button
+# on screen, and an unconditional extra swipe moves it - measured, it scrolled
+# `ca (ltr)` clean out of the hierarchy. Just let the list come to rest.
+- waitForAnimationToEnd:
+    timeout: 3000
+- repeat:
+    times: 6
+    while:
+      notVisible:
+        text: '^ca \(ltr\)$'
+        selected: true
+    commands:
+      - tapOn:
+          text: '^ca \(ltr\)$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 2500
+- assertVisible:
+    text: '^ca \(ltr\)$'
+    selected: true

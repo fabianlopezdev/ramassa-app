@@ -16,10 +16,12 @@ import {
   type SafeAsyncOptions,
 } from '@ramassa/shared/errors';
 import {
+  consoleLogSink,
   createLogger,
   createNoopErrorReporter,
   redactPii,
   type ErrorReporter,
+  type LogSink,
 } from '@ramassa/shared/logger';
 
 // Literal member access so Metro can inline the values at bundle time
@@ -72,8 +74,36 @@ function createSentryErrorReporter(): ErrorReporter {
   };
 }
 
+/**
+ * Console plus, in dev builds only, the in-app log viewer's ring buffer
+ * (RAPP-19). The require sits inside the `__DEV__` branch so Metro folds the
+ * branch away before it collects dependencies: neither the buffer nor the
+ * network inspector it also installs reaches a release bundle. Asserted by
+ * `tests/dev-menu-production-gate.test.ts`, proved end to end by
+ * `scripts/verify-dev-menu-excluded.sh`.
+ *
+ * Importing it HERE is deliberate: this is the first module the app evaluates,
+ * so the network inspector is wrapping `fetch` before the Supabase client makes
+ * its first request.
+ */
+function createMobileLogSink(): LogSink {
+  const devLogSink = __DEV__
+    ? (require('@/lib/dev/dev-instrumentation') as typeof import('@/lib/dev/dev-instrumentation'))
+        .devLogSink
+    : undefined;
+
+  if (devLogSink === undefined) {
+    return consoleLogSink;
+  }
+  return (entry) => {
+    consoleLogSink(entry);
+    devLogSink(entry);
+  };
+}
+
 export const logger = createLogger({
   minimumLevel: __DEV__ ? 'debug' : 'info',
+  sink: createMobileLogSink(),
   reporter: sentryDsn === undefined ? createNoopErrorReporter() : createSentryErrorReporter(),
   baseContext: { runtime: 'mobile' },
 });

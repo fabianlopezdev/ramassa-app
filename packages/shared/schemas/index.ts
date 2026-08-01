@@ -15,13 +15,7 @@
 
 import { z } from 'zod';
 
-/**
- * The five supported languages (ADR-006). Catalan is the grant-mandated default.
- */
-export const languageCodeSchema = z.enum(['ca', 'es', 'en', 'ar', 'fa']);
-export type LanguageCode = z.infer<typeof languageCodeSchema>;
-
-export const DEFAULT_LANGUAGE: LanguageCode = 'ca';
+export * from './language';
 
 /**
  * Multilingual text. Catalan is required (it is the default the UI falls back to);
@@ -42,4 +36,7 @@ export const isoDateTimeSchema = z.iso.datetime();
 
 // Domain schemas compose from the primitives above and live in sibling files.
 export * from './auth';
+export * from './onboarding';
+export * from './participant-notes';
+export * from './profile';
 export * from './upload';

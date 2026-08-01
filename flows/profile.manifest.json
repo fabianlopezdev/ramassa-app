@@ -1,0 +1,183 @@
+{
+  "app": "Ramassà",
+  "slug": "profile",
+  "title": "Perfil de la jugadora",
+  "surface": "mobile",
+  "description": "El que Ramassà guarda sobre cada jugadora, a la seva llengua, amb els controls per canviar-ho: editar les dades, canviar l'idioma de l'app, demanar que s'esborrin les dades i tancar la sessió. Les dades sensibles es desxifren només aquí i només per a la seva propietària. Es mostra en català i en àrab, de dreta a esquerra.",
+  "steps": [
+    {
+      "id": "profile",
+      "label": "El meu perfil",
+      "ios": "profile/ios/01-profile.png",
+      "android": "profile/android/01-profile.png",
+      "web": "profile/web/04-profile.png"
+    },
+    {
+      "id": "edit",
+      "label": "Edita les meves dades",
+      "ios": "profile/ios/02-edit.png",
+      "android": "profile/android/02-edit.png",
+      "web": "profile/web/05-edit.png"
+    },
+    {
+      "id": "language",
+      "label": "Idioma de l'aplicació",
+      "ios": "profile/ios/04-language.png",
+      "android": "profile/android/04-language.png",
+      "web": "profile/web/07-language.png"
+    },
+    {
+      "id": "delete-request",
+      "label": "Demanar esborrar les meves dades",
+      "ios": "profile/ios/03-delete-request.png",
+      "android": "profile/android/03-delete-request.png",
+      "web": "profile/web/08-delete-request.png"
+    },
+    {
+      "id": "signed-out",
+      "label": "Sessió tancada",
+      "ios": "profile/ios/05-signed-out.png",
+      "android": "profile/android/05-signed-out.png",
+      "web": "profile/web/10-signed-out.png"
+    },
+    {
+      "id": "profile-ar",
+      "label": "ملفي الشخصي (àrab, dreta a esquerra)",
+      "ios": "profile/ios/01-profile-ar.png",
+      "android": "profile/android/01-profile-ar.png",
+      "web": "profile/web/04-profile-ar.png"
+    },
+    {
+      "id": "edit-ar",
+      "label": "تعديل بياناتي",
+      "ios": "profile/ios/02-edit-ar.png",
+      "android": "profile/android/02-edit-ar.png",
+      "web": "profile/web/05-edit-ar.png"
+    },
+    {
+      "id": "language-ar",
+      "label": "لغة التطبيق",
+      "ios": "profile/ios/04-language-ar.png",
+      "android": "profile/android/04-language-ar.png",
+      "web": "profile/web/07-language-ar.png"
+    },
+    {
+      "id": "delete-request-ar",
+      "label": "طلب حذف بياناتي",
+      "ios": "profile/ios/03-delete-request-ar.png",
+      "android": "profile/android/03-delete-request-ar.png",
+      "web": "profile/web/08-delete-request-ar.png"
+    },
+    {
+      "id": "signed-out-ar",
+      "label": "تسجيل الخروج",
+      "ios": "profile/ios/05-signed-out-ar.png",
+      "android": "profile/android/05-signed-out-ar.png",
+      "web": "profile/web/10-signed-out-ar.png"
+    }
+  ],
+  "edges": [
+    {
+      "from": "profile",
+      "to": "edit",
+      "label": "Edita les meves dades"
+    },
+    {
+      "from": "edit",
+      "to": "profile",
+      "label": "Desa",
+      "kind": "positive"
+    },
+    {
+      "from": "edit",
+      "to": "profile",
+      "label": "Enrere, sense desar",
+      "kind": "dismiss"
+    },
+    {
+      "from": "profile",
+      "to": "language",
+      "label": "Idioma",
+      "kind": "neutral"
+    },
+    {
+      "from": "profile",
+      "to": "delete-request",
+      "label": "Demanar esborrar les dades",
+      "kind": "neutral"
+    },
+    {
+      "from": "delete-request",
+      "to": "profile",
+      "label": "Enrere",
+      "kind": "dismiss"
+    },
+    {
+      "from": "profile",
+      "to": "signed-out",
+      "label": "Tanca la sessió",
+      "kind": "negative"
+    },
+    {
+      "from": "profile-ar",
+      "to": "edit-ar",
+      "label": "تعديل بياناتي"
+    },
+    {
+      "from": "edit-ar",
+      "to": "profile-ar",
+      "label": "حفظ",
+      "kind": "positive"
+    },
+    {
+      "from": "edit-ar",
+      "to": "profile-ar",
+      "label": "رجوع بدون حفظ",
+      "kind": "dismiss"
+    },
+    {
+      "from": "profile-ar",
+      "to": "language-ar",
+      "label": "اللغة",
+      "kind": "neutral"
+    },
+    {
+      "from": "profile-ar",
+      "to": "delete-request-ar",
+      "label": "طلب حذف البيانات",
+      "kind": "neutral"
+    },
+    {
+      "from": "delete-request-ar",
+      "to": "profile-ar",
+      "label": "رجوع",
+      "kind": "dismiss"
+    },
+    {
+      "from": "profile-ar",
+      "to": "signed-out-ar",
+      "label": "تسجيل الخروج",
+      "kind": "negative"
+    },
+    {
+      "from": "language",
+      "to": "profile",
+      "label": "Torna al perfil",
+      "kind": "dismiss"
+    },
+    {
+      "from": "language-ar",
+      "to": "profile-ar",
+      "label": "العودة إلى الملف",
+      "kind": "dismiss"
+    }
+  ],
+  "nodes": [],
+  "notes": [
+    "Les dades sensibles (document, telèfon, adreça, codi postal) es guarden xifrades i es desxifren només per a la seva propietària, en aquesta pantalla. Es mostren senceres a propòsit: la pantalla existeix perquè la jugadora pugui comprovar què tenim d'ella, i amagar-li el seu propi número de document no protegeix ningú.",
+    "Editar reutilitza els mateixos controls i les mateixes regles que l'alta guiada, de manera que una pregunta té la mateixa forma tant si es respon el primer dia com si es corregeix un any després.",
+    "Canviar entre llengües que es llegeixen en sentits diferents demana reiniciar l'app: el text canvia a l'instant, però el sentit de la pantalla no ho fa fins al següent inici. L'app ho diu clarament en comptes de fer veure que ja ha canviat. El canvi en si es veu al flux d'idiomes i direcció de lectura.",
+    "Demanar esborrar les dades crea una petició per a l'equip, no un esborrat immediat: les dades d'una participant estan lligades a l'assistència i a obligacions del programa, així que ho revisa una persona i li respon.",
+    "El permís per sortir a fotos i històries es pot donar i treure des d'aquí, tantes vegades com calgui."
+  ]
+}

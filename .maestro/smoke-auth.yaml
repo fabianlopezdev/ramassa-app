@@ -1,0 +1,33 @@
+appId: com.ramassa.app
+name: smoke-auth
+# Cold start -> sign in -> land in the player shell -> sign out -> back at login.
+# The auth guard is the thing under test: the root navigator routes by session,
+# so signing in and out must move between the two route groups with no manual
+# navigation anywhere in this flow.
+env:
+  DEV_CLIENT_URL: ramassa://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081
+  DEV_MENU_LABEL: Developer menu
+  LOGIN_TITLE: '{{auth:loginTitle}}'
+  HOME_TITLE: '{{home:title}}'
+  SIGN_OUT: '{{auth:signOutAction}}'
+  TAB_HOME: '{{nav:tabs.home}}'
+---
+- runFlow: _open-app.yaml
+# Cold start with no session lands on login, not on the app.
+- assertVisible: '.*${LOGIN_TITLE}.*'
+- runFlow: _sign-in.yaml
+- runFlow: _relaunch.yaml
+
+# Signed in: the player shell, not the login screen.
+- assertVisible: '.*${HOME_TITLE}.*'
+- assertVisible:
+    text: '^${TAB_HOME}$'
+- assertNotVisible: '.*${LOGIN_TITLE}.*'
+
+# Signing out clears the session and the guard flips back on its own.
+- tapOn:
+    text: '^${SIGN_OUT}$'
+- extendedWaitUntil:
+    visible: '.*${LOGIN_TITLE}.*'
+    timeout: 60000
+- assertNotVisible: '.*${HOME_TITLE}.*'

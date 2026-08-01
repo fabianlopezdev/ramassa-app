@@ -13,7 +13,8 @@
       "bundleIdentifier": "com.ramassa.app",
       "infoPlist": {
         "ExpoLocalization_supportsRTL": true
-      }
+      },
+      "appleTeamId": "BM53DM6Z9A"
     },
     "android": {
       "adaptiveIcon": {

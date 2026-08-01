@@ -1,8 +1,10 @@
 import { describe, expect, test } from 'bun:test';
 import { SUPPORTED_LANGUAGES } from '../i18n/languages';
 import {
+  buildAuditLogEntry,
   buildOrganization,
   buildParticipant,
+  buildParticipantNote,
   buildParticipants,
   buildProfile,
   buildPushToken,
@@ -138,5 +140,51 @@ describe('buildPushToken', () => {
 
   test('overrides win over the defaults', () => {
     expect(buildPushToken({ platform: 'ios' }).platform).toBe('ios');
+  });
+});
+
+describe('buildParticipantNote', () => {
+  test('a note is about a participant and written BY somebody', () => {
+    const note = buildParticipantNote();
+
+    expect(note.profile_id).toBe(buildParticipant().id);
+    expect(note.author_id).toBe(seedUserId(STAFF_FIXTURES[1]!.ordinal));
+    expect(note.author_id).not.toBe(note.profile_id);
+  });
+
+  test('overrides win over the defaults', () => {
+    expect(buildParticipantNote({ body: 'una altra cosa' }).body).toBe('una altra cosa');
+  });
+});
+
+describe('buildAuditLogEntry', () => {
+  test('defaults to the entry the detail screen produces most: a view, changing nothing', () => {
+    const entry = buildAuditLogEntry();
+
+    expect(entry.action).toBe('profile.view_sensitive');
+    expect(entry.target_type).toBe('profile');
+    expect(entry.target_id).toBe(buildParticipant().id);
+    // A view changed nothing, so a diff would be a lie the first reader of this
+    // table believes.
+    expect(entry.changes).toBeNull();
+  });
+
+  test('the actor is a staff member, never the participant whose record it is', () => {
+    const entry = buildAuditLogEntry();
+
+    expect(entry.actor_id).toBe(seedUserId(STAFF_FIXTURES[1]!.ordinal));
+    expect(entry.actor_id).not.toBe(entry.target_id);
+  });
+
+  test('an edit entry carries what changed', () => {
+    const entry = buildAuditLogEntry({
+      action: 'profile.update',
+      changes: { city: { old: 'Vic', new: 'Manlleu' }, phone: { changed: true } },
+    });
+
+    expect(entry.changes).toEqual({
+      city: { old: 'Vic', new: 'Manlleu' },
+      phone: { changed: true },
+    });
   });
 });

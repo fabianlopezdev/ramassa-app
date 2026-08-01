@@ -1,0 +1,267 @@
+appId: com.ramassa.app
+name: shell-tabs
+# `bun run capture:flow shell-tabs` REWRITES this block per run (a flow's own env
+# wins over `maestro -e`, so the values have to be baked in, not passed alongside)
+# and that is how one file captures both the Catalan and the Arabic pass. The
+# `{{namespace:key}}` entries are resolved from the app's own locale catalogs, so
+# no screen name is ever hardcoded here. The literal values below are the
+# defaults a hand-run gets.
+env:
+  SHOTS: maestro/shots/shell-tabs/ca/ios
+  SUFFIX: ''
+  LOCALE: ca
+  DEV_CLIENT_URL: ramassa://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081
+  PLAYER_EMAIL: '{{player:email}}'
+  HOME_TITLE: '{{home:title}}'
+  PUSH_DECLINE: '{{push:rationaleDecline}}'
+  TAB_HOME: '{{nav:tabs.home}}'
+  TAB_EVENTS: '{{nav:tabs.events}}'
+  TAB_COMMUNITY: '{{nav:tabs.community}}'
+  TAB_SERVICES: '{{nav:tabs.services}}'
+  TAB_PROFILE: '{{nav:tabs.profile}}'
+---
+# The five player tabs in their pre-content state. A hub, not a sequence: the
+# canvas graph fans out from home to each tab.
+#
+# A clean install every time, so the shots never depend on what a previous run
+# left behind. The launch is a deep link rather than `launchApp` on purpose: this
+# is a development build, and a plain launch lands on the launcher's "searching
+# for development servers" screen instead of the app.
+- clearState
+- openLink: ${DEV_CLIENT_URL}
+# iOS asks "Open in <app>?" before it will follow a custom-scheme link, and
+# nothing dismisses that for you: the app never opens and the flow times out on
+# its first assertion, which reads as a bundle that would not load. Optional so
+# the identical line is a harmless no-op on Android, which does not ask.
+- tapOn:
+    text: '^Open$'
+    optional: true
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# First launch after clearing state downloads the JS bundle, which is why this
+# timeout is minutes rather than seconds.
+- extendedWaitUntil:
+    visible: '.*Developer menu.*'
+    timeout: 240000
+
+# The development client shows an explainer sheet for ITS OWN menu after a state
+# clear and again after a relaunch, and it lands on top of the app a second or
+# two AFTER the first render, so a fixed delay always loses the race on one
+# platform or the other. Loop until the app's own screen is the thing on top,
+# dismissing whatever sheet is in the way by its ✕ ("Close" on both platforms).
+#
+# Never by its "Continue" button: Continue is what OPENS the client's tools menu,
+# which then covers the screen in turn. And never by tapping the dimmed backdrop:
+# that does nothing on Android, where the sheet then sits there indefinitely and
+# the app behind it never draws.
+- waitForAnimationToEnd:
+    timeout: 12000
+- repeat:
+    times: 4
+    while:
+      visible: '.*Close.*'
+    commands:
+      - tapOn:
+          text: '.*Close.*'
+      - waitForAnimationToEnd:
+          timeout: 3000
+- extendedWaitUntil:
+    visible: '.*Developer menu.*'
+    timeout: 240000
+# LANGUAGE FIRST, then sign in. After `clearState` the app follows the
+# SIMULATOR's locale, so every Catalan-resolved selector below (the push decline,
+# the home title) matches nothing until the language is pinned: sign-in appeared
+# to hang when in fact it had succeeded behind an English notifications sheet.
+# The dev menu is reachable pre-auth precisely so this order is possible.
+- repeat:
+    times: 6
+    while:
+      notVisible: '.*Environment.*'
+    commands:
+      - tapOn:
+          text: '.*Developer menu.*'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- waitForAnimationToEnd:
+    timeout: 5000
+- repeat:
+    times: 20
+    while:
+      notVisible: '^${LOCALE} \(.*\)$'
+    commands:
+      - swipe:
+          start: 50%, 70%
+          end: 50%, 50%
+          duration: 900
+      - waitForAnimationToEnd:
+          timeout: 2500
+# Tap UNTIL selected: these small wrapped buttons drift between bounds-resolve
+# and touch, and a tap into the padding reports COMPLETED having done nothing.
+- repeat:
+    times: 6
+    while:
+      notVisible:
+        text: '^${LOCALE} \(.*\)$'
+        selected: true
+    commands:
+      - tapOn:
+          text: '^${LOCALE} \(.*\)$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 2500
+- assertVisible:
+    text: '^${LOCALE} \(.*\)$'
+    selected: true
+
+# Close and REOPEN rather than scrolling back: the account list sits above the
+# language buttons, and upward searches inside this menu cannot be trusted (the
+# hierarchy reports off-screen rows as present, so they exit before arriving).
+# A fresh push opens at the top. The direction has not flipped yet (that takes
+# the relaunch below), so the header and its close control are still present
+# even for the Arabic pass (RAPP-93 only bites once the layout is RTL).
+- repeat:
+    times: 6
+    while:
+      visible: '.*Close.*'
+    commands:
+      - tapOn:
+          text: '.*Close.*'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- repeat:
+    times: 6
+    while:
+      notVisible: '.*Accounts and roles.*'
+    commands:
+      - tapOn:
+          text: '.*Developer menu.*'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- waitForAnimationToEnd:
+    timeout: 5000
+
+# Sign in as a seeded player. Role lives in the database, so there is no flag to
+# fake: the switcher signs in for real against the local seeded stack. The row is
+# matched on the ADDRESS alone rather than on its "Sign in as <address>" label:
+# iOS exposes the row's accessibility label, Android exposes the address text
+# node inside it, and only the bare address matches on both.
+- repeat:
+    times: 20
+    while:
+      notVisible: '.*${PLAYER_EMAIL}.*'
+    commands:
+      - swipe:
+          start: 50%, 70%
+          end: 50%, 50%
+          duration: 900
+      - waitForAnimationToEnd:
+          timeout: 2500
+# The loop stops the moment ANY sliver of the row is on screen, which parks it
+# under the navigation bar where a tap does not reach it. One smaller swipe
+# lifts it into the body of the list.
+- swipe:
+    start: 50%, 65%
+    end: 50%, 55%
+    duration: 900
+- waitForAnimationToEnd:
+    timeout: 2500
+- tapOn: '.*${PLAYER_EMAIL}.*'
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# Close the menu (signing in does not dismiss it), clear the notifications
+# rationale - now in the pinned language, so the decline actually matches - and
+# prove the OUTCOME: the player home, which cannot appear without a session.
+- repeat:
+    times: 6
+    while:
+      notVisible: '.*${HOME_TITLE}.*'
+    commands:
+      - tapOn:
+          text: '^${PUSH_DECLINE}$'
+          optional: true
+      - tapOn:
+          text: '.*Close.*'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- extendedWaitUntil:
+    visible: '.*${HOME_TITLE}.*'
+    timeout: 120000
+
+# React Native applies a layout-direction flip on the next start only, so the
+# RTL pass is only honest after a real relaunch. Doing it for both locales keeps
+# the two passes identical in everything except the language.
+- stopApp
+- openLink: ${DEV_CLIENT_URL}
+# iOS asks "Open in <app>?" before it will follow a custom-scheme link, and
+# nothing dismisses that for you: the app never opens and the flow times out on
+# its first assertion, which reads as a bundle that would not load. Optional so
+# the identical line is a harmless no-op on Android, which does not ask.
+- tapOn:
+    text: '^Open$'
+    optional: true
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# A relaunch means both one-time overlays can come back: the client's explainer,
+# and the notifications question. Clear them before the first screenshot.
+# Here the loop condition is the HOME SCREEN, not the sheet. After a relaunch the
+# Android emulator takes minutes to reload the bundle and the explainer lands
+# whenever it lands, so any fixed wait either fires before the sheet or wastes
+# time after it. Looping until the home screen is up clears whatever appears,
+# whenever it appears, and stops the moment there is something to screenshot.
+- waitForAnimationToEnd:
+    timeout: 12000
+- repeat:
+    times: 10
+    while:
+      notVisible: '.*${HOME_TITLE}.*'
+    commands:
+      - tapOn:
+          text: '.*Close.*'
+          optional: true
+      - tapOn:
+          text: '^${PUSH_DECLINE}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- extendedWaitUntil:
+    visible: '.*${HOME_TITLE}.*'
+    timeout: 240000
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: ${SHOTS}/01-home${SUFFIX}
+
+- tapOn:
+    text: '^${TAB_EVENTS}$'
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: ${SHOTS}/02-events${SUFFIX}
+
+- tapOn:
+    text: '^${TAB_COMMUNITY}$'
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: ${SHOTS}/03-community${SUFFIX}
+
+- tapOn:
+    text: '^${TAB_SERVICES}$'
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: ${SHOTS}/04-services${SUFFIX}
+
+- tapOn:
+    text: '^${TAB_PROFILE}$'
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: ${SHOTS}/05-profile${SUFFIX}
+
+# Back to the starting tab, so a re-run that reuses the install starts where
+# this one did.
+- tapOn:
+    text: '^${TAB_HOME}$'

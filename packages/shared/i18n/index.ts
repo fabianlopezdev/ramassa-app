@@ -1,3 +1,10 @@
+export {
+  COMMON_COUNTRY_CODES,
+  countryLabelForCanonical,
+  getCountryOptions,
+  searchCountries,
+  type CountryOption,
+} from './countries';
 export { createI18n, type CreateI18nOptions } from './create-i18n';
 export {
   createInMemoryLanguageStorage,
@@ -11,6 +18,7 @@ export {
   getLanguageFontFamilyKey,
   isRtlLanguage,
   isSupportedLanguage,
+  LANGUAGE_NATIVE_NAMES,
   parseAcceptLanguageHeader,
   resolveInitialLanguage,
   RTL_LANGUAGES,

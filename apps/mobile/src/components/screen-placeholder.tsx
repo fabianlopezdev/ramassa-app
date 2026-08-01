@@ -1,4 +1,5 @@
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
+import type { ReactNode } from 'react';
 import { Text, View } from 'react-native';
 
 /**
@@ -8,16 +9,17 @@ import { Text, View } from 'react-native';
  * `shell-tabs` flow, RAPP-78). The caller passes an already-translated title;
  * `accessibilityRole="header"` gives screen-reader users a landmark per screen.
  */
-export function ScreenPlaceholder({ title }: { title: string }) {
+export function ScreenPlaceholder({ title, children }: { title: string; children?: ReactNode }) {
   const languageFontClass = useLanguageFontClass();
   return (
-    <View className="flex-1 items-center justify-center bg-white px-lg">
+    <View className="flex-1 items-center justify-center gap-lg bg-white px-lg">
       <Text
         accessibilityRole="header"
         className={`text-xl font-semibold text-neutral-900 ${languageFontClass}`}
       >
         {title}
       </Text>
+      {children}
     </View>
   );
 }

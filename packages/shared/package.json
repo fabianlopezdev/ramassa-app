@@ -16,7 +16,11 @@
     "./auth": "./auth/index.ts",
     "./constants": "./lib/constants.ts",
     "./upload-client": "./lib/upload-client.ts",
-    "./testing": "./testing/index.ts"
+    "./onboarding-drafts": "./lib/onboarding-drafts.ts",
+    "./testing": "./testing/index.ts",
+    "./tokens/motion": "./tokens/motion.ts",
+    "./profile": "./profile/index.ts",
+    "./participants": "./participants/index.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

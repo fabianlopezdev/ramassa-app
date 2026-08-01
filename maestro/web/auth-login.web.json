@@ -1,0 +1,30 @@
+{
+  "slug": "auth-login",
+  "viewport": { "width": 1440, "height": 900 },
+  "deviceScaleFactor": 2,
+  "timezoneId": "Europe/Madrid",
+  "settle": { "timeout": 6000, "interval": 150 },
+  "steps": [
+    {
+      "label": "login",
+      "goto": "/login",
+      "waitFor": "text={{auth:loginTitle}}"
+    },
+    {
+      "label": "password",
+      "click": "[aria-label=\"{{auth:usePasswordInstead}}\"]",
+      "waitFor": "[aria-label=\"{{auth:passwordLabel}}\"]"
+    },
+    {
+      "label": "back-to-magic",
+      "click": "[aria-label=\"{{auth:useMagicLinkInstead}}\"]",
+      "waitFor": "[aria-label=\"{{auth:magicLinkAction}}\"]"
+    },
+    {
+      "label": "magic-sent",
+      "fill": [{ "selector": "[aria-label=\"{{auth:emailLabel}}\"]", "value": "{{player:email}}" }],
+      "click": "[aria-label=\"{{auth:magicLinkAction}}\"]",
+      "waitFor": "text={{auth:magicLinkSentTitle}}"
+    }
+  ]
+}

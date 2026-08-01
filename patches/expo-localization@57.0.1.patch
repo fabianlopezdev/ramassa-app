@@ -1,0 +1,27 @@
+diff --git a/ios/LocalizationModule.swift b/ios/LocalizationModule.swift
+index 4c21fbe4470ece178a26c3236c14416598d98d0f..ea7a16665a4419e7f37705650cb901a6644aa75f 100644
+--- a/ios/LocalizationModule.swift
++++ b/ios/LocalizationModule.swift
+@@ -25,7 +25,21 @@ public class LocalizationModule: Module {
+         self.setRTLPreferences(true, forceRTL)
+       } else {
+         if let enableRTL = Bundle.main.object(forInfoDictionaryKey: "ExpoLocalization_supportsRTL") as? Bool {
+-          self.setRTLPreferences(enableRTL, false)
++          // PATCHED (RAPP-94): only derive the direction from the DEVICE locale
++          // when the app has never persisted a choice of its own. The unpatched
++          // module ran `forceRTL(deviceLocaleIsRTL)` on every launch, natively,
++          // before React loads, which clobbered the `RCTI18nUtil_forceRTL` that
++          // `I18nManager.forceRTL(true)` had persisted: an in-app language
++          // switch to Arabic on an English-locale device therefore NEVER
++          // applied its layout direction, on any number of restarts. The
++          // module's own Android sibling already behaves this way (it only
++          // touches forceRTL when ExpoLocalization_forcesRTL is explicitly
++          // configured), so this aligns iOS with Android.
++          if UserDefaults.standard.object(forKey: "RCTI18nUtil_forceRTL") == nil {
++            self.setRTLPreferences(enableRTL, false)
++          } else {
++            RCTI18nUtil.sharedInstance()?.allowRTL(enableRTL)
++          }
+         }
+       }
+     }

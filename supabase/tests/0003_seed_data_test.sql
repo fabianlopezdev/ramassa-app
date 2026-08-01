@@ -34,9 +34,15 @@ select is(
 );
 
 -- Roster -------------------------------------------------------------------------
+-- The onboarding drive account (…0099) is seeded WITHOUT a profile so the wizard
+-- gate fires; completing the wizard on a dev device gives it an app-created
+-- player profile. That profile is not the seed's doing, so roster equality
+-- assertions must ignore it or they flap with device usage.
 
 select is(
-  (select count(*) from public.profiles where role = 'player')::int, 20,
+  (select count(*) from public.profiles
+    where role = 'player'
+      and id <> '5eed0000-0000-4000-8000-000000000099')::int, 20,
   'twenty participants are seeded'
 );
 
@@ -83,7 +89,8 @@ select cmp_ok(
 
 select is_empty(
   $$ select id from public.profiles
-     where phone is not null and public.decrypt_field(phone) !~ '^\+34' $$,
+     where phone is not null and public.decrypt_field(phone) !~ '^\+34'
+       and id <> '5eed0000-0000-4000-8000-000000000099' $$,
   'every seeded phone decrypts back to a well-formed number through decrypt_field'
 );
 

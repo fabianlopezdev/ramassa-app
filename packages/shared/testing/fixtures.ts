@@ -37,6 +37,16 @@ export const SEED_ORGANIZATION_SLUG = 'ramassa';
 export const SEED_ACCOUNT_PASSWORD = 'ramassa-dev-password';
 
 /**
+ * The seeded auth-only account with NO profile row: the state of every
+ * brand-new player. The onboarding wizard flows sign in as it; a db reset
+ * removes whatever profile a run created. Mirrors `supabase/seed.sql`.
+ */
+export const ONBOARDING_ACCOUNT_EMAIL = 'onboarding@example.test';
+
+/** The terms version every seeded acceptance carries. Mirrors `supabase/seed.sql`. */
+export const SEED_TERMS_VERSION = '2026-07-01';
+
+/**
  * Seed user IDs are derived from an ordinal rather than listed, so the SQL and
  * the TypeScript can compute the same UUID without a shared table of literals.
  * The `5eed` prefix marks a row as fixture data at a glance, and keeps seeded

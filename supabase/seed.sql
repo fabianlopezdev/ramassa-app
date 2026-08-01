@@ -172,7 +172,7 @@ on conflict (provider_id, provider) do nothing;
 -- uniformly happy dataset hides exactly the screens that break.
 
 insert into public.profiles (
-  id, org_id, role, first_name, last_name, date_of_birth, nationality,
+  id, org_id, role, first_name, last_name, date_of_birth, place_of_birth, nationality,
   address, city, postal_code, phone, document_type, document_number,
   reference_entity, reference_contact_name, has_dependents, num_dependents,
   clothing_size, shoe_size, preferred_language, is_active, is_forum_banned,
@@ -185,6 +185,33 @@ select
   r.first_name,
   r.last_name,
   make_date(1985 + (r.ordinal % 15), 1 + (r.ordinal % 12), 1 + (r.ordinal % 28)),
+  -- Where she was born, in the script she writes it in. Required at intake
+  -- since 2026-07-31 (RAPP-21), so a roster of NULLs would leave the staff edit
+  -- form (RAPP-24) unable to save ANY seeded participant without inventing a
+  -- birthplace first: the form re-validates the same rule the wizard applies.
+  --
+  -- Two participants keep a NULL on purpose. Profiles created before the field
+  -- existed carry one, and that case has its own behaviour (staff must supply
+  -- it before they can save anything else); a uniformly complete dataset would
+  -- hide it, exactly as the deactivated and undocumented rows exist to stop
+  -- their screens hiding.
+  case when r.ordinal % 11 = 0 then null else
+    case r.nationality
+      when 'Síria'      then 'حلب'
+      when 'Marroc'     then 'الرباط'
+      when 'Tunísia'    then 'تونس'
+      when 'Afganistan' then 'کابل'
+      when 'Iran'       then 'تهران'
+      when 'Ucraïna'    then 'Київ'
+      when 'Colòmbia'   then 'Medellín'
+      when 'Perú'       then 'Cusco'
+      when 'Bolívia'    then 'Oruro'
+      when 'Veneçuela'  then 'Maracaibo'
+      when 'Senegal'    then 'Dakar'
+      when 'Gàmbia'     then 'Banjul'
+      else 'Vic'
+    end
+  end,
   r.nationality,
   public.encrypt_field('Carrer de Prova, ' || r.ordinal),
   r.city,
@@ -231,6 +258,136 @@ select
 from seed_roster r
 where r.ordinal in (11, 12)
 on conflict (user_id, device_id) do nothing;
+
+-- The wizard's test account (RAPP-21) -----------------------------------------------
+-- An auth user with NO profile row: the exact state of every brand-new player,
+-- which nothing else in the seeds provides (the roster all has profiles). The
+-- onboarding gate, the wizard flows and their captures all sign in as this
+-- account; completing the wizard locally creates its profile, and the next
+-- `db reset` removes it again, so the capture is reproducible forever.
+
+insert into auth.users (
+  instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
+  raw_app_meta_data, raw_user_meta_data, created_at, updated_at,
+  confirmation_token, recovery_token, email_change, email_change_token_new,
+  email_change_token_current, reauthentication_token
+)
+values (
+  '00000000-0000-0000-0000-000000000000',
+  '5eed0000-0000-4000-8000-000000000099',
+  'authenticated',
+  'authenticated',
+  'onboarding@example.test',
+  extensions.crypt('ramassa-dev-password', extensions.gen_salt('bf')),
+  now(),
+  '{"provider":"email","providers":["email"]}'::jsonb,
+  '{}'::jsonb,
+  now(), now(), '', '', '', '', '', ''
+)
+on conflict (id) do nothing;
+
+insert into auth.identities (
+  provider_id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at
+)
+values (
+  '5eed0000-0000-4000-8000-000000000099',
+  '5eed0000-0000-4000-8000-000000000099',
+  jsonb_build_object('sub', '5eed0000-0000-4000-8000-000000000099', 'email', 'onboarding@example.test'),
+  'email',
+  now(), now(), now()
+)
+on conflict (provider_id, provider) do nothing;
+
+-- Terms acceptances ----------------------------------------------------------------
+-- The consent EVENT behind each seeded player's `terms_accepted_at` (RAPP-21).
+-- Seeded in the language that player actually reads, because the whole point of
+-- the record is which text in which language someone agreed to.
+
+insert into public.terms_acceptances (profile_id, terms_version, locale_shown)
+select
+  ('5eed0000-0000-4000-8000-' || lpad(r.ordinal::text, 12, '0'))::uuid,
+  '2026-07-01',
+  r.preferred_language
+from seed_roster r
+where r.app_role = 'player'
+on conflict do nothing;
+
+-- Deletion requests ----------------------------------------------------------------
+-- One open RGPD erasure request (RAPP-22), so the staff queue that resolves them
+-- (RAPP-26) has something to show before anyone files one by hand, and so the
+-- participant-side "we received your request" state is reachable in the dev app.
+-- Deliberately ONE, and deliberately open: a resolved request proves nothing
+-- about the screen that has to display a pending one.
+
+insert into public.deletion_requests (profile_id, reason, state)
+select
+  ('5eed0000-0000-4000-8000-' || lpad(r.ordinal::text, 12, '0'))::uuid,
+  'Ja no puc venir a entrenar i prefereixo que esborreu les meves dades.',
+  'open'
+from seed_roster r
+where r.app_role = 'player'
+order by r.ordinal
+limit 1
+on conflict do nothing;
+
+-- Staff notes ------------------------------------------------------------------------
+-- The team's working record about a participant (RAPP-24), so the detail screen
+-- opens with a real thread rather than an empty box, and so the append-only
+-- behaviour is visible in the dev app before anyone types a note.
+--
+-- Two notes by two DIFFERENT staff members: the whole point of storing an author
+-- is that a thread reads as a conversation between colleagues, and a single-author
+-- fixture would let a broken author column look fine.
+--
+-- Written about Amina (ordinal 11), deliberately not about the participants the
+-- pgTAP suite drives, so a test can count what its own transaction did.
+
+insert into public.participant_notes (profile_id, author_id, body, created_at)
+values
+  (
+    '5eed0000-0000-4000-8000-000000000011',
+    '5eed0000-0000-4000-8000-000000000002',
+    'Ha començat el curs de català als matins. Millor proposar-li els entrenaments de tarda.',
+    now() - interval '9 days'
+  ),
+  (
+    '5eed0000-0000-4000-8000-000000000011',
+    '5eed0000-0000-4000-8000-000000000003',
+    'Confirmat amb ella per telèfon: pot venir dimarts i dijous. Li hem donat samarreta i pantalons.',
+    now() - interval '2 days'
+  )
+on conflict do nothing;
+
+-- The access audit -----------------------------------------------------------------------
+-- Two earlier staff consultations of the same participant (RAPP-24), so the audit
+-- table is never empty and the shape of an entry is visible in Studio without
+-- anyone having to open the screen first.
+--
+-- View entries carry no `changes`, which is correct: nothing changed. The values
+-- of encrypted columns are never recorded here, by design (ADR-004), so there is
+-- no fixture that could teach anyone otherwise.
+
+insert into public.audit_log (org_id, actor_id, action, target_type, target_id, changes, created_at)
+values
+  (
+    '5eed0000-0000-4000-8000-000000000000',
+    '5eed0000-0000-4000-8000-000000000002',
+    'profile.view_sensitive',
+    'profile',
+    '5eed0000-0000-4000-8000-000000000011',
+    null,
+    now() - interval '9 days'
+  ),
+  (
+    '5eed0000-0000-4000-8000-000000000000',
+    '5eed0000-0000-4000-8000-000000000003',
+    'profile.update',
+    'profile',
+    '5eed0000-0000-4000-8000-000000000011',
+    '{"city": {"old": "Manlleu", "new": "Vic"}, "phone": {"changed": true}}'::jsonb,
+    now() - interval '2 days'
+  )
+on conflict do nothing;
 
 drop table seed_roster;
 

@@ -15,12 +15,13 @@ import { Route as EntityRouteImport } from './routes/_entity'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as StaffSettingsRouteImport } from './routes/_staff.settings'
-import { Route as StaffParticipantsRouteImport } from './routes/_staff.participants'
 import { Route as StaffMessagesRouteImport } from './routes/_staff.messages'
 import { Route as StaffDashboardRouteImport } from './routes/_staff.dashboard'
 import { Route as StaffContentRouteImport } from './routes/_staff.content'
 import { Route as StaffAttendanceRouteImport } from './routes/_staff.attendance'
+import { Route as StaffParticipantsIndexRouteImport } from './routes/_staff.participants.index'
 import { Route as EntityPortalIndexRouteImport } from './routes/_entity.portal.index'
+import { Route as StaffParticipantsParticipantIdRouteImport } from './routes/_staff.participants.$participantId'
 import { Route as EntityPortalServicesRouteImport } from './routes/_entity.portal.services'
 import { Route as EntityPortalReferralsRouteImport } from './routes/_entity.portal.referrals'
 import { Route as EntityPortalMessagesRouteImport } from './routes/_entity.portal.messages'
@@ -54,11 +55,6 @@ const StaffSettingsRoute = StaffSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => StaffRoute,
 } as any)
-const StaffParticipantsRoute = StaffParticipantsRouteImport.update({
-  id: '/participants',
-  path: '/participants',
-  getParentRoute: () => StaffRoute,
-} as any)
 const StaffMessagesRoute = StaffMessagesRouteImport.update({
   id: '/messages',
   path: '/messages',
@@ -79,11 +75,22 @@ const StaffAttendanceRoute = StaffAttendanceRouteImport.update({
   path: '/attendance',
   getParentRoute: () => StaffRoute,
 } as any)
+const StaffParticipantsIndexRoute = StaffParticipantsIndexRouteImport.update({
+  id: '/participants/',
+  path: '/participants/',
+  getParentRoute: () => StaffRoute,
+} as any)
 const EntityPortalIndexRoute = EntityPortalIndexRouteImport.update({
   id: '/portal/',
   path: '/portal/',
   getParentRoute: () => EntityRoute,
 } as any)
+const StaffParticipantsParticipantIdRoute =
+  StaffParticipantsParticipantIdRouteImport.update({
+    id: '/participants/$participantId',
+    path: '/participants/$participantId',
+    getParentRoute: () => StaffRoute,
+  } as any)
 const EntityPortalServicesRoute = EntityPortalServicesRouteImport.update({
   id: '/portal/services',
   path: '/portal/services',
@@ -112,14 +119,15 @@ export interface FileRoutesByFullPath {
   '/content': typeof StaffContentRoute
   '/dashboard': typeof StaffDashboardRoute
   '/messages': typeof StaffMessagesRoute
-  '/participants': typeof StaffParticipantsRoute
   '/settings': typeof StaffSettingsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/portal/events': typeof EntityPortalEventsRoute
   '/portal/messages': typeof EntityPortalMessagesRoute
   '/portal/referrals': typeof EntityPortalReferralsRoute
   '/portal/services': typeof EntityPortalServicesRoute
+  '/participants/$participantId': typeof StaffParticipantsParticipantIdRoute
   '/portal/': typeof EntityPortalIndexRoute
+  '/participants/': typeof StaffParticipantsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -128,14 +136,15 @@ export interface FileRoutesByTo {
   '/content': typeof StaffContentRoute
   '/dashboard': typeof StaffDashboardRoute
   '/messages': typeof StaffMessagesRoute
-  '/participants': typeof StaffParticipantsRoute
   '/settings': typeof StaffSettingsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/portal/events': typeof EntityPortalEventsRoute
   '/portal/messages': typeof EntityPortalMessagesRoute
   '/portal/referrals': typeof EntityPortalReferralsRoute
   '/portal/services': typeof EntityPortalServicesRoute
+  '/participants/$participantId': typeof StaffParticipantsParticipantIdRoute
   '/portal': typeof EntityPortalIndexRoute
+  '/participants': typeof StaffParticipantsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -147,14 +156,15 @@ export interface FileRoutesById {
   '/_staff/content': typeof StaffContentRoute
   '/_staff/dashboard': typeof StaffDashboardRoute
   '/_staff/messages': typeof StaffMessagesRoute
-  '/_staff/participants': typeof StaffParticipantsRoute
   '/_staff/settings': typeof StaffSettingsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/_entity/portal/events': typeof EntityPortalEventsRoute
   '/_entity/portal/messages': typeof EntityPortalMessagesRoute
   '/_entity/portal/referrals': typeof EntityPortalReferralsRoute
   '/_entity/portal/services': typeof EntityPortalServicesRoute
+  '/_staff/participants/$participantId': typeof StaffParticipantsParticipantIdRoute
   '/_entity/portal/': typeof EntityPortalIndexRoute
+  '/_staff/participants/': typeof StaffParticipantsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -165,14 +175,15 @@ export interface FileRouteTypes {
     | '/content'
     | '/dashboard'
     | '/messages'
-    | '/participants'
     | '/settings'
     | '/auth/callback'
     | '/portal/events'
     | '/portal/messages'
     | '/portal/referrals'
     | '/portal/services'
+    | '/participants/$participantId'
     | '/portal/'
+    | '/participants/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -181,14 +192,15 @@ export interface FileRouteTypes {
     | '/content'
     | '/dashboard'
     | '/messages'
-    | '/participants'
     | '/settings'
     | '/auth/callback'
     | '/portal/events'
     | '/portal/messages'
     | '/portal/referrals'
     | '/portal/services'
+    | '/participants/$participantId'
     | '/portal'
+    | '/participants'
   id:
     | '__root__'
     | '/'
@@ -199,14 +211,15 @@ export interface FileRouteTypes {
     | '/_staff/content'
     | '/_staff/dashboard'
     | '/_staff/messages'
-    | '/_staff/participants'
     | '/_staff/settings'
     | '/auth/callback'
     | '/_entity/portal/events'
     | '/_entity/portal/messages'
     | '/_entity/portal/referrals'
     | '/_entity/portal/services'
+    | '/_staff/participants/$participantId'
     | '/_entity/portal/'
+    | '/_staff/participants/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -261,13 +274,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StaffSettingsRouteImport
       parentRoute: typeof StaffRoute
     }
-    '/_staff/participants': {
-      id: '/_staff/participants'
-      path: '/participants'
-      fullPath: '/participants'
-      preLoaderRoute: typeof StaffParticipantsRouteImport
-      parentRoute: typeof StaffRoute
-    }
     '/_staff/messages': {
       id: '/_staff/messages'
       path: '/messages'
@@ -296,12 +302,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StaffAttendanceRouteImport
       parentRoute: typeof StaffRoute
     }
+    '/_staff/participants/': {
+      id: '/_staff/participants/'
+      path: '/participants'
+      fullPath: '/participants/'
+      preLoaderRoute: typeof StaffParticipantsIndexRouteImport
+      parentRoute: typeof StaffRoute
+    }
     '/_entity/portal/': {
       id: '/_entity/portal/'
       path: '/portal'
       fullPath: '/portal/'
       preLoaderRoute: typeof EntityPortalIndexRouteImport
       parentRoute: typeof EntityRoute
+    }
+    '/_staff/participants/$participantId': {
+      id: '/_staff/participants/$participantId'
+      path: '/participants/$participantId'
+      fullPath: '/participants/$participantId'
+      preLoaderRoute: typeof StaffParticipantsParticipantIdRouteImport
+      parentRoute: typeof StaffRoute
     }
     '/_entity/portal/services': {
       id: '/_entity/portal/services'
@@ -358,8 +378,9 @@ interface StaffRouteChildren {
   StaffContentRoute: typeof StaffContentRoute
   StaffDashboardRoute: typeof StaffDashboardRoute
   StaffMessagesRoute: typeof StaffMessagesRoute
-  StaffParticipantsRoute: typeof StaffParticipantsRoute
   StaffSettingsRoute: typeof StaffSettingsRoute
+  StaffParticipantsParticipantIdRoute: typeof StaffParticipantsParticipantIdRoute
+  StaffParticipantsIndexRoute: typeof StaffParticipantsIndexRoute
 }
 
 const StaffRouteChildren: StaffRouteChildren = {
@@ -367,8 +388,9 @@ const StaffRouteChildren: StaffRouteChildren = {
   StaffContentRoute: StaffContentRoute,
   StaffDashboardRoute: StaffDashboardRoute,
   StaffMessagesRoute: StaffMessagesRoute,
-  StaffParticipantsRoute: StaffParticipantsRoute,
   StaffSettingsRoute: StaffSettingsRoute,
+  StaffParticipantsParticipantIdRoute: StaffParticipantsParticipantIdRoute,
+  StaffParticipantsIndexRoute: StaffParticipantsIndexRoute,
 }
 
 const StaffRouteWithChildren = StaffRoute._addFileChildren(StaffRouteChildren)

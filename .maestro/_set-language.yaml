@@ -1,0 +1,110 @@
+appId: com.ramassa.app
+name: _set-language
+# Pins the app language through the dev menu, from wherever the app currently is.
+#
+# A fragment of its own, and run by `_open-app.yaml` BEFORE anything is asserted,
+# because a fresh `clearState` leaves no persisted choice and the app then
+# follows the DEVICE locale. On an en-US emulator that renders the login screen
+# in English while the suite resolves its selectors in Catalan, which fails as
+# "Inici de sessio is not visible" and reads like a broken login screen rather
+# than a locale mismatch.
+#
+# The dev menu is reachable pre-auth on purpose: its entry sits on the login
+# screen too, exactly so the language can be pinned before anyone signs in.
+env:
+  DEV_MENU_LABEL: Developer menu
+  MENU_SECTION: Environment
+  LOCALE: ca
+---
+# Opening the dev menu is a LOOP, not one tap. A single tap is swallowed whenever
+# the client's explainer sheet is mid-flight over it, and the flow then waits out
+# its timeout on a login screen with the button plainly visible. The loop also
+# clears a late sheet, and it stops the instant the menu is actually open. The
+# section it waits on is the FIRST one: the menu opens scrolled to the top, so
+# waiting on a lower section fails on a menu that opened perfectly.
+- repeat:
+    times: 6
+    while:
+      notVisible: '.*${MENU_SECTION}.*'
+    commands:
+      - tapOn:
+          text: '.*Close.*'
+          optional: true
+      - tapOn:
+          text: '.*${DEV_MENU_LABEL}.*'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- extendedWaitUntil:
+    visible: '.*${MENU_SECTION}.*'
+    timeout: 15000
+# The menu opens with an interactive transition; a swipe landing while it is still
+# running cancels it and drops back to where we started.
+- waitForAnimationToEnd:
+    timeout: 5000
+
+# A bounded swipe loop rather than `scrollUntilVisible`, which reaches rows on
+# the Android emulator, leaves them plainly on screen, and still reports them as
+# not found.
+- repeat:
+    times: 20
+    while:
+      notVisible: '^${LOCALE} \(.*\)$'
+    commands:
+      - swipe:
+          start: 50%, 70%
+          end: 50%, 50%
+          duration: 900
+      - waitForAnimationToEnd:
+          timeout: 2500
+# The loop stops the instant a sliver is on screen, which parks the button under
+# the navigation bar where a tap does not reach it. One smaller swipe lifts it clear.
+- swipe:
+    start: 50%, 65%
+    end: 50%, 55%
+    duration: 900
+- waitForAnimationToEnd:
+    timeout: 2500
+- tapOn:
+    text: '^${LOCALE} \(.*\)$'
+- waitForAnimationToEnd:
+    timeout: 3000
+# Assert WHAT was selected, immediately. A tap that reports COMPLETED has only
+# proved Maestro found the element and dispatched a touch at its reported
+# bounds; it has not proved the touch landed on that button. Checking here fails
+# on the tap, with the real selection in the artifact, instead of surfacing much
+# later as a tab bar in the wrong language.
+- assertVisible:
+    text: '^${LOCALE} \(.*\)$'
+    selected: true
+
+# Back to whatever screen the caller was on; the close control is English at
+# every language, being a __DEV__ surface.
+# Closing the menu is a LOOP too. Selecting a language re-renders the section, and
+# a tap dispatched into that re-render finds no `Close` in the hierarchy at all,
+# even though a screenshot taken a moment later shows it plainly.
+#
+# The loop keys on `Close` rather than on a section title. A section title is the
+# wrong proxy for "the menu is open": by this point the menu is scrolled down to
+# the language buttons, so the FIRST section is above the fold, the loop reads
+# that as already closed, runs zero times, and the assertion passes on a menu
+# still filling the screen. The close control is pinned to the header and exists
+# only while the menu is open.
+#
+# Matched loosely (`.*Close.*`) because the two platforms expose it differently:
+# Android surfaces the inner text node, a bare "Close", while iOS surfaces the
+# Pressable's accessibility label, "Close the developer menu". An anchored
+# `^Close$` therefore matches on Android and can never match on iOS, and the
+# symptom is not a failed tap: the loop reads the menu as already closed, skips,
+# and the assertion passes while the menu fills the screen.
+- repeat:
+    times: 6
+    while:
+      visible: '.*Close.*'
+    commands:
+      - tapOn:
+          text: '.*Close.*'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- assertNotVisible: '.*Close.*'

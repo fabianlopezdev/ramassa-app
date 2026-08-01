@@ -1,0 +1,94 @@
+{
+  "slug": "onboarding",
+  "viewport": { "width": 1440, "height": 900 },
+  "deviceScaleFactor": 2,
+  "timezoneId": "Europe/Madrid",
+  "settle": { "timeout": 6000, "interval": 150 },
+  "steps": [
+    {
+      "label": "auth-open",
+      "goto": "/login",
+      "click": "[aria-label=\"{{auth:usePasswordInstead}}\"]",
+      "waitFor": "[aria-label=\"{{auth:passwordLabel}}\"]"
+    },
+    {
+      "label": "auth-submit",
+      "fill": [
+        { "selector": "[aria-label=\"{{auth:emailLabel}}\"]", "value": "{{onboarding:email}}" },
+        {
+          "selector": "[aria-label=\"{{auth:passwordLabel}}\"]",
+          "value": "{{onboarding:password}}"
+        }
+      ],
+      "click": "[aria-label=\"{{auth:passwordAction}}\"]",
+      "waitFor": "text={{onboarding:identityTitle}}"
+    },
+    {
+      "label": "identity",
+      "waitFor": "text={{onboarding:identityIntro}}"
+    },
+    {
+      "label": "identity-error",
+      "click": "[aria-label=\"{{onboarding:continueAction}}\"]:visible",
+      "waitFor": "text={{onboarding:errorRequired}}"
+    },
+    {
+      "label": "identity-fill",
+      "fill": [
+        { "selector": "[data-testid=\"onboarding-first-name\"]", "value": "Amina" },
+        { "selector": "[data-testid=\"onboarding-last-name\"]", "value": "Hasan" },
+        { "selector": "[data-testid=\"onboarding-day\"]", "value": "14" },
+        { "selector": "[data-testid=\"onboarding-month\"]", "value": "03" },
+        { "selector": "[data-testid=\"onboarding-year\"]", "value": "1995" },
+        { "selector": "[data-testid=\"onboarding-place-of-birth\"]", "value": "Aleppo" }
+      ],
+      "click": "[aria-label=\"{{country:SY}}\"]",
+      "waitTimeout": 400
+    },
+    {
+      "label": "documentation",
+      "click": "[aria-label=\"{{onboarding:continueAction}}\"]:visible",
+      "waitFor": "text={{onboarding:documentationIntro}}"
+    },
+    {
+      "label": "doc-none",
+      "click": "[aria-label=\"{{onboarding:documentTypeNone}}\"]",
+      "waitTimeout": 400
+    },
+    {
+      "label": "logistics",
+      "click": "[aria-label=\"{{onboarding:continueAction}}\"]:visible",
+      "waitFor": "text={{onboarding:logisticsIntro}}"
+    },
+    {
+      "label": "entity-none",
+      "click": "[aria-label=\"{{onboarding:referenceEntityNone}}\"]",
+      "waitTimeout": 400
+    },
+    {
+      "label": "dependents-no",
+      "click": "[aria-label=\"{{onboarding:noOption}}\"]",
+      "waitTimeout": 400
+    },
+    {
+      "label": "clothing-m",
+      "click": "[aria-label=\"M\"]",
+      "waitTimeout": 400
+    },
+    {
+      "label": "shoe-38",
+      "click": "[aria-label=\"38\"]",
+      "waitTimeout": 400
+    },
+    {
+      "label": "terms",
+      "click": "[aria-label=\"{{onboarding:continueAction}}\"]:visible",
+      "waitFor": "text={{onboarding:termsIntro}}"
+    },
+    {
+      "label": "declined",
+      "click": "[aria-label=\"{{onboarding:termsDeclineAction}}\"]:visible",
+      "waitFor": "text={{auth:loginTitle}}"
+    }
+  ]
+}

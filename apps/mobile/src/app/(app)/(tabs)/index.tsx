@@ -1,10 +1,9 @@
+import { PressableScale } from '@/components/motion/pressable-scale';
 import { logout } from '@/lib/auth';
-import { safeAsync } from '@/lib/observability';
+import { continuousCorners } from '@/lib/continuous-corners';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, Text, View } from 'react-native';
-import { AppError } from '@ramassa/shared/errors';
+import { Text, View } from 'react-native';
 
 /**
  * Signing out clears the session; the auth-state change flips the root
@@ -14,56 +13,17 @@ function SignOutButton() {
   const { t } = useTranslation('auth');
   const languageFontClass = useLanguageFontClass();
   return (
-    <Pressable
-      accessibilityRole="button"
+    <PressableScale
       accessibilityLabel={t('signOutAction')}
       onPress={() => void logout()}
-      className="mt-xl min-h-recommended items-center justify-center rounded-md border border-neutral-300 px-lg active:opacity-80"
+      haptic="tapLight"
+      style={continuousCorners}
+      className="mt-xl min-h-recommended items-center justify-center rounded-md border border-neutral-300 px-lg"
     >
       <Text className={`text-md font-medium text-neutral-800 ${languageFontClass}`}>
         {t('signOutAction')}
       </Text>
-    </Pressable>
-  );
-}
-
-/**
- * RAPP-12 acceptance drivers, dev builds only (the real dev menu is RAPP-19):
- * one button throws during render to exercise the ErrorBoundary chain, the
- * other fails inside safeAsync to exercise logger -> Sentry. Dev-only strings
- * are exempt from the no-literal-string rule: users never see them.
- */
-function DevForcedErrorTriggers() {
-  const [shouldThrowInRender, setShouldThrowInRender] = useState(false);
-
-  if (shouldThrowInRender) {
-    throw new AppError('UNEXPECTED-1', { message: 'forced render error (RAPP-12 dev trigger)' });
-  }
-
-  return (
-    <View className="mt-xl items-center gap-sm">
-      <Pressable
-        accessibilityRole="button"
-        className="rounded-md bg-error px-lg py-sm"
-        onPress={() => setShouldThrowInRender(true)}
-      >
-        {/* eslint-disable-next-line i18next/no-literal-string -- dev-only trigger */}
-        <Text className="font-bold text-white">DEV: crash render</Text>
-      </Pressable>
-      <Pressable
-        accessibilityRole="button"
-        className="rounded-md bg-warning px-lg py-sm"
-        onPress={() => {
-          void safeAsync(
-            () => Promise.reject(new Error('forced async failure (RAPP-12 dev trigger)')),
-            { code: 'NETWORK-1', context: { trigger: 'dev-button' } },
-          );
-        }}
-      >
-        {/* eslint-disable-next-line i18next/no-literal-string -- dev-only trigger */}
-        <Text className="font-bold text-neutral-900">DEV: fail safeAsync</Text>
-      </Pressable>
-    </View>
+    </PressableScale>
   );
 }
 
@@ -75,7 +35,7 @@ export default function HomeScreen() {
     <View className="flex-1 items-center justify-center bg-white">
       {/* Radius and color come from shared tokens (ADR-015): bg-primary and
           rounded-lg resolve to packages/shared/tokens via the NativeWind config. */}
-      <View className="rounded-lg bg-primary px-lg py-md">
+      <View className="rounded-lg bg-primary px-lg py-md" style={continuousCorners}>
         <Text className="text-2xl font-bold text-white">{t('common:appName')}</Text>
       </View>
       <Text className={`mt-2 text-xl text-neutral-900 ${languageFontClass}`}>
@@ -85,7 +45,9 @@ export default function HomeScreen() {
         {t('home:subtitle')}
       </Text>
       <SignOutButton />
-      {__DEV__ ? <DevForcedErrorTriggers /> : null}
+      {/* The RAPP-12 forced-error buttons that used to sit here moved into the
+          dev menu's Errors section (RAPP-19), which their own comment said was
+          where they belonged once it existed. */}
     </View>
   );
 }

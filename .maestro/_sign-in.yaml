@@ -1,0 +1,123 @@
+appId: com.ramassa.app
+name: _sign-in
+# Signs in as a seeded player through the dev menu's account switcher. A
+# fragment: `smoke-auth` exercises this path as its
+# subject, the others just need to be past it.
+#
+# There is no client-side role to fake: role lives in `profiles.role`, resolved
+# from the session, so the switcher signs in for real against the local seeded
+# stack. That is also what makes it deterministic - `supabase db reset` rebuilds
+# exactly these accounts.
+env:
+  DEV_MENU_LABEL: Developer menu
+  ACCOUNTS_SECTION: Accounts and roles
+  PLAYER_EMAIL: '{{player:email}}'
+  PUSH_DECLINE: '{{push:rationaleDecline}}'
+  HOME_TITLE: '{{home:title}}'
+---
+# Opening the dev menu is a LOOP, not one tap. A single tap is swallowed whenever
+# the client's explainer sheet is mid-flight over it, and the flow then waits out
+# its timeout on a login screen with the button plainly visible. The loop also
+# clears a late sheet, and it stops the instant the menu is actually open. The
+# section it waits on is the FIRST one: the menu opens scrolled to the top, so
+# waiting on a lower section fails on a menu that opened perfectly.
+- repeat:
+    times: 6
+    while:
+      notVisible: '.*${ACCOUNTS_SECTION}.*'
+    commands:
+      - tapOn:
+          text: '.*Close.*'
+          optional: true
+      - tapOn:
+          text: '.*${DEV_MENU_LABEL}.*'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- extendedWaitUntil:
+    visible: '.*${ACCOUNTS_SECTION}.*'
+    timeout: 15000
+# The menu opens with an interactive transition; a swipe landing while it is still
+# running cancels it and drops back to where we started.
+- waitForAnimationToEnd:
+    timeout: 5000
+
+# A bounded swipe loop rather than `scrollUntilVisible`: that built-in reaches
+# this row on the Android emulator, leaves it plainly on screen, and still
+# reports it as not found. The row is matched on the ADDRESS alone because iOS
+# exposes the row's accessibility label and Android the text node inside it.
+- repeat:
+    times: 20
+    while:
+      notVisible: '.*${PLAYER_EMAIL}.*'
+    commands:
+      - swipe:
+          start: 50%, 70%
+          end: 50%, 50%
+          duration: 900
+      - waitForAnimationToEnd:
+          timeout: 2500
+# The loop stops the instant a sliver is on screen, which parks the row under the
+# navigation bar where a tap does not reach it. One smaller swipe lifts it clear.
+- swipe:
+    start: 50%, 65%
+    end: 50%, 55%
+    duration: 900
+- waitForAnimationToEnd:
+    timeout: 2500
+- tapOn: '.*${PLAYER_EMAIL}.*'
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# Close the dev menu. Signing in does NOT dismiss it: the session changes
+# underneath and the tapped row simply becomes the highlighted one, so nothing
+# is waitable until the menu is out of the way.
+# Closing the menu is a LOOP too. Selecting a language re-renders the section, and
+# a tap dispatched into that re-render finds no `Close` in the hierarchy at all,
+# even though a screenshot taken a moment later shows it plainly.
+#
+# The loop keys on `Close` rather than on a section title. A section title is the
+# wrong proxy for "the menu is open": by this point the menu is scrolled down to
+# the language buttons, so the FIRST section is above the fold, the loop reads
+# that as already closed, runs zero times, and the assertion passes on a menu
+# still filling the screen. `Close` is pinned to the header and exists only while
+# the menu is open.
+- repeat:
+    times: 6
+    while:
+      visible: '.*Close.*'
+    commands:
+      - tapOn:
+          text: '.*Close.*'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- assertNotVisible: '.*Close.*'
+
+# Mounting the player area asks about notifications before the system dialog, and
+# that sheet can land AFTER the first render, covering the very title being waited
+# on. Loop rather than tap once.
+- repeat:
+    times: 6
+    while:
+      notVisible: '.*${HOME_TITLE}.*'
+    commands:
+      - tapOn:
+          text: '^${PUSH_DECLINE}$'
+          optional: true
+      - tapOn:
+          text: '.*Close.*'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+
+# Assert the OUTCOME, not the dev menu's "Signed in as ..." line. That line is
+# local component state rendered AFTER the whole account list, so it sits below
+# the row just tapped and no amount of waiting brings it into view. Landing on
+# the player home cannot happen without a session, so it is the honest proof, and
+# a failed sign-in still fails here because the app stays on the login screen.
+# Declining notifications above matters for iOS too: the OS is never asked, so
+# its single allotted prompt stays unspent.
+- extendedWaitUntil:
+    visible: '.*${HOME_TITLE}.*'
+    timeout: 120000

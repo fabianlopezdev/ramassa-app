@@ -5,10 +5,13 @@
  * the phone; announces itself to screen readers and offers a retry.
  */
 
+import { PressableScale } from '@/components/motion/pressable-scale';
+import { continuousCorners } from '@/lib/continuous-corners';
 import { logger } from '@/lib/observability';
+import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AccessibilityInfo, Pressable, Text, View } from 'react-native';
+import { AccessibilityInfo, Text, View } from 'react-native';
 import { getErrorMessageKey, toAppError } from '@ramassa/shared/errors';
 
 export interface ErrorFallbackProps {
@@ -18,6 +21,7 @@ export interface ErrorFallbackProps {
 
 export function ErrorFallback({ error, retry }: ErrorFallbackProps) {
   const { t } = useTranslation('errors');
+  const languageFontClass = useLanguageFontClass();
   const appError = toAppError(error);
   const friendlyMessage = t(getErrorMessageKey(appError.code));
   const codeLine = `${t('errorCodeLabel')}: ${appError.code}`;
@@ -33,19 +37,29 @@ export function ErrorFallback({ error, retry }: ErrorFallbackProps) {
 
   return (
     <View className="flex-1 items-center justify-center gap-md bg-white p-lg">
-      <Text accessibilityRole="header" className="text-center text-2xl font-bold text-neutral-900">
+      <Text
+        accessibilityRole="header"
+        className={`text-center text-2xl font-bold text-neutral-900 ${languageFontClass}`}
+      >
         {t('fallbackTitle')}
       </Text>
-      <Text className="text-center text-lg text-neutral-700">{friendlyMessage}</Text>
-      <Text className="text-center text-sm text-neutral-500">{codeLine}</Text>
-      <Pressable
-        accessibilityRole="button"
+      <Text className={`text-center text-lg text-neutral-700 ${languageFontClass}`}>
+        {friendlyMessage}
+      </Text>
+      {/* Selectable: staff read this code out to report a fault, and copying it
+          beats transcribing it. */}
+      <Text selectable className={`text-center text-sm text-neutral-500 ${languageFontClass}`}>
+        {codeLine}
+      </Text>
+      <PressableScale
         accessibilityLabel={t('retry')}
         onPress={retry}
-        className="min-h-[44px] items-center justify-center rounded-md bg-primary px-xl py-sm active:opacity-80"
+        haptic="tapLight"
+        style={continuousCorners}
+        className="min-h-recommended items-center justify-center rounded-md bg-primary px-xl py-sm"
       >
-        <Text className="text-lg font-bold text-white">{t('retry')}</Text>
-      </Pressable>
+        <Text className={`text-lg font-bold text-white ${languageFontClass}`}>{t('retry')}</Text>
+      </PressableScale>
     </View>
   );
 }
