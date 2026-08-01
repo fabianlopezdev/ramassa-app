@@ -18,70 +18,12 @@
  * instead of a number that quietly rots when the seeds change.
  */
 
-import { execFileSync } from 'node:child_process';
 import { expect, test, type Page } from '@playwright/test';
+import { countInDatabase as countRows, ENTITY_EMAIL, signIn, STAFF_EMAIL } from './session';
 
-const STAFF_EMAIL = 'marta.puig@example.test';
-const ENTITY_EMAIL = 'silvia.bosch@example.test';
-const SEED_PASSWORD = 'ramassa-dev-password';
-
-/**
- * Counts read straight from the local database, through psql in the Supabase
- * container rather than through the app's own client. Asking the app what it
- * expects to show would be circular: the bugs this suite exists to catch are
- * exactly the ones where the app is confidently wrong.
- */
+/** Participants matching a predicate, as the DATABASE counts them. */
 function countInDatabase(where: string): number {
-  const container = execFileSync('docker', ['ps', '--format', '{{.Names}}'], { encoding: 'utf8' })
-    .split('\n')
-    .find((name) => name.startsWith('supabase_db_'));
-  if (container === undefined) {
-    throw new Error('No local Supabase database container is running: bun run db:start');
-  }
-  const output = execFileSync(
-    'docker',
-    [
-      'exec',
-      container,
-      'psql',
-      '-U',
-      'postgres',
-      '-d',
-      'postgres',
-      '-t',
-      '-A',
-      '-c',
-      `select count(*) from public.profiles where role = 'player' and ${where}`,
-    ],
-    { encoding: 'utf8' },
-  );
-  return Number(output.trim());
-}
-
-/**
- * Signs in the way a person does: the password path, because local mail is not
- * wired up.
- *
- * The toggle is clicked with a RETRY, which is not paranoia. The admin is
- * server-rendered, so on a cold load the button exists in the markup before
- * React has attached its handler, and a click in that window does nothing at
- * all. A person never notices; an automated run hits it every time and reads
- * as "the login page is broken".
- */
-async function signIn(page: Page, email: string): Promise<void> {
-  await page.goto('/login');
-  const usePassword = page.getByRole('button', { name: /contrasenya|password/i }).first();
-  await expect(usePassword).toBeVisible();
-
-  await expect(async () => {
-    await usePassword.click();
-    await expect(page.locator('input[type="password"]')).toBeVisible({ timeout: 1_000 });
-  }).toPass({ timeout: 20_000 });
-
-  await page.locator('input[type="email"]').fill(email);
-  await page.locator('input[type="password"]').fill(SEED_PASSWORD);
-  await page.locator('button[type="submit"]').click();
-  await page.waitForURL((url) => !url.pathname.includes('/login'), { timeout: 20_000 });
+  return countRows(`select count(*) from public.profiles where role = 'player' and ${where}`);
 }
 
 async function gotoRoster(page: Page): Promise<void> {
