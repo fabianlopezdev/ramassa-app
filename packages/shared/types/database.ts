@@ -208,6 +208,7 @@ export type Database = {
       profiles: {
         Row: {
           address: string | null;
+          auth_method: string;
           avatar_url: string | null;
           city: string | null;
           clothing_size: string | null;
@@ -239,6 +240,7 @@ export type Database = {
         };
         Insert: {
           address?: string | null;
+          auth_method?: string;
           avatar_url?: string | null;
           city?: string | null;
           clothing_size?: string | null;
@@ -270,6 +272,7 @@ export type Database = {
         };
         Update: {
           address?: string | null;
+          auth_method?: string;
           avatar_url?: string | null;
           city?: string | null;
           clothing_size?: string | null;
@@ -384,10 +387,16 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      ascii_local_part: { Args: { source: string }; Returns: string };
+      assert_within_hourly_limit: {
+        Args: { limited_action: string; maximum_per_hour: number };
+        Returns: undefined;
+      };
       complete_onboarding: {
         Args: { payload: Json };
         Returns: {
           address: string | null;
+          auth_method: string;
           avatar_url: string | null;
           city: string | null;
           clothing_size: string | null;
@@ -423,6 +432,14 @@ export type Database = {
           isOneToOne: true;
           isSetofReturn: false;
         };
+      };
+      create_participant_account: {
+        Args: { payload: Json };
+        Returns: {
+          email: string;
+          password: string;
+          profile_id: string;
+        }[];
       };
       current_app_role: { Args: never; Returns: string };
       current_org_id: { Args: never; Returns: string };
@@ -507,10 +524,15 @@ export type Database = {
           nationalities: string[];
         }[];
       };
+      reset_participant_password: {
+        Args: { participant_id: string };
+        Returns: string;
+      };
       set_participant_active: {
         Args: { next_is_active: boolean; participant_id: string };
         Returns: undefined;
       };
+      unambiguous_token: { Args: { length: number }; Returns: string };
       update_own_profile: { Args: { payload: Json }; Returns: undefined };
       update_participant_profile: {
         Args: { participant_id: string; payload: Json };

@@ -118,6 +118,11 @@ function derivedProfileFields(fixture: PersonFixture) {
     terms_accepted_at: ordinal % 7 === 0 ? null : FIXTURE_TIMESTAMP,
     is_active: ordinal % 13 !== 0,
     is_forum_banned: ordinal % 17 === 0,
+    // Derived from the ADDRESS, exactly as `supabase/seed.sql` derives it: an
+    // unroutable address IS an admin-created account, because the only reason
+    // to generate one is that she has no inbox. One fact, two derivations, no
+    // way for them to disagree (RAPP-25).
+    auth_method: fixture.email.endsWith('@ramassa.invalid') ? 'admin_created' : 'magic_link',
   };
 }
 

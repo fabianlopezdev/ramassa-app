@@ -18,9 +18,17 @@ import {
 } from './fixtures';
 
 describe('fixtures — the roster the seed and the factories share', () => {
-  test('every fixture email is a clearly fake @example.test address', () => {
+  /**
+   * Two reserved domains, both unroutable. `@example.test` is the fixture
+   * domain; `@ramassa.invalid` is what the product itself generates for a
+   * participant with no inbox (RAPP-25), reserved by RFC 2606 so it can never
+   * acquire one. Anything else would be a real address in test data.
+   */
+  test('every fixture email is under a reserved, unroutable domain', () => {
     for (const fixture of [...PARTICIPANT_FIXTURES, ...STAFF_FIXTURES]) {
-      expect(fixture.email.endsWith('@example.test')).toBe(true);
+      expect(
+        fixture.email.endsWith('@example.test') || fixture.email.endsWith('@ramassa.invalid'),
+      ).toBe(true);
     }
   });
 
