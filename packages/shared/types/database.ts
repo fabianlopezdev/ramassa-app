@@ -544,6 +544,7 @@ export type Database = {
         Args: { participant_id: string };
         Returns: {
           address: string;
+          auth_method: string;
           avatar_url: string;
           city: string;
           clothing_size: string;

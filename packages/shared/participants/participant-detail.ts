@@ -20,6 +20,13 @@ import type { ProfileRow } from '../schemas/profile';
 export interface ParticipantDetailRow extends ProfileRow {
   readonly is_active: boolean;
   readonly is_forum_banned: boolean;
+  /**
+   * How this account signs in (RAPP-25). The reset-password control renders
+   * only for 'admin_created': those are the accounts that HAVE a password,
+   * and the RPC refuses the others anyway; the column keeps the button and
+   * the refusal in agreement.
+   */
+  readonly auth_method: 'magic_link' | 'admin_created';
   readonly created_at: string;
   readonly updated_at: string;
 }
