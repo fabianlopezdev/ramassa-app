@@ -23,6 +23,7 @@
 
 import type { Database } from '../types/database';
 import {
+  ONBOARDING_ACCOUNT_EMAIL,
   PARTICIPANT_FIXTURES,
   SEED_ORGANIZATION_ID,
   SEED_ORGANIZATION_SLUG,
@@ -39,6 +40,7 @@ export type TermsAcceptanceRow = Database['public']['Tables']['terms_acceptances
 export type DeletionRequestRow = Database['public']['Tables']['deletion_requests']['Row'];
 export type ParticipantNoteRow = Database['public']['Tables']['participant_notes']['Row'];
 export type AuditLogRow = Database['public']['Tables']['audit_log']['Row'];
+export type InviteRow = Database['public']['Tables']['invites']['Row'];
 
 /** One fixed instant for every timestamp, so factory output is byte-stable. */
 const FIXTURE_TIMESTAMP = '2026-01-15T09:00:00+00:00';
@@ -312,6 +314,33 @@ export function buildAuditLogEntry(overrides: Partial<AuditLogRow> = {}): AuditL
     target_type: 'profile',
     target_id: seedUserId(subject.ordinal),
     changes: null,
+    created_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+/**
+ * A staff invitation for a participant who has an email (RAPP-25). Defaults to
+ * PENDING, because that is the state the wizard reads and the staff list has to
+ * make actionable; a spent fixture would let the prefill path go untested while
+ * still looking like coverage.
+ *
+ * Addressed to the seeded onboarding account, which has an auth identity and no
+ * profile: the exact state a freshly invited woman is in.
+ */
+export function buildInvite(overrides: Partial<InviteRow> = {}): InviteRow {
+  const inviter = STAFF_FIXTURES.find((person) => person.role === 'staff')!;
+  return {
+    id: seedUserId(600),
+    org_id: SEED_ORGANIZATION_ID,
+    email: ONBOARDING_ACCOUNT_EMAIL,
+    reference_entity: 'Creu Roja Osona',
+    invited_by: seedUserId(inviter.ordinal),
+    // A fixed instant plus the real window, so an expiry assertion states the
+    // relationship rather than a date that rots.
+    expires_at: '2026-02-14T09:00:00+00:00',
+    accepted_at: null,
+    accepted_by: null,
     created_at: FIXTURE_TIMESTAMP,
     ...overrides,
   };

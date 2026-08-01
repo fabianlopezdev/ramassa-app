@@ -395,6 +395,37 @@ values
   )
 on conflict do nothing;
 
+-- Invites -----------------------------------------------------------------------------
+-- Two invitations (RAPP-25), so the staff invite list is not an empty screen and
+-- both states it has to render are reachable in the dev app.
+--
+-- The PENDING one is addressed to the seeded onboarding account, which has an
+-- auth user and deliberately no profile: signing in as her and opening the
+-- wizard is exactly how the referring-entity prefill gets exercised by hand.
+-- The SPENT one shows what an invitation looks like after it has done its job.
+
+insert into public.invites (org_id, email, reference_entity, invited_by, expires_at, accepted_at, accepted_by)
+values
+  (
+    '5eed0000-0000-4000-8000-000000000000',
+    'onboarding@example.test',
+    'Creu Roja Osona',
+    '5eed0000-0000-4000-8000-000000000002',
+    now() + interval '30 days',
+    null,
+    null
+  ),
+  (
+    '5eed0000-0000-4000-8000-000000000000',
+    'iryna.melnyk@example.test',
+    'CEAR Catalunya',
+    '5eed0000-0000-4000-8000-000000000003',
+    now() + interval '30 days',
+    now() - interval '12 days',
+    '5eed0000-0000-4000-8000-000000000021'
+  )
+on conflict do nothing;
+
 drop table seed_roster;
 
 end

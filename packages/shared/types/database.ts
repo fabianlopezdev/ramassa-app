@@ -124,6 +124,64 @@ export type Database = {
           },
         ];
       };
+      invites: {
+        Row: {
+          accepted_at: string | null;
+          accepted_by: string | null;
+          created_at: string;
+          email: string;
+          expires_at: string;
+          id: string;
+          invited_by: string;
+          org_id: string;
+          reference_entity: string | null;
+        };
+        Insert: {
+          accepted_at?: string | null;
+          accepted_by?: string | null;
+          created_at?: string;
+          email: string;
+          expires_at: string;
+          id?: string;
+          invited_by: string;
+          org_id: string;
+          reference_entity?: string | null;
+        };
+        Update: {
+          accepted_at?: string | null;
+          accepted_by?: string | null;
+          created_at?: string;
+          email?: string;
+          expires_at?: string;
+          id?: string;
+          invited_by?: string;
+          org_id?: string;
+          reference_entity?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'invites_accepted_by_fkey';
+            columns: ['accepted_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'invites_invited_by_fkey';
+            columns: ['invited_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'invites_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       organizations: {
         Row: {
           available_languages: string[];
@@ -441,6 +499,14 @@ export type Database = {
           profile_id: string;
         }[];
       };
+      create_participant_invite: {
+        Args: { payload: Json };
+        Returns: {
+          email: string;
+          expires_at: string;
+          invite_id: string;
+        }[];
+      };
       current_app_role: { Args: never; Returns: string };
       current_org_id: { Args: never; Returns: string };
       decrypt_field: { Args: { ciphertext: string }; Returns: string };
@@ -507,6 +573,13 @@ export type Database = {
       };
       immutable_unaccent: { Args: { value: string }; Returns: string };
       is_staff_or_admin: { Args: never; Returns: boolean };
+      my_pending_invite: {
+        Args: never;
+        Returns: {
+          invited_at: string;
+          reference_entity: string;
+        }[];
+      };
       participant_activity: {
         Args: { participant_id: string };
         Returns: {

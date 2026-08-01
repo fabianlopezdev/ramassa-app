@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import { SUPPORTED_LANGUAGES } from '../i18n/languages';
 import {
   buildAuditLogEntry,
+  buildInvite,
   buildOrganization,
   buildParticipant,
   buildParticipantNote,
@@ -10,6 +11,7 @@ import {
   buildPushToken,
 } from './factories';
 import {
+  ONBOARDING_ACCOUNT_EMAIL,
   PARTICIPANT_FIXTURES,
   SEED_ACCOUNT_PASSWORD,
   SEED_ORGANIZATION_ID,
@@ -194,5 +196,28 @@ describe('buildAuditLogEntry', () => {
       city: { old: 'Vic', new: 'Manlleu' },
       phone: { changed: true },
     });
+  });
+});
+
+describe('buildInvite', () => {
+  test('defaults to PENDING, which is the state the wizard actually reads', () => {
+    const invite = buildInvite();
+
+    expect(invite.accepted_at).toBeNull();
+    expect(invite.accepted_by).toBeNull();
+    expect(invite.reference_entity).toBe('Creu Roja Osona');
+  });
+
+  test('is addressed to the account that has an identity but no profile yet', () => {
+    // A freshly invited woman is signed in and has nothing else. That is the
+    // only state in which the prefill has any work to do.
+    expect(buildInvite().email).toBe(ONBOARDING_ACCOUNT_EMAIL);
+  });
+
+  test('is sent BY a staff member, never by the participant herself', () => {
+    const invite = buildInvite();
+
+    expect(invite.invited_by).toBe(seedUserId(STAFF_FIXTURES[1]!.ordinal));
+    expect(invite.invited_by).not.toBe(invite.accepted_by);
   });
 });
