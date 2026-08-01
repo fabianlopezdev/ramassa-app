@@ -1,0 +1,156 @@
+{
+  "app": "Ramassà",
+  "slug": "admin-account-creation",
+  "title": "Creació de comptes",
+  "surface": "admin",
+  "description": "Com l'equip dona accés a una participant. Tot comença amb una sola pregunta: té correu electrònic? Si en té, es registra una invitació i ella entra a l'aplicació amb un enllaç al seu propi correu, sense contrasenya. Si no en té, el sistema genera una adreça interna d'accés i una contrasenya que es mostren una única vegada, perquè l'equip les hi pugui donar en paper. En tots dos casos l'entitat que la deriva viatja fins al registre guiat com a resposta ja emplenada, que ella pot canviar. Des de la seva fitxa, l'equip pot generar-li una contrasenya nova si la perd.",
+  "steps": [
+    {
+      "id": "fork",
+      "label": "La pregunta que decideix: té correu?",
+      "web": "admin-account-creation/web/03-fork.png"
+    },
+    {
+      "id": "invite-form",
+      "label": "Amb correu: dades de la invitació",
+      "web": "admin-account-creation/web/04-invite-form.png"
+    },
+    {
+      "id": "invite-created",
+      "label": "Invitació creada, amb la data de caducitat",
+      "web": "admin-account-creation/web/05-invite-created.png"
+    },
+    {
+      "id": "invites-list",
+      "label": "Totes les invitacions enviades i el seu estat",
+      "web": "admin-account-creation/web/06-invites-list.png"
+    },
+    {
+      "id": "create-form",
+      "label": "Sense correu: només el nom i, si escau, l'entitat",
+      "web": "admin-account-creation/web/07-create-form.png"
+    },
+    {
+      "id": "missing-name",
+      "label": "Sense nom: ho diu, no es queda en silenci",
+      "web": "admin-account-creation/web/08-missing-name.png"
+    },
+    {
+      "id": "credentials",
+      "label": "Credencials, visibles una sola vegada",
+      "web": "admin-account-creation/web/09-credentials.png"
+    },
+    {
+      "id": "record",
+      "label": "La seva fitxa, acabada de crear",
+      "web": "admin-account-creation/web/10-record.png"
+    },
+    {
+      "id": "reset-confirm",
+      "label": "Contrasenya nova: què passarà amb l'anterior",
+      "web": "admin-account-creation/web/11-reset-confirm.png"
+    },
+    {
+      "id": "reset-done",
+      "label": "La contrasenya nova, també una sola vegada",
+      "web": "admin-account-creation/web/12-reset-done.png"
+    }
+  ],
+  "edges": [
+    {
+      "from": "fork",
+      "to": "invite-form",
+      "label": "Sí, té correu"
+    },
+    {
+      "from": "fork",
+      "to": "create-form",
+      "label": "No, no té correu",
+      "kind": "neutral"
+    },
+    {
+      "from": "invite-form",
+      "to": "invite-created",
+      "label": "Crea la invitació",
+      "kind": "positive"
+    },
+    {
+      "from": "invite-created",
+      "to": "invites-list",
+      "label": "Veure les invitacions",
+      "kind": "neutral"
+    },
+    {
+      "from": "invite-created",
+      "to": "invite-form",
+      "label": "Convida'n una altra",
+      "kind": "dismiss"
+    },
+    {
+      "from": "create-form",
+      "to": "credentials",
+      "label": "Crea el compte",
+      "kind": "positive"
+    },
+    {
+      "from": "create-form",
+      "to": "missing-name",
+      "label": "Falta el nom",
+      "kind": "negative"
+    },
+    {
+      "from": "missing-name",
+      "to": "create-form",
+      "label": "Escriu el nom",
+      "kind": "dismiss"
+    },
+    {
+      "from": "credentials",
+      "to": "record",
+      "label": "Obre la seva fitxa"
+    },
+    {
+      "from": "credentials",
+      "to": "create-form",
+      "label": "Crea'n un altre",
+      "kind": "dismiss"
+    },
+    {
+      "from": "record",
+      "to": "reset-confirm",
+      "label": "Nova contrasenya",
+      "kind": "neutral"
+    },
+    {
+      "from": "reset-confirm",
+      "to": "reset-done",
+      "label": "Sí, crea'n una de nova",
+      "kind": "positive"
+    },
+    {
+      "from": "reset-confirm",
+      "to": "record",
+      "label": "Cancel·la",
+      "kind": "dismiss"
+    },
+    {
+      "from": "reset-done",
+      "to": "record",
+      "label": "Tanca",
+      "kind": "dismiss"
+    }
+  ],
+  "nodes": [],
+  "notes": [
+    "L'equip no escriu mai cap adreça de correu inventada. A la pregunta \"té correu?\" es respon que no, i el servidor genera l'adreça d'accés: així no hi ha cap norma per recordar ni cap manera d'equivocar-s'hi.",
+    "L'adreça generada acaba en @ramassa.invalid, un domini que per norma internacional no pot existir enlloc. És una credencial d'accés, no una bústia: si fos un domini real, algun dia un correu de recuperació de la contrasenya d'una participant podria acabar a la bústia d'un desconegut.",
+    "La contrasenya es mostra una sola vegada i no queda guardada enlloc que es pugui tornar a llegir: ni a la pantalla si es recarrega, ni al registre d'activitat. Si es perd, se'n genera una de nova des de la seva fitxa.",
+    "Les credencials estan pensades per llegir-se en veu alta i escriure's en un mòbil: no hi ha cap caràcter que es pugui confondre (ni i/l/1 ni o/O/0), tot en minúscules, i la contrasenya va en tres grups de quatre.",
+    "L'equip crea el COMPTE; els termes els accepta ella. El compte nou arriba sense els termes acceptats a propòsit, així que el seu primer accés comença pel registre guiat, on els accepta ella mateixa. El consentiment no es pot donar en nom d'una altra persona.",
+    "La invitació va lligada a l'ADREÇA de correu, no a un enllaç amb codi. Un enllaç reenviat a un grup de WhatsApp ompliria les dades a qui no toca; lligant-la a l'adreça, l'entitat només li arriba a qui hi entra amb aquell correu, i sobreviu al viatge fins a la seva bústia i tornada.",
+    "L'entitat que la deriva li arriba al registre guiat com a resposta ja escrita, que ella pot canviar o esborrar. La invitació és el que creu l'equip; la fitxa és el que diu ella.",
+    "Només els comptes creats per l'equip tenen contrasenya, i per això el botó de contrasenya nova només surt a les seves fitxes. Qui entra amb un enllaç al correu recupera l'accés per la seva pròpia bústia.",
+    "Crear comptes i enviar invitacions té un límit per hora i persona, i cada acció queda registrada amb qui l'ha feta i quan. El límit és per persona: un límit compartit per tota l'organització permetria que un sol compte compromès deixés tot l'equip sense poder treballar.",
+    "Cap de les imatges mostra una contrasenya real: totes surten de dades de prova i les credencials es tapen abans que la captura surti de l'ordinador."
+  ]
+}
