@@ -303,6 +303,65 @@ order by r.ordinal
 limit 1
 on conflict do nothing;
 
+-- Staff notes ------------------------------------------------------------------------
+-- The team's working record about a participant (RAPP-24), so the detail screen
+-- opens with a real thread rather than an empty box, and so the append-only
+-- behaviour is visible in the dev app before anyone types a note.
+--
+-- Two notes by two DIFFERENT staff members: the whole point of storing an author
+-- is that a thread reads as a conversation between colleagues, and a single-author
+-- fixture would let a broken author column look fine.
+--
+-- Written about Amina (ordinal 11), deliberately not about the participants the
+-- pgTAP suite drives, so a test can count what its own transaction did.
+
+insert into public.participant_notes (profile_id, author_id, body, created_at)
+values
+  (
+    '5eed0000-0000-4000-8000-000000000011',
+    '5eed0000-0000-4000-8000-000000000002',
+    'Ha començat el curs de català als matins. Millor proposar-li els entrenaments de tarda.',
+    now() - interval '9 days'
+  ),
+  (
+    '5eed0000-0000-4000-8000-000000000011',
+    '5eed0000-0000-4000-8000-000000000003',
+    'Confirmat amb ella per telèfon: pot venir dimarts i dijous. Li hem donat samarreta i pantalons.',
+    now() - interval '2 days'
+  )
+on conflict do nothing;
+
+-- The access audit -----------------------------------------------------------------------
+-- Two earlier staff consultations of the same participant (RAPP-24), so the audit
+-- table is never empty and the shape of an entry is visible in Studio without
+-- anyone having to open the screen first.
+--
+-- View entries carry no `changes`, which is correct: nothing changed. The values
+-- of encrypted columns are never recorded here, by design (ADR-004), so there is
+-- no fixture that could teach anyone otherwise.
+
+insert into public.audit_log (org_id, actor_id, action, target_type, target_id, changes, created_at)
+values
+  (
+    '5eed0000-0000-4000-8000-000000000000',
+    '5eed0000-0000-4000-8000-000000000002',
+    'profile.view_sensitive',
+    'profile',
+    '5eed0000-0000-4000-8000-000000000011',
+    null,
+    now() - interval '9 days'
+  ),
+  (
+    '5eed0000-0000-4000-8000-000000000000',
+    '5eed0000-0000-4000-8000-000000000003',
+    'profile.update',
+    'profile',
+    '5eed0000-0000-4000-8000-000000000011',
+    '{"city": {"old": "Manlleu", "new": "Vic"}, "phone": {"changed": true}}'::jsonb,
+    now() - interval '2 days'
+  )
+on conflict do nothing;
+
 drop table seed_roster;
 
 end

@@ -28,6 +28,7 @@ import {
   SEED_ORGANIZATION_SLUG,
   SEED_TERMS_VERSION,
   seedUserId,
+  STAFF_FIXTURES,
   type PersonFixture,
 } from './fixtures';
 
@@ -36,6 +37,8 @@ export type ProfileRow = Database['public']['Tables']['profiles']['Row'];
 export type PushTokenRow = Database['public']['Tables']['push_tokens']['Row'];
 export type TermsAcceptanceRow = Database['public']['Tables']['terms_acceptances']['Row'];
 export type DeletionRequestRow = Database['public']['Tables']['deletion_requests']['Row'];
+export type ParticipantNoteRow = Database['public']['Tables']['participant_notes']['Row'];
+export type AuditLogRow = Database['public']['Tables']['audit_log']['Row'];
 
 /** One fixed instant for every timestamp, so factory output is byte-stable. */
 const FIXTURE_TIMESTAMP = '2026-01-15T09:00:00+00:00';
@@ -226,6 +229,55 @@ export function buildDeletionRequest(
     resolution_note: null,
     resolved_by: null,
     resolved_at: null,
+    created_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+/**
+ * A staff note about a participant (RAPP-24). Defaults to the first roster
+ * participant written up by Marta Puig, because a note only means anything with
+ * an author: the table stores one so a thread reads as a conversation between
+ * colleagues, and a factory that invented an author id would let a broken
+ * author column look fine in every test.
+ */
+export function buildParticipantNote(
+  overrides: Partial<ParticipantNoteRow> = {},
+): ParticipantNoteRow {
+  const subject = PARTICIPANT_FIXTURES[0]!;
+  const author = STAFF_FIXTURES.find((person) => person.role === 'staff')!;
+  return {
+    id: seedUserId(700 + subject.ordinal),
+    profile_id: seedUserId(subject.ordinal),
+    author_id: seedUserId(author.ordinal),
+    body: 'Ha començat el curs de català als matins. Millor proposar-li els entrenaments de tarda.',
+    created_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+/**
+ * An access-audit entry (RAPP-24). Defaults to the VIEW action with no
+ * `changes`, which is the entry the screen produces most and the one whose
+ * shape matters: a view changed nothing, so recording a diff for it would be a
+ * lie the first reader of this table would believe.
+ *
+ * Note what a `changes` override may carry, and what it may never carry. The
+ * values of encrypted columns (document number, phone, address, postal code)
+ * are recorded as `{ changed: true }` and never as text, or the audit log
+ * becomes a plaintext mirror of exactly the fields ADR-004 encrypts.
+ */
+export function buildAuditLogEntry(overrides: Partial<AuditLogRow> = {}): AuditLogRow {
+  const subject = PARTICIPANT_FIXTURES[0]!;
+  const actor = STAFF_FIXTURES.find((person) => person.role === 'staff')!;
+  return {
+    id: seedUserId(800 + subject.ordinal),
+    org_id: SEED_ORGANIZATION_ID,
+    actor_id: seedUserId(actor.ordinal),
+    action: 'profile.view_sensitive',
+    target_type: 'profile',
+    target_id: seedUserId(subject.ordinal),
+    changes: null,
     created_at: FIXTURE_TIMESTAMP,
     ...overrides,
   };

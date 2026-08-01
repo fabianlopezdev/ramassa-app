@@ -28,6 +28,54 @@ export type Database = {
   };
   public: {
     Tables: {
+      audit_log: {
+        Row: {
+          action: string;
+          actor_id: string;
+          changes: Json | null;
+          created_at: string;
+          id: string;
+          org_id: string;
+          target_id: string;
+          target_type: string;
+        };
+        Insert: {
+          action: string;
+          actor_id: string;
+          changes?: Json | null;
+          created_at?: string;
+          id?: string;
+          org_id: string;
+          target_id: string;
+          target_type: string;
+        };
+        Update: {
+          action?: string;
+          actor_id?: string;
+          changes?: Json | null;
+          created_at?: string;
+          id?: string;
+          org_id?: string;
+          target_id?: string;
+          target_type?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'audit_log_actor_id_fkey';
+            columns: ['actor_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'audit_log_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       deletion_requests: {
         Row: {
           created_at: string;
@@ -117,6 +165,45 @@ export type Database = {
           slug?: string;
         };
         Relationships: [];
+      };
+      participant_notes: {
+        Row: {
+          author_id: string;
+          body: string;
+          created_at: string;
+          id: string;
+          profile_id: string;
+        };
+        Insert: {
+          author_id: string;
+          body: string;
+          created_at?: string;
+          id?: string;
+          profile_id: string;
+        };
+        Update: {
+          author_id?: string;
+          body?: string;
+          created_at?: string;
+          id?: string;
+          profile_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'participant_notes_author_id_fkey';
+            columns: ['author_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'participant_notes_profile_id_fkey';
+            columns: ['profile_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       profiles: {
         Row: {
@@ -370,8 +457,49 @@ export type Database = {
           terms_accepted_at: string;
         }[];
       };
+      get_participant_profile: {
+        Args: { participant_id: string };
+        Returns: {
+          address: string;
+          avatar_url: string;
+          city: string;
+          clothing_size: string;
+          created_at: string;
+          date_of_birth: string;
+          document_number: string;
+          document_type: string;
+          first_name: string;
+          has_dependents: boolean;
+          id: string;
+          is_active: boolean;
+          is_forum_banned: boolean;
+          last_name: string;
+          media_consent: boolean;
+          nationality: string;
+          num_dependents: number;
+          phone: string;
+          place_of_birth: string;
+          postal_code: string;
+          preferred_language: string;
+          reference_contact_name: string;
+          reference_entity: string;
+          shoe_size: string;
+          terms_accepted_at: string;
+          updated_at: string;
+        }[];
+      };
       immutable_unaccent: { Args: { value: string }; Returns: string };
       is_staff_or_admin: { Args: never; Returns: boolean };
+      participant_activity: {
+        Args: { participant_id: string };
+        Returns: {
+          detail: string;
+          id: string;
+          kind: string;
+          occurred_at: string;
+          title: string;
+        }[];
+      };
       participant_filter_options: {
         Args: never;
         Returns: {
@@ -379,7 +507,15 @@ export type Database = {
           nationalities: string[];
         }[];
       };
+      set_participant_active: {
+        Args: { next_is_active: boolean; participant_id: string };
+        Returns: undefined;
+      };
       update_own_profile: { Args: { payload: Json }; Returns: undefined };
+      update_participant_profile: {
+        Args: { participant_id: string; payload: Json };
+        Returns: undefined;
+      };
       user_is_in_current_org: {
         Args: { target_user_id: string };
         Returns: boolean;
