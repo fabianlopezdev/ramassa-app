@@ -59,5 +59,8 @@
   "activityFeedback": "الاقتراحات",
   "activityEquipment": "التجهيزات",
   "activityEmpty": "لا يوجد شيء في هذا القسم بعد.",
-  "activityIntro": "يمتلئ هذا القسم تدريجيًا مع مشاركتها في البرنامج."
+  "activityIntro": "يمتلئ هذا القسم تدريجيًا مع مشاركتها في البرنامج.",
+  "termsAcceptedOn": "وافقت على الشروط في {{date}}.",
+  "mediaConsentGranted": "تظهر في صور المجتمع وقصصه.",
+  "mediaConsentDenied": "لا تظهر في الصور ولا القصص."
 }

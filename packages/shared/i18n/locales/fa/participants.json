@@ -59,5 +59,8 @@
   "activityFeedback": "پیشنهادها",
   "activityEquipment": "تجهیزات",
   "activityEmpty": "هنوز چیزی در این بخش نیست.",
-  "activityIntro": "این بخش هم‌زمان با مشارکت او در برنامه پر می‌شود."
+  "activityIntro": "این بخش هم‌زمان با مشارکت او در برنامه پر می‌شود.",
+  "termsAcceptedOn": "شرایط را در {{date}} پذیرفت.",
+  "mediaConsentGranted": "در عکس‌ها و داستان‌های جامعه دیده می‌شود.",
+  "mediaConsentDenied": "در عکس‌ها و داستان‌ها دیده نمی‌شود."
 }

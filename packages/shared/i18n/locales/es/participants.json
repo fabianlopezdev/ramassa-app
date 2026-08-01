@@ -59,5 +59,8 @@
   "activityFeedback": "Sugerencias",
   "activityEquipment": "Equipamiento",
   "activityEmpty": "Todavía no hay nada en esta sección.",
-  "activityIntro": "Esta sección se va llenando a medida que la participante hace actividad en el programa."
+  "activityIntro": "Esta sección se va llenando a medida que la participante hace actividad en el programa.",
+  "termsAcceptedOn": "Aceptó los términos el {{date}}.",
+  "mediaConsentGranted": "Sale en fotos e historias de la comunidad.",
+  "mediaConsentDenied": "No sale en fotos ni historias."
 }

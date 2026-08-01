@@ -7,6 +7,12 @@
  * they should be looking at the same words. New admin-only wording here would be
  * a second vocabulary for one form.
  *
+ * The exception is the handful of strings written in HER voice. Her profile
+ * says "I appear in community photos" and "you accepted the terms on ...";
+ * reused here they read as the staff member talking about herself, or as the
+ * screen addressing the wrong person. Those have staff-voiced twins and nothing
+ * else does: a field NAME is shared, a SENTENCE about someone is not.
+ *
  * The four decrypted fields (document number, phone, address, postal code) are
  * on this screen because the team genuinely needs them, and reading them is
  * AUDITED: `get_participant_profile` wrote a row naming this staff member and
@@ -93,10 +99,13 @@ export function ParticipantProfileFields({ participant }: ParticipantProfileFiel
       <DetailField label={t('onboarding:shoeSizeLabel')} value={shown(participant.shoe_size)} />
       <DetailField
         label={t('profile:fieldMediaConsent')}
+        // The staff-voiced wording, not the participant's own. Her profile says
+        // "I appear in community photos"; a staff screen that reuses it reads as
+        // the staff member talking about herself.
         value={
           participant.media_consent
-            ? t('profile:mediaConsentGranted')
-            : t('profile:mediaConsentDenied')
+            ? t('participants:mediaConsentGranted')
+            : t('participants:mediaConsentDenied')
         }
       />
 
@@ -105,7 +114,7 @@ export function ParticipantProfileFields({ participant }: ParticipantProfileFiel
         value={
           participant.terms_accepted_at === null
             ? t('profile:notProvided')
-            : t('profile:termsAcceptedOn', {
+            : t('participants:termsAcceptedOn', {
                 date: new Date(participant.terms_accepted_at).toLocaleDateString(locale),
               })
         }

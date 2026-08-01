@@ -59,5 +59,8 @@
   "activityFeedback": "Suggeriments",
   "activityEquipment": "Equipament",
   "activityEmpty": "Encara no hi ha res en aquesta secció.",
-  "activityIntro": "Aquesta secció es va omplint a mesura que la participant fa activitat al programa."
+  "activityIntro": "Aquesta secció es va omplint a mesura que la participant fa activitat al programa.",
+  "termsAcceptedOn": "Va acceptar els termes el {{date}}.",
+  "mediaConsentGranted": "Surt a fotos i històries de la comunitat.",
+  "mediaConsentDenied": "No surt a fotos ni històries."
 }

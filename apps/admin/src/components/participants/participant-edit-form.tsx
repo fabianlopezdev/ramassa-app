@@ -13,6 +13,12 @@
  * nationality comes from the generated country list and stores one canonical
  * string from every locale, so a staff member's keyboard cannot invent a new
  * reporting bucket for Ucraïna.
+ *
+ * The LABELS are the wizard's, with two exceptions. The wizard asks "which
+ * language do you want the app in?" and "do you have anyone in your care?",
+ * because it is talking to her; this form is talking about her, so those two
+ * carry field names instead. Everything else is a plain noun and is shared on
+ * purpose.
  */
 
 import { AdminAuthField } from '@/components/auth/admin-auth-field';
@@ -138,7 +144,7 @@ export function ParticipantEditForm({
         <SelectField
           control={control}
           name="preferredLanguage"
-          label={t('onboarding:preferredLanguageLabel')}
+          label={t('profile:languageLabel')}
           options={SUPPORTED_LANGUAGES.map((language) => ({
             value: language,
             label: LANGUAGE_NATIVE_NAMES[language],
@@ -202,7 +208,7 @@ export function ParticipantEditForm({
         <SelectField
           control={control}
           name="hasDependents"
-          label={t('onboarding:hasDependentsLabel')}
+          label={t('participants:columnDependents')}
           options={[
             { value: 'true', label: t('onboarding:yesOption') },
             { value: 'false', label: t('onboarding:noOption') },

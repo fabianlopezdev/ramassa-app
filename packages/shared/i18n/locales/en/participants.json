@@ -59,5 +59,8 @@
   "activityFeedback": "Feedback",
   "activityEquipment": "Equipment",
   "activityEmpty": "There is nothing in this section yet.",
-  "activityIntro": "This section fills up as the participant takes part in the programme."
+  "activityIntro": "This section fills up as the participant takes part in the programme.",
+  "termsAcceptedOn": "Accepted the terms on {{date}}.",
+  "mediaConsentGranted": "Appears in community photos and stories.",
+  "mediaConsentDenied": "Does not appear in photos or stories."
 }
