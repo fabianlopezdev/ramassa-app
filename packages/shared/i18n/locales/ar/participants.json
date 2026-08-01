@@ -28,9 +28,5 @@
   "emptyTitle": "لا توجد مشاركات بهذه المرشحات",
   "emptyBody": "جرّبي مرشحات أقل أو بحثًا آخر.",
   "clearFilters": "إزالة المرشحات",
-  "previousPage": "السابق",
-  "nextPage": "التالي",
-  "pageOf": "صفحة {{page}} من {{pages}}",
-  "sortBy": "ترتيب حسب {{column}}",
   "loadFailed": "لم نتمكن من تحميل القائمة."
 }

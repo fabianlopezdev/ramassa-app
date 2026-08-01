@@ -28,9 +28,5 @@
   "emptyTitle": "Cap participant amb aquests filtres",
   "emptyBody": "Prova amb menys filtres o una altra cerca.",
   "clearFilters": "Treu els filtres",
-  "previousPage": "Anterior",
-  "nextPage": "Següent",
-  "pageOf": "Pàgina {{page}} de {{pages}}",
-  "sortBy": "Ordena per {{column}}",
   "loadFailed": "No hem pogut carregar la llista."
 }

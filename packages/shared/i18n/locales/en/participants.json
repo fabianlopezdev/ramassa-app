@@ -28,9 +28,5 @@
   "emptyTitle": "No participants match these filters",
   "emptyBody": "Try fewer filters or a different search.",
   "clearFilters": "Clear filters",
-  "previousPage": "Previous",
-  "nextPage": "Next",
-  "pageOf": "Page {{page}} of {{pages}}",
-  "sortBy": "Sort by {{column}}",
   "loadFailed": "We could not load the list."
 }

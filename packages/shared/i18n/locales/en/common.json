@@ -8,5 +8,11 @@
     "en": "English",
     "ar": "العربية",
     "fa": "فارسی"
+  },
+  "table": {
+    "sortBy": "Sort by {{column}}",
+    "previousPage": "Previous",
+    "nextPage": "Next",
+    "pageOf": "Page {{page}} of {{pages}}"
   }
 }

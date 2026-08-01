@@ -1,26 +1,25 @@
 /**
- * The participants table (RAPP-23).
+ * The participants roster (RAPP-23).
+ *
+ * This file owns what is SPECIFIC to participants: which columns exist, how a
+ * row reads, and what its filters are. Everything generic — how a table
+ * renders, sorts, announces its sort and pages — comes from the shared
+ * `DataTable` and `DataTablePager`, so the announcements, events, knowledge
+ * base and attendance lists that follow inherit the same behaviour instead of
+ * re-deriving it.
  *
  * Every control writes to the URL and nothing else. There is no local copy of
  * "which filters are on", so the address bar and the table cannot disagree, and
  * a filtered view is a link a staff member can send to a colleague.
- *
- * The one exception is the search box, which keeps the keystrokes it has not
- * committed yet: typing must not wait for a round trip, and the URL must not
- * gain a history entry per letter. It commits on a pause (see `SEARCH_DEBOUNCE_MS`).
  */
 
+import { DataTable } from '@/components/data-table/data-table';
+import { DataTablePager } from '@/components/data-table/data-table-pager';
 import { ParticipantsFilters } from '@/components/participants/participants-filters';
 import { Button } from '@/components/ui/button';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import { useNavigate } from '@tanstack/react-router';
+import type { ColumnDef, SortingState } from '@tanstack/react-table';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   PARTICIPANT_PAGE_SIZE,
@@ -37,35 +36,76 @@ export interface ParticipantsTableProps {
   readonly search: ParticipantSearch;
 }
 
-const COLUMNS: readonly { key: ParticipantSortColumn; labelKey: string }[] = [
-  { key: 'last_name', labelKey: 'columnName' },
-  { key: 'nationality', labelKey: 'columnNationality' },
-  { key: 'city', labelKey: 'columnCity' },
-  { key: 'reference_entity', labelKey: 'columnEntity' },
-  { key: 'created_at', labelKey: 'columnJoined' },
-];
-
 export function ParticipantsTable({ page, filterOptions, search }: ParticipantsTableProps) {
-  const { t, i18n } = useTranslation('participants');
+  const { t, i18n } = useTranslation(['participants', 'common']);
   const navigate = useNavigate({ from: '/participants' });
+  const locale = i18n.resolvedLanguage ?? 'ca';
 
   const pages = Math.max(1, Math.ceil(page.total / PARTICIPANT_PAGE_SIZE));
+  const none = t('rowNone');
+
+  const columns = useMemo<ColumnDef<ParticipantListRow, unknown>[]>(
+    () => [
+      {
+        // `accessorKey`, not a bare id: a column with no accessor is a DISPLAY
+        // column, and TanStack refuses to sort those, so the header renders as
+        // dead text while still announcing aria-sort. The key doubles as the
+        // column id, which is the database column, so the sort state and the
+        // query speak the same language with nothing translated between them.
+        accessorKey: 'last_name' satisfies ParticipantSortColumn,
+        header: t('columnName'),
+        cell: ({ row }) => (
+          <span className="font-medium">{`${row.original.first_name} ${row.original.last_name}`}</span>
+        ),
+      },
+      {
+        accessorKey: 'nationality' satisfies ParticipantSortColumn,
+        header: t('columnNationality'),
+        cell: ({ row }) => row.original.nationality ?? none,
+      },
+      {
+        accessorKey: 'city' satisfies ParticipantSortColumn,
+        header: t('columnCity'),
+        cell: ({ row }) => row.original.city ?? none,
+      },
+      {
+        accessorKey: 'reference_entity' satisfies ParticipantSortColumn,
+        header: t('columnEntity'),
+        cell: ({ row }) => row.original.reference_entity ?? none,
+      },
+      {
+        accessorKey: 'created_at' satisfies ParticipantSortColumn,
+        header: t('columnJoined'),
+        cell: ({ row }) => new Date(row.original.created_at).toLocaleDateString(locale),
+      },
+      {
+        id: 'dependents',
+        header: t('columnDependents'),
+        // Not sortable: the roster is not ordered by how many children someone
+        // has, and offering it would suggest the team works that way.
+        enableSorting: false,
+        cell: ({ row }) => (row.original.has_dependents ? row.original.num_dependents : none),
+      },
+      {
+        id: 'status',
+        header: t('columnStatus'),
+        enableSorting: false,
+        cell: ({ row }) => (row.original.is_active ? t('rowActive') : t('rowInactive')),
+      },
+    ],
+    [t, none, locale],
+  );
 
   /**
    * Any change to a filter or the sort returns to page 1. Staying on page 7
    * after narrowing to three results shows an empty table and reads as "no
-   * matches", which is the single most common way a filtered table lies.
+   * matches", which is the most common way a filtered table lies.
    */
   function applySearch(next: Partial<ParticipantSearch>) {
     void navigate({ search: (previous) => ({ ...previous, page: 1, ...next }) });
   }
 
-  function toggleSort(column: ParticipantSortColumn) {
-    applySearch({
-      sort: column,
-      dir: search.sort === column && search.dir === 'asc' ? 'desc' : 'asc',
-    });
-  }
+  const sorting: SortingState = [{ id: search.sort, desc: search.dir === 'desc' }];
 
   return (
     <section className="flex flex-col gap-4 p-6">
@@ -76,114 +116,53 @@ export function ParticipantsTable({ page, filterOptions, search }: ParticipantsT
 
       <ParticipantsFilters search={search} filterOptions={filterOptions} onChange={applySearch} />
 
-      {page.rows.length === 0 ? (
-        // An empty state that says what to DO. "No results" alone leaves a
-        // staff member wondering whether the roster is empty or her filters are
-        // wrong, and those need different reactions.
-        <div className="flex flex-col items-start gap-3 rounded-md border border-dashed p-8">
-          <p className="font-medium">{t('emptyTitle')}</p>
-          <p className="text-sm text-muted-foreground">{t('emptyBody')}</p>
-          <Button
-            variant="outline"
-            onClick={() =>
-              void navigate({
-                search: () => ({
-                  q: '',
-                  entity: null,
-                  nationality: null,
-                  status: 'all' as const,
-                  dependents: 'all' as const,
-                  sort: search.sort,
-                  dir: search.dir,
-                  page: 1,
-                }),
-              })
-            }
-          >
-            {t('clearFilters')}
-          </Button>
-        </div>
-      ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              {COLUMNS.map((column) => (
-                <TableHead key={column.key}>
-                  <button
-                    type="button"
-                    onClick={() => toggleSort(column.key)}
-                    aria-label={t('sortBy', { column: t(column.labelKey) })}
-                    // The sorted column is announced, not just painted: an
-                    // arrow glyph tells a screen-reader user nothing.
-                    aria-sort={
-                      search.sort === column.key
-                        ? search.dir === 'asc'
-                          ? 'ascending'
-                          : 'descending'
-                        : 'none'
-                    }
-                    className="flex items-center gap-1 font-medium hover:text-foreground"
-                  >
-                    {t(column.labelKey)}
-                    {search.sort === column.key ? <SortGlyph direction={search.dir} /> : null}
-                  </button>
-                </TableHead>
-              ))}
-              <TableHead>{t('columnDependents')}</TableHead>
-              <TableHead>{t('columnStatus')}</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {page.rows.map((row) => (
-              <ParticipantRow key={row.id} row={row} locale={i18n.resolvedLanguage ?? 'ca'} />
-            ))}
-          </TableBody>
-        </Table>
-      )}
+      <DataTable
+        columns={columns}
+        rows={page.rows}
+        sorting={sorting}
+        onSortingChange={(next) => {
+          const [first] = next;
+          if (first === undefined) return;
+          applySearch({
+            sort: first.id as ParticipantSortColumn,
+            dir: first.desc ? 'desc' : 'asc',
+          });
+        }}
+        empty={
+          // An empty state that says what to DO. "No results" alone leaves a
+          // staff member wondering whether the roster is empty or her filters
+          // are wrong, and those need different reactions.
+          <div className="flex flex-col items-start gap-3 rounded-md border border-dashed p-8">
+            <p className="font-medium">{t('emptyTitle')}</p>
+            <p className="text-sm text-muted-foreground">{t('emptyBody')}</p>
+            <Button
+              variant="outline"
+              onClick={() =>
+                void navigate({
+                  search: () => ({
+                    q: '',
+                    entity: null,
+                    nationality: null,
+                    status: 'all' as const,
+                    dependents: 'all' as const,
+                    sort: search.sort,
+                    dir: search.dir,
+                    page: 1,
+                  }),
+                })
+              }
+            >
+              {t('clearFilters')}
+            </Button>
+          </div>
+        }
+      />
 
-      <footer className="flex items-center justify-between gap-4">
-        <p className="text-sm text-muted-foreground">{t('pageOf', { page: search.page, pages })}</p>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            disabled={search.page <= 1}
-            onClick={() => void navigate({ search: (prev) => ({ ...prev, page: prev.page - 1 }) })}
-          >
-            {t('previousPage')}
-          </Button>
-          <Button
-            variant="outline"
-            disabled={search.page >= pages}
-            onClick={() => void navigate({ search: (prev) => ({ ...prev, page: prev.page + 1 }) })}
-          >
-            {t('nextPage')}
-          </Button>
-        </div>
-      </footer>
+      <DataTablePager
+        page={search.page}
+        pages={pages}
+        onPageChange={(next) => void navigate({ search: (prev) => ({ ...prev, page: next }) })}
+      />
     </section>
-  );
-}
-
-function SortGlyph({ direction }: { direction: 'asc' | 'desc' }) {
-  return (
-    <span aria-hidden className="text-xs">
-      {direction === 'asc' ? '▲' : '▼'}
-    </span>
-  );
-}
-
-function ParticipantRow({ row, locale }: { row: ParticipantListRow; locale: string }) {
-  const { t } = useTranslation('participants');
-  const none = t('rowNone');
-  return (
-    <TableRow>
-      <TableCell className="font-medium">{`${row.first_name} ${row.last_name}`}</TableCell>
-      <TableCell>{row.nationality ?? none}</TableCell>
-      <TableCell>{row.city ?? none}</TableCell>
-      <TableCell>{row.reference_entity ?? none}</TableCell>
-      <TableCell>{new Date(row.created_at).toLocaleDateString(locale)}</TableCell>
-      <TableCell>{row.has_dependents ? row.num_dependents : none}</TableCell>
-      <TableCell>{row.is_active ? t('rowActive') : t('rowInactive')}</TableCell>
-    </TableRow>
   );
 }

@@ -28,9 +28,5 @@
   "emptyTitle": "Ninguna participante con estos filtros",
   "emptyBody": "Prueba con menos filtros u otra búsqueda.",
   "clearFilters": "Quitar los filtros",
-  "previousPage": "Anterior",
-  "nextPage": "Siguiente",
-  "pageOf": "Página {{page}} de {{pages}}",
-  "sortBy": "Ordenar por {{column}}",
   "loadFailed": "No hemos podido cargar la lista."
 }

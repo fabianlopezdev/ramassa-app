@@ -8,5 +8,11 @@
     "en": "English",
     "ar": "العربية",
     "fa": "فارسی"
+  },
+  "table": {
+    "sortBy": "مرتب‌سازی بر اساس {{column}}",
+    "previousPage": "قبلی",
+    "nextPage": "بعدی",
+    "pageOf": "صفحهٔ {{page}} از {{pages}}"
   }
 }
