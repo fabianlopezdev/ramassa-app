@@ -113,7 +113,7 @@
   "rgpdSectionHint": "Dos acciones que no se pueden deshacer. Para quitarla temporalmente de las listas, usa «Desactiva» arriba.",
   "rgpdOpenRequest": "Ha pedido que se borren sus datos.",
   "irreversibleWarning": "Esto no se puede deshacer.",
-  "confirmTypeLabel": "Escribe {{phrase}} para confirmar",
+  "confirmTypeLabel": "Escribe esta palabra para confirmar:",
   "alreadyAnonymized": "Esta ficha ya está anonimizada.",
   "eraseAdminOnly": "Solo una administradora puede borrar una ficha por completo.",
   "anonymizeAction": "Anonimiza",

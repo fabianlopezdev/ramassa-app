@@ -113,7 +113,7 @@
   "rgpdSectionHint": "Two actions that cannot be undone. To take her off the lists for now, use Deactivate above.",
   "rgpdOpenRequest": "She has asked for her data to be deleted.",
   "irreversibleWarning": "This cannot be undone.",
-  "confirmTypeLabel": "Type {{phrase}} to confirm",
+  "confirmTypeLabel": "Type this word to confirm:",
   "alreadyAnonymized": "This record is already anonymized.",
   "eraseAdminOnly": "Only an admin can erase a record completely.",
   "anonymizeAction": "Anonymize",

@@ -113,7 +113,7 @@
   "rgpdSectionHint": "إجراءان لا يمكن التراجع عنهما. لإخراجها من القوائم مؤقّتًا، استخدمي «إلغاء التفعيل» في الأعلى.",
   "rgpdOpenRequest": "طلبت حذف بياناتها.",
   "irreversibleWarning": "لا يمكن التراجع عن هذا.",
-  "confirmTypeLabel": "اكتبي {{phrase}} للتأكيد",
+  "confirmTypeLabel": "اكتبي هذه الكلمة للتأكيد:",
   "alreadyAnonymized": "هذه البطاقة مجهّلة الهوية بالفعل.",
   "eraseAdminOnly": "لا يمكن حذف البطاقة بالكامل إلّا لمديرة.",
   "anonymizeAction": "تجهيل الهوية",

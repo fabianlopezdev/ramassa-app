@@ -113,7 +113,7 @@
   "rgpdSectionHint": "Dues accions que no es poden desfer. Per treure-la temporalment de les llistes, fes servir «Desactiva» a dalt.",
   "rgpdOpenRequest": "Ha demanat que s'esborrin les seves dades.",
   "irreversibleWarning": "Això no es pot desfer.",
-  "confirmTypeLabel": "Escriu {{phrase}} per confirmar",
+  "confirmTypeLabel": "Escriu aquesta paraula per confirmar:",
   "alreadyAnonymized": "Aquesta fitxa ja està anonimitzada.",
   "eraseAdminOnly": "Només una administradora pot esborrar una fitxa del tot.",
   "anonymizeAction": "Anonimitza",

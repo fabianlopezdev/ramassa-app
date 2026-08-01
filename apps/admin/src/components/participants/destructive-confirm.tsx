@@ -104,8 +104,18 @@ export function DestructiveConfirm({
       <p className="text-start text-sm font-medium text-destructive">{t('irreversibleWarning')}</p>
 
       <div className="flex flex-col gap-2">
-        <label htmlFor={fieldId} className="text-start text-sm font-medium">
-          {t('confirmTypeLabel', { phrase: confirmationPhrase })}
+        <label
+          htmlFor={fieldId}
+          className="flex flex-wrap items-center gap-2 text-start text-sm font-medium"
+        >
+          {t('confirmTypeLabel')}
+          {/* The word in its own element rather than interpolated into the
+              sentence: it is what the reader's eye has to land on, and it is
+              what the browser suite reads instead of hardcoding a Catalan word
+              that is not what an English or Arabic session shows. */}
+          <code data-confirmation-phrase className="rounded bg-muted px-2 py-0.5 font-mono">
+            {confirmationPhrase}
+          </code>
         </label>
         <Input
           id={fieldId}
