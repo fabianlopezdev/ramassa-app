@@ -216,6 +216,26 @@ install chromium`); the flow-shots skill deliberately does not ship browser bina
 16. **Selector shapes differ per platform.** iOS exposes a row's accessibility label; Android exposes
     the text nodes inside it. Match on the substring both carry (the email address, not
     "Sign in as <address>").
+17. **A WEB SCREEN IS NOT DONE UNTIL `bun run qa:web` COVERS IT.** The phone app has had a
+    cumulative Maestro suite since RAPP-20; the admin and entity surfaces have the Playwright
+    equivalent since RAPP-99 (`scripts/qa-web/*.web-qa.ts`). Every issue that builds or changes a
+    web screen extends that suite in the SAME issue, and the suite is cumulative: what an earlier
+    issue proved stays proved.
+18. **A check that cannot fail is not evidence.** Before trusting a new assertion, break the
+    implementation on purpose and watch it go red. This has caught bad checks four times: the
+    canvas overlap test, the optimistic-rollback test, the web suite's own half-typed-search spec
+    (it passed against broken search, because the row it looked for was already visible in the
+    unfiltered table), and the suite's server reuse (it tested a stale bundle rather than the code
+    on disk).
+19. **Verify along the path the PRODUCT takes.** RAPP-23 shipped a search that could not match a
+    half-typed or an accented word, with a green pgTAP assertion and a green browser check behind
+    it: the pgTAP wrapped the query in `immutable_unaccent` BY HAND (a route the app never takes)
+    and the browser check used a complete unaccented word (identical behaviour broken or fixed).
+    Pick the example that CAN fail: a half-typed word, an accented word, an empty result, a
+    hostile string, the RTL locale.
+20. **A QA suite starts its own server.** Never reuse a running dev server: Vite serves what it
+    already has, so the suite passes against code that no longer exists on disk. `qa:web` boots
+    its own on :3100 with `--force`.
 
 **Known gap:** on Android the development client draws a floating tools button over the app, so it
 appears in the top corner of every Android frame. iOS is clean. Tracked as its own issue; do not put
