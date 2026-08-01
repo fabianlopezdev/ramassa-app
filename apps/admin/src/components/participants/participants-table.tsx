@@ -119,9 +119,19 @@ export function ParticipantsTable({ page, filterOptions, search }: ParticipantsT
 
   return (
     <section className="flex flex-col gap-4 p-6">
-      <header className="flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold">{t('title')}</h1>
-        <p className="text-sm text-muted-foreground">{t('summary', { count: page.total })}</p>
+      <header className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-2xl font-semibold">{t('title')}</h1>
+          <p className="text-sm text-muted-foreground">{t('summary', { count: page.total })}</p>
+        </div>
+        <div className="flex flex-wrap gap-3">
+          <Button asChild size="lg" variant="outline">
+            <Link to="/participants/invites">{t('invitesAction')}</Link>
+          </Button>
+          <Button asChild size="lg">
+            <Link to="/participants/new">{t('newAction')}</Link>
+          </Button>
+        </div>
       </header>
 
       <ParticipantsFilters search={search} filterOptions={filterOptions} onChange={applySearch} />

@@ -1,11 +1,14 @@
 /**
  * Onboarding wiring for the mobile app (RAPP-21): the draft store bound to the
- * app's MMKV, and the completion action that calls the atomic RPC.
+ * app's MMKV, the completion action that calls the atomic RPC, and the pending
+ * invitation the wizard pre-fills its referring entity from (RAPP-25).
  */
 
 import { safeAsync } from '@/lib/observability';
 import { mmkvStorage } from '@/lib/storage';
 import { supabase } from '@/lib/supabase';
+import { useEffect, useState } from 'react';
+import { fetchMyPendingInvite } from '@ramassa/shared/accounts';
 import { AppError, type Result } from '@ramassa/shared/errors';
 import { createMmkvOnboardingDraftStore } from '@ramassa/shared/onboarding-drafts';
 import type { CompleteOnboardingPayload } from '@ramassa/shared/schemas';
@@ -32,4 +35,30 @@ export function completeOnboarding(
     },
     { code: 'DB-1' },
   );
+}
+
+/**
+ * The referring entity a staff invitation carries for the signed-in address
+ * (RAPP-25), or null: most players sign up uninvited, and a failed lookup is
+ * the same null. The prefill is a CONVENIENCE, so nothing about it may block
+ * or break the wizard.
+ *
+ * The RPC takes no argument: the address comes from the verified JWT
+ * server-side, so a forwarded invite link cannot pre-fill for the wrong woman.
+ */
+export function usePendingInviteEntity(): string | null {
+  const [entity, setEntity] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    void safeAsync(() => fetchMyPendingInvite(supabase), { code: 'DB-1' }).then((result) => {
+      if (!isMounted || !result.ok) return;
+      setEntity(result.value?.reference_entity ?? null);
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  return entity;
 }

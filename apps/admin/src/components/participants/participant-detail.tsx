@@ -21,6 +21,7 @@ import { ParticipantActivity } from '@/components/participants/participant-activ
 import { ParticipantEditForm } from '@/components/participants/participant-edit-form';
 import { ParticipantNotes } from '@/components/participants/participant-notes';
 import { ParticipantProfileFields } from '@/components/participants/participant-profile-fields';
+import { ResetPasswordControl } from '@/components/participants/reset-password';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { safeAsync } from '@/lib/observability';
@@ -151,6 +152,13 @@ export function ParticipantDetail({ participant, notes, activity }: ParticipantD
           </div>
         </div>
       </header>
+
+      {/* Only an admin-created account HAS a password; the RPC refuses the
+          others, and this render condition keeps the button and the refusal
+          in agreement. */}
+      {participant.auth_method === 'admin_created' ? (
+        <ResetPasswordControl participantId={participant.id} />
+      ) : null}
 
       <DetailSection
         title={t('sectionProfile')}

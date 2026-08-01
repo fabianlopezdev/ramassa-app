@@ -99,3 +99,56 @@ describe('redactPii — resilience', () => {
     expect(redactPii(null)).toBe(null);
   });
 });
+
+/**
+ * Credentials (RAPP-25). Staff create accounts for participants with no email;
+ * the generated password is returned once and stored nowhere. The one way it
+ * could outlive that moment is a failure carrying it into an error context, so
+ * the key is redacted like any other secret.
+ */
+test('a generated account password never survives redaction', () => {
+  const redacted = redactPii({
+    profileId: '5eed0000-0000-4000-8000-000000000030',
+    email: 'blanca.k4m9@ramassa.invalid',
+    password: 'xkm4-9rtp-w2n7',
+  }) as Record<string, unknown>;
+
+  expect(redacted.password).toBe(REDACTED);
+  expect(redacted.email).toBe(REDACTED);
+  // Opaque IDs are the one thing that may be logged, and must be: without them
+  // an incident cannot be traced to a record at all.
+  expect(redacted.profileId).toBe('5eed0000-0000-4000-8000-000000000030');
+});
+
+test('the other credential-shaped keys go too', () => {
+  const redacted = redactPii({
+    token: 'eyJhbGciOi',
+    refreshToken: 'r-123',
+    apiKey: 'sk-live-abc',
+  }) as Record<string, unknown>;
+
+  expect(Object.values(redacted)).toEqual([REDACTED, REDACTED, REDACTED]);
+});
+
+/**
+ * The promise in this module's docstring: opaque IDs are loggable, and must be,
+ * or an incident cannot be traced to a record. The seeded identifiers are the
+ * hard case because they are almost all digits, which is indistinguishable from
+ * a phone number to a pattern that only counts them.
+ */
+test('an opaque identifier survives intact, including the digit-heavy seeded ones', () => {
+  const seededId = '5eed0000-0000-4000-8000-000000000030';
+  const randomId = '3f2504e0-4f89-41d3-9a0c-0305e82c3301';
+
+  expect(redactPii({ id: seededId })).toEqual({ id: seededId });
+  expect(redactPii({ id: randomId })).toEqual({ id: randomId });
+});
+
+test('but a phone number quoted beside one still goes', () => {
+  const redacted = redactPii({
+    note: 'called 5eed0000-0000-4000-8000-000000000030 on +34600111222',
+  }) as Record<string, unknown>;
+
+  expect(redacted.note).toContain(REDACTED);
+  expect(redacted.note).not.toContain('+34600111222');
+});

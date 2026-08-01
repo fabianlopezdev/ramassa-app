@@ -36,18 +36,42 @@ test('every fixture identity in the shared roster is present in seed.sql', () =>
 });
 
 test('seed.sql seeds exactly the roster: no extra accounts, none missing', () => {
-  const seededEmails = new Set(seedSql.match(/[\w.+-]+@[\w.-]+\.test\b/g) ?? []);
+  // Both reserved domains: the fixture one, and the unroutable one the product
+  // generates for a participant with no inbox (RAPP-25).
+  const seededEmails = new Set(seedSql.match(/[\w.+-]+@[\w.-]+\.(?:test|invalid)\b/g) ?? []);
   // The onboarding drive account is auth-only ON PURPOSE: no profile, so the
   // wizard gate fires for it. It is part of the seed contract, not roster drift.
   const expected = [...allFixtures.map((fixture) => fixture.email), ONBOARDING_ACCOUNT_EMAIL];
   expect([...seededEmails].sort()).toEqual(expected.sort());
 });
 
-test('seed.sql contains no email address outside the reserved fake domain', () => {
+/**
+ * Two reserved domains, both unroutable, for two different reasons.
+ *
+ * `@example.test` is the fixture domain: a seeded account can never reach a
+ * real mailbox. `@ramassa.invalid` is what the product itself GENERATES for a
+ * participant who has no email (RAPP-25) — reserved by RFC 2606 so it can
+ * never resolve, which is what stops a password-recovery mail for her account
+ * from one day being delivered to a stranger. Anything else in this file is a
+ * real address, and a real address in a seed is an RGPD incident waiting for a
+ * `db reset` on the wrong machine.
+ */
+test('seed.sql contains no email address outside the two reserved domains', () => {
   const emails = seedSql.match(/[\w.+-]+@[\w.-]+\.\w+/g) ?? [];
   expect(emails.length).toBeGreaterThan(0);
   for (const email of emails) {
-    expect(email.endsWith('@example.test')).toBe(true);
+    expect(email.endsWith('@example.test') || email.endsWith('@ramassa.invalid')).toBe(true);
+  }
+});
+
+test('the roster carries the no-email case the password-reset screen needs', () => {
+  const adminCreated = PARTICIPANT_FIXTURES.filter(
+    (fixture) => buildProfileFromFixture(fixture).auth_method === 'admin_created',
+  );
+  expect(adminCreated.length).toBeGreaterThan(0);
+  for (const fixture of adminCreated) {
+    expect(fixture.email.endsWith('@ramassa.invalid')).toBe(true);
+    expect(seedSql).toContain(fixture.email);
   }
 });
 

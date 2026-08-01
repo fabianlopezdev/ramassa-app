@@ -1,0 +1,112 @@
+{
+  "slug": "admin-account-creation",
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "deviceScaleFactor": 2,
+  "timezoneId": "Europe/Madrid",
+  "settle": {
+    "timeout": 6000,
+    "interval": 150
+  },
+  "mask": ["code"],
+  "steps": [
+    {
+      "label": "auth-open",
+      "goto": "/login",
+      "click": "button:has-text(\"{{auth:usePasswordInstead}}\")",
+      "waitFor": "input[type=\"password\"]"
+    },
+    {
+      "label": "auth-submit",
+      "fill": [
+        {
+          "selector": "input[type=\"email\"]",
+          "value": "{{staff:email}}"
+        },
+        {
+          "selector": "input[type=\"password\"]",
+          "value": "{{staff:password}}"
+        }
+      ],
+      "click": "button:has-text(\"{{auth:passwordAction}}\")",
+      "waitFor": "text={{admin:dashboardTitle}}"
+    },
+    {
+      "label": "fork",
+      "goto": "/participants/new",
+      "waitFor": "text={{participants:forkQuestion}} >> visible=true"
+    },
+    {
+      "label": "invite-form",
+      "click": "button:has-text(\"{{participants:forkHasEmail}}\")",
+      "waitFor": "#new-participant-email >> visible=true"
+    },
+    {
+      "label": "invite-created",
+      "fill": [
+        {
+          "selector": "#new-participant-email",
+          "value": "aminata.sow@example.test"
+        },
+        {
+          "selector": "#new-invite-entity",
+          "value": "Creu Roja Osona"
+        }
+      ],
+      "click": "button:has-text(\"{{participants:inviteAction}}\")",
+      "waitFor": "text={{participants:invitedTitle}} >> visible=true"
+    },
+    {
+      "label": "invites-list",
+      "goto": "/participants/invites",
+      "waitFor": "text={{participants:invitesTitle}} >> visible=true"
+    },
+    {
+      "label": "create-form",
+      "goto": "/participants/new",
+      "click": "button:has-text(\"{{participants:forkNoEmail}}\")",
+      "waitFor": "#new-participant-first-name >> visible=true"
+    },
+    {
+      "label": "missing-name",
+      "click": "button:has-text(\"{{participants:createAccountAction}}\")",
+      "waitFor": "text={{onboarding:errorRequired}} >> visible=true"
+    },
+    {
+      "label": "credentials",
+      "fill": [
+        {
+          "selector": "#new-participant-first-name",
+          "value": "Aissatou"
+        },
+        {
+          "selector": "#new-participant-last-name",
+          "value": "Barry"
+        },
+        {
+          "selector": "#new-participant-entity",
+          "value": "CEAR Catalunya"
+        }
+      ],
+      "click": "button:has-text(\"{{participants:createAccountAction}}\")",
+      "waitFor": "text={{participants:credentialsTitle}} >> visible=true"
+    },
+    {
+      "label": "record",
+      "goto": "/participants/5eed0000-0000-4000-8000-000000000030",
+      "waitFor": "text={{participants:resetPasswordHint}} >> visible=true"
+    },
+    {
+      "label": "reset-confirm",
+      "click": "button:has-text(\"{{participants:resetPasswordAction}}\")",
+      "waitFor": "text={{participants:resetPasswordConfirmBody}} >> visible=true"
+    },
+    {
+      "label": "reset-done",
+      "click": "button:has-text(\"{{participants:resetPasswordConfirmAction}}\")",
+      "waitFor": "text={{participants:resetPasswordDoneTitle}} >> visible=true"
+    }
+  ]
+}

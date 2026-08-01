@@ -8,15 +8,16 @@
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { OptionChip } from '@/components/onboarding/option-chip';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
-import { onboardingDraftStore } from '@/lib/onboarding';
+import { onboardingDraftStore, usePendingInviteEntity } from '@/lib/onboarding';
 import { logisticsFormSchema, type LogisticsFormInput } from '@/lib/onboarding-form';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
+import { prefilledReferenceEntity } from '@ramassa/shared/accounts';
 import { CLOTHING_SIZES, SHOE_SIZES, type LogisticsStep } from '@ramassa/shared/schemas';
 
 export default function LogisticsStepScreen() {
@@ -26,10 +27,13 @@ export default function LogisticsStepScreen() {
   const [draft] = useState(() => onboardingDraftStore.loadDraft());
 
   const saved = (draft?.logistics ?? {}) as Partial<LogisticsFormInput>;
+  const invitedEntity = usePendingInviteEntity();
+
   const {
     control,
     handleSubmit,
     getValues,
+    setValue,
     watch,
     formState: { errors },
   } = useForm<LogisticsFormInput, unknown, LogisticsStep>({
@@ -51,6 +55,23 @@ export default function LogisticsStepScreen() {
   const hasDependents = watch('hasDependents');
   const referenceEntity = watch('referenceEntity');
   const isNoEntity = referenceEntity === null;
+
+  /**
+   * The entity a staff invitation carries, applied ONCE and only into a field
+   * she has not answered (RAPP-25). It is a DEFAULT she can change, never a
+   * fact recorded about her: `prefilledReferenceEntity` owns that precedence,
+   * and the ref makes sure a late-arriving lookup cannot re-apply itself over
+   * something she typed in the meantime.
+   */
+  const hasAppliedInvite = useRef(false);
+  useEffect(() => {
+    if (hasAppliedInvite.current || invitedEntity === null) return;
+    const next = prefilledReferenceEntity(getValues('referenceEntity'), invitedEntity);
+    hasAppliedInvite.current = true;
+    if (next !== getValues('referenceEntity')) {
+      setValue('referenceEntity', next ?? '');
+    }
+  }, [invitedEntity, getValues, setValue]);
 
   function persist(currentStep: 'documentation' | 'terms') {
     onboardingDraftStore.saveDraft({

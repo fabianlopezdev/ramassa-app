@@ -46,6 +46,22 @@ const piiKeys = new Set([
   'dateofbirth',
   'birthday',
   'nationality',
+  // Credentials (RAPP-25). The account-creation and password-reset RPCs return
+  // a plaintext password ONCE, to be read aloud and written on paper. It is
+  // stored nowhere, and a failure carrying it into `safeAsync`'s context would
+  // put it in a log line and in Sentry, which is the one place it must never
+  // reach: an issue-tracker search would then hand over live credentials for a
+  // refugee woman's account.
+  'password',
+  'newpassword',
+  'currentpassword',
+  'credential',
+  'credentials',
+  'secret',
+  'token',
+  'accesstoken',
+  'refreshtoken',
+  'apikey',
 ]);
 
 function isPiiKey(key: string): boolean {
@@ -63,7 +79,27 @@ const emailPattern = /[\w.+-]+@[\w-]+\.[\w.-]+/g;
 const phoneCandidatePattern = /\+?\d[\d\s-]*\d/g;
 const minimumPhoneDigits = 9;
 
+/**
+ * A value that is EXACTLY a UUID and nothing else.
+ *
+ * Opaque IDs are the one thing this module is supposed to let through: they are
+ * what makes an incident traceable back to a record, and a log line that has
+ * scrubbed its own identifiers cannot be investigated at all. The phone pattern
+ * does not know that, and a hyphenated run of digits is exactly what a UUID
+ * looks like to it — the seeded identifiers, being mostly zeroes, were coming
+ * out as "5eed[REDACTED]" (found by a RAPP-25 test asserting the promise in
+ * this file's own docstring).
+ *
+ * Deliberately anchored to the WHOLE string: an id field holds an id. A UUID
+ * quoted inside a sentence is left to the ordinary rules, because there the
+ * surrounding text is the risk and a partial scrub is the safe failure.
+ */
+const wholeUuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 function redactStringPatterns(value: string): string {
+  if (wholeUuidPattern.test(value)) {
+    return value;
+  }
   return value
     .replaceAll(spanishNiePattern, REDACTED)
     .replaceAll(spanishDniPattern, REDACTED)

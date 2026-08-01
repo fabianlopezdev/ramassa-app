@@ -20,7 +20,8 @@
     "./testing": "./testing/index.ts",
     "./tokens/motion": "./tokens/motion.ts",
     "./profile": "./profile/index.ts",
-    "./participants": "./participants/index.ts"
+    "./participants": "./participants/index.ts",
+    "./accounts": "./accounts/index.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

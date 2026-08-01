@@ -21,6 +21,8 @@ import { Route as StaffContentRouteImport } from './routes/_staff.content'
 import { Route as StaffAttendanceRouteImport } from './routes/_staff.attendance'
 import { Route as StaffParticipantsIndexRouteImport } from './routes/_staff.participants.index'
 import { Route as EntityPortalIndexRouteImport } from './routes/_entity.portal.index'
+import { Route as StaffParticipantsNewRouteImport } from './routes/_staff.participants.new'
+import { Route as StaffParticipantsInvitesRouteImport } from './routes/_staff.participants.invites'
 import { Route as StaffParticipantsParticipantIdRouteImport } from './routes/_staff.participants.$participantId'
 import { Route as EntityPortalServicesRouteImport } from './routes/_entity.portal.services'
 import { Route as EntityPortalReferralsRouteImport } from './routes/_entity.portal.referrals'
@@ -85,6 +87,17 @@ const EntityPortalIndexRoute = EntityPortalIndexRouteImport.update({
   path: '/portal/',
   getParentRoute: () => EntityRoute,
 } as any)
+const StaffParticipantsNewRoute = StaffParticipantsNewRouteImport.update({
+  id: '/participants/new',
+  path: '/participants/new',
+  getParentRoute: () => StaffRoute,
+} as any)
+const StaffParticipantsInvitesRoute =
+  StaffParticipantsInvitesRouteImport.update({
+    id: '/participants/invites',
+    path: '/participants/invites',
+    getParentRoute: () => StaffRoute,
+  } as any)
 const StaffParticipantsParticipantIdRoute =
   StaffParticipantsParticipantIdRouteImport.update({
     id: '/participants/$participantId',
@@ -126,6 +139,8 @@ export interface FileRoutesByFullPath {
   '/portal/referrals': typeof EntityPortalReferralsRoute
   '/portal/services': typeof EntityPortalServicesRoute
   '/participants/$participantId': typeof StaffParticipantsParticipantIdRoute
+  '/participants/invites': typeof StaffParticipantsInvitesRoute
+  '/participants/new': typeof StaffParticipantsNewRoute
   '/portal/': typeof EntityPortalIndexRoute
   '/participants/': typeof StaffParticipantsIndexRoute
 }
@@ -143,6 +158,8 @@ export interface FileRoutesByTo {
   '/portal/referrals': typeof EntityPortalReferralsRoute
   '/portal/services': typeof EntityPortalServicesRoute
   '/participants/$participantId': typeof StaffParticipantsParticipantIdRoute
+  '/participants/invites': typeof StaffParticipantsInvitesRoute
+  '/participants/new': typeof StaffParticipantsNewRoute
   '/portal': typeof EntityPortalIndexRoute
   '/participants': typeof StaffParticipantsIndexRoute
 }
@@ -163,6 +180,8 @@ export interface FileRoutesById {
   '/_entity/portal/referrals': typeof EntityPortalReferralsRoute
   '/_entity/portal/services': typeof EntityPortalServicesRoute
   '/_staff/participants/$participantId': typeof StaffParticipantsParticipantIdRoute
+  '/_staff/participants/invites': typeof StaffParticipantsInvitesRoute
+  '/_staff/participants/new': typeof StaffParticipantsNewRoute
   '/_entity/portal/': typeof EntityPortalIndexRoute
   '/_staff/participants/': typeof StaffParticipantsIndexRoute
 }
@@ -182,6 +201,8 @@ export interface FileRouteTypes {
     | '/portal/referrals'
     | '/portal/services'
     | '/participants/$participantId'
+    | '/participants/invites'
+    | '/participants/new'
     | '/portal/'
     | '/participants/'
   fileRoutesByTo: FileRoutesByTo
@@ -199,6 +220,8 @@ export interface FileRouteTypes {
     | '/portal/referrals'
     | '/portal/services'
     | '/participants/$participantId'
+    | '/participants/invites'
+    | '/participants/new'
     | '/portal'
     | '/participants'
   id:
@@ -218,6 +241,8 @@ export interface FileRouteTypes {
     | '/_entity/portal/referrals'
     | '/_entity/portal/services'
     | '/_staff/participants/$participantId'
+    | '/_staff/participants/invites'
+    | '/_staff/participants/new'
     | '/_entity/portal/'
     | '/_staff/participants/'
   fileRoutesById: FileRoutesById
@@ -316,6 +341,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EntityPortalIndexRouteImport
       parentRoute: typeof EntityRoute
     }
+    '/_staff/participants/new': {
+      id: '/_staff/participants/new'
+      path: '/participants/new'
+      fullPath: '/participants/new'
+      preLoaderRoute: typeof StaffParticipantsNewRouteImport
+      parentRoute: typeof StaffRoute
+    }
+    '/_staff/participants/invites': {
+      id: '/_staff/participants/invites'
+      path: '/participants/invites'
+      fullPath: '/participants/invites'
+      preLoaderRoute: typeof StaffParticipantsInvitesRouteImport
+      parentRoute: typeof StaffRoute
+    }
     '/_staff/participants/$participantId': {
       id: '/_staff/participants/$participantId'
       path: '/participants/$participantId'
@@ -380,6 +419,8 @@ interface StaffRouteChildren {
   StaffMessagesRoute: typeof StaffMessagesRoute
   StaffSettingsRoute: typeof StaffSettingsRoute
   StaffParticipantsParticipantIdRoute: typeof StaffParticipantsParticipantIdRoute
+  StaffParticipantsInvitesRoute: typeof StaffParticipantsInvitesRoute
+  StaffParticipantsNewRoute: typeof StaffParticipantsNewRoute
   StaffParticipantsIndexRoute: typeof StaffParticipantsIndexRoute
 }
 
@@ -390,6 +431,8 @@ const StaffRouteChildren: StaffRouteChildren = {
   StaffMessagesRoute: StaffMessagesRoute,
   StaffSettingsRoute: StaffSettingsRoute,
   StaffParticipantsParticipantIdRoute: StaffParticipantsParticipantIdRoute,
+  StaffParticipantsInvitesRoute: StaffParticipantsInvitesRoute,
+  StaffParticipantsNewRoute: StaffParticipantsNewRoute,
   StaffParticipantsIndexRoute: StaffParticipantsIndexRoute,
 }
 

@@ -125,9 +125,13 @@ select is_empty(
   'every seeded account has the shared dev password and a confirmed email'
 );
 
+-- Two reserved domains, both unroutable. `@example.test` is the fixture
+-- domain; `@ramassa.invalid` is what the product generates for a participant
+-- with no inbox (RAPP-25), reserved by RFC 2606 so it can never acquire one.
 select is_empty(
-  $$ select id from auth.users where email not like '%@example.test' $$,
-  'no seeded account uses an address outside the reserved fake domain'
+  $$ select id from auth.users
+     where email not like '%@example.test' and email not like '%@ramassa.invalid' $$,
+  'no seeded account uses an address outside the two reserved domains'
 );
 
 -- STANDING RULE (RAPP-18 scope 4) -------------------------------------------------
