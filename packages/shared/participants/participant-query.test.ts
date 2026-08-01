@@ -85,6 +85,28 @@ describe('parseParticipantSearch', () => {
     expect(parseParticipantSearch({ status: 'deleted' }).status).toBe('all');
   });
 
+  /**
+   * A URL is strings all the way down, so an absent filter comes back as the
+   * four characters "null" rather than as null. Read literally, that filters
+   * the roster to an entity by that name and the table shows nobody: the bug
+   * looks like "search is broken" and is actually a round trip.
+   */
+  test('an absent filter survives the round trip through the URL as absent', () => {
+    expect(parseParticipantSearch({ entity: 'null', nationality: 'null' })).toMatchObject({
+      entity: null,
+      nationality: null,
+    });
+    expect(parseParticipantSearch({ entity: '', nationality: '' })).toMatchObject({
+      entity: null,
+      nationality: null,
+    });
+    expect(parseParticipantSearch({ entity: 'undefined' })).toMatchObject({ entity: null });
+  });
+
+  test('an entity that genuinely contains those letters still filters', () => {
+    expect(parseParticipantSearch({ entity: 'Nullestrand' }).entity).toBe('Nullestrand');
+  });
+
   test('an encrypted field is not offered as a sort column', () => {
     for (const column of ['document_number', 'phone', 'address', 'postal_code']) {
       expect(parseParticipantSearch({ sort: column }).sort).toBe('last_name');

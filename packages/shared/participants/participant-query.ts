@@ -39,10 +39,27 @@ export type ParticipantSortColumn = (typeof PARTICIPANT_SORT_COLUMNS)[number];
  * URL, or follows a stale bookmark from before a filter was renamed, should get
  * the table she expected with that one filter ignored, not an error page.
  */
+/**
+ * A URL is strings all the way down: an absent filter comes back from the
+ * address bar as the four characters "null", not as null. Read literally that
+ * filters the roster to an entity by that name and the table shows nobody,
+ * which reads as "search is broken" and is actually a round trip. An entity
+ * genuinely called "Nullestrand" is unaffected: only the exact placeholders
+ * are treated as absence.
+ */
+const absentAsNull = (value: unknown): unknown =>
+  value === '' || value === 'null' || value === 'undefined' || value === undefined ? null : value;
+
 export const participantSearchSchema = z.object({
   q: z.string().trim().max(200).catch('').default(''),
-  entity: z.string().trim().max(200).nullable().catch(null).default(null),
-  nationality: z.string().trim().max(100).nullable().catch(null).default(null),
+  entity: z
+    .preprocess(absentAsNull, z.string().trim().max(200).nullable())
+    .catch(null)
+    .default(null),
+  nationality: z
+    .preprocess(absentAsNull, z.string().trim().max(100).nullable())
+    .catch(null)
+    .default(null),
   status: z.enum(['all', 'active', 'inactive']).catch('all').default('all'),
   dependents: z.enum(['all', 'with', 'without']).catch('all').default('all'),
   sort: z.enum(PARTICIPANT_SORT_COLUMNS).catch('last_name').default('last_name'),
