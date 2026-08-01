@@ -176,17 +176,17 @@ These are not guidelines — they are enforced during code review and `/react-na
 
 **Participant Management:**
 
-| Capability                      | Description                                                                                                                                                                |
-| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **View all participants**       | Searchable, filterable table (shadcn data table) of all players in the org. Filter by entity, nationality, active/inactive, has dependents. Full-text search (PostgreSQL). |
-| **View participant detail**     | Full profile, attendance history, event signups, chat history, forum activity, feedback submissions, reference entity info.                                                |
-| **Edit participant profiles**   | Update any field. Add notes. Change status (active/inactive).                                                                                                              |
-| **Create participant accounts** | Create accounts directly (for users without email: generate internal email + set password). No SMS/messaging cost.                                                         |
-| **Invite new participants**     | Generate invite link (magic link via email, with optional pre-filled reference entity). Share link directly or via entity.                                                 |
-| **Deactivate participants**     | Soft-delete: mark inactive without destroying data (RGPD: keep for reporting, anonymize on request).                                                                       |
-| **Delete participants**         | Full RGPD deletion on request. Remove all personal data.                                                                                                                   |
-| **Reset passwords**             | Reset password for admin-created accounts (fallback auth).                                                                                                                 |
-| **Assign equipment**            | Record clothing size, shoe size (on profile). Track deliveries: item, size, date, who delivered (via `equipment_deliveries` table). View delivery history per participant. |
+| Capability                      | Description                                                                                                                                                                              |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **View all participants**       | Searchable, filterable table (shadcn data table) of all players in the org. Filter by entity, nationality, active/inactive, has dependents. Full-text search (PostgreSQL).               |
+| **View participant detail**     | Full profile, attendance history, event signups, chat history, forum activity, feedback submissions, reference entity info.                                                              |
+| **Edit participant profiles**   | Update any field. Add notes. Change status (active/inactive).                                                                                                                            |
+| **Create participant accounts** | Create accounts directly (for users without email: generate an unroutable internal identifier + set a one-time password, shown once and stored nowhere readable). No SMS/messaging cost. |
+| **Invite new participants**     | Generate invite link (magic link via email, with optional pre-filled reference entity). Share link directly or via entity.                                                               |
+| **Deactivate participants**     | Soft-delete: mark inactive without destroying data (RGPD: keep for reporting, anonymize on request).                                                                                     |
+| **Delete participants**         | Full RGPD deletion on request. Remove all personal data.                                                                                                                                 |
+| **Reset passwords**             | Reset password for admin-created accounts (fallback auth).                                                                                                                               |
+| **Assign equipment**            | Record clothing size, shoe size (on profile). Track deliveries: item, size, date, who delivered (via `equipment_deliveries` table). View delivery history per participant.               |
 
 **Operations:**
 
@@ -240,12 +240,12 @@ These are not guidelines — they are enforced during code review and `/react-na
 
 ### Strategy: Magic Link Primary, Admin-Created Fallback
 
-| User type                     | Auth method           | Details                                                                                                                              |
-| ----------------------------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| **Players (with email)**      | Magic link            | Player enters email → receives link → taps → logged in. No password to remember. Free (Supabase email).                              |
-| **Players (no email — rare)** | Admin-created account | Staff creates account with internal email (`name.id@ramassa.app`) + password. Gives credentials to player. Staff can reset password. |
-| **Staff / Admin**             | Magic link            | All staff have email. Magic link is simplest.                                                                                        |
-| **Entity users**              | Magic link            | All entity contacts have email.                                                                                                      |
+| User type                     | Auth method           | Details                                                                                                                                                                                                                                                                                                                                                                     |
+| ----------------------------- | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Players (with email)**      | Magic link            | Player enters email → receives link → taps → logged in. No password to remember. Free (Supabase email).                                                                                                                                                                                                                                                                     |
+| **Players (no email — rare)** | Admin-created account | Staff creates account with an internal login identifier (`name.<id>@ramassa.invalid`, GENERATED server-side so staff never type it) + password. Gives credentials to player in person. Staff can reset the password. The domain is reserved by RFC 2606 and can never receive mail, because there is no inbox to receive it — see ADR-005 (amended 2026-08-01) and ADR-022. |
+| **Staff / Admin**             | Magic link            | All staff have email. Magic link is simplest.                                                                                                                                                                                                                                                                                                                               |
+| **Entity users**              | Magic link            | All entity contacts have email.                                                                                                                                                                                                                                                                                                                                             |
 
 **Session persistence:** Sessions persist on device (MMKV on mobile, localStorage on web). Users log in once and stay logged in. Re-authentication only needed on device change or session expiry.
 
