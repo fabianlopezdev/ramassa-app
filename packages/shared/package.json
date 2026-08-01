@@ -19,7 +19,8 @@
     "./onboarding-drafts": "./lib/onboarding-drafts.ts",
     "./testing": "./testing/index.ts",
     "./tokens/motion": "./tokens/motion.ts",
-    "./profile": "./profile/index.ts"
+    "./profile": "./profile/index.ts",
+    "./participants": "./participants/index.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

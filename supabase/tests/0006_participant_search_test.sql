@@ -19,7 +19,7 @@
 -- that search works against the data the app actually ships with.
 
 begin;
-select plan(13);
+select plan(15);
 
 select vault.create_secret('test-encryption-key', 'app_encryption_key', 'pgTAP test key')
 where not exists (select 1 from vault.secrets where name = 'app_encryption_key');
@@ -83,6 +83,14 @@ select is_empty(
   'encrypted fields are NOT searchable, and that is the design, not a gap'
 );
 
+-- The filter dropdowns ------------------------------------------------------------
+
+select isnt_empty(
+  $$ select 1 from public.participant_filter_options()
+     where 'Creu Roja Osona' = any(entities) and 'Síria' = any(nationalities) $$,
+  'the filter options are derived from the roster that is actually there'
+);
+
 -- Who may run it -------------------------------------------------------------------
 
 -- Staff see their own organization's roster.
@@ -99,6 +107,15 @@ set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000004", 
 select is(
   (select count(*) from public.profiles where role = 'player')::int, 0,
   'an entity contact cannot enumerate participants'
+);
+
+-- The dropdowns leak nothing either: they are built from rows the caller can
+-- read, so someone who can read none gets empty arrays rather than the full
+-- list of entities the programme works with.
+select is(
+  (select cardinality(entities) + cardinality(nationalities)
+     from public.participant_filter_options()), 0,
+  'and the filter options tell her nothing about the roster she cannot read'
 );
 
 -- A participant sees only herself, however she searches.

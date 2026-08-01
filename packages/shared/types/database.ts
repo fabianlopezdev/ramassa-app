@@ -372,6 +372,13 @@ export type Database = {
       };
       immutable_unaccent: { Args: { value: string }; Returns: string };
       is_staff_or_admin: { Args: never; Returns: boolean };
+      participant_filter_options: {
+        Args: never;
+        Returns: {
+          entities: string[];
+          nationalities: string[];
+        }[];
+      };
       update_own_profile: { Args: { payload: Json }; Returns: undefined };
       user_is_in_current_org: {
         Args: { target_user_id: string };
