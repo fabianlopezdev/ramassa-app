@@ -46,6 +46,35 @@ export function countInDatabase(sql: string): number {
 }
 
 /**
+ * One scalar, read as a given signed-in ADDRESS rather than as the owner.
+ *
+ * Some promises are only true from inside a session: `my_pending_invite()`
+ * keys on the JWT's email precisely so there is no argument that could widen
+ * it, which means the owner-level `queryDatabase` cannot see what it returns
+ * for a particular woman. This sets the claims the way GoTrue presents them.
+ *
+ * `set local` needs a transaction, and psql echoes a command tag for every
+ * statement in the batch ("BEGIN", "SET", ...), so only the LAST line is the
+ * answer. An empty answer (no row) stays an empty string.
+ */
+export function queryDatabaseAsAddress(email: string, sql: string): string {
+  const claims = JSON.stringify({
+    sub: '5eed0000-0000-4000-8000-000000000026',
+    role: 'authenticated',
+    email,
+  });
+  const output = queryDatabase(
+    `begin;
+     set local role authenticated;
+     set local request.jwt.claims = '${claims}';
+     ${sql}
+     commit;`,
+  );
+  const lines = output.split('\n').filter((line) => !/^(BEGIN|SET|COMMIT|ROLLBACK)$/.test(line));
+  return (lines.at(-1) ?? '').trim();
+}
+
+/**
  * Signs in the way a person does: the password path, because local mail is not
  * wired up.
  *
@@ -55,7 +84,46 @@ export function countInDatabase(sql: string): number {
  * all. A person never notices; an automated run hits it every time and reads
  * as "the login page is broken".
  */
+/**
+ * Signs the current identity out THROUGH THE PRODUCT, so a spec can sign in as
+ * somebody else afterwards.
+ *
+ * It is needed because `/login` on an authenticated session redirects to that
+ * role's landing, so a second `signIn` in one test would silently never see a
+ * login form. Both landings carry the button: the staff dashboard, and the
+ * terminal "no admin access" screen a participant lands on.
+ */
+export async function signOut(page: Page): Promise<void> {
+  await page.goto('/dashboard');
+
+  const signOutButton = page
+    .getByRole('button', { name: /tanca la sessió|sign out|log out|cerrar sesión/i })
+    .first();
+  const loginEmailField = page.locator('input[type="email"]');
+
+  // WAITED FOR, never counted straight away. `count()` does not auto-wait, so
+  // asking on a cold server-rendered load answers "no button" while React is
+  // still hydrating; this helper then returned without signing anyone out and
+  // the caller failed much later, looking like a broken login page.
+  await expect(signOutButton.or(loginEmailField).first()).toBeVisible({ timeout: 20_000 });
+
+  // Already signed out: the guard sent an unauthenticated visitor to /login.
+  if ((await signOutButton.count()) === 0) return;
+
+  // The same hydration retry the sign-in below needs, for the same reason.
+  await expect(async () => {
+    await signOutButton.click();
+    await expect(page).toHaveURL(/\/login/, { timeout: 2_000 });
+  }).toPass({ timeout: 20_000 });
+}
+
 export async function signIn(page: Page, email: string): Promise<void> {
+  // Signing out first makes this safe to call twice in one test. `/login` on
+  // an authenticated session redirects to that role's landing, so a second
+  // call would otherwise wait 20s for a form that is never coming and fail as
+  // "the login page is broken" — a full page away from the real cause.
+  await signOut(page);
+
   await page.goto('/login');
   const usePassword = page.getByRole('button', { name: /contrasenya|password/i }).first();
   await expect(usePassword).toBeVisible();
