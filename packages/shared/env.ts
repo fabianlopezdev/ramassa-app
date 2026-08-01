@@ -19,6 +19,11 @@ export const clientEnvSchema = z.object({
   // Optional: without it, error reporting is simply off (local dev, CI).
   // A DSN is an ingest address, not a secret, so it may ship in the client.
   EXPO_PUBLIC_SENTRY_DSN: z.url().optional(),
+  // The media Worker's origin (RAPP-14). Optional because nothing on the phone
+  // uploads yet and a required key would fail BOTH apps at boot over a feature
+  // neither uses; the one flow that needs it (the RGPD media sweep, RAPP-26)
+  // fails at the point of use with a code instead.
+  EXPO_PUBLIC_MEDIA_WORKER_URL: z.url().optional(),
 });
 
 export const serverEnvSchema = clientEnvSchema.extend({

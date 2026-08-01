@@ -126,6 +126,9 @@ export function ParticipantsTable({ page, filterOptions, search }: ParticipantsT
         </div>
         <div className="flex flex-wrap gap-3">
           <Button asChild size="lg" variant="outline">
+            <Link to="/participants/deletion-requests">{t('deletionRequestsTitle')}</Link>
+          </Button>
+          <Button asChild size="lg" variant="outline">
             <Link to="/participants/invites">{t('invitesAction')}</Link>
           </Button>
           <Button asChild size="lg">

@@ -27,6 +27,13 @@ export interface ParticipantDetailRow extends ProfileRow {
    * the refusal in agreement.
    */
   readonly auth_method: 'magic_link' | 'admin_created';
+  /**
+   * When the person was removed from this row while the row was kept for
+   * reporting (RAPP-26). Null for an ordinary record. The screen reads this
+   * rather than inferring it from a blank name, so "anonymized" is a state the
+   * UI can name instead of a shape it has to guess.
+   */
+  readonly anonymized_at: string | null;
   readonly created_at: string;
   readonly updated_at: string;
 }

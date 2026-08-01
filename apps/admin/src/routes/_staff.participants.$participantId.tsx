@@ -27,6 +27,7 @@ import {
   fetchParticipantDetail,
   fetchParticipantNotes,
 } from '@ramassa/shared/participants';
+import { fetchDeletionRequests } from '@ramassa/shared/rgpd';
 
 export const Route = createFileRoute('/_staff/participants/$participantId')({
   ssr: false,
@@ -36,24 +37,47 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
     // those apart from a FAILED read, which throws and reaches the router's
     // error component with its code.
     if (participant === null) {
-      return { participant: null, notes: [], activity: [] };
+      return {
+        participant: null,
+        notes: [],
+        activity: [],
+        openDeletionRequestReason: undefined,
+      };
     }
-    const [notes, activity] = await Promise.all([
+    const [notes, activity, openRequests] = await Promise.all([
       fetchParticipantNotes(supabase, params.participantId),
       fetchParticipantActivity(supabase, params.participantId),
+      fetchDeletionRequests(supabase, 'open'),
     ]);
-    return { participant, notes, activity };
+    // Filtered here rather than asked for by participant: the queue read is one
+    // round trip either way, and the same call feeds the staff-wide queue, so
+    // there is one query to keep correct instead of two.
+    const hers = openRequests.find((request) => request.profile_id === params.participantId);
+    return {
+      participant,
+      notes,
+      activity,
+      // `undefined` = she never asked. `null` = she asked and gave no reason.
+      openDeletionRequestReason: hers === undefined ? undefined : hers.reason,
+    };
   },
   component: ParticipantDetailPage,
 });
 
 function ParticipantDetailPage() {
-  const { participant, notes, activity } = Route.useLoaderData();
+  const { participant, notes, activity, openDeletionRequestReason } = Route.useLoaderData();
 
   if (participant === null) {
     return <ParticipantNotFound />;
   }
-  return <ParticipantDetail participant={participant} notes={notes} activity={activity} />;
+  return (
+    <ParticipantDetail
+      participant={participant}
+      notes={notes}
+      activity={activity}
+      openDeletionRequestReason={openDeletionRequestReason}
+    />
+  );
 }
 
 /**
