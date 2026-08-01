@@ -53,3 +53,7 @@ excalidraw-diagram
 
 # TanStack Start build temp
 .tanstack/
+
+# Playwright web QA output (RAPP-99)
+test-results/
+playwright-report/
