@@ -1111,14 +1111,20 @@ CREATE TABLE staff_documents (
 );
 
 -- Audit log
+-- Append-only (no UPDATE/DELETE policies; INSERT pins actor_id to the caller).
 CREATE TABLE audit_log (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   org_id UUID REFERENCES organizations(id) NOT NULL,
   actor_id UUID REFERENCES profiles(id) NOT NULL,
-  action TEXT NOT NULL,                    -- 'profile.update', 'event.create', 'forum_post.delete', etc.
+  action TEXT NOT NULL,                    -- 'profile.view_sensitive', 'profile.update', 'event.create', etc.
   target_type TEXT NOT NULL,               -- 'profile', 'event', 'forum_post', etc.
   target_id UUID NOT NULL,
-  changes JSONB,                           -- {"field": {"old": "...", "new": "..."}}
+  changes JSONB,                           -- ordinary field: {"field": {"old": "...", "new": "..."}}
+                                           -- ENCRYPTED field (document_number, phone, address,
+                                           -- postal_code): {"field": {"changed": true}} — values of
+                                           -- encrypted columns NEVER enter this table, or it becomes
+                                           -- a plaintext mirror of what pgcrypto protects. Decided by
+                                           -- Fabián 2026-08-01; rationale + pgTAP pin in ADR-021.
   created_at TIMESTAMPTZ DEFAULT now()
 );
 

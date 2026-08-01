@@ -30,6 +30,8 @@
 -- sensitive, and the encryption would have bought nothing. Knowing that the
 -- phone was changed, by whom, and when is what the audit is for; knowing what
 -- it was changed from is the participant's data, and it lives in one place.
+-- Confirmed by Fabián 2026-08-01 as the standing rule for every writer of this
+-- table, present and future: ADR-021.
 --
 -- WHY NO `org_id` ON `participant_notes`
 --
