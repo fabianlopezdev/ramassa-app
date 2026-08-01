@@ -145,6 +145,7 @@ export type Database = {
           reference_contact_name: string | null;
           reference_entity: string | null;
           role: string;
+          search_document: unknown;
           shoe_size: string | null;
           terms_accepted_at: string | null;
           updated_at: string;
@@ -175,6 +176,7 @@ export type Database = {
           reference_contact_name?: string | null;
           reference_entity?: string | null;
           role?: string;
+          search_document?: unknown;
           shoe_size?: string | null;
           terms_accepted_at?: string | null;
           updated_at?: string;
@@ -205,6 +207,7 @@ export type Database = {
           reference_contact_name?: string | null;
           reference_entity?: string | null;
           role?: string;
+          search_document?: unknown;
           shoe_size?: string | null;
           terms_accepted_at?: string | null;
           updated_at?: string;
@@ -322,6 +325,7 @@ export type Database = {
           reference_contact_name: string | null;
           reference_entity: string | null;
           role: string;
+          search_document: unknown;
           shoe_size: string | null;
           terms_accepted_at: string | null;
           updated_at: string;
@@ -366,6 +370,7 @@ export type Database = {
           terms_accepted_at: string;
         }[];
       };
+      immutable_unaccent: { Args: { value: string }; Returns: string };
       is_staff_or_admin: { Args: never; Returns: boolean };
       update_own_profile: { Args: { payload: Json }; Returns: undefined };
       user_is_in_current_org: {
