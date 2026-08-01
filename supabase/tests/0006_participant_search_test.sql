@@ -19,7 +19,7 @@
 -- that search works against the data the app actually ships with.
 
 begin;
-select plan(15);
+select plan(18);
 
 select vault.create_secret('test-encryption-key', 'app_encryption_key', 'pgTAP test key')
 where not exists (select 1 from vault.secrets where name = 'app_encryption_key');
@@ -58,6 +58,28 @@ select isnt_empty(
   $$ select id from public.profiles
      where search_document @@ websearch_to_tsquery('simple', public.immutable_unaccent('Оксана')) $$,
   'Cyrillic names are searchable in Cyrillic'
+);
+
+-- The two failures a staff member reported by using it: a half-typed word, and
+-- a word typed WITH its accents. Both go through `to_tsquery`, which is what
+-- the app actually sends, rather than through a hand-folded query that only
+-- ever proved the stored side worked.
+select isnt_empty(
+  $$ select id from public.profiles
+     where role = 'player' and search_document @@ to_tsquery('simple', 'yo:*') $$,
+  'a half-typed word matches from its start: "yo" finds Yolanda'
+);
+
+select isnt_empty(
+  $$ select id from public.profiles
+     where search_document @@ to_tsquery('simple', 'Torelló:*') $$,
+  'a word typed WITH its accents matches: the document carries both spellings'
+);
+
+select isnt_empty(
+  $$ select id from public.profiles
+     where search_document @@ to_tsquery('simple', 'torello:*') $$,
+  'and the folded spelling still matches too'
 );
 
 -- The searchable fields are the non-encrypted ones, so a team member can find

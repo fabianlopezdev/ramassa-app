@@ -12,6 +12,7 @@
 import { describe, expect, test } from 'bun:test';
 import {
   applyParticipantQuery,
+  buildPrefixTsQuery,
   parseParticipantSearch,
   PARTICIPANT_PAGE_SIZE,
   type ParticipantSearch,
@@ -114,6 +115,46 @@ describe('parseParticipantSearch', () => {
   });
 });
 
+/**
+ * Search runs on every pause in typing, so the term is usually HALF A WORD.
+ * Whole-token matching means "yo" finds nobody while Yolanda sits in the list
+ * on screen, which is indistinguishable from broken.
+ */
+describe('buildPrefixTsQuery', () => {
+  test('a half-typed word matches from its start', () => {
+    expect(buildPrefixTsQuery('yo')).toBe('yo:*');
+  });
+
+  test('several words all have to match, each as a prefix', () => {
+    expect(buildPrefixTsQuery('nuria ser')).toBe('nuria:* & ser:*');
+  });
+
+  test('accents are preserved: the document indexes both spellings', () => {
+    expect(buildPrefixTsQuery('Torelló')).toBe('Torelló:*');
+  });
+
+  /**
+   * The string is interpolated into a tsquery, so its operators are the
+   * injection surface: an unescaped `&`, `!` or `(` is a syntax error at best
+   * and a different query at worst.
+   */
+  test('tsquery operators in the input are stripped, not honoured', () => {
+    expect(buildPrefixTsQuery('a & b | !c')).toBe('a:* & b:* & c:*');
+    expect(buildPrefixTsQuery("nuria') | (1=1--")).toBe('nuria:* & 11:*');
+    expect(buildPrefixTsQuery('<->')).toBe('');
+  });
+
+  test('an empty or whitespace-only term produces no query', () => {
+    expect(buildPrefixTsQuery('')).toBe('');
+    expect(buildPrefixTsQuery('   ')).toBe('');
+  });
+
+  test('non-Latin scripts survive intact', () => {
+    expect(buildPrefixTsQuery('أمينة')).toBe('أمينة:*');
+    expect(buildPrefixTsQuery('Оксана')).toBe('Оксана:*');
+  });
+});
+
 describe('applyParticipantQuery', () => {
   const base: ParticipantSearch = parseParticipantSearch({});
 
@@ -142,8 +183,12 @@ describe('applyParticipantQuery', () => {
     applyParticipantQuery(builder as never, { ...base, q: 'nuria serra' });
     const [args] = callsTo(calls, 'textSearch');
     expect(args?.[0]).toBe('search_document');
-    expect(args?.[1]).toBe('nuria serra');
-    expect(args?.[2]).toMatchObject({ type: 'websearch', config: 'simple' });
+    // A PREFIX query, and no `type`: supabase-js only passes the string to
+    // `to_tsquery` untouched when the type is omitted, and `:*` is what makes
+    // a half-typed word match.
+    expect(args?.[1]).toBe('nuria:* & serra:*');
+    expect(args?.[2]).toMatchObject({ config: 'simple' });
+    expect((args?.[2] as { type?: string }).type).toBeUndefined();
   });
 
   test('each filter is applied, and only when it is set', () => {

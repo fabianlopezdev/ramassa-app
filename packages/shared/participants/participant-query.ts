@@ -83,7 +83,9 @@ export interface ParticipantQueryBuilder {
   textSearch(
     column: string,
     query: string,
-    options: { type: 'websearch'; config: string },
+    // `type` omitted means `to_tsquery`, the only member of the family that
+    // understands the `:*` prefix syntax this search depends on.
+    options: { config: string; type?: 'plain' | 'phrase' | 'websearch' },
   ): ParticipantQueryBuilder;
   order(column: string, options: { ascending: boolean }): ParticipantQueryBuilder;
   range(from: number, to: number): ParticipantQueryBuilder;
@@ -97,14 +99,16 @@ export function applyParticipantQuery<T extends ParticipantQueryBuilder>(
   // are not roster rows, and RLS already limits everything to one organization.
   let query = builder.eq('role', 'player') as T;
 
-  if (search.q !== '') {
+  const tsQuery = buildPrefixTsQuery(search.q);
+  if (tsQuery !== '') {
     // The generated document, not a LIKE across columns: the index exists, and
     // an unanchored LIKE would scan the whole organization for every keystroke.
-    // 'simple' matches how the document was built, accents already folded.
-    query = query.textSearch('search_document', search.q, {
-      type: 'websearch',
-      config: 'simple',
-    }) as T;
+    //
+    // No `type`, on purpose. supabase-js maps 'websearch' to
+    // `websearch_to_tsquery`, which has no prefix syntax and would send `:*`
+    // through as literal text; omitting it uses `to_tsquery`, which is the only
+    // one of the family that can match a half-typed word.
+    query = query.textSearch('search_document', tsQuery, { config: 'simple' }) as T;
   }
 
   if (search.entity !== null) {
@@ -131,6 +135,34 @@ export function applyParticipantQuery<T extends ParticipantQueryBuilder>(
 
   const from = (search.page - 1) * PARTICIPANT_PAGE_SIZE;
   return query.range(from, from + PARTICIPANT_PAGE_SIZE - 1) as T;
+}
+
+/**
+ * Turns what a staff member has typed so far into a PREFIX tsquery.
+ *
+ * Search fires on every pause in typing, so the term is usually half a word.
+ * Whole-token matching means "yo" finds nobody while Yolanda is visible in the
+ * list on screen, which is indistinguishable from a broken search box; `:*`
+ * makes each word match from its start.
+ *
+ * Everything that is not a letter, a digit or a space is REMOVED first. The
+ * result is interpolated into `to_tsquery`, whose operators (`&`, `|`, `!`,
+ * `(`, `:`, `*`, `<->`) are the injection surface: left in, a stray `!` is a
+ * syntax error the staff member sees as a crash, and a crafted string is a
+ * different query than the one she asked for. Letters are matched by Unicode
+ * class, so Arabic, Farsi and Cyrillic pass through untouched.
+ *
+ * Accents are deliberately KEPT: the search document indexes both the accented
+ * and the folded spelling, so "Torelló" and "torello" both match without this
+ * layer having to own a copy of Postgres's unaccent dictionary.
+ */
+export function buildPrefixTsQuery(term: string): string {
+  return term
+    .replace(/[^\p{L}\p{N}\s]/gu, '')
+    .split(/\s+/)
+    .filter((word) => word !== '')
+    .map((word) => `${word}:*`)
+    .join(' & ');
 }
 
 /** The columns the table reads. No encrypted column is among them. */
