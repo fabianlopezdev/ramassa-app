@@ -1,0 +1,77 @@
+{
+  "app": "Ramassà",
+  "slug": "admin-participants",
+  "title": "Gestió de participants",
+  "surface": "admin",
+  "description": "La pantalla de treball de l'equip: totes les participants de l'organització, amb cerca per text, filtres per entitat, nacionalitat, estat i persones a càrrec, ordenació per columna i paginació. Tot l'estat viu a l'adreça, així que una vista filtrada és un enllaç que es pot enviar a una companya.",
+  "steps": [
+    {
+      "id": "table",
+      "label": "La taula, tal com s'obre",
+      "web": "admin-participants/web/03-table.png"
+    },
+    {
+      "id": "search",
+      "label": "Cerca: \"torello\" (troba Torelló, sense accents)",
+      "web": "admin-participants/web/04-search.png"
+    },
+    {
+      "id": "filter-entity",
+      "label": "Filtre: derivades per Creu Roja Osona",
+      "web": "admin-participants/web/05-filter-entity.png"
+    },
+    {
+      "id": "filter-nationality",
+      "label": "Filtre: nacionalitat ucraïnesa",
+      "web": "admin-participants/web/06-filter-nationality.png"
+    },
+    {
+      "id": "filter-status",
+      "label": "Filtre: participants inactives",
+      "web": "admin-participants/web/07-filter-status.png"
+    },
+    {
+      "id": "filter-dependents",
+      "label": "Filtre: amb persones a càrrec",
+      "web": "admin-participants/web/08-filter-dependents.png"
+    },
+    {
+      "id": "sorted",
+      "label": "Ordenat per població, de la Z a la A",
+      "web": "admin-participants/web/09-sorted.png"
+    },
+    {
+      "id": "empty",
+      "label": "Cap resultat: diu què fer, no només que no n'hi ha",
+      "web": "admin-participants/web/10-empty.png"
+    }
+  ],
+  "edges": [
+    { "from": "table", "to": "search", "label": "Escriu a la cerca" },
+    { "from": "table", "to": "filter-entity", "label": "Filtra per entitat", "kind": "neutral" },
+    {
+      "from": "table",
+      "to": "filter-nationality",
+      "label": "Filtra per nacionalitat",
+      "kind": "neutral"
+    },
+    { "from": "table", "to": "filter-status", "label": "Filtra per estat", "kind": "neutral" },
+    {
+      "from": "table",
+      "to": "filter-dependents",
+      "label": "Filtra per persones a càrrec",
+      "kind": "neutral"
+    },
+    { "from": "table", "to": "sorted", "label": "Ordena per població", "kind": "neutral" },
+    { "from": "search", "to": "empty", "label": "Cap coincidència", "kind": "negative" },
+    { "from": "empty", "to": "table", "label": "Treu els filtres", "kind": "dismiss" }
+  ],
+  "nodes": [],
+  "notes": [
+    "Tot l'estat de la taula viu a l'adreça: una vista filtrada es pot enviar per missatge, desar als preferits o recarregar sense perdre-la, i el botó de tornar enrere fa el que s'espera.",
+    "La cerca ignora accents en tots dos sentits: \"torello\" troba Torelló i \"Torelló\" també. Els noms en àrab, farsi i ciríl·lic es cerquen tal com s'escriuen, sense haver-los de transliterar.",
+    "La cerca NO inclou els camps xifrats (document, telèfon, adreça) i la pantalla ho diu. Fer-los cercables voldria dir guardar-ne una còpia en clar en algun lloc, que és precisament el que l'encriptació evita.",
+    "Cercar, filtrar, ordenar i paginar es fan a la base de dades, no al navegador: la llista està pensada per créixer fins a dues-centes participants.",
+    "Canviar un filtre torna a la primera pàgina. Quedar-se a la pàgina 7 després de reduir la llista a tres resultats mostraria una taula buida que sembla dir \"cap coincidència\"."
+  ]
+}

@@ -1,0 +1,64 @@
+{
+  "slug": "admin-participants",
+  "viewport": { "width": 1440, "height": 900 },
+  "deviceScaleFactor": 2,
+  "timezoneId": "Europe/Madrid",
+  "settle": { "timeout": 6000, "interval": 150 },
+  "steps": [
+    {
+      "label": "auth-open",
+      "goto": "/login",
+      "click": "button:has-text(\"{{auth:usePasswordInstead}}\")",
+      "waitFor": "input[type=\"password\"]"
+    },
+    {
+      "label": "auth-submit",
+      "fill": [
+        { "selector": "input[type=\"email\"]", "value": "{{staff:email}}" },
+        { "selector": "input[type=\"password\"]", "value": "{{staff:password}}" }
+      ],
+      "click": "button:has-text(\"{{auth:passwordAction}}\")",
+      "waitFor": "text={{admin:dashboardTitle}}"
+    },
+    {
+      "label": "table",
+      "goto": "/participants",
+      "waitFor": "text={{participants:searchHint}} >> visible=true"
+    },
+    {
+      "label": "search",
+      "goto": "/participants?q=torello",
+      "waitFor": "text={{participants:searchHint}} >> visible=true"
+    },
+    {
+      "label": "filter-entity",
+      "goto": "/participants?entity=Creu%20Roja%20Osona",
+      "waitFor": "text={{participants:searchHint}} >> visible=true"
+    },
+    {
+      "label": "filter-nationality",
+      "goto": "/participants?nationality=Ucra%C3%AFna",
+      "waitFor": "text={{participants:searchHint}} >> visible=true"
+    },
+    {
+      "label": "filter-status",
+      "goto": "/participants?status=inactive",
+      "waitFor": "text={{participants:searchHint}} >> visible=true"
+    },
+    {
+      "label": "filter-dependents",
+      "goto": "/participants?dependents=with",
+      "waitFor": "text={{participants:searchHint}} >> visible=true"
+    },
+    {
+      "label": "sorted",
+      "goto": "/participants?sort=city&dir=desc",
+      "waitFor": "text={{participants:searchHint}} >> visible=true"
+    },
+    {
+      "label": "empty",
+      "goto": "/participants?q=zzzzzz",
+      "waitFor": "text={{participants:emptyTitle}} >> visible=true"
+    }
+  ]
+}
