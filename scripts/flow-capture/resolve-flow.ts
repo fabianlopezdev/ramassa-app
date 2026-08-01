@@ -43,6 +43,14 @@ export const capturePlayerWithoutRequest = PARTICIPANT_FIXTURES[1];
 /** The seeded admin and entity contact the browser flows sign in as. */
 export const captureAdmin = STAFF_FIXTURES.find((person) => person.role === 'admin');
 export const captureEntity = STAFF_FIXTURES.find((person) => person.role === 'entity');
+/**
+ * A staff member who is NOT an admin. `staff:` above is the admin, because most
+ * browser flows just need "somebody who can reach the staff area"; this one
+ * exists for the flows whose whole point is the difference between the two, such
+ * as the RGPD lifecycle, where erasure is offered to an admin and withheld from
+ * everybody else.
+ */
+export const captureStaffOnly = STAFF_FIXTURES.find((person) => person.role === 'staff');
 
 /**
  * Adds the seeded credentials to the translation lookup, so a flow refers to the
@@ -59,6 +67,7 @@ export function withFixtures(translate: Translator): Translator {
     'player:email': capturePlayer?.email,
     'playerWithoutRequest:email': capturePlayerWithoutRequest?.email,
     'staff:email': captureAdmin?.email,
+    'staffOnly:email': captureStaffOnly?.email,
     'entity:email': captureEntity?.email,
     // The profile-less account the wizard flows sign in as (RAPP-21).
     'onboarding:email': ONBOARDING_ACCOUNT_EMAIL,
@@ -77,6 +86,7 @@ export function withFixtures(translate: Translator): Translator {
       key === 'player:password' ||
       key === 'playerWithoutRequest:password' ||
       key === 'staff:password' ||
+      key === 'staffOnly:password' ||
       key === 'entity:password' ||
       key === 'onboarding:password'
     ) {

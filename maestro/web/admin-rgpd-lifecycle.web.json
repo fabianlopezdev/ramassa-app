@@ -1,0 +1,118 @@
+{
+  "slug": "admin-rgpd-lifecycle",
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "deviceScaleFactor": 2,
+  "timezoneId": "Europe/Madrid",
+  "settle": {
+    "timeout": 6000,
+    "interval": 150
+  },
+  "steps": [
+    {
+      "label": "auth-open",
+      "goto": "/login",
+      "click": "button:has-text(\"{{auth:usePasswordInstead}}\")",
+      "waitFor": "input[type=\"password\"]"
+    },
+    {
+      "label": "auth-submit",
+      "fill": [
+        {
+          "selector": "input[type=\"email\"]",
+          "value": "{{staff:email}}"
+        },
+        {
+          "selector": "input[type=\"password\"]",
+          "value": "{{staff:password}}"
+        }
+      ],
+      "click": "button:has-text(\"{{auth:passwordAction}}\")",
+      "waitFor": "text={{admin:dashboardTitle}}"
+    },
+    {
+      "label": "requests-queue",
+      "goto": "/participants/deletion-requests",
+      "waitFor": "text={{participants:deletionRequestsTitle}} >> visible=true"
+    },
+    {
+      "label": "record",
+      "goto": "/participants/5eed0000-0000-4000-8000-000000000029",
+      "waitFor": "text={{participants:rgpdSectionTitle}} >> visible=true"
+    },
+    {
+      "label": "deactivated",
+      "click": "button:has-text(\"{{participants:statusActionDeactivate}}\")",
+      "waitFor": "button:has-text(\"{{participants:statusActionActivate}}\") >> visible=true"
+    },
+    {
+      "label": "anonymize-confirm",
+      "click": "button:has-text(\"{{participants:anonymizeAction}}\")",
+      "waitFor": "text={{participants:anonymizeConfirmBody}} >> visible=true"
+    },
+    {
+      "label": "anonymize-blocked",
+      "waitFor": "[role=\"dialog\"] button[disabled] >> visible=true"
+    },
+    {
+      "label": "anonymized",
+      "fill": [
+        {
+          "selector": "[role=\"dialog\"] input[type=\"text\"]",
+          "value": "{{participants:anonymizeConfirmPhrase}}"
+        }
+      ],
+      "click": "[role=\"dialog\"] button:has-text(\"{{participants:anonymizeAction}}\")",
+      "waitFor": "text={{participants:alreadyAnonymized}} >> visible=true"
+    },
+    {
+      "label": "erase-confirm",
+      "goto": "/participants/5eed0000-0000-4000-8000-000000000027",
+      "click": "button:has-text(\"{{participants:eraseAction}}\")",
+      "waitFor": "text={{participants:eraseConfirmBody}} >> visible=true"
+    },
+    {
+      "label": "erased",
+      "fill": [
+        {
+          "selector": "[role=\"dialog\"] input[type=\"text\"]",
+          "value": "{{participants:eraseConfirmPhrase}}"
+        }
+      ],
+      "click": "[role=\"dialog\"] button:has-text(\"{{participants:eraseAction}}\")",
+      "waitFor": "text={{participants:title}} >> visible=true"
+    },
+    {
+      "label": "sign-out",
+      "goto": "/dashboard",
+      "click": "button:has-text(\"{{auth:signOutAction}}\")",
+      "waitFor": "input[type=\"email\"] >> visible=true"
+    },
+    {
+      "label": "staff-sign-in",
+      "click": "button:has-text(\"{{auth:usePasswordInstead}}\")",
+      "fill": [
+        {
+          "selector": "input[type=\"email\"]",
+          "value": "{{staffOnly:email}}"
+        },
+        {
+          "selector": "input[type=\"password\"]",
+          "value": "{{staffOnly:password}}"
+        }
+      ]
+    },
+    {
+      "label": "staff-sign-in-submit",
+      "click": "button:has-text(\"{{auth:passwordAction}}\")",
+      "waitFor": "text={{admin:dashboardTitle}}"
+    },
+    {
+      "label": "staff-view",
+      "goto": "/participants/5eed0000-0000-4000-8000-000000000025",
+      "waitFor": "text={{participants:eraseAdminOnly}} >> visible=true"
+    }
+  ]
+}
