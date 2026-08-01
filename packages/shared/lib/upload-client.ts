@@ -18,6 +18,7 @@ import { AppError, safeAsync, type Result } from '../errors';
 import { errorCodeRegistry, type AppErrorCode } from '../errors/codes';
 import {
   getUploadErrorCodeForIssue,
+  purgeParticipantMediaResponseSchema,
   uploadUrlRequestSchema,
   uploadUrlResponseSchema,
   type UploadContentType,
@@ -25,6 +26,7 @@ import {
 } from '../schemas/upload';
 
 export const MINT_UPLOAD_URL_PATH = '/uploads/url';
+export const PURGE_PARTICIPANT_MEDIA_PATH = '/participants/media';
 
 export interface UploadFileContent {
   /** The exact bytes to send. */
@@ -154,6 +156,67 @@ export async function uploadFile(
       // typed failures above pass through untouched.
       code: 'UPLOAD-1',
       context: { folder: options.folder },
+      onError: options.onError,
+    },
+  );
+}
+
+export interface PurgeParticipantMediaOptions {
+  readonly mediaWorkerUrl: string;
+  readonly accessToken: string;
+  readonly participantId: string;
+  readonly fetchImplementation?: typeof fetch;
+  readonly onError?: (error: AppError) => void;
+}
+
+/**
+ * Removes every object a participant uploaded, the first half of erasing her
+ * (RAPP-26, ADR-023). The Worker records a receipt that the erasure RPC then
+ * requires, so this is not an optional step the admin screen may skip: without
+ * it, `delete_participant_permanently()` refuses.
+ *
+ * Only her ID is sent. The tenant and the folder list are derived by the Worker
+ * from the caller's own verified profile, so there is nothing here that could
+ * widen the sweep.
+ *
+ * Safe to call again: the sweep is idempotent, and a retry is the documented
+ * recovery when the erasure fails after the media is already gone.
+ */
+export async function purgeParticipantMedia(
+  options: PurgeParticipantMediaOptions,
+): Promise<Result<{ readonly objectsDeleted: number }, AppError>> {
+  const performFetch = options.fetchImplementation ?? fetch;
+
+  return safeAsync(
+    async () => {
+      const response = await fetchOrThrowNetworkError(
+        performFetch,
+        `${options.mediaWorkerUrl}${PURGE_PARTICIPANT_MEDIA_PATH}`,
+        {
+          method: 'POST',
+          headers: {
+            authorization: `Bearer ${options.accessToken}`,
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify({ participantId: options.participantId }),
+        },
+      );
+
+      if (!response.ok) {
+        throw new AppError(await readWorkerErrorCode(response), {
+          context: { status: response.status },
+        });
+      }
+
+      const parsed = purgeParticipantMediaResponseSchema.safeParse(await response.json());
+      if (!parsed.success) {
+        throw new AppError('UPLOAD-7', { message: 'Malformed purge response' });
+      }
+      return { objectsDeleted: parsed.data.objectsDeleted };
+    },
+    {
+      code: 'UPLOAD-7',
+      context: { participantId: options.participantId },
       onError: options.onError,
     },
   );

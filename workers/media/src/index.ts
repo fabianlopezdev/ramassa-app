@@ -6,21 +6,24 @@
  * which are pure functions over injected dependencies, so the rules are tested
  * without a network, a JWT, or Cloudflare credentials.
  *
- *   POST /uploads/url    mint a short-TTL upload URL for the signed-in caller
- *   PUT  /local-uploads/*  local development only (see local-upload.ts)
- *   GET  /health         liveness for the deploy runbook
+ *   POST /uploads/url        mint a short-TTL upload URL for the signed-in caller
+ *   POST /participants/media remove every object one participant uploaded (RAPP-26)
+ *   PUT  /local-uploads/*    local development only (see local-upload.ts)
+ *   GET  /health             liveness for the deploy runbook
  */
 
 import * as Sentry from '@sentry/cloudflare';
-import { MINT_UPLOAD_URL_PATH } from '@ramassa/shared/upload-client';
+import { MINT_UPLOAD_URL_PATH, PURGE_PARTICIPANT_MEDIA_PATH } from '@ramassa/shared/upload-client';
 import { UPLOAD_URL_TTL_SECONDS } from './constants';
 import { parseWorkerEnv, type WorkerConfig } from './env';
 import { buildCorsHeaders, errorResponse } from './http';
 import { buildLocalUploadUrl, handleLocalUpload, LOCAL_UPLOAD_PATH_PREFIX } from './local-upload';
+import { recordMediaPurgeReceipt } from './media-purge-receipt';
 import { handleMintUploadUrl, type SignedUploadTarget, type UploadTarget } from './mint-upload-url';
 import { createWorkerObservability } from './observability';
 import { presignR2Upload } from './presign';
-import { resolveCallerIdentity } from './supabase-identity';
+import { handlePurgeParticipantMedia } from './purge-participant-media';
+import { readBearerToken, resolveCallerIdentity } from './supabase-identity';
 
 async function createUploadTarget(
   config: WorkerConfig,
@@ -103,6 +106,36 @@ const handler: ExportedHandler<Env> = {
         createUploadTarget: (target) => createUploadTarget(config, url.origin, target, new Date()),
         uploadUrlTtlSeconds: UPLOAD_URL_TTL_SECONDS,
         now: () => new Date(),
+        corsHeaders,
+        onError: (thrown, context) => observability.reportError(thrown, context),
+      });
+    }
+
+    // The RGPD media sweep (RAPP-26). It runs BEFORE the record is erased and
+    // records a receipt Postgres then requires, so this route is a step in an
+    // erasure rather than an endpoint anyone calls on its own.
+    if (url.pathname === PURGE_PARTICIPANT_MEDIA_PATH) {
+      return handlePurgeParticipantMedia(request, {
+        resolveIdentity: (incoming) =>
+          resolveCallerIdentity({
+            request: incoming,
+            supabaseUrl: config.supabaseUrl,
+            supabasePublishableKey: config.supabasePublishableKey,
+          }),
+        bucket: env.MEDIA_BUCKET,
+        recordReceipt: ({ participantId, objectsDeleted, identity }) =>
+          recordMediaPurgeReceipt({
+            // The identity the handler ALREADY authorized against, read from her
+            // profile under RLS. Resolving it a second time here could disagree
+            // with the one that did the work.
+            actorId: identity.userId,
+            orgId: identity.orgId,
+            participantId,
+            objectsDeleted,
+            token: readBearerToken(request),
+            supabaseUrl: config.supabaseUrl,
+            supabasePublishableKey: config.supabasePublishableKey,
+          }),
         corsHeaders,
         onError: (thrown, context) => observability.reportError(thrown, context),
       });
