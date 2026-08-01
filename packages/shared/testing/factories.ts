@@ -203,6 +203,10 @@ export function buildProfileFromFixture(
     // default would let a test pass while the app quietly assumed permission
     // to publish a participant's photo.
     media_consent_at: null,
+    // A fixture is a participant whose record still describes a person. The
+    // anonymized state is produced by an irreversible RPC (RAPP-26), so a test
+    // that wants one asks for it explicitly rather than inheriting it.
+    anonymized_at: null,
     created_at: FIXTURE_TIMESTAMP,
     updated_at: FIXTURE_TIMESTAMP,
     ...derivedProfileFields(fixture),
