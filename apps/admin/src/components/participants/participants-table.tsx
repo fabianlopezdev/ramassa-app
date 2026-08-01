@@ -17,7 +17,7 @@ import { DataTable } from '@/components/data-table/data-table';
 import { DataTablePager } from '@/components/data-table/data-table-pager';
 import { ParticipantsFilters } from '@/components/participants/participants-filters';
 import { Button } from '@/components/ui/button';
-import { useNavigate } from '@tanstack/react-router';
+import { Link, useNavigate } from '@tanstack/react-router';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -38,7 +38,7 @@ export interface ParticipantsTableProps {
 
 export function ParticipantsTable({ page, filterOptions, search }: ParticipantsTableProps) {
   const { t, i18n } = useTranslation(['participants', 'common']);
-  const navigate = useNavigate({ from: '/participants' });
+  const navigate = useNavigate({ from: '/participants/' });
   const locale = i18n.resolvedLanguage ?? 'ca';
 
   const pages = Math.max(1, Math.ceil(page.total / PARTICIPANT_PAGE_SIZE));
@@ -54,8 +54,18 @@ export function ParticipantsTable({ page, filterOptions, search }: ParticipantsT
         // query speak the same language with nothing translated between them.
         accessorKey: 'last_name' satisfies ParticipantSortColumn,
         header: t('columnName'),
+        // The name is the LINK to her record, rather than the whole row being
+        // clickable. A row-level click handler is invisible to the keyboard and
+        // to a screen reader, and it fights with selecting the text in a cell,
+        // which is how a staff member copies a town into an email.
         cell: ({ row }) => (
-          <span className="font-medium">{`${row.original.first_name} ${row.original.last_name}`}</span>
+          <Link
+            to="/participants/$participantId"
+            params={{ participantId: row.original.id }}
+            className="font-medium underline-offset-4 hover:underline"
+          >
+            {`${row.original.first_name} ${row.original.last_name}`}
+          </Link>
         ),
       },
       {

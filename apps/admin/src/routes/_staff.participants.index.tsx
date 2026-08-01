@@ -24,21 +24,22 @@ import { createFileRoute } from '@tanstack/react-router';
 import {
   fetchParticipantFilterOptions,
   fetchParticipants,
-  parseParticipantSearch,
-  type ParticipantSearch,
+  participantSearchSchema,
 } from '@ramassa/shared/participants';
 
-export const Route = createFileRoute('/_staff/participants')({
+export const Route = createFileRoute('/_staff/participants/')({
   // Client-only, because the SESSION is. Supabase keeps it in localStorage
   // (ADR-005), so a loader running during the server render queries as an
   // anonymous user, RLS correctly refuses, and the screen renders a confident
   // "0 participants" over a roster of twenty. `ssr: false` moves the loader to
   // the browser, where the caller is who the table says she is.
   ssr: false,
-  // Every field falls back rather than throwing, so a hand-edited or stale URL
-  // renders the table with that one filter ignored instead of an error page.
-  validateSearch: (search: Record<string, unknown>): ParticipantSearch =>
-    parseParticipantSearch(search),
+  // The schema itself, handed straight to the router. Every field carries a
+  // `.catch()` and a `.default()`, which does two jobs: a hand-edited or stale
+  // URL renders the table with that one filter ignored instead of an error
+  // page, and a link to this route (the detail view's "back to the list") does
+  // not have to spell out all eight parameters to satisfy the type checker.
+  validateSearch: participantSearchSchema,
   loaderDeps: ({ search }) => search,
   loader: async ({ deps }) => {
     const [page, filterOptions] = await Promise.all([
