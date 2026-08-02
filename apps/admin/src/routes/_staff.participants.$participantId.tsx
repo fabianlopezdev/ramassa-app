@@ -22,6 +22,7 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabase';
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
+import { fetchEquipmentDeliveries } from '@ramassa/shared/equipment';
 import {
   fetchParticipantActivity,
   fetchParticipantDetail,
@@ -41,13 +42,15 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
         participant: null,
         notes: [],
         activity: [],
+        deliveries: [],
         openDeletionRequestReason: undefined,
       };
     }
-    const [notes, activity, openRequests] = await Promise.all([
+    const [notes, activity, openRequests, deliveries] = await Promise.all([
       fetchParticipantNotes(supabase, params.participantId),
       fetchParticipantActivity(supabase, params.participantId),
       fetchDeletionRequests(supabase, 'open'),
+      fetchEquipmentDeliveries(supabase, params.participantId),
     ]);
     // Filtered here rather than asked for by participant: the queue read is one
     // round trip either way, and the same call feeds the staff-wide queue, so
@@ -57,6 +60,7 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
       participant,
       notes,
       activity,
+      deliveries,
       // `undefined` = she never asked. `null` = she asked and gave no reason.
       openDeletionRequestReason: hers === undefined ? undefined : hers.reason,
     };
@@ -65,7 +69,8 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
 });
 
 function ParticipantDetailPage() {
-  const { participant, notes, activity, openDeletionRequestReason } = Route.useLoaderData();
+  const { participant, notes, activity, deliveries, openDeletionRequestReason } =
+    Route.useLoaderData();
 
   if (participant === null) {
     return <ParticipantNotFound />;
@@ -75,6 +80,7 @@ function ParticipantDetailPage() {
       participant={participant}
       notes={notes}
       activity={activity}
+      deliveries={deliveries}
       openDeletionRequestReason={openDeletionRequestReason}
     />
   );

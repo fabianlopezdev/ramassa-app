@@ -41,3 +41,4 @@ export * from './onboarding';
 export * from './participant-notes';
 export * from './profile';
 export * from './upload';
+export * from './equipment';

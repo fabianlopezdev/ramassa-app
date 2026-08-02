@@ -142,5 +142,15 @@
   "deletionRequestColumnCreated": "Asked on",
   "deletionRequestNoReason": "No reason given",
   "deletionRequestOpen": "Open her record",
-  "workingLabel": "Working…"
+  "workingLabel": "Working…",
+  "equipmentTitle": "Equipment handed over",
+  "equipmentAppendOnly": "Every handover is recorded with who did it and when. It cannot be deleted: if something is wrong, record the correct entry below it.",
+  "equipmentEmpty": "Nothing has been handed to her yet.",
+  "equipmentColumnItem": "Item",
+  "equipmentColumnSize": "Size",
+  "equipmentColumnDate": "Date",
+  "equipmentColumnNote": "Notes",
+  "equipmentAddAction": "Record the handover",
+  "equipmentSizeRequired": "This item needs a size.",
+  "equipmentAddFailed": "We could not record the handover."
 }

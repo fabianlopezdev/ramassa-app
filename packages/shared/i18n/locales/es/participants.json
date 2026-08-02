@@ -142,5 +142,15 @@
   "deletionRequestColumnCreated": "Pedida el",
   "deletionRequestNoReason": "Sin motivo",
   "deletionRequestOpen": "Abre la ficha",
-  "workingLabel": "Un momento…"
+  "workingLabel": "Un momento…",
+  "equipmentTitle": "Material entregado",
+  "equipmentAppendOnly": "Cada entrega queda registrada con quién la ha hecho y cuándo. No se puede borrar: si hay un error, se anota lo correcto debajo.",
+  "equipmentEmpty": "Todavía no se le ha entregado nada.",
+  "equipmentColumnItem": "Material",
+  "equipmentColumnSize": "Talla",
+  "equipmentColumnDate": "Fecha",
+  "equipmentColumnNote": "Observaciones",
+  "equipmentAddAction": "Registra la entrega",
+  "equipmentSizeRequired": "Este material necesita una talla.",
+  "equipmentAddFailed": "No hemos podido registrar la entrega."
 }

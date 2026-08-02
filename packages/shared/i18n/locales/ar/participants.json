@@ -142,5 +142,15 @@
   "deletionRequestColumnCreated": "تاريخ الطلب",
   "deletionRequestNoReason": "دون ذكر سبب",
   "deletionRequestOpen": "افتحي بطاقتها",
-  "workingLabel": "لحظة من فضلك…"
+  "workingLabel": "لحظة من فضلك…",
+  "equipmentTitle": "المعدّات المسلَّمة",
+  "equipmentAppendOnly": "كلّ تسليم يُسجَّل مع من قام به ومتى. لا يمكن حذفه: إذا كان هناك خطأ، سجّلي الصواب تحته.",
+  "equipmentEmpty": "لم يُسلَّم لها شيء بعد.",
+  "equipmentColumnItem": "المعدّات",
+  "equipmentColumnSize": "المقاس",
+  "equipmentColumnDate": "التاريخ",
+  "equipmentColumnNote": "ملاحظات",
+  "equipmentAddAction": "سجّلي التسليم",
+  "equipmentSizeRequired": "هذه المعدّات تحتاج إلى مقاس.",
+  "equipmentAddFailed": "لم نتمكّن من تسجيل التسليم."
 }

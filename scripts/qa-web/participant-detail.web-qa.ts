@@ -234,7 +234,12 @@ test.describe('the participant detail view', () => {
     const body = `Ha trucat aquest matí, تحدثنا معها (${before + 1})`;
 
     await openDetail(page, participantId);
-    await page.getByRole('textbox', { name: /nota|note/i }).fill(body);
+    // Located by its own id, not by an accessible name matching /note/i. The
+    // equipment section (RAPP-27) added a "Notes" field of its own to this same
+    // screen, and the name match then resolved to two controls and failed in
+    // strict mode. An id is what distinguishes the staff note thread from
+    // anything else on the page that is also, reasonably, called a note.
+    await page.locator('#participant-note').fill(body);
     await page.getByRole('button', { name: /afegeix la nota|add the note|añade la nota/i }).click();
 
     await expect.poll(() => noteCount(participantId), { timeout: 15_000 }).toBe(before + 1);

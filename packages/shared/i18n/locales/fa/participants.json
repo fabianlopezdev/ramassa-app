@@ -142,5 +142,15 @@
   "deletionRequestColumnCreated": "تاریخ درخواست",
   "deletionRequestNoReason": "بدون ذکر دلیل",
   "deletionRequestOpen": "پرونده‌اش را باز کن",
-  "workingLabel": "لحظه‌ای صبر کنید…"
+  "workingLabel": "لحظه‌ای صبر کنید…",
+  "equipmentTitle": "تجهیزات تحویل‌شده",
+  "equipmentAppendOnly": "هر تحویل با نام تحویل‌دهنده و زمان آن ثبت می‌شود. حذف‌شدنی نیست: اگر اشتباهی رخ داد، مورد درست را زیر آن ثبت کنید.",
+  "equipmentEmpty": "هنوز چیزی به او تحویل داده نشده است.",
+  "equipmentColumnItem": "تجهیزات",
+  "equipmentColumnSize": "سایز",
+  "equipmentColumnDate": "تاریخ",
+  "equipmentColumnNote": "توضیحات",
+  "equipmentAddAction": "ثبت تحویل",
+  "equipmentSizeRequired": "این مورد به سایز نیاز دارد.",
+  "equipmentAddFailed": "نتوانستیم تحویل را ثبت کنیم."
 }

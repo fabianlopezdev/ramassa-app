@@ -124,6 +124,54 @@ export type Database = {
           },
         ];
       };
+      equipment_deliveries: {
+        Row: {
+          created_at: string;
+          delivered_by: string;
+          delivered_on: string;
+          id: string;
+          item: string;
+          note: string | null;
+          profile_id: string;
+          size: string | null;
+        };
+        Insert: {
+          created_at?: string;
+          delivered_by: string;
+          delivered_on?: string;
+          id?: string;
+          item: string;
+          note?: string | null;
+          profile_id: string;
+          size?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          delivered_by?: string;
+          delivered_on?: string;
+          id?: string;
+          item?: string;
+          note?: string | null;
+          profile_id?: string;
+          size?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'equipment_deliveries_delivered_by_fkey';
+            columns: ['delivered_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'equipment_deliveries_profile_id_fkey';
+            columns: ['profile_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       invites: {
         Row: {
           accepted_at: string | null;

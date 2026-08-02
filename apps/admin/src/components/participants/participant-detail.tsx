@@ -19,6 +19,7 @@
 import { DetailSection } from '@/components/detail/detail-section';
 import { ParticipantActivity } from '@/components/participants/participant-activity';
 import { ParticipantEditForm } from '@/components/participants/participant-edit-form';
+import { ParticipantEquipment } from '@/components/participants/participant-equipment';
 import { ParticipantNotes } from '@/components/participants/participant-notes';
 import { ParticipantProfileFields } from '@/components/participants/participant-profile-fields';
 import { ParticipantRgpd } from '@/components/participants/participant-rgpd';
@@ -32,6 +33,7 @@ import { ArrowLeft } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@ramassa/shared/auth';
+import { addEquipmentDelivery, type EquipmentDeliveryRow } from '@ramassa/shared/equipment';
 import {
   addParticipantNote,
   setParticipantActive,
@@ -40,12 +42,13 @@ import {
   type ParticipantDetailRow,
   type ParticipantNoteRow,
 } from '@ramassa/shared/participants';
-import type { UpdateOwnProfilePayload } from '@ramassa/shared/schemas';
+import type { EquipmentItem, UpdateOwnProfilePayload } from '@ramassa/shared/schemas';
 
 export interface ParticipantDetailProps {
   readonly participant: ParticipantDetailRow;
   readonly notes: readonly ParticipantNoteRow[];
   readonly activity: readonly ParticipantActivityEntry[];
+  readonly deliveries: readonly EquipmentDeliveryRow[];
   /**
    * Her outstanding erasure request (RAPP-22), when she has one. `undefined`
    * means she has not asked; `null` means she asked and gave no reason, which is
@@ -58,6 +61,7 @@ export function ParticipantDetail({
   participant,
   notes,
   activity,
+  deliveries,
   openDeletionRequestReason,
 }: ParticipantDetailProps) {
   const { t, i18n } = useTranslation(['participants', 'common', 'profile']);
@@ -70,6 +74,7 @@ export function ParticipantDetail({
   const [noteErrorMessage, setNoteErrorMessage] = useState<string | undefined>(undefined);
   const [statusErrorMessage, setStatusErrorMessage] = useState<string | undefined>(undefined);
   const [isChangingStatus, setIsChangingStatus] = useState(false);
+  const [deliveryErrorMessage, setDeliveryErrorMessage] = useState<string | undefined>(undefined);
 
   async function saveProfile(payload: UpdateOwnProfilePayload) {
     setSaveErrorMessage(undefined);
@@ -96,6 +101,30 @@ export function ParticipantDetail({
     );
     if (!result.ok) {
       setNoteErrorMessage(t('noteAddFailed'));
+      return;
+    }
+    await router.invalidate();
+  }
+
+  async function addDelivery(delivery: {
+    readonly item: EquipmentItem;
+    readonly size?: string;
+    readonly deliveredOn: string;
+    readonly note?: string;
+  }) {
+    setDeliveryErrorMessage(undefined);
+    if (user === null) return;
+    const result = await safeAsync(() =>
+      addEquipmentDelivery(supabase, {
+        participantId: participant.id,
+        // Her OWN id: the policy requires it, because the log exists to say who
+        // actually met the participant.
+        deliveredBy: user.id,
+        delivery,
+      }),
+    );
+    if (!result.ok) {
+      setDeliveryErrorMessage(t('equipmentAddFailed'));
       return;
     }
     await router.invalidate();
@@ -203,6 +232,12 @@ export function ParticipantDetail({
       </DetailSection>
 
       <ParticipantNotes notes={notes} onAdd={addNote} errorMessage={noteErrorMessage} />
+
+      <ParticipantEquipment
+        deliveries={deliveries}
+        onAdd={addDelivery}
+        errorMessage={deliveryErrorMessage}
+      />
 
       <ParticipantActivity entries={activity} />
 
