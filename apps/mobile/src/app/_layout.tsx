@@ -8,11 +8,12 @@ import { i18n } from '@/lib/i18n';
 import { wrapRootComponent } from '@/lib/observability';
 import { registerProfileQueries } from '@/lib/profile';
 import { queryClient } from '@/lib/query-client';
+import { shouldDropCachedServerState } from '@/lib/session-cache';
 import { supabase } from '@/lib/supabase';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { Stack } from 'expo-router/stack';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { I18nextProvider } from 'react-i18next';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useReducedMotion } from 'react-native-reanimated';
@@ -46,12 +47,26 @@ export function ErrorBoundary(props: ErrorFallbackProps) {
  */
 function RootNavigator() {
   const { session, isLoading } = useAuth();
+  // The identity the cache currently holds data for. A ref, not state: this
+  // drives an eviction, not a render.
+  const cachedUserIdRef = useRef<string | null | undefined>(undefined);
   // The profile query and its optimistic edit read the signed-in user's id, so
   // they are registered here where the session lives rather than at module
-  // scope, and re-registered when the session changes (a device shared between
-  // two women must never serve one of them the other's cached profile).
+  // scope, and re-registered when the session changes.
+  //
+  // Re-registering is NOT enough on its own, which is what this used to claim:
+  // `setQueryDefaults` replaces the query FUNCTION and leaves every cached row
+  // exactly where it was. On a shared phone that meant the next woman to sign
+  // in was served the previous one's decrypted profile (legal name, document
+  // number, address) from cache while her own refetch was still in flight. So
+  // the identity change evicts the cache FIRST, then re-registers.
   useEffect(() => {
-    registerProfileQueries(() => session?.user.id ?? null);
+    const userId = session?.user.id ?? null;
+    if (shouldDropCachedServerState(cachedUserIdRef.current, userId)) {
+      queryClient.clear();
+    }
+    cachedUserIdRef.current = userId;
+    registerProfileQueries(() => userId);
   }, [session]);
   // Screen transitions honour reduce-motion too (RAPP-70 scope item 5): the
   // native stack's default slide becomes a plain fade, which is the closest the
