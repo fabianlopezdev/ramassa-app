@@ -266,6 +266,7 @@ export type Database = {
       profiles: {
         Row: {
           address: string | null;
+          anonymized_at: string | null;
           auth_method: string;
           avatar_url: string | null;
           city: string | null;
@@ -298,6 +299,7 @@ export type Database = {
         };
         Insert: {
           address?: string | null;
+          anonymized_at?: string | null;
           auth_method?: string;
           avatar_url?: string | null;
           city?: string | null;
@@ -330,6 +332,7 @@ export type Database = {
         };
         Update: {
           address?: string | null;
+          anonymized_at?: string | null;
           auth_method?: string;
           avatar_url?: string | null;
           city?: string | null;
@@ -445,6 +448,10 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      anonymize_participant: {
+        Args: { participant_id: string };
+        Returns: undefined;
+      };
       ascii_local_part: { Args: { source: string }; Returns: string };
       assert_within_hourly_limit: {
         Args: { limited_action: string; maximum_per_hour: number };
@@ -454,6 +461,7 @@ export type Database = {
         Args: { payload: Json };
         Returns: {
           address: string | null;
+          anonymized_at: string | null;
           auth_method: string;
           avatar_url: string | null;
           city: string | null;
@@ -511,6 +519,10 @@ export type Database = {
       current_org_id: { Args: never; Returns: string };
       decrypt_field: { Args: { ciphertext: string }; Returns: string };
       default_organization_id: { Args: never; Returns: string };
+      delete_participant_permanently: {
+        Args: { participant_id: string };
+        Returns: undefined;
+      };
       encrypt_field: { Args: { plaintext: string }; Returns: string };
       encryption_key: { Args: never; Returns: string };
       get_own_profile: {
@@ -544,6 +556,7 @@ export type Database = {
         Args: { participant_id: string };
         Returns: {
           address: string;
+          anonymized_at: string;
           auth_method: string;
           avatar_url: string;
           city: string;
@@ -573,6 +586,7 @@ export type Database = {
         }[];
       };
       immutable_unaccent: { Args: { value: string }; Returns: string };
+      is_admin: { Args: never; Returns: boolean };
       is_staff_or_admin: { Args: never; Returns: boolean };
       my_pending_invite: {
         Args: never;
@@ -596,6 +610,15 @@ export type Database = {
         Returns: {
           entities: string[];
           nationalities: string[];
+        }[];
+      };
+      personal_data_disposition: {
+        Args: never;
+        Returns: {
+          disposition: string;
+          participant_column: string;
+          reason: string;
+          table_name: string;
         }[];
       };
       reset_participant_password: {

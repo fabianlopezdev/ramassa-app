@@ -31,20 +31,36 @@ export default defineConfig({
     locale: 'en-GB',
     trace: 'retain-on-failure',
   },
-  webServer: {
-    // Its OWN server, on its own port, never reused.
-    //
-    // The first version reused whatever was already on :3000, and the suite
-    // then passed against a deliberately broken build: Vite had the shared
-    // package pre-bundled from before the change, so the specs exercised code
-    // that no longer existed on disk. A suite that tests a stale bundle is the
-    // exact failure it was written to prevent, one level up.
-    //
-    // Port 3100 also keeps it clear of the dev server a person has open while
-    // the suite runs.
-    command: 'bun run --cwd apps/admin dev -- --port 3100 --strictPort --force',
-    url: 'http://localhost:3100',
-    reuseExistingServer: false,
-    timeout: 180_000,
-  },
+  webServer: [
+    {
+      // Its OWN server, on its own port, never reused.
+      //
+      // The first version reused whatever was already on :3000, and the suite
+      // then passed against a deliberately broken build: Vite had the shared
+      // package pre-bundled from before the change, so the specs exercised code
+      // that no longer existed on disk. A suite that tests a stale bundle is the
+      // exact failure it was written to prevent, one level up.
+      //
+      // Port 3100 also keeps it clear of the dev server a person has open while
+      // the suite runs.
+      command: 'bun run --cwd apps/admin dev -- --port 3100 --strictPort --force',
+      url: 'http://localhost:3100',
+      reuseExistingServer: false,
+      timeout: 180_000,
+    },
+    {
+      // The media Worker, because erasing a participant is TWO systems and the
+      // suite is here to prove the whole act (RAPP-26). Postgres refuses to
+      // delete her record without a receipt this Worker writes, so a suite that
+      // ran without it could only ever assert the refusal.
+      //
+      // `--port 8787` matches EXPO_PUBLIC_MEDIA_WORKER_URL in the admin's env,
+      // which Vite inlines at build time, and 3100 is in the Worker's CORS
+      // allowlist for the same reason.
+      command: 'bun run --cwd workers/media dev -- --port 8787',
+      url: 'http://127.0.0.1:8787/health',
+      reuseExistingServer: true,
+      timeout: 180_000,
+    },
+  ],
 });

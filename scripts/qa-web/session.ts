@@ -18,6 +18,79 @@ export const ENTITY_EMAIL = 'silvia.bosch@example.test';
 export const SEED_PASSWORD = 'ramassa-dev-password';
 
 /**
+ * The local stack, for the one spec that has to talk to something other than the
+ * admin app: erasing a participant removes objects from R2, and proving that
+ * needs a real object put there through the real upload path (RAPP-26).
+ *
+ * Local defaults, matching apps/admin/.env. They are not secrets: the
+ * publishable key is in the client bundle by design.
+ */
+export const SUPABASE_URL = 'http://127.0.0.1:54321';
+export const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH';
+export const MEDIA_WORKER_URL = 'http://127.0.0.1:8787';
+
+/** An access token for an arbitrary account, the way GoTrue issues one. */
+export async function accessTokenFor(email: string, password: string): Promise<string> {
+  const response = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+    method: 'POST',
+    headers: { apikey: SUPABASE_PUBLISHABLE_KEY, 'content-type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
+  if (!response.ok) {
+    throw new Error(`Could not sign in as ${email}: ${response.status} ${await response.text()}`);
+  }
+  const body = (await response.json()) as { access_token?: string };
+  if (body.access_token === undefined) {
+    throw new Error(`No access token for ${email}`);
+  }
+  return body.access_token;
+}
+
+/**
+ * Uploads one object AS the given identity, through the product's own path:
+ * the Worker mints a key and a signed URL, and the bytes go where it says.
+ *
+ * Deliberately not written straight into the bucket. The object key is what the
+ * erasure sweep matches on, and a key this test invented would prove the sweep
+ * works against test data rather than against what the app actually stores.
+ */
+export async function uploadObjectAs(
+  accessToken: string,
+  bytes: Uint8Array,
+): Promise<{ readonly objectKey: string }> {
+  const minted = await fetch(`${MEDIA_WORKER_URL}/uploads/url`, {
+    method: 'POST',
+    headers: { authorization: `Bearer ${accessToken}`, 'content-type': 'application/json' },
+    body: JSON.stringify({
+      folder: 'profile-photos',
+      contentType: 'image/jpeg',
+      contentLength: bytes.byteLength,
+    }),
+  });
+  if (!minted.ok) {
+    throw new Error(`Mint refused: ${minted.status} ${await minted.text()}`);
+  }
+  const target = (await minted.json()) as {
+    uploadUrl: string;
+    objectKey: string;
+    requiredHeaders: Record<string, string>;
+  };
+
+  const stored = await fetch(target.uploadUrl, {
+    method: 'PUT',
+    headers: target.requiredHeaders,
+    // The DOM lib is not in this project's tsconfig (it is a bun/node context),
+    // so the fetch body type is not nameable here; the value is a plain
+    // Uint8Array, which every runtime accepts.
+    body: bytes,
+  });
+  if (!stored.ok) {
+    throw new Error(`Storage refused the upload: ${stored.status} ${await stored.text()}`);
+  }
+  return { objectKey: target.objectKey };
+}
+
+/**
  * One scalar, straight from the local database through psql in the Supabase
  * container, rather than through the app's own client.
  *

@@ -1,0 +1,152 @@
+{
+  "app": "Ramassà",
+  "slug": "admin-rgpd-lifecycle",
+  "title": "Cicle de vida de les dades",
+  "surface": "admin",
+  "description": "Què pot fer l'equip amb les dades d'una participant, de menys a més greu. Desactivar-la la treu de les llistes del dia a dia i es pot desfer amb un clic. Anonimitzar-la esborra qui és i manté la fitxa per als informes: hi queden la nacionalitat, l'any de naixement, el municipi i l'entitat que la deriva, i desapareixen el nom, els papers, el telèfon, l'adreça, la foto i les notes de l'equip. Esborrar-ho tot no deixa res: ni la fitxa, ni les fotos que hagi pujat, ni l'accés a l'aplicació. Les dues accions irreversibles demanen escriure una paraula per confirmar, diuen abans què passarà, i només una administradora pot esborrar del tot.",
+  "steps": [
+    {
+      "id": "record",
+      "label": "La seva fitxa, amb l'apartat de dades personals al final",
+      "web": "admin-rgpd-lifecycle/web/01-record.png"
+    },
+    {
+      "id": "deactivated",
+      "label": "Desactivada: fora de les llistes, dins dels informes",
+      "web": "admin-rgpd-lifecycle/web/02-deactivated.png"
+    },
+    {
+      "id": "anonymize-confirm",
+      "label": "Confirmació d'anonimitzar: què marxa i què es queda",
+      "web": "admin-rgpd-lifecycle/web/03-anonymize-confirm.png"
+    },
+    {
+      "id": "anonymize-blocked",
+      "label": "Sense escriure la paraula, el botó no es pot prémer",
+      "web": "admin-rgpd-lifecycle/web/04-anonymize-blocked.png"
+    },
+    {
+      "id": "anonymized",
+      "label": "Fitxa anonimitzada: ja no diu qui és",
+      "web": "admin-rgpd-lifecycle/web/05-anonymized.png"
+    },
+    {
+      "id": "staff-view",
+      "label": "Vista de l'equip: esborrar del tot no s'ofereix",
+      "web": "admin-rgpd-lifecycle/web/06-staff-view.png"
+    },
+    {
+      "id": "erase-confirm",
+      "label": "Confirmació d'esborrar-ho tot, amb la petició que va fer ella",
+      "web": "admin-rgpd-lifecycle/web/07-erase-confirm.png"
+    },
+    {
+      "id": "erased",
+      "label": "Després d'esborrar: torna al llistat i la fitxa ja no hi és",
+      "web": "admin-rgpd-lifecycle/web/08-erased.png"
+    },
+    {
+      "id": "requests-queue",
+      "label": "Peticions d'esborrat fetes per les participants",
+      "web": "admin-rgpd-lifecycle/web/09-requests-queue.png"
+    }
+  ],
+  "edges": [
+    {
+      "from": "requests-queue",
+      "to": "record",
+      "label": "Obre la seva fitxa",
+      "kind": "neutral"
+    },
+    {
+      "from": "record",
+      "to": "deactivated",
+      "label": "Desactiva",
+      "kind": "neutral"
+    },
+    {
+      "from": "deactivated",
+      "to": "record",
+      "label": "Activa una altra vegada",
+      "kind": "positive"
+    },
+    {
+      "from": "record",
+      "to": "anonymize-confirm",
+      "label": "Anonimitza",
+      "kind": "negative"
+    },
+    {
+      "from": "anonymize-confirm",
+      "to": "anonymize-blocked",
+      "label": "Encara no s'ha escrit la paraula",
+      "kind": "negative"
+    },
+    {
+      "from": "anonymize-blocked",
+      "to": "anonymize-confirm",
+      "label": "Escriu la paraula",
+      "kind": "dismiss"
+    },
+    {
+      "from": "anonymize-confirm",
+      "to": "record",
+      "label": "Cancel·la",
+      "kind": "dismiss"
+    },
+    {
+      "from": "anonymize-confirm",
+      "to": "anonymized",
+      "label": "Confirma l'anonimització",
+      "kind": "negative"
+    },
+    {
+      "from": "record",
+      "to": "staff-view",
+      "label": "La mateixa fitxa, vista per l'equip",
+      "kind": "neutral"
+    },
+    {
+      "from": "record",
+      "to": "erase-confirm",
+      "label": "Esborra-ho tot",
+      "kind": "negative"
+    },
+    {
+      "from": "erase-confirm",
+      "to": "record",
+      "label": "Cancel·la",
+      "kind": "dismiss"
+    },
+    {
+      "from": "erase-confirm",
+      "to": "erased",
+      "label": "Confirma l'esborrat",
+      "kind": "negative"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "two-arms",
+      "type": "note",
+      "text": "Hi ha dos camins que no es poden desfer, i el dibuix els separa a propòsit. Anonimitzar manté la fitxa comptant als informes; esborrar no deixa res. Desactivar, que és el camí reversible, es fa des de dalt de la fitxa i no comparteix porta amb aquests dos."
+    },
+    {
+      "id": "confirm-wording",
+      "type": "note",
+      "text": "Les dues finestres de confirmació diuen exactament què passarà abans que passi, en la llengua de qui llegeix, i el botó no s'activa fins que s'escriu la paraula que hi surt. És la part que una revisió de protecció de dades demana veure."
+    }
+  ],
+  "notes": [
+    "Tres accions, de menys a més greu: desactivar (es desfà amb un clic), anonimitzar (irreversible, manté la fitxa per als informes) i esborrar-ho tot (irreversible, no deixa res). Estan separades perquè la segura no faci la mateixa por que la definitiva: un equip que té por de desactivar no desactiva ningú.",
+    "Anonimitzar esborra el nom, els papers, el telèfon, l'adreça, el lloc de naixement, la persona de contacte de l'entitat i la foto, i esborra també totes les notes que l'equip hagi escrit sobre ella. Es queden la nacionalitat, el municipi, l'entitat que la deriva, si té persones a càrrec i les talles, que és el que compten els informes de la subvenció.",
+    "De la data de naixement només es queda l'any. Una data exacta al costat d'una nacionalitat i d'un municipi de quaranta mil habitants assenyala una sola persona, i per a les franges d'edat que demana un informe l'any ja n'hi ha prou.",
+    "El permís per fer servir les seves fotos es retira en anonimitzar. Un permís que continués viu en una fitxa que ja no diu qui és seria un permís que ningú pot retirar mai més.",
+    "Esborrar-ho tot és l'única acció reservada a una administradora. L'equip porta el dia a dia de la fitxa; acabar-la és un pas per sobre. A qui no li correspon, la pantalla li ho diu, en comptes de deixar un botó que només pot fallar.",
+    "Les fotos i els arxius que hagi pujat s'esborren ABANS que la fitxa, i el sistema es nega a esborrar la fitxa si això no ha passat. Fet a l'inrevés, quedarien arxius guardats sense res que digués de qui eren.",
+    "Del registre d'activitat es conserva la constància que algú va consultar la fitxa, la va modificar i finalment la va esborrar, amb la data i la persona que ho va fer. Aquest registre no conté cap dada personal seva: només identificadors interns que, un cop esborrada la fitxa, ja no assenyalen res. És la prova que l'esborrat es va fer, i esborrar-la també eliminaria la prova.",
+    "Una participant pot demanar ella mateixa que s'esborrin les seves dades, des de la seva pantalla de perfil. Aquestes peticions surten en una llista per a l'equip, amb el motiu escrit per ella. La llista no té cap botó d'esborrar: l'acció es fa des de la seva fitxa, amb el seu nom al davant, perquè el risc real d'una llista és equivocar-se de filera.",
+    "El motiu que escriu ella es llegeix abans de fer res. «Vull que esborreu les meves dades» i «no vull sortir a les fotos» són dues peticions molt diferents, i aquesta és l'última ocasió de notar-ho.",
+    "Cap de les imatges mostra dades d'una persona real: totes surten de dades de prova."
+  ]
+}

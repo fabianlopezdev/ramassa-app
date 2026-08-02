@@ -21,7 +21,8 @@
     "./tokens/motion": "./tokens/motion.ts",
     "./profile": "./profile/index.ts",
     "./participants": "./participants/index.ts",
-    "./accounts": "./accounts/index.ts"
+    "./accounts": "./accounts/index.ts",
+    "./rgpd": "./rgpd/index.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

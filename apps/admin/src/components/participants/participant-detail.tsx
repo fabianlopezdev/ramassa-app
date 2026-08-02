@@ -21,6 +21,7 @@ import { ParticipantActivity } from '@/components/participants/participant-activ
 import { ParticipantEditForm } from '@/components/participants/participant-edit-form';
 import { ParticipantNotes } from '@/components/participants/participant-notes';
 import { ParticipantProfileFields } from '@/components/participants/participant-profile-fields';
+import { ParticipantRgpd } from '@/components/participants/participant-rgpd';
 import { ResetPasswordControl } from '@/components/participants/reset-password';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -45,9 +46,20 @@ export interface ParticipantDetailProps {
   readonly participant: ParticipantDetailRow;
   readonly notes: readonly ParticipantNoteRow[];
   readonly activity: readonly ParticipantActivityEntry[];
+  /**
+   * Her outstanding erasure request (RAPP-22), when she has one. `undefined`
+   * means she has not asked; `null` means she asked and gave no reason, which is
+   * her right and a different thing from not asking.
+   */
+  readonly openDeletionRequestReason?: string | null;
 }
 
-export function ParticipantDetail({ participant, notes, activity }: ParticipantDetailProps) {
+export function ParticipantDetail({
+  participant,
+  notes,
+  activity,
+  openDeletionRequestReason,
+}: ParticipantDetailProps) {
   const { t, i18n } = useTranslation(['participants', 'common', 'profile']);
   const locale = i18n.resolvedLanguage ?? 'ca';
   const router = useRouter();
@@ -193,6 +205,13 @@ export function ParticipantDetail({ participant, notes, activity }: ParticipantD
       <ParticipantNotes notes={notes} onAdd={addNote} errorMessage={noteErrorMessage} />
 
       <ParticipantActivity entries={activity} />
+
+      {/* Last on the page, deliberately. These are the two gestures nobody
+          should reach by scrolling past something else. */}
+      <ParticipantRgpd
+        participant={participant}
+        openDeletionRequestReason={openDeletionRequestReason}
+      />
     </section>
   );
 }

@@ -48,6 +48,8 @@ export const errorCodeRegistry = defineCodes({
   'AUTH-7': { domain: 'AUTH', description: 'Sign-in link came from an untrusted origin' },
   'DB-1': { domain: 'DB', description: 'Database operation failed' },
   'DB-2': { domain: 'DB', description: 'Requested record not found' },
+  'DB-3': { domain: 'DB', description: 'Erasure did not complete and was rolled back' },
+  'DB-4': { domain: 'DB', description: 'Stored files must be removed before the record' },
   'NETWORK-1': { domain: 'NETWORK', description: 'Network request failed' },
   'SYNC-1': { domain: 'SYNC', description: 'Offline sync failed' },
   'UPLOAD-1': { domain: 'UPLOAD', description: 'File upload failed' },
@@ -56,6 +58,7 @@ export const errorCodeRegistry = defineCodes({
   'UPLOAD-4': { domain: 'UPLOAD', description: 'Too many uploads started (rate limited)' },
   'UPLOAD-5': { domain: 'UPLOAD', description: 'Upload authorization expired before the transfer' },
   'UPLOAD-6': { domain: 'UPLOAD', description: 'Storage rejected the upload' },
+  'UPLOAD-7': { domain: 'UPLOAD', description: 'Removing stored files failed' },
   'VALIDATION-1': { domain: 'VALIDATION', description: 'Input failed validation' },
   'UNEXPECTED-1': { domain: 'UNEXPECTED', description: 'Unexpected error' },
 });

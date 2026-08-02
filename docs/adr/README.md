@@ -72,3 +72,4 @@ At every checkpoint commit (Checkpoints A, B, C, D in the Phase 1 plan, and equi
 | 020 | [Media Worker upload modes + EU buckets](020-media-worker-upload-modes.md)                             | Accepted          | 2026-07-23 |
 | 021 | [Audit log never stores values of encrypted fields](021-audit-log-no-plaintext-of-encrypted-fields.md) | Accepted          | 2026-08-01 |
 | 022 | [Account creation in Postgres, no service-role key](022-account-creation-without-service-role-key.md)  | Accepted          | 2026-08-01 |
+| 023 | [RGPD erasure in Postgres, with a media receipt](023-rgpd-erasure-in-postgres-with-a-media-receipt.md) | Accepted          | 2026-08-01 |

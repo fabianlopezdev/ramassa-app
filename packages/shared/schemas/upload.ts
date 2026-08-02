@@ -167,3 +167,22 @@ export function getUploadErrorCodeForIssue(issue: z.core.$ZodIssue): AppErrorCod
   }
   return 'VALIDATION-1';
 }
+
+/**
+ * Removing every object one participant uploaded, as part of her erasure
+ * (RAPP-26, ADR-023).
+ *
+ * The ONLY field is who. Deliberately: the tenant prefix and the folder list
+ * are derived by the Worker from the caller's own verified profile, so there is
+ * nothing here an attacker could set to widen the sweep to another
+ * organization, another folder, or an arbitrary key.
+ */
+export const purgeParticipantMediaRequestSchema = z.object({
+  participantId: z.uuid(),
+});
+export type PurgeParticipantMediaRequest = z.infer<typeof purgeParticipantMediaRequestSchema>;
+
+export const purgeParticipantMediaResponseSchema = z.object({
+  objectsDeleted: z.int().nonnegative(),
+});
+export type PurgeParticipantMediaResponse = z.infer<typeof purgeParticipantMediaResponseSchema>;
