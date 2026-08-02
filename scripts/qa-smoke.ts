@@ -165,8 +165,23 @@ export async function runSmokeSuite(
   }
 
   const results: SmokeResult[] = [];
-  for (const platform of platforms) {
-    results.push(...(await runSuiteOn(platform, config, flows)));
+  try {
+    for (const platform of platforms) {
+      results.push(...(await runSuiteOn(platform, config, flows)));
+    }
+  } finally {
+    // Leave the database as the rest of the repo expects to find it.
+    //
+    // `smoke-onboarding` finishes the wizard, which SPENDS the intake account's
+    // invitation, and two pgTAP assertions are about exactly that invite
+    // ("completing onboarding marks the invite as spent", "a spent invite
+    // prefills nothing on a second run"). pgTAP runs inside `bun test`, which is
+    // a pre-commit gate - so without this a QA run leaves the repo unable to
+    // commit, and the red points at a seed-data file that is perfectly correct.
+    //
+    // In a `finally`, because a suite that fails half way through has left the
+    // database in exactly the state that needs clearing up.
+    await resetSeededDatabase();
   }
 
   log('\n─── smoke suite ───');

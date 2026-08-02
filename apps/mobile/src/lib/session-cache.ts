@@ -13,6 +13,33 @@
  * privacy boundary, and it should not be provable only by borrowing a phone.
  */
 
+import type { QueryClient } from '@tanstack/react-query';
+
+/**
+ * Throwing the cached rows away, once the predicate below says to.
+ *
+ * `resetQueries`, NEVER `clear`. Both empty the cache, and `clear` was the first
+ * implementation, but it rips every query out from under its observers and that
+ * fails in both directions at once (both measured, both covered by the tests
+ * beside this file):
+ *
+ *   - liveness: a query that is MID-FETCH when the identity changes is left at
+ *     `pending` with nothing left to resolve it. On the profile tab that is a
+ *     screen of skeletons that never becomes anything, forever, and it is what
+ *     two flows of the Android suite failed on.
+ *   - privacy: an observer that does recover can settle holding the row it had
+ *     BEFORE the change - which is the leak this boundary exists to close, back
+ *     again by another route.
+ *
+ * `resetQueries` returns every query to its initial state (dropping the data
+ * synchronously) and refetches the active ones, so the screen goes to loading
+ * and then to the new woman's record. The promise is deliberately not awaited:
+ * the eviction is what has to happen now, the refetch can land whenever.
+ */
+export function dropCachedServerState(queryClient: QueryClient): void {
+  void queryClient.resetQueries();
+}
+
 /**
  * @param previousUserId the last signed-in id observed, or `undefined` when
  *   none has been observed yet (first run of the app, nothing is cached).
