@@ -430,3 +430,36 @@ drop table seed_roster;
 
 end
 $seed$;
+
+-- Equipment deliveries (RAPP-27) -------------------------------------------------------
+--
+-- Two participants rather than one, and three items with two different staff
+-- handing them over, so a screen grouping by participant, by item or by deliverer
+-- has something real to group. One row deliberately has no size (a water bottle),
+-- because the column is nullable on purpose and a fixture set where it is always
+-- present would let a broken "sizeless item" path look fine.
+--
+-- About Blanca (ordinal 30) and Daniela (27), NOT about the participants the
+-- pgTAP suite drives, so a test can count what its own transaction did.
+
+insert into public.equipment_deliveries (profile_id, item, size, delivered_on, delivered_by, note)
+values
+  (
+    '5eed0000-0000-4000-8000-000000000030',
+    'boots', '38', current_date - 21,
+    '5eed0000-0000-4000-8000-000000000002',
+    null
+  ),
+  (
+    '5eed0000-0000-4000-8000-000000000030',
+    'jersey', 'M', current_date - 21,
+    '5eed0000-0000-4000-8000-000000000002',
+    null
+  ),
+  (
+    '5eed0000-0000-4000-8000-000000000027',
+    'water_bottle', null, current_date - 5,
+    '5eed0000-0000-4000-8000-000000000003',
+    'Segona ampolla, la primera es va perdre al camp.'
+  )
+on conflict do nothing;

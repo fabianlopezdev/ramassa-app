@@ -39,6 +39,7 @@ export type PushTokenRow = Database['public']['Tables']['push_tokens']['Row'];
 export type TermsAcceptanceRow = Database['public']['Tables']['terms_acceptances']['Row'];
 export type DeletionRequestRow = Database['public']['Tables']['deletion_requests']['Row'];
 export type ParticipantNoteRow = Database['public']['Tables']['participant_notes']['Row'];
+export type EquipmentDeliveryRow = Database['public']['Tables']['equipment_deliveries']['Row'];
 export type AuditLogRow = Database['public']['Tables']['audit_log']['Row'];
 export type InviteRow = Database['public']['Tables']['invites']['Row'];
 
@@ -345,6 +346,33 @@ export function buildInvite(overrides: Partial<InviteRow> = {}): InviteRow {
     expires_at: '2026-02-14T09:00:00+00:00',
     accepted_at: null,
     accepted_by: null,
+    created_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+/**
+ * One equipment handover (RAPP-27). Defaults to boots in a size, which is the
+ * row the screen shows most.
+ *
+ * `delivered_by` is a real staff fixture rather than an invented id, for the
+ * reason `buildParticipantNote` gives: the column exists so the log says who
+ * actually met her, and a factory that made one up would let a broken
+ * attribution look fine in every test.
+ */
+export function buildEquipmentDelivery(
+  overrides: Partial<EquipmentDeliveryRow> = {},
+): EquipmentDeliveryRow {
+  const subject = PARTICIPANT_FIXTURES[0]!;
+  const deliverer = STAFF_FIXTURES.find((person) => person.role === 'staff')!;
+  return {
+    id: seedUserId(800 + subject.ordinal),
+    profile_id: seedUserId(subject.ordinal),
+    item: 'boots',
+    size: '38',
+    delivered_on: FIXTURE_TIMESTAMP.slice(0, 10),
+    delivered_by: seedUserId(deliverer.ordinal),
+    note: null,
     created_at: FIXTURE_TIMESTAMP,
     ...overrides,
   };

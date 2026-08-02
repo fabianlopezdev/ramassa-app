@@ -142,5 +142,15 @@
   "deletionRequestColumnCreated": "Demanada el",
   "deletionRequestNoReason": "Sense motiu",
   "deletionRequestOpen": "Obre la fitxa",
-  "workingLabel": "Un moment…"
+  "workingLabel": "Un moment…",
+  "equipmentTitle": "Material lliurat",
+  "equipmentAppendOnly": "Cada lliurament queda registrat amb qui l'ha fet i quan. No es pot esborrar: si hi ha un error, s'anota el que és correcte a sota.",
+  "equipmentEmpty": "Encara no se li ha lliurat res.",
+  "equipmentColumnItem": "Material",
+  "equipmentColumnSize": "Talla",
+  "equipmentColumnDate": "Data",
+  "equipmentColumnNote": "Observacions",
+  "equipmentAddAction": "Registra el lliurament",
+  "equipmentSizeRequired": "Aquest material necessita una talla.",
+  "equipmentAddFailed": "No hem pogut registrar el lliurament."
 }

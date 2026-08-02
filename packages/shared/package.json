@@ -22,7 +22,8 @@
     "./profile": "./profile/index.ts",
     "./participants": "./participants/index.ts",
     "./accounts": "./accounts/index.ts",
-    "./rgpd": "./rgpd/index.ts"
+    "./rgpd": "./rgpd/index.ts",
+    "./equipment": "./equipment/index.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

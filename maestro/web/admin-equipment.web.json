@@ -1,0 +1,57 @@
+{
+  "slug": "admin-equipment",
+  "viewport": { "width": 1440, "height": 900 },
+  "deviceScaleFactor": 2,
+  "timezoneId": "Europe/Madrid",
+  "settle": { "timeout": 6000, "interval": 150 },
+  "steps": [
+    {
+      "label": "auth-open",
+      "goto": "/login",
+      "click": "button:has-text(\"{{auth:usePasswordInstead}}\")",
+      "waitFor": "input[type=\"password\"]"
+    },
+    {
+      "label": "auth-submit",
+      "fill": [
+        { "selector": "input[type=\"email\"]", "value": "{{staff:email}}" },
+        { "selector": "input[type=\"password\"]", "value": "{{staff:password}}" }
+      ],
+      "click": "button:has-text(\"{{auth:passwordAction}}\")",
+      "waitFor": "text={{admin:dashboardTitle}}"
+    },
+    {
+      "label": "record",
+      "goto": "/participants/5eed0000-0000-4000-8000-000000000030",
+      "waitFor": "text={{participants:equipmentTitle}} >> visible=true"
+    },
+    {
+      "label": "empty-log",
+      "goto": "/participants/5eed0000-0000-4000-8000-000000000025",
+      "waitFor": "text={{participants:equipmentEmpty}} >> visible=true"
+    },
+    {
+      "label": "item-picker",
+      "waitFor": "select >> visible=true"
+    },
+    {
+      "label": "size-missing",
+      "click": "button:has-text(\"{{participants:equipmentAddAction}}\")",
+      "waitFor": "text={{participants:equipmentSizeRequired}} >> visible=true"
+    },
+    {
+      "label": "no-size-item",
+      "select": [{ "selector": "select", "value": "water_bottle" }],
+      "waitFor": "button:has-text(\"{{participants:equipmentAddAction}}\") >> visible=true"
+    },
+    {
+      "label": "recorded",
+      "goto": "/participants/5eed0000-0000-4000-8000-000000000030",
+      "waitFor": "text={{equipment:boots}} >> visible=true"
+    },
+    {
+      "label": "sizes-on-record",
+      "waitFor": "text={{onboarding:clothingSizeLabel}} >> visible=true"
+    }
+  ]
+}

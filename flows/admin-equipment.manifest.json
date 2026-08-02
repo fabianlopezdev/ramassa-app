@@ -1,0 +1,89 @@
+{
+  "app": "Ramassà",
+  "slug": "admin-equipment",
+  "title": "Control d'equipament",
+  "surface": "admin",
+  "description": "Com l'equip registra el material que dona a una participant: botes, samarretes, xandalls, ampolles d'aigua. Cada lliurament queda amb qui l'ha fet i quan, i no es pot esborrar després. El material s'escull d'una llista tancada, mai s'escriu a mà, perquè la pregunta que ha de respondre aquest registre a final de temporada és quantes botes s'han donat, i això només es pot comptar si totes s'escriuen igual. Les talles ja viuen a la fitxa de cada participant, recollides al registre guiat.",
+  "steps": [
+    {
+      "id": "record",
+      "label": "La seva fitxa, amb l'apartat de material",
+      "web": "admin-equipment/web/01-record.png"
+    },
+    {
+      "id": "empty-log",
+      "label": "Encara no se li ha donat res",
+      "web": "admin-equipment/web/02-empty-log.png"
+    },
+    {
+      "id": "item-picker",
+      "label": "El material s'escull d'una llista, no s'escriu",
+      "web": "admin-equipment/web/03-item-picker.png"
+    },
+    {
+      "id": "size-missing",
+      "label": "Unes botes sense talla: ho diu, no ho desa",
+      "web": "admin-equipment/web/04-size-missing.png"
+    },
+    {
+      "id": "no-size-item",
+      "label": "Una ampolla d'aigua no demana talla",
+      "web": "admin-equipment/web/05-no-size-item.png"
+    },
+    {
+      "id": "recorded",
+      "label": "El lliurament registrat, amb data i qui l'ha fet",
+      "web": "admin-equipment/web/06-recorded.png"
+    },
+    {
+      "id": "sizes-on-record",
+      "label": "Les seves talles, a la fitxa",
+      "web": "admin-equipment/web/07-sizes-on-record.png"
+    }
+  ],
+  "edges": [
+    { "from": "record", "to": "empty-log", "label": "Baixa fins al material", "kind": "neutral" },
+    { "from": "empty-log", "to": "item-picker", "label": "Tria el material", "kind": "neutral" },
+    { "from": "item-picker", "to": "size-missing", "label": "Sense talla", "kind": "negative" },
+    { "from": "size-missing", "to": "item-picker", "label": "Escriu la talla", "kind": "dismiss" },
+    {
+      "from": "item-picker",
+      "to": "no-size-item",
+      "label": "Material sense talla",
+      "kind": "neutral"
+    },
+    {
+      "from": "item-picker",
+      "to": "recorded",
+      "label": "Registra el lliurament",
+      "kind": "positive"
+    },
+    {
+      "from": "no-size-item",
+      "to": "recorded",
+      "label": "Registra el lliurament",
+      "kind": "positive"
+    },
+    {
+      "from": "recorded",
+      "to": "sizes-on-record",
+      "label": "Les talles són a la fitxa",
+      "kind": "neutral"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "why-a-list",
+      "type": "note",
+      "text": "El material s'escull d'una llista tancada. Escrit a mà, «botes», «Botes» i «bota» serien tres coses diferents al recompte de final de temporada, i cap neteja posterior recupera què volia dir cadascú."
+    }
+  ],
+  "notes": [
+    "Cada lliurament queda registrat amb la persona de l'equip que l'ha fet i la data. Serveix per saber què s'ha donat i què falta, i perquè ningú hagi de recordar-ho de memòria.",
+    "El registre no es pot esborrar ni modificar. Si s'hi ha anotat una cosa equivocada, s'anota la correcta a sota; així el que va passar es continua veient. La pantalla ho diu abans d'escriure-hi res, per no fer creure que després es podrà arreglar.",
+    "Hi ha material que no té talla, com una ampolla d'aigua o una motxilla. En aquests casos la casella de talla desapareix, en comptes de quedar-se allà sense servir per a res: una pregunta que no fa res segueix sent una pregunta que algú ha de respondre.",
+    "El material que sí que té talla no es pot registrar sense posar-la. La segona pregunta d'un informe de temporada és quines talles s'han acabat, i sense la talla no es pot respondre.",
+    "Les talles de roba i de calçat es recullen al registre guiat i viuen a la fitxa de cada participant. Es poden canviar des de la fitxa quan calgui.",
+    "Aquest registre és de l'equip. Ni la participant ni les entitats que la deriven hi tenen accés: diu qui ha necessitat botes i en quin mes, que és una informació sobre la seva situació i no una dada que ella hagi donat."
+  ]
+}
