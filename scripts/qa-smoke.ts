@@ -38,10 +38,42 @@ import {
 } from './flow-capture/devices';
 import { devClientUrl, writeResolvedFlow } from './flow-capture/resolve-flow';
 import { ensureMetro } from './flow-capture/servers';
-import { log, run } from './flow-capture/shell';
+import { log, run, runOrThrow } from './flow-capture/shell';
 import { loadTranslator } from './flow-capture/translations';
 
 const suiteDir = path.join(repoRoot, '.maestro');
+
+/**
+ * Rebuild the local seeded database before the suite runs (RAPP-28).
+ *
+ * Needed because one member CONSUMES seeded state: `smoke-onboarding` finishes
+ * the wizard, which writes a profile for the profile-less intake account, and
+ * the wizard gate then never fires for that account again. Without this the
+ * flow would be green on its first run and, from the second on, would be
+ * asserting against a screen it can no longer reach - a check that silently
+ * stops testing the thing it is named after, which is the failure mode this
+ * project has written down twice.
+ *
+ * Unconditional rather than "only when smoke-onboarding is in the run": a
+ * cumulative suite whose result depends on what a previous run left behind is
+ * not a regression net. It costs one reset per platform, and `qa:smoke` is a
+ * closure gate, not a per-commit hook.
+ *
+ * Per PLATFORM, not once per invocation. The platforms run one after the other
+ * against the SAME local database, so a single reset up front would let the
+ * Android pass consume the intake account and leave the iOS pass signing in as
+ * a woman who already has a profile: no wizard, and a failure that reads as a
+ * broken gate on iOS only. Sequential execution is what makes this safe.
+ *
+ * `runOrThrow`, never `run`: a reset that failed silently would leave the suite
+ * running against whatever state was already there, and every downstream
+ * failure would name the wrong file. Local stack only, per contract rule 9 -
+ * `supabase db reset` targets the Docker stack and has no remote target here.
+ */
+async function resetSeededDatabase(): Promise<void> {
+  log('· resetting the local seeded database');
+  await runOrThrow(['bunx', 'supabase', 'db', 'reset'], { cwd: repoRoot, inherit: true });
+}
 
 export interface SmokeResult {
   readonly flow: string;
@@ -59,6 +91,8 @@ async function runSuiteOn(
   config: FlowConfig,
   flows: readonly string[],
 ): Promise<SmokeResult[]> {
+  await resetSeededDatabase();
+
   const device =
     platform === 'ios'
       ? await ensureIosDevice(config.devices.ios)

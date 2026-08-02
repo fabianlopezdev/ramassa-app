@@ -341,6 +341,12 @@ export default function ProfileEditScreen() {
         name="phone"
         render={({ field }) => (
           <AuthTextField
+            // Same testID convention as the wizard's fields, and for the same
+            // reason: the label is rendered TWICE on this control, once as the
+            // visible caption and once as the input's accessibility label, so
+            // matching a field by its text is ambiguous and can resolve to the
+            // caption, which nothing can type into. The suite edits this field.
+            testID="profile-edit-phone"
             label={t('onboarding:phoneLabel')}
             placeholder={t('onboarding:phonePlaceholder')}
             value={field.value ?? ''}

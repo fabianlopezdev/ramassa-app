@@ -1,0 +1,198 @@
+appId: com.ramassa.app
+name: smoke-profile
+# An edit a woman makes to her own record SURVIVES (RAPP-28).
+#
+# The capture flow photographs the editor; it never types into it. So until
+# now nothing in the suite proved that changing a field and pressing Desa
+# actually writes anything - and the profile screen is the RGPD surface where
+# "see your data and correct it" is the promise being kept.
+#
+# Persistence is asserted after a RELAUNCH, not straight after the save. Reading
+# the value back on the screen that just wrote it proves only that the optimistic
+# cache update painted; the write is optimistic, so that assertion passes just as
+# happily when the server rejected it and the rollback has not landed yet. A
+# relaunch drops the cache and the value can only come back from the database.
+#
+# The suite rebuilds the seeded database before each platform's run, so the
+# phone number this writes is gone by the next run and the flow always starts
+# from the same seeded value. Nothing is tagged, and nothing needs cleaning up:
+# the row is the seeded fixture's, identified by the account signed into, not by
+# anything written into a column the feature under test can rewrite.
+env:
+  DEV_CLIENT_URL: ramassa://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081
+  DEV_MENU_LABEL: Developer menu
+  TAB_PROFILE: '{{nav:tabs.profile}}'
+  PROFILE_TITLE: '{{profile:title}}'
+  EDIT_ACTION: '{{profile:editAction}}'
+  EDIT_TITLE: '{{profile:editTitle}}'
+  SAVE_ACTION: '{{profile:saveAction}}'
+  SAVE_FAILED: '{{profile:saveFailed}}'
+  PUSH_DECLINE: '{{push:rationaleDecline}}'
+  # Distinct from every seeded phone number, so finding it on screen can only
+  # mean this flow put it there. The seeds use +34600000012 for this player.
+  NEW_PHONE: '+34600445566'
+---
+- runFlow: _open-app.yaml
+- runFlow: _sign-in.yaml
+- runFlow: _relaunch.yaml
+
+# Reaching Profile is a LOOP verified by the dev-menu entry, which renders on
+# Profile and nowhere else in the signed-in shell. A single tab tap can land on
+# the WRONG tab: the tab bar is a floating pill that animates into place after a
+# relaunch, and a touch dispatched against its pre-settle layout selects a
+# neighbour.
+- repeat:
+    times: 6
+    while:
+      notVisible: '.*${DEV_MENU_LABEL}.*'
+    commands:
+      - tapOn:
+          text: '^${TAB_PROFILE}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- extendedWaitUntil:
+    visible: '.*${PROFILE_TITLE}.*'
+    timeout: 15000
+
+# ── Into the editor ────────────────────────────────────────────────────────
+- repeat:
+    times: 10
+    while:
+      notVisible: '^${EDIT_ACTION}$'
+    commands:
+      - swipe:
+          start: 50%, 60%
+          end: 50%, 40%
+          duration: 900
+      - waitForAnimationToEnd:
+          timeout: 1500
+# The loop stops the instant a sliver is on screen, which parks the control
+# under the tab bar where a tap does not reach it. One smaller swipe lifts it.
+- swipe:
+    start: 50%, 60%
+    end: 50%, 52%
+    duration: 900
+- waitForAnimationToEnd:
+    timeout: 2000
+- repeat:
+    times: 6
+    while:
+      notVisible: '.*${EDIT_TITLE}.*'
+    commands:
+      - tapOn:
+          text: '^${EDIT_ACTION}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 2500
+- extendedWaitUntil:
+    visible: '.*${EDIT_TITLE}.*'
+    timeout: 20000
+- waitForAnimationToEnd:
+    timeout: 2000
+
+# ── Change the phone number ────────────────────────────────────────────────
+# By testID: the label is rendered twice on this control (visible caption and
+# the input's accessibility label), so matching on its text can resolve to the
+# caption, which nothing can type into.
+- repeat:
+    times: 10
+    while:
+      notVisible:
+        id: 'profile-edit-phone'
+    commands:
+      - swipe:
+          start: 50%, 45%
+          end: 50%, 20%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 1200
+- swipe:
+    start: 50%, 55%
+    end: 50%, 40%
+    duration: 600
+- waitForAnimationToEnd:
+    timeout: 1500
+- tapOn:
+    text: '^Cancel$'
+    optional: true
+- tapOn:
+    id: 'profile-edit-phone'
+# Clear first: `inputText` appends, so without this the field would hold the
+# seeded number followed by the new one, which fails phone validation and the
+# flow would then be testing the error path by accident.
+- eraseText
+- inputText: ${NEW_PHONE}
+- waitForAnimationToEnd:
+    timeout: 1500
+
+# Save. The button sits below the fold on a form this long once the keyboard
+# has been up.
+- repeat:
+    times: 12
+    while:
+      notVisible: '^${SAVE_ACTION}$'
+    commands:
+      - swipe:
+          start: 50%, 45%
+          end: 50%, 15%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 1500
+- repeat:
+    times: 6
+    while:
+      notVisible: '.*${PROFILE_TITLE}.*'
+    commands:
+      - tapOn:
+          text: '^${SAVE_ACTION}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+
+# Leaving the editor IS the success signal, and only the success signal: a
+# rejected save deliberately keeps her on this screen with her edits intact, so
+# landing back on the profile cannot happen on the failure path.
+- extendedWaitUntil:
+    visible: '.*${PROFILE_TITLE}.*'
+    timeout: 60000
+# Belt and braces on the same fact, and safe to assert as an absence only
+# because the wait above has already proved something PRESENT on the screen
+# that replaced it.
+- assertNotVisible: '.*${SAVE_FAILED}.*'
+
+# ── The point: it survives a relaunch ──────────────────────────────────────
+# Everything above passes against a purely optimistic write. This is the part
+# that cannot: the process is killed, the query cache goes with it, and the
+# number can only reappear by having been read back from the database.
+- runFlow: _relaunch.yaml
+- repeat:
+    times: 6
+    while:
+      notVisible: '.*${PROFILE_TITLE}.*'
+    commands:
+      - tapOn:
+          text: '^${TAB_PROFILE}$'
+          optional: true
+      - tapOn:
+          text: '^${PUSH_DECLINE}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- extendedWaitUntil:
+    visible: '.*${PROFILE_TITLE}.*'
+    timeout: 30000
+- repeat:
+    times: 10
+    while:
+      notVisible: '.*${NEW_PHONE}.*'
+    commands:
+      - swipe:
+          start: 50%, 60%
+          end: 50%, 40%
+          duration: 900
+      - waitForAnimationToEnd:
+          timeout: 1500
+- extendedWaitUntil:
+    visible: '.*${NEW_PHONE}.*'
+    timeout: 30000
