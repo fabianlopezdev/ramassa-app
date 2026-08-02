@@ -278,6 +278,13 @@ export default function ProfileEditScreen() {
         name="placeOfBirth"
         render={({ field }) => (
           <AuthTextField
+            // The field the smoke suite edits. Chosen because the seed leaves it
+            // NULL for the participant the suite signs in as (deliberately: two
+            // rows keep a null so the "created before this field existed" case
+            // is covered), so the flow can type into it without first erasing
+            // what is there - and erasing an Arabic-script value through the
+            // Android driver hangs until Maestro's own two-minute deadline.
+            testID="profile-edit-place-of-birth"
             label={t('onboarding:placeOfBirthLabel')}
             value={field.value}
             onChangeText={field.onChange}

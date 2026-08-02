@@ -13,9 +13,9 @@ name: smoke-profile
 # happily when the server rejected it and the rollback has not landed yet. A
 # relaunch drops the cache and the value can only come back from the database.
 #
-# The suite rebuilds the seeded database before each platform's run, so the name
+# The suite rebuilds the seeded database before each platform's run, so what
 # this writes is gone by the next run and the flow always starts from the same
-# seeded value. Nothing is tagged, and nothing needs cleaning up:
+# seeded state. Nothing is tagged, and nothing needs cleaning up:
 # the row is the seeded fixture's, identified by the account signed into, not by
 # anything written into a column the feature under test can rewrite.
 env:
@@ -31,11 +31,10 @@ env:
   SAVE_ACTION: '{{profile:saveAction}}'
   SAVE_FAILED: '{{profile:saveFailed}}'
   PUSH_DECLINE: '{{push:rationaleDecline}}'
-  # ASCII, and distinct from every seeded name, so finding it on screen can only
-  # mean this flow put it there. Maestro's inputText cannot type Arabic script,
-  # and this player's seeded name is in it; the pgTAP suite covers that storage
-  # path server-side instead.
-  NEW_NAME: 'Nadira'
+  # ASCII, and distinct from every seeded value, so finding it on screen can
+  # only mean this flow put it there. Maestro's inputText cannot type Arabic
+  # script; the pgTAP suite covers that storage path server-side instead.
+  NEW_BIRTHPLACE: 'Homs'
 ---
 - runFlow: _open-app.yaml
 - runFlow: _sign-in.yaml
@@ -104,7 +103,7 @@ env:
     times: 6
     while:
       notVisible:
-        id: 'profile-edit-first-name'
+        id: 'profile-edit-place-of-birth'
     commands:
       - tapOn:
           text: '^${EDIT_ACTION}$'
@@ -113,35 +112,35 @@ env:
           timeout: 2500
 - extendedWaitUntil:
     visible:
-      id: 'profile-edit-first-name'
+      id: 'profile-edit-place-of-birth'
     timeout: 30000
 - waitForAnimationToEnd:
     timeout: 2000
 
-# ── Change her name ────────────────────────────────────────────────────────
+# ── Fill in where she was born ────────────────────────────────────────────────────────
 # By testID: the label is rendered twice on this control (visible caption and
 # the input's accessibility label), so matching on its text can resolve to the
 # caption, which nothing can type into.
 #
-# The FIRST field on the form, deliberately, and not the phone number this flow
-# originally edited. The edit screen carries the entire intake in one column, so
-# the phone sits six to eight screens down, and reaching it meant a long swipe
-# loop plus a settle swipe - which then pushed the field back off the top
-# whenever the loop had already stopped with it high on screen, so the tap
-# failed with the field plainly in the hierarchy a moment earlier. The claim
-# being tested is "an edit survives a relaunch"; any field proves that, and the
-# first name is at the top of BOTH this screen and the profile screen, so the
-# check needs no scrolling on either and has nothing left to drift.
+# Place of birth, and not the phone number this flow first edited. The claim
+# being tested is "an edit survives a relaunch", so any field proves it, and
+# this one is the only field that avoids both traps at once: it is near the top
+# of BOTH this screen and the profile screen, so nothing has to be scrolled to,
+# and the seed leaves it empty, so nothing has to be erased. The phone number
+# failed on the first (six to eight screens down a form carrying the whole
+# intake) and her name failed on the second.
 - tapOn:
     text: '^Cancel$'
     optional: true
 - tapOn:
-    id: 'profile-edit-first-name'
-# Clear first: `inputText` appends, so without this the field would hold the
-# seeded name followed by the new one - still a valid name, so the flow would
-# pass while proving something weaker than it claims.
-- eraseText
-- inputText: ${NEW_NAME}
+    id: 'profile-edit-place-of-birth'
+# No erase, deliberately. `eraseText` removes a character at a time through the
+# Android driver and hung on this participant's Arabic-script name until
+# Maestro's own two-minute deadline killed the run. The seed leaves her place of
+# birth NULL on purpose (two rows keep a null so the "profile created before
+# this field existed" case stays covered), so there is nothing to clear and
+# `inputText` has nothing to append to.
+- inputText: ${NEW_BIRTHPLACE}
 - waitForAnimationToEnd:
     timeout: 1500
 
@@ -204,7 +203,7 @@ env:
 - repeat:
     times: 20
     while:
-      notVisible: '.*${NEW_NAME}.*'
+      notVisible: '.*${NEW_BIRTHPLACE}.*'
     commands:
       - swipe:
           start: 50%, 60%
@@ -213,5 +212,5 @@ env:
       - waitForAnimationToEnd:
           timeout: 1500
 - extendedWaitUntil:
-    visible: '.*${NEW_NAME}.*'
+    visible: '.*${NEW_BIRTHPLACE}.*'
     timeout: 30000
