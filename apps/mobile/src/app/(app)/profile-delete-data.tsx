@@ -12,41 +12,49 @@
  */
 
 import { AuthTextField } from '@/components/auth/auth-text-field';
+import { FailureNotice } from '@/components/error-code-line';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
+import { playHaptic } from '@/lib/haptics/haptics';
 import { submitDeletionRequest } from '@/lib/profile';
-import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text } from 'react-native';
 import { useAuth } from '@ramassa/shared/auth';
+import type { AppErrorCode } from '@ramassa/shared/errors';
 
 export default function DeleteDataScreen() {
   const { t } = useTranslation('profile');
-  const languageFontClass = useLanguageFontClass();
   const router = useRouter();
   const { user } = useAuth();
   const [reason, setReason] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [hasFailed, setHasFailed] = useState(false);
+  // The failure's own code, not a boolean: it drives the shake and picks the
+  // haptic through the RAPP-12 taxonomy.
+  const [failureCode, setFailureCode] = useState<AppErrorCode | null>(null);
 
   async function send() {
     if (user === null) return;
     setIsSubmitting(true);
-    setHasFailed(false);
-    try {
-      await submitDeletionRequest({
-        profileId: user.id,
-        ...(reason.trim() === '' ? {} : { reason: reason.trim() }),
-      });
-      router.back();
-    } catch {
+    setFailureCode(null);
+    // A `Result`, not a try/catch (contract rule 7): the wired `safeAsync`
+    // inside the action has already logged and reported the failure by the time
+    // it arrives here, and it cannot reject, so there is no path out of this
+    // function that leaves `isSubmitting` stuck true.
+    const result = await submitDeletionRequest({
+      profileId: user.id,
+      ...(reason.trim() === '' ? {} : { reason: reason.trim() }),
+    });
+    setIsSubmitting(false);
+    if (!result.ok) {
       // Staying on the screen with her words intact: a failed send must not
       // also cost her the message she just wrote.
-      setHasFailed(true);
-    } finally {
-      setIsSubmitting(false);
+      setFailureCode(result.error.code);
+      return;
     }
+    // The request reached Ramassà. A completed primary action, so it gets the
+    // success feedback every other one gets (RAPP-70) before the screen goes.
+    playHaptic('success');
+    router.back();
   }
 
   return (
@@ -58,14 +66,13 @@ export default function DeleteDataScreen() {
       isContinueBusy={isSubmitting}
       onBack={() => router.back()}
     >
-      {hasFailed ? (
-        <Text
-          accessibilityLiveRegion="polite"
-          className={`text-start text-sm text-error ${languageFontClass}`}
-        >
-          {t('saveFailed')}
-        </Text>
-      ) : null}
+      {/* Mounted only while there IS a failure, so the shake wrapper never
+          occupies a slot in the frame's gap when everything is fine.
+
+          The short code travels with the friendly message (contract rule 7):
+          this is the most sensitive request in the product, and "it did not
+          work" with nothing to report is where a woman gives up. */}
+      {failureCode === null ? null : <FailureNotice code={failureCode} message={t('saveFailed')} />}
 
       <AuthTextField
         label={t('deleteReasonLabel')}

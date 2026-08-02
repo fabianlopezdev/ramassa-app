@@ -64,7 +64,11 @@ export function LanguageSwitcher() {
       </View>
 
       {needsRestart ? (
+        // `alert` as well as the live region: the live region is Android-only,
+        // and this panel appears without the player having asked for it, in the
+        // one moment she has just changed the language the app speaks to her in.
         <View
+          accessibilityRole="alert"
           accessibilityLiveRegion="polite"
           style={continuousCorners}
           className="gap-sm rounded-md bg-neutral-50 p-md"

@@ -174,3 +174,72 @@ test('fetchOwnDeletionRequest reports no request as null rather than inventing o
     ),
   ).toBeNull();
 });
+
+/**
+ * A builder that behaves like PostgREST's: awaitable on its own, and awaitable
+ * AFTER `.abortSignal()`. Two shapes, because the point of the test is that the
+ * caller's signal actually reaches the request rather than being accepted and
+ * dropped.
+ */
+function cancellableRpcClient(
+  result: { data: unknown; error: unknown },
+  seen: { signal?: AbortSignal },
+): Client {
+  return {
+    rpc: () => ({
+      then: (resolve: (value: unknown) => unknown) => Promise.resolve(result).then(resolve),
+      abortSignal(signal: AbortSignal) {
+        seen.signal = signal;
+        return Promise.resolve(result);
+      },
+    }),
+  } as unknown as Client;
+}
+
+test('fetchOwnProfile hands the caller cancellation to the request', async () => {
+  const controller = new AbortController();
+  const seen: { signal?: AbortSignal } = {};
+
+  await fetchOwnProfile(cancellableRpcClient({ data: [decryptedRow], error: null }, seen), {
+    signal: controller.signal,
+  });
+
+  expect(seen.signal).toBe(controller.signal);
+});
+
+test('fetchOwnProfile without a signal never reaches for abortSignal', async () => {
+  const seen: { signal?: AbortSignal } = {};
+
+  const profile = await fetchOwnProfile(
+    cancellableRpcClient({ data: [decryptedRow], error: null }, seen),
+  );
+
+  expect(seen.signal).toBeUndefined();
+  expect(profile?.document_number).toBe('X1234567L');
+});
+
+/**
+ * The cast this replaced (`data as ProfileRow[]`) let a renamed or dropped
+ * column through as `undefined`, which the profile screen renders as "Sense
+ * omplir" — the app calmly telling a woman it holds nothing about her, in the
+ * one place whose entire job is showing her what it holds. Contract rule 6.
+ */
+test('a row that does not match the schema is a typed failure, not a blank profile', async () => {
+  const renamedColumn = { ...decryptedRow, document_number: undefined, docNumber: 'X1234567L' };
+
+  await expect(fetchOwnProfile(rpcClient({ data: [renamedColumn], error: null }))).rejects.toThrow(
+    AppError,
+  );
+});
+
+test('the parse failure carries the field names but never the values', async () => {
+  const renamedColumn = { ...decryptedRow, document_number: undefined, docNumber: 'X1234567L' };
+
+  const error = (await fetchOwnProfile(rpcClient({ data: [renamedColumn], error: null })).catch(
+    (thrown: unknown) => thrown,
+  )) as AppError;
+
+  expect(error.code).toBe('DB-1');
+  expect(error.context.invalidFields).toEqual(['document_number']);
+  expect(JSON.stringify(error.context)).not.toContain('X1234567L');
+});

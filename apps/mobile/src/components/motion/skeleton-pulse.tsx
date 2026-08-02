@@ -1,3 +1,4 @@
+import { continuousCorners } from '@/lib/continuous-corners';
 import { useEffect } from 'react';
 import Animated, {
   useAnimatedStyle,
@@ -55,7 +56,11 @@ export function SkeletonPulse({ className }: SkeletonPulseProps) {
   return (
     <Animated.View
       accessibilityRole="progressbar"
-      style={animatedStyle}
+      // The rounded surface is this component's own, so the continuous curve
+      // belongs here rather than at every call site (contract rule 17): callers
+      // pass the radius as a class and NativeWind cannot express `borderCurve`.
+      // Composed with the pulse, from the hoisted constant, never a literal.
+      style={[animatedStyle, continuousCorners]}
       className={`bg-neutral-200 ${className ?? ''}`}
     />
   );

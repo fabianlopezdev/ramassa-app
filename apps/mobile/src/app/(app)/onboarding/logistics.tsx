@@ -8,6 +8,7 @@
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { OptionChip } from '@/components/onboarding/option-chip';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
+import { playHaptic } from '@/lib/haptics/haptics';
 import { onboardingDraftStore, usePendingInviteEntity } from '@/lib/onboarding';
 import { logisticsFormSchema, type LogisticsFormInput } from '@/lib/onboarding-form';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
@@ -19,6 +20,18 @@ import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { prefilledReferenceEntity } from '@ramassa/shared/accounts';
 import { CLOTHING_SIZES, SHOE_SIZES, type LogisticsStep } from '@ramassa/shared/schemas';
+
+/**
+ * The city box takes a wider share of its row than the postal-code box beside
+ * it: a postal code is exactly five digits and never grows, while a
+ * municipality name routinely runs past twenty characters.
+ *
+ * A NAMED class rather than a bare `flex-[1.6]` in the JSX, for the same reason
+ * as the wizard's year field: no design token expresses a flex proportion
+ * (contract rule 8 covers colour, spacing, radius and type), so the name is
+ * what stops the ratio being an unexplained number.
+ */
+const CITY_FIELD_WIDTH_CLASS = 'flex-[1.6]';
 
 export default function LogisticsStepScreen() {
   const { t } = useTranslation('onboarding');
@@ -81,10 +94,15 @@ export default function LogisticsStepScreen() {
     });
   }
 
-  const continueToTerms = handleSubmit(() => {
-    persist('terms');
-    router.push('/onboarding/terms');
-  });
+  const continueToTerms = handleSubmit(
+    () => {
+      persist('terms');
+      router.push('/onboarding/terms');
+    },
+    // One warning buzz per rejected submit, from the shared vocabulary. Same
+    // placement and reasoning as step 1.
+    () => playHaptic('warning'),
+  );
 
   return (
     <WizardFrame
@@ -129,7 +147,7 @@ export default function LogisticsStepScreen() {
         )}
       />
       <View className="flex-row gap-sm">
-        <View className="flex-[1.6]">
+        <View className={CITY_FIELD_WIDTH_CLASS}>
           <Controller
             control={control}
             name="city"
@@ -271,7 +289,10 @@ export default function LogisticsStepScreen() {
           )}
         />
         {errors.clothingSize ? (
-          <Text className={`text-start text-sm text-error ${languageFontClass}`}>
+          <Text
+            accessibilityLiveRegion="polite"
+            className={`text-start text-sm text-error ${languageFontClass}`}
+          >
             {t('errorRequired')}
           </Text>
         ) : null}
@@ -298,7 +319,10 @@ export default function LogisticsStepScreen() {
           )}
         />
         {errors.shoeSize ? (
-          <Text className={`text-start text-sm text-error ${languageFontClass}`}>
+          <Text
+            accessibilityLiveRegion="polite"
+            className={`text-start text-sm text-error ${languageFontClass}`}
+          >
             {t('errorRequired')}
           </Text>
         ) : null}

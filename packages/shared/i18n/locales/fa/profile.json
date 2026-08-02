@@ -12,6 +12,7 @@
   "cancelAction": "لغو",
   "editTitle": "ویرایش اطلاعاتم",
   "notProvided": "پر نشده",
+  "loading": "در حال بارگذاری اطلاعات شما.",
   "termsAcceptedOn": "شما شرایط را در {{date}} پذیرفتید.",
   "mediaConsentGranted": "در عکس‌ها و داستان‌های جامعه دیده می‌شوم.",
   "mediaConsentDenied": "در عکس‌ها و داستان‌ها دیده نمی‌شوم.",

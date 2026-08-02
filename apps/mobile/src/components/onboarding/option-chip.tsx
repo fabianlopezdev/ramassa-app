@@ -17,6 +17,22 @@ import { continuousCorners } from '@/lib/continuous-corners';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { Text } from 'react-native';
 
+/**
+ * The two appearances as hoisted constants rather than a template literal
+ * rebuilt on every render (contract rule 17's perf clause). Worth naming here
+ * and not only for tidiness: the longest screens render a dozen-odd chips at
+ * once and re-render them together whenever a watched field changes.
+ *
+ * Spelled out in full rather than composed from a shared base, so Tailwind's
+ * scanner still sees every utility as a literal in this file.
+ */
+const CHIP_CLASS =
+  'min-h-recommended justify-center rounded-md border border-neutral-300 bg-white px-lg';
+const CHIP_SELECTED_CLASS =
+  'min-h-recommended justify-center rounded-md border border-primary bg-primary px-lg';
+const CHIP_LABEL_CLASS = 'text-center text-md font-medium text-neutral-800';
+const CHIP_LABEL_SELECTED_CLASS = 'text-center text-md font-medium text-white';
+
 export interface OptionChipProps {
   readonly label: string;
   readonly isSelected: boolean;
@@ -32,14 +48,10 @@ export function OptionChip({ label, isSelected, onPress }: OptionChipProps) {
       onPress={onPress}
       haptic="selection"
       style={continuousCorners}
-      className={`min-h-recommended justify-center rounded-md border px-lg ${
-        isSelected ? 'border-primary bg-primary' : 'border-neutral-300 bg-white'
-      }`}
+      className={isSelected ? CHIP_SELECTED_CLASS : CHIP_CLASS}
     >
       <Text
-        className={`text-center text-md font-medium ${
-          isSelected ? 'text-white' : 'text-neutral-800'
-        } ${languageFontClass}`}
+        className={`${isSelected ? CHIP_LABEL_SELECTED_CLASS : CHIP_LABEL_CLASS} ${languageFontClass}`}
       >
         {label}
       </Text>

@@ -40,31 +40,57 @@ export type ProfileEdit = z.infer<typeof profileEditSchema>;
  * columns already decrypted server-side. Declared structurally rather than
  * pulled from the generated database types because those live in a package this
  * one must not depend on, and the RPC's shape is pinned by pgTAP either way.
+ *
+ * A SCHEMA, not just an interface (contract rule 6: external API responses are
+ * parsed). An interface is a promise the compiler cannot keep about a payload
+ * that arrived over the network: the previous `data as ProfileRow[]` cast meant
+ * a renamed column reached the screens as `undefined` and rendered as "Sense
+ * omplir", which is the app quietly telling a woman it holds nothing about her.
+ * Parsing turns that into a typed `DB-1` with a retry.
+ *
+ * Unknown keys are stripped rather than rejected, so a migration that ADDS a
+ * column does not break every phone that has not updated yet.
  */
-export interface ProfileRow {
-  id: string;
-  first_name: string;
-  last_name: string;
-  date_of_birth: string | null;
-  place_of_birth: string | null;
-  nationality: string | null;
-  preferred_language: string;
-  document_type: string | null;
-  document_number: string | null;
-  phone: string | null;
-  address: string | null;
-  city: string | null;
-  postal_code: string | null;
-  reference_entity: string | null;
-  reference_contact_name: string | null;
-  has_dependents: boolean;
-  num_dependents: number;
-  clothing_size: string | null;
-  shoe_size: string | null;
-  avatar_url: string | null;
-  media_consent: boolean;
-  terms_accepted_at: string | null;
-}
+export const profileRowSchema = z.object({
+  id: z.string(),
+  first_name: z.string(),
+  last_name: z.string(),
+  date_of_birth: z.string().nullable(),
+  place_of_birth: z.string().nullable(),
+  nationality: z.string().nullable(),
+  preferred_language: z.string(),
+  document_type: z.string().nullable(),
+  document_number: z.string().nullable(),
+  phone: z.string().nullable(),
+  address: z.string().nullable(),
+  city: z.string().nullable(),
+  postal_code: z.string().nullable(),
+  reference_entity: z.string().nullable(),
+  reference_contact_name: z.string().nullable(),
+  has_dependents: z.boolean(),
+  num_dependents: z.number(),
+  clothing_size: z.string().nullable(),
+  shoe_size: z.string().nullable(),
+  avatar_url: z.string().nullable(),
+  media_consent: z.boolean(),
+  terms_accepted_at: z.string().nullable(),
+});
+
+export type ProfileRow = z.infer<typeof profileRowSchema>;
+
+/**
+ * The most recent erasure request this participant filed. `state` stays an open
+ * string: the workflow the staff side runs is theirs to extend, and a phone
+ * that has not been updated must not reject a row because a new state was added
+ * on the server.
+ */
+export const ownDeletionRequestSchema = z.object({
+  id: z.string(),
+  state: z.string(),
+  created_at: z.string(),
+});
+
+export type OwnDeletionRequest = z.infer<typeof ownDeletionRequestSchema>;
 
 /**
  * A decrypted row as the edit form wants it. NULL becomes `undefined` for the

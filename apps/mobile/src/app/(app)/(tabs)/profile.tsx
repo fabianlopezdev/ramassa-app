@@ -10,15 +10,22 @@
  */
 
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
+import { ErrorCodeLine } from '@/components/error-code-line';
+import { FadeSlideIn } from '@/components/motion/fade-slide-in';
 import { PressableScale } from '@/components/motion/pressable-scale';
+import { ShakeOnError } from '@/components/motion/shake-on-error';
+import { SkeletonPulse } from '@/components/motion/skeleton-pulse';
 import { LanguageSwitcher } from '@/components/profile/language-switcher';
 import { ProfileRow, ProfileSection } from '@/components/profile/profile-section';
 import { logout } from '@/lib/auth';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useRouter } from 'expo-router';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { toAppError } from '@ramassa/shared/errors';
 import { useOwnDeletionRequest, useOwnProfile } from '@ramassa/shared/profile';
 
 // The dev-menu entry, required inside a __DEV__ branch so neither the component
@@ -29,29 +36,82 @@ const DevMenuEntry = __DEV__
       .DevMenuEntry
   : null;
 
+/**
+ * How many section placeholders the loading state draws, one per real section
+ * below. A skeleton, not a spinner (SPEC / contract rule 14): it holds the
+ * shape of the answer so the content does not jump in over a spinner.
+ */
+const LOADING_SECTION_COUNT = 4;
+
 export default function ProfileScreen() {
   const { t, i18n } = useTranslation(['profile', 'onboarding']);
   const languageFontClass = useLanguageFontClass();
   const router = useRouter();
-  const { data: profile, isLoading, isError, refetch } = useOwnProfile();
+  const { data: profile, isLoading, isError, error, refetch } = useOwnProfile();
   const { data: deletionRequest } = useOwnDeletionRequest();
+
+  /**
+   * ONE formatter per language, not one per date. `toLocaleDateString` builds a
+   * fresh `Intl.DateTimeFormat` on every call, and instantiating one parses
+   * locale data and builds lookup tables: by far the most expensive thing on
+   * this screen per call, and this screen formats several dates. Same output as
+   * before (a bare `Intl.DateTimeFormat(locale)` IS what `toLocaleDateString`
+   * constructs), so no locale reads differently.
+   */
+  const dateFormatter = useMemo(
+    () => new Intl.DateTimeFormat(i18n.resolvedLanguage ?? 'ca'),
+    [i18n.resolvedLanguage],
+  );
 
   function formatDate(value: string | null): string {
     if (value === null) return t('notProvided');
-    return new Date(value).toLocaleDateString(i18n.resolvedLanguage ?? 'ca');
+    const date = new Date(value);
+    // An unparseable stored date says "not provided" rather than throwing:
+    // `format` rejects an Invalid Date where `toLocaleDateString` used to
+    // return the literal string "Invalid Date", and neither belongs on a screen
+    // whose whole job is telling a woman what is held about her.
+    if (Number.isNaN(date.getTime())) return t('notProvided');
+    return dateFormatter.format(date);
   }
 
   const shown = (value: string | null | undefined): string =>
     value === null || value === undefined || value === '' ? t('notProvided') : value;
+
+  // `DB-2` when the read SUCCEEDED but held no row: that is "not found", not a
+  // crash, and the taxonomy keeps the two apart. Named once here because it is
+  // now used twice: it drives the shake's haptic and it is the code she reports.
+  const loadFailureCode = isError ? toAppError(error).code : 'DB-2';
+
+  // Android's share of the insets, and only Android's: on iOS
+  // `contentInsetAdjustmentBehavior="automatic"` already accounts for both the
+  // status bar and the floating tab bar, so adding padding there would double
+  // it. A computed value rather than a module constant because it depends on
+  // the device, but still one object per inset change rather than per render.
+  const insets = useSafeAreaInsets();
+  const androidEdgeInsets = useMemo(
+    () =>
+      process.env.EXPO_OS === 'android'
+        ? { paddingTop: insets.top, paddingBottom: insets.bottom }
+        : undefined,
+    [insets.top, insets.bottom],
+  );
 
   return (
     // A ScrollView with automatic inset adjustment, not a plain View. The iOS 26
     // native tab bar is a floating pill drawn OVER the screen, so anything laid
     // out at the bottom of a tab screen sits underneath it: unreachable, and
     // absent from the accessibility tree entirely.
+    //
+    // `contentInsetAdjustmentBehavior` is iOS-ONLY, so on Android it did
+    // nothing at all and this screen had no insets in either direction: under
+    // edge-to-edge the heading drew beneath the status bar, and the last row of
+    // the last section sat under the navigation bar. The safe-area padding
+    // below is what Android gets instead; it is zero on iOS, where the prop
+    // above has already done the work, so the two cannot double up.
     <ScrollView
       className="flex-1 bg-white"
       contentContainerClassName="grow gap-lg p-lg"
+      contentContainerStyle={androidEdgeInsets}
       contentInsetAdjustmentBehavior="automatic"
     >
       <View className="gap-xs">
@@ -67,79 +127,113 @@ export default function ProfileScreen() {
       </View>
 
       {isLoading ? (
-        <ActivityIndicator accessibilityLabel={t('title')} />
+        // One node that says it is LOADING, not one that repeats the screen
+        // title: a screen reader announcing "My profile" over a skeleton is
+        // indistinguishable from a profile that came back empty, and busy is
+        // the state that tells the listener to wait rather than to act.
+        <View
+          accessible
+          accessibilityLabel={t('loading')}
+          accessibilityState={{ busy: true }}
+          accessibilityLiveRegion="polite"
+          className="gap-lg"
+        >
+          {Array.from({ length: LOADING_SECTION_COUNT }, (_unused, index) => (
+            <View key={index} className="gap-sm">
+              <SkeletonPulse className="h-lg w-1/2 rounded-md" />
+              <SkeletonPulse className="h-3xl w-full rounded-md" />
+            </View>
+          ))}
+        </View>
       ) : isError || profile === null || profile === undefined ? (
         // A failed read says so and offers a retry. It must never render as an
         // empty profile: "we hold nothing about you" is a different statement,
         // and a false one.
-        <View className="gap-md">
-          <Text
-            accessibilityLiveRegion="polite"
-            className={`text-start text-md text-error ${languageFontClass}`}
-          >
-            {t('loadFailed')}
-          </Text>
-          <AuthSubmitButton label={t('retryAction')} onPress={() => void refetch()} />
-        </View>
+        <ShakeOnError errorCode={loadFailureCode}>
+          <View className="gap-md">
+            <Text
+              accessibilityLiveRegion="polite"
+              className={`text-start text-md text-error ${languageFontClass}`}
+            >
+              {t('loadFailed')}
+            </Text>
+            {/* Translated message AND the short code (contract rule 7): the
+                retry button is the answer when it is a dead connection, and
+                the code is what tells staff when it is not. */}
+            <ErrorCodeLine code={loadFailureCode} />
+            <AuthSubmitButton label={t('retryAction')} onPress={() => void refetch()} />
+          </View>
+        </ShakeOnError>
       ) : (
         <>
-          <ProfileSection title={t('sectionIdentity')}>
-            <ProfileRow label={t('onboarding:firstNameLabel')} value={profile.first_name} />
-            <ProfileRow label={t('onboarding:lastNameLabel')} value={profile.last_name} />
-            <ProfileRow
-              label={t('onboarding:dateOfBirthLabel')}
-              value={formatDate(profile.date_of_birth)}
-            />
-            <ProfileRow
-              label={t('onboarding:placeOfBirthLabel')}
-              value={shown(profile.place_of_birth)}
-            />
-            <ProfileRow
-              label={t('onboarding:nationalityLabel')}
-              value={shown(profile.nationality)}
-            />
-          </ProfileSection>
+          {/* The record assembles section by section instead of arriving as a
+              slab (contract rule 14). Mount-only and stagger-capped by the
+              primitive, and completely flat under reduce-motion. */}
+          <FadeSlideIn index={0}>
+            <ProfileSection title={t('sectionIdentity')}>
+              <ProfileRow label={t('onboarding:firstNameLabel')} value={profile.first_name} />
+              <ProfileRow label={t('onboarding:lastNameLabel')} value={profile.last_name} />
+              <ProfileRow
+                label={t('onboarding:dateOfBirthLabel')}
+                value={formatDate(profile.date_of_birth)}
+              />
+              <ProfileRow
+                label={t('onboarding:placeOfBirthLabel')}
+                value={shown(profile.place_of_birth)}
+              />
+              <ProfileRow
+                label={t('onboarding:nationalityLabel')}
+                value={shown(profile.nationality)}
+              />
+            </ProfileSection>
+          </FadeSlideIn>
 
-          <ProfileSection title={t('sectionDocumentation')}>
-            <ProfileRow
-              label={t('onboarding:documentTypeLabel')}
-              value={documentTypeLabel(profile.document_type, t)}
-            />
-            <ProfileRow
-              label={t('onboarding:documentNumberLabel')}
-              value={shown(profile.document_number)}
-            />
-          </ProfileSection>
+          <FadeSlideIn index={1}>
+            <ProfileSection title={t('sectionDocumentation')}>
+              <ProfileRow
+                label={t('onboarding:documentTypeLabel')}
+                value={documentTypeLabel(profile.document_type, t)}
+              />
+              <ProfileRow
+                label={t('onboarding:documentNumberLabel')}
+                value={shown(profile.document_number)}
+              />
+            </ProfileSection>
+          </FadeSlideIn>
 
-          <ProfileSection title={t('sectionContact')}>
-            {/* Read-view labels, not the form's: "(optional)" is an
-                instruction for someone filling a field in, and reads as noise
-                next to an answer she already gave. */}
-            <ProfileRow label={t('fieldPhone')} value={shown(profile.phone)} />
-            <ProfileRow label={t('fieldAddress')} value={shown(profile.address)} />
-            <ProfileRow label={t('fieldCity')} value={shown(profile.city)} />
-            <ProfileRow label={t('fieldPostalCode')} value={shown(profile.postal_code)} />
-            <ProfileRow
-              label={t('onboarding:clothingSizeLabel')}
-              value={shown(profile.clothing_size)}
-            />
-            <ProfileRow label={t('onboarding:shoeSizeLabel')} value={shown(profile.shoe_size)} />
-          </ProfileSection>
+          <FadeSlideIn index={2}>
+            <ProfileSection title={t('sectionContact')}>
+              {/* Read-view labels, not the form's: "(optional)" is an
+                  instruction for someone filling a field in, and reads as noise
+                  next to an answer she already gave. */}
+              <ProfileRow label={t('fieldPhone')} value={shown(profile.phone)} />
+              <ProfileRow label={t('fieldAddress')} value={shown(profile.address)} />
+              <ProfileRow label={t('fieldCity')} value={shown(profile.city)} />
+              <ProfileRow label={t('fieldPostalCode')} value={shown(profile.postal_code)} />
+              <ProfileRow
+                label={t('onboarding:clothingSizeLabel')}
+                value={shown(profile.clothing_size)}
+              />
+              <ProfileRow label={t('onboarding:shoeSizeLabel')} value={shown(profile.shoe_size)} />
+            </ProfileSection>
+          </FadeSlideIn>
 
-          <ProfileSection title={t('sectionConsents')}>
-            <ProfileRow
-              label={t('onboarding:termsTitle')}
-              value={
-                profile.terms_accepted_at === null
-                  ? t('notProvided')
-                  : t('termsAcceptedOn', { date: formatDate(profile.terms_accepted_at) })
-              }
-            />
-            <ProfileRow
-              label={t('fieldMediaConsent')}
-              value={profile.media_consent ? t('mediaConsentGranted') : t('mediaConsentDenied')}
-            />
-          </ProfileSection>
+          <FadeSlideIn index={3}>
+            <ProfileSection title={t('sectionConsents')}>
+              <ProfileRow
+                label={t('onboarding:termsTitle')}
+                value={
+                  profile.terms_accepted_at === null
+                    ? t('notProvided')
+                    : t('termsAcceptedOn', { date: formatDate(profile.terms_accepted_at) })
+                }
+              />
+              <ProfileRow
+                label={t('fieldMediaConsent')}
+                value={profile.media_consent ? t('mediaConsentGranted') : t('mediaConsentDenied')}
+              />
+            </ProfileSection>
+          </FadeSlideIn>
 
           <AuthSubmitButton label={t('editAction')} onPress={() => router.push('/profile-edit')} />
         </>

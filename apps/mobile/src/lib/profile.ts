@@ -8,9 +8,10 @@
  * write without mocking a network.
  */
 
-import { logger } from '@/lib/observability';
+import { logger, safeAsync } from '@/lib/observability';
 import { queryClient } from '@/lib/query-client';
 import { supabase } from '@/lib/supabase';
+import type { AppError, Result } from '@ramassa/shared/errors';
 import {
   fetchOwnDeletionRequest,
   fetchOwnProfile,
@@ -29,15 +30,20 @@ import { buildUpdateOwnProfilePayload, type ProfileEdit } from '@ramassa/shared/
  * worse than a spinner.
  */
 export function registerProfileQueries(currentProfileId: () => string | null): void {
+  // `signal` is React Query's own, and it aborts the request when the query is
+  // cancelled or the last screen using it unmounts. Forwarded rather than
+  // dropped because this query refetches on EVERY entry to the tab (staleTime
+  // 0), so leaving the tab mid-flight otherwise leaves the radio open on a
+  // low-end phone for an answer nobody is waiting for.
   queryClient.setQueryDefaults(ownProfileQueryKey, {
-    queryFn: () => fetchOwnProfile(supabase),
+    queryFn: ({ signal }: { signal: AbortSignal }) => fetchOwnProfile(supabase, { signal }),
     staleTime: 0,
   });
 
   queryClient.setQueryDefaults(ownDeletionRequestQueryKey, {
-    queryFn: () => {
+    queryFn: ({ signal }: { signal: AbortSignal }) => {
       const profileId = currentProfileId();
-      return profileId === null ? null : fetchOwnDeletionRequest(supabase, profileId);
+      return profileId === null ? null : fetchOwnDeletionRequest(supabase, profileId, { signal });
     },
   });
 
@@ -50,11 +56,29 @@ export function registerProfileQueries(currentProfileId: () => string | null): v
   });
 }
 
-/** Files an RGPD erasure request and refreshes the pending-request banner. */
-export async function submitDeletionRequest(params: {
+/**
+ * Files an RGPD erasure request and refreshes the pending-request banner.
+ *
+ * Returns a `Result` through the app's wired `safeAsync` (contract rule 7)
+ * rather than throwing for the screen to catch. The screen's own try/catch did
+ * produce a typed code, but it was the ONLY failing write in the app that never
+ * reached the logger or Sentry: a woman exercising her right to erasure could
+ * be failing repeatedly and nothing outside her phone would know.
+ *
+ * The invalidation is inside the guarded operation deliberately. Refreshing the
+ * banner after a write that did not happen would ask the server the same
+ * question again for nothing, and any failure of the refresh itself is still a
+ * failure to show her that her request arrived.
+ */
+export function submitDeletionRequest(params: {
   profileId: string;
   reason?: string;
-}): Promise<void> {
-  await requestOwnDeletion(supabase, params);
-  await queryClient.invalidateQueries({ queryKey: ownDeletionRequestQueryKey });
+}): Promise<Result<void, AppError>> {
+  return safeAsync(
+    async () => {
+      await requestOwnDeletion(supabase, params);
+      await queryClient.invalidateQueries({ queryKey: ownDeletionRequestQueryKey });
+    },
+    { code: 'DB-1' },
+  );
 }

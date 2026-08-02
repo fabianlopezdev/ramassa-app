@@ -12,6 +12,7 @@
   "cancelAction": "Cancelar",
   "editTitle": "Editar mis datos",
   "notProvided": "Sin rellenar",
+  "loading": "Cargando tus datos.",
   "termsAcceptedOn": "Aceptaste los términos el {{date}}.",
   "mediaConsentGranted": "Salgo en fotos e historias de la comunidad.",
   "mediaConsentDenied": "No salgo en fotos ni historias.",

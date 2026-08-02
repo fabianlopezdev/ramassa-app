@@ -18,10 +18,17 @@ import { PressableScale } from '@/components/motion/pressable-scale';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
+import { KeyboardAvoidingView, ScrollView, Text, View, type TextStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export const WIZARD_TOTAL_STEPS = 4;
+
+/**
+ * Fixed-width digits for the "step X of Y" counter, so the line does not
+ * re-flow by a pixel as the wizard advances. Hoisted, never an object literal
+ * in JSX (contract rule 17's perf clause): one shared object for every step.
+ */
+const tabularNumerals: TextStyle = { fontVariant: ['tabular-nums'] };
 
 export interface WizardFrameProps {
   /**
@@ -47,7 +54,9 @@ export interface WizardFrameProps {
  * is a pure no-op layer.
  */
 function Frame({ children }: { readonly children: ReactNode }) {
-  if (Platform.OS !== 'ios') {
+  // `EXPO_OS`, not `Platform.OS`: it is inlined at bundle time, so the branch
+  // folds away per platform instead of being decided on every render.
+  if (process.env.EXPO_OS !== 'ios') {
     return <View className="flex-1">{children}</View>;
   }
   return (
@@ -103,6 +112,7 @@ export function WizardFrame({
             ) : (
               <Text
                 testID={`wizard-step-${stepNumber}`}
+                style={tabularNumerals}
                 className={`text-sm text-neutral-500 ${languageFontClass}`}
               >
                 {t('stepOf', { current: stepNumber, total: WIZARD_TOTAL_STEPS })}
@@ -111,9 +121,19 @@ export function WizardFrame({
           </View>
 
           {/* Four segments filling left to right (mirrored under RTL by the
-              flex row itself), so progress reads without reading. */}
+              flex row itself), so progress reads without reading.
+
+              Hidden from BOTH accessibility trees, not just iOS's:
+              `accessibilityElementsHidden` is iOS-only, so on Android (where
+              most of this audience is) a screen reader still stopped on four
+              unlabelled boxes between the header and the title. The same
+              progress is already spoken by the "step X of Y" line above. */}
           {stepNumber === undefined ? null : (
-            <View className="flex-row gap-xs" accessibilityElementsHidden>
+            <View
+              className="flex-row gap-xs"
+              accessibilityElementsHidden
+              importantForAccessibility="no-hide-descendants"
+            >
               {Array.from({ length: WIZARD_TOTAL_STEPS }, (_unused, index) => (
                 <View
                   key={index}
@@ -134,6 +154,7 @@ export function WizardFrame({
             Continue button off the bottom with no way to scroll to them. */}
         <ScrollView
           className="flex-1"
+          contentInsetAdjustmentBehavior="automatic"
           contentContainerClassName="grow gap-lg p-lg"
           keyboardShouldPersistTaps="handled"
         >

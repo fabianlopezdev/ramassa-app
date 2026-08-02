@@ -12,6 +12,7 @@
   "cancelAction": "إلغاء",
   "editTitle": "تعديل بياناتي",
   "notProvided": "غير مُعبَّأ",
+  "loading": "جارٍ تحميل بياناتكِ.",
   "termsAcceptedOn": "وافقتِ على الشروط بتاريخ {{date}}.",
   "mediaConsentGranted": "أظهر في صور وقصص المجتمع.",
   "mediaConsentDenied": "لا أظهر في الصور أو القصص.",
