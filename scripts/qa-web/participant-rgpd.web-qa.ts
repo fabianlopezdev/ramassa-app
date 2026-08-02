@@ -25,7 +25,14 @@
  */
 
 import { expect, test, type Page } from '@playwright/test';
-import { countInDatabase, queryDatabase, signIn, STAFF_EMAIL } from './session';
+import {
+  accessTokenFor,
+  countInDatabase,
+  queryDatabase,
+  signIn,
+  STAFF_EMAIL,
+  uploadObjectAs,
+} from './session';
 
 const ADMIN_EMAIL = 'laia.ferrer@example.test';
 
@@ -75,7 +82,7 @@ test.afterAll(() => {
 async function createParticipantWithData(
   page: Page,
   firstName: string,
-): Promise<{ readonly id: string; readonly email: string }> {
+): Promise<{ readonly id: string; readonly email: string; readonly password: string }> {
   await page.goto('/participants/new');
   await page
     .getByRole('button', { name: /no, (no té correu|she has no email|no tiene correo)/i })
@@ -94,6 +101,7 @@ async function createParticipantWithData(
     .last();
   await expect(panel).toBeVisible({ timeout: 15_000 });
   const email = (await panel.locator('code').nth(0).innerText()).trim();
+  const password = (await panel.locator('code').nth(1).innerText()).trim();
   const id = queryDatabase(`select id from auth.users where email = '${email}'`);
   expect(id).not.toBe('');
   // Recorded BEFORE the attached rows exist, so a spec that fails halfway still
@@ -111,7 +119,7 @@ async function createParticipantWithData(
       values ('${id}', 'Vull que esborreu les meves dades. ${RUN_TAG}');
   `);
 
-  return { id, email };
+  return { id, email, password };
 }
 
 /** How many rows anywhere in the schema still point at her, per the database. */
@@ -419,4 +427,54 @@ test.describe('the erasure-request queue', () => {
       .poll(() => new URL(page.url()).pathname, { timeout: 15_000 })
       .toContain(participant.id);
   });
+});
+
+/**
+ * THE MEDIA HALF, end to end, which is the acceptance criterion the rest of this
+ * file cannot reach: everything above proves her ROWS are gone, and rows are not
+ * where her photographs live.
+ *
+ * A real object is put in the bucket through the product's own upload path, as
+ * HER, so the key is the one the app actually generates rather than one this
+ * test invented. Then an admin erases her, and the receipt the Worker wrote is
+ * asked how many objects it removed.
+ *
+ * The count is read from the audit trail rather than from the bucket because
+ * that receipt is what Postgres itself checked before allowing the deletion: if
+ * it says one object, one object was swept, and if the sweep had missed her
+ * prefix it would say zero and this would be red.
+ */
+test('an object she uploaded is gone from storage after her erasure', async ({ page }) => {
+  await signIn(page, STAFF_EMAIL);
+  const participant = await createParticipantWithData(page, 'Media');
+
+  // As her, with the credential the screen printed, exactly as she would.
+  const herToken = await accessTokenFor(participant.email, participant.password);
+  const uploaded = await uploadObjectAs(herToken, new Uint8Array([0xff, 0xd8, 0xff, 0xdb, 0x00]));
+  // The key the APP generated carries her id and her organization; a sweep that
+  // built a different prefix would not match it.
+  expect(uploaded.objectKey).toContain(participant.id);
+
+  await signIn(page, ADMIN_EMAIL);
+  await page.goto(`/participants/${participant.id}`);
+  await openConfirmDialog(page, /esborra-ho tot|erase everything|bórralo todo/i);
+  await page
+    .getByRole('dialog')
+    .getByRole('textbox')
+    .fill(await requiredPhrase(page));
+  await page
+    .getByRole('dialog')
+    .getByRole('button', { name: /esborra-ho tot|erase everything|bórralo todo/i })
+    .click();
+
+  // PRESENT FIRST, before anything is asserted about what is gone.
+  await expect.poll(() => new URL(page.url()).pathname, { timeout: 30_000 }).toBe('/participants');
+
+  expect(
+    queryDatabase(
+      `select changes ->> 'objects_deleted' from public.audit_log
+        where action = 'profile.media_purged' and target_id = '${participant.id}'`,
+    ),
+  ).toBe('1');
+  expect(rowsAttachedTo(participant.id)).toBe(0);
 });
