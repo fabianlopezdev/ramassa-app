@@ -24,7 +24,10 @@ env:
   TAB_PROFILE: '{{nav:tabs.profile}}'
   PROFILE_TITLE: '{{profile:title}}'
   EDIT_ACTION: '{{profile:editAction}}'
-  EDIT_TITLE: '{{profile:editTitle}}'
+  # `profile:editTitle` is deliberately NOT declared here. It renders the same
+  # words as `editAction` above, so any condition written against it is also
+  # true on the screen that merely offers the button - which is exactly how this
+  # flow came to assert it was in the editor while it was not.
   SAVE_ACTION: '{{profile:saveAction}}'
   SAVE_FAILED: '{{profile:saveFailed}}'
   PUSH_DECLINE: '{{push:rationaleDecline}}'
@@ -82,10 +85,26 @@ env:
     duration: 900
 - waitForAnimationToEnd:
     timeout: 2000
+# Keyed on the FIELD, not on the editor's title.
+#
+# `profile:editAction` and `profile:editTitle` are the same words - "Edita les
+# meves dades" labels both the button on the profile screen and the header of
+# the screen it opens. A loop waiting for the title was therefore already
+# satisfied by the BUTTON, skipped without ever tapping it, and the flow went
+# looking for form fields while still on the profile screen. It reported the
+# field as missing, which sent me hunting a scrolling problem that did not
+# exist.
+#
+# The field id is the honest signal: it appears only in the editor, and only in
+# its LOADED state (the loading branch draws placeholders and the failed-read
+# branch draws a retry, and neither renders a single input). So this proves
+# navigation and readiness in one condition, and it cannot be satisfied by the
+# screen we are leaving.
 - repeat:
     times: 6
     while:
-      notVisible: '.*${EDIT_TITLE}.*'
+      notVisible:
+        id: 'profile-edit-first-name'
     commands:
       - tapOn:
           text: '^${EDIT_ACTION}$'
@@ -93,8 +112,9 @@ env:
       - waitForAnimationToEnd:
           timeout: 2500
 - extendedWaitUntil:
-    visible: '.*${EDIT_TITLE}.*'
-    timeout: 20000
+    visible:
+      id: 'profile-edit-first-name'
+    timeout: 30000
 - waitForAnimationToEnd:
     timeout: 2000
 
