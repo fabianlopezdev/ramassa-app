@@ -157,10 +157,19 @@ env:
           duration: 900
       - waitForAnimationToEnd:
           timeout: 1500
+# Keyed on the EDIT BUTTON, not on the profile heading.
+#
+# Returning from the editor restores the scroll position this flow left the
+# profile screen at - part-way down, because it had to scroll to reach that
+# button in the first place - so the heading is above the fold and unmatchable
+# on Android. The save had worked and the screen was correct; the assertion was
+# simply looking at a part of it that was not on screen. The button is where the
+# flow already knows the screen is scrolled to, and it exists on no other
+# screen: the editor does not render it.
 - repeat:
     times: 6
     while:
-      notVisible: '.*${PROFILE_TITLE}.*'
+      notVisible: '^${EDIT_ACTION}$'
     commands:
       - tapOn:
           text: '^${SAVE_ACTION}$'
@@ -172,7 +181,7 @@ env:
 # rejected save deliberately keeps her on this screen with her edits intact, so
 # landing back on the profile cannot happen on the failure path.
 - extendedWaitUntil:
-    visible: '.*${PROFILE_TITLE}.*'
+    visible: '^${EDIT_ACTION}$'
     timeout: 60000
 # Belt and braces on the same fact, and safe to assert as an absence only
 # because the wait above has already proved something PRESENT on the screen
