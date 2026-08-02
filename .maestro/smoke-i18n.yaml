@@ -24,6 +24,10 @@ env:
   TAB_HOME_AR: الرئيسية
   TAB_EVENTS_AR: الفعاليات
   TAB_PROFILE_CA: '{{nav:tabs.profile}}'
+  # The profile screen's own heading, used to confirm the tab actually changed
+  # before scrolling down it. Not the tab label: that is on screen whichever tab
+  # is showing, so it cannot tell one from another.
+  PROFILE_TITLE: '{{profile:title}}'
   PUSH_DECLINE: '{{push:rationaleDecline}}'
   # Hardcoded, like the Arabic tab labels above. This suite resolves its
   # selectors from the CATALAN catalog, so once the app is in Arabic the
@@ -47,16 +51,48 @@ env:
 # neighbour. Twice this put the app on Comunitat, where there is no dev-menu
 # entry, so the next six attempts to open the menu had nothing to tap and the
 # failure surfaced as "the menu will not open".
+#
+# The dev-menu entry is also the LAST thing on the profile screen, and since the
+# profile tab stopped being a placeholder it sits well below the fold: the
+# hierarchy Maestro matches against on Android excludes off-screen nodes (it logs
+# them as "Skipping invisible child"), so tapping the tab is no longer enough to
+# make the entry matchable. This flow was written when that tab was empty, which
+# is why it never needed to scroll before.
+#
+# So: reach the tab first, keyed on the profile TITLE, which is at the top of
+# the screen and on no other tab. Then scroll to the entry.
 - repeat:
     times: 6
     while:
-      notVisible: '.*${DEV_MENU_LABEL}.*'
+      notVisible: '.*${PROFILE_TITLE}.*'
     commands:
       - tapOn:
           text: '^${TAB_PROFILE_CA}$'
           optional: true
       - waitForAnimationToEnd:
           timeout: 3000
+- extendedWaitUntil:
+    visible: '.*${PROFILE_TITLE}.*'
+    timeout: 15000
+- repeat:
+    times: 12
+    while:
+      notVisible: '.*${DEV_MENU_LABEL}.*'
+    commands:
+      - swipe:
+          start: 50%, 65%
+          end: 50%, 35%
+          duration: 900
+      - waitForAnimationToEnd:
+          timeout: 1500
+# The loop stops the instant a sliver is on screen, which parks the entry under
+# the tab bar where a tap does not reach it. One smaller swipe lifts it clear.
+- swipe:
+    start: 50%, 60%
+    end: 50%, 50%
+    duration: 900
+- waitForAnimationToEnd:
+    timeout: 2000
 - extendedWaitUntil:
     visible: '.*${DEV_MENU_LABEL}.*'
     timeout: 15000
@@ -161,11 +197,30 @@ env:
     text: '^${TAB_HOME_CA}$'
 
 # The direction readout lives in the dev menu, which is now reached through the
-# Arabic profile tab.
+# Arabic profile tab. Scrolled to the entry for the same reason as the Catalan
+# pass above: the profile screen has real content now, so its dev-menu entry is
+# below the fold and off-screen nodes are not matchable on Android.
 - tapOn:
     text: '^الملف الشخصي$'
 - waitForAnimationToEnd:
     timeout: 3000
+- repeat:
+    times: 12
+    while:
+      notVisible: '.*${DEV_MENU_LABEL}.*'
+    commands:
+      - swipe:
+          start: 50%, 65%
+          end: 50%, 35%
+          duration: 900
+      - waitForAnimationToEnd:
+          timeout: 1500
+- swipe:
+    start: 50%, 60%
+    end: 50%, 50%
+    duration: 900
+- waitForAnimationToEnd:
+    timeout: 2000
 # Opening the dev menu is a LOOP that confirms it actually opened. A bare tap can
 # be swallowed, and the cost here is not a missed tap: the swipes below then land
 # on the APP instead of the menu, scrolling and switching tabs, and the flow ends

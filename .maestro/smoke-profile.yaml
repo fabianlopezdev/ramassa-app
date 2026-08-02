@@ -95,16 +95,25 @@ env:
 # By testID: the label is rendered twice on this control (visible caption and
 # the input's accessibility label), so matching on its text can resolve to the
 # caption, which nothing can type into.
+# Thirty swipes, not ten. This form is the whole intake in one screen - names,
+# birth date, place of birth, nationality, document type and number, then
+# contact - so the phone field is six to eight screens down, and ten swipes of
+# a fifth of the screen each covered barely two. The loop exits as soon as the
+# field is matchable, so the extra iterations cost nothing when it is nearer.
+#
+# Still a fifth of the screen per swipe with a slow duration: a bigger jump
+# flings, and a fling exits the loop on a frame the scroll has already passed,
+# leaving the tap to land somewhere else entirely.
 - repeat:
-    times: 10
+    times: 30
     while:
       notVisible:
         id: 'profile-edit-phone'
     commands:
       - swipe:
           start: 50%, 45%
-          end: 50%, 20%
-          duration: 600
+          end: 50%, 25%
+          duration: 900
       - waitForAnimationToEnd:
           timeout: 1200
 - swipe:
@@ -129,14 +138,14 @@ env:
 # Save. The button sits below the fold on a form this long once the keyboard
 # has been up.
 - repeat:
-    times: 12
+    times: 20
     while:
       notVisible: '^${SAVE_ACTION}$'
     commands:
       - swipe:
           start: 50%, 45%
-          end: 50%, 15%
-          duration: 600
+          end: 50%, 25%
+          duration: 900
       - waitForAnimationToEnd:
           timeout: 1500
 - repeat:
@@ -183,7 +192,7 @@ env:
     visible: '.*${PROFILE_TITLE}.*'
     timeout: 30000
 - repeat:
-    times: 10
+    times: 20
     while:
       notVisible: '.*${NEW_PHONE}.*'
     commands:
