@@ -242,6 +242,14 @@ export default function ProfileEditScreen() {
         name="firstName"
         render={({ field }) => (
           <AuthTextField
+            // Same convention as the wizard's fields: the label is rendered
+            // twice on this control, as the visible caption and as the input's
+            // accessibility label, so matching by text is ambiguous and can
+            // resolve to the caption, which nothing can type into. The suite
+            // edits this field because it is the first one on both this screen
+            // and the profile screen, so proving an edit survives needs no
+            // scrolling on either.
+            testID="profile-edit-first-name"
             label={t('onboarding:firstNameLabel')}
             value={field.value}
             onChangeText={field.onChange}

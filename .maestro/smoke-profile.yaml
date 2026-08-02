@@ -13,9 +13,9 @@ name: smoke-profile
 # happily when the server rejected it and the rollback has not landed yet. A
 # relaunch drops the cache and the value can only come back from the database.
 #
-# The suite rebuilds the seeded database before each platform's run, so the
-# phone number this writes is gone by the next run and the flow always starts
-# from the same seeded value. Nothing is tagged, and nothing needs cleaning up:
+# The suite rebuilds the seeded database before each platform's run, so the name
+# this writes is gone by the next run and the flow always starts from the same
+# seeded value. Nothing is tagged, and nothing needs cleaning up:
 # the row is the seeded fixture's, identified by the account signed into, not by
 # anything written into a column the feature under test can rewrite.
 env:
@@ -28,23 +28,30 @@ env:
   SAVE_ACTION: '{{profile:saveAction}}'
   SAVE_FAILED: '{{profile:saveFailed}}'
   PUSH_DECLINE: '{{push:rationaleDecline}}'
-  # Distinct from every seeded phone number, so finding it on screen can only
-  # mean this flow put it there. The seeds use +34600000012 for this player.
-  NEW_PHONE: '+34600445566'
+  # ASCII, and distinct from every seeded name, so finding it on screen can only
+  # mean this flow put it there. Maestro's inputText cannot type Arabic script,
+  # and this player's seeded name is in it; the pgTAP suite covers that storage
+  # path server-side instead.
+  NEW_NAME: 'Nadira'
 ---
 - runFlow: _open-app.yaml
 - runFlow: _sign-in.yaml
 - runFlow: _relaunch.yaml
 
-# Reaching Profile is a LOOP verified by the dev-menu entry, which renders on
-# Profile and nowhere else in the signed-in shell. A single tab tap can land on
-# the WRONG tab: the tab bar is a floating pill that animates into place after a
-# relaunch, and a touch dispatched against its pre-settle layout selects a
-# neighbour.
+# Reaching Profile is a LOOP, because a single tab tap can land on the WRONG
+# tab: the tab bar is a floating pill that animates into place after a relaunch,
+# and a touch dispatched against its pre-settle layout selects a neighbour.
+#
+# Keyed on the profile HEADING, not the dev-menu entry. The entry is the last
+# thing on the screen and sits below the fold now that the tab holds a real
+# record, and Maestro does not match off-screen nodes on Android - so a loop
+# waiting for it would run its full six iterations every time and then be
+# rescued by the wait below, which is a slow way of testing nothing. The heading
+# is at the top and appears on no other tab.
 - repeat:
     times: 6
     while:
-      notVisible: '.*${DEV_MENU_LABEL}.*'
+      notVisible: '.*${PROFILE_TITLE}.*'
     commands:
       - tapOn:
           text: '^${TAB_PROFILE}$'
@@ -91,47 +98,30 @@ env:
 - waitForAnimationToEnd:
     timeout: 2000
 
-# ── Change the phone number ────────────────────────────────────────────────
+# ── Change her name ────────────────────────────────────────────────────────
 # By testID: the label is rendered twice on this control (visible caption and
 # the input's accessibility label), so matching on its text can resolve to the
 # caption, which nothing can type into.
-# Thirty swipes, not ten. This form is the whole intake in one screen - names,
-# birth date, place of birth, nationality, document type and number, then
-# contact - so the phone field is six to eight screens down, and ten swipes of
-# a fifth of the screen each covered barely two. The loop exits as soon as the
-# field is matchable, so the extra iterations cost nothing when it is nearer.
 #
-# Still a fifth of the screen per swipe with a slow duration: a bigger jump
-# flings, and a fling exits the loop on a frame the scroll has already passed,
-# leaving the tap to land somewhere else entirely.
-- repeat:
-    times: 30
-    while:
-      notVisible:
-        id: 'profile-edit-phone'
-    commands:
-      - swipe:
-          start: 50%, 45%
-          end: 50%, 25%
-          duration: 900
-      - waitForAnimationToEnd:
-          timeout: 1200
-- swipe:
-    start: 50%, 55%
-    end: 50%, 40%
-    duration: 600
-- waitForAnimationToEnd:
-    timeout: 1500
+# The FIRST field on the form, deliberately, and not the phone number this flow
+# originally edited. The edit screen carries the entire intake in one column, so
+# the phone sits six to eight screens down, and reaching it meant a long swipe
+# loop plus a settle swipe - which then pushed the field back off the top
+# whenever the loop had already stopped with it high on screen, so the tap
+# failed with the field plainly in the hierarchy a moment earlier. The claim
+# being tested is "an edit survives a relaunch"; any field proves that, and the
+# first name is at the top of BOTH this screen and the profile screen, so the
+# check needs no scrolling on either and has nothing left to drift.
 - tapOn:
     text: '^Cancel$'
     optional: true
 - tapOn:
-    id: 'profile-edit-phone'
+    id: 'profile-edit-first-name'
 # Clear first: `inputText` appends, so without this the field would hold the
-# seeded number followed by the new one, which fails phone validation and the
-# flow would then be testing the error path by accident.
+# seeded name followed by the new one - still a valid name, so the flow would
+# pass while proving something weaker than it claims.
 - eraseText
-- inputText: ${NEW_PHONE}
+- inputText: ${NEW_NAME}
 - waitForAnimationToEnd:
     timeout: 1500
 
@@ -172,8 +162,8 @@ env:
 
 # ── The point: it survives a relaunch ──────────────────────────────────────
 # Everything above passes against a purely optimistic write. This is the part
-# that cannot: the process is killed, the query cache goes with it, and the
-# number can only reappear by having been read back from the database.
+# that cannot: the process is killed, the query cache goes with it, and the name
+# can only reappear by having been read back from the database.
 - runFlow: _relaunch.yaml
 - repeat:
     times: 6
@@ -194,7 +184,7 @@ env:
 - repeat:
     times: 20
     while:
-      notVisible: '.*${NEW_PHONE}.*'
+      notVisible: '.*${NEW_NAME}.*'
     commands:
       - swipe:
           start: 50%, 60%
@@ -203,5 +193,5 @@ env:
       - waitForAnimationToEnd:
           timeout: 1500
 - extendedWaitUntil:
-    visible: '.*${NEW_PHONE}.*'
+    visible: '.*${NEW_NAME}.*'
     timeout: 30000
