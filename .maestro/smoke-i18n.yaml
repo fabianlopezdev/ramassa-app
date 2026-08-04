@@ -74,6 +74,19 @@ env:
 - extendedWaitUntil:
     visible: '.*${PROFILE_TITLE}.*'
     timeout: 15000
+# iOS keeps off-screen descendants in its accessibility hierarchy, so the
+# conditional loop below can claim the last profile row is visible while it is
+# still several screens below the viewport. Scroll to the bottom without a
+# condition first. Android stops harmlessly at the same bottom edge.
+- repeat:
+    times: 10
+    commands:
+      - swipe:
+          start: 50%, 65%
+          end: 50%, 35%
+          duration: 400
+- waitForAnimationToEnd:
+    timeout: 2000
 - repeat:
     times: 12
     while:
@@ -204,6 +217,18 @@ env:
     text: '^الملف الشخصي$'
 - waitForAnimationToEnd:
     timeout: 3000
+# As in the Catalan pass, iOS exposes the off-screen developer-menu row to the
+# hierarchy. Reach the physical bottom before asking whether the row is visible,
+# otherwise its off-screen coordinates can land on a neighboring tab.
+- repeat:
+    times: 10
+    commands:
+      - swipe:
+          start: 50%, 65%
+          end: 50%, 35%
+          duration: 400
+- waitForAnimationToEnd:
+    timeout: 2000
 - repeat:
     times: 12
     while:

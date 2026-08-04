@@ -8,47 +8,47 @@
     {
       "id": "record",
       "label": "La seva fitxa, amb l'apartat de dades personals al final",
-      "web": "admin-rgpd-lifecycle/web/01-record.png"
+      "web": "admin-rgpd-lifecycle/web/04-record.png"
     },
     {
       "id": "deactivated",
       "label": "Desactivada: fora de les llistes, dins dels informes",
-      "web": "admin-rgpd-lifecycle/web/02-deactivated.png"
+      "web": "admin-rgpd-lifecycle/web/05-deactivated.png"
     },
     {
       "id": "anonymize-confirm",
       "label": "Confirmació d'anonimitzar: què marxa i què es queda",
-      "web": "admin-rgpd-lifecycle/web/03-anonymize-confirm.png"
+      "web": "admin-rgpd-lifecycle/web/06-anonymize-confirm.png"
     },
     {
       "id": "anonymize-blocked",
       "label": "Sense escriure la paraula, el botó no es pot prémer",
-      "web": "admin-rgpd-lifecycle/web/04-anonymize-blocked.png"
+      "web": "admin-rgpd-lifecycle/web/07-anonymize-blocked.png"
     },
     {
       "id": "anonymized",
       "label": "Fitxa anonimitzada: ja no diu qui és",
-      "web": "admin-rgpd-lifecycle/web/05-anonymized.png"
+      "web": "admin-rgpd-lifecycle/web/08-anonymized.png"
     },
     {
       "id": "staff-view",
       "label": "Vista de l'equip: esborrar del tot no s'ofereix",
-      "web": "admin-rgpd-lifecycle/web/06-staff-view.png"
+      "web": "admin-rgpd-lifecycle/web/14-staff-view.png"
     },
     {
       "id": "erase-confirm",
       "label": "Confirmació d'esborrar-ho tot, amb la petició que va fer ella",
-      "web": "admin-rgpd-lifecycle/web/07-erase-confirm.png"
+      "web": "admin-rgpd-lifecycle/web/09-erase-confirm.png"
     },
     {
       "id": "erased",
       "label": "Després d'esborrar: torna al llistat i la fitxa ja no hi és",
-      "web": "admin-rgpd-lifecycle/web/08-erased.png"
+      "web": "admin-rgpd-lifecycle/web/10-erased.png"
     },
     {
       "id": "requests-queue",
       "label": "Peticions d'esborrat fetes per les participants",
-      "web": "admin-rgpd-lifecycle/web/09-requests-queue.png"
+      "web": "admin-rgpd-lifecycle/web/03-requests-queue.png"
     }
   ],
   "edges": [

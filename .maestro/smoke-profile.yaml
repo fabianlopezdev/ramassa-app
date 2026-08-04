@@ -143,9 +143,17 @@ env:
 - inputText: ${NEW_BIRTHPLACE}
 - waitForAnimationToEnd:
     timeout: 1500
+# The Catalan keyboard exposes its action key as "Desa" too. While it remains
+# open, Maestro can satisfy SAVE_ACTION with the IME key instead of the app's
+# button, stop scrolling early, and leave the form unsaved. Submit the
+# single-line field with Enter, which blurs it on both platforms, before looking
+# for the primary action so there is only one honest match.
+- pressKey: Enter
+- waitForAnimationToEnd:
+    timeout: 1500
 
 # Save. The button sits below the fold on a form this long once the keyboard
-# has been up.
+# has been up. It is dismissed above, but the form keeps its scroll position.
 - repeat:
     times: 20
     while:

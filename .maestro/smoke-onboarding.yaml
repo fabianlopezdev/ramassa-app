@@ -383,6 +383,16 @@ env:
     text: '^${CLOTHING_SIZE}$'
     selected: true
 
+# iOS exposes the first off-screen shoe-size row in the accessibility tree.
+# Move the physical viewport once before using visibility as a condition, or a
+# tap on 38 can be dispatched below the screen and report success without
+# selecting anything.
+- swipe:
+    start: 50%, 45%
+    end: 50%, 20%
+    duration: 600
+- waitForAnimationToEnd:
+    timeout: 1200
 - repeat:
     times: 10
     while:
