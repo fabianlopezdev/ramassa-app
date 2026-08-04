@@ -23,7 +23,9 @@
     "./participants": "./participants/index.ts",
     "./accounts": "./accounts/index.ts",
     "./rgpd": "./rgpd/index.ts",
-    "./equipment": "./equipment/index.ts"
+    "./equipment": "./equipment/index.ts",
+    "./translation": "./translation/index.ts",
+    "./translation/react": "./translation/react.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

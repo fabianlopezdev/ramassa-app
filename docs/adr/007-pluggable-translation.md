@@ -29,3 +29,12 @@ interface TranslationProvider {
 - Staff can always review/correct translations before publishing
 - Adding a new provider requires implementing one interface method
 - Testing requires mocking the provider
+
+## Implementation update, 2026-08-04
+
+DeepL now lists Catalan and Persian as supported translation languages, so the
+original provider-support premise has changed. The pluggable decision still
+stands. DeepL is the production default for all Ramassà languages, Claude Haiku
+is available as a deploy-time alternative, and a hybrid adapter remains
+available for explicit quality fallbacks. Local development and tests use a
+deterministic mock provider.

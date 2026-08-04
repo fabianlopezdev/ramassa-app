@@ -20,6 +20,7 @@ export const errorDomains = [
   'NETWORK',
   'SYNC',
   'UPLOAD',
+  'TRANSLATION',
   'VALIDATION',
   'UNEXPECTED',
 ] as const;
@@ -59,6 +60,14 @@ export const errorCodeRegistry = defineCodes({
   'UPLOAD-5': { domain: 'UPLOAD', description: 'Upload authorization expired before the transfer' },
   'UPLOAD-6': { domain: 'UPLOAD', description: 'Storage rejected the upload' },
   'UPLOAD-7': { domain: 'UPLOAD', description: 'Removing stored files failed' },
+  'TRANSLATION-1': { domain: 'TRANSLATION', description: 'Translation provider request failed' },
+  'TRANSLATION-2': {
+    domain: 'TRANSLATION',
+    description: 'Translation provider response was invalid',
+  },
+  'TRANSLATION-3': { domain: 'TRANSLATION', description: 'Too many translations requested' },
+  'TRANSLATION-4': { domain: 'TRANSLATION', description: 'Translation review state is invalid' },
+  'TRANSLATION-5': { domain: 'TRANSLATION', description: 'Translation provider is unavailable' },
   'VALIDATION-1': { domain: 'VALIDATION', description: 'Input failed validation' },
   'UNEXPECTED-1': { domain: 'UNEXPECTED', description: 'Unexpected error' },
 });
