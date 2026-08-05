@@ -273,6 +273,27 @@ main ──●──●──●──●──●──●──  (always deplo
 - Delete branches after merge
 - Branch naming: `feature/task-creation`, `fix/duplicate-events`, `chore/update-deps`
 
+### Remote Branch Invariant: Main Only When Idle
+
+`main` is the only durable branch on GitHub and `origin`. A temporary remote head branch may exist
+only while an active pull request needs it. When no pull request is active, the remote branch list
+must contain exactly `main`.
+
+- Start every task from the current `origin/main`.
+- Push a temporary head branch only to run the protected pull request workflow. Required status
+  checks must pass before merge. Source:
+  https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches
+- Keep GitHub's `Automatically delete head branches` repository setting enabled. Source:
+  https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/configuring-pull-request-merges/managing-the-automatic-deletion-of-branches
+- Never delete unmerged work. Before manual deletion, prove the branch is contained in `main` with
+  `git merge-base --is-ancestor origin/<branch> origin/main`, or verify that its exact head commit
+  belongs to a merged pull request. A squash merge requires the merged pull request check because
+  its original head commits are not ancestors of `main`.
+- After every merge, run `git fetch origin --prune` and verify the remote inventory with
+  `gh api repos/fabianlopezdev/ramassa-app/branches --paginate --jq '.[].name'`.
+- If an unmerged branch remains, preserve it and report the blocker. Do not claim branch cleanup is
+  complete until GitHub lists only `main` or every remaining branch has an active pull request.
+
 ### Commit Convention
 
 ```
