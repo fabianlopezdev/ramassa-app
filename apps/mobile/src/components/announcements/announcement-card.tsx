@@ -1,6 +1,6 @@
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
-import { Image } from 'expo-image';
+import { Image, type ImageSource } from 'expo-image';
 import { StyleSheet, Text, View } from 'react-native';
 import { tokens } from '@ramassa/shared/tokens';
 
@@ -19,7 +19,7 @@ export interface AnnouncementCardProps {
   readonly body: string;
   readonly category: string;
   readonly publishedDate: string;
-  readonly imageUrl: string | null;
+  readonly imageSource: ImageSource | null;
   readonly imageAlt: string | null;
   readonly isPinned: boolean;
   readonly pinnedLabel: string;
@@ -34,7 +34,7 @@ export function AnnouncementCard({
   body,
   category,
   publishedDate,
-  imageUrl,
+  imageSource,
   imageAlt,
   isPinned,
   pinnedLabel,
@@ -50,9 +50,9 @@ export function AnnouncementCard({
       style={continuousCorners}
       className="overflow-hidden rounded-lg border border-neutral-200 bg-white"
     >
-      {imageUrl === null ? null : (
+      {imageSource === null ? null : (
         <Image
-          source={imageUrl}
+          source={imageSource}
           accessibilityLabel={imageAlt ?? undefined}
           cachePolicy="memory-disk"
           contentFit="cover"

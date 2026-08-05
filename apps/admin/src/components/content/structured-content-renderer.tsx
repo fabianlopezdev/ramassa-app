@@ -1,15 +1,20 @@
 import { normalizeVideoEmbedUrl, type KnowledgeBlock } from '@ramassa/shared/knowledge';
+import { AuthenticatedMediaImage } from './authenticated-media-image';
 
 export interface StructuredContentRendererProps {
   readonly title: string;
   readonly blocks: readonly KnowledgeBlock[];
   readonly videoUrl: string | null;
+  readonly mediaWorkerUrl?: string;
+  readonly accessToken?: string;
 }
 
 export function StructuredContentRenderer({
   title,
   blocks,
   videoUrl,
+  mediaWorkerUrl = '',
+  accessToken,
 }: StructuredContentRendererProps) {
   const embedUrl = videoUrl === null ? null : normalizeVideoEmbedUrl(videoUrl);
   return (
@@ -24,11 +29,12 @@ export function StructuredContentRenderer({
             <h3 className="font-semibold">{block.title}</h3>
             <p className="whitespace-pre-wrap text-sm leading-6">{block.text}</p>
             {block.imageUrl === null ? null : (
-              <img
-                src={block.imageUrl}
+              <AuthenticatedMediaImage
+                objectKeyOrUrl={block.imageUrl}
                 alt={block.imageAlt ?? ''}
+                mediaWorkerUrl={mediaWorkerUrl}
+                accessToken={accessToken}
                 className="max-h-80 rounded-md object-contain"
-                loading="lazy"
               />
             )}
           </section>

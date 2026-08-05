@@ -11,8 +11,10 @@ import {
 } from '@/components/announcements/feed-states';
 import { PageWidth } from '@/components/layout/content-width';
 import { usePlayerAnnouncements } from '@/lib/announcement-feed';
+import { resolveMediaImageSource } from '@/lib/media-source';
 import { isNetworkStateOnline } from '@/lib/network-status';
 import { logger } from '@/lib/observability';
+import { mobileClientEnv } from '@/lib/supabase';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useNetworkState } from 'expo-network';
@@ -26,6 +28,7 @@ import {
   type AnnouncementListRow,
   type PlayerAnnouncementCategoryFilter,
 } from '@ramassa/shared/announcements';
+import { useAuth } from '@ramassa/shared/auth';
 import { toAppError } from '@ramassa/shared/errors';
 import { resolveLocalizedText, useLanguage } from '@ramassa/shared/i18n';
 import { tokens } from '@ramassa/shared/tokens';
@@ -49,6 +52,7 @@ export default function HomeScreen() {
   const { language } = useLanguage();
   const languageFontClass = useLanguageFontClass();
   const router = useRouter();
+  const { session } = useAuth();
   const networkState = useNetworkState();
   const isOffline = !isNetworkStateOnline(networkState);
   const [category, setCategory] = useState<PlayerAnnouncementCategoryFilter>('all');
@@ -91,6 +95,11 @@ export default function HomeScreen() {
       ]
         .filter((part): part is string => typeof part === 'string')
         .join('. ');
+      const imageSource = resolveMediaImageSource({
+        objectKeyOrUrl: item.image_url,
+        mediaWorkerUrl: mobileClientEnv.EXPO_PUBLIC_MEDIA_WORKER_URL,
+        accessToken: session?.access_token,
+      });
 
       return (
         <PageWidth className="pb-md">
@@ -100,7 +109,7 @@ export default function HomeScreen() {
             body={body.text}
             category={categoryLabel}
             publishedDate={publishedDate}
-            imageUrl={item.image_url}
+            imageSource={imageSource}
             imageAlt={imageAlt?.text ?? null}
             isPinned={item.is_pinned}
             pinnedLabel={t('pinned')}
@@ -111,7 +120,7 @@ export default function HomeScreen() {
         </PageWidth>
       );
     },
-    [dateFormatter, language, languageFontClass, openAnnouncement, t],
+    [dateFormatter, language, languageFontClass, openAnnouncement, session?.access_token, t],
   );
 
   const onRefresh = useCallback(() => {

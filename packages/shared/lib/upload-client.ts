@@ -27,6 +27,17 @@ import {
 
 export const MINT_UPLOAD_URL_PATH = '/uploads/url';
 export const PURGE_PARTICIPANT_MEDIA_PATH = '/participants/media';
+export const MEDIA_OBJECT_PATH_PREFIX = '/objects';
+
+/**
+ * Builds the Worker's authenticated read URL without putting credentials in
+ * the URL. Object keys are server-generated paths, so each segment is encoded
+ * independently and the hierarchy remains available to the Worker.
+ */
+export function buildMediaObjectUrl(mediaWorkerUrl: string, objectKey: string): string {
+  const encodedKey = objectKey.split('/').map(encodeURIComponent).join('/');
+  return `${mediaWorkerUrl.replace(/\/+$/, '')}${MEDIA_OBJECT_PATH_PREFIX}/${encodedKey}`;
+}
 
 export interface UploadFileContent {
   /** The exact bytes to send. */

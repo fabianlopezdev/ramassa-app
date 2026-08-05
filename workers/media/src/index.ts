@@ -8,12 +8,17 @@
  *
  *   POST /uploads/url        mint a short-TTL upload URL for the signed-in caller
  *   POST /participants/media remove every object one participant uploaded (RAPP-26)
+ *   GET  /objects/*         stream one authenticated, same-organization object
  *   PUT  /local-uploads/*    local development only (see local-upload.ts)
  *   GET  /health             liveness for the deploy runbook
  */
 
 import * as Sentry from '@sentry/cloudflare';
-import { MINT_UPLOAD_URL_PATH, PURGE_PARTICIPANT_MEDIA_PATH } from '@ramassa/shared/upload-client';
+import {
+  MEDIA_OBJECT_PATH_PREFIX,
+  MINT_UPLOAD_URL_PATH,
+  PURGE_PARTICIPANT_MEDIA_PATH,
+} from '@ramassa/shared/upload-client';
 import { UPLOAD_URL_TTL_SECONDS } from './constants';
 import { parseWorkerEnv, type WorkerConfig } from './env';
 import { buildCorsHeaders, errorResponse } from './http';
@@ -23,6 +28,7 @@ import { handleMintUploadUrl, type SignedUploadTarget, type UploadTarget } from 
 import { createWorkerObservability } from './observability';
 import { presignR2Upload } from './presign';
 import { handlePurgeParticipantMedia } from './purge-participant-media';
+import { handleServeMediaObject } from './serve-media-object';
 import { readBearerToken, resolveCallerIdentity } from './supabase-identity';
 
 async function createUploadTarget(
@@ -136,6 +142,20 @@ const handler: ExportedHandler<Env> = {
             supabaseUrl: config.supabaseUrl,
             supabasePublishableKey: config.supabasePublishableKey,
           }),
+        corsHeaders,
+        onError: (thrown, context) => observability.reportError(thrown, context),
+      });
+    }
+
+    if (url.pathname.startsWith(`${MEDIA_OBJECT_PATH_PREFIX}/`)) {
+      return handleServeMediaObject(request, {
+        resolveIdentity: (incoming) =>
+          resolveCallerIdentity({
+            request: incoming,
+            supabaseUrl: config.supabaseUrl,
+            supabasePublishableKey: config.supabasePublishableKey,
+          }),
+        bucket: env.MEDIA_BUCKET,
         corsHeaders,
         onError: (thrown, context) => observability.reportError(thrown, context),
       });

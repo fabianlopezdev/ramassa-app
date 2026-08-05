@@ -1,9 +1,26 @@
 import { describe, expect, test } from 'bun:test';
-import { uploadFile, type UploadFileOptions } from './upload-client';
+import {
+  buildMediaObjectUrl,
+  MEDIA_OBJECT_PATH_PREFIX,
+  uploadFile,
+  type UploadFileOptions,
+} from './upload-client';
 
 const mediaWorkerUrl = 'https://media.ramassa.test';
 const objectKey = 'org/gallery/user/2026/07/abc123.jpg';
 const fileBytes = new Uint8Array(2048).fill(3);
+
+describe('buildMediaObjectUrl', () => {
+  test('keeps the object hierarchy while safely encoding every segment', () => {
+    expect(buildMediaObjectUrl(`${mediaWorkerUrl}/`, 'org/gallery/user name/photo #1.jpg')).toBe(
+      `${mediaWorkerUrl}${MEDIA_OBJECT_PATH_PREFIX}/org/gallery/user%20name/photo%20%231.jpg`,
+    );
+  });
+
+  test('does not place authentication material in the URL', () => {
+    expect(buildMediaObjectUrl(mediaWorkerUrl, objectKey)).not.toContain('access-token');
+  });
+});
 
 interface RecordedCall {
   readonly url: string;

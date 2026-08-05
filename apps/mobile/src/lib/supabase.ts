@@ -13,14 +13,15 @@ import { parseClientEnv } from '@ramassa/shared/env';
 import { createMmkvSessionStorage, createSupabaseClient } from '@ramassa/shared/supabase';
 import { mmkvStorage } from './storage';
 
-const env = parseClientEnv({
+export const mobileClientEnv = parseClientEnv({
   EXPO_PUBLIC_SUPABASE_URL: process.env.EXPO_PUBLIC_SUPABASE_URL,
   EXPO_PUBLIC_SUPABASE_ANON_KEY: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
   EXPO_PUBLIC_SENTRY_DSN: process.env.EXPO_PUBLIC_SENTRY_DSN,
+  EXPO_PUBLIC_MEDIA_WORKER_URL: process.env.EXPO_PUBLIC_MEDIA_WORKER_URL,
 });
 
 export const supabase = createSupabaseClient({
-  supabaseUrl: env.EXPO_PUBLIC_SUPABASE_URL,
-  supabaseAnonKey: env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
+  supabaseUrl: mobileClientEnv.EXPO_PUBLIC_SUPABASE_URL,
+  supabaseAnonKey: mobileClientEnv.EXPO_PUBLIC_SUPABASE_ANON_KEY,
   storage: createMmkvSessionStorage(mmkvStorage),
 });

@@ -5,7 +5,9 @@ import { FadeSlideIn } from '@/components/motion/fade-slide-in';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { usePlayerAnnouncements } from '@/lib/announcement-feed';
 import { continuousCorners } from '@/lib/continuous-corners';
+import { resolveMediaImageSource } from '@/lib/media-source';
 import { isNetworkStateOnline } from '@/lib/network-status';
+import { mobileClientEnv } from '@/lib/supabase';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { Image } from 'expo-image';
 import { useNetworkState } from 'expo-network';
@@ -14,6 +16,7 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAuth } from '@ramassa/shared/auth';
 import { resolveLocalizedText, useLanguage } from '@ramassa/shared/i18n';
 import { tokens } from '@ramassa/shared/tokens';
 
@@ -28,6 +31,7 @@ const styles = StyleSheet.create({
 export default function AnnouncementDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const { session } = useAuth();
   const { t, i18n } = useTranslation(['home', 'common']);
   const { language } = useLanguage();
   const languageFontClass = useLanguageFontClass();
@@ -43,6 +47,15 @@ export default function AnnouncementDetailScreen() {
     announcement?.image_alt === null || announcement?.image_alt === undefined
       ? undefined
       : resolveLocalizedText(announcement.image_alt, language);
+  const imageSource = useMemo(
+    () =>
+      resolveMediaImageSource({
+        objectKeyOrUrl: announcement?.image_url ?? null,
+        mediaWorkerUrl: mobileClientEnv.EXPO_PUBLIC_MEDIA_WORKER_URL,
+        accessToken: session?.access_token,
+      }),
+    [announcement?.image_url, session?.access_token],
+  );
   const dateFormatter = useMemo(
     () => new Intl.DateTimeFormat(i18n.resolvedLanguage ?? 'ca', { dateStyle: 'long' }),
     [i18n.resolvedLanguage],
@@ -123,9 +136,9 @@ export default function AnnouncementDetailScreen() {
                   new Date(announcement.published_at ?? announcement.created_at),
                 )}
               </Text>
-              {announcement.image_url === null ? null : (
+              {imageSource === null ? null : (
                 <Image
-                  source={announcement.image_url}
+                  source={imageSource}
                   accessibilityLabel={imageAlt?.text}
                   cachePolicy="memory-disk"
                   contentFit="cover"

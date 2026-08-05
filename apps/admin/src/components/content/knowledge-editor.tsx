@@ -8,6 +8,7 @@ import { requestCatalanTranslation } from '@/lib/translation-worker';
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { localizedTextFromReview } from '@ramassa/shared/announcements';
+import { useAuth } from '@ramassa/shared/auth';
 import { AppError, type AppErrorCode } from '@ramassa/shared/errors';
 import { type SupportedLanguage } from '@ramassa/shared/i18n';
 import { compressBrowserImage } from '@ramassa/shared/image-compression';
@@ -88,6 +89,7 @@ function initialMode(article: KnowledgeArticleListRow | undefined): PublishMode 
 
 export function KnowledgeEditor({ article, categories, onSaved }: KnowledgeEditorProps) {
   const { t } = useTranslation(['knowledge', 'errors']);
+  const { session } = useAuth();
   const [categoryId, setCategoryId] = useState(article?.category_id ?? categories[0]?.id ?? '');
   const [contentType, setContentType] = useState<KnowledgeContentType>(
     article?.content_type ?? 'article',
@@ -318,7 +320,13 @@ export function KnowledgeEditor({ article, categories, onSaved }: KnowledgeEdito
       >
         {isGenerating ? t('knowledge:generatingTranslations') : t('knowledge:generateTranslations')}
       </Button>
-      <StructuredContentRenderer title={title} blocks={body.ca} videoUrl={normalizedVideo} />
+      <StructuredContentRenderer
+        title={title}
+        blocks={body.ca}
+        videoUrl={normalizedVideo}
+        mediaWorkerUrl={mediaWorkerUrl}
+        accessToken={session?.access_token}
+      />
       {article?.content_type === 'participant_story' ? (
         <label className="flex flex-col gap-2">
           <span className="text-sm font-medium">{t('knowledge:reviewerNote')}</span>
