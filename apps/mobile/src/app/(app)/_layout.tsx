@@ -36,6 +36,7 @@ export default function AppLayout() {
               screen silently never opens. */}
           <Stack.Screen name="profile-edit" />
           <Stack.Screen name="profile-delete-data" />
+          <Stack.Screen name="announcement/[id]" />
         </Stack.Protected>
         <Stack.Protected guard={needsOnboarding}>
           <Stack.Screen name="onboarding" />

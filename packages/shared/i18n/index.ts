@@ -13,6 +13,12 @@ export {
   type LanguageStorage,
 } from './language-storage';
 export {
+  getContentLanguageFallbacks,
+  resolveLocalizedText,
+  type LocalizedContent,
+  type ResolvedLocalizedText,
+} from './localized-content';
+export {
   DEFAULT_LANGUAGE,
   getLanguageDirection,
   getLanguageFontFamilyKey,

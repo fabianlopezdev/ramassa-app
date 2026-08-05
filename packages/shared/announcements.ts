@@ -21,6 +21,7 @@ export type AnnouncementCategory = (typeof ANNOUNCEMENT_CATEGORIES)[number];
 export type AnnouncementStatus = (typeof ANNOUNCEMENT_STATUSES)[number];
 export type AnnouncementLifecycle = (typeof ANNOUNCEMENT_LIFECYCLES)[number];
 export type AnnouncementStatusFilter = (typeof ANNOUNCEMENT_STATUS_FILTERS)[number];
+export type PlayerAnnouncementCategoryFilter = 'all' | AnnouncementCategory;
 
 const optionalLocalizedTextSchema = (maximum: number) =>
   z.object({
@@ -208,6 +209,37 @@ export interface AnnouncementPage {
   readonly total: number;
 }
 
+/**
+ * Client-side enforcement of the same publish window RLS applies, followed by
+ * the feed's canonical order. Keeping this pure gives persisted rows the same
+ * visibility treatment as fresh rows when the app is opened offline later.
+ */
+export function filterAndOrderPlayerAnnouncements(
+  rows: readonly AnnouncementListRow[],
+  category: PlayerAnnouncementCategoryFilter,
+  now = new Date(),
+): readonly AnnouncementListRow[] {
+  return [...rows]
+    .filter(
+      (row) =>
+        (category === 'all' || row.category === category) &&
+        isContentVisible(
+          {
+            status: row.status,
+            publishedAt: row.published_at,
+            expiresAt: row.expires_at,
+          },
+          now,
+        ),
+    )
+    .sort((left, right) => {
+      if (left.is_pinned !== right.is_pinned) return left.is_pinned ? -1 : 1;
+      const publishedDifference =
+        new Date(right.published_at ?? 0).getTime() - new Date(left.published_at ?? 0).getTime();
+      return publishedDifference === 0 ? left.id.localeCompare(right.id) : publishedDifference;
+    });
+}
+
 export interface AnnouncementQueryBuilder {
   eq(column: string, value: unknown): AnnouncementQueryBuilder;
   gt(column: string, value: unknown): AnnouncementQueryBuilder;
@@ -261,6 +293,32 @@ export async function fetchAnnouncements(
   const { data, error, count } = await applyAnnouncementQuery(base as never, search, now);
   if (error) throw new AppError('DB-1', { message: (error as { message: string }).message });
   return { rows: (data ?? []) as AnnouncementListRow[], total: count ?? 0 };
+}
+
+/**
+ * The complete player feed. RLS is the primary tenant and schedule boundary;
+ * the explicit filters keep the request selective and make its intent visible
+ * in the client too. The pure visibility pass above is still applied after
+ * restore because a once-live cached row may expire while the device is offline.
+ */
+export async function fetchPlayerAnnouncements(
+  client: Client,
+  options: { readonly signal?: AbortSignal; readonly now?: Date } = {},
+): Promise<readonly AnnouncementListRow[]> {
+  const now = options.now ?? new Date();
+  let query = client
+    .from('announcements')
+    .select(ANNOUNCEMENT_COLUMNS)
+    .eq('status', 'published')
+    .lte('published_at', now.toISOString())
+    .or(`expires_at.is.null,expires_at.gt.${now.toISOString()}`)
+    .order('is_pinned', { ascending: false })
+    .order('published_at', { ascending: false, nullsFirst: false })
+    .order('id', { ascending: true });
+  if (options.signal !== undefined) query = query.abortSignal(options.signal);
+  const { data, error } = await query;
+  if (error) throw new AppError('DB-1', { message: error.message });
+  return filterAndOrderPlayerAnnouncements((data ?? []) as AnnouncementListRow[], 'all', now);
 }
 
 export async function fetchAnnouncement(

@@ -1,5 +1,24 @@
 {
   "title": "Welcome",
   "subtitle": "The app foundation is running",
-  "tabLabel": "Home"
+  "tabLabel": "Home",
+  "feedTitle": "Announcements",
+  "feedIntro": "Club news, training updates, and activities for you.",
+  "filterLabel": "Filter announcements by category",
+  "filterAll": "All",
+  "category": {
+    "info": "Information",
+    "training": "Training",
+    "social": "Social",
+    "urgent": "Urgent"
+  },
+  "pinned": "Pinned",
+  "offlineBanner": "No connection. You are seeing saved announcements.",
+  "emptyTitle": "No announcements yet",
+  "emptyBody": "When the team posts an update, you will find it here.",
+  "loadFailed": "We could not load the announcements.",
+  "retryAction": "Try again",
+  "openAnnouncementLabel": "Open announcement: {{title}}",
+  "detailTitle": "Announcement",
+  "loading": "Loading announcements"
 }

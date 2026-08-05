@@ -1,5 +1,8 @@
 import { QueryClient } from '@tanstack/react-query';
 import { isRetryableError } from '@ramassa/shared/errors';
+import { configureNetworkStatus } from './network-status';
+import { ANNOUNCEMENT_CACHE_MAX_AGE_MS, createQueryPersister } from './query-persistence';
+import { mmkvStorage } from './storage';
 
 /**
  * The app's single React Query client (added with RAPP-19 so the dev menu's
@@ -12,8 +15,8 @@ import { isRetryableError } from '@ramassa/shared/errors';
  * low-end Android over patchy mobile data (SPEC), so a failed request retries
  * once rather than hammering the connection, and cached data stays fresh long
  * enough that returning to a screen does not refetch. Feature issues tune this
- * per query as real screens arrive (RAPP-33 onward); offline persistence is
- * RAPP-65's job, not a default here.
+ * per query as real screens arrive. RAPP-33 persists only the public
+ * announcement feed; decrypted profile rows are deliberately excluded.
  *
  * The retry is CONDITIONAL, not a count. A flat `retry: 1` also retried the
  * failures a second attempt cannot fix — an expired session, a rejected input,
@@ -26,10 +29,13 @@ import { isRetryableError } from '@ramassa/shared/errors';
 const STALE_TIME_MS = 60_000;
 const MAX_QUERY_ATTEMPTS_AFTER_THE_FIRST = 1;
 
+configureNetworkStatus();
+
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: STALE_TIME_MS,
+      gcTime: ANNOUNCEMENT_CACHE_MAX_AGE_MS,
       retry: (failureCount, error) =>
         failureCount < MAX_QUERY_ATTEMPTS_AFTER_THE_FIRST && isRetryableError(error),
     },
@@ -39,3 +45,5 @@ export const queryClient = new QueryClient({
     mutations: { retry: 0 },
   },
 });
+
+export const queryPersister = createQueryPersister(mmkvStorage);

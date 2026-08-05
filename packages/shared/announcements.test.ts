@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import {
   announcementInputSchema,
   areAnnouncementTranslationsApproved,
+  filterAndOrderPlayerAnnouncements,
   getAnnouncementLifecycle,
   isContentVisible,
 } from './announcements';
@@ -111,6 +112,70 @@ describe('publishable content visibility', () => {
         now,
       ),
     ).toBe('published');
+  });
+});
+
+describe('player announcement feed', () => {
+  const row = (
+    id: string,
+    overrides: Partial<{
+      category: 'info' | 'training' | 'social' | 'urgent';
+      is_pinned: boolean;
+      status: 'draft' | 'published';
+      published_at: string | null;
+      expires_at: string | null;
+    }> = {},
+  ) => ({
+    id,
+    category: overrides.category ?? 'info',
+    title: completeText,
+    body: completeText,
+    image_url: null,
+    image_alt: null,
+    is_pinned: overrides.is_pinned ?? false,
+    status: overrides.status ?? ('published' as const),
+    published_at: overrides.published_at ?? '2026-08-04T10:00:00.000Z',
+    expires_at: overrides.expires_at ?? null,
+    created_by: null,
+    created_at: '2026-08-04T10:00:00.000Z',
+    updated_at: '2026-08-04T10:00:00.000Z',
+  });
+
+  test('filters with the shared visibility rule and puts pinned items first', () => {
+    const input = [
+      row('ordinary-new', { published_at: '2026-08-04T11:30:00.000Z' }),
+      row('pinned-old', { is_pinned: true, published_at: '2026-08-03T10:00:00.000Z' }),
+      row('draft', { status: 'draft' }),
+      row('scheduled', { published_at: '2026-08-05T10:00:00.000Z' }),
+      row('expired', { expires_at: '2026-08-04T11:59:59.000Z' }),
+    ];
+    const visible = filterAndOrderPlayerAnnouncements(input, 'all', now);
+
+    expect(visible.map(({ id }) => id)).toEqual(['pinned-old', 'ordinary-new']);
+    expect(input.map(({ id }) => id)).toEqual([
+      'ordinary-new',
+      'pinned-old',
+      'draft',
+      'scheduled',
+      'expired',
+    ]);
+  });
+
+  test('applies a category without changing pinned-first ordering', () => {
+    const filtered = filterAndOrderPlayerAnnouncements(
+      [
+        row('training-new', {
+          category: 'training',
+          published_at: '2026-08-04T11:30:00.000Z',
+        }),
+        row('training-pinned', { category: 'training', is_pinned: true }),
+        row('social-pinned', { category: 'social', is_pinned: true }),
+      ],
+      'training',
+      now,
+    );
+
+    expect(filtered.map(({ id }) => id)).toEqual(['training-pinned', 'training-new']);
   });
 });
 

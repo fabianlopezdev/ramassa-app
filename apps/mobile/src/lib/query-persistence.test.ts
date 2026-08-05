@@ -1,0 +1,91 @@
+import { onlineManager, QueryClient, QueryObserver } from '@tanstack/react-query';
+import {
+  persistQueryClientRestore,
+  persistQueryClientSave,
+} from '@tanstack/react-query-persist-client';
+import { afterEach, expect, test } from 'bun:test';
+import {
+  ANNOUNCEMENT_CACHE_MAX_AGE_MS,
+  createQueryPersister,
+  persistedQueryOptions,
+} from './query-persistence';
+
+function memoryStorage() {
+  const values = new Map<string, string>();
+  return {
+    getString: (key: string) => values.get(key),
+    set: (key: string, value: string) => void values.set(key, value),
+    remove: (key: string) => values.delete(key),
+    raw: values,
+  };
+}
+
+afterEach(() => onlineManager.setOnline(true));
+
+test('airplane mode restores and renders the cached feed without fetching', async () => {
+  const storage = memoryStorage();
+  const persister = createQueryPersister(storage);
+  const source = new QueryClient({
+    defaultOptions: { queries: { gcTime: ANNOUNCEMENT_CACHE_MAX_AGE_MS } },
+  });
+  const cachedFeed = [{ id: 'cached-announcement', title: { ca: 'Des de la memòria' } }];
+  source.setQueryData(['player-announcements', 'player-a'], cachedFeed);
+
+  await persistQueryClientSave({ queryClient: source, ...persistedQueryOptions(persister) });
+
+  const restored = new QueryClient({
+    defaultOptions: { queries: { gcTime: ANNOUNCEMENT_CACHE_MAX_AGE_MS, retry: false } },
+  });
+  await persistQueryClientRestore({ queryClient: restored, ...persistedQueryOptions(persister) });
+  onlineManager.setOnline(false);
+
+  let networkCalls = 0;
+  const observer = new QueryObserver<readonly { id: string; title: { ca: string } }[]>(restored, {
+    queryKey: ['player-announcements', 'player-a'],
+    queryFn: async () => {
+      networkCalls += 1;
+      throw new Error('the radio must stay quiet in airplane mode');
+    },
+  });
+  const stop = observer.subscribe(() => undefined);
+
+  expect(observer.getCurrentResult().data).toEqual(cachedFeed);
+  expect(observer.getCurrentResult().status).toBe('success');
+  expect(observer.getCurrentResult().fetchStatus).toBe('paused');
+  expect(networkCalls).toBe(0);
+  stop();
+});
+
+test('a restored feed is visible only to the user who cached it', async () => {
+  const storage = memoryStorage();
+  const persister = createQueryPersister(storage);
+  const source = new QueryClient();
+  source.setQueryData(['player-announcements', 'player-a'], [{ id: 'organization-a' }]);
+
+  await persistQueryClientSave({ queryClient: source, ...persistedQueryOptions(persister) });
+
+  const restored = new QueryClient();
+  await persistQueryClientRestore({ queryClient: restored, ...persistedQueryOptions(persister) });
+
+  expect(
+    restored.getQueryData<readonly { id: string }[]>(['player-announcements', 'player-a']),
+  ).toEqual([{ id: 'organization-a' }]);
+  expect(
+    restored.getQueryData<readonly { id: string }[]>(['player-announcements', 'player-b']),
+  ).toBeUndefined();
+});
+
+test('persistence excludes decrypted profile data and keeps only the public feed', async () => {
+  const storage = memoryStorage();
+  const persister = createQueryPersister(storage);
+  const client = new QueryClient();
+  client.setQueryData(['own-profile'], { document_number: 'X1234567' });
+  client.setQueryData(['player-announcements', 'player-a'], [{ id: 'safe-public-content' }]);
+
+  await persistQueryClientSave({ queryClient: client, ...persistedQueryOptions(persister) });
+
+  const serialized = [...storage.raw.values()].join('');
+  expect(serialized).toContain('safe-public-content');
+  expect(serialized).not.toContain('X1234567');
+  expect(serialized).not.toContain('own-profile');
+});

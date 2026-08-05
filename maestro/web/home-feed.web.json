@@ -1,0 +1,55 @@
+{
+  "slug": "home-feed",
+  "viewport": { "width": 1440, "height": 900 },
+  "deviceScaleFactor": 2,
+  "timezoneId": "Europe/Madrid",
+  "settle": { "timeout": 6000, "interval": 150 },
+  "steps": [
+    {
+      "label": "auth-open",
+      "goto": "/login",
+      "click": "[aria-label=\"{{auth:usePasswordInstead}}\"]",
+      "waitFor": "[aria-label=\"{{auth:passwordLabel}}\"]"
+    },
+    {
+      "label": "auth-submit",
+      "fill": [
+        { "selector": "[aria-label=\"{{auth:emailLabel}}\"]", "value": "{{player:email}}" },
+        { "selector": "[aria-label=\"{{auth:passwordLabel}}\"]", "value": "{{player:password}}" }
+      ],
+      "click": "[aria-label=\"{{auth:passwordAction}}\"]",
+      "waitFor": "text={{home:feedTitle}} >> visible=true"
+    },
+    { "label": "feed", "goto": "/", "waitFor": "text={{home:feedTitle}} >> visible=true" },
+    {
+      "label": "urgent",
+      "click": "[aria-label=\"{{home:category.urgent}}\"]",
+      "waitFor": "text={{home:pinned}} >> visible=true"
+    },
+    {
+      "label": "detail",
+      "click": "[aria-label*=\"{{home:pinned}}\"]",
+      "waitFor": "[aria-label=\"{{common:back}}\"]"
+    },
+    {
+      "label": "back",
+      "click": "[aria-label=\"{{common:back}}\"]",
+      "waitFor": "text={{home:feedTitle}} >> visible=true"
+    },
+    {
+      "label": "social",
+      "click": "[aria-label=\"{{home:category.social}}\"]",
+      "waitFor": "[aria-label^=\"{{home:category.social}}. \"]"
+    },
+    {
+      "label": "training",
+      "click": "[aria-label=\"{{home:category.training}}\"]",
+      "waitFor": "text={{home:emptyTitle}} >> visible=true"
+    },
+    {
+      "label": "info",
+      "click": "[aria-label=\"{{home:category.info}}\"]",
+      "waitFor": "text={{home:emptyTitle}} >> visible=true"
+    }
+  ]
+}

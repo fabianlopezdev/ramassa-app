@@ -7,10 +7,11 @@ import { AuthFlowStatusProvider } from '@/lib/auth-flow-status';
 import { i18n } from '@/lib/i18n';
 import { wrapRootComponent } from '@/lib/observability';
 import { registerProfileQueries } from '@/lib/profile';
-import { queryClient } from '@/lib/query-client';
+import { queryClient, queryPersister } from '@/lib/query-client';
+import { persistedQueryOptions } from '@/lib/query-persistence';
 import { dropCachedServerState, shouldDropCachedServerState } from '@/lib/session-cache';
 import { supabase } from '@/lib/supabase';
-import { QueryClientProvider } from '@tanstack/react-query';
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { Stack } from 'expo-router/stack';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useRef } from 'react';
@@ -125,14 +126,17 @@ function RootLayout() {
         {/* Server-state cache for every screen that fetches (RAPP-19). Mounted
             above the auth provider so a future query can be keyed by session
             without the provider tree having to be reordered later. */}
-        <QueryClientProvider client={queryClient}>
+        <PersistQueryClientProvider
+          client={queryClient}
+          persistOptions={persistedQueryOptions(queryPersister)}
+        >
           <AuthProvider client={supabase} onError={reportAuthError}>
             <AuthFlowStatusProvider>
               <AuthDeepLinkHandler />
               <RootNavigator />
             </AuthFlowStatusProvider>
           </AuthProvider>
-        </QueryClientProvider>
+        </PersistQueryClientProvider>
       </I18nextProvider>
     </GestureHandlerRootView>
   );

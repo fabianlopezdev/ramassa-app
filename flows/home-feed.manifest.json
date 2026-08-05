@@ -1,0 +1,138 @@
+{
+  "app": "Ramassà",
+  "slug": "home-feed",
+  "title": "Inici i avisos",
+  "surface": "mobile",
+  "description": "El tauler d'entrada per a les jugadores: avisos del club ordenats amb els destacats al davant, filtres senzills per tipus i una còpia desada que continua disponible quan falla la connexió. Es mostra en català i en àrab, de dreta a esquerra.",
+  "steps": [
+    {
+      "id": "feed",
+      "label": "Avisos del club",
+      "ios": "home-feed/ios/01-feed.png",
+      "android": "home-feed/android/01-feed.png",
+      "web": "home-feed/web/03-feed.png"
+    },
+    {
+      "id": "refresh",
+      "label": "Actualitza els avisos",
+      "ios": "home-feed/ios/02-refresh.png",
+      "android": "home-feed/android/02-refresh.png"
+    },
+    {
+      "id": "urgent",
+      "label": "Avisos urgents i destacats",
+      "ios": "home-feed/ios/03-urgent.png",
+      "android": "home-feed/android/03-urgent.png",
+      "web": "home-feed/web/04-urgent.png"
+    },
+    {
+      "id": "detail",
+      "label": "Detall d'un avís",
+      "ios": "home-feed/ios/04-detail.png",
+      "android": "home-feed/android/04-detail.png",
+      "web": "home-feed/web/05-detail.png"
+    },
+    {
+      "id": "social",
+      "label": "Activitats socials",
+      "ios": "home-feed/ios/05-social.png",
+      "android": "home-feed/android/05-social.png",
+      "web": "home-feed/web/07-social.png"
+    },
+    {
+      "id": "training",
+      "label": "Entrenaments, sense avisos",
+      "ios": "home-feed/ios/06-training.png",
+      "android": "home-feed/android/06-training.png",
+      "web": "home-feed/web/08-training.png"
+    },
+    {
+      "id": "info",
+      "label": "Informació, sense avisos",
+      "ios": "home-feed/ios/07-info.png",
+      "android": "home-feed/android/07-info.png",
+      "web": "home-feed/web/09-info.png"
+    },
+    {
+      "id": "offline",
+      "label": "Còpia desada sense connexió",
+      "android": "home-feed/android/08-offline.png"
+    },
+    {
+      "id": "feed-ar",
+      "label": "الإعلانات (àrab, dreta a esquerra)",
+      "ios": "home-feed/ios/01-feed-ar.png",
+      "android": "home-feed/android/01-feed-ar.png",
+      "web": "home-feed/web/03-feed-ar.png"
+    },
+    {
+      "id": "refresh-ar",
+      "label": "تحديث الإعلانات",
+      "ios": "home-feed/ios/02-refresh-ar.png",
+      "android": "home-feed/android/02-refresh-ar.png"
+    },
+    {
+      "id": "urgent-ar",
+      "label": "الإعلانات العاجلة والمثبتة",
+      "ios": "home-feed/ios/03-urgent-ar.png",
+      "android": "home-feed/android/03-urgent-ar.png",
+      "web": "home-feed/web/04-urgent-ar.png"
+    },
+    {
+      "id": "detail-ar",
+      "label": "تفاصيل الإعلان",
+      "ios": "home-feed/ios/04-detail-ar.png",
+      "android": "home-feed/android/04-detail-ar.png",
+      "web": "home-feed/web/05-detail-ar.png"
+    },
+    {
+      "id": "social-ar",
+      "label": "الأنشطة الاجتماعية",
+      "ios": "home-feed/ios/05-social-ar.png",
+      "android": "home-feed/android/05-social-ar.png",
+      "web": "home-feed/web/07-social-ar.png"
+    },
+    {
+      "id": "training-ar",
+      "label": "التدريبات، بدون إعلانات",
+      "ios": "home-feed/ios/06-training-ar.png",
+      "android": "home-feed/android/06-training-ar.png",
+      "web": "home-feed/web/08-training-ar.png"
+    },
+    {
+      "id": "info-ar",
+      "label": "المعلومات، بدون إعلانات",
+      "ios": "home-feed/ios/07-info-ar.png",
+      "android": "home-feed/android/07-info-ar.png",
+      "web": "home-feed/web/09-info-ar.png"
+    },
+    {
+      "id": "offline-ar",
+      "label": "نسخة محفوظة بدون اتصال",
+      "android": "home-feed/android/08-offline-ar.png"
+    }
+  ],
+  "edges": [
+    { "from": "feed", "to": "refresh", "label": "Llisca per actualitzar" },
+    { "from": "feed", "to": "urgent", "label": "Urgent" },
+    { "from": "urgent", "to": "detail", "label": "Obre l'avís" },
+    { "from": "feed", "to": "social", "label": "Social" },
+    { "from": "feed", "to": "training", "label": "Entrenaments", "kind": "neutral" },
+    { "from": "feed", "to": "info", "label": "Informació", "kind": "neutral" },
+    { "from": "feed", "to": "offline", "label": "Sense connexió", "kind": "neutral" },
+    { "from": "feed-ar", "to": "refresh-ar", "label": "اسحبي للتحديث" },
+    { "from": "feed-ar", "to": "urgent-ar", "label": "عاجل" },
+    { "from": "urgent-ar", "to": "detail-ar", "label": "افتحي الإعلان" },
+    { "from": "feed-ar", "to": "social-ar", "label": "اجتماعي" },
+    { "from": "feed-ar", "to": "training-ar", "label": "التدريبات", "kind": "neutral" },
+    { "from": "feed-ar", "to": "info-ar", "label": "معلومات", "kind": "neutral" },
+    { "from": "feed-ar", "to": "offline-ar", "label": "لا يوجد اتصال", "kind": "neutral" }
+  ],
+  "nodes": [],
+  "notes": [
+    "Els avisos destacats es mantenen al davant perquè una cancel·lació urgent no quedi enterrada sota contingut més recent.",
+    "Els filtres són botons visibles i etiquetats, no un menú ocult. Les categories sense contingut expliquen què apareixerà aquí en el futur.",
+    "Quan no hi ha connexió, la pantalla conserva els avisos desats i ho explica amb un missatge curt. No substitueix el contingut per un error tècnic.",
+    "La mateixa informació es comprova en telèfons i al web, incloent la direcció de lectura de l'àrab."
+  ]
+}
