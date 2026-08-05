@@ -17,7 +17,22 @@ const row = (id: string, startsAt: string, categoryId: string): PlayerEventOccur
 
 describe('event calendar locale', () => {
   test('Arabic calendar labels stay complete in the Sunday-based locale API order', () => {
-    expect(buildCalendarLocale('ar', 'اليوم')).toMatchSnapshot();
+    const locale = buildCalendarLocale('ar', 'اليوم');
+    const sunday = new Intl.DateTimeFormat('ar-u-ca-gregory', {
+      weekday: 'long',
+      timeZone: 'UTC',
+    }).format(new Date(Date.UTC(2026, 7, 2)));
+
+    expect(locale.today).toBe('اليوم');
+    expect(locale.monthNames).toHaveLength(12);
+    expect(locale.monthNamesShort).toHaveLength(12);
+    expect(locale.dayNames).toHaveLength(7);
+    expect(locale.dayNamesShort).toHaveLength(7);
+    expect(locale.dayNames[0]).toBe(sunday);
+    expect(locale.monthNames.every((label) => label.trim().length > 0)).toBe(true);
+    expect(locale.monthNamesShort.every((label) => label.trim().length > 0)).toBe(true);
+    expect(locale.dayNames.every((label) => label.trim().length > 0)).toBe(true);
+    expect(locale.dayNamesShort.every((label) => label.trim().length > 0)).toBe(true);
   });
 
   test('Farsi uses localized Gregorian month labels for the Gregorian grid', () => {
