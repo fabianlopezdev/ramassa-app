@@ -211,7 +211,14 @@ organization is the documented workaround), so transfer deliberately.
 | Platform | Needed                                           | Who    |
 | -------- | ------------------------------------------------ | ------ |
 | Android  | FCM V1 credentials (service account JSON) in EAS | manual |
-| iOS      | APNs key — needs a paid Apple Developer account  | manual |
+| iOS      | APNs key, needs a paid Apple Developer account   | manual |
+
+The public Android Firebase client config is checked in at
+`apps/mobile/google-services.json` and wired through `app.json`. The server-side
+FCM V1 JSON is a credential: upload it with `eas credentials`, and never print or
+commit it. If Google organization policy blocks service-account key creation,
+get an approved project exception or an approved existing key instead of
+weakening the policy silently.
 
 ### End-to-end proof
 
@@ -220,9 +227,13 @@ iOS 16+), and on an **Android emulator with Google Play services**. Android need
 a **development build** — remote notifications are unavailable in Expo Go on
 Android from SDK 53.
 
-1. Run a dev build (`bunx expo run:ios` / `bunx expo run:android`) and sign in.
-2. Accept the rationale, then the OS prompt.
-3. Confirm the row landed: `select user_id, platform, device_id, updated_at from push_tokens;`
-4. Copy the token and send a test push from https://expo.dev/notifications
-5. Verify it arrives with the app **foregrounded** and again **backgrounded**.
-6. Sign out, and confirm the row is gone.
+1. From `apps/mobile`, regenerate once with `bunx expo prebuild --clean` and
+   confirm both native identifiers are `com.ramassa.app`.
+2. From the same directory, run a development build (`bunx expo run:ios` or
+   `bunx expo run:android`) and sign in.
+3. Accept the rationale, then the OS prompt.
+4. Confirm the row landed: `select user_id, platform, device_id, updated_at from push_tokens;`
+5. Relaunch and confirm there is still one row for that user and device.
+6. Copy the token and send a test push from https://expo.dev/notifications
+7. Verify it arrives with the app **foregrounded** and again **backgrounded**.
+8. Sign out, and confirm the row is gone.
