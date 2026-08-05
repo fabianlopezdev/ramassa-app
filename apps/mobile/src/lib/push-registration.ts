@@ -13,6 +13,20 @@ export type PushPlatform = 'android' | 'ios' | 'web';
 
 export type PushPermissionStatus = 'granted' | 'denied' | 'undetermined';
 
+/**
+ * Expo can report a fresh Android 13+ notification permission as `denied`
+ * because notifications are not enabled yet, while `canAskAgain` correctly
+ * says the OS prompt is still available. Treat that askable state as
+ * undetermined so the app can show its translated rationale before prompting.
+ */
+export function normalizePushPermissionStatus(
+  status: PushPermissionStatus,
+  canAskAgain: boolean,
+): PushPermissionStatus {
+  if (status === 'denied' && canAskAgain) return 'undetermined';
+  return status;
+}
+
 export type PushSkipReason =
   'no-session' | 'unsupported-platform' | 'missing-project-id' | 'permission-denied';
 

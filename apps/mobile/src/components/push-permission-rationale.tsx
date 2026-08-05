@@ -1,8 +1,8 @@
-import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
+import { playHaptic } from '@/lib/haptics/haptics';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
 /**
  * The explanation shown BEFORE the OS notification prompt (RAPP-17).
@@ -43,29 +43,38 @@ export function PushPermissionRationale({
         {t('push:rationaleBody')}
       </Text>
 
-      <PressableScale
+      {/* A native Modal has its own Android root, outside the app-level gesture
+          root. Use the platform pressable here so both actions remain tappable
+          without nesting a second GestureHandlerRootView, which crashes Fabric. */}
+      <Pressable
+        accessibilityRole="button"
         accessibilityLabel={t('push:rationaleAccept')}
-        onPress={onAccept}
-        haptic="tapLight"
+        onPress={() => {
+          playHaptic('tapLight');
+          onAccept();
+        }}
         style={continuousCorners}
-        className="mt-sm min-h-recommended items-center justify-center rounded-md bg-primary px-lg"
+        className="mt-sm min-h-recommended items-center justify-center rounded-md bg-primary px-lg active:opacity-90"
       >
         <Text className={`text-base font-semibold text-white ${languageFontClass}`}>
           {t('push:rationaleAccept')}
         </Text>
-      </PressableScale>
+      </Pressable>
 
       {/* Equal tap target, quieter styling: a real choice, not a dead end. */}
-      <PressableScale
+      <Pressable
+        accessibilityRole="button"
         accessibilityLabel={t('push:rationaleDecline')}
-        onPress={onDecline}
-        haptic="selection"
-        className="min-h-recommended items-center justify-center rounded-md px-lg"
+        onPress={() => {
+          playHaptic('selection');
+          onDecline();
+        }}
+        className="min-h-recommended items-center justify-center rounded-md px-lg active:opacity-70"
       >
         <Text className={`text-base font-medium text-neutral-600 ${languageFontClass}`}>
           {t('push:rationaleDecline')}
         </Text>
-      </PressableScale>
+      </Pressable>
     </View>
   );
 }

@@ -19,6 +19,7 @@ import { logger, safeAsync } from './observability';
 import {
   buildPushTokenRow,
   decidePushRegistration,
+  normalizePushPermissionStatus,
   resolvePushPlatform,
   shouldWriteToken,
   type PushPermissionStatus,
@@ -50,8 +51,8 @@ function toPermissionStatus(status: Notifications.PermissionStatus): PushPermiss
 
 /** Current OS permission, without prompting. */
 export async function getPushPermissionStatus(): Promise<PushPermissionStatus> {
-  const { status } = await Notifications.getPermissionsAsync();
-  return toPermissionStatus(status);
+  const { status, canAskAgain } = await Notifications.getPermissionsAsync();
+  return normalizePushPermissionStatus(toPermissionStatus(status), canAskAgain);
 }
 
 /**
@@ -59,8 +60,8 @@ export async function getPushPermissionStatus(): Promise<PushPermissionStatus> {
  * shown and accepted (SPEC UX hard constraint: never a bare system dialog first).
  */
 export async function requestPushPermission(): Promise<PushPermissionStatus> {
-  const { status } = await Notifications.requestPermissionsAsync();
-  return toPermissionStatus(status);
+  const { status, canAskAgain } = await Notifications.requestPermissionsAsync();
+  return normalizePushPermissionStatus(toPermissionStatus(status), canAskAgain);
 }
 
 /**

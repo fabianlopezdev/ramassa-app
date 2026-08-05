@@ -2,6 +2,7 @@ import { expect, test } from 'bun:test';
 import {
   buildPushTokenRow,
   decidePushRegistration,
+  normalizePushPermissionStatus,
   resolvePushPlatform,
   shouldWriteToken,
   type PushRegistrationInput,
@@ -13,6 +14,14 @@ const ready: PushRegistrationInput = {
   hasProjectId: true,
   permission: 'granted',
 };
+
+test('an askable Android denial is still undetermined before the OS prompt', () => {
+  expect(normalizePushPermissionStatus('denied', true)).toBe('undetermined');
+});
+
+test('a blocked OS permission remains denied', () => {
+  expect(normalizePushPermissionStatus('denied', false)).toBe('denied');
+});
 
 test('only android and ios resolve to a push platform', () => {
   expect(resolvePushPlatform('android')).toBe('android');
