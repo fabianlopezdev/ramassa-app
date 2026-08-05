@@ -148,6 +148,23 @@ test.describe('knowledge resources', () => {
       ),
     ).toBe('0');
   });
+
+  test('shows a useful empty result and clears the filters that caused it', async ({ page }) => {
+    await page.goto('/content/knowledge?kind=stories&storyStatus=in_review&page=1');
+    const expectedCount = Number(
+      queryDatabase(
+        `select count(*) from public.knowledge_articles
+         where content_type = 'participant_story' and story_status = 'in_review'`,
+      ),
+    );
+    expect(expectedCount).toBe(0);
+    await expect(page.locator('tbody tr')).toHaveCount(expectedCount);
+    await expect(page.getByRole('button', { name: /clear filters/i })).toBeVisible();
+
+    await page.getByRole('button', { name: /clear filters/i }).click();
+    await expect(page).toHaveURL(/kind=all&storyStatus=all&page=1/);
+    await expect(page.locator('tbody tr')).not.toHaveCount(0);
+  });
 });
 
 test('drives publish, request-changes, and decline outcomes through the story queue', async ({
