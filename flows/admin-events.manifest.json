@@ -1,0 +1,58 @@
+{
+  "app": "Ramassà",
+  "slug": "admin-events",
+  "title": "Gestió d'esdeveniments",
+  "surface": "admin",
+  "description": "Com l'equip crea activitats puntuals i entrenaments setmanals, manté l'hora local de Madrid quan canvia l'horari d'estiu i gestiona categories accessibles amb icones i colors semàntics.",
+  "steps": [
+    {
+      "id": "list",
+      "label": "Tots els esdeveniments amb categoria, calendari i inscripció",
+      "web": "admin-events/web/03-list.png"
+    },
+    {
+      "id": "weekly",
+      "label": "Un entrenament setmanal amb sis sessions i capacitat",
+      "web": "admin-events/web/04-weekly.png"
+    },
+    {
+      "id": "one-off",
+      "label": "Una activitat puntual amb ubicació i interès",
+      "web": "admin-events/web/05-one-off.png"
+    },
+    {
+      "id": "new-weekly",
+      "label": "L'editor mostra explícitament l'interval i el nombre de sessions",
+      "web": "admin-events/web/06-new-weekly.png"
+    },
+    {
+      "id": "categories",
+      "label": "Les categories es poden ordenar i editar amb controls accessibles",
+      "web": "admin-events/web/07-categories.png"
+    },
+    {
+      "id": "category-editor",
+      "label": "Les icones són fixes i els colors provenen del sistema visual",
+      "web": "admin-events/web/08-category-editor.png"
+    }
+  ],
+  "edges": [
+    { "from": "list", "to": "weekly", "label": "Edita un entrenament", "kind": "neutral" },
+    { "from": "list", "to": "one-off", "label": "Edita una activitat", "kind": "neutral" },
+    { "from": "list", "to": "new-weekly", "label": "Crea una sèrie", "kind": "neutral" },
+    { "from": "list", "to": "categories", "label": "Gestiona categories", "kind": "neutral" },
+    {
+      "from": "categories",
+      "to": "category-editor",
+      "label": "Tria icona i color",
+      "kind": "positive"
+    }
+  ],
+  "notes": [
+    "Les dates es desen com instants UTC, però l'equip sempre les introdueix i les llegeix a la zona Europe/Madrid.",
+    "Una recurrència setmanal és finita. El sistema materialitza cada sessió i conserva la mateixa hora local quan entra o surt l'horari d'estiu.",
+    "Cada esdeveniment defineix si no necessita inscripció, si només recull interès o si exigeix confirmació.",
+    "Les categories admeten una llista fixa d'icones accessibles i només colors semàntics del sistema visual.",
+    "Els contactes d'entitats no poden accedir a aquesta administració."
+  ]
+}

@@ -30,7 +30,11 @@ import { Route as EntityPortalServicesRouteImport } from './routes/_entity.porta
 import { Route as EntityPortalReferralsRouteImport } from './routes/_entity.portal.referrals'
 import { Route as EntityPortalMessagesRouteImport } from './routes/_entity.portal.messages'
 import { Route as EntityPortalEventsRouteImport } from './routes/_entity.portal.events'
+import { Route as StaffContentEventsIndexRouteImport } from './routes/_staff.content.events.index'
 import { Route as StaffContentAnnouncementsIndexRouteImport } from './routes/_staff.content.announcements.index'
+import { Route as StaffContentEventsNewRouteImport } from './routes/_staff.content.events.new'
+import { Route as StaffContentEventsCategoriesRouteImport } from './routes/_staff.content.events.categories'
+import { Route as StaffContentEventsEventIdRouteImport } from './routes/_staff.content.events.$eventId'
 import { Route as StaffContentAnnouncementsNewRouteImport } from './routes/_staff.content.announcements.new'
 import { Route as StaffContentAnnouncementsAnnouncementIdRouteImport } from './routes/_staff.content.announcements.$announcementId'
 
@@ -140,10 +144,32 @@ const EntityPortalEventsRoute = EntityPortalEventsRouteImport.update({
   path: '/portal/events',
   getParentRoute: () => EntityRoute,
 } as any)
+const StaffContentEventsIndexRoute = StaffContentEventsIndexRouteImport.update({
+  id: '/events/',
+  path: '/events/',
+  getParentRoute: () => StaffContentRoute,
+} as any)
 const StaffContentAnnouncementsIndexRoute =
   StaffContentAnnouncementsIndexRouteImport.update({
     id: '/announcements/',
     path: '/announcements/',
+    getParentRoute: () => StaffContentRoute,
+  } as any)
+const StaffContentEventsNewRoute = StaffContentEventsNewRouteImport.update({
+  id: '/events/new',
+  path: '/events/new',
+  getParentRoute: () => StaffContentRoute,
+} as any)
+const StaffContentEventsCategoriesRoute =
+  StaffContentEventsCategoriesRouteImport.update({
+    id: '/events/categories',
+    path: '/events/categories',
+    getParentRoute: () => StaffContentRoute,
+  } as any)
+const StaffContentEventsEventIdRoute =
+  StaffContentEventsEventIdRouteImport.update({
+    id: '/events/$eventId',
+    path: '/events/$eventId',
     getParentRoute: () => StaffContentRoute,
   } as any)
 const StaffContentAnnouncementsNewRoute =
@@ -181,7 +207,11 @@ export interface FileRoutesByFullPath {
   '/participants/': typeof StaffParticipantsIndexRoute
   '/content/announcements/$announcementId': typeof StaffContentAnnouncementsAnnouncementIdRoute
   '/content/announcements/new': typeof StaffContentAnnouncementsNewRoute
+  '/content/events/$eventId': typeof StaffContentEventsEventIdRoute
+  '/content/events/categories': typeof StaffContentEventsCategoriesRoute
+  '/content/events/new': typeof StaffContentEventsNewRoute
   '/content/announcements/': typeof StaffContentAnnouncementsIndexRoute
+  '/content/events/': typeof StaffContentEventsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -204,7 +234,11 @@ export interface FileRoutesByTo {
   '/participants': typeof StaffParticipantsIndexRoute
   '/content/announcements/$announcementId': typeof StaffContentAnnouncementsAnnouncementIdRoute
   '/content/announcements/new': typeof StaffContentAnnouncementsNewRoute
+  '/content/events/$eventId': typeof StaffContentEventsEventIdRoute
+  '/content/events/categories': typeof StaffContentEventsCategoriesRoute
+  '/content/events/new': typeof StaffContentEventsNewRoute
   '/content/announcements': typeof StaffContentAnnouncementsIndexRoute
+  '/content/events': typeof StaffContentEventsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -231,7 +265,11 @@ export interface FileRoutesById {
   '/_staff/participants/': typeof StaffParticipantsIndexRoute
   '/_staff/content/announcements/$announcementId': typeof StaffContentAnnouncementsAnnouncementIdRoute
   '/_staff/content/announcements/new': typeof StaffContentAnnouncementsNewRoute
+  '/_staff/content/events/$eventId': typeof StaffContentEventsEventIdRoute
+  '/_staff/content/events/categories': typeof StaffContentEventsCategoriesRoute
+  '/_staff/content/events/new': typeof StaffContentEventsNewRoute
   '/_staff/content/announcements/': typeof StaffContentAnnouncementsIndexRoute
+  '/_staff/content/events/': typeof StaffContentEventsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -257,7 +295,11 @@ export interface FileRouteTypes {
     | '/participants/'
     | '/content/announcements/$announcementId'
     | '/content/announcements/new'
+    | '/content/events/$eventId'
+    | '/content/events/categories'
+    | '/content/events/new'
     | '/content/announcements/'
+    | '/content/events/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -280,7 +322,11 @@ export interface FileRouteTypes {
     | '/participants'
     | '/content/announcements/$announcementId'
     | '/content/announcements/new'
+    | '/content/events/$eventId'
+    | '/content/events/categories'
+    | '/content/events/new'
     | '/content/announcements'
+    | '/content/events'
   id:
     | '__root__'
     | '/'
@@ -306,7 +352,11 @@ export interface FileRouteTypes {
     | '/_staff/participants/'
     | '/_staff/content/announcements/$announcementId'
     | '/_staff/content/announcements/new'
+    | '/_staff/content/events/$eventId'
+    | '/_staff/content/events/categories'
+    | '/_staff/content/events/new'
     | '/_staff/content/announcements/'
+    | '/_staff/content/events/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -466,11 +516,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EntityPortalEventsRouteImport
       parentRoute: typeof EntityRoute
     }
+    '/_staff/content/events/': {
+      id: '/_staff/content/events/'
+      path: '/events'
+      fullPath: '/content/events/'
+      preLoaderRoute: typeof StaffContentEventsIndexRouteImport
+      parentRoute: typeof StaffContentRoute
+    }
     '/_staff/content/announcements/': {
       id: '/_staff/content/announcements/'
       path: '/announcements'
       fullPath: '/content/announcements/'
       preLoaderRoute: typeof StaffContentAnnouncementsIndexRouteImport
+      parentRoute: typeof StaffContentRoute
+    }
+    '/_staff/content/events/new': {
+      id: '/_staff/content/events/new'
+      path: '/events/new'
+      fullPath: '/content/events/new'
+      preLoaderRoute: typeof StaffContentEventsNewRouteImport
+      parentRoute: typeof StaffContentRoute
+    }
+    '/_staff/content/events/categories': {
+      id: '/_staff/content/events/categories'
+      path: '/events/categories'
+      fullPath: '/content/events/categories'
+      preLoaderRoute: typeof StaffContentEventsCategoriesRouteImport
+      parentRoute: typeof StaffContentRoute
+    }
+    '/_staff/content/events/$eventId': {
+      id: '/_staff/content/events/$eventId'
+      path: '/events/$eventId'
+      fullPath: '/content/events/$eventId'
+      preLoaderRoute: typeof StaffContentEventsEventIdRouteImport
       parentRoute: typeof StaffContentRoute
     }
     '/_staff/content/announcements/new': {
@@ -513,7 +591,11 @@ interface StaffContentRouteChildren {
   StaffContentIndexRoute: typeof StaffContentIndexRoute
   StaffContentAnnouncementsAnnouncementIdRoute: typeof StaffContentAnnouncementsAnnouncementIdRoute
   StaffContentAnnouncementsNewRoute: typeof StaffContentAnnouncementsNewRoute
+  StaffContentEventsEventIdRoute: typeof StaffContentEventsEventIdRoute
+  StaffContentEventsCategoriesRoute: typeof StaffContentEventsCategoriesRoute
+  StaffContentEventsNewRoute: typeof StaffContentEventsNewRoute
   StaffContentAnnouncementsIndexRoute: typeof StaffContentAnnouncementsIndexRoute
+  StaffContentEventsIndexRoute: typeof StaffContentEventsIndexRoute
 }
 
 const StaffContentRouteChildren: StaffContentRouteChildren = {
@@ -521,7 +603,11 @@ const StaffContentRouteChildren: StaffContentRouteChildren = {
   StaffContentAnnouncementsAnnouncementIdRoute:
     StaffContentAnnouncementsAnnouncementIdRoute,
   StaffContentAnnouncementsNewRoute: StaffContentAnnouncementsNewRoute,
+  StaffContentEventsEventIdRoute: StaffContentEventsEventIdRoute,
+  StaffContentEventsCategoriesRoute: StaffContentEventsCategoriesRoute,
+  StaffContentEventsNewRoute: StaffContentEventsNewRoute,
   StaffContentAnnouncementsIndexRoute: StaffContentAnnouncementsIndexRoute,
+  StaffContentEventsIndexRoute: StaffContentEventsIndexRoute,
 }
 
 const StaffContentRouteWithChildren = StaffContentRoute._addFileChildren(

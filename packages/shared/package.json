@@ -27,6 +27,7 @@
     "./translation": "./translation/index.ts",
     "./translation/react": "./translation/react.ts",
     "./announcements": "./announcements.ts",
+    "./events": "./events.ts",
     "./image-compression": "./lib/image-compression.ts"
   },
   "scripts": {
@@ -34,7 +35,9 @@
     "test": "bun test"
   },
   "dependencies": {
+    "@date-fns/tz": "1.5.0",
     "@supabase/supabase-js": "^2.110.7",
+    "date-fns": "4.4.0",
     "i18next": "26.3.6",
     "react-i18next": "17.0.10",
     "zod": "^4.4.3"

@@ -39,7 +39,7 @@ export interface AnnouncementEditorProps {
   readonly onSaved: (announcement: AnnouncementListRow) => void | Promise<void>;
 }
 
-function reviewOptions(
+export function reviewOptions(
   sourceText: string,
   localized: AnnouncementListRow['title'] | null,
 ): CreateTranslationReviewOptions | undefined {
@@ -72,7 +72,7 @@ function initialMode(announcement: AnnouncementListRow | undefined): PublishMode
   return 'now';
 }
 
-function startGeneratedReview(
+export function startGeneratedReview(
   generated: TranslationReview,
   start: (options: CreateTranslationReviewOptions) => void,
 ) {
@@ -85,7 +85,7 @@ function startGeneratedReview(
   });
 }
 
-function approveAll(
+export function approveAll(
   review: TranslationReview | undefined,
   approve: (language: SupportedLanguage) => void,
 ) {
@@ -369,6 +369,7 @@ export function AnnouncementEditor({ announcement, onSaved }: AnnouncementEditor
       </label>
 
       <ScheduledPublishFields
+        fieldId="announcement"
         mode={mode}
         publishedAt={publishedAt}
         expiresAt={expiresAt}

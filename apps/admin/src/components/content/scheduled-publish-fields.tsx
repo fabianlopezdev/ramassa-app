@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 export type PublishMode = 'draft' | 'now' | 'scheduled';
 
 export interface ScheduledPublishFieldsProps {
+  readonly fieldId?: string;
   readonly mode: PublishMode;
   readonly publishedAt: string;
   readonly expiresAt: string;
@@ -13,6 +14,7 @@ export interface ScheduledPublishFieldsProps {
 }
 
 export function ScheduledPublishFields({
+  fieldId = 'announcement',
   mode,
   publishedAt,
   expiresAt,
@@ -29,7 +31,7 @@ export function ScheduledPublishFields({
         <span className="text-sm font-medium">{t('modeLabel')}</span>
         <select
           className="h-9 rounded-md border border-input bg-background px-3 text-sm"
-          data-testid="announcement-mode"
+          data-testid={`${fieldId}-mode`}
           value={mode}
           onChange={(event) => onModeChange(event.target.value as PublishMode)}
         >
@@ -44,7 +46,7 @@ export function ScheduledPublishFields({
           <span className="text-sm font-medium">{t('publishedAt')}</span>
           <Input
             type="datetime-local"
-            data-testid="announcement-published-at"
+            data-testid={`${fieldId}-published-at`}
             value={publishedAt}
             onChange={(event) => onPublishedAtChange(event.target.value)}
           />
@@ -56,7 +58,7 @@ export function ScheduledPublishFields({
           <span className="text-sm font-medium">{t('expiresAt')}</span>
           <Input
             type="datetime-local"
-            data-testid="announcement-expires-at"
+            data-testid={`${fieldId}-expires-at`}
             value={expiresAt}
             onChange={(event) => onExpiresAtChange(event.target.value)}
           />

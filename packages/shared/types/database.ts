@@ -238,6 +238,173 @@ export type Database = {
           },
         ];
       };
+      event_categories: {
+        Row: {
+          color: string;
+          created_at: string;
+          icon: string;
+          id: string;
+          name: Json;
+          org_id: string;
+          sort_order: number;
+          updated_at: string;
+        };
+        Insert: {
+          color: string;
+          created_at?: string;
+          icon: string;
+          id?: string;
+          name: Json;
+          org_id?: string;
+          sort_order?: number;
+          updated_at?: string;
+        };
+        Update: {
+          color?: string;
+          created_at?: string;
+          icon?: string;
+          id?: string;
+          name?: Json;
+          org_id?: string;
+          sort_order?: number;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'event_categories_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      event_occurrences: {
+        Row: {
+          created_at: string;
+          ends_at: string | null;
+          event_id: string;
+          id: string;
+          org_id: string;
+          starts_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          ends_at?: string | null;
+          event_id: string;
+          id?: string;
+          org_id: string;
+          starts_at: string;
+        };
+        Update: {
+          created_at?: string;
+          ends_at?: string | null;
+          event_id?: string;
+          id?: string;
+          org_id?: string;
+          starts_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'event_occurrences_event_same_org';
+            columns: ['org_id', 'event_id'];
+            isOneToOne: false;
+            referencedRelation: 'events';
+            referencedColumns: ['org_id', 'id'];
+          },
+        ];
+      };
+      events: {
+        Row: {
+          category_id: string;
+          created_at: string;
+          created_by: string | null;
+          description: Json | null;
+          ends_at: string | null;
+          expires_at: string | null;
+          id: string;
+          is_recurring: boolean | null;
+          location: string;
+          location_url: string | null;
+          max_participants: number | null;
+          org_id: string;
+          published_at: string | null;
+          recurrence_rule: string | null;
+          signup_mode: string;
+          starts_at: string;
+          status: string;
+          time_zone: string;
+          title: Json;
+          updated_at: string;
+        };
+        Insert: {
+          category_id: string;
+          created_at?: string;
+          created_by?: string | null;
+          description?: Json | null;
+          ends_at?: string | null;
+          expires_at?: string | null;
+          id?: string;
+          is_recurring?: boolean | null;
+          location: string;
+          location_url?: string | null;
+          max_participants?: number | null;
+          org_id?: string;
+          published_at?: string | null;
+          recurrence_rule?: string | null;
+          signup_mode?: string;
+          starts_at: string;
+          status?: string;
+          time_zone?: string;
+          title: Json;
+          updated_at?: string;
+        };
+        Update: {
+          category_id?: string;
+          created_at?: string;
+          created_by?: string | null;
+          description?: Json | null;
+          ends_at?: string | null;
+          expires_at?: string | null;
+          id?: string;
+          is_recurring?: boolean | null;
+          location?: string;
+          location_url?: string | null;
+          max_participants?: number | null;
+          org_id?: string;
+          published_at?: string | null;
+          recurrence_rule?: string | null;
+          signup_mode?: string;
+          starts_at?: string;
+          status?: string;
+          time_zone?: string;
+          title?: Json;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'events_category_same_org';
+            columns: ['org_id', 'category_id'];
+            isOneToOne: false;
+            referencedRelation: 'event_categories';
+            referencedColumns: ['org_id', 'id'];
+          },
+          {
+            foreignKeyName: 'events_created_by_fkey';
+            columns: ['created_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'events_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       invites: {
         Row: {
           accepted_at: string | null;
@@ -708,6 +875,10 @@ export type Database = {
           published_at: string;
           visible_at?: string;
         };
+        Returns: boolean;
+      };
+      is_event_recurrence_rule_valid: {
+        Args: { recurrence_rule: string };
         Returns: boolean;
       };
       is_localized_content_valid: {

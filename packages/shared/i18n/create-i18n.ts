@@ -14,6 +14,7 @@ import arAuth from './locales/ar/auth.json';
 import arCommon from './locales/ar/common.json';
 import arEquipment from './locales/ar/equipment.json';
 import arErrors from './locales/ar/errors.json';
+import arEvents from './locales/ar/events.json';
 import arHome from './locales/ar/home.json';
 import arNav from './locales/ar/nav.json';
 import arOnboarding from './locales/ar/onboarding.json';
@@ -26,6 +27,7 @@ import caAuth from './locales/ca/auth.json';
 import caCommon from './locales/ca/common.json';
 import caEquipment from './locales/ca/equipment.json';
 import caErrors from './locales/ca/errors.json';
+import caEvents from './locales/ca/events.json';
 import caHome from './locales/ca/home.json';
 import caNav from './locales/ca/nav.json';
 import caOnboarding from './locales/ca/onboarding.json';
@@ -38,6 +40,7 @@ import enAuth from './locales/en/auth.json';
 import enCommon from './locales/en/common.json';
 import enEquipment from './locales/en/equipment.json';
 import enErrors from './locales/en/errors.json';
+import enEvents from './locales/en/events.json';
 import enHome from './locales/en/home.json';
 import enNav from './locales/en/nav.json';
 import enOnboarding from './locales/en/onboarding.json';
@@ -50,6 +53,7 @@ import esAuth from './locales/es/auth.json';
 import esCommon from './locales/es/common.json';
 import esEquipment from './locales/es/equipment.json';
 import esErrors from './locales/es/errors.json';
+import esEvents from './locales/es/events.json';
 import esHome from './locales/es/home.json';
 import esNav from './locales/es/nav.json';
 import esOnboarding from './locales/es/onboarding.json';
@@ -62,6 +66,7 @@ import faAuth from './locales/fa/auth.json';
 import faCommon from './locales/fa/common.json';
 import faEquipment from './locales/fa/equipment.json';
 import faErrors from './locales/fa/errors.json';
+import faEvents from './locales/fa/events.json';
 import faHome from './locales/fa/home.json';
 import faNav from './locales/fa/nav.json';
 import faOnboarding from './locales/fa/onboarding.json';
@@ -83,6 +88,7 @@ const resources = {
     profile: caProfile,
     push: caPush,
     announcements: caAnnouncements,
+    events: caEvents,
   },
   es: {
     common: esCommon,
@@ -97,6 +103,7 @@ const resources = {
     profile: esProfile,
     push: esPush,
     announcements: esAnnouncements,
+    events: esEvents,
   },
   en: {
     common: enCommon,
@@ -111,6 +118,7 @@ const resources = {
     profile: enProfile,
     push: enPush,
     announcements: enAnnouncements,
+    events: enEvents,
   },
   ar: {
     common: arCommon,
@@ -125,6 +133,7 @@ const resources = {
     profile: arProfile,
     push: arPush,
     announcements: arAnnouncements,
+    events: arEvents,
   },
   fa: {
     common: faCommon,
@@ -139,6 +148,7 @@ const resources = {
     profile: faProfile,
     push: faPush,
     announcements: faAnnouncements,
+    events: faEvents,
   },
 };
 

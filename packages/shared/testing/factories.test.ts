@@ -3,6 +3,9 @@ import { SUPPORTED_LANGUAGES } from '../i18n/languages';
 import {
   buildAnnouncement,
   buildAuditLogEntry,
+  buildEvent,
+  buildEventCategory,
+  buildEventOccurrence,
   buildInvite,
   buildOrganization,
   buildParticipant,
@@ -111,6 +114,34 @@ describe('buildAnnouncement', () => {
       status: 'draft',
       is_pinned: true,
     });
+  });
+});
+
+describe('event factories', () => {
+  test('builds a multilingual category from the fixed design vocabulary', () => {
+    const category = buildEventCategory();
+
+    expect(category.org_id).toBe(SEED_ORGANIZATION_ID);
+    expect(Object.keys(category.name as Record<string, unknown>)).toEqual([...SUPPORTED_LANGUAGES]);
+    expect(category.icon).toBe('dumbbell');
+    expect(category.color).toBe('primary');
+  });
+
+  test('links a complete event and occurrence through deterministic IDs', () => {
+    const event = buildEvent();
+    const occurrence = buildEventOccurrence();
+
+    expect(event.category_id).toBe(buildEventCategory().id);
+    expect(event.created_by).toBe(seedUserId(STAFF_FIXTURES[1]!.ordinal));
+    expect(occurrence.event_id).toBe(event.id);
+    expect(occurrence.org_id).toBe(event.org_id);
+  });
+
+  test('event factory overrides win over generated and nullable defaults', () => {
+    expect(buildEvent({ recurrence_rule: 'FREQ=WEEKLY;INTERVAL=1;COUNT=6' })).toMatchObject({
+      recurrence_rule: 'FREQ=WEEKLY;INTERVAL=1;COUNT=6',
+    });
+    expect(buildEventOccurrence({ ends_at: null }).ends_at).toBeNull();
   });
 });
 
