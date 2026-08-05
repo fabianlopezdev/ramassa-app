@@ -10,6 +10,7 @@
   "DB-2": "We could not find what you are looking for.",
   "DB-3": "We could not delete everything, so nothing was deleted. Please try again.",
   "DB-4": "Her photos and files have to be deleted first.",
+  "EVENTS-1": "This activity is already full. Choose another one or try again later.",
   "NETWORK-1": "No connection. Check your internet and try again.",
   "SYNC-1": "Sync did not finish. It will retry automatically.",
   "UPLOAD-1": "We could not upload the file. Please try again.",

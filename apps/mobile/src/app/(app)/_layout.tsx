@@ -37,6 +37,7 @@ export default function AppLayout() {
           <Stack.Screen name="profile-edit" />
           <Stack.Screen name="profile-delete-data" />
           <Stack.Screen name="announcement/[id]" />
+          <Stack.Screen name="event/[id]" />
         </Stack.Protected>
         <Stack.Protected guard={needsOnboarding}>
           <Stack.Screen name="onboarding" />

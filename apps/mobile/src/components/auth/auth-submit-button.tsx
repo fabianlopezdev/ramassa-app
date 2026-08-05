@@ -12,8 +12,19 @@
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { tokens } from '@ramassa/shared/tokens';
+
+const styles = StyleSheet.create({
+  button: {
+    minHeight: tokens.tapTarget.recommended,
+    justifyContent: 'center',
+    borderRadius: tokens.radius.md,
+    backgroundColor: tokens.colors.primary.DEFAULT,
+    paddingHorizontal: tokens.spacing.lg,
+  },
+  blocked: { opacity: 0.6 },
+});
 
 export interface AuthSubmitButtonProps {
   readonly label: string;
@@ -34,7 +45,7 @@ export function AuthSubmitButton({ label, onPress, isLoading, disabled }: AuthSu
       haptic="tapLight"
       isDisabled={Boolean(disabled)}
       isBusy={isBusy}
-      style={continuousCorners}
+      style={[continuousCorners, styles.button, isInteractionBlocked ? styles.blocked : undefined]}
       className={`min-h-recommended justify-center rounded-md bg-primary px-lg ${
         isInteractionBlocked ? 'opacity-60' : ''
       }`}

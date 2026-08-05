@@ -2,8 +2,9 @@ import type { Query } from '@tanstack/react-query';
 import type { PersistedClient, Persister } from '@tanstack/react-query-persist-client';
 
 const QUERY_CACHE_STORAGE_KEY = 'ramassa.query-cache.v1';
-const QUERY_CACHE_BUSTER = 'player-announcements-v2-user-scoped';
+const QUERY_CACHE_BUSTER = 'player-content-v3-events-user-scoped';
 const PLAYER_ANNOUNCEMENTS_QUERY_ROOT = 'player-announcements';
+const PLAYER_EVENTS_QUERY_ROOT = 'player-events';
 
 export const ANNOUNCEMENT_CACHE_MAX_AGE_MS = 1000 * 60 * 60 * 24 * 7;
 
@@ -35,13 +36,18 @@ export function createQueryPersister(storage: QueryCacheStorage): Persister {
 }
 
 function shouldPersistQuery(query: Query): boolean {
-  return query.queryKey[0] === PLAYER_ANNOUNCEMENTS_QUERY_ROOT && query.state.status === 'success';
+  return (
+    (query.queryKey[0] === PLAYER_ANNOUNCEMENTS_QUERY_ROOT ||
+      query.queryKey[0] === PLAYER_EVENTS_QUERY_ROOT) &&
+    query.state.status === 'success'
+  );
 }
 
 /**
- * Persistence is intentionally allowlisted to public organization content.
- * The same QueryClient also holds a participant's decrypted profile, which
- * must never be serialized into the unencrypted MMKV instance.
+ * Persistence is intentionally allowlisted to player-facing organization
+ * content and the caller's signup state. Every key is user-scoped. The same
+ * QueryClient also holds a participant's decrypted profile, which must never
+ * be serialized into the unencrypted MMKV instance.
  */
 export function persistedQueryOptions(persister: Persister) {
   return {

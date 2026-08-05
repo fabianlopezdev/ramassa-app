@@ -6,6 +6,7 @@ import {
   buildEvent,
   buildEventCategory,
   buildEventOccurrence,
+  buildEventSignup,
   buildInvite,
   buildKnowledgeArticle,
   buildKnowledgeCategory,
@@ -145,6 +146,14 @@ describe('event factories', () => {
       recurrence_rule: 'FREQ=WEEKLY;INTERVAL=1;COUNT=6',
     });
     expect(buildEventOccurrence({ ends_at: null }).ends_at).toBeNull();
+  });
+
+  test('builds a deterministic signup linked to a seeded player and event', () => {
+    const signup = buildEventSignup();
+
+    expect(signup.event_id).toBe(buildEvent().id);
+    expect(signup.player_id).toBe(seedUserId(PARTICIPANT_FIXTURES[0]!.ordinal));
+    expect(signup.state).toBe('confirmed');
   });
 });
 

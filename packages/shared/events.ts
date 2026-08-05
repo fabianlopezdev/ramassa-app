@@ -13,6 +13,8 @@ import type { Database } from './types/database';
 
 export const MADRID_TIME_ZONE = 'Europe/Madrid';
 export const EVENT_SIGNUP_MODES = ['none', 'interest', 'confirm'] as const;
+export const EVENT_SIGNUP_STATES = ['interested', 'confirmed', 'cancelled'] as const;
+export const EVENT_SIGNUP_CAPACITY_ERROR = 'EVENTS/CAPACITY_FULL' as const;
 export const EVENT_STATUSES = ['draft', 'published'] as const;
 export const EVENT_CATEGORY_ICONS = [
   'dumbbell',
@@ -37,6 +39,7 @@ export const MAX_EVENT_RECURRENCE_COUNT = 52;
 export const MAX_EVENT_RECURRENCE_INTERVAL = 4;
 
 export type EventSignupMode = (typeof EVENT_SIGNUP_MODES)[number];
+export type EventSignupState = (typeof EVENT_SIGNUP_STATES)[number];
 export type EventStatus = (typeof EVENT_STATUSES)[number];
 export type EventCategoryIcon = (typeof EVENT_CATEGORY_ICONS)[number];
 export type EventCategoryColor = (typeof EVENT_CATEGORY_COLORS)[number];
@@ -317,6 +320,7 @@ export interface EventListRow {
   readonly recurrence_rule: string | null;
   readonly is_recurring: boolean;
   readonly max_participants: number | null;
+  readonly active_signup_count: number;
   readonly signup_mode: EventSignupMode;
   readonly status: EventStatus;
   readonly published_at: string | null;
@@ -331,6 +335,102 @@ export interface EventOccurrenceRow {
   readonly event_id: string;
   readonly starts_at: string;
   readonly ends_at: string | null;
+}
+
+export interface PlayerEventSignup {
+  readonly id: string;
+  readonly state: EventSignupState;
+  readonly updated_at: string;
+}
+
+export interface PlayerEventOccurrence {
+  readonly occurrence_id: string;
+  readonly occurrence_starts_at: string;
+  readonly occurrence_ends_at: string | null;
+  readonly event: EventListRow;
+  readonly signup: PlayerEventSignup | null;
+}
+
+export type PlayerEventCategoryFilter = 'all' | string;
+
+function isActiveEventSignup(state: EventSignupState | null): boolean {
+  return state === 'interested' || state === 'confirmed';
+}
+
+export function nextEventSignupState(
+  mode: EventSignupMode,
+  current: EventSignupState | null,
+): EventSignupState | null {
+  if (isActiveEventSignup(current)) return 'cancelled';
+  if (mode === 'interest') return 'interested';
+  if (mode === 'confirm') return 'confirmed';
+  return null;
+}
+
+export function formatEventCapacity(
+  activeCount: number,
+  maximum: number | null,
+  unlimitedLabel: string,
+): string {
+  return `${activeCount} / ${maximum ?? unlimitedLabel}`;
+}
+
+export function isPlayerEventVisible(event: EventListRow, now = new Date()): boolean {
+  if (event.status !== 'published' || event.published_at === null) return false;
+  if (new Date(event.published_at).getTime() > now.getTime()) return false;
+  return event.expires_at === null || new Date(event.expires_at).getTime() > now.getTime();
+}
+
+export function filterPlayerEventOccurrences(
+  rows: readonly PlayerEventOccurrence[],
+  category: PlayerEventCategoryFilter = 'all',
+  now = new Date(),
+): readonly PlayerEventOccurrence[] {
+  return [...rows]
+    .filter(
+      (row) =>
+        new Date(row.occurrence_starts_at).getTime() >= now.getTime() &&
+        isPlayerEventVisible(row.event, now) &&
+        (category === 'all' || row.event.category_id === category),
+    )
+    .sort((left, right) => {
+      const difference =
+        new Date(left.occurrence_starts_at).getTime() -
+        new Date(right.occurrence_starts_at).getTime();
+      return difference === 0 ? left.occurrence_id.localeCompare(right.occurrence_id) : difference;
+    });
+}
+
+export function applyOptimisticEventSignup(
+  rows: readonly PlayerEventOccurrence[],
+  eventId: string,
+  state: EventSignupState,
+): readonly PlayerEventOccurrence[] {
+  return rows.map((row) => {
+    if (row.event.id !== eventId) return row;
+    const wasActive = isActiveEventSignup(row.signup?.state ?? null);
+    const willBeActive = isActiveEventSignup(state);
+    const countDelta = Number(willBeActive) - Number(wasActive);
+    return {
+      ...row,
+      event: {
+        ...row.event,
+        active_signup_count: Math.max(0, row.event.active_signup_count + countDelta),
+      },
+      signup: {
+        id: row.signup?.id ?? `optimistic:${eventId}`,
+        state,
+        updated_at: new Date().toISOString(),
+      },
+    };
+  });
+}
+
+export function mapEventSignupError(error: { readonly message?: string } | null): AppError {
+  if (error?.message?.includes(EVENT_SIGNUP_CAPACITY_ERROR) === true) {
+    return new AppError('EVENTS-1');
+  }
+  return new AppError('DB-1', { message: error?.message });
 }
 
 export interface EventPage {
@@ -378,7 +478,8 @@ export function applyEventQuery<T extends EventQueryBuilder>(
 
 const CATEGORY_COLUMNS = 'id, name, icon, color, sort_order, created_at, updated_at';
 const EVENT_COLUMNS =
-  'id, category_id, category:event_categories!events_category_same_org(id, name, icon, color, sort_order, created_at, updated_at), title, description, location, location_url, starts_at, ends_at, time_zone, recurrence_rule, is_recurring, max_participants, signup_mode, status, published_at, expires_at, created_by, created_at, updated_at';
+  'id, category_id, category:event_categories!events_category_same_org(id, name, icon, color, sort_order, created_at, updated_at), title, description, location, location_url, starts_at, ends_at, time_zone, recurrence_rule, is_recurring, max_participants, active_signup_count, signup_mode, status, published_at, expires_at, created_by, created_at, updated_at';
+const PLAYER_EVENT_COLUMNS = `${EVENT_COLUMNS}, signup:event_signups!event_signups_event_same_org(id, state, updated_at)`;
 
 export async function fetchEventCategories(client: Client): Promise<readonly EventCategoryRow[]> {
   const { data, error } = await client
@@ -475,6 +576,73 @@ export async function fetchEventOccurrences(
     .order('starts_at', { ascending: true });
   if (error) throw new AppError('DB-1', { message: error.message });
   return (data ?? []) as EventOccurrenceRow[];
+}
+
+interface PlayerEventDatabaseRow extends EventListRow {
+  readonly signup: readonly PlayerEventSignup[] | PlayerEventSignup | null;
+}
+
+export async function fetchPlayerEventOccurrences(
+  client: Client,
+  options: { readonly signal?: AbortSignal; readonly now?: Date } = {},
+): Promise<readonly PlayerEventOccurrence[]> {
+  const now = options.now ?? new Date();
+  let eventsQuery = client.from('events').select(PLAYER_EVENT_COLUMNS);
+  let occurrencesQuery = client
+    .from('event_occurrences')
+    .select('id, event_id, starts_at, ends_at')
+    .gte('starts_at', now.toISOString())
+    .order('starts_at', { ascending: true })
+    .order('id', { ascending: true });
+  if (options.signal !== undefined) {
+    eventsQuery = eventsQuery.abortSignal(options.signal);
+    occurrencesQuery = occurrencesQuery.abortSignal(options.signal);
+  }
+
+  const [eventsResult, occurrencesResult] = await Promise.all([eventsQuery, occurrencesQuery]);
+  if (eventsResult.error) throw new AppError('DB-1', { message: eventsResult.error.message });
+  if (occurrencesResult.error) {
+    throw new AppError('DB-1', { message: occurrencesResult.error.message });
+  }
+
+  const events = (eventsResult.data ?? []) as unknown as PlayerEventDatabaseRow[];
+  const eventsById = new Map(events.map((event) => [event.id, event]));
+  const rows = (occurrencesResult.data ?? []).flatMap((occurrence) => {
+    const event = eventsById.get(occurrence.event_id);
+    if (event === undefined) return [];
+    const signup = Array.isArray(event.signup) ? (event.signup[0] ?? null) : event.signup;
+    const eventWithoutSignup: EventListRow = event;
+    return [
+      {
+        occurrence_id: occurrence.id,
+        occurrence_starts_at: occurrence.starts_at,
+        occurrence_ends_at: occurrence.ends_at,
+        event: eventWithoutSignup,
+        signup,
+      } satisfies PlayerEventOccurrence,
+    ];
+  });
+  return filterPlayerEventOccurrences(rows, 'all', now);
+}
+
+export async function setPlayerEventSignup(
+  client: Client,
+  input: {
+    readonly eventId: string;
+    readonly playerId: string;
+    readonly state: EventSignupState;
+  },
+): Promise<PlayerEventSignup> {
+  const { data, error } = await client
+    .from('event_signups')
+    .upsert(
+      { event_id: input.eventId, player_id: input.playerId, state: input.state },
+      { onConflict: 'event_id,player_id' },
+    )
+    .select('id, state, updated_at')
+    .single();
+  if (error) throw mapEventSignupError(error);
+  return data as PlayerEventSignup;
 }
 
 function toDatabaseEventValues(input: EventInput) {

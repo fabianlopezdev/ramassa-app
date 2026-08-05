@@ -1,0 +1,346 @@
+appId: com.ramassa.app
+name: events-signup
+env:
+  SHOTS: maestro/shots/events-signup/ca/ios
+  SUFFIX: ''
+  LOCALE: ca
+  DEV_CLIENT_URL: ramassa://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081
+  PLAYER_EMAIL: '{{player:email}}'
+  HOME_TITLE: '{{home:feedTitle}}'
+  PUSH_DECLINE: '{{push:rationaleDecline}}'
+  EVENTS_TAB: '{{nav:tabs.events}}'
+  EVENTS_TITLE: '{{events:playerTitle}}'
+  LIST_VIEW_ACTION: '{{events:playerListViewAction}}'
+  CALENDAR_VIEW_ACTION: '{{events:playerCalendarViewAction}}'
+  CALENDAR_LABEL: '{{events:playerCalendarLabel}}'
+  CONFIRM_ACTION: '{{events:playerConfirmAction}}'
+  CANCEL_ACTION: '{{events:playerCancelAction}}'
+  CONFIRMED_STATUS: '{{events:playerConfirmed}}'
+  CAPACITY_ERROR: '{{errors:EVENTS-1}}'
+  BACK: '{{events:playerBack}}'
+  OFFLINE_BANNER: '{{events:playerOfflineBanner}}'
+---
+- clearState
+- openLink: ${DEV_CLIENT_URL}
+- tapOn:
+    text: '^Open$'
+    optional: true
+- waitForAnimationToEnd:
+    timeout: 3000
+- extendedWaitUntil:
+    visible: '.*Developer menu.*'
+    timeout: 240000
+- repeat:
+    times: 4
+    while:
+      visible: '.*Close.*'
+    commands:
+      - tapOn: '.*Close.*'
+      - waitForAnimationToEnd:
+          timeout: 3000
+- repeat:
+    times: 6
+    while:
+      notVisible: '.*Environment.*'
+    commands:
+      - tapOn:
+          text: '.*Developer menu.*'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- repeat:
+    times: 20
+    while:
+      notVisible: '^${LOCALE} \(.*\)$'
+    commands:
+      - swipe:
+          start: 50%, 70%
+          end: 50%, 50%
+          duration: 900
+      - waitForAnimationToEnd:
+          timeout: 2500
+- repeat:
+    times: 6
+    while:
+      notVisible:
+        text: '^${LOCALE} \(.*\)$'
+        selected: true
+    commands:
+      - tapOn:
+          text: '^${LOCALE} \(.*\)$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 2500
+- assertVisible:
+    text: '^${LOCALE} \(.*\)$'
+    selected: true
+- repeat:
+    times: 6
+    while:
+      visible: '.*Close.*'
+    commands:
+      - tapOn:
+          text: '.*Close.*'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- repeat:
+    times: 6
+    while:
+      notVisible: '.*Accounts and roles.*'
+    commands:
+      - tapOn:
+          text: '.*Developer menu.*'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- repeat:
+    times: 20
+    while:
+      notVisible: '.*${PLAYER_EMAIL}.*'
+    commands:
+      - swipe:
+          start: 50%, 70%
+          end: 50%, 50%
+          duration: 900
+      - waitForAnimationToEnd:
+          timeout: 2500
+- tapOn: '.*${PLAYER_EMAIL}.*'
+- repeat:
+    times: 8
+    while:
+      notVisible: '.*${HOME_TITLE}.*'
+    commands:
+      - tapOn:
+          text: '^${PUSH_DECLINE}$'
+          optional: true
+      - tapOn:
+          text: '.*Close.*'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- extendedWaitUntil:
+    visible: '.*${HOME_TITLE}.*'
+    timeout: 120000
+- stopApp
+- openLink: ${DEV_CLIENT_URL}
+- tapOn:
+    text: '^Open$'
+    optional: true
+- waitForAnimationToEnd:
+    timeout: 12000
+- repeat:
+    times: 10
+    while:
+      notVisible: '.*${HOME_TITLE}.*'
+    commands:
+      - tapOn:
+          text: '.*Close.*'
+          optional: true
+      - tapOn:
+          text: '^${PUSH_DECLINE}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- tapOn: '^${EVENTS_TAB}$'
+- extendedWaitUntil:
+    visible: '.*${EVENTS_TITLE}.*'
+    timeout: 120000
+- waitForAnimationToEnd:
+    timeout: 3000
+
+- takeScreenshot: ${SHOTS}/01-list${SUFFIX}
+
+- tapOn: '^${CALENDAR_VIEW_ACTION}$'
+- assertVisible:
+    text: '^${CALENDAR_VIEW_ACTION}$'
+    selected: true
+- extendedWaitUntil:
+    visible: '.*${CALENDAR_LABEL}.*'
+    timeout: 30000
+- waitForAnimationToEnd:
+    timeout: 1500
+- takeScreenshot: ${SHOTS}/02-calendar${SUFFIX}
+
+- repeat:
+    times: 4
+    while:
+      notVisible:
+        id: 'event-card-.*'
+    commands:
+      - swipe:
+          start: 50%, 80%
+          end: 50%, 55%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 1000
+- tapOn:
+    id: 'event-card-.*'
+    index: 0
+- extendedWaitUntil:
+    visible: '^${BACK}$'
+    timeout: 30000
+- waitForAnimationToEnd:
+    timeout: 1500
+- takeScreenshot: ${SHOTS}/03-detail${SUFFIX}
+
+- repeat:
+    times: 4
+    while:
+      notVisible: '^${CONFIRM_ACTION}$'
+    commands:
+      - swipe:
+          start: 50%, 80%
+          end: 50%, 55%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 1000
+- tapOn: '^${CONFIRM_ACTION}$'
+- extendedWaitUntil:
+    visible: '.*${CONFIRMED_STATUS}.*'
+    timeout: 30000
+- waitForAnimationToEnd:
+    timeout: 1500
+- takeScreenshot: ${SHOTS}/04-confirmed${SUFFIX}
+
+- repeat:
+    times: 4
+    while:
+      notVisible: '^${CANCEL_ACTION}$'
+    commands:
+      - swipe:
+          start: 50%, 80%
+          end: 50%, 55%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 1000
+- tapOn: '^${CANCEL_ACTION}$'
+- extendedWaitUntil:
+    visible: '^${CONFIRM_ACTION}$'
+    timeout: 30000
+- waitForAnimationToEnd:
+    timeout: 1500
+- takeScreenshot: ${SHOTS}/05-cancelled${SUFFIX}
+
+- repeat:
+    times: 6
+    while:
+      notVisible: '^${BACK}$'
+    commands:
+      - swipe:
+          start: 50%, 30%
+          end: 50%, 75%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 1000
+- tapOn: '^${BACK}$'
+- extendedWaitUntil:
+    visible: '^${LIST_VIEW_ACTION}$'
+    timeout: 30000
+
+- tapOn: '^${LIST_VIEW_ACTION}$'
+- extendedWaitUntil:
+    visible:
+      id: 'event-card-5eed0000-0000-4000-8003-000000000004-.*'
+    timeout: 30000
+- tapOn:
+    id: 'event-card-5eed0000-0000-4000-8003-000000000004-.*'
+- extendedWaitUntil:
+    visible: '^${BACK}$'
+    timeout: 30000
+- repeat:
+    times: 4
+    while:
+      notVisible: '^${CONFIRM_ACTION}$'
+    commands:
+      - swipe:
+          start: 50%, 80%
+          end: 50%, 55%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 1000
+- tapOn: '^${CONFIRM_ACTION}$'
+- extendedWaitUntil:
+    visible: '.*${CAPACITY_ERROR}.*'
+    timeout: 30000
+- waitForAnimationToEnd:
+    timeout: 1500
+- takeScreenshot: ${SHOTS}/06-full${SUFFIX}
+
+- repeat:
+    times: 6
+    while:
+      notVisible: '^${BACK}$'
+    commands:
+      - swipe:
+          start: 50%, 30%
+          end: 50%, 75%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 1000
+- tapOn: '^${BACK}$'
+- extendedWaitUntil:
+    visible: '.*${EVENTS_TITLE}.*'
+    timeout: 30000
+
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - setAirplaneMode: enabled
+      - repeat:
+          times: 6
+          while:
+            notVisible: '.*${OFFLINE_BANNER}.*'
+          commands:
+            - swipe:
+                start: 50%, 30%
+                end: 50%, 75%
+                duration: 600
+            - waitForAnimationToEnd:
+                timeout: 1000
+      - extendedWaitUntil:
+          visible: '.*${OFFLINE_BANNER}.*'
+          timeout: 30000
+      - takeScreenshot: ${SHOTS}/07-offline${SUFFIX}
+      - setAirplaneMode: disabled
+
+- repeat:
+    times: 6
+    while:
+      notVisible:
+        id: 'event-filter-5eed0000-0000-4000-8002-000000000001'
+    commands:
+      - swipe:
+          start: 50%, 30%
+          end: 50%, 75%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 1000
+
+- tapOn:
+    id: 'event-filter-5eed0000-0000-4000-8002-000000000001'
+- assertVisible:
+    id: 'event-filter-5eed0000-0000-4000-8002-000000000001'
+    selected: true
+- waitForAnimationToEnd:
+    timeout: 1000
+- takeScreenshot: ${SHOTS}/08-filter-training${SUFFIX}
+
+- tapOn:
+    id: 'event-filter-5eed0000-0000-4000-8002-000000000002'
+- assertVisible:
+    id: 'event-filter-5eed0000-0000-4000-8002-000000000002'
+    selected: true
+- waitForAnimationToEnd:
+    timeout: 1000
+- takeScreenshot: ${SHOTS}/09-filter-courses${SUFFIX}
+
+- tapOn:
+    id: 'event-filter-5eed0000-0000-4000-8002-000000000003'
+- assertVisible:
+    id: 'event-filter-5eed0000-0000-4000-8002-000000000003'
+    selected: true
+- waitForAnimationToEnd:
+    timeout: 1000
+- takeScreenshot: ${SHOTS}/10-filter-cultural${SUFFIX}

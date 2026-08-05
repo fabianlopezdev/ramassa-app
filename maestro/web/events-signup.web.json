@@ -1,0 +1,89 @@
+{
+  "slug": "events-signup",
+  "viewport": { "width": 1440, "height": 900 },
+  "deviceScaleFactor": 2,
+  "timezoneId": "Europe/Madrid",
+  "settle": { "timeout": 6000, "interval": 150 },
+  "steps": [
+    {
+      "label": "auth-open",
+      "goto": "/login",
+      "click": "[aria-label=\"{{auth:usePasswordInstead}}\"]",
+      "waitFor": "[aria-label=\"{{auth:passwordLabel}}\"]"
+    },
+    {
+      "label": "auth-submit",
+      "fill": [
+        { "selector": "[aria-label=\"{{auth:emailLabel}}\"]", "value": "{{player:email}}" },
+        { "selector": "[aria-label=\"{{auth:passwordLabel}}\"]", "value": "{{player:password}}" }
+      ],
+      "click": "[aria-label=\"{{auth:passwordAction}}\"]",
+      "waitFor": "text={{home:feedTitle}} >> visible=true"
+    },
+    {
+      "label": "list",
+      "click": "text={{nav:tabs.events}} >> visible=true",
+      "waitFor": "text={{events:playerTitle}} >> visible=true"
+    },
+    {
+      "label": "calendar",
+      "click": "[aria-label=\"{{events:playerCalendarViewAction}}\"]",
+      "waitFor": "[data-testid=\"player-events-calendar\"]"
+    },
+    {
+      "label": "detail",
+      "click": "[data-testid^=\"event-card-\"] >> nth=0",
+      "waitFor": "[aria-label=\"{{events:playerBack}}\"]"
+    },
+    {
+      "label": "confirmed",
+      "click": "[aria-label=\"{{events:playerConfirmAction}}\"]",
+      "waitFor": "text={{events:playerSignupSuccessConfirmed}} >> visible=true"
+    },
+    {
+      "label": "cancelled",
+      "click": "[aria-label=\"{{events:playerCancelAction}}\"]",
+      "waitFor": "text={{events:playerSignupSuccessCancelled}} >> visible=true"
+    },
+    {
+      "label": "events-return",
+      "click": "[aria-label=\"{{events:playerBack}}\"]",
+      "waitFor": "text={{events:playerTitle}} >> visible=true"
+    },
+    {
+      "label": "list-return",
+      "click": "[aria-label=\"{{events:playerListViewAction}}\"]",
+      "waitFor": "[data-testid^=\"event-card-5eed0000-0000-4000-8003-000000000004-\"]"
+    },
+    {
+      "label": "full-detail",
+      "click": "[data-testid^=\"event-card-5eed0000-0000-4000-8003-000000000004-\"]",
+      "waitFor": "[aria-label=\"{{events:playerBack}}\"]"
+    },
+    {
+      "label": "full",
+      "click": "[aria-label=\"{{events:playerConfirmAction}}\"]",
+      "waitFor": "text={{errors:EVENTS-1}} >> visible=true"
+    },
+    {
+      "label": "filter-return",
+      "click": "[aria-label=\"{{events:playerBack}}\"]",
+      "waitFor": "[data-testid=\"event-filter-5eed0000-0000-4000-8002-000000000001\"]"
+    },
+    {
+      "label": "filter-training",
+      "click": "[data-testid=\"event-filter-5eed0000-0000-4000-8002-000000000001\"]",
+      "waitFor": "[data-testid^=\"event-card-5eed0000-0000-4000-8003-000000000001-\"]"
+    },
+    {
+      "label": "filter-courses",
+      "click": "[data-testid=\"event-filter-5eed0000-0000-4000-8002-000000000002\"]",
+      "waitFor": "[data-testid^=\"event-card-5eed0000-0000-4000-8003-000000000004-\"]"
+    },
+    {
+      "label": "filter-cultural",
+      "click": "[data-testid=\"event-filter-5eed0000-0000-4000-8002-000000000003\"]",
+      "waitFor": "[data-testid^=\"event-card-5eed0000-0000-4000-8003-000000000002-\"]"
+    }
+  ]
+}

@@ -1,7 +1,8 @@
 import type { HapticFeedback } from '@/lib/haptics/haptic-policy';
 import { playHaptic } from '@/lib/haptics/haptics';
+import { cssInterop } from 'nativewind';
 import type { ReactNode } from 'react';
-import type { StyleProp, ViewStyle } from 'react-native';
+import { Platform, type StyleProp, type ViewStyle } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   interpolate,
@@ -12,6 +13,9 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { resolveDurationMs, resolvePressScale } from '@ramassa/shared/tokens/motion';
+
+const PressableAnimatedView =
+  Platform.OS === 'web' ? cssInterop(Animated.View, { className: 'style' }) : Animated.View;
 
 /**
  * The press response every touchable in the app shares (RAPP-70). The single
@@ -41,6 +45,8 @@ import { resolveDurationMs, resolvePressScale } from '@ramassa/shared/tokens/mot
 export interface PressableScaleProps {
   readonly children: ReactNode;
   readonly onPress: () => void;
+  /** Stable automation hook for flows that must verify control state. */
+  readonly testID?: string;
   /** Required: this is the only label a screen reader gets for the control. */
   readonly accessibilityLabel: string;
   /** Which feedback to fire on press. Omit for none (e.g. a nav row). */
@@ -68,6 +74,7 @@ export interface PressableScaleProps {
 export function PressableScale({
   children,
   onPress,
+  testID,
   accessibilityLabel,
   haptic,
   className,
@@ -111,7 +118,8 @@ export function PressableScale({
 
   return (
     <GestureDetector gesture={tap}>
-      <Animated.View
+      <PressableAnimatedView
+        testID={testID}
         accessibilityRole="button"
         accessibilityLabel={accessibilityLabel}
         accessibilityState={{
@@ -123,7 +131,7 @@ export function PressableScale({
         className={className}
       >
         {children}
-      </Animated.View>
+      </PressableAnimatedView>
     </GestureDetector>
   );
 }

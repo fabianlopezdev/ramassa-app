@@ -162,6 +162,24 @@ values
     null,
     null,
     now() - interval '2 hours'
+  ),
+  (
+    '5eed0000-0000-4000-8003-000000000004',
+    '5eed0000-0000-4000-8000-000000000000',
+    '5eed0000-0000-4000-8002-000000000002',
+    '{"ca":"Taller de primers auxilis","es":"Taller de primeros auxilios","en":"First aid workshop","ar":"ورشة الإسعافات الأولية","fa":"کارگاه کمک‌های اولیه"}',
+    '{"ca":"Taller pràctic amb places limitades.","es":"Taller práctico con plazas limitadas.","en":"Practical workshop with limited places.","ar":"ورشة عملية بأماكن محدودة.","fa":"کارگاه عملی با ظرفیت محدود."}',
+    'Local de Ramassà',
+    'https://maps.google.com/?q=Ramassa+Vic',
+    (date_trunc('day', now() at time zone 'Europe/Madrid') + interval '7 days 16 hours') at time zone 'Europe/Madrid',
+    (date_trunc('day', now() at time zone 'Europe/Madrid') + interval '7 days 18 hours') at time zone 'Europe/Madrid',
+    null,
+    1,
+    'confirm',
+    'published',
+    now() - interval '1 day',
+    null,
+    now() - interval '6 hours'
   )
 on conflict (id) do nothing;
 
@@ -549,6 +567,37 @@ drop table seed_roster;
 
 end
 $seed$;
+
+-- Player event signup states (RAPP-34) --------------------------------------------
+-- Three states make the happy path, interest path, and at-capacity path reachable
+-- without editing Studio. Signups belong to the event series, not one occurrence.
+insert into public.event_signups (id, org_id, event_id, player_id, state, created_at)
+values
+  (
+    '5eed0000-0000-4000-8006-000000000001',
+    '5eed0000-0000-4000-8000-000000000000',
+    '5eed0000-0000-4000-8003-000000000001',
+    '5eed0000-0000-4000-8000-000000000011',
+    'cancelled',
+    now() - interval '1 day'
+  ),
+  (
+    '5eed0000-0000-4000-8006-000000000002',
+    '5eed0000-0000-4000-8000-000000000000',
+    '5eed0000-0000-4000-8003-000000000002',
+    '5eed0000-0000-4000-8000-000000000012',
+    'interested',
+    now() - interval '12 hours'
+  ),
+  (
+    '5eed0000-0000-4000-8006-000000000003',
+    '5eed0000-0000-4000-8000-000000000000',
+    '5eed0000-0000-4000-8003-000000000004',
+    '5eed0000-0000-4000-8000-000000000013',
+    'confirmed',
+    now() - interval '6 hours'
+  )
+on conflict (id) do nothing;
 
 -- Equipment deliveries (RAPP-27) -------------------------------------------------------
 --

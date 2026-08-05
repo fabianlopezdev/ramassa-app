@@ -19,7 +19,7 @@
 -- It reads only, and still runs in a transaction that rolls back.
 
 begin;
-select plan(16);
+select plan(18);
 
 -- Tenant -------------------------------------------------------------------------
 
@@ -150,6 +150,20 @@ select is_empty(
              query_to_xml(format('select count(*) from public.%I', t.table_name), false, true, '')
            ))[1]::text::int = 0 $$,
   'STANDING RULE: every table in public has seed rows (add seeds + a factory with the table)'
+);
+
+select cmp_ok(
+  (select count(*) from public.event_signups)::int,
+  '>=', 3,
+  'event signup fixtures cover several players and signup modes'
+);
+
+select is(
+  (select count(*) from public.events
+   where max_participants is not null
+     and active_signup_count = max_participants)::int,
+  1,
+  'one seeded event is full so the capacity state is reachable in local QA'
 );
 
 select * from finish();

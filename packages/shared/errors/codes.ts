@@ -17,6 +17,7 @@
 export const errorDomains = [
   'AUTH',
   'DB',
+  'EVENTS',
   'NETWORK',
   'SYNC',
   'UPLOAD',
@@ -51,6 +52,7 @@ export const errorCodeRegistry = defineCodes({
   'DB-2': { domain: 'DB', description: 'Requested record not found' },
   'DB-3': { domain: 'DB', description: 'Erasure did not complete and was rolled back' },
   'DB-4': { domain: 'DB', description: 'Stored files must be removed before the record' },
+  'EVENTS-1': { domain: 'EVENTS', description: 'Event capacity is full' },
   'NETWORK-1': { domain: 'NETWORK', description: 'Network request failed' },
   'SYNC-1': { domain: 'SYNC', description: 'Offline sync failed' },
   'UPLOAD-1': { domain: 'UPLOAD', description: 'File upload failed' },

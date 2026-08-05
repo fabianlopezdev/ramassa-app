@@ -10,6 +10,7 @@
   "DB-2": "No hem trobat el que busques.",
   "DB-3": "No hem pogut esborrar-ho tot, així que no s'ha esborrat res. Torna-ho a provar.",
   "DB-4": "Primer cal esborrar les fotos i els arxius d'aquesta persona.",
+  "EVENTS-1": "Aquesta activitat ja és plena. Tria'n una altra o torna-ho a provar més tard.",
   "NETWORK-1": "Sense connexió. Comprova internet i torna-ho a provar.",
   "SYNC-1": "No hem pogut sincronitzar. Es tornarà a provar automàticament.",
   "UPLOAD-1": "No hem pogut pujar l'arxiu. Torna-ho a provar.",

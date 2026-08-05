@@ -13,6 +13,7 @@ import type { AppErrorCode } from '@ramassa/shared/errors';
 import {
   deleteEvent,
   EVENT_PAGE_SIZE,
+  formatEventCapacity,
   parseWeeklyRecurrenceRule,
   type EventCategoryRow,
   type EventLifecycle,
@@ -108,7 +109,12 @@ export function EventsTable({ page, categories, search }: EventsTableProps) {
         id: 'capacity',
         header: t('events:columnCapacity'),
         enableSorting: false,
-        cell: ({ row }) => row.original.max_participants ?? t('events:unlimited'),
+        cell: ({ row }) =>
+          formatEventCapacity(
+            row.original.active_signup_count,
+            row.original.max_participants,
+            t('events:unlimited'),
+          ),
       },
       {
         id: 'signup',

@@ -38,6 +38,7 @@ export type AnnouncementRow = Database['public']['Tables']['announcements']['Row
 export type EventCategoryRow = Database['public']['Tables']['event_categories']['Row'];
 export type EventRow = Database['public']['Tables']['events']['Row'];
 export type EventOccurrenceRow = Database['public']['Tables']['event_occurrences']['Row'];
+export type EventSignupRow = Database['public']['Tables']['event_signups']['Row'];
 export type KnowledgeCategoryRow = Database['public']['Tables']['knowledge_categories']['Row'];
 export type KnowledgeArticleRow = Database['public']['Tables']['knowledge_articles']['Row'];
 export type ProfileRow = Database['public']['Tables']['profiles']['Row'];
@@ -237,6 +238,7 @@ export function buildEvent(overrides: Partial<EventRow> = {}): EventRow {
     recurrence_rule: null,
     is_recurring: false,
     max_participants: 18,
+    active_signup_count: 0,
     signup_mode: 'confirm',
     status: 'published',
     published_at: FIXTURE_TIMESTAMP,
@@ -258,6 +260,19 @@ export function buildEventOccurrence(
     starts_at: '2026-03-22T17:00:00+00:00',
     ends_at: '2026-03-22T18:30:00+00:00',
     created_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+export function buildEventSignup(overrides: Partial<EventSignupRow> = {}): EventSignupRow {
+  return {
+    id: '5eed0000-0000-4000-8006-000000000099',
+    org_id: SEED_ORGANIZATION_ID,
+    event_id: buildEvent().id,
+    player_id: seedUserId(PARTICIPANT_FIXTURES[0]!.ordinal),
+    state: 'confirmed',
+    created_at: FIXTURE_TIMESTAMP,
+    updated_at: FIXTURE_TIMESTAMP,
     ...overrides,
   };
 }

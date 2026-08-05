@@ -1,18 +1,25 @@
 import { describe, expect, test } from 'bun:test';
+import { AppError } from './errors';
 import {
   applyEventQuery,
+  applyOptimisticEventSignup,
   areEventTranslationsApproved,
   buildWeeklyRecurrenceRule,
   EVENT_CATEGORY_COLORS,
   EVENT_CATEGORY_ICONS,
   eventCategoryInputSchema,
   eventInputSchema,
+  filterPlayerEventOccurrences,
+  formatEventCapacity,
+  mapEventSignupError,
   materializeEventOccurrences,
   moveCategory,
+  nextEventSignupState,
   parseWeeklyRecurrenceRule,
   toMadridLocalInput,
   toUtcInstant,
   type EventQueryBuilder,
+  type PlayerEventOccurrence,
 } from './events';
 import { approveTranslation, createTranslationReview } from './translation/index';
 
@@ -244,5 +251,92 @@ describe('event translation review gate', () => {
     expect(areEventTranslationsApproved({ titleReview, descriptionReview: undefined }, true)).toBe(
       false,
     );
+  });
+});
+
+const playerEvent = (overrides: Partial<PlayerEventOccurrence> = {}): PlayerEventOccurrence => ({
+  occurrence_id: 'occurrence-1',
+  occurrence_starts_at: '2026-08-08T16:00:00.000Z',
+  occurrence_ends_at: '2026-08-08T17:30:00.000Z',
+  event: {
+    id: 'event-1',
+    category_id: 'category-1',
+    category: {
+      id: 'category-1',
+      name: completeTitle,
+      icon: 'dumbbell',
+      color: 'primary',
+      sort_order: 10,
+      created_at: '2026-08-01T09:00:00.000Z',
+      updated_at: '2026-08-01T09:00:00.000Z',
+    },
+    title: completeTitle,
+    description: null,
+    location: 'Camp Municipal de Vic',
+    location_url: 'https://maps.google.com/?q=Camp+Municipal+de+Vic',
+    starts_at: '2026-08-08T16:00:00.000Z',
+    ends_at: '2026-08-08T17:30:00.000Z',
+    time_zone: 'Europe/Madrid',
+    recurrence_rule: null,
+    is_recurring: false,
+    max_participants: 1,
+    active_signup_count: 0,
+    signup_mode: 'confirm',
+    status: 'published',
+    published_at: '2026-08-01T09:00:00.000Z',
+    expires_at: null,
+    created_by: null,
+    created_at: '2026-08-01T09:00:00.000Z',
+    updated_at: '2026-08-01T09:00:00.000Z',
+  },
+  signup: null,
+  ...overrides,
+});
+
+describe('player event signup state', () => {
+  test('keeps only future visible occurrences in the selected category and chronological order', () => {
+    const rows = [
+      playerEvent({ occurrence_id: 'later', occurrence_starts_at: '2026-08-10T10:00:00Z' }),
+      playerEvent({ occurrence_id: 'past', occurrence_starts_at: '2026-08-04T10:00:00Z' }),
+      playerEvent({ occurrence_id: 'first', occurrence_starts_at: '2026-08-08T10:00:00Z' }),
+    ];
+
+    expect(
+      filterPlayerEventOccurrences(rows, 'category-1', new Date('2026-08-05T12:00:00Z')).map(
+        (row) => row.occurrence_id,
+      ),
+    ).toEqual(['first', 'later']);
+  });
+
+  test('formats the staff capacity column as active count over maximum', () => {
+    expect(formatEventCapacity(7, 18, 'Unlimited')).toBe('7 / 18');
+    expect(formatEventCapacity(7, null, 'Unlimited')).toBe('7 / Unlimited');
+  });
+
+  test('maps signup modes to the one active state and toggles active rows to cancelled', () => {
+    expect(nextEventSignupState('confirm', null)).toBe('confirmed');
+    expect(nextEventSignupState('interest', null)).toBe('interested');
+    expect(nextEventSignupState('none', null)).toBeNull();
+    expect(nextEventSignupState('confirm', 'confirmed')).toBe('cancelled');
+  });
+
+  test('optimistically updates every occurrence in the series and its capacity count', () => {
+    const rows = [
+      playerEvent(),
+      playerEvent({ occurrence_id: 'occurrence-2', occurrence_starts_at: '2026-08-15T16:00:00Z' }),
+    ];
+    const confirmed = applyOptimisticEventSignup(rows, 'event-1', 'confirmed');
+
+    expect(confirmed.map((row) => row.signup?.state)).toEqual(['confirmed', 'confirmed']);
+    expect(confirmed.map((row) => row.event.active_signup_count)).toEqual([1, 1]);
+
+    const cancelled = applyOptimisticEventSignup(confirmed, 'event-1', 'cancelled');
+    expect(cancelled.map((row) => row.event.active_signup_count)).toEqual([0, 0]);
+  });
+
+  test('turns the server capacity sentinel into the typed product error', () => {
+    const error = mapEventSignupError({ message: 'EVENTS/CAPACITY_FULL' });
+    expect(error).toBeInstanceOf(AppError);
+    expect(error.code).toBe('EVENTS-1');
   });
 });

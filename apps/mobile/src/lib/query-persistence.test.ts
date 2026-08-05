@@ -81,11 +81,44 @@ test('persistence excludes decrypted profile data and keeps only the public feed
   const client = new QueryClient();
   client.setQueryData(['own-profile'], { document_number: 'X1234567' });
   client.setQueryData(['player-announcements', 'player-a'], [{ id: 'safe-public-content' }]);
+  client.setQueryData(
+    ['player-events', 'player-a'],
+    [{ occurrence_id: 'cached-event', signup: { state: 'confirmed' } }],
+  );
 
   await persistQueryClientSave({ queryClient: client, ...persistedQueryOptions(persister) });
 
   const serialized = [...storage.raw.values()].join('');
   expect(serialized).toContain('safe-public-content');
+  expect(serialized).toContain('cached-event');
   expect(serialized).not.toContain('X1234567');
   expect(serialized).not.toContain('own-profile');
+});
+
+test('airplane mode restores the player calendar without a network request', async () => {
+  const storage = memoryStorage();
+  const persister = createQueryPersister(storage);
+  const source = new QueryClient();
+  const cachedEvents = [{ occurrence_id: 'event-from-cache' }];
+  source.setQueryData(['player-events', 'player-a'], cachedEvents);
+
+  await persistQueryClientSave({ queryClient: source, ...persistedQueryOptions(persister) });
+
+  const restored = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  await persistQueryClientRestore({ queryClient: restored, ...persistedQueryOptions(persister) });
+  onlineManager.setOnline(false);
+  let networkCalls = 0;
+  const observer = new QueryObserver<readonly { occurrence_id: string }[]>(restored, {
+    queryKey: ['player-events', 'player-a'],
+    queryFn: async () => {
+      networkCalls += 1;
+      throw new Error('the calendar must use its persisted rows');
+    },
+  });
+  const stop = observer.subscribe(() => undefined);
+
+  expect(observer.getCurrentResult().data).toEqual(cachedEvents);
+  expect(observer.getCurrentResult().fetchStatus).toBe('paused');
+  expect(networkCalls).toBe(0);
+  stop();
 });

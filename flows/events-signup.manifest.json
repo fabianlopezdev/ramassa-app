@@ -1,0 +1,173 @@
+{
+  "app": "Ramassà",
+  "slug": "events-signup",
+  "title": "Calendari i inscripcions",
+  "surface": "mobile",
+  "description": "Les jugadores exploren activitats futures en una llista o un calendari, obren els detalls i confirmen o cancel·len la seva assistència amb una sola acció. El flux també mostra la còpia desada sense connexió i la mateixa experiència en àrab de dreta a esquerra.",
+  "steps": [
+    {
+      "id": "list",
+      "label": "Activitats properes",
+      "ios": "events-signup/ios/01-list.png",
+      "android": "events-signup/android/01-list.png",
+      "web": "events-signup/web/03-list.png"
+    },
+    {
+      "id": "calendar",
+      "label": "Calendari amb dies marcats",
+      "ios": "events-signup/ios/02-calendar.png",
+      "android": "events-signup/android/02-calendar.png",
+      "web": "events-signup/web/04-calendar.png"
+    },
+    {
+      "id": "detail",
+      "label": "Detall de l'activitat",
+      "ios": "events-signup/ios/03-detail.png",
+      "android": "events-signup/android/03-detail.png",
+      "web": "events-signup/web/05-detail.png"
+    },
+    {
+      "id": "confirmed",
+      "label": "Assistència confirmada",
+      "ios": "events-signup/ios/04-confirmed.png",
+      "android": "events-signup/android/04-confirmed.png",
+      "web": "events-signup/web/06-confirmed.png"
+    },
+    {
+      "id": "cancelled",
+      "label": "Inscripció cancel·lada",
+      "ios": "events-signup/ios/05-cancelled.png",
+      "android": "events-signup/android/05-cancelled.png",
+      "web": "events-signup/web/07-cancelled.png"
+    },
+    {
+      "id": "offline",
+      "label": "Calendari desat sense connexió",
+      "android": "events-signup/android/07-offline.png"
+    },
+    {
+      "id": "full",
+      "label": "Activitat plena",
+      "ios": "events-signup/ios/06-full.png",
+      "android": "events-signup/android/06-full.png",
+      "web": "events-signup/web/11-full.png"
+    },
+    {
+      "id": "filter-training",
+      "label": "Filtre: entrenaments",
+      "ios": "events-signup/ios/08-filter-training.png",
+      "android": "events-signup/android/08-filter-training.png",
+      "web": "events-signup/web/13-filter-training.png"
+    },
+    {
+      "id": "filter-courses",
+      "label": "Filtre: cursos",
+      "ios": "events-signup/ios/09-filter-courses.png",
+      "android": "events-signup/android/09-filter-courses.png",
+      "web": "events-signup/web/14-filter-courses.png"
+    },
+    {
+      "id": "filter-cultural",
+      "label": "Filtre: activitats culturals",
+      "ios": "events-signup/ios/10-filter-cultural.png",
+      "android": "events-signup/android/10-filter-cultural.png",
+      "web": "events-signup/web/15-filter-cultural.png"
+    },
+    {
+      "id": "list-ar",
+      "label": "الأنشطة القادمة (àrab, dreta a esquerra)",
+      "ios": "events-signup/ios/01-list-ar.png",
+      "android": "events-signup/android/01-list-ar.png",
+      "web": "events-signup/web/03-list-ar.png"
+    },
+    {
+      "id": "calendar-ar",
+      "label": "تقويم الأنشطة",
+      "ios": "events-signup/ios/02-calendar-ar.png",
+      "android": "events-signup/android/02-calendar-ar.png",
+      "web": "events-signup/web/04-calendar-ar.png"
+    },
+    {
+      "id": "detail-ar",
+      "label": "تفاصيل النشاط",
+      "ios": "events-signup/ios/03-detail-ar.png",
+      "android": "events-signup/android/03-detail-ar.png",
+      "web": "events-signup/web/05-detail-ar.png"
+    },
+    {
+      "id": "confirmed-ar",
+      "label": "تم تأكيد الحضور",
+      "ios": "events-signup/ios/04-confirmed-ar.png",
+      "android": "events-signup/android/04-confirmed-ar.png",
+      "web": "events-signup/web/06-confirmed-ar.png"
+    },
+    {
+      "id": "cancelled-ar",
+      "label": "تم إلغاء التسجيل",
+      "ios": "events-signup/ios/05-cancelled-ar.png",
+      "android": "events-signup/android/05-cancelled-ar.png",
+      "web": "events-signup/web/07-cancelled-ar.png"
+    },
+    {
+      "id": "offline-ar",
+      "label": "نسخة محفوظة بدون اتصال",
+      "android": "events-signup/android/07-offline-ar.png"
+    },
+    {
+      "id": "full-ar",
+      "label": "النشاط ممتلئ",
+      "ios": "events-signup/ios/06-full-ar.png",
+      "android": "events-signup/android/06-full-ar.png",
+      "web": "events-signup/web/11-full-ar.png"
+    },
+    {
+      "id": "filter-training-ar",
+      "label": "فلتر: التدريبات",
+      "ios": "events-signup/ios/08-filter-training-ar.png",
+      "android": "events-signup/android/08-filter-training-ar.png",
+      "web": "events-signup/web/13-filter-training-ar.png"
+    },
+    {
+      "id": "filter-courses-ar",
+      "label": "فلتر: الدورات",
+      "ios": "events-signup/ios/09-filter-courses-ar.png",
+      "android": "events-signup/android/09-filter-courses-ar.png",
+      "web": "events-signup/web/14-filter-courses-ar.png"
+    },
+    {
+      "id": "filter-cultural-ar",
+      "label": "فلتر: الأنشطة الثقافية",
+      "ios": "events-signup/ios/10-filter-cultural-ar.png",
+      "android": "events-signup/android/10-filter-cultural-ar.png",
+      "web": "events-signup/web/15-filter-cultural-ar.png"
+    }
+  ],
+  "edges": [
+    { "from": "list", "to": "calendar", "label": "Calendari" },
+    { "from": "list", "to": "detail", "label": "Obre una activitat" },
+    { "from": "detail", "to": "confirmed", "label": "Confirma", "kind": "positive" },
+    { "from": "confirmed", "to": "cancelled", "label": "Cancel·la", "kind": "dismiss" },
+    { "from": "list", "to": "full", "label": "Activitat plena", "kind": "negative" },
+    { "from": "list", "to": "offline", "label": "Sense connexió", "kind": "neutral" },
+    { "from": "list", "to": "filter-training", "label": "Entrenaments" },
+    { "from": "list", "to": "filter-courses", "label": "Cursos" },
+    { "from": "list", "to": "filter-cultural", "label": "Cultura" },
+    { "from": "list-ar", "to": "calendar-ar", "label": "تقويم" },
+    { "from": "list-ar", "to": "detail-ar", "label": "فتح النشاط" },
+    { "from": "detail-ar", "to": "confirmed-ar", "label": "تأكيد", "kind": "positive" },
+    { "from": "confirmed-ar", "to": "cancelled-ar", "label": "إلغاء", "kind": "dismiss" },
+    { "from": "list-ar", "to": "full-ar", "label": "النشاط ممتلئ", "kind": "negative" },
+    { "from": "list-ar", "to": "offline-ar", "label": "لا يوجد اتصال", "kind": "neutral" },
+    { "from": "list-ar", "to": "filter-training-ar", "label": "التدريبات" },
+    { "from": "list-ar", "to": "filter-courses-ar", "label": "الدورات" },
+    { "from": "list-ar", "to": "filter-cultural-ar", "label": "الأنشطة الثقافية" }
+  ],
+  "nodes": [],
+  "notes": [
+    "La llista és l'equivalent accessible del calendari: el calendari serveix per triar un dia i les activitats resultants continuen sent files completes i llegibles.",
+    "La capacitat es comprova al servidor en el moment de confirmar. Si dues jugadores intenten agafar l'última plaça, només una pot completar l'acció.",
+    "Sense connexió es conserven les activitats desades, però una inscripció no es posa en cua perquè la capacitat pot canviar abans de recuperar la xarxa.",
+    "Les dates i les hores es mostren en Europe/Madrid i el calendari comença en dilluns en les cinc llengües de l'app.",
+    "La vista inicial captura el filtre Totes. Els tres filtres de categoria disponibles també tenen una captura pròpia amb l'estat seleccionat verificat."
+  ]
+}

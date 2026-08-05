@@ -24,6 +24,7 @@
     "translation:deploy": "bun run --cwd workers/translation deploy",
     "db:reset": "supabase db reset",
     "db:test": "supabase test db",
+    "db:test:signup-race": "bun run scripts/verify-event-signup-race.ts",
     "db:types": "supabase gen types typescript --local > packages/shared/types/database.ts",
     "capture:flow": "bun run scripts/capture-flow.ts",
     "capture:phase": "bun run scripts/capture-phase.ts",

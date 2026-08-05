@@ -314,8 +314,61 @@ export type Database = {
           },
         ];
       };
+      event_signups: {
+        Row: {
+          created_at: string;
+          event_id: string;
+          id: string;
+          org_id: string;
+          player_id: string;
+          state: string;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          event_id: string;
+          id?: string;
+          org_id?: string;
+          player_id: string;
+          state: string;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          event_id?: string;
+          id?: string;
+          org_id?: string;
+          player_id?: string;
+          state?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'event_signups_event_same_org';
+            columns: ['org_id', 'event_id'];
+            isOneToOne: false;
+            referencedRelation: 'events';
+            referencedColumns: ['org_id', 'id'];
+          },
+          {
+            foreignKeyName: 'event_signups_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'event_signups_player_id_fkey';
+            columns: ['player_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       events: {
         Row: {
+          active_signup_count: number;
           category_id: string;
           created_at: string;
           created_by: string | null;
@@ -338,6 +391,7 @@ export type Database = {
           updated_at: string;
         };
         Insert: {
+          active_signup_count?: number;
           category_id: string;
           created_at?: string;
           created_by?: string | null;
@@ -360,6 +414,7 @@ export type Database = {
           updated_at?: string;
         };
         Update: {
+          active_signup_count?: number;
           category_id?: string;
           created_at?: string;
           created_by?: string | null;
