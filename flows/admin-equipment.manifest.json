@@ -8,37 +8,37 @@
     {
       "id": "record",
       "label": "La seva fitxa, amb l'apartat de material",
-      "web": "admin-equipment/web/01-record.png"
+      "web": "admin-equipment/web/03-record.png"
     },
     {
       "id": "empty-log",
       "label": "Encara no se li ha donat res",
-      "web": "admin-equipment/web/02-empty-log.png"
+      "web": "admin-equipment/web/04-empty-log.png"
     },
     {
       "id": "item-picker",
       "label": "El material s'escull d'una llista, no s'escriu",
-      "web": "admin-equipment/web/03-item-picker.png"
+      "web": "admin-equipment/web/05-item-picker.png"
     },
     {
       "id": "size-missing",
       "label": "Unes botes sense talla: ho diu, no ho desa",
-      "web": "admin-equipment/web/04-size-missing.png"
+      "web": "admin-equipment/web/06-size-missing.png"
     },
     {
       "id": "no-size-item",
       "label": "Una ampolla d'aigua no demana talla",
-      "web": "admin-equipment/web/05-no-size-item.png"
+      "web": "admin-equipment/web/07-no-size-item.png"
     },
     {
       "id": "recorded",
       "label": "El lliurament registrat, amb data i qui l'ha fet",
-      "web": "admin-equipment/web/06-recorded.png"
+      "web": "admin-equipment/web/08-recorded.png"
     },
     {
       "id": "sizes-on-record",
       "label": "Les seves talles, a la fitxa",
-      "web": "admin-equipment/web/07-sizes-on-record.png"
+      "web": "admin-equipment/web/09-sizes-on-record.png"
     }
   ],
   "edges": [

@@ -1,4 +1,5 @@
 import { QueryClient } from '@tanstack/react-query';
+import { isRetryableError } from '@ramassa/shared/errors';
 
 /**
  * The app's single React Query client (added with RAPP-19 so the dev menu's
@@ -13,14 +14,28 @@ import { QueryClient } from '@tanstack/react-query';
  * enough that returning to a screen does not refetch. Feature issues tune this
  * per query as real screens arrive (RAPP-33 onward); offline persistence is
  * RAPP-65's job, not a default here.
+ *
+ * The retry is CONDITIONAL, not a count. A flat `retry: 1` also retried the
+ * failures a second attempt cannot fix — an expired session, a rejected input,
+ * a record that is simply not there — and every one of those spends the two
+ * things this audience has least of: seconds in front of a stuck screen, and
+ * mobile data. Which codes those are is a property of the taxonomy, so the rule
+ * lives with it (`isRetryableError`) and the admin app answers the same way.
  */
 
 const STALE_TIME_MS = 60_000;
-const RETRY_COUNT = 1;
+const MAX_QUERY_ATTEMPTS_AFTER_THE_FIRST = 1;
 
 export const queryClient = new QueryClient({
   defaultOptions: {
-    queries: { staleTime: STALE_TIME_MS, retry: RETRY_COUNT },
+    queries: {
+      staleTime: STALE_TIME_MS,
+      retry: (failureCount, error) =>
+        failureCount < MAX_QUERY_ATTEMPTS_AFTER_THE_FIRST && isRetryableError(error),
+    },
+    // Writes are never retried automatically: this app's mutations are profile
+    // edits and RGPD requests, and a silent second attempt at "please erase my
+    // data" is not a retry, it is a second request.
     mutations: { retry: 0 },
   },
 });

@@ -13,11 +13,20 @@ import { useTranslation } from 'react-i18next';
  * from the `nav` i18n namespace so all five languages translate and the
  * no-literal-string lint rule is satisfied. Android caps native tabs at 5, so
  * these five are the ceiling.
+ *
+ * `labelVisibilityMode="labeled"` is what makes the second half of that rule
+ * TRUE ON ANDROID, which is the platform nearly all of these players are on.
+ * Material's default (`auto`) hides every label except the selected tab's once
+ * there are four or more items, so the shipped Android build showed four
+ * unlabelled pictograms and one word — icon-only navigation, for an audience
+ * the SPEC defines as reading little in any language. iOS was unaffected and
+ * showed all five labels, which is exactly why it survived review: the defect
+ * was only ever visible in an Android capture.
  */
 export default function TabsLayout() {
   const { t } = useTranslation('nav');
   return (
-    <NativeTabs>
+    <NativeTabs labelVisibilityMode="labeled">
       <NativeTabs.Trigger name="index">
         <NativeTabs.Trigger.Icon sf="house.fill" md="home" />
         <NativeTabs.Trigger.Label>{t('nav:tabs.home')}</NativeTabs.Trigger.Label>

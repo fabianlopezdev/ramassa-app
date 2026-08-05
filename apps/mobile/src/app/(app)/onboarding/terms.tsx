@@ -11,10 +11,13 @@
  * back resumes here rather than starting over.
  */
 
+import { FailureNotice } from '@/components/error-code-line';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { OptionChip } from '@/components/onboarding/option-chip';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
 import { logout } from '@/lib/auth';
+import { continuousCorners } from '@/lib/continuous-corners';
+import { playHaptic } from '@/lib/haptics/haptics';
 import { completeOnboarding, onboardingDraftStore } from '@/lib/onboarding';
 import {
   documentationFormSchema,
@@ -28,6 +31,7 @@ import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { useAuth } from '@ramassa/shared/auth';
 import { CURRENT_TERMS_VERSION } from '@ramassa/shared/constants';
+import type { AppErrorCode } from '@ramassa/shared/errors';
 import { buildCompleteOnboardingPayload, termsStepSchema } from '@ramassa/shared/schemas';
 import type { LanguageCode } from '@ramassa/shared/schemas';
 
@@ -42,7 +46,10 @@ export default function TermsStepScreen() {
   const [isAccepted, setIsAccepted] = useState(savedTerms.termsAccepted === true);
   const [hasMediaConsent, setHasMediaConsent] = useState(savedTerms.mediaConsent === true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showError, setShowError] = useState<'accept' | 'completion' | null>(null);
+  const [hasAcceptError, setHasAcceptError] = useState(false);
+  // The FAILURE's own code, not a boolean: it drives the shake and, through the
+  // RAPP-12 taxonomy, decides whether the buzz is a warning or an error.
+  const [failureCode, setFailureCode] = useState<AppErrorCode | null>(null);
 
   function persist(currentStep: 'logistics' | 'terms') {
     onboardingDraftStore.saveDraft({
@@ -54,10 +61,15 @@ export default function TermsStepScreen() {
 
   async function finish() {
     if (!isAccepted) {
-      setShowError('accept');
+      setHasAcceptError(true);
+      // The same warning buzz every rejected wizard submit fires, from the
+      // shared vocabulary. Called on every press, not only the first: a player
+      // who taps Finish three times must feel the refusal three times.
+      playHaptic('warning');
       return;
     }
-    setShowError(null);
+    setHasAcceptError(false);
+    setFailureCode(null);
     setIsSubmitting(true);
     try {
       // Every stored step re-parses through the SAME schemas the screens used,
@@ -99,9 +111,15 @@ export default function TermsStepScreen() {
 
       const result = await completeOnboarding(payload);
       if (!result.ok) {
-        setShowError('completion');
+        // The shake and its buzz come from the code, so a system failure feels
+        // different from the "you have not ticked the box" refusal above.
+        setFailureCode(result.error.code);
         return;
       }
+      // The completed primary action of the whole flow (RAPP-70). No animation
+      // to pair it with: the auth gate swaps this stack for the tabs the moment
+      // the profile refreshes, so the haptic is the confirmation that survives.
+      playHaptic('success');
       onboardingDraftStore.clearDraft();
       // Flips `needsOnboarding`; the (app) layout's guard then swaps this
       // stack out for the tabs. No manual navigation.
@@ -125,7 +143,7 @@ export default function TermsStepScreen() {
         router.replace('/onboarding/logistics');
       }}
     >
-      <View className="rounded-md bg-neutral-50 p-md">
+      <View style={continuousCorners} className="rounded-md bg-neutral-50 p-md">
         <Text className={`text-start text-md leading-6 text-neutral-800 ${languageFontClass}`}>
           {t('termsBody')}
         </Text>
@@ -136,15 +154,22 @@ export default function TermsStepScreen() {
         isSelected={isAccepted}
         onPress={() => {
           setIsAccepted((current) => !current);
-          setShowError(null);
+          // Both, as before the errors were split: a message about the last
+          // attempt is stale the moment she changes her answer.
+          setHasAcceptError(false);
+          setFailureCode(null);
         }}
       />
-      {showError === 'accept' ? (
+      {/* Its own message, not the form-wide "this is missing": next to a
+          consent chip that reads as a statement about a field she cannot see,
+          and it is the one refusal in the wizard that has to name the exact
+          tap that unblocks it. */}
+      {hasAcceptError ? (
         <Text
           accessibilityLiveRegion="polite"
           className={`text-start text-sm text-error ${languageFontClass}`}
         >
-          {t('errorRequired')}
+          {t('errorTermsRequired')}
         </Text>
       ) : null}
 
@@ -159,14 +184,14 @@ export default function TermsStepScreen() {
         </Text>
       </View>
 
-      {showError === 'completion' ? (
-        <Text
-          accessibilityLiveRegion="polite"
-          className={`text-start text-sm text-error ${languageFontClass}`}
-        >
-          {t('completionFailed')}
-        </Text>
-      ) : null}
+      {/* Mounted only while there IS a failure, so it never occupies a slot in
+          the parent's gap. The code it carries (contract rule 7) matters more
+          here than anywhere: this is the last screen of the intake, so a woman
+          stuck on it has no account yet and the code is the only thing staff
+          can act on. */}
+      {failureCode === null ? null : (
+        <FailureNotice code={failureCode} message={t('completionFailed')} />
+      )}
 
       <PressableScale
         accessibilityLabel={t('termsDeclineAction')}

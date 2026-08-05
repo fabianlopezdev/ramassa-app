@@ -1,0 +1,59 @@
+{
+  "app": "Ramassà",
+  "slug": "admin-translation-review",
+  "title": "Revisió de traduccions",
+  "surface": "admin",
+  "description": "Com l'equip transforma un text en català en quatre esborranys, en revisa cada paraula i decideix què es pot publicar. La traducció automàtica només proposa: cap text arriba a les participants fins que una persona de l'equip l'ha revisat i aprovat.",
+  "steps": [
+    {
+      "id": "source",
+      "label": "El text original en català",
+      "web": "admin-translation-review/web/03-source.png"
+    },
+    {
+      "id": "drafts",
+      "label": "Quatre propostes pendents de revisió",
+      "web": "admin-translation-review/web/04-drafts.png"
+    },
+    {
+      "id": "accepted",
+      "label": "Una proposta acceptada tal com ha arribat",
+      "web": "admin-translation-review/web/05-accepted.png"
+    },
+    {
+      "id": "edited",
+      "label": "Una proposta corregida abans d'aprovar-la",
+      "web": "admin-translation-review/web/06-edited.png"
+    },
+    {
+      "id": "rejected",
+      "label": "Una proposta rebutjada perquè no es publicarà",
+      "web": "admin-translation-review/web/07-rejected.png"
+    },
+    {
+      "id": "manual",
+      "label": "Un text nou escrit manualment després del rebuig",
+      "web": "admin-translation-review/web/08-manual.png"
+    },
+    {
+      "id": "approved",
+      "label": "Totes les llengües revisades i a punt per publicar",
+      "web": "admin-translation-review/web/09-approved.png"
+    }
+  ],
+  "edges": [
+    { "from": "source", "to": "drafts", "label": "Genera esborranys", "kind": "neutral" },
+    { "from": "drafts", "to": "accepted", "label": "Accepta la proposta", "kind": "positive" },
+    { "from": "drafts", "to": "edited", "label": "Revisa i corregeix", "kind": "neutral" },
+    { "from": "drafts", "to": "rejected", "label": "Rebutja la proposta", "kind": "negative" },
+    { "from": "rejected", "to": "manual", "label": "Escriu una alternativa", "kind": "neutral" },
+    { "from": "accepted", "to": "approved", "label": "Continua la revisió", "kind": "positive" },
+    { "from": "edited", "to": "approved", "label": "Aprova la correcció", "kind": "positive" },
+    { "from": "manual", "to": "approved", "label": "Aprova el text manual", "kind": "positive" }
+  ],
+  "notes": [
+    "La proposta automàtica i el text revisat es conserven per separat. Així es pot veure què ha suggerit el sistema i què ha decidit finalment l'equip.",
+    "Rebutjar una proposta no la publica ni la tracta com a aprovada. Cal corregir-la o generar-ne una altra.",
+    "El botó de publicar només s'activa quan totes les llengües necessàries han estat aprovades per una persona."
+  ]
+}

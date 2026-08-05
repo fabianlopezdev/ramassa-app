@@ -10,11 +10,18 @@
  * nobody.
  */
 
+import { continuousCorners } from '@/lib/continuous-corners';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import type { ReactNode } from 'react';
 import { Text, View } from 'react-native';
 
-export function ProfileSection({ title, children }: { title: string; children: ReactNode }) {
+export function ProfileSection({
+  title,
+  children,
+}: {
+  readonly title: string;
+  readonly children: ReactNode;
+}) {
   const languageFontClass = useLanguageFontClass();
   return (
     <View className="gap-sm">
@@ -24,12 +31,17 @@ export function ProfileSection({ title, children }: { title: string; children: R
       >
         {title}
       </Text>
-      <View className="gap-xs rounded-md border border-neutral-200 bg-white p-md">{children}</View>
+      <View
+        style={continuousCorners}
+        className="gap-xs rounded-md border border-neutral-200 bg-white p-md"
+      >
+        {children}
+      </View>
     </View>
   );
 }
 
-export function ProfileRow({ label, value }: { label: string; value: string }) {
+export function ProfileRow({ label, value }: { readonly label: string; readonly value: string }) {
   const languageFontClass = useLanguageFontClass();
   return (
     // One accessibility node per row, so a screen reader announces "Phone,
@@ -37,7 +49,13 @@ export function ProfileRow({ label, value }: { label: string; value: string }) {
     // to reassemble.
     <View accessible accessibilityLabel={`${label}: ${value}`} className="gap-xs py-xs">
       <Text className={`text-start text-sm text-neutral-500 ${languageFontClass}`}>{label}</Text>
-      <Text className={`text-start text-md text-neutral-900 ${languageFontClass}`}>{value}</Text>
+      {/* Selectable: this screen exists so a woman can READ what the
+          organization holds about her, and a document or phone number she can
+          long-press and copy is one she can also paste into a form or send to
+          someone helping her. */}
+      <Text selectable className={`text-start text-md text-neutral-900 ${languageFontClass}`}>
+        {value}
+      </Text>
     </View>
   );
 }

@@ -48,7 +48,12 @@ async function mintUrl(overrides: Partial<Parameters<typeof buildLocalUploadUrl>
 
 async function put(
   url: string,
-  init: { body?: BodyInit; contentType?: string; now?: Date } = {},
+  init: {
+    body?: BodyInit;
+    contentType?: string;
+    now?: Date;
+    corsHeaders?: Record<string, string>;
+  } = {},
 ): Promise<Response> {
   const request = new Request(url, {
     method: 'PUT',
@@ -59,6 +64,7 @@ async function put(
     bucket,
     secret,
     now: () => init.now ?? new Date('2026-07-23T09:16:00.000Z'),
+    corsHeaders: init.corsHeaders,
   });
 }
 
@@ -77,6 +83,15 @@ describe('handleLocalUpload', () => {
     expect(response.status).toBe(200);
     expect(bucket.objects.has(objectKey)).toBe(true);
     expect(bucket.objects.get(objectKey)?.httpMetadata?.contentType).toBe(contentType);
+  });
+
+  test('echoes the allowlisted browser origin on the local upload response', async () => {
+    const response = await put(await mintUrl(), {
+      corsHeaders: { 'Access-Control-Allow-Origin': 'http://localhost:4193', Vary: 'Origin' },
+    });
+
+    expect(response.headers.get('Access-Control-Allow-Origin')).toBe('http://localhost:4193');
+    expect(response.headers.get('Vary')).toBe('Origin');
   });
 
   test('rejects a tampered object key', async () => {

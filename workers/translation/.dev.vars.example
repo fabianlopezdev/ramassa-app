@@ -1,0 +1,6 @@
+SENTRY_DSN=
+
+# Local development uses TRANSLATION_PROVIDER=mock from wrangler.jsonc.
+# To exercise a real provider, override the mode and add the matching secrets.
+DEEPL_API_KEY=
+ANTHROPIC_API_KEY=

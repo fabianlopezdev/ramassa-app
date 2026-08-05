@@ -6,7 +6,7 @@ pre-commit:
       run: bunx prettier --check {staged_files}
     lint:
       glob: '*.{ts,tsx,js,jsx,mjs,cjs}'
-      run: bunx eslint {staged_files}
+      run: bunx eslint --no-warn-ignored {staged_files}
     typecheck:
       glob: '*.{ts,tsx}'
       run: bunx tsc --noEmit

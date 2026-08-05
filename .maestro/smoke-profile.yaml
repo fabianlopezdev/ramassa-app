@@ -1,0 +1,233 @@
+appId: com.ramassa.app
+name: smoke-profile
+# An edit a woman makes to her own record SURVIVES (RAPP-28).
+#
+# The capture flow photographs the editor; it never types into it. So until
+# now nothing in the suite proved that changing a field and pressing Desa
+# actually writes anything - and the profile screen is the RGPD surface where
+# "see your data and correct it" is the promise being kept.
+#
+# Persistence is asserted after a RELAUNCH, not straight after the save. Reading
+# the value back on the screen that just wrote it proves only that the optimistic
+# cache update painted; the write is optimistic, so that assertion passes just as
+# happily when the server rejected it and the rollback has not landed yet. A
+# relaunch drops the cache and the value can only come back from the database.
+#
+# The suite rebuilds the seeded database before each platform's run, so what
+# this writes is gone by the next run and the flow always starts from the same
+# seeded state. Nothing is tagged, and nothing needs cleaning up:
+# the row is the seeded fixture's, identified by the account signed into, not by
+# anything written into a column the feature under test can rewrite.
+env:
+  DEV_CLIENT_URL: ramassa://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081
+  DEV_MENU_LABEL: Developer menu
+  TAB_PROFILE: '{{nav:tabs.profile}}'
+  PROFILE_TITLE: '{{profile:title}}'
+  EDIT_ACTION: '{{profile:editAction}}'
+  # `profile:editTitle` is deliberately NOT declared here. It renders the same
+  # words as `editAction` above, so any condition written against it is also
+  # true on the screen that merely offers the button - which is exactly how this
+  # flow came to assert it was in the editor while it was not.
+  SAVE_ACTION: '{{profile:saveAction}}'
+  SAVE_FAILED: '{{profile:saveFailed}}'
+  PUSH_DECLINE: '{{push:rationaleDecline}}'
+  # ASCII, and distinct from every seeded value, so finding it on screen can
+  # only mean this flow put it there. Maestro's inputText cannot type Arabic
+  # script; the pgTAP suite covers that storage path server-side instead.
+  NEW_BIRTHPLACE: 'Homs'
+---
+- runFlow: _open-app.yaml
+- runFlow: _sign-in.yaml
+- runFlow: _relaunch.yaml
+
+# Reaching Profile is a LOOP, because a single tab tap can land on the WRONG
+# tab: the tab bar is a floating pill that animates into place after a relaunch,
+# and a touch dispatched against its pre-settle layout selects a neighbour.
+#
+# Keyed on the profile HEADING, not the dev-menu entry. The entry is the last
+# thing on the screen and sits below the fold now that the tab holds a real
+# record, and Maestro does not match off-screen nodes on Android - so a loop
+# waiting for it would run its full six iterations every time and then be
+# rescued by the wait below, which is a slow way of testing nothing. The heading
+# is at the top and appears on no other tab.
+- repeat:
+    times: 6
+    while:
+      notVisible: '.*${PROFILE_TITLE}.*'
+    commands:
+      - tapOn:
+          text: '^${TAB_PROFILE}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- extendedWaitUntil:
+    visible: '.*${PROFILE_TITLE}.*'
+    timeout: 15000
+
+# ── Into the editor ────────────────────────────────────────────────────────
+- repeat:
+    times: 10
+    while:
+      notVisible: '^${EDIT_ACTION}$'
+    commands:
+      - swipe:
+          start: 50%, 60%
+          end: 50%, 40%
+          duration: 900
+      - waitForAnimationToEnd:
+          timeout: 1500
+# The loop stops the instant a sliver is on screen, which parks the control
+# under the tab bar where a tap does not reach it. One smaller swipe lifts it.
+- swipe:
+    start: 50%, 60%
+    end: 50%, 52%
+    duration: 900
+- waitForAnimationToEnd:
+    timeout: 2000
+# Keyed on the FIELD, not on the editor's title.
+#
+# `profile:editAction` and `profile:editTitle` are the same words - "Edita les
+# meves dades" labels both the button on the profile screen and the header of
+# the screen it opens. A loop waiting for the title was therefore already
+# satisfied by the BUTTON, skipped without ever tapping it, and the flow went
+# looking for form fields while still on the profile screen. It reported the
+# field as missing, which sent me hunting a scrolling problem that did not
+# exist.
+#
+# The field id is the honest signal: it appears only in the editor, and only in
+# its LOADED state (the loading branch draws placeholders and the failed-read
+# branch draws a retry, and neither renders a single input). So this proves
+# navigation and readiness in one condition, and it cannot be satisfied by the
+# screen we are leaving.
+- repeat:
+    times: 6
+    while:
+      notVisible:
+        id: 'profile-edit-place-of-birth'
+    commands:
+      - tapOn:
+          text: '^${EDIT_ACTION}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 2500
+- extendedWaitUntil:
+    visible:
+      id: 'profile-edit-place-of-birth'
+    timeout: 30000
+- waitForAnimationToEnd:
+    timeout: 2000
+
+# ── Fill in where she was born ────────────────────────────────────────────────────────
+# By testID: the label is rendered twice on this control (visible caption and
+# the input's accessibility label), so matching on its text can resolve to the
+# caption, which nothing can type into.
+#
+# Place of birth, and not the phone number this flow first edited. The claim
+# being tested is "an edit survives a relaunch", so any field proves it, and
+# this one is the only field that avoids both traps at once: it is near the top
+# of BOTH this screen and the profile screen, so nothing has to be scrolled to,
+# and the seed leaves it empty, so nothing has to be erased. The phone number
+# failed on the first (six to eight screens down a form carrying the whole
+# intake) and her name failed on the second.
+- tapOn:
+    text: '^Cancel$'
+    optional: true
+- tapOn:
+    id: 'profile-edit-place-of-birth'
+# No erase, deliberately. `eraseText` removes a character at a time through the
+# Android driver and hung on this participant's Arabic-script name until
+# Maestro's own two-minute deadline killed the run. The seed leaves her place of
+# birth NULL on purpose (two rows keep a null so the "profile created before
+# this field existed" case stays covered), so there is nothing to clear and
+# `inputText` has nothing to append to.
+- inputText: ${NEW_BIRTHPLACE}
+- waitForAnimationToEnd:
+    timeout: 1500
+# The Catalan keyboard exposes its action key as "Desa" too. While it remains
+# open, Maestro can satisfy SAVE_ACTION with the IME key instead of the app's
+# button, stop scrolling early, and leave the form unsaved. Submit the
+# single-line field with Enter, which blurs it on both platforms, before looking
+# for the primary action so there is only one honest match.
+- pressKey: Enter
+- waitForAnimationToEnd:
+    timeout: 1500
+
+# Save. The button sits below the fold on a form this long once the keyboard
+# has been up. It is dismissed above, but the form keeps its scroll position.
+- repeat:
+    times: 20
+    while:
+      notVisible: '^${SAVE_ACTION}$'
+    commands:
+      - swipe:
+          start: 50%, 45%
+          end: 50%, 25%
+          duration: 900
+      - waitForAnimationToEnd:
+          timeout: 1500
+# Keyed on the EDIT BUTTON, not on the profile heading.
+#
+# Returning from the editor restores the scroll position this flow left the
+# profile screen at - part-way down, because it had to scroll to reach that
+# button in the first place - so the heading is above the fold and unmatchable
+# on Android. The save had worked and the screen was correct; the assertion was
+# simply looking at a part of it that was not on screen. The button is where the
+# flow already knows the screen is scrolled to, and it exists on no other
+# screen: the editor does not render it.
+- repeat:
+    times: 6
+    while:
+      notVisible: '^${EDIT_ACTION}$'
+    commands:
+      - tapOn:
+          text: '^${SAVE_ACTION}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+
+# Leaving the editor IS the success signal, and only the success signal: a
+# rejected save deliberately keeps her on this screen with her edits intact, so
+# landing back on the profile cannot happen on the failure path.
+- extendedWaitUntil:
+    visible: '^${EDIT_ACTION}$'
+    timeout: 60000
+# Belt and braces on the same fact, and safe to assert as an absence only
+# because the wait above has already proved something PRESENT on the screen
+# that replaced it.
+- assertNotVisible: '.*${SAVE_FAILED}.*'
+
+# ── The point: it survives a relaunch ──────────────────────────────────────
+# Everything above passes against a purely optimistic write. This is the part
+# that cannot: the process is killed, the query cache goes with it, and the name
+# can only reappear by having been read back from the database.
+- runFlow: _relaunch.yaml
+- repeat:
+    times: 6
+    while:
+      notVisible: '.*${PROFILE_TITLE}.*'
+    commands:
+      - tapOn:
+          text: '^${TAB_PROFILE}$'
+          optional: true
+      - tapOn:
+          text: '^${PUSH_DECLINE}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- extendedWaitUntil:
+    visible: '.*${PROFILE_TITLE}.*'
+    timeout: 30000
+- repeat:
+    times: 20
+    while:
+      notVisible: '.*${NEW_BIRTHPLACE}.*'
+    commands:
+      - swipe:
+          start: 50%, 60%
+          end: 50%, 40%
+          duration: 900
+      - waitForAnimationToEnd:
+          timeout: 1500
+- extendedWaitUntil:
+    visible: '.*${NEW_BIRTHPLACE}.*'
+    timeout: 30000

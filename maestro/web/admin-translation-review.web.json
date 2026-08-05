@@ -1,0 +1,71 @@
+{
+  "slug": "admin-translation-review",
+  "viewport": { "width": 1440, "height": 900 },
+  "deviceScaleFactor": 2,
+  "timezoneId": "Europe/Madrid",
+  "settle": { "timeout": 6000, "interval": 150 },
+  "steps": [
+    {
+      "label": "auth-open",
+      "goto": "/login",
+      "click": "button:has-text(\"{{auth:usePasswordInstead}}\")",
+      "waitFor": "input[type=\"password\"]"
+    },
+    {
+      "label": "auth-submit",
+      "fill": [
+        { "selector": "input[type=\"email\"]", "value": "{{staff:email}}" },
+        { "selector": "input[type=\"password\"]", "value": "{{staff:password}}" }
+      ],
+      "click": "button:has-text(\"{{auth:passwordAction}}\")",
+      "waitFor": "text={{admin:dashboardTitle}}"
+    },
+    {
+      "label": "source",
+      "goto": "/translations/review",
+      "waitFor": "[data-testid=\"translation-source\"] >> visible=true"
+    },
+    {
+      "label": "drafts",
+      "click": "[data-testid=\"translation-generate\"]",
+      "waitFor": "[data-testid=\"translation-drafts\"] >> visible=true"
+    },
+    {
+      "label": "accepted",
+      "click": "[data-testid=\"translation-approve-es\"]",
+      "waitFor": "[data-testid=\"translation-status-es-approved\"] >> visible=true"
+    },
+    {
+      "label": "edited",
+      "fill": [
+        {
+          "selector": "[data-testid=\"translation-draft-en\"]",
+          "value": "Training has been cancelled"
+        }
+      ],
+      "click": "[data-testid=\"translation-approve-en\"]",
+      "waitFor": "[data-testid=\"translation-status-en-approved\"] >> visible=true"
+    },
+    {
+      "label": "rejected",
+      "click": "[data-testid=\"translation-reject-ar\"]",
+      "waitFor": "[data-testid=\"translation-status-ar-rejected\"] >> visible=true"
+    },
+    {
+      "label": "manual",
+      "fill": [
+        {
+          "selector": "[data-testid=\"translation-draft-ar\"]",
+          "value": "تم إلغاء التدريب"
+        }
+      ],
+      "click": "[data-testid=\"translation-approve-ar\"]",
+      "waitFor": "[data-testid=\"translation-status-ar-approved\"] >> visible=true"
+    },
+    {
+      "label": "approved",
+      "click": "[data-testid=\"translation-approve-all\"]",
+      "waitFor": "[data-testid=\"translation-publish\"]:not([disabled])"
+    }
+  ]
+}

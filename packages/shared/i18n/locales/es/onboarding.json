@@ -54,8 +54,10 @@
   "errorPhoneFormat": "Escribe el teléfono con el prefijo, por ejemplo +34 600 111 222.",
   "errorPostalFormat": "Un código postal son cinco números.",
   "errorDependentsRange": "Indica cuántas, entre 1 y 15.",
+  "errorTermsRequired": "Para continuar tienes que aceptar los términos. Toca \"He leído y acepto los términos\".",
   "completionFailed": "No hemos podido guardar tus datos. Vuelve a intentarlo.",
   "cancelAction": "Cancelar",
   "searchCountryPlaceholder": "Busca tu país",
+  "noCountryResults": "Ningún país con ese nombre. Prueba a escribir menos letras.",
   "languageNativeName": "Español"
 }

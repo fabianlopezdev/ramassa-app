@@ -50,14 +50,20 @@ export function usePendingInviteEntity(): string | null {
   const [entity, setEntity] = useState<string | null>(null);
 
   useEffect(() => {
-    let isMounted = true;
-    void safeAsync(() => fetchMyPendingInvite(supabase), { code: 'DB-1' }).then((result) => {
-      if (!isMounted || !result.ok) return;
+    // An AbortController, not only a mounted flag. The flag stops the state
+    // write, which is the crash; the controller stops the REQUEST, which is the
+    // battery and the data. A player who taps through step 3 quickly leaves
+    // this lookup in flight behind her.
+    const controller = new AbortController();
+    void safeAsync(() => fetchMyPendingInvite(supabase, { signal: controller.signal }), {
+      code: 'DB-1',
+    }).then((result) => {
+      // The abort itself arrives here as a failure, and it is one nobody needs
+      // to hear about: `result.ok` is false and the prefill is a convenience.
+      if (controller.signal.aborted || !result.ok) return;
       setEntity(result.value?.reference_entity ?? null);
     });
-    return () => {
-      isMounted = false;
-    };
+    return () => controller.abort();
   }, []);
 
   return entity;

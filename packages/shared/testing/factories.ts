@@ -34,6 +34,10 @@ import {
 } from './fixtures';
 
 export type OrganizationRow = Database['public']['Tables']['organizations']['Row'];
+export type AnnouncementRow = Database['public']['Tables']['announcements']['Row'];
+export type EventCategoryRow = Database['public']['Tables']['event_categories']['Row'];
+export type EventRow = Database['public']['Tables']['events']['Row'];
+export type EventOccurrenceRow = Database['public']['Tables']['event_occurrences']['Row'];
 export type ProfileRow = Database['public']['Tables']['profiles']['Row'];
 export type PushTokenRow = Database['public']['Tables']['push_tokens']['Row'];
 export type TermsAcceptanceRow = Database['public']['Tables']['terms_acceptances']['Row'];
@@ -145,6 +149,112 @@ export function buildOrganization(overrides: Partial<OrganizationRow> = {}): Org
     available_languages: ['ca', 'es', 'en', 'ar', 'fa'],
     contact_email: 'contacte@example.test',
     contact_phone: '+34600000000',
+    created_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+/**
+ * A complete published announcement in every supported language. Tests that
+ * need a draft or scheduled item override only the fields that define it.
+ */
+export function buildAnnouncement(overrides: Partial<AnnouncementRow> = {}): AnnouncementRow {
+  const author = STAFF_FIXTURES.find((person) => person.role === 'staff')!;
+
+  return {
+    id: '5eed0000-0000-4000-8001-000000000099',
+    org_id: SEED_ORGANIZATION_ID,
+    category: 'info',
+    title: {
+      ca: 'Trobada de famílies',
+      es: 'Encuentro de familias',
+      en: 'Family gathering',
+      ar: 'لقاء العائلات',
+      fa: 'گردهمایی خانواده‌ها',
+    },
+    body: {
+      ca: 'Dissabte compartirem un dinar al club.',
+      es: 'El sábado compartiremos una comida en el club.',
+      en: 'We will share lunch at the club on Saturday.',
+      ar: 'سنتناول الغداء معًا في النادي يوم السبت.',
+      fa: 'شنبه در باشگاه ناهار را با هم صرف می‌کنیم.',
+    },
+    image_url: null,
+    image_alt: null,
+    is_pinned: false,
+    status: 'published',
+    published_at: FIXTURE_TIMESTAMP,
+    expires_at: null,
+    created_by: seedUserId(author.ordinal),
+    created_at: FIXTURE_TIMESTAMP,
+    updated_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+export function buildEventCategory(overrides: Partial<EventCategoryRow> = {}): EventCategoryRow {
+  return {
+    id: '5eed0000-0000-4000-8002-000000000099',
+    org_id: SEED_ORGANIZATION_ID,
+    name: {
+      ca: 'Entrenaments',
+      es: 'Entrenamientos',
+      en: 'Training',
+      ar: 'التدريبات',
+      fa: 'تمرین ها',
+    },
+    icon: 'dumbbell',
+    color: 'primary',
+    sort_order: 10,
+    created_at: FIXTURE_TIMESTAMP,
+    updated_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+export function buildEvent(overrides: Partial<EventRow> = {}): EventRow {
+  const author = STAFF_FIXTURES.find((person) => person.role === 'staff')!;
+
+  return {
+    id: '5eed0000-0000-4000-8003-000000000099',
+    org_id: SEED_ORGANIZATION_ID,
+    category_id: buildEventCategory().id,
+    title: {
+      ca: 'Entrenament setmanal',
+      es: 'Entrenamiento semanal',
+      en: 'Weekly training',
+      ar: 'تدريب أسبوعي',
+      fa: 'تمرین هفتگی',
+    },
+    description: null,
+    location: 'Camp Municipal de Vic',
+    location_url: 'https://maps.google.com/?q=Camp+Municipal+de+Vic',
+    starts_at: '2026-03-22T17:00:00+00:00',
+    ends_at: '2026-03-22T18:30:00+00:00',
+    time_zone: 'Europe/Madrid',
+    recurrence_rule: null,
+    is_recurring: false,
+    max_participants: 18,
+    signup_mode: 'confirm',
+    status: 'published',
+    published_at: FIXTURE_TIMESTAMP,
+    expires_at: null,
+    created_by: seedUserId(author.ordinal),
+    created_at: FIXTURE_TIMESTAMP,
+    updated_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+export function buildEventOccurrence(
+  overrides: Partial<EventOccurrenceRow> = {},
+): EventOccurrenceRow {
+  return {
+    id: '5eed0000-0000-4000-8004-000000000099',
+    org_id: SEED_ORGANIZATION_ID,
+    event_id: buildEvent().id,
+    starts_at: '2026-03-22T17:00:00+00:00',
+    ends_at: '2026-03-22T18:30:00+00:00',
     created_at: FIXTURE_TIMESTAMP,
     ...overrides,
   };

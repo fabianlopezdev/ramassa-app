@@ -12,6 +12,7 @@
   "cancelAction": "Cancel·la",
   "editTitle": "Edita les meves dades",
   "notProvided": "Sense omplir",
+  "loading": "Carregant les teves dades.",
   "termsAcceptedOn": "Vas acceptar els termes el {{date}}.",
   "mediaConsentGranted": "Surto a fotos i històries de la comunitat.",
   "mediaConsentDenied": "No surto a fotos ni històries.",

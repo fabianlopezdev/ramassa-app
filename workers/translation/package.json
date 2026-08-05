@@ -1,0 +1,27 @@
+{
+  "name": "@ramassa/translation-worker",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Staff-only Cloudflare Worker for machine translation drafts and review state.",
+  "scripts": {
+    "dev": "wrangler dev --port 8792",
+    "dev:rapp30": "wrangler dev --port 8793 --compatibility-date 2026-07-29",
+    "deploy": "wrangler deploy --var SENTRY_RELEASE:$(git rev-parse HEAD)",
+    "deploy:production": "wrangler deploy --env production --var SENTRY_RELEASE:$(git rev-parse HEAD)",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test",
+    "types": "wrangler types"
+  },
+  "dependencies": {
+    "@ramassa/shared": "workspace:*",
+    "@sentry/cloudflare": "^10.67.0",
+    "jose": "^6.2.4",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.14",
+    "typescript": "~5.9.3",
+    "wrangler": "^4.113.0"
+  }
+}

@@ -8,6 +8,7 @@ import { AuthTextField } from '@/components/auth/auth-text-field';
 import { CountryPicker } from '@/components/onboarding/country-picker';
 import { OptionChip } from '@/components/onboarding/option-chip';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
+import { playHaptic } from '@/lib/haptics/haptics';
 import { onboardingDraftStore } from '@/lib/onboarding';
 import { identityFormSchema, type IdentityFormInput } from '@/lib/onboarding-form';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
@@ -19,6 +20,20 @@ import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { LANGUAGE_NATIVE_NAMES, SUPPORTED_LANGUAGES, useLanguage } from '@ramassa/shared/i18n';
 import type { IdentityStep, LanguageCode } from '@ramassa/shared/schemas';
+
+/**
+ * The year box takes a wider share of the date row than the day and month
+ * boxes beside it, because it holds twice their digits: four digits crammed
+ * into a box visibly sized for two reads as the wrong field, and on a
+ * low-literacy intake form that costs a correction.
+ *
+ * A NAMED class rather than a bare `flex-[1.4]` in the JSX. There is no design
+ * token for a flex proportion (the token set is colour, spacing, radius and
+ * type per contract rule 8), so a name is the only thing that keeps the ratio
+ * from being an unexplained number. Tailwind scans this file for class
+ * literals, so declaring it here still generates the utility.
+ */
+const YEAR_FIELD_WIDTH_CLASS = 'flex-[1.4]';
 
 export default function IdentityStepScreen() {
   const { t, i18n } = useTranslation('onboarding');
@@ -72,14 +87,22 @@ export default function IdentityStepScreen() {
           : 'errorRequired'
         : null;
 
-  const continueToDocumentation = handleSubmit(() => {
-    onboardingDraftStore.saveDraft({
-      ...draft,
-      currentStep: 'documentation',
-      identity: getValues(),
-    });
-    router.push('/onboarding/documentation');
-  });
+  const continueToDocumentation = handleSubmit(
+    () => {
+      onboardingDraftStore.saveDraft({
+        ...draft,
+        currentStep: 'documentation',
+        identity: getValues(),
+      });
+      router.push('/onboarding/documentation');
+    },
+    // One warning buzz per REJECTED submit, from the shared vocabulary (RAPP-70
+    // rule: shake + warning haptic on validation errors). Fired here rather
+    // than per field: the messages render next to each field, scattered down a
+    // form that is taller than the screen, so the only moment the player can
+    // feel is the one where the button did not take her forward.
+    () => playHaptic('warning'),
+  );
 
   return (
     <WizardFrame
@@ -163,7 +186,7 @@ export default function IdentityStepScreen() {
               )}
             />
           </View>
-          <View className="flex-[1.4]">
+          <View className={YEAR_FIELD_WIDTH_CLASS}>
             <Controller
               control={control}
               name="year"

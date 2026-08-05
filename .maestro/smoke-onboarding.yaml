@@ -1,0 +1,537 @@
+appId: com.ramassa.app
+name: smoke-onboarding
+# The intake wizard, driven to COMPLETION, ending in the player shell (RAPP-28).
+#
+# This is the one thing the capture flow deliberately cannot prove. `maestro/
+# flows/onboarding.yaml` ends by DECLINING the terms, because finishing writes a
+# profile for the intake account and the wizard gate then never fires for it
+# again - which would make every later capture skip the wizard entirely. So the
+# capture photographs four steps and the transitions between them, and nothing
+# in the suite showed that pressing the last button actually lands a woman
+# inside the app. That is the single most important regression check Phase 2
+# owns, and it lives here.
+#
+# What pays for it: `bun run qa:smoke` rebuilds the seeded database before each
+# platform's run, so the account is profile-less again every time. Running this
+# flow by hand twice without a `bun run db:reset` in between will fail the
+# second time, at the wizard-step-1 wait, because the woman it signs in as now
+# has a profile and goes straight to the tabs.
+#
+# Catalan only, on purpose. The Arabic pass of this wizard cannot be driven on
+# the Android emulator: injected scroll gestures do not move the wizard's
+# ScrollView, and Arabic wraps far enough to push the nationality picker and the
+# Continue button below the fold. Catalan step 1 fits on one screen, so the
+# Catalan pass needs no scrolling to reach its first control and runs on both
+# platforms. The Arabic layout direction is covered by `smoke-i18n`.
+env:
+  DEV_CLIENT_URL: ramassa://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081
+  DEV_MENU_LABEL: Developer menu
+  ACCOUNTS_SECTION: Accounts and roles
+  ONBOARDING_EMAIL: '{{onboarding:email}}'
+  CONTINUE: '{{onboarding:continueAction}}'
+  FINISH: '{{onboarding:finishAction}}'
+  DOC_NONE: '{{onboarding:documentTypeNone}}'
+  ENTITY_NONE: '{{onboarding:referenceEntityNone}}'
+  NO_OPTION: '{{onboarding:noOption}}'
+  TERMS_ACCEPT: '{{onboarding:termsAcceptLabel}}'
+  NATIONALITY_CHIP: '{{country:SY}}'
+  PUSH_DECLINE: '{{push:rationaleDecline}}'
+  HOME_TITLE: '{{home:title}}'
+  TAB_HOME: '{{nav:tabs.home}}'
+  TAB_PROFILE: '{{nav:tabs.profile}}'
+  # Sizes are DATA, not copy: the chips render the literal catalogue values in
+  # every language, so these are the only selectors here that are not resolved
+  # from a locale file. Same two values the browser spec clicks.
+  CLOTHING_SIZE: M
+  SHOE_SIZE: '38'
+---
+- runFlow: _open-app.yaml
+
+# Sign in as the PROFILE-LESS intake account, not the seeded player: the wizard
+# gate fires on a missing profile, so signing in as anyone else lands on the
+# tabs and there is no wizard to drive. `_sign-in.yaml` is deliberately not
+# reused - it signs in as the seeded player and waits on the home title, which
+# is the exact screen this flow must NOT see yet.
+- repeat:
+    times: 6
+    while:
+      notVisible: '.*${ACCOUNTS_SECTION}.*'
+    commands:
+      - tapOn:
+          text: '.*Close.*'
+          optional: true
+      - tapOn:
+          text: '.*${DEV_MENU_LABEL}.*'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- extendedWaitUntil:
+    visible: '.*${ACCOUNTS_SECTION}.*'
+    timeout: 15000
+- waitForAnimationToEnd:
+    timeout: 5000
+# A bounded swipe loop, never `scrollUntilVisible`: that built-in reaches rows
+# on this Android emulator, leaves them plainly on screen, and still reports
+# them as not found. Matched on the ADDRESS alone because iOS exposes the row's
+# accessibility label and Android the text node inside it.
+- repeat:
+    times: 20
+    while:
+      notVisible: '.*${ONBOARDING_EMAIL}.*'
+    commands:
+      - swipe:
+          start: 50%, 70%
+          end: 50%, 50%
+          duration: 900
+      - waitForAnimationToEnd:
+          timeout: 2500
+# The loop stops the instant a sliver is on screen, which parks the row under
+# the navigation bar where a tap does not reach it. One smaller swipe lifts it.
+- swipe:
+    start: 50%, 65%
+    end: 50%, 55%
+    duration: 900
+- waitForAnimationToEnd:
+    timeout: 2500
+- tapOn: '.*${ONBOARDING_EMAIL}.*'
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# Close the menu and wait for step 1, which cannot render without BOTH a
+# session and a missing profile - so reaching it is already proof the gate fired.
+- repeat:
+    times: 6
+    while:
+      notVisible:
+        id: 'wizard-step-1'
+    commands:
+      - tapOn:
+          text: '^${PUSH_DECLINE}$'
+          optional: true
+      - tapOn:
+          text: '.*Close.*'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- extendedWaitUntil:
+    visible:
+      id: 'wizard-step-1'
+    timeout: 120000
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# ── Step 1 ─────────────────────────────────────────────────────────────────
+# Fields by testID, which is identical in every locale. Names in ASCII because
+# Maestro's inputText cannot type Arabic script; that storage path is proven
+# server-side by the pgTAP suite instead.
+- tapOn:
+    text: '^Cancel$'
+    optional: true
+- tapOn:
+    id: 'onboarding-first-name'
+- inputText: 'Nadia'
+- tapOn:
+    text: '^Cancel$'
+    optional: true
+- tapOn:
+    id: 'onboarding-last-name'
+- inputText: 'Khoury'
+# With the keyboard up, anything in the lower half of the screen is BEHIND the
+# keys, so a tap at those bounds presses a key instead of focusing the field.
+# Lift the next row above the keyboard first; the 45%→25% band stays clear.
+- swipe:
+    start: 50%, 45%
+    end: 50%, 25%
+    duration: 600
+- waitForAnimationToEnd:
+    timeout: 1500
+- tapOn:
+    id: 'onboarding-day'
+- inputText: '02'
+- tapOn:
+    id: 'onboarding-month'
+- inputText: '11'
+- tapOn:
+    id: 'onboarding-year'
+- inputText: '1993'
+- swipe:
+    start: 50%, 45%
+    end: 50%, 25%
+    duration: 600
+- waitForAnimationToEnd:
+    timeout: 1500
+- tapOn:
+    id: 'onboarding-place-of-birth'
+- inputText: 'Homs'
+- waitForAnimationToEnd:
+    timeout: 2000
+
+# Nationality is a PICKER (contract rule 18): one tap on a pinned chip. Tap
+# UNTIL selected rather than tap-then-assert - a tap reporting COMPLETED only
+# proves a touch was dispatched at the resolved bounds, and these chips wrap,
+# so a touch into the padding between rows changes nothing and still reports
+# success. The loop's condition IS the outcome.
+- repeat:
+    times: 12
+    while:
+      notVisible: '^${NATIONALITY_CHIP}$'
+    commands:
+      - swipe:
+          start: 50%, 45%
+          end: 50%, 15%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 1500
+- repeat:
+    times: 4
+    while:
+      notVisible:
+        text: '^${NATIONALITY_CHIP}$'
+        selected: true
+    commands:
+      - tapOn:
+          text: '^${NATIONALITY_CHIP}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 2000
+- assertVisible:
+    text: '^${NATIONALITY_CHIP}$'
+    selected: true
+
+- repeat:
+    times: 12
+    while:
+      notVisible: '^${CONTINUE}$'
+    commands:
+      - swipe:
+          start: 50%, 45%
+          end: 50%, 15%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 1500
+- repeat:
+    times: 8
+    while:
+      notVisible:
+        id: 'wizard-step-2'
+    commands:
+      - tapOn:
+          text: '^${CONTINUE}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 2000
+      - swipe:
+          start: 50%, 45%
+          end: 50%, 20%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 1200
+- extendedWaitUntil:
+    visible:
+      id: 'wizard-step-2'
+    timeout: 20000
+
+# ── Step 2 ─────────────────────────────────────────────────────────────────
+# "I have no document" is a first-class answer that must never dead-end: many
+# participants genuinely have none, and it is the path with no document number
+# to validate, so it is the one a completion check should take.
+- repeat:
+    times: 8
+    while:
+      notVisible: '^${DOC_NONE}$'
+    commands:
+      - swipe:
+          start: 50%, 45%
+          end: 50%, 20%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 1200
+- repeat:
+    times: 4
+    while:
+      notVisible:
+        text: '^${DOC_NONE}$'
+        selected: true
+    commands:
+      - tapOn:
+          text: '^${DOC_NONE}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 2000
+- assertVisible:
+    text: '^${DOC_NONE}$'
+    selected: true
+
+- repeat:
+    times: 12
+    while:
+      notVisible: '^${CONTINUE}$'
+    commands:
+      - swipe:
+          start: 50%, 45%
+          end: 50%, 15%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 1500
+- repeat:
+    times: 8
+    while:
+      notVisible:
+        id: 'wizard-step-3'
+    commands:
+      - tapOn:
+          text: '^${CONTINUE}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 2000
+      - swipe:
+          start: 50%, 45%
+          end: 50%, 20%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 1200
+- extendedWaitUntil:
+    visible:
+      id: 'wizard-step-3'
+    timeout: 20000
+
+# ── Step 3 ─────────────────────────────────────────────────────────────────
+# Four required answers, all chips: referring entity, dependants, clothing size
+# and shoe size. Contact fields are optional and left empty on purpose - an
+# empty optional field is the state most women will actually submit, and it is
+# the one that would break if a field were quietly made required upstream.
+- repeat:
+    times: 10
+    while:
+      notVisible: '^${ENTITY_NONE}$'
+    commands:
+      - swipe:
+          start: 50%, 45%
+          end: 50%, 20%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 1200
+- repeat:
+    times: 4
+    while:
+      notVisible:
+        text: '^${ENTITY_NONE}$'
+        selected: true
+    commands:
+      - tapOn:
+          text: '^${ENTITY_NONE}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 2000
+- assertVisible:
+    text: '^${ENTITY_NONE}$'
+    selected: true
+
+- repeat:
+    times: 10
+    while:
+      notVisible: '^${NO_OPTION}$'
+    commands:
+      - swipe:
+          start: 50%, 45%
+          end: 50%, 20%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 1200
+- repeat:
+    times: 4
+    while:
+      notVisible:
+        text: '^${NO_OPTION}$'
+        selected: true
+    commands:
+      - tapOn:
+          text: '^${NO_OPTION}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 2000
+- assertVisible:
+    text: '^${NO_OPTION}$'
+    selected: true
+
+# Sizes: the equipment questions (they are what the kit hand-out is planned
+# from, so an intake that cannot record them is not finished).
+- repeat:
+    times: 10
+    while:
+      notVisible: '^${CLOTHING_SIZE}$'
+    commands:
+      - swipe:
+          start: 50%, 45%
+          end: 50%, 20%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 1200
+- repeat:
+    times: 4
+    while:
+      notVisible:
+        text: '^${CLOTHING_SIZE}$'
+        selected: true
+    commands:
+      - tapOn:
+          text: '^${CLOTHING_SIZE}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 2000
+- assertVisible:
+    text: '^${CLOTHING_SIZE}$'
+    selected: true
+
+# iOS exposes the first off-screen shoe-size row in the accessibility tree.
+# Move the physical viewport once before using visibility as a condition, or a
+# tap on 38 can be dispatched below the screen and report success without
+# selecting anything.
+- swipe:
+    start: 50%, 45%
+    end: 50%, 20%
+    duration: 600
+- waitForAnimationToEnd:
+    timeout: 1200
+- repeat:
+    times: 10
+    while:
+      notVisible: '^${SHOE_SIZE}$'
+    commands:
+      - swipe:
+          start: 50%, 45%
+          end: 50%, 20%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 1200
+- repeat:
+    times: 4
+    while:
+      notVisible:
+        text: '^${SHOE_SIZE}$'
+        selected: true
+    commands:
+      - tapOn:
+          text: '^${SHOE_SIZE}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 2000
+- assertVisible:
+    text: '^${SHOE_SIZE}$'
+    selected: true
+
+- repeat:
+    times: 12
+    while:
+      notVisible: '^${CONTINUE}$'
+    commands:
+      - swipe:
+          start: 50%, 45%
+          end: 50%, 15%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 1500
+- repeat:
+    times: 8
+    while:
+      notVisible:
+        id: 'wizard-step-4'
+    commands:
+      - tapOn:
+          text: '^${CONTINUE}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 2000
+      - swipe:
+          start: 50%, 45%
+          end: 50%, 20%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 1200
+- extendedWaitUntil:
+    visible:
+      id: 'wizard-step-4'
+    timeout: 20000
+
+# ── Step 4 ─────────────────────────────────────────────────────────────────
+# Consent is REQUIRED and the media consent beside it is not: accepting only
+# the terms is the minimum lawful path, so it is the one driven here. Selected
+# state again, because this chip looks identical pressed or not to a matcher
+# that only checks the tap completed.
+- repeat:
+    times: 10
+    while:
+      notVisible: '^${TERMS_ACCEPT}$'
+    commands:
+      - swipe:
+          start: 50%, 45%
+          end: 50%, 20%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 1200
+- repeat:
+    times: 4
+    while:
+      notVisible:
+        text: '^${TERMS_ACCEPT}$'
+        selected: true
+    commands:
+      - tapOn:
+          text: '^${TERMS_ACCEPT}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 2000
+- assertVisible:
+    text: '^${TERMS_ACCEPT}$'
+    selected: true
+
+# Finish. The button is pinned to the bottom of the frame, but the terms body
+# is long enough that it can still sit below the fold on a short screen.
+- repeat:
+    times: 12
+    while:
+      notVisible: '^${FINISH}$'
+    commands:
+      - swipe:
+          start: 50%, 45%
+          end: 50%, 15%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 1500
+- repeat:
+    times: 8
+    while:
+      notVisible: '.*${HOME_TITLE}.*'
+    commands:
+      - tapOn:
+          text: '^${FINISH}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+      - tapOn:
+          text: '^${PUSH_DECLINE}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 2000
+
+# ── The whole point ────────────────────────────────────────────────────────
+# She is INSIDE the app. Asserted on the home title AND the tab bar, because
+# either alone is weaker than it looks: the wizard is a full-screen stack that
+# renders no tab bar at all, so the tabs prove the stack was swapped, and the
+# home title proves the tab that came up is the real home screen and not an
+# empty shell. The generous timeout covers `complete_onboarding` plus the
+# profile refetch the gate waits on.
+- extendedWaitUntil:
+    visible: '.*${HOME_TITLE}.*'
+    timeout: 120000
+- assertVisible:
+    text: '^${TAB_HOME}$'
+- assertVisible:
+    text: '^${TAB_PROFILE}$'
+# And the wizard is GONE, not merely covered. Checked last and only after the
+# waits above have already proved something PRESENT: an absence assertion is
+# true the instant nothing matches, including while a screen is still painting,
+# so run on its own it would pass against a wizard that simply had not rendered
+# yet.
+- assertNotVisible:
+    id: 'wizard-step-4'

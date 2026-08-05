@@ -54,8 +54,10 @@
   "errorPhoneFormat": "Escriu el telèfon amb el prefix, per exemple +34 600 111 222.",
   "errorPostalFormat": "Un codi postal són cinc números.",
   "errorDependentsRange": "Indica quantes, entre 1 i 15.",
+  "errorTermsRequired": "Per continuar has d'acceptar els termes. Toca \"He llegit i accepto els termes\".",
   "completionFailed": "No hem pogut guardar les teves dades. Torna-ho a provar.",
   "cancelAction": "Cancel·la",
   "searchCountryPlaceholder": "Busca el teu país",
+  "noCountryResults": "Cap país amb aquest nom. Prova d'escriure menys lletres.",
   "languageNativeName": "Català"
 }

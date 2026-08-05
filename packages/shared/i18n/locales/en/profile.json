@@ -12,6 +12,7 @@
   "cancelAction": "Cancel",
   "editTitle": "Edit my information",
   "notProvided": "Not filled in",
+  "loading": "Loading your information.",
   "termsAcceptedOn": "You accepted the terms on {{date}}.",
   "mediaConsentGranted": "I appear in community photos and stories.",
   "mediaConsentDenied": "I do not appear in photos or stories.",

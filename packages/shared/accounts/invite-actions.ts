@@ -10,6 +10,7 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { AppError } from '../errors';
+import { withCancellation, type CancellableRequest } from '../lib/cancellation';
 import type { CreateParticipantInvitePayload } from '../schemas/accounts';
 import type { Database } from '../types/database';
 import { INVITE_COLUMNS, type InviteRow } from './invites';
@@ -66,8 +67,11 @@ export interface PendingInvite {
  * shrugs at; only a FAILED read throws, and the wizard treats that the same
  * as no invite rather than blocking onboarding on a prefill.
  */
-export async function fetchMyPendingInvite(client: Client): Promise<PendingInvite | null> {
-  const { data, error } = await client.rpc('my_pending_invite');
+export async function fetchMyPendingInvite(
+  client: Client,
+  options: CancellableRequest = {},
+): Promise<PendingInvite | null> {
+  const { data, error } = await withCancellation(client.rpc('my_pending_invite'), options);
   if (error) {
     throw new AppError('DB-1', { message: error.message });
   }

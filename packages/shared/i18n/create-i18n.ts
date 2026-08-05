@@ -9,10 +9,12 @@ import { initReactI18next } from 'react-i18next';
 import type { LanguageStorage } from './language-storage';
 import { DEFAULT_LANGUAGE, resolveInitialLanguage, SUPPORTED_LANGUAGES } from './languages';
 import arAdmin from './locales/ar/admin.json';
+import arAnnouncements from './locales/ar/announcements.json';
 import arAuth from './locales/ar/auth.json';
 import arCommon from './locales/ar/common.json';
 import arEquipment from './locales/ar/equipment.json';
 import arErrors from './locales/ar/errors.json';
+import arEvents from './locales/ar/events.json';
 import arHome from './locales/ar/home.json';
 import arNav from './locales/ar/nav.json';
 import arOnboarding from './locales/ar/onboarding.json';
@@ -20,10 +22,12 @@ import arParticipants from './locales/ar/participants.json';
 import arProfile from './locales/ar/profile.json';
 import arPush from './locales/ar/push.json';
 import caAdmin from './locales/ca/admin.json';
+import caAnnouncements from './locales/ca/announcements.json';
 import caAuth from './locales/ca/auth.json';
 import caCommon from './locales/ca/common.json';
 import caEquipment from './locales/ca/equipment.json';
 import caErrors from './locales/ca/errors.json';
+import caEvents from './locales/ca/events.json';
 import caHome from './locales/ca/home.json';
 import caNav from './locales/ca/nav.json';
 import caOnboarding from './locales/ca/onboarding.json';
@@ -31,10 +35,12 @@ import caParticipants from './locales/ca/participants.json';
 import caProfile from './locales/ca/profile.json';
 import caPush from './locales/ca/push.json';
 import enAdmin from './locales/en/admin.json';
+import enAnnouncements from './locales/en/announcements.json';
 import enAuth from './locales/en/auth.json';
 import enCommon from './locales/en/common.json';
 import enEquipment from './locales/en/equipment.json';
 import enErrors from './locales/en/errors.json';
+import enEvents from './locales/en/events.json';
 import enHome from './locales/en/home.json';
 import enNav from './locales/en/nav.json';
 import enOnboarding from './locales/en/onboarding.json';
@@ -42,10 +48,12 @@ import enParticipants from './locales/en/participants.json';
 import enProfile from './locales/en/profile.json';
 import enPush from './locales/en/push.json';
 import esAdmin from './locales/es/admin.json';
+import esAnnouncements from './locales/es/announcements.json';
 import esAuth from './locales/es/auth.json';
 import esCommon from './locales/es/common.json';
 import esEquipment from './locales/es/equipment.json';
 import esErrors from './locales/es/errors.json';
+import esEvents from './locales/es/events.json';
 import esHome from './locales/es/home.json';
 import esNav from './locales/es/nav.json';
 import esOnboarding from './locales/es/onboarding.json';
@@ -53,10 +61,12 @@ import esParticipants from './locales/es/participants.json';
 import esProfile from './locales/es/profile.json';
 import esPush from './locales/es/push.json';
 import faAdmin from './locales/fa/admin.json';
+import faAnnouncements from './locales/fa/announcements.json';
 import faAuth from './locales/fa/auth.json';
 import faCommon from './locales/fa/common.json';
 import faEquipment from './locales/fa/equipment.json';
 import faErrors from './locales/fa/errors.json';
+import faEvents from './locales/fa/events.json';
 import faHome from './locales/fa/home.json';
 import faNav from './locales/fa/nav.json';
 import faOnboarding from './locales/fa/onboarding.json';
@@ -77,6 +87,8 @@ const resources = {
     equipment: caEquipment,
     profile: caProfile,
     push: caPush,
+    announcements: caAnnouncements,
+    events: caEvents,
   },
   es: {
     common: esCommon,
@@ -90,6 +102,8 @@ const resources = {
     equipment: esEquipment,
     profile: esProfile,
     push: esPush,
+    announcements: esAnnouncements,
+    events: esEvents,
   },
   en: {
     common: enCommon,
@@ -103,6 +117,8 @@ const resources = {
     equipment: enEquipment,
     profile: enProfile,
     push: enPush,
+    announcements: enAnnouncements,
+    events: enEvents,
   },
   ar: {
     common: arCommon,
@@ -116,6 +132,8 @@ const resources = {
     equipment: arEquipment,
     profile: arProfile,
     push: arPush,
+    announcements: arAnnouncements,
+    events: arEvents,
   },
   fa: {
     common: faCommon,
@@ -129,6 +147,8 @@ const resources = {
     equipment: faEquipment,
     profile: faProfile,
     push: faPush,
+    announcements: faAnnouncements,
+    events: faEvents,
   },
 };
 

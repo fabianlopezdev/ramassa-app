@@ -46,6 +46,125 @@ values (
 )
 on conflict (id) do nothing;
 
+-- Event categories and events --------------------------------------------------
+-- Six real category shapes, followed by one repeating training, one one-off
+-- cultural outing, and one draft. The trigger materializes their occurrences.
+insert into public.event_categories
+  (id, org_id, name, icon, color, sort_order)
+values
+  (
+    '5eed0000-0000-4000-8002-000000000001',
+    '5eed0000-0000-4000-8000-000000000000',
+    '{"ca":"Entrenaments","es":"Entrenamientos","en":"Trainings","ar":"التدريبات","fa":"تمرین‌ها"}',
+    'dumbbell', 'primary', 10
+  ),
+  (
+    '5eed0000-0000-4000-8002-000000000002',
+    '5eed0000-0000-4000-8000-000000000000',
+    '{"ca":"Cursos","es":"Cursos","en":"Courses","ar":"الدورات","fa":"دوره‌ها"}',
+    'graduation-cap', 'secondary', 20
+  ),
+  (
+    '5eed0000-0000-4000-8002-000000000003',
+    '5eed0000-0000-4000-8000-000000000000',
+    '{"ca":"Activitats culturals","es":"Actividades culturales","en":"Cultural activities","ar":"الأنشطة الثقافية","fa":"فعالیت‌های فرهنگی"}',
+    'theater', 'accent', 30
+  ),
+  (
+    '5eed0000-0000-4000-8002-000000000004',
+    '5eed0000-0000-4000-8000-000000000000',
+    '{"ca":"Inserció laboral","es":"Inserción laboral","en":"Job insertion","ar":"الإدماج المهني","fa":"ورود به بازار کار"}',
+    'briefcase-business', 'chart-1', 40
+  ),
+  (
+    '5eed0000-0000-4000-8002-000000000005',
+    '5eed0000-0000-4000-8000-000000000000',
+    '{"ca":"Cursos d''idiomes","es":"Cursos de idiomas","en":"Language courses","ar":"دورات اللغة","fa":"دوره‌های زبان"}',
+    'languages', 'chart-2', 50
+  ),
+  (
+    '5eed0000-0000-4000-8002-000000000006',
+    '5eed0000-0000-4000-8000-000000000000',
+    '{"ca":"Sortides","es":"Salidas","en":"Outings","ar":"الرحلات","fa":"گردش‌ها"}',
+    'footprints', 'chart-3', 60
+  )
+on conflict (id) do nothing;
+
+insert into public.events (
+  id,
+  org_id,
+  category_id,
+  title,
+  description,
+  location,
+  location_url,
+  starts_at,
+  ends_at,
+  recurrence_rule,
+  max_participants,
+  signup_mode,
+  status,
+  published_at,
+  created_by,
+  created_at
+)
+values
+  (
+    '5eed0000-0000-4000-8003-000000000001',
+    '5eed0000-0000-4000-8000-000000000000',
+    '5eed0000-0000-4000-8002-000000000001',
+    '{"ca":"Entrenament setmanal","es":"Entrenamiento semanal","en":"Weekly training","ar":"تدريب أسبوعي","fa":"تمرین هفتگی"}',
+    '{"ca":"Sessió oberta de futbol i preparació física.","es":"Sesión abierta de fútbol y preparación física.","en":"Open football and fitness session.","ar":"جلسة مفتوحة لكرة القدم واللياقة البدنية.","fa":"جلسه آزاد فوتبال و آمادگی جسمانی."}',
+    'Camp Municipal de Vic',
+    'https://maps.google.com/?q=Camp+Municipal+de+Vic',
+    (date_trunc('day', now() at time zone 'Europe/Madrid') + interval '3 days 18 hours') at time zone 'Europe/Madrid',
+    (date_trunc('day', now() at time zone 'Europe/Madrid') + interval '3 days 19 hours 30 minutes') at time zone 'Europe/Madrid',
+    'FREQ=WEEKLY;INTERVAL=1;COUNT=6',
+    24,
+    'confirm',
+    'published',
+    now() - interval '1 day',
+    null,
+    now() - interval '1 day'
+  ),
+  (
+    '5eed0000-0000-4000-8003-000000000002',
+    '5eed0000-0000-4000-8000-000000000000',
+    '5eed0000-0000-4000-8002-000000000003',
+    '{"ca":"Visita al Museu Episcopal","es":"Visita al Museo Episcopal","en":"Episcopal Museum visit","ar":"زيارة المتحف الأسقفي","fa":"بازدید از موزه اسقفی"}',
+    '{"ca":"Sortida cultural amb trobada davant del museu.","es":"Salida cultural con encuentro delante del museo.","en":"Cultural outing meeting outside the museum.","ar":"رحلة ثقافية مع لقاء أمام المتحف.","fa":"گردش فرهنگی با قرار جلوی موزه."}',
+    'Museu Episcopal de Vic',
+    'https://maps.google.com/?q=Museu+Episcopal+de+Vic',
+    (date_trunc('day', now() at time zone 'Europe/Madrid') + interval '10 days 11 hours') at time zone 'Europe/Madrid',
+    (date_trunc('day', now() at time zone 'Europe/Madrid') + interval '10 days 13 hours') at time zone 'Europe/Madrid',
+    null,
+    20,
+    'interest',
+    'published',
+    now() - interval '1 day',
+    null,
+    now() - interval '12 hours'
+  ),
+  (
+    '5eed0000-0000-4000-8003-000000000003',
+    '5eed0000-0000-4000-8000-000000000000',
+    '5eed0000-0000-4000-8002-000000000005',
+    '{"ca":"Taller de conversa"}',
+    null,
+    'Local de Ramassà',
+    null,
+    (date_trunc('day', now() at time zone 'Europe/Madrid') + interval '14 days 17 hours') at time zone 'Europe/Madrid',
+    null,
+    null,
+    null,
+    'none',
+    'draft',
+    null,
+    null,
+    now() - interval '2 hours'
+  )
+on conflict (id) do nothing;
+
 -- The roster -------------------------------------------------------------------
 -- Written once into a temporary table, then read three times (auth.users, the
 -- email identities, profiles). A temp table beats repeating twenty-five people
@@ -463,3 +582,97 @@ values
     'Segona ampolla, la primera es va perdre al camp.'
   )
 on conflict do nothing;
+-- Announcements -----------------------------------------------------------------
+-- One row for every list lifecycle, plus two currently visible rows whose pin
+-- order is meaningful. Published rows are complete in all five languages.
+insert into public.announcements
+  (id, org_id, category, title, body, image_url, image_alt, is_pinned, status,
+   published_at, expires_at, created_by, created_at)
+values
+  (
+    '5eed0000-0000-4000-8001-000000000001',
+    '5eed0000-0000-4000-8000-000000000000',
+    'training',
+    '{"ca":"Canvi d''horari","es":"Cambio de horario","en":"Schedule change","ar":"تغيير الموعد","fa":"تغییر برنامه"}',
+    '{"ca":"Esborrany pendent de revisió."}'::jsonb,
+    null,
+    null,
+    false,
+    'draft',
+    null,
+    null,
+    '5eed0000-0000-4000-8000-000000000002',
+    now() - interval '4 days'
+  ),
+  (
+    '5eed0000-0000-4000-8001-000000000002',
+    '5eed0000-0000-4000-8000-000000000000',
+    'urgent',
+    '{"ca":"Entrenament cancel·lat","es":"Entrenamiento cancelado","en":"Training cancelled","ar":"تم إلغاء التدريب","fa":"تمرین لغو شد"}',
+    '{"ca":"La pluja ha deixat el camp impracticable.","es":"La lluvia ha dejado el campo impracticable.","en":"Rain has made the pitch unplayable.","ar":"جعل المطر الملعب غير صالح للعب.","fa":"باران زمین را غیرقابل بازی کرده است."}',
+    null,
+    null,
+    true,
+    'published',
+    now() - interval '2 hours',
+    now() + interval '1 day',
+    '5eed0000-0000-4000-8000-000000000002',
+    now() - interval '2 hours'
+  ),
+  (
+    '5eed0000-0000-4000-8001-000000000003',
+    '5eed0000-0000-4000-8000-000000000000',
+    'social',
+    '{"ca":"Trobada de famílies","es":"Encuentro de familias","en":"Family gathering","ar":"لقاء العائلات","fa":"گردهمایی خانواده‌ها"}',
+    '{"ca":"Dissabte compartirem un dinar al club.","es":"El sábado compartiremos una comida en el club.","en":"We will share lunch at the club on Saturday.","ar":"سنتناول الغداء معًا في النادي يوم السبت.","fa":"شنبه در باشگاه ناهار را با هم صرف می‌کنیم."}',
+    null,
+    null,
+    false,
+    'published',
+    now() - interval '1 day',
+    null,
+    '5eed0000-0000-4000-8000-000000000002',
+    now() - interval '1 day'
+  ),
+  (
+    '5eed0000-0000-4000-8001-000000000004',
+    '5eed0000-0000-4000-8000-000000000000',
+    'info',
+    '{"ca":"Reunió de temporada","es":"Reunión de temporada","en":"Season meeting","ar":"اجتماع الموسم","fa":"جلسه فصل"}',
+    '{"ca":"Aquest avís es publicarà la setmana vinent.","es":"Este aviso se publicará la próxima semana.","en":"This notice will publish next week.","ar":"سيُنشر هذا الإعلان الأسبوع المقبل.","fa":"این اطلاعیه هفته آینده منتشر می‌شود."}',
+    null,
+    null,
+    false,
+    'published',
+    now() + interval '7 days',
+    null,
+    '5eed0000-0000-4000-8000-000000000002',
+    now() - interval '1 hour'
+  ),
+  (
+    '5eed0000-0000-4000-8001-000000000005',
+    '5eed0000-0000-4000-8000-000000000000',
+    'info',
+    '{"ca":"Avís anterior","es":"Aviso anterior","en":"Previous notice","ar":"إعلان سابق","fa":"اطلاعیه قبلی"}',
+    '{"ca":"Aquest avís ja ha caducat.","es":"Este aviso ya ha caducado.","en":"This notice has expired.","ar":"انتهت صلاحية هذا الإعلان.","fa":"این اطلاعیه منقضی شده است."}',
+    null,
+    null,
+    false,
+    'published',
+    now() - interval '8 days',
+    now() - interval '1 day',
+    '5eed0000-0000-4000-8000-000000000002',
+    now() - interval '8 days'
+  )
+on conflict (id) do nothing;
+
+-- The event rows are inserted before the auth roster so their category and
+-- occurrence fixtures are available immediately. Attach the seeded staff
+-- author now that profiles exist.
+update public.events
+set created_by = '5eed0000-0000-4000-8000-000000000002'
+where id in (
+  '5eed0000-0000-4000-8003-000000000001',
+  '5eed0000-0000-4000-8003-000000000002',
+  '5eed0000-0000-4000-8003-000000000003'
+);

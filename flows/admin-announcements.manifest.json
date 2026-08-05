@@ -1,0 +1,53 @@
+{
+  "app": "Ramassà",
+  "slug": "admin-announcements",
+  "title": "Gestió d'avisos",
+  "surface": "admin",
+  "description": "Com l'equip crea, programa i revisa avisos en cinc llengües. El català és el text font, la traducció automàtica només prepara esborranys i una persona aprova cada versió abans de publicar-la.",
+  "steps": [
+    {
+      "id": "list",
+      "label": "Tots els avisos, amb estat i calendari",
+      "web": "admin-announcements/web/03-list.png"
+    },
+    {
+      "id": "scheduled",
+      "label": "Els avisos programats, filtrats des de l'adreça",
+      "web": "admin-announcements/web/04-scheduled.png"
+    },
+    {
+      "id": "editor",
+      "label": "Un avís nou comença en català",
+      "web": "admin-announcements/web/05-editor.png"
+    },
+    {
+      "id": "draft",
+      "label": "Un esborrany es pot desar abans de traduir",
+      "web": "admin-announcements/web/06-draft.png"
+    },
+    {
+      "id": "review",
+      "label": "Les quatre traduccions esperen revisió humana",
+      "web": "admin-announcements/web/07-review.png"
+    },
+    {
+      "id": "approved",
+      "label": "Cada llengua queda aprovada explícitament",
+      "web": "admin-announcements/web/08-approved.png"
+    }
+  ],
+  "edges": [
+    { "from": "list", "to": "scheduled", "label": "Filtra per estat", "kind": "neutral" },
+    { "from": "list", "to": "editor", "label": "Crea un avís", "kind": "neutral" },
+    { "from": "editor", "to": "draft", "label": "Escriu en català", "kind": "neutral" },
+    { "from": "draft", "to": "review", "label": "Genera les traduccions", "kind": "neutral" },
+    { "from": "review", "to": "approved", "label": "Revisa i aprova", "kind": "positive" }
+  ],
+  "notes": [
+    "Un esborrany només necessita el text en català. Això permet separar l'escriptura de la revisió lingüística.",
+    "Publicar exigeix les cinc llengües completes. Si hi ha una imatge, la seva descripció també ha d'estar completa i aprovada en les cinc llengües.",
+    "Els avisos programats i caducats es calculen amb la mateixa regla al client i a Postgres. Una participant no pot veure un avís abans de l'hora ni després de la caducitat.",
+    "Fixar un avís el posa davant dels altres sense perdre l'ordre temporal dins de cada grup.",
+    "Els contactes d'entitats no poden accedir a aquesta administració."
+  ]
+}

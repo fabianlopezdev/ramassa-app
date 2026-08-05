@@ -14,14 +14,16 @@
 import { parseClientEnv } from '@ramassa/shared/env';
 import { createLocalStorageSessionStorage, createSupabaseClient } from '@ramassa/shared/supabase';
 
-const env = parseClientEnv({
+export const adminClientEnv = parseClientEnv({
   EXPO_PUBLIC_SUPABASE_URL: import.meta.env.EXPO_PUBLIC_SUPABASE_URL,
   EXPO_PUBLIC_SUPABASE_ANON_KEY: import.meta.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
   EXPO_PUBLIC_SENTRY_DSN: import.meta.env.VITE_SENTRY_DSN,
+  EXPO_PUBLIC_MEDIA_WORKER_URL: import.meta.env.EXPO_PUBLIC_MEDIA_WORKER_URL,
+  EXPO_PUBLIC_TRANSLATION_WORKER_URL: import.meta.env.EXPO_PUBLIC_TRANSLATION_WORKER_URL,
 });
 
 export const supabase = createSupabaseClient({
-  supabaseUrl: env.EXPO_PUBLIC_SUPABASE_URL,
-  supabaseAnonKey: env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
+  supabaseUrl: adminClientEnv.EXPO_PUBLIC_SUPABASE_URL,
+  supabaseAnonKey: adminClientEnv.EXPO_PUBLIC_SUPABASE_ANON_KEY,
   storage: createLocalStorageSessionStorage(),
 });

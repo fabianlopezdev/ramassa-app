@@ -1,0 +1,83 @@
+{
+  "slug": "admin-events",
+  "viewport": { "width": 1440, "height": 900 },
+  "deviceScaleFactor": 2,
+  "timezoneId": "Europe/Madrid",
+  "settle": { "timeout": 6000, "interval": 150 },
+  "steps": [
+    {
+      "label": "auth-open",
+      "goto": "/login",
+      "click": "button:has-text(\"{{auth:usePasswordInstead}}\")",
+      "waitFor": "input[type=\"password\"]"
+    },
+    {
+      "label": "auth-submit",
+      "fill": [
+        { "selector": "input[type=\"email\"]", "value": "{{staff:email}}" },
+        { "selector": "input[type=\"password\"]", "value": "{{staff:password}}" }
+      ],
+      "click": "button:has-text(\"{{auth:passwordAction}}\")",
+      "waitFor": "text={{admin:dashboardTitle}}"
+    },
+    {
+      "label": "list",
+      "goto": "/content/events",
+      "waitFor": "text={{events:title}} >> visible=true"
+    },
+    {
+      "label": "weekly",
+      "goto": "/content/events/5eed0000-0000-4000-8003-000000000001",
+      "waitFor": "[data-testid=\"event-recurrence-count\"] >> visible=true"
+    },
+    {
+      "label": "one-off",
+      "goto": "/content/events/new",
+      "fill": [
+        {
+          "selector": "[data-testid=\"event-title-source\"]",
+          "value": "Visita al Museu Episcopal"
+        },
+        { "selector": "[data-testid=\"event-location\"]", "value": "Museu Episcopal de Vic" },
+        { "selector": "[data-testid=\"event-starts-at\"]", "value": "2026-10-18T11:00" },
+        { "selector": "[data-testid=\"event-ends-at\"]", "value": "2026-10-18T13:00" }
+      ],
+      "waitFor": "[data-testid=\"event-recurrence-one_off\"] >> visible=true"
+    },
+    {
+      "label": "new-weekly",
+      "goto": "/content/events/new",
+      "click": "[data-testid=\"event-recurrence-weekly\"]",
+      "fill": [
+        {
+          "selector": "[data-testid=\"event-title-source\"]",
+          "value": "Entrenament dels dimecres"
+        },
+        { "selector": "[data-testid=\"event-location\"]", "value": "Camp Municipal de Vic" },
+        { "selector": "[data-testid=\"event-starts-at\"]", "value": "2026-10-18T18:00" },
+        { "selector": "[data-testid=\"event-ends-at\"]", "value": "2026-10-18T19:30" },
+        { "selector": "[data-testid=\"event-capacity\"]", "value": "24" }
+      ],
+      "waitFor": "[data-testid=\"event-recurrence-count\"] >> visible=true"
+    },
+    {
+      "label": "categories",
+      "goto": "/content/events/categories",
+      "waitFor": "[data-testid=\"event-category-list\"] >> visible=true"
+    },
+    {
+      "label": "category-editor",
+      "fill": [
+        {
+          "selector": "[data-testid=\"event-category-name-source\"]",
+          "value": "Trobades comunitàries"
+        }
+      ],
+      "select": [
+        { "selector": "[data-testid=\"event-category-icon\"]", "value": "users" },
+        { "selector": "[data-testid=\"event-category-color\"]", "value": "chart-3" }
+      ],
+      "waitFor": "[data-testid=\"event-category-save\"] >> visible=true"
+    }
+  ]
+}

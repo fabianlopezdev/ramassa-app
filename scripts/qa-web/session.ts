@@ -27,7 +27,7 @@ export const SEED_PASSWORD = 'ramassa-dev-password';
  */
 export const SUPABASE_URL = 'http://127.0.0.1:54321';
 export const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH';
-export const MEDIA_WORKER_URL = 'http://127.0.0.1:8787';
+export const MEDIA_WORKER_URL = 'http://127.0.0.1:8893';
 
 /** An access token for an arbitrary account, the way GoTrue issues one. */
 export async function accessTokenFor(email: string, password: string): Promise<string> {
@@ -103,9 +103,9 @@ export async function uploadObjectAs(
 export function queryDatabase(sql: string): string {
   const container = execFileSync('docker', ['ps', '--format', '{{.Names}}'], { encoding: 'utf8' })
     .split('\n')
-    .find((name) => name.startsWith('supabase_db_'));
+    .find((name) => name === 'supabase_db_ramassa');
   if (container === undefined) {
-    throw new Error('No local Supabase database container is running: bunx supabase start');
+    throw new Error('The Ramassà local Supabase database is not running: bunx supabase start');
   }
   return execFileSync(
     'docker',

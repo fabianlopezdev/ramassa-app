@@ -72,7 +72,11 @@ export const tokens = {
   contentWidth: { form: 480, page: 768 },
 
   // Client-side upload ceilings, enforced before the R2 upload (ADR-013).
-  upload: { maxImageBytes: 1_048_576, maxVideoBytes: 10_485_760 },
+  upload: {
+    maxImageBytes: 1_048_576,
+    maxImageDimension: 1_200,
+    maxVideoBytes: 10_485_760,
+  },
 
   // Number of flags that auto-hides a forum post pending moderation (ADR-014).
   forum: { autoHideFlagThreshold: 3 },

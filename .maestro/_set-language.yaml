@@ -65,10 +65,29 @@ env:
     duration: 900
 - waitForAnimationToEnd:
     timeout: 2500
-- tapOn:
-    text: '^${LOCALE} \(.*\)$'
-- waitForAnimationToEnd:
-    timeout: 3000
+# Tap UNTIL selected, not tap-then-assert. These small buttons wrap onto two
+# rows and drift between the moment Maestro resolves their bounds and the moment
+# the touch is dispatched, so a tap landing in the padding between rows reports
+# COMPLETED having changed nothing at all. The loop's condition IS the outcome,
+# so it cannot exit without the selection actually having changed.
+#
+# `smoke-i18n.yaml` and the onboarding capture flow both already do this, with
+# the reasoning written out; this fragment - which every flow in the suite runs
+# through `_open-app.yaml` - was left on the naive single tap, so the flake it
+# describes could still fail any flow at random. It failed `smoke-auth` this way
+# on the 2026-08-02 closure run.
+- repeat:
+    times: 6
+    while:
+      notVisible:
+        text: '^${LOCALE} \(.*\)$'
+        selected: true
+    commands:
+      - tapOn:
+          text: '^${LOCALE} \(.*\)$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 2500
 # Assert WHAT was selected, immediately. A tap that reports COMPLETED has only
 # proved Maestro found the element and dispatched a touch at its reported
 # bounds; it has not proved the touch landed on that button. Checking here fails

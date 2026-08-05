@@ -54,8 +54,10 @@
   "errorPhoneFormat": "Write the phone with its prefix, for example +34 600 111 222.",
   "errorPostalFormat": "A postal code is five digits.",
   "errorDependentsRange": "Tell us how many, between 1 and 15.",
+  "errorTermsRequired": "To continue you have to accept the terms. Tap \"I have read and accept the terms\".",
   "completionFailed": "We could not save your details. Please try again.",
   "cancelAction": "Cancel",
   "searchCountryPlaceholder": "Search your country",
+  "noCountryResults": "No country with that name. Try typing fewer letters.",
   "languageNativeName": "English"
 }

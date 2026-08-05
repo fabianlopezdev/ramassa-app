@@ -8,6 +8,7 @@
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { OptionChip } from '@/components/onboarding/option-chip';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
+import { playHaptic } from '@/lib/haptics/haptics';
 import { onboardingDraftStore } from '@/lib/onboarding';
 import { documentationFormSchema } from '@/lib/onboarding-form';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
@@ -57,10 +58,15 @@ export default function DocumentationStepScreen() {
     });
   }
 
-  const continueToLogistics = handleSubmit(() => {
-    persist('logistics');
-    router.push('/onboarding/logistics');
-  });
+  const continueToLogistics = handleSubmit(
+    () => {
+      persist('logistics');
+      router.push('/onboarding/logistics');
+    },
+    // One warning buzz per rejected submit, from the shared vocabulary. Same
+    // placement and reasoning as step 1.
+    () => playHaptic('warning'),
+  );
 
   return (
     <WizardFrame
