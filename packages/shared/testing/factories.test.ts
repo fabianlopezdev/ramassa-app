@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { SUPPORTED_LANGUAGES } from '../i18n/languages';
 import {
+  buildAnnouncement,
   buildAuditLogEntry,
   buildInvite,
   buildOrganization,
@@ -86,6 +87,30 @@ describe('buildOrganization', () => {
 
   test('overrides win over the defaults', () => {
     expect(buildOrganization({ slug: 'other-club' }).slug).toBe('other-club');
+  });
+});
+
+describe('buildAnnouncement', () => {
+  test('defaults to a complete, currently visible multilingual announcement', () => {
+    const announcement = buildAnnouncement();
+
+    expect(announcement.org_id).toBe(SEED_ORGANIZATION_ID);
+    expect(announcement.status).toBe('published');
+    expect(Object.keys(announcement.title as Record<string, unknown>)).toEqual([
+      ...SUPPORTED_LANGUAGES,
+    ]);
+    expect(Object.keys(announcement.body as Record<string, unknown>)).toEqual([
+      ...SUPPORTED_LANGUAGES,
+    ]);
+    expect(announcement.published_at).toBe('2026-01-15T09:00:00+00:00');
+    expect(announcement.expires_at).toBeNull();
+  });
+
+  test('overrides win over defaults', () => {
+    expect(buildAnnouncement({ status: 'draft', is_pinned: true })).toMatchObject({
+      status: 'draft',
+      is_pinned: true,
+    });
   });
 });
 

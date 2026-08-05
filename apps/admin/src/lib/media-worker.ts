@@ -9,4 +9,6 @@
  * the point of use as a refused erasure with a code, never as a silent no-op.
  */
 
-export const mediaWorkerUrl: string = import.meta.env.EXPO_PUBLIC_MEDIA_WORKER_URL ?? '';
+import { adminClientEnv } from './supabase';
+
+export const mediaWorkerUrl: string = adminClientEnv.EXPO_PUBLIC_MEDIA_WORKER_URL ?? '';

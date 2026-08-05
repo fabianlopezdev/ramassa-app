@@ -12,7 +12,7 @@ import {
 import { resolveCallerIdentity } from './supabase-identity';
 import { handleTranslationRequest } from './translate';
 
-export const TRANSLATION_PATH = '/translations';
+const TRANSLATION_PATH = '/translations';
 
 interface TranslationEnv extends Env {
   readonly SENTRY_DSN?: string;

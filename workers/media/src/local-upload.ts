@@ -112,14 +112,17 @@ export interface HandleLocalUploadDependencies {
   readonly bucket: LocalUploadBucket;
   readonly secret: string;
   readonly now: () => Date;
+  readonly corsHeaders?: HeadersInit;
 }
 
 export async function handleLocalUpload(
   request: Request,
   dependencies: HandleLocalUploadDependencies,
 ): Promise<Response> {
+  const response = (status: number, headers: HeadersInit = {}) =>
+    new Response(null, { status, headers: { ...dependencies.corsHeaders, ...headers } });
   if (request.method !== 'PUT') {
-    return new Response(null, { status: 405, headers: { Allow: 'PUT' } });
+    return response(405, { Allow: 'PUT' });
   }
 
   const url = new URL(request.url);
@@ -135,7 +138,7 @@ export async function handleLocalUpload(
     !Number.isInteger(declaredContentLength) ||
     !Number.isInteger(expiresAtEpochSeconds)
   ) {
-    return new Response(null, { status: 403 });
+    return response(403);
   }
 
   const key = await importSigningKey(dependencies.secret);
@@ -151,20 +154,20 @@ export async function handleLocalUpload(
     }),
   );
   if (!signatureIsValid) {
-    return new Response(null, { status: 403 });
+    return response(403);
   }
 
   if (dependencies.now().getTime() / 1000 > expiresAtEpochSeconds) {
-    return new Response(null, { status: 403 });
+    return response(403);
   }
 
   if (request.headers.get('content-type') !== declaredContentType) {
-    return new Response(null, { status: 403 });
+    return response(403);
   }
 
   const body = await request.arrayBuffer();
   if (body.byteLength !== declaredContentLength) {
-    return new Response(null, { status: 403 });
+    return response(403);
   }
 
   await dependencies.bucket
@@ -173,5 +176,5 @@ export async function handleLocalUpload(
       throw new AppError('UPLOAD-6', { message: 'Local R2 simulation rejected the object', cause });
     });
 
-  return new Response(null, { status: 200 });
+  return response(200);
 }

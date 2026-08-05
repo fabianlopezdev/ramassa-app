@@ -25,7 +25,9 @@
     "./rgpd": "./rgpd/index.ts",
     "./equipment": "./equipment/index.ts",
     "./translation": "./translation/index.ts",
-    "./translation/react": "./translation/react.ts"
+    "./translation/react": "./translation/react.ts",
+    "./announcements": "./announcements.ts",
+    "./image-compression": "./lib/image-compression.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

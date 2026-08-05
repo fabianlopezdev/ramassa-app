@@ -61,6 +61,47 @@ export interface TranslationReview {
   readonly suggestions: readonly TranslationSuggestion[];
 }
 
+export const translationSuggestionSchema = z.object({
+  language: languageCodeSchema,
+  machineText: z.string().trim().min(1).max(MAX_TRANSLATION_TEXT_LENGTH),
+  reviewedText: z.string().trim().min(1).max(MAX_TRANSLATION_TEXT_LENGTH),
+  status: z.enum(['draft', 'approved', 'rejected']),
+});
+
+export const translationReviewSchema = z
+  .object({
+    sourceLanguage: languageCodeSchema,
+    sourceText: z.string().trim().min(1).max(MAX_TRANSLATION_TEXT_LENGTH),
+    suggestions: translationSuggestionSchema.array().min(1).max(4),
+  })
+  .superRefine((review, context) => {
+    const languages = review.suggestions.map((suggestion) => suggestion.language);
+    if (new Set(languages).size !== languages.length) {
+      context.addIssue({
+        code: 'custom',
+        path: ['suggestions'],
+        message: 'Languages must be unique',
+      });
+    }
+    if (languages.includes(review.sourceLanguage)) {
+      context.addIssue({
+        code: 'custom',
+        path: ['suggestions'],
+        message: 'A review cannot translate into its source language',
+      });
+    }
+  });
+
+export const translationWorkerResponseSchema = z.object({
+  review: translationReviewSchema,
+  usage: z.object({
+    provider: z.string().trim().min(1),
+    estimatedCostUsd: z.number().finite().nonnegative(),
+  }),
+});
+
+export type TranslationWorkerResponse = z.infer<typeof translationWorkerResponseSchema>;
+
 export interface CreateTranslationReviewOptions {
   readonly sourceLanguage: LanguageCode;
   readonly sourceText: string;

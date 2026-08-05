@@ -148,6 +148,7 @@ const handler: ExportedHandler<Env> = {
         bucket: env.MEDIA_BUCKET,
         secret: config.localUploadSigningSecret,
         now: () => new Date(),
+        corsHeaders,
       });
     }
 

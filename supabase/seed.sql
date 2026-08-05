@@ -463,3 +463,86 @@ values
     'Segona ampolla, la primera es va perdre al camp.'
   )
 on conflict do nothing;
+-- Announcements -----------------------------------------------------------------
+-- One row for every list lifecycle, plus two currently visible rows whose pin
+-- order is meaningful. Published rows are complete in all five languages.
+insert into public.announcements
+  (id, org_id, category, title, body, image_url, image_alt, is_pinned, status,
+   published_at, expires_at, created_by, created_at)
+values
+  (
+    '5eed0000-0000-4000-8001-000000000001',
+    '5eed0000-0000-4000-8000-000000000000',
+    'training',
+    '{"ca":"Canvi d''horari","es":"Cambio de horario","en":"Schedule change","ar":"تغيير الموعد","fa":"تغییر برنامه"}',
+    '{"ca":"Esborrany pendent de revisió."}'::jsonb,
+    null,
+    null,
+    false,
+    'draft',
+    null,
+    null,
+    '5eed0000-0000-4000-8000-000000000002',
+    now() - interval '4 days'
+  ),
+  (
+    '5eed0000-0000-4000-8001-000000000002',
+    '5eed0000-0000-4000-8000-000000000000',
+    'urgent',
+    '{"ca":"Entrenament cancel·lat","es":"Entrenamiento cancelado","en":"Training cancelled","ar":"تم إلغاء التدريب","fa":"تمرین لغو شد"}',
+    '{"ca":"La pluja ha deixat el camp impracticable.","es":"La lluvia ha dejado el campo impracticable.","en":"Rain has made the pitch unplayable.","ar":"جعل المطر الملعب غير صالح للعب.","fa":"باران زمین را غیرقابل بازی کرده است."}',
+    null,
+    null,
+    true,
+    'published',
+    now() - interval '2 hours',
+    now() + interval '1 day',
+    '5eed0000-0000-4000-8000-000000000002',
+    now() - interval '2 hours'
+  ),
+  (
+    '5eed0000-0000-4000-8001-000000000003',
+    '5eed0000-0000-4000-8000-000000000000',
+    'social',
+    '{"ca":"Trobada de famílies","es":"Encuentro de familias","en":"Family gathering","ar":"لقاء العائلات","fa":"گردهمایی خانواده‌ها"}',
+    '{"ca":"Dissabte compartirem un dinar al club.","es":"El sábado compartiremos una comida en el club.","en":"We will share lunch at the club on Saturday.","ar":"سنتناول الغداء معًا في النادي يوم السبت.","fa":"شنبه در باشگاه ناهار را با هم صرف می‌کنیم."}',
+    null,
+    null,
+    false,
+    'published',
+    now() - interval '1 day',
+    null,
+    '5eed0000-0000-4000-8000-000000000002',
+    now() - interval '1 day'
+  ),
+  (
+    '5eed0000-0000-4000-8001-000000000004',
+    '5eed0000-0000-4000-8000-000000000000',
+    'info',
+    '{"ca":"Reunió de temporada","es":"Reunión de temporada","en":"Season meeting","ar":"اجتماع الموسم","fa":"جلسه فصل"}',
+    '{"ca":"Aquest avís es publicarà la setmana vinent.","es":"Este aviso se publicará la próxima semana.","en":"This notice will publish next week.","ar":"سيُنشر هذا الإعلان الأسبوع المقبل.","fa":"این اطلاعیه هفته آینده منتشر می‌شود."}',
+    null,
+    null,
+    false,
+    'published',
+    now() + interval '7 days',
+    null,
+    '5eed0000-0000-4000-8000-000000000002',
+    now() - interval '1 hour'
+  ),
+  (
+    '5eed0000-0000-4000-8001-000000000005',
+    '5eed0000-0000-4000-8000-000000000000',
+    'info',
+    '{"ca":"Avís anterior","es":"Aviso anterior","en":"Previous notice","ar":"إعلان سابق","fa":"اطلاعیه قبلی"}',
+    '{"ca":"Aquest avís ja ha caducat.","es":"Este aviso ya ha caducado.","en":"This notice has expired.","ar":"انتهت صلاحية هذا الإعلان.","fa":"این اطلاعیه منقضی شده است."}',
+    null,
+    null,
+    false,
+    'published',
+    now() - interval '8 days',
+    now() - interval '1 day',
+    '5eed0000-0000-4000-8000-000000000002',
+    now() - interval '8 days'
+  )
+on conflict (id) do nothing;

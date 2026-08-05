@@ -7,6 +7,7 @@ import {
   isTranslationReviewPublishable,
   rejectTranslation,
   translationRequestSchema,
+  translationWorkerResponseSchema,
 } from './index';
 
 const generatedTranslations = {
@@ -108,5 +109,36 @@ describe('translation review state machine', () => {
 
     expect(isTranslationReviewPublishable(review)).toBe(true);
     expect(getApprovedTranslations(review)).toEqual(generatedTranslations);
+  });
+});
+
+describe('translation Worker response validation', () => {
+  test('accepts the review contract returned by the Worker', () => {
+    const review = createTranslationReview({
+      sourceLanguage: 'ca',
+      sourceText: 'Entrenament cancel·lat',
+      translations: generatedTranslations,
+    });
+
+    const parsed = translationWorkerResponseSchema.parse({
+      review,
+      usage: { provider: 'mock', estimatedCostUsd: 0 },
+    });
+    expect(parsed.review.sourceText).toBe(review.sourceText);
+    expect(parsed.review.suggestions).toEqual([...review.suggestions]);
+    expect(parsed.usage).toEqual({ provider: 'mock', estimatedCostUsd: 0 });
+  });
+
+  test('refuses incomplete or invalid suggestions from the network', () => {
+    expect(
+      translationWorkerResponseSchema.safeParse({
+        review: {
+          sourceLanguage: 'ca',
+          sourceText: 'Text',
+          suggestions: [{ language: 'xx', machineText: '', reviewedText: '', status: 'draft' }],
+        },
+        usage: { provider: '', estimatedCostUsd: -1 },
+      }).success,
+    ).toBe(false);
   });
 });

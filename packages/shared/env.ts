@@ -24,6 +24,9 @@ export const clientEnvSchema = z.object({
   // neither uses; the one flow that needs it (the RGPD media sweep, RAPP-26)
   // fails at the point of use with a code instead.
   EXPO_PUBLIC_MEDIA_WORKER_URL: z.url().optional(),
+  // The staff-only translation Worker (RAPP-29). Optional at boot so the rest
+  // of the admin remains usable when local translation is not running.
+  EXPO_PUBLIC_TRANSLATION_WORKER_URL: z.url().optional(),
 });
 
 export const serverEnvSchema = clientEnvSchema.extend({

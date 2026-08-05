@@ -40,7 +40,7 @@ export function StaffSidebar() {
             <SidebarMenu>
               {STAFF_NAV_ITEMS.map((item) => {
                 const label = t(item.labelKey);
-                const isActive = pathname === item.to;
+                const isActive = pathname === item.to || pathname.startsWith(`${item.to}/`);
                 const Icon = item.icon;
                 return (
                   <SidebarMenuItem key={item.to}>

@@ -28,6 +28,72 @@ export type Database = {
   };
   public: {
     Tables: {
+      announcements: {
+        Row: {
+          body: Json;
+          category: string;
+          created_at: string;
+          created_by: string | null;
+          expires_at: string | null;
+          id: string;
+          image_alt: Json | null;
+          image_url: string | null;
+          is_pinned: boolean;
+          org_id: string;
+          published_at: string | null;
+          status: string;
+          title: Json;
+          updated_at: string;
+        };
+        Insert: {
+          body: Json;
+          category?: string;
+          created_at?: string;
+          created_by?: string | null;
+          expires_at?: string | null;
+          id?: string;
+          image_alt?: Json | null;
+          image_url?: string | null;
+          is_pinned?: boolean;
+          org_id?: string;
+          published_at?: string | null;
+          status?: string;
+          title: Json;
+          updated_at?: string;
+        };
+        Update: {
+          body?: Json;
+          category?: string;
+          created_at?: string;
+          created_by?: string | null;
+          expires_at?: string | null;
+          id?: string;
+          image_alt?: Json | null;
+          image_url?: string | null;
+          is_pinned?: boolean;
+          org_id?: string;
+          published_at?: string | null;
+          status?: string;
+          title?: Json;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'announcements_created_by_fkey';
+            columns: ['created_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'announcements_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       audit_log: {
         Row: {
           action: string;
@@ -635,6 +701,23 @@ export type Database = {
       };
       immutable_unaccent: { Args: { value: string }; Returns: string };
       is_admin: { Args: never; Returns: boolean };
+      is_content_visible: {
+        Args: {
+          content_status: string;
+          expires_at: string;
+          published_at: string;
+          visible_at?: string;
+        };
+        Returns: boolean;
+      };
+      is_localized_content_valid: {
+        Args: {
+          content: Json;
+          maximum_length: number;
+          require_all_languages?: boolean;
+        };
+        Returns: boolean;
+      };
       is_staff_or_admin: { Args: never; Returns: boolean };
       my_pending_invite: {
         Args: never;

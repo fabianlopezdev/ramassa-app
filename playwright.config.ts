@@ -27,7 +27,7 @@ export default defineConfig({
   retries: 0,
   reporter: [['list']],
   use: {
-    baseURL: 'http://localhost:3100',
+    baseURL: 'http://localhost:4193',
     locale: 'en-GB',
     trace: 'retain-on-failure',
   },
@@ -41,10 +41,11 @@ export default defineConfig({
       // that no longer existed on disk. A suite that tests a stale bundle is the
       // exact failure it was written to prevent, one level up.
       //
-      // Port 3100 also keeps it clear of the dev server a person has open while
+      // Port 4193 also keeps it clear of the dev server a person has open while
       // the suite runs.
-      command: 'bun run --cwd apps/admin dev -- --port 3100 --strictPort --force',
-      url: 'http://localhost:3100',
+      command:
+        'EXPO_PUBLIC_MEDIA_WORKER_URL=http://127.0.0.1:8893 EXPO_PUBLIC_TRANSLATION_WORKER_URL=http://127.0.0.1:8793 bun run --cwd apps/admin dev -- --port 4193 --strictPort --force',
+      url: 'http://localhost:4193',
       reuseExistingServer: false,
       timeout: 180_000,
     },
@@ -54,12 +55,18 @@ export default defineConfig({
       // delete her record without a receipt this Worker writes, so a suite that
       // ran without it could only ever assert the refusal.
       //
-      // `--port 8787` matches EXPO_PUBLIC_MEDIA_WORKER_URL in the admin's env,
-      // which Vite inlines at build time, and 3100 is in the Worker's CORS
+      // `--port 8893` matches EXPO_PUBLIC_MEDIA_WORKER_URL in the admin's env,
+      // which Vite inlines at build time, and 4193 is in the Worker's CORS
       // allowlist for the same reason.
-      command: 'bun run --cwd workers/media dev -- --port 8787',
-      url: 'http://127.0.0.1:8787/health',
-      reuseExistingServer: true,
+      command: 'bun run --cwd workers/media dev -- --port 8893',
+      url: 'http://127.0.0.1:8893/health',
+      reuseExistingServer: false,
+      timeout: 180_000,
+    },
+    {
+      command: 'bun run --cwd workers/translation dev:rapp30',
+      url: 'http://127.0.0.1:8793/health',
+      reuseExistingServer: false,
       timeout: 180_000,
     },
   ],

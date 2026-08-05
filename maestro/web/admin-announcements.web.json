@@ -1,0 +1,62 @@
+{
+  "slug": "admin-announcements",
+  "viewport": { "width": 1440, "height": 900 },
+  "deviceScaleFactor": 2,
+  "timezoneId": "Europe/Madrid",
+  "settle": { "timeout": 6000, "interval": 150 },
+  "steps": [
+    {
+      "label": "auth-open",
+      "goto": "/login",
+      "click": "button:has-text(\"{{auth:usePasswordInstead}}\")",
+      "waitFor": "input[type=\"password\"]"
+    },
+    {
+      "label": "auth-submit",
+      "fill": [
+        { "selector": "input[type=\"email\"]", "value": "{{staff:email}}" },
+        { "selector": "input[type=\"password\"]", "value": "{{staff:password}}" }
+      ],
+      "click": "button:has-text(\"{{auth:passwordAction}}\")",
+      "waitFor": "text={{admin:dashboardTitle}}"
+    },
+    {
+      "label": "list",
+      "goto": "/content/announcements",
+      "waitFor": "text={{announcements:title}} >> visible=true"
+    },
+    {
+      "label": "scheduled",
+      "select": [
+        { "selector": "[data-testid=\"announcement-status-filter\"]", "value": "scheduled" }
+      ],
+      "waitFor": "text={{announcements:statusScheduled}} >> visible=true"
+    },
+    {
+      "label": "editor",
+      "goto": "/content/announcements/new",
+      "waitFor": "[data-testid=\"announcement-editor\"] >> visible=true"
+    },
+    {
+      "label": "draft",
+      "fill": [
+        { "selector": "[data-testid=\"title-source\"]", "value": "Canvi d'horari de dissabte" },
+        {
+          "selector": "[data-testid=\"body-source\"]",
+          "value": "L'entrenament començarà a les deu del matí."
+        }
+      ],
+      "waitFor": "button:has-text(\"{{announcements:saveDraft}}\") >> visible=true"
+    },
+    {
+      "label": "review",
+      "goto": "/content/announcements/5eed0000-0000-4000-8001-000000000002",
+      "waitFor": "[data-testid=\"title-draft-ar\"] >> visible=true"
+    },
+    {
+      "label": "approved",
+      "click": "[data-testid=\"title-approve-all\"]",
+      "waitFor": "[data-testid=\"title-status-fa-approved\"] >> visible=true"
+    }
+  ]
+}
