@@ -8,6 +8,9 @@ on:
 jobs:
   quality-gates:
     runs-on: ubuntu-latest
+    env:
+      EXPO_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
+      EXPO_PUBLIC_SUPABASE_ANON_KEY: ci-anon-key
     steps:
       - uses: actions/checkout@v4
 
