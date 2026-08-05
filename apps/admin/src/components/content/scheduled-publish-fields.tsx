@@ -11,6 +11,7 @@ export interface ScheduledPublishFieldsProps {
   readonly onModeChange: (mode: PublishMode) => void;
   readonly onPublishedAtChange: (value: string) => void;
   readonly onExpiresAtChange: (value: string) => void;
+  readonly translationNamespace?: 'announcements' | 'knowledge';
 }
 
 export function ScheduledPublishFields({
@@ -21,8 +22,9 @@ export function ScheduledPublishFields({
   onModeChange,
   onPublishedAtChange,
   onExpiresAtChange,
+  translationNamespace = 'announcements',
 }: ScheduledPublishFieldsProps) {
-  const { t } = useTranslation('announcements');
+  const { t } = useTranslation(translationNamespace);
 
   return (
     <fieldset className="grid gap-4 rounded-lg border p-4 md:grid-cols-2">

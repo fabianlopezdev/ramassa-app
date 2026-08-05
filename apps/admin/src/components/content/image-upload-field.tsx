@@ -8,10 +8,18 @@ export interface ImageUploadFieldProps {
   readonly state: ImageUploadState;
   readonly onSelect: (file: File) => void;
   readonly onRemove: () => void;
+  readonly fieldId?: string;
+  readonly translationNamespace?: 'announcements' | 'knowledge';
 }
 
-export function ImageUploadField({ state, onSelect, onRemove }: ImageUploadFieldProps) {
-  const { t } = useTranslation('announcements');
+export function ImageUploadField({
+  state,
+  onSelect,
+  onRemove,
+  fieldId = 'announcement',
+  translationNamespace = 'announcements',
+}: ImageUploadFieldProps) {
+  const { t } = useTranslation(translationNamespace);
 
   function selectImage(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -26,7 +34,7 @@ export function ImageUploadField({ state, onSelect, onRemove }: ImageUploadField
         <input
           className="sr-only"
           type="file"
-          data-testid="announcement-image"
+          data-testid={`${fieldId}-image`}
           accept="image/jpeg,image/png,image/webp"
           disabled={state === 'uploading'}
           onChange={selectImage}

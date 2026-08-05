@@ -463,6 +463,155 @@ export type Database = {
           },
         ];
       };
+      knowledge_articles: {
+        Row: {
+          author_first_name: string | null;
+          author_id: string | null;
+          body: Json;
+          category_id: string;
+          content_type: string;
+          created_at: string;
+          created_by: string | null;
+          expires_at: string | null;
+          external_url: string | null;
+          id: string;
+          image_url: string | null;
+          is_published: boolean;
+          org_id: string;
+          published_at: string | null;
+          reviewed_at: string | null;
+          reviewed_by: string | null;
+          reviewer_note: string | null;
+          story_status: string | null;
+          title: Json;
+          updated_at: string;
+          video_url: string | null;
+        };
+        Insert: {
+          author_first_name?: string | null;
+          author_id?: string | null;
+          body: Json;
+          category_id: string;
+          content_type?: string;
+          created_at?: string;
+          created_by?: string | null;
+          expires_at?: string | null;
+          external_url?: string | null;
+          id?: string;
+          image_url?: string | null;
+          is_published?: boolean;
+          org_id?: string;
+          published_at?: string | null;
+          reviewed_at?: string | null;
+          reviewed_by?: string | null;
+          reviewer_note?: string | null;
+          story_status?: string | null;
+          title: Json;
+          updated_at?: string;
+          video_url?: string | null;
+        };
+        Update: {
+          author_first_name?: string | null;
+          author_id?: string | null;
+          body?: Json;
+          category_id?: string;
+          content_type?: string;
+          created_at?: string;
+          created_by?: string | null;
+          expires_at?: string | null;
+          external_url?: string | null;
+          id?: string;
+          image_url?: string | null;
+          is_published?: boolean;
+          org_id?: string;
+          published_at?: string | null;
+          reviewed_at?: string | null;
+          reviewed_by?: string | null;
+          reviewer_note?: string | null;
+          story_status?: string | null;
+          title?: Json;
+          updated_at?: string;
+          video_url?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'knowledge_articles_author_same_org';
+            columns: ['org_id', 'author_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['org_id', 'id'];
+          },
+          {
+            foreignKeyName: 'knowledge_articles_category_same_org';
+            columns: ['org_id', 'category_id'];
+            isOneToOne: false;
+            referencedRelation: 'knowledge_categories';
+            referencedColumns: ['org_id', 'id'];
+          },
+          {
+            foreignKeyName: 'knowledge_articles_created_by_fkey';
+            columns: ['created_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'knowledge_articles_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'knowledge_articles_reviewed_by_fkey';
+            columns: ['reviewed_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      knowledge_categories: {
+        Row: {
+          created_at: string;
+          icon: string;
+          id: string;
+          name: Json;
+          org_id: string;
+          slug: string;
+          sort_order: number;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          icon: string;
+          id?: string;
+          name: Json;
+          org_id?: string;
+          slug: string;
+          sort_order?: number;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          icon?: string;
+          id?: string;
+          name?: Json;
+          org_id?: string;
+          slug?: string;
+          sort_order?: number;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'knowledge_categories_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       organizations: {
         Row: {
           available_languages: string[];
@@ -868,6 +1017,7 @@ export type Database = {
       };
       immutable_unaccent: { Args: { value: string }; Returns: string };
       is_admin: { Args: never; Returns: boolean };
+      is_allowed_video_url: { Args: { video_url: string }; Returns: boolean };
       is_content_visible: {
         Args: {
           content_status: string;
@@ -881,6 +1031,10 @@ export type Database = {
         Args: { recurrence_rule: string };
         Returns: boolean;
       };
+      is_knowledge_body_valid: {
+        Args: { content: Json; require_all_languages?: boolean };
+        Returns: boolean;
+      };
       is_localized_content_valid: {
         Args: {
           content: Json;
@@ -890,6 +1044,10 @@ export type Database = {
         Returns: boolean;
       };
       is_staff_or_admin: { Args: never; Returns: boolean };
+      is_story_status_transition_allowed: {
+        Args: { new_status: string; old_status: string };
+        Returns: boolean;
+      };
       my_pending_invite: {
         Args: never;
         Returns: {

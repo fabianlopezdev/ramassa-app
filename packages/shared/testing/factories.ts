@@ -38,6 +38,8 @@ export type AnnouncementRow = Database['public']['Tables']['announcements']['Row
 export type EventCategoryRow = Database['public']['Tables']['event_categories']['Row'];
 export type EventRow = Database['public']['Tables']['events']['Row'];
 export type EventOccurrenceRow = Database['public']['Tables']['event_occurrences']['Row'];
+export type KnowledgeCategoryRow = Database['public']['Tables']['knowledge_categories']['Row'];
+export type KnowledgeArticleRow = Database['public']['Tables']['knowledge_articles']['Row'];
 export type ProfileRow = Database['public']['Tables']['profiles']['Row'];
 export type PushTokenRow = Database['public']['Tables']['push_tokens']['Row'];
 export type TermsAcceptanceRow = Database['public']['Tables']['terms_acceptances']['Row'];
@@ -258,6 +260,94 @@ export function buildEventOccurrence(
     created_at: FIXTURE_TIMESTAMP,
     ...overrides,
   };
+}
+
+export function buildKnowledgeCategory(
+  overrides: Partial<KnowledgeCategoryRow> = {},
+): KnowledgeCategoryRow {
+  return {
+    id: '5eed0000-0000-4000-8004-000000000099',
+    org_id: SEED_ORGANIZATION_ID,
+    name: {
+      ca: 'Drets i asil',
+      es: 'Derechos y asilo',
+      en: 'Rights and asylum',
+      ar: 'الحقوق واللجوء',
+      fa: 'حقوق و پناهندگی',
+    },
+    slug: 'rights-asylum',
+    icon: 'scale',
+    sort_order: 10,
+    created_at: FIXTURE_TIMESTAMP,
+    updated_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+export function buildKnowledgeArticle(
+  overrides: Partial<KnowledgeArticleRow> = {},
+): KnowledgeArticleRow {
+  const author = STAFF_FIXTURES.find((person) => person.role === 'staff')!;
+  const body = Object.fromEntries(
+    ['ca', 'es', 'en', 'ar', 'fa'].map((language) => [
+      language,
+      [{ type: 'paragraph', text: `Safe account guide (${language})` }],
+    ]),
+  );
+
+  return {
+    id: '5eed0000-0000-4000-8005-000000000099',
+    org_id: SEED_ORGANIZATION_ID,
+    category_id: buildKnowledgeCategory().id,
+    title: {
+      ca: 'Protegeix el teu compte',
+      es: 'Protege tu cuenta',
+      en: 'Protect your account',
+      ar: 'احمي حسابك',
+      fa: 'از حساب خود محافظت کنید',
+    },
+    body,
+    image_url: null,
+    video_url: null,
+    external_url: null,
+    content_type: 'article',
+    story_status: null,
+    author_id: null,
+    author_first_name: null,
+    reviewer_note: null,
+    reviewed_by: null,
+    reviewed_at: null,
+    is_published: true,
+    published_at: FIXTURE_TIMESTAMP,
+    expires_at: null,
+    created_by: seedUserId(author.ordinal),
+    created_at: FIXTURE_TIMESTAMP,
+    updated_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+export function buildParticipantStory(
+  overrides: Partial<KnowledgeArticleRow> = {},
+): KnowledgeArticleRow {
+  const author = PARTICIPANT_FIXTURES[0]!;
+  return buildKnowledgeArticle({
+    id: '5eed0000-0000-4000-8005-000000000100',
+    category_id: buildKnowledgeCategory({
+      id: '5eed0000-0000-4000-8004-000000000100',
+      slug: 'general-resources',
+    }).id,
+    title: { ca: 'El meu primer partit' },
+    body: { ca: [{ type: 'paragraph', text: 'Vaig trobar un equip.' }] },
+    content_type: 'participant_story',
+    story_status: 'submitted',
+    author_id: seedUserId(author.ordinal),
+    author_first_name: author.firstName,
+    is_published: false,
+    published_at: null,
+    created_by: seedUserId(author.ordinal),
+    ...overrides,
+  });
 }
 
 /**

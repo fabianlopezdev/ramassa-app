@@ -1,0 +1,64 @@
+{
+  "app": "Ramassà",
+  "slug": "admin-knowledge-base",
+  "title": "Gestió de continguts informatius",
+  "surface": "admin",
+  "description": "Com l'equip crea recursos en cinc llengües i revisa les històries enviades per les participants abans de publicar-les.",
+  "steps": [
+    {
+      "id": "library",
+      "label": "La biblioteca mostra els recursos i el seu estat",
+      "web": "admin-knowledge-base/web/03-library.png"
+    },
+    {
+      "id": "editor",
+      "label": "L'editor estructura el contingut en paràgrafs i passos",
+      "web": "admin-knowledge-base/web/04-editor.png"
+    },
+    {
+      "id": "story-queue",
+      "label": "Les històries enviades esperen revisió",
+      "web": "admin-knowledge-base/web/05-story-queue.png"
+    },
+    {
+      "id": "story-review",
+      "label": "La revisió conserva l'atribució pel nom de pila",
+      "web": "admin-knowledge-base/web/06-story-review.png"
+    },
+    {
+      "id": "published",
+      "label": "La història aprovada queda publicada",
+      "web": "admin-knowledge-base/web/07-published.png"
+    },
+    {
+      "id": "changes-requested",
+      "label": "L'equip pot demanar canvis amb una nota",
+      "web": "admin-knowledge-base/web/08-changes-requested.png"
+    },
+    {
+      "id": "rejected",
+      "label": "La història descartada queda rebutjada",
+      "web": "admin-knowledge-base/web/09-rejected.png"
+    }
+  ],
+  "edges": [
+    { "from": "library", "to": "editor", "label": "Crea o edita un recurs", "kind": "neutral" },
+    {
+      "from": "story-queue",
+      "to": "story-review",
+      "label": "Comença la revisió",
+      "kind": "neutral"
+    },
+    { "from": "story-review", "to": "editor", "label": "Revisa el contingut", "kind": "neutral" },
+    { "from": "editor", "to": "published", "label": "Aprova i publica", "kind": "positive" },
+    { "from": "editor", "to": "changes-requested", "label": "Demana canvis", "kind": "neutral" },
+    { "from": "editor", "to": "rejected", "label": "Descarta", "kind": "negative" }
+  ],
+  "notes": [
+    "Els títols i cada bloc de contingut es preparen en català i es revisen en castellà, anglès, àrab i farsi abans de publicar.",
+    "Els vídeos només accepten adreces de YouTube i Vimeo, que es transformen en formats segurs per incrustar.",
+    "Les imatges dels passos comparteixen el mateix fitxer entre llengües, però la descripció accessible es revisa per cada idioma.",
+    "Una història passa per revisió abans de publicar-se, demanar canvis o rebutjar-se.",
+    "Els contactes d'entitats no poden accedir a aquesta administració."
+  ]
+}

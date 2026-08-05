@@ -27,7 +27,7 @@ export const SEED_PASSWORD = 'ramassa-dev-password';
  */
 export const SUPABASE_URL = 'http://127.0.0.1:54321';
 export const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH';
-export const MEDIA_WORKER_URL = 'http://127.0.0.1:8893';
+export const MEDIA_WORKER_URL = `http://127.0.0.1:${process.env.RAMASSA_QA_MEDIA_PORT ?? '8893'}`;
 
 /** An access token for an arbitrary account, the way GoTrue issues one. */
 export async function accessTokenFor(email: string, password: string): Promise<string> {

@@ -1,4 +1,14 @@
+import { mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { defineConfig } from '@playwright/test';
+
+const adminPort = process.env.RAMASSA_QA_ADMIN_PORT ?? '4193';
+const mediaPort = process.env.RAMASSA_QA_MEDIA_PORT ?? '8893';
+const translationPort = process.env.RAMASSA_QA_TRANSLATION_PORT ?? '8793';
+const adminOrigin = `http://localhost:${adminPort}`;
+const allowedOrigins = `${adminOrigin},http://127.0.0.1:${adminPort}`;
+const workerStateRoot = mkdtempSync(join(tmpdir(), 'ramassa-web-qa-'));
 
 /**
  * The web QA suite (RAPP-99): the admin app's equivalent of the Maestro
@@ -27,7 +37,7 @@ export default defineConfig({
   retries: 0,
   reporter: [['list']],
   use: {
-    baseURL: 'http://localhost:4193',
+    baseURL: adminOrigin,
     locale: 'en-GB',
     trace: 'retain-on-failure',
   },
@@ -43,9 +53,8 @@ export default defineConfig({
       //
       // Port 4193 also keeps it clear of the dev server a person has open while
       // the suite runs.
-      command:
-        'EXPO_PUBLIC_MEDIA_WORKER_URL=http://127.0.0.1:8893 EXPO_PUBLIC_TRANSLATION_WORKER_URL=http://127.0.0.1:8793 bun run --cwd apps/admin dev -- --port 4193 --strictPort --force',
-      url: 'http://localhost:4193',
+      command: `EXPO_PUBLIC_MEDIA_WORKER_URL=http://127.0.0.1:${mediaPort} EXPO_PUBLIC_TRANSLATION_WORKER_URL=http://127.0.0.1:${translationPort} bun run --cwd apps/admin dev -- --port ${adminPort} --strictPort --force`,
+      url: adminOrigin,
       reuseExistingServer: false,
       timeout: 180_000,
     },
@@ -58,14 +67,14 @@ export default defineConfig({
       // `--port 8893` matches EXPO_PUBLIC_MEDIA_WORKER_URL in the admin's env,
       // which Vite inlines at build time, and 4193 is in the Worker's CORS
       // allowlist for the same reason.
-      command: 'bun run --cwd workers/media dev -- --port 8893',
-      url: 'http://127.0.0.1:8893/health',
+      command: `bun run --cwd workers/media dev -- --port ${mediaPort} --persist-to ${workerStateRoot}/media --var ALLOWED_ORIGINS:${allowedOrigins}`,
+      url: `http://127.0.0.1:${mediaPort}/health`,
       reuseExistingServer: false,
       timeout: 180_000,
     },
     {
-      command: 'bun run --cwd workers/translation dev:rapp30',
-      url: 'http://127.0.0.1:8793/health',
+      command: `bun run --cwd workers/translation dev:qa -- --port ${translationPort} --persist-to ${workerStateRoot}/translation --var ALLOWED_ORIGINS:${allowedOrigins}`,
+      url: `http://127.0.0.1:${translationPort}/health`,
       reuseExistingServer: false,
       timeout: 180_000,
     },

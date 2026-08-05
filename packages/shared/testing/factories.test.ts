@@ -7,10 +7,13 @@ import {
   buildEventCategory,
   buildEventOccurrence,
   buildInvite,
+  buildKnowledgeArticle,
+  buildKnowledgeCategory,
   buildOrganization,
   buildParticipant,
   buildParticipantNote,
   buildParticipants,
+  buildParticipantStory,
   buildProfile,
   buildPushToken,
 } from './factories';
@@ -142,6 +145,28 @@ describe('event factories', () => {
       recurrence_rule: 'FREQ=WEEKLY;INTERVAL=1;COUNT=6',
     });
     expect(buildEventOccurrence({ ends_at: null }).ends_at).toBeNull();
+  });
+});
+
+describe('knowledge factories', () => {
+  test('builds a complete published article linked to a deterministic category', () => {
+    const category = buildKnowledgeCategory();
+    const article = buildKnowledgeArticle();
+
+    expect(article.category_id).toBe(category.id);
+    expect(article.is_published).toBe(true);
+    expect(Object.keys(article.title as Record<string, unknown>)).toEqual([...SUPPORTED_LANGUAGES]);
+    expect(Object.keys(article.body as Record<string, unknown>)).toEqual([...SUPPORTED_LANGUAGES]);
+  });
+
+  test('builds an unpublished participant story with first-name-only attribution', () => {
+    const story = buildParticipantStory();
+
+    expect(story.content_type).toBe('participant_story');
+    expect(story.story_status).toBe('submitted');
+    expect(story.author_id).toBe(buildParticipant().id);
+    expect(story.author_first_name).toBe(buildParticipant().first_name);
+    expect(story.is_published).toBe(false);
   });
 });
 

@@ -16,6 +16,7 @@ import arEquipment from './locales/ar/equipment.json';
 import arErrors from './locales/ar/errors.json';
 import arEvents from './locales/ar/events.json';
 import arHome from './locales/ar/home.json';
+import arKnowledge from './locales/ar/knowledge.json';
 import arNav from './locales/ar/nav.json';
 import arOnboarding from './locales/ar/onboarding.json';
 import arParticipants from './locales/ar/participants.json';
@@ -29,6 +30,7 @@ import caEquipment from './locales/ca/equipment.json';
 import caErrors from './locales/ca/errors.json';
 import caEvents from './locales/ca/events.json';
 import caHome from './locales/ca/home.json';
+import caKnowledge from './locales/ca/knowledge.json';
 import caNav from './locales/ca/nav.json';
 import caOnboarding from './locales/ca/onboarding.json';
 import caParticipants from './locales/ca/participants.json';
@@ -42,6 +44,7 @@ import enEquipment from './locales/en/equipment.json';
 import enErrors from './locales/en/errors.json';
 import enEvents from './locales/en/events.json';
 import enHome from './locales/en/home.json';
+import enKnowledge from './locales/en/knowledge.json';
 import enNav from './locales/en/nav.json';
 import enOnboarding from './locales/en/onboarding.json';
 import enParticipants from './locales/en/participants.json';
@@ -55,6 +58,7 @@ import esEquipment from './locales/es/equipment.json';
 import esErrors from './locales/es/errors.json';
 import esEvents from './locales/es/events.json';
 import esHome from './locales/es/home.json';
+import esKnowledge from './locales/es/knowledge.json';
 import esNav from './locales/es/nav.json';
 import esOnboarding from './locales/es/onboarding.json';
 import esParticipants from './locales/es/participants.json';
@@ -68,6 +72,7 @@ import faEquipment from './locales/fa/equipment.json';
 import faErrors from './locales/fa/errors.json';
 import faEvents from './locales/fa/events.json';
 import faHome from './locales/fa/home.json';
+import faKnowledge from './locales/fa/knowledge.json';
 import faNav from './locales/fa/nav.json';
 import faOnboarding from './locales/fa/onboarding.json';
 import faParticipants from './locales/fa/participants.json';
@@ -89,6 +94,7 @@ const resources = {
     push: caPush,
     announcements: caAnnouncements,
     events: caEvents,
+    knowledge: caKnowledge,
   },
   es: {
     common: esCommon,
@@ -104,6 +110,7 @@ const resources = {
     push: esPush,
     announcements: esAnnouncements,
     events: esEvents,
+    knowledge: esKnowledge,
   },
   en: {
     common: enCommon,
@@ -119,6 +126,7 @@ const resources = {
     push: enPush,
     announcements: enAnnouncements,
     events: enEvents,
+    knowledge: enKnowledge,
   },
   ar: {
     common: arCommon,
@@ -134,6 +142,7 @@ const resources = {
     push: arPush,
     announcements: arAnnouncements,
     events: arEvents,
+    knowledge: arKnowledge,
   },
   fa: {
     common: faCommon,
@@ -149,6 +158,7 @@ const resources = {
     push: faPush,
     announcements: faAnnouncements,
     events: faEvents,
+    knowledge: faKnowledge,
   },
 };
 

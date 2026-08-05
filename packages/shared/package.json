@@ -28,6 +28,7 @@
     "./translation/react": "./translation/react.ts",
     "./announcements": "./announcements.ts",
     "./events": "./events.ts",
+    "./knowledge": "./knowledge.ts",
     "./image-compression": "./lib/image-compression.ts"
   },
   "scripts": {

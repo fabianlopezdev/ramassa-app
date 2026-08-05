@@ -15,6 +15,7 @@ export interface MultilingualEditorProps {
   readonly maxLength: number;
   readonly onSourceChange: (value: string) => void;
   readonly onTranslationChange: (language: SupportedLanguage, value: string) => void;
+  readonly translationNamespace?: 'announcements' | 'knowledge';
 }
 
 export function MultilingualEditor({
@@ -25,8 +26,9 @@ export function MultilingualEditor({
   maxLength,
   onSourceChange,
   onTranslationChange,
+  translationNamespace = 'announcements',
 }: MultilingualEditorProps) {
-  const { t } = useTranslation('announcements');
+  const { t } = useTranslation(translationNamespace);
 
   return (
     <fieldset className="flex flex-col gap-4 rounded-lg border p-4">

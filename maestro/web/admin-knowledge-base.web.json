@@ -1,0 +1,66 @@
+{
+  "slug": "admin-knowledge-base",
+  "viewport": { "width": 1440, "height": 900 },
+  "deviceScaleFactor": 2,
+  "timezoneId": "Europe/Madrid",
+  "settle": { "timeout": 6000, "interval": 150 },
+  "steps": [
+    {
+      "label": "auth-open",
+      "goto": "/login",
+      "click": "button:has-text(\"{{auth:usePasswordInstead}}\")",
+      "waitFor": "input[type=\"password\"]"
+    },
+    {
+      "label": "auth-submit",
+      "fill": [
+        { "selector": "input[type=\"email\"]", "value": "{{staff:email}}" },
+        { "selector": "input[type=\"password\"]", "value": "{{staff:password}}" }
+      ],
+      "click": "button:has-text(\"{{auth:passwordAction}}\")",
+      "waitFor": "text={{admin:dashboardTitle}}"
+    },
+    {
+      "label": "library",
+      "goto": "/content/knowledge",
+      "waitFor": "[data-testid=\"knowledge-table\"] >> visible=true"
+    },
+    {
+      "label": "editor",
+      "goto": "/content/knowledge/5eed0000-0000-4000-8005-000000000001",
+      "waitFor": "[data-testid=\"knowledge-editor\"] >> visible=true"
+    },
+    {
+      "label": "story-queue",
+      "goto": "/content/knowledge?kind=stories&storyStatus=submitted&page=1",
+      "waitFor": "[data-testid=\"knowledge-start-review-5eed0000-0000-4000-8005-000000000002\"] >> visible=true"
+    },
+    {
+      "label": "story-review",
+      "click": "[data-testid=\"knowledge-start-review-5eed0000-0000-4000-8005-000000000002\"]",
+      "waitFor": "[data-testid=\"knowledge-reviewer-note\"] >> visible=true"
+    },
+    {
+      "label": "published",
+      "goto": "/content/knowledge?kind=stories&storyStatus=published&page=1",
+      "waitFor": "[data-testid=\"knowledge-link-5eed0000-0000-4000-8005-000000000003\"] >> visible=true"
+    },
+    {
+      "label": "changes-requested",
+      "goto": "/content/knowledge/5eed0000-0000-4000-8005-000000000002",
+      "fill": [
+        {
+          "selector": "[data-testid=\"knowledge-reviewer-note\"]",
+          "value": "Pots aclarir una mica més el final?"
+        }
+      ],
+      "click": "[data-testid=\"knowledge-request-changes\"]",
+      "waitFor": "[data-testid=\"knowledge-table\"] >> visible=true"
+    },
+    {
+      "label": "rejected",
+      "goto": "/content/knowledge?kind=stories&storyStatus=rejected&page=1",
+      "waitFor": "[data-testid=\"knowledge-link-5eed0000-0000-4000-8005-000000000004\"] >> visible=true"
+    }
+  ]
+}

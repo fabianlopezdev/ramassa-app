@@ -676,3 +676,87 @@ where id in (
   '5eed0000-0000-4000-8003-000000000002',
   '5eed0000-0000-4000-8003-000000000003'
 );
+
+-- Knowledge base ---------------------------------------------------------------
+insert into public.knowledge_categories (id, org_id, name, slug, icon, sort_order)
+values
+  (
+    '5eed0000-0000-4000-8004-000000000001',
+    '5eed0000-0000-4000-8000-000000000000',
+    '{"ca":"Drets i asil","es":"Derechos y asilo","en":"Rights and asylum","ar":"الحقوق واللجوء","fa":"حقوق و پناهندگی"}',
+    'rights-asylum', 'scale', 10
+  ),
+  (
+    '5eed0000-0000-4000-8004-000000000002',
+    '5eed0000-0000-4000-8000-000000000000',
+    '{"ca":"Alfabetització digital","es":"Alfabetización digital","en":"Digital literacy","ar":"المهارات الرقمية","fa":"سواد دیجیتال"}',
+    'digital-literacy', 'laptop', 20
+  ),
+  (
+    '5eed0000-0000-4000-8004-000000000003',
+    '5eed0000-0000-4000-8000-000000000000',
+    '{"ca":"Igualtat de gènere","es":"Igualdad de género","en":"Gender equality","ar":"المساواة بين الجنسين","fa":"برابری جنسیتی"}',
+    'gender-equality', 'venus', 30
+  ),
+  (
+    '5eed0000-0000-4000-8004-000000000004',
+    '5eed0000-0000-4000-8000-000000000000',
+    '{"ca":"Recursos generals","es":"Recursos generales","en":"General resources","ar":"موارد عامة","fa":"منابع عمومی"}',
+    'general-resources', 'book-open', 40
+  )
+on conflict (id) do nothing;
+
+insert into public.knowledge_articles
+  (id, org_id, category_id, title, body, video_url, content_type, is_published,
+   published_at, created_by, created_at)
+values (
+  '5eed0000-0000-4000-8005-000000000001',
+  '5eed0000-0000-4000-8000-000000000000',
+  '5eed0000-0000-4000-8004-000000000002',
+  '{"ca":"Protegeix el teu compte","es":"Protege tu cuenta","en":"Protect your account","ar":"احمي حسابك","fa":"از حساب خود محافظت کنید"}',
+  '{"ca":[{"type":"paragraph","text":"Tres passos per protegir el teu compte."},{"type":"step","title":"Activa un codi segur","text":"No comparteixis mai el codi d’accés.","imageUrl":null,"imageAlt":null}],"es":[{"type":"paragraph","text":"Tres pasos para proteger tu cuenta."},{"type":"step","title":"Activa un código seguro","text":"No compartas nunca el código de acceso.","imageUrl":null,"imageAlt":null}],"en":[{"type":"paragraph","text":"Three steps to protect your account."},{"type":"step","title":"Use a secure code","text":"Never share your access code.","imageUrl":null,"imageAlt":null}],"ar":[{"type":"paragraph","text":"ثلاث خطوات لحماية حسابك."},{"type":"step","title":"استخدمي رمزاً آمناً","text":"لا تشاركي رمز الدخول أبداً.","imageUrl":null,"imageAlt":null}],"fa":[{"type":"paragraph","text":"سه گام برای محافظت از حساب شما."},{"type":"step","title":"از یک کد امن استفاده کنید","text":"هرگز کد ورود خود را به اشتراک نگذارید.","imageUrl":null,"imageAlt":null}]}'::jsonb,
+  'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ',
+  'tutorial', true, now() - interval '2 days',
+  '5eed0000-0000-4000-8000-000000000002', now() - interval '2 days'
+);
+
+insert into public.knowledge_articles
+  (id, org_id, category_id, title, body, content_type, story_status, author_id,
+   is_published, created_by, created_at)
+values (
+  '5eed0000-0000-4000-8005-000000000002',
+  '5eed0000-0000-4000-8000-000000000000',
+  '5eed0000-0000-4000-8004-000000000004',
+  '{"ca":"Quan vaig arribar a l’equip"}',
+  '{"ca":[{"type":"paragraph","text":"El primer dia estava nerviosa, però les companyes em van rebre amb una abraçada."}]}'::jsonb,
+  'participant_story', 'submitted',
+  '5eed0000-0000-4000-8000-000000000026', false,
+  '5eed0000-0000-4000-8000-000000000026', now() - interval '1 day'
+)
+on conflict (id) do nothing;
+
+insert into public.knowledge_articles
+  (id, org_id, category_id, title, body, content_type, story_status, author_id,
+   is_published, published_at, created_by, created_at)
+values
+  (
+    '5eed0000-0000-4000-8005-000000000003',
+    '5eed0000-0000-4000-8000-000000000000',
+    '5eed0000-0000-4000-8004-000000000004',
+    '{"ca":"El futbol em va donar confiança","es":"El fútbol me dio confianza","en":"Football gave me confidence","ar":"منحتني كرة القدم الثقة","fa":"فوتبال به من اعتماد به نفس داد"}',
+    '{"ca":[{"type":"paragraph","text":"Ara em sento part de l’equip."}],"es":[{"type":"paragraph","text":"Ahora me siento parte del equipo."}],"en":[{"type":"paragraph","text":"Now I feel part of the team."}],"ar":[{"type":"paragraph","text":"أشعر الآن أنني جزء من الفريق."}],"fa":[{"type":"paragraph","text":"حالا احساس می‌کنم بخشی از تیم هستم."}]}'::jsonb,
+    'participant_story', 'published',
+    '5eed0000-0000-4000-8000-000000000027', true, now() - interval '3 days',
+    '5eed0000-0000-4000-8000-000000000027', now() - interval '4 days'
+  ),
+  (
+    '5eed0000-0000-4000-8005-000000000004',
+    '5eed0000-0000-4000-8000-000000000000',
+    '5eed0000-0000-4000-8004-000000000004',
+    '{"ca":"Una història que no es publicarà"}',
+    '{"ca":[{"type":"paragraph","text":"Aquest exemple mostra una història descartada."}]}'::jsonb,
+    'participant_story', 'rejected',
+    '5eed0000-0000-4000-8000-000000000028', false, null,
+    '5eed0000-0000-4000-8000-000000000028', now() - interval '5 days'
+  )
+on conflict (id) do nothing;
