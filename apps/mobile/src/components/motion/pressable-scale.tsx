@@ -1,10 +1,9 @@
 import type { HapticFeedback } from '@/lib/haptics/haptic-policy';
 import { playHaptic } from '@/lib/haptics/haptics';
-import { cssInterop } from 'nativewind';
 import type { ReactNode } from 'react';
-import { Platform, type AccessibilityRole, type StyleProp, type ViewStyle } from 'react-native';
+import type { AccessibilityRole, StyleProp, ViewStyle } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, {
+import {
   interpolate,
   runOnJS,
   useAnimatedStyle,
@@ -13,9 +12,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { resolveDurationMs, resolvePressScale } from '@ramassa/shared/tokens/motion';
-
-const PressableAnimatedView =
-  Platform.OS === 'web' ? cssInterop(Animated.View, { className: 'style' }) : Animated.View;
+import { NativeWindAnimatedView } from './nativewind-animated-view';
 
 /**
  * The press response every touchable in the app shares (RAPP-70). The single
@@ -120,7 +117,7 @@ export function PressableScale({
 
   return (
     <GestureDetector gesture={tap}>
-      <PressableAnimatedView
+      <NativeWindAnimatedView
         testID={testID}
         accessibilityRole={accessibilityRole}
         accessibilityLabel={accessibilityLabel}
@@ -135,7 +132,7 @@ export function PressableScale({
         className={className}
       >
         {children}
-      </PressableAnimatedView>
+      </NativeWindAnimatedView>
     </GestureDetector>
   );
 }

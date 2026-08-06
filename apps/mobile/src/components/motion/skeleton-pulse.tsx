@@ -1,6 +1,6 @@
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useEffect } from 'react';
-import Animated, {
+import {
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
@@ -8,6 +8,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { motionTokens, resolveDurationMs } from '@ramassa/shared/tokens/motion';
+import { NativeWindAnimatedView } from './nativewind-animated-view';
 
 /**
  * The loading placeholder (RAPP-70 + the SPEC "skeletons preferred over
@@ -54,7 +55,7 @@ export function SkeletonPulse({ className }: SkeletonPulseProps) {
   const animatedStyle = useAnimatedStyle(() => ({ opacity: opacity.get() }));
 
   return (
-    <Animated.View
+    <NativeWindAnimatedView
       accessibilityRole="progressbar"
       // The rounded surface is this component's own, so the continuous curve
       // belongs here rather than at every call site (contract rule 17): callers

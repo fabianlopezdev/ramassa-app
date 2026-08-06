@@ -1,11 +1,7 @@
 import { type ReactNode } from 'react';
-import Animated, {
-  FadeInDown,
-  FadeOut,
-  LinearTransition,
-  useReducedMotion,
-} from 'react-native-reanimated';
+import { FadeInDown, FadeOut, LinearTransition, useReducedMotion } from 'react-native-reanimated';
 import { motionTokens } from '@ramassa/shared/tokens/motion';
+import { NativeWindAnimatedView } from './nativewind-animated-view';
 
 /**
  * Layout transitions for list add/remove (RAPP-70 scope item 2, last bullet).
@@ -57,17 +53,17 @@ export function ListItemTransition({ children, className }: ListItemTransitionPr
   const isReducedMotion = useReducedMotion();
 
   if (isReducedMotion) {
-    return <Animated.View className={className}>{children}</Animated.View>;
+    return <NativeWindAnimatedView className={className}>{children}</NativeWindAnimatedView>;
   }
 
   return (
-    <Animated.View
+    <NativeWindAnimatedView
       layout={ROW_LAYOUT}
       entering={ROW_ENTERING}
       exiting={ROW_EXITING}
       className={className}
     >
       {children}
-    </Animated.View>
+    </NativeWindAnimatedView>
   );
 }

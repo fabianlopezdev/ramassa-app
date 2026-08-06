@@ -1,5 +1,5 @@
 import { useEffect, type ReactNode } from 'react';
-import Animated, {
+import {
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
@@ -11,6 +11,7 @@ import {
   resolveEntranceTranslateY,
   resolveStaggerMs,
 } from '@ramassa/shared/tokens/motion';
+import { NativeWindAnimatedView } from './nativewind-animated-view';
 
 /**
  * Content entrance (RAPP-70): a short rise plus a fade, staggered down a list.
@@ -53,8 +54,8 @@ export function FadeSlideIn({ children, index = 0, className }: FadeSlideInProps
   }));
 
   return (
-    <Animated.View style={animatedStyle} className={className}>
+    <NativeWindAnimatedView style={animatedStyle} className={className}>
       {children}
-    </Animated.View>
+    </NativeWindAnimatedView>
   );
 }

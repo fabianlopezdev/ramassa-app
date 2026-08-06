@@ -1,6 +1,6 @@
 import { playErrorHaptic } from '@/lib/haptics/haptics';
 import { useEffect, useRef, type ReactNode } from 'react';
-import Animated, {
+import {
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
@@ -9,6 +9,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import type { AppErrorCode } from '@ramassa/shared/errors';
 import { resolveDurationMs, resolveShake } from '@ramassa/shared/tokens/motion';
+import { NativeWindAnimatedView } from './nativewind-animated-view';
 
 /**
  * The validation-error nudge (RAPP-70), paired with a warning haptic. NEVER the
@@ -66,8 +67,8 @@ export function ShakeOnError({ children, errorCode, className }: ShakeOnErrorPro
   }));
 
   return (
-    <Animated.View style={animatedStyle} className={className}>
+    <NativeWindAnimatedView style={animatedStyle} className={className}>
       {children}
-    </Animated.View>
+    </NativeWindAnimatedView>
   );
 }

@@ -18,9 +18,9 @@
         { "selector": "[aria-label=\"{{auth:passwordLabel}}\"]", "value": "{{player:password}}" }
       ],
       "click": "[aria-label=\"{{auth:passwordAction}}\"]",
-      "waitFor": "text={{home:title}}"
+      "waitFor": "text={{home:feedTitle}}"
     },
-    { "label": "home", "goto": "/", "waitFor": "text={{home:title}}" },
+    { "label": "home", "goto": "/", "waitFor": "text={{home:feedTitle}}" },
     { "label": "events", "goto": "/events", "waitFor": "text={{nav:tabs.events}}" },
     { "label": "community", "goto": "/community", "waitFor": "text={{nav:tabs.community}}" },
     { "label": "services", "goto": "/services", "waitFor": "text={{nav:tabs.services}}" },

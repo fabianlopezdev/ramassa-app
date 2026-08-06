@@ -1,6 +1,6 @@
 import { playHaptic } from '@/lib/haptics/haptics';
 import { useEffect, type ReactNode } from 'react';
-import Animated, {
+import {
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
@@ -9,6 +9,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { resolveDurationMs, resolveSpring } from '@ramassa/shared/tokens/motion';
+import { NativeWindAnimatedView } from './nativewind-animated-view';
 
 /**
  * The confirmation for a completed primary action (RAPP-70): signup, attendance
@@ -56,8 +57,8 @@ export function SuccessPop({ children, className, hasHaptic = true }: SuccessPop
   }));
 
   return (
-    <Animated.View style={animatedStyle} className={className}>
+    <NativeWindAnimatedView style={animatedStyle} className={className}>
       {children}
-    </Animated.View>
+    </NativeWindAnimatedView>
   );
 }
