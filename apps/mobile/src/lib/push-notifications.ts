@@ -16,9 +16,11 @@ import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import { getOrCreateDeviceId } from './device-id';
 import { logger, safeAsync } from './observability';
+import { foregroundNotificationBehavior } from './push-presentation';
 import {
   buildPushTokenRow,
   decidePushRegistration,
+  normalizePushPermissionStatus,
   resolvePushPlatform,
   shouldWriteToken,
   type PushPermissionStatus,
@@ -28,6 +30,17 @@ import { mmkvStorage } from './storage';
 import { supabase } from './supabase';
 
 const LAST_WRITTEN_TOKEN_KEY = 'ramassa.pushToken.lastWritten';
+
+/**
+ * Expo's default foreground policy discards the visible notification. Install
+ * the app policy explicitly so the same remote push can be observed with the
+ * app open and in the background.
+ */
+export function configurePushNotificationPresentation(): void {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => foregroundNotificationBehavior(),
+  });
+}
 
 /**
  * The EAS projectId `getExpoPushTokenAsync` needs (SDK 49+). Absent until the
@@ -50,8 +63,8 @@ function toPermissionStatus(status: Notifications.PermissionStatus): PushPermiss
 
 /** Current OS permission, without prompting. */
 export async function getPushPermissionStatus(): Promise<PushPermissionStatus> {
-  const { status } = await Notifications.getPermissionsAsync();
-  return toPermissionStatus(status);
+  const { status, canAskAgain } = await Notifications.getPermissionsAsync();
+  return normalizePushPermissionStatus(toPermissionStatus(status), canAskAgain);
 }
 
 /**
@@ -59,8 +72,8 @@ export async function getPushPermissionStatus(): Promise<PushPermissionStatus> {
  * shown and accepted (SPEC UX hard constraint: never a bare system dialog first).
  */
 export async function requestPushPermission(): Promise<PushPermissionStatus> {
-  const { status } = await Notifications.requestPermissionsAsync();
-  return toPermissionStatus(status);
+  const { status, canAskAgain } = await Notifications.requestPermissionsAsync();
+  return normalizePushPermissionStatus(toPermissionStatus(status), canAskAgain);
 }
 
 /**

@@ -7,6 +7,7 @@ import { AuthFlowStatusProvider } from '@/lib/auth-flow-status';
 import { i18n } from '@/lib/i18n';
 import { wrapRootComponent } from '@/lib/observability';
 import { registerProfileQueries } from '@/lib/profile';
+import { configurePushNotificationPresentation } from '@/lib/push-notifications';
 import { queryClient, queryPersister } from '@/lib/query-client';
 import { persistedQueryOptions } from '@/lib/query-persistence';
 import { dropCachedServerState, shouldDropCachedServerState } from '@/lib/session-cache';
@@ -25,6 +26,7 @@ import '../global.css';
 // Hold the native splash until the persisted session (if any) has resolved, so
 // a signed-in player never flashes the login screen on cold start (RAPP-13).
 void SplashScreen.preventAutoHideAsync();
+configurePushNotificationPresentation();
 
 // Hoisted rather than inline: GestureHandlerRootView is not NativeWind-aware, so
 // it needs a real style object, and an inline one would be a fresh allocation on

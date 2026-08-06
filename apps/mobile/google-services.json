@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "208280122441",
+    "project_id": "ramassa-app",
+    "storage_bucket": "ramassa-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:208280122441:android:277158855e10f454393b98",
+        "android_client_info": {
+          "package_name": "com.ramassa.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCxaDuv0D3af5jXkAxVlOgyYx0mUZn98us"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
