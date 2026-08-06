@@ -236,6 +236,17 @@ install chromium`); the flow-shots skill deliberately does not ship browser bina
 20. **A QA suite starts its own server.** Never reuse a running dev server: Vite serves what it
     already has, so the suite passes against code that no longer exists on disk. `qa:web` boots
     its own on :3100 with `--force`.
+21. **A flow keys only on something visible at that exact scroll position.** Safe signals are a
+    screen heading immediately on arrival, a field the flow is about to type into, or a control the
+    flow itself just scrolled to. Never wait on an element merely because it exists somewhere in a
+    scroll view: Android omits off-screen nodes from Maestro's matchable hierarchy, and returning
+    to a screen can restore a position where its heading is off-screen. Use a fixed header or tab
+    for that return, or deliberately scroll to the signal first.
+22. **Transition evidence must be distinguishable from the action that caused it.** Two translation
+    keys can render identical words (for example a profile's edit button and the editor title), so
+    waiting on the second label may be satisfied by the first screen and make an assertion that
+    cannot fail. Key the destination on a unique test ID or a genuinely different visible label;
+    if duplicate visible labels are intentional, disambiguate the selector explicitly.
 
 **Known gap:** on Android the development client draws a floating tools button over the app, so it
 appears in the top corner of every Android frame. iOS is clean. Tracked as its own issue; do not put

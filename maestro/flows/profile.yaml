@@ -16,7 +16,6 @@ env:
   PLAYER_EMAIL: '{{playerWithoutRequest:email}}'
   PROFILE_TITLE: '{{profile:title}}'
   EDIT_ACTION: '{{profile:editAction}}'
-  EDIT_TITLE: '{{profile:editTitle}}'
   SAVE_ACTION: '{{profile:saveAction}}'
   BACK: '{{onboarding:backAction}}'
   LANGUAGE_LABEL: '{{profile:languageLabel}}'
@@ -256,8 +255,12 @@ env:
       - waitForAnimationToEnd:
           timeout: 900
 - tapOn: '^${EDIT_ACTION}$'
+# `profile:editAction` and `profile:editTitle` render identical words. The
+# near-top field exists only on the loaded editor, so it proves both navigation
+# and readiness without an assertion that the source screen can satisfy.
 - extendedWaitUntil:
-    visible: '.*${EDIT_TITLE}.*'
+    visible:
+      id: 'profile-edit-place-of-birth'
     timeout: 30000
 - waitForAnimationToEnd:
     timeout: 3000

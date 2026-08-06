@@ -17,6 +17,7 @@ env:
   EMPTY_TITLE: '{{home:emptyTitle}}'
   OFFLINE_BANNER: '{{home:offlineBanner}}'
   BACK: '{{common:back}}'
+  TAB_HOME: '{{nav:tabs.home}}'
 ---
 # Start clean, pin the requested language through the local development menu,
 # sign in as the seeded player, then relaunch so right-to-left layout is honest.
@@ -193,10 +194,12 @@ env:
 # Under RTL on Android the in-screen back button sits under the development
 # client's floating gear. Use the system back there, and the visible control on
 # iOS. Close the tools sheet if an intercepted tap opened it.
+# The return signal is the fixed tab, not the feed heading: the list restores
+# the scroll position it had before opening the announcement.
 - repeat:
     times: 6
     while:
-      notVisible: '.*${HOME_TITLE}.*'
+      notVisible: '^${TAB_HOME}$'
     commands:
       - tapOn:
           text: '.*Close.*'
@@ -212,8 +215,24 @@ env:
       - waitForAnimationToEnd:
           timeout: 2500
 - extendedWaitUntil:
-    visible: '.*${HOME_TITLE}.*'
+    visible: '^${TAB_HOME}$'
     timeout: 30000
+
+# Return the restored feed to its header before using the category controls.
+# This burst is unconditional because iOS can expose off-screen descendants to
+# Maestro; asking whether the filter exists cannot tell us where it is.
+- repeat:
+    times: 8
+    commands:
+      - swipe:
+          start: 50%, 20%
+          end: 50%, 85%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 900
+- extendedWaitUntil:
+    visible: '^${FILTER_SOCIAL}$'
+    timeout: 15000
 
 # Each category is visible without a hidden overflow menu. The seeded social
 # category is populated; training and information prove the empty state.

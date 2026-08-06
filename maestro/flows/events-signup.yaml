@@ -235,9 +235,23 @@ env:
           timeout: 1000
 - tapOn: '^${BACK}$'
 - extendedWaitUntil:
-    visible: '^${LIST_VIEW_ACTION}$'
+    visible: '^${EVENTS_TAB}$'
     timeout: 30000
 
+# The list restores the calendar's scroll position, which can leave its view
+# toggle above the fold. Reach the physical top before keying on that control.
+- repeat:
+    times: 8
+    commands:
+      - swipe:
+          start: 50%, 20%
+          end: 50%, 85%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 900
+- extendedWaitUntil:
+    visible: '^${LIST_VIEW_ACTION}$'
+    timeout: 15000
 - tapOn: '^${LIST_VIEW_ACTION}$'
 - extendedWaitUntil:
     visible:
@@ -280,7 +294,7 @@ env:
           timeout: 1000
 - tapOn: '^${BACK}$'
 - extendedWaitUntil:
-    visible: '.*${EVENTS_TITLE}.*'
+    visible: '^${EVENTS_TAB}$'
     timeout: 30000
 
 - runFlow:

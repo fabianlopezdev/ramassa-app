@@ -28,6 +28,9 @@ env:
   # before scrolling down it. Not the tab label: that is on screen whichever tab
   # is showing, so it cannot tell one from another.
   PROFILE_TITLE: '{{profile:title}}'
+  # Hardcoded for the same reason as the Arabic tab labels below: this suite's
+  # catalog resolver is still Catalan after the app itself switches to Arabic.
+  PROFILE_TITLE_AR: ملفي الشخصي
   PUSH_DECLINE: '{{push:rationaleDecline}}'
   # Hardcoded, like the Arabic tab labels above. This suite resolves its
   # selectors from the CATALAN catalog, so once the app is in Arabic the
@@ -213,10 +216,19 @@ env:
 # Arabic profile tab. Scrolled to the entry for the same reason as the Catalan
 # pass above: the profile screen has real content now, so its dev-menu entry is
 # below the fold and off-screen nodes are not matchable on Android.
-- tapOn:
-    text: '^الملف الشخصي$'
-- waitForAnimationToEnd:
-    timeout: 3000
+- repeat:
+    times: 6
+    while:
+      notVisible: '.*${PROFILE_TITLE_AR}.*'
+    commands:
+      - tapOn:
+          text: '^الملف الشخصي$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- extendedWaitUntil:
+    visible: '.*${PROFILE_TITLE_AR}.*'
+    timeout: 15000
 # As in the Catalan pass, iOS exposes the off-screen developer-menu row to the
 # hierarchy. Reach the physical bottom before asking whether the row is visible,
 # otherwise its off-screen coordinates can land on a neighboring tab.

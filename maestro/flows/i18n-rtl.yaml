@@ -17,11 +17,13 @@ env:
   PLAYER_EMAIL: '{{player:email}}'
   DEV_MENU_LABEL: Developer menu
   HOME_TITLE: '{{home:title}}'
+  PROFILE_TITLE: '{{profile:title}}'
   PUSH_DECLINE: '{{push:rationaleDecline}}'
   TAB_HOME: '{{nav:tabs.home}}'
   TAB_PROFILE: '{{nav:tabs.profile}}'
   TAB_HOME_AR: الرئيسية
   TAB_PROFILE_AR: الملف الشخصي
+  PROFILE_TITLE_AR: ملفي الشخصي
   # Hardcoded like the Arabic tab labels: selectors resolve from the Catalan
   # catalog, and the notifications prompt reappears after every relaunch,
   # covering the tab bar being waited on.
@@ -224,17 +226,13 @@ env:
 
 # 2. The switcher itself, so the canvas shows WHERE this lives and that all five
 # languages are offered, each labelled with its own reading direction.
-# Reaching Profile is a LOOP, verified by the dev-menu entry, which is rendered
-# on Profile and nowhere else in the signed-in shell. A single tab tap can land
-# on the WRONG tab: the tab bar is a floating pill that animates into place after
-# a relaunch, and a touch dispatched against its pre-settle layout selects a
-# neighbour. Twice this put the app on Comunitat, where there is no dev-menu
-# entry, so the next six attempts to open the menu had nothing to tap and the
-# failure surfaced as "the menu will not open".
+# Reach Profile on its immediately visible heading. The dev-menu entry is the
+# final row of this long screen and cannot prove arrival until it is scrolled on
+# screen.
 - repeat:
     times: 6
     while:
-      notVisible: '.*${DEV_MENU_LABEL}.*'
+      notVisible: '.*${PROFILE_TITLE}.*'
     commands:
       - tapOn:
           text: '^${TAB_PROFILE}$'
@@ -242,17 +240,46 @@ env:
       - waitForAnimationToEnd:
           timeout: 3000
 - extendedWaitUntil:
+    visible: '.*${PROFILE_TITLE}.*'
+    timeout: 15000
+# iOS exposes off-screen descendants, so first reach the physical bottom without
+# a condition; Android stops harmlessly at the same edge.
+- repeat:
+    times: 10
+    commands:
+      - swipe:
+          start: 50%, 65%
+          end: 50%, 35%
+          duration: 400
+- waitForAnimationToEnd:
+    timeout: 2000
+- repeat:
+    times: 12
+    while:
+      notVisible: '.*${DEV_MENU_LABEL}.*'
+    commands:
+      - swipe:
+          start: 50%, 65%
+          end: 50%, 35%
+          duration: 900
+      - waitForAnimationToEnd:
+          timeout: 1500
+- swipe:
+    start: 50%, 60%
+    end: 50%, 50%
+    duration: 900
+- waitForAnimationToEnd:
+    timeout: 2000
+- extendedWaitUntil:
     visible: '.*${DEV_MENU_LABEL}.*'
     timeout: 15000
-# Open the menu, then scroll BLIND to the top. Android reopens this menu at the
-# scroll position it was last left at (iOS's fresh push resets it), so asserting
-# on the first section fails on a menu that opened perfectly. A fixed count of
-# drags needs no condition and so cannot be fooled by a hierarchy that reports
-# off-screen rows as present; at the top the extra drags are a no-op.
+# Open the menu by keying on the developer entry that is physically on screen.
+# Then scroll BLIND to the top: Android can reopen the menu at its previous
+# position, so the first section is not valid evidence until after those drags.
 - repeat:
     times: 6
     while:
-      notVisible: '.*Accounts and roles.*'
+      visible: '.*${DEV_MENU_LABEL}.*'
     commands:
       - tapOn:
           text: '.*${DEV_MENU_LABEL}.*'
@@ -268,6 +295,9 @@ env:
           duration: 400
 - waitForAnimationToEnd:
     timeout: 5000
+- extendedWaitUntil:
+    visible: '.*Accounts and roles.*'
+    timeout: 15000
 - repeat:
     times: 20
     while:
@@ -355,17 +385,12 @@ env:
 # 5. The readout that proves it, rather than asking anyone to eyeball a mirror:
 # the dev menu renders "matches the language" only when `I18nManager.isRTL`
 # agrees with the resolved direction.
-# Reaching Profile is a LOOP, verified by the dev-menu entry, which is rendered
-# on Profile and nowhere else in the signed-in shell. A single tab tap can land
-# on the WRONG tab: the tab bar is a floating pill that animates into place after
-# a relaunch, and a touch dispatched against its pre-settle layout selects a
-# neighbour. Twice this put the app on Comunitat, where there is no dev-menu
-# entry, so the next six attempts to open the menu had nothing to tap and the
-# failure surfaced as "the menu will not open".
+# The same contract in Arabic: prove the tab change on its top heading, then
+# scroll to the developer-menu row before using it.
 - repeat:
     times: 6
     while:
-      notVisible: '.*${DEV_MENU_LABEL}.*'
+      notVisible: '.*${PROFILE_TITLE_AR}.*'
     commands:
       - tapOn:
           text: '^${TAB_PROFILE_AR}$'
@@ -373,17 +398,44 @@ env:
       - waitForAnimationToEnd:
           timeout: 3000
 - extendedWaitUntil:
+    visible: '.*${PROFILE_TITLE_AR}.*'
+    timeout: 15000
+- repeat:
+    times: 10
+    commands:
+      - swipe:
+          start: 50%, 65%
+          end: 50%, 35%
+          duration: 400
+- waitForAnimationToEnd:
+    timeout: 2000
+- repeat:
+    times: 12
+    while:
+      notVisible: '.*${DEV_MENU_LABEL}.*'
+    commands:
+      - swipe:
+          start: 50%, 65%
+          end: 50%, 35%
+          duration: 900
+      - waitForAnimationToEnd:
+          timeout: 1500
+- swipe:
+    start: 50%, 60%
+    end: 50%, 50%
+    duration: 900
+- waitForAnimationToEnd:
+    timeout: 2000
+- extendedWaitUntil:
     visible: '.*${DEV_MENU_LABEL}.*'
     timeout: 15000
-# Open the menu, then scroll BLIND to the top. Android reopens this menu at the
-# scroll position it was last left at (iOS's fresh push resets it), so asserting
-# on the first section fails on a menu that opened perfectly. A fixed count of
-# drags needs no condition and so cannot be fooled by a hierarchy that reports
-# off-screen rows as present; at the top the extra drags are a no-op.
+# Open from the visible developer entry, then scroll BLIND to the top before the
+# first-section assertion. This is the same viewport contract as the Catalan
+# branch above and does not depend on Android exposing an off-screen row.
 - repeat:
     times: 6
     while:
-      notVisible: '.*Accounts and roles.*'
+      visible: '.*${DEV_MENU_LABEL}.*'
     commands:
       - tapOn:
           text: '.*${DEV_MENU_LABEL}.*'
@@ -399,6 +451,9 @@ env:
           duration: 400
 - waitForAnimationToEnd:
     timeout: 5000
+- extendedWaitUntil:
+    visible: '.*Accounts and roles.*'
+    timeout: 15000
 - repeat:
     times: 20
     while:
