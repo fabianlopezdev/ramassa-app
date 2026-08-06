@@ -138,14 +138,18 @@ set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000011", 
 
 select lives_ok(
   $$ insert into public.knowledge_articles
-       (category_id, title, body, content_type, story_status, author_id)
+       (category_id, title, body, content_type, story_status, author_id,
+        submission_language, publication_consent, publication_consent_version)
      values (
        '5eed0000-0000-4000-8004-000000000004',
        '{"ca":"El meu primer partit"}',
        '{"ca":[{"type":"paragraph","text":"Vaig sentir que formava part de l’equip."}]}'::jsonb,
        'participant_story',
        'submitted',
-       '5eed0000-0000-4000-8000-000000000011'
+       '5eed0000-0000-4000-8000-000000000011',
+       'ca',
+       true,
+       'story-publication-v1'
      ) $$,
   'a player can submit only her own unpublished story'
 );
@@ -174,14 +178,18 @@ select is(
 
 select throws_ok(
   $$ insert into public.knowledge_articles
-       (category_id, title, body, content_type, story_status, author_id)
+       (category_id, title, body, content_type, story_status, author_id,
+        submission_language, publication_consent, publication_consent_version)
      values (
        '5eed0000-0000-4000-8004-000000000004',
        '{"ca":"Suplantació"}',
        '{"ca":[{"type":"paragraph","text":"No"}]}'::jsonb,
        'participant_story',
        'submitted',
-       '5eed0000-0000-4000-8000-000000000012'
+       '5eed0000-0000-4000-8000-000000000012',
+       'ca',
+       true,
+       'story-publication-v1'
      ) $$,
   '42501',
   null::text,

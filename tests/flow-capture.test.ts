@@ -204,4 +204,31 @@ describe('every declared flow can eventually be captured', () => {
       }
     }
   });
+
+  test('new player flows dismiss the dev-client first-run prompt after clearing state', async () => {
+    for (const slug of ['knowledge-base', 'story-submission']) {
+      const spec = await Bun.file(path.join(repoRoot, 'maestro', 'flows', `${slug}.yaml`)).text();
+      expect(spec).toContain("'.*Continue.*'");
+    }
+  });
+
+  test('story submission captures both review confirmation and the abandon-draft branch', async () => {
+    const manifest = (await Bun.file(
+      path.join(repoRoot, 'flows', 'story-submission.manifest.json'),
+    ).json()) as FlowManifest;
+
+    for (const suffix of ['', '-ar']) {
+      const abandoned = manifest.steps.find((step) => step.id === `abandoned${suffix}`);
+      expect(abandoned?.ios).toBeDefined();
+      expect(abandoned?.android).toBeDefined();
+      expect(abandoned?.web).toBeDefined();
+      expect(manifest.steps.some((step) => step.id === `submitted${suffix}`)).toBe(true);
+      expect(manifest.edges).toContainEqual({
+        from: `form${suffix}`,
+        to: `abandoned${suffix}`,
+        label: expect.any(String),
+        kind: 'dismiss',
+      });
+    }
+  });
 });

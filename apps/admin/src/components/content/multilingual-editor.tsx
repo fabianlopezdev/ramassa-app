@@ -11,6 +11,7 @@ export interface MultilingualEditorProps {
   readonly fieldId: string;
   readonly sourceLabel: string;
   readonly sourceValue: string;
+  readonly sourceLanguage?: SupportedLanguage;
   readonly review: TranslationReview | undefined;
   readonly maxLength: number;
   readonly onSourceChange: (value: string) => void;
@@ -22,6 +23,7 @@ export function MultilingualEditor({
   fieldId,
   sourceLabel,
   sourceValue,
+  sourceLanguage = 'ca',
   review,
   maxLength,
   onSourceChange,
@@ -39,7 +41,7 @@ export function MultilingualEditor({
         <Textarea
           id={`${fieldId}-source`}
           data-testid={`${fieldId}-source`}
-          dir="ltr"
+          dir={getLanguageDirection(sourceLanguage)}
           value={sourceValue}
           maxLength={maxLength}
           onChange={(event) => onSourceChange(event.target.value)}

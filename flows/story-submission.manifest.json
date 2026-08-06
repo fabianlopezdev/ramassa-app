@@ -1,0 +1,79 @@
+{
+  "app": "Ramassà",
+  "slug": "story-submission",
+  "title": "Enviament d'històries",
+  "surface": "mobile",
+  "description": "Una jugadora explica la seva experiència, accepta un consentiment explícit de publicació i envia la història a revisió abans que altres participants la puguin veure.",
+  "steps": [
+    {
+      "id": "form",
+      "label": "Formulari de la història",
+      "ios": "story-submission/ios/01-form.png",
+      "android": "story-submission/android/01-form.png",
+      "web": "story-submission/web/03-form.png"
+    },
+    {
+      "id": "consent",
+      "label": "Consentiment explícit seleccionat",
+      "ios": "story-submission/ios/03-consent.png",
+      "android": "story-submission/android/03-consent.png",
+      "web": "story-submission/web/06-consent.png"
+    },
+    {
+      "id": "submitted",
+      "label": "Història enviada a revisió",
+      "ios": "story-submission/ios/04-submitted.png",
+      "android": "story-submission/android/04-submitted.png",
+      "web": "story-submission/web/07-submitted.png"
+    },
+    {
+      "id": "abandoned",
+      "label": "Esborrany descartat i retorn a l'inici",
+      "ios": "story-submission/ios/02-abandoned.png",
+      "android": "story-submission/android/02-abandoned.png",
+      "web": "story-submission/web/04-abandoned.png"
+    },
+    {
+      "id": "form-ar",
+      "label": "نموذج القصة (àrab, dreta a esquerra)",
+      "ios": "story-submission/ios/01-form-ar.png",
+      "android": "story-submission/android/01-form-ar.png",
+      "web": "story-submission/web/03-form-ar.png"
+    },
+    {
+      "id": "consent-ar",
+      "label": "موافقة النشر المحددة",
+      "ios": "story-submission/ios/03-consent-ar.png",
+      "android": "story-submission/android/03-consent-ar.png",
+      "web": "story-submission/web/06-consent-ar.png"
+    },
+    {
+      "id": "submitted-ar",
+      "label": "تم إرسال القصة للمراجعة",
+      "ios": "story-submission/ios/04-submitted-ar.png",
+      "android": "story-submission/android/04-submitted-ar.png",
+      "web": "story-submission/web/07-submitted-ar.png"
+    },
+    {
+      "id": "abandoned-ar",
+      "label": "تم تجاهل المسودة والعودة إلى البداية",
+      "ios": "story-submission/ios/02-abandoned-ar.png",
+      "android": "story-submission/android/02-abandoned-ar.png",
+      "web": "story-submission/web/04-abandoned-ar.png"
+    }
+  ],
+  "edges": [
+    { "from": "form", "to": "consent", "label": "Escriu i accepta" },
+    { "from": "consent", "to": "submitted", "label": "Envia", "kind": "positive" },
+    { "from": "form", "to": "abandoned", "label": "Torna enrere", "kind": "dismiss" },
+    { "from": "form-ar", "to": "consent-ar", "label": "اكتبي ووافقي" },
+    { "from": "consent-ar", "to": "submitted-ar", "label": "إرسال", "kind": "positive" },
+    { "from": "form-ar", "to": "abandoned-ar", "label": "الرجوع", "kind": "dismiss" }
+  ],
+  "notes": [
+    "La còpia explica que l'equip revisarà la història abans de publicar-la i que només mostrarà el nom de pila.",
+    "El consentiment és una casella accessible obligatòria i el servidor en registra la data, la llengua i la versió.",
+    "Les fotos són opcionals, es limiten a tres, es comprimeixen al dispositiu i passen pel flux multimèdia autenticat.",
+    "Sense connexió el formulari es conserva en memòria, explica el bloqueig i no intenta una cua opaca."
+  ]
+}

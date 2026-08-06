@@ -33,6 +33,7 @@ function DevAccountRow({
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={`Sign in as ${account.email}`}
+      accessibilityState={{ selected: isCurrent }}
       onPress={() => onPress(account)}
       className={`min-h-recommended justify-center rounded-md border px-md py-sm active:opacity-70 ${
         isCurrent ? 'border-primary bg-primary-light/20' : 'border-neutral-200 bg-white'

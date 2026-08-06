@@ -4,10 +4,11 @@ import { join } from 'node:path';
 import { defineConfig } from '@playwright/test';
 
 const adminPort = process.env.RAMASSA_QA_ADMIN_PORT ?? '4193';
+const playerPort = process.env.RAMASSA_QA_PLAYER_PORT ?? '4194';
 const mediaPort = process.env.RAMASSA_QA_MEDIA_PORT ?? '8893';
 const translationPort = process.env.RAMASSA_QA_TRANSLATION_PORT ?? '8793';
 const adminOrigin = `http://localhost:${adminPort}`;
-const allowedOrigins = `${adminOrigin},http://127.0.0.1:${adminPort}`;
+const playerOrigin = `http://localhost:${playerPort}`;
 const workerStateRoot = mkdtempSync(join(tmpdir(), 'ramassa-web-qa-'));
 
 /**
@@ -53,8 +54,14 @@ export default defineConfig({
       //
       // Port 4193 also keeps it clear of the dev server a person has open while
       // the suite runs.
-      command: `EXPO_PUBLIC_MEDIA_WORKER_URL=http://127.0.0.1:${mediaPort} EXPO_PUBLIC_TRANSLATION_WORKER_URL=http://127.0.0.1:${translationPort} bun run --cwd apps/admin dev -- --port ${adminPort} --strictPort --force`,
+      command: `EXPO_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321 EXPO_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH EXPO_PUBLIC_MEDIA_WORKER_URL=http://127.0.0.1:${mediaPort} EXPO_PUBLIC_TRANSLATION_WORKER_URL=http://127.0.0.1:${translationPort} bun run --cwd apps/admin dev -- --port ${adminPort} --strictPort --force`,
       url: adminOrigin,
+      reuseExistingServer: false,
+      timeout: 180_000,
+    },
+    {
+      command: `CI=1 RAMASSA_QA_PLAYER_PORT=${playerPort} EXPO_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321 EXPO_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH EXPO_PUBLIC_MEDIA_WORKER_URL=http://127.0.0.1:${mediaPort} bun run scripts/start-player-web-qa.ts`,
+      url: playerOrigin,
       reuseExistingServer: false,
       timeout: 180_000,
     },
@@ -67,13 +74,13 @@ export default defineConfig({
       // `--port 8893` matches EXPO_PUBLIC_MEDIA_WORKER_URL in the admin's env,
       // which Vite inlines at build time, and 4193 is in the Worker's CORS
       // allowlist for the same reason.
-      command: `bun run --cwd workers/media dev -- --port ${mediaPort} --persist-to ${workerStateRoot}/media --var ALLOWED_ORIGINS:${allowedOrigins}`,
+      command: `bun run --cwd workers/media dev -- --port ${mediaPort} --persist-to ${workerStateRoot}/media`,
       url: `http://127.0.0.1:${mediaPort}/health`,
       reuseExistingServer: false,
       timeout: 180_000,
     },
     {
-      command: `bun run --cwd workers/translation dev:qa -- --port ${translationPort} --persist-to ${workerStateRoot}/translation --var ALLOWED_ORIGINS:${allowedOrigins}`,
+      command: `bun run --cwd workers/translation dev:qa -- --port ${translationPort} --persist-to ${workerStateRoot}/translation`,
       url: `http://127.0.0.1:${translationPort}/health`,
       reuseExistingServer: false,
       timeout: 180_000,

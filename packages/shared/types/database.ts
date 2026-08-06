@@ -533,11 +533,16 @@ export type Database = {
           image_url: string | null;
           is_published: boolean;
           org_id: string;
+          publication_consent: boolean | null;
+          publication_consent_at: string | null;
+          publication_consent_version: string | null;
           published_at: string | null;
           reviewed_at: string | null;
           reviewed_by: string | null;
           reviewer_note: string | null;
+          story_image_urls: string[];
           story_status: string | null;
+          submission_language: string | null;
           title: Json;
           updated_at: string;
           video_url: string | null;
@@ -556,11 +561,16 @@ export type Database = {
           image_url?: string | null;
           is_published?: boolean;
           org_id?: string;
+          publication_consent?: boolean | null;
+          publication_consent_at?: string | null;
+          publication_consent_version?: string | null;
           published_at?: string | null;
           reviewed_at?: string | null;
           reviewed_by?: string | null;
           reviewer_note?: string | null;
+          story_image_urls?: string[];
           story_status?: string | null;
+          submission_language?: string | null;
           title: Json;
           updated_at?: string;
           video_url?: string | null;
@@ -579,11 +589,16 @@ export type Database = {
           image_url?: string | null;
           is_published?: boolean;
           org_id?: string;
+          publication_consent?: boolean | null;
+          publication_consent_at?: string | null;
+          publication_consent_version?: string | null;
           published_at?: string | null;
           reviewed_at?: string | null;
           reviewed_by?: string | null;
           reviewer_note?: string | null;
+          story_image_urls?: string[];
           story_status?: string | null;
+          submission_language?: string | null;
           title?: Json;
           updated_at?: string;
           video_url?: string | null;
@@ -1090,6 +1105,10 @@ export type Database = {
         Args: { content: Json; require_all_languages?: boolean };
         Returns: boolean;
       };
+      is_knowledge_body_valid_for_language: {
+        Args: { content: Json; source_language: string };
+        Returns: boolean;
+      };
       is_localized_content_valid: {
         Args: {
           content: Json;
@@ -1098,7 +1117,19 @@ export type Database = {
         };
         Returns: boolean;
       };
+      is_localized_content_valid_for_language: {
+        Args: { content: Json; max_length: number; source_language: string };
+        Returns: boolean;
+      };
       is_staff_or_admin: { Args: never; Returns: boolean };
+      is_story_image_urls_valid: {
+        Args: {
+          expected_author_id: string;
+          expected_org_id: string;
+          image_urls: string[];
+        };
+        Returns: boolean;
+      };
       is_story_status_transition_allowed: {
         Args: { new_status: string; old_status: string };
         Returns: boolean;

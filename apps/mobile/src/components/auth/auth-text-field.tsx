@@ -18,7 +18,7 @@ export interface AuthTextFieldProps extends TextInputProps {
 }
 
 export const AuthTextField = forwardRef<TextInput, AuthTextFieldProps>(function AuthTextField(
-  { label, errorMessage, ...inputProps },
+  { label, errorMessage, style, ...inputProps },
   ref,
 ) {
   const languageFontClass = useLanguageFontClass();
@@ -32,7 +32,7 @@ export const AuthTextField = forwardRef<TextInput, AuthTextFieldProps>(function 
       <TextInput
         ref={ref}
         accessibilityLabel={label}
-        style={continuousCorners}
+        style={[continuousCorners, style]}
         placeholderTextColor={tokens.colors.neutral[400]}
         className={`min-h-recommended rounded-md border px-md text-start text-md text-neutral-900 ${
           hasError ? 'border-error' : 'border-neutral-300'

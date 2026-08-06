@@ -1,5 +1,6 @@
-import { requestCatalanTranslation } from '@/lib/translation-worker';
+import { requestTranslation } from '@/lib/translation-worker';
 import { AppError } from '@ramassa/shared/errors';
+import { SUPPORTED_LANGUAGES, type SupportedLanguage } from '@ramassa/shared/i18n';
 import type {
   KnowledgeBlock,
   LocalizedKnowledgeBody,
@@ -7,47 +8,59 @@ import type {
 } from '@ramassa/shared/knowledge';
 import type { TranslationReview } from '@ramassa/shared/translation';
 
-const TARGET_LANGUAGES = ['es', 'en', 'ar', 'fa'] as const;
-
 function reviewedTextByLanguage(review: TranslationReview) {
   return Object.fromEntries(
     review.suggestions.map((suggestion) => [suggestion.language, suggestion.reviewedText]),
-  ) as Record<(typeof TARGET_LANGUAGES)[number], string>;
+  ) as Partial<Record<SupportedLanguage, string>>;
 }
 
-async function translateText(source: string) {
-  const result = await requestCatalanTranslation(source);
+async function translateText(
+  source: string,
+  sourceLanguage: SupportedLanguage,
+  targetLanguages: readonly SupportedLanguage[],
+) {
+  const result = await requestTranslation(source, sourceLanguage, targetLanguages);
   if (!result.ok) throw result.error;
   return reviewedTextByLanguage(result.value);
 }
 
 export async function translateKnowledgeBody(
   sourceBlocks: readonly KnowledgeBlock[],
+  sourceLanguage: SupportedLanguage,
 ): Promise<LocalizedKnowledgeBody> {
+  const targetLanguages = SUPPORTED_LANGUAGES.filter((language) => language !== sourceLanguage);
   const translatedBlocks = await Promise.all(
     sourceBlocks.map(async (block) => {
       if (block.type === 'paragraph') {
-        return { type: 'paragraph', source: block, text: await translateText(block.text) } as const;
+        return {
+          type: 'paragraph',
+          source: block,
+          text: await translateText(block.text, sourceLanguage, targetLanguages),
+        } as const;
       }
       const [title, text, imageAlt] = await Promise.all([
-        translateText(block.title),
-        translateText(block.text),
-        block.imageAlt === null ? null : translateText(block.imageAlt),
+        translateText(block.title, sourceLanguage, targetLanguages),
+        translateText(block.text, sourceLanguage, targetLanguages),
+        block.imageAlt === null
+          ? null
+          : translateText(block.imageAlt, sourceLanguage, targetLanguages),
       ]);
       return { type: 'step', source: block, title, text, imageAlt } as const;
     }),
   );
 
-  const body: Record<string, KnowledgeBlock[]> = { ca: [...sourceBlocks] };
-  for (const language of TARGET_LANGUAGES) {
+  const body: Partial<Record<SupportedLanguage, KnowledgeBlock[]>> = {
+    [sourceLanguage]: [...sourceBlocks],
+  };
+  for (const language of targetLanguages) {
     body[language] = translatedBlocks.map((translated) => {
       if (translated.type === 'paragraph') {
-        return { type: 'paragraph', text: translated.text[language] };
+        return { type: 'paragraph', text: translated.text[language]! };
       }
       return {
         type: 'step',
-        title: translated.title[language],
-        text: translated.text[language],
+        title: translated.title[language]!,
+        text: translated.text[language]!,
         imageUrl: translated.source.imageUrl,
         imageAlt: translated.imageAlt?.[language] ?? null,
       };

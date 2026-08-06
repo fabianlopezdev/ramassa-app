@@ -10,6 +10,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getAnnouncementLifecycle } from '@ramassa/shared/announcements';
 import type { AppErrorCode } from '@ramassa/shared/errors';
+import { resolveLocalizedText } from '@ramassa/shared/i18n';
 import {
   deleteKnowledgeArticle,
   KNOWLEDGE_PAGE_SIZE,
@@ -64,7 +65,8 @@ export function KnowledgeArticlesTable({ page, search }: KnowledgeArticlesTableP
             className="font-medium underline-offset-4 hover:underline"
             data-testid={`knowledge-link-${row.original.id}`}
           >
-            {row.original.title.ca}
+            {resolveLocalizedText(row.original.title, 'ca')?.text ??
+              t('knowledge:contentUnavailable')}
           </Link>
         ),
       },

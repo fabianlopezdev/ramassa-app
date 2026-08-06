@@ -1,6 +1,7 @@
 import { safeAsync } from '@/lib/observability';
 import { adminClientEnv, supabase } from '@/lib/supabase';
 import { AppError, errorCodeRegistry, type AppErrorCode } from '@ramassa/shared/errors';
+import type { SupportedLanguage } from '@ramassa/shared/i18n';
 import {
   translationRequestSchema,
   translationWorkerResponseSchema,
@@ -19,7 +20,11 @@ async function workerError(response: Response): Promise<AppError> {
   });
 }
 
-export async function requestCatalanTranslation(text: string) {
+export async function requestTranslation(
+  text: string,
+  from: SupportedLanguage,
+  to: readonly SupportedLanguage[],
+) {
   return safeAsync<TranslationReview>(
     async () => {
       const workerUrl = adminClientEnv.EXPO_PUBLIC_TRANSLATION_WORKER_URL;
@@ -30,8 +35,8 @@ export async function requestCatalanTranslation(text: string) {
 
       const request = translationRequestSchema.parse({
         text,
-        from: 'ca',
-        to: ['es', 'en', 'ar', 'fa'],
+        from,
+        to,
       });
       const response = await fetch(`${workerUrl}/translations`, {
         method: 'POST',
@@ -49,6 +54,10 @@ export async function requestCatalanTranslation(text: string) {
       if (!parsed.success) throw new AppError('TRANSLATION-2');
       return parsed.data.review;
     },
-    { code: 'TRANSLATION-1', context: { targetCount: 4 } },
+    { code: 'TRANSLATION-1', context: { targetCount: to.length } },
   );
+}
+
+export function requestCatalanTranslation(text: string) {
+  return requestTranslation(text, 'ca', ['es', 'en', 'ar', 'fa']);
 }
