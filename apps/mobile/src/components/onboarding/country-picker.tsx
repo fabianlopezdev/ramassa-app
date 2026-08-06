@@ -28,7 +28,7 @@ import {
   getCountryOptions,
   searchCountries,
   type CountryOption,
-} from '@ramassa/shared/i18n';
+} from '@ramassa/shared/i18n/countries';
 import type { LanguageCode } from '@ramassa/shared/schemas';
 
 /**

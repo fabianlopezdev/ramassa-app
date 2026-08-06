@@ -6,15 +6,22 @@
  * and without accents.
  */
 
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, spyOn, test } from 'bun:test';
 import {
   COMMON_COUNTRY_CODES,
   countryLabelForCanonical,
   getCountryOptions,
   searchCountries,
-} from './countries';
+} from '@ramassa/shared/i18n/countries';
 
 describe('country options', () => {
+  test('reuses one sorted option list per locale', () => {
+    const firstCatalanOptions = getCountryOptions('ca');
+
+    expect(getCountryOptions('ca')).toBe(firstCatalanOptions);
+    expect(getCountryOptions('ar')).not.toBe(firstCatalanOptions);
+  });
+
   test('every locale saves the SAME canonical value for the same country', () => {
     const canonicalByLocale = (['ca', 'es', 'en', 'ar', 'fa'] as const).map(
       (locale) => getCountryOptions(locale).find((option) => option.code === 'SY')?.canonical,
@@ -48,6 +55,16 @@ describe('country options', () => {
 });
 
 describe('searchCountries', () => {
+  test('normalizes only the query while filtering', () => {
+    const options = getCountryOptions('ca');
+    const normalize = spyOn(String.prototype, 'normalize');
+
+    searchCountries(options, 'siria');
+
+    expect(normalize).toHaveBeenCalledTimes(1);
+    normalize.mockRestore();
+  });
+
   test('accent-insensitive: "siria" finds Síria', () => {
     const options = getCountryOptions('ca');
     const hits = searchCountries(options, 'siria');

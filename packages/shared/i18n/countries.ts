@@ -11,7 +11,7 @@
  */
 
 import countriesData from './countries.json';
-import type { SupportedLanguage } from './languages';
+import { SUPPORTED_LANGUAGES, type SupportedLanguage } from './languages';
 
 export interface CountryOption {
   readonly code: string;
@@ -27,6 +27,7 @@ interface CountryEntry {
 }
 
 const COUNTRIES = countriesData as readonly CountryEntry[];
+const COMBINING_MARKS = /[\u0300-\u036f]/g;
 
 /**
  * The roster's own nationalities, pinned above the search so the answer most
@@ -36,15 +37,35 @@ export const COMMON_COUNTRY_CODES: readonly string[] = ['SY', 'UA', 'AF', 'MA', 
 
 /** Accent- and case-insensitive, so "siria" finds "Síria" and "سوريا" alike. */
 function normalizeForSearch(value: string): string {
-  return value.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  return value.toLowerCase().normalize('NFD').replace(COMBINING_MARKS, '');
 }
 
-export function getCountryOptions(locale: SupportedLanguage): CountryOption[] {
-  return COUNTRIES.map((entry) => ({
+const NORMALIZED_SEARCH_TEXT_BY_CODE = new Map(
+  COUNTRIES.map((entry) => [
+    entry.code,
+    Object.values(entry.names).map(normalizeForSearch).join('\n'),
+  ]),
+);
+
+const COUNTRY_COLLATOR_BY_LOCALE = new Map(
+  SUPPORTED_LANGUAGES.map((locale) => [locale, new Intl.Collator(locale)]),
+);
+const COUNTRY_OPTIONS_BY_LOCALE = new Map<SupportedLanguage, readonly CountryOption[]>();
+
+export function getCountryOptions(locale: SupportedLanguage): readonly CountryOption[] {
+  const cached = COUNTRY_OPTIONS_BY_LOCALE.get(locale);
+  if (cached !== undefined) return cached;
+
+  const collator = COUNTRY_COLLATOR_BY_LOCALE.get(locale);
+  if (collator === undefined) return [];
+
+  const options = COUNTRIES.map((entry) => ({
     code: entry.code,
     label: entry.names[locale],
     canonical: entry.names.ca,
-  })).sort((a, b) => a.label.localeCompare(b.label, locale));
+  })).sort((a, b) => collator.compare(a.label, b.label));
+  COUNTRY_OPTIONS_BY_LOCALE.set(locale, options);
+  return options;
 }
 
 /**
@@ -52,15 +73,15 @@ export function getCountryOptions(locale: SupportedLanguage): CountryOption[] {
  * often knows her country's Latin spelling from documents even when the app is
  * in Arabic, and vice versa.
  */
-export function searchCountries(options: CountryOption[], query: string): CountryOption[] {
+export function searchCountries(
+  options: readonly CountryOption[],
+  query: string,
+): readonly CountryOption[] {
   const needle = normalizeForSearch(query.trim());
   if (needle === '') return options;
-  const byCode = new Map(COUNTRIES.map((entry) => [entry.code, entry]));
-  return options.filter((option) => {
-    const entry = byCode.get(option.code);
-    if (entry === undefined) return false;
-    return Object.values(entry.names).some((name) => normalizeForSearch(name).includes(needle));
-  });
+  return options.filter((option) =>
+    NORMALIZED_SEARCH_TEXT_BY_CODE.get(option.code)?.includes(needle),
+  );
 }
 
 /** The localized label for an already-stored canonical value, for re-display. */

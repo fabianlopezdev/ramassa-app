@@ -29,11 +29,8 @@ import { useMemo, useState } from 'react';
 import { Controller, useForm, type Control, type FieldErrors } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import type { z } from 'zod';
-import {
-  getCountryOptions,
-  LANGUAGE_NATIVE_NAMES,
-  SUPPORTED_LANGUAGES,
-} from '@ramassa/shared/i18n';
+import { LANGUAGE_NATIVE_NAMES, SUPPORTED_LANGUAGES } from '@ramassa/shared/i18n';
+import { getCountryOptions } from '@ramassa/shared/i18n/countries';
 import type { ParticipantDetailRow } from '@ramassa/shared/participants';
 import {
   buildUpdateOwnProfilePayload,
