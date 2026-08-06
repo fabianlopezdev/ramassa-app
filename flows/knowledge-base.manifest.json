@@ -1,0 +1,63 @@
+{
+  "app": "Ramassà",
+  "slug": "knowledge-base",
+  "title": "Base de coneixement",
+  "surface": "mobile",
+  "description": "Les jugadores exploren guies i històries publicades per tema, obren contingut estructurat i conserven una còpia local per consultar-la sense connexió.",
+  "steps": [
+    {
+      "id": "browse",
+      "label": "Exploració per temes",
+      "ios": "knowledge-base/ios/01-browse.png",
+      "android": "knowledge-base/android/01-browse.png",
+      "web": "knowledge-base/web/03-browse.png"
+    },
+    {
+      "id": "topic",
+      "label": "Recursos d'alfabetització digital",
+      "ios": "knowledge-base/ios/02-topic.png",
+      "android": "knowledge-base/android/02-topic.png",
+      "web": "knowledge-base/web/04-topic.png"
+    },
+    {
+      "id": "detail",
+      "label": "Guia segura amb passos numerats",
+      "ios": "knowledge-base/ios/03-detail.png",
+      "android": "knowledge-base/android/03-detail.png",
+      "web": "knowledge-base/web/05-detail.png"
+    },
+    {
+      "id": "browse-ar",
+      "label": "تصفح حسب الموضوع (àrab, dreta a esquerra)",
+      "ios": "knowledge-base/ios/01-browse-ar.png",
+      "android": "knowledge-base/android/01-browse-ar.png",
+      "web": "knowledge-base/web/03-browse-ar.png"
+    },
+    {
+      "id": "topic-ar",
+      "label": "موارد المهارات الرقمية",
+      "ios": "knowledge-base/ios/02-topic-ar.png",
+      "android": "knowledge-base/android/02-topic-ar.png",
+      "web": "knowledge-base/web/04-topic-ar.png"
+    },
+    {
+      "id": "detail-ar",
+      "label": "دليل آمن بخطوات مرقمة",
+      "ios": "knowledge-base/ios/03-detail-ar.png",
+      "android": "knowledge-base/android/03-detail-ar.png",
+      "web": "knowledge-base/web/05-detail-ar.png"
+    }
+  ],
+  "edges": [
+    { "from": "browse", "to": "topic", "label": "Tria un tema" },
+    { "from": "topic", "to": "detail", "label": "Obre la guia" },
+    { "from": "browse-ar", "to": "topic-ar", "label": "اختاري موضوعاً" },
+    { "from": "topic-ar", "to": "detail-ar", "label": "افتحي الدليل" }
+  ],
+  "notes": [
+    "Les categories fan visible el volum de recursos i eviten un menú ocult.",
+    "El detall comparteix el mateix renderitzador segur amb l'administració i numera només els passos vàlids.",
+    "Les consultes cancel·lables i la persistència local permeten continuar llegint contingut desat sense connexió.",
+    "El web, iOS i Android comproven la mateixa jerarquia en català i amb direcció RTL en àrab."
+  ]
+}

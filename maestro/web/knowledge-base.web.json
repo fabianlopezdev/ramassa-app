@@ -1,0 +1,39 @@
+{
+  "slug": "knowledge-base",
+  "viewport": { "width": 1440, "height": 900 },
+  "deviceScaleFactor": 2,
+  "timezoneId": "Europe/Madrid",
+  "settle": { "timeout": 6000, "interval": 150 },
+  "steps": [
+    {
+      "label": "auth-open",
+      "goto": "/login",
+      "click": "[aria-label=\"{{auth:usePasswordInstead}}\"]",
+      "waitFor": "[aria-label=\"{{auth:passwordLabel}}\"]"
+    },
+    {
+      "label": "auth-submit",
+      "fill": [
+        { "selector": "[aria-label=\"{{auth:emailLabel}}\"]", "value": "{{player:email}}" },
+        { "selector": "[aria-label=\"{{auth:passwordLabel}}\"]", "value": "{{player:password}}" }
+      ],
+      "click": "[aria-label=\"{{auth:passwordAction}}\"]",
+      "waitFor": "[data-testid=\"open-knowledge-base\"]"
+    },
+    {
+      "label": "browse",
+      "click": "[data-testid=\"open-knowledge-base\"]",
+      "waitFor": "[data-testid=\"knowledge-base-screen\"]"
+    },
+    {
+      "label": "topic",
+      "click": "[data-testid=\"knowledge-filter-5eed0000-0000-4000-8004-000000000002\"]",
+      "waitFor": "[data-testid=\"knowledge-article-5eed0000-0000-4000-8005-000000000001\"]"
+    },
+    {
+      "label": "detail",
+      "click": "[data-testid=\"knowledge-article-5eed0000-0000-4000-8005-000000000001\"]",
+      "waitFor": "[data-testid=\"knowledge-detail-screen\"]"
+    }
+  ]
+}

@@ -4,13 +4,16 @@ import { Textarea } from '@/components/ui/textarea';
 import { mediaWorkerUrl } from '@/lib/media-worker';
 import { safeAsync } from '@/lib/observability';
 import { supabase } from '@/lib/supabase';
-import { requestCatalanTranslation } from '@/lib/translation-worker';
+import { requestTranslation } from '@/lib/translation-worker';
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { localizedTextFromReview } from '@ramassa/shared/announcements';
 import { useAuth } from '@ramassa/shared/auth';
 import { AppError, type AppErrorCode } from '@ramassa/shared/errors';
-import { type SupportedLanguage } from '@ramassa/shared/i18n';
+import {
+  LANGUAGE_NATIVE_NAMES,
+  SUPPORTED_LANGUAGES,
+  type SupportedLanguage,
+} from '@ramassa/shared/i18n';
 import { compressBrowserImage } from '@ramassa/shared/image-compression';
 import {
   createKnowledgeArticle,
@@ -34,6 +37,7 @@ import {
 } from '@ramassa/shared/translation';
 import { useTranslationReview } from '@ramassa/shared/translation/react';
 import { uploadFile } from '@ramassa/shared/upload-client';
+import { AuthenticatedMediaImage } from './authenticated-media-image';
 import { KnowledgeBodyEditor } from './knowledge-body-editor';
 import {
   applyStepImageUrls,
@@ -46,7 +50,6 @@ import { ScheduledPublishFields, type PublishMode } from './scheduled-publish-fi
 import { StructuredContentRenderer } from './structured-content-renderer';
 import { TranslationReviewPanel } from './translation-review-panel';
 
-const TARGET_LANGUAGES = ['es', 'en', 'ar', 'fa'] as const;
 const STAFF_CONTENT_TYPES = KNOWLEDGE_CONTENT_TYPES.filter(
   (type): type is Exclude<KnowledgeContentType, 'participant_story'> =>
     type !== 'participant_story',
@@ -62,15 +65,18 @@ function reviewOptions(
   article: KnowledgeArticleListRow | undefined,
 ): CreateTranslationReviewOptions | undefined {
   if (article === undefined) return undefined;
+  const sourceLanguage = article.submission_language ?? 'ca';
+  const sourceText = article.title[sourceLanguage];
+  if (sourceText === undefined) return undefined;
   const translations = Object.fromEntries(
-    TARGET_LANGUAGES.flatMap((language) => {
+    SUPPORTED_LANGUAGES.filter((language) => language !== sourceLanguage).flatMap((language) => {
       const text = article.title[language];
       return text === undefined ? [] : [[language, text]];
     }),
   );
   return Object.keys(translations).length === 0
     ? undefined
-    : { sourceLanguage: 'ca', sourceText: article.title.ca, translations };
+    : { sourceLanguage, sourceText, translations };
 }
 
 function approveAll(
@@ -90,16 +96,23 @@ function initialMode(article: KnowledgeArticleListRow | undefined): PublishMode 
 export function KnowledgeEditor({ article, categories, onSaved }: KnowledgeEditorProps) {
   const { t } = useTranslation(['knowledge', 'errors']);
   const { session } = useAuth();
+  const sourceLanguage = article?.submission_language ?? 'ca';
+  const targetLanguages = SUPPORTED_LANGUAGES.filter((language) => language !== sourceLanguage);
   const [categoryId, setCategoryId] = useState(article?.category_id ?? categories[0]?.id ?? '');
   const [contentType, setContentType] = useState<KnowledgeContentType>(
     article?.content_type ?? 'article',
   );
-  const [title, setTitle] = useState(article?.title.ca ?? '');
+  const [title, setTitle] = useState(article?.title[sourceLanguage] ?? '');
   const [body, setBody] = useState<LocalizedKnowledgeBody>(
-    article?.body ?? { ca: [{ type: 'paragraph', text: '' }] },
+    article?.body ?? { [sourceLanguage]: [{ type: 'paragraph', text: '' }] },
   );
   const [approvedBodyLanguages, setApprovedBodyLanguages] = useState<Set<SupportedLanguage>>(
-    () => new Set(TARGET_LANGUAGES.filter((language) => article?.body[language] !== undefined)),
+    () =>
+      new Set(
+        SUPPORTED_LANGUAGES.filter(
+          (language) => language !== sourceLanguage && article?.body[language] !== undefined,
+        ),
+      ),
   );
   const [stepFiles, setStepFiles] = useState<Record<number, File>>({});
   const [videoUrl, setVideoUrl] = useState(article?.video_url ?? '');
@@ -118,13 +131,15 @@ export function KnowledgeEditor({ article, categories, onSaved }: KnowledgeEdito
     setErrorCode(null);
     const result = await safeAsync(
       async () => {
+        const sourceBlocks = body[sourceLanguage];
+        if (sourceBlocks === undefined) throw new AppError('VALIDATION-1');
         const [titleResult, translatedBody] = await Promise.all([
-          requestCatalanTranslation(title),
-          translateKnowledgeBody(body.ca),
+          requestTranslation(title, sourceLanguage, targetLanguages),
+          translateKnowledgeBody(sourceBlocks, sourceLanguage),
         ]);
         if (!titleResult.ok) throw titleResult.error;
         titleReview.start({
-          sourceLanguage: 'ca',
+          sourceLanguage,
           sourceText: title,
           translations: Object.fromEntries(
             titleResult.value.suggestions.map((suggestion) => [
@@ -183,7 +198,7 @@ export function KnowledgeEditor({ article, categories, onSaved }: KnowledgeEdito
       publishing &&
       (titleReview.review === undefined ||
         !isTranslationReviewPublishable(titleReview.review) ||
-        !TARGET_LANGUAGES.every((language) => approvedBodyLanguages.has(language)))
+        !targetLanguages.every((language) => approvedBodyLanguages.has(language)))
     ) {
       setErrorCode('TRANSLATION-4');
       return;
@@ -195,7 +210,14 @@ export function KnowledgeEditor({ article, categories, onSaved }: KnowledgeEdito
         const storedBody = await uploadStepImages();
         const input = {
           categoryId,
-          title: localizedTextFromReview(title, titleReview.review),
+          title: {
+            [sourceLanguage]: title.trim(),
+            ...Object.fromEntries(
+              (titleReview.review?.suggestions ?? [])
+                .filter((suggestion) => suggestion.status === 'approved')
+                .map((suggestion) => [suggestion.language, suggestion.reviewedText]),
+            ),
+          },
           body: storedBody,
           imageUrl: article?.image_url ?? null,
           videoUrl: videoUrl.trim() || null,
@@ -203,6 +225,11 @@ export function KnowledgeEditor({ article, categories, onSaved }: KnowledgeEdito
           contentType,
           storyStatus: nextStoryPublicationState(article?.story_status ?? null, publishing),
           authorId: article?.author_id ?? null,
+          submissionLanguage: article?.submission_language ?? null,
+          storyImageUrls: [...(article?.story_image_urls ?? [])],
+          publicationConsent: article?.publication_consent ?? null,
+          publicationConsentAt: article?.publication_consent_at ?? null,
+          publicationConsentVersion: article?.publication_consent_version ?? null,
           reviewerNote:
             article?.content_type === 'participant_story' ? reviewerNote.trim() || null : null,
           isPublished: publishing,
@@ -266,8 +293,15 @@ export function KnowledgeEditor({ article, categories, onSaved }: KnowledgeEdito
       />
       <MultilingualEditor
         fieldId="knowledge-title"
-        sourceLabel={t('knowledge:fieldTitle')}
+        sourceLabel={
+          article?.submission_language === null || article?.submission_language === undefined
+            ? t('knowledge:fieldTitle')
+            : t('knowledge:fieldSourceTitle', {
+                language: LANGUAGE_NATIVE_NAMES[sourceLanguage],
+              })
+        }
         sourceValue={title}
+        sourceLanguage={sourceLanguage}
         review={titleReview.review}
         maxLength={MAX_KNOWLEDGE_TITLE_LENGTH}
         translationNamespace="knowledge"
@@ -287,12 +321,13 @@ export function KnowledgeEditor({ article, categories, onSaved }: KnowledgeEdito
       />
       <KnowledgeBodyEditor
         body={body}
+        sourceLanguage={sourceLanguage}
         approvedLanguages={approvedBodyLanguages}
         stepImageNames={Object.fromEntries(
           Object.entries(stepFiles).map(([index, file]) => [index, file.name]),
         )}
         onSourceChange={(blocks) => {
-          setBody({ ca: blocks });
+          setBody({ [sourceLanguage]: blocks });
           setApprovedBodyLanguages(new Set());
         }}
         onTranslationChange={(language, blocks) => {
@@ -322,11 +357,36 @@ export function KnowledgeEditor({ article, categories, onSaved }: KnowledgeEdito
       </Button>
       <StructuredContentRenderer
         title={title}
-        blocks={body.ca}
+        blocks={body[sourceLanguage] ?? []}
         videoUrl={normalizedVideo}
         mediaWorkerUrl={mediaWorkerUrl}
         accessToken={session?.access_token}
       />
+      {article?.content_type === 'participant_story' && article.publication_consent === true ? (
+        <section className="flex flex-col gap-2 rounded-lg border bg-muted/20 p-4">
+          <h2 className="font-semibold">{t('knowledge:consentRecorded')}</h2>
+          <p className="text-sm text-muted-foreground">
+            {t('knowledge:consentRecordedDetail', {
+              language: article.submission_language,
+              date:
+                article.publication_consent_at === null
+                  ? ''
+                  : new Date(article.publication_consent_at).toLocaleString(),
+              version: article.publication_consent_version,
+            })}
+          </p>
+        </section>
+      ) : null}
+      {article?.story_image_urls.map((objectKey, index) => (
+        <AuthenticatedMediaImage
+          key={objectKey}
+          objectKeyOrUrl={objectKey}
+          alt={t('knowledge:storyPhoto', { number: index + 1, title })}
+          mediaWorkerUrl={mediaWorkerUrl}
+          accessToken={session?.access_token}
+          className="max-h-80 rounded-md object-contain"
+        />
+      ))}
       {article?.content_type === 'participant_story' ? (
         <label className="flex flex-col gap-2">
           <span className="text-sm font-medium">{t('knowledge:reviewerNote')}</span>

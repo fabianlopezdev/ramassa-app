@@ -2,7 +2,7 @@ import type { HapticFeedback } from '@/lib/haptics/haptic-policy';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { cssInterop } from 'nativewind';
 import type { ReactNode } from 'react';
-import { Platform, type StyleProp, type ViewStyle } from 'react-native';
+import { Platform, type AccessibilityRole, type StyleProp, type ViewStyle } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   interpolate,
@@ -49,6 +49,7 @@ export interface PressableScaleProps {
   readonly testID?: string;
   /** Required: this is the only label a screen reader gets for the control. */
   readonly accessibilityLabel: string;
+  readonly accessibilityRole?: AccessibilityRole;
   /** Which feedback to fire on press. Omit for none (e.g. a nav row). */
   readonly haptic?: HapticFeedback;
   readonly className?: string;
@@ -76,6 +77,7 @@ export function PressableScale({
   onPress,
   testID,
   accessibilityLabel,
+  accessibilityRole = 'button',
   haptic,
   className,
   style,
@@ -120,11 +122,13 @@ export function PressableScale({
     <GestureDetector gesture={tap}>
       <PressableAnimatedView
         testID={testID}
-        accessibilityRole="button"
+        accessibilityRole={accessibilityRole}
         accessibilityLabel={accessibilityLabel}
+        aria-checked={accessibilityRole === 'checkbox' ? Boolean(isSelected) : undefined}
         accessibilityState={{
           disabled: isInteractionBlocked,
           busy: isBusy,
+          ...(accessibilityRole === 'checkbox' ? { checked: Boolean(isSelected) } : {}),
           ...(isSelected === undefined ? {} : { selected: isSelected }),
         }}
         style={[animatedStyle, style]}

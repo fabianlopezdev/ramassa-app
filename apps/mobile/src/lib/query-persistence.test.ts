@@ -122,3 +122,31 @@ test('airplane mode restores the player calendar without a network request', asy
   expect(networkCalls).toBe(0);
   stop();
 });
+
+test('airplane mode restores published knowledge and the signed-in player own story states', async () => {
+  const storage = memoryStorage();
+  const persister = createQueryPersister(storage);
+  const source = new QueryClient();
+  source.setQueryData(['player-knowledge', 'articles', 'player-a'], [{ id: 'cached-resource' }]);
+  source.setQueryData(
+    ['player-knowledge', 'own-stories', 'player-a'],
+    [{ id: 'own-pending-story', story_status: 'submitted' }],
+  );
+
+  await persistQueryClientSave({ queryClient: source, ...persistedQueryOptions(persister) });
+
+  const restored = new QueryClient();
+  await persistQueryClientRestore({ queryClient: restored, ...persistedQueryOptions(persister) });
+
+  expect(
+    restored.getQueryData<readonly { id: string }[]>(['player-knowledge', 'articles', 'player-a']),
+  ).toEqual([{ id: 'cached-resource' }]);
+  expect(
+    restored.getQueryData<readonly { id: string; story_status: string }[]>([
+      'player-knowledge',
+      'own-stories',
+      'player-a',
+    ]),
+  ).toEqual([{ id: 'own-pending-story', story_status: 'submitted' }]);
+  expect(restored.getQueryData(['player-knowledge', 'own-stories', 'player-b'])).toBeUndefined();
+});

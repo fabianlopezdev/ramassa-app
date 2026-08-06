@@ -1,0 +1,63 @@
+{
+  "slug": "story-submission",
+  "viewport": { "width": 1440, "height": 900 },
+  "deviceScaleFactor": 2,
+  "timezoneId": "Europe/Madrid",
+  "settle": { "timeout": 6000, "interval": 150 },
+  "steps": [
+    {
+      "label": "auth-open",
+      "goto": "/login",
+      "click": "[aria-label=\"{{auth:usePasswordInstead}}\"]",
+      "waitFor": "[aria-label=\"{{auth:passwordLabel}}\"]"
+    },
+    {
+      "label": "auth-submit",
+      "fill": [
+        { "selector": "[aria-label=\"{{auth:emailLabel}}\"]", "value": "{{player:email}}" },
+        { "selector": "[aria-label=\"{{auth:passwordLabel}}\"]", "value": "{{player:password}}" }
+      ],
+      "click": "[aria-label=\"{{auth:passwordAction}}\"]",
+      "waitFor": "[data-testid=\"open-story-submission\"]"
+    },
+    {
+      "label": "form",
+      "click": "[data-testid=\"open-story-submission\"]",
+      "waitFor": "[data-testid=\"story-submission-screen\"]"
+    },
+    {
+      "label": "abandoned",
+      "fill": [
+        { "selector": "[data-testid=\"story-title-input\"]", "value": "Draft story" },
+        {
+          "selector": "[data-testid=\"story-body-input\"]",
+          "value": "A draft that I decide not to send."
+        }
+      ],
+      "click": "[aria-label=\"{{common:back}}\"]",
+      "waitFor": "[data-testid=\"open-story-submission\"]"
+    },
+    {
+      "label": "reopen",
+      "click": "[data-testid=\"open-story-submission\"]",
+      "waitFor": "[data-testid=\"story-submission-screen\"]"
+    },
+    {
+      "label": "consent",
+      "fill": [
+        { "selector": "[data-testid=\"story-title-input\"]", "value": "Ramassa story" },
+        {
+          "selector": "[data-testid=\"story-body-input\"]",
+          "value": "Playing football helped me feel welcome."
+        }
+      ],
+      "click": "[data-testid=\"story-publication-consent\"]",
+      "waitFor": "[data-testid=\"story-publication-consent\"][aria-checked=\"true\"]"
+    },
+    {
+      "label": "submitted",
+      "click": "[aria-label=\"{{knowledge:submitStory}}\"]",
+      "waitFor": "[data-testid=\"story-submission-confirmation\"]"
+    }
+  ]
+}

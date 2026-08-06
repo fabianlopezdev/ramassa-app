@@ -29,6 +29,8 @@
     "./announcements": "./announcements.ts",
     "./events": "./events.ts",
     "./knowledge": "./knowledge.ts",
+    "./story-submission": "./story-submission.ts",
+    "./structured-content": "./structured-content/index.ts",
     "./image-compression": "./lib/image-compression.ts"
   },
   "scripts": {

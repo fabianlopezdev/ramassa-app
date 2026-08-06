@@ -1,7 +1,13 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { AppError } from './errors';
+import { getContentLanguageFallbacks } from './i18n/localized-content';
 import { languageCodeSchema, type LanguageCode } from './schemas/language';
+import {
+  MAX_STORY_IMAGES,
+  participantStorySubmissionSchema,
+  type ParticipantStorySubmission,
+} from './story-submission';
 import type { Database } from './types/database';
 
 export const KNOWLEDGE_CONTENT_TYPES = [
@@ -69,22 +75,26 @@ export const knowledgeBlockSchema = z.discriminatedUnion('type', [
 export type KnowledgeBlock = z.infer<typeof knowledgeBlockSchema>;
 export const knowledgeBlocksSchema = z.array(knowledgeBlockSchema).min(1).max(50);
 
-export const localizedKnowledgeBodySchema = z.object({
-  ca: knowledgeBlocksSchema,
-  es: knowledgeBlocksSchema.optional(),
-  en: knowledgeBlocksSchema.optional(),
-  ar: knowledgeBlocksSchema.optional(),
-  fa: knowledgeBlocksSchema.optional(),
-});
+export const localizedKnowledgeBodySchema = z
+  .object({
+    ca: knowledgeBlocksSchema.optional(),
+    es: knowledgeBlocksSchema.optional(),
+    en: knowledgeBlocksSchema.optional(),
+    ar: knowledgeBlocksSchema.optional(),
+    fa: knowledgeBlocksSchema.optional(),
+  })
+  .refine((body) => languageCodeSchema.options.some((language) => body[language] !== undefined));
 export type LocalizedKnowledgeBody = z.infer<typeof localizedKnowledgeBodySchema>;
 
-export const knowledgeTitleSchema = z.object({
-  ca: nonEmptyText(MAX_KNOWLEDGE_TITLE_LENGTH),
-  es: nonEmptyText(MAX_KNOWLEDGE_TITLE_LENGTH).optional(),
-  en: nonEmptyText(MAX_KNOWLEDGE_TITLE_LENGTH).optional(),
-  ar: nonEmptyText(MAX_KNOWLEDGE_TITLE_LENGTH).optional(),
-  fa: nonEmptyText(MAX_KNOWLEDGE_TITLE_LENGTH).optional(),
-});
+export const knowledgeTitleSchema = z
+  .object({
+    ca: nonEmptyText(MAX_KNOWLEDGE_TITLE_LENGTH).optional(),
+    es: nonEmptyText(MAX_KNOWLEDGE_TITLE_LENGTH).optional(),
+    en: nonEmptyText(MAX_KNOWLEDGE_TITLE_LENGTH).optional(),
+    ar: nonEmptyText(MAX_KNOWLEDGE_TITLE_LENGTH).optional(),
+    fa: nonEmptyText(MAX_KNOWLEDGE_TITLE_LENGTH).optional(),
+  })
+  .refine((title) => languageCodeSchema.options.some((language) => title[language] !== undefined));
 export type KnowledgeLocalizedText = z.infer<typeof knowledgeTitleSchema>;
 
 const YOUTUBE_ID = /^[A-Za-z0-9_-]{6,15}$/;
@@ -173,6 +183,11 @@ export const knowledgeArticleInputSchema = z
     contentType: z.enum(KNOWLEDGE_CONTENT_TYPES),
     storyStatus: z.enum(STORY_STATUSES).nullable(),
     authorId: z.uuid().nullable(),
+    submissionLanguage: languageCodeSchema.nullable().default(null),
+    storyImageUrls: z.array(z.string().trim().min(1).max(2_000)).max(MAX_STORY_IMAGES).default([]),
+    publicationConsent: z.boolean().nullable().default(null),
+    publicationConsentAt: z.iso.datetime().nullable().default(null),
+    publicationConsentVersion: z.string().trim().min(1).max(100).nullable().default(null),
     reviewerNote: z.string().trim().max(MAX_KNOWLEDGE_REVIEWER_NOTE_LENGTH).nullable(),
     isPublished: z.boolean(),
     publishedAt: z.iso.datetime().nullable(),
@@ -212,6 +227,40 @@ export const knowledgeArticleInputSchema = z
         code: 'custom',
         path: ['storyStatus'],
         message: 'Only participant stories carry author review state',
+      });
+    }
+    if (isStory) {
+      const sourceLanguage = article.submissionLanguage ?? 'ca';
+      if (
+        article.title[sourceLanguage] === undefined ||
+        article.body[sourceLanguage] === undefined
+      ) {
+        context.addIssue({
+          code: 'custom',
+          path: ['submissionLanguage'],
+          message: 'Participant story content must retain its source language',
+        });
+      }
+    }
+    if (
+      !isStory &&
+      (article.submissionLanguage !== null ||
+        article.storyImageUrls.length > 0 ||
+        article.publicationConsent !== null ||
+        article.publicationConsentAt !== null ||
+        article.publicationConsentVersion !== null)
+    ) {
+      context.addIssue({
+        code: 'custom',
+        path: ['submissionLanguage'],
+        message: 'Only participant stories carry submission evidence',
+      });
+    }
+    if (!isStory && (article.title.ca === undefined || article.body.ca === undefined)) {
+      context.addIssue({
+        code: 'custom',
+        path: ['title'],
+        message: 'Staff knowledge drafts require a Catalan source',
       });
     }
     if (isStory && article.storyStatus !== 'published' && article.isPublished) {
@@ -281,6 +330,11 @@ export interface KnowledgeArticleListRow {
   readonly external_url: string | null;
   readonly content_type: KnowledgeContentType;
   readonly story_status: StoryStatus | null;
+  readonly submission_language: LanguageCode | null;
+  readonly story_image_urls: readonly string[];
+  readonly publication_consent: boolean | null;
+  readonly publication_consent_at: string | null;
+  readonly publication_consent_version: string | null;
   readonly author_id: string | null;
   readonly author_first_name: string | null;
   readonly reviewer_note: string | null;
@@ -298,14 +352,19 @@ export interface KnowledgeArticlePage {
 
 type Client = SupabaseClient<Database>;
 const KNOWLEDGE_COLUMNS =
-  'id, category_id, category:knowledge_categories!knowledge_articles_category_same_org(id, name, slug, icon, sort_order), title, body, image_url, video_url, external_url, content_type, story_status, author_id, author_first_name, reviewer_note, is_published, published_at, expires_at, created_at, updated_at';
+  'id, category_id, category:knowledge_categories!knowledge_articles_category_same_org(id, name, slug, icon, sort_order), title, body, image_url, video_url, external_url, content_type, story_status, submission_language, story_image_urls, publication_consent, publication_consent_at, publication_consent_version, author_id, author_first_name, reviewer_note, is_published, published_at, expires_at, created_at, updated_at';
 
-export async function fetchKnowledgeCategories(client: Client): Promise<KnowledgeCategoryRow[]> {
-  const { data, error } = await client
+export async function fetchKnowledgeCategories(
+  client: Client,
+  options: { readonly signal?: AbortSignal } = {},
+): Promise<KnowledgeCategoryRow[]> {
+  let query = client
     .from('knowledge_categories')
     .select('id, name, slug, icon, sort_order')
     .order('sort_order', { ascending: true })
     .order('id', { ascending: true });
+  if (options.signal !== undefined) query = query.abortSignal(options.signal);
+  const { data, error } = await query;
   if (error) throw new AppError('DB-1', { message: error.message });
   return (data ?? []) as KnowledgeCategoryRow[];
 }
@@ -313,16 +372,19 @@ export async function fetchKnowledgeCategories(client: Client): Promise<Knowledg
 export async function fetchKnowledgeArticles(
   client: Client,
   search: KnowledgeSearch,
+  options: { readonly signal?: AbortSignal } = {},
 ): Promise<KnowledgeArticlePage> {
   let query = client.from('knowledge_articles').select(KNOWLEDGE_COLUMNS, { count: 'exact' });
   if (search.kind === 'articles') query = query.neq('content_type', 'participant_story');
   if (search.kind === 'stories') query = query.eq('content_type', 'participant_story');
   if (search.storyStatus !== 'all') query = query.eq('story_status', search.storyStatus);
   const from = (search.page - 1) * KNOWLEDGE_PAGE_SIZE;
-  const { data, error, count } = await query
+  query = query
     .order('updated_at', { ascending: false })
     .order('id', { ascending: true })
     .range(from, from + KNOWLEDGE_PAGE_SIZE - 1);
+  if (options.signal !== undefined) query = query.abortSignal(options.signal);
+  const { data, error, count } = await query;
   if (error) throw new AppError('DB-1', { message: error.message });
   return { rows: (data ?? []) as unknown as KnowledgeArticleListRow[], total: count ?? 0 };
 }
@@ -330,17 +392,120 @@ export async function fetchKnowledgeArticles(
 export async function fetchKnowledgeArticle(
   client: Client,
   articleId: string,
+  options: { readonly signal?: AbortSignal } = {},
 ): Promise<KnowledgeArticleListRow> {
-  const { data, error } = await client
+  let query = client.from('knowledge_articles').select(KNOWLEDGE_COLUMNS).eq('id', articleId);
+  if (options.signal !== undefined) query = query.abortSignal(options.signal);
+  const { data, error } = await query.single();
+  if (error) throw new AppError('DB-1', { message: error.message });
+  return data as unknown as KnowledgeArticleListRow;
+}
+
+export interface ResolvedKnowledgeBlocks {
+  readonly language: LanguageCode;
+  readonly blocks: readonly KnowledgeBlock[];
+}
+
+export function resolveLocalizedKnowledgeBlocks(
+  body: LocalizedKnowledgeBody,
+  language: LanguageCode,
+): ResolvedKnowledgeBlocks | undefined {
+  for (const candidate of getContentLanguageFallbacks(language)) {
+    const blocks = body[candidate];
+    if (blocks !== undefined && blocks.length > 0) return { language: candidate, blocks };
+  }
+  return undefined;
+}
+
+/** Published resources only. Own pending stories use the separate owner query. */
+export async function fetchPlayerKnowledgeArticles(
+  client: Client,
+  options: { readonly signal?: AbortSignal } = {},
+): Promise<readonly KnowledgeArticleListRow[]> {
+  let query = client
     .from('knowledge_articles')
     .select(KNOWLEDGE_COLUMNS)
-    .eq('id', articleId)
+    .eq('is_published', true)
+    .order('published_at', { ascending: false, nullsFirst: false })
+    .order('id', { ascending: true });
+  if (options.signal !== undefined) query = query.abortSignal(options.signal);
+  const { data, error } = await query;
+  if (error) throw new AppError('DB-1', { message: error.message });
+  return (data ?? []) as unknown as KnowledgeArticleListRow[];
+}
+
+export async function fetchOwnParticipantStories(
+  client: Client,
+  authorId: string,
+  options: { readonly signal?: AbortSignal } = {},
+): Promise<readonly KnowledgeArticleListRow[]> {
+  let query = client
+    .from('knowledge_articles')
+    .select(KNOWLEDGE_COLUMNS)
+    .eq('content_type', 'participant_story')
+    .eq('author_id', authorId)
+    .order('created_at', { ascending: false })
+    .order('id', { ascending: true });
+  if (options.signal !== undefined) query = query.abortSignal(options.signal);
+  const { data, error } = await query;
+  if (error) throw new AppError('DB-1', { message: error.message });
+  return (data ?? []) as unknown as KnowledgeArticleListRow[];
+}
+
+export interface ParticipantStoryStatusRow {
+  readonly id: string;
+  readonly story_status: StoryStatus;
+  readonly created_at: string;
+  readonly updated_at: string;
+}
+
+export async function fetchOwnParticipantStoryStatuses(
+  client: Client,
+  authorId: string,
+  options: { readonly signal?: AbortSignal } = {},
+): Promise<readonly ParticipantStoryStatusRow[]> {
+  let query = client
+    .from('knowledge_articles')
+    .select('id, story_status, created_at, updated_at')
+    .eq('content_type', 'participant_story')
+    .eq('author_id', authorId)
+    .order('created_at', { ascending: false })
+    .order('id', { ascending: true });
+  if (options.signal !== undefined) query = query.abortSignal(options.signal);
+  const { data, error } = await query;
+  if (error) throw new AppError('DB-1', { message: error.message });
+  return (data ?? []) as ParticipantStoryStatusRow[];
+}
+
+export async function submitParticipantStory(
+  client: Client,
+  rawInput: ParticipantStorySubmission,
+): Promise<KnowledgeArticleListRow> {
+  const input = participantStorySubmissionSchema.parse(rawInput);
+  const title = { [input.language]: input.title };
+  const body = { [input.language]: [{ type: 'paragraph', text: input.story }] };
+  const { data, error } = await client
+    .from('knowledge_articles')
+    .insert({
+      category_id: input.categoryId,
+      title,
+      body,
+      content_type: 'participant_story',
+      story_status: 'submitted',
+      author_id: input.authorId,
+      submission_language: input.language,
+      story_image_urls: input.imageObjectKeys,
+      publication_consent: input.publicationConsent,
+      publication_consent_version: input.consentVersion,
+      is_published: false,
+    })
+    .select(KNOWLEDGE_COLUMNS)
     .single();
   if (error) throw new AppError('DB-1', { message: error.message });
   return data as unknown as KnowledgeArticleListRow;
 }
 
-function toDatabaseValues(input: KnowledgeArticleInput) {
+function toDatabaseValues(input: KnowledgeArticleInput, includeAuthorId = true) {
   return {
     category_id: input.categoryId,
     title: input.title,
@@ -350,7 +515,7 @@ function toDatabaseValues(input: KnowledgeArticleInput) {
     external_url: input.externalUrl,
     content_type: input.contentType,
     story_status: input.storyStatus,
-    author_id: input.authorId,
+    ...(includeAuthorId ? { author_id: input.authorId } : {}),
     reviewer_note: input.reviewerNote,
     is_published: input.isPublished,
     published_at: input.publishedAt,
@@ -380,7 +545,7 @@ export async function updateKnowledgeArticle(
   const input = knowledgeArticleInputSchema.parse(rawInput);
   const { data, error } = await client
     .from('knowledge_articles')
-    .update(toDatabaseValues(input))
+    .update(toDatabaseValues(input, false))
     .eq('id', articleId)
     .select(KNOWLEDGE_COLUMNS)
     .single();

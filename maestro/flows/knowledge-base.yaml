@@ -1,0 +1,245 @@
+appId: com.ramassa.app
+name: knowledge-base
+env:
+  SHOTS: maestro/shots/knowledge-base/ca/ios
+  SUFFIX: ''
+  LOCALE: ca
+  DEV_CLIENT_URL: ramassa://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081
+  PLAYER_EMAIL: '{{player:email}}'
+  PUSH_DECLINE: '{{push:rationaleDecline}}'
+  PLAYER_TITLE: '{{knowledge:playerTitle}}'
+  BACK: '{{knowledge:backToResources}}'
+---
+- clearState
+- openLink: ${DEV_CLIENT_URL}
+- tapOn:
+    text: '^Open$'
+    optional: true
+- waitForAnimationToEnd:
+    timeout: 3000
+- extendedWaitUntil:
+    visible: '.*Developer menu.*'
+    timeout: 240000
+- waitForAnimationToEnd:
+    timeout: 12000
+- tapOn:
+    text: '.*Continue.*'
+    optional: true
+- waitForAnimationToEnd:
+    timeout: 2000
+- repeat:
+    times: 4
+    while:
+      visible: '.*Close.*'
+    commands:
+      - tapOn:
+          text: '.*Close.*'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- repeat:
+    times: 6
+    while:
+      notVisible: '.*Environment.*'
+    commands:
+      - tapOn:
+          text: '.*Developer menu.*'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- waitForAnimationToEnd:
+    timeout: 5000
+- repeat:
+    times: 20
+    while:
+      notVisible: '^${LOCALE} \(.*\)$'
+    commands:
+      - swipe:
+          start: 50%, 70%
+          end: 50%, 50%
+          duration: 900
+      - waitForAnimationToEnd:
+          timeout: 2500
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - swipe:
+          start: 50%, 65%
+          end: 50%, 55%
+          duration: 900
+- waitForAnimationToEnd:
+    timeout: 2500
+- repeat:
+    times: 6
+    while:
+      notVisible:
+        text: '^${LOCALE} \(.*\)$'
+        selected: true
+    commands:
+      - tapOn:
+          text: '^${LOCALE} \(.*\)$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 2500
+- assertVisible:
+    text: '^${LOCALE} \(.*\)$'
+    selected: true
+- repeat:
+    times: 6
+    while:
+      visible: '.*Close.*'
+    commands:
+      - tapOn:
+          text: '.*Close.*'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- repeat:
+    times: 6
+    while:
+      notVisible: '.*Accounts and roles.*'
+    commands:
+      - tapOn:
+          text: '.*Developer menu.*'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- waitForAnimationToEnd:
+    timeout: 5000
+- repeat:
+    times: 20
+    while:
+      notVisible: '.*${PLAYER_EMAIL}.*'
+    commands:
+      - swipe:
+          start: 50%, 70%
+          end: 50%, 50%
+          duration: 900
+      - waitForAnimationToEnd:
+          timeout: 2500
+- swipe:
+    start: 50%, 65%
+    end: 50%, 55%
+    duration: 900
+- waitForAnimationToEnd:
+    timeout: 2500
+- tapOn: '.*${PLAYER_EMAIL}.*'
+- repeat:
+    times: 24
+    while:
+      notVisible:
+        text: '.*${PLAYER_EMAIL}.*'
+        selected: true
+    commands:
+      - waitForAnimationToEnd:
+          timeout: 2500
+- assertVisible:
+    text: '.*${PLAYER_EMAIL}.*'
+    selected: true
+- openLink: ${DEV_CLIENT_URL}
+- tapOn:
+    text: '^Open$'
+    optional: true
+- waitForAnimationToEnd:
+    timeout: 12000
+- repeat:
+    times: 6
+    while:
+      visible: '.*Close.*'
+    commands:
+      - tapOn:
+          text: '.*Close.*'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- repeat:
+    times: 3
+    while:
+      visible: '^${PUSH_DECLINE}$'
+    commands:
+      - tapOn:
+          text: '^${PUSH_DECLINE}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 2000
+- repeat:
+    times: 40
+    while:
+      notVisible:
+        id: 'open-knowledge-base'
+    commands:
+      - waitForAnimationToEnd:
+          timeout: 3000
+- assertVisible:
+    id: 'open-knowledge-base'
+- stopApp
+- openLink: ${DEV_CLIENT_URL}
+- tapOn:
+    text: '^Open$'
+    optional: true
+- waitForAnimationToEnd:
+    timeout: 12000
+- repeat:
+    times: 6
+    while:
+      visible: '.*Close.*'
+    commands:
+      - tapOn:
+          text: '.*Close.*'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- repeat:
+    times: 3
+    while:
+      visible: '^${PUSH_DECLINE}$'
+    commands:
+      - tapOn:
+          text: '^${PUSH_DECLINE}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 2000
+- repeat:
+    times: 40
+    while:
+      notVisible:
+        id: 'open-knowledge-base'
+    commands:
+      - waitForAnimationToEnd:
+          timeout: 3000
+- assertVisible:
+    id: 'open-knowledge-base'
+- tapOn:
+    id: 'open-knowledge-base'
+- extendedWaitUntil:
+    visible: '.*${PLAYER_TITLE}.*'
+    timeout: 30000
+- waitForAnimationToEnd:
+    timeout: 2000
+- takeScreenshot: ${SHOTS}/01-browse${SUFFIX}
+- tapOn:
+    id: 'knowledge-filter-5eed0000-0000-4000-8004-000000000002'
+- waitForAnimationToEnd:
+    timeout: 1500
+- takeScreenshot: ${SHOTS}/02-topic${SUFFIX}
+- repeat:
+    times: 8
+    while:
+      notVisible:
+        id: 'knowledge-article-5eed0000-0000-4000-8005-000000000001'
+    commands:
+      - swipe:
+          start: 50%, 75%
+          end: 50%, 35%
+          duration: 700
+      - waitForAnimationToEnd:
+          timeout: 1200
+- tapOn:
+    id: 'knowledge-article-5eed0000-0000-4000-8005-000000000001'
+- extendedWaitUntil:
+    visible: '^${BACK}$'
+    timeout: 30000
+- waitForAnimationToEnd:
+    timeout: 2000
+- takeScreenshot: ${SHOTS}/03-detail${SUFFIX}

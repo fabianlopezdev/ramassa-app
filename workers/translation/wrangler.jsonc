@@ -25,7 +25,7 @@
     "TRANSLATION_PROVIDER": "mock",
     "SUPABASE_URL": "http://127.0.0.1:54321",
     "SUPABASE_PUBLISHABLE_KEY": "sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH",
-    "ALLOWED_ORIGINS": "http://localhost:4192,http://127.0.0.1:4192,http://localhost:4193,http://127.0.0.1:4193",
+    "ALLOWED_ORIGINS": "http://localhost:4192,http://127.0.0.1:4192,http://localhost:4193,http://127.0.0.1:4193,http://localhost:4194,http://127.0.0.1:4194",
     "SENTRY_RELEASE": "",
   },
   "env": {

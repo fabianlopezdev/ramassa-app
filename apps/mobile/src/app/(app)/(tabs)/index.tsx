@@ -9,6 +9,7 @@ import {
   AnnouncementFeedSkeleton,
   OfflineBanner,
 } from '@/components/announcements/feed-states';
+import { KnowledgeQuickActions } from '@/components/knowledge/knowledge-quick-actions';
 import { PageWidth } from '@/components/layout/content-width';
 import { usePlayerAnnouncements } from '@/lib/announcement-feed';
 import { resolveMediaImageSource } from '@/lib/media-source';
@@ -193,6 +194,7 @@ export default function HomeScreen() {
               {t('feedIntro')}
             </Text>
           </View>
+          <KnowledgeQuickActions />
           {isOffline ? (
             <OfflineBanner label={t('offlineBanner')} languageFontClass={languageFontClass} />
           ) : null}

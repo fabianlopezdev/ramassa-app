@@ -36,7 +36,7 @@
 -- driven these screens in a browser cannot turn this file red.
 
 begin;
-select plan(39);
+select plan(40);
 
 select vault.create_secret('test-encryption-key', 'app_encryption_key', 'pgTAP test key')
 where not exists (select 1 from vault.secrets where name = 'app_encryption_key');
@@ -221,6 +221,44 @@ values (
   '5eed0000-0000-4000-8000-000000000012'::uuid,
   '5eed0000-0000-4000-8000-000000000002',
   'Ha demanat ajuda amb el transport els dimarts.'
+);
+
+-- A submitted story gives the subject two references from knowledge_articles:
+-- author_id cascades the article, while created_by is cleared first. This order
+-- used to make the article preparation trigger reject the erasure halfway
+-- through, even though both references were headed for deletion.
+insert into public.knowledge_articles (
+  category_id,
+  title,
+  body,
+  content_type,
+  story_status,
+  author_id,
+  submission_language,
+  publication_consent,
+  publication_consent_at,
+  publication_consent_version,
+  created_by
+)
+values (
+  '5eed0000-0000-4000-8004-000000000004',
+  '{"ca":"La història que vull compartir"}'::jsonb,
+  '{"ca":[{"type":"paragraph","text":"Vaig trobar un lloc on sentir-me part de l''equip."}]}'::jsonb,
+  'participant_story',
+  'submitted',
+  '5eed0000-0000-4000-8000-000000000011',
+  'ca',
+  true,
+  now(),
+  'story-publication-v1',
+  '5eed0000-0000-4000-8000-000000000011'
+);
+
+select is(
+  (select count(*) from public.knowledge_articles
+    where author_id = '5eed0000-0000-4000-8000-000000000011'::uuid)::int,
+  1,
+  'the erasure subject starts with a submitted story attributed to her'
 );
 
 set local role authenticated;

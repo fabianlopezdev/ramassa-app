@@ -31,9 +31,16 @@ export interface AuthSubmitButtonProps {
   readonly onPress: () => void;
   readonly isLoading?: boolean;
   readonly disabled?: boolean;
+  readonly testID?: string;
 }
 
-export function AuthSubmitButton({ label, onPress, isLoading, disabled }: AuthSubmitButtonProps) {
+export function AuthSubmitButton({
+  label,
+  onPress,
+  isLoading,
+  disabled,
+  testID,
+}: AuthSubmitButtonProps) {
   const languageFontClass = useLanguageFontClass();
   const isBusy = Boolean(isLoading);
   const isInteractionBlocked = Boolean(disabled) || isBusy;
@@ -45,6 +52,7 @@ export function AuthSubmitButton({ label, onPress, isLoading, disabled }: AuthSu
       haptic="tapLight"
       isDisabled={Boolean(disabled)}
       isBusy={isBusy}
+      testID={testID}
       style={[continuousCorners, styles.button, isInteractionBlocked ? styles.blocked : undefined]}
       className={`min-h-recommended justify-center rounded-md bg-primary px-lg ${
         isInteractionBlocked ? 'opacity-60' : ''

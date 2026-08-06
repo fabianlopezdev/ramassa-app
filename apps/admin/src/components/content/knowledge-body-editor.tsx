@@ -7,14 +7,14 @@ import { useTranslation } from 'react-i18next';
 import {
   getLanguageDirection,
   LANGUAGE_NATIVE_NAMES,
+  SUPPORTED_LANGUAGES,
   type SupportedLanguage,
 } from '@ramassa/shared/i18n';
 import type { KnowledgeBlock, LocalizedKnowledgeBody } from '@ramassa/shared/knowledge';
 
-const TRANSLATED_LANGUAGES = ['es', 'en', 'ar', 'fa'] as const;
-
 export interface KnowledgeBodyEditorProps {
   readonly body: LocalizedKnowledgeBody;
+  readonly sourceLanguage?: SupportedLanguage;
   readonly approvedLanguages: ReadonlySet<SupportedLanguage>;
   readonly stepImageNames: Readonly<Record<number, string>>;
   readonly onSourceChange: (blocks: KnowledgeBlock[]) => void;
@@ -25,18 +25,20 @@ export interface KnowledgeBodyEditorProps {
 
 export function KnowledgeBodyEditor(props: KnowledgeBodyEditorProps) {
   const { t } = useTranslation('knowledge');
+  const sourceLanguage = props.sourceLanguage ?? 'ca';
+  const translatedLanguages = SUPPORTED_LANGUAGES.filter((language) => language !== sourceLanguage);
   return (
     <section className="flex flex-col gap-4 rounded-lg border p-4">
       <h2 className="text-base font-semibold">{t('fieldBody')}</h2>
       <KnowledgeLanguageBlocks
-        language="ca"
-        blocks={props.body.ca}
+        language={sourceLanguage}
+        blocks={props.body[sourceLanguage] ?? []}
         canChangeStructure
         stepImageNames={props.stepImageNames}
         onChange={props.onSourceChange}
         onStepImageSelect={props.onStepImageSelect}
       />
-      {TRANSLATED_LANGUAGES.flatMap((language) => {
+      {translatedLanguages.flatMap((language) => {
         const blocks = props.body[language];
         if (blocks === undefined) return [];
         return [

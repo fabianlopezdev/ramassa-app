@@ -3,6 +3,7 @@ import {
   canTransitionStoryStatus,
   knowledgeArticleInputSchema,
   normalizeVideoEmbedUrl,
+  resolveLocalizedKnowledgeBlocks,
   type KnowledgeBlock,
 } from './knowledge';
 
@@ -172,5 +173,19 @@ describe('participant story state machine', () => {
     expect(canTransitionStoryStatus('changes_requested', 'submitted')).toBe(true);
     expect(canTransitionStoryStatus('published', 'in_review')).toBe(false);
     expect(canTransitionStoryStatus('rejected', 'in_review')).toBe(false);
+  });
+});
+
+describe('player knowledge localization', () => {
+  test('resolves a participant story from its truthful Arabic source language', () => {
+    const resolved = resolveLocalizedKnowledgeBlocks(
+      { ar: [{ type: 'paragraph', text: 'هذه قصتي الأصلية.' }] } as never,
+      'ar',
+    );
+
+    expect(resolved).toEqual({
+      language: 'ar',
+      blocks: [{ type: 'paragraph', text: 'هذه قصتي الأصلية.' }],
+    });
   });
 });

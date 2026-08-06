@@ -1,0 +1,332 @@
+appId: com.ramassa.app
+name: story-submission
+env:
+  SHOTS: maestro/shots/story-submission/ca/ios
+  SUFFIX: ''
+  LOCALE: ca
+  DEV_CLIENT_URL: ramassa://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081
+  PLAYER_EMAIL: '{{player:email}}'
+  PUSH_DECLINE: '{{push:rationaleDecline}}'
+  BACK: '{{common:back}}'
+  SUBMISSION_TITLE: '{{knowledge:submissionTitle}}'
+  SUBMIT_STORY: '{{knowledge:submitStory}}'
+  SUCCESS_TITLE: '{{knowledge:submissionSuccessTitle}}'
+---
+- clearState
+- openLink: ${DEV_CLIENT_URL}
+- tapOn:
+    text: '^Open$'
+    optional: true
+- waitForAnimationToEnd:
+    timeout: 3000
+- extendedWaitUntil:
+    visible: '.*Developer menu.*'
+    timeout: 240000
+- waitForAnimationToEnd:
+    timeout: 12000
+- tapOn:
+    text: '.*Continue.*'
+    optional: true
+- waitForAnimationToEnd:
+    timeout: 2000
+- repeat:
+    times: 4
+    while:
+      visible: '.*Close.*'
+    commands:
+      - tapOn:
+          text: '.*Close.*'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- repeat:
+    times: 6
+    while:
+      notVisible: '.*Environment.*'
+    commands:
+      - tapOn:
+          text: '.*Developer menu.*'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- waitForAnimationToEnd:
+    timeout: 5000
+- repeat:
+    times: 20
+    while:
+      notVisible: '^${LOCALE} \(.*\)$'
+    commands:
+      - swipe:
+          start: 50%, 70%
+          end: 50%, 50%
+          duration: 900
+      - waitForAnimationToEnd:
+          timeout: 2500
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - swipe:
+          start: 50%, 65%
+          end: 50%, 55%
+          duration: 900
+- waitForAnimationToEnd:
+    timeout: 2500
+- repeat:
+    times: 6
+    while:
+      notVisible:
+        text: '^${LOCALE} \(.*\)$'
+        selected: true
+    commands:
+      - tapOn:
+          text: '^${LOCALE} \(.*\)$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 2500
+- assertVisible:
+    text: '^${LOCALE} \(.*\)$'
+    selected: true
+- repeat:
+    times: 6
+    while:
+      visible: '.*Close.*'
+    commands:
+      - tapOn:
+          text: '.*Close.*'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- repeat:
+    times: 6
+    while:
+      notVisible: '.*Accounts and roles.*'
+    commands:
+      - tapOn:
+          text: '.*Developer menu.*'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- waitForAnimationToEnd:
+    timeout: 5000
+- repeat:
+    times: 20
+    while:
+      notVisible: '.*${PLAYER_EMAIL}.*'
+    commands:
+      - swipe:
+          start: 50%, 70%
+          end: 50%, 50%
+          duration: 900
+      - waitForAnimationToEnd:
+          timeout: 2500
+- swipe:
+    start: 50%, 65%
+    end: 50%, 55%
+    duration: 900
+- waitForAnimationToEnd:
+    timeout: 2500
+- tapOn: '.*${PLAYER_EMAIL}.*'
+- repeat:
+    times: 24
+    while:
+      notVisible:
+        text: '.*${PLAYER_EMAIL}.*'
+        selected: true
+    commands:
+      - waitForAnimationToEnd:
+          timeout: 2500
+- assertVisible:
+    text: '.*${PLAYER_EMAIL}.*'
+    selected: true
+- openLink: ${DEV_CLIENT_URL}
+- tapOn:
+    text: '^Open$'
+    optional: true
+- waitForAnimationToEnd:
+    timeout: 12000
+- repeat:
+    times: 6
+    while:
+      visible: '.*Close.*'
+    commands:
+      - tapOn:
+          text: '.*Close.*'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- repeat:
+    times: 3
+    while:
+      visible: '^${PUSH_DECLINE}$'
+    commands:
+      - tapOn:
+          text: '^${PUSH_DECLINE}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 2000
+- repeat:
+    times: 40
+    while:
+      notVisible:
+        id: 'open-story-submission'
+    commands:
+      - tapOn:
+          text: '^${PUSH_DECLINE}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- assertVisible:
+    id: 'open-story-submission'
+- stopApp
+- openLink: ${DEV_CLIENT_URL}
+- tapOn:
+    text: '^Open$'
+    optional: true
+- waitForAnimationToEnd:
+    timeout: 12000
+- repeat:
+    times: 6
+    while:
+      visible: '.*Close.*'
+    commands:
+      - tapOn:
+          text: '.*Close.*'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- repeat:
+    times: 3
+    while:
+      visible: '^${PUSH_DECLINE}$'
+    commands:
+      - tapOn:
+          text: '^${PUSH_DECLINE}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 2000
+- repeat:
+    times: 40
+    while:
+      notVisible:
+        id: 'open-story-submission'
+    commands:
+      - tapOn:
+          text: '^${PUSH_DECLINE}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- assertVisible:
+    id: 'open-story-submission'
+- tapOn:
+    id: 'open-story-submission'
+- extendedWaitUntil:
+    visible: '.*${SUBMISSION_TITLE}.*'
+    timeout: 30000
+- waitForAnimationToEnd:
+    timeout: 2000
+- takeScreenshot: ${SHOTS}/01-form${SUFFIX}
+- tapOn:
+    id: 'story-title-input'
+- inputText: 'Draft story'
+- tapOn:
+    id: 'story-body-input'
+- inputText: 'A draft that I decide not to send.'
+- tapOn:
+    point: 50%, 18%
+- waitForAnimationToEnd:
+    timeout: 1500
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - runFlow:
+          when:
+            visible: '^رجوع$'
+          commands:
+            - swipe:
+                start: 98%, 50%
+                end: 20%, 50%
+                duration: 1000
+      - runFlow:
+          when:
+            visible: '^Enrere$'
+          commands:
+            - tapOn:
+                text: '^${BACK}$'
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - back
+- extendedWaitUntil:
+    visible:
+      id: 'open-story-submission'
+    timeout: 30000
+- waitForAnimationToEnd:
+    timeout: 1500
+- takeScreenshot: ${SHOTS}/02-abandoned${SUFFIX}
+- tapOn:
+    id: 'open-story-submission'
+- extendedWaitUntil:
+    visible: '.*${SUBMISSION_TITLE}.*'
+    timeout: 30000
+- waitForAnimationToEnd:
+    timeout: 1500
+- tapOn:
+    id: 'story-title-input'
+- inputText: 'Ramassa story'
+- tapOn:
+    id: 'story-body-input'
+- inputText: 'Playing football helped me feel welcome.'
+- tapOn:
+    point: 50%, 18%
+- waitForAnimationToEnd:
+    timeout: 1500
+- repeat:
+    times: 5
+    while:
+      notVisible:
+        id: 'story-publication-consent'
+    commands:
+      - swipe:
+          start: 50%, 75%
+          end: 50%, 35%
+          duration: 700
+      - waitForAnimationToEnd:
+          timeout: 1000
+- repeat:
+    times: 4
+    while:
+      notVisible:
+        id: 'story-publication-consent'
+        selected: true
+    commands:
+      - tapOn:
+          id: 'story-publication-consent'
+      - waitForAnimationToEnd:
+          timeout: 1000
+- assertVisible:
+    id: 'story-publication-consent'
+    selected: true
+- takeScreenshot: ${SHOTS}/03-consent${SUFFIX}
+- repeat:
+    times: 5
+    while:
+      notVisible:
+        id: 'story-submit-button'
+    commands:
+      - swipe:
+          start: 50%, 75%
+          end: 50%, 35%
+          duration: 700
+      - waitForAnimationToEnd:
+          timeout: 1000
+- tapOn:
+    id: 'story-submit-button'
+- extendedWaitUntil:
+    visible: '.*${SUCCESS_TITLE}.*'
+    timeout: 60000
+- waitForAnimationToEnd:
+    timeout: 2000
+- takeScreenshot: ${SHOTS}/04-submitted${SUFFIX}
