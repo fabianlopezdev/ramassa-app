@@ -35,6 +35,14 @@ env:
   # only mean this flow put it there. Maestro's inputText cannot type Arabic
   # script; the pgTAP suite covers that storage path server-side instead.
   NEW_BIRTHPLACE: 'Homs'
+  ACCOUNTS_SECTION: Accounts and roles
+  PLAYER_WITHOUT_REQUEST_EMAIL: '{{playerWithoutRequest:email}}'
+  DELETE_TITLE: '{{profile:deleteTitle}}'
+  DELETE_REASON_LABEL: '{{profile:deleteReasonLabel}}'
+  DELETE_ACTION: '{{profile:deleteAction}}'
+  DELETE_CONFIRM_BODY: '{{profile:deleteConfirmBody}}'
+  DELETE_CONFIRM_ACTION: '{{profile:deleteConfirmAction}}'
+  DELETE_CONFIRM_CANCEL: '{{profile:deleteConfirmCancel}}'
 ---
 - runFlow: _open-app.yaml
 - runFlow: _sign-in.yaml
@@ -231,3 +239,104 @@ env:
 - extendedWaitUntil:
     visible: '.*${NEW_BIRTHPLACE}.*'
     timeout: 30000
+
+# The erasure form is unreachable for the player used above because the seed
+# deliberately gives her an open request. Switch to the seeded player without
+# one, then prove that reaching the form and tapping its action still does not
+# file anything. The final destructive action remains untouched in this smoke.
+- repeat:
+    times: 20
+    while:
+      notVisible: '.*${DEV_MENU_LABEL}.*'
+    commands:
+      - swipe:
+          start: 50%, 65%
+          end: 50%, 35%
+          duration: 900
+      - waitForAnimationToEnd:
+          timeout: 1500
+- tapOn: '.*${DEV_MENU_LABEL}.*'
+- extendedWaitUntil:
+    visible: '.*${ACCOUNTS_SECTION}.*'
+    timeout: 15000
+- waitForAnimationToEnd:
+    timeout: 4000
+- repeat:
+    times: 20
+    while:
+      notVisible: '.*${PLAYER_WITHOUT_REQUEST_EMAIL}.*'
+    commands:
+      - swipe:
+          start: 50%, 70%
+          end: 50%, 50%
+          duration: 900
+      - waitForAnimationToEnd:
+          timeout: 2000
+- swipe:
+    start: 50%, 65%
+    end: 50%, 55%
+    duration: 900
+- waitForAnimationToEnd:
+    timeout: 2000
+- tapOn: '.*${PLAYER_WITHOUT_REQUEST_EMAIL}.*'
+- waitForAnimationToEnd:
+    timeout: 3000
+- repeat:
+    times: 6
+    while:
+      visible: '.*Close.*'
+    commands:
+      - tapOn:
+          text: '.*Close.*'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+
+- runFlow: _relaunch.yaml
+- repeat:
+    times: 6
+    while:
+      notVisible: '.*${PROFILE_TITLE}.*'
+    commands:
+      - tapOn:
+          text: '^${TAB_PROFILE}$'
+          optional: true
+      - tapOn:
+          text: '^${PUSH_DECLINE}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- extendedWaitUntil:
+    visible: '.*${PROFILE_TITLE}.*'
+    timeout: 30000
+- repeat:
+    times: 20
+    while:
+      notVisible: '^${DELETE_TITLE}$'
+    commands:
+      - swipe:
+          start: 50%, 65%
+          end: 50%, 40%
+          duration: 900
+      - waitForAnimationToEnd:
+          timeout: 1500
+- swipe:
+    start: 50%, 60%
+    end: 50%, 52%
+    duration: 900
+- waitForAnimationToEnd:
+    timeout: 2000
+- tapOn: '^${DELETE_TITLE}$'
+- extendedWaitUntil:
+    visible: '.*${DELETE_REASON_LABEL}.*'
+    timeout: 30000
+- tapOn: '^${DELETE_ACTION}$'
+- extendedWaitUntil:
+    visible: '.*${DELETE_CONFIRM_BODY}.*'
+    timeout: 15000
+- assertVisible: '^${DELETE_CONFIRM_ACTION}$'
+- tapOn: '^${DELETE_CONFIRM_CANCEL}$'
+- extendedWaitUntil:
+    visible: '.*${DELETE_REASON_LABEL}.*'
+    timeout: 15000
+- assertNotVisible: '.*${DELETE_CONFIRM_BODY}.*'
