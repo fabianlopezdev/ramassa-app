@@ -742,13 +742,14 @@ where content_type = 'announcement'
   and content_id = '5eed0000-0000-4000-8001-000000000002';
 
 insert into public.push_deliveries (
-  id, publication_id, push_token_id, recipient_id, language, state,
+  id, org_id, publication_id, push_token_id, recipient_id, language, state,
   attempt_count, receipt_attempt_count, expo_ticket_id, ticketed_at,
   next_attempt_at, completed_at, created_at, updated_at
 )
 select
   '5eed0000-0000-4000-8008-000000000001',
-  '5eed0000-0000-4000-8007-000000000001',
+  publication.org_id,
+  publication.id,
   push_token.id,
   push_token.user_id,
   'ar',
@@ -762,6 +763,8 @@ select
   now() - interval '1 hour 20 minutes',
   now() - interval '1 hour'
 from public.push_tokens as push_token
+join public.push_publications as publication
+  on publication.id = '5eed0000-0000-4000-8007-000000000001'
 where push_token.user_id = '5eed0000-0000-4000-8000-000000000011'
 on conflict (id) do nothing;
 

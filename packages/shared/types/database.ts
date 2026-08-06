@@ -887,6 +887,7 @@ export type Database = {
           last_error_code: string | null;
           lease_expires_at: string | null;
           next_attempt_at: string;
+          org_id: string;
           publication_id: string;
           push_token_id: string | null;
           receipt_attempt_count: number;
@@ -907,6 +908,7 @@ export type Database = {
           last_error_code?: string | null;
           lease_expires_at?: string | null;
           next_attempt_at?: string;
+          org_id: string;
           publication_id: string;
           push_token_id?: string | null;
           receipt_attempt_count?: number;
@@ -927,6 +929,7 @@ export type Database = {
           last_error_code?: string | null;
           lease_expires_at?: string | null;
           next_attempt_at?: string;
+          org_id?: string;
           publication_id?: string;
           push_token_id?: string | null;
           receipt_attempt_count?: number;
@@ -939,25 +942,32 @@ export type Database = {
         };
         Relationships: [
           {
-            foreignKeyName: 'push_deliveries_publication_id_fkey';
-            columns: ['publication_id'];
+            foreignKeyName: 'push_deliveries_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'push_deliveries_publication_org_fkey';
+            columns: ['org_id', 'publication_id'];
             isOneToOne: false;
             referencedRelation: 'push_publications';
-            referencedColumns: ['id'];
+            referencedColumns: ['org_id', 'id'];
           },
           {
-            foreignKeyName: 'push_deliveries_push_token_id_fkey';
-            columns: ['push_token_id'];
-            isOneToOne: false;
-            referencedRelation: 'push_tokens';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'push_deliveries_recipient_id_fkey';
-            columns: ['recipient_id'];
+            foreignKeyName: 'push_deliveries_recipient_org_fkey';
+            columns: ['org_id', 'recipient_id'];
             isOneToOne: false;
             referencedRelation: 'profiles';
-            referencedColumns: ['id'];
+            referencedColumns: ['org_id', 'id'];
+          },
+          {
+            foreignKeyName: 'push_deliveries_recipient_token_fkey';
+            columns: ['recipient_id', 'push_token_id'];
+            isOneToOne: false;
+            referencedRelation: 'push_tokens';
+            referencedColumns: ['user_id', 'id'];
           },
         ];
       };
@@ -1104,11 +1114,16 @@ export type Database = {
         Args: { limited_action: string; maximum_per_hour: number };
         Returns: undefined;
       };
+      authorize_push_dispatch: {
+        Args: { dispatch_secret: string };
+        Returns: boolean;
+      };
       claim_push_deliveries: {
         Args: {
           claim_limit?: number;
           claimed_at?: string;
           claiming_worker_id: string;
+          dispatch_secret: string;
         };
         Returns: {
           attempt_count: number;
@@ -1130,6 +1145,7 @@ export type Database = {
           claim_limit?: number;
           claimed_at?: string;
           claiming_worker_id: string;
+          dispatch_secret: string;
         };
         Returns: {
           delivery_id: string;
@@ -1207,10 +1223,6 @@ export type Database = {
       };
       encrypt_field: { Args: { plaintext: string }; Returns: string };
       encryption_key: { Args: never; Returns: string };
-      enqueue_due_push_publications: {
-        Args: { due_at?: string };
-        Returns: number;
-      };
       get_own_profile: {
         Args: never;
         Returns: {
@@ -1355,6 +1367,7 @@ export type Database = {
       };
       record_push_delivery_results: {
         Args: {
+          dispatch_secret: string;
           recorded_at?: string;
           recording_worker_id: string;
           results: Json;
@@ -1363,6 +1376,7 @@ export type Database = {
       };
       record_push_receipt_results: {
         Args: {
+          dispatch_secret: string;
           recorded_at?: string;
           recording_worker_id: string;
           results: Json;

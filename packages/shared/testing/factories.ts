@@ -484,6 +484,7 @@ export function buildPushDelivery(overrides: Partial<PushDeliveryRow> = {}): Pus
   const owner = PARTICIPANT_FIXTURES[0]!;
   return {
     id: '5eed0000-0000-4000-8008-000000000001',
+    org_id: SEED_ORGANIZATION_ID,
     publication_id: '5eed0000-0000-4000-8007-000000000001',
     push_token_id: seedUserId(900 + owner.ordinal),
     recipient_id: seedUserId(owner.ordinal),

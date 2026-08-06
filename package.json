@@ -27,6 +27,7 @@
     "db:test:signup-race": "bun run scripts/verify-event-signup-race.ts",
     "db:types": "supabase gen types typescript --local > packages/shared/types/database.ts",
     "push:scheduler:configure": "bun run scripts/configure-local-push-scheduler.ts",
+    "push:catalog:generate": "bun run scripts/generate-push-edge-catalog.ts",
     "capture:flow": "bun run scripts/capture-flow.ts",
     "capture:phase": "bun run scripts/capture-phase.ts",
     "qa:smoke": "bun run scripts/qa-smoke.ts",

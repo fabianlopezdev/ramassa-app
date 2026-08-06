@@ -19,6 +19,7 @@
   "PUSH-5": "We could not check whether this alert was delivered.",
   "PUSH-6": "We could not confirm delivery of this alert in time.",
   "PUSH-7": "We could not save the status of this alert.",
+  "PUSH-8": "We could not confirm that this alert was sent. We will try again.",
   "SYNC-1": "Sync did not finish. It will retry automatically.",
   "UPLOAD-1": "We could not upload the file. Please try again.",
   "UPLOAD-2": "This kind of file cannot be uploaded. Try a photo or a video.",

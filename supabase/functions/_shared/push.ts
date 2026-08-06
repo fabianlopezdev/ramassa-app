@@ -1,31 +1,26 @@
+import {
+  AppError,
+  isAppError,
+  toAppError,
+  type PushAppErrorCode,
+} from '../../../packages/shared/errors/runtime.ts';
+import {
+  PUSH_NOTIFICATION_FALLBACK_BODIES,
+  type PushCatalogLanguage,
+} from './push-catalog.generated.ts';
+
+export { AppError, isAppError, toAppError, type PushAppErrorCode };
+
 export const EXPO_SEND_BATCH_SIZE = 100;
 export const EXPO_RECEIPT_BATCH_SIZE = 1000;
 export const MAX_PUSH_ATTEMPTS = 8;
-export const SUPPORTED_PUSH_LANGUAGES = ['ca', 'es', 'en', 'ar', 'fa'] as const;
+export const SUPPORTED_PUSH_LANGUAGES = Object.keys(
+  PUSH_NOTIFICATION_FALLBACK_BODIES,
+) as readonly PushCatalogLanguage[];
 
-export type PushLanguage = (typeof SUPPORTED_PUSH_LANGUAGES)[number];
+export type PushLanguage = PushCatalogLanguage;
 export type PushContentType = 'announcement' | 'event';
 export type LocalizedPushText = Readonly<Partial<Record<PushLanguage, string>>>;
-export type PushErrorCode =
-  'PUSH-1' | 'PUSH-2' | 'PUSH-3' | 'PUSH-4' | 'PUSH-5' | 'PUSH-6' | 'PUSH-7';
-
-export class PushError extends Error {
-  readonly code: PushErrorCode;
-
-  constructor(code: PushErrorCode, options: ErrorOptions = {}) {
-    super(code, options);
-    this.name = 'PushError';
-    this.code = code;
-  }
-}
-
-export function isPushError(value: unknown): value is PushError {
-  return value instanceof PushError;
-}
-
-export function toPushError(value: unknown, fallbackCode: PushErrorCode): PushError {
-  return isPushError(value) ? value : new PushError(fallbackCode, { cause: value });
-}
 
 export interface PushContent {
   readonly contentType: PushContentType;
@@ -41,6 +36,8 @@ export interface ExpoPushMessage {
   readonly body: string;
   readonly sound: 'default';
   readonly channelId: 'default';
+  readonly collapseId: string;
+  readonly tag: string;
   readonly data: {
     readonly contentType: PushContentType;
     readonly contentId: string;
@@ -50,26 +47,32 @@ export interface ExpoPushMessage {
 
 export interface ExpoOutcome {
   readonly status?: unknown;
+  readonly id?: unknown;
   readonly details?: { readonly error?: unknown } | null;
 }
 
 export type ExpoOutcomeClassification = 'delivered' | 'pruned' | 'retry' | 'failed';
 
-const eventFallbackBody: Readonly<Record<PushLanguage, string>> = {
-  ca: "Toca per veure l'activitat.",
-  es: 'Toca para ver la actividad.',
-  en: 'Tap to view the activity.',
-  ar: 'اضغطي لعرض النشاط.',
-  fa: 'برای دیدن برنامه ضربه بزنید.',
-};
+export interface PushHttpRequest {
+  readonly method: 'POST';
+  readonly headers: Readonly<Record<string, string>>;
+  readonly body: string;
+}
 
-const announcementFallbackBody: Readonly<Record<PushLanguage, string>> = {
-  ca: "Toca per llegir l'avís.",
-  es: 'Toca para leer el aviso.',
-  en: 'Tap to read the notice.',
-  ar: 'اضغطي لقراءة الإشعار.',
-  fa: 'برای خواندن اطلاعیه ضربه بزنید.',
-};
+export interface PushHttpResponse {
+  readonly ok: boolean;
+  readonly status: number;
+  json(): Promise<unknown>;
+}
+
+export type PushFetcher = (url: string, request: PushHttpRequest) => Promise<PushHttpResponse>;
+
+export interface PostExpoJsonOptions {
+  readonly accessToken?: string;
+  readonly maxAttempts?: number;
+  readonly fetcher?: PushFetcher;
+  readonly sleeper?: (milliseconds: number) => Promise<void>;
+}
 
 function isPushLanguage(value: string): value is PushLanguage {
   return (SUPPORTED_PUSH_LANGUAGES as readonly string[]).includes(value);
@@ -103,16 +106,17 @@ export function resolvePushText(
 ): { readonly title: string; readonly body: string; readonly language: PushLanguage } {
   const resolvedTitle = resolveLocalizedValue(content.title, requestedLanguage);
   if (resolvedTitle === null) {
-    throw new PushError('PUSH-3');
+    throw new AppError('PUSH-3');
   }
 
   const resolvedBody =
     content.body === null ? null : resolveLocalizedValue(content.body, requestedLanguage);
   const fallbackLanguage = isPushLanguage(requestedLanguage) ? requestedLanguage : 'ca';
+  const fallbackCatalog = PUSH_NOTIFICATION_FALLBACK_BODIES[fallbackLanguage];
   const fallbackBody =
     content.contentType === 'event'
-      ? eventFallbackBody[fallbackLanguage]
-      : announcementFallbackBody[fallbackLanguage];
+      ? fallbackCatalog.eventFallbackBody
+      : fallbackCatalog.announcementFallbackBody;
 
   return {
     title: resolvedTitle.text,
@@ -131,6 +135,7 @@ export function buildExpoMessage(
     content.expiresAt === null
       ? undefined
       : Math.floor(new Date(content.expiresAt).getTime() / 1000);
+  const collapseIdentity = `${content.contentType}:${content.contentId}`;
 
   return {
     to: token,
@@ -138,6 +143,8 @@ export function buildExpoMessage(
     body: localized.body,
     sound: 'default',
     channelId: 'default',
+    collapseId: collapseIdentity,
+    tag: collapseIdentity,
     data: { contentType: content.contentType, contentId: content.contentId },
     ...(expiration === undefined ? {} : { expiration }),
   };
@@ -145,7 +152,7 @@ export function buildExpoMessage(
 
 export function chunkItems<T>(items: readonly T[], size: number): readonly (readonly T[])[] {
   if (!Number.isInteger(size) || size < 1) {
-    throw new PushError('PUSH-3');
+    throw new AppError('PUSH-3');
   }
 
   const chunks: T[][] = [];
@@ -164,12 +171,64 @@ export function classifyExpoOutcome(outcome: ExpoOutcome): ExpoOutcomeClassifica
   return 'failed';
 }
 
+export function getAcceptedExpoTicketId(outcome: ExpoOutcome): string | null {
+  if (outcome.status !== 'ok') return null;
+  if (typeof outcome.id === 'string' && outcome.id.length > 0) return outcome.id;
+  throw new AppError('PUSH-8');
+}
+
 export function isTransientExpoStatus(status: number): boolean {
   return status === 429 || status >= 500;
 }
 
-export function shouldRetryPushDelivery(code: PushErrorCode, attemptCount: number): boolean {
-  return code === 'PUSH-2' && attemptCount < MAX_PUSH_ATTEMPTS;
+const defaultPushFetcher: PushFetcher = (url, request) => fetch(url, request);
+
+function defaultSleeper(milliseconds: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
+
+export async function postExpoJson(
+  url: string,
+  body: unknown,
+  failureCode: 'PUSH-8' | 'PUSH-5',
+  options: PostExpoJsonOptions = {},
+): Promise<unknown> {
+  const maxAttempts = options.maxAttempts ?? 3;
+  if (!Number.isInteger(maxAttempts) || maxAttempts < 1) throw new AppError('PUSH-3');
+
+  const fetcher = options.fetcher ?? defaultPushFetcher;
+  const sleeper = options.sleeper ?? defaultSleeper;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    try {
+      const response = await fetcher(url, {
+        method: 'POST',
+        headers: {
+          accept: 'application/json',
+          'content-type': 'application/json',
+          ...(options.accessToken === undefined
+            ? {}
+            : { authorization: `Bearer ${options.accessToken}` }),
+        },
+        body: JSON.stringify(body),
+      });
+
+      if (response.ok) return await response.json();
+      if (!isTransientExpoStatus(response.status)) throw new AppError('PUSH-3');
+      if (attempt === maxAttempts) throw new AppError(failureCode);
+    } catch (error) {
+      if (isAppError(error) && error.code === 'PUSH-3') throw error;
+      if (attempt === maxAttempts) throw new AppError(failureCode, { cause: error });
+    }
+
+    await sleeper(getRetryDelayMs(attempt));
+  }
+
+  throw new AppError(failureCode);
+}
+
+export function shouldRetryPushDelivery(code: PushAppErrorCode, attemptCount: number): boolean {
+  return (code === 'PUSH-2' || code === 'PUSH-8') && attemptCount < MAX_PUSH_ATTEMPTS;
 }
 
 export function getRetryDelayMs(attempt: number): number {

@@ -1,10 +1,10 @@
 -- Publish-triggered Expo push pipeline.
 --
--- The database owns idempotency and scheduling. One push_publications row is
+-- The database owns durable uniqueness and scheduling. One push_publications row is
 -- allowed per announcement or event, and one push_deliveries row is allowed per
 -- publication and registered device. The Edge Function only claims durable rows
--- and records Expo tickets and receipts, so a repeated invocation has nothing to
--- send until a specifically failed delivery becomes retryable.
+-- and records Expo tickets and receipts. Expo delivery is at-least-once, so an
+-- ambiguous response or expired send lease retries the same collapse-aware message.
 --
 -- Supabase Cron is required here even though player content visibility itself is
 -- a WHERE-clause concern. A scheduled publication needs an active moment at
@@ -21,6 +21,9 @@ comment on column public.profiles.push_notifications_enabled is
   'Simple player push preference. False excludes every device from sends; granular preferences arrive in Phase 8.';
 
 grant update (push_notifications_enabled) on table public.profiles to authenticated;
+
+alter table public.push_tokens
+  add constraint push_tokens_user_id_id_unique unique (user_id, id);
 
 create table public.push_publications (
   id uuid primary key default gen_random_uuid(),
@@ -39,17 +42,16 @@ create table public.push_publications (
   updated_at timestamptz not null default now(),
   completed_at timestamptz,
   constraint push_publications_content_unique unique (content_type, content_id),
-  constraint push_publications_idempotency_key_unique unique (idempotency_key)
+  constraint push_publications_idempotency_key_unique unique (idempotency_key),
+  constraint push_publications_org_id_id_unique unique (org_id, id)
 );
 
 create table public.push_deliveries (
   id uuid primary key default gen_random_uuid(),
-  publication_id uuid not null
-    references public.push_publications (id) on delete cascade,
-  push_token_id uuid
-    references public.push_tokens (id) on delete set null,
-  recipient_id uuid not null
-    references public.profiles (id) on delete cascade,
+  org_id uuid not null references public.organizations (id) on delete cascade,
+  publication_id uuid not null,
+  push_token_id uuid,
+  recipient_id uuid not null,
   language text not null check (language in ('ca', 'es', 'en', 'ar', 'fa')),
   state text not null default 'pending'
     check (state in (
@@ -69,7 +71,16 @@ create table public.push_deliveries (
   updated_at timestamptz not null default now(),
   completed_at timestamptz,
   constraint push_deliveries_publication_token_unique
-    unique (publication_id, push_token_id)
+    unique (publication_id, push_token_id),
+  constraint push_deliveries_publication_org_fkey
+    foreign key (org_id, publication_id)
+    references public.push_publications (org_id, id) on delete cascade,
+  constraint push_deliveries_recipient_org_fkey
+    foreign key (org_id, recipient_id)
+    references public.profiles (org_id, id) on delete cascade,
+  constraint push_deliveries_recipient_token_fkey
+    foreign key (recipient_id, push_token_id)
+    references public.push_tokens (user_id, id) on delete set null (push_token_id)
 );
 
 comment on table public.push_publications is
@@ -95,10 +106,10 @@ create index push_publications_active_idx
   where state <> 'complete';
 
 create index push_deliveries_publication_idx
-  on public.push_deliveries (publication_id, id);
+  on public.push_deliveries (org_id, publication_id, id);
 
 create index push_deliveries_recipient_idx
-  on public.push_deliveries (recipient_id, id);
+  on public.push_deliveries (org_id, recipient_id, id);
 
 create index push_deliveries_token_idx
   on public.push_deliveries (push_token_id)
@@ -117,12 +128,12 @@ alter table public.push_publications force row level security;
 alter table public.push_deliveries enable row level security;
 alter table public.push_deliveries force row level security;
 
-revoke all on table public.push_publications from public, anon, authenticated;
-revoke all on table public.push_deliveries from public, anon, authenticated;
-grant select, insert, update, delete on table public.push_publications to service_role;
-grant select, insert, update, delete on table public.push_deliveries to service_role;
+revoke all on table public.push_publications
+  from public, anon, authenticated, service_role;
+revoke all on table public.push_deliveries
+  from public, anon, authenticated, service_role;
 
-create or replace function public.enqueue_due_push_publications(
+create or replace function private.enqueue_due_push_publications(
   due_at timestamptz default now()
 )
 returns integer
@@ -174,8 +185,11 @@ begin
 end;
 $$;
 
-comment on function public.enqueue_due_push_publications is
+comment on function private.enqueue_due_push_publications is
   'Idempotently adds every due, unexpired published announcement and event to the push outbox.';
+
+revoke all on function private.enqueue_due_push_publications(timestamptz)
+  from public, anon, authenticated, service_role;
 
 create or replace function private.refresh_push_publication_states(
   refreshed_at timestamptz default now()
@@ -216,8 +230,9 @@ as $$
       count(*) filter (where delivery.state in ('ticketed', 'checking_receipt'))::integer as receipt_count
     from public.push_publications as source_publication
     left join public.push_deliveries as delivery
-      on delivery.publication_id = source_publication.id
-    group by source_publication.id
+      on delivery.org_id = source_publication.org_id
+     and delivery.publication_id = source_publication.id
+    group by source_publication.id, source_publication.org_id
   ) as summary
   where publication.id = summary.publication_id
     and (
@@ -228,13 +243,33 @@ as $$
     );
 $$;
 
-grant usage on schema private to service_role;
 revoke all on function private.refresh_push_publication_states(timestamptz)
-  from public, anon, authenticated;
-grant execute on function private.refresh_push_publication_states(timestamptz)
-  to service_role;
+  from public, anon, authenticated, service_role;
 
-create or replace function public.claim_push_deliveries(
+create or replace function private.push_dispatch_secret_matches(candidate text)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select candidate is not null
+    and length(candidate) >= 32
+    and length(candidate) <= 256
+    and exists (
+      select 1
+      from vault.decrypted_secrets as secret
+      where secret.name = 'push_dispatch_secret'
+        and extensions.digest(candidate, 'sha256') =
+          extensions.digest(secret.decrypted_secret, 'sha256')
+    );
+$$;
+
+comment on function private.push_dispatch_secret_matches(text) is
+  'Validates the invocation-only push secret. It grants no table or RLS-bypass authority.';
+
+create or replace function private.claim_push_deliveries(
+  dispatch_secret text,
   claiming_worker_id uuid,
   claimed_at timestamptz default now(),
   claim_limit integer default 500
@@ -254,16 +289,20 @@ returns table (
   attempt_count integer
 )
 language plpgsql
-security invoker
+security definer
 set search_path = ''
 as $$
 begin
+  if not private.push_dispatch_secret_matches(dispatch_secret) then
+    raise exception 'PUSH-1' using errcode = '28000';
+  end if;
+
   if claim_limit < 1 or claim_limit > 1000 then
     raise exception 'claim_limit must be between 1 and 1000'
       using errcode = 'invalid_parameter_value';
   end if;
 
-  perform public.enqueue_due_push_publications(claimed_at);
+  perform private.enqueue_due_push_publications(claimed_at);
 
   update public.push_deliveries as stale
   set
@@ -275,7 +314,7 @@ begin
       when stale.expo_ticket_id is null then null
       else claimed_at
     end,
-    last_error_code = 'PUSH-2'
+    last_error_code = 'PUSH-8'
   where stale.state in ('sending', 'checking_receipt')
     and stale.lease_expires_at <= claimed_at;
 
@@ -288,9 +327,10 @@ begin
     for update skip locked
   )
   insert into public.push_deliveries (
-    publication_id, push_token_id, recipient_id, language, next_attempt_at
+    org_id, publication_id, push_token_id, recipient_id, language, next_attempt_at
   )
   select
+    publication.org_id,
     publication.id,
     push_token.id,
     profile.id,
@@ -315,7 +355,9 @@ begin
   with candidates as (
     select delivery.id
     from public.push_deliveries as delivery
-    join public.push_publications as publication on publication.id = delivery.publication_id
+    join public.push_publications as publication
+      on publication.org_id = delivery.org_id
+     and publication.id = delivery.publication_id
     where delivery.state in ('pending', 'retry')
       and delivery.next_attempt_at <= claimed_at
       and delivery.push_token_id is not null
@@ -336,7 +378,9 @@ begin
   ), marked_publications as (
     update public.push_publications as publication
     set state = 'processing', completed_at = null
-    where publication.id in (select distinct claimed.publication_id from claimed)
+    where (publication.org_id, publication.id) in (
+      select distinct claimed.org_id, claimed.publication_id from claimed
+    )
     returning publication.id
   )
   select
@@ -363,35 +407,46 @@ begin
     claimed.attempt_count
   from claimed
   join marked_publications on marked_publications.id = claimed.publication_id
-  join public.push_publications as publication on publication.id = claimed.publication_id
-  join public.push_tokens as push_token on push_token.id = claimed.push_token_id
+  join public.push_publications as publication
+    on publication.org_id = claimed.org_id
+   and publication.id = claimed.publication_id
+  join public.push_tokens as push_token
+    on push_token.user_id = claimed.recipient_id
+   and push_token.id = claimed.push_token_id
   left join public.announcements as announcement
     on publication.content_type = 'announcement'
+   and announcement.org_id = publication.org_id
    and announcement.id = publication.content_id
   left join public.events as event
     on publication.content_type = 'event'
+   and event.org_id = publication.org_id
    and event.id = publication.content_id
   order by claimed.id;
 end;
 $$;
 
-comment on function public.claim_push_deliveries is
-  'Atomically creates eligible player deliveries and claims retryable rows with SKIP LOCKED.';
+comment on function private.claim_push_deliveries is
+  'Secret-checked narrow authority that creates eligible deliveries and claims retryable rows.';
 
-create or replace function public.record_push_delivery_results(
+create or replace function private.record_push_delivery_results(
+  dispatch_secret text,
   recording_worker_id uuid,
   results jsonb,
   recorded_at timestamptz default now()
 )
 returns integer
 language plpgsql
-security invoker
+security definer
 set search_path = ''
 as $$
 declare
   updated_count integer;
   pruned_token_ids uuid[];
 begin
+  if not private.push_dispatch_secret_matches(dispatch_secret) then
+    raise exception 'PUSH-1' using errcode = '28000';
+  end if;
+
   if jsonb_typeof(results) <> 'array' then
     raise exception 'results must be a JSON array'
       using errcode = 'invalid_parameter_value';
@@ -447,6 +502,19 @@ begin
   into updated_count, pruned_token_ids
   from updated;
 
+  update public.push_deliveries as invalid_token_delivery
+  set
+    state = 'pruned',
+    worker_id = null,
+    lease_expires_at = null,
+    receipt_due_at = null,
+    last_error_code = 'PUSH-4',
+    completed_at = recorded_at
+  where invalid_token_delivery.push_token_id = any(pruned_token_ids)
+    and invalid_token_delivery.state in (
+      'pending', 'sending', 'ticketed', 'checking_receipt', 'retry'
+    );
+
   delete from public.push_tokens as push_token
   where push_token.id = any(pruned_token_ids);
 
@@ -455,7 +523,8 @@ begin
 end;
 $$;
 
-create or replace function public.claim_push_receipts(
+create or replace function private.claim_push_receipts(
+  dispatch_secret text,
   claiming_worker_id uuid,
   claimed_at timestamptz default now(),
   claim_limit integer default 1000
@@ -467,10 +536,14 @@ returns table (
   receipt_attempt_count integer
 )
 language plpgsql
-security invoker
+security definer
 set search_path = ''
 as $$
 begin
+  if not private.push_dispatch_secret_matches(dispatch_secret) then
+    raise exception 'PUSH-1' using errcode = '28000';
+  end if;
+
   if claim_limit < 1 or claim_limit > 1000 then
     raise exception 'claim_limit must be between 1 and 1000'
       using errcode = 'invalid_parameter_value';
@@ -527,20 +600,25 @@ begin
 end;
 $$;
 
-create or replace function public.record_push_receipt_results(
+create or replace function private.record_push_receipt_results(
+  dispatch_secret text,
   recording_worker_id uuid,
   results jsonb,
   recorded_at timestamptz default now()
 )
 returns integer
 language plpgsql
-security invoker
+security definer
 set search_path = ''
 as $$
 declare
   updated_count integer;
   pruned_token_ids uuid[];
 begin
+  if not private.push_dispatch_secret_matches(dispatch_secret) then
+    raise exception 'PUSH-1' using errcode = '28000';
+  end if;
+
   if jsonb_typeof(results) <> 'array' then
     raise exception 'results must be a JSON array'
       using errcode = 'invalid_parameter_value';
@@ -594,6 +672,19 @@ begin
   into updated_count, pruned_token_ids
   from updated;
 
+  update public.push_deliveries as invalid_token_delivery
+  set
+    state = 'pruned',
+    worker_id = null,
+    lease_expires_at = null,
+    receipt_due_at = null,
+    last_error_code = 'PUSH-4',
+    completed_at = recorded_at
+  where invalid_token_delivery.push_token_id = any(pruned_token_ids)
+    and invalid_token_delivery.state in (
+      'pending', 'sending', 'ticketed', 'checking_receipt', 'retry'
+    );
+
   delete from public.push_tokens as push_token
   where push_token.id = any(pruned_token_ids);
 
@@ -602,22 +693,147 @@ begin
 end;
 $$;
 
-revoke all on function public.enqueue_due_push_publications(timestamptz)
-  from public, anon, authenticated;
-revoke all on function public.claim_push_deliveries(uuid, timestamptz, integer)
-  from public, anon, authenticated;
-revoke all on function public.record_push_delivery_results(uuid, jsonb, timestamptz)
-  from public, anon, authenticated;
-revoke all on function public.claim_push_receipts(uuid, timestamptz, integer)
-  from public, anon, authenticated;
-revoke all on function public.record_push_receipt_results(uuid, jsonb, timestamptz)
-  from public, anon, authenticated;
+create or replace function public.authorize_push_dispatch(dispatch_secret text)
+returns boolean
+language sql
+security invoker
+set search_path = ''
+as $$
+  select private.push_dispatch_secret_matches(dispatch_secret);
+$$;
 
-grant execute on function public.enqueue_due_push_publications(timestamptz) to service_role;
-grant execute on function public.claim_push_deliveries(uuid, timestamptz, integer) to service_role;
-grant execute on function public.record_push_delivery_results(uuid, jsonb, timestamptz) to service_role;
-grant execute on function public.claim_push_receipts(uuid, timestamptz, integer) to service_role;
-grant execute on function public.record_push_receipt_results(uuid, jsonb, timestamptz) to service_role;
+create or replace function public.claim_push_deliveries(
+  dispatch_secret text,
+  claiming_worker_id uuid,
+  claimed_at timestamptz default now(),
+  claim_limit integer default 500
+)
+returns table (
+  delivery_id uuid,
+  publication_id uuid,
+  push_token_id uuid,
+  recipient_id uuid,
+  token text,
+  language text,
+  content_type text,
+  content_id uuid,
+  title jsonb,
+  body jsonb,
+  expires_at timestamptz,
+  attempt_count integer
+)
+language sql
+security invoker
+set search_path = ''
+as $$
+  select * from private.claim_push_deliveries(
+    dispatch_secret,
+    claiming_worker_id,
+    claimed_at,
+    claim_limit
+  );
+$$;
+
+create or replace function public.record_push_delivery_results(
+  dispatch_secret text,
+  recording_worker_id uuid,
+  results jsonb,
+  recorded_at timestamptz default now()
+)
+returns integer
+language sql
+security invoker
+set search_path = ''
+as $$
+  select private.record_push_delivery_results(
+    dispatch_secret,
+    recording_worker_id,
+    results,
+    recorded_at
+  );
+$$;
+
+create or replace function public.claim_push_receipts(
+  dispatch_secret text,
+  claiming_worker_id uuid,
+  claimed_at timestamptz default now(),
+  claim_limit integer default 1000
+)
+returns table (
+  delivery_id uuid,
+  push_token_id uuid,
+  ticket_id text,
+  receipt_attempt_count integer
+)
+language sql
+security invoker
+set search_path = ''
+as $$
+  select * from private.claim_push_receipts(
+    dispatch_secret,
+    claiming_worker_id,
+    claimed_at,
+    claim_limit
+  );
+$$;
+
+create or replace function public.record_push_receipt_results(
+  dispatch_secret text,
+  recording_worker_id uuid,
+  results jsonb,
+  recorded_at timestamptz default now()
+)
+returns integer
+language sql
+security invoker
+set search_path = ''
+as $$
+  select private.record_push_receipt_results(
+    dispatch_secret,
+    recording_worker_id,
+    results,
+    recorded_at
+  );
+$$;
+
+revoke all on function private.push_dispatch_secret_matches(text)
+  from public, anon, authenticated, service_role;
+revoke all on function private.claim_push_deliveries(text, uuid, timestamptz, integer)
+  from public, anon, authenticated, service_role;
+revoke all on function private.record_push_delivery_results(text, uuid, jsonb, timestamptz)
+  from public, anon, authenticated, service_role;
+revoke all on function private.claim_push_receipts(text, uuid, timestamptz, integer)
+  from public, anon, authenticated, service_role;
+revoke all on function private.record_push_receipt_results(text, uuid, jsonb, timestamptz)
+  from public, anon, authenticated, service_role;
+
+grant usage on schema private to anon;
+grant execute on function private.push_dispatch_secret_matches(text) to anon;
+grant execute on function private.claim_push_deliveries(text, uuid, timestamptz, integer) to anon;
+grant execute on function private.record_push_delivery_results(text, uuid, jsonb, timestamptz)
+  to anon;
+grant execute on function private.claim_push_receipts(text, uuid, timestamptz, integer) to anon;
+grant execute on function private.record_push_receipt_results(text, uuid, jsonb, timestamptz)
+  to anon;
+
+revoke all on function public.authorize_push_dispatch(text)
+  from public, anon, authenticated, service_role;
+revoke all on function public.claim_push_deliveries(text, uuid, timestamptz, integer)
+  from public, anon, authenticated, service_role;
+revoke all on function public.record_push_delivery_results(text, uuid, jsonb, timestamptz)
+  from public, anon, authenticated, service_role;
+revoke all on function public.claim_push_receipts(text, uuid, timestamptz, integer)
+  from public, anon, authenticated, service_role;
+revoke all on function public.record_push_receipt_results(text, uuid, jsonb, timestamptz)
+  from public, anon, authenticated, service_role;
+
+grant execute on function public.authorize_push_dispatch(text) to anon;
+grant execute on function public.claim_push_deliveries(text, uuid, timestamptz, integer) to anon;
+grant execute on function public.record_push_delivery_results(text, uuid, jsonb, timestamptz)
+  to anon;
+grant execute on function public.claim_push_receipts(text, uuid, timestamptz, integer) to anon;
+grant execute on function public.record_push_receipt_results(text, uuid, jsonb, timestamptz)
+  to anon;
 
 create or replace function private.invoke_push_dispatch(reason text)
 returns bigint
@@ -627,7 +843,7 @@ set search_path = ''
 as $$
 declare
   project_url text;
-  secret_key text;
+  dispatch_secret text;
   request_id bigint;
 begin
   select decrypted_secret into project_url
@@ -635,12 +851,12 @@ begin
   where name = 'push_project_url'
   limit 1;
 
-  select decrypted_secret into secret_key
+  select decrypted_secret into dispatch_secret
   from vault.decrypted_secrets
-  where name = 'push_secret_key'
+  where name = 'push_dispatch_secret'
   limit 1;
 
-  if project_url is null or secret_key is null then
+  if project_url is null or dispatch_secret is null then
     return null;
   end if;
 
@@ -648,7 +864,7 @@ begin
     url := rtrim(project_url, '/') || '/functions/v1/send-push',
     headers := jsonb_build_object(
       'content-type', 'application/json',
-      'apikey', secret_key
+      'x-push-dispatch-secret', dispatch_secret
     ),
     body := jsonb_build_object('reason', reason)
   ) into request_id;
@@ -699,17 +915,17 @@ security invoker
 set search_path = ''
 as $$
 begin
-  perform public.enqueue_due_push_publications(now());
+  perform private.enqueue_due_push_publications(now());
   perform private.invoke_push_dispatch('scheduled');
 end;
 $$;
 
 revoke all on function private.invoke_push_dispatch(text)
-  from public, anon, authenticated;
+  from public, anon, authenticated, service_role;
 revoke all on function private.enqueue_push_on_publish()
-  from public, anon, authenticated;
+  from public, anon, authenticated, service_role;
 revoke all on function private.run_push_scheduler()
-  from public, anon, authenticated;
+  from public, anon, authenticated, service_role;
 
 do $$
 declare

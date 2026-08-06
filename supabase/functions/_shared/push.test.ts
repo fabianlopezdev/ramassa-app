@@ -1,10 +1,13 @@
 import { describe, expect, test } from 'bun:test';
+import { AppError, errorCodeRegistry } from '../../../packages/shared/errors';
 import {
   buildExpoMessage,
   chunkItems,
   classifyExpoOutcome,
+  getAcceptedExpoTicketId,
   getRetryDelayMs,
   isTransientExpoStatus,
+  postExpoJson,
   resolvePushText,
   shouldRetryPushDelivery,
   type PushContent,
@@ -42,7 +45,14 @@ describe('Expo push batching', () => {
   });
 
   test('rejects a non-positive batch size instead of looping forever', () => {
-    expect(() => chunkItems([1], 0)).toThrow();
+    try {
+      chunkItems([1], 0);
+      throw new Error('expected chunkItems to reject the invalid size');
+    } catch (error) {
+      expect(error).toBeInstanceOf(AppError);
+      expect((error as AppError).code).toBe('PUSH-3');
+      expect(errorCodeRegistry[(error as AppError).code].domain).toBe('PUSH');
+    }
   });
 });
 
@@ -92,11 +102,81 @@ describe('notification payloads and outcomes', () => {
       body: 'Avui no entrenem.',
       sound: 'default',
       channelId: 'default',
+      collapseId: `announcement:${announcement.contentId}`,
+      tag: `announcement:${announcement.contentId}`,
       data: {
         contentType: 'announcement',
         contentId: announcement.contentId,
       },
     });
+  });
+
+  test('every retry of one content item uses the same provider collapse identity', () => {
+    const firstAttempt = buildExpoMessage('ExponentPushToken[test]', announcement, 'ar');
+    const retryAttempt = buildExpoMessage('ExponentPushToken[test]', announcement, 'ar');
+
+    expect(retryAttempt.collapseId).toBe(firstAttempt.collapseId);
+    expect(retryAttempt.tag).toBe(firstAttempt.tag);
+  });
+
+  test('a lost response retries the same collapse-aware payload', async () => {
+    const message = buildExpoMessage('ExponentPushToken[test]', announcement, 'ca');
+    const attemptedBodies: unknown[] = [];
+    const delays: number[] = [];
+
+    const response = await postExpoJson('https://example.test/push', [message], 'PUSH-8', {
+      maxAttempts: 2,
+      fetcher: async (_url, request) => {
+        attemptedBodies.push(JSON.parse(request.body));
+        if (attemptedBodies.length === 1) throw new Error('response lost after request write');
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ data: [{ status: 'ok', id: 'ticket-1' }] }),
+        };
+      },
+      sleeper: async (delay) => {
+        delays.push(delay);
+      },
+    });
+
+    expect(response).toEqual({ data: [{ status: 'ok', id: 'ticket-1' }] });
+    expect(attemptedBodies).toEqual([[message], [message]]);
+    expect(delays).toEqual([1_000]);
+  });
+
+  test('a permanent provider rejection fails without retrying', async () => {
+    let attempts = 0;
+
+    await expect(
+      postExpoJson('https://example.test/push', [], 'PUSH-8', {
+        fetcher: async () => {
+          attempts += 1;
+          return { ok: false, status: 400, json: async () => ({}) };
+        },
+        sleeper: async () => {},
+      }),
+    ).rejects.toMatchObject({ code: 'PUSH-3' });
+    expect(attempts).toBe(1);
+  });
+
+  test('an exhausted transient response does not sleep after its final attempt', async () => {
+    const delays: number[] = [];
+
+    await expect(
+      postExpoJson('https://example.test/push', [], 'PUSH-8', {
+        maxAttempts: 3,
+        fetcher: async () => ({
+          ok: false,
+          status: 503,
+          json: async () => ({}),
+        }),
+        sleeper: async (delay) => {
+          delays.push(delay);
+        },
+      }),
+    ).rejects.toMatchObject({ code: 'PUSH-8' });
+    expect(delays).toEqual([1_000, 2_000]);
   });
 
   test.each([
@@ -106,6 +186,14 @@ describe('notification payloads and outcomes', () => {
     [{ status: 'error', details: { error: 'InvalidCredentials' } }, 'failed'],
   ] as const)('classifies Expo ticket and receipt outcomes', (outcome, expected) => {
     expect(classifyExpoOutcome(outcome)).toBe(expected);
+  });
+
+  test('treats an accepted response without a ticket id as ambiguous', () => {
+    expect(getAcceptedExpoTicketId({ status: 'ok', id: 'ticket-1' })).toBe('ticket-1');
+    expect(getAcceptedExpoTicketId({ status: 'error' })).toBeNull();
+    expect(() => getAcceptedExpoTicketId({ status: 'ok' })).toThrow(
+      expect.objectContaining({ code: 'PUSH-8' }),
+    );
   });
 
   test('transient retry delay grows exponentially and stays capped', () => {
@@ -120,6 +208,8 @@ describe('notification payloads and outcomes', () => {
   test('retries transient delivery failures only within the bounded attempt budget', () => {
     expect(shouldRetryPushDelivery('PUSH-2', 1)).toBe(true);
     expect(shouldRetryPushDelivery('PUSH-2', 8)).toBe(false);
+    expect(shouldRetryPushDelivery('PUSH-8', 1)).toBe(true);
+    expect(shouldRetryPushDelivery('PUSH-8', 8)).toBe(false);
     expect(shouldRetryPushDelivery('PUSH-3', 1)).toBe(false);
   });
 });

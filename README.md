@@ -171,9 +171,9 @@ Claude cannot create tokens or set repository secrets, so this step is manual.
 
 ## Push notifications (RAPP-17)
 
-Registration plumbing only: the app obtains an Expo push token after login and
-stores it in `push_tokens`, keyed to the profile and the device. **Sending**
-(targeting, templates, auto-translation) is Phase 3/8 and is not built yet.
+The app obtains an Expo push token after login and stores it in `push_tokens`,
+keyed to the profile and the device. Published announcements and events are sent
+to opted-in players by the RAPP-36 pipeline described below.
 
 How it behaves:
 
@@ -250,9 +250,16 @@ Android from SDK 53.
 
 `supabase/functions/send-push` sends due announcements and events through the
 Expo Push API. Postgres keeps one publication row per content item and one
-delivery row per registered device, so a repeated invocation does not broadcast
-the same item again. Players with `profiles.push_notifications_enabled = false`
-are excluded before a delivery row is created.
+delivery row per registered device. This durable uniqueness prevents independent
+duplicate jobs. Players with `profiles.push_notifications_enabled = false` are
+excluded before a delivery row is created.
+
+Expo documents push delivery as at-least-once. If Expo accepts a request but the
+network response is lost, the worker retries the same durable delivery because
+silently dropping the notification would be worse. Every retry carries the same
+Expo `collapseId` and Android `tag`, which lets supported devices collapse or
+replace the duplicate. This is the strongest provider-compatible behavior, but
+it cannot promise literal exactly-once display in every failure window.
 
 Immediate publishes invoke the function after the content transaction commits.
 Supabase Cron invokes it every minute for scheduled publications, transient
@@ -260,19 +267,23 @@ retries, and Expo receipt checks. Receipts are first requested after 15 minutes
 and invalid `DeviceNotRegistered` tokens are deleted.
 
 Local setup is automatic after `bun run db:reset`: the reset command stores the
-local gateway URL and the local service credential in Supabase Vault without
-printing or writing either value. To serve and invoke the function locally:
+local gateway URL and a random invocation-only secret in Supabase Vault without
+printing or writing either value. The function uses a public Supabase key plus
+narrow secret-checked RPCs. It never receives a service-role credential and
+cannot bypass RLS generally. To serve and invoke the function locally:
 
 ```bash
 supabase functions serve send-push
 ```
 
 For a hosted project, deploy `send-push`, then create the two Vault secrets
-`push_project_url` and `push_secret_key`. Their values are the project URL and a
-dedicated secret API key. Enter them through the Supabase Dashboard or a private
-SQL session. Never place the key in a migration, shell history, repository,
-screenshot, or issue note. The migration installs the `ramassa-push-dispatch`
-Cron job and begins working as soon as both secrets exist.
+`push_project_url` and `push_dispatch_secret`. Their values are the project URL
+and a random invocation secret of at least 32 characters. The invocation secret
+authorizes only the five push RPCs and cannot bypass RLS or access arbitrary
+tables. Enter both through the Supabase Dashboard or a private SQL session. Never
+place the secret in a migration, shell history, repository, screenshot, or issue
+note. The migration installs the `ramassa-push-dispatch` Cron job and begins
+working as soon as both secrets exist.
 
 If enhanced Expo push security is enabled in EAS, set `EXPO_ACCESS_TOKEN` as an
 Edge Function secret. The value must never enter application code or logs.

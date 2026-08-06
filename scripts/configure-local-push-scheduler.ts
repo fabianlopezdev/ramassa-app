@@ -1,45 +1,12 @@
 /**
- * Gives pg_cron the local Edge Function URL and secret API key without writing
- * either value to disk or stdout. A database reset clears Vault, so db:reset
+ * Gives pg_cron the local Edge Function URL and an invocation-only secret without
+ * writing either value to disk or stdout. A database reset clears Vault, so db:reset
  * runs this immediately after the migrations and seed finish.
  */
 
-interface LocalSupabaseEnvironment {
-  readonly SERVICE_ROLE_KEY: string;
-}
-
-function parseEnvironment(output: string): Partial<Record<string, string>> {
-  return Object.fromEntries(
-    output
-      .split('\n')
-      .map((line) => line.trim())
-      .filter((line) => line.includes('='))
-      .map((line) => {
-        const separator = line.indexOf('=');
-        const name = line.slice(0, separator);
-        const rawValue = line.slice(separator + 1);
-        const value = rawValue.replace(/^"|"$/g, '');
-        return [name, value];
-      }),
-  );
-}
-
-async function readLocalSupabaseEnvironment(): Promise<LocalSupabaseEnvironment> {
-  const process = Bun.spawn(['supabase', 'status', '-o', 'env'], {
-    stdout: 'pipe',
-    stderr: 'pipe',
-  });
-  const [stdout, exitCode] = await Promise.all([
-    new Response(process.stdout).text(),
-    process.exited,
-  ]);
-  if (exitCode !== 0) throw new Error('Local Supabase is not running');
-
-  const environment = parseEnvironment(stdout);
-  if (environment.SERVICE_ROLE_KEY === undefined) {
-    throw new Error('Local Supabase did not report its service-role key');
-  }
-  return { SERVICE_ROLE_KEY: environment.SERVICE_ROLE_KEY };
+export function createDispatchSecret(): string {
+  const bytes = crypto.getRandomValues(new Uint8Array(32));
+  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
 function quoteSqlLiteral(value: string): string {
@@ -47,10 +14,10 @@ function quoteSqlLiteral(value: string): string {
 }
 
 async function configureLocalPushScheduler(): Promise<void> {
-  const environment = await readLocalSupabaseEnvironment();
+  const dispatchSecret = createDispatchSecret();
   const sql = `
     delete from vault.secrets
-    where name in ('push_project_url', 'push_secret_key');
+    where name in ('push_project_url', 'push_dispatch_secret');
 
     select vault.create_secret(
       'http://kong:8000',
@@ -59,9 +26,9 @@ async function configureLocalPushScheduler(): Promise<void> {
     );
 
     select vault.create_secret(
-      ${quoteSqlLiteral(environment.SERVICE_ROLE_KEY)},
-      'push_secret_key',
-      'Local secret API key for the Ramassa push scheduler'
+      ${quoteSqlLiteral(dispatchSecret)},
+      'push_dispatch_secret',
+      'Local invocation-only secret for the Ramassa push scheduler'
     );
   `;
 
@@ -93,6 +60,4 @@ async function configureLocalPushScheduler(): Promise<void> {
   console.info('Local push scheduler configured in Supabase Vault.');
 }
 
-await configureLocalPushScheduler();
-
-export {};
+if (import.meta.main) await configureLocalPushScheduler();

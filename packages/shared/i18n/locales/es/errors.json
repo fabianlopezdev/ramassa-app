@@ -19,6 +19,7 @@
   "PUSH-5": "No hemos podido comprobar la entrega del aviso.",
   "PUSH-6": "No hemos podido confirmar la entrega del aviso a tiempo.",
   "PUSH-7": "No hemos podido guardar el estado del aviso.",
+  "PUSH-8": "No hemos podido confirmar el envío del aviso. Lo volveremos a intentar.",
   "SYNC-1": "No hemos podido sincronizar. Se volverá a intentar automáticamente.",
   "UPLOAD-1": "No hemos podido subir el archivo. Vuelve a intentarlo.",
   "UPLOAD-2": "Este tipo de archivo no se puede subir. Prueba con una foto o un vídeo.",
