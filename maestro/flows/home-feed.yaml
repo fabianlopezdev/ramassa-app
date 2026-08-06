@@ -248,3 +248,13 @@ env:
           timeout: 30000
       - takeScreenshot: ${SHOTS}/08-offline${SUFFIX}
       - setAirplaneMode: disabled
+
+# The same validated app route used by an announcement notification response.
+# The system shade is captured separately when the platform exposes it reliably.
+- openLink: ramassa://announcement/5eed0000-0000-4000-8001-000000000002
+- extendedWaitUntil:
+    visible: '^${BACK}$'
+    timeout: 30000
+- waitForAnimationToEnd:
+    timeout: 1500
+- takeScreenshot: ${SHOTS}/09-push-entry${SUFFIX}

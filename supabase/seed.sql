@@ -392,8 +392,9 @@ on conflict (id) do nothing;
 -- Two registered devices, so a staff-side send screen has something to target
 -- before any device has ever run the app (RAPP-17 registers the real ones).
 
-insert into public.push_tokens (user_id, token, platform, device_id)
+insert into public.push_tokens (id, user_id, token, platform, device_id)
 select
+  ('5eed0000-0000-4000-8000-' || lpad((900 + r.ordinal)::text, 12, '0'))::uuid,
   ('5eed0000-0000-4000-8000-' || lpad(r.ordinal::text, 12, '0'))::uuid,
   'ExponentPushToken[seed-' || lpad(r.ordinal::text, 4, '0') || ']',
   case when r.ordinal % 2 = 0 then 'android' else 'ios' end,
@@ -713,6 +714,55 @@ values
     '5eed0000-0000-4000-8000-000000000002',
     now() - interval '8 days'
   )
+on conflict (id) do nothing;
+
+-- Push delivery pipeline ---------------------------------------------------------
+-- One terminal fixture keeps the durable receipt state inspectable without a
+-- live Expo send. The publication id is normalized so the shared factories can
+-- build the same rows deterministically.
+update public.push_publications
+set
+  state = 'complete',
+  recipient_count = 0,
+  sent_count = 0,
+  delivered_count = 0,
+  failed_count = 0,
+  completed_at = now() - interval '1 hour'
+where state <> 'complete';
+
+update public.push_publications
+set
+  id = '5eed0000-0000-4000-8007-000000000001',
+  state = 'complete',
+  recipient_count = 1,
+  sent_count = 1,
+  delivered_count = 1,
+  completed_at = now() - interval '1 hour'
+where content_type = 'announcement'
+  and content_id = '5eed0000-0000-4000-8001-000000000002';
+
+insert into public.push_deliveries (
+  id, publication_id, push_token_id, recipient_id, language, state,
+  attempt_count, receipt_attempt_count, expo_ticket_id, ticketed_at,
+  next_attempt_at, completed_at, created_at, updated_at
+)
+select
+  '5eed0000-0000-4000-8008-000000000001',
+  '5eed0000-0000-4000-8007-000000000001',
+  push_token.id,
+  push_token.user_id,
+  'ar',
+  'delivered',
+  1,
+  1,
+  'seed-ticket-delivered',
+  now() - interval '1 hour 15 minutes',
+  now() - interval '1 hour 15 minutes',
+  now() - interval '1 hour',
+  now() - interval '1 hour 20 minutes',
+  now() - interval '1 hour'
+from public.push_tokens as push_token
+where push_token.user_id = '5eed0000-0000-4000-8000-000000000011'
 on conflict (id) do nothing;
 
 -- The event rows are inserted before the auth roster so their category and

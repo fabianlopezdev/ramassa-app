@@ -43,6 +43,8 @@ export type KnowledgeCategoryRow = Database['public']['Tables']['knowledge_categ
 export type KnowledgeArticleRow = Database['public']['Tables']['knowledge_articles']['Row'];
 export type ProfileRow = Database['public']['Tables']['profiles']['Row'];
 export type PushTokenRow = Database['public']['Tables']['push_tokens']['Row'];
+export type PushPublicationRow = Database['public']['Tables']['push_publications']['Row'];
+export type PushDeliveryRow = Database['public']['Tables']['push_deliveries']['Row'];
 export type TermsAcceptanceRow = Database['public']['Tables']['terms_acceptances']['Row'];
 export type DeletionRequestRow = Database['public']['Tables']['deletion_requests']['Row'];
 export type ParticipantNoteRow = Database['public']['Tables']['participant_notes']['Row'];
@@ -432,6 +434,7 @@ export function buildProfileFromFixture(
     // anonymized state is produced by an irreversible RPC (RAPP-26), so a test
     // that wants one asks for it explicitly rather than inheriting it.
     anonymized_at: null,
+    push_notifications_enabled: true,
     created_at: FIXTURE_TIMESTAMP,
     updated_at: FIXTURE_TIMESTAMP,
     ...derivedProfileFields(fixture),
@@ -448,6 +451,54 @@ export function buildPushToken(overrides: Partial<PushTokenRow> = {}): PushToken
     token: `ExponentPushToken[seed-${pad(owner.ordinal, 4)}]`,
     platform: 'android',
     device_id: `seed-device-${pad(owner.ordinal, 4)}`,
+    created_at: FIXTURE_TIMESTAMP,
+    updated_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+export function buildPushPublication(
+  overrides: Partial<PushPublicationRow> = {},
+): PushPublicationRow {
+  const contentId = '5eed0000-0000-4000-8001-000000000002';
+  return {
+    id: '5eed0000-0000-4000-8007-000000000001',
+    org_id: SEED_ORGANIZATION_ID,
+    content_type: 'announcement',
+    content_id: contentId,
+    idempotency_key: `announcement:${contentId}`,
+    scheduled_for: FIXTURE_TIMESTAMP,
+    state: 'complete',
+    recipient_count: 1,
+    sent_count: 1,
+    delivered_count: 1,
+    failed_count: 0,
+    completed_at: FIXTURE_TIMESTAMP,
+    created_at: FIXTURE_TIMESTAMP,
+    updated_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+export function buildPushDelivery(overrides: Partial<PushDeliveryRow> = {}): PushDeliveryRow {
+  const owner = PARTICIPANT_FIXTURES[0]!;
+  return {
+    id: '5eed0000-0000-4000-8008-000000000001',
+    publication_id: '5eed0000-0000-4000-8007-000000000001',
+    push_token_id: seedUserId(900 + owner.ordinal),
+    recipient_id: seedUserId(owner.ordinal),
+    language: owner.preferredLanguage,
+    state: 'delivered',
+    attempt_count: 1,
+    receipt_attempt_count: 1,
+    expo_ticket_id: 'seed-ticket-delivered',
+    ticketed_at: FIXTURE_TIMESTAMP,
+    worker_id: null,
+    lease_expires_at: null,
+    next_attempt_at: FIXTURE_TIMESTAMP,
+    receipt_due_at: null,
+    last_error_code: null,
+    completed_at: FIXTURE_TIMESTAMP,
     created_at: FIXTURE_TIMESTAMP,
     updated_at: FIXTURE_TIMESTAMP,
     ...overrides,

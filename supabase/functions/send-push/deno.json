@@ -1,0 +1,10 @@
+{
+  "imports": {
+    "@supabase/functions-js": "jsr:@supabase/functions-js@2.5.0",
+    "@supabase/supabase-js": "npm:@supabase/supabase-js@2.111.0"
+  },
+  "compilerOptions": {
+    "strict": true,
+    "noUncheckedIndexedAccess": true
+  }
+}

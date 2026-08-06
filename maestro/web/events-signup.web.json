@@ -84,6 +84,11 @@
       "label": "filter-cultural",
       "click": "[data-testid=\"event-filter-5eed0000-0000-4000-8002-000000000003\"]",
       "waitFor": "[data-testid^=\"event-card-5eed0000-0000-4000-8003-000000000002-\"]"
+    },
+    {
+      "label": "push-entry",
+      "goto": "/event/5eed0000-0000-4000-8003-000000000001",
+      "waitFor": "[aria-label=\"{{events:playerBack}}\"]"
     }
   ]
 }

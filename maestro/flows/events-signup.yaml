@@ -344,3 +344,13 @@ env:
 - waitForAnimationToEnd:
     timeout: 1000
 - takeScreenshot: ${SHOTS}/10-filter-cultural${SUFFIX}
+
+# The same validated app route used by an event notification response.
+# The system shade is captured separately when the platform exposes it reliably.
+- openLink: ramassa://event/5eed0000-0000-4000-8003-000000000001
+- extendedWaitUntil:
+    visible: '^${BACK}$'
+    timeout: 30000
+- waitForAnimationToEnd:
+    timeout: 1500
+- takeScreenshot: ${SHOTS}/11-push-entry${SUFFIX}

@@ -89,6 +89,12 @@ export default tseslint.config(
     },
   },
   {
+    files: ['supabase/functions/**/*.ts'],
+    languageOptions: {
+      globals: globals.denoBuiltin,
+    },
+  },
+  {
     // Plain-node ESM scripts (the canvas verifier). Run with `node`, not bun,
     // so they get node's globals rather than the TS/react-native environment.
     files: ['scripts/**/*.mjs'],

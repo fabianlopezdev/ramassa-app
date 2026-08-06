@@ -2,6 +2,7 @@
 // below reaches transitively, so the SDK is live before the first render (RAPP-12).
 import { AuthDeepLinkHandler } from '@/components/auth/auth-deep-link-handler';
 import { ErrorFallback, type ErrorFallbackProps } from '@/components/error-fallback';
+import { PushNotificationResponseHandler } from '@/components/push-notification-response-handler';
 import { reportAuthError } from '@/lib/auth';
 import { AuthFlowStatusProvider } from '@/lib/auth-flow-status';
 import { i18n } from '@/lib/i18n';
@@ -135,6 +136,7 @@ function RootLayout() {
           <AuthProvider client={supabase} onError={reportAuthError}>
             <AuthFlowStatusProvider>
               <AuthDeepLinkHandler />
+              <PushNotificationResponseHandler />
               <RootNavigator />
             </AuthFlowStatusProvider>
           </AuthProvider>

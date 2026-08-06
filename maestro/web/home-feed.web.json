@@ -50,6 +50,11 @@
       "label": "info",
       "click": "[aria-label=\"{{home:category.info}}\"]",
       "waitFor": "text={{home:emptyTitle}} >> visible=true"
+    },
+    {
+      "label": "push-entry",
+      "goto": "/announcement/5eed0000-0000-4000-8001-000000000002",
+      "waitFor": "[aria-label=\"{{common:back}}\"]"
     }
   ]
 }

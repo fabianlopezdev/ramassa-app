@@ -59,6 +59,13 @@
       "android": "home-feed/android/08-offline.png"
     },
     {
+      "id": "push-entry",
+      "label": "Detall obert des d'una notificació",
+      "ios": "home-feed/ios/09-push-entry.png",
+      "android": "home-feed/android/04-detail.png",
+      "web": "home-feed/web/05-detail.png"
+    },
+    {
       "id": "feed-ar",
       "label": "الإعلانات (àrab, dreta a esquerra)",
       "ios": "home-feed/ios/01-feed-ar.png",
@@ -120,6 +127,7 @@
     { "from": "feed", "to": "training", "label": "Entrenaments", "kind": "neutral" },
     { "from": "feed", "to": "info", "label": "Informació", "kind": "neutral" },
     { "from": "feed", "to": "offline", "label": "Sense connexió", "kind": "neutral" },
+    { "from": "feed", "to": "push-entry", "label": "From push" },
     { "from": "feed-ar", "to": "refresh-ar", "label": "اسحبي للتحديث" },
     { "from": "feed-ar", "to": "urgent-ar", "label": "عاجل" },
     { "from": "urgent-ar", "to": "detail-ar", "label": "افتحي الإعلان" },
@@ -133,6 +141,8 @@
     "Els avisos destacats es mantenen al davant perquè una cancel·lació urgent no quedi enterrada sota contingut més recent.",
     "Els filtres són botons visibles i etiquetats, no un menú ocult. Les categories sense contingut expliquen què apareixerà aquí en el futur.",
     "Quan no hi ha connexió, la pantalla conserva els avisos desats i ho explica amb un missatge curt. No substitueix el contingut per un error tècnic.",
-    "La mateixa informació es comprova en telèfons i al web, incloent la direcció de lectura de l'àrab."
+    "La mateixa informació es comprova en telèfons i al web, incloent la direcció de lectura de l'àrab.",
+    "La captura mostra la pantalla on arriba la ruta validada d'una notificació. El lliurament i el toc reals es van comprovar per separat al sistema Android. La safata del sistema no es captura de manera determinista amb Maestro.",
+    "El corredor Android es va aturar en un selector anterior del menú de desenvolupament i el web perd la ruta protegida durant la hidratació de la sessió. En aquests dos eixos, el node reutilitza la captura autenticada de la mateixa pantalla de detall."
   ]
 }

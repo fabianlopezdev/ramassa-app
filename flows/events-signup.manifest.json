@@ -74,6 +74,13 @@
       "web": "events-signup/web/15-filter-cultural.png"
     },
     {
+      "id": "push-entry",
+      "label": "Activitat oberta des d'una notificació",
+      "ios": "events-signup/ios/11-push-entry.png",
+      "android": "events-signup/android/03-detail.png",
+      "web": "events-signup/web/05-detail.png"
+    },
+    {
       "id": "list-ar",
       "label": "الأنشطة القادمة (àrab, dreta a esquerra)",
       "ios": "events-signup/ios/01-list-ar.png",
@@ -152,6 +159,7 @@
     { "from": "list", "to": "filter-training", "label": "Entrenaments" },
     { "from": "list", "to": "filter-courses", "label": "Cursos" },
     { "from": "list", "to": "filter-cultural", "label": "Cultura" },
+    { "from": "list", "to": "push-entry", "label": "From push" },
     { "from": "list-ar", "to": "calendar-ar", "label": "تقويم" },
     { "from": "list-ar", "to": "detail-ar", "label": "فتح النشاط" },
     { "from": "detail-ar", "to": "confirmed-ar", "label": "تأكيد", "kind": "positive" },
@@ -168,6 +176,8 @@
     "La capacitat es comprova al servidor en el moment de confirmar. Si dues jugadores intenten agafar l'última plaça, només una pot completar l'acció.",
     "Sense connexió es conserven les activitats desades, però una inscripció no es posa en cua perquè la capacitat pot canviar abans de recuperar la xarxa.",
     "Les dates i les hores es mostren en Europe/Madrid i el calendari comença en dilluns en les cinc llengües de l'app.",
-    "La vista inicial captura el filtre Totes. Els tres filtres de categoria disponibles també tenen una captura pròpia amb l'estat seleccionat verificat."
+    "La vista inicial captura el filtre Totes. Els tres filtres de categoria disponibles també tenen una captura pròpia amb l'estat seleccionat verificat.",
+    "La captura mostra la pantalla on arriba la ruta validada d'una notificació. El lliurament i el toc reals es van comprovar per separat al sistema Android. La safata del sistema no es captura de manera determinista amb Maestro.",
+    "El corredor Android es va aturar en un selector anterior del menú de desenvolupament i el web perd la ruta protegida durant la hidratació de la sessió. En aquests dos eixos, el node reutilitza la captura autenticada de la mateixa pantalla de detall."
   ]
 }

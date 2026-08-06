@@ -789,6 +789,7 @@ export type Database = {
           place_of_birth: string | null;
           postal_code: string | null;
           preferred_language: string;
+          push_notifications_enabled: boolean;
           reference_contact_name: string | null;
           reference_entity: string | null;
           role: string;
@@ -822,6 +823,7 @@ export type Database = {
           place_of_birth?: string | null;
           postal_code?: string | null;
           preferred_language?: string;
+          push_notifications_enabled?: boolean;
           reference_contact_name?: string | null;
           reference_entity?: string | null;
           role?: string;
@@ -855,6 +857,7 @@ export type Database = {
           place_of_birth?: string | null;
           postal_code?: string | null;
           preferred_language?: string;
+          push_notifications_enabled?: boolean;
           reference_contact_name?: string | null;
           reference_entity?: string | null;
           role?: string;
@@ -866,6 +869,150 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: 'profiles_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      push_deliveries: {
+        Row: {
+          attempt_count: number;
+          completed_at: string | null;
+          created_at: string;
+          expo_ticket_id: string | null;
+          id: string;
+          language: string;
+          last_error_code: string | null;
+          lease_expires_at: string | null;
+          next_attempt_at: string;
+          publication_id: string;
+          push_token_id: string | null;
+          receipt_attempt_count: number;
+          receipt_due_at: string | null;
+          recipient_id: string;
+          state: string;
+          ticketed_at: string | null;
+          updated_at: string;
+          worker_id: string | null;
+        };
+        Insert: {
+          attempt_count?: number;
+          completed_at?: string | null;
+          created_at?: string;
+          expo_ticket_id?: string | null;
+          id?: string;
+          language: string;
+          last_error_code?: string | null;
+          lease_expires_at?: string | null;
+          next_attempt_at?: string;
+          publication_id: string;
+          push_token_id?: string | null;
+          receipt_attempt_count?: number;
+          receipt_due_at?: string | null;
+          recipient_id: string;
+          state?: string;
+          ticketed_at?: string | null;
+          updated_at?: string;
+          worker_id?: string | null;
+        };
+        Update: {
+          attempt_count?: number;
+          completed_at?: string | null;
+          created_at?: string;
+          expo_ticket_id?: string | null;
+          id?: string;
+          language?: string;
+          last_error_code?: string | null;
+          lease_expires_at?: string | null;
+          next_attempt_at?: string;
+          publication_id?: string;
+          push_token_id?: string | null;
+          receipt_attempt_count?: number;
+          receipt_due_at?: string | null;
+          recipient_id?: string;
+          state?: string;
+          ticketed_at?: string | null;
+          updated_at?: string;
+          worker_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'push_deliveries_publication_id_fkey';
+            columns: ['publication_id'];
+            isOneToOne: false;
+            referencedRelation: 'push_publications';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'push_deliveries_push_token_id_fkey';
+            columns: ['push_token_id'];
+            isOneToOne: false;
+            referencedRelation: 'push_tokens';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'push_deliveries_recipient_id_fkey';
+            columns: ['recipient_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      push_publications: {
+        Row: {
+          completed_at: string | null;
+          content_id: string;
+          content_type: string;
+          created_at: string;
+          delivered_count: number;
+          failed_count: number;
+          id: string;
+          idempotency_key: string | null;
+          org_id: string;
+          recipient_count: number;
+          scheduled_for: string;
+          sent_count: number;
+          state: string;
+          updated_at: string;
+        };
+        Insert: {
+          completed_at?: string | null;
+          content_id: string;
+          content_type: string;
+          created_at?: string;
+          delivered_count?: number;
+          failed_count?: number;
+          id?: string;
+          idempotency_key?: string | null;
+          org_id: string;
+          recipient_count?: number;
+          scheduled_for: string;
+          sent_count?: number;
+          state?: string;
+          updated_at?: string;
+        };
+        Update: {
+          completed_at?: string | null;
+          content_id?: string;
+          content_type?: string;
+          created_at?: string;
+          delivered_count?: number;
+          failed_count?: number;
+          id?: string;
+          idempotency_key?: string | null;
+          org_id?: string;
+          recipient_count?: number;
+          scheduled_for?: string;
+          sent_count?: number;
+          state?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'push_publications_org_id_fkey';
             columns: ['org_id'];
             isOneToOne: false;
             referencedRelation: 'organizations';
@@ -957,6 +1104,40 @@ export type Database = {
         Args: { limited_action: string; maximum_per_hour: number };
         Returns: undefined;
       };
+      claim_push_deliveries: {
+        Args: {
+          claim_limit?: number;
+          claimed_at?: string;
+          claiming_worker_id: string;
+        };
+        Returns: {
+          attempt_count: number;
+          body: Json;
+          content_id: string;
+          content_type: string;
+          delivery_id: string;
+          expires_at: string;
+          language: string;
+          publication_id: string;
+          push_token_id: string;
+          recipient_id: string;
+          title: Json;
+          token: string;
+        }[];
+      };
+      claim_push_receipts: {
+        Args: {
+          claim_limit?: number;
+          claimed_at?: string;
+          claiming_worker_id: string;
+        };
+        Returns: {
+          delivery_id: string;
+          push_token_id: string;
+          receipt_attempt_count: number;
+          ticket_id: string;
+        }[];
+      };
       complete_onboarding: {
         Args: { payload: Json };
         Returns: {
@@ -984,6 +1165,7 @@ export type Database = {
           place_of_birth: string | null;
           postal_code: string | null;
           preferred_language: string;
+          push_notifications_enabled: boolean;
           reference_contact_name: string | null;
           reference_entity: string | null;
           role: string;
@@ -1025,6 +1207,10 @@ export type Database = {
       };
       encrypt_field: { Args: { plaintext: string }; Returns: string };
       encryption_key: { Args: never; Returns: string };
+      enqueue_due_push_publications: {
+        Args: { due_at?: string };
+        Returns: number;
+      };
       get_own_profile: {
         Args: never;
         Returns: {
@@ -1166,6 +1352,22 @@ export type Database = {
           reason: string;
           table_name: string;
         }[];
+      };
+      record_push_delivery_results: {
+        Args: {
+          recorded_at?: string;
+          recording_worker_id: string;
+          results: Json;
+        };
+        Returns: number;
+      };
+      record_push_receipt_results: {
+        Args: {
+          recorded_at?: string;
+          recording_worker_id: string;
+          results: Json;
+        };
+        Returns: number;
       };
       reset_participant_password: {
         Args: { participant_id: string };

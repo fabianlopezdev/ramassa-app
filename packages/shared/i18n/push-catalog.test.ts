@@ -17,6 +17,8 @@ const PUSH_KEYS = [
   'rationaleAccept',
   'rationaleDecline',
   'deniedNotice',
+  'eventFallbackBody',
+  'announcementFallbackBody',
 ] as const;
 
 describe('push catalog', () => {

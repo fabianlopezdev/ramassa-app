@@ -245,3 +245,34 @@ Android from SDK 53.
    screenshots, commits, or vault notes.
 7. Verify it arrives with the app **foregrounded** and again **backgrounded**.
 8. Sign out, and confirm the row is gone.
+
+### Publish-triggered send pipeline
+
+`supabase/functions/send-push` sends due announcements and events through the
+Expo Push API. Postgres keeps one publication row per content item and one
+delivery row per registered device, so a repeated invocation does not broadcast
+the same item again. Players with `profiles.push_notifications_enabled = false`
+are excluded before a delivery row is created.
+
+Immediate publishes invoke the function after the content transaction commits.
+Supabase Cron invokes it every minute for scheduled publications, transient
+retries, and Expo receipt checks. Receipts are first requested after 15 minutes
+and invalid `DeviceNotRegistered` tokens are deleted.
+
+Local setup is automatic after `bun run db:reset`: the reset command stores the
+local gateway URL and the local service credential in Supabase Vault without
+printing or writing either value. To serve and invoke the function locally:
+
+```bash
+supabase functions serve send-push
+```
+
+For a hosted project, deploy `send-push`, then create the two Vault secrets
+`push_project_url` and `push_secret_key`. Their values are the project URL and a
+dedicated secret API key. Enter them through the Supabase Dashboard or a private
+SQL session. Never place the key in a migration, shell history, repository,
+screenshot, or issue note. The migration installs the `ramassa-push-dispatch`
+Cron job and begins working as soon as both secrets exist.
+
+If enhanced Expo push security is enabled in EAS, set `EXPO_ACCESS_TOKEN` as an
+Edge Function secret. The value must never enter application code or logs.
