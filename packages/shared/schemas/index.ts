@@ -34,6 +34,16 @@ export const uuidSchema = z.uuid();
 export const emailSchema = z.email();
 export const isoDateTimeSchema = z.iso.datetime();
 
+/** The subset of an Expo manifest the capture harness trusts to identify Metro. */
+export const expoMetroManifestSchema = z.object({
+  extra: z.object({
+    expoClient: z.object({
+      scheme: z.union([z.string().min(1), z.array(z.string().min(1)).min(1)]),
+    }),
+  }),
+});
+export type ExpoMetroManifest = z.infer<typeof expoMetroManifestSchema>;
+
 // Domain schemas compose from the primitives above and live in sibling files.
 export * from './accounts';
 export * from './auth';

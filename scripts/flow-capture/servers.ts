@@ -9,6 +9,7 @@
  */
 
 import path from 'node:path';
+import { expoMetroManifestSchema } from '@ramassa/shared/schemas';
 import { repoRoot } from './config';
 import { log, runOrThrow, waitFor } from './shell';
 
@@ -43,13 +44,13 @@ export async function ensureMetro(port: number, scheme: string): Promise<MetroSe
   // this run starts its own.
   let ourPort = port;
   for (let candidate = port; candidate < port + 20; candidate += 1) {
-    const owner = await metroScheme(candidate);
-    if (owner === scheme) {
+    const owners = await metroSchemes(candidate);
+    if (owners?.includes(scheme) === true) {
       log(`· reusing the Metro server already on :${candidate}`);
       return { port: candidate, stop: async () => {} };
     }
-    if (owner !== undefined) {
-      log(`· :${candidate} belongs to another app (${owner}), leaving it alone`);
+    if (owners !== undefined) {
+      log(`· :${candidate} belongs to another app (${owners.join(', ')}), leaving it alone`);
       continue;
     }
     if (await isPortFree(candidate)) {
@@ -65,9 +66,11 @@ export async function ensureMetro(port: number, scheme: string): Promise<MetroSe
     stderr: 'ignore',
     stdin: 'ignore',
   });
-  await waitFor(`Metro on :${ourPort}`, async () => (await metroScheme(ourPort)) === scheme, {
-    timeoutMs: 180_000,
-  });
+  await waitFor(
+    `Metro on :${ourPort}`,
+    async () => (await metroSchemes(ourPort))?.includes(scheme) === true,
+    { timeoutMs: 180_000 },
+  );
   return {
     port: ourPort,
     stop: async () => {
@@ -82,21 +85,25 @@ export async function ensureMetro(port: number, scheme: string): Promise<MetroSe
  * listening. Read from the Expo manifest rather than from `/status`, which
  * every Metro answers identically.
  */
-async function metroScheme(port: number): Promise<string | undefined> {
+async function metroSchemes(port: number): Promise<readonly string[] | undefined> {
   try {
     const response = await fetch(`http://localhost:${port}/`, {
       headers: { 'expo-platform': 'android', accept: 'application/expo+json,application/json' },
       signal: AbortSignal.timeout(4000),
     });
     if (!response.ok) return undefined;
-    const manifest = (await response.json()) as {
-      extra?: { expoClient?: { scheme?: string | readonly string[] } };
-    };
-    const served = manifest.extra?.expoClient?.scheme;
-    return Array.isArray(served) ? served[0] : (served as string | undefined);
+    return metroSchemesFromManifest(await response.json());
   } catch {
     return undefined;
   }
+}
+
+/** Parse, then normalize the external Expo manifest before using its identity. */
+export function metroSchemesFromManifest(manifest: unknown): readonly string[] | undefined {
+  const parsed = expoMetroManifestSchema.safeParse(manifest);
+  if (!parsed.success) return undefined;
+  const { scheme } = parsed.data.extra.expoClient;
+  return typeof scheme === 'string' ? [scheme] : scheme;
 }
 
 async function isPortFree(port: number): Promise<boolean> {

@@ -9,7 +9,7 @@
   },
   "appId": "com.ramassa.app",
   "scheme": "ramassa",
-  "metroPort": 8081,
+  "metroPort": 8082,
   "webPreviewPort": 4173,
   "adminPreviewPort": 4174,
   "flows": [

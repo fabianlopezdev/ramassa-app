@@ -28,6 +28,10 @@ import { interpolate, loadTranslator } from '../scripts/flow-capture/translation
 
 const config = await loadFlowConfig();
 
+test('the shared Ramassa Metro uses its reserved port', () => {
+  expect(config.metroPort).toBe(8082);
+});
+
 describe('capture passes', () => {
   test('a bare player flow captures both phones AND the browser', () => {
     expect(resolvePasses('mobile')).toEqual(['ios', 'android', 'web']);

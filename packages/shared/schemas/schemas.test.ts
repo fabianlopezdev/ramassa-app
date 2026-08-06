@@ -2,6 +2,7 @@ import { expect, test } from 'bun:test';
 import {
   DEFAULT_LANGUAGE,
   emailSchema,
+  expoMetroManifestSchema,
   languageCodeSchema,
   localizedTextSchema,
   uuidSchema,
@@ -23,6 +24,20 @@ test('localizedTextSchema requires Catalan and allows the rest to be partial', (
   expect(localizedTextSchema.safeParse({ ca: 'Entrenament', ar: 'تدريب' }).success).toBe(true);
   expect(localizedTextSchema.safeParse({ es: 'Entrenamiento' }).success).toBe(false);
   expect(localizedTextSchema.safeParse({ ca: '' }).success).toBe(false);
+});
+
+test('expoMetroManifestSchema validates the Metro identity before the capture harness trusts it', () => {
+  expect(
+    expoMetroManifestSchema.parse({ extra: { expoClient: { scheme: 'ramassa' } } }).extra.expoClient
+      .scheme,
+  ).toBe('ramassa');
+  expect(
+    expoMetroManifestSchema.parse({ extra: { expoClient: { scheme: ['ramassa', 'other'] } } }).extra
+      .expoClient.scheme,
+  ).toEqual(['ramassa', 'other']);
+  expect(expoMetroManifestSchema.safeParse({ extra: { expoClient: { scheme: 42 } } }).success).toBe(
+    false,
+  );
 });
 
 test('uuid and email primitives validate', () => {
