@@ -206,19 +206,25 @@ renamed, so every already-issued token stays valid. Expo does cap how many times
 project can be transferred and needs Owner/Admin on both accounts (an escrow
 organization is the documented workaround), so transfer deliberately.
 
-### Credentials still needed
+### Credential status and ownership
 
-| Platform | Needed                                           | Who    |
-| -------- | ------------------------------------------------ | ------ |
-| Android  | FCM V1 credentials (service account JSON) in EAS | manual |
-| iOS      | APNs key, needs a paid Apple Developer account   | manual |
+| Platform | Development status                                                               | Production owner       |
+| -------- | -------------------------------------------------------------------------------- | ---------------------- |
+| Android  | FCM V1 is configured in EAS under the temporary Fabulous Apps development setup. | Ramassà at handover    |
+| iOS      | Deferred. Do not register `com.ramassa.app` in a Fabulous Apps Apple team.       | Ramassà before release |
 
 The public Android Firebase client config is checked in at
 `apps/mobile/google-services.json` and wired through `app.json`. The server-side
-FCM V1 JSON is a credential: upload it with `eas credentials`, and never print or
-commit it. If Google organization policy blocks service-account key creation,
-get an approved project exception or an approved existing key instead of
-weakening the policy silently.
+FCM V1 credential was uploaded directly to EAS on 2026-08-05. Its temporary
+source file was removed immediately, and the Google organization policy that
+blocks service-account key creation was restored. Never print, retain, or commit
+that credential.
+
+The final `com.ramassa.app` App ID, APNs credential, provisioning material, and
+iOS delivery proof must be created in Ramassà's paid Apple Developer account
+before production distribution. Development does not justify asking the client
+to start the paid membership months early or putting the final identifier in a
+Fabulous Apps Apple team.
 
 ### End-to-end proof
 
@@ -234,6 +240,8 @@ Android from SDK 53.
 3. Accept the rationale, then the OS prompt.
 4. Confirm the row landed: `select user_id, platform, device_id, updated_at from push_tokens;`
 5. Relaunch and confirm there is still one row for that user and device.
-6. Copy the token and send a test push from https://expo.dev/notifications
+6. Send a test push through the Expo push service. Keep the token in a temporary
+   shell variable or a private dashboard field, and never place it in logs,
+   screenshots, commits, or vault notes.
 7. Verify it arrives with the app **foregrounded** and again **backgrounded**.
 8. Sign out, and confirm the row is gone.
