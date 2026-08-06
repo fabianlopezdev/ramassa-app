@@ -72,15 +72,7 @@ const spanishDniPattern = /\b\d{8}[a-z]\b/gi;
 const spanishNiePattern = /\b[xyz]\d{7}[a-z]\b/gi;
 const emailPattern = /[\w.+-]+@[\w-]+\.[\w.-]+/g;
 /**
- * Digit runs (with optional +, spaces, hyphens) that contain at least nine
- * digits — Spanish subscriber numbers and international formats — while
- * ISO dates (eight digits) survive.
- */
-const phoneCandidatePattern = /\+?\d[\d\s-]*\d/g;
-const minimumPhoneDigits = 9;
-
-/**
- * A value that is EXACTLY a UUID and nothing else.
+ * A UUID token, matched before the broader phone candidate alternative.
  *
  * Opaque IDs are the one thing this module is supposed to let through: they are
  * what makes an incident traceable back to a record, and a log line that has
@@ -90,23 +82,30 @@ const minimumPhoneDigits = 9;
  * out as "5eed[REDACTED]" (found by a RAPP-25 test asserting the promise in
  * this file's own docstring).
  *
- * Deliberately anchored to the WHOLE string: an id field holds an id. A UUID
- * quoted inside a sentence is left to the ordinary rules, because there the
- * surrounding text is the risk and a partial scrub is the safe failure.
+ * The anchored form classifies each matched candidate. The unanchored form in
+ * `uuidOrPhoneCandidatePattern` lets the same UUID survive inside free text.
  */
-const wholeUuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+/**
+ * UUIDs, or digit runs (with optional +, spaces, hyphens) that may be phone
+ * numbers. Candidates with at least nine digits are redacted, while ISO dates
+ * (eight digits) survive.
+ */
+const uuidOrPhoneCandidatePattern =
+  /\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b|\+?\d[\d\s-]*\d/gi;
+const minimumPhoneDigits = 9;
 
 function redactStringPatterns(value: string): string {
-  if (wholeUuidPattern.test(value)) {
-    return value;
-  }
   return value
     .replaceAll(spanishNiePattern, REDACTED)
     .replaceAll(spanishDniPattern, REDACTED)
     .replaceAll(emailPattern, REDACTED)
-    .replaceAll(phoneCandidatePattern, (candidate) =>
-      candidate.replaceAll(/\D/g, '').length >= minimumPhoneDigits ? REDACTED : candidate,
-    );
+    .replaceAll(uuidOrPhoneCandidatePattern, (candidate) => {
+      if (uuidPattern.test(candidate)) {
+        return candidate;
+      }
+      return candidate.replaceAll(/\D/g, '').length >= minimumPhoneDigits ? REDACTED : candidate;
+    });
 }
 
 function redactValue(value: unknown, seenObjects: WeakSet<object>): unknown {

@@ -2,6 +2,12 @@ import { describe, expect, test } from 'bun:test';
 import { buildParticipant, buildParticipants } from '../testing';
 import { REDACTED, redactPii } from './redact';
 
+const uuidFixtures = [
+  '9c8d1e20-1234-4567-8901-234567890123',
+  '00000000-0000-0000-0000-000000000000',
+  'f47ac10b-58cc-4372-a567-0e02b2c3d479',
+] as const;
+
 describe('redactPii — key-based redaction', () => {
   test('scrubs every PII column of a real participant row, nested in a log payload', () => {
     // The factory row is the same shape the app actually logs (RAPP-18), so this
@@ -28,13 +34,9 @@ describe('redactPii — key-based redaction', () => {
     expect(redacted.attendees[0]?.name).toBe(REDACTED);
     expect(redacted.attendees[1]?.name).toBe(REDACTED);
 
-    // Technical facts survive.
-    // NOT asserted here: that the opaque UUIDs survive. They do not — the
-    // phone-candidate pattern eats the digit runs inside a digit-heavy UUID and
-    // logs `5eed[REDACTED]` instead of the id. That is a real defect in this
-    // module (RAPP-84), surfaced by feeding it a real row; it over-redacts, so
-    // nothing leaks, but a log entry loses the one field that makes it
-    // actionable. Asserting the broken behaviour here would cement it.
+    // Opaque IDs and technical facts survive.
+    expect(redacted.userId).toBe(participant.id);
+    expect(redacted.profile.org_id).toBe(participant.org_id);
     expect(redacted.profile.role).toBe('player');
     expect(redacted.profile.preferred_language).toBe(participant.preferred_language);
     expect(redacted.attendees[0]?.present).toBe(true);
@@ -136,19 +138,18 @@ test('the other credential-shaped keys go too', () => {
  * hard case because they are almost all digits, which is indistinguishable from
  * a phone number to a pattern that only counts them.
  */
-test('an opaque identifier survives intact, including the digit-heavy seeded ones', () => {
-  const seededId = '5eed0000-0000-4000-8000-000000000030';
-  const randomId = '3f2504e0-4f89-41d3-9a0c-0305e82c3301';
-
-  expect(redactPii({ id: seededId })).toEqual({ id: seededId });
-  expect(redactPii({ id: randomId })).toEqual({ id: randomId });
+test('digit-heavy, all-zero, and letter-heavy UUID values survive intact', () => {
+  for (const uuid of uuidFixtures) {
+    expect(redactPii({ id: uuid })).toEqual({ id: uuid });
+  }
 });
 
-test('but a phone number quoted beside one still goes', () => {
-  const redacted = redactPii({
-    note: 'called 5eed0000-0000-4000-8000-000000000030 on +34600111222',
-  }) as Record<string, unknown>;
+test('UUIDs survive inside text while a phone number beside them is redacted', () => {
+  for (const uuid of uuidFixtures) {
+    const redacted = redactPii({
+      note: `called ${uuid} on +34 612 345 678`,
+    }) as { note: string };
 
-  expect(redacted.note).toContain(REDACTED);
-  expect(redacted.note).not.toContain('+34600111222');
+    expect(redacted.note).toBe(`called ${uuid} on ${REDACTED}`);
+  }
 });
