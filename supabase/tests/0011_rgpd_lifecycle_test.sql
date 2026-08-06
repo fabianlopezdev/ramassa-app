@@ -36,7 +36,7 @@
 -- driven these screens in a browser cannot turn this file red.
 
 begin;
-select plan(40);
+select plan(41);
 
 select vault.create_secret('test-encryption-key', 'app_encryption_key', 'pgTAP test key')
 where not exists (select 1 from vault.secrets where name = 'app_encryption_key');
@@ -65,6 +65,13 @@ select has_function(
 select has_function(
   'public', 'delete_participant_permanently', array['uuid'],
   'the erasure RPC exists'
+);
+select ok(
+  position(
+    'leftovers text[] := array[]::text[];'::text in
+    pg_get_functiondef('public.delete_participant_permanently(uuid)'::regprocedure)
+  ) > 0,
+  'the erasure post-check accumulator has an explicit array type'
 );
 
 -- THE COVERAGE ASSERTION, and the reason this file is worth writing.
