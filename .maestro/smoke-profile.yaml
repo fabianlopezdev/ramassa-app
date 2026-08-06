@@ -22,6 +22,7 @@ env:
   DEV_CLIENT_URL: ramassa://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081
   DEV_MENU_LABEL: Developer menu
   TAB_PROFILE: '{{nav:tabs.profile}}'
+  HOME_FEED_TITLE: '{{home:feedTitle}}'
   PROFILE_TITLE: '{{profile:title}}'
   EDIT_ACTION: '{{profile:editAction}}'
   # `profile:editTitle` is deliberately NOT declared here. It renders the same
@@ -30,23 +31,153 @@ env:
   # flow came to assert it was in the editor while it was not.
   SAVE_ACTION: '{{profile:saveAction}}'
   SAVE_FAILED: '{{profile:saveFailed}}'
+  BACK: '{{onboarding:backAction}}'
   PUSH_DECLINE: '{{push:rationaleDecline}}'
   # ASCII, and distinct from every seeded value, so finding it on screen can
   # only mean this flow put it there. Maestro's inputText cannot type Arabic
   # script; the pgTAP suite covers that storage path server-side instead.
   NEW_BIRTHPLACE: 'Homs'
   ACCOUNTS_SECTION: Accounts and roles
+  SHOW_ALL_ACCOUNTS: Show all
+  PLAYER_EMAIL: '{{player:email}}'
   PLAYER_WITHOUT_REQUEST_EMAIL: '{{playerWithoutRequest:email}}'
   DELETE_TITLE: '{{profile:deleteTitle}}'
   DELETE_REASON_LABEL: '{{profile:deleteReasonLabel}}'
+  DELETE_REASON_PLACEHOLDER: '{{profile:deleteReasonPlaceholder}}'
   DELETE_ACTION: '{{profile:deleteAction}}'
   DELETE_CONFIRM_BODY: '{{profile:deleteConfirmBody}}'
   DELETE_CONFIRM_ACTION: '{{profile:deleteConfirmAction}}'
   DELETE_CONFIRM_CANCEL: '{{profile:deleteConfirmCancel}}'
+  DELETE_PENDING_TITLE: '{{profile:deletePendingTitle}}'
 ---
 - runFlow: _open-app.yaml
-- runFlow: _sign-in.yaml
-- runFlow: _relaunch.yaml
+# Sign in through the seeded account switcher. This flow waits on the current
+# feed heading because the shared sign-in fragment still names the retired home
+# placeholder heading and cannot prove that the new feed has mounted.
+- repeat:
+    times: 6
+    while:
+      notVisible: '.*${ACCOUNTS_SECTION}.*'
+    commands:
+      - tapOn:
+          text: '.*Close.*'
+          optional: true
+      - tapOn:
+          text: '.*${DEV_MENU_LABEL}.*'
+          optional: true
+      - swipe:
+          start: 50%, 70%
+          end: 50%, 40%
+          duration: 900
+      - waitForAnimationToEnd:
+          timeout: 3000
+- waitForAnimationToEnd:
+    timeout: 5000
+- repeat:
+    times: 20
+    while:
+      notVisible: '.*${PLAYER_EMAIL}.*'
+    commands:
+      - swipe:
+          start: 50%, 70%
+          end: 50%, 50%
+          duration: 900
+      - waitForAnimationToEnd:
+          timeout: 2500
+- swipe:
+    start: 50%, 65%
+    end: 50%, 55%
+    duration: 900
+- waitForAnimationToEnd:
+    timeout: 2500
+- tapOn: '.*${PLAYER_EMAIL}.*'
+- waitForAnimationToEnd:
+    timeout: 3000
+- repeat:
+    times: 6
+    while:
+      visible: '.*Close.*'
+    commands:
+      - tapOn:
+          text: '.*Close.*'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- assertNotVisible: '.*Close.*'
+- repeat:
+    times: 6
+    while:
+      notVisible: '.*${HOME_FEED_TITLE}.*'
+    commands:
+      - tapOn:
+          text: '^${PUSH_DECLINE}$'
+          optional: true
+      - tapOn:
+          text: '.*Close.*'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- extendedWaitUntil:
+    visible: '.*${HOME_FEED_TITLE}.*'
+    timeout: 120000
+- runFlow:
+    commands:
+      - stopApp
+      - openLink: ${DEV_CLIENT_URL}
+      - tapOn:
+          text: '^Open$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+      - waitForAnimationToEnd:
+          timeout: 12000
+      - repeat:
+          times: 10
+          while:
+            notVisible: '.*${HOME_FEED_TITLE}.*'
+          commands:
+            - tapOn:
+                text: '.*Close.*'
+                optional: true
+            - tapOn:
+                text: '^${PUSH_DECLINE}$'
+                optional: true
+            - tapOn:
+                text: '^${BACK}$'
+                optional: true
+            - waitForAnimationToEnd:
+                timeout: 3000
+      - repeat:
+          times: 6
+          while:
+            visible: '^${PUSH_DECLINE}$'
+          commands:
+            - tapOn: '^${PUSH_DECLINE}$'
+            - waitForAnimationToEnd:
+                timeout: 3000
+      - repeat:
+          times: 4
+          while:
+            visible: '.*Close.*'
+          commands:
+            - tapOn: '.*Close.*'
+            - waitForAnimationToEnd:
+                timeout: 3000
+      - waitForAnimationToEnd:
+          timeout: 5000
+      - repeat:
+          times: 6
+          while:
+            notVisible: '.*${HOME_FEED_TITLE}.*'
+          commands:
+            - tapOn:
+                text: '^${BACK}$'
+                optional: true
+            - waitForAnimationToEnd:
+                timeout: 3000
+      - extendedWaitUntil:
+          visible: '.*${HOME_FEED_TITLE}.*'
+          timeout: 240000
 
 # Reaching Profile is a LOOP, because a single tab tap can land on the WRONG
 # tab: the tab bar is a floating pill that animates into place after a relaunch,
@@ -65,6 +196,12 @@ env:
     commands:
       - tapOn:
           text: '^${TAB_PROFILE}$'
+          optional: true
+      - tapOn:
+          text: '^${PUSH_DECLINE}$'
+          optional: true
+      - tapOn:
+          text: '.*Close.*'
           optional: true
       - waitForAnimationToEnd:
           timeout: 3000
@@ -208,7 +345,64 @@ env:
 # Everything above passes against a purely optimistic write. This is the part
 # that cannot: the process is killed, the query cache goes with it, and the name
 # can only reappear by having been read back from the database.
-- runFlow: _relaunch.yaml
+- runFlow:
+    commands:
+      - stopApp
+      - openLink: ${DEV_CLIENT_URL}
+      - tapOn:
+          text: '^Open$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+      - waitForAnimationToEnd:
+          timeout: 12000
+      - repeat:
+          times: 10
+          while:
+            notVisible: '.*${HOME_FEED_TITLE}.*'
+          commands:
+            - tapOn:
+                text: '.*Close.*'
+                optional: true
+            - tapOn:
+                text: '^${PUSH_DECLINE}$'
+                optional: true
+            - tapOn:
+                text: '^${BACK}$'
+                optional: true
+            - waitForAnimationToEnd:
+                timeout: 3000
+      - repeat:
+          times: 6
+          while:
+            visible: '^${PUSH_DECLINE}$'
+          commands:
+            - tapOn: '^${PUSH_DECLINE}$'
+            - waitForAnimationToEnd:
+                timeout: 3000
+      - repeat:
+          times: 4
+          while:
+            visible: '.*Close.*'
+          commands:
+            - tapOn: '.*Close.*'
+            - waitForAnimationToEnd:
+                timeout: 3000
+      - waitForAnimationToEnd:
+          timeout: 5000
+      - repeat:
+          times: 6
+          while:
+            notVisible: '.*${HOME_FEED_TITLE}.*'
+          commands:
+            - tapOn:
+                text: '^${BACK}$'
+                optional: true
+            - waitForAnimationToEnd:
+                timeout: 3000
+      - extendedWaitUntil:
+          visible: '.*${HOME_FEED_TITLE}.*'
+          timeout: 240000
 - repeat:
     times: 6
     while:
@@ -219,6 +413,9 @@ env:
           optional: true
       - tapOn:
           text: '^${PUSH_DECLINE}$'
+          optional: true
+      - tapOn:
+          text: '.*Close.*'
           optional: true
       - waitForAnimationToEnd:
           timeout: 3000
@@ -242,8 +439,8 @@ env:
 
 # The erasure form is unreachable for the player used above because the seed
 # deliberately gives her an open request. Switch to the seeded player without
-# one, then prove that reaching the form and tapping its action still does not
-# file anything. The final destructive action remains untouched in this smoke.
+# one, then prove the confirmation, cancellation, system back, and final
+# destructive submission from a clean request state.
 - repeat:
     times: 20
     while:
@@ -256,11 +453,22 @@ env:
       - waitForAnimationToEnd:
           timeout: 1500
 - tapOn: '.*${DEV_MENU_LABEL}.*'
-- extendedWaitUntil:
-    visible: '.*${ACCOUNTS_SECTION}.*'
-    timeout: 15000
 - waitForAnimationToEnd:
     timeout: 4000
+- repeat:
+    times: 12
+    while:
+      notVisible: '.*${SHOW_ALL_ACCOUNTS}.*'
+    commands:
+      - swipe:
+          start: 50%, 70%
+          end: 50%, 50%
+          duration: 900
+      - waitForAnimationToEnd:
+          timeout: 2000
+- tapOn: '.*${SHOW_ALL_ACCOUNTS}.*'
+- waitForAnimationToEnd:
+    timeout: 2500
 - repeat:
     times: 20
     while:
@@ -292,7 +500,64 @@ env:
       - waitForAnimationToEnd:
           timeout: 3000
 
-- runFlow: _relaunch.yaml
+- runFlow:
+    commands:
+      - stopApp
+      - openLink: ${DEV_CLIENT_URL}
+      - tapOn:
+          text: '^Open$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+      - waitForAnimationToEnd:
+          timeout: 12000
+      - repeat:
+          times: 10
+          while:
+            notVisible: '.*${HOME_FEED_TITLE}.*'
+          commands:
+            - tapOn:
+                text: '.*Close.*'
+                optional: true
+            - tapOn:
+                text: '^${PUSH_DECLINE}$'
+                optional: true
+            - tapOn:
+                text: '^${BACK}$'
+                optional: true
+            - waitForAnimationToEnd:
+                timeout: 3000
+      - repeat:
+          times: 6
+          while:
+            visible: '^${PUSH_DECLINE}$'
+          commands:
+            - tapOn: '^${PUSH_DECLINE}$'
+            - waitForAnimationToEnd:
+                timeout: 3000
+      - repeat:
+          times: 4
+          while:
+            visible: '.*Close.*'
+          commands:
+            - tapOn: '.*Close.*'
+            - waitForAnimationToEnd:
+                timeout: 3000
+      - waitForAnimationToEnd:
+          timeout: 5000
+      - repeat:
+          times: 6
+          while:
+            notVisible: '.*${HOME_FEED_TITLE}.*'
+          commands:
+            - tapOn:
+                text: '^${BACK}$'
+                optional: true
+            - waitForAnimationToEnd:
+                timeout: 3000
+      - extendedWaitUntil:
+          visible: '.*${HOME_FEED_TITLE}.*'
+          timeout: 240000
 - repeat:
     times: 6
     while:
@@ -303,6 +568,9 @@ env:
           optional: true
       - tapOn:
           text: '^${PUSH_DECLINE}$'
+          optional: true
+      - tapOn:
+          text: '.*Close.*'
           optional: true
       - waitForAnimationToEnd:
           timeout: 3000
@@ -322,21 +590,66 @@ env:
           timeout: 1500
 - swipe:
     start: 50%, 60%
-    end: 50%, 52%
+    end: 50%, 35%
     duration: 900
 - waitForAnimationToEnd:
     timeout: 2000
 - tapOn: '^${DELETE_TITLE}$'
 - extendedWaitUntil:
-    visible: '.*${DELETE_REASON_LABEL}.*'
+    visible: '^${DELETE_ACTION}$'
     timeout: 30000
+- tapOn: '^${DELETE_REASON_PLACEHOLDER}$'
+- inputText: 'QA RAPP 105'
+- hideKeyboard
+- waitForAnimationToEnd:
+    timeout: 2000
+- extendedWaitUntil:
+    visible: '^${DELETE_ACTION}$'
+    timeout: 15000
 - tapOn: '^${DELETE_ACTION}$'
 - extendedWaitUntil:
     visible: '.*${DELETE_CONFIRM_BODY}.*'
     timeout: 15000
 - assertVisible: '^${DELETE_CONFIRM_ACTION}$'
-- tapOn: '^${DELETE_CONFIRM_CANCEL}$'
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - back
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          id: profile-delete-confirm-cancel
 - extendedWaitUntil:
-    visible: '.*${DELETE_REASON_LABEL}.*'
+    visible: '^${DELETE_ACTION}$'
     timeout: 15000
+- assertNotVisible: '.*${DELETE_CONFIRM_BODY}.*'
+
+# Exercise the visible cancel control independently from Android's system back.
+- tapOn: '^${DELETE_ACTION}$'
+- extendedWaitUntil:
+    visible: '.*${DELETE_CONFIRM_BODY}.*'
+    timeout: 15000
+- tapOn:
+    id: profile-delete-confirm-cancel
+- extendedWaitUntil:
+    visible: '^${DELETE_ACTION}$'
+    timeout: 15000
+- assertNotVisible: '.*${DELETE_CONFIRM_BODY}.*'
+
+# Reopen and deliberately double-tap the destructive action. The screen must
+# accept one request, return to the profile, and show the pending state instead
+# of sending a second request from the same gesture.
+- tapOn: '^${DELETE_ACTION}$'
+- extendedWaitUntil:
+    visible: '.*${DELETE_CONFIRM_BODY}.*'
+    timeout: 15000
+- doubleTapOn:
+    id: profile-delete-confirm
+    delay: 100
+- extendedWaitUntil:
+    visible: '.*${DELETE_PENDING_TITLE}.*'
+    timeout: 30000
 - assertNotVisible: '.*${DELETE_CONFIRM_BODY}.*'

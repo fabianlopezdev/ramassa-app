@@ -22,8 +22,8 @@
     {
       "id": "language",
       "label": "Idioma de l'aplicació",
-      "ios": "profile/ios/04-language.png",
-      "android": "profile/android/04-language.png",
+      "ios": "profile/ios/05-language.png",
+      "android": "profile/android/05-language.png",
       "web": "profile/web/07-language.png"
     },
     {
@@ -34,11 +34,18 @@
       "web": "profile/web/08-delete-request.png"
     },
     {
+      "id": "delete-confirmation",
+      "label": "Confirmar la petició perquè la revisi l'equip",
+      "ios": "profile/ios/04-delete-confirmation.png",
+      "android": "profile/android/04-delete-confirmation.png",
+      "web": "profile/web/09-delete-confirmation.png"
+    },
+    {
       "id": "signed-out",
       "label": "Sessió tancada",
-      "ios": "profile/ios/05-signed-out.png",
-      "android": "profile/android/05-signed-out.png",
-      "web": "profile/web/10-signed-out.png"
+      "ios": "profile/ios/06-signed-out.png",
+      "android": "profile/android/06-signed-out.png",
+      "web": "profile/web/12-signed-out.png"
     },
     {
       "id": "profile-ar",
@@ -57,8 +64,8 @@
     {
       "id": "language-ar",
       "label": "لغة التطبيق",
-      "ios": "profile/ios/04-language-ar.png",
-      "android": "profile/android/04-language-ar.png",
+      "ios": "profile/ios/05-language-ar.png",
+      "android": "profile/android/05-language-ar.png",
       "web": "profile/web/07-language-ar.png"
     },
     {
@@ -69,11 +76,18 @@
       "web": "profile/web/08-delete-request-ar.png"
     },
     {
+      "id": "delete-confirmation-ar",
+      "label": "تأكيد الطلب ليراجعه الفريق",
+      "ios": "profile/ios/04-delete-confirmation-ar.png",
+      "android": "profile/android/04-delete-confirmation-ar.png",
+      "web": "profile/web/09-delete-confirmation-ar.png"
+    },
+    {
       "id": "signed-out-ar",
       "label": "تسجيل الخروج",
-      "ios": "profile/ios/05-signed-out-ar.png",
-      "android": "profile/android/05-signed-out-ar.png",
-      "web": "profile/web/10-signed-out-ar.png"
+      "ios": "profile/ios/06-signed-out-ar.png",
+      "android": "profile/android/06-signed-out-ar.png",
+      "web": "profile/web/12-signed-out-ar.png"
     }
   ],
   "edges": [
@@ -105,6 +119,18 @@
       "to": "delete-request",
       "label": "Demanar esborrar les dades",
       "kind": "neutral"
+    },
+    {
+      "from": "delete-request",
+      "to": "delete-confirmation",
+      "label": "Continua",
+      "kind": "negative"
+    },
+    {
+      "from": "delete-confirmation",
+      "to": "delete-request",
+      "label": "Cancel·la",
+      "kind": "dismiss"
     },
     {
       "from": "delete-request",
@@ -146,6 +172,18 @@
       "to": "delete-request-ar",
       "label": "طلب حذف البيانات",
       "kind": "neutral"
+    },
+    {
+      "from": "delete-request-ar",
+      "to": "delete-confirmation-ar",
+      "label": "متابعة",
+      "kind": "negative"
+    },
+    {
+      "from": "delete-confirmation-ar",
+      "to": "delete-request-ar",
+      "label": "إلغاء",
+      "kind": "dismiss"
     },
     {
       "from": "delete-request-ar",

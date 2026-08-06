@@ -91,6 +91,35 @@ mock.module('react-native', () => ({
   ActivityIndicator: () => createElement('span', { 'aria-label': 'busy' }),
   Modal: ({ children, visible }: { readonly children: ReactNode; readonly visible: boolean }) =>
     visible ? createElement('div', { role: 'dialog' }, children) : null,
+  Pressable: ({
+    accessibilityLabel,
+    accessibilityState,
+    children,
+    className,
+    disabled,
+    onPress,
+    testID,
+  }: {
+    readonly accessibilityLabel: string;
+    readonly accessibilityState?: { readonly busy?: boolean };
+    readonly children: ReactNode;
+    readonly className?: string;
+    readonly disabled?: boolean;
+    readonly onPress: () => void;
+    readonly testID?: string;
+  }) =>
+    createElement(
+      'button',
+      {
+        'aria-busy': accessibilityState?.busy,
+        'aria-label': accessibilityLabel,
+        className,
+        'data-testid': testID,
+        disabled,
+        onClick: onPress,
+      },
+      children,
+    ),
   ScrollView: ({ children }: { readonly children: ReactNode }) =>
     createElement('div', null, children),
   Text: ({ children }: { readonly children: ReactNode }) => createElement('span', null, children),
@@ -139,6 +168,30 @@ test('only the destructive confirmation action files the request', async () => {
 
   await waitFor(() => expect(submitDeletionRequest).toHaveBeenCalledTimes(1));
   expect(routerBack).toHaveBeenCalledTimes(1);
+});
+
+test('the destructive action disables immediately and prevents a double send', async () => {
+  let finishRequest: (() => void) | undefined;
+  submitDeletionRequest.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        finishRequest = () => resolve({ ok: true as const, value: undefined });
+      }),
+  );
+  const view = render(createElement(DeleteDataScreen));
+
+  fireEvent.click(view.getByRole('button', { name: 'deleteAction' }));
+  const confirm = view.getByRole('button', {
+    name: 'deleteConfirmAction',
+  }) as HTMLButtonElement;
+  fireEvent.click(confirm);
+  fireEvent.click(confirm);
+
+  expect(confirm.disabled).toBe(true);
+  expect(submitDeletionRequest).toHaveBeenCalledTimes(1);
+
+  finishRequest?.();
+  await waitFor(() => expect(routerBack).toHaveBeenCalledTimes(1));
 });
 
 test('cancelling confirmation returns to the request form without filing', () => {

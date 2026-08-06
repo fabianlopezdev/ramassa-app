@@ -22,6 +22,9 @@ env:
   LANGUAGE_LABEL: '{{profile:languageLabel}}'
   DELETE_TITLE: '{{profile:deleteTitle}}'
   DELETE_INTRO: '{{profile:deleteIntro}}'
+  DELETE_ACTION: '{{profile:deleteAction}}'
+  DELETE_CONFIRM_BODY: '{{profile:deleteConfirmBody}}'
+  DELETE_CONFIRM_ACTION: '{{profile:deleteConfirmAction}}'
   SIGN_OUT: '{{profile:signOutAction}}'
   LOGIN_TITLE: '{{auth:loginTitle}}'
   PUSH_DECLINE: '{{push:rationaleDecline}}'
@@ -204,8 +207,32 @@ env:
       - tapOn:
           text: '.*Close.*'
           optional: true
+      - tapOn:
+          text: '^${BACK}$'
+          optional: true
       - waitForAnimationToEnd:
           timeout: 3000
+- waitForAnimationToEnd:
+    timeout: 5000
+- repeat:
+    times: 6
+    while:
+      notVisible: '^${TAB_PROFILE}$'
+    commands:
+      - tapOn:
+          text: '^${BACK}$'
+          optional: true
+      - tapOn:
+          text: '^${PUSH_DECLINE}$'
+          optional: true
+      - tapOn:
+          text: '.*Close.*'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- extendedWaitUntil:
+    visible: '^${TAB_PROFILE}$'
+    timeout: 30000
 - tapOn: '^${TAB_PROFILE}$'
 - extendedWaitUntil:
     visible: '.*${PROFILE_TITLE}.*'
@@ -285,6 +312,12 @@ env:
           duration: 600
       - waitForAnimationToEnd:
           timeout: 900
+- swipe:
+    start: 50%, 60%
+    end: 50%, 35%
+    duration: 900
+- waitForAnimationToEnd:
+    timeout: 1500
 - tapOn: '^${DELETE_TITLE}$'
 - extendedWaitUntil:
     visible: '.*${DELETE_INTRO}.*'
@@ -292,6 +325,35 @@ env:
 - waitForAnimationToEnd:
     timeout: 2500
 - takeScreenshot: ${SHOTS}/03-delete-request${SUFFIX}
+
+# The request is still only a form at this point. The next deliberate action
+# opens a separate confirmation that explains staff review and keeps the final
+# submission visibly destructive.
+- repeat:
+    times: 6
+    while:
+      notVisible: '^${DELETE_ACTION}$'
+    commands:
+      - swipe:
+          start: 50%, 65%
+          end: 50%, 40%
+          duration: 700
+      - waitForAnimationToEnd:
+          timeout: 1000
+- tapOn: '^${DELETE_ACTION}$'
+- extendedWaitUntil:
+    visible: '.*${DELETE_CONFIRM_BODY}.*'
+    timeout: 15000
+- assertVisible: '^${DELETE_CONFIRM_ACTION}$'
+- waitForAnimationToEnd:
+    timeout: 1500
+- takeScreenshot: ${SHOTS}/04-delete-confirmation${SUFFIX}
+- tapOn:
+    id: profile-delete-confirm-cancel
+- extendedWaitUntil:
+    visible: '^${DELETE_ACTION}$'
+    timeout: 15000
+- assertNotVisible: '.*${DELETE_CONFIRM_BODY}.*'
 
 # Returning to the hub, written to survive both platforms and its own worst
 # case. Android gets the system back, because under RTL the in-screen control
@@ -329,7 +391,7 @@ env:
 - waitForAnimationToEnd:
     timeout: 2000
 
-# 4. The language switch as it sits on the profile. What SWITCHING does (the
+# 5. The language switch as it sits on the profile. What SWITCHING does (the
 # reading direction, the restart it needs) belongs to the i18n flow: doing it
 # here would leave every screen after it in the other language, and a Catalan
 # pass that ends on an Arabic login screen tells a reader nothing true.
@@ -344,9 +406,9 @@ env:
           duration: 600
       - waitForAnimationToEnd:
           timeout: 900
-- takeScreenshot: ${SHOTS}/04-language${SUFFIX}
+- takeScreenshot: ${SHOTS}/05-language${SUFFIX}
 
-# 5. Signing out is terminal: it ends at the door she came in through.
+# 6. Signing out is terminal: it ends at the door she came in through.
 - repeat:
     times: 8
     while:
@@ -364,4 +426,4 @@ env:
     timeout: 60000
 - waitForAnimationToEnd:
     timeout: 2500
-- takeScreenshot: ${SHOTS}/05-signed-out${SUFFIX}
+- takeScreenshot: ${SHOTS}/06-signed-out${SUFFIX}

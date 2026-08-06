@@ -13,7 +13,6 @@
 
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { FailureNotice } from '@/components/error-code-line';
-import { PressableScale } from '@/components/motion/pressable-scale';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
@@ -23,11 +22,14 @@ import { useRouter } from 'expo-router';
 import type { TFunction } from 'i18next';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Modal, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@ramassa/shared/auth';
 import type { AppErrorCode } from '@ramassa/shared/errors';
 import { tokens } from '@ramassa/shared/tokens';
+
+const enabledAccessibilityState = { busy: false, disabled: false } as const;
+const busyAccessibilityState = { busy: true, disabled: true } as const;
 
 interface DeletionConfirmationProps {
   readonly isBusy: boolean;
@@ -71,14 +73,21 @@ function DeletionConfirmation({
           </View>
 
           <View className="gap-sm">
-            <PressableScale
+            {/* A native Modal owns a separate Android root outside the app's
+                gesture root. Native pressables keep both actions interactive
+                without nesting another GestureHandlerRootView. */}
+            <Pressable
+              accessibilityRole="button"
               accessibilityLabel={t('deleteConfirmAction')}
-              onPress={onConfirm}
-              haptic="tapLight"
-              isBusy={isBusy}
+              accessibilityState={isBusy ? busyAccessibilityState : enabledAccessibilityState}
+              disabled={isBusy}
+              onPress={() => {
+                playHaptic('tapLight');
+                onConfirm();
+              }}
               testID="profile-delete-confirm"
               style={continuousCorners}
-              className={`min-h-recommended items-center justify-center rounded-md bg-error px-lg ${
+              className={`min-h-recommended items-center justify-center rounded-md bg-error px-lg active:opacity-90 ${
                 isBusy ? 'opacity-60' : ''
               }`}
             >
@@ -88,22 +97,27 @@ function DeletionConfirmation({
                   {t('deleteConfirmAction')}
                 </Text>
               </View>
-            </PressableScale>
+            </Pressable>
 
-            <PressableScale
+            <Pressable
+              accessibilityRole="button"
               accessibilityLabel={t('deleteConfirmCancel')}
-              onPress={onCancel}
-              haptic="selection"
-              isDisabled={isBusy}
+              accessibilityState={isBusy ? busyAccessibilityState : enabledAccessibilityState}
+              disabled={isBusy}
+              onPress={() => {
+                playHaptic('selection');
+                onCancel();
+              }}
+              testID="profile-delete-confirm-cancel"
               style={continuousCorners}
-              className={`min-h-recommended items-center justify-center rounded-md border border-neutral-300 px-lg ${
+              className={`min-h-recommended items-center justify-center rounded-md border border-neutral-300 px-lg active:opacity-70 ${
                 isBusy ? 'opacity-60' : ''
               }`}
             >
               <Text className={`text-md font-medium text-neutral-800 ${languageFontClass}`}>
                 {t('deleteConfirmCancel')}
               </Text>
-            </PressableScale>
+            </Pressable>
           </View>
         </ScrollView>
       </SafeAreaView>

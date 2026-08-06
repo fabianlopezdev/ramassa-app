@@ -30,12 +30,12 @@
         }
       ],
       "click": "[aria-label=\"{{auth:passwordAction}}\"]",
-      "waitFor": "text={{home:title}} >> visible=true"
+      "waitFor": "text={{home:feedTitle}} >> visible=true"
     },
     {
       "label": "home",
       "goto": "/",
-      "waitFor": "text={{home:title}} >> visible=true"
+      "waitFor": "text={{home:feedTitle}} >> visible=true"
     },
     {
       "label": "profile",
@@ -59,6 +59,16 @@
     {
       "label": "delete-request",
       "click": "[aria-label=\"{{profile:deleteTitle}}\"]:visible",
+      "waitFor": "text={{profile:deleteReasonLabel}} >> visible=true"
+    },
+    {
+      "label": "delete-confirmation",
+      "click": "[aria-label=\"{{profile:deleteAction}}\"]:visible",
+      "waitFor": "text={{profile:deleteConfirmBody}} >> visible=true"
+    },
+    {
+      "label": "cancel-delete-confirmation",
+      "click": "[aria-label=\"{{profile:deleteConfirmCancel}}\"]:visible",
       "waitFor": "text={{profile:deleteReasonLabel}} >> visible=true"
     },
     {
