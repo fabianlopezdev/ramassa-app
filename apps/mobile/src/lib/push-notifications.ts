@@ -16,6 +16,7 @@ import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import { getOrCreateDeviceId } from './device-id';
 import { logger, safeAsync } from './observability';
+import { foregroundNotificationBehavior } from './push-presentation';
 import {
   buildPushTokenRow,
   decidePushRegistration,
@@ -29,6 +30,17 @@ import { mmkvStorage } from './storage';
 import { supabase } from './supabase';
 
 const LAST_WRITTEN_TOKEN_KEY = 'ramassa.pushToken.lastWritten';
+
+/**
+ * Expo's default foreground policy discards the visible notification. Install
+ * the app policy explicitly so the same remote push can be observed with the
+ * app open and in the background.
+ */
+export function configurePushNotificationPresentation(): void {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => foregroundNotificationBehavior(),
+  });
+}
 
 /**
  * The EAS projectId `getExpoPushTokenAsync` needs (SDK 49+). Absent until the
