@@ -4,7 +4,7 @@ import { PageWidth } from '@/components/layout/content-width';
 import { FadeSlideIn } from '@/components/motion/fade-slide-in';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { usePlayerAnnouncements } from '@/lib/announcement-feed';
-import { continuousCorners } from '@/lib/continuous-corners';
+import { composeContinuousViewStyle } from '@/lib/continuous-corners';
 import { resolveMediaImageSource } from '@/lib/media-source';
 import { isNetworkStateOnline } from '@/lib/network-status';
 import { mobileClientEnv } from '@/lib/supabase';
@@ -27,7 +27,7 @@ const styles = StyleSheet.create({
   },
   image: { width: '100%', height: '100%' },
 });
-const imageFrameStyle = StyleSheet.compose(continuousCorners, styles.imageFrame);
+const imageFrameStyle = composeContinuousViewStyle(styles.imageFrame);
 
 export default function AnnouncementDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();

@@ -1,5 +1,9 @@
 import { PressableScale } from '@/components/motion/pressable-scale';
-import { continuousCorners } from '@/lib/continuous-corners';
+import {
+  composeContinuousViewStyle,
+  composeViewStyles,
+  continuousCorners,
+} from '@/lib/continuous-corners';
 import { memo, useCallback, useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import type { EventCategoryColor, PlayerEventCategoryFilter } from '@ramassa/shared/events';
@@ -34,13 +38,13 @@ const styles = StyleSheet.create({
   },
   viewOptionSelected: { backgroundColor: tokens.colors.white },
 });
-const selectedFilterOptionStyle = StyleSheet.compose(
+const selectedFilterOptionStyle = composeViewStyles(
   styles.filterOption,
   styles.filterOptionSelected,
 );
-const idleFilterOptionStyle = StyleSheet.compose(styles.filterOption, styles.filterOptionIdle);
-const viewOptionStyle = StyleSheet.compose(continuousCorners, styles.viewOption);
-const selectedViewOptionStyle = StyleSheet.compose(viewOptionStyle, styles.viewOptionSelected);
+const idleFilterOptionStyle = composeViewStyles(styles.filterOption, styles.filterOptionIdle);
+const viewOptionStyle = composeContinuousViewStyle(styles.viewOption);
+const selectedViewOptionStyle = composeViewStyles(viewOptionStyle, styles.viewOptionSelected);
 
 export interface PlayerEventFilterOption {
   readonly id: string;

@@ -1,4 +1,4 @@
-import type { TextStyle, ViewStyle } from 'react-native';
+import { StyleSheet, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
 
 /**
  * The iOS "squircle": a corner that eases into the straight edge instead of
@@ -15,8 +15,23 @@ import type { TextStyle, ViewStyle } from 'react-native';
  * to anything with a `rounded-*` class. Skip it on capsules (`rounded-full`),
  * where a continuous curve has nothing to ease into.
  */
-// Typed as the literal, not as ViewStyle: the wide type is NOT assignable to
-// TextStyle (their `userSelect` unions differ), so a ViewStyle-typed constant
-// cannot be passed to a TextInput's style. The literal satisfies both.
-export const continuousCorners = { borderCurve: 'continuous' } as const satisfies ViewStyle &
-  TextStyle;
+// Keep the exported type as this exact literal. Annotating it as ViewStyle or
+// TextStyle makes it incompatible with the other consumer, while intersecting
+// those types makes StyleSheet.compose infer RN's broad view/text/image union.
+// The literal is structurally assignable to both without widening either one.
+export const continuousCorners = { borderCurve: 'continuous' } as const;
+
+export function composeViewStyles(
+  first: StyleProp<ViewStyle>,
+  second: StyleProp<ViewStyle>,
+): StyleProp<ViewStyle> {
+  return StyleSheet.compose(first, second) as StyleProp<ViewStyle>;
+}
+
+export function composeContinuousViewStyle(style: StyleProp<ViewStyle>): StyleProp<ViewStyle> {
+  return composeViewStyles(continuousCorners as ViewStyle, style);
+}
+
+export function composeContinuousTextStyle(style: StyleProp<TextStyle>): StyleProp<TextStyle> {
+  return StyleSheet.compose(continuousCorners as TextStyle, style);
+}

@@ -1,5 +1,5 @@
 import { PressableScale } from '@/components/motion/pressable-scale';
-import { continuousCorners } from '@/lib/continuous-corners';
+import { composeContinuousViewStyle } from '@/lib/continuous-corners';
 import { memo, useCallback } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import type { EventCategoryColor } from '@ramassa/shared/events';
@@ -22,7 +22,7 @@ const categoryBackgroundStyles = StyleSheet.create({
   'chart-2': { backgroundColor: tokens.colors.warning },
   'chart-3': { backgroundColor: tokens.colors.error },
 });
-const cardStyle = StyleSheet.compose(continuousCorners, styles.card);
+const cardStyle = composeContinuousViewStyle(styles.card);
 
 export function eventCategoryColor(color: EventCategoryColor): string {
   switch (color) {

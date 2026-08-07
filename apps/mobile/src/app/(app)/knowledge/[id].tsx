@@ -6,7 +6,7 @@ import {
 import { PlayerStructuredContent } from '@/components/knowledge/player-structured-content';
 import { PageWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
-import { continuousCorners } from '@/lib/continuous-corners';
+import { composeContinuousViewStyle, continuousCorners } from '@/lib/continuous-corners';
 import { resolveMediaImageSource } from '@/lib/media-source';
 import { isNetworkStateOnline } from '@/lib/network-status';
 import { usePlayerKnowledgeArticle } from '@/lib/player-knowledge';
@@ -30,7 +30,7 @@ const styles = StyleSheet.create({
   imageFrame: { width: '100%', height: tokens.contentWidth.form / 2 },
   image: { width: '100%', height: '100%' },
 });
-const imageFrameStyle = StyleSheet.compose(continuousCorners, styles.imageFrame);
+const imageFrameStyle = composeContinuousViewStyle(styles.imageFrame);
 
 export default function PlayerKnowledgeDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();

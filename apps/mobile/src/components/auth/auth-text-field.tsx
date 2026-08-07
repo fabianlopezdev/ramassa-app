@@ -6,10 +6,10 @@
  * owns the value via react-hook-form's Controller and passes it straight down.
  */
 
-import { continuousCorners } from '@/lib/continuous-corners';
+import { composeContinuousTextStyle } from '@/lib/continuous-corners';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useMemo, type Ref } from 'react';
-import { StyleSheet, Text, TextInput, View, type TextInputProps } from 'react-native';
+import { Text, TextInput, View, type TextInputProps } from 'react-native';
 import { tokens } from '@ramassa/shared/tokens';
 
 export interface AuthTextFieldProps extends TextInputProps {
@@ -27,7 +27,7 @@ export function AuthTextField({
 }: AuthTextFieldProps) {
   const languageFontClass = useLanguageFontClass();
   const hasError = Boolean(errorMessage);
-  const inputStyle = useMemo(() => StyleSheet.compose(continuousCorners, style), [style]);
+  const inputStyle = useMemo(() => composeContinuousTextStyle(style), [style]);
 
   return (
     <View className="gap-xs">

@@ -1,5 +1,5 @@
-import { continuousCorners } from '@/lib/continuous-corners';
-import { StyleSheet, View } from 'react-native';
+import { composeContinuousViewStyle } from '@/lib/continuous-corners';
+import { View } from 'react-native';
 import type { StructuredContentVideoProps } from '@ramassa/shared/structured-content';
 import {
   createPlayerStructuredContentComponents,
@@ -9,7 +9,7 @@ import {
 
 const videoStyle = { aspectRatio: 16 / 9, width: '100%' } as const;
 const iframeStyle = { border: 0, height: '100%', width: '100%' } as const;
-const videoFrameStyle = StyleSheet.compose(continuousCorners, videoStyle);
+const videoFrameStyle = composeContinuousViewStyle(videoStyle);
 
 function WebVideo({ embedUrl, title }: StructuredContentVideoProps) {
   return (

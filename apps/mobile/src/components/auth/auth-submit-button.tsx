@@ -10,7 +10,7 @@
  */
 
 import { PressableScale } from '@/components/motion/pressable-scale';
-import { continuousCorners } from '@/lib/continuous-corners';
+import { composeContinuousViewStyle, composeViewStyles } from '@/lib/continuous-corners';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { tokens } from '@ramassa/shared/tokens';
@@ -25,8 +25,8 @@ const styles = StyleSheet.create({
   },
   blocked: { opacity: 0.6 },
 });
-const buttonStyle = StyleSheet.compose(continuousCorners, styles.button);
-const blockedButtonStyle = StyleSheet.compose(buttonStyle, styles.blocked);
+const buttonStyle = composeContinuousViewStyle(styles.button);
+const blockedButtonStyle = composeViewStyles(buttonStyle, styles.blocked);
 
 export interface AuthSubmitButtonProps {
   readonly label: string;

@@ -1,5 +1,5 @@
 import { PressableScale } from '@/components/motion/pressable-scale';
-import { continuousCorners } from '@/lib/continuous-corners';
+import { composeContinuousViewStyle, continuousCorners } from '@/lib/continuous-corners';
 import { resolveMediaImageSource } from '@/lib/media-source';
 import { mobileClientEnv } from '@/lib/supabase';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
@@ -51,7 +51,7 @@ const styles = StyleSheet.create({
   stepImageFrame: { width: '100%', height: tokens.contentWidth.form / 2 },
   stepImage: { width: '100%', height: '100%' },
 });
-const stepImageFrameStyle = StyleSheet.compose(continuousCorners, styles.stepImageFrame);
+const stepImageFrameStyle = composeContinuousViewStyle(styles.stepImageFrame);
 
 function usePlayerStructuredContentContext() {
   const value = use(PlayerStructuredContentContext);

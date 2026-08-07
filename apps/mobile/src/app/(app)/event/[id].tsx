@@ -5,7 +5,7 @@ import { EventDetailLine } from '@/components/events/event-card';
 import { PageWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { SuccessPop } from '@/components/motion/success-pop';
-import { continuousCorners } from '@/lib/continuous-corners';
+import { composeContinuousViewStyle, continuousCorners } from '@/lib/continuous-corners';
 import { isEventSignupActionDisabled } from '@/lib/event-signup-policy';
 import { playErrorHaptic } from '@/lib/haptics/haptics';
 import { isNetworkStateOnline } from '@/lib/network-status';
@@ -43,7 +43,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: tokens.spacing.lg,
   },
 });
-const mapButtonStyle = StyleSheet.compose(continuousCorners, styles.mapButton);
+const mapButtonStyle = composeContinuousViewStyle(styles.mapButton);
 
 function successKey(state: EventSignupState): string {
   if (state === 'confirmed') return 'playerSignupSuccessConfirmed';

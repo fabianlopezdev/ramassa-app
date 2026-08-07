@@ -11,7 +11,7 @@ import {
   type PlayerEventFilterOption,
 } from '@/components/events/event-filters';
 import { PageWidth } from '@/components/layout/content-width';
-import { continuousCorners } from '@/lib/continuous-corners';
+import { composeContinuousViewStyle } from '@/lib/continuous-corners';
 import { buildCalendarLocale, buildEventMarkedDates, eventDateKey } from '@/lib/event-calendar';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { isNetworkStateOnline } from '@/lib/network-status';
@@ -62,7 +62,7 @@ const calendarTheme = {
   dayTextColor: tokens.colors.neutral[800],
   textDisabledColor: tokens.colors.neutral[400],
 } as const;
-const calendarStyle = StyleSheet.compose(continuousCorners, styles.calendar);
+const calendarStyle = composeContinuousViewStyle(styles.calendar);
 
 const keyExtractor = (item: PlayerEventOccurrence) => item.occurrence_id;
 const getItemType = (item: PlayerEventOccurrence) =>
