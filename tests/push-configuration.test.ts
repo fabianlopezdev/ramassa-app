@@ -51,3 +51,18 @@ test('EAS has a development-client profile for real push verification', () => {
     distribution: 'internal',
   });
 });
+
+test('the web player never invokes native-only notification response methods', () => {
+  const source = readFileSync(
+    new URL(
+      '../apps/mobile/src/components/push-notification-response-handler.tsx',
+      import.meta.url,
+    ),
+    'utf8',
+  );
+  const platformGuard = source.indexOf('if (resolvePushPlatform(Platform.OS) === null) return;');
+  const nativeResponseRead = source.indexOf('Notifications.getLastNotificationResponseAsync()');
+
+  expect(platformGuard).toBeGreaterThan(-1);
+  expect(nativeResponseRead).toBeGreaterThan(platformGuard);
+});

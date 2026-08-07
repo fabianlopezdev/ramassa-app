@@ -4,10 +4,12 @@ import {
   shouldOpenPushDetail,
   type PushDetailQueryRoot,
 } from '@/lib/push-deep-link';
+import { resolvePushPlatform } from '@/lib/push-registration';
 import { queryClient } from '@/lib/query-client';
 import * as Notifications from 'expo-notifications';
 import { router, useRootNavigationState } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { Platform } from 'react-native';
 import { useAuth } from '@ramassa/shared/auth';
 
 interface PendingPushDetail {
@@ -38,6 +40,11 @@ export function PushNotificationResponseHandler() {
   }, []);
 
   useEffect(() => {
+    // expo-notifications exposes these methods to the web bundle, but throws
+    // when they are invoked. Web push is not supported yet, so keep the handler
+    // inert there just like token registration.
+    if (resolvePushPlatform(Platform.OS) === null) return;
+
     let active = true;
     void Notifications.getLastNotificationResponseAsync().then((response) => {
       if (active && response !== null) receiveResponse(response);
