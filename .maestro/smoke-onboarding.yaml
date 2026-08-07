@@ -36,7 +36,7 @@ env:
   TERMS_ACCEPT: '{{onboarding:termsAcceptLabel}}'
   NATIONALITY_CHIP: '{{country:SY}}'
   PUSH_DECLINE: '{{push:rationaleDecline}}'
-  HOME_TITLE: '{{home:title}}'
+  HOME_FEED_TITLE: '{{home:feedTitle}}'
   TAB_HOME: '{{nav:tabs.home}}'
   TAB_PROFILE: '{{nav:tabs.profile}}'
   # Sizes are DATA, not copy: the chips render the literal catalogue values in
@@ -501,7 +501,7 @@ env:
 - repeat:
     times: 8
     while:
-      notVisible: '.*${HOME_TITLE}.*'
+      notVisible: '.*${HOME_FEED_TITLE}.*'
     commands:
       - tapOn:
           text: '^${FINISH}$'
@@ -515,14 +515,14 @@ env:
           timeout: 2000
 
 # ── The whole point ────────────────────────────────────────────────────────
-# She is INSIDE the app. Asserted on the home title AND the tab bar, because
+# She is INSIDE the app. Asserted on the current feed heading AND the tab bar, because
 # either alone is weaker than it looks: the wizard is a full-screen stack that
 # renders no tab bar at all, so the tabs prove the stack was swapped, and the
-# home title proves the tab that came up is the real home screen and not an
+# feed heading proves the tab that came up is the real home screen and not an
 # empty shell. The generous timeout covers `complete_onboarding` plus the
 # profile refetch the gate waits on.
 - extendedWaitUntil:
-    visible: '.*${HOME_TITLE}.*'
+    visible: '.*${HOME_FEED_TITLE}.*'
     timeout: 120000
 - assertVisible:
     text: '^${TAB_HOME}$'

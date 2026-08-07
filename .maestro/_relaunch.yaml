@@ -5,7 +5,8 @@ name: _relaunch
 # Reused by every flow that needs the app in a known, settled, signed-in state.
 env:
   DEV_CLIENT_URL: ramassa://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081
-  HOME_TITLE: '{{home:title}}'
+  BACK: '{{common:back}}'
+  TAB_HOME: '{{nav:tabs.home}}'
   PUSH_DECLINE: '{{push:rationaleDecline}}'
 ---
 - stopApp
@@ -19,17 +20,22 @@ env:
     optional: true
 - waitForAnimationToEnd:
     timeout: 3000
-# Here the loop condition is the HOME SCREEN, not the sheet: after a relaunch the
+# Here the loop condition is the signed-in TAB SHELL, not the sheet: after a relaunch the
 # Android emulator takes minutes to reload the bundle and the client's explainer
 # lands whenever it lands, so any fixed wait either fires before it or wastes
-# time after it.
+# time after it. Sign-in can also restore a pushed player route whose tab bar is
+# intentionally hidden; backing out makes this shared fragment's promised known
+# shell state deterministic without treating that valid route as an auth failure.
 - waitForAnimationToEnd:
     timeout: 12000
 - repeat:
     times: 10
     while:
-      notVisible: '.*${HOME_TITLE}.*'
+      notVisible: '^${TAB_HOME}$'
     commands:
+      - tapOn:
+          text: '^${BACK}$'
+          optional: true
       - tapOn:
           text: '.*Close.*'
           optional: true
@@ -52,5 +58,5 @@ env:
       - waitForAnimationToEnd:
           timeout: 3000
 - extendedWaitUntil:
-    visible: '.*${HOME_TITLE}.*'
+    visible: '^${TAB_HOME}$'
     timeout: 240000

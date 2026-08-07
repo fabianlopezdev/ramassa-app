@@ -192,6 +192,22 @@ describe('Maestro selector contracts', () => {
     expect(await maestroSpecPaths()).toEqual([...auditedSpecs]);
   });
 
+  test('every variable used by a Maestro command is declared by that spec', async () => {
+    const missing: string[] = [];
+    for (const relativePath of auditedSpecs) {
+      const spec = await loadSpec(relativePath);
+      const referenced = new Set(
+        [...JSON.stringify(spec.commands).matchAll(/\$\{([A-Z][A-Z0-9_]*)\}/g)]
+          .map((match) => match[1])
+          .filter((variable): variable is string => variable !== undefined),
+      );
+      for (const variable of referenced) {
+        if (!(variable in spec.env)) missing.push(`${relativePath}:${variable}`);
+      }
+    }
+    expect(missing).toEqual([]);
+  });
+
   test('tab-navigation retries key on an arrival heading, never a below-fold control', async () => {
     const violations: string[] = [];
     for (const relativePath of auditedSpecs) {
@@ -237,5 +253,27 @@ describe('Maestro selector contracts', () => {
       /tapOn: '\^\$\{BACK\}\$'[\s\S]{0,100}visible: .*\$\{(?:EVENTS_TITLE|LIST_VIEW_ACTION)\}/,
     );
     expect(home).toMatch(/notVisible: '\^\$\{TAB_HOME\}\$'[\s\S]*?visible: '\^\$\{TAB_HOME\}\$'/);
+  });
+
+  test('the smoke suite never keys signed-in state on the retired welcome heading', async () => {
+    for (const relativePath of auditedSpecs.filter((file) => file.startsWith('.maestro/'))) {
+      const source = await Bun.file(path.join(repoRoot, relativePath)).text();
+      expect(source).not.toContain('{{home:title}}');
+    }
+
+    const signIn = await Bun.file(path.join(repoRoot, '.maestro/_sign-in.yaml')).text();
+    expect(signIn).toContain("LOGIN_TITLE: '{{auth:loginTitle}}'");
+    expect(signIn).toMatch(/assertNotVisible: '\.\*\$\{LOGIN_TITLE\}\.\*'/);
+
+    const relaunch = await Bun.file(path.join(repoRoot, '.maestro/_relaunch.yaml')).text();
+    expect(relaunch).toContain("BACK: '{{common:back}}'");
+    expect(relaunch).toMatch(
+      /notVisible: '\^\$\{TAB_HOME\}\$'[\s\S]*?tapOn:[\s\S]*?text: '\^\$\{BACK\}\$'/,
+    );
+
+    const auth = await Bun.file(path.join(repoRoot, '.maestro/smoke-auth.yaml')).text();
+    expect(auth).toMatch(
+      /notVisible: '\.\*\$\{PROFILE_TITLE\}\.\*'[\s\S]*?text: '\^\$\{TAB_PROFILE\}\$'[\s\S]*?visible: '\.\*\$\{PROFILE_TITLE\}\.\*'[\s\S]*?notVisible: '\^\$\{SIGN_OUT\}\$'[\s\S]*?swipe:[\s\S]*?visible: '\^\$\{SIGN_OUT\}\$'[\s\S]*?text: '\^\$\{SIGN_OUT\}\$'/,
+    );
   });
 });

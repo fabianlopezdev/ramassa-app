@@ -8,9 +8,10 @@ env:
   DEV_CLIENT_URL: ramassa://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081
   DEV_MENU_LABEL: Developer menu
   LOGIN_TITLE: '{{auth:loginTitle}}'
-  HOME_TITLE: '{{home:title}}'
+  PROFILE_TITLE: '{{profile:title}}'
   SIGN_OUT: '{{auth:signOutAction}}'
   TAB_HOME: '{{nav:tabs.home}}'
+  TAB_PROFILE: '{{nav:tabs.profile}}'
 ---
 - runFlow: _open-app.yaml
 # Cold start with no session lands on login, not on the app.
@@ -18,11 +19,40 @@ env:
 - runFlow: _sign-in.yaml
 - runFlow: _relaunch.yaml
 
-# Signed in: the player shell, not the login screen.
-- assertVisible: '.*${HOME_TITLE}.*'
+# Signed in: the player shell, not the login screen. Its fixed tab remains valid
+# when the router retains any screen inside that shell.
 - assertVisible:
     text: '^${TAB_HOME}$'
 - assertNotVisible: '.*${LOGIN_TITLE}.*'
+
+# Sign-out lives on Profile, below the Home screen's viewport. Navigate by the
+# fixed tab and prove the destination heading before targeting that control.
+- repeat:
+    times: 3
+    while:
+      notVisible: '.*${PROFILE_TITLE}.*'
+    commands:
+      - tapOn:
+          text: '^${TAB_PROFILE}$'
+      - waitForAnimationToEnd:
+          timeout: 3000
+- extendedWaitUntil:
+    visible: '.*${PROFILE_TITLE}.*'
+    timeout: 30000
+- repeat:
+    times: 20
+    while:
+      notVisible: '^${SIGN_OUT}$'
+    commands:
+      - swipe:
+          start: 50%, 70%
+          end: 50%, 50%
+          duration: 900
+      - waitForAnimationToEnd:
+          timeout: 2500
+- extendedWaitUntil:
+    visible: '^${SIGN_OUT}$'
+    timeout: 30000
 
 # Signing out clears the session and the guard flips back on its own.
 - tapOn:
@@ -30,4 +60,5 @@ env:
 - extendedWaitUntil:
     visible: '.*${LOGIN_TITLE}.*'
     timeout: 60000
-- assertNotVisible: '.*${HOME_TITLE}.*'
+- assertNotVisible:
+    text: '^${TAB_HOME}$'

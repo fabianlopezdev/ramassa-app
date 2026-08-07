@@ -7,7 +7,7 @@ name: smoke-shells
 env:
   DEV_CLIENT_URL: ramassa://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081
   DEV_MENU_LABEL: Developer menu
-  HOME_TITLE: '{{home:title}}'
+  HOME_FEED_TITLE: '{{home:feedTitle}}'
   EVENTS_TITLE: '{{events:playerTitle}}'
   PROFILE_TITLE: '{{profile:title}}'
   TAB_HOME: '{{nav:tabs.home}}'
@@ -63,5 +63,5 @@ env:
 - tapOn:
     text: '^${TAB_HOME}$'
 - extendedWaitUntil:
-    visible: '.*${HOME_TITLE}.*'
+    visible: '.*${HOME_FEED_TITLE}.*'
     timeout: 15000

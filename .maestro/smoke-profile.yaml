@@ -51,9 +51,9 @@ env:
   DELETE_PENDING_TITLE: '{{profile:deletePendingTitle}}'
 ---
 - runFlow: _open-app.yaml
-# Sign in through the seeded account switcher. This flow waits on the current
-# feed heading because the shared sign-in fragment still names the retired home
-# placeholder heading and cannot prove that the new feed has mounted.
+# Sign in through the seeded account switcher. This flow owns account selection
+# because it switches among several fixtures later, then waits on the current
+# feed heading to prove that the player shell has mounted.
 - repeat:
     times: 6
     while:

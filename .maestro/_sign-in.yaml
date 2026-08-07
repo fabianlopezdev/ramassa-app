@@ -12,8 +12,7 @@ env:
   DEV_MENU_LABEL: Developer menu
   ACCOUNTS_SECTION: Accounts and roles
   PLAYER_EMAIL: '{{player:email}}'
-  PUSH_DECLINE: '{{push:rationaleDecline}}'
-  HOME_TITLE: '{{home:title}}'
+  LOGIN_TITLE: '{{auth:loginTitle}}'
 ---
 # Opening the dev menu is a LOOP, not one tap. A single tap is swallowed whenever
 # the client's explainer sheet is mid-flight over it, and the flow then waits out
@@ -94,30 +93,10 @@ env:
           timeout: 3000
 - assertNotVisible: '.*Close.*'
 
-# Mounting the player area asks about notifications before the system dialog, and
-# that sheet can land AFTER the first render, covering the very title being waited
-# on. Loop rather than tap once.
-- repeat:
-    times: 6
-    while:
-      notVisible: '.*${HOME_TITLE}.*'
-    commands:
-      - tapOn:
-          text: '^${PUSH_DECLINE}$'
-          optional: true
-      - tapOn:
-          text: '.*Close.*'
-          optional: true
-      - waitForAnimationToEnd:
-          timeout: 3000
-
 # Assert the OUTCOME, not the dev menu's "Signed in as ..." line. That line is
 # local component state rendered AFTER the whole account list, so it sits below
-# the row just tapped and no amount of waiting brings it into view. Landing on
-# the player home cannot happen without a session, so it is the honest proof, and
-# a failed sign-in still fails here because the app stays on the login screen.
-# Declining notifications above matters for iOS too: the OS is never asked, so
-# its single allotted prompt stays unspent.
-- extendedWaitUntil:
-    visible: '.*${HOME_TITLE}.*'
-    timeout: 120000
+# the row just tapped and no amount of waiting brings it into view. Successful
+# sign-in can land on Home OR restore a valid pushed player route, so a specific
+# screen or tab is not an authentication predicate. The login heading remains on
+# a failed sign-in and disappears on every valid signed-in route.
+- assertNotVisible: '.*${LOGIN_TITLE}.*'
