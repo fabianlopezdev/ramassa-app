@@ -1,9 +1,11 @@
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { ErrorCodeLine } from '@/components/error-code-line';
-import { SkeletonPulse } from '@/components/motion/skeleton-pulse';
+import { CapsuleSkeletonPulse, SkeletonPulse } from '@/components/motion/skeleton-pulse';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { Text, View } from 'react-native';
 import type { AppErrorCode } from '@ramassa/shared/errors';
+
+const busyAccessibilityState = { busy: true } as const;
 
 export function OfflineBanner({
   label,
@@ -18,7 +20,7 @@ export function OfflineBanner({
       className="flex-row items-center gap-sm rounded-md border border-secondary-dark bg-secondary-light px-md py-sm"
       style={continuousCorners}
     >
-      <View className="h-sm w-sm rounded-full bg-warning" />
+      <View accessible={false} className="h-sm w-sm rounded-full bg-warning" />
       <Text
         className={`flex-1 text-start text-sm font-medium text-neutral-900 ${languageFontClass}`}
       >
@@ -70,13 +72,13 @@ export function AnnouncementFeedSkeleton({
     <View
       accessible
       accessibilityLabel={accessibilityLabel}
-      accessibilityState={{ busy: true }}
+      accessibilityState={busyAccessibilityState}
       accessibilityLiveRegion="polite"
       className="flex-1 gap-lg bg-white p-lg"
     >
       <SkeletonPulse className="h-2xl w-1/2 rounded-md" />
       <SkeletonPulse className="h-lg w-full rounded-md" />
-      <SkeletonPulse className="h-recommended w-full rounded-full" />
+      <CapsuleSkeletonPulse className="h-recommended w-full rounded-full" />
       <SkeletonPulse className="h-3xl w-full rounded-lg" />
       <SkeletonPulse className="h-3xl w-full rounded-lg" />
     </View>
@@ -99,6 +101,7 @@ export function AnnouncementFeedError({
   return (
     <View className="flex-1 items-center justify-center gap-md bg-white p-lg">
       <Text
+        selectable
         accessibilityRole="alert"
         className={`text-center text-md text-neutral-800 ${languageFontClass}`}
       >

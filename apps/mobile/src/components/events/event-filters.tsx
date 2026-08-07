@@ -1,9 +1,10 @@
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
+import { memo, useCallback, useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import type { EventCategoryColor, PlayerEventCategoryFilter } from '@ramassa/shared/events';
 import { tokens } from '@ramassa/shared/tokens';
-import { eventCategoryColor } from './event-card';
+import { eventCategoryBackgroundStyle } from './event-card';
 
 const styles = StyleSheet.create({
   filterOption: {
@@ -33,12 +34,63 @@ const styles = StyleSheet.create({
   },
   viewOptionSelected: { backgroundColor: tokens.colors.white },
 });
+const selectedFilterOptionStyle = StyleSheet.compose(
+  styles.filterOption,
+  styles.filterOptionSelected,
+);
+const idleFilterOptionStyle = StyleSheet.compose(styles.filterOption, styles.filterOptionIdle);
+const viewOptionStyle = StyleSheet.compose(continuousCorners, styles.viewOption);
+const selectedViewOptionStyle = StyleSheet.compose(viewOptionStyle, styles.viewOptionSelected);
 
 export interface PlayerEventFilterOption {
   readonly id: string;
   readonly label: string;
   readonly color: EventCategoryColor;
 }
+
+interface EventCategoryOptionProps extends PlayerEventFilterOption {
+  readonly isSelected: boolean;
+  readonly languageFontClass: string;
+  readonly onSelect: (category: PlayerEventCategoryFilter) => void;
+}
+
+const EventCategoryOption = memo(function EventCategoryOption({
+  id,
+  label,
+  color,
+  isSelected,
+  languageFontClass,
+  onSelect,
+}: EventCategoryOptionProps) {
+  const handlePress = useCallback(() => onSelect(id), [id, onSelect]);
+  return (
+    <PressableScale
+      testID={`event-filter-${id}`}
+      accessibilityRole="radio"
+      accessibilityLabel={label}
+      onPress={handlePress}
+      haptic="selection"
+      isSelected={isSelected}
+      style={isSelected ? selectedFilterOptionStyle : idleFilterOptionStyle}
+      className={`min-h-recommended flex-row items-center gap-sm rounded-full border px-md ${
+        isSelected ? 'border-primary bg-primary' : 'border-neutral-300 bg-white'
+      }`}
+    >
+      <View
+        accessible={false}
+        className="h-sm w-sm rounded-full"
+        style={eventCategoryBackgroundStyle(color)}
+      />
+      <Text
+        className={`text-md font-medium ${
+          isSelected ? 'text-white' : 'text-neutral-800'
+        } ${languageFontClass}`}
+      >
+        {label}
+      </Text>
+    </PressableScale>
+  );
+});
 
 export function EventCategoryFilters({
   categories,
@@ -55,45 +107,63 @@ export function EventCategoryFilters({
   readonly languageFontClass: string;
   readonly onSelect: (category: PlayerEventCategoryFilter) => void;
 }) {
-  const options = [{ id: 'all', label: allLabel, color: 'primary' as const }, ...categories];
+  const options = useMemo(
+    () => [{ id: 'all', label: allLabel, color: 'primary' as const }, ...categories],
+    [allLabel, categories],
+  );
   return (
     <View accessibilityRole="radiogroup" accessibilityLabel={accessibilityLabel}>
       <View className="flex-row flex-wrap gap-sm">
-        {options.map((option) => {
-          const isSelected = selected === option.id;
-          return (
-            <PressableScale
-              key={option.id}
-              testID={`event-filter-${option.id}`}
-              accessibilityLabel={option.label}
-              onPress={() => onSelect(option.id)}
-              haptic="selection"
-              isSelected={isSelected}
-              style={[
-                continuousCorners,
-                styles.filterOption,
-                isSelected ? styles.filterOptionSelected : styles.filterOptionIdle,
-              ]}
-              className={`min-h-recommended flex-row items-center gap-sm rounded-full border px-md ${
-                isSelected ? 'border-primary bg-primary' : 'border-neutral-300 bg-white'
-              }`}
-            >
-              <View
-                className="h-sm w-sm rounded-full"
-                style={{ backgroundColor: eventCategoryColor(option.color) }}
-              />
-              <Text
-                className={`text-md font-medium ${
-                  isSelected ? 'text-white' : 'text-neutral-800'
-                } ${languageFontClass}`}
-              >
-                {option.label}
-              </Text>
-            </PressableScale>
-          );
-        })}
+        {options.map((option) => (
+          <EventCategoryOption
+            key={option.id}
+            {...option}
+            isSelected={selected === option.id}
+            languageFontClass={languageFontClass}
+            onSelect={onSelect}
+          />
+        ))}
       </View>
     </View>
+  );
+}
+
+function EventViewOption({
+  value,
+  label,
+  accessibilityLabel,
+  selected,
+  languageFontClass,
+  onSelect,
+}: {
+  readonly value: 'list' | 'calendar';
+  readonly label: string;
+  readonly accessibilityLabel: string;
+  readonly selected: boolean;
+  readonly languageFontClass: string;
+  readonly onSelect: (view: 'list' | 'calendar') => void;
+}) {
+  const handlePress = useCallback(() => onSelect(value), [onSelect, value]);
+  return (
+    <PressableScale
+      accessibilityRole="radio"
+      accessibilityLabel={accessibilityLabel}
+      onPress={handlePress}
+      haptic="selection"
+      isSelected={selected}
+      style={selected ? selectedViewOptionStyle : viewOptionStyle}
+      className={`min-h-recommended flex-1 items-center justify-center rounded-sm px-md ${
+        selected ? 'bg-white' : ''
+      }`}
+    >
+      <Text
+        className={`text-md font-semibold ${
+          selected ? 'text-primary-dark' : 'text-neutral-600'
+        } ${languageFontClass}`}
+      >
+        {label}
+      </Text>
+    </PressableScale>
   );
 }
 
@@ -123,39 +193,22 @@ export function EventViewToggle({
       className="flex-row rounded-md bg-neutral-100 p-xs"
       style={continuousCorners}
     >
-      {(
-        [
-          ['list', listLabel, listAccessibilityLabel],
-          ['calendar', calendarLabel, calendarAccessibilityLabel],
-        ] as const
-      ).map(([value, label, optionAccessibilityLabel]) => {
-        const isSelected = selected === value;
-        return (
-          <PressableScale
-            key={value}
-            accessibilityLabel={optionAccessibilityLabel}
-            onPress={() => onSelect(value)}
-            haptic="selection"
-            isSelected={isSelected}
-            style={[
-              continuousCorners,
-              styles.viewOption,
-              isSelected ? styles.viewOptionSelected : undefined,
-            ]}
-            className={`min-h-recommended flex-1 items-center justify-center rounded-sm px-md ${
-              isSelected ? 'bg-white' : ''
-            }`}
-          >
-            <Text
-              className={`text-md font-semibold ${
-                isSelected ? 'text-primary-dark' : 'text-neutral-600'
-              } ${languageFontClass}`}
-            >
-              {label}
-            </Text>
-          </PressableScale>
-        );
-      })}
+      <EventViewOption
+        value="list"
+        label={listLabel}
+        accessibilityLabel={listAccessibilityLabel}
+        selected={selected === 'list'}
+        languageFontClass={languageFontClass}
+        onSelect={onSelect}
+      />
+      <EventViewOption
+        value="calendar"
+        label={calendarLabel}
+        accessibilityLabel={calendarAccessibilityLabel}
+        selected={selected === 'calendar'}
+        languageFontClass={languageFontClass}
+        onSelect={onSelect}
+      />
     </View>
   );
 }

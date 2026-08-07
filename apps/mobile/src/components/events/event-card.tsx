@@ -1,5 +1,6 @@
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
+import { memo, useCallback } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import type { EventCategoryColor } from '@ramassa/shared/events';
 import { tokens } from '@ramassa/shared/tokens';
@@ -13,6 +14,15 @@ const styles = StyleSheet.create({
     backgroundColor: tokens.colors.white,
   },
 });
+const categoryBackgroundStyles = StyleSheet.create({
+  primary: { backgroundColor: tokens.colors.primary.DEFAULT },
+  secondary: { backgroundColor: tokens.colors.secondary.dark },
+  accent: { backgroundColor: tokens.colors.info },
+  'chart-1': { backgroundColor: tokens.colors.success },
+  'chart-2': { backgroundColor: tokens.colors.warning },
+  'chart-3': { backgroundColor: tokens.colors.error },
+});
+const cardStyle = StyleSheet.compose(continuousCorners, styles.card);
 
 export function eventCategoryColor(color: EventCategoryColor): string {
   switch (color) {
@@ -31,6 +41,34 @@ export function eventCategoryColor(color: EventCategoryColor): string {
   }
 }
 
+export function eventCategoryBackgroundStyle(color: EventCategoryColor) {
+  return categoryBackgroundStyles[color];
+}
+
+export function EventDetailLine({
+  label,
+  value,
+  languageFontClass,
+}: {
+  readonly label: string;
+  readonly value: string;
+  readonly languageFontClass: string;
+}) {
+  return (
+    <View className="gap-xs">
+      <Text className={`text-start text-sm font-semibold text-neutral-500 ${languageFontClass}`}>
+        {label}
+      </Text>
+      <Text
+        selectable
+        className={`text-start text-md tabular-nums text-neutral-900 ${languageFontClass}`}
+      >
+        {value}
+      </Text>
+    </View>
+  );
+}
+
 export interface EventCardProps {
   readonly eventId: string;
   readonly occurrenceId: string;
@@ -44,10 +82,10 @@ export interface EventCardProps {
   readonly signupLabel: string | null;
   readonly accessibilityLabel: string;
   readonly languageFontClass: string;
-  readonly onOpen: (occurrenceId: string) => void;
+  readonly onOpen: (eventId: string, occurrenceId: string) => void;
 }
 
-export function EventCard({
+export const EventCard = memo(function EventCard({
   eventId,
   occurrenceId,
   title,
@@ -62,22 +100,32 @@ export function EventCard({
   languageFontClass,
   onOpen,
 }: EventCardProps) {
+  const handlePress = useCallback(
+    () => onOpen(eventId, occurrenceId),
+    [eventId, occurrenceId, onOpen],
+  );
+
   return (
     <View testID={`event-card-${eventId}-${occurrenceId}`}>
       <PressableScale
         accessibilityLabel={accessibilityLabel}
-        onPress={() => onOpen(occurrenceId)}
+        onPress={handlePress}
         haptic="tapLight"
-        style={[continuousCorners, styles.card]}
+        style={cardStyle}
         className="overflow-hidden rounded-lg border border-neutral-200 bg-white"
       >
-        <View className="h-xs" style={{ backgroundColor: eventCategoryColor(categoryColor) }} />
+        <View
+          accessible={false}
+          className="h-xs"
+          style={eventCategoryBackgroundStyle(categoryColor)}
+        />
         <View className="gap-sm p-md">
           <View className="flex-row flex-wrap items-center gap-sm">
             <View className="flex-row items-center gap-xs rounded-full bg-neutral-100 px-sm py-xs">
               <View
+                accessible={false}
                 className="h-sm w-sm rounded-full"
-                style={{ backgroundColor: eventCategoryColor(categoryColor) }}
+                style={eventCategoryBackgroundStyle(categoryColor)}
               />
               <Text className={`text-sm font-medium text-neutral-700 ${languageFontClass}`}>
                 {category}
@@ -97,7 +145,9 @@ export function EventCard({
           >
             {title}
           </Text>
-          <Text className={`text-start text-md font-medium text-primary-dark ${languageFontClass}`}>
+          <Text
+            className={`text-start text-md font-medium tabular-nums text-primary-dark ${languageFontClass}`}
+          >
             {date} · {time}
           </Text>
           <Text
@@ -106,11 +156,11 @@ export function EventCard({
           >
             {location}
           </Text>
-          <Text className={`text-start text-sm text-neutral-500 ${languageFontClass}`}>
+          <Text className={`text-start text-sm tabular-nums text-neutral-500 ${languageFontClass}`}>
             {capacityLabel}
           </Text>
         </View>
       </PressableScale>
     </View>
   );
-}
+});

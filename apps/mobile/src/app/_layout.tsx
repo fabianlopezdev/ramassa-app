@@ -16,7 +16,7 @@ import { supabase } from '@/lib/supabase';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { Stack } from 'expo-router/stack';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { I18nextProvider } from 'react-i18next';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useReducedMotion } from 'react-native-reanimated';
@@ -33,6 +33,7 @@ configurePushNotificationPresentation();
 // it needs a real style object, and an inline one would be a fresh allocation on
 // every render of the root.
 const gestureRootStyle = { flex: 1 } as const;
+const persistOptions = persistedQueryOptions(queryPersister);
 
 /** Root-level net: catches render crashes outside the zone boundaries. */
 export function ErrorBoundary(props: ErrorFallbackProps) {
@@ -51,6 +52,7 @@ export function ErrorBoundary(props: ErrorFallbackProps) {
  */
 function RootNavigator() {
   const { session, isLoading } = useAuth();
+  const userId = session?.user.id ?? null;
   // The identity the cache currently holds data for. A ref, not state: this
   // drives an eviction, not a render.
   const cachedUserIdRef = useRef<string | null | undefined>(undefined);
@@ -72,19 +74,26 @@ function RootNavigator() {
   // (The profile read itself is safe either way: it resolves identity from the
   // session server-side rather than from anything captured here.)
   useEffect(() => {
-    const userId = session?.user.id ?? null;
     const identityChanged = shouldDropCachedServerState(cachedUserIdRef.current, userId);
     cachedUserIdRef.current = userId;
     registerProfileQueries(() => userId);
     if (identityChanged) {
       dropCachedServerState(queryClient);
     }
-  }, [session]);
+  }, [userId]);
   // Screen transitions honour reduce-motion too (RAPP-70 scope item 5): the
   // native stack's default slide becomes a plain fade, which is the closest the
   // native navigator offers to "no movement". Set here rather than per screen so
   // no future route can forget it.
   const isReducedMotion = useReducedMotion();
+  const screenOptions = useMemo(
+    () => ({
+      headerShown: false,
+      animation: isReducedMotion ? ('fade' as const) : ('default' as const),
+      animationDuration: motionTokens.duration.base,
+    }),
+    [isReducedMotion],
+  );
 
   useEffect(() => {
     if (!isLoading) {
@@ -93,13 +102,7 @@ function RootNavigator() {
   }, [isLoading]);
 
   return (
-    <Stack
-      screenOptions={{
-        headerShown: false,
-        animation: isReducedMotion ? 'fade' : 'default',
-        animationDuration: motionTokens.duration.base,
-      }}
-    >
+    <Stack screenOptions={screenOptions}>
       <Stack.Protected guard={Boolean(session)}>
         <Stack.Screen name="(app)" />
       </Stack.Protected>
@@ -129,10 +132,7 @@ function RootLayout() {
         {/* Server-state cache for every screen that fetches (RAPP-19). Mounted
             above the auth provider so a future query can be keyed by session
             without the provider tree having to be reordered later. */}
-        <PersistQueryClientProvider
-          client={queryClient}
-          persistOptions={persistedQueryOptions(queryPersister)}
-        >
+        <PersistQueryClientProvider client={queryClient} persistOptions={persistOptions}>
           <AuthProvider client={supabase} onError={reportAuthError}>
             <AuthFlowStatusProvider>
               <AuthDeepLinkHandler />

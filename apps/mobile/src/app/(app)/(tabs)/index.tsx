@@ -1,4 +1,8 @@
-import { AnnouncementCard } from '@/components/announcements/announcement-card';
+import {
+  AnnouncementCard,
+  PinnedAnnouncementCard,
+  type AnnouncementCardProps,
+} from '@/components/announcements/announcement-card';
 import {
   announcementCategoryLabel,
   CategoryFilters,
@@ -12,10 +16,8 @@ import {
 import { KnowledgeQuickActions } from '@/components/knowledge/knowledge-quick-actions';
 import { PageWidth } from '@/components/layout/content-width';
 import { usePlayerAnnouncements } from '@/lib/announcement-feed';
-import { resolveMediaImageSource } from '@/lib/media-source';
 import { isNetworkStateOnline } from '@/lib/network-status';
 import { logger } from '@/lib/observability';
-import { mobileClientEnv } from '@/lib/supabase';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useNetworkState } from 'expo-network';
@@ -52,7 +54,7 @@ export default function HomeScreen() {
   const { t, i18n } = useTranslation(['home', 'common']);
   const { language } = useLanguage();
   const languageFontClass = useLanguageFontClass();
-  const router = useRouter();
+  const { push } = useRouter();
   const { session } = useAuth();
   const networkState = useNetworkState();
   const isOffline = !isNetworkStateOnline(networkState);
@@ -71,11 +73,7 @@ export default function HomeScreen() {
       }),
     [i18n.resolvedLanguage],
   );
-
-  const openAnnouncement = useCallback(
-    (id: string) => router.push(`/announcement/${id}` as Href),
-    [router],
-  );
+  const openAnnouncement = useCallback((id: string) => push(`/announcement/${id}` as Href), [push]);
 
   const renderAnnouncement = useCallback(
     ({ item }: ListRenderItemInfo<AnnouncementListRow>) => {
@@ -96,28 +94,27 @@ export default function HomeScreen() {
       ]
         .filter((part): part is string => typeof part === 'string')
         .join('. ');
-      const imageSource = resolveMediaImageSource({
-        objectKeyOrUrl: item.image_url,
-        mediaWorkerUrl: mobileClientEnv.EXPO_PUBLIC_MEDIA_WORKER_URL,
+      const cardProps: AnnouncementCardProps = {
+        id: item.id,
+        title: title.text,
+        body: body.text,
+        category: categoryLabel,
+        publishedDate,
+        imageObjectKeyOrUrl: item.image_url,
         accessToken: session?.access_token,
-      });
+        imageAlt: imageAlt?.text ?? null,
+        accessibilityLabel: completeLabel,
+        languageFontClass,
+        onOpen: openAnnouncement,
+      };
 
       return (
         <PageWidth className="pb-md">
-          <AnnouncementCard
-            id={item.id}
-            title={title.text}
-            body={body.text}
-            category={categoryLabel}
-            publishedDate={publishedDate}
-            imageSource={imageSource}
-            imageAlt={imageAlt?.text ?? null}
-            isPinned={item.is_pinned}
-            pinnedLabel={t('pinned')}
-            accessibilityLabel={completeLabel}
-            languageFontClass={languageFontClass}
-            onOpen={openAnnouncement}
-          />
+          {item.is_pinned ? (
+            <PinnedAnnouncementCard {...cardProps} pinnedLabel={t('pinned')} />
+          ) : (
+            <AnnouncementCard {...cardProps} />
+          )}
         </PageWidth>
       );
     },
@@ -170,6 +167,8 @@ export default function HomeScreen() {
 
   return (
     <FlashList
+      accessibilityRole="list"
+      accessibilityLabel={t('feedTitle')}
       data={announcements}
       renderItem={renderAnnouncement}
       keyExtractor={keyExtractor}

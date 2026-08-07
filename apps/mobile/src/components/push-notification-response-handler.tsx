@@ -18,6 +18,7 @@ interface PendingPushDetail {
 
 export function PushNotificationResponseHandler() {
   const { session, needsOnboarding } = useAuth();
+  const hasSession = session !== null;
   const navigationState = useRootNavigationState();
   const [pending, setPending] = useState<PendingPushDetail | null>(null);
   const handledResponseIds = useRef(new Set<string>());
@@ -53,7 +54,7 @@ export function PushNotificationResponseHandler() {
     if (pending === null) return;
     if (
       !shouldOpenPushDetail({
-        hasSession: session !== null,
+        hasSession,
         needsOnboarding,
         isNavigationReady: navigationState?.key !== undefined,
       })
@@ -66,7 +67,7 @@ export function PushNotificationResponseHandler() {
     router.push(pending.route);
     setPending(null);
     void Notifications.clearLastNotificationResponseAsync();
-  }, [navigationState?.key, needsOnboarding, pending, session]);
+  }, [hasSession, navigationState?.key, needsOnboarding, pending]);
 
   return null;
 }

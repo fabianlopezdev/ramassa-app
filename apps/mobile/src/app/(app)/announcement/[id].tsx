@@ -21,16 +21,17 @@ import { resolveLocalizedText, useLanguage } from '@ramassa/shared/i18n';
 import { tokens } from '@ramassa/shared/tokens';
 
 const styles = StyleSheet.create({
-  image: {
+  imageFrame: {
     width: '100%',
     height: tokens.contentWidth.form / 2,
-    borderRadius: tokens.radius.lg,
   },
+  image: { width: '100%', height: '100%' },
 });
+const imageFrameStyle = StyleSheet.compose(continuousCorners, styles.imageFrame);
 
 export default function AnnouncementDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const router = useRouter();
+  const { back } = useRouter();
   const { session } = useAuth();
   const { t, i18n } = useTranslation(['home', 'common']);
   const { language } = useLanguage();
@@ -71,7 +72,6 @@ export default function AnnouncementDetailScreen() {
         : undefined,
     [insets.bottom, insets.top],
   );
-
   return (
     <ScrollView
       className="flex-1 bg-white"
@@ -82,9 +82,8 @@ export default function AnnouncementDetailScreen() {
       <PageWidth className="gap-lg">
         <PressableScale
           accessibilityLabel={t('common:back')}
-          onPress={() => router.back()}
+          onPress={back}
           haptic="tapLight"
-          style={continuousCorners}
           className="min-h-recommended self-start justify-center rounded-full border border-neutral-300 px-lg"
         >
           <Text className={`text-md font-medium text-primary ${languageFontClass}`}>
@@ -112,13 +111,13 @@ export default function AnnouncementDetailScreen() {
           <FadeSlideIn index={0}>
             <View className="gap-md">
               <View className="flex-row flex-wrap items-center gap-sm">
-                <View className="rounded-full bg-neutral-100 px-sm py-xs" style={continuousCorners}>
+                <View className="rounded-full bg-neutral-100 px-sm py-xs">
                   <Text className={`text-sm font-medium text-neutral-700 ${languageFontClass}`}>
                     {announcementCategoryLabel(announcement.category, t)}
                   </Text>
                 </View>
                 {announcement.is_pinned ? (
-                  <View className="rounded-full bg-secondary px-sm py-xs" style={continuousCorners}>
+                  <View className="rounded-full bg-secondary px-sm py-xs">
                     <Text className={`text-sm font-semibold text-neutral-900 ${languageFontClass}`}>
                       {t('pinned')}
                     </Text>
@@ -137,13 +136,16 @@ export default function AnnouncementDetailScreen() {
                 )}
               </Text>
               {imageSource === null ? null : (
-                <Image
-                  source={imageSource}
-                  accessibilityLabel={imageAlt?.text}
-                  cachePolicy="memory-disk"
-                  contentFit="cover"
-                  style={styles.image}
-                />
+                <View className="overflow-hidden rounded-lg" style={imageFrameStyle}>
+                  <Image
+                    source={imageSource}
+                    accessible={imageAlt !== undefined}
+                    accessibilityLabel={imageAlt?.text}
+                    cachePolicy="memory-disk"
+                    contentFit="cover"
+                    style={styles.image}
+                  />
+                </View>
               )}
               <Text className={`text-start text-lg text-neutral-800 ${languageFontClass}`}>
                 {body.text}

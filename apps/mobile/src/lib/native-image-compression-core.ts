@@ -3,6 +3,7 @@ import { tokens } from '@ramassa/shared/tokens';
 import type { UploadFileContent } from '@ramassa/shared/upload-client';
 
 const NATIVE_IMAGE_QUALITIES = [0.82, 0.68, 0.54] as const;
+const MIN_IMAGE_DIMENSION_PIXELS = 1;
 
 export interface NativeStoryImageSource {
   readonly uri: string;
@@ -44,8 +45,8 @@ export function scaledStoryImageDimensions(
   if (longestEdge <= tokens.upload.maxImageDimension) return { width, height };
   const scale = tokens.upload.maxImageDimension / longestEdge;
   return {
-    width: Math.max(1, Math.round(width * scale)),
-    height: Math.max(1, Math.round(height * scale)),
+    width: Math.max(MIN_IMAGE_DIMENSION_PIXELS, Math.round(width * scale)),
+    height: Math.max(MIN_IMAGE_DIMENSION_PIXELS, Math.round(height * scale)),
   };
 }
 

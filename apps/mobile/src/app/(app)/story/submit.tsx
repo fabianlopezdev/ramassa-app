@@ -1,6 +1,7 @@
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { ErrorCodeLine } from '@/components/error-code-line';
+import { StoryImagePreview } from '@/components/knowledge/story-image-preview';
 import { FormWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { ShakeOnError } from '@/components/motion/shake-on-error';
@@ -16,7 +17,6 @@ import {
 } from '@/lib/player-knowledge';
 import { useStorySubmissionScrollReset } from '@/lib/story-submission-scroll';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { useNetworkState } from 'expo-network';
 import { useRouter } from 'expo-router';
@@ -43,8 +43,11 @@ const checkSymbol: SymbolViewProps['name'] = {
 };
 const styles = StyleSheet.create({
   storyInput: { minHeight: tokens.spacing['3xl'] * 2 },
-  photo: { width: tokens.tapTarget.recommended * 2, height: tokens.tapTarget.recommended * 2 },
 });
+const STORY_TITLE_MAX_LENGTH = participantStoryDraftSchema.shape.title.maxLength ?? undefined;
+const STORY_TEXT_MAX_LENGTH = participantStoryDraftSchema.shape.story.maxLength ?? undefined;
+const STORY_TEXT_VISIBLE_LINES = 7;
+const IMAGE_PICKER_ORIGINAL_QUALITY = 1;
 
 function statusTranslationKey(status: StoryStatus) {
   if (status === 'in_review') return 'knowledge:storyStatusInReview' as const;
@@ -56,14 +59,18 @@ function statusTranslationKey(status: StoryStatus) {
 
 export default function StorySubmissionScreen() {
   const { t, i18n } = useTranslation(['knowledge', 'common']);
-  const router = useRouter();
+  const { back } = useRouter();
   const { language } = useLanguage();
   const languageFontClass = useLanguageFontClass();
   const networkState = useNetworkState();
   const isOnline = isNetworkStateOnline(networkState);
   const categoriesQuery = usePlayerKnowledgeCategories();
   const statusesQuery = useOwnParticipantStoryStatuses();
-  const submitStory = useSubmitPlayerStory();
+  const {
+    error: submitStoryError,
+    isPending: isSubmitPending,
+    mutateAsync: submitStoryAsync,
+  } = useSubmitPlayerStory();
   const [title, setTitle] = useState('');
   const [story, setStory] = useState('');
   const [images, setImages] = useState<readonly CompressedNativeStoryImage[]>([]);
@@ -80,7 +87,7 @@ export default function StorySubmissionScreen() {
     () => new Intl.DateTimeFormat(i18n.resolvedLanguage ?? 'ca', { dateStyle: 'medium' }),
     [i18n.resolvedLanguage],
   );
-  const mutationErrorCode = submitStory.error === null ? null : toAppError(submitStory.error).code;
+  const mutationErrorCode = submitStoryError === null ? null : toAppError(submitStoryError).code;
   const errorCode = localErrorCode ?? mutationErrorCode;
   const resetScroll = useCallback(() => {
     scrollViewRef.current?.scrollTo({ y: 0, animated: false });
@@ -105,7 +112,7 @@ export default function StorySubmissionScreen() {
       mediaTypes: ['images'],
       allowsMultipleSelection: true,
       selectionLimit: MAX_STORY_IMAGES - images.length,
-      quality: 1,
+      quality: IMAGE_PICKER_ORIGINAL_QUALITY,
     });
     if (result.canceled) return;
     setIsProcessingPhoto(true);
@@ -160,7 +167,7 @@ export default function StorySubmissionScreen() {
       return;
     }
     try {
-      await submitStory.mutateAsync({
+      await submitStoryAsync({
         categoryId: defaultCategoryId,
         language,
         title: draft.data.title,
@@ -175,7 +182,12 @@ export default function StorySubmissionScreen() {
     } catch {
       return;
     }
-  }, [defaultCategoryId, hasConsent, images, language, story, submitStory, t, title]);
+  }, [defaultCategoryId, hasConsent, images, language, story, submitStoryAsync, t, title]);
+
+  const addPhotos = useCallback(() => void choosePhotos(), [choosePhotos]);
+  const submitForm = useCallback(() => void submit(), [submit]);
+  const submitAnother = useCallback(() => setIsComplete(false), []);
+  const toggleConsent = useCallback(() => setHasConsent((current) => !current), []);
 
   const insets = useSafeAreaInsets();
   const androidEdgeInsets = useMemo(
@@ -202,9 +214,8 @@ export default function StorySubmissionScreen() {
       <FormWidth className="gap-lg">
         <PressableScale
           accessibilityLabel={t('common:back')}
-          onPress={() => router.back()}
+          onPress={back}
           haptic="tapLight"
-          style={continuousCorners}
           className="min-h-recommended self-start justify-center rounded-full border border-neutral-300 px-lg"
         >
           <Text className={`text-md font-medium text-primary ${languageFontClass}`}>
@@ -231,7 +242,7 @@ export default function StorySubmissionScreen() {
               </Text>
               <PressableScale
                 accessibilityLabel={t('knowledge:submitAnother')}
-                onPress={() => setIsComplete(false)}
+                onPress={submitAnother}
                 haptic="tapLight"
                 style={continuousCorners}
                 className="min-h-recommended items-center justify-center rounded-md border border-primary px-lg"
@@ -260,7 +271,7 @@ export default function StorySubmissionScreen() {
               label={t('knowledge:submissionFieldTitle')}
               placeholder={t('knowledge:submissionTitleHint')}
               value={title}
-              maxLength={200}
+              maxLength={STORY_TITLE_MAX_LENGTH}
               returnKeyType="next"
               onChangeText={setTitle}
             />
@@ -269,9 +280,9 @@ export default function StorySubmissionScreen() {
               label={t('knowledge:submissionFieldStory')}
               placeholder={t('knowledge:submissionStoryHint')}
               value={story}
-              maxLength={10_000}
+              maxLength={STORY_TEXT_MAX_LENGTH}
               multiline
-              numberOfLines={7}
+              numberOfLines={STORY_TEXT_VISIBLE_LINES}
               textAlignVertical="top"
               style={styles.storyInput}
               onChangeText={setStory}
@@ -280,7 +291,7 @@ export default function StorySubmissionScreen() {
               <PressableScale
                 testID="story-add-photos"
                 accessibilityLabel={t('knowledge:addPhotos')}
-                onPress={() => void choosePhotos()}
+                onPress={addPhotos}
                 haptic="tapLight"
                 isDisabled={images.length >= MAX_STORY_IMAGES || isProcessingPhoto}
                 isBusy={isProcessingPhoto}
@@ -288,9 +299,10 @@ export default function StorySubmissionScreen() {
                 className="min-h-recommended flex-row items-center justify-center gap-sm rounded-md border border-primary px-lg"
               >
                 {isProcessingPhoto ? (
-                  <ActivityIndicator color={tokens.colors.primary.DEFAULT} />
+                  <ActivityIndicator accessible={false} color={tokens.colors.primary.DEFAULT} />
                 ) : (
                   <SymbolView
+                    accessible={false}
                     name={addPhotoSymbol}
                     size={tokens.fontSize.xl}
                     tintColor={tokens.colors.primary.DEFAULT}
@@ -300,33 +312,20 @@ export default function StorySubmissionScreen() {
                   {isProcessingPhoto ? t('knowledge:processingPhoto') : t('knowledge:addPhotos')}
                 </Text>
               </PressableScale>
-              <Text className={`text-start text-sm text-neutral-600 ${languageFontClass}`}>
+              <Text
+                className={`text-start text-sm tabular-nums text-neutral-600 ${languageFontClass}`}
+              >
                 {t('knowledge:photoCount', { count: images.length, maximum: MAX_STORY_IMAGES })}
               </Text>
               <View className="flex-row flex-wrap gap-sm">
                 {images.map((image, index) => (
-                  <View key={image.uri} className="gap-xs">
-                    <Image
-                      accessibilityLabel={t('knowledge:storyPhoto', {
-                        number: index + 1,
-                        title: title || t('knowledge:submissionTitle'),
-                      })}
-                      source={{ uri: image.uri }}
-                      contentFit="cover"
-                      style={styles.photo}
-                    />
-                    <PressableScale
-                      accessibilityLabel={t('knowledge:removePhoto', { number: index + 1 })}
-                      onPress={() => removePhoto(image.uri)}
-                      haptic="tapLight"
-                      style={continuousCorners}
-                      className="min-h-min items-center justify-center rounded-md border border-neutral-300 px-sm"
-                    >
-                      <Text className={`text-xs text-neutral-700 ${languageFontClass}`}>
-                        {t('knowledge:imageRemove')}
-                      </Text>
-                    </PressableScale>
-                  </View>
+                  <StoryImagePreview
+                    key={image.uri}
+                    image={image}
+                    number={index + 1}
+                    title={title}
+                    onRemove={removePhoto}
+                  />
                 ))}
               </View>
             </View>
@@ -334,7 +333,7 @@ export default function StorySubmissionScreen() {
               testID="story-publication-consent"
               accessibilityRole="checkbox"
               accessibilityLabel={t('knowledge:publicationConsent')}
-              onPress={() => setHasConsent((current) => !current)}
+              onPress={toggleConsent}
               haptic="selection"
               isSelected={hasConsent}
               style={continuousCorners}
@@ -342,9 +341,13 @@ export default function StorySubmissionScreen() {
                 hasConsent ? 'border-primary bg-primary/10' : 'border-neutral-300 bg-white'
               }`}
             >
-              <View className="h-lg w-lg items-center justify-center rounded-sm border border-primary">
+              <View
+                className="h-lg w-lg items-center justify-center rounded-sm border border-primary"
+                style={continuousCorners}
+              >
                 {hasConsent ? (
                   <SymbolView
+                    accessible={false}
                     name={checkSymbol}
                     size={tokens.fontSize.md}
                     tintColor={tokens.colors.primary.dark}
@@ -364,6 +367,7 @@ export default function StorySubmissionScreen() {
             </PressableScale>
             {!isOnline ? (
               <Text
+                selectable
                 accessibilityRole="alert"
                 className={`text-start text-sm text-error ${languageFontClass}`}
               >
@@ -374,6 +378,7 @@ export default function StorySubmissionScreen() {
               <View className="gap-sm">
                 {validationMessage === null && mutationErrorCode === null ? null : (
                   <Text
+                    selectable
                     accessibilityRole="alert"
                     className={`text-start text-sm text-error ${languageFontClass}`}
                   >
@@ -384,12 +389,10 @@ export default function StorySubmissionScreen() {
                 <AuthSubmitButton
                   testID="story-submit-button"
                   label={
-                    submitStory.isPending
-                      ? t('knowledge:submittingStory')
-                      : t('knowledge:submitStory')
+                    isSubmitPending ? t('knowledge:submittingStory') : t('knowledge:submitStory')
                   }
-                  onPress={() => void submit()}
-                  isLoading={submitStory.isPending}
+                  onPress={submitForm}
+                  isLoading={isSubmitPending}
                   disabled={!isOnline || isProcessingPhoto || defaultCategoryId === undefined}
                 />
               </View>

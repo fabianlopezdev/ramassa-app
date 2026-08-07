@@ -7,25 +7,27 @@ import {
 
 export * from './native-image-compression-core';
 
+const nativeImageCompressionDependencies = {
+  manipulate: (uri: string) => {
+    const context = ImageManipulator.manipulate(uri);
+    return {
+      resize: (dimensions: { readonly width: number; readonly height: number }) =>
+        context.resize(dimensions),
+      renderAsync: async () => {
+        const image = await context.renderAsync();
+        return {
+          saveAsync: ({ compress }: { readonly compress: number }) =>
+            image.saveAsync({ compress, format: SaveFormat.JPEG }),
+        };
+      },
+    };
+  },
+  readBytes: (uri: string) => new File(uri).bytes(),
+};
+
 export async function compressNativeStoryImage(
   source: NativeStoryImageSource,
-  dependencies = {
-    manipulate: (uri: string) => {
-      const context = ImageManipulator.manipulate(uri);
-      return {
-        resize: (dimensions: { readonly width: number; readonly height: number }) =>
-          context.resize(dimensions),
-        renderAsync: async () => {
-          const image = await context.renderAsync();
-          return {
-            saveAsync: ({ compress }: { readonly compress: number }) =>
-              image.saveAsync({ compress, format: SaveFormat.JPEG }),
-          };
-        },
-      };
-    },
-    readBytes: (uri: string) => new File(uri).bytes(),
-  },
+  dependencies = nativeImageCompressionDependencies,
 ) {
   return compressNativeStoryImageWithDependencies(source, dependencies);
 }

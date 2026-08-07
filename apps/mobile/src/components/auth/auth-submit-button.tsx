@@ -25,6 +25,8 @@ const styles = StyleSheet.create({
   },
   blocked: { opacity: 0.6 },
 });
+const buttonStyle = StyleSheet.compose(continuousCorners, styles.button);
+const blockedButtonStyle = StyleSheet.compose(buttonStyle, styles.blocked);
 
 export interface AuthSubmitButtonProps {
   readonly label: string;
@@ -53,13 +55,13 @@ export function AuthSubmitButton({
       isDisabled={Boolean(disabled)}
       isBusy={isBusy}
       testID={testID}
-      style={[continuousCorners, styles.button, isInteractionBlocked ? styles.blocked : undefined]}
+      style={isInteractionBlocked ? blockedButtonStyle : buttonStyle}
       className={`min-h-recommended justify-center rounded-md bg-primary px-lg ${
         isInteractionBlocked ? 'opacity-60' : ''
       }`}
     >
       <View className="flex-row items-center justify-center gap-sm">
-        {isBusy ? <ActivityIndicator color={tokens.colors.white} /> : null}
+        {isBusy ? <ActivityIndicator accessible={false} color={tokens.colors.white} /> : null}
         <Text className={`text-lg font-bold text-white ${languageFontClass}`}>{label}</Text>
       </View>
     </PressableScale>

@@ -1,5 +1,5 @@
 import { continuousCorners } from '@/lib/continuous-corners';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import {
   useAnimatedStyle,
   useReducedMotion,
@@ -29,8 +29,12 @@ export interface SkeletonPulseProps {
 }
 
 const PULSE_REPEAT_FOREVER = -1;
+const SKELETON_TIMING_CONFIG = { duration: motionTokens.duration.slow } as const;
 
-export function SkeletonPulse({ className }: SkeletonPulseProps) {
+function SkeletonPulseSurface({
+  className,
+  cornerStyle,
+}: SkeletonPulseProps & { readonly cornerStyle: typeof continuousCorners | undefined }) {
   const isReducedMotion = useReducedMotion();
   // Explicit `number`: the tokens are `as const`, so inference would pin this
   // shared value to the literal 1 and reject the pulse's min opacity.
@@ -45,7 +49,7 @@ export function SkeletonPulse({ className }: SkeletonPulseProps) {
     }
     opacity.set(
       withRepeat(
-        withTiming(motionTokens.skeleton.minOpacity, { duration: durationMs }),
+        withTiming(motionTokens.skeleton.minOpacity, SKELETON_TIMING_CONFIG),
         PULSE_REPEAT_FOREVER,
         true,
       ),
@@ -53,16 +57,26 @@ export function SkeletonPulse({ className }: SkeletonPulseProps) {
   }, [opacity, durationMs]);
 
   const animatedStyle = useAnimatedStyle(() => ({ opacity: opacity.get() }));
+  const composedStyle = useMemo(() => [animatedStyle, cornerStyle], [animatedStyle, cornerStyle]);
 
   return (
     <NativeWindAnimatedView
-      accessibilityRole="progressbar"
+      accessible={false}
       // The rounded surface is this component's own, so the continuous curve
       // belongs here rather than at every call site (contract rule 17): callers
       // pass the radius as a class and NativeWind cannot express `borderCurve`.
       // Composed with the pulse, from the hoisted constant, never a literal.
-      style={[animatedStyle, continuousCorners]}
+      style={composedStyle}
       className={`bg-neutral-200 ${className ?? ''}`}
     />
   );
+}
+
+export function SkeletonPulse(props: SkeletonPulseProps) {
+  return <SkeletonPulseSurface {...props} cornerStyle={continuousCorners} />;
+}
+
+/** Explicit pill variant: its full radius is already the intended geometry. */
+export function CapsuleSkeletonPulse(props: SkeletonPulseProps) {
+  return <SkeletonPulseSurface {...props} cornerStyle={undefined} />;
 }

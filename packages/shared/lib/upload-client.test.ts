@@ -96,6 +96,19 @@ describe('uploadFile', () => {
     expect(putCall?.headers['content-type']).toBe('image/jpeg');
   });
 
+  test('normalizes a trailing slash in the configured Worker URL', async () => {
+    const { fetch: fetchStub, calls } = createFetchStub([
+      () => mintResponse(),
+      () => new Response(null, { status: 200 }),
+    ]);
+
+    await uploadFile(
+      buildOptions({ mediaWorkerUrl: `${mediaWorkerUrl}/`, fetchImplementation: fetchStub }),
+    );
+
+    expect(calls[0]?.url).toBe(`${mediaWorkerUrl}/uploads/url`);
+  });
+
   test('sends exactly the headers the Worker signed, not headers of its own', async () => {
     const { fetch: fetchStub, calls } = createFetchStub([
       () => mintResponse({ requiredHeaders: { 'content-type': 'image/webp' } }),

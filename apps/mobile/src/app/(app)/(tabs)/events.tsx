@@ -11,7 +11,9 @@ import {
   type PlayerEventFilterOption,
 } from '@/components/events/event-filters';
 import { PageWidth } from '@/components/layout/content-width';
+import { continuousCorners } from '@/lib/continuous-corners';
 import { buildCalendarLocale, buildEventMarkedDates, eventDateKey } from '@/lib/event-calendar';
+import { playHaptic } from '@/lib/haptics/haptics';
 import { isNetworkStateOnline } from '@/lib/network-status';
 import { logger } from '@/lib/observability';
 import { usePlayerEvents } from '@/lib/player-events';
@@ -37,6 +39,8 @@ import { resolveLocalizedText, useLanguage } from '@ramassa/shared/i18n';
 import { tokens } from '@ramassa/shared/tokens';
 
 const EMPTY_EVENTS: readonly PlayerEventOccurrence[] = [];
+const CALENDAR_FIRST_DAY_MONDAY = 1;
+const UTC_MIDDAY_SUFFIX = 'T12:00:00Z';
 
 const styles = StyleSheet.create({
   list: { flex: 1, backgroundColor: tokens.colors.white },
@@ -48,6 +52,17 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
 });
+const calendarTheme = {
+  calendarBackground: tokens.colors.white,
+  selectedDayBackgroundColor: tokens.colors.primary.light,
+  selectedDayTextColor: tokens.colors.neutral[900],
+  todayTextColor: tokens.colors.primary.dark,
+  arrowColor: tokens.colors.primary.DEFAULT,
+  monthTextColor: tokens.colors.neutral[900],
+  dayTextColor: tokens.colors.neutral[800],
+  textDisabledColor: tokens.colors.neutral[400],
+} as const;
+const calendarStyle = StyleSheet.compose(continuousCorners, styles.calendar);
 
 const keyExtractor = (item: PlayerEventOccurrence) => item.occurrence_id;
 const getItemType = (item: PlayerEventOccurrence) =>
@@ -72,7 +87,7 @@ export default function EventsScreen() {
   const { t, i18n } = useTranslation(['events', 'common']);
   const { language } = useLanguage();
   const languageFontClass = useLanguageFontClass();
-  const router = useRouter();
+  const { push } = useRouter();
   const networkState = useNetworkState();
   const isOffline = !isNetworkStateOnline(networkState);
   const [category, setCategory] = useState<PlayerEventCategoryFilter>('all');
@@ -84,9 +99,11 @@ export default function EventsScreen() {
     () => filterPlayerEventOccurrences(data ?? EMPTY_EVENTS, category, now),
     [category, data],
   );
-  const categories = useMemo(() => {
+  const { categories, categoryColorsById } = useMemo(() => {
     const byId = new Map<string, PlayerEventFilterOption>();
+    const colorsById = new Map<string, PlayerEventOccurrence['event']['category']['color']>();
     for (const row of data ?? EMPTY_EVENTS) {
+      colorsById.set(row.event.category.id, row.event.category.color);
       const name = resolveLocalizedText(row.event.category.name, language);
       if (name !== undefined) {
         byId.set(row.event.category.id, {
@@ -96,7 +113,7 @@ export default function EventsScreen() {
         });
       }
     }
-    return [...byId.values()];
+    return { categories: [...byId.values()], categoryColorsById: colorsById };
   }, [data, language]);
   const effectiveSelectedDate =
     selectedDate ?? eventDateKey(events[0]?.occurrence_starts_at ?? now.toISOString());
@@ -106,10 +123,6 @@ export default function EventsScreen() {
         ? events
         : events.filter((row) => eventDateKey(row.occurrence_starts_at) === effectiveSelectedDate),
     [effectiveSelectedDate, events, view],
-  );
-  const occurrenceById = useMemo(
-    () => new Map((data ?? EMPTY_EVENTS).map((row) => [row.occurrence_id, row])),
-    [data],
   );
   const dateFormatter = useMemo(
     () =>
@@ -133,33 +146,39 @@ export default function EventsScreen() {
     () => buildCalendarLocale(language, t('playerToday')),
     [language, t],
   );
-  LocaleConfig.locales[calendarLocaleKey] = {
-    monthNames: [...calendarLocale.monthNames],
-    monthNamesShort: [...calendarLocale.monthNamesShort],
-    dayNames: [...calendarLocale.dayNames],
-    dayNamesShort: [...calendarLocale.dayNamesShort],
-    today: calendarLocale.today,
-  };
+  const calendarLocaleDefinition = useMemo(
+    () => ({
+      monthNames: [...calendarLocale.monthNames],
+      monthNamesShort: [...calendarLocale.monthNamesShort],
+      dayNames: [...calendarLocale.dayNames],
+      dayNamesShort: [...calendarLocale.dayNamesShort],
+      today: calendarLocale.today,
+    }),
+    [calendarLocale],
+  );
+  LocaleConfig.locales[calendarLocaleKey] = calendarLocaleDefinition;
   LocaleConfig.defaultLocale = calendarLocaleKey;
   const markedDates = useMemo(
     () =>
-      buildEventMarkedDates(events, effectiveSelectedDate, (categoryId) => {
-        const event = events.find((row) => row.event.category_id === categoryId);
-        return eventCategoryColor(event?.event.category.color ?? 'primary');
-      }) as MarkedDates,
-    [effectiveSelectedDate, events],
+      buildEventMarkedDates(
+        events,
+        effectiveSelectedDate,
+        (categoryId) => eventCategoryColor(categoryColorsById.get(categoryId) ?? 'primary'),
+        (date) =>
+          t('playerSelectedDate', {
+            date: dateFormatter.format(new Date(`${date}${UTC_MIDDAY_SUFFIX}`)),
+          }),
+      ) as MarkedDates,
+    [categoryColorsById, dateFormatter, effectiveSelectedDate, events, t],
   );
-
   const openOccurrence = useCallback(
-    (occurrenceId: string) => {
-      const row = occurrenceById.get(occurrenceId);
-      if (row === undefined) return;
-      router.push({
+    (eventId: string, occurrenceId: string) => {
+      push({
         pathname: '/event/[id]',
-        params: { id: row.event.id, occurrenceId },
+        params: { id: eventId, occurrenceId },
       } as unknown as Href);
     },
-    [occurrenceById, router],
+    [push],
   );
 
   const renderEvent = useCallback(
@@ -218,6 +237,24 @@ export default function EventsScreen() {
     [insets.bottom, insets.top],
   );
   const onRefresh = useCallback(() => void refetch(), [refetch]);
+  const selectCalendarDay = useCallback((day: DateData) => {
+    playHaptic('selection');
+    setSelectedDate(day.dateString);
+  }, []);
+  const listExtraData = useMemo(
+    () => ({ category, effectiveSelectedDate, view }),
+    [category, effectiveSelectedDate, view],
+  );
+  const onListLoad = useCallback(
+    ({ elapsedTimeInMs }: { readonly elapsedTimeInMs: number }) => {
+      logger.info('player events rendered', {
+        elapsedTimeInMs: Math.round(elapsedTimeInMs),
+        itemCount: visibleEvents.length,
+        view,
+      });
+    },
+    [view, visibleEvents.length],
+  );
 
   if (isPending && data === undefined) {
     return <AnnouncementFeedSkeleton accessibilityLabel={t('playerLoading')} />;
@@ -236,23 +273,19 @@ export default function EventsScreen() {
 
   return (
     <FlashList
+      accessibilityRole="list"
+      accessibilityLabel={t('playerTitle')}
       data={visibleEvents}
       renderItem={renderEvent}
       keyExtractor={keyExtractor}
       getItemType={getItemType}
-      extraData={{ category, effectiveSelectedDate, view }}
+      extraData={listExtraData}
       style={styles.list}
       contentContainerStyle={contentContainerStyle}
       contentInsetAdjustmentBehavior="automatic"
       refreshing={isRefetching && !isOffline}
       onRefresh={onRefresh}
-      onLoad={({ elapsedTimeInMs }) =>
-        logger.info('player events rendered', {
-          elapsedTimeInMs: Math.round(elapsedTimeInMs),
-          itemCount: visibleEvents.length,
-          view,
-        })
-      }
+      onLoad={onListLoad}
       ListHeaderComponent={
         <PageWidth className="gap-lg pb-lg">
           <View className="gap-xs">
@@ -302,30 +335,23 @@ export default function EventsScreen() {
                 key={calendarLocaleKey}
                 current={effectiveSelectedDate}
                 minDate={eventDateKey(now.toISOString())}
-                firstDay={1}
+                firstDay={CALENDAR_FIRST_DAY_MONDAY}
                 markingType="multi-dot"
                 markedDates={markedDates}
                 enableSwipeMonths
-                onDayPress={(day: DateData) => setSelectedDate(day.dateString)}
+                onDayPress={selectCalendarDay}
                 testID="player-events-calendar"
-                style={styles.calendar}
-                theme={{
-                  calendarBackground: tokens.colors.white,
-                  selectedDayBackgroundColor: tokens.colors.primary.light,
-                  selectedDayTextColor: tokens.colors.neutral[900],
-                  todayTextColor: tokens.colors.primary.dark,
-                  arrowColor: tokens.colors.primary.DEFAULT,
-                  monthTextColor: tokens.colors.neutral[900],
-                  dayTextColor: tokens.colors.neutral[800],
-                  textDisabledColor: tokens.colors.neutral[400],
-                }}
+                style={calendarStyle}
+                theme={calendarTheme}
               />
               <Text
                 accessibilityRole="header"
                 className={`text-start text-lg font-bold text-neutral-900 ${languageFontClass}`}
               >
                 {t('playerSelectedDate', {
-                  date: dateFormatter.format(new Date(`${effectiveSelectedDate}T12:00:00Z`)),
+                  date: dateFormatter.format(
+                    new Date(`${effectiveSelectedDate}${UTC_MIDDAY_SUFFIX}`),
+                  ),
                 })}
               </Text>
             </View>

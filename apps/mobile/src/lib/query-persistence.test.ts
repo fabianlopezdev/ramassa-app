@@ -6,6 +6,7 @@ import {
 import { afterEach, expect, test } from 'bun:test';
 import {
   ANNOUNCEMENT_CACHE_MAX_AGE_MS,
+  cachedListItemInitialDataOptions,
   createQueryPersister,
   persistedQueryOptions,
 } from './query-persistence';
@@ -149,4 +150,36 @@ test('airplane mode restores published knowledge and the signed-in player own st
     ]),
   ).toEqual([{ id: 'own-pending-story', story_status: 'submitted' }]);
   expect(restored.getQueryData(['player-knowledge', 'own-stories', 'player-b'])).toBeUndefined();
+});
+
+test('a detail seeded from a restored list inherits the list age and refreshes when online', async () => {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const listQueryKey = ['player-knowledge', 'articles', 'player-a'] as const;
+  const detailQueryKey = ['player-knowledge', 'detail', 'player-a', 'cached-resource'] as const;
+  client.setQueryData(listQueryKey, [{ id: 'cached-resource', title: 'cached title' }], {
+    updatedAt: Date.now() - 120_000,
+  });
+
+  let networkCalls = 0;
+  const observer = new QueryObserver<{ readonly id: string; readonly title: string }>(client, {
+    queryKey: detailQueryKey,
+    queryFn: async () => {
+      networkCalls += 1;
+      return { id: 'cached-resource', title: 'fresh title' };
+    },
+    staleTime: 60_000,
+    ...cachedListItemInitialDataOptions<{ readonly id: string; readonly title: string }>(
+      client,
+      listQueryKey,
+      'cached-resource',
+    ),
+  });
+
+  expect(observer.getCurrentResult().data?.title).toBe('cached title');
+  const stop = observer.subscribe(() => undefined);
+  await Bun.sleep(20);
+
+  expect(networkCalls).toBe(1);
+  expect(observer.getCurrentResult().data?.title).toBe('fresh title');
+  stop();
 });

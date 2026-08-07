@@ -1,6 +1,7 @@
 import { OfflineBanner } from '@/components/announcements/feed-states';
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { ErrorCodeLine } from '@/components/error-code-line';
+import { EventDetailLine } from '@/components/events/event-card';
 import { PageWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { SuccessPop } from '@/components/motion/success-pop';
@@ -13,7 +14,7 @@ import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import * as Linking from 'expo-linking';
 import { useNetworkState } from 'expo-network';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -42,6 +43,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: tokens.spacing.lg,
   },
 });
+const mapButtonStyle = StyleSheet.compose(continuousCorners, styles.mapButton);
 
 function successKey(state: EventSignupState): string {
   if (state === 'confirmed') return 'playerSignupSuccessConfirmed';
@@ -51,14 +53,21 @@ function successKey(state: EventSignupState): string {
 
 export default function EventDetailScreen() {
   const { id, occurrenceId } = useLocalSearchParams<{ id: string; occurrenceId?: string }>();
-  const router = useRouter();
+  const { back } = useRouter();
   const { t, i18n } = useTranslation(['events', 'errors']);
   const { language } = useLanguage();
   const languageFontClass = useLanguageFontClass();
   const networkState = useNetworkState();
   const isOffline = !isNetworkStateOnline(networkState);
   const { data } = usePlayerEvents();
-  const signup = useEventSignup();
+  const {
+    data: signupData,
+    error: signupMutationError,
+    isPending: isSignupPending,
+    isSuccess: isSignupSuccess,
+    mutate: mutateSignup,
+    submittedAt: signupSubmittedAt,
+  } = useEventSignup();
   const row =
     data?.find((candidate) => candidate.occurrence_id === occurrenceId) ??
     data?.find((candidate) => candidate.event.id === id);
@@ -116,7 +125,16 @@ export default function EventDetailScreen() {
         : undefined,
     [insets.bottom, insets.top],
   );
-  const signupError = signup.error === null ? null : toAppError(signup.error);
+  const signupError = signupMutationError === null ? null : toAppError(signupMutationError);
+  const locationUrl = row?.event.location_url;
+  const openMap = useCallback(() => {
+    if (locationUrl !== null && locationUrl !== undefined) void Linking.openURL(locationUrl);
+  }, [locationUrl]);
+  const submitSignup = useCallback(() => {
+    if (row !== undefined && nextState !== null) {
+      mutateSignup({ eventId: row.event.id, state: nextState });
+    }
+  }, [mutateSignup, nextState, row]);
 
   useEffect(() => {
     if (signupError !== null) playErrorHaptic(signupError.code);
@@ -132,9 +150,9 @@ export default function EventDetailScreen() {
       <PageWidth className="gap-lg">
         <PressableScale
           accessibilityLabel={t('playerBack')}
-          onPress={() => router.back()}
+          onPress={back}
           haptic="tapLight"
-          style={[continuousCorners, styles.backButton]}
+          style={styles.backButton}
           className="min-h-recommended self-start justify-center rounded-full border border-neutral-300 px-lg"
         >
           <Text className={`text-md font-medium text-primary ${languageFontClass}`}>
@@ -184,34 +202,35 @@ export default function EventDetailScreen() {
               className="gap-md rounded-lg bg-neutral-50 p-lg"
               style={continuousCorners}
             >
-              <DetailLine
+              <EventDetailLine
                 label={t('playerDate')}
                 value={dateFormatter.format(new Date(row.occurrence_starts_at))}
                 languageFontClass={languageFontClass}
               />
-              <DetailLine
+              <EventDetailLine
                 label={t('playerTime')}
                 value={timeFormatter.format(new Date(row.occurrence_starts_at))}
                 languageFontClass={languageFontClass}
               />
               {row.occurrence_ends_at === null ? null : (
-                <DetailLine
+                <EventDetailLine
                   label={t('playerEnds')}
                   value={timeFormatter.format(new Date(row.occurrence_ends_at))}
                   languageFontClass={languageFontClass}
                 />
               )}
-              <DetailLine
+              <EventDetailLine
                 label={t('playerLocation')}
                 value={row.event.location}
                 languageFontClass={languageFontClass}
               />
               {row.event.location_url === null ? null : (
                 <PressableScale
+                  accessibilityRole="link"
                   accessibilityLabel={t('playerOpenMap')}
-                  onPress={() => void Linking.openURL(row.event.location_url!)}
+                  onPress={openMap}
                   haptic="tapLight"
-                  style={[continuousCorners, styles.mapButton]}
+                  style={mapButtonStyle}
                   className="min-h-recommended items-center justify-center rounded-md border border-primary px-lg"
                 >
                   <Text className={`text-md font-bold text-primary ${languageFontClass}`}>
@@ -221,10 +240,13 @@ export default function EventDetailScreen() {
               )}
             </View>
 
-            <View className="gap-md rounded-lg border border-neutral-200 p-lg">
+            <View
+              className="gap-md rounded-lg border border-neutral-200 p-lg"
+              style={continuousCorners}
+            >
               <Text
                 accessibilityRole="header"
-                className={`text-start text-lg font-bold text-neutral-900 ${languageFontClass}`}
+                className={`text-start text-lg font-bold tabular-nums text-neutral-900 ${languageFontClass}`}
               >
                 {row.event.max_participants === null
                   ? t('playerUnlimited')
@@ -250,8 +272,8 @@ export default function EventDetailScreen() {
                 <AuthSubmitButton
                   label={actionLabel}
                   disabled={actionDisabled}
-                  isLoading={signup.isPending}
-                  onPress={() => signup.mutate({ eventId: row.event.id, state: nextState })}
+                  isLoading={isSignupPending}
+                  onPress={submitSignup}
                 />
               )}
               {isOffline && nextState !== null ? (
@@ -261,19 +283,19 @@ export default function EventDetailScreen() {
               ) : null}
               {signupError === null ? null : (
                 <View className="gap-xs" accessibilityRole="alert">
-                  <Text className={`text-start text-sm text-error ${languageFontClass}`}>
+                  <Text selectable className={`text-start text-sm text-error ${languageFontClass}`}>
                     {t(`errors:${signupError.code}`)}
                   </Text>
                   <ErrorCodeLine code={signupError.code} />
                 </View>
               )}
-              {signup.isSuccess ? (
-                <SuccessPop key={`${signup.data.state}:${signup.submittedAt}`}>
+              {isSignupSuccess ? (
+                <SuccessPop key={`${signupData.state}:${signupSubmittedAt}`}>
                   <Text
                     accessibilityLiveRegion="polite"
                     className={`text-start text-md font-semibold text-success ${languageFontClass}`}
                   >
-                    {t(successKey(signup.data.state))}
+                    {t(successKey(signupData.state))}
                   </Text>
                 </SuccessPop>
               ) : null}
@@ -282,24 +304,5 @@ export default function EventDetailScreen() {
         )}
       </PageWidth>
     </ScrollView>
-  );
-}
-
-function DetailLine({
-  label,
-  value,
-  languageFontClass,
-}: {
-  readonly label: string;
-  readonly value: string;
-  readonly languageFontClass: string;
-}) {
-  return (
-    <View className="gap-xs">
-      <Text className={`text-start text-sm font-semibold text-neutral-500 ${languageFontClass}`}>
-        {label}
-      </Text>
-      <Text className={`text-start text-md text-neutral-900 ${languageFontClass}`}>{value}</Text>
-    </View>
   );
 }

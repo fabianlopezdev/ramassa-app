@@ -46,6 +46,7 @@ function QuickAction({
       className="min-h-recommended flex-1 gap-sm rounded-lg border border-neutral-200 bg-neutral-50 p-md"
     >
       <SymbolView
+        accessible={false}
         name={symbol}
         size={tokens.fontSize['2xl']}
         tintColor={tokens.colors.primary.DEFAULT}
@@ -61,9 +62,9 @@ function QuickAction({
 export function KnowledgeQuickActions() {
   const { t } = useTranslation('knowledge');
   const languageFontClass = useLanguageFontClass();
-  const router = useRouter();
-  const openKnowledge = useCallback(() => router.push('/knowledge' as Href), [router]);
-  const openStory = useCallback(() => router.push('/story/submit' as Href), [router]);
+  const { push } = useRouter();
+  const openKnowledge = useCallback(() => push('/knowledge' as Href), [push]);
+  const openStory = useCallback(() => push('/story/submit' as Href), [push]);
 
   return (
     <View className="flex-row gap-sm">

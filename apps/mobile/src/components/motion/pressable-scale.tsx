@@ -1,6 +1,6 @@
 import type { HapticFeedback } from '@/lib/haptics/haptic-policy';
 import { playHaptic } from '@/lib/haptics/haptics';
-import type { ReactNode } from 'react';
+import { useCallback, useMemo, type ReactNode } from 'react';
 import type { AccessibilityRole, StyleProp, ViewStyle } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import {
@@ -11,8 +11,11 @@ import {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
-import { resolveDurationMs, resolvePressScale } from '@ramassa/shared/tokens/motion';
+import { motionTokens, resolvePressScale } from '@ramassa/shared/tokens/motion';
 import { NativeWindAnimatedView } from './nativewind-animated-view';
+
+const PRESS_TIMING_CONFIG = { duration: motionTokens.duration.fast } as const;
+const REDUCED_MOTION_TIMING_CONFIG = { duration: 0 } as const;
 
 /**
  * The press response every touchable in the app shares (RAPP-70). The single
@@ -87,33 +90,49 @@ export function PressableScale({
 
   const pressedScale = resolvePressScale(isReducedMotion);
   const pressedOpacity = isReducedMotion ? 1 : 0.9;
-  const durationMs = resolveDurationMs('fast', isReducedMotion);
+  const timingConfig = isReducedMotion ? REDUCED_MOTION_TIMING_CONFIG : PRESS_TIMING_CONFIG;
 
-  function handlePress() {
+  const handlePress = useCallback(() => {
     if (haptic !== undefined) {
       playHaptic(haptic);
     }
     onPress();
-  }
+  }, [haptic, onPress]);
 
   const isInteractionBlocked = isDisabled || isBusy;
 
-  const tap = Gesture.Tap()
-    .enabled(!isInteractionBlocked)
-    .onBegin(() => {
-      pressed.set(withTiming(1, { duration: durationMs }));
-    })
-    .onFinalize(() => {
-      pressed.set(withTiming(0, { duration: durationMs }));
-    })
-    .onEnd(() => {
-      runOnJS(handlePress)();
-    });
+  const tap = useMemo(
+    () =>
+      Gesture.Tap()
+        .enabled(!isInteractionBlocked)
+        .onBegin(() => {
+          pressed.set(withTiming(1, timingConfig));
+        })
+        .onFinalize(() => {
+          pressed.set(withTiming(0, timingConfig));
+        })
+        .onEnd(() => {
+          runOnJS(handlePress)();
+        }),
+    [handlePress, isInteractionBlocked, pressed, timingConfig],
+  );
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: interpolate(pressed.get(), [0, 1], [1, pressedScale]) }],
     opacity: interpolate(pressed.get(), [0, 1], [1, pressedOpacity]),
   }));
+  const composedStyle = useMemo(() => [animatedStyle, style], [animatedStyle, style]);
+  const accessibilityState = useMemo(
+    () => ({
+      disabled: isInteractionBlocked,
+      busy: isBusy,
+      ...(accessibilityRole === 'checkbox' || accessibilityRole === 'radio'
+        ? { checked: Boolean(isSelected) }
+        : {}),
+      ...(isSelected === undefined ? {} : { selected: isSelected }),
+    }),
+    [accessibilityRole, isBusy, isInteractionBlocked, isSelected],
+  );
 
   return (
     <GestureDetector gesture={tap}>
@@ -121,14 +140,13 @@ export function PressableScale({
         testID={testID}
         accessibilityRole={accessibilityRole}
         accessibilityLabel={accessibilityLabel}
-        aria-checked={accessibilityRole === 'checkbox' ? Boolean(isSelected) : undefined}
-        accessibilityState={{
-          disabled: isInteractionBlocked,
-          busy: isBusy,
-          ...(accessibilityRole === 'checkbox' ? { checked: Boolean(isSelected) } : {}),
-          ...(isSelected === undefined ? {} : { selected: isSelected }),
-        }}
-        style={[animatedStyle, style]}
+        aria-checked={
+          accessibilityRole === 'checkbox' || accessibilityRole === 'radio'
+            ? Boolean(isSelected)
+            : undefined
+        }
+        accessibilityState={accessibilityState}
+        style={composedStyle}
         className={className}
       >
         {children}

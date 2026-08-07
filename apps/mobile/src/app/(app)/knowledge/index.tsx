@@ -38,7 +38,7 @@ const getItemType = (article: KnowledgeArticleListRow) => article.content_type;
 
 export default function PlayerKnowledgeScreen() {
   const { t } = useTranslation(['knowledge', 'common']);
-  const router = useRouter();
+  const { back, push } = useRouter();
   const { session } = useAuth();
   const languageFontClass = useLanguageFontClass();
   const networkState = useNetworkState();
@@ -46,6 +46,8 @@ export default function PlayerKnowledgeScreen() {
   const [filter, setFilter] = useState<PlayerKnowledgeFilter>('all');
   const categoriesQuery = usePlayerKnowledgeCategories();
   const articlesQuery = usePlayerKnowledgeArticles();
+  const { refetch: refetchCategories } = categoriesQuery;
+  const { refetch: refetchArticles } = articlesQuery;
   const articles = articlesQuery.data ?? EMPTY_ARTICLES;
 
   const visibleArticles = useMemo(() => {
@@ -64,14 +66,11 @@ export default function PlayerKnowledgeScreen() {
     return result;
   }, [articles]);
 
-  const openArticle = useCallback(
-    (id: string) => router.push(`/knowledge/${id}` as Href),
-    [router],
-  );
-  const openStory = useCallback(() => router.push('/story/submit' as Href), [router]);
+  const openStory = useCallback(() => push('/story/submit' as Href), [push]);
+  const openArticle = useCallback((id: string) => push(`/knowledge/${id}` as Href), [push]);
   const refresh = useCallback(() => {
-    void Promise.all([categoriesQuery.refetch(), articlesQuery.refetch()]);
-  }, [articlesQuery, categoriesQuery]);
+    void Promise.all([refetchCategories(), refetchArticles()]);
+  }, [refetchArticles, refetchCategories]);
   const renderArticle = useCallback(
     ({ item }: ListRenderItemInfo<KnowledgeArticleListRow>) => (
       <PageWidth className="pb-md">
@@ -124,6 +123,8 @@ export default function PlayerKnowledgeScreen() {
   return (
     <FlashList
       testID="knowledge-base-screen"
+      accessibilityRole="list"
+      accessibilityLabel={t('knowledge:playerTitle')}
       data={visibleArticles}
       renderItem={renderArticle}
       keyExtractor={keyExtractor}
@@ -138,9 +139,8 @@ export default function PlayerKnowledgeScreen() {
         <PageWidth className="gap-lg pb-lg">
           <PressableScale
             accessibilityLabel={t('common:back')}
-            onPress={() => router.back()}
+            onPress={back}
             haptic="tapLight"
-            style={continuousCorners}
             className="min-h-recommended self-start justify-center rounded-full border border-neutral-300 px-lg"
           >
             <Text className={`text-md font-medium text-primary ${languageFontClass}`}>
@@ -183,7 +183,7 @@ export default function PlayerKnowledgeScreen() {
             </Text>
           </PressableScale>
           <Text
-            className={`text-start text-sm font-semibold text-neutral-600 ${languageFontClass}`}
+            className={`text-start text-sm font-semibold tabular-nums text-neutral-600 ${languageFontClass}`}
           >
             {t('knowledge:resourcesCount', { count: visibleArticles.length })}
           </Text>

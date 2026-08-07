@@ -18,6 +18,7 @@ import { uploadFile } from '@ramassa/shared/upload-client';
 import type { CompressedNativeStoryImage } from './native-image-compression-core';
 import { isNetworkStateOnline } from './network-status';
 import { logger } from './observability';
+import { cachedListItemInitialDataOptions } from './query-persistence';
 import { requireStorySubmissionOnline } from './story-submission-policy';
 import { mobileClientEnv, supabase } from './supabase';
 
@@ -58,10 +59,11 @@ export function usePlayerKnowledgeArticle(articleId: string | undefined) {
       if (articleId === undefined) throw new AppError('VALIDATION-1');
       return fetchKnowledgeArticle(supabase, articleId, { signal });
     },
-    initialData: () =>
-      queryClient
-        .getQueryData<readonly KnowledgeArticleListRow[]>(articlesQueryKey)
-        ?.find((article) => article.id === articleId),
+    ...cachedListItemInitialDataOptions<KnowledgeArticleListRow>(
+      queryClient,
+      articlesQueryKey,
+      articleId ?? '',
+    ),
     enabled: user !== null && articleId !== undefined,
   });
 }

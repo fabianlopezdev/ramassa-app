@@ -4,7 +4,14 @@ import { resolveMediaImageSource } from '@/lib/media-source';
 import { mobileClientEnv } from '@/lib/supabase';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { Image } from 'expo-image';
-import { createContext, useContext, useMemo, type ComponentType } from 'react';
+import {
+  createContext,
+  use,
+  useCallback,
+  useMemo,
+  type ComponentType,
+  type ReactNode,
+} from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { AppError } from '@ramassa/shared/errors';
 import {
@@ -14,9 +21,26 @@ import {
 } from '@ramassa/shared/structured-content';
 import { tokens } from '@ramassa/shared/tokens';
 
-interface PlayerStructuredContentContextValue {
-  readonly accessToken: string | undefined;
+interface PlayerStructuredContentState {
+  readonly blocks: readonly unknown[];
+  readonly videoUrl: string | null;
+  readonly title: string;
+}
+
+interface PlayerStructuredContentActions {
+  readonly resolveImageSource: (
+    imageUrl: string | null,
+  ) => ReturnType<typeof resolveMediaImageSource>;
+}
+
+interface PlayerStructuredContentMeta {
   readonly unavailableLabel: string;
+}
+
+interface PlayerStructuredContentContextValue {
+  readonly state: PlayerStructuredContentState;
+  readonly actions: PlayerStructuredContentActions;
+  readonly meta: PlayerStructuredContentMeta;
 }
 
 const PlayerStructuredContentContext = createContext<PlayerStructuredContentContextValue | null>(
@@ -24,15 +48,13 @@ const PlayerStructuredContentContext = createContext<PlayerStructuredContentCont
 );
 
 const styles = StyleSheet.create({
-  stepImage: {
-    width: '100%',
-    height: tokens.contentWidth.form / 2,
-    borderRadius: tokens.radius.md,
-  },
+  stepImageFrame: { width: '100%', height: tokens.contentWidth.form / 2 },
+  stepImage: { width: '100%', height: '100%' },
 });
+const stepImageFrameStyle = StyleSheet.compose(continuousCorners, styles.stepImageFrame);
 
 function usePlayerStructuredContentContext() {
-  const value = useContext(PlayerStructuredContentContext);
+  const value = use(PlayerStructuredContentContext);
   if (value === null) {
     throw new AppError('VALIDATION-1', {
       message: 'Player structured content is missing its provider',
@@ -68,16 +90,10 @@ function Step({
   readonly imageAlt: string | null;
 }) {
   const languageFontClass = useLanguageFontClass();
-  const { accessToken } = usePlayerStructuredContentContext();
-  const imageSource = useMemo(
-    () =>
-      resolveMediaImageSource({
-        objectKeyOrUrl: imageUrl,
-        mediaWorkerUrl: mobileClientEnv.EXPO_PUBLIC_MEDIA_WORKER_URL,
-        accessToken,
-      }),
-    [accessToken, imageUrl],
-  );
+  const {
+    actions: { resolveImageSource },
+  } = usePlayerStructuredContentContext();
+  const imageSource = useMemo(() => resolveImageSource(imageUrl), [imageUrl, resolveImageSource]);
 
   return (
     <View
@@ -94,13 +110,16 @@ function Step({
         {text}
       </Text>
       {imageSource === null ? null : (
-        <Image
-          source={imageSource}
-          accessibilityLabel={imageAlt ?? undefined}
-          cachePolicy="memory-disk"
-          contentFit="cover"
-          style={styles.stepImage}
-        />
+        <View className="overflow-hidden rounded-md" style={stepImageFrameStyle}>
+          <Image
+            source={imageSource}
+            accessible={imageAlt !== null}
+            accessibilityLabel={imageAlt ?? undefined}
+            cachePolicy="memory-disk"
+            contentFit="cover"
+            style={styles.stepImage}
+          />
+        </View>
       )}
     </View>
   );
@@ -108,15 +127,15 @@ function Step({
 
 function Unsupported() {
   const languageFontClass = useLanguageFontClass();
-  const { unavailableLabel } = usePlayerStructuredContentContext();
+  const { meta } = usePlayerStructuredContentContext();
   return (
     <View
       accessibilityRole="alert"
       className="rounded-md bg-neutral-100 p-md"
       style={continuousCorners}
     >
-      <Text className={`text-start text-sm text-neutral-700 ${languageFontClass}`}>
-        {unavailableLabel}
+      <Text selectable className={`text-start text-sm text-neutral-700 ${languageFontClass}`}>
+        {meta.unavailableLabel}
       </Text>
     </View>
   );
@@ -136,27 +155,60 @@ export function createPlayerStructuredContentComponents(
   return { Container, Paragraph, Step, Video, Unsupported };
 }
 
-export function PlayerStructuredContentFrame({
+function PlayerStructuredContentProvider({
   blocks,
   videoUrl,
   title,
   accessToken,
   unavailableLabel,
-  components,
-}: PlayerStructuredContentProps & { readonly components: StructuredContentComponents }) {
+  children,
+}: PlayerStructuredContentProps & { readonly children: ReactNode }) {
+  const resolveImageSource = useCallback(
+    (imageUrl: string | null) =>
+      resolveMediaImageSource({
+        objectKeyOrUrl: imageUrl,
+        mediaWorkerUrl: mobileClientEnv.EXPO_PUBLIC_MEDIA_WORKER_URL,
+        accessToken,
+      }),
+    [accessToken],
+  );
   const contextValue = useMemo(
-    () => ({ accessToken, unavailableLabel }),
-    [accessToken, unavailableLabel],
+    () => ({
+      state: { blocks, videoUrl, title },
+      actions: { resolveImageSource },
+      meta: { unavailableLabel },
+    }),
+    [blocks, resolveImageSource, title, unavailableLabel, videoUrl],
   );
   return (
-    <PlayerStructuredContentContext.Provider value={contextValue}>
-      <StructuredContentRenderer
-        blocks={blocks}
-        videoUrl={videoUrl}
-        videoTitle={title}
-        components={components}
-      />
-    </PlayerStructuredContentContext.Provider>
+    <PlayerStructuredContentContext value={contextValue}>{children}</PlayerStructuredContentContext>
+  );
+}
+
+function PlayerStructuredContentRenderer({
+  components,
+}: {
+  readonly components: StructuredContentComponents;
+}) {
+  const { state } = usePlayerStructuredContentContext();
+  return (
+    <StructuredContentRenderer
+      blocks={state.blocks}
+      videoUrl={state.videoUrl}
+      videoTitle={state.title}
+      components={components}
+    />
+  );
+}
+
+export function PlayerStructuredContentFrame({
+  components,
+  ...providerProps
+}: PlayerStructuredContentProps & { readonly components: StructuredContentComponents }) {
+  return (
+    <PlayerStructuredContentProvider {...providerProps}>
+      <PlayerStructuredContentRenderer components={components} />
+    </PlayerStructuredContentProvider>
   );
 }
 
@@ -172,6 +224,7 @@ export function VideoLinkButton({
   const languageFontClass = useLanguageFontClass();
   return (
     <PressableScale
+      accessibilityRole="link"
       accessibilityLabel={label}
       onPress={onPress}
       haptic="tapLight"

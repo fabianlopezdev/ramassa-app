@@ -27,17 +27,14 @@ import { resolveLocalizedKnowledgeBlocks } from '@ramassa/shared/knowledge';
 import { tokens } from '@ramassa/shared/tokens';
 
 const styles = StyleSheet.create({
-  cover: { width: '100%', height: tokens.contentWidth.form / 2, borderRadius: tokens.radius.lg },
-  storyImage: {
-    width: '100%',
-    height: tokens.contentWidth.form / 2,
-    borderRadius: tokens.radius.md,
-  },
+  imageFrame: { width: '100%', height: tokens.contentWidth.form / 2 },
+  image: { width: '100%', height: '100%' },
 });
+const imageFrameStyle = StyleSheet.compose(continuousCorners, styles.imageFrame);
 
 export default function PlayerKnowledgeDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const router = useRouter();
+  const { back } = useRouter();
   const { t } = useTranslation(['knowledge', 'common']);
   const { language } = useLanguage();
   const languageFontClass = useLanguageFontClass();
@@ -77,7 +74,8 @@ export default function PlayerKnowledgeDetailScreen() {
       void WebBrowser.openBrowserAsync(article.external_url);
     }
   }, [article?.external_url]);
-  const retry = useCallback(() => void query.refetch(), [query]);
+  const { refetch } = query;
+  const retry = useCallback(() => void refetch(), [refetch]);
   const insets = useSafeAreaInsets();
   const androidEdgeInsets = useMemo(
     () =>
@@ -116,9 +114,8 @@ export default function PlayerKnowledgeDetailScreen() {
       <PageWidth className="gap-lg">
         <PressableScale
           accessibilityLabel={t('knowledge:backToResources')}
-          onPress={() => router.back()}
+          onPress={back}
           haptic="tapLight"
-          style={continuousCorners}
           className="min-h-recommended self-start justify-center rounded-full border border-neutral-300 px-lg"
         >
           <Text className={`text-md font-medium text-primary ${languageFontClass}`}>
@@ -167,13 +164,15 @@ export default function PlayerKnowledgeDetailScreen() {
               )}
             </View>
             {coverSource === null ? null : (
-              <Image
-                source={coverSource}
-                accessibilityLabel={title.text}
-                cachePolicy="memory-disk"
-                contentFit="cover"
-                style={styles.cover}
-              />
+              <View className="overflow-hidden rounded-lg" style={imageFrameStyle}>
+                <Image
+                  source={coverSource}
+                  accessibilityLabel={title.text}
+                  cachePolicy="memory-disk"
+                  contentFit="cover"
+                  style={styles.image}
+                />
+              </View>
             )}
             <PlayerStructuredContent
               blocks={body.blocks}
@@ -183,20 +182,26 @@ export default function PlayerKnowledgeDetailScreen() {
               unavailableLabel={t('knowledge:contentUnavailable')}
             />
             {storyImageSources.map((source, index) => (
-              <Image
+              <View
                 key={article.story_image_urls[index]}
-                source={source}
-                accessibilityLabel={t('knowledge:storyPhoto', {
-                  number: index + 1,
-                  title: title.text,
-                })}
-                cachePolicy="memory-disk"
-                contentFit="cover"
-                style={styles.storyImage}
-              />
+                className="overflow-hidden rounded-md"
+                style={imageFrameStyle}
+              >
+                <Image
+                  source={source}
+                  accessibilityLabel={t('knowledge:storyPhoto', {
+                    number: index + 1,
+                    title: title.text,
+                  })}
+                  cachePolicy="memory-disk"
+                  contentFit="cover"
+                  style={styles.image}
+                />
+              </View>
             ))}
             {article.external_url === null ? null : (
               <PressableScale
+                accessibilityRole="link"
                 accessibilityLabel={t('knowledge:openExternalResource')}
                 onPress={openExternalResource}
                 haptic="tapLight"

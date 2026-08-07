@@ -29,6 +29,10 @@ export const MINT_UPLOAD_URL_PATH = '/uploads/url';
 export const PURGE_PARTICIPANT_MEDIA_PATH = '/participants/media';
 export const MEDIA_OBJECT_PATH_PREFIX = '/objects';
 
+function buildMediaWorkerEndpoint(mediaWorkerUrl: string, path: string): string {
+  return `${mediaWorkerUrl.replace(/\/+$/, '')}${path}`;
+}
+
 /**
  * Builds the Worker's authenticated read URL without putting credentials in
  * the URL. Object keys are server-generated paths, so each segment is encoded
@@ -36,7 +40,7 @@ export const MEDIA_OBJECT_PATH_PREFIX = '/objects';
  */
 export function buildMediaObjectUrl(mediaWorkerUrl: string, objectKey: string): string {
   const encodedKey = objectKey.split('/').map(encodeURIComponent).join('/');
-  return `${mediaWorkerUrl.replace(/\/+$/, '')}${MEDIA_OBJECT_PATH_PREFIX}/${encodedKey}`;
+  return buildMediaWorkerEndpoint(mediaWorkerUrl, `${MEDIA_OBJECT_PATH_PREFIX}/${encodedKey}`);
 }
 
 export interface UploadFileContent {
@@ -122,7 +126,7 @@ export async function uploadFile(
 
       const mintResponse = await fetchOrThrowNetworkError(
         performFetch,
-        `${options.mediaWorkerUrl}${MINT_UPLOAD_URL_PATH}`,
+        buildMediaWorkerEndpoint(options.mediaWorkerUrl, MINT_UPLOAD_URL_PATH),
         {
           method: 'POST',
           headers: {
@@ -202,7 +206,7 @@ export async function purgeParticipantMedia(
     async () => {
       const response = await fetchOrThrowNetworkError(
         performFetch,
-        `${options.mediaWorkerUrl}${PURGE_PARTICIPANT_MEDIA_PATH}`,
+        buildMediaWorkerEndpoint(options.mediaWorkerUrl, PURGE_PARTICIPANT_MEDIA_PATH),
         {
           method: 'POST',
           headers: {

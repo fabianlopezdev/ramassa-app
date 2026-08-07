@@ -1,3 +1,4 @@
+import { continuousCorners } from '@/lib/continuous-corners';
 import { StyleSheet, View } from 'react-native';
 import type { StructuredContentVideoProps } from '@ramassa/shared/structured-content';
 import {
@@ -6,14 +7,13 @@ import {
   type PlayerStructuredContentProps,
 } from './player-structured-content-shared';
 
-const styles = StyleSheet.create({
-  video: { aspectRatio: 16 / 9, width: '100%' },
-});
+const videoStyle = { aspectRatio: 16 / 9, width: '100%' } as const;
 const iframeStyle = { border: 0, height: '100%', width: '100%' } as const;
+const videoFrameStyle = StyleSheet.compose(continuousCorners, videoStyle);
 
 function WebVideo({ embedUrl, title }: StructuredContentVideoProps) {
   return (
-    <View style={styles.video} className="overflow-hidden rounded-lg border border-neutral-200">
+    <View style={videoFrameStyle} className="overflow-hidden rounded-lg border border-neutral-200">
       <iframe
         src={embedUrl}
         title={title}

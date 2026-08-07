@@ -8,21 +8,26 @@
 
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { forwardRef } from 'react';
-import { Text, TextInput, View, type TextInputProps } from 'react-native';
+import { useMemo, type Ref } from 'react';
+import { StyleSheet, Text, TextInput, View, type TextInputProps } from 'react-native';
 import { tokens } from '@ramassa/shared/tokens';
 
 export interface AuthTextFieldProps extends TextInputProps {
   readonly label: string;
   readonly errorMessage?: string;
+  readonly ref?: Ref<TextInput>;
 }
 
-export const AuthTextField = forwardRef<TextInput, AuthTextFieldProps>(function AuthTextField(
-  { label, errorMessage, style, ...inputProps },
+export function AuthTextField({
+  label,
+  errorMessage,
   ref,
-) {
+  style,
+  ...inputProps
+}: AuthTextFieldProps) {
   const languageFontClass = useLanguageFontClass();
   const hasError = Boolean(errorMessage);
+  const inputStyle = useMemo(() => StyleSheet.compose(continuousCorners, style), [style]);
 
   return (
     <View className="gap-xs">
@@ -32,7 +37,7 @@ export const AuthTextField = forwardRef<TextInput, AuthTextFieldProps>(function 
       <TextInput
         ref={ref}
         accessibilityLabel={label}
-        style={[continuousCorners, style]}
+        style={inputStyle}
         placeholderTextColor={tokens.colors.neutral[400]}
         className={`min-h-recommended rounded-md border px-md text-start text-md text-neutral-900 ${
           hasError ? 'border-error' : 'border-neutral-300'
@@ -41,6 +46,7 @@ export const AuthTextField = forwardRef<TextInput, AuthTextFieldProps>(function 
       />
       {hasError ? (
         <Text
+          selectable
           accessibilityLiveRegion="polite"
           className={`text-start text-sm text-error ${languageFontClass}`}
         >
@@ -49,4 +55,4 @@ export const AuthTextField = forwardRef<TextInput, AuthTextFieldProps>(function 
       ) : null}
     </View>
   );
-});
+}

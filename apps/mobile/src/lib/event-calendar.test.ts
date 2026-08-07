@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import type { PlayerEventOccurrence } from '@ramassa/shared/events';
+import { tokens } from '@ramassa/shared/tokens';
 import { buildCalendarLocale, buildEventMarkedDates, eventDateKey } from './event-calendar';
 
 const row = (id: string, startsAt: string, categoryId: string): PlayerEventOccurrence =>
@@ -59,10 +60,17 @@ test('marked dates expose one dot per category and preserve the selected day', (
 
   expect(marks['2026-08-08']).toEqual({
     selected: true,
-    selectedColor: '#E6F3F8',
+    selectedColor: tokens.colors.primary.light,
     dots: [
       { key: 'training', color: '#0077B6' },
       { key: 'course', color: '#FFD166' },
     ],
   });
+});
+
+test('calendar presentation colors come from the shared token vocabulary', async () => {
+  const source = await Bun.file(new URL('./event-calendar.ts', import.meta.url)).text();
+
+  expect(source).toContain('tokens.colors.primary.light');
+  expect(source).not.toMatch(/#[\dA-Fa-f]{3,8}/);
 });

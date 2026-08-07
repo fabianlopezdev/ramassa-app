@@ -4,16 +4,14 @@ import { resolveMediaImageSource } from '@/lib/media-source';
 import { mobileClientEnv } from '@/lib/supabase';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { Image } from 'expo-image';
-import { useMemo } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { resolveLocalizedText, useLanguage } from '@ramassa/shared/i18n';
 import type { KnowledgeArticleListRow, KnowledgeContentType } from '@ramassa/shared/knowledge';
 import { tokens } from '@ramassa/shared/tokens';
 
-const styles = StyleSheet.create({
-  image: { height: tokens.contentWidth.form / 3, width: '100%' },
-});
+const imageStyle = { height: tokens.contentWidth.form / 3, width: '100%' } as const;
 
 function typeTranslationKey(contentType: KnowledgeContentType) {
   if (contentType === 'tutorial') return 'knowledge:typeTutorial' as const;
@@ -23,7 +21,7 @@ function typeTranslationKey(contentType: KnowledgeContentType) {
   return 'knowledge:typeArticle' as const;
 }
 
-export function KnowledgeArticleCard({
+export const KnowledgeArticleCard = memo(function KnowledgeArticleCard({
   article,
   accessToken,
   onOpen,
@@ -53,11 +51,12 @@ export function KnowledgeArticleCard({
     article.author_first_name === null
       ? null
       : t('knowledge:byAuthor', { name: article.author_first_name });
+  const handlePress = useCallback(() => onOpen(article.id), [article.id, onOpen]);
   return (
     <PressableScale
       testID={`knowledge-article-${article.id}`}
       accessibilityLabel={[title.text, category.text, type, attribution].filter(Boolean).join('. ')}
-      onPress={() => onOpen(article.id)}
+      onPress={handlePress}
       haptic="tapLight"
       style={continuousCorners}
       className="overflow-hidden rounded-lg border border-neutral-200 bg-white"
@@ -65,9 +64,11 @@ export function KnowledgeArticleCard({
       {imageSource === null ? null : (
         <Image
           source={imageSource}
+          accessibilityLabel={title.text}
           cachePolicy="memory-disk"
           contentFit="cover"
-          style={styles.image}
+          recyclingKey={article.id}
+          style={imageStyle}
         />
       )}
       <View className="gap-sm p-md">
@@ -101,4 +102,4 @@ export function KnowledgeArticleCard({
       </View>
     </PressableScale>
   );
-}
+});

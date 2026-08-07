@@ -8,6 +8,8 @@ import { useAuth } from '@ramassa/shared/auth';
 // translated fallback here instead of unmounting the whole app.
 export { ErrorFallback as ErrorBoundary } from '@/components/error-fallback';
 
+const hiddenHeaderScreenOptions = { headerShown: false } as const;
+
 export default function AppLayout() {
   const { needsOnboarding } = useAuth();
   // Registers this device's push token for the signed-in user (RAPP-17), and
@@ -23,7 +25,7 @@ export default function AppLayout() {
           deliberately false while a profile LOOKUP fails (shared/auth): a
           network flake must never route an onboarded player back into the
           wizard. */}
-      <Stack screenOptions={{ headerShown: false }}>
+      <Stack screenOptions={hiddenHeaderScreenOptions}>
         <Stack.Protected guard={!needsOnboarding}>
           <Stack.Screen name="(tabs)" />
           {/* Pushed OVER the tabs, not inside them: the edit form and the

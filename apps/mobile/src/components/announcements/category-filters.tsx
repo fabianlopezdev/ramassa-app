@@ -1,6 +1,6 @@
 import { PressableScale } from '@/components/motion/pressable-scale';
-import { continuousCorners } from '@/lib/continuous-corners';
 import type { TFunction } from 'i18next';
+import { memo, useCallback } from 'react';
 import { Text, View } from 'react-native';
 import {
   ANNOUNCEMENT_CATEGORIES,
@@ -40,6 +40,43 @@ export interface CategoryFiltersProps {
   readonly languageFontClass: string;
 }
 
+const CategoryFilterOption = memo(function CategoryFilterOption({
+  filter,
+  label,
+  isSelected,
+  languageFontClass,
+  onSelect,
+}: {
+  readonly filter: PlayerAnnouncementCategoryFilter;
+  readonly label: string;
+  readonly isSelected: boolean;
+  readonly languageFontClass: string;
+  readonly onSelect: (category: PlayerAnnouncementCategoryFilter) => void;
+}) {
+  const handlePress = useCallback(() => onSelect(filter), [filter, onSelect]);
+  return (
+    <PressableScale
+      accessibilityRole="radio"
+      accessibilityLabel={label}
+      onPress={handlePress}
+      haptic="selection"
+      isSelected={isSelected}
+      className={`min-h-recommended flex-row items-center gap-sm rounded-full border px-md ${
+        isSelected ? 'border-primary bg-primary' : 'border-neutral-300 bg-white'
+      }`}
+    >
+      <View accessible={false} className={`h-sm w-sm rounded-full ${categoryDotClass(filter)}`} />
+      <Text
+        className={`text-md font-medium ${
+          isSelected ? 'text-white' : 'text-neutral-800'
+        } ${languageFontClass}`}
+      >
+        {label}
+      </Text>
+    </PressableScale>
+  );
+});
+
 export function CategoryFilters({
   selected,
   onSelect,
@@ -53,26 +90,14 @@ export function CategoryFilters({
           const label = categoryLabel(filter, t);
           const isSelected = selected === filter;
           return (
-            <PressableScale
+            <CategoryFilterOption
               key={filter}
-              accessibilityLabel={label}
-              onPress={() => onSelect(filter)}
-              haptic="selection"
+              filter={filter}
+              label={label}
               isSelected={isSelected}
-              style={continuousCorners}
-              className={`min-h-recommended flex-row items-center gap-sm rounded-full border px-md ${
-                isSelected ? 'border-primary bg-primary' : 'border-neutral-300 bg-white'
-              }`}
-            >
-              <View className={`h-sm w-sm rounded-full ${categoryDotClass(filter)}`} />
-              <Text
-                className={`text-md font-medium ${
-                  isSelected ? 'text-white' : 'text-neutral-800'
-                } ${languageFontClass}`}
-              >
-                {label}
-              </Text>
-            </PressableScale>
+              languageFontClass={languageFontClass}
+              onSelect={onSelect}
+            />
           );
         })}
       </View>

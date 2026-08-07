@@ -2,6 +2,7 @@ import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { SymbolView, type SymbolViewProps } from 'expo-symbols';
+import { memo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { resolveLocalizedText, useLanguage } from '@ramassa/shared/i18n';
@@ -20,20 +21,36 @@ const storiesSymbol: SymbolViewProps['name'] = {
   android: 'groups',
   web: 'groups',
 };
+const rightsSymbol: SymbolViewProps['name'] = {
+  ios: 'scale.3d',
+  android: 'gavel',
+  web: 'gavel',
+};
+const digitalSkillsSymbol: SymbolViewProps['name'] = {
+  ios: 'iphone',
+  android: 'smartphone',
+  web: 'smartphone',
+};
+const genderEqualitySymbol: SymbolViewProps['name'] = {
+  ios: 'shield.lefthalf.filled',
+  android: 'health_and_safety',
+  web: 'health_and_safety',
+};
+const defaultCategorySymbol: SymbolViewProps['name'] = {
+  ios: 'book.closed.fill',
+  android: 'auto_stories',
+  web: 'auto_stories',
+};
 
 function categorySymbol(slug: string): SymbolViewProps['name'] {
-  if (slug === 'rights-asylum') return { ios: 'scale.3d', android: 'gavel', web: 'gavel' };
+  if (slug === 'rights-asylum') return rightsSymbol;
   if (slug === 'digital-skills' || slug === 'digital-literacy') {
-    return { ios: 'iphone', android: 'smartphone', web: 'smartphone' };
+    return digitalSkillsSymbol;
   }
   if (slug === 'gender-based-violence' || slug === 'gender-equality') {
-    return {
-      ios: 'shield.lefthalf.filled',
-      android: 'health_and_safety',
-      web: 'health_and_safety',
-    };
+    return genderEqualitySymbol;
   }
-  return { ios: 'book.closed.fill', android: 'auto_stories', web: 'auto_stories' };
+  return defaultCategorySymbol;
 }
 
 interface CategoryCardProps {
@@ -46,7 +63,7 @@ interface CategoryCardProps {
   readonly onSelect: (filter: PlayerKnowledgeFilter) => void;
 }
 
-function CategoryCard({
+const CategoryCard = memo(function CategoryCard({
   id,
   title,
   hint,
@@ -55,12 +72,14 @@ function CategoryCard({
   languageFontClass,
   onSelect,
 }: CategoryCardProps) {
+  const handlePress = useCallback(() => onSelect(id), [id, onSelect]);
   return (
     <View className="basis-[48%] grow">
       <PressableScale
         testID={`knowledge-filter-${id}`}
+        accessibilityRole="radio"
         accessibilityLabel={`${title}. ${hint}`}
-        onPress={() => onSelect(id)}
+        onPress={handlePress}
         haptic="selection"
         isSelected={selected}
         style={continuousCorners}
@@ -69,6 +88,7 @@ function CategoryCard({
         }`}
       >
         <SymbolView
+          accessible={false}
           name={symbol}
           size={tokens.fontSize['2xl']}
           tintColor={selected ? tokens.colors.primary.dark : tokens.colors.neutral[600]}
@@ -76,11 +96,13 @@ function CategoryCard({
         <Text className={`text-start text-md font-bold text-neutral-900 ${languageFontClass}`}>
           {title}
         </Text>
-        <Text className={`text-start text-xs text-neutral-600 ${languageFontClass}`}>{hint}</Text>
+        <Text className={`text-start text-xs tabular-nums text-neutral-600 ${languageFontClass}`}>
+          {hint}
+        </Text>
       </PressableScale>
     </View>
   );
-}
+});
 
 export function KnowledgeCategoryGrid({
   categories,
@@ -104,7 +126,11 @@ export function KnowledgeCategoryGrid({
       >
         {t('knowledge:categoriesHeading')}
       </Text>
-      <View className="flex-row flex-wrap gap-sm">
+      <View
+        accessibilityRole="radiogroup"
+        accessibilityLabel={t('knowledge:categoriesHeading')}
+        className="flex-row flex-wrap gap-sm"
+      >
         <CategoryCard
           id="all"
           title={t('knowledge:allResources')}

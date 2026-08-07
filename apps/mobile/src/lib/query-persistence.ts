@@ -1,4 +1,4 @@
-import type { Query } from '@tanstack/react-query';
+import type { Query, QueryClient, QueryKey } from '@tanstack/react-query';
 import type { PersistedClient, Persister } from '@tanstack/react-query-persist-client';
 
 const QUERY_CACHE_STORAGE_KEY = 'ramassa.query-cache.v1';
@@ -33,6 +33,26 @@ export function createQueryPersister(storage: QueryCacheStorage): Persister {
     removeClient: () => {
       storage.remove(QUERY_CACHE_STORAGE_KEY);
     },
+  };
+}
+
+/**
+ * Seeds a detail query from a cached list without making old persisted data
+ * look newly fetched. React Query otherwise timestamps `initialData` at the
+ * moment the detail mounts, which can suppress the online refresh of a list
+ * restored from disk up to a week earlier.
+ */
+export function cachedListItemInitialDataOptions<T extends { readonly id: string }>(
+  queryClient: QueryClient,
+  listQueryKey: QueryKey,
+  itemId: string,
+) {
+  return {
+    initialData: () =>
+      queryClient
+        .getQueryData<readonly T[]>(listQueryKey)
+        ?.find((candidate) => candidate.id === itemId),
+    initialDataUpdatedAt: () => queryClient.getQueryState(listQueryKey)?.dataUpdatedAt,
   };
 }
 
