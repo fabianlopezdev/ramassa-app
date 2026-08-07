@@ -178,10 +178,13 @@ const handler: ExportedHandler<Env> = {
 
 export default Sentry.withSentry(
   (env: Env) => ({
-    dsn: env.SENTRY_DSN.length > 0 ? env.SENTRY_DSN : undefined,
+    // Wrangler does not materialize an unset secret in local development.
+    // Keep local QA observable without requiring a production-only DSN.
+    dsn: (env.SENTRY_DSN?.length ?? 0) > 0 ? env.SENTRY_DSN : undefined,
     // Parity with mobile and admin: the release is the commit SHA, passed at
     // deploy time. The deployment id is the fallback for a manual deploy.
-    release: env.SENTRY_RELEASE.length > 0 ? env.SENTRY_RELEASE : env.CF_VERSION_METADATA.id,
+    release:
+      (env.SENTRY_RELEASE?.length ?? 0) > 0 ? env.SENTRY_RELEASE : env.CF_VERSION_METADATA.id,
     tracesSampleRate: 0.1,
     sendDefaultPii: false,
   }),

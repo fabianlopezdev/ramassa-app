@@ -7,6 +7,7 @@ const adminPort = process.env.RAMASSA_QA_ADMIN_PORT ?? '4193';
 const playerPort = process.env.RAMASSA_QA_PLAYER_PORT ?? '4194';
 const mediaPort = process.env.RAMASSA_QA_MEDIA_PORT ?? '8893';
 const translationPort = process.env.RAMASSA_QA_TRANSLATION_PORT ?? '8793';
+const qaLocalUploadSigningSecret = 'ramassa-web-qa-local-upload-only';
 const adminOrigin = `http://localhost:${adminPort}`;
 const playerOrigin = `http://localhost:${playerPort}`;
 const workerStateRoot = mkdtempSync(join(tmpdir(), 'ramassa-web-qa-'));
@@ -74,7 +75,7 @@ export default defineConfig({
       // `--port 8893` matches EXPO_PUBLIC_MEDIA_WORKER_URL in the admin's env,
       // which Vite inlines at build time, and 4193 is in the Worker's CORS
       // allowlist for the same reason.
-      command: `bun run --cwd workers/media dev -- --port ${mediaPort} --persist-to ${workerStateRoot}/media`,
+      command: `bun run --cwd workers/media dev -- --port ${mediaPort} --persist-to ${workerStateRoot}/media --var LOCAL_UPLOAD_SIGNING_SECRET:${qaLocalUploadSigningSecret}`,
       url: `http://127.0.0.1:${mediaPort}/health`,
       reuseExistingServer: false,
       timeout: 180_000,
