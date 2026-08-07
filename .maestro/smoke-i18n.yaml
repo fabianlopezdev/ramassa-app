@@ -14,6 +14,8 @@ name: smoke-i18n
 # Both directions are exercised: a switch that cannot be undone is its own bug.
 env:
   DEV_CLIENT_URL: ramassa://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081
+  BACK: '{{common:back}}'
+  TAB_HOME: '{{nav:tabs.home}}'
   DEV_MENU_LABEL: Developer menu
   # Parenthesis-free on purpose: these values are treated as REGEX, so the
   # brackets in the rendered "rtl (native matches)" would be a capture group and

@@ -199,7 +199,10 @@ describe('Maestro selector contracts', () => {
     expect(await maestroSpecPaths()).toEqual([...auditedSpecs]);
   });
 
-  test('every variable used by a Maestro command is declared by that spec', async () => {
+  test('every variable used by a Maestro command is declared or a documented subflow input', async () => {
+    const subflowInputs: Partial<Record<(typeof auditedSpecs)[number], ReadonlySet<string>>> = {
+      '.maestro/_relaunch.yaml': new Set(['BACK', 'PUSH_DECLINE', 'TAB_HOME']),
+    };
     const missing: string[] = [];
     for (const relativePath of auditedSpecs) {
       const spec = await loadSpec(relativePath);
@@ -209,7 +212,9 @@ describe('Maestro selector contracts', () => {
           .filter((variable): variable is string => variable !== undefined),
       );
       for (const variable of referenced) {
-        if (!(variable in spec.env)) missing.push(`${relativePath}:${variable}`);
+        if (!(variable in spec.env) && !subflowInputs[relativePath]?.has(variable)) {
+          missing.push(`${relativePath}:${variable}`);
+        }
       }
     }
     expect(missing).toEqual([]);
@@ -273,30 +278,66 @@ describe('Maestro selector contracts', () => {
     expect(signIn).toMatch(/assertNotVisible: '\.\*\$\{LOGIN_TITLE\}\.\*'/);
 
     const relaunch = await Bun.file(path.join(repoRoot, '.maestro/_relaunch.yaml')).text();
-    expect(relaunch).toContain("BACK: '{{common:back}}'");
+    // Localized defaults in the subflow shadow `runFlow.env` in Maestro. The
+    // caller owns these values so an Arabic relaunch cannot silently assert on
+    // the Catalan root shell.
+    expect(relaunch).not.toContain("BACK: '{{common:back}}'");
+    expect(relaunch).not.toContain("TAB_HOME: '{{nav:tabs.home}}'");
+    expect(relaunch).not.toContain("PUSH_DECLINE: '{{push:rationaleDecline}}'");
     expect(relaunch).toMatch(
       /notVisible: '\^\$\{TAB_HOME\}\$'[\s\S]*?tapOn:[\s\S]*?text: '\^\$\{BACK\}\$'/,
+    );
+    expect(relaunch).toMatch(/platform: iOS[\s\S]*?notVisible:[\s\S]*?id: player-tab-home/);
+    const tabs = await Bun.file(
+      path.join(repoRoot, 'apps/mobile/src/app/(app)/(tabs)/_layout.tsx'),
+    ).text();
+    expect(tabs).toContain('testID="player-tab-home"');
+
+    for (const relativePath of [
+      '.maestro/events-signup.yaml',
+      '.maestro/feed-browse.yaml',
+      '.maestro/knowledge-story.yaml',
+      '.maestro/offline-feed.yaml',
+      '.maestro/smoke-auth.yaml',
+      '.maestro/smoke-i18n.yaml',
+      '.maestro/smoke-shells.yaml',
+    ]) {
+      const caller = await Bun.file(path.join(repoRoot, relativePath)).text();
+      expect(caller).toContain("BACK: '{{common:back}}'");
+      expect(caller).toContain("TAB_HOME: '{{nav:tabs.home}}'");
+      expect(caller).toContain("PUSH_DECLINE: '{{push:rationaleDecline}}'");
+    }
+
+    const setLanguage = await Bun.file(path.join(repoRoot, '.maestro/_set-language.yaml')).text();
+    expect(setLanguage).toMatch(
+      /visible: '\^Reload app to apply direction\$'[\s\S]*?tapOn: '\^Reload app to apply direction\$'/,
     );
 
     const auth = await Bun.file(path.join(repoRoot, '.maestro/smoke-auth.yaml')).text();
     expect(auth).toMatch(
-      /notVisible: '\.\*\$\{PROFILE_TITLE\}\.\*'[\s\S]*?text: '\^\$\{TAB_PROFILE\}\$'[\s\S]*?visible: '\.\*\$\{PROFILE_TITLE\}\.\*'[\s\S]*?notVisible: '\^\$\{SIGN_OUT\}\$'[\s\S]*?swipe:[\s\S]*?visible: '\^\$\{SIGN_OUT\}\$'[\s\S]*?text: '\^\$\{SIGN_OUT\}\$'/,
+      /notVisible: '\.\*\$\{PROFILE_TITLE\}\.\*'[\s\S]*?text: '\^\$\{TAB_PROFILE\}\$'[\s\S]*?visible: '\.\*\$\{PROFILE_TITLE\}\.\*'[\s\S]*?notVisible: '\^\$\{SIGN_OUT\}\$'[\s\S]*?swipe:[\s\S]*?visible: '\^\$\{SIGN_OUT\}\$'[\s\S]*?id: profile-sign-out/,
     );
   });
 
   test('the Phase 3 smoke flows prove their durable player outcomes', async () => {
     const feed = await Bun.file(path.join(repoRoot, '.maestro/feed-browse.yaml')).text();
     expect(feed).toContain('LOCALE: ca');
-    expect(feed).toContain('LOCALE: ar');
+    expect(feed).toContain("LANGUAGE_AR: 'العربية'");
+    expect(feed).toMatch(/LANGUAGE_AR[\s\S]*?RESTART_AR/);
+    expect(feed).not.toContain("notVisible: '^${TAB_HOME_AR}$'");
     expect(feed).toContain("PINNED_CA: '{{home:pinned}}'");
     expect(feed).toMatch(/FILTER_URGENT[\s\S]*?selected: true[\s\S]*?PINNED/);
     expect(feed).toMatch(/FILTER_SOCIAL[\s\S]*?selected: true/);
-    expect(feed).toMatch(/PINNED[\s\S]*?DETAIL_TITLE/);
+    expect(feed).toMatch(
+      /PINNED[\s\S]*?announcement-detail-screen[\s\S]*?announcement-detail-back/,
+    );
 
     const events = await Bun.file(path.join(repoRoot, '.maestro/events-signup.yaml')).text();
     expect(events).toMatch(/CALENDAR_VIEW_ACTION[\s\S]*?player-events-calendar/);
     expect(events).toMatch(/CONFIRM_ACTION[\s\S]*?CONFIRMED_STATUS/);
-    expect(events).toMatch(/stopApp[\s\S]*?CONFIRMED_STATUS/);
+    expect(events).toMatch(
+      /CONFIRMED_STATUS[\s\S]*?- runFlow: _relaunch\.yaml[\s\S]*?CONFIRMED_STATUS/,
+    );
 
     const knowledge = await Bun.file(path.join(repoRoot, '.maestro/knowledge-story.yaml')).text();
     expect(knowledge).toMatch(/open-knowledge-base[\s\S]*?knowledge-detail-screen/);

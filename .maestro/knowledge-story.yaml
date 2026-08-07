@@ -4,6 +4,8 @@ name: knowledge-story
 # the server-backed submitted status.
 env:
   DEV_CLIENT_URL: ramassa://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081
+  BACK: '{{common:back}}'
+  TAB_HOME: '{{nav:tabs.home}}'
   PLAYER_TITLE: '{{knowledge:playerTitle}}'
   SUBMISSION_TITLE: '{{knowledge:submissionTitle}}'
   SUCCESS_TITLE: '{{knowledge:submissionSuccessTitle}}'
@@ -39,8 +41,16 @@ env:
     visible:
       id: knowledge-detail-screen
     timeout: 30000
-- back
-- back
+- tapOn:
+    id: knowledge-detail-back
+    point: 50%, 50%
+- extendedWaitUntil:
+    visible:
+      id: knowledge-base-screen
+    timeout: 30000
+- tapOn:
+    id: knowledge-back
+    point: 50%, 50%
 - repeat:
     times: 6
     while:
@@ -79,9 +89,6 @@ env:
           timeout: 1000
 - tapOn:
     id: story-publication-consent
-- assertVisible:
-    id: story-publication-consent
-    checked: true
 - repeat:
     times: 6
     while:

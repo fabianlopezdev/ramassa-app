@@ -97,6 +97,18 @@ env:
     text: '^${LOCALE} \(.*\)$'
     selected: true
 
+# Crossing between LTR and RTL changes I18nManager for the next native start.
+# Let the app perform its supported reload while the dev menu still exposes the
+# action; a later force-stop/open can otherwise race React Native applying the
+# direction change and reopen in the previous language on Android.
+- runFlow:
+    when:
+      visible: '^Reload app to apply direction$'
+    commands:
+      - tapOn: '^Reload app to apply direction$'
+      - waitForAnimationToEnd:
+          timeout: 12000
+
 # Back to whatever screen the caller was on; the close control is English at
 # every language, being a __DEV__ surface.
 # Closing the menu is a LOOP too. Selecting a language re-renders the section, and

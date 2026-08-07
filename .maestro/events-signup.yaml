@@ -3,13 +3,14 @@ name: events-signup
 # Calendar -> detail -> signup -> cold-relaunch -> same durable signup state.
 env:
   DEV_CLIENT_URL: ramassa://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081
+  BACK: '{{common:back}}'
+  TAB_HOME: '{{nav:tabs.home}}'
+  PUSH_DECLINE: '{{push:rationaleDecline}}'
   EVENTS_TAB: '{{nav:tabs.events}}'
-  EVENTS_TITLE: '{{events:playerTitle}}'
   CALENDAR_VIEW_ACTION: '{{events:playerCalendarViewAction}}'
   CALENDAR_LABEL: '{{events:playerCalendarLabel}}'
   CONFIRM_ACTION: '{{events:playerConfirmAction}}'
   CONFIRMED_STATUS: '{{events:playerConfirmed}}'
-  PUSH_DECLINE: '{{push:rationaleDecline}}'
 ---
 - runFlow: _open-app.yaml
 - runFlow: _sign-in.yaml
@@ -18,7 +19,8 @@ env:
 - repeat:
     times: 4
     while:
-      notVisible: '.*${EVENTS_TITLE}.*'
+      notVisible:
+        id: player-events-screen
     commands:
       - tapOn:
           text: '^${EVENTS_TAB}$'
@@ -26,7 +28,8 @@ env:
       - waitForAnimationToEnd:
           timeout: 2500
 - extendedWaitUntil:
-    visible: '.*${EVENTS_TITLE}.*'
+    visible:
+      id: player-events-screen
     timeout: 30000
 - tapOn: '^${CALENDAR_VIEW_ACTION}$'
 - assertVisible:
@@ -71,30 +74,12 @@ env:
 
 # A cold process start discards optimistic UI. Reaching the occurrence again
 # proves the server write and query hydration, not the just-painted detail.
-- stopApp
-- openLink: ${DEV_CLIENT_URL}
-- tapOn:
-    text: '^Open$'
-    optional: true
-- waitForAnimationToEnd:
-    timeout: 12000
+- runFlow: _relaunch.yaml
 - repeat:
     times: 6
     while:
-      visible: '.*Close.*'
-    commands:
-      - tapOn:
-          text: '.*Close.*'
-          optional: true
-      - waitForAnimationToEnd:
-          timeout: 2000
-- tapOn:
-    text: '^${PUSH_DECLINE}$'
-    optional: true
-- repeat:
-    times: 6
-    while:
-      notVisible: '.*${EVENTS_TITLE}.*'
+      notVisible:
+        id: player-events-screen
     commands:
       - tapOn:
           text: '^${EVENTS_TAB}$'
@@ -102,7 +87,8 @@ env:
       - waitForAnimationToEnd:
           timeout: 2500
 - extendedWaitUntil:
-    visible: '.*${EVENTS_TITLE}.*'
+    visible:
+      id: player-events-screen
     timeout: 120000
 - tapOn: '^${CALENDAR_VIEW_ACTION}$'
 - extendedWaitUntil:

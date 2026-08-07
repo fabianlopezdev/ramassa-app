@@ -6,6 +6,8 @@ name: smoke-shells
 # speakers), and nothing crashing on the way round.
 env:
   DEV_CLIENT_URL: ramassa://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081
+  BACK: '{{common:back}}'
+  PUSH_DECLINE: '{{push:rationaleDecline}}'
   DEV_MENU_LABEL: Developer menu
   HOME_FEED_TITLE: '{{home:feedTitle}}'
   EVENTS_TITLE: '{{events:playerTitle}}'

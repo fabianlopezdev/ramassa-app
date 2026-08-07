@@ -3,6 +3,10 @@ name: offline-feed
 # Android exercises real airplane mode after the feed has hydrated. Maestro's
 # command is harmless on iOS, where the cumulative suite still proves launch.
 env:
+  DEV_CLIENT_URL: ramassa://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081
+  BACK: '{{common:back}}'
+  TAB_HOME: '{{nav:tabs.home}}'
+  PUSH_DECLINE: '{{push:rationaleDecline}}'
   OFFLINE_BANNER: '{{home:offlineBanner}}'
   PINNED: '{{home:pinned}}'
   HOME_TITLE: '{{home:feedTitle}}'

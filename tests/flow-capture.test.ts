@@ -25,11 +25,20 @@ import {
   type FlowManifest,
 } from '../scripts/flow-capture/manifest';
 import { interpolate, loadTranslator } from '../scripts/flow-capture/translations';
+import { smokeDevClientUrl } from '../scripts/qa-smoke';
 
 const config = await loadFlowConfig();
 
 test('the shared Ramassa Metro uses its reserved port', () => {
   expect(config.metroPort).toBe(8082);
+});
+
+test('smoke deep links address the installed Ramassa app unambiguously', () => {
+  const iosUrl = smokeDevClientUrl('ios', config.appId, config.scheme, config.metroPort);
+  const androidUrl = smokeDevClientUrl('android', config.appId, config.scheme, config.metroPort);
+  expect(iosUrl).toStartWith('com.ramassa.app://expo-development-client/');
+  expect(iosUrl).not.toStartWith(`${config.scheme}://`);
+  expect(androidUrl).toStartWith(`${config.scheme}://expo-development-client/`);
 });
 
 describe('capture passes', () => {

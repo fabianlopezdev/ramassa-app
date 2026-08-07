@@ -6,6 +6,8 @@ name: smoke-auth
 # navigation anywhere in this flow.
 env:
   DEV_CLIENT_URL: ramassa://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081
+  BACK: '{{common:back}}'
+  PUSH_DECLINE: '{{push:rationaleDecline}}'
   DEV_MENU_LABEL: Developer menu
   LOGIN_TITLE: '{{auth:loginTitle}}'
   PROFILE_TITLE: '{{profile:title}}'
@@ -56,7 +58,8 @@ env:
 
 # Signing out clears the session and the guard flips back on its own.
 - tapOn:
-    text: '^${SIGN_OUT}$'
+    id: profile-sign-out
+    point: 50%, 50%
 - extendedWaitUntil:
     visible: '.*${LOGIN_TITLE}.*'
     timeout: 60000

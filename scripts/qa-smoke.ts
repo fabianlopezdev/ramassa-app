@@ -86,6 +86,21 @@ export function suiteFlows(fileNames: readonly string[]): readonly string[] {
   return fileNames.filter((name) => name.endsWith('.yaml') && !name.startsWith('_')).sort();
 }
 
+/**
+ * Uses the bundle-id URL scheme that Expo registers alongside the public app
+ * scheme. The public scheme is appropriate for product links, but a QA device
+ * can contain another development client with a stale chooser prompt. This
+ * scheme addresses the installed Ramassa app unambiguously.
+ */
+export function smokeDevClientUrl(
+  platform: 'ios' | 'android',
+  appId: string,
+  publicScheme: string,
+  metroPort: number,
+): string {
+  return devClientUrl(platform === 'ios' ? appId : publicScheme, metroPort);
+}
+
 async function runSuiteOn(
   platform: 'ios' | 'android',
   config: FlowConfig,
@@ -119,7 +134,7 @@ async function runSuiteOn(
   // the resolver treats an undeclared override as an authoring mistake - which
   // it is, for a capture flow, and that check is worth keeping.
   const translate = await loadTranslator('ca');
-  const clientUrl = devClientUrl(config.scheme, metro.port);
+  const clientUrl = smokeDevClientUrl(platform, config.appId, config.scheme, metro.port);
   for (const file of (await readdir(suiteDir)).filter((name) => name.endsWith('.yaml'))) {
     const source = path.join(suiteDir, file);
     const declaresClientUrl = (await Bun.file(source).text()).includes('DEV_CLIENT_URL:');

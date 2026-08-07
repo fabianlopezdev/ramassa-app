@@ -74,6 +74,7 @@ export default function AnnouncementDetailScreen() {
   );
   return (
     <ScrollView
+      testID="announcement-detail-screen"
       className="flex-1 bg-white"
       contentContainerClassName="grow px-lg py-lg"
       contentContainerStyle={androidEdgeInsets}
@@ -81,6 +82,7 @@ export default function AnnouncementDetailScreen() {
     >
       <PageWidth className="gap-lg">
         <PressableScale
+          testID="announcement-detail-back"
           accessibilityLabel={t('common:back')}
           onPress={back}
           haptic="tapLight"

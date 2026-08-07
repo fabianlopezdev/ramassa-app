@@ -27,7 +27,7 @@ export default function TabsLayout() {
   const { t } = useTranslation('nav');
   return (
     <NativeTabs labelVisibilityMode="labeled">
-      <NativeTabs.Trigger name="index">
+      <NativeTabs.Trigger name="index" testID="player-tab-home">
         <NativeTabs.Trigger.Icon sf="house.fill" md="home" />
         <NativeTabs.Trigger.Label>{t('nav:tabs.home')}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>

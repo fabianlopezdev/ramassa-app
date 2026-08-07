@@ -188,6 +188,7 @@ export default function DeleteDataScreen() {
         )}
 
         <AuthTextField
+          testID="profile-delete-reason"
           label={t('deleteReasonLabel')}
           placeholder={t('deleteReasonPlaceholder')}
           value={reason}

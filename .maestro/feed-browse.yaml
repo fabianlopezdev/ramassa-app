@@ -4,22 +4,22 @@ name: feed-browse
 # chips, and the detail transition. Arabic is verified after a real relaunch.
 env:
   DEV_CLIENT_URL: ramassa://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081
+  BACK: '{{common:back}}'
+  TAB_HOME: '{{nav:tabs.home}}'
+  PUSH_DECLINE: '{{push:rationaleDecline}}'
   LOCALE: ca
-  LOCALE_AR: ar
   HOME_TITLE_CA: '{{home:feedTitle}}'
-  DETAIL_TITLE_CA: '{{home:detailTitle}}'
   PINNED_CA: '{{home:pinned}}'
   FILTER_URGENT_CA: '{{home:category.urgent}}'
   FILTER_SOCIAL_CA: '{{home:category.social}}'
   TAB_PROFILE_CA: '{{nav:tabs.profile}}'
   PROFILE_CA_TITLE: '{{profile:title}}'
+  LANGUAGE_AR: 'العربية'
+  RESTART_AR: 'أعِد التشغيل الآن'
   HOME_TITLE_AR: 'الإعلانات'
-  DETAIL_TITLE_AR: 'إعلان'
   PINNED_AR: 'مثبّت'
   FILTER_URGENT_AR: 'عاجل'
   FILTER_SOCIAL_AR: 'اجتماعي'
-  TAB_HOME_AR: 'الرئيسية'
-  PUSH_DECLINE_AR: 'ليس الآن'
 ---
 - runFlow:
     file: _open-app.yaml
@@ -40,9 +40,12 @@ env:
 - assertVisible: '.*${PINNED_CA}.*'
 - tapOn: '.*${PINNED_CA}.*'
 - extendedWaitUntil:
-    visible: '.*${DETAIL_TITLE_CA}.*'
+    visible:
+      id: announcement-detail-screen
     timeout: 30000
-- back
+- tapOn:
+    id: announcement-detail-back
+    point: 50%, 50%
 - repeat:
     times: 8
     commands:
@@ -57,8 +60,8 @@ env:
     text: '^${FILTER_SOCIAL_CA}$'
     selected: true
 
-# Reach Profile by its arrival heading, then switch the app to Arabic through
-# the same accessibility-visible dev control used by the i18n regression.
+# Reach Profile by its arrival heading, then switch through the player-facing
+# language control and accept its required native direction restart.
 - repeat:
     times: 6
     while:
@@ -75,7 +78,7 @@ env:
 - repeat:
     times: 20
     while:
-      notVisible: '.*Developer menu.*'
+      notVisible: '^${LANGUAGE_AR}$'
     commands:
       - swipe:
           start: 50%, 72%
@@ -83,40 +86,41 @@ env:
           duration: 900
       - waitForAnimationToEnd:
           timeout: 1200
-- runFlow:
-    file: _set-language.yaml
-    env:
-      LOCALE: ar
-- stopApp
-- openLink: ${DEV_CLIENT_URL}
-- tapOn:
-    text: '^Open$'
-    optional: true
+- swipe:
+    start: 50%, 65%
+    end: 50%, 55%
+    duration: 900
+- waitForAnimationToEnd:
+    timeout: 2000
+- tapOn: '^${LANGUAGE_AR}$'
+- waitForAnimationToEnd:
+    timeout: 2500
+# The Arabic restart action is language evidence from the app content itself.
+# Native iOS tab labels carry bidi metadata that makes an exact Maestro text
+# regex fail even while the correct Arabic label is visibly rendered.
+- repeat:
+    times: 12
+    while:
+      notVisible: '^${RESTART_AR}$'
+    commands:
+      - swipe:
+          start: 50%, 70%
+          end: 50%, 35%
+          duration: 900
+      - waitForAnimationToEnd:
+          timeout: 1200
+- extendedWaitUntil:
+    visible: '^${RESTART_AR}$'
+    timeout: 30000
+- tapOn: '^${RESTART_AR}$'
 - waitForAnimationToEnd:
     timeout: 12000
-- repeat:
-    times: 6
-    while:
-      visible: '.*Close.*'
-    commands:
-      - tapOn:
-          text: '.*Close.*'
-          optional: true
-      - waitForAnimationToEnd:
-          timeout: 2000
-- tapOn:
-    text: '^${PUSH_DECLINE_AR}$'
-    optional: true
-- repeat:
-    times: 6
-    while:
-      notVisible: '.*${HOME_TITLE_AR}.*'
-    commands:
-      - tapOn:
-          text: '^${TAB_HOME_AR}$'
-          optional: true
-      - waitForAnimationToEnd:
-          timeout: 2500
+- runFlow:
+    file: _relaunch.yaml
+    env:
+      TAB_HOME: 'الرئيسية'
+      PUSH_DECLINE: 'ليس الآن'
+      BACK: 'رجوع'
 - extendedWaitUntil:
     visible: '.*${HOME_TITLE_AR}.*'
     timeout: 120000
@@ -128,9 +132,12 @@ env:
 - assertVisible: '.*${PINNED_AR}.*'
 - tapOn: '.*${PINNED_AR}.*'
 - extendedWaitUntil:
-    visible: '.*${DETAIL_TITLE_AR}.*'
+    visible:
+      id: announcement-detail-screen
     timeout: 30000
-- back
+- tapOn:
+    id: announcement-detail-back
+    point: 50%, 50%
 - repeat:
     times: 8
     commands:

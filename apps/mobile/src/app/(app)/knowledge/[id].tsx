@@ -113,6 +113,7 @@ export default function PlayerKnowledgeDetailScreen() {
     >
       <PageWidth className="gap-lg">
         <PressableScale
+          testID="knowledge-detail-back"
           accessibilityLabel={t('knowledge:backToResources')}
           onPress={back}
           haptic="tapLight"

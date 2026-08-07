@@ -274,6 +274,7 @@ export default function ProfileScreen() {
       </ProfileSection>
 
       <PressableScale
+        testID="profile-sign-out"
         accessibilityLabel={t('signOutAction')}
         onPress={() => void logout()}
         haptic="tapLight"

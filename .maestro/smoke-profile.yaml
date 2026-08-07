@@ -598,7 +598,8 @@ env:
 - extendedWaitUntil:
     visible: '^${DELETE_ACTION}$'
     timeout: 30000
-- tapOn: '^${DELETE_REASON_PLACEHOLDER}$'
+- tapOn:
+    id: profile-delete-reason
 - inputText: 'QA RAPP 105'
 - hideKeyboard
 - waitForAnimationToEnd:
