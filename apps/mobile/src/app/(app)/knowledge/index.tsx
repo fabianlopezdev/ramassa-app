@@ -138,6 +138,7 @@ export default function PlayerKnowledgeScreen() {
       ListHeaderComponent={
         <PageWidth className="gap-lg pb-lg">
           <PressableScale
+            testID="knowledge-back"
             accessibilityLabel={t('common:back')}
             onPress={back}
             haptic="tapLight"
