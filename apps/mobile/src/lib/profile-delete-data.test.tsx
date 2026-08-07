@@ -132,10 +132,6 @@ mock.module('react-native-safe-area-context', () => ({
 mock.module('@ramassa/shared/auth', () => ({
   useAuth: () => ({ user: { id: 'player-1' } }),
 }));
-mock.module('@ramassa/shared/tokens', () => ({
-  tokens: { colors: { white: '#fff' } },
-}));
-
 const { default: DeleteDataScreen } = await import('../app/(app)/profile-delete-data');
 
 beforeEach(() => {
