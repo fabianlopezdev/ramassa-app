@@ -1,0 +1,104 @@
+appId: com.ramassa.app
+name: knowledge-story
+# Browse a real structured article, then submit a consented story and observe
+# the server-backed submitted status.
+env:
+  DEV_CLIENT_URL: ramassa://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081
+  PLAYER_TITLE: '{{knowledge:playerTitle}}'
+  SUBMISSION_TITLE: '{{knowledge:submissionTitle}}'
+  SUCCESS_TITLE: '{{knowledge:submissionSuccessTitle}}'
+  PUSH_DECLINE: '{{push:rationaleDecline}}'
+---
+- runFlow: _open-app.yaml
+- runFlow: _sign-in.yaml
+- runFlow: _relaunch.yaml
+- tapOn:
+    id: open-knowledge-base
+- extendedWaitUntil:
+    visible: '.*${PLAYER_TITLE}.*'
+    timeout: 30000
+- assertVisible:
+    id: knowledge-base-screen
+- tapOn:
+    id: knowledge-filter-5eed0000-0000-4000-8004-000000000002
+- repeat:
+    times: 8
+    while:
+      notVisible:
+        id: knowledge-article-5eed0000-0000-4000-8005-000000000001
+    commands:
+      - swipe:
+          start: 50%, 76%
+          end: 50%, 42%
+          duration: 800
+      - waitForAnimationToEnd:
+          timeout: 1200
+- tapOn:
+    id: knowledge-article-5eed0000-0000-4000-8005-000000000001
+- extendedWaitUntil:
+    visible:
+      id: knowledge-detail-screen
+    timeout: 30000
+- back
+- back
+- repeat:
+    times: 6
+    while:
+      notVisible:
+        id: open-story-submission
+    commands:
+      - tapOn:
+          text: '^${PUSH_DECLINE}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 2500
+- tapOn:
+    id: open-story-submission
+- extendedWaitUntil:
+    visible: '.*${SUBMISSION_TITLE}.*'
+    timeout: 30000
+- tapOn:
+    id: story-title-input
+- inputText: 'Closure story'
+- tapOn:
+    id: story-body-input
+- inputText: 'Playing football helped me feel welcome and supported.'
+- tapOn:
+    point: 50%, 18%
+- repeat:
+    times: 8
+    while:
+      notVisible:
+        id: story-publication-consent
+    commands:
+      - swipe:
+          start: 50%, 76%
+          end: 50%, 40%
+          duration: 800
+      - waitForAnimationToEnd:
+          timeout: 1000
+- tapOn:
+    id: story-publication-consent
+- assertVisible:
+    id: story-publication-consent
+    checked: true
+- repeat:
+    times: 6
+    while:
+      notVisible:
+        id: story-submit-button
+    commands:
+      - swipe:
+          start: 50%, 76%
+          end: 50%, 48%
+          duration: 800
+      - waitForAnimationToEnd:
+          timeout: 1000
+- tapOn:
+    id: story-submit-button
+    enabled: true
+- extendedWaitUntil:
+    visible: '.*${SUCCESS_TITLE}.*'
+    timeout: 60000
+- assertVisible:
+    id: story-status-submitted

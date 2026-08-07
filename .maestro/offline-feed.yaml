@@ -1,0 +1,29 @@
+appId: com.ramassa.app
+name: offline-feed
+# Android exercises real airplane mode after the feed has hydrated. Maestro's
+# command is harmless on iOS, where the cumulative suite still proves launch.
+env:
+  OFFLINE_BANNER: '{{home:offlineBanner}}'
+  PINNED: '{{home:pinned}}'
+  HOME_TITLE: '{{home:feedTitle}}'
+---
+- runFlow: _open-app.yaml
+- runFlow: _sign-in.yaml
+- runFlow: _relaunch.yaml
+- extendedWaitUntil:
+    visible: '.*${HOME_TITLE}.*'
+    timeout: 120000
+- assertVisible: '.*${PINNED}.*'
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - toggleAirplaneMode
+      - extendedWaitUntil:
+          visible: '.*${OFFLINE_BANNER}.*'
+          timeout: 30000
+      - assertVisible: '.*${PINNED}.*'
+      - toggleAirplaneMode
+      - extendedWaitUntil:
+          notVisible: '.*${OFFLINE_BANNER}.*'
+          timeout: 30000

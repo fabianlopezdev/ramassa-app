@@ -1,0 +1,138 @@
+appId: com.ramassa.app
+name: events-signup
+# Calendar -> detail -> signup -> cold-relaunch -> same durable signup state.
+env:
+  DEV_CLIENT_URL: ramassa://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081
+  EVENTS_TAB: '{{nav:tabs.events}}'
+  EVENTS_TITLE: '{{events:playerTitle}}'
+  CALENDAR_VIEW_ACTION: '{{events:playerCalendarViewAction}}'
+  CALENDAR_LABEL: '{{events:playerCalendarLabel}}'
+  CONFIRM_ACTION: '{{events:playerConfirmAction}}'
+  CONFIRMED_STATUS: '{{events:playerConfirmed}}'
+  PUSH_DECLINE: '{{push:rationaleDecline}}'
+---
+- runFlow: _open-app.yaml
+- runFlow: _sign-in.yaml
+- runFlow: _relaunch.yaml
+
+- repeat:
+    times: 4
+    while:
+      notVisible: '.*${EVENTS_TITLE}.*'
+    commands:
+      - tapOn:
+          text: '^${EVENTS_TAB}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 2500
+- extendedWaitUntil:
+    visible: '.*${EVENTS_TITLE}.*'
+    timeout: 30000
+- tapOn: '^${CALENDAR_VIEW_ACTION}$'
+- assertVisible:
+    text: '^${CALENDAR_VIEW_ACTION}$'
+    selected: true
+- extendedWaitUntil:
+    visible:
+      id: player-events-calendar
+    timeout: 30000
+- assertVisible: '.*${CALENDAR_LABEL}.*'
+
+- repeat:
+    times: 6
+    while:
+      notVisible:
+        id: 'event-card-.*'
+    commands:
+      - swipe:
+          start: 50%, 78%
+          end: 50%, 52%
+          duration: 800
+      - waitForAnimationToEnd:
+          timeout: 1200
+- tapOn:
+    id: 'event-card-.*'
+    index: 0
+- repeat:
+    times: 6
+    while:
+      notVisible: '^${CONFIRM_ACTION}$'
+    commands:
+      - swipe:
+          start: 50%, 78%
+          end: 50%, 52%
+          duration: 800
+      - waitForAnimationToEnd:
+          timeout: 1200
+- tapOn: '^${CONFIRM_ACTION}$'
+- extendedWaitUntil:
+    visible: '.*${CONFIRMED_STATUS}.*'
+    timeout: 30000
+
+# A cold process start discards optimistic UI. Reaching the occurrence again
+# proves the server write and query hydration, not the just-painted detail.
+- stopApp
+- openLink: ${DEV_CLIENT_URL}
+- tapOn:
+    text: '^Open$'
+    optional: true
+- waitForAnimationToEnd:
+    timeout: 12000
+- repeat:
+    times: 6
+    while:
+      visible: '.*Close.*'
+    commands:
+      - tapOn:
+          text: '.*Close.*'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 2000
+- tapOn:
+    text: '^${PUSH_DECLINE}$'
+    optional: true
+- repeat:
+    times: 6
+    while:
+      notVisible: '.*${EVENTS_TITLE}.*'
+    commands:
+      - tapOn:
+          text: '^${EVENTS_TAB}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 2500
+- extendedWaitUntil:
+    visible: '.*${EVENTS_TITLE}.*'
+    timeout: 120000
+- tapOn: '^${CALENDAR_VIEW_ACTION}$'
+- extendedWaitUntil:
+    visible:
+      id: player-events-calendar
+    timeout: 30000
+- repeat:
+    times: 6
+    while:
+      notVisible:
+        id: 'event-card-.*'
+    commands:
+      - swipe:
+          start: 50%, 78%
+          end: 50%, 52%
+          duration: 800
+      - waitForAnimationToEnd:
+          timeout: 1200
+- tapOn:
+    id: 'event-card-.*'
+    index: 0
+- repeat:
+    times: 6
+    while:
+      notVisible: '.*${CONFIRMED_STATUS}.*'
+    commands:
+      - swipe:
+          start: 50%, 78%
+          end: 50%, 52%
+          duration: 800
+      - waitForAnimationToEnd:
+          timeout: 1200
+- assertVisible: '.*${CONFIRMED_STATUS}.*'

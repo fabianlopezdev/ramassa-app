@@ -4,7 +4,8 @@ import { describe, expect, test } from 'bun:test';
 import { repoRoot } from '../scripts/flow-capture/config';
 import { interpolate, loadTranslator, type Translator } from '../scripts/flow-capture/translations';
 
-type MaestroSelector = string | { id?: string; index?: number; selected?: boolean; text?: string };
+type MaestroSelector =
+  string | { checked?: boolean; id?: string; index?: number; selected?: boolean; text?: string };
 type MaestroCommand = Record<string, unknown>;
 
 interface MaestroSpec {
@@ -18,6 +19,10 @@ const auditedSpecs = [
   '.maestro/_relaunch.yaml',
   '.maestro/_set-language.yaml',
   '.maestro/_sign-in.yaml',
+  '.maestro/events-signup.yaml',
+  '.maestro/feed-browse.yaml',
+  '.maestro/knowledge-story.yaml',
+  '.maestro/offline-feed.yaml',
   '.maestro/smoke-auth.yaml',
   '.maestro/smoke-i18n.yaml',
   '.maestro/smoke-onboarding.yaml',
@@ -157,7 +162,9 @@ function resolveSelector(
 function isQualifiedOutcome(selector: MaestroSelector): boolean {
   return (
     typeof selector !== 'string' &&
-    (selector.selected !== undefined || selector.index !== undefined)
+    (selector.checked !== undefined ||
+      selector.selected !== undefined ||
+      selector.index !== undefined)
   );
 }
 
@@ -275,5 +282,32 @@ describe('Maestro selector contracts', () => {
     expect(auth).toMatch(
       /notVisible: '\.\*\$\{PROFILE_TITLE\}\.\*'[\s\S]*?text: '\^\$\{TAB_PROFILE\}\$'[\s\S]*?visible: '\.\*\$\{PROFILE_TITLE\}\.\*'[\s\S]*?notVisible: '\^\$\{SIGN_OUT\}\$'[\s\S]*?swipe:[\s\S]*?visible: '\^\$\{SIGN_OUT\}\$'[\s\S]*?text: '\^\$\{SIGN_OUT\}\$'/,
     );
+  });
+
+  test('the Phase 3 smoke flows prove their durable player outcomes', async () => {
+    const feed = await Bun.file(path.join(repoRoot, '.maestro/feed-browse.yaml')).text();
+    expect(feed).toContain('LOCALE: ca');
+    expect(feed).toContain('LOCALE: ar');
+    expect(feed).toContain("PINNED_CA: '{{home:pinned}}'");
+    expect(feed).toMatch(/FILTER_URGENT[\s\S]*?selected: true[\s\S]*?PINNED/);
+    expect(feed).toMatch(/FILTER_SOCIAL[\s\S]*?selected: true/);
+    expect(feed).toMatch(/PINNED[\s\S]*?DETAIL_TITLE/);
+
+    const events = await Bun.file(path.join(repoRoot, '.maestro/events-signup.yaml')).text();
+    expect(events).toMatch(/CALENDAR_VIEW_ACTION[\s\S]*?player-events-calendar/);
+    expect(events).toMatch(/CONFIRM_ACTION[\s\S]*?CONFIRMED_STATUS/);
+    expect(events).toMatch(/stopApp[\s\S]*?CONFIRMED_STATUS/);
+
+    const knowledge = await Bun.file(path.join(repoRoot, '.maestro/knowledge-story.yaml')).text();
+    expect(knowledge).toMatch(/open-knowledge-base[\s\S]*?knowledge-detail-screen/);
+    expect(knowledge).toMatch(
+      /story-title-input[\s\S]*?story-body-input[\s\S]*?story-publication-consent[\s\S]*?story-submit-button/,
+    );
+    expect(knowledge).toMatch(/story-submit-button[\s\S]*?story-status-submitted/);
+
+    const offline = await Bun.file(path.join(repoRoot, '.maestro/offline-feed.yaml')).text();
+    expect(offline).toContain("OFFLINE_BANNER: '{{home:offlineBanner}}'");
+    expect(offline).toMatch(/toggleAirplaneMode[\s\S]*?OFFLINE_BANNER/);
+    expect(offline).toMatch(/OFFLINE_BANNER[\s\S]*?toggleAirplaneMode/);
   });
 });

@@ -12,6 +12,7 @@ name: _open-app
 env:
   DEV_CLIENT_URL: ramassa://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081
   DEV_MENU_LABEL: Developer menu
+  LOCALE: ca
 ---
 # Clean install every run, so a smoke result never depends on what the previous
 # run left behind. The launch is a deep link because a plain `launchApp` lands on
@@ -55,4 +56,7 @@ env:
 # Language before assertions, never after: `clearState` leaves no persisted
 # choice, so until this runs the app is in the DEVICE's language and every
 # selector the suite resolved from Catalan misses.
-- runFlow: _set-language.yaml
+- runFlow:
+    file: _set-language.yaml
+    env:
+      LOCALE: ${LOCALE}
