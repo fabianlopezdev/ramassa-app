@@ -356,4 +356,14 @@ describe('Maestro selector contracts', () => {
     expect(offline).toMatch(/toggleAirplaneMode[\s\S]*?OFFLINE_BANNER/);
     expect(offline).toMatch(/OFFLINE_BANNER[\s\S]*?toggleAirplaneMode/);
   });
+
+  test('the Knowledge Base capture clears a late notification rationale while waiting for Home', async () => {
+    const knowledge = await Bun.file(
+      path.join(repoRoot, 'maestro/flows/knowledge-base.yaml'),
+    ).text();
+    const waitsForShortcut = knowledge.match(
+      /notVisible:\n\s+id: 'open-knowledge-base'[\s\S]{0,180}?text: '\^\$\{PUSH_DECLINE\}\$'/g,
+    );
+    expect(waitsForShortcut).toHaveLength(2);
+  });
 });

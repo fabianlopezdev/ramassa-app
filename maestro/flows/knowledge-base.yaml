@@ -169,6 +169,9 @@ env:
       notVisible:
         id: 'open-knowledge-base'
     commands:
+      - tapOn:
+          text: '^${PUSH_DECLINE}$'
+          optional: true
       - waitForAnimationToEnd:
           timeout: 3000
 - assertVisible:
@@ -206,6 +209,9 @@ env:
       notVisible:
         id: 'open-knowledge-base'
     commands:
+      - tapOn:
+          text: '^${PUSH_DECLINE}$'
+          optional: true
       - waitForAnimationToEnd:
           timeout: 3000
 - assertVisible:
