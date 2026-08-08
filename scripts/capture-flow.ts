@@ -51,6 +51,7 @@ import {
   assertLocalSupabase,
   ensureMetro,
   serveAdminApp,
+  serveTranslationWorker,
   serveWebExport,
   type StoppableServer,
 } from './flow-capture/servers';
@@ -211,10 +212,17 @@ async function captureWebPass(
   // bundle finds none of its selectors.
   const isPlayer = entry.surface === 'mobile';
   const port = isPlayer ? config.webPreviewPort : config.adminPreviewPort;
-  const preview: StoppableServer = isPlayer
-    ? await serveWebExport(port)
-    : await serveAdminApp(port);
+  const needsTranslationWorker = entry.slug === 'admin-translation-review';
+  const previousTranslationWorkerUrl = process.env.EXPO_PUBLIC_TRANSLATION_WORKER_URL;
+  const translationWorker = needsTranslationWorker
+    ? await serveTranslationWorker(config.translationWorkerPort, config.adminPreviewPort)
+    : undefined;
+  if (translationWorker !== undefined) {
+    process.env.EXPO_PUBLIC_TRANSLATION_WORKER_URL = `http://127.0.0.1:${config.translationWorkerPort}`;
+  }
+  let preview: StoppableServer | undefined;
   try {
+    preview = isPlayer ? await serveWebExport(port) : await serveAdminApp(port);
     await runOrThrow(
       [
         'node',
@@ -229,7 +237,13 @@ async function captureWebPass(
       { cwd: repoRoot, inherit: true },
     );
   } finally {
-    await preview.stop();
+    await preview?.stop();
+    await translationWorker?.stop();
+    if (previousTranslationWorkerUrl === undefined) {
+      delete process.env.EXPO_PUBLIC_TRANSLATION_WORKER_URL;
+    } else {
+      process.env.EXPO_PUBLIC_TRANSLATION_WORKER_URL = previousTranslationWorkerUrl;
+    }
   }
 }
 

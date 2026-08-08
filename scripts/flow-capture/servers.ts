@@ -15,6 +15,7 @@ import { log, runOrThrow, waitFor } from './shell';
 
 const mobileDir = path.join(repoRoot, 'apps', 'mobile');
 const adminDir = path.join(repoRoot, 'apps', 'admin');
+const translationWorkerDir = path.join(repoRoot, 'workers', 'translation');
 
 export interface StoppableServer {
   stop(): Promise<void>;
@@ -201,6 +202,67 @@ export async function serveAdminApp(port: number): Promise<StoppableServer> {
     },
     { timeoutMs: 120_000 },
   );
+  return {
+    stop: async () => {
+      child.kill();
+      await child.exited;
+    },
+  };
+}
+
+/**
+ * Starts the deterministic local translation Worker for the canvas flow that
+ * proves human review. Its URL is compiled into the admin build by the caller.
+ */
+export async function serveTranslationWorker(
+  port: number,
+  adminPort: number,
+): Promise<StoppableServer> {
+  if (!(await isPortFree(port))) {
+    throw new Error(`Translation capture port :${port} is already in use; refusing to replace it.`);
+  }
+
+  log(`· starting the deterministic translation Worker on :${port}`);
+  const allowedOrigins = `http://localhost:${adminPort},http://127.0.0.1:${adminPort}`;
+  const child = Bun.spawn(
+    [
+      'bunx',
+      'wrangler',
+      'dev',
+      '--port',
+      String(port),
+      '--compatibility-date',
+      '2026-07-29',
+      '--var',
+      `ALLOWED_ORIGINS:${allowedOrigins}`,
+    ],
+    {
+      cwd: translationWorkerDir,
+      stdout: 'ignore',
+      stderr: 'ignore',
+      stdin: 'ignore',
+    },
+  );
+  try {
+    await waitFor(
+      `translation Worker on :${port}`,
+      async () => {
+        try {
+          const response = await fetch(`http://127.0.0.1:${port}/health`, {
+            signal: AbortSignal.timeout(3000),
+          });
+          return response.ok && (await response.text()) === 'ok';
+        } catch {
+          return false;
+        }
+      },
+      { timeoutMs: 120_000 },
+    );
+  } catch (thrown) {
+    child.kill();
+    await child.exited;
+    throw thrown;
+  }
   return {
     stop: async () => {
       child.kill();

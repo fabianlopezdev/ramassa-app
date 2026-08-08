@@ -44,6 +44,7 @@ export interface FlowConfig {
   readonly metroPort: number;
   readonly webPreviewPort: number;
   readonly adminPreviewPort: number;
+  readonly translationWorkerPort: number;
   readonly flows: readonly FlowEntry[];
 }
 

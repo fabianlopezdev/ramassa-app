@@ -22,50 +22,70 @@
     },
     {
       "label": "source",
-      "goto": "/translations/review",
-      "waitFor": "[data-testid=\"translation-source\"] >> visible=true"
+      "goto": "/content/announcements/new",
+      "fill": [
+        { "selector": "[data-testid=\"title-source\"]", "value": "Entrenament cancel·lat" },
+        {
+          "selector": "[data-testid=\"body-source\"]",
+          "value": "L'entrenament de dissabte ha quedat cancel·lat."
+        }
+      ],
+      "waitFor": "[data-testid=\"announcement-generate\"] >> visible=true",
+      "fullPage": true
     },
     {
       "label": "drafts",
-      "click": "[data-testid=\"translation-generate\"]",
-      "waitFor": "[data-testid=\"translation-drafts\"] >> visible=true"
+      "click": "[data-testid=\"announcement-generate\"]",
+      "waitFor": "[data-testid=\"title-draft-es\"] >> visible=true",
+      "fullPage": true
     },
     {
       "label": "accepted",
-      "click": "[data-testid=\"translation-approve-es\"]",
-      "waitFor": "[data-testid=\"translation-status-es-approved\"] >> visible=true"
+      "click": "[data-testid=\"title-approve-es\"]",
+      "waitFor": "[data-testid=\"title-status-es-approved\"] >> visible=true",
+      "fullPage": true
     },
     {
       "label": "edited",
       "fill": [
         {
-          "selector": "[data-testid=\"translation-draft-en\"]",
+          "selector": "[data-testid=\"title-draft-en\"]",
           "value": "Training has been cancelled"
         }
       ],
-      "click": "[data-testid=\"translation-approve-en\"]",
-      "waitFor": "[data-testid=\"translation-status-en-approved\"] >> visible=true"
+      "click": "[data-testid=\"title-approve-en\"]",
+      "waitFor": "[data-testid=\"title-status-en-approved\"] >> visible=true",
+      "fullPage": true
     },
     {
       "label": "rejected",
-      "click": "[data-testid=\"translation-reject-ar\"]",
-      "waitFor": "[data-testid=\"translation-status-ar-rejected\"] >> visible=true"
+      "click": "[data-testid=\"title-reject-ar\"]",
+      "waitFor": "[data-testid=\"title-status-ar-rejected\"] >> visible=true",
+      "fullPage": true
     },
     {
       "label": "manual",
       "fill": [
         {
-          "selector": "[data-testid=\"translation-draft-ar\"]",
+          "selector": "[data-testid=\"title-draft-ar\"]",
           "value": "تم إلغاء التدريب"
         }
       ],
-      "click": "[data-testid=\"translation-approve-ar\"]",
-      "waitFor": "[data-testid=\"translation-status-ar-approved\"] >> visible=true"
+      "click": "[data-testid=\"title-approve-ar\"]",
+      "waitFor": "[data-testid=\"title-status-ar-approved\"] >> visible=true",
+      "fullPage": true
+    },
+    {
+      "label": "body-approved",
+      "click": "[data-testid=\"body-approve-all\"]",
+      "waitFor": "[data-testid=\"body-status-fa-approved\"] >> visible=true",
+      "fullPage": true
     },
     {
       "label": "approved",
-      "click": "[data-testid=\"translation-approve-all\"]",
-      "waitFor": "[data-testid=\"translation-publish\"]:not([disabled])"
+      "click": "[data-testid=\"title-approve-all\"]",
+      "waitFor": "[data-testid=\"title-status-fa-approved\"] >> visible=true",
+      "fullPage": true
     }
   ]
 }

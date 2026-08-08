@@ -12,6 +12,7 @@
   "metroPort": 8082,
   "webPreviewPort": 4173,
   "adminPreviewPort": 4174,
+  "translationWorkerPort": 8792,
   "flows": [
     { "slug": "auth-login", "phase": "1", "surface": "mobile", "title": "Inici de sessió" },
     { "slug": "shell-tabs", "phase": "1", "surface": "mobile", "title": "Navegació principal" },

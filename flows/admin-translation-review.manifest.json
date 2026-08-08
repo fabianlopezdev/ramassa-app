@@ -38,7 +38,7 @@
     {
       "id": "approved",
       "label": "Totes les llengües revisades i a punt per publicar",
-      "web": "admin-translation-review/web/09-approved.png"
+      "web": "admin-translation-review/web/10-approved.png"
     }
   ],
   "edges": [

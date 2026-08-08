@@ -31,6 +31,7 @@ const config = await loadFlowConfig();
 
 test('the shared Ramassa Metro uses its reserved port', () => {
   expect(config.metroPort).toBe(8082);
+  expect(config.translationWorkerPort).toBe(8792);
 });
 
 test('smoke deep links address the installed Ramassa app unambiguously', () => {
@@ -225,6 +226,26 @@ describe('every declared flow can eventually be captured', () => {
     expect(source).toMatch(
       /"label": "story-start"[\s\S]*?knowledge-start-review-5eed0000-0000-4000-8005-000000000002[\s\S]*?"label": "story-review"[\s\S]*?"goto": "\/content\/knowledge\/5eed0000-0000-4000-8005-000000000002"/,
     );
+  });
+
+  test('the admin translation capture drives the real multilingual announcement editor', async () => {
+    const source = await Bun.file(
+      path.join(repoRoot, 'maestro/web/admin-translation-review.web.json'),
+    ).text();
+    expect(source).not.toContain('/translations/review');
+    expect(source).not.toContain('translation-source');
+    expect(source).toContain('/content/announcements/new');
+    expect(source).toContain('announcement-generate');
+    expect(source).toContain('title-status-ar-rejected');
+    expect(source).toContain('body-status-fa-approved');
+    expect(source).toContain('title-status-fa-approved');
+    const captureSource = await Bun.file(path.join(repoRoot, 'scripts/capture-flow.ts')).text();
+    expect(captureSource).toContain("entry.slug === 'admin-translation-review'");
+    expect(captureSource).toContain('serveTranslationWorker');
+    const serverSource = await Bun.file(
+      path.join(repoRoot, 'scripts/flow-capture/servers.ts'),
+    ).text();
+    expect(serverSource).toContain("'--compatibility-date',\n      '2026-07-29'");
   });
 
   test('new player flows dismiss the dev-client first-run prompt after clearing state', async () => {
