@@ -77,8 +77,8 @@
       "id": "push-entry",
       "label": "Activitat oberta des d'una notificació",
       "ios": "events-signup/ios/11-push-entry.png",
-      "android": "events-signup/android/03-detail.png",
-      "web": "events-signup/web/05-detail.png"
+      "android": "events-signup/android/11-push-entry.png",
+      "web": "events-signup/web/16-push-entry.png"
     },
     {
       "id": "list-ar",

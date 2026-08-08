@@ -5,6 +5,7 @@ import { ErrorFallback, type ErrorFallbackProps } from '@/components/error-fallb
 import { PushNotificationResponseHandler } from '@/components/push-notification-response-handler';
 import { reportAuthError } from '@/lib/auth';
 import { AuthFlowStatusProvider } from '@/lib/auth-flow-status';
+import { shouldMountAuthRoutes } from '@/lib/auth-route-readiness';
 import { i18n } from '@/lib/i18n';
 import { wrapRootComponent } from '@/lib/observability';
 import { registerProfileQueries } from '@/lib/profile';
@@ -100,6 +101,8 @@ function RootNavigator() {
       void SplashScreen.hideAsync();
     }
   }, [isLoading]);
+
+  if (!shouldMountAuthRoutes(isLoading)) return null;
 
   return (
     <Stack screenOptions={screenOptions}>

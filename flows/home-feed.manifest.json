@@ -62,8 +62,8 @@
       "id": "push-entry",
       "label": "Detall obert des d'una notificació",
       "ios": "home-feed/ios/09-push-entry.png",
-      "android": "home-feed/android/04-detail.png",
-      "web": "home-feed/web/05-detail.png"
+      "android": "home-feed/android/09-push-entry.png",
+      "web": "home-feed/web/10-push-entry.png"
     },
     {
       "id": "feed-ar",
