@@ -148,6 +148,12 @@ env:
     times: 4
     commands:
       - tapOn:
+          text: '.*Continue.*'
+          optional: true
+      - tapOn:
+          text: '.*Close.*'
+          optional: true
+      - tapOn:
           text: '^${PUSH_DECLINE}$'
           optional: true
       - waitForAnimationToEnd:
