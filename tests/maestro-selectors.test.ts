@@ -260,7 +260,7 @@ describe('Maestro selector contracts', () => {
   test('capture flows return from pushed records on fixed tabs before restoring scroll', async () => {
     const events = await Bun.file(path.join(repoRoot, 'maestro/flows/events-signup.yaml')).text();
     const home = await Bun.file(path.join(repoRoot, 'maestro/flows/home-feed.yaml')).text();
-    expect(events.match(/visible: '\^\$\{EVENTS_TAB\}\$'/g)).toHaveLength(2);
+    expect(events.match(/visible: '\^\$\{EVENTS_TAB\}\$'/g)).toHaveLength(3);
     expect(events).not.toMatch(
       /tapOn: '\^\$\{BACK\}\$'[\s\S]{0,100}visible: .*\$\{(?:EVENTS_TITLE|LIST_VIEW_ACTION)\}/,
     );
@@ -342,6 +342,13 @@ describe('Maestro selector contracts', () => {
     expect(events).toMatch(/CONFIRM_ACTION[\s\S]*?CONFIRMED_STATUS/);
     expect(events).toMatch(
       /CONFIRMED_STATUS[\s\S]*?- runFlow: _relaunch\.yaml[\s\S]*?CONFIRMED_STATUS/,
+    );
+
+    const eventsCapture = await Bun.file(
+      path.join(repoRoot, 'maestro/flows/events-signup.yaml'),
+    ).text();
+    expect(eventsCapture).toMatch(
+      /visible: '\^\$\{EVENTS_TAB\}\$'\n\s+timeout: 240000[\s\S]{0,100}?tapOn: '\^\$\{EVENTS_TAB\}\$'/,
     );
 
     const knowledge = await Bun.file(path.join(repoRoot, '.maestro/knowledge-story.yaml')).text();
