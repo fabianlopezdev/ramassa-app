@@ -179,6 +179,9 @@ env:
           optional: true
       - waitForAnimationToEnd:
           timeout: 1500
+- openLink: ramassa:///
+- waitForAnimationToEnd:
+    timeout: 3000
 - extendedWaitUntil:
     visible: '.*${HOME_TITLE}.*'
     timeout: 30000

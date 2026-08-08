@@ -383,6 +383,7 @@ describe('Maestro selector contracts', () => {
     expect(source.slice(delayedWindow, firstScreenshot)).toContain("text: '.*Close.*'");
     expect(source.slice(delayedWindow, firstScreenshot)).toContain("text: '^${PUSH_DECLINE}$'");
     expect(source.slice(delayedWindow, firstScreenshot)).toContain('optional: true');
+    expect(source.slice(delayedWindow, firstScreenshot)).toContain('openLink: ramassa:///');
   });
 
   test('every Phase 3 player capture clears delayed notification rationale before navigation', async () => {
@@ -400,6 +401,7 @@ describe('Maestro selector contracts', () => {
       expect(source.slice(delayedWindow, target)).toContain("text: '.*Close.*'");
       expect(source.slice(delayedWindow, target)).toContain("text: '^${PUSH_DECLINE}$'");
       expect(source.slice(delayedWindow, target)).toContain('optional: true');
+      expect(source.slice(delayedWindow, target)).toContain('openLink: ramassa:///');
     }
   });
 });

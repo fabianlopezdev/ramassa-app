@@ -158,6 +158,9 @@ env:
           optional: true
       - waitForAnimationToEnd:
           timeout: 1500
+- openLink: ramassa:///
+- waitForAnimationToEnd:
+    timeout: 3000
 - extendedWaitUntil:
     visible: '^${EVENTS_TAB}$'
     timeout: 240000

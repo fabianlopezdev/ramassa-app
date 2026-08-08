@@ -230,6 +230,9 @@ env:
           optional: true
       - waitForAnimationToEnd:
           timeout: 1500
+- openLink: ramassa:///
+- waitForAnimationToEnd:
+    timeout: 3000
 - assertVisible:
     id: 'open-knowledge-base'
 - tapOn:
