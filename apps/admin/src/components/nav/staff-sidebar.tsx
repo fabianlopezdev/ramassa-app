@@ -12,6 +12,11 @@ import {
 import { STAFF_NAV_ITEMS } from '@/lib/nav-items';
 import { Link, useLocation } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
+import type { LayoutDirection } from '@ramassa/shared/i18n';
+
+export function sidebarSideForDirection(direction: LayoutDirection): 'left' | 'right' {
+  return direction === 'rtl' ? 'right' : 'left';
+}
 
 /**
  * The staff CMS navigation shell (RAPP-16): the six-section sidebar every staff
@@ -23,11 +28,11 @@ import { useTranslation } from 'react-i18next';
  * itself lives in `lib/nav-items` so its destinations stay directly testable.
  */
 export function StaffSidebar() {
-  const { t } = useTranslation(['nav', 'common']);
+  const { t, i18n } = useTranslation(['nav', 'common']);
   const pathname = useLocation({ select: (location) => location.pathname });
 
   return (
-    <Sidebar collapsible="icon">
+    <Sidebar collapsible="icon" side={sidebarSideForDirection(i18n.dir())}>
       <SidebarHeader className="px-3 py-4">
         <span className="text-base font-semibold text-sidebar-foreground group-data-[collapsible=icon]:hidden">
           {t('common:appName')}
