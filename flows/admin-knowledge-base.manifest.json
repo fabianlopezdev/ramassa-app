@@ -23,22 +23,22 @@
     {
       "id": "story-review",
       "label": "La revisió conserva l'atribució pel nom de pila",
-      "web": "admin-knowledge-base/web/06-story-review.png"
+      "web": "admin-knowledge-base/web/07-story-review.png"
     },
     {
       "id": "published",
       "label": "La història aprovada queda publicada",
-      "web": "admin-knowledge-base/web/07-published.png"
+      "web": "admin-knowledge-base/web/08-published.png"
     },
     {
       "id": "changes-requested",
       "label": "L'equip pot demanar canvis amb una nota",
-      "web": "admin-knowledge-base/web/08-changes-requested.png"
+      "web": "admin-knowledge-base/web/09-changes-requested.png"
     },
     {
       "id": "rejected",
       "label": "La història descartada queda rebutjada",
-      "web": "admin-knowledge-base/web/09-rejected.png"
+      "web": "admin-knowledge-base/web/10-rejected.png"
     }
   ],
   "edges": [

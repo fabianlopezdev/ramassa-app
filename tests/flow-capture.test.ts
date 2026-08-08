@@ -218,6 +218,15 @@ describe('every declared flow can eventually be captured', () => {
     }
   });
 
+  test('the admin Knowledge Base capture enters review before opening the review form', async () => {
+    const source = await Bun.file(
+      path.join(repoRoot, 'maestro/web/admin-knowledge-base.web.json'),
+    ).text();
+    expect(source).toMatch(
+      /"label": "story-start"[\s\S]*?knowledge-start-review-5eed0000-0000-4000-8005-000000000002[\s\S]*?"label": "story-review"[\s\S]*?"goto": "\/content\/knowledge\/5eed0000-0000-4000-8005-000000000002"/,
+    );
+  });
+
   test('new player flows dismiss the dev-client first-run prompt after clearing state', async () => {
     for (const slug of ['knowledge-base', 'story-submission']) {
       const spec = await Bun.file(path.join(repoRoot, 'maestro', 'flows', `${slug}.yaml`)).text();
