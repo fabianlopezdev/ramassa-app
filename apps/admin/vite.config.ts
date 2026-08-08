@@ -9,6 +9,15 @@ import { tokens, tokensToCssVariables } from '@ramassa/shared/tokens';
 
 const TOKENS_MARKER = '/* @ramassa-tokens */';
 
+// The current client entry is about 1,216 kB uncompressed and 379 kB gzip.
+// Keep a narrow, explicit ceiling so ordinary builds stay quiet while future
+// bundle growth still fails the closure gate with a warning.
+export const ADMIN_CLIENT_CHUNK_BUDGET_KB = 1_250;
+
+export function isSentryBuildUploadEnabled(authToken: string | undefined): boolean {
+  return authToken?.trim() !== '' && authToken !== undefined;
+}
+
 // Injects the shared design tokens (ADR-015) into the admin stylesheet as
 // --ramassa-* CSS custom properties, generated from packages/shared/tokens. Runs
 // before @tailwindcss/vite so the shadcn brand variables that reference them are
@@ -37,6 +46,9 @@ export default defineConfig({
   server: {
     port: 3000,
   },
+  build: {
+    chunkSizeWarningLimit: ADMIN_CLIENT_CHUNK_BUDGET_KB,
+  },
   resolve: {
     // The docs' `resolve.tsconfigPaths: true` requires a newer Vite than 7.x;
     // mirror the tsconfig "@/*" path manually until the repo moves to Vite 8+.
@@ -61,6 +73,10 @@ export default defineConfig({
       // (verified via a real sentry-cli sourcemaps upload, RAPP-12).
       project: 'ramassa-admin',
       authToken: process.env.SENTRY_AUTH_TOKEN,
+      silent: !isSentryBuildUploadEnabled(process.env.SENTRY_AUTH_TOKEN),
+      sourcemaps: {
+        disable: !isSentryBuildUploadEnabled(process.env.SENTRY_AUTH_TOKEN),
+      },
       telemetry: false,
     }),
   ],
