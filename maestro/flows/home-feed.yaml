@@ -162,6 +162,20 @@ env:
     timeout: 240000
 - waitForAnimationToEnd:
     timeout: 3000
+# Android can surface the translated notification rationale after the Home
+# heading has already satisfied the readiness check. Probe through that delayed
+# window before taking client-facing screenshots.
+- repeat:
+    times: 4
+    commands:
+      - tapOn:
+          text: '^${PUSH_DECLINE}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 1500
+- extendedWaitUntil:
+    visible: '.*${HOME_TITLE}.*'
+    timeout: 30000
 
 # Populated hub with the pinned cancellation first.
 - takeScreenshot: ${SHOTS}/01-feed${SUFFIX}

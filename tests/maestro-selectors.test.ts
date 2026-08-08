@@ -373,4 +373,13 @@ describe('Maestro selector contracts', () => {
     );
     expect(waitsForShortcut).toHaveLength(2);
   });
+
+  test('the Home capture clears a delayed notification rationale before screenshots', async () => {
+    const source = await Bun.file(path.join(repoRoot, 'maestro/flows/home-feed.yaml')).text();
+    const firstScreenshot = source.indexOf('takeScreenshot: ${SHOTS}/01-feed${SUFFIX}');
+    const delayedWindow = source.lastIndexOf('times: 4', firstScreenshot);
+    expect(delayedWindow).toBeGreaterThan(0);
+    expect(source.slice(delayedWindow, firstScreenshot)).toContain("text: '^${PUSH_DECLINE}$'");
+    expect(source.slice(delayedWindow, firstScreenshot)).toContain('optional: true');
+  });
 });
