@@ -255,6 +255,13 @@ describe('every declared flow can eventually be captured', () => {
     }
   });
 
+  test('an iOS capture retries once after restarting only its dedicated simulator', async () => {
+    const source = await Bun.file(path.join(repoRoot, 'scripts/capture-flow.ts')).text();
+    expect(source).toContain("if (pass !== 'ios') throw thrown");
+    expect(source).toContain('await restartIosDevice(device)');
+    expect(source).toContain('retrying ${entry.slug} once');
+  });
+
   test('story submission captures both review confirmation and the abandon-draft branch', async () => {
     const manifest = (await Bun.file(
       path.join(repoRoot, 'flows', 'story-submission.manifest.json'),

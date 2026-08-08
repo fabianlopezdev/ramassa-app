@@ -42,6 +42,7 @@ import {
   ensureIosDevice,
   pinAndroidStatusBar,
   pinIosStatusBar,
+  restartIosDevice,
   reverseMetroPort,
   reverseSupabasePort,
 } from './flow-capture/devices';
@@ -154,10 +155,16 @@ async function captureMobilePass(
 
   try {
     log(`· running ${entry.slug} on ${pass} (${device})`);
-    await runOrThrow(['maestro', '--device', device, 'test', resolvedFlowFile], {
-      cwd: repoRoot,
-      inherit: true,
-    });
+    const maestroCommand = ['maestro', '--device', device, 'test', resolvedFlowFile] as const;
+    try {
+      await runOrThrow(maestroCommand, { cwd: repoRoot, inherit: true });
+    } catch (thrown) {
+      if (pass !== 'ios') throw thrown;
+      await restartIosDevice(device);
+      await pinIosStatusBar(device);
+      log(`· retrying ${entry.slug} once on the restarted iOS simulator`);
+      await runOrThrow(maestroCommand, { cwd: repoRoot, inherit: true });
+    }
   } finally {
     await metro.stop();
   }

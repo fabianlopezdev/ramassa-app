@@ -52,6 +52,20 @@ async function isIosBooted(udid: string): Promise<boolean> {
     .some((device) => device.udid === udid && device.state === 'Booted');
 }
 
+/**
+ * Restarts only the simulator reserved by this capture run. XCUITest can lose
+ * its accessibility element handles while the app is mounting; one clean boot
+ * gives the next Maestro attempt a fresh driver without touching other devices.
+ */
+export async function restartIosDevice(udid: string): Promise<void> {
+  log(`· restarting the dedicated iOS simulator after a failed Maestro attempt`);
+  await runOrThrow(['xcrun', 'simctl', 'shutdown', udid]);
+  await runOrThrow(['xcrun', 'simctl', 'boot', udid]);
+  await waitFor(`${udid} to reboot`, async () => await isIosBooted(udid), {
+    timeoutMs: 180_000,
+  });
+}
+
 /** Starts the named AVD if no emulator is attached and returns its adb serial. */
 export async function ensureAndroidDevice(avdName: string): Promise<string> {
   let serial = await findEmulatorRunning(avdName);
