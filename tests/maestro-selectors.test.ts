@@ -315,7 +315,12 @@ describe('Maestro selector contracts', () => {
 
     const auth = await Bun.file(path.join(repoRoot, '.maestro/smoke-auth.yaml')).text();
     expect(auth).toMatch(
-      /notVisible: '\.\*\$\{PROFILE_TITLE\}\.\*'[\s\S]*?text: '\^\$\{TAB_PROFILE\}\$'[\s\S]*?visible: '\.\*\$\{PROFILE_TITLE\}\.\*'[\s\S]*?notVisible: '\^\$\{SIGN_OUT\}\$'[\s\S]*?swipe:[\s\S]*?visible: '\^\$\{SIGN_OUT\}\$'[\s\S]*?id: profile-sign-out/,
+      /notVisible: '\.\*\$\{PROFILE_TITLE\}\.\*'[\s\S]*?text: '\^\$\{TAB_PROFILE\}\$'[\s\S]*?visible: '\.\*\$\{PROFILE_TITLE\}\.\*'[\s\S]*?notVisible: '\^\$\{SIGN_OUT\}\$'[\s\S]*?swipe:[\s\S]*?visible: '\^\$\{SIGN_OUT\}\$'[\s\S]*?start: 50%, 60%[\s\S]*?end: 50%, 52%[\s\S]*?text: '\^\$\{SIGN_OUT\}\$'/,
+    );
+
+    const profile = await Bun.file(path.join(repoRoot, '.maestro/smoke-profile.yaml')).text();
+    expect(profile).toMatch(
+      /hideKeyboard[\s\S]*?notVisible: '\.\*\$\{DELETE_CONFIRM_BODY\}\.\*'[\s\S]*?visible: '\^\$\{DELETE_ACTION\}\$'[\s\S]*?tapOn: '\^\$\{DELETE_ACTION\}\$'[\s\S]*?visible: '\.\*\$\{DELETE_CONFIRM_BODY\}\.\*'/,
     );
   });
 
@@ -329,7 +334,7 @@ describe('Maestro selector contracts', () => {
     expect(feed).toMatch(/FILTER_URGENT[\s\S]*?selected: true[\s\S]*?PINNED/);
     expect(feed).toMatch(/FILTER_SOCIAL[\s\S]*?selected: true/);
     expect(feed).toMatch(
-      /PINNED[\s\S]*?announcement-detail-screen[\s\S]*?announcement-detail-back/,
+      /PINNED[\s\S]*?announcement-detail-screen[\s\S]*?announcement-detail-back[\s\S]*?point: 20%, 50%/,
     );
 
     const events = await Bun.file(path.join(repoRoot, '.maestro/events-signup.yaml')).text();

@@ -604,10 +604,14 @@ env:
 - hideKeyboard
 - waitForAnimationToEnd:
     timeout: 2000
-- extendedWaitUntil:
-    visible: '^${DELETE_ACTION}$'
-    timeout: 15000
-- tapOn: '^${DELETE_ACTION}$'
+- runFlow:
+    when:
+      notVisible: '.*${DELETE_CONFIRM_BODY}.*'
+    commands:
+      - extendedWaitUntil:
+          visible: '^${DELETE_ACTION}$'
+          timeout: 15000
+      - tapOn: '^${DELETE_ACTION}$'
 - extendedWaitUntil:
     visible: '.*${DELETE_CONFIRM_BODY}.*'
     timeout: 15000

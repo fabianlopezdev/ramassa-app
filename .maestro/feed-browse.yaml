@@ -45,7 +45,8 @@ env:
     timeout: 30000
 - tapOn:
     id: announcement-detail-back
-    point: 50%, 50%
+    # The Android dev-menu gear overlaps this mirrored button's centre in RTL.
+    point: 20%, 50%
 - repeat:
     times: 8
     commands:
@@ -137,7 +138,7 @@ env:
     timeout: 30000
 - tapOn:
     id: announcement-detail-back
-    point: 50%, 50%
+    point: 20%, 50%
 - repeat:
     times: 8
     commands:

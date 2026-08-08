@@ -56,10 +56,19 @@ env:
     visible: '^${SIGN_OUT}$'
     timeout: 30000
 
+# On iOS the floating native tab bar covers the first sliver that makes this
+# below-fold control "visible". Lift it clear before tapping, or its centre
+# selects the Community tab instead of firing sign-out.
+- swipe:
+    start: 50%, 60%
+    end: 50%, 52%
+    duration: 900
+- waitForAnimationToEnd:
+    timeout: 2000
+
 # Signing out clears the session and the guard flips back on its own.
 - tapOn:
-    id: profile-sign-out
-    point: 50%, 50%
+    text: '^${SIGN_OUT}$'
 - extendedWaitUntil:
     visible: '.*${LOGIN_TITLE}.*'
     timeout: 60000
