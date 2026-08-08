@@ -216,6 +216,16 @@ env:
           timeout: 3000
 - assertVisible:
     id: 'open-knowledge-base'
+- repeat:
+    times: 4
+    commands:
+      - tapOn:
+          text: '^${PUSH_DECLINE}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 1500
+- assertVisible:
+    id: 'open-knowledge-base'
 - tapOn:
     id: 'open-knowledge-base'
 - extendedWaitUntil:

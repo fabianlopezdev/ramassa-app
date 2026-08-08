@@ -382,4 +382,20 @@ describe('Maestro selector contracts', () => {
     expect(source.slice(delayedWindow, firstScreenshot)).toContain("text: '^${PUSH_DECLINE}$'");
     expect(source.slice(delayedWindow, firstScreenshot)).toContain('optional: true');
   });
+
+  test('every Phase 3 player capture clears delayed notification rationale before navigation', async () => {
+    const contracts = [
+      ['events-signup.yaml', "visible: '^${EVENTS_TAB}$'"],
+      ['knowledge-base.yaml', "id: 'open-knowledge-base'"],
+      ['story-submission.yaml', "id: 'open-story-submission'"],
+    ] as const;
+    for (const [file, navigationTarget] of contracts) {
+      const source = await Bun.file(path.join(repoRoot, 'maestro/flows', file)).text();
+      const target = source.indexOf(navigationTarget, source.indexOf('stopApp'));
+      const delayedWindow = source.lastIndexOf('times: 4\n', target);
+      expect(delayedWindow).toBeGreaterThan(0);
+      expect(source.slice(delayedWindow, target)).toContain("text: '^${PUSH_DECLINE}$'");
+      expect(source.slice(delayedWindow, target)).toContain('optional: true');
+    }
+  });
 });
