@@ -35,6 +35,7 @@ import {
 
 export type OrganizationRow = Database['public']['Tables']['organizations']['Row'];
 export type AnnouncementRow = Database['public']['Tables']['announcements']['Row'];
+export type AttendanceRow = Database['public']['Tables']['attendance']['Row'];
 export type EventCategoryRow = Database['public']['Tables']['event_categories']['Row'];
 export type EventRow = Database['public']['Tables']['events']['Row'];
 export type EventOccurrenceRow = Database['public']['Tables']['event_occurrences']['Row'];
@@ -274,6 +275,20 @@ export function buildEventSignup(overrides: Partial<EventSignupRow> = {}): Event
     player_id: seedUserId(PARTICIPANT_FIXTURES[0]!.ordinal),
     state: 'confirmed',
     created_at: FIXTURE_TIMESTAMP,
+    updated_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+export function buildAttendance(overrides: Partial<AttendanceRow> = {}): AttendanceRow {
+  return {
+    id: '5eed0000-0000-4000-8009-000000000099',
+    org_id: SEED_ORGANIZATION_ID,
+    occurrence_id: buildEventOccurrence().id,
+    player_id: seedUserId(PARTICIPANT_FIXTURES[0]!.ordinal),
+    status: 'present',
+    marked_by: seedUserId(STAFF_FIXTURES[1]!.ordinal),
+    marked_at: FIXTURE_TIMESTAMP,
     updated_at: FIXTURE_TIMESTAMP,
     ...overrides,
   };

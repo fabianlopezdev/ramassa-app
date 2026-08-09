@@ -36,7 +36,7 @@
 -- driven these screens in a browser cannot turn this file red.
 
 begin;
-select plan(41);
+select plan(43);
 
 select vault.create_secret('test-encryption-key', 'app_encryption_key', 'pgTAP test key')
 where not exists (select 1 from vault.secrets where name = 'app_encryption_key');
@@ -202,6 +202,14 @@ select cmp_ok(
   '>=',
   5,
   'the subject starts out with rows in at least five registered places'
+);
+
+select cmp_ok(
+  (select count(*) from public.attendance
+    where player_id = '5eed0000-0000-4000-8000-000000000011'::uuid)::int,
+  '>=',
+  1,
+  'the erasure subject starts with at least one attendance mark'
 );
 
 -- Anonymization ------------------------------------------------------------------------
@@ -470,6 +478,13 @@ select is(
   pg_temp.rows_left_for('5eed0000-0000-4000-8000-000000000011'::uuid),
   '{}'::text[],
   'no row referencing her survives in any table registered for purge'
+);
+
+select is(
+  (select count(*) from public.attendance
+    where player_id = '5eed0000-0000-4000-8000-000000000011'::uuid)::int,
+  0,
+  'attendance marks are removed with the participant rather than retaining a shadow identity'
 );
 
 select is(

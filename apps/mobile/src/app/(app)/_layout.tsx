@@ -1,6 +1,10 @@
+import { AttendanceSyncWorker } from '@/components/attendance/attendance-sync-worker';
 import { PushPermissionRationale } from '@/components/push-permission-rationale';
+import { isAttendanceCoachCached, rememberAttendanceCoach } from '@/lib/attendance-coach-cache';
+import { mmkvStorage } from '@/lib/storage';
 import { usePushRegistration } from '@/lib/use-push-registration';
 import { Stack } from 'expo-router/stack';
+import { useEffect } from 'react';
 import { Modal, View } from 'react-native';
 import { useAuth } from '@ramassa/shared/auth';
 
@@ -11,7 +15,15 @@ export { ErrorFallback as ErrorBoundary } from '@/components/error-fallback';
 const hiddenHeaderScreenOptions = { headerShown: false } as const;
 
 export default function AppLayout() {
-  const { needsOnboarding } = useAuth();
+  const { needsOnboarding, role, user } = useAuth();
+  const hasStaffRole = role === 'staff' || role === 'admin';
+  const isStaff =
+    hasStaffRole ||
+    (role === null && user !== null && isAttendanceCoachCached(mmkvStorage, user.id));
+  useEffect(() => {
+    if (user === null || role === null) return;
+    rememberAttendanceCoach(mmkvStorage, user.id, hasStaffRole);
+  }, [hasStaffRole, role, user]);
   // Registers this device's push token for the signed-in user (RAPP-17), and
   // surfaces the translated rationale when the OS permission is undetermined.
   const { shouldShowRationale, acceptRationale, declineRationale } = usePushRegistration();
@@ -26,7 +38,7 @@ export default function AppLayout() {
           network flake must never route an onboarded player back into the
           wizard. */}
       <Stack screenOptions={hiddenHeaderScreenOptions}>
-        <Stack.Protected guard={!needsOnboarding}>
+        <Stack.Protected guard={!needsOnboarding && !isStaff}>
           <Stack.Screen name="(tabs)" />
           {/* Pushed OVER the tabs, not inside them: the edit form and the
               erasure request are full-screen tasks, and the floating tab bar
@@ -44,10 +56,15 @@ export default function AppLayout() {
           <Stack.Screen name="knowledge/[id]" />
           <Stack.Screen name="story/submit" />
         </Stack.Protected>
+        <Stack.Protected guard={!needsOnboarding && isStaff}>
+          <Stack.Screen name="attendance/index" />
+          <Stack.Screen name="attendance/[id]" />
+        </Stack.Protected>
         <Stack.Protected guard={needsOnboarding}>
           <Stack.Screen name="onboarding" />
         </Stack.Protected>
       </Stack>
+      <AttendanceSyncWorker />
 
       {/* Shown BEFORE the system dialog, never instead of it (SPEC UX rule).
           Dismissing counts as "not now": the OS is never asked, so iOS's single

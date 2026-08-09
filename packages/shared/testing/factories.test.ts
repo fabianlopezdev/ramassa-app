@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import { SUPPORTED_LANGUAGES } from '../i18n/languages';
 import {
   buildAnnouncement,
+  buildAttendance,
   buildAuditLogEntry,
   buildEvent,
   buildEventCategory,
@@ -154,6 +155,15 @@ describe('event factories', () => {
     expect(signup.event_id).toBe(buildEvent().id);
     expect(signup.player_id).toBe(seedUserId(PARTICIPANT_FIXTURES[0]!.ordinal));
     expect(signup.state).toBe('confirmed');
+  });
+
+  test('builds a deterministic attendance mark linked to an occurrence, player, and coach', () => {
+    const attendance = buildAttendance();
+
+    expect(attendance.occurrence_id).toBe(buildEventOccurrence().id);
+    expect(attendance.player_id).toBe(seedUserId(PARTICIPANT_FIXTURES[0]!.ordinal));
+    expect(attendance.marked_by).toBe(seedUserId(STAFF_FIXTURES[1]!.ordinal));
+    expect(attendance.status).toBe('present');
   });
 });
 

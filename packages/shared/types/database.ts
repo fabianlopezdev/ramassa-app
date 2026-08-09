@@ -94,6 +94,68 @@ export type Database = {
           },
         ];
       };
+      attendance: {
+        Row: {
+          id: string;
+          marked_at: string;
+          marked_by: string | null;
+          occurrence_id: string;
+          org_id: string;
+          player_id: string;
+          status: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          marked_at?: string;
+          marked_by?: string | null;
+          occurrence_id: string;
+          org_id?: string;
+          player_id: string;
+          status: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          marked_at?: string;
+          marked_by?: string | null;
+          occurrence_id?: string;
+          org_id?: string;
+          player_id?: string;
+          status?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'attendance_marked_by_fkey';
+            columns: ['marked_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'attendance_occurrence_id_fkey';
+            columns: ['occurrence_id'];
+            isOneToOne: false;
+            referencedRelation: 'event_occurrences';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'attendance_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'attendance_player_id_fkey';
+            columns: ['player_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       audit_log: {
         Row: {
           action: string;
@@ -1331,6 +1393,30 @@ export type Database = {
       is_story_status_transition_allowed: {
         Args: { new_status: string; old_status: string };
         Returns: boolean;
+      };
+      mark_attendance: {
+        Args: {
+          attendance_marked_at: string;
+          attendance_occurrence_id: string;
+          attendance_player_id: string;
+          attendance_status: string;
+        };
+        Returns: {
+          id: string;
+          marked_at: string;
+          marked_by: string | null;
+          occurrence_id: string;
+          org_id: string;
+          player_id: string;
+          status: string;
+          updated_at: string;
+        };
+        SetofOptions: {
+          from: '*';
+          to: 'attendance';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
       };
       my_pending_invite: {
         Args: never;

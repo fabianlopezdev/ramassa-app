@@ -83,6 +83,13 @@ test('the seed and the factories derive user IDs from the same namespace', () =>
   expect(seedUserId(PARTICIPANT_FIXTURES[0]!.ordinal)).toStartWith(SEED_USER_ID_PREFIX);
 });
 
+test('the seed carries field-ready attendance rows in every visible status', () => {
+  expect(seedSql).toContain('insert into public.attendance');
+  expect(seedSql).toContain("'present'");
+  expect(seedSql).toContain("'absent'");
+  expect(seedSql).toContain("'excused'");
+});
+
 test('the shared dev password is the one seed.sql actually hashes', () => {
   expect(seedSql).toContain(SEED_ACCOUNT_PASSWORD);
 });

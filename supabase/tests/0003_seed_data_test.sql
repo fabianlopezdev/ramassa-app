@@ -19,7 +19,7 @@
 -- It reads only, and still runs in a transaction that rolls back.
 
 begin;
-select plan(18);
+select plan(23);
 
 -- Tenant -------------------------------------------------------------------------
 
@@ -164,6 +164,56 @@ select is(
      and active_signup_count = max_participants)::int,
   1,
   'one seeded event is full so the capacity state is reachable in local QA'
+);
+
+select cmp_ok(
+  (select count(*) from public.attendance)::int,
+  '>=', 3,
+  'attendance has field-ready seeded marks'
+);
+
+select is(
+  (select array_agg(distinct status order by status) from public.attendance),
+  array['absent', 'excused', 'present']::text[],
+  'the seeded sheet renders all three non-color-only attendance states'
+);
+
+select ok(
+  exists (
+    select 1
+    from public.event_occurrences occurrence
+    where not exists (
+      select 1 from public.attendance mark where mark.occurrence_id = occurrence.id
+    )
+  ),
+  'the attendance overview has a not-started occurrence'
+);
+
+select is(
+  (
+    select count(*)
+    from public.attendance mark
+    join public.event_occurrences occurrence on occurrence.id = mark.occurrence_id
+    where occurrence.event_id = '5eed0000-0000-4000-8003-000000000005'
+  )::int,
+  3,
+  'today attendance is deliberately in progress'
+);
+
+select is(
+  (
+    select count(*)
+    from public.attendance mark
+    where mark.occurrence_id = (
+      select occurrence.id
+      from public.event_occurrences occurrence
+      where occurrence.event_id = '5eed0000-0000-4000-8003-000000000001'
+      order by occurrence.starts_at
+      limit 1
+    )
+  )::int,
+  (select count(*) from public.profiles where role = 'player' and is_active)::int,
+  'one seeded attendance occurrence is complete against the active roster'
 );
 
 select * from finish();

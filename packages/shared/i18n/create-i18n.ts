@@ -10,6 +10,7 @@ import type { LanguageStorage } from './language-storage';
 import { DEFAULT_LANGUAGE, resolveInitialLanguage, SUPPORTED_LANGUAGES } from './languages';
 import arAdmin from './locales/ar/admin.json';
 import arAnnouncements from './locales/ar/announcements.json';
+import arAttendance from './locales/ar/attendance.json';
 import arAuth from './locales/ar/auth.json';
 import arCommon from './locales/ar/common.json';
 import arEquipment from './locales/ar/equipment.json';
@@ -24,6 +25,7 @@ import arProfile from './locales/ar/profile.json';
 import arPush from './locales/ar/push.json';
 import caAdmin from './locales/ca/admin.json';
 import caAnnouncements from './locales/ca/announcements.json';
+import caAttendance from './locales/ca/attendance.json';
 import caAuth from './locales/ca/auth.json';
 import caCommon from './locales/ca/common.json';
 import caEquipment from './locales/ca/equipment.json';
@@ -38,6 +40,7 @@ import caProfile from './locales/ca/profile.json';
 import caPush from './locales/ca/push.json';
 import enAdmin from './locales/en/admin.json';
 import enAnnouncements from './locales/en/announcements.json';
+import enAttendance from './locales/en/attendance.json';
 import enAuth from './locales/en/auth.json';
 import enCommon from './locales/en/common.json';
 import enEquipment from './locales/en/equipment.json';
@@ -52,6 +55,7 @@ import enProfile from './locales/en/profile.json';
 import enPush from './locales/en/push.json';
 import esAdmin from './locales/es/admin.json';
 import esAnnouncements from './locales/es/announcements.json';
+import esAttendance from './locales/es/attendance.json';
 import esAuth from './locales/es/auth.json';
 import esCommon from './locales/es/common.json';
 import esEquipment from './locales/es/equipment.json';
@@ -66,6 +70,7 @@ import esProfile from './locales/es/profile.json';
 import esPush from './locales/es/push.json';
 import faAdmin from './locales/fa/admin.json';
 import faAnnouncements from './locales/fa/announcements.json';
+import faAttendance from './locales/fa/attendance.json';
 import faAuth from './locales/fa/auth.json';
 import faCommon from './locales/fa/common.json';
 import faEquipment from './locales/fa/equipment.json';
@@ -95,6 +100,7 @@ const resources = {
     announcements: caAnnouncements,
     events: caEvents,
     knowledge: caKnowledge,
+    attendance: caAttendance,
   },
   es: {
     common: esCommon,
@@ -111,6 +117,7 @@ const resources = {
     announcements: esAnnouncements,
     events: esEvents,
     knowledge: esKnowledge,
+    attendance: esAttendance,
   },
   en: {
     common: enCommon,
@@ -127,6 +134,7 @@ const resources = {
     announcements: enAnnouncements,
     events: enEvents,
     knowledge: enKnowledge,
+    attendance: enAttendance,
   },
   ar: {
     common: arCommon,
@@ -143,6 +151,7 @@ const resources = {
     announcements: arAnnouncements,
     events: arEvents,
     knowledge: arKnowledge,
+    attendance: arAttendance,
   },
   fa: {
     common: faCommon,
@@ -159,6 +168,7 @@ const resources = {
     announcements: faAnnouncements,
     events: faEvents,
     knowledge: faKnowledge,
+    attendance: faAttendance,
   },
 };
 

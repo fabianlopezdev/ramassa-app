@@ -180,6 +180,24 @@ values
     now() - interval '1 day',
     null,
     now() - interval '6 hours'
+  ),
+  (
+    '5eed0000-0000-4000-8003-000000000005',
+    '5eed0000-0000-4000-8000-000000000000',
+    '5eed0000-0000-4000-8002-000000000001',
+    '{"ca":"Sessió d''entrenament d''avui","es":"Sesión de entrenamiento de hoy","en":"Today''s training session","ar":"جلسة تدريب اليوم","fa":"جلسهٔ تمرین امروز"}',
+    '{"ca":"Sessió preparada per practicar el registre d''assistència al camp.","es":"Sesión preparada para practicar el registro de asistencia en el campo.","en":"A session ready for field attendance practice.","ar":"جلسة جاهزة لتسجيل الحضور في الملعب.","fa":"جلسه‌ای آماده برای ثبت حضور در زمین."}',
+    'Camp Municipal de Vic',
+    'https://maps.google.com/?q=Camp+Municipal+de+Vic',
+    (date_trunc('day', now() at time zone 'Europe/Madrid') + interval '18 hours') at time zone 'Europe/Madrid',
+    (date_trunc('day', now() at time zone 'Europe/Madrid') + interval '19 hours 30 minutes') at time zone 'Europe/Madrid',
+    null,
+    24,
+    'confirm',
+    'published',
+    now() - interval '1 day',
+    null,
+    now() - interval '1 day'
   )
 on conflict (id) do nothing;
 
@@ -597,8 +615,84 @@ values
     '5eed0000-0000-4000-8000-000000000013',
     'confirmed',
     now() - interval '6 hours'
+  ),
+  (
+    '5eed0000-0000-4000-8006-000000000004',
+    '5eed0000-0000-4000-8000-000000000000',
+    '5eed0000-0000-4000-8003-000000000005',
+    '5eed0000-0000-4000-8000-000000000011',
+    'confirmed',
+    now() - interval '3 hours'
+  ),
+  (
+    '5eed0000-0000-4000-8006-000000000005',
+    '5eed0000-0000-4000-8000-000000000000',
+    '5eed0000-0000-4000-8003-000000000005',
+    '5eed0000-0000-4000-8000-000000000012',
+    'confirmed',
+    now() - interval '2 hours'
+  ),
+  (
+    '5eed0000-0000-4000-8006-000000000006',
+    '5eed0000-0000-4000-8000-000000000000',
+    '5eed0000-0000-4000-8003-000000000005',
+    '5eed0000-0000-4000-8000-000000000013',
+    'confirmed',
+    now() - interval '1 hour'
   )
 on conflict (id) do nothing;
+
+-- Attendance (RAPP-38) -------------------------------------------------------------
+-- Today's sheet starts with all three visible states and the first upcoming
+-- weekly occurrence is complete. That makes in-progress, complete, and empty
+-- overview states reachable after every reset, while the field screen remains
+-- safe to tap through during offline/realtime QA.
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"5eed0000-0000-4000-8000-000000000002","role":"authenticated"}',
+  false
+);
+
+insert into public.attendance (occurrence_id, player_id, status, marked_at)
+select
+  occurrence.id,
+  fixture.player_id,
+  fixture.status,
+  now() - interval '30 minutes'
+from public.event_occurrences as occurrence
+cross join (
+  values
+    ('5eed0000-0000-4000-8000-000000000011'::uuid, 'present'),
+    ('5eed0000-0000-4000-8000-000000000012'::uuid, 'absent'),
+    ('5eed0000-0000-4000-8000-000000000013'::uuid, 'excused')
+) as fixture(player_id, status)
+where occurrence.event_id = '5eed0000-0000-4000-8003-000000000005'
+on conflict (occurrence_id, player_id) do nothing;
+
+insert into public.attendance (occurrence_id, player_id, status, marked_at)
+select
+  occurrence.id,
+  participant.id,
+  case (right(participant.id::text, 1)::integer % 3)
+    when 0 then 'present'
+    when 1 then 'absent'
+    else 'excused'
+  end,
+  now() - interval '1 hour'
+from public.event_occurrences as occurrence
+cross join public.profiles as participant
+where occurrence.id = (
+    select first_occurrence.id
+    from public.event_occurrences as first_occurrence
+    where first_occurrence.event_id = '5eed0000-0000-4000-8003-000000000001'
+    order by first_occurrence.starts_at
+    limit 1
+  )
+  and participant.role = 'player'
+  and participant.is_active
+on conflict (occurrence_id, player_id) do nothing;
+
+select set_config('request.jwt.claims', '{}', false);
 
 -- Equipment deliveries (RAPP-27) -------------------------------------------------------
 --
@@ -776,7 +870,9 @@ set created_by = '5eed0000-0000-4000-8000-000000000002'
 where id in (
   '5eed0000-0000-4000-8003-000000000001',
   '5eed0000-0000-4000-8003-000000000002',
-  '5eed0000-0000-4000-8003-000000000003'
+  '5eed0000-0000-4000-8003-000000000003',
+  '5eed0000-0000-4000-8003-000000000004',
+  '5eed0000-0000-4000-8003-000000000005'
 );
 
 -- Knowledge base ---------------------------------------------------------------
