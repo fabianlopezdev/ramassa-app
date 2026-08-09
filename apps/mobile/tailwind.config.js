@@ -17,6 +17,7 @@ module.exports = {
       spacing: withPixelUnit(tokens.spacing),
       borderRadius: withPixelUnit(tokens.radius),
       fontSize: withPixelUnit(tokens.fontSize),
+      lineHeight: withPixelUnit(tokens.lineHeight),
       fontFamily: tokens.fontFamily,
       // WCAG AA touch targets (hard constraint): `min-h-min`/`min-w-min` = 48dp,
       // `min-h-recommended`/`min-w-recommended` = 56dp for player-facing controls.

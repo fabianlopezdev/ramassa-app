@@ -47,6 +47,10 @@ export const tokens = {
 
   fontSize: { xs: 12, sm: 14, md: 16, lg: 18, xl: 20, '2xl': 24, '3xl': 30, '4xl': 36 },
 
+  // Long body copy needs enough room for the bundled Arabic and Farsi fonts.
+  // 27dp at the 16dp body size is approximately 1.7em on every platform.
+  lineHeight: { body: 27 },
+
   // Font families are named here; the actual font files (which must render Arabic
   // and Farsi as a first-class concern, per the SPEC Design Direction) are bundled
   // per app. `sans` is the Latin/Cyrillic default; `arabic` and `farsi` carry the
@@ -103,7 +107,14 @@ type TokenTree = { readonly [key: string]: TokenLeaf | TokenTree };
 export function tokensToCssVariables(source: TokenTree = tokens, prefix = 'ramassa'): string {
   const declarations: string[] = [];
 
-  const dimensionGroups = new Set(['spacing', 'radius', 'fontSize', 'tapTarget', 'contentWidth']);
+  const dimensionGroups = new Set([
+    'spacing',
+    'radius',
+    'fontSize',
+    'lineHeight',
+    'tapTarget',
+    'contentWidth',
+  ]);
 
   const walk = (value: unknown, path: string[], group: string | null): void => {
     if (Array.isArray(value)) {

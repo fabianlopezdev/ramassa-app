@@ -144,7 +144,7 @@ export default function TermsStepScreen() {
       }}
     >
       <View style={continuousCorners} className="rounded-md bg-neutral-50 p-md">
-        <Text className={`text-start text-md leading-6 text-neutral-800 ${languageFontClass}`}>
+        <Text className={`text-start text-md leading-body text-neutral-800 ${languageFontClass}`}>
           {t('termsBody')}
         </Text>
       </View>

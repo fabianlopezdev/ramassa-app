@@ -8,6 +8,7 @@ test('tokens expose the full expected shape', () => {
   expect(tokens.radius.lg).toBe(16);
   expect(tokens.spacing.md).toBe(16);
   expect(tokens.fontSize.md).toBe(16);
+  expect(tokens.lineHeight.body).toBe(27);
   expect(tokens.fontFamily.arabic.length).toBeGreaterThan(0);
   expect(tokens.fontFamily.farsi.length).toBeGreaterThan(0);
 });
@@ -39,6 +40,7 @@ test('tokensToCssVariables derives CSS custom properties from the tokens', () =>
   // Dimensions carry a px unit; unitless thresholds do not.
   expect(css).toContain('--ramassa-radius-lg: 16px;');
   expect(css).toContain('--ramassa-spacing-md: 16px;');
+  expect(css).toContain('--ramassa-line-height-body: 27px;');
   expect(css).toContain('--ramassa-tap-target-recommended: 56px;');
   expect(css).toContain('--ramassa-content-width-form: 480px;');
   expect(css).toContain('--ramassa-forum-auto-hide-flag-threshold: 3;');
