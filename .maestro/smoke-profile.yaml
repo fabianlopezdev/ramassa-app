@@ -37,6 +37,7 @@ env:
   # only mean this flow put it there. Maestro's inputText cannot type Arabic
   # script; the pgTAP suite covers that storage path server-side instead.
   NEW_BIRTHPLACE: 'Homs'
+  NEW_MUNICIPALITY: 'Gurb'
   ACCOUNTS_SECTION: Accounts and roles
   SHOW_ALL_ACCOUNTS: Show all
   PLAYER_EMAIL: '{{player:email}}'
@@ -297,6 +298,62 @@ env:
 - waitForAnimationToEnd:
     timeout: 1500
 
+# Municipality is an IDESCAT picker, not a text field. Drive the full search
+# path to a non-pinned Osona municipality and keep its canonical result in the
+# same save whose server round-trip this flow already proves.
+- repeat:
+    times: 20
+    while:
+      notVisible:
+        id: 'municipality-picker-open'
+    commands:
+      - swipe:
+          start: 50%, 45%
+          end: 50%, 25%
+          duration: 900
+      - waitForAnimationToEnd:
+          timeout: 1500
+- tapOn:
+    id: 'municipality-picker-open'
+- extendedWaitUntil:
+    visible:
+      id: 'municipality-search-input'
+    timeout: 15000
+- tapOn:
+    id: 'municipality-search-input'
+- inputText: ${NEW_MUNICIPALITY}
+- extendedWaitUntil:
+    visible:
+      id: 'municipality-option-081000'
+    timeout: 15000
+# Maestro's injected keyboards can ignore the high-level hide command even
+# though the field declares a Done action. Tap that action key directly.
+- tapOn:
+    point: 91%, 91%
+- waitForAnimationToEnd:
+    timeout: 1500
+- runFlow:
+    when:
+      platform: ANDROID
+    commands:
+      - tapOn:
+          point: 20%, 29%
+- runFlow:
+    when:
+      platform: IOS
+    commands:
+      - tapOn:
+          point: 20%, 24%
+- extendedWaitUntil:
+    notVisible:
+      id: 'municipality-search-input'
+    timeout: 15000
+- extendedWaitUntil:
+    visible:
+      id: 'municipality-picker-open'
+    timeout: 15000
+- assertVisible: '^${NEW_MUNICIPALITY}$'
+
 # Save. The button sits below the fold on a form this long once the keyboard
 # has been up. It is dismissed above, but the form keeps its scroll position.
 - repeat:
@@ -310,6 +367,22 @@ env:
           duration: 900
       - waitForAnimationToEnd:
           timeout: 1500
+# iOS exposes the clipped Save node in its accessibility tree one row before
+# the ScrollView has actually painted it. Move the final consent row upward so
+# the primary action is physically on screen before tapping it.
+- runFlow:
+    when:
+      platform: IOS
+    commands:
+      - swipe:
+          start: 50%, 80%
+          end: 50%, 50%
+          duration: 900
+      - waitForAnimationToEnd:
+          timeout: 1500
+- extendedWaitUntil:
+    visible: '^${SAVE_ACTION}$'
+    timeout: 15000
 # Keyed on the EDIT BUTTON, not on the profile heading.
 #
 # Returning from the editor restores the scroll position this flow left the
@@ -435,6 +508,20 @@ env:
           timeout: 1500
 - extendedWaitUntil:
     visible: '.*${NEW_BIRTHPLACE}.*'
+    timeout: 30000
+- repeat:
+    times: 20
+    while:
+      notVisible: '.*${NEW_MUNICIPALITY}.*'
+    commands:
+      - swipe:
+          start: 50%, 60%
+          end: 50%, 40%
+          duration: 900
+      - waitForAnimationToEnd:
+          timeout: 1500
+- extendedWaitUntil:
+    visible: '.*${NEW_MUNICIPALITY}.*'
     timeout: 30000
 
 # The erasure form is unreachable for the player used above because the seed

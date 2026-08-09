@@ -296,10 +296,64 @@ env:
     timeout: 20000
 
 # ── Step 3 ─────────────────────────────────────────────────────────────────
+# Municipality is optional, but when answered it must come from IDESCAT. Search
+# for a non-pinned value so this proves opening, filtering and selection rather
+# than only the common-chip shortcut.
+- repeat:
+    times: 10
+    while:
+      notVisible:
+        id: 'municipality-picker-open'
+    commands:
+      - swipe:
+          start: 50%, 45%
+          end: 50%, 20%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 1200
+- tapOn:
+    id: 'municipality-picker-open'
+- extendedWaitUntil:
+    visible:
+      id: 'municipality-search-input'
+    timeout: 15000
+- tapOn:
+    id: 'municipality-search-input'
+- inputText: 'Girona'
+- extendedWaitUntil:
+    visible:
+      id: 'municipality-option-170792'
+    timeout: 15000
+# Maestro's injected keyboards can ignore the high-level hide command even
+# though the field declares a Done action. Tap that action key directly.
+- tapOn:
+    point: 91%, 91%
+- waitForAnimationToEnd:
+    timeout: 1500
+- runFlow:
+    when:
+      platform: ANDROID
+    commands:
+      - tapOn:
+          point: 20%, 29%
+- runFlow:
+    when:
+      platform: IOS
+    commands:
+      - tapOn:
+          point: 20%, 24%
+- extendedWaitUntil:
+    notVisible:
+      id: 'municipality-search-input'
+    timeout: 15000
+- extendedWaitUntil:
+    visible:
+      id: 'municipality-picker-open'
+    timeout: 15000
+- assertVisible: '^Girona$'
+
 # Four required answers, all chips: referring entity, dependants, clothing size
-# and shoe size. Contact fields are optional and left empty on purpose - an
-# empty optional field is the state most women will actually submit, and it is
-# the one that would break if a field were quietly made required upstream.
+# and shoe size. Other contact fields are optional and left empty on purpose.
 - repeat:
     times: 10
     while:

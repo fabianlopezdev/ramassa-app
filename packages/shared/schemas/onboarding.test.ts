@@ -150,6 +150,12 @@ describe('logisticsStepSchema', () => {
     expect(parsed.numDependents).toBe(0);
   });
 
+  test('municipality accepts only a canonical IDESCAT value when provided', () => {
+    expect(logisticsStepSchema.safeParse({ ...validLogistics, city: 'Vic' }).success).toBe(true);
+    expect(logisticsStepSchema.safeParse({ ...validLogistics, city: 'Vich' }).success).toBe(false);
+    expect(logisticsStepSchema.safeParse({ ...validLogistics, city: ' vic ' }).success).toBe(false);
+  });
+
   test('a malformed phone or postal code fails when provided', () => {
     expect(logisticsStepSchema.safeParse({ ...validLogistics, phone: 'call me' }).success).toBe(
       false,

@@ -53,11 +53,15 @@
   "errorNieFormat": "NIE یک حرف، هفت رقم و یک حرف است. مثلاً: X1234567L.",
   "errorPhoneFormat": "تلفن را با پیش‌شماره بنویسید، مثلاً ‎+34 600 111 222.",
   "errorPostalFormat": "کد پستی پنج رقم است.",
+  "errorMunicipalityInvalid": "یک شهر را از فهرست انتخاب کنید.",
   "errorDependentsRange": "بگویید چند نفر، بین ۱ و ۱۵.",
   "errorTermsRequired": "برای ادامه باید شرایط را بپذیرید. روی «شرایط را خوانده‌ام و می‌پذیرم» بزنید.",
   "completionFailed": "ذخیره اطلاعات ممکن نشد. دوباره تلاش کنید.",
   "cancelAction": "انصراف",
   "searchCountryPlaceholder": "کشورتان را جست‌وجو کنید",
   "noCountryResults": "کشوری با این نام نیست. با حروف کمتری امتحان کنید.",
+  "searchMunicipalityPlaceholder": "شهرتان را جست‌وجو کنید",
+  "noMunicipalityResults": "شهری با این نام نیست. با حروف کمتری امتحان کنید.",
+  "municipalityNone": "خالی بگذارید",
   "languageNativeName": "فارسی"
 }

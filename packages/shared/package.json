@@ -12,6 +12,7 @@
     "./env": "./env.ts",
     "./i18n": "./i18n/index.ts",
     "./i18n/countries": "./i18n/countries.ts",
+    "./i18n/municipalities": "./i18n/municipalities.ts",
     "./schemas": "./schemas/index.ts",
     "./supabase": "./lib/supabase.ts",
     "./auth": "./auth/index.ts",

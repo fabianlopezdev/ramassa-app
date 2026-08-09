@@ -48,6 +48,17 @@
       "waitFor": "text={{onboarding:documentTypeLabel}} >> visible=true"
     },
     {
+      "label": "municipality-open",
+      "click": "[data-testid=\"municipality-picker-open\"]",
+      "waitFor": "[data-testid=\"municipality-search-input\"]"
+    },
+    {
+      "label": "municipality-search",
+      "fill": [{ "selector": "[data-testid=\"municipality-search-input\"]", "value": "Girona" }],
+      "click": "[data-testid=\"municipality-option-170792\"]",
+      "waitFor": "text=Girona"
+    },
+    {
       "label": "back-to-profile",
       "click": "[aria-label=\"{{onboarding:backAction}}\"]:visible",
       "waitFor": "text={{profile:intro}} >> visible=true"

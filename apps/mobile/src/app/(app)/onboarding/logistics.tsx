@@ -6,6 +6,7 @@
  */
 
 import { AuthTextField } from '@/components/auth/auth-text-field';
+import { MunicipalityPicker } from '@/components/onboarding/municipality-picker';
 import { OptionChip } from '@/components/onboarding/option-chip';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
 import { playHaptic } from '@/lib/haptics/haptics';
@@ -20,18 +21,6 @@ import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { prefilledReferenceEntity } from '@ramassa/shared/accounts';
 import { CLOTHING_SIZES, SHOE_SIZES, type LogisticsStep } from '@ramassa/shared/schemas';
-
-/**
- * The city box takes a wider share of its row than the postal-code box beside
- * it: a postal code is exactly five digits and never grows, while a
- * municipality name routinely runs past twenty characters.
- *
- * A NAMED class rather than a bare `flex-[1.6]` in the JSX, for the same reason
- * as the wizard's year field: no design token expresses a flex proportion
- * (contract rule 8 covers colour, spacing, radius and type), so the name is
- * what stops the ratio being an unexplained number.
- */
-const CITY_FIELD_WIDTH_CLASS = 'flex-[1.6]';
 
 export default function LogisticsStepScreen() {
   const { t } = useTranslation('onboarding');
@@ -146,39 +135,33 @@ export default function LogisticsStepScreen() {
           />
         )}
       />
-      <View className="flex-row gap-sm">
-        <View className={CITY_FIELD_WIDTH_CLASS}>
-          <Controller
-            control={control}
-            name="city"
-            render={({ field }) => (
-              <AuthTextField
-                label={t('cityLabel')}
-                value={field.value ?? ''}
-                onChangeText={field.onChange}
-                onBlur={field.onBlur}
-              />
-            )}
+      <Controller
+        control={control}
+        name="city"
+        render={({ field }) => (
+          <MunicipalityPicker
+            label={t('cityLabel')}
+            value={field.value ?? ''}
+            onChange={field.onChange}
+            errorMessage={errors.city ? t('errorMunicipalityInvalid') : undefined}
           />
-        </View>
-        <View className="flex-1">
-          <Controller
-            control={control}
-            name="postalCode"
-            render={({ field }) => (
-              <AuthTextField
-                label={t('postalCodeLabel')}
-                value={field.value ?? ''}
-                onChangeText={field.onChange}
-                onBlur={field.onBlur}
-                errorMessage={errors.postalCode ? t('errorPostalFormat') : undefined}
-                keyboardType="number-pad"
-                maxLength={5}
-              />
-            )}
+        )}
+      />
+      <Controller
+        control={control}
+        name="postalCode"
+        render={({ field }) => (
+          <AuthTextField
+            label={t('postalCodeLabel')}
+            value={field.value ?? ''}
+            onChangeText={field.onChange}
+            onBlur={field.onBlur}
+            errorMessage={errors.postalCode ? t('errorPostalFormat') : undefined}
+            keyboardType="number-pad"
+            maxLength={5}
           />
-        </View>
-      </View>
+        )}
+      />
 
       <View className="gap-xs">
         <Text className={`text-start text-md font-medium text-neutral-800 ${languageFontClass}`}>

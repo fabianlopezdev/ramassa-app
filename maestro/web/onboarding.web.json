@@ -61,6 +61,17 @@
       "waitFor": "text={{onboarding:logisticsIntro}}"
     },
     {
+      "label": "municipality-open",
+      "click": "[data-testid=\"municipality-picker-open\"]",
+      "waitFor": "[data-testid=\"municipality-search-input\"]"
+    },
+    {
+      "label": "municipality-search",
+      "fill": [{ "selector": "[data-testid=\"municipality-search-input\"]", "value": "Girona" }],
+      "click": "[data-testid=\"municipality-option-170792\"]",
+      "waitFor": "text=Girona"
+    },
+    {
       "label": "entity-none",
       "click": "[aria-label=\"{{onboarding:referenceEntityNone}}\"]",
       "waitTimeout": 400

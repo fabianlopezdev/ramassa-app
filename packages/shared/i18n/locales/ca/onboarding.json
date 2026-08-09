@@ -53,11 +53,15 @@
   "errorNieFormat": "Un NIE és una lletra, set números i una lletra. Per exemple: X1234567L.",
   "errorPhoneFormat": "Escriu el telèfon amb el prefix, per exemple +34 600 111 222.",
   "errorPostalFormat": "Un codi postal són cinc números.",
+  "errorMunicipalityInvalid": "Tria un municipi de la llista.",
   "errorDependentsRange": "Indica quantes, entre 1 i 15.",
   "errorTermsRequired": "Per continuar has d'acceptar els termes. Toca \"He llegit i accepto els termes\".",
   "completionFailed": "No hem pogut guardar les teves dades. Torna-ho a provar.",
   "cancelAction": "Cancel·la",
   "searchCountryPlaceholder": "Busca el teu país",
   "noCountryResults": "Cap país amb aquest nom. Prova d'escriure menys lletres.",
+  "searchMunicipalityPlaceholder": "Busca el teu municipi",
+  "noMunicipalityResults": "Cap municipi amb aquest nom. Prova d'escriure menys lletres.",
+  "municipalityNone": "No l'indico",
   "languageNativeName": "Català"
 }

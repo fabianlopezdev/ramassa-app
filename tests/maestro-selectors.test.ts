@@ -257,6 +257,15 @@ describe('Maestro selector contracts', () => {
     expect(smoke).toMatch(/Keyed on the EDIT BUTTON[\s\S]*?notVisible: '\^\$\{EDIT_ACTION\}\$'/);
   });
 
+  test('onboarding and profile smoke flows drive municipality search by stable IDs', async () => {
+    for (const relativePath of ['.maestro/smoke-onboarding.yaml', '.maestro/smoke-profile.yaml']) {
+      const source = await Bun.file(path.join(repoRoot, relativePath)).text();
+      expect(source).toContain("id: 'municipality-picker-open'");
+      expect(source).toContain("id: 'municipality-search-input'");
+      expect(source).toMatch(/id: 'municipality-option-\d{6}'/);
+    }
+  });
+
   test('capture flows return from pushed records on fixed tabs before restoring scroll', async () => {
     const events = await Bun.file(path.join(repoRoot, 'maestro/flows/events-signup.yaml')).text();
     const home = await Bun.file(path.join(repoRoot, 'maestro/flows/home-feed.yaml')).text();

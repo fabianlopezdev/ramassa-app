@@ -25,6 +25,7 @@ import { ErrorCodeLine, FailureNotice } from '@/components/error-code-line';
 import { ShakeOnError } from '@/components/motion/shake-on-error';
 import { SkeletonPulse } from '@/components/motion/skeleton-pulse';
 import { CountryPicker } from '@/components/onboarding/country-picker';
+import { MunicipalityPicker } from '@/components/onboarding/municipality-picker';
 import { OptionChip } from '@/components/onboarding/option-chip';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
 import { playHaptic } from '@/lib/haptics/haptics';
@@ -388,11 +389,11 @@ export default function ProfileEditScreen() {
         control={control}
         name="city"
         render={({ field }) => (
-          <AuthTextField
+          <MunicipalityPicker
             label={t('onboarding:cityLabel')}
             value={field.value ?? ''}
-            onChangeText={field.onChange}
-            onBlur={field.onBlur}
+            onChange={field.onChange}
+            errorMessage={errors.city ? t('onboarding:errorMunicipalityInvalid') : undefined}
           />
         )}
       />

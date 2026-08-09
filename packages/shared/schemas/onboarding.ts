@@ -13,6 +13,7 @@
  */
 
 import { z } from 'zod';
+import { isCanonicalMunicipality } from '../i18n/municipalities';
 import { languageCodeSchema } from './language';
 
 /** Program constraint: younger players are staff-assisted edge cases with staff-created accounts. */
@@ -30,6 +31,15 @@ const optionalText = z
   .max(200)
   .optional()
   .transform((value) => (value === '' ? undefined : value));
+
+const optionalMunicipality = z
+  .string()
+  .trim()
+  .optional()
+  .transform((value) => (value === '' ? undefined : value))
+  .refine((value) => value === undefined || isCanonicalMunicipality(value), {
+    message: 'expected a canonical IDESCAT municipality',
+  });
 
 function ageInYears(isoDate: string): number {
   const birth = new Date(`${isoDate}T00:00:00Z`);
@@ -147,7 +157,7 @@ const optionalPhone = z
 export const logisticsFields = z.object({
   phone: optionalPhone,
   address: optionalText,
-  city: optionalText,
+  city: optionalMunicipality,
   postalCode: z
     .string()
     .trim()

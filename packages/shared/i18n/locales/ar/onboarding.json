@@ -53,11 +53,15 @@
   "errorNieFormat": "رقم NIE هو حرف ثم سبعة أرقام ثم حرف. مثال: X1234567L.",
   "errorPhoneFormat": "اكتبي الهاتف مع رمز البلد، مثل ‎+34 600 111 222.",
   "errorPostalFormat": "الرمز البريدي خمسة أرقام.",
+  "errorMunicipalityInvalid": "اختاري بلدية من القائمة.",
   "errorDependentsRange": "أخبرينا كم، بين 1 و15.",
   "errorTermsRequired": "للمتابعة عليكِ الموافقة على الشروط. اضغطي على \"قرأتُ الشروط وأوافق عليها\".",
   "completionFailed": "تعذّر حفظ بياناتك. حاولي مرة أخرى.",
   "cancelAction": "إلغاء",
   "searchCountryPlaceholder": "ابحثي عن بلدك",
   "noCountryResults": "لا يوجد بلد بهذا الاسم. جرّبي كتابة حروف أقل.",
+  "searchMunicipalityPlaceholder": "ابحثي عن بلديتك",
+  "noMunicipalityResults": "لا توجد بلدية بهذا الاسم. جرّبي كتابة حروف أقل.",
+  "municipalityNone": "لن أحددها",
   "languageNativeName": "العربية"
 }
