@@ -21,11 +21,13 @@ import { Route as StaffContentRouteImport } from './routes/_staff.content'
 import { Route as StaffAttendanceRouteImport } from './routes/_staff.attendance'
 import { Route as StaffParticipantsIndexRouteImport } from './routes/_staff.participants.index'
 import { Route as StaffContentIndexRouteImport } from './routes/_staff.content.index'
+import { Route as StaffAttendanceIndexRouteImport } from './routes/_staff.attendance.index'
 import { Route as EntityPortalIndexRouteImport } from './routes/_entity.portal.index'
 import { Route as StaffParticipantsNewRouteImport } from './routes/_staff.participants.new'
 import { Route as StaffParticipantsInvitesRouteImport } from './routes/_staff.participants.invites'
 import { Route as StaffParticipantsDeletionRequestsRouteImport } from './routes/_staff.participants.deletion-requests'
 import { Route as StaffParticipantsParticipantIdRouteImport } from './routes/_staff.participants.$participantId'
+import { Route as StaffAttendanceOccurrenceIdRouteImport } from './routes/_staff.attendance.$occurrenceId'
 import { Route as EntityPortalServicesRouteImport } from './routes/_entity.portal.services'
 import { Route as EntityPortalReferralsRouteImport } from './routes/_entity.portal.referrals'
 import { Route as EntityPortalMessagesRouteImport } from './routes/_entity.portal.messages'
@@ -99,6 +101,11 @@ const StaffContentIndexRoute = StaffContentIndexRouteImport.update({
   path: '/',
   getParentRoute: () => StaffContentRoute,
 } as any)
+const StaffAttendanceIndexRoute = StaffAttendanceIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => StaffAttendanceRoute,
+} as any)
 const EntityPortalIndexRoute = EntityPortalIndexRouteImport.update({
   id: '/portal/',
   path: '/portal/',
@@ -126,6 +133,12 @@ const StaffParticipantsParticipantIdRoute =
     id: '/participants/$participantId',
     path: '/participants/$participantId',
     getParentRoute: () => StaffRoute,
+  } as any)
+const StaffAttendanceOccurrenceIdRoute =
+  StaffAttendanceOccurrenceIdRouteImport.update({
+    id: '/$occurrenceId',
+    path: '/$occurrenceId',
+    getParentRoute: () => StaffAttendanceRoute,
   } as any)
 const EntityPortalServicesRoute = EntityPortalServicesRouteImport.update({
   id: '/portal/services',
@@ -209,7 +222,7 @@ const StaffContentAnnouncementsAnnouncementIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
-  '/attendance': typeof StaffAttendanceRoute
+  '/attendance': typeof StaffAttendanceRouteWithChildren
   '/content': typeof StaffContentRouteWithChildren
   '/dashboard': typeof StaffDashboardRoute
   '/messages': typeof StaffMessagesRoute
@@ -219,11 +232,13 @@ export interface FileRoutesByFullPath {
   '/portal/messages': typeof EntityPortalMessagesRoute
   '/portal/referrals': typeof EntityPortalReferralsRoute
   '/portal/services': typeof EntityPortalServicesRoute
+  '/attendance/$occurrenceId': typeof StaffAttendanceOccurrenceIdRoute
   '/participants/$participantId': typeof StaffParticipantsParticipantIdRoute
   '/participants/deletion-requests': typeof StaffParticipantsDeletionRequestsRoute
   '/participants/invites': typeof StaffParticipantsInvitesRoute
   '/participants/new': typeof StaffParticipantsNewRoute
   '/portal/': typeof EntityPortalIndexRoute
+  '/attendance/': typeof StaffAttendanceIndexRoute
   '/content/': typeof StaffContentIndexRoute
   '/participants/': typeof StaffParticipantsIndexRoute
   '/content/announcements/$announcementId': typeof StaffContentAnnouncementsAnnouncementIdRoute
@@ -240,7 +255,6 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
-  '/attendance': typeof StaffAttendanceRoute
   '/dashboard': typeof StaffDashboardRoute
   '/messages': typeof StaffMessagesRoute
   '/settings': typeof StaffSettingsRoute
@@ -249,11 +263,13 @@ export interface FileRoutesByTo {
   '/portal/messages': typeof EntityPortalMessagesRoute
   '/portal/referrals': typeof EntityPortalReferralsRoute
   '/portal/services': typeof EntityPortalServicesRoute
+  '/attendance/$occurrenceId': typeof StaffAttendanceOccurrenceIdRoute
   '/participants/$participantId': typeof StaffParticipantsParticipantIdRoute
   '/participants/deletion-requests': typeof StaffParticipantsDeletionRequestsRoute
   '/participants/invites': typeof StaffParticipantsInvitesRoute
   '/participants/new': typeof StaffParticipantsNewRoute
   '/portal': typeof EntityPortalIndexRoute
+  '/attendance': typeof StaffAttendanceIndexRoute
   '/content': typeof StaffContentIndexRoute
   '/participants': typeof StaffParticipantsIndexRoute
   '/content/announcements/$announcementId': typeof StaffContentAnnouncementsAnnouncementIdRoute
@@ -273,7 +289,7 @@ export interface FileRoutesById {
   '/_entity': typeof EntityRouteWithChildren
   '/_staff': typeof StaffRouteWithChildren
   '/login': typeof LoginRoute
-  '/_staff/attendance': typeof StaffAttendanceRoute
+  '/_staff/attendance': typeof StaffAttendanceRouteWithChildren
   '/_staff/content': typeof StaffContentRouteWithChildren
   '/_staff/dashboard': typeof StaffDashboardRoute
   '/_staff/messages': typeof StaffMessagesRoute
@@ -283,11 +299,13 @@ export interface FileRoutesById {
   '/_entity/portal/messages': typeof EntityPortalMessagesRoute
   '/_entity/portal/referrals': typeof EntityPortalReferralsRoute
   '/_entity/portal/services': typeof EntityPortalServicesRoute
+  '/_staff/attendance/$occurrenceId': typeof StaffAttendanceOccurrenceIdRoute
   '/_staff/participants/$participantId': typeof StaffParticipantsParticipantIdRoute
   '/_staff/participants/deletion-requests': typeof StaffParticipantsDeletionRequestsRoute
   '/_staff/participants/invites': typeof StaffParticipantsInvitesRoute
   '/_staff/participants/new': typeof StaffParticipantsNewRoute
   '/_entity/portal/': typeof EntityPortalIndexRoute
+  '/_staff/attendance/': typeof StaffAttendanceIndexRoute
   '/_staff/content/': typeof StaffContentIndexRoute
   '/_staff/participants/': typeof StaffParticipantsIndexRoute
   '/_staff/content/announcements/$announcementId': typeof StaffContentAnnouncementsAnnouncementIdRoute
@@ -316,11 +334,13 @@ export interface FileRouteTypes {
     | '/portal/messages'
     | '/portal/referrals'
     | '/portal/services'
+    | '/attendance/$occurrenceId'
     | '/participants/$participantId'
     | '/participants/deletion-requests'
     | '/participants/invites'
     | '/participants/new'
     | '/portal/'
+    | '/attendance/'
     | '/content/'
     | '/participants/'
     | '/content/announcements/$announcementId'
@@ -337,7 +357,6 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/login'
-    | '/attendance'
     | '/dashboard'
     | '/messages'
     | '/settings'
@@ -346,11 +365,13 @@ export interface FileRouteTypes {
     | '/portal/messages'
     | '/portal/referrals'
     | '/portal/services'
+    | '/attendance/$occurrenceId'
     | '/participants/$participantId'
     | '/participants/deletion-requests'
     | '/participants/invites'
     | '/participants/new'
     | '/portal'
+    | '/attendance'
     | '/content'
     | '/participants'
     | '/content/announcements/$announcementId'
@@ -379,11 +400,13 @@ export interface FileRouteTypes {
     | '/_entity/portal/messages'
     | '/_entity/portal/referrals'
     | '/_entity/portal/services'
+    | '/_staff/attendance/$occurrenceId'
     | '/_staff/participants/$participantId'
     | '/_staff/participants/deletion-requests'
     | '/_staff/participants/invites'
     | '/_staff/participants/new'
     | '/_entity/portal/'
+    | '/_staff/attendance/'
     | '/_staff/content/'
     | '/_staff/participants/'
     | '/_staff/content/announcements/$announcementId'
@@ -492,6 +515,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StaffContentIndexRouteImport
       parentRoute: typeof StaffContentRoute
     }
+    '/_staff/attendance/': {
+      id: '/_staff/attendance/'
+      path: '/'
+      fullPath: '/attendance/'
+      preLoaderRoute: typeof StaffAttendanceIndexRouteImport
+      parentRoute: typeof StaffAttendanceRoute
+    }
     '/_entity/portal/': {
       id: '/_entity/portal/'
       path: '/portal'
@@ -526,6 +556,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/participants/$participantId'
       preLoaderRoute: typeof StaffParticipantsParticipantIdRouteImport
       parentRoute: typeof StaffRoute
+    }
+    '/_staff/attendance/$occurrenceId': {
+      id: '/_staff/attendance/$occurrenceId'
+      path: '/$occurrenceId'
+      fullPath: '/attendance/$occurrenceId'
+      preLoaderRoute: typeof StaffAttendanceOccurrenceIdRouteImport
+      parentRoute: typeof StaffAttendanceRoute
     }
     '/_entity/portal/services': {
       id: '/_entity/portal/services'
@@ -647,6 +684,20 @@ const EntityRouteChildren: EntityRouteChildren = {
 const EntityRouteWithChildren =
   EntityRoute._addFileChildren(EntityRouteChildren)
 
+interface StaffAttendanceRouteChildren {
+  StaffAttendanceOccurrenceIdRoute: typeof StaffAttendanceOccurrenceIdRoute
+  StaffAttendanceIndexRoute: typeof StaffAttendanceIndexRoute
+}
+
+const StaffAttendanceRouteChildren: StaffAttendanceRouteChildren = {
+  StaffAttendanceOccurrenceIdRoute: StaffAttendanceOccurrenceIdRoute,
+  StaffAttendanceIndexRoute: StaffAttendanceIndexRoute,
+}
+
+const StaffAttendanceRouteWithChildren = StaffAttendanceRoute._addFileChildren(
+  StaffAttendanceRouteChildren,
+)
+
 interface StaffContentRouteChildren {
   StaffContentIndexRoute: typeof StaffContentIndexRoute
   StaffContentAnnouncementsAnnouncementIdRoute: typeof StaffContentAnnouncementsAnnouncementIdRoute
@@ -681,7 +732,7 @@ const StaffContentRouteWithChildren = StaffContentRoute._addFileChildren(
 )
 
 interface StaffRouteChildren {
-  StaffAttendanceRoute: typeof StaffAttendanceRoute
+  StaffAttendanceRoute: typeof StaffAttendanceRouteWithChildren
   StaffContentRoute: typeof StaffContentRouteWithChildren
   StaffDashboardRoute: typeof StaffDashboardRoute
   StaffMessagesRoute: typeof StaffMessagesRoute
@@ -694,7 +745,7 @@ interface StaffRouteChildren {
 }
 
 const StaffRouteChildren: StaffRouteChildren = {
-  StaffAttendanceRoute: StaffAttendanceRoute,
+  StaffAttendanceRoute: StaffAttendanceRouteWithChildren,
   StaffContentRoute: StaffContentRouteWithChildren,
   StaffDashboardRoute: StaffDashboardRoute,
   StaffMessagesRoute: StaffMessagesRoute,

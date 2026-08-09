@@ -22,6 +22,10 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabase';
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
+import {
+  fetchAttendanceHistory,
+  fetchAttendanceParticipantStats,
+} from '@ramassa/shared/attendance';
 import { fetchEquipmentDeliveries } from '@ramassa/shared/equipment';
 import {
   fetchParticipantActivity,
@@ -43,15 +47,20 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
         notes: [],
         activity: [],
         deliveries: [],
+        attendanceStats: null,
+        attendanceHistory: [],
         openDeletionRequestReason: undefined,
       };
     }
-    const [notes, activity, openRequests, deliveries] = await Promise.all([
-      fetchParticipantNotes(supabase, params.participantId),
-      fetchParticipantActivity(supabase, params.participantId),
-      fetchDeletionRequests(supabase, 'open'),
-      fetchEquipmentDeliveries(supabase, params.participantId),
-    ]);
+    const [notes, activity, openRequests, deliveries, attendanceStats, attendanceHistory] =
+      await Promise.all([
+        fetchParticipantNotes(supabase, params.participantId),
+        fetchParticipantActivity(supabase, params.participantId),
+        fetchDeletionRequests(supabase, 'open'),
+        fetchEquipmentDeliveries(supabase, params.participantId),
+        fetchAttendanceParticipantStats(supabase, params.participantId),
+        fetchAttendanceHistory(supabase, params.participantId),
+      ]);
     // Filtered here rather than asked for by participant: the queue read is one
     // round trip either way, and the same call feeds the staff-wide queue, so
     // there is one query to keep correct instead of two.
@@ -61,6 +70,8 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
       notes,
       activity,
       deliveries,
+      attendanceStats,
+      attendanceHistory,
       // `undefined` = she never asked. `null` = she asked and gave no reason.
       openDeletionRequestReason: hers === undefined ? undefined : hers.reason,
     };
@@ -69,8 +80,15 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
 });
 
 function ParticipantDetailPage() {
-  const { participant, notes, activity, deliveries, openDeletionRequestReason } =
-    Route.useLoaderData();
+  const {
+    participant,
+    notes,
+    activity,
+    deliveries,
+    attendanceStats,
+    attendanceHistory,
+    openDeletionRequestReason,
+  } = Route.useLoaderData();
 
   if (participant === null) {
     return <ParticipantNotFound />;
@@ -81,6 +99,8 @@ function ParticipantDetailPage() {
       notes={notes}
       activity={activity}
       deliveries={deliveries}
+      attendanceStats={attendanceStats}
+      attendanceHistory={attendanceHistory}
       openDeletionRequestReason={openDeletionRequestReason}
     />
   );

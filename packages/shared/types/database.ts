@@ -744,6 +744,24 @@ export type Database = {
           },
         ];
       };
+      municipality_catalog: {
+        Row: {
+          canonical: string;
+          code: string;
+          comarca_code: string;
+        };
+        Insert: {
+          canonical: string;
+          code: string;
+          comarca_code: string;
+        };
+        Update: {
+          canonical?: string;
+          code?: string;
+          comarca_code?: string;
+        };
+        Relationships: [];
+      };
       organizations: {
         Row: {
           available_languages: string[];
@@ -929,6 +947,13 @@ export type Database = {
           updated_at?: string;
         };
         Relationships: [
+          {
+            foreignKeyName: 'profiles_city_municipality_canonical_fkey';
+            columns: ['city'];
+            isOneToOne: false;
+            referencedRelation: 'municipality_catalog';
+            referencedColumns: ['canonical'];
+          },
           {
             foreignKeyName: 'profiles_org_id_fkey';
             columns: ['org_id'];
@@ -1164,7 +1189,168 @@ export type Database = {
       };
     };
     Views: {
-      [_ in never]: never;
+      attendance_category_stats: {
+        Row: {
+          absent_count: number | null;
+          attendance_rate: number | null;
+          category_color: string | null;
+          category_id: string | null;
+          category_name: Json | null;
+          event_count: number | null;
+          excused_count: number | null;
+          latest_occurrence_at: string | null;
+          marked_count: number | null;
+          occurrence_count: number | null;
+          org_id: string | null;
+          present_count: number | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'attendance_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      attendance_event_stats: {
+        Row: {
+          absent_count: number | null;
+          attendance_rate: number | null;
+          category_color: string | null;
+          category_id: string | null;
+          category_name: Json | null;
+          event_id: string | null;
+          event_location: string | null;
+          event_title: Json | null;
+          excused_count: number | null;
+          latest_occurrence_at: string | null;
+          marked_count: number | null;
+          occurrence_count: number | null;
+          org_id: string | null;
+          present_count: number | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'attendance_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      attendance_participant_stats: {
+        Row: {
+          absent_count: number | null;
+          attendance_rate: number | null;
+          excused_count: number | null;
+          first_name: string | null;
+          last_name: string | null;
+          latest_occurrence_at: string | null;
+          marked_count: number | null;
+          org_id: string | null;
+          player_id: string | null;
+          present_count: number | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'attendance_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'attendance_player_id_fkey';
+            columns: ['player_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      attendance_period_stats: {
+        Row: {
+          absent_count: number | null;
+          attendance_rate: number | null;
+          event_count: number | null;
+          excused_count: number | null;
+          marked_count: number | null;
+          occurrence_count: number | null;
+          org_id: string | null;
+          period_start: string | null;
+          present_count: number | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'attendance_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      attendance_report_rows: {
+        Row: {
+          attendance_id: string | null;
+          category_color: string | null;
+          category_id: string | null;
+          category_name: Json | null;
+          ends_at: string | null;
+          event_id: string | null;
+          event_location: string | null;
+          event_title: Json | null;
+          first_name: string | null;
+          last_name: string | null;
+          marked_at: string | null;
+          occurrence_id: string | null;
+          org_id: string | null;
+          player_id: string | null;
+          starts_at: string | null;
+          status: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'attendance_occurrence_id_fkey';
+            columns: ['occurrence_id'];
+            isOneToOne: false;
+            referencedRelation: 'event_occurrences';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'attendance_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'attendance_player_id_fkey';
+            columns: ['player_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      municipality_compatibility_report: {
+        Row: {
+          legacy_value: string | null;
+          profile_count: number | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'profiles_city_municipality_canonical_fkey';
+            columns: ['legacy_value'];
+            isOneToOne: false;
+            referencedRelation: 'municipality_catalog';
+            referencedColumns: ['canonical'];
+          },
+        ];
+      };
     };
     Functions: {
       anonymize_participant: {
@@ -1344,6 +1530,10 @@ export type Database = {
           terms_accepted_at: string;
           updated_at: string;
         }[];
+      };
+      has_own_attendance_for_event: {
+        Args: { attended_event_id: string };
+        Returns: boolean;
       };
       immutable_unaccent: { Args: { value: string }; Returns: string };
       is_admin: { Args: never; Returns: boolean };

@@ -15,6 +15,7 @@ import { FadeSlideIn } from '@/components/motion/fade-slide-in';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { ShakeOnError } from '@/components/motion/shake-on-error';
 import { SkeletonPulse } from '@/components/motion/skeleton-pulse';
+import { AttendanceHistorySection } from '@/components/profile/attendance-history-section';
 import { LanguageSwitcher } from '@/components/profile/language-switcher';
 import { ProfileRow, ProfileSection } from '@/components/profile/profile-section';
 import { logout } from '@/lib/auth';
@@ -233,6 +234,10 @@ export default function ProfileScreen() {
                 value={profile.media_consent ? t('mediaConsentGranted') : t('mediaConsentDenied')}
               />
             </ProfileSection>
+          </FadeSlideIn>
+
+          <FadeSlideIn index={4}>
+            <AttendanceHistorySection />
           </FadeSlideIn>
 
           <AuthSubmitButton label={t('editAction')} onPress={() => router.push('/profile-edit')} />

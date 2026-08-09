@@ -3,6 +3,7 @@ import {
   attendanceOverviewSearchSchema,
   buildAttendanceOverview,
   buildAttendanceSheet,
+  calculateAttendanceRate,
   filterAttendanceOverview,
   mergeAttendanceMark,
   mergeAttendanceMarks,
@@ -10,6 +11,17 @@ import {
   nextAttendanceStatus,
   type AttendanceMark,
 } from './attendance';
+
+describe('attendance reporting rates', () => {
+  test('excludes excused marks from the denominator', () => {
+    expect(calculateAttendanceRate({ present: 2, absent: 1, excused: 7 })).toBe(66.67);
+  });
+
+  test('returns zero when every mark is excused or there are no marks', () => {
+    expect(calculateAttendanceRate({ present: 0, absent: 0, excused: 3 })).toBe(0);
+    expect(calculateAttendanceRate({ present: 0, absent: 0, excused: 0 })).toBe(0);
+  });
+});
 
 const occurrence = {
   id: 'occurrence-1',

@@ -1,12 +1,17 @@
+import { AttendanceDashboard } from '@/components/attendance/attendance-dashboard';
 import { Button } from '@/components/ui/button';
 import { logout } from '@/lib/auth';
 import { safeAsync } from '@/lib/observability';
+import { supabase } from '@/lib/supabase';
 import { createFileRoute } from '@tanstack/react-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { fetchAttendanceDashboard } from '@ramassa/shared/attendance';
 import { AppError } from '@ramassa/shared/errors';
 
 export const Route = createFileRoute('/_staff/dashboard')({
+  ssr: false,
+  loader: () => fetchAttendanceDashboard(supabase),
   component: DashboardPage,
 });
 
@@ -46,11 +51,13 @@ function DevForcedErrorTriggers() {
 
 function DashboardPage() {
   const { t } = useTranslation(['admin', 'auth']);
+  const attendance = Route.useLoaderData();
   // A section, not a main: the staff layout's SidebarInset is already the
   // page's single `main` landmark (RAPP-16).
   return (
     <section className="flex flex-col items-start gap-6 p-6">
       <h1 className="text-lg font-semibold text-foreground">{t('admin:dashboardTitle')}</h1>
+      <AttendanceDashboard data={attendance} />
       {/* Signing out clears the session; RequireAuth then redirects to /login. */}
       <Button variant="outline" onClick={() => void logout()}>
         {t('auth:signOutAction')}

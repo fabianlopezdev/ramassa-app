@@ -16,6 +16,7 @@
  * instead of as an optimistic edit that looks saved and is not.
  */
 
+import { ParticipantAttendanceReport } from '@/components/attendance/attendance-report';
 import { DetailSection } from '@/components/detail/detail-section';
 import { ParticipantActivity } from '@/components/participants/participant-activity';
 import { ParticipantEditForm } from '@/components/participants/participant-edit-form';
@@ -32,6 +33,7 @@ import { Link, useRouter } from '@tanstack/react-router';
 import { ArrowLeft } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { AttendanceParticipantStats, AttendanceReportRow } from '@ramassa/shared/attendance';
 import { useAuth } from '@ramassa/shared/auth';
 import { addEquipmentDelivery, type EquipmentDeliveryRow } from '@ramassa/shared/equipment';
 import {
@@ -49,6 +51,8 @@ export interface ParticipantDetailProps {
   readonly notes: readonly ParticipantNoteRow[];
   readonly activity: readonly ParticipantActivityEntry[];
   readonly deliveries: readonly EquipmentDeliveryRow[];
+  readonly attendanceStats: AttendanceParticipantStats | null;
+  readonly attendanceHistory: readonly AttendanceReportRow[];
   /**
    * Her outstanding erasure request (RAPP-22), when she has one. `undefined`
    * means she has not asked; `null` means she asked and gave no reason, which is
@@ -62,6 +66,8 @@ export function ParticipantDetail({
   notes,
   activity,
   deliveries,
+  attendanceStats,
+  attendanceHistory,
   openDeletionRequestReason,
 }: ParticipantDetailProps) {
   const { t, i18n } = useTranslation(['participants', 'common', 'profile']);
@@ -238,6 +244,8 @@ export function ParticipantDetail({
         onAdd={addDelivery}
         errorMessage={deliveryErrorMessage}
       />
+
+      <ParticipantAttendanceReport stats={attendanceStats} history={attendanceHistory} />
 
       <ParticipantActivity entries={activity} />
 

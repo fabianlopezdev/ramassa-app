@@ -1,0 +1,59 @@
+appId: com.ramassa.app
+name: attendance-history
+env:
+  DEV_CLIENT_URL: ramassa://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8082
+  DEV_MENU_LABEL: Developer menu
+  LOCALE: ca
+  LOGIN_TITLE: '{{auth:loginTitle}}'
+  TAB_PROFILE: '{{nav:tabs.profile}}'
+  PROFILE_TITLE: '{{profile:title}}'
+  HISTORY_TITLE: '{{attendance:participantHistoryTitle}}'
+  ATTENDED: '{{attendance:historyAttended}}'
+  MISSED: '{{attendance:historyMissed}}'
+  PUSH_DECLINE: '{{push:rationaleDecline}}'
+---
+- runFlow:
+    file: _open-app.yaml
+    env:
+      DEV_CLIENT_URL: ${DEV_CLIENT_URL}
+      DEV_MENU_LABEL: ${DEV_MENU_LABEL}
+      LOCALE: ${LOCALE}
+- runFlow: _sign-in.yaml
+- tapOn:
+    text: '^${PUSH_DECLINE}$'
+    optional: true
+- repeat:
+    times: 6
+    while:
+      notVisible: '.*${PROFILE_TITLE}.*'
+    commands:
+      - tapOn:
+          text: '^${TAB_PROFILE}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- extendedWaitUntil:
+    visible: '.*${PROFILE_TITLE}.*'
+    timeout: 30000
+- repeat:
+    times: 12
+    while:
+      notVisible: '.*${HISTORY_TITLE}.*'
+    commands:
+      - swipe:
+          start: 50%, 70%
+          end: 50%, 38%
+          duration: 900
+      - waitForAnimationToEnd:
+          timeout: 1500
+- assertVisible: '.*${HISTORY_TITLE}.*'
+- swipe:
+    start: 50%, 65%
+    end: 50%, 48%
+    duration: 900
+- extendedWaitUntil:
+    visible:
+      id: attendance-history-attended
+    timeout: 30000
+- assertVisible:
+    id: attendance-history-missed

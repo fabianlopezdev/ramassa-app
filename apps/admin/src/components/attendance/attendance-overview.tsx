@@ -1,7 +1,7 @@
 import { DataTable } from '@/components/data-table/data-table';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { useNavigate } from '@tanstack/react-router';
+import { Link, useNavigate } from '@tanstack/react-router';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
 import { CheckCircle2, Circle, Clock3 } from 'lucide-react';
 import { useMemo } from 'react';
@@ -60,9 +60,13 @@ export function AttendanceOverview({
         enableSorting: false,
         cell: ({ row }) => (
           <div className="flex min-w-52 flex-col gap-1">
-            <span className="font-medium">
+            <Link
+              to="/attendance/$occurrenceId"
+              params={{ occurrenceId: row.original.occurrence_id }}
+              className="font-medium underline-offset-4 hover:underline"
+            >
               {resolveLocalizedText(row.original.title, language)?.text ?? row.original.title.ca}
-            </span>
+            </Link>
             <span className="text-sm text-muted-foreground">{row.original.location}</span>
           </div>
         ),

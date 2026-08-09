@@ -102,6 +102,70 @@ export interface AttendanceOccurrenceListRow extends AttendanceOccurrence {
   readonly event: AttendanceEvent;
 }
 
+export interface AttendanceReportRow {
+  readonly attendance_id: string;
+  readonly occurrence_id: string;
+  readonly event_id: string;
+  readonly category_id: string;
+  readonly player_id: string;
+  readonly first_name: string;
+  readonly last_name: string;
+  readonly status: AttendanceStatus;
+  readonly marked_at: string;
+  readonly starts_at: string;
+  readonly ends_at: string | null;
+  readonly event_title: EventLocalizedText;
+  readonly event_location: string;
+  readonly category_name: EventLocalizedText;
+  readonly category_color: string;
+}
+
+export interface AttendanceTotals {
+  readonly present_count: number;
+  readonly absent_count: number;
+  readonly excused_count: number;
+  readonly marked_count: number;
+  readonly attendance_rate: number;
+}
+
+export interface AttendanceParticipantStats extends AttendanceTotals {
+  readonly player_id: string;
+  readonly first_name: string;
+  readonly last_name: string;
+  readonly latest_occurrence_at: string | null;
+}
+
+export interface AttendanceCategoryStats extends AttendanceTotals {
+  readonly category_id: string;
+  readonly category_name: EventLocalizedText;
+  readonly category_color: string;
+  readonly event_count: number;
+  readonly occurrence_count: number;
+  readonly latest_occurrence_at: string | null;
+}
+
+export interface AttendancePeriodStats extends AttendanceTotals {
+  readonly period_start: string;
+  readonly event_count: number;
+  readonly occurrence_count: number;
+}
+
+export interface AttendanceDashboardData {
+  readonly overall: AttendanceTotals;
+  readonly categories: readonly AttendanceCategoryStats[];
+  readonly periods: readonly AttendancePeriodStats[];
+}
+
+export function calculateAttendanceRate(counts: {
+  readonly present: number;
+  readonly absent: number;
+  readonly excused: number;
+}): number {
+  const considered = counts.present + counts.absent;
+  if (considered === 0) return 0;
+  return Math.round((counts.present / considered) * 10_000) / 100;
+}
+
 interface AttendanceSheetSource {
   readonly occurrence: AttendanceOccurrence;
   readonly event: AttendanceEvent;
@@ -357,6 +421,143 @@ export async function fetchAttendanceOverview(
     }),
     search,
   );
+}
+
+const REPORT_COLUMNS =
+  'attendance_id, occurrence_id, event_id, category_id, player_id, first_name, last_name, status, marked_at, starts_at, ends_at, event_title, event_location, category_name, category_color';
+const PARTICIPANT_STATS_COLUMNS =
+  'player_id, first_name, last_name, present_count, absent_count, excused_count, marked_count, attendance_rate, latest_occurrence_at';
+const CATEGORY_STATS_COLUMNS =
+  'category_id, category_name, category_color, event_count, occurrence_count, present_count, absent_count, excused_count, marked_count, attendance_rate, latest_occurrence_at';
+const PERIOD_STATS_COLUMNS =
+  'period_start, event_count, occurrence_count, present_count, absent_count, excused_count, marked_count, attendance_rate';
+
+function normalizeTotals(row: {
+  readonly present_count: number | null;
+  readonly absent_count: number | null;
+  readonly excused_count: number | null;
+  readonly marked_count: number | null;
+  readonly attendance_rate: number | null;
+}): AttendanceTotals {
+  return {
+    present_count: row.present_count ?? 0,
+    absent_count: row.absent_count ?? 0,
+    excused_count: row.excused_count ?? 0,
+    marked_count: row.marked_count ?? 0,
+    attendance_rate: row.attendance_rate ?? 0,
+  };
+}
+
+export async function fetchAttendanceHistory(
+  client: Client,
+  playerId: string,
+  options: { readonly limit?: number; readonly signal?: AbortSignal } = {},
+): Promise<readonly AttendanceReportRow[]> {
+  let query = client
+    .from('attendance_report_rows')
+    .select(REPORT_COLUMNS)
+    .eq('player_id', playerId)
+    .order('starts_at', { ascending: false })
+    .limit(options.limit ?? 20);
+  if (options.signal !== undefined) query = query.abortSignal(options.signal);
+  const { data, error } = await query;
+  if (error) throw new AppError('DB-1', { message: error.message });
+  return (data ?? []) as unknown as AttendanceReportRow[];
+}
+
+export async function fetchAttendanceOccurrenceReport(
+  client: Client,
+  occurrenceId: string,
+  signal?: AbortSignal,
+): Promise<readonly AttendanceReportRow[]> {
+  let query = client
+    .from('attendance_report_rows')
+    .select(REPORT_COLUMNS)
+    .eq('occurrence_id', occurrenceId)
+    .order('last_name', { ascending: true })
+    .order('first_name', { ascending: true });
+  if (signal !== undefined) query = query.abortSignal(signal);
+  const { data, error } = await query;
+  if (error) throw new AppError('DB-1', { message: error.message });
+  return (data ?? []) as unknown as AttendanceReportRow[];
+}
+
+export async function fetchAttendanceParticipantStats(
+  client: Client,
+  playerId: string,
+  signal?: AbortSignal,
+): Promise<AttendanceParticipantStats | null> {
+  let query = client
+    .from('attendance_participant_stats')
+    .select(PARTICIPANT_STATS_COLUMNS)
+    .eq('player_id', playerId);
+  if (signal !== undefined) query = query.abortSignal(signal);
+  const { data, error } = await query.maybeSingle();
+  if (error) throw new AppError('DB-1', { message: error.message });
+  if (data === null) return null;
+  return {
+    player_id: data.player_id!,
+    first_name: data.first_name!,
+    last_name: data.last_name!,
+    latest_occurrence_at: data.latest_occurrence_at,
+    ...normalizeTotals(data),
+  };
+}
+
+export async function fetchAttendanceDashboard(
+  client: Client,
+  signal?: AbortSignal,
+): Promise<AttendanceDashboardData> {
+  let categoriesQuery = client
+    .from('attendance_category_stats')
+    .select(CATEGORY_STATS_COLUMNS)
+    .order('latest_occurrence_at', { ascending: false });
+  let periodsQuery = client
+    .from('attendance_period_stats')
+    .select(PERIOD_STATS_COLUMNS)
+    .order('period_start', { ascending: false });
+  if (signal !== undefined) {
+    categoriesQuery = categoriesQuery.abortSignal(signal);
+    periodsQuery = periodsQuery.abortSignal(signal);
+  }
+  const [categoriesResult, periodsResult] = await Promise.all([categoriesQuery, periodsQuery]);
+  const error = categoriesResult.error ?? periodsResult.error;
+  if (error) throw new AppError('DB-1', { message: error.message });
+
+  const categories: AttendanceCategoryStats[] = (categoriesResult.data ?? []).map((row) => ({
+    category_id: row.category_id!,
+    category_name: row.category_name as unknown as EventLocalizedText,
+    category_color: row.category_color!,
+    event_count: row.event_count ?? 0,
+    occurrence_count: row.occurrence_count ?? 0,
+    latest_occurrence_at: row.latest_occurrence_at,
+    ...normalizeTotals(row),
+  }));
+  const allPeriods: AttendancePeriodStats[] = (periodsResult.data ?? []).map((row) => ({
+    period_start: row.period_start!,
+    event_count: row.event_count ?? 0,
+    occurrence_count: row.occurrence_count ?? 0,
+    ...normalizeTotals(row),
+  }));
+  const summed = allPeriods.reduce(
+    (totals, period) => ({
+      present: totals.present + period.present_count,
+      absent: totals.absent + period.absent_count,
+      excused: totals.excused + period.excused_count,
+    }),
+    { present: 0, absent: 0, excused: 0 },
+  );
+  return {
+    overall: {
+      present_count: summed.present,
+      absent_count: summed.absent,
+      excused_count: summed.excused,
+      marked_count: summed.present + summed.absent + summed.excused,
+      attendance_rate: calculateAttendanceRate(summed),
+    },
+    categories,
+    periods: allPeriods.slice(0, 12).reverse(),
+  };
 }
 
 export async function upsertAttendanceMark(

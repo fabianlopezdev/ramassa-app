@@ -201,7 +201,11 @@ select is(
 );
 
 set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000011","role":"authenticated"}';
-select is((select count(*) from public.attendance)::int, 0, 'a participant cannot read attendance');
+select is(
+  (select count(*) from public.attendance)::int,
+  1,
+  'a participant can read only her own attendance for self-service history'
+);
 select throws_ok(
   $$
     select public.mark_attendance(

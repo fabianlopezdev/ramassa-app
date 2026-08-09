@@ -10,7 +10,7 @@ name: _open-app
 # `bun run qa:smoke` rewrites the env block below before running (a flow's own
 # env wins over `maestro -e`, so the values must be baked in).
 env:
-  DEV_CLIENT_URL: ramassa://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081
+  DEV_CLIENT_URL: ramassa://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8082
   DEV_MENU_LABEL: Developer menu
   LOCALE: ca
 ---

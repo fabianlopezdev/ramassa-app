@@ -87,6 +87,48 @@ test.describe('attendance overview', () => {
     await expect(page.locator('img[src="x"]')).toHaveCount(0);
     await expect(page.locator('tbody tr')).toHaveCount(0);
   });
+
+  test('opens a per-session report with exact participant marks and rate', async ({ page }) => {
+    const occurrenceId = queryDatabase(
+      `select id from public.event_occurrences where event_id = '${TODAY_EVENT_ID}' limit 1`,
+    );
+    const marked = Number(
+      queryDatabase(
+        `select count(*) from public.attendance where occurrence_id = '${occurrenceId}'`,
+      ),
+    );
+    const rate = queryDatabase(
+      `select round(
+         100.0 * count(*) filter (where status = 'present') /
+         nullif(count(*) filter (where status in ('present', 'absent')), 0),
+         2
+       ) from public.attendance where occurrence_id = '${occurrenceId}'`,
+    );
+
+    await page.getByRole('link', { name: "Sessió d'entrenament d'avui" }).click();
+    await expect.poll(() => new URL(page.url()).pathname).toBe(`/attendance/${occurrenceId}`);
+    await expect(page.locator('tbody tr')).toHaveCount(marked);
+    await expect(page.getByTestId('attendance-rate')).toHaveText(`${rate}%`);
+  });
+
+  test('shows participant history and dashboard trend from the same reporting views', async ({
+    page,
+  }) => {
+    await page.goto('/participants/5eed0000-0000-4000-8000-000000000011');
+    await expect(
+      page.getByRole('heading', { name: /historial d’assistència|attendance history/i }),
+    ).toBeVisible();
+    await expect(page.getByText(/present/i).first()).toBeVisible();
+
+    await page.goto('/dashboard');
+    await expect(
+      page.getByRole('heading', { name: /rendiment d’assistència|attendance performance/i }),
+    ).toBeVisible();
+    await expect(page.getByTestId('attendance-rate')).toBeVisible();
+    await expect(
+      page.getByRole('img', { name: /taxa d’assistència per mes|attendance rate by month/i }),
+    ).toBeVisible();
+  });
 });
 
 test('an entity contact cannot reach attendance administration', async ({ page }) => {
