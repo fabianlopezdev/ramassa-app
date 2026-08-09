@@ -51,6 +51,8 @@ as $$
      'What she was given and when. Not neutral inventory: it says which women needed boots and in what month, which is an inference about her circumstances.'),
     ('event_signups', 'player_id', 'purge',
      'Her interest or confirmed attendance at an event is participant activity and must be erased.'),
+    ('attendance', 'player_id', 'purge',
+     'Whether she attended, missed, or was excused from an event is participant activity and must be erased.'),
     ('audit_log', 'actor_id', 'purge',
      'Rows where SHE acted. The FK does not cascade, so leaving these would make her undeletable.'),
     ('audit_log', 'target_id', 'retain',
