@@ -74,6 +74,9 @@ export function ServicesTable({
         </div>
         <div className="flex gap-2">
           <Button asChild variant="outline">
+            <Link to="/content/services/reviews">{t('services:reviewQueueAction')}</Link>
+          </Button>
+          <Button asChild variant="outline">
             <Link to="/content/services/categories">{t('services:categoriesAction')}</Link>
           </Button>
           <Button asChild>

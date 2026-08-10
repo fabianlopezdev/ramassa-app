@@ -11,6 +11,7 @@ import { AppError, type AppErrorCode } from '@ramassa/shared/errors';
 import { compressBrowserImage } from '@ramassa/shared/image-compression';
 import { uploadContentTypeSchema } from '@ramassa/shared/schemas';
 import {
+  approveEntityService,
   createAdminServiceInputSchema,
   saveAdminService,
   type AdminServiceCategory,
@@ -52,6 +53,21 @@ export interface ServiceEditorProps {
   readonly onSaved: (serviceId: string) => void | Promise<void>;
 }
 
+export interface ServiceSubmissionApprovalEditorProps {
+  readonly categories: readonly AdminServiceCategory[];
+  readonly detail: AdminServiceDetail;
+  readonly publicComment: string;
+  readonly onApproved: (serviceId: string) => void | Promise<void>;
+}
+
+type ServiceEditorWorkflow =
+  | { readonly kind: 'content'; readonly onSaved: ServiceEditorProps['onSaved'] }
+  | {
+      readonly kind: 'submission-approval';
+      readonly publicComment: string;
+      readonly onApproved: ServiceSubmissionApprovalEditorProps['onApproved'];
+    };
+
 function blankToNull(value: string): string | null {
   const trimmed = value.trim();
   return trimmed.length === 0 ? null : trimmed;
@@ -90,6 +106,39 @@ function setAllApproved(review: TranslationReview | undefined): TranslationRevie
 }
 
 export function ServiceEditor({ categories, detail, onSaved }: ServiceEditorProps) {
+  return (
+    <ServiceEditorForm
+      categories={categories}
+      detail={detail}
+      workflow={{ kind: 'content', onSaved }}
+    />
+  );
+}
+
+export function ServiceSubmissionApprovalEditor({
+  categories,
+  detail,
+  publicComment,
+  onApproved,
+}: ServiceSubmissionApprovalEditorProps) {
+  return (
+    <ServiceEditorForm
+      categories={categories}
+      detail={detail}
+      workflow={{ kind: 'submission-approval', publicComment, onApproved }}
+    />
+  );
+}
+
+function ServiceEditorForm({
+  categories,
+  detail,
+  workflow,
+}: {
+  readonly categories: readonly AdminServiceCategory[];
+  readonly detail?: AdminServiceDetail;
+  readonly workflow: ServiceEditorWorkflow;
+}) {
   const { t, i18n } = useTranslation(['services', 'errors']);
   const firstCategory = categories[0];
   const [categoryId, setCategoryId] = useState(
@@ -114,7 +163,9 @@ export function ServiceEditor({ categories, detail, onSaved }: ServiceEditorProp
       state: 'stored',
     })),
   );
-  const [mode, setMode] = useState<PublishMode>(() => initialMode(detail));
+  const [mode, setMode] = useState<PublishMode>(() =>
+    workflow.kind === 'submission-approval' ? 'now' : initialMode(detail),
+  );
   const [publishedAt, setPublishedAt] = useState(
     localDateTime(detail?.service.published_at ?? null),
   );
@@ -308,22 +359,33 @@ export function ServiceEditor({ categories, detail, onSaved }: ServiceEditorProp
     const result = await safeAsync(
       async () => {
         const urls = await Promise.all(images.map(uploadImage));
-        return saveAdminService(
-          supabase,
-          activeCategory,
-          {
-            ...inputWithoutImages,
-            images: images.map((image, index) => ({
-              url: urls[index]!,
-              altText: localizedTextFromReview(image.alt, image.review),
-            })),
-          },
-          detail?.service.id ?? null,
-        );
+        const input = {
+          ...inputWithoutImages,
+          images: images.map((image, index) => ({
+            url: urls[index]!,
+            altText: localizedTextFromReview(image.alt, image.review),
+          })),
+        };
+        return workflow.kind === 'submission-approval'
+          ? approveEntityService(
+              supabase,
+              activeCategory,
+              detail!.service.id,
+              input,
+              workflow.publicComment,
+            )
+          : saveAdminService(supabase, activeCategory, input, detail?.service.id ?? null);
       },
       {
         code: 'DB-1',
-        context: { operation: detail === undefined ? 'create-service' : 'update-service' },
+        context: {
+          operation:
+            workflow.kind === 'submission-approval'
+              ? 'approve-service-submission'
+              : detail === undefined
+                ? 'create-service'
+                : 'update-service',
+        },
       },
     );
     setIsSaving(false);
@@ -331,15 +393,26 @@ export function ServiceEditor({ categories, detail, onSaved }: ServiceEditorProp
       setErrorCode(result.error.code);
       return;
     }
-    await onSaved(result.value);
+    if (workflow.kind === 'submission-approval') await workflow.onApproved(result.value);
+    else await workflow.onSaved(result.value);
   }
 
   const locale = (i18n.resolvedLanguage ?? 'ca') as keyof AdminServiceCategory['name'];
   return (
     <FormProvider {...form}>
-      <form className="flex flex-col gap-6 p-6" onSubmit={submit} data-testid="service-editor">
+      <form
+        className="flex flex-col gap-6 p-6"
+        onSubmit={submit}
+        data-testid={
+          workflow.kind === 'submission-approval' ? 'service-approval-editor' : 'service-editor'
+        }
+      >
         <h1 className="text-2xl font-semibold">
-          {detail === undefined ? t('services:newAction') : t('services:editTitle')}
+          {workflow.kind === 'submission-approval'
+            ? t('services:reviewEditTitle')
+            : detail === undefined
+              ? t('services:newAction')
+              : t('services:editTitle')}
         </h1>
         <ServiceSubmissionFields
           categories={categories}
@@ -544,16 +617,18 @@ export function ServiceEditor({ categories, detail, onSaved }: ServiceEditorProp
         >
           {isGenerating ? t('services:generatingTranslations') : t('services:generateTranslations')}
         </Button>
-        <ScheduledPublishFields
-          fieldId="service"
-          mode={mode}
-          publishedAt={publishedAt}
-          expiresAt={expiresAt}
-          translationNamespace="services"
-          onModeChange={setMode}
-          onPublishedAtChange={setPublishedAt}
-          onExpiresAtChange={setExpiresAt}
-        />
+        {workflow.kind === 'content' ? (
+          <ScheduledPublishFields
+            fieldId="service"
+            mode={mode}
+            publishedAt={publishedAt}
+            expiresAt={expiresAt}
+            translationNamespace="services"
+            onModeChange={setMode}
+            onPublishedAtChange={setPublishedAt}
+            onExpiresAtChange={setExpiresAt}
+          />
+        ) : null}
         {formInvalid ? (
           <p role="alert" className="text-sm text-destructive" data-testid="service-form-error">
             {t('services:formInvalid')} {formIssues}
@@ -564,8 +639,17 @@ export function ServiceEditor({ categories, detail, onSaved }: ServiceEditorProp
             {t(`errors:${errorCode}`)}
           </p>
         )}
-        <Button type="submit" size="lg" data-testid="service-save" disabled={isSaving}>
-          {isSaving ? t('services:saving') : t('services:save')}
+        <Button
+          type="submit"
+          size="lg"
+          data-testid={workflow.kind === 'submission-approval' ? 'service-approve' : 'service-save'}
+          disabled={isSaving}
+        >
+          {isSaving
+            ? t('services:saving')
+            : workflow.kind === 'submission-approval'
+              ? t('services:reviewApprove')
+              : t('services:save')}
         </Button>
       </form>
     </FormProvider>

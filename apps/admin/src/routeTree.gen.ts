@@ -49,6 +49,8 @@ import { Route as StaffContentAnnouncementsNewRouteImport } from './routes/_staf
 import { Route as StaffContentAnnouncementsAnnouncementIdRouteImport } from './routes/_staff.content.announcements.$announcementId'
 import { Route as EntityPortalServicesNewRouteImport } from './routes/_entity.portal.services.new'
 import { Route as EntityPortalServicesServiceIdRouteImport } from './routes/_entity.portal.services.$serviceId'
+import { Route as StaffContentServicesReviewsIndexRouteImport } from './routes/_staff.content.services.reviews.index'
+import { Route as StaffContentServicesReviewsServiceIdRouteImport } from './routes/_staff.content.services.reviews.$serviceId'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -265,6 +267,18 @@ const EntityPortalServicesServiceIdRoute =
     path: '/$serviceId',
     getParentRoute: () => EntityPortalServicesRoute,
   } as any)
+const StaffContentServicesReviewsIndexRoute =
+  StaffContentServicesReviewsIndexRouteImport.update({
+    id: '/services/reviews/',
+    path: '/services/reviews/',
+    getParentRoute: () => StaffContentRoute,
+  } as any)
+const StaffContentServicesReviewsServiceIdRoute =
+  StaffContentServicesReviewsServiceIdRouteImport.update({
+    id: '/services/reviews/$serviceId',
+    path: '/services/reviews/$serviceId',
+    getParentRoute: () => StaffContentRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -305,6 +319,8 @@ export interface FileRoutesByFullPath {
   '/content/events/': typeof StaffContentEventsIndexRoute
   '/content/knowledge/': typeof StaffContentKnowledgeIndexRoute
   '/content/services/': typeof StaffContentServicesIndexRoute
+  '/content/services/reviews/$serviceId': typeof StaffContentServicesReviewsServiceIdRoute
+  '/content/services/reviews/': typeof StaffContentServicesReviewsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -342,6 +358,8 @@ export interface FileRoutesByTo {
   '/content/events': typeof StaffContentEventsIndexRoute
   '/content/knowledge': typeof StaffContentKnowledgeIndexRoute
   '/content/services': typeof StaffContentServicesIndexRoute
+  '/content/services/reviews/$serviceId': typeof StaffContentServicesReviewsServiceIdRoute
+  '/content/services/reviews': typeof StaffContentServicesReviewsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -385,6 +403,8 @@ export interface FileRoutesById {
   '/_staff/content/events/': typeof StaffContentEventsIndexRoute
   '/_staff/content/knowledge/': typeof StaffContentKnowledgeIndexRoute
   '/_staff/content/services/': typeof StaffContentServicesIndexRoute
+  '/_staff/content/services/reviews/$serviceId': typeof StaffContentServicesReviewsServiceIdRoute
+  '/_staff/content/services/reviews/': typeof StaffContentServicesReviewsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -427,6 +447,8 @@ export interface FileRouteTypes {
     | '/content/events/'
     | '/content/knowledge/'
     | '/content/services/'
+    | '/content/services/reviews/$serviceId'
+    | '/content/services/reviews/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -464,6 +486,8 @@ export interface FileRouteTypes {
     | '/content/events'
     | '/content/knowledge'
     | '/content/services'
+    | '/content/services/reviews/$serviceId'
+    | '/content/services/reviews'
   id:
     | '__root__'
     | '/'
@@ -506,6 +530,8 @@ export interface FileRouteTypes {
     | '/_staff/content/events/'
     | '/_staff/content/knowledge/'
     | '/_staff/content/services/'
+    | '/_staff/content/services/reviews/$serviceId'
+    | '/_staff/content/services/reviews/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -798,6 +824,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EntityPortalServicesServiceIdRouteImport
       parentRoute: typeof EntityPortalServicesRoute
     }
+    '/_staff/content/services/reviews/': {
+      id: '/_staff/content/services/reviews/'
+      path: '/services/reviews'
+      fullPath: '/content/services/reviews/'
+      preLoaderRoute: typeof StaffContentServicesReviewsIndexRouteImport
+      parentRoute: typeof StaffContentRoute
+    }
+    '/_staff/content/services/reviews/$serviceId': {
+      id: '/_staff/content/services/reviews/$serviceId'
+      path: '/services/reviews/$serviceId'
+      fullPath: '/content/services/reviews/$serviceId'
+      preLoaderRoute: typeof StaffContentServicesReviewsServiceIdRouteImport
+      parentRoute: typeof StaffContentRoute
+    }
   }
 }
 
@@ -865,6 +905,8 @@ interface StaffContentRouteChildren {
   StaffContentEventsIndexRoute: typeof StaffContentEventsIndexRoute
   StaffContentKnowledgeIndexRoute: typeof StaffContentKnowledgeIndexRoute
   StaffContentServicesIndexRoute: typeof StaffContentServicesIndexRoute
+  StaffContentServicesReviewsServiceIdRoute: typeof StaffContentServicesReviewsServiceIdRoute
+  StaffContentServicesReviewsIndexRoute: typeof StaffContentServicesReviewsIndexRoute
 }
 
 const StaffContentRouteChildren: StaffContentRouteChildren = {
@@ -884,6 +926,9 @@ const StaffContentRouteChildren: StaffContentRouteChildren = {
   StaffContentEventsIndexRoute: StaffContentEventsIndexRoute,
   StaffContentKnowledgeIndexRoute: StaffContentKnowledgeIndexRoute,
   StaffContentServicesIndexRoute: StaffContentServicesIndexRoute,
+  StaffContentServicesReviewsServiceIdRoute:
+    StaffContentServicesReviewsServiceIdRoute,
+  StaffContentServicesReviewsIndexRoute: StaffContentServicesReviewsIndexRoute,
 }
 
 const StaffContentRouteWithChildren = StaffContentRoute._addFileChildren(

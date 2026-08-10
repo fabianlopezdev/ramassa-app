@@ -10,6 +10,7 @@ import {
   deleteEntityService,
   getEntityServiceActions,
   resubmitEntityService,
+  type EntityServiceDecisionNotification,
   type EntityServiceRow,
 } from '@ramassa/shared/services/entity';
 import { EntityServiceStateChip } from './entity-service-state-chip';
@@ -17,11 +18,13 @@ import { EntityServiceStateChip } from './entity-service-state-chip';
 interface EntityServiceDashboardProps {
   readonly initialServices: readonly EntityServiceRow[];
   readonly categories: readonly AdminServiceCategory[];
+  readonly notifications: readonly EntityServiceDecisionNotification[];
 }
 
 export function EntityServiceDashboard({
   initialServices,
   categories,
+  notifications,
 }: EntityServiceDashboardProps) {
   const { t, i18n } = useTranslation(['entity-services', 'errors']);
   const [services, setServices] = useState(initialServices);
@@ -71,6 +74,56 @@ export function EntityServiceDashboard({
         <p role="alert" className="text-sm text-destructive">
           {t(`errors:${errorCode}`)}
         </p>
+      )}
+
+      {notifications.length === 0 ? null : (
+        <section className="rounded-xl border bg-card p-5" aria-labelledby="decision-title">
+          <h2 id="decision-title" className="text-lg font-semibold">
+            {t('entity-services:decisionTitle')}
+          </h2>
+          <ol className="mt-4 grid gap-3" data-testid="entity-service-decisions">
+            {notifications.map((notification) => (
+              <li key={notification.id} className="rounded-lg bg-muted p-4">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="font-medium">
+                      {notification.serviceTitle[
+                        language as keyof typeof notification.serviceTitle
+                      ] ?? notification.serviceTitle.ca}
+                    </p>
+                    <p className="mt-1 text-sm">
+                      {notification.kind === 'approved'
+                        ? t('entity-services:decisionApproved')
+                        : t('entity-services:decisionRejected')}
+                    </p>
+                  </div>
+                  <time className="text-xs text-muted-foreground" dateTime={notification.createdAt}>
+                    {new Intl.DateTimeFormat(language, {
+                      dateStyle: 'medium',
+                      timeStyle: 'short',
+                    }).format(new Date(notification.createdAt))}
+                  </time>
+                </div>
+                {notification.comment === null ? null : (
+                  <p
+                    className="mt-3 whitespace-pre-wrap text-sm"
+                    data-testid={`entity-service-decision-comment-${notification.id}`}
+                  >
+                    {notification.comment}
+                  </p>
+                )}
+                <Button asChild variant="link" className="mt-2 h-auto p-0">
+                  <Link
+                    to="/portal/services/$serviceId"
+                    params={{ serviceId: notification.serviceId }}
+                  >
+                    {t('entity-services:decisionOpen')}
+                  </Link>
+                </Button>
+              </li>
+            ))}
+          </ol>
+        </section>
       )}
 
       {services.length === 0 ? (

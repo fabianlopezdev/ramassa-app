@@ -297,6 +297,73 @@ export async function addEntityServiceComment(
   return parseServiceSubmissionComment(data);
 }
 
+export type StaffServiceCommentVisibility = 'public' | 'internal';
+
+export async function addStaffServiceComment(
+  client: Client,
+  serviceId: string,
+  rawBody: string,
+  visibility: StaffServiceCommentVisibility,
+): Promise<ServiceSubmissionComment> {
+  const parsedServiceId = z.uuid().parse(serviceId);
+  const body = z.string().trim().min(1).max(4_000).parse(rawBody);
+  const { data, error } = await client
+    .from('service_submission_comments')
+    .insert({
+      service_id: parsedServiceId,
+      body,
+      is_internal: visibility === 'internal',
+    })
+    .select(SERVICE_SUBMISSION_COMMENT_COLUMNS)
+    .single();
+  if (error) throw new AppError('DB-1', { message: error.message });
+  return parseServiceSubmissionComment(data);
+}
+
+const entityServiceDecisionRowSchema = z.object({
+  id: z.uuid(),
+  service_id: z.uuid(),
+  kind: z.enum(['approved', 'rejected']),
+  created_at: z.string(),
+  decision_comment: z.object({ body: z.string().min(1).max(4_000) }).nullable(),
+  service: z.object({ title: entityLocalizedTextSchema }),
+});
+
+export interface EntityServiceDecisionNotification {
+  readonly id: string;
+  readonly serviceId: string;
+  readonly kind: 'approved' | 'rejected';
+  readonly serviceTitle: z.infer<typeof entityLocalizedTextSchema>;
+  readonly comment: string | null;
+  readonly createdAt: string;
+}
+
+const ENTITY_SERVICE_DECISION_COLUMNS =
+  'id, service_id, kind, created_at, decision_comment:service_submission_comments!service_submission_notifications_decision_comment_id_fkey(body), service:services!service_submission_notifications_service_tenant_fkey(title)';
+
+export async function fetchEntityServiceDecisionNotifications(
+  client: Client,
+): Promise<readonly EntityServiceDecisionNotification[]> {
+  const { data, error } = await client
+    .from('service_submission_notifications')
+    .select(ENTITY_SERVICE_DECISION_COLUMNS)
+    .in('kind', ['approved', 'rejected'])
+    .order('created_at', { ascending: false })
+    .order('id', { ascending: true });
+  if (error) throw new AppError('DB-1', { message: error.message });
+  return z
+    .array(entityServiceDecisionRowSchema)
+    .parse(data ?? [])
+    .map((row) => ({
+      id: row.id,
+      serviceId: row.service_id,
+      kind: row.kind,
+      serviceTitle: row.service.title,
+      comment: row.decision_comment?.body ?? null,
+      createdAt: row.created_at,
+    }));
+}
+
 function entityServiceRpcPayload(input: EntityServiceInput, serviceId: string | null): Json {
   return {
     serviceId,

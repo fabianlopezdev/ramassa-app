@@ -1352,33 +1352,45 @@ export type Database = {
         Row: {
           created_at: string;
           created_by: string | null;
+          current_service: Json | null;
+          decision_comment_id: string | null;
           id: string;
           kind: string;
           org_id: string;
+          previous_service: Json | null;
           read_at: string | null;
           read_by: string | null;
+          recipient_id: string | null;
           service_id: string;
           service_interest_id: string | null;
         };
         Insert: {
           created_at?: string;
           created_by?: string | null;
+          current_service?: Json | null;
+          decision_comment_id?: string | null;
           id?: string;
           kind: string;
           org_id: string;
+          previous_service?: Json | null;
           read_at?: string | null;
           read_by?: string | null;
+          recipient_id?: string | null;
           service_id: string;
           service_interest_id?: string | null;
         };
         Update: {
           created_at?: string;
           created_by?: string | null;
+          current_service?: Json | null;
+          decision_comment_id?: string | null;
           id?: string;
           kind?: string;
           org_id?: string;
+          previous_service?: Json | null;
           read_at?: string | null;
           read_by?: string | null;
+          recipient_id?: string | null;
           service_id?: string;
           service_interest_id?: string | null;
         };
@@ -1391,6 +1403,13 @@ export type Database = {
             referencedColumns: ['id'];
           },
           {
+            foreignKeyName: 'service_submission_notifications_decision_comment_id_fkey';
+            columns: ['decision_comment_id'];
+            isOneToOne: false;
+            referencedRelation: 'service_submission_comments';
+            referencedColumns: ['id'];
+          },
+          {
             foreignKeyName: 'service_submission_notifications_org_id_fkey';
             columns: ['org_id'];
             isOneToOne: false;
@@ -1400,6 +1419,13 @@ export type Database = {
           {
             foreignKeyName: 'service_submission_notifications_read_by_fkey';
             columns: ['read_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'service_submission_notifications_recipient_id_fkey';
+            columns: ['recipient_id'];
             isOneToOne: false;
             referencedRelation: 'profiles';
             referencedColumns: ['id'];
@@ -1942,6 +1968,28 @@ export type Database = {
           updated_at: string;
         }[];
       };
+      get_service_review_queue: {
+        Args: {
+          p_category_id: string;
+          p_kind: string;
+          p_page: number;
+          p_query: string;
+        };
+        Returns: {
+          category_id: string;
+          changed_at: string;
+          contact_name: string;
+          current_service: Json;
+          item_id: string;
+          item_kind: string;
+          previous_service: Json;
+          provider_name: string;
+          service_id: string;
+          status: string;
+          title: Json;
+          total_count: number;
+        }[];
+      };
       has_own_attendance_for_event: {
         Args: { attended_event_id: string };
         Returns: boolean;
@@ -2089,6 +2137,15 @@ export type Database = {
       resubmit_entity_service: {
         Args: { p_service_id: string };
         Returns: undefined;
+      };
+      review_entity_service: {
+        Args: {
+          p_comment: string;
+          p_decision: string;
+          p_payload: Json;
+          p_service_id: string;
+        };
+        Returns: string;
       };
       save_admin_service: { Args: { p_payload: Json }; Returns: string };
       save_entity_service: { Args: { p_payload: Json }; Returns: string };

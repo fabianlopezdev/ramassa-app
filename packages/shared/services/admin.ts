@@ -354,7 +354,10 @@ export async function fetchAdminService(
   };
 }
 
-function rpcPayload(input: AdminServiceInput, serviceId: string | null): Json {
+export function createAdminServiceRpcPayload(
+  input: AdminServiceInput,
+  serviceId: string | null,
+): Json {
   return {
     serviceId,
     categoryId: input.categoryId,
@@ -389,7 +392,7 @@ export async function saveAdminService(
 ): Promise<string> {
   const input = createAdminServiceInputSchema(category).parse(rawInput);
   const { data, error } = await client.rpc('save_admin_service', {
-    p_payload: rpcPayload(input, serviceId),
+    p_payload: createAdminServiceRpcPayload(input, serviceId),
   });
   if (error) throw new AppError('DB-1', { message: error.message });
   return z.uuid().parse(data);
