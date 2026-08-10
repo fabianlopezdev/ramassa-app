@@ -320,6 +320,7 @@ export default function ProfileEditScreen() {
                 <OptionChip
                   key={type}
                   label={t(DOCUMENT_TYPE_LABEL_KEYS[type])}
+                  accessibilityHint={t('onboarding:documentTypeLabel')}
                   isSelected={field.value === type}
                   onPress={() => field.onChange(type)}
                 />
@@ -423,11 +424,13 @@ export default function ProfileEditScreen() {
             <View className="flex-row flex-wrap gap-sm">
               <OptionChip
                 label={t('onboarding:yesOption')}
+                accessibilityHint={t('onboarding:hasDependentsLabel')}
                 isSelected={field.value === true}
                 onPress={() => field.onChange(true)}
               />
               <OptionChip
                 label={t('onboarding:noOption')}
+                accessibilityHint={t('onboarding:hasDependentsLabel')}
                 isSelected={field.value === false}
                 onPress={() => field.onChange(false)}
               />
@@ -466,6 +469,7 @@ export default function ProfileEditScreen() {
                 <OptionChip
                   key={size}
                   label={size}
+                  accessibilityHint={t('onboarding:clothingSizeLabel')}
                   isSelected={field.value === size}
                   onPress={() => field.onChange(size)}
                 />
@@ -488,6 +492,7 @@ export default function ProfileEditScreen() {
                 <OptionChip
                   key={size}
                   label={size}
+                  accessibilityHint={t('onboarding:shoeSizeLabel')}
                   isSelected={field.value === size}
                   onPress={() => field.onChange(size)}
                 />
@@ -511,11 +516,13 @@ export default function ProfileEditScreen() {
             <View className="flex-row flex-wrap gap-sm">
               <OptionChip
                 label={t('onboarding:yesOption')}
+                accessibilityHint={t('onboarding:mediaConsentLabel')}
                 isSelected={field.value === true}
                 onPress={() => field.onChange(true)}
               />
               <OptionChip
                 label={t('onboarding:noOption')}
+                accessibilityHint={t('onboarding:mediaConsentLabel')}
                 isSelected={field.value === false}
                 onPress={() => field.onChange(false)}
               />

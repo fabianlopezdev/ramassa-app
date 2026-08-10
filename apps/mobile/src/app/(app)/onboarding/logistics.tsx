@@ -174,6 +174,7 @@ export default function LogisticsStepScreen() {
             <View className="gap-sm">
               <OptionChip
                 label={t('referenceEntityNone')}
+                accessibilityHint={t('referenceEntityLabel')}
                 isSelected={isNoEntity}
                 onPress={() => field.onChange(field.value === null ? '' : null)}
               />
@@ -221,11 +222,13 @@ export default function LogisticsStepScreen() {
             <View className="flex-row gap-sm">
               <OptionChip
                 label={t('yesOption')}
+                accessibilityHint={t('hasDependentsLabel')}
                 isSelected={field.value === true}
                 onPress={() => field.onChange(true)}
               />
               <OptionChip
                 label={t('noOption')}
+                accessibilityHint={t('hasDependentsLabel')}
                 isSelected={field.value === false}
                 onPress={() => field.onChange(false)}
               />
@@ -264,6 +267,7 @@ export default function LogisticsStepScreen() {
                 <OptionChip
                   key={size}
                   label={size}
+                  accessibilityHint={t('clothingSizeLabel')}
                   isSelected={field.value === size}
                   onPress={() => field.onChange(size)}
                 />
@@ -294,6 +298,7 @@ export default function LogisticsStepScreen() {
                 <OptionChip
                   key={size}
                   label={size}
+                  accessibilityHint={t('shoeSizeLabel')}
                   isSelected={field.value === size}
                   onPress={() => field.onChange(size)}
                 />

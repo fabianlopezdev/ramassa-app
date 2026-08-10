@@ -36,16 +36,24 @@ const CHIP_LABEL_SELECTED_CLASS = 'text-center text-md font-medium text-white';
 export interface OptionChipProps {
   readonly testID?: string;
   readonly label: string;
+  readonly accessibilityHint?: string;
   readonly isSelected: boolean;
   readonly onPress: () => void;
 }
 
-export function OptionChip({ testID, label, isSelected, onPress }: OptionChipProps) {
+export function OptionChip({
+  testID,
+  label,
+  accessibilityHint,
+  isSelected,
+  onPress,
+}: OptionChipProps) {
   const languageFontClass = useLanguageFontClass();
   return (
     <PressableScale
       testID={testID}
       accessibilityLabel={label}
+      accessibilityHint={accessibilityHint}
       isSelected={isSelected}
       onPress={onPress}
       haptic="selection"

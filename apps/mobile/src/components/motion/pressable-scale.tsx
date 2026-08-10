@@ -47,8 +47,10 @@ export interface PressableScaleProps {
   readonly onPress: () => void;
   /** Stable automation hook for flows that must verify control state. */
   readonly testID?: string;
-  /** Required: this is the only label a screen reader gets for the control. */
+  /** Required: the control's concise screen-reader name. */
   readonly accessibilityLabel: string;
+  /** Optional context announced after the label, without changing its name. */
+  readonly accessibilityHint?: string;
   readonly accessibilityRole?: AccessibilityRole;
   /** Which feedback to fire on press. Omit for none (e.g. a nav row). */
   readonly haptic?: HapticFeedback;
@@ -77,6 +79,7 @@ export function PressableScale({
   onPress,
   testID,
   accessibilityLabel,
+  accessibilityHint,
   accessibilityRole = 'button',
   haptic,
   className,
@@ -140,6 +143,7 @@ export function PressableScale({
         testID={testID}
         accessibilityRole={accessibilityRole}
         accessibilityLabel={accessibilityLabel}
+        accessibilityHint={accessibilityHint}
         aria-checked={
           accessibilityRole === 'checkbox' || accessibilityRole === 'radio'
             ? Boolean(isSelected)
