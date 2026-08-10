@@ -33,6 +33,7 @@
     "./attendance": "./attendance.ts",
     "./knowledge": "./knowledge.ts",
     "./story-submission": "./story-submission.ts",
+    "./services": "./services/index.ts",
     "./structured-content": "./structured-content/index.ts",
     "./image-compression": "./lib/image-compression.ts"
   },

@@ -16,19 +16,7 @@
 import { z } from 'zod';
 
 export * from './language';
-
-/**
- * Multilingual text. Catalan is required (it is the default the UI falls back to);
- * the other four languages are optional so staff can translate incrementally.
- */
-export const localizedTextSchema = z.object({
-  ca: z.string().min(1),
-  es: z.string().optional(),
-  en: z.string().optional(),
-  ar: z.string().optional(),
-  fa: z.string().optional(),
-});
-export type LocalizedText = z.infer<typeof localizedTextSchema>;
+export * from './localized-text';
 
 export const uuidSchema = z.uuid();
 export const emailSchema = z.email();
@@ -52,3 +40,4 @@ export * from './participant-notes';
 export * from './profile';
 export * from './upload';
 export * from './equipment';
+export * from './services';

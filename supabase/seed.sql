@@ -35,6 +35,8 @@ where not exists (
   select 1 from vault.secrets where name = 'app_encryption_key'
 );
 
+begin;
+
 -- The demo tenant. Ordinal 0 of the seed namespace.
 insert into public.organizations (id, name, slug, contact_email, contact_phone)
 values (
@@ -43,6 +45,346 @@ values (
   'ramassa',
   'laia.ferrer@example.test',
   '+34600000000'
+)
+on conflict (id) do nothing;
+
+-- Services directory ------------------------------------------------------------
+-- The category JSON is the database copy of packages/shared/services/definitions.ts.
+-- Runtime code turns the same field shape into form controls, Zod validation,
+-- and JSONB containment filters. The database validates every service against it.
+insert into public.service_categories
+  (id, org_id, name, slug, icon, color, sort_order, metadata_schema)
+values
+  (
+    '5eed0000-0000-4000-8009-000000000001',
+    '5eed0000-0000-4000-8000-000000000000',
+    '{"ca":"Allotjament","es":"Alojamiento","en":"Housing","ar":"السكن","fa":"مسکن"}',
+    'housing', 'house', 'primary', 10,
+    $schema${"fields":[{"key":"housing_type","label":{"ca":"Tipus d’allotjament","es":"Tipo de alojamiento","en":"Housing type","ar":"نوع السكن","fa":"نوع مسکن"},"type":"select","required":true,"filterable":true,"options":["room","shared_flat","apartment","emergency_shelter","social_housing"]},{"key":"duration","label":{"ca":"Durada","es":"Duración","en":"Duration","ar":"المدة","fa":"مدت"},"type":"select","required":true,"filterable":true,"options":["temporary","long_term","emergency"]},{"key":"deposit_required","label":{"ca":"Cal dipòsit","es":"Requiere depósito","en":"Deposit required","ar":"يتطلب وديعة","fa":"نیاز به ودیعه"},"type":"boolean","required":true,"filterable":true},{"key":"deposit_amount","label":{"ca":"Import del dipòsit","es":"Importe del depósito","en":"Deposit amount","ar":"مبلغ الوديعة","fa":"مبلغ ودیعه"},"type":"number","required":false,"filterable":false,"minimum":0},{"key":"for_whom","label":{"ca":"Per a qui","es":"Para quién","en":"For whom","ar":"لمن","fa":"برای چه کسی"},"type":"select","required":true,"filterable":true,"options":["women_only","families","singles","any"]},{"key":"restrictions","label":{"ca":"Restriccions","es":"Restricciones","en":"Restrictions","ar":"القيود","fa":"محدودیت‌ها"},"type":"text","required":false,"filterable":false}]}$schema$::jsonb
+  ),
+  (
+    '5eed0000-0000-4000-8009-000000000002',
+    '5eed0000-0000-4000-8000-000000000000',
+    '{"ca":"Cursos d''idiomes","es":"Cursos de idiomas","en":"Language Courses","ar":"دورات اللغة","fa":"دوره‌های زبان"}',
+    'language-courses', 'languages', 'secondary', 20,
+    $schema${"fields":[{"key":"language_taught","label":{"ca":"Idioma","es":"Idioma","en":"Language taught","ar":"اللغة","fa":"زبان"},"type":"select","required":true,"filterable":true,"options":["catalan","spanish","english","other"]},{"key":"level","label":{"ca":"Nivell","es":"Nivel","en":"Level","ar":"المستوى","fa":"سطح"},"type":"select","required":true,"filterable":true,"options":["beginner","intermediate","advanced","all_levels"]},{"key":"modality","label":{"ca":"Modalitat","es":"Modalidad","en":"Modality","ar":"طريقة الدراسة","fa":"شیوه برگزاری"},"type":"select","required":true,"filterable":true,"options":["in_person","online","hybrid"]},{"key":"registration_deadline","label":{"ca":"Data límit","es":"Fecha límite","en":"Registration deadline","ar":"آخر موعد للتسجيل","fa":"مهلت ثبت‌نام"},"type":"date","required":false,"filterable":false}]}$schema$::jsonb
+  ),
+  (
+    '5eed0000-0000-4000-8009-000000000003',
+    '5eed0000-0000-4000-8000-000000000000',
+    '{"ca":"Inserció laboral","es":"Inserción laboral","en":"Job Insertion","ar":"الاندماج المهني","fa":"ورود به بازار کار"}',
+    'job-insertion', 'briefcase-business', 'primary', 30,
+    $schema${"fields":[{"key":"job_type","label":{"ca":"Tipus de recurs","es":"Tipo de recurso","en":"Job resource type","ar":"نوع المورد","fa":"نوع منبع شغلی"},"type":"select","required":true,"filterable":true,"options":["job_offer","training","cv_workshop","interview_prep","internship"]},{"key":"sector","label":{"ca":"Sector","es":"Sector","en":"Sector","ar":"القطاع","fa":"بخش"},"type":"select","required":true,"filterable":true,"options":["hospitality","care","cleaning","retail","admin","other"]},{"key":"requirements","label":{"ca":"Requisits","es":"Requisitos","en":"Requirements","ar":"المتطلبات","fa":"شرایط"},"type":"text","required":false,"filterable":false},{"key":"language_required","label":{"ca":"Idioma requerit","es":"Idioma requerido","en":"Language required","ar":"اللغة المطلوبة","fa":"زبان مورد نیاز"},"type":"select","required":false,"filterable":true,"options":["catalan","spanish","english","none"]}]}$schema$::jsonb
+  ),
+  (
+    '5eed0000-0000-4000-8009-000000000004',
+    '5eed0000-0000-4000-8000-000000000000',
+    '{"ca":"Assessoria jurídica","es":"Asesoría jurídica","en":"Legal Aid","ar":"المساعدة القانونية","fa":"کمک حقوقی"}',
+    'legal-aid', 'scale', 'secondary', 40,
+    $schema${"fields":[{"key":"legal_type","label":{"ca":"Tipus d’assessoria","es":"Tipo de asesoría","en":"Legal aid type","ar":"نوع المساعدة","fa":"نوع کمک حقوقی"},"type":"select","required":true,"filterable":true,"options":["asylum","residency","family_reunification","labor_rights","gender_violence","general"]},{"key":"languages_available","label":{"ca":"Idiomes disponibles","es":"Idiomas disponibles","en":"Languages available","ar":"اللغات المتاحة","fa":"زبان‌های موجود"},"type":"string-array","required":true,"filterable":true,"options":["ca","es","en","ar","fa"]},{"key":"appointment_required","label":{"ca":"Cal cita","es":"Requiere cita","en":"Appointment required","ar":"يتطلب موعداً","fa":"نیاز به وقت قبلی"},"type":"boolean","required":true,"filterable":true}]}$schema$::jsonb
+  ),
+  (
+    '5eed0000-0000-4000-8009-000000000005',
+    '5eed0000-0000-4000-8000-000000000000',
+    '{"ca":"Salut","es":"Salud","en":"Health","ar":"الصحة","fa":"سلامت"}',
+    'health', 'heart-pulse', 'primary', 50,
+    $schema${"fields":[{"key":"health_type","label":{"ca":"Tipus d’atenció","es":"Tipo de atención","en":"Health service type","ar":"نوع الرعاية","fa":"نوع خدمات سلامت"},"type":"select","required":true,"filterable":true,"options":["medical","dental","mental_health","reproductive","emergency"]},{"key":"health_card_required","label":{"ca":"Cal targeta sanitària","es":"Requiere tarjeta sanitaria","en":"Health card required","ar":"تتطلب بطاقة صحية","fa":"نیاز به کارت سلامت"},"type":"boolean","required":true,"filterable":true},{"key":"languages_available","label":{"ca":"Idiomes disponibles","es":"Idiomas disponibles","en":"Languages available","ar":"اللغات المتاحة","fa":"زبان‌های موجود"},"type":"string-array","required":true,"filterable":true,"options":["ca","es","en","ar","fa"]},{"key":"appointment_required","label":{"ca":"Cal cita","es":"Requiere cita","en":"Appointment required","ar":"يتطلب موعداً","fa":"نیاز به وقت قبلی"},"type":"boolean","required":true,"filterable":true}]}$schema$::jsonb
+  ),
+  (
+    '5eed0000-0000-4000-8009-000000000006',
+    '5eed0000-0000-4000-8000-000000000000',
+    '{"ca":"Formació","es":"Formación","en":"Training","ar":"التدريب","fa":"آموزش"}',
+    'training', 'graduation-cap', 'secondary', 60,
+    $schema${"fields":[{"key":"training_type","label":{"ca":"Tipus de formació","es":"Tipo de formación","en":"Training type","ar":"نوع التدريب","fa":"نوع آموزش"},"type":"select","required":true,"filterable":true,"options":["digital_literacy","professional","certificate"]},{"key":"modality","label":{"ca":"Modalitat","es":"Modalidad","en":"Modality","ar":"طريقة الدراسة","fa":"شیوه برگزاری"},"type":"select","required":true,"filterable":true,"options":["in_person","online","hybrid"]},{"key":"requirements","label":{"ca":"Requisits","es":"Requisitos","en":"Requirements","ar":"المتطلبات","fa":"شرایط"},"type":"text","required":false,"filterable":false},{"key":"registration_deadline","label":{"ca":"Data límit","es":"Fecha límite","en":"Registration deadline","ar":"آخر موعد للتسجيل","fa":"مهلت ثبت‌نام"},"type":"date","required":false,"filterable":false}]}$schema$::jsonb
+  ),
+  (
+    '5eed0000-0000-4000-8009-000000000007',
+    '5eed0000-0000-4000-8000-000000000000',
+    '{"ca":"Oci i cultura","es":"Ocio y cultura","en":"Leisure & Culture","ar":"الترفيه والثقافة","fa":"تفریح و فرهنگ"}',
+    'leisure-culture', 'tickets', 'primary', 70,
+    $schema${"fields":[{"key":"activity_type","label":{"ca":"Tipus d’activitat","es":"Tipo de actividad","en":"Activity type","ar":"نوع النشاط","fa":"نوع فعالیت"},"type":"select","required":true,"filterable":true,"options":["sports","cultural","social","trips"]},{"key":"family_friendly","label":{"ca":"Per a famílies","es":"Para familias","en":"Family friendly","ar":"مناسب للعائلات","fa":"مناسب خانواده"},"type":"boolean","required":true,"filterable":true},{"key":"age_restriction","label":{"ca":"Edat mínima","es":"Edad mínima","en":"Minimum age","ar":"الحد الأدنى للعمر","fa":"حداقل سن"},"type":"number","required":false,"filterable":true,"minimum":0}]}$schema$::jsonb
+  ),
+  (
+    '5eed0000-0000-4000-8009-000000000008',
+    '5eed0000-0000-4000-8000-000000000000',
+    '{"ca":"Tràmits","es":"Trámites","en":"Documentation & Administrative","ar":"الوثائق والإجراءات","fa":"مدارک و امور اداری"}',
+    'documentation', 'file-text', 'secondary', 80,
+    $schema${"fields":[{"key":"document_type","label":{"ca":"Tipus de tràmit","es":"Tipo de trámite","en":"Document type","ar":"نوع الإجراء","fa":"نوع مدرک"},"type":"select","required":true,"filterable":true,"options":["empadronament","nie","tie","health_card","social_services","other"]},{"key":"appointment_required","label":{"ca":"Cal cita","es":"Requiere cita","en":"Appointment required","ar":"يتطلب موعداً","fa":"نیاز به وقت قبلی"},"type":"boolean","required":true,"filterable":true},{"key":"documents_needed","label":{"ca":"Documents necessaris","es":"Documentos necesarios","en":"Documents needed","ar":"المستندات المطلوبة","fa":"مدارک مورد نیاز"},"type":"text","required":false,"filterable":false},{"key":"languages_available","label":{"ca":"Idiomes disponibles","es":"Idiomas disponibles","en":"Languages available","ar":"اللغات المتاحة","fa":"زبان‌های موجود"},"type":"string-array","required":true,"filterable":true,"options":["ca","es","en","ar","fa"]},{"key":"processing_time","label":{"ca":"Temps de tramitació","es":"Tiempo de tramitación","en":"Processing time","ar":"مدة المعالجة","fa":"زمان پردازش"},"type":"text","required":false,"filterable":false}]}$schema$::jsonb
+  )
+on conflict (id) do nothing;
+
+insert into public.services (
+  id, org_id, category_id, title, provider_name, location, zone,
+  cost_type, cost_amount, cost_details, contact_name, contact_phone,
+  contact_email, contact_role, schedule, external_url, availability,
+  metadata, status, published_at, expires_at, submitted_by, created_by,
+  reviewed_by, reviewed_at, rejection_reason, created_at
+)
+values
+  (
+    '5eed0000-0000-4000-800a-000000000001',
+    '5eed0000-0000-4000-8000-000000000000',
+    '5eed0000-0000-4000-8009-000000000001',
+    '{"ca":"Mediació per trobar una habitació"}',
+    'Creu Roja Osona', 'Vic', 'Osona', 'free', null, null,
+    'Sílvia Bosch', '+34938850000', 'silvia.bosch@example.test', 'Tècnica social',
+    'Amb cita prèvia', 'https://example.test/habitatge', 'available',
+    '{"housing_type":"room","duration":"temporary","deposit_required":false,"for_whom":"women_only"}',
+    'pending', null, null,
+    '5eed0000-0000-4000-8000-000000000004',
+    '5eed0000-0000-4000-8000-000000000004',
+    null, null, null, now() - interval '2 days'
+  ),
+  (
+    '5eed0000-0000-4000-800a-000000000002',
+    '5eed0000-0000-4000-8000-000000000000',
+    '5eed0000-0000-4000-8009-000000000001',
+    '{"ca":"Pis temporal sense confirmar"}',
+    'Entitat col·laboradora', 'Manlleu', 'Osona', 'subsidized', 180, null,
+    'Jordi Camps', '+34938850001', 'jordi.camps@example.test', 'Referent',
+    'Matins', 'https://example.test/pis', 'waiting_list',
+    '{"housing_type":"apartment","duration":"temporary","deposit_required":true,"deposit_amount":300,"for_whom":"families"}',
+    'rejected', null, null,
+    '5eed0000-0000-4000-8000-000000000005',
+    '5eed0000-0000-4000-8000-000000000005',
+    '5eed0000-0000-4000-8000-000000000002', now() - interval '1 day',
+    'Cal confirmar la disponibilitat abans de publicar.', now() - interval '3 days'
+  ),
+  (
+    '5eed0000-0000-4000-800a-000000000003',
+    '5eed0000-0000-4000-8000-000000000000',
+    '5eed0000-0000-4000-8009-000000000001',
+    '{"ca":"Habitació compartida per a dones","es":"Habitación compartida para mujeres","en":"Shared room for women","ar":"غرفة مشتركة للنساء","fa":"اتاق مشترک برای زنان"}',
+    'Fundació Habitat3', 'Vic', 'Osona', 'subsidized', 120, 'Subministraments inclosos',
+    'Anna Serra', '+34938851000', 'silvia.bosch@example.test', 'Coordinació d’habitatge',
+    'De dilluns a divendres, de 9 a 14 h', 'https://example.test/habitacio-vic', 'available',
+    '{"housing_type":"shared_flat","duration":"long_term","deposit_required":true,"deposit_amount":250,"for_whom":"women_only","restrictions":"Cal empadronament"}',
+    'published', now() - interval '10 days', null, null,
+    '5eed0000-0000-4000-8000-000000000002', null, null, null, now() - interval '12 days'
+  ),
+  (
+    '5eed0000-0000-4000-800a-000000000004',
+    '5eed0000-0000-4000-8000-000000000000',
+    '5eed0000-0000-4000-8009-000000000002',
+    '{"ca":"Català inicial a Vic","es":"Catalán inicial en Vic","en":"Beginner Catalan in Vic","ar":"اللغة الكتالانية للمبتدئات في فيك","fa":"کاتالان مقدماتی در ویک"}',
+    'CNL Osona', 'Vic', 'Osona', 'free', null, null,
+    'Recepció CNL', '+34938852000', 'marta.puig@example.test', 'Inscripcions',
+    'Dimarts i dijous, de 10 a 12 h', 'https://example.test/catala-inicial', 'available',
+    '{"language_taught":"catalan","level":"beginner","modality":"in_person","registration_deadline":"2026-09-15"}',
+    'published', now() - interval '5 days', null, null,
+    '5eed0000-0000-4000-8000-000000000002', null, null, null, now() - interval '6 days'
+  ),
+  (
+    '5eed0000-0000-4000-800a-000000000005',
+    '5eed0000-0000-4000-8000-000000000000',
+    '5eed0000-0000-4000-8009-000000000002',
+    '{"ca":"Castellà en línia","es":"Español en línea","en":"Online Spanish","ar":"الإسبانية عبر الإنترنت","fa":"اسپانیایی آنلاین"}',
+    'Aula Oberta', null, 'Online', 'free', null, null,
+    'Equip docent', null, 'laia.ferrer@example.test', null,
+    'Dilluns i dimecres, de 18 a 19.30 h', 'https://example.test/castella-online', 'available',
+    '{"language_taught":"spanish","level":"all_levels","modality":"online"}',
+    'published', now() - interval '3 days', now() + interval '90 days', null,
+    '5eed0000-0000-4000-8000-000000000002', null, null, null, now() - interval '4 days'
+  ),
+  (
+    '5eed0000-0000-4000-800a-000000000006',
+    '5eed0000-0000-4000-8000-000000000000',
+    '5eed0000-0000-4000-8009-000000000002',
+    '{"ca":"Conversa en anglès"}',
+    'Biblioteca de Vic', 'Vic', 'Osona', 'free', null, null,
+    null, null, null, null, 'Divendres a la tarda', null, 'available',
+    '{"language_taught":"english","level":"intermediate","modality":"in_person"}',
+    'draft', null, null, null,
+    '5eed0000-0000-4000-8000-000000000002', null, null, null, now() - interval '1 day'
+  ),
+  (
+    '5eed0000-0000-4000-800a-000000000007',
+    '5eed0000-0000-4000-8000-000000000000',
+    '5eed0000-0000-4000-8009-000000000003',
+    '{"ca":"Taller de currículum","es":"Taller de currículum","en":"CV workshop","ar":"ورشة السيرة الذاتية","fa":"کارگاه رزومه"}',
+    'Osona Acció Social', 'Vic', 'Osona', 'free', null, null,
+    'Laia Pons', '+34938853000', 'jordi.camps@example.test', 'Orientadora laboral',
+    'Dimecres, de 10 a 12 h', 'https://example.test/taller-cv', 'available',
+    '{"job_type":"cv_workshop","sector":"admin","requirements":"Portar un currículum actual","language_required":"catalan"}',
+    'published', now() - interval '7 days', null, null,
+    '5eed0000-0000-4000-8000-000000000003', null, null, null, now() - interval '8 days'
+  ),
+  (
+    '5eed0000-0000-4000-800a-000000000008',
+    '5eed0000-0000-4000-8000-000000000000',
+    '5eed0000-0000-4000-8009-000000000003',
+    '{"ca":"Pràctiques en comerç","es":"Prácticas en comercio","en":"Retail internship","ar":"تدريب في متجر","fa":"کارآموزی فروشگاه"}',
+    'Cambra d’Osona', 'Manlleu', 'Osona', 'paid', 650, 'Beca mensual',
+    'Marc Vila', '+34938853001', 'marta.puig@example.test', 'Prospecció',
+    'Jornada de matí', 'https://example.test/practiques-comerc', 'waiting_list',
+    '{"job_type":"internship","sector":"retail","requirements":"Disponibilitat de matins","language_required":"spanish"}',
+    'published', now() - interval '2 days', now() + interval '45 days', null,
+    '5eed0000-0000-4000-8000-000000000003', null, null, null, now() - interval '3 days'
+  ),
+  (
+    '5eed0000-0000-4000-800a-000000000009',
+    '5eed0000-0000-4000-8000-000000000000',
+    '5eed0000-0000-4000-8009-000000000004',
+    '{"ca":"Orientació d’estrangeria","es":"Orientación de extranjería","en":"Immigration guidance","ar":"إرشاد شؤون الهجرة","fa":"راهنمایی مهاجرت"}',
+    'CITE Osona', 'Vic', 'Osona', 'free', null, null,
+    'Núria Soler', '+34938854000', 'jordi.camps@example.test', 'Advocada',
+    'Amb cita prèvia', 'https://example.test/estrangeria', 'by_appointment',
+    '{"legal_type":"residency","languages_available":["ca","es","ar"],"appointment_required":true}',
+    'published', now() - interval '20 days', null, null,
+    '5eed0000-0000-4000-8000-000000000002', null, null, null, now() - interval '21 days'
+  ),
+  (
+    '5eed0000-0000-4000-800a-000000000010',
+    '5eed0000-0000-4000-8000-000000000000',
+    '5eed0000-0000-4000-8009-000000000004',
+    '{"ca":"Assessorament en asil","es":"Asesoramiento en asilo","en":"Asylum advice","ar":"استشارة اللجوء","fa":"مشاوره پناهندگی"}',
+    'CEAR Catalunya', 'Barcelona', 'Barcelona', 'free', null, null,
+    'Equip jurídic', '+34930000010', 'silvia.bosch@example.test', null,
+    'De dilluns a dijous', 'https://example.test/asil', 'by_appointment',
+    '{"legal_type":"asylum","languages_available":["ca","es","en","ar","fa"],"appointment_required":true}',
+    'published', now() + interval '7 days', null, null,
+    '5eed0000-0000-4000-8000-000000000002', null, null, null, now() - interval '1 day'
+  ),
+  (
+    '5eed0000-0000-4000-800a-000000000011',
+    '5eed0000-0000-4000-8000-000000000000',
+    '5eed0000-0000-4000-8009-000000000004',
+    '{"ca":"Consulta sobre reagrupament familiar"}',
+    'Entitat col·laboradora', 'Vic', 'Osona', 'free', null, null,
+    'Jordi Camps', '+34938854001', 'jordi.camps@example.test', null,
+    'Amb cita prèvia', null, 'by_appointment',
+    '{"legal_type":"family_reunification","languages_available":["ca","es"],"appointment_required":true}',
+    'approved', null, null,
+    '5eed0000-0000-4000-8000-000000000004',
+    '5eed0000-0000-4000-8000-000000000004',
+    '5eed0000-0000-4000-8000-000000000002', now() - interval '3 hours', null,
+    now() - interval '2 days'
+  ),
+  (
+    '5eed0000-0000-4000-800a-000000000012',
+    '5eed0000-0000-4000-8000-000000000000',
+    '5eed0000-0000-4000-8009-000000000005',
+    '{"ca":"Suport psicològic per a dones","es":"Apoyo psicológico para mujeres","en":"Psychological support for women","ar":"دعم نفسي للنساء","fa":"حمایت روانی برای زنان"}',
+    'SIAD Osona', 'Vic', 'Osona', 'free', null, null,
+    'Acollida SIAD', '+34938855000', 'laia.ferrer@example.test', null,
+    'Amb cita prèvia', 'https://example.test/suport-psicologic', 'by_appointment',
+    '{"health_type":"mental_health","health_card_required":false,"languages_available":["ca","es","fa"],"appointment_required":true}',
+    'published', now() - interval '30 days', null, null,
+    '5eed0000-0000-4000-8000-000000000002', null, null, null, now() - interval '31 days'
+  ),
+  (
+    '5eed0000-0000-4000-800a-000000000013',
+    '5eed0000-0000-4000-8000-000000000000',
+    '5eed0000-0000-4000-8009-000000000005',
+    '{"ca":"Odontologia social","es":"Odontología social","en":"Social dental care","ar":"رعاية الأسنان الاجتماعية","fa":"دندانپزشکی اجتماعی"}',
+    'Clínica Solidària', 'Manlleu', 'Osona', 'subsidized', 25, 'Preu per visita',
+    'Recepció', '+34938855001', 'marta.puig@example.test', null,
+    'Dilluns i dimecres', 'https://example.test/dental', 'waiting_list',
+    '{"health_type":"dental","health_card_required":true,"languages_available":["ca","es"],"appointment_required":true}',
+    'published', now() - interval '12 days', now() + interval '60 days', null,
+    '5eed0000-0000-4000-8000-000000000002', null, null, null, now() - interval '13 days'
+  ),
+  (
+    '5eed0000-0000-4000-800a-000000000014',
+    '5eed0000-0000-4000-8000-000000000000',
+    '5eed0000-0000-4000-8009-000000000006',
+    '{"ca":"Competències digitals bàsiques","es":"Competencias digitales básicas","en":"Basic digital skills","ar":"المهارات الرقمية الأساسية","fa":"مهارت‌های دیجیتال پایه"}',
+    'Punt Òmnia', 'Vic', 'Osona', 'free', null, null,
+    'Dinamització Òmnia', '+34938856000', 'marta.puig@example.test', null,
+    'Dilluns, de 16 a 18 h', 'https://example.test/competencies-digitals', 'available',
+    '{"training_type":"digital_literacy","modality":"in_person","requirements":"Portar el telèfon mòbil","registration_deadline":"2026-10-01"}',
+    'published', now() - interval '4 days', null, null,
+    '5eed0000-0000-4000-8000-000000000003', null, null, null, now() - interval '5 days'
+  ),
+  (
+    '5eed0000-0000-4000-800a-000000000015',
+    '5eed0000-0000-4000-8000-000000000000',
+    '5eed0000-0000-4000-8009-000000000006',
+    '{"ca":"Certificat de manipulació d’aliments","es":"Certificado de manipulación de alimentos","en":"Food handling certificate","ar":"شهادة تداول الأغذية","fa":"گواهی کار با مواد غذایی"}',
+    'Aula Professional', 'Online', 'Online', 'paid', 18, null,
+    'Inscripcions', null, 'jordi.camps@example.test', null,
+    'Accés lliure durant dues setmanes', 'https://example.test/manipulacio-aliments', 'available',
+    '{"training_type":"certificate","modality":"online","requirements":"Correu electrònic actiu"}',
+    'published', now() - interval '9 days', null, null,
+    '5eed0000-0000-4000-8000-000000000003', null, null, null, now() - interval '10 days'
+  ),
+  (
+    '5eed0000-0000-4000-800a-000000000016',
+    '5eed0000-0000-4000-8000-000000000000',
+    '5eed0000-0000-4000-8009-000000000007',
+    '{"ca":"Futbol obert per a famílies","es":"Fútbol abierto para familias","en":"Open football for families","ar":"كرة القدم المفتوحة للعائلات","fa":"فوتبال آزاد برای خانواده‌ها"}',
+    'AE Ramassà', 'Camp Municipal de Vic', 'Osona', 'free', null, null,
+    'Coordinació Ramassà', '+34938857000', 'laia.ferrer@example.test', null,
+    'Dissabtes, de 10 a 12 h', 'https://example.test/futbol-families', 'available',
+    '{"activity_type":"sports","family_friendly":true}',
+    'published', now() - interval '40 days', null, null,
+    '5eed0000-0000-4000-8000-000000000002', null, null, null, now() - interval '41 days'
+  ),
+  (
+    '5eed0000-0000-4000-800a-000000000017',
+    '5eed0000-0000-4000-8000-000000000000',
+    '5eed0000-0000-4000-8009-000000000007',
+    '{"ca":"Sortida al Museu Episcopal","es":"Visita al Museo Episcopal","en":"Episcopal Museum visit","ar":"زيارة المتحف الأسقفي","fa":"بازدید از موزه اسقفی"}',
+    'Museu Episcopal de Vic', 'Vic', 'Osona', 'subsidized', 3, 'Infants gratuït',
+    'Educació', '+34938857001', 'marta.puig@example.test', null,
+    'Diumenge, de 11 a 13 h', 'https://example.test/visita-museu', 'available',
+    '{"activity_type":"cultural","family_friendly":true,"age_restriction":6}',
+    'published', now() - interval '1 day', now() + interval '20 days', null,
+    '5eed0000-0000-4000-8000-000000000002', null, null, null, now() - interval '2 days'
+  ),
+  (
+    '5eed0000-0000-4000-800a-000000000018',
+    '5eed0000-0000-4000-8000-000000000000',
+    '5eed0000-0000-4000-8009-000000000008',
+    '{"ca":"Acompanyament per empadronar-se","es":"Acompañamiento para empadronarse","en":"Municipal registration support","ar":"دعم التسجيل البلدي","fa":"کمک برای ثبت شهرداری"}',
+    'Ajuntament de Vic', 'Oficina d’Atenció Ciutadana', 'Osona', 'free', null, null,
+    'OAC Vic', '+34938858000', 'jordi.camps@example.test', null,
+    'De dilluns a divendres, de 9 a 14 h', 'https://example.test/empadronament', 'by_appointment',
+    '{"document_type":"empadronament","appointment_required":true,"documents_needed":"Passaport i contracte de lloguer","languages_available":["ca","es"],"processing_time":"Dues setmanes"}',
+    'published', now() - interval '15 days', null, null,
+    '5eed0000-0000-4000-8000-000000000002', null, null, null, now() - interval '16 days'
+  ),
+  (
+    '5eed0000-0000-4000-800a-000000000019',
+    '5eed0000-0000-4000-8000-000000000000',
+    '5eed0000-0000-4000-8009-000000000008',
+    '{"ca":"Primera sol·licitud de TIE","es":"Primera solicitud de TIE","en":"First TIE application","ar":"طلب بطاقة الإقامة لأول مرة","fa":"درخواست اولیه کارت اقامت"}',
+    'Servei d’Acollida', 'Vic', 'Osona', 'free', null, null,
+    'Punt d’acollida', '+34938858001', 'silvia.bosch@example.test', null,
+    'Dimarts i dijous', 'https://example.test/tie', 'by_appointment',
+    '{"document_type":"tie","appointment_required":true,"documents_needed":"Resolució favorable, passaport i fotografia","languages_available":["ca","es","ar"],"processing_time":"Entre quatre i sis setmanes"}',
+    'published', now() - interval '6 days', now() - interval '1 day', null,
+    '5eed0000-0000-4000-8000-000000000002', null, null, null, now() - interval '7 days'
+  )
+on conflict (id) do nothing;
+
+insert into public.service_images (id, org_id, service_id, url, alt_text, position)
+values
+  (
+    '5eed0000-0000-4000-800b-000000000001',
+    '5eed0000-0000-4000-8000-000000000000',
+    '5eed0000-0000-4000-800a-000000000003',
+    'org/services/housing/shared-room.webp',
+    '{"ca":"Habitació doble amb llum natural","es":"Habitación doble con luz natural","en":"Twin room with natural light","ar":"غرفة مزدوجة بإضاءة طبيعية","fa":"اتاق دو نفره با نور طبیعی"}',
+    0
+  ),
+  (
+    '5eed0000-0000-4000-800b-000000000002',
+    '5eed0000-0000-4000-8000-000000000000',
+    '5eed0000-0000-4000-800a-000000000016',
+    'org/services/leisure/family-football.webp',
+    '{"ca":"Jugadores i famílies al camp de futbol","es":"Jugadoras y familias en el campo","en":"Players and families on the football pitch","ar":"لاعبات وعائلات في ملعب كرة القدم","fa":"بازیکنان و خانواده‌ها در زمین فوتبال"}',
+    0
+  )
+on conflict (id) do nothing;
+
+insert into public.service_interests (id, org_id, service_id, user_id, created_at)
+values (
+  '5eed0000-0000-4000-800c-000000000001',
+  '5eed0000-0000-4000-8000-000000000000',
+  '5eed0000-0000-4000-800a-000000000004',
+  '5eed0000-0000-4000-8000-000000000012',
+  now() - interval '1 day'
 )
 on conflict (id) do nothing;
 
@@ -958,3 +1300,5 @@ values
     '5eed0000-0000-4000-8000-000000000028', now() - interval '5 days'
   )
 on conflict (id) do nothing;
+
+commit;

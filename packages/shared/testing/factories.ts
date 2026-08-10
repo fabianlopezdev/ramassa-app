@@ -21,7 +21,11 @@
  * sides, so a factory-built participant and the seeded row agree.
  */
 
-import type { Database } from '../types/database';
+import {
+  serializeServiceCategoryMetadataSchema,
+  SERVICE_CATEGORY_DEFINITIONS,
+} from '../services/definitions';
+import type { Database, Json } from '../types/database';
 import {
   ONBOARDING_ACCOUNT_EMAIL,
   PARTICIPANT_FIXTURES,
@@ -52,6 +56,10 @@ export type ParticipantNoteRow = Database['public']['Tables']['participant_notes
 export type EquipmentDeliveryRow = Database['public']['Tables']['equipment_deliveries']['Row'];
 export type AuditLogRow = Database['public']['Tables']['audit_log']['Row'];
 export type InviteRow = Database['public']['Tables']['invites']['Row'];
+export type ServiceCategoryRow = Database['public']['Tables']['service_categories']['Row'];
+export type ServiceRow = Database['public']['Tables']['services']['Row'];
+export type ServiceImageRow = Database['public']['Tables']['service_images']['Row'];
+export type ServiceInterestRow = Database['public']['Tables']['service_interests']['Row'];
 
 /** One fixed instant for every timestamp, so factory output is byte-stable. */
 const FIXTURE_TIMESTAMP = '2026-01-15T09:00:00+00:00';
@@ -64,6 +72,10 @@ const POSTAL_CODES_BY_CITY: Readonly<Record<string, string>> = {
 };
 
 const CLOTHING_SIZES = ['S', 'M', 'L', 'XL'] as const;
+
+function toJson(value: unknown): Json {
+  return JSON.parse(JSON.stringify(value)) as Json;
+}
 
 /**
  * Where each roster nationality's participants were born, in the script they
@@ -155,6 +167,106 @@ export function buildOrganization(overrides: Partial<OrganizationRow> = {}): Org
     available_languages: ['ca', 'es', 'en', 'ar', 'fa'],
     contact_email: 'contacte@example.test',
     contact_phone: '+34600000000',
+    created_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+export function buildServiceCategory(
+  overrides: Partial<ServiceCategoryRow> = {},
+): ServiceCategoryRow {
+  const definition = SERVICE_CATEGORY_DEFINITIONS[0];
+  return {
+    id: '5eed0000-0000-4000-8009-000000000001',
+    org_id: SEED_ORGANIZATION_ID,
+    name: toJson(definition.name),
+    slug: definition.slug,
+    icon: definition.icon,
+    color: definition.color,
+    sort_order: definition.sortOrder,
+    metadata_schema: toJson(serializeServiceCategoryMetadataSchema(definition)),
+    created_at: FIXTURE_TIMESTAMP,
+    updated_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+export function buildService(overrides: Partial<ServiceRow> = {}): ServiceRow {
+  const creator = STAFF_FIXTURES.find((person) => person.role === 'staff')!;
+  return {
+    id: '5eed0000-0000-4000-800a-000000000003',
+    org_id: SEED_ORGANIZATION_ID,
+    category_id: buildServiceCategory().id,
+    title: {
+      ca: 'Habitació compartida per a dones',
+      es: 'Habitación compartida para mujeres',
+      en: 'Shared room for women',
+      ar: 'غرفة مشتركة للنساء',
+      fa: 'اتاق مشترک برای زنان',
+    },
+    description: null,
+    provider_name: 'Fundació Habitat3',
+    location: 'Vic',
+    zone: 'Osona',
+    cost_type: 'subsidized',
+    cost_amount: 120,
+    cost_details: 'Subministraments inclosos',
+    contact_name: 'Anna Serra',
+    contact_phone: '+34938851000',
+    contact_email: 'silvia.bosch@example.test',
+    contact_role: 'Coordinació d’habitatge',
+    schedule: 'De dilluns a divendres, de 9 a 14 h',
+    external_url: 'https://example.test/habitacio-vic',
+    availability: 'available',
+    metadata: {
+      housing_type: 'shared_flat',
+      duration: 'long_term',
+      deposit_required: true,
+      deposit_amount: 250,
+      for_whom: 'women_only',
+      restrictions: 'Cal empadronament',
+    },
+    status: 'published',
+    published_at: FIXTURE_TIMESTAMP,
+    expires_at: null,
+    submitted_by: null,
+    created_by: seedUserId(creator.ordinal),
+    reviewed_by: null,
+    reviewed_at: null,
+    rejection_reason: null,
+    created_at: FIXTURE_TIMESTAMP,
+    updated_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+export function buildServiceImage(overrides: Partial<ServiceImageRow> = {}): ServiceImageRow {
+  return {
+    id: '5eed0000-0000-4000-800b-000000000001',
+    org_id: SEED_ORGANIZATION_ID,
+    service_id: buildService().id,
+    url: 'org/services/housing/shared-room.webp',
+    alt_text: {
+      ca: 'Habitació doble amb llum natural',
+      es: 'Habitación doble con luz natural',
+      en: 'Twin room with natural light',
+      ar: 'غرفة مزدوجة بإضاءة طبيعية',
+      fa: 'اتاق دو نفره با نور طبیعی',
+    },
+    position: 0,
+    created_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+export function buildServiceInterest(
+  overrides: Partial<ServiceInterestRow> = {},
+): ServiceInterestRow {
+  return {
+    id: '5eed0000-0000-4000-800c-000000000001',
+    org_id: SEED_ORGANIZATION_ID,
+    service_id: '5eed0000-0000-4000-800a-000000000004',
+    user_id: seedUserId(PARTICIPANT_FIXTURES[1]!.ordinal),
     created_at: FIXTURE_TIMESTAMP,
     ...overrides,
   };

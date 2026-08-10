@@ -18,6 +18,10 @@ import {
   buildParticipantStory,
   buildProfile,
   buildPushToken,
+  buildService,
+  buildServiceCategory,
+  buildServiceImage,
+  buildServiceInterest,
 } from './factories';
 import {
   ONBOARDING_ACCOUNT_EMAIL,
@@ -119,6 +123,28 @@ describe('buildAnnouncement', () => {
       status: 'draft',
       is_pinned: true,
     });
+  });
+});
+
+describe('service factories', () => {
+  test('builds a published hybrid service from the seeded housing definition', () => {
+    const category = buildServiceCategory();
+    const service = buildService();
+
+    expect(category.slug).toBe('housing');
+    expect((category.metadata_schema as { fields: unknown[] }).fields.length).toBeGreaterThan(0);
+    expect(service.category_id).toBe(category.id);
+    expect(service.metadata).toMatchObject({
+      housing_type: 'shared_flat',
+      for_whom: 'women_only',
+    });
+    expect(service.status).toBe('published');
+  });
+
+  test('links image and interest fixtures to seeded service rows', () => {
+    expect(buildServiceImage().service_id).toBe(buildService().id);
+    expect(buildServiceImage().position).toBe(0);
+    expect(buildServiceInterest().user_id).toBe(seedUserId(PARTICIPANT_FIXTURES[1]!.ordinal));
   });
 });
 

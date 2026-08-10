@@ -1155,6 +1155,276 @@ export type Database = {
           },
         ];
       };
+      service_categories: {
+        Row: {
+          color: string;
+          created_at: string;
+          icon: string;
+          id: string;
+          metadata_schema: Json;
+          name: Json;
+          org_id: string;
+          slug: string;
+          sort_order: number;
+          updated_at: string;
+        };
+        Insert: {
+          color: string;
+          created_at?: string;
+          icon: string;
+          id?: string;
+          metadata_schema: Json;
+          name: Json;
+          org_id?: string;
+          slug: string;
+          sort_order?: number;
+          updated_at?: string;
+        };
+        Update: {
+          color?: string;
+          created_at?: string;
+          icon?: string;
+          id?: string;
+          metadata_schema?: Json;
+          name?: Json;
+          org_id?: string;
+          slug?: string;
+          sort_order?: number;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'service_categories_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      service_images: {
+        Row: {
+          alt_text: Json;
+          created_at: string;
+          id: string;
+          org_id: string;
+          position: number;
+          service_id: string;
+          url: string;
+        };
+        Insert: {
+          alt_text: Json;
+          created_at?: string;
+          id?: string;
+          org_id?: string;
+          position?: number;
+          service_id: string;
+          url: string;
+        };
+        Update: {
+          alt_text?: Json;
+          created_at?: string;
+          id?: string;
+          org_id?: string;
+          position?: number;
+          service_id?: string;
+          url?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'service_images_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'service_images_service_tenant_fkey';
+            columns: ['org_id', 'service_id'];
+            isOneToOne: false;
+            referencedRelation: 'services';
+            referencedColumns: ['org_id', 'id'];
+          },
+        ];
+      };
+      service_interests: {
+        Row: {
+          created_at: string;
+          id: string;
+          org_id: string;
+          service_id: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          org_id?: string;
+          service_id: string;
+          user_id?: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          org_id?: string;
+          service_id?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'service_interests_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'service_interests_service_tenant_fkey';
+            columns: ['org_id', 'service_id'];
+            isOneToOne: false;
+            referencedRelation: 'services';
+            referencedColumns: ['org_id', 'id'];
+          },
+          {
+            foreignKeyName: 'service_interests_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      services: {
+        Row: {
+          availability: string;
+          category_id: string;
+          contact_email: string | null;
+          contact_name: string | null;
+          contact_phone: string | null;
+          contact_role: string | null;
+          cost_amount: number | null;
+          cost_details: string | null;
+          cost_type: string;
+          created_at: string;
+          created_by: string | null;
+          description: Json | null;
+          expires_at: string | null;
+          external_url: string | null;
+          id: string;
+          location: string | null;
+          metadata: Json;
+          org_id: string;
+          provider_name: string | null;
+          published_at: string | null;
+          rejection_reason: string | null;
+          reviewed_at: string | null;
+          reviewed_by: string | null;
+          schedule: string | null;
+          status: string;
+          submitted_by: string | null;
+          title: Json;
+          updated_at: string;
+          zone: string | null;
+        };
+        Insert: {
+          availability?: string;
+          category_id: string;
+          contact_email?: string | null;
+          contact_name?: string | null;
+          contact_phone?: string | null;
+          contact_role?: string | null;
+          cost_amount?: number | null;
+          cost_details?: string | null;
+          cost_type?: string;
+          created_at?: string;
+          created_by?: string | null;
+          description?: Json | null;
+          expires_at?: string | null;
+          external_url?: string | null;
+          id?: string;
+          location?: string | null;
+          metadata?: Json;
+          org_id?: string;
+          provider_name?: string | null;
+          published_at?: string | null;
+          rejection_reason?: string | null;
+          reviewed_at?: string | null;
+          reviewed_by?: string | null;
+          schedule?: string | null;
+          status?: string;
+          submitted_by?: string | null;
+          title: Json;
+          updated_at?: string;
+          zone?: string | null;
+        };
+        Update: {
+          availability?: string;
+          category_id?: string;
+          contact_email?: string | null;
+          contact_name?: string | null;
+          contact_phone?: string | null;
+          contact_role?: string | null;
+          cost_amount?: number | null;
+          cost_details?: string | null;
+          cost_type?: string;
+          created_at?: string;
+          created_by?: string | null;
+          description?: Json | null;
+          expires_at?: string | null;
+          external_url?: string | null;
+          id?: string;
+          location?: string | null;
+          metadata?: Json;
+          org_id?: string;
+          provider_name?: string | null;
+          published_at?: string | null;
+          rejection_reason?: string | null;
+          reviewed_at?: string | null;
+          reviewed_by?: string | null;
+          schedule?: string | null;
+          status?: string;
+          submitted_by?: string | null;
+          title?: Json;
+          updated_at?: string;
+          zone?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'services_category_tenant_fkey';
+            columns: ['org_id', 'category_id'];
+            isOneToOne: false;
+            referencedRelation: 'service_categories';
+            referencedColumns: ['org_id', 'id'];
+          },
+          {
+            foreignKeyName: 'services_created_by_fkey';
+            columns: ['created_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'services_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'services_reviewed_by_fkey';
+            columns: ['reviewed_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'services_submitted_by_fkey';
+            columns: ['submitted_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       terms_acceptances: {
         Row: {
           accepted_at: string;
@@ -1569,6 +1839,14 @@ export type Database = {
       };
       is_localized_content_valid_for_language: {
         Args: { content: Json; max_length: number; source_language: string };
+        Returns: boolean;
+      };
+      is_service_metadata_schema_valid: {
+        Args: { metadata_schema: Json };
+        Returns: boolean;
+      };
+      is_service_metadata_valid: {
+        Args: { metadata: Json; metadata_schema: Json };
         Returns: boolean;
       };
       is_staff_or_admin: { Args: never; Returns: boolean };
