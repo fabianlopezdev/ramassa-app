@@ -40,6 +40,7 @@ import { devClientUrl, writeResolvedFlow } from './flow-capture/resolve-flow';
 import { ensureMetro } from './flow-capture/servers';
 import { log, run, runOrThrow } from './flow-capture/shell';
 import { loadTranslator } from './flow-capture/translations';
+import { assertAndroidTabLabelsDrawn } from './qa-android-tab-labels';
 
 const suiteDir = path.join(repoRoot, '.maestro');
 
@@ -154,7 +155,16 @@ async function runSuiteOn(
         cwd: path.join(repoRoot, '.flow-shots'),
         inherit: true,
       });
-      results.push({ flow, platform, passed: exitCode === 0 });
+      let passed = exitCode === 0;
+      if (passed && platform === 'android' && flow === 'smoke-shells.yaml') {
+        try {
+          await assertAndroidTabLabelsDrawn(device);
+        } catch (error) {
+          console.error(`✗ ${error instanceof Error ? error.message : String(error)}`);
+          passed = false;
+        }
+      }
+      results.push({ flow, platform, passed });
     }
   } finally {
     await metro.stop();

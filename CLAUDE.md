@@ -135,6 +135,13 @@ repository only as historical tooling and must not be run unless Fabián explici
 5. **Evidence must be capable of failing.** Break a new assertion deliberately, confirm it goes red,
    restore the implementation, and test the route the product actually uses.
 6. **Local data only:** browser and device QA run against local seeded Supabase, never production.
+7. **Drawn pixels, not hierarchy, for visual claims:** accessibility-tree assertions prove that a
+   label exists for assistive technology, not that Android painted it. When acceptance is visual,
+   capture the framebuffer with `adb exec-out screencap -p` and assert on that image. The player-tab
+   example runs automatically after `smoke-shells` and can be repeated directly with
+   `bun run qa:android:tab-labels -- --device emulator-5556`. It OCRs only the bottom-navigation
+   label band and requires evidence in all five tab slots. Install the local prerequisite with
+   `brew install tesseract`.
 
 ## ADR Enforcement
 

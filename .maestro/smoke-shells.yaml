@@ -22,17 +22,9 @@ env:
 - runFlow: _sign-in.yaml
 - runFlow: _relaunch.yaml
 
-# All five labels are present at once: this is the tab bar, not one screen.
-- assertVisible:
-    text: '^${TAB_HOME}$'
-- assertVisible:
-    text: '^${TAB_EVENTS}$'
-- assertVisible:
-    text: '^${TAB_COMMUNITY}$'
-- assertVisible:
-    text: '^${TAB_SERVICES}$'
-- assertVisible:
-    text: '^${TAB_PROFILE}$'
+# Maestro uses the hierarchy for navigation below. After this flow completes,
+# qa-smoke captures the real Android framebuffer and OCRs the five label slots.
+# Hierarchy visibility is not accepted as evidence that Material painted text.
 
 # Each tab opens and renders its own header. Events and Profile have unique
 # headings. The two remaining placeholders intentionally repeat their tab label,

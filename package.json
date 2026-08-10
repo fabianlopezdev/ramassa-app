@@ -32,6 +32,7 @@
     "capture:flow": "bun run scripts/capture-flow.ts",
     "capture:phase": "bun run scripts/capture-phase.ts",
     "qa:smoke": "bun run scripts/qa-smoke.ts",
+    "qa:android:tab-labels": "bun run scripts/qa-android-tab-labels.ts",
     "qa:web": "playwright test"
   },
   "devDependencies": {
