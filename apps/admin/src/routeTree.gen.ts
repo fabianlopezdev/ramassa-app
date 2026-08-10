@@ -36,6 +36,7 @@ import { Route as StaffContentServicesIndexRouteImport } from './routes/_staff.c
 import { Route as StaffContentKnowledgeIndexRouteImport } from './routes/_staff.content.knowledge.index'
 import { Route as StaffContentEventsIndexRouteImport } from './routes/_staff.content.events.index'
 import { Route as StaffContentAnnouncementsIndexRouteImport } from './routes/_staff.content.announcements.index'
+import { Route as EntityPortalServicesIndexRouteImport } from './routes/_entity.portal.services.index'
 import { Route as StaffContentServicesNewRouteImport } from './routes/_staff.content.services.new'
 import { Route as StaffContentServicesCategoriesRouteImport } from './routes/_staff.content.services.categories'
 import { Route as StaffContentServicesServiceIdRouteImport } from './routes/_staff.content.services.$serviceId'
@@ -46,6 +47,8 @@ import { Route as StaffContentEventsCategoriesRouteImport } from './routes/_staf
 import { Route as StaffContentEventsEventIdRouteImport } from './routes/_staff.content.events.$eventId'
 import { Route as StaffContentAnnouncementsNewRouteImport } from './routes/_staff.content.announcements.new'
 import { Route as StaffContentAnnouncementsAnnouncementIdRouteImport } from './routes/_staff.content.announcements.$announcementId'
+import { Route as EntityPortalServicesNewRouteImport } from './routes/_entity.portal.services.new'
+import { Route as EntityPortalServicesServiceIdRouteImport } from './routes/_entity.portal.services.$serviceId'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -187,6 +190,12 @@ const StaffContentAnnouncementsIndexRoute =
     path: '/announcements/',
     getParentRoute: () => StaffContentRoute,
   } as any)
+const EntityPortalServicesIndexRoute =
+  EntityPortalServicesIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => EntityPortalServicesRoute,
+  } as any)
 const StaffContentServicesNewRoute = StaffContentServicesNewRouteImport.update({
   id: '/services/new',
   path: '/services/new',
@@ -245,6 +254,17 @@ const StaffContentAnnouncementsAnnouncementIdRoute =
     path: '/announcements/$announcementId',
     getParentRoute: () => StaffContentRoute,
   } as any)
+const EntityPortalServicesNewRoute = EntityPortalServicesNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => EntityPortalServicesRoute,
+} as any)
+const EntityPortalServicesServiceIdRoute =
+  EntityPortalServicesServiceIdRouteImport.update({
+    id: '/$serviceId',
+    path: '/$serviceId',
+    getParentRoute: () => EntityPortalServicesRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -258,7 +278,7 @@ export interface FileRoutesByFullPath {
   '/portal/events': typeof EntityPortalEventsRoute
   '/portal/messages': typeof EntityPortalMessagesRoute
   '/portal/referrals': typeof EntityPortalReferralsRoute
-  '/portal/services': typeof EntityPortalServicesRoute
+  '/portal/services': typeof EntityPortalServicesRouteWithChildren
   '/attendance/$occurrenceId': typeof StaffAttendanceOccurrenceIdRoute
   '/participants/$participantId': typeof StaffParticipantsParticipantIdRoute
   '/participants/deletion-requests': typeof StaffParticipantsDeletionRequestsRoute
@@ -268,6 +288,8 @@ export interface FileRoutesByFullPath {
   '/attendance/': typeof StaffAttendanceIndexRoute
   '/content/': typeof StaffContentIndexRoute
   '/participants/': typeof StaffParticipantsIndexRoute
+  '/portal/services/$serviceId': typeof EntityPortalServicesServiceIdRoute
+  '/portal/services/new': typeof EntityPortalServicesNewRoute
   '/content/announcements/$announcementId': typeof StaffContentAnnouncementsAnnouncementIdRoute
   '/content/announcements/new': typeof StaffContentAnnouncementsNewRoute
   '/content/events/$eventId': typeof StaffContentEventsEventIdRoute
@@ -278,6 +300,7 @@ export interface FileRoutesByFullPath {
   '/content/services/$serviceId': typeof StaffContentServicesServiceIdRoute
   '/content/services/categories': typeof StaffContentServicesCategoriesRoute
   '/content/services/new': typeof StaffContentServicesNewRoute
+  '/portal/services/': typeof EntityPortalServicesIndexRoute
   '/content/announcements/': typeof StaffContentAnnouncementsIndexRoute
   '/content/events/': typeof StaffContentEventsIndexRoute
   '/content/knowledge/': typeof StaffContentKnowledgeIndexRoute
@@ -293,7 +316,6 @@ export interface FileRoutesByTo {
   '/portal/events': typeof EntityPortalEventsRoute
   '/portal/messages': typeof EntityPortalMessagesRoute
   '/portal/referrals': typeof EntityPortalReferralsRoute
-  '/portal/services': typeof EntityPortalServicesRoute
   '/attendance/$occurrenceId': typeof StaffAttendanceOccurrenceIdRoute
   '/participants/$participantId': typeof StaffParticipantsParticipantIdRoute
   '/participants/deletion-requests': typeof StaffParticipantsDeletionRequestsRoute
@@ -303,6 +325,8 @@ export interface FileRoutesByTo {
   '/attendance': typeof StaffAttendanceIndexRoute
   '/content': typeof StaffContentIndexRoute
   '/participants': typeof StaffParticipantsIndexRoute
+  '/portal/services/$serviceId': typeof EntityPortalServicesServiceIdRoute
+  '/portal/services/new': typeof EntityPortalServicesNewRoute
   '/content/announcements/$announcementId': typeof StaffContentAnnouncementsAnnouncementIdRoute
   '/content/announcements/new': typeof StaffContentAnnouncementsNewRoute
   '/content/events/$eventId': typeof StaffContentEventsEventIdRoute
@@ -313,6 +337,7 @@ export interface FileRoutesByTo {
   '/content/services/$serviceId': typeof StaffContentServicesServiceIdRoute
   '/content/services/categories': typeof StaffContentServicesCategoriesRoute
   '/content/services/new': typeof StaffContentServicesNewRoute
+  '/portal/services': typeof EntityPortalServicesIndexRoute
   '/content/announcements': typeof StaffContentAnnouncementsIndexRoute
   '/content/events': typeof StaffContentEventsIndexRoute
   '/content/knowledge': typeof StaffContentKnowledgeIndexRoute
@@ -333,7 +358,7 @@ export interface FileRoutesById {
   '/_entity/portal/events': typeof EntityPortalEventsRoute
   '/_entity/portal/messages': typeof EntityPortalMessagesRoute
   '/_entity/portal/referrals': typeof EntityPortalReferralsRoute
-  '/_entity/portal/services': typeof EntityPortalServicesRoute
+  '/_entity/portal/services': typeof EntityPortalServicesRouteWithChildren
   '/_staff/attendance/$occurrenceId': typeof StaffAttendanceOccurrenceIdRoute
   '/_staff/participants/$participantId': typeof StaffParticipantsParticipantIdRoute
   '/_staff/participants/deletion-requests': typeof StaffParticipantsDeletionRequestsRoute
@@ -343,6 +368,8 @@ export interface FileRoutesById {
   '/_staff/attendance/': typeof StaffAttendanceIndexRoute
   '/_staff/content/': typeof StaffContentIndexRoute
   '/_staff/participants/': typeof StaffParticipantsIndexRoute
+  '/_entity/portal/services/$serviceId': typeof EntityPortalServicesServiceIdRoute
+  '/_entity/portal/services/new': typeof EntityPortalServicesNewRoute
   '/_staff/content/announcements/$announcementId': typeof StaffContentAnnouncementsAnnouncementIdRoute
   '/_staff/content/announcements/new': typeof StaffContentAnnouncementsNewRoute
   '/_staff/content/events/$eventId': typeof StaffContentEventsEventIdRoute
@@ -353,6 +380,7 @@ export interface FileRoutesById {
   '/_staff/content/services/$serviceId': typeof StaffContentServicesServiceIdRoute
   '/_staff/content/services/categories': typeof StaffContentServicesCategoriesRoute
   '/_staff/content/services/new': typeof StaffContentServicesNewRoute
+  '/_entity/portal/services/': typeof EntityPortalServicesIndexRoute
   '/_staff/content/announcements/': typeof StaffContentAnnouncementsIndexRoute
   '/_staff/content/events/': typeof StaffContentEventsIndexRoute
   '/_staff/content/knowledge/': typeof StaffContentKnowledgeIndexRoute
@@ -382,6 +410,8 @@ export interface FileRouteTypes {
     | '/attendance/'
     | '/content/'
     | '/participants/'
+    | '/portal/services/$serviceId'
+    | '/portal/services/new'
     | '/content/announcements/$announcementId'
     | '/content/announcements/new'
     | '/content/events/$eventId'
@@ -392,6 +422,7 @@ export interface FileRouteTypes {
     | '/content/services/$serviceId'
     | '/content/services/categories'
     | '/content/services/new'
+    | '/portal/services/'
     | '/content/announcements/'
     | '/content/events/'
     | '/content/knowledge/'
@@ -407,7 +438,6 @@ export interface FileRouteTypes {
     | '/portal/events'
     | '/portal/messages'
     | '/portal/referrals'
-    | '/portal/services'
     | '/attendance/$occurrenceId'
     | '/participants/$participantId'
     | '/participants/deletion-requests'
@@ -417,6 +447,8 @@ export interface FileRouteTypes {
     | '/attendance'
     | '/content'
     | '/participants'
+    | '/portal/services/$serviceId'
+    | '/portal/services/new'
     | '/content/announcements/$announcementId'
     | '/content/announcements/new'
     | '/content/events/$eventId'
@@ -427,6 +459,7 @@ export interface FileRouteTypes {
     | '/content/services/$serviceId'
     | '/content/services/categories'
     | '/content/services/new'
+    | '/portal/services'
     | '/content/announcements'
     | '/content/events'
     | '/content/knowledge'
@@ -456,6 +489,8 @@ export interface FileRouteTypes {
     | '/_staff/attendance/'
     | '/_staff/content/'
     | '/_staff/participants/'
+    | '/_entity/portal/services/$serviceId'
+    | '/_entity/portal/services/new'
     | '/_staff/content/announcements/$announcementId'
     | '/_staff/content/announcements/new'
     | '/_staff/content/events/$eventId'
@@ -466,6 +501,7 @@ export interface FileRouteTypes {
     | '/_staff/content/services/$serviceId'
     | '/_staff/content/services/categories'
     | '/_staff/content/services/new'
+    | '/_entity/portal/services/'
     | '/_staff/content/announcements/'
     | '/_staff/content/events/'
     | '/_staff/content/knowledge/'
@@ -671,6 +707,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StaffContentAnnouncementsIndexRouteImport
       parentRoute: typeof StaffContentRoute
     }
+    '/_entity/portal/services/': {
+      id: '/_entity/portal/services/'
+      path: '/'
+      fullPath: '/portal/services/'
+      preLoaderRoute: typeof EntityPortalServicesIndexRouteImport
+      parentRoute: typeof EntityPortalServicesRoute
+    }
     '/_staff/content/services/new': {
       id: '/_staff/content/services/new'
       path: '/services/new'
@@ -741,14 +784,43 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StaffContentAnnouncementsAnnouncementIdRouteImport
       parentRoute: typeof StaffContentRoute
     }
+    '/_entity/portal/services/new': {
+      id: '/_entity/portal/services/new'
+      path: '/new'
+      fullPath: '/portal/services/new'
+      preLoaderRoute: typeof EntityPortalServicesNewRouteImport
+      parentRoute: typeof EntityPortalServicesRoute
+    }
+    '/_entity/portal/services/$serviceId': {
+      id: '/_entity/portal/services/$serviceId'
+      path: '/$serviceId'
+      fullPath: '/portal/services/$serviceId'
+      preLoaderRoute: typeof EntityPortalServicesServiceIdRouteImport
+      parentRoute: typeof EntityPortalServicesRoute
+    }
   }
 }
+
+interface EntityPortalServicesRouteChildren {
+  EntityPortalServicesServiceIdRoute: typeof EntityPortalServicesServiceIdRoute
+  EntityPortalServicesNewRoute: typeof EntityPortalServicesNewRoute
+  EntityPortalServicesIndexRoute: typeof EntityPortalServicesIndexRoute
+}
+
+const EntityPortalServicesRouteChildren: EntityPortalServicesRouteChildren = {
+  EntityPortalServicesServiceIdRoute: EntityPortalServicesServiceIdRoute,
+  EntityPortalServicesNewRoute: EntityPortalServicesNewRoute,
+  EntityPortalServicesIndexRoute: EntityPortalServicesIndexRoute,
+}
+
+const EntityPortalServicesRouteWithChildren =
+  EntityPortalServicesRoute._addFileChildren(EntityPortalServicesRouteChildren)
 
 interface EntityRouteChildren {
   EntityPortalEventsRoute: typeof EntityPortalEventsRoute
   EntityPortalMessagesRoute: typeof EntityPortalMessagesRoute
   EntityPortalReferralsRoute: typeof EntityPortalReferralsRoute
-  EntityPortalServicesRoute: typeof EntityPortalServicesRoute
+  EntityPortalServicesRoute: typeof EntityPortalServicesRouteWithChildren
   EntityPortalIndexRoute: typeof EntityPortalIndexRoute
 }
 
@@ -756,7 +828,7 @@ const EntityRouteChildren: EntityRouteChildren = {
   EntityPortalEventsRoute: EntityPortalEventsRoute,
   EntityPortalMessagesRoute: EntityPortalMessagesRoute,
   EntityPortalReferralsRoute: EntityPortalReferralsRoute,
-  EntityPortalServicesRoute: EntityPortalServicesRoute,
+  EntityPortalServicesRoute: EntityPortalServicesRouteWithChildren,
   EntityPortalIndexRoute: EntityPortalIndexRoute,
 }
 

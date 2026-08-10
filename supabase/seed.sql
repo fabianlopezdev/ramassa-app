@@ -388,6 +388,45 @@ values (
 )
 on conflict (id) do nothing;
 
+insert into public.service_submission_comments (
+  id, org_id, service_id, author_id, author_role, body, is_internal, created_at
+)
+values
+  (
+    '5eed0000-0000-4000-800d-000000000001',
+    '5eed0000-0000-4000-8000-000000000000',
+    '5eed0000-0000-4000-800a-000000000011',
+    '5eed0000-0000-4000-8000-000000000004',
+    'entity',
+    'Quan es publicarà el servei?',
+    false,
+    now() - interval '2 hours'
+  ),
+  (
+    '5eed0000-0000-4000-800d-000000000002',
+    '5eed0000-0000-4000-8000-000000000000',
+    '5eed0000-0000-4000-800a-000000000011',
+    '5eed0000-0000-4000-8000-000000000002',
+    'staff',
+    'Confirmar la data amb coordinació abans de respondre.',
+    true,
+    now() - interval '1 hour'
+  )
+on conflict (id) do nothing;
+
+insert into public.service_submission_notifications (
+  id, org_id, service_id, kind, created_by, created_at
+)
+values (
+  '5eed0000-0000-4000-800e-000000000001',
+  '5eed0000-0000-4000-8000-000000000000',
+  '5eed0000-0000-4000-800a-000000000011',
+  'published_edit',
+  '5eed0000-0000-4000-8000-000000000004',
+  now() - interval '3 hours'
+)
+on conflict (id) do nothing;
+
 -- Event categories and events --------------------------------------------------
 -- Six real category shapes, followed by one repeating training, one one-off
 -- cultural outing, and one draft. The trigger materializes their occurrences.

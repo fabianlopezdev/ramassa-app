@@ -13,6 +13,7 @@ import arAnnouncements from './locales/ar/announcements.json';
 import arAttendance from './locales/ar/attendance.json';
 import arAuth from './locales/ar/auth.json';
 import arCommon from './locales/ar/common.json';
+import arEntityServices from './locales/ar/entity-services.json';
 import arEquipment from './locales/ar/equipment.json';
 import arErrors from './locales/ar/errors.json';
 import arEvents from './locales/ar/events.json';
@@ -28,6 +29,7 @@ import caAnnouncements from './locales/ca/announcements.json';
 import caAttendance from './locales/ca/attendance.json';
 import caAuth from './locales/ca/auth.json';
 import caCommon from './locales/ca/common.json';
+import caEntityServices from './locales/ca/entity-services.json';
 import caEquipment from './locales/ca/equipment.json';
 import caErrors from './locales/ca/errors.json';
 import caEvents from './locales/ca/events.json';
@@ -44,6 +46,7 @@ import enAnnouncements from './locales/en/announcements.json';
 import enAttendance from './locales/en/attendance.json';
 import enAuth from './locales/en/auth.json';
 import enCommon from './locales/en/common.json';
+import enEntityServices from './locales/en/entity-services.json';
 import enEquipment from './locales/en/equipment.json';
 import enErrors from './locales/en/errors.json';
 import enEvents from './locales/en/events.json';
@@ -60,6 +63,7 @@ import esAnnouncements from './locales/es/announcements.json';
 import esAttendance from './locales/es/attendance.json';
 import esAuth from './locales/es/auth.json';
 import esCommon from './locales/es/common.json';
+import esEntityServices from './locales/es/entity-services.json';
 import esEquipment from './locales/es/equipment.json';
 import esErrors from './locales/es/errors.json';
 import esEvents from './locales/es/events.json';
@@ -75,6 +79,7 @@ import faAnnouncements from './locales/fa/announcements.json';
 import faAttendance from './locales/fa/attendance.json';
 import faAuth from './locales/fa/auth.json';
 import faCommon from './locales/fa/common.json';
+import faEntityServices from './locales/fa/entity-services.json';
 import faEquipment from './locales/fa/equipment.json';
 import faErrors from './locales/fa/errors.json';
 import faEvents from './locales/fa/events.json';
@@ -104,6 +109,7 @@ const resources = {
     knowledge: caKnowledge,
     attendance: caAttendance,
     services: caServices,
+    'entity-services': caEntityServices,
   },
   es: {
     common: esCommon,
@@ -122,6 +128,7 @@ const resources = {
     knowledge: esKnowledge,
     attendance: esAttendance,
     services: enServices,
+    'entity-services': esEntityServices,
   },
   en: {
     common: enCommon,
@@ -140,6 +147,7 @@ const resources = {
     knowledge: enKnowledge,
     attendance: enAttendance,
     services: enServices,
+    'entity-services': enEntityServices,
   },
   ar: {
     common: arCommon,
@@ -158,6 +166,7 @@ const resources = {
     knowledge: arKnowledge,
     attendance: arAttendance,
     services: enServices,
+    'entity-services': arEntityServices,
   },
   fa: {
     common: faCommon,
@@ -176,6 +185,7 @@ const resources = {
     knowledge: faKnowledge,
     attendance: faAttendance,
     services: enServices,
+    'entity-services': faEntityServices,
   },
 };
 

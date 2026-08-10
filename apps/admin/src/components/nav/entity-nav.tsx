@@ -29,7 +29,7 @@ export function EntityNav() {
           <ul className="flex items-center gap-1">
             {ENTITY_NAV_ITEMS.map((item) => {
               const label = t(item.labelKey);
-              const isActive = pathname === item.to;
+              const isActive = pathname === item.to || pathname.startsWith(`${item.to}/`);
               const Icon = item.icon;
               return (
                 <li key={item.to}>

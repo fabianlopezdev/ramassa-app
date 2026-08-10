@@ -1,5 +1,4 @@
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { mediaWorkerUrl } from '@/lib/media-worker';
 import { safeAsync } from '@/lib/observability';
 import { supabase } from '@/lib/supabase';
@@ -30,25 +29,13 @@ import { approveAll, reviewOptions } from './announcement-editor';
 import { ImageUploadField, type ImageUploadState } from './image-upload-field';
 import { MultilingualEditor } from './multilingual-editor';
 import { ScheduledPublishFields, type PublishMode } from './scheduled-publish-fields';
-import { ServiceMetadataFields } from './service-metadata-fields';
+import {
+  normalizedServiceMetadata,
+  serviceMetadataDefaults,
+  ServiceSubmissionFields,
+  type ServiceFormValues,
+} from './service-submission-fields';
 import { TranslationReviewPanel } from './translation-review-panel';
-
-interface ServiceFormValues {
-  readonly providerName: string;
-  readonly location: string;
-  readonly zone: string;
-  readonly costType: 'free' | 'paid' | 'subsidized' | 'varies';
-  readonly costAmount: string;
-  readonly costDetails: string;
-  readonly contactName: string;
-  readonly contactPhone: string;
-  readonly contactEmail: string;
-  readonly contactRole: string;
-  readonly schedule: string;
-  readonly externalUrl: string;
-  readonly availability: 'available' | 'waiting_list' | 'by_appointment' | 'full';
-  readonly metadata: Record<string, unknown>;
-}
 
 interface ServiceImageDraft {
   readonly key: string;
@@ -86,34 +73,6 @@ function initialMode(detail: AdminServiceDetail | undefined): PublishMode {
     return 'scheduled';
   }
   return 'now';
-}
-
-export function serviceMetadataDefaults(
-  category: AdminServiceCategory,
-  existing: Record<string, unknown> = {},
-): Record<string, unknown> {
-  return Object.fromEntries(
-    category.definition.fields.map((field) => [
-      field.key,
-      existing[field.key] ??
-        (field.type === 'boolean' ? false : field.type === 'string-array' ? [] : ''),
-    ]),
-  );
-}
-
-export function normalizedServiceMetadata(
-  category: AdminServiceCategory,
-  values: Record<string, unknown>,
-): Record<string, unknown> {
-  return Object.fromEntries(
-    category.definition.fields.flatMap((field) => {
-      const value = values[field.key];
-      if (value === '' || value === undefined || (Array.isArray(value) && value.length === 0)) {
-        return [];
-      }
-      return [[field.key, value]];
-    }),
-  );
 }
 
 function initialReview(source: string, localized: AdminServiceDetail['service']['title'] | null) {
@@ -382,171 +341,81 @@ export function ServiceEditor({ categories, detail, onSaved }: ServiceEditorProp
         <h1 className="text-2xl font-semibold">
           {detail === undefined ? t('services:newAction') : t('services:editTitle')}
         </h1>
-        <label className="flex max-w-md flex-col gap-2">
-          <span className="text-sm font-medium">{t('services:fieldCategory')}</span>
-          <select
-            required
-            className="h-9 rounded-md border border-input bg-background px-3 text-sm"
-            data-testid="service-category"
-            value={categoryId}
-            onChange={(event) => changeCategory(event.target.value)}
-          >
-            {categories.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.name[locale] ?? item.name.ca}
-              </option>
-            ))}
-          </select>
-        </label>
-        <MultilingualEditor
-          fieldId="service-title"
-          sourceLabel={t('services:fieldTitle')}
-          sourceValue={title}
-          review={titleReview}
-          maxLength={300}
-          translationNamespace="services"
-          onSourceChange={(value) => {
-            setTitle(value);
-            setTitleReview(undefined);
-          }}
-          onTranslationChange={(language, value) =>
-            setTitleReview((review) =>
-              review === undefined ? review : editTranslationDraft(review, language, value),
-            )
-          }
-        />
-        <TranslationReviewPanel
-          fieldId="service-title"
-          review={titleReview}
-          translationNamespace="services"
-          onApprove={(language) =>
-            setTitleReview((review) =>
-              review === undefined ? review : approveTranslation(review, language),
-            )
-          }
-          onReject={(language) =>
-            setTitleReview((review) =>
-              review === undefined ? review : rejectTranslation(review, language),
-            )
-          }
-          onApproveAll={() => setTitleReview(setAllApproved)}
-        />
-        <MultilingualEditor
-          fieldId="service-description"
-          sourceLabel={t('services:fieldDescription')}
-          sourceValue={description}
-          review={descriptionReview}
-          maxLength={10_000}
-          translationNamespace="services"
-          onSourceChange={(value) => {
-            setDescription(value);
-            setDescriptionReview(undefined);
-          }}
-          onTranslationChange={(language, value) =>
-            setDescriptionReview((review) =>
-              review === undefined ? review : editTranslationDraft(review, language, value),
-            )
-          }
-        />
-        <TranslationReviewPanel
-          fieldId="service-description"
-          review={descriptionReview}
-          translationNamespace="services"
-          onApprove={(language) =>
-            setDescriptionReview((review) =>
-              review === undefined ? review : approveTranslation(review, language),
-            )
-          }
-          onReject={(language) =>
-            setDescriptionReview((review) =>
-              review === undefined ? review : rejectTranslation(review, language),
-            )
-          }
-          onApproveAll={() => setDescriptionReview(setAllApproved)}
-        />
-        <section className="grid gap-4 rounded-lg border p-4 md:grid-cols-2">
-          <TextField
-            label={t('services:fieldProviderName')}
-            testId="service-provider"
-            registration={form.register('providerName')}
+        <ServiceSubmissionFields
+          categories={categories}
+          category={activeCategory}
+          categoryId={categoryId}
+          language={locale}
+          labelNamespace="services"
+          onCategoryChange={changeCategory}
+        >
+          <MultilingualEditor
+            fieldId="service-title"
+            sourceLabel={t('services:fieldTitle')}
+            sourceValue={title}
+            review={titleReview}
+            maxLength={300}
+            translationNamespace="services"
+            onSourceChange={(value) => {
+              setTitle(value);
+              setTitleReview(undefined);
+            }}
+            onTranslationChange={(language, value) =>
+              setTitleReview((review) =>
+                review === undefined ? review : editTranslationDraft(review, language, value),
+              )
+            }
           />
-          <TextField
-            label={t('services:fieldLocation')}
-            testId="service-location"
-            registration={form.register('location')}
+          <TranslationReviewPanel
+            fieldId="service-title"
+            review={titleReview}
+            translationNamespace="services"
+            onApprove={(language) =>
+              setTitleReview((review) =>
+                review === undefined ? review : approveTranslation(review, language),
+              )
+            }
+            onReject={(language) =>
+              setTitleReview((review) =>
+                review === undefined ? review : rejectTranslation(review, language),
+              )
+            }
+            onApproveAll={() => setTitleReview(setAllApproved)}
           />
-          <TextField
-            label={t('services:fieldZone')}
-            testId="service-zone"
-            registration={form.register('zone')}
+          <MultilingualEditor
+            fieldId="service-description"
+            sourceLabel={t('services:fieldDescription')}
+            sourceValue={description}
+            review={descriptionReview}
+            maxLength={10_000}
+            translationNamespace="services"
+            onSourceChange={(value) => {
+              setDescription(value);
+              setDescriptionReview(undefined);
+            }}
+            onTranslationChange={(language, value) =>
+              setDescriptionReview((review) =>
+                review === undefined ? review : editTranslationDraft(review, language, value),
+              )
+            }
           />
-          <SelectField
-            label={t('services:fieldCostType')}
-            testId="service-cost-type"
-            registration={form.register('costType')}
-            options={[
-              ['free', t('services:costFree')],
-              ['paid', t('services:costPaid')],
-              ['subsidized', t('services:costSubsidized')],
-              ['varies', t('services:costVaries')],
-            ]}
+          <TranslationReviewPanel
+            fieldId="service-description"
+            review={descriptionReview}
+            translationNamespace="services"
+            onApprove={(language) =>
+              setDescriptionReview((review) =>
+                review === undefined ? review : approveTranslation(review, language),
+              )
+            }
+            onReject={(language) =>
+              setDescriptionReview((review) =>
+                review === undefined ? review : rejectTranslation(review, language),
+              )
+            }
+            onApproveAll={() => setDescriptionReview(setAllApproved)}
           />
-          <TextField
-            label={t('services:fieldCostAmount')}
-            testId="service-cost-amount"
-            type="number"
-            registration={form.register('costAmount')}
-          />
-          <TextField
-            label={t('services:fieldCostDetails')}
-            testId="service-cost-details"
-            registration={form.register('costDetails')}
-          />
-          <TextField
-            label={t('services:fieldContactName')}
-            testId="service-contact-name"
-            registration={form.register('contactName')}
-          />
-          <TextField
-            label={t('services:fieldContactPhone')}
-            testId="service-contact-phone"
-            registration={form.register('contactPhone')}
-          />
-          <TextField
-            label={t('services:fieldContactEmail')}
-            testId="service-contact-email"
-            type="email"
-            registration={form.register('contactEmail')}
-          />
-          <TextField
-            label={t('services:fieldContactRole')}
-            testId="service-contact-role"
-            registration={form.register('contactRole')}
-          />
-          <TextField
-            label={t('services:fieldSchedule')}
-            testId="service-schedule"
-            registration={form.register('schedule')}
-          />
-          <TextField
-            label={t('services:fieldExternalUrl')}
-            testId="service-external-url"
-            type="url"
-            registration={form.register('externalUrl')}
-          />
-          <SelectField
-            label={t('services:fieldAvailability')}
-            testId="service-availability"
-            registration={form.register('availability')}
-            options={[
-              ['available', t('services:availabilityAvailable')],
-              ['waiting_list', t('services:availabilityWaitingList')],
-              ['by_appointment', t('services:availabilityByAppointment')],
-              ['full', t('services:availabilityFull')],
-            ]}
-          />
-        </section>
-        <ServiceMetadataFields category={activeCategory.definition} language={locale} />
+        </ServiceSubmissionFields>
         <section className="flex flex-col gap-4" data-testid="service-images">
           {images.map((image, index) => (
             <div
@@ -700,53 +569,5 @@ export function ServiceEditor({ categories, detail, onSaved }: ServiceEditorProp
         </Button>
       </form>
     </FormProvider>
-  );
-}
-
-function TextField({
-  label,
-  testId,
-  type = 'text',
-  registration,
-}: {
-  readonly label: string;
-  readonly testId: string;
-  readonly type?: string;
-  readonly registration: ReturnType<ReturnType<typeof useForm<ServiceFormValues>>['register']>;
-}) {
-  return (
-    <label className="flex flex-col gap-2">
-      <span className="text-sm font-medium">{label}</span>
-      <Input type={type} data-testid={testId} {...registration} />
-    </label>
-  );
-}
-
-function SelectField({
-  label,
-  testId,
-  registration,
-  options,
-}: {
-  readonly label: string;
-  readonly testId: string;
-  readonly registration: ReturnType<ReturnType<typeof useForm<ServiceFormValues>>['register']>;
-  readonly options: readonly (readonly [string, string])[];
-}) {
-  return (
-    <label className="flex flex-col gap-2">
-      <span className="text-sm font-medium">{label}</span>
-      <select
-        className="h-9 rounded-md border border-input bg-background px-3 text-sm"
-        data-testid={testId}
-        {...registration}
-      >
-        {options.map(([value, text]) => (
-          <option key={value} value={value}>
-            {text}
-          </option>
-        ))}
-      </select>
-    </label>
   );
 }

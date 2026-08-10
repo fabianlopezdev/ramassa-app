@@ -1293,6 +1293,123 @@ export type Database = {
           },
         ];
       };
+      service_submission_comments: {
+        Row: {
+          author_id: string | null;
+          author_role: string;
+          body: string;
+          created_at: string;
+          id: string;
+          is_internal: boolean;
+          org_id: string;
+          service_id: string;
+        };
+        Insert: {
+          author_id?: string | null;
+          author_role?: string;
+          body: string;
+          created_at?: string;
+          id?: string;
+          is_internal?: boolean;
+          org_id?: string;
+          service_id: string;
+        };
+        Update: {
+          author_id?: string | null;
+          author_role?: string;
+          body?: string;
+          created_at?: string;
+          id?: string;
+          is_internal?: boolean;
+          org_id?: string;
+          service_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'service_submission_comments_author_id_fkey';
+            columns: ['author_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'service_submission_comments_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'service_submission_comments_service_tenant_fkey';
+            columns: ['org_id', 'service_id'];
+            isOneToOne: false;
+            referencedRelation: 'services';
+            referencedColumns: ['org_id', 'id'];
+          },
+        ];
+      };
+      service_submission_notifications: {
+        Row: {
+          created_at: string;
+          created_by: string | null;
+          id: string;
+          kind: string;
+          org_id: string;
+          read_at: string | null;
+          read_by: string | null;
+          service_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          kind: string;
+          org_id: string;
+          read_at?: string | null;
+          read_by?: string | null;
+          service_id: string;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          kind?: string;
+          org_id?: string;
+          read_at?: string | null;
+          read_by?: string | null;
+          service_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'service_submission_notifications_created_by_fkey';
+            columns: ['created_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'service_submission_notifications_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'service_submission_notifications_read_by_fkey';
+            columns: ['read_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'service_submission_notifications_service_tenant_fkey';
+            columns: ['org_id', 'service_id'];
+            isOneToOne: false;
+            referencedRelation: 'services';
+            referencedColumns: ['org_id', 'id'];
+          },
+        ];
+      };
       services: {
         Row: {
           availability: string;
@@ -1772,6 +1889,16 @@ export type Database = {
           terms_accepted_at: string;
         }[];
       };
+      get_own_service_contacts: {
+        Args: never;
+        Returns: {
+          contact_email: string;
+          contact_name: string;
+          contact_phone: string;
+          contact_role: string;
+          provider_name: string;
+        }[];
+      };
       get_participant_profile: {
         Args: { participant_id: string };
         Returns: {
@@ -1949,7 +2076,12 @@ export type Database = {
         Args: { participant_id: string };
         Returns: string;
       };
+      resubmit_entity_service: {
+        Args: { p_service_id: string };
+        Returns: undefined;
+      };
       save_admin_service: { Args: { p_payload: Json }; Returns: string };
+      save_entity_service: { Args: { p_payload: Json }; Returns: string };
       set_participant_active: {
         Args: { next_is_active: boolean; participant_id: string };
         Returns: undefined;
