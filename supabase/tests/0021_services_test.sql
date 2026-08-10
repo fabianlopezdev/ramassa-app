@@ -2,7 +2,7 @@
 -- Runs with: bunx supabase test db
 
 begin;
-select plan(52);
+select plan(60);
 
 select has_table('public', 'service_categories', 'service categories exist');
 select has_table('public', 'services', 'services exist');
@@ -128,6 +128,13 @@ values (
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000011","role":"authenticated"}';
 
+select throws_ok(
+  $$ select public.save_admin_service('{}'::jsonb) $$,
+  '42501',
+  null::text,
+  'a player is denied by the product write RPC before payload handling'
+);
+
 select is(
   (select count(*) from public.services where status <> 'published')::int,
   0,
@@ -210,6 +217,104 @@ select throws_ok(
 );
 
 set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000002","role":"authenticated"}';
+
+select throws_ok(
+  $$ update public.service_categories
+     set metadata_schema = '{"fields":[{"key":"housing_type","label":{"ca":"Tipus","es":"Tipo","en":"Type","ar":"النوع","fa":"نوع"},"type":"select","required":true,"filterable":true,"options":["room"]}]}'::jsonb
+     where slug = 'housing' $$,
+  '23514',
+  null::text,
+  'an incompatible category schema edit is rejected before existing metadata is invalidated'
+);
+
+select ok(
+  public.count_services_incompatible_with_category_schema(
+    (select id from public.service_categories where slug = 'housing'),
+    '{"fields":[{"key":"housing_type","label":{"ca":"Tipus","es":"Tipo","en":"Type","ar":"النوع","fa":"نوع"},"type":"select","required":true,"filterable":true,"options":["room"]}]}'::jsonb
+  ) > 0,
+  'staff can preview the number of services an incompatible schema edit would affect'
+);
+
+select lives_ok(
+  $$ select public.reorder_service_categories(
+       array(select id from public.service_categories order by sort_order desc)
+     ) $$,
+  'staff can reorder the full service category catalog atomically'
+);
+select is(
+  (select slug from public.service_categories order by sort_order, id limit 1),
+  'documentation',
+  'category order round trips through the reorder RPC'
+);
+
+select throws_ok(
+  $$ select public.save_admin_service(jsonb_build_object(
+       'serviceId', null,
+       'categoryId', (select id from public.service_categories where slug = 'housing'),
+       'title', '{"ca":"Metadades hostils"}'::jsonb,
+       'description', null,
+       'providerName', null,
+       'location', null,
+       'zone', null,
+       'costType', 'free',
+       'costAmount', null,
+       'costDetails', null,
+       'contactName', null,
+       'contactPhone', null,
+       'contactEmail', null,
+       'contactRole', null,
+       'schedule', null,
+       'externalUrl', null,
+       'availability', 'available',
+       'metadata', '{"housing_type":"hotel"}'::jsonb,
+       'status', 'draft',
+       'publishedAt', null,
+       'expiresAt', null,
+       'images', '[]'::jsonb
+     )) $$,
+  '23514',
+  null::text,
+  'the staff write RPC still reaches category metadata validation on the server'
+);
+
+select lives_ok(
+  $$ select public.save_admin_service(jsonb_build_object(
+       'serviceId', null,
+       'categoryId', (select id from public.service_categories where slug = 'leisure-culture'),
+       'title', '{"ca":"Servei <script>hostil</script> Àgora","es":"Servicio Ágora","en":"Agora service","ar":"خدمة أغورا","fa":"خدمات آگورا"}'::jsonb,
+       'description', null,
+       'providerName', 'Наталія',
+       'location', 'Vic',
+       'zone', 'Osona',
+       'costType', 'free',
+       'costAmount', null,
+       'costDetails', null,
+       'contactName', null,
+       'contactPhone', null,
+       'contactEmail', null,
+       'contactRole', null,
+       'schedule', null,
+       'externalUrl', 'https://example.test/agora',
+       'availability', 'available',
+       'metadata', '{"activity_type":"cultural","family_friendly":true}'::jsonb,
+       'status', 'published',
+       'publishedAt', now()::text,
+       'expiresAt', null,
+       'images', jsonb_build_array(
+         jsonb_build_object('url', 'org/services/first.webp', 'altText', '{"ca":"Primera","es":"Primera","en":"First","ar":"الأولى","fa":"اول"}'::jsonb),
+         jsonb_build_object('url', 'org/services/second.webp', 'altText', '{"ca":"Segona","es":"Segunda","en":"Second","ar":"الثانية","fa":"دوم"}'::jsonb)
+       )
+     )) $$,
+  'staff can save a published multilingual service and ordered images atomically'
+);
+select is(
+  (select string_agg(image.url || ':' || image.position, ',' order by image.position)
+   from public.service_images image
+   join public.services service on service.id = image.service_id
+   where service.title->>'ca' = 'Servei <script>hostil</script> Àgora'),
+  'org/services/first.webp:0,org/services/second.webp:1',
+  'the service write RPC preserves image order and hostile text remains inert data'
+);
 
 select ok(
   exists (select 1 from public.services where id = '5eed0000-0000-4000-800a-000000000001')

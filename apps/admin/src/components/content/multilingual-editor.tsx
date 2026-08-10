@@ -16,7 +16,7 @@ export interface MultilingualEditorProps {
   readonly maxLength: number;
   readonly onSourceChange: (value: string) => void;
   readonly onTranslationChange: (language: SupportedLanguage, value: string) => void;
-  readonly translationNamespace?: 'announcements' | 'knowledge';
+  readonly translationNamespace?: 'announcements' | 'knowledge' | 'services';
 }
 
 export function MultilingualEditor({

@@ -9,7 +9,7 @@ export interface ImageUploadFieldProps {
   readonly onSelect: (file: File) => void;
   readonly onRemove: () => void;
   readonly fieldId?: string;
-  readonly translationNamespace?: 'announcements' | 'knowledge';
+  readonly translationNamespace?: 'announcements' | 'knowledge' | 'services';
 }
 
 export function ImageUploadField({

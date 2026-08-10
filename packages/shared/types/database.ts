@@ -1715,6 +1715,10 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      count_services_incompatible_with_category_schema: {
+        Args: { p_category_id: string; p_metadata_schema: Json };
+        Returns: number;
+      };
       create_participant_account: {
         Args: { payload: Json };
         Returns: {
@@ -1937,10 +1941,15 @@ export type Database = {
         };
         Returns: number;
       };
+      reorder_service_categories: {
+        Args: { p_category_ids: string[] };
+        Returns: undefined;
+      };
       reset_participant_password: {
         Args: { participant_id: string };
         Returns: string;
       };
+      save_admin_service: { Args: { p_payload: Json }; Returns: string };
       set_participant_active: {
         Args: { next_is_active: boolean; participant_id: string };
         Returns: undefined;

@@ -11,7 +11,7 @@ export interface ScheduledPublishFieldsProps {
   readonly onModeChange: (mode: PublishMode) => void;
   readonly onPublishedAtChange: (value: string) => void;
   readonly onExpiresAtChange: (value: string) => void;
-  readonly translationNamespace?: 'announcements' | 'knowledge';
+  readonly translationNamespace?: 'announcements' | 'knowledge' | 'services';
 }
 
 export function ScheduledPublishFields({

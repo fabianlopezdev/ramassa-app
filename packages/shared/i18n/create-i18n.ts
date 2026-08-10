@@ -38,6 +38,7 @@ import caOnboarding from './locales/ca/onboarding.json';
 import caParticipants from './locales/ca/participants.json';
 import caProfile from './locales/ca/profile.json';
 import caPush from './locales/ca/push.json';
+import caServices from './locales/ca/services.json';
 import enAdmin from './locales/en/admin.json';
 import enAnnouncements from './locales/en/announcements.json';
 import enAttendance from './locales/en/attendance.json';
@@ -53,6 +54,7 @@ import enOnboarding from './locales/en/onboarding.json';
 import enParticipants from './locales/en/participants.json';
 import enProfile from './locales/en/profile.json';
 import enPush from './locales/en/push.json';
+import enServices from './locales/en/services.json';
 import esAdmin from './locales/es/admin.json';
 import esAnnouncements from './locales/es/announcements.json';
 import esAttendance from './locales/es/attendance.json';
@@ -101,6 +103,7 @@ const resources = {
     events: caEvents,
     knowledge: caKnowledge,
     attendance: caAttendance,
+    services: caServices,
   },
   es: {
     common: esCommon,
@@ -118,6 +121,7 @@ const resources = {
     events: esEvents,
     knowledge: esKnowledge,
     attendance: esAttendance,
+    services: enServices,
   },
   en: {
     common: enCommon,
@@ -135,6 +139,7 @@ const resources = {
     events: enEvents,
     knowledge: enKnowledge,
     attendance: enAttendance,
+    services: enServices,
   },
   ar: {
     common: arCommon,
@@ -152,6 +157,7 @@ const resources = {
     events: arEvents,
     knowledge: arKnowledge,
     attendance: arAttendance,
+    services: enServices,
   },
   fa: {
     common: faCommon,
@@ -169,6 +175,7 @@ const resources = {
     events: faEvents,
     knowledge: faKnowledge,
     attendance: faAttendance,
+    services: enServices,
   },
 };
 

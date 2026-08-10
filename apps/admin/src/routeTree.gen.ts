@@ -32,9 +32,13 @@ import { Route as EntityPortalServicesRouteImport } from './routes/_entity.porta
 import { Route as EntityPortalReferralsRouteImport } from './routes/_entity.portal.referrals'
 import { Route as EntityPortalMessagesRouteImport } from './routes/_entity.portal.messages'
 import { Route as EntityPortalEventsRouteImport } from './routes/_entity.portal.events'
+import { Route as StaffContentServicesIndexRouteImport } from './routes/_staff.content.services.index'
 import { Route as StaffContentKnowledgeIndexRouteImport } from './routes/_staff.content.knowledge.index'
 import { Route as StaffContentEventsIndexRouteImport } from './routes/_staff.content.events.index'
 import { Route as StaffContentAnnouncementsIndexRouteImport } from './routes/_staff.content.announcements.index'
+import { Route as StaffContentServicesNewRouteImport } from './routes/_staff.content.services.new'
+import { Route as StaffContentServicesCategoriesRouteImport } from './routes/_staff.content.services.categories'
+import { Route as StaffContentServicesServiceIdRouteImport } from './routes/_staff.content.services.$serviceId'
 import { Route as StaffContentKnowledgeNewRouteImport } from './routes/_staff.content.knowledge.new'
 import { Route as StaffContentKnowledgeArticleIdRouteImport } from './routes/_staff.content.knowledge.$articleId'
 import { Route as StaffContentEventsNewRouteImport } from './routes/_staff.content.events.new'
@@ -160,6 +164,12 @@ const EntityPortalEventsRoute = EntityPortalEventsRouteImport.update({
   path: '/portal/events',
   getParentRoute: () => EntityRoute,
 } as any)
+const StaffContentServicesIndexRoute =
+  StaffContentServicesIndexRouteImport.update({
+    id: '/services/',
+    path: '/services/',
+    getParentRoute: () => StaffContentRoute,
+  } as any)
 const StaffContentKnowledgeIndexRoute =
   StaffContentKnowledgeIndexRouteImport.update({
     id: '/knowledge/',
@@ -175,6 +185,23 @@ const StaffContentAnnouncementsIndexRoute =
   StaffContentAnnouncementsIndexRouteImport.update({
     id: '/announcements/',
     path: '/announcements/',
+    getParentRoute: () => StaffContentRoute,
+  } as any)
+const StaffContentServicesNewRoute = StaffContentServicesNewRouteImport.update({
+  id: '/services/new',
+  path: '/services/new',
+  getParentRoute: () => StaffContentRoute,
+} as any)
+const StaffContentServicesCategoriesRoute =
+  StaffContentServicesCategoriesRouteImport.update({
+    id: '/services/categories',
+    path: '/services/categories',
+    getParentRoute: () => StaffContentRoute,
+  } as any)
+const StaffContentServicesServiceIdRoute =
+  StaffContentServicesServiceIdRouteImport.update({
+    id: '/services/$serviceId',
+    path: '/services/$serviceId',
     getParentRoute: () => StaffContentRoute,
   } as any)
 const StaffContentKnowledgeNewRoute =
@@ -248,9 +275,13 @@ export interface FileRoutesByFullPath {
   '/content/events/new': typeof StaffContentEventsNewRoute
   '/content/knowledge/$articleId': typeof StaffContentKnowledgeArticleIdRoute
   '/content/knowledge/new': typeof StaffContentKnowledgeNewRoute
+  '/content/services/$serviceId': typeof StaffContentServicesServiceIdRoute
+  '/content/services/categories': typeof StaffContentServicesCategoriesRoute
+  '/content/services/new': typeof StaffContentServicesNewRoute
   '/content/announcements/': typeof StaffContentAnnouncementsIndexRoute
   '/content/events/': typeof StaffContentEventsIndexRoute
   '/content/knowledge/': typeof StaffContentKnowledgeIndexRoute
+  '/content/services/': typeof StaffContentServicesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -279,9 +310,13 @@ export interface FileRoutesByTo {
   '/content/events/new': typeof StaffContentEventsNewRoute
   '/content/knowledge/$articleId': typeof StaffContentKnowledgeArticleIdRoute
   '/content/knowledge/new': typeof StaffContentKnowledgeNewRoute
+  '/content/services/$serviceId': typeof StaffContentServicesServiceIdRoute
+  '/content/services/categories': typeof StaffContentServicesCategoriesRoute
+  '/content/services/new': typeof StaffContentServicesNewRoute
   '/content/announcements': typeof StaffContentAnnouncementsIndexRoute
   '/content/events': typeof StaffContentEventsIndexRoute
   '/content/knowledge': typeof StaffContentKnowledgeIndexRoute
+  '/content/services': typeof StaffContentServicesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -315,9 +350,13 @@ export interface FileRoutesById {
   '/_staff/content/events/new': typeof StaffContentEventsNewRoute
   '/_staff/content/knowledge/$articleId': typeof StaffContentKnowledgeArticleIdRoute
   '/_staff/content/knowledge/new': typeof StaffContentKnowledgeNewRoute
+  '/_staff/content/services/$serviceId': typeof StaffContentServicesServiceIdRoute
+  '/_staff/content/services/categories': typeof StaffContentServicesCategoriesRoute
+  '/_staff/content/services/new': typeof StaffContentServicesNewRoute
   '/_staff/content/announcements/': typeof StaffContentAnnouncementsIndexRoute
   '/_staff/content/events/': typeof StaffContentEventsIndexRoute
   '/_staff/content/knowledge/': typeof StaffContentKnowledgeIndexRoute
+  '/_staff/content/services/': typeof StaffContentServicesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -350,9 +389,13 @@ export interface FileRouteTypes {
     | '/content/events/new'
     | '/content/knowledge/$articleId'
     | '/content/knowledge/new'
+    | '/content/services/$serviceId'
+    | '/content/services/categories'
+    | '/content/services/new'
     | '/content/announcements/'
     | '/content/events/'
     | '/content/knowledge/'
+    | '/content/services/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -381,9 +424,13 @@ export interface FileRouteTypes {
     | '/content/events/new'
     | '/content/knowledge/$articleId'
     | '/content/knowledge/new'
+    | '/content/services/$serviceId'
+    | '/content/services/categories'
+    | '/content/services/new'
     | '/content/announcements'
     | '/content/events'
     | '/content/knowledge'
+    | '/content/services'
   id:
     | '__root__'
     | '/'
@@ -416,9 +463,13 @@ export interface FileRouteTypes {
     | '/_staff/content/events/new'
     | '/_staff/content/knowledge/$articleId'
     | '/_staff/content/knowledge/new'
+    | '/_staff/content/services/$serviceId'
+    | '/_staff/content/services/categories'
+    | '/_staff/content/services/new'
     | '/_staff/content/announcements/'
     | '/_staff/content/events/'
     | '/_staff/content/knowledge/'
+    | '/_staff/content/services/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -592,6 +643,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EntityPortalEventsRouteImport
       parentRoute: typeof EntityRoute
     }
+    '/_staff/content/services/': {
+      id: '/_staff/content/services/'
+      path: '/services'
+      fullPath: '/content/services/'
+      preLoaderRoute: typeof StaffContentServicesIndexRouteImport
+      parentRoute: typeof StaffContentRoute
+    }
     '/_staff/content/knowledge/': {
       id: '/_staff/content/knowledge/'
       path: '/knowledge'
@@ -611,6 +669,27 @@ declare module '@tanstack/react-router' {
       path: '/announcements'
       fullPath: '/content/announcements/'
       preLoaderRoute: typeof StaffContentAnnouncementsIndexRouteImport
+      parentRoute: typeof StaffContentRoute
+    }
+    '/_staff/content/services/new': {
+      id: '/_staff/content/services/new'
+      path: '/services/new'
+      fullPath: '/content/services/new'
+      preLoaderRoute: typeof StaffContentServicesNewRouteImport
+      parentRoute: typeof StaffContentRoute
+    }
+    '/_staff/content/services/categories': {
+      id: '/_staff/content/services/categories'
+      path: '/services/categories'
+      fullPath: '/content/services/categories'
+      preLoaderRoute: typeof StaffContentServicesCategoriesRouteImport
+      parentRoute: typeof StaffContentRoute
+    }
+    '/_staff/content/services/$serviceId': {
+      id: '/_staff/content/services/$serviceId'
+      path: '/services/$serviceId'
+      fullPath: '/content/services/$serviceId'
+      preLoaderRoute: typeof StaffContentServicesServiceIdRouteImport
       parentRoute: typeof StaffContentRoute
     }
     '/_staff/content/knowledge/new': {
@@ -707,9 +786,13 @@ interface StaffContentRouteChildren {
   StaffContentEventsNewRoute: typeof StaffContentEventsNewRoute
   StaffContentKnowledgeArticleIdRoute: typeof StaffContentKnowledgeArticleIdRoute
   StaffContentKnowledgeNewRoute: typeof StaffContentKnowledgeNewRoute
+  StaffContentServicesServiceIdRoute: typeof StaffContentServicesServiceIdRoute
+  StaffContentServicesCategoriesRoute: typeof StaffContentServicesCategoriesRoute
+  StaffContentServicesNewRoute: typeof StaffContentServicesNewRoute
   StaffContentAnnouncementsIndexRoute: typeof StaffContentAnnouncementsIndexRoute
   StaffContentEventsIndexRoute: typeof StaffContentEventsIndexRoute
   StaffContentKnowledgeIndexRoute: typeof StaffContentKnowledgeIndexRoute
+  StaffContentServicesIndexRoute: typeof StaffContentServicesIndexRoute
 }
 
 const StaffContentRouteChildren: StaffContentRouteChildren = {
@@ -722,9 +805,13 @@ const StaffContentRouteChildren: StaffContentRouteChildren = {
   StaffContentEventsNewRoute: StaffContentEventsNewRoute,
   StaffContentKnowledgeArticleIdRoute: StaffContentKnowledgeArticleIdRoute,
   StaffContentKnowledgeNewRoute: StaffContentKnowledgeNewRoute,
+  StaffContentServicesServiceIdRoute: StaffContentServicesServiceIdRoute,
+  StaffContentServicesCategoriesRoute: StaffContentServicesCategoriesRoute,
+  StaffContentServicesNewRoute: StaffContentServicesNewRoute,
   StaffContentAnnouncementsIndexRoute: StaffContentAnnouncementsIndexRoute,
   StaffContentEventsIndexRoute: StaffContentEventsIndexRoute,
   StaffContentKnowledgeIndexRoute: StaffContentKnowledgeIndexRoute,
+  StaffContentServicesIndexRoute: StaffContentServicesIndexRoute,
 }
 
 const StaffContentRouteWithChildren = StaffContentRoute._addFileChildren(
