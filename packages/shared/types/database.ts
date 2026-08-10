@@ -1358,6 +1358,7 @@ export type Database = {
           read_at: string | null;
           read_by: string | null;
           service_id: string;
+          service_interest_id: string | null;
         };
         Insert: {
           created_at?: string;
@@ -1368,6 +1369,7 @@ export type Database = {
           read_at?: string | null;
           read_by?: string | null;
           service_id: string;
+          service_interest_id?: string | null;
         };
         Update: {
           created_at?: string;
@@ -1378,6 +1380,7 @@ export type Database = {
           read_at?: string | null;
           read_by?: string | null;
           service_id?: string;
+          service_interest_id?: string | null;
         };
         Relationships: [
           {
@@ -1399,6 +1402,13 @@ export type Database = {
             columns: ['read_by'];
             isOneToOne: false;
             referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'service_submission_notifications_service_interest_id_fkey';
+            columns: ['service_interest_id'];
+            isOneToOne: false;
+            referencedRelation: 'service_interests';
             referencedColumns: ['id'];
           },
           {
@@ -2085,6 +2095,10 @@ export type Database = {
       set_participant_active: {
         Args: { next_is_active: boolean; participant_id: string };
         Returns: undefined;
+      };
+      set_service_interest: {
+        Args: { p_interested: boolean; p_service_id: string };
+        Returns: boolean;
       };
       unambiguous_token: { Args: { length: number }; Returns: string };
       update_own_profile: { Args: { payload: Json }; Returns: undefined };

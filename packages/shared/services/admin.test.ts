@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import {
   applyAdminServiceQuery,
   createAdminServiceInputSchema,
+  fetchAdminServices,
   getServiceLifecycle,
   parseServiceCategoryRow,
   saveAdminService,
@@ -145,6 +146,42 @@ describe('admin services list contract', () => {
         now,
       ),
     ).toBe('scheduled');
+  });
+
+  test('the staff list requests the RLS-scoped participant interest count', async () => {
+    const calls: Array<readonly [string, ...unknown[]]> = [];
+    const query = {
+      order(column: string, options: unknown) {
+        calls.push(['order', column, options]);
+        return this;
+      },
+      range(from: number, to: number) {
+        calls.push(['range', from, to]);
+        return this;
+      },
+      then(resolve: (value: unknown) => void) {
+        resolve({ data: [], error: null, count: 0 });
+      },
+    };
+    const client = {
+      from(table: string) {
+        calls.push(['from', table]);
+        return {
+          select(columns: string, options: unknown) {
+            calls.push(['select', columns, options]);
+            return query;
+          },
+        };
+      },
+    };
+
+    await fetchAdminServices(client as never, serviceSearchSchema.parse({}));
+
+    expect(calls).toContainEqual([
+      'select',
+      expect.stringContaining('interests:service_interests(count)'),
+      { count: 'exact' },
+    ]);
   });
 });
 

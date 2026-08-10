@@ -579,6 +579,7 @@ function createFieldSchema(field: ServiceMetadataFieldDefinition): z.ZodType {
 export interface ServiceCategoryContract {
   readonly definition: ServiceCategoryDefinition;
   readonly formFields: readonly ServiceMetadataFieldDefinition[];
+  readonly filterFields: readonly ServiceMetadataFieldDefinition[];
   readonly metadataSchema: z.ZodObject<z.ZodRawShape>;
   readonly buildMetadataFilter: (
     values: Readonly<Record<string, unknown>>,
@@ -591,10 +592,9 @@ export function createServiceCategoryContract(
   const metadataShape = Object.fromEntries(
     definition.fields.map((field) => [field.key, createFieldSchema(field)]),
   ) as z.ZodRawShape;
+  const filterFields = definition.fields.filter(({ filterable }) => filterable);
   const filterShape = Object.fromEntries(
-    definition.fields
-      .filter(({ filterable }) => filterable)
-      .map((field) => [field.key, createFieldSchema({ ...field, required: false })]),
+    filterFields.map((field) => [field.key, createFieldSchema({ ...field, required: false })]),
   ) as z.ZodRawShape;
   const metadataSchema = z.object(metadataShape).strict();
   const metadataFilterSchema = z.object(filterShape).strict();
@@ -602,6 +602,7 @@ export function createServiceCategoryContract(
   return {
     definition,
     formFields: definition.fields,
+    filterFields,
     metadataSchema,
     buildMetadataFilter(values) {
       return metadataFilterSchema.parse(values);

@@ -41,6 +41,7 @@ const ACTIVITY_LABEL_KEYS: Record<ParticipantActivityFilter, string> = {
   forum_post: 'activityForumPost',
   feedback: 'activityFeedback',
   equipment: 'activityEquipment',
+  service_interest: 'activityServiceInterest',
 };
 
 const ACTIVITY_FILTERS: readonly ParticipantActivityFilter[] = [
@@ -77,7 +78,11 @@ export function ParticipantActivity({ entries }: ParticipantActivityProps) {
             ) : (
               <ol className="flex flex-col gap-3">
                 {shown.map((entry) => (
-                  <li key={entry.id} className="flex flex-col gap-0.5">
+                  <li
+                    key={entry.id}
+                    className="flex flex-col gap-0.5"
+                    data-testid={`participant-activity-${entry.kind}-${entry.id}`}
+                  >
                     <p className="text-start text-sm font-medium">{entry.title}</p>
                     <p className="text-start text-xs text-muted-foreground">
                       {t(ACTIVITY_LABEL_KEYS[entry.kind])}

@@ -266,6 +266,43 @@ test.describe('the participant detail view', () => {
     ).toBeVisible();
   });
 
+  test('a service interest appears in the participant timeline', async ({ page }) => {
+    const participantId = participantIdByLastName('Mamani');
+    const serviceId = queryDatabase(
+      `select id from public.services where status = 'published' and published_at <= now() and (expires_at is null or expires_at > now()) order by updated_at desc, id limit 1`,
+    );
+    expect(serviceId).not.toBe('');
+    const existed =
+      queryDatabase(
+        `select exists(select 1 from public.service_interests where service_id = '${serviceId}' and user_id = '${participantId}')::text`,
+      ) === 't';
+
+    try {
+      queryDatabase(
+        `insert into public.service_interests (org_id, service_id, user_id)
+         select org_id, id, '${participantId}' from public.services where id = '${serviceId}'
+         on conflict (service_id, user_id) do nothing`,
+      );
+      const interestId = queryDatabase(
+        `select id from public.service_interests where service_id = '${serviceId}' and user_id = '${participantId}'`,
+      );
+      const title = queryDatabase(
+        `select title->>'ca' from public.services where id = '${serviceId}'`,
+      );
+
+      await openDetail(page, participantId);
+      const entry = page.getByTestId(`participant-activity-service_interest-${interestId}`);
+      await expect(entry).toBeVisible();
+      await expect(entry).toContainText(title);
+    } finally {
+      if (!existed) {
+        queryDatabase(
+          `delete from public.service_interests where service_id = '${serviceId}' and user_id = '${participantId}'`,
+        );
+      }
+    }
+  });
+
   test('the status toggle flips the record, and the roster filter agrees', async ({ page }) => {
     const participantId = participantIdByLastName('Camara');
     const wasActive =

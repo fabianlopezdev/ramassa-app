@@ -59,3 +59,15 @@ export function shouldDropCachedServerState(
   // wipe the cache roughly hourly and read as an app that reloads by itself.
   return previousUserId !== nextUserId;
 }
+
+export function observeSessionIdentity(
+  previousUserId: string | null | undefined,
+  nextUserId: string | null,
+  isLoading: boolean,
+): { readonly cachedUserId: string | null; readonly shouldDrop: boolean } | null {
+  if (isLoading) return null;
+  return {
+    cachedUserId: nextUserId,
+    shouldDrop: shouldDropCachedServerState(previousUserId, nextUserId),
+  };
+}

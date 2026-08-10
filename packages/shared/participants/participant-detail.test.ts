@@ -92,6 +92,7 @@ describe('the activity timeline contract', () => {
       'forum_post',
       'feedback',
       'equipment',
+      'service_interest',
     ]);
   });
 

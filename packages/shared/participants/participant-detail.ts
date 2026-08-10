@@ -55,6 +55,7 @@ export const PARTICIPANT_ACTIVITY_KINDS = [
   'forum_post',
   'feedback',
   'equipment',
+  'service_interest',
 ] as const;
 
 export type ParticipantActivityKind = (typeof PARTICIPANT_ACTIVITY_KINDS)[number];

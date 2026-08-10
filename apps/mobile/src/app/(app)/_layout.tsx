@@ -55,6 +55,7 @@ export default function AppLayout() {
           <Stack.Screen name="event/[id]" />
           <Stack.Screen name="knowledge/index" />
           <Stack.Screen name="knowledge/[id]" />
+          <Stack.Screen name="service/[id]" />
           <Stack.Screen name="story/submit" />
         </Stack.Protected>
         <Stack.Protected guard={!needsOnboarding && isStaff}>

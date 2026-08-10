@@ -58,6 +58,7 @@
   "activityForumPost": "Fòrum",
   "activityFeedback": "Suggeriments",
   "activityEquipment": "Equipament",
+  "activityServiceInterest": "Interès en serveis",
   "activityEmpty": "Encara no hi ha res en aquesta secció.",
   "activityIntro": "Aquesta secció es va omplint a mesura que la participant fa activitat al programa.",
   "termsAcceptedOn": "Va acceptar els termes el {{date}}.",

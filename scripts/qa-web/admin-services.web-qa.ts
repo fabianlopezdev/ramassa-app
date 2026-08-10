@@ -176,6 +176,41 @@ test.describe.serial('services administration across database categories', () =>
       .toBe('published');
   });
 
+  test('shows the database-backed participant interest count', async ({ page }) => {
+    const serviceId = queryDatabase(
+      `select id from public.services order by updated_at desc, id limit 1`,
+    );
+    const participantId = queryDatabase(
+      `select id from public.profiles where role = 'player' order by id limit 1`,
+    );
+    expect(serviceId).not.toBe('');
+    expect(participantId).not.toBe('');
+    const existed =
+      queryDatabase(
+        `select exists(select 1 from public.service_interests where service_id = ${sqlLiteral(serviceId)} and user_id = ${sqlLiteral(participantId)})::text`,
+      ) === 't';
+
+    try {
+      queryDatabase(
+        `insert into public.service_interests (org_id, service_id, user_id)
+         select org_id, id, ${sqlLiteral(participantId)} from public.services where id = ${sqlLiteral(serviceId)}
+         on conflict (service_id, user_id) do nothing`,
+      );
+      const expected = queryDatabase(
+        `select count(*)::text from public.service_interests where service_id = ${sqlLiteral(serviceId)}`,
+      );
+
+      await page.goto('/content/services');
+      await expect(page.getByTestId(`service-interest-count-${serviceId}`)).toHaveText(expected);
+    } finally {
+      if (!existed) {
+        queryDatabase(
+          `delete from public.service_interests where service_id = ${sqlLiteral(serviceId)} and user_id = ${sqlLiteral(participantId)}`,
+        );
+      }
+    }
+  });
+
   test('uploads multilingual images and persists explicit image ordering', async ({ page }) => {
     test.setTimeout(120_000);
     const id = createdServiceIds[0];

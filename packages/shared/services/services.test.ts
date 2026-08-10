@@ -105,7 +105,7 @@ describe('service category contracts', () => {
     },
   );
 
-  test('one field definition drives form fields, validation, and JSONB containment filters', () => {
+  test('a new filterable category field reaches the player filters without screen-specific code', () => {
     const definition: ServiceCategoryDefinition = {
       slug: 'proof-category',
       name: { ca: 'Prova', es: 'Prueba', en: 'Proof', ar: 'إثبات', fa: 'اثبات' },
@@ -127,15 +127,40 @@ describe('service category contracts', () => {
           filterable: true,
           options: ['in_person', 'online'],
         },
+        {
+          key: 'delivery_window',
+          label: {
+            ca: 'Franja horària',
+            es: 'Franja horaria',
+            en: 'Delivery window',
+            ar: 'الفترة الزمنية',
+            fa: 'بازه زمانی',
+          },
+          type: 'select',
+          required: false,
+          filterable: true,
+          options: ['morning', 'afternoon'],
+        },
       ],
     };
     const contract = createServiceCategoryContract(definition);
 
-    expect(contract.formFields.map(({ key }) => key)).toEqual(['delivery_mode']);
-    expect(contract.metadataSchema.safeParse({ delivery_mode: 'online' }).success).toBe(true);
+    expect(contract.filterFields.map(({ key }) => key)).toEqual([
+      'delivery_mode',
+      'delivery_window',
+    ]);
+    expect(
+      contract.metadataSchema.safeParse({
+        delivery_mode: 'online',
+        delivery_window: 'morning',
+      }).success,
+    ).toBe(true);
     expect(contract.metadataSchema.safeParse({ delivery_mode: 'hybrid' }).success).toBe(false);
-    expect(contract.buildMetadataFilter({ delivery_mode: 'online' })).toEqual({
+    expect(
+      contract.buildMetadataFilter({ delivery_mode: 'online', delivery_window: 'afternoon' }),
+    ).toEqual({
       delivery_mode: 'online',
+      delivery_window: 'afternoon',
     });
   });
 
@@ -228,6 +253,55 @@ describe('service directory query helper', () => {
       ['eq', 'cost_type', 'subsidized'],
       ['eq', 'availability', 'available'],
       ['contains', 'metadata', { housing_type: 'shared_flat', for_whom: 'women_only' }],
+    ]);
+  });
+
+  test('uses the runtime category contract for a staff-added filter field', () => {
+    const definition: ServiceCategoryDefinition = {
+      slug: 'proof-category',
+      name: { ca: 'Prova', es: 'Prueba', en: 'Proof', ar: 'إثبات', fa: 'اثبات' },
+      icon: 'flask-conical',
+      color: 'primary',
+      sortOrder: 999,
+      fields: [
+        {
+          key: 'delivery_window',
+          label: {
+            ca: 'Franja horària',
+            es: 'Franja horaria',
+            en: 'Delivery window',
+            ar: 'الفترة الزمنية',
+            fa: 'بازه زمانی',
+          },
+          type: 'select',
+          required: false,
+          filterable: true,
+          options: ['morning', 'afternoon'],
+        },
+      ],
+    };
+    const calls: Array<readonly [string, string, unknown]> = [];
+    const query = {
+      eq(column: string, value: unknown) {
+        calls.push(['eq', column, value]);
+        return this;
+      },
+      contains(column: string, value: unknown) {
+        calls.push(['contains', column, value]);
+        return this;
+      },
+    };
+
+    applyServiceDirectoryFilters(query, {
+      categoryId: '5eed0000-0000-4000-8009-000000000099',
+      categorySlug: definition.slug as never,
+      categoryContract: createServiceCategoryContract(definition),
+      metadata: { delivery_window: 'morning' },
+    });
+
+    expect(calls).toEqual([
+      ['eq', 'category_id', '5eed0000-0000-4000-8009-000000000099'],
+      ['contains', 'metadata', { delivery_window: 'morning' }],
     ]);
   });
 });

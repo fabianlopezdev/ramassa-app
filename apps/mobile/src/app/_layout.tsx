@@ -12,7 +12,7 @@ import { registerProfileQueries } from '@/lib/profile';
 import { configurePushNotificationPresentation } from '@/lib/push-notifications';
 import { queryClient, queryPersister } from '@/lib/query-client';
 import { persistedQueryOptions } from '@/lib/query-persistence';
-import { dropCachedServerState, shouldDropCachedServerState } from '@/lib/session-cache';
+import { dropCachedServerState, observeSessionIdentity } from '@/lib/session-cache';
 import { supabase } from '@/lib/supabase';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { Stack } from 'expo-router/stack';
@@ -75,13 +75,14 @@ function RootNavigator() {
   // (The profile read itself is safe either way: it resolves identity from the
   // session server-side rather than from anything captured here.)
   useEffect(() => {
-    const identityChanged = shouldDropCachedServerState(cachedUserIdRef.current, userId);
-    cachedUserIdRef.current = userId;
     registerProfileQueries(() => userId);
-    if (identityChanged) {
+    const observation = observeSessionIdentity(cachedUserIdRef.current, userId, isLoading);
+    if (observation === null) return;
+    cachedUserIdRef.current = observation.cachedUserId;
+    if (observation.shouldDrop) {
       dropCachedServerState(queryClient);
     }
-  }, [userId]);
+  }, [isLoading, userId]);
   // Screen transitions honour reduce-motion too (RAPP-70 scope item 5): the
   // native stack's default slide becomes a plain fade, which is the closest the
   // native navigator offers to "no movement". Set here rather than per screen so

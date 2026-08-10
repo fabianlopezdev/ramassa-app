@@ -126,6 +126,7 @@ export function ServicesTable({
               <th className="p-3">{t('services:columnTitle')}</th>
               <th className="p-3">{t('services:columnCategory')}</th>
               <th className="p-3">{t('services:columnStatus')}</th>
+              <th className="p-3">{t('services:columnInterests')}</th>
               <th className="p-3">{t('services:columnUpdated')}</th>
               <th className="p-3">{t('services:columnActions')}</th>
             </tr>
@@ -157,6 +158,9 @@ export function ServicesTable({
                     <Badge variant="secondary">
                       {t(`services:status${capitalize(lifecycle)}`)}
                     </Badge>
+                  </td>
+                  <td className="p-3 tabular-nums" data-testid={`service-interest-count-${row.id}`}>
+                    {row.interest_count}
                   </td>
                   <td className="p-3">
                     {new Date(row.updated_at).toLocaleString(i18n.resolvedLanguage)}

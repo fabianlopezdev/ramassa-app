@@ -1,4 +1,8 @@
-import { getServiceCategoryContract, type ServiceCategorySlug } from './definitions';
+import {
+  getServiceCategoryContract,
+  type ServiceCategoryContract,
+  type ServiceCategorySlug,
+} from './definitions';
 
 export const SERVICE_COST_TYPES = ['free', 'subsidized', 'paid', 'varies'] as const;
 export const SERVICE_AVAILABILITIES = [
@@ -14,6 +18,7 @@ export type ServiceAvailability = (typeof SERVICE_AVAILABILITIES)[number];
 export interface ServiceDirectoryFilters {
   readonly categoryId: string;
   readonly categorySlug: ServiceCategorySlug;
+  readonly categoryContract?: ServiceCategoryContract;
   readonly zone?: string;
   readonly costType?: ServiceCostType;
   readonly availability?: ServiceAvailability;
@@ -38,9 +43,8 @@ export function applyServiceDirectoryFilters<Query extends ServiceDirectoryQuery
     filteredQuery = filteredQuery.eq('availability', filters.availability);
   }
   if (filters.metadata !== undefined && Object.keys(filters.metadata).length > 0) {
-    const metadataFilter = getServiceCategoryContract(filters.categorySlug).buildMetadataFilter(
-      filters.metadata,
-    );
+    const contract = filters.categoryContract ?? getServiceCategoryContract(filters.categorySlug);
+    const metadataFilter = contract.buildMetadataFilter(filters.metadata);
     filteredQuery = filteredQuery.contains('metadata', metadataFilter);
   }
   return filteredQuery;

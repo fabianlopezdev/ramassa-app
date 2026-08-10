@@ -152,6 +152,40 @@ test('airplane mode restores published knowledge and the signed-in player own st
   expect(restored.getQueryData(['player-knowledge', 'own-stories', 'player-b'])).toBeUndefined();
 });
 
+test('airplane mode restores the signed-in player service directory and interests', async () => {
+  const storage = memoryStorage();
+  const persister = createQueryPersister(storage);
+  const source = new QueryClient();
+  const cachedServices = [{ id: 'cached-service', interested: true }];
+  source.setQueryData(
+    ['player-services', 'list', 'player-a', 'housing', 'unfiltered'],
+    cachedServices,
+  );
+
+  await persistQueryClientSave({ queryClient: source, ...persistedQueryOptions(persister) });
+
+  const restored = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  await persistQueryClientRestore({ queryClient: restored, ...persistedQueryOptions(persister) });
+  onlineManager.setOnline(false);
+  let networkCalls = 0;
+  const observer = new QueryObserver<readonly { id: string; interested: boolean }[]>(restored, {
+    queryKey: ['player-services', 'list', 'player-a', 'housing', 'unfiltered'],
+    queryFn: async () => {
+      networkCalls += 1;
+      throw new Error('the service directory must use its persisted rows');
+    },
+  });
+  const stop = observer.subscribe(() => undefined);
+
+  expect(observer.getCurrentResult().data).toEqual(cachedServices);
+  expect(observer.getCurrentResult().fetchStatus).toBe('paused');
+  expect(networkCalls).toBe(0);
+  expect(
+    restored.getQueryData(['player-services', 'list', 'player-b', 'housing', 'unfiltered']),
+  ).toBeUndefined();
+  stop();
+});
+
 test('a detail seeded from a restored list inherits the list age and refreshes when online', async () => {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const listQueryKey = ['player-knowledge', 'articles', 'player-a'] as const;

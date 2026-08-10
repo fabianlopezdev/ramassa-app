@@ -8,7 +8,11 @@
 
 import { QueryClient, QueryObserver } from '@tanstack/react-query';
 import { expect, test } from 'bun:test';
-import { dropCachedServerState, shouldDropCachedServerState } from './session-cache';
+import {
+  dropCachedServerState,
+  observeSessionIdentity,
+  shouldDropCachedServerState,
+} from './session-cache';
 
 const amina = '5eed0000-0000-4000-8000-000000000001';
 const fatima = '5eed0000-0000-4000-8000-000000000002';
@@ -16,6 +20,14 @@ const fatima = '5eed0000-0000-4000-8000-000000000002';
 test('the first observed session drops nothing: nothing has been fetched yet', () => {
   expect(shouldDropCachedServerState(undefined, amina)).toBe(false);
   expect(shouldDropCachedServerState(undefined, null)).toBe(false);
+});
+
+test('auth loading does not record a signed-out identity or erase a restored offline cache', () => {
+  expect(observeSessionIdentity(undefined, null, true)).toBeNull();
+  expect(observeSessionIdentity(undefined, amina, false)).toEqual({
+    cachedUserId: amina,
+    shouldDrop: false,
+  });
 });
 
 test('a token refresh on the same identity keeps the cache', () => {
