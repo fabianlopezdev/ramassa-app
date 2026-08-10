@@ -1,11 +1,9 @@
 import { PressableScale } from '@/components/motion/pressable-scale';
 import type { AttendanceSyncState } from '@/lib/attendance';
-import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 import { memo, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
-import { nextAttendanceStatus, type AttendanceStatus } from '@ramassa/shared/attendance';
+import type { AttendanceStatus } from '@ramassa/shared/attendance';
 import { tokens } from '@ramassa/shared/tokens';
 
 const statusSymbols: Record<AttendanceStatus | 'unmarked', SymbolViewProps['name']> = {
@@ -22,14 +20,14 @@ const statusColors: Record<AttendanceStatus | 'unmarked', string> = {
   excused: tokens.colors.warning,
 };
 
-function statusKey(status: AttendanceStatus | null) {
+export function attendanceStatusKey(status: AttendanceStatus | null) {
   if (status === null) return 'statusUnmarked' as const;
   if (status === 'present') return 'statusPresent' as const;
   if (status === 'absent') return 'statusAbsent' as const;
   return 'statusExcused' as const;
 }
 
-function syncKey(state: AttendanceSyncState) {
+export function attendanceSyncKey(state: AttendanceSyncState) {
   if (state === 'pending') return 'syncPending' as const;
   if (state === 'retrying') return 'syncRetrying' as const;
   return 'syncSynced' as const;
@@ -42,6 +40,11 @@ interface AttendanceRowProps {
   readonly status: AttendanceStatus | null;
   readonly markedAt: string | null;
   readonly syncState: AttendanceSyncState;
+  readonly accessibilityLabel: string;
+  readonly statusLabel: string;
+  readonly signedUpLabel: string;
+  readonly syncLabel: string;
+  readonly languageFontClass: string;
   readonly onMark: (
     playerId: string,
     status: AttendanceStatus | null,
@@ -56,13 +59,13 @@ export const AttendanceRow = memo(function AttendanceRow({
   status,
   markedAt,
   syncState,
+  accessibilityLabel,
+  statusLabel,
+  signedUpLabel,
+  syncLabel,
+  languageFontClass,
   onMark,
 }: AttendanceRowProps) {
-  const { t } = useTranslation('attendance');
-  const languageFontClass = useLanguageFontClass();
-  const next = nextAttendanceStatus(status);
-  const currentLabel = t(statusKey(status));
-  const nextLabel = t(statusKey(next));
   const handlePress = useCallback(
     () => onMark(playerId, status, markedAt),
     [markedAt, onMark, playerId, status],
@@ -72,7 +75,7 @@ export const AttendanceRow = memo(function AttendanceRow({
   return (
     <PressableScale
       testID={`attendance-player-${playerId}`}
-      accessibilityLabel={t('tapAction', { name, current: currentLabel, next: nextLabel })}
+      accessibilityLabel={accessibilityLabel}
       onPress={handlePress}
       haptic="selection"
       className="min-h-3xl flex-row items-center gap-md border-b border-neutral-200 bg-white px-lg py-md"
@@ -92,11 +95,11 @@ export const AttendanceRow = memo(function AttendanceRow({
             testID={`attendance-status-${playerId}-${visualStatus}`}
             className={`text-start text-sm font-semibold text-neutral-800 ${languageFontClass}`}
           >
-            {currentLabel}
+            {statusLabel}
           </Text>
           {signedUp ? (
             <Text className={`text-start text-xs text-neutral-600 ${languageFontClass}`}>
-              {t('signedUp')}
+              {signedUpLabel}
             </Text>
           ) : null}
         </View>
@@ -106,7 +109,7 @@ export const AttendanceRow = memo(function AttendanceRow({
             accessibilityLiveRegion="polite"
             className={`text-start text-xs text-neutral-600 ${languageFontClass}`}
           >
-            {t(syncKey(syncState))}
+            {syncLabel}
           </Text>
         ) : null}
       </View>

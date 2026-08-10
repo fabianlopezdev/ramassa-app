@@ -6,6 +6,7 @@
   "noEventsBody": "Les sessions publicades d’avui apareixeran aquí.",
   "noParticipantsTitle": "No hi ha jugadores en aquesta sessió",
   "noParticipantsBody": "Les jugadores actives i les inscrites apareixeran aquí.",
+  "participantListLabel": "Jugadores d’aquesta sessió",
   "openSheet": "Obre l’assistència de {{title}}",
   "loading": "S’està carregant l’assistència",
   "loadFailed": "No hem pogut carregar l’assistència. Comprova la connexió i torna-ho a provar.",

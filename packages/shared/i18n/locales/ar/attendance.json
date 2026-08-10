@@ -6,6 +6,7 @@
   "noEventsBody": "ستظهر جلسات اليوم المنشورة هنا.",
   "noParticipantsTitle": "لا توجد لاعبات في هذه الجلسة",
   "noParticipantsBody": "ستظهر هنا لاعبات القائمة النشطة والمسجلات.",
+  "participantListLabel": "لاعبات هذه الجلسة",
   "openSheet": "فتح حضور {{title}}",
   "loading": "جارٍ تحميل الحضور",
   "loadFailed": "تعذر تحميل الحضور. تحقق من اتصالك وحاول مرة أخرى.",

@@ -20,6 +20,7 @@ const auditedSpecs = [
   '.maestro/_set-language.yaml',
   '.maestro/_sign-in.yaml',
   '.maestro/attendance-history.yaml',
+  '.maestro/attendance-offline.yaml',
   '.maestro/attendance.yaml',
   '.maestro/events-signup.yaml',
   '.maestro/feed-browse.yaml',
@@ -340,6 +341,10 @@ describe('Maestro selector contracts', () => {
     expect(feed).toContain('LOCALE: ca');
     expect(feed).toContain("LANGUAGE_AR: 'العربية'");
     expect(feed).toMatch(/LANGUAGE_AR[\s\S]*?RESTART_AR/);
+    expect(feed).toMatch(
+      /id: profile-language-ar[\s\S]*?start: 50%, 70%[\s\S]*?end: 50%, 30%[\s\S]*?id: profile-language-ar[\s\S]*?point: 50%, 50%/,
+    );
+    expect(feed).toMatch(/platform: Android[\s\S]*?visible: '\^\$\{RESTART_AR\}\$'/);
     expect(feed).not.toContain("notVisible: '^${TAB_HOME_AR}$'");
     expect(feed).toContain("PINNED_CA: '{{home:pinned}}'");
     expect(feed).toMatch(/FILTER_URGENT[\s\S]*?selected: true[\s\S]*?PINNED/);
@@ -348,8 +353,16 @@ describe('Maestro selector contracts', () => {
       /PINNED[\s\S]*?announcement-detail-screen[\s\S]*?announcement-detail-back[\s\S]*?point: 20%, 50%/,
     );
 
+    const languageSwitcher = await Bun.file(
+      path.join(repoRoot, 'apps/mobile/src/components/profile/language-switcher.tsx'),
+    ).text();
+    expect(languageSwitcher).toContain('testID={`profile-language-${code}`}');
+
     const events = await Bun.file(path.join(repoRoot, '.maestro/events-signup.yaml')).text();
     expect(events).toMatch(/CALENDAR_VIEW_ACTION[\s\S]*?player-events-calendar/);
+    expect(events).toMatch(
+      /notVisible: '\^\$\{CONFIRM_ACTION\}\$'[\s\S]*?tapOn: '\^\$\{CANCEL_ACTION\}\$'[\s\S]*?visible: '\^\$\{CONFIRM_ACTION\}\$'/,
+    );
     expect(events).toMatch(/CONFIRM_ACTION[\s\S]*?CONFIRMED_STATUS/);
     expect(events).toMatch(
       /CONFIRMED_STATUS[\s\S]*?- runFlow: _relaunch\.yaml[\s\S]*?CONFIRMED_STATUS/,

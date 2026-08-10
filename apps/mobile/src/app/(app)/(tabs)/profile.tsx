@@ -22,11 +22,12 @@ import { logout } from '@/lib/auth';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useRouter } from 'expo-router';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { toAppError } from '@ramassa/shared/errors';
+import { DEFAULT_LANGUAGE } from '@ramassa/shared/i18n';
 import { useOwnDeletionRequest, useOwnProfile } from '@ramassa/shared/profile';
 
 // The dev-menu entry, required inside a __DEV__ branch so neither the component
@@ -47,7 +48,7 @@ const LOADING_SECTION_COUNT = 4;
 export default function ProfileScreen() {
   const { t, i18n } = useTranslation(['profile', 'onboarding']);
   const languageFontClass = useLanguageFontClass();
-  const router = useRouter();
+  const { push } = useRouter();
   const { data: profile, isLoading, isError, error, refetch } = useOwnProfile();
   const { data: deletionRequest } = useOwnDeletionRequest();
 
@@ -60,7 +61,7 @@ export default function ProfileScreen() {
    * constructs), so no locale reads differently.
    */
   const dateFormatter = useMemo(
-    () => new Intl.DateTimeFormat(i18n.resolvedLanguage ?? 'ca'),
+    () => new Intl.DateTimeFormat(i18n.resolvedLanguage ?? DEFAULT_LANGUAGE),
     [i18n.resolvedLanguage],
   );
 
@@ -96,6 +97,10 @@ export default function ProfileScreen() {
         : undefined,
     [insets.top, insets.bottom],
   );
+  const handleRetry = useCallback(() => void refetch(), [refetch]);
+  const handleEdit = useCallback(() => push('/profile-edit'), [push]);
+  const handleDelete = useCallback(() => push('/profile-delete-data'), [push]);
+  const handleLogout = useCallback(() => void logout(), []);
 
   return (
     // A ScrollView with automatic inset adjustment, not a plain View. The iOS 26
@@ -162,7 +167,7 @@ export default function ProfileScreen() {
                 retry button is the answer when it is a dead connection, and
                 the code is what tells staff when it is not. */}
             <ErrorCodeLine code={loadFailureCode} />
-            <AuthSubmitButton label={t('retryAction')} onPress={() => void refetch()} />
+            <AuthSubmitButton label={t('retryAction')} onPress={handleRetry} />
           </View>
         </ShakeOnError>
       ) : (
@@ -240,7 +245,7 @@ export default function ProfileScreen() {
             <AttendanceHistorySection />
           </FadeSlideIn>
 
-          <AuthSubmitButton label={t('editAction')} onPress={() => router.push('/profile-edit')} />
+          <AuthSubmitButton label={t('editAction')} onPress={handleEdit} />
         </>
       )}
 
@@ -266,7 +271,7 @@ export default function ProfileScreen() {
         ) : (
           <PressableScale
             accessibilityLabel={t('deleteTitle')}
-            onPress={() => router.push('/profile-delete-data')}
+            onPress={handleDelete}
             haptic="selection"
             style={continuousCorners}
             className="min-h-recommended justify-center rounded-md border border-neutral-300 px-lg"
@@ -281,7 +286,7 @@ export default function ProfileScreen() {
       <PressableScale
         testID="profile-sign-out"
         accessibilityLabel={t('signOutAction')}
-        onPress={() => void logout()}
+        onPress={handleLogout}
         haptic="tapLight"
         className="min-h-recommended justify-center"
       >

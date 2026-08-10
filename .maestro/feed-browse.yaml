@@ -79,7 +79,8 @@ env:
 - repeat:
     times: 20
     while:
-      notVisible: '^${LANGUAGE_AR}$'
+      notVisible:
+        id: profile-language-ar
     commands:
       - swipe:
           start: 50%, 72%
@@ -88,34 +89,43 @@ env:
       - waitForAnimationToEnd:
           timeout: 1200
 - swipe:
-    start: 50%, 65%
-    end: 50%, 55%
+    start: 50%, 70%
+    end: 50%, 30%
     duration: 900
 - waitForAnimationToEnd:
     timeout: 2000
-- tapOn: '^${LANGUAGE_AR}$'
+- assertVisible:
+    id: profile-language-ar
+- tapOn:
+    id: profile-language-ar
+    point: 50%, 50%
 - waitForAnimationToEnd:
     timeout: 2500
-# The Arabic restart action is language evidence from the app content itself.
-# Native iOS tab labels carry bidi metadata that makes an exact Maestro text
-# regex fail even while the correct Arabic label is visibly rendered.
-- repeat:
-    times: 12
-    while:
-      notVisible: '^${RESTART_AR}$'
+# Android keeps the current activity alive after changing native direction, so
+# exercise the app's explicit restart action there. iOS can recreate the scene
+# as soon as I18nManager changes; the unconditional cold relaunch below is the
+# cross-platform proof that Arabic persisted and the native direction applied.
+- runFlow:
+    when:
+      platform: Android
     commands:
-      - swipe:
-          start: 50%, 70%
-          end: 50%, 35%
-          duration: 900
+      - repeat:
+          times: 12
+          while:
+            notVisible: '^${RESTART_AR}$'
+          commands:
+            - swipe:
+                start: 50%, 70%
+                end: 50%, 35%
+                duration: 900
+            - waitForAnimationToEnd:
+                timeout: 1200
+      - extendedWaitUntil:
+          visible: '^${RESTART_AR}$'
+          timeout: 30000
+      - tapOn: '^${RESTART_AR}$'
       - waitForAnimationToEnd:
-          timeout: 1200
-- extendedWaitUntil:
-    visible: '^${RESTART_AR}$'
-    timeout: 30000
-- tapOn: '^${RESTART_AR}$'
-- waitForAnimationToEnd:
-    timeout: 12000
+          timeout: 12000
 - runFlow:
     file: _relaunch.yaml
     env:

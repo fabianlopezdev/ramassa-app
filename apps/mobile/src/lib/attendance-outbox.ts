@@ -1,8 +1,14 @@
-import type { AttendanceStatus } from '@ramassa/shared/attendance';
+import {
+  nextAttendanceMarkedAt,
+  nextAttendanceStatus,
+  type AttendanceStatus,
+} from '@ramassa/shared/attendance';
 
 const ATTENDANCE_OUTBOX_KEY = 'ramassa.attendance-outbox.v1';
+const ATTENDANCE_OUTBOX_SCHEMA_VERSION = 1;
 const ATTENDANCE_RETRY_BASE_MS = 1_000;
 const ATTENDANCE_RETRY_MAX_MS = 30_000;
+const ATTENDANCE_RETRY_BACKOFF_BASE = 2;
 
 export interface AttendanceOutboxStorage {
   getString(key: string): string | undefined;
@@ -34,6 +40,49 @@ export interface AttendanceDrainResult {
   readonly nextRetryAt: string | null;
 }
 
+export function nextAttendanceOutboxMark(
+  pending: AttendanceOutboxMark | undefined,
+  currentStatus: AttendanceStatus | null,
+  currentMarkedAt: string | null,
+  now = new Date(),
+): Pick<EnqueueAttendanceMark, 'status' | 'markedAt'> {
+  return {
+    status: nextAttendanceStatus(pending?.status ?? currentStatus),
+    markedAt: nextAttendanceMarkedAt(pending?.markedAt ?? currentMarkedAt, now),
+  };
+}
+
+const drainTails = new WeakMap<AttendanceOutboxStorage, Map<string, Promise<void>>>();
+
+async function serializeDrain<Result>(
+  storage: AttendanceOutboxStorage,
+  ownerId: string,
+  execute: () => Promise<Result>,
+): Promise<Result> {
+  let ownerTails = drainTails.get(storage);
+  if (ownerTails === undefined) {
+    ownerTails = new Map();
+    drainTails.set(storage, ownerTails);
+  }
+  const previous = ownerTails.get(ownerId);
+  let release!: () => void;
+  const turn = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const tail = (previous ?? Promise.resolve()).then(() => turn);
+  ownerTails.set(ownerId, tail);
+  if (previous !== undefined) await previous;
+  try {
+    return await execute();
+  } finally {
+    release();
+    if (ownerTails.get(ownerId) === tail) {
+      ownerTails.delete(ownerId);
+      if (ownerTails.size === 0) drainTails.delete(storage);
+    }
+  }
+}
+
 function readEntries(storage: AttendanceOutboxStorage): readonly AttendanceOutboxMark[] {
   const serialized = storage.getString(ATTENDANCE_OUTBOX_KEY);
   if (serialized === undefined) return [];
@@ -53,7 +102,10 @@ function writeEntries(
     storage.remove(ATTENDANCE_OUTBOX_KEY);
     return;
   }
-  storage.set(ATTENDANCE_OUTBOX_KEY, JSON.stringify({ version: 1, entries }));
+  storage.set(
+    ATTENDANCE_OUTBOX_KEY,
+    JSON.stringify({ version: ATTENDANCE_OUTBOX_SCHEMA_VERSION, entries }),
+  );
 }
 
 export function createAttendanceOutbox(storage: AttendanceOutboxStorage, ownerId: string) {
@@ -75,47 +127,53 @@ export function createAttendanceOutbox(storage: AttendanceOutboxStorage, ownerId
       writeEntries(storage, [...entries, entry]);
       return entry;
     },
-    drain: async (
+    drain: (
       send: (mark: AttendanceOutboxMark) => Promise<void>,
       now: Date = new Date(),
-    ): Promise<AttendanceDrainResult> => {
-      const nowMs = now.getTime();
-      const pending = readEntries(storage)
-        .filter((entry) => entry.ownerId === ownerId)
-        .sort((left, right) => left.markedAt.localeCompare(right.markedAt));
-      let sent = 0;
-      let failed = 0;
-      for (const entry of pending) {
-        if (entry.retryAt !== null && Date.parse(entry.retryAt) > nowMs) continue;
-        try {
-          await send(entry);
-          const remaining = readEntries(storage).filter(
-            (candidate) => candidate.id !== entry.id || candidate.markedAt !== entry.markedAt,
-          );
-          writeEntries(storage, remaining);
-          sent += 1;
-        } catch {
-          const nextAttemptCount = entry.attemptCount + 1;
-          const delayMs = Math.min(
-            ATTENDANCE_RETRY_MAX_MS,
-            ATTENDANCE_RETRY_BASE_MS * 2 ** (nextAttemptCount - 1),
-          );
-          const retryAt = new Date(nowMs + delayMs).toISOString();
-          const withFailure = readEntries(storage).map((candidate) =>
-            candidate.id === entry.id && candidate.markedAt === entry.markedAt
-              ? { ...candidate, attemptCount: nextAttemptCount, retryAt }
-              : candidate,
-          );
-          writeEntries(storage, withFailure);
-          failed += 1;
+    ): Promise<AttendanceDrainResult> =>
+      serializeDrain(storage, ownerId, async () => {
+        const nowMs = now.getTime();
+        const pending = readEntries(storage)
+          .filter((entry) => entry.ownerId === ownerId)
+          .sort((left, right) => left.markedAt.localeCompare(right.markedAt));
+        let sent = 0;
+        let failed = 0;
+        for (const entry of pending) {
+          if (entry.retryAt !== null && Date.parse(entry.retryAt) > nowMs) continue;
+          try {
+            await send(entry);
+            const remaining = readEntries(storage).filter(
+              (candidate) => candidate.id !== entry.id || candidate.markedAt !== entry.markedAt,
+            );
+            writeEntries(storage, remaining);
+            sent += 1;
+          } catch {
+            const nextAttemptCount = entry.attemptCount + 1;
+            const delayMs = Math.min(
+              ATTENDANCE_RETRY_MAX_MS,
+              ATTENDANCE_RETRY_BASE_MS * ATTENDANCE_RETRY_BACKOFF_BASE ** (nextAttemptCount - 1),
+            );
+            const retryAt = new Date(nowMs + delayMs).toISOString();
+            const withFailure = readEntries(storage).map((candidate) =>
+              candidate.id === entry.id && candidate.markedAt === entry.markedAt
+                ? { ...candidate, attemptCount: nextAttemptCount, retryAt }
+                : candidate,
+            );
+            writeEntries(storage, withFailure);
+            failed += 1;
+          }
         }
-      }
-      const nextRetryAt =
-        readEntries(storage)
-          .filter((entry) => entry.ownerId === ownerId && entry.retryAt !== null)
-          .map((entry) => entry.retryAt!)
-          .sort()[0] ?? null;
-      return { sent, failed, nextRetryAt };
-    },
+        let nextRetryAt: string | null = null;
+        for (const entry of readEntries(storage)) {
+          if (
+            entry.ownerId === ownerId &&
+            entry.retryAt !== null &&
+            (nextRetryAt === null || entry.retryAt < nextRetryAt)
+          ) {
+            nextRetryAt = entry.retryAt;
+          }
+        }
+        return { sent, failed, nextRetryAt };
+      }),
   };
 }

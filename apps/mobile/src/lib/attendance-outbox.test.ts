@@ -1,5 +1,9 @@
 import { describe, expect, test } from 'bun:test';
-import { createAttendanceOutbox, type AttendanceOutboxStorage } from './attendance-outbox';
+import {
+  createAttendanceOutbox,
+  nextAttendanceOutboxMark,
+  type AttendanceOutboxStorage,
+} from './attendance-outbox';
 
 function memoryStorage(): AttendanceOutboxStorage {
   const values = new Map<string, string>();
@@ -92,6 +96,23 @@ describe('attendance outbox persistence', () => {
     });
   });
 
+  test('a rapid second tap advances from the persisted pending mark', () => {
+    const outbox = createAttendanceOutbox(memoryStorage(), 'coach-1');
+    outbox.enqueue({
+      occurrenceId: 'occurrence-1',
+      playerId: 'player-1',
+      status: 'present',
+      markedAt: '2026-08-09T09:00:00.000Z',
+    });
+
+    expect(
+      nextAttendanceOutboxMark(outbox.list()[0], null, null, new Date('2026-08-09T09:00:00.000Z')),
+    ).toEqual({
+      status: 'absent',
+      markedAt: '2026-08-09T09:00:00.001Z',
+    });
+  });
+
   test('draining sends a pending mark and removes it only after success', async () => {
     const outbox = createAttendanceOutbox(memoryStorage(), 'coach-1');
     const pending = outbox.enqueue({
@@ -139,6 +160,37 @@ describe('attendance outbox persistence', () => {
       status: 'absent',
       markedAt: '2026-08-09T09:00:01.000Z',
     });
+  });
+
+  test('serializes simultaneous drains created for the same owner and storage', async () => {
+    const storage = memoryStorage();
+    const firstWorker = createAttendanceOutbox(storage, 'coach-1');
+    const secondWorker = createAttendanceOutbox(storage, 'coach-1');
+    firstWorker.enqueue({
+      occurrenceId: 'occurrence-1',
+      playerId: 'player-1',
+      status: 'present',
+      markedAt: '2026-08-09T09:00:00.000Z',
+    });
+    let releaseSend!: () => void;
+    const sending = new Promise<void>((resolve) => {
+      releaseSend = resolve;
+    });
+    let sends = 0;
+    const send = async () => {
+      sends += 1;
+      await sending;
+    };
+
+    const firstDrain = firstWorker.drain(send);
+    const secondDrain = secondWorker.drain(send);
+    await Promise.resolve();
+    expect(sends).toBe(1);
+
+    releaseSend();
+    await Promise.all([firstDrain, secondDrain]);
+    expect(sends).toBe(1);
+    expect(firstWorker.list()).toEqual([]);
   });
 
   test('a failed send stays queued and retries after its persisted backoff', async () => {

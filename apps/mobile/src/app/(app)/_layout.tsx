@@ -16,14 +16,15 @@ const hiddenHeaderScreenOptions = { headerShown: false } as const;
 
 export default function AppLayout() {
   const { needsOnboarding, role, user } = useAuth();
+  const userId = user?.id ?? null;
   const hasStaffRole = role === 'staff' || role === 'admin';
   const isStaff =
     hasStaffRole ||
-    (role === null && user !== null && isAttendanceCoachCached(mmkvStorage, user.id));
+    (role === null && userId !== null && isAttendanceCoachCached(mmkvStorage, userId));
   useEffect(() => {
-    if (user === null || role === null) return;
-    rememberAttendanceCoach(mmkvStorage, user.id, hasStaffRole);
-  }, [hasStaffRole, role, user]);
+    if (userId === null || role === null) return;
+    rememberAttendanceCoach(mmkvStorage, userId, hasStaffRole);
+  }, [hasStaffRole, role, userId]);
   // Registers this device's push token for the signed-in user (RAPP-17), and
   // surfaces the translated rationale when the OS permission is undetermined.
   const { shouldShowRationale, acceptRationale, declineRationale } = usePushRegistration();
@@ -64,7 +65,7 @@ export default function AppLayout() {
           <Stack.Screen name="onboarding" />
         </Stack.Protected>
       </Stack>
-      <AttendanceSyncWorker />
+      {isStaff && userId !== null ? <AttendanceSyncWorker userId={userId} /> : null}
 
       {/* Shown BEFORE the system dialog, never instead of it (SPEC UX rule).
           Dismissing counts as "not now": the OS is never asked, so iOS's single

@@ -6,6 +6,7 @@
   "noEventsBody": "Today’s published sessions will appear here.",
   "noParticipantsTitle": "No players in this session",
   "noParticipantsBody": "Active roster players and signed-up players will appear here.",
+  "participantListLabel": "Players in this session",
   "openSheet": "Open attendance for {{title}}",
   "loading": "Loading attendance",
   "loadFailed": "We could not load attendance. Check your connection and try again.",

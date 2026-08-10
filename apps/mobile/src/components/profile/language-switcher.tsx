@@ -56,6 +56,7 @@ export function LanguageSwitcher() {
         {SUPPORTED_LANGUAGES.map((code) => (
           <OptionChip
             key={code}
+            testID={`profile-language-${code}`}
             label={LANGUAGE_NATIVE_NAMES[code]}
             isSelected={code === language}
             onPress={() => void choose(code)}

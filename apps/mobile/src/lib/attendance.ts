@@ -4,9 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   fetchAttendanceOccurrencesForDay,
   fetchAttendanceSheet,
-  mergeAttendanceMark,
-  nextAttendanceMarkedAt,
-  nextAttendanceStatus,
+  mergeAttendanceSheetMark,
   subscribeToAttendance,
   upsertAttendanceMark,
   type AttendanceMark,
@@ -16,15 +14,22 @@ import {
 } from '@ramassa/shared/attendance';
 import { useAuth } from '@ramassa/shared/auth';
 import { isAttendanceCoachCached } from './attendance-coach-cache';
-import { createAttendanceOutbox, type AttendanceOutboxMark } from './attendance-outbox';
+import {
+  createAttendanceOutbox,
+  nextAttendanceOutboxMark,
+  type AttendanceOutboxMark,
+} from './attendance-outbox';
 import { isNetworkStateOnline } from './network-status';
 import { mmkvStorage } from './storage';
 import { supabase } from './supabase';
 
+const SIGNED_OUT_QUERY_SCOPE = 'signed-out';
+
 export const attendanceOccurrencesQueryKey = (userId: string) =>
   ['attendance-occurrences', userId] as const;
+export const attendanceSheetsQueryKey = (userId: string) => ['attendance-sheet', userId] as const;
 export const attendanceSheetQueryKey = (userId: string, occurrenceId: string) =>
-  ['attendance-sheet', userId, occurrenceId] as const;
+  [...attendanceSheetsQueryKey(userId), occurrenceId] as const;
 
 export function useAttendanceOccurrences() {
   const { user, role } = useAuth();
@@ -34,48 +39,34 @@ export function useAttendanceOccurrences() {
       role === 'admin' ||
       (role === null && isAttendanceCoachCached(mmkvStorage, user.id)));
   return useQuery<readonly AttendanceOccurrenceListRow[]>({
-    queryKey: attendanceOccurrencesQueryKey(user?.id ?? 'signed-out'),
+    queryKey: attendanceOccurrencesQueryKey(user?.id ?? SIGNED_OUT_QUERY_SCOPE),
     queryFn: ({ signal }) => fetchAttendanceOccurrencesForDay(supabase, new Date(), signal),
     enabled: canReadAttendance,
   });
 }
 
-function withMark(sheet: AttendanceSheet, incoming: AttendanceMark): AttendanceSheet {
-  return {
-    ...sheet,
-    participants: sheet.participants.map((participant) => {
-      if (participant.id !== incoming.player_id) return participant;
-      return {
-        ...participant,
-        mark:
-          participant.mark === null ? incoming : mergeAttendanceMark(participant.mark, incoming),
-      };
-    }),
-  };
-}
-
 export function useAttendanceSheet(occurrenceId: string) {
   const { user } = useAuth();
+  const userId = user?.id ?? null;
   const queryClient = useQueryClient();
   const queryKey = useMemo(
-    () => attendanceSheetQueryKey(user?.id ?? 'signed-out', occurrenceId),
-    [occurrenceId, user?.id],
+    () => attendanceSheetQueryKey(userId ?? SIGNED_OUT_QUERY_SCOPE, occurrenceId),
+    [occurrenceId, userId],
   );
   const query = useQuery<AttendanceSheet>({
     queryKey,
     queryFn: ({ signal }) => fetchAttendanceSheet(supabase, occurrenceId, signal),
-    enabled: user !== null && occurrenceId.length > 0,
+    enabled: userId !== null && occurrenceId.length > 0,
   });
 
-  useEffect(
-    () =>
-      subscribeToAttendance(supabase, occurrenceId, (mark) => {
-        queryClient.setQueryData<AttendanceSheet>(queryKey, (current) =>
-          current === undefined ? current : withMark(current, mark),
-        );
-      }),
-    [occurrenceId, queryClient, queryKey],
-  );
+  useEffect(() => {
+    if (userId === null || occurrenceId.length === 0) return;
+    return subscribeToAttendance(supabase, occurrenceId, (mark) => {
+      queryClient.setQueryData<AttendanceSheet>(queryKey, (current) =>
+        current === undefined ? current : mergeAttendanceSheetMark(current, mark),
+      );
+    });
+  }, [occurrenceId, queryClient, queryKey, userId]);
 
   return query;
 }
@@ -84,27 +75,26 @@ export type AttendanceSyncState = 'pending' | 'retrying' | 'synced';
 
 export function useAttendanceMarker(occurrenceId: string) {
   const { user } = useAuth();
+  const userId = user?.id ?? null;
   const networkState = useNetworkState();
   const isOnline = isNetworkStateOnline(networkState);
   const queryClient = useQueryClient();
   const queryKey = useMemo(
-    () => attendanceSheetQueryKey(user?.id ?? 'signed-out', occurrenceId),
-    [occurrenceId, user?.id],
+    () => attendanceSheetQueryKey(userId ?? SIGNED_OUT_QUERY_SCOPE, occurrenceId),
+    [occurrenceId, userId],
   );
   const [nextRetryAt, setNextRetryAt] = useState<string | null>(null);
   const outbox = useMemo(
-    () => (user === null ? null : createAttendanceOutbox(mmkvStorage, user.id)),
-    [user],
+    () => (userId === null ? null : createAttendanceOutbox(mmkvStorage, userId)),
+    [userId],
   );
-  const readPending = useCallback(
-    () =>
-      new Map(
-        (outbox?.list() ?? [])
-          .filter((entry) => entry.occurrenceId === occurrenceId)
-          .map((entry) => [entry.playerId, entry]),
-      ),
-    [occurrenceId, outbox],
-  );
+  const readPending = useCallback(() => {
+    const byPlayer = new Map<string, AttendanceOutboxMark>();
+    for (const entry of outbox?.list() ?? []) {
+      if (entry.occurrenceId === occurrenceId) byPlayer.set(entry.playerId, entry);
+    }
+    return byPlayer;
+  }, [occurrenceId, outbox]);
   const [pending, setPending] = useState<ReadonlyMap<string, AttendanceOutboxMark>>(
     () => new Map(),
   );
@@ -112,16 +102,20 @@ export function useAttendanceMarker(occurrenceId: string) {
   useEffect(() => setPending(readPending()), [readPending]);
 
   const drain = useCallback(async () => {
-    if (!isOnline || outbox === null) return;
+    if (!isOnline || outbox === null || userId === null) return;
     const result = await outbox.drain(async (entry) => {
       const accepted = await sendAttendanceOutboxMark(entry);
-      queryClient.setQueryData<AttendanceSheet>(queryKey, (current) =>
-        current === undefined ? current : withMark(current, accepted),
+      const acceptedQueryKey = attendanceSheetQueryKey(userId, accepted.occurrence_id);
+      queryClient.setQueryData<AttendanceSheet>(acceptedQueryKey, (current) =>
+        current === undefined ? current : mergeAttendanceSheetMark(current, accepted),
       );
     });
+    if (result.sent > 0) {
+      await queryClient.invalidateQueries({ queryKey: attendanceOccurrencesQueryKey(userId) });
+    }
     setNextRetryAt(result.nextRetryAt);
     setPending(readPending());
-  }, [isOnline, outbox, queryClient, queryKey, readPending]);
+  }, [isOnline, outbox, queryClient, readPending, userId]);
 
   useEffect(() => {
     if (isOnline) void drain();
@@ -135,9 +129,12 @@ export function useAttendanceMarker(occurrenceId: string) {
 
   const mark = useCallback(
     (playerId: string, current: AttendanceStatus | null, currentMarkedAt: string | null) => {
-      if (user === null || outbox === null) return;
-      const status = nextAttendanceStatus(current);
-      const markedAt = nextAttendanceMarkedAt(pending.get(playerId)?.markedAt ?? currentMarkedAt);
+      if (userId === null || outbox === null) return;
+      const { status, markedAt } = nextAttendanceOutboxMark(
+        readPending().get(playerId),
+        current,
+        currentMarkedAt,
+      );
       const entry = outbox.enqueue({ occurrenceId, playerId, status, markedAt });
       setPending((current) => {
         const next = new Map(current);
@@ -149,16 +146,16 @@ export function useAttendanceMarker(occurrenceId: string) {
         occurrence_id: occurrenceId,
         player_id: playerId,
         status,
-        marked_by: user.id,
+        marked_by: userId,
         marked_at: markedAt,
         updated_at: markedAt,
       };
       queryClient.setQueryData<AttendanceSheet>(queryKey, (sheet) =>
-        sheet === undefined ? sheet : withMark(sheet, optimistic),
+        sheet === undefined ? sheet : mergeAttendanceSheetMark(sheet, optimistic),
       );
       if (isOnline) void drain();
     },
-    [drain, isOnline, occurrenceId, outbox, pending, queryClient, queryKey, user],
+    [drain, isOnline, occurrenceId, outbox, queryClient, queryKey, readPending, userId],
   );
 
   const syncStateFor = useCallback(
@@ -170,7 +167,7 @@ export function useAttendanceMarker(occurrenceId: string) {
     [pending],
   );
 
-  return { mark, syncStateFor, pendingCount: pending.size };
+  return { mark, pendingMarks: pending, syncStateFor };
 }
 
 export async function sendAttendanceOutboxMark(

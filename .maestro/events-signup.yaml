@@ -10,6 +10,7 @@ env:
   CALENDAR_VIEW_ACTION: '{{events:playerCalendarViewAction}}'
   CALENDAR_LABEL: '{{events:playerCalendarLabel}}'
   CONFIRM_ACTION: '{{events:playerConfirmAction}}'
+  CANCEL_ACTION: '{{events:playerCancelAction}}'
   CONFIRMED_STATUS: '{{events:playerConfirmed}}'
 ---
 - runFlow: _open-app.yaml
@@ -56,6 +57,17 @@ env:
 - tapOn:
     id: 'event-card-.*'
     index: 0
+# The selected calendar day is intentionally seeded with an active signup so
+# the same flow proves both transitions. If a future fixture starts unsigned,
+# this branch simply skips and confirmation remains the tested outcome.
+- runFlow:
+    when:
+      notVisible: '^${CONFIRM_ACTION}$'
+    commands:
+      - tapOn: '^${CANCEL_ACTION}$'
+      - extendedWaitUntil:
+          visible: '^${CONFIRM_ACTION}$'
+          timeout: 30000
 - repeat:
     times: 6
     while:

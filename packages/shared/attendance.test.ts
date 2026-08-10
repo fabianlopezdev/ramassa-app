@@ -7,6 +7,7 @@ import {
   filterAttendanceOverview,
   mergeAttendanceMark,
   mergeAttendanceMarks,
+  mergeAttendanceSheetMark,
   nextAttendanceMarkedAt,
   nextAttendanceStatus,
   type AttendanceMark,
@@ -72,6 +73,24 @@ describe('attendance status cycle', () => {
 });
 
 describe('attendance conflict resolution', () => {
+  test('does not merge a mark from another occurrence into the visible sheet', () => {
+    const sheet = buildAttendanceSheet({
+      occurrence,
+      event,
+      profiles,
+      signups: [],
+      marks: [mark()],
+    });
+    const otherOccurrenceMark = mark({
+      id: 'mark-other-occurrence',
+      occurrence_id: 'occurrence-2',
+      status: 'absent',
+      marked_at: '2026-08-09T12:01:00.000Z',
+    });
+
+    expect(mergeAttendanceSheetMark(sheet, otherOccurrenceMark)).toBe(sheet);
+  });
+
   test('the later device timestamp wins even when messages arrive out of order', () => {
     const deviceA: AttendanceMark = {
       id: 'mark-1',
@@ -127,6 +146,20 @@ describe('attendance conflict resolution', () => {
     expect(mergeAttendanceMark(accepted, { ...accepted, id: 'other-server-mark' })).toEqual(
       accepted,
     );
+  });
+
+  test('equivalent UTC timestamp encodings still replace an optimistic shell', () => {
+    const optimistic = mark({
+      id: 'local:occurrence-1:player-1',
+      marked_at: '2026-08-09T12:00:00.000Z',
+    });
+    const accepted = mark({
+      id: 'server-mark',
+      marked_at: '2026-08-09T12:00:00+00:00',
+      updated_at: '2026-08-09T12:00:02+00:00',
+    });
+
+    expect(mergeAttendanceMark(optimistic, accepted)).toEqual(accepted);
   });
 });
 

@@ -1,4 +1,5 @@
 const ATTENDANCE_COACH_CACHE_PREFIX = 'ramassa.attendance-coach.v1';
+const CACHED_ATTENDANCE_COACH_VALUE = 'true';
 
 export interface AttendanceCoachCacheStorage {
   getString(key: string): string | undefined;
@@ -21,7 +22,7 @@ export function rememberAttendanceCoach(
   isCoach: boolean,
 ): void {
   if (isCoach) {
-    storage.set(cacheKey(userId), 'true');
+    storage.set(cacheKey(userId), CACHED_ATTENDANCE_COACH_VALUE);
   } else {
     storage.remove(cacheKey(userId));
   }
@@ -31,5 +32,5 @@ export function isAttendanceCoachCached(
   storage: AttendanceCoachCacheStorage,
   userId: string,
 ): boolean {
-  return storage.getString(cacheKey(userId)) === 'true';
+  return storage.getString(cacheKey(userId)) === CACHED_ATTENDANCE_COACH_VALUE;
 }

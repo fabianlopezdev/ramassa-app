@@ -1,16 +1,28 @@
 import { PressableScale } from '@/components/motion/pressable-scale';
-import { useLanguageFontClass } from '@/lib/use-language-font-class';
+import { continuousCorners } from '@/lib/continuous-corners';
 import { SymbolView } from 'expo-symbols';
 import { memo, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { tokens } from '@ramassa/shared/tokens';
+
+const soccerSymbol = {
+  ios: 'figure.soccer',
+  android: 'sports_soccer',
+  web: 'sports_soccer',
+} as const;
+const forwardSymbol = {
+  ios: 'chevron.forward',
+  android: 'chevron_right',
+  web: 'chevron_right',
+} as const;
 
 interface AttendanceOccurrenceRowProps {
   readonly id: string;
   readonly title: string;
   readonly location: string;
   readonly time: string;
+  readonly accessibilityLabel: string;
+  readonly languageFontClass: string;
   readonly onOpen: (id: string) => void;
 }
 
@@ -19,22 +31,23 @@ export const AttendanceOccurrenceRow = memo(function AttendanceOccurrenceRow({
   title,
   location,
   time,
+  accessibilityLabel,
+  languageFontClass,
   onOpen,
 }: AttendanceOccurrenceRowProps) {
-  const { t } = useTranslation('attendance');
-  const languageFontClass = useLanguageFontClass();
   const handleOpen = useCallback(() => onOpen(id), [id, onOpen]);
 
   return (
     <PressableScale
       testID={`attendance-occurrence-${id}`}
-      accessibilityLabel={t('openSheet', { title })}
+      accessibilityLabel={accessibilityLabel}
       onPress={handleOpen}
+      style={continuousCorners}
       className="min-h-recommended flex-row items-center gap-md rounded-lg border border-neutral-200 bg-white p-md"
     >
       <SymbolView
         accessible={false}
-        name={{ ios: 'figure.soccer', android: 'sports_soccer', web: 'sports_soccer' }}
+        name={soccerSymbol}
         size={tokens.fontSize['2xl']}
         tintColor={tokens.colors.primary.dark}
       />
@@ -42,13 +55,13 @@ export const AttendanceOccurrenceRow = memo(function AttendanceOccurrenceRow({
         <Text className={`text-start text-lg font-bold text-neutral-900 ${languageFontClass}`}>
           {title}
         </Text>
-        <Text className={`text-start text-sm text-neutral-600 ${languageFontClass}`}>
+        <Text className={`text-start text-sm tabular-nums text-neutral-600 ${languageFontClass}`}>
           {time} · {location}
         </Text>
       </View>
       <SymbolView
         accessible={false}
-        name={{ ios: 'chevron.forward', android: 'chevron_right', web: 'chevron_right' }}
+        name={forwardSymbol}
         size={tokens.fontSize.lg}
         tintColor={tokens.colors.neutral[500]}
       />

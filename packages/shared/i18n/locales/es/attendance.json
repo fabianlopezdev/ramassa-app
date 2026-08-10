@@ -6,6 +6,7 @@
   "noEventsBody": "Las sesiones publicadas de hoy aparecerán aquí.",
   "noParticipantsTitle": "No hay jugadoras en esta sesión",
   "noParticipantsBody": "Las jugadoras activas y las inscritas aparecerán aquí.",
+  "participantListLabel": "Jugadoras de esta sesión",
   "openSheet": "Abrir la asistencia de {{title}}",
   "loading": "Cargando la asistencia",
   "loadFailed": "No hemos podido cargar la asistencia. Comprueba la conexión e inténtalo de nuevo.",

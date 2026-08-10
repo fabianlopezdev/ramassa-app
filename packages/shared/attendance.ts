@@ -42,8 +42,10 @@ export function mergeAttendanceMark(
   existing: AttendanceMark,
   incoming: AttendanceMark,
 ): AttendanceMark {
-  if (incoming.marked_at > existing.marked_at) return incoming;
-  if (incoming.marked_at === existing.marked_at && existing.id.startsWith('local:')) {
+  const existingMarkedAt = Date.parse(existing.marked_at);
+  const incomingMarkedAt = Date.parse(incoming.marked_at);
+  if (incomingMarkedAt > existingMarkedAt) return incoming;
+  if (incomingMarkedAt === existingMarkedAt && existing.id.startsWith('local:')) {
     return incoming;
   }
   return existing;
@@ -220,6 +222,24 @@ export function buildAttendanceSheet(source: AttendanceSheetSource): AttendanceS
       );
     });
   return { occurrence: source.occurrence, event: source.event, participants };
+}
+
+/** Merge one accepted or realtime mark only into the sheet it belongs to. */
+export function mergeAttendanceSheetMark(
+  sheet: AttendanceSheet,
+  incoming: AttendanceMark,
+): AttendanceSheet {
+  if (incoming.occurrence_id !== sheet.occurrence.id) return sheet;
+  let changed = false;
+  const participants = sheet.participants.map((participant) => {
+    if (participant.id !== incoming.player_id) return participant;
+    const mark =
+      participant.mark === null ? incoming : mergeAttendanceMark(participant.mark, incoming);
+    if (mark === participant.mark) return participant;
+    changed = true;
+    return { ...participant, mark };
+  });
+  return changed ? { ...sheet, participants } : sheet;
 }
 
 export interface AttendanceOverviewRow {

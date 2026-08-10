@@ -17,10 +17,15 @@ import { Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { AttendanceOccurrenceListRow } from '@ramassa/shared/attendance';
 import { toAppError } from '@ramassa/shared/errors';
-import { resolveLocalizedText, useLanguage } from '@ramassa/shared/i18n';
+import { MADRID_TIME_ZONE } from '@ramassa/shared/events';
+import { DEFAULT_LANGUAGE, resolveLocalizedText, useLanguage } from '@ramassa/shared/i18n';
 import { tokens } from '@ramassa/shared/tokens';
 
 const EMPTY_OCCURRENCES: readonly AttendanceOccurrenceListRow[] = [];
+const listContentStyle = {
+  paddingHorizontal: tokens.spacing.lg,
+  paddingBottom: tokens.spacing['3xl'],
+} as const;
 const keyExtractor = (row: AttendanceOccurrenceListRow) => row.id;
 
 export default function AttendanceOccurrencesScreen() {
@@ -28,18 +33,20 @@ export default function AttendanceOccurrencesScreen() {
   const { t: tProfile } = useTranslation('profile');
   const { language } = useLanguage();
   const languageFontClass = useLanguageFontClass();
-  const router = useRouter();
+  const { push } = useRouter();
   const { data, isPending, isError, error, refetch } = useAttendanceOccurrences();
   const timeFormatter = useMemo(
     () =>
-      new Intl.DateTimeFormat(i18n.resolvedLanguage ?? 'ca', {
+      new Intl.DateTimeFormat(i18n.resolvedLanguage ?? DEFAULT_LANGUAGE, {
         hour: '2-digit',
         minute: '2-digit',
-        timeZone: 'Europe/Madrid',
+        timeZone: MADRID_TIME_ZONE,
       }),
     [i18n.resolvedLanguage],
   );
-  const open = useCallback((id: string) => router.push(`/attendance/${id}`), [router]);
+  const open = useCallback((id: string) => push(`/attendance/${id}`), [push]);
+  const handleRetry = useCallback(() => void refetch(), [refetch]);
+  const handleLogout = useCallback(() => void logout(), []);
   const renderItem = useCallback(
     ({ item }: ListRenderItemInfo<AttendanceOccurrenceListRow>) => {
       const title = resolveLocalizedText(item.event.title, language)?.text ?? item.event.title.ca;
@@ -49,11 +56,13 @@ export default function AttendanceOccurrencesScreen() {
           title={title}
           location={item.event.location}
           time={timeFormatter.format(new Date(item.starts_at))}
+          accessibilityLabel={t('openSheet', { title })}
+          languageFontClass={languageFontClass}
           onOpen={open}
         />
       );
     },
-    [language, open, timeFormatter],
+    [language, languageFontClass, open, t, timeFormatter],
   );
 
   if (isPending) return <AnnouncementFeedSkeleton accessibilityLabel={t('loading')} />;
@@ -64,7 +73,7 @@ export default function AttendanceOccurrencesScreen() {
         retryLabel={t('retry')}
         code={toAppError(error).code}
         languageFontClass={languageFontClass}
-        onRetry={() => void refetch()}
+        onRetry={handleRetry}
       />
     );
   }
@@ -83,7 +92,7 @@ export default function AttendanceOccurrencesScreen() {
             <PressableScale
               testID="attendance-sign-out"
               accessibilityLabel={tProfile('signOutAction')}
-              onPress={() => void logout()}
+              onPress={handleLogout}
               haptic="tapLight"
               className="min-h-min justify-center px-sm"
             >
@@ -109,13 +118,13 @@ export default function AttendanceOccurrencesScreen() {
           />
         ) : (
           <FlashList
+            accessibilityRole="list"
+            accessibilityLabel={t('today')}
             data={rows}
             renderItem={renderItem}
             keyExtractor={keyExtractor}
-            contentContainerStyle={{
-              paddingHorizontal: tokens.spacing.lg,
-              paddingBottom: tokens.spacing['3xl'],
-            }}
+            contentContainerStyle={listContentStyle}
+            contentInsetAdjustmentBehavior="automatic"
             ItemSeparatorComponent={OccurrenceSeparator}
           />
         )}
