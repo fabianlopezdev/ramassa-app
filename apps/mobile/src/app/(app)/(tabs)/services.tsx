@@ -10,6 +10,7 @@ import { PressableScale } from '@/components/motion/pressable-scale';
 import { ServiceCard } from '@/components/services/service-card';
 import { ServiceCategoryGrid } from '@/components/services/service-category-grid';
 import { ServiceFilterPanel } from '@/components/services/service-filter-panel';
+import { continuousCorners } from '@/lib/continuous-corners';
 import { isNetworkStateOnline } from '@/lib/network-status';
 import {
   usePlayerServiceCategories,
@@ -294,6 +295,7 @@ export default function ServicesScreen() {
             }
             onPress={toggleFilters}
             haptic="tapLight"
+            style={continuousCorners}
             className="min-h-recommended items-center justify-center rounded-md border border-primary px-lg"
           >
             <Text className={`text-md font-bold text-primary-dark ${languageFontClass}`}>

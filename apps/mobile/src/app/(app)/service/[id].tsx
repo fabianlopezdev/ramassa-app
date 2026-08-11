@@ -27,7 +27,7 @@ import { useNetworkState } from 'expo-network';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@ramassa/shared/auth';
 import { toAppError, type AppErrorCode } from '@ramassa/shared/errors';
@@ -42,14 +42,20 @@ import { tokens } from '@ramassa/shared/tokens';
 
 const styles = StyleSheet.create({
   images: { height: tokens.spacing['3xl'] * 3 },
-  image: {
+  imageFrame: {
     width: tokens.contentWidth.form - tokens.spacing['3xl'] * 2,
     height: tokens.spacing['3xl'] * 3,
     borderRadius: tokens.radius.lg,
+    overflow: 'hidden',
+  },
+  image: {
+    width: tokens.contentWidth.form - tokens.spacing['3xl'] * 2,
+    height: tokens.spacing['3xl'] * 3,
   },
 });
 const imageKeyExtractor = (image: PlayerServiceImageRow) => image.id;
 const ImageSeparator = () => <View className="w-sm" />;
+const imageFrameStyle: StyleProp<ViewStyle> = [styles.imageFrame, continuousCorners];
 
 function ServiceImage({
   image,
@@ -66,7 +72,7 @@ function ServiceImage({
   });
   if (source === null) return null;
   return (
-    <View accessible accessibilityRole="image" accessibilityLabel={alt} style={styles.image}>
+    <View accessible accessibilityRole="image" accessibilityLabel={alt} style={imageFrameStyle}>
       <Image
         source={source}
         accessible={false}
@@ -149,7 +155,9 @@ export default function ServiceDetailScreen() {
           location: service?.location ?? null,
           externalUrl: service?.external_url ?? null,
         },
-        Platform.OS === 'android' || Platform.OS === 'ios' ? Platform.OS : 'web',
+        process.env.EXPO_OS === 'android' || process.env.EXPO_OS === 'ios'
+          ? process.env.EXPO_OS
+          : 'web',
       ),
     [service?.contact_email, service?.contact_phone, service?.external_url, service?.location],
   );
@@ -261,6 +269,7 @@ export default function ServiceDetailScreen() {
               <FlashList
                 horizontal
                 accessibilityRole="list"
+                accessibilityLabel={t('playerServices:images')}
                 data={service.images}
                 renderItem={renderImage}
                 keyExtractor={imageKeyExtractor}

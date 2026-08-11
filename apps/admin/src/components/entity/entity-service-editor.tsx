@@ -63,6 +63,7 @@ export function EntityServiceEditor({
   const [description, setDescription] = useState(service?.description?.ca ?? '');
   const [publishedAt, setPublishedAt] = useState(localDateTime(service?.published_at ?? null));
   const [expiresAt, setExpiresAt] = useState(localDateTime(service?.expires_at ?? null));
+  const [contactSuggestionsVisible, setContactSuggestionsVisible] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [formInvalid, setFormInvalid] = useState(false);
   const [errorCode, setErrorCode] = useState<AppErrorCode | null>(null);
@@ -85,6 +86,7 @@ export function EntityServiceEditor({
     },
   });
   const contactQuery = form.watch('contactName').trim();
+  const contactNameRegistration = form.register('contactName');
   const normalizedQuery = normalizedContactSearch(contactQuery);
   const contactMatches =
     contactQuery.length === 0
@@ -116,6 +118,7 @@ export function EntityServiceEditor({
     form.setValue('contactEmail', contact.email ?? '');
     form.setValue('contactRole', contact.role ?? '');
     if (contact.providerName !== null) form.setValue('providerName', contact.providerName);
+    setContactSuggestionsVisible(false);
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -184,16 +187,25 @@ export function EntityServiceEditor({
                   autoComplete="off"
                   role="combobox"
                   aria-autocomplete="list"
-                  aria-controls="entity-service-contact-listbox"
-                  aria-expanded={contactQuery.length > 0}
+                  aria-controls={
+                    contactSuggestionsVisible && contactQuery.length > 0
+                      ? 'entity-service-contact-listbox'
+                      : undefined
+                  }
+                  aria-expanded={contactSuggestionsVisible && contactQuery.length > 0}
                   data-testid="service-contact-name"
-                  {...form.register('contactName')}
+                  {...contactNameRegistration}
+                  onFocus={() => setContactSuggestionsVisible(true)}
+                  onChange={(event) => {
+                    void contactNameRegistration.onChange(event);
+                    setContactSuggestionsVisible(true);
+                  }}
                 />
               </label>
               <p className="text-xs text-muted-foreground">
                 {t('entity-services:contactReuseHelp')}
               </p>
-              {contactQuery.length > 0 ? (
+              {contactSuggestionsVisible && contactQuery.length > 0 ? (
                 <div
                   id="entity-service-contact-listbox"
                   role="listbox"
@@ -210,7 +222,7 @@ export function EntityServiceEditor({
                         key={`${contact.email ?? contact.phone ?? contact.name}-${index}`}
                         type="button"
                         role="option"
-                        className="rounded px-2 py-1 text-left text-sm hover:bg-muted"
+                        className="rounded px-2 py-1 text-start text-sm hover:bg-muted"
                         data-testid={`entity-service-contact-option-${index}`}
                         onClick={() => chooseContact(contact)}
                       >

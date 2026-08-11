@@ -182,6 +182,7 @@ test.describe.serial('entity service submission product flow', () => {
     await contactInput.fill('Нат');
     await page.getByTestId('entity-service-contact-option-0').click();
     await expect(contactInput).toHaveValue('Наталія Àlvarez');
+    await expect(page.getByTestId('entity-service-contact-results')).toHaveCount(0);
 
     const title = `<img src=x onerror=alert(1)> Servei Àgora ${RUN_TAG}`;
     const description = `Suport per a أمينة i Наталія ${RUN_TAG}`;

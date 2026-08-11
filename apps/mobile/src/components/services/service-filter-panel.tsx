@@ -1,4 +1,5 @@
 import { PressableScale } from '@/components/motion/pressable-scale';
+import { continuousCorners } from '@/lib/continuous-corners';
 import type { PlayerServiceFilterSelection } from '@/lib/player-services';
 import {
   availableServiceZones,
@@ -21,12 +22,14 @@ type FilterValue = string | number | boolean;
 const FilterChip = memo(function FilterChip({
   value,
   label,
+  groupLabel,
   selected,
   onToggle,
   languageFontClass,
 }: {
   readonly value: FilterValue;
   readonly label: string;
+  readonly groupLabel: string;
   readonly selected: boolean;
   readonly onToggle: (value: FilterValue) => void;
   readonly languageFontClass: string;
@@ -36,6 +39,7 @@ const FilterChip = memo(function FilterChip({
     <PressableScale
       accessibilityRole="checkbox"
       accessibilityLabel={label}
+      accessibilityHint={groupLabel}
       onPress={handlePress}
       haptic="selection"
       isSelected={selected}
@@ -70,7 +74,7 @@ function FilterGroup({
   const languageFontClass = useLanguageFontClass();
   if (options.length === 0) return null;
   return (
-    <View accessibilityRole="radiogroup" accessibilityLabel={label} className="gap-sm">
+    <View className="gap-sm">
       <Text className={`text-start text-md font-bold text-neutral-900 ${languageFontClass}`}>
         {label}
       </Text>
@@ -80,6 +84,7 @@ function FilterGroup({
             key={String(option)}
             value={option}
             label={optionLabel(option)}
+            groupLabel={label}
             selected={selected.includes(option)}
             onToggle={onToggle}
             languageFontClass={languageFontClass}
@@ -163,7 +168,10 @@ export function ServiceFilterPanel({
   );
 
   return (
-    <View className="gap-lg rounded-lg border border-neutral-200 bg-neutral-50 p-md">
+    <View
+      className="gap-lg rounded-lg border border-neutral-200 bg-neutral-50 p-md"
+      style={continuousCorners}
+    >
       <View className="flex-row items-center justify-between gap-md">
         <Text
           accessibilityRole="header"

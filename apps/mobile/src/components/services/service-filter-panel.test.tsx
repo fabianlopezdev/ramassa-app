@@ -5,13 +5,24 @@ import { createElement, type ReactNode } from 'react';
 mock.module('@/components/motion/pressable-scale', () => ({
   PressableScale: ({
     accessibilityLabel,
+    accessibilityHint,
     children,
     onPress,
   }: {
     readonly accessibilityLabel: string;
+    readonly accessibilityHint?: string;
     readonly children: ReactNode;
     readonly onPress: () => void;
-  }) => createElement('button', { 'aria-label': accessibilityLabel, onClick: onPress }, children),
+  }) =>
+    createElement(
+      'button',
+      {
+        'aria-label': accessibilityLabel,
+        'aria-description': accessibilityHint,
+        onClick: onPress,
+      },
+      children,
+    ),
 }));
 mock.module('@/lib/use-language-font-class', () => ({ useLanguageFontClass: () => '' }));
 mock.module('react-i18next', () => ({
@@ -20,6 +31,7 @@ mock.module('react-i18next', () => ({
   }),
 }));
 mock.module('react-native', () => ({
+  StyleSheet: { compose: (first: unknown, second: unknown) => [first, second] },
   Text: ({ children }: { readonly children: ReactNode }) => createElement('span', null, children),
   View: ({ children }: { readonly children: ReactNode }) => createElement('div', null, children),
 }));
@@ -66,6 +78,8 @@ test('a newly filterable category field renders without screen-specific code', (
   );
 
   expect(view.getByText('Delivery window')).toBeTruthy();
-  expect(view.getByRole('button', { name: 'morning' })).toBeTruthy();
+  expect(view.getByRole('button', { name: 'morning' }).getAttribute('aria-description')).toBe(
+    'Delivery window',
+  );
   expect(view.getByRole('button', { name: 'evening' })).toBeTruthy();
 });
