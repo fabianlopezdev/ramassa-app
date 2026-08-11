@@ -19,13 +19,13 @@ export const SUPPORTED_PUSH_LANGUAGES = Object.keys(
 ) as readonly PushCatalogLanguage[];
 
 export type PushLanguage = PushCatalogLanguage;
-export type PushContentType = 'announcement' | 'event';
+export type PushContentType = 'announcement' | 'event' | 'message';
 export type LocalizedPushText = Readonly<Partial<Record<PushLanguage, string>>>;
 
 export interface PushContent {
   readonly contentType: PushContentType;
   readonly contentId: string;
-  readonly title: LocalizedPushText;
+  readonly title: LocalizedPushText | null;
   readonly body: LocalizedPushText | null;
   readonly expiresAt: string | null;
 }
@@ -104,6 +104,17 @@ export function resolvePushText(
   content: PushContent,
   requestedLanguage: string,
 ): { readonly title: string; readonly body: string; readonly language: PushLanguage } {
+  const fallbackLanguage = isPushLanguage(requestedLanguage) ? requestedLanguage : 'ca';
+  const fallbackCatalog = PUSH_NOTIFICATION_FALLBACK_BODIES[fallbackLanguage];
+  if (content.contentType === 'message') {
+    return {
+      title: fallbackCatalog.messageTitle,
+      body: fallbackCatalog.messageBody,
+      language: fallbackLanguage,
+    };
+  }
+
+  if (content.title === null) throw new AppError('PUSH-3');
   const resolvedTitle = resolveLocalizedValue(content.title, requestedLanguage);
   if (resolvedTitle === null) {
     throw new AppError('PUSH-3');
@@ -111,8 +122,6 @@ export function resolvePushText(
 
   const resolvedBody =
     content.body === null ? null : resolveLocalizedValue(content.body, requestedLanguage);
-  const fallbackLanguage = isPushLanguage(requestedLanguage) ? requestedLanguage : 'ca';
-  const fallbackCatalog = PUSH_NOTIFICATION_FALLBACK_BODIES[fallbackLanguage];
   const fallbackBody =
     content.contentType === 'event'
       ? fallbackCatalog.eventFallbackBody

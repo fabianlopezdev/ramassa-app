@@ -1,3 +1,4 @@
+import { Badge } from '@/components/ui/badge';
 import {
   Sidebar,
   SidebarContent,
@@ -9,6 +10,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from '@/components/ui/sidebar';
+import { useUnreadMessageCount } from '@/lib/messaging';
 import { STAFF_NAV_ITEMS } from '@/lib/nav-items';
 import { Link, useLocation } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
@@ -30,6 +32,7 @@ export function sidebarSideForDirection(direction: LayoutDirection): 'left' | 'r
 export function StaffSidebar() {
   const { t, i18n } = useTranslation(['nav', 'common']);
   const pathname = useLocation({ select: (location) => location.pathname });
+  const unread = useUnreadMessageCount();
 
   return (
     <Sidebar collapsible="icon" side={sidebarSideForDirection(i18n.dir())}>
@@ -53,6 +56,14 @@ export function StaffSidebar() {
                       <Link to={item.to} aria-current={isActive ? 'page' : undefined}>
                         <Icon aria-hidden="true" />
                         <span>{label}</span>
+                        {item.to === '/messages' && unread > 0 ? (
+                          <Badge
+                            data-testid="staff-message-badge"
+                            aria-label={t('messaging:unread', { count: unread })}
+                          >
+                            {Math.min(unread, 99)}
+                          </Badge>
+                        ) : null}
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>

@@ -31,6 +31,8 @@
     "./announcements": "./announcements.ts",
     "./events": "./events.ts",
     "./attendance": "./attendance.ts",
+    "./messaging": "./messaging/messaging.ts",
+    "./messaging/outbox": "./messaging/outbox.ts",
     "./knowledge": "./knowledge.ts",
     "./story-submission": "./story-submission.ts",
     "./services": "./services/index.ts",

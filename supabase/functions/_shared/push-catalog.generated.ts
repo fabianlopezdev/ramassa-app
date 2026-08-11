@@ -5,23 +5,33 @@
 export const PUSH_NOTIFICATION_FALLBACK_BODIES = {
   "ca": {
     "announcementFallbackBody": "Toca per llegir l'avís.",
-    "eventFallbackBody": "Toca per veure l'activitat."
+    "eventFallbackBody": "Toca per veure l'activitat.",
+    "messageTitle": "Nou missatge de l’equip",
+    "messageBody": "Obre Ramassà per llegir-lo."
   },
   "es": {
     "announcementFallbackBody": "Toca para leer el aviso.",
-    "eventFallbackBody": "Toca para ver la actividad."
+    "eventFallbackBody": "Toca para ver la actividad.",
+    "messageTitle": "Nuevo mensaje del equipo",
+    "messageBody": "Abre Ramassà para leerlo."
   },
   "en": {
     "announcementFallbackBody": "Tap to read the notice.",
-    "eventFallbackBody": "Tap to view the activity."
+    "eventFallbackBody": "Tap to view the activity.",
+    "messageTitle": "New message from the team",
+    "messageBody": "Open Ramassà to read it."
   },
   "ar": {
     "announcementFallbackBody": "اضغطي لقراءة الإشعار.",
-    "eventFallbackBody": "اضغطي لعرض النشاط."
+    "eventFallbackBody": "اضغطي لعرض النشاط.",
+    "messageTitle": "رسالة جديدة من الفريق",
+    "messageBody": "افتحي Ramassà لقراءتها."
   },
   "fa": {
     "announcementFallbackBody": "برای خواندن اطلاعیه ضربه بزنید.",
-    "eventFallbackBody": "برای دیدن برنامه ضربه بزنید."
+    "eventFallbackBody": "برای دیدن برنامه ضربه بزنید.",
+    "messageTitle": "پیام جدید از تیم",
+    "messageBody": "Ramassà را باز کنید تا آن را بخوانید."
   }
 } as const;
 

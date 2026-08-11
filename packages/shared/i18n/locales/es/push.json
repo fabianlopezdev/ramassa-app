@@ -5,5 +5,7 @@
   "rationaleDecline": "Ahora no",
   "deniedNotice": "No recibirás avisos. Puedes activarlos cuando quieras desde la configuración del teléfono.",
   "eventFallbackBody": "Toca para ver la actividad.",
-  "announcementFallbackBody": "Toca para leer el aviso."
+  "announcementFallbackBody": "Toca para leer el aviso.",
+  "messageTitle": "Nuevo mensaje del equipo",
+  "messageBody": "Abre Ramassà para leerlo."
 }

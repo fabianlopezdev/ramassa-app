@@ -45,7 +45,7 @@ interface PushDeliveryClaim {
   readonly language: string;
   readonly content_type: PushContentType;
   readonly content_id: string;
-  readonly title: LocalizedPushText;
+  readonly title: LocalizedPushText | null;
   readonly body: LocalizedPushText | null;
   readonly expires_at: string | null;
   readonly attempt_count: number;
@@ -185,9 +185,13 @@ function parseDeliveryClaims(value: unknown): readonly PushDeliveryClaim[] {
       typeof row.recipient_id !== 'string' ||
       typeof row.token !== 'string' ||
       typeof row.language !== 'string' ||
-      (row.content_type !== 'announcement' && row.content_type !== 'event') ||
+      (row.content_type !== 'announcement' &&
+        row.content_type !== 'event' &&
+        row.content_type !== 'message') ||
       typeof row.content_id !== 'string' ||
-      objectRecord(row.title) === null ||
+      (row.content_type === 'message'
+        ? row.title !== null || row.body !== null
+        : objectRecord(row.title) === null) ||
       (row.body !== null && objectRecord(row.body) === null) ||
       (row.expires_at !== null && typeof row.expires_at !== 'string') ||
       typeof row.attempt_count !== 'number'

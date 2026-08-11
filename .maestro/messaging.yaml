@@ -1,0 +1,330 @@
+appId: com.ramassa.app
+name: messaging
+env:
+  RAPP47_DEV_CLIENT_URL: ramassa://expo-development-client/?url=http%3A%2F%2Flocalhost%3A18047
+  DEV_MENU_LABEL: Developer menu
+  PLAYER_EMAIL: amina.alhassan@example.test
+  PLAYER_PASSWORD: ramassa-dev-password
+  LOGIN_TITLE: Inici de sessió
+  BACK: Enrere
+  PUSH_DECLINE: Ara no
+  TAB_HOME: Inici
+  TAB_MESSAGES: Missatges
+  TAB_PROFILE: Perfil
+  CHAT_TITLE: Xat amb l’equip
+  COMPOSER: Escriu un missatge
+  OFFLINE: Sense connexió. Els missatges quedaran en cua.
+---
+- clearState
+- openLink: ${RAPP47_DEV_CLIENT_URL}
+- tapOn:
+    text: '^Open$'
+    optional: true
+- extendedWaitUntil:
+    visible: '.*${DEV_MENU_LABEL}.*'
+    timeout: 240000
+- waitForAnimationToEnd:
+    timeout: 12000
+- repeat:
+    times: 4
+    while:
+      visible: '.*Close.*'
+    commands:
+      - tapOn: '.*Close.*'
+      - waitForAnimationToEnd:
+          timeout: 3000
+- runFlow:
+    file: _set-language.yaml
+    env:
+      LOCALE: ca
+- tapOn: '^Inicia la sessió amb contrasenya$'
+- tapOn: '^tu@exemple.com$'
+- inputText: ${PLAYER_EMAIL}
+- tapOn: '^La teva contrasenya$'
+- inputText: ${PLAYER_PASSWORD}
+- tapOn: '.*${LOGIN_TITLE}.*'
+- tapOn: '^Entra$'
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - repeat:
+          times: 12
+          while:
+            notVisible: '^${TAB_HOME}$'
+          commands:
+            - tapOn:
+                text: '^Not Now$'
+                optional: true
+            - tapOn:
+                text: '^${PUSH_DECLINE}$'
+                optional: true
+            - waitForAnimationToEnd:
+                timeout: 3000
+      - extendedWaitUntil:
+          visible: '^${TAB_HOME}$'
+          timeout: 60000
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - repeat:
+          times: 12
+          while:
+            notVisible:
+              id: player-tab-home
+          commands:
+            - tapOn:
+                text: '^Not Now$'
+                optional: true
+            - tapOn:
+                text: '^${PUSH_DECLINE}$'
+                optional: true
+            - waitForAnimationToEnd:
+                timeout: 3000
+      - extendedWaitUntil:
+          visible:
+            id: player-tab-home
+          timeout: 60000
+- stopApp
+- openLink: ${RAPP47_DEV_CLIENT_URL}
+- tapOn:
+    text: '^Open$'
+    optional: true
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - repeat:
+          times: 12
+          while:
+            notVisible: '^${TAB_HOME}$'
+          commands:
+            - tapOn:
+                text: '^Not Now$'
+                optional: true
+            - tapOn:
+                text: '.*Close.*'
+                optional: true
+            - tapOn:
+                text: '^${PUSH_DECLINE}$'
+                optional: true
+            - waitForAnimationToEnd:
+                timeout: 3000
+      - extendedWaitUntil:
+          visible: '^${TAB_HOME}$'
+          timeout: 240000
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - repeat:
+          times: 12
+          while:
+            notVisible:
+              id: player-tab-home
+          commands:
+            - tapOn:
+                text: '^Not Now$'
+                optional: true
+            - tapOn:
+                text: '.*Close.*'
+                optional: true
+            - tapOn:
+                text: '^${PUSH_DECLINE}$'
+                optional: true
+            - waitForAnimationToEnd:
+                timeout: 3000
+      - extendedWaitUntil:
+          visible:
+            id: player-tab-home
+          timeout: 240000
+
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - tapOn: '^${TAB_MESSAGES}$'
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          id: player-tab-messages
+- extendedWaitUntil:
+    visible:
+      id: message-composer
+    timeout: 30000
+- assertVisible:
+    id: message-composer
+
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - toggleAirplaneMode
+      - extendedWaitUntil:
+          visible: '.*${OFFLINE}.*'
+          timeout: 30000
+      - tapOn:
+          id: message-composer
+      - inputText: rapp47-offline-queued-send
+      - hideKeyboard
+      - waitForAnimationToEnd:
+          timeout: 1000
+      - tapOn:
+          id: message-send
+      - assertVisible:
+          id: message-sync-sending
+      - stopApp
+      - toggleAirplaneMode
+      - openLink: ${RAPP47_DEV_CLIENT_URL}
+      - waitForAnimationToEnd:
+          timeout: 12000
+      - repeat:
+          times: 12
+          while:
+            notVisible: '^${TAB_MESSAGES}$'
+          commands:
+            - tapOn:
+                text: '.*Close.*'
+                optional: true
+            - tapOn:
+                text: '^${PUSH_DECLINE}$'
+                optional: true
+            - waitForAnimationToEnd:
+                timeout: 3000
+      - tapOn: '^${TAB_MESSAGES}$'
+      - extendedWaitUntil:
+          visible:
+            id: message-composer
+          timeout: 60000
+      - extendedWaitUntil:
+          notVisible:
+            id: message-sync-sending
+          timeout: 30000
+      - assertNotVisible:
+          id: message-sync-retrying
+
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - tapOn: '^${TAB_PROFILE}$'
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          id: player-tab-profile
+- repeat:
+    times: 12
+    while:
+      notVisible:
+        id: profile-language-ar
+    commands:
+      - swipe:
+          start: 50%, 70%
+          end: 50%, 35%
+          duration: 700
+- tapOn:
+    id: profile-language-ar
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - repeat:
+          times: 12
+          while:
+            notVisible: '^أعِد التشغيل الآن$'
+          commands:
+            - swipe:
+                start: 50%, 70%
+                end: 50%, 35%
+                duration: 900
+            - waitForAnimationToEnd:
+                timeout: 1200
+      - extendedWaitUntil:
+          visible: '^أعِد التشغيل الآن$'
+          timeout: 30000
+      - tapOn: '^أعِد التشغيل الآن$'
+      - waitForAnimationToEnd:
+          timeout: 12000
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - waitForAnimationToEnd:
+          timeout: 2500
+- stopApp
+- openLink: ${RAPP47_DEV_CLIENT_URL}
+- tapOn:
+    text: '^Open$'
+    optional: true
+- waitForAnimationToEnd:
+    timeout: 12000
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - repeat:
+          times: 12
+          while:
+            notVisible: '^الرئيسية$'
+          commands:
+            - tapOn:
+                text: '^Continue$'
+                optional: true
+            - tapOn:
+                text: '.*Close.*'
+                optional: true
+            - tapOn:
+                text: '^ليس الآن$'
+                optional: true
+            - waitForAnimationToEnd:
+                timeout: 3000
+      - extendedWaitUntil:
+          visible: '^الرئيسية$'
+          timeout: 240000
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - repeat:
+          times: 12
+          while:
+            notVisible:
+              id: player-tab-home
+          commands:
+            - tapOn:
+                text: '^Continue$'
+                optional: true
+            - tapOn:
+                text: '.*Close.*'
+                optional: true
+            - tapOn:
+                text: '^ليس الآن$'
+                optional: true
+            - waitForAnimationToEnd:
+                timeout: 3000
+      - extendedWaitUntil:
+          visible:
+            id: player-tab-home
+          timeout: 240000
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - tapOn: '^الرسائل$'
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          id: player-tab-messages
+- extendedWaitUntil:
+    visible:
+      id: message-composer
+    timeout: 60000
+- assertVisible:
+    id: message-composer

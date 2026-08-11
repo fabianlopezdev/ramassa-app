@@ -1,0 +1,18 @@
+{
+  "playerTitle": "Xat amb l’equip",
+  "entityTitle": "Xat general amb l’equip",
+  "staffTitle": "Conversa directa",
+  "staffIntro": "Obre una conversa directa des de l’enllaç segur del participant o de l’entitat.",
+  "emptyTitle": "Encara no hi ha missatges",
+  "emptyBody": "Escriu a l’equip quan necessitis ajuda.",
+  "composerPlaceholder": "Escriu un missatge",
+  "send": "Envia",
+  "sending": "Enviant",
+  "retrying": "Es tornarà a enviar",
+  "delivered": "Enviat",
+  "loadError": "No hem pogut carregar la conversa.",
+  "retry": "Torna-ho a provar",
+  "offline": "Sense connexió. Els missatges quedaran en cua.",
+  "unread": "{{count}} missatges sense llegir",
+  "conversationWith": "Conversa amb {{name}}"
+}

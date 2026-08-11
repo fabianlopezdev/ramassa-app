@@ -5,5 +5,7 @@
   "rationaleDecline": "Not now",
   "deniedNotice": "You will not get alerts. You can turn them on any time in your phone settings.",
   "eventFallbackBody": "Tap to view the activity.",
-  "announcementFallbackBody": "Tap to read the notice."
+  "announcementFallbackBody": "Tap to read the notice.",
+  "messageTitle": "New message from the team",
+  "messageBody": "Open Ramassà to read it."
 }

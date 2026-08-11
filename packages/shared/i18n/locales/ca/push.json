@@ -5,5 +5,7 @@
   "rationaleDecline": "Ara no",
   "deniedNotice": "No rebràs avisos. Pots activar-los quan vulguis des de la configuració del telèfon.",
   "eventFallbackBody": "Toca per veure l'activitat.",
-  "announcementFallbackBody": "Toca per llegir l'avís."
+  "announcementFallbackBody": "Toca per llegir l'avís.",
+  "messageTitle": "Nou missatge de l’equip",
+  "messageBody": "Obre Ramassà per llegir-lo."
 }

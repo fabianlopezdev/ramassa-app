@@ -57,6 +57,21 @@ describe('Expo push batching', () => {
 });
 
 describe('recipient language selection', () => {
+  test('message notifications use fixed localized copy and ignore message text', () => {
+    const message: PushContent = {
+      contentType: 'message',
+      contentId: '30000000-0000-4000-8000-000000000001',
+      title: { ca: 'private-message-title' },
+      body: { ca: 'private-message-body' },
+      expiresAt: null,
+    };
+
+    const resolved = buildExpoMessage('ExponentPushToken[test]', message, 'ca');
+    expect(resolved.title).toBe('Nou missatge de l’equip');
+    expect(resolved.body).toBe('Obre Ramassà per llegir-lo.');
+    expect(JSON.stringify(resolved)).not.toContain('private-message');
+  });
+
   test.each([
     ['ar', 'تم إلغاء التدريب', 'لا يوجد تدريب اليوم.'],
     ['fa', 'تمرین لغو شد', 'امروز تمرین نداریم.'],

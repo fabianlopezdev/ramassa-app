@@ -20,6 +20,7 @@ import { Route as StaffDashboardRouteImport } from './routes/_staff.dashboard'
 import { Route as StaffContentRouteImport } from './routes/_staff.content'
 import { Route as StaffAttendanceRouteImport } from './routes/_staff.attendance'
 import { Route as StaffParticipantsIndexRouteImport } from './routes/_staff.participants.index'
+import { Route as StaffMessagesIndexRouteImport } from './routes/_staff.messages.index'
 import { Route as StaffContentIndexRouteImport } from './routes/_staff.content.index'
 import { Route as StaffAttendanceIndexRouteImport } from './routes/_staff.attendance.index'
 import { Route as EntityPortalIndexRouteImport } from './routes/_entity.portal.index'
@@ -27,6 +28,7 @@ import { Route as StaffParticipantsNewRouteImport } from './routes/_staff.partic
 import { Route as StaffParticipantsInvitesRouteImport } from './routes/_staff.participants.invites'
 import { Route as StaffParticipantsDeletionRequestsRouteImport } from './routes/_staff.participants.deletion-requests'
 import { Route as StaffParticipantsParticipantIdRouteImport } from './routes/_staff.participants.$participantId'
+import { Route as StaffMessagesConversationIdRouteImport } from './routes/_staff.messages.$conversationId'
 import { Route as StaffAttendanceOccurrenceIdRouteImport } from './routes/_staff.attendance.$occurrenceId'
 import { Route as EntityPortalServicesRouteImport } from './routes/_entity.portal.services'
 import { Route as EntityPortalReferralsRouteImport } from './routes/_entity.portal.referrals'
@@ -105,6 +107,11 @@ const StaffParticipantsIndexRoute = StaffParticipantsIndexRouteImport.update({
   path: '/participants/',
   getParentRoute: () => StaffRoute,
 } as any)
+const StaffMessagesIndexRoute = StaffMessagesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => StaffMessagesRoute,
+} as any)
 const StaffContentIndexRoute = StaffContentIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -142,6 +149,12 @@ const StaffParticipantsParticipantIdRoute =
     id: '/participants/$participantId',
     path: '/participants/$participantId',
     getParentRoute: () => StaffRoute,
+  } as any)
+const StaffMessagesConversationIdRoute =
+  StaffMessagesConversationIdRouteImport.update({
+    id: '/$conversationId',
+    path: '/$conversationId',
+    getParentRoute: () => StaffMessagesRoute,
   } as any)
 const StaffAttendanceOccurrenceIdRoute =
   StaffAttendanceOccurrenceIdRouteImport.update({
@@ -286,7 +299,7 @@ export interface FileRoutesByFullPath {
   '/attendance': typeof StaffAttendanceRouteWithChildren
   '/content': typeof StaffContentRouteWithChildren
   '/dashboard': typeof StaffDashboardRoute
-  '/messages': typeof StaffMessagesRoute
+  '/messages': typeof StaffMessagesRouteWithChildren
   '/settings': typeof StaffSettingsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/portal/events': typeof EntityPortalEventsRoute
@@ -294,6 +307,7 @@ export interface FileRoutesByFullPath {
   '/portal/referrals': typeof EntityPortalReferralsRoute
   '/portal/services': typeof EntityPortalServicesRouteWithChildren
   '/attendance/$occurrenceId': typeof StaffAttendanceOccurrenceIdRoute
+  '/messages/$conversationId': typeof StaffMessagesConversationIdRoute
   '/participants/$participantId': typeof StaffParticipantsParticipantIdRoute
   '/participants/deletion-requests': typeof StaffParticipantsDeletionRequestsRoute
   '/participants/invites': typeof StaffParticipantsInvitesRoute
@@ -301,6 +315,7 @@ export interface FileRoutesByFullPath {
   '/portal/': typeof EntityPortalIndexRoute
   '/attendance/': typeof StaffAttendanceIndexRoute
   '/content/': typeof StaffContentIndexRoute
+  '/messages/': typeof StaffMessagesIndexRoute
   '/participants/': typeof StaffParticipantsIndexRoute
   '/portal/services/$serviceId': typeof EntityPortalServicesServiceIdRoute
   '/portal/services/new': typeof EntityPortalServicesNewRoute
@@ -326,13 +341,13 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/dashboard': typeof StaffDashboardRoute
-  '/messages': typeof StaffMessagesRoute
   '/settings': typeof StaffSettingsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/portal/events': typeof EntityPortalEventsRoute
   '/portal/messages': typeof EntityPortalMessagesRoute
   '/portal/referrals': typeof EntityPortalReferralsRoute
   '/attendance/$occurrenceId': typeof StaffAttendanceOccurrenceIdRoute
+  '/messages/$conversationId': typeof StaffMessagesConversationIdRoute
   '/participants/$participantId': typeof StaffParticipantsParticipantIdRoute
   '/participants/deletion-requests': typeof StaffParticipantsDeletionRequestsRoute
   '/participants/invites': typeof StaffParticipantsInvitesRoute
@@ -340,6 +355,7 @@ export interface FileRoutesByTo {
   '/portal': typeof EntityPortalIndexRoute
   '/attendance': typeof StaffAttendanceIndexRoute
   '/content': typeof StaffContentIndexRoute
+  '/messages': typeof StaffMessagesIndexRoute
   '/participants': typeof StaffParticipantsIndexRoute
   '/portal/services/$serviceId': typeof EntityPortalServicesServiceIdRoute
   '/portal/services/new': typeof EntityPortalServicesNewRoute
@@ -370,7 +386,7 @@ export interface FileRoutesById {
   '/_staff/attendance': typeof StaffAttendanceRouteWithChildren
   '/_staff/content': typeof StaffContentRouteWithChildren
   '/_staff/dashboard': typeof StaffDashboardRoute
-  '/_staff/messages': typeof StaffMessagesRoute
+  '/_staff/messages': typeof StaffMessagesRouteWithChildren
   '/_staff/settings': typeof StaffSettingsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/_entity/portal/events': typeof EntityPortalEventsRoute
@@ -378,6 +394,7 @@ export interface FileRoutesById {
   '/_entity/portal/referrals': typeof EntityPortalReferralsRoute
   '/_entity/portal/services': typeof EntityPortalServicesRouteWithChildren
   '/_staff/attendance/$occurrenceId': typeof StaffAttendanceOccurrenceIdRoute
+  '/_staff/messages/$conversationId': typeof StaffMessagesConversationIdRoute
   '/_staff/participants/$participantId': typeof StaffParticipantsParticipantIdRoute
   '/_staff/participants/deletion-requests': typeof StaffParticipantsDeletionRequestsRoute
   '/_staff/participants/invites': typeof StaffParticipantsInvitesRoute
@@ -385,6 +402,7 @@ export interface FileRoutesById {
   '/_entity/portal/': typeof EntityPortalIndexRoute
   '/_staff/attendance/': typeof StaffAttendanceIndexRoute
   '/_staff/content/': typeof StaffContentIndexRoute
+  '/_staff/messages/': typeof StaffMessagesIndexRoute
   '/_staff/participants/': typeof StaffParticipantsIndexRoute
   '/_entity/portal/services/$serviceId': typeof EntityPortalServicesServiceIdRoute
   '/_entity/portal/services/new': typeof EntityPortalServicesNewRoute
@@ -422,6 +440,7 @@ export interface FileRouteTypes {
     | '/portal/referrals'
     | '/portal/services'
     | '/attendance/$occurrenceId'
+    | '/messages/$conversationId'
     | '/participants/$participantId'
     | '/participants/deletion-requests'
     | '/participants/invites'
@@ -429,6 +448,7 @@ export interface FileRouteTypes {
     | '/portal/'
     | '/attendance/'
     | '/content/'
+    | '/messages/'
     | '/participants/'
     | '/portal/services/$serviceId'
     | '/portal/services/new'
@@ -454,13 +474,13 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/dashboard'
-    | '/messages'
     | '/settings'
     | '/auth/callback'
     | '/portal/events'
     | '/portal/messages'
     | '/portal/referrals'
     | '/attendance/$occurrenceId'
+    | '/messages/$conversationId'
     | '/participants/$participantId'
     | '/participants/deletion-requests'
     | '/participants/invites'
@@ -468,6 +488,7 @@ export interface FileRouteTypes {
     | '/portal'
     | '/attendance'
     | '/content'
+    | '/messages'
     | '/participants'
     | '/portal/services/$serviceId'
     | '/portal/services/new'
@@ -505,6 +526,7 @@ export interface FileRouteTypes {
     | '/_entity/portal/referrals'
     | '/_entity/portal/services'
     | '/_staff/attendance/$occurrenceId'
+    | '/_staff/messages/$conversationId'
     | '/_staff/participants/$participantId'
     | '/_staff/participants/deletion-requests'
     | '/_staff/participants/invites'
@@ -512,6 +534,7 @@ export interface FileRouteTypes {
     | '/_entity/portal/'
     | '/_staff/attendance/'
     | '/_staff/content/'
+    | '/_staff/messages/'
     | '/_staff/participants/'
     | '/_entity/portal/services/$serviceId'
     | '/_entity/portal/services/new'
@@ -621,6 +644,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StaffParticipantsIndexRouteImport
       parentRoute: typeof StaffRoute
     }
+    '/_staff/messages/': {
+      id: '/_staff/messages/'
+      path: '/'
+      fullPath: '/messages/'
+      preLoaderRoute: typeof StaffMessagesIndexRouteImport
+      parentRoute: typeof StaffMessagesRoute
+    }
     '/_staff/content/': {
       id: '/_staff/content/'
       path: '/'
@@ -669,6 +699,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/participants/$participantId'
       preLoaderRoute: typeof StaffParticipantsParticipantIdRouteImport
       parentRoute: typeof StaffRoute
+    }
+    '/_staff/messages/$conversationId': {
+      id: '/_staff/messages/$conversationId'
+      path: '/$conversationId'
+      fullPath: '/messages/$conversationId'
+      preLoaderRoute: typeof StaffMessagesConversationIdRouteImport
+      parentRoute: typeof StaffMessagesRoute
     }
     '/_staff/attendance/$occurrenceId': {
       id: '/_staff/attendance/$occurrenceId'
@@ -935,11 +972,25 @@ const StaffContentRouteWithChildren = StaffContentRoute._addFileChildren(
   StaffContentRouteChildren,
 )
 
+interface StaffMessagesRouteChildren {
+  StaffMessagesConversationIdRoute: typeof StaffMessagesConversationIdRoute
+  StaffMessagesIndexRoute: typeof StaffMessagesIndexRoute
+}
+
+const StaffMessagesRouteChildren: StaffMessagesRouteChildren = {
+  StaffMessagesConversationIdRoute: StaffMessagesConversationIdRoute,
+  StaffMessagesIndexRoute: StaffMessagesIndexRoute,
+}
+
+const StaffMessagesRouteWithChildren = StaffMessagesRoute._addFileChildren(
+  StaffMessagesRouteChildren,
+)
+
 interface StaffRouteChildren {
   StaffAttendanceRoute: typeof StaffAttendanceRouteWithChildren
   StaffContentRoute: typeof StaffContentRouteWithChildren
   StaffDashboardRoute: typeof StaffDashboardRoute
-  StaffMessagesRoute: typeof StaffMessagesRoute
+  StaffMessagesRoute: typeof StaffMessagesRouteWithChildren
   StaffSettingsRoute: typeof StaffSettingsRoute
   StaffParticipantsParticipantIdRoute: typeof StaffParticipantsParticipantIdRoute
   StaffParticipantsDeletionRequestsRoute: typeof StaffParticipantsDeletionRequestsRoute
@@ -952,7 +1003,7 @@ const StaffRouteChildren: StaffRouteChildren = {
   StaffAttendanceRoute: StaffAttendanceRouteWithChildren,
   StaffContentRoute: StaffContentRouteWithChildren,
   StaffDashboardRoute: StaffDashboardRoute,
-  StaffMessagesRoute: StaffMessagesRoute,
+  StaffMessagesRoute: StaffMessagesRouteWithChildren,
   StaffSettingsRoute: StaffSettingsRoute,
   StaffParticipantsParticipantIdRoute: StaffParticipantsParticipantIdRoute,
   StaffParticipantsDeletionRequestsRoute:

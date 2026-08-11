@@ -1,3 +1,5 @@
+import { Badge } from '@/components/ui/badge';
+import { useUnreadMessageCount } from '@/lib/messaging';
 import { ENTITY_NAV_ITEMS } from '@/lib/nav-items';
 import { cn } from '@/lib/utils';
 import { Link, useLocation } from '@tanstack/react-router';
@@ -18,6 +20,7 @@ import { useTranslation } from 'react-i18next';
 export function EntityNav() {
   const { t } = useTranslation(['nav', 'common']);
   const pathname = useLocation({ select: (location) => location.pathname });
+  const unread = useUnreadMessageCount();
 
   return (
     <header className="border-b border-border bg-background">
@@ -46,6 +49,14 @@ export function EntityNav() {
                   >
                     <Icon className="size-4" aria-hidden="true" />
                     <span>{label}</span>
+                    {item.to === '/portal/messages' && unread > 0 ? (
+                      <Badge
+                        data-testid="entity-message-badge"
+                        aria-label={t('messaging:unread', { count: unread })}
+                      >
+                        {Math.min(unread, 99)}
+                      </Badge>
+                    ) : null}
                   </Link>
                 </li>
               );

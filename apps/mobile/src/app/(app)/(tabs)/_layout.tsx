@@ -1,3 +1,4 @@
+import { useUnreadMessages } from '@/lib/messaging';
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
 import { useTranslation } from 'react-i18next';
 
@@ -25,6 +26,7 @@ import { useTranslation } from 'react-i18next';
  */
 export default function TabsLayout() {
   const { t } = useTranslation('nav');
+  const unread = useUnreadMessages().data ?? 0;
   return (
     <NativeTabs labelVisibilityMode="labeled">
       <NativeTabs.Trigger name="index" testID="player-tab-home">
@@ -35,15 +37,18 @@ export default function TabsLayout() {
         <NativeTabs.Trigger.Icon sf="calendar" md="calendar_month" />
         <NativeTabs.Trigger.Label>{t('nav:tabs.events')}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="community">
-        <NativeTabs.Trigger.Icon sf="person.2.fill" md="groups" />
-        <NativeTabs.Trigger.Label>{t('nav:tabs.community')}</NativeTabs.Trigger.Label>
+      <NativeTabs.Trigger name="community" testID="player-tab-messages">
+        <NativeTabs.Trigger.Icon sf="bubble.left.and.bubble.right.fill" md="chat" />
+        <NativeTabs.Trigger.Label>{t('nav:tabs.messages')}</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Badge hidden={unread === 0}>
+          {String(Math.min(unread, 99))}
+        </NativeTabs.Trigger.Badge>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="services">
         <NativeTabs.Trigger.Icon sf="square.grid.2x2.fill" md="category" />
         <NativeTabs.Trigger.Label>{t('nav:tabs.services')}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="profile">
+      <NativeTabs.Trigger name="profile" testID="player-tab-profile">
         <NativeTabs.Trigger.Icon sf="person.crop.circle.fill" md="person" />
         <NativeTabs.Trigger.Label>{t('nav:tabs.profile')}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>

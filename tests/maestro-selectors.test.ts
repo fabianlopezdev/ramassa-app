@@ -25,6 +25,7 @@ const auditedSpecs = [
   '.maestro/events-signup.yaml',
   '.maestro/feed-browse.yaml',
   '.maestro/knowledge-story.yaml',
+  '.maestro/messaging.yaml',
   '.maestro/offline-feed.yaml',
   '.maestro/smoke-auth.yaml',
   '.maestro/smoke-i18n.yaml',

@@ -13,6 +13,8 @@ export function renderPushEdgeCatalog(): string {
       {
         announcementFallbackBody: catalog.announcementFallbackBody,
         eventFallbackBody: catalog.eventFallbackBody,
+        messageTitle: catalog.messageTitle,
+        messageBody: catalog.messageBody,
       },
     ]),
   );

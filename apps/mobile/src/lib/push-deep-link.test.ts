@@ -24,6 +24,16 @@ describe('push detail routes', () => {
     ).toBe('/event/20000000-0000-4000-8000-000000000001');
   });
 
+  test('message taps open the single team chat and refresh its unread state', () => {
+    expect(
+      resolvePushDetailRoute({
+        contentType: 'message',
+        contentId: '30000000-0000-4000-8000-000000000001',
+      }),
+    ).toBe('/community');
+    expect(pushDetailQueryRoot('message')).toBe('messaging');
+  });
+
   test('refreshes the content collection before opening a newly published detail', () => {
     expect(pushDetailQueryRoot('announcement')).toBe('player-announcements');
     expect(pushDetailQueryRoot('event')).toBe('player-events');

@@ -5,5 +5,7 @@
   "rationaleDecline": "الان نه",
   "deniedNotice": "اعلانی دریافت نمی‌کنید. هر وقت خواستید می‌توانید از تنظیمات گوشی فعالش کنید.",
   "eventFallbackBody": "برای دیدن برنامه ضربه بزنید.",
-  "announcementFallbackBody": "برای خواندن اطلاعیه ضربه بزنید."
+  "announcementFallbackBody": "برای خواندن اطلاعیه ضربه بزنید.",
+  "messageTitle": "پیام جدید از تیم",
+  "messageBody": "Ramassà را باز کنید تا آن را بخوانید."
 }

@@ -5,5 +5,7 @@
   "rationaleDecline": "ليس الآن",
   "deniedNotice": "لن تصلك تنبيهات. يمكنك تفعيلها في أي وقت من إعدادات هاتفك.",
   "eventFallbackBody": "اضغطي لعرض النشاط.",
-  "announcementFallbackBody": "اضغطي لقراءة الإشعار."
+  "announcementFallbackBody": "اضغطي لقراءة الإشعار.",
+  "messageTitle": "رسالة جديدة من الفريق",
+  "messageBody": "افتحي Ramassà لقراءتها."
 }

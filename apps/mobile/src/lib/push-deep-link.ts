@@ -7,11 +7,12 @@ interface PushDetailData {
   readonly contentId?: unknown;
 }
 
-export type PushDetailQueryRoot = 'player-announcements' | 'player-events';
+export type PushDetailQueryRoot = 'player-announcements' | 'player-events' | 'messaging';
 
 export function pushDetailQueryRoot(contentType: unknown): PushDetailQueryRoot | null {
   if (contentType === 'announcement') return 'player-announcements';
   if (contentType === 'event') return 'player-events';
+  if (contentType === 'message') return 'messaging';
   return null;
 }
 
@@ -22,6 +23,7 @@ export function resolvePushDetailRoute(data: unknown): Href | null {
   if (typeof contentId !== 'string' || !uuidPattern.test(contentId)) return null;
   if (contentType === 'announcement') return `/announcement/${contentId}` as Href;
   if (contentType === 'event') return `/event/${contentId}` as Href;
+  if (contentType === 'message') return '/community' as Href;
   return null;
 }
 

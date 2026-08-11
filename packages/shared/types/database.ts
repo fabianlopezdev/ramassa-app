@@ -204,6 +204,105 @@ export type Database = {
           },
         ];
       };
+      conversation_read_states: {
+        Row: {
+          conversation_id: string;
+          last_read_message_id: string | null;
+          org_id: string;
+          read_at: string;
+          user_id: string;
+        };
+        Insert: {
+          conversation_id: string;
+          last_read_message_id?: string | null;
+          org_id: string;
+          read_at?: string;
+          user_id: string;
+        };
+        Update: {
+          conversation_id?: string;
+          last_read_message_id?: string | null;
+          org_id?: string;
+          read_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'conversation_read_states_conversation_tenant_fkey';
+            columns: ['org_id', 'conversation_id'];
+            isOneToOne: false;
+            referencedRelation: 'conversations';
+            referencedColumns: ['org_id', 'id'];
+          },
+          {
+            foreignKeyName: 'conversation_read_states_message_fkey';
+            columns: ['last_read_message_id'];
+            isOneToOne: false;
+            referencedRelation: 'messages';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'conversation_read_states_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'conversation_read_states_user_tenant_fkey';
+            columns: ['org_id', 'user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['org_id', 'id'];
+          },
+        ];
+      };
+      conversations: {
+        Row: {
+          assigned_staff_id: string | null;
+          created_at: string;
+          id: string;
+          org_id: string;
+          user_id: string;
+        };
+        Insert: {
+          assigned_staff_id?: string | null;
+          created_at?: string;
+          id?: string;
+          org_id: string;
+          user_id: string;
+        };
+        Update: {
+          assigned_staff_id?: string | null;
+          created_at?: string;
+          id?: string;
+          org_id?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'conversations_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'conversations_staff_tenant_fkey';
+            columns: ['org_id', 'assigned_staff_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['org_id', 'id'];
+          },
+          {
+            foreignKeyName: 'conversations_user_tenant_fkey';
+            columns: ['org_id', 'user_id'];
+            isOneToOne: true;
+            referencedRelation: 'profiles';
+            referencedColumns: ['org_id', 'id'];
+          },
+        ];
+      };
       deletion_requests: {
         Row: {
           created_at: string;
@@ -744,6 +843,58 @@ export type Database = {
           },
         ];
       };
+      messages: {
+        Row: {
+          content: string | null;
+          conversation_id: string;
+          created_at: string;
+          id: string;
+          image_url: string | null;
+          org_id: string;
+          sender_id: string;
+        };
+        Insert: {
+          content?: string | null;
+          conversation_id: string;
+          created_at?: string;
+          id: string;
+          image_url?: string | null;
+          org_id: string;
+          sender_id: string;
+        };
+        Update: {
+          content?: string | null;
+          conversation_id?: string;
+          created_at?: string;
+          id?: string;
+          image_url?: string | null;
+          org_id?: string;
+          sender_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'messages_conversation_tenant_fkey';
+            columns: ['org_id', 'conversation_id'];
+            isOneToOne: false;
+            referencedRelation: 'conversations';
+            referencedColumns: ['org_id', 'id'];
+          },
+          {
+            foreignKeyName: 'messages_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'messages_sender_tenant_fkey';
+            columns: ['org_id', 'sender_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['org_id', 'id'];
+          },
+        ];
+      };
       municipality_catalog: {
         Row: {
           canonical: string;
@@ -1070,6 +1221,7 @@ export type Database = {
           idempotency_key: string | null;
           org_id: string;
           recipient_count: number;
+          recipient_id: string | null;
           scheduled_for: string;
           sent_count: number;
           state: string;
@@ -1086,6 +1238,7 @@ export type Database = {
           idempotency_key?: string | null;
           org_id: string;
           recipient_count?: number;
+          recipient_id?: string | null;
           scheduled_for: string;
           sent_count?: number;
           state?: string;
@@ -1102,6 +1255,7 @@ export type Database = {
           idempotency_key?: string | null;
           org_id?: string;
           recipient_count?: number;
+          recipient_id?: string | null;
           scheduled_for?: string;
           sent_count?: number;
           state?: string;
@@ -1114,6 +1268,13 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'organizations';
             referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'push_publications_recipient_tenant_fkey';
+            columns: ['org_id', 'recipient_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['org_id', 'id'];
           },
         ];
       };
@@ -1898,6 +2059,22 @@ export type Database = {
       };
       encrypt_field: { Args: { plaintext: string }; Returns: string };
       encryption_key: { Args: never; Returns: string };
+      get_or_create_own_conversation: {
+        Args: never;
+        Returns: {
+          assigned_staff_id: string | null;
+          created_at: string;
+          id: string;
+          org_id: string;
+          user_id: string;
+        };
+        SetofOptions: {
+          from: '*';
+          to: 'conversations';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       get_own_profile: {
         Args: never;
         Returns: {
@@ -1990,6 +2167,10 @@ export type Database = {
           total_count: number;
         }[];
       };
+      get_unread_message_count: {
+        Args: { p_conversation_id?: string };
+        Returns: number;
+      };
       has_own_attendance_for_event: {
         Args: { attended_event_id: string };
         Returns: boolean;
@@ -2075,6 +2256,10 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      mark_conversation_read: {
+        Args: { p_conversation_id: string; p_message_id: string };
+        Returns: undefined;
+      };
       my_pending_invite: {
         Args: never;
         Returns: {
@@ -2149,6 +2334,29 @@ export type Database = {
       };
       save_admin_service: { Args: { p_payload: Json }; Returns: string };
       save_entity_service: { Args: { p_payload: Json }; Returns: string };
+      send_message: {
+        Args: {
+          p_content: string;
+          p_conversation_id: string;
+          p_image_url: string;
+          p_message_id: string;
+        };
+        Returns: {
+          content: string | null;
+          conversation_id: string;
+          created_at: string;
+          id: string;
+          image_url: string | null;
+          org_id: string;
+          sender_id: string;
+        };
+        SetofOptions: {
+          from: '*';
+          to: 'messages';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       set_participant_active: {
         Args: { next_is_active: boolean; participant_id: string };
         Returns: undefined;

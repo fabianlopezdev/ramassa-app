@@ -15,6 +15,7 @@ const NAV_KEYS = [
   'tabs.home',
   'tabs.events',
   'tabs.community',
+  'tabs.messages',
   'tabs.services',
   'tabs.profile',
   'staff.dashboard',

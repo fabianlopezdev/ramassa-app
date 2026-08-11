@@ -1,0 +1,18 @@
+{
+  "playerTitle": "Chat con el equipo",
+  "entityTitle": "Chat general con el equipo",
+  "staffTitle": "Conversación directa",
+  "staffIntro": "Abre una conversación directa desde el enlace seguro de la participante o la entidad.",
+  "emptyTitle": "Todavía no hay mensajes",
+  "emptyBody": "Escribe al equipo cuando necesites ayuda.",
+  "composerPlaceholder": "Escribe un mensaje",
+  "send": "Enviar",
+  "sending": "Enviando",
+  "retrying": "Se volverá a enviar",
+  "delivered": "Enviado",
+  "loadError": "No hemos podido cargar la conversación.",
+  "retry": "Volver a intentarlo",
+  "offline": "Sin conexión. Los mensajes quedarán en cola.",
+  "unread": "{{count}} mensajes sin leer",
+  "conversationWith": "Conversación con {{name}}"
+}

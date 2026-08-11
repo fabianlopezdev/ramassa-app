@@ -1340,4 +1340,84 @@ values
   )
 on conflict (id) do nothing;
 
+-- Direct messaging (RAPP-47) ---------------------------------------------------
+-- One player thread and one entity thread make both client surfaces reachable
+-- after every reset. The player starts with one unread staff reply so badge and
+-- read-state QA do not depend on creating data by hand.
+insert into public.conversations (
+  id, org_id, user_id, assigned_staff_id, created_at
+)
+values
+  (
+    '5eed0000-0000-4000-800c-000000000001',
+    '5eed0000-0000-4000-8000-000000000000',
+    '5eed0000-0000-4000-8000-000000000011',
+    '5eed0000-0000-4000-8000-000000000002',
+    now() - interval '2 hours'
+  ),
+  (
+    '5eed0000-0000-4000-800c-000000000002',
+    '5eed0000-0000-4000-8000-000000000000',
+    '5eed0000-0000-4000-8000-000000000004',
+    null,
+    now() - interval '90 minutes'
+  )
+on conflict (id) do nothing;
+
+-- Seed fixtures must not enqueue real delivery work. The trigger is exercised
+-- by pgTAP and runtime QA with synthetic tokens, then restored immediately.
+alter table public.messages disable trigger messages_enqueue_push;
+
+insert into public.messages (
+  id, org_id, conversation_id, sender_id, content, created_at
+)
+values
+  (
+    '5eed0000-0000-4000-800d-000000000001',
+    '5eed0000-0000-4000-8000-000000000000',
+    '5eed0000-0000-4000-800c-000000000001',
+    '5eed0000-0000-4000-8000-000000000011',
+    'rapp47-seed-player-message',
+    now() - interval '2 hours'
+  ),
+  (
+    '5eed0000-0000-4000-800d-000000000002',
+    '5eed0000-0000-4000-8000-000000000000',
+    '5eed0000-0000-4000-800c-000000000001',
+    '5eed0000-0000-4000-8000-000000000002',
+    'rapp47-seed-staff-reply',
+    now() - interval '1 hour'
+  ),
+  (
+    '5eed0000-0000-4000-800d-000000000003',
+    '5eed0000-0000-4000-8000-000000000000',
+    '5eed0000-0000-4000-800c-000000000002',
+    '5eed0000-0000-4000-8000-000000000004',
+    'rapp47-seed-entity-message',
+    now() - interval '90 minutes'
+  )
+on conflict (id) do nothing;
+
+alter table public.messages enable trigger messages_enqueue_push;
+
+insert into public.conversation_read_states (
+  org_id, conversation_id, user_id, last_read_message_id, read_at
+)
+values
+  (
+    '5eed0000-0000-4000-8000-000000000000',
+    '5eed0000-0000-4000-800c-000000000001',
+    '5eed0000-0000-4000-8000-000000000011',
+    '5eed0000-0000-4000-800d-000000000001',
+    now() - interval '2 hours'
+  ),
+  (
+    '5eed0000-0000-4000-8000-000000000000',
+    '5eed0000-0000-4000-800c-000000000002',
+    '5eed0000-0000-4000-8000-000000000004',
+    '5eed0000-0000-4000-800d-000000000003',
+    now() - interval '90 minutes'
+  )
+on conflict (conversation_id, user_id) do nothing;
+
 commit;
