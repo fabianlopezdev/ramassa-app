@@ -11,6 +11,9 @@
     "ios": {
       "icon": "./assets/expo.icon",
       "bundleIdentifier": "com.ramassa.app",
+      "config": {
+        "usesNonExemptEncryption": false
+      },
       "infoPlist": {
         "ExpoLocalization_supportsRTL": true
       },
@@ -24,6 +27,7 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
+      "allowBackup": false,
       "package": "com.ramassa.app",
       "googleServicesFile": "./google-services.json"
     },
@@ -42,6 +46,13 @@
         }
       ],
       "expo-localization",
+      [
+        "expo-secure-store",
+        {
+          "configureAndroidBackup": false
+        }
+      ],
+      "./plugins/with-secure-backup-rules",
       [
         "@sentry/react-native/expo",
         {

@@ -6,7 +6,7 @@ import {
   DEFAULT_LANGUAGE,
   syncNativeLayoutDirection,
 } from '@ramassa/shared/i18n';
-import { mmkvStorage } from './storage';
+import { preferencesStorage } from './storage';
 
 /**
  * The app's single i18n instance, created once at module scope so it exists
@@ -14,7 +14,7 @@ import { mmkvStorage } from './storage';
  * else the device locale, else Catalan (ADR-006).
  */
 export const i18n = createI18n({
-  languageStorage: createMmkvLanguageStorage(mmkvStorage),
+  languageStorage: createMmkvLanguageStorage(preferencesStorage),
   deviceLanguages: getLocales().map((deviceLocale) => deviceLocale.languageTag),
 });
 

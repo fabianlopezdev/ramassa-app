@@ -1,7 +1,7 @@
 import { AttendanceSyncWorker } from '@/components/attendance/attendance-sync-worker';
 import { PushPermissionRationale } from '@/components/push-permission-rationale';
 import { isAttendanceCoachCached, rememberAttendanceCoach } from '@/lib/attendance-coach-cache';
-import { mmkvStorage } from '@/lib/storage';
+import { privateStorage } from '@/lib/storage';
 import { usePushRegistration } from '@/lib/use-push-registration';
 import { Stack } from 'expo-router/stack';
 import { useEffect } from 'react';
@@ -20,10 +20,10 @@ export default function AppLayout() {
   const hasStaffRole = role === 'staff' || role === 'admin';
   const isStaff =
     hasStaffRole ||
-    (role === null && userId !== null && isAttendanceCoachCached(mmkvStorage, userId));
+    (role === null && userId !== null && isAttendanceCoachCached(privateStorage, userId));
   useEffect(() => {
     if (userId === null || role === null) return;
-    rememberAttendanceCoach(mmkvStorage, userId, hasStaffRole);
+    rememberAttendanceCoach(privateStorage, userId, hasStaffRole);
   }, [hasStaffRole, role, userId]);
   // Registers this device's push token for the signed-in user (RAPP-17), and
   // surfaces the translated rationale when the OS permission is undetermined.

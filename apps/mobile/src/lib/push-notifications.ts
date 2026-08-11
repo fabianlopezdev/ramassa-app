@@ -26,7 +26,7 @@ import {
   type PushPermissionStatus,
   type PushRegistrationDecision,
 } from './push-registration';
-import { mmkvStorage } from './storage';
+import { preferencesStorage } from './storage';
 import { supabase } from './supabase';
 
 const LAST_WRITTEN_TOKEN_KEY = 'ramassa.pushToken.lastWritten';
@@ -117,8 +117,8 @@ export async function registerPushToken(userId: string): Promise<void> {
   const result = await safeAsync(
     async () => {
       const { data: token } = await Notifications.getExpoPushTokenAsync({ projectId });
-      const deviceId = getOrCreateDeviceId(mmkvStorage);
-      const lastWritten = mmkvStorage.getString(LAST_WRITTEN_TOKEN_KEY) ?? null;
+      const deviceId = getOrCreateDeviceId(preferencesStorage);
+      const lastWritten = preferencesStorage.getString(LAST_WRITTEN_TOKEN_KEY) ?? null;
 
       if (!shouldWriteToken(lastWritten, token)) return;
 
@@ -129,7 +129,7 @@ export async function registerPushToken(userId: string): Promise<void> {
         });
       if (error) throw error;
 
-      mmkvStorage.set(LAST_WRITTEN_TOKEN_KEY, token);
+      preferencesStorage.set(LAST_WRITTEN_TOKEN_KEY, token);
     },
     { code: 'NETWORK-1', context: { operation: 'registerPushToken' } },
   );
@@ -147,7 +147,7 @@ export async function registerPushToken(userId: string): Promise<void> {
  * device, not by token: the stored token may already have rotated.
  */
 export async function removePushToken(userId: string): Promise<void> {
-  const deviceId = getOrCreateDeviceId(mmkvStorage);
+  const deviceId = getOrCreateDeviceId(preferencesStorage);
   await safeAsync(
     async () => {
       const { error } = await supabase
@@ -156,7 +156,7 @@ export async function removePushToken(userId: string): Promise<void> {
         .eq('user_id', userId)
         .eq('device_id', deviceId);
       if (error) throw error;
-      mmkvStorage.remove(LAST_WRITTEN_TOKEN_KEY);
+      preferencesStorage.remove(LAST_WRITTEN_TOKEN_KEY);
     },
     { code: 'NETWORK-1', context: { operation: 'removePushToken' } },
   );

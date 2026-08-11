@@ -26,7 +26,7 @@
 
 import * as Haptics from 'expo-haptics';
 import type { AppErrorCode } from '@ramassa/shared/errors';
-import { mmkvStorage } from '../storage';
+import { preferencesStorage } from '../storage';
 import { hapticForErrorCode, shouldPlayHaptic, type HapticFeedback } from './haptic-policy';
 
 const HAPTICS_ENABLED_KEY = 'ramassa.haptics.enabled';
@@ -34,11 +34,11 @@ const DISABLED_VALUE = 'false';
 
 /** Defaults to true: only an explicit opt-out disables haptics. */
 export function areHapticsEnabled(): boolean {
-  return mmkvStorage.getString(HAPTICS_ENABLED_KEY) !== DISABLED_VALUE;
+  return preferencesStorage.getString(HAPTICS_ENABLED_KEY) !== DISABLED_VALUE;
 }
 
 export function setHapticsEnabled(isEnabled: boolean): void {
-  mmkvStorage.set(HAPTICS_ENABLED_KEY, isEnabled ? 'true' : DISABLED_VALUE);
+  preferencesStorage.set(HAPTICS_ENABLED_KEY, isEnabled ? 'true' : DISABLED_VALUE);
 }
 
 function runFeedback(feedback: HapticFeedback): Promise<void> {

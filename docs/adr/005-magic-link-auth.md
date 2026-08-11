@@ -23,6 +23,30 @@ Players have varying digital literacy. Some may not have email addresses. The pr
 > otherwise unchanged, and the address is GENERATED server-side, so staff never
 > type a domain and cannot get it wrong.
 
+> **Amended 2026-08-11 (RAPP-101).** Native mobile sessions are persisted in an
+> encrypted MMKV instance named `ramassa.auth.v1`. A separate encrypted instance,
+> `ramassa.private.v1`, holds onboarding drafts, offline messaging and attendance
+> outboxes, and the user-scoped React Query cache. Keeping auth separate gives it
+> an independent failure lifecycle: if its key is missing, malformed, or cannot
+> decrypt the store sentinel, only the auth store is discarded and the user is
+> signed out.
+>
+> Each instance has its own 24-byte cryptographically random key, base64 encoded
+> to exactly 32 ASCII characters for MMKV AES-256. The keys are stored by Expo
+> SecureStore with `WHEN_UNLOCKED_THIS_DEVICE_ONLY`, backed by iOS Keychain or
+> Android Keystore. Language, haptics, device ID, and push bookkeeping remain in
+> the default plaintext MMKV instance because they are low sensitivity.
+>
+> The first upgraded launch deliberately removes legacy Supabase session keys,
+> onboarding drafts, outboxes, and query cache entries from the old default
+> instance. This causes one planned sign-in reset. The legacy file is replaced
+> so its removed records are not readable from the live app data directory, but
+> this is not claimed as forensic erasure of previously allocated filesystem
+> blocks. Android app backup is disabled and explicit
+> Android 11 and Android 12 rules exclude app data from cloud backup and
+> device-to-device transfer. Browser storage used by the Expo web build is not
+> covered by this native device-storage decision.
+
 ## Alternatives Considered
 
 - **SMS OTP** — rejected. $15-20/month for ~50 users. Ongoing cost with no benefit over email magic links.

@@ -2,7 +2,7 @@ import { QueryClient } from '@tanstack/react-query';
 import { isRetryableError } from '@ramassa/shared/errors';
 import { configureNetworkStatus } from './network-status';
 import { ANNOUNCEMENT_CACHE_MAX_AGE_MS, createQueryPersister } from './query-persistence';
-import { mmkvStorage } from './storage';
+import { privateStorage } from './storage';
 
 /**
  * The app's single React Query client (added with RAPP-19 so the dev menu's
@@ -46,4 +46,4 @@ export const queryClient = new QueryClient({
   },
 });
 
-export const queryPersister = createQueryPersister(mmkvStorage);
+export const queryPersister = createQueryPersister(privateStorage);

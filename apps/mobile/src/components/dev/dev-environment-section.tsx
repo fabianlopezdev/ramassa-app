@@ -1,14 +1,15 @@
 import { summarizeDevEnvironment } from '@/lib/dev/dev-environment';
 import { getOrCreateDeviceId } from '@/lib/device-id';
 import { resolvePushRegistrationDecision } from '@/lib/push-notifications';
-import { mmkvStorage } from '@/lib/storage';
+import { preferencesStorage } from '@/lib/storage';
+import { supabase } from '@/lib/supabase';
 import Constants from 'expo-constants';
 import { isDevice, modelName, osName, osVersion } from 'expo-device';
 import { useEffect, useState } from 'react';
 import { I18nManager } from 'react-native';
 import { useAuth } from '@ramassa/shared/auth';
 import { useLanguage } from '@ramassa/shared/i18n';
-import { DevRow, DevSection } from './dev-ui';
+import { DevButton, DevButtonRow, DevNote, DevRow, DevSection } from './dev-ui';
 
 /**
  * What build am I running, against what, as whom (RAPP-19 scope item 3).
@@ -22,6 +23,7 @@ export function DevEnvironmentSection() {
   const { user, role, session } = useAuth();
   const { language, direction } = useLanguage();
   const [pushRegistration, setPushRegistration] = useState('resolving...');
+  const [refreshStatus, setRefreshStatus] = useState('');
 
   useEffect(() => {
     let isSubscribed = true;
@@ -57,7 +59,7 @@ export function DevEnvironmentSection() {
     userEmail: user?.email ?? null,
     role,
     sessionExpiresAt: session?.expires_at ?? null,
-    deviceId: getOrCreateDeviceId(mmkvStorage),
+    deviceId: getOrCreateDeviceId(preferencesStorage),
     pushRegistration,
   });
 
@@ -76,6 +78,13 @@ export function DevEnvironmentSection() {
       ? `${direction} (native matches)`
       : `${direction} (native ${nativeDirection}, stale until restart)`;
 
+  async function refreshSession() {
+    const { error } = await supabase.auth.refreshSession();
+    setRefreshStatus(
+      error === null ? 'Session refreshed and persisted.' : 'Session refresh failed.',
+    );
+  }
+
   return (
     <DevSection title="Environment">
       {rows.map((row) => (
@@ -83,6 +92,10 @@ export function DevEnvironmentSection() {
       ))}
       <DevRow label="Language" value={language} />
       <DevRow label="Layout direction" value={directionValue} />
+      <DevButtonRow>
+        <DevButton label="Refresh session" onPress={() => void refreshSession()} />
+      </DevButtonRow>
+      {refreshStatus === '' ? null : <DevNote>{refreshStatus}</DevNote>}
     </DevSection>
   );
 }

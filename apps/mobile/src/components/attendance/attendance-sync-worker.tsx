@@ -5,7 +5,7 @@ import {
 } from '@/lib/attendance';
 import { createAttendanceOutbox } from '@/lib/attendance-outbox';
 import { isNetworkStateOnline } from '@/lib/network-status';
-import { mmkvStorage } from '@/lib/storage';
+import { privateStorage } from '@/lib/storage';
 import { useQueryClient } from '@tanstack/react-query';
 import { useNetworkState } from 'expo-network';
 import { useEffect } from 'react';
@@ -18,7 +18,7 @@ export function AttendanceSyncWorker({ userId }: { readonly userId: string }) {
 
   useEffect(() => {
     if (!isOnline) return;
-    const outbox = createAttendanceOutbox(mmkvStorage, userId);
+    const outbox = createAttendanceOutbox(privateStorage, userId);
     let timer: ReturnType<typeof setTimeout> | undefined;
     let cancelled = false;
 

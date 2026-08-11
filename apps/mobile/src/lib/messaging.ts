@@ -23,7 +23,7 @@ import { createMessagingOutbox } from '@ramassa/shared/messaging/outbox';
 import { generateMessageId } from './message-id';
 import { isNetworkStateOnline } from './network-status';
 import { staffConversationListQueryKey, staffConversationQueryKey } from './staff-messaging-keys';
-import { mmkvStorage } from './storage';
+import { privateStorage } from './storage';
 import { supabase } from './supabase';
 
 export { staffConversationListQueryKey, staffConversationQueryKey } from './staff-messaging-keys';
@@ -86,7 +86,7 @@ function useConversationThread(requestedConversationId: string | null) {
     enabled: userId !== null && conversationId !== null,
   });
   const outbox = useMemo(
-    () => (userId === null ? null : createMessagingOutbox(mmkvStorage, userId)),
+    () => (userId === null ? null : createMessagingOutbox(privateStorage, userId)),
     [userId],
   );
   const [nextRetryAt, setNextRetryAt] = useState<string | null>(null);

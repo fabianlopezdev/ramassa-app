@@ -20,7 +20,7 @@ import {
   type AttendanceOutboxMark,
 } from './attendance-outbox';
 import { isNetworkStateOnline } from './network-status';
-import { mmkvStorage } from './storage';
+import { privateStorage } from './storage';
 import { supabase } from './supabase';
 
 const SIGNED_OUT_QUERY_SCOPE = 'signed-out';
@@ -37,7 +37,7 @@ export function useAttendanceOccurrences() {
     user !== null &&
     (role === 'staff' ||
       role === 'admin' ||
-      (role === null && isAttendanceCoachCached(mmkvStorage, user.id)));
+      (role === null && isAttendanceCoachCached(privateStorage, user.id)));
   return useQuery<readonly AttendanceOccurrenceListRow[]>({
     queryKey: attendanceOccurrencesQueryKey(user?.id ?? SIGNED_OUT_QUERY_SCOPE),
     queryFn: ({ signal }) => fetchAttendanceOccurrencesForDay(supabase, new Date(), signal),
@@ -85,7 +85,7 @@ export function useAttendanceMarker(occurrenceId: string) {
   );
   const [nextRetryAt, setNextRetryAt] = useState<string | null>(null);
   const outbox = useMemo(
-    () => (userId === null ? null : createAttendanceOutbox(mmkvStorage, userId)),
+    () => (userId === null ? null : createAttendanceOutbox(privateStorage, userId)),
     [userId],
   );
   const readPending = useCallback(() => {

@@ -5,7 +5,7 @@
  */
 
 import { safeAsync } from '@/lib/observability';
-import { mmkvStorage } from '@/lib/storage';
+import { privateStorage } from '@/lib/storage';
 import { supabase } from '@/lib/supabase';
 import { useEffect, useState } from 'react';
 import { fetchMyPendingInvite } from '@ramassa/shared/accounts';
@@ -14,7 +14,7 @@ import { createMmkvOnboardingDraftStore } from '@ramassa/shared/onboarding-draft
 import type { CompleteOnboardingPayload } from '@ramassa/shared/schemas';
 
 /** The one draft store the wizard screens share. */
-export const onboardingDraftStore = createMmkvOnboardingDraftStore(mmkvStorage);
+export const onboardingDraftStore = createMmkvOnboardingDraftStore(privateStorage);
 
 /**
  * Completes onboarding through `public.complete_onboarding`: profile plus
