@@ -1,9 +1,10 @@
 import { PageWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
-import { useOwnConversation } from '@/lib/messaging';
+import { useOwnConversation, useStaffConversation } from '@/lib/messaging';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
-import { memo, useCallback, useMemo, useState } from 'react';
+import { useRouter } from 'expo-router';
+import { memo, useCallback, useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
@@ -64,12 +65,22 @@ const MessageBubble = memo(function MessageBubble({
   );
 });
 
-export function MessageThread({ title }: { readonly title: string }) {
+type MessageThreadController = ReturnType<typeof useOwnConversation>;
+
+function MessageThreadView({
+  title,
+  controller,
+  headerAccessory,
+}: {
+  readonly title: string;
+  readonly controller: MessageThreadController;
+  readonly headerAccessory?: ReactNode;
+}) {
   const { t, i18n } = useTranslation('messaging');
   const { user } = useAuth();
   const fontClass = useLanguageFontClass();
   const insets = useSafeAreaInsets();
-  const { messages, send, isOnline, isPending, isError, refetch } = useOwnConversation();
+  const { messages, send, isOnline, isPending, isError, refetch } = controller;
   const [draft, setDraft] = useState('');
   const dateFormatter = useMemo(
     () => new Intl.DateTimeFormat(i18n.resolvedLanguage ?? 'ca', { dateStyle: 'medium' }),
@@ -148,12 +159,15 @@ export function MessageThread({ title }: { readonly title: string }) {
     >
       <PageWidth className="flex-1">
         <View className="border-b border-neutral-200 bg-white px-lg py-md">
-          <Text
-            accessibilityRole="header"
-            className={`text-xl font-semibold text-neutral-900 ${fontClass}`}
-          >
-            {title}
-          </Text>
+          <View className="flex-row items-center gap-md">
+            {headerAccessory}
+            <Text
+              accessibilityRole="header"
+              className={`flex-1 text-xl font-semibold text-neutral-900 ${fontClass}`}
+            >
+              {title}
+            </Text>
+          </View>
           {!isOnline ? (
             <Text className={`mt-xs text-sm text-amber-800 ${fontClass}`}>{t('offline')}</Text>
           ) : null}
@@ -208,4 +222,33 @@ export function MessageThread({ title }: { readonly title: string }) {
       </PageWidth>
     </KeyboardAvoidingView>
   );
+}
+
+export function PlayerMessageThread({ title }: { readonly title: string }) {
+  return <MessageThreadView title={title} controller={useOwnConversation()} />;
+}
+
+export function StaffMessageThread({
+  conversationId,
+  title,
+}: {
+  readonly conversationId: string;
+  readonly title: string;
+}) {
+  const { back } = useRouter();
+  const { t } = useTranslation('messaging');
+  const fontClass = useLanguageFontClass();
+  const controller = useStaffConversation(conversationId);
+  const backAction = (
+    <PressableScale
+      testID="staff-message-back"
+      accessibilityLabel={t('backToConversations')}
+      onPress={back}
+      haptic="tapLight"
+      className="min-h-min justify-center px-sm"
+    >
+      <Text className={`font-semibold text-primary-dark ${fontClass}`}>{t('backShort')}</Text>
+    </PressableScale>
+  );
+  return <MessageThreadView title={title} controller={controller} headerAccessory={backAction} />;
 }

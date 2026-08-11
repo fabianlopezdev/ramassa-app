@@ -204,6 +204,82 @@ export type Database = {
           },
         ];
       };
+      conversation_assignment_history: {
+        Row: {
+          assigned_staff_id: string | null;
+          changed_by: string;
+          conversation_id: string;
+          created_at: string;
+          id: string;
+          org_id: string;
+          previous_staff_id: string | null;
+          user_id: string;
+        };
+        Insert: {
+          assigned_staff_id?: string | null;
+          changed_by: string;
+          conversation_id: string;
+          created_at?: string;
+          id?: string;
+          org_id: string;
+          previous_staff_id?: string | null;
+          user_id: string;
+        };
+        Update: {
+          assigned_staff_id?: string | null;
+          changed_by?: string;
+          conversation_id?: string;
+          created_at?: string;
+          id?: string;
+          org_id?: string;
+          previous_staff_id?: string | null;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'conversation_assignment_history_actor_fkey';
+            columns: ['org_id', 'changed_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['org_id', 'id'];
+          },
+          {
+            foreignKeyName: 'conversation_assignment_history_assigned_staff_fkey';
+            columns: ['org_id', 'assigned_staff_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['org_id', 'id'];
+          },
+          {
+            foreignKeyName: 'conversation_assignment_history_conversation_fkey';
+            columns: ['org_id', 'conversation_id'];
+            isOneToOne: false;
+            referencedRelation: 'conversations';
+            referencedColumns: ['org_id', 'id'];
+          },
+          {
+            foreignKeyName: 'conversation_assignment_history_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'conversation_assignment_history_previous_staff_fkey';
+            columns: ['org_id', 'previous_staff_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['org_id', 'id'];
+          },
+          {
+            foreignKeyName: 'conversation_assignment_history_user_fkey';
+            columns: ['org_id', 'user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['org_id', 'id'];
+          },
+        ];
+      };
       conversation_read_states: {
         Row: {
           conversation_id: string;
@@ -2232,6 +2308,31 @@ export type Database = {
         Args: { new_status: string; old_status: string };
         Returns: boolean;
       };
+      list_staff_conversations: {
+        Args: {
+          p_assigned_to_me?: boolean;
+          p_participant_role?: string;
+          p_query?: string;
+          p_unread_only?: boolean;
+        };
+        Returns: {
+          assigned_staff_first_name: string;
+          assigned_staff_id: string;
+          assigned_staff_last_name: string;
+          conversation_created_at: string;
+          conversation_id: string;
+          latest_message_at: string;
+          latest_message_preview: string;
+          latest_sender_id: string;
+          participant_city: string;
+          participant_first_name: string;
+          participant_id: string;
+          participant_language: string;
+          participant_last_name: string;
+          participant_role: string;
+          unread_count: number;
+        }[];
+      };
       mark_attendance: {
         Args: {
           attendance_marked_at: string;
@@ -2356,6 +2457,10 @@ export type Database = {
           isOneToOne: true;
           isSetofReturn: false;
         };
+      };
+      set_conversation_assignment: {
+        Args: { p_conversation_id: string; p_staff_id: string };
+        Returns: undefined;
       };
       set_participant_active: {
         Args: { next_is_active: boolean; participant_id: string };

@@ -1,4 +1,5 @@
 import { useUnreadMessages } from '@/lib/messaging';
+import { unreadBadgeProps } from '@/lib/unread-badge';
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
 import { useTranslation } from 'react-i18next';
 
@@ -27,6 +28,7 @@ import { useTranslation } from 'react-i18next';
 export default function TabsLayout() {
   const { t } = useTranslation('nav');
   const unread = useUnreadMessages().data ?? 0;
+  const unreadBadge = unreadBadgeProps(unread);
   return (
     <NativeTabs labelVisibilityMode="labeled">
       <NativeTabs.Trigger name="index" testID="player-tab-home">
@@ -40,8 +42,8 @@ export default function TabsLayout() {
       <NativeTabs.Trigger name="community" testID="player-tab-messages">
         <NativeTabs.Trigger.Icon sf="bubble.left.and.bubble.right.fill" md="chat" />
         <NativeTabs.Trigger.Label>{t('nav:tabs.messages')}</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Badge hidden={unread === 0}>
-          {String(Math.min(unread, 99))}
+        <NativeTabs.Trigger.Badge hidden={unreadBadge.hidden}>
+          {unreadBadge.children}
         </NativeTabs.Trigger.Badge>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="services">

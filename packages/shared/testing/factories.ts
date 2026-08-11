@@ -54,6 +54,8 @@ export type ConversationRow = Database['public']['Tables']['conversations']['Row
 export type MessageRow = Database['public']['Tables']['messages']['Row'];
 export type ConversationReadStateRow =
   Database['public']['Tables']['conversation_read_states']['Row'];
+export type ConversationAssignmentHistoryRow =
+  Database['public']['Tables']['conversation_assignment_history']['Row'];
 export type TermsAcceptanceRow = Database['public']['Tables']['terms_acceptances']['Row'];
 export type DeletionRequestRow = Database['public']['Tables']['deletion_requests']['Row'];
 export type ParticipantNoteRow = Database['public']['Tables']['participant_notes']['Row'];
@@ -649,6 +651,24 @@ export function buildConversationReadState(
     user_id: seedUserId(player.ordinal),
     last_read_message_id: buildMessage().id,
     read_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+export function buildConversationAssignmentHistory(
+  overrides: Partial<ConversationAssignmentHistoryRow> = {},
+): ConversationAssignmentHistoryRow {
+  const player = PARTICIPANT_FIXTURES[0]!;
+  const staff = STAFF_FIXTURES.find((person) => person.role === 'staff')!;
+  return {
+    id: '5eed0000-0000-4000-800e-000000000001',
+    org_id: SEED_ORGANIZATION_ID,
+    conversation_id: buildConversation().id,
+    user_id: seedUserId(player.ordinal),
+    changed_by: seedUserId(staff.ordinal),
+    previous_staff_id: null,
+    assigned_staff_id: seedUserId(staff.ordinal),
+    created_at: FIXTURE_TIMESTAMP,
     ...overrides,
   };
 }

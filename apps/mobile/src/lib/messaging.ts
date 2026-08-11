@@ -4,22 +4,29 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@ramassa/shared/auth';
 import { AppError } from '@ramassa/shared/errors';
 import {
+  fetchConversation,
   fetchConversationMessages,
+  fetchStaffConversations,
   fetchUnreadMessageCount,
   getOrCreateOwnConversation,
   markConversationRead,
   mergeMessageTimeline,
   sendConversationMessage,
   subscribeToConversationMessages,
+  subscribeToConversationQueue,
   subscribeToMessageActivity,
   type ChatMessage,
   type Conversation,
+  type StaffConversationRow,
 } from '@ramassa/shared/messaging';
 import { createMessagingOutbox } from '@ramassa/shared/messaging/outbox';
 import { generateMessageId } from './message-id';
 import { isNetworkStateOnline } from './network-status';
+import { staffConversationListQueryKey, staffConversationQueryKey } from './staff-messaging-keys';
 import { mmkvStorage } from './storage';
 import { supabase } from './supabase';
+
+export { staffConversationListQueryKey, staffConversationQueryKey } from './staff-messaging-keys';
 
 const SIGNED_OUT = 'signed-out';
 export const conversationQueryKey = (userId: string) =>
@@ -47,16 +54,25 @@ export function useUnreadMessages() {
   return query;
 }
 
-export function useOwnConversation() {
+function useConversationThread(requestedConversationId: string | null) {
   const { user } = useAuth();
   const userId = user?.id ?? null;
   const queryClient = useQueryClient();
   const network = useNetworkState();
   const isOnline = isNetworkStateOnline(network);
-  const conversationKey = useMemo(() => conversationQueryKey(userId ?? SIGNED_OUT), [userId]);
+  const conversationKey = useMemo(
+    () =>
+      requestedConversationId === null
+        ? conversationQueryKey(userId ?? SIGNED_OUT)
+        : staffConversationQueryKey(userId ?? SIGNED_OUT, requestedConversationId),
+    [requestedConversationId, userId],
+  );
   const conversationQuery = useQuery<Conversation>({
     queryKey: conversationKey,
-    queryFn: () => getOrCreateOwnConversation(supabase),
+    queryFn: ({ signal }) =>
+      requestedConversationId === null
+        ? getOrCreateOwnConversation(supabase)
+        : fetchConversation(supabase, requestedConversationId, signal),
     enabled: userId !== null,
   });
   const conversationId = conversationQuery.data?.id ?? null;
@@ -133,10 +149,15 @@ export function useOwnConversation() {
   const latestId = messages.at(-1)?.id ?? null;
   useEffect(() => {
     if (conversationId === null || latestId === null || userId === null) return;
-    void markConversationRead(supabase, conversationId, latestId).then(() =>
-      queryClient.setQueryData(unreadMessagesQueryKey(userId), 0),
-    );
-  }, [conversationId, latestId, queryClient, userId]);
+    void markConversationRead(supabase, conversationId, latestId).then(() => {
+      if (requestedConversationId === null) {
+        queryClient.setQueryData(unreadMessagesQueryKey(userId), 0);
+      } else {
+        void queryClient.invalidateQueries({ queryKey: staffConversationListQueryKey(userId) });
+        void queryClient.invalidateQueries({ queryKey: unreadMessagesQueryKey(userId) });
+      }
+    });
+  }, [conversationId, latestId, queryClient, requestedConversationId, userId]);
 
   const send = useCallback(
     (rawContent: string) => {
@@ -176,4 +197,36 @@ export function useOwnConversation() {
       await messagesQuery.refetch();
     },
   };
+}
+
+export function useOwnConversation() {
+  return useConversationThread(null);
+}
+
+export function useStaffConversation(conversationId: string) {
+  return useConversationThread(conversationId);
+}
+
+export function useStaffConversationList() {
+  const { user } = useAuth();
+  const userId = user?.id ?? null;
+  const queryClient = useQueryClient();
+  const key = useMemo(() => staffConversationListQueryKey(userId ?? SIGNED_OUT), [userId]);
+  const query = useQuery<readonly StaffConversationRow[]>({
+    queryKey: key,
+    queryFn: ({ signal }) =>
+      fetchStaffConversations(
+        supabase,
+        { q: '', unread: false, assigned: false, participant: 'all' },
+        signal,
+      ),
+    enabled: userId !== null,
+  });
+  useEffect(() => {
+    if (userId === null) return;
+    return subscribeToConversationQueue(supabase, userId, () => {
+      void queryClient.invalidateQueries({ queryKey: key });
+    });
+  }, [key, queryClient, userId]);
+  return query;
 }

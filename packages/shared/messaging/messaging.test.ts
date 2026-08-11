@@ -1,5 +1,12 @@
 import { describe, expect, test } from 'bun:test';
-import { mergeMessageTimeline, messageInputSchema, type ChatMessage } from './messaging';
+import {
+  adminConversationSearchSchema,
+  buildConversationPrefixTsQuery,
+  mergeMessageTimeline,
+  messageInputSchema,
+  parseAdminConversationSearch,
+  type ChatMessage,
+} from './messaging';
 
 function message(overrides: Partial<ChatMessage> = {}): ChatMessage {
   return {
@@ -50,5 +57,55 @@ describe('message timeline merge', () => {
     expect(messageInputSchema.safeParse({ ...base, content: 'x'.repeat(4_001) }).success).toBe(
       false,
     );
+  });
+});
+
+describe('admin conversation filters', () => {
+  test('an empty URL means every conversation, unread first in the database', () => {
+    expect(parseAdminConversationSearch({})).toEqual({
+      q: '',
+      unread: false,
+      assigned: false,
+      participant: 'all',
+    });
+  });
+
+  test('reloadable URL values parse booleans and participant roles', () => {
+    expect(
+      parseAdminConversationSearch({
+        q: '  أمينة  ',
+        unread: 'true',
+        assigned: 'true',
+        participant: 'player',
+      }),
+    ).toEqual({ q: 'أمينة', unread: true, assigned: true, participant: 'player' });
+  });
+
+  test('hostile and stale URL filter values fall back without widening access', () => {
+    expect(
+      parseAdminConversationSearch({
+        q: "x') | (1=1--",
+        unread: 'yes',
+        assigned: 'somebody-else',
+        participant: 'staff',
+      }),
+    ).toEqual({
+      q: "x') | (1=1--",
+      unread: false,
+      assigned: false,
+      participant: 'all',
+    });
+    expect(adminConversationSearchSchema.safeParse({ q: 'x'.repeat(201) }).success).toBe(true);
+  });
+
+  test('partial names, accents, Arabic and Cyrillic become safe prefix queries', () => {
+    expect(buildConversationPrefixTsQuery('María')).toBe('María:*');
+    expect(buildConversationPrefixTsQuery('أمي')).toBe('أمي:*');
+    expect(buildConversationPrefixTsQuery('Окса')).toBe('Окса:*');
+  });
+
+  test('tsquery operators are removed rather than executed', () => {
+    expect(buildConversationPrefixTsQuery("nuria') | (1=1--")).toBe('nuria:* & 11:*');
+    expect(buildConversationPrefixTsQuery('<->')).toBe('');
   });
 });

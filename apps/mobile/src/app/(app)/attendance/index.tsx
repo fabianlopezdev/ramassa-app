@@ -8,9 +8,10 @@ import { PageWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { useAttendanceOccurrences } from '@/lib/attendance';
 import { logout } from '@/lib/auth';
+import { useUnreadMessages } from '@/lib/messaging';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
-import { useRouter } from 'expo-router';
+import { useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
@@ -31,10 +32,12 @@ const keyExtractor = (row: AttendanceOccurrenceListRow) => row.id;
 export default function AttendanceOccurrencesScreen() {
   const { t, i18n } = useTranslation('attendance');
   const { t: tProfile } = useTranslation('profile');
+  const { t: tMessaging } = useTranslation('messaging');
   const { language } = useLanguage();
   const languageFontClass = useLanguageFontClass();
   const { push } = useRouter();
   const { data, isPending, isError, error, refetch } = useAttendanceOccurrences();
+  const unreadMessages = useUnreadMessages().data ?? 0;
   const timeFormatter = useMemo(
     () =>
       new Intl.DateTimeFormat(i18n.resolvedLanguage ?? DEFAULT_LANGUAGE, {
@@ -89,17 +92,32 @@ export default function AttendanceOccurrencesScreen() {
             >
               {t('title')}
             </Text>
-            <PressableScale
-              testID="attendance-sign-out"
-              accessibilityLabel={tProfile('signOutAction')}
-              onPress={handleLogout}
-              haptic="tapLight"
-              className="min-h-min justify-center px-sm"
-            >
-              <Text className={`text-sm font-semibold text-primary-dark ${languageFontClass}`}>
-                {tProfile('signOutAction')}
-              </Text>
-            </PressableScale>
+            <View className="flex-row items-center gap-sm">
+              <PressableScale
+                testID="attendance-open-messages"
+                accessibilityLabel={tMessaging('unread', { count: unreadMessages })}
+                onPress={() => push('/messages' as Href)}
+                haptic="selection"
+                className="min-h-min justify-center px-sm"
+              >
+                <Text className={`text-sm font-semibold text-primary-dark ${languageFontClass}`}>
+                  {unreadMessages > 0
+                    ? tMessaging('managementUnread', { count: unreadMessages })
+                    : tMessaging('managementTitle')}
+                </Text>
+              </PressableScale>
+              <PressableScale
+                testID="attendance-sign-out"
+                accessibilityLabel={tProfile('signOutAction')}
+                onPress={handleLogout}
+                haptic="tapLight"
+                className="min-h-min justify-center px-sm"
+              >
+                <Text className={`text-sm font-semibold text-primary-dark ${languageFontClass}`}>
+                  {tProfile('signOutAction')}
+                </Text>
+              </PressableScale>
+            </View>
           </View>
           <Text className={`text-start text-md text-neutral-600 ${languageFontClass}`}>
             {t('intro')}

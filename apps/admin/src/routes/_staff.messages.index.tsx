@@ -8,9 +8,12 @@ export const Route = createFileRoute('/_staff/messages/')({
 function StaffMessagesLanding() {
   const { t } = useTranslation('messaging');
   return (
-    <main className="mx-auto max-w-3xl p-6">
-      <h1 className="text-2xl font-semibold">{t('staffTitle')}</h1>
-      <p className="mt-2 text-muted-foreground">{t('staffIntro')}</p>
-    </main>
+    <section
+      data-testid="conversation-empty-pane"
+      className="grid min-h-72 place-content-center gap-2 p-6 text-center"
+    >
+      <h2 className="text-lg font-semibold">{t('selectConversationTitle')}</h2>
+      <p className="text-sm text-muted-foreground">{t('selectConversationBody')}</p>
+    </section>
   );
 }

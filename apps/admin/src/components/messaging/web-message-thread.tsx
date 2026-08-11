@@ -4,7 +4,7 @@ import { useWebConversation } from '@/lib/messaging';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-export function WebMessageThread({
+function WebMessageThread({
   conversationId,
   titleKey,
 }: {
@@ -122,4 +122,12 @@ export function WebMessageThread({
       ) : null}
     </main>
   );
+}
+
+export function StaffWebMessageThread({ conversationId }: { readonly conversationId: string }) {
+  return <WebMessageThread conversationId={conversationId} titleKey="staffTitle" />;
+}
+
+export function EntityWebMessageThread() {
+  return <WebMessageThread titleKey="entityTitle" />;
 }

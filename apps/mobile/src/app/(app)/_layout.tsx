@@ -61,6 +61,8 @@ export default function AppLayout() {
         <Stack.Protected guard={!needsOnboarding && isStaff}>
           <Stack.Screen name="attendance/index" />
           <Stack.Screen name="attendance/[id]" />
+          <Stack.Screen name="messages/index" />
+          <Stack.Screen name="messages/[conversationId]" />
         </Stack.Protected>
         <Stack.Protected guard={needsOnboarding}>
           <Stack.Screen name="onboarding" />

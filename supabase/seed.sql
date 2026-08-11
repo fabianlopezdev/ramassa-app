@@ -1364,6 +1364,28 @@ values
   )
 on conflict (id) do nothing;
 
+insert into public.conversation_assignment_history (
+  id,
+  org_id,
+  conversation_id,
+  user_id,
+  changed_by,
+  previous_staff_id,
+  assigned_staff_id,
+  created_at
+)
+values (
+  '5eed0000-0000-4000-800e-000000000001',
+  '5eed0000-0000-4000-8000-000000000000',
+  '5eed0000-0000-4000-800c-000000000001',
+  '5eed0000-0000-4000-8000-000000000011',
+  '5eed0000-0000-4000-8000-000000000002',
+  null,
+  '5eed0000-0000-4000-8000-000000000002',
+  now() - interval '2 hours'
+)
+on conflict (id) do nothing;
+
 -- Seed fixtures must not enqueue real delivery work. The trigger is exercised
 -- by pgTAP and runtime QA with synthetic tokens, then restored immediately.
 alter table public.messages disable trigger messages_enqueue_push;
