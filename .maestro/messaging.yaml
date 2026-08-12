@@ -199,6 +199,21 @@ env:
     visible:
       id: message-sync-delivered
     timeout: 30000
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - hideKeyboard
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - swipe:
+          start: 50%, 35%
+          end: 50%, 55%
+          duration: 500
+- waitForAnimationToEnd:
+    timeout: 1000
 
 - runFlow:
     when:

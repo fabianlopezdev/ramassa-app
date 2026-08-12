@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import { parseSmokeMetroPort } from './qa-smoke';
 
 const flowPath = new URL('../.maestro/messaging.yaml', import.meta.url);
+const shellFlowPath = new URL('../.maestro/smoke-shells.yaml', import.meta.url);
 
 describe('durable messaging device flow', () => {
   test('accepts an explicit private Metro port for an isolated closure run', () => {
@@ -48,5 +49,27 @@ describe('durable messaging device flow', () => {
     expect(sendIndex).toBeGreaterThan(reachableSendIndex);
     expect(deliveredIndex).toBeGreaterThan(sendIndex);
     expect(deliveredIndex).toBeLessThan(offlineIndex);
+  });
+
+  test('uses the stable messages tab selector on iOS shell QA', async () => {
+    const flow = await Bun.file(shellFlowPath).text();
+
+    expect(flow).toContain(
+      '- runFlow:\n    when:\n      platform: iOS\n    commands:\n      - tapOn:\n          id: player-tab-messages',
+    );
+  });
+
+  test('dismisses the keyboard before leaving the delivered message thread', async () => {
+    const flow = await Bun.file(flowPath).text();
+    const deliveredIndex = flow.indexOf('id: message-sync-delivered');
+    const offlineBranchIndex = flow.indexOf('- toggleAirplaneMode', deliveredIndex);
+    const onlineBranch = flow.slice(deliveredIndex, offlineBranchIndex);
+    const iosDismissIndex = onlineBranch.indexOf(
+      'platform: iOS\n    commands:\n      - swipe:\n          start: 50%, 35%\n          end: 50%, 55%',
+    );
+    const profileIndex = flow.indexOf('id: player-tab-profile', deliveredIndex);
+
+    expect(iosDismissIndex).toBeGreaterThanOrEqual(0);
+    expect(profileIndex).toBeGreaterThan(offlineBranchIndex);
   });
 });

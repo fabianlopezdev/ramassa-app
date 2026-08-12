@@ -36,8 +36,18 @@ env:
 - extendedWaitUntil:
     visible: '.*${EVENTS_TITLE}.*'
     timeout: 15000
-- tapOn:
-    text: '^${TAB_MESSAGES}$'
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - tapOn:
+          text: '^${TAB_MESSAGES}$'
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          id: player-tab-messages
 - extendedWaitUntil:
     visible: '.*${MESSAGES_TITLE}.*'
     timeout: 15000
