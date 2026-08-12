@@ -11,10 +11,11 @@ env:
   DEV_MENU_LABEL: Developer menu
   HOME_FEED_TITLE: '{{home:feedTitle}}'
   EVENTS_TITLE: '{{events:playerTitle}}'
+  MESSAGES_TITLE: '{{messaging:playerTitle}}'
   PROFILE_TITLE: '{{profile:title}}'
   TAB_HOME: '{{nav:tabs.home}}'
   TAB_EVENTS: '{{nav:tabs.events}}'
-  TAB_COMMUNITY: '{{nav:tabs.community}}'
+  TAB_MESSAGES: '{{nav:tabs.messages}}'
   TAB_SERVICES: '{{nav:tabs.services}}'
   TAB_PROFILE: '{{nav:tabs.profile}}'
 ---
@@ -26,21 +27,19 @@ env:
 # qa-smoke captures the real Android framebuffer and OCRs the five label slots.
 # Hierarchy visibility is not accepted as evidence that Material painted text.
 
-# Each tab opens and renders its own header. Events and Profile have unique
-# headings. The two remaining placeholders intentionally repeat their tab label,
-# so `index: 1` proves a second match (the screen heading) exists; without the
-# index, the tab-bar label would satisfy the assertion before the tap happened.
+# Each tab opens and renders its own header. Events, Messages, and Profile have
+# unique headings. Services repeats its tab label, so `index: 1` proves a second
+# match (the screen heading) exists; without the index, the tab-bar label would
+# satisfy the assertion before the tap happened.
 - tapOn:
     text: '^${TAB_EVENTS}$'
 - extendedWaitUntil:
     visible: '.*${EVENTS_TITLE}.*'
     timeout: 15000
 - tapOn:
-    text: '^${TAB_COMMUNITY}$'
+    text: '^${TAB_MESSAGES}$'
 - extendedWaitUntil:
-    visible:
-      text: '^${TAB_COMMUNITY}$'
-      index: 1
+    visible: '.*${MESSAGES_TITLE}.*'
     timeout: 15000
 - tapOn:
     text: '^${TAB_SERVICES}$'

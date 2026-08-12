@@ -2,9 +2,15 @@ import { describe, expect, test } from 'bun:test';
 import {
   adminConversationSearchSchema,
   buildConversationPrefixTsQuery,
+  fetchConversationMessages,
+  getOrCreateOwnConversation,
+  latestDeliveredMessageId,
   mergeMessageTimeline,
   messageInputSchema,
   parseAdminConversationSearch,
+  subscribeToConversationQueue,
+  subscribeToMessageActivity,
+  syncReadReceiptWithRetry,
   type ChatMessage,
 } from './messaging';
 
@@ -58,6 +64,98 @@ describe('message timeline merge', () => {
       false,
     );
   });
+
+  test('loads the newest 500 messages and returns them in chronological order', async () => {
+    const orderCalls: { readonly column: string; readonly ascending: boolean }[] = [];
+    const newest = {
+      id: 'a4700000-0000-4000-8001-000000000002',
+      conversation_id: 'a4700000-0000-4000-8000-000000000001',
+      sender_id: 'a4700000-0000-4000-8000-000000000011',
+      content: 'newest',
+      image_url: null,
+      created_at: '2026-08-10T12:00:01.000Z',
+    };
+    const oldestInWindow = {
+      ...newest,
+      id: 'a4700000-0000-4000-8001-000000000001',
+      content: 'oldest-in-window',
+      created_at: '2026-08-10T12:00:00.000Z',
+    };
+    const query = {
+      select: () => query,
+      eq: () => query,
+      order: (column: string, options: { readonly ascending: boolean }) => {
+        orderCalls.push({ column, ascending: options.ascending });
+        return query;
+      },
+      limit: async () => ({ data: [newest, oldestInWindow], error: null }),
+    };
+    const client = { from: () => query } as never;
+
+    const result = await fetchConversationMessages(client, 'a4700000-0000-4000-8000-000000000001');
+
+    expect(orderCalls).toEqual([
+      { column: 'created_at', ascending: false },
+      { column: 'id', ascending: false },
+    ]);
+    expect(result.map((row) => row.id)).toEqual([oldestInWindow.id, newest.id]);
+  });
+
+  test('read receipts ignore a newer optimistic message id', () => {
+    const delivered = message();
+    const optimistic = message({
+      id: 'a4700000-0000-4000-8001-000000000002',
+      createdAt: '2026-08-10T12:00:01.000Z',
+      deliveryState: 'sending',
+    });
+
+    expect(latestDeliveredMessageId([delivered, optimistic])).toBe(delivered.id);
+    expect(latestDeliveredMessageId([optimistic])).toBeNull();
+  });
+
+  test('forwards cancellation to the own-conversation RPC', async () => {
+    const controller = new AbortController();
+    let receivedSignal: AbortSignal | undefined;
+    const rpcResult = {
+      abortSignal: async (signal: AbortSignal) => {
+        receivedSignal = signal;
+        return {
+          data: {
+            id: 'a4700000-0000-4000-8000-000000000001',
+            org_id: 'a4700000-0000-4000-8000-000000000002',
+            user_id: 'a4700000-0000-4000-8000-000000000003',
+            assigned_staff_id: null,
+            created_at: '2026-08-10T12:00:00.000Z',
+          },
+          error: null,
+        };
+      },
+    };
+    const client = { rpc: () => rpcResult } as never;
+
+    await getOrCreateOwnConversation(client, controller.signal);
+
+    expect(receivedSignal).toBe(controller.signal);
+  });
+});
+
+describe('read receipt synchronization', () => {
+  test('retries one transient failure before succeeding', async () => {
+    let attempts = 0;
+    const controller = new AbortController();
+
+    const synced = await syncReadReceiptWithRetry(
+      async () => {
+        attempts += 1;
+        if (attempts === 1) throw new Error('temporary');
+      },
+      controller.signal,
+      async () => undefined,
+    );
+
+    expect(synced).toBe(true);
+    expect(attempts).toBe(2);
+  });
 });
 
 describe('admin conversation filters', () => {
@@ -107,5 +205,40 @@ describe('admin conversation filters', () => {
   test('tsquery operators are removed rather than executed', () => {
     expect(buildConversationPrefixTsQuery("nuria') | (1=1--")).toBe('nuria:* & 11:*');
     expect(buildConversationPrefixTsQuery('<->')).toBe('');
+  });
+});
+
+describe('message realtime subscriptions', () => {
+  test('reports subscribed status so consumers can close the initial fetch gap', () => {
+    const statuses: string[] = [];
+    const channel = {
+      on: () => channel,
+      subscribe: (onStatus?: (status: string) => void) => {
+        onStatus?.('SUBSCRIBED');
+        return channel;
+      },
+    };
+    const client = {
+      channel: () => channel,
+      removeChannel: () => undefined,
+    } as never;
+    const ownerId = 'a4700000-0000-4000-8000-000000000011';
+
+    const unsubscribeActivity = subscribeToMessageActivity(
+      client,
+      ownerId,
+      () => undefined,
+      (status) => statuses.push(`activity:${status}`),
+    );
+    const unsubscribeQueue = subscribeToConversationQueue(
+      client,
+      ownerId,
+      () => undefined,
+      (status) => statuses.push(`queue:${status}`),
+    );
+
+    expect(statuses).toEqual(['activity:SUBSCRIBED', 'queue:SUBSCRIBED']);
+    unsubscribeActivity();
+    unsubscribeQueue();
   });
 });

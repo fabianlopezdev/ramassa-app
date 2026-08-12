@@ -6,6 +6,8 @@ import type { Database } from '../types/database';
 
 export type MessageDeliveryState = 'sending' | 'retrying' | 'delivered';
 
+export const MESSAGE_CONTENT_MAX_LENGTH = 4_000;
+
 type Client = SupabaseClient<Database>;
 
 export interface Conversation {
@@ -97,7 +99,7 @@ export const buildConversationPrefixTsQuery = buildPrefixTsQuery;
 export const messageInputSchema = z.object({
   conversationId: z.uuid(),
   id: z.uuid(),
-  content: z.string().trim().min(1).max(4_000),
+  content: z.string().trim().min(1).max(MESSAGE_CONTENT_MAX_LENGTH),
 });
 
 export type MessageInput = z.infer<typeof messageInputSchema>;
@@ -218,8 +220,39 @@ export function mergeMessageTimeline(
   });
 }
 
-export async function getOrCreateOwnConversation(client: Client): Promise<Conversation> {
-  const { data, error } = await client.rpc('get_or_create_own_conversation');
+export function latestDeliveredMessageId(messages: readonly ChatMessage[]): string | null {
+  for (let index = messages.length - 1; index >= 0; index -= 1) {
+    const message = messages[index];
+    if (message?.deliveryState === 'delivered') return message.id;
+  }
+  return null;
+}
+
+export async function syncReadReceiptWithRetry(
+  operation: () => Promise<void>,
+  signal: AbortSignal,
+  waitForRetry: () => Promise<void> = () => new Promise((resolve) => setTimeout(resolve, 250)),
+): Promise<boolean> {
+  if (signal.aborted) return false;
+  try {
+    await operation();
+    return !signal.aborted;
+  } catch {
+    if (signal.aborted) return false;
+    await waitForRetry();
+    if (signal.aborted) return false;
+    await operation();
+    return !signal.aborted;
+  }
+}
+
+export async function getOrCreateOwnConversation(
+  client: Client,
+  signal?: AbortSignal,
+): Promise<Conversation> {
+  let query = client.rpc('get_or_create_own_conversation');
+  if (signal !== undefined) query = query.abortSignal(signal);
+  const { data, error } = await query;
   if (error) throw new AppError('DB-1', { message: error.message });
   return parseConversation(data);
 }
@@ -275,13 +308,13 @@ export async function fetchConversationMessages(
     .from('messages')
     .select('id, conversation_id, sender_id, content, image_url, created_at')
     .eq('conversation_id', conversationId)
-    .order('created_at', { ascending: true })
-    .order('id', { ascending: true })
+    .order('created_at', { ascending: false })
+    .order('id', { ascending: false })
     .limit(500);
   if (signal !== undefined) query = query.abortSignal(signal);
   const { data, error } = await query;
   if (error) throw new AppError('DB-1', { message: error.message });
-  return (data ?? []).map(parseMessage);
+  return (data ?? []).map(parseMessage).reverse();
 }
 
 export async function sendConversationMessage(
@@ -303,27 +336,33 @@ export async function markConversationRead(
   client: Client,
   rawConversationId: string,
   rawMessageId: string,
+  signal?: AbortSignal,
 ): Promise<void> {
   const conversationId = z.uuid().parse(rawConversationId);
   const messageId = z.uuid().parse(rawMessageId);
-  const { error } = await client.rpc('mark_conversation_read', {
+  let query = client.rpc('mark_conversation_read', {
     p_conversation_id: conversationId,
     p_message_id: messageId,
   });
+  if (signal !== undefined) query = query.abortSignal(signal);
+  const { error } = await query;
   if (error) throw new AppError('DB-1', { message: error.message });
 }
 
 export async function fetchUnreadMessageCount(
   client: Client,
   conversationId: string | null = null,
+  signal?: AbortSignal,
 ): Promise<number> {
   const parsedConversationId = conversationId === null ? null : z.uuid().parse(conversationId);
-  const { data, error } =
+  let query =
     parsedConversationId === null
-      ? await client.rpc('get_unread_message_count')
-      : await client.rpc('get_unread_message_count', {
+      ? client.rpc('get_unread_message_count')
+      : client.rpc('get_unread_message_count', {
           p_conversation_id: parsedConversationId,
         });
+  if (signal !== undefined) query = query.abortSignal(signal);
+  const { data, error } = await query;
   if (error) throw new AppError('DB-1', { message: error.message });
   return z.coerce.number().int().nonnegative().parse(data);
 }
@@ -439,6 +478,7 @@ export function subscribeToMessageActivity(
   client: Client,
   ownerId: string,
   onMessage: (message: ChatMessage) => void,
+  onStatus?: (status: string) => void,
 ): () => void {
   const channel = client
     .channel(`message-activity:${z.uuid().parse(ownerId)}`)
@@ -449,7 +489,7 @@ export function subscribeToMessageActivity(
         onMessage(parseMessage(payload.new));
       },
     )
-    .subscribe();
+    .subscribe((status) => onStatus?.(status));
   return () => {
     void client.removeChannel(channel);
   };
@@ -459,6 +499,7 @@ export function subscribeToConversationQueue(
   client: Client,
   ownerId: string,
   onChange: () => void,
+  onStatus?: (status: string) => void,
 ): () => void {
   const channel = client
     .channel(`conversation-queue:${z.uuid().parse(ownerId)}`)
@@ -469,7 +510,7 @@ export function subscribeToConversationQueue(
       { event: '*', schema: 'public', table: 'conversation_read_states' },
       onChange,
     )
-    .subscribe();
+    .subscribe((status) => onStatus?.(status));
   return () => {
     void client.removeChannel(channel);
   };

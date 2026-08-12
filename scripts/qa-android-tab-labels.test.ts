@@ -8,7 +8,7 @@ import {
 const labels: readonly ExpectedTabLabel[] = [
   { key: 'home', text: 'Inici' },
   { key: 'events', text: 'Esdeveniments' },
-  { key: 'community', text: 'Comunitat' },
+  { key: 'messages', text: 'Missatges' },
   { key: 'services', text: 'Serveis' },
   { key: 'profile', text: 'Perfil' },
 ];
@@ -23,7 +23,7 @@ describe('Android tab-label visual evidence', () => {
       'level\tpage_num\tblock_num\tpar_num\tline_num\tword_num\tleft\ttop\twidth\theight\tconf\ttext',
       tsvRow('Inici', 45, 70),
       tsvRow('Esdeveniments', 205, 180),
-      tsvRow('Comunitat', 445, 150),
+      tsvRow('Missatges', 445, 150),
       tsvRow('Serveis', 685, 110),
       tsvRow('Perfil', 900, 80),
     ].join('\n');
@@ -39,7 +39,7 @@ describe('Android tab-label visual evidence', () => {
 
     expect(findMissingTabLabels(parseTesseractTsv(tsv), labels, 1_000)).toEqual([
       'events',
-      'community',
+      'messages',
       'services',
       'profile',
     ]);
@@ -50,7 +50,7 @@ describe('Android tab-label visual evidence', () => {
       'level\tpage_num\tblock_num\tpar_num\tline_num\tword_num\tleft\ttop\twidth\theight\tconf\ttext',
       tsvRow('Inici', 45, 70),
       tsvRow('Esdevenimenta', 205, 180),
-      tsvRow('Comunitat', 445, 150),
+      tsvRow('Missatges', 445, 150),
       tsvRow('Serveis', 685, 110),
       tsvRow('Q', 900, 30),
     ].join('\n');

@@ -1,7 +1,7 @@
 /**
  * The cumulative Maestro regression suite (RAPP-20).
  *
- *   bun run qa:smoke [--platform ios|android|both] [--only <substring>]
+ *   bun run qa:smoke [--platform ios|android|both] [--only <substring>] [--metro-port <port>]
  *
  * `--only` narrows the run to the flows whose filename contains the substring.
  * It exists for ITERATING on one failing flow: a suite pass is minutes per
@@ -102,6 +102,15 @@ export function smokeDevClientUrl(
   return devClientUrl(platform === 'ios' ? appId : publicScheme, metroPort);
 }
 
+export function parseSmokeMetroPort(rawPort: string | undefined): number | undefined {
+  if (rawPort === undefined) return undefined;
+  const port = Number(rawPort);
+  if (!Number.isInteger(port) || port < 1 || port > 65_535) {
+    throw new Error('--metro-port needs a valid TCP port');
+  }
+  return port;
+}
+
 async function runSuiteOn(
   platform: 'ios' | 'android',
   config: FlowConfig,
@@ -175,8 +184,13 @@ async function runSuiteOn(
 export async function runSmokeSuite(
   platforms: readonly ('ios' | 'android')[],
   only?: string,
+  metroPortOverride?: number,
 ): Promise<boolean> {
-  const config = await loadFlowConfig();
+  const loadedConfig = await loadFlowConfig();
+  const config =
+    metroPortOverride === undefined
+      ? loadedConfig
+      : { ...loadedConfig, metroPort: metroPortOverride };
   const all = suiteFlows(await readdir(suiteDir));
   const flows = only === undefined ? all : all.filter((flow) => flow.includes(only));
   if (all.length === 0) {
@@ -224,8 +238,19 @@ if (import.meta.main) {
   const requested = index === -1 ? 'android' : argv[index + 1];
   const onlyIndex = argv.indexOf('--only');
   const only = onlyIndex === -1 ? undefined : argv[onlyIndex + 1];
+  const metroPortIndex = argv.indexOf('--metro-port');
+  const metroPort = parseSmokeMetroPort(
+    metroPortIndex === -1 ? undefined : argv[metroPortIndex + 1],
+  );
   if (onlyIndex !== -1 && (only === undefined || only.startsWith('--'))) {
     console.error('--only needs a flow-name substring, e.g. --only i18n');
+    process.exit(1);
+  }
+  if (
+    metroPortIndex !== -1 &&
+    (argv[metroPortIndex + 1] === undefined || argv[metroPortIndex + 1]!.startsWith('--'))
+  ) {
+    console.error('--metro-port needs a valid TCP port');
     process.exit(1);
   }
   const platforms =
@@ -235,7 +260,7 @@ if (import.meta.main) {
     process.exit(1);
   }
   try {
-    process.exit((await runSmokeSuite(platforms, only)) ? 0 : 1);
+    process.exit((await runSmokeSuite(platforms, only, metroPort)) ? 0 : 1);
   } catch (error) {
     console.error(`\n✗ ${error instanceof Error ? error.message : String(error)}\n`);
     process.exit(1);

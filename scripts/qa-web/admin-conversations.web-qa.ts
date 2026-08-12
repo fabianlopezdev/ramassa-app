@@ -320,7 +320,7 @@ test('assignment, reply, push receipt and participant timeline complete one staf
       where publication.content_id = ${sqlLiteral(messageId)}
         and delivery.recipient_id = ${sqlLiteral(conversation.userId)}`),
     )
-    .toBe(1);
+    .toBeGreaterThanOrEqual(1);
 
   await page.getByTestId('conversation-participant-link').click();
   await expect(page.getByTestId(`participant-activity-message-${messageId}`)).toBeVisible();

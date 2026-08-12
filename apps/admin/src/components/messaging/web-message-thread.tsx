@@ -1,8 +1,71 @@
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useWebConversation } from '@/lib/messaging';
-import { useMemo, useState } from 'react';
+import { memo, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { MESSAGE_CONTENT_MAX_LENGTH } from '@ramassa/shared/messaging';
+
+const WebMessageComposer = memo(function WebMessageComposer({
+  send,
+  sendState,
+  sendErrorCode,
+}: {
+  readonly send: (content: string) => Promise<boolean | undefined>;
+  readonly sendState: 'idle' | 'sending' | 'error';
+  readonly sendErrorCode: string | null;
+}) {
+  const { t } = useTranslation('messaging');
+  const { t: tErrors } = useTranslation('errors');
+  const [draft, setDraft] = useState('');
+  const submit = async () => {
+    const content = draft.trim();
+    if (content.length === 0) return;
+    if (await send(content)) {
+      setDraft((current) => (current.trim() === content ? '' : current));
+    }
+  };
+
+  return (
+    <div className="mt-3 space-y-2">
+      {sendState === 'error' ? (
+        <p data-testid="message-send-error" role="alert" className="text-sm text-destructive">
+          {t('sendError')}
+          {sendErrorCode === null ? null : (
+            <span className="block text-xs text-muted-foreground">
+              {tErrors('errorCodeLabel')}: {sendErrorCode}
+            </span>
+          )}
+        </p>
+      ) : null}
+      <form
+        className="flex items-end gap-2"
+        onSubmit={(event) => {
+          event.preventDefault();
+          void submit();
+        }}
+      >
+        <Textarea
+          value={draft}
+          data-testid="message-composer"
+          onChange={(event) => setDraft(event.target.value)}
+          placeholder={t('composerPlaceholder')}
+          aria-label={t('composerPlaceholder')}
+          maxLength={MESSAGE_CONTENT_MAX_LENGTH}
+          rows={2}
+          className="min-h-12 resize-none"
+        />
+        <Button
+          data-testid="message-send"
+          type="submit"
+          size="lg"
+          disabled={draft.trim().length === 0 || sendState === 'sending'}
+        >
+          {t(sendState === 'sending' ? 'sending' : 'send')}
+        </Button>
+      </form>
+    </div>
+  );
+});
 
 function WebMessageThread({
   conversationId,
@@ -12,8 +75,9 @@ function WebMessageThread({
   readonly titleKey: 'entityTitle' | 'staffTitle';
 }) {
   const { t, i18n } = useTranslation('messaging');
-  const { peer, messages, state, load, send, userId } = useWebConversation(conversationId);
-  const [draft, setDraft] = useState('');
+  const { t: tErrors } = useTranslation('errors');
+  const { peer, messages, state, sendState, loadErrorCode, sendErrorCode, load, send, userId } =
+    useWebConversation(conversationId);
   const formatter = useMemo(
     () =>
       new Intl.DateTimeFormat(i18n.resolvedLanguage ?? 'ca', {
@@ -22,12 +86,6 @@ function WebMessageThread({
       }),
     [i18n.resolvedLanguage],
   );
-  const submit = () => {
-    const content = draft.trim();
-    if (content.length === 0) return;
-    setDraft('');
-    void send(content);
-  };
 
   return (
     <main
@@ -43,12 +101,17 @@ function WebMessageThread({
       </header>
       {state === 'loading' ? (
         <p className="m-auto text-sm text-muted-foreground" aria-live="polite">
-          {t('sending')}
+          {t('loadingConversation')}
         </p>
       ) : null}
       {state === 'error' ? (
         <div className="m-auto flex flex-col items-center gap-3" role="alert">
           <p className="text-sm text-muted-foreground">{t('loadError')}</p>
+          {loadErrorCode === null ? null : (
+            <p className="text-xs text-muted-foreground">
+              {tErrors('errorCodeLabel')}: {loadErrorCode}
+            </p>
+          )}
           <Button type="button" onClick={() => void load()}>
             {t('retry')}
           </Button>
@@ -73,10 +136,10 @@ function WebMessageThread({
                     <li
                       data-testid="message-row"
                       key={message.id}
-                      className={`max-w-[82%] ${isOwn ? 'self-end' : 'self-start'}`}
+                      className={`max-w-[var(--ramassa-messaging-message-bubble-max-width)] ${isOwn ? 'self-end' : 'self-start'}`}
                     >
                       <div
-                        className={`rounded-2xl px-4 py-2 ${isOwn ? 'rounded-br-sm bg-primary text-primary-foreground' : 'rounded-bl-sm border border-border bg-background'}`}
+                        className={`rounded-2xl px-4 py-2 ${isOwn ? 'rounded-ee-sm bg-primary text-primary-foreground' : 'rounded-es-sm border border-border bg-background'}`}
                       >
                         <p className="whitespace-pre-wrap break-words text-sm">{message.content}</p>
                       </div>
@@ -92,32 +155,7 @@ function WebMessageThread({
               </ol>
             )}
           </section>
-          <form
-            className="mt-3 flex items-end gap-2"
-            onSubmit={(event) => {
-              event.preventDefault();
-              submit();
-            }}
-          >
-            <Textarea
-              value={draft}
-              data-testid="message-composer"
-              onChange={(event) => setDraft(event.target.value)}
-              placeholder={t('composerPlaceholder')}
-              aria-label={t('composerPlaceholder')}
-              maxLength={4_000}
-              rows={2}
-              className="min-h-12 resize-none"
-            />
-            <Button
-              data-testid="message-send"
-              type="submit"
-              size="lg"
-              disabled={draft.trim().length === 0}
-            >
-              {t('send')}
-            </Button>
-          </form>
+          <WebMessageComposer send={send} sendState={sendState} sendErrorCode={sendErrorCode} />
         </>
       ) : null}
     </main>

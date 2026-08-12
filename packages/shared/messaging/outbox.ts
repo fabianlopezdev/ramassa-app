@@ -32,6 +32,28 @@ export interface MessagingDrainResult<Result> {
 
 const drainTails = new WeakMap<MessagingOutboxStorage, Map<string, Promise<void>>>();
 
+function isMessagingOutboxEntry(value: unknown): value is MessagingOutboxEntry {
+  if (typeof value !== 'object' || value === null) return false;
+  const entry = value as Record<string, unknown>;
+  return (
+    typeof entry.id === 'string' &&
+    entry.id.length > 0 &&
+    typeof entry.conversationId === 'string' &&
+    entry.conversationId.length > 0 &&
+    typeof entry.ownerId === 'string' &&
+    entry.ownerId.length > 0 &&
+    (typeof entry.content === 'string' || entry.content === null) &&
+    (typeof entry.imageUrl === 'string' || entry.imageUrl === null) &&
+    typeof entry.createdAt === 'string' &&
+    Number.isFinite(Date.parse(entry.createdAt)) &&
+    typeof entry.attemptCount === 'number' &&
+    Number.isInteger(entry.attemptCount) &&
+    entry.attemptCount >= 0 &&
+    (entry.retryAt === null ||
+      (typeof entry.retryAt === 'string' && Number.isFinite(Date.parse(entry.retryAt))))
+  );
+}
+
 async function serializeDrain<Result>(
   storage: MessagingOutboxStorage,
   ownerId: string,
@@ -68,7 +90,7 @@ function readEntries(storage: MessagingOutboxStorage): readonly MessagingOutboxE
     const parsed = JSON.parse(serialized) as {
       readonly entries?: readonly MessagingOutboxEntry[];
     };
-    return Array.isArray(parsed.entries) ? parsed.entries : [];
+    return Array.isArray(parsed.entries) ? parsed.entries.filter(isMessagingOutboxEntry) : [];
   } catch {
     return [];
   }
@@ -101,7 +123,9 @@ export function createMessagingOutbox(storage: MessagingOutboxStorage, ownerId: 
         attemptCount: 0,
         retryAt: null,
       };
-      const entries = readEntries(storage).filter((candidate) => candidate.id !== entry.id);
+      const entries = readEntries(storage).filter(
+        (candidate) => candidate.ownerId !== ownerId || candidate.id !== entry.id,
+      );
       writeEntries(storage, [...entries, entry]);
       return entry;
     },
@@ -121,14 +145,17 @@ export function createMessagingOutbox(storage: MessagingOutboxStorage, ownerId: 
         let failed = 0;
 
         for (const entry of pending) {
-          if (entry.retryAt !== null && Date.parse(entry.retryAt) > nowMs) continue;
+          if (entry.retryAt !== null && Date.parse(entry.retryAt) > nowMs) break;
           try {
             const result = await send(entry);
             delivered.push(result);
             writeEntries(
               storage,
               readEntries(storage).filter(
-                (candidate) => candidate.id !== entry.id || candidate.createdAt !== entry.createdAt,
+                (candidate) =>
+                  candidate.ownerId !== ownerId ||
+                  candidate.id !== entry.id ||
+                  candidate.createdAt !== entry.createdAt,
               ),
             );
           } catch {
@@ -141,12 +168,15 @@ export function createMessagingOutbox(storage: MessagingOutboxStorage, ownerId: 
             writeEntries(
               storage,
               readEntries(storage).map((candidate) =>
-                candidate.id === entry.id && candidate.createdAt === entry.createdAt
+                candidate.ownerId === ownerId &&
+                candidate.id === entry.id &&
+                candidate.createdAt === entry.createdAt
                   ? { ...candidate, attemptCount, retryAt }
                   : candidate,
               ),
             );
             failed += 1;
+            break;
           }
         }
 

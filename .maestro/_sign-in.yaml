@@ -15,24 +15,33 @@ env:
   LOGIN_TITLE: '{{auth:loginTitle}}'
 ---
 # Opening the dev menu is a LOOP, not one tap. A single tap is swallowed whenever
-# the client's explainer sheet is mid-flight over it, and the flow then waits out
-# its timeout on a login screen with the button plainly visible. The loop also
-# clears a late sheet, and it stops the instant the menu is actually open. The
-# section it waits on is the FIRST one: the menu opens scrolled to the top, so
-# waiting on a lower section fails on a menu that opened perfectly.
+# the client's explainer sheet is mid-flight over it. Stop on the pinned Close
+# action, then scroll independently because the Environment section can push the
+# account switcher below the fold on smaller Android screens.
 - repeat:
     times: 6
     while:
-      notVisible: '.*${ACCOUNTS_SECTION}.*'
+      notVisible: '.*Close.*'
     commands:
-      - tapOn:
-          text: '.*Close.*'
-          optional: true
       - tapOn:
           text: '.*${DEV_MENU_LABEL}.*'
           optional: true
       - waitForAnimationToEnd:
           timeout: 3000
+- extendedWaitUntil:
+    visible: '.*Close.*'
+    timeout: 15000
+- repeat:
+    times: 20
+    while:
+      notVisible: '.*${ACCOUNTS_SECTION}.*'
+    commands:
+      - swipe:
+          start: 50%, 70%
+          end: 50%, 48%
+          duration: 900
+      - waitForAnimationToEnd:
+          timeout: 1200
 - extendedWaitUntil:
     visible: '.*${ACCOUNTS_SECTION}.*'
     timeout: 15000

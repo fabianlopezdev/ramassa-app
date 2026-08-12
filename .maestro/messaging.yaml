@@ -1,7 +1,7 @@
 appId: com.ramassa.app
 name: messaging
 env:
-  RAPP47_DEV_CLIENT_URL: ramassa://expo-development-client/?url=http%3A%2F%2Flocalhost%3A18047
+  DEV_CLIENT_URL: ramassa://expo-development-client/?url=http%3A%2F%2Flocalhost%3A18049
   DEV_MENU_LABEL: Developer menu
   PLAYER_EMAIL: amina.alhassan@example.test
   PLAYER_PASSWORD: ramassa-dev-password
@@ -16,7 +16,7 @@ env:
   OFFLINE: Sense connexió. Els missatges quedaran en cua.
 ---
 - clearState
-- openLink: ${RAPP47_DEV_CLIENT_URL}
+- openLink: ${DEV_CLIENT_URL}
 - tapOn:
     text: '^Open$'
     optional: true
@@ -40,8 +40,26 @@ env:
 - tapOn: '^Inicia la sessió amb contrasenya$'
 - tapOn: '^tu@exemple.com$'
 - inputText: ${PLAYER_EMAIL}
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - waitForAnimationToEnd:
+          timeout: 1500
+      - tapOn:
+          text: '^Not Now$'
+          optional: true
 - tapOn: '^La teva contrasenya$'
 - inputText: ${PLAYER_PASSWORD}
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - waitForAnimationToEnd:
+          timeout: 1500
+      - tapOn:
+          text: '^Not Now$'
+          optional: true
 - tapOn: '.*${LOGIN_TITLE}.*'
 - tapOn: '^Entra$'
 - runFlow:
@@ -87,7 +105,7 @@ env:
             id: player-tab-home
           timeout: 60000
 - stopApp
-- openLink: ${RAPP47_DEV_CLIENT_URL}
+- openLink: ${DEV_CLIENT_URL}
 - tapOn:
     text: '^Open$'
     optional: true
@@ -158,6 +176,30 @@ env:
 - assertVisible:
     id: message-composer
 
+- tapOn:
+    id: message-composer
+- inputText: rapp49-online-device-send
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      # A fresh simulator can show the one-time system Dictation sheet when
+      # Maestro first types into a field. Dismiss it so the product flow can
+      # continue, especially at large content sizes where it covers the tabs.
+      - waitForAnimationToEnd:
+          timeout: 1500
+      - tapOn:
+          text: '^Not Now$'
+          optional: true
+- assertVisible:
+    id: message-send
+- tapOn:
+    id: message-send
+- extendedWaitUntil:
+    visible:
+      id: message-sync-delivered
+    timeout: 30000
+
 - runFlow:
     when:
       platform: Android
@@ -177,8 +219,7 @@ env:
       - assertVisible:
           id: message-sync-sending
       - stopApp
-      - toggleAirplaneMode
-      - openLink: ${RAPP47_DEV_CLIENT_URL}
+      - openLink: ${DEV_CLIENT_URL}
       - waitForAnimationToEnd:
           timeout: 12000
       - repeat:
@@ -199,6 +240,9 @@ env:
           visible:
             id: message-composer
           timeout: 60000
+      - assertVisible:
+          id: message-sync-sending
+      - toggleAirplaneMode
       - extendedWaitUntil:
           notVisible:
             id: message-sync-sending
@@ -257,7 +301,7 @@ env:
       - waitForAnimationToEnd:
           timeout: 2500
 - stopApp
-- openLink: ${RAPP47_DEV_CLIENT_URL}
+- openLink: ${DEV_CLIENT_URL}
 - tapOn:
     text: '^Open$'
     optional: true

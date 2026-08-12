@@ -4,8 +4,10 @@ import {
   AnnouncementFeedSkeleton,
 } from '@/components/announcements/feed-states';
 import { PageWidth } from '@/components/layout/content-width';
+import { StaffConversationCard } from '@/components/messaging/staff-conversation-card';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { useStaffConversationList } from '@/lib/messaging';
+import { formatUnreadBadge } from '@/lib/unread-badge';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useRouter, type Href } from 'expo-router';
@@ -21,6 +23,7 @@ const EMPTY_CONVERSATIONS: readonly StaffConversationRow[] = [];
 const listContentStyle = {
   paddingHorizontal: tokens.spacing.lg,
   paddingBottom: tokens.spacing['3xl'],
+  gap: tokens.spacing.md,
 } as const;
 const keyExtractor = (row: StaffConversationRow) => row.conversationId;
 
@@ -28,46 +31,43 @@ export default function StaffConversationsScreen() {
   const { t } = useTranslation('messaging');
   const fontClass = useLanguageFontClass();
   const { back, push } = useRouter();
-  const { data, isPending, isError, error, refetch } = useStaffConversationList();
+  const { data, isPending, isError, isFetching, error, refetch } = useStaffConversationList();
   const open = useCallback(
     (conversationId: string) => push(`/messages/${conversationId}` as Href),
     [push],
   );
   const renderItem = useCallback(
-    ({ item }: ListRenderItemInfo<StaffConversationRow>) => (
-      <PressableScale
-        testID={`staff-conversation-${item.conversationId}`}
-        accessibilityLabel={t('openConversation', {
-          name: `${item.participantFirstName} ${item.participantLastName}`,
-        })}
-        onPress={() => open(item.conversationId)}
-        haptic="selection"
-        className="rounded-2xl border border-neutral-200 bg-white p-lg"
-      >
-        <View className="flex-row items-start justify-between gap-md">
-          <View className="flex-1 gap-xs">
-            <Text className={`text-lg font-semibold text-neutral-900 ${fontClass}`}>
-              {`${item.participantFirstName} ${item.participantLastName}`}
-            </Text>
-            <Text className={`text-sm text-neutral-600 ${fontClass}`}>
-              {t(item.participantRole === 'player' ? 'participantPlayer' : 'participantEntity')}
-            </Text>
-            <Text className={`text-sm text-neutral-600 ${fontClass}`} numberOfLines={1}>
-              {item.latestMessagePreview ?? t('noMessagePreview')}
-            </Text>
-          </View>
-          {item.unreadCount > 0 ? (
-            <View className="min-h-8 min-w-8 items-center justify-center rounded-full bg-primary-600 px-sm">
-              <Text className={`font-bold text-white ${fontClass}`}>{item.unreadCount}</Text>
-            </View>
-          ) : null}
-        </View>
-      </PressableScale>
-    ),
+    ({ item }: ListRenderItemInfo<StaffConversationRow>) => {
+      const unreadBadge = formatUnreadBadge(item.unreadCount);
+      const participantName = `${item.participantFirstName} ${item.participantLastName}`;
+      const participantRole = t(
+        item.participantRole === 'player' ? 'participantPlayer' : 'participantEntity',
+      );
+      const messagePreview = item.latestMessagePreview ?? t('noMessagePreview');
+      return (
+        <StaffConversationCard
+          conversationId={item.conversationId}
+          participantName={participantName}
+          participantRole={participantRole}
+          messagePreview={messagePreview}
+          unreadBadge={unreadBadge}
+          accessibilityLabel={t('conversationRowLabel', {
+            name: participantName,
+            role: participantRole,
+            preview: messagePreview,
+          })}
+          accessibilityHint={
+            item.unreadCount > 0 ? t('unread', { count: item.unreadCount }) : undefined
+          }
+          languageClass={fontClass}
+          onOpen={open}
+        />
+      );
+    },
     [fontClass, open, t],
   );
 
-  if (isPending) return <AnnouncementFeedSkeleton accessibilityLabel={t('sending')} />;
+  if (isPending) return <AnnouncementFeedSkeleton accessibilityLabel={t('loadingConversations')} />;
   if (isError) {
     return (
       <AnnouncementFeedError
@@ -76,6 +76,7 @@ export default function StaffConversationsScreen() {
         code={toAppError(error).code}
         languageFontClass={fontClass}
         onRetry={() => void refetch()}
+        isLoading={isFetching}
       />
     );
   }
@@ -89,7 +90,7 @@ export default function StaffConversationsScreen() {
             accessibilityLabel={t('backToAttendance')}
             onPress={back}
             haptic="tapLight"
-            className="min-h-min self-start justify-center"
+            className="min-h-recommended self-start justify-center"
           >
             <Text className={`font-semibold text-primary-dark ${fontClass}`}>{t('backShort')}</Text>
           </PressableScale>
@@ -105,8 +106,8 @@ export default function StaffConversationsScreen() {
         </View>
         {conversations.length === 0 ? (
           <AnnouncementEmptyState
-            title={t('noConversationsTitle')}
-            body={t('noConversationsBody')}
+            title={t('noStaffConversationsTitle')}
+            body={t('noStaffConversationsBody')}
             languageFontClass={fontClass}
           />
         ) : (
@@ -116,15 +117,11 @@ export default function StaffConversationsScreen() {
             data={conversations}
             renderItem={renderItem}
             keyExtractor={keyExtractor}
+            contentInsetAdjustmentBehavior="automatic"
             contentContainerStyle={listContentStyle}
-            ItemSeparatorComponent={ConversationSeparator}
           />
         )}
       </PageWidth>
     </SafeAreaView>
   );
-}
-
-function ConversationSeparator() {
-  return <View className="h-md" />;
 }

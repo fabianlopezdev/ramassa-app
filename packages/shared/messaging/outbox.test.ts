@@ -104,4 +104,94 @@ describe('persisted messaging outbox', () => {
     await Promise.all([outbox.drain(send), outbox.drain(send)]);
     expect(sends).toBe(1);
   });
+
+  test('does not send newer messages ahead of a failed earlier message', async () => {
+    const outbox = createMessagingOutbox(memoryStorage(), 'player-1');
+    outbox.enqueue({
+      id: 'a4700000-0000-4000-8001-000000000001',
+      conversationId: 'conversation-1',
+      content: 'first',
+      imageUrl: null,
+      createdAt: '2026-08-10T12:00:00.000Z',
+    });
+    outbox.enqueue({
+      id: 'a4700000-0000-4000-8001-000000000002',
+      conversationId: 'conversation-1',
+      content: 'second',
+      imageUrl: null,
+      createdAt: '2026-08-10T12:00:01.000Z',
+    });
+    const attempted: string[] = [];
+
+    const result = await outbox.drain(async (entry) => {
+      attempted.push(entry.content ?? '');
+      if (entry.content === 'first') throw new Error('offline');
+      return entry.content;
+    }, new Date('2026-08-10T12:00:10.000Z'));
+
+    expect(attempted).toEqual(['first']);
+    expect(result.failed).toBe(1);
+    expect(outbox.list().map((entry) => entry.content)).toEqual(['first', 'second']);
+
+    attempted.length = 0;
+    await outbox.drain(async (entry) => {
+      attempted.push(entry.content ?? '');
+      return entry.content;
+    }, new Date('2026-08-10T12:00:10.500Z'));
+    expect(attempted).toEqual([]);
+  });
+
+  test('discards malformed persisted entries without losing valid queued messages', () => {
+    const storage = memoryStorage();
+    storage.set(
+      'ramassa.messaging-outbox.v1',
+      JSON.stringify({
+        version: 1,
+        entries: [
+          {
+            id: 'a4700000-0000-4000-8001-000000000001',
+            conversationId: 'conversation-1',
+            ownerId: 'player-1',
+            content: 'valid',
+            imageUrl: null,
+            createdAt: '2026-08-10T12:00:00.000Z',
+            attemptCount: 0,
+            retryAt: null,
+          },
+          { ownerId: 'player-1', content: 'malformed' },
+        ],
+      }),
+    );
+
+    expect(
+      createMessagingOutbox(storage, 'player-1')
+        .list()
+        .map((entry) => entry.content),
+    ).toEqual(['valid']);
+  });
+
+  test('deduplicates ids only within the same owner', () => {
+    const storage = memoryStorage();
+    const firstOwner = createMessagingOutbox(storage, 'player-1');
+    const secondOwner = createMessagingOutbox(storage, 'player-2');
+    const sharedId = 'a4700000-0000-4000-8001-000000000001';
+
+    firstOwner.enqueue({
+      id: sharedId,
+      conversationId: 'conversation-1',
+      content: 'first owner',
+      imageUrl: null,
+      createdAt: '2026-08-10T12:00:00.000Z',
+    });
+    secondOwner.enqueue({
+      id: sharedId,
+      conversationId: 'conversation-2',
+      content: 'second owner',
+      imageUrl: null,
+      createdAt: '2026-08-10T12:00:01.000Z',
+    });
+
+    expect(firstOwner.list().map((entry) => entry.content)).toEqual(['first owner']);
+    expect(secondOwner.list().map((entry) => entry.content)).toEqual(['second owner']);
+  });
 });

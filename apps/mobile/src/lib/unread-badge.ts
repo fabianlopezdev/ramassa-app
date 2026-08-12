@@ -1,5 +1,7 @@
+const MAX_UNREAD_BADGE_COUNT = 99;
+
 export function formatUnreadBadge(unread: number): string | null {
-  return unread > 0 ? String(Math.min(unread, 99)) : null;
+  return unread > 0 ? String(Math.min(unread, MAX_UNREAD_BADGE_COUNT)) : null;
 }
 
 export function unreadBadgeProps(unread: number): {

@@ -91,12 +91,14 @@ export function AnnouncementFeedError({
   code,
   languageFontClass,
   onRetry,
+  isLoading,
 }: {
   readonly message: string;
   readonly retryLabel: string;
   readonly code: AppErrorCode;
   readonly languageFontClass: string;
   readonly onRetry: () => void;
+  readonly isLoading?: boolean;
 }) {
   return (
     <View className="flex-1 items-center justify-center gap-md bg-white p-lg">
@@ -109,7 +111,7 @@ export function AnnouncementFeedError({
       </Text>
       <ErrorCodeLine code={code} />
       <View className="w-full max-w-form">
-        <AuthSubmitButton label={retryLabel} onPress={onRetry} />
+        <AuthSubmitButton label={retryLabel} onPress={onRetry} isLoading={isLoading} />
       </View>
     </View>
   );

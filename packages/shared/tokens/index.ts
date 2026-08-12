@@ -75,6 +75,11 @@ export const tokens = {
   // from the `sm` breakpoint up for the same reason.
   contentWidth: { form: 480, page: 768 },
 
+  // Conversation bubbles stay comfortably readable without spanning the full
+  // thread width. A percentage keeps the measure responsive at large text and
+  // across phone widths while leaving sender alignment visually obvious.
+  messaging: { messageBubbleMaxWidth: '84%' },
+
   // Client-side upload ceilings, enforced before the R2 upload (ADR-013).
   upload: {
     maxImageBytes: 1_048_576,
