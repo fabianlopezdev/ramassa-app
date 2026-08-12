@@ -17,6 +17,8 @@ describe('Edge push catalog artifact', () => {
 
     expect(generated).toContain('announcementFallbackBody');
     expect(generated).toContain('eventFallbackBody');
+    expect(generated).toContain('forumFlagTitle');
+    expect(generated).toContain('forumFlagBody');
     expect(generated).not.toContain('rationaleTitle');
     expect(generated).not.toContain('rationaleBody');
   });

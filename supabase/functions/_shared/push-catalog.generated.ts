@@ -7,31 +7,41 @@ export const PUSH_NOTIFICATION_FALLBACK_BODIES = {
     "announcementFallbackBody": "Toca per llegir l'avís.",
     "eventFallbackBody": "Toca per veure l'activitat.",
     "messageTitle": "Nou missatge de l’equip",
-    "messageBody": "Obre Ramassà per llegir-lo."
+    "messageBody": "Obre Ramassà per llegir-lo.",
+    "forumFlagTitle": "Nou avís al fòrum",
+    "forumFlagBody": "Obre la cua de moderació per revisar-lo."
   },
   "es": {
     "announcementFallbackBody": "Toca para leer el aviso.",
     "eventFallbackBody": "Toca para ver la actividad.",
     "messageTitle": "Nuevo mensaje del equipo",
-    "messageBody": "Abre Ramassà para leerlo."
+    "messageBody": "Abre Ramassà para leerlo.",
+    "forumFlagTitle": "Nuevo aviso en el foro",
+    "forumFlagBody": "Abre la cola de moderación para revisarlo."
   },
   "en": {
     "announcementFallbackBody": "Tap to read the notice.",
     "eventFallbackBody": "Tap to view the activity.",
     "messageTitle": "New message from the team",
-    "messageBody": "Open Ramassà to read it."
+    "messageBody": "Open Ramassà to read it.",
+    "forumFlagTitle": "New forum report",
+    "forumFlagBody": "Open the moderation queue to review it."
   },
   "ar": {
     "announcementFallbackBody": "اضغطي لقراءة الإشعار.",
     "eventFallbackBody": "اضغطي لعرض النشاط.",
     "messageTitle": "رسالة جديدة من الفريق",
-    "messageBody": "افتحي Ramassà لقراءتها."
+    "messageBody": "افتحي Ramassà لقراءتها.",
+    "forumFlagTitle": "بلاغ جديد في المنتدى",
+    "forumFlagBody": "افتحي قائمة الإشراف لمراجعته."
   },
   "fa": {
     "announcementFallbackBody": "برای خواندن اطلاعیه ضربه بزنید.",
     "eventFallbackBody": "برای دیدن برنامه ضربه بزنید.",
     "messageTitle": "پیام جدید از تیم",
-    "messageBody": "Ramassà را باز کنید تا آن را بخوانید."
+    "messageBody": "Ramassà را باز کنید تا آن را بخوانید.",
+    "forumFlagTitle": "گزارش جدید در انجمن",
+    "forumFlagBody": "صف نظارت را برای بررسی باز کنید."
   }
 } as const;
 

@@ -738,6 +738,87 @@ export type Database = {
           },
         ];
       };
+      forum_flags: {
+        Row: {
+          comment: string | null;
+          created_at: string;
+          flagger_id: string;
+          id: string;
+          org_id: string;
+          post_id: string | null;
+          reason: string;
+          reply_id: string | null;
+          reviewed_at: string | null;
+          reviewed_by: string | null;
+          state: string;
+          target_type: string;
+        };
+        Insert: {
+          comment?: string | null;
+          created_at?: string;
+          flagger_id: string;
+          id?: string;
+          org_id: string;
+          post_id?: string | null;
+          reason: string;
+          reply_id?: string | null;
+          reviewed_at?: string | null;
+          reviewed_by?: string | null;
+          state?: string;
+          target_type: string;
+        };
+        Update: {
+          comment?: string | null;
+          created_at?: string;
+          flagger_id?: string;
+          id?: string;
+          org_id?: string;
+          post_id?: string | null;
+          reason?: string;
+          reply_id?: string | null;
+          reviewed_at?: string | null;
+          reviewed_by?: string | null;
+          state?: string;
+          target_type?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'forum_flags_flagger_tenant_fkey';
+            columns: ['org_id', 'flagger_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['org_id', 'id'];
+          },
+          {
+            foreignKeyName: 'forum_flags_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'forum_flags_post_tenant_fkey';
+            columns: ['org_id', 'post_id'];
+            isOneToOne: false;
+            referencedRelation: 'forum_posts';
+            referencedColumns: ['org_id', 'id'];
+          },
+          {
+            foreignKeyName: 'forum_flags_reply_tenant_fkey';
+            columns: ['org_id', 'reply_id'];
+            isOneToOne: false;
+            referencedRelation: 'forum_replies';
+            referencedColumns: ['org_id', 'id'];
+          },
+          {
+            foreignKeyName: 'forum_flags_reviewed_by_fkey';
+            columns: ['reviewed_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       forum_posts: {
         Row: {
           author_first_name: string;
@@ -2312,6 +2393,10 @@ export type Database = {
       current_org_id: { Args: never; Returns: string };
       decrypt_field: { Args: { ciphertext: string }; Returns: string };
       default_organization_id: { Args: never; Returns: string };
+      delete_forum_category: {
+        Args: { p_category_id: string };
+        Returns: undefined;
+      };
       delete_own_forum_post: { Args: { p_post_id: string }; Returns: undefined };
       delete_participant_permanently: {
         Args: { participant_id: string };
@@ -2323,6 +2408,15 @@ export type Database = {
       };
       encrypt_field: { Args: { plaintext: string }; Returns: string };
       encryption_key: { Args: never; Returns: string };
+      flag_forum_content: {
+        Args: {
+          p_comment: string;
+          p_reason: string;
+          p_target_id: string;
+          p_target_type: string;
+        };
+        Returns: string;
+      };
       get_or_create_own_conversation: {
         Args: never;
         Returns: {
@@ -2338,6 +2432,10 @@ export type Database = {
           isOneToOne: true;
           isSetofReturn: false;
         };
+      };
+      get_or_create_staff_conversation: {
+        Args: { p_participant_id: string };
+        Returns: string;
       };
       get_own_profile: {
         Args: never;
@@ -2496,6 +2594,24 @@ export type Database = {
         Args: { new_status: string; old_status: string };
         Returns: boolean;
       };
+      list_forum_moderation_queue: {
+        Args: never;
+        Returns: {
+          author_first_name: string;
+          author_id: string;
+          category_id: string;
+          comments: Json;
+          content: string;
+          first_flagged_at: string;
+          flag_count: number;
+          is_pinned: boolean;
+          post_id: string;
+          reasons: Json;
+          target_id: string;
+          target_type: string;
+          visibility: string;
+        }[];
+      };
       list_staff_conversations: {
         Args: {
           p_assigned_to_me?: boolean;
@@ -2547,6 +2663,10 @@ export type Database = {
       };
       mark_conversation_read: {
         Args: { p_conversation_id: string; p_message_id: string };
+        Returns: undefined;
+      };
+      moderate_forum_target: {
+        Args: { p_action: string; p_target_id: string; p_target_type: string };
         Returns: undefined;
       };
       my_pending_invite: {
@@ -2623,6 +2743,17 @@ export type Database = {
       };
       save_admin_service: { Args: { p_payload: Json }; Returns: string };
       save_entity_service: { Args: { p_payload: Json }; Returns: string };
+      save_forum_category: {
+        Args: {
+          p_category_id: string;
+          p_color: string;
+          p_icon: string;
+          p_name: Json;
+          p_slug: string;
+          p_sort_order: number;
+        };
+        Returns: string;
+      };
       send_message: {
         Args: {
           p_content: string;
@@ -2648,6 +2779,18 @@ export type Database = {
       };
       set_conversation_assignment: {
         Args: { p_conversation_id: string; p_staff_id: string };
+        Returns: undefined;
+      };
+      set_forum_post_category: {
+        Args: { p_category_id: string; p_post_id: string };
+        Returns: undefined;
+      };
+      set_forum_post_pinned: {
+        Args: { p_is_pinned: boolean; p_post_id: string };
+        Returns: undefined;
+      };
+      set_forum_posting_disabled: {
+        Args: { p_disabled: boolean; p_participant_id: string };
         Returns: undefined;
       };
       set_participant_active: {

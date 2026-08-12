@@ -17,7 +17,7 @@ test('forum composer enforces limits, single compressed image, and online-only s
   expect(source).toContain('FORUM_POST_MAX_LENGTH');
   expect(source).toContain('compressNativeStoryImage');
   expect(source).toContain('allowsMultipleSelection: false');
-  expect(source).toContain('disabled={!isOnline');
+  expect(source).toContain('!isOnline ||');
 });
 
 test('forum detail exposes replies and owner-only edit and delete controls', async () => {
@@ -27,6 +27,36 @@ test('forum detail exposes replies and owner-only edit and delete controls', asy
   expect(source).toContain('useEditForumPost');
   expect(source).toContain('useDeleteForumPost');
   expect(source).toContain('ForumPlainText');
+  expect(source).toContain('ForumFlagDialog');
+  expect(source).toContain('forum-flag-post');
+  expect(source).toContain('forum-flag-reply-');
+});
+
+test('forum flagging is a reason-first one-tap flow with optional context', async () => {
+  const source = await readMobileSource('components/forum/forum-flag-dialog.tsx');
+  expect(source).toContain('FORUM_FLAG_REASONS');
+  expect(source).toContain('forum-flag-reason-');
+  expect(source).toContain('forum-flag-comment');
+  expect(source).toContain('forum-flag-submit');
+  expect(source).toContain('flagConfirmation');
+});
+
+test('forum flag modal uses native pressables that remain interactive on Android', async () => {
+  const source = await readMobileSource('components/forum/forum-flag-dialog.tsx');
+  expect(source).toContain('ActivityIndicator,');
+  expect(source).toContain('Pressable,');
+  expect(source).toContain('A native Modal owns a separate Android root');
+  expect(source).not.toContain('<PressableScale');
+  expect(source).not.toContain('<AuthSubmitButton');
+});
+
+test('the posting soft ban disables both post and reply composers with non-shaming copy', async () => {
+  const composer = await readMobileSource('app/(app)/forum/create.tsx');
+  const detail = await readMobileSource('app/(app)/forum/[id].tsx');
+  expect(composer).toContain('useOwnForumPostingStatus');
+  expect(composer).toContain("t('forum:postingDisabled')");
+  expect(detail).toContain('useOwnForumPostingStatus');
+  expect(detail).toContain("t('forum:postingDisabled')");
 });
 
 test('the cumulative native flow proves the lifecycle in Catalan and Arabic', async () => {

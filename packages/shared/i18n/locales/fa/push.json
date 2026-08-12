@@ -7,5 +7,7 @@
   "eventFallbackBody": "برای دیدن برنامه ضربه بزنید.",
   "announcementFallbackBody": "برای خواندن اطلاعیه ضربه بزنید.",
   "messageTitle": "پیام جدید از تیم",
-  "messageBody": "Ramassà را باز کنید تا آن را بخوانید."
+  "messageBody": "Ramassà را باز کنید تا آن را بخوانید.",
+  "forumFlagTitle": "گزارش جدید در انجمن",
+  "forumFlagBody": "صف نظارت را برای بررسی باز کنید."
 }

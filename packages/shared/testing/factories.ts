@@ -45,6 +45,7 @@ export type EventRow = Database['public']['Tables']['events']['Row'];
 export type EventOccurrenceRow = Database['public']['Tables']['event_occurrences']['Row'];
 export type EventSignupRow = Database['public']['Tables']['event_signups']['Row'];
 export type ForumCategoryRow = Database['public']['Tables']['forum_categories']['Row'];
+export type ForumFlagRow = Database['public']['Tables']['forum_flags']['Row'];
 export type ForumPostRow = Database['public']['Tables']['forum_posts']['Row'];
 export type ForumReplyRow = Database['public']['Tables']['forum_replies']['Row'];
 export type KnowledgeCategoryRow = Database['public']['Tables']['knowledge_categories']['Row'];
@@ -317,6 +318,25 @@ export function buildForumPost(overrides: Partial<ForumPostRow> = {}): ForumPost
     reply_count: 1,
     created_at: FIXTURE_TIMESTAMP,
     updated_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+export function buildForumFlag(overrides: Partial<ForumFlagRow> = {}): ForumFlagRow {
+  const flagger = PARTICIPANT_FIXTURES[1]!;
+  return {
+    id: '5eed0000-0000-4000-8012-000000000099',
+    org_id: SEED_ORGANIZATION_ID,
+    flagger_id: seedUserId(flagger.ordinal),
+    target_type: 'post',
+    post_id: buildForumPost().id,
+    reply_id: null,
+    reason: 'harassment',
+    comment: 'Em fa sentir insegura.',
+    state: 'pending',
+    reviewed_by: null,
+    reviewed_at: null,
+    created_at: FIXTURE_TIMESTAMP,
     ...overrides,
   };
 }

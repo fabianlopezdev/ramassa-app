@@ -34,6 +34,7 @@ export const STAFF_NAV_ITEMS = [
   { to: '/content', icon: FileText, labelKey: 'nav:staff.content' },
   { to: '/attendance', icon: CalendarCheck, labelKey: 'nav:staff.attendance' },
   { to: '/messages', icon: MessageSquare, labelKey: 'nav:staff.messages' },
+  { to: '/forum', icon: MessageSquare, labelKey: 'nav:staff.forum' },
   { to: '/settings', icon: Settings, labelKey: 'nav:staff.settings' },
 ] as const satisfies readonly NavItem[];
 

@@ -36,6 +36,7 @@ import { useTranslation } from 'react-i18next';
 import type { AttendanceParticipantStats, AttendanceReportRow } from '@ramassa/shared/attendance';
 import { useAuth } from '@ramassa/shared/auth';
 import { addEquipmentDelivery, type EquipmentDeliveryRow } from '@ramassa/shared/equipment';
+import { setForumPostingDisabled } from '@ramassa/shared/forum';
 import {
   addParticipantNote,
   setParticipantActive,
@@ -81,6 +82,10 @@ export function ParticipantDetail({
   const [statusErrorMessage, setStatusErrorMessage] = useState<string | undefined>(undefined);
   const [isChangingStatus, setIsChangingStatus] = useState(false);
   const [deliveryErrorMessage, setDeliveryErrorMessage] = useState<string | undefined>(undefined);
+  const [forumStatusErrorMessage, setForumStatusErrorMessage] = useState<string | undefined>(
+    undefined,
+  );
+  const [isChangingForumStatus, setIsChangingForumStatus] = useState(false);
 
   async function saveProfile(payload: UpdateOwnProfilePayload) {
     setSaveErrorMessage(undefined);
@@ -150,6 +155,20 @@ export function ParticipantDetail({
     await router.invalidate();
   }
 
+  async function toggleForumPosting() {
+    setForumStatusErrorMessage(undefined);
+    setIsChangingForumStatus(true);
+    const result = await safeAsync(() =>
+      setForumPostingDisabled(supabase, participant.id, !participant.is_forum_banned),
+    );
+    setIsChangingForumStatus(false);
+    if (!result.ok) {
+      setForumStatusErrorMessage(t('forumPostingStatusChangeFailed'));
+      return;
+    }
+    await router.invalidate();
+  }
+
   return (
     <section className="flex flex-col gap-6 p-6">
       <header className="flex flex-col gap-3">
@@ -196,8 +215,24 @@ export function ParticipantDetail({
             >
               {participant.is_active ? t('statusActionDeactivate') : t('statusActionActivate')}
             </Button>
+            <Button
+              type="button"
+              size="lg"
+              variant="outline"
+              disabled={isChangingForumStatus}
+              onClick={() => void toggleForumPosting()}
+            >
+              {participant.is_forum_banned
+                ? t('forumPostingEnableAction')
+                : t('forumPostingDisableAction')}
+            </Button>
           </div>
         </div>
+        {forumStatusErrorMessage === undefined ? null : (
+          <p role="alert" className="text-start text-sm text-destructive">
+            {forumStatusErrorMessage}
+          </p>
+        )}
       </header>
 
       {/* Only an admin-created account HAS a password; the RPC refuses the

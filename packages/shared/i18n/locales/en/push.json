@@ -7,5 +7,7 @@
   "eventFallbackBody": "Tap to view the activity.",
   "announcementFallbackBody": "Tap to read the notice.",
   "messageTitle": "New message from the team",
-  "messageBody": "Open Ramassà to read it."
+  "messageBody": "Open Ramassà to read it.",
+  "forumFlagTitle": "New forum report",
+  "forumFlagBody": "Open the moderation queue to review it."
 }

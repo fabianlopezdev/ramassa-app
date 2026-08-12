@@ -4,6 +4,7 @@ env:
   DEV_CLIENT_URL: ramassa://expo-development-client/?url=http%3A%2F%2Flocalhost%3A18050
   CATALAN_TITLE: '{{forum:title}}'
   CATALAN_TOMBSTONE: '{{forum:deletedTombstone}}'
+  CATALAN_FLAG_CONFIRMATION: '{{forum:flagConfirmation}}'
   CATALAN_PROFILE: '{{nav:tabs.profile}}'
   PUSH_DECLINE: '{{push:rationaleDecline}}'
   ARABIC_TITLE: المجتمع
@@ -50,6 +51,31 @@ env:
       id: forum-board
     timeout: 60000
 - assertVisible: '^${CATALAN_TITLE}$'
+- tapOn:
+    id: forum-post-5eed0000-0000-4000-8010-000000000002
+- extendedWaitUntil:
+    visible:
+      id: forum-detail-screen
+    timeout: 30000
+- tapOn:
+    id: forum-flag-post
+- tapOn:
+    id: forum-flag-reason-privacy
+- tapOn:
+    id: forum-flag-comment
+- inputText: rapp51-cat-private-info
+- hideKeyboard
+- tapOn:
+    id: forum-flag-submit
+- extendedWaitUntil:
+    visible: '^${CATALAN_FLAG_CONFIRMATION}$'
+    timeout: 30000
+- tapOn: "^(D'acord|OK)$"
+- back
+- extendedWaitUntil:
+    visible:
+      id: forum-board
+    timeout: 30000
 - tapOn:
     id: forum-new-post
 - extendedWaitUntil:

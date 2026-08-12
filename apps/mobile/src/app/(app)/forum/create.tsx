@@ -8,7 +8,11 @@ import { continuousCorners } from '@/lib/continuous-corners';
 import { compressNativeStoryImage } from '@/lib/native-image-compression';
 import type { CompressedNativeStoryImage } from '@/lib/native-image-compression-core';
 import { isNetworkStateOnline } from '@/lib/network-status';
-import { useCreateForumPost, useForumCategories } from '@/lib/player-forum';
+import {
+  useCreateForumPost,
+  useForumCategories,
+  useOwnForumPostingStatus,
+} from '@/lib/player-forum';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
@@ -37,6 +41,7 @@ export default function ForumPostComposerScreen() {
   const isOnline = isNetworkStateOnline(networkState);
   const categoriesQuery = useForumCategories();
   const createPost = useCreateForumPost();
+  const postingStatus = useOwnForumPostingStatus();
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [content, setContent] = useState('');
   const [image, setImage] = useState<CompressedNativeStoryImage | null>(null);
@@ -45,6 +50,7 @@ export default function ForumPostComposerScreen() {
   const [localErrorCode, setLocalErrorCode] = useState<AppErrorCode | null>(null);
   const mutationErrorCode = createPost.error === null ? null : toAppError(createPost.error).code;
   const errorCode = localErrorCode ?? mutationErrorCode;
+  const postingDisabled = postingStatus.data === true;
   const remaining = FORUM_POST_MAX_LENGTH - content.length;
   const insets = useSafeAreaInsets();
   const contentInsets = useMemo(
@@ -153,6 +159,14 @@ export default function ForumPostComposerScreen() {
             {t('forum:composerIntro')}
           </Text>
         </View>
+        {postingDisabled ? (
+          <Text
+            accessibilityRole="alert"
+            className={`text-start text-md text-neutral-700 ${languageFontClass}`}
+          >
+            {t('forum:postingDisabled')}
+          </Text>
+        ) : null}
         <View
           accessibilityRole="radiogroup"
           accessibilityLabel={t('forum:categoriesLabel')}
@@ -170,6 +184,7 @@ export default function ForumPostComposerScreen() {
                 isSelected={selected}
                 onPress={() => setCategoryId(category.id)}
                 haptic="selection"
+                isDisabled={postingDisabled}
                 style={continuousCorners}
                 className={`min-h-recommended justify-center rounded-full border px-lg ${selected ? 'border-primary bg-primary' : 'border-neutral-300 bg-white'}`}
               >
@@ -193,6 +208,7 @@ export default function ForumPostComposerScreen() {
           numberOfLines={7}
           textAlignVertical="top"
           style={styles.input}
+          editable={!postingDisabled}
         />
         <Text className={`text-end text-sm tabular-nums text-neutral-600 ${languageFontClass}`}>
           {t('forum:charactersRemaining', { count: remaining })}
@@ -203,7 +219,7 @@ export default function ForumPostComposerScreen() {
             accessibilityLabel={image === null ? t('forum:addPhoto') : t('forum:changePhoto')}
             onPress={() => void choosePhoto()}
             haptic="tapLight"
-            isDisabled={isProcessingPhoto}
+            isDisabled={isProcessingPhoto || postingDisabled}
             isBusy={isProcessingPhoto}
             style={continuousCorners}
             className="min-h-recommended items-center justify-center rounded-md border border-primary px-lg"
@@ -265,7 +281,13 @@ export default function ForumPostComposerScreen() {
               label={createPost.isPending ? t('forum:publishing') : t('forum:publish')}
               onPress={() => void submit()}
               isLoading={createPost.isPending}
-              disabled={!isOnline || isProcessingPhoto || categoriesQuery.isPending}
+              disabled={
+                !isOnline ||
+                isProcessingPhoto ||
+                categoriesQuery.isPending ||
+                postingStatus.isPending ||
+                postingDisabled
+              }
             />
           </View>
         </ShakeOnError>

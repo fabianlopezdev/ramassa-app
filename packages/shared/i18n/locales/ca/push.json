@@ -7,5 +7,7 @@
   "eventFallbackBody": "Toca per veure l'activitat.",
   "announcementFallbackBody": "Toca per llegir l'avís.",
   "messageTitle": "Nou missatge de l’equip",
-  "messageBody": "Obre Ramassà per llegir-lo."
+  "messageBody": "Obre Ramassà per llegir-lo.",
+  "forumFlagTitle": "Nou avís al fòrum",
+  "forumFlagBody": "Obre la cua de moderació per revisar-lo."
 }

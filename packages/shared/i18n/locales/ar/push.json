@@ -7,5 +7,7 @@
   "eventFallbackBody": "اضغطي لعرض النشاط.",
   "announcementFallbackBody": "اضغطي لقراءة الإشعار.",
   "messageTitle": "رسالة جديدة من الفريق",
-  "messageBody": "افتحي Ramassà لقراءتها."
+  "messageBody": "افتحي Ramassà لقراءتها.",
+  "forumFlagTitle": "بلاغ جديد في المنتدى",
+  "forumFlagBody": "افتحي قائمة الإشراف لمراجعته."
 }

@@ -57,6 +57,26 @@ describe('Expo push batching', () => {
 });
 
 describe('recipient language selection', () => {
+  test('forum flag notifications use fixed localized moderation copy', () => {
+    const forumFlag: PushContent = {
+      contentType: 'forum_flag',
+      contentId: '40000000-0000-4000-8000-000000000001',
+      title: null,
+      body: null,
+      expiresAt: null,
+    };
+
+    expect(resolvePushText(forumFlag, 'ca')).toEqual({
+      title: 'Nou avís al fòrum',
+      body: 'Obre la cua de moderació per revisar-lo.',
+      language: 'ca',
+    });
+    expect(buildExpoMessage('ExponentPushToken[test]', forumFlag, 'es').data).toEqual({
+      contentType: 'forum_flag',
+      contentId: forumFlag.contentId,
+    });
+  });
+
   test('message notifications use fixed localized copy and ignore message text', () => {
     const message: PushContent = {
       contentType: 'message',

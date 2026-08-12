@@ -9,6 +9,7 @@ import {
   buildEventOccurrence,
   buildEventSignup,
   buildForumCategory,
+  buildForumFlag,
   buildForumPost,
   buildForumReply,
   buildInvite,
@@ -199,12 +200,16 @@ describe('event factories', () => {
 describe('forum factories', () => {
   test('builds localized categories and first-name-only attributed threads', () => {
     const category = buildForumCategory();
+    const flag = buildForumFlag();
     const post = buildForumPost();
     const reply = buildForumReply();
 
     expect(Object.keys(category.name as Record<string, unknown>)).toEqual([...SUPPORTED_LANGUAGES]);
     expect(post.category_id).toBe(category.id);
     expect(post.author_first_name).toBe(buildParticipant().first_name);
+    expect(flag.post_id).toBe(post.id);
+    expect(flag.flagger_id).toBe(seedUserId(PARTICIPANT_FIXTURES[1]!.ordinal));
+    expect(flag.state).toBe('pending');
     expect(reply.post_id).toBe(post.id);
     expect(reply.author_first_name).toBe(PARTICIPANT_FIXTURES[1]!.firstName);
   });

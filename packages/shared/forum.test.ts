@@ -1,12 +1,18 @@
 import { describe, expect, test } from 'bun:test';
 import {
+  contactForumAuthor,
   createForumPost,
   createForumReply,
   deleteOwnForumPost,
   editOwnForumPost,
   fetchForumPosts,
   filterForumPostsByCategory,
+  flagForumContent,
+  moderateForumTarget,
   parseForumPlainText,
+  setForumPostCategory,
+  setForumPostingDisabled,
+  setForumPostPinned,
   type ForumPostRow,
 } from './forum';
 
@@ -148,6 +154,65 @@ describe('forum category board', () => {
       ['create_forum_reply', { p_post_id: postId, p_content: 'Jo en conec una' }],
       ['edit_own_forum_post', { p_post_id: postId, p_content: 'Busco feina a Vic' }],
       ['delete_own_forum_post', { p_post_id: postId }],
+    ]);
+  });
+
+  test('flags and moderation actions use validated server boundaries', async () => {
+    const calls: unknown[] = [];
+    const client = {
+      async rpc(name: string, args: unknown) {
+        calls.push([name, args]);
+        return {
+          data:
+            name === 'flag_forum_content'
+              ? '5eed0000-0000-4000-8012-000000000099'
+              : name === 'get_or_create_staff_conversation'
+                ? '5eed0000-0000-4000-8011-000000000099'
+                : null,
+          error: null,
+        };
+      },
+    };
+    const targetId = '5eed0000-0000-4000-8010-000000000001';
+    const categoryId = '5eed0000-0000-4000-8006-000000000003';
+    const participantId = '5eed0000-0000-4000-8000-000000000011';
+
+    await flagForumContent(client as never, {
+      targetType: 'post',
+      targetId,
+      reason: 'harassment',
+      comment: '  Em fa sentir insegura  ',
+    });
+    await moderateForumTarget(client as never, {
+      targetType: 'post',
+      targetId,
+      action: 'dismiss',
+    });
+    await setForumPostPinned(client as never, targetId, true);
+    await setForumPostCategory(client as never, targetId, categoryId);
+    await setForumPostingDisabled(client as never, participantId, true);
+    await expect(contactForumAuthor(client as never, participantId)).resolves.toBe(
+      '5eed0000-0000-4000-8011-000000000099',
+    );
+
+    expect(calls).toEqual([
+      [
+        'flag_forum_content',
+        {
+          p_target_type: 'post',
+          p_target_id: targetId,
+          p_reason: 'harassment',
+          p_comment: 'Em fa sentir insegura',
+        },
+      ],
+      [
+        'moderate_forum_target',
+        { p_target_type: 'post', p_target_id: targetId, p_action: 'dismiss' },
+      ],
+      ['set_forum_post_pinned', { p_post_id: targetId, p_is_pinned: true }],
+      ['set_forum_post_category', { p_post_id: targetId, p_category_id: categoryId }],
+      ['set_forum_posting_disabled', { p_participant_id: participantId, p_disabled: true }],
+      ['get_or_create_staff_conversation', { p_participant_id: participantId }],
     ]);
   });
 });

@@ -10,7 +10,10 @@ import {
   fetchForumPost,
   fetchForumPosts,
   fetchForumReplies,
+  fetchOwnForumPostingStatus,
+  flagForumContent,
   type ForumCategoryRow,
+  type ForumFlagInput,
   type ForumPostRow,
   type ForumReplyRow,
 } from '@ramassa/shared/forum';
@@ -30,6 +33,8 @@ export const playerForumPostQueryKey = (userId: string, postId: string) =>
   [playerForumQueryRoot, 'post', userId, postId] as const;
 export const playerForumRepliesQueryKey = (userId: string, postId: string) =>
   [playerForumQueryRoot, 'replies', userId, postId] as const;
+export const ownForumPostingStatusQueryKey = (userId: string) =>
+  [playerForumQueryRoot, 'posting-status', userId] as const;
 
 export function useForumCategories() {
   const { user } = useAuth();
@@ -78,6 +83,48 @@ export function useForumReplies(postId: string | undefined) {
       return fetchForumReplies(supabase, postId, { signal });
     },
     enabled: user !== null && postId !== undefined,
+  });
+}
+
+export function useOwnForumPostingStatus() {
+  const { user } = useAuth();
+  const userId = user?.id ?? 'signed-out';
+  return useQuery<boolean>({
+    queryKey: ownForumPostingStatusQueryKey(userId),
+    queryFn: ({ signal }) => {
+      if (user === null) throw new AppError('AUTH-2');
+      return fetchOwnForumPostingStatus(supabase, user.id, { signal });
+    },
+    enabled: user !== null,
+    staleTime: 0,
+  });
+}
+
+export function useFlagForumContent(postId: string | undefined) {
+  const { user } = useAuth();
+  const networkState = useNetworkState();
+  const isOnline = isNetworkStateOnline(networkState);
+  const queryClient = useQueryClient();
+  const userId = user?.id ?? 'signed-out';
+  return useMutation({
+    mutationKey: ['flag-forum-content', userId],
+    networkMode: 'always',
+    mutationFn: async (input: ForumFlagInput) => {
+      requireForumWriteOnline(isOnline);
+      if (user === null) throw new AppError('AUTH-2');
+      return flagForumContent(supabase, input);
+    },
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: playerForumPostsQueryKey(userId) }),
+        ...(postId === undefined
+          ? []
+          : [
+              queryClient.invalidateQueries({
+                queryKey: playerForumRepliesQueryKey(userId, postId),
+              }),
+            ]),
+      ]),
   });
 }
 

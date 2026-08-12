@@ -799,7 +799,7 @@ select
   case when r.ordinal % 2 = 0 then 'android' else 'ios' end,
   'seed-device-' || lpad(r.ordinal::text, 4, '0')
 from seed_roster r
-where r.ordinal in (11, 12)
+where r.ordinal in (1, 2, 3, 11, 12)
 on conflict (user_id, device_id) do nothing;
 
 -- The wizard's test account (RAPP-21) -----------------------------------------------
@@ -1046,6 +1046,54 @@ values
     now() - interval '2 hours'
   )
 on conflict (id) do nothing;
+
+-- Forum moderation (RAPP-51) ----------------------------------------------------
+-- One pending flag makes the staff queue and notification path reachable after
+-- every reset without hiding the post from the player board.
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000012","role":"authenticated"}';
+insert into public.forum_flags (
+  id, org_id, flagger_id, target_type, post_id, reason, comment, created_at
+) values (
+  '5eed0000-0000-4000-8012-000000000099',
+  '5eed0000-0000-4000-8000-000000000000',
+  '5eed0000-0000-4000-8000-000000000012',
+  'post',
+  '5eed0000-0000-4000-8010-000000000001',
+  'harassment',
+  'Em fa sentir insegura.',
+  now() - interval '1 hour'
+)
+on conflict (id) do nothing;
+reset role;
+update public.push_deliveries as delivery
+set
+  state = 'delivered',
+  attempt_count = 1,
+  receipt_attempt_count = 1,
+  expo_ticket_id = 'seed-forum-ticket-' || delivery.id::text,
+  ticketed_at = now() - interval '45 minutes',
+  next_attempt_at = now() - interval '1 hour',
+  completed_at = now() - interval '30 minutes',
+  updated_at = now() - interval '30 minutes'
+from public.push_publications as publication
+where publication.id = delivery.publication_id
+  and publication.content_type = 'forum_flag';
+update public.push_publications as publication
+set
+  state = 'complete',
+  recipient_count = counts.recipient_count,
+  sent_count = counts.recipient_count,
+  delivered_count = counts.recipient_count,
+  failed_count = 0,
+  completed_at = now() - interval '30 minutes'
+from (
+  select delivery.publication_id, count(*)::integer as recipient_count
+  from public.push_deliveries as delivery
+  group by delivery.publication_id
+) as counts
+where publication.id = counts.publication_id
+  and publication.content_type = 'forum_flag';
 
 -- Player event signup states (RAPP-34) --------------------------------------------
 -- Three states make the happy path, interest path, and at-capacity path reachable

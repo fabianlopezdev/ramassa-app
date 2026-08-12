@@ -15,6 +15,8 @@ export function renderPushEdgeCatalog(): string {
         eventFallbackBody: catalog.eventFallbackBody,
         messageTitle: catalog.messageTitle,
         messageBody: catalog.messageBody,
+        forumFlagTitle: catalog.forumFlagTitle,
+        forumFlagBody: catalog.forumFlagBody,
       },
     ]),
   );

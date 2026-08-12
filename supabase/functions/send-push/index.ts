@@ -187,9 +187,10 @@ function parseDeliveryClaims(value: unknown): readonly PushDeliveryClaim[] {
       typeof row.language !== 'string' ||
       (row.content_type !== 'announcement' &&
         row.content_type !== 'event' &&
-        row.content_type !== 'message') ||
+        row.content_type !== 'message' &&
+        row.content_type !== 'forum_flag') ||
       typeof row.content_id !== 'string' ||
-      (row.content_type === 'message'
+      (row.content_type === 'message' || row.content_type === 'forum_flag'
         ? row.title !== null || row.body !== null
         : objectRecord(row.title) === null) ||
       (row.body !== null && objectRecord(row.body) === null) ||

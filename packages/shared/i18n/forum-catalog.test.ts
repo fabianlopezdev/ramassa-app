@@ -15,7 +15,10 @@ describe('forum catalog', () => {
 
   test('every forum label is a non-empty translated string', () => {
     for (const catalog of [ca, es, en, ar, fa]) {
-      for (const value of Object.values(catalog)) {
+      const values = Object.values(catalog).flatMap((value) =>
+        typeof value === 'string' ? [value] : Object.values(value),
+      );
+      for (const value of values) {
         expect(value.trim().length).toBeGreaterThan(0);
       }
     }

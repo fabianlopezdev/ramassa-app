@@ -23,6 +23,10 @@ test('every nav destination is unique', () => {
   expect(new Set(paths).size).toBe(paths.length);
 });
 
+test('staff can reach the forum moderation queue from primary navigation', () => {
+  expect(STAFF_NAV_ITEMS.some((item) => item.to === '/forum')).toBe(true);
+});
+
 test('the entity area stays namespaced under /portal', () => {
   for (const item of ENTITY_NAV_ITEMS) {
     expect(item.to.startsWith('/portal/')).toBe(true);
@@ -47,6 +51,7 @@ test.each(SUPPORTED_LANGUAGES.map((language) => [language] as const))(
       // "nav:staff.content" to a user.
       expect(label.length).toBeGreaterThan(0);
       expect(label).not.toBe(item.labelKey);
+      expect(label).not.toBe(item.labelKey.replace(/^nav:/, ''));
     }
   },
 );
