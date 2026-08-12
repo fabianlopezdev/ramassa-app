@@ -11,11 +11,11 @@ env:
   DEV_MENU_LABEL: Developer menu
   HOME_FEED_TITLE: '{{home:feedTitle}}'
   EVENTS_TITLE: '{{events:playerTitle}}'
-  MESSAGES_TITLE: '{{messaging:playerTitle}}'
+  COMMUNITY_TITLE: '{{forum:title}}'
   PROFILE_TITLE: '{{profile:title}}'
   TAB_HOME: '{{nav:tabs.home}}'
   TAB_EVENTS: '{{nav:tabs.events}}'
-  TAB_MESSAGES: '{{nav:tabs.messages}}'
+  TAB_COMMUNITY: '{{nav:tabs.community}}'
   TAB_SERVICES: '{{nav:tabs.services}}'
   TAB_PROFILE: '{{nav:tabs.profile}}'
 ---
@@ -41,15 +41,15 @@ env:
       platform: Android
     commands:
       - tapOn:
-          text: '^${TAB_MESSAGES}$'
+          text: '^${TAB_COMMUNITY}$'
 - runFlow:
     when:
       platform: iOS
     commands:
       - tapOn:
-          id: player-tab-messages
+          id: player-tab-community
 - extendedWaitUntil:
-    visible: '.*${MESSAGES_TITLE}.*'
+    visible: '.*${COMMUNITY_TITLE}.*'
     timeout: 15000
 - tapOn:
     text: '^${TAB_SERVICES}$'

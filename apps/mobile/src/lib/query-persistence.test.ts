@@ -186,6 +186,39 @@ test('airplane mode restores the signed-in player service directory and interest
   stop();
 });
 
+test('airplane mode restores the user-scoped forum board and reply thread', async () => {
+  const storage = memoryStorage();
+  const persister = createQueryPersister(storage);
+  const source = new QueryClient();
+  const cachedPosts = [{ id: 'cached-forum-post', content: 'Des de la memòria' }];
+  const cachedReplies = [{ id: 'cached-forum-reply', content: 'من الذاكرة' }];
+  source.setQueryData(['player-forum', 'posts', 'player-a'], cachedPosts);
+  source.setQueryData(['player-forum', 'replies', 'player-a', 'cached-forum-post'], cachedReplies);
+
+  await persistQueryClientSave({ queryClient: source, ...persistedQueryOptions(persister) });
+
+  const restored = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  await persistQueryClientRestore({ queryClient: restored, ...persistedQueryOptions(persister) });
+  onlineManager.setOnline(false);
+
+  expect(
+    restored.getQueryData<readonly { id: string; content: string }[]>([
+      'player-forum',
+      'posts',
+      'player-a',
+    ]),
+  ).toEqual(cachedPosts);
+  expect(
+    restored.getQueryData<readonly { id: string; content: string }[]>([
+      'player-forum',
+      'replies',
+      'player-a',
+      'cached-forum-post',
+    ]),
+  ).toEqual(cachedReplies);
+  expect(restored.getQueryData(['player-forum', 'posts', 'player-b'])).toBeUndefined();
+});
+
 test('a detail seeded from a restored list inherits the list age and refreshes when online', async () => {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const listQueryKey = ['player-knowledge', 'articles', 'player-a'] as const;

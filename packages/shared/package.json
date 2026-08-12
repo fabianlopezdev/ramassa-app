@@ -30,6 +30,7 @@
     "./translation/react": "./translation/react.ts",
     "./announcements": "./announcements.ts",
     "./events": "./events.ts",
+    "./forum": "./forum.ts",
     "./attendance": "./attendance.ts",
     "./messaging": "./messaging/messaging.ts",
     "./messaging/outbox": "./messaging/outbox.ts",

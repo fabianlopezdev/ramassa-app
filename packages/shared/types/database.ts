@@ -697,6 +697,181 @@ export type Database = {
           },
         ];
       };
+      forum_categories: {
+        Row: {
+          color: string;
+          created_at: string;
+          icon: string;
+          id: string;
+          name: Json;
+          org_id: string;
+          slug: string;
+          sort_order: number;
+        };
+        Insert: {
+          color: string;
+          created_at?: string;
+          icon: string;
+          id?: string;
+          name: Json;
+          org_id: string;
+          slug: string;
+          sort_order?: number;
+        };
+        Update: {
+          color?: string;
+          created_at?: string;
+          icon?: string;
+          id?: string;
+          name?: Json;
+          org_id?: string;
+          slug?: string;
+          sort_order?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'forum_categories_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      forum_posts: {
+        Row: {
+          author_first_name: string;
+          author_id: string;
+          category_id: string;
+          content: string | null;
+          created_at: string;
+          flag_count: number;
+          id: string;
+          image_url: string | null;
+          is_pinned: boolean;
+          org_id: string;
+          reply_count: number;
+          updated_at: string;
+          visibility: string;
+        };
+        Insert: {
+          author_first_name: string;
+          author_id: string;
+          category_id: string;
+          content?: string | null;
+          created_at?: string;
+          flag_count?: number;
+          id?: string;
+          image_url?: string | null;
+          is_pinned?: boolean;
+          org_id: string;
+          reply_count?: number;
+          updated_at?: string;
+          visibility?: string;
+        };
+        Update: {
+          author_first_name?: string;
+          author_id?: string;
+          category_id?: string;
+          content?: string | null;
+          created_at?: string;
+          flag_count?: number;
+          id?: string;
+          image_url?: string | null;
+          is_pinned?: boolean;
+          org_id?: string;
+          reply_count?: number;
+          updated_at?: string;
+          visibility?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'forum_posts_author_tenant_fkey';
+            columns: ['org_id', 'author_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['org_id', 'id'];
+          },
+          {
+            foreignKeyName: 'forum_posts_category_tenant_fkey';
+            columns: ['org_id', 'category_id'];
+            isOneToOne: false;
+            referencedRelation: 'forum_categories';
+            referencedColumns: ['org_id', 'id'];
+          },
+          {
+            foreignKeyName: 'forum_posts_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      forum_replies: {
+        Row: {
+          author_first_name: string;
+          author_id: string;
+          content: string | null;
+          created_at: string;
+          flag_count: number;
+          id: string;
+          image_url: string | null;
+          org_id: string;
+          post_id: string;
+          updated_at: string;
+          visibility: string;
+        };
+        Insert: {
+          author_first_name: string;
+          author_id: string;
+          content?: string | null;
+          created_at?: string;
+          flag_count?: number;
+          id?: string;
+          image_url?: string | null;
+          org_id: string;
+          post_id: string;
+          updated_at?: string;
+          visibility?: string;
+        };
+        Update: {
+          author_first_name?: string;
+          author_id?: string;
+          content?: string | null;
+          created_at?: string;
+          flag_count?: number;
+          id?: string;
+          image_url?: string | null;
+          org_id?: string;
+          post_id?: string;
+          updated_at?: string;
+          visibility?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'forum_replies_author_tenant_fkey';
+            columns: ['org_id', 'author_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['org_id', 'id'];
+          },
+          {
+            foreignKeyName: 'forum_replies_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'forum_replies_post_tenant_fkey';
+            columns: ['org_id', 'post_id'];
+            isOneToOne: false;
+            referencedRelation: 'forum_posts';
+            referencedColumns: ['org_id', 'id'];
+          },
+        ];
+      };
       invites: {
         Row: {
           accepted_at: string | null;
@@ -2109,6 +2284,14 @@ export type Database = {
         Args: { p_category_id: string; p_metadata_schema: Json };
         Returns: number;
       };
+      create_forum_post: {
+        Args: { p_category_id: string; p_content: string; p_image_url: string };
+        Returns: string;
+      };
+      create_forum_reply: {
+        Args: { p_content: string; p_post_id: string };
+        Returns: string;
+      };
       create_participant_account: {
         Args: { payload: Json };
         Returns: {
@@ -2129,8 +2312,13 @@ export type Database = {
       current_org_id: { Args: never; Returns: string };
       decrypt_field: { Args: { ciphertext: string }; Returns: string };
       default_organization_id: { Args: never; Returns: string };
+      delete_own_forum_post: { Args: { p_post_id: string }; Returns: undefined };
       delete_participant_permanently: {
         Args: { participant_id: string };
+        Returns: undefined;
+      };
+      edit_own_forum_post: {
+        Args: { p_content: string; p_post_id: string };
         Returns: undefined;
       };
       encrypt_field: { Args: { plaintext: string }; Returns: string };

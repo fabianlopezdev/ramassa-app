@@ -23,7 +23,7 @@ export function resolvePushDetailRoute(data: unknown): Href | null {
   if (typeof contentId !== 'string' || !uuidPattern.test(contentId)) return null;
   if (contentType === 'announcement') return `/announcement/${contentId}` as Href;
   if (contentType === 'event') return `/event/${contentId}` as Href;
-  if (contentType === 'message') return '/community' as Href;
+  if (contentType === 'message') return '/team-chat' as Href;
   return null;
 }
 

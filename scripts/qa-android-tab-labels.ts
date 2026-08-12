@@ -27,7 +27,13 @@ export interface OcrWord {
 
 const MINIMUM_OCR_CONFIDENCE = 20;
 const MINIMUM_LABEL_SIMILARITY = 0.55;
-const TAB_LABEL_KEYS = ['home', 'events', 'messages', 'services', 'profile'] as const;
+export const PLAYER_TAB_LABEL_KEYS = [
+  'home',
+  'events',
+  'community',
+  'services',
+  'profile',
+] as const;
 
 export function parseTesseractTsv(tsv: string): readonly OcrWord[] {
   return tsv
@@ -147,7 +153,7 @@ function sipsDimension(output: string, name: 'pixelWidth' | 'pixelHeight'): numb
 
 async function expectedCatalanLabels(): Promise<readonly ExpectedTabLabel[]> {
   const translate = await loadTranslator('ca');
-  return TAB_LABEL_KEYS.map((key) => ({ key, text: translate(`nav:tabs.${key}`) }));
+  return PLAYER_TAB_LABEL_KEYS.map((key) => ({ key, text: translate(`nav:tabs.${key}`) }));
 }
 
 export async function assertAndroidTabLabelsDrawn(device: string): Promise<void> {

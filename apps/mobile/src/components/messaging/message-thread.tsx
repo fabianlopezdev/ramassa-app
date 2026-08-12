@@ -353,8 +353,20 @@ function MessageThreadView({
   );
 }
 
-export function PlayerMessageThread({ title }: { readonly title: string }) {
-  return <MessageThreadView title={title} controller={useOwnConversation()} />;
+export function PlayerMessageThread({
+  title,
+  headerAccessory,
+}: {
+  readonly title: string;
+  readonly headerAccessory?: ReactNode;
+}) {
+  return (
+    <MessageThreadView
+      title={title}
+      controller={useOwnConversation()}
+      headerAccessory={headerAccessory}
+    />
+  );
 }
 
 export function StaffMessageThread({

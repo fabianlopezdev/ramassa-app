@@ -9,7 +9,7 @@ env:
   BACK: Enrere
   PUSH_DECLINE: Ara no
   TAB_HOME: Inici
-  TAB_MESSAGES: Missatges
+  TAB_COMMUNITY: Comunitat
   TAB_PROFILE: Perfil
   CHAT_TITLE: Xat amb l’equip
   COMPOSER: Escriu un missatge
@@ -162,13 +162,15 @@ env:
     when:
       platform: Android
     commands:
-      - tapOn: '^${TAB_MESSAGES}$'
+      - tapOn: '^${TAB_COMMUNITY}$'
 - runFlow:
     when:
       platform: iOS
     commands:
       - tapOn:
-          id: player-tab-messages
+          id: player-tab-community
+- tapOn:
+    id: forum-open-team-chat
 - extendedWaitUntil:
     visible:
       id: message-composer
@@ -240,7 +242,7 @@ env:
       - repeat:
           times: 12
           while:
-            notVisible: '^${TAB_MESSAGES}$'
+            notVisible: '^${TAB_COMMUNITY}$'
           commands:
             - tapOn:
                 text: '.*Close.*'
@@ -250,7 +252,9 @@ env:
                 optional: true
             - waitForAnimationToEnd:
                 timeout: 3000
-      - tapOn: '^${TAB_MESSAGES}$'
+      - tapOn: '^${TAB_COMMUNITY}$'
+      - tapOn:
+          id: forum-open-team-chat
       - extendedWaitUntil:
           visible:
             id: message-composer
@@ -265,6 +269,8 @@ env:
       - assertNotVisible:
           id: message-sync-retrying
 
+- tapOn:
+    id: team-chat-back
 - runFlow:
     when:
       platform: Android
@@ -374,13 +380,15 @@ env:
     when:
       platform: Android
     commands:
-      - tapOn: '^الرسائل$'
+      - tapOn: '^المجتمع$'
 - runFlow:
     when:
       platform: iOS
     commands:
       - tapOn:
-          id: player-tab-messages
+          id: player-tab-community
+- tapOn:
+    id: forum-open-team-chat
 - extendedWaitUntil:
     visible:
       id: message-composer

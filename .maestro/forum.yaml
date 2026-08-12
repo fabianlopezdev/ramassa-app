@@ -1,0 +1,208 @@
+appId: com.ramassa.app
+name: forum
+env:
+  DEV_CLIENT_URL: ramassa://expo-development-client/?url=http%3A%2F%2Flocalhost%3A18050
+  CATALAN_TITLE: '{{forum:title}}'
+  CATALAN_TOMBSTONE: '{{forum:deletedTombstone}}'
+  CATALAN_PROFILE: '{{nav:tabs.profile}}'
+  PUSH_DECLINE: '{{push:rationaleDecline}}'
+  ARABIC_TITLE: المجتمع
+  ARABIC_TOMBSTONE: تم حذف هذا المنشور.
+  ARABIC_RESTART: أعِد التشغيل الآن
+  ARABIC_PUSH_DECLINE: ليس الآن
+---
+- clearState
+- openLink: ${DEV_CLIENT_URL}
+- tapOn:
+    text: '^Open$'
+    optional: true
+- extendedWaitUntil:
+    visible: '.*Developer menu.*'
+    timeout: 240000
+- waitForAnimationToEnd:
+    timeout: 12000
+- runFlow:
+    file: _set-language.yaml
+    env:
+      LOCALE: ca
+- runFlow: _sign-in.yaml
+- repeat:
+    times: 6
+    while:
+      visible: '^${PUSH_DECLINE}$'
+    commands:
+      - tapOn: '^${PUSH_DECLINE}$'
+      - waitForAnimationToEnd:
+          timeout: 3000
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - tapOn: '^${CATALAN_TITLE}$'
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          id: player-tab-community
+- extendedWaitUntil:
+    visible:
+      id: forum-board
+    timeout: 60000
+- assertVisible: '^${CATALAN_TITLE}$'
+- tapOn:
+    id: forum-new-post
+- extendedWaitUntil:
+    visible:
+      id: forum-create-screen
+    timeout: 30000
+- tapOn:
+    id: forum-compose-category-general
+- tapOn:
+    id: forum-post-content
+- inputText: rapp50-cat-post-inert-script
+- hideKeyboard
+- tapOn:
+    id: forum-publish
+- extendedWaitUntil:
+    visible:
+      id: forum-detail-screen
+    timeout: 30000
+- tapOn:
+    id: forum-reply-content
+- inputText: rapp50-cat-reply
+- hideKeyboard
+- tapOn:
+    id: forum-submit-reply
+- extendedWaitUntil:
+    visible: rapp50-cat-reply
+    timeout: 30000
+- tapOn:
+    id: forum-edit
+- tapOn:
+    id: forum-edit-content
+- eraseText
+- inputText: rapp50-cat-edited
+- hideKeyboard
+- tapOn:
+    id: forum-save-edit
+- extendedWaitUntil:
+    visible: '.*rapp50-cat-edited.*'
+    timeout: 30000
+- tapOn:
+    id: forum-delete
+- tapOn:
+    id: forum-confirm-delete
+- extendedWaitUntil:
+    visible: '^${CATALAN_TOMBSTONE}$'
+    timeout: 30000
+- assertVisible: rapp50-cat-reply
+
+- back
+- extendedWaitUntil:
+    visible:
+      id: forum-board
+    timeout: 30000
+- tapOn: '^${CATALAN_PROFILE}$'
+- repeat:
+    times: 20
+    while:
+      notVisible:
+        id: profile-language-ar
+    commands:
+      - swipe:
+          start: 50%, 72%
+          end: 50%, 40%
+          duration: 900
+      - waitForAnimationToEnd:
+          timeout: 1200
+- assertVisible:
+    id: profile-language-ar
+- tapOn:
+    id: profile-language-ar
+- repeat:
+    times: 12
+    while:
+      notVisible: '^${ARABIC_RESTART}$'
+    commands:
+      - swipe:
+          start: 50%, 70%
+          end: 50%, 35%
+          duration: 900
+      - waitForAnimationToEnd:
+          timeout: 1200
+- assertVisible: '^${ARABIC_RESTART}$'
+- tapOn: '^${ARABIC_RESTART}$'
+- waitForAnimationToEnd:
+    timeout: 12000
+- repeat:
+    times: 6
+    while:
+      visible: '^${ARABIC_PUSH_DECLINE}$'
+    commands:
+      - tapOn: '^${ARABIC_PUSH_DECLINE}$'
+      - waitForAnimationToEnd:
+          timeout: 3000
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - tapOn: '^${ARABIC_TITLE}$'
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          id: player-tab-community
+- extendedWaitUntil:
+    visible:
+      id: forum-board
+    timeout: 60000
+- assertVisible: '^${ARABIC_TITLE}$'
+- tapOn:
+    id: forum-new-post
+- extendedWaitUntil:
+    visible:
+      id: forum-create-screen
+    timeout: 30000
+- tapOn:
+    id: forum-compose-category-general
+- tapOn:
+    id: forum-post-content
+- inputText: rapp50-ar-post
+- hideKeyboard
+- tapOn:
+    id: forum-publish
+- extendedWaitUntil:
+    visible:
+      id: forum-detail-screen
+    timeout: 30000
+- tapOn:
+    id: forum-reply-content
+- inputText: rapp50-ar-reply
+- hideKeyboard
+- tapOn:
+    id: forum-submit-reply
+- extendedWaitUntil:
+    visible: rapp50-ar-reply
+    timeout: 30000
+- tapOn:
+    id: forum-edit
+- tapOn:
+    id: forum-edit-content
+- eraseText
+- inputText: rapp50-ar-edited
+- hideKeyboard
+- tapOn:
+    id: forum-save-edit
+- extendedWaitUntil:
+    visible: '.*rapp50-ar-edited.*'
+    timeout: 30000
+- tapOn:
+    id: forum-delete
+- tapOn:
+    id: forum-confirm-delete
+- extendedWaitUntil:
+    visible: '^${ARABIC_TOMBSTONE}$'
+    timeout: 30000
+- assertVisible: rapp50-ar-reply

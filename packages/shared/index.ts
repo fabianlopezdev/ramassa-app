@@ -11,6 +11,7 @@ export * from './tokens';
 export * from './env';
 export * from './i18n';
 export * from './schemas';
+export * from './forum';
 export * from './services';
 export * from './lib/supabase';
 export * from './lib/upload-client';

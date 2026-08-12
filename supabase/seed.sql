@@ -968,6 +968,85 @@ drop table seed_roster;
 end
 $seed$;
 
+-- Community forum board (RAPP-50) -------------------------------------------------
+insert into public.forum_categories (id, org_id, name, slug, icon, color, sort_order)
+values
+  (
+    '5eed0000-0000-4000-8006-000000000001',
+    '5eed0000-0000-4000-8000-000000000000',
+    '{"ca":"Habitatge","es":"Vivienda","en":"Housing","ar":"السكن","fa":"مسکن"}',
+    'housing', 'house', 'primary', 10
+  ),
+  (
+    '5eed0000-0000-4000-8006-000000000002',
+    '5eed0000-0000-4000-8000-000000000000',
+    '{"ca":"Feina","es":"Empleo","en":"Jobs","ar":"العمل","fa":"کار"}',
+    'jobs', 'briefcase', 'secondary', 20
+  ),
+  (
+    '5eed0000-0000-4000-8006-000000000003',
+    '5eed0000-0000-4000-8000-000000000000',
+    '{"ca":"Recomanacions","es":"Recomendaciones","en":"Recommendations","ar":"توصيات","fa":"پیشنهادها"}',
+    'recommendations', 'lightbulb', 'info', 30
+  ),
+  (
+    '5eed0000-0000-4000-8006-000000000004',
+    '5eed0000-0000-4000-8000-000000000000',
+    '{"ca":"General","es":"General","en":"General","ar":"عام","fa":"عمومی"}',
+    'general', 'bubble', 'neutral', 40
+  )
+on conflict (id) do nothing;
+
+insert into public.forum_posts (
+  id, org_id, category_id, author_id, author_first_name, content, is_pinned, created_at
+)
+values
+  (
+    '5eed0000-0000-4000-8010-000000000001',
+    '5eed0000-0000-4000-8000-000000000000',
+    '5eed0000-0000-4000-8006-000000000002',
+    '5eed0000-0000-4000-8000-000000000011',
+    'pending',
+    'Busco feina de cuina a Vic. Algú coneix un lloc?',
+    true,
+    now() - interval '2 days'
+  ),
+  (
+    '5eed0000-0000-4000-8010-000000000002',
+    '5eed0000-0000-4000-8000-000000000000',
+    '5eed0000-0000-4000-8006-000000000001',
+    '5eed0000-0000-4000-8000-000000000012',
+    'pending',
+    'أبحث عن habitació a prop del centre de Vic.',
+    false,
+    now() - interval '6 hours'
+  )
+on conflict (id) do nothing;
+
+insert into public.forum_replies (
+  id, org_id, post_id, author_id, author_first_name, content, created_at
+)
+values
+  (
+    '5eed0000-0000-4000-8010-000000000011',
+    '5eed0000-0000-4000-8000-000000000000',
+    '5eed0000-0000-4000-8010-000000000001',
+    '5eed0000-0000-4000-8000-000000000012',
+    'pending',
+    'Conec un restaurant que busca ajuda. T envio el contacte.',
+    now() - interval '1 day'
+  ),
+  (
+    '5eed0000-0000-4000-8010-000000000012',
+    '5eed0000-0000-4000-8000-000000000000',
+    '5eed0000-0000-4000-8010-000000000002',
+    '5eed0000-0000-4000-8000-000000000011',
+    'pending',
+    'يمكنني أن أسأل una amiga que viu al centre.',
+    now() - interval '2 hours'
+  )
+on conflict (id) do nothing;
+
 -- Player event signup states (RAPP-34) --------------------------------------------
 -- Three states make the happy path, interest path, and at-capacity path reachable
 -- without editing Studio. Signups belong to the event series, not one occurrence.

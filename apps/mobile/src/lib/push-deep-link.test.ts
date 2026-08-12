@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'bun:test';
+import type { Href } from 'expo-router';
 import {
   pushDetailQueryRoot,
   resolvePushDetailRoute,
@@ -30,7 +31,7 @@ describe('push detail routes', () => {
         contentType: 'message',
         contentId: '30000000-0000-4000-8000-000000000001',
       }),
-    ).toBe('/community');
+    ).toBe('/team-chat' as Href);
     expect(pushDetailQueryRoot('message')).toBe('messaging');
   });
 

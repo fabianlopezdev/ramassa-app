@@ -1,10 +1,25 @@
 import { describe, expect, test } from 'bun:test';
-import { parseSmokeMetroPort } from './qa-smoke';
+import { maestroSmokeCommand, parseSmokeMetroPort } from './qa-smoke';
 
 const flowPath = new URL('../.maestro/messaging.yaml', import.meta.url);
 const shellFlowPath = new URL('../.maestro/smoke-shells.yaml', import.meta.url);
 
 describe('durable messaging device flow', () => {
+  test('isolates Maestro debug output per flow', () => {
+    expect(
+      maestroSmokeCommand('emulator-5558', '/repo/.flow-shots/messaging.yaml', '/tmp/debug'),
+    ).toEqual([
+      'maestro',
+      '--device',
+      'emulator-5558',
+      'test',
+      '--debug-output',
+      '/tmp/debug',
+      '--flatten-debug-output',
+      '/repo/.flow-shots/messaging.yaml',
+    ]);
+  });
+
   test('accepts an explicit private Metro port for an isolated closure run', () => {
     expect(parseSmokeMetroPort('18049')).toBe(18_049);
     expect(parseSmokeMetroPort(undefined)).toBeUndefined();
@@ -51,12 +66,23 @@ describe('durable messaging device flow', () => {
     expect(deliveredIndex).toBeLessThan(offlineIndex);
   });
 
-  test('uses the stable messages tab selector on iOS shell QA', async () => {
+  test('uses the stable community tab selector on iOS shell QA', async () => {
     const flow = await Bun.file(shellFlowPath).text();
 
     expect(flow).toContain(
-      '- runFlow:\n    when:\n      platform: iOS\n    commands:\n      - tapOn:\n          id: player-tab-messages',
+      '- runFlow:\n    when:\n      platform: iOS\n    commands:\n      - tapOn:\n          id: player-tab-community',
     );
+  });
+
+  test('opens private team chat from the community board before messaging', async () => {
+    const flow = await Bun.file(flowPath).text();
+    const communityIndex = flow.indexOf('id: player-tab-community');
+    const chatIndex = flow.indexOf('id: forum-open-team-chat', communityIndex);
+    const composerIndex = flow.indexOf('id: message-composer', chatIndex);
+
+    expect(communityIndex).toBeGreaterThanOrEqual(0);
+    expect(chatIndex).toBeGreaterThan(communityIndex);
+    expect(composerIndex).toBeGreaterThan(chatIndex);
   });
 
   test('dismisses the keyboard before leaving the delivered message thread', async () => {
@@ -71,5 +97,16 @@ describe('durable messaging device flow', () => {
 
     expect(iosDismissIndex).toBeGreaterThanOrEqual(0);
     expect(profileIndex).toBeGreaterThan(offlineBranchIndex);
+  });
+
+  test('returns from the nested team chat route before opening profile', async () => {
+    const flow = await Bun.file(flowPath).text();
+    const reconnectIndex = flow.indexOf('id: message-sync-retrying');
+    const backIndex = flow.indexOf('id: team-chat-back', reconnectIndex);
+    const profileIndex = flow.indexOf('id: player-tab-profile', backIndex);
+
+    expect(reconnectIndex).toBeGreaterThanOrEqual(0);
+    expect(backIndex).toBeGreaterThan(reconnectIndex);
+    expect(profileIndex).toBeGreaterThan(backIndex);
   });
 });

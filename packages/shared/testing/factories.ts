@@ -44,6 +44,9 @@ export type EventCategoryRow = Database['public']['Tables']['event_categories'][
 export type EventRow = Database['public']['Tables']['events']['Row'];
 export type EventOccurrenceRow = Database['public']['Tables']['event_occurrences']['Row'];
 export type EventSignupRow = Database['public']['Tables']['event_signups']['Row'];
+export type ForumCategoryRow = Database['public']['Tables']['forum_categories']['Row'];
+export type ForumPostRow = Database['public']['Tables']['forum_posts']['Row'];
+export type ForumReplyRow = Database['public']['Tables']['forum_replies']['Row'];
 export type KnowledgeCategoryRow = Database['public']['Tables']['knowledge_categories']['Row'];
 export type KnowledgeArticleRow = Database['public']['Tables']['knowledge_articles']['Row'];
 export type ProfileRow = Database['public']['Tables']['profiles']['Row'];
@@ -274,6 +277,64 @@ export function buildServiceInterest(
     service_id: '5eed0000-0000-4000-800a-000000000004',
     user_id: seedUserId(PARTICIPANT_FIXTURES[1]!.ordinal),
     created_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+export function buildForumCategory(overrides: Partial<ForumCategoryRow> = {}): ForumCategoryRow {
+  return {
+    id: '5eed0000-0000-4000-8006-000000000002',
+    org_id: SEED_ORGANIZATION_ID,
+    name: {
+      ca: 'Feina',
+      es: 'Empleo',
+      en: 'Jobs',
+      ar: 'العمل',
+      fa: 'کار',
+    },
+    slug: 'jobs',
+    icon: 'briefcase',
+    color: 'secondary',
+    sort_order: 20,
+    created_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+export function buildForumPost(overrides: Partial<ForumPostRow> = {}): ForumPostRow {
+  const author = PARTICIPANT_FIXTURES[0]!;
+  return {
+    id: '5eed0000-0000-4000-8010-000000000099',
+    org_id: SEED_ORGANIZATION_ID,
+    category_id: buildForumCategory().id,
+    author_id: seedUserId(author.ordinal),
+    author_first_name: author.firstName,
+    content: 'Busco feina de cuina a Vic.',
+    image_url: null,
+    visibility: 'visible',
+    is_pinned: false,
+    flag_count: 0,
+    reply_count: 1,
+    created_at: FIXTURE_TIMESTAMP,
+    updated_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+export function buildForumReply(overrides: Partial<ForumReplyRow> = {}): ForumReplyRow {
+  const author = PARTICIPANT_FIXTURES[1]!;
+  return {
+    id: '5eed0000-0000-4000-8010-000000000199',
+    org_id: SEED_ORGANIZATION_ID,
+    post_id: buildForumPost().id,
+    author_id: seedUserId(author.ordinal),
+    author_first_name: author.firstName,
+    content: 'أعرف una feina a Vic.',
+    image_url: null,
+    visibility: 'visible',
+    flag_count: 0,
+    created_at: FIXTURE_TIMESTAMP,
+    updated_at: FIXTURE_TIMESTAMP,
     ...overrides,
   };
 }

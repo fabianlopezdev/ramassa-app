@@ -111,6 +111,23 @@ export function parseSmokeMetroPort(rawPort: string | undefined): number | undef
   return port;
 }
 
+export function maestroSmokeCommand(
+  device: string,
+  resolvedFlow: string,
+  debugOutputDir: string,
+): string[] {
+  return [
+    'maestro',
+    '--device',
+    device,
+    'test',
+    '--debug-output',
+    debugOutputDir,
+    '--flatten-debug-output',
+    resolvedFlow,
+  ];
+}
+
 async function runSuiteOn(
   platform: 'ios' | 'android',
   config: FlowConfig,
@@ -160,7 +177,8 @@ async function runSuiteOn(
     for (const flow of flows) {
       log(`\n▸ ${flow} on ${platform} (${device})`);
       const resolved = path.join(repoRoot, '.flow-shots', flow);
-      const { exitCode } = await run(['maestro', '--device', device, 'test', resolved], {
+      const debugOutput = path.join(repoRoot, '.flow-shots', 'debug', platform, flow);
+      const { exitCode } = await run(maestroSmokeCommand(device, resolved, debugOutput), {
         cwd: path.join(repoRoot, '.flow-shots'),
         inherit: true,
       });

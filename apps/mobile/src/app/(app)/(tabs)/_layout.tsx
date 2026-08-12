@@ -39,9 +39,9 @@ export default function TabsLayout() {
         <NativeTabs.Trigger.Icon sf="calendar" md="calendar_month" />
         <NativeTabs.Trigger.Label>{t('nav:tabs.events')}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="community" testID="player-tab-messages">
+      <NativeTabs.Trigger name="community" testID="player-tab-community">
         <NativeTabs.Trigger.Icon sf="bubble.left.and.bubble.right.fill" md="chat" />
-        <NativeTabs.Trigger.Label>{t('nav:tabs.messages')}</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label>{t('nav:tabs.community')}</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Badge hidden={unreadBadge.hidden}>
           {unreadBadge.children}
         </NativeTabs.Trigger.Badge>

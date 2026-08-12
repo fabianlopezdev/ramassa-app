@@ -8,6 +8,9 @@ import {
   buildEventCategory,
   buildEventOccurrence,
   buildEventSignup,
+  buildForumCategory,
+  buildForumPost,
+  buildForumReply,
   buildInvite,
   buildKnowledgeArticle,
   buildKnowledgeCategory,
@@ -190,6 +193,20 @@ describe('event factories', () => {
     expect(attendance.player_id).toBe(seedUserId(PARTICIPANT_FIXTURES[0]!.ordinal));
     expect(attendance.marked_by).toBe(seedUserId(STAFF_FIXTURES[1]!.ordinal));
     expect(attendance.status).toBe('present');
+  });
+});
+
+describe('forum factories', () => {
+  test('builds localized categories and first-name-only attributed threads', () => {
+    const category = buildForumCategory();
+    const post = buildForumPost();
+    const reply = buildForumReply();
+
+    expect(Object.keys(category.name as Record<string, unknown>)).toEqual([...SUPPORTED_LANGUAGES]);
+    expect(post.category_id).toBe(category.id);
+    expect(post.author_first_name).toBe(buildParticipant().first_name);
+    expect(reply.post_id).toBe(post.id);
+    expect(reply.author_first_name).toBe(PARTICIPANT_FIXTURES[1]!.firstName);
   });
 });
 

@@ -24,6 +24,7 @@ const auditedSpecs = [
   '.maestro/attendance.yaml',
   '.maestro/events-signup.yaml',
   '.maestro/feed-browse.yaml',
+  '.maestro/forum.yaml',
   '.maestro/knowledge-story.yaml',
   '.maestro/messaging.yaml',
   '.maestro/offline-feed.yaml',
