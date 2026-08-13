@@ -26,6 +26,7 @@ export interface MediaObjectBucket {
 
 export interface ServeMediaObjectDependencies {
   readonly resolveIdentity: (request: Request) => Promise<CallerIdentity>;
+  readonly authorizeGalleryObject: (objectKey: string) => Promise<boolean>;
   readonly bucket: MediaObjectBucket;
   readonly corsHeaders?: Record<string, string>;
   readonly onError?: (error: unknown, context: Record<string, unknown>) => void;
@@ -90,6 +91,15 @@ export async function handleServeMediaObject(
   const objectKey = readObjectKey(request);
   if (objectKey === null || !objectKey.startsWith(`${identity.orgId}/`)) {
     return notFound(corsHeaders);
+  }
+
+  if (objectKey.split('/')[1] === 'gallery') {
+    try {
+      if (!(await dependencies.authorizeGalleryObject(objectKey))) return notFound(corsHeaders);
+    } catch (thrown) {
+      dependencies.onError?.(thrown, { stage: 'authorize-gallery-object' });
+      return fail('DB-1');
+    }
   }
 
   let object: MediaObject | null;

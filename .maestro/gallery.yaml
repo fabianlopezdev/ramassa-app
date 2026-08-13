@@ -1,0 +1,52 @@
+appId: com.ramassa.app
+name: gallery
+env:
+  COMMUNITY_TITLE: '{{forum:title}}'
+  GALLERY_TITLE: '{{gallery:title}}'
+  CONSENT_REMINDER: '{{gallery:consentReminder}}'
+  PUSH_DECLINE: '{{push:rationaleDecline}}'
+---
+- runFlow: _open-app.yaml
+- runFlow: _sign-in.yaml
+- repeat:
+    times: 6
+    while:
+      visible: '^${PUSH_DECLINE}$'
+    commands:
+      - tapOn: '^${PUSH_DECLINE}$'
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - tapOn: '^${COMMUNITY_TITLE}$'
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          id: player-tab-community
+- extendedWaitUntil:
+    visible:
+      id: forum-board
+    timeout: 60000
+- tapOn:
+    id: forum-open-gallery
+- extendedWaitUntil:
+    visible:
+      id: gallery-grid
+    timeout: 30000
+- assertVisible: '^${GALLERY_TITLE}$'
+- tapOn:
+    id: gallery-item-5eed0000-0000-4000-8014-000000000001
+- extendedWaitUntil:
+    visible:
+      id: gallery-privacy-picker
+    timeout: 30000
+- back
+- tapOn:
+    id: gallery-upload
+- extendedWaitUntil:
+    visible: '^${CONSENT_REMINDER}$'
+    timeout: 30000
+- assertVisible:
+    id: gallery-consent-acknowledgment

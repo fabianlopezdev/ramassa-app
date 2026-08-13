@@ -26,6 +26,7 @@
     "db:test": "supabase test db",
     "db:test:signup-race": "bun run scripts/verify-event-signup-race.ts",
     "db:test:forum-flag-race": "bun run scripts/verify-forum-flag-race.ts",
+    "db:test:media-deletion": "bun run scripts/verify-media-deletion.ts",
     "db:types": "supabase gen types typescript --local > packages/shared/types/database.ts",
     "push:scheduler:configure": "bun run scripts/configure-local-push-scheduler.ts",
     "push:catalog:generate": "bun run scripts/generate-push-edge-catalog.ts",

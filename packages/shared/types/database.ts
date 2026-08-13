@@ -744,6 +744,7 @@ export type Database = {
           created_at: string;
           flagger_id: string;
           id: string;
+          media_id: string | null;
           org_id: string;
           post_id: string | null;
           reason: string;
@@ -758,6 +759,7 @@ export type Database = {
           created_at?: string;
           flagger_id: string;
           id?: string;
+          media_id?: string | null;
           org_id: string;
           post_id?: string | null;
           reason: string;
@@ -772,6 +774,7 @@ export type Database = {
           created_at?: string;
           flagger_id?: string;
           id?: string;
+          media_id?: string | null;
           org_id?: string;
           post_id?: string | null;
           reason?: string;
@@ -787,6 +790,13 @@ export type Database = {
             columns: ['org_id', 'flagger_id'];
             isOneToOne: false;
             referencedRelation: 'profiles';
+            referencedColumns: ['org_id', 'id'];
+          },
+          {
+            foreignKeyName: 'forum_flags_media_tenant_fkey';
+            columns: ['org_id', 'media_id'];
+            isOneToOne: false;
+            referencedRelation: 'media_items';
             referencedColumns: ['org_id', 'id'];
           },
           {
@@ -1172,6 +1182,78 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'organizations';
             referencedColumns: ['id'];
+          },
+        ];
+      };
+      media_items: {
+        Row: {
+          caption: string | null;
+          consent_acknowledged_at: string;
+          consent_version: string;
+          created_at: string;
+          file_size: number;
+          file_type: string;
+          file_url: string;
+          flag_count: number;
+          id: string;
+          moderation_state: string;
+          org_id: string;
+          privacy_level: string;
+          thumbnail_url: string | null;
+          updated_at: string;
+          uploaded_by: string;
+          uploader_first_name: string;
+        };
+        Insert: {
+          caption?: string | null;
+          consent_acknowledged_at: string;
+          consent_version: string;
+          created_at?: string;
+          file_size: number;
+          file_type: string;
+          file_url: string;
+          flag_count?: number;
+          id?: string;
+          moderation_state?: string;
+          org_id: string;
+          privacy_level: string;
+          thumbnail_url?: string | null;
+          updated_at?: string;
+          uploaded_by: string;
+          uploader_first_name: string;
+        };
+        Update: {
+          caption?: string | null;
+          consent_acknowledged_at?: string;
+          consent_version?: string;
+          created_at?: string;
+          file_size?: number;
+          file_type?: string;
+          file_url?: string;
+          flag_count?: number;
+          id?: string;
+          moderation_state?: string;
+          org_id?: string;
+          privacy_level?: string;
+          thumbnail_url?: string | null;
+          updated_at?: string;
+          uploaded_by?: string;
+          uploader_first_name?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'media_items_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'media_items_uploader_tenant_fkey';
+            columns: ['org_id', 'uploaded_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['org_id', 'id'];
           },
         ];
       };
@@ -2282,6 +2364,10 @@ export type Database = {
         Args: { dispatch_secret: string };
         Returns: boolean;
       };
+      can_read_media_object: {
+        Args: { p_object_key: string };
+        Returns: boolean;
+      };
       claim_push_deliveries: {
         Args: {
           claim_limit?: number;
@@ -2317,6 +2403,14 @@ export type Database = {
           receipt_attempt_count: number;
           ticket_id: string;
         }[];
+      };
+      complete_media_item_deletion: {
+        Args: {
+          p_file_object_key: string;
+          p_media_item_id: string;
+          p_thumbnail_object_key: string;
+        };
+        Returns: undefined;
       };
       complete_onboarding: {
         Args: { payload: Json };
@@ -2371,6 +2465,19 @@ export type Database = {
       };
       create_forum_reply: {
         Args: { p_content: string; p_post_id: string };
+        Returns: string;
+      };
+      create_media_item: {
+        Args: {
+          p_caption: string;
+          p_consent_acknowledged: boolean;
+          p_consent_version: string;
+          p_file_size: number;
+          p_file_type: string;
+          p_file_url: string;
+          p_privacy_level: string;
+          p_thumbnail_url: string;
+        };
         Returns: string;
       };
       create_participant_account: {
@@ -2605,6 +2712,9 @@ export type Database = {
           first_flagged_at: string;
           flag_count: number;
           is_pinned: boolean;
+          media_file_type: string;
+          media_file_url: string;
+          media_thumbnail_url: string;
           post_id: string;
           reasons: Json;
           target_id: string;
@@ -2702,6 +2812,13 @@ export type Database = {
           table_name: string;
         }[];
       };
+      prepare_media_item_deletion: {
+        Args: { p_media_item_id: string };
+        Returns: {
+          file_object_key: string;
+          thumbnail_object_key: string;
+        }[];
+      };
       record_push_delivery_results: {
         Args: {
           dispatch_secret: string;
@@ -2791,6 +2908,10 @@ export type Database = {
       };
       set_forum_posting_disabled: {
         Args: { p_disabled: boolean; p_participant_id: string };
+        Returns: undefined;
+      };
+      set_media_item_privacy: {
+        Args: { p_media_item_id: string; p_privacy_level: string };
         Returns: undefined;
       };
       set_participant_active: {

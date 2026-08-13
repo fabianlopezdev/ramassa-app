@@ -86,7 +86,7 @@
   "moderationEmptyBody": "Els avisos nous apareixeran aquí.",
   "moderationUnknownCategory": "Categoria desconeguda",
   "moderationFlags": "{{count}} avisos",
-  "moderationTarget": { "post": "Publicació", "reply": "Resposta" },
+  "moderationTarget": { "post": "Publicació", "reply": "Resposta", "media": "Galeria" },
   "moderationDismiss": "Descarta avisos",
   "moderationHide": "Amaga",
   "moderationDelete": "Esborra",
@@ -107,5 +107,6 @@
   "categorySortOrder": "Ordre",
   "categorySaveFailed": "No s'ha pogut desar la categoria.",
   "categoryCreate": "Crea la categoria",
-  "categorySave": "Desa la categoria"
+  "categorySave": "Desa la categoria",
+  "gallery": "Galeria"
 }

@@ -86,7 +86,7 @@
   "moderationEmptyBody": "ستظهر البلاغات الجديدة هنا.",
   "moderationUnknownCategory": "فئة غير معروفة",
   "moderationFlags": "{{count}} بلاغات",
-  "moderationTarget": { "post": "منشور", "reply": "رد" },
+  "moderationTarget": { "post": "منشور", "reply": "رد", "media": "المعرض" },
   "moderationDismiss": "رفض البلاغات",
   "moderationHide": "إخفاء",
   "moderationDelete": "حذف",
@@ -107,5 +107,6 @@
   "categorySortOrder": "الترتيب",
   "categorySaveFailed": "تعذر حفظ الفئة.",
   "categoryCreate": "إنشاء الفئة",
-  "categorySave": "حفظ الفئة"
+  "categorySave": "حفظ الفئة",
+  "gallery": "المعرض"
 }

@@ -86,7 +86,7 @@
   "moderationEmptyBody": "New reports will appear here.",
   "moderationUnknownCategory": "Unknown category",
   "moderationFlags": "{{count}} reports",
-  "moderationTarget": { "post": "Post", "reply": "Reply" },
+  "moderationTarget": { "post": "Post", "reply": "Reply", "media": "Gallery media" },
   "moderationDismiss": "Dismiss reports",
   "moderationHide": "Hide",
   "moderationDelete": "Delete",
@@ -107,5 +107,6 @@
   "categorySortOrder": "Order",
   "categorySaveFailed": "The category could not be saved.",
   "categoryCreate": "Create category",
-  "categorySave": "Save category"
+  "categorySave": "Save category",
+  "gallery": "Gallery"
 }

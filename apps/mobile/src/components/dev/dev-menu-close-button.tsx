@@ -21,6 +21,7 @@ export function DevMenuCloseButton() {
 
   return (
     <Pressable
+      testID="dev-menu-close"
       accessibilityRole="button"
       accessibilityLabel="Close the developer menu"
       hitSlop={12}

@@ -1549,6 +1549,23 @@ on conflict (id) do nothing;
 
 alter table public.messages enable trigger messages_enqueue_push;
 
+insert into public.media_items (
+  id, org_id, uploaded_by, uploader_first_name, file_url, thumbnail_url,
+  file_type, file_size, caption, privacy_level,
+  consent_acknowledged_at, consent_version, created_at, updated_at
+)
+values (
+  '5eed0000-0000-4000-8014-000000000001',
+  '5eed0000-0000-4000-8000-000000000000',
+  '5eed0000-0000-4000-8000-000000000011',
+  'Amina',
+  '5eed0000-0000-4000-8000-000000000000/gallery/5eed0000-0000-4000-8000-000000000011/2026/08/11111111111111111111111111111111.jpg',
+  '5eed0000-0000-4000-8000-000000000000/gallery/5eed0000-0000-4000-8000-000000000011/2026/08/22222222222222222222222222222222.jpg',
+  'image', 640000, 'Entrenament de dimarts', 'community',
+  now() - interval '1 day', 'gallery-consent-v1', now() - interval '1 day', now() - interval '1 day'
+)
+on conflict (id) do nothing;
+
 insert into public.conversation_read_states (
   org_id, conversation_id, user_id, last_read_message_id, read_at
 )

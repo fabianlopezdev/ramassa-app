@@ -63,6 +63,7 @@ export default function CommunityScreen() {
   );
   const createPost = useCallback(() => push('/forum/create' as Href), [push]);
   const openTeamChat = useCallback(() => push('/team-chat' as Href), [push]);
+  const openGallery = useCallback(() => push('/gallery' as Href), [push]);
   const openLinkLabel = useCallback((url: string) => t('forum:openLink', { url }), [t]);
   const refresh = useCallback(() => {
     void Promise.all([categoriesQuery.refetch(), postsQuery.refetch()]);
@@ -158,6 +159,18 @@ export default function CommunityScreen() {
               >
                 <Text className={`text-center text-md font-bold text-primary ${languageFontClass}`}>
                   {t('forum:teamChat')}
+                </Text>
+              </PressableScale>
+              <PressableScale
+                testID="forum-open-gallery"
+                accessibilityLabel={t('forum:gallery')}
+                onPress={openGallery}
+                haptic="tapLight"
+                style={continuousCorners}
+                className="min-h-recommended grow items-center justify-center rounded-md border border-primary px-lg"
+              >
+                <Text className={`text-center text-md font-bold text-primary ${languageFontClass}`}>
+                  {t('forum:gallery')}
                 </Text>
               </PressableScale>
             </View>

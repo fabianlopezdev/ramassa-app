@@ -47,17 +47,20 @@ interface DevButtonProps {
   readonly label: string;
   readonly onPress: () => void;
   readonly isActive?: boolean;
+  readonly testID?: string;
 }
 
 function DevButtonBase({
   label,
   onPress,
   isActive,
+  testID,
   className,
   textClassName,
 }: DevButtonProps & { className: string; textClassName: string }) {
   return (
     <Pressable
+      testID={testID}
       accessibilityRole="button"
       accessibilityLabel={label}
       // Selection announced, not just coloured. A button whose only "on" signal
@@ -74,10 +77,11 @@ function DevButtonBase({
   );
 }
 
-export function DevButton({ label, onPress, isActive = false }: DevButtonProps) {
+export function DevButton({ label, onPress, isActive = false, testID }: DevButtonProps) {
   return (
     <DevButtonBase
       label={label}
+      testID={testID}
       onPress={onPress}
       isActive={isActive}
       className={isActive ? 'bg-primary' : 'bg-neutral-100'}

@@ -119,19 +119,22 @@ const forumReplyDatabaseRowSchema = z.object({
   updated_at: z.iso.datetime({ offset: true }),
 });
 const forumModerationQueueRowSchema = z.object({
-  target_type: z.enum(['post', 'reply']),
+  target_type: z.enum(['post', 'reply', 'media']),
   target_id: z.uuid(),
-  post_id: z.uuid(),
+  post_id: z.uuid().nullable(),
   author_id: z.uuid(),
   author_first_name: z.string().min(1),
   content: z.string().nullable(),
   visibility: forumVisibilitySchema,
   is_pinned: z.boolean(),
-  category_id: z.uuid(),
+  category_id: z.uuid().nullable(),
   flag_count: z.number().int().positive(),
   first_flagged_at: z.iso.datetime({ offset: true }),
   reasons: z.array(z.string()),
   comments: z.array(z.string()),
+  media_file_url: z.string().nullable(),
+  media_thumbnail_url: z.string().nullable(),
+  media_file_type: z.enum(['image', 'video']).nullable(),
 });
 
 export type ForumModerationQueueRow = z.infer<typeof forumModerationQueueRowSchema>;

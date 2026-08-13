@@ -86,7 +86,7 @@
   "moderationEmptyBody": "Los nuevos avisos aparecerán aquí.",
   "moderationUnknownCategory": "Categoría desconocida",
   "moderationFlags": "{{count}} avisos",
-  "moderationTarget": { "post": "Publicación", "reply": "Respuesta" },
+  "moderationTarget": { "post": "Publicación", "reply": "Respuesta", "media": "Galería" },
   "moderationDismiss": "Descartar avisos",
   "moderationHide": "Ocultar",
   "moderationDelete": "Eliminar",
@@ -107,5 +107,6 @@
   "categorySortOrder": "Orden",
   "categorySaveFailed": "No se ha podido guardar la categoría.",
   "categoryCreate": "Crear categoría",
-  "categorySave": "Guardar categoría"
+  "categorySave": "Guardar categoría",
+  "gallery": "Galería"
 }

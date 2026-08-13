@@ -13,7 +13,7 @@ export const FORUM_FLAG_REASONS = [
   'other',
 ] as const;
 
-export const forumFlagTargetTypeSchema = z.enum(['post', 'reply']);
+export const forumFlagTargetTypeSchema = z.enum(['post', 'reply', 'media']);
 export const forumFlagReasonSchema = z.enum(FORUM_FLAG_REASONS);
 
 const forumText = (maximum: number) => z.string().trim().min(1).max(maximum);

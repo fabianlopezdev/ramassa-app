@@ -16,6 +16,7 @@ export function DevMenuEntry() {
   return (
     <Link href="/dev-menu" asChild>
       <Pressable
+        testID="dev-menu-entry"
         accessibilityRole="button"
         accessibilityLabel="Open the developer menu"
         className="min-h-min items-center justify-center rounded-md border border-neutral-300 bg-neutral-100 px-lg py-sm active:opacity-70"

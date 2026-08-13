@@ -20,9 +20,15 @@ import {
   PURGE_PARTICIPANT_MEDIA_PATH,
 } from '@ramassa/shared/upload-client';
 import { UPLOAD_URL_TTL_SECONDS } from './constants';
+import { handleDeleteMediaItem } from './delete-media-item';
 import { parseWorkerEnv, type WorkerConfig } from './env';
 import { buildCorsHeaders, errorResponse } from './http';
 import { buildLocalUploadUrl, handleLocalUpload, LOCAL_UPLOAD_PATH_PREFIX } from './local-upload';
+import {
+  canReadMediaObject,
+  completeMediaItemDeletion,
+  prepareMediaItemDeletion,
+} from './media-item-deletion-rpc';
 import { recordMediaPurgeReceipt } from './media-purge-receipt';
 import { handleMintUploadUrl, type SignedUploadTarget, type UploadTarget } from './mint-upload-url';
 import { createWorkerObservability } from './observability';
@@ -147,11 +153,49 @@ const handler: ExportedHandler<Env> = {
       });
     }
 
+    const galleryDeleteMatch = url.pathname.match(/^\/gallery\/items\/([^/]+)$/);
+    if (galleryDeleteMatch?.[1] !== undefined) {
+      return handleDeleteMediaItem(request, galleryDeleteMatch[1], {
+        resolveIdentity: (incoming) =>
+          resolveCallerIdentity({
+            request: incoming,
+            supabaseUrl: config.supabaseUrl,
+            supabasePublishableKey: config.supabasePublishableKey,
+          }),
+        prepareDeletion: ({ mediaItemId }) =>
+          prepareMediaItemDeletion({
+            mediaItemId,
+            token: readBearerToken(request),
+            supabaseUrl: config.supabaseUrl,
+            supabasePublishableKey: config.supabasePublishableKey,
+          }),
+        deleteObjects: (keys) => env.MEDIA_BUCKET.delete([...keys]),
+        completeDeletion: ({ mediaItemId, fileObjectKey, thumbnailObjectKey }) =>
+          completeMediaItemDeletion({
+            mediaItemId,
+            fileObjectKey,
+            thumbnailObjectKey,
+            token: readBearerToken(request),
+            supabaseUrl: config.supabaseUrl,
+            supabasePublishableKey: config.supabasePublishableKey,
+          }),
+        corsHeaders,
+        onError: (thrown, context) => observability.reportError(thrown, context),
+      });
+    }
+
     if (url.pathname.startsWith(`${MEDIA_OBJECT_PATH_PREFIX}/`)) {
       return handleServeMediaObject(request, {
         resolveIdentity: (incoming) =>
           resolveCallerIdentity({
             request: incoming,
+            supabaseUrl: config.supabaseUrl,
+            supabasePublishableKey: config.supabasePublishableKey,
+          }),
+        authorizeGalleryObject: (objectKey) =>
+          canReadMediaObject({
+            objectKey,
+            token: readBearerToken(request),
             supabaseUrl: config.supabaseUrl,
             supabasePublishableKey: config.supabasePublishableKey,
           }),

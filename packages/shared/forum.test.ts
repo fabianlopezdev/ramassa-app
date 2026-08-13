@@ -5,6 +5,7 @@ import {
   createForumReply,
   deleteOwnForumPost,
   editOwnForumPost,
+  fetchForumModerationQueue,
   fetchForumPosts,
   filterForumPostsByCategory,
   flagForumContent,
@@ -66,6 +67,42 @@ describe('forum plain-text rendering', () => {
 });
 
 describe('forum category board', () => {
+  test('parses a media moderation row with no post or category', async () => {
+    const client = {
+      async rpc() {
+        return {
+          data: [
+            {
+              target_type: 'media',
+              target_id: '5eed0000-0000-4000-8014-000000000098',
+              post_id: null,
+              author_id: '5eed0000-0000-4000-8000-000000000011',
+              author_first_name: 'Amina',
+              content: 'RAPP-52 gallery moderation QA',
+              visibility: 'hidden_pending_review',
+              is_pinned: false,
+              category_id: null,
+              flag_count: 3,
+              first_flagged_at: '2026-08-12T20:00:00.000Z',
+              reasons: ['privacy'],
+              comments: [],
+              media_file_url:
+                '5eed0000-0000-4000-8000-000000000000/gallery/5eed0000-0000-4000-8000-000000000011/2026/08/33333333333333333333333333333333.jpg',
+              media_thumbnail_url:
+                '5eed0000-0000-4000-8000-000000000000/gallery/5eed0000-0000-4000-8000-000000000011/2026/08/33333333333333333333333333333333.jpg',
+              media_file_type: 'image',
+            },
+          ],
+          error: null,
+        };
+      },
+    };
+
+    await expect(fetchForumModerationQueue(client as never)).resolves.toMatchObject([
+      { target_type: 'media', post_id: null, category_id: null },
+    ]);
+  });
+
   test('filters persisted posts by category without changing server order', () => {
     const rows = [post('pinned', 'jobs'), post('newest', 'housing'), post('older', 'jobs')];
     expect(filterForumPostsByCategory(rows, 'jobs').map((row) => row.id)).toEqual([

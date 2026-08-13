@@ -25,6 +25,7 @@ const auditedSpecs = [
   '.maestro/events-signup.yaml',
   '.maestro/feed-browse.yaml',
   '.maestro/forum.yaml',
+  '.maestro/gallery.yaml',
   '.maestro/knowledge-story.yaml',
   '.maestro/messaging.yaml',
   '.maestro/offline-feed.yaml',
@@ -323,6 +324,11 @@ describe('Maestro selector contracts', () => {
     }
 
     const setLanguage = await Bun.file(path.join(repoRoot, '.maestro/_set-language.yaml')).text();
+    expect(setLanguage).toContain('id: dev-menu-entry');
+    expect(setLanguage).toContain('id: dev-menu-close');
+    expect(setLanguage).toContain('id: dev-language-${LOCALE}');
+    expect(setLanguage).not.toContain("text: '.*${DEV_MENU_LABEL}.*'");
+    expect(setLanguage).toMatch(/while:\n\s+notVisible:\n\s+id: dev-menu-close/);
     expect(setLanguage).toMatch(
       /visible: '\^Reload app to apply direction\$'[\s\S]*?tapOn: '\^Reload app to apply direction\$'/,
     );
@@ -360,6 +366,11 @@ describe('Maestro selector contracts', () => {
     ).text();
     expect(languageSwitcher).toContain('testID={`profile-language-${code}`}');
 
+    const devLanguage = await Bun.file(
+      path.join(repoRoot, 'apps/mobile/src/components/dev/dev-language-section.tsx'),
+    ).text();
+    expect(devLanguage).toContain('testID={`dev-language-${code}`}');
+
     const events = await Bun.file(path.join(repoRoot, '.maestro/events-signup.yaml')).text();
     expect(events).toMatch(/CALENDAR_VIEW_ACTION[\s\S]*?player-events-calendar/);
     expect(events).toMatch(
@@ -388,6 +399,25 @@ describe('Maestro selector contracts', () => {
     expect(offline).toContain("OFFLINE_BANNER: '{{home:offlineBanner}}'");
     expect(offline).toMatch(/toggleAirplaneMode[\s\S]*?OFFLINE_BANNER/);
     expect(offline).toMatch(/OFFLINE_BANNER[\s\S]*?toggleAirplaneMode/);
+  });
+
+  test('the gallery flow uses the shared development-client bootstrap', async () => {
+    const gallery = await Bun.file(path.join(repoRoot, '.maestro/gallery.yaml')).text();
+    expect(gallery).toContain('- runFlow: _open-app.yaml');
+    expect(gallery).not.toContain('- clearState');
+    expect(gallery).toMatch(
+      /platform: Android[\s\S]*?tapOn: '\^\$\{COMMUNITY_TITLE\}\$'[\s\S]*?platform: iOS[\s\S]*?id: player-tab-community/,
+    );
+  });
+
+  test('the forum flow uses the shared development-client bootstrap', async () => {
+    const forum = await Bun.file(path.join(repoRoot, '.maestro/forum.yaml')).text();
+    expect(forum).toContain('- runFlow: _open-app.yaml');
+    expect(forum).not.toContain('- clearState');
+    expect(forum).toContain('id: forum-detail-back');
+    expect(forum).toMatch(
+      /notVisible:\n\s+id: forum-board[\s\S]*?id: forum-detail-back[\s\S]*?visible:\n\s+id: forum-board/,
+    );
   });
 
   test('the Knowledge Base capture clears a late notification rationale while waiting for Home', async () => {

@@ -86,7 +86,7 @@
   "moderationEmptyBody": "گزارش‌های جدید اینجا نمایش داده می‌شوند.",
   "moderationUnknownCategory": "دسته ناشناخته",
   "moderationFlags": "{{count}} گزارش",
-  "moderationTarget": { "post": "پست", "reply": "پاسخ" },
+  "moderationTarget": { "post": "پست", "reply": "پاسخ", "media": "گالری" },
   "moderationDismiss": "رد گزارش‌ها",
   "moderationHide": "پنهان کردن",
   "moderationDelete": "حذف",
@@ -107,5 +107,6 @@
   "categorySortOrder": "ترتیب",
   "categorySaveFailed": "دسته ذخیره نشد.",
   "categoryCreate": "ایجاد دسته",
-  "categorySave": "ذخیره دسته"
+  "categorySave": "ذخیره دسته",
+  "gallery": "گالری"
 }

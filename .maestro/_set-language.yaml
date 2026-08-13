@@ -12,31 +12,28 @@ name: _set-language
 # The dev menu is reachable pre-auth on purpose: its entry sits on the login
 # screen too, exactly so the language can be pinned before anyone signs in.
 env:
-  DEV_MENU_LABEL: Developer menu
-  MENU_SECTION: Environment
   LOCALE: ca
 ---
 # Opening the dev menu is a LOOP, not one tap. A single tap is swallowed whenever
 # the client's explainer sheet is mid-flight over it, and the flow then waits out
 # its timeout on a login screen with the button plainly visible. The loop also
 # clears a late sheet, and it stops the instant the menu is actually open. The
-# section it waits on is the FIRST one: the menu opens scrolled to the top, so
-# waiting on a lower section fails on a menu that opened perfectly.
+# The close control is pinned and has a stable accessibility ID, so it is the
+# authoritative signal that the menu is open on both platforms.
 - repeat:
     times: 6
     while:
-      notVisible: '.*${MENU_SECTION}.*'
+      notVisible:
+        id: dev-menu-close
     commands:
       - tapOn:
-          text: '.*Close.*'
-          optional: true
-      - tapOn:
-          text: '.*${DEV_MENU_LABEL}.*'
+          id: dev-menu-entry
           optional: true
       - waitForAnimationToEnd:
           timeout: 3000
 - extendedWaitUntil:
-    visible: '.*${MENU_SECTION}.*'
+    visible:
+      id: dev-menu-close
     timeout: 15000
 # The menu opens with an interactive transition; a swipe landing while it is still
 # running cancels it and drops back to where we started.
@@ -49,7 +46,8 @@ env:
 - repeat:
     times: 20
     while:
-      notVisible: '^${LOCALE} \(.*\)$'
+      notVisible:
+        id: dev-language-${LOCALE}
     commands:
       - swipe:
           start: 50%, 70%
@@ -57,14 +55,6 @@ env:
           duration: 900
       - waitForAnimationToEnd:
           timeout: 2500
-# The loop stops the instant a sliver is on screen, which parks the button under
-# the navigation bar where a tap does not reach it. One smaller swipe lifts it clear.
-- swipe:
-    start: 50%, 65%
-    end: 50%, 55%
-    duration: 900
-- waitForAnimationToEnd:
-    timeout: 2500
 # Tap UNTIL selected, not tap-then-assert. These small buttons wrap onto two
 # rows and drift between the moment Maestro resolves their bounds and the moment
 # the touch is dispatched, so a tap landing in the padding between rows reports
@@ -80,11 +70,11 @@ env:
     times: 6
     while:
       notVisible:
-        text: '^${LOCALE} \(.*\)$'
+        id: dev-language-${LOCALE}
         selected: true
     commands:
       - tapOn:
-          text: '^${LOCALE} \(.*\)$'
+          id: dev-language-${LOCALE}
           optional: true
       - waitForAnimationToEnd:
           timeout: 2500
@@ -94,7 +84,7 @@ env:
 # on the tap, with the real selection in the artifact, instead of surfacing much
 # later as a tab bar in the wrong language.
 - assertVisible:
-    text: '^${LOCALE} \(.*\)$'
+    id: dev-language-${LOCALE}
     selected: true
 
 # Crossing between LTR and RTL changes I18nManager for the next native start.
@@ -131,11 +121,13 @@ env:
 - repeat:
     times: 6
     while:
-      visible: '.*Close.*'
+      visible:
+        id: dev-menu-close
     commands:
       - tapOn:
-          text: '.*Close.*'
+          id: dev-menu-close
           optional: true
       - waitForAnimationToEnd:
           timeout: 3000
-- assertNotVisible: '.*Close.*'
+- assertNotVisible:
+    id: dev-menu-close

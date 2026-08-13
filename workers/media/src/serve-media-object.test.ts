@@ -9,6 +9,7 @@ const identity: CallerIdentity = {
   role: 'player',
 };
 const objectKey = `${identity.orgId}/announcements/${identity.userId}/2026/08/0123456789abcdef0123456789abcdef.jpg`;
+const galleryObjectKey = `${identity.orgId}/gallery/${identity.userId}/2026/08/1123456789abcdef0123456789abcdef.jpg`;
 
 function requestFor(key: string = objectKey, method = 'GET'): Request {
   const encodedKey = key.split('/').map(encodeURIComponent).join('/');
@@ -23,6 +24,7 @@ function dependencies(
 ): ServeMediaObjectDependencies {
   return {
     resolveIdentity: async () => identity,
+    authorizeGalleryObject: async () => true,
     bucket: {
       get: async (key) =>
         key === objectKey
@@ -84,6 +86,25 @@ describe('handleServeMediaObject', () => {
       expect(response.status).toBe(404);
       expect(await response.text()).toBe('');
     }
+  });
+
+  test('checks gallery row visibility before reading the private R2 object', async () => {
+    let storageReads = 0;
+    const response = await handleServeMediaObject(
+      requestFor(galleryObjectKey),
+      dependencies({
+        authorizeGalleryObject: async () => false,
+        bucket: {
+          get: async () => {
+            storageReads += 1;
+            return null;
+          },
+        },
+      }),
+    );
+
+    expect(response.status).toBe(404);
+    expect(storageReads).toBe(0);
   });
 
   test('reports a storage failure without exposing its details', async () => {

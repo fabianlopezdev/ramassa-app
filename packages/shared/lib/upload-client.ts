@@ -27,6 +27,7 @@ import {
 
 export const MINT_UPLOAD_URL_PATH = '/uploads/url';
 export const PURGE_PARTICIPANT_MEDIA_PATH = '/participants/media';
+export const GALLERY_ITEMS_PATH = '/gallery/items';
 export const MEDIA_OBJECT_PATH_PREFIX = '/objects';
 
 function buildMediaWorkerEndpoint(mediaWorkerUrl: string, path: string): string {
@@ -63,10 +64,43 @@ export interface UploadFileOptions {
   readonly fetchImplementation?: typeof fetch;
   /** Observation hook: the app-wired logger/Sentry pair passes its own here. */
   readonly onError?: (error: AppError) => void;
+  /** Determinate stage progress for native and web UIs. */
+  readonly onProgress?: (value: number) => void;
 }
 
 export interface UploadedFile {
   readonly objectKey: string;
+}
+
+export interface DeleteMediaItemOptions {
+  readonly mediaWorkerUrl: string;
+  readonly accessToken: string;
+  readonly mediaItemId: string;
+  readonly fetchImplementation?: typeof fetch;
+  readonly onError?: (error: AppError) => void;
+}
+
+export async function deleteMediaItem(
+  options: DeleteMediaItemOptions,
+): Promise<Result<void, AppError>> {
+  return safeAsync(
+    async () => {
+      const response = await fetchOrThrowNetworkError(
+        options.fetchImplementation ?? fetch,
+        buildMediaWorkerEndpoint(
+          options.mediaWorkerUrl,
+          `${GALLERY_ITEMS_PATH}/${encodeURIComponent(options.mediaItemId)}`,
+        ),
+        { method: 'DELETE', headers: { authorization: `Bearer ${options.accessToken}` } },
+      );
+      if (!response.ok) {
+        throw new AppError(await readWorkerErrorCode(response), {
+          context: { status: response.status },
+        });
+      }
+    },
+    { code: 'UPLOAD-7', context: { mediaItemId: options.mediaItemId }, onError: options.onError },
+  );
 }
 
 function isKnownErrorCode(value: unknown): value is AppErrorCode {
@@ -108,6 +142,7 @@ export async function uploadFile(
 
   return safeAsync(
     async () => {
+      options.onProgress?.(0);
       const file = options.prepareFile ? await options.prepareFile(options.file) : options.file;
 
       // Validate before spending a round trip, with the same schema the Worker
@@ -123,6 +158,7 @@ export async function uploadFile(
           firstIssue === undefined ? 'VALIDATION-1' : getUploadErrorCodeForIssue(firstIssue),
         );
       }
+      options.onProgress?.(0.2);
 
       const mintResponse = await fetchOrThrowNetworkError(
         performFetch,
@@ -142,6 +178,7 @@ export async function uploadFile(
           context: { status: mintResponse.status },
         });
       }
+      options.onProgress?.(0.4);
 
       // An external response is parsed, never trusted (CONVENTIONS.md rule 2).
       const minted = uploadUrlResponseSchema.safeParse(await mintResponse.json());
@@ -163,6 +200,9 @@ export async function uploadFile(
           context: { status: storeResponse.status },
         });
       }
+
+      options.onProgress?.(0.9);
+      options.onProgress?.(1);
 
       return { objectKey: minted.data.objectKey };
     },

@@ -1,15 +1,25 @@
 import { expect, test } from '@playwright/test';
-import { queryDatabase, signIn, STAFF_EMAIL } from './session';
+import {
+  accessTokenFor,
+  MEDIA_WORKER_URL,
+  queryDatabase,
+  SEED_PASSWORD,
+  signIn,
+  STAFF_EMAIL,
+  uploadObjectAs,
+} from './session';
 
 const seededPostId = '5eed0000-0000-4000-8010-000000000001';
 const seededFlagId = '5eed0000-0000-4000-8012-000000000099';
 const softBanParticipantId = '5eed0000-0000-4000-8000-000000000012';
 const qaCategorySlug = 'rapp51-qa';
+const mediaId = '5eed0000-0000-4000-8014-000000000098';
 
 test.setTimeout(180_000);
 
 test.afterAll(() => {
   queryDatabase(`
+    delete from public.media_items where id = '${mediaId}';
     update public.forum_posts
     set category_id = '5eed0000-0000-4000-8006-000000000002',
         is_pinned = true,
@@ -22,6 +32,54 @@ test.afterAll(() => {
     update public.profiles set is_forum_banned = false where id = '${softBanParticipantId}';
     delete from public.forum_categories where slug in ('${qaCategorySlug}', '${qaCategorySlug}-edited');
   `);
+});
+
+test('staff sees flagged gallery media and deletes its row and R2 object', async ({ page }) => {
+  const playerToken = await accessTokenFor('amina.alhassan@example.test', SEED_PASSWORD);
+  const { objectKey } = await uploadObjectAs(
+    playerToken,
+    new Uint8Array([255, 216, 255, 217]),
+    'gallery',
+  );
+  queryDatabase(`
+    insert into public.media_items (
+      id, org_id, uploaded_by, uploader_first_name, file_url, thumbnail_url,
+      file_type, file_size, caption, privacy_level, moderation_state, flag_count,
+      consent_acknowledged_at, consent_version
+    ) values (
+      '${mediaId}', '5eed0000-0000-4000-8000-000000000000',
+      '5eed0000-0000-4000-8000-000000000011', 'Amina', '${objectKey}', '${objectKey}',
+      'image', 4, 'RAPP-52 gallery moderation QA', 'community', 'hidden_pending_review', 3,
+      now(), 'gallery-consent-v1'
+    );
+    alter table public.forum_flags disable trigger forum_flags_set_context;
+    alter table public.forum_flags disable trigger forum_flags_apply;
+    insert into public.forum_flags (
+      org_id, flagger_id, target_type, media_id, reason, state
+    ) values
+      ('5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-8000-000000000014', 'media', '${mediaId}', 'privacy', 'pending'),
+      ('5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-8000-000000000015', 'media', '${mediaId}', 'privacy', 'pending'),
+      ('5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-8000-000000000016', 'media', '${mediaId}', 'privacy', 'pending');
+    alter table public.forum_flags enable trigger forum_flags_set_context;
+    alter table public.forum_flags enable trigger forum_flags_apply;
+  `);
+
+  await signIn(page, STAFF_EMAIL);
+  await page.goto('/forum');
+  const mediaItem = page.getByRole('listitem').filter({ hasText: 'RAPP-52 gallery moderation QA' });
+  await expect(mediaItem).toBeVisible();
+  await expect(mediaItem.getByRole('img')).toBeVisible();
+  page.once('dialog', (dialog) => void dialog.accept());
+  await mediaItem.getByRole('button', { name: /delete|elimina/i }).click();
+  await expect(mediaItem).toHaveCount(0);
+  expect(queryDatabase(`select count(*) from public.media_items where id = '${mediaId}'`)).toBe(
+    '0',
+  );
+  const objectResponse = await fetch(
+    `${MEDIA_WORKER_URL}/objects/${objectKey.split('/').map(encodeURIComponent).join('/')}`,
+    { headers: { authorization: `Bearer ${playerToken}` } },
+  );
+  expect(objectResponse.status).toBe(404);
 });
 
 test('staff reviews a flag, manages its post, and restores it after dismissal', async ({

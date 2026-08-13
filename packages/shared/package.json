@@ -31,6 +31,7 @@
     "./announcements": "./announcements.ts",
     "./events": "./events.ts",
     "./forum": "./forum.ts",
+    "./media": "./media.ts",
     "./attendance": "./attendance.ts",
     "./messaging": "./messaging/messaging.ts",
     "./messaging/outbox": "./messaging/outbox.ts",

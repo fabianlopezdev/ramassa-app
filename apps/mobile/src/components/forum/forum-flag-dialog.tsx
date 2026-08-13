@@ -34,7 +34,7 @@ const busyButtonAccessibilityState = { busy: true, disabled: true } as const;
 
 export interface ForumFlagDialogProps {
   readonly target: Readonly<Pick<ForumFlagInput, 'targetType' | 'targetId'>> | null;
-  readonly postId: string;
+  readonly postId?: string;
   readonly onClose: () => void;
   readonly onConfirmed: () => void;
 }

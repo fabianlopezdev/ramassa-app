@@ -184,6 +184,25 @@ describe('uploadFile', () => {
     expect(calls[1]?.body).toBe(compressed);
   });
 
+  test('reports determinate preparation, authorization, transfer, and completion progress', async () => {
+    const progress: number[] = [];
+    const { fetch: fetchStub } = createFetchStub([
+      () => mintResponse(),
+      () => new Response(null, { status: 200 }),
+    ]);
+
+    const result = await uploadFile(
+      buildOptions({
+        fetchImplementation: fetchStub,
+        prepareFile: async (file) => file,
+        onProgress: (value) => progress.push(value),
+      }),
+    );
+
+    expect(result.ok).toBe(true);
+    expect(progress).toEqual([0, 0.2, 0.4, 0.9, 1]);
+  });
+
   test('never rejects: a thrown preparation hook comes back as a typed failure', async () => {
     const { fetch: fetchStub } = createFetchStub([]);
     const result = await uploadFile(

@@ -21,15 +21,17 @@ env:
 - repeat:
     times: 6
     while:
-      notVisible: '.*Close.*'
+      notVisible:
+        id: dev-menu-close
     commands:
       - tapOn:
-          text: '.*${DEV_MENU_LABEL}.*'
+          id: dev-menu-entry
           optional: true
       - waitForAnimationToEnd:
           timeout: 3000
 - extendedWaitUntil:
-    visible: '.*Close.*'
+    visible:
+      id: dev-menu-close
     timeout: 15000
 - repeat:
     times: 20
@@ -93,14 +95,16 @@ env:
 - repeat:
     times: 6
     while:
-      visible: '.*Close.*'
+      visible:
+        id: dev-menu-close
     commands:
       - tapOn:
-          text: '.*Close.*'
+          id: dev-menu-close
           optional: true
       - waitForAnimationToEnd:
           timeout: 3000
-- assertNotVisible: '.*Close.*'
+- assertNotVisible:
+    id: dev-menu-close
 
 # Assert the OUTCOME, not the dev menu's "Signed in as ..." line. That line is
 # local component state rendered AFTER the whole account list, so it sits below

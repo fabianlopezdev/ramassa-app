@@ -231,6 +231,7 @@ export default function ForumPostDetailScreen() {
         ListHeaderComponent={
           <PageWidth className="gap-lg pb-lg">
             <PressableScale
+              testID="forum-detail-back"
               accessibilityLabel={t('common:back')}
               onPress={back}
               haptic="tapLight"

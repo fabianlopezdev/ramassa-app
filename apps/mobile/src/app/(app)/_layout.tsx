@@ -59,6 +59,9 @@ export default function AppLayout() {
           <Stack.Screen name="story/submit" />
           <Stack.Screen name="forum/create" />
           <Stack.Screen name="forum/[id]" />
+          <Stack.Screen name="gallery/index" />
+          <Stack.Screen name="gallery/upload" />
+          <Stack.Screen name="gallery/[id]" />
           <Stack.Screen name="team-chat" />
         </Stack.Protected>
         <Stack.Protected guard={!needsOnboarding && isStaff}>

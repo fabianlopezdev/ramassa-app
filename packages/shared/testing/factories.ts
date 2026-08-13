@@ -48,6 +48,7 @@ export type ForumCategoryRow = Database['public']['Tables']['forum_categories'][
 export type ForumFlagRow = Database['public']['Tables']['forum_flags']['Row'];
 export type ForumPostRow = Database['public']['Tables']['forum_posts']['Row'];
 export type ForumReplyRow = Database['public']['Tables']['forum_replies']['Row'];
+export type MediaItemRow = Database['public']['Tables']['media_items']['Row'];
 export type KnowledgeCategoryRow = Database['public']['Tables']['knowledge_categories']['Row'];
 export type KnowledgeArticleRow = Database['public']['Tables']['knowledge_articles']['Row'];
 export type ProfileRow = Database['public']['Tables']['profiles']['Row'];
@@ -331,12 +332,37 @@ export function buildForumFlag(overrides: Partial<ForumFlagRow> = {}): ForumFlag
     target_type: 'post',
     post_id: buildForumPost().id,
     reply_id: null,
+    media_id: null,
     reason: 'harassment',
     comment: 'Em fa sentir insegura.',
     state: 'pending',
     reviewed_by: null,
     reviewed_at: null,
     created_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+export function buildMediaItem(overrides: Partial<MediaItemRow> = {}): MediaItemRow {
+  const uploader = PARTICIPANT_FIXTURES[0]!;
+  const uploaderId = seedUserId(uploader.ordinal);
+  return {
+    id: '5eed0000-0000-4000-8014-000000000099',
+    org_id: SEED_ORGANIZATION_ID,
+    uploaded_by: uploaderId,
+    uploader_first_name: uploader.firstName,
+    file_url: `${SEED_ORGANIZATION_ID}/gallery/${uploaderId}/2026/08/11111111111111111111111111111111.jpg`,
+    thumbnail_url: `${SEED_ORGANIZATION_ID}/gallery/${uploaderId}/2026/08/22222222222222222222222222222222.jpg`,
+    file_type: 'image',
+    file_size: 640000,
+    caption: 'Entrenament de dimarts',
+    privacy_level: 'community',
+    moderation_state: 'visible',
+    flag_count: 0,
+    consent_acknowledged_at: FIXTURE_TIMESTAMP,
+    consent_version: 'gallery-consent-v1',
+    created_at: FIXTURE_TIMESTAMP,
+    updated_at: FIXTURE_TIMESTAMP,
     ...overrides,
   };
 }

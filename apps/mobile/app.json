@@ -111,7 +111,8 @@
           "color": "#0077B6",
           "defaultChannel": "default"
         }
-      ]
+      ],
+      "expo-video"
     ],
     "extra": {
       "supportsRTL": true,

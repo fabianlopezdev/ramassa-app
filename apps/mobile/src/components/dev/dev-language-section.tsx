@@ -27,6 +27,7 @@ export function DevLanguageSection() {
         {SUPPORTED_LANGUAGES.map((code) => (
           <DevButton
             key={code}
+            testID={`dev-language-${code}`}
             label={`${code} (${getLanguageDirection(code)})`}
             isActive={code === language}
             onPress={() => void setLanguage(code)}

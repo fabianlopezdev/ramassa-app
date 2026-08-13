@@ -223,9 +223,20 @@ env:
     while:
       notVisible: '.*${PROFILE_TITLE_AR}.*'
     commands:
-      - tapOn:
-          text: '^الملف الشخصي$'
-          optional: true
+      - runFlow:
+          when:
+            platform: Android
+          commands:
+            # Native Material tabs do not expose Expo's testID. RTL places the
+            # profile tab in the leftmost fifth of the bottom navigation bar.
+            - tapOn:
+                point: 10%, 93%
+      - runFlow:
+          when:
+            platform: iOS
+          commands:
+            - tapOn:
+                id: player-tab-profile
       - waitForAnimationToEnd:
           timeout: 3000
 - extendedWaitUntil:

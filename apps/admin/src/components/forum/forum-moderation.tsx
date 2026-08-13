@@ -1,11 +1,14 @@
+import { AuthenticatedMediaImage } from '@/components/content/authenticated-media-image';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { safeAsync } from '@/lib/observability';
-import { supabase } from '@/lib/supabase';
+import { adminClientEnv, supabase } from '@/lib/supabase';
 import { useNavigate, useRouter } from '@tanstack/react-router';
 import { useMemo, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '@ramassa/shared/auth';
+import { AppError } from '@ramassa/shared/errors';
 import {
   contactForumAuthor,
   deleteForumCategory,
@@ -20,6 +23,7 @@ import {
 } from '@ramassa/shared/forum';
 import { resolveLocalizedText } from '@ramassa/shared/i18n';
 import type { LanguageCode } from '@ramassa/shared/schemas';
+import { deleteMediaItem } from '@ramassa/shared/upload-client';
 
 export interface ForumModerationProps {
   readonly queue: readonly ForumModerationQueueRow[];
@@ -40,6 +44,7 @@ export function ForumModeration({ queue, categories }: ForumModerationProps) {
       }),
     [i18n.resolvedLanguage],
   );
+  const { session } = useAuth();
 
   async function run(key: string, operation: () => Promise<void>) {
     setBusyKey(key);
@@ -55,6 +60,20 @@ export function ForumModeration({ queue, categories }: ForumModerationProps) {
 
   async function moderate(row: ForumModerationQueueRow, action: ForumModerationAction) {
     if (action === 'delete' && !window.confirm(t('moderationDeleteConfirm'))) return;
+    if (row.target_type === 'media' && action === 'delete') {
+      await run(`${row.target_id}:${action}`, async () => {
+        if (session === null || adminClientEnv.EXPO_PUBLIC_MEDIA_WORKER_URL === undefined) {
+          throw new AppError('AUTH-2');
+        }
+        const result = await deleteMediaItem({
+          mediaWorkerUrl: adminClientEnv.EXPO_PUBLIC_MEDIA_WORKER_URL,
+          accessToken: session.access_token,
+          mediaItemId: row.target_id,
+        });
+        if (!result.ok) throw result.error;
+      });
+      return;
+    }
     await run(`${row.target_id}:${action}`, () =>
       moderateForumTarget(supabase, {
         targetType: row.target_type,
@@ -119,7 +138,9 @@ export function ForumModeration({ queue, categories }: ForumModerationProps) {
                         {t('moderationFlags', { count: row.flag_count })}
                       </Badge>
                       <Badge variant="outline">{t(`moderationTarget.${row.target_type}`)}</Badge>
-                      <Badge variant="secondary">{categoryLabel}</Badge>
+                      {row.target_type === 'media' ? null : (
+                        <Badge variant="secondary">{categoryLabel}</Badge>
+                      )}
                     </div>
                     <p className="text-sm font-medium">{row.author_first_name}</p>
                     <p className="text-xs text-muted-foreground">
@@ -153,6 +174,15 @@ export function ForumModeration({ queue, categories }: ForumModerationProps) {
                 <p className="whitespace-pre-wrap text-start text-sm">
                   {row.content ?? t('deletedTombstone')}
                 </p>
+                {row.target_type === 'media' && row.media_thumbnail_url !== null ? (
+                  <AuthenticatedMediaImage
+                    objectKeyOrUrl={row.media_thumbnail_url}
+                    mediaWorkerUrl={adminClientEnv.EXPO_PUBLIC_MEDIA_WORKER_URL ?? ''}
+                    accessToken={session?.access_token}
+                    alt={row.content ?? t('moderationTarget.media')}
+                    className="max-h-64 rounded-lg object-contain"
+                  />
+                ) : null}
                 <div className="space-y-1 text-sm text-muted-foreground">
                   <p>
                     {t('moderationReasons')}:{' '}
@@ -184,7 +214,7 @@ export function ForumModeration({ queue, categories }: ForumModerationProps) {
                     <label className="space-y-1 text-sm font-medium">
                       <span>{t('moderationCategory')}</span>
                       <select
-                        value={row.category_id}
+                        value={row.category_id ?? ''}
                         disabled={busyKey !== null}
                         onChange={(event) =>
                           void run(`${row.target_id}:category`, () =>

@@ -57,12 +57,13 @@ export async function accessTokenFor(email: string, password: string): Promise<s
 export async function uploadObjectAs(
   accessToken: string,
   bytes: Uint8Array,
+  folder = 'profile-photos',
 ): Promise<{ readonly objectKey: string }> {
   const minted = await fetch(`${MEDIA_WORKER_URL}/uploads/url`, {
     method: 'POST',
     headers: { authorization: `Bearer ${accessToken}`, 'content-type': 'application/json' },
     body: JSON.stringify({
-      folder: 'profile-photos',
+      folder,
       contentType: 'image/jpeg',
       contentLength: bytes.byteLength,
     }),
