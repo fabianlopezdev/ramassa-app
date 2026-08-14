@@ -17,6 +17,7 @@
     "settings": "Settings"
   },
   "entity": {
+    "dashboard": "Impact",
     "referrals": "Referrals",
     "services": "Services",
     "events": "Events",

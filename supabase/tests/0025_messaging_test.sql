@@ -289,7 +289,7 @@ select is((select count(*) from public.conversations)::integer, 0, 'cross-org st
 reset role;
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000026","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000025","role":"authenticated"}';
 select public.get_or_create_own_conversation();
 select public.send_message(
   (select id from public.conversations limit 1),
@@ -302,10 +302,10 @@ select public.mark_conversation_read(
   'a4700000-0000-4000-8001-000000000009'
 );
 reset role;
-delete from auth.users where id = '5eed0000-0000-4000-8000-000000000026';
-select is((select count(*) from public.conversations where user_id = '5eed0000-0000-4000-8000-000000000026')::integer, 0, 'user deletion removes the conversation');
-select is((select count(*) from public.messages where sender_id = '5eed0000-0000-4000-8000-000000000026')::integer, 0, 'user deletion removes authored messages');
-select is((select count(*) from public.conversation_read_states where user_id = '5eed0000-0000-4000-8000-000000000026')::integer, 0, 'user deletion removes read state');
+delete from auth.users where id = '5eed0000-0000-4000-8000-000000000025';
+select is((select count(*) from public.conversations where user_id = '5eed0000-0000-4000-8000-000000000025')::integer, 0, 'user deletion removes the conversation');
+select is((select count(*) from public.messages where sender_id = '5eed0000-0000-4000-8000-000000000025')::integer, 0, 'user deletion removes authored messages');
+select is((select count(*) from public.conversation_read_states where user_id = '5eed0000-0000-4000-8000-000000000025')::integer, 0, 'user deletion removes read state');
 
 select * from finish();
 rollback;

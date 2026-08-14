@@ -4,6 +4,7 @@ import {
   adminManualChunks,
   injectRamassaTokensCss,
   isSentryBuildUploadEnabled,
+  isViteCssPostSourcemapDiagnostic,
 } from './vite.config';
 
 describe('admin production build configuration', () => {
@@ -40,5 +41,18 @@ describe('admin production build configuration', () => {
     expect(result?.code).toContain('--ramassa-');
     expect(result?.map).toBeDefined();
     expect(result?.map.sources).toEqual(['/app.css']);
+  });
+
+  test('filters only the Vite 7 CSS post sourcemap diagnostic', () => {
+    expect(
+      isViteCssPostSourcemapDiagnostic({
+        code: 'SOURCEMAP_BROKEN',
+        plugin: 'vite:css-post',
+      }),
+    ).toBe(true);
+    expect(
+      isViteCssPostSourcemapDiagnostic({ code: 'SOURCEMAP_BROKEN', plugin: 'other-plugin' }),
+    ).toBe(false);
+    expect(isViteCssPostSourcemapDiagnostic({ code: 'CIRCULAR_DEPENDENCY' })).toBe(false);
   });
 });

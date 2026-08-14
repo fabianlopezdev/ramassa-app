@@ -10,6 +10,7 @@ type SeededReferralUpdateInsert = ReferralUpdateInsert & {
 
 const ORG_ID = '5eed0000-0000-4000-8000-000000000000';
 const ENTITY_ID = '5eed0000-0000-4000-8000-000000000004';
+const COLLABORATING_ENTITY_ID = '5eed0000-0000-4000-8030-000000000001';
 const STAFF_ID = '5eed0000-0000-4000-8000-000000000002';
 const PROFILE_ID = '5eed0000-0000-4000-8000-000000000011';
 const REFERRAL_ID = '5eed0000-0000-4000-8010-000000000090';
@@ -20,6 +21,7 @@ export function buildEntityReferral(overrides: Partial<ReferralInsert> = {}): Se
     id: REFERRAL_ID,
     org_id: ORG_ID,
     entity_user_id: ENTITY_ID,
+    collaborating_entity_id: COLLABORATING_ENTITY_ID,
     referred_profile_id: PROFILE_ID,
     assigned_staff_id: STAFF_ID,
     referred_first_name: 'أمينة',

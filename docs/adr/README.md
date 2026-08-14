@@ -74,3 +74,4 @@ At every checkpoint commit (Checkpoints A, B, C, D in the Phase 1 plan, and equi
 | 022 | [Account creation in Postgres, no service-role key](022-account-creation-without-service-role-key.md)  | Accepted          | 2026-08-01 |
 | 023 | [RGPD erasure in Postgres, with a media receipt](023-rgpd-erasure-in-postgres-with-a-media-receipt.md) | Accepted          | 2026-08-01 |
 | 024 | [Private R2 delivery through the media Worker](024-private-r2-delivery-through-media-worker.md)        | Accepted          | 2026-08-05 |
+| 025 | [Stable collaborating entity membership](025-stable-collaborating-entity-membership.md)                | Accepted          | 2026-08-14 |

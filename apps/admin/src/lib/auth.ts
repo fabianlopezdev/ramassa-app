@@ -13,6 +13,7 @@ import {
   signInWithPassword as sharedSignInWithPassword,
   signOut as sharedSignOut,
 } from '@ramassa/shared/auth';
+import { acceptPendingEntityInvitation } from '@ramassa/shared/entity-management';
 import type { AppError, Result } from '@ramassa/shared/errors';
 import { logger, safeAsync } from './observability';
 import { supabase } from './supabase';
@@ -41,8 +42,12 @@ export function loginWithPassword(
 
 export function completeMagicLink(url: string): Promise<Result<void, AppError>> {
   return safeAsync(
-    () =>
-      sharedCompleteAuthCallback(supabase, url, { allowedRedirectPrefixes: [authRedirectTo()] }),
+    async () => {
+      await sharedCompleteAuthCallback(supabase, url, {
+        allowedRedirectPrefixes: [authRedirectTo()],
+      });
+      await acceptPendingEntityInvitation(supabase);
+    },
     { code: 'AUTH-4' },
   );
 }

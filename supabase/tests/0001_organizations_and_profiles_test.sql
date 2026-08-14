@@ -23,6 +23,13 @@ insert into public.organizations (id, name, slug) values
   ('00000000-0000-0000-0000-00000000a001', 'Org A', 'org-a'),
   ('00000000-0000-0000-0000-00000000b001', 'Org B', 'org-b');
 
+insert into public.collaborating_entities (id, org_id, name)
+values (
+  '00000000-0000-0000-0000-00000000a004',
+  '00000000-0000-0000-0000-00000000a001',
+  'Entity A'
+);
+
 -- auth.users rows the profiles reference (FK target).
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-0000000000a1', 'playerA1@test.local'),
@@ -32,17 +39,20 @@ insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-0000000000b1', 'playerB1@test.local');
 
 -- Profiles. playerA1 carries encrypted PII to exercise the crypto helpers.
-insert into public.profiles (id, org_id, role, first_name, last_name, phone, document_number) values
+insert into public.profiles (
+  id, org_id, role, collaborating_entity_id,
+  first_name, last_name, phone, document_number
+) values
   ('00000000-0000-0000-0000-0000000000a1', '00000000-0000-0000-0000-00000000a001', 'player',
-    'Amina', 'One', public.encrypt_field('600111222'), public.encrypt_field('X1234567L')),
+    null, 'Amina', 'One', public.encrypt_field('600111222'), public.encrypt_field('X1234567L')),
   ('00000000-0000-0000-0000-0000000000a2', '00000000-0000-0000-0000-00000000a001', 'player',
-    'Bea', 'Two', null, null),
+    null, 'Bea', 'Two', null, null),
   ('00000000-0000-0000-0000-0000000000a3', '00000000-0000-0000-0000-00000000a001', 'staff',
-    'Carla', 'Staff', null, null),
+    null, 'Carla', 'Staff', null, null),
   ('00000000-0000-0000-0000-0000000000a4', '00000000-0000-0000-0000-00000000a001', 'entity',
-    'Dolors', 'Entity', null, null),
+    '00000000-0000-0000-0000-00000000a004', 'Dolors', 'Entity', null, null),
   ('00000000-0000-0000-0000-0000000000b1', '00000000-0000-0000-0000-00000000b001', 'player',
-    'Eva', 'OtherOrg', null, null);
+    null, 'Eva', 'OtherOrg', null, null);
 
 -- Encryption assertions (read raw column as superuser; crypto is independent of RLS)
 select is(

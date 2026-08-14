@@ -29,7 +29,7 @@ test('staff can reach the forum moderation queue from primary navigation', () =>
 
 test('the entity area stays namespaced under /portal', () => {
   for (const item of ENTITY_NAV_ITEMS) {
-    expect(item.to.startsWith('/portal/')).toBe(true);
+    expect(item.to === '/portal' || item.to.startsWith('/portal/')).toBe(true);
   }
 });
 

@@ -25,8 +25,8 @@ set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000004","r
 
 select is(
   (select count(*) from public.list_entity_referrals())::int,
-  2,
-  'the first entity sees only its own seeded referrals'
+  4,
+  'the first entity sees all referrals retained for its stable entity'
 );
 select is(
   (select count(*) from public.list_entity_referrals()
@@ -110,13 +110,13 @@ select is(
 set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000002","role":"authenticated"}';
 select is(
   (select count(*) from public.list_staff_referrals(null))::int,
-  4,
+  6,
   'staff see every referral in their organization'
 );
 select lives_ok(
   $$ select public.complete_entity_referral(
     '5eed0000-0000-4000-8010-000000000001',
-    '5eed0000-0000-4000-8000-000000000014'
+    '5eed0000-0000-4000-8000-000000000015'
   ) $$,
   'staff link a pending referral to a same-tenant player'
 );
@@ -124,13 +124,13 @@ select is(
   (select referred_profile_id::text || '|' || assigned_staff_id::text || '|' || status
    from public.entity_referrals
    where id = '5eed0000-0000-4000-8010-000000000001'),
-  '5eed0000-0000-4000-8000-000000000014|5eed0000-0000-4000-8000-000000000002|active',
+  '5eed0000-0000-4000-8000-000000000015|5eed0000-0000-4000-8000-000000000002|active',
   'completion atomically links the player, assignee and status'
 );
 select throws_ok(
   $$ select public.complete_entity_referral(
     (select id from public.entity_referrals where referred_first_name = 'Наталія'),
-    '5eed0000-0000-4000-8000-000000000014'
+    '5eed0000-0000-4000-8000-000000000015'
   ) $$,
   '23505',
   null::text,
@@ -159,7 +159,7 @@ select is(
 );
 select is(
   (select count(*) from public.participant_activity(
-    '5eed0000-0000-4000-8000-000000000014'
+    '5eed0000-0000-4000-8000-000000000015'
   ) where kind = 'referral_update' and detail = 'Ha començat català amb أمينة')::int,
   1,
   'the update appears decrypted on the linked participant timeline'
@@ -200,7 +200,7 @@ select isnt(
 );
 
 update public.profiles set is_active = false
-where id = '5eed0000-0000-4000-8000-000000000014';
+where id = '5eed0000-0000-4000-8000-000000000015';
 select is(
   (select status from public.entity_referrals
    where id = '5eed0000-0000-4000-8010-000000000001'),
@@ -232,13 +232,15 @@ select ok(
 );
 
 insert into public.entity_referrals (
-  id, org_id, entity_user_id, referred_first_name, referred_last_name,
+  id, org_id, entity_user_id, collaborating_entity_id,
+  referred_first_name, referred_last_name,
   documentation_status, status, created_at, updated_at
 ) values
   (
     '5eed0000-0000-4000-8010-000000000090',
     '5eed0000-0000-4000-8000-000000000000',
     '5eed0000-0000-4000-8000-000000000004',
+    '5eed0000-0000-4000-8030-000000000001',
     'Expired', 'Referral', 'none', 'pending',
     now() - interval '25 months', now() - interval '25 months'
   ),
@@ -246,6 +248,7 @@ insert into public.entity_referrals (
     '5eed0000-0000-4000-8010-000000000091',
     '5eed0000-0000-4000-8000-000000000000',
     '5eed0000-0000-4000-8000-000000000004',
+    '5eed0000-0000-4000-8030-000000000001',
     'Recent', 'Referral', 'none', 'pending',
     now() - interval '23 months', now() - interval '23 months'
   );

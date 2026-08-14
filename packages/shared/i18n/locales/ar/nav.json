@@ -17,6 +17,7 @@
     "settings": "الإعدادات"
   },
   "entity": {
+    "dashboard": "الأثر",
     "referrals": "الإحالات",
     "services": "الخدمات",
     "events": "الفعاليات",

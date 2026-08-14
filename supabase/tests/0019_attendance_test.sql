@@ -221,7 +221,11 @@ select throws_ok(
 );
 
 set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000004","role":"authenticated"}';
-select is((select count(*) from public.attendance)::int, 0, 'an entity contact cannot read attendance');
+select is(
+  (select count(*) from public.attendance)::int,
+  1,
+  'an entity contact reads attendance only for a linked referred participant'
+);
 select throws_ok(
   $$
     select public.mark_attendance(

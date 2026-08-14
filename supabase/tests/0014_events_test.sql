@@ -378,7 +378,15 @@ select throws_ok(
 
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000004", "role": "authenticated"}';
 
-select is((select count(*) from public.events)::int, 0, 'entity contacts cannot read events');
+select is(
+  (select count(*) from public.events)::int,
+  (select count(*)::int from public.events
+   where status = 'published'
+     and published_at <= now()
+     and (expires_at is null or expires_at > now())
+     and starts_at >= now()),
+  'entity contacts read only currently published upcoming events'
+);
 select is(
   (select count(*) from public.event_categories)::int,
   0,

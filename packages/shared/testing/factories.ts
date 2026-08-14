@@ -655,6 +655,7 @@ export function buildProfileFromFixture(
     id: seedUserId(fixture.ordinal),
     org_id: SEED_ORGANIZATION_ID,
     role: 'player',
+    collaborating_entity_id: null,
     // Postgres GENERATES this from the searchable fields (RAPP-23), so a
     // fixture cannot meaningfully supply one: null stands for "whatever the
     // database will derive", and no test should assert on it.

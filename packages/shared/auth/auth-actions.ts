@@ -130,7 +130,7 @@ export async function fetchProfileSummary(
 ): Promise<ProfileSummary | null> {
   const { data, error } = await client
     .from('profiles')
-    .select('role, terms_accepted_at')
+    .select('role, terms_accepted_at, is_active')
     .eq('id', userId)
     .maybeSingle();
   if (error) {
@@ -138,6 +138,9 @@ export async function fetchProfileSummary(
   }
   if (data === null) {
     return null;
+  }
+  if (!data.is_active) {
+    throw new AppError('AUTH-1', { context: { userId, reason: 'inactive_profile' } });
   }
   const role = appRoleSchema.safeParse(data.role);
   if (!role.success) {

@@ -48,6 +48,22 @@ values (
 )
 on conflict (id) do nothing;
 
+-- Stable social-entity tenants (RAPP-55). These rows precede profiles because
+-- every entity-role profile must carry a durable membership foreign key.
+insert into public.collaborating_entities (id, org_id, name)
+values
+  (
+    '5eed0000-0000-4000-8030-000000000001',
+    '5eed0000-0000-4000-8000-000000000000',
+    'Creu Roja Osona'
+  ),
+  (
+    '5eed0000-0000-4000-8030-000000000002',
+    '5eed0000-0000-4000-8000-000000000000',
+    'CEAR Catalunya'
+  )
+on conflict (id) do nothing;
+
 -- Services directory ------------------------------------------------------------
 -- The category JSON is the database copy of packages/shared/services/definitions.ts.
 -- Runtime code turns the same field shape into form controls, Zod validation,
@@ -715,7 +731,8 @@ on conflict (provider_id, provider) do nothing;
 insert into public.profiles (
   id, org_id, role, first_name, last_name, date_of_birth, place_of_birth, nationality,
   address, city, postal_code, phone, document_type, document_number,
-  reference_entity, reference_contact_name, has_dependents, num_dependents,
+  reference_entity, collaborating_entity_id, reference_contact_name,
+  has_dependents, num_dependents,
   clothing_size, shoe_size, preferred_language, is_active, is_forum_banned,
   terms_accepted_at, auth_method
 )
@@ -773,6 +790,11 @@ select
     r.own_reference_entity,
     case r.ordinal % 3 when 0 then 'Creu Roja Osona' when 1 then 'CEAR Catalunya' else null end
   ),
+  case r.ordinal
+    when 4 then '5eed0000-0000-4000-8030-000000000001'::uuid
+    when 5 then '5eed0000-0000-4000-8030-000000000002'::uuid
+    else null
+  end,
   case when r.own_reference_entity is not null then null
        else case r.ordinal % 3 when 0 then 'Sílvia Bosch' when 1 then 'Jordi Camps' else null end end,
   r.ordinal % 3 = 0,
@@ -788,13 +810,14 @@ from seed_roster r
 on conflict (id) do nothing;
 
 -- Entity referrals and encrypted participant updates (RAPP-54) -----------------
--- One pending and two completed referrals make the entity dashboard, staff queue,
--- cross-entity boundary, timeline and assigned-staff notification paths reachable.
+-- Creu Roja has one pending and three linked referrals. Its linked denominator
+-- reaches the privacy threshold. CEAR has one linked referral and stays below it.
 
 insert into public.entity_referrals (
   id,
   org_id,
   entity_user_id,
+  collaborating_entity_id,
   referred_profile_id,
   assigned_staff_id,
   referred_first_name,
@@ -812,6 +835,7 @@ values
     '5eed0000-0000-4000-8010-000000000001',
     '5eed0000-0000-4000-8000-000000000000',
     '5eed0000-0000-4000-8000-000000000004',
+    '5eed0000-0000-4000-8030-000000000001',
     null,
     null,
     'Amina',
@@ -828,6 +852,7 @@ values
     '5eed0000-0000-4000-8010-000000000002',
     '5eed0000-0000-4000-8000-000000000000',
     '5eed0000-0000-4000-8000-000000000004',
+    '5eed0000-0000-4000-8030-000000000001',
     '5eed0000-0000-4000-8000-000000000011',
     '5eed0000-0000-4000-8000-000000000002',
     'أمينة',
@@ -844,6 +869,7 @@ values
     '5eed0000-0000-4000-8010-000000000003',
     '5eed0000-0000-4000-8000-000000000000',
     '5eed0000-0000-4000-8000-000000000005',
+    '5eed0000-0000-4000-8030-000000000002',
     '5eed0000-0000-4000-8000-000000000012',
     '5eed0000-0000-4000-8000-000000000003',
     'فاطمة',
@@ -855,7 +881,58 @@ values
     'active',
     now() - interval '20 days',
     now() - interval '2 days'
+  ),
+  (
+    '5eed0000-0000-4000-8010-000000000004',
+    '5eed0000-0000-4000-8000-000000000000',
+    '5eed0000-0000-4000-8000-000000000004',
+    '5eed0000-0000-4000-8030-000000000001',
+    '5eed0000-0000-4000-8000-000000000013',
+    '5eed0000-0000-4000-8000-000000000002',
+    'مريم',
+    'بن علي',
+    public.encrypt_field('+34600000013'),
+    public.encrypt_field('mariam.benali@example.test'),
+    'complete',
+    public.encrypt_field('Derivació completada per Creu Roja Osona.'),
+    'inactive',
+    now() - interval '60 days',
+    now() - interval '4 days'
+  ),
+  (
+    '5eed0000-0000-4000-8010-000000000005',
+    '5eed0000-0000-4000-8000-000000000000',
+    '5eed0000-0000-4000-8000-000000000004',
+    '5eed0000-0000-4000-8030-000000000001',
+    '5eed0000-0000-4000-8000-000000000014',
+    '5eed0000-0000-4000-8000-000000000002',
+    'زينب',
+    'حداد',
+    public.encrypt_field('+34600000014'),
+    public.encrypt_field('zeinab.haddad@example.test'),
+    'complete',
+    public.encrypt_field('Derivació completada per Creu Roja Osona.'),
+    'active',
+    now() - interval '90 days',
+    now() - interval '5 days'
   )
+on conflict (id) do nothing;
+
+insert into public.entity_invitations (
+  id, org_id, collaborating_entity_id, email, profile_id, invited_by,
+  expires_at, accepted_at, created_at
+)
+values (
+  '5eed0000-0000-4000-8040-000000000001',
+  '5eed0000-0000-4000-8000-000000000000',
+  '5eed0000-0000-4000-8030-000000000001',
+  'silvia.bosch@example.test',
+  '5eed0000-0000-4000-8000-000000000004',
+  '5eed0000-0000-4000-8000-000000000001',
+  now() + interval '30 days',
+  now() - interval '10 days',
+  now() - interval '10 days'
+)
 on conflict (id) do nothing;
 
 insert into public.referral_updates (
@@ -1206,7 +1283,7 @@ values
     '5eed0000-0000-4000-8006-000000000003',
     '5eed0000-0000-4000-8000-000000000000',
     '5eed0000-0000-4000-8003-000000000004',
-    '5eed0000-0000-4000-8000-000000000013',
+    '5eed0000-0000-4000-8000-000000000014',
     'confirmed',
     now() - interval '6 hours'
   ),

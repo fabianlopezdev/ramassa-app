@@ -17,6 +17,7 @@
     "settings": "Configuración"
   },
   "entity": {
+    "dashboard": "Impacto",
     "referrals": "Derivaciones",
     "services": "Servicios",
     "events": "Eventos",

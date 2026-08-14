@@ -18,7 +18,11 @@ function makeClient(options: {
     profile:
       options.profile ??
       ({
-        data: { role: options.role ?? 'player', terms_accepted_at: '2026-07-01T10:00:00Z' },
+        data: {
+          role: options.role ?? 'player',
+          terms_accepted_at: '2026-07-01T10:00:00Z',
+          is_active: true,
+        },
         error: null,
       } as { data: unknown; error: unknown }),
   };
@@ -134,7 +138,7 @@ test('a profile lookup FAILURE does not route to the wizard, and is reported', a
 test('a profile without terms acceptance still needs onboarding', async () => {
   const { client } = makeClient({
     initialSession: { user: { id: 'u1' } },
-    profile: { data: { role: 'player', terms_accepted_at: null }, error: null },
+    profile: { data: { role: 'player', terms_accepted_at: null, is_active: true }, error: null },
   });
   const { getByTestId } = render(
     <AuthProvider client={client}>
@@ -157,7 +161,7 @@ test('refreshProfile flips the gate after the wizard completes', async () => {
   await waitFor(() => expect(textContentOf(getByTestId('probe'))).toBe('ready|in|none|onboard'));
 
   state.profile = {
-    data: { role: 'player', terms_accepted_at: '2026-07-31T09:00:00Z' },
+    data: { role: 'player', terms_accepted_at: '2026-07-31T09:00:00Z', is_active: true },
     error: null,
   };
   await act(async () => {

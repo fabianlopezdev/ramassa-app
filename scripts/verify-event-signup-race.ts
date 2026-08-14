@@ -70,8 +70,8 @@ const players = [
   },
 ] as const;
 const seededHolder = {
-  id: '5eed0000-0000-4000-8000-000000000013',
-  email: 'mariam.benali@example.test',
+  id: '5eed0000-0000-4000-8000-000000000014',
+  email: 'zeinab.haddad@example.test',
 } as const;
 
 const [holderToken, ...contenderTokens] = await Promise.all([

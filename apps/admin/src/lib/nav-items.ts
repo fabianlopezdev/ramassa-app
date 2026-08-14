@@ -39,6 +39,7 @@ export const STAFF_NAV_ITEMS = [
 ] as const satisfies readonly NavItem[];
 
 export const ENTITY_NAV_ITEMS = [
+  { to: '/portal', icon: LayoutDashboard, labelKey: 'nav:entity.dashboard' },
   { to: '/portal/referrals', icon: Share2, labelKey: 'nav:entity.referrals' },
   { to: '/portal/services', icon: Wrench, labelKey: 'nav:entity.services' },
   { to: '/portal/events', icon: CalendarDays, labelKey: 'nav:entity.events' },

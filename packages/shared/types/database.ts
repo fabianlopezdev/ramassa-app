@@ -204,6 +204,51 @@ export type Database = {
           },
         ];
       };
+      collaborating_entities: {
+        Row: {
+          created_at: string;
+          created_by: string | null;
+          id: string;
+          is_active: boolean;
+          name: string;
+          org_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          is_active?: boolean;
+          name: string;
+          org_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          is_active?: boolean;
+          name?: string;
+          org_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'collaborating_entities_created_by_fkey';
+            columns: ['created_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'collaborating_entities_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       conversation_assignment_history: {
         Row: {
           assigned_staff_id: string | null;
@@ -427,9 +472,75 @@ export type Database = {
           },
         ];
       };
+      entity_invitations: {
+        Row: {
+          accepted_at: string | null;
+          collaborating_entity_id: string;
+          created_at: string;
+          email: string;
+          expires_at: string;
+          id: string;
+          invited_by: string;
+          org_id: string;
+          profile_id: string;
+        };
+        Insert: {
+          accepted_at?: string | null;
+          collaborating_entity_id: string;
+          created_at?: string;
+          email: string;
+          expires_at: string;
+          id?: string;
+          invited_by: string;
+          org_id: string;
+          profile_id: string;
+        };
+        Update: {
+          accepted_at?: string | null;
+          collaborating_entity_id?: string;
+          created_at?: string;
+          email?: string;
+          expires_at?: string;
+          id?: string;
+          invited_by?: string;
+          org_id?: string;
+          profile_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'entity_invitations_entity_tenant_fkey';
+            columns: ['org_id', 'collaborating_entity_id'];
+            isOneToOne: false;
+            referencedRelation: 'collaborating_entities';
+            referencedColumns: ['org_id', 'id'];
+          },
+          {
+            foreignKeyName: 'entity_invitations_inviter_tenant_fkey';
+            columns: ['org_id', 'invited_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['org_id', 'id'];
+          },
+          {
+            foreignKeyName: 'entity_invitations_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'entity_invitations_profile_tenant_fkey';
+            columns: ['org_id', 'profile_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['org_id', 'id'];
+          },
+        ];
+      };
       entity_referrals: {
         Row: {
           assigned_staff_id: string | null;
+          collaborating_entity_id: string;
           created_at: string;
           documentation_status: string;
           entity_user_id: string;
@@ -446,6 +557,7 @@ export type Database = {
         };
         Insert: {
           assigned_staff_id?: string | null;
+          collaborating_entity_id: string;
           created_at?: string;
           documentation_status: string;
           entity_user_id: string;
@@ -462,6 +574,7 @@ export type Database = {
         };
         Update: {
           assigned_staff_id?: string | null;
+          collaborating_entity_id?: string;
           created_at?: string;
           documentation_status?: string;
           entity_user_id?: string;
@@ -477,6 +590,13 @@ export type Database = {
           updated_at?: string;
         };
         Relationships: [
+          {
+            foreignKeyName: 'entity_referrals_collaborating_entity_tenant_fkey';
+            columns: ['org_id', 'collaborating_entity_id'];
+            isOneToOne: false;
+            referencedRelation: 'collaborating_entities';
+            referencedColumns: ['org_id', 'id'];
+          },
           {
             foreignKeyName: 'entity_referrals_entity_tenant_fkey';
             columns: ['org_id', 'entity_user_id'];
@@ -1496,6 +1616,7 @@ export type Database = {
           avatar_url: string | null;
           city: string | null;
           clothing_size: string | null;
+          collaborating_entity_id: string | null;
           created_at: string;
           date_of_birth: string | null;
           document_number: string | null;
@@ -1530,6 +1651,7 @@ export type Database = {
           avatar_url?: string | null;
           city?: string | null;
           clothing_size?: string | null;
+          collaborating_entity_id?: string | null;
           created_at?: string;
           date_of_birth?: string | null;
           document_number?: string | null;
@@ -1564,6 +1686,7 @@ export type Database = {
           avatar_url?: string | null;
           city?: string | null;
           clothing_size?: string | null;
+          collaborating_entity_id?: string | null;
           created_at?: string;
           date_of_birth?: string | null;
           document_number?: string | null;
@@ -1598,6 +1721,13 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'municipality_catalog';
             referencedColumns: ['canonical'];
+          },
+          {
+            foreignKeyName: 'profiles_collaborating_entity_tenant_fkey';
+            columns: ['org_id', 'collaborating_entity_id'];
+            isOneToOne: false;
+            referencedRelation: 'collaborating_entities';
+            referencedColumns: ['org_id', 'id'];
           },
           {
             foreignKeyName: 'profiles_org_id_fkey';
@@ -2483,6 +2613,7 @@ export type Database = {
       };
     };
     Functions: {
+      accept_my_entity_invitation: { Args: never; Returns: string };
       add_referral_update: {
         Args: {
           p_content: string;
@@ -2565,6 +2696,7 @@ export type Database = {
           avatar_url: string | null;
           city: string | null;
           clothing_size: string | null;
+          collaborating_entity_id: string | null;
           created_at: string;
           date_of_birth: string | null;
           document_number: string | null;
@@ -2603,6 +2735,7 @@ export type Database = {
         Args: { p_category_id: string; p_metadata_schema: Json };
         Returns: number;
       };
+      create_collaborating_entity: { Args: { p_name: string }; Returns: string };
       create_entity_referral: { Args: { p_payload: Json }; Returns: string };
       create_forum_post: {
         Args: { p_category_id: string; p_content: string; p_image_url: string };
@@ -2642,6 +2775,7 @@ export type Database = {
         }[];
       };
       current_app_role: { Args: never; Returns: string };
+      current_collaborating_entity_id: { Args: never; Returns: string };
       current_org_id: { Args: never; Returns: string };
       decrypt_field: { Args: { ciphertext: string }; Returns: string };
       default_organization_id: { Args: never; Returns: string };
@@ -2668,6 +2802,19 @@ export type Database = {
           p_target_type: string;
         };
         Returns: string;
+      };
+      get_entity_impact_summary: {
+        Args: never;
+        Returns: {
+          active_count: number;
+          attendance_eligible_count: number;
+          attendance_marked_count: number;
+          attendance_present_count: number;
+          attendance_rate: number;
+          inactive_count: number;
+          referred_count: number;
+          suppressed: boolean;
+        }[];
       };
       get_entity_referral: {
         Args: { p_referral_id: string };
@@ -2809,6 +2956,20 @@ export type Database = {
         Returns: boolean;
       };
       immutable_unaccent: { Args: { value: string }; Returns: string };
+      invite_entity_collaborator: {
+        Args: {
+          p_collaborating_entity_id: string;
+          p_email: string;
+          p_first_name: string;
+          p_last_name: string;
+        };
+        Returns: {
+          email: string;
+          expires_at: string;
+          invitation_id: string;
+          profile_id: string;
+        }[];
+      };
       is_admin: { Args: never; Returns: boolean };
       is_allowed_video_url: { Args: { video_url: string }; Returns: boolean };
       is_content_visible: {
@@ -2865,6 +3026,58 @@ export type Database = {
         Args: { new_status: string; old_status: string };
         Returns: boolean;
       };
+      list_collaborating_entities: {
+        Args: never;
+        Returns: {
+          active_collaborator_count: number;
+          created_at: string;
+          id: string;
+          is_active: boolean;
+          name: string;
+          pending_invitation_count: number;
+          referral_count: number;
+          updated_at: string;
+        }[];
+      };
+      list_entity_collaborators: {
+        Args: { p_collaborating_entity_id: string };
+        Returns: {
+          accepted_at: string;
+          email: string;
+          first_name: string;
+          invited_at: string;
+          is_active: boolean;
+          last_name: string;
+          profile_id: string;
+        }[];
+      };
+      list_entity_participation_trend: {
+        Args: never;
+        Returns: {
+          attendance_eligible_count: number;
+          attendance_marked_count: number;
+          attendance_present_count: number;
+          attendance_rate: number;
+          month_start: string;
+          participant_count: number;
+        }[];
+      };
+      list_entity_referral_tracking: {
+        Args: never;
+        Returns: {
+          attendance_absent_count: number;
+          attendance_excused_count: number;
+          attendance_marked_count: number;
+          attendance_present_count: number;
+          attendance_rate: number;
+          latest_occurrence_at: string;
+          referral_id: string;
+          referred_first_name: string;
+          referred_last_name: string;
+          referred_profile_id: string;
+          status: string;
+        }[];
+      };
       list_entity_referrals: {
         Args: never;
         Returns: {
@@ -2882,6 +3095,21 @@ export type Database = {
           referred_profile_id: string;
           status: string;
           updated_at: string;
+        }[];
+      };
+      list_entity_upcoming_events: {
+        Args: never;
+        Returns: {
+          category_id: string;
+          description: Json;
+          ends_at: string;
+          id: string;
+          is_recurring: boolean;
+          location: string;
+          location_url: string;
+          starts_at: string;
+          time_zone: string;
+          title: Json;
         }[];
       };
       list_forum_moderation_queue: {
@@ -2991,6 +3219,15 @@ export type Database = {
         Args: { p_action: string; p_target_id: string; p_target_type: string };
         Returns: undefined;
       };
+      my_entity_invitation: {
+        Args: never;
+        Returns: {
+          collaborating_entity_id: string;
+          entity_name: string;
+          invitation_id: string;
+          invited_at: string;
+        }[];
+      };
       my_pending_invite: {
         Args: never;
         Returns: {
@@ -3030,6 +3267,10 @@ export type Database = {
           file_object_key: string;
           thumbnail_object_key: string;
         }[];
+      };
+      purge_expired_entity_invitations: {
+        Args: { p_now?: string };
+        Returns: number;
       };
       purge_expired_entity_referrals: {
         Args: { p_now?: string };
@@ -3110,8 +3351,16 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      set_collaborating_entity_active: {
+        Args: { p_collaborating_entity_id: string; p_is_active: boolean };
+        Returns: undefined;
+      };
       set_conversation_assignment: {
         Args: { p_conversation_id: string; p_staff_id: string };
+        Returns: undefined;
+      };
+      set_entity_collaborator_active: {
+        Args: { p_is_active: boolean; p_profile_id: string };
         Returns: undefined;
       };
       set_forum_post_category: {

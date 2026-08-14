@@ -1,7 +1,33 @@
-import { AdminPlaceholder } from '@/components/nav/admin-placeholder';
+import { EntityDashboard } from '@/components/entity/entity-dashboard';
+import { supabase } from '@/lib/supabase';
 import { createFileRoute } from '@tanstack/react-router';
+import { fetchEntityUpcomingEvents } from '@ramassa/shared/entity-management';
 
-// Placeholder section for the entity events area (RAPP-16); the feature lands later.
 export const Route = createFileRoute('/_entity/portal/events')({
-  component: () => <AdminPlaceholder titleKey="nav:entity.events" />,
+  ssr: false,
+  loader: () => fetchEntityUpcomingEvents(supabase),
+  component: EventsPage,
 });
+
+function EventsPage() {
+  return (
+    <EntityDashboard
+      dashboard={{
+        impact: {
+          suppressed: true,
+          referredCount: null,
+          activeCount: null,
+          inactiveCount: null,
+          attendancePresentCount: null,
+          attendanceEligibleCount: null,
+          attendanceMarkedCount: null,
+          attendanceRate: null,
+        },
+        trend: [],
+        tracking: [],
+        upcomingEvents: Route.useLoaderData(),
+      }}
+      sections={['events']}
+    />
+  );
+}

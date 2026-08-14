@@ -40,6 +40,13 @@ export function isSentryBuildUploadEnabled(authToken: string | undefined): boole
   return authToken?.trim() !== '' && authToken !== undefined;
 }
 
+export function isViteCssPostSourcemapDiagnostic(log: {
+  readonly code?: string;
+  readonly plugin?: string;
+}): boolean {
+  return log.code === 'SOURCEMAP_BROKEN' && log.plugin === 'vite:css-post';
+}
+
 // Injects the shared design tokens (ADR-015) into the admin stylesheet as
 // --ramassa-* CSS custom properties, generated from packages/shared/tokens. Runs
 // before @tailwindcss/vite so the shadcn brand variables that reference them are
@@ -85,6 +92,12 @@ export default defineConfig({
   build: {
     chunkSizeWarningLimit: ADMIN_CLIENT_CHUNK_BUDGET_KB,
     rollupOptions: {
+      onLog(level, log, handler) {
+        // Vite 7 reports its own empty CSS module map when release maps are
+        // enabled. Project transforms still provide real maps and are tested.
+        if (isViteCssPostSourcemapDiagnostic(log)) return;
+        handler(level, log);
+      },
       output: {
         manualChunks: adminManualChunks,
       },

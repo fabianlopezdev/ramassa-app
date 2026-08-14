@@ -144,7 +144,7 @@ test('fetchProfileRole rejects an unknown role value', async () => {
 test('fetchProfileSummary returns role and terms timestamp for an existing profile', async () => {
   const summary = await fetchProfileSummary(
     fakeProfileClient({
-      data: { role: 'player', terms_accepted_at: '2026-07-01T10:00:00Z' },
+      data: { role: 'player', terms_accepted_at: '2026-07-01T10:00:00Z', is_active: true },
       error: null,
     }),
     'user-1',
@@ -172,10 +172,25 @@ test('fetchProfileSummary throws a typed error on lookup failure', async () => {
   }
 });
 
+test('fetchProfileSummary rejects an inactive profile', async () => {
+  expect(
+    fetchProfileSummary(
+      fakeProfileClient({
+        data: { role: 'entity', terms_accepted_at: '2026-07-01T10:00:00Z', is_active: false },
+        error: null,
+      }),
+      'user-1',
+    ),
+  ).rejects.toMatchObject({ code: 'AUTH-1' });
+});
+
 test('fetchProfileSummary rejects an unknown role value', async () => {
   try {
     await fetchProfileSummary(
-      fakeProfileClient({ data: { role: 'wizard', terms_accepted_at: null }, error: null }),
+      fakeProfileClient({
+        data: { role: 'wizard', terms_accepted_at: null, is_active: true },
+        error: null,
+      }),
       'user-1',
     );
     throw new Error('expected fetchProfileSummary to throw');

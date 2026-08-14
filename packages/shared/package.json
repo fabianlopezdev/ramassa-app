@@ -11,6 +11,8 @@
     "./tokens": "./tokens/index.ts",
     "./env": "./env.ts",
     "./i18n": "./i18n/index.ts",
+    "./i18n/languages": "./i18n/languages.ts",
+    "./i18n/localized-content": "./i18n/localized-content.ts",
     "./i18n/countries": "./i18n/countries.ts",
     "./i18n/municipalities": "./i18n/municipalities.ts",
     "./schemas": "./schemas/index.ts",
@@ -40,6 +42,7 @@
     "./services": "./services/index.ts",
     "./services/entity": "./services/entity.ts",
     "./referrals": "./referrals.ts",
+    "./entity-management": "./entity-management.ts",
     "./structured-content": "./structured-content/index.ts",
     "./image-compression": "./lib/image-compression.ts"
   },
