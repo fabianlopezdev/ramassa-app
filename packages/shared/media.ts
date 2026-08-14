@@ -5,6 +5,7 @@ import { tokens } from './tokens';
 import type { Database } from './types/database';
 
 export const MEDIA_CONSENT_VERSION = 'gallery-consent-v1';
+export const MEDIA_CAPTION_MAX_LENGTH = 500;
 export const mediaPrivacySchema = z.enum(['community', 'staff_only']);
 export const mediaFileTypeSchema = z.enum(['image', 'video']);
 export type MediaPrivacy = z.infer<typeof mediaPrivacySchema>;
@@ -37,7 +38,7 @@ export const mediaItemInputSchema = z
     caption: z
       .string()
       .trim()
-      .max(500)
+      .max(MEDIA_CAPTION_MAX_LENGTH)
       .transform((value) => value || null),
     privacyLevel: mediaPrivacySchema,
     consentAcknowledged: z.literal(true),

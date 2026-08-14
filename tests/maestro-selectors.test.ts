@@ -208,6 +208,7 @@ describe('Maestro selector contracts', () => {
   test('every variable used by a Maestro command is declared or a documented subflow input', async () => {
     const subflowInputs: Partial<Record<(typeof auditedSpecs)[number], ReadonlySet<string>>> = {
       '.maestro/_relaunch.yaml': new Set(['BACK', 'PUSH_DECLINE', 'TAB_HOME']),
+      '.maestro/_set-language.yaml': new Set(['LOCALE']),
     };
     const missing: string[] = [];
     for (const relativePath of auditedSpecs) {
@@ -291,6 +292,7 @@ describe('Maestro selector contracts', () => {
     const signIn = await Bun.file(path.join(repoRoot, '.maestro/_sign-in.yaml')).text();
     expect(signIn).toContain("LOGIN_TITLE: '{{auth:loginTitle}}'");
     expect(signIn).toMatch(/assertNotVisible: '\.\*\$\{LOGIN_TITLE\}\.\*'/);
+    expect(signIn).toContain('start: 50%, 70%\n    end: 50%, 35%');
 
     const relaunch = await Bun.file(path.join(repoRoot, '.maestro/_relaunch.yaml')).text();
     // Localized defaults in the subflow shadow `runFlow.env` in Maestro. The

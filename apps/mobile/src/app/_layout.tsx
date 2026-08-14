@@ -7,6 +7,7 @@ import { reportAuthError } from '@/lib/auth';
 import { AuthFlowStatusProvider } from '@/lib/auth-flow-status';
 import { shouldMountAuthRoutes } from '@/lib/auth-route-readiness';
 import { i18n } from '@/lib/i18n';
+import { configureNetworkStatus } from '@/lib/network-status';
 import { wrapRootComponent } from '@/lib/observability';
 import { registerProfileQueries } from '@/lib/profile';
 import { configurePushNotificationPresentation } from '@/lib/push-notifications';
@@ -123,6 +124,13 @@ function RootNavigator() {
 }
 
 function RootLayout() {
+  // The online manager notifies mounted React Query consumers. Starting its
+  // async native probe at query-client module scope can resolve between render
+  // and commit, which makes React report a state update on an unmounted root.
+  useEffect(() => {
+    configureNetworkStatus();
+  }, []);
+
   return (
     /* Gesture Handler's root, mounted explicitly (RAPP-70). Expo Router does
        NOT provide one for this configuration, and every `GestureDetector` in

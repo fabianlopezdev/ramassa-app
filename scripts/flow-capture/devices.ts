@@ -93,11 +93,22 @@ export async function ensureAndroidDevice(avdName: string): Promise<string> {
 }
 
 /**
- * Two signals, because neither is reliable alone across system images: on this
+ * Three signals, because none is reliable alone across system images: on this
  * project's Pixel 8 image `sys.boot_completed` stays unset long after adb is
  * answering, while `init.svc.bootanim` reports `running` until the device is
- * genuinely usable. Whichever one this image exposes, the strict answer wins.
+ * genuinely usable. A cold Android 36 restart can expose neither property even
+ * after the package service and launcher are usable, so that service is the
+ * fallback only when boot animation has no opinion.
  */
+export function isAndroidBootReady(signals: {
+  readonly bootAnimation: string;
+  readonly bootCompleted: string;
+  readonly packageService: string;
+}): boolean {
+  if (signals.bootAnimation !== '') return signals.bootAnimation === 'stopped';
+  return signals.bootCompleted === '1' || signals.packageService.includes('found');
+}
+
 async function waitForAndroidBoot(serial: string): Promise<void> {
   const getProp = async (name: string): Promise<string> =>
     (await run(['adb', '-s', serial, 'shell', 'getprop', name])).stdout.trim();
@@ -105,12 +116,14 @@ async function waitForAndroidBoot(serial: string): Promise<void> {
   await waitFor(
     `${serial} to finish booting`,
     async () => {
-      const [bootAnimation, bootCompleted] = await Promise.all([
+      const [bootAnimation, bootCompleted, packageService] = await Promise.all([
         getProp('init.svc.bootanim'),
         getProp('sys.boot_completed'),
+        run(['adb', '-s', serial, 'shell', 'service', 'check', 'package']).then(({ stdout }) =>
+          stdout.trim(),
+        ),
       ]);
-      if (bootAnimation !== '') return bootAnimation === 'stopped';
-      return bootCompleted === '1';
+      return isAndroidBootReady({ bootAnimation, bootCompleted, packageService });
     },
     { timeoutMs: 600_000, intervalMs: 3000 },
   );

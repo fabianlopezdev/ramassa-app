@@ -11,8 +11,6 @@ name: _set-language
 #
 # The dev menu is reachable pre-auth on purpose: its entry sits on the login
 # screen too, exactly so the language can be pinned before anyone signs in.
-env:
-  LOCALE: ca
 ---
 # Opening the dev menu is a LOOP, not one tap. A single tap is swallowed whenever
 # the client's explainer sheet is mid-flight over it, and the flow then waits out

@@ -6,6 +6,8 @@ import {
   SEED_PASSWORD,
   signIn,
   STAFF_EMAIL,
+  SUPABASE_PUBLISHABLE_KEY,
+  SUPABASE_URL,
   uploadObjectAs,
 } from './session';
 
@@ -17,9 +19,40 @@ const mediaId = '5eed0000-0000-4000-8014-000000000098';
 
 test.setTimeout(180_000);
 
+async function flagForumPost(accessToken: string, reason: string): Promise<string> {
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/flag_forum_content`, {
+    method: 'POST',
+    headers: {
+      apikey: SUPABASE_PUBLISHABLE_KEY,
+      authorization: `Bearer ${accessToken}`,
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({
+      p_target_type: 'post',
+      p_target_id: seededPostId,
+      p_reason: reason,
+      p_comment: null,
+    }),
+  });
+  const body = await response.text();
+  expect(response.ok, body).toBe(true);
+  const flagId: unknown = JSON.parse(body);
+  expect(flagId).toEqual(expect.any(String));
+  if (typeof flagId !== 'string') throw new Error('Forum flag RPC returned no flag id');
+  return flagId;
+}
+
 test.afterAll(() => {
   queryDatabase(`
     delete from public.media_items where id = '${mediaId}';
+    delete from public.push_publications
+    where content_type = 'forum_flag'
+      and content_id in (
+        select id from public.forum_flags
+        where post_id = '${seededPostId}' and id <> '${seededFlagId}'
+      );
+    delete from public.forum_flags
+    where post_id = '${seededPostId}' and id <> '${seededFlagId}';
     update public.forum_posts
     set category_id = '5eed0000-0000-4000-8006-000000000002',
         is_pinned = true,
@@ -85,6 +118,39 @@ test('staff sees flagged gallery media and deletes its row and R2 object', async
 test('staff reviews a flag, manages its post, and restores it after dismissal', async ({
   page,
 }) => {
+  const [secondFlaggerToken, thirdFlaggerToken] = await Promise.all([
+    accessTokenFor('zeinab.haddad@example.test', SEED_PASSWORD),
+    accessTokenFor('souad.almansouri@example.test', SEED_PASSWORD),
+  ]);
+  const [secondFlagId, thirdFlagId] = await Promise.all([
+    flagForumPost(secondFlaggerToken, 'privacy'),
+    flagForumPost(thirdFlaggerToken, 'hate'),
+  ]);
+  expect(
+    queryDatabase(
+      `select visibility || ':' || flag_count::text from public.forum_posts where id = '${seededPostId}'`,
+    ),
+  ).toBe('hidden_pending_review:3');
+  expect(
+    queryDatabase(`
+      select count(*)::text
+      from (
+        select flag.id
+        from public.push_deliveries as delivery
+        join public.profiles as recipient on recipient.id = delivery.recipient_id
+        join public.push_publications as publication on publication.id = delivery.publication_id
+        join public.forum_flags as flag on flag.id = publication.content_id
+        where publication.content_type = 'forum_flag'
+          and flag.post_id = '${seededPostId}'
+          and flag.id <> '${seededFlagId}'
+          and flag.id in ('${secondFlagId}', '${thirdFlagId}')
+          and recipient.role in ('staff', 'admin')
+        group by flag.id
+        having count(distinct publication.id) = 1 and count(delivery.id) > 0
+      ) as newly_flagged_staff_pushes
+    `),
+  ).toBe('2');
+
   await signIn(page, STAFF_EMAIL);
 
   await page.goto(`/participants/${softBanParticipantId}`);

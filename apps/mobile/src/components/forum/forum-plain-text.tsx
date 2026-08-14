@@ -1,7 +1,8 @@
+import { playHaptic } from '@/lib/haptics/haptics';
 import * as Linking from 'expo-linking';
-import { memo, useCallback } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { Text, type TextStyle } from 'react-native';
-import { parseForumPlainText } from '@ramassa/shared/forum';
+import { parseForumPlainText, type ForumTextSegment } from '@ramassa/shared/forum';
 
 const mixedDirectionTextStyle: TextStyle = { writingDirection: 'auto' };
 
@@ -12,7 +13,10 @@ const ForumLink = memo(function ForumLink({
   readonly url: string;
   readonly accessibilityLabel: string;
 }) {
-  const open = useCallback(() => void Linking.openURL(url), [url]);
+  const open = useCallback(() => {
+    playHaptic('tapLight');
+    void Linking.openURL(url);
+  }, [url]);
   return (
     <Text
       accessibilityRole="link"
@@ -38,6 +42,20 @@ export const ForumPlainText = memo(function ForumPlainText({
   readonly className?: string;
   readonly numberOfLines?: number;
 }) {
+  const segments = useMemo(() => parseForumPlainText(content), [content]);
+  const renderSegment = useCallback(
+    (segment: ForumTextSegment, index: number) =>
+      segment.kind === 'link' ? (
+        <ForumLink
+          key={`${segment.value}:${index}`}
+          url={segment.value}
+          accessibilityLabel={openLinkLabel(segment.value)}
+        />
+      ) : (
+        segment.value
+      ),
+    [openLinkLabel],
+  );
   return (
     <Text
       selectable
@@ -45,17 +63,7 @@ export const ForumPlainText = memo(function ForumPlainText({
       className={`text-start text-md text-neutral-900 ${languageFontClass} ${className}`}
       numberOfLines={numberOfLines}
     >
-      {parseForumPlainText(content).map((segment, index) =>
-        segment.kind === 'link' ? (
-          <ForumLink
-            key={`${segment.value}:${index}`}
-            url={segment.value}
-            accessibilityLabel={openLinkLabel(segment.value)}
-          />
-        ) : (
-          segment.value
-        ),
-      )}
+      {segments.map(renderSegment)}
     </Text>
   );
 });

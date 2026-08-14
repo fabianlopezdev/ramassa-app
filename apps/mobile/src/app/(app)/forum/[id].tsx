@@ -34,10 +34,13 @@ import type { ForumFlagTargetType, ForumReplyRow } from '@ramassa/shared/forum';
 import { FORUM_POST_MAX_LENGTH, FORUM_REPLY_MAX_LENGTH } from '@ramassa/shared/schemas';
 import { tokens } from '@ramassa/shared/tokens';
 
+const FORUM_DETAIL_IMAGE_HEIGHT = tokens.spacing['3xl'] * 4;
+const EMPTY_REPLIES: readonly ForumReplyRow[] = [];
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: tokens.colors.neutral[50] },
-  image: { width: '100%', height: tokens.spacing['3xl'] * 4 },
-  replyInput: { minHeight: tokens.spacing['2xl'] },
+  image: { width: '100%', height: FORUM_DETAIL_IMAGE_HEIGHT },
+  mixedDirectionInput: { writingDirection: 'auto' },
+  replyInput: { minHeight: tokens.spacing['2xl'], writingDirection: 'auto' },
 });
 const replyKeyExtractor = (reply: ForumReplyRow) => reply.id;
 
@@ -56,6 +59,11 @@ export default function ForumPostDetailScreen() {
   const editPost = useEditForumPost(postId);
   const deletePost = useDeleteForumPost(postId);
   const postingStatus = useOwnForumPostingStatus();
+  const refetchPost = postQuery.refetch;
+  const refetchReplies = repliesQuery.refetch;
+  const createReplyAsync = createReply.mutateAsync;
+  const editPostAsync = editPost.mutateAsync;
+  const deletePostAsync = deletePost.mutateAsync;
   const [reply, setReply] = useState('');
   const [editContent, setEditContent] = useState('');
   const [isEditing, setIsEditing] = useState(false);
@@ -74,11 +82,15 @@ export default function ForumPostDetailScreen() {
   const mutationErrorCode = mutationError === null ? null : toAppError(mutationError).code;
   const errorCode = localErrorCode ?? mutationErrorCode;
   const postingDisabled = postingStatus.data === true;
-  const imageSource = resolveMediaImageSource({
-    objectKeyOrUrl: post?.image_url ?? null,
-    mediaWorkerUrl: mobileClientEnv.EXPO_PUBLIC_MEDIA_WORKER_URL,
-    accessToken: session?.access_token,
-  });
+  const imageSource = useMemo(
+    () =>
+      resolveMediaImageSource({
+        objectKeyOrUrl: post?.image_url ?? null,
+        mediaWorkerUrl: mobileClientEnv.EXPO_PUBLIC_MEDIA_WORKER_URL,
+        accessToken: session?.access_token,
+      }),
+    [post?.image_url, session?.access_token],
+  );
   const contentStyle = useMemo(
     () => ({
       paddingHorizontal: tokens.spacing.lg,
@@ -89,9 +101,14 @@ export default function ForumPostDetailScreen() {
     [insets.bottom, insets.top],
   );
   const openLinkLabel = useCallback((url: string) => t('forum:openLink', { url }), [t]);
+  const flagReply = useCallback(
+    (targetId: string) => setFlagTarget({ targetType: 'reply', targetId }),
+    [],
+  );
   const refresh = useCallback(() => {
-    void Promise.all([postQuery.refetch(), repliesQuery.refetch()]);
-  }, [postQuery, repliesQuery]);
+    void Promise.all([refetchPost(), refetchReplies()]);
+  }, [refetchPost, refetchReplies]);
+  const retryPost = useCallback(() => void refetchPost(), [refetchPost]);
 
   const beginEdit = useCallback(() => {
     setEditContent(post?.content ?? '');
@@ -109,24 +126,24 @@ export default function ForumPostDetailScreen() {
     setLocalErrorCode(null);
     setErrorMessage(null);
     try {
-      await editPost.mutateAsync(editContent);
+      await editPostAsync(editContent);
       setIsEditing(false);
     } catch {
       setErrorMessage(t('forum:publishFailed'));
     }
-  }, [editContent, editPost, t]);
+  }, [editContent, editPostAsync, t]);
   const confirmDelete = useCallback(() => setIsConfirmingDelete(true), []);
   const cancelDelete = useCallback(() => setIsConfirmingDelete(false), []);
   const performDelete = useCallback(async () => {
     setLocalErrorCode(null);
     setErrorMessage(null);
     try {
-      await deletePost.mutateAsync();
+      await deletePostAsync();
       setIsConfirmingDelete(false);
     } catch {
       setErrorMessage(t('forum:deleteFailed'));
     }
-  }, [deletePost, t]);
+  }, [deletePostAsync, t]);
   const submitReply = useCallback(async () => {
     if (reply.trim().length === 0) {
       setLocalErrorCode('VALIDATION-1');
@@ -136,39 +153,27 @@ export default function ForumPostDetailScreen() {
     setLocalErrorCode(null);
     setErrorMessage(null);
     try {
-      await createReply.mutateAsync(reply);
+      await createReplyAsync(reply);
       setReply('');
     } catch {
       setErrorMessage(t('forum:replyFailed'));
     }
-  }, [createReply, reply, t]);
+  }, [createReplyAsync, reply, t]);
   const renderReply = useCallback(
     ({ item }: ListRenderItemInfo<ForumReplyRow>) => (
-      <View className="gap-sm pb-md">
-        <ForumReplyCard
-          reply={item}
-          authorLabel={t('forum:postBy', { name: item.author_first_name })}
-          tombstone={t('forum:deletedTombstone')}
-          languageFontClass={languageFontClass}
-          openLinkLabel={openLinkLabel}
-        />
-        {item.author_id === user?.id || item.visibility !== 'visible' ? null : (
-          <PressableScale
-            testID={`forum-flag-reply-${item.id}`}
-            accessibilityLabel={t('forum:flagReply')}
-            onPress={() => setFlagTarget({ targetType: 'reply', targetId: item.id })}
-            haptic="warning"
-            isDisabled={!isOnline}
-            className="min-h-recommended self-start justify-center rounded-md border border-neutral-300 px-lg"
-          >
-            <Text className={`font-semibold text-neutral-700 ${languageFontClass}`}>
-              {t('forum:flag')}
-            </Text>
-          </PressableScale>
-        )}
-      </View>
+      <ForumReplyCard
+        reply={item}
+        authorLabel={t('forum:postBy', { name: item.author_first_name })}
+        tombstone={t('forum:deletedTombstone')}
+        languageFontClass={languageFontClass}
+        openLinkLabel={openLinkLabel}
+        flagLabel={t('forum:flag')}
+        flagAccessibilityLabel={t('forum:flagReply')}
+        isFlagDisabled={!isOnline}
+        onFlag={item.author_id === user?.id || item.visibility !== 'visible' ? null : flagReply}
+      />
     ),
-    [isOnline, languageFontClass, openLinkLabel, t, user?.id],
+    [flagReply, isOnline, languageFontClass, openLinkLabel, t, user?.id],
   );
 
   const confirmFlag = useCallback(() => {
@@ -176,6 +181,10 @@ export default function ForumPostDetailScreen() {
     Alert.alert(t('forum:flagConfirmationTitle'), t('forum:flagConfirmation'));
     back();
   }, [back, t]);
+  const flagPost = useCallback(() => {
+    if (post !== undefined) setFlagTarget({ targetType: 'post', targetId: post.id });
+  }, [post]);
+  const closeFlagDialog = useCallback(() => setFlagTarget(null), []);
 
   if (postQuery.isPending && post === undefined) {
     return (
@@ -195,6 +204,7 @@ export default function ForumPostDetailScreen() {
       <SafeAreaView style={styles.screen}>
         <View className="flex-1 items-center justify-center gap-md px-lg">
           <Text
+            selectable
             accessibilityRole="alert"
             className={`text-center text-neutral-700 ${languageFontClass}`}
           >
@@ -203,8 +213,9 @@ export default function ForumPostDetailScreen() {
           <ErrorCodeLine code={loadCode} />
           <PressableScale
             accessibilityLabel={t('forum:retry')}
-            onPress={() => void postQuery.refetch()}
+            onPress={retryPost}
             haptic="tapLight"
+            style={continuousCorners}
             className="min-h-recommended justify-center rounded-md bg-primary px-lg"
           >
             <Text className={`font-bold text-white ${languageFontClass}`}>{t('forum:retry')}</Text>
@@ -220,12 +231,13 @@ export default function ForumPostDetailScreen() {
         testID="forum-detail-screen"
         accessibilityRole="list"
         accessibilityLabel={t('forum:detailTitle')}
-        data={repliesQuery.data ?? []}
+        data={repliesQuery.data ?? EMPTY_REPLIES}
         renderItem={renderReply}
         keyExtractor={replyKeyExtractor}
         style={styles.screen}
         contentContainerStyle={contentStyle}
         contentInsetAdjustmentBehavior="automatic"
+        keyboardDismissMode="on-drag"
         refreshing={(postQuery.isRefetching || repliesQuery.isRefetching) && isOnline}
         onRefresh={refresh}
         ListHeaderComponent={
@@ -280,12 +292,14 @@ export default function ForumPostDetailScreen() {
                   maxLength={FORUM_POST_MAX_LENGTH}
                   multiline
                   textAlignVertical="top"
+                  style={styles.mixedDirectionInput}
                 />
                 <View className="flex-row gap-sm">
                   <PressableScale
                     accessibilityLabel={t('forum:cancel')}
                     onPress={cancelEdit}
                     haptic="tapLight"
+                    style={continuousCorners}
                     className="min-h-recommended grow items-center justify-center rounded-md border border-neutral-300 px-lg"
                   >
                     <Text className={`font-bold text-neutral-700 ${languageFontClass}`}>
@@ -295,10 +309,11 @@ export default function ForumPostDetailScreen() {
                   <PressableScale
                     testID="forum-save-edit"
                     accessibilityLabel={t('forum:save')}
-                    onPress={() => void saveEdit()}
+                    onPress={saveEdit}
                     haptic="tapLight"
                     isBusy={editPost.isPending}
                     isDisabled={!isOnline}
+                    style={continuousCorners}
                     className="min-h-recommended grow items-center justify-center rounded-md bg-primary px-lg"
                   >
                     <Text className={`font-bold text-white ${languageFontClass}`}>
@@ -349,9 +364,10 @@ export default function ForumPostDetailScreen() {
               <PressableScale
                 testID="forum-flag-post"
                 accessibilityLabel={t('forum:flagPost')}
-                onPress={() => setFlagTarget({ targetType: 'post', targetId: post.id })}
+                onPress={flagPost}
                 haptic="warning"
                 isDisabled={!isOnline}
+                style={continuousCorners}
                 className="min-h-recommended self-start justify-center rounded-md border border-neutral-300 px-lg"
               >
                 <Text className={`font-semibold text-neutral-700 ${languageFontClass}`}>
@@ -379,6 +395,7 @@ export default function ForumPostDetailScreen() {
                     accessibilityLabel={t('forum:cancel')}
                     onPress={cancelDelete}
                     haptic="tapLight"
+                    style={continuousCorners}
                     className="min-h-recommended grow items-center justify-center rounded-md border border-neutral-300 px-lg"
                   >
                     <Text className={`font-bold text-neutral-700 ${languageFontClass}`}>
@@ -388,9 +405,10 @@ export default function ForumPostDetailScreen() {
                   <PressableScale
                     testID="forum-confirm-delete"
                     accessibilityLabel={t('forum:deleteConfirm')}
-                    onPress={() => void performDelete()}
+                    onPress={performDelete}
                     haptic="warning"
                     isBusy={deletePost.isPending}
+                    style={continuousCorners}
                     className="min-h-recommended grow items-center justify-center rounded-md bg-error px-lg"
                   >
                     <Text className={`font-bold text-white ${languageFontClass}`}>
@@ -402,6 +420,7 @@ export default function ForumPostDetailScreen() {
             )}
             {!isOnline ? (
               <Text
+                selectable
                 accessibilityRole="alert"
                 className={`text-start text-sm text-error ${languageFontClass}`}
               >
@@ -410,7 +429,7 @@ export default function ForumPostDetailScreen() {
             ) : null}
             <Text
               accessibilityRole="header"
-              className={`text-start text-xl font-bold text-neutral-900 ${languageFontClass}`}
+              className={`text-start text-xl font-bold tabular-nums text-neutral-900 ${languageFontClass}`}
             >
               {t('forum:repliesCount', { count: post.reply_count })}
             </Text>
@@ -428,6 +447,7 @@ export default function ForumPostDetailScreen() {
             <PageWidth className="gap-sm pt-md">
               {postingDisabled ? (
                 <Text
+                  selectable
                   accessibilityRole="alert"
                   className={`text-start text-sm text-neutral-700 ${languageFontClass}`}
                 >
@@ -455,6 +475,7 @@ export default function ForumPostDetailScreen() {
                 <View className="gap-sm">
                   {errorMessage === null && mutationErrorCode === null ? null : (
                     <Text
+                      selectable
                       accessibilityRole="alert"
                       accessibilityLiveRegion="polite"
                       className={`text-start text-sm text-error ${languageFontClass}`}
@@ -466,7 +487,7 @@ export default function ForumPostDetailScreen() {
                   <AuthSubmitButton
                     testID="forum-submit-reply"
                     label={createReply.isPending ? t('forum:replying') : t('forum:reply')}
-                    onPress={() => void submitReply()}
+                    onPress={submitReply}
                     isLoading={createReply.isPending}
                     disabled={!isOnline || postingDisabled || postingStatus.isPending}
                   />
@@ -479,7 +500,7 @@ export default function ForumPostDetailScreen() {
       <ForumFlagDialog
         target={flagTarget}
         postId={post.id}
-        onClose={() => setFlagTarget(null)}
+        onClose={closeFlagDialog}
         onConfirmed={confirmFlag}
       />
     </>

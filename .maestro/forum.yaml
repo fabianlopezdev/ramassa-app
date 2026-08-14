@@ -51,7 +51,19 @@ env:
 - tapOn:
     id: forum-flag-comment
 - inputText: rapp51-cat-private-info
-- hideKeyboard
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - hideKeyboard
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - swipe:
+          start: 50%, 45%
+          end: 50%, 35%
+          duration: 500
 - tapOn:
     id: forum-flag-submit
 - extendedWaitUntil:
@@ -83,8 +95,29 @@ env:
     id: forum-compose-category-general
 - tapOn:
     id: forum-post-content
-- inputText: rapp50-cat-post-inert-script
-- hideKeyboard
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - inputText: rapp50-cat-post-inert-script
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - inputText: rapp50-cat-post català مرحبا
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - hideKeyboard
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - swipe:
+          start: 50%, 45%
+          end: 50%, 35%
+          duration: 500
 - tapOn:
     id: forum-publish
 - extendedWaitUntil:
@@ -93,12 +126,33 @@ env:
     timeout: 30000
 - tapOn:
     id: forum-reply-content
-- inputText: rapp50-cat-reply
-- hideKeyboard
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - inputText: rapp50-cat-reply
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - inputText: rapp50-cat-reply resposta أهلا
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - hideKeyboard
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - swipe:
+          start: 50%, 45%
+          end: 50%, 35%
+          duration: 500
 - tapOn:
     id: forum-submit-reply
 - extendedWaitUntil:
-    visible: rapp50-cat-reply
+    visible: '.*rapp50-cat-reply.*'
     timeout: 30000
 - tapOn:
     id: forum-edit
@@ -106,7 +160,19 @@ env:
     id: forum-edit-content
 - eraseText
 - inputText: rapp50-cat-edited
-- hideKeyboard
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - hideKeyboard
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - swipe:
+          start: 50%, 45%
+          end: 50%, 35%
+          duration: 500
 - tapOn:
     id: forum-save-edit
 - extendedWaitUntil:
@@ -119,7 +185,7 @@ env:
 - extendedWaitUntil:
     visible: '^${CATALAN_TOMBSTONE}$'
     timeout: 30000
-- assertVisible: rapp50-cat-reply
+- assertVisible: '.*rapp50-cat-reply.*'
 
 - repeat:
     times: 3
@@ -136,57 +202,51 @@ env:
     visible:
       id: forum-board
     timeout: 30000
-- tapOn: '^${CATALAN_PROFILE}$'
-- repeat:
-    times: 20
-    while:
-      notVisible:
-        id: profile-language-ar
-    commands:
-      - swipe:
-          start: 50%, 72%
-          end: 50%, 40%
-          duration: 900
-      - waitForAnimationToEnd:
-          timeout: 1200
-- assertVisible:
-    id: profile-language-ar
-- tapOn:
-    id: profile-language-ar
-- repeat:
-    times: 12
-    while:
-      notVisible: '^${ARABIC_RESTART}$'
-    commands:
-      - swipe:
-          start: 50%, 70%
-          end: 50%, 35%
-          duration: 900
-      - waitForAnimationToEnd:
-          timeout: 1200
-- assertVisible: '^${ARABIC_RESTART}$'
-- tapOn: '^${ARABIC_RESTART}$'
-- waitForAnimationToEnd:
-    timeout: 12000
-- repeat:
-    times: 6
-    while:
-      visible: '^${ARABIC_PUSH_DECLINE}$'
-    commands:
-      - tapOn: '^${ARABIC_PUSH_DECLINE}$'
-      - waitForAnimationToEnd:
-          timeout: 3000
 - runFlow:
     when:
       platform: Android
     commands:
-      - tapOn: '^${ARABIC_TITLE}$'
+      - tapOn: '^${CATALAN_PROFILE}$'
 - runFlow:
     when:
       platform: iOS
     commands:
       - tapOn:
+          id: player-tab-profile
+- repeat:
+    times: 20
+    while:
+      notVisible:
+        id: dev-menu-entry
+    commands:
+      - swipe:
+          start: 50%, 70%
+          end: 50%, 45%
+          duration: 900
+      - waitForAnimationToEnd:
+          timeout: 2000
+- assertVisible:
+    id: dev-menu-entry
+- runFlow:
+    file: _set-language.yaml
+    env:
+      LOCALE: ar
+- waitForAnimationToEnd:
+    timeout: 12000
+- repeat:
+    times: 3
+    while:
+      notVisible:
+        id: forum-board
+    commands:
+      - tapOn:
           id: player-tab-community
+          optional: true
+      - tapOn:
+          text: '^${ARABIC_TITLE}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
 - extendedWaitUntil:
     visible:
       id: forum-board
@@ -202,8 +262,29 @@ env:
     id: forum-compose-category-general
 - tapOn:
     id: forum-post-content
-- inputText: rapp50-ar-post
-- hideKeyboard
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - inputText: rapp50-ar-post
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - inputText: rapp50-ar-post مرحبا Ramassà
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - hideKeyboard
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - swipe:
+          start: 50%, 45%
+          end: 50%, 35%
+          duration: 500
 - tapOn:
     id: forum-publish
 - extendedWaitUntil:
@@ -212,12 +293,33 @@ env:
     timeout: 30000
 - tapOn:
     id: forum-reply-content
-- inputText: rapp50-ar-reply
-- hideKeyboard
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - inputText: rapp50-ar-reply
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - inputText: rapp50-ar-reply رد resposta
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - hideKeyboard
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - swipe:
+          start: 50%, 45%
+          end: 50%, 35%
+          duration: 500
 - tapOn:
     id: forum-submit-reply
 - extendedWaitUntil:
-    visible: rapp50-ar-reply
+    visible: '.*rapp50-ar-reply.*'
     timeout: 30000
 - tapOn:
     id: forum-edit
@@ -225,7 +327,19 @@ env:
     id: forum-edit-content
 - eraseText
 - inputText: rapp50-ar-edited
-- hideKeyboard
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - hideKeyboard
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - swipe:
+          start: 50%, 45%
+          end: 50%, 35%
+          duration: 500
 - tapOn:
     id: forum-save-edit
 - extendedWaitUntil:
@@ -238,4 +352,4 @@ env:
 - extendedWaitUntil:
     visible: '^${ARABIC_TOMBSTONE}$'
     timeout: 30000
-- assertVisible: rapp50-ar-reply
+- assertVisible: '.*rapp50-ar-reply.*'

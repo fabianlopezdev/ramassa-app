@@ -1,5 +1,3 @@
-import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Database } from '@ramassa/shared';
 import { AppError } from '@ramassa/shared/errors';
 import { createForumPost, type ForumPostInput } from '@ramassa/shared/forum';
 import { uploadFile, type UploadFileOptions } from '@ramassa/shared/upload-client';
@@ -20,8 +18,10 @@ interface SubmitForumPostOptions {
 
 interface SubmitForumPostDependencies {
   readonly upload: typeof uploadFile;
-  readonly createPost: (client: SupabaseClient<Database>, input: ForumPostInput) => Promise<string>;
+  readonly createPost: (client: ForumClient, input: ForumPostInput) => Promise<string>;
 }
+
+type ForumClient = Parameters<typeof createForumPost>[0];
 
 const defaultDependencies: SubmitForumPostDependencies = {
   upload: uploadFile,
@@ -29,7 +29,7 @@ const defaultDependencies: SubmitForumPostDependencies = {
 };
 
 export async function submitForumPostWithDependencies(
-  client: SupabaseClient<Database>,
+  client: ForumClient,
   options: SubmitForumPostOptions,
   dependencies: SubmitForumPostDependencies = defaultDependencies,
 ): Promise<string> {

@@ -29,6 +29,22 @@ env:
 - waitForAnimationToEnd:
     timeout: 3000
 
+# Android can occasionally accept the custom-scheme dispatch but leave the
+# launcher in front. Retry the same explicit app link until the app surface is
+# present. On iOS the optional Open action handles the system confirmation on
+# every attempt.
+- repeat:
+    times: 3
+    while:
+      notVisible: '.*${DEV_MENU_LABEL}.*'
+    commands:
+      - openLink: ${DEV_CLIENT_URL}
+      - tapOn:
+          text: '^Open$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 5000
+
 # First launch after a state clear downloads the JS bundle, hence minutes.
 - extendedWaitUntil:
     visible: '.*${DEV_MENU_LABEL}.*'

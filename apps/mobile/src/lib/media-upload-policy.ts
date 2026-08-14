@@ -3,6 +3,13 @@ import type { UploadContentType } from '@ramassa/shared/schemas';
 import { tokens } from '@ramassa/shared/tokens';
 import type { UploadFileContent } from '@ramassa/shared/upload-client';
 
+const MIN_UPLOAD_PROGRESS = 0;
+const MAX_UPLOAD_PROGRESS = 1;
+
+export function requireGalleryWriteOnline(isOnline: boolean): void {
+  if (!isOnline) throw new AppError('NETWORK-1');
+}
+
 export interface MediaUploadDraft {
   readonly sourceUri: string;
   readonly sourceKind: 'image' | 'video';
@@ -33,20 +40,26 @@ export type MediaUploadState =
   | {
       readonly status: 'idle';
       readonly draft: null;
-      readonly progress: 0;
+      readonly progress: typeof MIN_UPLOAD_PROGRESS;
       readonly errorCode: null;
     }
   | {
-      readonly status: 'selected' | 'uploading' | 'failed' | 'completed';
+      readonly status: 'failed';
+      readonly draft: MediaUploadDraft | null;
+      readonly progress: number;
+      readonly errorCode: AppErrorCode;
+    }
+  | {
+      readonly status: 'selected' | 'uploading' | 'completed';
       readonly draft: MediaUploadDraft;
       readonly progress: number;
-      readonly errorCode: AppErrorCode | null;
+      readonly errorCode: null;
     };
 
 export const initialMediaUploadState: MediaUploadState = {
   status: 'idle',
   draft: null,
-  progress: 0,
+  progress: MIN_UPLOAD_PROGRESS,
   errorCode: null,
 };
 
@@ -64,17 +77,38 @@ export function mediaUploadReducer(
 ): MediaUploadState {
   if (action.type === 'reset') return initialMediaUploadState;
   if (action.type === 'selected') {
-    return { status: 'selected', draft: action.draft, progress: 0, errorCode: null };
-  }
-  if (state.draft === null) return state;
-  if (action.type === 'started' || action.type === 'retry') {
-    return { status: 'uploading', draft: state.draft, progress: 0, errorCode: null };
-  }
-  if (action.type === 'progress') {
-    return { ...state, progress: Math.max(state.progress, Math.min(1, Math.max(0, action.value))) };
+    return {
+      status: 'selected',
+      draft: action.draft,
+      progress: MIN_UPLOAD_PROGRESS,
+      errorCode: null,
+    };
   }
   if (action.type === 'failed') {
     return { ...state, status: 'failed', errorCode: action.errorCode };
   }
-  return { status: 'completed', draft: state.draft, progress: 1, errorCode: null };
+  if (state.draft === null) return state;
+  if (action.type === 'started' || action.type === 'retry') {
+    return {
+      status: 'uploading',
+      draft: state.draft,
+      progress: MIN_UPLOAD_PROGRESS,
+      errorCode: null,
+    };
+  }
+  if (action.type === 'progress') {
+    return {
+      ...state,
+      progress: Math.max(
+        state.progress,
+        Math.min(MAX_UPLOAD_PROGRESS, Math.max(MIN_UPLOAD_PROGRESS, action.value)),
+      ),
+    };
+  }
+  return {
+    status: 'completed',
+    draft: state.draft,
+    progress: MAX_UPLOAD_PROGRESS,
+    errorCode: null,
+  };
 }

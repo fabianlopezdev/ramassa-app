@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useNetworkState } from 'expo-network';
 import { useAuth } from '@ramassa/shared/auth';
 import { AppError } from '@ramassa/shared/errors';
 import {
@@ -11,6 +12,8 @@ import {
   type MediaPrivacy,
 } from '@ramassa/shared/media';
 import { deleteMediaItem } from '@ramassa/shared/upload-client';
+import { requireGalleryWriteOnline } from './media-upload-policy';
+import { isNetworkStateOnline } from './network-status';
 import { cachedListItemInitialDataOptions } from './query-persistence';
 import { mobileClientEnv, supabase } from './supabase';
 
@@ -45,22 +48,34 @@ export function useGalleryItem(itemId: string | undefined) {
 
 export function useCreateGalleryItem() {
   const { user } = useAuth();
+  const networkState = useNetworkState();
+  const isOnline = isNetworkStateOnline(networkState);
   const queryClient = useQueryClient();
   const userId = user?.id ?? 'signed-out';
   return useMutation({
     mutationKey: ['create-gallery-item', userId],
-    mutationFn: (input: MediaItemInput) => createMediaItem(supabase, input),
+    networkMode: 'always',
+    mutationFn: (input: MediaItemInput) => {
+      requireGalleryWriteOnline(isOnline);
+      if (user === null) throw new AppError('AUTH-2');
+      return createMediaItem(supabase, input);
+    },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: galleryListKey(userId) }),
   });
 }
 
 export function useSetGalleryPrivacy(itemId: string | undefined) {
   const { user } = useAuth();
+  const networkState = useNetworkState();
+  const isOnline = isNetworkStateOnline(networkState);
   const queryClient = useQueryClient();
   const userId = user?.id ?? 'signed-out';
   return useMutation({
     mutationKey: ['set-gallery-privacy', userId, itemId],
+    networkMode: 'always',
     mutationFn: async (privacy: MediaPrivacy) => {
+      requireGalleryWriteOnline(isOnline);
+      if (user === null) throw new AppError('AUTH-2');
       if (itemId === undefined) throw new AppError('VALIDATION-1');
       await setMediaItemPrivacy(supabase, itemId, privacy);
     },
@@ -74,11 +89,15 @@ export function useSetGalleryPrivacy(itemId: string | undefined) {
 
 export function useDeleteGalleryItem(itemId: string | undefined) {
   const { user, session } = useAuth();
+  const networkState = useNetworkState();
+  const isOnline = isNetworkStateOnline(networkState);
   const queryClient = useQueryClient();
   const userId = user?.id ?? 'signed-out';
   return useMutation({
     mutationKey: ['delete-gallery-item', userId, itemId],
+    networkMode: 'always',
     mutationFn: async () => {
+      requireGalleryWriteOnline(isOnline);
       if (
         itemId === undefined ||
         session === null ||

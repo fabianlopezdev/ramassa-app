@@ -5,6 +5,7 @@ import {
   initialMediaUploadState,
   mediaUploadReducer,
   prepareNativeGalleryVideoWithDependencies,
+  requireGalleryWriteOnline,
   type MediaUploadDraft,
 } from './media-upload-policy';
 
@@ -18,6 +19,10 @@ const draft: MediaUploadDraft = {
 };
 
 describe('native gallery video policy', () => {
+  test('fails immediately offline instead of queueing gallery writes', () => {
+    expect(() => requireGalleryWriteOnline(false)).toThrow(new AppError('NETWORK-1'));
+  });
+
   test('accepts exactly 10MB after checking the actual bytes', async () => {
     const prepared = await prepareNativeGalleryVideoWithDependencies(draft, {
       readBytes: async () => new Uint8Array(tokens.upload.maxVideoBytes),
@@ -52,6 +57,30 @@ describe('native gallery video policy', () => {
 });
 
 describe('media upload retry state', () => {
+  test('surfaces an initial selection failure without discarding a prior selection', () => {
+    const initialFailure = mediaUploadReducer(initialMediaUploadState, {
+      type: 'failed',
+      errorCode: 'UPLOAD-2',
+    });
+    const selected = mediaUploadReducer(initialMediaUploadState, { type: 'selected', draft });
+    const replacementFailure = mediaUploadReducer(selected, {
+      type: 'failed',
+      errorCode: 'UPLOAD-2',
+    });
+
+    expect(initialFailure).toEqual({
+      status: 'failed',
+      draft: null,
+      progress: 0,
+      errorCode: 'UPLOAD-2',
+    });
+    expect(replacementFailure).toMatchObject({
+      status: 'failed',
+      draft,
+      errorCode: 'UPLOAD-2',
+    });
+  });
+
   test('keeps the selected draft after failure and reuses it on retry', () => {
     const selected = mediaUploadReducer(initialMediaUploadState, { type: 'selected', draft });
     const uploading = mediaUploadReducer(selected, { type: 'started' });

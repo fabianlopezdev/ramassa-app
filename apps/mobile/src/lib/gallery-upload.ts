@@ -4,10 +4,22 @@ import { createVideoPlayer } from 'expo-video';
 import { AppError } from '@ramassa/shared/errors';
 import type { MediaItemInput, MediaPrivacy } from '@ramassa/shared/media';
 import { MEDIA_CONSENT_VERSION } from '@ramassa/shared/media';
+import { tokens } from '@ramassa/shared/tokens';
 import { uploadFile, type UploadFileContent } from '@ramassa/shared/upload-client';
 import type { MediaUploadDraft } from './media-upload-policy';
 import { compressNativeStoryImage } from './native-image-compression';
 import { prepareNativeGalleryVideo } from './native-media-upload';
+
+const VIDEO_THUMBNAIL_TIME_SECONDS = 0;
+const VIDEO_THUMBNAIL_JPEG_QUALITY = 0.72;
+const UPLOAD_PROGRESS = {
+  START: 0,
+  PREPARATION_COMPLETE: 0.2,
+  FILE_TRANSFER_WEIGHT: 0.5,
+  THUMBNAIL_TRANSFER_START: 0.7,
+  THUMBNAIL_TRANSFER_WEIGHT: 0.25,
+  FINALIZING: 0.95,
+} as const;
 
 export interface GalleryUploadRequest {
   readonly draft: MediaUploadDraft;
@@ -22,14 +34,17 @@ export interface GalleryUploadRequest {
 async function createVideoThumbnail(uri: string): Promise<UploadFileContent> {
   const player = createVideoPlayer(uri);
   try {
-    const [thumbnail] = await player.generateThumbnailsAsync(0, {
-      maxWidth: 1_200,
-      maxHeight: 1_200,
+    const [thumbnail] = await player.generateThumbnailsAsync(VIDEO_THUMBNAIL_TIME_SECONDS, {
+      maxWidth: tokens.upload.maxImageDimension,
+      maxHeight: tokens.upload.maxImageDimension,
     });
     if (thumbnail === undefined) throw new AppError('UPLOAD-1');
     const context = ImageManipulator.manipulate(thumbnail);
     const rendered = await context.renderAsync();
-    const saved = await rendered.saveAsync({ compress: 0.72, format: SaveFormat.JPEG });
+    const saved = await rendered.saveAsync({
+      compress: VIDEO_THUMBNAIL_JPEG_QUALITY,
+      format: SaveFormat.JPEG,
+    });
     const bytes = await new File(saved.uri).bytes();
     return { data: bytes, contentType: 'image/jpeg', byteLength: bytes.byteLength };
   } finally {
@@ -39,7 +54,7 @@ async function createVideoThumbnail(uri: string): Promise<UploadFileContent> {
 
 export async function uploadGalleryMedia(request: GalleryUploadRequest): Promise<MediaItemInput> {
   if (!request.consentAcknowledged) throw new AppError('VALIDATION-1');
-  request.onProgress(0);
+  request.onProgress(UPLOAD_PROGRESS.START);
   const file =
     request.draft.sourceKind === 'image'
       ? await compressNativeStoryImage({
@@ -48,32 +63,43 @@ export async function uploadGalleryMedia(request: GalleryUploadRequest): Promise
           height: request.draft.height,
         })
       : await prepareNativeGalleryVideo(request.draft);
-  request.onProgress(0.2);
+  request.onProgress(UPLOAD_PROGRESS.PREPARATION_COMPLETE);
 
-  const uploadedFile = await uploadFile({
+  const thumbnailPromise: Promise<UploadFileContent | null> =
+    request.draft.sourceKind === 'video'
+      ? createVideoThumbnail(request.draft.sourceUri)
+      : Promise.resolve(null);
+  const uploadedFilePromise = uploadFile({
     mediaWorkerUrl: request.mediaWorkerUrl,
     accessToken: request.accessToken,
     folder: 'gallery',
     file,
-    onProgress: (value) => request.onProgress(0.2 + value * 0.5),
+    onProgress: (value) =>
+      request.onProgress(
+        UPLOAD_PROGRESS.PREPARATION_COMPLETE + value * UPLOAD_PROGRESS.FILE_TRANSFER_WEIGHT,
+      ),
   });
+  const [uploadedFile, thumbnail] = await Promise.all([uploadedFilePromise, thumbnailPromise]);
   if (!uploadedFile.ok) throw uploadedFile.error;
 
   let thumbnailObjectKey: string | null =
     request.draft.sourceKind === 'image' ? uploadedFile.value.objectKey : null;
-  if (request.draft.sourceKind === 'video') {
-    const thumbnail = await createVideoThumbnail(request.draft.sourceUri);
+  if (thumbnail !== null) {
     const uploadedThumbnail = await uploadFile({
       mediaWorkerUrl: request.mediaWorkerUrl,
       accessToken: request.accessToken,
       folder: 'gallery',
       file: thumbnail,
-      onProgress: (value) => request.onProgress(0.7 + value * 0.25),
+      onProgress: (value) =>
+        request.onProgress(
+          UPLOAD_PROGRESS.THUMBNAIL_TRANSFER_START +
+            value * UPLOAD_PROGRESS.THUMBNAIL_TRANSFER_WEIGHT,
+        ),
     });
     if (!uploadedThumbnail.ok) throw uploadedThumbnail.error;
     thumbnailObjectKey = uploadedThumbnail.value.objectKey;
   }
-  request.onProgress(0.95);
+  request.onProgress(UPLOAD_PROGRESS.FINALIZING);
 
   return {
     fileObjectKey: uploadedFile.value.objectKey,

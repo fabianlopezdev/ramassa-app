@@ -4,21 +4,23 @@ import { composeContinuousViewStyle } from '@/lib/continuous-corners';
 import { resolveMediaImageSource } from '@/lib/media-source';
 import { mobileClientEnv } from '@/lib/supabase';
 import { Image } from 'expo-image';
-import { memo, useCallback } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { useAuth } from '@ramassa/shared/auth';
 import type { ForumPostRow } from '@ramassa/shared/forum';
 import { tokens } from '@ramassa/shared/tokens';
 
+const FORUM_POST_IMAGE_HEIGHT = tokens.spacing['3xl'] * 3;
+const FORUM_POST_PREVIEW_LINES = 5;
+const FORUM_POST_CARD_BORDER_WIDTH = 1;
 const styles = StyleSheet.create({
   card: {
     overflow: 'hidden',
-    borderWidth: 1,
+    borderWidth: FORUM_POST_CARD_BORDER_WIDTH,
     borderColor: tokens.colors.neutral[200],
     borderRadius: tokens.radius.lg,
     backgroundColor: tokens.colors.white,
   },
-  image: { width: '100%', height: tokens.spacing['3xl'] * 3 },
+  image: { width: '100%', height: FORUM_POST_IMAGE_HEIGHT },
 });
 const cardStyle = composeContinuousViewStyle(styles.card);
 
@@ -30,6 +32,7 @@ export const ForumPostCard = memo(function ForumPostCard({
   imageAlt,
   accessibilityLabel,
   languageFontClass,
+  accessToken,
   openLinkLabel,
   onOpen,
 }: {
@@ -40,15 +43,19 @@ export const ForumPostCard = memo(function ForumPostCard({
   readonly imageAlt: string;
   readonly accessibilityLabel: string;
   readonly languageFontClass: string;
+  readonly accessToken: string | undefined;
   readonly openLinkLabel: (url: string) => string;
   readonly onOpen: (id: string) => void;
 }) {
-  const { session } = useAuth();
-  const imageSource = resolveMediaImageSource({
-    objectKeyOrUrl: post.image_url,
-    mediaWorkerUrl: mobileClientEnv.EXPO_PUBLIC_MEDIA_WORKER_URL,
-    accessToken: session?.access_token,
-  });
+  const imageSource = useMemo(
+    () =>
+      resolveMediaImageSource({
+        objectKeyOrUrl: post.image_url,
+        mediaWorkerUrl: mobileClientEnv.EXPO_PUBLIC_MEDIA_WORKER_URL,
+        accessToken,
+      }),
+    [accessToken, post.image_url],
+  );
   const open = useCallback(() => onOpen(post.id), [onOpen, post.id]);
   return (
     <PressableScale
@@ -88,7 +95,7 @@ export const ForumPostCard = memo(function ForumPostCard({
             content={post.content}
             languageFontClass={languageFontClass}
             openLinkLabel={openLinkLabel}
-            numberOfLines={5}
+            numberOfLines={FORUM_POST_PREVIEW_LINES}
           />
         )}
         <Text className={`text-start text-sm tabular-nums text-neutral-600 ${languageFontClass}`}>

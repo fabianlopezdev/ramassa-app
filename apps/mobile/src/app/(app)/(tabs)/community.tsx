@@ -20,11 +20,17 @@ import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAuth } from '@ramassa/shared/auth';
 import { toAppError } from '@ramassa/shared/errors';
-import { filterForumPostsByCategory, type ForumPostRow } from '@ramassa/shared/forum';
+import {
+  filterForumPostsByCategory,
+  type ForumCategoryRow,
+  type ForumPostRow,
+} from '@ramassa/shared/forum';
 import { tokens } from '@ramassa/shared/tokens';
 
 const EMPTY_POSTS: readonly ForumPostRow[] = [];
+const EMPTY_CATEGORIES: readonly ForumCategoryRow[] = [];
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: tokens.colors.neutral[50] },
   content: { paddingBottom: tokens.spacing['3xl'], paddingHorizontal: tokens.spacing.lg },
@@ -35,11 +41,14 @@ export default function CommunityScreen() {
   const { t } = useTranslation(['forum', 'errors']);
   const languageFontClass = useLanguageFontClass();
   const { push } = useRouter();
+  const { session } = useAuth();
   const insets = useSafeAreaInsets();
   const networkState = useNetworkState();
   const isOffline = !isNetworkStateOnline(networkState);
   const categoriesQuery = useForumCategories();
   const postsQuery = useForumPosts();
+  const refetchCategories = categoriesQuery.refetch;
+  const refetchPosts = postsQuery.refetch;
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const posts = useMemo(
     () => filterForumPostsByCategory(postsQuery.data ?? EMPTY_POSTS, categoryId),
@@ -66,8 +75,8 @@ export default function CommunityScreen() {
   const openGallery = useCallback(() => push('/gallery' as Href), [push]);
   const openLinkLabel = useCallback((url: string) => t('forum:openLink', { url }), [t]);
   const refresh = useCallback(() => {
-    void Promise.all([categoriesQuery.refetch(), postsQuery.refetch()]);
-  }, [categoriesQuery, postsQuery]);
+    void Promise.all([refetchCategories(), refetchPosts()]);
+  }, [refetchCategories, refetchPosts]);
   const renderPost = useCallback(
     ({ item, index }: ListRenderItemInfo<ForumPostRow>) => (
       <PageWidth className="pb-md">
@@ -80,13 +89,14 @@ export default function CommunityScreen() {
             imageAlt={t('forum:imageAlt', { name: item.author_first_name })}
             accessibilityLabel={t('forum:openPost', { name: item.author_first_name })}
             languageFontClass={languageFontClass}
+            accessToken={session?.access_token}
             openLinkLabel={openLinkLabel}
             onOpen={openPost}
           />
         </FadeSlideIn>
       </PageWidth>
     ),
-    [languageFontClass, openLinkLabel, openPost, t],
+    [languageFontClass, openLinkLabel, openPost, session?.access_token, t],
   );
 
   if ((categoriesQuery.isPending || postsQuery.isPending) && postsQuery.data === undefined) {
@@ -176,7 +186,7 @@ export default function CommunityScreen() {
             </View>
           </PageWidth>
           <ForumCategoryTabs
-            categories={categoriesQuery.data ?? []}
+            categories={categoriesQuery.data ?? EMPTY_CATEGORIES}
             selectedId={categoryId}
             allLabel={t('forum:allCategories')}
             accessibilityLabel={t('forum:categoriesLabel')}

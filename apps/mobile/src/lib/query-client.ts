@@ -1,6 +1,5 @@
 import { QueryClient } from '@tanstack/react-query';
 import { isRetryableError } from '@ramassa/shared/errors';
-import { configureNetworkStatus } from './network-status';
 import { ANNOUNCEMENT_CACHE_MAX_AGE_MS, createQueryPersister } from './query-persistence';
 import { privateStorage } from './storage';
 
@@ -28,8 +27,6 @@ import { privateStorage } from './storage';
 
 const STALE_TIME_MS = 60_000;
 const MAX_QUERY_ATTEMPTS_AFTER_THE_FIRST = 1;
-
-configureNetworkStatus();
 
 export const queryClient = new QueryClient({
   defaultOptions: {

@@ -68,10 +68,12 @@ env:
       - waitForAnimationToEnd:
           timeout: 2500
 # The loop stops the instant a sliver is on screen, which parks the row under the
-# navigation bar where a tap does not reach it. One smaller swipe lifts it clear.
+# navigation bar where a tap does not reach it. A full extra swipe lifts the
+# entire row clear. The previous 65% to 55% move left the email at y=2176 on a
+# 2160px Android screen, so Maestro tapped below the app and reported success.
 - swipe:
-    start: 50%, 65%
-    end: 50%, 55%
+    start: 50%, 70%
+    end: 50%, 35%
     duration: 900
 - waitForAnimationToEnd:
     timeout: 2500

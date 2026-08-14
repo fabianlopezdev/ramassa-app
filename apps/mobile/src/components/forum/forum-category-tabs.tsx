@@ -11,27 +11,34 @@ const styles = StyleSheet.create({
   content: { gap: tokens.spacing.sm, paddingHorizontal: tokens.spacing.lg },
 });
 
-const CategoryButton = memo(function CategoryButton({
+export const ForumCategoryOption = memo(function ForumCategoryOption({
   id,
   label,
   selected,
   onSelect,
+  testID,
+  accessibilityRole,
+  isDisabled = false,
 }: {
   readonly id: string | null;
   readonly label: string;
   readonly selected: boolean;
   readonly onSelect: (id: string | null) => void;
+  readonly testID: string;
+  readonly accessibilityRole: 'radio' | 'tab';
+  readonly isDisabled?: boolean;
 }) {
   const languageFontClass = useLanguageFontClass();
   const select = useCallback(() => onSelect(id), [id, onSelect]);
   return (
     <PressableScale
-      testID={`forum-category-${id ?? 'all'}`}
+      testID={testID}
       accessibilityLabel={label}
-      accessibilityRole="tab"
+      accessibilityRole={accessibilityRole}
       onPress={select}
       haptic="selection"
       isSelected={selected}
+      isDisabled={isDisabled}
       style={continuousCorners}
       className={`min-h-recommended justify-center rounded-full border px-lg ${
         selected ? 'border-primary bg-primary' : 'border-neutral-300 bg-white'
@@ -46,7 +53,7 @@ const CategoryButton = memo(function CategoryButton({
   );
 });
 
-export function ForumCategoryTabs({
+export const ForumCategoryTabs = memo(function ForumCategoryTabs({
   categories,
   selectedId,
   allLabel,
@@ -60,33 +67,41 @@ export function ForumCategoryTabs({
   readonly onSelect: (id: string | null) => void;
 }) {
   const { language } = useLanguage();
+  const renderCategory = useCallback(
+    (category: ForumCategoryRow) => {
+      const label = resolveLocalizedText(category.name, language)?.text ?? category.slug;
+      return (
+        <ForumCategoryOption
+          key={category.id}
+          id={category.id}
+          label={label}
+          selected={selectedId === category.id}
+          onSelect={onSelect}
+          testID={`forum-category-${category.id}`}
+          accessibilityRole="tab"
+        />
+      );
+    },
+    [language, onSelect, selectedId],
+  );
   return (
     <View accessibilityRole="tablist" accessibilityLabel={accessibilityLabel}>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.content}
-        contentInsetAdjustmentBehavior="never"
+        contentInsetAdjustmentBehavior="automatic"
       >
-        <CategoryButton
+        <ForumCategoryOption
           id={null}
           label={allLabel}
           selected={selectedId === null}
           onSelect={onSelect}
+          testID="forum-category-all"
+          accessibilityRole="tab"
         />
-        {categories.map((category) => {
-          const label = resolveLocalizedText(category.name, language)?.text ?? category.slug;
-          return (
-            <CategoryButton
-              key={category.id}
-              id={category.id}
-              label={label}
-              selected={selectedId === category.id}
-              onSelect={onSelect}
-            />
-          );
-        })}
+        {categories.map(renderCategory)}
       </ScrollView>
     </View>
   );
-}
+});

@@ -1,6 +1,7 @@
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { ErrorCodeLine } from '@/components/error-code-line';
+import { ForumCategoryOption } from '@/components/forum/forum-category-tabs';
 import { FormWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { ShakeOnError } from '@/components/motion/shake-on-error';
@@ -23,13 +24,19 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { toAppError, type AppErrorCode } from '@ramassa/shared/errors';
+import type { ForumCategoryRow } from '@ramassa/shared/forum';
 import { resolveLocalizedText, useLanguage } from '@ramassa/shared/i18n';
 import { FORUM_POST_MAX_LENGTH, forumPostInputSchema } from '@ramassa/shared/schemas';
 import { tokens } from '@ramassa/shared/tokens';
 
+const FORUM_PREVIEW_HEIGHT = tokens.spacing['3xl'] * 4;
+const FORUM_COMPOSER_INPUT_MIN_HEIGHT = tokens.spacing['3xl'] * 2;
+const IMAGE_PICKER_ORIGINAL_QUALITY = 1;
+const FORUM_COMPOSER_TEXT_LINES = 7;
+const EMPTY_CATEGORIES: readonly ForumCategoryRow[] = [];
 const styles = StyleSheet.create({
-  input: { minHeight: tokens.spacing['3xl'] * 2 },
-  preview: { width: '100%', height: tokens.spacing['3xl'] * 4 },
+  input: { minHeight: FORUM_COMPOSER_INPUT_MIN_HEIGHT, writingDirection: 'auto' },
+  preview: { width: '100%', height: FORUM_PREVIEW_HEIGHT },
 });
 
 export default function ForumPostComposerScreen() {
@@ -41,6 +48,7 @@ export default function ForumPostComposerScreen() {
   const isOnline = isNetworkStateOnline(networkState);
   const categoriesQuery = useForumCategories();
   const createPost = useCreateForumPost();
+  const createPostAsync = createPost.mutateAsync;
   const postingStatus = useOwnForumPostingStatus();
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [content, setContent] = useState('');
@@ -48,6 +56,7 @@ export default function ForumPostComposerScreen() {
   const [isProcessingPhoto, setIsProcessingPhoto] = useState(false);
   const [validationMessage, setValidationMessage] = useState<string | null>(null);
   const [localErrorCode, setLocalErrorCode] = useState<AppErrorCode | null>(null);
+  const imageSource = useMemo(() => (image === null ? null : { uri: image.uri }), [image]);
   const mutationErrorCode = createPost.error === null ? null : toAppError(createPost.error).code;
   const errorCode = localErrorCode ?? mutationErrorCode;
   const postingDisabled = postingStatus.data === true;
@@ -76,7 +85,7 @@ export default function ForumPostComposerScreen() {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       allowsMultipleSelection: false,
-      quality: 1,
+      quality: IMAGE_PICKER_ORIGINAL_QUALITY,
     });
     if (result.canceled) return;
     const asset = result.assets[0];
@@ -100,6 +109,7 @@ export default function ForumPostComposerScreen() {
       setIsProcessingPhoto(false);
     }
   }, [t]);
+  const removePhoto = useCallback(() => setImage(null), []);
 
   const submit = useCallback(async () => {
     setValidationMessage(null);
@@ -117,7 +127,7 @@ export default function ForumPostComposerScreen() {
       return;
     }
     try {
-      const postId = await createPost.mutateAsync({
+      const postId = await createPostAsync({
         categoryId: parsed.data.categoryId,
         content: parsed.data.content,
         image,
@@ -126,7 +136,25 @@ export default function ForumPostComposerScreen() {
     } catch {
       return;
     }
-  }, [categoryId, content, createPost, image, replace, t]);
+  }, [categoryId, content, createPostAsync, image, replace, t]);
+  const renderCategory = useCallback(
+    (category: ForumCategoryRow) => {
+      const label = resolveLocalizedText(category.name, language)?.text ?? category.slug;
+      return (
+        <ForumCategoryOption
+          key={category.id}
+          id={category.id}
+          label={label}
+          selected={category.id === categoryId}
+          onSelect={setCategoryId}
+          testID={`forum-compose-category-${category.slug}`}
+          accessibilityRole="radio"
+          isDisabled={postingDisabled}
+        />
+      );
+    },
+    [categoryId, language, postingDisabled],
+  );
 
   return (
     <ScrollView
@@ -135,6 +163,7 @@ export default function ForumPostComposerScreen() {
       contentContainerClassName="grow px-lg py-lg"
       contentContainerStyle={contentInsets}
       contentInsetAdjustmentBehavior="automatic"
+      keyboardDismissMode="on-drag"
       keyboardShouldPersistTaps="handled"
     >
       <FormWidth className="gap-lg">
@@ -161,6 +190,7 @@ export default function ForumPostComposerScreen() {
         </View>
         {postingDisabled ? (
           <Text
+            selectable
             accessibilityRole="alert"
             className={`text-start text-md text-neutral-700 ${languageFontClass}`}
           >
@@ -172,30 +202,7 @@ export default function ForumPostComposerScreen() {
           accessibilityLabel={t('forum:categoriesLabel')}
           className="flex-row flex-wrap gap-sm"
         >
-          {(categoriesQuery.data ?? []).map((category) => {
-            const label = resolveLocalizedText(category.name, language)?.text ?? category.slug;
-            const selected = category.id === categoryId;
-            return (
-              <PressableScale
-                key={category.id}
-                testID={`forum-compose-category-${category.slug}`}
-                accessibilityRole="radio"
-                accessibilityLabel={label}
-                isSelected={selected}
-                onPress={() => setCategoryId(category.id)}
-                haptic="selection"
-                isDisabled={postingDisabled}
-                style={continuousCorners}
-                className={`min-h-recommended justify-center rounded-full border px-lg ${selected ? 'border-primary bg-primary' : 'border-neutral-300 bg-white'}`}
-              >
-                <Text
-                  className={`font-semibold ${selected ? 'text-white' : 'text-neutral-800'} ${languageFontClass}`}
-                >
-                  {label}
-                </Text>
-              </PressableScale>
-            );
-          })}
+          {(categoriesQuery.data ?? EMPTY_CATEGORIES).map(renderCategory)}
         </View>
         <AuthTextField
           testID="forum-post-content"
@@ -205,7 +212,7 @@ export default function ForumPostComposerScreen() {
           onChangeText={setContent}
           maxLength={FORUM_POST_MAX_LENGTH}
           multiline
-          numberOfLines={7}
+          numberOfLines={FORUM_COMPOSER_TEXT_LINES}
           textAlignVertical="top"
           style={styles.input}
           editable={!postingDisabled}
@@ -217,7 +224,7 @@ export default function ForumPostComposerScreen() {
           <PressableScale
             testID="forum-add-photo"
             accessibilityLabel={image === null ? t('forum:addPhoto') : t('forum:changePhoto')}
-            onPress={() => void choosePhoto()}
+            onPress={choosePhoto}
             haptic="tapLight"
             isDisabled={isProcessingPhoto || postingDisabled}
             isBusy={isProcessingPhoto}
@@ -233,20 +240,24 @@ export default function ForumPostComposerScreen() {
             </Text>
           </PressableScale>
           {isProcessingPhoto ? (
-            <ActivityIndicator accessibilityLabel={t('forum:processingPhoto')} />
+            <ActivityIndicator
+              accessibilityRole="progressbar"
+              accessibilityLabel={t('forum:processingPhoto')}
+            />
           ) : null}
-          {image === null ? null : (
+          {imageSource === null ? null : (
             <View className="gap-sm">
               <Image
-                source={{ uri: image.uri }}
+                source={imageSource}
                 accessibilityLabel={t('forum:photoReady')}
                 contentFit="cover"
                 style={styles.preview}
               />
               <PressableScale
                 accessibilityLabel={t('forum:removePhoto')}
-                onPress={() => setImage(null)}
+                onPress={removePhoto}
                 haptic="tapLight"
+                style={continuousCorners}
                 className="min-h-recommended items-center justify-center rounded-md border border-neutral-300 px-lg"
               >
                 <Text className={`text-neutral-700 ${languageFontClass}`}>
@@ -258,6 +269,7 @@ export default function ForumPostComposerScreen() {
         </View>
         {!isOnline ? (
           <Text
+            selectable
             accessibilityRole="alert"
             className={`text-start text-sm text-error ${languageFontClass}`}
           >
@@ -268,6 +280,7 @@ export default function ForumPostComposerScreen() {
           <View className="gap-sm">
             {validationMessage === null && mutationErrorCode === null ? null : (
               <Text
+                selectable
                 accessibilityRole="alert"
                 accessibilityLiveRegion="polite"
                 className={`text-start text-sm text-error ${languageFontClass}`}
@@ -279,7 +292,7 @@ export default function ForumPostComposerScreen() {
             <AuthSubmitButton
               testID="forum-publish"
               label={createPost.isPending ? t('forum:publishing') : t('forum:publish')}
-              onPress={() => void submit()}
+              onPress={submit}
               isLoading={createPost.isPending}
               disabled={
                 !isOnline ||

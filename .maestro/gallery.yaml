@@ -42,7 +42,8 @@ env:
     visible:
       id: gallery-privacy-picker
     timeout: 30000
-- back
+- tapOn:
+    id: gallery-detail-back
 - tapOn:
     id: gallery-upload
 - extendedWaitUntil:

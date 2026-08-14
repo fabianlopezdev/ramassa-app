@@ -1,11 +1,10 @@
+import { GalleryTile } from '@/components/gallery/gallery-tile';
 import { PageWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
-import { resolveMediaImageSource } from '@/lib/media-source';
+import { continuousCorners } from '@/lib/continuous-corners';
 import { useGalleryItems } from '@/lib/player-gallery';
-import { mobileClientEnv } from '@/lib/supabase';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
-import { Image } from 'expo-image';
 import { useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -14,10 +13,11 @@ import { useAuth } from '@ramassa/shared/auth';
 import type { MediaItemRow } from '@ramassa/shared/media';
 import { tokens } from '@ramassa/shared/tokens';
 
+const GALLERY_COLUMN_COUNT = 2;
+const EMPTY_GALLERY_ITEMS: readonly MediaItemRow[] = [];
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: tokens.colors.neutral[50] },
   content: { padding: tokens.spacing.md, paddingBottom: tokens.spacing['3xl'] },
-  tile: { width: '100%', aspectRatio: 1 },
 });
 const keyExtractor = (item: MediaItemRow) => item.id;
 
@@ -27,43 +27,26 @@ export default function GalleryScreen() {
   const { push, back } = useRouter();
   const { session } = useAuth();
   const query = useGalleryItems();
+  const refetchGallery = query.refetch;
+  const accessToken = session?.access_token;
   const openItem = useCallback(
     (id: string) => push({ pathname: '/gallery/[id]', params: { id } } as unknown as Href),
     [push],
   );
+  const openUpload = useCallback(() => push('/gallery/upload' as Href), [push]);
+  const refresh = useCallback(() => void refetchGallery(), [refetchGallery]);
   const renderItem = useCallback(
-    ({ item }: ListRenderItemInfo<MediaItemRow>) => {
-      const source = resolveMediaImageSource({
-        objectKeyOrUrl: item.thumbnail_url ?? item.file_url,
-        mediaWorkerUrl: mobileClientEnv.EXPO_PUBLIC_MEDIA_WORKER_URL,
-        accessToken: session?.access_token,
-      });
-      return (
-        <View className="p-xs">
-          <PressableScale
-            testID={`gallery-item-${item.id}`}
-            accessibilityLabel={t('openItem', { name: item.uploader_first_name })}
-            onPress={() => openItem(item.id)}
-            className="overflow-hidden rounded-md bg-neutral-200"
-          >
-            {source === null ? null : (
-              <Image
-                recyclingKey={item.id}
-                source={source}
-                accessibilityLabel={
-                  item.caption ?? t('mediaBy', { name: item.uploader_first_name })
-                }
-                cachePolicy="memory-disk"
-                contentFit="cover"
-                transition={150}
-                style={styles.tile}
-              />
-            )}
-          </PressableScale>
-        </View>
-      );
-    },
-    [openItem, session?.access_token, t],
+    ({ item }: ListRenderItemInfo<MediaItemRow>) => (
+      <GalleryTile
+        id={item.id}
+        objectKeyOrUrl={item.thumbnail_url ?? item.file_url}
+        accessToken={accessToken}
+        accessibilityLabel={t('openItem', { name: item.uploader_first_name })}
+        imageAlt={item.caption ?? t('mediaBy', { name: item.uploader_first_name })}
+        onOpen={openItem}
+      />
+    ),
+    [accessToken, openItem, t],
   );
   const header = useMemo(
     () => (
@@ -71,6 +54,7 @@ export default function GalleryScreen() {
         <PressableScale
           accessibilityLabel={t('back')}
           onPress={back}
+          haptic="tapLight"
           className="min-h-recommended self-start justify-center rounded-full border border-neutral-300 px-lg"
         >
           <Text className={`font-medium text-primary ${languageFontClass}`}>{t('back')}</Text>
@@ -89,27 +73,30 @@ export default function GalleryScreen() {
         <PressableScale
           testID="gallery-upload"
           accessibilityLabel={t('upload')}
-          onPress={() => push('/gallery/upload' as Href)}
+          onPress={openUpload}
           haptic="tapLight"
+          style={continuousCorners}
           className="min-h-recommended items-center justify-center rounded-md bg-primary px-lg"
         >
           <Text className={`font-bold text-white ${languageFontClass}`}>{t('upload')}</Text>
         </PressableScale>
       </PageWidth>
     ),
-    [back, languageFontClass, push, t],
+    [back, languageFontClass, openUpload, t],
   );
 
   return (
     <FlashList
       testID="gallery-grid"
       accessibilityRole="list"
-      data={query.data ?? []}
+      accessibilityLabel={t('title')}
+      data={query.data ?? EMPTY_GALLERY_ITEMS}
       renderItem={renderItem}
       keyExtractor={keyExtractor}
-      numColumns={2}
+      numColumns={GALLERY_COLUMN_COUNT}
       style={styles.screen}
       contentContainerStyle={styles.content}
+      contentInsetAdjustmentBehavior="automatic"
       ListHeaderComponent={header}
       ListEmptyComponent={
         <Text className={`text-center text-neutral-600 ${languageFontClass}`}>
@@ -117,7 +104,7 @@ export default function GalleryScreen() {
         </Text>
       }
       refreshing={query.isRefetching}
-      onRefresh={() => void query.refetch()}
+      onRefresh={refresh}
     />
   );
 }

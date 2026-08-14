@@ -24,6 +24,7 @@ import { cachedListItemInitialDataOptions } from './query-persistence';
 import { mobileClientEnv, supabase } from './supabase';
 
 const playerForumQueryRoot = 'player-forum';
+const FORUM_POSTING_STATUS_STALE_TIME_MS = 0;
 
 export const playerForumCategoriesQueryKey = (userId: string) =>
   [playerForumQueryRoot, 'categories', userId] as const;
@@ -96,7 +97,7 @@ export function useOwnForumPostingStatus() {
       return fetchOwnForumPostingStatus(supabase, user.id, { signal });
     },
     enabled: user !== null,
-    staleTime: 0,
+    staleTime: FORUM_POSTING_STATUS_STALE_TIME_MS,
   });
 }
 
