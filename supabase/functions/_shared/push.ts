@@ -19,7 +19,8 @@ export const SUPPORTED_PUSH_LANGUAGES = Object.keys(
 ) as readonly PushCatalogLanguage[];
 
 export type PushLanguage = PushCatalogLanguage;
-export type PushContentType = 'announcement' | 'event' | 'message' | 'forum_flag';
+export type PushContentType =
+  'announcement' | 'event' | 'message' | 'forum_flag' | 'referral_update';
 export type LocalizedPushText = Readonly<Partial<Record<PushLanguage, string>>>;
 
 export interface PushContent {
@@ -117,6 +118,13 @@ export function resolvePushText(
     return {
       title: fallbackCatalog.forumFlagTitle,
       body: fallbackCatalog.forumFlagBody,
+      language: fallbackLanguage,
+    };
+  }
+  if (content.contentType === 'referral_update') {
+    return {
+      title: fallbackCatalog.referralUpdateTitle,
+      body: fallbackCatalog.referralUpdateBody,
       language: fallbackLanguage,
     };
   }

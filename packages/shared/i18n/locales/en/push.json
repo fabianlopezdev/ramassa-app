@@ -9,5 +9,7 @@
   "messageTitle": "New message from the team",
   "messageBody": "Open Ramassà to read it.",
   "forumFlagTitle": "New forum report",
-  "forumFlagBody": "Open the moderation queue to review it."
+  "forumFlagBody": "Open the moderation queue to review it.",
+  "referralUpdateTitle": "New referral update",
+  "referralUpdateBody": "Open the participant record to review it."
 }

@@ -35,7 +35,7 @@
     "capture:phase": "bun run scripts/capture-phase.ts",
     "qa:smoke": "bun run scripts/qa-smoke.ts",
     "qa:android:tab-labels": "bun run scripts/qa-android-tab-labels.ts",
-    "qa:web": "playwright test"
+    "qa:web": "env -u NO_COLOR playwright test"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.2.1",

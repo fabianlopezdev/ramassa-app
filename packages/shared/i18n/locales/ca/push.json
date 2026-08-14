@@ -9,5 +9,7 @@
   "messageTitle": "Nou missatge de l’equip",
   "messageBody": "Obre Ramassà per llegir-lo.",
   "forumFlagTitle": "Nou avís al fòrum",
-  "forumFlagBody": "Obre la cua de moderació per revisar-lo."
+  "forumFlagBody": "Obre la cua de moderació per revisar-lo.",
+  "referralUpdateTitle": "Nova actualització d’una derivació",
+  "referralUpdateBody": "Obre la fitxa de la participant per revisar-la."
 }

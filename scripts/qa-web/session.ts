@@ -15,6 +15,7 @@ import { expect, type Page } from '@playwright/test';
 
 export const STAFF_EMAIL = 'marta.puig@example.test';
 export const ENTITY_EMAIL = 'silvia.bosch@example.test';
+export const OTHER_ENTITY_EMAIL = 'jordi.camps@example.test';
 export const SEED_PASSWORD = 'ramassa-dev-password';
 
 /**
@@ -168,18 +169,20 @@ export function queryDatabaseAsAddress(email: string, sql: string): string {
  * terminal "no admin access" screen a participant lands on.
  */
 export async function signOut(page: Page): Promise<void> {
-  await page.goto('/dashboard');
-
   const signOutButton = page
     .getByRole('button', { name: /tanca la sessió|sign out|log out|cerrar sesión/i })
     .first();
   const loginEmailField = page.locator('input[type="email"]');
 
-  // WAITED FOR, never counted straight away. `count()` does not auto-wait, so
-  // asking on a cold server-rendered load answers "no button" while React is
-  // still hydrating; this helper then returned without signing anyone out and
-  // the caller failed much later, looking like a broken login page.
-  await expect(signOutButton.or(loginEmailField).first()).toBeVisible({ timeout: 20_000 });
+  // Use the guarded dashboard as the authority. A signed-out context reaches
+  // login, while an authenticated context reaches its role landing, where
+  // every role exposes the product sign-out action. Retry the navigation
+  // because a cold SSR shell can exist before hydration starts and otherwise
+  // remain on the translated loading fallback indefinitely.
+  await expect(async () => {
+    await page.goto('/dashboard');
+    await expect(signOutButton.or(loginEmailField).first()).toBeVisible({ timeout: 3_000 });
+  }).toPass({ timeout: 20_000 });
 
   // Already signed out: the guard sent an unauthenticated visitor to /login.
   if ((await signOutButton.count()) === 0) return;
@@ -207,8 +210,11 @@ export async function signIn(page: Page, email: string): Promise<void> {
     await expect(page.locator('input[type="password"]')).toBeVisible({ timeout: 1_000 });
   }).toPass({ timeout: 20_000 });
 
-  await page.locator('input[type="email"]').fill(email);
-  await page.locator('input[type="password"]').fill(SEED_PASSWORD);
-  await page.locator('button[type="submit"]').click();
-  await page.waitForURL((url) => !url.pathname.includes('/login'), { timeout: 20_000 });
+  await expect(async () => {
+    if (!new URL(page.url()).pathname.includes('/login')) return;
+    await page.locator('input[type="email"]').fill(email);
+    await page.locator('input[type="password"]').fill(SEED_PASSWORD);
+    await page.locator('button[type="submit"]').click();
+    await expect(page).not.toHaveURL(/\/login/, { timeout: 3_000 });
+  }).toPass({ timeout: 20_000 });
 }

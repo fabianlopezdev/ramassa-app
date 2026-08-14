@@ -83,7 +83,7 @@ describe('the activity timeline contract', () => {
   ];
 
   test('every kind the later phases will produce is declared up front', () => {
-    // Six sources, named once, so the tabs on the screen and the branches added
+    // Eight sources, named once, so the tabs on the screen and the branches added
     // to the SQL union cannot drift into two different vocabularies.
     expect([...PARTICIPANT_ACTIVITY_KINDS]).toEqual([
       'attendance',
@@ -93,6 +93,7 @@ describe('the activity timeline contract', () => {
       'feedback',
       'equipment',
       'service_interest',
+      'referral_update',
     ]);
   });
 

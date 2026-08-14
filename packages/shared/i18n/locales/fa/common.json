@@ -2,6 +2,11 @@
   "appName": "Ramassà",
   "back": "بازگشت",
   "close": "بستن",
+  "notFound": {
+    "title": "صفحه پیدا نشد",
+    "description": "نشانی را بررسی کنید یا به صفحه اصلی برگردید.",
+    "returnHome": "بازگشت به صفحه اصلی"
+  },
   "languageName": {
     "ca": "Català",
     "es": "Español",

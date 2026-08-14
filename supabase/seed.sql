@@ -787,9 +787,95 @@ select
 from seed_roster r
 on conflict (id) do nothing;
 
+-- Entity referrals and encrypted participant updates (RAPP-54) -----------------
+-- One pending and two completed referrals make the entity dashboard, staff queue,
+-- cross-entity boundary, timeline and assigned-staff notification paths reachable.
+
+insert into public.entity_referrals (
+  id,
+  org_id,
+  entity_user_id,
+  referred_profile_id,
+  assigned_staff_id,
+  referred_first_name,
+  referred_last_name,
+  referred_phone,
+  referred_email,
+  documentation_status,
+  notes,
+  status,
+  created_at,
+  updated_at
+)
+values
+  (
+    '5eed0000-0000-4000-8010-000000000001',
+    '5eed0000-0000-4000-8000-000000000000',
+    '5eed0000-0000-4000-8000-000000000004',
+    null,
+    null,
+    'Amina',
+    'Referral',
+    public.encrypt_field('+34930005401'),
+    public.encrypt_field(concat('amina.referral', '@', 'example.test')),
+    'in_progress',
+    public.encrypt_field('Pendent de primera entrevista.'),
+    'pending',
+    now() - interval '2 days',
+    now() - interval '2 days'
+  ),
+  (
+    '5eed0000-0000-4000-8010-000000000002',
+    '5eed0000-0000-4000-8000-000000000000',
+    '5eed0000-0000-4000-8000-000000000004',
+    '5eed0000-0000-4000-8000-000000000011',
+    '5eed0000-0000-4000-8000-000000000002',
+    'أمينة',
+    'الحسن',
+    public.encrypt_field('+34600000011'),
+    public.encrypt_field('amina.alhassan@example.test'),
+    'complete',
+    public.encrypt_field('Derivació completada per Creu Roja Osona.'),
+    'active',
+    now() - interval '30 days',
+    now() - interval '3 days'
+  ),
+  (
+    '5eed0000-0000-4000-8010-000000000003',
+    '5eed0000-0000-4000-8000-000000000000',
+    '5eed0000-0000-4000-8000-000000000005',
+    '5eed0000-0000-4000-8000-000000000012',
+    '5eed0000-0000-4000-8000-000000000003',
+    'فاطمة',
+    'الزهراء',
+    public.encrypt_field('+34600000012'),
+    public.encrypt_field('fatima.zahra@example.test'),
+    'complete',
+    public.encrypt_field('Derivació completada per CEAR Catalunya.'),
+    'active',
+    now() - interval '20 days',
+    now() - interval '2 days'
+  )
+on conflict (id) do nothing;
+
+insert into public.referral_updates (
+  id, org_id, referral_id, author_id, update_type, content, created_at
+)
+values (
+  '5eed0000-0000-4000-8020-000000000001',
+  '5eed0000-0000-4000-8000-000000000000',
+  '5eed0000-0000-4000-8010-000000000002',
+  '5eed0000-0000-4000-8000-000000000004',
+  'housing',
+  public.encrypt_field('La situació d’habitatge ha canviat.'),
+  now() - interval '3 days'
+)
+on conflict (id) do nothing;
+
 -- Push tokens --------------------------------------------------------------------
--- Two registered devices, so a staff-side send screen has something to target
--- before any device has ever run the app (RAPP-17 registers the real ones).
+-- Insert fixture devices after referral updates. The referral update trigger may
+-- dispatch immediately, and seeded Expo tokens must not be pruned before QA uses
+-- them to prove a later recipient-specific delivery.
 
 insert into public.push_tokens (id, user_id, token, platform, device_id)
 select

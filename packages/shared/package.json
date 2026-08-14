@@ -39,6 +39,7 @@
     "./story-submission": "./story-submission.ts",
     "./services": "./services/index.ts",
     "./services/entity": "./services/entity.ts",
+    "./referrals": "./referrals.ts",
     "./structured-content": "./structured-content/index.ts",
     "./image-compression": "./lib/image-compression.ts"
   },

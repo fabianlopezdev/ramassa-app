@@ -19,6 +19,8 @@ const PUSH_KEYS = [
   'deniedNotice',
   'eventFallbackBody',
   'announcementFallbackBody',
+  'referralUpdateTitle',
+  'referralUpdateBody',
 ] as const;
 
 describe('push catalog', () => {

@@ -9,5 +9,7 @@
   "messageTitle": "رسالة جديدة من الفريق",
   "messageBody": "افتحي Ramassà لقراءتها.",
   "forumFlagTitle": "بلاغ جديد في المنتدى",
-  "forumFlagBody": "افتحي قائمة الإشراف لمراجعته."
+  "forumFlagBody": "افتحي قائمة الإشراف لمراجعته.",
+  "referralUpdateTitle": "تحديث جديد لإحالة",
+  "referralUpdateBody": "افتحي سجل المشاركة لمراجعته."
 }

@@ -37,7 +37,7 @@ export interface ParticipantsTableProps {
 }
 
 export function ParticipantsTable({ page, filterOptions, search }: ParticipantsTableProps) {
-  const { t, i18n } = useTranslation(['participants', 'common']);
+  const { t, i18n } = useTranslation(['participants', 'common', 'referrals']);
   const navigate = useNavigate({ from: '/participants/' });
   const locale = i18n.resolvedLanguage ?? 'ca';
 
@@ -125,6 +125,9 @@ export function ParticipantsTable({ page, filterOptions, search }: ParticipantsT
           <p className="text-sm text-muted-foreground">{t('summary', { count: page.total })}</p>
         </div>
         <div className="flex flex-wrap gap-3">
+          <Button asChild size="lg" variant="outline">
+            <Link to="/participants/referrals">{t('referrals:staffQueueAction')}</Link>
+          </Button>
           <Button asChild size="lg" variant="outline">
             <Link to="/participants/deletion-requests">{t('deletionRequestsTitle')}</Link>
           </Button>

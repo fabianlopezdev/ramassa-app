@@ -28,6 +28,7 @@ import arParticipants from './locales/ar/participants.json';
 import arPlayerServices from './locales/ar/player-services.json';
 import arProfile from './locales/ar/profile.json';
 import arPush from './locales/ar/push.json';
+import arReferrals from './locales/ar/referrals.json';
 import caAdmin from './locales/ca/admin.json';
 import caAnnouncements from './locales/ca/announcements.json';
 import caAttendance from './locales/ca/attendance.json';
@@ -48,6 +49,7 @@ import caParticipants from './locales/ca/participants.json';
 import caPlayerServices from './locales/ca/player-services.json';
 import caProfile from './locales/ca/profile.json';
 import caPush from './locales/ca/push.json';
+import caReferrals from './locales/ca/referrals.json';
 import caServices from './locales/ca/services.json';
 import enAdmin from './locales/en/admin.json';
 import enAnnouncements from './locales/en/announcements.json';
@@ -69,6 +71,7 @@ import enParticipants from './locales/en/participants.json';
 import enPlayerServices from './locales/en/player-services.json';
 import enProfile from './locales/en/profile.json';
 import enPush from './locales/en/push.json';
+import enReferrals from './locales/en/referrals.json';
 import enServices from './locales/en/services.json';
 import esAdmin from './locales/es/admin.json';
 import esAnnouncements from './locales/es/announcements.json';
@@ -90,6 +93,7 @@ import esParticipants from './locales/es/participants.json';
 import esPlayerServices from './locales/es/player-services.json';
 import esProfile from './locales/es/profile.json';
 import esPush from './locales/es/push.json';
+import esReferrals from './locales/es/referrals.json';
 import faAdmin from './locales/fa/admin.json';
 import faAnnouncements from './locales/fa/announcements.json';
 import faAttendance from './locales/fa/attendance.json';
@@ -110,6 +114,7 @@ import faParticipants from './locales/fa/participants.json';
 import faPlayerServices from './locales/fa/player-services.json';
 import faProfile from './locales/fa/profile.json';
 import faPush from './locales/fa/push.json';
+import faReferrals from './locales/fa/referrals.json';
 
 const resources = {
   ca: {
@@ -134,6 +139,7 @@ const resources = {
     services: caServices,
     'entity-services': caEntityServices,
     playerServices: caPlayerServices,
+    referrals: caReferrals,
   },
   es: {
     common: esCommon,
@@ -157,6 +163,7 @@ const resources = {
     services: enServices,
     'entity-services': esEntityServices,
     playerServices: esPlayerServices,
+    referrals: esReferrals,
   },
   en: {
     common: enCommon,
@@ -180,6 +187,7 @@ const resources = {
     services: enServices,
     'entity-services': enEntityServices,
     playerServices: enPlayerServices,
+    referrals: enReferrals,
   },
   ar: {
     common: arCommon,
@@ -203,6 +211,7 @@ const resources = {
     services: enServices,
     'entity-services': arEntityServices,
     playerServices: arPlayerServices,
+    referrals: arReferrals,
   },
   fa: {
     common: faCommon,
@@ -226,6 +235,7 @@ const resources = {
     services: enServices,
     'entity-services': faEntityServices,
     playerServices: faPlayerServices,
+    referrals: faReferrals,
   },
 };
 

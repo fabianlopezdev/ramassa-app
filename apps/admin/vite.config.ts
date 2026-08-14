@@ -4,6 +4,7 @@ import { sentryTanstackStart } from '@sentry/tanstackstart-react/vite';
 import tailwindcss from '@tailwindcss/vite';
 import { tanstackStart } from '@tanstack/react-start/plugin/vite';
 import viteReact from '@vitejs/plugin-react';
+import MagicString from 'magic-string';
 import { defineConfig, type Plugin } from 'vite';
 import { tokens, tokensToCssVariables } from '@ramassa/shared/tokens';
 
@@ -14,6 +15,27 @@ const TOKENS_MARKER = '/* @ramassa-tokens */';
 // bundle growth still fails the closure gate with a warning.
 export const ADMIN_CLIENT_CHUNK_BUDGET_KB = 1_250;
 
+export function adminManualChunks(moduleId: string): string | undefined {
+  if (!moduleId.includes('/node_modules/')) return undefined;
+  if (
+    moduleId.includes('/seroval') ||
+    moduleId.includes('/@tanstack/react-router/') ||
+    moduleId.includes('/@tanstack/router-core/') ||
+    moduleId.includes('/@tanstack/history/') ||
+    moduleId.includes('/@tanstack/react-store/') ||
+    moduleId.includes('/@tanstack/store/')
+  ) {
+    return 'vendor-tanstack-router';
+  }
+  if (moduleId.includes('/@tanstack/')) {
+    return 'vendor-tanstack-start';
+  }
+  if (moduleId.includes('/@sentry/') || moduleId.includes('/@apm-js-collab/')) {
+    return 'vendor-observability';
+  }
+  return undefined;
+}
+
 export function isSentryBuildUploadEnabled(authToken: string | undefined): boolean {
   return authToken?.trim() !== '' && authToken !== undefined;
 }
@@ -23,13 +45,27 @@ export function isSentryBuildUploadEnabled(authToken: string | undefined): boole
 // before @tailwindcss/vite so the shadcn brand variables that reference them are
 // resolved during the Tailwind build. Single source of truth: change a token and
 // both the admin and the mobile theme change.
+export function injectRamassaTokensCss(code: string, id: string) {
+  if (!id.includes('app.css') || !code.includes(TOKENS_MARKER)) return null;
+  const transformed = new MagicString(code);
+  const markerStart = code.indexOf(TOKENS_MARKER);
+  transformed.overwrite(
+    markerStart,
+    markerStart + TOKENS_MARKER.length,
+    tokensToCssVariables(tokens),
+  );
+  return {
+    code: transformed.toString(),
+    map: transformed.generateMap({ hires: true, source: id, includeContent: true }),
+  };
+}
+
 function ramassaTokensCss(): Plugin {
   return {
     name: 'ramassa-tokens-css',
     enforce: 'pre',
     transform(code, id) {
-      if (!id.includes('app.css') || !code.includes(TOKENS_MARKER)) return null;
-      return { code: code.replace(TOKENS_MARKER, tokensToCssVariables(tokens)), map: null };
+      return injectRamassaTokensCss(code, id);
     },
   };
 }
@@ -48,6 +84,11 @@ export default defineConfig({
   },
   build: {
     chunkSizeWarningLimit: ADMIN_CLIENT_CHUNK_BUDGET_KB,
+    rollupOptions: {
+      output: {
+        manualChunks: adminManualChunks,
+      },
+    },
   },
   resolve: {
     // The docs' `resolve.tsconfigPaths: true` requires a newer Vite than 7.x;

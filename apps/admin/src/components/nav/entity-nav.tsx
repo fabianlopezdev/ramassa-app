@@ -1,4 +1,6 @@
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { logout } from '@/lib/auth';
 import { useUnreadMessageCount } from '@/lib/messaging';
 import { ENTITY_NAV_ITEMS } from '@/lib/nav-items';
 import { cn } from '@/lib/utils';
@@ -18,7 +20,7 @@ import { useTranslation } from 'react-i18next';
  * under /portal so it can never collide with a staff route.
  */
 export function EntityNav() {
-  const { t } = useTranslation(['nav', 'common']);
+  const { t } = useTranslation(['nav', 'common', 'auth']);
   const pathname = useLocation({ select: (location) => location.pathname });
   const unread = useUnreadMessageCount();
 
@@ -63,6 +65,9 @@ export function EntityNav() {
             })}
           </ul>
         </nav>
+        <Button className="ms-auto" variant="outline" onClick={() => void logout()}>
+          {t('auth:signOutAction')}
+        </Button>
       </div>
     </header>
   );

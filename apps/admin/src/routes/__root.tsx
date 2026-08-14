@@ -1,4 +1,6 @@
+import { NotFoundFallback } from '@/components/not-found-fallback';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { ADMIN_META_DESCRIPTION } from '@/lib/admin-metadata';
 import { reportAuthError } from '@/lib/auth';
 import { createAdminI18n } from '@/lib/i18n';
 import { getRequestLanguage } from '@/lib/request-language';
@@ -15,6 +17,7 @@ export const Route = createRootRoute({
     meta: [
       { charSet: 'utf-8' },
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+      { name: 'description', content: ADMIN_META_DESCRIPTION },
       { title: 'Ramassa Admin' },
     ],
     links: [{ rel: 'stylesheet', href: appCss }],
@@ -22,6 +25,7 @@ export const Route = createRootRoute({
   // Resolved once per request on the server (cookie -> Accept-Language -> ca)
   // and dehydrated, so the client hydrates in the language the server rendered.
   loader: () => getRequestLanguage(),
+  notFoundComponent: NotFoundFallback,
   component: RootComponent,
 });
 

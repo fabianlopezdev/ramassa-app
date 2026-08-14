@@ -13,6 +13,7 @@ export * from './i18n';
 export * from './schemas';
 export * from './forum';
 export * from './services';
+export * from './referrals';
 export * from './lib/supabase';
 export * from './lib/upload-client';
 export type { Database } from './types/database';

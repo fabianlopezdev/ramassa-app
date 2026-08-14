@@ -2,6 +2,11 @@
   "appName": "Ramassà",
   "back": "Enrere",
   "close": "Tanca",
+  "notFound": {
+    "title": "Pàgina no trobada",
+    "description": "Comprova l'adreça o torna a l'inici.",
+    "returnHome": "Torna a l'inici"
+  },
   "fallbackSentinel": "només en català",
   "languageName": {
     "ca": "Català",

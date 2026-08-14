@@ -21,6 +21,7 @@
 
 import { AdminAuthField } from '@/components/auth/admin-auth-field';
 import { CopyableCredential } from '@/components/participants/copyable-credential';
+import { finishParticipantAccountCreation } from '@/components/participants/participant-account-completion';
 import { Button } from '@/components/ui/button';
 import { safeAsync } from '@/lib/observability';
 import { supabase } from '@/lib/supabase';
@@ -36,6 +37,7 @@ import {
   type CreatedParticipantAccount,
   type CreatedParticipantInvite,
 } from '@ramassa/shared/accounts';
+import { completeReferral, type Referral } from '@ramassa/shared/referrals';
 import {
   buildCreateParticipantAccountPayload,
   buildCreateParticipantInvitePayload,
@@ -49,16 +51,34 @@ import {
 
 type Arm = 'invite' | 'create';
 
-export function NewParticipant() {
-  const { t } = useTranslation(['participants', 'auth', 'onboarding']);
+export function NewParticipant({ referral = null }: { readonly referral?: Referral | null }) {
+  const { t } = useTranslation(['participants', 'auth', 'onboarding', 'referrals']);
   const [arm, setArm] = useState<Arm | null>(null);
   const [createdAccount, setCreatedAccount] = useState<CreatedParticipantAccount | null>(null);
   const [createdInvite, setCreatedInvite] = useState<CreatedParticipantInvite | null>(null);
+  const [completionFailed, setCompletionFailed] = useState(false);
 
   function startOver(nextArm: Arm | null) {
     setCreatedAccount(null);
     setCreatedInvite(null);
     setArm(nextArm);
+  }
+
+  async function finishCreatedAccount(account: CreatedParticipantAccount) {
+    setCompletionFailed(false);
+    await finishParticipantAccountCreation(account, {
+      showAccount: setCreatedAccount,
+      linkReferral:
+        referral === null
+          ? undefined
+          : async () => {
+              const linked = await safeAsync(() =>
+                completeReferral(supabase, referral.id, account.profile_id),
+              );
+              return linked.ok;
+            },
+      showLinkFailure: () => setCompletionFailed(true),
+    });
   }
 
   return (
@@ -74,12 +94,28 @@ export function NewParticipant() {
         <h1 className="text-start text-2xl font-semibold">{t('newTitle')}</h1>
       </header>
 
+      {completionFailed ? (
+        <p role="alert" className="text-start text-sm text-destructive">
+          {t('referrals:saveError')}
+        </p>
+      ) : null}
+
       {createdAccount !== null ? (
         <CredentialsPanel account={createdAccount} onCreateAnother={() => startOver('create')} />
       ) : createdInvite !== null ? (
         <InvitedPanel invite={createdInvite} onInviteAnother={() => startOver('invite')} />
       ) : (
         <>
+          {referral === null ? null : (
+            <div className="rounded-xl border bg-muted p-4" data-testid="referral-prefill">
+              <p className="text-start font-medium">
+                {referral.referredFirstName} {referral.referredLastName}
+              </p>
+              <p className="mt-1 text-start text-sm text-muted-foreground">
+                {t('referrals:completionHelp')}
+              </p>
+            </div>
+          )}
           <fieldset className="flex flex-col gap-3">
             <legend className="text-start text-base font-medium">{t('forkQuestion')}</legend>
             <div className="flex flex-wrap gap-3">
@@ -104,8 +140,15 @@ export function NewParticipant() {
             </div>
           </fieldset>
 
-          {arm === 'invite' ? <InviteForm onInvited={setCreatedInvite} /> : null}
-          {arm === 'create' ? <CreateAccountForm onCreated={setCreatedAccount} /> : null}
+          {arm === 'invite' ? (
+            <InviteForm
+              onInvited={setCreatedInvite}
+              initialReferenceEntity={referral?.entityName ?? ''}
+            />
+          ) : null}
+          {arm === 'create' ? (
+            <CreateAccountForm onCreated={finishCreatedAccount} referral={referral} />
+          ) : null}
         </>
       )}
     </section>
@@ -115,8 +158,10 @@ export function NewParticipant() {
 /** The no-email arm: names in, one-time credentials out. */
 function CreateAccountForm({
   onCreated,
+  referral,
 }: {
-  readonly onCreated: (account: CreatedParticipantAccount) => void;
+  readonly onCreated: (account: CreatedParticipantAccount) => Promise<void>;
+  readonly referral: Referral | null;
 }) {
   const { t } = useTranslation(['participants', 'onboarding']);
   const [submitErrorMessage, setSubmitErrorMessage] = useState<string | undefined>(undefined);
@@ -127,7 +172,11 @@ function CreateAccountForm({
     formState: { errors, isSubmitting },
   } = useForm<CreateParticipantAccountInput, unknown, CreateParticipantAccount>({
     resolver: zodResolver(createParticipantAccountSchema),
-    defaultValues: { firstName: '', lastName: '', referenceEntity: '' },
+    defaultValues: {
+      firstName: referral?.referredFirstName ?? '',
+      lastName: referral?.referredLastName ?? '',
+      referenceEntity: referral?.entityName ?? '',
+    },
   });
 
   const create = handleSubmit(async (input) => {
@@ -139,7 +188,7 @@ function CreateAccountForm({
       setSubmitErrorMessage(t('createAccountFailed'));
       return;
     }
-    onCreated(result.value);
+    await onCreated(result.value);
   });
 
   return (
@@ -204,8 +253,10 @@ function CreateAccountForm({
 /** The email arm: an address in, a recorded 30-day invitation out. */
 function InviteForm({
   onInvited,
+  initialReferenceEntity,
 }: {
   readonly onInvited: (invite: CreatedParticipantInvite) => void;
+  readonly initialReferenceEntity: string;
 }) {
   const { t } = useTranslation(['participants', 'auth']);
   const [submitErrorMessage, setSubmitErrorMessage] = useState<string | undefined>(undefined);
@@ -216,7 +267,7 @@ function InviteForm({
     formState: { errors, isSubmitting },
   } = useForm<CreateParticipantInviteInput, unknown, CreateParticipantInvite>({
     resolver: zodResolver(createParticipantInviteSchema),
-    defaultValues: { email: '', referenceEntity: '' },
+    defaultValues: { email: '', referenceEntity: initialReferenceEntity },
   });
 
   const invite = handleSubmit(async (input) => {

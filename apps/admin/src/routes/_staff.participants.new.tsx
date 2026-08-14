@@ -10,9 +10,22 @@
  */
 
 import { NewParticipant } from '@/components/participants/new-participant';
+import { supabase } from '@/lib/supabase';
 import { createFileRoute } from '@tanstack/react-router';
+import { z } from 'zod';
+import { fetchReferral } from '@ramassa/shared/referrals';
 
 export const Route = createFileRoute('/_staff/participants/new')({
   ssr: false,
-  component: NewParticipant,
+  validateSearch: z.object({
+    referral: z.uuid().optional().catch(undefined),
+  }),
+  loaderDeps: ({ search }) => search,
+  loader: ({ deps }) =>
+    deps.referral === undefined ? Promise.resolve(null) : fetchReferral(supabase, deps.referral),
+  component: NewParticipantPage,
 });
+
+function NewParticipantPage() {
+  return <NewParticipant referral={Route.useLoaderData()} />;
+}

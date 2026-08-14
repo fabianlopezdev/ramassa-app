@@ -9,5 +9,7 @@
   "messageTitle": "Nuevo mensaje del equipo",
   "messageBody": "Abre Ramassà para leerlo.",
   "forumFlagTitle": "Nuevo aviso en el foro",
-  "forumFlagBody": "Abre la cola de moderación para revisarlo."
+  "forumFlagBody": "Abre la cola de moderación para revisarlo.",
+  "referralUpdateTitle": "Nueva actualización de una derivación",
+  "referralUpdateBody": "Abre la ficha de la participante para revisarla."
 }

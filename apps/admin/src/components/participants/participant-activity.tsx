@@ -42,6 +42,7 @@ const ACTIVITY_LABEL_KEYS: Record<ParticipantActivityFilter, string> = {
   feedback: 'activityFeedback',
   equipment: 'activityEquipment',
   service_interest: 'activityServiceInterest',
+  referral_update: 'activityReferralUpdate',
 };
 
 const ACTIVITY_FILTERS: readonly ParticipantActivityFilter[] = [

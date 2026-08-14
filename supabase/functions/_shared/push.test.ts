@@ -92,6 +92,20 @@ describe('recipient language selection', () => {
     expect(JSON.stringify(resolved)).not.toContain('private-message');
   });
 
+  test('referral updates use fixed staff copy and never include sensitive prose', () => {
+    const content: PushContent = {
+      contentType: 'referral_update',
+      contentId: '5eed0000-0000-4000-8020-000000000001',
+      title: null,
+      body: null,
+      expiresAt: null,
+    };
+
+    const resolved = buildExpoMessage('ExponentPushToken[test]', content, 'ca');
+    expect(resolved.title).toBe('Nova actualització d’una derivació');
+    expect(JSON.stringify(resolved)).not.toContain('habitatge');
+  });
+
   test.each([
     ['ar', 'تم إلغاء التدريب', 'لا يوجد تدريب اليوم.'],
     ['fa', 'تمرین لغو شد', 'امروز تمرین نداریم.'],

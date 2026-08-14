@@ -427,6 +427,86 @@ export type Database = {
           },
         ];
       };
+      entity_referrals: {
+        Row: {
+          assigned_staff_id: string | null;
+          created_at: string;
+          documentation_status: string;
+          entity_user_id: string;
+          id: string;
+          notes: string | null;
+          org_id: string;
+          referred_email: string | null;
+          referred_first_name: string;
+          referred_last_name: string;
+          referred_phone: string | null;
+          referred_profile_id: string | null;
+          status: string;
+          updated_at: string;
+        };
+        Insert: {
+          assigned_staff_id?: string | null;
+          created_at?: string;
+          documentation_status: string;
+          entity_user_id: string;
+          id?: string;
+          notes?: string | null;
+          org_id: string;
+          referred_email?: string | null;
+          referred_first_name: string;
+          referred_last_name: string;
+          referred_phone?: string | null;
+          referred_profile_id?: string | null;
+          status?: string;
+          updated_at?: string;
+        };
+        Update: {
+          assigned_staff_id?: string | null;
+          created_at?: string;
+          documentation_status?: string;
+          entity_user_id?: string;
+          id?: string;
+          notes?: string | null;
+          org_id?: string;
+          referred_email?: string | null;
+          referred_first_name?: string;
+          referred_last_name?: string;
+          referred_phone?: string | null;
+          referred_profile_id?: string | null;
+          status?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'entity_referrals_entity_tenant_fkey';
+            columns: ['org_id', 'entity_user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['org_id', 'id'];
+          },
+          {
+            foreignKeyName: 'entity_referrals_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'entity_referrals_profile_tenant_fkey';
+            columns: ['org_id', 'referred_profile_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['org_id', 'id'];
+          },
+          {
+            foreignKeyName: 'entity_referrals_staff_tenant_fkey';
+            columns: ['org_id', 'assigned_staff_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['org_id', 'id'];
+          },
+        ];
+      };
       equipment_deliveries: {
         Row: {
           created_at: string;
@@ -1730,6 +1810,58 @@ export type Database = {
           },
         ];
       };
+      referral_updates: {
+        Row: {
+          author_id: string;
+          content: string;
+          created_at: string;
+          id: string;
+          org_id: string;
+          referral_id: string;
+          update_type: string;
+        };
+        Insert: {
+          author_id: string;
+          content: string;
+          created_at?: string;
+          id?: string;
+          org_id: string;
+          referral_id: string;
+          update_type: string;
+        };
+        Update: {
+          author_id?: string;
+          content?: string;
+          created_at?: string;
+          id?: string;
+          org_id?: string;
+          referral_id?: string;
+          update_type?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'referral_updates_author_tenant_fkey';
+            columns: ['org_id', 'author_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['org_id', 'id'];
+          },
+          {
+            foreignKeyName: 'referral_updates_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'referral_updates_referral_tenant_fkey';
+            columns: ['org_id', 'referral_id'];
+            isOneToOne: false;
+            referencedRelation: 'entity_referrals';
+            referencedColumns: ['org_id', 'id'];
+          },
+        ];
+      };
       service_categories: {
         Row: {
           color: string;
@@ -2351,6 +2483,14 @@ export type Database = {
       };
     };
     Functions: {
+      add_referral_update: {
+        Args: {
+          p_content: string;
+          p_referral_id: string;
+          p_update_type: string;
+        };
+        Returns: string;
+      };
       anonymize_participant: {
         Args: { participant_id: string };
         Returns: undefined;
@@ -2403,6 +2543,10 @@ export type Database = {
           receipt_attempt_count: number;
           ticket_id: string;
         }[];
+      };
+      complete_entity_referral: {
+        Args: { p_profile_id: string; p_referral_id: string };
+        Returns: undefined;
       };
       complete_media_item_deletion: {
         Args: {
@@ -2459,6 +2603,7 @@ export type Database = {
         Args: { p_category_id: string; p_metadata_schema: Json };
         Returns: number;
       };
+      create_entity_referral: { Args: { p_payload: Json }; Returns: string };
       create_forum_post: {
         Args: { p_category_id: string; p_content: string; p_image_url: string };
         Returns: string;
@@ -2523,6 +2668,25 @@ export type Database = {
           p_target_type: string;
         };
         Returns: string;
+      };
+      get_entity_referral: {
+        Args: { p_referral_id: string };
+        Returns: {
+          assigned_staff_id: string;
+          created_at: string;
+          documentation_status: string;
+          entity_name: string;
+          entity_user_id: string;
+          id: string;
+          notes: string;
+          referred_email: string;
+          referred_first_name: string;
+          referred_last_name: string;
+          referred_phone: string;
+          referred_profile_id: string;
+          status: string;
+          updated_at: string;
+        }[];
       };
       get_or_create_own_conversation: {
         Args: never;
@@ -2701,6 +2865,25 @@ export type Database = {
         Args: { new_status: string; old_status: string };
         Returns: boolean;
       };
+      list_entity_referrals: {
+        Args: never;
+        Returns: {
+          assigned_staff_id: string;
+          created_at: string;
+          documentation_status: string;
+          entity_name: string;
+          entity_user_id: string;
+          id: string;
+          notes: string;
+          referred_email: string;
+          referred_first_name: string;
+          referred_last_name: string;
+          referred_phone: string;
+          referred_profile_id: string;
+          status: string;
+          updated_at: string;
+        }[];
+      };
       list_forum_moderation_queue: {
         Args: never;
         Returns: {
@@ -2720,6 +2903,16 @@ export type Database = {
           target_id: string;
           target_type: string;
           visibility: string;
+        }[];
+      };
+      list_referral_updates: {
+        Args: { p_referral_id: string };
+        Returns: {
+          author_name: string;
+          content: string;
+          created_at: string;
+          id: string;
+          update_type: string;
         }[];
       };
       list_staff_conversations: {
@@ -2745,6 +2938,25 @@ export type Database = {
           participant_last_name: string;
           participant_role: string;
           unread_count: number;
+        }[];
+      };
+      list_staff_referrals: {
+        Args: { p_status?: string };
+        Returns: {
+          assigned_staff_id: string;
+          created_at: string;
+          documentation_status: string;
+          entity_name: string;
+          entity_user_id: string;
+          id: string;
+          notes: string;
+          referred_email: string;
+          referred_first_name: string;
+          referred_last_name: string;
+          referred_phone: string;
+          referred_profile_id: string;
+          status: string;
+          updated_at: string;
         }[];
       };
       mark_attendance: {
@@ -2818,6 +3030,10 @@ export type Database = {
           file_object_key: string;
           thumbnail_object_key: string;
         }[];
+      };
+      purge_expired_entity_referrals: {
+        Args: { p_now?: string };
+        Returns: number;
       };
       record_push_delivery_results: {
         Args: {

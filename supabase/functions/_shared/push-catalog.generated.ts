@@ -9,7 +9,9 @@ export const PUSH_NOTIFICATION_FALLBACK_BODIES = {
     "messageTitle": "Nou missatge de l’equip",
     "messageBody": "Obre Ramassà per llegir-lo.",
     "forumFlagTitle": "Nou avís al fòrum",
-    "forumFlagBody": "Obre la cua de moderació per revisar-lo."
+    "forumFlagBody": "Obre la cua de moderació per revisar-lo.",
+    "referralUpdateTitle": "Nova actualització d’una derivació",
+    "referralUpdateBody": "Obre la fitxa de la participant per revisar-la."
   },
   "es": {
     "announcementFallbackBody": "Toca para leer el aviso.",
@@ -17,7 +19,9 @@ export const PUSH_NOTIFICATION_FALLBACK_BODIES = {
     "messageTitle": "Nuevo mensaje del equipo",
     "messageBody": "Abre Ramassà para leerlo.",
     "forumFlagTitle": "Nuevo aviso en el foro",
-    "forumFlagBody": "Abre la cola de moderación para revisarlo."
+    "forumFlagBody": "Abre la cola de moderación para revisarlo.",
+    "referralUpdateTitle": "Nueva actualización de una derivación",
+    "referralUpdateBody": "Abre la ficha de la participante para revisarla."
   },
   "en": {
     "announcementFallbackBody": "Tap to read the notice.",
@@ -25,7 +29,9 @@ export const PUSH_NOTIFICATION_FALLBACK_BODIES = {
     "messageTitle": "New message from the team",
     "messageBody": "Open Ramassà to read it.",
     "forumFlagTitle": "New forum report",
-    "forumFlagBody": "Open the moderation queue to review it."
+    "forumFlagBody": "Open the moderation queue to review it.",
+    "referralUpdateTitle": "New referral update",
+    "referralUpdateBody": "Open the participant record to review it."
   },
   "ar": {
     "announcementFallbackBody": "اضغطي لقراءة الإشعار.",
@@ -33,7 +39,9 @@ export const PUSH_NOTIFICATION_FALLBACK_BODIES = {
     "messageTitle": "رسالة جديدة من الفريق",
     "messageBody": "افتحي Ramassà لقراءتها.",
     "forumFlagTitle": "بلاغ جديد في المنتدى",
-    "forumFlagBody": "افتحي قائمة الإشراف لمراجعته."
+    "forumFlagBody": "افتحي قائمة الإشراف لمراجعته.",
+    "referralUpdateTitle": "تحديث جديد لإحالة",
+    "referralUpdateBody": "افتحي سجل المشاركة لمراجعته."
   },
   "fa": {
     "announcementFallbackBody": "برای خواندن اطلاعیه ضربه بزنید.",
@@ -41,7 +49,9 @@ export const PUSH_NOTIFICATION_FALLBACK_BODIES = {
     "messageTitle": "پیام جدید از تیم",
     "messageBody": "Ramassà را باز کنید تا آن را بخوانید.",
     "forumFlagTitle": "گزارش جدید در انجمن",
-    "forumFlagBody": "صف نظارت را برای بررسی باز کنید."
+    "forumFlagBody": "صف نظارت را برای بررسی باز کنید.",
+    "referralUpdateTitle": "به‌روزرسانی جدید ارجاع",
+    "referralUpdateBody": "پرونده شرکت‌کننده را برای بررسی باز کنید."
   }
 } as const;
 

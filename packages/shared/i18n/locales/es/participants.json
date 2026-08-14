@@ -62,6 +62,7 @@
   "activityFeedback": "Sugerencias",
   "activityEquipment": "Equipamiento",
   "activityServiceInterest": "Interés en servicios",
+  "activityReferralUpdate": "Actualización de derivación",
   "activityEmpty": "Todavía no hay nada en esta sección.",
   "activityIntro": "Esta sección se va llenando a medida que la participante hace actividad en el programa.",
   "termsAcceptedOn": "Aceptó los términos el {{date}}.",

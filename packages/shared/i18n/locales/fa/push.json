@@ -9,5 +9,7 @@
   "messageTitle": "پیام جدید از تیم",
   "messageBody": "Ramassà را باز کنید تا آن را بخوانید.",
   "forumFlagTitle": "گزارش جدید در انجمن",
-  "forumFlagBody": "صف نظارت را برای بررسی باز کنید."
+  "forumFlagBody": "صف نظارت را برای بررسی باز کنید.",
+  "referralUpdateTitle": "به‌روزرسانی جدید ارجاع",
+  "referralUpdateBody": "پرونده شرکت‌کننده را برای بررسی باز کنید."
 }
