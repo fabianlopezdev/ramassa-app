@@ -41,5 +41,16 @@
   "noCollaborators": "این نهاد همکاری ندارد.",
   "working": "در حال ذخیره...",
   "actionError": "تغییر ذخیره نشد.",
-  "inviteSent": "دعوت ارسال شد."
+  "inviteSent": "دعوت ارسال شد.",
+  "statusHeading": "وضعیت",
+  "entityCreated": "نهاد افزوده شد.",
+  "entityDeactivated": "نهاد غیرفعال شد.",
+  "entityReactivated": "نهاد دوباره فعال شد.",
+  "collaboratorAccessRemoved": "دسترسی همکار حذف شد.",
+  "collaboratorAccessRestored": "دسترسی همکار بازگردانده شد.",
+  "confirmEntityDeactivation": "با غیرفعال کردن این نهاد، همه همکاران دسترسی خود را از دست می‌دهند. سابقه معرفی‌ها حفظ می‌شود.",
+  "confirmCollaboratorRemoval": "این همکار دیگر نمی‌تواند به درگاه دسترسی داشته باشد. سابقه معرفی‌ها حفظ می‌شود.",
+  "confirmDeactivateEntity": "تأیید غیرفعال کردن نهاد",
+  "confirmRemoveAccess": "تأیید حذف دسترسی",
+  "cancel": "لغو"
 }

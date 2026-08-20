@@ -120,6 +120,7 @@ test.describe.serial('entity tracking, impact, events and administration', () =>
       limit 1
     `);
     await expect(page.getByTestId('entity-tracking-row')).toHaveCount(expectedTracking);
+    await expect(page.getByRole('columnheader', { name: /status|estat|estado/i })).toBeVisible();
     await expect(page.getByTestId('entity-impact-referred')).toContainText(
       String(expectedTracking),
     );
@@ -158,6 +159,9 @@ test.describe.serial('entity tracking, impact, events and administration', () =>
     await page.goto('/settings');
     await page.getByLabel(/entity name|nom de l'entitat|nombre de la entidad/i).fill(ENTITY_NAME);
     await page.getByRole('button', { name: /add entity|afegeix entitat|añadir entidad/i }).click();
+    await expect(page.getByRole('status')).toContainText(
+      /entity added|entitat afegida|entidad añadida/i,
+    );
 
     createdEntityId = queryDatabase(
       `select id from public.collaborating_entities where name = ${sqlLiteral(ENTITY_NAME)}`,
@@ -250,6 +254,19 @@ test.describe.serial('entity tracking, impact, events and administration', () =>
     await page
       .getByRole('button', { name: /remove access|retira l'accés|retirar acceso/i })
       .click();
+    await expect(
+      page.getByText(/will no longer be able|ja no podrà accedir|ya no podrá acceder/i),
+    ).toBeVisible();
+    expect(
+      queryDatabase(
+        `select is_active::text from public.profiles where id = ${sqlLiteral(collaboratorProfileId)}::uuid`,
+      ),
+    ).toBe('true');
+    await page
+      .getByRole('button', {
+        name: /confirm access removal|confirma la retirada d'accés|confirmar retirada de acceso/i,
+      })
+      .click();
     await expect
       .poll(() =>
         queryDatabase(
@@ -257,6 +274,9 @@ test.describe.serial('entity tracking, impact, events and administration', () =>
         ),
       )
       .toBe('false');
+    await expect(page.getByRole('status')).toContainText(
+      /collaborator access removed|accés de la col·laboradora retirat|acceso de la colaboradora retirado/i,
+    );
     await activePage.reload();
     await expect(activePage.getByTestId('entity-impact-suppressed')).toHaveCount(0);
 
@@ -270,6 +290,9 @@ test.describe.serial('entity tracking, impact, events and administration', () =>
         ),
       )
       .toBe('true');
+    await expect(page.getByRole('status')).toContainText(
+      /collaborator access restored|accés de la col·laboradora restaurat|acceso de la colaboradora restaurado/i,
+    );
     const referralCountBefore = queryDatabase(
       `select count(*) from public.entity_referrals where collaborating_entity_id = ${sqlLiteral(createdEntityId)}::uuid`,
     );
@@ -278,6 +301,21 @@ test.describe.serial('entity tracking, impact, events and administration', () =>
     await page
       .getByRole('button', { name: /deactivate entity|desactiva l'entitat|desactivar entidad/i })
       .click();
+    await expect(
+      page.getByText(
+        /collaborators will lose access|col·laboradores perdran l'accés|colaboradoras perderán el acceso/i,
+      ),
+    ).toBeVisible();
+    expect(
+      queryDatabase(
+        `select is_active::text from public.collaborating_entities where id = ${sqlLiteral(createdEntityId)}::uuid`,
+      ),
+    ).toBe('true');
+    await page
+      .getByRole('button', {
+        name: /confirm entity deactivation|confirma la desactivació|confirmar desactivación de la entidad/i,
+      })
+      .click();
     await expect
       .poll(() =>
         queryDatabase(
@@ -285,6 +323,9 @@ test.describe.serial('entity tracking, impact, events and administration', () =>
         ),
       )
       .toBe('false');
+    await expect(page.getByRole('status')).toContainText(
+      /entity deactivated|entitat desactivada|entidad desactivada/i,
+    );
     expect(
       queryDatabase(
         `select count(*) from public.entity_referrals where collaborating_entity_id = ${sqlLiteral(createdEntityId)}::uuid`,

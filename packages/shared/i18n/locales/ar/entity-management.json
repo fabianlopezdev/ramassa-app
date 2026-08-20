@@ -41,5 +41,16 @@
   "noCollaborators": "لا توجد متعاونات لهذه الجهة.",
   "working": "جارٍ الحفظ...",
   "actionError": "تعذر حفظ التغيير.",
-  "inviteSent": "تم إرسال الدعوة."
+  "inviteSent": "تم إرسال الدعوة.",
+  "statusHeading": "الحالة",
+  "entityCreated": "تمت إضافة الجهة.",
+  "entityDeactivated": "تم تعطيل الجهة.",
+  "entityReactivated": "تمت إعادة تفعيل الجهة.",
+  "collaboratorAccessRemoved": "تمت إزالة وصول المتعاونة.",
+  "collaboratorAccessRestored": "تمت استعادة وصول المتعاونة.",
+  "confirmEntityDeactivation": "ستفقد جميع المتعاونات الوصول عند تعطيل هذه الجهة. سيُحتفظ بسجل الإحالات.",
+  "confirmCollaboratorRemoval": "لن تتمكن هذه المتعاونة من الوصول إلى البوابة. سيُحتفظ بسجل الإحالات.",
+  "confirmDeactivateEntity": "تأكيد تعطيل الجهة",
+  "confirmRemoveAccess": "تأكيد إزالة الوصول",
+  "cancel": "إلغاء"
 }

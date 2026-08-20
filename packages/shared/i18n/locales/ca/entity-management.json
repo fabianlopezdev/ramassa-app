@@ -41,5 +41,16 @@
   "noCollaborators": "Aquesta entitat no té col·laboradores.",
   "working": "Desant...",
   "actionError": "No s'ha pogut desar el canvi.",
-  "inviteSent": "Invitació enviada."
+  "inviteSent": "Invitació enviada.",
+  "statusHeading": "Estat",
+  "entityCreated": "Entitat afegida.",
+  "entityDeactivated": "Entitat desactivada.",
+  "entityReactivated": "Entitat reactivada.",
+  "collaboratorAccessRemoved": "Accés de la col·laboradora retirat.",
+  "collaboratorAccessRestored": "Accés de la col·laboradora restaurat.",
+  "confirmEntityDeactivation": "En desactivar l'entitat, totes les col·laboradores perdran l'accés. L'historial de derivacions es conservarà.",
+  "confirmCollaboratorRemoval": "Aquesta col·laboradora ja no podrà accedir al portal. L'historial de derivacions es conservarà.",
+  "confirmDeactivateEntity": "Confirma la desactivació",
+  "confirmRemoveAccess": "Confirma la retirada d'accés",
+  "cancel": "Cancel·la"
 }

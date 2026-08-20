@@ -70,6 +70,7 @@ test('entity dashboard exposes exact KPI and attendance values without event act
   expect(view.getByTestId('entity-impact-rate').textContent).toContain('66.67%');
   expect(view.getByTestId('entity-tracking-row').textContent).toContain('Amina Alhassan');
   expect(view.getByTestId('entity-tracking-row').textContent).toContain('4');
+  expect(view.getByRole('columnheader', { name: /Status|statusHeading/ })).not.toBeNull();
   expect(view.getByTestId('entity-event-card').textContent).toContain('Training session');
   expect(view.queryByRole('button', { name: /sign up/i })).toBeNull();
 });
@@ -99,7 +100,7 @@ test('suppressed dashboard never renders counts, rates, or trend points', () => 
   expect(view.queryByTestId('entity-trend-table')).toBeNull();
 });
 
-test('entity management panel exposes add, invite, collaborator removal, and deactivation actions', async () => {
+test('entity management panel confirms destructive actions and reports successful changes', async () => {
   const entity: ManagedEntity = {
     id: '5eed0000-0000-4000-8030-000000000001',
     name: 'Creu Roja Osona',
@@ -141,26 +142,52 @@ test('entity management panel exposes add, invite, collaborator removal, and dea
     target: { value: 'Fundació Nova' },
   });
   fireEvent.submit(view.getByTestId('entity-create-form'));
+  await waitFor(() => {
+    expect(onCreateEntity).toHaveBeenCalledWith({ name: 'Fundació Nova' });
+    expect(view.getByRole('status').textContent).toMatch(/Entity added|entityCreated/);
+  });
+
   fireEvent.input(view.getByLabelText(/First name|firstName/), { target: { value: 'Núria' } });
   fireEvent.input(view.getByLabelText(/Last name|lastName/), { target: { value: 'Soler' } });
   fireEvent.input(view.getByLabelText(/Email|email/), {
     target: { value: 'nuria.soler@example.test' },
   });
   fireEvent.submit(view.getByTestId('entity-invite-form'));
-  fireEvent.click(view.getByRole('button', { name: /Remove access|removeAccess/ }));
-  fireEvent.click(view.getByRole('button', { name: /Deactivate entity|deactivateEntity/ }));
-
   await waitFor(() => {
-    expect(onCreateEntity).toHaveBeenCalledWith({ name: 'Fundació Nova' });
     expect(onInvite).toHaveBeenCalledWith({
       email: 'nuria.soler@example.test',
       firstName: 'Núria',
       lastName: 'Soler',
     });
+  });
+
+  fireEvent.click(view.getByRole('button', { name: /Remove access|removeAccess/ }));
+  expect(onSetCollaboratorActive).not.toHaveBeenCalled();
+  expect(view.getByText(/will no longer be able|confirmCollaboratorRemoval/)).not.toBeNull();
+  fireEvent.click(view.getByRole('button', { name: /Cancel|cancel/ }));
+  expect(onSetCollaboratorActive).not.toHaveBeenCalled();
+
+  fireEvent.click(view.getByRole('button', { name: /Remove access|removeAccess/ }));
+  fireEvent.click(view.getByRole('button', { name: /Confirm access removal|confirmRemoveAccess/ }));
+  await waitFor(() => {
     expect(onSetCollaboratorActive).toHaveBeenCalledWith(
       '5eed0000-0000-4000-8000-000000000004',
       false,
     );
+    expect(view.getByRole('status').textContent).toMatch(
+      /Collaborator access removed|collaboratorAccessRemoved/,
+    );
+  });
+
+  fireEvent.click(view.getByRole('button', { name: /Deactivate entity|deactivateEntity/ }));
+  expect(onSetEntityActive).not.toHaveBeenCalled();
+  expect(view.getByText(/collaborators will lose access|confirmEntityDeactivation/)).not.toBeNull();
+  fireEvent.click(
+    view.getByRole('button', { name: /Confirm entity deactivation|confirmDeactivateEntity/ }),
+  );
+
+  await waitFor(() => {
     expect(onSetEntityActive).toHaveBeenCalledWith(entity.id, false);
+    expect(view.getByRole('status').textContent).toMatch(/Entity deactivated|entityDeactivated/);
   });
 });

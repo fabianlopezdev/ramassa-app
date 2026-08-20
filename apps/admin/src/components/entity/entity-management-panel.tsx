@@ -29,6 +29,9 @@ interface EntityManagementPanelProps {
 }
 
 type Action = 'create' | 'invite' | 'entity' | 'collaborator';
+type Confirmation =
+  | { readonly kind: 'entity'; readonly entityId: string }
+  | { readonly kind: 'collaborator'; readonly profileId: string };
 
 export function EntityManagementPanel({
   entities,
@@ -43,6 +46,7 @@ export function EntityManagementPanel({
   const { t } = useTranslation('entity-management');
   const [pending, setPending] = useState<Action | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
   const selectedEntity = entities.find((entity) => entity.id === selectedEntityId) ?? null;
 
   async function run(action: Action, operation: Promise<void>, success?: string) {
@@ -68,6 +72,7 @@ export function EntityManagementPanel({
       onCreateEntity({ name }).then(() => {
         form.reset();
       }),
+      t('entityCreated'),
     );
   }
 
@@ -158,16 +163,56 @@ export function EntityManagementPanel({
               </div>
             </div>
 
-            <Button
-              variant={selectedEntity.isActive ? 'destructive' : 'outline'}
-              disabled={pending === 'entity'}
-              onClick={() =>
-                void run('entity', onSetEntityActive(selectedEntity.id, !selectedEntity.isActive))
-              }
-              type="button"
-            >
-              {selectedEntity.isActive ? t('deactivateEntity') : t('reactivateEntity')}
-            </Button>
+            {confirmation?.kind === 'entity' && confirmation.entityId === selectedEntity.id ? (
+              <div
+                className="max-w-2xl space-y-3 rounded-lg border border-destructive/30 bg-destructive/5 p-4"
+                role="group"
+                aria-label={t('confirmDeactivateEntity')}
+              >
+                <p className="text-sm leading-6 text-foreground">
+                  {t('confirmEntityDeactivation')}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant="destructive"
+                    disabled={pending === 'entity'}
+                    onClick={() => {
+                      setConfirmation(null);
+                      void run(
+                        'entity',
+                        onSetEntityActive(selectedEntity.id, false),
+                        t('entityDeactivated'),
+                      );
+                    }}
+                    type="button"
+                  >
+                    {t('confirmDeactivateEntity')}
+                  </Button>
+                  <Button variant="outline" onClick={() => setConfirmation(null)} type="button">
+                    {t('cancel')}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <Button
+                variant={selectedEntity.isActive ? 'destructive' : 'outline'}
+                disabled={pending === 'entity'}
+                onClick={() => {
+                  if (selectedEntity.isActive) {
+                    setConfirmation({ kind: 'entity', entityId: selectedEntity.id });
+                    return;
+                  }
+                  void run(
+                    'entity',
+                    onSetEntityActive(selectedEntity.id, true),
+                    t('entityReactivated'),
+                  );
+                }}
+                type="button"
+              >
+                {selectedEntity.isActive ? t('deactivateEntity') : t('reactivateEntity')}
+              </Button>
+            )}
 
             <section className="space-y-3" aria-labelledby="entity-collaborators-heading">
               <h3 id="entity-collaborators-heading" className="font-semibold text-foreground">
@@ -181,7 +226,7 @@ export function EntityManagementPanel({
                     <TableRow>
                       <TableHead>{t('firstName')}</TableHead>
                       <TableHead>{t('email')}</TableHead>
-                      <TableHead>{t('status.active')}</TableHead>
+                      <TableHead>{t('statusHeading')}</TableHead>
                       <TableHead>
                         <span className="sr-only">{t('removeAccess')}</span>
                       </TableHead>
@@ -198,23 +243,67 @@ export function EntityManagementPanel({
                           {collaborator.isActive ? t('status.active') : t('status.inactive')}
                         </TableCell>
                         <TableCell className="text-end">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            disabled={pending === 'collaborator'}
-                            onClick={() =>
-                              void run(
-                                'collaborator',
-                                onSetCollaboratorActive(
-                                  collaborator.profileId,
-                                  !collaborator.isActive,
-                                ),
-                              )
-                            }
-                            type="button"
-                          >
-                            {collaborator.isActive ? t('removeAccess') : t('restoreAccess')}
-                          </Button>
+                          {confirmation?.kind === 'collaborator' &&
+                          confirmation.profileId === collaborator.profileId ? (
+                            <div
+                              className="ms-auto max-w-sm space-y-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-start"
+                              role="group"
+                              aria-label={t('confirmRemoveAccess')}
+                            >
+                              <p className="text-sm leading-5 text-foreground">
+                                {t('confirmCollaboratorRemoval')}
+                              </p>
+                              <div className="flex flex-wrap gap-2">
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  disabled={pending === 'collaborator'}
+                                  onClick={() => {
+                                    setConfirmation(null);
+                                    void run(
+                                      'collaborator',
+                                      onSetCollaboratorActive(collaborator.profileId, false),
+                                      t('collaboratorAccessRemoved'),
+                                    );
+                                  }}
+                                  type="button"
+                                >
+                                  {t('confirmRemoveAccess')}
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setConfirmation(null)}
+                                  type="button"
+                                >
+                                  {t('cancel')}
+                                </Button>
+                              </div>
+                            </div>
+                          ) : (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              disabled={pending === 'collaborator'}
+                              onClick={() => {
+                                if (collaborator.isActive) {
+                                  setConfirmation({
+                                    kind: 'collaborator',
+                                    profileId: collaborator.profileId,
+                                  });
+                                  return;
+                                }
+                                void run(
+                                  'collaborator',
+                                  onSetCollaboratorActive(collaborator.profileId, true),
+                                  t('collaboratorAccessRestored'),
+                                );
+                              }}
+                              type="button"
+                            >
+                              {collaborator.isActive ? t('removeAccess') : t('restoreAccess')}
+                            </Button>
+                          )}
                         </TableCell>
                       </TableRow>
                     ))}

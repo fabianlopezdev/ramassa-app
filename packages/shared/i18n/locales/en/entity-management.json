@@ -45,5 +45,16 @@
   "noCollaborators": "No collaborators for this entity.",
   "working": "Saving...",
   "actionError": "The change could not be saved.",
-  "inviteSent": "Invitation sent."
+  "inviteSent": "Invitation sent.",
+  "statusHeading": "Status",
+  "entityCreated": "Entity added.",
+  "entityDeactivated": "Entity deactivated.",
+  "entityReactivated": "Entity reactivated.",
+  "collaboratorAccessRemoved": "Collaborator access removed.",
+  "collaboratorAccessRestored": "Collaborator access restored.",
+  "confirmEntityDeactivation": "All collaborators will lose access when this entity is deactivated. Referral history will be retained.",
+  "confirmCollaboratorRemoval": "This collaborator will no longer be able to access the portal. Referral history will be retained.",
+  "confirmDeactivateEntity": "Confirm entity deactivation",
+  "confirmRemoveAccess": "Confirm access removal",
+  "cancel": "Cancel"
 }

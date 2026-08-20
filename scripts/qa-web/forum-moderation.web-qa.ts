@@ -19,6 +19,18 @@ const mediaId = '5eed0000-0000-4000-8014-000000000098';
 
 test.setTimeout(180_000);
 
+function restoreStaffPushFixtures(): void {
+  queryDatabase(`
+    insert into public.push_tokens (id, user_id, token, platform, device_id)
+    values
+      ('5eed0000-0000-4000-8000-000000000901', '5eed0000-0000-4000-8000-000000000001', 'ExponentPushToken[seed-0001]', 'ios', 'seed-device-0001'),
+      ('5eed0000-0000-4000-8000-000000000902', '5eed0000-0000-4000-8000-000000000002', 'ExponentPushToken[seed-0002]', 'android', 'seed-device-0002'),
+      ('5eed0000-0000-4000-8000-000000000903', '5eed0000-0000-4000-8000-000000000003', 'ExponentPushToken[seed-0003]', 'ios', 'seed-device-0003')
+    on conflict (user_id, device_id) do update
+    set token = excluded.token, platform = excluded.platform, updated_at = now();
+  `);
+}
+
 async function flagForumPost(accessToken: string, reason: string): Promise<string> {
   const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/flag_forum_content`, {
     method: 'POST',
@@ -118,6 +130,7 @@ test('staff sees flagged gallery media and deletes its row and R2 object', async
 test('staff reviews a flag, manages its post, and restores it after dismissal', async ({
   page,
 }) => {
+  restoreStaffPushFixtures();
   const [secondFlaggerToken, thirdFlaggerToken] = await Promise.all([
     accessTokenFor('zeinab.haddad@example.test', SEED_PASSWORD),
     accessTokenFor('souad.almansouri@example.test', SEED_PASSWORD),

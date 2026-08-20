@@ -41,5 +41,16 @@
   "noCollaborators": "Esta entidad no tiene colaboradoras.",
   "working": "Guardando...",
   "actionError": "No se pudo guardar el cambio.",
-  "inviteSent": "Invitación enviada."
+  "inviteSent": "Invitación enviada.",
+  "statusHeading": "Estado",
+  "entityCreated": "Entidad añadida.",
+  "entityDeactivated": "Entidad desactivada.",
+  "entityReactivated": "Entidad reactivada.",
+  "collaboratorAccessRemoved": "Acceso de la colaboradora retirado.",
+  "collaboratorAccessRestored": "Acceso de la colaboradora restaurado.",
+  "confirmEntityDeactivation": "Al desactivar la entidad, todas las colaboradoras perderán el acceso. El historial de derivaciones se conservará.",
+  "confirmCollaboratorRemoval": "Esta colaboradora ya no podrá acceder al portal. El historial de derivaciones se conservará.",
+  "confirmDeactivateEntity": "Confirmar desactivación de la entidad",
+  "confirmRemoveAccess": "Confirmar retirada de acceso",
+  "cancel": "Cancelar"
 }

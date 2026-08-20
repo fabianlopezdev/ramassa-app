@@ -132,7 +132,7 @@ export function EntityDashboard({
               <TableHeader>
                 <TableRow>
                   <TableHead>{t('participants')}</TableHead>
-                  <TableHead>{t('status.active')}</TableHead>
+                  <TableHead>{t('statusHeading')}</TableHead>
                   <TableHead>{t('present')}</TableHead>
                   <TableHead>{t('absent')}</TableHead>
                   <TableHead>{t('excused')}</TableHead>
