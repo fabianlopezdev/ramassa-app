@@ -63,6 +63,7 @@ export default function AppLayout() {
           <Stack.Screen name="gallery/upload" />
           <Stack.Screen name="gallery/[id]" />
           <Stack.Screen name="team-chat" />
+          <Stack.Screen name="mentoring/index" />
         </Stack.Protected>
         <Stack.Protected guard={!needsOnboarding && isStaff}>
           <Stack.Screen name="attendance/index" />

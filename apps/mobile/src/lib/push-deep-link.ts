@@ -7,12 +7,14 @@ interface PushDetailData {
   readonly contentId?: unknown;
 }
 
-export type PushDetailQueryRoot = 'player-announcements' | 'player-events' | 'messaging';
+export type PushDetailQueryRoot =
+  'player-announcements' | 'player-events' | 'messaging' | 'player-mentoring';
 
 export function pushDetailQueryRoot(contentType: unknown): PushDetailQueryRoot | null {
   if (contentType === 'announcement') return 'player-announcements';
   if (contentType === 'event') return 'player-events';
   if (contentType === 'message') return 'messaging';
+  if (contentType === 'mentoring_update') return 'player-mentoring';
   return null;
 }
 
@@ -24,6 +26,7 @@ export function resolvePushDetailRoute(data: unknown): Href | null {
   if (contentType === 'announcement') return `/announcement/${contentId}` as Href;
   if (contentType === 'event') return `/event/${contentId}` as Href;
   if (contentType === 'message') return '/team-chat' as Href;
+  if (contentType === 'mentoring_update') return '/mentoring' as Href;
   return null;
 }
 

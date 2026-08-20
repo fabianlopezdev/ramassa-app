@@ -1457,6 +1457,128 @@ export type Database = {
           },
         ];
       };
+      mentoring_notification_events: {
+        Row: {
+          created_at: string;
+          id: string;
+          kind: string;
+          org_id: string;
+          recipient_id: string;
+          request_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          kind: string;
+          org_id: string;
+          recipient_id: string;
+          request_id: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          kind?: string;
+          org_id?: string;
+          recipient_id?: string;
+          request_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'mentoring_notification_events_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'mentoring_notification_events_recipient_tenant_fkey';
+            columns: ['org_id', 'recipient_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['org_id', 'id'];
+          },
+          {
+            foreignKeyName: 'mentoring_notification_events_request_tenant_fkey';
+            columns: ['org_id', 'request_id'];
+            isOneToOne: false;
+            referencedRelation: 'mentoring_requests';
+            referencedColumns: ['org_id', 'id'];
+          },
+        ];
+      };
+      mentoring_requests: {
+        Row: {
+          assigned_staff_id: string | null;
+          completed_at: string | null;
+          created_at: string;
+          id: string;
+          org_id: string;
+          player_id: string;
+          preferred_date: string | null;
+          preferred_time: string | null;
+          scheduled_at: string | null;
+          staff_notes_encrypted: string | null;
+          status: string;
+          topic: string;
+          topic_detail_encrypted: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          assigned_staff_id?: string | null;
+          completed_at?: string | null;
+          created_at?: string;
+          id?: string;
+          org_id: string;
+          player_id: string;
+          preferred_date?: string | null;
+          preferred_time?: string | null;
+          scheduled_at?: string | null;
+          staff_notes_encrypted?: string | null;
+          status?: string;
+          topic: string;
+          topic_detail_encrypted?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          assigned_staff_id?: string | null;
+          completed_at?: string | null;
+          created_at?: string;
+          id?: string;
+          org_id?: string;
+          player_id?: string;
+          preferred_date?: string | null;
+          preferred_time?: string | null;
+          scheduled_at?: string | null;
+          staff_notes_encrypted?: string | null;
+          status?: string;
+          topic?: string;
+          topic_detail_encrypted?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'mentoring_requests_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'mentoring_requests_player_tenant_fkey';
+            columns: ['org_id', 'player_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['org_id', 'id'];
+          },
+          {
+            foreignKeyName: 'mentoring_requests_staff_tenant_fkey';
+            columns: ['org_id', 'assigned_staff_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['org_id', 'id'];
+          },
+        ];
+      };
       messages: {
         Row: {
           content: string | null;
@@ -2687,6 +2809,10 @@ export type Database = {
         };
         Returns: undefined;
       };
+      complete_mentoring_request: {
+        Args: { p_request_id: string };
+        Returns: undefined;
+      };
       complete_onboarding: {
         Args: { payload: Json };
         Returns: {
@@ -2755,6 +2881,15 @@ export type Database = {
           p_file_url: string;
           p_privacy_level: string;
           p_thumbnail_url: string;
+        };
+        Returns: string;
+      };
+      create_mentoring_request: {
+        Args: {
+          p_preferred_date: string;
+          p_preferred_time: string;
+          p_topic: string;
+          p_topic_detail: string;
         };
         Returns: string;
       };
@@ -3133,6 +3268,22 @@ export type Database = {
           visibility: string;
         }[];
       };
+      list_own_mentoring_requests: {
+        Args: never;
+        Returns: {
+          assigned_staff_name: string;
+          completed_at: string;
+          created_at: string;
+          id: string;
+          preferred_date: string;
+          preferred_time: string;
+          scheduled_at: string;
+          status: string;
+          topic: string;
+          topic_detail: string;
+          updated_at: string;
+        }[];
+      };
       list_referral_updates: {
         Args: { p_referral_id: string };
         Returns: {
@@ -3166,6 +3317,27 @@ export type Database = {
           participant_last_name: string;
           participant_role: string;
           unread_count: number;
+        }[];
+      };
+      list_staff_mentoring_requests: {
+        Args: never;
+        Returns: {
+          assigned_staff_id: string;
+          assigned_staff_name: string;
+          completed_at: string;
+          created_at: string;
+          id: string;
+          player_first_name: string;
+          player_id: string;
+          player_last_name: string;
+          preferred_date: string;
+          preferred_time: string;
+          scheduled_at: string;
+          staff_notes: string;
+          status: string;
+          topic: string;
+          topic_detail: string;
+          updated_at: string;
         }[];
       };
       list_staff_referrals: {
@@ -3327,6 +3499,15 @@ export type Database = {
           p_sort_order: number;
         };
         Returns: string;
+      };
+      schedule_mentoring_request: {
+        Args: {
+          p_assigned_staff_id: string;
+          p_request_id: string;
+          p_scheduled_at: string;
+          p_staff_notes: string;
+        };
+        Returns: undefined;
       };
       send_message: {
         Args: {

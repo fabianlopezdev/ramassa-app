@@ -15,6 +15,7 @@ import {
   buildInvite,
   buildKnowledgeArticle,
   buildKnowledgeCategory,
+  buildMentoringRequest,
   buildOrganization,
   buildParticipant,
   buildParticipantNote,
@@ -298,6 +299,22 @@ describe('buildPushToken', () => {
 
   test('overrides win over the defaults', () => {
     expect(buildPushToken({ platform: 'ios' }).platform).toBe('ios');
+  });
+});
+
+describe('buildMentoringRequest', () => {
+  test('defaults to a scheduled request owned by a seeded participant', () => {
+    const request = buildMentoringRequest();
+
+    expect(request.player_id).toBe(buildParticipant().id);
+    expect(request.status).toBe('scheduled');
+    expect(request.assigned_staff_id).not.toBeNull();
+  });
+
+  test('overrides win over the defaults', () => {
+    expect(buildMentoringRequest({ status: 'requested', scheduled_at: null }).status).toBe(
+      'requested',
+    );
   });
 });
 

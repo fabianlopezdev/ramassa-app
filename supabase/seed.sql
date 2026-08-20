@@ -1749,4 +1749,58 @@ values
   )
 on conflict (conversation_id, user_id) do nothing;
 
+-- Private mentoring (RAPP-57) -------------------------------------------------
+-- One scheduled request makes both the player's private calendar item and the
+-- staff scheduling queue reachable after every reset. Sensitive prose remains
+-- encrypted at rest, exactly as it is for a request created through the RPC.
+insert into public.mentoring_requests (
+  id,
+  org_id,
+  player_id,
+  topic,
+  topic_detail_encrypted,
+  preferred_date,
+  preferred_time,
+  status,
+  scheduled_at,
+  assigned_staff_id,
+  staff_notes_encrypted,
+  created_at,
+  updated_at
+)
+values (
+  '5eed0000-0000-4000-8015-000000000001',
+  '5eed0000-0000-4000-8000-000000000000',
+  '5eed0000-0000-4000-8000-000000000011',
+  'labor_orientation',
+  public.encrypt_field('M’agradaria revisar el meu currículum.'),
+  current_date + 4,
+  '10:30'::time,
+  'scheduled',
+  now() + interval '5 days',
+  '5eed0000-0000-4000-8000-000000000002',
+  public.encrypt_field('Portar exemples de currículums.'),
+  now() - interval '1 day',
+  now() - interval '2 hours'
+)
+on conflict (id) do nothing;
+
+insert into public.mentoring_notification_events (
+  id,
+  org_id,
+  request_id,
+  recipient_id,
+  kind,
+  created_at
+)
+values (
+  '5eed0000-0000-4000-8016-000000000001',
+  '5eed0000-0000-4000-8000-000000000000',
+  '5eed0000-0000-4000-8015-000000000001',
+  '5eed0000-0000-4000-8000-000000000011',
+  'scheduled',
+  now() - interval '2 hours'
+)
+on conflict (id) do nothing;
+
 commit;

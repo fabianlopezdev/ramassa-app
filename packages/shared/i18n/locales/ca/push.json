@@ -11,5 +11,7 @@
   "forumFlagTitle": "Nou avís al fòrum",
   "forumFlagBody": "Obre la cua de moderació per revisar-lo.",
   "referralUpdateTitle": "Nova actualització d’una derivació",
-  "referralUpdateBody": "Obre la fitxa de la participant per revisar-la."
+  "referralUpdateBody": "Obre la fitxa de la participant per revisar-la.",
+  "mentoringUpdateTitle": "Actualització de la teva cita privada",
+  "mentoringUpdateBody": "Obre Ramassà per veure el dia i l’hora."
 }

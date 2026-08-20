@@ -11,7 +11,9 @@ export const PUSH_NOTIFICATION_FALLBACK_BODIES = {
     "forumFlagTitle": "Nou avís al fòrum",
     "forumFlagBody": "Obre la cua de moderació per revisar-lo.",
     "referralUpdateTitle": "Nova actualització d’una derivació",
-    "referralUpdateBody": "Obre la fitxa de la participant per revisar-la."
+    "referralUpdateBody": "Obre la fitxa de la participant per revisar-la.",
+    "mentoringUpdateTitle": "Actualització de la teva cita privada",
+    "mentoringUpdateBody": "Obre Ramassà per veure el dia i l’hora."
   },
   "es": {
     "announcementFallbackBody": "Toca para leer el aviso.",
@@ -21,7 +23,9 @@ export const PUSH_NOTIFICATION_FALLBACK_BODIES = {
     "forumFlagTitle": "Nuevo aviso en el foro",
     "forumFlagBody": "Abre la cola de moderación para revisarlo.",
     "referralUpdateTitle": "Nueva actualización de una derivación",
-    "referralUpdateBody": "Abre la ficha de la participante para revisarla."
+    "referralUpdateBody": "Abre la ficha de la participante para revisarla.",
+    "mentoringUpdateTitle": "Actualización de tu cita privada",
+    "mentoringUpdateBody": "Abre Ramassà para ver el día y la hora."
   },
   "en": {
     "announcementFallbackBody": "Tap to read the notice.",
@@ -31,7 +35,9 @@ export const PUSH_NOTIFICATION_FALLBACK_BODIES = {
     "forumFlagTitle": "New forum report",
     "forumFlagBody": "Open the moderation queue to review it.",
     "referralUpdateTitle": "New referral update",
-    "referralUpdateBody": "Open the participant record to review it."
+    "referralUpdateBody": "Open the participant record to review it.",
+    "mentoringUpdateTitle": "Update to your private appointment",
+    "mentoringUpdateBody": "Open Ramassà to see the date and time."
   },
   "ar": {
     "announcementFallbackBody": "اضغطي لقراءة الإشعار.",
@@ -41,7 +47,9 @@ export const PUSH_NOTIFICATION_FALLBACK_BODIES = {
     "forumFlagTitle": "بلاغ جديد في المنتدى",
     "forumFlagBody": "افتحي قائمة الإشراف لمراجعته.",
     "referralUpdateTitle": "تحديث جديد لإحالة",
-    "referralUpdateBody": "افتحي سجل المشاركة لمراجعته."
+    "referralUpdateBody": "افتحي سجل المشاركة لمراجعته.",
+    "mentoringUpdateTitle": "تحديث لموعدك الخاص",
+    "mentoringUpdateBody": "افتحي Ramassà لرؤية اليوم والوقت."
   },
   "fa": {
     "announcementFallbackBody": "برای خواندن اطلاعیه ضربه بزنید.",
@@ -51,7 +59,9 @@ export const PUSH_NOTIFICATION_FALLBACK_BODIES = {
     "forumFlagTitle": "گزارش جدید در انجمن",
     "forumFlagBody": "صف نظارت را برای بررسی باز کنید.",
     "referralUpdateTitle": "به‌روزرسانی جدید ارجاع",
-    "referralUpdateBody": "پرونده شرکت‌کننده را برای بررسی باز کنید."
+    "referralUpdateBody": "پرونده شرکت‌کننده را برای بررسی باز کنید.",
+    "mentoringUpdateTitle": "به‌روزرسانی قرار خصوصی شما",
+    "mentoringUpdateBody": "Ramassà را باز کنید تا روز و ساعت را ببینید."
   }
 } as const;
 

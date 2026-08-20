@@ -38,7 +38,7 @@ const styles = StyleSheet.create({
 const postKeyExtractor = (post: ForumPostRow) => post.id;
 
 export default function CommunityScreen() {
-  const { t } = useTranslation(['forum', 'errors']);
+  const { t } = useTranslation(['forum', 'errors', 'mentoring']);
   const languageFontClass = useLanguageFontClass();
   const { push } = useRouter();
   const { session } = useAuth();
@@ -72,6 +72,7 @@ export default function CommunityScreen() {
   );
   const createPost = useCallback(() => push('/forum/create' as Href), [push]);
   const openTeamChat = useCallback(() => push('/team-chat' as Href), [push]);
+  const openMentoring = useCallback(() => push('/mentoring' as Href), [push]);
   const openGallery = useCallback(() => push('/gallery' as Href), [push]);
   const openLinkLabel = useCallback((url: string) => t('forum:openLink', { url }), [t]);
   const refresh = useCallback(() => {
@@ -181,6 +182,18 @@ export default function CommunityScreen() {
               >
                 <Text className={`text-center text-md font-bold text-primary ${languageFontClass}`}>
                   {t('forum:gallery')}
+                </Text>
+              </PressableScale>
+              <PressableScale
+                testID="forum-open-mentoring"
+                accessibilityLabel={t('mentoring:communityAction')}
+                onPress={openMentoring}
+                haptic="tapLight"
+                style={continuousCorners}
+                className="min-h-recommended grow items-center justify-center rounded-md border border-primary px-lg"
+              >
+                <Text className={`text-center text-md font-bold text-primary ${languageFontClass}`}>
+                  {t('mentoring:communityAction')}
                 </Text>
               </PressableScale>
             </View>

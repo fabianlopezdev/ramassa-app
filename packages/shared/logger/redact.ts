@@ -46,6 +46,14 @@ const piiKeys = new Set([
   'dateofbirth',
   'birthday',
   'nationality',
+  // Mentoring (RAPP-57). The controlled topic is reportable inside the
+  // authorized product, but it can reveal gender violence, asylum, or another
+  // sensitive support need. Neither the topic nor either note field may enter
+  // logs or Sentry, even when a whole database row is passed as context.
+  'topic',
+  'mentoringtopic',
+  'topicdetail',
+  'staffnotes',
   // Credentials (RAPP-25). The account-creation and password-reset RPCs return
   // a plaintext password ONCE, to be read aloud and written on paper. It is
   // stored nowhere, and a failure carrying it into `safeAsync`'s context would

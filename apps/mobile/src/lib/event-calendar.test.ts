@@ -1,7 +1,12 @@
 import { describe, expect, test } from 'bun:test';
 import type { PlayerEventOccurrence } from '@ramassa/shared/events';
 import { tokens } from '@ramassa/shared/tokens';
-import { buildCalendarLocale, buildEventMarkedDates, eventDateKey } from './event-calendar';
+import {
+  addPrivateMentoringMarkedDates,
+  buildCalendarLocale,
+  buildEventMarkedDates,
+  eventDateKey,
+} from './event-calendar';
 
 const row = (id: string, startsAt: string, categoryId: string): PlayerEventOccurrence =>
   ({
@@ -66,6 +71,22 @@ test('marked dates expose one dot per category and preserve the selected day', (
       { key: 'course', color: '#FFD166' },
     ],
   });
+});
+
+test('private mentoring appointments add a generic calendar dot without topic data', () => {
+  const marks = addPrivateMentoringMarkedDates({}, [
+    {
+      id: '5eed0000-0000-4000-8999-000000000001',
+      status: 'scheduled',
+      scheduledAt: '2026-08-29T10:30:00.000Z',
+      assignedStaffName: 'Aina Serra',
+    },
+  ]);
+
+  expect(marks['2026-08-29']?.dots).toEqual([
+    { key: 'private-mentoring', color: tokens.colors.secondary.dark },
+  ]);
+  expect(JSON.stringify(marks)).not.toContain('topic');
 });
 
 test('calendar presentation colors come from the shared token vocabulary', async () => {

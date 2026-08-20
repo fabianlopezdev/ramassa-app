@@ -106,6 +106,22 @@ describe('recipient language selection', () => {
     expect(JSON.stringify(resolved)).not.toContain('habitatge');
   });
 
+  test('mentoring updates use fixed private copy and never include the topic or notes', () => {
+    const content: PushContent = {
+      contentType: 'mentoring_update',
+      contentId: '5eed0000-0000-4000-8030-000000000001',
+      title: { ca: 'Violència de gènere' },
+      body: { ca: 'Preparar una sala tranquil·la.' },
+      expiresAt: null,
+    };
+
+    const resolved = buildExpoMessage('ExponentPushToken[test]', content, 'ca');
+    expect(resolved.title).toBe('Actualització de la teva cita privada');
+    expect(resolved.body).toBe('Obre Ramassà per veure el dia i l’hora.');
+    expect(JSON.stringify(resolved)).not.toContain('Violència de gènere');
+    expect(JSON.stringify(resolved)).not.toContain('sala tranquil·la');
+  });
+
   test.each([
     ['ar', 'تم إلغاء التدريب', 'لا يوجد تدريب اليوم.'],
     ['fa', 'تمرین لغو شد', 'امروز تمرین نداریم.'],

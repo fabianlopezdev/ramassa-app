@@ -43,6 +43,7 @@
     "./services/entity": "./services/entity.ts",
     "./referrals": "./referrals.ts",
     "./entity-management": "./entity-management.ts",
+    "./mentoring": "./mentoring.ts",
     "./structured-content": "./structured-content/index.ts",
     "./image-compression": "./lib/image-compression.ts"
   },

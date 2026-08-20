@@ -11,12 +11,19 @@ import {
   type PlayerEventFilterOption,
 } from '@/components/events/event-filters';
 import { PageWidth } from '@/components/layout/content-width';
-import { composeContinuousViewStyle } from '@/lib/continuous-corners';
-import { buildCalendarLocale, buildEventMarkedDates, eventDateKey } from '@/lib/event-calendar';
+import { PressableScale } from '@/components/motion/pressable-scale';
+import { composeContinuousViewStyle, continuousCorners } from '@/lib/continuous-corners';
+import {
+  addPrivateMentoringMarkedDates,
+  buildCalendarLocale,
+  buildEventMarkedDates,
+  eventDateKey,
+} from '@/lib/event-calendar';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { isNetworkStateOnline } from '@/lib/network-status';
 import { logger } from '@/lib/observability';
 import { usePlayerEvents } from '@/lib/player-events';
+import { usePlayerMentoringRequests } from '@/lib/player-mentoring';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useNetworkState } from 'expo-network';
@@ -36,6 +43,7 @@ import {
   type PlayerEventOccurrence,
 } from '@ramassa/shared/events';
 import { resolveLocalizedText, useLanguage } from '@ramassa/shared/i18n';
+import { getPrivateMentoringCalendarEntries } from '@ramassa/shared/mentoring';
 import { tokens } from '@ramassa/shared/tokens';
 
 const EMPTY_EVENTS: readonly PlayerEventOccurrence[] = [];
@@ -84,7 +92,7 @@ function capacityLabel(row: PlayerEventOccurrence, t: TFunction) {
 }
 
 export default function EventsScreen() {
-  const { t, i18n } = useTranslation(['events', 'common']);
+  const { t, i18n } = useTranslation(['events', 'common', 'mentoring']);
   const { language } = useLanguage();
   const languageFontClass = useLanguageFontClass();
   const { push } = useRouter();
@@ -94,10 +102,15 @@ export default function EventsScreen() {
   const [view, setView] = useState<'list' | 'calendar'>('list');
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const { data, isPending, isError, error, isRefetching, refetch } = usePlayerEvents();
+  const mentoringQuery = usePlayerMentoringRequests();
   const now = new Date();
   const events = useMemo(
     () => filterPlayerEventOccurrences(data ?? EMPTY_EVENTS, category, now),
     [category, data],
+  );
+  const mentoringEntries = useMemo(
+    () => getPrivateMentoringCalendarEntries(mentoringQuery.data ?? []),
+    [mentoringQuery.data],
   );
   const { categories, categoryColorsById } = useMemo(() => {
     const byId = new Map<string, PlayerEventFilterOption>();
@@ -116,13 +129,25 @@ export default function EventsScreen() {
     return { categories: [...byId.values()], categoryColorsById: colorsById };
   }, [data, language]);
   const effectiveSelectedDate =
-    selectedDate ?? eventDateKey(events[0]?.occurrence_starts_at ?? now.toISOString());
+    selectedDate ??
+    eventDateKey(
+      events[0]?.occurrence_starts_at ?? mentoringEntries[0]?.scheduledAt ?? now.toISOString(),
+    );
   const visibleEvents = useMemo(
     () =>
       view === 'list'
         ? events
         : events.filter((row) => eventDateKey(row.occurrence_starts_at) === effectiveSelectedDate),
     [effectiveSelectedDate, events, view],
+  );
+  const visibleMentoringEntries = useMemo(
+    () =>
+      view === 'list'
+        ? mentoringEntries
+        : mentoringEntries.filter(
+            (entry) => eventDateKey(entry.scheduledAt) === effectiveSelectedDate,
+          ),
+    [effectiveSelectedDate, mentoringEntries, view],
   );
   const dateFormatter = useMemo(
     () =>
@@ -160,16 +185,19 @@ export default function EventsScreen() {
   LocaleConfig.defaultLocale = calendarLocaleKey;
   const markedDates = useMemo(
     () =>
-      buildEventMarkedDates(
-        events,
-        effectiveSelectedDate,
-        (categoryId) => eventCategoryColor(categoryColorsById.get(categoryId) ?? 'primary'),
-        (date) =>
-          t('playerSelectedDate', {
-            date: dateFormatter.format(new Date(`${date}${UTC_MIDDAY_SUFFIX}`)),
-          }),
+      addPrivateMentoringMarkedDates(
+        buildEventMarkedDates(
+          events,
+          effectiveSelectedDate,
+          (categoryId) => eventCategoryColor(categoryColorsById.get(categoryId) ?? 'primary'),
+          (date) =>
+            t('playerSelectedDate', {
+              date: dateFormatter.format(new Date(`${date}${UTC_MIDDAY_SUFFIX}`)),
+            }),
+        ),
+        mentoringEntries,
       ) as MarkedDates,
-    [categoryColorsById, dateFormatter, effectiveSelectedDate, events, t],
+    [categoryColorsById, dateFormatter, effectiveSelectedDate, events, mentoringEntries, t],
   );
   const openOccurrence = useCallback(
     (eventId: string, occurrenceId: string) => {
@@ -180,6 +208,7 @@ export default function EventsScreen() {
     },
     [push],
   );
+  const openMentoring = useCallback(() => push('/mentoring' as Href), [push]);
 
   const renderEvent = useCallback(
     ({ item }: ListRenderItemInfo<PlayerEventOccurrence>) => {
@@ -236,7 +265,10 @@ export default function EventsScreen() {
     ],
     [insets.bottom, insets.top],
   );
-  const onRefresh = useCallback(() => void refetch(), [refetch]);
+  const onRefresh = useCallback(
+    () => void Promise.all([refetch(), mentoringQuery.refetch()]),
+    [mentoringQuery, refetch],
+  );
   const selectCalendarDay = useCallback((day: DateData) => {
     playHaptic('selection');
     setSelectedDate(day.dateString);
@@ -321,6 +353,44 @@ export default function EventsScreen() {
             languageFontClass={languageFontClass}
             onSelect={setView}
           />
+          {visibleMentoringEntries.length === 0 ? null : (
+            <View className="gap-sm">
+              <Text
+                accessibilityRole="header"
+                className={`text-start text-lg font-bold text-neutral-900 ${languageFontClass}`}
+              >
+                {t('mentoring:calendarPrivateTitle')}
+              </Text>
+              {visibleMentoringEntries.map((entry) => (
+                <PressableScale
+                  key={entry.id}
+                  testID={`private-mentoring-calendar-${entry.id}`}
+                  accessibilityLabel={`${t('mentoring:calendarPrivateTitle')}. ${dateFormatter.format(
+                    new Date(entry.scheduledAt),
+                  )}. ${timeFormatter.format(new Date(entry.scheduledAt))}`}
+                  onPress={openMentoring}
+                  haptic="tapLight"
+                  style={continuousCorners}
+                  className="min-h-recommended gap-xs rounded-lg border border-secondary bg-secondary-light p-md"
+                >
+                  <Text
+                    className={`text-start text-md font-bold text-neutral-900 ${languageFontClass}`}
+                  >
+                    {t('mentoring:calendarPrivateTitle')}
+                  </Text>
+                  <Text
+                    className={`text-start text-md tabular-nums text-neutral-800 ${languageFontClass}`}
+                  >
+                    {dateFormatter.format(new Date(entry.scheduledAt))} ·{' '}
+                    {timeFormatter.format(new Date(entry.scheduledAt))}
+                  </Text>
+                  <Text className={`text-start text-sm text-neutral-600 ${languageFontClass}`}>
+                    {t('mentoring:calendarPrivateBody')}
+                  </Text>
+                </PressableScale>
+              ))}
+            </View>
+          )}
           {view === 'calendar' ? (
             <View className="gap-sm">
               <Text

@@ -11,5 +11,7 @@
   "forumFlagTitle": "بلاغ جديد في المنتدى",
   "forumFlagBody": "افتحي قائمة الإشراف لمراجعته.",
   "referralUpdateTitle": "تحديث جديد لإحالة",
-  "referralUpdateBody": "افتحي سجل المشاركة لمراجعته."
+  "referralUpdateBody": "افتحي سجل المشاركة لمراجعته.",
+  "mentoringUpdateTitle": "تحديث لموعدك الخاص",
+  "mentoringUpdateBody": "افتحي Ramassà لرؤية اليوم والوقت."
 }

@@ -16,6 +16,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as StaffSettingsRouteImport } from './routes/_staff.settings'
 import { Route as StaffMessagesRouteImport } from './routes/_staff.messages'
+import { Route as StaffMentoringRouteImport } from './routes/_staff.mentoring'
 import { Route as StaffForumRouteImport } from './routes/_staff.forum'
 import { Route as StaffDashboardRouteImport } from './routes/_staff.dashboard'
 import { Route as StaffContentRouteImport } from './routes/_staff.content'
@@ -90,6 +91,11 @@ const StaffSettingsRoute = StaffSettingsRouteImport.update({
 const StaffMessagesRoute = StaffMessagesRouteImport.update({
   id: '/messages',
   path: '/messages',
+  getParentRoute: () => StaffRoute,
+} as any)
+const StaffMentoringRoute = StaffMentoringRouteImport.update({
+  id: '/mentoring',
+  path: '/mentoring',
   getParentRoute: () => StaffRoute,
 } as any)
 const StaffForumRoute = StaffForumRouteImport.update({
@@ -334,6 +340,7 @@ export interface FileRoutesByFullPath {
   '/content': typeof StaffContentRouteWithChildren
   '/dashboard': typeof StaffDashboardRoute
   '/forum': typeof StaffForumRoute
+  '/mentoring': typeof StaffMentoringRoute
   '/messages': typeof StaffMessagesRouteWithChildren
   '/settings': typeof StaffSettingsRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -381,6 +388,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/dashboard': typeof StaffDashboardRoute
   '/forum': typeof StaffForumRoute
+  '/mentoring': typeof StaffMentoringRoute
   '/settings': typeof StaffSettingsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/portal/events': typeof EntityPortalEventsRoute
@@ -430,6 +438,7 @@ export interface FileRoutesById {
   '/_staff/content': typeof StaffContentRouteWithChildren
   '/_staff/dashboard': typeof StaffDashboardRoute
   '/_staff/forum': typeof StaffForumRoute
+  '/_staff/mentoring': typeof StaffMentoringRoute
   '/_staff/messages': typeof StaffMessagesRouteWithChildren
   '/_staff/settings': typeof StaffSettingsRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -481,6 +490,7 @@ export interface FileRouteTypes {
     | '/content'
     | '/dashboard'
     | '/forum'
+    | '/mentoring'
     | '/messages'
     | '/settings'
     | '/auth/callback'
@@ -528,6 +538,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/dashboard'
     | '/forum'
+    | '/mentoring'
     | '/settings'
     | '/auth/callback'
     | '/portal/events'
@@ -576,6 +587,7 @@ export interface FileRouteTypes {
     | '/_staff/content'
     | '/_staff/dashboard'
     | '/_staff/forum'
+    | '/_staff/mentoring'
     | '/_staff/messages'
     | '/_staff/settings'
     | '/auth/callback'
@@ -676,6 +688,13 @@ declare module '@tanstack/react-router' {
       path: '/messages'
       fullPath: '/messages'
       preLoaderRoute: typeof StaffMessagesRouteImport
+      parentRoute: typeof StaffRoute
+    }
+    '/_staff/mentoring': {
+      id: '/_staff/mentoring'
+      path: '/mentoring'
+      fullPath: '/mentoring'
+      preLoaderRoute: typeof StaffMentoringRouteImport
       parentRoute: typeof StaffRoute
     }
     '/_staff/forum': {
@@ -1105,6 +1124,7 @@ interface StaffRouteChildren {
   StaffContentRoute: typeof StaffContentRouteWithChildren
   StaffDashboardRoute: typeof StaffDashboardRoute
   StaffForumRoute: typeof StaffForumRoute
+  StaffMentoringRoute: typeof StaffMentoringRoute
   StaffMessagesRoute: typeof StaffMessagesRouteWithChildren
   StaffSettingsRoute: typeof StaffSettingsRoute
   StaffParticipantsParticipantIdRoute: typeof StaffParticipantsParticipantIdRoute
@@ -1120,6 +1140,7 @@ const StaffRouteChildren: StaffRouteChildren = {
   StaffContentRoute: StaffContentRouteWithChildren,
   StaffDashboardRoute: StaffDashboardRoute,
   StaffForumRoute: StaffForumRoute,
+  StaffMentoringRoute: StaffMentoringRoute,
   StaffMessagesRoute: StaffMessagesRouteWithChildren,
   StaffSettingsRoute: StaffSettingsRoute,
   StaffParticipantsParticipantIdRoute: StaffParticipantsParticipantIdRoute,

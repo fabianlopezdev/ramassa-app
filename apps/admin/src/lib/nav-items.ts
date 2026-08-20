@@ -13,6 +13,7 @@ import {
   CalendarCheck,
   CalendarDays,
   FileText,
+  HeartHandshake,
   LayoutDashboard,
   MessageSquare,
   Settings,
@@ -35,6 +36,7 @@ export const STAFF_NAV_ITEMS = [
   { to: '/attendance', icon: CalendarCheck, labelKey: 'nav:staff.attendance' },
   { to: '/messages', icon: MessageSquare, labelKey: 'nav:staff.messages' },
   { to: '/forum', icon: MessageSquare, labelKey: 'nav:staff.forum' },
+  { to: '/mentoring', icon: HeartHandshake, labelKey: 'nav:staff.mentoring' },
   { to: '/settings', icon: Settings, labelKey: 'nav:staff.settings' },
 ] as const satisfies readonly NavItem[];
 

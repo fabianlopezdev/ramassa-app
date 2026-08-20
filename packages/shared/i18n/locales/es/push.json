@@ -11,5 +11,7 @@
   "forumFlagTitle": "Nuevo aviso en el foro",
   "forumFlagBody": "Abre la cola de moderación para revisarlo.",
   "referralUpdateTitle": "Nueva actualización de una derivación",
-  "referralUpdateBody": "Abre la ficha de la participante para revisarla."
+  "referralUpdateBody": "Abre la ficha de la participante para revisarla.",
+  "mentoringUpdateTitle": "Actualización de tu cita privada",
+  "mentoringUpdateBody": "Abre Ramassà para ver el día y la hora."
 }

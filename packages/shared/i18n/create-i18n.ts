@@ -22,6 +22,7 @@ import arForum from './locales/ar/forum.json';
 import arGallery from './locales/ar/gallery.json';
 import arHome from './locales/ar/home.json';
 import arKnowledge from './locales/ar/knowledge.json';
+import arMentoring from './locales/ar/mentoring.json';
 import arMessaging from './locales/ar/messaging.json';
 import arNav from './locales/ar/nav.json';
 import arOnboarding from './locales/ar/onboarding.json';
@@ -44,6 +45,7 @@ import caForum from './locales/ca/forum.json';
 import caGallery from './locales/ca/gallery.json';
 import caHome from './locales/ca/home.json';
 import caKnowledge from './locales/ca/knowledge.json';
+import caMentoring from './locales/ca/mentoring.json';
 import caMessaging from './locales/ca/messaging.json';
 import caNav from './locales/ca/nav.json';
 import caOnboarding from './locales/ca/onboarding.json';
@@ -67,6 +69,7 @@ import enForum from './locales/en/forum.json';
 import enGallery from './locales/en/gallery.json';
 import enHome from './locales/en/home.json';
 import enKnowledge from './locales/en/knowledge.json';
+import enMentoring from './locales/en/mentoring.json';
 import enMessaging from './locales/en/messaging.json';
 import enNav from './locales/en/nav.json';
 import enOnboarding from './locales/en/onboarding.json';
@@ -90,6 +93,7 @@ import esForum from './locales/es/forum.json';
 import esGallery from './locales/es/gallery.json';
 import esHome from './locales/es/home.json';
 import esKnowledge from './locales/es/knowledge.json';
+import esMentoring from './locales/es/mentoring.json';
 import esMessaging from './locales/es/messaging.json';
 import esNav from './locales/es/nav.json';
 import esOnboarding from './locales/es/onboarding.json';
@@ -112,6 +116,7 @@ import faForum from './locales/fa/forum.json';
 import faGallery from './locales/fa/gallery.json';
 import faHome from './locales/fa/home.json';
 import faKnowledge from './locales/fa/knowledge.json';
+import faMentoring from './locales/fa/mentoring.json';
 import faMessaging from './locales/fa/messaging.json';
 import faNav from './locales/fa/nav.json';
 import faOnboarding from './locales/fa/onboarding.json';
@@ -140,6 +145,7 @@ const resources = {
     gallery: caGallery,
     knowledge: caKnowledge,
     messaging: caMessaging,
+    mentoring: caMentoring,
     attendance: caAttendance,
     services: caServices,
     'entity-services': caEntityServices,
@@ -165,6 +171,7 @@ const resources = {
     gallery: esGallery,
     knowledge: esKnowledge,
     messaging: esMessaging,
+    mentoring: esMentoring,
     attendance: esAttendance,
     services: enServices,
     'entity-services': esEntityServices,
@@ -190,6 +197,7 @@ const resources = {
     gallery: enGallery,
     knowledge: enKnowledge,
     messaging: enMessaging,
+    mentoring: enMentoring,
     attendance: enAttendance,
     services: enServices,
     'entity-services': enEntityServices,
@@ -215,6 +223,7 @@ const resources = {
     gallery: arGallery,
     knowledge: arKnowledge,
     messaging: arMessaging,
+    mentoring: arMentoring,
     attendance: arAttendance,
     services: enServices,
     'entity-services': arEntityServices,
@@ -240,6 +249,7 @@ const resources = {
     gallery: faGallery,
     knowledge: faKnowledge,
     messaging: faMessaging,
+    mentoring: faMentoring,
     attendance: faAttendance,
     services: enServices,
     'entity-services': faEntityServices,

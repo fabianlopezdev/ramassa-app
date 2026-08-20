@@ -27,6 +27,10 @@ test('staff can reach the forum moderation queue from primary navigation', () =>
   expect(STAFF_NAV_ITEMS.some((item) => item.to === '/forum')).toBe(true);
 });
 
+test('staff can reach the mentoring queue from primary navigation', () => {
+  expect(STAFF_NAV_ITEMS.some((item) => item.to === '/mentoring')).toBe(true);
+});
+
 test('the entity area stays namespaced under /portal', () => {
   for (const item of ENTITY_NAV_ITEMS) {
     expect(item.to === '/portal' || item.to.startsWith('/portal/')).toBe(true);

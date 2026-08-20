@@ -11,5 +11,7 @@
   "forumFlagTitle": "New forum report",
   "forumFlagBody": "Open the moderation queue to review it.",
   "referralUpdateTitle": "New referral update",
-  "referralUpdateBody": "Open the participant record to review it."
+  "referralUpdateBody": "Open the participant record to review it.",
+  "mentoringUpdateTitle": "Update to your private appointment",
+  "mentoringUpdateBody": "Open Ramassà to see the date and time."
 }

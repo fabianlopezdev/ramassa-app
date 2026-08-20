@@ -35,6 +35,16 @@ describe('push detail routes', () => {
     expect(pushDetailQueryRoot('message')).toBe('messaging');
   });
 
+  test('mentoring schedule taps open the private mentoring screen', () => {
+    expect(
+      resolvePushDetailRoute({
+        contentType: 'mentoring_update',
+        contentId: '30000000-0000-4000-8000-000000000002',
+      }),
+    ).toBe('/mentoring' as Href);
+    expect(pushDetailQueryRoot('mentoring_update')).toBe('player-mentoring');
+  });
+
   test('refreshes the content collection before opening a newly published detail', () => {
     expect(pushDetailQueryRoot('announcement')).toBe('player-announcements');
     expect(pushDetailQueryRoot('event')).toBe('player-events');

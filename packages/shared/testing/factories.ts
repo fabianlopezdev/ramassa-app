@@ -71,6 +71,7 @@ export type ServiceCategoryRow = Database['public']['Tables']['service_categorie
 export type ServiceRow = Database['public']['Tables']['services']['Row'];
 export type ServiceImageRow = Database['public']['Tables']['service_images']['Row'];
 export type ServiceInterestRow = Database['public']['Tables']['service_interests']['Row'];
+export type MentoringRequestRow = Database['public']['Tables']['mentoring_requests']['Row'];
 
 /** One fixed instant for every timestamp, so factory output is byte-stable. */
 const FIXTURE_TIMESTAMP = '2026-01-15T09:00:00+00:00';
@@ -777,6 +778,30 @@ export function buildConversationAssignmentHistory(
     previous_staff_id: null,
     assigned_staff_id: seedUserId(staff.ordinal),
     created_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+export function buildMentoringRequest(
+  overrides: Partial<MentoringRequestRow> = {},
+): MentoringRequestRow {
+  const player = PARTICIPANT_FIXTURES[0]!;
+  const staff = STAFF_FIXTURES.find((person) => person.role === 'staff')!;
+  return {
+    id: '5eed0000-0000-4000-8015-000000000001',
+    org_id: SEED_ORGANIZATION_ID,
+    player_id: seedUserId(player.ordinal),
+    topic: 'labor_orientation',
+    topic_detail_encrypted: 'Synthetic private mentoring note',
+    preferred_date: '2026-01-20',
+    preferred_time: '10:30:00',
+    status: 'scheduled',
+    scheduled_at: '2026-01-21T10:30:00+00:00',
+    assigned_staff_id: seedUserId(staff.ordinal),
+    staff_notes_encrypted: 'Synthetic private staff note',
+    completed_at: null,
+    created_at: FIXTURE_TIMESTAMP,
+    updated_at: FIXTURE_TIMESTAMP,
     ...overrides,
   };
 }

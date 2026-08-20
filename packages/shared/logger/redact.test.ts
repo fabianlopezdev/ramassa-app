@@ -132,6 +132,24 @@ test('the other credential-shaped keys go too', () => {
   expect(Object.values(redacted)).toEqual([REDACTED, REDACTED, REDACTED]);
 });
 
+test('mentoring topics and notes never survive redaction', () => {
+  const redacted = redactPii({
+    requestId: '5eed0000-0000-4000-8000-000000000099',
+    topic: 'gender_violence',
+    mentoringTopic: 'asylum_rights',
+    topicDetail: 'Sensitive request detail',
+    staffNotes: 'Sensitive preparation note',
+  }) as Record<string, unknown>;
+
+  expect(redacted).toEqual({
+    requestId: '5eed0000-0000-4000-8000-000000000099',
+    topic: REDACTED,
+    mentoringTopic: REDACTED,
+    topicDetail: REDACTED,
+    staffNotes: REDACTED,
+  });
+});
+
 /**
  * The promise in this module's docstring: opaque IDs are loggable, and must be,
  * or an incident cannot be traced to a record. The seeded identifiers are the

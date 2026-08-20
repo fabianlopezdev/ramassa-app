@@ -1,5 +1,6 @@
 import type { PlayerEventOccurrence } from '@ramassa/shared/events';
 import type { SupportedLanguage } from '@ramassa/shared/i18n';
+import type { PrivateMentoringCalendarEntry } from '@ramassa/shared/mentoring';
 import { tokens } from '@ramassa/shared/tokens';
 
 const MADRID_TIME_ZONE = 'Europe/Madrid';
@@ -114,4 +115,21 @@ export function buildEventMarkedDates(
       ];
     }),
   );
+}
+
+export function addPrivateMentoringMarkedDates(
+  base: Readonly<Record<string, EventCalendarMark>>,
+  entries: readonly PrivateMentoringCalendarEntry[],
+): Readonly<Record<string, EventCalendarMark>> {
+  const marks: Record<string, EventCalendarMark> = { ...base };
+  for (const entry of entries) {
+    const date = eventDateKey(entry.scheduledAt);
+    const current = marks[date] ?? { dots: [] };
+    if (current.dots.some((dot) => dot.key === 'private-mentoring')) continue;
+    marks[date] = {
+      ...current,
+      dots: [...current.dots, { key: 'private-mentoring', color: tokens.colors.secondary.dark }],
+    };
+  }
+  return marks;
 }
