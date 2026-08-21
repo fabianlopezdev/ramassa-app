@@ -4,16 +4,21 @@ import { PARTICIPANT_FIXTURES, SEED_ACCOUNT_PASSWORD, seedUserId } from '@ramass
 import { queryDatabase, signIn, STAFF_EMAIL } from './session';
 
 const playerOrigin = `http://localhost:${process.env.RAMASSA_QA_PLAYER_PORT ?? '4194'}`;
-const player = PARTICIPANT_FIXTURES.find((fixture) => fixture.ordinal === 11)!;
-const playerId = seedUserId(player.ordinal);
+const arabicPlayer = PARTICIPANT_FIXTURES.find((fixture) => fixture.ordinal === 11)!;
+const catalanPlayer = PARTICIPANT_FIXTURES.find((fixture) => fixture.ordinal === 27)!;
+const playerIds = [seedUserId(arabicPlayer.ordinal), seedUserId(catalanPlayer.ordinal)];
 const surveyId = '5eed0000-0000-4000-8040-000000000001';
 const arabicAnswer = 'تجربة واضحة ومفيدة';
+const catalanAnswer = 'Una experiència clara i útil';
 
 function sqlLiteral(value: string): string {
   return `'${value.replaceAll("'", "''")}'`;
 }
 
-async function signInPlayer(page: Page): Promise<void> {
+async function signInPlayer(
+  page: Page,
+  player: (typeof PARTICIPANT_FIXTURES)[number],
+): Promise<void> {
   await page.goto(`${playerOrigin}/login`, { waitUntil: 'domcontentloaded', timeout: 120_000 });
   const usePassword = page
     .getByRole('button', { name: /password|contrasenya|contraseña/i })
@@ -34,20 +39,21 @@ test.afterAll(() => {
     begin;
     delete from public.audit_log
      where action = 'survey_response_completed'
-       and actor_id = ${sqlLiteral(playerId)}::uuid
+       and actor_id = any(array[${playerIds.map((id) => `${sqlLiteral(id)}::uuid`).join(',')}])
        and target_id = ${sqlLiteral(surveyId)}::uuid;
     delete from public.survey_responses
      where survey_id = ${sqlLiteral(surveyId)}::uuid
-       and player_id = ${sqlLiteral(playerId)}::uuid;
+       and player_id = any(array[${playerIds.map((id) => `${sqlLiteral(id)}::uuid`).join(',')}]);
     commit;
   `);
 });
 
-test('player completes every survey control and staff sees attributed aggregates and Arabic CSV', async ({
+test('Catalan and Arabic players complete every control and staff sees attributed aggregates and CSV', async ({
+  browser,
   page,
 }) => {
   test.setTimeout(180_000);
-  await signInPlayer(page);
+  await signInPlayer(page, arabicPlayer);
   await page.goto(`${playerOrigin}/profile`);
   await page.getByTestId('profile-language-ar').click();
   await page.goto(playerOrigin);
@@ -74,11 +80,50 @@ test('player completes every survey control and staff sees attributed aggregates
   expect(
     queryDatabase(
       `select status || '|' || (public.decrypt_field(answers_encrypted)::jsonb->>'5eed0000-0000-4000-8041-000000000004')
-         from public.survey_responses
+       from public.survey_responses
         where survey_id = ${sqlLiteral(surveyId)}::uuid
-          and player_id = ${sqlLiteral(playerId)}::uuid`,
+          and player_id = ${sqlLiteral(seedUserId(arabicPlayer.ordinal))}::uuid`,
     ),
   ).toBe(`completed|${arabicAnswer}`);
+
+  const catalanContext = await browser.newContext();
+  const catalanPage = await catalanContext.newPage();
+  await signInPlayer(catalanPage, catalanPlayer);
+  await catalanPage.goto(`${playerOrigin}/profile`);
+  await catalanPage.getByTestId('profile-language-ca').click();
+  await catalanPage.goto(playerOrigin);
+  await expect(
+    catalanPage.getByText('La teva opinió sobre la formació', { exact: true }),
+  ).toBeVisible({
+    timeout: 30_000,
+  });
+  await catalanPage
+    .getByRole('button', { name: 'Respondre ara: La teva opinió sobre la formació' })
+    .click();
+  await expect(
+    catalanPage.getByText("Aquesta resposta no és anònima. L'equip podrà veure qui ha respost."),
+  ).toBeVisible({ timeout: 30_000 });
+  await catalanPage.getByRole('radio', { name: '5 de 5 estrelles' }).click();
+  await catalanPage.getByTestId('survey-next').click();
+  await catalanPage.getByRole('radio', { name: 'Acompanyament' }).click();
+  await catalanPage.getByTestId('survey-next').click();
+  await catalanPage.getByRole('radio', { name: 'Sí' }).click();
+  await catalanPage.getByTestId('survey-next').click();
+  await catalanPage.getByLabel('Escriu el teu comentari').fill(catalanAnswer);
+  await catalanPage.getByTestId('survey-next').click();
+  await expect(catalanPage.getByText('Gràcies per compartir la teva opinió')).toBeVisible({
+    timeout: 30_000,
+  });
+  await catalanContext.close();
+
+  expect(
+    queryDatabase(
+      `select status || '|' || (public.decrypt_field(answers_encrypted)::jsonb->>'5eed0000-0000-4000-8041-000000000004')
+         from public.survey_responses
+        where survey_id = ${sqlLiteral(surveyId)}::uuid
+          and player_id = ${sqlLiteral(seedUserId(catalanPlayer.ordinal))}::uuid`,
+    ),
+  ).toBe(`completed|${catalanAnswer}`);
 
   await signIn(page, STAFF_EMAIL);
   await page.goto('/surveys');
@@ -89,7 +134,9 @@ test('player completes every survey control and staff sees attributed aggregates
   await expect(page.getByText(arabicAnswer, { exact: true }).first()).toBeVisible({
     timeout: 30_000,
   });
-  await expect(page.getByText(player.firstName, { exact: false }).first()).toBeVisible();
+  await expect(page.getByText(arabicPlayer.firstName, { exact: false }).first()).toBeVisible();
+  await expect(page.getByText(catalanAnswer, { exact: true }).first()).toBeVisible();
+  await expect(page.getByText(catalanPlayer.firstName, { exact: false }).first()).toBeVisible();
 
   const downloadPromise = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Export CSV', exact: true }).click();
@@ -99,5 +146,7 @@ test('player completes every survey control and staff sees attributed aggregates
   const bytes = readFileSync(path!);
   expect(bytes.subarray(0, 3).toString('hex')).toBe('efbbbf');
   expect(bytes.toString('utf8')).toContain(arabicAnswer);
-  expect(bytes.toString('utf8')).toContain(player.firstName);
+  expect(bytes.toString('utf8')).toContain(arabicPlayer.firstName);
+  expect(bytes.toString('utf8')).toContain(catalanAnswer);
+  expect(bytes.toString('utf8')).toContain(catalanPlayer.firstName);
 });
