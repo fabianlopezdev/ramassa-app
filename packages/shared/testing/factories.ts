@@ -73,6 +73,13 @@ export type ServiceImageRow = Database['public']['Tables']['service_images']['Ro
 export type ServiceInterestRow = Database['public']['Tables']['service_interests']['Row'];
 export type MentoringRequestRow = Database['public']['Tables']['mentoring_requests']['Row'];
 export type FeedbackSubmissionRow = Database['public']['Tables']['feedback_submissions']['Row'];
+export type NotificationTemplateRow = Database['public']['Tables']['notification_templates']['Row'];
+export type CustomNotificationGroupRow =
+  Database['public']['Tables']['custom_notification_groups']['Row'];
+export type CustomNotificationGroupMemberRow =
+  Database['public']['Tables']['custom_notification_group_members']['Row'];
+export type TargetedNotificationSendRow =
+  Database['public']['Tables']['targeted_notification_sends']['Row'];
 
 /** One fixed instant for every timestamp, so factory output is byte-stable. */
 const FIXTURE_TIMESTAMP = '2026-01-15T09:00:00+00:00';
@@ -823,6 +830,86 @@ export function buildFeedbackSubmission(
     resolved_at: null,
     created_at: FIXTURE_TIMESTAMP,
     updated_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+const WEEKLY_NOTIFICATION_TITLE = {
+  ca: 'Recordatori de l’entrenament setmanal',
+  es: 'Recordatorio del entrenamiento semanal',
+  en: 'Weekly training reminder',
+  ar: 'تذكير بالتدريب الأسبوعي',
+  fa: 'یادآوری تمرین هفتگی',
+} as const;
+const WEEKLY_NOTIFICATION_BODY = {
+  ca: 'Recorda que aquesta tarda tenim entrenament.',
+  es: 'Recuerda que esta tarde tenemos entrenamiento.',
+  en: 'Remember that training is this afternoon.',
+  ar: 'تذكّري أن التدريب سيكون بعد ظهر اليوم.',
+  fa: 'یادت باشد تمرین امروز بعدازظهر است.',
+} as const;
+
+export function buildNotificationTemplate(
+  overrides: Partial<NotificationTemplateRow> = {},
+): NotificationTemplateRow {
+  const staff = STAFF_FIXTURES.find((person) => person.role === 'staff')!;
+  return {
+    id: '5eed0000-0000-4000-8033-000000000001',
+    org_id: SEED_ORGANIZATION_ID,
+    name: 'Entrenament setmanal',
+    category: 'engagement',
+    title: toJson(WEEKLY_NOTIFICATION_TITLE),
+    body: toJson(WEEKLY_NOTIFICATION_BODY),
+    created_by: seedUserId(staff.ordinal),
+    created_at: FIXTURE_TIMESTAMP,
+    updated_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+export function buildCustomNotificationGroup(
+  overrides: Partial<CustomNotificationGroupRow> = {},
+): CustomNotificationGroupRow {
+  const staff = STAFF_FIXTURES.find((person) => person.role === 'staff')!;
+  return {
+    id: '5eed0000-0000-4000-8034-000000000001',
+    org_id: SEED_ORGANIZATION_ID,
+    name: 'Grup setmanal multilingüe',
+    created_by: seedUserId(staff.ordinal),
+    created_at: FIXTURE_TIMESTAMP,
+    updated_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+export function buildCustomNotificationGroupMember(
+  overrides: Partial<CustomNotificationGroupMemberRow> = {},
+): CustomNotificationGroupMemberRow {
+  const participant = PARTICIPANT_FIXTURES[0]!;
+  return {
+    org_id: SEED_ORGANIZATION_ID,
+    group_id: buildCustomNotificationGroup().id,
+    participant_id: seedUserId(participant.ordinal),
+    created_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+export function buildTargetedNotificationSend(
+  overrides: Partial<TargetedNotificationSendRow> = {},
+): TargetedNotificationSendRow {
+  const staff = STAFF_FIXTURES.find((person) => person.role === 'staff')!;
+  return {
+    id: '5eed0000-0000-4000-8035-000000000001',
+    org_id: SEED_ORGANIZATION_ID,
+    template_id: buildNotificationTemplate().id,
+    title: toJson(WEEKLY_NOTIFICATION_TITLE),
+    body: toJson(WEEKLY_NOTIFICATION_BODY),
+    audience_kind: 'custom_group',
+    audience_config: toJson({ custom_group_id: buildCustomNotificationGroup().id }),
+    recipient_count: 5,
+    sent_by: seedUserId(staff.ordinal),
+    created_at: FIXTURE_TIMESTAMP,
     ...overrides,
   };
 }

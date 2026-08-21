@@ -15,6 +15,7 @@ import { Route as EntityRouteImport } from './routes/_entity'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as StaffSettingsRouteImport } from './routes/_staff.settings'
+import { Route as StaffNotificationsRouteImport } from './routes/_staff.notifications'
 import { Route as StaffMessagesRouteImport } from './routes/_staff.messages'
 import { Route as StaffMentoringRouteImport } from './routes/_staff.mentoring'
 import { Route as StaffForumRouteImport } from './routes/_staff.forum'
@@ -87,6 +88,11 @@ const AuthCallbackRoute = AuthCallbackRouteImport.update({
 const StaffSettingsRoute = StaffSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => StaffRoute,
+} as any)
+const StaffNotificationsRoute = StaffNotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
   getParentRoute: () => StaffRoute,
 } as any)
 const StaffMessagesRoute = StaffMessagesRouteImport.update({
@@ -349,6 +355,7 @@ export interface FileRoutesByFullPath {
   '/forum': typeof StaffForumRoute
   '/mentoring': typeof StaffMentoringRoute
   '/messages': typeof StaffMessagesRouteWithChildren
+  '/notifications': typeof StaffNotificationsRoute
   '/settings': typeof StaffSettingsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/portal/events': typeof EntityPortalEventsRoute
@@ -397,6 +404,7 @@ export interface FileRoutesByTo {
   '/feedback': typeof StaffFeedbackRoute
   '/forum': typeof StaffForumRoute
   '/mentoring': typeof StaffMentoringRoute
+  '/notifications': typeof StaffNotificationsRoute
   '/settings': typeof StaffSettingsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/portal/events': typeof EntityPortalEventsRoute
@@ -449,6 +457,7 @@ export interface FileRoutesById {
   '/_staff/forum': typeof StaffForumRoute
   '/_staff/mentoring': typeof StaffMentoringRoute
   '/_staff/messages': typeof StaffMessagesRouteWithChildren
+  '/_staff/notifications': typeof StaffNotificationsRoute
   '/_staff/settings': typeof StaffSettingsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/_entity/portal/events': typeof EntityPortalEventsRoute
@@ -502,6 +511,7 @@ export interface FileRouteTypes {
     | '/forum'
     | '/mentoring'
     | '/messages'
+    | '/notifications'
     | '/settings'
     | '/auth/callback'
     | '/portal/events'
@@ -550,6 +560,7 @@ export interface FileRouteTypes {
     | '/feedback'
     | '/forum'
     | '/mentoring'
+    | '/notifications'
     | '/settings'
     | '/auth/callback'
     | '/portal/events'
@@ -601,6 +612,7 @@ export interface FileRouteTypes {
     | '/_staff/forum'
     | '/_staff/mentoring'
     | '/_staff/messages'
+    | '/_staff/notifications'
     | '/_staff/settings'
     | '/auth/callback'
     | '/_entity/portal/events'
@@ -693,6 +705,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof StaffSettingsRouteImport
+      parentRoute: typeof StaffRoute
+    }
+    '/_staff/notifications': {
+      id: '/_staff/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof StaffNotificationsRouteImport
       parentRoute: typeof StaffRoute
     }
     '/_staff/messages': {
@@ -1146,6 +1165,7 @@ interface StaffRouteChildren {
   StaffForumRoute: typeof StaffForumRoute
   StaffMentoringRoute: typeof StaffMentoringRoute
   StaffMessagesRoute: typeof StaffMessagesRouteWithChildren
+  StaffNotificationsRoute: typeof StaffNotificationsRoute
   StaffSettingsRoute: typeof StaffSettingsRoute
   StaffParticipantsParticipantIdRoute: typeof StaffParticipantsParticipantIdRoute
   StaffParticipantsDeletionRequestsRoute: typeof StaffParticipantsDeletionRequestsRoute
@@ -1163,6 +1183,7 @@ const StaffRouteChildren: StaffRouteChildren = {
   StaffForumRoute: StaffForumRoute,
   StaffMentoringRoute: StaffMentoringRoute,
   StaffMessagesRoute: StaffMessagesRouteWithChildren,
+  StaffNotificationsRoute: StaffNotificationsRoute,
   StaffSettingsRoute: StaffSettingsRoute,
   StaffParticipantsParticipantIdRoute: StaffParticipantsParticipantIdRoute,
   StaffParticipantsDeletionRequestsRoute:

@@ -962,8 +962,86 @@ select
   case when r.ordinal % 2 = 0 then 'android' else 'ios' end,
   'seed-device-' || lpad(r.ordinal::text, 4, '0')
 from seed_roster r
-where r.ordinal in (1, 2, 3, 11, 12)
+where r.ordinal in (1, 2, 3) or r.app_role = 'player'
 on conflict (user_id, device_id) do nothing;
+
+-- Targeted notification fixtures (RAPP-59) -------------------------------------
+-- One reusable reminder and one group with one active player per supported
+-- language make exact audience and locale QA reproducible after every reset.
+
+insert into public.notification_templates (
+  id, org_id, name, category, title, body, created_by
+)
+values (
+  '5eed0000-0000-4000-8033-000000000001',
+  '5eed0000-0000-4000-8000-000000000000',
+  'Entrenament setmanal',
+  'engagement',
+  '{"ca":"Recordatori de l’entrenament setmanal","es":"Recordatorio del entrenamiento semanal","en":"Weekly training reminder","ar":"تذكير بالتدريب الأسبوعي","fa":"یادآوری تمرین هفتگی"}'::jsonb,
+  '{"ca":"Recorda que aquesta tarda tenim entrenament.","es":"Recuerda que esta tarde tenemos entrenamiento.","en":"Remember that training is this afternoon.","ar":"تذكّري أن التدريب سيكون بعد ظهر اليوم.","fa":"یادت باشد تمرین امروز بعدازظهر است."}'::jsonb,
+  '5eed0000-0000-4000-8000-000000000002'
+)
+on conflict (id) do nothing;
+
+insert into public.custom_notification_groups (id, org_id, name, created_by)
+values (
+  '5eed0000-0000-4000-8034-000000000001',
+  '5eed0000-0000-4000-8000-000000000000',
+  'Grup setmanal multilingüe',
+  '5eed0000-0000-4000-8000-000000000002'
+)
+on conflict (id) do nothing;
+
+insert into public.custom_notification_group_members (org_id, group_id, participant_id)
+select
+  '5eed0000-0000-4000-8000-000000000000'::uuid,
+  '5eed0000-0000-4000-8034-000000000001'::uuid,
+  member_id
+from unnest(array[
+  '5eed0000-0000-4000-8000-000000000011'::uuid,
+  '5eed0000-0000-4000-8000-000000000016'::uuid,
+  '5eed0000-0000-4000-8000-000000000020'::uuid,
+  '5eed0000-0000-4000-8000-000000000023'::uuid,
+  '5eed0000-0000-4000-8000-000000000027'::uuid
+]) as member_id
+on conflict (group_id, participant_id) do nothing;
+
+insert into public.targeted_notification_sends (
+  id, org_id, template_id, title, body, audience_kind, audience_config,
+  recipient_count, sent_by, created_at
+)
+values (
+  '5eed0000-0000-4000-8035-000000000001',
+  '5eed0000-0000-4000-8000-000000000000',
+  '5eed0000-0000-4000-8033-000000000001',
+  '{"ca":"Recordatori de l’entrenament setmanal","es":"Recordatorio del entrenamiento semanal","en":"Weekly training reminder","ar":"تذكير بالتدريب الأسبوعي","fa":"یادآوری تمرین هفتگی"}'::jsonb,
+  '{"ca":"Recorda que aquesta tarda tenim entrenament.","es":"Recuerda que esta tarde tenemos entrenamiento.","en":"Remember that training is this afternoon.","ar":"تذكّري أن التدريب سيكون بعد ظهر اليوم.","fa":"یادت باشد تمرین امروز بعدازظهر است."}'::jsonb,
+  'custom_group',
+  '{"custom_group_id":"5eed0000-0000-4000-8034-000000000001"}'::jsonb,
+  5,
+  '5eed0000-0000-4000-8000-000000000002',
+  now() - interval '7 days'
+)
+on conflict (id) do nothing;
+
+insert into public.push_publications (
+  id, org_id, content_type, content_id, scheduled_for, state,
+  recipient_count, sent_count, delivered_count, failed_count, completed_at
+)
+values (
+  '5eed0000-0000-4000-8036-000000000001',
+  '5eed0000-0000-4000-8000-000000000000',
+  'targeted_notification',
+  '5eed0000-0000-4000-8035-000000000001',
+  now() - interval '7 days',
+  'complete',
+  5,
+  5,
+  5,
+  0,
+  now() - interval '7 days'
+)
+on conflict (content_type, content_id) do nothing;
 
 -- The wizard's test account (RAPP-21) -----------------------------------------------
 -- An auth user with NO profile row: the exact state of every brand-new player,

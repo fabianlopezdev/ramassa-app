@@ -45,6 +45,7 @@
     "./entity-management": "./entity-management.ts",
     "./mentoring": "./mentoring.ts",
     "./feedback": "./feedback.ts",
+    "./notifications": "./notifications.ts",
     "./structured-content": "./structured-content/index.ts",
     "./image-compression": "./lib/image-compression.ts"
   },

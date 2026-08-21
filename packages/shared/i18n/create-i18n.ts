@@ -26,6 +26,7 @@ import arKnowledge from './locales/ar/knowledge.json';
 import arMentoring from './locales/ar/mentoring.json';
 import arMessaging from './locales/ar/messaging.json';
 import arNav from './locales/ar/nav.json';
+import arNotifications from './locales/ar/notifications.json';
 import arOnboarding from './locales/ar/onboarding.json';
 import arParticipants from './locales/ar/participants.json';
 import arPlayerServices from './locales/ar/player-services.json';
@@ -50,6 +51,7 @@ import caKnowledge from './locales/ca/knowledge.json';
 import caMentoring from './locales/ca/mentoring.json';
 import caMessaging from './locales/ca/messaging.json';
 import caNav from './locales/ca/nav.json';
+import caNotifications from './locales/ca/notifications.json';
 import caOnboarding from './locales/ca/onboarding.json';
 import caParticipants from './locales/ca/participants.json';
 import caPlayerServices from './locales/ca/player-services.json';
@@ -75,6 +77,7 @@ import enKnowledge from './locales/en/knowledge.json';
 import enMentoring from './locales/en/mentoring.json';
 import enMessaging from './locales/en/messaging.json';
 import enNav from './locales/en/nav.json';
+import enNotifications from './locales/en/notifications.json';
 import enOnboarding from './locales/en/onboarding.json';
 import enParticipants from './locales/en/participants.json';
 import enPlayerServices from './locales/en/player-services.json';
@@ -100,6 +103,7 @@ import esKnowledge from './locales/es/knowledge.json';
 import esMentoring from './locales/es/mentoring.json';
 import esMessaging from './locales/es/messaging.json';
 import esNav from './locales/es/nav.json';
+import esNotifications from './locales/es/notifications.json';
 import esOnboarding from './locales/es/onboarding.json';
 import esParticipants from './locales/es/participants.json';
 import esPlayerServices from './locales/es/player-services.json';
@@ -124,6 +128,7 @@ import faKnowledge from './locales/fa/knowledge.json';
 import faMentoring from './locales/fa/mentoring.json';
 import faMessaging from './locales/fa/messaging.json';
 import faNav from './locales/fa/nav.json';
+import faNotifications from './locales/fa/notifications.json';
 import faOnboarding from './locales/fa/onboarding.json';
 import faParticipants from './locales/fa/participants.json';
 import faPlayerServices from './locales/fa/player-services.json';
@@ -152,6 +157,7 @@ const resources = {
     messaging: caMessaging,
     mentoring: caMentoring,
     feedback: caFeedback,
+    notifications: caNotifications,
     attendance: caAttendance,
     services: caServices,
     'entity-services': caEntityServices,
@@ -179,6 +185,7 @@ const resources = {
     messaging: esMessaging,
     mentoring: esMentoring,
     feedback: esFeedback,
+    notifications: esNotifications,
     attendance: esAttendance,
     services: enServices,
     'entity-services': esEntityServices,
@@ -206,6 +213,7 @@ const resources = {
     messaging: enMessaging,
     mentoring: enMentoring,
     feedback: enFeedback,
+    notifications: enNotifications,
     attendance: enAttendance,
     services: enServices,
     'entity-services': enEntityServices,
@@ -233,6 +241,7 @@ const resources = {
     messaging: arMessaging,
     mentoring: arMentoring,
     feedback: arFeedback,
+    notifications: arNotifications,
     attendance: arAttendance,
     services: enServices,
     'entity-services': arEntityServices,
@@ -260,6 +269,7 @@ const resources = {
     messaging: faMessaging,
     mentoring: faMentoring,
     feedback: faFeedback,
+    notifications: faNotifications,
     attendance: faAttendance,
     services: enServices,
     'entity-services': faEntityServices,

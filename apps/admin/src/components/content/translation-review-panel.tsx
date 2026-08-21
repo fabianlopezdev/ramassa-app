@@ -10,7 +10,7 @@ export interface TranslationReviewPanelProps {
   readonly onApprove: (language: SupportedLanguage) => void;
   readonly onReject: (language: SupportedLanguage) => void;
   readonly onApproveAll: () => void;
-  readonly translationNamespace?: 'announcements' | 'knowledge' | 'services';
+  readonly translationNamespace?: 'announcements' | 'knowledge' | 'services' | 'notifications';
 }
 
 export function TranslationReviewPanel({

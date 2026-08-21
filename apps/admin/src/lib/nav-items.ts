@@ -10,6 +10,7 @@
  */
 
 import {
+  BellRing,
   CalendarCheck,
   CalendarDays,
   FileText,
@@ -39,6 +40,7 @@ export const STAFF_NAV_ITEMS = [
   { to: '/forum', icon: MessageSquare, labelKey: 'nav:staff.forum' },
   { to: '/mentoring', icon: HeartHandshake, labelKey: 'nav:staff.mentoring' },
   { to: '/feedback', icon: Inbox, labelKey: 'nav:staff.feedback' },
+  { to: '/notifications', icon: BellRing, labelKey: 'nav:staff.notifications' },
   { to: '/settings', icon: Settings, labelKey: 'nav:staff.settings' },
 ] as const satisfies readonly NavItem[];
 

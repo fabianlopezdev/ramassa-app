@@ -424,6 +424,91 @@ export type Database = {
           },
         ];
       };
+      custom_notification_group_members: {
+        Row: {
+          created_at: string;
+          group_id: string;
+          org_id: string;
+          participant_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          group_id: string;
+          org_id: string;
+          participant_id: string;
+        };
+        Update: {
+          created_at?: string;
+          group_id?: string;
+          org_id?: string;
+          participant_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'custom_notification_group_members_group_tenant_fkey';
+            columns: ['org_id', 'group_id'];
+            isOneToOne: false;
+            referencedRelation: 'custom_notification_groups';
+            referencedColumns: ['org_id', 'id'];
+          },
+          {
+            foreignKeyName: 'custom_notification_group_members_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'custom_notification_group_members_participant_tenant_fkey';
+            columns: ['org_id', 'participant_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['org_id', 'id'];
+          },
+        ];
+      };
+      custom_notification_groups: {
+        Row: {
+          created_at: string;
+          created_by: string | null;
+          id: string;
+          name: string;
+          org_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          name: string;
+          org_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          name?: string;
+          org_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'custom_notification_groups_creator_tenant_fkey';
+            columns: ['org_id', 'created_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['org_id', 'id'];
+          },
+          {
+            foreignKeyName: 'custom_notification_groups_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       deletion_requests: {
         Row: {
           created_at: string;
@@ -1713,6 +1798,57 @@ export type Database = {
         };
         Relationships: [];
       };
+      notification_templates: {
+        Row: {
+          body: Json;
+          category: string;
+          created_at: string;
+          created_by: string | null;
+          id: string;
+          name: string;
+          org_id: string;
+          title: Json;
+          updated_at: string;
+        };
+        Insert: {
+          body: Json;
+          category: string;
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          name: string;
+          org_id: string;
+          title: Json;
+          updated_at?: string;
+        };
+        Update: {
+          body?: Json;
+          category?: string;
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          name?: string;
+          org_id?: string;
+          title?: Json;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'notification_templates_creator_tenant_fkey';
+            columns: ['org_id', 'created_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['org_id', 'id'];
+          },
+          {
+            foreignKeyName: 'notification_templates_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       organizations: {
         Row: {
           available_languages: string[];
@@ -2601,6 +2737,67 @@ export type Database = {
           },
         ];
       };
+      targeted_notification_sends: {
+        Row: {
+          audience_config: Json;
+          audience_kind: string;
+          body: Json;
+          created_at: string;
+          id: string;
+          org_id: string;
+          recipient_count: number;
+          sent_by: string | null;
+          template_id: string | null;
+          title: Json;
+        };
+        Insert: {
+          audience_config?: Json;
+          audience_kind: string;
+          body: Json;
+          created_at?: string;
+          id?: string;
+          org_id: string;
+          recipient_count: number;
+          sent_by?: string | null;
+          template_id?: string | null;
+          title: Json;
+        };
+        Update: {
+          audience_config?: Json;
+          audience_kind?: string;
+          body?: Json;
+          created_at?: string;
+          id?: string;
+          org_id?: string;
+          recipient_count?: number;
+          sent_by?: string | null;
+          template_id?: string | null;
+          title?: Json;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'targeted_notification_sends_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'targeted_notification_sends_sender_tenant_fkey';
+            columns: ['org_id', 'sent_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['org_id', 'id'];
+          },
+          {
+            foreignKeyName: 'targeted_notification_sends_template_tenant_fkey';
+            columns: ['org_id', 'template_id'];
+            isOneToOne: false;
+            referencedRelation: 'notification_templates';
+            referencedColumns: ['org_id', 'id'];
+          },
+        ];
+      };
       terms_acceptances: {
         Row: {
           accepted_at: string;
@@ -2981,13 +3178,32 @@ export type Database = {
           invite_id: string;
         }[];
       };
+      create_targeted_notification_send: {
+        Args: {
+          p_audience_config: Json;
+          p_audience_kind: string;
+          p_body: Json;
+          p_expected_recipient_count: number;
+          p_template_id: string;
+          p_title: Json;
+        };
+        Returns: string;
+      };
       current_app_role: { Args: never; Returns: string };
       current_collaborating_entity_id: { Args: never; Returns: string };
       current_org_id: { Args: never; Returns: string };
       decrypt_field: { Args: { ciphertext: string }; Returns: string };
       default_organization_id: { Args: never; Returns: string };
+      delete_custom_notification_group: {
+        Args: { p_id: string };
+        Returns: undefined;
+      };
       delete_forum_category: {
         Args: { p_category_id: string };
+        Returns: undefined;
+      };
+      delete_notification_template: {
+        Args: { p_id: string };
         Returns: undefined;
       };
       delete_own_forum_post: { Args: { p_post_id: string }; Returns: undefined };
@@ -3348,6 +3564,23 @@ export type Database = {
           visibility: string;
         }[];
       };
+      list_notification_send_history: {
+        Args: never;
+        Returns: {
+          audience_config: Json;
+          audience_kind: string;
+          created_at: string;
+          delivered_count: number;
+          device_count: number;
+          failed_count: number;
+          id: string;
+          recipient_count: number;
+          sent_by: string;
+          sent_count: number;
+          state: string;
+          template_id: string;
+        }[];
+      };
       list_own_feedback_submissions: {
         Args: never;
         Returns: {
@@ -3551,6 +3784,15 @@ export type Database = {
           thumbnail_object_key: string;
         }[];
       };
+      preview_notification_audience: {
+        Args: { p_audience_config?: Json; p_audience_kind: string };
+        Returns: {
+          device_count: number;
+          full_name: string;
+          language: string;
+          participant_id: string;
+        }[];
+      };
       purge_expired_entity_invitations: {
         Args: { p_now?: string };
         Returns: number;
@@ -3599,6 +3841,10 @@ export type Database = {
         Returns: string;
       };
       save_admin_service: { Args: { p_payload: Json }; Returns: string };
+      save_custom_notification_group: {
+        Args: { p_id: string; p_name: string; p_participant_ids: string[] };
+        Returns: string;
+      };
       save_entity_service: { Args: { p_payload: Json }; Returns: string };
       save_forum_category: {
         Args: {
@@ -3608,6 +3854,16 @@ export type Database = {
           p_name: Json;
           p_slug: string;
           p_sort_order: number;
+        };
+        Returns: string;
+      };
+      save_notification_template: {
+        Args: {
+          p_body: Json;
+          p_category: string;
+          p_id: string;
+          p_name: string;
+          p_title: Json;
         };
         Returns: string;
       };
