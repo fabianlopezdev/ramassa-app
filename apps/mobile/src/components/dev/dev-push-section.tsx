@@ -1,5 +1,5 @@
 import { ensureAndroidChannel, getEasProjectId } from '@/lib/push-notifications';
-import { scheduleNotificationAsync } from 'expo-notifications';
+import { SchedulableTriggerInputTypes, scheduleNotificationAsync } from 'expo-notifications';
 import { useState } from 'react';
 import { DevButton, DevButtonRow, DevNote, DevRow, DevSection } from './dev-ui';
 
@@ -22,9 +22,9 @@ export function DevPushSection() {
     await ensureAndroidChannel();
     await scheduleNotificationAsync({
       content: { title: 'Ramassà dev', body: 'Local notification from the dev menu (RAPP-19)' },
-      trigger: null,
+      trigger: { type: SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: 10 },
     });
-    setStatus('Scheduled. Background the app if the banner does not show in the foreground.');
+    setStatus('Scheduled in 10 seconds. Background the app to verify the system banner.');
   }
 
   return (
@@ -32,7 +32,11 @@ export function DevPushSection() {
       <DevRow label="EAS project id" value={getEasProjectId() ?? 'missing'} />
       <DevNote>Local only: no token, no server, no push_tokens row.</DevNote>
       <DevButtonRow>
-        <DevButton label="Fire a local notification" onPress={() => void fireLocalNotification()} />
+        <DevButton
+          label="Fire a local notification"
+          testID="dev-fire-local-notification"
+          onPress={() => void fireLocalNotification()}
+        />
       </DevButtonRow>
       {status === '' ? null : <DevNote>{status}</DevNote>}
     </DevSection>

@@ -1,0 +1,179 @@
+appId: com.ramassa.app
+name: phase8-feedback
+env:
+  LOCALE: ca
+  PUSH_DECLINE: '{{push:rationaleDecline}}'
+---
+- runFlow: _open-app.yaml
+- runFlow: _sign-in.yaml
+- tapOn:
+    text: '^${PUSH_DECLINE}$'
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: home-open-feedback
+    timeout: 60000
+- tapOn:
+    id: home-open-feedback
+- extendedWaitUntil:
+    visible:
+      id: feedback-screen
+    timeout: 30000
+- tapOn:
+    id: feedback-type-activity_proposal
+- tapOn:
+    id: feedback-content
+- inputText: rapp61-activity-proposal
+- hideKeyboard
+- repeat:
+    times: 4
+    while:
+      notVisible:
+        id: feedback-confirmation
+    commands:
+      - tapOn:
+          id: feedback-submit
+      - waitForAnimationToEnd:
+          timeout: 2500
+- extendedWaitUntil:
+    visible:
+      id: feedback-confirmation
+    timeout: 30000
+- repeat:
+    times: 4
+    while:
+      visible:
+        id: feedback-confirmation
+    commands:
+      - tapOn:
+          id: feedback-submit-another
+      - waitForAnimationToEnd:
+          timeout: 2500
+- repeat:
+    times: 8
+    while:
+      notVisible:
+        id: feedback-type-idea
+    commands:
+      - swipe:
+          start: 50%, 35%
+          end: 50%, 70%
+          duration: 700
+      - waitForAnimationToEnd:
+          timeout: 1800
+- extendedWaitUntil:
+    visible:
+      id: feedback-type-idea
+    timeout: 10000
+- tapOn:
+    id: feedback-type-idea
+- tapOn:
+    id: feedback-content
+- inputText: rapp61-idea
+- hideKeyboard
+- repeat:
+    times: 4
+    while:
+      notVisible:
+        id: feedback-confirmation
+    commands:
+      - tapOn:
+          id: feedback-submit
+      - waitForAnimationToEnd:
+          timeout: 2500
+- extendedWaitUntil:
+    visible:
+      id: feedback-confirmation
+    timeout: 30000
+- repeat:
+    times: 4
+    while:
+      visible:
+        id: feedback-confirmation
+    commands:
+      - tapOn:
+          id: feedback-submit-another
+      - waitForAnimationToEnd:
+          timeout: 2500
+- repeat:
+    times: 8
+    while:
+      notVisible:
+        id: feedback-type-problem
+    commands:
+      - swipe:
+          start: 50%, 35%
+          end: 50%, 70%
+          duration: 700
+      - waitForAnimationToEnd:
+          timeout: 1800
+- extendedWaitUntil:
+    visible:
+      id: feedback-type-problem
+    timeout: 10000
+- tapOn:
+    id: feedback-type-problem
+- tapOn:
+    id: feedback-content
+- inputText: rapp61-problem
+- hideKeyboard
+- repeat:
+    times: 4
+    while:
+      notVisible:
+        id: feedback-confirmation
+    commands:
+      - tapOn:
+          id: feedback-submit
+      - waitForAnimationToEnd:
+          timeout: 2500
+- extendedWaitUntil:
+    visible:
+      id: feedback-confirmation
+    timeout: 30000
+- repeat:
+    times: 4
+    while:
+      visible:
+        id: feedback-confirmation
+    commands:
+      - tapOn:
+          id: feedback-submit-another
+      - waitForAnimationToEnd:
+          timeout: 2500
+- repeat:
+    times: 8
+    while:
+      notVisible:
+        id: feedback-type-general
+    commands:
+      - swipe:
+          start: 50%, 35%
+          end: 50%, 70%
+          duration: 700
+      - waitForAnimationToEnd:
+          timeout: 1800
+- extendedWaitUntil:
+    visible:
+      id: feedback-type-general
+    timeout: 10000
+- tapOn:
+    id: feedback-type-general
+- tapOn:
+    id: feedback-content
+- inputText: rapp61-general
+- hideKeyboard
+- repeat:
+    times: 4
+    while:
+      notVisible:
+        id: feedback-confirmation
+    commands:
+      - tapOn:
+          id: feedback-submit
+      - waitForAnimationToEnd:
+          timeout: 2500
+- extendedWaitUntil:
+    visible:
+      id: feedback-confirmation
+    timeout: 30000

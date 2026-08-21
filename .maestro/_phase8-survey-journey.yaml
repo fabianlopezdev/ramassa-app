@@ -1,0 +1,59 @@
+appId: com.ramassa.app
+name: _phase8-survey-journey
+---
+- extendedWaitUntil:
+    visible:
+      id: survey-prompt-action
+    timeout: 60000
+- tapOn:
+    id: survey-prompt-action
+- extendedWaitUntil:
+    visible:
+      id: survey-rating-4
+    timeout: 30000
+- tapOn:
+    id: survey-rating-4
+- tapOn:
+    id: survey-next
+- extendedWaitUntil:
+    visible:
+      id: survey-choice-training
+    timeout: 30000
+- tapOn:
+    id: survey-choice-training
+- tapOn:
+    id: survey-next
+- extendedWaitUntil:
+    visible:
+      id: survey-yes
+    timeout: 30000
+- tapOn:
+    id: survey-yes
+- tapOn:
+    id: survey-next
+- extendedWaitUntil:
+    visible:
+      id: survey-free-text
+    timeout: 30000
+- tapOn:
+    id: survey-free-text
+- inputText: rapp61-survey-response
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - hideKeyboard
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - swipe:
+          start: 50%, 45%
+          end: 50%, 25%
+          duration: 700
+- tapOn:
+    id: survey-next
+- extendedWaitUntil:
+    visible:
+      id: survey-completion
+    timeout: 30000

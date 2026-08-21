@@ -11,7 +11,7 @@ import { isNetworkStateOnline } from '@/lib/network-status';
 import { useCreateFeedback, usePlayerFeedback } from '@/lib/player-feedback';
 import { mobileClientEnv } from '@/lib/supabase';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
+import { FlashList, type FlashListRef, type ListRenderItemInfo } from '@shopify/flash-list';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { useNetworkState } from 'expo-network';
@@ -115,6 +115,7 @@ export default function FeedbackScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [localErrorCode, setLocalErrorCode] = useState<AppErrorCode | null>(null);
   const submissionInFlight = useRef(false);
+  const feedbackListRef = useRef<FlashListRef<FeedbackSubmission>>(null);
   const dateFormatter = useMemo(
     () =>
       new Intl.DateTimeFormat(i18n.resolvedLanguage ?? DEFAULT_LANGUAGE, { dateStyle: 'medium' }),
@@ -209,11 +210,18 @@ export default function FeedbackScreen() {
     ),
     [dateFormatter, languageFontClass, t],
   );
+  const submitAnother = useCallback(() => {
+    setIsComplete(false);
+    requestAnimationFrame(() => {
+      feedbackListRef.current?.scrollToOffset({ offset: 0, animated: true });
+    });
+  }, []);
 
   return (
     <>
       <Stack.Screen options={screenOptions} />
       <FlashList
+        ref={feedbackListRef}
         testID="feedback-screen"
         accessibilityRole="list"
         accessibilityLabel={t('feedback:historyTitle')}
@@ -249,8 +257,9 @@ export default function FeedbackScreen() {
                     {t('feedback:successBody')}
                   </Text>
                   <PressableScale
+                    testID="feedback-submit-another"
                     accessibilityLabel={t('feedback:submitAnother')}
-                    onPress={() => setIsComplete(false)}
+                    onPress={submitAnother}
                     haptic="tapLight"
                     style={continuousCorners}
                     className="min-h-recommended items-center justify-center rounded-md border border-primary px-lg"
@@ -302,6 +311,7 @@ export default function FeedbackScreen() {
                   ))}
                 </View>
                 <AuthTextField
+                  testID="feedback-content"
                   label={t('feedback:contentLabel')}
                   placeholder={t('feedback:contentPlaceholder')}
                   value={content}

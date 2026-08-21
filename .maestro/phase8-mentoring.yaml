@@ -1,0 +1,147 @@
+appId: com.ramassa.app
+name: phase8-mentoring
+env:
+  LOCALE: ca
+  COMMUNITY: '{{nav:tabs.community}}'
+  PUSH_DECLINE: '{{push:rationaleDecline}}'
+---
+- runFlow: _open-app.yaml
+- runFlow: _sign-in.yaml
+- tapOn:
+    text: '^${PUSH_DECLINE}$'
+    optional: true
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - tapOn: '^${COMMUNITY}$'
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          id: player-tab-community
+- repeat:
+    times: 12
+    while:
+      notVisible:
+        id: forum-open-mentoring
+    commands:
+      - swipe:
+          start: 50%, 70%
+          end: 50%, 45%
+          duration: 700
+- tapOn:
+    id: forum-open-mentoring
+- extendedWaitUntil:
+    visible:
+      id: mentoring-screen
+    timeout: 30000
+- tapOn:
+    id: mentoring-topic-digital_skills
+- repeat:
+    times: 8
+    while:
+      notVisible:
+        id: mentoring-detail
+    commands:
+      - swipe:
+          start: 50%, 70%
+          end: 50%, 45%
+          duration: 700
+- tapOn:
+    id: mentoring-detail
+- inputText: rapp61-private-mentoring
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - hideKeyboard
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - swipe:
+          start: 50%, 45%
+          end: 50%, 30%
+          duration: 700
+- repeat:
+    times: 8
+    while:
+      notVisible:
+        id: mentoring-preferred-date
+    commands:
+      - swipe:
+          start: 50%, 70%
+          end: 50%, 45%
+          duration: 700
+- tapOn:
+    id: mentoring-preferred-date
+- inputText: '2026-09-15'
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - hideKeyboard
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - swipe:
+          start: 50%, 45%
+          end: 50%, 30%
+          duration: 700
+- repeat:
+    times: 8
+    while:
+      notVisible:
+        id: mentoring-preferred-time
+    commands:
+      - swipe:
+          start: 50%, 70%
+          end: 50%, 45%
+          duration: 700
+- tapOn:
+    id: mentoring-preferred-time
+- inputText: '10:30'
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - hideKeyboard
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - swipe:
+          start: 50%, 45%
+          end: 50%, 30%
+          duration: 700
+- repeat:
+    times: 8
+    while:
+      notVisible:
+        id: mentoring-submit
+    commands:
+      - swipe:
+          start: 50%, 70%
+          end: 50%, 45%
+          duration: 700
+- tapOn:
+    id: mentoring-submit
+- extendedWaitUntil:
+    visible:
+      id: mentoring-request-confirmation
+    timeout: 30000
+- repeat:
+    times: 12
+    while:
+      notVisible:
+        id: 'mentoring-request-.*'
+    commands:
+      - swipe:
+          start: 50%, 75%
+          end: 50%, 42%
+          duration: 700
+- assertVisible:
+    id: 'mentoring-request-.*'

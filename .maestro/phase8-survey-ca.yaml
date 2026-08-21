@@ -1,0 +1,16 @@
+appId: com.ramassa.app
+name: phase8-survey-ca
+env:
+  LOCALE: ca
+  PUSH_DECLINE: '{{push:rationaleDecline}}'
+  SURVEY_ACTION: '{{surveys:promptAction}}'
+---
+- runFlow: _open-app.yaml
+- runFlow: _sign-in.yaml
+- tapOn:
+    text: '^${PUSH_DECLINE}$'
+    optional: true
+- extendedWaitUntil:
+    visible: '^${SURVEY_ACTION}$'
+    timeout: 60000
+- runFlow: _phase8-survey-journey.yaml

@@ -164,6 +164,7 @@ export default function MentoringScreen() {
         contentContainerStyle={contentContainerStyle}
         contentInsetAdjustmentBehavior="automatic"
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
         ListHeaderComponent={
           <FormWidth className="gap-lg pb-md">
             <View className="gap-xs">

@@ -1,0 +1,66 @@
+appId: com.ramassa.app
+name: phase8-notification
+env:
+  LOCALE: ca
+  PUSH_ACCEPT: '{{push:rationaleAccept}}'
+  TAB_PROFILE: '{{nav:tabs.profile}}'
+---
+- runFlow: _open-app.yaml
+- runFlow: _sign-in.yaml
+- tapOn:
+    text: '^${PUSH_ACCEPT}$'
+    optional: true
+- tapOn:
+    text: '^Allow$'
+    optional: true
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - tapOn: '^${TAB_PROFILE}$'
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          id: player-tab-profile
+- repeat:
+    times: 12
+    while:
+      notVisible:
+        id: dev-menu-entry
+    commands:
+      - swipe:
+          start: 50%, 70%
+          end: 50%, 40%
+          duration: 700
+- tapOn:
+    id: dev-menu-entry
+- extendedWaitUntil:
+    visible:
+      id: dev-menu-close
+    timeout: 15000
+- repeat:
+    times: 48
+    while:
+      notVisible:
+        id: dev-fire-local-notification
+    commands:
+      - swipe:
+          start: 50%, 75%
+          end: 50%, 25%
+          duration: 900
+      - waitForAnimationToEnd:
+          timeout: 1200
+- extendedWaitUntil:
+    visible:
+      id: dev-fire-local-notification
+    timeout: 15000
+- tapOn:
+    id: dev-fire-local-notification
+- waitForAnimationToEnd:
+    timeout: 2000
+- pressKey: HOME
+- extendedWaitUntil:
+    visible: '^Ramassà dev$'
+    timeout: 15000

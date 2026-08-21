@@ -43,6 +43,7 @@ function SurveyPromptCard({ survey }: { readonly survey: PlayerSurvey | undefine
         {title}
       </Text>
       <PressableScale
+        testID="survey-prompt-action"
         accessibilityLabel={t('promptAction')}
         onPress={() => push(`/survey/${survey.id}` as Href)}
         haptic="tapLight"

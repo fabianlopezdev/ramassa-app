@@ -1,0 +1,21 @@
+appId: com.ramassa.app
+name: phase8-survey-ar
+env:
+  LOCALE: ca
+  RTL_LOCALE: ar
+  PUSH_DECLINE: 'ليس الآن'
+  SURVEY_ACTION: 'أجيبي الآن'
+---
+- runFlow: _open-app.yaml
+- runFlow:
+    file: _set-language.yaml
+    env:
+      LOCALE: ${RTL_LOCALE}
+- runFlow: _sign-in.yaml
+- tapOn:
+    text: '^${PUSH_DECLINE}$'
+    optional: true
+- extendedWaitUntil:
+    visible: '^${SURVEY_ACTION}$'
+    timeout: 60000
+- runFlow: _phase8-survey-journey.yaml

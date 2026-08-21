@@ -16,6 +16,7 @@ interface MaestroSpec {
 
 const auditedSpecs = [
   '.maestro/_open-app.yaml',
+  '.maestro/_phase8-survey-journey.yaml',
   '.maestro/_relaunch.yaml',
   '.maestro/_set-language.yaml',
   '.maestro/_sign-in.yaml',
@@ -29,6 +30,11 @@ const auditedSpecs = [
   '.maestro/knowledge-story.yaml',
   '.maestro/messaging.yaml',
   '.maestro/offline-feed.yaml',
+  '.maestro/phase8-feedback.yaml',
+  '.maestro/phase8-mentoring.yaml',
+  '.maestro/phase8-notification.yaml',
+  '.maestro/phase8-survey-ar.yaml',
+  '.maestro/phase8-survey-ca.yaml',
   '.maestro/smoke-auth.yaml',
   '.maestro/smoke-i18n.yaml',
   '.maestro/smoke-onboarding.yaml',

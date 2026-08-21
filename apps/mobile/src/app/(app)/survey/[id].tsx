@@ -111,6 +111,7 @@ function RatingQuestionControl({ question, answer, language, onChange }: Questio
       {RATING_OPTIONS.map((rating) => (
         <PressableScale
           key={rating}
+          testID={`survey-rating-${rating}`}
           accessibilityLabel={t('ratingLabel', { count: rating })}
           accessibilityRole="radio"
           isSelected={answer === rating}
@@ -147,6 +148,7 @@ function MultipleChoiceQuestionControl({
       {question.options?.map((option) => (
         <PressableScale
           key={option.id}
+          testID={`survey-choice-${option.id}`}
           accessibilityLabel={resolveSurveyCopy(option.label, language)}
           accessibilityRole="radio"
           isSelected={answer === option.id}
@@ -184,6 +186,7 @@ function YesNoQuestionControl({
       {YES_NO_OPTIONS.map((value) => (
         <PressableScale
           key={String(value)}
+          testID={value ? 'survey-yes' : 'survey-no'}
           accessibilityLabel={value ? t('yes') : t('no')}
           accessibilityRole="radio"
           isSelected={answer === value}
@@ -217,6 +220,7 @@ function FreeTextQuestionControl({
   const { t } = useTranslation('surveys');
   return (
     <TextInput
+      testID="survey-free-text"
       multiline
       value={typeof answer === 'string' ? answer : ''}
       onChangeText={onChange}
@@ -251,6 +255,7 @@ function SurveyScreenFrame({
         contentContainerClassName={contentContainerClassName}
         contentContainerStyle={contentInsets}
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
         contentInsetAdjustmentBehavior="automatic"
       >
         {children}
@@ -282,7 +287,7 @@ export default function SurveyScreen() {
   const storedAnswers = storedResponse?.answers;
   const hasMissingResponseError = isResponseError && storedResponse === undefined;
   const orderedQuestions = useMemo(
-    () => surveyQuestions.toSorted((left, right) => left.sortOrder - right.sortOrder),
+    () => [...surveyQuestions].sort((left, right) => left.sortOrder - right.sortOrder),
     [surveyQuestions],
   );
   const [answers, setAnswers] =
@@ -424,23 +429,25 @@ export default function SurveyScreen() {
         contentInsets={contentInsets}
         contentContainerClassName="grow items-center justify-center gap-lg p-xl"
       >
-        <SymbolView
-          accessible={false}
-          name={successSymbol}
-          size={tokens.fontSize['4xl']}
-          tintColor={tokens.colors.success}
-        />
-        <Text
-          accessibilityRole="header"
-          className={`text-center text-2xl font-bold ${languageFontClass}`}
-        >
-          {submitted ? t('thankTitle') : t('alreadyCompleted')}
-        </Text>
-        <Text className={`text-center text-lg text-neutral-600 ${languageFontClass}`}>
-          {t('thankBody')}
-        </Text>
-        <View className="w-full max-w-form">
-          <AuthSubmitButton label={t('back')} onPress={back} />
+        <View testID="survey-completion" className="w-full items-center gap-lg">
+          <SymbolView
+            accessible={false}
+            name={successSymbol}
+            size={tokens.fontSize['4xl']}
+            tintColor={tokens.colors.success}
+          />
+          <Text
+            accessibilityRole="header"
+            className={`text-center text-2xl font-bold ${languageFontClass}`}
+          >
+            {submitted ? t('thankTitle') : t('alreadyCompleted')}
+          </Text>
+          <Text className={`text-center text-lg text-neutral-600 ${languageFontClass}`}>
+            {t('thankBody')}
+          </Text>
+          <View className="w-full max-w-form">
+            <AuthSubmitButton label={t('back')} onPress={back} />
+          </View>
         </View>
       </SurveyScreenFrame>
     );

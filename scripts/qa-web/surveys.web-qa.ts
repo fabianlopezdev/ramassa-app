@@ -60,7 +60,7 @@ test('Catalan and Arabic players complete every control and staff sees attribute
   await expect(page.getByText('رأيك في التدريب', { exact: true })).toBeVisible({
     timeout: 30_000,
   });
-  await page.getByRole('button', { name: 'أجيبي الآن: رأيك في التدريب' }).click();
+  await page.getByTestId('survey-prompt-action').click();
 
   await expect(page.getByText('هذا الرد ليس مجهولاً. يمكن للفريق معرفة من أجاب.')).toBeVisible({
     timeout: 30_000,
@@ -71,7 +71,7 @@ test('Catalan and Arabic players complete every control and staff sees attribute
   await page.getByTestId('survey-next').click();
   await page.getByRole('radio', { name: 'نعم' }).click();
   await page.getByTestId('survey-next').click();
-  await page.getByLabel('اكتبي تعليقك').fill(arabicAnswer);
+  await page.getByTestId('survey-free-text').fill(arabicAnswer);
   await page.getByTestId('survey-next').click();
   await expect(page.getByText('شكراً لمشاركة رأيك')).toBeVisible({
     timeout: 30_000,
@@ -97,9 +97,7 @@ test('Catalan and Arabic players complete every control and staff sees attribute
   ).toBeVisible({
     timeout: 30_000,
   });
-  await catalanPage
-    .getByRole('button', { name: 'Respondre ara: La teva opinió sobre la formació' })
-    .click();
+  await catalanPage.getByTestId('survey-prompt-action').click();
   await expect(
     catalanPage.getByText("Aquesta resposta no és anònima. L'equip podrà veure qui ha respost."),
   ).toBeVisible({ timeout: 30_000 });
@@ -109,7 +107,7 @@ test('Catalan and Arabic players complete every control and staff sees attribute
   await catalanPage.getByTestId('survey-next').click();
   await catalanPage.getByRole('radio', { name: 'Sí' }).click();
   await catalanPage.getByTestId('survey-next').click();
-  await catalanPage.getByLabel('Escriu el teu comentari').fill(catalanAnswer);
+  await catalanPage.getByTestId('survey-free-text').fill(catalanAnswer);
   await catalanPage.getByTestId('survey-next').click();
   await expect(catalanPage.getByText('Gràcies per compartir la teva opinió')).toBeVisible({
     timeout: 30_000,

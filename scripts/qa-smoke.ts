@@ -173,8 +173,16 @@ async function runSuiteOn(
   }
 
   const results: SmokeResult[] = [];
+  let hasRunSurveyLocaleJourney = false;
   try {
     for (const flow of flows) {
+      const isSurveyLocaleJourney = flow.startsWith('phase8-survey-');
+      if (isSurveyLocaleJourney && hasRunSurveyLocaleJourney) {
+        // Survey completion is intentionally one-shot per player. Re-seed before
+        // the second locale so Catalan and Arabic exercise the same full journey
+        // independently instead of the latter inheriting a completed response.
+        await resetSeededDatabase();
+      }
       log(`\n▸ ${flow} on ${platform} (${device})`);
       const resolved = path.join(repoRoot, '.flow-shots', flow);
       const debugOutput = path.join(repoRoot, '.flow-shots', 'debug', platform, flow);
@@ -192,6 +200,7 @@ async function runSuiteOn(
         }
       }
       results.push({ flow, platform, passed });
+      if (isSurveyLocaleJourney) hasRunSurveyLocaleJourney = true;
     }
   } finally {
     await metro.stop();
