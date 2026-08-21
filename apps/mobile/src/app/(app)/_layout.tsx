@@ -88,7 +88,10 @@ export default function AppLayout() {
         animationType="fade"
         onRequestClose={declineRationale}
       >
-        <View className="flex-1 items-center justify-center bg-black/50 px-lg">
+        <View
+          accessibilityViewIsModal
+          className="flex-1 items-center justify-center bg-black/50 px-lg"
+        >
           <PushPermissionRationale onAccept={acceptRationale} onDecline={declineRationale} />
         </View>
       </Modal>

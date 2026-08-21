@@ -38,23 +38,25 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { toAppError } from '@ramassa/shared/errors';
 import {
   filterPlayerEventOccurrences,
+  MADRID_TIME_ZONE,
   type EventSignupState,
   type PlayerEventCategoryFilter,
   type PlayerEventOccurrence,
 } from '@ramassa/shared/events';
-import { resolveLocalizedText, useLanguage } from '@ramassa/shared/i18n';
+import { DEFAULT_LANGUAGE, resolveLocalizedText, useLanguage } from '@ramassa/shared/i18n';
 import { getPrivateMentoringCalendarEntries } from '@ramassa/shared/mentoring';
 import { tokens } from '@ramassa/shared/tokens';
 
 const EMPTY_EVENTS: readonly PlayerEventOccurrence[] = [];
 const CALENDAR_FIRST_DAY_MONDAY = 1;
 const UTC_MIDDAY_SUFFIX = 'T12:00:00Z';
+const CALENDAR_BORDER_WIDTH = StyleSheet.hairlineWidth;
 
 const styles = StyleSheet.create({
   list: { flex: 1, backgroundColor: tokens.colors.white },
   content: { paddingHorizontal: tokens.spacing.lg, paddingBottom: tokens.spacing['3xl'] },
   calendar: {
-    borderWidth: 1,
+    borderWidth: CALENDAR_BORDER_WIDTH,
     borderColor: tokens.colors.neutral[200],
     borderRadius: tokens.radius.lg,
     overflow: 'hidden',
@@ -103,6 +105,7 @@ export default function EventsScreen() {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const { data, isPending, isError, error, isRefetching, refetch } = usePlayerEvents();
   const mentoringQuery = usePlayerMentoringRequests();
+  const refetchMentoring = mentoringQuery.refetch;
   const now = new Date();
   const events = useMemo(
     () => filterPlayerEventOccurrences(data ?? EMPTY_EVENTS, category, now),
@@ -151,18 +154,18 @@ export default function EventsScreen() {
   );
   const dateFormatter = useMemo(
     () =>
-      new Intl.DateTimeFormat(i18n.resolvedLanguage ?? 'ca', {
+      new Intl.DateTimeFormat(i18n.resolvedLanguage ?? DEFAULT_LANGUAGE, {
         dateStyle: 'long',
-        timeZone: 'Europe/Madrid',
+        timeZone: MADRID_TIME_ZONE,
       }),
     [i18n.resolvedLanguage],
   );
   const timeFormatter = useMemo(
     () =>
-      new Intl.DateTimeFormat(i18n.resolvedLanguage ?? 'ca', {
+      new Intl.DateTimeFormat(i18n.resolvedLanguage ?? DEFAULT_LANGUAGE, {
         hour: '2-digit',
         minute: '2-digit',
-        timeZone: 'Europe/Madrid',
+        timeZone: MADRID_TIME_ZONE,
       }),
     [i18n.resolvedLanguage],
   );
@@ -196,6 +199,10 @@ export default function EventsScreen() {
             }),
         ),
         mentoringEntries,
+        (date) =>
+          `${t('mentoring:calendarPrivateTitle')}. ${dateFormatter.format(
+            new Date(`${date}${UTC_MIDDAY_SUFFIX}`),
+          )}`,
       ) as MarkedDates,
     [categoryColorsById, dateFormatter, effectiveSelectedDate, events, mentoringEntries, t],
   );
@@ -266,8 +273,8 @@ export default function EventsScreen() {
     [insets.bottom, insets.top],
   );
   const onRefresh = useCallback(
-    () => void Promise.all([refetch(), mentoringQuery.refetch()]),
-    [mentoringQuery, refetch],
+    () => void Promise.all([refetch(), refetchMentoring()]),
+    [refetch, refetchMentoring],
   );
   const selectCalendarDay = useCallback((day: DateData) => {
     playHaptic('selection');
@@ -417,7 +424,7 @@ export default function EventsScreen() {
               />
               <Text
                 accessibilityRole="header"
-                className={`text-start text-lg font-bold text-neutral-900 ${languageFontClass}`}
+                className={`text-start text-lg font-bold tabular-nums text-neutral-900 ${languageFontClass}`}
               >
                 {t('playerSelectedDate', {
                   date: dateFormatter.format(

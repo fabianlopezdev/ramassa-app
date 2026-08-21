@@ -1,9 +1,8 @@
-import type { PlayerEventOccurrence } from '@ramassa/shared/events';
+import { MADRID_TIME_ZONE, type PlayerEventOccurrence } from '@ramassa/shared/events';
 import type { SupportedLanguage } from '@ramassa/shared/i18n';
 import type { PrivateMentoringCalendarEntry } from '@ramassa/shared/mentoring';
 import { tokens } from '@ramassa/shared/tokens';
 
-const MADRID_TIME_ZONE = 'Europe/Madrid';
 const CALENDAR_SELECTED_COLOR = tokens.colors.primary.light;
 const GREGORIAN_MONTH_COUNT = 12;
 const WEEKDAY_COUNT = 7;
@@ -72,16 +71,22 @@ export function buildCalendarLocale(
 
 export function eventDateKey(instant: string): string {
   const parts = eventDateKeyFormatter.formatToParts(new Date(instant));
-  const get = (type: Intl.DateTimeFormatPartTypes) =>
-    parts.find((part) => part.type === type)?.value ?? '';
-  return `${get('year')}-${get('month')}-${get('day')}`;
+  let year = '';
+  let month = '';
+  let day = '';
+  for (const part of parts) {
+    if (part.type === 'year') year = part.value;
+    else if (part.type === 'month') month = part.value;
+    else if (part.type === 'day') day = part.value;
+  }
+  return `${year}-${month}-${day}`;
 }
 
 export function buildEventMarkedDates(
   rows: readonly PlayerEventOccurrence[],
   selectedDate: string | null,
   colorForCategory: (categoryId: string) => string,
-  accessibilityLabelForSelectedDate?: (date: string) => string,
+  accessibilityLabelForDate?: (date: string) => string,
 ): Readonly<Record<string, EventCalendarMark>> {
   const categoriesByDate = new Map<string, Set<string>>();
   for (const row of rows) {
@@ -96,15 +101,15 @@ export function buildEventMarkedDates(
   return Object.fromEntries(
     [...dates].map((date) => {
       const categories = [...(categoriesByDate.get(date) ?? [])];
-      const accessibilityLabel = accessibilityLabelForSelectedDate?.(date);
+      const accessibilityLabel = accessibilityLabelForDate?.(date);
       return [
         date,
         {
+          ...(accessibilityLabel === undefined ? {} : { accessibilityLabel }),
           ...(date === selectedDate
             ? {
                 selected: true,
                 selectedColor: CALENDAR_SELECTED_COLOR,
-                ...(accessibilityLabel === undefined ? {} : { accessibilityLabel }),
               }
             : {}),
           dots: categories.map((categoryId) => ({
@@ -120,14 +125,23 @@ export function buildEventMarkedDates(
 export function addPrivateMentoringMarkedDates(
   base: Readonly<Record<string, EventCalendarMark>>,
   entries: readonly PrivateMentoringCalendarEntry[],
+  accessibilityLabelForDate?: (date: string) => string,
 ): Readonly<Record<string, EventCalendarMark>> {
   const marks: Record<string, EventCalendarMark> = { ...base };
   for (const entry of entries) {
     const date = eventDateKey(entry.scheduledAt);
     const current = marks[date] ?? { dots: [] };
     if (current.dots.some((dot) => dot.key === 'private-mentoring')) continue;
+    const mentoringAccessibilityLabel = accessibilityLabelForDate?.(date);
+    const accessibilityLabel =
+      mentoringAccessibilityLabel === undefined
+        ? current.accessibilityLabel
+        : current.accessibilityLabel === undefined
+          ? mentoringAccessibilityLabel
+          : `${current.accessibilityLabel}. ${mentoringAccessibilityLabel}`;
     marks[date] = {
       ...current,
+      ...(accessibilityLabel === undefined ? {} : { accessibilityLabel }),
       dots: [...current.dots, { key: 'private-mentoring', color: tokens.colors.secondary.dark }],
     };
   }

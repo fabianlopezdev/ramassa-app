@@ -1,7 +1,8 @@
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
+import { FailureNotice } from '@/components/error-code-line';
 import { FormWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
-import { composeContinuousViewStyle, continuousCorners } from '@/lib/continuous-corners';
+import { continuousCorners } from '@/lib/continuous-corners';
 import {
   useOwnSurveyResponse,
   usePlayerSurveys,
@@ -9,11 +10,29 @@ import {
 } from '@/lib/player-surveys';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Stack } from 'expo-router/stack';
+import { SymbolView, type SymbolViewProps } from 'expo-symbols';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type ComponentProps,
+  type ReactNode,
+} from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { getLanguageDirection, useLanguage } from '@ramassa/shared/i18n';
+import { toAppError } from '@ramassa/shared/errors';
+import { useLanguage } from '@ramassa/shared/i18n';
 import {
   findSurveyResumeIndex,
   resolveSurveyCopy,
@@ -23,119 +42,220 @@ import {
 import { tokens } from '@ramassa/shared/tokens';
 
 const styles = StyleSheet.create({
-  option: {
-    minHeight: tokens.tapTarget.recommended,
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: tokens.colors.neutral[200],
-    borderRadius: tokens.radius.md,
-    paddingHorizontal: tokens.spacing.lg,
-    paddingVertical: tokens.spacing.md,
-  },
-  selected: { borderColor: tokens.colors.primary.DEFAULT, backgroundColor: '#F2F7FF' },
+  selected: { borderColor: tokens.colors.primary.DEFAULT },
   textInput: {
-    minHeight: 144,
-    borderWidth: 1,
-    borderColor: tokens.colors.neutral[300],
-    borderRadius: tokens.radius.md,
-    padding: tokens.spacing.lg,
+    minHeight: tokens.spacing['3xl'] * 2 + tokens.spacing.md,
     textAlignVertical: 'top',
+    writingDirection: 'auto',
   },
+  dynamicCopy: { writingDirection: 'auto' },
 });
-const optionStyle = composeContinuousViewStyle(styles.option);
-const selectedOptionStyle = [optionStyle, styles.selected];
-const STAR_SYMBOL = String.fromCodePoint(0x2605);
-const CHECK_SYMBOL = String.fromCodePoint(0x2713);
+const optionStyle = continuousCorners;
+const selectedOptionStyle = [continuousCorners, styles.selected];
+const textInputStyle = [styles.textInput, continuousCorners];
+const RATING_OPTIONS = [1, 2, 3, 4, 5] as const;
+const YES_NO_OPTIONS = [true, false] as const;
+const EMPTY_SURVEY_QUESTIONS: readonly SurveyQuestion[] = [];
+const EMPTY_SURVEY_ANSWERS: Readonly<Record<string, SurveyAnswer>> = {};
+const SURVEY_FREE_TEXT_MAX_LENGTH = 4_000;
+const starSymbol: SymbolViewProps['name'] = {
+  ios: 'star.fill',
+  android: 'star',
+  web: 'star',
+};
+const yesSymbol: SymbolViewProps['name'] = {
+  ios: 'checkmark',
+  android: 'check',
+  web: 'check',
+};
+const noSymbol: SymbolViewProps['name'] = {
+  ios: 'xmark',
+  android: 'close',
+  web: 'close',
+};
+const successSymbol: SymbolViewProps['name'] = {
+  ios: 'checkmark.circle.fill',
+  android: 'check_circle',
+  web: 'check_circle',
+};
 
-function QuestionControl({
-  question,
-  answer,
-  language,
-  languageFontClass,
-  onChange,
-}: {
+interface QuestionControlProps {
   readonly question: SurveyQuestion;
   readonly answer: SurveyAnswer | undefined;
   readonly language: string;
   readonly languageFontClass: string;
   readonly onChange: (answer: SurveyAnswer) => void;
-}) {
+}
+
+function QuestionControl(props: QuestionControlProps) {
+  switch (props.question.type) {
+    case 'rating':
+      return <RatingQuestionControl {...props} />;
+    case 'multiple_choice':
+      return <MultipleChoiceQuestionControl {...props} />;
+    case 'yes_no':
+      return <YesNoQuestionControl {...props} />;
+    case 'free_text':
+      return <FreeTextQuestionControl {...props} />;
+  }
+}
+
+function RatingQuestionControl({ question, answer, language, onChange }: QuestionControlProps) {
   const { t } = useTranslation('surveys');
-  if (question.type === 'rating') {
-    return (
-      <View className="flex-row justify-between gap-xs" accessibilityRole="radiogroup">
-        {[1, 2, 3, 4, 5].map((rating) => (
-          <PressableScale
-            key={rating}
-            accessibilityLabel={t('ratingLabel', { count: rating })}
-            accessibilityRole="radio"
-            isSelected={answer === rating}
-            onPress={() => onChange(rating)}
-            haptic="selection"
-            style={answer === rating ? selectedOptionStyle : optionStyle}
-            className="min-h-recommended min-w-12 flex-1 items-center justify-center rounded-md border-2 border-neutral-200"
+  return (
+    <View
+      className="flex-row justify-between gap-xs"
+      accessibilityRole="radiogroup"
+      accessibilityLabel={resolveSurveyCopy(question.prompt, language)}
+    >
+      {RATING_OPTIONS.map((rating) => (
+        <PressableScale
+          key={rating}
+          accessibilityLabel={t('ratingLabel', { count: rating })}
+          accessibilityRole="radio"
+          isSelected={answer === rating}
+          onPress={() => onChange(rating)}
+          haptic="selection"
+          style={answer === rating ? selectedOptionStyle : optionStyle}
+          className={`min-h-recommended min-w-12 flex-1 items-center justify-center rounded-md border-2 border-neutral-200 ${answer === rating ? 'bg-primary/10' : 'bg-white'}`}
+        >
+          <SymbolView
+            accessible={false}
+            name={starSymbol}
+            size={tokens.fontSize['3xl']}
+            tintColor={tokens.colors.secondary.dark}
+          />
+        </PressableScale>
+      ))}
+    </View>
+  );
+}
+
+function MultipleChoiceQuestionControl({
+  question,
+  answer,
+  language,
+  languageFontClass,
+  onChange,
+}: QuestionControlProps) {
+  return (
+    <View
+      className="gap-md"
+      accessibilityRole="radiogroup"
+      accessibilityLabel={resolveSurveyCopy(question.prompt, language)}
+    >
+      {question.options?.map((option) => (
+        <PressableScale
+          key={option.id}
+          accessibilityLabel={resolveSurveyCopy(option.label, language)}
+          accessibilityRole="radio"
+          isSelected={answer === option.id}
+          onPress={() => onChange(option.id)}
+          haptic="selection"
+          style={answer === option.id ? selectedOptionStyle : optionStyle}
+          className={`min-h-recommended justify-center rounded-md border-2 border-neutral-200 px-lg py-md ${answer === option.id ? 'bg-primary/10' : 'bg-white'}`}
+        >
+          <Text
+            style={styles.dynamicCopy}
+            className={`text-center text-lg font-bold text-neutral-900 ${languageFontClass}`}
           >
-            <Text className="text-3xl text-amber-500">{STAR_SYMBOL}</Text>
-          </PressableScale>
-        ))}
-      </View>
-    );
-  }
-  if (question.type === 'multiple_choice') {
-    return (
-      <View className="gap-md" accessibilityRole="radiogroup">
-        {question.options?.map((option) => (
-          <PressableScale
-            key={option.id}
-            accessibilityLabel={resolveSurveyCopy(option.label, language)}
-            accessibilityRole="radio"
-            isSelected={answer === option.id}
-            onPress={() => onChange(option.id)}
-            haptic="selection"
-            style={answer === option.id ? selectedOptionStyle : optionStyle}
-            className="min-h-recommended justify-center rounded-md border-2 border-neutral-200 px-lg py-md"
-          >
-            <Text className={`text-center text-lg font-bold text-neutral-900 ${languageFontClass}`}>
-              {resolveSurveyCopy(option.label, language)}
-            </Text>
-          </PressableScale>
-        ))}
-      </View>
-    );
-  }
-  if (question.type === 'yes_no') {
-    return (
-      <View className="flex-row gap-md" accessibilityRole="radiogroup">
-        {[true, false].map((value) => (
-          <PressableScale
-            key={String(value)}
-            accessibilityLabel={value ? t('yes') : t('no')}
-            accessibilityRole="radio"
-            isSelected={answer === value}
-            onPress={() => onChange(value)}
-            haptic="selection"
-            style={answer === value ? selectedOptionStyle : optionStyle}
-            className="min-h-recommended flex-1 items-center justify-center rounded-md border-2 border-neutral-200 px-lg py-xl"
-          >
-            <Text className={`text-2xl font-bold text-neutral-900 ${languageFontClass}`}>
-              {value ? `✓ ${t('yes')}` : `× ${t('no')}`}
-            </Text>
-          </PressableScale>
-        ))}
-      </View>
-    );
-  }
+            {resolveSurveyCopy(option.label, language)}
+          </Text>
+        </PressableScale>
+      ))}
+    </View>
+  );
+}
+
+function YesNoQuestionControl({
+  question,
+  answer,
+  language,
+  languageFontClass,
+  onChange,
+}: QuestionControlProps) {
+  const { t } = useTranslation('surveys');
+  return (
+    <View
+      className="flex-row gap-md"
+      accessibilityRole="radiogroup"
+      accessibilityLabel={resolveSurveyCopy(question.prompt, language)}
+    >
+      {YES_NO_OPTIONS.map((value) => (
+        <PressableScale
+          key={String(value)}
+          accessibilityLabel={value ? t('yes') : t('no')}
+          accessibilityRole="radio"
+          isSelected={answer === value}
+          onPress={() => onChange(value)}
+          haptic="selection"
+          style={answer === value ? selectedOptionStyle : optionStyle}
+          className={`min-h-recommended flex-1 flex-row items-center justify-center gap-sm rounded-md border-2 border-neutral-200 px-lg py-xl ${answer === value ? 'bg-primary/10' : 'bg-white'}`}
+        >
+          <SymbolView
+            accessible={false}
+            name={value ? yesSymbol : noSymbol}
+            size={tokens.fontSize['2xl']}
+            tintColor={tokens.colors.neutral[900]}
+          />
+          <Text className={`text-2xl font-bold text-neutral-900 ${languageFontClass}`}>
+            {value ? t('yes') : t('no')}
+          </Text>
+        </PressableScale>
+      ))}
+    </View>
+  );
+}
+
+function FreeTextQuestionControl({
+  question,
+  answer,
+  language,
+  languageFontClass,
+  onChange,
+}: QuestionControlProps) {
+  const { t } = useTranslation('surveys');
   return (
     <TextInput
       multiline
       value={typeof answer === 'string' ? answer : ''}
       onChangeText={onChange}
       placeholder={t('freeTextPlaceholder')}
-      maxLength={4000}
-      style={[styles.textInput, continuousCorners]}
-      className={`text-start text-lg text-neutral-900 ${languageFontClass}`}
-      accessibilityLabel={t('freeTextPlaceholder')}
+      maxLength={SURVEY_FREE_TEXT_MAX_LENGTH}
+      style={textInputStyle}
+      className={`rounded-md border border-neutral-300 p-lg text-start text-lg text-neutral-900 ${languageFontClass}`}
+      accessibilityLabel={resolveSurveyCopy(question.prompt, language)}
+      accessibilityHint={t('freeTextPlaceholder')}
     />
+  );
+}
+
+interface SurveyScreenFrameProps {
+  readonly children: ReactNode;
+  readonly contentContainerClassName: string;
+  readonly contentInsets: StyleProp<ViewStyle>;
+  readonly screenOptions: ComponentProps<typeof Stack.Screen>['options'];
+}
+
+function SurveyScreenFrame({
+  children,
+  contentContainerClassName,
+  contentInsets,
+  screenOptions,
+}: SurveyScreenFrameProps) {
+  return (
+    <>
+      <Stack.Screen options={screenOptions} />
+      <ScrollView
+        className="flex-1 bg-white"
+        contentContainerClassName={contentContainerClassName}
+        contentContainerStyle={contentInsets}
+        keyboardShouldPersistTaps="handled"
+        contentInsetAdjustmentBehavior="automatic"
+      >
+        {children}
+      </ScrollView>
+    </>
   );
 }
 
@@ -146,28 +266,54 @@ export default function SurveyScreen() {
   const { language } = useLanguage();
   const languageFontClass = useLanguageFontClass();
   const { data: surveys, isPending, isError } = usePlayerSurveys();
-  const { data: storedResponse, isPending: isResponsePending } = useOwnSurveyResponse(id);
-  const saveResponse = useSaveSurveyResponse();
+  const {
+    data: storedResponse,
+    isPending: isResponsePending,
+    isError: isResponseError,
+  } = useOwnSurveyResponse(id);
+  const {
+    error: saveResponseError,
+    isPending: isSavePending,
+    mutateAsync: saveResponseAsync,
+  } = useSaveSurveyResponse();
   const survey = surveys?.find((item) => item.id === id);
-  const [answers, setAnswers] = useState<Readonly<Record<string, SurveyAnswer>>>({});
+  const surveyId = survey?.id;
+  const surveyQuestions = survey?.questions ?? EMPTY_SURVEY_QUESTIONS;
+  const storedAnswers = storedResponse?.answers;
+  const hasMissingResponseError = isResponseError && storedResponse === undefined;
+  const orderedQuestions = useMemo(
+    () => surveyQuestions.toSorted((left, right) => left.sortOrder - right.sortOrder),
+    [surveyQuestions],
+  );
+  const [answers, setAnswers] =
+    useState<Readonly<Record<string, SurveyAnswer>>>(EMPTY_SURVEY_ANSWERS);
   const [index, setIndex] = useState(0);
-  const [initialized, setInitialized] = useState(false);
+  const [initializedSurveyId, setInitializedSurveyId] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const insets = useSafeAreaInsets();
-  const isRtl = getLanguageDirection(language) === 'rtl';
 
   useEffect(() => {
-    if (initialized || survey === undefined || isResponsePending) return;
-    const initialAnswers = storedResponse?.answers ?? {};
+    if (
+      initializedSurveyId === surveyId ||
+      surveyId === undefined ||
+      isResponsePending ||
+      hasMissingResponseError
+    ) {
+      return;
+    }
+    const initialAnswers = storedAnswers ?? EMPTY_SURVEY_ANSWERS;
     setAnswers(initialAnswers);
-    setIndex(findSurveyResumeIndex(survey.questions, initialAnswers));
-    setInitialized(true);
-  }, [initialized, isResponsePending, storedResponse, survey]);
-
-  const orderedQuestions = useMemo(
-    () => [...(survey?.questions ?? [])].sort((left, right) => left.sortOrder - right.sortOrder),
-    [survey?.questions],
-  );
+    setIndex(findSurveyResumeIndex(orderedQuestions, initialAnswers));
+    setSubmitted(false);
+    setInitializedSurveyId(surveyId);
+  }, [
+    initializedSurveyId,
+    hasMissingResponseError,
+    isResponsePending,
+    orderedQuestions,
+    storedAnswers,
+    surveyId,
+  ]);
   const question = orderedQuestions[index];
   const isAtEnd = index >= orderedQuestions.length - 1;
   const currentAnswer = question === undefined ? undefined : answers[question.id];
@@ -179,61 +325,111 @@ export default function SurveyScreen() {
 
   const persist = useCallback(
     (complete: boolean) => {
-      if (survey === undefined) return Promise.resolve();
-      return saveResponse
-        .mutateAsync({
-          surveyId: survey.id,
-          questions: orderedQuestions,
-          answers,
-          complete,
-        })
-        .then(() => undefined);
+      if (surveyId === undefined) return Promise.resolve();
+      return saveResponseAsync({
+        surveyId,
+        questions: orderedQuestions,
+        answers,
+        complete,
+      }).then(() => undefined);
     },
-    [answers, orderedQuestions, saveResponse, survey],
+    [answers, orderedQuestions, saveResponseAsync, surveyId],
   );
 
   async function next() {
     if (!canContinue) return;
-    if (isAtEnd) {
-      await persist(true);
-      setSubmitted(true);
+    try {
+      if (isAtEnd) {
+        await persist(true);
+        setSubmitted(true);
+        return;
+      }
+      await persist(false);
+      setIndex((current) => current + 1);
+    } catch {
       return;
     }
-    await persist(false);
-    setIndex((current) => current + 1);
   }
 
   async function saveAndExit() {
-    await persist(false);
-    back();
+    try {
+      await persist(false);
+      back();
+    } catch {
+      return;
+    }
   }
 
-  const contentInsets =
-    process.env.EXPO_OS === 'android'
-      ? {
-          paddingTop: insets.top + tokens.spacing.lg,
-          paddingBottom: insets.bottom + tokens.spacing.lg,
-        }
-      : undefined;
+  const contentInsets = useMemo(
+    () =>
+      process.env.EXPO_OS === 'android'
+        ? { paddingBottom: insets.bottom + tokens.spacing.lg }
+        : undefined,
+    [insets.bottom],
+  );
+  const screenOptions = useMemo(
+    () => ({
+      headerShown: true,
+      headerBackButtonDisplayMode: 'minimal' as const,
+      title: survey === undefined ? t('title') : resolveSurveyCopy(survey.title, language),
+    }),
+    [language, survey, t],
+  );
 
-  if (isPending) {
+  const isInitialLoad =
+    (isPending && surveys === undefined) ||
+    (survey !== undefined &&
+      ((isResponsePending && storedResponse === undefined) || initializedSurveyId !== survey.id));
+  const hasLoadError =
+    (isError && surveys === undefined) ||
+    (isResponseError && storedResponse === undefined) ||
+    (surveys !== undefined && survey === undefined);
+  const saveError = saveResponseError === null ? null : toAppError(saveResponseError);
+
+  if (isInitialLoad && !hasLoadError) {
     return (
-      <View className="flex-1 items-center justify-center bg-white">
-        <Text>{t('common:loading')}</Text>
-      </View>
+      <SurveyScreenFrame
+        screenOptions={screenOptions}
+        contentInsets={contentInsets}
+        contentContainerClassName="grow items-center justify-center p-lg"
+      >
+        <Text
+          accessible
+          accessibilityLabel={t('common:loading')}
+          accessibilityState={{ busy: true }}
+          accessibilityLiveRegion="polite"
+        >
+          {t('common:loading')}
+        </Text>
+      </SurveyScreenFrame>
     );
   }
-  if (isError || survey === undefined) {
+  if (hasLoadError || survey === undefined) {
     return (
-      <View className="flex-1 items-center justify-center bg-white p-lg">
-        <Text>{t('loadError')}</Text>
-      </View>
+      <SurveyScreenFrame
+        screenOptions={screenOptions}
+        contentInsets={contentInsets}
+        contentContainerClassName="grow items-center justify-center p-lg"
+      >
+        <Text selectable accessibilityRole="alert">
+          {t('loadError')}
+        </Text>
+      </SurveyScreenFrame>
     );
   }
   if (submitted || storedResponse?.status === 'completed') {
     return (
-      <View className="flex-1 items-center justify-center gap-lg bg-white p-xl">
-        <Text className="text-5xl">{CHECK_SYMBOL}</Text>
+      <SurveyScreenFrame
+        screenOptions={screenOptions}
+        contentInsets={contentInsets}
+        contentContainerClassName="grow items-center justify-center gap-lg p-xl"
+      >
+        <SymbolView
+          accessible={false}
+          name={successSymbol}
+          size={tokens.fontSize['4xl']}
+          tintColor={tokens.colors.success}
+        />
         <Text
           accessibilityRole="header"
           className={`text-center text-2xl font-bold ${languageFontClass}`}
@@ -243,37 +439,44 @@ export default function SurveyScreen() {
         <Text className={`text-center text-lg text-neutral-600 ${languageFontClass}`}>
           {t('thankBody')}
         </Text>
-        <AuthSubmitButton label={t('back')} onPress={back} />
-      </View>
+        <View className="w-full max-w-form">
+          <AuthSubmitButton label={t('back')} onPress={back} />
+        </View>
+      </SurveyScreenFrame>
     );
   }
-  if (question === undefined) return null;
+  if (question === undefined) {
+    return (
+      <SurveyScreenFrame
+        screenOptions={screenOptions}
+        contentInsets={contentInsets}
+        contentContainerClassName="grow items-center justify-center p-lg"
+      >
+        <Text selectable accessibilityRole="alert">
+          {t('loadError')}
+        </Text>
+      </SurveyScreenFrame>
+    );
+  }
 
   return (
-    <ScrollView
-      className="flex-1 bg-white"
+    <SurveyScreenFrame
+      screenOptions={screenOptions}
+      contentInsets={contentInsets}
       contentContainerClassName="grow px-lg py-lg"
-      contentContainerStyle={contentInsets}
-      keyboardShouldPersistTaps="handled"
-      contentInsetAdjustmentBehavior="automatic"
     >
       <FormWidth className="grow justify-between gap-xl">
         <View className="gap-xl">
-          <PressableScale
-            accessibilityLabel={t('back')}
-            onPress={back}
-            haptic="tapLight"
-            className={`min-h-recommended justify-center rounded-full border border-neutral-300 px-lg ${isRtl ? 'self-end' : 'self-start'}`}
-          >
-            <Text className={`font-medium text-primary ${languageFontClass}`}>{t('back')}</Text>
-          </PressableScale>
           <View className="gap-sm">
             <Text
+              style={styles.dynamicCopy}
               className={`text-start text-sm font-bold uppercase text-primary ${languageFontClass}`}
             >
               {resolveSurveyCopy(survey.title, language)}
             </Text>
-            <Text className={`text-start text-sm text-neutral-600 ${languageFontClass}`}>
+            <Text
+              className={`text-start text-sm tabular-nums text-neutral-600 ${languageFontClass}`}
+            >
               {t('progress', { current: index + 1, total: orderedQuestions.length })}
             </Text>
             <View className="flex-row gap-xs" accessibilityElementsHidden>
@@ -286,8 +489,8 @@ export default function SurveyScreen() {
             </View>
           </View>
           {index === 0 ? (
-            <View className="rounded-lg bg-amber-50 p-md" style={continuousCorners}>
-              <Text className={`text-start text-sm text-amber-900 ${languageFontClass}`}>
+            <View className="rounded-lg bg-secondary-light p-md" style={continuousCorners}>
+              <Text className={`text-start text-sm text-neutral-900 ${languageFontClass}`}>
                 {t('attributedNotice')}
               </Text>
             </View>
@@ -295,6 +498,7 @@ export default function SurveyScreen() {
           <View className="gap-lg">
             <Text
               accessibilityRole="header"
+              style={styles.dynamicCopy}
               className={`text-start text-3xl font-bold text-neutral-900 ${languageFontClass}`}
             >
               {resolveSurveyCopy(question.prompt, language)}
@@ -316,17 +520,20 @@ export default function SurveyScreen() {
           </View>
         </View>
         <View className="gap-md">
+          {saveError === null ? null : <FailureNotice code={saveError.code} message={t('error')} />}
           <AuthSubmitButton
             label={isAtEnd ? t('submit') : t('next')}
             onPress={() => void next()}
-            isLoading={saveResponse.isPending}
+            isLoading={isSavePending}
             disabled={!canContinue}
             testID="survey-next"
           />
           <PressableScale
             accessibilityLabel={t('saveExit')}
             onPress={() => void saveAndExit()}
-            isBusy={saveResponse.isPending}
+            haptic="tapLight"
+            isBusy={isSavePending}
+            style={continuousCorners}
             className="min-h-recommended items-center justify-center rounded-md border border-neutral-300 px-lg"
           >
             <Text className={`font-bold text-neutral-700 ${languageFontClass}`}>
@@ -335,6 +542,6 @@ export default function SurveyScreen() {
           </PressableScale>
         </View>
       </FormWidth>
-    </ScrollView>
+    </SurveyScreenFrame>
   );
 }

@@ -159,6 +159,7 @@ export default function ProfileScreen() {
         <ShakeOnError errorCode={loadFailureCode}>
           <View className="gap-md">
             <Text
+              selectable
               accessibilityLiveRegion="polite"
               className={`text-start text-md text-error ${languageFontClass}`}
             >
@@ -277,7 +278,10 @@ export default function ProfileScreen() {
             >
               {t('deletePendingTitle')}
             </Text>
-            <Text className={`text-start text-sm text-neutral-600 ${languageFontClass}`}>
+            <Text
+              selectable
+              className={`text-start text-sm tabular-nums text-neutral-600 ${languageFontClass}`}
+            >
               {t('deletePendingBody', { date: formatDate(deletionRequest.created_at) })}
             </Text>
           </View>

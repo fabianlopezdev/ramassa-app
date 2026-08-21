@@ -36,7 +36,7 @@ import {
 } from '@ramassa/shared/announcements';
 import { useAuth } from '@ramassa/shared/auth';
 import { toAppError } from '@ramassa/shared/errors';
-import { resolveLocalizedText, useLanguage } from '@ramassa/shared/i18n';
+import { DEFAULT_LANGUAGE, resolveLocalizedText, useLanguage } from '@ramassa/shared/i18n';
 import { tokens } from '@ramassa/shared/tokens';
 
 const EMPTY_ANNOUNCEMENTS: readonly AnnouncementListRow[] = [];
@@ -70,7 +70,7 @@ export default function HomeScreen() {
   );
   const dateFormatter = useMemo(
     () =>
-      new Intl.DateTimeFormat(i18n.resolvedLanguage ?? 'ca', {
+      new Intl.DateTimeFormat(i18n.resolvedLanguage ?? DEFAULT_LANGUAGE, {
         day: 'numeric',
         month: 'long',
       }),
