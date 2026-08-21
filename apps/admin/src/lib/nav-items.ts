@@ -14,6 +14,7 @@ import {
   CalendarDays,
   FileText,
   HeartHandshake,
+  Inbox,
   LayoutDashboard,
   MessageSquare,
   Settings,
@@ -37,6 +38,7 @@ export const STAFF_NAV_ITEMS = [
   { to: '/messages', icon: MessageSquare, labelKey: 'nav:staff.messages' },
   { to: '/forum', icon: MessageSquare, labelKey: 'nav:staff.forum' },
   { to: '/mentoring', icon: HeartHandshake, labelKey: 'nav:staff.mentoring' },
+  { to: '/feedback', icon: Inbox, labelKey: 'nav:staff.feedback' },
   { to: '/settings', icon: Settings, labelKey: 'nav:staff.settings' },
 ] as const satisfies readonly NavItem[];
 

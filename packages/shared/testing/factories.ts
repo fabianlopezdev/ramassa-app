@@ -72,6 +72,7 @@ export type ServiceRow = Database['public']['Tables']['services']['Row'];
 export type ServiceImageRow = Database['public']['Tables']['service_images']['Row'];
 export type ServiceInterestRow = Database['public']['Tables']['service_interests']['Row'];
 export type MentoringRequestRow = Database['public']['Tables']['mentoring_requests']['Row'];
+export type FeedbackSubmissionRow = Database['public']['Tables']['feedback_submissions']['Row'];
 
 /** One fixed instant for every timestamp, so factory output is byte-stable. */
 const FIXTURE_TIMESTAMP = '2026-01-15T09:00:00+00:00';
@@ -800,6 +801,26 @@ export function buildMentoringRequest(
     assigned_staff_id: seedUserId(staff.ordinal),
     staff_notes_encrypted: 'Synthetic private staff note',
     completed_at: null,
+    created_at: FIXTURE_TIMESTAMP,
+    updated_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+export function buildFeedbackSubmission(
+  overrides: Partial<FeedbackSubmissionRow> = {},
+): FeedbackSubmissionRow {
+  const player = PARTICIPANT_FIXTURES[0]!;
+  return {
+    id: '5eed0000-0000-4000-8017-000000000001',
+    org_id: SEED_ORGANIZATION_ID,
+    author_id: seedUserId(player.ordinal),
+    type: 'activity_proposal',
+    content_encrypted: 'Synthetic private feedback content',
+    image_url: null,
+    status: 'in_progress',
+    resolved_by: null,
+    resolved_at: null,
     created_at: FIXTURE_TIMESTAMP,
     updated_at: FIXTURE_TIMESTAMP,
     ...overrides,

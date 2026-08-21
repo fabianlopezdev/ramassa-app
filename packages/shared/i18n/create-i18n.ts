@@ -18,6 +18,7 @@ import arEntityServices from './locales/ar/entity-services.json';
 import arEquipment from './locales/ar/equipment.json';
 import arErrors from './locales/ar/errors.json';
 import arEvents from './locales/ar/events.json';
+import arFeedback from './locales/ar/feedback.json';
 import arForum from './locales/ar/forum.json';
 import arGallery from './locales/ar/gallery.json';
 import arHome from './locales/ar/home.json';
@@ -41,6 +42,7 @@ import caEntityServices from './locales/ca/entity-services.json';
 import caEquipment from './locales/ca/equipment.json';
 import caErrors from './locales/ca/errors.json';
 import caEvents from './locales/ca/events.json';
+import caFeedback from './locales/ca/feedback.json';
 import caForum from './locales/ca/forum.json';
 import caGallery from './locales/ca/gallery.json';
 import caHome from './locales/ca/home.json';
@@ -65,6 +67,7 @@ import enEntityServices from './locales/en/entity-services.json';
 import enEquipment from './locales/en/equipment.json';
 import enErrors from './locales/en/errors.json';
 import enEvents from './locales/en/events.json';
+import enFeedback from './locales/en/feedback.json';
 import enForum from './locales/en/forum.json';
 import enGallery from './locales/en/gallery.json';
 import enHome from './locales/en/home.json';
@@ -89,6 +92,7 @@ import esEntityServices from './locales/es/entity-services.json';
 import esEquipment from './locales/es/equipment.json';
 import esErrors from './locales/es/errors.json';
 import esEvents from './locales/es/events.json';
+import esFeedback from './locales/es/feedback.json';
 import esForum from './locales/es/forum.json';
 import esGallery from './locales/es/gallery.json';
 import esHome from './locales/es/home.json';
@@ -112,6 +116,7 @@ import faEntityServices from './locales/fa/entity-services.json';
 import faEquipment from './locales/fa/equipment.json';
 import faErrors from './locales/fa/errors.json';
 import faEvents from './locales/fa/events.json';
+import faFeedback from './locales/fa/feedback.json';
 import faForum from './locales/fa/forum.json';
 import faGallery from './locales/fa/gallery.json';
 import faHome from './locales/fa/home.json';
@@ -146,6 +151,7 @@ const resources = {
     knowledge: caKnowledge,
     messaging: caMessaging,
     mentoring: caMentoring,
+    feedback: caFeedback,
     attendance: caAttendance,
     services: caServices,
     'entity-services': caEntityServices,
@@ -172,6 +178,7 @@ const resources = {
     knowledge: esKnowledge,
     messaging: esMessaging,
     mentoring: esMentoring,
+    feedback: esFeedback,
     attendance: esAttendance,
     services: enServices,
     'entity-services': esEntityServices,
@@ -198,6 +205,7 @@ const resources = {
     knowledge: enKnowledge,
     messaging: enMessaging,
     mentoring: enMentoring,
+    feedback: enFeedback,
     attendance: enAttendance,
     services: enServices,
     'entity-services': enEntityServices,
@@ -224,6 +232,7 @@ const resources = {
     knowledge: arKnowledge,
     messaging: arMessaging,
     mentoring: arMentoring,
+    feedback: arFeedback,
     attendance: arAttendance,
     services: enServices,
     'entity-services': arEntityServices,
@@ -250,6 +259,7 @@ const resources = {
     knowledge: faKnowledge,
     messaging: faMessaging,
     mentoring: faMentoring,
+    feedback: faFeedback,
     attendance: faAttendance,
     services: enServices,
     'entity-services': faEntityServices,

@@ -897,6 +897,70 @@ export type Database = {
           },
         ];
       };
+      feedback_submissions: {
+        Row: {
+          author_id: string;
+          content_encrypted: string;
+          created_at: string;
+          id: string;
+          image_url: string | null;
+          org_id: string;
+          resolved_at: string | null;
+          resolved_by: string | null;
+          status: string;
+          type: string;
+          updated_at: string;
+        };
+        Insert: {
+          author_id: string;
+          content_encrypted: string;
+          created_at?: string;
+          id?: string;
+          image_url?: string | null;
+          org_id: string;
+          resolved_at?: string | null;
+          resolved_by?: string | null;
+          status?: string;
+          type: string;
+          updated_at?: string;
+        };
+        Update: {
+          author_id?: string;
+          content_encrypted?: string;
+          created_at?: string;
+          id?: string;
+          image_url?: string | null;
+          org_id?: string;
+          resolved_at?: string | null;
+          resolved_by?: string | null;
+          status?: string;
+          type?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'feedback_submissions_author_tenant_fkey';
+            columns: ['org_id', 'author_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['org_id', 'id'];
+          },
+          {
+            foreignKeyName: 'feedback_submissions_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'feedback_submissions_resolver_tenant_fkey';
+            columns: ['org_id', 'resolved_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['org_id', 'id'];
+          },
+        ];
+      };
       forum_categories: {
         Row: {
           color: string;
@@ -2757,6 +2821,10 @@ export type Database = {
         Args: { dispatch_secret: string };
         Returns: boolean;
       };
+      can_read_feedback_object: {
+        Args: { p_object_key: string };
+        Returns: boolean;
+      };
       can_read_media_object: {
         Args: { p_object_key: string };
         Returns: boolean;
@@ -2863,6 +2931,10 @@ export type Database = {
       };
       create_collaborating_entity: { Args: { p_name: string }; Returns: string };
       create_entity_referral: { Args: { p_payload: Json }; Returns: string };
+      create_feedback_submission: {
+        Args: { p_content: string; p_image_url: string; p_type: string };
+        Returns: string;
+      };
       create_forum_post: {
         Args: { p_category_id: string; p_content: string; p_image_url: string };
         Returns: string;
@@ -2929,6 +3001,14 @@ export type Database = {
       };
       encrypt_field: { Args: { plaintext: string }; Returns: string };
       encryption_key: { Args: never; Returns: string };
+      feedback_monthly_counts: {
+        Args: never;
+        Returns: {
+          count: number;
+          month: string;
+          type: string;
+        }[];
+      };
       flag_forum_content: {
         Args: {
           p_comment: string;
@@ -3268,6 +3348,19 @@ export type Database = {
           visibility: string;
         }[];
       };
+      list_own_feedback_submissions: {
+        Args: never;
+        Returns: {
+          content: string;
+          created_at: string;
+          id: string;
+          image_url: string;
+          resolved_at: string;
+          status: string;
+          type: string;
+          updated_at: string;
+        }[];
+      };
       list_own_mentoring_requests: {
         Args: never;
         Returns: {
@@ -3317,6 +3410,24 @@ export type Database = {
           participant_last_name: string;
           participant_role: string;
           unread_count: number;
+        }[];
+      };
+      list_staff_feedback_submissions: {
+        Args: { p_status?: string; p_type?: string };
+        Returns: {
+          author_first_name: string;
+          author_id: string;
+          author_last_name: string;
+          content: string;
+          conversation_id: string;
+          created_at: string;
+          id: string;
+          image_url: string;
+          resolved_at: string;
+          resolved_by: string;
+          status: string;
+          type: string;
+          updated_at: string;
         }[];
       };
       list_staff_mentoring_requests: {
@@ -3567,6 +3678,10 @@ export type Database = {
       set_service_interest: {
         Args: { p_interested: boolean; p_service_id: string };
         Returns: boolean;
+      };
+      transition_feedback_submission: {
+        Args: { p_status: string; p_submission_id: string };
+        Returns: undefined;
       };
       unambiguous_token: { Args: { length: number }; Returns: string };
       update_own_profile: { Args: { payload: Json }; Returns: undefined };

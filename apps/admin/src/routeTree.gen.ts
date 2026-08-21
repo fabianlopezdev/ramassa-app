@@ -18,6 +18,7 @@ import { Route as StaffSettingsRouteImport } from './routes/_staff.settings'
 import { Route as StaffMessagesRouteImport } from './routes/_staff.messages'
 import { Route as StaffMentoringRouteImport } from './routes/_staff.mentoring'
 import { Route as StaffForumRouteImport } from './routes/_staff.forum'
+import { Route as StaffFeedbackRouteImport } from './routes/_staff.feedback'
 import { Route as StaffDashboardRouteImport } from './routes/_staff.dashboard'
 import { Route as StaffContentRouteImport } from './routes/_staff.content'
 import { Route as StaffAttendanceRouteImport } from './routes/_staff.attendance'
@@ -101,6 +102,11 @@ const StaffMentoringRoute = StaffMentoringRouteImport.update({
 const StaffForumRoute = StaffForumRouteImport.update({
   id: '/forum',
   path: '/forum',
+  getParentRoute: () => StaffRoute,
+} as any)
+const StaffFeedbackRoute = StaffFeedbackRouteImport.update({
+  id: '/feedback',
+  path: '/feedback',
   getParentRoute: () => StaffRoute,
 } as any)
 const StaffDashboardRoute = StaffDashboardRouteImport.update({
@@ -339,6 +345,7 @@ export interface FileRoutesByFullPath {
   '/attendance': typeof StaffAttendanceRouteWithChildren
   '/content': typeof StaffContentRouteWithChildren
   '/dashboard': typeof StaffDashboardRoute
+  '/feedback': typeof StaffFeedbackRoute
   '/forum': typeof StaffForumRoute
   '/mentoring': typeof StaffMentoringRoute
   '/messages': typeof StaffMessagesRouteWithChildren
@@ -387,6 +394,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/dashboard': typeof StaffDashboardRoute
+  '/feedback': typeof StaffFeedbackRoute
   '/forum': typeof StaffForumRoute
   '/mentoring': typeof StaffMentoringRoute
   '/settings': typeof StaffSettingsRoute
@@ -437,6 +445,7 @@ export interface FileRoutesById {
   '/_staff/attendance': typeof StaffAttendanceRouteWithChildren
   '/_staff/content': typeof StaffContentRouteWithChildren
   '/_staff/dashboard': typeof StaffDashboardRoute
+  '/_staff/feedback': typeof StaffFeedbackRoute
   '/_staff/forum': typeof StaffForumRoute
   '/_staff/mentoring': typeof StaffMentoringRoute
   '/_staff/messages': typeof StaffMessagesRouteWithChildren
@@ -489,6 +498,7 @@ export interface FileRouteTypes {
     | '/attendance'
     | '/content'
     | '/dashboard'
+    | '/feedback'
     | '/forum'
     | '/mentoring'
     | '/messages'
@@ -537,6 +547,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/dashboard'
+    | '/feedback'
     | '/forum'
     | '/mentoring'
     | '/settings'
@@ -586,6 +597,7 @@ export interface FileRouteTypes {
     | '/_staff/attendance'
     | '/_staff/content'
     | '/_staff/dashboard'
+    | '/_staff/feedback'
     | '/_staff/forum'
     | '/_staff/mentoring'
     | '/_staff/messages'
@@ -702,6 +714,13 @@ declare module '@tanstack/react-router' {
       path: '/forum'
       fullPath: '/forum'
       preLoaderRoute: typeof StaffForumRouteImport
+      parentRoute: typeof StaffRoute
+    }
+    '/_staff/feedback': {
+      id: '/_staff/feedback'
+      path: '/feedback'
+      fullPath: '/feedback'
+      preLoaderRoute: typeof StaffFeedbackRouteImport
       parentRoute: typeof StaffRoute
     }
     '/_staff/dashboard': {
@@ -1123,6 +1142,7 @@ interface StaffRouteChildren {
   StaffAttendanceRoute: typeof StaffAttendanceRouteWithChildren
   StaffContentRoute: typeof StaffContentRouteWithChildren
   StaffDashboardRoute: typeof StaffDashboardRoute
+  StaffFeedbackRoute: typeof StaffFeedbackRoute
   StaffForumRoute: typeof StaffForumRoute
   StaffMentoringRoute: typeof StaffMentoringRoute
   StaffMessagesRoute: typeof StaffMessagesRouteWithChildren
@@ -1139,6 +1159,7 @@ const StaffRouteChildren: StaffRouteChildren = {
   StaffAttendanceRoute: StaffAttendanceRouteWithChildren,
   StaffContentRoute: StaffContentRouteWithChildren,
   StaffDashboardRoute: StaffDashboardRoute,
+  StaffFeedbackRoute: StaffFeedbackRoute,
   StaffForumRoute: StaffForumRoute,
   StaffMentoringRoute: StaffMentoringRoute,
   StaffMessagesRoute: StaffMessagesRouteWithChildren,

@@ -106,6 +106,11 @@ describe('content-type helpers', () => {
 });
 
 describe('folder authorization', () => {
+  test('allows player feedback images in their dedicated private folder', () => {
+    expect(UPLOAD_FOLDERS).toContain('feedback');
+    expect(isFolderWritableByRole('feedback' as never, 'player')).toBe(true);
+  });
+
   test('staff-only folders are closed to players and entities', () => {
     for (const folder of STAFF_ONLY_UPLOAD_FOLDERS) {
       expect(isFolderWritableByRole(folder, 'player')).toBe(false);

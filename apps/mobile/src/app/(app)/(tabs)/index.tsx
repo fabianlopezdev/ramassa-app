@@ -15,7 +15,9 @@ import {
 } from '@/components/announcements/feed-states';
 import { KnowledgeQuickActions } from '@/components/knowledge/knowledge-quick-actions';
 import { PageWidth } from '@/components/layout/content-width';
+import { PressableScale } from '@/components/motion/pressable-scale';
 import { usePlayerAnnouncements } from '@/lib/announcement-feed';
+import { continuousCorners } from '@/lib/continuous-corners';
 import { isNetworkStateOnline } from '@/lib/network-status';
 import { logger } from '@/lib/observability';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
@@ -51,7 +53,7 @@ const getItemType = (item: AnnouncementListRow) =>
   item.image_url === null ? 'text-announcement' : 'image-announcement';
 
 export default function HomeScreen() {
-  const { t, i18n } = useTranslation(['home', 'common']);
+  const { t, i18n } = useTranslation(['home', 'common', 'feedback']);
   const { language } = useLanguage();
   const languageFontClass = useLanguageFontClass();
   const { push } = useRouter();
@@ -74,6 +76,7 @@ export default function HomeScreen() {
     [i18n.resolvedLanguage],
   );
   const openAnnouncement = useCallback((id: string) => push(`/announcement/${id}` as Href), [push]);
+  const openFeedback = useCallback(() => push('/feedback' as Href), [push]);
 
   const renderAnnouncement = useCallback(
     ({ item }: ListRenderItemInfo<AnnouncementListRow>) => {
@@ -194,6 +197,18 @@ export default function HomeScreen() {
             </Text>
           </View>
           <KnowledgeQuickActions />
+          <PressableScale
+            testID="home-open-feedback"
+            accessibilityLabel={t('feedback:homeAction')}
+            onPress={openFeedback}
+            haptic="tapLight"
+            style={continuousCorners}
+            className="min-h-recommended items-center justify-center rounded-md border border-primary px-lg"
+          >
+            <Text className={`text-md font-bold text-primary ${languageFontClass}`}>
+              {t('feedback:homeAction')}
+            </Text>
+          </PressableScale>
           {isOffline ? (
             <OfflineBanner label={t('offlineBanner')} languageFontClass={languageFontClass} />
           ) : null}

@@ -1803,4 +1803,30 @@ values (
 )
 on conflict (id) do nothing;
 
+-- Typed feedback (RAPP-58) ---------------------------------------------------
+-- A visible in-progress item keeps the player history and staff inbox reachable
+-- after every reset. Feedback prose uses the same field encryption boundary as
+-- production-created submissions.
+insert into public.feedback_submissions (
+  id,
+  org_id,
+  author_id,
+  type,
+  content_encrypted,
+  status,
+  created_at,
+  updated_at
+)
+values (
+  '5eed0000-0000-4000-8017-000000000001',
+  '5eed0000-0000-4000-8000-000000000000',
+  '5eed0000-0000-4000-8000-000000000011',
+  'activity_proposal',
+  public.encrypt_field('M’agradaria una activitat de conversa en català.'),
+  'in_progress',
+  now() - interval '12 hours',
+  now() - interval '2 hours'
+)
+on conflict (id) do nothing;
+
 commit;

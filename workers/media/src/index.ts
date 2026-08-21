@@ -25,6 +25,7 @@ import { parseWorkerEnv, type WorkerConfig } from './env';
 import { buildCorsHeaders, errorResponse } from './http';
 import { buildLocalUploadUrl, handleLocalUpload, LOCAL_UPLOAD_PATH_PREFIX } from './local-upload';
 import {
+  canReadFeedbackObject,
   canReadMediaObject,
   completeMediaItemDeletion,
   prepareMediaItemDeletion,
@@ -194,6 +195,13 @@ const handler: ExportedHandler<Env> = {
           }),
         authorizeGalleryObject: (objectKey) =>
           canReadMediaObject({
+            objectKey,
+            token: readBearerToken(request),
+            supabaseUrl: config.supabaseUrl,
+            supabasePublishableKey: config.supabasePublishableKey,
+          }),
+        authorizeFeedbackObject: (objectKey) =>
+          canReadFeedbackObject({
             objectKey,
             token: readBearerToken(request),
             supabaseUrl: config.supabaseUrl,

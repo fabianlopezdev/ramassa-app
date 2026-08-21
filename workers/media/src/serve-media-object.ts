@@ -27,6 +27,7 @@ export interface MediaObjectBucket {
 export interface ServeMediaObjectDependencies {
   readonly resolveIdentity: (request: Request) => Promise<CallerIdentity>;
   readonly authorizeGalleryObject: (objectKey: string) => Promise<boolean>;
+  readonly authorizeFeedbackObject: (objectKey: string) => Promise<boolean>;
   readonly bucket: MediaObjectBucket;
   readonly corsHeaders?: Record<string, string>;
   readonly onError?: (error: unknown, context: Record<string, unknown>) => void;
@@ -98,6 +99,15 @@ export async function handleServeMediaObject(
       if (!(await dependencies.authorizeGalleryObject(objectKey))) return notFound(corsHeaders);
     } catch (thrown) {
       dependencies.onError?.(thrown, { stage: 'authorize-gallery-object' });
+      return fail('DB-1');
+    }
+  }
+
+  if (objectKey.split('/')[1] === 'feedback') {
+    try {
+      if (!(await dependencies.authorizeFeedbackObject(objectKey))) return notFound(corsHeaders);
+    } catch (thrown) {
+      dependencies.onError?.(thrown, { stage: 'authorize-feedback-object' });
       return fail('DB-1');
     }
   }

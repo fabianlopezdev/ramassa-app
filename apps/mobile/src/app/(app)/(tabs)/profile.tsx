@@ -21,7 +21,7 @@ import { ProfileRow, ProfileSection } from '@/components/profile/profile-section
 import { logout } from '@/lib/auth';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { useRouter } from 'expo-router';
+import { useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, View } from 'react-native';
@@ -46,7 +46,7 @@ const DevMenuEntry = __DEV__
 const LOADING_SECTION_COUNT = 4;
 
 export default function ProfileScreen() {
-  const { t, i18n } = useTranslation(['profile', 'onboarding']);
+  const { t, i18n } = useTranslation(['profile', 'onboarding', 'feedback']);
   const languageFontClass = useLanguageFontClass();
   const { push } = useRouter();
   const { data: profile, isLoading, isError, error, refetch } = useOwnProfile();
@@ -100,6 +100,7 @@ export default function ProfileScreen() {
   const handleRetry = useCallback(() => void refetch(), [refetch]);
   const handleEdit = useCallback(() => push('/profile-edit'), [push]);
   const handleDelete = useCallback(() => push('/profile-delete-data'), [push]);
+  const handleFeedback = useCallback(() => push('/feedback' as Href), [push]);
   const handleLogout = useCallback(() => void logout(), []);
 
   return (
@@ -251,6 +252,18 @@ export default function ProfileScreen() {
 
       <ProfileSection title={t('sectionApp')}>
         <LanguageSwitcher />
+        <PressableScale
+          testID="profile-open-feedback"
+          accessibilityLabel={t('feedback:profileAction')}
+          onPress={handleFeedback}
+          haptic="tapLight"
+          style={continuousCorners}
+          className="min-h-recommended justify-center rounded-md border border-primary px-lg"
+        >
+          <Text className={`text-center text-md font-bold text-primary ${languageFontClass}`}>
+            {t('feedback:profileAction')}
+          </Text>
+        </PressableScale>
       </ProfileSection>
 
       <ProfileSection title={t('sectionData')}>

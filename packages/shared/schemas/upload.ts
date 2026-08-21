@@ -26,6 +26,7 @@ export const UPLOAD_FOLDERS = [
   'announcements',
   'events',
   'forum',
+  'feedback',
   'gallery',
   'knowledge-base',
   'stories',
