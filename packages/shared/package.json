@@ -46,6 +46,7 @@
     "./mentoring": "./mentoring.ts",
     "./feedback": "./feedback.ts",
     "./notifications": "./notifications.ts",
+    "./surveys": "./surveys.ts",
     "./structured-content": "./structured-content/index.ts",
     "./image-compression": "./lib/image-compression.ts"
   },

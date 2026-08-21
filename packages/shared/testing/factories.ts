@@ -80,6 +80,9 @@ export type CustomNotificationGroupMemberRow =
   Database['public']['Tables']['custom_notification_group_members']['Row'];
 export type TargetedNotificationSendRow =
   Database['public']['Tables']['targeted_notification_sends']['Row'];
+export type SurveyRow = Database['public']['Tables']['surveys']['Row'];
+export type SurveyQuestionRow = Database['public']['Tables']['survey_questions']['Row'];
+export type SurveyResponseRow = Database['public']['Tables']['survey_responses']['Row'];
 
 /** One fixed instant for every timestamp, so factory output is byte-stable. */
 const FIXTURE_TIMESTAMP = '2026-01-15T09:00:00+00:00';
@@ -910,6 +913,67 @@ export function buildTargetedNotificationSend(
     recipient_count: 5,
     sent_by: seedUserId(staff.ordinal),
     created_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+export function buildSurvey(overrides: Partial<SurveyRow> = {}): SurveyRow {
+  const staff = STAFF_FIXTURES.find((person) => person.role === 'staff')!;
+  return {
+    id: '5eed0000-0000-4000-8040-000000000001',
+    org_id: SEED_ORGANIZATION_ID,
+    event_id: null,
+    title: toJson({
+      ca: 'La teva opinió',
+      es: 'Tu opinión',
+      en: 'Your feedback',
+      ar: 'رأيك',
+      fa: 'نظر شما',
+    }),
+    published_at: FIXTURE_TIMESTAMP,
+    closes_at: '2026-02-15T09:00:00+00:00',
+    audience_kind: 'all',
+    audience_config: toJson({}),
+    created_by: seedUserId(staff.ordinal),
+    created_at: FIXTURE_TIMESTAMP,
+    updated_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+export function buildSurveyQuestion(overrides: Partial<SurveyQuestionRow> = {}): SurveyQuestionRow {
+  return {
+    id: '5eed0000-0000-4000-8041-000000000001',
+    org_id: SEED_ORGANIZATION_ID,
+    survey_id: buildSurvey().id,
+    prompt: toJson({
+      ca: 'Com ho valores?',
+      es: '¿Cómo lo valoras?',
+      en: 'How do you rate it?',
+      ar: 'كيف تقيمينه؟',
+      fa: 'چه امتیازی می دهید؟',
+    }),
+    question_type: 'rating',
+    options: null,
+    required: true,
+    sort_order: 10,
+    created_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+export function buildSurveyResponse(overrides: Partial<SurveyResponseRow> = {}): SurveyResponseRow {
+  const participant = PARTICIPANT_FIXTURES[0]!;
+  return {
+    id: '5eed0000-0000-4000-8042-000000000001',
+    org_id: SEED_ORGANIZATION_ID,
+    survey_id: buildSurvey().id,
+    player_id: seedUserId(participant.ordinal),
+    answers_encrypted: '\\x656e63727970746564',
+    status: 'completed',
+    completed_at: FIXTURE_TIMESTAMP,
+    created_at: FIXTURE_TIMESTAMP,
+    updated_at: FIXTURE_TIMESTAMP,
     ...overrides,
   };
 }

@@ -154,7 +154,7 @@ function databaseFailure(message: string): never {
   throw new AppError('DB-1', { message });
 }
 
-function audienceArguments(audience: NotificationAudience): {
+export function notificationAudienceArguments(audience: NotificationAudience): {
   kind: NotificationAudienceKind;
   config: Record<string, string>;
 } {
@@ -318,7 +318,7 @@ export async function previewNotificationAudience(
   signal?: AbortSignal,
 ): Promise<readonly NotificationAudienceMember[]> {
   const parsed = notificationAudienceSchema.parse(audience);
-  const { kind, config } = audienceArguments(parsed);
+  const { kind, config } = notificationAudienceArguments(parsed);
   let query = client.rpc('preview_notification_audience', {
     p_audience_kind: kind,
     p_audience_config: config as Json,
@@ -382,7 +382,7 @@ export async function createTargetedNotificationSend(
   input: NotificationSendInput,
 ): Promise<string> {
   const send = notificationSendInputSchema.parse(input);
-  const { kind, config } = audienceArguments(send.audience);
+  const { kind, config } = notificationAudienceArguments(send.audience);
   const { data, error } = await client.rpc('create_targeted_notification_send', {
     p_template_id: send.templateId,
     p_title: send.title,

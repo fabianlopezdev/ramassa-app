@@ -9,7 +9,6 @@ import { useTranslation } from 'react-i18next';
 import type { SupportedLanguage } from '@ramassa/shared/i18n';
 import {
   createTargetedNotificationSend,
-  NOTIFICATION_AUDIENCE_KINDS,
   NOTIFICATION_TEMPLATE_CATEGORIES,
   notificationContentSchema,
   previewNotificationAudience,
@@ -17,7 +16,6 @@ import {
   saveNotificationTemplate,
   type CustomNotificationGroup,
   type NotificationAudience,
-  type NotificationAudienceKind,
   type NotificationAudienceMember,
   type NotificationAudienceOptions,
   type NotificationSendHistory,
@@ -29,6 +27,7 @@ import type {
   TranslationReview,
 } from '@ramassa/shared/translation';
 import { useTranslationReview } from '@ramassa/shared/translation/react';
+import { AudiencePicker } from './audience-picker';
 
 const TARGET_LANGUAGES = ['es', 'en', 'ar', 'fa'] as const;
 
@@ -73,19 +72,6 @@ function reviewedCopy(source: string, review: TranslationReview | undefined) {
   });
 }
 
-function audienceFromSelection(
-  kind: '' | NotificationAudienceKind,
-  value: string,
-): NotificationAudience | null {
-  if (kind === '') return null;
-  if (kind === 'all') return { kind };
-  if (value.length === 0) return null;
-  if (kind === 'interest') return { kind, serviceCategoryId: value };
-  if (kind === 'signup') return { kind, eventId: value };
-  if (kind === 'entity') return { kind, entityName: value };
-  return { kind, customGroupId: value };
-}
-
 function stateKey(state: NotificationSendHistory['state']) {
   if (state === 'awaiting_receipts') return 'stateAwaitingReceipts';
   return `state${state.slice(0, 1).toUpperCase()}${state.slice(1)}`;
@@ -123,8 +109,7 @@ export function NotificationWorkspace({
   const [templateId, setTemplateId] = useState('');
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
-  const [audienceKind, setAudienceKind] = useState<'' | NotificationAudienceKind>('');
-  const [audienceValue, setAudienceValue] = useState('');
+  const [selectedAudience, setSelectedAudience] = useState<NotificationAudience | null>(null);
   const [audience, setAudience] = useState<readonly NotificationAudienceMember[]>([]);
   const [isPreviewing, setIsPreviewing] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -140,10 +125,6 @@ export function NotificationWorkspace({
 
   const titleReview = useTranslationReview();
   const bodyReview = useTranslationReview();
-  const selectedAudience = useMemo(
-    () => audienceFromSelection(audienceKind, audienceValue),
-    [audienceKind, audienceValue],
-  );
   const deviceCount = useMemo(
     () => audience.reduce((total, member) => total + member.deviceCount, 0),
     [audience],
@@ -287,15 +268,6 @@ export function NotificationWorkspace({
     }
   }
 
-  function audienceChoices() {
-    if (audienceKind === 'interest')
-      return options.serviceCategories.map((item) => [item.id, item.name]);
-    if (audienceKind === 'signup') return options.events.map((item) => [item.id, item.title]);
-    if (audienceKind === 'entity') return options.entities.map((name) => [name, name]);
-    if (audienceKind === 'custom_group') return groups.map((group) => [group.id, group.name]);
-    return [];
-  }
-
   const dateFormatter = useMemo(
     () =>
       new Intl.DateTimeFormat(i18n?.resolvedLanguage ?? 'ca', {
@@ -390,47 +362,13 @@ export function NotificationWorkspace({
 
         <fieldset className="grid gap-4 rounded-xl border border-neutral-200 p-4">
           <legend className="px-2 font-semibold">{t('audienceTitle')}</legend>
-          <label className="grid gap-2 text-sm font-medium">
-            {t('audienceKind')}
-            <select
-              id="notification-audience-kind"
-              name="notification-audience-kind"
-              data-testid="notification-audience-kind"
-              value={audienceKind}
-              onChange={(event) => {
-                setAudienceKind(event.target.value as '' | NotificationAudienceKind);
-                setAudienceValue('');
-              }}
-              className="min-h-11 rounded-lg border border-neutral-300 bg-white px-3"
-            >
-              <option value="">{t('selectOption')}</option>
-              {NOTIFICATION_AUDIENCE_KINDS.map((kind) => (
-                <option key={kind} value={kind}>
-                  {t(
-                    `audience${kind === 'custom_group' ? 'CustomGroup' : kind.slice(0, 1).toUpperCase() + kind.slice(1)}`,
-                  )}
-                </option>
-              ))}
-            </select>
-          </label>
-          {audienceKind !== '' && audienceKind !== 'all' ? (
-            <select
-              id="notification-audience-value"
-              name="notification-audience-value"
-              aria-label={t('audienceTitle')}
-              value={audienceValue}
-              onChange={(event) => setAudienceValue(event.target.value)}
-              className="min-h-11 rounded-lg border border-neutral-300 bg-white px-3"
-              data-testid="notification-audience-value"
-            >
-              <option value="">{t('selectOption')}</option>
-              {audienceChoices().map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          ) : null}
+          <AudiencePicker
+            idPrefix="notification"
+            audience={selectedAudience}
+            groups={groups}
+            options={options}
+            onChange={setSelectedAudience}
+          />
           <div
             data-testid="notification-confirmation"
             data-recipient-count={audience.length}

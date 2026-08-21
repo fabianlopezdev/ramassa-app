@@ -13,6 +13,7 @@ import {
   BellRing,
   CalendarCheck,
   CalendarDays,
+  ClipboardList,
   FileText,
   HeartHandshake,
   Inbox,
@@ -41,6 +42,7 @@ export const STAFF_NAV_ITEMS = [
   { to: '/mentoring', icon: HeartHandshake, labelKey: 'nav:staff.mentoring' },
   { to: '/feedback', icon: Inbox, labelKey: 'nav:staff.feedback' },
   { to: '/notifications', icon: BellRing, labelKey: 'nav:staff.notifications' },
+  { to: '/surveys', icon: ClipboardList, labelKey: 'nav:staff.surveys' },
   { to: '/settings', icon: Settings, labelKey: 'nav:staff.settings' },
 ] as const satisfies readonly NavItem[];
 

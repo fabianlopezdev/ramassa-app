@@ -1907,4 +1907,111 @@ values (
 )
 on conflict (id) do nothing;
 
+-- Surveys and attributed encrypted responses (RAPP-60) -----------------------
+-- The open fixture exercises every visual response type in all supported languages.
+insert into public.surveys (
+  id, org_id, event_id, title, published_at, closes_at,
+  audience_kind, audience_config, created_by, created_at, updated_at
+)
+values
+  (
+    '5eed0000-0000-4000-8040-000000000001',
+    '5eed0000-0000-4000-8000-000000000000',
+    null,
+    '{"ca":"La teva opinió sobre la formació","es":"Tu opinión sobre la formación","en":"Your training feedback","ar":"رأيك في التدريب","fa":"نظر شما درباره آموزش"}'::jsonb,
+    now() - interval '1 day',
+    now() + interval '30 days',
+    'all',
+    '{}'::jsonb,
+    '5eed0000-0000-4000-8000-000000000001',
+    now() - interval '1 day',
+    now() - interval '1 day'
+  ),
+  (
+    '5eed0000-0000-4000-8040-000000000002',
+    '5eed0000-0000-4000-8000-000000000000',
+    null,
+    '{"ca":"Enquesta programada","es":"Encuesta programada","en":"Scheduled survey","ar":"استبيان مجدول","fa":"نظرسنجی برنامه ریزی شده"}'::jsonb,
+    now() + interval '2 days',
+    now() + interval '12 days',
+    'all',
+    '{}'::jsonb,
+    '5eed0000-0000-4000-8000-000000000001',
+    now(),
+    now()
+  ),
+  (
+    '5eed0000-0000-4000-8040-000000000003',
+    '5eed0000-0000-4000-8000-000000000000',
+    null,
+    '{"ca":"Enquesta tancada","es":"Encuesta cerrada","en":"Closed survey","ar":"استبيان مغلق","fa":"نظرسنجی بسته"}'::jsonb,
+    now() - interval '12 days',
+    now() - interval '2 days',
+    'all',
+    '{}'::jsonb,
+    '5eed0000-0000-4000-8000-000000000001',
+    now() - interval '12 days',
+    now() - interval '2 days'
+  )
+on conflict (id) do nothing;
+
+insert into public.survey_questions (
+  id, org_id, survey_id, prompt, question_type, options, required, sort_order
+)
+values
+  (
+    '5eed0000-0000-4000-8041-000000000001',
+    '5eed0000-0000-4000-8000-000000000000',
+    '5eed0000-0000-4000-8040-000000000001',
+    '{"ca":"Com valores la formació?","es":"¿Cómo valoras la formación?","en":"How do you rate the training?","ar":"كيف تقيمين التدريب؟","fa":"به آموزش چه امتیازی می دهید؟"}'::jsonb,
+    'rating', null, true, 10
+  ),
+  (
+    '5eed0000-0000-4000-8041-000000000002',
+    '5eed0000-0000-4000-8000-000000000000',
+    '5eed0000-0000-4000-8040-000000000001',
+    '{"ca":"Què t’ha ajudat més?","es":"¿Qué te ha ayudado más?","en":"What helped you most?","ar":"ما الذي ساعدك أكثر؟","fa":"چه چیزی بیشتر به شما کمک کرد؟"}'::jsonb,
+    'multiple_choice',
+    '[{"id":"training","label":{"ca":"Formació","es":"Formación","en":"Training","ar":"التدريب","fa":"آموزش"}},{"id":"support","label":{"ca":"Acompanyament","es":"Acompañamiento","en":"Support","ar":"الدعم","fa":"پشتیبانی"}}]'::jsonb,
+    true, 20
+  ),
+  (
+    '5eed0000-0000-4000-8041-000000000003',
+    '5eed0000-0000-4000-8000-000000000000',
+    '5eed0000-0000-4000-8040-000000000001',
+    '{"ca":"Recomanaries aquesta activitat?","es":"¿Recomendarías esta actividad?","en":"Would you recommend this activity?","ar":"هل توصي بهذا النشاط؟","fa":"آیا این فعالیت را پیشنهاد می کنید؟"}'::jsonb,
+    'yes_no', null, true, 30
+  ),
+  (
+    '5eed0000-0000-4000-8041-000000000004',
+    '5eed0000-0000-4000-8000-000000000000',
+    '5eed0000-0000-4000-8040-000000000001',
+    '{"ca":"Vols afegir alguna cosa?","es":"¿Quieres añadir algo?","en":"Would you like to add anything?","ar":"هل تريدين إضافة شيء؟","fa":"آیا می خواهید چیزی اضافه کنید؟"}'::jsonb,
+    'free_text', null, false, 40
+  )
+on conflict (id) do nothing;
+
+insert into public.survey_responses (
+  id, org_id, survey_id, player_id, answers_encrypted,
+  status, completed_at, created_at, updated_at
+)
+values
+  (
+    '5eed0000-0000-4000-8042-000000000001',
+    '5eed0000-0000-4000-8000-000000000000',
+    '5eed0000-0000-4000-8040-000000000001',
+    '5eed0000-0000-4000-8000-000000000004',
+    public.encrypt_field('{"5eed0000-0000-4000-8041-000000000001":5,"5eed0000-0000-4000-8041-000000000002":"training","5eed0000-0000-4000-8041-000000000003":true,"5eed0000-0000-4000-8041-000000000004":"تجربة ممتازة"}'),
+    'completed', now() - interval '3 hours', now() - interval '4 hours', now() - interval '3 hours'
+  ),
+  (
+    '5eed0000-0000-4000-8042-000000000002',
+    '5eed0000-0000-4000-8000-000000000000',
+    '5eed0000-0000-4000-8040-000000000001',
+    '5eed0000-0000-4000-8000-000000000013',
+    public.encrypt_field('{"5eed0000-0000-4000-8041-000000000001":3,"5eed0000-0000-4000-8041-000000000002":"support","5eed0000-0000-4000-8041-000000000003":false,"5eed0000-0000-4000-8041-000000000004":"Molt útil"}'),
+    'completed', now() - interval '2 hours', now() - interval '3 hours', now() - interval '2 hours'
+  )
+on conflict (id) do nothing;
+
 commit;

@@ -16,6 +16,7 @@ import {
 import { KnowledgeQuickActions } from '@/components/knowledge/knowledge-quick-actions';
 import { PageWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
+import { SurveyPrompt } from '@/components/surveys/survey-prompt';
 import { usePlayerAnnouncements } from '@/lib/announcement-feed';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { isNetworkStateOnline } from '@/lib/network-status';
@@ -197,6 +198,7 @@ export default function HomeScreen() {
             </Text>
           </View>
           <KnowledgeQuickActions />
+          <SurveyPrompt />
           <PressableScale
             testID="home-open-feedback"
             accessibilityLabel={t('feedback:homeAction')}

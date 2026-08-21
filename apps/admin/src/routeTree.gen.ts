@@ -14,6 +14,7 @@ import { Route as StaffRouteImport } from './routes/_staff'
 import { Route as EntityRouteImport } from './routes/_entity'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
+import { Route as StaffSurveysRouteImport } from './routes/_staff.surveys'
 import { Route as StaffSettingsRouteImport } from './routes/_staff.settings'
 import { Route as StaffNotificationsRouteImport } from './routes/_staff.notifications'
 import { Route as StaffMessagesRouteImport } from './routes/_staff.messages'
@@ -84,6 +85,11 @@ const AuthCallbackRoute = AuthCallbackRouteImport.update({
   id: '/auth/callback',
   path: '/auth/callback',
   getParentRoute: () => rootRouteImport,
+} as any)
+const StaffSurveysRoute = StaffSurveysRouteImport.update({
+  id: '/surveys',
+  path: '/surveys',
+  getParentRoute: () => StaffRoute,
 } as any)
 const StaffSettingsRoute = StaffSettingsRouteImport.update({
   id: '/settings',
@@ -357,6 +363,7 @@ export interface FileRoutesByFullPath {
   '/messages': typeof StaffMessagesRouteWithChildren
   '/notifications': typeof StaffNotificationsRoute
   '/settings': typeof StaffSettingsRoute
+  '/surveys': typeof StaffSurveysRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/portal/events': typeof EntityPortalEventsRoute
   '/portal/messages': typeof EntityPortalMessagesRoute
@@ -406,6 +413,7 @@ export interface FileRoutesByTo {
   '/mentoring': typeof StaffMentoringRoute
   '/notifications': typeof StaffNotificationsRoute
   '/settings': typeof StaffSettingsRoute
+  '/surveys': typeof StaffSurveysRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/portal/events': typeof EntityPortalEventsRoute
   '/portal/messages': typeof EntityPortalMessagesRoute
@@ -459,6 +467,7 @@ export interface FileRoutesById {
   '/_staff/messages': typeof StaffMessagesRouteWithChildren
   '/_staff/notifications': typeof StaffNotificationsRoute
   '/_staff/settings': typeof StaffSettingsRoute
+  '/_staff/surveys': typeof StaffSurveysRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/_entity/portal/events': typeof EntityPortalEventsRoute
   '/_entity/portal/messages': typeof EntityPortalMessagesRoute
@@ -513,6 +522,7 @@ export interface FileRouteTypes {
     | '/messages'
     | '/notifications'
     | '/settings'
+    | '/surveys'
     | '/auth/callback'
     | '/portal/events'
     | '/portal/messages'
@@ -562,6 +572,7 @@ export interface FileRouteTypes {
     | '/mentoring'
     | '/notifications'
     | '/settings'
+    | '/surveys'
     | '/auth/callback'
     | '/portal/events'
     | '/portal/messages'
@@ -614,6 +625,7 @@ export interface FileRouteTypes {
     | '/_staff/messages'
     | '/_staff/notifications'
     | '/_staff/settings'
+    | '/_staff/surveys'
     | '/auth/callback'
     | '/_entity/portal/events'
     | '/_entity/portal/messages'
@@ -699,6 +711,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/auth/callback'
       preLoaderRoute: typeof AuthCallbackRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_staff/surveys': {
+      id: '/_staff/surveys'
+      path: '/surveys'
+      fullPath: '/surveys'
+      preLoaderRoute: typeof StaffSurveysRouteImport
+      parentRoute: typeof StaffRoute
     }
     '/_staff/settings': {
       id: '/_staff/settings'
@@ -1167,6 +1186,7 @@ interface StaffRouteChildren {
   StaffMessagesRoute: typeof StaffMessagesRouteWithChildren
   StaffNotificationsRoute: typeof StaffNotificationsRoute
   StaffSettingsRoute: typeof StaffSettingsRoute
+  StaffSurveysRoute: typeof StaffSurveysRoute
   StaffParticipantsParticipantIdRoute: typeof StaffParticipantsParticipantIdRoute
   StaffParticipantsDeletionRequestsRoute: typeof StaffParticipantsDeletionRequestsRoute
   StaffParticipantsInvitesRoute: typeof StaffParticipantsInvitesRoute
@@ -1185,6 +1205,7 @@ const StaffRouteChildren: StaffRouteChildren = {
   StaffMessagesRoute: StaffMessagesRouteWithChildren,
   StaffNotificationsRoute: StaffNotificationsRoute,
   StaffSettingsRoute: StaffSettingsRoute,
+  StaffSurveysRoute: StaffSurveysRoute,
   StaffParticipantsParticipantIdRoute: StaffParticipantsParticipantIdRoute,
   StaffParticipantsDeletionRequestsRoute:
     StaffParticipantsDeletionRequestsRoute,

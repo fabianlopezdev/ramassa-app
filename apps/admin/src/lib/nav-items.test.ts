@@ -39,6 +39,10 @@ test('staff can reach targeted notifications from primary navigation', () => {
   expect(STAFF_NAV_ITEMS.some((item) => item.to === '/notifications')).toBe(true);
 });
 
+test('staff can reach surveys from primary navigation', () => {
+  expect(STAFF_NAV_ITEMS.some((item) => item.to === '/surveys')).toBe(true);
+});
+
 test('the entity area stays namespaced under /portal', () => {
   for (const item of ENTITY_NAV_ITEMS) {
     expect(item.to === '/portal' || item.to.startsWith('/portal/')).toBe(true);

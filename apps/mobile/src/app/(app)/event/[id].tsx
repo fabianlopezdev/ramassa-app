@@ -5,6 +5,7 @@ import { EventDetailLine } from '@/components/events/event-card';
 import { PageWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { SuccessPop } from '@/components/motion/success-pop';
+import { SurveyPrompt } from '@/components/surveys/survey-prompt';
 import { composeContinuousViewStyle, continuousCorners } from '@/lib/continuous-corners';
 import { isEventSignupActionDisabled } from '@/lib/event-signup-policy';
 import { playErrorHaptic } from '@/lib/haptics/haptics';
@@ -300,6 +301,9 @@ export default function EventDetailScreen() {
                 </SuccessPop>
               ) : null}
             </View>
+            {row.occurrence_ends_at !== null && Date.parse(row.occurrence_ends_at) <= Date.now() ? (
+              <SurveyPrompt eventId={row.event.id} />
+            ) : null}
           </View>
         )}
       </PageWidth>

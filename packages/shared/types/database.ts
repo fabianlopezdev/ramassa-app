@@ -2737,6 +2737,179 @@ export type Database = {
           },
         ];
       };
+      survey_questions: {
+        Row: {
+          created_at: string;
+          id: string;
+          options: Json | null;
+          org_id: string;
+          prompt: Json;
+          question_type: string;
+          required: boolean;
+          sort_order: number;
+          survey_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          options?: Json | null;
+          org_id: string;
+          prompt: Json;
+          question_type: string;
+          required?: boolean;
+          sort_order: number;
+          survey_id: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          options?: Json | null;
+          org_id?: string;
+          prompt?: Json;
+          question_type?: string;
+          required?: boolean;
+          sort_order?: number;
+          survey_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'survey_questions_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'survey_questions_survey_tenant_fkey';
+            columns: ['org_id', 'survey_id'];
+            isOneToOne: false;
+            referencedRelation: 'surveys';
+            referencedColumns: ['org_id', 'id'];
+          },
+        ];
+      };
+      survey_responses: {
+        Row: {
+          answers_encrypted: string;
+          completed_at: string | null;
+          created_at: string;
+          id: string;
+          org_id: string;
+          player_id: string;
+          status: string;
+          survey_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          answers_encrypted: string;
+          completed_at?: string | null;
+          created_at?: string;
+          id?: string;
+          org_id: string;
+          player_id: string;
+          status?: string;
+          survey_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          answers_encrypted?: string;
+          completed_at?: string | null;
+          created_at?: string;
+          id?: string;
+          org_id?: string;
+          player_id?: string;
+          status?: string;
+          survey_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'survey_responses_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'survey_responses_player_tenant_fkey';
+            columns: ['org_id', 'player_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['org_id', 'id'];
+          },
+          {
+            foreignKeyName: 'survey_responses_survey_tenant_fkey';
+            columns: ['org_id', 'survey_id'];
+            isOneToOne: false;
+            referencedRelation: 'surveys';
+            referencedColumns: ['org_id', 'id'];
+          },
+        ];
+      };
+      surveys: {
+        Row: {
+          audience_config: Json;
+          audience_kind: string;
+          closes_at: string | null;
+          created_at: string;
+          created_by: string | null;
+          event_id: string | null;
+          id: string;
+          org_id: string;
+          published_at: string;
+          title: Json;
+          updated_at: string;
+        };
+        Insert: {
+          audience_config?: Json;
+          audience_kind: string;
+          closes_at?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          event_id?: string | null;
+          id?: string;
+          org_id: string;
+          published_at: string;
+          title: Json;
+          updated_at?: string;
+        };
+        Update: {
+          audience_config?: Json;
+          audience_kind?: string;
+          closes_at?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          event_id?: string | null;
+          id?: string;
+          org_id?: string;
+          published_at?: string;
+          title?: Json;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'surveys_creator_tenant_fkey';
+            columns: ['org_id', 'created_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['org_id', 'id'];
+          },
+          {
+            foreignKeyName: 'surveys_event_tenant_fkey';
+            columns: ['org_id', 'event_id'];
+            isOneToOne: false;
+            referencedRelation: 'events';
+            referencedColumns: ['org_id', 'id'];
+          },
+          {
+            foreignKeyName: 'surveys_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       targeted_notification_sends: {
         Row: {
           audience_config: Json;
@@ -3323,6 +3496,16 @@ export type Database = {
           provider_name: string;
         }[];
       };
+      get_own_survey_response: {
+        Args: { p_survey_id: string };
+        Returns: {
+          answers: Json;
+          completed_at: string;
+          id: string;
+          status: string;
+          updated_at: string;
+        }[];
+      };
       get_participant_profile: {
         Args: { participant_id: string };
         Returns: {
@@ -3610,6 +3793,19 @@ export type Database = {
           updated_at: string;
         }[];
       };
+      list_player_surveys: {
+        Args: never;
+        Returns: {
+          closes_at: string;
+          completed_at: string;
+          event_id: string;
+          id: string;
+          published_at: string;
+          questions: Json;
+          response_status: string;
+          title: Json;
+        }[];
+      };
       list_referral_updates: {
         Args: { p_referral_id: string };
         Returns: {
@@ -3701,6 +3897,34 @@ export type Database = {
           referred_profile_id: string;
           status: string;
           updated_at: string;
+        }[];
+      };
+      list_survey_responses: {
+        Args: { p_survey_id: string };
+        Returns: {
+          answers: Json;
+          completed_at: string;
+          id: string;
+          language: string;
+          player_id: string;
+          player_name: string;
+          status: string;
+          updated_at: string;
+        }[];
+      };
+      list_surveys: {
+        Args: never;
+        Returns: {
+          audience_config: Json;
+          audience_kind: string;
+          closes_at: string;
+          completed_count: number;
+          event_id: string;
+          id: string;
+          published_at: string;
+          questions: Json;
+          response_count: number;
+          title: Json;
         }[];
       };
       mark_attendance: {
@@ -3865,6 +4089,23 @@ export type Database = {
           p_name: string;
           p_title: Json;
         };
+        Returns: string;
+      };
+      save_survey: {
+        Args: {
+          p_audience_config: Json;
+          p_audience_kind: string;
+          p_closes_at: string;
+          p_event_id: string;
+          p_id: string;
+          p_published_at: string;
+          p_questions: Json;
+          p_title: Json;
+        };
+        Returns: string;
+      };
+      save_survey_response: {
+        Args: { p_answers: Json; p_complete?: boolean; p_survey_id: string };
         Returns: string;
       };
       schedule_mentoring_request: {
