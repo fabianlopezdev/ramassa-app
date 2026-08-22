@@ -250,7 +250,7 @@ function MessageThreadView({
     [fontClass, t, title, user?.id],
   );
 
-  if (isPending) {
+  if (isPending && isOnline) {
     return (
       <SafeAreaView style={screenStyle} edges={['top', 'left', 'right']}>
         <AnnouncementFeedSkeleton accessibilityLabel={t('loadingConversation')} />

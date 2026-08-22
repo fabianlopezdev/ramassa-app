@@ -45,6 +45,15 @@ describe('RAPP-65 player hardening contract', () => {
     expect(messageThread).not.toContain('<ActivityIndicator');
   });
 
+  test('an offline cold-started private thread resolves to its translated empty state', async () => {
+    const messageThread = await readMobileSource('components/messaging/message-thread.tsx');
+
+    expect(messageThread).toContain('if (isPending && isOnline)');
+    expect(messageThread).toContain("t('offline')");
+    expect(messageThread).toContain("title={t('emptyTitle')}");
+    expect(messageThread).toContain("body={t('emptyBody')}");
+  });
+
   test('forum reply failures are taxonomy-mapped instead of presented as an empty thread', async () => {
     const forumDetail = await readMobileSource('app/(app)/forum/[id].tsx');
 
