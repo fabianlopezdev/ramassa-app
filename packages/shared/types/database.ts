@@ -3300,6 +3300,18 @@ export type Database = {
         Returns: number;
       };
       create_collaborating_entity: { Args: { p_name: string }; Returns: string };
+      create_data_export: {
+        Args: {
+          p_confirmed?: boolean;
+          p_dataset: string;
+          p_end_date?: string;
+          p_format: string;
+          p_reason?: string;
+          p_scope: string;
+          p_start_date?: string;
+        };
+        Returns: Json;
+      };
       create_entity_referral: { Args: { p_payload: Json }; Returns: string };
       create_feedback_submission: {
         Args: { p_content: string; p_image_url: string; p_type: string };
@@ -3406,6 +3418,20 @@ export type Database = {
           p_target_type: string;
         };
         Returns: string;
+      };
+      get_audit_log_page: {
+        Args: {
+          p_action?: string;
+          p_actor_id?: string;
+          p_cursor_created_at?: string;
+          p_cursor_id?: string;
+          p_end_date?: string;
+          p_page_size?: number;
+          p_start_date?: string;
+          p_target_id?: string;
+          p_target_type?: string;
+        };
+        Returns: Json;
       };
       get_entity_impact_summary: {
         Args: never;

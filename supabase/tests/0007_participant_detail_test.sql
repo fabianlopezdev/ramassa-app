@@ -112,11 +112,13 @@ select is(
   'and the row says what kind of record was read'
 );
 
--- The audit is append-only. Neither of these raises (RLS filters rather than
--- refusing), and neither changes anything, which is the whole guarantee.
-select lives_ok(
+-- The audit is append-only. RAPP-63 removes the table privileges as well as
+-- keeping update and delete policies absent, so both attempts are refused.
+select throws_ok(
   $$ delete from public.audit_log where target_id = '5eed0000-0000-4000-8000-000000000026' $$,
-  'deleting from the audit log raises nothing'
+  '42501',
+  'permission denied for table audit_log',
+  'deleting from the audit log is denied at the privilege boundary'
 );
 
 select is(
@@ -127,10 +129,12 @@ select is(
   '...and removes nothing: there is no DELETE policy on the audit log'
 );
 
-select lives_ok(
+select throws_ok(
   $$ update public.audit_log set action = 'nothing.happened'
      where target_id = '5eed0000-0000-4000-8000-000000000026' $$,
-  'updating the audit log raises nothing'
+  '42501',
+  'permission denied for table audit_log',
+  'updating the audit log is denied at the privilege boundary'
 );
 
 select is_empty(

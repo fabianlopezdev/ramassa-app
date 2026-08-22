@@ -21,6 +21,7 @@ import { Route as StaffMessagesRouteImport } from './routes/_staff.messages'
 import { Route as StaffMentoringRouteImport } from './routes/_staff.mentoring'
 import { Route as StaffForumRouteImport } from './routes/_staff.forum'
 import { Route as StaffFeedbackRouteImport } from './routes/_staff.feedback'
+import { Route as StaffDataRouteImport } from './routes/_staff.data'
 import { Route as StaffDashboardRouteImport } from './routes/_staff.dashboard'
 import { Route as StaffContentRouteImport } from './routes/_staff.content'
 import { Route as StaffAttendanceRouteImport } from './routes/_staff.attendance'
@@ -119,6 +120,11 @@ const StaffForumRoute = StaffForumRouteImport.update({
 const StaffFeedbackRoute = StaffFeedbackRouteImport.update({
   id: '/feedback',
   path: '/feedback',
+  getParentRoute: () => StaffRoute,
+} as any)
+const StaffDataRoute = StaffDataRouteImport.update({
+  id: '/data',
+  path: '/data',
   getParentRoute: () => StaffRoute,
 } as any)
 const StaffDashboardRoute = StaffDashboardRouteImport.update({
@@ -357,6 +363,7 @@ export interface FileRoutesByFullPath {
   '/attendance': typeof StaffAttendanceRouteWithChildren
   '/content': typeof StaffContentRouteWithChildren
   '/dashboard': typeof StaffDashboardRoute
+  '/data': typeof StaffDataRoute
   '/feedback': typeof StaffFeedbackRoute
   '/forum': typeof StaffForumRoute
   '/mentoring': typeof StaffMentoringRoute
@@ -408,6 +415,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/dashboard': typeof StaffDashboardRoute
+  '/data': typeof StaffDataRoute
   '/feedback': typeof StaffFeedbackRoute
   '/forum': typeof StaffForumRoute
   '/mentoring': typeof StaffMentoringRoute
@@ -461,6 +469,7 @@ export interface FileRoutesById {
   '/_staff/attendance': typeof StaffAttendanceRouteWithChildren
   '/_staff/content': typeof StaffContentRouteWithChildren
   '/_staff/dashboard': typeof StaffDashboardRoute
+  '/_staff/data': typeof StaffDataRoute
   '/_staff/feedback': typeof StaffFeedbackRoute
   '/_staff/forum': typeof StaffForumRoute
   '/_staff/mentoring': typeof StaffMentoringRoute
@@ -516,6 +525,7 @@ export interface FileRouteTypes {
     | '/attendance'
     | '/content'
     | '/dashboard'
+    | '/data'
     | '/feedback'
     | '/forum'
     | '/mentoring'
@@ -567,6 +577,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/dashboard'
+    | '/data'
     | '/feedback'
     | '/forum'
     | '/mentoring'
@@ -619,6 +630,7 @@ export interface FileRouteTypes {
     | '/_staff/attendance'
     | '/_staff/content'
     | '/_staff/dashboard'
+    | '/_staff/data'
     | '/_staff/feedback'
     | '/_staff/forum'
     | '/_staff/mentoring'
@@ -759,6 +771,13 @@ declare module '@tanstack/react-router' {
       path: '/feedback'
       fullPath: '/feedback'
       preLoaderRoute: typeof StaffFeedbackRouteImport
+      parentRoute: typeof StaffRoute
+    }
+    '/_staff/data': {
+      id: '/_staff/data'
+      path: '/data'
+      fullPath: '/data'
+      preLoaderRoute: typeof StaffDataRouteImport
       parentRoute: typeof StaffRoute
     }
     '/_staff/dashboard': {
@@ -1180,6 +1199,7 @@ interface StaffRouteChildren {
   StaffAttendanceRoute: typeof StaffAttendanceRouteWithChildren
   StaffContentRoute: typeof StaffContentRouteWithChildren
   StaffDashboardRoute: typeof StaffDashboardRoute
+  StaffDataRoute: typeof StaffDataRoute
   StaffFeedbackRoute: typeof StaffFeedbackRoute
   StaffForumRoute: typeof StaffForumRoute
   StaffMentoringRoute: typeof StaffMentoringRoute
@@ -1199,6 +1219,7 @@ const StaffRouteChildren: StaffRouteChildren = {
   StaffAttendanceRoute: StaffAttendanceRouteWithChildren,
   StaffContentRoute: StaffContentRouteWithChildren,
   StaffDashboardRoute: StaffDashboardRoute,
+  StaffDataRoute: StaffDataRoute,
   StaffFeedbackRoute: StaffFeedbackRoute,
   StaffForumRoute: StaffForumRoute,
   StaffMentoringRoute: StaffMentoringRoute,

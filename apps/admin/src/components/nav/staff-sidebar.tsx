@@ -14,6 +14,7 @@ import { useUnreadMessageCount } from '@/lib/messaging';
 import { STAFF_NAV_ITEMS } from '@/lib/nav-items';
 import { Link, useLocation } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '@ramassa/shared/auth';
 import type { LayoutDirection } from '@ramassa/shared/i18n';
 
 export function sidebarSideForDirection(direction: LayoutDirection): 'left' | 'right' {
@@ -33,6 +34,10 @@ export function StaffSidebar() {
   const { t, i18n } = useTranslation(['nav', 'common']);
   const pathname = useLocation({ select: (location) => location.pathname });
   const unread = useUnreadMessageCount();
+  const { role } = useAuth();
+  const visibleItems = STAFF_NAV_ITEMS.filter(
+    (item) => !('adminOnly' in item) || !item.adminOnly || role === 'admin',
+  );
 
   return (
     <Sidebar collapsible="icon" side={sidebarSideForDirection(i18n.dir())}>
@@ -46,7 +51,7 @@ export function StaffSidebar() {
         <SidebarGroup role="navigation" aria-label={t('nav:a11y.staffSidebar')}>
           <SidebarGroupContent>
             <SidebarMenu>
-              {STAFF_NAV_ITEMS.map((item) => {
+              {visibleItems.map((item) => {
                 const label = t(item.labelKey);
                 const isActive = pathname === item.to || pathname.startsWith(`${item.to}/`);
                 const Icon = item.icon;

@@ -14,6 +14,7 @@ import {
   CalendarCheck,
   CalendarDays,
   ClipboardList,
+  Database,
   FileText,
   HeartHandshake,
   Inbox,
@@ -30,6 +31,7 @@ export interface NavItem {
   readonly to: string;
   readonly icon: LucideIcon;
   readonly labelKey: string;
+  readonly adminOnly?: boolean;
 }
 
 export const STAFF_NAV_ITEMS = [
@@ -43,6 +45,7 @@ export const STAFF_NAV_ITEMS = [
   { to: '/feedback', icon: Inbox, labelKey: 'nav:staff.feedback' },
   { to: '/notifications', icon: BellRing, labelKey: 'nav:staff.notifications' },
   { to: '/surveys', icon: ClipboardList, labelKey: 'nav:staff.surveys' },
+  { to: '/data', icon: Database, labelKey: 'nav:staff.data', adminOnly: true },
   { to: '/settings', icon: Settings, labelKey: 'nav:staff.settings' },
 ] as const satisfies readonly NavItem[];
 
