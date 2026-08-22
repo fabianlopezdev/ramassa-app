@@ -176,6 +176,17 @@ async function runSuiteOn(
   let hasRunSurveyLocaleJourney = false;
   try {
     for (const flow of flows) {
+      if (platform === 'android') {
+        // Offline flows use real airplane mode. A failed assertion can stop a
+        // flow before its second toggle, and the AVD persists that state across
+        // app clears and emulator restarts. Normalize connectivity before every
+        // flow so one failure cannot turn the rest of the suite into skeleton
+        // timeouts that name unrelated screens.
+        await runOrThrow(
+          ['adb', '-s', device, 'shell', 'cmd', 'connectivity', 'airplane-mode', 'disable'],
+          { cwd: repoRoot },
+        );
+      }
       const isSurveyLocaleJourney = flow.startsWith('phase8-survey-');
       if (isSurveyLocaleJourney && hasRunSurveyLocaleJourney) {
         // Survey completion is intentionally one-shot per player. Re-seed before

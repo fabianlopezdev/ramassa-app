@@ -25,6 +25,7 @@ test.describe.configure({ mode: 'serial' });
 const amina = PARTICIPANT_FIXTURES.find((fixture) => fixture.email.startsWith('amina.'))!;
 const oksana = PARTICIPANT_FIXTURES.find((fixture) => fixture.email.startsWith('oksana.'))!;
 const maria = PARTICIPANT_FIXTURES.find((fixture) => fixture.email.startsWith('maria.'))!;
+const createdPushTokenIds: string[] = [];
 
 function client(): SupabaseClient<Database> {
   return createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
@@ -77,6 +78,13 @@ async function setBooleanFilter(
 
 test.beforeAll(async () => {
   await Promise.all([ownConversation(oksana.email), ownConversation(maria.email)]);
+});
+
+test.afterAll(() => {
+  if (createdPushTokenIds.length === 0) return;
+  queryDatabase(
+    `delete from public.push_tokens where id in (${createdPushTokenIds.map(sqlLiteral).join(',')})`,
+  );
 });
 
 test('staff list is unread first and its human filters match the database', async ({ page }) => {
@@ -252,6 +260,7 @@ test('assignment, reply, push receipt and participant timeline complete one staf
   await page.getByTestId(`conversation-row-${conversation.id}`).click();
 
   const pushTokenId = crypto.randomUUID();
+  createdPushTokenIds.push(pushTokenId);
   queryDatabase(`
     insert into public.push_tokens (id, user_id, token, platform, device_id)
     values (

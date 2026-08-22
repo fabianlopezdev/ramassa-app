@@ -70,13 +70,17 @@ test.describe('announcement lifecycle', () => {
     await expect(page).toHaveURL(/\/content\/announcements(?:\?.*)?$/, { timeout: 20_000 });
     const id = remember(title);
 
-    expect(
-      queryDatabase(
-        `select status || '|' || (select count(*) from jsonb_object_keys(a.title)) || '|' ||
-                (select count(*) from jsonb_object_keys(a.body)) || '|' || (published_at <= now())::text
-           from public.announcements a where id = '${id}'`,
-      ),
-    ).toBe('published|5|5|true');
+    await expect
+      .poll(
+        () =>
+          queryDatabase(
+            `select status || '|' || (select count(*) from jsonb_object_keys(a.title)) || '|' ||
+                    (select count(*) from jsonb_object_keys(a.body)) || '|' || (published_at <= now())::text
+               from public.announcements a where id = '${id}'`,
+          ),
+        { timeout: 15_000 },
+      )
+      .toBe('published|5|5|true');
   });
 
   test('scheduling stores a future publication time and filters by lifecycle', async ({ page }) => {

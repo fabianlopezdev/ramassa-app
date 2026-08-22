@@ -21,6 +21,10 @@ env:
     commands:
       - tapOn:
           id: player-tab-community
+- extendedWaitUntil:
+    visible:
+      id: forum-board
+    timeout: 60000
 - repeat:
     times: 12
     while:

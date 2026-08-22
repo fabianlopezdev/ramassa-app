@@ -18,6 +18,7 @@ import {
 } from './session';
 
 test.setTimeout(120_000);
+const runTag = `rapp47-${Date.now().toString(36)}`;
 
 function client() {
   return createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
@@ -44,7 +45,7 @@ test('player and browser staff exchange realtime messages with unread badges', a
   const playerMessage = await sendConversationMessage(player, {
     id: crypto.randomUUID(),
     conversationId: conversation.id,
-    content: 'rapp47-browser-realtime-player',
+    content: `${runTag}-player`,
   });
   await expect(page.getByTestId('staff-message-badge')).toBeVisible({ timeout: 20_000 });
 
@@ -95,7 +96,7 @@ test('player and browser staff exchange realtime messages with unread badges', a
   );
   try {
     await subscribed;
-    await page.getByTestId('message-composer').fill('rapp47-browser-realtime-staff');
+    await page.getByTestId('message-composer').fill(`${runTag}-staff`);
     await page.getByTestId('message-send').click();
     await Promise.race([
       reply,

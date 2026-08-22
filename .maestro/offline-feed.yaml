@@ -17,6 +17,17 @@ env:
 - extendedWaitUntil:
     visible: '.*${HOME_TITLE}.*'
     timeout: 120000
+- repeat:
+    times: 8
+    while:
+      notVisible: '.*${PINNED}.*'
+    commands:
+      - swipe:
+          start: 50%, 70%
+          end: 50%, 45%
+          duration: 700
+      - waitForAnimationToEnd:
+          timeout: 1200
 - assertVisible: '.*${PINNED}.*'
 - runFlow:
     when:
@@ -26,8 +37,28 @@ env:
       - extendedWaitUntil:
           visible: '.*${OFFLINE_BANNER}.*'
           timeout: 30000
+      - repeat:
+          times: 8
+          while:
+            notVisible: '.*${PINNED}.*'
+          commands:
+            - swipe:
+                start: 50%, 70%
+                end: 50%, 45%
+                duration: 700
+            - waitForAnimationToEnd:
+                timeout: 1200
       - assertVisible: '.*${PINNED}.*'
       - toggleAirplaneMode
+      - repeat:
+          times: 8
+          commands:
+            - swipe:
+                start: 50%, 22%
+                end: 50%, 82%
+                duration: 700
+            - waitForAnimationToEnd:
+                timeout: 900
       - extendedWaitUntil:
           notVisible: '.*${OFFLINE_BANNER}.*'
           timeout: 30000

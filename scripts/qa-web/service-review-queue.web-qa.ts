@@ -170,11 +170,15 @@ test.describe.serial('staff service submission review queue', () => {
       await expect(staffPage).toHaveURL(/\/content\/services\/reviews(?:\?.*)?$/, {
         timeout: 30_000,
       });
-      expect(
-        queryDatabase(
-          `select status || '|' || provider_name || '|' || (select count(*) from jsonb_object_keys(title)) || '|' || (published_at <= now())::text from public.services where id = ${sqlLiteral(serviceId)}`,
-        ),
-      ).toBe(`published|${staffProvider}|5|true`);
+      await expect
+        .poll(
+          () =>
+            queryDatabase(
+              `select status || '|' || provider_name || '|' || (select count(*) from jsonb_object_keys(title)) || '|' || (published_at <= now())::text from public.services where id = ${sqlLiteral(serviceId)}`,
+            ),
+          { timeout: 15_000 },
+        )
+        .toBe(`published|${staffProvider}|5|true`);
       expect(
         queryDatabase(
           `select n.kind || '|' || c.body from public.service_submission_notifications n left join public.service_submission_comments c on c.id = n.decision_comment_id where n.service_id = ${sqlLiteral(serviceId)} and n.kind = 'approved' order by n.created_at desc limit 1`,

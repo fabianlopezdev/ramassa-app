@@ -33,6 +33,9 @@ env:
 
 # Catalan: the urgent chip exposes its selected state; the pinned marker is in
 # the first seeded urgent card, and tapping it must reach the detail heading.
+- extendedWaitUntil:
+    visible: '^${FILTER_URGENT_CA}$'
+    timeout: 60000
 - tapOn: '^${FILTER_URGENT_CA}$'
 - assertVisible:
     text: '^${FILTER_URGENT_CA}$'
@@ -136,10 +139,24 @@ env:
     visible: '.*${HOME_TITLE_AR}.*'
     timeout: 120000
 
+- extendedWaitUntil:
+    visible: '^${FILTER_URGENT_AR}$'
+    timeout: 60000
 - tapOn: '^${FILTER_URGENT_AR}$'
 - assertVisible:
     text: '^${FILTER_URGENT_AR}$'
     selected: true
+- repeat:
+    times: 8
+    while:
+      notVisible: '.*${PINNED_AR}.*'
+    commands:
+      - swipe:
+          start: 50%, 70%
+          end: 50%, 45%
+          duration: 700
+      - waitForAnimationToEnd:
+          timeout: 1200
 - assertVisible: '.*${PINNED_AR}.*'
 - tapOn: '.*${PINNED_AR}.*'
 - extendedWaitUntil:

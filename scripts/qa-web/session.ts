@@ -169,20 +169,25 @@ export function queryDatabaseAsAddress(email: string, sql: string): string {
  * terminal "no admin access" screen a participant lands on.
  */
 export async function signOut(page: Page): Promise<void> {
+  const hasStoredSession = (await page.context().storageState()).origins.some((origin) =>
+    origin.localStorage.some((entry) => entry.name.endsWith('-auth-token')),
+  );
+  if (!hasStoredSession) return;
+
   const signOutButton = page
     .getByRole('button', { name: /tanca la sessió|sign out|log out|cerrar sesión/i })
     .first();
   const loginEmailField = page.locator('input[type="email"]');
 
-  // Use the guarded dashboard as the authority. A signed-out context reaches
-  // login, while an authenticated context reaches its role landing, where
-  // every role exposes the product sign-out action. Retry the navigation
-  // because a cold SSR shell can exist before hydration starts and otherwise
-  // remain on the translated loading fallback indefinitely.
+  // A stored browser session must be cleared through the product. The guarded
+  // dashboard reaches the authenticated role landing, where every role exposes
+  // the sign-out action. Waiting only for DOM content prevents a stalled
+  // development asset from holding the whole retry open until goto's default
+  // timeout.
   await expect(async () => {
-    await page.goto('/dashboard');
+    await page.goto('/dashboard', { waitUntil: 'domcontentloaded', timeout: 10_000 });
     await expect(signOutButton.or(loginEmailField).first()).toBeVisible({ timeout: 3_000 });
-  }).toPass({ timeout: 20_000 });
+  }).toPass({ timeout: 30_000 });
 
   // Already signed out: the guard sent an unauthenticated visitor to /login.
   if ((await signOutButton.count()) === 0) return;
