@@ -3439,6 +3439,15 @@ export type Database = {
           updated_at: string;
         }[];
       };
+      get_impact_report: {
+        Args: {
+          p_category_id?: string;
+          p_collaborating_entity_id?: string;
+          p_end_date: string;
+          p_start_date: string;
+        };
+        Returns: Json;
+      };
       get_or_create_own_conversation: {
         Args: never;
         Returns: {

@@ -35,6 +35,7 @@
     "./forum": "./forum.ts",
     "./media": "./media.ts",
     "./attendance": "./attendance.ts",
+    "./analytics": "./analytics.ts",
     "./messaging": "./messaging/messaging.ts",
     "./messaging/outbox": "./messaging/outbox.ts",
     "./knowledge": "./knowledge.ts",

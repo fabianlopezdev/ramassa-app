@@ -149,3 +149,37 @@
     @apply font-sans;
   }
 }
+
+@media print {
+  @page {
+    margin: 16mm;
+  }
+
+  body {
+    background: white;
+    color: black;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  .impact-print-report,
+  .impact-print-report * {
+    visibility: visible;
+  }
+
+  .impact-print-report {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+  }
+
+  .impact-no-print {
+    display: none !important;
+  }
+
+  .impact-print-report section {
+    break-inside: avoid;
+  }
+}
