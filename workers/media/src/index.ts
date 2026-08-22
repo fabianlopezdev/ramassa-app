@@ -26,6 +26,7 @@ import { buildCorsHeaders, errorResponse } from './http';
 import { buildLocalUploadUrl, handleLocalUpload, LOCAL_UPLOAD_PATH_PREFIX } from './local-upload';
 import {
   canReadFeedbackObject,
+  canReadInternalDocumentObject,
   canReadMediaObject,
   completeMediaItemDeletion,
   prepareMediaItemDeletion,
@@ -202,6 +203,13 @@ const handler: ExportedHandler<Env> = {
           }),
         authorizeFeedbackObject: (objectKey) =>
           canReadFeedbackObject({
+            objectKey,
+            token: readBearerToken(request),
+            supabaseUrl: config.supabaseUrl,
+            supabasePublishableKey: config.supabasePublishableKey,
+          }),
+        authorizeInternalDocumentObject: (objectKey) =>
+          canReadInternalDocumentObject({
             objectKey,
             token: readBearerToken(request),
             supabaseUrl: config.supabaseUrl,

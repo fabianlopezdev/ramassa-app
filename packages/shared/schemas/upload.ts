@@ -32,6 +32,7 @@ export const UPLOAD_FOLDERS = [
   'stories',
   'services',
   'documents',
+  'organization-branding',
 ] as const;
 
 export const uploadFolderSchema = z.enum(UPLOAD_FOLDERS);
@@ -49,6 +50,7 @@ export const STAFF_ONLY_UPLOAD_FOLDERS = [
   'knowledge-base',
   'services',
   'documents',
+  'organization-branding',
 ] as const satisfies readonly UploadFolder[];
 
 export function isFolderWritableByRole(folder: UploadFolder, role: AppRole): boolean {
@@ -77,6 +79,8 @@ export const UPLOAD_CONTENT_TYPES = [
   'video/mp4',
   'video/quicktime',
   'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 ] as const;
 
 export const uploadContentTypeSchema = z.enum(UPLOAD_CONTENT_TYPES);
@@ -89,6 +93,11 @@ const uploadContentTypeDefinitions = {
   'video/mp4': { kind: 'video', fileExtension: 'mp4' },
   'video/quicktime': { kind: 'video', fileExtension: 'mov' },
   'application/pdf': { kind: 'document', fileExtension: 'pdf' },
+  'application/msword': { kind: 'document', fileExtension: 'doc' },
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': {
+    kind: 'document',
+    fileExtension: 'docx',
+  },
 } as const satisfies Record<UploadContentType, UploadContentTypeDefinition>;
 
 export function getUploadKindForContentType(contentType: UploadContentType): UploadKind {
@@ -109,6 +118,9 @@ export function getMaxBytesForUploadContentType(contentType: UploadContentType):
   if (kind === 'image') {
     return tokens.upload.maxImageBytes;
   }
+  if (kind === 'document') {
+    return tokens.upload.maxDocumentBytes;
+  }
   return tokens.upload.maxVideoBytes;
 }
 
@@ -125,6 +137,21 @@ export const uploadUrlRequestSchema = z
     contentLength: z.int().positive(),
   })
   .superRefine((request, context) => {
+    const kind = getUploadKindForContentType(request.contentType);
+    if (request.folder === 'documents' && kind === 'video') {
+      context.addIssue({
+        code: 'custom',
+        path: ['contentType'],
+        message: 'Internal documents accept PDF, images, and Word documents only',
+      });
+    }
+    if (request.folder === 'organization-branding' && kind !== 'image') {
+      context.addIssue({
+        code: 'custom',
+        path: ['contentType'],
+        message: 'Organization branding accepts images only',
+      });
+    }
     const maxBytes = getMaxBytesForUploadContentType(request.contentType);
     if (request.contentLength > maxBytes) {
       context.addIssue({

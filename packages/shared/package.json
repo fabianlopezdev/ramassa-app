@@ -50,7 +50,8 @@
     "./notifications": "./notifications.ts",
     "./surveys": "./surveys.ts",
     "./structured-content": "./structured-content/index.ts",
-    "./image-compression": "./lib/image-compression.ts"
+    "./image-compression": "./lib/image-compression.ts",
+    "./organization-settings": "./organization-settings.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

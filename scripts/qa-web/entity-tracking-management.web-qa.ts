@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import {
   ENTITY_EMAIL,
+  latestMagicLink,
   OTHER_ENTITY_EMAIL,
   queryDatabase,
   SEED_PASSWORD,
@@ -13,7 +14,6 @@ const RUN_TAG = `rapp55${Date.now().toString(36)}`;
 const ENTITY_NAME = `Fundació QA ${RUN_TAG}`;
 const COLLABORATOR_EMAIL = `collaborator.${RUN_TAG}@example.test`;
 const CREATED_PASSWORD = SEED_PASSWORD;
-const MAILPIT_URL = 'http://127.0.0.1:54324';
 
 let createdEntityId = '';
 let collaboratorProfileId = '';
@@ -21,30 +21,6 @@ let createdReferralId = '';
 
 function sqlLiteral(value: string): string {
   return `'${value.replaceAll("'", "''")}'`;
-}
-
-async function latestMagicLink(email: string): Promise<string> {
-  let messageId = '';
-  await expect
-    .poll(async () => {
-      const response = await fetch(
-        `${MAILPIT_URL}/api/v1/search?query=${encodeURIComponent(`to:${email}`)}`,
-      );
-      if (!response.ok) return '';
-      const body = (await response.json()) as { messages?: Array<{ ID?: string }> };
-      messageId = body.messages?.[0]?.ID ?? '';
-      return messageId;
-    })
-    .not.toBe('');
-
-  const response = await fetch(`${MAILPIT_URL}/api/v1/message/${messageId}`);
-  const message = (await response.json()) as { HTML?: string; Text?: string };
-  const content = `${message.HTML ?? ''}\n${message.Text ?? ''}`.replaceAll('&amp;', '&');
-  const link = content
-    .match(/https?:\/\/[^\s"'<>]+/g)
-    ?.find((candidate) => candidate.includes('/auth/v1/verify'));
-  if (link === undefined) throw new Error(`No magic link found for ${email}`);
-  return link;
 }
 
 async function passwordLoginIsDenied(page: Page, email: string): Promise<boolean> {
@@ -65,7 +41,7 @@ async function passwordLoginIsDenied(page: Page, email: string): Promise<boolean
 }
 
 async function openCreatedEntity(page: Page): Promise<void> {
-  await page.goto('/settings');
+  await page.goto('/settings?tab=entities');
   await page
     .getByRole('combobox', { name: /select entity|selecciona una entitat|selecciona una entidad/i })
     .selectOption(createdEntityId);
@@ -156,7 +132,7 @@ test.describe.serial('entity tracking, impact, events and administration', () =>
   }) => {
     test.setTimeout(120_000);
     await signIn(page, ADMIN_EMAIL);
-    await page.goto('/settings');
+    await page.goto('/settings?tab=entities');
     await page.getByLabel(/entity name|nom de l'entitat|nombre de la entidad/i).fill(ENTITY_NAME);
     await page.getByRole('button', { name: /add entity|afegeix entitat|añadir entidad/i }).click();
     await expect(page.getByRole('status')).toContainText(

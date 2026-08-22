@@ -4,6 +4,7 @@
 // mobile theme and the admin theme derive from the exact same values. Change a
 // token in packages/shared/tokens and both apps change.
 const { tokens } = require('@ramassa/shared/tokens');
+const { brandThemeVariables } = require('@ramassa/shared/organization-settings');
 
 const withPixelUnit = (scale) =>
   Object.fromEntries(Object.entries(scale).map(([name, value]) => [name, `${value}px`]));
@@ -13,7 +14,19 @@ module.exports = {
   presets: [require('nativewind/preset')],
   theme: {
     extend: {
-      colors: tokens.colors,
+      colors: {
+        ...tokens.colors,
+        primary: {
+          DEFAULT: 'rgb(var(--ramassa-primary-rgb) / <alpha-value>)',
+          light: 'rgb(var(--ramassa-primary-light-rgb) / <alpha-value>)',
+          dark: 'rgb(var(--ramassa-primary-dark-rgb) / <alpha-value>)',
+        },
+        secondary: {
+          DEFAULT: 'rgb(var(--ramassa-secondary-rgb) / <alpha-value>)',
+          light: 'rgb(var(--ramassa-secondary-light-rgb) / <alpha-value>)',
+          dark: 'rgb(var(--ramassa-secondary-dark-rgb) / <alpha-value>)',
+        },
+      },
       spacing: withPixelUnit(tokens.spacing),
       borderRadius: withPixelUnit(tokens.radius),
       fontSize: withPixelUnit(tokens.fontSize),
@@ -29,5 +42,13 @@ module.exports = {
       maxWidth: withPixelUnit(tokens.contentWidth),
     },
   },
-  plugins: [],
+  plugins: [
+    ({ addBase }) =>
+      addBase({
+        ':root': brandThemeVariables({
+          primaryColor: tokens.colors.primary.DEFAULT,
+          secondaryColor: tokens.colors.secondary.DEFAULT,
+        }),
+      }),
+  ],
 };

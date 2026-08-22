@@ -73,6 +73,8 @@ export type ServiceImageRow = Database['public']['Tables']['service_images']['Ro
 export type ServiceInterestRow = Database['public']['Tables']['service_interests']['Row'];
 export type MentoringRequestRow = Database['public']['Tables']['mentoring_requests']['Row'];
 export type FeedbackSubmissionRow = Database['public']['Tables']['feedback_submissions']['Row'];
+export type StaffInvitationRow = Database['public']['Tables']['staff_invitations']['Row'];
+export type InternalDocumentRow = Database['public']['Tables']['internal_documents']['Row'];
 export type NotificationTemplateRow = Database['public']['Tables']['notification_templates']['Row'];
 export type CustomNotificationGroupRow =
   Database['public']['Tables']['custom_notification_groups']['Row'];
@@ -188,6 +190,7 @@ export function buildOrganization(overrides: Partial<OrganizationRow> = {}): Org
     secondary_color: '#FFD166',
     default_language: 'ca',
     available_languages: ['ca', 'es', 'en', 'ar', 'fa'],
+    locked_default_language: null,
     contact_email: 'contacte@example.test',
     contact_phone: '+34600000000',
     created_at: FIXTURE_TIMESTAMP,
@@ -1147,6 +1150,40 @@ export function buildEquipmentDelivery(
     delivered_on: FIXTURE_TIMESTAMP.slice(0, 10),
     delivered_by: seedUserId(deliverer.ordinal),
     note: null,
+    created_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+export function buildStaffInvitation(
+  overrides: Partial<StaffInvitationRow> = {},
+): StaffInvitationRow {
+  return {
+    id: seedUserId(6401),
+    org_id: SEED_ORGANIZATION_ID,
+    profile_id: seedUserId(2),
+    email: 'marta.puig@example.test',
+    role: 'staff',
+    invited_by: seedUserId(1),
+    expires_at: '2026-02-14T09:00:00+00:00',
+    accepted_at: FIXTURE_TIMESTAMP,
+    created_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+export function buildInternalDocument(
+  overrides: Partial<InternalDocumentRow> = {},
+): InternalDocumentRow {
+  const id = seedUserId(6402);
+  return {
+    id,
+    org_id: SEED_ORGANIZATION_ID,
+    uploaded_by: seedUserId(1),
+    object_key: `${SEED_ORGANIZATION_ID}/documents/${id}.pdf`,
+    name: 'Assegurança esportiva 2026.pdf',
+    content_type: 'application/pdf',
+    file_size: 32768,
     created_at: FIXTURE_TIMESTAMP,
     ...overrides,
   };

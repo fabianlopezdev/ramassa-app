@@ -1,7 +1,10 @@
+import { useAdminBranding } from '@/components/branding/organization-branding-provider';
+import { AuthenticatedMediaImage } from '@/components/content/authenticated-media-image';
 import { Badge } from '@/components/ui/badge';
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarHeader,
@@ -10,6 +13,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from '@/components/ui/sidebar';
+import { mediaWorkerUrl } from '@/lib/media-worker';
 import { useUnreadMessageCount } from '@/lib/messaging';
 import { STAFF_NAV_ITEMS } from '@/lib/nav-items';
 import { Link, useLocation } from '@tanstack/react-router';
@@ -34,7 +38,8 @@ export function StaffSidebar() {
   const { t, i18n } = useTranslation(['nav', 'common']);
   const pathname = useLocation({ select: (location) => location.pathname });
   const unread = useUnreadMessageCount();
-  const { role } = useAuth();
+  const { role, session } = useAuth();
+  const organization = useAdminBranding();
   const visibleItems = STAFF_NAV_ITEMS.filter(
     (item) => !('adminOnly' in item) || !item.adminOnly || role === 'admin',
   );
@@ -42,8 +47,19 @@ export function StaffSidebar() {
   return (
     <Sidebar collapsible="icon" side={sidebarSideForDirection(i18n.dir())}>
       <SidebarHeader className="px-3 py-4">
+        {organization?.logo_url !== null &&
+        organization?.logo_url !== undefined &&
+        session !== null ? (
+          <AuthenticatedMediaImage
+            objectKeyOrUrl={organization.logo_url}
+            mediaWorkerUrl={mediaWorkerUrl}
+            accessToken={session.access_token}
+            alt={organization.name}
+            className="mb-2 max-h-12 max-w-full object-contain object-left group-data-[collapsible=icon]:hidden"
+          />
+        ) : null}
         <span className="text-base font-semibold text-sidebar-foreground group-data-[collapsible=icon]:hidden">
-          {t('common:appName')}
+          {organization?.name ?? t('common:appName')}
         </span>
       </SidebarHeader>
       <SidebarContent>
@@ -78,6 +94,14 @@ export function StaffSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+      <SidebarFooter className="border-t border-sidebar-border p-3 group-data-[collapsible=icon]:hidden">
+        <p
+          className="text-xs leading-5 text-sidebar-foreground/70"
+          data-testid="generalitat-credit"
+        >
+          {t('common:fundingAcknowledgment')}
+        </p>
+      </SidebarFooter>
       <SidebarRail />
     </Sidebar>
   );

@@ -1312,6 +1312,54 @@ export type Database = {
           },
         ];
       };
+      internal_documents: {
+        Row: {
+          content_type: string;
+          created_at: string;
+          file_size: number;
+          id: string;
+          name: string;
+          object_key: string;
+          org_id: string;
+          uploaded_by: string;
+        };
+        Insert: {
+          content_type: string;
+          created_at?: string;
+          file_size: number;
+          id?: string;
+          name: string;
+          object_key: string;
+          org_id: string;
+          uploaded_by: string;
+        };
+        Update: {
+          content_type?: string;
+          created_at?: string;
+          file_size?: number;
+          id?: string;
+          name?: string;
+          object_key?: string;
+          org_id?: string;
+          uploaded_by?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'internal_documents_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'internal_documents_uploaded_by_fkey';
+            columns: ['uploaded_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       invites: {
         Row: {
           accepted_at: string | null;
@@ -1857,6 +1905,7 @@ export type Database = {
           created_at: string;
           default_language: string;
           id: string;
+          locked_default_language: string | null;
           logo_url: string | null;
           name: string;
           primary_color: string;
@@ -1870,6 +1919,7 @@ export type Database = {
           created_at?: string;
           default_language?: string;
           id?: string;
+          locked_default_language?: string | null;
           logo_url?: string | null;
           name: string;
           primary_color?: string;
@@ -1883,6 +1933,7 @@ export type Database = {
           created_at?: string;
           default_language?: string;
           id?: string;
+          locked_default_language?: string | null;
           logo_url?: string | null;
           name?: string;
           primary_color?: string;
@@ -2737,6 +2788,64 @@ export type Database = {
           },
         ];
       };
+      staff_invitations: {
+        Row: {
+          accepted_at: string | null;
+          created_at: string;
+          email: string;
+          expires_at: string;
+          id: string;
+          invited_by: string;
+          org_id: string;
+          profile_id: string;
+          role: string;
+        };
+        Insert: {
+          accepted_at?: string | null;
+          created_at?: string;
+          email: string;
+          expires_at: string;
+          id?: string;
+          invited_by: string;
+          org_id: string;
+          profile_id: string;
+          role: string;
+        };
+        Update: {
+          accepted_at?: string | null;
+          created_at?: string;
+          email?: string;
+          expires_at?: string;
+          id?: string;
+          invited_by?: string;
+          org_id?: string;
+          profile_id?: string;
+          role?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'staff_invitations_invited_by_fkey';
+            columns: ['invited_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'staff_invitations_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'staff_invitations_profile_id_fkey';
+            columns: ['profile_id'];
+            isOneToOne: true;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       survey_questions: {
         Row: {
           created_at: string;
@@ -3195,6 +3304,10 @@ export type Database = {
         Args: { p_object_key: string };
         Returns: boolean;
       };
+      can_read_internal_document_object: {
+        Args: { p_object_key: string };
+        Returns: boolean;
+      };
       can_read_media_object: {
         Args: { p_object_key: string };
         Returns: boolean;
@@ -3619,6 +3732,19 @@ export type Database = {
           profile_id: string;
         }[];
       };
+      invite_staff_member: {
+        Args: {
+          p_email: string;
+          p_first_name: string;
+          p_last_name: string;
+          p_role: string;
+        };
+        Returns: {
+          email: string;
+          expires_at: string;
+          profile_id: string;
+        }[];
+      };
       is_admin: { Args: never; Returns: boolean };
       is_allowed_video_url: { Args: { video_url: string }; Returns: boolean };
       is_content_visible: {
@@ -3894,6 +4020,18 @@ export type Database = {
           updated_at: string;
         }[];
       };
+      list_staff_members: {
+        Args: never;
+        Returns: {
+          email: string;
+          first_name: string;
+          invited_at: string;
+          is_active: boolean;
+          last_name: string;
+          profile_id: string;
+          role: string;
+        }[];
+      };
       list_staff_mentoring_requests: {
         Args: never;
         Returns: {
@@ -4078,6 +4216,19 @@ export type Database = {
         };
         Returns: number;
       };
+      register_internal_document: {
+        Args: {
+          p_content_type: string;
+          p_file_size: number;
+          p_name: string;
+          p_object_key: string;
+        };
+        Returns: string;
+      };
+      remove_staff_member: {
+        Args: { p_profile_id: string };
+        Returns: undefined;
+      };
       reorder_service_categories: {
         Args: { p_category_ids: string[] };
         Returns: undefined;
@@ -4152,6 +4303,19 @@ export type Database = {
         };
         Returns: undefined;
       };
+      search_internal_documents: {
+        Args: { p_query?: string };
+        Returns: {
+          content_type: string;
+          created_at: string;
+          file_size: number;
+          id: string;
+          name: string;
+          object_key: string;
+          uploaded_by: string;
+          uploader_name: string;
+        }[];
+      };
       send_message: {
         Args: {
           p_content: string;
@@ -4211,11 +4375,47 @@ export type Database = {
         Args: { p_interested: boolean; p_service_id: string };
         Returns: boolean;
       };
+      set_staff_member_role: {
+        Args: { p_profile_id: string; p_role: string };
+        Returns: undefined;
+      };
       transition_feedback_submission: {
         Args: { p_status: string; p_submission_id: string };
         Returns: undefined;
       };
       unambiguous_token: { Args: { length: number }; Returns: string };
+      update_organization_settings: {
+        Args: {
+          p_available_languages: string[];
+          p_contact_email: string;
+          p_contact_phone: string;
+          p_default_language: string;
+          p_logo_url: string;
+          p_name: string;
+          p_primary_color: string;
+          p_secondary_color: string;
+        };
+        Returns: {
+          available_languages: string[];
+          contact_email: string | null;
+          contact_phone: string | null;
+          created_at: string;
+          default_language: string;
+          id: string;
+          locked_default_language: string | null;
+          logo_url: string | null;
+          name: string;
+          primary_color: string;
+          secondary_color: string;
+          slug: string;
+        };
+        SetofOptions: {
+          from: '*';
+          to: 'organizations';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       update_own_profile: { Args: { payload: Json }; Returns: undefined };
       update_participant_profile: {
         Args: { participant_id: string; payload: Json };

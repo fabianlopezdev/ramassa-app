@@ -11,6 +11,7 @@ const identity: CallerIdentity = {
 const objectKey = `${identity.orgId}/announcements/${identity.userId}/2026/08/0123456789abcdef0123456789abcdef.jpg`;
 const galleryObjectKey = `${identity.orgId}/gallery/${identity.userId}/2026/08/1123456789abcdef0123456789abcdef.jpg`;
 const feedbackObjectKey = `${identity.orgId}/feedback/${identity.userId}/2026/08/2123456789abcdef0123456789abcdef.jpg`;
+const documentObjectKey = `${identity.orgId}/documents/${identity.userId}/2026/08/3123456789abcdef0123456789abcdef.pdf`;
 
 function requestFor(key: string = objectKey, method = 'GET'): Request {
   const encodedKey = key.split('/').map(encodeURIComponent).join('/');
@@ -27,6 +28,7 @@ function dependencies(
     resolveIdentity: async () => identity,
     authorizeGalleryObject: async () => true,
     authorizeFeedbackObject: async () => true,
+    authorizeInternalDocumentObject: async () => true,
     bucket: {
       get: async (key) =>
         key === objectKey
@@ -115,6 +117,25 @@ describe('handleServeMediaObject', () => {
       requestFor(feedbackObjectKey),
       dependencies({
         authorizeFeedbackObject: async () => false,
+        bucket: {
+          get: async () => {
+            storageReads += 1;
+            return null;
+          },
+        },
+      }),
+    );
+
+    expect(response.status).toBe(404);
+    expect(storageReads).toBe(0);
+  });
+
+  test('checks staff-only document visibility before reading the private R2 object', async () => {
+    let storageReads = 0;
+    const response = await handleServeMediaObject(
+      requestFor(documentObjectKey),
+      dependencies({
+        authorizeInternalDocumentObject: async () => false,
         bucket: {
           get: async () => {
             storageReads += 1;

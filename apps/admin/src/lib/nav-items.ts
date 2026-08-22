@@ -46,7 +46,7 @@ export const STAFF_NAV_ITEMS = [
   { to: '/notifications', icon: BellRing, labelKey: 'nav:staff.notifications' },
   { to: '/surveys', icon: ClipboardList, labelKey: 'nav:staff.surveys' },
   { to: '/data', icon: Database, labelKey: 'nav:staff.data', adminOnly: true },
-  { to: '/settings', icon: Settings, labelKey: 'nav:staff.settings' },
+  { to: '/settings', icon: Settings, labelKey: 'nav:staff.settings', adminOnly: true },
 ] as const satisfies readonly NavItem[];
 
 export const ENTITY_NAV_ITEMS = [

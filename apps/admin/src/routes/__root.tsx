@@ -1,3 +1,4 @@
+import { OrganizationBrandingProvider } from '@/components/branding/organization-branding-provider';
 import { NotFoundFallback } from '@/components/not-found-fallback';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { ADMIN_META_DESCRIPTION } from '@/lib/admin-metadata';
@@ -58,9 +59,11 @@ function RootComponent() {
                 shows its labels as tooltips when collapsed to the icon rail, and
                 a Tooltip without this provider THROWS rather than degrading, so
                 its absence crashed the whole staff area on load (RAPP-16). */}
-            <TooltipProvider>
-              <Outlet />
-            </TooltipProvider>
+            <OrganizationBrandingProvider>
+              <TooltipProvider>
+                <Outlet />
+              </TooltipProvider>
+            </OrganizationBrandingProvider>
           </AuthProvider>
         </I18nextProvider>
         <Scripts />

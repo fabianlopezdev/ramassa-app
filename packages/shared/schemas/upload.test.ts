@@ -56,6 +56,39 @@ describe('uploadUrlRequestSchema', () => {
     expect(result.success).toBe(true);
   });
 
+  test('allows internal PDFs and Word documents under the document cap', () => {
+    for (const contentType of [
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    ] as const) {
+      const result = uploadUrlRequestSchema.safeParse({
+        folder: 'documents',
+        contentType,
+        contentLength: tokens.upload.maxDocumentBytes,
+      });
+      expect(result.success).toBe(true);
+      expect(getMaxBytesForUploadContentType(contentType)).toBe(tokens.upload.maxDocumentBytes);
+    }
+  });
+
+  test('rejects videos from the internal document area and non-images from branding', () => {
+    expect(
+      uploadUrlRequestSchema.safeParse({
+        folder: 'documents',
+        contentType: 'video/mp4',
+        contentLength: 1_000,
+      }).success,
+    ).toBe(false);
+    expect(
+      uploadUrlRequestSchema.safeParse({
+        folder: 'organization-branding',
+        contentType: 'application/pdf',
+        contentLength: 1_000,
+      }).success,
+    ).toBe(false);
+  });
+
   test('rejects a video over the video cap', () => {
     const result = uploadUrlRequestSchema.safeParse({
       folder: 'gallery',

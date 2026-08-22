@@ -95,3 +95,18 @@ export async function canReadFeedbackObject(
   if (!response.ok) throw new AppError('DB-1');
   return (await response.json()) === true;
 }
+
+export async function canReadInternalDocumentObject(
+  options: Omit<RpcOptions, 'mediaItemId'> & { readonly objectKey: string },
+): Promise<boolean> {
+  const response = await (options.fetchImplementation ?? fetch)(
+    `${options.supabaseUrl}/rest/v1/rpc/can_read_internal_document_object`,
+    {
+      method: 'POST',
+      headers: rpcHeaders({ ...options, mediaItemId: '' }),
+      body: JSON.stringify({ p_object_key: options.objectKey }),
+    },
+  );
+  if (!response.ok) throw new AppError('DB-1');
+  return (await response.json()) === true;
+}

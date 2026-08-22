@@ -1,6 +1,7 @@
 // Sentry.init runs at @/lib/observability module scope, which every import
 // below reaches transitively, so the SDK is live before the first render (RAPP-12).
 import { AuthDeepLinkHandler } from '@/components/auth/auth-deep-link-handler';
+import { OrganizationBrandingProvider } from '@/components/branding/organization-branding-provider';
 import { ErrorFallback, type ErrorFallbackProps } from '@/components/error-fallback';
 import { PushNotificationResponseHandler } from '@/components/push-notification-response-handler';
 import { reportAuthError } from '@/lib/auth';
@@ -146,11 +147,13 @@ function RootLayout() {
             without the provider tree having to be reordered later. */}
         <PersistQueryClientProvider client={queryClient} persistOptions={persistOptions}>
           <AuthProvider client={supabase} onError={reportAuthError}>
-            <AuthFlowStatusProvider>
-              <AuthDeepLinkHandler />
-              <PushNotificationResponseHandler />
-              <RootNavigator />
-            </AuthFlowStatusProvider>
+            <OrganizationBrandingProvider>
+              <AuthFlowStatusProvider>
+                <AuthDeepLinkHandler />
+                <PushNotificationResponseHandler />
+                <RootNavigator />
+              </AuthFlowStatusProvider>
+            </OrganizationBrandingProvider>
           </AuthProvider>
         </PersistQueryClientProvider>
       </I18nextProvider>

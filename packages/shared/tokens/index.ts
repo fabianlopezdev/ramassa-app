@@ -85,6 +85,7 @@ export const tokens = {
     maxImageBytes: 1_048_576,
     maxImageDimension: 1_200,
     maxVideoBytes: 10_485_760,
+    maxDocumentBytes: 10_485_760,
   },
 
   // Number of flags that auto-hides a forum post pending moderation (ADR-014).

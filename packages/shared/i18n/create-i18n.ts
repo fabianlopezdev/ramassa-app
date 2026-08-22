@@ -33,6 +33,7 @@ import arPlayerServices from './locales/ar/player-services.json';
 import arProfile from './locales/ar/profile.json';
 import arPush from './locales/ar/push.json';
 import arReferrals from './locales/ar/referrals.json';
+import arSettings from './locales/ar/settings.json';
 import arSurveys from './locales/ar/surveys.json';
 import caAdmin from './locales/ca/admin.json';
 import caAnnouncements from './locales/ca/announcements.json';
@@ -60,6 +61,7 @@ import caProfile from './locales/ca/profile.json';
 import caPush from './locales/ca/push.json';
 import caReferrals from './locales/ca/referrals.json';
 import caServices from './locales/ca/services.json';
+import caSettings from './locales/ca/settings.json';
 import caSurveys from './locales/ca/surveys.json';
 import enAdmin from './locales/en/admin.json';
 import enAnnouncements from './locales/en/announcements.json';
@@ -87,6 +89,7 @@ import enProfile from './locales/en/profile.json';
 import enPush from './locales/en/push.json';
 import enReferrals from './locales/en/referrals.json';
 import enServices from './locales/en/services.json';
+import enSettings from './locales/en/settings.json';
 import enSurveys from './locales/en/surveys.json';
 import esAdmin from './locales/es/admin.json';
 import esAnnouncements from './locales/es/announcements.json';
@@ -113,6 +116,7 @@ import esPlayerServices from './locales/es/player-services.json';
 import esProfile from './locales/es/profile.json';
 import esPush from './locales/es/push.json';
 import esReferrals from './locales/es/referrals.json';
+import esSettings from './locales/es/settings.json';
 import esSurveys from './locales/es/surveys.json';
 import faAdmin from './locales/fa/admin.json';
 import faAnnouncements from './locales/fa/announcements.json';
@@ -139,6 +143,7 @@ import faPlayerServices from './locales/fa/player-services.json';
 import faProfile from './locales/fa/profile.json';
 import faPush from './locales/fa/push.json';
 import faReferrals from './locales/fa/referrals.json';
+import faSettings from './locales/fa/settings.json';
 import faSurveys from './locales/fa/surveys.json';
 
 const resources = {
@@ -170,6 +175,7 @@ const resources = {
     playerServices: caPlayerServices,
     referrals: caReferrals,
     surveys: caSurveys,
+    settings: caSettings,
   },
   es: {
     common: esCommon,
@@ -199,6 +205,7 @@ const resources = {
     playerServices: esPlayerServices,
     referrals: esReferrals,
     surveys: esSurveys,
+    settings: esSettings,
   },
   en: {
     common: enCommon,
@@ -228,6 +235,7 @@ const resources = {
     playerServices: enPlayerServices,
     referrals: enReferrals,
     surveys: enSurveys,
+    settings: enSettings,
   },
   ar: {
     common: arCommon,
@@ -257,6 +265,7 @@ const resources = {
     playerServices: arPlayerServices,
     referrals: arReferrals,
     surveys: arSurveys,
+    settings: arSettings,
   },
   fa: {
     common: faCommon,
@@ -286,6 +295,7 @@ const resources = {
     playerServices: faPlayerServices,
     referrals: faReferrals,
     surveys: faSurveys,
+    settings: faSettings,
   },
 };
 

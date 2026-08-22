@@ -15,6 +15,7 @@ export * from './forum';
 export * from './services';
 export * from './referrals';
 export * from './surveys';
+export * from './organization-settings';
 export * from './lib/supabase';
 export * from './lib/upload-client';
 export type { Database } from './types/database';

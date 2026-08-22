@@ -16,6 +16,7 @@
  * a name in a language she does not read.
  */
 
+import { useOrganizationBranding } from '@/components/branding/organization-branding-provider';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { OptionChip } from '@/components/onboarding/option-chip';
 import { continuousCorners } from '@/lib/continuous-corners';
@@ -36,6 +37,10 @@ export function LanguageSwitcher() {
   const languageFontClass = useLanguageFontClass();
   const { language, setLanguage } = useLanguage();
   const [needsRestart, setNeedsRestart] = useState(false);
+  const organization = useOrganizationBranding();
+  const availableLanguages = SUPPORTED_LANGUAGES.filter(
+    (code) => organization?.available_languages.includes(code) ?? true,
+  );
 
   async function choose(next: (typeof SUPPORTED_LANGUAGES)[number]) {
     // Compared against the NATIVE direction, not the previous language's:
@@ -53,7 +58,7 @@ export function LanguageSwitcher() {
       </Text>
 
       <View className="flex-row flex-wrap gap-sm">
-        {SUPPORTED_LANGUAGES.map((code) => (
+        {availableLanguages.map((code) => (
           <OptionChip
             key={code}
             testID={`profile-language-${code}`}

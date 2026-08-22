@@ -311,7 +311,7 @@ test.describe('entity service product role boundaries', () => {
   test('staff is redirected away from the entity service portal', async ({ page }) => {
     await signIn(page, STAFF_EMAIL);
     await page.goto('/portal/services');
-    await expect(page).toHaveURL(/\/dashboard$/);
+    await expect.poll(() => new URL(page.url()).pathname).toBe('/dashboard');
     await expect(page.getByTestId('entity-service-new')).toHaveCount(0);
   });
 

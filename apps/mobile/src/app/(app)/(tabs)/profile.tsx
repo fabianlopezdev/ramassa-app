@@ -10,6 +10,7 @@
  */
 
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
+import { useOrganizationBranding } from '@/components/branding/organization-branding-provider';
 import { ErrorCodeLine } from '@/components/error-code-line';
 import { FadeSlideIn } from '@/components/motion/fade-slide-in';
 import { PressableScale } from '@/components/motion/pressable-scale';
@@ -20,12 +21,16 @@ import { LanguageSwitcher } from '@/components/profile/language-switcher';
 import { ProfileRow, ProfileSection } from '@/components/profile/profile-section';
 import { logout } from '@/lib/auth';
 import { continuousCorners } from '@/lib/continuous-corners';
+import { resolveMediaImageSource } from '@/lib/media-source';
+import { mobileClientEnv } from '@/lib/supabase';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
+import { Image } from 'expo-image';
 import { useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAuth } from '@ramassa/shared/auth';
 import { toAppError } from '@ramassa/shared/errors';
 import { DEFAULT_LANGUAGE } from '@ramassa/shared/i18n';
 import { useOwnDeletionRequest, useOwnProfile } from '@ramassa/shared/profile';
@@ -46,11 +51,18 @@ const DevMenuEntry = __DEV__
 const LOADING_SECTION_COUNT = 4;
 
 export default function ProfileScreen() {
-  const { t, i18n } = useTranslation(['profile', 'onboarding', 'feedback']);
+  const { t, i18n } = useTranslation(['profile', 'onboarding', 'feedback', 'common']);
   const languageFontClass = useLanguageFontClass();
   const { push } = useRouter();
   const { data: profile, isLoading, isError, error, refetch } = useOwnProfile();
   const { data: deletionRequest } = useOwnDeletionRequest();
+  const { session } = useAuth();
+  const organization = useOrganizationBranding();
+  const organizationLogo = resolveMediaImageSource({
+    objectKeyOrUrl: organization?.logo_url ?? null,
+    mediaWorkerUrl: mobileClientEnv.EXPO_PUBLIC_MEDIA_WORKER_URL,
+    accessToken: session?.access_token,
+  });
 
   /**
    * ONE formatter per language, not one per date. `toLocaleDateString` builds a
@@ -122,6 +134,14 @@ export default function ProfileScreen() {
       contentInsetAdjustmentBehavior="automatic"
     >
       <View className="gap-xs">
+        {organizationLogo === null ? null : (
+          <Image
+            source={organizationLogo}
+            accessibilityLabel={organization?.name ?? t('common:appName')}
+            contentFit="contain"
+            className="mb-sm h-16 w-40 self-start"
+          />
+        )}
         <Text
           accessibilityRole="header"
           className={`text-start text-2xl font-bold text-neutral-900 ${languageFontClass}`}
@@ -265,6 +285,12 @@ export default function ProfileScreen() {
             {t('feedback:profileAction')}
           </Text>
         </PressableScale>
+        <Text
+          testID="generalitat-credit"
+          className={`text-start text-xs leading-body text-neutral-600 ${languageFontClass}`}
+        >
+          {t('common:fundingAcknowledgment')}
+        </Text>
       </ProfileSection>
 
       <ProfileSection title={t('sectionData')}>

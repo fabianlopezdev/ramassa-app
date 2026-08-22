@@ -2014,4 +2014,38 @@ values
   )
 on conflict (id) do nothing;
 
+-- Organization settings fixtures (RAPP-64). The accepted staff invitation
+-- makes invitation history visible; the document row exercises the staff-only
+-- list and accent-insensitive search without requiring an R2 upload first.
+insert into public.staff_invitations (
+  id, org_id, profile_id, email, role, invited_by, expires_at, accepted_at, created_at
+)
+values (
+  '5eed0000-0000-4000-8064-000000000001',
+  '5eed0000-0000-4000-8000-000000000000',
+  '5eed0000-0000-4000-8000-000000000002',
+  'marta.puig@example.test',
+  'staff',
+  '5eed0000-0000-4000-8000-000000000001',
+  now() + interval '30 days',
+  now() - interval '90 days',
+  now() - interval '90 days'
+)
+on conflict (profile_id) do nothing;
+
+insert into public.internal_documents (
+  id, org_id, uploaded_by, object_key, name, content_type, file_size, created_at
+)
+values (
+  '5eed0000-0000-4000-8064-000000000002',
+  '5eed0000-0000-4000-8000-000000000000',
+  '5eed0000-0000-4000-8000-000000000001',
+  '5eed0000-0000-4000-8000-000000000000/documents/5eed0000-0000-4000-8064-000000000002.pdf',
+  'Assegurança esportiva 2026.pdf',
+  'application/pdf',
+  32768,
+  now() - interval '7 days'
+)
+on conflict (id) do nothing;
+
 commit;

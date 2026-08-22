@@ -28,6 +28,7 @@ export interface ServeMediaObjectDependencies {
   readonly resolveIdentity: (request: Request) => Promise<CallerIdentity>;
   readonly authorizeGalleryObject: (objectKey: string) => Promise<boolean>;
   readonly authorizeFeedbackObject: (objectKey: string) => Promise<boolean>;
+  readonly authorizeInternalDocumentObject: (objectKey: string) => Promise<boolean>;
   readonly bucket: MediaObjectBucket;
   readonly corsHeaders?: Record<string, string>;
   readonly onError?: (error: unknown, context: Record<string, unknown>) => void;
@@ -59,7 +60,7 @@ function readObjectKey(request: Request): string | null {
     !/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(uploaderId) ||
     !/^\d{4}$/.test(year) ||
     !/^(0[1-9]|1[0-2])$/.test(month) ||
-    !/^[0-9a-f]{32}\.(jpg|png|webp|mp4|mov|pdf)$/i.test(fileName)
+    !/^[0-9a-f]{32}\.(jpg|png|webp|mp4|mov|pdf|doc|docx)$/i.test(fileName)
   ) {
     return null;
   }
@@ -108,6 +109,17 @@ export async function handleServeMediaObject(
       if (!(await dependencies.authorizeFeedbackObject(objectKey))) return notFound(corsHeaders);
     } catch (thrown) {
       dependencies.onError?.(thrown, { stage: 'authorize-feedback-object' });
+      return fail('DB-1');
+    }
+  }
+
+  if (objectKey.split('/')[1] === 'documents') {
+    try {
+      if (!(await dependencies.authorizeInternalDocumentObject(objectKey))) {
+        return notFound(corsHeaders);
+      }
+    } catch (thrown) {
+      dependencies.onError?.(thrown, { stage: 'authorize-internal-document-object' });
       return fail('DB-1');
     }
   }

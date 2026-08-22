@@ -231,6 +231,6 @@ test.describe.serial('entity referral product flow', () => {
 
     await signIn(page, STAFF_EMAIL);
     await page.goto('/portal/referrals');
-    await expect(page).toHaveURL(/\/dashboard$/);
+    await expect.poll(() => new URL(page.url()).pathname).toBe('/dashboard');
   });
 });

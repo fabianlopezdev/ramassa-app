@@ -122,11 +122,15 @@ test.describe('attendance overview', () => {
 
     await page.goto('/dashboard');
     await expect(
-      page.getByRole('heading', { name: /rendiment d’assistència|attendance performance/i }),
+      page.getByRole('heading', {
+        name: /informe d['’]impacte|impact report|rendiment d['’]assistència|attendance performance/i,
+      }),
     ).toBeVisible();
-    await expect(page.getByTestId('attendance-rate')).toBeVisible();
+    await expect(page.getByTestId('impact-attendance-rate')).toBeVisible();
     await expect(
-      page.getByRole('img', { name: /taxa d’assistència per mes|attendance rate by month/i }),
+      page.getByRole('img', {
+        name: /evolució de l['’]assistència|attendance trend|taxa d['’]assistència per mes|attendance rate by month/i,
+      }),
     ).toBeVisible();
   });
 });
