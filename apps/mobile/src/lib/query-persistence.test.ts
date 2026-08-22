@@ -76,7 +76,7 @@ test('a restored feed is visible only to the user who cached it', async () => {
   ).toBeUndefined();
 });
 
-test('persistence excludes decrypted profile data and keeps only the public feed', async () => {
+test('persistence excludes private data and keeps user-scoped community content', async () => {
   const storage = memoryStorage();
   const persister = createQueryPersister(storage);
   const client = new QueryClient();
@@ -86,14 +86,52 @@ test('persistence excludes decrypted profile data and keeps only the public feed
     ['player-events', 'player-a'],
     [{ occurrence_id: 'cached-event', signup: { state: 'confirmed' } }],
   );
+  client.setQueryData(
+    ['player-gallery', 'items', 'player-a'],
+    [{ id: 'cached-gallery-item', caption: 'Community photo' }],
+  );
+  client.setQueryData(['own-conversation', 'player-a'], {
+    content: 'private-message-must-not-persist',
+  });
 
   await persistQueryClientSave({ queryClient: client, ...persistedQueryOptions(persister) });
 
   const serialized = [...storage.raw.values()].join('');
   expect(serialized).toContain('safe-public-content');
   expect(serialized).toContain('cached-event');
+  expect(serialized).toContain('cached-gallery-item');
   expect(serialized).not.toContain('X1234567');
   expect(serialized).not.toContain('own-profile');
+  expect(serialized).not.toContain('private-message-must-not-persist');
+});
+
+test('airplane mode restores the user-scoped gallery without a network request', async () => {
+  const storage = memoryStorage();
+  const persister = createQueryPersister(storage);
+  const source = new QueryClient();
+  const cachedGallery = [{ id: 'cached-gallery-item', caption: 'Des de la memòria' }];
+  source.setQueryData(['player-gallery', 'items', 'player-a'], cachedGallery);
+
+  await persistQueryClientSave({ queryClient: source, ...persistedQueryOptions(persister) });
+
+  const restored = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  await persistQueryClientRestore({ queryClient: restored, ...persistedQueryOptions(persister) });
+  onlineManager.setOnline(false);
+  let networkCalls = 0;
+  const observer = new QueryObserver<readonly { id: string; caption: string }[]>(restored, {
+    queryKey: ['player-gallery', 'items', 'player-a'],
+    queryFn: async () => {
+      networkCalls += 1;
+      throw new Error('the gallery must use its persisted rows');
+    },
+  });
+  const stop = observer.subscribe(() => undefined);
+
+  expect(observer.getCurrentResult().data).toEqual(cachedGallery);
+  expect(observer.getCurrentResult().fetchStatus).toBe('paused');
+  expect(networkCalls).toBe(0);
+  expect(restored.getQueryData(['player-gallery', 'items', 'player-b'])).toBeUndefined();
+  stop();
 });
 
 test('airplane mode restores the player calendar without a network request', async () => {

@@ -12,9 +12,11 @@
  */
 
 import Constants from 'expo-constants';
+import * as Network from 'expo-network';
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import { getOrCreateDeviceId } from './device-id';
+import { isNetworkStateOnline } from './network-status';
 import { logger, safeAsync } from './observability';
 import { foregroundNotificationBehavior } from './push-presentation';
 import {
@@ -93,10 +95,12 @@ export async function ensureAndroidChannel(): Promise<void> {
 export async function resolvePushRegistrationDecision(
   hasSession: boolean,
 ): Promise<PushRegistrationDecision> {
+  const networkState = await Network.getNetworkStateAsync();
   return decidePushRegistration({
     hasSession,
     os: Platform.OS,
     hasProjectId: Boolean(getEasProjectId()),
+    isOnline: isNetworkStateOnline(networkState),
     permission: await getPushPermissionStatus(),
   });
 }

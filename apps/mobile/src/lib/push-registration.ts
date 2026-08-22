@@ -28,7 +28,7 @@ export function normalizePushPermissionStatus(
 }
 
 export type PushSkipReason =
-  'no-session' | 'unsupported-platform' | 'missing-project-id' | 'permission-denied';
+  'no-session' | 'unsupported-platform' | 'missing-project-id' | 'offline' | 'permission-denied';
 
 export type PushRegistrationDecision =
   | { readonly kind: 'register' }
@@ -49,6 +49,8 @@ export interface PushRegistrationInput {
   readonly os: string;
   /** `getExpoPushTokenAsync` requires an EAS projectId (SDK 49+). */
   readonly hasProjectId: boolean;
+  /** Token acquisition is network work and should stay quiet in airplane mode. */
+  readonly isOnline: boolean;
   readonly permission: PushPermissionStatus;
 }
 
@@ -71,7 +73,7 @@ export function resolvePushPlatform(os: string): PushPlatform | null {
  * optional and the app must stay fully usable without it.
  */
 export function decidePushRegistration(input: PushRegistrationInput): PushRegistrationDecision {
-  const { hasSession, os, hasProjectId, permission } = input;
+  const { hasSession, os, hasProjectId, isOnline, permission } = input;
 
   if (!hasSession) {
     return { kind: 'skip', reason: 'no-session' };
@@ -82,6 +84,9 @@ export function decidePushRegistration(input: PushRegistrationInput): PushRegist
   // Guards a build whose config lost the EAS link: degrade quietly, never throw.
   if (!hasProjectId) {
     return { kind: 'skip', reason: 'missing-project-id' };
+  }
+  if (!isOnline) {
+    return { kind: 'skip', reason: 'offline' };
   }
   if (permission === 'denied') {
     return { kind: 'skip', reason: 'permission-denied' };

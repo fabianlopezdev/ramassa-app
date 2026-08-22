@@ -2,12 +2,13 @@ import type { Query, QueryClient, QueryKey } from '@tanstack/react-query';
 import type { PersistedClient, Persister } from '@tanstack/react-query-persist-client';
 
 const QUERY_CACHE_STORAGE_KEY = 'ramassa.query-cache.v1';
-const QUERY_CACHE_BUSTER = 'player-content-v6-forum-user-scoped';
+const QUERY_CACHE_BUSTER = 'player-content-v7-gallery-user-scoped';
 const PLAYER_ANNOUNCEMENTS_QUERY_ROOT = 'player-announcements';
 const PLAYER_EVENTS_QUERY_ROOT = 'player-events';
 const PLAYER_KNOWLEDGE_QUERY_ROOT = 'player-knowledge';
 const PLAYER_SERVICES_QUERY_ROOT = 'player-services';
 const PLAYER_FORUM_QUERY_ROOT = 'player-forum';
+const PLAYER_GALLERY_QUERY_ROOT = 'player-gallery';
 
 export const ANNOUNCEMENT_CACHE_MAX_AGE_MS = 1000 * 60 * 60 * 24 * 7;
 
@@ -64,7 +65,8 @@ function shouldPersistQuery(query: Query): boolean {
       query.queryKey[0] === PLAYER_EVENTS_QUERY_ROOT ||
       query.queryKey[0] === PLAYER_KNOWLEDGE_QUERY_ROOT ||
       query.queryKey[0] === PLAYER_SERVICES_QUERY_ROOT ||
-      query.queryKey[0] === PLAYER_FORUM_QUERY_ROOT) &&
+      query.queryKey[0] === PLAYER_FORUM_QUERY_ROOT ||
+      query.queryKey[0] === PLAYER_GALLERY_QUERY_ROOT) &&
     query.state.status === 'success'
   );
 }

@@ -1,15 +1,24 @@
+import {
+  AnnouncementEmptyState,
+  AnnouncementFeedError,
+  AnnouncementFeedSkeleton,
+  OfflineBanner,
+} from '@/components/announcements/feed-states';
 import { GalleryTile } from '@/components/gallery/gallery-tile';
 import { PageWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
+import { isNetworkStateOnline } from '@/lib/network-status';
 import { useGalleryItems } from '@/lib/player-gallery';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
+import { useNetworkState } from 'expo-network';
 import { useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '@ramassa/shared/auth';
+import { toAppError } from '@ramassa/shared/errors';
 import type { MediaItemRow } from '@ramassa/shared/media';
 import { tokens } from '@ramassa/shared/tokens';
 
@@ -26,6 +35,7 @@ export default function GalleryScreen() {
   const languageFontClass = useLanguageFontClass();
   const { push, back } = useRouter();
   const { session } = useAuth();
+  const isOnline = isNetworkStateOnline(useNetworkState());
   const query = useGalleryItems();
   const refetchGallery = query.refetch;
   const accessToken = session?.access_token;
@@ -70,6 +80,9 @@ export default function GalleryScreen() {
             {t('intro')}
           </Text>
         </View>
+        {!isOnline ? (
+          <OfflineBanner label={t('offline')} languageFontClass={languageFontClass} />
+        ) : null}
         <PressableScale
           testID="gallery-upload"
           accessibilityLabel={t('upload')}
@@ -82,8 +95,24 @@ export default function GalleryScreen() {
         </PressableScale>
       </PageWidth>
     ),
-    [back, languageFontClass, openUpload, t],
+    [back, isOnline, languageFontClass, openUpload, t],
   );
+
+  if (query.isPending && query.data === undefined && isOnline) {
+    return <AnnouncementFeedSkeleton accessibilityLabel={t('loading')} />;
+  }
+  if (query.isError && query.data === undefined && isOnline) {
+    return (
+      <AnnouncementFeedError
+        message={t('loadFailed')}
+        retryLabel={t('retry')}
+        code={toAppError(query.error).code}
+        languageFontClass={languageFontClass}
+        onRetry={refresh}
+        isLoading={query.isRefetching}
+      />
+    );
+  }
 
   return (
     <FlashList
@@ -99,11 +128,13 @@ export default function GalleryScreen() {
       contentInsetAdjustmentBehavior="automatic"
       ListHeaderComponent={header}
       ListEmptyComponent={
-        <Text className={`text-center text-neutral-600 ${languageFontClass}`}>
-          {t(query.isPending ? 'loading' : 'empty')}
-        </Text>
+        <AnnouncementEmptyState
+          title={t(isOnline ? 'emptyTitle' : 'offlineEmptyTitle')}
+          body={t(isOnline ? 'emptyBody' : 'offlineEmptyBody')}
+          languageFontClass={languageFontClass}
+        />
       }
-      refreshing={query.isRefetching}
+      refreshing={query.isRefetching && isOnline}
       onRefresh={refresh}
     />
   );

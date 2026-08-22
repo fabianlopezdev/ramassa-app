@@ -57,10 +57,13 @@ describe('native messaging UI contract', () => {
   });
 
   test('announces thread loading, errors, offline state, dates, and delivery status semantically', async () => {
-    const source = await Bun.file(threadPath).text();
+    const [source, sharedStateSource] = await Promise.all([
+      Bun.file(threadPath).text(),
+      Bun.file(feedStatesPath).text(),
+    ]);
 
-    expect(source).toContain('accessibilityRole="progressbar"');
-    expect(source).toContain('accessibilityState={busyAccessibilityState}');
+    expect(sharedStateSource).toContain('accessibilityRole="progressbar"');
+    expect(sharedStateSource).toContain('accessibilityState={busyAccessibilityState}');
     expect(source).toContain('accessibilityRole="alert"');
     expect(source).toContain('<ErrorCodeLine code={errorCode} />');
     expect(source).toContain("t('messageStatus'");

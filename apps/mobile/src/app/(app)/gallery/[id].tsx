@@ -1,3 +1,8 @@
+import {
+  AnnouncementEmptyState,
+  AnnouncementFeedSkeleton,
+  OfflineBanner,
+} from '@/components/announcements/feed-states';
 import { ErrorCodeLine } from '@/components/error-code-line';
 import { ForumFlagDialog } from '@/components/forum/forum-flag-dialog';
 import { PageWidth } from '@/components/layout/content-width';
@@ -5,10 +10,12 @@ import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { resolveMediaImageSource } from '@/lib/media-source';
+import { isNetworkStateOnline } from '@/lib/network-status';
 import { useDeleteGalleryItem, useGalleryItem, useSetGalleryPrivacy } from '@/lib/player-gallery';
 import { mobileClientEnv } from '@/lib/supabase';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { Image } from 'expo-image';
+import { useNetworkState } from 'expo-network';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { useCallback, useMemo, useState } from 'react';
@@ -38,6 +45,7 @@ export default function GalleryItemScreen() {
   const { t } = useTranslation(['gallery', 'forum']);
   const languageFontClass = useLanguageFontClass();
   const { user, role, session } = useAuth();
+  const isOnline = isNetworkStateOnline(useNetworkState());
   const query = useGalleryItem(id);
   const refetchItem = query.refetch;
   const privacyMutation = useSetGalleryPrivacy(id);
@@ -126,6 +134,10 @@ export default function GalleryItemScreen() {
     ]);
   }, [back, deleteItem, t]);
 
+  if (query.isPending && item === undefined && isOnline) {
+    return <AnnouncementFeedSkeleton accessibilityLabel={t('gallery:loading')} />;
+  }
+
   return (
     <ScrollView
       className="flex-1 bg-white"
@@ -144,10 +156,15 @@ export default function GalleryItemScreen() {
             {t('gallery:back')}
           </Text>
         </PressableScale>
-        {query.isPending && item === undefined ? (
-          <Text className={`text-center text-neutral-600 ${languageFontClass}`}>
-            {t('gallery:loading')}
-          </Text>
+        {!isOnline ? (
+          <OfflineBanner label={t('gallery:offline')} languageFontClass={languageFontClass} />
+        ) : null}
+        {item === undefined && !isOnline ? (
+          <AnnouncementEmptyState
+            title={t('gallery:offlineEmptyTitle')}
+            body={t('gallery:offlineEmptyBody')}
+            languageFontClass={languageFontClass}
+          />
         ) : item === undefined ? (
           <View testID="gallery-detail-load-error" className="gap-md py-xl">
             <Text

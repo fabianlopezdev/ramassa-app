@@ -12,6 +12,7 @@ const ready: PushRegistrationInput = {
   hasSession: true,
   os: 'android',
   hasProjectId: true,
+  isOnline: true,
   permission: 'granted',
 };
 
@@ -34,6 +35,13 @@ test('only android and ios resolve to a push platform', () => {
 
 test('a signed-in, permitted device registers', () => {
   expect(decidePushRegistration(ready)).toEqual({ kind: 'register' });
+});
+
+test('an offline device skips token registration without creating network error noise', () => {
+  expect(decidePushRegistration({ ...ready, isOnline: false })).toEqual({
+    kind: 'skip',
+    reason: 'offline',
+  });
 });
 
 test('a simulator is NOT disqualified: Expo supports push on modern simulators', () => {

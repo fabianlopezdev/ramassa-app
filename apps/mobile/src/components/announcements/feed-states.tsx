@@ -71,6 +71,7 @@ export function AnnouncementFeedSkeleton({
   return (
     <View
       accessible
+      accessibilityRole="progressbar"
       accessibilityLabel={accessibilityLabel}
       accessibilityState={busyAccessibilityState}
       accessibilityLiveRegion="polite"

@@ -1,5 +1,9 @@
 import { announcementCategoryLabel } from '@/components/announcements/category-filters';
-import { OfflineBanner } from '@/components/announcements/feed-states';
+import {
+  AnnouncementFeedError,
+  AnnouncementFeedSkeleton,
+  OfflineBanner,
+} from '@/components/announcements/feed-states';
 import { PageWidth } from '@/components/layout/content-width';
 import { FadeSlideIn } from '@/components/motion/fade-slide-in';
 import { PressableScale } from '@/components/motion/pressable-scale';
@@ -12,11 +16,12 @@ import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { Image } from 'expo-image';
 import { useNetworkState } from 'expo-network';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@ramassa/shared/auth';
+import { toAppError } from '@ramassa/shared/errors';
 import { resolveLocalizedText, useLanguage } from '@ramassa/shared/i18n';
 import { tokens } from '@ramassa/shared/tokens';
 
@@ -38,7 +43,9 @@ export default function AnnouncementDetailScreen() {
   const languageFontClass = useLanguageFontClass();
   const networkState = useNetworkState();
   const isOffline = !isNetworkStateOnline(networkState);
-  const { data } = usePlayerAnnouncements();
+  const query = usePlayerAnnouncements();
+  const { data, refetch } = query;
+  const retry = useCallback(() => void refetch(), [refetch]);
   const announcement = data?.find((row) => row.id === id);
   const title =
     announcement === undefined ? undefined : resolveLocalizedText(announcement.title, language);
@@ -72,6 +79,23 @@ export default function AnnouncementDetailScreen() {
         : undefined,
     [insets.bottom, insets.top],
   );
+
+  if (query.isPending && data === undefined) {
+    return <AnnouncementFeedSkeleton accessibilityLabel={t('loading')} />;
+  }
+
+  if (query.isError && data === undefined) {
+    return (
+      <AnnouncementFeedError
+        message={t('loadFailed')}
+        retryLabel={t('retryAction')}
+        code={toAppError(query.error).code}
+        languageFontClass={languageFontClass}
+        onRetry={retry}
+      />
+    );
+  }
+
   return (
     <ScrollView
       testID="announcement-detail-screen"

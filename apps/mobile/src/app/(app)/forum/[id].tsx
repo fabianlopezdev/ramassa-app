@@ -1,3 +1,4 @@
+import { AnnouncementFeedSkeleton } from '@/components/announcements/feed-states';
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { ErrorCodeLine } from '@/components/error-code-line';
@@ -26,7 +27,7 @@ import { useNetworkState } from 'expo-network';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Alert, StyleSheet, Text, View } from 'react-native';
+import { Alert, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@ramassa/shared/auth';
 import { toAppError, type AppErrorCode } from '@ramassa/shared/errors';
@@ -187,16 +188,7 @@ export default function ForumPostDetailScreen() {
   const closeFlagDialog = useCallback(() => setFlagTarget(null), []);
 
   if (postQuery.isPending && post === undefined) {
-    return (
-      <SafeAreaView style={styles.screen}>
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator
-            accessibilityRole="progressbar"
-            accessibilityLabel={t('forum:loading')}
-          />
-        </View>
-      </SafeAreaView>
-    );
+    return <AnnouncementFeedSkeleton accessibilityLabel={t('forum:loading')} />;
   }
   if (post === undefined) {
     const loadCode = postQuery.error === null ? 'DB-1' : toAppError(postQuery.error).code;
@@ -436,11 +428,37 @@ export default function ForumPostDetailScreen() {
           </PageWidth>
         }
         ListEmptyComponent={
-          <PageWidth>
-            <Text className={`pb-lg text-start text-neutral-600 ${languageFontClass}`}>
-              {t('forum:noReplies')}
-            </Text>
-          </PageWidth>
+          repliesQuery.isPending && repliesQuery.data === undefined ? (
+            <AnnouncementFeedSkeleton accessibilityLabel={t('forum:loading')} />
+          ) : repliesQuery.isError && repliesQuery.data === undefined ? (
+            <PageWidth className="items-center gap-md pb-lg">
+              <Text
+                selectable
+                accessibilityRole="alert"
+                className={`text-center text-neutral-700 ${languageFontClass}`}
+              >
+                {t('forum:loadFailed')}
+              </Text>
+              <ErrorCodeLine code={toAppError(repliesQuery.error).code} />
+              <PressableScale
+                accessibilityLabel={t('forum:retry')}
+                onPress={() => void refetchReplies()}
+                haptic="tapLight"
+                style={continuousCorners}
+                className="min-h-recommended justify-center rounded-md bg-primary px-lg"
+              >
+                <Text className={`font-bold text-white ${languageFontClass}`}>
+                  {t('forum:retry')}
+                </Text>
+              </PressableScale>
+            </PageWidth>
+          ) : (
+            <PageWidth>
+              <Text className={`pb-lg text-start text-neutral-600 ${languageFontClass}`}>
+                {t('forum:noReplies')}
+              </Text>
+            </PageWidth>
+          )
         }
         ListFooterComponent={
           post.visibility === 'deleted' ? null : (

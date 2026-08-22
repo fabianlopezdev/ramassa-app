@@ -1,3 +1,4 @@
+import { AnnouncementFeedSkeleton } from '@/components/announcements/feed-states';
 import { ErrorCodeLine } from '@/components/error-code-line';
 import { PageWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
@@ -9,7 +10,7 @@ import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
 import { memo, useCallback, useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, KeyboardAvoidingView, Text, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@ramassa/shared/auth';
 import { DEFAULT_LANGUAGE } from '@ramassa/shared/i18n';
@@ -35,7 +36,6 @@ const composerStyle = {
   borderTopColor: tokens.colors.neutral[200],
 } as const;
 const messageBubbleWidthStyle = { maxWidth: tokens.messaging.messageBubbleMaxWidth } as const;
-const busyAccessibilityState = { busy: true } as const;
 const timelineKeyExtractor = (row: TimelineRow) => row.id;
 const timelineItemType = (row: TimelineRow) => row.kind;
 const timelineVisibleContentPosition = {
@@ -253,13 +253,7 @@ function MessageThreadView({
   if (isPending) {
     return (
       <SafeAreaView style={screenStyle} edges={['top', 'left', 'right']}>
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator
-            accessibilityRole="progressbar"
-            accessibilityLabel={t('loadingConversation')}
-            accessibilityState={busyAccessibilityState}
-          />
-        </View>
+        <AnnouncementFeedSkeleton accessibilityLabel={t('loadingConversation')} />
       </SafeAreaView>
     );
   }
