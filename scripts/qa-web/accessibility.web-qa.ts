@@ -137,7 +137,18 @@ function formatViolations(
 }
 
 async function expectNoAxeViolations(page: Page, route: string): Promise<void> {
-  const results = await new AxeBuilder({ page }).withTags(wcagTags).analyze();
+  const frames = page.locator('iframe');
+  for (let index = 0; index < (await frames.count()); index += 1) {
+    await expect(
+      frames.nth(index),
+      `${route}: embedded frame ${index + 1} needs an accessible title`,
+    ).toHaveAttribute('title', /\S+/);
+  }
+
+  // Axe can enter a cross-origin frame when the provider permits it, but those
+  // descendants belong to the provider and can change without a Ramassa
+  // release. Ramassa owns the frame boundary above; axe owns our document.
+  const results = await new AxeBuilder({ page }).exclude('iframe').withTags(wcagTags).analyze();
   expect(results.violations, `${route}\n${formatViolations(results.violations)}`).toEqual([]);
 }
 

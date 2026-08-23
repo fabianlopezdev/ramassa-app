@@ -17,4 +17,11 @@ describe('accessibility CI local service contract', () => {
     expect(playwrightConfig).toContain('process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY');
     expect(session).toContain('process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY');
   });
+
+  test('the browser gate owns frame naming without auditing third-party frame internals', async () => {
+    const accessibilityGate = await readSource('scripts/qa-web/accessibility.web-qa.ts');
+
+    expect(accessibilityGate).toContain("exclude('iframe')");
+    expect(accessibilityGate).toContain("toHaveAttribute('title', /\\S+/)");
+  });
 });
