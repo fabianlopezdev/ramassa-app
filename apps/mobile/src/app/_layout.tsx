@@ -21,6 +21,7 @@ import { Stack } from 'expo-router/stack';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useMemo, useRef } from 'react';
 import { I18nextProvider } from 'react-i18next';
+import { Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useReducedMotion } from 'react-native-reanimated';
 import { AuthProvider, useAuth } from '@ramassa/shared/auth';
@@ -37,6 +38,58 @@ configurePushNotificationPresentation();
 // every render of the root.
 const gestureRootStyle = { flex: 1 } as const;
 const persistOptions = persistedQueryOptions(queryPersister);
+let webRouteFocusInstalled = false;
+const WEB_ROUTE_FOCUS_POLL_MS = 100;
+const WEB_ROUTE_FOCUS_MAX_FRAMES = 60;
+
+function visibleWebHeading(): HTMLElement | undefined {
+  return [...document.querySelectorAll<HTMLElement>('h1, [role="heading"]')].find(
+    (heading) => heading.offsetParent !== null,
+  );
+}
+
+function WebRouteFocusManager() {
+  useEffect(() => {
+    if (Platform.OS !== 'web' || webRouteFocusInstalled) return;
+    webRouteFocusInstalled = true;
+    let currentPathname = window.location.pathname;
+    let pendingPathname: string | null = null;
+    window.setInterval(() => {
+      if (
+        currentPathname === window.location.pathname ||
+        pendingPathname === window.location.pathname
+      ) {
+        return;
+      }
+      const destinationPathname = window.location.pathname;
+      pendingPathname = destinationPathname;
+      const previousHeading = visibleWebHeading();
+      let attempts = 0;
+      const focusDestinationHeading = () => {
+        if (window.location.pathname !== destinationPathname) {
+          pendingPathname = null;
+          return;
+        }
+        const heading = visibleWebHeading();
+        if (
+          heading !== undefined &&
+          (heading !== previousHeading || attempts >= WEB_ROUTE_FOCUS_MAX_FRAMES)
+        ) {
+          currentPathname = destinationPathname;
+          pendingPathname = null;
+          heading.setAttribute('tabindex', '-1');
+          heading.focus();
+          return;
+        }
+        attempts += 1;
+        window.requestAnimationFrame(focusDestinationHeading);
+      };
+      window.requestAnimationFrame(focusDestinationHeading);
+    }, WEB_ROUTE_FOCUS_POLL_MS);
+  }, []);
+
+  return null;
+}
 
 /** Root-level net: catches render crashes outside the zone boundaries. */
 export function ErrorBoundary(props: ErrorFallbackProps) {
@@ -142,6 +195,7 @@ function RootLayout() {
        providers so it covers the whole app including the modal above. */
     <GestureHandlerRootView style={gestureRootStyle}>
       <I18nextProvider i18n={i18n}>
+        <WebRouteFocusManager />
         {/* Server-state cache for every screen that fetches (RAPP-19). Mounted
             above the auth provider so a future query can be keyed by session
             without the provider tree having to be reordered later. */}

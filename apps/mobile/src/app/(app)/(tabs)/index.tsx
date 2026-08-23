@@ -171,8 +171,6 @@ export default function HomeScreen() {
 
   return (
     <FlashList
-      accessibilityRole="list"
-      accessibilityLabel={t('feedTitle')}
       data={announcements}
       renderItem={renderAnnouncement}
       keyExtractor={keyExtractor}

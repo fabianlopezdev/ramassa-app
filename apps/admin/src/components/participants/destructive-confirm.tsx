@@ -28,6 +28,13 @@
  */
 
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { useId, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -77,75 +84,86 @@ export function DestructiveConfirm({
   const isMatched = isConfirmationPhraseMatched(typed, confirmationPhrase);
 
   return (
-    <section
-      // A dialog in the accessibility tree, not merely a bordered box: a screen
-      // reader must announce that everything behind it is out of scope, and the
-      // capture harness needs it addressable as its own node.
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby={`${fieldId}-title`}
-      className="flex flex-col gap-4 rounded-md border border-destructive p-6"
+    <Dialog
+      open
+      onOpenChange={(open) => {
+        if (!open && !isWorking) onCancel();
+      }}
     >
-      <h2 id={`${fieldId}-title`} className="text-start text-xl font-semibold">
-        {title}
-      </h2>
-      <p className="text-start text-sm text-muted-foreground">{body}</p>
+      <DialogContent
+        className="border-destructive"
+        onEscapeKeyDown={(event) => {
+          if (isWorking) event.preventDefault();
+        }}
+        onInteractOutside={(event) => event.preventDefault()}
+        onOpenAutoFocus={(event) => {
+          event.preventDefault();
+          document.getElementById(fieldId)?.focus();
+        }}
+      >
+        <DialogTitle>{title}</DialogTitle>
+        <DialogDescription>{body}</DialogDescription>
 
-      <ul className="flex list-disc flex-col gap-1 ps-5">
-        {consequences.map((consequence) => (
-          <li key={consequence} className="text-start text-sm">
-            {consequence}
-          </li>
-        ))}
-      </ul>
+        <ul className="flex list-disc flex-col gap-1 ps-5">
+          {consequences.map((consequence) => (
+            <li key={consequence} className="text-start text-sm">
+              {consequence}
+            </li>
+          ))}
+        </ul>
 
-      {children}
+        {children}
 
-      <p className="text-start text-sm font-medium text-destructive">{t('irreversibleWarning')}</p>
+        <p className="text-start text-sm font-medium text-destructive">
+          {t('irreversibleWarning')}
+        </p>
 
-      <div className="flex flex-col gap-2">
-        <label
-          htmlFor={fieldId}
-          className="flex flex-wrap items-center gap-2 text-start text-sm font-medium"
-        >
-          {t('confirmTypeLabel')}
-          {/* The word in its own element rather than interpolated into the
+        <div className="flex flex-col gap-2">
+          <label
+            htmlFor={fieldId}
+            className="flex flex-wrap items-center gap-2 text-start text-sm font-medium"
+          >
+            {t('confirmTypeLabel')}
+            {/* The word in its own element rather than interpolated into the
               sentence: it is what the reader's eye has to land on, and it is
               what the browser suite reads instead of hardcoding a Catalan word
               that is not what an English or Arabic session shows. */}
-          <code data-confirmation-phrase className="rounded bg-muted px-2 py-0.5 font-mono">
-            {confirmationPhrase}
-          </code>
-        </label>
-        <Input
-          id={fieldId}
-          value={typed}
-          autoComplete="off"
-          onChange={(event) => setTyped(event.target.value)}
-          className="max-w-xs"
-        />
-      </div>
+            <code data-confirmation-phrase className="rounded bg-muted px-2 py-0.5 font-mono">
+              {confirmationPhrase}
+            </code>
+          </label>
+          <Input
+            id={fieldId}
+            value={typed}
+            autoComplete="off"
+            onChange={(event) => setTyped(event.target.value)}
+            className="max-w-xs"
+          />
+        </div>
 
-      {errorMessage === undefined ? null : (
-        <p aria-live="polite" className="text-start text-sm text-destructive">
-          {errorMessage}
-        </p>
-      )}
+        {errorMessage === undefined ? null : (
+          <p aria-live="polite" className="text-start text-sm text-destructive">
+            {errorMessage}
+          </p>
+        )}
 
-      <div className="flex flex-wrap items-center gap-3">
-        <Button
-          type="button"
-          size="lg"
-          variant="destructive"
-          disabled={!isMatched || isWorking}
-          onClick={onConfirm}
-        >
-          {isWorking ? t('workingLabel') : confirmLabel}
-        </Button>
-        <Button type="button" size="lg" variant="outline" disabled={isWorking} onClick={onCancel}>
-          {t('profile:cancelAction')}
-        </Button>
-      </div>
-    </section>
+        <div className="flex flex-wrap items-center gap-3">
+          <Button
+            type="button"
+            size="lg"
+            variant="destructive"
+            disabled={!isMatched || isWorking}
+            onClick={onConfirm}
+          >
+            {isWorking ? t('workingLabel') : confirmLabel}
+          </Button>
+          <DialogClose asChild>
+            <Button type="button" size="lg" variant="outline" disabled={isWorking}>
+              {t('profile:cancelAction')}
+            </Button>
+          </DialogClose>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

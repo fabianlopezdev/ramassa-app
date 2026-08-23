@@ -1,6 +1,7 @@
 import { getLocales } from 'expo-localization';
 import { I18nManager } from 'react-native';
 import {
+  applyDocumentDirection,
   createI18n,
   createMmkvLanguageStorage,
   DEFAULT_LANGUAGE,
@@ -24,7 +25,15 @@ export const i18n = createI18n({
 // device lay out RTL natively; this sync covers the in-app language switch,
 // which becomes fully visible on the next launch. The settings-UI issue that
 // exposes the switcher owns prompting/triggering that reload.
-syncNativeLayoutDirection(I18nManager, i18n.resolvedLanguage ?? DEFAULT_LANGUAGE);
-i18n.on('languageChanged', (language) => {
+function syncLayoutDirection(language: string): void {
+  if (typeof document !== 'undefined') {
+    applyDocumentDirection(document, language);
+    return;
+  }
   syncNativeLayoutDirection(I18nManager, language);
+}
+
+syncLayoutDirection(i18n.resolvedLanguage ?? DEFAULT_LANGUAGE);
+i18n.on('languageChanged', (language) => {
+  syncLayoutDirection(language);
 });

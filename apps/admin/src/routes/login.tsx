@@ -29,7 +29,11 @@ function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-svh flex-col items-center justify-center p-6">
+    <main
+      id="main-content"
+      tabIndex={-1}
+      className="flex min-h-svh flex-col items-center justify-center p-6"
+    >
       <div className="flex w-full max-w-sm flex-col gap-6">
         <div className="flex flex-col gap-1 text-start">
           <h1 className="text-2xl font-bold text-foreground">{t('admin:loginTitle')}</h1>

@@ -1,3 +1,4 @@
+import { RouteFocusManager } from '@/components/accessibility/route-focus-manager';
 import { RequireAuth } from '@/components/auth/require-auth';
 import { EntityNav } from '@/components/nav/entity-nav';
 import { createFileRoute, Outlet } from '@tanstack/react-router';
@@ -16,9 +17,10 @@ function EntityLayout() {
   return (
     <RequireAuth allow={ENTITY_ROLES}>
       <div className="min-h-screen">
+        <RouteFocusManager targetId="main-content" />
         <EntityNav />
         {/* The portal's single `main` landmark; child routes render sections. */}
-        <main>
+        <main id="main-content" tabIndex={-1}>
           <Outlet />
         </main>
       </div>

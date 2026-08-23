@@ -6,13 +6,39 @@ const mobileRoot = fileURLToPath(new URL('../', import.meta.url));
 const readMobileSource = (path: string) => readFile(`${mobileRoot}${path}`, 'utf8');
 
 describe('Phase 6 accessibility and i18n contract', () => {
-  test('gallery lists and meaningful media expose translated accessible names', async () => {
+  test('shared press controls are native accessibility elements', async () => {
+    const pressableScale = await readMobileSource('components/motion/pressable-scale.tsx');
+
+    expect(pressableScale).toMatch(
+      /<NativeWindAnimatedView[\s\S]*?accessible[\s\S]*?accessibilityRole=\{accessibilityRole\}/,
+    );
+  });
+
+  test('shared press controls enforce the 48dp target in both dimensions', async () => {
+    const pressableScale = await readMobileSource('components/motion/pressable-scale.tsx');
+
+    expect(pressableScale).toContain('minHeight: tokens.tapTarget.min');
+    expect(pressableScale).toContain('minWidth: tokens.tapTarget.min');
+    expect(pressableScale).toContain('[styles.minimumTarget, animatedStyle, style]');
+    expect(pressableScale).toContain("accessibilityRole === 'switch'");
+  });
+
+  test('onboarding date fields stack before accessibility text reaches 200 percent', async () => {
+    const identity = await readMobileSource('app/(app)/onboarding/index.tsx');
+
+    expect(identity).toContain('useWindowDimensions');
+    expect(identity).toContain('LARGE_TEXT_STACK_THRESHOLD');
+    expect(identity).toContain("isLargeText ? 'gap-sm' : 'flex-row gap-sm'");
+  });
+
+  test('gallery controls and meaningful media expose translated accessible names', async () => {
     const gallery = await readMobileSource('app/(app)/gallery/index.tsx');
     const galleryItem = await readMobileSource('app/(app)/gallery/[id].tsx');
 
-    expect(gallery).toMatch(
-      /<FlashList[\s\S]*?accessibilityRole="list"[\s\S]*?accessibilityLabel=\{t\('title'\)\}/,
+    expect(gallery).toContain(
+      "accessibilityLabel={t('openItem', { name: item.uploader_first_name })}",
     );
+    expect(gallery).toContain('accessibilityRole="header"');
     expect(galleryItem).toMatch(
       /<VideoView[\s\S]*?accessibilityLabel=\{[\s\S]*?item\.caption \?\? t\('gallery:mediaBy'/,
     );
@@ -23,8 +49,13 @@ describe('Phase 6 accessibility and i18n contract', () => {
     const composer = await readMobileSource('app/(app)/forum/create.tsx');
 
     expect(upload).toMatch(
-      /<Switch[\s\S]*?accessibilityRole="switch"[\s\S]*?accessibilityLabel=\{t\('gallery:consentReminder'\)\}[\s\S]*?accessibilityState=/,
+      /<Switch[\s\S]*?testID="gallery-consent-acknowledgment"[\s\S]*?style=\{styles\.consentSwitch\}[\s\S]*?accessibilityRole=\{consentSwitchRole\}[\s\S]*?accessibilityLabel=\{t\('gallery:consentReminder'\)\}[\s\S]*?accessibilityState=/,
     );
+    expect(upload).toContain('IOS_SWITCH_SCALE');
+    expect(upload).toContain("Platform.OS === 'web' ? 'none' : 'switch'");
+    expect(upload).toContain('style={styles.consentSwitch}');
+    expect(upload).toContain('minHeight: tokens.tapTarget.min');
+    expect(upload).toContain('minWidth: tokens.tapTarget.min');
     expect(upload).toMatch(
       /accessibilityRole="progressbar"[\s\S]*?accessibilityLabel=\{uploadProgressLabel\}/,
     );
@@ -117,5 +148,14 @@ describe('Phase 6 accessibility and i18n contract', () => {
         expect(alertTextTag, path).toMatch(/<Text\s+selectable\b/);
       }
     }
+  });
+
+  test('player web route changes focus the destination heading', async () => {
+    const root = await readMobileSource('app/_layout.tsx');
+
+    expect(root).toContain('function WebRouteFocusManager()');
+    expect(root).toContain('document.querySelectorAll<HTMLElement>(\'h1, [role="heading"]\')');
+    expect(root).toContain("heading.setAttribute('tabindex', '-1')");
+    expect(root).toContain('heading.focus()');
   });
 });

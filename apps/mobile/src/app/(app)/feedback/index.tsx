@@ -223,8 +223,6 @@ export default function FeedbackScreen() {
       <FlashList
         ref={feedbackListRef}
         testID="feedback-screen"
-        accessibilityRole="list"
-        accessibilityLabel={t('feedback:historyTitle')}
         data={feedbackQuery.data ?? EMPTY_FEEDBACK}
         renderItem={renderFeedback}
         keyExtractor={feedbackKeyExtractor}

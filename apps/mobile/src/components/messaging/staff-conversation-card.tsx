@@ -55,7 +55,7 @@ export const StaffConversationCard = memo(function StaffConversationCard({
         {unreadBadge === null ? null : (
           <View
             accessible={false}
-            className="min-h-8 min-w-8 items-center justify-center rounded-full bg-primary-600 px-sm"
+            className="min-h-8 min-w-8 items-center justify-center rounded-full bg-primary-dark px-sm"
           >
             <Text style={tabularNumerals} className={`font-bold text-white ${languageClass}`}>
               {unreadBadge}

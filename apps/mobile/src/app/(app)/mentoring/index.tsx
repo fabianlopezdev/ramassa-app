@@ -155,8 +155,6 @@ export default function MentoringScreen() {
       <Stack.Screen options={screenOptions} />
       <FlashList
         testID="mentoring-screen"
-        accessibilityRole="list"
-        accessibilityLabel={t('mentoring:statusTitle')}
         data={requestsQuery.data ?? EMPTY_MENTORING_REQUESTS}
         renderItem={renderRequest}
         keyExtractor={mentoringKeyExtractor}
@@ -178,7 +176,9 @@ export default function MentoringScreen() {
               className="gap-xs rounded-lg border border-primary/30 bg-primary/5 p-lg"
               style={continuousCorners}
             >
-              <Text className={`text-start text-lg font-bold text-primary ${languageFontClass}`}>
+              <Text
+                className={`text-start text-lg font-bold text-primary-dark ${languageFontClass}`}
+              >
                 {t('mentoring:privacyTitle')}
               </Text>
               <Text className={`text-start text-md text-neutral-700 ${languageFontClass}`}>

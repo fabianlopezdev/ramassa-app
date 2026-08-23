@@ -1,3 +1,4 @@
+import { RouteFocusManager } from '@/components/accessibility/route-focus-manager';
 import { RequireAuth } from '@/components/auth/require-auth';
 import { StaffSidebar } from '@/components/nav/staff-sidebar';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
@@ -16,10 +17,11 @@ function StaffLayout() {
   return (
     <RequireAuth allow={STAFF_ROLES}>
       <SidebarProvider>
+        <RouteFocusManager targetId="main-content" />
         <StaffSidebar />
         {/* SidebarInset renders the page's single `main` landmark, so child
             routes render sections rather than nesting another `main`. */}
-        <SidebarInset>
+        <SidebarInset id="main-content" tabIndex={-1}>
           <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-4">
             <SidebarTrigger />
           </header>

@@ -17,7 +17,7 @@ import { Redirect, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { Text, useWindowDimensions, View } from 'react-native';
 import { LANGUAGE_NATIVE_NAMES, SUPPORTED_LANGUAGES, useLanguage } from '@ramassa/shared/i18n';
 import type { IdentityStep, LanguageCode } from '@ramassa/shared/schemas';
 
@@ -34,12 +34,15 @@ import type { IdentityStep, LanguageCode } from '@ramassa/shared/schemas';
  * literals, so declaring it here still generates the utility.
  */
 const YEAR_FIELD_WIDTH_CLASS = 'flex-[1.4]';
+const LARGE_TEXT_STACK_THRESHOLD = 1.5;
 
 export default function IdentityStepScreen() {
   const { t, i18n } = useTranslation('onboarding');
   const languageFontClass = useLanguageFontClass();
   const { setLanguage } = useLanguage();
   const router = useRouter();
+  const { fontScale } = useWindowDimensions();
+  const isLargeText = fontScale >= LARGE_TEXT_STACK_THRESHOLD;
 
   // Loaded ONCE per mount: the draft is the mount-time snapshot, the form owns
   // the values from here.
@@ -151,8 +154,8 @@ export default function IdentityStepScreen() {
         <Text className={`text-start text-md font-medium text-neutral-800 ${languageFontClass}`}>
           {t('dateOfBirthLabel')}
         </Text>
-        <View className="flex-row gap-sm">
-          <View className="flex-1">
+        <View className={isLargeText ? 'gap-sm' : 'flex-row gap-sm'}>
+          <View className={isLargeText ? '' : 'flex-1'}>
             <Controller
               control={control}
               name="day"
@@ -169,7 +172,7 @@ export default function IdentityStepScreen() {
               )}
             />
           </View>
-          <View className="flex-1">
+          <View className={isLargeText ? '' : 'flex-1'}>
             <Controller
               control={control}
               name="month"
@@ -186,7 +189,7 @@ export default function IdentityStepScreen() {
               )}
             />
           </View>
-          <View className={YEAR_FIELD_WIDTH_CLASS}>
+          <View className={isLargeText ? '' : YEAR_FIELD_WIDTH_CLASS}>
             <Controller
               control={control}
               name="year"

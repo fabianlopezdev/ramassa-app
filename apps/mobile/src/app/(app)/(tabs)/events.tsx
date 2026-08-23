@@ -313,8 +313,6 @@ export default function EventsScreen() {
   return (
     <FlashList
       testID="player-events-screen"
-      accessibilityRole="list"
-      accessibilityLabel={t('playerTitle')}
       data={visibleEvents}
       renderItem={renderEvent}
       keyExtractor={keyExtractor}

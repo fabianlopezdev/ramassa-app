@@ -10,7 +10,7 @@ import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
 import { memo, useCallback, useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { KeyboardAvoidingView, Text, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, Text, TextInput, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@ramassa/shared/auth';
 import { DEFAULT_LANGUAGE } from '@ramassa/shared/i18n';
@@ -68,7 +68,7 @@ const MessageBubble = memo(function MessageBubble({
       <View
         style={continuousCorners}
         className={`rounded-2xl px-md py-sm ${
-          isOwn ? 'rounded-ee-sm bg-primary-600' : 'rounded-es-sm bg-white'
+          isOwn ? 'rounded-ee-sm bg-primary-dark' : 'rounded-es-sm bg-white'
         }`}
       >
         <Text
@@ -155,7 +155,8 @@ const MessageComposer = memo(function MessageComposer({
         testID="message-composer"
         value={draft}
         onChangeText={setDraft}
-        placeholder={placeholder}
+        placeholder={Platform.OS === 'web' ? undefined : placeholder}
+        placeholderTextColor={tokens.colors.neutral[600]}
         accessibilityLabel={placeholder}
         multiline
         maxLength={MESSAGE_CONTENT_MAX_LENGTH}
@@ -170,7 +171,7 @@ const MessageComposer = memo(function MessageComposer({
         isDisabled={draft.trim().length === 0}
         haptic="selection"
         style={continuousCorners}
-        className="min-h-recommended justify-center rounded-2xl bg-primary-600 px-lg"
+        className="min-h-recommended justify-center rounded-2xl bg-primary-dark px-lg"
       >
         <Text className={`font-semibold text-white ${languageClass}`}>{sendLabel}</Text>
       </PressableScale>
@@ -275,7 +276,7 @@ function MessageThreadView({
             isBusy={isRefetching}
             haptic="tapLight"
             style={continuousCorners}
-            className="rounded-xl bg-primary-600 px-lg py-md"
+            className="rounded-xl bg-primary-dark px-lg py-md"
           >
             <Text className={`font-semibold text-white ${fontClass}`}>{t('retry')}</Text>
           </PressableScale>
@@ -321,8 +322,6 @@ function MessageThreadView({
             />
           ) : (
             <FlashList
-              accessibilityRole="list"
-              accessibilityLabel={t('messageList')}
               data={rows}
               renderItem={renderItem}
               keyExtractor={timelineKeyExtractor}

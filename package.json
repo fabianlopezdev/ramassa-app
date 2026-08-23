@@ -35,9 +35,11 @@
     "capture:phase": "bun run scripts/capture-phase.ts",
     "qa:smoke": "bun run scripts/qa-smoke.ts",
     "qa:android:tab-labels": "bun run scripts/qa-android-tab-labels.ts",
-    "qa:web": "env -u NO_COLOR playwright test"
+    "qa:web": "env -u NO_COLOR playwright test",
+    "qa:accessibility:web": "env -u NO_COLOR playwright test scripts/qa-web/accessibility.web-qa.ts"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.13.0",
     "@commitlint/cli": "^21.2.1",
     "@commitlint/config-conventional": "^21.2.0",
     "@eslint/js": "^10.0.1",

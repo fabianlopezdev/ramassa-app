@@ -119,8 +119,6 @@ export default function CommunityScreen() {
   return (
     <FlashList
       testID="forum-board"
-      accessibilityRole="list"
-      accessibilityLabel={t('forum:title')}
       data={posts}
       renderItem={renderPost}
       keyExtractor={postKeyExtractor}

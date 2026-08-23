@@ -1,4 +1,5 @@
 import { expect, test } from 'bun:test';
+import { contrastRatio } from '../organization-settings';
 import { tokens, tokensToCssVariables } from './index';
 
 test('tokens expose the full expected shape', () => {
@@ -26,6 +27,11 @@ test('content widths keep a wide browser from stretching a phone layout (RAPP-80
 test('touch targets meet the WCAG AA hard constraint (min 48dp, recommended 56dp)', () => {
   expect(tokens.tapTarget.min).toBeGreaterThanOrEqual(48);
   expect(tokens.tapTarget.recommended).toBeGreaterThanOrEqual(56);
+});
+
+test('semantic error color carries normal text on light and dark surfaces at WCAG AA', () => {
+  expect(contrastRatio(tokens.colors.error, tokens.colors.white)).toBeGreaterThanOrEqual(4.5);
+  expect(contrastRatio(tokens.colors.error, tokens.colors.neutral[50])).toBeGreaterThanOrEqual(4.5);
 });
 
 test('tokensToCssVariables derives CSS custom properties from the tokens', () => {

@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test';
 
 const threadPath = new URL('../components/messaging/message-thread.tsx', import.meta.url);
 const conversationListPath = new URL('../app/(app)/messages/index.tsx', import.meta.url);
+const teamChatPath = new URL('../app/(app)/team-chat.tsx', import.meta.url);
 const conversationCardPath = new URL(
   '../components/messaging/staff-conversation-card.tsx',
   import.meta.url,
@@ -85,6 +86,13 @@ describe('native messaging UI contract', () => {
     expect(threadSource).toContain('className="min-h-recommended justify-center');
     expect(conversationListSource).not.toContain('min-h-min');
     expect(threadSource).not.toContain('min-h-min');
+  });
+
+  test('uses the catalog-backed player title for private team chat', async () => {
+    const source = await Bun.file(teamChatPath).text();
+
+    expect(source).toContain("title={t('messaging:playerTitle')}");
+    expect(source).not.toContain('playerThreadTitle');
   });
 
   test('localizes row summaries, delivery status, and singular unread counts in every language', async () => {

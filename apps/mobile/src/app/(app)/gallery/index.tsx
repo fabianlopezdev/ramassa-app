@@ -117,8 +117,6 @@ export default function GalleryScreen() {
   return (
     <FlashList
       testID="gallery-grid"
-      accessibilityRole="list"
-      accessibilityLabel={t('title')}
       data={query.data ?? EMPTY_GALLERY_ITEMS}
       renderItem={renderItem}
       keyExtractor={keyExtractor}

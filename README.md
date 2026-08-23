@@ -65,13 +65,14 @@ docs/adr/          Architecture Decision Records
 
 ## Documentation
 
-| Document                       | Purpose                                                  |
-| ------------------------------ | -------------------------------------------------------- |
-| [SPEC.md](SPEC.md)             | Product requirements, schema, UX, tech stack             |
-| [CLAUDE.md](CLAUDE.md)         | Development workflow, conventions, skill enforcement     |
-| [tasks/plan.md](tasks/plan.md) | Current phase implementation plan (detailed)             |
-| [tasks/todo.md](tasks/todo.md) | Current phase task checklist with dependencies           |
-| [docs/adr/](docs/adr/)         | Architecture Decision Records — why we built it this way |
+| Document                                                               | Purpose                                              |
+| ---------------------------------------------------------------------- | ---------------------------------------------------- |
+| [SPEC.md](SPEC.md)                                                     | Product requirements, schema, UX, tech stack         |
+| [CLAUDE.md](CLAUDE.md)                                                 | Development workflow, conventions, skill enforcement |
+| [tasks/plan.md](tasks/plan.md)                                         | Current phase implementation plan                    |
+| [tasks/todo.md](tasks/todo.md)                                         | Current phase task checklist with dependencies       |
+| [docs/accessibility-conformance.md](docs/accessibility-conformance.md) | WCAG 2.2 AA conformance statement and audit evidence |
+| [docs/adr/](docs/adr/)                                                 | Architecture Decision Records and rationale          |
 
 ## Key Commands
 

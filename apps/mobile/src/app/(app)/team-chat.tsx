@@ -11,7 +11,7 @@ export default function TeamChatScreen() {
   const languageFontClass = useLanguageFontClass();
   return (
     <PlayerMessageThread
-      title={t('messaging:playerThreadTitle')}
+      title={t('messaging:playerTitle')}
       headerAccessory={
         <PressableScale
           testID="team-chat-back"

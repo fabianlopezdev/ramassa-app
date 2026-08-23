@@ -58,13 +58,13 @@ export default defineConfig({
       command: `EXPO_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321 EXPO_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH EXPO_PUBLIC_MEDIA_WORKER_URL=http://127.0.0.1:${mediaPort} EXPO_PUBLIC_TRANSLATION_WORKER_URL=http://127.0.0.1:${translationPort} bun run --cwd apps/admin dev -- --port ${adminPort} --strictPort --force`,
       url: adminOrigin,
       reuseExistingServer: false,
-      timeout: 180_000,
+      timeout: 600_000,
     },
     {
       command: `CI=1 RAMASSA_QA_PLAYER_PORT=${playerPort} EXPO_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321 EXPO_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH EXPO_PUBLIC_MEDIA_WORKER_URL=http://127.0.0.1:${mediaPort} bun run scripts/start-player-web-qa.ts`,
       url: playerOrigin,
       reuseExistingServer: false,
-      timeout: 180_000,
+      timeout: 600_000,
     },
     {
       // The media Worker, because erasing a participant is TWO systems and the
@@ -78,13 +78,13 @@ export default defineConfig({
       command: `bun run --cwd workers/media dev -- --port ${mediaPort} --persist-to ${workerStateRoot}/media --var LOCAL_UPLOAD_SIGNING_SECRET:${qaLocalUploadSigningSecret}`,
       url: `http://127.0.0.1:${mediaPort}/health`,
       reuseExistingServer: false,
-      timeout: 180_000,
+      timeout: 600_000,
     },
     {
       command: `bun run --cwd workers/translation dev:qa -- --port ${translationPort} --persist-to ${workerStateRoot}/translation`,
       url: `http://127.0.0.1:${translationPort}/health`,
       reuseExistingServer: false,
-      timeout: 180_000,
+      timeout: 600_000,
     },
   ],
 });

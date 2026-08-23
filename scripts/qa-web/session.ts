@@ -146,6 +146,15 @@ export function countInDatabase(sql: string): number {
   return Number(queryDatabase(sql));
 }
 
+/** Waits until TanStack Start has replaced its server-rendered shell with interactive React. */
+export async function waitForHydration(page: Page): Promise<void> {
+  await page.waitForFunction(
+    () => (globalThis as { readonly $_TSR?: unknown }).$_TSR === undefined,
+    undefined,
+    { timeout: 300_000 },
+  );
+}
+
 /**
  * One scalar, read as a given signed-in ADDRESS rather than as the owner.
  *
@@ -201,7 +210,9 @@ export async function signOut(page: Page): Promise<void> {
   if (!hasStoredSession) return;
 
   const signOutButton = page
-    .getByRole('button', { name: /tanca la sessió|sign out|log out|cerrar sesión/i })
+    .getByRole('button', {
+      name: /tanca la sessió|sign out|log out|cerrar sesión|تسجيل الخروج|خروج(?: از حساب)?/i,
+    })
     .first();
   const loginEmailField = page.locator('input[type="email"]');
 
@@ -213,6 +224,7 @@ export async function signOut(page: Page): Promise<void> {
   await expect(async () => {
     await page.goto('/dashboard', { waitUntil: 'domcontentloaded', timeout: 10_000 });
     await expect(signOutButton.or(loginEmailField).first()).toBeVisible({ timeout: 3_000 });
+    await waitForHydration(page);
   }).toPass({ timeout: 30_000 });
 
   // Already signed out: the guard sent an unauthenticated visitor to /login.
@@ -233,8 +245,11 @@ export async function signIn(page: Page, email: string): Promise<void> {
   await signOut(page);
 
   await page.goto('/login');
-  const usePassword = page.getByRole('button', { name: /contrasenya|password/i }).first();
+  const usePassword = page
+    .getByRole('button', { name: /contrasenya|password|كلمة المرور|رمز عبور/i })
+    .first();
   await expect(usePassword).toBeVisible();
+  await waitForHydration(page);
 
   await expect(async () => {
     await usePassword.click();

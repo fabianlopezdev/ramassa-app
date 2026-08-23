@@ -114,7 +114,10 @@ const AttendanceHistoryRow = memo(function AttendanceHistoryRow({
   readonly fontClass: string;
 }) {
   return (
-    <View className="flex-row items-center justify-between gap-md border-t border-neutral-200 pt-sm">
+    <View
+      role="listitem"
+      className="flex-row items-center justify-between gap-md border-t border-neutral-200 pt-sm"
+    >
       <View className="min-w-0 flex-1">
         <Text
           numberOfLines={2}

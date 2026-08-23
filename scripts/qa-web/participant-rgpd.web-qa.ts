@@ -137,7 +137,9 @@ function rowsAttachedTo(participantId: string): number {
 
 async function openConfirmDialog(page: Page, action: RegExp): Promise<void> {
   await page.getByRole('button', { name: action }).click();
-  await expect(page.getByRole('dialog')).toBeVisible({ timeout: 10_000 });
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toBeVisible({ timeout: 10_000 });
+  await expect(dialog.getByRole('textbox')).toBeFocused();
 }
 
 /**

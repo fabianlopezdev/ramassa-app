@@ -23,22 +23,33 @@ import { useRouter, type Href } from 'expo-router';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { useCallback, useMemo, useReducer, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, StyleSheet, Switch, Text, View, type TextStyle } from 'react-native';
+import { Platform, ScrollView, StyleSheet, Switch, Text, View, type TextStyle } from 'react-native';
 import { useAuth } from '@ramassa/shared/auth';
 import { toAppError } from '@ramassa/shared/errors';
 import { MEDIA_CAPTION_MAX_LENGTH, type MediaPrivacy } from '@ramassa/shared/media';
 import { uploadContentTypeSchema } from '@ramassa/shared/schemas';
+import { tokens } from '@ramassa/shared/tokens';
 
 const IMAGE_PICKER_ORIGINAL_QUALITY = 1;
 const PROGRESS_PERCENT_MIN = 0;
 const PROGRESS_PERCENT_MAX = 100;
 const GALLERY_UPLOAD_PREVIEW_ASPECT_RATIO = 4 / 3;
 const MEDIA_PRIVACY_OPTIONS: readonly MediaPrivacy[] = ['community', 'staff_only'];
+const IOS_SWITCH_VISUAL_HEIGHT = 28;
+const IOS_SWITCH_SCALE = tokens.tapTarget.min / IOS_SWITCH_VISUAL_HEIGHT;
 const uncheckedSwitchAccessibilityState = { checked: false } as const;
 const checkedSwitchAccessibilityState = { checked: true } as const;
+const consentSwitchRole = Platform.OS === 'web' ? 'none' : 'switch';
 const mixedDirectionInputStyle: TextStyle = { writingDirection: 'auto' };
 const styles = StyleSheet.create({
   preview: { width: '100%', aspectRatio: GALLERY_UPLOAD_PREVIEW_ASPECT_RATIO },
+  consentSwitch: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: tokens.tapTarget.min,
+    minWidth: tokens.tapTarget.min,
+    transform: Platform.OS === 'ios' ? [{ scale: IOS_SWITCH_SCALE }] : undefined,
+  },
 });
 
 export default function GalleryUploadScreen() {
@@ -102,9 +113,9 @@ export default function GalleryUploadScreen() {
     [languageFontClass, privacy, privacyActions, t],
   );
 
-  const toggleConsent = useCallback((value: boolean) => {
+  const toggleConsent = useCallback(() => {
     playHaptic('selection');
-    setConsent(value);
+    setConsent((current) => !current);
   }, []);
 
   const pick = useCallback(async () => {
@@ -311,9 +322,10 @@ export default function GalleryUploadScreen() {
         <View className="flex-row items-center gap-md">
           <Switch
             testID="gallery-consent-acknowledgment"
+            style={styles.consentSwitch}
             value={consent}
             onValueChange={toggleConsent}
-            accessibilityRole="switch"
+            accessibilityRole={consentSwitchRole}
             accessibilityLabel={t('gallery:consentReminder')}
             accessibilityState={
               consent ? checkedSwitchAccessibilityState : uncheckedSwitchAccessibilityState

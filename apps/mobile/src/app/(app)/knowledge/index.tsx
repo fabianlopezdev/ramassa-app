@@ -123,8 +123,6 @@ export default function PlayerKnowledgeScreen() {
   return (
     <FlashList
       testID="knowledge-base-screen"
-      accessibilityRole="list"
-      accessibilityLabel={t('knowledge:playerTitle')}
       data={visibleArticles}
       renderItem={renderArticle}
       keyExtractor={keyExtractor}

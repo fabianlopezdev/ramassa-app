@@ -9,7 +9,7 @@
 import { composeContinuousTextStyle } from '@/lib/continuous-corners';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useMemo, type Ref } from 'react';
-import { Text, TextInput, View, type TextInputProps } from 'react-native';
+import { Platform, Text, TextInput, View, type TextInputProps } from 'react-native';
 import { tokens } from '@ramassa/shared/tokens';
 
 export interface AuthTextFieldProps extends TextInputProps {
@@ -23,6 +23,7 @@ export function AuthTextField({
   errorMessage,
   ref,
   style,
+  placeholder,
   ...inputProps
 }: AuthTextFieldProps) {
   const languageFontClass = useLanguageFontClass();
@@ -38,7 +39,8 @@ export function AuthTextField({
         ref={ref}
         accessibilityLabel={label}
         style={inputStyle}
-        placeholderTextColor={tokens.colors.neutral[400]}
+        placeholder={Platform.OS === 'web' ? undefined : placeholder}
+        placeholderTextColor={tokens.colors.neutral[600]}
         className={`min-h-recommended rounded-md border px-md text-start text-md text-neutral-900 ${
           hasError ? 'border-error' : 'border-neutral-300'
         } ${languageFontClass}`}

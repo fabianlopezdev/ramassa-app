@@ -1,7 +1,7 @@
 import type { HapticFeedback } from '@/lib/haptics/haptic-policy';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { useCallback, useMemo, type ReactNode } from 'react';
-import type { AccessibilityRole, StyleProp, ViewStyle } from 'react-native';
+import { StyleSheet, type AccessibilityRole, type StyleProp, type ViewStyle } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import {
   interpolate,
@@ -11,11 +11,18 @@ import {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
+import { tokens } from '@ramassa/shared/tokens';
 import { motionTokens, resolvePressScale } from '@ramassa/shared/tokens/motion';
 import { NativeWindAnimatedView } from './nativewind-animated-view';
 
 const PRESS_TIMING_CONFIG = { duration: motionTokens.duration.fast } as const;
 const REDUCED_MOTION_TIMING_CONFIG = { duration: 0 } as const;
+const styles = StyleSheet.create({
+  minimumTarget: {
+    minHeight: tokens.tapTarget.min,
+    minWidth: tokens.tapTarget.min,
+  },
+});
 
 /**
  * The press response every touchable in the app shares (RAPP-70). The single
@@ -124,12 +131,17 @@ export function PressableScale({
     transform: [{ scale: interpolate(pressed.get(), [0, 1], [1, pressedScale]) }],
     opacity: interpolate(pressed.get(), [0, 1], [1, pressedOpacity]),
   }));
-  const composedStyle = useMemo(() => [animatedStyle, style], [animatedStyle, style]);
+  const composedStyle = useMemo(
+    () => [styles.minimumTarget, animatedStyle, style],
+    [animatedStyle, style],
+  );
   const accessibilityState = useMemo(
     () => ({
       disabled: isInteractionBlocked,
       busy: isBusy,
-      ...(accessibilityRole === 'checkbox' || accessibilityRole === 'radio'
+      ...(accessibilityRole === 'checkbox' ||
+      accessibilityRole === 'radio' ||
+      accessibilityRole === 'switch'
         ? { checked: Boolean(isSelected) }
         : {}),
       ...(isSelected === undefined ? {} : { selected: isSelected }),
@@ -141,11 +153,14 @@ export function PressableScale({
     <GestureDetector gesture={tap}>
       <NativeWindAnimatedView
         testID={testID}
+        accessible
         accessibilityRole={accessibilityRole}
         accessibilityLabel={accessibilityLabel}
         accessibilityHint={accessibilityHint}
         aria-checked={
-          accessibilityRole === 'checkbox' || accessibilityRole === 'radio'
+          accessibilityRole === 'checkbox' ||
+          accessibilityRole === 'radio' ||
+          accessibilityRole === 'switch'
             ? Boolean(isSelected)
             : undefined
         }

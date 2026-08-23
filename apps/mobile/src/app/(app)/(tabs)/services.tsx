@@ -244,8 +244,6 @@ export default function ServicesScreen() {
   return (
     <FlashList
       testID="player-services-list"
-      accessibilityRole="list"
-      accessibilityLabel={selectedCategoryName.text}
       data={services}
       renderItem={renderService}
       keyExtractor={keyExtractor}

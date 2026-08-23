@@ -20,7 +20,7 @@ import { mediaWorkerUrl } from '@/lib/media-worker';
 import { safeAsync } from '@/lib/observability';
 import { supabase } from '@/lib/supabase';
 import { useNavigate, useRouter } from '@tanstack/react-router';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@ramassa/shared/auth';
 import { getErrorMessageKey } from '@ramassa/shared/errors';
@@ -49,6 +49,9 @@ export function ParticipantRgpd({ participant, openDeletionRequestReason }: Part
   const [gesture, setGesture] = useState<Gesture>('none');
   const [isWorking, setIsWorking] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
+  const anonymizeTriggerRef = useRef<HTMLButtonElement>(null);
+  const eraseTriggerRef = useRef<HTMLButtonElement>(null);
+  const focusAfterCloseRef = useRef<Exclude<Gesture, 'none'> | null>(null);
 
   const isAnonymized = participant.anonymized_at !== null;
   const canErase = role === 'admin';
@@ -57,6 +60,20 @@ export function ParticipantRgpd({ participant, openDeletionRequestReason }: Part
     setGesture('none');
     setErrorMessage(undefined);
   }
+
+  function open(nextGesture: Exclude<Gesture, 'none'>) {
+    focusAfterCloseRef.current = nextGesture;
+    setGesture(nextGesture);
+  }
+
+  useEffect(() => {
+    if (gesture !== 'none' || focusAfterCloseRef.current === null) return;
+    const trigger =
+      focusAfterCloseRef.current === 'anonymize' ? anonymizeTriggerRef : eraseTriggerRef;
+    focusAfterCloseRef.current = null;
+    const frame = requestAnimationFrame(() => trigger.current?.focus());
+    return () => cancelAnimationFrame(frame);
+  }, [gesture]);
 
   async function anonymize() {
     setErrorMessage(undefined);
@@ -184,13 +201,25 @@ export function ParticipantRgpd({ participant, openDeletionRequestReason }: Part
         {isAnonymized ? (
           <p className="text-start text-sm text-muted-foreground">{t('alreadyAnonymized')}</p>
         ) : (
-          <Button type="button" size="lg" variant="outline" onClick={() => setGesture('anonymize')}>
+          <Button
+            ref={anonymizeTriggerRef}
+            type="button"
+            size="lg"
+            variant="outline"
+            onClick={() => open('anonymize')}
+          >
             {t('anonymizeAction')}
           </Button>
         )}
 
         {canErase ? (
-          <Button type="button" size="lg" variant="destructive" onClick={() => setGesture('erase')}>
+          <Button
+            ref={eraseTriggerRef}
+            type="button"
+            size="lg"
+            variant="destructive"
+            onClick={() => open('erase')}
+          >
             {t('eraseAction')}
           </Button>
         ) : (

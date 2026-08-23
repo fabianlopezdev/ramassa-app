@@ -20,7 +20,7 @@ export const tokens = {
     // always pair with an icon or text label.
     success: '#06D6A0',
     warning: '#FFD166',
-    error: '#EF476F',
+    error: '#BE123C',
     info: '#118AB2',
 
     // Neutral ramp for text, surfaces, and borders.

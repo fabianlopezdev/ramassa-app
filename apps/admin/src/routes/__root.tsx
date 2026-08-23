@@ -54,6 +54,19 @@ function RootComponent() {
       </head>
       <body>
         <I18nextProvider i18n={i18n}>
+          <a
+            href="#main-content"
+            className="fixed start-4 top-0 z-50 -translate-y-[150%] rounded-md bg-background px-4 py-3 font-medium text-foreground shadow-lg transition-transform motion-reduce:transition-none focus:translate-y-4 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            onClick={(event) => {
+              const main = document.getElementById('main-content');
+              if (main === null) return;
+              event.preventDefault();
+              main.focus();
+              window.history.replaceState(null, '', '#main-content');
+            }}
+          >
+            {i18n.t('common:skipToMainContent')}
+          </a>
           <AuthProvider client={supabase} onError={reportAuthError}>
             {/* Required by any shadcn Tooltip in the tree. The staff sidebar
                 shows its labels as tooltips when collapsed to the icon rail, and

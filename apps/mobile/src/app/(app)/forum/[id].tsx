@@ -221,8 +221,6 @@ export default function ForumPostDetailScreen() {
     <>
       <FlashList
         testID="forum-detail-screen"
-        accessibilityRole="list"
-        accessibilityLabel={t('forum:detailTitle')}
         data={repliesQuery.data ?? EMPTY_REPLIES}
         renderItem={renderReply}
         keyExtractor={replyKeyExtractor}

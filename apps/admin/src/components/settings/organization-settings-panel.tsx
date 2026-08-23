@@ -3,6 +3,14 @@ import {
   loadAuthenticatedMediaObjectUrl,
 } from '@/components/content/authenticated-media-image';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import {
   Table,
@@ -408,119 +416,135 @@ export function OrganizationSettingsPanel({
         </TabsContent>
 
         <TabsContent value="staff" className="space-y-6">
-          <SectionHeader title={t('staffTitle')} intro={t('staffIntro')} />
-          <form
-            className="grid gap-3 rounded-xl border bg-card p-4 sm:grid-cols-2 lg:grid-cols-5"
-            onSubmit={submitStaffInvitation}
-            data-testid="staff-invite-form"
+          <Dialog
+            open={removeProfileId !== null}
+            onOpenChange={(open) => {
+              if (!open && pending !== 'remove') setRemoveProfileId(null);
+            }}
           >
-            <Field label={t('firstName')}>
-              <Input name="first-name" required />
-            </Field>
-            <Field label={t('lastName')}>
-              <Input name="last-name" required />
-            </Field>
-            <Field label={t('email')}>
-              <Input name="email" type="email" required />
-            </Field>
-            <Field label={t('role')}>
-              <select
-                name="role"
-                className="h-9 rounded-md border border-input bg-background px-3 text-sm"
-              >
-                <option value="staff">{t('roleStaff')}</option>
-                <option value="admin">{t('roleAdmin')}</option>
-              </select>
-            </Field>
-            <Button type="submit" className="self-end" disabled={pending !== null}>
-              {pending === 'invite' ? t('working') : t('invite')}
-            </Button>
-          </form>
-          <div className="overflow-x-auto rounded-xl border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t('email')}</TableHead>
-                  <TableHead>{t('role')}</TableHead>
-                  <TableHead>{t('statusActive')}</TableHead>
-                  <TableHead />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {staffMembers.map((member) => (
-                  <TableRow key={member.profile_id}>
-                    <TableCell>
-                      <span className="font-medium">
-                        {member.first_name} {member.last_name}
-                      </span>
-                      <br />
-                      <span className="text-xs text-muted-foreground">{member.email}</span>
-                    </TableCell>
-                    <TableCell>
-                      <select
-                        aria-label={`${t('role')} ${member.email}`}
-                        className="h-8 rounded-md border bg-background px-2"
-                        value={member.role}
-                        disabled={!member.is_active || pending !== null}
-                        onChange={(event) =>
-                          void run('role', () =>
-                            onSetStaffRole(
-                              member.profile_id,
-                              event.target.value as 'staff' | 'admin',
-                            ),
-                          )
-                        }
-                      >
-                        <option value="staff">{t('roleStaff')}</option>
-                        <option value="admin">{t('roleAdmin')}</option>
-                      </select>
-                    </TableCell>
-                    <TableCell>
-                      {member.is_active ? t('statusActive') : t('statusInactive')}
-                    </TableCell>
-                    <TableCell>
-                      {member.is_active ? (
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => setRemoveProfileId(member.profile_id)}
-                        >
-                          {t('remove')}
-                        </Button>
-                      ) : null}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-          {removeProfileId !== null ? (
-            <div
-              role="alertdialog"
-              aria-modal="true"
-              className="max-w-xl space-y-3 rounded-xl border border-destructive/30 bg-card p-4"
+            <SectionHeader title={t('staffTitle')} intro={t('staffIntro')} />
+            <form
+              className="grid gap-3 rounded-xl border bg-card p-4 sm:grid-cols-2 lg:grid-cols-5"
+              onSubmit={submitStaffInvitation}
+              data-testid="staff-invite-form"
             >
-              <p>{t('removeConfirm')}</p>
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  variant="destructive"
-                  onClick={() =>
-                    void run('remove', async () => {
-                      await onRemoveStaff(removeProfileId);
-                      setRemoveProfileId(null);
-                    })
-                  }
+              <Field label={t('firstName')}>
+                <Input name="first-name" required />
+              </Field>
+              <Field label={t('lastName')}>
+                <Input name="last-name" required />
+              </Field>
+              <Field label={t('email')}>
+                <Input name="email" type="email" required />
+              </Field>
+              <Field label={t('role')}>
+                <select
+                  name="role"
+                  className="h-9 rounded-md border border-input bg-background px-3 text-sm"
                 >
-                  {t('confirm')}
-                </Button>
-                <Button type="button" variant="outline" onClick={() => setRemoveProfileId(null)}>
-                  {t('cancel')}
-                </Button>
-              </div>
+                  <option value="staff">{t('roleStaff')}</option>
+                  <option value="admin">{t('roleAdmin')}</option>
+                </select>
+              </Field>
+              <Button type="submit" className="self-end" disabled={pending !== null}>
+                {pending === 'invite' ? t('working') : t('invite')}
+              </Button>
+            </form>
+            <div className="overflow-x-auto rounded-xl border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t('email')}</TableHead>
+                    <TableHead>{t('role')}</TableHead>
+                    <TableHead>{t('statusActive')}</TableHead>
+                    <TableHead />
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {staffMembers.map((member) => (
+                    <TableRow key={member.profile_id}>
+                      <TableCell>
+                        <span className="font-medium">
+                          {member.first_name} {member.last_name}
+                        </span>
+                        <br />
+                        <span className="text-xs text-muted-foreground">{member.email}</span>
+                      </TableCell>
+                      <TableCell>
+                        <select
+                          aria-label={`${t('role')} ${member.email}`}
+                          className="h-8 rounded-md border bg-background px-2"
+                          value={member.role}
+                          disabled={!member.is_active || pending !== null}
+                          onChange={(event) =>
+                            void run('role', () =>
+                              onSetStaffRole(
+                                member.profile_id,
+                                event.target.value as 'staff' | 'admin',
+                              ),
+                            )
+                          }
+                        >
+                          <option value="staff">{t('roleStaff')}</option>
+                          <option value="admin">{t('roleAdmin')}</option>
+                        </select>
+                      </TableCell>
+                      <TableCell>
+                        {member.is_active ? t('statusActive') : t('statusInactive')}
+                      </TableCell>
+                      <TableCell>
+                        {member.is_active ? (
+                          <DialogTrigger asChild>
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => setRemoveProfileId(member.profile_id)}
+                            >
+                              {t('remove')}
+                            </Button>
+                          </DialogTrigger>
+                        ) : null}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
-          ) : null}
+            {removeProfileId !== null ? (
+              <DialogContent
+                role="alertdialog"
+                className="border-destructive/30"
+                onInteractOutside={(event) => event.preventDefault()}
+                onOpenAutoFocus={(event) => {
+                  event.preventDefault();
+                  document.getElementById('remove-staff-cancel')?.focus();
+                }}
+              >
+                <DialogTitle>{t('remove')}</DialogTitle>
+                <DialogDescription>{t('removeConfirm')}</DialogDescription>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    onClick={() =>
+                      void run('remove', async () => {
+                        await onRemoveStaff(removeProfileId);
+                        setRemoveProfileId(null);
+                      })
+                    }
+                  >
+                    {t('confirm')}
+                  </Button>
+                  <DialogClose asChild>
+                    <Button id="remove-staff-cancel" type="button" variant="outline">
+                      {t('cancel')}
+                    </Button>
+                  </DialogClose>
+                </div>
+              </DialogContent>
+            ) : null}
+          </Dialog>
         </TabsContent>
 
         <TabsContent value="documents" className="space-y-6">

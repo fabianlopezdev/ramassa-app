@@ -2,6 +2,7 @@ import { useUnreadMessages } from '@/lib/messaging';
 import { unreadBadgeProps } from '@/lib/unread-badge';
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
 import { useTranslation } from 'react-i18next';
+import { tokens } from '@ramassa/shared/tokens';
 
 /**
  * The player navigation shell (RAPP-16): five bottom tabs, the SPEC's whole
@@ -30,7 +31,17 @@ export default function TabsLayout() {
   const unread = useUnreadMessages().data ?? 0;
   const unreadBadge = unreadBadgeProps(unread);
   return (
-    <NativeTabs labelVisibilityMode="labeled">
+    <NativeTabs
+      backgroundColor={tokens.colors.white}
+      iconColor={{ default: tokens.colors.neutral[700], selected: tokens.colors.primary.dark }}
+      indicatorColor={tokens.colors.neutral[100]}
+      labelStyle={{
+        default: { color: tokens.colors.neutral[700] },
+        selected: { color: tokens.colors.primary.dark },
+      }}
+      labelVisibilityMode="labeled"
+      tintColor={tokens.colors.primary.dark}
+    >
       <NativeTabs.Trigger name="index" testID="player-tab-home">
         <NativeTabs.Trigger.Icon sf="house.fill" md="home" />
         <NativeTabs.Trigger.Label>{t('nav:tabs.home')}</NativeTabs.Trigger.Label>
