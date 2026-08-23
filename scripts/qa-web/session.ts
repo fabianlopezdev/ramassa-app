@@ -27,7 +27,8 @@ export const SEED_PASSWORD = 'ramassa-dev-password';
  * publishable key is in the client bundle by design.
  */
 export const SUPABASE_URL = 'http://127.0.0.1:54321';
-export const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH';
+export const SUPABASE_PUBLISHABLE_KEY =
+  process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? 'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH';
 export const MEDIA_WORKER_URL = `http://127.0.0.1:${process.env.RAMASSA_QA_MEDIA_PORT ?? '8893'}`;
 export const MAILPIT_URL = 'http://127.0.0.1:54324';
 

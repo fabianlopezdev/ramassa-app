@@ -180,6 +180,7 @@ export default function ProfileEditScreen() {
       // skeleton exists to prevent.
       <SafeAreaView
         accessible
+        accessibilityRole="progressbar"
         accessibilityLabel={t('loading')}
         accessibilityState={{ busy: true }}
         accessibilityLiveRegion="polite"

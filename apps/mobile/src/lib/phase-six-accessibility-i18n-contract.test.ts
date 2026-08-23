@@ -158,4 +158,19 @@ describe('Phase 6 accessibility and i18n contract', () => {
     expect(root).toContain("heading.setAttribute('tabindex', '-1')");
     expect(root).toContain('heading.focus()');
   });
+
+  test('labeled busy profile states expose a progressbar role on web', async () => {
+    const paths = [
+      'app/(app)/(tabs)/profile.tsx',
+      'app/(app)/profile-edit.tsx',
+      'components/profile/attendance-history-section.tsx',
+    ] as const;
+
+    for (const path of paths) {
+      const source = await readMobileSource(path);
+      expect(source, path).toMatch(
+        /accessible[\s\S]*?accessibilityRole="progressbar"[\s\S]*?accessibilityLabel=/,
+      );
+    }
+  });
 });

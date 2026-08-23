@@ -160,6 +160,7 @@ export default function ProfileScreen() {
         // the state that tells the listener to wait rather than to act.
         <View
           accessible
+          accessibilityRole="progressbar"
           accessibilityLabel={t('loading')}
           accessibilityState={{ busy: true }}
           accessibilityLiveRegion="polite"

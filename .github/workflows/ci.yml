@@ -53,6 +53,11 @@ jobs:
       - name: Start seeded local services
         run: bunx supabase start
 
+      - name: Export generated local public key
+        run: |
+          bunx supabase status -o env |
+            sed -n 's/^ANON_KEY="\([^"]*\)"$/EXPO_PUBLIC_SUPABASE_ANON_KEY=\1/p' >> "$GITHUB_ENV"
+
       - name: WCAG 2.2 AA browser gate
         run: bun run qa:accessibility:web
 

@@ -38,20 +38,22 @@ Accessibility Inspector reported one warning on the Arabic onboarding screen for
 
 ## Findings and resolutions
 
-| Finding                                                                                       | Resolution                                                                                 | Regression evidence                                                                                               | Status   |
-| --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------- | -------- |
-| Native shared press controls were not always exposed as one accessible element                | `PressableScale` now sets the native accessibility-element contract                        | Source contract failed before the change and passes after it                                                      | Resolved |
-| Some shared press controls exposed less than 48dp in one dimension                            | The shared primitive now enforces the 48dp token in both dimensions                        | Source contract failed before the change; complete Android and iOS target sweeps pass                             | Resolved |
-| Onboarding date inputs could compress at high font scale                                      | Date fields stack when font scale reaches the accessibility threshold                      | Source contract failed before the change and passes after it; verified at 200 percent Android and 235 percent iOS | Resolved |
-| Some mobile actions and meaningful media lacked complete translated accessible names or state | Added translated labels, roles, values, busy state, progress, and mixed-direction handling | Mobile accessibility contract and direct hierarchy checks pass                                                    | Resolved |
-| The gallery consent switch exposed only its 28pt visual height on iOS                         | Scaled the native iOS switch to 48pt while preserving its switch role and checked value    | Source contract failed before the change; iOS reports 108 by 48pt and Android reports a labeled 48dp switch       | Resolved |
-| Private team chat announced the raw `playerThreadTitle` key                                   | Reused the catalog-backed `playerTitle` key available in all five languages                | Focused contract failed before the change; Arabic iOS hierarchy now reports `الدردشة مع الفريق`                   | Resolved |
-| Player web route changes did not consistently move focus into the destination                 | Added destination-heading focus management                                                 | Source contract and keyboard-only Playwright route test pass                                                      | Resolved |
-| Admin route changes did not consistently focus the destination landmark                       | Added a route focus manager to staff and entity shells                                     | Source contract and keyboard-only Playwright route test pass                                                      | Resolved |
-| Destructive modal surfaces lacked a shared focus-management contract                          | Added the focus-managed dialog primitive and migrated destructive flows                    | Dialog source contract and Playwright focus-cycle test pass                                                       | Resolved |
-| Several admin controls used incomplete roles, names, or form associations                     | Corrected semantic roles, labels, placeholders, and control relationships                  | Full axe route sweep reports zero violations                                                                      | Resolved |
-| Error text tokens did not guarantee AA contrast on light and dark surfaces                    | Updated the semantic error token and added ratio assertions                                | Shared-token contrast tests pass                                                                                  | Resolved |
-| Web locale changes did not consistently expose document language and direction                | Synchronized root `lang` and `dir` for staff, entity, and player web                       | Full Arabic route sweep asserts RTL semantics and reports zero axe violations                                     | Resolved |
+| Finding                                                                                         | Resolution                                                                                 | Regression evidence                                                                                               | Status   |
+| ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------- | -------- |
+| Native shared press controls were not always exposed as one accessible element                  | `PressableScale` now sets the native accessibility-element contract                        | Source contract failed before the change and passes after it                                                      | Resolved |
+| Some shared press controls exposed less than 48dp in one dimension                              | The shared primitive now enforces the 48dp token in both dimensions                        | Source contract failed before the change; complete Android and iOS target sweeps pass                             | Resolved |
+| Onboarding date inputs could compress at high font scale                                        | Date fields stack when font scale reaches the accessibility threshold                      | Source contract failed before the change and passes after it; verified at 200 percent Android and 235 percent iOS | Resolved |
+| Some mobile actions and meaningful media lacked complete translated accessible names or state   | Added translated labels, roles, values, busy state, progress, and mixed-direction handling | Mobile accessibility contract and direct hierarchy checks pass                                                    | Resolved |
+| The gallery consent switch exposed only its 28pt visual height on iOS                           | Scaled the native iOS switch to 48pt while preserving its switch role and checked value    | Source contract failed before the change; iOS reports 108 by 48pt and Android reports a labeled 48dp switch       | Resolved |
+| Private team chat announced the raw `playerThreadTitle` key                                     | Reused the catalog-backed `playerTitle` key available in all five languages                | Focused contract failed before the change; Arabic iOS hierarchy now reports `الدردشة مع الفريق`                   | Resolved |
+| Profile loading states used accessible names without a permitted semantic role on web           | Added the progressbar role to labeled busy profile states                                  | Source contract failed before the change; the dynamic-key route-wide axe sweep passes                             | Resolved |
+| Player web route changes did not consistently move focus into the destination                   | Added destination-heading focus management                                                 | Source contract and keyboard-only Playwright route test pass                                                      | Resolved |
+| Admin route changes did not consistently focus the destination landmark                         | Added a route focus manager to staff and entity shells                                     | Source contract and keyboard-only Playwright route test pass                                                      | Resolved |
+| Destructive modal surfaces lacked a shared focus-management contract                            | Added the focus-managed dialog primitive and migrated destructive flows                    | Dialog source contract and Playwright focus-cycle test pass                                                       | Resolved |
+| Several admin controls used incomplete roles, names, or form associations                       | Corrected semantic roles, labels, placeholders, and control relationships                  | Full axe route sweep reports zero violations                                                                      | Resolved |
+| Error text tokens did not guarantee AA contrast on light and dark surfaces                      | Updated the semantic error token and added ratio assertions                                | Shared-token contrast tests pass                                                                                  | Resolved |
+| Web locale changes did not consistently expose document language and direction                  | Synchronized root `lang` and `dir` for staff, entity, and player web                       | Full Arabic route sweep asserts RTL semantics and reports zero axe violations                                     | Resolved |
+| Hosted accessibility CI used a checked-in local public key that could drift across CLI versions | Exported the public key generated by the job's own Supabase runtime into the browser gate  | Source contract failed before the change; the complete route sweep passes with the dynamically generated key      | Resolved |
 
 ## Focused regression evidence
 
@@ -64,7 +66,7 @@ bun test apps/mobile/src/lib/phase-six-accessibility-i18n-contract.test.ts \
   packages/shared/tokens/tokens.test.ts
 ```
 
-Result on 2026-08-23: 34 passed, 0 failed, with 223 assertions.
+Result on 2026-08-23: 35 passed, 0 failed, with 226 assertions.
 
 Command: `bun run typecheck`
 
@@ -72,7 +74,7 @@ Result on 2026-08-23: root, shared package, mobile, admin, media worker, and tra
 
 ## Cumulative regression evidence
 
-- `bun test`: 1,198 passed, 0 failed, 1 expected local-stack skip, and 6,156 assertions.
+- `bun test`: 1,200 passed, 0 failed, 1 expected local-stack skip, and 6,163 assertions.
 - `bun run lint`: passed with no findings.
 - `bun run format:check`: passed.
 - `bun run typecheck`: passed across every workspace.

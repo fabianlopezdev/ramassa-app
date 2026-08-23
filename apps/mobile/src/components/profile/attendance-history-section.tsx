@@ -28,7 +28,12 @@ export function AttendanceHistorySection() {
   return (
     <ProfileSection title={t('participantHistoryTitle')}>
       {isLoading ? (
-        <View accessible accessibilityState={{ busy: true }} accessibilityLabel={t('loading')}>
+        <View
+          accessible
+          accessibilityRole="progressbar"
+          accessibilityState={{ busy: true }}
+          accessibilityLabel={t('loading')}
+        >
           <SkeletonPulse className="h-3xl w-full rounded-md" />
         </View>
       ) : isError ? (

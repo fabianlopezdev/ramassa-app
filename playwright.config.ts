@@ -8,6 +8,8 @@ const playerPort = process.env.RAMASSA_QA_PLAYER_PORT ?? '4194';
 const mediaPort = process.env.RAMASSA_QA_MEDIA_PORT ?? '8893';
 const translationPort = process.env.RAMASSA_QA_TRANSLATION_PORT ?? '8793';
 const qaLocalUploadSigningSecret = 'ramassa-web-qa-local-upload-only';
+const supabasePublishableKey =
+  process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? 'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH';
 const adminOrigin = `http://localhost:${adminPort}`;
 const playerOrigin = `http://localhost:${playerPort}`;
 const workerStateRoot = mkdtempSync(join(tmpdir(), 'ramassa-web-qa-'));
@@ -55,13 +57,13 @@ export default defineConfig({
       //
       // Port 4193 also keeps it clear of the dev server a person has open while
       // the suite runs.
-      command: `EXPO_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321 EXPO_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH EXPO_PUBLIC_MEDIA_WORKER_URL=http://127.0.0.1:${mediaPort} EXPO_PUBLIC_TRANSLATION_WORKER_URL=http://127.0.0.1:${translationPort} bun run --cwd apps/admin dev -- --port ${adminPort} --strictPort --force`,
+      command: `EXPO_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321 EXPO_PUBLIC_SUPABASE_ANON_KEY=${supabasePublishableKey} EXPO_PUBLIC_MEDIA_WORKER_URL=http://127.0.0.1:${mediaPort} EXPO_PUBLIC_TRANSLATION_WORKER_URL=http://127.0.0.1:${translationPort} bun run --cwd apps/admin dev -- --port ${adminPort} --strictPort --force`,
       url: adminOrigin,
       reuseExistingServer: false,
       timeout: 600_000,
     },
     {
-      command: `CI=1 RAMASSA_QA_PLAYER_PORT=${playerPort} EXPO_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321 EXPO_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH EXPO_PUBLIC_MEDIA_WORKER_URL=http://127.0.0.1:${mediaPort} bun run scripts/start-player-web-qa.ts`,
+      command: `CI=1 RAMASSA_QA_PLAYER_PORT=${playerPort} EXPO_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321 EXPO_PUBLIC_SUPABASE_ANON_KEY=${supabasePublishableKey} EXPO_PUBLIC_MEDIA_WORKER_URL=http://127.0.0.1:${mediaPort} bun run scripts/start-player-web-qa.ts`,
       url: playerOrigin,
       reuseExistingServer: false,
       timeout: 600_000,
