@@ -12,7 +12,8 @@ describe('accessibility CI local service contract', () => {
     ]);
 
     expect(workflow).toContain('EXPO_PUBLIC_SUPABASE_ANON_KEY');
-    expect(workflow).toContain('supabase status -o env');
+    expect(workflow).toContain('supabase@2.90.0 status -o env');
+    expect(workflow.match(/supabase@2\.90\.0/g)).toHaveLength(3);
     expect(playwrightConfig).toContain('process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY');
     expect(session).toContain('process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY');
   });

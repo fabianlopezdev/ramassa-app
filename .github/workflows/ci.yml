@@ -51,11 +51,11 @@ jobs:
         run: bunx playwright install --with-deps chromium
 
       - name: Start seeded local services
-        run: bunx supabase start
+        run: bunx supabase@2.90.0 start
 
       - name: Export generated local public key
         run: |
-          bunx supabase status -o env |
+          bunx supabase@2.90.0 status -o env |
             sed -n 's/^ANON_KEY="\([^"]*\)"$/EXPO_PUBLIC_SUPABASE_ANON_KEY=\1/p' >> "$GITHUB_ENV"
 
       - name: WCAG 2.2 AA browser gate
@@ -63,4 +63,4 @@ jobs:
 
       - name: Stop local services
         if: always()
-        run: bunx supabase stop
+        run: bunx supabase@2.90.0 stop
