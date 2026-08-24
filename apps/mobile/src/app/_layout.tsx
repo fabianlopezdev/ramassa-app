@@ -1,6 +1,5 @@
 // Sentry.init runs at @/lib/observability module scope, which every import
 // below reaches transitively, so the SDK is live before the first render (RAPP-12).
-import { AuthDeepLinkHandler } from '@/components/auth/auth-deep-link-handler';
 import { OrganizationBrandingProvider } from '@/components/branding/organization-branding-provider';
 import { ErrorFallback, type ErrorFallbackProps } from '@/components/error-fallback';
 import { PushNotificationResponseHandler } from '@/components/push-notification-response-handler';
@@ -168,11 +167,6 @@ function RootNavigator() {
       <Stack.Protected guard={!session}>
         <Stack.Screen name="(auth)" />
       </Stack.Protected>
-      {/* Ungated on purpose: the magic link lands here while still signed out,
-          and Expo Router resolves the deep link as a route — without this the
-          link opens onto "Unmatched Route". The screen itself redirects once
-          the session (or the failure) is known. */}
-      <Stack.Screen name="auth/callback" />
     </Stack>
   );
 }
@@ -203,7 +197,6 @@ function RootLayout() {
           <AuthProvider client={supabase} onError={reportAuthError}>
             <OrganizationBrandingProvider>
               <AuthFlowStatusProvider>
-                <AuthDeepLinkHandler />
                 <PushNotificationResponseHandler />
                 <RootNavigator />
               </AuthFlowStatusProvider>

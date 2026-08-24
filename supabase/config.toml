@@ -152,19 +152,11 @@ enabled = true
 # The base URL of your website. Used as an allow-list for redirects and for constructing URLs used
 # in emails. Local admin dev server (RAPP-13).
 site_url = "http://localhost:3000"
-# URLs auth is permitted to redirect to after a magic link (RAPP-13). Wildcards
-# match a path; the parser (packages/shared/auth/callback-url.ts) is the second,
-# stricter gate that also rejects any origin the app did not itself request.
-#   - admin dev (both localhost + 127.0.0.1 forms Vite may serve)
-#   - mobile deep link (custom `ramassa://` scheme, dev + production builds)
-# Production URLs (the deployed admin origin) are appended when hosting lands.
+# Browser routes remain allow-listed for non-auth application links. Login uses
+# an email-bound OTP and does not redirect through the browser or app scheme.
 additional_redirect_urls = [
-  "http://localhost:3000/auth/callback",
   "http://localhost:3000/**",
-  "http://127.0.0.1:3000/auth/callback",
   "http://127.0.0.1:3000/**",
-  "ramassa://auth/callback",
-  "ramassa://**",
 ]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600

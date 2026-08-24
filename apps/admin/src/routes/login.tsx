@@ -1,4 +1,4 @@
-import { MagicLinkForm } from '@/components/auth/magic-link-form';
+import { EmailOtpRequestForm, EmailOtpVerifyForm } from '@/components/auth/email-otp-form';
 import { NoAdminAccess } from '@/components/auth/no-admin-access';
 import { PasswordLoginForm } from '@/components/auth/password-login-form';
 import { Button } from '@/components/ui/button';
@@ -12,12 +12,12 @@ export const Route = createFileRoute('/login')({
   component: LoginPage,
 });
 
-type LoginMode = 'magic' | 'password';
+type LoginMode = 'otp' | 'password';
 
 function LoginPage() {
   const { t } = useTranslation(['admin', 'auth', 'common']);
   const { session, role } = useAuth();
-  const [mode, setMode] = useState<LoginMode>('magic');
+  const [mode, setMode] = useState<LoginMode>('otp');
   const [sentToEmail, setSentToEmail] = useState<string | null>(null);
 
   // Already signed in (a resolved role): send them to their landing. A role
@@ -37,27 +37,26 @@ function LoginPage() {
       <div className="flex w-full max-w-sm flex-col gap-6">
         <div className="flex flex-col gap-1 text-start">
           <h1 className="text-2xl font-bold text-foreground">{t('admin:loginTitle')}</h1>
-          {mode === 'magic' && !sentToEmail ? (
+          {mode === 'otp' && !sentToEmail ? (
             <p className="text-muted-foreground text-sm">{t('auth:loginSubtitle')}</p>
           ) : null}
         </div>
 
         {sentToEmail ? (
           <div className="flex flex-col gap-4 text-start" aria-live="polite">
-            <h2 className="text-lg font-semibold text-foreground">
-              {t('auth:magicLinkSentTitle')}
-            </h2>
+            <h2 className="text-lg font-semibold text-foreground">{t('auth:emailOtpSentTitle')}</h2>
             <p className="text-muted-foreground text-sm">
-              {t('auth:magicLinkSentBody', { email: sentToEmail })}
+              {t('auth:emailOtpSentBody', { email: sentToEmail })}
             </p>
+            <EmailOtpVerifyForm email={sentToEmail} />
             <Button variant="ghost" className="self-start" onClick={() => setSentToEmail(null)}>
               {t('common:back')}
             </Button>
           </div>
-        ) : mode === 'magic' ? (
+        ) : mode === 'otp' ? (
           <div className="flex flex-col gap-4">
-            <MagicLinkForm onSent={setSentToEmail} />
-            <p className="text-muted-foreground text-start text-sm">{t('auth:magicLinkHint')}</p>
+            <EmailOtpRequestForm onSent={setSentToEmail} />
+            <p className="text-muted-foreground text-start text-sm">{t('auth:emailOtpHint')}</p>
             <Button variant="link" className="self-center" onClick={() => setMode('password')}>
               {t('auth:usePasswordInstead')}
             </Button>
@@ -65,8 +64,8 @@ function LoginPage() {
         ) : (
           <div className="flex flex-col gap-4">
             <PasswordLoginForm />
-            <Button variant="link" className="self-center" onClick={() => setMode('magic')}>
-              {t('auth:useMagicLinkInstead')}
+            <Button variant="link" className="self-center" onClick={() => setMode('otp')}>
+              {t('auth:useEmailOtpInstead')}
             </Button>
           </div>
         )}

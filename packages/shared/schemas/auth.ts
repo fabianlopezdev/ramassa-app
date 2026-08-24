@@ -3,7 +3,7 @@
  * (client validates for UX, server/Supabase re-validates for security) and for
  * the profile role claim read back from the database.
  *
- * ADR-005: magic link is primary (email only); the admin-created fallback adds
+ * ADR-005: email OTP is primary; the admin-created fallback adds
  * a password. Both apps import these; neither redefines them.
  */
 
@@ -21,11 +21,21 @@ export const loginEmailSchema = z.string().trim().toLowerCase().pipe(z.email());
 /** A fallback-account password (ADR-005). Length only; Supabase owns hashing. */
 export const loginPasswordSchema = z.string().min(PASSWORD_MIN_LENGTH);
 
-/** Magic-link request: email is all a player needs to type (the common path). */
-export const magicLinkRequestSchema = z.object({
+/** Email OTP request: email is all a player needs to type first. */
+export const emailOtpRequestSchema = z.object({
   email: loginEmailSchema,
 });
-export type MagicLinkRequest = z.infer<typeof magicLinkRequestSchema>;
+export type EmailOtpRequest = z.infer<typeof emailOtpRequestSchema>;
+
+/** The OTP is bound to the normalized email and is always six digits. */
+export const emailOtpVerifySchema = z.object({
+  email: loginEmailSchema,
+  token: z
+    .string()
+    .trim()
+    .regex(/^\d{6}$/),
+});
+export type EmailOtpVerify = z.infer<typeof emailOtpVerifySchema>;
 
 /** Password login: the admin-created fallback for players without an email. */
 export const passwordLoginSchema = z.object({

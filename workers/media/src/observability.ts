@@ -11,6 +11,7 @@
 import * as Sentry from '@sentry/cloudflare';
 import { isAppError, toAppError } from '@ramassa/shared/errors';
 import {
+  buildRedactedErrorReportExtra,
   createLogger,
   createNoopErrorReporter,
   type ErrorReporter,
@@ -22,7 +23,7 @@ function createSentryErrorReporter(): ErrorReporter {
     captureError(error, context) {
       Sentry.captureException(error, {
         tags: { errorCode: error.code, errorDomain: error.domain },
-        extra: { ...context, errorContext: error.context },
+        extra: buildRedactedErrorReportExtra(error, context),
       });
     },
   };

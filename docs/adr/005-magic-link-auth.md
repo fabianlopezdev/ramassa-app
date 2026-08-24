@@ -1,4 +1,4 @@
-# 005. Magic link auth + password fallback
+# 005. Email OTP auth + password fallback
 
 **Status:** Accepted
 **Date:** 2026-04-09
@@ -9,7 +9,7 @@ Players have varying digital literacy. Some may not have email addresses. The pr
 
 ## Decision
 
-- **Primary:** Magic link via email (Supabase Auth `signInWithOtp`). Free, no SMS costs.
+- **Primary:** Six-digit email OTP (Supabase Auth `signInWithOtp` followed by `verifyOtp`). Free, no SMS costs. The email address is repeated during verification so the code is bound to the intended account. Native and web clients use PKCE and never receive bearer sessions through a custom-scheme URL.
 - **Fallback:** Admin-created accounts with an internal address (`firstname.<id>@ramassa.invalid`) + password. For players without personal email. Credentials shared in person by staff.
 
 > **Amended 2026-08-01 (RAPP-25).** The address was originally specced as
@@ -17,7 +17,7 @@ Players have varying digital literacy. Some may not have email addresses. The pr
 > belongs to has no email, which is the whole reason the account exists. A real
 > domain would mean any automatic mail Supabase sends (recovery, email change, a
 > resend added in a later phase) could one day be delivered to whoever holds
-> that mailbox — a password link for a participant's account, to a stranger —
+> that mailbox. That could expose a participant's account to a stranger
 > and could collide with a real address created on that domain later. `.invalid`
 > is reserved by RFC 2606 so it can never resolve, anywhere, ever. The format is
 > otherwise unchanged, and the address is GENERATED server-side, so staff never
@@ -49,16 +49,17 @@ Players have varying digital literacy. Some may not have email addresses. The pr
 
 ## Alternatives Considered
 
-- **SMS OTP** — rejected. $15-20/month for ~50 users. Ongoing cost with no benefit over email magic links.
-- **WhatsApp auth** — rejected. API costs, dependency on Meta platform.
-- **Passkeys** — rejected. Too new, inconsistent support on low-end Android devices.
-- **PIN-based** — rejected. No standard implementation in Supabase, custom auth layer needed.
-- **Password-only** — rejected. Requires all users to remember passwords, poor UX for low-literacy users.
+- **Email magic links:** rejected after the security review. A native custom-scheme callback can expose a bearer session to another app that claims the scheme. Email OTP preserves passwordless access without putting a session in a callback URL.
+- **SMS OTP:** rejected. $15-20/month for about 50 users. Ongoing cost with no benefit over email OTP.
+- **WhatsApp auth:** rejected. API costs and dependency on the Meta platform.
+- **Passkeys:** rejected. Too new and inconsistently supported on low-end Android devices.
+- **PIN-based:** rejected. No standard Supabase implementation, so it requires a custom auth layer.
+- **Password-only:** rejected. It requires every user to remember a password, which is poor UX for users with low digital literacy.
 
 ## Consequences
 
 - Zero auth cost (Supabase email sending is included)
-- Magic links work across all platforms (mobile deep link, web redirect)
+- Email OTP works across mobile and web without a deep link or auth callback route
 - Fallback requires admin to create accounts manually and share credentials in person
 - Admin needs a "create user" screen. **Superseded by ADR-022 (2026-08-01):** it
   runs as a SECURITY DEFINER Postgres function, not an Edge Function, so no

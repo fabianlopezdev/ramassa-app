@@ -54,7 +54,7 @@ At every checkpoint commit (Checkpoints A, B, C, D in the Phase 1 plan, and equi
 | 002 | [Cloudflare R2 for media storage](002-cloudflare-r2-media.md)                                          | Accepted          | 2026-04-09 |
 | 003 | [OpenNext for admin hosting](003-opennext-admin-hosting.md)                                            | Superseded by 016 | 2026-04-09 |
 | 004 | [pgcrypto encryption from day 1](004-encryption-day-one.md)                                            | Accepted          | 2026-04-09 |
-| 005 | [Magic link auth + password fallback](005-magic-link-auth.md)                                          | Accepted          | 2026-04-09 |
+| 005 | [Email OTP auth + password fallback](005-magic-link-auth.md)                                           | Accepted          | 2026-04-09 |
 | 006 | [5 languages with RTL from day 1](006-five-languages-rtl.md)                                           | Accepted          | 2026-04-09 |
 | 007 | [Pluggable auto-translation provider](007-pluggable-translation.md)                                    | Accepted          | 2026-04-09 |
 | 008 | [Expo Web for player web interface](008-expo-web-player.md)                                            | Accepted          | 2026-04-09 |

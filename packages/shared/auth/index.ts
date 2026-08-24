@@ -2,24 +2,20 @@
  * `@ramassa/shared/auth` — the auth surface both apps consume (RAPP-13):
  * the AuthProvider/useAuth state, the actions screens call through their wired
  * `safeAsync`, the Supabase-error → `AUTH-*` mapper, and the origin-validating
- * callback-URL parser.
+ * email-code verification.
  */
 
 export { AuthProvider, useAuth, type AuthProviderProps, type AuthState } from './auth-context';
 export {
-  completeAuthCallback,
   fetchProfileRole,
   fetchProfileSummary,
   type ProfileSummary,
-  requestMagicLink,
+  requestEmailOtp,
   signInWithPassword,
   signOut,
+  verifyEmailOtp,
   type PasswordLoginParams,
-  type RequestMagicLinkParams,
+  type RequestEmailOtpParams,
+  type VerifyEmailOtpParams,
 } from './auth-actions';
 export { mapSupabaseAuthError, type SupabaseAuthErrorShape } from './auth-error';
-export {
-  parseAuthCallbackUrl,
-  type AuthCallbackTokens,
-  type ParseAuthCallbackUrlOptions,
-} from './callback-url';

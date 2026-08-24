@@ -5,7 +5,7 @@
  * caller's wired `safeAsync` logs it and turns it into a `Result` — nothing
  * here reaches for a logger or Sentry directly.
  *
- * ADR-005: `requestMagicLink` is the primary path; `signInWithPassword` is the
+ * ADR-005: `requestEmailOtp` is the primary path; `signInWithPassword` is the
  * admin-created fallback. `shouldCreateUser: false` keeps login closed to
  * already-provisioned accounts (invite-only distribution, RAPP-1).
  */
@@ -15,26 +15,42 @@ import { AppError } from '../errors';
 import { appRoleSchema, type AppRole } from '../schemas/auth';
 import type { Database } from '../types/database';
 import { mapSupabaseAuthError } from './auth-error';
-import { parseAuthCallbackUrl, type ParseAuthCallbackUrlOptions } from './callback-url';
 
 type Client = SupabaseClient<Database>;
 
-export interface RequestMagicLinkParams {
+export interface RequestEmailOtpParams {
   readonly email: string;
-  /** Where Supabase sends the link back to (deep link on mobile, route on web). */
-  readonly emailRedirectTo: string;
 }
 
-export async function requestMagicLink(
+export async function requestEmailOtp(
   client: Client,
-  params: RequestMagicLinkParams,
+  params: RequestEmailOtpParams,
 ): Promise<void> {
   const { error } = await client.auth.signInWithOtp({
     email: params.email,
-    options: { shouldCreateUser: false, emailRedirectTo: params.emailRedirectTo },
+    options: { shouldCreateUser: false },
   });
   if (error) {
     throw new AppError(mapSupabaseAuthError(error), {
+      message: error.message,
+      context: { status: error.status },
+    });
+  }
+}
+
+export interface VerifyEmailOtpParams {
+  readonly email: string;
+  readonly token: string;
+}
+
+export async function verifyEmailOtp(client: Client, params: VerifyEmailOtpParams): Promise<void> {
+  const { error } = await client.auth.verifyOtp({
+    email: params.email,
+    token: params.token,
+    type: 'email',
+  });
+  if (error) {
+    throw new AppError(mapSupabaseAuthError(error, 'AUTH-4'), {
       message: error.message,
       context: { status: error.status },
     });
@@ -67,27 +83,6 @@ export async function signOut(client: Client): Promise<void> {
   const { error } = await client.auth.signOut();
   if (error) {
     throw new AppError('AUTH-1', { message: error.message });
-  }
-}
-
-/**
- * Opens a session from a magic-link callback URL: validates the URL's origin
- * and extracts the tokens (throws `AUTH-7`/`AUTH-4` on an untrusted or bad
- * link), then hands them to supabase-js. On success the client persists the
- * session and fires `onAuthStateChange`, which the AuthProvider is listening to.
- */
-export async function completeAuthCallback(
-  client: Client,
-  url: string,
-  options: ParseAuthCallbackUrlOptions,
-): Promise<void> {
-  const { accessToken, refreshToken } = parseAuthCallbackUrl(url, options);
-  const { error } = await client.auth.setSession({
-    access_token: accessToken,
-    refresh_token: refreshToken,
-  });
-  if (error) {
-    throw new AppError(mapSupabaseAuthError(error, 'AUTH-4'), { message: error.message });
   }
 }
 

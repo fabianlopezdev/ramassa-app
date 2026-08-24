@@ -156,7 +156,6 @@ export async function fetchDeletionRequests(
 export interface ResolveDeletionRequestParams {
   readonly requestId: string;
   readonly state: 'in_progress' | 'done' | 'declined';
-  readonly resolvedBy: string;
   /** What staff did about it, which is the part RGPD expects to be answerable. */
   readonly resolutionNote?: string;
 }
@@ -165,15 +164,11 @@ export async function resolveDeletionRequest(
   client: Client,
   params: ResolveDeletionRequestParams,
 ): Promise<void> {
-  const { error } = await client
-    .from('deletion_requests')
-    .update({
-      state: params.state,
-      resolved_by: params.resolvedBy,
-      resolved_at: new Date().toISOString(),
-      resolution_note: params.resolutionNote ?? null,
-    })
-    .eq('id', params.requestId);
+  const { error } = await client.rpc('transition_deletion_request', {
+    p_request_id: params.requestId,
+    p_state: params.state,
+    p_resolution_note: params.resolutionNote,
+  });
   if (error) {
     throw new AppError('DB-1', { message: error.message });
   }

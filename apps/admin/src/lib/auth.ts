@@ -1,33 +1,31 @@
 /**
- * Admin auth wiring (RAPP-13): the magic-link redirect target and the actions
- * the login form + callback route call, each through the admin's wired
- * `safeAsync`. Magic links come back to `/auth/callback` on this origin, and
- * that same URL is the only prefix the callback parser trusts (open-redirect
- * guard). Staff and entity users authenticate the same way; only the landing
- * differs by role.
+ * Admin auth wiring (RAPP-13): email-code and password actions used by staff
+ * and entity users. Successful code verification also accepts a pending entity
+ * invitation before the role gate chooses a landing page.
  */
 
 import {
-  completeAuthCallback as sharedCompleteAuthCallback,
-  requestMagicLink as sharedRequestMagicLink,
+  requestEmailOtp as sharedRequestEmailOtp,
   signInWithPassword as sharedSignInWithPassword,
   signOut as sharedSignOut,
+  verifyEmailOtp as sharedVerifyEmailOtp,
 } from '@ramassa/shared/auth';
 import { acceptPendingEntityInvitation } from '@ramassa/shared/entity-management';
 import type { AppError, Result } from '@ramassa/shared/errors';
 import { logger, safeAsync } from './observability';
 import { supabase } from './supabase';
 
-const AUTH_CALLBACK_PATH = '/auth/callback';
-
-/** The callback URL on THIS origin (browser-only; login runs client-side). */
-function authRedirectTo(): string {
-  return `${window.location.origin}${AUTH_CALLBACK_PATH}`;
+export function sendEmailOtp(email: string): Promise<Result<void, AppError>> {
+  return safeAsync(() => sharedRequestEmailOtp(supabase, { email }));
 }
 
-export function sendMagicLink(email: string): Promise<Result<void, AppError>> {
-  return safeAsync(() =>
-    sharedRequestMagicLink(supabase, { email, emailRedirectTo: authRedirectTo() }),
+export function confirmEmailOtp(email: string, token: string): Promise<Result<void, AppError>> {
+  return safeAsync(
+    async () => {
+      await sharedVerifyEmailOtp(supabase, { email, token });
+      await acceptPendingEntityInvitation(supabase);
+    },
+    { code: 'AUTH-4' },
   );
 }
 
@@ -38,18 +36,6 @@ export function loginWithPassword(
   return safeAsync(() => sharedSignInWithPassword(supabase, { email, password }), {
     code: 'AUTH-6',
   });
-}
-
-export function completeMagicLink(url: string): Promise<Result<void, AppError>> {
-  return safeAsync(
-    async () => {
-      await sharedCompleteAuthCallback(supabase, url, {
-        allowedRedirectPrefixes: [authRedirectTo()],
-      });
-      await acceptPendingEntityInvitation(supabase);
-    },
-    { code: 'AUTH-4' },
-  );
 }
 
 export function logout(): Promise<Result<void, AppError>> {

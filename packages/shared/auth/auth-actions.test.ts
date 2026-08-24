@@ -3,11 +3,11 @@ import { expect, test } from 'bun:test';
 import { isAppError } from '../errors';
 import type { Database } from '../types/database';
 import {
-  completeAuthCallback,
   fetchProfileRole,
   fetchProfileSummary,
-  requestMagicLink,
+  requestEmailOtp,
   signInWithPassword,
+  verifyEmailOtp,
 } from './auth-actions';
 
 type Client = SupabaseClient<Database>;
@@ -15,7 +15,7 @@ type Client = SupabaseClient<Database>;
 interface AuthOverrides {
   signInWithOtp?: (args: unknown) => Promise<{ error: unknown }>;
   signInWithPassword?: (args: unknown) => Promise<{ error: unknown }>;
-  setSession?: (args: unknown) => Promise<{ error: unknown }>;
+  verifyOtp?: (args: unknown) => Promise<{ error: unknown }>;
 }
 
 function fakeAuthClient(overrides: AuthOverrides = {}): Client {
@@ -23,7 +23,7 @@ function fakeAuthClient(overrides: AuthOverrides = {}): Client {
     auth: {
       signInWithOtp: overrides.signInWithOtp ?? (async () => ({ error: null })),
       signInWithPassword: overrides.signInWithPassword ?? (async () => ({ error: null })),
-      setSession: overrides.setSession ?? (async () => ({ error: null })),
+      verifyOtp: overrides.verifyOtp ?? (async () => ({ error: null })),
     },
   } as unknown as Client;
 }
@@ -38,9 +38,8 @@ function fakeProfileClient(result: { data: unknown; error: unknown }): Client {
   return { from: () => builder } as unknown as Client;
 }
 
-test('requestMagicLink sends a closed-signup OTP with the redirect', async () => {
-  let received:
-    { email: string; options: { shouldCreateUser: boolean; emailRedirectTo: string } } | undefined;
+test('requestEmailOtp sends a closed-signup code without a redirect URL', async () => {
+  let received: { email: string; options: { shouldCreateUser: boolean } } | undefined;
   const client = fakeAuthClient({
     signInWithOtp: async (args) => {
       received = args as typeof received;
@@ -48,26 +47,20 @@ test('requestMagicLink sends a closed-signup OTP with the redirect', async () =>
     },
   });
 
-  await requestMagicLink(client, {
-    email: 'player@example.com',
-    emailRedirectTo: 'ramassa://auth/callback',
-  });
+  await requestEmailOtp(client, { email: 'player@example.com' });
 
   expect(received?.email).toBe('player@example.com');
   expect(received?.options.shouldCreateUser).toBe(false);
-  expect(received?.options.emailRedirectTo).toBe('ramassa://auth/callback');
+  expect(received?.options).not.toHaveProperty('emailRedirectTo');
 });
 
-test('requestMagicLink surfaces a rate limit as AUTH-5', async () => {
+test('requestEmailOtp surfaces a rate limit as AUTH-5', async () => {
   const client = fakeAuthClient({
     signInWithOtp: async () => ({ error: { status: 429, message: 'Email rate limit exceeded' } }),
   });
   try {
-    await requestMagicLink(client, {
-      email: 'p@example.com',
-      emailRedirectTo: 'ramassa://auth/callback',
-    });
-    throw new Error('expected requestMagicLink to throw');
+    await requestEmailOtp(client, { email: 'p@example.com' });
+    throw new Error('expected requestEmailOtp to throw');
   } catch (error) {
     expect(isAppError(error) && error.code).toBe('AUTH-5');
   }
@@ -85,37 +78,30 @@ test('signInWithPassword maps a generic failure to invalid credentials (AUTH-6)'
   }
 });
 
-test('completeAuthCallback rejects a foreign origin before calling setSession', async () => {
-  let setSessionCalled = false;
+test('verifyEmailOtp binds the one-time code to the expected email', async () => {
+  let received: { email: string; token: string; type: string } | undefined;
   const client = fakeAuthClient({
-    setSession: async () => {
-      setSessionCalled = true;
-      return { error: null };
-    },
-  });
-  try {
-    await completeAuthCallback(client, 'https://evil.example.com/#access_token=a&refresh_token=b', {
-      allowedRedirectPrefixes: ['ramassa://auth/callback'],
-    });
-    throw new Error('expected completeAuthCallback to throw');
-  } catch (error) {
-    expect(isAppError(error) && error.code).toBe('AUTH-7');
-  }
-  expect(setSessionCalled).toBe(false);
-});
-
-test('completeAuthCallback opens a session from a trusted link', async () => {
-  let received: { access_token: string; refresh_token: string } | undefined;
-  const client = fakeAuthClient({
-    setSession: async (args) => {
+    verifyOtp: async (args) => {
       received = args as typeof received;
       return { error: null };
     },
   });
-  await completeAuthCallback(client, 'ramassa://auth/callback#access_token=at&refresh_token=rt', {
-    allowedRedirectPrefixes: ['ramassa://auth/callback'],
+
+  await verifyEmailOtp(client, {
+    email: 'player@example.com',
+    token: '123456',
   });
-  expect(received).toEqual({ access_token: 'at', refresh_token: 'rt' });
+
+  expect(received).toEqual({ email: 'player@example.com', token: '123456', type: 'email' });
+});
+
+test('verifyEmailOtp maps an expired or invalid code to AUTH-4', async () => {
+  const client = fakeAuthClient({
+    verifyOtp: async () => ({ error: { status: 403, message: 'Token has expired or is invalid' } }),
+  });
+  await expect(
+    verifyEmailOtp(client, { email: 'player@example.com', token: '000000' }),
+  ).rejects.toMatchObject({ code: 'AUTH-4' });
 });
 
 test('fetchProfileRole returns the validated role', async () => {

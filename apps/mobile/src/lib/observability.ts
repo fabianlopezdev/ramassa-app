@@ -16,6 +16,7 @@ import {
   type SafeAsyncOptions,
 } from '@ramassa/shared/errors';
 import {
+  buildRedactedErrorReportExtra,
   consoleLogSink,
   createLogger,
   createNoopErrorReporter,
@@ -68,7 +69,7 @@ function createSentryErrorReporter(): ErrorReporter {
     captureError(error, context) {
       Sentry.captureException(error, {
         tags: { errorCode: error.code, errorDomain: error.domain },
-        extra: { ...context, errorContext: error.context },
+        extra: buildRedactedErrorReportExtra(error, context),
       });
     },
   };

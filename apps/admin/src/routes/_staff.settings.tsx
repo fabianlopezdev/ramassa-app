@@ -2,7 +2,7 @@ import { RequireAuth } from '@/components/auth/require-auth';
 import { ORGANIZATION_BRANDING_CHANGED_EVENT } from '@/components/branding/organization-branding-provider';
 import { EntityManagementPanel } from '@/components/entity/entity-management-panel';
 import { OrganizationSettingsPanel } from '@/components/settings/organization-settings-panel';
-import { sendMagicLink } from '@/lib/auth';
+import { sendEmailOtp } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
 import { createFileRoute, useRouter } from '@tanstack/react-router';
 import { z } from 'zod';
@@ -94,7 +94,7 @@ function OrganizationSettingsScreen() {
       onInvite={async (input) => {
         if (data.selectedEntityId === null) return;
         const invitation = await inviteEntityCollaborator(supabase, data.selectedEntityId, input);
-        const result = await sendMagicLink(invitation.email);
+        const result = await sendEmailOtp(invitation.email);
         if (!result.ok) throw result.error;
         await refresh();
       }}
@@ -128,7 +128,7 @@ function OrganizationSettingsScreen() {
       }}
       onInviteStaff={async (input) => {
         const invitation = await inviteStaffMember(supabase, input);
-        const result = await sendMagicLink(invitation.email);
+        const result = await sendEmailOtp(invitation.email);
         if (!result.ok) throw result.error;
         await refresh();
       }}

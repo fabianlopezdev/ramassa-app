@@ -1,4 +1,8 @@
-export { createNoopErrorReporter, type ErrorReporter } from './error-reporter';
+export {
+  buildRedactedErrorReportExtra,
+  createNoopErrorReporter,
+  type ErrorReporter,
+} from './error-reporter';
 export {
   consoleLogSink,
   createLogger,

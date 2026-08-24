@@ -1,10 +1,10 @@
 <!doctype html>
 <!--
-  Magic-link email (RAPP-13). Catalan is the default language (grant, ADR-006).
+  Email OTP message (RAPP-67). Catalan is the default language (grant, ADR-006).
   Email clients strip <style>/CSS variables, so colours are inlined here; the
   values mirror packages/shared/tokens (primary #0077B6, gold #FFD166, neutrals)
   and are the one place in the repo where inlined hex is expected, not a token.
-  Supabase substitutes {{ .ConfirmationURL }} with the one-time login link.
+  Supabase substitutes {{ .Token }} with the six-digit one-time code.
 -->
 <html lang="ca">
   <body
@@ -48,38 +48,23 @@
                   Inicia la sessió
                 </h1>
                 <p style="margin: 0 0 24px; font-size: 16px; line-height: 1.5; color: #334155">
-                  Has demanat iniciar la sessió a l'aplicació de Ramassà. Fes clic al botó per
-                  entrar. No cal cap contrasenya.
-                </p>
-                <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 0 0 24px">
-                  <tr>
-                    <td style="border-radius: 12px; background-color: #0077b6">
-                      <a
-                        href="{{ .ConfirmationURL }}"
-                        style="
-                          display: inline-block;
-                          padding: 16px 32px;
-                          font-size: 16px;
-                          font-weight: 700;
-                          color: #ffffff;
-                          text-decoration: none;
-                        "
-                      >
-                        Inicia la sessió
-                      </a>
-                    </td>
-                  </tr>
-                </table>
-                <p style="margin: 0 0 8px; font-size: 14px; line-height: 1.5; color: #64748b">
-                  Si el botó no funciona, copia i enganxa aquest enllaç al navegador:
+                  Has demanat iniciar la sessió a l'aplicació de Ramassà. Introdueix aquest codi a
+                  l'aplicació. No cal cap contrasenya.
                 </p>
                 <p
-                  style="margin: 0 0 24px; font-size: 13px; line-height: 1.5; word-break: break-all"
+                  style="
+                    margin: 0 0 24px;
+                    color: #0077b6;
+                    font-size: 32px;
+                    font-weight: 700;
+                    letter-spacing: 8px;
+                    line-height: 1.25;
+                  "
                 >
-                  <a href="{{ .ConfirmationURL }}" style="color: #0077b6">{{ .ConfirmationURL }}</a>
+                  {{ .Token }}
                 </p>
                 <p style="margin: 0; font-size: 13px; line-height: 1.5; color: #94a3b8">
-                  Aquest enllaç caduca en una hora i només es pot fer servir una vegada. Si no has
+                  Aquest codi caduca en una hora i només es pot fer servir una vegada. Si no has
                   demanat iniciar la sessió, pots ignorar aquest correu.
                 </p>
               </td>

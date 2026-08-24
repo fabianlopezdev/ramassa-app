@@ -193,29 +193,24 @@ describe('the deletion-request queue', () => {
     expect(queries).toContain('order:created_at:desc');
   });
 
-  test('resolving a request records who resolved it and when', async () => {
-    let updated: Record<string, unknown> = {};
-    const client = {
-      from() {
-        return {
-          update(values: Record<string, unknown>) {
-            updated = values;
-            return { eq: () => Promise.resolve({ data: null, error: null }) };
-          },
-        };
-      },
-    } as never;
+  test('resolving a request delegates actor, tenant, and time to the database', async () => {
+    const { client, calls } = buildClient();
 
     await resolveDeletionRequest(client, {
       requestId: 'req-1',
       state: 'done',
-      resolvedBy: 'staff-1',
       resolutionNote: 'Erased at her request.',
     });
 
-    expect(updated.state).toBe('done');
-    expect(updated.resolved_by).toBe('staff-1');
-    expect(updated.resolution_note).toBe('Erased at her request.');
-    expect(typeof updated.resolved_at).toBe('string');
+    expect(calls).toEqual([
+      {
+        name: 'transition_deletion_request',
+        args: {
+          p_request_id: 'req-1',
+          p_state: 'done',
+          p_resolution_note: 'Erased at her request.',
+        },
+      },
+    ]);
   });
 });

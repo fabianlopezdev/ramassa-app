@@ -13,7 +13,6 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as StaffRouteImport } from './routes/_staff'
 import { Route as EntityRouteImport } from './routes/_entity'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as StaffSurveysRouteImport } from './routes/_staff.surveys'
 import { Route as StaffSettingsRouteImport } from './routes/_staff.settings'
 import { Route as StaffNotificationsRouteImport } from './routes/_staff.notifications'
@@ -80,11 +79,6 @@ const EntityRoute = EntityRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthCallbackRoute = AuthCallbackRouteImport.update({
-  id: '/auth/callback',
-  path: '/auth/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StaffSurveysRoute = StaffSurveysRouteImport.update({
@@ -371,7 +365,6 @@ export interface FileRoutesByFullPath {
   '/notifications': typeof StaffNotificationsRoute
   '/settings': typeof StaffSettingsRoute
   '/surveys': typeof StaffSurveysRoute
-  '/auth/callback': typeof AuthCallbackRoute
   '/portal/events': typeof EntityPortalEventsRoute
   '/portal/messages': typeof EntityPortalMessagesRoute
   '/portal/referrals': typeof EntityPortalReferralsRouteWithChildren
@@ -422,7 +415,6 @@ export interface FileRoutesByTo {
   '/notifications': typeof StaffNotificationsRoute
   '/settings': typeof StaffSettingsRoute
   '/surveys': typeof StaffSurveysRoute
-  '/auth/callback': typeof AuthCallbackRoute
   '/portal/events': typeof EntityPortalEventsRoute
   '/portal/messages': typeof EntityPortalMessagesRoute
   '/attendance/$occurrenceId': typeof StaffAttendanceOccurrenceIdRoute
@@ -477,7 +469,6 @@ export interface FileRoutesById {
   '/_staff/notifications': typeof StaffNotificationsRoute
   '/_staff/settings': typeof StaffSettingsRoute
   '/_staff/surveys': typeof StaffSurveysRoute
-  '/auth/callback': typeof AuthCallbackRoute
   '/_entity/portal/events': typeof EntityPortalEventsRoute
   '/_entity/portal/messages': typeof EntityPortalMessagesRoute
   '/_entity/portal/referrals': typeof EntityPortalReferralsRouteWithChildren
@@ -533,7 +524,6 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/settings'
     | '/surveys'
-    | '/auth/callback'
     | '/portal/events'
     | '/portal/messages'
     | '/portal/referrals'
@@ -584,7 +574,6 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/settings'
     | '/surveys'
-    | '/auth/callback'
     | '/portal/events'
     | '/portal/messages'
     | '/attendance/$occurrenceId'
@@ -638,7 +627,6 @@ export interface FileRouteTypes {
     | '/_staff/notifications'
     | '/_staff/settings'
     | '/_staff/surveys'
-    | '/auth/callback'
     | '/_entity/portal/events'
     | '/_entity/portal/messages'
     | '/_entity/portal/referrals'
@@ -684,7 +672,6 @@ export interface RootRouteChildren {
   EntityRoute: typeof EntityRouteWithChildren
   StaffRoute: typeof StaffRouteWithChildren
   LoginRoute: typeof LoginRoute
-  AuthCallbackRoute: typeof AuthCallbackRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -715,13 +702,6 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth/callback': {
-      id: '/auth/callback'
-      path: '/auth/callback'
-      fullPath: '/auth/callback'
-      preLoaderRoute: typeof AuthCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_staff/surveys': {
@@ -1243,7 +1223,6 @@ const rootRouteChildren: RootRouteChildren = {
   EntityRoute: EntityRouteWithChildren,
   StaffRoute: StaffRouteWithChildren,
   LoginRoute: LoginRoute,
-  AuthCallbackRoute: AuthCallbackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

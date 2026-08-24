@@ -4379,6 +4379,14 @@ export type Database = {
         Args: { p_profile_id: string; p_role: string };
         Returns: undefined;
       };
+      transition_deletion_request: {
+        Args: {
+          p_request_id: string;
+          p_resolution_note?: string;
+          p_state: string;
+        };
+        Returns: undefined;
+      };
       transition_feedback_submission: {
         Args: { p_status: string; p_submission_id: string };
         Returns: undefined;

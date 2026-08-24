@@ -1,5 +1,5 @@
 import { AuthFormError } from '@/components/auth/auth-form-error';
-import { MagicLinkForm } from '@/components/auth/magic-link-form';
+import { EmailOtpRequestForm, EmailOtpVerifyForm } from '@/components/auth/email-otp-form';
 import { PasswordLoginForm } from '@/components/auth/password-login-form';
 import { FormWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
@@ -11,7 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { KeyboardAvoidingView, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-type LoginMode = 'magic' | 'password';
+type LoginMode = 'otp' | 'password';
 
 // Required inside a __DEV__ branch so nothing dev-only reaches a production
 // bundle (RAPP-19). It sits on the login screen too, not only on Profile: the
@@ -38,8 +38,7 @@ function AuthLink({ label, onPress }: { label: string; onPress: () => void }) {
   );
 }
 
-/** The confirmation shown after a magic link is sent (first WCAG AA screen). */
-function MagicLinkSent({ email, onBack }: { email: string; onBack: () => void }) {
+function EmailOtpEntry({ email, onBack }: { email: string; onBack: () => void }) {
   const { t } = useTranslation(['auth', 'common']);
   const languageFontClass = useLanguageFontClass();
   return (
@@ -48,11 +47,12 @@ function MagicLinkSent({ email, onBack }: { email: string; onBack: () => void })
         accessibilityRole="header"
         className={`text-start text-xl font-bold text-neutral-900 ${languageFontClass}`}
       >
-        {t('auth:magicLinkSentTitle')}
+        {t('auth:emailOtpSentTitle')}
       </Text>
       <Text className={`text-start text-md text-neutral-700 ${languageFontClass}`}>
-        {t('auth:magicLinkSentBody', { email })}
+        {t('auth:emailOtpSentBody', { email })}
       </Text>
+      <EmailOtpVerifyForm email={email} />
       <AuthLink label={t('common:back')} onPress={onBack} />
     </View>
   );
@@ -62,7 +62,7 @@ export default function LoginScreen() {
   const { t } = useTranslation(['auth', 'common']);
   const languageFontClass = useLanguageFontClass();
   const { errorCode, setErrorCode } = useAuthFlowStatus();
-  const [mode, setMode] = useState<LoginMode>('magic');
+  const [mode, setMode] = useState<LoginMode>('otp');
   const [sentToEmail, setSentToEmail] = useState<string | null>(null);
 
   const switchTo = (nextMode: LoginMode) => {
@@ -97,7 +97,7 @@ export default function LoginScreen() {
               >
                 {t('auth:loginTitle')}
               </Text>
-              {mode === 'magic' && !sentToEmail ? (
+              {mode === 'otp' && !sentToEmail ? (
                 <Text className={`text-start text-md text-neutral-600 ${languageFontClass}`}>
                   {t('auth:loginSubtitle')}
                 </Text>
@@ -109,13 +109,13 @@ export default function LoginScreen() {
             </ShakeOnError>
 
             {sentToEmail ? (
-              <MagicLinkSent email={sentToEmail} onBack={() => setSentToEmail(null)} />
-            ) : mode === 'magic' ? (
+              <EmailOtpEntry email={sentToEmail} onBack={() => setSentToEmail(null)} />
+            ) : mode === 'otp' ? (
               <View className="gap-md">
-                <MagicLinkForm onSent={setSentToEmail} />
+                <EmailOtpRequestForm onSent={setSentToEmail} />
                 {/* Reassurance for players who worry they have no password (persona). */}
                 <Text className={`text-start text-sm text-neutral-500 ${languageFontClass}`}>
-                  {t('auth:magicLinkHint')}
+                  {t('auth:emailOtpHint')}
                 </Text>
                 <AuthLink
                   label={t('auth:usePasswordInstead')}
@@ -125,7 +125,7 @@ export default function LoginScreen() {
             ) : (
               <View className="gap-lg">
                 <PasswordLoginForm />
-                <AuthLink label={t('auth:useMagicLinkInstead')} onPress={() => switchTo('magic')} />
+                <AuthLink label={t('auth:useEmailOtpInstead')} onPress={() => switchTo('otp')} />
               </View>
             )}
 

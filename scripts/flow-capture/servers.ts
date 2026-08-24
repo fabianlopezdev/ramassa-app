@@ -107,6 +107,31 @@ export function metroSchemesFromManifest(manifest: unknown): readonly string[] |
   return typeof scheme === 'string' ? [scheme] : scheme;
 }
 
+/** Resolve a URL pathname only when it names a file inside the export root. */
+export function resolveWebExportAssetPath(distDir: string, pathname: string): string | undefined {
+  let decodedPath: string;
+  try {
+    decodedPath = decodeURIComponent(pathname);
+  } catch {
+    return undefined;
+  }
+
+  const candidate = path.resolve(
+    distDir,
+    `.${decodedPath.startsWith('/') ? decodedPath : `/${decodedPath}`}`,
+  );
+  const relative = path.relative(distDir, candidate);
+  if (
+    relative === '' ||
+    relative === '..' ||
+    relative.startsWith(`..${path.sep}`) ||
+    path.isAbsolute(relative)
+  ) {
+    return undefined;
+  }
+  return candidate;
+}
+
 async function isPortFree(port: number): Promise<boolean> {
   try {
     const probe = Bun.serve({ port, fetch: () => new Response() });
@@ -141,12 +166,14 @@ export async function serveWebExport(port: number): Promise<StoppableServer> {
   }
 
   const server = Bun.serve({
+    hostname: '127.0.0.1',
     port,
     fetch: async (request) => {
       const { pathname } = new URL(request.url);
-      const asset = Bun.file(path.join(distDir, decodeURIComponent(pathname)));
-      if (pathname !== '/' && (await asset.exists())) {
-        return new Response(asset);
+      const assetPath = resolveWebExportAssetPath(distDir, pathname);
+      if (assetPath !== undefined) {
+        const asset = Bun.file(assetPath);
+        if (await asset.exists()) return new Response(asset);
       }
       return new Response(indexHtml, { headers: { 'content-type': 'text/html' } });
     },

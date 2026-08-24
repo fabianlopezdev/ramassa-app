@@ -11,7 +11,12 @@ import {
   type Result,
   type SafeAsyncOptions,
 } from '@ramassa/shared/errors';
-import { createLogger, createNoopErrorReporter, type ErrorReporter } from '@ramassa/shared/logger';
+import {
+  buildRedactedErrorReportExtra,
+  createLogger,
+  createNoopErrorReporter,
+  type ErrorReporter,
+} from '@ramassa/shared/logger';
 
 const sentryDsn = import.meta.env.VITE_SENTRY_DSN as string | undefined;
 
@@ -20,7 +25,7 @@ function createSentryErrorReporter(): ErrorReporter {
     captureError(error, context) {
       Sentry.captureException(error, {
         tags: { errorCode: error.code, errorDomain: error.domain },
-        extra: { ...context, errorContext: error.context },
+        extra: buildRedactedErrorReportExtra(error, context),
       });
     },
   };
