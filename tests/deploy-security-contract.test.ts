@@ -26,4 +26,20 @@ describe('deployment workflow security contract', () => {
       expect(action[1]).toMatch(/@[0-9a-f]{40}$/);
     }
   });
+
+  test('hosted Supabase configuration is validated before either web build', async () => {
+    const workflow = await readFile('.github/workflows/deploy.yml', 'utf8');
+    const validationIndex = workflow.indexOf('name: Validate hosted Supabase config');
+    const adminBuildIndex = workflow.indexOf('name: Build admin');
+    const playerBuildIndex = workflow.indexOf('name: Export player web');
+
+    expect(validationIndex).toBeGreaterThan(-1);
+    expect(validationIndex).toBeLessThan(adminBuildIndex);
+    expect(validationIndex).toBeLessThan(playerBuildIndex);
+
+    const validationStep = workflow.slice(validationIndex, adminBuildIndex);
+    expect(validationStep).toContain('run: bun run deploy:check-env');
+    expect(validationStep).toContain('secrets.EXPO_PUBLIC_SUPABASE_URL');
+    expect(validationStep).toContain('secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY');
+  });
 });

@@ -14,8 +14,10 @@ name: Deploy
 #   EXPO_PUBLIC_SUPABASE_URL       - baked into both web builds at build time
 #   EXPO_PUBLIC_SUPABASE_ANON_KEY  - public anon/publishable key (safe to embed)
 #   SENTRY_AUTH_TOKEN      - optional; enables source-map upload on the admin build
-# Until the production Supabase project exists (RAPP-11), the two EXPO_PUBLIC_*
-# values are placeholders; the deployed apps boot but have no live backend yet.
+# Preview uses the synthetic-only hosted staging project from RAPP-92. Production
+# remains unconfigured until Ramassà creates its client-owned project in RAPP-74.
+# The validation step below fails before either build if a value is missing, local,
+# or still points at the historical placeholder project.
 
 on:
   # Auto-deploy preview once CI has gone green on a main commit.
@@ -59,6 +61,12 @@ jobs:
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
+
+      - name: Validate hosted Supabase config
+        run: bun run deploy:check-env
+        env:
+          EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
+          EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
 
       # --- Admin (TanStack Start → Cloudflare Workers) ---
       - name: Build admin (${{ env.TARGET_ENV }})

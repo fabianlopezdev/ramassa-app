@@ -49,7 +49,8 @@
     "security:audit": "bun run scripts/verify-dependency-audit.ts",
     "qa:android:tab-labels": "bun run scripts/qa-android-tab-labels.ts",
     "qa:web": "env -u NO_COLOR playwright test",
-    "qa:accessibility:web": "env -u NO_COLOR playwright test scripts/qa-web/accessibility.web-qa.ts"
+    "qa:accessibility:web": "env -u NO_COLOR playwright test scripts/qa-web/accessibility.web-qa.ts",
+    "deploy:check-env": "bun run scripts/validate-deployment-env.ts"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.13.0",
