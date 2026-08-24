@@ -1,0 +1,33 @@
+{
+  "issue": "RAPP-110",
+  "package": "image-size",
+  "installedVersion": "1.2.1",
+  "created": "2026-08-24",
+  "reviewBy": "2026-09-24",
+  "exposure": "build-time only",
+  "dependencyPath": [
+    "apps/mobile",
+    "expo@57.0.7",
+    "@expo/cli@57.0.9",
+    "@expo/metro@56.0.0",
+    "metro@0.84.4",
+    "image-size@1.2.1"
+  ],
+  "reachableSurface": "Expo and Metro may inspect local image assets while bundling the mobile application. Ramassa does not call image-size directly and does not pass user-provided production data to it.",
+  "advisories": [
+    {
+      "id": "GHSA-5p2g-fcmc-qvqq",
+      "url": "https://github.com/advisories/GHSA-5p2g-fcmc-qvqq"
+    },
+    {
+      "id": "GHSA-w3rx-r6r6-pgpr",
+      "url": "https://github.com/advisories/GHSA-w3rx-r6r6-pgpr"
+    }
+  ],
+  "upstreamStatus": "No patched image-size release exists as of 2026-08-24. The latest release is 2.0.2 and the upstream repository is archived.",
+  "remediation": {
+    "patch": "patches/image-size@1.2.1.patch",
+    "regressionTest": "tests/image-size-security-contract.test.ts"
+  },
+  "removalCondition": "Remove this exception when Expo or Metro no longer depends on image-size, or when a maintained compatible release or replacement includes both parser fixes."
+}
