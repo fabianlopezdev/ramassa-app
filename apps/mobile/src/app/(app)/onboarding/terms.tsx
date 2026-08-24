@@ -26,6 +26,7 @@ import {
 } from '@/lib/onboarding-form';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useRouter } from 'expo-router';
+import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
@@ -34,6 +35,66 @@ import { CURRENT_TERMS_VERSION } from '@ramassa/shared/constants';
 import type { AppErrorCode } from '@ramassa/shared/errors';
 import { buildCompleteOnboardingPayload, termsStepSchema } from '@ramassa/shared/schemas';
 import type { LanguageCode } from '@ramassa/shared/schemas';
+import { tokens } from '@ramassa/shared/tokens';
+
+const purposeSymbol: SymbolViewProps['name'] = {
+  ios: 'calendar.badge.checkmark',
+  android: 'event_available',
+  web: 'event_available',
+};
+const protectedSymbol: SymbolViewProps['name'] = {
+  ios: 'lock.shield.fill',
+  android: 'shield_lock',
+  web: 'shield_lock',
+};
+const privateSymbol: SymbolViewProps['name'] = {
+  ios: 'hand.raised.fill',
+  android: 'privacy_tip',
+  web: 'privacy_tip',
+};
+const controlSymbol: SymbolViewProps['name'] = {
+  ios: 'slider.horizontal.3',
+  android: 'tune',
+  web: 'tune',
+};
+
+function TermsTrustPoint({
+  title,
+  body,
+  symbol,
+}: {
+  readonly title: string;
+  readonly body: string;
+  readonly symbol: SymbolViewProps['name'];
+}) {
+  const languageFontClass = useLanguageFontClass();
+  return (
+    <View className="flex-row items-start gap-sm">
+      <View
+        accessible={false}
+        aria-hidden
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+        className="h-xl w-xl items-center justify-center rounded-full bg-primary-light"
+      >
+        <SymbolView
+          accessible={false}
+          name={symbol}
+          size={tokens.fontSize.xl}
+          tintColor={tokens.colors.primary.dark}
+        />
+      </View>
+      <View className="flex-1 gap-xs">
+        <Text className={`text-start text-md font-bold text-neutral-900 ${languageFontClass}`}>
+          {title}
+        </Text>
+        <Text className={`text-start text-md leading-body text-neutral-600 ${languageFontClass}`}>
+          {body}
+        </Text>
+      </View>
+    </View>
+  );
+}
 
 export default function TermsStepScreen() {
   const { t, i18n } = useTranslation('onboarding');
@@ -47,6 +108,7 @@ export default function TermsStepScreen() {
   const [hasMediaConsent, setHasMediaConsent] = useState(savedTerms.mediaConsent === true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasAcceptError, setHasAcceptError] = useState(false);
+  const [isFullTermsVisible, setIsFullTermsVisible] = useState(false);
   // The FAILURE's own code, not a boolean: it drives the shake and, through the
   // RAPP-12 taxonomy, decides whether the buzz is a warning or an error.
   const [failureCode, setFailureCode] = useState<AppErrorCode | null>(null);
@@ -131,7 +193,7 @@ export default function TermsStepScreen() {
 
   return (
     <WizardFrame
-      stepNumber={4}
+      stepNumber={5}
       title={t('termsTitle')}
       intro={t('termsIntro')}
       continueLabel={t('finishAction')}
@@ -143,11 +205,47 @@ export default function TermsStepScreen() {
         router.replace('/onboarding/logistics');
       }}
     >
-      <View style={continuousCorners} className="rounded-md bg-neutral-50 p-md">
-        <Text className={`text-start text-md leading-body text-neutral-800 ${languageFontClass}`}>
-          {t('termsBody')}
-        </Text>
+      <View className="gap-lg">
+        <TermsTrustPoint
+          title={t('termsPointPurposeTitle')}
+          body={t('termsPointPurposeBody')}
+          symbol={purposeSymbol}
+        />
+        <TermsTrustPoint
+          title={t('termsPointProtectedTitle')}
+          body={t('termsPointProtectedBody')}
+          symbol={protectedSymbol}
+        />
+        <TermsTrustPoint
+          title={t('termsPointPrivateTitle')}
+          body={t('termsPointPrivateBody')}
+          symbol={privateSymbol}
+        />
+        <TermsTrustPoint
+          title={t('termsPointControlTitle')}
+          body={t('termsPointControlBody')}
+          symbol={controlSymbol}
+        />
       </View>
+
+      <PressableScale
+        accessibilityLabel={t(isFullTermsVisible ? 'termsHideFullAction' : 'termsReadFullAction')}
+        onPress={() => setIsFullTermsVisible((current) => !current)}
+        haptic="selection"
+        className="min-h-recommended items-center justify-center rounded-md border border-neutral-300 bg-white px-lg"
+      >
+        <Text className={`text-md font-bold text-primary ${languageFontClass}`}>
+          {t(isFullTermsVisible ? 'termsHideFullAction' : 'termsReadFullAction')}
+        </Text>
+      </PressableScale>
+
+      {isFullTermsVisible ? (
+        <View style={continuousCorners} className="rounded-md bg-neutral-50 p-md">
+          <Text className={`text-start text-md leading-body text-neutral-800 ${languageFontClass}`}>
+            {t('termsBody')}
+          </Text>
+        </View>
+      ) : null}
 
       <OptionChip
         label={t('termsAcceptLabel')}

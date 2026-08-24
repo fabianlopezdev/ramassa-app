@@ -15,19 +15,22 @@ import { tokens } from '@ramassa/shared/tokens';
 export interface AuthTextFieldProps extends TextInputProps {
   readonly label: string;
   readonly errorMessage?: string;
+  /** Marks the border without repeating a field-level error sentence. */
+  readonly isInvalid?: boolean;
   readonly ref?: Ref<TextInput>;
 }
 
 export function AuthTextField({
   label,
   errorMessage,
+  isInvalid,
   ref,
   style,
   placeholder,
   ...inputProps
 }: AuthTextFieldProps) {
   const languageFontClass = useLanguageFontClass();
-  const hasError = Boolean(errorMessage);
+  const hasError = Boolean(errorMessage) || Boolean(isInvalid);
   const inputStyle = useMemo(() => composeContinuousTextStyle(style), [style]);
 
   return (
@@ -46,7 +49,7 @@ export function AuthTextField({
         } ${languageFontClass}`}
         {...inputProps}
       />
-      {hasError ? (
+      {errorMessage === undefined ? null : (
         <Text
           selectable
           accessibilityLiveRegion="polite"
@@ -54,7 +57,7 @@ export function AuthTextField({
         >
           {errorMessage}
         </Text>
-      ) : null}
+      )}
     </View>
   );
 }

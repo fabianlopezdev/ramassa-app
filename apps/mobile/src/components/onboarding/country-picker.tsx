@@ -15,9 +15,11 @@
 
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { PressableScale } from '@/components/motion/pressable-scale';
+import { OnboardingQuestionHeading } from '@/components/onboarding/onboarding-question-heading';
 import { OptionChip } from '@/components/onboarding/option-chip';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
+import type { SymbolViewProps } from 'expo-symbols';
 import { memo, useCallback, useDeferredValue, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, Modal, Text, View, type ListRenderItemInfo } from 'react-native';
@@ -125,9 +127,16 @@ export interface CountryPickerProps {
   readonly value: string;
   readonly onChange: (canonical: string) => void;
   readonly errorMessage?: string;
+  readonly symbol?: SymbolViewProps['name'];
 }
 
-export function CountryPicker({ label, value, onChange, errorMessage }: CountryPickerProps) {
+export function CountryPicker({
+  label,
+  value,
+  onChange,
+  errorMessage,
+  symbol,
+}: CountryPickerProps) {
   const { t, i18n } = useTranslation('onboarding');
   const languageFontClass = useLanguageFontClass();
   const locale = (i18n.resolvedLanguage as LanguageCode) ?? 'ca';
@@ -216,9 +225,13 @@ export function CountryPicker({ label, value, onChange, errorMessage }: CountryP
 
   return (
     <View className="gap-xs">
-      <Text className={`text-start text-md font-medium text-neutral-800 ${languageFontClass}`}>
-        {label}
-      </Text>
+      {symbol === undefined ? (
+        <Text className={`text-start text-md font-medium text-neutral-800 ${languageFontClass}`}>
+          {label}
+        </Text>
+      ) : (
+        <OnboardingQuestionHeading label={label} symbol={symbol} />
+      )}
 
       {/* The roster's nationalities: for most players the answer is one tap. */}
       <View className="flex-row flex-wrap gap-sm">

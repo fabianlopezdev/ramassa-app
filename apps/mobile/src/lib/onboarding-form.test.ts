@@ -6,7 +6,12 @@
  */
 
 import { describe, expect, test } from 'bun:test';
-import { composeIsoBirthDate, identityFormSchema, logisticsFormSchema } from './onboarding-form';
+import {
+  composeIsoBirthDate,
+  identityFormSchema,
+  identityNameFormSchema,
+  logisticsFormSchema,
+} from './onboarding-form';
 
 const identityBase = {
   firstName: 'أمينة',
@@ -15,6 +20,20 @@ const identityBase = {
   nationality: 'Síria',
   preferredLanguage: 'ar' as const,
 };
+
+describe('identityNameFormSchema', () => {
+  test('the welcome step accepts names without asking the background questions', () => {
+    expect(
+      identityNameFormSchema.parse({
+        firstName: 'أمينة',
+        lastName: 'الحسن',
+      }),
+    ).toEqual({
+      firstName: 'أمينة',
+      lastName: 'الحسن',
+    });
+  });
+});
 
 describe('identityFormSchema', () => {
   test('composes single-digit day and month into a valid ISO date', () => {

@@ -1,110 +1,61 @@
 /**
- * Wizard step 1 — Identitat (RAPP-21). Also the wizard's front door: an
- * interrupted run re-enters here, and the stored draft's `currentStep` decides
- * whether to stay or jump forward to where the player left off.
+ * Wizard step 1: a warm, low-friction welcome that asks only for a name.
+ * The front door also resumes an interrupted wizard from its stored step.
  */
 
 import { AuthTextField } from '@/components/auth/auth-text-field';
-import { CountryPicker } from '@/components/onboarding/country-picker';
-import { OptionChip } from '@/components/onboarding/option-chip';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
+import { WizardValidationSummary } from '@/components/onboarding/wizard-validation-summary';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { onboardingDraftStore } from '@/lib/onboarding';
-import { identityFormSchema, type IdentityFormInput } from '@/lib/onboarding-form';
-import { useLanguageFontClass } from '@/lib/use-language-font-class';
+import { identityNameFormSchema, type IdentityNameFormInput } from '@/lib/onboarding-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Redirect, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { Text, useWindowDimensions, View } from 'react-native';
-import { LANGUAGE_NATIVE_NAMES, SUPPORTED_LANGUAGES, useLanguage } from '@ramassa/shared/i18n';
-import type { IdentityStep, LanguageCode } from '@ramassa/shared/schemas';
-
-/**
- * The year box takes a wider share of the date row than the day and month
- * boxes beside it, because it holds twice their digits: four digits crammed
- * into a box visibly sized for two reads as the wrong field, and on a
- * low-literacy intake form that costs a correction.
- *
- * A NAMED class rather than a bare `flex-[1.4]` in the JSX. There is no design
- * token for a flex proportion (the token set is colour, spacing, radius and
- * type per contract rule 8), so a name is the only thing that keeps the ratio
- * from being an unexplained number. Tailwind scans this file for class
- * literals, so declaring it here still generates the utility.
- */
-const YEAR_FIELD_WIDTH_CLASS = 'flex-[1.4]';
-const LARGE_TEXT_STACK_THRESHOLD = 1.5;
 
 export default function IdentityStepScreen() {
-  const { t, i18n } = useTranslation('onboarding');
-  const languageFontClass = useLanguageFontClass();
-  const { setLanguage } = useLanguage();
+  const { t } = useTranslation('onboarding');
   const router = useRouter();
-  const { fontScale } = useWindowDimensions();
-  const isLargeText = fontScale >= LARGE_TEXT_STACK_THRESHOLD;
-
-  // Loaded ONCE per mount: the draft is the mount-time snapshot, the form owns
-  // the values from here.
   const [draft] = useState(() => onboardingDraftStore.loadDraft());
+  const [hasSubmitErrors, setHasSubmitErrors] = useState(false);
 
-  const defaultValues = useMemo<IdentityFormInput>(() => {
-    const saved = (draft?.identity ?? {}) as Partial<IdentityFormInput>;
+  const defaultValues = useMemo<IdentityNameFormInput>(() => {
+    const saved = (draft?.identity ?? {}) as Partial<IdentityNameFormInput>;
     return {
       firstName: saved.firstName ?? '',
       lastName: saved.lastName ?? '',
-      day: saved.day ?? '',
-      month: saved.month ?? '',
-      year: saved.year ?? '',
-      placeOfBirth: saved.placeOfBirth ?? '',
-      nationality: saved.nationality ?? '',
-      // Prefilled from the app language the player is ALREADY reading, which
-      // is the strongest signal available of what she wants.
-      preferredLanguage: saved.preferredLanguage ?? (i18n.resolvedLanguage as LanguageCode) ?? 'ca',
     };
-  }, [draft, i18n.resolvedLanguage]);
+  }, [draft]);
 
   const {
     control,
     handleSubmit,
-    getValues,
     formState: { errors },
-  } = useForm<IdentityFormInput, unknown, IdentityStep>({
-    resolver: zodResolver(identityFormSchema),
+  } = useForm<IdentityNameFormInput>({
+    resolver: zodResolver(identityNameFormSchema),
     defaultValues,
   });
 
-  // Resume: an interrupted wizard re-enters at its front door; jump to where
-  // the player actually was. `identity` stays put, so back-navigation that
-  // stamps `currentStep: 'identity'` cannot loop.
   if (draft !== null && draft.currentStep !== 'identity') {
     return <Redirect href={`/onboarding/${draft.currentStep}`} />;
   }
 
-  const dateErrorKey =
-    errors.year?.message === 'too young'
-      ? 'errorTooYoung'
-      : errors.day || errors.month || errors.year
-        ? errors.year?.message === 'invalid date'
-          ? 'errorInvalidDate'
-          : 'errorRequired'
-        : null;
-
-  const continueToDocumentation = handleSubmit(
-    () => {
+  const continueToBackground = handleSubmit(
+    (names) => {
+      setHasSubmitErrors(false);
       onboardingDraftStore.saveDraft({
         ...draft,
-        currentStep: 'documentation',
-        identity: getValues(),
+        currentStep: 'background',
+        identity: { ...(draft?.identity ?? {}), ...names },
       });
-      router.push('/onboarding/documentation');
+      router.push('/onboarding/background');
     },
-    // One warning buzz per REJECTED submit, from the shared vocabulary (RAPP-70
-    // rule: shake + warning haptic on validation errors). Fired here rather
-    // than per field: the messages render next to each field, scattered down a
-    // form that is taller than the screen, so the only moment the player can
-    // feel is the one where the button did not take her forward.
-    () => playHaptic('warning'),
+    () => {
+      setHasSubmitErrors(true);
+      playHaptic('warning');
+    },
   );
 
   return (
@@ -113,8 +64,9 @@ export default function IdentityStepScreen() {
       title={t('identityTitle')}
       intro={t('identityIntro')}
       continueLabel={t('continueAction')}
-      onContinue={continueToDocumentation}
+      onContinue={continueToBackground}
     >
+      <WizardValidationSummary isVisible={hasSubmitErrors} message={t('errorSummary')} />
       <Controller
         control={control}
         name="firstName"
@@ -125,7 +77,7 @@ export default function IdentityStepScreen() {
             value={field.value}
             onChangeText={field.onChange}
             onBlur={field.onBlur}
-            errorMessage={errors.firstName ? t('errorRequired') : undefined}
+            isInvalid={Boolean(errors.firstName)}
             autoCapitalize="words"
             autoComplete="given-name"
             returnKeyType="next"
@@ -142,140 +94,14 @@ export default function IdentityStepScreen() {
             value={field.value}
             onChangeText={field.onChange}
             onBlur={field.onBlur}
-            errorMessage={errors.lastName ? t('errorRequired') : undefined}
+            isInvalid={Boolean(errors.lastName)}
             autoCapitalize="words"
             autoComplete="family-name"
-            returnKeyType="next"
+            returnKeyType="done"
+            onSubmitEditing={continueToBackground}
           />
         )}
       />
-
-      <View className="gap-xs">
-        <Text className={`text-start text-md font-medium text-neutral-800 ${languageFontClass}`}>
-          {t('dateOfBirthLabel')}
-        </Text>
-        <View className={isLargeText ? 'gap-sm' : 'flex-row gap-sm'}>
-          <View className={isLargeText ? '' : 'flex-1'}>
-            <Controller
-              control={control}
-              name="day"
-              render={({ field }) => (
-                <AuthTextField
-                  testID="onboarding-day"
-                  label={t('dayLabel')}
-                  value={field.value}
-                  onChangeText={field.onChange}
-                  onBlur={field.onBlur}
-                  keyboardType="number-pad"
-                  maxLength={2}
-                />
-              )}
-            />
-          </View>
-          <View className={isLargeText ? '' : 'flex-1'}>
-            <Controller
-              control={control}
-              name="month"
-              render={({ field }) => (
-                <AuthTextField
-                  testID="onboarding-month"
-                  label={t('monthLabel')}
-                  value={field.value}
-                  onChangeText={field.onChange}
-                  onBlur={field.onBlur}
-                  keyboardType="number-pad"
-                  maxLength={2}
-                />
-              )}
-            />
-          </View>
-          <View className={isLargeText ? '' : YEAR_FIELD_WIDTH_CLASS}>
-            <Controller
-              control={control}
-              name="year"
-              render={({ field }) => (
-                <AuthTextField
-                  testID="onboarding-year"
-                  label={t('yearLabel')}
-                  value={field.value}
-                  onChangeText={field.onChange}
-                  onBlur={field.onBlur}
-                  keyboardType="number-pad"
-                  maxLength={4}
-                />
-              )}
-            />
-          </View>
-        </View>
-        {dateErrorKey === null ? null : (
-          <Text
-            accessibilityLiveRegion="polite"
-            className={`text-start text-sm text-error ${languageFontClass}`}
-          >
-            {t(dateErrorKey)}
-          </Text>
-        )}
-      </View>
-
-      <Controller
-        control={control}
-        name="placeOfBirth"
-        render={({ field }) => (
-          <AuthTextField
-            testID="onboarding-place-of-birth"
-            label={t('placeOfBirthLabel')}
-            value={field.value ?? ''}
-            onChangeText={field.onChange}
-            onBlur={field.onBlur}
-            errorMessage={errors.placeOfBirth ? t('errorRequired') : undefined}
-          />
-        )}
-      />
-      {/* A PICKER, not free text (RAPP-4 contract): nationality feeds
-          aggregate reporting, and a typo is a new reporting bucket. The stored
-          value is the canonical Catalan name from the shared list, identical
-          from every locale. */}
-      <Controller
-        control={control}
-        name="nationality"
-        render={({ field }) => (
-          <CountryPicker
-            label={t('nationalityLabel')}
-            value={field.value}
-            onChange={field.onChange}
-            errorMessage={errors.nationality ? t('errorRequired') : undefined}
-          />
-        )}
-      />
-
-      <View className="gap-xs">
-        <Text className={`text-start text-md font-medium text-neutral-800 ${languageFontClass}`}>
-          {t('preferredLanguageLabel')}
-        </Text>
-        <Controller
-          control={control}
-          name="preferredLanguage"
-          render={({ field }) => (
-            <View className="flex-row flex-wrap gap-sm">
-              {SUPPORTED_LANGUAGES.map((code) => (
-                <OptionChip
-                  key={code}
-                  label={LANGUAGE_NATIVE_NAMES[code]}
-                  isSelected={field.value === code}
-                  onPress={() => {
-                    field.onChange(code);
-                    // The app switches WITH the choice: a player picking
-                    // العربية must not finish the wizard in English. Text
-                    // flips immediately; the RTL layout flip lands on the
-                    // next start, which the resume path makes lossless.
-                    void setLanguage(code);
-                  }}
-                />
-              ))}
-            </View>
-          )}
-        />
-      </View>
     </WizardFrame>
   );
 }

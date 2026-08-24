@@ -24,11 +24,11 @@ describe('Phase 6 accessibility and i18n contract', () => {
   });
 
   test('onboarding date fields stack before accessibility text reaches 200 percent', async () => {
-    const identity = await readMobileSource('app/(app)/onboarding/index.tsx');
+    const background = await readMobileSource('app/(app)/onboarding/background.tsx');
 
-    expect(identity).toContain('useWindowDimensions');
-    expect(identity).toContain('LARGE_TEXT_STACK_THRESHOLD');
-    expect(identity).toContain("isLargeText ? 'gap-sm' : 'flex-row gap-sm'");
+    expect(background).toContain('useWindowDimensions');
+    expect(background).toContain('LARGE_TEXT_STACK_THRESHOLD');
+    expect(background).toContain("isLargeText ? 'gap-sm' : 'flex-row gap-sm'");
   });
 
   test('gallery controls and meaningful media expose translated accessible names', async () => {

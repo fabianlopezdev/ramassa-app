@@ -9,7 +9,7 @@
  * the first thing an Arabic-speaking player ever sees.
  *
  * Progress is a BAR plus a "step X of Y" line, not just text: the SPEC's
- * low-literacy rule is visual progress, and four segments filling up needs no
+ * low-literacy rule is visual progress, and five segments filling up needs no
  * reading at all.
  */
 
@@ -21,7 +21,7 @@ import { useTranslation } from 'react-i18next';
 import { KeyboardAvoidingView, ScrollView, Text, View, type TextStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-export const WIZARD_TOTAL_STEPS = 4;
+export const WIZARD_TOTAL_STEPS = 5;
 
 /**
  * Fixed-width digits for the "step X of Y" counter, so the line does not
@@ -120,12 +120,12 @@ export function WizardFrame({
             )}
           </View>
 
-          {/* Four segments filling left to right (mirrored under RTL by the
+          {/* Five segments filling left to right (mirrored under RTL by the
               flex row itself), so progress reads without reading.
 
               Hidden from BOTH accessibility trees, not just iOS's:
               `accessibilityElementsHidden` is iOS-only, so on Android (where
-              most of this audience is) a screen reader still stopped on four
+              most of this audience is) a screen reader still stopped on five
               unlabelled boxes between the header and the title. The same
               progress is already spoken by the "step X of Y" line above. */}
           {stepNumber === undefined ? null : (

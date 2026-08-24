@@ -7,26 +7,54 @@
 
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { MunicipalityPicker } from '@/components/onboarding/municipality-picker';
+import { OnboardingQuestionHeading } from '@/components/onboarding/onboarding-question-heading';
 import { OptionChip } from '@/components/onboarding/option-chip';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
+import { WizardValidationSummary } from '@/components/onboarding/wizard-validation-summary';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { onboardingDraftStore, usePendingInviteEntity } from '@/lib/onboarding';
 import { logisticsFormSchema, type LogisticsFormInput } from '@/lib/onboarding-form';
-import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'expo-router';
+import type { SymbolViewProps } from 'expo-symbols';
 import { useEffect, useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { prefilledReferenceEntity } from '@ramassa/shared/accounts';
 import { CLOTHING_SIZES, SHOE_SIZES, type LogisticsStep } from '@ramassa/shared/schemas';
 
+const entitySymbol: SymbolViewProps['name'] = {
+  ios: 'building.2.fill',
+  android: 'business',
+  web: 'business',
+};
+const municipalitySymbol: SymbolViewProps['name'] = {
+  ios: 'mappin.and.ellipse',
+  android: 'location_city',
+  web: 'location_city',
+};
+const dependentsSymbol: SymbolViewProps['name'] = {
+  ios: 'person.2.fill',
+  android: 'groups',
+  web: 'groups',
+};
+const clothingSymbol: SymbolViewProps['name'] = {
+  ios: 'tshirt.fill',
+  android: 'checkroom',
+  web: 'checkroom',
+};
+const shoeSymbol: SymbolViewProps['name'] = {
+  ios: 'figure.walk',
+  android: 'directions_walk',
+  web: 'directions_walk',
+};
+
 export default function LogisticsStepScreen() {
   const { t } = useTranslation('onboarding');
-  const languageFontClass = useLanguageFontClass();
   const router = useRouter();
   const [draft] = useState(() => onboardingDraftStore.loadDraft());
+  const [hasSubmitErrors, setHasSubmitErrors] = useState(false);
 
   const saved = (draft?.logistics ?? {}) as Partial<LogisticsFormInput>;
   const invitedEntity = usePendingInviteEntity();
@@ -85,17 +113,21 @@ export default function LogisticsStepScreen() {
 
   const continueToTerms = handleSubmit(
     () => {
+      setHasSubmitErrors(false);
       persist('terms');
       router.push('/onboarding/terms');
     },
     // One warning buzz per rejected submit, from the shared vocabulary. Same
     // placement and reasoning as step 1.
-    () => playHaptic('warning'),
+    () => {
+      setHasSubmitErrors(true);
+      playHaptic('warning');
+    },
   );
 
   return (
     <WizardFrame
-      stepNumber={3}
+      stepNumber={4}
       title={t('logisticsTitle')}
       intro={t('logisticsIntro')}
       continueLabel={t('continueAction')}
@@ -106,6 +138,7 @@ export default function LogisticsStepScreen() {
         router.replace('/onboarding/documentation');
       }}
     >
+      <WizardValidationSummary isVisible={hasSubmitErrors} message={t('errorSummary')} />
       <Controller
         control={control}
         name="phone"
@@ -141,6 +174,7 @@ export default function LogisticsStepScreen() {
         render={({ field }) => (
           <MunicipalityPicker
             label={t('cityLabel')}
+            symbol={municipalitySymbol}
             value={field.value ?? ''}
             onChange={field.onChange}
             errorMessage={errors.city ? t('errorMunicipalityInvalid') : undefined}
@@ -164,9 +198,7 @@ export default function LogisticsStepScreen() {
       />
 
       <View className="gap-xs">
-        <Text className={`text-start text-md font-medium text-neutral-800 ${languageFontClass}`}>
-          {t('referenceEntityLabel')}
-        </Text>
+        <OnboardingQuestionHeading label={t('referenceEntityLabel')} symbol={entitySymbol} />
         <Controller
           control={control}
           name="referenceEntity"
@@ -187,7 +219,7 @@ export default function LogisticsStepScreen() {
                   value={field.value ?? ''}
                   onChangeText={field.onChange}
                   onBlur={field.onBlur}
-                  errorMessage={errors.referenceEntity ? t('errorRequired') : undefined}
+                  isInvalid={Boolean(errors.referenceEntity)}
                 />
               )}
             </View>
@@ -212,9 +244,7 @@ export default function LogisticsStepScreen() {
       )}
 
       <View className="gap-xs">
-        <Text className={`text-start text-md font-medium text-neutral-800 ${languageFontClass}`}>
-          {t('hasDependentsLabel')}
-        </Text>
+        <OnboardingQuestionHeading label={t('hasDependentsLabel')} symbol={dependentsSymbol} />
         <Controller
           control={control}
           name="hasDependents"
@@ -255,9 +285,7 @@ export default function LogisticsStepScreen() {
       </View>
 
       <View className="gap-xs">
-        <Text className={`text-start text-md font-medium text-neutral-800 ${languageFontClass}`}>
-          {t('clothingSizeLabel')}
-        </Text>
+        <OnboardingQuestionHeading label={t('clothingSizeLabel')} symbol={clothingSymbol} />
         <Controller
           control={control}
           name="clothingSize"
@@ -275,20 +303,10 @@ export default function LogisticsStepScreen() {
             </View>
           )}
         />
-        {errors.clothingSize ? (
-          <Text
-            accessibilityLiveRegion="polite"
-            className={`text-start text-sm text-error ${languageFontClass}`}
-          >
-            {t('errorRequired')}
-          </Text>
-        ) : null}
       </View>
 
       <View className="gap-xs">
-        <Text className={`text-start text-md font-medium text-neutral-800 ${languageFontClass}`}>
-          {t('shoeSizeLabel')}
-        </Text>
+        <OnboardingQuestionHeading label={t('shoeSizeLabel')} symbol={shoeSymbol} />
         <Controller
           control={control}
           name="shoeSize"
@@ -306,14 +324,6 @@ export default function LogisticsStepScreen() {
             </View>
           )}
         />
-        {errors.shoeSize ? (
-          <Text
-            accessibilityLiveRegion="polite"
-            className={`text-start text-sm text-error ${languageFontClass}`}
-          >
-            {t('errorRequired')}
-          </Text>
-        ) : null}
       </View>
     </WizardFrame>
   );

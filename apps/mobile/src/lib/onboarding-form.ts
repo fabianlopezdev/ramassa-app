@@ -23,6 +23,16 @@ export function composeIsoBirthDate(day: string, month: string, year: string): s
 }
 
 /**
+ * The welcome screen deliberately asks only for the person's name. The rest
+ * of the identity record is collected on the following background screen.
+ */
+export const identityNameFormSchema = identityStepSchema.pick({
+  firstName: true,
+  lastName: true,
+});
+export type IdentityNameFormInput = z.input<typeof identityNameFormSchema>;
+
+/**
  * The identity screen's form: shared fields plus the three date parts. The
  * composed date is validated by the SHARED schema via pipe, so "too young" and
  * "invalid date" are never re-implemented here; the refine only reports them

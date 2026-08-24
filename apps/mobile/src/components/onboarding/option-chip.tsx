@@ -29,9 +29,9 @@ import { Text } from 'react-native';
 const CHIP_CLASS =
   'min-h-recommended justify-center rounded-md border border-neutral-300 bg-white px-lg';
 const CHIP_SELECTED_CLASS =
-  'min-h-recommended justify-center rounded-md border border-primary bg-primary px-lg';
+  'min-h-recommended justify-center rounded-md border border-primary bg-primary/10 px-lg';
 const CHIP_LABEL_CLASS = 'text-center text-md font-medium text-neutral-800';
-const CHIP_LABEL_SELECTED_CLASS = 'text-center text-md font-medium text-white';
+const CHIP_LABEL_SELECTED_CLASS = 'text-center text-md font-bold text-primary-dark';
 
 export interface OptionChipProps {
   readonly testID?: string;

@@ -40,6 +40,21 @@ describe('onboarding draft store', () => {
     expect(draft?.documentation?.documentType).toBe('nie');
   });
 
+  test('the warm welcome split resumes on the new background step without losing names', () => {
+    const mmkv = makeFakeMmkv();
+    const store = createMmkvOnboardingDraftStore(mmkv);
+    store.saveDraft({
+      currentStep: 'background',
+      identity: { firstName: 'أمينة', lastName: 'الحسن' },
+    });
+
+    const resumed = createMmkvOnboardingDraftStore(mmkv).loadDraft();
+    expect(resumed).toEqual({
+      currentStep: 'background',
+      identity: { firstName: 'أمينة', lastName: 'الحسن' },
+    });
+  });
+
   test('no draft reads as null, not as an empty object', () => {
     const store = createInMemoryOnboardingDraftStore();
     expect(store.loadDraft()).toBeNull();

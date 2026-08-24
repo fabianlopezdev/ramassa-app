@@ -25,7 +25,13 @@ import type { MmkvLike } from './supabase';
 
 const DRAFT_STORAGE_KEY = 'ramassa.onboarding-draft';
 
-export const ONBOARDING_STEPS = ['identity', 'documentation', 'logistics', 'terms'] as const;
+export const ONBOARDING_STEPS = [
+  'identity',
+  'background',
+  'documentation',
+  'logistics',
+  'terms',
+] as const;
 export type OnboardingStepName = (typeof ONBOARDING_STEPS)[number];
 
 /**
