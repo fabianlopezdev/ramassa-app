@@ -2,6 +2,7 @@ import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { FailureNotice } from '@/components/error-code-line';
 import { FormWidth } from '@/components/layout/content-width';
+import { MentoringPreferencePickers } from '@/components/mentoring/mentoring-preference-pickers';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { SkeletonPulse } from '@/components/motion/skeleton-pulse';
 import { SuccessPop } from '@/components/motion/success-pop';
@@ -27,15 +28,12 @@ import {
 import { tokens } from '@ramassa/shared/tokens';
 
 const MENTORING_DETAIL_MAX_LENGTH = 2_000;
-const PREFERRED_DATE_MAX_LENGTH = 10;
-const PREFERRED_TIME_MAX_LENGTH = 5;
 const DETAIL_INPUT_VISIBLE_LINES = 5;
 const EMPTY_MENTORING_REQUESTS: readonly MentoringRequest[] = [];
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: tokens.colors.neutral[50] },
   content: { paddingHorizontal: tokens.spacing.lg, paddingVertical: tokens.spacing.lg },
   detailInput: { minHeight: tokens.spacing['3xl'] * 2, writingDirection: 'auto' },
-  canonicalDateTimeInput: { writingDirection: 'ltr' },
   mixedDirectionText: { writingDirection: 'auto' },
 });
 
@@ -276,32 +274,12 @@ export default function MentoringScreen() {
                   style={styles.detailInput}
                   onChangeText={setTopicDetail}
                 />
-                <View className="gap-md sm:flex-row">
-                  <View className="flex-1">
-                    <AuthTextField
-                      testID="mentoring-preferred-date"
-                      label={t('mentoring:preferredDateLabel')}
-                      placeholder={t('mentoring:preferredDatePlaceholder')}
-                      value={preferredDate}
-                      maxLength={PREFERRED_DATE_MAX_LENGTH}
-                      inputMode="numeric"
-                      style={styles.canonicalDateTimeInput}
-                      onChangeText={setPreferredDate}
-                    />
-                  </View>
-                  <View className="flex-1">
-                    <AuthTextField
-                      testID="mentoring-preferred-time"
-                      label={t('mentoring:preferredTimeLabel')}
-                      placeholder={t('mentoring:preferredTimePlaceholder')}
-                      value={preferredTime}
-                      maxLength={PREFERRED_TIME_MAX_LENGTH}
-                      inputMode="numeric"
-                      style={styles.canonicalDateTimeInput}
-                      onChangeText={setPreferredTime}
-                    />
-                  </View>
-                </View>
+                <MentoringPreferencePickers
+                  preferredDate={preferredDate}
+                  preferredTime={preferredTime}
+                  onPreferredDateChange={setPreferredDate}
+                  onPreferredTimeChange={setPreferredTime}
+                />
                 {errorCode === null ? null : (
                   <FailureNotice
                     code={errorCode}
