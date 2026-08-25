@@ -20,3 +20,10 @@ export const PASSWORD_MIN_LENGTH = 8;
  * the seeded acceptances (SEED_TERMS_VERSION in testing/).
  */
 export const CURRENT_TERMS_VERSION = '2026-07-01';
+
+/**
+ * Optional monitored mailbox shown before authentication. It stays hidden
+ * until Ramassa confirms the address and the deployment config supplies it.
+ */
+const configuredSupportEmail = process.env.EXPO_PUBLIC_SUPPORT_EMAIL?.trim();
+export const SUPPORT_EMAIL = configuredSupportEmail || null;
