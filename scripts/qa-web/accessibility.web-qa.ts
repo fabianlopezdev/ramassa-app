@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Locator, type Page } from '@playwright/test';
-import { PARTICIPANT_FIXTURES, SEED_ACCOUNT_PASSWORD } from '@ramassa/shared/testing';
+import { SEED_ACCESS_CODE } from '@ramassa/shared/testing';
 import { ENTITY_EMAIL, queryDatabase, signIn, waitForHydration } from './session';
 
 const wcagTags = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
@@ -161,19 +161,13 @@ async function expectSkipLinkTargetsMain(page: Page): Promise<void> {
   await expect(page.locator('#main-content')).toBeFocused();
 }
 
-async function signInPlayer(
-  page: Page,
-  player: (typeof PARTICIPANT_FIXTURES)[number] = PARTICIPANT_FIXTURES[0]!,
-): Promise<void> {
-  await page.goto(`${playerOrigin}/login`, { waitUntil: 'domcontentloaded' });
-  const usePassword = page
-    .getByRole('button', { name: /password|contrasenya|contraseña|كلمة المرور|رمز عبور/i })
-    .first();
-  await expect(usePassword).toBeVisible({ timeout: 30_000 });
-  await usePassword.click();
-  await expect(page.locator('input[type="password"]')).toBeVisible();
-  await page.locator('input[type="email"]').fill(player.email);
-  await page.locator('input[type="password"]').fill(SEED_ACCOUNT_PASSWORD);
+async function signInPlayer(page: Page): Promise<void> {
+  await page.goto(`${playerOrigin}/access-code-login`, { waitUntil: 'domcontentloaded' });
+  const accessCode = page.getByLabel(
+    /Access code|Codi d'accés|Código de acceso|رمز الدخول|کد دسترسی/i,
+  );
+  await expect(accessCode).toBeVisible({ timeout: 30_000 });
+  await accessCode.fill(SEED_ACCESS_CODE);
   await page.getByRole('button', { name: /^(Log in|Entra|Entrar|دخول|ورود)$/i }).click();
   await expect(page.getByTestId('open-knowledge-base')).toBeVisible({
     timeout: 30_000,
@@ -355,9 +349,8 @@ test.describe('WCAG 2.2 AA regression gate', () => {
   });
 
   test('Arabic player web routes retain RTL semantics and pass axe', async ({ page }) => {
-    const arabicPlayer = PARTICIPANT_FIXTURES.find((fixture) => fixture.ordinal === 11)!;
     await page.emulateMedia({ reducedMotion: 'reduce' });
-    await signInPlayer(page, arabicPlayer);
+    await signInPlayer(page);
     await page.goto(`${playerOrigin}/profile`);
     await page.getByTestId('profile-language-ar').click();
 
