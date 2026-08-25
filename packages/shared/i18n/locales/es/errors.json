@@ -4,7 +4,7 @@
   "AUTH-3": "No tienes permiso para hacer esta acción.",
   "AUTH-4": "Este enlace de inicio de sesión no es válido o ha caducado. Solicita uno nuevo.",
   "AUTH-5": "Demasiados intentos. Espera un momento y vuelve a intentarlo.",
-  "AUTH-6": "Correo o contraseña incorrectos. Vuelve a intentarlo.",
+  "AUTH-6": "Los datos no coinciden. Revísalos y vuelve a intentarlo.",
   "AUTH-7": "No se ha podido confiar en este enlace de inicio de sesión. Solicita uno nuevo.",
   "DB-1": "No hemos podido guardar o cargar los datos. Vuelve a intentarlo.",
   "DB-2": "No hemos encontrado lo que buscas.",

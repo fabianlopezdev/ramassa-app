@@ -58,14 +58,14 @@ function LoginPage() {
             <EmailOtpRequestForm onSent={setSentToEmail} />
             <p className="text-muted-foreground text-start text-sm">{t('auth:emailOtpHint')}</p>
             <Button variant="link" className="self-center" onClick={() => setMode('password')}>
-              {t('auth:usePasswordInstead')}
+              {t('auth:adminUsePasswordInstead')}
             </Button>
           </div>
         ) : (
           <div className="flex flex-col gap-4">
             <PasswordLoginForm />
             <Button variant="link" className="self-center" onClick={() => setMode('otp')}>
-              {t('auth:useEmailOtpInstead')}
+              {t('auth:adminUseEmailOtpInstead')}
             </Button>
           </div>
         )}

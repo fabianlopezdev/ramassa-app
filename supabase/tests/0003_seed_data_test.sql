@@ -120,9 +120,15 @@ select is_empty(
   $$ select u.id from auth.users u
      join public.profiles p on p.id = u.id
      where u.encrypted_password is distinct from
-           extensions.crypt('ramassa-dev-password', u.encrypted_password)
+           extensions.crypt(
+             case
+               when u.email = 'blnc@ramassa.invalid' then 'blnc-k4m9-r2t7'
+               else 'ramassa-dev-password'
+             end,
+             u.encrypted_password
+           )
         or u.email_confirmed_at is null $$,
-  'every seeded account has the shared dev password and a confirmed email'
+  'every seeded account has its expected development credential and a confirmed email'
 );
 
 -- Two reserved domains, both unroutable. `@example.test` is the fixture

@@ -16,6 +16,7 @@ import { buildProfileFromFixture } from '../packages/shared/testing/factories';
 import {
   ONBOARDING_ACCOUNT_EMAIL,
   PARTICIPANT_FIXTURES,
+  SEED_ACCESS_CODE,
   SEED_ACCOUNT_PASSWORD,
   SEED_ORGANIZATION_ID,
   SEED_USER_ID_PREFIX,
@@ -70,8 +71,13 @@ test('the roster carries the no-email case the password-reset screen needs', () 
   );
   expect(adminCreated.length).toBeGreaterThan(0);
   for (const fixture of adminCreated) {
+    const accessCode = fixture.accessCode;
+    expect(accessCode).toBeDefined();
+    if (!accessCode) continue;
     expect(fixture.email.endsWith('@ramassa.invalid')).toBe(true);
+    expect(fixture.email.split('@')[0]).toBe(accessCode.split('-')[0]);
     expect(seedSql).toContain(fixture.email);
+    expect(seedSql).toContain(accessCode);
   }
 });
 
@@ -92,6 +98,7 @@ test('the seed carries field-ready attendance rows in every visible status', () 
 
 test('the shared dev password is the one seed.sql actually hashes', () => {
   expect(seedSql).toContain(SEED_ACCOUNT_PASSWORD);
+  expect(seedSql).toContain(SEED_ACCESS_CODE);
 });
 
 /**

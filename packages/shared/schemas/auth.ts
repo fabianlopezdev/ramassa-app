@@ -8,6 +8,7 @@
  */
 
 import { z } from 'zod';
+import { canonicalizeAccessCode, isAccessCode } from '../auth/access-code';
 import { PASSWORD_MIN_LENGTH } from '../lib/constants';
 
 /**
@@ -36,6 +37,11 @@ export const emailOtpVerifySchema = z.object({
     .regex(/^\d{6}$/),
 });
 export type EmailOtpVerify = z.infer<typeof emailOtpVerifySchema>;
+
+export const accessCodeLoginSchema = z.object({
+  accessCode: z.string().transform(canonicalizeAccessCode).refine(isAccessCode),
+});
+export type AccessCodeLogin = z.infer<typeof accessCodeLoginSchema>;
 
 /** Password login: the admin-created fallback for players without an email. */
 export const passwordLoginSchema = z.object({

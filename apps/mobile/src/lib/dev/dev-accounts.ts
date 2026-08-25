@@ -50,7 +50,7 @@ function toDevAccount(fixture: PersonFixture, role: AppRole): DevAccount {
   return {
     userId: seedUserId(fixture.ordinal),
     email: fixture.email,
-    password: SEED_ACCOUNT_PASSWORD,
+    password: fixture.accessCode ?? SEED_ACCOUNT_PASSWORD,
     displayName: `${fixture.firstName} ${fixture.lastName}`,
     role,
     language: fixture.preferredLanguage,

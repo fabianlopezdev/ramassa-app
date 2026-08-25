@@ -14,6 +14,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { AppError } from '../errors';
 import { appRoleSchema, type AppRole } from '../schemas/auth';
 import type { Database } from '../types/database';
+import { internalEmailForAccessCode, splitAccessCode } from './access-code';
 import { mapSupabaseAuthError } from './auth-error';
 
 type Client = SupabaseClient<Database>;
@@ -72,6 +73,32 @@ export async function signInWithPassword(
   });
   if (error) {
     // A bare failure on the password path almost always means bad credentials.
+    throw new AppError(mapSupabaseAuthError(error, 'AUTH-6'), {
+      message: error.message,
+      context: { status: error.status },
+    });
+  }
+}
+
+export interface AccessCodeLoginParams {
+  readonly accessCode: string;
+}
+
+export async function signInWithAccessCode(
+  client: Client,
+  params: AccessCodeLoginParams,
+): Promise<void> {
+  const parts = splitAccessCode(params.accessCode);
+  const email = internalEmailForAccessCode(params.accessCode);
+  if (!parts || !email) {
+    throw new AppError('AUTH-6');
+  }
+
+  const { error } = await client.auth.signInWithPassword({
+    email,
+    password: parts.canonical,
+  });
+  if (error) {
     throw new AppError(mapSupabaseAuthError(error, 'AUTH-6'), {
       message: error.message,
       context: { status: error.status },

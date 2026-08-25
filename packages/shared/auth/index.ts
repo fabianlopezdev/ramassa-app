@@ -11,11 +11,28 @@ export {
   fetchProfileSummary,
   type ProfileSummary,
   requestEmailOtp,
+  signInWithAccessCode,
   signInWithPassword,
   signOut,
   verifyEmailOtp,
   type PasswordLoginParams,
+  type AccessCodeLoginParams,
   type RequestEmailOtpParams,
   type VerifyEmailOtpParams,
 } from './auth-actions';
+export {
+  ACCESS_CODE_ALPHABET,
+  ACCESS_CODE_CANONICAL_LENGTH,
+  ACCESS_CODE_GROUP_COUNT,
+  ACCESS_CODE_GROUP_LENGTH,
+  ACCESS_CODE_INTERNAL_DOMAIN,
+  ACCESS_CODE_PATTERN,
+  ACCESS_CODE_RAW_LENGTH,
+  canonicalizeAccessCode,
+  formatAccessCodeInput,
+  internalEmailForAccessCode,
+  isAccessCode,
+  splitAccessCode,
+  type AccessCodeParts,
+} from './access-code';
 export { mapSupabaseAuthError, type SupabaseAuthErrorShape } from './auth-error';

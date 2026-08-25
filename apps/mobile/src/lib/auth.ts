@@ -5,6 +5,7 @@
 
 import {
   requestEmailOtp as sharedRequestEmailOtp,
+  signInWithAccessCode as sharedSignInWithAccessCode,
   signInWithPassword as sharedSignInWithPassword,
   signOut as sharedSignOut,
   verifyEmailOtp as sharedVerifyEmailOtp,
@@ -32,6 +33,12 @@ export function loginWithPassword(
   password: string,
 ): Promise<Result<void, AppError>> {
   return safeAsync(() => sharedSignInWithPassword(supabase, { email, password }), {
+    code: 'AUTH-6',
+  });
+}
+
+export function loginWithAccessCode(accessCode: string): Promise<Result<void, AppError>> {
+  return safeAsync(() => sharedSignInWithAccessCode(supabase, { accessCode }), {
     code: 'AUTH-6',
   });
 }

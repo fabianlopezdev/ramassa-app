@@ -124,12 +124,13 @@ test('a generated account password never survives redaction', () => {
 
 test('the other credential-shaped keys go too', () => {
   const redacted = redactPii({
+    accessCode: 'abcd-efgh-jkmp',
     token: 'eyJhbGciOi',
     refreshToken: 'r-123',
     apiKey: 'sk-live-abc',
   }) as Record<string, unknown>;
 
-  expect(Object.values(redacted)).toEqual([REDACTED, REDACTED, REDACTED]);
+  expect(Object.values(redacted)).toEqual([REDACTED, REDACTED, REDACTED, REDACTED]);
 });
 
 test('mentoring topics and notes never survive redaction', () => {

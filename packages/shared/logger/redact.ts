@@ -68,6 +68,7 @@ const piiKeys = new Set([
   'secret',
   'token',
   'accesstoken',
+  'accesscode',
   'refreshtoken',
   'apikey',
 ]);

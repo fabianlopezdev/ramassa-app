@@ -8,9 +8,13 @@ import { openSupportEmail } from './support-email';
 
 type SupportEmailLinkProps = {
   readonly email?: string | null;
+  readonly translationKey?: 'supportPrompt' | 'accessCodeSupportPrompt';
 };
 
-export function SupportEmailLink({ email = SUPPORT_EMAIL }: SupportEmailLinkProps) {
+export function SupportEmailLink({
+  email = SUPPORT_EMAIL,
+  translationKey = 'supportPrompt',
+}: SupportEmailLinkProps) {
   const { t } = useTranslation('auth');
   const languageFontClass = useLanguageFontClass();
   const [showFallback, setShowFallback] = useState(false);
@@ -25,14 +29,14 @@ export function SupportEmailLink({ email = SUPPORT_EMAIL }: SupportEmailLinkProp
   return (
     <View className="items-center gap-xs">
       <PressableScale
-        accessibilityLabel={t('supportPrompt', { email: supportEmail })}
+        accessibilityLabel={t(translationKey, { email: supportEmail })}
         accessibilityRole="link"
         onPress={() => void handlePress()}
         haptic="selection"
         className="min-h-min items-center justify-center px-sm py-sm"
       >
         <Text className={`text-center text-sm text-primary ${languageFontClass}`}>
-          {t('supportPrompt', { email: supportEmail })}
+          {t(translationKey, { email: supportEmail })}
         </Text>
       </PressableScale>
       {showFallback ? (

@@ -38,7 +38,7 @@
 -- screens in a browser cannot turn this file red.
 
 begin;
-select plan(29);
+select plan(32);
 
 select vault.create_secret('test-encryption-key', 'app_encryption_key', 'pgTAP test key')
 where not exists (select 1 from vault.secrets where name = 'app_encryption_key');
@@ -90,13 +90,19 @@ select ok(
 );
 
 select ok(
-  (select email like 'nuria.%' from created_account),
-  'the local part carries her name, folded to ASCII so the address is typable'
+  (select email ~ '^[abcdefghjkmnpqrstuvwxyz23456789]{4}@ramassa\.invalid$' from created_account),
+  'group one is the complete internal login identifier'
 );
 
 select ok(
-  (select length(password) >= 8 from created_account),
-  'the generated password is at least as long as the shared minimum'
+  (select password ~ '^[abcdefghjkmnpqrstuvwxyz23456789]{4}(-[abcdefghjkmnpqrstuvwxyz23456789]{4}){2}$' from created_account),
+  'the generated access code is exactly three unambiguous groups'
+);
+
+select is(
+  (select split_part(email, '@', 1) from created_account),
+  (select split_part(password, '-', 1) from created_account),
+  'group one is shared by the internal identifier and the complete credential'
 );
 
 -- The password is handed over on paper and typed on a phone by someone who may
@@ -182,8 +188,8 @@ select * from public.create_participant_account(
 );
 
 select ok(
-  (select email ~ '^[a-z0-9.]+@ramassa\.invalid$' from arabic_account),
-  'an Arabic name still yields an ASCII address GoTrue will accept'
+  (select email ~ '^[abcdefghjkmnpqrstuvwxyz23456789]{4}@ramassa\.invalid$' from arabic_account),
+  'an Arabic name gets the same name-free ASCII identifier contract'
 );
 
 select ok(
@@ -225,6 +231,17 @@ select public.reset_participant_password((select profile_id from created_account
 select ok(
   (select r.password <> c.password from reset_result r, created_account c),
   'a reset issues a genuinely new password'
+);
+
+select ok(
+  (select password ~ '^[abcdefghjkmnpqrstuvwxyz23456789]{4}(-[abcdefghjkmnpqrstuvwxyz23456789]{4}){2}$' from reset_result),
+  'the reset code keeps the exact three-group shape'
+);
+
+select is(
+  (select split_part(r.password, '-', 1) from reset_result r),
+  (select split_part(c.email, '@', 1) from created_account c),
+  'a reset preserves the stable group-one identifier'
 );
 
 reset role;

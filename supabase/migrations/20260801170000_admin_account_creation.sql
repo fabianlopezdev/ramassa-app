@@ -67,29 +67,6 @@ $$;
 
 comment on function public.unambiguous_token is 'Random lowercase text drawn from an alphabet with no look-alike characters (no i/l/1, no o/O/0), for credentials a person reads off paper and types on a phone.';
 
--- ASCII, because GoTrue validates addresses against a plain-ASCII pattern and
--- most of this roster writes in Arabic, Farsi or Cyrillic. Folding an accented
--- Latin name keeps it recognizable ("Núria" -> "nuria"); a name in another
--- script folds to nothing at all, so the address falls back to a neutral word.
--- Her real name is on her profile either way: the address is a credential, not
--- a label.
-create or replace function public.ascii_local_part(source text)
-returns text
-language sql
-immutable
-set search_path = ''
-as $$
-  select coalesce(
-    nullif(
-      regexp_replace(lower(public.immutable_unaccent(coalesce(source, ''))), '[^a-z0-9]', '', 'g'),
-      ''
-    ),
-    'participant'
-  );
-$$;
-
-comment on function public.ascii_local_part is 'The ASCII, address-safe form of a name. Falls back to a neutral word for names written in a script that folds to nothing, because the address is a login identifier and her real name lives on her profile.';
-
 -- Rate limiting ------------------------------------------------------------------------
 
 -- Read off the audit trail itself rather than a second counter table: the trail
@@ -145,7 +122,7 @@ declare
   reference_entity_value text := nullif(btrim(payload ->> 'reference_entity'), '');
   new_user_id uuid := extensions.gen_random_uuid();
   generated_email text;
-  generated_password text;
+  generated_access_code text;
 begin
   -- SECURITY DEFINER means RLS is not doing this check for us, so it is the
   -- first thing in the body and it is asserted from three roles in pgTAP.
@@ -163,28 +140,24 @@ begin
 
   actor_org := (select public.current_org_id());
 
-  -- Retry rather than trust: the suffix makes a collision vanishingly unlikely,
-  -- and "vanishingly unlikely" is not the same as "cannot happen" on a unique
-  -- index. Bounded, so a pathological case fails loudly instead of spinning.
+  -- Group one is a public login identifier. Generate all three groups first,
+  -- then retry when that identifier is already present. The bound keeps a
+  -- pathological collision from spinning forever.
   for attempt in 1..10 loop
-    generated_email :=
-      public.ascii_local_part(first_name_value) || '.' ||
-      public.unambiguous_token(4) || '@ramassa.invalid';
+    generated_access_code :=
+      public.unambiguous_token(4) || '-' ||
+      public.unambiguous_token(4) || '-' ||
+      public.unambiguous_token(4);
+    generated_email := split_part(generated_access_code, '-', 1) || '@ramassa.invalid';
     exit when not exists (select 1 from auth.users u where u.email = generated_email);
     generated_email := null;
+    generated_access_code := null;
   end loop;
 
-  if generated_email is null then
-    raise exception 'could not generate a free internal address after 10 attempts'
+  if generated_email is null or generated_access_code is null then
+    raise exception 'could not generate a free access-code identifier after 10 attempts'
       using errcode = 'raise_exception';
   end if;
-
-  -- Three groups of four, hyphenated: a person reading it aloud to another
-  -- person keeps their place, and a person typing it can see where they are.
-  generated_password :=
-    public.unambiguous_token(4) || '-' ||
-    public.unambiguous_token(4) || '-' ||
-    public.unambiguous_token(4);
 
   -- The empty-string token columns are deliberate: GoTrue scans them as strings
   -- and errors on NULL. `raw_user_meta_data` stays empty because it is
@@ -201,7 +174,7 @@ begin
     'authenticated',
     'authenticated',
     generated_email,
-    extensions.crypt(generated_password, extensions.gen_salt('bf')),
+    extensions.crypt(generated_access_code, extensions.gen_salt('bf')),
     -- Confirmed on creation: there is no inbox to confirm from, and an
     -- unconfirmed account cannot sign in at all.
     now(),
@@ -253,7 +226,7 @@ begin
     jsonb_build_object('auth_method', 'admin_created')
   );
 
-  return query select new_user_id, generated_email, generated_password;
+  return query select new_user_id, generated_email, generated_access_code;
 end;
 $$;
 
@@ -271,7 +244,8 @@ declare
   actor uuid := (select auth.uid());
   actor_org uuid;
   subject_auth_method text;
-  generated_password text;
+  stable_identifier text;
+  generated_access_code text;
 begin
   if not (select public.is_staff_or_admin()) then
     raise exception 'resetting a participant password is a staff action'
@@ -282,8 +256,10 @@ begin
 
   actor_org := (select public.current_org_id());
 
-  select p.auth_method into subject_auth_method
+  select p.auth_method, split_part(u.email, '@', 1)
+    into subject_auth_method, stable_identifier
   from public.profiles p
+  join auth.users u on u.id = p.id
   where p.id = participant_id and p.org_id = actor_org;
 
   if subject_auth_method is null then
@@ -300,20 +276,24 @@ begin
       using errcode = 'raise_exception';
   end if;
 
-  generated_password :=
-    public.unambiguous_token(4) || '-' ||
+  if stable_identifier !~ '^[abcdefghjkmnpqrstuvwxyz23456789]{4}$' then
+    raise exception 'admin-created account has an invalid access-code identifier'
+      using errcode = 'data_exception';
+  end if;
+
+  generated_access_code := stable_identifier || '-' ||
     public.unambiguous_token(4) || '-' ||
     public.unambiguous_token(4);
 
   update auth.users
-     set encrypted_password = extensions.crypt(generated_password, extensions.gen_salt('bf')),
+     set encrypted_password = extensions.crypt(generated_access_code, extensions.gen_salt('bf')),
          updated_at = now()
    where id = participant_id;
 
   insert into public.audit_log (org_id, actor_id, action, target_type, target_id)
   values (actor_org, actor, 'account.password_reset', 'profile', participant_id);
 
-  return generated_password;
+  return generated_access_code;
 end;
 $$;
 

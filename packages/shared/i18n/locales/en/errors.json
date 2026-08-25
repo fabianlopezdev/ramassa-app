@@ -4,7 +4,7 @@
   "AUTH-3": "You do not have permission to do this.",
   "AUTH-4": "This sign-in link is invalid or has expired. Request a new one.",
   "AUTH-5": "Too many attempts. Please wait a moment and try again.",
-  "AUTH-6": "Incorrect email or password. Please try again.",
+  "AUTH-6": "Those details do not match. Check them and try again.",
   "AUTH-7": "This sign-in link could not be trusted. Request a new one.",
   "DB-1": "We could not save or load your data. Please try again.",
   "DB-2": "We could not find what you are looking for.",

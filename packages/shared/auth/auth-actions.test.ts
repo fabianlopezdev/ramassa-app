@@ -6,6 +6,7 @@ import {
   fetchProfileRole,
   fetchProfileSummary,
   requestEmailOtp,
+  signInWithAccessCode,
   signInWithPassword,
   verifyEmailOtp,
 } from './auth-actions';
@@ -75,6 +76,40 @@ test('signInWithPassword maps a generic failure to invalid credentials (AUTH-6)'
     throw new Error('expected signInWithPassword to throw');
   } catch (error) {
     expect(isAppError(error) && error.code).toBe('AUTH-6');
+  }
+});
+
+test('signInWithAccessCode derives the internal identifier and submits the canonical whole code', async () => {
+  let received: { email: string; password: string } | undefined;
+  const client = fakeAuthClient({
+    signInWithPassword: async (args) => {
+      received = args as typeof received;
+      return { error: null };
+    },
+  });
+
+  await signInWithAccessCode(client, { accessCode: 'ABCD EFGH JKMP' });
+
+  expect(received).toEqual({
+    email: 'abcd@ramassa.invalid',
+    password: 'abcd-efgh-jkmp',
+  });
+});
+
+test('signInWithAccessCode exposes only AUTH-6 and transport status on failure', async () => {
+  const client = fakeAuthClient({
+    signInWithPassword: async () => ({
+      error: { status: 400, message: 'Invalid login credentials' },
+    }),
+  });
+
+  try {
+    await signInWithAccessCode(client, { accessCode: 'ABCD EFGH JKMP' });
+    throw new Error('expected signInWithAccessCode to throw');
+  } catch (error) {
+    expect(error).toMatchObject({ code: 'AUTH-6', context: { status: 400 } });
+    expect(JSON.stringify(error)).not.toContain('abcd-efgh-jkmp');
+    expect(JSON.stringify(error)).not.toContain('@ramassa.invalid');
   }
 });
 
