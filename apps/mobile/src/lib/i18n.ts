@@ -14,10 +14,16 @@ import { preferencesStorage } from './storage';
  * before the first render. Language resolution: persisted choice from MMKV,
  * else the device locale, else Catalan (ADR-006).
  */
+const languageStorage = createMmkvLanguageStorage(preferencesStorage);
+
 export const i18n = createI18n({
-  languageStorage: createMmkvLanguageStorage(preferencesStorage),
+  languageStorage,
   deviceLanguages: getLocales().map((deviceLocale) => deviceLocale.languageTag),
 });
+
+export function hasPersistedLanguageChoice(): boolean {
+  return languageStorage.getLanguage() !== null;
+}
 
 // React Native only applies a layout-direction flip on the next app start, so a
 // `true` return here means the CURRENT session still shows the old direction.

@@ -16,40 +16,25 @@
  * a name in a language she does not read.
  */
 
+import { useLanguageRestart } from '@/components/auth/use-language-restart';
 import { useOrganizationBranding } from '@/components/branding/organization-branding-provider';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { OptionChip } from '@/components/onboarding/option-chip';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { reloadAppAsync } from 'expo';
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { I18nManager, Text, View } from 'react-native';
-import {
-  getLanguageDirection,
-  LANGUAGE_NATIVE_NAMES,
-  SUPPORTED_LANGUAGES,
-  useLanguage,
-} from '@ramassa/shared/i18n';
+import { Text, View } from 'react-native';
+import { LANGUAGE_NATIVE_NAMES, SUPPORTED_LANGUAGES, useLanguage } from '@ramassa/shared/i18n';
 
 export function LanguageSwitcher() {
   const { t } = useTranslation('profile');
   const languageFontClass = useLanguageFontClass();
   const { language, setLanguage } = useLanguage();
-  const [needsRestart, setNeedsRestart] = useState(false);
+  const { choose, dismissRestart, needsRestart, restart } = useLanguageRestart(setLanguage);
   const organization = useOrganizationBranding();
   const availableLanguages = SUPPORTED_LANGUAGES.filter(
     (code) => organization?.available_languages.includes(code) ?? true,
   );
-
-  async function choose(next: (typeof SUPPORTED_LANGUAGES)[number]) {
-    // Compared against the NATIVE direction, not the previous language's:
-    // someone who already switched and postponed the restart is still on the
-    // old layout, and the prompt has to keep reflecting that.
-    const flipsDirection = I18nManager.isRTL !== (getLanguageDirection(next) === 'rtl');
-    await setLanguage(next);
-    setNeedsRestart(flipsDirection);
-  }
 
   return (
     <View className="gap-sm">
@@ -88,7 +73,7 @@ export function LanguageSwitcher() {
           <View className="flex-row flex-wrap gap-sm">
             <PressableScale
               accessibilityLabel={t('languageRestartAction')}
-              onPress={() => void reloadAppAsync()}
+              onPress={() => void restart()}
               haptic="tapLight"
               style={continuousCorners}
               className="min-h-recommended justify-center rounded-md bg-primary px-lg"
@@ -101,7 +86,7 @@ export function LanguageSwitcher() {
                 perfectly usable with the text already switched. */}
             <PressableScale
               accessibilityLabel={t('languageRestartLater')}
-              onPress={() => setNeedsRestart(false)}
+              onPress={dismissRestart}
               haptic="selection"
               className="min-h-recommended justify-center px-lg"
             >
