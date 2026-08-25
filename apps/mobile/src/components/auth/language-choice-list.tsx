@@ -44,7 +44,7 @@ export function LanguageChoiceList({ selectedLanguage, onChoose }: LanguageChoic
             className={isSelected ? SELECTED_ROW_CLASS : ROW_CLASS}
           >
             <Text
-              lang={language}
+              accessibilityLanguage={language}
               className={`text-start text-lg font-medium text-neutral-900 ${fontClass}`}
             >
               {nativeName}
