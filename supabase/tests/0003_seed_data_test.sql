@@ -122,7 +122,7 @@ select is_empty(
      where u.encrypted_password is distinct from
            extensions.crypt(
              case
-               when u.email = 'blnc@ramassa.invalid' then 'blnc-k4m9-r2t7'
+               when u.email = 'bjnc@ramassa.invalid' then 'bjnc-k4m9-r2t7'
                else 'ramassa-dev-password'
              end,
              u.encrypted_password

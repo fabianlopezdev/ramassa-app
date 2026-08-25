@@ -667,7 +667,7 @@ insert into seed_roster (ordinal, email, app_role, first_name, last_name, prefer
   -- because she has no inbox to route to, and marks her as the one roster
   -- account whose password staff can reset. Without her, the reset screen is a
   -- screen nobody can open in the dev app.
-  (30, 'blnc@ramassa.invalid',           'player', 'Blanca',         'Ribes',   'ca', 'Espanya',   'Vic',     null);
+  (30, 'bjnc@ramassa.invalid',           'player', 'Blanca',         'Ribes',   'ca', 'Espanya',   'Vic',     null);
 
 -- Auth accounts ------------------------------------------------------------------
 -- Seeded profiles are useless if nobody can sign in as them: the dev menu and the
@@ -692,8 +692,8 @@ select
   'authenticated',
   r.email,
   extensions.crypt(
-    case when r.email = 'blnc@ramassa.invalid'
-      then 'blnc-k4m9-r2t7'
+    case when r.email = 'bjnc@ramassa.invalid'
+      then 'bjnc-k4m9-r2t7'
       else 'ramassa-dev-password'
     end,
     extensions.gen_salt('bf')

@@ -12,6 +12,7 @@
  */
 
 import { expect, test } from 'bun:test';
+import { isAccessCode } from '../packages/shared/auth';
 import { buildProfileFromFixture } from '../packages/shared/testing/factories';
 import {
   ONBOARDING_ACCOUNT_EMAIL,
@@ -75,6 +76,7 @@ test('the roster carries the no-email case the password-reset screen needs', () 
     expect(accessCode).toBeDefined();
     if (!accessCode) continue;
     expect(fixture.email.endsWith('@ramassa.invalid')).toBe(true);
+    expect(isAccessCode(accessCode)).toBe(true);
     expect(fixture.email.split('@')[0]).toBe(accessCode.split('-')[0]);
     expect(seedSql).toContain(fixture.email);
     expect(seedSql).toContain(accessCode);
