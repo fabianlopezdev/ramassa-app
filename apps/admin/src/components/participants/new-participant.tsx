@@ -82,7 +82,7 @@ export function NewParticipant({ referral = null }: { readonly referral?: Referr
   }
 
   return (
-    <section className="flex max-w-2xl flex-col gap-6 p-6">
+    <section className="flex w-full max-w-2xl flex-col gap-6 px-4 py-5 sm:p-6">
       <header className="flex flex-col gap-3">
         <Link
           to="/participants"
@@ -118,10 +118,11 @@ export function NewParticipant({ referral = null }: { readonly referral?: Referr
           )}
           <fieldset className="flex flex-col gap-3">
             <legend className="text-start text-base font-medium">{t('forkQuestion')}</legend>
-            <div className="flex flex-wrap gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:flex sm:flex-wrap">
               <Button
                 type="button"
                 size="lg"
+                className="h-12 w-full sm:w-auto"
                 variant={arm === 'invite' ? 'default' : 'outline'}
                 aria-pressed={arm === 'invite'}
                 onClick={() => setArm('invite')}
@@ -131,6 +132,7 @@ export function NewParticipant({ referral = null }: { readonly referral?: Referr
               <Button
                 type="button"
                 size="lg"
+                className="h-12 w-full sm:w-auto"
                 variant={arm === 'create' ? 'default' : 'outline'}
                 aria-pressed={arm === 'create'}
                 onClick={() => setArm('create')}
@@ -236,8 +238,8 @@ function CreateAccountForm({
           />
         )}
       />
-      <div className="flex flex-wrap items-center gap-3">
-        <Button type="submit" size="lg" disabled={isSubmitting}>
+      <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
+        <Button type="submit" size="lg" className="h-12 w-full sm:w-auto" disabled={isSubmitting}>
           {t('createAccountAction')}
         </Button>
         {submitErrorMessage === undefined ? null : (
@@ -314,8 +316,8 @@ function InviteForm({
           />
         )}
       />
-      <div className="flex flex-wrap items-center gap-3">
-        <Button type="submit" size="lg" disabled={isSubmitting}>
+      <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
+        <Button type="submit" size="lg" className="h-12 w-full sm:w-auto" disabled={isSubmitting}>
           {t('inviteAction')}
         </Button>
         {submitErrorMessage === undefined ? null : (
@@ -358,9 +360,9 @@ function EntityField({ id, value, onChange, onBlur }: EntityFieldProps) {
 }
 
 /**
- * The only sighting of the password there will ever be. The panel says so, and
- * offers the two things staff do next: hand the slip over and open her record,
- * or create the next account.
+ * The only sighting of the access code there will ever be. The panel says so,
+ * and offers the two things staff do next: hand the code over and open her
+ * record, or create the next account.
  */
 function CredentialsPanel({
   account,
@@ -371,19 +373,28 @@ function CredentialsPanel({
 }) {
   const { t } = useTranslation('participants');
   return (
-    <section aria-live="polite" className="flex flex-col gap-4 rounded-md border p-6">
+    <section
+      aria-live="polite"
+      className="flex w-full min-w-0 flex-col gap-4 rounded-md border p-4 sm:p-6"
+    >
       <h2 className="text-start text-xl font-semibold">{t('credentialsTitle')}</h2>
       <p className="text-start text-sm font-medium text-destructive">{t('credentialsShownOnce')}</p>
-      <CopyableCredential label={t('credentialsAddressLabel')} value={account.email} />
-      <CopyableCredential label={t('credentialsPasswordLabel')} value={account.password} />
+      <p className="text-start text-sm text-foreground">{t('credentialsHandoffGuidance')}</p>
+      <CopyableCredential label={t('credentialsCodeLabel')} value={account.password} />
       <p className="text-start text-sm text-muted-foreground">{t('credentialsTermsNote')}</p>
-      <div className="flex flex-wrap gap-3">
-        <Button asChild size="lg">
+      <div className="grid grid-cols-1 gap-3 sm:flex sm:flex-wrap">
+        <Button asChild size="lg" className="h-12 w-full sm:w-auto">
           <Link to="/participants/$participantId" params={{ participantId: account.profile_id }}>
             {t('credentialsOpenRecord')}
           </Link>
         </Button>
-        <Button type="button" size="lg" variant="outline" onClick={onCreateAnother}>
+        <Button
+          type="button"
+          size="lg"
+          variant="outline"
+          className="h-12 w-full sm:w-auto"
+          onClick={onCreateAnother}
+        >
           {t('createAnotherAction')}
         </Button>
       </div>
@@ -401,17 +412,17 @@ function InvitedPanel({
   const { t, i18n } = useTranslation('participants');
   const locale = i18n.resolvedLanguage ?? 'ca';
   return (
-    <section aria-live="polite" className="flex flex-col gap-4 rounded-md border p-6">
+    <section aria-live="polite" className="flex flex-col gap-4 rounded-md border p-4 sm:p-6">
       <h2 className="text-start text-xl font-semibold">{t('invitedTitle')}</h2>
       <p className="text-start text-sm">{t('invitedBody', { email: invite.email })}</p>
       <p className="text-start text-sm text-muted-foreground">
         {t('invitedExpires', { date: new Date(invite.expires_at).toLocaleDateString(locale) })}
       </p>
-      <div className="flex flex-wrap gap-3">
-        <Button asChild size="lg" variant="outline">
+      <div className="grid grid-cols-1 gap-3 sm:flex sm:flex-wrap">
+        <Button asChild size="lg" variant="outline" className="h-12 w-full sm:w-auto">
           <Link to="/participants/invites">{t('invitesAction')}</Link>
         </Button>
-        <Button type="button" size="lg" onClick={onInviteAnother}>
+        <Button type="button" size="lg" className="h-12 w-full sm:w-auto" onClick={onInviteAnother}>
           {t('inviteAnotherAction')}
         </Button>
       </div>

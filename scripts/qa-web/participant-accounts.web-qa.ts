@@ -72,16 +72,20 @@ test.afterAll(() => {
   `);
 });
 
-interface ShownCredentials {
-  readonly email: string;
-  readonly password: string;
+interface ShownCredential {
+  readonly accessCode: string;
+  readonly internalEmail: string;
 }
 
-/** The credentials panel's two values, read off the SCREEN that promised them. */
+function internalEmailForShownCode(accessCode: string): string {
+  return `${accessCode.split('-')[0]}@ramassa.invalid`;
+}
+
+/** The access code read off the screen that promised it. */
 async function createAccountThroughTheProduct(
   page: Page,
   names: { readonly firstName: string; readonly lastName: string; readonly entity?: string },
-): Promise<ShownCredentials> {
+): Promise<ShownCredential> {
   await page.goto('/participants/new');
   await page
     .getByRole('button', { name: /no, (no té correu|she has no email|no tiene correo)/i })
@@ -107,11 +111,13 @@ async function createAccountThroughTheProduct(
     })
     .last();
   await expect(panel).toBeVisible({ timeout: 15_000 });
-  const values = panel.locator('code');
-  await expect(values).toHaveCount(2);
+  const accessCode = panel.getByTestId('one-time-access-code');
+  await expect(accessCode).toBeVisible();
+  await expect(panel).not.toContainText('@ramassa.invalid');
+  const shownCode = (await accessCode.innerText()).trim();
   return {
-    email: (await values.nth(0).innerText()).trim(),
-    password: (await values.nth(1).innerText()).trim(),
+    accessCode: shownCode,
+    internalEmail: internalEmailForShownCode(shownCode),
   };
 }
 
@@ -143,20 +149,49 @@ async function passwordSignInSucceeds(
   // A player has no admin surface, so a SUCCESSFUL sign-in lands on the
   // terminal "no access here" state (AUTH-3) rather than on a dashboard. That
   // is the tell that distinguishes it from a REFUSED one, which stays on the
-  // form with "incorrect email or password" (AUTH-6). Both are real outcomes
-  // of this form, which is what makes the assertion able to fail either way.
+  // form with the neutral AUTH-6 recovery message. Both are real outcomes of
+  // this form, which is what makes the assertion able to fail either way.
   const authenticated = page.getByRole('button', {
     name: /tanca la sessió|sign out|log out|cerrar sesión/i,
   });
-  const refused = page.getByText(
-    /correu o contrasenya incorrectes|incorrect email or password|correo o contraseña incorrectos/i,
-  );
+  const refused = page.getByRole('alert').filter({ hasText: 'AUTH-6' });
   await expect(authenticated.or(refused).first()).toBeVisible({ timeout: 20_000 });
   return (await authenticated.count()) > 0;
 }
 
 function profileIdByEmail(email: string): string {
   return queryDatabase(`select id from auth.users where email = '${email}'`);
+}
+
+async function expectNoHorizontalScroll(page: Page): Promise<void> {
+  expect(
+    await page.evaluate(() => {
+      const browser = globalThis as unknown as {
+        document: { documentElement: { clientWidth: number; scrollWidth: number } };
+      };
+      return {
+        viewport: browser.document.documentElement.clientWidth,
+        content: browser.document.documentElement.scrollWidth,
+      };
+    }),
+  ).toEqual({ viewport: 375, content: 375 });
+}
+
+async function requestsAfterResultSettles(page: Page): Promise<readonly string[]> {
+  const requests: string[] = [];
+  const collect = (request: { url(): string }) => requests.push(request.url());
+  page.on('request', collect);
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) => {
+        const browser = globalThis as unknown as {
+          requestAnimationFrame: (callback: () => void) => number;
+        };
+        browser.requestAnimationFrame(() => browser.requestAnimationFrame(() => resolve()));
+      }),
+  );
+  page.off('request', collect);
+  return requests;
 }
 
 test.describe('creating an account for a participant with no email', () => {
@@ -180,11 +215,15 @@ test.describe('creating an account for a participant with no email', () => {
       lastName: `Signin ${RUN_TAG}`,
     });
 
-    expect(await passwordSignInSucceeds(page, credentials.email, credentials.password)).toBe(true);
+    expect(
+      await passwordSignInSucceeds(page, credentials.internalEmail, credentials.accessCode),
+    ).toBe(true);
 
     // The same address with a password that was never issued must be refused,
     // or the assertion above proves nothing about the password at all.
-    expect(await passwordSignInSucceeds(page, credentials.email, 'wrong-wrong-wrong')).toBe(false);
+    expect(await passwordSignInSucceeds(page, credentials.internalEmail, 'wrong-wrong-wrong')).toBe(
+      false,
+    );
   });
 
   /**
@@ -198,12 +237,14 @@ test.describe('creating an account for a participant with no email', () => {
       lastName: `Domini ${RUN_TAG}`,
     });
 
-    expect(credentials.email).toMatch(/^[a-z0-9]+\.[a-z0-9]{4}@ramassa\.invalid$/);
+    expect(credentials.internalEmail).toMatch(
+      /^[abcdefghjkmnpqrstuvwxyz23456789]{4}@ramassa\.invalid$/,
+    );
     // Per the DATABASE, not per the panel: the identity GoTrue will resolve
     // carries the same unroutable address.
-    expect(queryDatabase(`select email from auth.users where email = '${credentials.email}'`)).toBe(
-      credentials.email,
-    );
+    expect(
+      queryDatabase(`select email from auth.users where email = '${credentials.internalEmail}'`),
+    ).toBe(credentials.internalEmail);
     expect(
       countInDatabase(`select count(*) from auth.users where email like '%@ramassa.app'`),
     ).toBe(0);
@@ -222,7 +263,7 @@ test.describe('creating an account for a participant with no email', () => {
       lastName: `Consent ${RUN_TAG}`,
       entity: 'Creu Roja Osona',
     });
-    const profileId = profileIdByEmail(credentials.email);
+    const profileId = profileIdByEmail(credentials.internalEmail);
     expect(profileId).not.toBe('');
 
     const row = queryDatabase(
@@ -254,7 +295,7 @@ test.describe('creating an account for a participant with no email', () => {
     expect(
       countInDatabase(
         `select count(*) from public.audit_log
-          where changes::text like '%${credentials.password}%'`,
+          where changes::text like '%${credentials.accessCode}%'`,
       ),
     ).toBe(0);
   });
@@ -271,8 +312,12 @@ test.describe('creating an account for a participant with no email', () => {
       lastName: `Arabic ${RUN_TAG}`,
     });
 
-    expect(credentials.email).toMatch(/^participant\.[a-z0-9]{4}@ramassa\.invalid$/);
-    expect(await passwordSignInSucceeds(page, credentials.email, credentials.password)).toBe(true);
+    expect(credentials.internalEmail).toMatch(
+      /^[abcdefghjkmnpqrstuvwxyz23456789]{4}@ramassa\.invalid$/,
+    );
+    expect(
+      await passwordSignInSucceeds(page, credentials.internalEmail, credentials.accessCode),
+    ).toBe(true);
   });
 
   /** Pressing the button with an empty form has to SAY something. */
@@ -317,8 +362,8 @@ test.describe('creating an account for a participant with no email', () => {
       page.getByRole('button', { name: /no, (no té correu|she has no email|no tiene correo)/i }),
     ).toBeVisible({ timeout: 15_000 });
 
-    await expect(page.getByText(credentials.password)).toHaveCount(0);
-    await expect(page.getByText(credentials.email)).toHaveCount(0);
+    await expect(page.getByText(credentials.accessCode)).toHaveCount(0);
+    await expect(page.getByText(credentials.internalEmail)).toHaveCount(0);
   });
 });
 
@@ -426,7 +471,7 @@ test.describe('inviting a participant who has an email', () => {
   });
 });
 
-test.describe('resetting the password of an admin-created account', () => {
+test.describe('resetting the access code of an admin-created account', () => {
   test.beforeEach(async ({ page }) => {
     await signIn(page, STAFF_EMAIL);
   });
@@ -436,28 +481,34 @@ test.describe('resetting the password of an admin-created account', () => {
    * stops. Both halves are asserted through the login form, for the reason the
    * creation spec gives.
    */
-  test('the new password signs in and the old one no longer does', async ({ page }) => {
+  test('the new access code signs in and the old one no longer does', async ({ page }) => {
     const original = await createAccountThroughTheProduct(page, {
       firstName: 'Blanca',
       lastName: `Reset ${RUN_TAG}`,
     });
-    const profileId = profileIdByEmail(original.email);
+    const profileId = profileIdByEmail(original.internalEmail);
 
     await page.goto(`/participants/${profileId}`);
     await page
-      .getByRole('button', { name: /nova contrasenya|new password|nueva contraseña/i })
+      .getByRole('button', { name: /codi d'accés nou|new access code|código de acceso nuevo/i })
       .click();
-    await page.getByRole('button', { name: /sí, crea|yes, create|sí, crea una nueva/i }).click();
+    await page
+      .getByRole('button', {
+        name: /sí, crea un codi nou|yes, create a new code|sí, crea un código nuevo/i,
+      })
+      .click();
 
     const panel = page
-      .locator('section', { hasText: /nova contrasenya|new password|nueva contraseña/i })
+      .locator('section', { hasText: /codi d'accés nou|new access code|código de acceso nuevo/i })
       .last();
     await expect(panel.locator('code')).toBeVisible({ timeout: 15_000 });
     const replacement = (await panel.locator('code').innerText()).trim();
-    expect(replacement).not.toBe(original.password);
+    expect(replacement).not.toBe(original.accessCode);
 
-    expect(await passwordSignInSucceeds(page, original.email, replacement)).toBe(true);
-    expect(await passwordSignInSucceeds(page, original.email, original.password)).toBe(false);
+    expect(await passwordSignInSucceeds(page, original.internalEmail, replacement)).toBe(true);
+    expect(await passwordSignInSucceeds(page, original.internalEmail, original.accessCode)).toBe(
+      false,
+    );
   });
 
   /**
@@ -474,8 +525,62 @@ test.describe('resetting the password of an admin-created account', () => {
     await page.goto(`/participants/${magicLinkParticipant}`);
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
     await expect(
-      page.getByRole('button', { name: /nova contrasenya|new password|nueva contraseña/i }),
+      page.getByRole('button', {
+        name: /codi d'accés nou|new access code|código de acceso nuevo/i,
+      }),
     ).toHaveCount(0);
+  });
+
+  test('the creation form and both one-time code screens work at 375px without refetching', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 375, height: 812 });
+    await page.goto('/participants/new');
+    await page
+      .getByRole('button', { name: /no, (no té correu|she has no email|no tiene correo)/i })
+      .click();
+    await expectNoHorizontalScroll(page);
+
+    await page.locator('#new-participant-first-name').fill('Mobile');
+    await page.locator('#new-participant-last-name').fill(`Pitch ${RUN_TAG}`);
+    await page
+      .getByRole('button', { name: /crea el compte|create the account|crea la cuenta/i })
+      .click();
+
+    const createdCode = page.getByTestId('one-time-access-code');
+    await expect(createdCode).toBeVisible({ timeout: 15_000 });
+    await expect(createdCode).toHaveCSS('white-space', 'nowrap');
+    expect(
+      Number.parseFloat(
+        await createdCode.evaluate((element) => {
+          const browser = globalThis as unknown as {
+            getComputedStyle: (node: unknown) => { fontSize: string };
+          };
+          return browser.getComputedStyle(element).fontSize;
+        }),
+      ),
+    ).toBeGreaterThanOrEqual(20);
+    await expectNoHorizontalScroll(page);
+    expect(await requestsAfterResultSettles(page)).toEqual([]);
+
+    const accessCode = (await createdCode.innerText()).trim();
+    const internalEmail = internalEmailForShownCode(accessCode);
+    const profileId = profileIdByEmail(internalEmail);
+    await page.goto(`/participants/${profileId}`);
+    await page
+      .getByRole('button', { name: /codi d'accés nou|new access code|código de acceso nuevo/i })
+      .click();
+    await page
+      .getByRole('button', {
+        name: /sí, crea un codi nou|yes, create a new code|sí, crea un código nuevo/i,
+      })
+      .click();
+
+    const resetCode = page.getByTestId('one-time-access-code');
+    await expect(resetCode).toBeVisible({ timeout: 15_000 });
+    await expect(resetCode).toHaveCSS('white-space', 'nowrap');
+    await expectNoHorizontalScroll(page);
+    expect(await requestsAfterResultSettles(page)).toEqual([]);
   });
 });
 

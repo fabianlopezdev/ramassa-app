@@ -21,15 +21,20 @@ export function CopyableCredential({ label, value }: CopyableCredentialProps) {
   const { t } = useTranslation('participants');
   const [hasCopied, setHasCopied] = useState(false);
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="flex w-full min-w-0 flex-col gap-3">
       <p className="text-start text-sm font-medium">{label}</p>
-      <div className="flex flex-wrap items-center gap-3">
-        <code className="select-all rounded-md bg-muted px-3 py-2 font-mono text-base">
+      <div className="flex min-w-0 flex-col items-stretch gap-3 sm:flex-row sm:items-center">
+        <code
+          data-testid="one-time-access-code"
+          aria-label={label}
+          className="block min-w-0 select-all whitespace-nowrap rounded-lg bg-muted px-3 py-4 text-center font-mono text-[clamp(1.25rem,7vw,2.25rem)] leading-none font-semibold tracking-[0.08em] text-foreground"
+        >
           {value}
         </code>
         <Button
           type="button"
           variant="outline"
+          className="h-12 w-full sm:w-auto"
           onClick={() => {
             void navigator.clipboard.writeText(value).then(() => setHasCopied(true));
           }}

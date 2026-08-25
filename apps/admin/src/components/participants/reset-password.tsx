@@ -29,7 +29,7 @@ type ResetState =
   | { readonly kind: 'idle' }
   | { readonly kind: 'confirming' }
   | { readonly kind: 'working' }
-  | { readonly kind: 'done'; readonly password: string };
+  | { readonly kind: 'done'; readonly accessCode: string };
 
 export function ResetPasswordControl({ participantId }: ResetPasswordControlProps) {
   const { t } = useTranslation(['participants', 'profile', 'common']);
@@ -41,26 +41,30 @@ export function ResetPasswordControl({ participantId }: ResetPasswordControlProp
     setState({ kind: 'working' });
     const result = await safeAsync(() => resetParticipantPassword(supabase, participantId));
     if (!result.ok) {
-      setErrorMessage(t('resetPasswordFailed'));
+      setErrorMessage(t('resetAccessCodeFailed'));
       setState({ kind: 'idle' });
       return;
     }
-    setState({ kind: 'done', password: result.value });
+    setState({ kind: 'done', accessCode: result.value });
   }
 
   if (state.kind === 'done') {
     return (
-      <section aria-live="polite" className="flex flex-col gap-4 rounded-md border p-6">
-        <h2 className="text-start text-xl font-semibold">{t('resetPasswordDoneTitle')}</h2>
+      <section
+        aria-live="polite"
+        className="flex w-full min-w-0 flex-col gap-4 rounded-md border p-4 sm:p-6"
+      >
+        <h2 className="text-start text-xl font-semibold">{t('resetAccessCodeDoneTitle')}</h2>
         <p className="text-start text-sm font-medium text-destructive">
           {t('credentialsShownOnce')}
         </p>
-        <CopyableCredential label={t('credentialsPasswordLabel')} value={state.password} />
+        <p className="text-start text-sm text-foreground">{t('credentialsHandoffGuidance')}</p>
+        <CopyableCredential label={t('credentialsCodeLabel')} value={state.accessCode} />
         <Button
           type="button"
           size="lg"
           variant="outline"
-          className="w-fit"
+          className="h-12 w-full sm:w-fit"
           onClick={() => setState({ kind: 'idle' })}
         >
           {t('common:close')}
@@ -71,32 +75,39 @@ export function ResetPasswordControl({ participantId }: ResetPasswordControlProp
 
   return (
     <div className="flex flex-col gap-3 rounded-md border p-4">
-      <p className="text-start text-sm text-muted-foreground">{t('resetPasswordHint')}</p>
+      <p className="text-start text-sm text-muted-foreground">{t('resetAccessCodeHint')}</p>
       {state.kind === 'confirming' ? (
-        <div className="flex flex-wrap items-center gap-3">
-          <p className="text-start text-sm">{t('resetPasswordConfirmBody')}</p>
-          <Button type="button" size="lg" onClick={() => void reset()}>
-            {t('resetPasswordConfirmAction')}
+        <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+          <p className="text-start text-sm">{t('resetAccessCodeConfirmBody')}</p>
+          <Button
+            type="button"
+            size="lg"
+            className="h-12 w-full sm:w-auto"
+            onClick={() => void reset()}
+          >
+            {t('resetAccessCodeConfirmAction')}
           </Button>
           <Button
             type="button"
             size="lg"
             variant="outline"
+            className="h-12 w-full sm:w-auto"
             onClick={() => setState({ kind: 'idle' })}
           >
             {t('profile:cancelAction')}
           </Button>
         </div>
       ) : (
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
           <Button
             type="button"
             size="lg"
             variant="outline"
+            className="h-12 w-full sm:w-auto"
             disabled={state.kind === 'working'}
             onClick={() => setState({ kind: 'confirming' })}
           >
-            {t('resetPasswordAction')}
+            {t('resetAccessCodeAction')}
           </Button>
           {errorMessage === undefined ? null : (
             <p aria-live="polite" className="text-start text-sm text-destructive">
