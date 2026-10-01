@@ -3,6 +3,15 @@
 begin;
 select plan(36);
 
+-- Re-anchor scheduling fixtures inside this rolled-back test transaction.
+-- A developer database may have been seeded more than thirty days ago.
+update public.surveys set published_at = now() - interval '1 day', closes_at = now() + interval '30 days'
+where id = '5eed0000-0000-4000-8040-000000000001';
+update public.surveys set published_at = now() + interval '2 days', closes_at = now() + interval '12 days'
+where id = '5eed0000-0000-4000-8040-000000000002';
+update public.surveys set published_at = now() - interval '12 days', closes_at = now() - interval '2 days'
+where id = '5eed0000-0000-4000-8040-000000000003';
+
 select has_table('public', 'surveys', 'surveys table exists');
 select has_table('public', 'survey_questions', 'survey questions table exists');
 select has_table('public', 'survey_responses', 'survey responses table exists');

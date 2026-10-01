@@ -1,0 +1,12 @@
+diff --git a/ios/RNSentryReplay.mm b/ios/RNSentryReplay.mm
+index 40575a9e4c435dc60ed22445775bf5050c0e69e9..e0517707abc94bcb7545b6697a652ee76061f741 100644
+--- a/ios/RNSentryReplay.mm
++++ b/ios/RNSentryReplay.mm
+@@ -2,7 +2,6 @@
+ #import "RNSentryReplayBreadcrumbConverterHelper.h"
+ #import "RNSentryReplayQuality.h"
+ #import "RNSentryVersion.h"
+-#import "React/RCTTextView.h"
+ #import "Replay/RNSentryReplayMask.h"
+ #import "Replay/RNSentryReplayUnmask.h"
+ #import <Sentry/PrivateSentrySDKOnly.h>

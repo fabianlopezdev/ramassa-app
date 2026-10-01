@@ -128,7 +128,7 @@ export default function GalleryItemScreen() {
         style: 'destructive',
         onPress: () => {
           playHaptic('warning');
-          void deleteItem().then(back);
+          void deleteItem().then(() => back());
         },
       },
     ]);

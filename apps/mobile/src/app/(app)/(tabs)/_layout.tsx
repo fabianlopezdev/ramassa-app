@@ -1,6 +1,6 @@
 import { useUnreadMessages } from '@/lib/messaging';
 import { unreadBadgeProps } from '@/lib/unread-badge';
-import { NativeTabs } from 'expo-router/unstable-native-tabs';
+import { NativeTabs } from 'expo-router/native-tabs';
 import { useTranslation } from 'react-i18next';
 import { tokens } from '@ramassa/shared/tokens';
 
