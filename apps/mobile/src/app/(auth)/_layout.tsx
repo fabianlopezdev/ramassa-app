@@ -14,5 +14,12 @@ export default function AuthLayout() {
   useEffect(() => {
     if (consumeLanguageConfirmation(preferencesStorage)) router.push('/login');
   }, [router]);
-  return <Stack screenOptions={{ headerShown: false }} />;
+  return (
+    <Stack
+      screenOptions={({ route }) => ({
+        headerShown: false,
+        scrollEdgeEffects: route.name === 'index' ? { top: 'hidden' } : undefined,
+      })}
+    />
+  );
 }

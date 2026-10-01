@@ -85,6 +85,7 @@
   ],
   "patchedDependencies": {
     "expo-localization@58.0.2": "patches/expo-localization@58.0.2.patch",
-    "@sentry/react-native@7.11.0": "patches/@sentry%2Freact-native@7.11.0.patch"
+    "@sentry/react-native@7.11.0": "patches/@sentry%2Freact-native@7.11.0.patch",
+    "@expo/plist@0.10.1": "patches/@expo%2Fplist@0.10.1.patch"
   }
 }

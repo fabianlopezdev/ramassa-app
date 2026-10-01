@@ -65,7 +65,12 @@ export const tokens = {
   // interactive element is at least `min`; player-facing controls aim for `recommended`.
   tapTarget: { min: 48, recommended: 56 },
 
-  onboarding: { languageRowHeight: 64, languageHeadingMinHeight: 56, logoHeight: 128 },
+  onboarding: {
+    languageRowHeight: 64,
+    languageHeadingMinHeight: 56,
+    logoHeight: 128,
+    footerBlurIntensity: 50,
+  },
 
   // How wide a player screen's content is allowed to grow (RAPP-80). The player app
   // is the phone app exported to the browser (ADR-008), so without a ceiling a form

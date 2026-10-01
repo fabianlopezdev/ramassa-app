@@ -9,13 +9,17 @@ import { LANGUAGE_CONFIRMED_RELOAD_KEY } from '@/lib/language-confirmation';
 import { preferencesStorage } from '@/lib/storage';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { reloadAppAsync } from 'expo';
+import { BlurTargetView, BlurView } from 'expo-blur';
 import { useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { I18nManager, Platform, ScrollView, Text, useWindowDimensions, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLanguage } from '@ramassa/shared/i18n';
 import { tokens } from '@ramassa/shared/tokens';
+
+const scrollViewportStyle = { flex: 1, overflow: 'hidden' } as const;
+const blurFillStyle = { position: 'absolute', top: 0, bottom: 0, start: 0, end: 0 } as const;
 
 export default function PreAuthLanguageScreen() {
   const { t } = useTranslation(['auth', 'common']);
@@ -24,6 +28,22 @@ export default function PreAuthLanguageScreen() {
   const { language, setLanguage } = useLanguage();
   const [continuing, setContinuing] = useState(false);
   const { fontScale } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  const blurTarget = useRef<View | null>(null);
+  const [footerHeight, setFooterHeight] = useState(0);
+  const bottomPadding = tokens.spacing.lg + insets.bottom;
+  const estimatedFooterHeight =
+    tokens.tapTarget.recommended * Math.max(1, fontScale) + tokens.spacing.md + bottomPadding;
+  const scrollContentStyle = useMemo(
+    () => ({
+      // The initial content clears the status icons, but the viewport extends
+      // behind them so scrolling does not reveal an opaque safe-area strip.
+      paddingTop: insets.top + tokens.spacing.lg,
+      paddingBottom: Math.max(footerHeight, estimatedFooterHeight) + tokens.spacing.lg,
+    }),
+    [insets.top, footerHeight, estimatedFooterHeight],
+  );
+  const footerStyle = useMemo(() => ({ paddingBottom: bottomPadding }), [bottomPadding]);
   const continueStyle = useMemo(
     () => ({ ...continuousCorners, height: tokens.tapTarget.recommended * Math.max(1, fontScale) }),
     [fontScale],
@@ -49,20 +69,42 @@ export default function PreAuthLanguageScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-white" edges={['top', 'bottom']}>
-      <ScrollView
-        testID="language-scroll-content"
-        className="flex-1"
-        contentInsetAdjustmentBehavior="automatic"
-        contentContainerClassName="grow justify-center p-lg"
+    <SafeAreaView className="flex-1 bg-white" edges={['left', 'right']}>
+      <BlurTargetView
+        ref={blurTarget}
+        testID="language-scroll-viewport"
+        style={scrollViewportStyle}
       >
-        <FormWidth className="gap-lg">
-          <PublicOrganizationLogo />
-          <LanguageChoiceHeading />
-          <LanguageChoiceList selectedLanguage={language} onChoose={setLanguage} />
-        </FormWidth>
-      </ScrollView>
-      <View testID="language-continue-footer" className="p-lg pt-md">
+        <ScrollView
+          testID="language-scroll-content"
+          className="flex-1"
+          showsVerticalScrollIndicator={false}
+          showsHorizontalScrollIndicator={false}
+          contentInsetAdjustmentBehavior="never"
+          contentContainerClassName="grow justify-center p-lg"
+          contentContainerStyle={scrollContentStyle}
+        >
+          <FormWidth className="gap-lg">
+            <PublicOrganizationLogo />
+            <LanguageChoiceHeading />
+            <LanguageChoiceList selectedLanguage={language} onChoose={setLanguage} />
+          </FormWidth>
+        </ScrollView>
+      </BlurTargetView>
+      <View
+        testID="language-continue-footer"
+        className="absolute bottom-0 start-0 end-0 overflow-hidden px-lg pt-md"
+        style={footerStyle}
+        onLayout={({ nativeEvent: { layout } }) => setFooterHeight(layout.height)}
+      >
+        <BlurView
+          pointerEvents="none"
+          style={blurFillStyle}
+          tint="light"
+          intensity={tokens.onboarding.footerBlurIntensity}
+          blurTarget={blurTarget}
+          blurMethod="dimezisBlurViewSdk31Plus"
+        />
         <FormWidth>
           <PressableScale
             accessibilityLabel={t('auth:continueAction')}

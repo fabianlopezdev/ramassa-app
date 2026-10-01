@@ -32,7 +32,11 @@ mock.module('react-native', () => ({
   Platform: { OS: 'ios' },
   useWindowDimensions: () => ({ fontScale: 1 }),
 }));
-mock.module('react-native-safe-area-context', () => ({ SafeAreaView: box }));
+mock.module('react-native-safe-area-context', () => ({
+  SafeAreaView: box,
+  useSafeAreaInsets: () => ({ top: 20, bottom: 0, left: 0, right: 0 }),
+}));
+mock.module('expo-blur', () => ({ BlurView: box, BlurTargetView: box }));
 mock.module('@/components/motion/pressable-scale', () => ({
   PressableScale: ({
     children,
