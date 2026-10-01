@@ -40,6 +40,13 @@ mock.module('react-native', () => ({
   View: ({ children }: { readonly children: ReactNode }) => createElement('div', null, children),
 }));
 
+mock.module('@/components/motion/fade-slide-in', () => ({
+  FadeSlideIn: ({ children }: { children: ReactNode }) => createElement('div', null, children),
+}));
+mock.module('@/components/motion/selection-transition', () => ({
+  SelectionTransition: ({ children, active }: { children?: ReactNode; active: boolean }) =>
+    createElement('div', { 'aria-hidden': !active }, children),
+}));
 const { LanguageChoiceList } = await import('./language-choice-list');
 
 beforeEach(() => onChoose.mockClear());

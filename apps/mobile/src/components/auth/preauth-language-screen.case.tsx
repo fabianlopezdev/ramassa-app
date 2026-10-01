@@ -64,6 +64,13 @@ mock.module('@/components/motion/pressable-scale', () => ({
 }));
 mock.module('@/components/error-fallback', () => ({ ErrorFallback: () => null }));
 mock.module('expo-router/stack', () => ({ Stack: () => null }));
+mock.module('@/components/motion/fade-slide-in', () => ({
+  FadeSlideIn: ({ children }: { children: ReactNode }) => createElement('div', null, children),
+}));
+mock.module('@/components/motion/selection-transition', () => ({
+  SelectionTransition: ({ children, active }: { children?: ReactNode; active: boolean }) =>
+    createElement('div', { 'aria-hidden': !active }, children),
+}));
 const { default: Screen } = await import('../../app/(auth)/index');
 const { default: AuthLayout } = await import('../../app/(auth)/_layout');
 beforeEach(() => {

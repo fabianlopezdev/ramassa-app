@@ -3,6 +3,7 @@ import { LanguageChoiceList } from '@/components/auth/language-choice-list';
 import { shouldRestartForLanguage } from '@/components/auth/language-restart-policy';
 import { PublicOrganizationLogo } from '@/components/branding/public-organization-logo';
 import { FormWidth } from '@/components/layout/content-width';
+import { FadeSlideIn } from '@/components/motion/fade-slide-in';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { LANGUAGE_CONFIRMED_RELOAD_KEY } from '@/lib/language-confirmation';
@@ -86,7 +87,9 @@ export default function PreAuthLanguageScreen() {
         >
           <FormWidth className="gap-lg">
             <PublicOrganizationLogo />
-            <LanguageChoiceHeading />
+            <FadeSlideIn preset="fade">
+              <LanguageChoiceHeading />
+            </FadeSlideIn>
             <LanguageChoiceList selectedLanguage={language} onChoose={setLanguage} />
           </FormWidth>
         </ScrollView>
@@ -106,19 +109,21 @@ export default function PreAuthLanguageScreen() {
           blurMethod="dimezisBlurViewSdk31Plus"
         />
         <FormWidth>
-          <PressableScale
-            accessibilityLabel={t('auth:continueAction')}
-            onPress={() => void continueToLogin()}
-            isBusy={continuing}
-            isDisabled={continuing}
-            haptic="tapLight"
-            style={continueStyle}
-            className="min-h-recommended items-center justify-center rounded-md bg-primary px-lg"
-          >
-            <Text className={`text-md font-bold text-white ${languageFontClass}`}>
-              {t('auth:continueAction')}
-            </Text>
-          </PressableScale>
+          <FadeSlideIn preset="fade">
+            <PressableScale
+              accessibilityLabel={t('auth:continueAction')}
+              onPress={() => void continueToLogin()}
+              isBusy={continuing}
+              isDisabled={continuing}
+              haptic="tapLight"
+              style={continueStyle}
+              className="min-h-recommended items-center justify-center rounded-md bg-primary px-lg"
+            >
+              <Text className={`text-md font-bold text-white ${languageFontClass}`}>
+                {t('auth:continueAction')}
+              </Text>
+            </PressableScale>
+          </FadeSlideIn>
         </FormWidth>
       </View>
     </SafeAreaView>

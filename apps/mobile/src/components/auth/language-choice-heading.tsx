@@ -1,3 +1,4 @@
+import { SelectionTransition } from '@/components/motion/selection-transition';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, useWindowDimensions, View } from 'react-native';
@@ -10,8 +11,7 @@ import {
 import { tokens } from '@ramassa/shared/tokens';
 
 const fontClasses = { sans: 'font-sans', arabic: 'font-arabic', farsi: 'font-farsi' } as const;
-const visibleTitleStyle = { position: 'absolute', width: '100%', opacity: 1 } as const;
-const hiddenTitleStyle = { ...visibleTitleStyle, opacity: 0 } as const;
+const titleStyle = { position: 'absolute', width: '100%' } as const;
 
 export function LanguageChoiceHeading() {
   const { t } = useTranslation('auth');
@@ -36,26 +36,26 @@ export function LanguageChoiceHeading() {
       {SUPPORTED_LANGUAGES.map((titleLanguage) => {
         const active = titleLanguage === language;
         return (
-          <Text
-            key={titleLanguage}
-            accessibilityRole="header"
-            accessibilityLanguage={titleLanguage}
-            accessibilityElementsHidden={!active}
-            importantForAccessibility={active ? 'auto' : 'no-hide-descendants'}
-            pointerEvents="none"
-            style={active ? visibleTitleStyle : hiddenTitleStyle}
-            className={`text-center text-2xl font-bold text-neutral-900 ${fontClasses[getLanguageFontFamilyKey(titleLanguage)]}`}
-            onLayout={({ nativeEvent: { layout } }) => {
-              const height = Math.ceil(layout.height);
-              setHeights((previous) =>
-                previous[titleLanguage] === height
-                  ? previous
-                  : { ...previous, [titleLanguage]: height },
-              );
-            }}
-          >
-            {t('languageTitle', { lng: titleLanguage })}
-          </Text>
+          <SelectionTransition key={titleLanguage} active={active} style={titleStyle}>
+            <Text
+              accessibilityRole="header"
+              accessibilityLanguage={titleLanguage}
+              accessibilityElementsHidden={!active}
+              importantForAccessibility={active ? 'auto' : 'no-hide-descendants'}
+              pointerEvents="none"
+              className={`text-center text-2xl font-bold text-neutral-900 ${fontClasses[getLanguageFontFamilyKey(titleLanguage)]}`}
+              onLayout={({ nativeEvent: { layout } }) => {
+                const height = Math.ceil(layout.height);
+                setHeights((previous) =>
+                  previous[titleLanguage] === height
+                    ? previous
+                    : { ...previous, [titleLanguage]: height },
+                );
+              }}
+            >
+              {t('languageTitle', { lng: titleLanguage })}
+            </Text>
+          </SelectionTransition>
         );
       })}
     </View>

@@ -1,5 +1,7 @@
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import {
+  cancelAnimation,
+  Easing,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
@@ -7,6 +9,7 @@ import {
   withTiming,
 } from 'react-native-reanimated';
 import {
+  motionTokens,
   resolveDurationMs,
   resolveEntranceTranslateY,
   resolveStaggerMs,
@@ -16,7 +19,7 @@ import { NativeWindAnimatedView } from './nativewind-animated-view';
 /**
  * Content entrance (RAPP-70): a short rise plus a fade, staggered down a list.
  *
- * Runs ONCE, on mount, never on re-render. That distinction matters: an
+ * Runs once after layout and content readiness, never on ordinary re-render. That distinction matters: an
  * entrance that replays whenever its parent re-renders reads as flicker, and on
  * a feed that refetches it looks like a bug. The effect depends only on values
  * that are fixed for the component's life.
@@ -32,21 +35,58 @@ export interface FadeSlideInProps {
   /** Position in a list; drives the stagger. Omit for a single element. */
   readonly index?: number;
   readonly className?: string;
+  readonly preset?: 'default' | 'onboarding' | 'logo' | 'fade';
+  /** Wait for async content, such as a downloaded logo, before starting. */
+  readonly ready?: boolean;
 }
 
-export function FadeSlideIn({ children, index = 0, className }: FadeSlideInProps) {
+export function FadeSlideIn({
+  children,
+  index = 0,
+  className,
+  preset = 'default',
+  ready = true,
+}: FadeSlideInProps) {
   const isReducedMotion = useReducedMotion();
-  const progress = useSharedValue(0);
+  const progress = useSharedValue(isReducedMotion ? 1 : 0);
 
-  const travel = resolveEntranceTranslateY(isReducedMotion);
-  const durationMs = resolveDurationMs('slow', isReducedMotion);
-  const delayMs = resolveStaggerMs(index, isReducedMotion);
+  const [laidOut, setLaidOut] = useState(false);
+  const entrance = motionTokens.onboardingEntrance;
+  const travel = isReducedMotion
+    ? 0
+    : preset === 'onboarding'
+      ? entrance.translateY
+      : preset === 'default'
+        ? resolveEntranceTranslateY(false)
+        : 0;
+  const durationMs = isReducedMotion
+    ? 0
+    : preset === 'default'
+      ? resolveDurationMs('slow', false)
+      : preset === 'logo'
+        ? motionTokens.logoEntrance.durationMs
+        : entrance.durationMs;
+  const delayMs = isReducedMotion
+    ? 0
+    : preset === 'onboarding'
+      ? entrance.leadInMs + Math.min(index * entrance.staggerMs, entrance.maxStaggerMs)
+      : preset === 'default'
+        ? resolveStaggerMs(index, false)
+        : 0;
 
   useEffect(() => {
-    progress.set(withDelay(delayMs, withTiming(1, { duration: durationMs })));
-    // Mount-only by construction: every dependency is fixed for this instance's
-    // life, so this cannot re-fire on a parent re-render.
-  }, [progress, delayMs, durationMs]);
+    if (!ready || !laidOut) return;
+    progress.set(
+      withDelay(
+        delayMs,
+        withTiming(1, {
+          duration: durationMs,
+          easing: preset === 'default' ? Easing.inOut(Easing.quad) : Easing.out(Easing.cubic),
+        }),
+      ),
+    );
+    return () => cancelAnimation(progress);
+  }, [progress, delayMs, durationMs, preset, ready, laidOut]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     opacity: progress.get(),
@@ -54,7 +94,11 @@ export function FadeSlideIn({ children, index = 0, className }: FadeSlideInProps
   }));
 
   return (
-    <NativeWindAnimatedView style={animatedStyle} className={className}>
+    <NativeWindAnimatedView
+      style={animatedStyle}
+      className={className}
+      onLayout={() => setLaidOut(true)}
+    >
       {children}
     </NativeWindAnimatedView>
   );

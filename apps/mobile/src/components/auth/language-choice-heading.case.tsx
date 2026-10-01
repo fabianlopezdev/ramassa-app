@@ -36,6 +36,13 @@ mock.module('react-native', () => ({
     return createElement('h1', { 'aria-hidden': accessibilityElementsHidden }, children);
   },
 }));
+mock.module('@/components/motion/fade-slide-in', () => ({
+  FadeSlideIn: ({ children }: { children: ReactNode }) => createElement('div', null, children),
+}));
+mock.module('@/components/motion/selection-transition', () => ({
+  SelectionTransition: ({ children, active }: { children?: ReactNode; active: boolean }) =>
+    createElement('div', { 'aria-hidden': !active }, children),
+}));
 const { LanguageChoiceHeading } = await import('./language-choice-heading');
 afterAll(() => mock.restore());
 

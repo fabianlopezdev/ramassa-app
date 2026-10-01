@@ -44,6 +44,17 @@ export const motionTokens = {
     maxStaggerMs: 240,
   },
 
+  /** Visible onboarding choreography, independent of image download time. */
+  onboardingEntrance: {
+    durationMs: 600,
+    translateY: 24,
+    staggerMs: 120,
+    leadInMs: 180,
+    maxStaggerMs: 480,
+  },
+  logoEntrance: { durationMs: 700 },
+  selection: { initialScale: 0.82, peakScale: 1.04, riseMs: 120, settleMs: 100 },
+
   /** Validation-error nudge, paired with the translated message, never alone. */
   shake: { offset: 8, cycles: 3 },
 
