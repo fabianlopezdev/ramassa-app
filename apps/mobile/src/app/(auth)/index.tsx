@@ -32,6 +32,10 @@ export default function PreAuthLanguageScreen() {
   const insets = useSafeAreaInsets();
   const blurTarget = useRef<View | null>(null);
   const [footerHeight, setFooterHeight] = useState(0);
+  const [viewportHeight, setViewportHeight] = useState(0);
+  const [contentHeight, setContentHeight] = useState(0);
+  const contentOverflows =
+    viewportHeight > 0 && Math.round(contentHeight) > Math.round(viewportHeight);
   const bottomPadding = tokens.spacing.lg + insets.bottom;
   const estimatedFooterHeight =
     tokens.tapTarget.recommended * Math.max(1, fontScale) + tokens.spacing.md + bottomPadding;
@@ -78,6 +82,8 @@ export default function PreAuthLanguageScreen() {
       >
         <ScrollView
           testID="language-scroll-content"
+          onLayout={({ nativeEvent: { layout } }) => setViewportHeight(layout.height)}
+          onContentSizeChange={(_width, height) => setContentHeight(height)}
           className="flex-1"
           showsVerticalScrollIndicator={false}
           showsHorizontalScrollIndicator={false}
@@ -100,14 +106,16 @@ export default function PreAuthLanguageScreen() {
         style={footerStyle}
         onLayout={({ nativeEvent: { layout } }) => setFooterHeight(layout.height)}
       >
-        <BlurView
-          pointerEvents="none"
-          style={blurFillStyle}
-          tint="light"
-          intensity={tokens.onboarding.footerBlurIntensity}
-          blurTarget={blurTarget}
-          blurMethod="dimezisBlurViewSdk31Plus"
-        />
+        {contentOverflows ? (
+          <BlurView
+            pointerEvents="none"
+            style={blurFillStyle}
+            tint="light"
+            intensity={tokens.onboarding.footerBlurIntensity}
+            blurTarget={blurTarget}
+            blurMethod="dimezisBlurViewSdk31Plus"
+          />
+        ) : null}
         <FormWidth>
           <FadeSlideIn preset="fade">
             <PressableScale

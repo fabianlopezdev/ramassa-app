@@ -1,4 +1,4 @@
-import { fireEvent, render, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, waitFor } from '@testing-library/react';
 import { afterAll, beforeEach, expect, mock, test } from 'bun:test';
 import { createElement, type ReactNode } from 'react';
 import { I18nextProvider } from 'react-i18next';
@@ -24,10 +24,21 @@ mock.module('@/components/branding/public-organization-logo', () => ({
 }));
 const box = ({ children, testID }: { children: ReactNode; testID?: string }) =>
   createElement('div', { 'data-testid': testID }, children);
+let scrollLayout: ((event: { nativeEvent: { layout: { height: number } } }) => void) | undefined;
+let scrollContentSize: ((width: number, height: number) => void) | undefined;
 mock.module('react-native', () => ({
   View: box,
   Text: box,
-  ScrollView: box,
+  ScrollView: (
+    props: Parameters<typeof box>[0] & {
+      onLayout?: typeof scrollLayout;
+      onContentSizeChange?: typeof scrollContentSize;
+    },
+  ) => {
+    scrollLayout = props.onLayout;
+    scrollContentSize = props.onContentSizeChange;
+    return box(props);
+  },
   I18nManager: { isRTL: false },
   Platform: { OS: 'ios' },
   useWindowDimensions: () => ({ fontScale: 1 }),
@@ -36,7 +47,10 @@ mock.module('react-native-safe-area-context', () => ({
   SafeAreaView: box,
   useSafeAreaInsets: () => ({ top: 20, bottom: 0, left: 0, right: 0 }),
 }));
-mock.module('expo-blur', () => ({ BlurView: box, BlurTargetView: box }));
+mock.module('expo-blur', () => ({
+  BlurView: () => createElement('div', { 'data-testid': 'footer-blur' }),
+  BlurTargetView: box,
+}));
 mock.module('@/components/motion/pressable-scale', () => ({
   PressableScale: ({
     children,
@@ -124,4 +138,19 @@ test('direction reload pushes login so Back can return to language selection', a
   render(createElement(AuthLayout));
   await waitFor(() => expect(push).toHaveBeenCalledWith('/login'));
   expect(storage.has('auth.language-confirmed-reload')).toBe(false);
+});
+
+test('footer is clear when content fits and adds blur only for overflowing content', async () => {
+  const { view } = await screen();
+  expect(view.queryByTestId('footer-blur')).toBeNull();
+  act(() => {
+    scrollLayout!({ nativeEvent: { layout: { height: 900 } } });
+    scrollContentSize!(400, 900);
+  });
+  expect(view.queryByTestId('footer-blur')).toBeNull();
+  act(() => scrollContentSize!(400, 1040));
+  expect(view.getByTestId('footer-blur')).toBeTruthy();
+  // A larger viewport or smaller accessibility text must remove the tint again.
+  act(() => scrollLayout!({ nativeEvent: { layout: { height: 1100 } } }));
+  expect(view.queryByTestId('footer-blur')).toBeNull();
 });
