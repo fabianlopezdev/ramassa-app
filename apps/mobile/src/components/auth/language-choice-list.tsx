@@ -1,17 +1,19 @@
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
-import { Text, View } from 'react-native';
+import { useMemo } from 'react';
+import { Text, useWindowDimensions, View } from 'react-native';
 import {
   getLanguageFontFamilyKey,
   LANGUAGE_NATIVE_NAMES,
   SUPPORTED_LANGUAGES,
   type SupportedLanguage,
 } from '@ramassa/shared/i18n';
+import { tokens } from '@ramassa/shared/tokens';
 
 const ROW_CLASS =
-  'min-h-recommended w-full flex-row items-center justify-between rounded-md border border-neutral-300 bg-white px-lg py-md';
+  'w-full flex-row items-center justify-between rounded-md border-2 border-neutral-300 bg-white px-lg';
 const SELECTED_ROW_CLASS =
-  'min-h-recommended w-full flex-row items-center justify-between rounded-md border-2 border-primary bg-primary/10 px-lg py-md';
+  'w-full flex-row items-center justify-between rounded-md border-2 border-primary bg-primary/10 px-lg';
 const LABEL_CLASS_BY_FAMILY = {
   sans: 'font-sans',
   arabic: 'font-arabic',
@@ -24,6 +26,14 @@ export interface LanguageChoiceListProps {
 }
 
 export function LanguageChoiceList({ selectedLanguage, onChoose }: LanguageChoiceListProps) {
+  const { fontScale } = useWindowDimensions();
+  const rowStyle = useMemo(
+    () => ({
+      ...continuousCorners,
+      height: tokens.onboarding.languageRowHeight * Math.max(1, fontScale),
+    }),
+    [fontScale],
+  );
   return (
     <View className="w-full gap-sm">
       {SUPPORTED_LANGUAGES.map((language) => {
@@ -40,7 +50,7 @@ export function LanguageChoiceList({ selectedLanguage, onChoose }: LanguageChoic
             isSelected={isSelected}
             onPress={() => void onChoose(language)}
             haptic="selection"
-            style={continuousCorners}
+            style={rowStyle}
             className={isSelected ? SELECTED_ROW_CLASS : ROW_CLASS}
           >
             <Text

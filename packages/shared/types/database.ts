@@ -3687,6 +3687,17 @@ export type Database = {
           updated_at: string;
         }[];
       };
+      get_public_organization_logo: {
+        Args: { organization_slug: string };
+        Returns: string;
+      };
+      get_public_organization_branding: {
+        Args: { organization_slug: string };
+        Returns: {
+          primary_color: string;
+          secondary_color: string;
+        }[];
+      };
       get_service_review_queue: {
         Args: {
           p_category_id: string;
