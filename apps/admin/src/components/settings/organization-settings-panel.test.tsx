@@ -1,4 +1,4 @@
-import { fireEvent, render, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, waitFor } from '@testing-library/react';
 import { expect, mock, test } from 'bun:test';
 import type { OrganizationRow, StaffMember } from '@ramassa/shared/organization-settings';
 import { OrganizationSettingsPanel } from './organization-settings-panel';
@@ -53,6 +53,44 @@ test('organization settings saves validated defaults and preserves the Catalan g
   expect(view.getByText(/Catalan|languageLocked/)).not.toBeNull();
   fireEvent.submit(view.getByTestId('organization-settings-form'));
   await waitFor(() => expect(props.onSaveOrganization).toHaveBeenCalledTimes(1));
+});
+
+test('save confirmation waits for completion, can be dismissed, and appears again on another save', async () => {
+  let finishSave!: () => void;
+  const onSaveOrganization = mock(
+    () =>
+      new Promise<void>((resolve) => {
+        finishSave = resolve;
+      }),
+  );
+  const { view } = renderPanel({ onSaveOrganization });
+  const form = view.getByTestId('organization-settings-form');
+  fireEvent.submit(form);
+  expect(view.getByRole('button', { name: /Working|working/ }).hasAttribute('disabled')).toBe(true);
+  expect(view.queryByText(/Settings saved|^saved$/)).toBeNull();
+  await act(async () => finishSave());
+  expect(view.getByRole('status').textContent).toMatch(/Settings saved|saved/);
+  fireEvent.click(view.getByRole('button', { name: /Close|close/ }));
+  expect(view.queryByText(/Settings saved|^saved$/)).toBeNull();
+  fireEvent.submit(form);
+  await act(async () => finishSave());
+  expect(view.getByRole('status').textContent).toMatch(/Settings saved|saved/);
+});
+
+test('failed save announces a dismissible error without claiming success', async () => {
+  const { view } = renderPanel({
+    onSaveOrganization: mock(async () => {
+      throw new Error('Save failed');
+    }),
+  });
+  fireEvent.submit(view.getByTestId('organization-settings-form'));
+  await waitFor(() => expect(view.getByRole('alert').textContent).toContain('Save failed'));
+  expect(view.queryByText(/Settings saved|^saved$/)).toBeNull();
+  expect(view.getByRole('button', { name: /Save changes|^save$/ }).hasAttribute('disabled')).toBe(
+    false,
+  );
+  fireEvent.click(view.getByRole('button', { name: /Close|close/ }));
+  expect(view.queryByText('Save failed')).toBeNull();
 });
 
 test('staff removal requires confirmation and document search delegates the typed query', async () => {
