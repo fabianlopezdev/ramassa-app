@@ -10,6 +10,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { tokens } from '@ramassa/shared/tokens';
 
 const viewportStyle = { flex: 1, overflow: 'hidden' } as const;
+// NativeWind's remapped flex class overrides the height behavior's flex: 0.
+// A native style lets KeyboardAvoidingView shrink its container on Android.
+const keyboardContainerStyle = { flex: 1 } as const;
 const choiceGroupHeight =
   2 * (tokens.authChoice.minHeight + tokens.authChoice.shadowBlockOffset) + tokens.spacing.lg;
 
@@ -83,8 +86,14 @@ export function AuthScreen({
         </View>
       ) : null}
       <KeyboardAvoidingView
-        className="flex-1"
-        behavior={process.env.EXPO_OS === 'ios' ? 'padding' : undefined}
+        style={keyboardContainerStyle}
+        behavior={
+          process.env.EXPO_OS === 'ios'
+            ? 'padding'
+            : process.env.EXPO_OS === 'android'
+              ? 'height'
+              : undefined
+        }
       >
         <View className="flex-1">
           <BlurTargetView

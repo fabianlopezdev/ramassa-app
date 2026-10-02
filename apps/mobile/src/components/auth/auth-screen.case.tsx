@@ -10,7 +10,12 @@ let contentStyle: { paddingTop: number; paddingBottom: number };
 const box = ({ children }: { children?: ReactNode }) => createElement('div', null, children);
 mock.module('react-native', () => ({
   View: box,
-  KeyboardAvoidingView: box,
+  KeyboardAvoidingView: ({ children, behavior }: { children?: ReactNode; behavior?: string }) =>
+    createElement(
+      'div',
+      { 'data-testid': 'keyboard-container', 'data-behavior': behavior },
+      children,
+    ),
   useWindowDimensions: () => ({ fontScale: 1 }),
   ScrollView: ({
     children,
@@ -64,10 +69,16 @@ mock.module('@/components/motion/fade-slide-in', () => ({
   }) => createElement('div', { 'data-step': index, 'data-composite': composite }, children),
 }));
 const { AuthScreen } = await import('./auth-screen');
+const originalOS = process.env.EXPO_OS;
+afterAll(() => {
+  if (originalOS === undefined) delete process.env.EXPO_OS;
+  else process.env.EXPO_OS = originalOS;
+});
 afterAll(() => mock.restore());
 const layout = (height: number) => ({ nativeEvent: { layout: { height } } });
 
 test('login title shares the choice heading anchor, while footer stays outside scrolling fields', () => {
+  process.env.EXPO_OS = 'android';
   const view = render(
     createElement(AuthScreen, {
       title: 'Email login',
@@ -83,6 +94,10 @@ test('login title shares the choice heading anchor, while footer stays outside s
   });
   expect(contentStyle).toEqual({ paddingTop: 198, paddingBottom: 120 });
   const action = view.getByRole('button');
+  const keyboardContainer = view.getByTestId('keyboard-container');
+  expect(keyboardContainer.getAttribute('data-behavior')).toBe('height');
+  expect(keyboardContainer.contains(action)).toBe(true);
+  expect(keyboardContainer.contains(view.getByTestId('scroll'))).toBe(true);
   expect(action.closest('footer')).toBeTruthy();
   expect(view.getByTestId('scroll').contains(action)).toBe(false);
   expect(view.getByRole('heading').closest('[data-step]')?.getAttribute('data-step')).toBe('0');
@@ -94,4 +109,7 @@ test('login title shares the choice heading anchor, while footer stays outside s
     footerLayout(layout(160));
   });
   expect(contentStyle).toEqual({ paddingTop: 24, paddingBottom: 184 });
+  process.env.EXPO_OS = 'ios';
+  view.rerender(createElement(AuthScreen, { children: null }));
+  expect(keyboardContainer.getAttribute('data-behavior')).toBe('padding');
 });
