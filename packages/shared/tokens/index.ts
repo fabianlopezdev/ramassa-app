@@ -72,6 +72,8 @@ export const tokens = {
     footerBlurIntensity: 50,
   },
 
+  authChoice: { minHeight: 120, iconSize: 56, shadowInlineOffset: 4, shadowBlockOffset: 6 },
+
   // How wide a player screen's content is allowed to grow (RAPP-80). The player app
   // is the phone app exported to the browser (ADR-008), so without a ceiling a form
   // spans a whole desktop window: a single email field a metre wide. `form` is one

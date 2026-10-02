@@ -35,6 +35,8 @@ export const motionTokens = {
 
   /** The press response every touchable shares. 0.97 reads as felt, not seen. */
   press: { scale: 0.97, opacity: 0.9 },
+  /** Raised card faces sink quickly into their fixed backing, then lift on release. */
+  depthPress: { inMs: 80, outMs: 140 },
 
   /** Content entrance: a short rise plus a fade, staggered down a list. */
   entrance: {

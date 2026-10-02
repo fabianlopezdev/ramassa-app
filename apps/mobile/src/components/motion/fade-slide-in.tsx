@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import {
   cancelAnimation,
   Easing,
+  runOnJS,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
@@ -38,6 +39,8 @@ export interface FadeSlideInProps {
   readonly preset?: 'default' | 'onboarding' | 'logo' | 'fade';
   /** Wait for async content, such as a downloaded logo, before starting. */
   readonly ready?: boolean;
+  /** Fade overlapping faces/shadows as one image, rather than blending each child. */
+  readonly composite?: boolean;
 }
 
 export function FadeSlideIn({
@@ -46,11 +49,14 @@ export function FadeSlideIn({
   className,
   preset = 'default',
   ready = true,
+  composite = false,
 }: FadeSlideInProps) {
   const isReducedMotion = useReducedMotion();
   const progress = useSharedValue(isReducedMotion ? 1 : 0);
 
   const [laidOut, setLaidOut] = useState(false);
+  const [finished, setFinished] = useState(false);
+  const cacheComposite = composite && !isReducedMotion && !finished;
   const entrance = motionTokens.onboardingEntrance;
   const travel = isReducedMotion
     ? 0
@@ -79,14 +85,20 @@ export function FadeSlideIn({
     progress.set(
       withDelay(
         delayMs,
-        withTiming(1, {
-          duration: durationMs,
-          easing: preset === 'default' ? Easing.inOut(Easing.quad) : Easing.out(Easing.cubic),
-        }),
+        withTiming(
+          1,
+          {
+            duration: durationMs,
+            easing: preset === 'default' ? Easing.inOut(Easing.quad) : Easing.out(Easing.cubic),
+          },
+          (completed) => {
+            if (completed && composite) runOnJS(setFinished)(true);
+          },
+        ),
       ),
     );
     return () => cancelAnimation(progress);
-  }, [progress, delayMs, durationMs, preset, ready, laidOut]);
+  }, [progress, delayMs, durationMs, preset, ready, laidOut, composite]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     opacity: progress.get(),
@@ -97,6 +109,9 @@ export function FadeSlideIn({
     <NativeWindAnimatedView
       style={animatedStyle}
       className={className}
+      needsOffscreenAlphaCompositing={cacheComposite}
+      renderToHardwareTextureAndroid={cacheComposite}
+      shouldRasterizeIOS={cacheComposite}
       onLayout={() => setLaidOut(true)}
     >
       {children}
