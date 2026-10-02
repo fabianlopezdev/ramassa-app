@@ -75,7 +75,7 @@ export function AuthRouterCard({
             {label}
           </Text>
           {subline ? (
-            <Text className={`text-start text-sm text-primary ${languageFontClass}`}>
+            <Text className={`text-start text-lg text-primary ${languageFontClass}`}>
               {subline}
             </Text>
           ) : null}

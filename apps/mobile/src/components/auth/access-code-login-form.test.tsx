@@ -53,9 +53,15 @@ beforeEach(() => {
 afterAll(() => mock.restore());
 
 test('masks pasted input and submits the canonical whole access code', async () => {
-  const view = render(createElement(AccessCodeLoginForm));
+  const view = render(
+    createElement(AccessCodeLoginForm, {
+      renderLayout: (fields, action) =>
+        createElement('main', null, fields, createElement('footer', null, action)),
+    }),
+  );
   const input = view.getByRole('textbox', { name: 'accessCodeLabel' });
 
+  expect(view.getByRole('button', { name: 'accessCodeAction' }).closest('footer')).toBeTruthy();
   fireEvent.input(input, { target: { value: 'ABCD EFGH JKMP' } });
   await waitFor(() => expect((input as HTMLInputElement).value).toBe('abcd-efgh-jkmp'));
   fireEvent.click(view.getByRole('button', { name: 'accessCodeAction' }));

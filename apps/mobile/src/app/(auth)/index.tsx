@@ -1,31 +1,28 @@
+import { AuthActionFooter } from '@/components/auth/auth-action-footer';
+import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { LanguageChoiceHeading } from '@/components/auth/language-choice-heading';
 import { LanguageChoiceList } from '@/components/auth/language-choice-list';
 import { shouldRestartForLanguage } from '@/components/auth/language-restart-policy';
 import { PublicOrganizationLogo } from '@/components/branding/public-organization-logo';
 import { FormWidth } from '@/components/layout/content-width';
 import { FadeSlideIn } from '@/components/motion/fade-slide-in';
-import { PressableScale } from '@/components/motion/pressable-scale';
-import { continuousCorners } from '@/lib/continuous-corners';
 import { LANGUAGE_CONFIRMED_RELOAD_KEY } from '@/lib/language-confirmation';
 import { preferencesStorage } from '@/lib/storage';
-import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { reloadAppAsync } from 'expo';
-import { BlurTargetView, BlurView } from 'expo-blur';
+import { BlurTargetView } from 'expo-blur';
 import { useRouter } from 'expo-router';
 import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { I18nManager, Platform, ScrollView, Text, useWindowDimensions, View } from 'react-native';
+import { I18nManager, Platform, ScrollView, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLanguage } from '@ramassa/shared/i18n';
 import { tokens } from '@ramassa/shared/tokens';
 
 const scrollViewportStyle = { flex: 1, overflow: 'hidden' } as const;
-const blurFillStyle = { position: 'absolute', top: 0, bottom: 0, start: 0, end: 0 } as const;
 
 export default function PreAuthLanguageScreen() {
   const { t } = useTranslation(['auth', 'common']);
   const router = useRouter();
-  const languageFontClass = useLanguageFontClass();
   const { language, setLanguage } = useLanguage();
   const [continuing, setContinuing] = useState(false);
   const { fontScale } = useWindowDimensions();
@@ -47,11 +44,6 @@ export default function PreAuthLanguageScreen() {
       paddingBottom: Math.max(footerHeight, estimatedFooterHeight) + tokens.spacing.lg,
     }),
     [insets.top, footerHeight, estimatedFooterHeight],
-  );
-  const footerStyle = useMemo(() => ({ paddingBottom: bottomPadding }), [bottomPadding]);
-  const continueStyle = useMemo(
-    () => ({ ...continuousCorners, height: tokens.tapTarget.recommended * Math.max(1, fontScale) }),
-    [fontScale],
   );
 
   async function continueToLogin() {
@@ -100,40 +92,20 @@ export default function PreAuthLanguageScreen() {
           </FormWidth>
         </ScrollView>
       </BlurTargetView>
-      <View
+      <AuthActionFooter
         testID="language-continue-footer"
-        className="absolute bottom-0 start-0 end-0 overflow-hidden px-lg pt-md"
-        style={footerStyle}
-        onLayout={({ nativeEvent: { layout } }) => setFooterHeight(layout.height)}
+        blurTarget={blurTarget}
+        blurred={contentOverflows}
+        onLayout={({ nativeEvent }) => setFooterHeight(nativeEvent.layout.height)}
       >
-        {contentOverflows ? (
-          <BlurView
-            pointerEvents="none"
-            style={blurFillStyle}
-            tint="light"
-            intensity={tokens.onboarding.footerBlurIntensity}
-            blurTarget={blurTarget}
-            blurMethod="dimezisBlurViewSdk31Plus"
+        <FadeSlideIn preset="fade">
+          <AuthSubmitButton
+            label={t('auth:continueAction')}
+            onPress={() => void continueToLogin()}
+            isLoading={continuing}
           />
-        ) : null}
-        <FormWidth>
-          <FadeSlideIn preset="fade">
-            <PressableScale
-              accessibilityLabel={t('auth:continueAction')}
-              onPress={() => void continueToLogin()}
-              isBusy={continuing}
-              isDisabled={continuing}
-              haptic="tapLight"
-              style={continueStyle}
-              className="min-h-recommended items-center justify-center rounded-md bg-primary px-lg"
-            >
-              <Text className={`text-md font-bold text-white ${languageFontClass}`}>
-                {t('auth:continueAction')}
-              </Text>
-            </PressableScale>
-          </FadeSlideIn>
-        </FormWidth>
-      </View>
+        </FadeSlideIn>
+      </AuthActionFooter>
     </SafeAreaView>
   );
 }

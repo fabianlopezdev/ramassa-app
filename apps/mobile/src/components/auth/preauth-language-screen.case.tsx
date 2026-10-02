@@ -29,6 +29,7 @@ let scrollContentSize: ((width: number, height: number) => void) | undefined;
 mock.module('react-native', () => ({
   View: box,
   Text: box,
+  ActivityIndicator: () => null,
   ScrollView: (
     props: Parameters<typeof box>[0] & {
       onLayout?: typeof scrollLayout;
@@ -76,6 +77,25 @@ mock.module('@/components/motion/pressable-scale', () => ({
       children,
     ),
 }));
+mock.module('@/components/motion/pressable-depth', () => ({
+  PressableDepth: ({
+    children,
+    onPress,
+    accessibilityLabel,
+    testID,
+  }: {
+    children: ReactNode;
+    onPress: () => void;
+    accessibilityLabel: string;
+    testID?: string;
+  }) =>
+    createElement(
+      'button',
+      { onClick: onPress, 'aria-label': accessibilityLabel, 'data-testid': testID },
+      children,
+    ),
+}));
+mock.module('@/components/motion/drawn-checkmark', () => ({ DrawnCheckmark: () => null }));
 mock.module('@/components/error-fallback', () => ({ ErrorFallback: () => null }));
 mock.module('expo-router/stack', () => ({ Stack: () => null }));
 mock.module('@/components/motion/fade-slide-in', () => ({

@@ -1,6 +1,8 @@
 import { Image } from 'expo-image';
 import { cssInterop } from 'nativewind';
 import { tokens } from '@ramassa/shared/tokens';
+import key from '../../../assets/icons/solar/key.svg';
+import letter from '../../../assets/icons/solar/letter.svg';
 import userCircle from '../../../assets/icons/solar/user-circle.svg';
 import userPlus from '../../../assets/icons/solar/user-plus.svg';
 
@@ -10,6 +12,8 @@ const ThemedImage = cssInterop(Image, {
 const icons = {
   'user-plus': userPlus,
   'user-circle': userCircle,
+  letter,
+  key,
 } as const;
 const iconStyle = {
   width: tokens.authChoice.iconSize,
