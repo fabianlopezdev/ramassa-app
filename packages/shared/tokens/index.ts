@@ -73,6 +73,13 @@ export const tokens = {
   },
 
   authChoice: { minHeight: 120, iconSize: 56, shadowInlineOffset: 4, shadowBlockOffset: 6 },
+  languageChoice: { shadowInlineOffset: 2, shadowBlockOffset: 3 },
+  checkmark: {
+    size: 24,
+    strokeWidth: 3,
+    short: { x: 4, y: 11, length: 8, angle: '45deg' },
+    long: { x: 9.66, y: 16.66, length: 15, angle: '-48deg' },
+  },
 
   // How wide a player screen's content is allowed to grow (RAPP-80). The player app
   // is the phone app exported to the browser (ADR-008), so without a ceiling a form

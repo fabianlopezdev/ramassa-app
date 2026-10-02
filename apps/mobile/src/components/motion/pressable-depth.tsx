@@ -1,7 +1,13 @@
 import type { HapticFeedback } from '@/lib/haptics/haptic-policy';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { useCallback, useMemo, type ReactNode } from 'react';
-import { I18nManager, View, type StyleProp, type ViewStyle } from 'react-native';
+import {
+  I18nManager,
+  View,
+  type AccessibilityRole,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import {
   runOnJS,
@@ -17,6 +23,9 @@ interface PressableDepthProps {
   readonly children: ReactNode;
   readonly shadow: ReactNode;
   readonly accessibilityLabel: string;
+  readonly accessibilityRole?: AccessibilityRole;
+  readonly isSelected?: boolean;
+  readonly testID?: string;
   readonly onPress: () => void;
   readonly haptic?: HapticFeedback;
   readonly className?: string;
@@ -32,6 +41,9 @@ export function PressableDepth({
   children,
   shadow,
   accessibilityLabel,
+  accessibilityRole = 'button',
+  isSelected,
+  testID,
   onPress,
   haptic,
   className,
@@ -74,8 +86,13 @@ export function PressableDepth({
     <GestureDetector gesture={tap}>
       <View
         accessible
-        accessibilityRole="button"
+        testID={testID}
+        accessibilityRole={accessibilityRole}
         accessibilityLabel={accessibilityLabel}
+        accessibilityState={
+          isSelected === undefined ? undefined : { selected: isSelected, checked: isSelected }
+        }
+        aria-checked={accessibilityRole === 'radio' ? isSelected : undefined}
         className={className}
         style={style}
       >

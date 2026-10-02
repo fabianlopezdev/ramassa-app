@@ -56,6 +56,7 @@ export const motionTokens = {
   },
   logoEntrance: { durationMs: 700 },
   selection: { initialScale: 0.82, peakScale: 1.04, riseMs: 120, settleMs: 100 },
+  checkDraw: { durationMs: 320, shortStrokeFraction: 0.35 },
 
   /** Validation-error nudge, paired with the translated message, never alone. */
   shake: { offset: 8, cycles: 3 },

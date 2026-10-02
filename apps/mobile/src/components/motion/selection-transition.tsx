@@ -9,7 +9,11 @@ import {
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
-import { motionTokens, resolveDurationMs } from '@ramassa/shared/tokens/motion';
+import {
+  motionTokens,
+  resolveDurationMs,
+  type MotionDurationName,
+} from '@ramassa/shared/tokens/motion';
 import { NativeWindAnimatedView } from './nativewind-animated-view';
 
 /** Shared opacity transition, with an optional small confirmation settle.
@@ -22,12 +26,14 @@ export function SelectionTransition({
   children,
   className,
   style,
+  duration = 'fast',
 }: {
   readonly active: boolean;
   readonly emphasis?: boolean;
   readonly children?: ReactNode;
   readonly className?: string;
   readonly style?: StyleProp<ViewStyle>;
+  readonly duration?: MotionDurationName;
 }) {
   const reduced = useReducedMotion();
   const previous = useRef(active);
@@ -44,7 +50,7 @@ export function SelectionTransition({
       scale.set(1);
       return;
     }
-    opacity.set(withTiming(active ? 1 : 0, { duration: resolveDurationMs('fast', false) }));
+    opacity.set(withTiming(active ? 1 : 0, { duration: resolveDurationMs(duration, false) }));
     if (active && emphasis) {
       const motion = motionTokens.selection;
       scale.set(motion.initialScale);
@@ -60,7 +66,7 @@ export function SelectionTransition({
     } else {
       scale.set(withTiming(1, { duration: resolveDurationMs('fast', false) }));
     }
-  }, [active, emphasis, reduced, opacity, scale]);
+  }, [active, emphasis, reduced, opacity, scale, duration]);
 
   useEffect(
     () => () => {
