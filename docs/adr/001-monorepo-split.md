@@ -5,6 +5,8 @@
 
 > [!note] Amended 2026-07-17 (ADR-016 / RAPP-71): the admin framework is now **TanStack Start**, not Next.js. This ADR's core decision stands; read "Next.js" as "TanStack Start" for the admin app.
 
+> [!note] Amended 2026-10-08 (ADR-026 / RAPP-210): the mobile app also gains native management screens for every role. The web admin stays with full parity.
+
 ## Context
 
 We need both a mobile app (Android-first, iOS secondary) and a web admin panel. The admin panel requires complex data tables, charts, sidebar navigation, and rich form editors that React Native Web handles poorly. Research confirmed that Expo Web is suitable for simple consumer screens but not for admin dashboards.
