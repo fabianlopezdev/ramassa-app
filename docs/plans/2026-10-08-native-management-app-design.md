@@ -64,42 +64,130 @@ if an organization needs it.
 
 ### Permission catalog
 
-A fixed list of small permissions, defined in code and in the database, with a test that keeps the
-two lists equal (the same pattern as the equipment catalog). Each permission is one toggle. First
-draft, to finalize in phase 1:
+Each permission is one toggle and names exactly what it opens. The list is defined in code and in
+the database, with a test that keeps both lists equal. The Team screen groups the toggles by area,
+with one switch to turn on a whole area.
 
-- `attendance.mark`, `attendance.reports`
-- `events.manage`, `announcements.manage`, `knowledge.manage`, `services.manage`,
-  `services.review`, `content.publish`
-- `participants.view`, `participants.view_sensitive` (address, postal code, phone, document
-  number), `participants.notes`, `participants.invite`, `accounts.create`, `participants.deactivate`,
-  `rgpd.erase`
-- `equipment.stock`, `equipment.handover`
-- `messages.use`, `forum.moderate`, `gallery.moderate`, `mentoring.manage`, `feedback.view`,
-  `surveys.manage`, `notifications.send`
-- `referrals.manage`, `entities.manage`
-- `impact.view`, `data.export`, `audit.view`
-- `settings.organization`, `settings.branding`, `settings.documents`, `team.manage` (people,
-  presets, permissions, remote sign-out)
+**Participant data levels.** Participant fields are split into three levels, so each level can be
+given on its own:
+
+| Level     | Fields                                                                                                                                                                                            |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Basic     | (1) first name, (2) last name, (3) photo, (4) preferred language, (5) referring entity, (6) active or inactive, (7) clothing size, (8) shoe size, (9) event sign-ups, (10) attendance history     |
+| Personal  | (1) date of birth, (2) nationality, (3) place of birth, (4) city, (5) document type, (6) has dependants, (7) number of dependants, (8) contact person at the referring entity                     |
+| Sensitive | The four encrypted fields (ADR-004): (1) address, (2) postal code, (3) phone, (4) document number (NIE or passport). Stored as `bytea` and decrypted only for a person who holds this permission. |
+
+**Participants**
+
+| #   | Permission                    | What it allows                                                                           |
+| --- | ----------------------------- | ---------------------------------------------------------------------------------------- |
+| 1   | `participants.view`           | See the participant list and the Basic fields.                                           |
+| 2   | `participants.view_personal`  | Also see the Personal fields.                                                            |
+| 3   | `participants.view_sensitive` | Also see the four Sensitive fields.                                                      |
+| 4   | `participants.notes`          | Read and write internal team notes on a participant.                                     |
+| 5   | `participants.invite`         | Send invitations to new players.                                                         |
+| 6   | `accounts.create`             | Create player accounts for players with no email.                                        |
+| 7   | `participants.deactivate`     | Deactivate and reactivate a player account.                                              |
+| 8   | `rgpd.erase`                  | Handle deletion requests and erase a player's data (RGPD). Always needs a step-up check. |
+
+**Material**
+
+| #   | Permission           | What it allows                                                              |
+| --- | -------------------- | --------------------------------------------------------------------------- |
+| 9   | `equipment.handover` | Record a handover to a player and see the handover history.                 |
+| 10  | `equipment.stock`    | Record arrivals, correct stock counts, and manage the item list (RAPP-170). |
+
+**Attendance**
+
+| #   | Permission           | What it allows                                        |
+| --- | -------------------- | ----------------------------------------------------- |
+| 11  | `attendance.mark`    | Take attendance for a session, online or offline.     |
+| 12  | `attendance.reports` | See attendance reports per event and per participant. |
+
+**Content** (each type has its own pair: "edit" makes and changes drafts and translations;
+"publish" publishes, schedules, unpublishes and deletes)
+
+| #   | Permission                                        | Content it covers                                                      |
+| --- | ------------------------------------------------- | ---------------------------------------------------------------------- |
+| 13  | `announcements.edit` / 14 `announcements.publish` | Announcements on the player home feed.                                 |
+| 15  | `events.edit` / 16 `events.publish`               | Events, trainings, recurring sessions and event categories.            |
+| 17  | `knowledge.edit` / 18 `knowledge.publish`         | Knowledge base articles, and player story submissions sent for review. |
+| 19  | `services.edit` / 20 `services.publish`           | Services in the directory and service categories.                      |
+| 21  | `services.review`                                 | Approve or reject services that partner entities submit.               |
+
+**Community and support**
+
+| #   | Permission           | What it allows                                                                                   |
+| --- | -------------------- | ------------------------------------------------------------------------------------------------ |
+| 22  | `forum.moderate`     | Handle forum reports, hide and restore posts, ban and unban players from the forum.              |
+| 23  | `gallery.moderate`   | Approve, hide and remove gallery photos.                                                         |
+| 24  | `messages.inbox`     | Read and answer the team inbox (conversations between the team and players or entities).         |
+| 25  | `mentoring.manage`   | See mentoring requests, including the private topic details, and write the team's notes on them. |
+| 26  | `feedback.view`      | Read the private feedback players send.                                                          |
+| 27  | `surveys.manage`     | Create, publish and close surveys and polls.                                                     |
+| 28  | `surveys.results`    | See survey answers.                                                                              |
+| 29  | `notifications.send` | Send push notifications to players and manage notification templates.                            |
+
+**Partner entities**
+
+| #   | Permission         | What it allows                                                                                    |
+| --- | ------------------ | ------------------------------------------------------------------------------------------------- |
+| 30  | `referrals.manage` | See and update referrals from entities, including the referred person's phone, notes and updates. |
+| 31  | `entities.manage`  | Add and edit partner entities, their collaborators and invitations.                               |
+
+**Impact and data** (exports come as CSV or Excel; datasets from `packages/shared/data-exports.ts`)
+
+| #   | Permission                      | What it allows                                                                                                          |
+| --- | ------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| 32  | `impact.view`                   | See the impact dashboard and generate impact reports for funders.                                                       |
+| 33  | `export.participants`           | Export the participant list without the four Sensitive fields.                                                          |
+| 34  | `export.participants_sensitive` | Export the participant list with the four Sensitive fields. Needs permission 3 as well, and a step-up check every time. |
+| 35  | `export.attendance`             | Export attendance records.                                                                                              |
+| 36  | `export.events`                 | Export events and sign-ups.                                                                                             |
+| 37  | `audit.view`                    | See the audit log (who saw, changed or exported what, and when).                                                        |
+
+**Settings and team**
+
+| #   | Permission              | What it allows                                                                                               |
+| --- | ----------------------- | ------------------------------------------------------------------------------------------------------------ |
+| 38  | `settings.organization` | Edit the organization's name, contact details and defaults.                                                  |
+| 39  | `settings.branding`     | Edit the logo and colours.                                                                                   |
+| 40  | `settings.documents`    | Manage internal documents (insurance forms, inventories, organizational files).                              |
+| 41  | `team.manage`           | Add and remove team members, edit presets and toggles, sign people out remotely, reset a lost second factor. |
+
+Every team member can use "Preview as player" and their own security settings. Those two need no
+toggle.
+
+To confirm in phase 1: the exact columns of each export dataset, and whether the impact report
+contains any personal data. If a report can contain names, it needs its own permission.
 
 ### Presets
 
-- **Built-in presets** are starting templates: Coach (attendance, events, messages, equipment
-  handover, participants view without sensitive fields), Staff (all day-to-day work, no Data and no
-  Settings), Admin (everything).
-- **Organization presets:** admins create, rename and delete their own presets (for example
-  "Material manager" or "Account creator").
-- **Applying a preset copies its toggles to the person.** The admin can then change single toggles.
-  The person shows "Coach, adjusted" when the toggles differ from the preset. Editing a preset later
-  offers "Apply to the N people who use it". Nobody's access changes without an explicit action.
+- Every organization starts with three presets: **Coach**, **Staff** and **Admin**. They are fully
+  editable. For example, an organization can decide its coaches also need `events.edit`. Each one
+  has a "Restore default" button that returns it to the product default.
+- Admins can also create, rename, edit and delete their own presets (for example "Material manager"
+  or "Account creator").
+- Product defaults (numbers from the catalog above):
+  - **Coach:** 1, 9, 11, 12, 24.
+  - **Staff:** 1, 2, 4 to 7, 9 to 30, 32 (today's staff access: everything except Data and
+    Settings).
+  - **Admin:** all 41.
+  - Phase 1 checks these defaults against today's access rules, so migrated people keep exactly
+    the access they have now.
+- Applying a preset copies its toggles to the person. The admin can then change single toggles. The
+  person shows "Coach, adjusted" when the toggles differ from the preset.
+- Editing a preset asks "Apply to the N people who use it?". The admin can apply it to everyone,
+  to some people, or to nobody. Nobody's access changes without an explicit action, and the audit
+  log records each change.
 
 ### Enforcement and safety
 
 - Every management access rule calls a database helper, `has_permission('<code>')`, wrapped in a
   sub-select so PostgreSQL evaluates it once per query. The helper reads the live permission table,
   so a change takes effect at once, with no new sign-in.
-- Decryption of sensitive fields requires `participants.view_sensitive`, which is off in every
-  preset except Admin.
+- Decryption of the four Sensitive fields requires `participants.view_sensitive`, which is off in
+  every default preset except Admin.
 - An organization always keeps at least one person with `team.manage`.
 - A person can grant only permissions they hold themselves.
 - Every change to permissions or presets goes to the audit log.
