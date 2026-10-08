@@ -43,35 +43,105 @@ web admin (cheapest, but it gives the desktop experience on a phone). A DOM comp
 allowed fallback for one piece that proves very hard to build natively. None is known today: content
 is structured blocks (`packages/shared/structured-content`), which suits a native block editor.
 
-## Roles
+## Account types and permissions
 
-| Role               | Experience in the app                                                                                                                                         |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| player             | The five player tabs, unchanged.                                                                                                                              |
-| coach (new)        | Attendance, events, messages, material handovers. Sees name, photo and sizes. Never sees the encrypted fields (address, postal code, phone, document number). |
-| staff              | Everything except Data and Settings.                                                                                                                          |
-| admin              | Everything.                                                                                                                                                   |
-| entity             | The entity portal: Home, Referrals, Services, Events, Messages.                                                                                               |
-| unknown or missing | A plain "no access" screen. Never the player tabs.                                                                                                            |
+> Revised 2026-10-08 (same day): fixed management levels were replaced by permissions that admins
+> toggle per person, with presets. Fabián's reason: an organization must be able to give someone
+> access to one job only (for example material stock, attendance, or creating user accounts), and
+> the white-label product needs this flexibility.
 
-The coach level is enforced in the database, so it applies on the web admin as well. Admins assign
-levels in Settings.
+### Account types
+
+| Account type       | Experience in the app                                           |
+| ------------------ | --------------------------------------------------------------- |
+| player             | The five player tabs, unchanged.                                |
+| team member        | Only the areas their permissions allow. Replaces staff/admin.   |
+| entity             | The entity portal: Home, Referrals, Services, Events, Messages. |
+| unknown or missing | A plain "no access" screen. Never the player tabs.              |
+
+Entity accounts keep a fixed portal for now. The same permission system can extend to them later
+if an organization needs it.
+
+### Permission catalog
+
+A fixed list of small permissions, defined in code and in the database, with a test that keeps the
+two lists equal (the same pattern as the equipment catalog). Each permission is one toggle. First
+draft, to finalize in phase 1:
+
+- `attendance.mark`, `attendance.reports`
+- `events.manage`, `announcements.manage`, `knowledge.manage`, `services.manage`,
+  `services.review`, `content.publish`
+- `participants.view`, `participants.view_sensitive` (address, postal code, phone, document
+  number), `participants.notes`, `participants.invite`, `accounts.create`, `participants.deactivate`,
+  `rgpd.erase`
+- `equipment.stock`, `equipment.handover`
+- `messages.use`, `forum.moderate`, `gallery.moderate`, `mentoring.manage`, `feedback.view`,
+  `surveys.manage`, `notifications.send`
+- `referrals.manage`, `entities.manage`
+- `impact.view`, `data.export`, `audit.view`
+- `settings.organization`, `settings.branding`, `settings.documents`, `team.manage` (people,
+  presets, permissions, remote sign-out)
+
+### Presets
+
+- **Built-in presets** are starting templates: Coach (attendance, events, messages, equipment
+  handover, participants view without sensitive fields), Staff (all day-to-day work, no Data and no
+  Settings), Admin (everything).
+- **Organization presets:** admins create, rename and delete their own presets (for example
+  "Material manager" or "Account creator").
+- **Applying a preset copies its toggles to the person.** The admin can then change single toggles.
+  The person shows "Coach, adjusted" when the toggles differ from the preset. Editing a preset later
+  offers "Apply to the N people who use it". Nobody's access changes without an explicit action.
+
+### Enforcement and safety
+
+- Every management access rule calls a database helper, `has_permission('<code>')`, wrapped in a
+  sub-select so PostgreSQL evaluates it once per query. The helper reads the live permission table,
+  so a change takes effect at once, with no new sign-in.
+- Decryption of sensitive fields requires `participants.view_sensitive`, which is off in every
+  preset except Admin.
+- An organization always keeps at least one person with `team.manage`.
+- A person can grant only permissions they hold themselves.
+- Every change to permissions or presets goes to the audit log.
+- The second factor is required for every team member with any permission, and for entities.
+
+### Migration
+
+The current `staff` and `admin` roles become team members with the Staff and Admin presets. Every
+RLS policy that checks `current_app_role() in ('staff', 'admin')` moves to `has_permission`. This
+is the largest piece of phase 1, and the role matrix test turns into a permission matrix test.
+
+## Languages
+
+- **Staff side** (the web dashboard, team member screens and entity screens in the app): Catalan,
+  Spanish and English. Catalan stays the default.
+- **Players:** Catalan, Spanish, English, Arabic and Farsi, with full right-to-left support, as in
+  ADR-006.
+- **Player content** written by staff (announcements, events, knowledge, services) keeps all five
+  languages. The editor keeps five language tabs.
+- A team member whose saved language is Arabic or Farsi sees the staff side in Catalan, and can pick
+  Spanish or English.
 
 ## Navigation
+
+Menus are built from the person's permissions. A person with one permission gets that one screen
+and no empty tabs.
 
 - **Player:** five tabs, as today.
 - **Entity:** Home (impact on the women they referred), Referrals, Services, Events, Messages. This
   matches `ENTITY_NAV_ITEMS` in `apps/admin/src/lib/nav-items.ts`.
-- **Staff and admin (phone):** five tabs.
-  - **Today:** actions that need doing now. Today's sessions with one tap to take attendance, unread
-    messages, services waiting for review, forum reports, mentoring requests, deletion requests.
+- **Team member (phone), up to five tabs:**
+  - **Today:** actions that need doing now and that the person is allowed to do. For example
+    today's sessions with one tap to take attendance, unread messages, services waiting for review,
+    forum reports, mentoring requests, deletion requests.
   - **Participants:** search, filters, profile card, notes, material handovers, invites.
   - **Content:** announcements, events, knowledge base, services, review queue.
   - **Messages.**
-  - **More:** impact dashboard, forum moderation, mentoring, feedback, notifications, surveys, player
-    preview, my security settings. Admins also see Data and Settings.
-- **Coach (phone):** Today (sessions and messages only), Events, Messages, More (handovers, security).
-- **Tablet (all management roles):** a sidebar with every area and list-and-detail split views.
+  - **More:** impact dashboard, stock, forum moderation, mentoring, feedback, notifications,
+    surveys, player preview, data, settings, team, my security settings.
+  - Tabs with no allowed area are hidden. With one or two areas allowed, the app shows them as a
+    simple home screen with large buttons.
+- **Tablet:** a sidebar with every allowed area and list-and-detail split views.
 
 ## Screen patterns
 
@@ -92,29 +162,29 @@ levels in Settings.
   (attendance, handovers, quick notes) save offline and sync later. Other changes need a connection,
   and the app says so before the user starts.
 - **House rules stay:** 56dp touch targets, icons with labels, full RTL, five languages, no technical
-  error messages, WCAG AA.
+  error messages, WCAG AA. Player screens keep five languages and RTL; staff screens use CA, ES, EN.
 
 ## Authentication and authorization
 
 - **Players:** email code as today, plus an optional app lock.
-- **Second factor (TOTP)** with Supabase MFA, required for coach, staff, admin and entity. Every
-  management access rule requires `aal2`. Because the rule is in the database, the web admin ships
+- **Second factor (TOTP)** with Supabase MFA, required for every team member and every entity
+  account. Every management access rule requires `aal2`. Because the rule is in the database, the web admin ships
   the same enrolment and challenge in the same release. Staff enrol at their first sign-in after the
   release.
-- **Recovery:** an admin resets a lost factor. Email alone never resets it.
-- **Step-up checks:** device biometrics or passcode before risky actions. For RGPD deletion, role and
-  level changes, new staff accounts and exports, the server also requires a TOTP verification from
+- **Recovery:** a person with `team.manage` resets a lost factor. Email alone never resets it.
+- **Step-up checks:** device biometrics or passcode before risky actions. For RGPD deletion, permission and
+  preset changes, new accounts and exports, the server also requires a TOTP verification from
   the last few minutes, so the check holds on the web too.
 - **Remote sign-out:** each profile gets a "sessions valid after" time. The database role helpers
   deny any session issued before it, so the sign-out takes effect at once on every device. This
   follows the immediate-deny pattern of ADR-025.
 - **App lock:** optional for every role, stored on the device, locks after a set time in the
-  background. On by default for management roles, and the user can turn it off.
+  background. On by default for team members, and the user can turn it off.
 
 ## Player preview
 
 Each organization has a preview player account with no personal data. "Preview as player" calls a
-server function that confirms the caller's management role and `aal2`, then opens the preview session
+server function that confirms the caller is a team member with `aal2`, then opens the preview session
 in a separate read-only mode. The staff session is untouched. Staff never see a real player's private
 data (messages, profile, sign-ups, drafts) through the app. Tracked as RAPP-171.
 
@@ -126,11 +196,12 @@ data (messages, profile, sign-ups, drafts) through the app. Tracked as RAPP-171.
   review queue).
 - **Offline writes:** one shared outbox, generalised from the attendance sync worker, persisted in
   encrypted storage, retried on reconnect, with an idempotency key on every change.
-- **Session, role, branding:** React Context, as today.
+- **Session, account type, permissions, branding:** React Context. Permissions reload on a Realtime
+  change to the person's permission rows, so menus update at once.
 - **Screen state and drafts:** local state; drafts per item in encrypted storage. No global store
   library until a real cross-screen need appears.
 - **Sensitive data:** queries that return decrypted personal fields stay in memory and are excluded
-  from the persisted cache. The cache is wiped on sign-out, remote sign-out and role change.
+  from the persisted cache. The cache is wiped on sign-out, remote sign-out and any permission change.
 
 ## Errors
 
@@ -141,31 +212,34 @@ visible with a plain message and a retry button, and is never dropped silently.
 
 A screen is done only when all of these pass:
 
-- Role matrix: player, coach, staff, admin, entity and unknown against every route, in the app and on
-  the web.
-- pgTAP for the coach level, `aal2`, sessions valid after, and the preview account.
+- Permission matrix: each permission granted alone, against every route and every RLS policy, in
+  the app and on the web. Plus player, entity and unknown account types, and the built-in presets.
+- pgTAP for `has_permission`, the safety rules (last `team.manage` holder, no granting above your
+  own permissions, audit log), `aal2`, sessions valid after, and the preview account.
 - Unit tests for every new shared module and outbox behavior.
-- Device checks: low-end Android phone, iPhone, iPad, Android tablet; Arabic RTL; offline, then back
-  online.
-- Playwright for the web admin changes (TOTP, coach level, remote sign-out).
+- Device checks: low-end Android phone, iPhone, iPad, Android tablet; Arabic RTL on player screens;
+  offline, then back online.
+- Playwright for the web admin changes (TOTP, permissions and presets screens, remote sign-out).
 - Sentry checked clean for the QA window.
 
 ## Delivery
 
 Each phase ships phone and tablet together.
 
-1. Security foundation: route groups, coach level, TOTP on app and web, remote sign-out, app lock,
-   step-up, cache rules, outbox, Realtime refresh.
+1. Security foundation: route groups, the permission catalog with presets and per-person toggles
+   (database, RLS migration and the web admin Team screen), TOTP on app and web, remote sign-out,
+   app lock, step-up, cache rules, outbox, Realtime refresh, staff-side languages cut to CA, ES, EN.
 2. Today and field work: staff tabs and tablet shell, Today, attendance, messages, material
    handovers with stock (RAPP-170), quick participant lookup.
 3. Participants: list, profile, notes, activity, equipment history, invites, accounts, deletion
    requests.
 4. Content: announcements, events, knowledge, services, review queue, block editor, player preview.
 5. Community and support: forum and gallery moderation, mentoring, feedback, surveys, notifications.
-6. Impact dashboard, reports and exports, Data and Settings.
+6. Impact dashboard, reports and exports, Data and Settings, the native Team screen (people,
+   presets, toggles).
 7. Entity experience.
 
 ## Out of scope
 
-- Custom per-organization permission sets. Three fixed management levels plus entity cover the need.
+- Permission toggles for entity accounts (possible later with the same system).
 - Removing or reducing the web admin.
