@@ -1,0 +1,48 @@
+[
+  {
+    "issue": "RAPP-220",
+    "package": "braces",
+    "installedVersion": "3.0.3",
+    "created": "2026-10-09",
+    "reviewBy": "2026-11-08",
+    "exposure": "build-time only",
+    "dependencyPath": [
+      "apps/mobile and apps/admin (dev tooling)",
+      "metro-file-map@0.87.1, @expo/metro-file-map@58.0.3, fast-glob@3.3.3 (tailwindcss@3.4.19, shadcn@4.13.1)",
+      "micromatch@4.0.8",
+      "braces@3.0.3"
+    ],
+    "reachableSurface": "Metro, Tailwind and the shadcn CLI expand glob patterns from this repository's own configuration while building or scaffolding. Ramassa never passes user input to braces. On 2026-10-09 the iOS export source map (4,319 modules) and the admin Vite build contained no braces module.",
+    "advisories": [
+      {
+        "id": "GHSA-vfj7-8cjw-p6xm",
+        "url": "https://github.com/advisories/GHSA-vfj7-8cjw-p6xm"
+      }
+    ],
+    "upstreamStatus": "Advisory published 2026-09-18 for braces <= 3.0.3 with no first patched version. The latest release is 3.0.3 (2024-05-21).",
+    "removalCondition": "Remove when braces publishes a patched release (then add an exact override) or when micromatch, Metro and fast-glob no longer depend on a vulnerable braces."
+  },
+  {
+    "issue": "RAPP-220",
+    "package": "node-forge",
+    "installedVersion": "1.4.0",
+    "created": "2026-10-09",
+    "reviewBy": "2026-11-08",
+    "exposure": "build-time only",
+    "dependencyPath": [
+      "apps/mobile",
+      "expo@58.0.0",
+      "@expo/cli@58.0.9 and @expo/code-signing-certificates@0.0.6",
+      "node-forge@1.4.0"
+    ],
+    "reachableSurface": "The Expo CLI uses node-forge on developer machines for local certificates and update code signing. The shipped app does not include it. On 2026-10-09 the iOS export source map (4,319 modules) and the admin Vite build contained no node-forge module.",
+    "advisories": [
+      {
+        "id": "GHSA-86w9-cpqp-85rv",
+        "url": "https://github.com/advisories/GHSA-86w9-cpqp-85rv"
+      }
+    ],
+    "upstreamStatus": "Advisory published 2026-09-03 for node-forge <= 1.4.0 with no first patched version. The latest release is 1.4.0 (2026-03-24).",
+    "removalCondition": "Remove when node-forge publishes a patched release (then add an exact override) or when the Expo CLI no longer depends on a vulnerable node-forge."
+  }
+]
