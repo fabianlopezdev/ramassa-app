@@ -205,6 +205,25 @@ export type InternalDocument = z.infer<typeof internalDocumentSchema>;
 
 type Client = SupabaseClient<Database>;
 
+const publicOrganizationBrandingSchema = z.object({
+  primary_color: hexColorSchema,
+  secondary_color: hexColorSchema,
+});
+
+export type PublicOrganizationBranding = z.infer<typeof publicOrganizationBrandingSchema>;
+
+export async function fetchPublicOrganizationBranding(
+  client: Client,
+  organizationSlug: string,
+): Promise<PublicOrganizationBranding | null> {
+  const { data, error } = await client.rpc('get_public_organization_branding', {
+    organization_slug: organizationSlug,
+  });
+  if (error) databaseFailure(error.message);
+  const rows = z.array(publicOrganizationBrandingSchema).max(1).parse(data);
+  return rows[0] ?? null;
+}
+
 function databaseFailure(message: string): never {
   throw new AppError('DB-1', { message });
 }

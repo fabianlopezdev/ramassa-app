@@ -8,7 +8,7 @@ import { DevButton, DevButtonRow, DevNote, DevSection } from './dev-ui';
  * is short today because Phase 1 shipped shells only (RAPP-16); every feature
  * issue from Phase 3 on adds its screens here.
  *
- * `(auth)/login` is reachable even while signed in: the root navigator's
+ * `(auth)` (the language screen) is reachable even while signed in: the root navigator's
  * `Stack.Protected` guard will bounce it straight back, which is itself the
  * fastest way to check the guard still works.
  */
@@ -18,7 +18,7 @@ const DEV_ROUTES: readonly { readonly label: string; readonly href: Href }[] = [
   { label: 'Community', href: '/(app)/(tabs)/community' },
   { label: 'Services', href: '/(app)/(tabs)/services' },
   { label: 'Profile', href: '/(app)/(tabs)/profile' },
-  { label: 'Login', href: '/(auth)/login' },
+  { label: 'Login', href: '/(auth)' },
   { label: 'Sitemap', href: '/_sitemap' },
 ];
 

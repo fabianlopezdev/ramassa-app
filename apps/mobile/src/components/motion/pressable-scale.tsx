@@ -35,12 +35,10 @@ const styles = StyleSheet.create({
  * app targets is most of the time. Only `transform` and `opacity` animate, so
  * the GPU does the work and no layout pass runs.
  *
- * Built against Gesture Handler 2.32, the version Expo SDK 57 aligns to. 3.1.0
- * was tried and reverted: its native module intercepts React Native's touch
- * responder system, so NO touchable in the app fires, including a plain RN
- * `Pressable` with no gesture-handler code in the tree at all. See RAPP-86 for
- * the reproduction matrix. Nothing about that failure is visible to a type
- * check or a test; it only shows on a device.
+ * Expo SDK 58 aligns to Gesture Handler 3.2.1. Verify taps on a device after
+ * native upgrades: Gesture Handler 3.1.0 previously broke the touch responder
+ * system on SDK 57, including plain RN `Pressable` controls. See RAPP-86 for
+ * that reproduction matrix; type checks alone cannot catch this regression.
  *
  * The shared value stores press STATE (0 or 1) and the visuals are interpolated
  * from it, so the state stays the single source of truth. `.get()`/`.set()` are

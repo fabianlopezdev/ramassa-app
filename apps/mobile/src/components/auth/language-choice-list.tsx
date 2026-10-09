@@ -1,17 +1,32 @@
-import { PressableScale } from '@/components/motion/pressable-scale';
+import { DrawnCheckmark } from '@/components/motion/drawn-checkmark';
+import { FadeSlideIn } from '@/components/motion/fade-slide-in';
+import { PressableDepth } from '@/components/motion/pressable-depth';
+import { SelectionTransition } from '@/components/motion/selection-transition';
 import { continuousCorners } from '@/lib/continuous-corners';
-import { Text, View } from 'react-native';
+import { useMemo } from 'react';
+import { Text, useWindowDimensions, View } from 'react-native';
 import {
   getLanguageFontFamilyKey,
   LANGUAGE_NATIVE_NAMES,
   SUPPORTED_LANGUAGES,
   type SupportedLanguage,
 } from '@ramassa/shared/i18n';
+import { tokens } from '@ramassa/shared/tokens';
 
 const ROW_CLASS =
-  'min-h-recommended w-full flex-row items-center justify-between rounded-md border border-neutral-300 bg-white px-lg py-md';
-const SELECTED_ROW_CLASS =
-  'min-h-recommended w-full flex-row items-center justify-between rounded-md border-2 border-primary bg-primary/10 px-lg py-md';
+  'relative w-full flex-row items-center justify-between overflow-hidden rounded-lg border border-primary px-lg';
+const wrapperStyle = {
+  paddingEnd: tokens.languageChoice.shadowInlineOffset,
+  paddingBottom: tokens.languageChoice.shadowBlockOffset,
+} as const;
+const shadowStyle = {
+  ...continuousCorners,
+  position: 'absolute',
+  top: tokens.languageChoice.shadowBlockOffset,
+  start: tokens.languageChoice.shadowInlineOffset,
+  end: 0,
+  bottom: 0,
+} as const;
 const LABEL_CLASS_BY_FAMILY = {
   sans: 'font-sans',
   arabic: 'font-arabic',
@@ -24,41 +39,57 @@ export interface LanguageChoiceListProps {
 }
 
 export function LanguageChoiceList({ selectedLanguage, onChoose }: LanguageChoiceListProps) {
+  const { fontScale } = useWindowDimensions();
+  const rowStyle = useMemo(
+    () => ({
+      ...continuousCorners,
+      height:
+        tokens.onboarding.languageRowHeight * Math.max(1, fontScale) -
+        tokens.languageChoice.shadowBlockOffset,
+    }),
+    [fontScale],
+  );
   return (
     <View className="w-full gap-sm">
-      {SUPPORTED_LANGUAGES.map((language) => {
+      {SUPPORTED_LANGUAGES.map((language, index) => {
         const nativeName = LANGUAGE_NATIVE_NAMES[language];
         const isSelected = language === selectedLanguage;
         const fontClass = LABEL_CLASS_BY_FAMILY[getLanguageFontFamilyKey(language)];
 
         return (
-          <PressableScale
-            key={language}
-            testID={`auth-language-${language}`}
-            accessibilityLabel={nativeName}
-            accessibilityRole="radio"
-            isSelected={isSelected}
-            onPress={() => void onChoose(language)}
-            haptic="selection"
-            style={continuousCorners}
-            className={isSelected ? SELECTED_ROW_CLASS : ROW_CLASS}
-          >
-            <Text
-              accessibilityLanguage={language}
-              className={`text-start text-lg font-medium text-neutral-900 ${fontClass}`}
+          <FadeSlideIn key={language} index={index} preset="onboarding" composite>
+            <PressableDepth
+              testID={`auth-language-${language}`}
+              accessibilityLabel={nativeName}
+              accessibilityRole="radio"
+              isSelected={isSelected}
+              onPress={() => void onChoose(language)}
+              haptic="selection"
+              style={wrapperStyle}
+              className="relative w-full"
+              faceStyle={rowStyle}
+              faceClassName={`${ROW_CLASS} bg-white`}
+              inlineOffset={tokens.languageChoice.shadowInlineOffset}
+              blockOffset={tokens.languageChoice.shadowBlockOffset}
+              shadow={
+                <View pointerEvents="none" className="rounded-lg bg-primary" style={shadowStyle} />
+              }
             >
-              {nativeName}
-            </Text>
-            {isSelected ? (
+              <SelectionTransition
+                active={isSelected}
+                duration="base"
+                className="absolute inset-0 bg-secondary"
+                style={continuousCorners}
+              />
               <Text
-                accessibilityElementsHidden
-                importantForAccessibility="no-hide-descendants"
-                className="text-xl font-bold text-primary"
+                accessibilityLanguage={language}
+                className={`text-start text-lg font-medium text-primary ${fontClass}`}
               >
-                {String.fromCodePoint(0x2713)}
+                {nativeName}
               </Text>
-            ) : null}
-          </PressableScale>
+              <DrawnCheckmark active={isSelected} />
+            </PressableDepth>
+          </FadeSlideIn>
         );
       })}
     </View>

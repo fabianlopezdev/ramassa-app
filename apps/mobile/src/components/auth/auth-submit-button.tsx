@@ -1,32 +1,11 @@
-/**
- * The primary action button for the auth screens (RAPP-13): a 56dp target, a
- * busy state that disables and shows a spinner (so a slow network can't produce
- * a double submit), and an accessible label + state for screen readers.
- *
- * Retrofitted to `PressableScale` in RAPP-70: press feedback and the haptic
- * vocabulary now come from the shared primitive rather than an `active:opacity`
- * class, so every touchable in the app responds identically and respects
- * reduce-motion. The disabled TREATMENT stays here: that is styling, not motion.
- */
+/** Dashboard-themed primary action shared by language selection and login forms. */
 
 import { PressableScale } from '@/components/motion/pressable-scale';
-import { composeContinuousViewStyle, composeViewStyles } from '@/lib/continuous-corners';
+import { continuousCorners } from '@/lib/continuous-corners';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { useMemo } from 'react';
+import { ActivityIndicator, Text, useWindowDimensions, View } from 'react-native';
 import { tokens } from '@ramassa/shared/tokens';
-
-const styles = StyleSheet.create({
-  button: {
-    minHeight: tokens.tapTarget.recommended,
-    justifyContent: 'center',
-    borderRadius: tokens.radius.md,
-    backgroundColor: tokens.colors.primary.DEFAULT,
-    paddingHorizontal: tokens.spacing.lg,
-  },
-  blocked: { opacity: 0.6 },
-});
-const buttonStyle = composeContinuousViewStyle(styles.button);
-const blockedButtonStyle = composeViewStyles(buttonStyle, styles.blocked);
 
 export interface AuthSubmitButtonProps {
   readonly label: string;
@@ -44,6 +23,14 @@ export function AuthSubmitButton({
   testID,
 }: AuthSubmitButtonProps) {
   const languageFontClass = useLanguageFontClass();
+  const { fontScale } = useWindowDimensions();
+  const buttonStyle = useMemo(
+    () => ({
+      ...continuousCorners,
+      minHeight: tokens.tapTarget.recommended * Math.max(1, fontScale),
+    }),
+    [fontScale],
+  );
   const isBusy = Boolean(isLoading);
   const isInteractionBlocked = Boolean(disabled) || isBusy;
 
@@ -55,14 +42,16 @@ export function AuthSubmitButton({
       isDisabled={Boolean(disabled)}
       isBusy={isBusy}
       testID={testID}
-      style={isInteractionBlocked ? blockedButtonStyle : buttonStyle}
+      style={buttonStyle}
       className={`min-h-recommended justify-center rounded-md bg-primary px-lg ${
         isInteractionBlocked ? 'opacity-60' : ''
       }`}
     >
       <View className="flex-row items-center justify-center gap-sm">
         {isBusy ? <ActivityIndicator accessible={false} color={tokens.colors.white} /> : null}
-        <Text className={`text-lg font-bold text-white ${languageFontClass}`}>{label}</Text>
+        <Text className={`text-center text-md font-bold text-white ${languageFontClass}`}>
+          {label}
+        </Text>
       </View>
     </PressableScale>
   );

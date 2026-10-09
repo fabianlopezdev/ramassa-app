@@ -22,7 +22,7 @@ bunx supabase studio                           # Local DB admin
 
 ## Tech Stack
 
-- **Mobile**: Expo SDK 57 / React Native / Expo Router
+- **Mobile**: Expo SDK 58 / React Native / Expo Router
 - **Admin web**: TanStack Start (Vite, TanStack Router file routes) + shadcn/ui, deployed natively to Cloudflare Workers via `@cloudflare/vite-plugin` (ADR-016; replaced Next.js + OpenNext on 2026-07-17)
 - **Backend**: Supabase (EU region Frankfurt) — PostgreSQL, Auth, Storage, Realtime, Edge Functions
 - **Styling**: NativeWind (Tailwind CSS for React Native)
@@ -75,7 +75,7 @@ bunx supabase studio                           # Local DB admin
 9. **Dev DB is local Supabase (Docker)**, prod is Frankfurt. Never develop or run QA against prod. Every migration ships with RLS denial tests, seeds, factories, and RGPD-deletion coverage in the same issue.
 10. **Docs at latest versions**: each issue pins versions pulled at authoring; verify against current official docs at execution.
 11. **Skills are preventive, not corrective (2026-07-16).** Every issue carries a "Skills to apply" section; consult those skills BEFORE writing the code they govern. The issue's list is authoritative; the Skills table below is the standing matrix behind those lists. RAPP-65 and the closure sweeps VERIFY; they are never the first application.
-12. **Platform baseline: Expo SDK 57, React 19, React New Architecture (`newArchEnabled: true`). Never opt out.** Reanimated 4 requires it; check New-Architecture compatibility before adding any native library.
+12. **Platform baseline: Expo SDK 58, React 19, React New Architecture (mandatory in SDK 58). Never opt out.** Reanimated 4 requires it; check New-Architecture compatibility before adding any native library.
 13. **Admin framework is TanStack Start (ADR-016, 2026-07-17) and its work is OFFICIAL-DOCS-FIRST (hard rule).** Any issue implementing TanStack Start or TanStack Router code MUST consult https://tanstack.com/start/latest and https://tanstack.com/router/latest (context7 or live fetch) at execution time, BEFORE writing the code, and verify every API against the installed version. The framework is young and moving; training-data knowledge is presumed stale. Where SPEC.md still says "Next.js" for the admin, read TanStack Start; OpenNext is deleted from the plan.
 14. **Premium feel is a system (RAPP-70).** All microinteractions come from the shared primitives (PressableScale, FadeSlideIn, SuccessPop, ShakeOnError, SkeletonPulse) and the haptic vocabulary in `packages/shared`; motion timings only from motion tokens. Per-feature bar: press feedback on every touchable, entrance animation on content lists, success haptic + animation on completed primary actions, shake + warning haptic on validation errors, skeletons not spinners. Everything respects reduce-motion. No ad-hoc Animated/Reanimated code in feature screens.
 15. **Only the skills below exist for this project (2026-07-17, RAPP-72).** This is the complete, issue-enforced set. Do not reach for other skills (lifecycle/process skills included) unless a vault issue adds them first.

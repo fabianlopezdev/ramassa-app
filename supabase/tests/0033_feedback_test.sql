@@ -2,6 +2,10 @@
 begin;
 select plan(19);
 
+-- Monthly aggregation should not depend on when this local database was seeded.
+update public.feedback_submissions set created_at = now()
+where org_id = '5eed0000-0000-4000-8000-000000000000' and type = 'activity_proposal';
+
 select has_table('public', 'feedback_submissions', 'feedback submissions exist');
 select is(
   (select disposition || ':' || participant_column

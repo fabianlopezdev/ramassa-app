@@ -35,6 +35,8 @@ export const motionTokens = {
 
   /** The press response every touchable shares. 0.97 reads as felt, not seen. */
   press: { scale: 0.97, opacity: 0.9 },
+  /** Raised card faces sink quickly into their fixed backing, then lift on release. */
+  depthPress: { inMs: 80, outMs: 140 },
 
   /** Content entrance: a short rise plus a fade, staggered down a list. */
   entrance: {
@@ -43,6 +45,18 @@ export const motionTokens = {
     /** Ceiling on the stagger so a long list does not crawl in for seconds. */
     maxStaggerMs: 240,
   },
+
+  /** Visible onboarding choreography, independent of image download time. */
+  onboardingEntrance: {
+    durationMs: 600,
+    translateY: 24,
+    staggerMs: 120,
+    leadInMs: 180,
+    maxStaggerMs: 480,
+  },
+  logoEntrance: { durationMs: 700 },
+  selection: { initialScale: 0.82, peakScale: 1.04, riseMs: 120, settleMs: 100 },
+  checkDraw: { durationMs: 320, shortStrokeFraction: 0.35 },
 
   /** Validation-error nudge, paired with the translated message, never alone. */
   shake: { offset: 8, cycles: 3 },

@@ -5,6 +5,9 @@
   "compatibility_date": "2026-07-23",
   // Sentry needs AsyncLocalStorage, which rides on nodejs_compat.
   "compatibility_flags": ["nodejs_compat"],
+  // Physical development phones must reach the same media server as the dashboard.
+  // This affects wrangler dev only, not deployed Workers.
+  "dev": { "ip": "0.0.0.0", "port": 8787 },
   "observability": {
     "enabled": true,
     "head_sampling_rate": 1,

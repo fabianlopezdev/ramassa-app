@@ -6,9 +6,48 @@ Mobile app + web admin panel for AE Ramassa's inclusive women's football program
 
 ```bash
 bun install                    # Install all workspace dependencies
-bunx expo start                # Mobile dev server
-bun run dev:admin              # Admin web dev server
+bun run mobile:start           # Mobile dev server (apps/mobile)
+bun run admin:dev              # Admin web dev server
 ```
+
+## Ramassa iOS simulator (SDK 58)
+
+Use the dedicated **Ramassa — iPhone 18 Pro** simulator on iOS 27. This leaves
+simulators used by Ottermates and other apps alone. From the repository root:
+
+```bash
+bun run mobile:ios:ramassa      # Build and launch on the dedicated simulator
+bun run mobile:start           # Start Metro separately when the app is installed
+```
+
+On a new Mac, create the named simulator once:
+
+```bash
+xcrun simctl create 'Ramassa — iPhone 18 Pro' com.apple.CoreSimulator.SimDeviceType.iPhone-18-Pro com.apple.CoreSimulator.SimRuntime.iOS-27-0
+```
+
+The September 30 SDK 58 upgrade uses Expo 58.0.0 from the `next` release channel,
+React 19.3.0, and React Native 0.88.0-rc.3. SDK 58 is still in its beta period.
+Regenerate native projects from `apps/mobile` after changing native dependencies;
+Expo's SDK 58 template provides the scene lifecycle required by iOS 27.
+
+React and React DOM are aligned across the workspaces to avoid duplicate hook
+runtimes. The root React Native override keeps Bun's peer resolution on the
+SDK's release candidate instead of installing a second stable native runtime.
+NativeWind 4 still augments React Native's legacy declaration interfaces, so the
+mobile TypeScript config uses the documented `react-native-legacy-deep-imports`
+compatibility condition. Remove it when migrating to a styling version compatible
+with React Native's strict API; React Native removes this condition after 0.88.
+
+The existing saved RTL-direction fix is ported to `expo-localization@58.0.2`.
+Autolinking builds that module from source so the patch is included in the app.
+The Sentry 7.11 compatibility patch removes an unused import of `RCTTextView.h`,
+a legacy React Native header absent from 0.88; replay masking still uses its
+existing class-name strings. Nitro Modules is upgraded to 0.37.1, which implements
+the JSI initialization callback required by React Native 0.87 and later.
+
+References: [SDK 58 release notes](https://expo.dev/changelog/sdk-58-beta),
+[Router migration](https://docs.expo.dev/router/migrate/sdk-57-to-58/).
 
 ## Local Development (Supabase)
 
@@ -50,7 +89,7 @@ migrations. (Not automated: it needs the account owner's login and billing.)
 
 ```
 apps/
-  mobile/          Expo SDK 55+ — player mobile app + web export
+  mobile/          Expo SDK 58 — player mobile app + web export
   admin/           TanStack Start (Vite, file routes) — staff admin + entity portal
 packages/
   shared/          Types, hooks, i18n, Supabase client, design tokens

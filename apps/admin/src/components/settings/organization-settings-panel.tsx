@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { mediaWorkerUrl } from '@/lib/media-worker';
+import { CircleAlert, CircleCheck, X } from 'lucide-react';
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AppError } from '@ramassa/shared/errors';
@@ -111,7 +112,7 @@ export function OrganizationSettingsPanel({
 }: OrganizationSettingsPanelProps) {
   const { t } = useTranslation('settings');
   const [pending, setPending] = useState<PendingAction | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
+  const [message, setMessage] = useState<{ kind: 'success' | 'error'; text: string } | null>(null);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [query, setQuery] = useState(documentQuery);
   const [removeProfileId, setRemoveProfileId] = useState<string | null>(null);
@@ -143,11 +144,12 @@ export function OrganizationSettingsPanel({
     setMessage(null);
     try {
       await operation();
-      setMessage(success ?? null);
+      setMessage(success ? { kind: 'success', text: success } : null);
     } catch (error) {
-      setMessage(
-        error instanceof Error && error.message.length > 0 ? error.message : t('actionError'),
-      );
+      setMessage({
+        kind: 'error',
+        text: error instanceof Error && error.message.length > 0 ? error.message : t('actionError'),
+      });
     } finally {
       setPending(null);
     }
@@ -178,7 +180,10 @@ export function OrganizationSettingsPanel({
       defaultLanguage,
     });
     if (!parsed.success) {
-      setMessage(parsed.error.issues.map((issue) => issue.message).join(' '));
+      setMessage({
+        kind: 'error',
+        text: parsed.error.issues.map((issue) => issue.message).join(' '),
+      });
       return;
     }
     void run(
@@ -277,11 +282,35 @@ export function OrganizationSettingsPanel({
         <p className="text-sm leading-6 text-muted-foreground">{t('intro')}</p>
       </header>
 
-      {message ? (
-        <p role="status" className="rounded-lg border p-3 text-sm">
-          {message}
-        </p>
-      ) : null}
+      <div className="pointer-events-none fixed inset-x-4 top-4 z-50 sm:start-auto sm:end-6 sm:w-96">
+        {(['success', 'error'] as const).map((kind) => (
+          <div key={kind} role={kind === 'success' ? 'status' : 'alert'} aria-atomic="true">
+            {message?.kind === kind ? (
+              <div className="pointer-events-auto flex items-start gap-3 rounded-xl border bg-card p-4 text-card-foreground shadow-lg">
+                {kind === 'success' ? (
+                  <CircleCheck className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden="true" />
+                ) : (
+                  <CircleAlert
+                    className="mt-0.5 size-5 shrink-0 text-destructive"
+                    aria-hidden="true"
+                  />
+                )}
+                <p className="min-w-0 flex-1 break-words text-sm font-medium">{message.text}</p>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="-my-1 shrink-0"
+                  aria-label={t('common:close')}
+                  onClick={() => setMessage(null)}
+                >
+                  <X aria-hidden="true" />
+                </Button>
+              </div>
+            ) : null}
+          </div>
+        ))}
+      </div>
 
       <Tabs
         defaultValue={initialTab}
@@ -302,6 +331,7 @@ export function OrganizationSettingsPanel({
           <form
             className="grid max-w-3xl gap-5 rounded-xl border bg-card p-5"
             onSubmit={submitOrganization}
+            onChange={() => setMessage(null)}
             data-testid="organization-settings-form"
           >
             <div className="grid gap-4 sm:grid-cols-2">

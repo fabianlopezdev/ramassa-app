@@ -6,7 +6,8 @@
       "@/*": ["./src/*"],
       "@/assets/*": ["./assets/*"]
     },
-    "types": ["bun"]
+    "types": ["bun"],
+    "customConditions": ["react-native", "react-native-legacy-deep-imports"]
   },
   "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts", "nativewind-env.d.ts"]
 }

@@ -37,6 +37,10 @@ import { createWorkerObservability } from './observability';
 import { presignR2Upload } from './presign';
 import { handlePurgeParticipantMedia } from './purge-participant-media';
 import { handleServeMediaObject } from './serve-media-object';
+import {
+  handleServeOrganizationLogo,
+  resolvePublicOrganizationLogo,
+} from './serve-organization-logo';
 import { readBearerToken, resolveCallerIdentity } from './supabase-identity';
 
 async function createUploadTarget(
@@ -106,6 +110,20 @@ const handler: ExportedHandler<Env> = {
 
     if (url.pathname === '/health') {
       return new Response('ok', { status: 200, headers: corsHeaders });
+    }
+
+    if (url.pathname.startsWith('/branding/')) {
+      return handleServeOrganizationLogo(request, {
+        resolveLogo: (slug) =>
+          resolvePublicOrganizationLogo({
+            slug,
+            supabaseUrl: config.supabaseUrl,
+            supabasePublishableKey: config.supabasePublishableKey,
+          }),
+        bucket: env.MEDIA_BUCKET,
+        corsHeaders,
+        onError: (error, context) => observability.reportError(error, context),
+      });
     }
 
     if (url.pathname === MINT_UPLOAD_URL_PATH) {

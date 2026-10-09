@@ -112,7 +112,10 @@
           "defaultChannel": "default"
         }
       ],
-      "expo-video"
+      "expo-video",
+      "expo-image",
+      "expo-status-bar",
+      "expo-web-browser"
     ],
     "extra": {
       "supportsRTL": true,
@@ -124,7 +127,6 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    },
-    "newArchEnabled": true
+    }
   }
 }
