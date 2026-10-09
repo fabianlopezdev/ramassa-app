@@ -12,7 +12,7 @@ export const unstable_settings = { anchor: 'index' };
 export default function AuthLayout() {
   const router = useRouter();
   useEffect(() => {
-    if (consumeLanguageConfirmation(preferencesStorage)) router.push('/login');
+    if (consumeLanguageConfirmation(preferencesStorage)) router.push('/email-login');
   }, [router]);
   return (
     <Stack

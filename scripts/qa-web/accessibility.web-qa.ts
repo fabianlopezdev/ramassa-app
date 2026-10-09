@@ -1,7 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Locator, type Page } from '@playwright/test';
-import { SEED_ACCESS_CODE } from '@ramassa/shared/testing';
-import { ENTITY_EMAIL, queryDatabase, signIn, waitForHydration } from './session';
+import { ENTITY_EMAIL, MAILPIT_URL, queryDatabase, signIn, waitForHydration } from './session';
 
 const wcagTags = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
 const ADMIN_EMAIL = 'laia.ferrer@example.test';
@@ -162,16 +161,42 @@ async function expectSkipLinkTargetsMain(page: Page): Promise<void> {
 }
 
 async function signInPlayer(page: Page): Promise<void> {
-  await page.goto(`${playerOrigin}/access-code-login`, { waitUntil: 'domcontentloaded' });
-  const accessCode = page.getByLabel(
-    /Access code|Codi d'accés|Código de acceso|رمز الدخول|کد دسترسی/i,
-  );
-  await expect(accessCode).toBeVisible({ timeout: 30_000 });
-  await accessCode.fill(SEED_ACCESS_CODE);
-  await page.getByRole('button', { name: /^(Log in|Entra|Entrar|دخول|ورود)$/i }).click();
-  await expect(page.getByTestId('open-knowledge-base')).toBeVisible({
-    timeout: 30_000,
-  });
+  const email = 'daniela.ortega@example.test';
+  const searchUrl = `${MAILPIT_URL}/api/v1/search?query=${encodeURIComponent(`to:${email}`)}`;
+  const existingResponse = await fetch(searchUrl);
+  const existing = (await existingResponse.json()) as { messages?: Array<{ ID: string }> };
+  const existingIds = new Set(existing.messages?.map((message) => message.ID));
+
+  await page.goto(playerOrigin, { waitUntil: 'domcontentloaded' });
+  await page.getByRole('radio', { name: 'English', exact: true }).click();
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await expect(page).toHaveURL(`${playerOrigin}/email-login`);
+  await page.getByLabel('Email', { exact: true }).fill(email);
+  await page.getByRole('button', { name: 'Send me a code', exact: true }).click();
+  await expect(page.getByText('Enter your code', { exact: true })).toBeVisible();
+
+  let token = '';
+  await expect
+    .poll(
+      async () => {
+        const response = await fetch(searchUrl);
+        if (!response.ok) return '';
+        const inbox = (await response.json()) as { messages?: Array<{ ID: string }> };
+        const messageId = inbox.messages?.find((message) => !existingIds.has(message.ID))?.ID;
+        if (!messageId) return '';
+        const messageResponse = await fetch(`${MAILPIT_URL}/api/v1/message/${messageId}`);
+        if (!messageResponse.ok) return '';
+        const message = (await messageResponse.json()) as { Text?: string };
+        token = message.Text?.match(/\b\d{6}\b/)?.[0] ?? '';
+        return token;
+      },
+      { timeout: 30_000 },
+    )
+    .not.toBe('');
+
+  await page.getByLabel('One-time code', { exact: true }).fill(token);
+  await page.getByRole('button', { name: 'Log in', exact: true }).click();
+  await expect(page.getByTestId('open-knowledge-base')).toBeVisible({ timeout: 30_000 });
 }
 
 async function expectRtlDocument(page: Page): Promise<void> {

@@ -62,7 +62,7 @@ export default function PreAuthLanguageScreen() {
       }
     }
     setContinuing(false);
-    router.push('/login');
+    router.push('/email-login');
   }
 
   return (

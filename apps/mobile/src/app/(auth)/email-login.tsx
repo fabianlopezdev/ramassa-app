@@ -17,7 +17,8 @@ export default function EmailLoginScreen() {
   const goBack = () => {
     setErrorCode(null);
     if (sentToEmail) setSentToEmail(null);
-    else router.back();
+    else if (router.canGoBack()) router.back();
+    else router.replace('/(auth)');
   };
   const renderLayout: AuthFormLayout = (fields, action) => (
     <AuthScreen

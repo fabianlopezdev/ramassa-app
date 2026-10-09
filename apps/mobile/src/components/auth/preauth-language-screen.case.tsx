@@ -130,7 +130,7 @@ test('first install has Continue and language taps preview without navigating', 
   expect(push).not.toHaveBeenCalled();
   expect(restart).not.toHaveBeenCalled();
   fireEvent.click(view.getByRole('button', { name: i18n.t('auth:continueAction') }));
-  await waitFor(() => expect(push).toHaveBeenCalledWith('/login'));
+  await waitFor(() => expect(push).toHaveBeenCalledWith('/email-login'));
 });
 test('Arabic previews in place and reloads only when confirmed', async () => {
   const { view, i18n } = await screen();
@@ -153,10 +153,10 @@ test('screen removes duplicate name and instructions, and keeps footer outside s
   expect(view.getByTestId('language-scroll-content').contains(footer)).toBe(false);
 });
 
-test('direction reload pushes login so Back can return to language selection', async () => {
+test('direction reload pushes email login so Back can return to language selection', async () => {
   storage.set('auth.language-confirmed-reload', true);
   render(createElement(AuthLayout));
-  await waitFor(() => expect(push).toHaveBeenCalledWith('/login'));
+  await waitFor(() => expect(push).toHaveBeenCalledWith('/email-login'));
   expect(storage.has('auth.language-confirmed-reload')).toBe(false);
 });
 
