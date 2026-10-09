@@ -14,8 +14,7 @@
  * remember to compress: it passes a preparer or it does not upload images.
  */
 
-import { AppError, safeAsync, type Result } from '../errors';
-import { errorCodeRegistry, type AppErrorCode } from '../errors/codes';
+import { AppError, errorCodeRegistry, safeAsync, type AppErrorCode, type Result } from '../errors';
 import {
   getUploadErrorCodeForIssue,
   purgeParticipantMediaResponseSchema,

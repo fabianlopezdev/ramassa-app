@@ -24,7 +24,7 @@ const DEVICE_ID_KEY = 'ramassa.deviceId';
  * does not ship WebCrypto by default and the app has no crypto dependency, so
  * the fallback keeps this working without pulling one in for a dedupe key.
  */
-export function generateDeviceId(): string {
+function generateDeviceId(): string {
   const webCrypto = globalThis.crypto;
   if (typeof webCrypto?.randomUUID === 'function') {
     return webCrypto.randomUUID();

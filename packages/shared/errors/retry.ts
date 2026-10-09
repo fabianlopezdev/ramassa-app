@@ -13,8 +13,8 @@
  * about the CODES, and the admin's retry policy has to agree with the phone's.
  */
 
-import { toAppError } from './app-error';
-import type { ErrorDomain } from './codes';
+import { toAppError } from './runtime';
+import type { ErrorDomain } from './runtime';
 
 /**
  * Domains where a second attempt asks a question that has already been

@@ -49,16 +49,16 @@ function stableFilterSignature(filters: PlayerServiceFilterSelection): string {
   });
 }
 
-export const playerServiceCategoriesQueryKey = (userId: string) =>
+const playerServiceCategoriesQueryKey = (userId: string) =>
   [playerServicesQueryRoot, 'categories', userId] as const;
 
-export const playerServicesQueryKey = (
+const playerServicesQueryKey = (
   userId: string,
   categoryId: string,
   filters: PlayerServiceFilterSelection,
 ) => [playerServicesQueryRoot, 'list', userId, categoryId, stableFilterSignature(filters)] as const;
 
-export const playerServiceDetailQueryKey = (userId: string, serviceId: string) =>
+const playerServiceDetailQueryKey = (userId: string, serviceId: string) =>
   [playerServicesQueryRoot, 'detail', userId, serviceId] as const;
 
 export function usePlayerServiceCategories() {

@@ -24,7 +24,7 @@ import { AppError } from '@ramassa/shared/errors';
 export const LOCAL_UPLOAD_PATH_PREFIX = '/local-uploads';
 
 /** Structural subset of `R2Bucket` this module needs, so tests need no workerd. */
-export interface LocalUploadBucket {
+interface LocalUploadBucket {
   put(
     key: string,
     value: ArrayBuffer,

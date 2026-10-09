@@ -22,7 +22,7 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { AppError, safeAsync, type Result } from '../errors';
-import type { AppErrorCode } from '../errors/codes';
+import type { AppErrorCode } from '../errors';
 import type { Database } from '../types/database';
 
 type Client = SupabaseClient<Database>;

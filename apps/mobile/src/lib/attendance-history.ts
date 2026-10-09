@@ -17,7 +17,7 @@ export interface OwnAttendanceHistory {
   readonly rows: readonly AttendanceReportRow[];
 }
 
-export function ownAttendanceHistoryQueryKey(userId: string) {
+function ownAttendanceHistoryQueryKey(userId: string) {
   return ['own-attendance-history', userId] as const;
 }
 

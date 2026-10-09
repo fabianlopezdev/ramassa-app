@@ -35,7 +35,7 @@ interface ServiceCategoryCardProps {
   readonly onSelect: (id: string) => void;
 }
 
-export const ServiceCategoryCard = memo(function ServiceCategoryCard({
+const ServiceCategoryCard = memo(function ServiceCategoryCard({
   id,
   slug,
   title,

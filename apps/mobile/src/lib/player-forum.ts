@@ -26,15 +26,15 @@ import { mobileClientEnv, supabase } from './supabase';
 const playerForumQueryRoot = 'player-forum';
 const FORUM_POSTING_STATUS_STALE_TIME_MS = 0;
 
-export const playerForumCategoriesQueryKey = (userId: string) =>
+const playerForumCategoriesQueryKey = (userId: string) =>
   [playerForumQueryRoot, 'categories', userId] as const;
-export const playerForumPostsQueryKey = (userId: string) =>
+const playerForumPostsQueryKey = (userId: string) =>
   [playerForumQueryRoot, 'posts', userId] as const;
-export const playerForumPostQueryKey = (userId: string, postId: string) =>
+const playerForumPostQueryKey = (userId: string, postId: string) =>
   [playerForumQueryRoot, 'post', userId, postId] as const;
-export const playerForumRepliesQueryKey = (userId: string, postId: string) =>
+const playerForumRepliesQueryKey = (userId: string, postId: string) =>
   [playerForumQueryRoot, 'replies', userId, postId] as const;
-export const ownForumPostingStatusQueryKey = (userId: string) =>
+const ownForumPostingStatusQueryKey = (userId: string) =>
   [playerForumQueryRoot, 'posting-status', userId] as const;
 
 export function useForumCategories() {

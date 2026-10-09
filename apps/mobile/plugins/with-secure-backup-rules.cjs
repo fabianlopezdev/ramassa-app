@@ -2,7 +2,7 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
-const { AndroidConfig, withAndroidManifest, withDangerousMod } = require('@expo/config-plugins');
+const { AndroidConfig, withAndroidManifest, withDangerousMod } = require('expo/config-plugins');
 
 const BACKUP_RULES = `<?xml version="1.0" encoding="utf-8"?>
 <full-backup-content>

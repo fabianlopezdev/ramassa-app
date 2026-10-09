@@ -28,6 +28,7 @@ const logBuffer = createDevLogBuffer({ capacity: LOG_BUFFER_CAPACITY });
 export const devLogBuffer = logBuffer;
 
 /** Handed to `createLogger` as a second sink beside the console one. */
+/** @public Loaded with a `require()` inside `__DEV__`, so release builds drop it; knip cannot follow that. */
 export const devLogSink = logBuffer.sink;
 
 // supabase-js and the R2 upload client both call global `fetch`, so wrapping it

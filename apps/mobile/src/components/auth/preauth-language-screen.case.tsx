@@ -16,7 +16,6 @@ mock.module('@/lib/storage', () => ({
     remove: (key: string) => storage.delete(key),
   },
 }));
-mock.module('@/lib/i18n', () => ({ hasPersistedLanguageChoice: () => false }));
 mock.module('@/lib/use-language-font-class', () => ({ useLanguageFontClass: () => 'font-sans' }));
 mock.module('@/lib/continuous-corners', () => ({ continuousCorners: {} }));
 mock.module('@/components/branding/public-organization-logo', () => ({

@@ -10,8 +10,8 @@
  * and feature code just consumes the wired helper.
  */
 
-import { toAppError, type AppError } from './app-error';
-import type { AppErrorCode } from './codes';
+import { toAppError, type AppError } from './runtime';
+import type { AppErrorCode } from './runtime';
 
 export type Result<Value, Failure = AppError> =
   { readonly ok: true; readonly value: Value } | { readonly ok: false; readonly error: Failure };

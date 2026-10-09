@@ -1,7 +1,7 @@
 import { Input } from '@/components/ui/input';
 import { MAX_EVENT_RECURRENCE_COUNT, MAX_EVENT_RECURRENCE_INTERVAL } from '@ramassa/shared/events';
 
-export interface EventScheduleLabels {
+interface EventScheduleLabels {
   readonly startsAt: string;
   readonly endsAt: string;
   readonly interval: string;

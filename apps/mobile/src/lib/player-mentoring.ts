@@ -11,8 +11,6 @@ import { isNetworkStateOnline } from './network-status';
 import { playerMentoringQueryKey } from './player-mentoring-key';
 import { supabase } from './supabase';
 
-export { playerMentoringQueryKey } from './player-mentoring-key';
-
 export function usePlayerMentoringRequests() {
   const { user } = useAuth();
   return useQuery({

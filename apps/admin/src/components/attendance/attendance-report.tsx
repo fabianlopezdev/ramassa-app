@@ -18,7 +18,7 @@ function StatusBadge({ status }: { readonly status: AttendanceReportRow['status'
   return <Badge variant={status === 'present' ? 'default' : 'outline'}>{t(key)}</Badge>;
 }
 
-export function AttendanceTotalsCards({
+function AttendanceTotalsCards({
   present,
   absent,
   excused,

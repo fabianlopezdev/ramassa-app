@@ -21,7 +21,7 @@ function getRemoteJwkSet(supabaseUrl: string): ReturnType<typeof createRemoteJWK
   return jwkSet;
 }
 
-export function readBearerToken(request: Request): string {
+function readBearerToken(request: Request): string {
   const header = request.headers.get('Authorization') ?? '';
   const [scheme, token] = header.split(' ');
   if (scheme?.toLowerCase() !== 'bearer' || token === undefined || token.length === 0) {
@@ -30,7 +30,7 @@ export function readBearerToken(request: Request): string {
   return token;
 }
 
-export async function verifyAccessToken(options: {
+async function verifyAccessToken(options: {
   readonly token: string;
   readonly supabaseUrl: string;
 }): Promise<string> {
@@ -54,7 +54,7 @@ const profileRowSchema = z.object({
   role: appRoleSchema,
 });
 
-export async function fetchCallerProfile(options: {
+async function fetchCallerProfile(options: {
   readonly userId: string;
   readonly token: string;
   readonly supabaseUrl: string;
