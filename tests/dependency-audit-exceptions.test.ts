@@ -1,83 +1,87 @@
-import { readFileSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { expect, test } from 'bun:test';
-import { validateAuditReport, type AuditReport } from '../scripts/verify-dependency-audit';
+import { validateAuditReport, type AuditException } from '../scripts/verify-dependency-audit';
 
-const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const exceptionPath = join(repoRoot, 'security-audit-findings', 'dependency-audit-exceptions.json');
+const now = Date.parse('2026-10-09T12:00:00Z');
 
-type AuditException = {
-  issue: string;
-  package: string;
-  installedVersion: string;
-  reviewBy: string;
-  exposure: string;
-  dependencyPath: string[];
-  advisories: Array<{ id: string; url: string }>;
-  remediation: {
-    patch: string;
-    regressionTest: string;
-  };
-  removalCondition: string;
+const braces = (overrides: Partial<AuditException> = {}): AuditException => ({
+  issue: 'RAPP-220',
+  package: 'braces',
+  installedVersion: '3.0.3',
+  created: '2026-10-09',
+  reviewBy: '2026-11-08',
+  exposure: 'build-time only',
+  dependencyPath: ['apps/mobile', 'micromatch@4.0.8', 'braces@3.0.3'],
+  reachableSurface: 'Build tools only.',
+  advisories: [
+    { id: 'GHSA-vfj7-8cjw-p6xm', url: 'https://github.com/advisories/GHSA-vfj7-8cjw-p6xm' },
+  ],
+  upstreamStatus: 'No patched release.',
+  removalCondition: 'Remove when a patched release exists.',
+  ...overrides,
+});
+
+const bracesReport = {
+  braces: [{ url: 'https://github.com/advisories/GHSA-vfj7-8cjw-p6xm' }],
 };
 
-const readException = (): AuditException =>
-  JSON.parse(readFileSync(exceptionPath, 'utf8')) as AuditException;
+test('a clean dependency audit passes', () => {
+  expect(() => validateAuditReport({}, [], now)).not.toThrow();
+});
 
-test('bun audit contains only the approved image-size advisories', () => {
-  const exception = readException();
-  const approvedReport: AuditReport = {
-    'image-size': exception.advisories.map(({ url }) => ({ url })),
-  };
-  const unexpectedReport: AuditReport = {
-    ...approvedReport,
-    'unexpected-package': [{ url: 'https://github.com/advisories/GHSA-aaaa-bbbb-cccc' }],
-  };
+test('every advisory without an exception fails, including the retired exception', () => {
+  expect(() =>
+    validateAuditReport(
+      { 'image-size': [{ url: 'https://github.com/advisories/GHSA-5p2g-fcmc-qvqq' }] },
+      [],
+      now,
+    ),
+  ).toThrow('Dependency audit found');
+  expect(() => validateAuditReport({ unexpected: [] }, [], now)).toThrow('Dependency audit found');
+});
 
-  expect(() => validateAuditReport(approvedReport, exception)).not.toThrow();
-  expect(() => validateAuditReport(unexpectedReport, exception)).toThrow(
-    'Audit packages do not match',
+test('an advisory listed in a current exception passes', () => {
+  expect(() => validateAuditReport(bracesReport, [braces()], now)).not.toThrow();
+});
+
+test('a new advisory on an excepted package still fails', () => {
+  const report = {
+    braces: [
+      { url: 'https://github.com/advisories/GHSA-vfj7-8cjw-p6xm' },
+      { url: 'https://github.com/advisories/GHSA-new0-0000-0000' },
+    ],
+  };
+  expect(() => validateAuditReport(report, [braces()], now)).toThrow('GHSA-new0-0000-0000');
+});
+
+test('an exception never covers a different package', () => {
+  const report = { 'node-forge': [{ url: 'https://github.com/advisories/GHSA-vfj7-8cjw-p6xm' }] };
+  expect(() => validateAuditReport(report, [braces()], now)).toThrow('Dependency audit found');
+});
+
+test('an expired exception fails', () => {
+  expect(() =>
+    validateAuditReport(bracesReport, [braces()], Date.parse('2026-11-09T00:00:01Z')),
+  ).toThrow('expired on 2026-11-08');
+});
+
+test('an exception longer than 31 days fails', () => {
+  expect(() =>
+    validateAuditReport(bracesReport, [braces({ reviewBy: '2026-11-10' })], now),
+  ).toThrow('longer than 31 days');
+});
+
+test('an exception for an advisory that is no longer reported fails, so it gets removed', () => {
+  expect(() => validateAuditReport({}, [braces()], now)).toThrow('no longer reported');
+});
+
+test('an exception without its evidence fields fails', () => {
+  expect(() => validateAuditReport(bracesReport, [braces({ reachableSurface: '' })], now)).toThrow(
+    'Invalid dependency audit exception',
   );
 });
 
-test('the approved exception is scoped, patched, and not expired', () => {
-  const exception = readException();
-  const packageEntry = fileURLToPath(import.meta.resolve('image-size'));
-  const packageManifest = JSON.parse(
-    readFileSync(join(dirname(packageEntry), '..', 'package.json'), 'utf8'),
-  ) as { name: string; version: string };
-
-  expect(exception.issue).toBe('RAPP-110');
-  expect(packageManifest).toMatchObject({
-    name: exception.package,
-    version: exception.installedVersion,
-  });
-  expect(exception.exposure).toBe('build-time only');
-  expect(exception.dependencyPath).toEqual([
-    'apps/mobile',
-    'expo@57.0.7',
-    '@expo/cli@57.0.9',
-    '@expo/metro@56.0.0',
-    'metro@0.84.4',
-    'image-size@1.2.1',
-  ]);
-  expect(exception.advisories).toEqual([
-    {
-      id: 'GHSA-5p2g-fcmc-qvqq',
-      url: 'https://github.com/advisories/GHSA-5p2g-fcmc-qvqq',
-    },
-    {
-      id: 'GHSA-w3rx-r6r6-pgpr',
-      url: 'https://github.com/advisories/GHSA-w3rx-r6r6-pgpr',
-    },
-  ]);
-  expect(new Date(`${exception.reviewBy}T23:59:59Z`).getTime()).toBeGreaterThanOrEqual(Date.now());
-  expect(exception.removalCondition.length).toBeGreaterThan(20);
-  expect(readFileSync(join(repoRoot, exception.remediation.patch), 'utf8')).toContain(
-    'jxlpBox.size < 12',
-  );
-  expect(readFileSync(join(repoRoot, exception.remediation.regressionTest), 'utf8')).toContain(
-    'patched ICNS parser',
-  );
+test('malformed audit reports fail closed', () => {
+  for (const report of [null, [], '', 0, true]) {
+    expect(() => validateAuditReport(report, [], now)).toThrow('Invalid dependency audit report');
+  }
 });

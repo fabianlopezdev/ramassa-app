@@ -5,17 +5,23 @@ import { useAuthFlowStatus } from '@/lib/auth-flow-status';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { View } from 'react-native';
 import {
   emailOtpRequestSchema,
   emailOtpVerifySchema,
   type EmailOtpRequest,
   type EmailOtpVerify,
 } from '@ramassa/shared/schemas';
+import { inlineAuthFormLayout, type AuthFormLayout } from './auth-form-layout';
 import { AuthSubmitButton } from './auth-submit-button';
 import { AuthTextField } from './auth-text-field';
 
-export function EmailOtpRequestForm({ onSent }: { onSent: (email: string) => void }) {
+export function EmailOtpRequestForm({
+  onSent,
+  renderLayout = inlineAuthFormLayout,
+}: {
+  onSent: (email: string) => void;
+  renderLayout?: AuthFormLayout;
+}) {
   const { t } = useTranslation('auth');
   const { setErrorCode } = useAuthFlowStatus();
   const {
@@ -34,36 +40,40 @@ export function EmailOtpRequestForm({ onSent }: { onSent: (email: string) => voi
     else setErrorCode(result.error.code);
   });
 
-  return (
-    <View className="gap-md">
-      <Controller
-        control={control}
-        name="email"
-        render={({ field }) => (
-          <AuthTextField
-            label={t('emailLabel')}
-            placeholder={t('emailPlaceholder')}
-            value={field.value}
-            onChangeText={field.onChange}
-            onBlur={field.onBlur}
-            errorMessage={errors.email ? t('emailInvalid') : undefined}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoCorrect={false}
-            autoComplete="email"
-            textContentType="emailAddress"
-            inputMode="email"
-            returnKeyType="send"
-            onSubmitEditing={submit}
-          />
-        )}
-      />
-      <AuthSubmitButton label={t('emailOtpAction')} onPress={submit} isLoading={isSubmitting} />
-    </View>
+  return renderLayout(
+    <Controller
+      control={control}
+      name="email"
+      render={({ field }) => (
+        <AuthTextField
+          label={t('emailLabel')}
+          placeholder={t('emailPlaceholder')}
+          value={field.value}
+          onChangeText={field.onChange}
+          onBlur={field.onBlur}
+          errorMessage={errors.email ? t('emailInvalid') : undefined}
+          keyboardType="email-address"
+          autoCapitalize="none"
+          autoCorrect={false}
+          autoComplete="email"
+          textContentType="emailAddress"
+          inputMode="email"
+          returnKeyType="send"
+          onSubmitEditing={submit}
+        />
+      )}
+    />,
+    <AuthSubmitButton label={t('emailOtpAction')} onPress={submit} isLoading={isSubmitting} />,
   );
 }
 
-export function EmailOtpVerifyForm({ email }: { email: string }) {
+export function EmailOtpVerifyForm({
+  email,
+  renderLayout = inlineAuthFormLayout,
+}: {
+  email: string;
+  renderLayout?: AuthFormLayout;
+}) {
   const { t } = useTranslation('auth');
   const { setErrorCode } = useAuthFlowStatus();
   const {
@@ -81,36 +91,34 @@ export function EmailOtpVerifyForm({ email }: { email: string }) {
     if (!result.ok) setErrorCode(result.error.code);
   });
 
-  return (
-    <View className="gap-md">
-      <Controller
-        control={control}
-        name="token"
-        render={({ field }) => (
-          <AuthTextField
-            label={t('emailOtpCodeLabel')}
-            placeholder={t('emailOtpCodePlaceholder')}
-            value={field.value}
-            onChangeText={field.onChange}
-            onBlur={field.onBlur}
-            errorMessage={errors.token ? t('emailOtpCodeInvalid') : undefined}
-            keyboardType="number-pad"
-            autoCapitalize="none"
-            autoCorrect={false}
-            autoComplete="one-time-code"
-            textContentType="oneTimeCode"
-            inputMode="numeric"
-            maxLength={6}
-            returnKeyType="done"
-            onSubmitEditing={submit}
-          />
-        )}
-      />
-      <AuthSubmitButton
-        label={t('emailOtpVerifyAction')}
-        onPress={submit}
-        isLoading={isSubmitting}
-      />
-    </View>
+  return renderLayout(
+    <Controller
+      control={control}
+      name="token"
+      render={({ field }) => (
+        <AuthTextField
+          label={t('emailOtpCodeLabel')}
+          placeholder={t('emailOtpCodePlaceholder')}
+          value={field.value}
+          onChangeText={field.onChange}
+          onBlur={field.onBlur}
+          errorMessage={errors.token ? t('emailOtpCodeInvalid') : undefined}
+          keyboardType="number-pad"
+          autoCapitalize="none"
+          autoCorrect={false}
+          autoComplete="one-time-code"
+          textContentType="oneTimeCode"
+          inputMode="numeric"
+          maxLength={6}
+          returnKeyType="done"
+          onSubmitEditing={submit}
+        />
+      )}
+    />,
+    <AuthSubmitButton
+      label={t('emailOtpVerifyAction')}
+      onPress={submit}
+      isLoading={isSubmitting}
+    />,
   );
 }

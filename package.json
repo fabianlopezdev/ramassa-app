@@ -9,14 +9,31 @@
   ],
   "overrides": {
     "@hono/node-server": "1.19.15",
-    "brace-expansion": "5.0.9",
-    "fast-uri": "3.1.5",
-    "hono": "4.12.34",
-    "ip-address": "10.5.0",
-    "js-yaml": "4.3.1",
+    "@modelcontextprotocol/sdk": "1.32.1",
+    "@react-native/metro-config": "0.88.0-rc.3",
+    "@xmldom/xmldom": "0.9.12",
+    "baseline-browser-mapping": "2.11.27",
+    "brace-expansion": "5.0.12",
+    "browserslist": "4.29.3",
+    "compression": "1.8.2",
+    "decode-uri-component": "0.5.0",
+    "fast-uri": "3.1.8",
+    "hono": "4.13.12",
+    "ip-address": "10.7.2",
+    "js-yaml": "4.3.2",
+    "moment": "2.31.0",
     "nanoid": "3.3.18",
     "postcss": "8.5.26",
-    "undici": "7.29.0",
+    "postcss-selector-parser": "7.1.6",
+    "proxy-addr": "2.0.8",
+    "qs": "6.16.0",
+    "react-native": "0.88.0-rc.3",
+    "seroval": "1.6.9",
+    "seroval-plugins": "1.6.9",
+    "sharp": "0.35.5",
+    "shell-quote": "1.12.0",
+    "source-map-js": "1.2.2",
+    "undici": "7.29.1",
     "uuid": "11.1.1"
   },
   "scripts": {
@@ -50,7 +67,8 @@
     "qa:android:tab-labels": "bun run scripts/qa-android-tab-labels.ts",
     "qa:web": "env -u NO_COLOR playwright test",
     "qa:accessibility:web": "env -u NO_COLOR playwright test scripts/qa-web/accessibility.web-qa.ts",
-    "deploy:check-env": "bun run scripts/validate-deployment-env.ts"
+    "deploy:check-env": "bun run scripts/validate-deployment-env.ts",
+    "mobile:ios:ramassa": "bun run --cwd apps/mobile ios:ramassa"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.13.0",
@@ -74,7 +92,8 @@
     "@sentry/cli"
   ],
   "patchedDependencies": {
-    "expo-localization@57.0.1": "patches/expo-localization@57.0.1.patch",
-    "image-size@1.2.1": "patches/image-size@1.2.1.patch"
+    "expo-localization@58.0.2": "patches/expo-localization@58.0.2.patch",
+    "@sentry/react-native@7.11.0": "patches/@sentry%2Freact-native@7.11.0.patch",
+    "@expo/plist@0.10.1": "patches/@expo%2Fplist@0.10.1.patch"
   }
 }

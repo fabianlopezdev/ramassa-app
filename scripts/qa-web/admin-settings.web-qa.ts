@@ -59,7 +59,7 @@ test.describe.serial('admin organization settings', () => {
     );
     await page.getByLabel('Primary color hex').fill('#FFFFFF');
     await page.getByRole('button', { name: 'Save changes' }).click();
-    await expect(page.getByRole('status')).toContainText('4.5:1');
+    await expect(page.getByRole('alert')).toContainText('4.5:1');
     expect(
       queryDatabase(
         "select primary_color || '|' || secondary_color from public.organizations where slug = 'ramassa'",

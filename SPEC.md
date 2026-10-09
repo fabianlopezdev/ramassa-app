@@ -1553,3 +1553,22 @@ To confirm the MVP is working end-to-end:
 ```
 bun run typecheck && bun run test && bun run build:admin && bunx eas build --platform android --profile preview
 ```
+
+## Onboarding V2 update (2026-10-08)
+
+Following the meeting decision, all players use email login. After language selection,
+Continue opens the email form directly. Email submission sends a one-time verification
+code; successful verification still passes through the existing profile and terms gate.
+The first-use/account choice, registration-method choice, and team-issued access-code
+login screens are retired. Back from email returns to language selection; Back from
+email-code entry returns to the email form.
+
+The intended download route is Google Play or the App Store, so the team expects most
+users to already have an email address associated with their store account. For users
+without one, the NGO or referring organization will help create one. This is an
+operational assumption about likely email access, not a universal email requirement
+for every store account.
+
+The canvas preserves V1 as a historical snapshot and V2 as the agreed flow. Existing
+dashboard account provisioning and database records are outside this mobile navigation
+change (RAPP-140).

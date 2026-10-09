@@ -3,7 +3,6 @@ import {
   ACCESS_CODE_ALPHABET,
   ACCESS_CODE_PATTERN,
   canonicalizeAccessCode,
-  formatAccessCodeInput,
   isAccessCode,
   splitAccessCode,
 } from './access-code';
@@ -11,12 +10,6 @@ import {
 test('canonicalizes case, whitespace, and missing separators into 4-4-4 groups', () => {
   expect(canonicalizeAccessCode('  ABCD efgh JKMP  ')).toBe('abcd-efgh-jkmp');
   expect(canonicalizeAccessCode('abcd-efgh-jkmp')).toBe('abcd-efgh-jkmp');
-});
-
-test('formats incremental phone input without accepting more than twelve characters', () => {
-  expect(formatAccessCodeInput('ABCD')).toBe('abcd');
-  expect(formatAccessCodeInput('ABCDEFGH')).toBe('abcd-efgh');
-  expect(formatAccessCodeInput('ABCD EFGH JKMP EXTRA')).toBe('abcd-efgh-jkmp');
 });
 
 test('accepts only the unambiguous SQL alphabet and rejects near misses', () => {

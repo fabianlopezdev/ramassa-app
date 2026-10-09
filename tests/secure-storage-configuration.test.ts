@@ -14,8 +14,8 @@ describe('secure mobile storage configuration', () => {
       expo: { android: { allowBackup?: boolean }; plugins: unknown[] };
     };
 
-    expect(packageJson.dependencies['expo-secure-store']).toBe('~57.0.1');
-    expect(packageJson.dependencies['expo-crypto']).toBe('~57.0.1');
+    expect(packageJson.dependencies['expo-secure-store']).toMatch(/^~58\.0\.\d+$/);
+    expect(packageJson.dependencies['expo-crypto']).toMatch(/^~58\.0\.\d+$/);
     expect(appJson.expo.android.allowBackup).toBe(false);
     expect(JSON.stringify(appJson.expo.plugins)).toContain('expo-secure-store');
     expect(JSON.stringify(appJson.expo.plugins)).toContain('with-secure-backup-rules');

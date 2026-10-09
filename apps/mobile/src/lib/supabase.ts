@@ -9,15 +9,30 @@
  * fails fast with a named error instead of a confusing runtime crash later.
  */
 
+import Constants from 'expo-constants';
+import { Platform } from 'react-native';
 import { parseClientEnv } from '@ramassa/shared/env';
 import { createMmkvSessionStorage, createSupabaseClient } from '@ramassa/shared/supabase';
+import { resolveDevServiceUrl } from './dev-service-url';
 import { authStorage } from './storage';
 
+const devServiceContext = {
+  isDev: __DEV__,
+  platform: Platform.OS,
+  hostUri: Constants.expoConfig?.hostUri,
+};
+
 export const mobileClientEnv = parseClientEnv({
-  EXPO_PUBLIC_SUPABASE_URL: process.env.EXPO_PUBLIC_SUPABASE_URL,
+  EXPO_PUBLIC_SUPABASE_URL: resolveDevServiceUrl(
+    process.env.EXPO_PUBLIC_SUPABASE_URL,
+    devServiceContext,
+  ),
   EXPO_PUBLIC_SUPABASE_ANON_KEY: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
   EXPO_PUBLIC_SENTRY_DSN: process.env.EXPO_PUBLIC_SENTRY_DSN,
-  EXPO_PUBLIC_MEDIA_WORKER_URL: process.env.EXPO_PUBLIC_MEDIA_WORKER_URL,
+  EXPO_PUBLIC_MEDIA_WORKER_URL: resolveDevServiceUrl(
+    process.env.EXPO_PUBLIC_MEDIA_WORKER_URL,
+    devServiceContext,
+  ),
 });
 
 export const supabase = createSupabaseClient({

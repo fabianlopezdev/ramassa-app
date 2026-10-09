@@ -22,10 +22,6 @@ export function canonicalizeAccessCode(value: string): string {
   return groupAccessCode(accessCodeCharacters(value));
 }
 
-export function formatAccessCodeInput(value: string): string {
-  return groupAccessCode(accessCodeCharacters(value).slice(0, ACCESS_CODE_RAW_LENGTH));
-}
-
 export function isAccessCode(value: string): boolean {
   return ACCESS_CODE_PATTERN.test(canonicalizeAccessCode(value));
 }

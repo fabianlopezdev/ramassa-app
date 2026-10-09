@@ -1,0 +1,18 @@
+diff --git a/ios/LocalizationModule.swift b/ios/LocalizationModule.swift
+index 0ac5bdb0947a9f64d86920b492830293790e8491..3ad09a67afcfa2ae87e8f648860a41446b2c73eb 100644
+--- a/ios/LocalizationModule.swift
++++ b/ios/LocalizationModule.swift
+@@ -57,7 +57,12 @@ public class LocalizationModule: Module {
+     // Uses required reason API based on the following reason: CA92.1
+     if let i18nUtil = RCTI18nUtil.sharedInstance() {
+       i18nUtil.allowRTL(supportsRTL)
+-      i18nUtil.forceRTL(forcesRTL)
++      // Preserve the direction chosen inside Ramassa across native restarts (RAPP-94).
++      // An explicit ExpoLocalization_forcesRTL setting still takes precedence.
++      if Bundle.main.object(forInfoDictionaryKey: "ExpoLocalization_forcesRTL") != nil ||
++        UserDefaults.standard.object(forKey: "RCTI18nUtil_forceRTL") == nil {
++        i18nUtil.forceRTL(forcesRTL)
++      }
+     }
+   }
+ 

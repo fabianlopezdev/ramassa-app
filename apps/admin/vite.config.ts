@@ -10,13 +10,13 @@ import { tokens, tokensToCssVariables } from '@ramassa/shared/tokens';
 
 const TOKENS_MARKER = '/* @ramassa-tokens */';
 
-// The current client entry is about 1,216 kB uncompressed and 379 kB gzip.
-// Keep a narrow, explicit ceiling so ordinary builds stay quiet while future
-// bundle growth still fails the closure gate with a warning.
+// Keep an explicit ceiling so future bundle growth remains visible.
+// Supabase has its own shared chunk so the Start entry stays within budget.
 export const ADMIN_CLIENT_CHUNK_BUDGET_KB = 1_250;
 
 export function adminManualChunks(moduleId: string): string | undefined {
   if (!moduleId.includes('/node_modules/')) return undefined;
+  if (moduleId.includes('/@supabase/')) return 'vendor-supabase';
   if (
     moduleId.includes('/seroval') ||
     moduleId.includes('/@tanstack/react-router/') ||

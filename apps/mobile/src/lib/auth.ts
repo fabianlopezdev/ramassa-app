@@ -1,11 +1,10 @@
 /**
- * Mobile auth wiring (RAPP-13): email-code and password actions used by the
- * login screen. Authentication never travels through a custom-scheme URL.
+ * Mobile auth wiring (RAPP-13): email OTP for player login and password actions for
+ * developer test accounts. Authentication never travels through a custom-scheme URL.
  */
 
 import {
   requestEmailOtp as sharedRequestEmailOtp,
-  signInWithAccessCode as sharedSignInWithAccessCode,
   signInWithPassword as sharedSignInWithPassword,
   signOut as sharedSignOut,
   verifyEmailOtp as sharedVerifyEmailOtp,
@@ -33,12 +32,6 @@ export function loginWithPassword(
   password: string,
 ): Promise<Result<void, AppError>> {
   return safeAsync(() => sharedSignInWithPassword(supabase, { email, password }), {
-    code: 'AUTH-6',
-  });
-}
-
-export function loginWithAccessCode(accessCode: string): Promise<Result<void, AppError>> {
-  return safeAsync(() => sharedSignInWithAccessCode(supabase, { accessCode }), {
     code: 'AUTH-6',
   });
 }
