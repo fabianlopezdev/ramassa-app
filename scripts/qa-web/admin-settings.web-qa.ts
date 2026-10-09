@@ -1,9 +1,15 @@
 import { expect, test, type Page } from '@playwright/test';
-import { PARTICIPANT_FIXTURES, SEED_ACCOUNT_PASSWORD } from '@ramassa/shared/testing';
-import { latestMagicLink, queryDatabase, signIn, STAFF_EMAIL } from './session';
+import { PARTICIPANT_FIXTURES } from '@ramassa/shared/testing';
+import {
+  PLAYER_ORIGIN,
+  queryDatabase,
+  signIn,
+  signInPlayer as signInPlayerWithEmailCode,
+  signInStaffWithEmailCode,
+  STAFF_EMAIL,
+} from './session';
 
 const ADMIN_EMAIL = 'laia.ferrer@example.test';
-const playerOrigin = `http://localhost:${process.env.RAMASSA_QA_PLAYER_PORT ?? '4194'}`;
 const runTag = `rapp64-${Date.now().toString(36)}`;
 const invitedEmail = `${runTag}@example.test`;
 const documentName = `Inventari ${runTag}.pdf`;
@@ -31,18 +37,9 @@ test.afterAll(() => {
   `);
 });
 
-async function signInPlayer(page: Page) {
+async function signInPlayer(page: Page): Promise<void> {
   const player = PARTICIPANT_FIXTURES[0]!;
-  await page.goto(`${playerOrigin}/login`, { waitUntil: 'domcontentloaded', timeout: 120_000 });
-  const usePassword = page.getByRole('button', { name: /password/i }).first();
-  await expect(usePassword).toBeVisible({ timeout: 30_000 });
-  await expect(async () => {
-    await usePassword.click();
-    await expect(page.locator('input[type="password"]')).toBeVisible({ timeout: 1_000 });
-  }).toPass({ timeout: 20_000 });
-  await page.locator('input[type="email"]').fill(player.email);
-  await page.locator('input[type="password"]').fill(SEED_ACCOUNT_PASSWORD);
-  await page.getByRole('button', { name: 'Log in', exact: true }).click();
+  await signInPlayerWithEmailCode(page, player.email);
   await expect(page.getByRole('tab', { name: 'Profile' })).toBeVisible({ timeout: 30_000 });
 }
 
@@ -74,7 +71,9 @@ test.describe.serial('admin organization settings', () => {
       buffer: onePixelPng,
     });
     await page.getByRole('button', { name: 'Save changes' }).click();
-    await expect(page.getByRole('status')).toContainText('Settings saved.');
+    await expect(page.getByRole('status').filter({ hasText: /\S/ })).toContainText(
+      'Settings saved.',
+    );
     expect(
       queryDatabase(
         "select primary_color || '|' || secondary_color || '|' || (logo_url is not null)::text from public.organizations where slug = 'ramassa'",
@@ -96,11 +95,12 @@ test.describe.serial('admin organization settings', () => {
       )
       .toBeGreaterThan(0);
 
-    await signInPlayer(page);
-    await page.getByRole('tab', { name: 'Profile' }).click();
-    await expect(page.getByTestId('generalitat-credit')).toBeVisible({ timeout: 30_000 });
-    const playerLogo = page.getByRole('img', { name: 'AE Ramassà' }).first();
-    await expect(playerLogo).toBeVisible();
+    // The player app shows the organization logo on the language screen, before sign-in.
+    await page.goto(PLAYER_ORIGIN, { waitUntil: 'domcontentloaded', timeout: 120_000 });
+    // Selected by its source: the image is labelled with the app name, and the
+    // branding endpoint is what proves the uploaded logo reached the player app.
+    const playerLogo = page.locator('img[src*="/branding/"]').first();
+    await expect(playerLogo).toBeVisible({ timeout: 30_000 });
     await expect
       .poll(() =>
         playerLogo.evaluate(
@@ -108,6 +108,11 @@ test.describe.serial('admin organization settings', () => {
         ),
       )
       .toBeGreaterThan(0);
+
+    // Signed-in branding is read fresh from the organization, so colours are checked there.
+    await signInPlayer(page);
+    await page.getByRole('tab', { name: 'Profile' }).click();
+    await expect(page.getByTestId('generalitat-credit')).toBeVisible({ timeout: 30_000 });
     await expect
       .poll(
         async () =>
@@ -127,7 +132,9 @@ test.describe.serial('admin organization settings', () => {
     await page.getByLabel('Last name').fill('Коваль');
     await page.getByLabel('Email').fill(invitedEmail);
     await page.getByRole('button', { name: 'Send invitation' }).click();
-    await expect(page.getByRole('status')).toContainText('Invitation sent.');
+    await expect(page.getByRole('status').filter({ hasText: /\S/ })).toContainText(
+      'Invitation sent.',
+    );
     expect(
       queryDatabase(`select p.role || '|' || p.is_active::text
         from public.profiles p join auth.users u on u.id = p.id where u.email = '${invitedEmail}'`),
@@ -135,7 +142,7 @@ test.describe.serial('admin organization settings', () => {
 
     const invitedContext = await browser.newContext({ locale: 'en-GB' });
     const invitedPage = await invitedContext.newPage();
-    await invitedPage.goto(await latestMagicLink(invitedEmail));
+    await signInStaffWithEmailCode(invitedPage, invitedEmail);
     await expect.poll(() => new URL(invitedPage.url()).pathname).toBe('/dashboard');
     expect(
       Number(
@@ -178,7 +185,9 @@ test.describe.serial('admin organization settings', () => {
       buffer: Buffer.from('%PDF-1.4\n% Ramassa browser QA\n'),
     });
     await page.getByTestId('document-upload-form').locator('button[type="submit"]').click();
-    await expect(page.getByRole('status')).toContainText('Document uploaded.');
+    await expect(page.getByRole('status').filter({ hasText: /\S/ })).toContainText(
+      'Document uploaded.',
+    );
     expect(
       queryDatabase(`select count(*) from public.internal_documents
         where name = '${documentName.replaceAll("'", "''")}'`),

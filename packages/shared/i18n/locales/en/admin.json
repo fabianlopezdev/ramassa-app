@@ -1,7 +1,6 @@
 {
   "loginTitle": "Admin login",
   "dashboardTitle": "Staff dashboard",
-  "portalTitle": "Entity portal",
   "filterStartDate": "Start date",
   "filterEndDate": "End date",
   "filterCategory": "Category",

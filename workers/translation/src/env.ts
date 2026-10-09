@@ -35,7 +35,7 @@ const workerEnvSchema = z.discriminatedUnion('TRANSLATION_PROVIDER', [
   }),
 ]);
 
-export class TranslationWorkerEnvironmentValidationError extends Error {
+class TranslationWorkerEnvironmentValidationError extends Error {
   readonly missingOrInvalidKeys: readonly string[];
 
   constructor(issues: z.core.$ZodIssue[]) {

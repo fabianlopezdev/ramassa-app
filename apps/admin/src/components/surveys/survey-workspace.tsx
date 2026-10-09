@@ -553,7 +553,7 @@ export function SurveyWorkspace({
             </button>
           ))}
         </div>
-        {loadingResponses ? <p>{t('common:loading')}</p> : null}
+        {loadingResponses ? <p>{t('loadingResponses')}</p> : null}
         {!loadingResponses && aggregates?.responseCount === 0 ? <p>{t('noResponses')}</p> : null}
         {selectedSurvey && aggregates && aggregates.responseCount > 0 ? (
           <div className="grid gap-4 lg:grid-cols-2">

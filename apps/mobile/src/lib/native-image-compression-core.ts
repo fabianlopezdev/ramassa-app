@@ -37,7 +37,7 @@ export interface CompressedNativeStoryImage extends UploadFileContent {
   readonly height: number;
 }
 
-export function scaledStoryImageDimensions(
+function scaledStoryImageDimensions(
   width: number,
   height: number,
 ): { readonly width: number; readonly height: number } {

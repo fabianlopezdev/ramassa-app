@@ -27,7 +27,7 @@ export function normalizePushPermissionStatus(
   return status;
 }
 
-export type PushSkipReason =
+type PushSkipReason =
   'no-session' | 'unsupported-platform' | 'missing-project-id' | 'offline' | 'permission-denied';
 
 export type PushRegistrationDecision =

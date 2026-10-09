@@ -28,7 +28,7 @@ export interface RecordMediaPurgeReceiptOptions {
   readonly fetchImplementation?: typeof fetch;
 }
 
-export const MEDIA_PURGED_AUDIT_ACTION = 'profile.media_purged';
+const MEDIA_PURGED_AUDIT_ACTION = 'profile.media_purged';
 
 export async function recordMediaPurgeReceipt(
   options: RecordMediaPurgeReceiptOptions,

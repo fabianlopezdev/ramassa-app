@@ -3,8 +3,7 @@ import { fetchPlayerAnnouncements, type AnnouncementListRow } from '@ramassa/sha
 import { useAuth } from '@ramassa/shared/auth';
 import { supabase } from './supabase';
 
-export const playerAnnouncementsQueryKey = (userId: string) =>
-  ['player-announcements', userId] as const;
+const playerAnnouncementsQueryKey = (userId: string) => ['player-announcements', userId] as const;
 
 export function usePlayerAnnouncements() {
   const { user } = useAuth();

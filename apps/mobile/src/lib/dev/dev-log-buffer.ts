@@ -13,7 +13,7 @@
 
 import { logLevels, type LogEntry, type LogLevel, type LogSink } from '@ramassa/shared/logger';
 
-export interface DevLogEntry extends LogEntry {
+interface DevLogEntry extends LogEntry {
   readonly id: number;
 }
 

@@ -31,7 +31,7 @@ Every later issue cites this page. Read it before adding anything.
 ## Errors and logging (standing rules, RAPP-12)
 
 1. **Errors are typed, never generic.** App code throws `AppError` with a stable
-   `DOMAIN-N` code from `errors/codes.ts` (append-only registry); raw
+   `DOMAIN-N` code from `errors/runtime.ts` (append-only registry); raw
    `throw new Error` is lint-banned outside this package. Every code lands a
    translated `errors:<code>` message in ALL five locales in the same change.
 2. **`safeAsync` wraps every failable async operation** and returns

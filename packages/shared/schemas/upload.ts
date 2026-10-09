@@ -11,7 +11,7 @@
  */
 
 import { z } from 'zod';
-import type { AppErrorCode } from '../errors/codes';
+import type { AppErrorCode } from '../errors';
 import { tokens } from '../tokens';
 import type { AppRole } from './auth';
 

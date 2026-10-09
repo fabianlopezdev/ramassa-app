@@ -3,7 +3,6 @@
     "home": "الرئيسية",
     "events": "الفعاليات",
     "community": "المجتمع",
-    "messages": "الرسائل",
     "services": "الخدمات",
     "profile": "الملف الشخصي"
   },
@@ -29,7 +28,6 @@
     "messages": "الرسائل"
   },
   "a11y": {
-    "primary": "التنقل الرئيسي",
     "staffSidebar": "تنقل الفريق",
     "entityPortal": "تنقل البوابة",
     "toggleSidebar": "إظهار أو إخفاء الشريط الجانبي",

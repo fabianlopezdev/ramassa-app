@@ -5,9 +5,8 @@
  */
 
 import { expect, test } from 'bun:test';
-import { AppError } from './app-error';
-import { errorCodeRegistry, type AppErrorCode } from './codes';
 import { isRetryableError } from './retry';
+import { AppError, errorCodeRegistry, type AppErrorCode } from './runtime';
 
 const allCodes = Object.keys(errorCodeRegistry) as AppErrorCode[];
 

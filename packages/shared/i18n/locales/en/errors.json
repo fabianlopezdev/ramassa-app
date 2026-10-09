@@ -2,7 +2,7 @@
   "AUTH-1": "We could not sign you in. Please try again.",
   "AUTH-2": "Your session has expired. Please sign in again.",
   "AUTH-3": "You do not have permission to do this.",
-  "AUTH-4": "This sign-in link is invalid or has expired. Request a new one.",
+  "AUTH-4": "This code is wrong or has expired. Request a new one.",
   "AUTH-5": "Too many attempts. Please wait a moment and try again.",
   "AUTH-6": "Those details do not match. Check them and try again.",
   "AUTH-7": "This sign-in link could not be trusted. Request a new one.",

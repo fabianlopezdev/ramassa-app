@@ -1,11 +1,11 @@
 import { expect, test, type Page } from '@playwright/test';
 import {
   ENTITY_EMAIL,
-  latestMagicLink,
   OTHER_ENTITY_EMAIL,
   queryDatabase,
   SEED_PASSWORD,
   signIn,
+  signInStaffWithEmailCode,
   signOut,
 } from './session';
 
@@ -135,7 +135,7 @@ test.describe.serial('entity tracking, impact, events and administration', () =>
     await page.goto('/settings?tab=entities');
     await page.getByLabel(/entity name|nom de l'entitat|nombre de la entidad/i).fill(ENTITY_NAME);
     await page.getByRole('button', { name: /add entity|afegeix entitat|añadir entidad/i }).click();
-    await expect(page.getByRole('status')).toContainText(
+    await expect(page.getByRole('status').filter({ hasText: /\S/ })).toContainText(
       /entity added|entitat afegida|entidad añadida/i,
     );
 
@@ -155,7 +155,7 @@ test.describe.serial('entity tracking, impact, events and administration', () =>
     await page
       .getByRole('button', { name: /send invitation|envia la invitació|enviar invitación/i })
       .click();
-    await expect(page.getByRole('status')).toContainText(
+    await expect(page.getByRole('status').filter({ hasText: /\S/ })).toContainText(
       /invitation sent|invitació enviada|invitación enviada/i,
     );
 
@@ -172,10 +172,9 @@ test.describe.serial('entity tracking, impact, events and administration', () =>
       where id = ${sqlLiteral(collaboratorProfileId)}::uuid
     `);
 
-    const magicLink = await latestMagicLink(COLLABORATOR_EMAIL);
     const collaboratorContext = await browser.newContext({ locale: 'en-GB' });
     const collaboratorPage = await collaboratorContext.newPage();
-    await collaboratorPage.goto(magicLink);
+    await signInStaffWithEmailCode(collaboratorPage, COLLABORATOR_EMAIL);
     await expect(collaboratorPage).toHaveURL(/\/portal(?:\/)?$/, { timeout: 30_000 });
     expect(
       queryDatabase(
@@ -250,7 +249,7 @@ test.describe.serial('entity tracking, impact, events and administration', () =>
         ),
       )
       .toBe('false');
-    await expect(page.getByRole('status')).toContainText(
+    await expect(page.getByRole('status').filter({ hasText: /\S/ })).toContainText(
       /collaborator access removed|accés de la col·laboradora retirat|acceso de la colaboradora retirado/i,
     );
     await activePage.reload();
@@ -266,7 +265,7 @@ test.describe.serial('entity tracking, impact, events and administration', () =>
         ),
       )
       .toBe('true');
-    await expect(page.getByRole('status')).toContainText(
+    await expect(page.getByRole('status').filter({ hasText: /\S/ })).toContainText(
       /collaborator access restored|accés de la col·laboradora restaurat|acceso de la colaboradora restaurado/i,
     );
     const referralCountBefore = queryDatabase(
@@ -299,7 +298,7 @@ test.describe.serial('entity tracking, impact, events and administration', () =>
         ),
       )
       .toBe('false');
-    await expect(page.getByRole('status')).toContainText(
+    await expect(page.getByRole('status').filter({ hasText: /\S/ })).toContainText(
       /entity deactivated|entitat desactivada|entidad desactivada/i,
     );
     expect(

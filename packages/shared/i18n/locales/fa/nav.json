@@ -3,7 +3,6 @@
     "home": "خانه",
     "events": "رویدادها",
     "community": "انجمن",
-    "messages": "پیام‌ها",
     "services": "خدمات",
     "profile": "پروفایل"
   },
@@ -29,7 +28,6 @@
     "messages": "پیام‌ها"
   },
   "a11y": {
-    "primary": "ناوبری اصلی",
     "staffSidebar": "ناوبری کارکنان",
     "entityPortal": "ناوبری پورتال",
     "toggleSidebar": "نمایش یا پنهان‌کردن نوار کناری",

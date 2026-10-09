@@ -20,8 +20,6 @@ const HOME_FEED_KEYS = [
   'emptyBody',
   'loadFailed',
   'retryAction',
-  'openAnnouncementLabel',
-  'detailTitle',
   'loading',
 ] as const;
 

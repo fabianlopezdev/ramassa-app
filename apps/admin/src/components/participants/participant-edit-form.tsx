@@ -26,7 +26,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMemo, useState } from 'react';
-import { Controller, useForm, type Control, type FieldErrors } from 'react-hook-form';
+import { Controller, useForm, type Control } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import type { z } from 'zod';
 import { LANGUAGE_NATIVE_NAMES, SUPPORTED_LANGUAGES } from '@ramassa/shared/i18n';
@@ -392,5 +392,3 @@ function SelectField({
     />
   );
 }
-
-export type ParticipantEditErrors = FieldErrors<ProfileEditInput>;

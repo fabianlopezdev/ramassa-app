@@ -1,7 +1,5 @@
 {
   "title": "Benvinguda",
-  "subtitle": "La base de l'aplicació funciona",
-  "tabLabel": "Inici",
   "feedTitle": "Avisos",
   "feedIntro": "Novetats del club, entrenaments i activitats per a tu.",
   "filterLabel": "Filtra els avisos per categoria",
@@ -18,7 +16,5 @@
   "emptyBody": "Quan l'equip publiqui una novetat, la trobaràs aquí.",
   "loadFailed": "No hem pogut carregar els avisos.",
   "retryAction": "Torna-ho a provar",
-  "openAnnouncementLabel": "Obre l'avís: {{title}}",
-  "detailTitle": "Avís",
   "loading": "Carregant els avisos"
 }

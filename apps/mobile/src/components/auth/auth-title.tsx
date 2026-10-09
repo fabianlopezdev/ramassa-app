@@ -23,8 +23,12 @@ export function AuthTitle({
           {title}
         </Text>
       ) : null}
+      {/* Selectable because after the code is sent the subtitle names the
+          address it went to, which a player may want to copy and check. */}
       {subtitle ? (
-        <Text className={`text-center text-lg text-neutral-700 ${fontClass}`}>{subtitle}</Text>
+        <Text selectable className={`text-center text-lg text-neutral-700 ${fontClass}`}>
+          {subtitle}
+        </Text>
       ) : null}
     </View>
   );

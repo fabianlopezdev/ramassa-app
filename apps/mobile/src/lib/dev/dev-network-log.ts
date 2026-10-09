@@ -24,7 +24,7 @@ export type DevRequestKind =
   | 'r2-upload'
   | 'other';
 
-export interface DevNetworkEntry {
+interface DevNetworkEntry {
   readonly id: number;
   readonly method: string;
   /** Already redacted. Safe to render and to screenshot. */
@@ -36,7 +36,7 @@ export interface DevNetworkEntry {
   readonly failed: boolean;
 }
 
-export type DevNetworkRecord = Omit<DevNetworkEntry, 'id' | 'failed'> & { failed?: boolean };
+type DevNetworkRecord = Omit<DevNetworkEntry, 'id' | 'failed'> & { failed?: boolean };
 
 export interface DevNetworkLog {
   record(entry: DevNetworkRecord): void;

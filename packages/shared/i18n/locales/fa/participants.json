@@ -138,7 +138,6 @@
   "eraseConsequenceAccess": "دسترسی‌اش به برنامه بی‌درنگ قطع می‌شود.",
   "eraseConsequenceAudit": "سابقه‌ی اینکه چه کسی و چه زمانی این کار را کرده می‌ماند، بدون هیچ داده‌ای از او.",
   "eraseFulfillsRequest": "این پاسخ به درخواستی است که خودش داده:",
-  "eraseFailed": "نتوانستیم پرونده را حذف کنیم.",
   "deletionRequestsTitle": "درخواست‌های حذف",
   "deletionRequestsHint": "درخواست‌هایی که شرکت‌کنندگان از صفحه‌ی خودشان داده‌اند.",
   "deletionRequestsEmpty": "درخواستی در انتظار نیست.",

@@ -35,7 +35,6 @@
   "publish": "منتشر کنید",
   "publishing": "در حال انتشار",
   "publishFailed": "پست منتشر نشد.",
-  "publishSuccess": "پست ساخته شد.",
   "detailTitle": "پست",
   "replyPlaceholder": "یک پاسخ بنویسید",
   "reply": "پاسخ دهید",
@@ -86,7 +85,11 @@
   "moderationEmptyBody": "گزارش‌های جدید اینجا نمایش داده می‌شوند.",
   "moderationUnknownCategory": "دسته ناشناخته",
   "moderationFlags": "{{count}} گزارش",
-  "moderationTarget": { "post": "پست", "reply": "پاسخ", "media": "گالری" },
+  "moderationTarget": {
+    "post": "پست",
+    "reply": "پاسخ",
+    "media": "گالری"
+  },
   "moderationDismiss": "رد گزارش‌ها",
   "moderationHide": "پنهان کردن",
   "moderationDelete": "حذف",

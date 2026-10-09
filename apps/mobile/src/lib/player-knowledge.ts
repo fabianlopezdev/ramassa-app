@@ -24,11 +24,11 @@ import { mobileClientEnv, supabase } from './supabase';
 
 const playerKnowledgeQueryRoot = 'player-knowledge';
 
-export const playerKnowledgeCategoriesQueryKey = (userId: string) =>
+const playerKnowledgeCategoriesQueryKey = (userId: string) =>
   [playerKnowledgeQueryRoot, 'categories', userId] as const;
-export const playerKnowledgeArticlesQueryKey = (userId: string) =>
+const playerKnowledgeArticlesQueryKey = (userId: string) =>
   [playerKnowledgeQueryRoot, 'articles', userId] as const;
-export const playerOwnStoryStatusesQueryKey = (userId: string) =>
+const playerOwnStoryStatusesQueryKey = (userId: string) =>
   [playerKnowledgeQueryRoot, 'own-stories', userId] as const;
 
 export function usePlayerKnowledgeCategories() {

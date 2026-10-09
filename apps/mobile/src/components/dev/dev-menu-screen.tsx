@@ -35,6 +35,7 @@ import { DevPushSection } from './dev-push-section';
 // utility for `direction`, and an inline object would re-allocate every render.
 const headerRowLtr: ViewStyle = { direction: 'ltr' };
 
+/** @public Loaded with a `require()` inside `__DEV__`, so release builds drop it; knip cannot follow that. */
 export function DevMenuScreen() {
   return (
     <SafeAreaView className="flex-1 bg-neutral-50" edges={['top']}>

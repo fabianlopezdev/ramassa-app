@@ -62,8 +62,6 @@
   "deleted": "Avís eliminat",
   "translationRequired": "Genera i aprova totes les traduccions abans de publicar.",
   "imageAltRequired": "Afegeix una descripció de la imatge i aprova'n totes les traduccions.",
-  "workerUnavailable": "El servei de traducció no està configurat.",
   "saveFailed": "No s'ha pogut desar l'avís.",
-  "uploadFailed": "No s'ha pogut pujar la imatge.",
   "loadFailed": "No s'ha pogut carregar l'avís."
 }

@@ -62,8 +62,6 @@
   "deleted": "Aviso eliminado",
   "translationRequired": "Genera y aprueba todas las traducciones antes de publicar.",
   "imageAltRequired": "Añade una descripción de la imagen y aprueba todas sus traducciones.",
-  "workerUnavailable": "El servicio de traducción no está configurado.",
   "saveFailed": "No se pudo guardar el aviso.",
-  "uploadFailed": "No se pudo subir la imagen.",
   "loadFailed": "No se pudo cargar el aviso."
 }

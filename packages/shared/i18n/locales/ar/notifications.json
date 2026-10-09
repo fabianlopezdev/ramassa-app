@@ -25,8 +25,6 @@
   "audienceEntity": "المحالات من جهة",
   "audienceCustomGroup": "مجموعة مخصصة",
   "selectOption": "اختاري خيارًا",
-  "recipientCount": "{{count}} مستلمات",
-  "deviceCount": "{{count}} أجهزة",
   "previewing": "جارٍ تحديث الجمهور المباشر...",
   "confirmation": "تأكيد الإرسال إلى {{count}} مستلمات على {{devices}} أجهزة.",
   "sendAction": "تأكيد وإرسال",

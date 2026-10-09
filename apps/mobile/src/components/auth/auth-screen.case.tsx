@@ -77,7 +77,7 @@ afterAll(() => {
 afterAll(() => mock.restore());
 const layout = (height: number) => ({ nativeEvent: { layout: { height } } });
 
-test('login title shares the choice heading anchor, while footer stays outside scrolling fields', () => {
+test('login title keeps its anchored place, while footer stays outside scrolling fields', () => {
   process.env.EXPO_OS = 'android';
   const view = render(
     createElement(AuthScreen, {
@@ -110,6 +110,6 @@ test('login title shares the choice heading anchor, while footer stays outside s
   });
   expect(contentStyle).toEqual({ paddingTop: 24, paddingBottom: 184 });
   process.env.EXPO_OS = 'ios';
-  view.rerender(createElement(AuthScreen, { children: null }));
+  view.rerender(createElement(AuthScreen, { children: null, bottomAction: null }));
   expect(keyboardContainer.getAttribute('data-behavior')).toBe('padding');
 });

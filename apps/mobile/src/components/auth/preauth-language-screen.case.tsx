@@ -16,7 +16,6 @@ mock.module('@/lib/storage', () => ({
     remove: (key: string) => storage.delete(key),
   },
 }));
-mock.module('@/lib/i18n', () => ({ hasPersistedLanguageChoice: () => false }));
 mock.module('@/lib/use-language-font-class', () => ({ useLanguageFontClass: () => 'font-sans' }));
 mock.module('@/lib/continuous-corners', () => ({ continuousCorners: {} }));
 mock.module('@/components/branding/public-organization-logo', () => ({
@@ -144,7 +143,6 @@ test('Arabic previews in place and reloads only when confirmed', async () => {
 });
 test('screen removes duplicate name and instructions, and keeps footer outside scroll content', async () => {
   const { view, i18n } = await screen();
-  expect(view.queryByText(i18n.t('auth:languageSubtitle'))).toBeNull();
   expect(view.queryByText(i18n.t('common:appName'))).toBeNull();
   const footer = view.getByTestId('language-continue-footer');
   expect(footer.contains(view.getByRole('button', { name: i18n.t('auth:continueAction') }))).toBe(

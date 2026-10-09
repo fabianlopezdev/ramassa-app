@@ -1,8 +1,8 @@
 /** Browser proof for municipality search, selection and persistence (RAPP-100). */
 
 import { expect, test, type Page } from '@playwright/test';
-import { PARTICIPANT_FIXTURES, SEED_ACCOUNT_PASSWORD } from '@ramassa/shared/testing';
-import { queryDatabase } from './session';
+import { PARTICIPANT_FIXTURES } from '@ramassa/shared/testing';
+import { queryDatabase, signInPlayer as signInPlayerWithEmailCode } from './session';
 
 const playerOrigin = `http://localhost:${process.env.RAMASSA_QA_PLAYER_PORT ?? '4194'}`;
 // Ordinal 21 deliberately has no accepted terms in seed.sql and belongs to the
@@ -29,15 +29,7 @@ test.afterAll(() => {
 });
 
 async function signInPlayer(page: Page): Promise<void> {
-  await page.goto(`${playerOrigin}/login`, { waitUntil: 'domcontentloaded', timeout: 120_000 });
-  await page
-    .getByRole('button', { name: /password/i })
-    .first()
-    .click();
-  await page.locator('input[type="email"]').fill(player.email);
-  await page.locator('input[type="password"]').fill(SEED_ACCOUNT_PASSWORD);
-  await page.getByRole('button', { name: 'Log in', exact: true }).click();
-  await page.waitForURL((url) => !url.pathname.includes('/login'), { timeout: 30_000 });
+  await signInPlayerWithEmailCode(page, player.email);
 }
 
 test('searches and persists one canonical municipality from profile edit', async ({ page }) => {

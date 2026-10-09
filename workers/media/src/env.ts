@@ -48,7 +48,7 @@ const workerEnvSchema = z.discriminatedUnion('UPLOAD_MODE', [
   }),
 ]);
 
-export class WorkerEnvironmentValidationError extends Error {
+class WorkerEnvironmentValidationError extends Error {
   readonly missingOrInvalidKeys: string[];
 
   constructor(issues: z.core.$ZodIssue[]) {

@@ -12,8 +12,8 @@ import {
 import { isNetworkStateOnline } from './network-status';
 import { supabase } from './supabase';
 
-export const playerSurveysQueryKey = (userId: string) => ['player-surveys', userId] as const;
-export const ownSurveyResponseQueryKey = (userId: string, surveyId: string) =>
+const playerSurveysQueryKey = (userId: string) => ['player-surveys', userId] as const;
+const ownSurveyResponseQueryKey = (userId: string, surveyId: string) =>
   ['survey-response', userId, surveyId] as const;
 
 export function usePlayerSurveys() {

@@ -277,7 +277,7 @@ const emptyCategory = (): ForumCategoryInput => ({
   sortOrder: 0,
 });
 
-export function ForumCategoryManager({
+function ForumCategoryManager({
   categories,
 }: {
   readonly categories: readonly ForumCategoryRow[];

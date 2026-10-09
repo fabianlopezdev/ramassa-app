@@ -22,7 +22,5 @@ export function useLanguageRestart(setLanguage: SetLanguage) {
   );
 
   const dismissRestart = useCallback(() => setNeedsRestart(false), []);
-  const restart = useCallback(async () => reloadAppAsync(), []);
-
-  return { choose, dismissRestart, needsRestart, restart };
+  return { choose, dismissRestart, needsRestart, restart: reloadAppAsync };
 }

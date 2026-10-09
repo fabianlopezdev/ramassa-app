@@ -21,7 +21,7 @@ import { useTranslation } from 'react-i18next';
 import { KeyboardAvoidingView, ScrollView, Text, View, type TextStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-export const WIZARD_TOTAL_STEPS = 5;
+const WIZARD_TOTAL_STEPS = 5;
 
 /**
  * Fixed-width digits for the "step X of Y" counter, so the line does not

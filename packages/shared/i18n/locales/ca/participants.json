@@ -138,7 +138,6 @@
   "eraseConsequenceAccess": "Perd l'accés a l'aplicació immediatament.",
   "eraseConsequenceAudit": "Queda constància de qui ho ha fet i quan, sense cap dada seva.",
   "eraseFulfillsRequest": "Això respon a la petició que va fer ella mateixa:",
-  "eraseFailed": "No hem pogut esborrar la fitxa.",
   "deletionRequestsTitle": "Peticions d'esborrat",
   "deletionRequestsHint": "Peticions fetes per les participants des de la seva fitxa.",
   "deletionRequestsEmpty": "No hi ha cap petició pendent.",

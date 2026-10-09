@@ -35,7 +35,6 @@
   "publish": "انشري",
   "publishing": "جارٍ النشر",
   "publishFailed": "تعذّر نشر المنشور.",
-  "publishSuccess": "تم إنشاء المنشور.",
   "detailTitle": "منشور",
   "replyPlaceholder": "اكتبي ردًا",
   "reply": "ردّي",
@@ -86,7 +85,11 @@
   "moderationEmptyBody": "ستظهر البلاغات الجديدة هنا.",
   "moderationUnknownCategory": "فئة غير معروفة",
   "moderationFlags": "{{count}} بلاغات",
-  "moderationTarget": { "post": "منشور", "reply": "رد", "media": "المعرض" },
+  "moderationTarget": {
+    "post": "منشور",
+    "reply": "رد",
+    "media": "المعرض"
+  },
   "moderationDismiss": "رفض البلاغات",
   "moderationHide": "إخفاء",
   "moderationDelete": "حذف",

@@ -60,5 +60,6 @@
   "reviewStatusRejected": "Rebutjada",
   "reject": "Rebutja",
   "approve": "Aprova",
-  "approveAll": "Aprova-ho tot"
+  "approveAll": "Aprova-ho tot",
+  "loadingResponses": "S'estan carregant les respostes..."
 }

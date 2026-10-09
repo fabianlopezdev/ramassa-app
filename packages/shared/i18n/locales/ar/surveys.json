@@ -60,5 +60,6 @@
   "reviewStatusRejected": "مرفوضة",
   "reject": "رفض",
   "approve": "موافقة",
-  "approveAll": "الموافقة على الكل"
+  "approveAll": "الموافقة على الكل",
+  "loadingResponses": "جارٍ تحميل الردود..."
 }

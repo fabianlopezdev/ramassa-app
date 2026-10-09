@@ -23,11 +23,11 @@ const statusByErrorCode: Partial<Record<AppErrorCode, number>> = {
   'VALIDATION-1': 400,
 };
 
-export function getStatusForErrorCode(code: AppErrorCode): number {
+function getStatusForErrorCode(code: AppErrorCode): number {
   return statusByErrorCode[code] ?? 500;
 }
 
-export interface ErrorResponseBody {
+interface ErrorResponseBody {
   readonly error: { readonly code: AppErrorCode };
 }
 

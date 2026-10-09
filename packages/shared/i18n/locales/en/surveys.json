@@ -60,5 +60,6 @@
   "reviewStatusRejected": "Rejected",
   "reject": "Reject",
   "approve": "Approve",
-  "approveAll": "Approve all"
+  "approveAll": "Approve all",
+  "loadingResponses": "Loading responses..."
 }

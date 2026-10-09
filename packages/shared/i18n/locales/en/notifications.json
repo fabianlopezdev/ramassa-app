@@ -25,8 +25,6 @@
   "audienceEntity": "Referred by an entity",
   "audienceCustomGroup": "Custom group",
   "selectOption": "Select an option",
-  "recipientCount": "{{count}} recipients",
-  "deviceCount": "{{count}} devices",
   "previewing": "Updating live audience...",
   "confirmation": "Confirm send to {{count}} recipients on {{devices}} devices.",
   "sendAction": "Confirm and send",

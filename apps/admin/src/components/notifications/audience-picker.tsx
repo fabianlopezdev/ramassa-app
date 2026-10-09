@@ -16,7 +16,7 @@ function audienceValue(audience: NotificationAudience | null): string {
   return audience.customGroupId;
 }
 
-export function audienceFromSelection(
+function audienceFromSelection(
   kind: '' | NotificationAudienceKind,
   value: string,
 ): NotificationAudience | null {

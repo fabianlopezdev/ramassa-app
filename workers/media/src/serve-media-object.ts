@@ -13,7 +13,7 @@ import { MEDIA_OBJECT_PATH_PREFIX } from '@ramassa/shared/upload-client';
 import { errorResponse } from './http';
 import type { CallerIdentity } from './supabase-identity';
 
-export interface MediaObject {
+interface MediaObject {
   readonly body: ReadableStream;
   readonly size: number;
   readonly httpEtag: string;

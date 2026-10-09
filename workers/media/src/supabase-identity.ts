@@ -59,7 +59,7 @@ export function readBearerToken(request: Request): string {
  * `authenticated` is the audience Supabase stamps on a signed-in user's token;
  * anon tokens carry a different one and are rejected here.
  */
-export async function verifyAccessToken(options: {
+async function verifyAccessToken(options: {
   readonly token: string;
   readonly supabaseUrl: string;
 }): Promise<string> {
@@ -94,7 +94,7 @@ const profileRowSchema = z.object({
  * forwarded, so the row comes back only if RLS lets that user read it; a
  * deactivated or deleted participant gets nothing and is denied.
  */
-export async function fetchCallerProfile(options: {
+async function fetchCallerProfile(options: {
   readonly userId: string;
   readonly token: string;
   readonly supabaseUrl: string;

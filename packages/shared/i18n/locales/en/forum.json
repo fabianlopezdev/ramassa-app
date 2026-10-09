@@ -35,7 +35,6 @@
   "publish": "Post",
   "publishing": "Posting",
   "publishFailed": "The post could not be published.",
-  "publishSuccess": "Post created.",
   "detailTitle": "Post",
   "replyPlaceholder": "Write a reply",
   "reply": "Reply",
@@ -86,7 +85,11 @@
   "moderationEmptyBody": "New reports will appear here.",
   "moderationUnknownCategory": "Unknown category",
   "moderationFlags": "{{count}} reports",
-  "moderationTarget": { "post": "Post", "reply": "Reply", "media": "Gallery media" },
+  "moderationTarget": {
+    "post": "Post",
+    "reply": "Reply",
+    "media": "Gallery media"
+  },
   "moderationDismiss": "Dismiss reports",
   "moderationHide": "Hide",
   "moderationDelete": "Delete",

@@ -10,12 +10,17 @@ export const ACCESS_CODE_PATTERN = new RegExp(
   `^${accessCodeCharacterClass}{${ACCESS_CODE_GROUP_LENGTH}}(?:-${accessCodeCharacterClass}{${ACCESS_CODE_GROUP_LENGTH}}){${ACCESS_CODE_GROUP_COUNT - 1}}$`,
 );
 
+// Hoisted so each call reuses one compiled pattern. Both are global, and
+// `replaceAll` and `match` reset `lastIndex` before use, so sharing them is safe.
+const accessCodeSeparatorPattern = /[\s-]/g;
+const accessCodeGroupPattern = new RegExp(`.{1,${ACCESS_CODE_GROUP_LENGTH}}`, 'g');
+
 function accessCodeCharacters(value: string): string {
-  return value.trim().toLowerCase().replaceAll(/[\s-]/g, '');
+  return value.trim().toLowerCase().replaceAll(accessCodeSeparatorPattern, '');
 }
 
 function groupAccessCode(value: string): string {
-  return value.match(new RegExp(`.{1,${ACCESS_CODE_GROUP_LENGTH}}`, 'g'))?.join('-') ?? '';
+  return value.match(accessCodeGroupPattern)?.join('-') ?? '';
 }
 
 export function canonicalizeAccessCode(value: string): string {

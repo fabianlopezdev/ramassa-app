@@ -10,7 +10,7 @@ import {
 import { isNetworkStateOnline } from './network-status';
 import { supabase } from './supabase';
 
-export const playerFeedbackQueryKey = (userId: string) => ['player-feedback', userId] as const;
+const playerFeedbackQueryKey = (userId: string) => ['player-feedback', userId] as const;
 
 export function usePlayerFeedback() {
   const { user } = useAuth();

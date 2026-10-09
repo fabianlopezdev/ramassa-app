@@ -33,8 +33,6 @@
   "deleteConfirmCancel": "لا، عودي",
   "deletePendingTitle": "لديكِ طلب مفتوح بالفعل",
   "deletePendingBody": "استلمنا طلبكِ بتاريخ {{date}}. سيتواصل معكِ فريق رماسا.",
-  "deleteSentTitle": "تم إرسال الطلب",
-  "deleteSentBody": "سيراجعه فريق رماسا ويتحدث معكِ.",
   "loadFailed": "لم نتمكن من تحميل بياناتكِ. حاولي مرة أخرى.",
   "saveFailed": "لم نتمكن من حفظ التغييرات. حاولي مرة أخرى.",
   "retryAction": "حاولي مرة أخرى",

@@ -49,7 +49,7 @@ export interface MediaBucket {
   delete(keys: string | string[]): Promise<void>;
 }
 
-export interface PurgeReceipt {
+interface PurgeReceipt {
   readonly participantId: string;
   readonly objectsDeleted: number;
   /**
@@ -70,7 +70,7 @@ export interface PurgeParticipantMediaDependencies {
   readonly onError?: (error: unknown, context: Record<string, unknown>) => void;
 }
 
-export interface PurgeParticipantMediaResponse {
+interface PurgeParticipantMediaResponse {
   readonly objectsDeleted: number;
 }
 

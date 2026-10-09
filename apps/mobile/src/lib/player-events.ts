@@ -13,7 +13,7 @@ import { requireEventSignupOnline } from './event-signup-policy';
 import { isNetworkStateOnline } from './network-status';
 import { supabase } from './supabase';
 
-export const playerEventsQueryKey = (userId: string) => ['player-events', userId] as const;
+const playerEventsQueryKey = (userId: string) => ['player-events', userId] as const;
 
 export function usePlayerEvents() {
   const { user } = useAuth();

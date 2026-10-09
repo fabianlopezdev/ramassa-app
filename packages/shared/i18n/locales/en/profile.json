@@ -33,8 +33,6 @@
   "deleteConfirmCancel": "No, go back",
   "deletePendingTitle": "You already have an open request",
   "deletePendingBody": "We received your request on {{date}}. The Ramassà team will be in touch.",
-  "deleteSentTitle": "Request sent",
-  "deleteSentBody": "The Ramassà team will review it and talk to you.",
   "loadFailed": "We could not load your information. Please try again.",
   "saveFailed": "We could not save your changes. Please try again.",
   "retryAction": "Try again",

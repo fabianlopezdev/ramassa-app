@@ -59,7 +59,6 @@
   "publishedEditNotice": "Els canvis d'un servei publicat s'apliquen immediatament i avisen l'equip.",
   "pendingNotice": "Aquesta proposta està en revisió i no es pot editar.",
   "approvedNotice": "Aquesta proposta està aprovada i espera la publicació.",
-  "notFound": "No s'ha trobat el servei.",
   "createdAt": "Creat",
   "updatedAt": "Actualitzat"
 }

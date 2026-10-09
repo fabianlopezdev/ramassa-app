@@ -24,7 +24,7 @@ test('invalid credentials map to AUTH-6', () => {
 });
 
 test('a send-step "signups not allowed for otp" is NOT read as an expired link', () => {
-  // A magic-link request for an unregistered email (shouldCreateUser: false)
+  // An email code request for an unregistered email (shouldCreateUser: false)
   // is a plain failure, not an expired link — it must use the fallback.
   expect(mapSupabaseAuthError({ message: 'Signups not allowed for otp' })).toBe('AUTH-1');
 });

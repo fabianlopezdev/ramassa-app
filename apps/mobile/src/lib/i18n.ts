@@ -21,10 +21,6 @@ export const i18n = createI18n({
   deviceLanguages: getLocales().map((deviceLocale) => deviceLocale.languageTag),
 });
 
-export function hasPersistedLanguageChoice(): boolean {
-  return languageStorage.getLanguage() !== null;
-}
-
 // React Native only applies a layout-direction flip on the next app start, so a
 // `true` return here means the CURRENT session still shows the old direction.
 // `extra.supportsRTL` in app.json already makes a first launch on an AR/FA

@@ -1,16 +1,11 @@
 import { SelectionTransition } from '@/components/motion/selection-transition';
+import { fontClassForLanguage } from '@/lib/language-font-class';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, useWindowDimensions, View } from 'react-native';
-import {
-  getLanguageFontFamilyKey,
-  SUPPORTED_LANGUAGES,
-  useLanguage,
-  type SupportedLanguage,
-} from '@ramassa/shared/i18n';
+import { SUPPORTED_LANGUAGES, useLanguage, type SupportedLanguage } from '@ramassa/shared/i18n';
 import { tokens } from '@ramassa/shared/tokens';
 
-const fontClasses = { sans: 'font-sans', arabic: 'font-arabic', farsi: 'font-farsi' } as const;
 const titleStyle = { position: 'absolute', width: '100%' } as const;
 
 export function LanguageChoiceHeading() {
@@ -43,7 +38,7 @@ export function LanguageChoiceHeading() {
               accessibilityElementsHidden={!active}
               importantForAccessibility={active ? 'auto' : 'no-hide-descendants'}
               pointerEvents="none"
-              className={`text-center text-2xl font-bold text-neutral-900 ${fontClasses[getLanguageFontFamilyKey(titleLanguage)]}`}
+              className={`text-center text-2xl font-bold text-neutral-900 ${fontClassForLanguage(titleLanguage)}`}
               onLayout={({ nativeEvent: { layout } }) => {
                 const height = Math.ceil(layout.height);
                 setHeights((previous) =>

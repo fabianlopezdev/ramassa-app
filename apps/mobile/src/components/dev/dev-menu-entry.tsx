@@ -12,6 +12,7 @@ import { Pressable, Text } from 'react-native';
  * Callers require this module inside a `__DEV__` branch, so the label never
  * reaches a production bundle either.
  */
+/** @public Loaded with a `require()` inside `__DEV__`, so release builds drop it; knip cannot follow that. */
 export function DevMenuEntry() {
   return (
     <Link href="/dev-menu" asChild>

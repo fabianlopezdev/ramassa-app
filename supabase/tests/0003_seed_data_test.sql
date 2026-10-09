@@ -146,14 +146,20 @@ select is_empty(
 -- fixtures, and `supabase test db` fails with the table's name. A table that
 -- genuinely cannot be seeded should be excluded here, deliberately and in writing.
 
+-- The table list is MATERIALIZED first: otherwise the planner may run the row
+-- count before the schema filter and try `public.pg_statistic` (RAPP-120).
 select is_empty(
-  $$ select t.table_name
-     from information_schema.tables t
-     where t.table_schema = 'public'
-       and t.table_type = 'BASE TABLE'
-       and (xpath(
+  $$ with public_tables as materialized (
+       select t.table_name
+       from information_schema.tables t
+       where t.table_schema = 'public'
+         and t.table_type = 'BASE TABLE'
+     )
+     select table_name
+     from public_tables
+     where (xpath(
              '/row/count/text()',
-             query_to_xml(format('select count(*) from public.%I', t.table_name), false, true, '')
+             query_to_xml(format('select count(*) from public.%I', table_name), false, true, '')
            ))[1]::text::int = 0 $$,
   'STANDING RULE: every table in public has seed rows (add seeds + a factory with the table)'
 );

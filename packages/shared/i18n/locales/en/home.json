@@ -1,7 +1,5 @@
 {
   "title": "Welcome",
-  "subtitle": "The app foundation is running",
-  "tabLabel": "Home",
   "feedTitle": "Announcements",
   "feedIntro": "Club news, training updates, and activities for you.",
   "filterLabel": "Filter announcements by category",
@@ -18,7 +16,5 @@
   "emptyBody": "When the team posts an update, you will find it here.",
   "loadFailed": "We could not load the announcements.",
   "retryAction": "Try again",
-  "openAnnouncementLabel": "Open announcement: {{title}}",
-  "detailTitle": "Announcement",
   "loading": "Loading announcements"
 }

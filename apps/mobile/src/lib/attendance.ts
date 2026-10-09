@@ -28,7 +28,7 @@ const SIGNED_OUT_QUERY_SCOPE = 'signed-out';
 export const attendanceOccurrencesQueryKey = (userId: string) =>
   ['attendance-occurrences', userId] as const;
 export const attendanceSheetsQueryKey = (userId: string) => ['attendance-sheet', userId] as const;
-export const attendanceSheetQueryKey = (userId: string, occurrenceId: string) =>
+const attendanceSheetQueryKey = (userId: string, occurrenceId: string) =>
   [...attendanceSheetsQueryKey(userId), occurrenceId] as const;
 
 export function useAttendanceOccurrences() {

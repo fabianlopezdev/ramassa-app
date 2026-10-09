@@ -16,7 +16,6 @@ const PUSH_KEYS = [
   'rationaleBody',
   'rationaleAccept',
   'rationaleDecline',
-  'deniedNotice',
   'eventFallbackBody',
   'announcementFallbackBody',
   'referralUpdateTitle',

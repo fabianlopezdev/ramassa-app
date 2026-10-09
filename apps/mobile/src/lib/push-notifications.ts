@@ -64,7 +64,7 @@ function toPermissionStatus(status: Notifications.PermissionStatus): PushPermiss
 }
 
 /** Current OS permission, without prompting. */
-export async function getPushPermissionStatus(): Promise<PushPermissionStatus> {
+async function getPushPermissionStatus(): Promise<PushPermissionStatus> {
   const { status, canAskAgain } = await Notifications.getPermissionsAsync();
   return normalizePushPermissionStatus(toPermissionStatus(status), canAskAgain);
 }
