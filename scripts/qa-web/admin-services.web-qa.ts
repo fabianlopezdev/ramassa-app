@@ -345,3 +345,16 @@ test('an entity contact cannot reach service administration', async ({ page }) =
     .not.toContain('/content');
   await expect(page.getByTestId('service-editor')).toHaveCount(0);
 });
+
+test('the services area shows Spanish texts to a Spanish-speaking staff member', async ({
+  page,
+}) => {
+  // RAPP-200: Spanish used to fall through to the English services catalog.
+  await signIn(page, STAFF_EMAIL);
+  const origin = new URL(page.url()).origin;
+  await page.context().addCookies([{ name: 'ramassa.language', value: 'es', url: origin }]);
+  await page.goto('/content/services');
+  await expect(page.getByRole('heading', { name: 'Servicios', exact: true })).toBeVisible();
+  await expect(page.getByText('Nuevo servicio', { exact: true })).toBeVisible();
+  await expect(page.getByText('New service', { exact: true })).toHaveCount(0);
+});
