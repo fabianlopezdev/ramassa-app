@@ -116,6 +116,7 @@ import esPlayerServices from './locales/es/player-services.json';
 import esProfile from './locales/es/profile.json';
 import esPush from './locales/es/push.json';
 import esReferrals from './locales/es/referrals.json';
+import esServices from './locales/es/services.json';
 import esSettings from './locales/es/settings.json';
 import esSurveys from './locales/es/surveys.json';
 import faAdmin from './locales/fa/admin.json';
@@ -199,7 +200,7 @@ const resources = {
     feedback: esFeedback,
     notifications: esNotifications,
     attendance: esAttendance,
-    services: enServices,
+    services: esServices,
     'entity-services': esEntityServices,
     'entity-management': esEntityManagement,
     playerServices: esPlayerServices,
