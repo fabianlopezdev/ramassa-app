@@ -3,6 +3,8 @@
 **Status:** Accepted
 **Date:** 2026-04-09
 
+> [!note] Amended 2026-10-08 (ADR-026 / RAPP-210): staff screens (web dashboard, team member and entity screens in the app) use Catalan, Spanish and English only. Players keep all five languages with RTL, and player content is still written in all five.
+
 ## Context
 
 Catalan is mandatory (Generalitat grant requirement). The target population includes speakers of Spanish, English, Arabic, and Farsi. Adding RTL support after the fact requires refactoring every style that uses `left`/`right`.
