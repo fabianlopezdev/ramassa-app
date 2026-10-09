@@ -13,7 +13,7 @@ import { BlurTargetView } from 'expo-blur';
 import { useRouter } from 'expo-router';
 import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { I18nManager, Platform, ScrollView, useWindowDimensions, View } from 'react-native';
+import { I18nManager, ScrollView, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLanguage } from '@ramassa/shared/i18n';
 import { tokens } from '@ramassa/shared/tokens';
@@ -51,7 +51,7 @@ export default function PreAuthLanguageScreen() {
     setContinuing(true);
     // Persist the default choice too, even if the user never tapped a row.
     await setLanguage(language);
-    if (Platform.OS !== 'web' && shouldRestartForLanguage(I18nManager.isRTL, language)) {
+    if (process.env.EXPO_OS !== 'web' && shouldRestartForLanguage(I18nManager.isRTL, language)) {
       preferencesStorage.set(LANGUAGE_CONFIRMED_RELOAD_KEY, true);
       try {
         await reloadAppAsync();

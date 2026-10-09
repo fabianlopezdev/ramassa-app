@@ -25,8 +25,6 @@
   "audienceEntity": "Derivadas por una entidad",
   "audienceCustomGroup": "Grupo personalizado",
   "selectOption": "Selecciona una opción",
-  "recipientCount": "{{count}} destinatarias",
-  "deviceCount": "{{count}} dispositivos",
   "previewing": "Actualizando el público en directo...",
   "confirmation": "Confirma el envío a {{count}} destinatarias en {{devices}} dispositivos.",
   "sendAction": "Confirmar y enviar",

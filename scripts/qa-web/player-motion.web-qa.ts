@@ -1,9 +1,9 @@
 /** Browser regression coverage for NativeWind classes on shared player press targets. */
 
-import { expect, test, type Locator, type Page } from '@playwright/test';
-import { PARTICIPANT_FIXTURES, SEED_ACCOUNT_PASSWORD } from '@ramassa/shared/testing';
+import { expect, test, type Locator } from '@playwright/test';
+import { PARTICIPANT_FIXTURES } from '@ramassa/shared/testing';
+import { PLAYER_ORIGIN, signInPlayer } from './session';
 
-const playerOrigin = `http://localhost:${process.env.RAMASSA_QA_PLAYER_PORT ?? '4194'}`;
 const player = PARTICIPANT_FIXTURES[0]!;
 
 interface PressTargetMeasurements {
@@ -35,42 +35,48 @@ async function measurePressTarget(target: Locator): Promise<PressTargetMeasureme
   });
 }
 
-async function openPasswordForm(page: Page): Promise<void> {
-  await page.goto(`${playerOrigin}/login`, { waitUntil: 'domcontentloaded', timeout: 120_000 });
-  const usePassword = page.getByRole('button', { name: /password/i }).first();
-  await expect(usePassword).toBeVisible({ timeout: 30_000 });
-  await usePassword.click();
-  await expect(page.locator('input[type="password"]')).toBeVisible();
-}
-
 test.setTimeout(180_000);
 
-test('login press targets retain their NativeWind size and surface in the exported web app', async ({
+test('sign-in press targets keep their NativeWind size and surface in the exported web app', async ({
   page,
 }) => {
-  await page.goto(`${playerOrigin}/login`, { waitUntil: 'domcontentloaded', timeout: 120_000 });
+  // The email-only sign-in (RAPP-140): language choice, then the email form.
+  await page.goto(PLAYER_ORIGIN, { waitUntil: 'domcontentloaded', timeout: 120_000 });
+  const english = page.getByRole('radio', { name: 'English', exact: true });
+  const continueAction = page.getByRole('button', { name: 'Continue', exact: true });
+  await expect(continueAction).toBeVisible({ timeout: 30_000 });
 
-  const primaryAction = page.getByRole('button', { name: 'Send me a link', exact: true });
-  const passwordLink = page.getByRole('button', { name: /password/i }).first();
-  await expect(primaryAction).toBeVisible({ timeout: 30_000 });
-  await expect(passwordLink).toBeVisible();
+  // The rows fade and slide in, so sizes are read once the entrance has settled.
+  await expect
+    .poll(async () => (await measurePressTarget(english)).height)
+    .toBeGreaterThanOrEqual(56);
+  await expect
+    .poll(async () => (await measurePressTarget(continueAction)).height)
+    .toBeGreaterThanOrEqual(56);
+  const proceed = await measurePressTarget(continueAction);
+  expect(proceed.backgroundColor).not.toBe('rgba(0, 0, 0, 0)');
+  expect(proceed.borderRadius).not.toBe('0px');
 
-  const primary = await measurePressTarget(primaryAction);
-  const link = await measurePressTarget(passwordLink);
+  await english.click();
+  await continueAction.click();
+  await expect(page).toHaveURL(`${PLAYER_ORIGIN}/email-login`);
+  const sendCode = page.getByRole('button', { name: 'Send me a code', exact: true });
+  const back = page.getByRole('button', { name: 'Back', exact: true });
+  await expect(sendCode).toBeVisible();
 
-  expect(primary.height).toBeGreaterThanOrEqual(56);
+  await expect
+    .poll(async () => (await measurePressTarget(sendCode)).height)
+    .toBeGreaterThanOrEqual(56);
+  await expect.poll(async () => (await measurePressTarget(back)).height).toBeGreaterThanOrEqual(48);
+  const primary = await measurePressTarget(sendCode);
   expect(primary.backgroundColor).not.toBe('rgba(0, 0, 0, 0)');
   expect(primary.borderRadius).not.toBe('0px');
-  expect(link.height).toBeGreaterThanOrEqual(48);
 });
 
 test('a signed-in press target keeps its 56px minimum, border, radius, and background', async ({
   page,
 }) => {
-  await openPasswordForm(page);
-  await page.locator('input[type="email"]').fill(player.email);
-  await page.locator('input[type="password"]').fill(SEED_ACCOUNT_PASSWORD);
-  await page.getByRole('button', { name: 'Log in', exact: true }).click();
+  await signInPlayer(page, player.email);
 
   const knowledgeAction = page.getByTestId('open-knowledge-base');
   await expect(knowledgeAction).toBeVisible({ timeout: 30_000 });

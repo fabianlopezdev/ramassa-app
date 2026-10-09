@@ -2,6 +2,7 @@
 
 import { confirmEmailOtp, sendEmailOtp } from '@/lib/auth';
 import { useAuthFlowStatus } from '@/lib/auth-flow-status';
+import { playHaptic } from '@/lib/haptics/haptics';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
@@ -11,16 +12,23 @@ import {
   type EmailOtpRequest,
   type EmailOtpVerify,
 } from '@ramassa/shared/schemas';
-import { inlineAuthFormLayout, type AuthFormLayout } from './auth-form-layout';
+import type { AuthFormLayout } from './auth-form-layout';
 import { AuthSubmitButton } from './auth-submit-button';
 import { AuthTextField } from './auth-text-field';
 
+/** Mirrors `emailOtpVerifySchema`, which accepts exactly six digits. */
+const EMAIL_OTP_CODE_LENGTH = 6;
+
+// A rejected submit is the player's own input to fix, so it warns. The server
+// failures get their haptic from the shake on the form error instead.
+const warnInvalidSubmit = () => playHaptic('warning');
+
 export function EmailOtpRequestForm({
   onSent,
-  renderLayout = inlineAuthFormLayout,
+  renderLayout,
 }: {
   onSent: (email: string) => void;
-  renderLayout?: AuthFormLayout;
+  renderLayout: AuthFormLayout;
 }) {
   const { t } = useTranslation('auth');
   const { setErrorCode } = useAuthFlowStatus();
@@ -36,9 +44,13 @@ export function EmailOtpRequestForm({
   const submit = handleSubmit(async ({ email }) => {
     setErrorCode(null);
     const result = await sendEmailOtp(email);
-    if (result.ok) onSent(email);
-    else setErrorCode(result.error.code);
-  });
+    if (!result.ok) {
+      setErrorCode(result.error.code);
+      return;
+    }
+    playHaptic('success');
+    onSent(email);
+  }, warnInvalidSubmit);
 
   return renderLayout(
     <Controller
@@ -60,6 +72,7 @@ export function EmailOtpRequestForm({
           inputMode="email"
           returnKeyType="send"
           onSubmitEditing={submit}
+          aria-busy={isSubmitting}
         />
       )}
     />,
@@ -69,10 +82,10 @@ export function EmailOtpRequestForm({
 
 export function EmailOtpVerifyForm({
   email,
-  renderLayout = inlineAuthFormLayout,
+  renderLayout,
 }: {
   email: string;
-  renderLayout?: AuthFormLayout;
+  renderLayout: AuthFormLayout;
 }) {
   const { t } = useTranslation('auth');
   const { setErrorCode } = useAuthFlowStatus();
@@ -88,8 +101,10 @@ export function EmailOtpVerifyForm({
   const submit = handleSubmit(async ({ token }) => {
     setErrorCode(null);
     const result = await confirmEmailOtp(email, token);
-    if (!result.ok) setErrorCode(result.error.code);
-  });
+    // On success the session change routes the player into the app.
+    if (result.ok) playHaptic('success');
+    else setErrorCode(result.error.code);
+  }, warnInvalidSubmit);
 
   return renderLayout(
     <Controller
@@ -109,9 +124,10 @@ export function EmailOtpVerifyForm({
           autoComplete="one-time-code"
           textContentType="oneTimeCode"
           inputMode="numeric"
-          maxLength={6}
+          maxLength={EMAIL_OTP_CODE_LENGTH}
           returnKeyType="done"
           onSubmitEditing={submit}
+          aria-busy={isSubmitting}
         />
       )}
     />,

@@ -72,7 +72,9 @@ export const tokens = {
     footerBlurIntensity: 50,
   },
 
-  authChoice: { minHeight: 120, iconSize: 56, shadowInlineOffset: 4, shadowBlockOffset: 6 },
+  // The login title sits just above a centred block of this height, so every
+  // login step puts its title in the same place on a tall screen.
+  authForm: { titleAnchorBlockHeight: 276 },
   languageChoice: { shadowInlineOffset: 2, shadowBlockOffset: 3 },
   checkmark: {
     size: 24,

@@ -34,7 +34,7 @@ export const errorCodeRegistry = defineCodes({
   'AUTH-1': { domain: 'AUTH', description: 'Sign-in failed' },
   'AUTH-2': { domain: 'AUTH', description: 'Session expired or invalid' },
   'AUTH-3': { domain: 'AUTH', description: 'Not authorized for this action' },
-  'AUTH-4': { domain: 'AUTH', description: 'Magic link is invalid or has expired' },
+  'AUTH-4': { domain: 'AUTH', description: 'Email sign-in code is invalid or has expired' },
   'AUTH-5': { domain: 'AUTH', description: 'Too many sign-in attempts (rate limited)' },
   'AUTH-6': { domain: 'AUTH', description: 'Incorrect email or password' },
   'AUTH-7': { domain: 'AUTH', description: 'Sign-in link came from an untrusted origin' },

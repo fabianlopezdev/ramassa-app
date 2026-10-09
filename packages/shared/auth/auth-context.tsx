@@ -3,10 +3,10 @@
  * It owns exactly one thing: the current session and the role claim derived
  * from it. supabase-js already persists and refreshes the session in the
  * injected storage (MMKV / localStorage), so this provider does not store
- * anything itself — it subscribes to `onAuthStateChange`, mirrors the session
+ * anything itself. It subscribes to `onAuthStateChange`, mirrors the session
  * into React state, and looks up the profile role whenever the session changes.
  *
- * Actions (request magic link, password sign-in, sign out) are NOT on this
+ * Actions (request and verify an email code, sign out) are NOT on this
  * context: screens call the `auth-actions` functions through their app's wired
  * `safeAsync`, and the resulting session change flows back in through the
  * subscription here. That keeps logging/Sentry in the app layer and this
@@ -19,6 +19,7 @@ import {
   use,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -67,8 +68,12 @@ export function AuthProvider({ client, children, onError }: AuthProviderProps) {
 
   // Kept in a ref so the subscription effect depends only on `client`; an
   // inline `onError` from the app must not tear down and rebuild the listener.
+  // Synced after commit (render must stay pure); every report is asynchronous,
+  // so it always reads the committed callback.
   const onErrorRef = useRef(onError);
-  onErrorRef.current = onError;
+  useLayoutEffect(() => {
+    onErrorRef.current = onError;
+  }, [onError]);
 
   // A monotonic token so a slow role lookup from an old session can never
   // overwrite the state of a newer one (sign in, then sign out quickly).

@@ -2,7 +2,7 @@ import { PressableScale } from '@/components/motion/pressable-scale';
 import { GlassView, isGlassEffectAPIAvailable, isLiquidGlassAvailable } from 'expo-glass-effect';
 import { SymbolView } from 'expo-symbols';
 import { useTranslation } from 'react-i18next';
-import { I18nManager, Platform, View } from 'react-native';
+import { I18nManager, View } from 'react-native';
 import { tokens } from '@ramassa/shared/tokens';
 
 const circleStyle = {
@@ -16,7 +16,7 @@ const circleStyle = {
 export function AuthBackButton({ onPress }: { readonly onPress: () => void }) {
   const { t } = useTranslation('common');
   const hasNativeGlass =
-    Platform.OS === 'ios' && isGlassEffectAPIAvailable() && isLiquidGlassAvailable();
+    process.env.EXPO_OS === 'ios' && isGlassEffectAPIAvailable() && isLiquidGlassAvailable();
   const icon = (
     <SymbolView
       name={{

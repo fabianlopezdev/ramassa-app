@@ -37,6 +37,9 @@ jobs:
       - name: Dead code
         run: bun run qa:deadcode
 
+      - name: Translation keys
+        run: bun run qa:i18n-keys
+
       - name: Test
         run: bun run test
 

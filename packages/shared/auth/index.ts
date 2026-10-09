@@ -1,8 +1,7 @@
 /**
- * `@ramassa/shared/auth` — the auth surface both apps consume (RAPP-13):
+ * `@ramassa/shared/auth`: the auth surface both apps consume (RAPP-13):
  * the AuthProvider/useAuth state, the actions screens call through their wired
- * `safeAsync`, the Supabase-error → `AUTH-*` mapper, and the origin-validating
- * email-code verification.
+ * `safeAsync`, the Supabase-error → `AUTH-*` mapper, and the access-code helpers.
  */
 
 export { AuthProvider, useAuth, type AuthProviderProps, type AuthState } from './auth-context';

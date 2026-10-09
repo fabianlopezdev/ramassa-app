@@ -3,7 +3,6 @@
     "home": "Home",
     "events": "Events",
     "community": "Community",
-    "messages": "Messages",
     "services": "Services",
     "profile": "Profile"
   },
@@ -29,7 +28,6 @@
     "messages": "Messages"
   },
   "a11y": {
-    "primary": "Primary navigation",
     "staffSidebar": "Staff navigation",
     "entityPortal": "Portal navigation",
     "toggleSidebar": "Toggle sidebar",

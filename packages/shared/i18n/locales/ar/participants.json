@@ -138,7 +138,6 @@
   "eraseConsequenceAccess": "تفقد الدخول إلى التطبيق فورًا.",
   "eraseConsequenceAudit": "يبقى سجلّ بمن قام بذلك ومتى، دون أي بيانات تخصّها.",
   "eraseFulfillsRequest": "هذا استجابةً للطلب الذي قدّمته بنفسها:",
-  "eraseFailed": "لم نتمكّن من حذف البطاقة.",
   "deletionRequestsTitle": "طلبات الحذف",
   "deletionRequestsHint": "طلبات قدّمتها المشاركات من صفحاتهنّ.",
   "deletionRequestsEmpty": "لا توجد طلبات قيد الانتظار.",

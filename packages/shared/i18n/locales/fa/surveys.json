@@ -60,5 +60,6 @@
   "reviewStatusRejected": "رد شده",
   "reject": "رد",
   "approve": "تأیید",
-  "approveAll": "تأیید همه"
+  "approveAll": "تأیید همه",
+  "loadingResponses": "در حال بارگذاری پاسخ‌ها..."
 }

@@ -21,5 +21,6 @@
     "previousPage": "السابق",
     "nextPage": "التالي",
     "pageOf": "صفحة {{page}} من {{pages}}"
-  }
+  },
+  "loading": "جارٍ التحميل..."
 }

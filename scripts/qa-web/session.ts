@@ -11,7 +11,10 @@
  */
 
 import { execFileSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { expect, type Page } from '@playwright/test';
+import type { SupportedLanguage } from '@ramassa/shared/i18n/languages';
 
 export const STAFF_EMAIL = 'marta.puig@example.test';
 export const ENTITY_EMAIL = 'silvia.bosch@example.test';
@@ -31,30 +34,124 @@ export const SUPABASE_PUBLISHABLE_KEY =
   process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? 'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH';
 export const MEDIA_WORKER_URL = `http://127.0.0.1:${process.env.RAMASSA_QA_MEDIA_PORT ?? '8893'}`;
 export const MAILPIT_URL = 'http://127.0.0.1:54324';
+export const ADMIN_ORIGIN = `http://localhost:${process.env.RAMASSA_QA_ADMIN_PORT ?? '4193'}`;
+export const PLAYER_ORIGIN = `http://localhost:${process.env.RAMASSA_QA_PLAYER_PORT ?? '4194'}`;
 
-/** Reads the newest local email and returns its real Supabase verification URL. */
-export async function latestMagicLink(email: string): Promise<string> {
-  let messageId = '';
+interface PlayerAuthCopy {
+  readonly continueAction: string;
+  readonly emailLabel: string;
+  readonly emailOtpAction: string;
+  readonly emailOtpCodeLabel: string;
+  readonly emailOtpVerifyAction: string;
+}
+
+// Read from disk: Playwright loads specs as ES modules, where a bare JSON import fails.
+// Value imports from @ramassa/shared/i18n pull in JSON modules Playwright cannot load.
+const PLAYER_LANGUAGES = [
+  'ca',
+  'es',
+  'en',
+  'ar',
+  'fa',
+] as const satisfies readonly SupportedLanguage[];
+
+const PLAYER_AUTH_COPY = Object.fromEntries(
+  PLAYER_LANGUAGES.map((language) => [
+    language,
+    JSON.parse(
+      readFileSync(
+        resolve(import.meta.dirname, `../../packages/shared/i18n/locales/${language}/auth.json`),
+        'utf8',
+      ),
+    ) as PlayerAuthCopy,
+  ]),
+) as Record<SupportedLanguage, PlayerAuthCopy>;
+
+/**
+ * Signs a player in through the real player web app, the way she does it
+ * (RAPP-140): choose a language, enter the email, then the six-digit code that
+ * Supabase sends to the local inbox. Labels come from the language's own auth
+ * catalog, so a copy change cannot leave this helper pointing at old text.
+ *
+ * It resolves once the app leaves the login route; each spec then waits for
+ * the screen it needs.
+ */
+export async function signInPlayer(
+  page: Page,
+  email: string,
+  language: SupportedLanguage = 'en',
+): Promise<void> {
+  const copy = PLAYER_AUTH_COPY[language];
+  const earlier = await inboxMessageIds(email);
+
+  await page.goto(PLAYER_ORIGIN, { waitUntil: 'domcontentloaded', timeout: 120_000 });
+  await page.getByTestId(`auth-language-${language}`).click({ timeout: 30_000 });
+  await page.getByRole('button', { name: copy.continueAction, exact: true }).click();
+  await expect(page).toHaveURL(`${PLAYER_ORIGIN}/email-login`);
+  await enterEmailCode(page, email, copy, earlier);
+  await expect(page).not.toHaveURL(/\/email-login$/, { timeout: 30_000 });
+}
+
+/**
+ * Signs a staff member or entity collaborator in to the web admin with the
+ * emailed code, which is also how an invitation is accepted: since RAPP-67 the
+ * email carries a code and no link.
+ */
+export async function signInStaffWithEmailCode(
+  page: Page,
+  email: string,
+  language: SupportedLanguage = 'en',
+): Promise<void> {
+  const copy = PLAYER_AUTH_COPY[language];
+  const earlier = await inboxMessageIds(email);
+  // A context from browser.newContext() has no baseURL, so the origin is explicit.
+  await page.goto(`${ADMIN_ORIGIN}/login`);
+  await waitForHydration(page);
+  await enterEmailCode(page, email, copy, earlier);
+  await expect(page).not.toHaveURL(/\/login$/, { timeout: 30_000 });
+}
+
+async function inboxMessageIds(email: string): Promise<ReadonlySet<string>> {
+  const response = await fetch(inboxSearchUrl(email));
+  const inbox = (await response.json()) as { messages?: Array<{ ID: string }> };
+  return new Set(inbox.messages?.map((message) => message.ID));
+}
+
+const inboxSearchUrl = (email: string): string =>
+  `${MAILPIT_URL}/api/v1/search?query=${encodeURIComponent(`to:${email}`)}`;
+
+// Fills the email, asks for a code, reads the code from the newest local email
+// that was not there before, and submits it.
+async function enterEmailCode(
+  page: Page,
+  email: string,
+  copy: PlayerAuthCopy,
+  earlier: ReadonlySet<string>,
+): Promise<void> {
+  await page.getByLabel(copy.emailLabel, { exact: true }).fill(email);
+  await page.getByRole('button', { name: copy.emailOtpAction, exact: true }).click();
+
+  let code = '';
   await expect
-    .poll(async () => {
-      const response = await fetch(
-        `${MAILPIT_URL}/api/v1/search?query=${encodeURIComponent(`to:${email}`)}`,
-      );
-      if (!response.ok) return '';
-      const body = (await response.json()) as { messages?: Array<{ ID?: string }> };
-      messageId = body.messages?.[0]?.ID ?? '';
-      return messageId;
-    })
+    .poll(
+      async () => {
+        const inbox = (await (await fetch(inboxSearchUrl(email))).json()) as {
+          messages?: Array<{ ID: string }>;
+        };
+        const fresh = inbox.messages?.find((message) => !earlier.has(message.ID))?.ID;
+        if (fresh === undefined) return '';
+        const message = (await (await fetch(`${MAILPIT_URL}/api/v1/message/${fresh}`)).json()) as {
+          Text?: string;
+        };
+        code = message.Text?.match(/\b\d{6}\b/)?.[0] ?? '';
+        return code;
+      },
+      { timeout: 30_000 },
+    )
     .not.toBe('');
 
-  const response = await fetch(`${MAILPIT_URL}/api/v1/message/${messageId}`);
-  const message = (await response.json()) as { HTML?: string; Text?: string };
-  const content = `${message.HTML ?? ''}\n${message.Text ?? ''}`.replaceAll('&amp;', '&');
-  const link = content
-    .match(/https?:\/\/[^\s"'<>]+/g)
-    ?.find((candidate) => candidate.includes('/auth/v1/verify'));
-  if (link === undefined) throw new Error(`No magic link found for ${email}`);
-  return link;
+  await page.getByLabel(copy.emailOtpCodeLabel, { exact: true }).fill(code);
+  await page.getByRole('button', { name: copy.emailOtpVerifyAction, exact: true }).click();
 }
 
 /** An access token for an arbitrary account, the way GoTrue issues one. */

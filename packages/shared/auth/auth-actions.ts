@@ -2,11 +2,11 @@
  * Auth actions (RAPP-13): thin, platform-neutral wrappers over supabase-js that
  * both apps call. Each takes the app's Supabase client (dependency injection,
  * like the client factory) and throws a typed `AppError` on failure, so the
- * caller's wired `safeAsync` logs it and turns it into a `Result` — nothing
+ * caller's wired `safeAsync` logs it and turns it into a `Result`. Nothing
  * here reaches for a logger or Sentry directly.
  *
- * ADR-005: `requestEmailOtp` is the primary path; `signInWithPassword` is the
- * admin-created fallback. `shouldCreateUser: false` keeps login closed to
+ * ADR-005: `requestEmailOtp` is the primary path; `signInWithPassword` serves
+ * the web admin login and the mobile developer test accounts. `shouldCreateUser: false` keeps login closed to
  * already-provisioned accounts (invite-only distribution, RAPP-1).
  */
 
@@ -113,7 +113,7 @@ export interface ProfileSummary {
  *
  * The null case is the whole reason this exists alongside fetchProfileRole: a
  * brand-new player has a session but no profile until the onboarding wizard
- * completes, and that is an EXPECTED state the gate routes on, not an error.
+ * completes. That is an EXPECTED state the gate routes on, so it returns null.
  * `.single()` cannot express it (a missing row is an error to PostgREST), so
  * this uses `.maybeSingle()` and reserves throwing for real failures - where
  * the gate must NOT send the player to the wizard, because "we could not read

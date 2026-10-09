@@ -59,7 +59,6 @@
   "publishedEditNotice": "Changes to a published service apply immediately and notify the team.",
   "pendingNotice": "This proposal is under review and cannot be edited.",
   "approvedNotice": "This proposal is approved and waiting for publication.",
-  "notFound": "Service not found.",
   "createdAt": "Created",
   "updatedAt": "Updated"
 }

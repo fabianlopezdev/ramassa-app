@@ -138,7 +138,6 @@
   "eraseConsequenceAccess": "She loses access to the app immediately.",
   "eraseConsequenceAudit": "A record of who did this and when is kept, with none of her data.",
   "eraseFulfillsRequest": "This answers the request she made herself:",
-  "eraseFailed": "We could not erase the record.",
   "deletionRequestsTitle": "Deletion requests",
   "deletionRequestsHint": "Requests participants made from their own profile.",
   "deletionRequestsEmpty": "No requests are waiting.",

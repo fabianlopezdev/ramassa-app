@@ -33,8 +33,6 @@
   "deleteConfirmCancel": "No, volver atrás",
   "deletePendingTitle": "Ya tienes una petición abierta",
   "deletePendingBody": "Recibimos tu petición el {{date}}. El equipo de Ramassà se pondrá en contacto contigo.",
-  "deleteSentTitle": "Petición enviada",
-  "deleteSentBody": "El equipo de Ramassà lo revisará y hablará contigo.",
   "loadFailed": "No hemos podido cargar tus datos. Inténtalo de nuevo.",
   "saveFailed": "No hemos podido guardar los cambios. Inténtalo de nuevo.",
   "retryAction": "Inténtalo de nuevo",

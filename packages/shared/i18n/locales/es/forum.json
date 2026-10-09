@@ -35,7 +35,6 @@
   "publish": "Publica",
   "publishing": "Publicando",
   "publishFailed": "No se pudo publicar.",
-  "publishSuccess": "Publicación creada.",
   "detailTitle": "Publicación",
   "replyPlaceholder": "Escribe una respuesta",
   "reply": "Responde",
@@ -86,7 +85,11 @@
   "moderationEmptyBody": "Los nuevos avisos aparecerán aquí.",
   "moderationUnknownCategory": "Categoría desconocida",
   "moderationFlags": "{{count}} avisos",
-  "moderationTarget": { "post": "Publicación", "reply": "Respuesta", "media": "Galería" },
+  "moderationTarget": {
+    "post": "Publicación",
+    "reply": "Respuesta",
+    "media": "Galería"
+  },
   "moderationDismiss": "Descartar avisos",
   "moderationHide": "Ocultar",
   "moderationDelete": "Eliminar",

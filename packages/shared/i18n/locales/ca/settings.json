@@ -32,7 +32,6 @@
   "statusInactive": "Sense accés",
   "invite": "Envia la invitació",
   "inviteSent": "Invitació enviada.",
-  "changeRole": "Canvia el rol",
   "remove": "Retira l'accés",
   "removeConfirm": "Confirma que vols retirar l'accés i revocar totes les sessions d'aquesta persona.",
   "confirm": "Confirma",

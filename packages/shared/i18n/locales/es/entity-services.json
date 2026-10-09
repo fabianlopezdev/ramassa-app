@@ -59,7 +59,6 @@
   "publishedEditNotice": "Los cambios de un servicio publicado se aplican inmediatamente y avisan al equipo.",
   "pendingNotice": "Esta propuesta está en revisión y no se puede editar.",
   "approvedNotice": "Esta propuesta está aprobada y espera su publicación.",
-  "notFound": "No se ha encontrado el servicio.",
   "createdAt": "Creado",
   "updatedAt": "Actualizado"
 }

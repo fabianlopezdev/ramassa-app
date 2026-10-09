@@ -1,7 +1,5 @@
 {
   "title": "Bienvenida",
-  "subtitle": "La base de la aplicación funciona",
-  "tabLabel": "Inicio",
   "feedTitle": "Avisos",
   "feedIntro": "Novedades del club, entrenamientos y actividades para ti.",
   "filterLabel": "Filtra los avisos por categoría",
@@ -18,7 +16,5 @@
   "emptyBody": "Cuando el equipo publique una novedad, la encontrarás aquí.",
   "loadFailed": "No hemos podido cargar los avisos.",
   "retryAction": "Volver a intentar",
-  "openAnnouncementLabel": "Abre el aviso: {{title}}",
-  "detailTitle": "Aviso",
   "loading": "Cargando los avisos"
 }

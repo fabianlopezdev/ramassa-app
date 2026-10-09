@@ -32,7 +32,6 @@
   "statusInactive": "Sin acceso",
   "invite": "Enviar invitación",
   "inviteSent": "Invitación enviada.",
-  "changeRole": "Cambiar rol",
   "remove": "Retirar acceso",
   "removeConfirm": "Confirma que quieres retirar el acceso y revocar todas las sesiones de esta persona.",
   "confirm": "Confirmar",

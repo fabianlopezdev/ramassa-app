@@ -21,5 +21,6 @@
     "previousPage": "Previous",
     "nextPage": "Next",
     "pageOf": "Page {{page}} of {{pages}}"
-  }
+  },
+  "loading": "Loading..."
 }

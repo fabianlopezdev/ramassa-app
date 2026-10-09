@@ -62,8 +62,6 @@
   "deleted": "Announcement deleted",
   "translationRequired": "Generate and approve every translation before publishing.",
   "imageAltRequired": "Add an image description, then generate and approve its translations.",
-  "workerUnavailable": "Translation service is not configured.",
   "saveFailed": "The announcement could not be saved.",
-  "uploadFailed": "The image could not be uploaded.",
   "loadFailed": "The announcement could not be loaded."
 }

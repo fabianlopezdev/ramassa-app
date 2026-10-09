@@ -4,6 +4,7 @@ import {
   accessTokenFor,
   queryDatabase,
   signIn,
+  signInPlayer as signInPlayerWithEmailCode,
   STAFF_EMAIL,
   SUPABASE_PUBLISHABLE_KEY,
   SUPABASE_URL,
@@ -28,18 +29,7 @@ function futureLocalDateTimeValue(daysFromNow: number): string {
 }
 
 async function signInPlayer(page: Page, email: string): Promise<void> {
-  await page.goto(`${playerOrigin}/login`, { waitUntil: 'domcontentloaded', timeout: 120_000 });
-  const usePassword = page
-    .getByRole('button', { name: /password|contrasenya|contraseña/i })
-    .first();
-  await expect(usePassword).toBeVisible({ timeout: 30_000 });
-  await expect(async () => {
-    await usePassword.click();
-    await expect(page.locator('input[type="password"]')).toBeVisible({ timeout: 1_000 });
-  }).toPass({ timeout: 20_000 });
-  await page.locator('input[type="email"]').fill(email);
-  await page.locator('input[type="password"]').fill(SEED_ACCOUNT_PASSWORD);
-  await page.getByRole('button', { name: 'Log in', exact: true }).click();
+  await signInPlayerWithEmailCode(page, email);
   await expect(page.getByTestId('open-knowledge-base')).toBeVisible({ timeout: 30_000 });
 }
 

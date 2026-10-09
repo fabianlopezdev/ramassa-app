@@ -33,8 +33,6 @@
   "deleteConfirmCancel": "No, torna enrere",
   "deletePendingTitle": "Ja tens una petició oberta",
   "deletePendingBody": "Vam rebre la teva petició el {{date}}. L'equip de Ramassà s'hi posarà en contacte amb tu.",
-  "deleteSentTitle": "Petició enviada",
-  "deleteSentBody": "L'equip de Ramassà ho revisarà i parlarà amb tu.",
   "loadFailed": "No hem pogut carregar les teves dades. Torna-ho a provar.",
   "saveFailed": "No hem pogut desar els canvis. Torna-ho a provar.",
   "retryAction": "Torna-ho a provar",

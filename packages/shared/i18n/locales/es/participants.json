@@ -138,7 +138,6 @@
   "eraseConsequenceAccess": "Pierde el acceso a la aplicación inmediatamente.",
   "eraseConsequenceAudit": "Queda constancia de quién lo ha hecho y cuándo, sin ningún dato suyo.",
   "eraseFulfillsRequest": "Esto responde a la petición que hizo ella misma:",
-  "eraseFailed": "No hemos podido borrar la ficha.",
   "deletionRequestsTitle": "Peticiones de borrado",
   "deletionRequestsHint": "Peticiones hechas por las participantes desde su ficha.",
   "deletionRequestsEmpty": "No hay ninguna petición pendiente.",

@@ -4,13 +4,13 @@ import { createInMemoryLanguageStorage } from './language-storage';
 import { SUPPORTED_LANGUAGES } from './languages';
 
 describe('translation resolution', () => {
-  test('resolves the login title in every supported language', () => {
+  test('resolves the continue action in every supported language', () => {
     const expectedByLanguage = {
-      ca: 'Inici de sessió',
-      es: 'Inicio de sesión',
-      en: 'Log in',
-      ar: 'تسجيل الدخول',
-      fa: 'ورود',
+      ca: 'Continua',
+      es: 'Continuar',
+      en: 'Continue',
+      ar: 'متابعة',
+      fa: 'ادامه',
     } as const;
 
     for (const language of SUPPORTED_LANGUAGES) {
@@ -18,15 +18,15 @@ describe('translation resolution', () => {
         languageStorage: createInMemoryLanguageStorage(),
         deviceLanguages: [language],
       });
-      expect(i18n.t('auth:loginTitle')).toBe(expectedByLanguage[language]);
+      expect(i18n.t('auth:continueAction')).toBe(expectedByLanguage[language]);
     }
   });
 
   test('namespaces are split per feature (common, home, auth)', () => {
     const i18n = createI18n({ languageStorage: createInMemoryLanguageStorage() });
     expect(i18n.t('common:appName')).toBe('Ramassà');
-    expect(i18n.t('home:subtitle')).not.toBe('home:subtitle');
-    expect(i18n.t('auth:loginTitle')).not.toBe('auth:loginTitle');
+    expect(i18n.t('home:emptyTitle')).not.toBe('home:emptyTitle');
+    expect(i18n.t('auth:continueAction')).not.toBe('auth:continueAction');
   });
 });
 

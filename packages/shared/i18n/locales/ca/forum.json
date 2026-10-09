@@ -35,7 +35,6 @@
   "publish": "Publica",
   "publishing": "S'està publicant",
   "publishFailed": "No s'ha pogut publicar.",
-  "publishSuccess": "Publicació creada.",
   "detailTitle": "Publicació",
   "replyPlaceholder": "Escriu una resposta",
   "reply": "Respon",
@@ -86,7 +85,11 @@
   "moderationEmptyBody": "Els avisos nous apareixeran aquí.",
   "moderationUnknownCategory": "Categoria desconeguda",
   "moderationFlags": "{{count}} avisos",
-  "moderationTarget": { "post": "Publicació", "reply": "Resposta", "media": "Galeria" },
+  "moderationTarget": {
+    "post": "Publicació",
+    "reply": "Resposta",
+    "media": "Galeria"
+  },
   "moderationDismiss": "Descarta avisos",
   "moderationHide": "Amaga",
   "moderationDelete": "Esborra",

@@ -3,7 +3,6 @@
     "home": "Inicio",
     "events": "Calendario",
     "community": "Comunidad",
-    "messages": "Mensajes",
     "services": "Servicios",
     "profile": "Perfil"
   },
@@ -29,7 +28,6 @@
     "messages": "Mensajes"
   },
   "a11y": {
-    "primary": "Navegación principal",
     "staffSidebar": "Navegación del equipo",
     "entityPortal": "Navegación del portal",
     "toggleSidebar": "Mostrar u ocultar el menú lateral",

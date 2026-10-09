@@ -75,6 +75,5 @@
   "noCountryResults": "No country with that name. Try typing fewer letters.",
   "searchMunicipalityPlaceholder": "Search your municipality",
   "noMunicipalityResults": "No municipality with that name. Try typing fewer letters.",
-  "municipalityNone": "Leave blank",
-  "languageNativeName": "English"
+  "municipalityNone": "Leave blank"
 }

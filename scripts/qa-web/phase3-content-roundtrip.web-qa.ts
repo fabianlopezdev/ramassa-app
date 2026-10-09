@@ -9,11 +9,15 @@
  */
 
 import { expect, test, type Page } from '@playwright/test';
-import { PARTICIPANT_FIXTURES, SEED_ACCOUNT_PASSWORD } from '@ramassa/shared/testing';
-import { queryDatabase, signIn, STAFF_EMAIL } from './session';
+import { PARTICIPANT_FIXTURES } from '@ramassa/shared/testing';
+import {
+  queryDatabase,
+  signIn,
+  signInPlayer as signInPlayerWithEmailCode,
+  STAFF_EMAIL,
+} from './session';
 
 const RUN_TAG = `phase3-closure-${Date.now().toString(36)}`;
-const playerOrigin = `http://localhost:${process.env.RAMASSA_QA_PLAYER_PORT ?? '4194'}`;
 const createdIds: string[] = [];
 
 test.setTimeout(240_000);
@@ -42,13 +46,7 @@ function rememberAnnouncement(title: string): string {
 
 async function signInPlayer(page: Page): Promise<void> {
   const player = PARTICIPANT_FIXTURES[0]!;
-  await page.goto(`${playerOrigin}/login`, { waitUntil: 'domcontentloaded', timeout: 120_000 });
-  const usePassword = page.getByRole('button', { name: /password/i }).first();
-  await expect(usePassword).toBeVisible({ timeout: 30_000 });
-  await usePassword.click();
-  await page.locator('input[type="email"]').fill(player.email);
-  await page.locator('input[type="password"]').fill(SEED_ACCOUNT_PASSWORD);
-  await page.getByRole('button', { name: 'Log in', exact: true }).click();
+  await signInPlayerWithEmailCode(page, player.email);
   await expect(page.getByTestId('open-knowledge-base')).toBeVisible({ timeout: 30_000 });
 }
 

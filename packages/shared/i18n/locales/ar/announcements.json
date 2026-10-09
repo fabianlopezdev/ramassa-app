@@ -62,8 +62,6 @@
   "deleted": "تم حذف الإعلان",
   "translationRequired": "أنشئ كل الترجمات ووافق عليها قبل النشر.",
   "imageAltRequired": "أضف وصفًا للصورة ثم أنشئ ترجماته ووافق عليها.",
-  "workerUnavailable": "خدمة الترجمة غير مهيأة.",
   "saveFailed": "تعذر حفظ الإعلان.",
-  "uploadFailed": "تعذر رفع الصورة.",
   "loadFailed": "تعذر تحميل الإعلان."
 }

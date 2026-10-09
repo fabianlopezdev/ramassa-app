@@ -32,7 +32,6 @@
   "statusInactive": "Access removed",
   "invite": "Send invitation",
   "inviteSent": "Invitation sent.",
-  "changeRole": "Change role",
   "remove": "Remove access",
   "removeConfirm": "Confirm that you want to remove access and revoke every session for this person.",
   "confirm": "Confirm",
