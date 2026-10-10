@@ -25,8 +25,6 @@ export {
   type AddParticipantNoteParams,
 } from './participant-detail-actions';
 export {
-  applyParticipantQuery,
-  PARTICIPANT_LIST_COLUMNS,
   PARTICIPANT_PAGE_SIZE,
   PARTICIPANT_SORT_COLUMNS,
   parseParticipantSearch,

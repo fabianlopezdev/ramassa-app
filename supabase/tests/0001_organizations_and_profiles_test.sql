@@ -135,10 +135,7 @@ reset role;
 set local role anon;
 set local request.jwt.claims to '';
 
-select is(
-  (select count(*) from public.profiles)::int, 0,
-  'DENIAL: anon reads zero profiles'
-);
+select throws_ok($$ select count(*) from public.profiles $$, '42501', null::text, 'DENIAL: anon reads zero profiles: anon has no read access at all (RAPP-240)');
 select is(
   (select count(*) from public.organizations)::int, 0,
   'DENIAL: anon reads zero organizations'

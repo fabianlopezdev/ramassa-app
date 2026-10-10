@@ -1,9 +1,11 @@
 -- Full-text search over participants, and who is allowed to run it (RAPP-23).
+-- Since RAPP-240 the search runs through public.list_participants: the search
+-- document is built from Personal fields, so it is not a readable column.
 -- Run with: bunx supabase test db
 --
 -- What these assertions defend:
 --   1. Staff find people the way they actually type their names. "Nuria" must
---      find Núria and "Osona" must find the entity, or the search box is
+--      find María and "Osona" must find the entity, or the search box is
 --      decoration and the team goes back to scrolling.
 --   2. Arabic and Cyrillic names are searchable as first-class text, not as
 --      transliterations someone has to guess.
@@ -19,7 +21,7 @@
 -- that search works against the data the app actually ships with.
 
 begin;
-select plan(18);
+select plan(19);
 
 select vault.create_secret('test-encryption-key', 'app_encryption_key', 'pgTAP test key')
 where not exists (select 1 from vault.secrets where name = 'app_encryption_key');
@@ -37,26 +39,22 @@ set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", 
 -- Accent folding, in both directions: the team types what is on their keyboard,
 -- and a name typed with its accents must still find itself.
 select isnt_empty(
-  $$ select id from public.profiles
-     where search_document @@ websearch_to_tsquery('simple', public.immutable_unaccent('nuria')) $$,
-  'searching "nuria" finds Núria: accents are folded'
+  $$ select id from public.list_participants(p_query => (websearch_to_tsquery('simple', public.immutable_unaccent('maria')))::text) $$,
+  'searching "maria" finds María: accents are folded'
 );
 
 select isnt_empty(
-  $$ select id from public.profiles
-     where search_document @@ websearch_to_tsquery('simple', public.immutable_unaccent('Núria')) $$,
-  'searching "Núria" finds her too: folding works in both directions'
+  $$ select id from public.list_participants(p_query => (websearch_to_tsquery('simple', public.immutable_unaccent('María')))::text) $$,
+  'searching "María" finds her too: folding works in both directions'
 );
 
 select isnt_empty(
-  $$ select id from public.profiles
-     where search_document @@ websearch_to_tsquery('simple', public.immutable_unaccent('أمينة')) $$,
+  $$ select id from public.list_participants(p_query => (websearch_to_tsquery('simple', public.immutable_unaccent('أمينة')))::text) $$,
   'Arabic names are searchable in Arabic'
 );
 
 select isnt_empty(
-  $$ select id from public.profiles
-     where search_document @@ websearch_to_tsquery('simple', public.immutable_unaccent('Оксана')) $$,
+  $$ select id from public.list_participants(p_query => (websearch_to_tsquery('simple', public.immutable_unaccent('Оксана')))::text) $$,
   'Cyrillic names are searchable in Cyrillic'
 );
 
@@ -65,34 +63,29 @@ select isnt_empty(
 -- the app actually sends, rather than through a hand-folded query that only
 -- ever proved the stored side worked.
 select isnt_empty(
-  $$ select id from public.profiles
-     where role = 'player' and search_document @@ to_tsquery('simple', 'yo:*') $$,
+  $$ select id from public.list_participants(p_query => (to_tsquery('simple', 'yo:*'))::text) $$,
   'a half-typed word matches from its start: "yo" finds Yolanda'
 );
 
 select isnt_empty(
-  $$ select id from public.profiles
-     where search_document @@ to_tsquery('simple', 'Torelló:*') $$,
+  $$ select id from public.list_participants(p_query => (to_tsquery('simple', 'Torelló:*'))::text) $$,
   'a word typed WITH its accents matches: the document carries both spellings'
 );
 
 select isnt_empty(
-  $$ select id from public.profiles
-     where search_document @@ to_tsquery('simple', 'torello:*') $$,
+  $$ select id from public.list_participants(p_query => (to_tsquery('simple', 'torello:*'))::text) $$,
   'and the folded spelling still matches too'
 );
 
 -- The searchable fields are the non-encrypted ones, so a team member can find
 -- everyone referred by an entity, or everyone from one town.
 select isnt_empty(
-  $$ select id from public.profiles
-     where search_document @@ websearch_to_tsquery('simple', public.immutable_unaccent('Creu Roja')) $$,
+  $$ select id from public.list_participants(p_query => (websearch_to_tsquery('simple', public.immutable_unaccent('Creu Roja')))::text) $$,
   'the referring entity is searchable'
 );
 
 select isnt_empty(
-  $$ select id from public.profiles
-     where search_document @@ websearch_to_tsquery('simple', public.immutable_unaccent('Vic')) $$,
+  $$ select id from public.list_participants(p_query => (websearch_to_tsquery('simple', public.immutable_unaccent('Vic')))::text) $$,
   'the town is searchable'
 );
 
@@ -100,8 +93,7 @@ select isnt_empty(
 -- no index that could find it without holding the plaintext somewhere, which is
 -- exactly what ADR-004 refuses to do.
 select is_empty(
-  $$ select id from public.profiles
-     where search_document @@ websearch_to_tsquery('simple', public.immutable_unaccent('X1234567L')) $$,
+  $$ select id from public.list_participants(p_query => (websearch_to_tsquery('simple', public.immutable_unaccent('X1234567L')))::text) $$,
   'encrypted fields are NOT searchable, and that is the design, not a gap'
 );
 
@@ -149,10 +141,15 @@ select is(
 );
 
 select is(
-  (select count(*) from public.profiles
-    where search_document @@ websearch_to_tsquery('simple', public.immutable_unaccent('Оксана')))::int,
+  (select count(*) from public.list_participants(
+     p_query => (websearch_to_tsquery('simple', public.immutable_unaccent('Оксана')))::text))::int,
   0,
   'and searching for another participant by name does not widen that by one row'
+);
+select throws_ok(
+  $$ select id from public.profiles where search_document @@ to_tsquery('simple', 'Оксана') $$,
+  '42501', null::text,
+  'nor can she run the search document directly: it is not a readable column (RAPP-240)'
 );
 
 select * from finish();

@@ -74,70 +74,6 @@ export function parseParticipantSearch(search: Record<string, unknown>): Partici
 }
 
 /**
- * The subset of the Supabase query builder this needs. Declared structurally so
- * the tests can hand it a recorder and see the question that was actually
- * asked, rather than mocking a client and hoping.
- */
-export interface ParticipantQueryBuilder {
-  eq(column: string, value: unknown): ParticipantQueryBuilder;
-  textSearch(
-    column: string,
-    query: string,
-    // `type` omitted means `to_tsquery`, the only member of the family that
-    // understands the `:*` prefix syntax this search depends on.
-    options: { config: string; type?: 'plain' | 'phrase' | 'websearch' },
-  ): ParticipantQueryBuilder;
-  order(column: string, options: { ascending: boolean }): ParticipantQueryBuilder;
-  range(from: number, to: number): ParticipantQueryBuilder;
-}
-
-export function applyParticipantQuery<T extends ParticipantQueryBuilder>(
-  builder: T,
-  search: ParticipantSearch,
-): T {
-  // Participants only. Staff, admins and entity contacts share the table but
-  // are not roster rows, and RLS already limits everything to one organization.
-  let query = builder.eq('role', 'player') as T;
-
-  const tsQuery = buildPrefixTsQuery(search.q);
-  if (tsQuery !== '') {
-    // The generated document, not a LIKE across columns: the index exists, and
-    // an unanchored LIKE would scan the whole organization for every keystroke.
-    //
-    // No `type`, on purpose. supabase-js maps 'websearch' to
-    // `websearch_to_tsquery`, which has no prefix syntax and would send `:*`
-    // through as literal text; omitting it uses `to_tsquery`, which is the only
-    // one of the family that can match a half-typed word.
-    query = query.textSearch('search_document', tsQuery, { config: 'simple' }) as T;
-  }
-
-  if (search.entity !== null) {
-    query = query.eq('reference_entity', search.entity) as T;
-  }
-  if (search.nationality !== null) {
-    query = query.eq('nationality', search.nationality) as T;
-  }
-  // "all" adds no predicate at all. A predicate that matches everything still
-  // costs the planner something and, worse, reads in the logs as a filter the
-  // user set.
-  if (search.status !== 'all') {
-    query = query.eq('is_active', search.status === 'active') as T;
-  }
-  if (search.dependents !== 'all') {
-    query = query.eq('has_dependents', search.dependents === 'with') as T;
-  }
-
-  query = query.order(search.sort, { ascending: search.dir === 'asc' }) as T;
-  // A tiebreaker, always. Two people from the same town under a non-unique sort
-  // can otherwise swap places between page requests, which shows one of them
-  // twice and the other never.
-  query = query.order('id', { ascending: true }) as T;
-
-  const from = (search.page - 1) * PARTICIPANT_PAGE_SIZE;
-  return query.range(from, from + PARTICIPANT_PAGE_SIZE - 1) as T;
-}
-
-/**
  * Turns what a staff member has typed so far into a PREFIX tsquery.
  *
  * Search fires on every pause in typing, so the term is usually half a word.
@@ -165,10 +101,11 @@ export function buildPrefixTsQuery(term: string): string {
     .join(' & ');
 }
 
-/** The columns the table reads. No encrypted column is among them. */
-export const PARTICIPANT_LIST_COLUMNS =
-  'id, first_name, last_name, nationality, city, reference_entity, has_dependents, num_dependents, is_active, preferred_language, created_at';
-
+/**
+ * One roster row, as `list_participants` returns it. The Personal fields
+ * (nationality, city, dependants) are null for a caller without
+ * participants.view_personal (RAPP-240).
+ */
 export interface ParticipantListRow {
   readonly id: string;
   readonly first_name: string;
@@ -176,8 +113,8 @@ export interface ParticipantListRow {
   readonly nationality: string | null;
   readonly city: string | null;
   readonly reference_entity: string | null;
-  readonly has_dependents: boolean;
-  readonly num_dependents: number;
+  readonly has_dependents: boolean | null;
+  readonly num_dependents: number | null;
   readonly is_active: boolean;
   readonly preferred_language: string;
   readonly created_at: string;

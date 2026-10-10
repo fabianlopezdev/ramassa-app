@@ -1,6 +1,7 @@
 /**
- * The participants query (RAPP-23): the URL's search params in, a Supabase
- * query out.
+ * The participants query (RAPP-23): the URL's search params in, a valid
+ * search out. The query itself runs in the database (list_participants,
+ * RAPP-240); participant-actions.test.ts checks the arguments it receives.
  *
  * This is the layer where a staff member's filters become a database question,
  * so the tests are about the question being the one she asked: every filter
@@ -10,30 +11,7 @@
  */
 
 import { describe, expect, test } from 'bun:test';
-import {
-  applyParticipantQuery,
-  buildPrefixTsQuery,
-  parseParticipantSearch,
-  PARTICIPANT_PAGE_SIZE,
-  type ParticipantSearch,
-} from './participant-query';
-
-/** Records what the builder was asked to do, in the order it was asked. */
-function recordingBuilder() {
-  const calls: { method: string; args: unknown[] }[] = [];
-  const builder: Record<string, (...args: unknown[]) => unknown> = {};
-  for (const method of ['eq', 'or', 'textSearch', 'order', 'range', 'not', 'is']) {
-    builder[method] = (...args: unknown[]) => {
-      calls.push({ method, args });
-      return builder;
-    };
-  }
-  return { builder, calls };
-}
-
-function callsTo(calls: { method: string; args: unknown[] }[], method: string) {
-  return calls.filter((call) => call.method === method).map((call) => call.args);
-}
+import { buildPrefixTsQuery, parseParticipantSearch } from './participant-query';
 
 describe('parseParticipantSearch', () => {
   test('an empty URL yields the first page of everyone, newest sort last', () => {
@@ -152,88 +130,5 @@ describe('buildPrefixTsQuery', () => {
   test('non-Latin scripts survive intact', () => {
     expect(buildPrefixTsQuery('أمينة')).toBe('أمينة:*');
     expect(buildPrefixTsQuery('Оксана')).toBe('Оксана:*');
-  });
-});
-
-describe('applyParticipantQuery', () => {
-  const base: ParticipantSearch = parseParticipantSearch({});
-
-  test('always scopes to participants: staff and entities are not roster rows', () => {
-    const { builder, calls } = recordingBuilder();
-    applyParticipantQuery(builder as never, base);
-    expect(callsTo(calls, 'eq')).toContainEqual(['role', 'player']);
-  });
-
-  test('asks for one page, not the whole organization', () => {
-    const { builder, calls } = recordingBuilder();
-    applyParticipantQuery(builder as never, { ...base, page: 3 });
-    expect(callsTo(calls, 'range')).toEqual([
-      [2 * PARTICIPANT_PAGE_SIZE, 3 * PARTICIPANT_PAGE_SIZE - 1],
-    ]);
-  });
-
-  test('an empty search box adds no text search at all', () => {
-    const { builder, calls } = recordingBuilder();
-    applyParticipantQuery(builder as never, base);
-    expect(callsTo(calls, 'textSearch')).toEqual([]);
-  });
-
-  test('a search term goes to the indexed document, not to a LIKE over columns', () => {
-    const { builder, calls } = recordingBuilder();
-    applyParticipantQuery(builder as never, { ...base, q: 'nuria serra' });
-    const [args] = callsTo(calls, 'textSearch');
-    expect(args?.[0]).toBe('search_document');
-    // A PREFIX query, and no `type`: supabase-js only passes the string to
-    // `to_tsquery` untouched when the type is omitted, and `:*` is what makes
-    // a half-typed word match.
-    expect(args?.[1]).toBe('nuria:* & serra:*');
-    expect(args?.[2]).toMatchObject({ config: 'simple' });
-    expect((args?.[2] as { type?: string }).type).toBeUndefined();
-  });
-
-  test('each filter is applied, and only when it is set', () => {
-    const { builder, calls } = recordingBuilder();
-    applyParticipantQuery(builder as never, {
-      ...base,
-      entity: 'Creu Roja Osona',
-      nationality: 'Síria',
-      status: 'active',
-      dependents: 'with',
-    });
-    const eqs = callsTo(calls, 'eq');
-    expect(eqs).toContainEqual(['reference_entity', 'Creu Roja Osona']);
-    expect(eqs).toContainEqual(['nationality', 'Síria']);
-    expect(eqs).toContainEqual(['is_active', true]);
-    expect(eqs).toContainEqual(['has_dependents', true]);
-  });
-
-  test('"all" means no predicate, rather than a predicate matching everything', () => {
-    const { builder, calls } = recordingBuilder();
-    applyParticipantQuery(builder as never, { ...base, status: 'all', dependents: 'all' });
-    const columns = callsTo(calls, 'eq').map(([column]) => column);
-    expect(columns).not.toContain('is_active');
-    expect(columns).not.toContain('has_dependents');
-  });
-
-  test('inactive and without-dependents are real filters, not the absence of one', () => {
-    const { builder, calls } = recordingBuilder();
-    applyParticipantQuery(builder as never, {
-      ...base,
-      status: 'inactive',
-      dependents: 'without',
-    });
-    const eqs = callsTo(calls, 'eq');
-    expect(eqs).toContainEqual(['is_active', false]);
-    expect(eqs).toContainEqual(['has_dependents', false]);
-  });
-
-  test('sorting is stable: the chosen column, then a tiebreaker', () => {
-    const { builder, calls } = recordingBuilder();
-    applyParticipantQuery(builder as never, { ...base, sort: 'city', dir: 'desc' });
-    const orders = callsTo(calls, 'order');
-    expect(orders[0]).toEqual(['city', { ascending: false }]);
-    // Without a tiebreaker, two people from the same town can swap places
-    // between pages and one of them is never shown at all.
-    expect(orders[1]).toEqual(['id', { ascending: true }]);
   });
 });
