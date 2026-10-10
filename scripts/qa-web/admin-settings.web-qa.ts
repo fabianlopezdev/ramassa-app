@@ -1,11 +1,11 @@
 import { expect, test, type Page } from '@playwright/test';
 import { PARTICIPANT_FIXTURES } from '@ramassa/shared/testing';
 import {
+  acceptInvitationFromEmail,
   PLAYER_ORIGIN,
   queryDatabase,
   signIn,
   signInPlayer as signInPlayerWithEmailCode,
-  signInStaffWithEmailCode,
   STAFF_EMAIL,
 } from './session';
 
@@ -142,7 +142,11 @@ test.describe.serial('admin organization settings', () => {
 
     const invitedContext = await browser.newContext({ locale: 'en-GB' });
     const invitedPage = await invitedContext.newPage();
-    await signInStaffWithEmailCode(invitedPage, invitedEmail);
+    // The invitation email names the organization and opens the "I already
+    // have a code" step, so its own code signs her in (RAPP-225).
+    const invitation = await acceptInvitationFromEmail(invitedPage, invitedEmail);
+    expect(invitation.subject).toBe("T'han convidat a Ramassà");
+    expect(invitation.text).toContain('Organització: AE Ramassà');
     await expect.poll(() => new URL(invitedPage.url()).pathname).toBe('/dashboard');
     expect(
       Number(

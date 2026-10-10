@@ -92,3 +92,56 @@ export function EmailOtpVerifyForm({ email }: { email: string }) {
     </form>
   );
 }
+
+/**
+ * A code the person already holds, typically from an invitation email
+ * (RAPP-225). It asks for the address and the code together and sends no
+ * email, so the invitation's code works on its own.
+ */
+export function EmailOtpExistingCodeForm() {
+  const { t } = useTranslation('auth');
+  const [errorCode, setErrorCode] = useState<AppErrorCode | null>(null);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<EmailOtpVerify>({
+    resolver: zodResolver(emailOtpVerifySchema),
+    defaultValues: { email: '', token: '' },
+  });
+
+  const submit = handleSubmit(async ({ email, token }) => {
+    setErrorCode(null);
+    const result = await confirmEmailOtp(email, token);
+    if (!result.ok) setErrorCode(result.error.code);
+  });
+
+  return (
+    <form onSubmit={submit} noValidate className="flex flex-col gap-4">
+      <AuthFormError code={errorCode} />
+      <AdminAuthField
+        id="existing-code-email"
+        label={t('emailLabel')}
+        type="email"
+        autoComplete="email"
+        placeholder={t('emailPlaceholder')}
+        errorMessage={errors.email ? t('emailInvalid') : undefined}
+        {...register('email')}
+      />
+      <AdminAuthField
+        id="existing-code-token"
+        label={t('emailOtpCodeLabel')}
+        type="text"
+        inputMode="numeric"
+        autoComplete="one-time-code"
+        maxLength={6}
+        placeholder={t('emailOtpCodePlaceholder')}
+        errorMessage={errors.token ? t('emailOtpCodeInvalid') : undefined}
+        {...register('token')}
+      />
+      <Button type="submit" className="h-11 w-full text-base" disabled={isSubmitting}>
+        {t('emailOtpVerifyAction')}
+      </Button>
+    </form>
+  );
+}

@@ -227,11 +227,13 @@ otp_length = 6
 # Number of seconds before the email OTP expires (defaults to 1 hour).
 otp_expiry = 3600
 
-# Magic-link email (RAPP-13): Ramassà branding + Generalitat funding
+# Sign-in code email (RAPP-13, RAPP-67): Ramassà branding + Generalitat funding
 # acknowledgment, Catalan (the grant-mandated default language, ADR-006).
+# Staff and entity invitations (RAPP-225) reuse it: the subject and body switch
+# to the invitation wording while the account's metadata holds `invitation`.
 # Content path is relative to the project root.
 [auth.email.template.magic_link]
-subject = "Inicia la sessió a Ramassà"
+subject = "{{ with .Data.invitation }}{{ if eq .language \"es\" }}Te han invitado a Ramassà{{ else if eq .language \"en\" }}You are invited to Ramassà{{ else }}T'han convidat a Ramassà{{ end }}{{ else }}Inicia la sessió a Ramassà{{ end }}"
 content_path = "./supabase/templates/magic_link.html"
 
 # Use a production-ready SMTP server

@@ -5,6 +5,8 @@
 
 > [!note] Amended 2026-10-10 (RAPP-224, RAPP-227): `create_participant_account` and `reset_participant_password` are dropped. `create_participant_invite` now creates the player's auth account in Postgres, following this ADR, and generated `ramassa.invalid` addresses are no longer issued.
 
+> [!note] Amended 2026-10-10 (RAPP-225): a staff or entity invitation also writes `invitation` (kind, organization, entity, inviter, language) into the new account's `raw_user_meta_data`, through triggers on `staff_invitations` and `entity_invitations`. The sign-in code template shows the invitation wording while that key exists, and a trigger on `auth.users` removes it at the first sign-in. This adds one more write to `auth.users` to the coupling accepted below.
+
 ## Context
 
 ADR-005 established the fallback auth path: for a participant with no email,

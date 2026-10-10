@@ -1,4 +1,8 @@
-import { EmailOtpRequestForm, EmailOtpVerifyForm } from '@/components/auth/email-otp-form';
+import {
+  EmailOtpExistingCodeForm,
+  EmailOtpRequestForm,
+  EmailOtpVerifyForm,
+} from '@/components/auth/email-otp-form';
 import { NoAdminAccess } from '@/components/auth/no-admin-access';
 import { PasswordLoginForm } from '@/components/auth/password-login-form';
 import { Button } from '@/components/ui/button';
@@ -6,18 +10,27 @@ import { roleLandingPath } from '@/lib/role-landing';
 import { createFileRoute, Navigate } from '@tanstack/react-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { z } from 'zod';
 import { useAuth } from '@ramassa/shared/auth';
 
+/**
+ * `?code=1` opens the "I already have a code" step directly. The invitation
+ * email links here (RAPP-225), so its code works without sending another email.
+ */
 export const Route = createFileRoute('/login')({
+  validateSearch: z.object({
+    code: z.literal(1).optional().catch(undefined),
+  }),
   component: LoginPage,
 });
 
-type LoginMode = 'otp' | 'password';
+type LoginMode = 'otp' | 'existing-code' | 'password';
 
 function LoginPage() {
   const { t } = useTranslation(['admin', 'auth', 'common']);
   const { session, role } = useAuth();
-  const [mode, setMode] = useState<LoginMode>('otp');
+  const search = Route.useSearch();
+  const [mode, setMode] = useState<LoginMode>(search.code === 1 ? 'existing-code' : 'otp');
   const [sentToEmail, setSentToEmail] = useState<string | null>(null);
 
   // Already signed in (a resolved role): send them to their landing. A role
@@ -40,6 +53,9 @@ function LoginPage() {
           {mode === 'otp' && !sentToEmail ? (
             <p className="text-muted-foreground text-sm">{t('auth:loginSubtitle')}</p>
           ) : null}
+          {mode === 'existing-code' && !sentToEmail ? (
+            <p className="text-muted-foreground text-sm">{t('auth:emailOtpExistingCodeBody')}</p>
+          ) : null}
         </div>
 
         {sentToEmail ? (
@@ -57,8 +73,18 @@ function LoginPage() {
           <div className="flex flex-col gap-4">
             <EmailOtpRequestForm onSent={setSentToEmail} />
             <p className="text-muted-foreground text-start text-sm">{t('auth:emailOtpHint')}</p>
+            <Button variant="link" className="self-center" onClick={() => setMode('existing-code')}>
+              {t('auth:emailOtpExistingCodeAction')}
+            </Button>
             <Button variant="link" className="self-center" onClick={() => setMode('password')}>
               {t('auth:adminUsePasswordInstead')}
+            </Button>
+          </div>
+        ) : mode === 'existing-code' ? (
+          <div className="flex flex-col gap-4">
+            <EmailOtpExistingCodeForm />
+            <Button variant="link" className="self-center" onClick={() => setMode('otp')}>
+              {t('auth:emailOtpNeedCodeAction')}
             </Button>
           </div>
         ) : (

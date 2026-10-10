@@ -92,23 +92,64 @@ export async function signInPlayer(
   await expect(page).not.toHaveURL(/\/email-login$/, { timeout: 30_000 });
 }
 
+export interface InvitationEmail {
+  readonly subject: string;
+  readonly text: string;
+}
+
 /**
- * Signs a staff member or entity collaborator in to the web admin with the
- * emailed code, which is also how an invitation is accepted: since RAPP-67 the
- * email carries a code and no link.
+ * Accepts a staff or entity invitation the way the invited person does
+ * (RAPP-225): she opens the invitation email, follows its button to the
+ * login's "I already have a code" step, and enters her address and the code
+ * from that same email. No second email is sent.
+ *
+ * The button points at the auth server's site URL, so only its path is
+ * followed, on the QA admin origin. Returns the email so the spec can assert
+ * its wording.
  */
-export async function signInStaffWithEmailCode(
+export async function acceptInvitationFromEmail(
   page: Page,
   email: string,
   language: SupportedLanguage = 'en',
-): Promise<void> {
+): Promise<InvitationEmail> {
   const copy = PLAYER_AUTH_COPY[language];
-  const earlier = await inboxMessageIds(email);
+  let invitation: { Subject: string; Text: string; HTML: string } | undefined;
+  await expect
+    .poll(
+      async () => {
+        const inbox = (await (await fetch(inboxSearchUrl(email))).json()) as {
+          messages?: Array<{ ID: string }>;
+        };
+        const newest = inbox.messages?.[0]?.ID;
+        if (newest === undefined) return '';
+        invitation = (await (await fetch(`${MAILPIT_URL}/api/v1/message/${newest}`)).json()) as {
+          Subject: string;
+          Text: string;
+          HTML: string;
+        };
+        return invitation.Subject;
+      },
+      { timeout: 30_000 },
+    )
+    .not.toBe('');
+  if (invitation === undefined) throw new Error(`No invitation email for ${email}`);
+
+  const code = invitation.Text.match(/\b\d{6}\b/)?.[0];
+  const link = invitation.HTML.match(/href="([^"]+\/login\?code=1)"/)?.[1];
+  if (code === undefined || link === undefined) {
+    throw new Error(`The invitation email for ${email} has no code or no login button`);
+  }
+
   // A context from browser.newContext() has no baseURL, so the origin is explicit.
-  await page.goto(`${ADMIN_ORIGIN}/login`);
+  await page.goto(`${ADMIN_ORIGIN}${new URL(link).pathname}${new URL(link).search}`);
   await waitForHydration(page);
-  await enterEmailCode(page, email, copy, earlier);
-  await expect(page).not.toHaveURL(/\/login$/, { timeout: 30_000 });
+  await page.getByLabel(copy.emailLabel, { exact: true }).fill(email);
+  await page.getByLabel(copy.emailOtpCodeLabel, { exact: true }).fill(code);
+  await page.getByRole('button', { name: copy.emailOtpVerifyAction, exact: true }).click();
+  await expect(page).not.toHaveURL(/\/login/, { timeout: 30_000 });
+  // Her own code was enough: signing in sent her no second email.
+  expect((await inboxMessageIds(email)).size).toBe(1);
+  return { subject: invitation.Subject, text: invitation.Text };
 }
 
 async function inboxMessageIds(email: string): Promise<ReadonlySet<string>> {
