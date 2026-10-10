@@ -44,7 +44,7 @@ export function ParticipantRgpd({ participant, openDeletionRequestReason }: Part
   const { t } = useTranslation(['participants', 'errors', 'common']);
   const router = useRouter();
   const navigate = useNavigate();
-  const { role } = useAuth();
+  const { permissions } = useAuth();
 
   const [gesture, setGesture] = useState<Gesture>('none');
   const [isWorking, setIsWorking] = useState(false);
@@ -54,7 +54,8 @@ export function ParticipantRgpd({ participant, openDeletionRequestReason }: Part
   const focusAfterCloseRef = useRef<Exclude<Gesture, 'none'> | null>(null);
 
   const isAnonymized = participant.anonymized_at !== null;
-  const canErase = role === 'admin';
+  // Permanent erasure needs both, as the database requires (RAPP-230).
+  const canErase = permissions.has('rgpd.erase') && permissions.has('team.manage');
 
   function close() {
     setGesture('none');

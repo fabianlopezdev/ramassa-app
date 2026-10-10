@@ -4,7 +4,7 @@ import {
   createInMemoryLanguageStorage,
   SUPPORTED_LANGUAGES,
 } from '@ramassa/shared/i18n';
-import { ENTITY_NAV_ITEMS, STAFF_NAV_ITEMS } from './nav-items';
+import { ENTITY_NAV_ITEMS, holdsAnyPermission, STAFF_NAV_ITEMS } from './nav-items';
 
 const ALL_ITEMS = [...STAFF_NAV_ITEMS, ...ENTITY_NAV_ITEMS];
 
@@ -71,3 +71,11 @@ test.each(SUPPORTED_LANGUAGES.map((language) => [language] as const))(
     }
   },
 );
+
+test('the menu shows an item to a holder of any of its permissions, and the dashboard to everyone', () => {
+  const coach = new Set(['attendance.mark', 'messages.inbox'] as const);
+  const visible = STAFF_NAV_ITEMS.filter((item) =>
+    holdsAnyPermission(coach, 'anyPermission' in item ? item.anyPermission : undefined),
+  ).map((item) => item.to);
+  expect(visible).toEqual(['/dashboard', '/attendance', '/messages']);
+});

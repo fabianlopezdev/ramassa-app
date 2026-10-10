@@ -3,14 +3,6 @@ import {
   loadAuthenticatedMediaObjectUrl,
 } from '@/components/content/authenticated-media-image';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import {
   Table,
@@ -36,31 +28,26 @@ import {
   type InternalDocument,
   type OrganizationRow,
   type OrganizationSettingsInput,
-  type StaffMember,
 } from '@ramassa/shared/organization-settings';
+import type { PermissionCode } from '@ramassa/shared/permissions';
 import { uploadContentTypeSchema, type UploadContentType } from '@ramassa/shared/schemas';
 import { uploadFile } from '@ramassa/shared/upload-client';
 
 interface OrganizationSettingsPanelProps {
   readonly organization: OrganizationRow;
-  readonly staffMembers: readonly StaffMember[];
+  /** Which tabs and fields the caller may use (RAPP-231); the database enforces them again. */
+  readonly permissions: ReadonlySet<PermissionCode>;
+  /** The Team tab (RAPP-231): people, presets and toggles. */
+  readonly team: ReactNode;
   readonly documents: readonly InternalDocument[];
   readonly documentQuery: string;
   readonly entityManagement: ReactNode;
   readonly accessToken: string | undefined;
-  readonly initialTab?: 'organization' | 'staff' | 'documents' | 'entities';
-  readonly onTabChange?: (tab: 'organization' | 'staff' | 'documents' | 'entities') => void;
+  readonly initialTab?: SettingsTab;
+  readonly onTabChange?: (tab: SettingsTab) => void;
   readonly onSaveOrganization: (
     input: OrganizationSettingsInput & { readonly logoUrl: string | null },
   ) => Promise<void>;
-  readonly onInviteStaff: (input: {
-    readonly email: string;
-    readonly firstName: string;
-    readonly lastName: string;
-    readonly role: 'staff' | 'admin';
-  }) => Promise<void>;
-  readonly onSetStaffRole: (profileId: string, role: 'staff' | 'admin') => Promise<void>;
-  readonly onRemoveStaff: (profileId: string) => Promise<void>;
   readonly onRegisterDocument: (input: {
     readonly objectKey: string;
     readonly name: string;
@@ -70,7 +57,21 @@ interface OrganizationSettingsPanelProps {
   readonly onSearchDocuments: (query: string) => Promise<void>;
 }
 
-type PendingAction = 'organization' | 'invite' | 'role' | 'remove' | 'document' | 'download';
+type PendingAction = 'organization' | 'document' | 'download';
+
+export type SettingsTab = 'organization' | 'staff' | 'documents' | 'entities';
+
+/** The tabs a person may open, in display order (RAPP-231). */
+function visibleSettingsTabs(permissions: ReadonlySet<PermissionCode>): readonly SettingsTab[] {
+  const tabs: SettingsTab[] = [];
+  if (permissions.has('settings.organization') || permissions.has('settings.branding')) {
+    tabs.push('organization');
+  }
+  if (permissions.has('team.manage')) tabs.push('staff');
+  if (permissions.has('settings.documents')) tabs.push('documents');
+  if (permissions.has('entities.manage')) tabs.push('entities');
+  return tabs;
+}
 
 function Field({ label, children }: { readonly label: string; readonly children: ReactNode }) {
   return (
@@ -96,7 +97,8 @@ function fileContentType(file: File): UploadContentType {
 
 export function OrganizationSettingsPanel({
   organization,
-  staffMembers,
+  permissions,
+  team,
   documents,
   documentQuery,
   entityManagement,
@@ -104,9 +106,6 @@ export function OrganizationSettingsPanel({
   initialTab = 'organization',
   onTabChange,
   onSaveOrganization,
-  onInviteStaff,
-  onSetStaffRole,
-  onRemoveStaff,
   onRegisterDocument,
   onSearchDocuments,
 }: OrganizationSettingsPanelProps) {
@@ -115,7 +114,6 @@ export function OrganizationSettingsPanel({
   const [message, setMessage] = useState<{ kind: 'success' | 'error'; text: string } | null>(null);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [query, setQuery] = useState(documentQuery);
-  const [removeProfileId, setRemoveProfileId] = useState<string | null>(null);
   const [name, setName] = useState(organization.name);
   const [contactEmail, setContactEmail] = useState(organization.contact_email ?? '');
   const [contactPhone, setContactPhone] = useState(organization.contact_phone ?? '');
@@ -127,6 +125,11 @@ export function OrganizationSettingsPanel({
   const [defaultLanguage, setDefaultLanguage] = useState<SupportedLanguage>(
     organization.default_language,
   );
+
+  const tabs = visibleSettingsTabs(permissions);
+  const openTab = tabs.includes(initialTab) ? initialTab : (tabs[0] ?? 'organization');
+  const canEditOrganization = permissions.has('settings.organization');
+  const canEditBranding = permissions.has('settings.branding');
 
   useEffect(() => setQuery(documentQuery), [documentQuery]);
   useEffect(() => {
@@ -208,25 +211,6 @@ export function OrganizationSettingsPanel({
         setLogoFile(null);
       },
       t('saved'),
-    );
-  }
-
-  function submitStaffInvitation(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const form = event.currentTarget;
-    const fields = new FormData(form);
-    void run(
-      'invite',
-      async () => {
-        await onInviteStaff({
-          firstName: String(fields.get('first-name') ?? ''),
-          lastName: String(fields.get('last-name') ?? ''),
-          email: String(fields.get('email') ?? ''),
-          role: fields.get('role') === 'admin' ? 'admin' : 'staff',
-        });
-        form.reset();
-      },
-      t('inviteSent'),
     );
   }
 
@@ -313,17 +297,21 @@ export function OrganizationSettingsPanel({
       </div>
 
       <Tabs
-        defaultValue={initialTab}
+        defaultValue={openTab}
         className="gap-6"
-        onValueChange={(value) =>
-          onTabChange?.(value as 'organization' | 'staff' | 'documents' | 'entities')
-        }
+        onValueChange={(value) => onTabChange?.(value as SettingsTab)}
       >
         <TabsList className="max-w-full overflow-x-auto" variant="line">
-          <TabsTrigger value="organization">{t('tabOrganization')}</TabsTrigger>
-          <TabsTrigger value="staff">{t('tabStaff')}</TabsTrigger>
-          <TabsTrigger value="documents">{t('tabDocuments')}</TabsTrigger>
-          <TabsTrigger value="entities">{t('tabEntities')}</TabsTrigger>
+          {tabs.includes('organization') ? (
+            <TabsTrigger value="organization">{t('tabOrganization')}</TabsTrigger>
+          ) : null}
+          {tabs.includes('staff') ? <TabsTrigger value="staff">{t('tabTeam')}</TabsTrigger> : null}
+          {tabs.includes('documents') ? (
+            <TabsTrigger value="documents">{t('tabDocuments')}</TabsTrigger>
+          ) : null}
+          {tabs.includes('entities') ? (
+            <TabsTrigger value="entities">{t('tabEntities')}</TabsTrigger>
+          ) : null}
         </TabsList>
 
         <TabsContent value="organization" className="space-y-6">
@@ -336,19 +324,26 @@ export function OrganizationSettingsPanel({
           >
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label={t('organizationName')}>
-                <Input value={name} onChange={(event) => setName(event.target.value)} required />
+                <Input
+                  value={name}
+                  onChange={(event) => setName(event.target.value)}
+                  required
+                  disabled={!canEditOrganization}
+                />
               </Field>
               <Field label={t('contactEmail')}>
                 <Input
                   type="email"
                   value={contactEmail}
                   onChange={(event) => setContactEmail(event.target.value)}
+                  disabled={!canEditOrganization}
                 />
               </Field>
               <Field label={t('contactPhone')}>
                 <Input
                   value={contactPhone}
                   onChange={(event) => setContactPhone(event.target.value)}
+                  disabled={!canEditOrganization}
                 />
               </Field>
               <Field label={t('logo')}>
@@ -357,6 +352,7 @@ export function OrganizationSettingsPanel({
                   type="file"
                   accept="image/jpeg,image/png,image/webp"
                   onChange={(event) => setLogoFile(event.target.files?.[0] ?? null)}
+                  disabled={!canEditBranding}
                 />
               </Field>
             </div>
@@ -379,11 +375,13 @@ export function OrganizationSettingsPanel({
                     className="w-14 p-1"
                     value={primaryColor}
                     onChange={(event) => setPrimaryColor(event.target.value.toUpperCase())}
+                    disabled={!canEditBranding}
                   />
                   <Input
                     aria-label={`${t('primaryColor')} hex`}
                     value={primaryColor}
                     onChange={(event) => setPrimaryColor(event.target.value)}
+                    disabled={!canEditBranding}
                   />
                 </div>
               </Field>
@@ -395,11 +393,13 @@ export function OrganizationSettingsPanel({
                     className="w-14 p-1"
                     value={secondaryColor}
                     onChange={(event) => setSecondaryColor(event.target.value.toUpperCase())}
+                    disabled={!canEditBranding}
                   />
                   <Input
                     aria-label={`${t('secondaryColor')} hex`}
                     value={secondaryColor}
                     onChange={(event) => setSecondaryColor(event.target.value)}
+                    disabled={!canEditBranding}
                   />
                 </div>
               </Field>
@@ -413,7 +413,9 @@ export function OrganizationSettingsPanel({
                     <input
                       type="checkbox"
                       checked={availableLanguages.includes(language)}
-                      disabled={organization.locked_default_language === language}
+                      disabled={
+                        !canEditOrganization || organization.locked_default_language === language
+                      }
                       onChange={() => toggleLanguage(language)}
                     />
                     <span lang={language}>{LANGUAGE_NATIVE_NAMES[language]}</span>
@@ -425,7 +427,7 @@ export function OrganizationSettingsPanel({
               <select
                 className="h-9 rounded-md border border-input bg-background px-3 text-sm"
                 value={defaultLanguage}
-                disabled={organization.locked_default_language !== null}
+                disabled={!canEditOrganization || organization.locked_default_language !== null}
                 onChange={(event) => setDefaultLanguage(event.target.value as SupportedLanguage)}
               >
                 {availableLanguages.map((language) => (
@@ -446,135 +448,7 @@ export function OrganizationSettingsPanel({
         </TabsContent>
 
         <TabsContent value="staff" className="space-y-6">
-          <Dialog
-            open={removeProfileId !== null}
-            onOpenChange={(open) => {
-              if (!open && pending !== 'remove') setRemoveProfileId(null);
-            }}
-          >
-            <SectionHeader title={t('staffTitle')} intro={t('staffIntro')} />
-            <form
-              className="grid gap-3 rounded-xl border bg-card p-4 sm:grid-cols-2 lg:grid-cols-5"
-              onSubmit={submitStaffInvitation}
-              data-testid="staff-invite-form"
-            >
-              <Field label={t('firstName')}>
-                <Input name="first-name" required />
-              </Field>
-              <Field label={t('lastName')}>
-                <Input name="last-name" required />
-              </Field>
-              <Field label={t('email')}>
-                <Input name="email" type="email" required />
-              </Field>
-              <Field label={t('role')}>
-                <select
-                  name="role"
-                  className="h-9 rounded-md border border-input bg-background px-3 text-sm"
-                >
-                  <option value="staff">{t('roleStaff')}</option>
-                  <option value="admin">{t('roleAdmin')}</option>
-                </select>
-              </Field>
-              <Button type="submit" className="self-end" disabled={pending !== null}>
-                {pending === 'invite' ? t('working') : t('invite')}
-              </Button>
-            </form>
-            <div className="overflow-x-auto rounded-xl border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{t('email')}</TableHead>
-                    <TableHead>{t('role')}</TableHead>
-                    <TableHead>{t('statusActive')}</TableHead>
-                    <TableHead />
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {staffMembers.map((member) => (
-                    <TableRow key={member.profile_id}>
-                      <TableCell>
-                        <span className="font-medium">
-                          {member.first_name} {member.last_name}
-                        </span>
-                        <br />
-                        <span className="text-xs text-muted-foreground">{member.email}</span>
-                      </TableCell>
-                      <TableCell>
-                        <select
-                          aria-label={`${t('role')} ${member.email}`}
-                          className="h-8 rounded-md border bg-background px-2"
-                          value={member.role}
-                          disabled={!member.is_active || pending !== null}
-                          onChange={(event) =>
-                            void run('role', () =>
-                              onSetStaffRole(
-                                member.profile_id,
-                                event.target.value as 'staff' | 'admin',
-                              ),
-                            )
-                          }
-                        >
-                          <option value="staff">{t('roleStaff')}</option>
-                          <option value="admin">{t('roleAdmin')}</option>
-                        </select>
-                      </TableCell>
-                      <TableCell>
-                        {member.is_active ? t('statusActive') : t('statusInactive')}
-                      </TableCell>
-                      <TableCell>
-                        {member.is_active ? (
-                          <DialogTrigger asChild>
-                            <Button
-                              type="button"
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => setRemoveProfileId(member.profile_id)}
-                            >
-                              {t('remove')}
-                            </Button>
-                          </DialogTrigger>
-                        ) : null}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-            {removeProfileId !== null ? (
-              <DialogContent
-                role="alertdialog"
-                className="border-destructive/30"
-                onInteractOutside={(event) => event.preventDefault()}
-                onOpenAutoFocus={(event) => {
-                  event.preventDefault();
-                  document.getElementById('remove-staff-cancel')?.focus();
-                }}
-              >
-                <DialogTitle>{t('remove')}</DialogTitle>
-                <DialogDescription>{t('removeConfirm')}</DialogDescription>
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    onClick={() =>
-                      void run('remove', async () => {
-                        await onRemoveStaff(removeProfileId);
-                        setRemoveProfileId(null);
-                      })
-                    }
-                  >
-                    {t('confirm')}
-                  </Button>
-                  <DialogClose asChild>
-                    <Button id="remove-staff-cancel" type="button" variant="outline">
-                      {t('cancel')}
-                    </Button>
-                  </DialogClose>
-                </div>
-              </DialogContent>
-            ) : null}
-          </Dialog>
+          {team}
         </TabsContent>
 
         <TabsContent value="documents" className="space-y-6">

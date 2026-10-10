@@ -2,7 +2,9 @@ import { RequireAuth } from '@/components/auth/require-auth';
 import { ORGANIZATION_BRANDING_CHANGED_EVENT } from '@/components/branding/organization-branding-provider';
 import { EntityManagementPanel } from '@/components/entity/entity-management-panel';
 import { OrganizationSettingsPanel } from '@/components/settings/organization-settings-panel';
+import { TeamAccessPanel } from '@/components/team/team-access-panel';
 import { sendEmailOtp } from '@/lib/auth';
+import { SETTINGS_PERMISSIONS } from '@/lib/nav-items';
 import { supabase } from '@/lib/supabase';
 import { createFileRoute, useRouter } from '@tanstack/react-router';
 import { z } from 'zod';
@@ -23,8 +25,16 @@ import {
   removeStaffMember,
   saveOrganizationSettings,
   searchInternalDocuments,
-  setStaffMemberRole,
 } from '@ramassa/shared/organization-settings';
+import {
+  applyPermissionPreset,
+  deletePermissionPreset,
+  fetchMyPermissions,
+  fetchTeamAccess,
+  restorePermissionPresetDefault,
+  savePermissionPreset,
+  setTeamMemberPermissions,
+} from '@ramassa/shared/permissions';
 
 export const Route = createFileRoute('/_staff/settings')({
   ssr: false,
@@ -35,17 +45,40 @@ export const Route = createFileRoute('/_staff/settings')({
   }),
   loaderDeps: ({ search }) => ({ entityId: search.entity, documentQuery: search.q ?? '' }),
   loader: async ({ deps }) => {
-    const [organization, staffMembers, documents, entities] = await Promise.all([
+    // Each tab loads only for a person who may open it (RAPP-231): a call
+    // without its permission is refused by the database. Two round trips, as
+    // before permissions existed: a slower page widens the window in which a
+    // click lands on the list from before the reload.
+    const [permissions, organization] = await Promise.all([
+      fetchMyPermissions(supabase),
       fetchOrganizationSettings(supabase),
-      fetchStaffMembers(supabase),
-      searchInternalDocuments(supabase, deps.documentQuery),
-      fetchManagedEntities(supabase),
     ]);
+    const canManageEntities = permissions.has('entities.manage');
+    const [staffMembers, teamAccess, documents, entities, requestedCollaborators] =
+      await Promise.all([
+        permissions.has('team.manage') ? fetchStaffMembers(supabase) : Promise.resolve([]),
+        permissions.has('team.manage')
+          ? fetchTeamAccess(supabase)
+          : Promise.resolve({ presets: [], members: [] }),
+        permissions.has('settings.documents')
+          ? searchInternalDocuments(supabase, deps.documentQuery)
+          : Promise.resolve([]),
+        canManageEntities ? fetchManagedEntities(supabase) : Promise.resolve([]),
+        // The entity in the URL is fetched alongside; a stale or foreign id is
+        // simply not used below.
+        canManageEntities && deps.entityId !== undefined
+          ? fetchEntityCollaborators(supabase, deps.entityId).catch(() => null)
+          : Promise.resolve(null),
+      ]);
     const selectedEntityId = entities.some((entity) => entity.id === deps.entityId)
       ? (deps.entityId ?? null)
       : (entities[0]?.id ?? null);
     const collaborators =
-      selectedEntityId === null ? [] : await fetchEntityCollaborators(supabase, selectedEntityId);
+      selectedEntityId === null
+        ? []
+        : selectedEntityId === deps.entityId && requestedCollaborators !== null
+          ? requestedCollaborators
+          : await fetchEntityCollaborators(supabase, selectedEntityId);
     return {
       collaborators,
       documents,
@@ -54,6 +87,7 @@ export const Route = createFileRoute('/_staff/settings')({
       organization,
       selectedEntityId,
       staffMembers,
+      teamAccess,
     };
   },
   component: SettingsPage,
@@ -61,7 +95,7 @@ export const Route = createFileRoute('/_staff/settings')({
 
 function SettingsPage() {
   return (
-    <RequireAuth allow={['admin']}>
+    <RequireAuth allow={['staff', 'admin']} anyPermission={SETTINGS_PERMISSIONS}>
       <OrganizationSettingsScreen />
     </RequireAuth>
   );
@@ -71,10 +105,16 @@ function OrganizationSettingsScreen() {
   const data = Route.useLoaderData();
   const navigate = Route.useNavigate();
   const router = useRouter();
-  const { session } = useAuth();
+  const { session, permissions, user, refreshProfile } = useAuth();
 
   async function refresh() {
     await router.invalidate({ sync: true });
+  }
+
+  // A change to the reader's own toggles updates her menus at once.
+  async function refreshIfMine(profileIds: readonly string[]) {
+    if (user !== null && profileIds.includes(user.id)) await refreshProfile();
+    await refresh();
   }
 
   const search = Route.useSearch();
@@ -109,11 +149,59 @@ function OrganizationSettingsScreen() {
     />
   );
 
+  const team = (
+    <TeamAccessPanel
+      members={data.staffMembers}
+      access={data.teamAccess.members}
+      presets={data.teamAccess.presets}
+      myPermissions={permissions}
+      onInvite={async ({ presetId, ...person }) => {
+        const preset = data.teamAccess.presets.find((candidate) => candidate.id === presetId);
+        // The account type follows the preset: Admin makes an admin account,
+        // anything else a staff account, which starts on the Staff preset.
+        const role = preset?.builtinKey === 'admin' ? 'admin' : 'staff';
+        const invitation = await inviteStaffMember(supabase, { ...person, role });
+        if (preset !== undefined && preset.builtinKey !== role) {
+          await applyPermissionPreset(supabase, preset.id, [invitation.profileId]);
+        }
+        const result = await sendEmailOtp(invitation.email);
+        if (!result.ok) throw result.error;
+        await refresh();
+      }}
+      onSaveMemberAccess={async (input) => {
+        await setTeamMemberPermissions(supabase, input);
+        await refreshIfMine([input.profileId]);
+      }}
+      onSavePreset={async (input) => {
+        const presetId = await savePermissionPreset(supabase, input);
+        await refresh();
+        return presetId;
+      }}
+      onApplyPreset={async (presetId, profileIds) => {
+        await applyPermissionPreset(supabase, presetId, profileIds);
+        await refreshIfMine(profileIds);
+      }}
+      onDeletePreset={async (presetId) => {
+        await deletePermissionPreset(supabase, presetId);
+        await refresh();
+      }}
+      onRestorePreset={async (presetId) => {
+        await restorePermissionPresetDefault(supabase, presetId);
+        await refresh();
+      }}
+      onRemove={async (profileId) => {
+        await removeStaffMember(supabase, profileId);
+        await refresh();
+      }}
+    />
+  );
+
   return (
     <OrganizationSettingsPanel
       organization={data.organization}
+      permissions={permissions}
+      team={team}
       accessToken={session?.access_token}
-      staffMembers={data.staffMembers}
       documents={data.documents}
       documentQuery={data.documentQuery}
       entityManagement={entityManagement}
@@ -124,20 +212,6 @@ function OrganizationSettingsScreen() {
       onSaveOrganization={async (input) => {
         await saveOrganizationSettings(supabase, input);
         window.dispatchEvent(new Event(ORGANIZATION_BRANDING_CHANGED_EVENT));
-        await refresh();
-      }}
-      onInviteStaff={async (input) => {
-        const invitation = await inviteStaffMember(supabase, input);
-        const result = await sendEmailOtp(invitation.email);
-        if (!result.ok) throw result.error;
-        await refresh();
-      }}
-      onSetStaffRole={async (profileId, role) => {
-        await setStaffMemberRole(supabase, profileId, role);
-        await refresh();
-      }}
-      onRemoveStaff={async (profileId) => {
-        await removeStaffMember(supabase, profileId);
         await refresh();
       }}
       onRegisterDocument={async (input) => {

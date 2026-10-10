@@ -26,28 +26,120 @@ import {
   Wrench,
   type LucideIcon,
 } from 'lucide-react';
+import type { PermissionCode } from '@ramassa/shared/permissions';
 
 export interface NavItem {
   readonly to: string;
   readonly icon: LucideIcon;
   readonly labelKey: string;
-  readonly adminOnly?: boolean;
+  /**
+   * The item shows when the person holds ANY of these (RAPP-231). Absent means
+   * every team member: the dashboard. A UX filter only; the database checks
+   * every permission again.
+   */
+  readonly anyPermission?: readonly PermissionCode[];
 }
+
+/** The Data area: exports and the audit log. */
+export const DATA_PERMISSIONS = [
+  'export.participants',
+  'export.participants_sensitive',
+  'export.attendance',
+  'export.events',
+  'audit.view',
+] as const satisfies readonly PermissionCode[];
+
+/** The Settings area: one tab per permission (organization, team, documents, entities). */
+export const SETTINGS_PERMISSIONS = [
+  'settings.organization',
+  'settings.branding',
+  'settings.documents',
+  'entities.manage',
+  'team.manage',
+] as const satisfies readonly PermissionCode[];
 
 export const STAFF_NAV_ITEMS = [
   { to: '/dashboard', icon: LayoutDashboard, labelKey: 'nav:staff.dashboard' },
-  { to: '/participants', icon: Users, labelKey: 'nav:staff.participants' },
-  { to: '/content', icon: FileText, labelKey: 'nav:staff.content' },
-  { to: '/attendance', icon: CalendarCheck, labelKey: 'nav:staff.attendance' },
-  { to: '/messages', icon: MessageSquare, labelKey: 'nav:staff.messages' },
-  { to: '/forum', icon: MessageSquare, labelKey: 'nav:staff.forum' },
-  { to: '/mentoring', icon: HeartHandshake, labelKey: 'nav:staff.mentoring' },
-  { to: '/feedback', icon: Inbox, labelKey: 'nav:staff.feedback' },
-  { to: '/notifications', icon: BellRing, labelKey: 'nav:staff.notifications' },
-  { to: '/surveys', icon: ClipboardList, labelKey: 'nav:staff.surveys' },
-  { to: '/data', icon: Database, labelKey: 'nav:staff.data', adminOnly: true },
-  { to: '/settings', icon: Settings, labelKey: 'nav:staff.settings', adminOnly: true },
+  {
+    to: '/participants',
+    icon: Users,
+    labelKey: 'nav:staff.participants',
+    anyPermission: ['participants.view', 'participants.invite', 'referrals.manage', 'rgpd.erase'],
+  },
+  {
+    to: '/content',
+    icon: FileText,
+    labelKey: 'nav:staff.content',
+    anyPermission: [
+      'announcements.edit',
+      'announcements.publish',
+      'events.edit',
+      'events.publish',
+      'knowledge.edit',
+      'knowledge.publish',
+      'services.edit',
+      'services.publish',
+      'services.review',
+    ],
+  },
+  {
+    to: '/attendance',
+    icon: CalendarCheck,
+    labelKey: 'nav:staff.attendance',
+    anyPermission: ['attendance.mark', 'attendance.reports'],
+  },
+  {
+    to: '/messages',
+    icon: MessageSquare,
+    labelKey: 'nav:staff.messages',
+    anyPermission: ['messages.inbox'],
+  },
+  {
+    to: '/forum',
+    icon: MessageSquare,
+    labelKey: 'nav:staff.forum',
+    anyPermission: ['forum.moderate', 'gallery.moderate'],
+  },
+  {
+    to: '/mentoring',
+    icon: HeartHandshake,
+    labelKey: 'nav:staff.mentoring',
+    anyPermission: ['mentoring.manage'],
+  },
+  {
+    to: '/feedback',
+    icon: Inbox,
+    labelKey: 'nav:staff.feedback',
+    anyPermission: ['feedback.view'],
+  },
+  {
+    to: '/notifications',
+    icon: BellRing,
+    labelKey: 'nav:staff.notifications',
+    anyPermission: ['notifications.send'],
+  },
+  {
+    to: '/surveys',
+    icon: ClipboardList,
+    labelKey: 'nav:staff.surveys',
+    anyPermission: ['surveys.manage', 'surveys.results'],
+  },
+  { to: '/data', icon: Database, labelKey: 'nav:staff.data', anyPermission: DATA_PERMISSIONS },
+  {
+    to: '/settings',
+    icon: Settings,
+    labelKey: 'nav:staff.settings',
+    anyPermission: SETTINGS_PERMISSIONS,
+  },
 ] as const satisfies readonly NavItem[];
+
+/** Whether a permission-filtered item or route is open to this person. */
+export function holdsAnyPermission(
+  permissions: ReadonlySet<PermissionCode>,
+  anyPermission: readonly PermissionCode[] | undefined,
+): boolean {
+  return anyPermission === undefined || anyPermission.some((code) => permissions.has(code));
+}
 
 export const ENTITY_NAV_ITEMS = [
   { to: '/portal', icon: LayoutDashboard, labelKey: 'nav:entity.dashboard' },

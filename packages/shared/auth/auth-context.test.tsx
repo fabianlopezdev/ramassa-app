@@ -10,6 +10,7 @@ function makeClient(options: {
   initialSession: unknown;
   role?: string;
   profile?: { data: unknown; error: unknown };
+  permissions?: readonly string[];
 }) {
   let onChange: AuthChangeCallback = () => {};
   // Mutable so a test can install a profile AFTER mount and call refreshProfile,
@@ -39,6 +40,8 @@ function makeClient(options: {
         eq: () => ({ maybeSingle: async () => state.profile }),
       }),
     }),
+    // `my_permissions`, read for team members only (RAPP-231).
+    rpc: async () => ({ data: options.permissions ?? [], error: null }),
   } as unknown as SupabaseClient<Database>;
   return {
     client,
@@ -168,4 +171,45 @@ test('refreshProfile flips the gate after the wizard completes', async () => {
     await latestRefresh?.();
   });
   await waitFor(() => expect(textContentOf(getByTestId('probe'))).toBe('ready|in|player|ok'));
+});
+
+function PermissionsProbe() {
+  const { permissions, isLoading } = useAuth();
+  return (
+    <p data-testid="permissions">{isLoading ? 'loading' : [...permissions].sort().join(',')}</p>
+  );
+}
+
+test('a team member carries her permissions, and signing out clears them (RAPP-231)', async () => {
+  const { client, emit } = makeClient({
+    initialSession: { user: { id: 'u1' } },
+    role: 'staff',
+    permissions: ['messages.inbox', 'attendance.mark'],
+  });
+  const { getByTestId } = render(
+    <AuthProvider client={client}>
+      <PermissionsProbe />
+    </AuthProvider>,
+  );
+  await waitFor(() =>
+    expect(textContentOf(getByTestId('permissions'))).toBe('attendance.mark,messages.inbox'),
+  );
+  await act(async () => {
+    emit(null);
+  });
+  await waitFor(() => expect(textContentOf(getByTestId('permissions'))).toBe(''));
+});
+
+test('a player has no permissions, whatever the server would return', async () => {
+  const { client } = makeClient({
+    initialSession: { user: { id: 'u2' } },
+    role: 'player',
+    permissions: ['messages.inbox'],
+  });
+  const { getByTestId } = render(
+    <AuthProvider client={client}>
+      <PermissionsProbe />
+    </AuthProvider>,
+  );
+  await waitFor(() => expect(textContentOf(getByTestId('permissions'))).toBe(''));
 });

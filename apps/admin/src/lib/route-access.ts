@@ -13,6 +13,7 @@
  * known in the browser and this runs client-side.
  */
 
+import type { PermissionCode } from '@ramassa/shared/permissions';
 import type { AppRole } from '@ramassa/shared/schemas';
 import { roleLandingPath, type AdminLandingPath } from './role-landing';
 
@@ -27,8 +28,11 @@ export function resolveRouteAccess(input: {
   readonly hasSession: boolean;
   readonly role: AppRole | null;
   readonly allow: readonly AppRole[];
+  /** When set, the area also needs ANY of these permissions (RAPP-231). */
+  readonly anyPermission?: readonly PermissionCode[];
+  readonly permissions?: ReadonlySet<PermissionCode>;
 }): RouteAccess {
-  const { isLoading, hasSession, role, allow } = input;
+  const { isLoading, hasSession, role, allow, anyPermission, permissions } = input;
 
   // While the persisted session resolves, show loading so no wrong screen flashes.
   if (isLoading) {
@@ -43,6 +47,15 @@ export function resolveRouteAccess(input: {
   // a player to a landing this guard would reject again is what produced the
   // /dashboard -> /dashboard loop role-landing.ts guards against.
   if (!allow.includes(role)) {
+    const landing = roleLandingPath(role);
+    return landing === null ? { kind: 'no-access' } : { kind: 'redirect', to: landing };
+  }
+  // A team member without the job this area is for goes back to her landing,
+  // where the menu shows only what she may open.
+  if (
+    anyPermission !== undefined &&
+    !anyPermission.some((code) => permissions?.has(code) === true)
+  ) {
     const landing = roleLandingPath(role);
     return landing === null ? { kind: 'no-access' } : { kind: 'redirect', to: landing };
   }

@@ -2,7 +2,6 @@
   "playerTitle": "Chat con el equipo",
   "entityTitle": "Chat general con el equipo",
   "staffTitle": "Conversación directa",
-  "staffIntro": "Abre una conversación directa desde el enlace seguro de la participante o la entidad.",
   "emptyTitle": "Todavía no hay mensajes",
   "emptyBody": "Escribe al equipo cuando necesites ayuda.",
   "composerPlaceholder": "Escribe un mensaje",

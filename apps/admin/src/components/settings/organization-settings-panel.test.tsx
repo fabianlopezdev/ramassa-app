@@ -1,6 +1,7 @@
 import { act, fireEvent, render, waitFor } from '@testing-library/react';
 import { expect, mock, test } from 'bun:test';
-import type { OrganizationRow, StaffMember } from '@ramassa/shared/organization-settings';
+import type { OrganizationRow } from '@ramassa/shared/organization-settings';
+import type { PermissionCode } from '@ramassa/shared/permissions';
 import { OrganizationSettingsPanel } from './organization-settings-panel';
 
 const organization: OrganizationRow = {
@@ -17,30 +18,26 @@ const organization: OrganizationRow = {
   contact_phone: null,
 };
 
-const staffMember: StaffMember = {
-  profile_id: '5eed0000-0000-4000-8000-000000000002',
-  first_name: 'Núria',
-  last_name: 'Soler',
-  email: 'nuria@example.test',
-  role: 'staff',
-  is_active: true,
-  invited_at: '2026-08-22T10:00:00Z',
-};
+const ALL_SETTINGS: ReadonlySet<PermissionCode> = new Set([
+  'settings.organization',
+  'settings.branding',
+  'settings.documents',
+  'entities.manage',
+  'team.manage',
+]);
 
 function renderPanel(
   overrides: Partial<React.ComponentProps<typeof OrganizationSettingsPanel>> = {},
 ) {
   const props: React.ComponentProps<typeof OrganizationSettingsPanel> = {
     organization,
-    staffMembers: [staffMember],
+    permissions: ALL_SETTINGS,
+    team: <p>Team access</p>,
     documents: [],
     documentQuery: '',
     entityManagement: <p>Entity settings</p>,
     accessToken: undefined,
     onSaveOrganization: mock(async () => undefined),
-    onInviteStaff: mock(async () => undefined),
-    onSetStaffRole: mock(async () => undefined),
-    onRemoveStaff: mock(async () => undefined),
     onRegisterDocument: mock(async () => undefined),
     onSearchDocuments: mock(async () => undefined),
     ...overrides,
@@ -93,19 +90,32 @@ test('failed save announces a dismissible error without claiming success', async
   expect(view.queryByText('Save failed')).toBeNull();
 });
 
-test('staff removal requires confirmation and document search delegates the typed query', async () => {
-  const { props, view } = renderPanel({ documentQuery: 'asse', initialTab: 'staff' });
-
-  fireEvent.click(view.getByRole('button', { name: /Remove access|remove/ }));
-  expect(props.onRemoveStaff).not.toHaveBeenCalled();
-  fireEvent.click(view.getByRole('button', { name: /Confirm|confirm/ }));
-  await waitFor(() => expect(props.onRemoveStaff).toHaveBeenCalledWith(staffMember.profile_id));
-
-  view.unmount();
+test('document search delegates the typed query', async () => {
   const documentsPanel = renderPanel({ documentQuery: 'asse', initialTab: 'documents' });
   const documentsView = documentsPanel.view;
   const search = documentsView.getByLabelText(/Search documents|documentSearch/);
   expect((search as HTMLInputElement).value).toBe('asse');
   fireEvent.submit(search.closest('form')!);
   await waitFor(() => expect(documentsPanel.props.onSearchDocuments).toHaveBeenCalledWith('asse'));
+});
+
+test('a tab shows only to a holder of its permission (RAPP-231)', () => {
+  const { view } = renderPanel({
+    permissions: new Set(['settings.documents']),
+    initialTab: 'staff',
+  });
+  expect(view.queryByRole('tab', { name: /tabTeam|Team/ })).toBeNull();
+  expect(view.queryByRole('tab', { name: /tabOrganization|Organization/ })).toBeNull();
+  expect(
+    view.getByRole('tab', { name: /tabDocuments|Documents/ }).getAttribute('aria-selected'),
+  ).toBe('true');
+});
+
+test('branding alone changes the colours but not the organization details', () => {
+  const { view } = renderPanel({ permissions: new Set(['settings.branding']) });
+  expect(view.getByLabelText(/primaryColor hex|Primary color hex/).hasAttribute('disabled')).toBe(
+    false,
+  );
+  const nameInput = view.getByTestId('organization-settings-form').querySelector('input[required]');
+  expect(nameInput?.hasAttribute('disabled')).toBe(true);
 });

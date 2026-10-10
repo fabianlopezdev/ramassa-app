@@ -2,7 +2,7 @@
   "title": "Configuració de l'organització",
   "intro": "Gestiona la identitat visual, els idiomes, l'equip i els documents interns.",
   "tabOrganization": "Organització",
-  "tabStaff": "Equip",
+  "tabTeam": "Equip",
   "tabDocuments": "Documents",
   "tabEntities": "Entitats",
   "organizationName": "Nom de l'organització",
@@ -20,14 +20,9 @@
   "saved": "Configuració desada.",
   "working": "Treballant...",
   "actionError": "No s'ha pogut completar l'acció. Revisa les dades i torna-ho a provar.",
-  "staffTitle": "Equip de l'organització",
-  "staffIntro": "Convida membres, canvia rols i retira l'accés. Sempre hi ha d'haver com a mínim una persona administradora.",
   "firstName": "Nom",
   "lastName": "Cognoms",
   "email": "Correu electrònic",
-  "role": "Rol",
-  "roleStaff": "Personal",
-  "roleAdmin": "Administració",
   "statusActive": "Actiu",
   "statusInactive": "Sense accés",
   "invite": "Envia la invitació",
@@ -44,5 +39,240 @@
   "documentUploaded": "Document pujat.",
   "documentsEmpty": "No hi ha documents que coincideixin amb la cerca.",
   "download": "Descarrega",
-  "fundingNotice": "El reconeixement del finançament de la Generalitat és obligatori i no es pot eliminar des d'aquesta configuració."
+  "fundingNotice": "El reconeixement del finançament de la Generalitat és obligatori i no es pot eliminar des d'aquesta configuració.",
+  "team": {
+    "title": "Equip",
+    "intro": "Convida persones, tria què pot fer cadascuna i retira l'accés. L'organització sempre manté com a mínim una persona amb Gestió de l'equip.",
+    "presetLabel": "Perfil",
+    "accessColumn": "Accés",
+    "custom": "Personalitzat",
+    "adjusted": "{{preset}}, ajustat",
+    "editAccess": "Editar l'accés",
+    "editAccessFor": "Editar l'accés de {{name}}",
+    "removeFor": "Retirar l'accés de {{name}}",
+    "presetsTitle": "Perfils",
+    "presetsIntro": "Un perfil configura una persona ràpidament. Canviar un perfil no canvia ningú fins que decideixes aplicar-lo.",
+    "newPreset": "Perfil nou",
+    "builtIn": "Predefinit",
+    "presetSummary_one": "{{count}} permís · el fan servir {{people}}",
+    "presetSummary_other": "{{count}} permisos · el fan servir {{people}}",
+    "editPreset": "Editar el perfil",
+    "editPresetFor": "Editar el perfil {{name}}",
+    "restoreDefault": "Restaurar el predeterminat",
+    "deletePreset": "Eliminar",
+    "deletePresetFor": "Eliminar el perfil {{name}}",
+    "presetRestored": "Perfil restaurat al predeterminat.",
+    "presetDeleted": "Perfil eliminat.",
+    "accessSaved": "Accés desat.",
+    "presetSaved": "Perfil desat.",
+    "presetApplied_one": "Aplicat a {{count}} persona.",
+    "presetApplied_other": "Aplicat a {{count}} persones.",
+    "removed": "Accés retirat.",
+    "errorLastManager": "Com a mínim una persona activa ha de mantenir Gestió de l'equip. Dona-la primer a una altra persona.",
+    "errorNotHeld": "Només pots canviar els permisos que tens tu.",
+    "errorBuiltIn": "Un perfil predefinit no es pot eliminar. En canvi, pots restaurar-ne el predeterminat.",
+    "errorPresetName": "Posa un nom al perfil.",
+    "editAccessTitle": "Accés de {{name}}",
+    "editAccessIntro": "Comença per un perfil i després activa o desactiva permisos concrets.",
+    "usePreset": "Fes servir aquest perfil",
+    "editPresetTitle": "Editar {{name}}",
+    "editPresetIntro": "Tria els permisos que rep una persona quan s'aplica aquest perfil.",
+    "presetName": "Nom",
+    "applyTitle_one": "Vols aplicar els canvis a la {{count}} persona que fa servir {{preset}}?",
+    "applyTitle_other": "Vols aplicar els canvis a les {{count}} persones que fan servir {{preset}}?",
+    "applyIntro": "El seu accés només canvia si l'apliques aquí. El registre d'auditoria desa cada canvi.",
+    "apply": {
+      "everyone_one": "Sí, a aquesta persona",
+      "everyone_other": "Sí, a totes {{count}}",
+      "some": "Triar persones",
+      "nobody": "No, mantén-ne l'accés com està"
+    },
+    "lockedHint": "Només pots canviar els permisos que tens tu. Els altres es mostren bloquejats.",
+    "area": {
+      "participants": "Participants",
+      "material": "Material",
+      "attendance": "Assistència",
+      "content": "Continguts",
+      "community": "Comunitat i suport",
+      "entities": "Entitats col·laboradores",
+      "impact": "Impacte i dades",
+      "settings": "Configuració i equip"
+    },
+    "preset": {
+      "coach": "Entrenador",
+      "staff": "Equip tècnic",
+      "admin": "Administració",
+      "custom": "Personalitzat"
+    }
+  },
+  "permissions": {
+    "participants_view": {
+      "label": "Veure participants",
+      "description": "La llista de participants i els camps bàsics: nom, foto, idioma, entitat derivant, talles, inscripcions i assistència."
+    },
+    "participants_view_personal": {
+      "label": "Veure dades personals",
+      "description": "També data i lloc de naixement, nacionalitat, municipi, tipus de document, persones a càrrec i el contacte de l'entitat derivant."
+    },
+    "participants_view_sensitive": {
+      "label": "Veure dades sensibles",
+      "description": "També els quatre camps xifrats: adreça, codi postal, telèfon i número de document."
+    },
+    "participants_notes": {
+      "label": "Notes de l'equip",
+      "description": "Llegir i escriure les notes internes de l'equip sobre una participant."
+    },
+    "participants_invite": {
+      "label": "Convidar participants",
+      "description": "Enviar invitacions a jugadores noves."
+    },
+    "participants_deactivate": {
+      "label": "Desactivar comptes",
+      "description": "Desactivar i reactivar el compte d'una jugadora."
+    },
+    "rgpd_erase": {
+      "label": "Supressió RGPD",
+      "description": "Gestionar les sol·licituds de supressió i esborrar les dades d'una jugadora. La supressió definitiva també necessita Gestió de l'equip."
+    },
+    "equipment_handover": {
+      "label": "Lliurar material",
+      "description": "Registrar un lliurament a una jugadora i veure l'historial de lliuraments."
+    },
+    "equipment_receive": {
+      "label": "Rebre material",
+      "description": "Registrar el material que arriba al magatzem."
+    },
+    "equipment_count": {
+      "label": "Comptar estoc",
+      "description": "Corregir les quantitats d'estoc després d'un recompte."
+    },
+    "equipment_items": {
+      "label": "Gestionar la llista d'articles",
+      "description": "Afegir i editar els tipus de material i les seves talles."
+    },
+    "attendance_mark": {
+      "label": "Passar llista",
+      "description": "Passar llista d'una sessió, amb connexió o sense."
+    },
+    "attendance_reports": {
+      "label": "Informes d'assistència",
+      "description": "Veure l'assistència per activitat i per participant."
+    },
+    "announcements_edit": {
+      "label": "Editar avisos",
+      "description": "Crear i canviar esborranys i traduccions d'avisos."
+    },
+    "announcements_publish": {
+      "label": "Publicar avisos",
+      "description": "Publicar, programar, despublicar i eliminar avisos."
+    },
+    "events_edit": {
+      "label": "Editar activitats",
+      "description": "Crear i canviar activitats, entrenaments, sessions periòdiques i categories."
+    },
+    "events_publish": {
+      "label": "Publicar activitats",
+      "description": "Publicar, programar, despublicar i eliminar activitats."
+    },
+    "knowledge_edit": {
+      "label": "Editar la base de coneixement",
+      "description": "Crear i canviar articles, i revisar les històries enviades."
+    },
+    "knowledge_publish": {
+      "label": "Publicar la base de coneixement",
+      "description": "Publicar, programar, despublicar i eliminar articles i històries."
+    },
+    "services_edit": {
+      "label": "Editar serveis",
+      "description": "Crear i canviar serveis del directori i les seves categories."
+    },
+    "services_publish": {
+      "label": "Publicar serveis",
+      "description": "Publicar, programar, despublicar i eliminar serveis."
+    },
+    "services_review": {
+      "label": "Revisar serveis d'entitats",
+      "description": "Aprovar o rebutjar els serveis que envien les entitats col·laboradores."
+    },
+    "forum_moderate": {
+      "label": "Moderar el fòrum",
+      "description": "Gestionar denúncies, amagar i restaurar missatges i impedir publicar a una jugadora."
+    },
+    "gallery_moderate": {
+      "label": "Moderar la galeria",
+      "description": "Aprovar, amagar i retirar fotos de la galeria."
+    },
+    "messages_inbox": {
+      "label": "Bústia de l'equip",
+      "description": "Llegir i respondre les converses entre l'equip i les jugadores o les entitats."
+    },
+    "mentoring_manage": {
+      "label": "Mentoria",
+      "description": "Veure les sol·licituds de mentoria, també el tema privat, i escriure les notes de l'equip."
+    },
+    "feedback_view": {
+      "label": "Llegir opinions",
+      "description": "Llegir les opinions privades que envien les jugadores."
+    },
+    "surveys_manage": {
+      "label": "Gestionar enquestes",
+      "description": "Crear, publicar i tancar enquestes i votacions."
+    },
+    "surveys_results": {
+      "label": "Resultats d'enquestes",
+      "description": "Veure les respostes de les enquestes."
+    },
+    "notifications_send": {
+      "label": "Enviar notificacions",
+      "description": "Enviar notificacions a les jugadores i gestionar les plantilles."
+    },
+    "referrals_manage": {
+      "label": "Derivacions",
+      "description": "Veure i actualitzar les derivacions de les entitats, també el telèfon, les notes i les actualitzacions de la persona derivada."
+    },
+    "entities_manage": {
+      "label": "Entitats col·laboradores",
+      "description": "Afegir i editar entitats col·laboradores, les seves col·laboradores i les invitacions."
+    },
+    "impact_view": {
+      "label": "Tauler d'impacte",
+      "description": "Veure el tauler d'impacte i fer informes d'impacte per als finançadors."
+    },
+    "export_participants": {
+      "label": "Exportar participants",
+      "description": "Exportar la llista de participants sense els quatre camps sensibles."
+    },
+    "export_participants_sensitive": {
+      "label": "Exportar amb dades sensibles",
+      "description": "Exportar la llista de participants amb els quatre camps sensibles. També necessita Veure dades sensibles."
+    },
+    "export_attendance": {
+      "label": "Exportar assistència",
+      "description": "Exportar els registres d'assistència."
+    },
+    "export_events": {
+      "label": "Exportar activitats",
+      "description": "Exportar activitats i inscripcions."
+    },
+    "audit_view": {
+      "label": "Registre d'auditoria",
+      "description": "Veure qui ha vist, canviat o exportat què, i quan."
+    },
+    "settings_organization": {
+      "label": "Dades de l'organització",
+      "description": "Editar el nom, les dades de contacte i els idiomes."
+    },
+    "settings_branding": {
+      "label": "Imatge",
+      "description": "Editar el logotip i els colors."
+    },
+    "settings_documents": {
+      "label": "Documents interns",
+      "description": "Gestionar documents interns com formularis d'assegurança i inventaris."
+    },
+    "team_manage": {
+      "label": "Gestió de l'equip",
+      "description": "Afegir i treure persones de l'equip, editar perfils i permisos, i restablir un segon factor perdut."
+    }
+  }
 }

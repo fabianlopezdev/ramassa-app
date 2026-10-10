@@ -16,18 +16,22 @@ import { Navigate } from '@tanstack/react-router';
 import { type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@ramassa/shared/auth';
+import type { PermissionCode } from '@ramassa/shared/permissions';
 import type { AppRole } from '@ramassa/shared/schemas';
 import { AuthLoading } from './auth-loading';
 
 export function RequireAuth({
   allow,
+  anyPermission,
   children,
 }: {
   allow: readonly AppRole[];
+  /** The area also needs ANY of these permissions (RAPP-231). */
+  anyPermission?: readonly PermissionCode[];
   children: ReactNode;
 }) {
   const { t } = useTranslation('auth');
-  const { session, role, isLoading } = useAuth();
+  const { session, role, permissions, isLoading } = useAuth();
 
   // The role x area decision is a pure, exhaustively-tested function
   // (route-access.ts); this component only maps its outcome to a rendered view.
@@ -36,6 +40,8 @@ export function RequireAuth({
     hasSession: Boolean(session),
     role,
     allow,
+    anyPermission,
+    permissions,
   });
 
   switch (access.kind) {

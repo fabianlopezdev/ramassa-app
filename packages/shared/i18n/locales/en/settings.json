@@ -2,7 +2,7 @@
   "title": "Organization settings",
   "intro": "Manage visual identity, languages, staff, and internal documents.",
   "tabOrganization": "Organization",
-  "tabStaff": "Staff",
+  "tabTeam": "Team",
   "tabDocuments": "Documents",
   "tabEntities": "Entities",
   "organizationName": "Organization name",
@@ -20,14 +20,9 @@
   "saved": "Settings saved.",
   "working": "Working...",
   "actionError": "The action could not be completed. Check the details and try again.",
-  "staffTitle": "Organization staff",
-  "staffIntro": "Invite members, change roles, and remove access. At least one active administrator must always remain.",
   "firstName": "First name",
   "lastName": "Last name",
   "email": "Email",
-  "role": "Role",
-  "roleStaff": "Staff",
-  "roleAdmin": "Administrator",
   "statusActive": "Active",
   "statusInactive": "Access removed",
   "invite": "Send invitation",
@@ -44,5 +39,240 @@
   "documentUploaded": "Document uploaded.",
   "documentsEmpty": "No documents match the search.",
   "download": "Download",
-  "fundingNotice": "The Generalitat funding acknowledgment is mandatory and cannot be removed in these settings."
+  "fundingNotice": "The Generalitat funding acknowledgment is mandatory and cannot be removed in these settings.",
+  "team": {
+    "title": "Team",
+    "intro": "Invite people, choose what each person may do, and remove access. The organization always keeps at least one person with Team management.",
+    "presetLabel": "Preset",
+    "accessColumn": "Access",
+    "custom": "Custom",
+    "adjusted": "{{preset}}, adjusted",
+    "editAccess": "Edit access",
+    "editAccessFor": "Edit access for {{name}}",
+    "removeFor": "Remove access for {{name}}",
+    "presetsTitle": "Presets",
+    "presetsIntro": "A preset sets up a person quickly. Changing a preset changes nobody until you choose to apply it.",
+    "newPreset": "New preset",
+    "builtIn": "Built in",
+    "presetSummary_one": "{{count}} permission · used by {{people}}",
+    "presetSummary_other": "{{count}} permissions · used by {{people}}",
+    "editPreset": "Edit preset",
+    "editPresetFor": "Edit preset {{name}}",
+    "restoreDefault": "Restore default",
+    "deletePreset": "Delete",
+    "deletePresetFor": "Delete preset {{name}}",
+    "presetRestored": "Preset restored to its default.",
+    "presetDeleted": "Preset deleted.",
+    "accessSaved": "Access saved.",
+    "presetSaved": "Preset saved.",
+    "presetApplied_one": "Applied to {{count}} person.",
+    "presetApplied_other": "Applied to {{count}} people.",
+    "removed": "Access removed.",
+    "errorLastManager": "At least one active person must keep Team management. Give it to someone else first.",
+    "errorNotHeld": "You can only change permissions that you hold yourself.",
+    "errorBuiltIn": "A built-in preset cannot be deleted. You can restore its default instead.",
+    "errorPresetName": "Give the preset a name.",
+    "editAccessTitle": "Access for {{name}}",
+    "editAccessIntro": "Start from a preset, then turn single permissions on or off.",
+    "usePreset": "Use this preset",
+    "editPresetTitle": "Edit {{name}}",
+    "editPresetIntro": "Choose the permissions people get when this preset is applied.",
+    "presetName": "Name",
+    "applyTitle_one": "Apply the changes to the {{count}} person who uses {{preset}}?",
+    "applyTitle_other": "Apply the changes to the {{count}} people who use {{preset}}?",
+    "applyIntro": "Their access changes only if you apply it here. The audit log records each change.",
+    "apply": {
+      "everyone_one": "Yes, to that person",
+      "everyone_other": "Yes, to all {{count}}",
+      "some": "Choose people",
+      "nobody": "No, keep their access as it is"
+    },
+    "lockedHint": "You can only change permissions that you hold yourself. The others are shown but locked.",
+    "area": {
+      "participants": "Participants",
+      "material": "Material",
+      "attendance": "Attendance",
+      "content": "Content",
+      "community": "Community and support",
+      "entities": "Partner entities",
+      "impact": "Impact and data",
+      "settings": "Settings and team"
+    },
+    "preset": {
+      "coach": "Coach",
+      "staff": "Staff",
+      "admin": "Admin",
+      "custom": "Custom"
+    }
+  },
+  "permissions": {
+    "participants_view": {
+      "label": "See participants",
+      "description": "The participant list and the Basic fields: name, photo, language, referring entity, sizes, sign-ups and attendance."
+    },
+    "participants_view_personal": {
+      "label": "See personal details",
+      "description": "Also date and place of birth, nationality, city, document type, dependants and the contact at the referring entity."
+    },
+    "participants_view_sensitive": {
+      "label": "See sensitive details",
+      "description": "Also the four encrypted fields: address, postal code, phone and document number."
+    },
+    "participants_notes": {
+      "label": "Team notes",
+      "description": "Read and write the team's internal notes on a participant."
+    },
+    "participants_invite": {
+      "label": "Invite participants",
+      "description": "Send invitations to new players."
+    },
+    "participants_deactivate": {
+      "label": "Deactivate accounts",
+      "description": "Deactivate and reactivate a player's account."
+    },
+    "rgpd_erase": {
+      "label": "RGPD erasure",
+      "description": "Handle deletion requests and erase a player's data. Permanent deletion also needs Team management."
+    },
+    "equipment_handover": {
+      "label": "Hand over material",
+      "description": "Record a handover to a player and see the handover history."
+    },
+    "equipment_receive": {
+      "label": "Receive material",
+      "description": "Record material that arrives at the storeroom."
+    },
+    "equipment_count": {
+      "label": "Count stock",
+      "description": "Correct the stock counts after a count."
+    },
+    "equipment_items": {
+      "label": "Manage the item list",
+      "description": "Add and edit the types of material and their sizes."
+    },
+    "attendance_mark": {
+      "label": "Take attendance",
+      "description": "Take attendance for a session, online or offline."
+    },
+    "attendance_reports": {
+      "label": "Attendance reports",
+      "description": "See attendance per event and per participant."
+    },
+    "announcements_edit": {
+      "label": "Edit announcements",
+      "description": "Create and change announcement drafts and translations."
+    },
+    "announcements_publish": {
+      "label": "Publish announcements",
+      "description": "Publish, schedule, unpublish and delete announcements."
+    },
+    "events_edit": {
+      "label": "Edit events",
+      "description": "Create and change events, trainings, recurring sessions and event categories."
+    },
+    "events_publish": {
+      "label": "Publish events",
+      "description": "Publish, schedule, unpublish and delete events."
+    },
+    "knowledge_edit": {
+      "label": "Edit knowledge base",
+      "description": "Create and change articles, and review story submissions."
+    },
+    "knowledge_publish": {
+      "label": "Publish knowledge base",
+      "description": "Publish, schedule, unpublish and delete articles and stories."
+    },
+    "services_edit": {
+      "label": "Edit services",
+      "description": "Create and change services in the directory and their categories."
+    },
+    "services_publish": {
+      "label": "Publish services",
+      "description": "Publish, schedule, unpublish and delete services."
+    },
+    "services_review": {
+      "label": "Review entity services",
+      "description": "Approve or reject the services partner entities submit."
+    },
+    "forum_moderate": {
+      "label": "Moderate the forum",
+      "description": "Handle reports, hide and restore posts, and ban players from posting."
+    },
+    "gallery_moderate": {
+      "label": "Moderate the gallery",
+      "description": "Approve, hide and remove gallery photos."
+    },
+    "messages_inbox": {
+      "label": "Team inbox",
+      "description": "Read and answer the conversations between the team and players or entities."
+    },
+    "mentoring_manage": {
+      "label": "Mentoring",
+      "description": "See mentoring requests, including their private topic, and write the team's notes."
+    },
+    "feedback_view": {
+      "label": "Read feedback",
+      "description": "Read the private feedback players send."
+    },
+    "surveys_manage": {
+      "label": "Manage surveys",
+      "description": "Create, publish and close surveys and polls."
+    },
+    "surveys_results": {
+      "label": "Survey results",
+      "description": "See survey answers."
+    },
+    "notifications_send": {
+      "label": "Send notifications",
+      "description": "Send push notifications to players and manage the templates."
+    },
+    "referrals_manage": {
+      "label": "Referrals",
+      "description": "See and update referrals from entities, including the referred person's phone, notes and updates."
+    },
+    "entities_manage": {
+      "label": "Partner entities",
+      "description": "Add and edit partner entities, their collaborators and invitations."
+    },
+    "impact_view": {
+      "label": "Impact dashboard",
+      "description": "See the impact dashboard and make impact reports for funders."
+    },
+    "export_participants": {
+      "label": "Export participants",
+      "description": "Export the participant list without the four sensitive fields."
+    },
+    "export_participants_sensitive": {
+      "label": "Export with sensitive details",
+      "description": "Export the participant list with the four sensitive fields. Also needs See sensitive details."
+    },
+    "export_attendance": {
+      "label": "Export attendance",
+      "description": "Export attendance records."
+    },
+    "export_events": {
+      "label": "Export events",
+      "description": "Export events and sign-ups."
+    },
+    "audit_view": {
+      "label": "Audit log",
+      "description": "See who saw, changed or exported what, and when."
+    },
+    "settings_organization": {
+      "label": "Organization details",
+      "description": "Edit the name, contact details and languages."
+    },
+    "settings_branding": {
+      "label": "Branding",
+      "description": "Edit the logo and colours."
+    },
+    "settings_documents": {
+      "label": "Internal documents",
+      "description": "Manage internal documents such as insurance forms and inventories."
+    },
+    "team_manage": {
+      "label": "Team management",
+      "description": "Add and remove team members, edit presets and toggles, and reset a lost second factor."
+    }
+  }
 }
