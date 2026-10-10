@@ -2,7 +2,6 @@ import { describe, expect, test } from 'bun:test';
 import { SUPPORTED_LANGUAGES } from '@ramassa/shared/i18n';
 import {
   PARTICIPANT_FIXTURES,
-  SEED_ACCESS_CODE,
   SEED_ACCOUNT_PASSWORD,
   STAFF_FIXTURES,
 } from '@ramassa/shared/testing';
@@ -54,24 +53,9 @@ describe('roles', () => {
 });
 
 describe('development credentials', () => {
-  test('the admin-created participant signs in with the seeded access code', () => {
-    const fixture = PARTICIPANT_FIXTURES.find((participant) => participant.accessCode);
-    const account = DEV_ALL_PLAYER_ACCOUNTS.find(
-      (participant) => participant.email === fixture?.email,
-    );
-
-    expect(fixture?.accessCode).toBe(SEED_ACCESS_CODE);
-    expect(account?.password).toBe(SEED_ACCESS_CODE);
-  });
-
-  test('all remaining accounts keep the shared development password', () => {
-    const accessCodeEmail = PARTICIPANT_FIXTURES.find(
-      (participant) => participant.accessCode,
-    )?.email;
-    const passwordAccounts = allAccounts.filter((account) => account.email !== accessCodeEmail);
-
-    expect(passwordAccounts.length).toBeGreaterThan(0);
-    for (const account of passwordAccounts) {
+  test('every development account signs in with the shared development password', () => {
+    expect(allAccounts.length).toBeGreaterThan(0);
+    for (const account of allAccounts) {
       expect(account.password).toBe(SEED_ACCOUNT_PASSWORD);
     }
   });

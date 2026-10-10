@@ -3,6 +3,8 @@
 **Status:** Accepted
 **Date:** 2026-08-01 (decided by Fabián)
 
+> [!note] Amended 2026-10-10 (RAPP-224, RAPP-227): `create_participant_account` and `reset_participant_password` are dropped. `create_participant_invite` now creates the player's auth account in Postgres, following this ADR, and generated `ramassa.invalid` addresses are no longer issued.
+
 ## Context
 
 ADR-005 established the fallback auth path: for a participant with no email,

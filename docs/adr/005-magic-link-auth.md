@@ -3,6 +3,8 @@
 **Status:** Accepted
 **Date:** 2026-04-09
 
+> [!note] Amended 2026-10-10 (RAPP-224, RAPP-227): the admin-created account fallback is removed. Every player joins by invitation with her own email, and the invitation creates her account. Sign-in is an emailed six-digit code since RAPP-67.
+
 ## Context
 
 Players have varying digital literacy. Some may not have email addresses. The project owner explicitly wants zero messaging costs for auth.

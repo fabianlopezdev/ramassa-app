@@ -1371,6 +1371,7 @@ export type Database = {
           invited_by: string;
           org_id: string;
           reference_entity: string | null;
+          referral_id: string | null;
         };
         Insert: {
           accepted_at?: string | null;
@@ -1382,6 +1383,7 @@ export type Database = {
           invited_by: string;
           org_id: string;
           reference_entity?: string | null;
+          referral_id?: string | null;
         };
         Update: {
           accepted_at?: string | null;
@@ -1393,6 +1395,7 @@ export type Database = {
           invited_by?: string;
           org_id?: string;
           reference_entity?: string | null;
+          referral_id?: string | null;
         };
         Relationships: [
           {
@@ -1415,6 +1418,13 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'organizations';
             referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'invites_referral_tenant_fkey';
+            columns: ['org_id', 'referral_id'];
+            isOneToOne: false;
+            referencedRelation: 'entity_referrals';
+            referencedColumns: ['org_id', 'id'];
           },
         ];
       };
@@ -3291,7 +3301,6 @@ export type Database = {
         Args: { participant_id: string };
         Returns: undefined;
       };
-      ascii_local_part: { Args: { source: string }; Returns: string };
       assert_within_hourly_limit: {
         Args: { limited_action: string; maximum_per_hour: number };
         Returns: undefined;
@@ -3459,14 +3468,6 @@ export type Database = {
           p_topic_detail: string;
         };
         Returns: string;
-      };
-      create_participant_account: {
-        Args: { payload: Json };
-        Returns: {
-          email: string;
-          password: string;
-          profile_id: string;
-        }[];
       };
       create_participant_invite: {
         Args: { payload: Json };
@@ -3687,16 +3688,16 @@ export type Database = {
           updated_at: string;
         }[];
       };
-      get_public_organization_logo: {
-        Args: { organization_slug: string };
-        Returns: string;
-      };
       get_public_organization_branding: {
         Args: { organization_slug: string };
         Returns: {
           primary_color: string;
           secondary_color: string;
         }[];
+      };
+      get_public_organization_logo: {
+        Args: { organization_slug: string };
+        Returns: string;
       };
       get_service_review_queue: {
         Args: {
@@ -4244,10 +4245,6 @@ export type Database = {
         Args: { p_category_ids: string[] };
         Returns: undefined;
       };
-      reset_participant_password: {
-        Args: { participant_id: string };
-        Returns: string;
-      };
       resubmit_entity_service: {
         Args: { p_service_id: string };
         Returns: undefined;
@@ -4402,7 +4399,6 @@ export type Database = {
         Args: { p_status: string; p_submission_id: string };
         Returns: undefined;
       };
-      unambiguous_token: { Args: { length: number }; Returns: string };
       update_organization_settings: {
         Args: {
           p_available_languages: string[];

@@ -61,7 +61,7 @@ test.afterAll(() => {
   queryDatabase(`
     begin;
     delete from public.audit_log where target_id in (${ids}) or actor_id in (${ids});
-    delete from public.invites where accepted_by in (${ids});
+    delete from public.invites where accepted_by in (${ids}) or email like '%.${RUN_TAG}@example.test';
     -- Cascades to profiles, notes, tokens, consents and requests, exactly as the
     -- erasure under test does.
     delete from auth.users where id in (${ids});
@@ -70,38 +70,30 @@ test.afterAll(() => {
 });
 
 /**
- * A participant of this run's own, made through the real screen, with the rows
- * an erasure has to reach: a staff note, a device token, a consent record and an
- * erasure request she raised herself.
+ * A participant of this run's own, invited through the real screen, with the
+ * rows an erasure has to reach: a staff note, a device token, a consent record
+ * and an erasure request she raised herself.
  *
- * The account comes from the product; the four attached rows are inserted
- * directly, because the features that create them are later phases and a spec
- * that waited for them would assert nothing today about the tables the registry
- * already covers.
+ * The invitation (and her account) comes from the product. Her profile stands
+ * in for the onboarding wizard she would complete, and a test-only password
+ * lets the media spec act as her through the API. The four attached rows are
+ * inserted directly, because the features that create them are later phases.
  */
 async function createParticipantWithData(
   page: Page,
   firstName: string,
 ): Promise<{ readonly id: string; readonly email: string; readonly password: string }> {
+  const email = `rgpd.${firstName.toLowerCase()}.${RUN_TAG}@example.test`;
+  const password = `rgpd-${RUN_TAG}-${firstName}`;
   await page.goto('/participants/new');
+  await page.locator('#new-participant-email').fill(email);
   await page
-    .getByRole('button', { name: /no, (no té correu|she has no email|no tiene correo)/i })
+    .getByRole('button', { name: /crea la invitació|create the invitation|crea la invitación/i })
     .click();
-  await page.locator('#new-participant-first-name').fill(firstName);
-  await page.locator('#new-participant-last-name').fill(`Rgpd ${RUN_TAG}`);
-  await page
-    .getByRole('button', { name: /crea el compte|create the account|crea la cuenta/i })
-    .click();
+  await expect(
+    page.getByRole('heading', { name: /invitació creada|invitation created|invitación creada/i }),
+  ).toBeVisible({ timeout: 15_000 });
 
-  const panel = page
-    .locator('section')
-    .filter({
-      has: page.getByRole('heading', { name: /compte creat|account created|cuenta creada/i }),
-    })
-    .last();
-  await expect(panel).toBeVisible({ timeout: 15_000 });
-  const email = (await panel.locator('code').nth(0).innerText()).trim();
-  const password = (await panel.locator('code').nth(1).innerText()).trim();
   const id = queryDatabase(`select id from auth.users where email = '${email}'`);
   expect(id).not.toBe('');
   // Recorded BEFORE the attached rows exist, so a spec that fails halfway still
@@ -109,6 +101,12 @@ async function createParticipantWithData(
   mintedParticipantIds.push(id);
 
   queryDatabase(`
+    insert into public.profiles (id, org_id, role, first_name, last_name, terms_accepted_at)
+      values ('${id}', '5eed0000-0000-4000-8000-000000000000', 'player', '${firstName}',
+              'Rgpd ${RUN_TAG}', now());
+    update auth.users
+       set encrypted_password = extensions.crypt('${password}', extensions.gen_salt('bf'))
+     where id = '${id}';
     insert into public.participant_notes (profile_id, author_id, body)
       values ('${id}', '5eed0000-0000-4000-8000-000000000002', 'Nota de prova ${RUN_TAG}');
     insert into public.push_tokens (user_id, token, platform, device_id)

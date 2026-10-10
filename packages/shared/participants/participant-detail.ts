@@ -21,13 +21,6 @@ export interface ParticipantDetailRow extends ProfileRow {
   readonly is_active: boolean;
   readonly is_forum_banned: boolean;
   /**
-   * How this account signs in (RAPP-25). The reset-password control renders
-   * only for 'admin_created': those are the accounts that HAVE a password,
-   * and the RPC refuses the others anyway; the column keeps the button and
-   * the refusal in agreement.
-   */
-  readonly auth_method: 'magic_link' | 'admin_created';
-  /**
    * When the person was removed from this row while the row was kept for
    * reporting (RAPP-26). Null for an ordinary record. The screen reads this
    * rather than inferring it from a blank name, so "anonymized" is a state the
