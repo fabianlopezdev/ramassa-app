@@ -207,6 +207,15 @@ contains any personal data. If a report can contain names, it needs its own perm
 
 ### Migration
 
+> Done 2026-10-10 (RAPP-230). Measured first: 97 row policies on 46 tables and 81 functions
+> checked the fixed roles. Staff and Admin keep their access except for these decisions by Fabián:
+> today's staff keep `participants.view_sensitive` and `rgpd.erase` as an adjustment ("Staff,
+> adjusted") and new staff start without them; internal documents, the audit log and entity
+> invitations follow the web admin (admin only); permanent deletion needs `rgpd.erase` and
+> `team.manage`. Proof: the full pgTAP suite, a permission matrix test
+> (`supabase/tests/0047_permission_matrix_test.sql`), and a before/after table-visibility
+> comparison for every seed account, which differed only in those three admin-only tables.
+
 The current `staff` and `admin` roles become team members with the Staff and Admin presets. Every
 RLS policy that checks `current_app_role() in ('staff', 'admin')` moves to `has_permission`. This
 is the largest piece of phase 1, and the role matrix test turns into a permission matrix test.

@@ -53,7 +53,7 @@ select is(
 );
 select is(
   (select count(*)::int from public.team_member_permissions where profile_id = '5eed0000-0000-4000-8000-000000000002'),
-  30, 'a staff member holds the Staff preset'
+  32, 'a seeded staff member holds the Staff preset plus the RAPP-230 adjustment (view_sensitive, rgpd.erase)'
 );
 select is(
   (select count(*)::int from public.team_member_permissions t
@@ -67,11 +67,11 @@ set local role authenticated;
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated"}';
 select ok((select public.has_permission('attendance.mark')), 'staff hold attendance.mark');
 select ok(not (select public.has_permission('team.manage')), 'staff do not hold team.manage');
-select is((select count(*)::int from public.my_permissions()), 30, 'my_permissions lists her own 30');
+select is((select count(*)::int from public.my_permissions()), 32, 'my_permissions lists her own 32');
 select is((select count(*)::int from public.permission_presets), 0, 'without team.manage she cannot read presets');
 select is(
   (select count(*)::int from public.team_member_permissions),
-  30, 'she reads only her own toggles'
+  32, 'she reads only her own toggles'
 );
 select throws_ok(
   $$ select public.set_team_member_permissions('5eed0000-0000-4000-8000-000000000003', array['attendance.mark']) $$,
@@ -123,8 +123,8 @@ select is(
   (select jsonb_array_length(changes -> 'removed') from public.audit_log
     where action = 'team.permissions_update' and target_id = '5eed0000-0000-4000-8000-000000000003'
     order by created_at desc limit 1),
-  28,
-  'and the 28 toggles removed'
+  30,
+  'and the 30 toggles removed'
 );
 
 -- The admin gives that staff member team.manage, then the admin loses some toggles.

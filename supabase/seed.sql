@@ -2043,3 +2043,13 @@ values (
 on conflict (id) do nothing;
 
 commit;
+
+-- Seeded staff stand for today's staff, who keep the sensitive fields and RGPD
+-- erasure as an adjustment when team access moves to permissions (RAPP-230).
+-- A staff member created later gets the plain Staff preset.
+insert into public.team_member_permissions (org_id, profile_id, permission_code)
+select profile.org_id, profile.id, code
+from public.profiles as profile
+cross join unnest(array['participants.view_sensitive', 'rgpd.erase']) as code
+where profile.role = 'staff'
+on conflict do nothing;

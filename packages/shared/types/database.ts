@@ -3981,7 +3981,6 @@ export type Database = {
           profile_id: string;
         }[];
       };
-      is_admin: { Args: never; Returns: boolean };
       is_allowed_video_url: { Args: { video_url: string }; Returns: boolean };
       is_content_visible: {
         Args: {
@@ -4024,7 +4023,6 @@ export type Database = {
         Args: { metadata: Json; metadata_schema: Json };
         Returns: boolean;
       };
-      is_staff_or_admin: { Args: never; Returns: boolean };
       is_story_image_urls_valid: {
         Args: {
           expected_author_id: string;
@@ -4037,6 +4035,7 @@ export type Database = {
         Args: { new_status: string; old_status: string };
         Returns: boolean;
       };
+      is_team_member: { Args: never; Returns: boolean };
       list_collaborating_entities: {
         Args: never;
         Returns: {

@@ -53,7 +53,7 @@ where not exists (select 1 from vault.secrets where name = 'app_encryption_key')
 
 -- Schema and the registry ---------------------------------------------------------
 
-select has_function('public', 'is_admin', array[]::text[], 'the admin-only predicate exists');
+select has_function('public', 'has_permission', array['text'], 'the permission predicate exists');
 select has_function(
   'public', 'personal_data_disposition', array[]::text[],
   'the personal-data registry exists'
