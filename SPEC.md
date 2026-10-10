@@ -1580,3 +1580,10 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - Every player joins by invitation with her own email. A player without an email gets help creating one first. The admin-created account with an access code is removed: the admin no longer creates code accounts or resets codes, and the `create_participant_account` and `reset_participant_password` functions are dropped.
 - A player invitation now creates her empty auth account in Postgres at once (the pattern staff and entity invitations already use, ADR-022), because players request codes with `shouldCreateUser: false` and an invitation that only wrote a row left her refused ("Signups not allowed for otp"). Her profile is still written by the onboarding wizard, with her own consent.
 - An invitation opened from a partner entity's referral carries the referral; it is linked to her profile when the wizard creates it.
+
+## Staff and entity invitation email (2026-10-10, RAPP-225)
+
+- A staff or entity invitation sends an invitation email: who invited the person, for which organization (and entity, for a collaborator), a button to the login, and the six-digit code. It is in the organization's language when the staff side offers it (CA, ES, EN), otherwise Catalan.
+- It is the same auth template as the sign-in code email. The invitation writes `invitation` into the account's user metadata, the template and subject show the invitation wording while that key exists, and her first sign-in removes it. No service-role key and no second mail sender (ADR-022).
+- The admin login has an "I already have a code" step (email and code together, no email sent). The invitation button opens it directly with `/login?code=1`, so the invitation's own code signs her in.
+- Production: the template and subject live in `supabase/config.toml` and `supabase/templates/magic_link.html`, and the button uses the auth Site URL, which must be the admin address.

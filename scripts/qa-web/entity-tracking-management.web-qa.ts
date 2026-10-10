@@ -1,12 +1,13 @@
 import { expect, test, type Page } from '@playwright/test';
 import {
+  acceptInvitationFromEmail,
   ENTITY_EMAIL,
   OTHER_ENTITY_EMAIL,
   queryDatabase,
   SEED_PASSWORD,
   signIn,
-  signInStaffWithEmailCode,
   signOut,
+  waitForHydration,
 } from './session';
 
 const ADMIN_EMAIL = 'laia.ferrer@example.test';
@@ -26,6 +27,7 @@ function sqlLiteral(value: string): string {
 async function passwordLoginIsDenied(page: Page, email: string): Promise<boolean> {
   await signOut(page);
   await page.goto('/login');
+  await waitForHydration(page);
   const usePassword = page.getByRole('button', { name: /contrasenya|password/i }).first();
   await expect(usePassword).toBeVisible();
   await usePassword.click();
@@ -33,10 +35,8 @@ async function passwordLoginIsDenied(page: Page, email: string): Promise<boolean
   await page.locator('input[type="email"]').fill(email);
   await page.locator('input[type="password"]').fill(CREATED_PASSWORD);
   await page.locator('button[type="submit"]').click();
-  const refusal = page.getByText(
-    /correu o contrasenya incorrectes|incorrect email or password|correo o contraseña incorrectos/i,
-  );
-  await expect(refusal).toBeVisible({ timeout: 20_000 });
+  // The refusal is identified by its error code, which stays the same when the copy changes.
+  await expect(page.getByRole('alert')).toContainText('AUTH-6', { timeout: 20_000 });
   return true;
 }
 
@@ -174,7 +174,11 @@ test.describe.serial('entity tracking, impact, events and administration', () =>
 
     const collaboratorContext = await browser.newContext({ locale: 'en-GB' });
     const collaboratorPage = await collaboratorContext.newPage();
-    await signInStaffWithEmailCode(collaboratorPage, COLLABORATOR_EMAIL);
+    // The invitation email says who invited her, for which organization and entity.
+    const invitation = await acceptInvitationFromEmail(collaboratorPage, COLLABORATOR_EMAIL);
+    expect(invitation.subject).toBe("T'han convidat a Ramassà");
+    expect(invitation.text).toContain(`Entitat: ${ENTITY_NAME}`);
+    expect(invitation.text).toContain('Laia Ferrer');
     await expect(collaboratorPage).toHaveURL(/\/portal(?:\/)?$/, { timeout: 30_000 });
     expect(
       queryDatabase(

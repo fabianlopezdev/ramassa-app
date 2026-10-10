@@ -83,7 +83,10 @@ The production Supabase project is **EU Frankfurt** (`eu-central-1`) on the Pro
 plan for RGPD data residency (ADR-011); its monthly cost is Ramassà-side per the
 sponsorship framing. Provision it in the Supabase dashboard, then `supabase link`
 it, create the `app_encryption_key` Vault secret, and `supabase db push` the
-migrations. (Not automated: it needs the account owner's login and billing.)
+migrations. Push the auth settings with `supabase config push` too: the sign-in
+and invitation email template and subject come from `supabase/config.toml`, and
+the invitation button uses the auth Site URL, which must be the admin address.
+(Not automated: it needs the account owner's login and billing.)
 
 ## Project Structure
 

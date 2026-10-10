@@ -5,8 +5,14 @@
   values mirror packages/shared/tokens (primary #0077B6, gold #FFD166, neutrals)
   and are the one place in the repo where inlined hex is expected, not a token.
   Supabase substitutes {{ .Token }} with the six-digit one-time code.
+
+  Invitations (RAPP-225): a staff or entity invitation writes
+  `invitation` into the account's user metadata ({{ .Data }}), and this one
+  template then shows the invitation wording in that language, with a button to
+  the login's "I already have a code" step. The key is removed at the first
+  sign-in, so later code emails are the ordinary sign-in email below.
 -->
-<html lang="ca">
+<html lang="{{ with .Data.invitation }}{{ .language }}{{ else }}ca{{ end }}">
   <body
     style="
       margin: 0;
@@ -44,6 +50,149 @@
             </tr>
             <tr>
               <td style="padding: 32px">
+                {{ with .Data.invitation }} {{ if eq .language "es" }}
+                <h1 style="margin: 0 0 16px; font-size: 20px; font-weight: 700; color: #0f172a">
+                  Te han invitado a Ramassà
+                </h1>
+                <p style="margin: 0 0 24px; font-size: 16px; line-height: 1.5; color: #334155">
+                  {{ if eq .kind "entity" }}{{ with .inviter_name }}{{ . }} te ha invitado{{ else
+                  }}Te han invitado{{ end }} a colaborar en el portal de Ramassà en nombre de tu
+                  entidad.<br />Organización: {{ .org_name }}<br />Entidad: {{ .entity_name }}{{
+                  else }}{{ with .inviter_name }}{{ . }} te ha invitado{{ else }}Te han invitado{{
+                  end }} al equipo, en el panel de Ramassà.<br />Organización: {{ .org_name }}{{ end
+                  }}
+                </p>
+                <p style="margin: 0 0 24px; font-size: 16px; line-height: 1.5; color: #334155">
+                  Abre Ramassà con este botón y escribe tu dirección y este código. No necesitas
+                  contraseña.
+                </p>
+                <p
+                  style="
+                    margin: 0 0 24px;
+                    color: #0077b6;
+                    font-size: 32px;
+                    font-weight: 700;
+                    letter-spacing: 8px;
+                    line-height: 1.25;
+                  "
+                >
+                  {{ $.Token }}
+                </p>
+                <p style="margin: 0 0 24px">
+                  <a
+                    href="{{ $.SiteURL }}/login?code=1"
+                    style="
+                      display: inline-block;
+                      background-color: #0077b6;
+                      color: #ffffff;
+                      font-size: 16px;
+                      font-weight: 700;
+                      text-decoration: none;
+                      padding: 12px 24px;
+                      border-radius: 10px;
+                    "
+                    >Abrir Ramassà</a
+                  >
+                </p>
+                <p style="margin: 0; font-size: 13px; line-height: 1.5; color: #94a3b8">
+                  El código caduca en una hora. Si caduca, pide uno nuevo en la misma página. Si no
+                  esperabas esta invitación, puedes ignorar este correo.
+                </p>
+                {{ else if eq .language "en" }}
+                <h1 style="margin: 0 0 16px; font-size: 20px; font-weight: 700; color: #0f172a">
+                  You are invited to Ramassà
+                </h1>
+                <p style="margin: 0 0 24px; font-size: 16px; line-height: 1.5; color: #334155">
+                  {{ if eq .kind "entity" }}{{ with .inviter_name }}{{ . }} invited you{{ else }}You
+                  are invited{{ end }} to work on the Ramassà portal for your entity.<br />Organisation:
+                  {{ .org_name }}<br />Partner entity: {{ .entity_name }}{{ else }}{{ with
+                  .inviter_name }}{{ . }} invited you{{ else }}You are invited{{ end }} to the team
+                  on the Ramassà dashboard.<br />Organisation: {{ .org_name }}{{ end }}
+                </p>
+                <p style="margin: 0 0 24px; font-size: 16px; line-height: 1.5; color: #334155">
+                  Open Ramassà with this button, then enter your email address and this code. You do
+                  not need a password.
+                </p>
+                <p
+                  style="
+                    margin: 0 0 24px;
+                    color: #0077b6;
+                    font-size: 32px;
+                    font-weight: 700;
+                    letter-spacing: 8px;
+                    line-height: 1.25;
+                  "
+                >
+                  {{ $.Token }}
+                </p>
+                <p style="margin: 0 0 24px">
+                  <a
+                    href="{{ $.SiteURL }}/login?code=1"
+                    style="
+                      display: inline-block;
+                      background-color: #0077b6;
+                      color: #ffffff;
+                      font-size: 16px;
+                      font-weight: 700;
+                      text-decoration: none;
+                      padding: 12px 24px;
+                      border-radius: 10px;
+                    "
+                    >Open Ramassà</a
+                  >
+                </p>
+                <p style="margin: 0; font-size: 13px; line-height: 1.5; color: #94a3b8">
+                  The code expires in one hour. If it expires, ask for a new one on the same page.
+                  If you did not expect this invitation, you can ignore this email.
+                </p>
+                {{ else }}
+                <h1 style="margin: 0 0 16px; font-size: 20px; font-weight: 700; color: #0f172a">
+                  T'han convidat a Ramassà
+                </h1>
+                <p style="margin: 0 0 24px; font-size: 16px; line-height: 1.5; color: #334155">
+                  {{ if eq .kind "entity" }}{{ with .inviter_name }}{{ . }} t'ha convidat{{ else
+                  }}T'han convidat{{ end }} a col·laborar al portal de Ramassà en nom de la teva
+                  entitat.<br />Organització: {{ .org_name }}<br />Entitat: {{ .entity_name }}{{
+                  else }}{{ with .inviter_name }}{{ . }} t'ha convidat{{ else }}T'han convidat{{ end
+                  }} a l'equip, al tauler de Ramassà.<br />Organització: {{ .org_name }}{{ end }}
+                </p>
+                <p style="margin: 0 0 24px; font-size: 16px; line-height: 1.5; color: #334155">
+                  Obre Ramassà amb aquest botó i escriu la teva adreça i aquest codi. No cal cap
+                  contrasenya.
+                </p>
+                <p
+                  style="
+                    margin: 0 0 24px;
+                    color: #0077b6;
+                    font-size: 32px;
+                    font-weight: 700;
+                    letter-spacing: 8px;
+                    line-height: 1.25;
+                  "
+                >
+                  {{ $.Token }}
+                </p>
+                <p style="margin: 0 0 24px">
+                  <a
+                    href="{{ $.SiteURL }}/login?code=1"
+                    style="
+                      display: inline-block;
+                      background-color: #0077b6;
+                      color: #ffffff;
+                      font-size: 16px;
+                      font-weight: 700;
+                      text-decoration: none;
+                      padding: 12px 24px;
+                      border-radius: 10px;
+                    "
+                    >Obre Ramassà</a
+                  >
+                </p>
+                <p style="margin: 0; font-size: 13px; line-height: 1.5; color: #94a3b8">
+                  El codi caduca en una hora. Si caduca, demana'n un de nou a la mateixa pàgina. Si
+                  no esperaves aquesta invitació, pots ignorar aquest correu.
+                </p>
+                {{ end }} {{ else }}
                 <h1 style="margin: 0 0 16px; font-size: 20px; font-weight: 700; color: #0f172a">
                   Inicia la sessió
                 </h1>
@@ -67,6 +216,7 @@
                   Aquest codi caduca en una hora i només es pot fer servir una vegada. Si no has
                   demanat iniciar la sessió, pots ignorar aquest correu.
                 </p>
+                {{ end }}
               </td>
             </tr>
             <tr>
