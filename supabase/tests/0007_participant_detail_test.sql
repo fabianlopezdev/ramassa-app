@@ -73,6 +73,12 @@ select has_function(
 
 -- Reading a participant, as staff ------------------------------------------------
 
+-- Reading the audit log needs audit.view since RAPP-230 (Admin only by default). This
+-- staff member is given it so the assertions can see the rows her own actions wrote.
+insert into public.team_member_permissions (org_id, profile_id, permission_code)
+select org_id, id, 'audit.view' from public.profiles where id = '5eed0000-0000-4000-8000-000000000002'
+on conflict do nothing;
+
 set local role authenticated;
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated"}';
 

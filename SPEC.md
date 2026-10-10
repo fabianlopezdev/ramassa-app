@@ -1599,3 +1599,11 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 
 - A client cannot insert a profile directly, and cannot change `id`, `org_id`, `role`, `is_active`, `is_forum_banned`, `anonymized_at`, `terms_accepted_at`, `media_consent_at`, `auth_method`, `collaborating_entity_id` or `created_at` with a direct write. Each changes only through its own database action (onboarding, the profile and participant edits, activation, the forum ban, role changes, erasure). Before this, a staff member could make herself admin with one API call.
 - Enforced by the `profiles_guard_privileged_columns` trigger. The five actions that write profiles with the caller's rights mark their one write as trusted for that statement only.
+
+## Team access rules read permissions (2026-10-10, RAPP-230, part of RAPP-211)
+
+- Every row policy and function that checked `staff`/`admin` now checks the permission that names its job (`has_permission`, or `is_team_member()` for organization reference data every job needs). `is_staff_or_admin()` and `is_admin()` are dropped.
+- Staff and admins keep their access, with the exceptions decided on 2026-10-10: today's staff keep the sensitive fields and RGPD erasure as an adjustment while new staff start without them; internal documents, the audit log and entity invitations are admin only, as the web admin always showed them; permanent deletion needs `rgpd.erase` and `team.manage`.
+- New separations: publishing, scheduling and unpublishing need the "publish" permission of the content type; approving or rejecting an entity's service needs `services.review`; organization details need `settings.organization` and logo and colours `settings.branding`; exports need the dataset's own permission (a full participant export also needs `participants.view_sensitive`).
+- `get_participant_profile` returns Personal fields only with `participants.view_personal` and decrypts Sensitive fields only with `participants.view_sensitive`; `update_participant_profile` keeps the stored Sensitive values for an editor without it. Direct reads of `profiles` columns are still row-level only (RAPP-240).
+- Alerts and assignments go to the holders of the job's permission (forum flags, referral updates, conversations, mentoring).

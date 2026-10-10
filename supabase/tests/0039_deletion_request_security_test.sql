@@ -37,6 +37,12 @@ insert into public.profiles (id, org_id, role, first_name, last_name) values
   ('67000000-0000-4000-8000-000000000012', '67000000-0000-4000-8000-000000000001', 'staff', 'Test', 'Staff'),
   ('67000000-0000-4000-8000-000000000013', '67000000-0000-4000-8000-000000000002', 'staff', 'Other', 'Staff');
 
+-- These staff members handle RGPD requests. Since RAPP-230 that needs rgpd.erase, which
+-- the plain Staff preset of a new staff member does not include.
+insert into public.team_member_permissions (org_id, profile_id, permission_code)
+select org_id, id, 'rgpd.erase' from public.profiles
+where id in ('67000000-0000-4000-8000-000000000012', '67000000-0000-4000-8000-000000000013');
+
 insert into public.deletion_requests (id, profile_id, reason)
 values (
   '67000000-0000-4000-8000-000000000021',
