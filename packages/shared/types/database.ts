@@ -1991,6 +1991,115 @@ export type Database = {
           },
         ];
       };
+      permission_preset_defaults: {
+        Row: {
+          builtin_key: string;
+          permission_code: string;
+        };
+        Insert: {
+          builtin_key: string;
+          permission_code: string;
+        };
+        Update: {
+          builtin_key?: string;
+          permission_code?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'permission_preset_defaults_permission_code_fkey';
+            columns: ['permission_code'];
+            isOneToOne: false;
+            referencedRelation: 'permissions';
+            referencedColumns: ['code'];
+          },
+        ];
+      };
+      permission_preset_permissions: {
+        Row: {
+          org_id: string;
+          permission_code: string;
+          preset_id: string;
+        };
+        Insert: {
+          org_id: string;
+          permission_code: string;
+          preset_id: string;
+        };
+        Update: {
+          org_id?: string;
+          permission_code?: string;
+          preset_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'permission_preset_permissions_permission_code_fkey';
+            columns: ['permission_code'];
+            isOneToOne: false;
+            referencedRelation: 'permissions';
+            referencedColumns: ['code'];
+          },
+          {
+            foreignKeyName: 'permission_preset_permissions_preset_fkey';
+            columns: ['org_id', 'preset_id'];
+            isOneToOne: false;
+            referencedRelation: 'permission_presets';
+            referencedColumns: ['org_id', 'id'];
+          },
+        ];
+      };
+      permission_presets: {
+        Row: {
+          builtin_key: string | null;
+          created_at: string;
+          id: string;
+          name: string | null;
+          org_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          builtin_key?: string | null;
+          created_at?: string;
+          id?: string;
+          name?: string | null;
+          org_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          builtin_key?: string | null;
+          created_at?: string;
+          id?: string;
+          name?: string | null;
+          org_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'permission_presets_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      permissions: {
+        Row: {
+          area: string;
+          code: string;
+          sort_order: number;
+        };
+        Insert: {
+          area: string;
+          code: string;
+          sort_order: number;
+        };
+        Update: {
+          area?: string;
+          code?: string;
+          sort_order?: number;
+        };
+        Relationships: [];
+      };
       profiles: {
         Row: {
           address: string | null;
@@ -3090,6 +3199,112 @@ export type Database = {
           },
         ];
       };
+      team_member_access: {
+        Row: {
+          org_id: string;
+          preset_id: string | null;
+          profile_id: string;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          org_id: string;
+          preset_id?: string | null;
+          profile_id: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          org_id?: string;
+          preset_id?: string | null;
+          profile_id?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'team_member_access_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'team_member_access_preset_fkey';
+            columns: ['org_id', 'preset_id'];
+            isOneToOne: false;
+            referencedRelation: 'permission_presets';
+            referencedColumns: ['org_id', 'id'];
+          },
+          {
+            foreignKeyName: 'team_member_access_profile_id_fkey';
+            columns: ['profile_id'];
+            isOneToOne: true;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'team_member_access_updated_by_fkey';
+            columns: ['updated_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      team_member_permissions: {
+        Row: {
+          granted_at: string;
+          granted_by: string | null;
+          org_id: string;
+          permission_code: string;
+          profile_id: string;
+        };
+        Insert: {
+          granted_at?: string;
+          granted_by?: string | null;
+          org_id: string;
+          permission_code: string;
+          profile_id: string;
+        };
+        Update: {
+          granted_at?: string;
+          granted_by?: string | null;
+          org_id?: string;
+          permission_code?: string;
+          profile_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'team_member_permissions_granted_by_fkey';
+            columns: ['granted_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'team_member_permissions_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'team_member_permissions_permission_code_fkey';
+            columns: ['permission_code'];
+            isOneToOne: false;
+            referencedRelation: 'permissions';
+            referencedColumns: ['code'];
+          },
+          {
+            foreignKeyName: 'team_member_permissions_profile_id_fkey';
+            columns: ['profile_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       terms_acceptances: {
         Row: {
           accepted_at: string;
@@ -3301,6 +3516,10 @@ export type Database = {
         Args: { participant_id: string };
         Returns: undefined;
       };
+      apply_permission_preset: {
+        Args: { p_preset_id: string; p_profile_ids: string[] };
+        Returns: number;
+      };
       assert_within_hourly_limit: {
         Args: { limited_action: string; maximum_per_hour: number };
         Returns: undefined;
@@ -3508,6 +3727,10 @@ export type Database = {
       delete_own_forum_post: { Args: { p_post_id: string }; Returns: undefined };
       delete_participant_permanently: {
         Args: { participant_id: string };
+        Returns: undefined;
+      };
+      delete_permission_preset: {
+        Args: { p_preset_id: string };
         Returns: undefined;
       };
       edit_own_forum_post: {
@@ -3729,6 +3952,7 @@ export type Database = {
         Args: { attended_event_id: string };
         Returns: boolean;
       };
+      has_permission: { Args: { p_code: string }; Returns: boolean };
       immutable_unaccent: { Args: { value: string }; Returns: string };
       invite_entity_collaborator: {
         Args: {
@@ -4160,6 +4384,7 @@ export type Database = {
           reference_entity: string;
         }[];
       };
+      my_permissions: { Args: never; Returns: string[] };
       participant_activity: {
         Args: { participant_id: string };
         Returns: {
@@ -4245,6 +4470,10 @@ export type Database = {
         Args: { p_category_ids: string[] };
         Returns: undefined;
       };
+      restore_permission_preset_default: {
+        Args: { p_preset_id: string };
+        Returns: undefined;
+      };
       resubmit_entity_service: {
         Args: { p_service_id: string };
         Returns: undefined;
@@ -4282,6 +4511,14 @@ export type Database = {
           p_id: string;
           p_name: string;
           p_title: Json;
+        };
+        Returns: string;
+      };
+      save_permission_preset: {
+        Args: {
+          p_name: string;
+          p_permission_codes: string[];
+          p_preset_id: string;
         };
         Returns: string;
       };
@@ -4385,6 +4622,14 @@ export type Database = {
       };
       set_staff_member_role: {
         Args: { p_profile_id: string; p_role: string };
+        Returns: undefined;
+      };
+      set_team_member_permissions: {
+        Args: {
+          p_permission_codes: string[];
+          p_preset_id?: string;
+          p_profile_id: string;
+        };
         Returns: undefined;
       };
       transition_deletion_request: {

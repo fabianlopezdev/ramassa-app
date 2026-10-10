@@ -1587,3 +1587,10 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - It is the same auth template as the sign-in code email. The invitation writes `invitation` into the account's user metadata, the template and subject show the invitation wording while that key exists, and her first sign-in removes it. No service-role key and no second mail sender (ADR-022).
 - The admin login has an "I already have a code" step (email and code together, no email sent). The invitation button opens it directly with `/login?code=1`, so the invitation's own code signs her in.
 - Production: the template and subject live in `supabase/config.toml` and `supabase/templates/magic_link.html`, and the button uses the auth Site URL, which must be the admin address.
+
+## Team permissions (2026-10-10, RAPP-229, part of RAPP-211)
+
+- Team access is moving from the two fixed roles (`staff`, `admin`) to 42 explicit permissions, one toggle each, with presets. The catalog is `packages/shared/permissions/catalog.ts` and `public.permissions`, kept equal by a parity test.
+- Every organization has three built-in presets (Coach, Staff, Admin), editable, with "Restore default", and can create its own. Toggles are per person; `team_member_access.preset_id` records the preset last applied.
+- `has_permission(code)` is the one helper access rules will call. Safety rules: `team.manage` is required to change access, nobody changes a toggle they do not hold, the organization keeps at least one `team.manage` holder, built-in presets cannot be deleted, and every change is audited.
+- This step changes nobody's access: no access rule reads permissions yet, and a person's toggles follow their role (staff get Staff, admins get Admin). RAPP-230 moves every rule to `has_permission`.

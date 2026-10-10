@@ -64,6 +64,18 @@ if an organization needs it.
 
 ### Permission catalog
 
+> Finalized 2026-10-10 (RAPP-229). The catalog in code is `packages/shared/permissions/catalog.ts`,
+> and in the database `public.permissions` (migration `20261010170000_permission_catalog.sql`), kept
+> equal by `tests/permission-catalog-parity.test.ts`. Two changes from the tables below: (a)
+> `accounts.create` is dropped, because RAPP-224 removed accounts for players with no email and every
+> player now joins by invitation (`participants.invite`); (b) material is four toggles,
+> `equipment.handover`, `equipment.receive`, `equipment.count` and `equipment.items` (RAPP-170). The
+> catalog has **42** permissions, so the numbers below are the original numbering. The preset defaults
+> keep their meaning: Coach is `participants.view`, `equipment.handover`, `attendance.mark`,
+> `attendance.reports`, `messages.inbox`; Staff is the participant Basic and Personal views, notes,
+> invite and deactivate, every material, attendance, content and community permission,
+> `referrals.manage` and `impact.view` (30); Admin is all 42.
+
 Each permission is one toggle and names exactly what it opens. The list is defined in code and in
 the database, with a test that keeps both lists equal. The Team screen groups the toggles by area,
 with one switch to turn on a whole area.
