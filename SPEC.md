@@ -1594,3 +1594,8 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - Every organization has three built-in presets (Coach, Staff, Admin), editable, with "Restore default", and can create its own. Toggles are per person; `team_member_access.preset_id` records the preset last applied.
 - `has_permission(code)` is the one helper access rules will call. Safety rules: `team.manage` is required to change access, nobody changes a toggle they do not hold, the organization keeps at least one `team.manage` holder, built-in presets cannot be deleted, and every change is audited.
 - This step changes nobody's access: no access rule reads permissions yet, and a person's toggles follow their role (staff get Staff, admins get Admin). RAPP-230 moves every rule to `has_permission`.
+
+## Protected profile columns (2026-10-10, RAPP-239)
+
+- A client cannot insert a profile directly, and cannot change `id`, `org_id`, `role`, `is_active`, `is_forum_banned`, `anonymized_at`, `terms_accepted_at`, `media_consent_at`, `auth_method`, `collaborating_entity_id` or `created_at` with a direct write. Each changes only through its own database action (onboarding, the profile and participant edits, activation, the forum ban, role changes, erasure). Before this, a staff member could make herself admin with one API call.
+- Enforced by the `profiles_guard_privileged_columns` trigger. The five actions that write profiles with the caller's rights mark their one write as trusted for that statement only.
