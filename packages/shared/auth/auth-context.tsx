@@ -1,7 +1,7 @@
 /**
  * The shared auth state both apps mount at their root (RAPP-13, issue scope §4).
- * It owns exactly one thing: the current session and the role claim derived
- * from it. supabase-js already persists and refreshes the session in the
+ * It owns the current session, the role claim derived from it, and, for a
+ * team member, her permissions (RAPP-231), which menus and route guards read. supabase-js already persists and refreshes the session in the
  * injected storage (MMKV / localStorage), so this provider does not store
  * anything itself. It subscribes to `onAuthStateChange`, mirrors the session
  * into React state, and looks up the profile role whenever the session changes.
@@ -26,6 +26,7 @@ import {
   type ReactNode,
 } from 'react';
 import { AppError, type AppError as AppErrorType } from '../errors';
+import { fetchMyPermissions, type PermissionCode } from '../permissions';
 import type { AppRole } from '../schemas/auth';
 import type { Database } from '../types/database';
 import { fetchProfileSummary } from './auth-actions';
@@ -36,6 +37,12 @@ export interface AuthState {
   readonly session: Session | null;
   readonly user: User | null;
   readonly role: AppRole | null;
+  /**
+   * The signed-in team member's permissions (RAPP-231). Empty for players,
+   * entity contacts and signed-out visitors. A UX input only: the database
+   * checks every permission again.
+   */
+  readonly permissions: ReadonlySet<PermissionCode>;
   /** True until the first session (and, if present, its role) has resolved. */
   readonly isLoading: boolean;
   /**
@@ -47,11 +54,13 @@ export interface AuthState {
    * player into the wizard is worse than showing an error.
    */
   readonly needsOnboarding: boolean;
-  /** Re-reads the profile for the current session; the wizard calls it after `complete_onboarding` so the gate flips without a sign-out round trip. */
+  /** Re-reads the profile and permissions for the current session; the wizard calls it after `complete_onboarding` so the gate flips without a sign-out round trip, and the Team screen after changing the caller's own toggles. */
   readonly refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthState | null>(null);
+
+const NO_PERMISSIONS: ReadonlySet<PermissionCode> = new Set();
 
 export interface AuthProviderProps {
   readonly client: Client;
@@ -63,6 +72,7 @@ export interface AuthProviderProps {
 export function AuthProvider({ client, children, onError }: AuthProviderProps) {
   const [session, setSession] = useState<Session | null>(null);
   const [role, setRole] = useState<AppRole | null>(null);
+  const [permissions, setPermissions] = useState<ReadonlySet<PermissionCode>>(NO_PERMISSIONS);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -95,6 +105,7 @@ export function AuthProvider({ client, children, onError }: AuthProviderProps) {
       if (!nextSession) {
         if (isSubscribed && latestChangeRef.current === changeId) {
           setRole(null);
+          setPermissions(NO_PERMISSIONS);
           setNeedsOnboarding(false);
           setIsLoading(false);
         }
@@ -103,13 +114,17 @@ export function AuthProvider({ client, children, onError }: AuthProviderProps) {
 
       try {
         const summary = await fetchProfileSummary(client, nextSession.user.id);
+        const isTeamMember = summary?.role === 'staff' || summary?.role === 'admin';
+        const nextPermissions = isTeamMember ? await fetchMyPermissions(client) : NO_PERMISSIONS;
         if (isSubscribed && latestChangeRef.current === changeId) {
           setRole(summary?.role ?? null);
+          setPermissions(nextPermissions);
           setNeedsOnboarding(summary === null || summary.termsAcceptedAt === null);
         }
       } catch (error) {
         if (isSubscribed && latestChangeRef.current === changeId) {
           setRole(null);
+          setPermissions(NO_PERMISSIONS);
           setNeedsOnboarding(false);
         }
         onErrorRef.current?.(error as AppErrorType);
@@ -145,11 +160,12 @@ export function AuthProvider({ client, children, onError }: AuthProviderProps) {
       session,
       user: session?.user ?? null,
       role,
+      permissions,
       isLoading,
       needsOnboarding,
       refreshProfile,
     }),
-    [session, role, isLoading, needsOnboarding, refreshProfile],
+    [session, role, permissions, isLoading, needsOnboarding, refreshProfile],
   );
 
   return <AuthContext value={value}>{children}</AuthContext>;

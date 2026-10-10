@@ -2,7 +2,7 @@
   "title": "Configuración de la organización",
   "intro": "Gestiona la identidad visual, los idiomas, el equipo y los documentos internos.",
   "tabOrganization": "Organización",
-  "tabStaff": "Equipo",
+  "tabTeam": "Equipo",
   "tabDocuments": "Documentos",
   "tabEntities": "Entidades",
   "organizationName": "Nombre de la organización",
@@ -20,14 +20,9 @@
   "saved": "Configuración guardada.",
   "working": "Trabajando...",
   "actionError": "No se pudo completar la acción. Revisa los datos e inténtalo de nuevo.",
-  "staffTitle": "Equipo de la organización",
-  "staffIntro": "Invita miembros, cambia roles y retira el acceso. Siempre debe haber al menos una persona administradora.",
   "firstName": "Nombre",
   "lastName": "Apellidos",
   "email": "Correo electrónico",
-  "role": "Rol",
-  "roleStaff": "Personal",
-  "roleAdmin": "Administración",
   "statusActive": "Activo",
   "statusInactive": "Sin acceso",
   "invite": "Enviar invitación",
@@ -44,5 +39,240 @@
   "documentUploaded": "Documento subido.",
   "documentsEmpty": "No hay documentos que coincidan con la búsqueda.",
   "download": "Descargar",
-  "fundingNotice": "El reconocimiento de la financiación de la Generalitat es obligatorio y no se puede eliminar desde esta configuración."
+  "fundingNotice": "El reconocimiento de la financiación de la Generalitat es obligatorio y no se puede eliminar desde esta configuración.",
+  "team": {
+    "title": "Equipo",
+    "intro": "Invita a personas, elige qué puede hacer cada una y retira el acceso. La organización siempre mantiene como mínimo a una persona con Gestión del equipo.",
+    "presetLabel": "Perfil",
+    "accessColumn": "Acceso",
+    "custom": "Personalizado",
+    "adjusted": "{{preset}}, ajustado",
+    "editAccess": "Editar el acceso",
+    "editAccessFor": "Editar el acceso de {{name}}",
+    "removeFor": "Retirar el acceso de {{name}}",
+    "presetsTitle": "Perfiles",
+    "presetsIntro": "Un perfil configura a una persona rápidamente. Cambiar un perfil no cambia a nadie hasta que decides aplicarlo.",
+    "newPreset": "Perfil nuevo",
+    "builtIn": "Predefinido",
+    "presetSummary_one": "{{count}} permiso · lo usan {{people}}",
+    "presetSummary_other": "{{count}} permisos · lo usan {{people}}",
+    "editPreset": "Editar el perfil",
+    "editPresetFor": "Editar el perfil {{name}}",
+    "restoreDefault": "Restaurar el predeterminado",
+    "deletePreset": "Eliminar",
+    "deletePresetFor": "Eliminar el perfil {{name}}",
+    "presetRestored": "Perfil restaurado al predeterminado.",
+    "presetDeleted": "Perfil eliminado.",
+    "accessSaved": "Acceso guardado.",
+    "presetSaved": "Perfil guardado.",
+    "presetApplied_one": "Aplicado a {{count}} persona.",
+    "presetApplied_other": "Aplicado a {{count}} personas.",
+    "removed": "Acceso retirado.",
+    "errorLastManager": "Como mínimo una persona activa debe mantener Gestión del equipo. Dásela primero a otra persona.",
+    "errorNotHeld": "Solo puedes cambiar los permisos que tienes tú.",
+    "errorBuiltIn": "Un perfil predefinido no se puede eliminar. En su lugar, puedes restaurar su predeterminado.",
+    "errorPresetName": "Ponle un nombre al perfil.",
+    "editAccessTitle": "Acceso de {{name}}",
+    "editAccessIntro": "Empieza por un perfil y después activa o desactiva permisos concretos.",
+    "usePreset": "Usar este perfil",
+    "editPresetTitle": "Editar {{name}}",
+    "editPresetIntro": "Elige los permisos que recibe una persona cuando se aplica este perfil.",
+    "presetName": "Nombre",
+    "applyTitle_one": "¿Aplicar los cambios a la {{count}} persona que usa {{preset}}?",
+    "applyTitle_other": "¿Aplicar los cambios a las {{count}} personas que usan {{preset}}?",
+    "applyIntro": "Su acceso solo cambia si lo aplicas aquí. El registro de auditoría guarda cada cambio.",
+    "apply": {
+      "everyone_one": "Sí, a esa persona",
+      "everyone_other": "Sí, a las {{count}}",
+      "some": "Elegir personas",
+      "nobody": "No, mantener su acceso como está"
+    },
+    "lockedHint": "Solo puedes cambiar los permisos que tienes tú. Los demás se muestran bloqueados.",
+    "area": {
+      "participants": "Participantes",
+      "material": "Material",
+      "attendance": "Asistencia",
+      "content": "Contenidos",
+      "community": "Comunidad y apoyo",
+      "entities": "Entidades colaboradoras",
+      "impact": "Impacto y datos",
+      "settings": "Configuración y equipo"
+    },
+    "preset": {
+      "coach": "Entrenador",
+      "staff": "Equipo técnico",
+      "admin": "Administración",
+      "custom": "Personalizado"
+    }
+  },
+  "permissions": {
+    "participants_view": {
+      "label": "Ver participantes",
+      "description": "La lista de participantes y los campos básicos: nombre, foto, idioma, entidad derivante, tallas, inscripciones y asistencia."
+    },
+    "participants_view_personal": {
+      "label": "Ver datos personales",
+      "description": "También fecha y lugar de nacimiento, nacionalidad, municipio, tipo de documento, personas a cargo y el contacto de la entidad derivante."
+    },
+    "participants_view_sensitive": {
+      "label": "Ver datos sensibles",
+      "description": "También los cuatro campos cifrados: dirección, código postal, teléfono y número de documento."
+    },
+    "participants_notes": {
+      "label": "Notas del equipo",
+      "description": "Leer y escribir las notas internas del equipo sobre una participante."
+    },
+    "participants_invite": {
+      "label": "Invitar participantes",
+      "description": "Enviar invitaciones a jugadoras nuevas."
+    },
+    "participants_deactivate": {
+      "label": "Desactivar cuentas",
+      "description": "Desactivar y reactivar la cuenta de una jugadora."
+    },
+    "rgpd_erase": {
+      "label": "Supresión RGPD",
+      "description": "Gestionar las solicitudes de supresión y borrar los datos de una jugadora. La supresión definitiva también necesita Gestión del equipo."
+    },
+    "equipment_handover": {
+      "label": "Entregar material",
+      "description": "Registrar una entrega a una jugadora y ver el historial de entregas."
+    },
+    "equipment_receive": {
+      "label": "Recibir material",
+      "description": "Registrar el material que llega al almacén."
+    },
+    "equipment_count": {
+      "label": "Contar existencias",
+      "description": "Corregir las cantidades de existencias después de un recuento."
+    },
+    "equipment_items": {
+      "label": "Gestionar la lista de artículos",
+      "description": "Añadir y editar los tipos de material y sus tallas."
+    },
+    "attendance_mark": {
+      "label": "Pasar lista",
+      "description": "Pasar lista de una sesión, con conexión o sin ella."
+    },
+    "attendance_reports": {
+      "label": "Informes de asistencia",
+      "description": "Ver la asistencia por actividad y por participante."
+    },
+    "announcements_edit": {
+      "label": "Editar avisos",
+      "description": "Crear y cambiar borradores y traducciones de avisos."
+    },
+    "announcements_publish": {
+      "label": "Publicar avisos",
+      "description": "Publicar, programar, despublicar y eliminar avisos."
+    },
+    "events_edit": {
+      "label": "Editar actividades",
+      "description": "Crear y cambiar actividades, entrenamientos, sesiones periódicas y categorías."
+    },
+    "events_publish": {
+      "label": "Publicar actividades",
+      "description": "Publicar, programar, despublicar y eliminar actividades."
+    },
+    "knowledge_edit": {
+      "label": "Editar la base de conocimiento",
+      "description": "Crear y cambiar artículos, y revisar las historias enviadas."
+    },
+    "knowledge_publish": {
+      "label": "Publicar la base de conocimiento",
+      "description": "Publicar, programar, despublicar y eliminar artículos e historias."
+    },
+    "services_edit": {
+      "label": "Editar servicios",
+      "description": "Crear y cambiar servicios del directorio y sus categorías."
+    },
+    "services_publish": {
+      "label": "Publicar servicios",
+      "description": "Publicar, programar, despublicar y eliminar servicios."
+    },
+    "services_review": {
+      "label": "Revisar servicios de entidades",
+      "description": "Aprobar o rechazar los servicios que envían las entidades colaboradoras."
+    },
+    "forum_moderate": {
+      "label": "Moderar el foro",
+      "description": "Gestionar denuncias, ocultar y restaurar mensajes e impedir publicar a una jugadora."
+    },
+    "gallery_moderate": {
+      "label": "Moderar la galería",
+      "description": "Aprobar, ocultar y retirar fotos de la galería."
+    },
+    "messages_inbox": {
+      "label": "Buzón del equipo",
+      "description": "Leer y responder las conversaciones entre el equipo y las jugadoras o las entidades."
+    },
+    "mentoring_manage": {
+      "label": "Mentoría",
+      "description": "Ver las solicitudes de mentoría, también el tema privado, y escribir las notas del equipo."
+    },
+    "feedback_view": {
+      "label": "Leer opiniones",
+      "description": "Leer las opiniones privadas que envían las jugadoras."
+    },
+    "surveys_manage": {
+      "label": "Gestionar encuestas",
+      "description": "Crear, publicar y cerrar encuestas y votaciones."
+    },
+    "surveys_results": {
+      "label": "Resultados de encuestas",
+      "description": "Ver las respuestas de las encuestas."
+    },
+    "notifications_send": {
+      "label": "Enviar notificaciones",
+      "description": "Enviar notificaciones a las jugadoras y gestionar las plantillas."
+    },
+    "referrals_manage": {
+      "label": "Derivaciones",
+      "description": "Ver y actualizar las derivaciones de las entidades, también el teléfono, las notas y las actualizaciones de la persona derivada."
+    },
+    "entities_manage": {
+      "label": "Entidades colaboradoras",
+      "description": "Añadir y editar entidades colaboradoras, sus colaboradoras y las invitaciones."
+    },
+    "impact_view": {
+      "label": "Panel de impacto",
+      "description": "Ver el panel de impacto y hacer informes de impacto para los financiadores."
+    },
+    "export_participants": {
+      "label": "Exportar participantes",
+      "description": "Exportar la lista de participantes sin los cuatro campos sensibles."
+    },
+    "export_participants_sensitive": {
+      "label": "Exportar con datos sensibles",
+      "description": "Exportar la lista de participantes con los cuatro campos sensibles. También necesita Ver datos sensibles."
+    },
+    "export_attendance": {
+      "label": "Exportar asistencia",
+      "description": "Exportar los registros de asistencia."
+    },
+    "export_events": {
+      "label": "Exportar actividades",
+      "description": "Exportar actividades e inscripciones."
+    },
+    "audit_view": {
+      "label": "Registro de auditoría",
+      "description": "Ver quién ha visto, cambiado o exportado qué, y cuándo."
+    },
+    "settings_organization": {
+      "label": "Datos de la organización",
+      "description": "Editar el nombre, los datos de contacto y los idiomas."
+    },
+    "settings_branding": {
+      "label": "Imagen",
+      "description": "Editar el logotipo y los colores."
+    },
+    "settings_documents": {
+      "label": "Documentos internos",
+      "description": "Gestionar documentos internos como formularios de seguro e inventarios."
+    },
+    "team_manage": {
+      "label": "Gestión del equipo",
+      "description": "Añadir y quitar personas del equipo, editar perfiles y permisos, y restablecer un segundo factor perdido."
+    }
+  }
 }

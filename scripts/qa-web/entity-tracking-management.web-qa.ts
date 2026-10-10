@@ -45,6 +45,10 @@ async function openCreatedEntity(page: Page): Promise<void> {
   await page
     .getByRole('combobox', { name: /select entity|selecciona una entitat|selecciona una entidad/i })
     .selectOption(createdEntityId);
+  // A person clicks once the chosen entity's figures are on screen; the URL
+  // carrying the entity is the signal that its reload has finished.
+  await expect(page).toHaveURL(new RegExp(`entity=${createdEntityId}`));
+  await page.waitForLoadState('networkidle');
 }
 
 test.describe.serial('entity tracking, impact, events and administration', () => {

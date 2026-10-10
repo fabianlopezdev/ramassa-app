@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/sidebar';
 import { mediaWorkerUrl } from '@/lib/media-worker';
 import { useUnreadMessageCount } from '@/lib/messaging';
-import { STAFF_NAV_ITEMS } from '@/lib/nav-items';
+import { holdsAnyPermission, STAFF_NAV_ITEMS } from '@/lib/nav-items';
 import { Link, useLocation } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@ramassa/shared/auth';
@@ -38,10 +38,10 @@ export function StaffSidebar() {
   const { t, i18n } = useTranslation(['nav', 'common']);
   const pathname = useLocation({ select: (location) => location.pathname });
   const unread = useUnreadMessageCount();
-  const { role, session } = useAuth();
+  const { permissions, session } = useAuth();
   const organization = useAdminBranding();
-  const visibleItems = STAFF_NAV_ITEMS.filter(
-    (item) => !('adminOnly' in item) || !item.adminOnly || role === 'admin',
+  const visibleItems = STAFF_NAV_ITEMS.filter((item) =>
+    holdsAnyPermission(permissions, 'anyPermission' in item ? item.anyPermission : undefined),
   );
 
   return (

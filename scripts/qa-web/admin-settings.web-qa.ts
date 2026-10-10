@@ -30,7 +30,7 @@ test.afterAll(() => {
     delete from public.staff_invitations where email = '${invitedEmail}';
     delete from public.audit_log
      where created_at >= '${startedAt}'::timestamptz
-       and action in ('organization.settings_update', 'staff.invite', 'staff.role_change', 'staff.remove', 'internal_document.create');
+       and action in ('organization.settings_update', 'staff.invite', 'staff.role_change', 'staff.remove', 'internal_document.create', 'team.permissions_update');
     delete from public.profiles
      where id = (select id from auth.users where email = '${invitedEmail}');
     delete from auth.users where email = '${invitedEmail}';
@@ -155,13 +155,18 @@ test.describe.serial('admin organization settings', () => {
       ),
     ).toBeGreaterThan(0);
 
-    await page.getByLabel(`Role ${invitedEmail}`).selectOption('admin');
+    // Promotion is a preset since RAPP-231: the Admin preset gives every permission.
+    await page.getByRole('button', { name: `Edit access for ${invitedEmail}` }).click();
+    const accessDialog = page.getByRole('dialog');
+    await accessDialog.getByRole('combobox', { name: 'Preset' }).selectOption({ label: 'Admin' });
+    await accessDialog.getByRole('button', { name: 'Use this preset' }).click();
+    await accessDialog.getByRole('button', { name: 'Save' }).click();
     await expect
       .poll(() =>
-        queryDatabase(`select p.role from public.profiles p join auth.users u on u.id = p.id
-          where u.email = '${invitedEmail}'`),
+        queryDatabase(`select count(*) from public.team_member_permissions grant_row
+          join auth.users u on u.id = grant_row.profile_id where u.email = '${invitedEmail}'`),
       )
-      .toBe('admin');
+      .toBe('42');
     const memberRow = page.getByRole('row').filter({ hasText: invitedEmail });
     await memberRow.getByRole('button', { name: 'Remove access' }).click();
     await page.getByRole('button', { name: 'Confirm' }).click();

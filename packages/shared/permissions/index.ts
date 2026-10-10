@@ -7,3 +7,19 @@ export {
   type PermissionArea,
   type PermissionCode,
 } from './catalog';
+export {
+  applyPermissionPreset,
+  deletePermissionPreset,
+  fetchMyPermissions,
+  fetchTeamAccess,
+  membersUsingPreset,
+  permissionsByArea,
+  restorePermissionPresetDefault,
+  sameCodes,
+  savePermissionPreset,
+  setTeamMemberPermissions,
+  summarizeAccess,
+  type AccessSummary,
+  type PermissionPreset,
+  type TeamMemberAccess,
+} from './team-access';

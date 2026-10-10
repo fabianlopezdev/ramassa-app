@@ -49,3 +49,30 @@ test('only entity users reach the entity area; staff/admin bounce to their dashb
   expect(resolveRouteAccess(entityArea('admin'))).toEqual({ kind: 'redirect', to: '/dashboard' });
   expect(resolveRouteAccess(entityArea('player'))).toEqual({ kind: 'no-access' });
 });
+
+test('an area that needs a permission opens only for a holder of one of them (RAPP-231)', () => {
+  const base = {
+    isLoading: false,
+    hasSession: true,
+    role: 'staff' as const,
+    allow: ['staff', 'admin'] as const,
+  };
+  expect(
+    resolveRouteAccess({
+      ...base,
+      anyPermission: ['settings.branding', 'team.manage'],
+      permissions: new Set(['settings.branding']),
+    }),
+  ).toEqual({ kind: 'allow' });
+  expect(
+    resolveRouteAccess({
+      ...base,
+      anyPermission: ['settings.branding', 'team.manage'],
+      permissions: new Set(['attendance.mark']),
+    }),
+  ).toEqual({ kind: 'redirect', to: '/dashboard' });
+  expect(resolveRouteAccess({ ...base, anyPermission: ['audit.view'] })).toEqual({
+    kind: 'redirect',
+    to: '/dashboard',
+  });
+});

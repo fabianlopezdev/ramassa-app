@@ -22,7 +22,7 @@ describe('WCAG AA source contract', () => {
   test('modal surfaces use the focus-managed dialog primitive', async () => {
     const paths = [
       'components/participants/destructive-confirm.tsx',
-      'components/settings/organization-settings-panel.tsx',
+      'components/team/team-access-panel.tsx',
     ] as const;
 
     for (const path of paths) {
