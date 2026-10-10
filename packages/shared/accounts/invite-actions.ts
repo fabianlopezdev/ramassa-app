@@ -24,13 +24,21 @@ export interface CreatedParticipantInvite {
   readonly expires_at: string;
 }
 
+/** Set on the thrown error when the address already belongs to an account. */
+export const INVITE_ALREADY_HAS_ACCOUNT = 'already_has_account';
+
 export async function createParticipantInvite(
   client: Client,
   payload: CreateParticipantInvitePayload,
 ): Promise<CreatedParticipantInvite> {
   const { data, error } = await client.rpc('create_participant_invite', { payload });
   if (error) {
-    throw new AppError('DB-1', { message: error.message });
+    // 23505: the RPC refuses an address that already has a profile, so staff
+    // can be told to find her in the list rather than see a generic failure.
+    throw new AppError('DB-1', {
+      message: error.message,
+      context: error.code === '23505' ? { reason: INVITE_ALREADY_HAS_ACCOUNT } : {},
+    });
   }
   const created = ((data ?? []) as CreatedParticipantInvite[])[0];
   if (created === undefined) {

@@ -1,11 +1,7 @@
 export {
-  createParticipantAccount,
-  resetParticipantPassword,
-  type CreatedParticipantAccount,
-} from './account-actions';
-export {
   createParticipantInvite,
   fetchInvites,
+  INVITE_ALREADY_HAS_ACCOUNT,
   fetchMyPendingInvite,
   type CreatedParticipantInvite,
   type PendingInvite,

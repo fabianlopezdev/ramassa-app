@@ -120,24 +120,15 @@ select is_empty(
   $$ select u.id from auth.users u
      join public.profiles p on p.id = u.id
      where u.encrypted_password is distinct from
-           extensions.crypt(
-             case
-               when u.email = 'bjnc@ramassa.invalid' then 'bjnc-k4m9-r2t7'
-               else 'ramassa-dev-password'
-             end,
-             u.encrypted_password
-           )
+           extensions.crypt('ramassa-dev-password', u.encrypted_password)
         or u.email_confirmed_at is null $$,
   'every seeded account has its expected development credential and a confirmed email'
 );
 
--- Two reserved domains, both unroutable. `@example.test` is the fixture
--- domain; `@ramassa.invalid` is what the product generates for a participant
--- with no inbox (RAPP-25), reserved by RFC 2606 so it can never acquire one.
+-- `@example.test` is the fixture domain (RFC 2606): it can never reach a real inbox.
 select is_empty(
-  $$ select id from auth.users
-     where email not like '%@example.test' and email not like '%@ramassa.invalid' $$,
-  'no seeded account uses an address outside the two reserved domains'
+  $$ select id from auth.users where email not like '%@example.test' $$,
+  'no seeded account uses an address outside the reserved fixture domain'
 );
 
 -- STANDING RULE (RAPP-18 scope 4) -------------------------------------------------

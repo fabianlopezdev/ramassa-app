@@ -103,15 +103,14 @@ describe('redactPii — resilience', () => {
 });
 
 /**
- * Credentials (RAPP-25). Staff create accounts for participants with no email;
- * the generated password is returned once and stored nowhere. The one way it
- * could outlive that moment is a failure carrying it into an error context, so
- * the key is redacted like any other secret.
+ * Credentials. A password or code is a secret wherever it appears; the one way
+ * it could reach a log is a failure carrying it into an error context, so the
+ * key is redacted like any other secret.
  */
-test('a generated account password never survives redaction', () => {
+test('a password never survives redaction', () => {
   const redacted = redactPii({
     profileId: '5eed0000-0000-4000-8000-000000000030',
-    email: 'blanca.k4m9@ramassa.invalid',
+    email: 'blanca.ribes@example.test',
     password: 'xkm4-9rtp-w2n7',
   }) as Record<string, unknown>;
 

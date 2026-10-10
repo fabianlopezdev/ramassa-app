@@ -1,12 +1,11 @@
 /**
- * Creating a participant's access (RAPP-25): the fork between "she has an
- * email" (record an invitation) and "she has none" (mint an internal account).
+ * Inviting a participant (RAPP-25, RAPP-224): every player joins with her own
+ * email, and the invitation creates her account.
  *
- * No loader: the screen asks before it fetches, and both arms write through
- * SECURITY DEFINER RPCs that verify the staff role server-side. `ssr: false`
- * for the reason every staff screen gives (the session lives in localStorage,
- * ADR-005), and more so here: this page's success state holds a one-time
- * password, which has no business existing during a server render.
+ * The loader only reads the optional referral the invitation answers. The
+ * write goes through a SECURITY DEFINER RPC that verifies the staff role
+ * server-side. `ssr: false` for the reason every staff screen gives (the
+ * session lives in localStorage, ADR-005).
  */
 
 import { NewParticipant } from '@/components/participants/new-participant';

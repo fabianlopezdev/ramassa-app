@@ -1572,3 +1572,11 @@ for every store account.
 The canvas preserves V1 as a historical snapshot and V2 as the agreed flow. Existing
 dashboard account provisioning and database records are outside this mobile navigation
 change (RAPP-140).
+
+## Invitations create the account (2026-10-10, RAPP-224 and RAPP-227)
+
+This supersedes the "Players (no email — rare)" admin-created row in the authentication table above.
+
+- Every player joins by invitation with her own email. A player without an email gets help creating one first. The admin-created account with an access code is removed: the admin no longer creates code accounts or resets codes, and the `create_participant_account` and `reset_participant_password` functions are dropped.
+- A player invitation now creates her empty auth account in Postgres at once (the pattern staff and entity invitations already use, ADR-022), because players request codes with `shouldCreateUser: false` and an invitation that only wrote a row left her refused ("Signups not allowed for otp"). Her profile is still written by the onboarding wizard, with her own consent.
+- An invitation opened from a partner entity's referral carries the referral; it is linked to her profile when the wizard creates it.

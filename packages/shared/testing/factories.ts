@@ -168,11 +168,9 @@ function derivedProfileFields(fixture: PersonFixture) {
     terms_accepted_at: ordinal % 7 === 0 ? null : FIXTURE_TIMESTAMP,
     is_active: ordinal % 13 !== 0,
     is_forum_banned: ordinal % 17 === 0,
-    // Derived from the ADDRESS, exactly as `supabase/seed.sql` derives it: an
-    // unroutable address IS an admin-created account, because the only reason
-    // to generate one is that she has no inbox. One fact, two derivations, no
-    // way for them to disagree (RAPP-25).
-    auth_method: fixture.email.endsWith('@ramassa.invalid') ? 'admin_created' : 'magic_link',
+    // Every account signs in with an emailed code since RAPP-224; the column
+    // goes in RAPP-211.
+    auth_method: 'magic_link',
   };
 }
 
@@ -1117,6 +1115,7 @@ export function buildInvite(overrides: Partial<InviteRow> = {}): InviteRow {
     org_id: SEED_ORGANIZATION_ID,
     email: ONBOARDING_ACCOUNT_EMAIL,
     reference_entity: 'Creu Roja Osona',
+    referral_id: null,
     invited_by: seedUserId(inviter.ordinal),
     // A fixed instant plus the real window, so an expiry assertion states the
     // relationship rather than a date that rots.

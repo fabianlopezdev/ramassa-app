@@ -12,7 +12,12 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { expect, test } from 'bun:test';
 import { AppError } from '../errors';
 import type { Database } from '../types/database';
-import { createParticipantInvite, fetchInvites, fetchMyPendingInvite } from './invite-actions';
+import {
+  createParticipantInvite,
+  fetchInvites,
+  fetchMyPendingInvite,
+  INVITE_ALREADY_HAS_ACCOUNT,
+} from './invite-actions';
 import {
   INVITE_COLUMNS,
   inviterName,
@@ -45,7 +50,11 @@ const createdInvite = {
 
 test('createParticipantInvite sends the payload under the name the RPC declares', async () => {
   const calls: RpcCall[] = [];
-  const payload = { email: 'fatou.ndiaye@example.com', reference_entity: 'CEAR Catalunya' };
+  const payload = {
+    email: 'fatou.ndiaye@example.com',
+    reference_entity: 'CEAR Catalunya',
+    referral_id: null,
+  };
   await createParticipantInvite(rpcClient({ data: [createdInvite], error: null }, calls), payload);
 
   expect(calls[0]?.name).toBe('create_participant_invite');
@@ -56,9 +65,21 @@ test('createParticipantInvite returns the recorded invite with its expiry', asyn
   const invite = await createParticipantInvite(rpcClient({ data: [createdInvite], error: null }), {
     email: 'fatou.ndiaye@example.com',
     reference_entity: null,
+    referral_id: null,
   });
   expect(invite.email).toBe('fatou.ndiaye@example.com');
   expect(invite.expires_at).toBe('2026-08-31T12:00:00Z');
+});
+
+test('an address that already has an account is tagged so staff get a clear message', async () => {
+  const refused = createParticipantInvite(
+    rpcClient({ data: null, error: { code: '23505', message: 'already belongs to an account' } }),
+    { email: 'fatou.ndiaye@example.com', reference_entity: null, referral_id: null },
+  );
+  await expect(refused).rejects.toBeInstanceOf(AppError);
+  await refused.catch((error: AppError) =>
+    expect(error.context.reason).toBe(INVITE_ALREADY_HAS_ACCOUNT),
+  );
 });
 
 test('createParticipantInvite treats an empty result or a refusal as a failure', async () => {
@@ -66,6 +87,7 @@ test('createParticipantInvite treats an empty result or a refusal as a failure',
     createParticipantInvite(rpcClient({ data: [], error: null }), {
       email: 'fatou.ndiaye@example.com',
       reference_entity: null,
+      referral_id: null,
     }),
   ).rejects.toBeInstanceOf(AppError);
 
@@ -73,6 +95,7 @@ test('createParticipantInvite treats an empty result or a refusal as a failure',
     createParticipantInvite(rpcClient({ data: null, error: { message: 'rate limit reached' } }), {
       email: 'fatou.ndiaye@example.com',
       reference_entity: null,
+      referral_id: null,
     }),
   ).rejects.toBeInstanceOf(AppError);
 });

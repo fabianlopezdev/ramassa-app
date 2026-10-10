@@ -1,27 +1,19 @@
 /**
- * Creating a participant's ACCESS (RAPP-25): one question first — does she
- * have an email? — then one of two arms.
+ * Inviting a participant (RAPP-25, RAPP-224, RAPP-227).
  *
- * With an email, staff record an INVITATION: she signs in with a magic link to
- * her own inbox, and the invite (bound to her ADDRESS, not to a link token)
- * carries the referring entity into her wizard as an editable default. With no
- * email, the SERVER mints an internal address and a one-time password; staff
- * never type a domain, so there is no rule to remember and no way to get it
- * wrong.
+ * Every player joins with her own email. Staff record an invitation bound to
+ * her ADDRESS (never to a link token); the database creates her empty account
+ * at the same moment, so the first sign-in code she asks for reaches her. Her
+ * profile is still written by the onboarding wizard, because the consent in it
+ * is hers to give. A player without an email gets help creating one first.
  *
- * The two arms are explicit components rather than one form with a boolean:
- * they share a question, not a shape. The result panels replace the form
- * because both end states carry something that must be READ (credentials shown
- * exactly once; the expiry of an invite), not toasted over.
- *
- * Nothing here stores, logs or interpolates the generated password: it lives
- * in component state for exactly as long as the panel is on screen, and the
- * panel says so out loud.
+ * Opened from a partner entity's referral, the invitation also carries that
+ * referral, and the database links it to her profile when she finishes the
+ * wizard. The result panel replaces the form because its end state carries
+ * something that must be READ (the invitation's expiry), not toasted over.
  */
 
 import { AdminAuthField } from '@/components/auth/admin-auth-field';
-import { CopyableCredential } from '@/components/participants/copyable-credential';
-import { finishParticipantAccountCreation } from '@/components/participants/participant-account-completion';
 import { Button } from '@/components/ui/button';
 import { safeAsync } from '@/lib/observability';
 import { supabase } from '@/lib/supabase';
@@ -32,54 +24,21 @@ import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import {
-  createParticipantAccount,
   createParticipantInvite,
-  type CreatedParticipantAccount,
+  INVITE_ALREADY_HAS_ACCOUNT,
   type CreatedParticipantInvite,
 } from '@ramassa/shared/accounts';
-import { completeReferral, type Referral } from '@ramassa/shared/referrals';
+import type { Referral } from '@ramassa/shared/referrals';
 import {
-  buildCreateParticipantAccountPayload,
   buildCreateParticipantInvitePayload,
-  createParticipantAccountSchema,
   createParticipantInviteSchema,
-  type CreateParticipantAccount,
-  type CreateParticipantAccountInput,
   type CreateParticipantInvite,
   type CreateParticipantInviteInput,
 } from '@ramassa/shared/schemas';
 
-type Arm = 'invite' | 'create';
-
 export function NewParticipant({ referral = null }: { readonly referral?: Referral | null }) {
-  const { t } = useTranslation(['participants', 'auth', 'onboarding', 'referrals']);
-  const [arm, setArm] = useState<Arm | null>(null);
-  const [createdAccount, setCreatedAccount] = useState<CreatedParticipantAccount | null>(null);
+  const { t } = useTranslation(['participants', 'referrals']);
   const [createdInvite, setCreatedInvite] = useState<CreatedParticipantInvite | null>(null);
-  const [completionFailed, setCompletionFailed] = useState(false);
-
-  function startOver(nextArm: Arm | null) {
-    setCreatedAccount(null);
-    setCreatedInvite(null);
-    setArm(nextArm);
-  }
-
-  async function finishCreatedAccount(account: CreatedParticipantAccount) {
-    setCompletionFailed(false);
-    await finishParticipantAccountCreation(account, {
-      showAccount: setCreatedAccount,
-      linkReferral:
-        referral === null
-          ? undefined
-          : async () => {
-              const linked = await safeAsync(() =>
-                completeReferral(supabase, referral.id, account.profile_id),
-              );
-              return linked.ok;
-            },
-      showLinkFailure: () => setCompletionFailed(true),
-    });
-  }
 
   return (
     <section className="flex w-full max-w-2xl flex-col gap-6 px-4 py-5 sm:p-6">
@@ -94,16 +53,12 @@ export function NewParticipant({ referral = null }: { readonly referral?: Referr
         <h1 className="text-start text-2xl font-semibold">{t('newTitle')}</h1>
       </header>
 
-      {completionFailed ? (
-        <p role="alert" className="text-start text-sm text-destructive">
-          {t('referrals:saveError')}
-        </p>
-      ) : null}
-
-      {createdAccount !== null ? (
-        <CredentialsPanel account={createdAccount} onCreateAnother={() => startOver('create')} />
-      ) : createdInvite !== null ? (
-        <InvitedPanel invite={createdInvite} onInviteAnother={() => startOver('invite')} />
+      {createdInvite !== null ? (
+        <InvitedPanel
+          invite={createdInvite}
+          carriesReferral={referral !== null}
+          onInviteAnother={() => setCreatedInvite(null)}
+        />
       ) : (
         <>
           {referral === null ? null : (
@@ -116,148 +71,25 @@ export function NewParticipant({ referral = null }: { readonly referral?: Referr
               </p>
             </div>
           )}
-          <fieldset className="flex flex-col gap-3">
-            <legend className="text-start text-base font-medium">{t('forkQuestion')}</legend>
-            <div className="grid grid-cols-1 gap-3 sm:flex sm:flex-wrap">
-              <Button
-                type="button"
-                size="lg"
-                className="h-12 w-full sm:w-auto"
-                variant={arm === 'invite' ? 'default' : 'outline'}
-                aria-pressed={arm === 'invite'}
-                onClick={() => setArm('invite')}
-              >
-                {t('forkHasEmail')}
-              </Button>
-              <Button
-                type="button"
-                size="lg"
-                className="h-12 w-full sm:w-auto"
-                variant={arm === 'create' ? 'default' : 'outline'}
-                aria-pressed={arm === 'create'}
-                onClick={() => setArm('create')}
-              >
-                {t('forkNoEmail')}
-              </Button>
-            </div>
-          </fieldset>
-
-          {arm === 'invite' ? (
-            <InviteForm
-              onInvited={setCreatedInvite}
-              initialReferenceEntity={referral?.entityName ?? ''}
-            />
-          ) : null}
-          {arm === 'create' ? (
-            <CreateAccountForm onCreated={finishCreatedAccount} referral={referral} />
-          ) : null}
+          <InviteForm
+            onInvited={setCreatedInvite}
+            referralId={referral?.id ?? null}
+            initialReferenceEntity={referral?.entityName ?? ''}
+          />
         </>
       )}
     </section>
   );
 }
 
-/** The no-email arm: names in, one-time credentials out. */
-function CreateAccountForm({
-  onCreated,
-  referral,
-}: {
-  readonly onCreated: (account: CreatedParticipantAccount) => Promise<void>;
-  readonly referral: Referral | null;
-}) {
-  const { t } = useTranslation(['participants', 'onboarding']);
-  const [submitErrorMessage, setSubmitErrorMessage] = useState<string | undefined>(undefined);
-
-  const {
-    control,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm<CreateParticipantAccountInput, unknown, CreateParticipantAccount>({
-    resolver: zodResolver(createParticipantAccountSchema),
-    defaultValues: {
-      firstName: referral?.referredFirstName ?? '',
-      lastName: referral?.referredLastName ?? '',
-      referenceEntity: referral?.entityName ?? '',
-    },
-  });
-
-  const create = handleSubmit(async (input) => {
-    setSubmitErrorMessage(undefined);
-    const result = await safeAsync(() =>
-      createParticipantAccount(supabase, buildCreateParticipantAccountPayload(input)),
-    );
-    if (!result.ok) {
-      setSubmitErrorMessage(t('createAccountFailed'));
-      return;
-    }
-    await onCreated(result.value);
-  });
-
-  return (
-    <form onSubmit={(event) => void create(event)} noValidate className="flex flex-col gap-4">
-      <p className="text-start text-sm text-muted-foreground">{t('createAccountIntro')}</p>
-      <Controller
-        control={control}
-        name="firstName"
-        render={({ field }) => (
-          <AdminAuthField
-            id="new-participant-first-name"
-            label={t('onboarding:firstNameLabel')}
-            errorMessage={errors.firstName ? t('onboarding:errorRequired') : undefined}
-            value={field.value ?? ''}
-            onChange={(event) => field.onChange(event.target.value)}
-            onBlur={field.onBlur}
-            ref={field.ref}
-          />
-        )}
-      />
-      <Controller
-        control={control}
-        name="lastName"
-        render={({ field }) => (
-          <AdminAuthField
-            id="new-participant-last-name"
-            label={t('onboarding:lastNameLabel')}
-            errorMessage={errors.lastName ? t('onboarding:errorRequired') : undefined}
-            value={field.value ?? ''}
-            onChange={(event) => field.onChange(event.target.value)}
-            onBlur={field.onBlur}
-            ref={field.ref}
-          />
-        )}
-      />
-      <Controller
-        control={control}
-        name="referenceEntity"
-        render={({ field }) => (
-          <EntityField
-            id="new-participant-entity"
-            value={field.value ?? ''}
-            onChange={field.onChange}
-            onBlur={field.onBlur}
-          />
-        )}
-      />
-      <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
-        <Button type="submit" size="lg" className="h-12 w-full sm:w-auto" disabled={isSubmitting}>
-          {t('createAccountAction')}
-        </Button>
-        {submitErrorMessage === undefined ? null : (
-          <p aria-live="polite" className="text-start text-sm text-destructive">
-            {submitErrorMessage}
-          </p>
-        )}
-      </div>
-    </form>
-  );
-}
-
-/** The email arm: an address in, a recorded 30-day invitation out. */
+/** An address in, a recorded 30-day invitation (and her empty account) out. */
 function InviteForm({
   onInvited,
+  referralId,
   initialReferenceEntity,
 }: {
   readonly onInvited: (invite: CreatedParticipantInvite) => void;
+  readonly referralId: string | null;
   readonly initialReferenceEntity: string;
 }) {
   const { t } = useTranslation(['participants', 'auth']);
@@ -275,10 +107,14 @@ function InviteForm({
   const invite = handleSubmit(async (input) => {
     setSubmitErrorMessage(undefined);
     const result = await safeAsync(() =>
-      createParticipantInvite(supabase, buildCreateParticipantInvitePayload(input)),
+      createParticipantInvite(supabase, buildCreateParticipantInvitePayload(input, referralId)),
     );
     if (!result.ok) {
-      setSubmitErrorMessage(t('inviteFailed'));
+      setSubmitErrorMessage(
+        result.error.context.reason === INVITE_ALREADY_HAS_ACCOUNT
+          ? t('inviteAlreadyHasAccount')
+          : t('inviteFailed'),
+      );
       return;
     }
     onInvited(result.value);
@@ -287,6 +123,7 @@ function InviteForm({
   return (
     <form onSubmit={(event) => void invite(event)} noValidate className="flex flex-col gap-4">
       <p className="text-start text-sm text-muted-foreground">{t('inviteIntro')}</p>
+      <p className="text-start text-sm text-muted-foreground">{t('inviteNoEmailHint')}</p>
       <Controller
         control={control}
         name="email"
@@ -308,12 +145,16 @@ function InviteForm({
         control={control}
         name="referenceEntity"
         render={({ field }) => (
-          <EntityField
-            id="new-invite-entity"
-            value={field.value ?? ''}
-            onChange={field.onChange}
-            onBlur={field.onBlur}
-          />
+          <div className="flex flex-col gap-1.5">
+            <AdminAuthField
+              id="new-invite-entity"
+              label={t('entityOptionalLabel')}
+              value={field.value ?? ''}
+              onChange={(event) => field.onChange(event.target.value)}
+              onBlur={field.onBlur}
+            />
+            <p className="text-start text-sm text-muted-foreground">{t('entityPrefillHint')}</p>
+          </div>
         )}
       />
       <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
@@ -330,83 +171,13 @@ function InviteForm({
   );
 }
 
-interface EntityFieldProps {
-  readonly id: string;
-  readonly value: string;
-  readonly onChange: (value: string) => void;
-  readonly onBlur: () => void;
-}
-
-/**
- * The one field the two arms genuinely share, with the hint that explains what
- * it does: the entity is a DEFAULT in her wizard, hers to change, never a fact
- * recorded about her here. Presentational on purpose — each arm owns its own
- * Controller, because the two forms share a field, not a shape.
- */
-function EntityField({ id, value, onChange, onBlur }: EntityFieldProps) {
-  const { t } = useTranslation('participants');
-  return (
-    <div className="flex flex-col gap-1.5">
-      <AdminAuthField
-        id={id}
-        label={t('entityOptionalLabel')}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        onBlur={onBlur}
-      />
-      <p className="text-start text-sm text-muted-foreground">{t('entityPrefillHint')}</p>
-    </div>
-  );
-}
-
-/**
- * The only sighting of the access code there will ever be. The panel says so,
- * and offers the two things staff do next: hand the code over and open her
- * record, or create the next account.
- */
-function CredentialsPanel({
-  account,
-  onCreateAnother,
-}: {
-  readonly account: CreatedParticipantAccount;
-  readonly onCreateAnother: () => void;
-}) {
-  const { t } = useTranslation('participants');
-  return (
-    <section
-      aria-live="polite"
-      className="flex w-full min-w-0 flex-col gap-4 rounded-md border p-4 sm:p-6"
-    >
-      <h2 className="text-start text-xl font-semibold">{t('credentialsTitle')}</h2>
-      <p className="text-start text-sm font-medium text-destructive">{t('credentialsShownOnce')}</p>
-      <p className="text-start text-sm text-foreground">{t('credentialsHandoffGuidance')}</p>
-      <CopyableCredential label={t('credentialsCodeLabel')} value={account.password} />
-      <p className="text-start text-sm text-muted-foreground">{t('credentialsTermsNote')}</p>
-      <div className="grid grid-cols-1 gap-3 sm:flex sm:flex-wrap">
-        <Button asChild size="lg" className="h-12 w-full sm:w-auto">
-          <Link to="/participants/$participantId" params={{ participantId: account.profile_id }}>
-            {t('credentialsOpenRecord')}
-          </Link>
-        </Button>
-        <Button
-          type="button"
-          size="lg"
-          variant="outline"
-          className="h-12 w-full sm:w-auto"
-          onClick={onCreateAnother}
-        >
-          {t('createAnotherAction')}
-        </Button>
-      </div>
-    </section>
-  );
-}
-
 function InvitedPanel({
   invite,
+  carriesReferral,
   onInviteAnother,
 }: {
   readonly invite: CreatedParticipantInvite;
+  readonly carriesReferral: boolean;
   readonly onInviteAnother: () => void;
 }) {
   const { t, i18n } = useTranslation('participants');
@@ -415,6 +186,7 @@ function InvitedPanel({
     <section aria-live="polite" className="flex flex-col gap-4 rounded-md border p-4 sm:p-6">
       <h2 className="text-start text-xl font-semibold">{t('invitedTitle')}</h2>
       <p className="text-start text-sm">{t('invitedBody', { email: invite.email })}</p>
+      {carriesReferral ? <p className="text-start text-sm">{t('invitedReferralNote')}</p> : null}
       <p className="text-start text-sm text-muted-foreground">
         {t('invitedExpires', { date: new Date(invite.expires_at).toLocaleDateString(locale) })}
       </p>

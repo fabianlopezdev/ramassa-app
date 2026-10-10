@@ -24,20 +24,29 @@ function sqlLiteral(value: string): string {
   return `'${value.replaceAll("'", "''")}'`;
 }
 
-async function createAccountFromReferral(page: Page): Promise<void> {
+/**
+ * The product path since RAPP-224: staff invite her from the referral, and the
+ * referral links to her when the onboarding wizard creates her profile. The
+ * profile insert stands in for the wizard she would complete in the app.
+ */
+async function inviteFromReferralAndOnboard(page: Page): Promise<void> {
   await page.getByTestId(`complete-referral-${referralId}`).click();
   await expect(page.getByTestId('referral-prefill')).toContainText(FIRST_NAME);
+  await page.locator('#new-participant-email').fill(EMAIL);
   await page
-    .getByRole('button', { name: /no, (no té correu|she has no email|no tiene correo)/i })
-    .click();
-  await expect(page.locator('#new-participant-first-name')).toHaveValue(FIRST_NAME);
-  await expect(page.locator('#new-participant-last-name')).toHaveValue(LAST_NAME);
-  await page
-    .getByRole('button', { name: /crea el compte|create the account|crea la cuenta/i })
+    .getByRole('button', { name: /crea la invitació|create the invitation|crea la invitación/i })
     .click();
   await expect(
-    page.getByRole('heading', { name: /compte creat|account created|cuenta creada/i }),
+    page.getByRole('heading', { name: /invitació creada|invitation created|invitación creada/i }),
   ).toBeVisible({ timeout: 20_000 });
+
+  const accountId = queryDatabase(`select id from auth.users where email = ${sqlLiteral(EMAIL)}`);
+  expect(accountId).not.toBe('');
+  queryDatabase(`
+    insert into public.profiles (id, org_id, role, first_name, last_name, terms_accepted_at)
+    values (${sqlLiteral(accountId)}, '5eed0000-0000-4000-8000-000000000000', 'player',
+            ${sqlLiteral(FIRST_NAME)}, ${sqlLiteral(LAST_NAME)}, now())
+  `);
 }
 
 test.describe.serial('entity referral product flow', () => {
@@ -57,6 +66,7 @@ test.describe.serial('entity referral product flow', () => {
        where id in (select id from qa_referral_publications);
       delete from public.push_tokens where device_id = ${sqlLiteral(RUN_TAG)};
       delete from public.audit_log where target_id = nullif(${sqlLiteral(participantId)}, '')::uuid;
+      delete from public.invites where email = ${sqlLiteral(EMAIL)};
       delete from public.entity_referrals where id = ${sqlLiteral(referralId)};
       delete from public.profiles where id = nullif(${sqlLiteral(participantId)}, '')::uuid;
       delete from auth.identities where user_id = nullif(${sqlLiteral(participantId)}, '')::uuid;
@@ -140,7 +150,7 @@ test.describe.serial('entity referral product flow', () => {
          from public.entity_referrals where id = ${sqlLiteral(referralId)}`,
     );
     await expect(page.getByText(expectedName)).toBeVisible();
-    await createAccountFromReferral(page);
+    await inviteFromReferralAndOnboard(page);
 
     participantId = queryDatabase(
       `select referred_profile_id from public.entity_referrals where id = ${sqlLiteral(referralId)}`,
