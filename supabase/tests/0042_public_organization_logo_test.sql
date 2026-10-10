@@ -10,7 +10,7 @@ select is(public.get_public_organization_logo('rapp-124-empty'), null, 'absent l
 select is(public.get_public_organization_logo('unknown'), null, 'unknown organization is null');
 select is(public.get_public_organization_logo('%'), null, 'no wildcard enumeration');
 select is((select count(*)::integer from public.organizations), 0, 'DENIAL: private organization settings remain inaccessible');
-select is((select count(*)::integer from public.profiles), 0, 'DENIAL: profiles remain inaccessible');
+select throws_ok($$ select count(*) from public.profiles $$, '42501', null::text, 'DENIAL: profiles remain inaccessible: anon has no read access at all (RAPP-240)');
 reset role;
 update public.organizations set logo_url = '12400000-0000-4000-8000-000000000003/organization-branding/12400000-0000-4000-8000-000000000002/2026/10/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.png' where slug = 'rapp-124';
 set local role anon;

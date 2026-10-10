@@ -16,7 +16,7 @@ select is((select count(*)::integer from public.get_public_organization_branding
 select is((select count(*)::integer from public.get_public_organization_branding(null)), 0, 'null slug cannot enumerate organizations');
 select is((select count(*)::integer from public.get_public_organization_branding('%')), 0, 'slug is an exact match, not a wildcard');
 select is((select count(*)::integer from public.organizations), 0, 'DENIAL: anonymous table reads still reveal no organization settings');
-select is((select count(*)::integer from public.profiles), 0, 'DENIAL: profiles remain protected');
+select throws_ok($$ select count(*) from public.profiles $$, '42501', null::text, 'DENIAL: profiles remain protected: anon has no read access at all (RAPP-240)');
 
 reset role;
 update public.organizations set primary_color = '#005A8C' where slug = 'rapp-122-one';

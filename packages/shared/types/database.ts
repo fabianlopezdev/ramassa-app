@@ -3770,6 +3770,17 @@ export type Database = {
         };
         Returns: Json;
       };
+      get_conversation_peer: {
+        Args: { p_user_id: string };
+        Returns: {
+          city: string;
+          first_name: string;
+          id: string;
+          last_name: string;
+          preferred_language: string;
+          role: string;
+        }[];
+      };
       get_entity_impact_summary: {
         Args: never;
         Returns: {
@@ -4187,6 +4198,33 @@ export type Database = {
           topic: string;
           topic_detail: string;
           updated_at: string;
+        }[];
+      };
+      list_participants: {
+        Args: {
+          p_dependents?: string;
+          p_dir?: string;
+          p_entity?: string;
+          p_nationality?: string;
+          p_page?: number;
+          p_page_size?: number;
+          p_query?: string;
+          p_sort?: string;
+          p_status?: string;
+        };
+        Returns: {
+          city: string;
+          created_at: string;
+          first_name: string;
+          has_dependents: boolean;
+          id: string;
+          is_active: boolean;
+          last_name: string;
+          nationality: string;
+          num_dependents: number;
+          preferred_language: string;
+          reference_entity: string;
+          total_count: number;
         }[];
       };
       list_player_surveys: {

@@ -279,11 +279,9 @@ export async function fetchConversationPeer(
   signal?: AbortSignal,
 ): Promise<ConversationPeer> {
   const userId = z.uuid().parse(rawUserId);
-  let query = client
-    .from('profiles')
-    .select('id, first_name, last_name, role, city, preferred_language')
-    .eq('id', userId)
-    .in('role', ['player', 'entity']);
+  // A function, not a table read: the city is a Personal field, returned only
+  // to a holder of participants.view_personal (RAPP-240).
+  let query = client.rpc('get_conversation_peer', { p_user_id: userId });
   if (signal !== undefined) query = query.abortSignal(signal);
   const { data, error } = await query.single();
   if (error) throw new AppError('DB-1', { message: error.message });

@@ -113,7 +113,10 @@ select is(
 );
 
 -- The whole point of the encrypted columns: the new value must be ciphertext at
--- rest, not plaintext written by a second, sloppier write path.
+-- rest, not plaintext written by a second, sloppier write path. Read as the
+-- database owner: this checks storage, and since RAPP-240 the encrypted and
+-- Personal columns are not readable directly by any signed-in user.
+reset role;
 select is_empty(
   $$ select id from public.profiles
      where id = '00000000-0000-0000-0000-0000000000d1'
@@ -137,6 +140,9 @@ select is(
   true,
   'granting media consent from the profile stamps it'
 );
+
+set local role authenticated;
+set local request.jwt.claims = '{"sub": "00000000-0000-0000-0000-0000000000d1", "role": "authenticated"}';
 
 -- Escalation. The payload carries role and org because a naive client would send
 -- the whole profile back; the RPC must ignore them rather than trust them.

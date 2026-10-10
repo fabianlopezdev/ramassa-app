@@ -216,6 +216,9 @@ select lives_ok(
   'staff edit a participant profile'
 );
 
+-- Storage checks, read as the database owner: since RAPP-240 the encrypted
+-- columns are not readable directly by any signed-in user.
+reset role;
 select is(
   (select public.decrypt_field(phone) from public.profiles
     where id = '5eed0000-0000-4000-8000-000000000026'),
@@ -231,6 +234,8 @@ select is_empty(
        and encode(phone, 'escape') like '%+34600999026%' $$,
   'and it is stored as ciphertext, not as text that happens to decrypt'
 );
+set local role authenticated;
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated"}';
 
 select is(
   (select count(*) from public.audit_log
