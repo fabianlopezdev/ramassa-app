@@ -1643,6 +1643,12 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - Turning the lock on or off asks for Face ID, a fingerprint or the passcode first. A phone with no passcode, and the web, have no lock; the settings screen says why.
 - Settings: the App lock screen, from the player profile, the team attendance and messages headers, and the team and entity notice screens.
 
+## Cache rules, offline outbox and live permissions (2026-10-11, RAPP-237, part of RAPP-211)
+
+- **Disk cache:** the app saves to disk only organization content shown to players (an allow-list, `PERSISTED_QUERY_ROOTS`, held by a contract test). Queries with decrypted personal fields stay in memory. The whole cache, and its copy on disk, is emptied on sign-out, on a remote sign-out, when another person signs in, and when the person's permissions change.
+- **Live permissions:** every permission write moves the person's `team_member_access` row, and that table is in the Realtime publication. The shared auth context listens to the person's own row and reloads her permissions, so menus and screens follow at once, on the web and in the app. The permission rows are not published: a removal is a DELETE, which Realtime cannot filter.
+- **Offline outbox:** one shared core (`@ramassa/shared/offline`) for attendance and messages. Every change has an idempotency key (attendance: one per person per session, latest `marked_at` wins; messages: the id the phone makes). A failure that may pass is retried with a growing delay up to 30 seconds. A refusal (no permission, a broken rule, a missing record: AUTH-3, AUTH-9, DB-2, EVENTS-1, VALIDATION-1, mapped from the PostgreSQL code) stays on screen with a plain reason, Try again and Remove. It is never dropped silently.
+
 ## Staff-side languages (2026-10-11, RAPP-238, part of RAPP-211)
 
 - The staff side (the web admin, the team screens and the entity screens) is in Catalan, Spanish or English (`STAFF_LANGUAGES`). Player screens keep all five languages and right-to-left. Content stays five-language everywhere: this is the language of the screens themselves.

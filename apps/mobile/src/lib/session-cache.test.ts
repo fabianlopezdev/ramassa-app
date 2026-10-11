@@ -10,6 +10,7 @@ import { QueryClient, QueryObserver } from '@tanstack/react-query';
 import { expect, test } from 'bun:test';
 import {
   dropCachedServerState,
+  observePermissionChange,
   observeSessionIdentity,
   shouldDropCachedServerState,
 } from './session-cache';
@@ -128,4 +129,57 @@ test('the next woman is never handed the previous one row', async () => {
   // it had before the change, which is the leak this whole boundary exists for.
   expect(observer.getCurrentResult().data).toBe(FATIMAS_ROW);
   stop();
+});
+
+// --- Permission changes (RAPP-237) ---------------------------------------------------------
+
+test('a permission change for the same person empties the cache; the first look only records', () => {
+  const first = observePermissionChange(
+    undefined,
+    { userId: 'staff-1', permissions: new Set(['attendance.mark']) },
+    true,
+  );
+  expect(first?.shouldDrop).toBe(false);
+
+  const same = observePermissionChange(
+    first?.snapshot,
+    { userId: 'staff-1', permissions: new Set(['attendance.mark']) },
+    true,
+  );
+  expect(same?.shouldDrop).toBe(false);
+
+  const changed = observePermissionChange(
+    same?.snapshot,
+    { userId: 'staff-1', permissions: new Set(['attendance.mark', 'messages.inbox']) },
+    true,
+  );
+  expect(changed?.shouldDrop).toBe(true);
+});
+
+test('nothing is decided while the session is still resolving', () => {
+  expect(
+    observePermissionChange(undefined, { userId: 'staff-1', permissions: new Set() }, false),
+  ).toBeNull();
+});
+
+test('a different person is the identity rule, not this one', () => {
+  const observation = observePermissionChange(
+    { userId: 'staff-1', permissions: new Set(['attendance.mark']) },
+    { userId: 'staff-2', permissions: new Set() },
+    true,
+  );
+  expect(observation?.shouldDrop).toBe(false);
+});
+
+test('dropping the cache also removes the copy on disk', async () => {
+  let removed = 0;
+  const persister = {
+    persistClient: async () => undefined,
+    restoreClient: async () => undefined,
+    removeClient: async () => {
+      removed += 1;
+    },
+  };
+  dropCachedServerState(new QueryClient(), persister);
+  expect(removed).toBe(1);
 });

@@ -38,7 +38,8 @@ export default function AttendanceSheetScreen() {
   const networkState = useNetworkState();
   const isOffline = !isNetworkStateOnline(networkState);
   const { data, isPending, isError, error, refetch } = useAttendanceSheet(id);
-  const { mark, pendingMarks, syncStateFor } = useAttendanceMarker(id);
+  const { mark, pendingMarks, syncStateFor, rejectionFor, retryMark, discardMark } =
+    useAttendanceMarker(id);
   const participants = data?.participants ?? EMPTY_PARTICIPANTS;
   const title =
     data === undefined
@@ -69,13 +70,17 @@ export default function AttendanceSheetScreen() {
           accessibilityLabel={t('tapAction', { name, current: statusLabel, next: nextLabel })}
           statusLabel={statusLabel}
           signedUpLabel={t('signedUp')}
-          syncLabel={t(attendanceSyncKey(syncState))}
+          syncLabel={t(attendanceSyncKey(syncState, rejectionFor(item.id)))}
           languageFontClass={languageFontClass}
+          retryLabel={t('syncRetryAction')}
+          discardLabel={t('syncDiscardAction')}
+          onRetry={retryMark}
+          onDiscard={discardMark}
           onMark={mark}
         />
       );
     },
-    [languageFontClass, mark, syncStateFor, t],
+    [discardMark, languageFontClass, mark, rejectionFor, retryMark, syncStateFor, t],
   );
   const handleRetry = useCallback(() => void refetch(), [refetch]);
 

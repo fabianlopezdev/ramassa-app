@@ -55,5 +55,9 @@
   "dashboardTrendDescription": "Tasa de asistencia por mes",
   "dashboardCategories": "Por categoría",
   "dashboardCategoryEvents_one": "{{count}} evento",
-  "dashboardCategoryEvents_other": "{{count}} eventos"
+  "dashboardCategoryEvents_other": "{{count}} eventos",
+  "syncRejected": "No se ha guardado. Esta marca se ha rechazado.",
+  "syncRejectedPermission": "No se ha guardado. Ya no puedes pasar lista aquí.",
+  "syncRetryAction": "Volver a intentarlo",
+  "syncDiscardAction": "Quitarla"
 }

@@ -13,6 +13,7 @@ import {
   type AttendanceStatus,
 } from '@ramassa/shared/attendance';
 import { useAuth } from '@ramassa/shared/auth';
+import type { AppErrorCode } from '@ramassa/shared/errors';
 import { teamScreens } from './account-area';
 import {
   createAttendanceOutbox,
@@ -69,7 +70,11 @@ export function useAttendanceSheet(occurrenceId: string) {
   return query;
 }
 
-export type AttendanceSyncState = 'pending' | 'retrying' | 'synced';
+/**
+ * `rejected`: the server refused the mark (RAPP-237). It stays on the sheet
+ * with a plain reason and a retry until the person retries or removes it.
+ */
+export type AttendanceSyncState = 'pending' | 'retrying' | 'synced' | 'rejected';
 
 export function useAttendanceMarker(occurrenceId: string) {
   const { user } = useAuth();
@@ -160,12 +165,41 @@ export function useAttendanceMarker(occurrenceId: string) {
     (playerId: string): AttendanceSyncState => {
       const entry = pending.get(playerId);
       if (entry === undefined) return 'synced';
+      if (entry.rejection != null) return 'rejected';
       return entry.attemptCount > 0 ? 'retrying' : 'pending';
     },
     [pending],
   );
 
-  return { mark, pendingMarks: pending, syncStateFor };
+  const rejectionFor = useCallback(
+    (playerId: string): AppErrorCode | null => pending.get(playerId)?.rejection?.code ?? null,
+    [pending],
+  );
+
+  const retryMark = useCallback(
+    (playerId: string) => {
+      const entry = pending.get(playerId);
+      if (outbox === null || entry === undefined) return;
+      outbox.retry(entry.id);
+      setPending(readPending());
+      if (isOnline) void drain();
+    },
+    [drain, isOnline, outbox, pending, readPending],
+  );
+
+  const discardMark = useCallback(
+    (playerId: string) => {
+      const entry = pending.get(playerId);
+      if (outbox === null || entry === undefined || userId === null) return;
+      outbox.discard(entry.id);
+      setPending(readPending());
+      // The sheet showed the refused mark optimistically; read the real one back.
+      void queryClient.invalidateQueries({ queryKey });
+    },
+    [outbox, pending, queryClient, queryKey, readPending, userId],
+  );
+
+  return { mark, pendingMarks: pending, syncStateFor, rejectionFor, retryMark, discardMark };
 }
 
 export async function sendAttendanceOutboxMark(

@@ -37,6 +37,7 @@ describe('attendance outbox persistence', () => {
         markedAt: '2026-08-09T09:00:00.000Z',
         attemptCount: 0,
         retryAt: null,
+        rejection: null,
       },
     ]);
   });
@@ -70,7 +71,7 @@ describe('attendance outbox persistence', () => {
     });
 
     expect(sent).toEqual(['player-1:present', 'player-2:absent', 'player-3:excused']);
-    expect(result).toEqual({ sent: 3, failed: 0, nextRetryAt: null });
+    expect(result).toEqual({ sent: 3, failed: 0, rejected: 0, nextRetryAt: null });
     expect(afterRestart.list()).toEqual([]);
   });
 
@@ -128,7 +129,7 @@ describe('attendance outbox persistence', () => {
     });
 
     expect(sent).toEqual([pending]);
-    expect(result).toEqual({ sent: 1, failed: 0, nextRetryAt: null });
+    expect(result).toEqual({ sent: 1, failed: 0, rejected: 0, nextRetryAt: null });
     expect(outbox.list()).toEqual([]);
   });
 
@@ -211,11 +212,13 @@ describe('attendance outbox persistence', () => {
     expect(failed).toEqual({
       sent: 0,
       failed: 1,
+      rejected: 0,
       nextRetryAt: '2026-08-09T09:00:11.000Z',
     });
     expect(outbox.list()[0]).toMatchObject({
       attemptCount: 1,
       retryAt: '2026-08-09T09:00:11.000Z',
+      rejection: null,
     });
 
     const tooEarly = await outbox.drain(send, new Date('2026-08-09T09:00:10.500Z'));
@@ -223,7 +226,7 @@ describe('attendance outbox persistence', () => {
     expect(attempts).toBe(1);
 
     const retried = await outbox.drain(send, new Date('2026-08-09T09:00:11.000Z'));
-    expect(retried).toEqual({ sent: 1, failed: 0, nextRetryAt: null });
+    expect(retried).toEqual({ sent: 1, failed: 0, rejected: 0, nextRetryAt: null });
     expect(outbox.list()).toEqual([]);
   });
 });

@@ -53,5 +53,8 @@
   "backShort": "Back",
   "backToConversations": "Back to conversations",
   "backToAttendance": "Back to attendance",
-  "managementUnread": "Conversations ({{count}} unread)"
+  "managementUnread": "Conversations ({{count}} unread)",
+  "deliveryRejected": "Not sent. This message was refused.",
+  "deliveryRejectedPermission": "Not sent. You can no longer send messages here.",
+  "discard": "Remove"
 }

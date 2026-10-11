@@ -3,28 +3,23 @@ import {
   nextAttendanceStatus,
   type AttendanceStatus,
 } from '@ramassa/shared/attendance';
+import {
+  createOutbox,
+  type OutboxConfig,
+  type OutboxEntry,
+  type OutboxStorage,
+} from '@ramassa/shared/offline';
 
 const ATTENDANCE_OUTBOX_KEY = 'ramassa.attendance-outbox.v1';
 const ATTENDANCE_OUTBOX_SCHEMA_VERSION = 1;
-const ATTENDANCE_RETRY_BASE_MS = 1_000;
-const ATTENDANCE_RETRY_MAX_MS = 30_000;
-const ATTENDANCE_RETRY_BACKOFF_BASE = 2;
 
-export interface AttendanceOutboxStorage {
-  getString(key: string): string | undefined;
-  set(key: string, value: string): void;
-  remove(key: string): unknown;
-}
+export type AttendanceOutboxStorage = OutboxStorage;
 
-export interface AttendanceOutboxMark {
-  readonly id: string;
-  readonly ownerId: string;
+export interface AttendanceOutboxMark extends OutboxEntry {
   readonly occurrenceId: string;
   readonly playerId: string;
   readonly status: AttendanceStatus;
   readonly markedAt: string;
-  readonly attemptCount: number;
-  readonly retryAt: string | null;
 }
 
 export interface EnqueueAttendanceMark {
@@ -37,6 +32,7 @@ export interface EnqueueAttendanceMark {
 export interface AttendanceDrainResult {
   readonly sent: number;
   readonly failed: number;
+  readonly rejected: number;
   readonly nextRetryAt: string | null;
 }
 
@@ -52,128 +48,61 @@ export function nextAttendanceOutboxMark(
   };
 }
 
-const drainTails = new WeakMap<AttendanceOutboxStorage, Map<string, Promise<void>>>();
-
-async function serializeDrain<Result>(
-  storage: AttendanceOutboxStorage,
-  ownerId: string,
-  execute: () => Promise<Result>,
-): Promise<Result> {
-  let ownerTails = drainTails.get(storage);
-  if (ownerTails === undefined) {
-    ownerTails = new Map();
-    drainTails.set(storage, ownerTails);
-  }
-  const previous = ownerTails.get(ownerId);
-  let release!: () => void;
-  const turn = new Promise<void>((resolve) => {
-    release = resolve;
-  });
-  const tail = (previous ?? Promise.resolve()).then(() => turn);
-  ownerTails.set(ownerId, tail);
-  if (previous !== undefined) await previous;
-  try {
-    return await execute();
-  } finally {
-    release();
-    if (ownerTails.get(ownerId) === tail) {
-      ownerTails.delete(ownerId);
-      if (ownerTails.size === 0) drainTails.delete(storage);
-    }
-  }
-}
-
-function readEntries(storage: AttendanceOutboxStorage): readonly AttendanceOutboxMark[] {
-  const serialized = storage.getString(ATTENDANCE_OUTBOX_KEY);
-  if (serialized === undefined) return [];
-  try {
-    const parsed = JSON.parse(serialized) as { readonly entries?: readonly AttendanceOutboxMark[] };
-    return Array.isArray(parsed.entries) ? parsed.entries : [];
-  } catch {
-    return [];
-  }
-}
-
-function writeEntries(
-  storage: AttendanceOutboxStorage,
-  entries: readonly AttendanceOutboxMark[],
-): void {
-  if (entries.length === 0) {
-    storage.remove(ATTENDANCE_OUTBOX_KEY);
-    return;
-  }
-  storage.set(
-    ATTENDANCE_OUTBOX_KEY,
-    JSON.stringify({ version: ATTENDANCE_OUTBOX_SCHEMA_VERSION, entries }),
+function isAttendanceOutboxMark(value: unknown): value is AttendanceOutboxMark {
+  if (typeof value !== 'object' || value === null) return false;
+  const entry = value as Record<string, unknown>;
+  return (
+    typeof entry.id === 'string' &&
+    typeof entry.ownerId === 'string' &&
+    typeof entry.occurrenceId === 'string' &&
+    typeof entry.playerId === 'string' &&
+    typeof entry.status === 'string' &&
+    typeof entry.markedAt === 'string' &&
+    typeof entry.attemptCount === 'number' &&
+    (entry.retryAt === null || typeof entry.retryAt === 'string')
   );
 }
 
+const ATTENDANCE_OUTBOX: OutboxConfig<AttendanceOutboxMark> = {
+  key: ATTENDANCE_OUTBOX_KEY,
+  version: ATTENDANCE_OUTBOX_SCHEMA_VERSION,
+  isEntry: isAttendanceOutboxMark,
+  compare: (left, right) => left.markedAt.localeCompare(right.markedAt),
+  isSameVersion: (left, right) => left.id === right.id && left.markedAt === right.markedAt,
+  mode: 'independent',
+};
+
+/**
+ * Attendance on the shared outbox (RAPP-237). The idempotency key is one per
+ * person per session (`owner:occurrence:player`): a new tap replaces the
+ * pending one, and the server keeps the mark with the latest `marked_at`, so a
+ * repeated send changes nothing.
+ */
 export function createAttendanceOutbox(storage: AttendanceOutboxStorage, ownerId: string) {
+  const outbox = createOutbox(storage, ownerId, ATTENDANCE_OUTBOX);
   return {
-    list: (): readonly AttendanceOutboxMark[] =>
-      readEntries(storage).filter((entry) => entry.ownerId === ownerId),
-    enqueue: (input: EnqueueAttendanceMark): AttendanceOutboxMark => {
-      const entry: AttendanceOutboxMark = {
+    list: outbox.list,
+    retry: outbox.retry,
+    discard: outbox.discard,
+    enqueue: (input: EnqueueAttendanceMark): AttendanceOutboxMark =>
+      outbox.enqueue({
         id: `${ownerId}:${input.occurrenceId}:${input.playerId}`,
-        ownerId,
         occurrenceId: input.occurrenceId,
         playerId: input.playerId,
         status: input.status,
         markedAt: input.markedAt,
-        attemptCount: 0,
-        retryAt: null,
-      };
-      const entries = readEntries(storage).filter((candidate) => candidate.id !== entry.id);
-      writeEntries(storage, [...entries, entry]);
-      return entry;
-    },
-    drain: (
+      }),
+    drain: async (
       send: (mark: AttendanceOutboxMark) => Promise<void>,
       now: Date = new Date(),
-    ): Promise<AttendanceDrainResult> =>
-      serializeDrain(storage, ownerId, async () => {
-        const nowMs = now.getTime();
-        const pending = readEntries(storage)
-          .filter((entry) => entry.ownerId === ownerId)
-          .sort((left, right) => left.markedAt.localeCompare(right.markedAt));
-        let sent = 0;
-        let failed = 0;
-        for (const entry of pending) {
-          if (entry.retryAt !== null && Date.parse(entry.retryAt) > nowMs) continue;
-          try {
-            await send(entry);
-            const remaining = readEntries(storage).filter(
-              (candidate) => candidate.id !== entry.id || candidate.markedAt !== entry.markedAt,
-            );
-            writeEntries(storage, remaining);
-            sent += 1;
-          } catch {
-            const nextAttemptCount = entry.attemptCount + 1;
-            const delayMs = Math.min(
-              ATTENDANCE_RETRY_MAX_MS,
-              ATTENDANCE_RETRY_BASE_MS * ATTENDANCE_RETRY_BACKOFF_BASE ** (nextAttemptCount - 1),
-            );
-            const retryAt = new Date(nowMs + delayMs).toISOString();
-            const withFailure = readEntries(storage).map((candidate) =>
-              candidate.id === entry.id && candidate.markedAt === entry.markedAt
-                ? { ...candidate, attemptCount: nextAttemptCount, retryAt }
-                : candidate,
-            );
-            writeEntries(storage, withFailure);
-            failed += 1;
-          }
-        }
-        let nextRetryAt: string | null = null;
-        for (const entry of readEntries(storage)) {
-          if (
-            entry.ownerId === ownerId &&
-            entry.retryAt !== null &&
-            (nextRetryAt === null || entry.retryAt < nextRetryAt)
-          ) {
-            nextRetryAt = entry.retryAt;
-          }
-        }
-        return { sent, failed, nextRetryAt };
-      }),
+    ): Promise<AttendanceDrainResult> => {
+      const result = await outbox.drain(send, now);
+      return {
+        sent: result.sent,
+        failed: result.failed,
+        rejected: result.rejected,
+        nextRetryAt: result.nextRetryAt,
+      };
+    },
   };
 }
