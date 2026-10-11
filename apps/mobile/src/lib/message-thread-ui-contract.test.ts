@@ -68,7 +68,7 @@ describe('native messaging UI contract', () => {
     expect(source).toContain('accessibilityRole="alert"');
     expect(source).toContain('<ErrorCodeLine code={errorCode} />');
     expect(source).toContain("t('messageStatus'");
-    expect(source).toContain('status: t(item.message.deliveryState)');
+    expect(source).toContain('status: t(deliveryStatusKey(item.message))');
     expect(source).toContain('accessibilityLabel={statusAccessibilityLabel}');
     expect(source).toContain('accessibilityRole="header"');
   });

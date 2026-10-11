@@ -2,7 +2,7 @@ import { TZDate } from '@date-fns/tz';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { addDays, format } from 'date-fns';
 import { z } from 'zod';
-import { AppError } from './errors';
+import { AppError, databaseErrorCode } from './errors';
 import { MADRID_TIME_ZONE, toUtcInstant, type EventLocalizedText } from './events';
 import type { Database } from './types/database';
 
@@ -595,7 +595,9 @@ export async function upsertAttendanceMark(
     attendance_status: input.status,
     attendance_marked_at: input.markedAt,
   });
-  if (error) throw new AppError('DB-1', { message: error.message });
+  // A refusal keeps its own code, so the offline outbox shows it (RAPP-237).
+  if (error)
+    throw new AppError(databaseErrorCode(error.message, error.code), { message: error.message });
   return data as unknown as AttendanceMark;
 }
 

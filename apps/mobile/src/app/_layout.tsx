@@ -15,7 +15,12 @@ import { registerProfileQueries } from '@/lib/profile';
 import { configurePushNotificationPresentation } from '@/lib/push-notifications';
 import { queryClient, queryPersister } from '@/lib/query-client';
 import { persistedQueryOptions } from '@/lib/query-persistence';
-import { dropCachedServerState, observeSessionIdentity } from '@/lib/session-cache';
+import {
+  dropCachedServerState,
+  observePermissionChange,
+  observeSessionIdentity,
+  type PermissionSnapshot,
+} from '@/lib/session-cache';
 import { supabase } from '@/lib/supabase';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { Stack } from 'expo-router/stack';
@@ -108,7 +113,7 @@ export function ErrorBoundary(props: ErrorFallbackProps) {
  * `(auth)` with no manual navigation.
  */
 function RootNavigator() {
-  const { session, isLoading } = useAuth();
+  const { session, isLoading, isResolvingProfile, permissions } = useAuth();
   const userId = session?.user.id ?? null;
   // The identity the cache currently holds data for. A ref, not state: this
   // drives an eviction, not a render.
@@ -136,9 +141,21 @@ function RootNavigator() {
     if (observation === null) return;
     cachedUserIdRef.current = observation.cachedUserId;
     if (observation.shouldDrop) {
-      dropCachedServerState(queryClient);
+      dropCachedServerState(queryClient, queryPersister);
     }
   }, [isLoading, userId]);
+  // A permission change empties the cache as well (RAPP-237).
+  const permissionSnapshotRef = useRef<PermissionSnapshot | undefined>(undefined);
+  useEffect(() => {
+    const observation = observePermissionChange(
+      permissionSnapshotRef.current,
+      { userId, permissions },
+      !isLoading && !isResolvingProfile,
+    );
+    if (observation === null) return;
+    permissionSnapshotRef.current = observation.snapshot;
+    if (observation.shouldDrop) dropCachedServerState(queryClient, queryPersister);
+  }, [isLoading, isResolvingProfile, permissions, userId]);
   // Screen transitions honour reduce-motion too (RAPP-70 scope item 5): the
   // native stack's default slide becomes a plain fade, which is the closest the
   // native navigator offers to "no movement". Set here rather than per screen so

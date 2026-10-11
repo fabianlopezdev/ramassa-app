@@ -44,6 +44,7 @@ const timelineVisibleContentPosition = {
 } as const;
 
 const MessageBubble = memo(function MessageBubble({
+  id,
   content,
   deliveryState,
   isOwn,
@@ -51,7 +52,12 @@ const MessageBubble = memo(function MessageBubble({
   languageClass,
   accessibilityLabel,
   statusAccessibilityLabel,
+  retryLabel,
+  discardLabel,
+  onRetry,
+  onDiscard,
 }: {
+  readonly id: string;
   readonly content: string | null;
   readonly deliveryState: MessageDeliveryState;
   readonly isOwn: boolean;
@@ -59,7 +65,15 @@ const MessageBubble = memo(function MessageBubble({
   readonly languageClass: string;
   readonly accessibilityLabel: string;
   readonly statusAccessibilityLabel: string;
+  /** For a refused message only (RAPP-237). */
+  readonly retryLabel: string;
+  readonly discardLabel: string;
+  readonly onRetry: (id: string) => void;
+  readonly onDiscard: (id: string) => void;
 }) {
+  const isRejected = deliveryState === 'rejected';
+  const handleRetry = useCallback(() => onRetry(id), [id, onRetry]);
+  const handleDiscard = useCallback(() => onDiscard(id), [id, onDiscard]);
   return (
     <View
       style={messageBubbleWidthStyle}
@@ -84,14 +98,50 @@ const MessageBubble = memo(function MessageBubble({
           testID={`message-sync-${deliveryState}`}
           accessibilityLabel={statusAccessibilityLabel}
           accessibilityLiveRegion="polite"
-          className={`text-end text-xs text-neutral-500 ${languageClass}`}
+          className={`text-end text-xs ${
+            isRejected ? 'font-semibold text-error' : 'text-neutral-500'
+          } ${languageClass}`}
         >
           {status}
         </Text>
       ) : null}
+      {isOwn && isRejected ? (
+        <View className="flex-row items-center justify-end gap-sm">
+          <PressableScale
+            testID={`message-retry-${id}`}
+            accessibilityRole="button"
+            accessibilityLabel={retryLabel}
+            onPress={handleRetry}
+            haptic="tapLight"
+            className="min-h-recommended justify-center rounded-md border border-primary px-md"
+          >
+            <Text className={`text-sm font-semibold text-primary-dark ${languageClass}`}>
+              {retryLabel}
+            </Text>
+          </PressableScale>
+          <PressableScale
+            testID={`message-discard-${id}`}
+            accessibilityRole="button"
+            accessibilityLabel={discardLabel}
+            onPress={handleDiscard}
+            haptic="selection"
+            className="min-h-recommended justify-center px-md"
+          >
+            <Text className={`text-sm font-medium text-neutral-700 ${languageClass}`}>
+              {discardLabel}
+            </Text>
+          </PressableScale>
+        </View>
+      ) : null}
     </View>
   );
 });
+
+/** The status under one's own message; a refused one says why (RAPP-237). */
+function deliveryStatusKey(message: ChatMessage) {
+  if (message.deliveryState !== 'rejected') return message.deliveryState;
+  return message.rejectionCode === 'AUTH-3' ? 'deliveryRejectedPermission' : 'deliveryRejected';
+}
 
 function MessageThreadEmptyState({
   title,
@@ -193,8 +243,18 @@ function MessageThreadView({
   const { t, i18n } = useTranslation('messaging');
   const { user } = useAuth();
   const fontClass = useLanguageFontClass();
-  const { messages, send, isOnline, isPending, isError, errorCode, isRefetching, refetch } =
-    controller;
+  const {
+    messages,
+    send,
+    retryMessage,
+    discardMessage,
+    isOnline,
+    isPending,
+    isError,
+    errorCode,
+    isRefetching,
+    refetch,
+  } = controller;
   const dateFormatter = useMemo(
     () =>
       new Intl.DateTimeFormat(i18n.resolvedLanguage ?? DEFAULT_LANGUAGE, { dateStyle: 'medium' }),
@@ -233,22 +293,27 @@ function MessageThreadView({
       const isOwn = item.message.senderId === user?.id;
       return (
         <MessageBubble
+          id={item.message.id}
           content={item.message.content}
           deliveryState={item.message.deliveryState}
           isOwn={isOwn}
-          status={t(item.message.deliveryState)}
+          status={t(deliveryStatusKey(item.message))}
+          retryLabel={t('retry')}
+          discardLabel={t('discard')}
+          onRetry={retryMessage}
+          onDiscard={discardMessage}
           languageClass={fontClass}
           accessibilityLabel={t('messageFrom', {
             sender: isOwn ? t('messageSenderYou') : title,
             content: item.message.content,
           })}
           statusAccessibilityLabel={t('messageStatus', {
-            status: t(item.message.deliveryState),
+            status: t(deliveryStatusKey(item.message)),
           })}
         />
       );
     },
-    [fontClass, t, title, user?.id],
+    [discardMessage, fontClass, retryMessage, t, title, user?.id],
   );
 
   if (isPending && isOnline) {

@@ -14,6 +14,8 @@
  */
 
 import type { QueryClient } from '@tanstack/react-query';
+import type { Persister } from '@tanstack/react-query-persist-client';
+import { isSamePermissionSet } from '@ramassa/shared/auth';
 
 /**
  * Throwing the cached rows away, once the predicate below says to.
@@ -36,8 +38,11 @@ import type { QueryClient } from '@tanstack/react-query';
  * and then to the new woman's record. The promise is deliberately not awaited:
  * the eviction is what has to happen now, the refetch can land whenever.
  */
-export function dropCachedServerState(queryClient: QueryClient): void {
+export function dropCachedServerState(queryClient: QueryClient, persister?: Persister): void {
   void queryClient.resetQueries();
+  // The copy on disk goes too, at once, rather than at the next throttled save
+  // (RAPP-237).
+  void persister?.removeClient();
 }
 
 /**
@@ -70,4 +75,28 @@ export function observeSessionIdentity(
     cachedUserId: nextUserId,
     shouldDrop: shouldDropCachedServerState(previousUserId, nextUserId),
   };
+}
+
+/**
+ * A permission change empties the cache too (RAPP-237): a screen the person may
+ * no longer open must not keep serving rows it fetched while she could. Same
+ * person, different codes; the first observation only records.
+ */
+export interface PermissionSnapshot {
+  readonly userId: string | null;
+  readonly permissions: ReadonlySet<string>;
+}
+
+export function observePermissionChange(
+  previous: PermissionSnapshot | undefined,
+  next: PermissionSnapshot,
+  isSettled: boolean,
+): { readonly snapshot: PermissionSnapshot; readonly shouldDrop: boolean } | null {
+  if (!isSettled) return null;
+  const shouldDrop =
+    previous !== undefined &&
+    previous.userId !== null &&
+    previous.userId === next.userId &&
+    !isSamePermissionSet(previous.permissions, next.permissions);
+  return { snapshot: next, shouldDrop };
 }

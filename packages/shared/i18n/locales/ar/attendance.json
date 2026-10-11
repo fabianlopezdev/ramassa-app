@@ -55,5 +55,9 @@
   "dashboardTrendDescription": "نسبة الحضور حسب الشهر",
   "dashboardCategories": "حسب الفئة",
   "dashboardCategoryEvents_one": "فعالية واحدة",
-  "dashboardCategoryEvents_other": "{{count}} فعالية"
+  "dashboardCategoryEvents_other": "{{count}} فعالية",
+  "syncRejected": "لم يُحفظ. رُفض هذا التسجيل.",
+  "syncRejectedPermission": "لم يُحفظ. لم يعد بإمكانكِ تسجيل الحضور هنا.",
+  "syncRetryAction": "حاولي مرة أخرى",
+  "syncDiscardAction": "إزالة"
 }

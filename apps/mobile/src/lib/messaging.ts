@@ -22,7 +22,7 @@ import {
   type ConversationPeer,
   type StaffConversationRow,
 } from '@ramassa/shared/messaging';
-import { createMessagingOutbox } from '@ramassa/shared/messaging/outbox';
+import { createMessagingOutbox, type MessagingOutboxEntry } from '@ramassa/shared/messaging/outbox';
 import { generateMessageId } from './message-id';
 import {
   groupDeliveredMessagesByConversation,
@@ -94,7 +94,14 @@ function useConversationThread(requestedConversationId: string | null) {
     () => (userId === null ? null : createMessagingOutbox(privateStorage, userId)),
     [userId],
   );
-  const outboxEntries = outbox?.list() ?? [];
+  // What the outbox holds, re-read after every change to it, so a refused
+  // message shows as refused even when no retry time changes (RAPP-237). Read
+  // at the first render too: an offline cold start shows its waiting messages.
+  const [outboxEntries, setOutboxEntries] = useState<readonly MessagingOutboxEntry[]>(
+    () => outbox?.list() ?? [],
+  );
+  const refreshOutbox = useCallback(() => setOutboxEntries(outbox?.list() ?? []), [outbox]);
+  useEffect(() => refreshOutbox(), [refreshOutbox]);
   const conversationQuery = useQuery<Conversation>({
     queryKey: conversationKey,
     queryFn: ({ signal }) =>
@@ -148,7 +155,8 @@ function useConversationThread(requestedConversationId: string | null) {
       }
     }
     setNextRetryAt(result.nextRetryAt);
-  }, [canDrainOutbox, outbox, queryClient, userId]);
+    refreshOutbox();
+  }, [canDrainOutbox, outbox, queryClient, refreshOutbox, userId]);
 
   useEffect(() => {
     if (canDrainOutbox) void drain();
@@ -188,7 +196,13 @@ function useConversationThread(requestedConversationId: string | null) {
             content: entry.content,
             imageUrl: entry.imageUrl,
             createdAt: entry.createdAt,
-            deliveryState: entry.attemptCount > 0 ? 'retrying' : 'sending',
+            deliveryState:
+              entry.rejection != null
+                ? 'rejected'
+                : entry.attemptCount > 0
+                  ? 'retrying'
+                  : 'sending',
+            rejectionCode: entry.rejection?.code ?? null,
           }));
   const messages = mergeMessageTimeline(messagesQuery.data ?? [], pendingMessages);
   const rendersRestoredConversation = shouldRenderRestoredConversation(
@@ -244,9 +258,34 @@ function useConversationThread(requestedConversationId: string | null) {
           },
         ]),
       );
+      refreshOutbox();
       if (canDrainOutbox) void drain();
     },
-    [canDrainOutbox, conversationId, drain, messageKey, outbox, queryClient, userId],
+    [canDrainOutbox, conversationId, drain, messageKey, outbox, queryClient, refreshOutbox, userId],
+  );
+
+  /** Sends a refused message again (RAPP-237). */
+  const retryMessage = useCallback(
+    (id: string) => {
+      if (outbox === null) return;
+      outbox.retry(id);
+      refreshOutbox();
+      if (canDrainOutbox) void drain();
+    },
+    [canDrainOutbox, drain, outbox, refreshOutbox],
+  );
+
+  /** Gives up a refused message: it leaves the outbox and the screen. */
+  const discardMessage = useCallback(
+    (id: string) => {
+      if (outbox === null) return;
+      outbox.discard(id);
+      refreshOutbox();
+      queryClient.setQueryData<readonly ChatMessage[]>(messageKey, (current) =>
+        current?.filter((message) => message.id !== id),
+      );
+    },
+    [messageKey, outbox, queryClient, refreshOutbox],
   );
 
   return {
@@ -254,6 +293,8 @@ function useConversationThread(requestedConversationId: string | null) {
     peer: peerQuery.data ?? null,
     messages,
     send,
+    retryMessage,
+    discardMessage,
     isOnline,
     isPending:
       !rendersRestoredConversation &&

@@ -26,5 +26,6 @@ export {
   verifySecondFactor,
   type SecondFactorStart,
 } from './second-factor';
+export { isSamePermissionSet, subscribeToOwnPermissionChanges } from './permission-changes';
 export { isSessionCurrent, signOutEverywhere } from './sessions';
 export { confirmSecondFactor, hasRecentSecondFactor, secondFactorVerifiedAt } from './step-up';

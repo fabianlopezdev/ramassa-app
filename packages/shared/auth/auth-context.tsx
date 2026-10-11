@@ -30,6 +30,7 @@ import { fetchMyPermissions, type PermissionCode } from '../permissions';
 import type { AppRole } from '../schemas/auth';
 import type { Database } from '../types/database';
 import { fetchProfileSummary } from './auth-actions';
+import { isSamePermissionSet, subscribeToOwnPermissionChanges } from './permission-changes';
 import { assuranceLevelOf, needsSecondFactor as sessionNeedsSecondFactor } from './second-factor';
 import { isSessionCurrent } from './sessions';
 
@@ -148,7 +149,11 @@ export function AuthProvider({ client, children, onError }: AuthProviderProps) {
         const nextPermissions = isTeamMember ? await fetchMyPermissions(client) : NO_PERMISSIONS;
         if (isSubscribed && latestChangeRef.current === changeId) {
           setRole(summary?.role ?? null);
-          setPermissions(nextPermissions);
+          // The same set object while nothing changed, so a screen can tell a
+          // real permission change from a refresh (RAPP-237).
+          setPermissions((current) =>
+            isSamePermissionSet(current, nextPermissions) ? current : nextPermissions,
+          );
           setPermissionsLevel(assuranceLevelOf(nextSession));
           setNeedsOnboarding(summary === null || summary.termsAcceptedAt === null);
         }
@@ -186,6 +191,15 @@ export function AuthProvider({ client, children, onError }: AuthProviderProps) {
   const refreshProfile = useCallback(async () => {
     await applySessionRef.current?.(sessionRef.current);
   }, []);
+
+  // A team member's permissions reload the moment someone changes them, so
+  // menus and screens follow without a sign-out (RAPP-237).
+  const userId = session?.user.id ?? null;
+  const isTeamMember = role === 'staff' || role === 'admin';
+  useEffect(() => {
+    if (userId === null || !isTeamMember) return;
+    return subscribeToOwnPermissionChanges(client, userId, () => void refreshProfile());
+  }, [client, userId, isTeamMember, refreshProfile]);
 
   const value = useMemo<AuthState>(
     () => ({
