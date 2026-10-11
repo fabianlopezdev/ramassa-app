@@ -34,7 +34,7 @@ select has_index('public', 'profiles', 'profiles_search_document_idx', 'the sear
 -- Searching as staff ---------------------------------------------------------------
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 
 -- Accent folding, in both directions: the team types what is on their keyboard,
 -- and a name typed with its accents must still find itself.
@@ -116,7 +116,7 @@ select cmp_ok(
 
 -- An entity contact sees NOTHING here. Access to the participants she referred
 -- arrives with the referrals table; the roster itself is not hers to read.
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000004", "role": "authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000004", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 
 select is(
   (select count(*) from public.profiles where role = 'player')::int, 0,
@@ -133,7 +133,7 @@ select is(
 );
 
 -- A participant sees only herself, however she searches.
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000011", "role": "authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000011", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 
 select is(
   (select count(*) from public.profiles where role = 'player')::int, 1,

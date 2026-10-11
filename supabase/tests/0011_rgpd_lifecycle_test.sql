@@ -168,7 +168,7 @@ $$;
 -- the column, and the non-cascading FK it exists for would surface for the first
 -- time in production.
 set local role authenticated;
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000011", "role": "authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000011", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 insert into public.audit_log (org_id, actor_id, action, target_type, target_id)
 values (
   '5eed0000-0000-4000-8000-000000000000',
@@ -277,7 +277,7 @@ select is(
 );
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000004", "role": "authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000004", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 
 select throws_ok(
   $$ select public.anonymize_participant('5eed0000-0000-4000-8000-000000000012') $$,
@@ -286,7 +286,7 @@ select throws_ok(
   'an entity contact cannot anonymize a participant'
 );
 
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000026", "role": "authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000026", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 
 select throws_ok(
   $$ select public.anonymize_participant('5eed0000-0000-4000-8000-000000000012') $$,
@@ -295,7 +295,7 @@ select throws_ok(
   'and neither can a participant, including on her own record'
 );
 
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 
 select lives_ok(
   $$ select public.anonymize_participant('5eed0000-0000-4000-8000-000000000012') $$,
@@ -389,7 +389,7 @@ select is(
 -- Erasure: who may ------------------------------------------------------------------
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 
 -- Staff run the day-to-day record. Erasure is terminal, so it is the one action
 -- that stops at the admin. This assertion is the difference between the two
@@ -401,7 +401,7 @@ select throws_ok(
   'a staff member cannot erase a participant: erasure is an admin action'
 );
 
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000004", "role": "authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000004", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 
 select throws_ok(
   $$ select public.delete_participant_permanently('5eed0000-0000-4000-8000-000000000011') $$,
@@ -410,7 +410,7 @@ select throws_ok(
   'nor can an entity contact'
 );
 
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000011", "role": "authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000011", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 
 select throws_ok(
   $$ select public.delete_participant_permanently('5eed0000-0000-4000-8000-000000000011') $$,
@@ -421,7 +421,7 @@ select throws_ok(
 
 -- Erasure: the media receipt ----------------------------------------------------------
 
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000001", "role": "authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000001", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 
 -- The objects in R2 are outside this database and outside this transaction, so
 -- "her media is gone" cannot be something the caller merely promises. The media
@@ -556,7 +556,7 @@ select ok(
 -- Erasure: failing loudly ------------------------------------------------------------------
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000001", "role": "authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000001", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 
 -- A no-op that reports success is how a staff member tells a woman her data is
 -- gone when it is not. Erasing nothing is an error.

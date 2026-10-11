@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
-import { AppError } from './errors';
+import { AppError, databaseErrorCode } from './errors';
 import type { Database } from './types/database';
 
 const entityIdSchema = z.uuid();
@@ -184,7 +184,7 @@ export interface EntityDashboard {
 type Client = SupabaseClient<Database>;
 
 function databaseFailure(message: string): never {
-  throw new AppError('DB-1', { message });
+  throw new AppError(databaseErrorCode(message), { message });
 }
 
 function impactFromRow(row: z.infer<typeof impactSchema>): EntityImpact {

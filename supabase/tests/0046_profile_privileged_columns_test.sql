@@ -13,7 +13,7 @@ update public.profiles set is_forum_banned = true where id = '5eed0000-0000-4000
 -- Staff --------------------------------------------------------------------------------------
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 
 select throws_ok(
   $$ update public.profiles set role = 'admin' where id = '5eed0000-0000-4000-8000-000000000002' $$,
@@ -64,7 +64,7 @@ select is(
 -- Player ---------------------------------------------------------------------------------------
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000016", "role": "authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000016", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select throws_ok(
   $$ update public.profiles set is_forum_banned = false where id = '5eed0000-0000-4000-8000-000000000016' $$,
   '42501', 'PROFILES/PRIVILEGED_COLUMN', 'a banned player cannot lift her own ban'
@@ -76,7 +76,7 @@ select throws_ok(
 
 -- Entity collaborator --------------------------------------------------------------------------
 
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000004", "role": "authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000004", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select throws_ok(
   $$ update public.profiles set collaborating_entity_id = '5eed0000-0000-4000-8030-000000000002'
      where id = '5eed0000-0000-4000-8000-000000000004' $$,

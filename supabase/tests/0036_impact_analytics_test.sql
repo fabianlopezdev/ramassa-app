@@ -111,7 +111,7 @@ insert into public.forum_replies (
   ('62000000-0000-4000-8a00-000000000002', '62000000-0000-4000-8000-000000000001', '62000000-0000-4000-8900-000000000002', '62000000-0000-4000-8200-000000000003', 'Carla', 'Segona resposta', '2026-03-31T11:00:00Z');
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub":"62000000-0000-4000-8100-000000000001","role":"authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub":"62000000-0000-4000-8100-000000000001","role":"authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 
 insert into public.attendance (occurrence_id, player_id, status, marked_at)
 select occurrence.id, fixture.player_id, fixture.status, fixture.marked_at
@@ -251,7 +251,7 @@ select throws_ok(
   'a reversed period is rejected at the database boundary'
 );
 
-set local request.jwt.claims = '{"sub":"62000000-0000-4000-8100-000000000002","role":"authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub":"62000000-0000-4000-8100-000000000002","role":"authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select throws_ok(
   $$ select public.get_impact_report('2026-03-29', '2026-03-31', null, null) $$,
   '42501',
@@ -259,7 +259,7 @@ select throws_ok(
   'DENIAL: an entity contact cannot execute the staff impact report'
 );
 
-set local request.jwt.claims = '{"sub":"62000000-0000-4000-8200-000000000001","role":"authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub":"62000000-0000-4000-8200-000000000001","role":"authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select throws_ok(
   $$ select public.get_impact_report('2026-03-29', '2026-03-31', null, null) $$,
   '42501',
@@ -267,7 +267,7 @@ select throws_ok(
   'DENIAL: a player cannot execute the staff impact report'
 );
 
-set local request.jwt.claims = '{"sub":"62000000-0000-4000-8300-000000000001","role":"authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub":"62000000-0000-4000-8300-000000000001","role":"authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select is(
   (public.get_impact_report('2026-03-29', '2026-03-31', null, null) #>> '{summary,suppressed}')::boolean,
   true,

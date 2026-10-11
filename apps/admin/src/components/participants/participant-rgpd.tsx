@@ -14,6 +14,7 @@
  * staff member than no button at all.
  */
 
+import { useStepUp } from '@/components/auth/step-up';
 import { DestructiveConfirm } from '@/components/participants/destructive-confirm';
 import { Button } from '@/components/ui/button';
 import { mediaWorkerUrl } from '@/lib/media-worker';
@@ -23,7 +24,7 @@ import { useNavigate, useRouter } from '@tanstack/react-router';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@ramassa/shared/auth';
-import { getErrorMessageKey } from '@ramassa/shared/errors';
+import { AppError, getErrorMessageKey } from '@ramassa/shared/errors';
 import type { ParticipantDetailRow } from '@ramassa/shared/participants';
 import {
   anonymizeParticipant,
@@ -42,6 +43,7 @@ type Gesture = 'none' | 'anonymize' | 'erase';
 
 export function ParticipantRgpd({ participant, openDeletionRequestReason }: ParticipantRgpdProps) {
   const { t } = useTranslation(['participants', 'errors', 'common']);
+  const withStepUp = useStepUp();
   const router = useRouter();
   const navigate = useNavigate();
   const { permissions } = useAuth();
@@ -79,7 +81,9 @@ export function ParticipantRgpd({ participant, openDeletionRequestReason }: Part
   async function anonymize() {
     setErrorMessage(undefined);
     setIsWorking(true);
-    const result = await safeAsync(() => anonymizeParticipant(supabase, participant.id));
+    const result = await safeAsync(() =>
+      withStepUp(() => anonymizeParticipant(supabase, participant.id)),
+    );
     setIsWorking(false);
     if (!result.ok) {
       setErrorMessage(t(getErrorMessageKey(result.error.code)));
@@ -98,23 +102,26 @@ export function ParticipantRgpd({ participant, openDeletionRequestReason }: Part
     setErrorMessage(undefined);
     setIsWorking(true);
 
-    const session = await supabase.auth.getSession();
-    const accessToken = session.data.session?.access_token;
-    if (accessToken === undefined) {
-      setIsWorking(false);
-      setErrorMessage(t('errors:AUTH-2'));
-      return;
-    }
-
-    const result = await eraseParticipant(participant.id, {
-      purgeMedia: () =>
-        purgeParticipantMedia({
-          mediaWorkerUrl,
-          accessToken,
-          participantId: participant.id,
-        }),
-      deleteRecord: () => deleteParticipantPermanently(supabase, participant.id),
-    });
+    // Erasure is a risky action (RAPP-235): the code is asked for first, and
+    // the token is read after it, so both halves carry the fresh verification.
+    const result = await safeAsync(() =>
+      withStepUp(async () => {
+        const session = await supabase.auth.getSession();
+        const accessToken = session.data.session?.access_token;
+        if (accessToken === undefined) throw new AppError('AUTH-2');
+        const erased = await eraseParticipant(participant.id, {
+          purgeMedia: () =>
+            purgeParticipantMedia({
+              mediaWorkerUrl,
+              accessToken,
+              participantId: participant.id,
+            }),
+          deleteRecord: () => deleteParticipantPermanently(supabase, participant.id),
+        });
+        if (!erased.ok) throw erased.error;
+        return erased.value;
+      }),
+    );
     setIsWorking(false);
 
     if (!result.ok) {

@@ -33,6 +33,7 @@ type Client = SupabaseClient<Database>;
  * is checked before the generic fallback.
  */
 const ERASURE_ERROR_CODE_BY_TOKEN: readonly (readonly [string, AppErrorCode])[] = [
+  ['step_up_required', 'AUTH-9'],
   ['DELETION_MEDIA_NOT_PURGED', 'DB-4'],
   ['DELETION_INCOMPLETE', 'DB-3'],
   ['DELETION_NO_SUBJECT', 'DB-2'],
@@ -170,6 +171,6 @@ export async function resolveDeletionRequest(
     p_resolution_note: params.resolutionNote,
   });
   if (error) {
-    throw new AppError('DB-1', { message: error.message });
+    throw toTypedError(error.message);
   }
 }

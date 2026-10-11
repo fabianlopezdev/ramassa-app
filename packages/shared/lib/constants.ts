@@ -27,3 +27,11 @@ export const CURRENT_TERMS_VERSION = '2026-07-01';
  */
 const configuredSupportEmail = process.env.EXPO_PUBLIC_SUPPORT_EMAIL?.trim();
 export const SUPPORT_EMAIL = configuredSupportEmail || null;
+
+/**
+ * How old the last authenticator code may be for a risky action (RAPP-235):
+ * RGPD deletion, permission and preset changes, new accounts, second-factor
+ * resets and exports. The database migration `step_up_checks` uses the same
+ * 10 minutes, and the media Worker checks it before an erasure sweep.
+ */
+export const STEP_UP_WINDOW_SECONDS = 10 * 60;

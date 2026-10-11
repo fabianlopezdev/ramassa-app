@@ -1,4 +1,5 @@
 import { RequireAuth } from '@/components/auth/require-auth';
+import { useStepUp } from '@/components/auth/step-up';
 import { ORGANIZATION_BRANDING_CHANGED_EVENT } from '@/components/branding/organization-branding-provider';
 import { EntityManagementPanel } from '@/components/entity/entity-management-panel';
 import { OrganizationSettingsPanel } from '@/components/settings/organization-settings-panel';
@@ -118,6 +119,8 @@ function OrganizationSettingsScreen() {
   }
 
   const search = Route.useSearch();
+  // Risky changes ask for a fresh authenticator code first (RAPP-235).
+  const withStepUp = useStepUp();
   const entityManagement = (
     <EntityManagementPanel
       entities={data.entities}
@@ -132,8 +135,11 @@ function OrganizationSettingsScreen() {
         await refresh();
       }}
       onInvite={async (input) => {
-        if (data.selectedEntityId === null) return;
-        const invitation = await inviteEntityCollaborator(supabase, data.selectedEntityId, input);
+        const entityId = data.selectedEntityId;
+        if (entityId === null) return;
+        const invitation = await withStepUp(() =>
+          inviteEntityCollaborator(supabase, entityId, input),
+        );
         const result = await sendEmailOtp(invitation.email);
         if (!result.ok) throw result.error;
         await refresh();
@@ -143,11 +149,11 @@ function OrganizationSettingsScreen() {
         await refresh();
       }}
       onSetCollaboratorActive={async (profileId, isActive) => {
-        await setEntityCollaboratorActive(supabase, profileId, isActive);
+        await withStepUp(() => setEntityCollaboratorActive(supabase, profileId, isActive));
         await refresh();
       }}
       onResetCollaboratorSecondFactor={async (profileId) => {
-        await resetSecondFactor(supabase, profileId);
+        await withStepUp(() => resetSecondFactor(supabase, profileId));
         await refresh();
       }}
     />
@@ -164,42 +170,44 @@ function OrganizationSettingsScreen() {
         // The account type follows the preset: Admin makes an admin account,
         // anything else a staff account, which starts on the Staff preset.
         const role = preset?.builtinKey === 'admin' ? 'admin' : 'staff';
-        const invitation = await inviteStaffMember(supabase, { ...person, role });
+        const invitation = await withStepUp(() => inviteStaffMember(supabase, { ...person, role }));
         if (preset !== undefined && preset.builtinKey !== role) {
-          await applyPermissionPreset(supabase, preset.id, [invitation.profileId]);
+          await withStepUp(() =>
+            applyPermissionPreset(supabase, preset.id, [invitation.profileId]),
+          );
         }
         const result = await sendEmailOtp(invitation.email);
         if (!result.ok) throw result.error;
         await refresh();
       }}
       onSaveMemberAccess={async (input) => {
-        await setTeamMemberPermissions(supabase, input);
+        await withStepUp(() => setTeamMemberPermissions(supabase, input));
         await refreshIfMine([input.profileId]);
       }}
       onSavePreset={async (input) => {
-        const presetId = await savePermissionPreset(supabase, input);
+        const presetId = await withStepUp(() => savePermissionPreset(supabase, input));
         await refresh();
         return presetId;
       }}
       onApplyPreset={async (presetId, profileIds) => {
-        await applyPermissionPreset(supabase, presetId, profileIds);
+        await withStepUp(() => applyPermissionPreset(supabase, presetId, profileIds));
         await refreshIfMine(profileIds);
       }}
       onDeletePreset={async (presetId) => {
-        await deletePermissionPreset(supabase, presetId);
+        await withStepUp(() => deletePermissionPreset(supabase, presetId));
         await refresh();
       }}
       onRestorePreset={async (presetId) => {
-        await restorePermissionPresetDefault(supabase, presetId);
+        await withStepUp(() => restorePermissionPresetDefault(supabase, presetId));
         await refresh();
       }}
       onRemove={async (profileId) => {
-        await removeStaffMember(supabase, profileId);
+        await withStepUp(() => removeStaffMember(supabase, profileId));
         await refresh();
       }}
       currentUserId={user?.id ?? null}
       onResetSecondFactor={async (profileId) => {
-        await resetSecondFactor(supabase, profileId);
+        await withStepUp(() => resetSecondFactor(supabase, profileId));
         await refresh();
       }}
       onSignOutEverywhere={async (profileId) => {

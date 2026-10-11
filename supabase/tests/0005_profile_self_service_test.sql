@@ -37,7 +37,7 @@ insert into auth.users (id, email) values
 -- RPC rather than a raw insert, so what the edit path reads back is exactly what
 -- intake wrote, encryption included.
 set local role authenticated;
-set local request.jwt.claims = '{"sub": "00000000-0000-0000-0000-0000000000d1", "role": "authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub": "00000000-0000-0000-0000-0000000000d1", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 
 select public.complete_onboarding(
   jsonb_build_object(
@@ -81,7 +81,7 @@ select is(
 -- A stranger gets NOTHING, not someone else's row. The RPC keys off the caller,
 -- so there is no argument to pass that could widen it: this asserts the shape of
 -- that guarantee rather than trusting the absence of a parameter.
-set local request.jwt.claims = '{"sub": "00000000-0000-0000-0000-0000000000d2", "role": "authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub": "00000000-0000-0000-0000-0000000000d2", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 
 select is_empty(
   $$ select id from public.get_own_profile() $$,
@@ -90,7 +90,7 @@ select is_empty(
 
 -- Editing own profile ----------------------------------------------------------
 
-set local request.jwt.claims = '{"sub": "00000000-0000-0000-0000-0000000000d1", "role": "authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub": "00000000-0000-0000-0000-0000000000d1", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 
 select lives_ok(
   $$ select public.update_own_profile(
@@ -142,7 +142,7 @@ select is(
 );
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub": "00000000-0000-0000-0000-0000000000d1", "role": "authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub": "00000000-0000-0000-0000-0000000000d1", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 
 -- Escalation. The payload carries role and org because a naive client would send
 -- the whole profile back; the RPC must ignore them rather than trust them.

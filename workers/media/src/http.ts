@@ -15,6 +15,7 @@ import type { AppErrorCode } from '@ramassa/shared/errors';
 const statusByErrorCode: Partial<Record<AppErrorCode, number>> = {
   'AUTH-2': 401,
   'AUTH-3': 403,
+  'AUTH-9': 403,
   'DB-2': 404,
   'UPLOAD-2': 400,
   'UPLOAD-3': 400,

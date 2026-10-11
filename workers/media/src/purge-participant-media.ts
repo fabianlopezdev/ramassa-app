@@ -30,6 +30,7 @@
  * field an attacker could set to reach another organization's objects.
  */
 
+import { STEP_UP_WINDOW_SECONDS } from '@ramassa/shared/constants';
 import { AppError, isAppError, type AppErrorCode } from '@ramassa/shared/errors';
 import { purgeParticipantMediaRequestSchema, UPLOAD_FOLDERS } from '@ramassa/shared/schemas';
 import { errorResponse, jsonResponse } from './http';
@@ -68,6 +69,8 @@ export interface PurgeParticipantMediaDependencies {
   readonly recordReceipt: (receipt: PurgeReceipt) => Promise<void>;
   readonly corsHeaders?: Record<string, string>;
   readonly onError?: (error: unknown, context: Record<string, unknown>) => void;
+  /** The current time in milliseconds. Injected, so the step-up window is testable. */
+  readonly now?: () => number;
 }
 
 interface PurgeParticipantMediaResponse {
@@ -167,6 +170,14 @@ export async function handlePurgeParticipantMedia(
     !identity.permissions.has('team.manage')
   ) {
     return fail('AUTH-3');
+  }
+
+  // Erasure is a risky action (RAPP-235): it needs an authenticator code from
+  // the last few minutes, the same rule the database applies to the record.
+  const verifiedAt = identity.secondFactorVerifiedAt;
+  const nowSeconds = (dependencies.now ?? Date.now)() / 1000;
+  if (verifiedAt === null || nowSeconds - verifiedAt >= STEP_UP_WINDOW_SECONDS) {
+    return fail('AUTH-9');
   }
 
   const body = await readJsonBody(request);
