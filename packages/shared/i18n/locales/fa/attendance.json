@@ -55,5 +55,9 @@
   "dashboardTrendDescription": "نرخ حضور به تفکیک ماه",
   "dashboardCategories": "به تفکیک دسته",
   "dashboardCategoryEvents_one": "{{count}} رویداد",
-  "dashboardCategoryEvents_other": "{{count}} رویداد"
+  "dashboardCategoryEvents_other": "{{count}} رویداد",
+  "syncRejected": "ذخیره نشد. این علامت رد شد.",
+  "syncRejectedPermission": "ذخیره نشد. دیگر نمی‌توانید اینجا حضور و غیاب کنید.",
+  "syncRetryAction": "دوباره امتحان کنید",
+  "syncDiscardAction": "حذف"
 }

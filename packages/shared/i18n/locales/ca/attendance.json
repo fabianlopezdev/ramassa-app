@@ -55,5 +55,9 @@
   "dashboardTrendDescription": "Taxa d’assistència per mes",
   "dashboardCategories": "Per categoria",
   "dashboardCategoryEvents_one": "{{count}} esdeveniment",
-  "dashboardCategoryEvents_other": "{{count}} esdeveniments"
+  "dashboardCategoryEvents_other": "{{count}} esdeveniments",
+  "syncRejected": "No s'ha desat. Aquesta marca s'ha rebutjat.",
+  "syncRejectedPermission": "No s'ha desat. Ja no pots passar llista aquí.",
+  "syncRetryAction": "Torna-ho a provar",
+  "syncDiscardAction": "Treu-la"
 }

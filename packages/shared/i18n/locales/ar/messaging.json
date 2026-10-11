@@ -53,5 +53,8 @@
   "backShort": "رجوع",
   "backToConversations": "الرجوع إلى المحادثات",
   "backToAttendance": "الرجوع إلى الحضور",
-  "managementUnread": "المحادثات ({{count}} غير مقروءة)"
+  "managementUnread": "المحادثات ({{count}} غير مقروءة)",
+  "deliveryRejected": "لم تُرسل. رُفضت هذه الرسالة.",
+  "deliveryRejectedPermission": "لم تُرسل. لم يعد بإمكانكِ إرسال رسائل هنا.",
+  "discard": "إزالة"
 }

@@ -53,5 +53,8 @@
   "backShort": "Enrere",
   "backToConversations": "Torna a les converses",
   "backToAttendance": "Torna a l’assistència",
-  "managementUnread": "Converses ({{count}} sense llegir)"
+  "managementUnread": "Converses ({{count}} sense llegir)",
+  "deliveryRejected": "No s'ha enviat. Aquest missatge s'ha rebutjat.",
+  "deliveryRejectedPermission": "No s'ha enviat. Ja no pots enviar missatges aquí.",
+  "discard": "Treu-lo"
 }

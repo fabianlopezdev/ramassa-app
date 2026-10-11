@@ -1,10 +1,11 @@
 import type { RealtimePostgresInsertPayload, SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
-import { AppError } from '../errors';
+import { AppError, databaseErrorCode, type AppErrorCode } from '../errors';
 import { buildPrefixTsQuery } from '../participants/participant-query';
 import type { Database } from '../types/database';
 
-export type MessageDeliveryState = 'sending' | 'retrying' | 'delivered';
+/** `rejected`: the server refused it; it stays with a retry (RAPP-237). */
+export type MessageDeliveryState = 'sending' | 'retrying' | 'delivered' | 'rejected';
 
 export const MESSAGE_CONTENT_MAX_LENGTH = 4_000;
 
@@ -35,6 +36,8 @@ export interface ChatMessage {
   readonly imageUrl: string | null;
   readonly createdAt: string;
   readonly deliveryState: MessageDeliveryState;
+  /** Why a `rejected` message was refused. */
+  readonly rejectionCode?: AppErrorCode | null;
 }
 
 export interface StaffConversationRow {
@@ -326,7 +329,9 @@ export async function sendConversationMessage(
     p_image_url: '',
     p_message_id: input.id,
   });
-  if (error) throw new AppError('DB-1', { message: error.message });
+  if (error) {
+    throw new AppError(databaseErrorCode(error.message, error.code), { message: error.message });
+  }
   return parseMessage(data);
 }
 

@@ -53,5 +53,8 @@
   "backShort": "بازگشت",
   "backToConversations": "بازگشت به گفت‌وگوها",
   "backToAttendance": "بازگشت به حضور و غیاب",
-  "managementUnread": "گفت‌وگوها ({{count}} خوانده‌نشده)"
+  "managementUnread": "گفت‌وگوها ({{count}} خوانده‌نشده)",
+  "deliveryRejected": "ارسال نشد. این پیام رد شد.",
+  "deliveryRejectedPermission": "ارسال نشد. دیگر نمی‌توانید اینجا پیام بفرستید.",
+  "discard": "حذف"
 }

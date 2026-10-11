@@ -15,6 +15,7 @@ function makeClient(options: {
 }) {
   const localSignOuts: string[] = [];
   let onChange: AuthChangeCallback = () => {};
+  const channels: { name: string; filter: unknown; handler: () => void; removed: boolean }[] = [];
   // Mutable so a test can install a profile AFTER mount and call refreshProfile,
   // which is exactly what completing the wizard does.
   const state = {
@@ -28,6 +29,7 @@ function makeClient(options: {
         },
         error: null,
       } as { data: unknown; error: unknown }),
+    permissions: [...(options.permissions ?? [])] as string[],
   };
   const client = {
     auth: {
@@ -51,13 +53,32 @@ function makeClient(options: {
     rpc: async (name: string) =>
       name === 'my_session_is_current'
         ? { data: options.sessionCurrent ?? true, error: null }
-        : { data: options.permissions ?? [], error: null },
+        : { data: state.permissions, error: null },
+    channel: (name: string) => {
+      const entry = { name, filter: null as unknown, handler: () => {}, removed: false };
+      channels.push(entry);
+      const channel = {
+        on: (_type: string, filter: unknown, handler: () => void) => {
+          entry.filter = filter;
+          entry.handler = handler;
+          return channel;
+        },
+        subscribe: () => channel,
+        entry,
+      };
+      return channel;
+    },
+    removeChannel: async (channel: { entry: { removed: boolean } }) => {
+      channel.entry.removed = true;
+      return 'ok';
+    },
   } as unknown as SupabaseClient<Database>;
   return {
     client,
     state,
     emit: (session: unknown) => onChange('SIGNED_IN', session),
     localSignOuts,
+    channels,
   };
 }
 
@@ -238,4 +259,73 @@ test('a session ended remotely is signed out on this device (RAPP-234)', async (
   );
   await waitFor(() => expect(localSignOuts).toEqual(['local']));
   await waitFor(() => expect(textContentOf(getByTestId('probe'))).toBe('ready|out|none|ok'));
+});
+
+test('a change to her access row reloads her permissions at once (RAPP-237)', async () => {
+  const { client, state, channels } = makeClient({
+    initialSession: { user: { id: '5eed0000-0000-4000-8000-000000000002' } },
+    role: 'staff',
+    permissions: ['attendance.mark'],
+  });
+  const { getByTestId, unmount } = render(
+    <AuthProvider client={client}>
+      <PermissionsProbe />
+    </AuthProvider>,
+  );
+  await waitFor(() => expect(textContentOf(getByTestId('permissions'))).toBe('attendance.mark'));
+  const channel = channels.find((entry) => entry.name.startsWith('permissions:'));
+  expect(channel?.filter).toEqual({
+    event: '*',
+    schema: 'public',
+    table: 'team_member_access',
+    filter: 'profile_id=eq.5eed0000-0000-4000-8000-000000000002',
+  });
+
+  state.permissions = ['attendance.mark', 'messages.inbox'];
+  await act(async () => channel?.handler());
+  await waitFor(() =>
+    expect(textContentOf(getByTestId('permissions'))).toBe('attendance.mark,messages.inbox'),
+  );
+  unmount();
+  expect(channel?.removed).toBe(true);
+});
+
+test('a player opens no permission channel', async () => {
+  const { client, channels } = makeClient({
+    initialSession: { user: { id: 'u1' } },
+    role: 'player',
+  });
+  const { getByTestId } = render(
+    <AuthProvider client={client}>
+      <AuthProbe />
+    </AuthProvider>,
+  );
+  await waitFor(() => expect(textContentOf(getByTestId('probe'))).toBe('ready|in|player|ok'));
+  expect(channels).toHaveLength(0);
+});
+
+test('a refresh with the same codes keeps the same permission set', async () => {
+  const seen: ReadonlySet<string>[] = [];
+  function SetProbe() {
+    const { permissions, isLoading, refreshProfile } = useAuth();
+    if (!isLoading) seen.push(permissions);
+    latestRefresh = refreshProfile;
+    return null;
+  }
+  const { client } = makeClient({
+    initialSession: { user: { id: '5eed0000-0000-4000-8000-000000000003' } },
+    role: 'staff',
+    permissions: ['attendance.mark'],
+  });
+  render(
+    <AuthProvider client={client}>
+      <SetProbe />
+    </AuthProvider>,
+  );
+  await waitFor(() => expect(seen.at(-1)?.has('attendance.mark')).toBe(true));
+  const before = seen.at(-1);
+  await act(async () => {
+    await latestRefresh?.();
+  });
+  expect(seen.at(-1)).toBe(before);
 });

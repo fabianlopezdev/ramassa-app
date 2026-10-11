@@ -59,23 +59,30 @@ export function cachedListItemInitialDataOptions<T extends { readonly id: string
   };
 }
 
+/**
+ * The only query roots saved to disk: organization content shown to players.
+ * Anything that returns decrypted personal fields (the own profile, a
+ * conversation peer, a participant record, attendance names) stays in memory
+ * and is gone with the app (RAPP-237). A contract test holds this list.
+ */
+export const PERSISTED_QUERY_ROOTS: readonly unknown[] = [
+  PLAYER_ANNOUNCEMENTS_QUERY_ROOT,
+  PLAYER_EVENTS_QUERY_ROOT,
+  PLAYER_KNOWLEDGE_QUERY_ROOT,
+  PLAYER_SERVICES_QUERY_ROOT,
+  PLAYER_FORUM_QUERY_ROOT,
+  PLAYER_GALLERY_QUERY_ROOT,
+];
+
 function shouldPersistQuery(query: Query): boolean {
-  return (
-    (query.queryKey[0] === PLAYER_ANNOUNCEMENTS_QUERY_ROOT ||
-      query.queryKey[0] === PLAYER_EVENTS_QUERY_ROOT ||
-      query.queryKey[0] === PLAYER_KNOWLEDGE_QUERY_ROOT ||
-      query.queryKey[0] === PLAYER_SERVICES_QUERY_ROOT ||
-      query.queryKey[0] === PLAYER_FORUM_QUERY_ROOT ||
-      query.queryKey[0] === PLAYER_GALLERY_QUERY_ROOT) &&
-    query.state.status === 'success'
-  );
+  return PERSISTED_QUERY_ROOTS.includes(query.queryKey[0]) && query.state.status === 'success';
 }
 
 /**
  * Persistence is intentionally allowlisted to player-facing organization
  * content and the caller's signup state. Every key is user-scoped. The same
- * QueryClient also holds a participant's decrypted profile, which must never
- * be serialized into the unencrypted MMKV instance.
+ * QueryClient also holds a participant's decrypted profile, which is never
+ * written to disk, even to the encrypted MMKV store.
  */
 export function persistedQueryOptions(persister: Persister) {
   return {

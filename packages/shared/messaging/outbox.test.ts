@@ -71,6 +71,7 @@ describe('persisted messaging outbox', () => {
     expect(failed).toEqual({
       delivered: [],
       failed: 1,
+      rejected: 0,
       nextRetryAt: '2026-08-10T12:00:11.000Z',
     });
     expect(outbox.list()[0]).toMatchObject({
@@ -83,7 +84,12 @@ describe('persisted messaging outbox', () => {
     expect(attempts).toBe(1);
 
     const retried = await outbox.drain(send, new Date('2026-08-10T12:00:11.000Z'));
-    expect(retried).toEqual({ delivered: ['delivered'], failed: 0, nextRetryAt: null });
+    expect(retried).toEqual({
+      delivered: ['delivered'],
+      failed: 0,
+      rejected: 0,
+      nextRetryAt: null,
+    });
     expect(outbox.list()).toEqual([]);
   });
 

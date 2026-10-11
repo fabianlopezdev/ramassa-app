@@ -55,5 +55,9 @@
   "dashboardTrendDescription": "Attendance rate by month",
   "dashboardCategories": "By category",
   "dashboardCategoryEvents_one": "{{count}} event",
-  "dashboardCategoryEvents_other": "{{count}} events"
+  "dashboardCategoryEvents_other": "{{count}} events",
+  "syncRejected": "Not saved. This mark was refused.",
+  "syncRejectedPermission": "Not saved. You can no longer take attendance here.",
+  "syncRetryAction": "Try again",
+  "syncDiscardAction": "Remove"
 }
