@@ -18,6 +18,18 @@ export const RTL_LANGUAGES: readonly SupportedLanguage[] = ['ar', 'fa'];
 
 export type LayoutDirection = 'ltr' | 'rtl';
 
+/**
+ * The languages of the staff side (RAPP-238): the web admin, the team screens
+ * and the entity screens. Player screens keep all five. Content stays
+ * five-language everywhere; this is the language of the screens themselves.
+ */
+export const STAFF_LANGUAGES: readonly SupportedLanguage[] = ['ca', 'es', 'en'];
+
+/** A staff-side language: the same one when it is offered, Catalan otherwise. */
+export function staffLanguageFor(language: SupportedLanguage): SupportedLanguage {
+  return STAFF_LANGUAGES.includes(language) ? language : DEFAULT_LANGUAGE;
+}
+
 export function isSupportedLanguage(value: string): value is SupportedLanguage {
   return (SUPPORTED_LANGUAGES as readonly string[]).includes(value);
 }

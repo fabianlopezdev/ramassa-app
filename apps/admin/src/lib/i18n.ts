@@ -3,6 +3,7 @@ import {
   createI18n,
   DEFAULT_LANGUAGE,
   resolveInitialLanguage,
+  staffLanguageFor,
   type SupportedLanguage,
 } from '@ramassa/shared/i18n';
 
@@ -51,5 +52,7 @@ export function resolveClientLanguage(): SupportedLanguage {
       .split('; ')
       .find((cookie) => cookie.startsWith(`${LANGUAGE_COOKIE_NAME}=`))
       ?.slice(LANGUAGE_COOKIE_NAME.length + 1) ?? null;
-  return resolveInitialLanguage({ persistedLanguage, deviceLanguages: navigator.languages });
+  return staffLanguageFor(
+    resolveInitialLanguage({ persistedLanguage, deviceLanguages: navigator.languages }),
+  );
 }

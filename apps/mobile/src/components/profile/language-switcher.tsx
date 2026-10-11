@@ -24,15 +24,25 @@ import { continuousCorners } from '@/lib/continuous-corners';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
-import { LANGUAGE_NATIVE_NAMES, SUPPORTED_LANGUAGES, useLanguage } from '@ramassa/shared/i18n';
+import {
+  LANGUAGE_NATIVE_NAMES,
+  SUPPORTED_LANGUAGES,
+  useLanguage,
+  type SupportedLanguage,
+} from '@ramassa/shared/i18n';
 
-export function LanguageSwitcher() {
+export function LanguageSwitcher({
+  languages = SUPPORTED_LANGUAGES,
+}: {
+  /** The staff side offers Catalan, Spanish and English only (RAPP-238). */
+  readonly languages?: readonly SupportedLanguage[];
+} = {}) {
   const { t } = useTranslation('profile');
   const languageFontClass = useLanguageFontClass();
   const { language, setLanguage } = useLanguage();
   const { choose, dismissRestart, needsRestart, restart } = useLanguageRestart(setLanguage);
   const organization = useOrganizationBranding();
-  const availableLanguages = SUPPORTED_LANGUAGES.filter(
+  const availableLanguages = languages.filter(
     (code) => organization?.available_languages.includes(code) ?? true,
   );
 

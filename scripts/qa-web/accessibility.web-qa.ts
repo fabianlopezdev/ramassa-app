@@ -171,6 +171,11 @@ async function signInPlayer(page: Page): Promise<void> {
   await expect(page.getByTestId('open-knowledge-base')).toBeVisible({ timeout: 30_000 });
 }
 
+async function expectCatalanDocument(page: Page): Promise<void> {
+  await expect(page.locator('html')).toHaveAttribute('lang', 'ca');
+  await expect(page.locator('html')).toHaveAttribute('dir', 'ltr');
+}
+
 async function expectRtlDocument(page: Page): Promise<void> {
   await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
   await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
@@ -320,7 +325,11 @@ test.describe('WCAG 2.2 AA regression gate', () => {
     }
   });
 
-  test('Arabic staff and entity web routes retain RTL semantics and pass axe', async ({ page }) => {
+  // The staff side is Catalan, Spanish or English (RAPP-238): a saved Arabic
+  // choice opens it in Catalan, left to right, and every route still passes axe.
+  test('an Arabic choice opens the staff and entity web in Catalan, and it passes axe', async ({
+    page,
+  }) => {
     const adminOrigin = `http://localhost:${process.env.RAMASSA_QA_ADMIN_PORT ?? '4193'}`;
     await page.context().addCookies([{ name: 'ramassa.language', value: 'ar', url: adminOrigin }]);
 
@@ -329,8 +338,8 @@ test.describe('WCAG 2.2 AA regression gate', () => {
       await test.step(`staff ${route}`, async () => {
         await page.goto(route, { waitUntil: 'domcontentloaded' });
         await expect(page.locator('main')).toBeVisible();
-        await expectRtlDocument(page);
-        await expectNoAxeViolations(page, `Arabic staff ${route}`);
+        await expectCatalanDocument(page);
+        await expectNoAxeViolations(page, `Arabic-choice staff ${route}`);
       });
     }
 
@@ -339,8 +348,8 @@ test.describe('WCAG 2.2 AA regression gate', () => {
       await test.step(`entity ${route}`, async () => {
         await page.goto(route, { waitUntil: 'domcontentloaded' });
         await expect(page.locator('main')).toBeVisible();
-        await expectRtlDocument(page);
-        await expectNoAxeViolations(page, `Arabic entity ${route}`);
+        await expectCatalanDocument(page);
+        await expectNoAxeViolations(page, `Arabic-choice entity ${route}`);
       });
     }
   });

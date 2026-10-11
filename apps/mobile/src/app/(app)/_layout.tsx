@@ -1,6 +1,7 @@
 import { AttendanceSyncWorker } from '@/components/attendance/attendance-sync-worker';
 import { useAppLock } from '@/components/auth/app-lock';
 import { SecondFactorScreen } from '@/components/auth/second-factor-screen';
+import { StaffLanguageGate } from '@/components/auth/staff-language-gate';
 import { PushPermissionRationale } from '@/components/push-permission-rationale';
 import { areaHome, teamScreens } from '@/lib/account-area';
 import { useAccountAccess } from '@/lib/use-account-access';
@@ -116,6 +117,7 @@ export default function AppLayout() {
           <Stack.Screen name="onboarding" />
         </Stack.Protected>
       </Stack>
+      <StaffLanguageGate isStaffSide={isTeam || area === 'entity'} />
       {isTeam && permissions.has('attendance.mark') && userId !== null ? (
         <AttendanceSyncWorker userId={userId} />
       ) : null}

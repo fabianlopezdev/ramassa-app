@@ -5,6 +5,7 @@ import {
 } from '@/components/auth/email-otp-form';
 import { NoAdminAccess } from '@/components/auth/no-admin-access';
 import { PasswordLoginForm } from '@/components/auth/password-login-form';
+import { LanguagePicker } from '@/components/language-picker';
 import { Button } from '@/components/ui/button';
 import { roleLandingPath } from '@/lib/role-landing';
 import { createFileRoute, Navigate } from '@tanstack/react-router';
@@ -95,6 +96,7 @@ function LoginPage() {
             </Button>
           </div>
         )}
+        <LanguagePicker className="self-start" />
       </div>
     </main>
   );

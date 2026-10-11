@@ -22,5 +22,6 @@
     "nextPage": "التالي",
     "pageOf": "صفحة {{page}} من {{pages}}"
   },
-  "loading": "جارٍ التحميل..."
+  "loading": "جارٍ التحميل...",
+  "interfaceLanguageLabel": "اللغة"
 }
