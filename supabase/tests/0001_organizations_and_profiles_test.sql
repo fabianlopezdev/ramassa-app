@@ -79,7 +79,7 @@ select is(
 
 -- Player A1 -------------------------------------------------------------------
 set local role authenticated;
-set local request.jwt.claims to '{"sub":"00000000-0000-0000-0000-0000000000a1","role":"authenticated"}';
+set local request.jwt.claims to '{"sub":"00000000-0000-0000-0000-0000000000a1","role":"authenticated", "aal": "aal2"}';
 
 select is(
   (select count(*) from public.profiles)::int, 1,
@@ -105,7 +105,7 @@ select is(
 -- Entity A --------------------------------------------------------------------
 reset role;
 set local role authenticated;
-set local request.jwt.claims to '{"sub":"00000000-0000-0000-0000-0000000000a4","role":"authenticated"}';
+set local request.jwt.claims to '{"sub":"00000000-0000-0000-0000-0000000000a4","role":"authenticated", "aal": "aal2"}';
 
 select is(
   (select count(*) from public.profiles)::int, 1,
@@ -119,7 +119,7 @@ select is_empty(
 -- Staff A ---------------------------------------------------------------------
 reset role;
 set local role authenticated;
-set local request.jwt.claims to '{"sub":"00000000-0000-0000-0000-0000000000a3","role":"authenticated"}';
+set local request.jwt.claims to '{"sub":"00000000-0000-0000-0000-0000000000a3","role":"authenticated", "aal": "aal2"}';
 
 select is(
   (select count(*) from public.profiles)::int, 4,

@@ -6,6 +6,7 @@
   "AUTH-5": "Massa intents. Espera un moment i torna-ho a provar.",
   "AUTH-6": "Les dades no coincideixen. Revisa-les i torna-ho a provar.",
   "AUTH-7": "No s'ha pogut confiar en aquest enllaç d'inici de sessió. Demana'n un de nou.",
+  "AUTH-8": "Aquest codi no coincideix. Comprova l'app d'autenticació i torna-ho a provar.",
   "DB-1": "No hem pogut desar o carregar les dades. Torna-ho a provar.",
   "DB-2": "No hem trobat el que busques.",
   "DB-3": "No hem pogut esborrar-ho tot, així que no s'ha esborrat res. Torna-ho a provar.",

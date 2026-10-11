@@ -15,11 +15,65 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { expect, type Page } from '@playwright/test';
 import type { SupportedLanguage } from '@ramassa/shared/i18n/languages';
+import { totpCode } from './totp';
 
 export const STAFF_EMAIL = 'marta.puig@example.test';
 export const ENTITY_EMAIL = 'silvia.bosch@example.test';
 export const OTHER_ENTITY_EMAIL = 'jordi.camps@example.test';
 export const SEED_PASSWORD = 'ramassa-dev-password';
+/** SEED_TOTP_SECRET in packages/shared/testing/fixtures.ts (RAPP-233). */
+export const SEED_TOTP_SECRET = 'JBSWY3DPEHPK3PXP';
+
+/**
+ * Completes the second factor (RAPP-233) the way a person does: with a code
+ * from her authenticator. A seeded account already has one (SEED_TOTP_SECRET);
+ * a newly invited person sets one up on this screen, which shows its secret.
+ */
+const enrolledSecrets = new Map<string, string>();
+
+/** A spec that puts a seeded account back on the seed authenticator calls this. */
+export function forgetSecondFactorSecret(email: string): void {
+  enrolledSecrets.delete(email);
+}
+
+export async function completeSecondFactor(page: Page, email?: string): Promise<void> {
+  const screen = page.getByTestId('second-factor');
+  await expect(screen).toBeVisible({ timeout: 30_000 });
+  const input = page
+    .locator('#second-factor-code, input[data-testid="second-factor-code"]')
+    .first();
+  await expect(input).toBeEnabled({ timeout: 30_000 });
+  const shownSecret = page.getByTestId('second-factor-secret');
+  // A set-up shows its new secret, remembered for this person's next sign-in;
+  // otherwise her own remembered secret, or the seed's.
+  const shown = (await shownSecret.count()) > 0 ? (await shownSecret.innerText()).trim() : null;
+  if (shown !== null && email !== undefined) enrolledSecrets.set(email, shown);
+  const secret =
+    shown ?? (email === undefined ? undefined : enrolledSecrets.get(email)) ?? SEED_TOTP_SECRET;
+  const submit = page
+    .getByTestId('second-factor-verify')
+    .or(screen.locator('button[type="submit"]'))
+    .first();
+  // A code is valid for its 30-second step. Typing one in the last seconds of a
+  // step can reach the server after it has changed, so the helper waits for a
+  // fresh step, and retries once with the next code if one is refused.
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const secondsIntoStep = Math.floor(Date.now() / 1000) % 30;
+    // The first try waits out a step's last seconds; a retry waits for the next
+    // step, so it types a different code.
+    if (attempt > 0 || secondsIntoStep > 25) {
+      await page.waitForTimeout((31 - secondsIntoStep) * 1000);
+    }
+    await input.fill(totpCode(secret));
+    await submit.click();
+    const left = await expect(screen)
+      .toHaveCount(0, { timeout: 10_000 })
+      .then(() => true)
+      .catch(() => false);
+    if (left) return;
+  }
+  await expect(screen).toHaveCount(0, { timeout: 30_000 });
+}
 
 /**
  * The local stack, for the one spec that has to talk to something other than the
@@ -147,6 +201,8 @@ export async function acceptInvitationFromEmail(
   await page.getByLabel(copy.emailOtpCodeLabel, { exact: true }).fill(code);
   await page.getByRole('button', { name: copy.emailOtpVerifyAction, exact: true }).click();
   await expect(page).not.toHaveURL(/\/login/, { timeout: 30_000 });
+  // A new team member or entity contact sets up her authenticator (RAPP-233).
+  await completeSecondFactor(page, email);
   // Her own code was enough: signing in sent her no second email.
   expect((await inboxMessageIds(email)).size).toBe(1);
   return { subject: invitation.Subject, text: invitation.Text };
@@ -402,4 +458,12 @@ export async function signIn(page: Page, email: string): Promise<void> {
     await page.locator('button[type="submit"]').click();
     await expect(page).not.toHaveURL(/\/login/, { timeout: 3_000 });
   }).toPass({ timeout: 20_000 });
+
+  // Team members and entity contacts verify their authenticator next (RAPP-233).
+  const secondFactor = page.getByTestId('second-factor');
+  const settled = secondFactor
+    .or(page.getByRole('navigation').first())
+    .or(page.getByRole('alert').first());
+  await expect(settled.first()).toBeVisible({ timeout: 30_000 });
+  if ((await secondFactor.count()) > 0) await completeSecondFactor(page, email);
 }

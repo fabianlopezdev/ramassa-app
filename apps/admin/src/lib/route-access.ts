@@ -21,6 +21,7 @@ export type RouteAccess =
   | { readonly kind: 'loading' }
   | { readonly kind: 'redirect'; readonly to: '/login' | AdminLandingPath }
   | { readonly kind: 'no-access' }
+  | { readonly kind: 'second-factor' }
   | { readonly kind: 'allow' };
 
 export function resolveRouteAccess(input: {
@@ -31,6 +32,8 @@ export function resolveRouteAccess(input: {
   /** When set, the area also needs ANY of these permissions (RAPP-231). */
   readonly anyPermission?: readonly PermissionCode[];
   readonly permissions?: ReadonlySet<PermissionCode>;
+  /** The session still needs the authenticator code (RAPP-233). */
+  readonly needsSecondFactor?: boolean;
 }): RouteAccess {
   const { isLoading, hasSession, role, allow, anyPermission, permissions } = input;
 
@@ -49,6 +52,11 @@ export function resolveRouteAccess(input: {
   if (!allow.includes(role)) {
     const landing = roleLandingPath(role);
     return landing === null ? { kind: 'no-access' } : { kind: 'redirect', to: landing };
+  }
+  // Before anything else in her area, a team member or entity contact verifies
+  // her authenticator: until then the database lets her session reach nothing.
+  if (input.needsSecondFactor === true) {
+    return { kind: 'second-factor' };
   }
   // A team member without the job this area is for goes back to her landing,
   // where the menu shows only what she may open.

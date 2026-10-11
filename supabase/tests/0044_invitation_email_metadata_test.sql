@@ -25,7 +25,7 @@ update public.organizations set default_language = 'es'
 where id = '5eed0000-0000-4000-8000-000000000000';
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000001", "role": "authenticated"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000001", "role": "authenticated", "aal": "aal2"}';
 
 select lives_ok(
   $$ select * from public.invite_staff_member('invited.staff@example.test', 'Pau', 'Prova', 'staff') $$,
@@ -51,7 +51,7 @@ update public.organizations set default_language = 'ar'
 where id = '5eed0000-0000-4000-8000-000000000000';
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000001", "role": "authenticated"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000001", "role": "authenticated", "aal": "aal2"}';
 
 select lives_ok(
   $$ select * from public.invite_entity_collaborator(

@@ -31,7 +31,7 @@ values ('48000000-0000-4000-8000-000000000011', '48000000-0000-4000-8000-0000000
 -- 1. Direct reads -------------------------------------------------------------------------------
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000001", "role": "authenticated"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000001", "role": "authenticated", "aal": "aal2"}';
 select throws_ok(
   $$ select date_of_birth from public.profiles limit 1 $$,
   '42501', null::text, 'even an admin cannot read date of birth straight from the table'
@@ -51,7 +51,7 @@ select lives_ok(
 
 -- 3. Staff: as before ------------------------------------------------------------------------------
 
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated", "aal": "aal2"}';
 select ok(
   (select count(*) from public.list_participants() where nationality is not null) > 0,
   'staff see nationalities in the roster'
@@ -80,7 +80,7 @@ select is(
 
 -- 2. Coach: Basic only ---------------------------------------------------------------------------------
 
-set local request.jwt.claims = '{"sub": "48000000-0000-4000-8000-000000000001", "role": "authenticated"}';
+set local request.jwt.claims = '{"sub": "48000000-0000-4000-8000-000000000001", "role": "authenticated", "aal": "aal2"}';
 select ok((select count(*) from public.list_participants()) > 0, 'a coach sees the roster');
 select is(
   (select count(*)::int from public.list_participants()
@@ -111,7 +111,7 @@ select is(
 );
 
 -- A player or entity contact opening her own chat reads her own header.
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000004", "role": "authenticated"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000004", "role": "authenticated", "aal": "aal2"}';
 select is(
   (select count(*)::int from public.get_conversation_peer('5eed0000-0000-4000-8000-000000000004')),
   1, 'an entity contact reads her own chat header'

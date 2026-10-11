@@ -29,7 +29,7 @@ select is(
 );
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000012","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000012","role":"authenticated", "aal": "aal2"}';
 
 select lives_ok(
   $$ select public.create_mentoring_request(
@@ -59,21 +59,21 @@ select is(
   'the player can list her own request'
 );
 
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000013","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000013","role":"authenticated", "aal": "aal2"}';
 select is(
   (select count(*) from public.mentoring_requests)::integer,
   0,
   'DENIAL: another player cannot see the request'
 );
 
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000004","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000004","role":"authenticated", "aal": "aal2"}';
 select is(
   (select count(*) from public.mentoring_requests)::integer,
   0,
   'DENIAL: an entity user cannot see any mentoring request'
 );
 
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000002","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000002","role":"authenticated", "aal": "aal2"}';
 select is(
   (select count(*) from public.mentoring_requests)::integer,
   2,
@@ -108,7 +108,7 @@ select is(
 );
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000002","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000002","role":"authenticated", "aal": "aal2"}';
 
 select lives_ok(
   $$ select public.schedule_mentoring_request(
@@ -141,7 +141,7 @@ set push_notifications_enabled = false
 where id = '5eed0000-0000-4000-8000-000000000012';
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000002","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000002","role":"authenticated", "aal": "aal2"}';
 select lives_ok(
   $$ select public.schedule_mentoring_request(
     (select id from public.mentoring_requests where player_id = '5eed0000-0000-4000-8000-000000000012'),
@@ -163,7 +163,7 @@ select is(
 );
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000002","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000002","role":"authenticated", "aal": "aal2"}';
 
 select is(
   (select count(*) from public.list_staff_mentoring_requests())::integer,

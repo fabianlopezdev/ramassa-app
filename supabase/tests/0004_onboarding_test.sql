@@ -45,7 +45,7 @@ select has_column('public', 'terms_acceptances', 'locale_shown', 'terms_acceptan
 -- The completion RPC -----------------------------------------------------------
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub": "00000000-0000-0000-0000-0000000000c1", "role": "authenticated"}';
+set local request.jwt.claims = '{"sub": "00000000-0000-0000-0000-0000000000c1", "role": "authenticated", "aal": "aal2"}';
 
 -- Server-side parity for the required place_of_birth (2026-07-31): the client
 -- schema enforces it; the RPC must re-enforce it or the contract is a comment.

@@ -266,7 +266,7 @@ values (
 );
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated", "aal": "aal2"}';
 
 select lives_ok(
   $$ insert into public.event_categories (name, icon, color, sort_order)
@@ -326,7 +326,7 @@ select is(
   'staff can read all occurrences in their organization'
 );
 
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000011", "role": "authenticated"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000011", "role": "authenticated", "aal": "aal2"}';
 
 select is(
   (select count(*) from public.event_categories
@@ -376,7 +376,7 @@ select throws_ok(
   'players cannot create events'
 );
 
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000004", "role": "authenticated"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000004", "role": "authenticated", "aal": "aal2"}';
 
 select is(
   (select count(*) from public.events)::int,

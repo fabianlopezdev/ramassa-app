@@ -8,7 +8,7 @@ import { SETTINGS_PERMISSIONS } from '@/lib/nav-items';
 import { supabase } from '@/lib/supabase';
 import { createFileRoute, useRouter } from '@tanstack/react-router';
 import { z } from 'zod';
-import { useAuth } from '@ramassa/shared/auth';
+import { resetSecondFactor, useAuth } from '@ramassa/shared/auth';
 import {
   createManagedEntity,
   fetchEntityCollaborators,
@@ -146,6 +146,10 @@ function OrganizationSettingsScreen() {
         await setEntityCollaboratorActive(supabase, profileId, isActive);
         await refresh();
       }}
+      onResetCollaboratorSecondFactor={async (profileId) => {
+        await resetSecondFactor(supabase, profileId);
+        await refresh();
+      }}
     />
   );
 
@@ -191,6 +195,11 @@ function OrganizationSettingsScreen() {
       }}
       onRemove={async (profileId) => {
         await removeStaffMember(supabase, profileId);
+        await refresh();
+      }}
+      currentUserId={user?.id ?? null}
+      onResetSecondFactor={async (profileId) => {
+        await resetSecondFactor(supabase, profileId);
         await refresh();
       }}
     />

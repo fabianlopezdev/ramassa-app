@@ -5,8 +5,9 @@ import {
   getMaxBytesForUploadContentType,
   getUploadErrorCodeForIssue,
   getUploadKindForContentType,
-  isFolderWritableByRole,
+  isFolderWritableBy,
   STAFF_ONLY_UPLOAD_FOLDERS,
+  TEAM_FOLDER_PERMISSIONS,
   UPLOAD_CONTENT_TYPES,
   UPLOAD_FOLDERS,
   uploadUrlRequestSchema,
@@ -139,18 +140,31 @@ describe('content-type helpers', () => {
 });
 
 describe('folder authorization', () => {
+  const none = new Set<string>();
+
   test('allows player feedback images in their dedicated private folder', () => {
     expect(UPLOAD_FOLDERS).toContain('feedback');
-    expect(isFolderWritableByRole('feedback' as never, 'player')).toBe(true);
+    expect(isFolderWritableBy('feedback' as never, 'player', none)).toBe(true);
   });
 
-  test('staff-only folders are closed to players and entities', () => {
+  test('team folders are closed to players and entities, whatever they claim to hold', () => {
     for (const folder of STAFF_ONLY_UPLOAD_FOLDERS) {
-      expect(isFolderWritableByRole(folder, 'player')).toBe(false);
-      expect(isFolderWritableByRole(folder, 'entity')).toBe(false);
-      expect(isFolderWritableByRole(folder, 'staff')).toBe(true);
-      expect(isFolderWritableByRole(folder, 'admin')).toBe(true);
+      const codes = new Set(TEAM_FOLDER_PERMISSIONS[folder]);
+      expect(isFolderWritableBy(folder, 'player', codes)).toBe(false);
+      expect(isFolderWritableBy(folder, 'entity', codes)).toBe(false);
     }
+  });
+
+  test('a team folder opens with one of its permissions, and only then (RAPP-233)', () => {
+    for (const folder of STAFF_ONLY_UPLOAD_FOLDERS) {
+      const [code] = TEAM_FOLDER_PERMISSIONS[folder];
+      expect(isFolderWritableBy(folder, 'staff', new Set([code!]))).toBe(true);
+      // No permissions is also what a session without its second factor gets.
+      expect(isFolderWritableBy(folder, 'staff', none)).toBe(false);
+    }
+    expect(
+      isFolderWritableBy('organization-branding', 'admin', new Set(['announcements.edit'])),
+    ).toBe(false);
   });
 
   test('community folders are open to every signed-in role', () => {
@@ -159,7 +173,7 @@ describe('folder authorization', () => {
     expect(communityFolders.length).toBeGreaterThan(0);
     for (const folder of communityFolders) {
       for (const role of ['player', 'staff', 'admin', 'entity'] as const) {
-        expect(isFolderWritableByRole(folder, role)).toBe(true);
+        expect(isFolderWritableBy(folder, role, none)).toBe(true);
       }
     }
   });

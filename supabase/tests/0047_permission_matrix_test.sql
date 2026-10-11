@@ -71,7 +71,7 @@ $$;
 -- 2. A new staff member: the plain Staff preset ------------------------------------------------
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub": "47000000-0000-4000-8000-000000000001", "role": "authenticated"}';
+set local request.jwt.claims = '{"sub": "47000000-0000-4000-8000-000000000001", "role": "authenticated", "aal": "aal2"}';
 
 select ok((select count(*) from public.attendance) > 0, 'new staff read attendance');
 select ok((select count(*) from public.feedback_submissions) > 0, 'and private feedback');
@@ -90,7 +90,7 @@ select throws_ok(
 );
 
 -- Today's staff keep both (the adjustment).
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated", "aal": "aal2"}';
 select is(
   (select phone is not null from public.get_participant_profile('5eed0000-0000-4000-8000-000000000026')),
   true, 'today''s staff still see the sensitive fields'
@@ -104,7 +104,7 @@ select throws_ok(
 
 -- 3. One job only ---------------------------------------------------------------------------------
 
-set local request.jwt.claims = '{"sub": "47000000-0000-4000-8000-000000000002", "role": "authenticated"}';
+set local request.jwt.claims = '{"sub": "47000000-0000-4000-8000-000000000002", "role": "authenticated", "aal": "aal2"}';
 select ok((select count(*) from public.attendance) > 0, 'a coach reads attendance');
 select ok((select count(*) from public.event_signups) > 0, 'and event sign-ups');
 select is((select count(*)::int from public.feedback_submissions), 0, 'but no private feedback');
@@ -123,7 +123,7 @@ select throws_ok(
 reset role;
 select pg_temp.give_only('47000000-0000-4000-8000-000000000003', array['feedback.view']);
 set local role authenticated;
-set local request.jwt.claims = '{"sub": "47000000-0000-4000-8000-000000000003", "role": "authenticated"}';
+set local request.jwt.claims = '{"sub": "47000000-0000-4000-8000-000000000003", "role": "authenticated", "aal": "aal2"}';
 select ok((select count(*) from public.feedback_submissions) > 0, 'feedback.view alone opens feedback');
 select is((select count(*)::int from public.attendance), 0, 'and nothing else, not even attendance');
 
@@ -132,7 +132,7 @@ select is((select count(*)::int from public.attendance), 0, 'and nothing else, n
 reset role;
 select pg_temp.give_only('47000000-0000-4000-8000-000000000003', array['announcements.edit']);
 set local role authenticated;
-set local request.jwt.claims = '{"sub": "47000000-0000-4000-8000-000000000003", "role": "authenticated"}';
+set local request.jwt.claims = '{"sub": "47000000-0000-4000-8000-000000000003", "role": "authenticated", "aal": "aal2"}';
 select lives_ok(
   $$ update public.announcements set title = title where id = '5eed0000-0000-4000-8001-000000000001' $$,
   'announcements.edit edits a draft'
@@ -146,7 +146,7 @@ select throws_ok(
 reset role;
 select pg_temp.give_only('47000000-0000-4000-8000-000000000003', array['services.edit']);
 set local role authenticated;
-set local request.jwt.claims = '{"sub": "47000000-0000-4000-8000-000000000003", "role": "authenticated"}';
+set local request.jwt.claims = '{"sub": "47000000-0000-4000-8000-000000000003", "role": "authenticated", "aal": "aal2"}';
 select throws_ok(
   $$ update public.services set status = 'approved' where id = '5eed0000-0000-4000-800a-000000000001' $$,
   '42501', null::text, 'approving an entity''s service needs services.review'
@@ -155,7 +155,7 @@ select throws_ok(
 reset role;
 select pg_temp.give_only('47000000-0000-4000-8000-000000000003', array['settings.branding']);
 set local role authenticated;
-set local request.jwt.claims = '{"sub": "47000000-0000-4000-8000-000000000003", "role": "authenticated"}';
+set local request.jwt.claims = '{"sub": "47000000-0000-4000-8000-000000000003", "role": "authenticated", "aal": "aal2"}';
 select lives_ok(
   $$ select public.update_organization_settings(
        'AE Ramassà', 'laia.ferrer@example.test', '+34600000000', null, '#005F92', '#FFD166',
@@ -172,7 +172,7 @@ select throws_ok(
 reset role;
 select pg_temp.give_only('47000000-0000-4000-8000-000000000003', array['export.attendance']);
 set local role authenticated;
-set local request.jwt.claims = '{"sub": "47000000-0000-4000-8000-000000000003", "role": "authenticated"}';
+set local request.jwt.claims = '{"sub": "47000000-0000-4000-8000-000000000003", "role": "authenticated", "aal": "aal2"}';
 select lives_ok(
   $$ select public.create_data_export('attendance', 'default', 'csv') $$,
   'export.attendance exports attendance'
@@ -185,7 +185,7 @@ select throws_ok(
 reset role;
 select pg_temp.give_only('47000000-0000-4000-8000-000000000003', array['participants.view', 'participants.view_personal']);
 set local role authenticated;
-set local request.jwt.claims = '{"sub": "47000000-0000-4000-8000-000000000003", "role": "authenticated"}';
+set local request.jwt.claims = '{"sub": "47000000-0000-4000-8000-000000000003", "role": "authenticated", "aal": "aal2"}';
 select lives_ok(
   $$ select public.update_participant_profile('5eed0000-0000-4000-8000-000000000026',
        (select jsonb_build_object(

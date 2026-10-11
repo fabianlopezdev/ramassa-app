@@ -8,6 +8,16 @@ import {
 import { errorResponse, jsonResponse } from './http';
 import type { CallerIdentity } from './supabase-identity';
 
+/** The permissions whose screens write player-facing text in five languages. */
+const TRANSLATION_PERMISSIONS = [
+  'announcements.edit',
+  'events.edit',
+  'knowledge.edit',
+  'services.edit',
+  'notifications.send',
+  'surveys.manage',
+] as const;
+
 export interface TranslationRequestDependencies {
   readonly resolveIdentity: (request: Request) => Promise<CallerIdentity>;
   readonly rateLimiter: { limit(options: { key: string }): Promise<{ success: boolean }> };
@@ -47,7 +57,12 @@ export async function handleTranslationRequest(
     return fail(isAppError(thrown) ? thrown.code : 'AUTH-2');
   }
 
-  if (identity.role !== 'staff' && identity.role !== 'admin') {
+  // Translation serves the team's content editors (RAPP-233): any permission
+  // that writes player-facing text, read with the second factor verified.
+  if (
+    (identity.role !== 'staff' && identity.role !== 'admin') ||
+    !TRANSLATION_PERMISSIONS.some((code) => identity.permissions.has(code))
+  ) {
     return fail('AUTH-3');
   }
 

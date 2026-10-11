@@ -7,6 +7,7 @@ const identity: CallerIdentity = {
   userId: '7b1d9c2e-3f4a-4b5c-8d6e-9f0a1b2c3d4e',
   orgId: '11111111-2222-3333-4444-555555555555',
   role: 'player',
+  permissions: new Set(),
 };
 const objectKey = `${identity.orgId}/announcements/${identity.userId}/2026/08/0123456789abcdef0123456789abcdef.jpg`;
 const galleryObjectKey = `${identity.orgId}/gallery/${identity.userId}/2026/08/1123456789abcdef0123456789abcdef.jpg`;

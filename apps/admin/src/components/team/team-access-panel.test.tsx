@@ -51,6 +51,8 @@ function renderPanel(overrides: Partial<React.ComponentProps<typeof TeamAccessPa
     onDeletePreset: mock(async () => undefined),
     onRestorePreset: mock(async () => undefined),
     onRemove: mock(async () => undefined),
+    currentUserId: null,
+    onResetSecondFactor: mock(async () => undefined),
     ...overrides,
   };
   return { props, view: render(<TeamAccessPanel {...props} />) };
@@ -139,4 +141,20 @@ test('the database refusing the last team manager reads as plain words', async (
   await waitFor(() =>
     expect(view.getByRole('alert').textContent).toMatch(/errorLastManager|team\.manage|last/),
   );
+});
+
+test("a manager resets someone else's second factor after confirming, never her own", async () => {
+  const { props, view } = renderPanel();
+  fireEvent.click(
+    view.getByRole('button', { name: /secondFactorResetAction|Reset second factor/ }),
+  );
+  expect(props.onResetSecondFactor).not.toHaveBeenCalled();
+  fireEvent.click(view.getByRole('button', { name: /^confirm$|Confirm/ }));
+  await waitFor(() => expect(props.onResetSecondFactor).toHaveBeenCalledWith(nuria.profile_id));
+  view.unmount();
+
+  const own = renderPanel({ currentUserId: nuria.profile_id });
+  expect(
+    own.view.queryByRole('button', { name: /secondFactorResetAction|Reset second factor/ }),
+  ).toBeNull();
 });

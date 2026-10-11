@@ -15,7 +15,7 @@
 import { isAppError, type AppErrorCode } from '@ramassa/shared/errors';
 import {
   getUploadErrorCodeForIssue,
-  isFolderWritableByRole,
+  isFolderWritableBy,
   uploadUrlRequestSchema,
   type UploadContentType,
   type UploadFolder,
@@ -92,7 +92,7 @@ export async function handleMintUploadUrl(
   }
 
   const folder: UploadFolder = parsed.data.folder;
-  if (!isFolderWritableByRole(folder, identity.role)) {
+  if (!isFolderWritableBy(folder, identity.role, identity.permissions)) {
     return fail('AUTH-3');
   }
 

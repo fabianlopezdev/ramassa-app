@@ -126,7 +126,7 @@ values (
 );
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000011","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000011","role":"authenticated", "aal": "aal2"}';
 
 select throws_ok(
   $$ select public.save_admin_service('{}'::jsonb) $$,
@@ -179,7 +179,7 @@ select throws_ok(
   'a player cannot create a service submission'
 );
 
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000004","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000004","role":"authenticated", "aal": "aal2"}';
 
 select ok(
   exists (select 1 from public.services where id = '5eed0000-0000-4000-800a-000000000001'),
@@ -216,7 +216,7 @@ select throws_ok(
   'an entity cannot create a player interest'
 );
 
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000002","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000002","role":"authenticated", "aal": "aal2"}';
 
 select throws_ok(
   $$ update public.service_categories
@@ -375,7 +375,7 @@ values (
 );
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000002","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000002","role":"authenticated", "aal": "aal2"}';
 delete from public.services where id = '99000000-0000-4000-8000-000000000010';
 reset role;
 

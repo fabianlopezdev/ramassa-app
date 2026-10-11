@@ -6,6 +6,7 @@
   "AUTH-5": "Demasiados intentos. Espera un momento y vuelve a intentarlo.",
   "AUTH-6": "Los datos no coinciden. Revísalos y vuelve a intentarlo.",
   "AUTH-7": "No se ha podido confiar en este enlace de inicio de sesión. Solicita uno nuevo.",
+  "AUTH-8": "Ese código no coincide. Comprueba la app de autenticación y vuelve a intentarlo.",
   "DB-1": "No hemos podido guardar o cargar los datos. Vuelve a intentarlo.",
   "DB-2": "No hemos encontrado lo que buscas.",
   "DB-3": "No hemos podido borrarlo todo, así que no se ha borrado nada. Inténtalo de nuevo.",

@@ -120,7 +120,7 @@ $$;
 grant execute on function pg_temp.other_attendance_occurrence() to authenticated;
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000002","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000002","role":"authenticated", "aal": "aal2"}';
 
 select throws_ok(
   $$
@@ -160,7 +160,7 @@ select is(
   'the initial status is stored'
 );
 
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000003","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000003","role":"authenticated", "aal": "aal2"}';
 
 select lives_ok(
   $$
@@ -200,7 +200,7 @@ select is(
   'staff can read the organization attendance and an upsert identity stays unique'
 );
 
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000011","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000011","role":"authenticated", "aal": "aal2"}';
 select is(
   (select count(*) from public.attendance)::int,
   1,
@@ -220,7 +220,7 @@ select throws_ok(
   'a participant cannot write attendance, including her own'
 );
 
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000004","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000004","role":"authenticated", "aal": "aal2"}';
 select is(
   (select count(*) from public.attendance)::int,
   1,
@@ -240,7 +240,7 @@ select throws_ok(
   'an entity contact cannot write attendance'
 );
 
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000002","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000002","role":"authenticated", "aal": "aal2"}';
 select is(
   (select count(*) from public.attendance where occurrence_id = pg_temp.other_attendance_occurrence())::int,
   0,

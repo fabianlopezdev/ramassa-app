@@ -94,7 +94,7 @@ grant execute on function pg_temp.message_publication_count() to authenticated;
 grant execute on function pg_temp.message_delivery_count(uuid) to authenticated;
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000011","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000011","role":"authenticated", "aal": "aal2"}';
 
 select lives_ok(
   $$ select public.get_or_create_own_conversation() $$,
@@ -136,7 +136,7 @@ select is(
   'participant messages do not notify the participant'
 );
 
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000012","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000012","role":"authenticated", "aal": "aal2"}';
 select throws_ok(
   $$ select public.send_message(
     (select id from public.conversations),
@@ -148,7 +148,7 @@ select throws_ok(
   'DENIAL: a second player cannot write into another player conversation'
 );
 
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000004","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000004","role":"authenticated", "aal": "aal2"}';
 select lives_ok($$ select public.get_or_create_own_conversation() $$, 'an entity contact gets one general staff conversation');
 select lives_ok(
   $$ select public.send_message(
@@ -160,7 +160,7 @@ select lives_ok(
   'the entity contact can send in its own general thread'
 );
 
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000002","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000002","role":"authenticated", "aal": "aal2"}';
 select is((select count(*) from public.conversations)::integer, 2, 'same-org staff can read player and entity conversations');
 select lives_ok(
   $$ select public.send_message(
@@ -191,7 +191,7 @@ select is(
   'the opted-in player receives one targeted delivery per staff reply'
 );
 
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000011","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000011","role":"authenticated", "aal": "aal2"}';
 select is(public.get_unread_message_count(null), 2::bigint, 'both staff replies are initially unread');
 select lives_ok(
   $$ select public.mark_conversation_read(
@@ -210,7 +210,7 @@ select lives_ok(
 );
 select is(public.get_unread_message_count(null), 0::bigint, 'read-through clears the participant badge');
 
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000012","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000012","role":"authenticated", "aal": "aal2"}';
 select throws_ok(
   $$ select public.mark_conversation_read(
     (select id from public.conversations),
@@ -220,7 +220,7 @@ select throws_ok(
   'DENIAL: another player cannot alter read state in the thread'
 );
 
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000011","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000011","role":"authenticated", "aal": "aal2"}';
 select throws_ok(
   $$ select public.send_message(
     (select id from public.conversations limit 1),
@@ -245,7 +245,7 @@ select throws_ok(
 reset role;
 update public.profiles set push_notifications_enabled = false where id = '5eed0000-0000-4000-8000-000000000012';
 set local role authenticated;
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000012","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000012","role":"authenticated", "aal": "aal2"}';
 select public.get_or_create_own_conversation();
 reset role;
 insert into public.push_tokens (id, user_id, token, platform, device_id)
@@ -258,7 +258,7 @@ values (
 )
 on conflict do nothing;
 set local role authenticated;
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000002","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000002","role":"authenticated", "aal": "aal2"}';
 select public.send_message(
   (select id from public.conversations where user_id = '5eed0000-0000-4000-8000-000000000012'),
   'a4700000-0000-4000-8001-000000000008',
@@ -284,12 +284,12 @@ values (
   'Staff'
 );
 set local role authenticated;
-set local request.jwt.claims = '{"sub":"a4700000-0000-4000-8002-000000000002","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"a4700000-0000-4000-8002-000000000002","role":"authenticated", "aal": "aal2"}';
 select is((select count(*) from public.conversations)::integer, 0, 'cross-org staff cannot enumerate conversations');
 reset role;
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000025","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000025","role":"authenticated", "aal": "aal2"}';
 select public.get_or_create_own_conversation();
 select public.send_message(
   (select id from public.conversations limit 1),

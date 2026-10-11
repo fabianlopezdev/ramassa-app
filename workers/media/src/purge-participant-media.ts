@@ -158,10 +158,14 @@ export async function handlePurgeParticipantMedia(
     return fail(isAppError(thrown) ? thrown.code : 'AUTH-2');
   }
 
-  // The same boundary Postgres draws on the erasure itself (ADR-023). Staff run
-  // the day-to-day record; destroying what a participant uploaded is part of
-  // ending it, and ending it stops at the admin.
-  if (identity.role !== 'admin') {
+  // The same boundary Postgres draws on permanent erasure (ADR-023, RAPP-230):
+  // destroying what a participant uploaded is part of ending her record, which
+  // needs rgpd.erase and team.manage together.
+  if (
+    (identity.role !== 'staff' && identity.role !== 'admin') ||
+    !identity.permissions.has('rgpd.erase') ||
+    !identity.permissions.has('team.manage')
+  ) {
     return fail('AUTH-3');
   }
 

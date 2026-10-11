@@ -26,12 +26,15 @@ interface EntityManagementPanelProps {
   readonly onInvite: (input: InviteEntityCollaboratorInput) => Promise<void>;
   readonly onSetEntityActive: (entityId: string, isActive: boolean) => Promise<void>;
   readonly onSetCollaboratorActive: (profileId: string, isActive: boolean) => Promise<void>;
+  /** Resets a collaborator's lost authenticator (RAPP-233, entities.manage). */
+  readonly onResetCollaboratorSecondFactor?: (profileId: string) => Promise<void>;
 }
 
-type Action = 'create' | 'invite' | 'entity' | 'collaborator';
+type Action = 'create' | 'invite' | 'entity' | 'collaborator' | 'second-factor';
 type Confirmation =
   | { readonly kind: 'entity'; readonly entityId: string }
-  | { readonly kind: 'collaborator'; readonly profileId: string };
+  | { readonly kind: 'collaborator'; readonly profileId: string }
+  | { readonly kind: 'second-factor'; readonly profileId: string };
 
 export function EntityManagementPanel({
   entities,
@@ -42,6 +45,7 @@ export function EntityManagementPanel({
   onInvite,
   onSetEntityActive,
   onSetCollaboratorActive,
+  onResetCollaboratorSecondFactor,
 }: EntityManagementPanelProps) {
   const { t } = useTranslation('entity-management');
   const [pending, setPending] = useState<Action | null>(null);
@@ -280,29 +284,84 @@ export function EntityManagementPanel({
                                 </Button>
                               </div>
                             </div>
-                          ) : (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              disabled={pending === 'collaborator'}
-                              onClick={() => {
-                                if (collaborator.isActive) {
-                                  setConfirmation({
-                                    kind: 'collaborator',
-                                    profileId: collaborator.profileId,
-                                  });
-                                  return;
-                                }
-                                void run(
-                                  'collaborator',
-                                  onSetCollaboratorActive(collaborator.profileId, true),
-                                  t('collaboratorAccessRestored'),
-                                );
-                              }}
-                              type="button"
+                          ) : confirmation?.kind === 'second-factor' &&
+                            confirmation.profileId === collaborator.profileId &&
+                            onResetCollaboratorSecondFactor !== undefined ? (
+                            <div
+                              className="ms-auto max-w-sm space-y-2 rounded-lg border p-3 text-start"
+                              role="group"
+                              aria-label={t('auth:secondFactorResetAction')}
                             >
-                              {collaborator.isActive ? t('removeAccess') : t('restoreAccess')}
-                            </Button>
+                              <p className="text-sm leading-5 text-foreground">
+                                {t('auth:secondFactorResetConfirm')}
+                              </p>
+                              <div className="flex flex-wrap gap-2">
+                                <Button
+                                  size="sm"
+                                  disabled={pending === 'second-factor'}
+                                  onClick={() => {
+                                    setConfirmation(null);
+                                    void run(
+                                      'second-factor',
+                                      onResetCollaboratorSecondFactor(collaborator.profileId),
+                                      t('auth:secondFactorResetDone'),
+                                    );
+                                  }}
+                                  type="button"
+                                >
+                                  {t('auth:secondFactorResetAction')}
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setConfirmation(null)}
+                                  type="button"
+                                >
+                                  {t('cancel')}
+                                </Button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="flex flex-wrap justify-end gap-2">
+                              {collaborator.isActive &&
+                              onResetCollaboratorSecondFactor !== undefined ? (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() =>
+                                    setConfirmation({
+                                      kind: 'second-factor',
+                                      profileId: collaborator.profileId,
+                                    })
+                                  }
+                                  type="button"
+                                >
+                                  {t('auth:secondFactorResetAction')}
+                                </Button>
+                              ) : null}
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                disabled={pending === 'collaborator'}
+                                onClick={() => {
+                                  if (collaborator.isActive) {
+                                    setConfirmation({
+                                      kind: 'collaborator',
+                                      profileId: collaborator.profileId,
+                                    });
+                                    return;
+                                  }
+                                  void run(
+                                    'collaborator',
+                                    onSetCollaboratorActive(collaborator.profileId, true),
+                                    t('collaboratorAccessRestored'),
+                                  );
+                                }}
+                                type="button"
+                              >
+                                {collaborator.isActive ? t('removeAccess') : t('restoreAccess')}
+                              </Button>
+                            </div>
                           )}
                         </TableCell>
                       </TableRow>

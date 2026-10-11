@@ -24,7 +24,7 @@ select has_function(
 
 set local role authenticated;
 set local request.jwt.claims =
-  '{"sub":"5eed0000-0000-4000-8000-000000000004","role":"authenticated"}';
+  '{"sub":"5eed0000-0000-4000-8000-000000000004","role":"authenticated", "aal": "aal2"}';
 
 select lives_ok(
   $$ select public.save_entity_service(jsonb_build_object(
@@ -98,7 +98,7 @@ values (
 
 set local role authenticated;
 set local request.jwt.claims =
-  '{"sub":"5eed0000-0000-4000-8000-000000000004","role":"authenticated"}';
+  '{"sub":"5eed0000-0000-4000-8000-000000000004","role":"authenticated", "aal": "aal2"}';
 select lives_ok(
   $$ select public.save_entity_service(jsonb_build_object(
        'serviceId', '99000000-0000-4000-800a-000000000043',
@@ -172,7 +172,7 @@ select has_function(
 
 set local role authenticated;
 set local request.jwt.claims =
-  '{"sub":"5eed0000-0000-4000-8000-000000000004","role":"authenticated"}';
+  '{"sub":"5eed0000-0000-4000-8000-000000000004","role":"authenticated", "aal": "aal2"}';
 select ok(
   exists (
     select 1 from public.get_own_service_contacts()
@@ -190,7 +190,7 @@ select ok(
 );
 
 set local request.jwt.claims =
-  '{"sub":"5eed0000-0000-4000-8000-000000000002","role":"authenticated"}';
+  '{"sub":"5eed0000-0000-4000-8000-000000000002","role":"authenticated", "aal": "aal2"}';
 select throws_ok(
   $$ select * from public.get_own_service_contacts() $$,
   '42501',
@@ -199,7 +199,7 @@ select throws_ok(
 );
 
 set local request.jwt.claims =
-  '{"sub":"5eed0000-0000-4000-8000-000000000004","role":"authenticated"}';
+  '{"sub":"5eed0000-0000-4000-8000-000000000004","role":"authenticated", "aal": "aal2"}';
 select throws_ok(
   $$ update public.services set provider_name = 'No editable'
      where id = '5eed0000-0000-4000-800a-000000000001' $$,
@@ -216,7 +216,7 @@ select throws_ok(
 );
 
 set local request.jwt.claims =
-  '{"sub":"5eed0000-0000-4000-8000-000000000005","role":"authenticated"}';
+  '{"sub":"5eed0000-0000-4000-8000-000000000005","role":"authenticated", "aal": "aal2"}';
 select lives_ok(
   $$ select public.save_entity_service(jsonb_build_object(
        'serviceId', '5eed0000-0000-4000-800a-000000000002',
@@ -271,7 +271,7 @@ select ok(
 
 set local role authenticated;
 set local request.jwt.claims =
-  '{"sub":"5eed0000-0000-4000-8000-000000000004","role":"authenticated"}';
+  '{"sub":"5eed0000-0000-4000-8000-000000000004","role":"authenticated", "aal": "aal2"}';
 select lives_ok(
   $$ insert into public.service_submission_comments (service_id, body)
      values (
@@ -311,7 +311,7 @@ select is(
 );
 
 set local request.jwt.claims =
-  '{"sub":"5eed0000-0000-4000-8000-000000000002","role":"authenticated"}';
+  '{"sub":"5eed0000-0000-4000-8000-000000000002","role":"authenticated", "aal": "aal2"}';
 select lives_ok(
   $$ insert into public.service_submission_comments (service_id, body, is_internal)
      values (
@@ -329,7 +329,7 @@ select is(
 );
 
 set local request.jwt.claims =
-  '{"sub":"5eed0000-0000-4000-8000-000000000004","role":"authenticated"}';
+  '{"sub":"5eed0000-0000-4000-8000-000000000004","role":"authenticated", "aal": "aal2"}';
 select is(
   (select count(*) from public.service_submission_comments
    where service_id = '5eed0000-0000-4000-800a-000000000001')::int,
@@ -344,7 +344,7 @@ select ok(
 );
 
 set local request.jwt.claims =
-  '{"sub":"5eed0000-0000-4000-8000-000000000011","role":"authenticated"}';
+  '{"sub":"5eed0000-0000-4000-8000-000000000011","role":"authenticated", "aal": "aal2"}';
 select is(
   (select count(*) from public.service_submission_comments)::int,
   0,
@@ -393,7 +393,7 @@ values (
 
 set local role authenticated;
 set local request.jwt.claims =
-  '{"sub":"5eed0000-0000-4000-8000-000000000004","role":"authenticated"}';
+  '{"sub":"5eed0000-0000-4000-8000-000000000004","role":"authenticated", "aal": "aal2"}';
 select lives_ok(
   $$ delete from public.services
      where id = '99000000-0000-4000-800a-000000000045' $$,
@@ -454,7 +454,7 @@ select has_function(
 );
 set local role authenticated;
 set local request.jwt.claims =
-  '{"sub":"5eed0000-0000-4000-8000-000000000004","role":"authenticated"}';
+  '{"sub":"5eed0000-0000-4000-8000-000000000004","role":"authenticated", "aal": "aal2"}';
 select lives_ok(
   $$ select public.resubmit_entity_service(
        '99000000-0000-4000-800a-000000000046'

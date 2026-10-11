@@ -39,7 +39,7 @@ create temporary table rapp52_ids (kind text primary key, id uuid not null);
 grant select, insert, update, delete on table pg_temp.rapp52_ids to authenticated;
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000011","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000011","role":"authenticated", "aal": "aal2"}';
 select throws_ok(
   $$ select public.create_media_item(
     '5eed0000-0000-4000-8000-000000000000/gallery/5eed0000-0000-4000-8000-000000000011/2026/08/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.jpg',
@@ -67,7 +67,7 @@ select ok(
   'the acknowledgment time is recorded server-side'
 );
 
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000012","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000012","role":"authenticated", "aal": "aal2"}';
 insert into pg_temp.rapp52_ids values (
   'staff-only',
   public.create_media_item(
@@ -82,7 +82,7 @@ select is(
   'the owner sees community media and her own staff-only media'
 );
 
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000014","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000014","role":"authenticated", "aal": "aal2"}';
 select is(
   (select count(*) from public.media_items where id = (select id from pg_temp.rapp52_ids where kind = 'community'))::integer,
   1,
@@ -115,7 +115,7 @@ select throws_ok(
   'DENIAL: another player cannot edit media privacy'
 );
 
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000012","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000012","role":"authenticated", "aal": "aal2"}';
 select lives_ok(
   $$ select public.set_media_item_privacy(
     (select id from pg_temp.rapp52_ids where kind = 'staff-only'), 'community'
@@ -128,7 +128,7 @@ select is(
   'the privacy change is persisted'
 );
 
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000002","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000002","role":"authenticated", "aal": "aal2"}';
 select is(
   (select count(*) from public.media_items where id in (select id from pg_temp.rapp52_ids))::integer,
   2,
@@ -152,7 +152,7 @@ values (
   'player', 'Other', 'Player'
 );
 set local role authenticated;
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8014-000000000201","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8014-000000000201","role":"authenticated", "aal": "aal2"}';
 select is(
   (select count(*) from public.media_items where id in (select id from pg_temp.rapp52_ids))::integer,
   0,
@@ -166,21 +166,21 @@ select throws_ok(
   'DENIAL: another tenant cannot prepare R2 deletion'
 );
 
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000014","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000014","role":"authenticated", "aal": "aal2"}';
 select lives_ok(
   $$ select public.flag_forum_content(
     'media', (select id from pg_temp.rapp52_ids where kind = 'community'), 'privacy', null
   ) $$,
   'a player flags a visible media item through the RAPP-51 boundary'
 );
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000015","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000015","role":"authenticated", "aal": "aal2"}';
 select lives_ok(
   $$ select public.flag_forum_content(
     'media', (select id from pg_temp.rapp52_ids where kind = 'community'), 'privacy', null
   ) $$,
   'a second player flags the media item'
 );
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000016","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000016","role":"authenticated", "aal": "aal2"}';
 select lives_ok(
   $$ select public.flag_forum_content(
     'media', (select id from pg_temp.rapp52_ids where kind = 'community'), 'privacy', null
@@ -193,7 +193,7 @@ select is(
   'three flags hide media from players immediately'
 );
 
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000011","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000011","role":"authenticated", "aal": "aal2"}';
 select is(
   (select count(*) from public.media_items where id = (select id from pg_temp.rapp52_ids where kind = 'community'))::integer,
   0,
@@ -207,7 +207,7 @@ select is(
   'DENIAL: hidden media cannot be streamed by its player owner using the object key'
 );
 
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000002","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000002","role":"authenticated", "aal": "aal2"}';
 select is(
   public.can_read_media_object(
     '5eed0000-0000-4000-8000-000000000000/gallery/5eed0000-0000-4000-8000-000000000011/2026/08/cccccccccccccccccccccccccccccccc.jpg'
@@ -234,7 +234,7 @@ select is(
   'dismissal restores media and clears its pending count'
 );
 
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000011","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000011","role":"authenticated", "aal": "aal2"}';
 select throws_ok(
   $$ select public.complete_media_item_deletion(
     (select id from pg_temp.rapp52_ids where kind = 'community'),

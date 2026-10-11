@@ -19,6 +19,7 @@ import { useAuth } from '@ramassa/shared/auth';
 import type { PermissionCode } from '@ramassa/shared/permissions';
 import type { AppRole } from '@ramassa/shared/schemas';
 import { AuthLoading } from './auth-loading';
+import { SecondFactorScreen } from './second-factor-screen';
 
 export function RequireAuth({
   allow,
@@ -31,17 +32,21 @@ export function RequireAuth({
   children: ReactNode;
 }) {
   const { t } = useTranslation('auth');
-  const { session, role, permissions, isLoading } = useAuth();
+  const { session, role, permissions, isLoading, needsSecondFactor, permissionsAreCurrent } =
+    useAuth();
 
   // The role x area decision is a pure, exhaustively-tested function
   // (route-access.ts); this component only maps its outcome to a rendered view.
   const access = resolveRouteAccess({
-    isLoading,
+    // Just after the second factor, permissions are read again: wait for them
+    // rather than redirect on the empty list from before (RAPP-233).
+    isLoading: isLoading || (!needsSecondFactor && !permissionsAreCurrent),
     hasSession: Boolean(session),
     role,
     allow,
     anyPermission,
     permissions,
+    needsSecondFactor,
   });
 
   switch (access.kind) {
@@ -51,6 +56,8 @@ export function RequireAuth({
       return <Navigate to={access.to} />;
     case 'no-access':
       return <NoAdminAccess />;
+    case 'second-factor':
+      return <SecondFactorScreen />;
     case 'allow':
       return <>{children}</>;
   }

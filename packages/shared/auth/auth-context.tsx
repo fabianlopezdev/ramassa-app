@@ -30,6 +30,7 @@ import { fetchMyPermissions, type PermissionCode } from '../permissions';
 import type { AppRole } from '../schemas/auth';
 import type { Database } from '../types/database';
 import { fetchProfileSummary } from './auth-actions';
+import { assuranceLevelOf, needsSecondFactor as sessionNeedsSecondFactor } from './second-factor';
 
 type Client = SupabaseClient<Database>;
 
@@ -52,6 +53,18 @@ export interface AuthState {
    * instead of treating "not known yet" as "unknown".
    */
   readonly isResolvingProfile: boolean;
+  /**
+   * True for a team member or entity contact whose session is not yet verified
+   * with her authenticator (RAPP-233). Her access rules reach nothing until it
+   * is, so both apps show the second-factor step first.
+   */
+  readonly needsSecondFactor: boolean;
+  /**
+   * False just after the second factor verifies, until the permissions are read
+   * again at the new assurance level (RAPP-233). Screens that route by
+   * permission wait for it, so they never route on the empty list from before.
+   */
+  readonly permissionsAreCurrent: boolean;
   /**
    * True when the signed-in identity has no completed onboarding: either no
    * profile row yet (every brand-new player) or a profile whose terms were
@@ -80,6 +93,7 @@ export function AuthProvider({ client, children, onError }: AuthProviderProps) {
   const [session, setSession] = useState<Session | null>(null);
   const [role, setRole] = useState<AppRole | null>(null);
   const [permissions, setPermissions] = useState<ReadonlySet<PermissionCode>>(NO_PERMISSIONS);
+  const [permissionsLevel, setPermissionsLevel] = useState<'aal1' | 'aal2' | null>(null);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isResolvingProfile, setIsResolvingProfile] = useState(false);
@@ -128,6 +142,7 @@ export function AuthProvider({ client, children, onError }: AuthProviderProps) {
         if (isSubscribed && latestChangeRef.current === changeId) {
           setRole(summary?.role ?? null);
           setPermissions(nextPermissions);
+          setPermissionsLevel(assuranceLevelOf(nextSession));
           setNeedsOnboarding(summary === null || summary.termsAcceptedAt === null);
         }
       } catch (error) {
@@ -173,10 +188,24 @@ export function AuthProvider({ client, children, onError }: AuthProviderProps) {
       permissions,
       isLoading,
       isResolvingProfile,
+      needsSecondFactor: sessionNeedsSecondFactor(role, session),
+      permissionsAreCurrent:
+        session === null ||
+        (role !== 'staff' && role !== 'admin') ||
+        permissionsLevel === assuranceLevelOf(session),
       needsOnboarding,
       refreshProfile,
     }),
-    [session, role, permissions, isLoading, isResolvingProfile, needsOnboarding, refreshProfile],
+    [
+      session,
+      role,
+      permissions,
+      permissionsLevel,
+      isLoading,
+      isResolvingProfile,
+      needsOnboarding,
+      refreshProfile,
+    ],
   );
 
   return <AuthContext value={value}>{children}</AuthContext>;

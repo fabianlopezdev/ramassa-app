@@ -37,6 +37,13 @@ export const SEED_ORGANIZATION_SLUG = 'ramassa';
 export const SEED_ACCOUNT_PASSWORD = 'ramassa-dev-password';
 
 /**
+ * The authenticator secret of every seeded team member and entity contact
+ * (RAPP-233), so local sign-ins and tests can produce the six-digit code. A
+ * development value like the password above: the seed never reaches production.
+ */
+export const SEED_TOTP_SECRET = 'JBSWY3DPEHPK3PXP';
+
+/**
  * The seeded auth-only account with NO profile row: the state of every
  * brand-new player. The onboarding wizard flows sign in as it; a db reset
  * removes whatever profile a run created. Mirrors `supabase/seed.sql`.

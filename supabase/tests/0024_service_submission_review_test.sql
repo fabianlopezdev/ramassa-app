@@ -45,7 +45,7 @@ values (
 
 set local role authenticated;
 set local request.jwt.claims =
-  '{"sub":"5eed0000-0000-4000-8000-000000000004","role":"authenticated"}';
+  '{"sub":"5eed0000-0000-4000-8000-000000000004","role":"authenticated", "aal": "aal2"}';
 select public.save_entity_service(jsonb_build_object(
   'serviceId', '99440000-0000-4000-800a-000000000001',
   'categoryId', '5eed0000-0000-4000-8009-000000000007',
@@ -91,7 +91,7 @@ values (
 
 set local role authenticated;
 set local request.jwt.claims =
-  '{"sub":"5eed0000-0000-4000-8000-000000000002","role":"authenticated"}';
+  '{"sub":"5eed0000-0000-4000-8000-000000000002","role":"authenticated", "aal": "aal2"}';
 select throws_ok(
   $$ select public.review_entity_service(
     '99440000-0000-4000-800a-000000000004',
@@ -153,7 +153,7 @@ values (
 
 set local role authenticated;
 set local request.jwt.claims =
-  '{"sub":"5eed0000-0000-4000-8000-000000000002","role":"authenticated"}';
+  '{"sub":"5eed0000-0000-4000-8000-000000000002","role":"authenticated", "aal": "aal2"}';
 select lives_ok(
   $$ select public.review_entity_service(
     '99440000-0000-4000-800a-000000000003',
@@ -219,7 +219,7 @@ select is(
 
 set local role authenticated;
 set local request.jwt.claims =
-  '{"sub":"5eed0000-0000-4000-8000-000000000002","role":"authenticated"}';
+  '{"sub":"5eed0000-0000-4000-8000-000000000002","role":"authenticated", "aal": "aal2"}';
 select lives_ok(
   $$ insert into public.service_submission_comments (service_id, body, is_internal)
      values (
@@ -233,7 +233,7 @@ reset role;
 
 set local role authenticated;
 set local request.jwt.claims =
-  '{"sub":"5eed0000-0000-4000-8000-000000000004","role":"authenticated"}';
+  '{"sub":"5eed0000-0000-4000-8000-000000000004","role":"authenticated", "aal": "aal2"}';
 select is(
   (select count(*)::integer
    from public.service_submission_notifications
@@ -322,7 +322,7 @@ values (
 
 set local role authenticated;
 set local request.jwt.claims =
-  '{"sub":"5eed0000-0000-4000-8000-000000000002","role":"authenticated"}';
+  '{"sub":"5eed0000-0000-4000-8000-000000000002","role":"authenticated", "aal": "aal2"}';
 
 select is(
   (select item_kind
@@ -364,7 +364,7 @@ reset role;
 
 set local role authenticated;
 set local request.jwt.claims =
-  '{"sub":"5eed0000-0000-4000-8000-000000000004","role":"authenticated"}';
+  '{"sub":"5eed0000-0000-4000-8000-000000000004","role":"authenticated", "aal": "aal2"}';
 select throws_ok(
   $$ select public.review_entity_service(
     '99440000-0000-4000-800a-000000000002',

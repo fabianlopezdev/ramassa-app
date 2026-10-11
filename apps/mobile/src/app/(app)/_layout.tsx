@@ -1,4 +1,5 @@
 import { AttendanceSyncWorker } from '@/components/attendance/attendance-sync-worker';
+import { SecondFactorScreen } from '@/components/auth/second-factor-screen';
 import { PushPermissionRationale } from '@/components/push-permission-rationale';
 import { areaHome, teamScreens } from '@/lib/account-area';
 import { useAccountAccess } from '@/lib/use-account-access';
@@ -16,7 +17,7 @@ export { ErrorFallback as ErrorBoundary } from '@/components/error-fallback';
 const hiddenHeaderScreenOptions = { headerShown: false } as const;
 
 export default function AppLayout() {
-  const { user } = useAuth();
+  const { user, needsSecondFactor, permissionsAreCurrent } = useAuth();
   const userId = user?.id ?? null;
   // The area comes from the account type, never from its absence (RAPP-232):
   // an entity contact or an unknown account never lands in the player tabs.
@@ -33,12 +34,17 @@ export default function AppLayout() {
   // Just after signing in, the account type is not known yet. The screens wait
   // for it, so the stack mounts once with the right area and opens its first
   // screen, instead of passing through a wrong one (RAPP-232).
-  if (area === 'resolving') {
+  if (area === 'resolving' || (isTeam && !needsSecondFactor && !permissionsAreCurrent)) {
     return (
       <View className="flex-1 items-center justify-center bg-neutral-50" testID="account-resolving">
         <ActivityIndicator color={tokens.colors.primary.DEFAULT} />
       </View>
     );
+  }
+  // A team member verifies her authenticator before any team screen (RAPP-233):
+  // until then the database lets her session reach nothing.
+  if (isTeam && needsSecondFactor) {
+    return <SecondFactorScreen />;
   }
   if (home !== null && pathname === '/') {
     return <Redirect href={home as Href} />;

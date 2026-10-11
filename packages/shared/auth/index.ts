@@ -18,3 +18,11 @@ export {
   type VerifyEmailOtpParams,
 } from './auth-actions';
 export { mapSupabaseAuthError, type SupabaseAuthErrorShape } from './auth-error';
+export {
+  assuranceLevelOf,
+  needsSecondFactor,
+  resetSecondFactor,
+  startSecondFactor,
+  verifySecondFactor,
+  type SecondFactorStart,
+} from './second-factor';

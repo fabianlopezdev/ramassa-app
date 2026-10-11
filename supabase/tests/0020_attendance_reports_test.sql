@@ -79,7 +79,7 @@ values
 
 select set_config(
   'request.jwt.claims',
-  '{"sub":"5eed0000-0000-4000-8000-000000000002","role":"authenticated"}',
+  '{"sub":"5eed0000-0000-4000-8000-000000000002","role":"authenticated", "aal": "aal2"}',
   true
 );
 
@@ -139,7 +139,7 @@ select is(
 );
 select is((select count(*) from public.attendance_report_rows where status = 'present')::int, 4, 'event reports identify everyone marked present');
 
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000011","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000011","role":"authenticated", "aal": "aal2"}';
 select is((select count(*) from public.attendance)::int, 3, 'a player can read only her own raw attendance rows');
 select is((select count(*) from public.attendance_report_rows)::int, 3, 'a player can read only her own report history');
 select ok(
@@ -151,7 +151,7 @@ select ok(
 );
 select is((select count(*) from public.attendance_participant_stats)::int, 1, 'a player receives only her own summary');
 
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000004","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000004","role":"authenticated", "aal": "aal2"}';
 select is((select count(*) from public.attendance_report_rows)::int, 0, 'entity contacts cannot read attendance reports');
 
 reset role;

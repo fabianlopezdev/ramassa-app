@@ -26,6 +26,12 @@ export interface CallerIdentity {
   readonly userId: string;
   readonly orgId: string;
   readonly role: AppRole;
+  /**
+   * A team member's permissions (RAPP-233), from `my_permissions()` with the
+   * caller's own token: empty for everyone else, and empty for a session not
+   * yet verified with the second factor.
+   */
+  readonly permissions: ReadonlySet<string>;
 }
 
 /**
@@ -135,7 +141,45 @@ async function fetchCallerProfile(options: {
     throw new AppError('AUTH-2', { message: 'No readable profile for this identity' });
   }
 
-  return { userId: profile.id, orgId: profile.org_id, role: profile.role };
+  const permissions =
+    profile.role === 'staff' || profile.role === 'admin'
+      ? await fetchCallerPermissions({ ...options, performFetch })
+      : new Set<string>();
+  return { userId: profile.id, orgId: profile.org_id, role: profile.role, permissions };
+}
+
+async function fetchCallerPermissions(options: {
+  readonly token: string;
+  readonly supabaseUrl: string;
+  readonly supabasePublishableKey: string;
+  readonly performFetch: typeof fetch;
+}): Promise<ReadonlySet<string>> {
+  // Called as a plain function: the Workers runtime refuses `fetch` with any
+  // other `this` ("Illegal invocation").
+  const { performFetch } = options;
+  const response = await performFetch(`${options.supabaseUrl}/rest/v1/rpc/my_permissions`, {
+    method: 'POST',
+    headers: {
+      apikey: options.supabasePublishableKey,
+      Authorization: `Bearer ${options.token}`,
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: '{}',
+  });
+  if (!response.ok) {
+    throw new AppError('AUTH-2', {
+      message: 'Could not read the caller permissions',
+      context: { status: response.status },
+    });
+  }
+  const codes = z.array(z.string()).safeParse(await response.json());
+  if (!codes.success) {
+    throw new AppError('AUTH-2', {
+      message: 'Permissions response did not match the expected shape',
+    });
+  }
+  return new Set(codes.data);
 }
 
 /** The full identity check: token -> subject -> tenant and role. */

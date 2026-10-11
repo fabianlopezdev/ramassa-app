@@ -26,7 +26,7 @@ select has_column(
 );
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000011", "role": "authenticated"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000011", "role": "authenticated", "aal": "aal2"}';
 
 select lives_ok(
   $$ insert into public.knowledge_articles (
@@ -160,7 +160,7 @@ select is(
   'a player cannot update her own review state'
 );
 
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000012", "role": "authenticated"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000012", "role": "authenticated", "aal": "aal2"}';
 
 select is(
   (select count(*) from public.knowledge_articles where submission_language = 'ar')::int,
@@ -168,7 +168,7 @@ select is(
   'another player cannot read an unpublished story or its consent evidence'
 );
 
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated", "aal": "aal2"}';
 
 select is(
   (select publication_consent from public.knowledge_articles where submission_language = 'ar'),
@@ -220,7 +220,7 @@ select is(
   'publishing preserves the player original exactly'
 );
 
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000012", "role": "authenticated"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000012", "role": "authenticated", "aal": "aal2"}';
 
 select is(
   (select count(*) from public.knowledge_articles where title->>'ca' = 'La meva història')::int,

@@ -85,7 +85,7 @@ sponsorship framing. Provision it in the Supabase dashboard, then `supabase link
 it, create the `app_encryption_key` Vault secret, and `supabase db push` the
 migrations. Push the auth settings with `supabase config push` too: the sign-in
 and invitation email template and subject come from `supabase/config.toml`, and
-the invitation button uses the auth Site URL, which must be the admin address.
+the invitation button uses the auth Site URL, which must be the admin address. The same push turns on authenticator sign-in (`[auth.mfa.totp]`), which every team member and entity contact needs from RAPP-233 on: each sets one up at her first sign-in after the release.
 (Not automated: it needs the account owner's login and billing.)
 
 ## Project Structure
