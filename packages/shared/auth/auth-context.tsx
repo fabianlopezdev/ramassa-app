@@ -46,6 +46,13 @@ export interface AuthState {
   /** True until the first session (and, if present, its role) has resolved. */
   readonly isLoading: boolean;
   /**
+   * True while a profile lookup for the current session is in flight (RAPP-232),
+   * for instance just after signing in. The previous role stays in place during
+   * a refresh, so this matters only while `role` is still null: the app waits
+   * instead of treating "not known yet" as "unknown".
+   */
+  readonly isResolvingProfile: boolean;
+  /**
    * True when the signed-in identity has no completed onboarding: either no
    * profile row yet (every brand-new player) or a profile whose terms were
    * never accepted (staff-created edge cases). The (app) layout routes on it.
@@ -75,6 +82,7 @@ export function AuthProvider({ client, children, onError }: AuthProviderProps) {
   const [permissions, setPermissions] = useState<ReadonlySet<PermissionCode>>(NO_PERMISSIONS);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isResolvingProfile, setIsResolvingProfile] = useState(false);
 
   // Kept in a ref so the subscription effect depends only on `client`; an
   // inline `onError` from the app must not tear down and rebuild the listener.
@@ -100,6 +108,7 @@ export function AuthProvider({ client, children, onError }: AuthProviderProps) {
       if (isSubscribed) {
         setSession(nextSession);
         sessionRef.current = nextSession;
+        setIsResolvingProfile(nextSession !== null);
       }
 
       if (!nextSession) {
@@ -131,6 +140,7 @@ export function AuthProvider({ client, children, onError }: AuthProviderProps) {
       } finally {
         if (isSubscribed && latestChangeRef.current === changeId) {
           setIsLoading(false);
+          setIsResolvingProfile(false);
         }
       }
     }
@@ -162,10 +172,11 @@ export function AuthProvider({ client, children, onError }: AuthProviderProps) {
       role,
       permissions,
       isLoading,
+      isResolvingProfile,
       needsOnboarding,
       refreshProfile,
     }),
-    [session, role, permissions, isLoading, needsOnboarding, refreshProfile],
+    [session, role, permissions, isLoading, isResolvingProfile, needsOnboarding, refreshProfile],
   );
 
   return <AuthContext value={value}>{children}</AuthContext>;

@@ -13,7 +13,7 @@ import {
   type AttendanceStatus,
 } from '@ramassa/shared/attendance';
 import { useAuth } from '@ramassa/shared/auth';
-import { isAttendanceCoachCached } from './attendance-coach-cache';
+import { teamScreens } from './account-area';
 import {
   createAttendanceOutbox,
   nextAttendanceOutboxMark,
@@ -22,6 +22,7 @@ import {
 import { isNetworkStateOnline } from './network-status';
 import { privateStorage } from './storage';
 import { supabase } from './supabase';
+import { useAccountAccess } from './use-account-access';
 
 const SIGNED_OUT_QUERY_SCOPE = 'signed-out';
 
@@ -32,12 +33,9 @@ const attendanceSheetQueryKey = (userId: string, occurrenceId: string) =>
   [...attendanceSheetsQueryKey(userId), occurrenceId] as const;
 
 export function useAttendanceOccurrences() {
-  const { user, role } = useAuth();
-  const canReadAttendance =
-    user !== null &&
-    (role === 'staff' ||
-      role === 'admin' ||
-      (role === null && isAttendanceCoachCached(privateStorage, user.id)));
+  const { user } = useAuth();
+  const { area, permissions } = useAccountAccess();
+  const canReadAttendance = user !== null && area === 'team' && teamScreens(permissions).attendance;
   return useQuery<readonly AttendanceOccurrenceListRow[]>({
     queryKey: attendanceOccurrencesQueryKey(user?.id ?? SIGNED_OUT_QUERY_SCOPE),
     queryFn: ({ signal }) => fetchAttendanceOccurrencesForDay(supabase, new Date(), signal),
