@@ -70,6 +70,8 @@ export interface TeamAccessPanelProps {
   /** The reader's own id: nobody resets her own second factor (RAPP-233). */
   readonly currentUserId: string | null;
   readonly onResetSecondFactor: (profileId: string) => Promise<void>;
+  /** Ends every session of the person at once (RAPP-234). */
+  readonly onSignOutEverywhere: (profileId: string) => Promise<void>;
 }
 
 type Message = { readonly kind: 'success' | 'error'; readonly text: string };
@@ -91,6 +93,7 @@ export function TeamAccessPanel({
   onRemove,
   currentUserId,
   onResetSecondFactor,
+  onSignOutEverywhere,
 }: TeamAccessPanelProps) {
   const { t } = useTranslation('settings');
   const [pending, setPending] = useState(false);
@@ -99,7 +102,10 @@ export function TeamAccessPanel({
   const [editingPresetId, setEditingPresetId] = useState<string | 'new' | null>(null);
   const [applyPresetId, setApplyPresetId] = useState<string | null>(null);
   const [removeProfileId, setRemoveProfileId] = useState<string | null>(null);
-  const [resetProfileId, setResetProfileId] = useState<string | null>(null);
+  const [accountAction, setAccountAction] = useState<{
+    readonly kind: 'reset-second-factor' | 'sign-out-everywhere';
+    readonly profileId: string;
+  } | null>(null);
 
   const presetName = (preset: PermissionPreset) =>
     preset.name ?? t(`team.preset.${preset.builtinKey ?? 'custom'}`);
@@ -234,12 +240,31 @@ export function TeamAccessPanel({
                           >
                             {t('team.editAccess')}
                           </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                              setAccountAction({
+                                kind: 'sign-out-everywhere',
+                                profileId: member.profile_id,
+                              })
+                            }
+                            aria-label={`${t('auth:signOutEverywhereAction')} ${member.email}`}
+                          >
+                            {t('auth:signOutEverywhereAction')}
+                          </Button>
                           {member.profile_id === currentUserId ? null : (
                             <Button
                               type="button"
                               variant="ghost"
                               size="sm"
-                              onClick={() => setResetProfileId(member.profile_id)}
+                              onClick={() =>
+                                setAccountAction({
+                                  kind: 'reset-second-factor',
+                                  profileId: member.profile_id,
+                                })
+                              }
                               aria-label={`${t('auth:secondFactorResetAction')} ${member.email}`}
                             >
                               {t('auth:secondFactorResetAction')}
@@ -409,38 +434,55 @@ export function TeamAccessPanel({
       ) : null}
 
       <Dialog
-        open={resetProfileId !== null}
+        open={accountAction !== null}
         onOpenChange={(open) => {
-          if (!open && !pending) setResetProfileId(null);
+          if (!open && !pending) setAccountAction(null);
         }}
       >
-        {resetProfileId !== null ? (
+        {accountAction !== null ? (
           <DialogContent
             role="alertdialog"
             onInteractOutside={(event) => event.preventDefault()}
             onOpenAutoFocus={(event) => {
               event.preventDefault();
-              document.getElementById('reset-second-factor-cancel')?.focus();
+              document.getElementById('account-action-cancel')?.focus();
             }}
           >
-            <DialogTitle>{t('auth:secondFactorResetAction')}</DialogTitle>
-            <DialogDescription>{t('auth:secondFactorResetConfirm')}</DialogDescription>
+            <DialogTitle>
+              {accountAction.kind === 'reset-second-factor'
+                ? t('auth:secondFactorResetAction')
+                : t('auth:signOutEverywhereAction')}
+            </DialogTitle>
+            <DialogDescription>
+              {accountAction.kind === 'reset-second-factor'
+                ? t('auth:secondFactorResetConfirm')
+                : t('auth:signOutEverywhereConfirm')}
+            </DialogDescription>
             <DialogError message={message?.kind === 'error' ? message.text : null} />
             <div className="flex gap-2">
               <Button
                 type="button"
                 disabled={pending}
                 onClick={() =>
-                  void run(async () => {
-                    await onResetSecondFactor(resetProfileId);
-                    setResetProfileId(null);
-                  }, t('auth:secondFactorResetDone'))
+                  void run(
+                    async () => {
+                      if (accountAction.kind === 'reset-second-factor') {
+                        await onResetSecondFactor(accountAction.profileId);
+                      } else {
+                        await onSignOutEverywhere(accountAction.profileId);
+                      }
+                      setAccountAction(null);
+                    },
+                    accountAction.kind === 'reset-second-factor'
+                      ? t('auth:secondFactorResetDone')
+                      : t('auth:signOutEverywhereDone'),
+                  )
                 }
               >
                 {t('confirm')}
               </Button>
               <DialogClose asChild>
-                <Button id="reset-second-factor-cancel" type="button" variant="outline">
+                <Button id="account-action-cancel" type="button" variant="outline">
                   {t('cancel')}
                 </Button>
               </DialogClose>

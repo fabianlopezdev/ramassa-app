@@ -1,3 +1,4 @@
+import { SessionFreshness } from '@/components/auth/session-freshness';
 import { OrganizationBrandingProvider } from '@/components/branding/organization-branding-provider';
 import { NotFoundFallback } from '@/components/not-found-fallback';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -68,6 +69,7 @@ function RootComponent() {
             {i18n.t('common:skipToMainContent')}
           </a>
           <AuthProvider client={supabase} onError={reportAuthError}>
+            <SessionFreshness />
             {/* Required by any shadcn Tooltip in the tree. The staff sidebar
                 shows its labels as tooltips when collapsed to the icon rail, and
                 a Tooltip without this provider THROWS rather than degrading, so

@@ -11,7 +11,9 @@ function makeClient(options: {
   role?: string;
   profile?: { data: unknown; error: unknown };
   permissions?: readonly string[];
+  sessionCurrent?: boolean;
 }) {
+  const localSignOuts: string[] = [];
   let onChange: AuthChangeCallback = () => {};
   // Mutable so a test can install a profile AFTER mount and call refreshProfile,
   // which is exactly what completing the wizard does.
@@ -30,6 +32,11 @@ function makeClient(options: {
   const client = {
     auth: {
       getSession: async () => ({ data: { session: options.initialSession } }),
+      signOut: async ({ scope }: { scope: string }) => {
+        localSignOuts.push(scope);
+        onChange('SIGNED_OUT', null);
+        return { error: null };
+      },
       onAuthStateChange: (callback: AuthChangeCallback) => {
         onChange = callback;
         return { data: { subscription: { unsubscribe: () => {} } } };
@@ -41,12 +48,16 @@ function makeClient(options: {
       }),
     }),
     // `my_permissions`, read for team members only (RAPP-231).
-    rpc: async () => ({ data: options.permissions ?? [], error: null }),
+    rpc: async (name: string) =>
+      name === 'my_session_is_current'
+        ? { data: options.sessionCurrent ?? true, error: null }
+        : { data: options.permissions ?? [], error: null },
   } as unknown as SupabaseClient<Database>;
   return {
     client,
     state,
     emit: (session: unknown) => onChange('SIGNED_IN', session),
+    localSignOuts,
   };
 }
 
@@ -212,4 +223,19 @@ test('a player has no permissions, whatever the server would return', async () =
     </AuthProvider>,
   );
   await waitFor(() => expect(textContentOf(getByTestId('permissions'))).toBe(''));
+});
+
+test('a session ended remotely is signed out on this device (RAPP-234)', async () => {
+  const { client, localSignOuts } = makeClient({
+    initialSession: { user: { id: 'u1' } },
+    role: 'staff',
+    sessionCurrent: false,
+  });
+  const { getByTestId } = render(
+    <AuthProvider client={client}>
+      <AuthProbe />
+    </AuthProvider>,
+  );
+  await waitFor(() => expect(localSignOuts).toEqual(['local']));
+  await waitFor(() => expect(textContentOf(getByTestId('probe'))).toBe('ready|out|none|ok'));
 });

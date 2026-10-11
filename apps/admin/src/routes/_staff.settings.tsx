@@ -8,7 +8,7 @@ import { SETTINGS_PERMISSIONS } from '@/lib/nav-items';
 import { supabase } from '@/lib/supabase';
 import { createFileRoute, useRouter } from '@tanstack/react-router';
 import { z } from 'zod';
-import { resetSecondFactor, useAuth } from '@ramassa/shared/auth';
+import { resetSecondFactor, signOutEverywhere, useAuth } from '@ramassa/shared/auth';
 import {
   createManagedEntity,
   fetchEntityCollaborators,
@@ -201,6 +201,11 @@ function OrganizationSettingsScreen() {
       onResetSecondFactor={async (profileId) => {
         await resetSecondFactor(supabase, profileId);
         await refresh();
+      }}
+      onSignOutEverywhere={async (profileId) => {
+        await signOutEverywhere(supabase, profileId);
+        // Signing herself out ends this tab as well.
+        await refreshIfMine([profileId]);
       }}
     />
   );

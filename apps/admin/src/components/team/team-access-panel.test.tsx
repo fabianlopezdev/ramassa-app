@@ -53,6 +53,7 @@ function renderPanel(overrides: Partial<React.ComponentProps<typeof TeamAccessPa
     onRemove: mock(async () => undefined),
     currentUserId: null,
     onResetSecondFactor: mock(async () => undefined),
+    onSignOutEverywhere: mock(async () => undefined),
     ...overrides,
   };
   return { props, view: render(<TeamAccessPanel {...props} />) };
@@ -157,4 +158,14 @@ test("a manager resets someone else's second factor after confirming, never her 
   expect(
     own.view.queryByRole('button', { name: /secondFactorResetAction|Reset second factor/ }),
   ).toBeNull();
+});
+
+test('signing someone out everywhere asks first, and works for oneself too', async () => {
+  const { props, view } = renderPanel({ currentUserId: nuria.profile_id });
+  fireEvent.click(
+    view.getByRole('button', { name: /signOutEverywhereAction|Sign out everywhere/ }),
+  );
+  expect(props.onSignOutEverywhere).not.toHaveBeenCalled();
+  fireEvent.click(view.getByRole('button', { name: /^confirm$|Confirm/ }));
+  await waitFor(() => expect(props.onSignOutEverywhere).toHaveBeenCalledWith(nuria.profile_id));
 });
