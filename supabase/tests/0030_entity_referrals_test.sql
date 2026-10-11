@@ -21,7 +21,7 @@ select is(
 );
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000004","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000004","role":"authenticated", "aal": "aal2"}';
 
 select is(
   (select count(*) from public.list_entity_referrals())::int,
@@ -94,7 +94,7 @@ select throws_ok(
   'invalid referral input is refused at the database boundary'
 );
 
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000005","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000005","role":"authenticated", "aal": "aal2"}';
 select is(
   (select count(*) from public.list_entity_referrals())::int,
   1,
@@ -107,7 +107,7 @@ select is(
   'DENIAL: direct table reads cannot cross the entity boundary'
 );
 
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000002","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000002","role":"authenticated", "aal": "aal2"}';
 select is(
   (select count(*) from public.list_staff_referrals(null))::int,
   6,
@@ -146,7 +146,7 @@ values (
 )
 on conflict (user_id, device_id) do update set token = excluded.token;
 
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000004","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000004","role":"authenticated", "aal": "aal2"}';
 
 select is(
   public.add_referral_update(
@@ -254,7 +254,7 @@ insert into public.entity_referrals (
   );
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000004","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000004","role":"authenticated", "aal": "aal2"}';
 select is(
   has_function_privilege(
     'authenticated',
@@ -288,7 +288,7 @@ select is(
 );
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000011","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000011","role":"authenticated", "aal": "aal2"}';
 select throws_ok(
   $$ select public.create_entity_referral('{"firstName":"No","lastName":"Player","documentationStatus":"none"}') $$,
   '42501',

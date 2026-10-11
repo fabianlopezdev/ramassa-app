@@ -25,7 +25,7 @@ set max_participants = 1
 where id = '5eed0000-0000-4000-8003-000000000001';
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000011", "role": "authenticated"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000011", "role": "authenticated", "aal": "aal2"}';
 
 select lives_ok(
   $$ insert into public.event_signups (event_id, player_id, state)
@@ -44,7 +44,7 @@ select is(
   'an active signup increments the event count'
 );
 
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000012", "role": "authenticated"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000012", "role": "authenticated", "aal": "aal2"}';
 
 select throws_ok(
   $$ insert into public.event_signups (event_id, player_id, state)
@@ -65,7 +65,7 @@ select is(
   'a rejected signup leaves the count unchanged'
 );
 
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000011", "role": "authenticated"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000011", "role": "authenticated", "aal": "aal2"}';
 
 select lives_ok(
   $$ update public.event_signups
@@ -118,7 +118,7 @@ select is(
   'cancelling through upsert releases the place exactly once'
 );
 
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000012", "role": "authenticated"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000012", "role": "authenticated", "aal": "aal2"}';
 
 select lives_ok(
   $$ insert into public.event_signups (event_id, player_id, state)
@@ -138,7 +138,7 @@ select ok(
 );
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000011", "role": "authenticated"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000011", "role": "authenticated", "aal": "aal2"}';
 
 select is(
   (select count(*) from public.event_signups)::int,
@@ -175,7 +175,7 @@ select is_empty(
   'a player cannot update another player signup'
 );
 
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated", "aal": "aal2"}';
 
 select is(
   (select count(*) from public.event_signups)::int,
@@ -195,7 +195,7 @@ select throws_ok(
   'staff cannot impersonate a player signup'
 );
 
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000004", "role": "authenticated"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000004", "role": "authenticated", "aal": "aal2"}';
 
 select is(
   (select count(*) from public.event_signups)::int,
@@ -227,7 +227,7 @@ select is(
 );
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000001", "role": "authenticated"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000001", "role": "authenticated", "aal": "aal2"}';
 
 insert into public.audit_log (org_id, actor_id, action, target_type, target_id)
 values (

@@ -43,7 +43,7 @@ create temporary table rapp50_ids (kind text primary key, id uuid not null);
 grant select, insert, update, delete on table pg_temp.rapp50_ids to authenticated;
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000011","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000011","role":"authenticated", "aal": "aal2"}';
 select is((select count(*) from public.forum_categories)::integer, 4, 'a player reads same-org categories');
 select lives_ok(
   $$ insert into pg_temp.rapp50_ids values (
@@ -71,7 +71,7 @@ select lives_ok(
 );
 select is((select reply_count from public.forum_posts where id = (select id from pg_temp.rapp50_ids where kind = 'post')), 1, 'reply count increments transactionally');
 
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000012","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000012","role":"authenticated", "aal": "aal2"}';
 select is((select count(*) from public.forum_posts where id = (select id from pg_temp.rapp50_ids where kind = 'post'))::integer, 1, 'another same-org player reads a visible post');
 select is((select count(*) from public.forum_replies where post_id = (select id from pg_temp.rapp50_ids where kind = 'post'))::integer, 1, 'another same-org player reads visible replies');
 select throws_ok(
@@ -85,14 +85,14 @@ select throws_ok(
   'DENIAL: another player cannot delete the post'
 );
 
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000017","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000017","role":"authenticated", "aal": "aal2"}';
 select throws_ok(
   $$ select public.create_forum_post('5eed0000-0000-4000-8006-000000000004', 'banned', null) $$,
   '42501', null::text,
   'DENIAL: a forum-banned player cannot create a post'
 );
 
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000011","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000011","role":"authenticated", "aal": "aal2"}';
 select lives_ok(
   $$ select public.edit_own_forum_post((select id from pg_temp.rapp50_ids where kind = 'post'), 'Editat per mi') $$,
   'the author edits her own visible post'
@@ -119,9 +119,9 @@ insert into public.forum_posts (
   'hidden'
 );
 set local role authenticated;
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000012","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000012","role":"authenticated", "aal": "aal2"}';
 select is((select count(*) from public.forum_posts where id = '5eed0000-0000-4000-8006-000000000099')::integer, 0, 'players cannot read moderation-hidden posts');
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000002","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000002","role":"authenticated", "aal": "aal2"}';
 select is((select count(*) from public.forum_posts where id = '5eed0000-0000-4000-8006-000000000099')::integer, 1, 'same-org staff reads moderation-hidden posts');
 select lives_ok(
   $$ select public.edit_own_forum_post('5eed0000-0000-4000-8006-000000000099', 'staff correction') $$,
@@ -135,11 +135,11 @@ insert into auth.users (id, email) values ('5eed0000-0000-4000-8006-000000000201
 insert into public.profiles (id, org_id, role, first_name, last_name)
 values ('5eed0000-0000-4000-8006-000000000201', '5eed0000-0000-4000-8006-000000000200', 'player', 'Other', 'Player');
 set local role authenticated;
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8006-000000000201","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8006-000000000201","role":"authenticated", "aal": "aal2"}';
 select is((select count(*) from public.forum_categories)::integer, 0, 'another organization cannot enumerate categories');
 select is((select count(*) from public.forum_posts)::integer, 0, 'another organization cannot enumerate posts');
 
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000011","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000011","role":"authenticated", "aal": "aal2"}';
 select throws_ok(
   $$ select public.create_forum_post('5eed0000-0000-4000-8006-000000000004', repeat('x', 2001), null) $$,
   '23514', null::text,
@@ -153,7 +153,7 @@ select throws_ok(
 
 reset role;
 set local role authenticated;
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000027","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000027","role":"authenticated", "aal": "aal2"}';
 insert into pg_temp.rapp50_ids values (
   'erasure-post',
   public.create_forum_post('5eed0000-0000-4000-8006-000000000004', 'erase my forum words', null)

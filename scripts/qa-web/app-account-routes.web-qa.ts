@@ -4,7 +4,13 @@
  */
 import { expect, test } from '@playwright/test';
 import { PARTICIPANT_FIXTURES } from '@ramassa/shared/testing';
-import { ENTITY_EMAIL, queryDatabase, signInPlayer, STAFF_EMAIL } from './session';
+import {
+  completeSecondFactor,
+  ENTITY_EMAIL,
+  queryDatabase,
+  signInPlayer,
+  STAFF_EMAIL,
+} from './session';
 
 const STAFF_ID = '5eed0000-0000-4000-8000-000000000002';
 const ORG_ID = '5eed0000-0000-4000-8000-000000000000';
@@ -49,6 +55,7 @@ test.describe.serial('app areas by account type', () => {
   test('a team member with attendance lands on attendance', async ({ page }) => {
     restoreStaff();
     await signInPlayer(page, STAFF_EMAIL);
+    await completeSecondFactor(page, STAFF_EMAIL);
     await expect(page.getByTestId('attendance-sign-out')).toBeVisible({ timeout: 30_000 });
     await expect(page.getByTestId('attendance-open-messages')).toBeVisible();
   });
@@ -56,6 +63,7 @@ test.describe.serial('app areas by account type', () => {
   test('attendance without the inbox hides the messages link', async ({ page }) => {
     giveStaffOnly(['attendance.mark']);
     await signInPlayer(page, STAFF_EMAIL);
+    await completeSecondFactor(page, STAFF_EMAIL);
     await expect(page.getByTestId('attendance-sign-out')).toBeVisible({ timeout: 30_000 });
     await expect(page.getByTestId('attendance-open-messages')).toHaveCount(0);
   });
@@ -63,6 +71,7 @@ test.describe.serial('app areas by account type', () => {
   test('the inbox alone lands on the conversations', async ({ page }) => {
     giveStaffOnly(['messages.inbox']);
     await signInPlayer(page, STAFF_EMAIL);
+    await completeSecondFactor(page, STAFF_EMAIL);
     await expect(page.getByTestId('staff-conversations-back')).toBeVisible({ timeout: 30_000 });
     await expect(page.getByTestId('attendance-sign-out')).toHaveCount(0);
   });
@@ -70,6 +79,7 @@ test.describe.serial('app areas by account type', () => {
   test('a team member with no app screen is pointed to the web dashboard', async ({ page }) => {
     giveStaffOnly(['settings.branding']);
     await signInPlayer(page, STAFF_EMAIL);
+    await completeSecondFactor(page, STAFF_EMAIL);
     await expect(page.getByTestId('team-home-notice')).toBeVisible({ timeout: 30_000 });
     await page.getByTestId('team-home-notice-sign-out').click();
     await expect(page).toHaveURL(/\/$|\/email-login|\/\?/, { timeout: 30_000 });

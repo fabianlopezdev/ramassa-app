@@ -57,7 +57,7 @@ select org_id, id, 'audit.view' from public.profiles where id = '5eed0000-0000-4
 on conflict do nothing;
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated", "aal": "aal2"}';
 
 -- A brand-new address: the onboarding drive account, which is seeded with an
 -- auth user and deliberately no profile, exactly as a freshly invited player.
@@ -109,7 +109,7 @@ select throws_ok(
 
 -- Who may invite ---------------------------------------------------------------------
 
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000004", "role": "authenticated"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000004", "role": "authenticated", "aal": "aal2"}';
 
 select throws_ok(
   $$ select public.create_participant_invite(jsonb_build_object('email', 'algu@example.test')) $$,
@@ -118,7 +118,7 @@ select throws_ok(
   'an entity contact cannot invite'
 );
 
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000026", "role": "authenticated"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000026", "role": "authenticated", "aal": "aal2"}';
 
 select throws_ok(
   $$ select public.create_participant_invite(jsonb_build_object('email', 'algu@example.test')) $$,
@@ -205,21 +205,21 @@ select is_empty(
 
 -- Visibility ---------------------------------------------------------------------------------
 
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated", "aal": "aal2"}';
 
 select isnt_empty(
   $$ select id from public.invites $$,
   'staff can see the invites their organization has sent'
 );
 
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000026", "role": "authenticated"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000026", "role": "authenticated", "aal": "aal2"}';
 
 select is_empty(
   $$ select id from public.invites $$,
   'a participant cannot enumerate who has been invited'
 );
 
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000004", "role": "authenticated"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000004", "role": "authenticated", "aal": "aal2"}';
 
 select is_empty(
   $$ select id from public.invites $$,
@@ -228,7 +228,7 @@ select is_empty(
 
 -- Rate limiting -------------------------------------------------------------------------------
 
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000003", "role": "authenticated"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000003", "role": "authenticated", "aal": "aal2"}';
 
 insert into public.audit_log (org_id, actor_id, action, target_type, target_id)
 select

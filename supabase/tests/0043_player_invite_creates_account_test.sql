@@ -38,7 +38,7 @@ grant select on existing_player to authenticated;
 -- Inviting a never-seen address, as staff ---------------------------------------
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated", "aal": "aal2"}';
 
 create temporary table first_invite as
 select * from public.create_participant_invite(
@@ -74,7 +74,7 @@ select is(
 -- Inviting the same address again --------------------------------------------------
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated", "aal": "aal2"}';
 
 select lives_ok(
   $$ select public.create_participant_invite(jsonb_build_object('email', 'brand.new.player@example.test')) $$,
@@ -90,7 +90,7 @@ select is(
 );
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated", "aal": "aal2"}';
 
 select throws_ok(
   $$ select public.create_participant_invite(jsonb_build_object(

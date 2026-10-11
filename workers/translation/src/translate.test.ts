@@ -7,6 +7,7 @@ const staff = {
   userId: '7b1d9c2e-3f4a-4b5c-8d6e-9f0a1b2c3d4e',
   orgId: '11111111-2222-3333-4444-555555555555',
   role: 'staff' as const,
+  permissions: new Set(['announcements.edit']),
 };
 
 function buildRequest(body: unknown): Request {
@@ -65,6 +66,17 @@ describe('translation request policy', () => {
     );
     expect(response.status).toBe(401);
     expect(await readErrorCode(response)).toBe('AUTH-2');
+  });
+
+  test('a team member without an editing permission, or before her second factor, is refused', async () => {
+    const response = await handleTranslationRequest(
+      buildRequest(validBody),
+      buildDependencies({
+        resolveIdentity: async () => ({ ...staff, permissions: new Set<string>() }),
+      }),
+    );
+    expect(response.status).toBe(403);
+    expect(await readErrorCode(response)).toBe('AUTH-3');
   });
 
   test('players cannot spend the staff translation quota', async () => {

@@ -4507,6 +4507,10 @@ export type Database = {
         Args: { p_category_ids: string[] };
         Returns: undefined;
       };
+      reset_second_factor: {
+        Args: { p_profile_id: string };
+        Returns: undefined;
+      };
       restore_permission_preset_default: {
         Args: { p_preset_id: string };
         Returns: undefined;

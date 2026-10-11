@@ -9,7 +9,7 @@ const mediaItemId = '0b1d9c2e-3f4a-4b5c-8d6e-9f0a1b2c3d4e';
 const fileObjectKey = `${orgId}/gallery/${userId}/2026/08/video.mp4`;
 const thumbnailObjectKey = `${orgId}/gallery/${userId}/2026/08/video-thumb.jpg`;
 
-const identity: CallerIdentity = { userId, orgId, role: 'player' };
+const identity: CallerIdentity = { userId, orgId, role: 'player', permissions: new Set() };
 
 function request(method = 'DELETE') {
   return new Request(`https://media.example/gallery/items/${mediaItemId}`, {

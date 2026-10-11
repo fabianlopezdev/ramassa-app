@@ -41,8 +41,8 @@ export type UploadFolder = z.infer<typeof uploadFolderSchema>;
 /**
  * Folders only staff and admins may write to: they hold published content and
  * internal paperwork (SPEC "Internal (staff-only)"), not participant uploads.
- * The Worker enforces this against the role read from the caller's profile,
- * never against a claim in the request.
+ * The Worker enforces this against the caller's permissions read from the
+ * database (RAPP-233), never against a claim in the request.
  */
 export const STAFF_ONLY_UPLOAD_FOLDERS = [
   'announcements',
@@ -53,9 +53,36 @@ export const STAFF_ONLY_UPLOAD_FOLDERS = [
   'organization-branding',
 ] as const satisfies readonly UploadFolder[];
 
-export function isFolderWritableByRole(folder: UploadFolder, role: AppRole): boolean {
-  const isStaffOnlyFolder = (STAFF_ONLY_UPLOAD_FOLDERS as readonly UploadFolder[]).includes(folder);
-  return isStaffOnlyFolder ? role === 'staff' || role === 'admin' : true;
+/**
+ * The permissions that open each team folder (RAPP-233): the content type's
+ * edit or publish permission, or the settings permission for documents and
+ * branding. Holding any one of them is enough.
+ */
+export const TEAM_FOLDER_PERMISSIONS: Readonly<
+  Record<(typeof STAFF_ONLY_UPLOAD_FOLDERS)[number], readonly string[]>
+> = {
+  announcements: ['announcements.edit', 'announcements.publish'],
+  events: ['events.edit', 'events.publish'],
+  'knowledge-base': ['knowledge.edit', 'knowledge.publish'],
+  services: ['services.edit', 'services.publish', 'services.review'],
+  documents: ['settings.documents'],
+  'organization-branding': ['settings.branding'],
+};
+
+/**
+ * Whether this caller may write to this folder. Participant folders are open to
+ * every signed-in role; a team folder needs one of its permissions, which the
+ * database returns only for a session verified with the second factor.
+ */
+export function isFolderWritableBy(
+  folder: UploadFolder,
+  role: AppRole,
+  permissions: ReadonlySet<string>,
+): boolean {
+  if (!(STAFF_ONLY_UPLOAD_FOLDERS as readonly UploadFolder[]).includes(folder)) return true;
+  if (role !== 'staff' && role !== 'admin') return false;
+  const needed = TEAM_FOLDER_PERMISSIONS[folder as (typeof STAFF_ONLY_UPLOAD_FOLDERS)[number]];
+  return needed.some((code) => permissions.has(code));
 }
 
 export type UploadKind = 'image' | 'video' | 'document';

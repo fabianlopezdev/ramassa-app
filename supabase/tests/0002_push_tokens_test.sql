@@ -75,7 +75,7 @@ select isnt(
 
 -- Player A1 ---------------------------------------------------------------------
 set local role authenticated;
-set local request.jwt.claims to '{"sub":"00000000-0000-0000-0000-0000000000a1","role":"authenticated"}';
+set local request.jwt.claims to '{"sub":"00000000-0000-0000-0000-0000000000a1","role":"authenticated", "aal": "aal2"}';
 
 select is(
   (select count(*) from public.push_tokens)::int, 1,
@@ -111,7 +111,7 @@ select is(
 
 -- A user may withdraw their own token (sign-out removal).
 set local role authenticated;
-set local request.jwt.claims to '{"sub":"00000000-0000-0000-0000-0000000000a1","role":"authenticated"}';
+set local request.jwt.claims to '{"sub":"00000000-0000-0000-0000-0000000000a1","role":"authenticated", "aal": "aal2"}';
 delete from public.push_tokens where user_id = '00000000-0000-0000-0000-0000000000a1';
 
 reset role;
@@ -126,7 +126,7 @@ insert into public.push_tokens (user_id, token, platform, device_id) values
 
 -- Staff A -----------------------------------------------------------------------
 set local role authenticated;
-set local request.jwt.claims to '{"sub":"00000000-0000-0000-0000-0000000000a3","role":"authenticated"}';
+set local request.jwt.claims to '{"sub":"00000000-0000-0000-0000-0000000000a3","role":"authenticated", "aal": "aal2"}';
 
 select is(
   (select count(*) from public.push_tokens)::int, 2,
@@ -148,7 +148,7 @@ select is(
 
 -- Staff B (other org) -----------------------------------------------------------
 set local role authenticated;
-set local request.jwt.claims to '{"sub":"00000000-0000-0000-0000-0000000000b3","role":"authenticated"}';
+set local request.jwt.claims to '{"sub":"00000000-0000-0000-0000-0000000000b3","role":"authenticated", "aal": "aal2"}';
 
 select is(
   (select count(*) from public.push_tokens)::int, 0,

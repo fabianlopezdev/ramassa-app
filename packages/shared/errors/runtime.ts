@@ -38,6 +38,7 @@ export const errorCodeRegistry = defineCodes({
   'AUTH-5': { domain: 'AUTH', description: 'Too many sign-in attempts (rate limited)' },
   'AUTH-6': { domain: 'AUTH', description: 'Incorrect email or password' },
   'AUTH-7': { domain: 'AUTH', description: 'Sign-in link came from an untrusted origin' },
+  'AUTH-8': { domain: 'AUTH', description: 'Authenticator (second factor) code is incorrect' },
   'DB-1': { domain: 'DB', description: 'Database operation failed' },
   'DB-2': { domain: 'DB', description: 'Requested record not found' },
   'DB-3': { domain: 'DB', description: 'Erasure did not complete and was rolled back' },

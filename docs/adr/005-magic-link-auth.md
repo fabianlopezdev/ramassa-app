@@ -1,5 +1,7 @@
 # 005. Email OTP auth + password fallback
 
+> [!note] Amended 2026-10-11 (RAPP-233): team members and entity contacts add a second factor, an authenticator app (TOTP). Their access rules need an `aal2` session; players keep the email code alone.
+
 **Status:** Accepted
 **Date:** 2026-04-09
 

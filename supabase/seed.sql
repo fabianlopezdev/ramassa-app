@@ -1286,7 +1286,7 @@ on conflict (id) do nothing;
 -- One pending flag makes the staff queue and notification path reachable after
 -- every reset without hiding the post from the player board.
 set local role authenticated;
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000012","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000012","role":"authenticated", "aal": "aal2"}';
 insert into public.forum_flags (
   id, org_id, flagger_id, target_type, post_id, reason, comment, created_at
 ) values (
@@ -1392,7 +1392,7 @@ on conflict (id) do nothing;
 -- safe to tap through during offline/realtime QA.
 select set_config(
   'request.jwt.claims',
-  '{"sub":"5eed0000-0000-4000-8000-000000000002","role":"authenticated"}',
+  '{"sub":"5eed0000-0000-4000-8000-000000000002","role":"authenticated", "aal": "aal2"}',
   false
 );
 
@@ -2053,3 +2053,12 @@ from public.profiles as profile
 cross join unnest(array['participants.view_sensitive', 'rgpd.erase']) as code
 where profile.role = 'staff'
 on conflict do nothing;
+
+-- Seeded team members and entity contacts have an authenticator set up
+-- (RAPP-233), with the development secret SEED_TOTP_SECRET in
+-- packages/shared/testing/fixtures.ts, so the second factor can be completed
+-- locally and in tests.
+insert into auth.mfa_factors (id, user_id, friendly_name, factor_type, status, secret, created_at, updated_at)
+select gen_random_uuid(), profile.id, 'Ramassà (seed)', 'totp', 'verified', 'JBSWY3DPEHPK3PXP', now(), now()
+from public.profiles as profile
+where profile.role in ('staff', 'admin', 'entity');

@@ -6,6 +6,7 @@
   "AUTH-5": "Too many attempts. Please wait a moment and try again.",
   "AUTH-6": "Those details do not match. Check them and try again.",
   "AUTH-7": "This sign-in link could not be trusted. Request a new one.",
+  "AUTH-8": "That code did not match. Check your authenticator app and try again.",
   "DB-1": "We could not save or load your data. Please try again.",
   "DB-2": "We could not find what you are looking for.",
   "DB-3": "We could not delete everything, so nothing was deleted. Please try again.",

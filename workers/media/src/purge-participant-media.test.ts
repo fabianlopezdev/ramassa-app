@@ -15,10 +15,13 @@ const admin: CallerIdentity = {
   userId: 'aaaaaaaa-1111-4111-8111-aaaaaaaaaaaa',
   orgId: ORG,
   role: 'admin',
+  permissions: new Set(['rgpd.erase', 'team.manage']),
 };
-const staff: CallerIdentity = { ...admin, role: 'staff' };
-const player: CallerIdentity = { ...admin, role: 'player' };
-const entity: CallerIdentity = { ...admin, role: 'entity' };
+// Today's staff hold rgpd.erase but not team.manage (RAPP-230), so they still
+// may not purge.
+const staff: CallerIdentity = { ...admin, role: 'staff', permissions: new Set(['rgpd.erase']) };
+const player: CallerIdentity = { ...admin, role: 'player', permissions: new Set() };
+const entity: CallerIdentity = { ...admin, role: 'entity', permissions: new Set() };
 
 /**
  * An in-memory stand-in for the R2 binding, holding whatever keys a test says

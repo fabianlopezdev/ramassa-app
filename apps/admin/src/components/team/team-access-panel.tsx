@@ -67,6 +67,9 @@ export interface TeamAccessPanelProps {
   readonly onDeletePreset: (presetId: string) => Promise<void>;
   readonly onRestorePreset: (presetId: string) => Promise<void>;
   readonly onRemove: (profileId: string) => Promise<void>;
+  /** The reader's own id: nobody resets her own second factor (RAPP-233). */
+  readonly currentUserId: string | null;
+  readonly onResetSecondFactor: (profileId: string) => Promise<void>;
 }
 
 type Message = { readonly kind: 'success' | 'error'; readonly text: string };
@@ -86,6 +89,8 @@ export function TeamAccessPanel({
   onDeletePreset,
   onRestorePreset,
   onRemove,
+  currentUserId,
+  onResetSecondFactor,
 }: TeamAccessPanelProps) {
   const { t } = useTranslation('settings');
   const [pending, setPending] = useState(false);
@@ -94,6 +99,7 @@ export function TeamAccessPanel({
   const [editingPresetId, setEditingPresetId] = useState<string | 'new' | null>(null);
   const [applyPresetId, setApplyPresetId] = useState<string | null>(null);
   const [removeProfileId, setRemoveProfileId] = useState<string | null>(null);
+  const [resetProfileId, setResetProfileId] = useState<string | null>(null);
 
   const presetName = (preset: PermissionPreset) =>
     preset.name ?? t(`team.preset.${preset.builtinKey ?? 'custom'}`);
@@ -228,6 +234,17 @@ export function TeamAccessPanel({
                           >
                             {t('team.editAccess')}
                           </Button>
+                          {member.profile_id === currentUserId ? null : (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setResetProfileId(member.profile_id)}
+                              aria-label={`${t('auth:secondFactorResetAction')} ${member.email}`}
+                            >
+                              {t('auth:secondFactorResetAction')}
+                            </Button>
+                          )}
                           <Button
                             type="button"
                             variant="destructive"
@@ -390,6 +407,47 @@ export function TeamAccessPanel({
           }}
         />
       ) : null}
+
+      <Dialog
+        open={resetProfileId !== null}
+        onOpenChange={(open) => {
+          if (!open && !pending) setResetProfileId(null);
+        }}
+      >
+        {resetProfileId !== null ? (
+          <DialogContent
+            role="alertdialog"
+            onInteractOutside={(event) => event.preventDefault()}
+            onOpenAutoFocus={(event) => {
+              event.preventDefault();
+              document.getElementById('reset-second-factor-cancel')?.focus();
+            }}
+          >
+            <DialogTitle>{t('auth:secondFactorResetAction')}</DialogTitle>
+            <DialogDescription>{t('auth:secondFactorResetConfirm')}</DialogDescription>
+            <DialogError message={message?.kind === 'error' ? message.text : null} />
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                disabled={pending}
+                onClick={() =>
+                  void run(async () => {
+                    await onResetSecondFactor(resetProfileId);
+                    setResetProfileId(null);
+                  }, t('auth:secondFactorResetDone'))
+                }
+              >
+                {t('confirm')}
+              </Button>
+              <DialogClose asChild>
+                <Button id="reset-second-factor-cancel" type="button" variant="outline">
+                  {t('cancel')}
+                </Button>
+              </DialogClose>
+            </div>
+          </DialogContent>
+        ) : null}
+      </Dialog>
 
       <Dialog
         open={removeProfileId !== null}

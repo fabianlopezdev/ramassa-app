@@ -67,7 +67,7 @@ insert into public.profiles (
   ('64000000-0000-4000-8100-000000000006', '64000000-0000-4000-8000-000000000002', 'admin', 'Other', 'Admin', 'ca', 'none', true, now(), null);
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub":"64000000-0000-4000-8100-000000000001","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"64000000-0000-4000-8100-000000000001","role":"authenticated", "aal": "aal2"}';
 
 select is(
   (public.update_organization_settings(
@@ -145,7 +145,7 @@ select is(
   'an admin may demote another admin while a second active admin remains'
 );
 
-set local request.jwt.claims = '{"sub":"64000000-0000-4000-8100-000000000002","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"64000000-0000-4000-8100-000000000002","role":"authenticated", "aal": "aal2"}';
 select throws_ok(
   $$ select public.set_staff_member_role('64000000-0000-4000-8100-000000000002', 'staff') $$,
   '23514',
@@ -165,7 +165,7 @@ insert into auth.sessions (id, user_id) values
 insert into auth.refresh_tokens (token, user_id, revoked, session_id) values
   ('rapp64-refresh-token', '64000000-0000-4000-8100-000000000003', false, '64000000-0000-4000-8200-000000000001');
 set local role authenticated;
-set local request.jwt.claims = '{"sub":"64000000-0000-4000-8100-000000000002","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"64000000-0000-4000-8100-000000000002","role":"authenticated", "aal": "aal2"}';
 select public.remove_staff_member('64000000-0000-4000-8100-000000000003');
 reset role;
 select is(
@@ -185,7 +185,7 @@ select is(
 );
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub":"64000000-0000-4000-8100-000000000002","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"64000000-0000-4000-8100-000000000002","role":"authenticated", "aal": "aal2"}';
 create temporary table rapp64_document (id uuid) on commit drop;
 insert into rapp64_document
 select public.register_internal_document(
@@ -205,7 +205,7 @@ select ok(
   'staff and admins can authorize an internal document object in their organization'
 );
 
-set local request.jwt.claims = '{"sub":"64000000-0000-4000-8100-000000000004","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"64000000-0000-4000-8100-000000000004","role":"authenticated", "aal": "aal2"}';
 select is((select count(*)::integer from public.internal_documents), 0, 'DENIAL: players cannot select internal document metadata');
 select is((select count(*)::integer from public.search_internal_documents('')), 0, 'DENIAL: player document search returns no rows');
 select is(
@@ -216,7 +216,7 @@ select is(
   'DENIAL: players cannot authorize internal R2 objects'
 );
 
-set local request.jwt.claims = '{"sub":"64000000-0000-4000-8100-000000000005","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"64000000-0000-4000-8100-000000000005","role":"authenticated", "aal": "aal2"}';
 select is((select count(*)::integer from public.internal_documents), 0, 'DENIAL: entity contacts cannot select internal document metadata');
 select is(
   public.can_read_internal_document_object(
@@ -226,10 +226,10 @@ select is(
   'DENIAL: entity contacts cannot authorize internal R2 objects'
 );
 
-set local request.jwt.claims = '{"sub":"64000000-0000-4000-8100-000000000006","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"64000000-0000-4000-8100-000000000006","role":"authenticated", "aal": "aal2"}';
 select is((select count(*)::integer from public.search_internal_documents('')), 0, 'another tenant admin cannot search these documents');
 
-set local request.jwt.claims = '{"sub":"64000000-0000-4000-8100-000000000003","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"64000000-0000-4000-8100-000000000003","role":"authenticated", "aal": "aal2"}';
 select throws_ok(
   $$ select public.invite_staff_member('blocked@example.test', 'Blocked', 'Staff', 'staff') $$,
   '42501',

@@ -126,7 +126,7 @@ values (
 
 set local role authenticated;
 set local request.jwt.claims =
-  '{"sub":"5eed0000-0000-4000-8000-000000000002","role":"authenticated"}';
+  '{"sub":"5eed0000-0000-4000-8000-000000000002","role":"authenticated", "aal": "aal2"}';
 
 select is(
   (select count(*)::integer from public.list_staff_conversations(false, false, 'all', '')),
@@ -270,7 +270,7 @@ select is(
 );
 
 set local request.jwt.claims =
-  '{"sub":"5eed0000-0000-4000-8000-000000000011","role":"authenticated"}';
+  '{"sub":"5eed0000-0000-4000-8000-000000000011","role":"authenticated", "aal": "aal2"}';
 select throws_ok(
   $$ select public.set_conversation_assignment(
     'a4800000-0000-4000-8000-000000000001',
@@ -291,7 +291,7 @@ select is(
 );
 
 set local request.jwt.claims =
-  '{"sub":"5eed0000-0000-4000-8000-000000000004","role":"authenticated"}';
+  '{"sub":"5eed0000-0000-4000-8000-000000000004","role":"authenticated", "aal": "aal2"}';
 select throws_ok(
   $$ select public.set_conversation_assignment(
     'a4800000-0000-4000-8000-000000000004',

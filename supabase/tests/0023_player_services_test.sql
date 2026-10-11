@@ -23,7 +23,7 @@ select ok(
 );
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000011","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000011","role":"authenticated", "aal": "aal2"}';
 
 select is(
   (select id from public.services
@@ -75,7 +75,7 @@ select is(
   'a player cannot read staff notifications'
 );
 
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000002","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000002","role":"authenticated", "aal": "aal2"}';
 
 select is(
   (select count(*) from public.service_submission_notifications
@@ -122,7 +122,7 @@ select throws_ok(
   'staff cannot mutate a participant interest through the player RPC'
 );
 
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000011","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000011","role":"authenticated", "aal": "aal2"}';
 
 select is(
   public.set_service_interest('5eed0000-0000-4000-800a-000000000003', false),
@@ -147,7 +147,7 @@ select is(
   'repeating false leaves no duplicate or negative state'
 );
 
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000002","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000002","role":"authenticated", "aal": "aal2"}';
 
 select is(
   (select count(*) from public.service_submission_notifications

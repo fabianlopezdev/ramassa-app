@@ -8,9 +8,14 @@ const player: CallerIdentity = {
   userId: '7b1d9c2e-3f4a-4b5c-8d6e-9f0a1b2c3d4e',
   orgId: '11111111-2222-3333-4444-555555555555',
   role: 'player',
+  permissions: new Set(),
 };
 
-const staff: CallerIdentity = { ...player, role: 'staff' };
+const staff: CallerIdentity = {
+  ...player,
+  role: 'staff',
+  permissions: new Set(['announcements.edit', 'events.edit', 'knowledge.edit', 'services.edit']),
+};
 
 function buildRequest(body: unknown): Request {
   return new Request('https://media.example/uploads/url', {
@@ -120,12 +125,23 @@ describe('handleMintUploadUrl - denial paths', () => {
     expect(await readErrorCode(response)).toBe('AUTH-3');
   });
 
-  test('staff may write to the same staff-only folder', async () => {
+  test('a holder of settings.documents may write to documents', async () => {
+    const response = await handleMintUploadUrl(
+      buildRequest({ ...validBody, folder: 'documents', contentType: 'application/pdf' }),
+      buildDependencies({
+        resolveIdentity: async () => ({ ...staff, permissions: new Set(['settings.documents']) }),
+      }),
+    );
+    expect(response.status).toBe(200);
+  });
+
+  test('staff without settings.documents may not (RAPP-230 decision, RAPP-233)', async () => {
     const response = await handleMintUploadUrl(
       buildRequest({ ...validBody, folder: 'documents', contentType: 'application/pdf' }),
       buildDependencies({ resolveIdentity: async () => staff }),
     );
-    expect(response.status).toBe(200);
+    expect(response.status).toBe(403);
+    expect(await readErrorCode(response)).toBe('AUTH-3');
   });
 
   test('a malformed JSON body is refused with VALIDATION-1', async () => {
