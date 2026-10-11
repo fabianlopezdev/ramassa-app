@@ -80,7 +80,7 @@ select org_id, id, 'audit.view' from public.profiles where id = '5eed0000-0000-4
 on conflict do nothing;
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 
 select is(
   (select document_number from public.get_participant_profile('5eed0000-0000-4000-8000-000000000026')),
@@ -165,14 +165,14 @@ select throws_ok(
 
 -- An entity contact reads nothing, and leaves no audit row: an access that did
 -- not happen must not look like one that did.
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000004", "role": "authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000004", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 
 select is_empty(
   $$ select id from public.get_participant_profile('5eed0000-0000-4000-8000-000000000026') $$,
   'an entity contact reads no participant through the staff RPC'
 );
 
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000026", "role": "authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000026", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 
 select is_empty(
   $$ select id from public.get_participant_profile('5eed0000-0000-4000-8000-000000000025') $$,
@@ -186,7 +186,7 @@ select is_empty(
   'and not herself either: this is the staff path, not a second self-service one'
 );
 
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 
 select is(
   (select count(*) from public.audit_log
@@ -235,7 +235,7 @@ select is_empty(
   'and it is stored as ciphertext, not as text that happens to decrypt'
 );
 set local role authenticated;
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 
 select is(
   (select count(*) from public.audit_log
@@ -289,7 +289,7 @@ select is(
   'an edit cannot change the role, whatever the payload carries'
 );
 
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000026", "role": "authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000026", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 
 select throws_ok(
   $$ select public.update_participant_profile(
@@ -303,7 +303,7 @@ select throws_ok(
 
 -- The active/inactive toggle ---------------------------------------------------------
 
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 
 -- Rosa is seeded inactive (ordinal 26, a multiple of 13), so this is a real
 -- transition rather than a write that changes nothing.
@@ -371,7 +371,7 @@ select cmp_ok(
 -- Notes are the team's working record, written in front of a participant but not
 -- addressed to her. She must not be able to read them, and must not be able to
 -- write one in a staff member's name.
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000026", "role": "authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000026", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 
 select is_empty(
   $$ select id from public.participant_notes
@@ -391,7 +391,7 @@ select throws_ok(
 
 -- The timeline contract ------------------------------------------------------------------
 
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 
 -- Phase 2 has no activity sources yet. What matters now is that the CONTRACT
 -- exists and is typed, so the screen renders a real empty state and every later

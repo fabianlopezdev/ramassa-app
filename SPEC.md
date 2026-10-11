@@ -1639,3 +1639,10 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - "Sign out everywhere" ends every session of a person at once, on every device: anyone for herself, a `team.manage` holder for a team member (Team screen), an `entities.manage` holder for an entity contact. Audited as `sessions.sign_out_everywhere`.
 - It sets `profiles.sessions_valid_after` and deletes the refreshable sessions. The access helpers (`has_permission`, `my_permissions`, `is_team_member`, `current_app_role`, `current_collaborating_entity_id`) deny a token issued before that time at once, the immediate-deny pattern of ADR-025. The column is protected from direct writes (RAPP-239).
 - Both apps ask `my_session_is_current()` on sign-in and when they come back to the front (at most every 30 seconds), and sign out on that device when it answers no.
+
+## Step-up checks (2026-10-11, RAPP-235, part of RAPP-211)
+
+- The risky actions need an authenticator code from the last 10 minutes, even in a verified session: RGPD deletion requests, anonymization and permanent erasure (including the media sweep), permission, preset and role changes, removing a team member, new team and entity accounts, activating or deactivating an entity contact, second-factor resets, and every data export.
+- The database enforces it: each of these functions calls `private.require_recent_second_factor()` first, which reads the most recent `totp` time from the token's `amr` claim and raises `step_up_required` (42501) when it is older. The service role and contexts with no signed-in user are not asked. The media Worker checks the same time before an erasure sweep.
+- The web admin reads the same time from its token before the action and opens a code prompt when it is older than 9 minutes, so the person is asked first. A refusal from the database (AUTH-9) opens the prompt once more and repeats the action. Cancelling shows AUTH-9.
+- The app's device check (biometrics or passcode) comes with its first risky screen; the app has none in phase 1.

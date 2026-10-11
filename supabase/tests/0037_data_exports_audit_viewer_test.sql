@@ -46,7 +46,7 @@ insert into public.profiles (
   ('63000000-0000-4000-8100-000000000004', '63000000-0000-4000-8000-000000000002', 'admin', 'Other', 'Admin', 'ca', null, null, null, 'none', null, 'Vic', null, null, true, '2026-08-01T08:00:00Z');
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub":"63000000-0000-4000-8100-000000000001","role":"authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub":"63000000-0000-4000-8100-000000000001","role":"authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 
 create temporary table rapp63_default_export (payload jsonb) on commit drop;
 insert into rapp63_default_export (payload)
@@ -163,7 +163,7 @@ select throws_ok(
   'DENIAL: authenticated admins cannot delete append-only audit rows'
 );
 
-set local request.jwt.claims = '{"sub":"63000000-0000-4000-8100-000000000002","role":"authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub":"63000000-0000-4000-8100-000000000002","role":"authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select throws_ok(
   $$ select public.create_data_export('participants', 'default', 'csv', null, null, null, false) $$,
   '42501',
@@ -177,7 +177,7 @@ select throws_ok(
   'DENIAL: staff cannot open the admin audit viewer'
 );
 
-set local request.jwt.claims = '{"sub":"63000000-0000-4000-8100-000000000004","role":"authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub":"63000000-0000-4000-8100-000000000004","role":"authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select is(
   jsonb_array_length(public.get_audit_log_page(null, null, null, null, null, null, null, null, 50) -> 'rows'),
   0,

@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
-import { AppError } from './errors';
+import { AppError, databaseErrorCode } from './errors';
 import type { Database } from './types/database';
 
 export const DATA_EXPORT_DATASETS = ['participants', 'attendance', 'events'] as const;
@@ -124,7 +124,8 @@ export async function createDataExport(
     p_reason: request.reason ?? null,
     p_confirmed: request.confirmed,
   });
-  if (error !== null) throw new AppError('DB-1', { message: error.message });
+  if (error !== null)
+    throw new AppError(databaseErrorCode(error.message), { message: error.message });
   return dataExportResponseSchema.parse(data);
 }
 

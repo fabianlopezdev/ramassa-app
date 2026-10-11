@@ -31,7 +31,7 @@ select is_empty(
   'nor a participant record'
 );
 
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000001", "role": "authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000001", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select ok((select public.has_permission('team.manage')), 'the same admin at aal2 holds her permissions');
 
 -- 2. An entity contact at aal1 -----------------------------------------------------------------
@@ -40,7 +40,7 @@ set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000004", 
 select is((select public.current_collaborating_entity_id()), null, 'an entity contact at aal1 has no entity');
 select is((select count(*)::int from public.entity_referrals), 0, 'and reads no referral');
 
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000004", "role": "authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000004", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select isnt((select public.current_collaborating_entity_id()), null, 'at aal2 she has her entity');
 
 -- 3. A player at aal1 ------------------------------------------------------------------------------
@@ -59,7 +59,7 @@ values (
 on conflict (id) do nothing;
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000003", "role": "authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000003", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select throws_ok(
   $$ select public.reset_second_factor('5eed0000-0000-4000-8000-000000000003') $$,
   '42501', null::text, 'nobody resets her own second factor'
@@ -69,7 +69,7 @@ select throws_ok(
   '42501', null::text, 'a staff member without team.manage resets nobody'
 );
 
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000001", "role": "authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000001", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select lives_ok(
   $$ select public.reset_second_factor('5eed0000-0000-4000-8000-000000000003') $$,
   'team.manage resets a team member''s second factor'

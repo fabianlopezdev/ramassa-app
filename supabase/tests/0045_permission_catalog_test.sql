@@ -64,7 +64,7 @@ select is(
 -- 3. has_permission ---------------------------------------------------------------------------
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select ok((select public.has_permission('attendance.mark')), 'staff hold attendance.mark');
 select ok(not (select public.has_permission('team.manage')), 'staff do not hold team.manage');
 select is((select count(*)::int from public.my_permissions()), 32, 'my_permissions lists her own 32');
@@ -78,13 +78,13 @@ select throws_ok(
   '42501', null::text, 'changing toggles needs team.manage'
 );
 
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000011", "role": "authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000011", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select ok(not (select public.has_permission('participants.view')), 'a player holds nothing');
 
 reset role;
 update public.profiles set is_active = false where id = '5eed0000-0000-4000-8000-000000000003';
 set local role authenticated;
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000003", "role": "authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000003", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select ok(not (select public.has_permission('attendance.mark')), 'an inactive team member holds nothing');
 reset role;
 update public.profiles set is_active = true where id = '5eed0000-0000-4000-8000-000000000003';
@@ -92,7 +92,7 @@ update public.profiles set is_active = true where id = '5eed0000-0000-4000-8000-
 -- 4. Safety rules, as the admin ----------------------------------------------------------------
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000001", "role": "authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000001", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 
 select is((select count(*)::int from public.permission_presets), 3, 'with team.manage the admin reads the presets');
 
@@ -129,12 +129,12 @@ select is(
 
 -- The admin gives that staff member team.manage, then the admin loses some toggles.
 set local role authenticated;
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000001", "role": "authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000001", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select public.set_team_member_permissions(
   '5eed0000-0000-4000-8000-000000000003', array['attendance.mark', 'team.manage']
 );
 
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000003", "role": "authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000003", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select throws_ok(
   $$ select public.set_team_member_permissions(
        '5eed0000-0000-4000-8000-000000000002', array['participants.view_sensitive']
@@ -148,7 +148,7 @@ select throws_ok(
   '42501', null::text, 'nor removes one they do not hold'
 );
 
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000001", "role": "authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000001", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select public.set_team_member_permissions('5eed0000-0000-4000-8000-000000000003', array['attendance.mark']);
 select throws_ok(
   $$ select public.set_team_member_permissions(

@@ -14,7 +14,7 @@ select plan(13);
 
 -- An admin signs a staff member out everywhere.
 set local role authenticated;
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000001", "role": "authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000001", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select lives_ok(
   $$ select public.sign_out_everywhere('5eed0000-0000-4000-8000-000000000002') $$,
   'team.manage signs a team member out everywhere'
@@ -57,7 +57,7 @@ select throws_ok(
 );
 
 -- Who may.
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000003", "role": "authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000003", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select throws_ok(
   $$ select public.sign_out_everywhere('5eed0000-0000-4000-8000-000000000001') $$,
   '42501', null::text, 'staff without team.manage cannot sign out another team member'

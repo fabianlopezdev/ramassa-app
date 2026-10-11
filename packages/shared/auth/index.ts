@@ -27,3 +27,4 @@ export {
   type SecondFactorStart,
 } from './second-factor';
 export { isSessionCurrent, signOutEverywhere } from './sessions';
+export { confirmSecondFactor, hasRecentSecondFactor, secondFactorVerifiedAt } from './step-up';

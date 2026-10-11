@@ -51,7 +51,7 @@ values (
 );
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub": "67000000-0000-4000-8000-000000000012", "role": "authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub": "67000000-0000-4000-8000-000000000012", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 
 select throws_ok(
   $$ update public.deletion_requests
@@ -124,7 +124,7 @@ select throws_ok(
   'terminal requests cannot move backward'
 );
 
-set local request.jwt.claims = '{"sub": "67000000-0000-4000-8000-000000000013", "role": "authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub": "67000000-0000-4000-8000-000000000013", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 
 select throws_ok(
   $$ select public.transition_deletion_request(

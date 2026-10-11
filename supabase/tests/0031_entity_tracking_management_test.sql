@@ -19,7 +19,7 @@ select is(
 );
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000004","role":"authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000004","role":"authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 
 select is(
   (select count(*) from public.list_entity_referrals())::int,
@@ -90,7 +90,7 @@ select throws_ok(
   'DENIAL: an entity cannot create an event'
 );
 
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000005","role":"authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000005","role":"authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select is(
   (select suppressed from public.get_entity_impact_summary()),
   true,
@@ -118,7 +118,7 @@ select is(
   'DENIAL: tracking cannot cross the entity boundary'
 );
 
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000002","role":"authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000002","role":"authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select is(
   (select count(*) from public.list_staff_referrals(null))::int,
   5,
@@ -130,7 +130,7 @@ select is(
   'DENIAL: staff cannot enter the admin-only entity management boundary'
 );
 
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000001","role":"authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000001","role":"authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 
 select lives_ok(
   $$ select public.create_collaborating_entity('Fundació RAPP-55') $$,
@@ -214,7 +214,7 @@ select is(
   'deactivation retains referral history for staff'
 );
 
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000004","role":"authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000004","role":"authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select is(public.current_app_role(), null::text, 'a deactivated entity user loses her app role');
 select is(
   (select count(*) from public.list_entity_referrals())::int,

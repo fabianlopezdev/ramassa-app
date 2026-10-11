@@ -45,7 +45,7 @@ select ok(
 );
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000001","role":"authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000001","role":"authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 
 select lives_ok(
   $$ select public.save_survey(
@@ -98,7 +98,7 @@ select throws_ok(
   'multiple-choice option identifiers must be unique'
 );
 
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000011","role":"authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000011","role":"authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 
 select is(
   (select count(*)::integer from public.list_player_surveys()
@@ -196,7 +196,7 @@ select throws_ok(
   'the closing instant is enforced on writes'
 );
 
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000012","role":"authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000012","role":"authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select is(
   (select count(*)::integer from public.survey_responses),
   0,
@@ -210,7 +210,7 @@ select is(
   'a second player cannot read the first player decrypted answers'
 );
 
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000001","role":"authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000001","role":"authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select is(
   (select count(*)::integer from public.list_survey_responses(
     '5eed0000-0000-4000-8040-000000000001'
