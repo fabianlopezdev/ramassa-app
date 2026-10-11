@@ -1,4 +1,5 @@
 import { AttendanceSyncWorker } from '@/components/attendance/attendance-sync-worker';
+import { useAppLock } from '@/components/auth/app-lock';
 import { SecondFactorScreen } from '@/components/auth/second-factor-screen';
 import { PushPermissionRationale } from '@/components/push-permission-rationale';
 import { areaHome, teamScreens } from '@/lib/account-area';
@@ -29,6 +30,7 @@ export default function AppLayout() {
   // surfaces the translated rationale when the OS permission is undetermined.
   const { shouldShowRationale, acceptRationale, declineRationale } = usePushRegistration();
   const pathname = usePathname();
+  const { isCovered } = useAppLock();
   const home = areaHome(area, permissions);
 
   // Just after signing in, the account type is not known yet. The screens wait
@@ -104,6 +106,9 @@ export default function AppLayout() {
         <Stack.Protected guard={area === 'entity'}>
           <Stack.Screen name="entity-portal" />
         </Stack.Protected>
+        <Stack.Protected guard={area === 'player' || area === 'team' || area === 'entity'}>
+          <Stack.Screen name="app-lock" />
+        </Stack.Protected>
         <Stack.Protected guard={area === 'unresolved'}>
           <Stack.Screen name="account-unresolved" />
         </Stack.Protected>
@@ -119,7 +124,7 @@ export default function AppLayout() {
           Dismissing counts as "not now": the OS is never asked, so iOS's single
           allotted prompt stays unspent for a later, better moment. */}
       <Modal
-        visible={shouldShowRationale}
+        visible={shouldShowRationale && !isCovered}
         transparent
         animationType="fade"
         onRequestClose={declineRationale}

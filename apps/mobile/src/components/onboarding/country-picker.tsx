@@ -13,6 +13,7 @@
  * identical from every locale.
  */
 
+import { useAppLock } from '@/components/auth/app-lock';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { OnboardingQuestionHeading } from '@/components/onboarding/onboarding-question-heading';
@@ -157,6 +158,7 @@ export function CountryPicker({
   const deferredQuery = useDeferredValue(query);
 
   const options = useMemo(() => getCountryOptions(locale), [locale]);
+  const { isCovered } = useAppLock();
   const commonOptions = useMemo(
     () =>
       COMMON_COUNTRY_CODES.map((code) => options.find((option) => option.code === code)).filter(
@@ -259,7 +261,11 @@ export function CountryPicker({
         </Text>
       ) : null}
 
-      <Modal visible={isOpen} animationType="slide" onRequestClose={() => setIsOpen(false)}>
+      <Modal
+        visible={isOpen && !isCovered}
+        animationType="slide"
+        onRequestClose={() => setIsOpen(false)}
+      >
         {/* `accessibilityViewIsModal` traps VoiceOver inside the sheet. Without
             it iOS keeps offering the wizard underneath, so a swipe walks out of
             the search into a form the player cannot see and cannot get back

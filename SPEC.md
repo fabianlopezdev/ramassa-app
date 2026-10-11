@@ -1634,6 +1634,15 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - Recovery: a person with `team.manage` resets a team member's lost authenticator from the Team screen, and a person with `entities.manage` an entity collaborator's from the entity panel (`reset_second_factor`). It removes the factor and ends her sessions; nobody resets her own.
 - The Workers now decide by permission instead of role (they were missed by RAPP-230): team upload folders need their content or settings permission, the participant media purge needs `rgpd.erase` and `team.manage`, and translation needs a content-editing permission.
 
+## App lock (2026-10-11, RAPP-236, part of RAPP-211)
+
+- Optional for every account and kept on the device, per person: a shared phone keeps each person's own choice. On by default for team members, after 1 minute in the background; off by default for players and entity contacts. Choices: immediately, 1, 5 or 15 minutes.
+- When it is on, the app locks at every cold start and after the chosen time in the background, and opens with Face ID, a fingerprint or the device passcode (`expo-local-authentication`). It asks at once when the lock screen appears; after a cancel, an Unlock button asks again. Sign-out is always on the lock screen.
+- While the app is not in the front, the same cover hides the screens, so the app switcher's snapshot shows no data. Signing in just now does not lock.
+- A native `Modal` is drawn above every view, the cover included, so every Modal in the app hides while the lock covers the app and comes back after unlock. A contract test (`app-lock-modal-contract.test.ts`) fails on a Modal that does not.
+- Turning the lock on or off asks for Face ID, a fingerprint or the passcode first. A phone with no passcode, and the web, have no lock; the settings screen says why.
+- Settings: the App lock screen, from the player profile, the team attendance and messages headers, and the team and entity notice screens.
+
 ## Remote sign-out (2026-10-11, RAPP-234, part of RAPP-211)
 
 - "Sign out everywhere" ends every session of a person at once, on every device: anyone for herself, a `team.manage` holder for a team member (Team screen), an `entities.manage` holder for an entity contact. Audited as `sessions.sign_out_everywhere`.

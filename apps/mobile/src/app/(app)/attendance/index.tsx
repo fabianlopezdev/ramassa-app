@@ -4,6 +4,7 @@ import {
   AnnouncementFeedSkeleton,
 } from '@/components/announcements/feed-states';
 import { AttendanceOccurrenceRow } from '@/components/attendance/attendance-occurrence-row';
+import { AppLockLink } from '@/components/auth/app-lock-link';
 import { PageWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { teamScreens } from '@/lib/account-area';
@@ -111,6 +112,7 @@ export default function AttendanceOccurrencesScreen() {
                   </Text>
                 </PressableScale>
               ) : null}
+              <AppLockLink variant="link" />
               <PressableScale
                 testID="attendance-sign-out"
                 accessibilityLabel={tProfile('signOutAction')}

@@ -3,6 +3,7 @@ import {
   AnnouncementFeedError,
   AnnouncementFeedSkeleton,
 } from '@/components/announcements/feed-states';
+import { AppLockLink } from '@/components/auth/app-lock-link';
 import { PageWidth } from '@/components/layout/content-width';
 import { StaffConversationCard } from '@/components/messaging/staff-conversation-card';
 import { PressableScale } from '@/components/motion/pressable-scale';
@@ -85,15 +86,20 @@ export default function StaffConversationsScreen() {
     <SafeAreaView className="flex-1 bg-neutral-50" edges={['top', 'left', 'right']}>
       <PageWidth className="flex-1">
         <View className="gap-sm px-lg pb-md pt-lg">
-          <PressableScale
-            testID="staff-conversations-back"
-            accessibilityLabel={t('backToAttendance')}
-            onPress={back}
-            haptic="tapLight"
-            className="min-h-recommended self-start justify-center"
-          >
-            <Text className={`font-semibold text-primary-dark ${fontClass}`}>{t('backShort')}</Text>
-          </PressableScale>
+          <View className="flex-row items-center justify-between">
+            <PressableScale
+              testID="staff-conversations-back"
+              accessibilityLabel={t('backToAttendance')}
+              onPress={back}
+              haptic="tapLight"
+              className="min-h-recommended self-start justify-center"
+            >
+              <Text className={`font-semibold text-primary-dark ${fontClass}`}>
+                {t('backShort')}
+              </Text>
+            </PressableScale>
+            <AppLockLink variant="link" />
+          </View>
           <Text
             accessibilityRole="header"
             className={`text-start text-3xl font-bold text-neutral-900 ${fontClass}`}

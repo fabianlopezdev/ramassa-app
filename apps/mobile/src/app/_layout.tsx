@@ -1,5 +1,6 @@
 // Sentry.init runs at @/lib/observability module scope, which every import
 // below reaches transitively, so the SDK is live before the first render (RAPP-12).
+import { AppLockProvider } from '@/components/auth/app-lock';
 import { SessionFreshness } from '@/components/auth/session-freshness';
 import { OrganizationBrandingProvider } from '@/components/branding/organization-branding-provider';
 import { ErrorFallback, type ErrorFallbackProps } from '@/components/error-fallback';
@@ -200,7 +201,10 @@ function RootLayout() {
             <OrganizationBrandingProvider>
               <AuthFlowStatusProvider>
                 <PushNotificationResponseHandler />
-                <RootNavigator />
+                {/* The app lock covers every screen once it engages (RAPP-236). */}
+                <AppLockProvider>
+                  <RootNavigator />
+                </AppLockProvider>
               </AuthFlowStatusProvider>
             </OrganizationBrandingProvider>
           </AuthProvider>

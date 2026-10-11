@@ -11,6 +11,7 @@
  * right is a way of discouraging people from exercising it.
  */
 
+import { useAppLock } from '@/components/auth/app-lock';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { FailureNotice } from '@/components/error-code-line';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
@@ -47,12 +48,13 @@ function DeletionConfirmation({
   t,
 }: DeletionConfirmationProps) {
   const languageFontClass = useLanguageFontClass();
+  const { isCovered } = useAppLock();
 
   return (
     <Modal
       animationType="slide"
       presentationStyle="fullScreen"
-      visible={isVisible}
+      visible={isVisible && !isCovered}
       onRequestClose={onCancel}
     >
       <SafeAreaView className="flex-1 bg-white" edges={['top', 'bottom']}>

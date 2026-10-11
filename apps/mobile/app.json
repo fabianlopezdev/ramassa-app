@@ -52,6 +52,12 @@
           "configureAndroidBackup": false
         }
       ],
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Ramassà uses Face ID to unlock the app when the app lock is on."
+        }
+      ],
       "./plugins/with-secure-backup-rules",
       [
         "@sentry/react-native/expo",
