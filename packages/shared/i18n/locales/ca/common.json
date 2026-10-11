@@ -23,5 +23,6 @@
     "nextPage": "Següent",
     "pageOf": "Pàgina {{page}} de {{pages}}"
   },
-  "loading": "Carregant..."
+  "loading": "Carregant...",
+  "interfaceLanguageLabel": "Idioma"
 }

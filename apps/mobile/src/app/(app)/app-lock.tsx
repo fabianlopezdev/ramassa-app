@@ -8,13 +8,16 @@ import { useAppLock } from '@/components/auth/app-lock';
 import { AuthBackButton } from '@/components/auth/auth-back-button';
 import { PageWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
+import { LanguageSwitcher } from '@/components/profile/language-switcher';
 import { APP_LOCK_TIMEOUTS, type AppLockTimeout } from '@/lib/app-lock';
+import { useAccountAccess } from '@/lib/use-account-access';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { STAFF_LANGUAGES } from '@ramassa/shared/i18n';
 import { tokens } from '@ramassa/shared/tokens';
 
 const TIMEOUT_LABEL_KEYS: Record<AppLockTimeout, string> = {
@@ -31,6 +34,8 @@ export default function AppLockScreen() {
   const router = useRouter();
   const languageFontClass = useLanguageFontClass();
   const { isAvailable, settings, saveSettings, confirmOwner } = useAppLock();
+  const { area } = useAccountAccess();
+  const isStaffSide = area === 'team' || area === 'entity';
   const [isConfirming, setIsConfirming] = useState(false);
 
   async function toggle(enabled: boolean) {
@@ -46,10 +51,25 @@ export default function AppLockScreen() {
       <PageWidth>
         <ScrollView contentContainerClassName="gap-lg p-lg">
           <AuthBackButton onPress={() => router.back()} />
+          {isStaffSide ? (
+            // Team members and entity contacts have no profile tab: their
+            // language lives here, cut to the staff side's three (RAPP-238).
+            <>
+              <Text
+                accessibilityRole="header"
+                className={`text-start text-2xl font-bold text-neutral-900 ${languageFontClass}`}
+              >
+                {t('teamSettingsTitle')}
+              </Text>
+              <LanguageSwitcher languages={STAFF_LANGUAGES} />
+            </>
+          ) : null}
           <View className="gap-sm">
             <Text
               accessibilityRole="header"
-              className={`text-start text-2xl font-bold text-neutral-900 ${languageFontClass}`}
+              className={`text-start ${
+                isStaffSide ? 'text-lg font-semibold' : 'text-2xl font-bold'
+              } text-neutral-900 ${languageFontClass}`}
             >
               {t('appLockTitle')}
             </Text>

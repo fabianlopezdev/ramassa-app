@@ -24,7 +24,13 @@ describe('createAdminI18n', () => {
 describe('resolveClientLanguage', () => {
   test('an existing language cookie wins over the browser languages', async () => {
     const instance = createAdminI18n('ca');
+    await instance.changeLanguage('es');
+    expect(resolveClientLanguage()).toBe('es');
+  });
+
+  test('a saved Arabic or Farsi choice opens the staff side in Catalan (RAPP-238)', async () => {
+    const instance = createAdminI18n('ca');
     await instance.changeLanguage('fa');
-    expect(resolveClientLanguage()).toBe('fa');
+    expect(resolveClientLanguage()).toBe('ca');
   });
 });

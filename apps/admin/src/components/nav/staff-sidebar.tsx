@@ -1,5 +1,6 @@
 import { useAdminBranding } from '@/components/branding/organization-branding-provider';
 import { AuthenticatedMediaImage } from '@/components/content/authenticated-media-image';
+import { LanguagePicker } from '@/components/language-picker';
 import { Badge } from '@/components/ui/badge';
 import {
   Sidebar,
@@ -95,6 +96,7 @@ export function StaffSidebar() {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter className="border-t border-sidebar-border p-3 group-data-[collapsible=icon]:hidden">
+        <LanguagePicker />
         <p
           className="text-xs leading-5 text-sidebar-foreground/70"
           data-testid="generalitat-credit"

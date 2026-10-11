@@ -1,3 +1,4 @@
+import { LanguagePicker } from '@/components/language-picker';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { logout } from '@/lib/auth';
@@ -65,7 +66,8 @@ export function EntityNav() {
             })}
           </ul>
         </nav>
-        <Button className="ms-auto" variant="outline" onClick={() => void logout()}>
+        <LanguagePicker className="ms-auto" />
+        <Button variant="outline" onClick={() => void logout()}>
           {t('auth:signOutAction')}
         </Button>
       </div>

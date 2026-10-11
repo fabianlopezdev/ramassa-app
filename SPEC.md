@@ -1643,6 +1643,13 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - Turning the lock on or off asks for Face ID, a fingerprint or the passcode first. A phone with no passcode, and the web, have no lock; the settings screen says why.
 - Settings: the App lock screen, from the player profile, the team attendance and messages headers, and the team and entity notice screens.
 
+## Staff-side languages (2026-10-11, RAPP-238, part of RAPP-211)
+
+- The staff side (the web admin, the team screens and the entity screens) is in Catalan, Spanish or English (`STAFF_LANGUAGES`). Player screens keep all five languages and right-to-left. Content stays five-language everywhere: this is the language of the screens themselves.
+- A saved or browser language outside the three opens the staff side in Catalan (`staffLanguageFor`), on the admin's server render and in the browser alike.
+- The admin has a language picker (Català, Español, English) in the staff sidebar, in the entity header and on the login page. The choice is saved in the `ramassa.language` cookie and applies at once.
+- In the app, a team member or entity contact with Arabic or Farsi saved gets Catalan. Because the layout direction flips, that one switch restarts the app. Their Settings screen (with the app lock) offers the three languages.
+
 ## Remote sign-out (2026-10-11, RAPP-234, part of RAPP-211)
 
 - "Sign out everywhere" ends every session of a person at once, on every device: anyone for herself, a `team.manage` holder for a team member (Team screen), an `entities.manage` holder for an entity contact. Audited as `sessions.sign_out_everywhere`.

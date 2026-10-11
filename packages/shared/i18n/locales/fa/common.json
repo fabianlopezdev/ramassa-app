@@ -22,5 +22,6 @@
     "nextPage": "بعدی",
     "pageOf": "صفحهٔ {{page}} از {{pages}}"
   },
-  "loading": "در حال بارگذاری..."
+  "loading": "در حال بارگذاری...",
+  "interfaceLanguageLabel": "زبان"
 }

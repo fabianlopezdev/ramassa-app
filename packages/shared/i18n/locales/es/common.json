@@ -22,5 +22,6 @@
     "nextPage": "Siguiente",
     "pageOf": "Página {{page}} de {{pages}}"
   },
-  "loading": "Cargando..."
+  "loading": "Cargando...",
+  "interfaceLanguageLabel": "Idioma"
 }
