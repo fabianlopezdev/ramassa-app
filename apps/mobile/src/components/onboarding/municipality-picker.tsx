@@ -1,5 +1,6 @@
 /** Searchable canonical IDESCAT municipality picker (RAPP-100). */
 
+import { useAppLock } from '@/components/auth/app-lock';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { OnboardingQuestionHeading } from '@/components/onboarding/onboarding-question-heading';
@@ -102,6 +103,7 @@ export function MunicipalityPicker({
   const deferredQuery = useDeferredValue(query);
 
   const options = useMemo(() => getMunicipalityOptions(locale), [locale]);
+  const { isCovered } = useAppLock();
   const commonOptions = useMemo(
     () =>
       COMMON_MUNICIPALITY_CODES.map((code) =>
@@ -191,7 +193,11 @@ export function MunicipalityPicker({
         </Text>
       )}
 
-      <Modal visible={isOpen} animationType="slide" onRequestClose={() => setIsOpen(false)}>
+      <Modal
+        visible={isOpen && !isCovered}
+        animationType="slide"
+        onRequestClose={() => setIsOpen(false)}
+      >
         <SafeAreaView
           accessibilityViewIsModal
           className="flex-1 bg-white"

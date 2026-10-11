@@ -12,6 +12,7 @@ export default function EntityPortalScreen() {
       testID="entity-portal-notice"
       title={t('entityPortalTitle')}
       body={t('entityPortalBody')}
+      showAppLock
     />
   );
 }

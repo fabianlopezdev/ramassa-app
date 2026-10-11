@@ -1,3 +1,4 @@
+import { useAppLock } from '@/components/auth/app-lock';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
@@ -99,6 +100,7 @@ export function ForumFlagDialog({ target, postId, onClose, onConfirmed }: ForumF
     onClose();
   }, [flagMutation.isPending, onClose]);
 
+  const { isCovered } = useAppLock();
   const submit = useCallback(async () => {
     if (target === null || reason === null) {
       setErrorCode('VALIDATION-1');
@@ -138,7 +140,7 @@ export function ForumFlagDialog({ target, postId, onClose, onConfirmed }: ForumF
 
   return (
     <Modal
-      visible={target !== null}
+      visible={target !== null && !isCovered}
       animationType="slide"
       presentationStyle="formSheet"
       onRequestClose={close}

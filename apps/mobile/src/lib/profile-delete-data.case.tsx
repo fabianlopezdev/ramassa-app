@@ -84,6 +84,7 @@ mock.module('@/lib/haptics/haptics', () => ({ playHaptic: mock(() => undefined) 
 mock.module('@/lib/profile', () => ({ submitDeletionRequest }));
 mock.module('@/lib/use-language-font-class', () => ({ useLanguageFontClass: () => '' }));
 mock.module('expo-router', () => ({ useRouter: () => ({ back: routerBack }) }));
+mock.module('@/components/auth/app-lock', () => ({ useAppLock: () => ({ isCovered: false }) }));
 mock.module('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));

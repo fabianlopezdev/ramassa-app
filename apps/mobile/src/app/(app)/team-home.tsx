@@ -12,6 +12,7 @@ export default function TeamHomeScreen() {
       testID="team-home-notice"
       title={t('teamHomeTitle')}
       body={t('teamHomeBody')}
+      showAppLock
     />
   );
 }

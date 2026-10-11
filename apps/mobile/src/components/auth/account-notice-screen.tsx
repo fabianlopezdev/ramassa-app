@@ -4,6 +4,7 @@
  * account that could not be checked. Always offers sign-out, so nobody is
  * stuck on a shared phone.
  */
+import { AppLockLink } from '@/components/auth/app-lock-link';
 import { PageWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { logout } from '@/lib/auth';
@@ -17,11 +18,14 @@ export function AccountNoticeScreen({
   title,
   body,
   action,
+  showAppLock = false,
 }: {
   readonly testID: string;
   readonly title: string;
   readonly body: string;
   readonly action?: { readonly label: string; readonly onPress: () => void };
+  /** For a signed-in team member or entity contact, whose only screen this is. */
+  readonly showAppLock?: boolean;
 }) {
   const { t } = useTranslation('profile');
   const languageFontClass = useLanguageFontClass();
@@ -51,6 +55,7 @@ export function AccountNoticeScreen({
               </Text>
             </PressableScale>
           )}
+          {showAppLock ? <AppLockLink variant="button" /> : null}
           <PressableScale
             testID={`${testID}-sign-out`}
             accessibilityRole="button"

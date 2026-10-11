@@ -9,6 +9,7 @@
  * "whenever you want, from your profile"; this is where that promise lands.
  */
 
+import { AppLockLink } from '@/components/auth/app-lock-link';
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { useOrganizationBranding } from '@/components/branding/organization-branding-provider';
 import { ErrorCodeLine } from '@/components/error-code-line';
@@ -274,6 +275,7 @@ export default function ProfileScreen() {
 
       <ProfileSection title={t('sectionApp')}>
         <LanguageSwitcher />
+        <AppLockLink variant="button" />
         <PressableScale
           testID="profile-open-feedback"
           accessibilityLabel={t('feedback:profileAction')}
