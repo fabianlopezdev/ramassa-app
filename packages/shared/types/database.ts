@@ -2132,6 +2132,7 @@ export type Database = {
           reference_entity: string | null;
           role: string;
           search_document: unknown;
+          sessions_valid_after: string | null;
           shoe_size: string | null;
           terms_accepted_at: string | null;
           updated_at: string;
@@ -2167,6 +2168,7 @@ export type Database = {
           reference_entity?: string | null;
           role?: string;
           search_document?: unknown;
+          sessions_valid_after?: string | null;
           shoe_size?: string | null;
           terms_accepted_at?: string | null;
           updated_at?: string;
@@ -2202,6 +2204,7 @@ export type Database = {
           reference_entity?: string | null;
           role?: string;
           search_document?: unknown;
+          sessions_valid_after?: string | null;
           shoe_size?: string | null;
           terms_accepted_at?: string | null;
           updated_at?: string;
@@ -3625,6 +3628,7 @@ export type Database = {
           reference_entity: string | null;
           role: string;
           search_document: unknown;
+          sessions_valid_after: string | null;
           shoe_size: string | null;
           terms_accepted_at: string | null;
           updated_at: string;
@@ -4422,6 +4426,7 @@ export type Database = {
         }[];
       };
       my_permissions: { Args: never; Returns: string[] };
+      my_session_is_current: { Args: never; Returns: boolean };
       participant_activity: {
         Args: { participant_id: string };
         Returns: {
@@ -4671,6 +4676,10 @@ export type Database = {
           p_preset_id?: string;
           p_profile_id: string;
         };
+        Returns: undefined;
+      };
+      sign_out_everywhere: {
+        Args: { p_profile_id: string };
         Returns: undefined;
       };
       transition_deletion_request: {

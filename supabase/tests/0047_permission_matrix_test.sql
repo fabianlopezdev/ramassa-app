@@ -35,6 +35,8 @@ select is(
         'has_permission', 'my_permissions', 'is_team_member', 'profile_has_permission',
         'assert_team_manage_remains', 'set_team_member_permissions', 'sync_role_permissions',
         'list_staff_members', 'remove_staff_member', 'set_staff_member_role',
+        -- Which manager may sign the target out depends on what kind of person she is.
+        'sign_out_everywhere',
         -- A message counts as sent by the team when its sender is a team member.
         'enqueue_message_push'
       )),

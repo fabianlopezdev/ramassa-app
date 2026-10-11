@@ -31,6 +31,7 @@ import type { AppRole } from '../schemas/auth';
 import type { Database } from '../types/database';
 import { fetchProfileSummary } from './auth-actions';
 import { assuranceLevelOf, needsSecondFactor as sessionNeedsSecondFactor } from './second-factor';
+import { isSessionCurrent } from './sessions';
 
 type Client = SupabaseClient<Database>;
 
@@ -136,6 +137,12 @@ export function AuthProvider({ client, children, onError }: AuthProviderProps) {
       }
 
       try {
+        // A session ended remotely is signed out here too (RAPP-234); the
+        // sign-out event then runs this again with no session.
+        if (!(await isSessionCurrent(client))) {
+          await client.auth.signOut({ scope: 'local' });
+          return;
+        }
         const summary = await fetchProfileSummary(client, nextSession.user.id);
         const isTeamMember = summary?.role === 'staff' || summary?.role === 'admin';
         const nextPermissions = isTeamMember ? await fetchMyPermissions(client) : NO_PERMISSIONS;

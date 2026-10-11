@@ -171,6 +171,7 @@ function derivedProfileFields(fixture: PersonFixture) {
     // Every account signs in with an emailed code since RAPP-224; the column
     // goes in RAPP-211.
     auth_method: 'magic_link',
+    sessions_valid_after: null,
   };
 }
 

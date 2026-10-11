@@ -1633,3 +1633,9 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - The database enforces it: `has_permission`, `my_permissions`, `is_team_member` and `current_collaborating_entity_id` hold only for an `aal2` session, and `current_app_role()` returns nothing for a staff, admin or entity session below `aal2`, so every role check fails closed. The media and translation Workers read permissions through `my_permissions()`, so the rule reaches them too.
 - Recovery: a person with `team.manage` resets a team member's lost authenticator from the Team screen, and a person with `entities.manage` an entity collaborator's from the entity panel (`reset_second_factor`). It removes the factor and ends her sessions; nobody resets her own.
 - The Workers now decide by permission instead of role (they were missed by RAPP-230): team upload folders need their content or settings permission, the participant media purge needs `rgpd.erase` and `team.manage`, and translation needs a content-editing permission.
+
+## Remote sign-out (2026-10-11, RAPP-234, part of RAPP-211)
+
+- "Sign out everywhere" ends every session of a person at once, on every device: anyone for herself, a `team.manage` holder for a team member (Team screen), an `entities.manage` holder for an entity contact. Audited as `sessions.sign_out_everywhere`.
+- It sets `profiles.sessions_valid_after` and deletes the refreshable sessions. The access helpers (`has_permission`, `my_permissions`, `is_team_member`, `current_app_role`, `current_collaborating_entity_id`) deny a token issued before that time at once, the immediate-deny pattern of ADR-025. The column is protected from direct writes (RAPP-239).
+- Both apps ask `my_session_is_current()` on sign-in and when they come back to the front (at most every 30 seconds), and sign out on that device when it answers no.
