@@ -103,7 +103,7 @@ values (
 );
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 
 select lives_ok(
   $$ insert into public.knowledge_articles (category_id, title, body)
@@ -134,7 +134,7 @@ select throws_ok(
   'staff cannot write into another organization'
 );
 
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000011", "role": "authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000011", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 
 select lives_ok(
   $$ insert into public.knowledge_articles
@@ -196,7 +196,7 @@ select throws_ok(
   'a player cannot submit in another participant’s name'
 );
 
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000012", "role": "authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000012", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 
 select is(
   (select count(*) from public.knowledge_articles where title->>'ca' = 'El meu primer partit')::int,
@@ -204,7 +204,7 @@ select is(
   'another player cannot read an unpublished story'
 );
 
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 
 select throws_ok(
   $$ update public.knowledge_articles set story_status = 'published'
@@ -243,7 +243,7 @@ select is(
   'published attribution exposes only the author first name'
 );
 
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000012", "role": "authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000012", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 
 select is(
   (select count(*) from public.knowledge_articles where title->>'ca' = 'El meu primer partit')::int,
@@ -257,7 +257,7 @@ select is(
   'a player cannot read organization drafts'
 );
 
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000004", "role": "authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000004", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 
 select is(
   (select count(*) from public.knowledge_articles)::int,
@@ -287,7 +287,7 @@ values (
 );
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select lives_ok(
   $$ select public.anonymize_participant('5eed0000-0000-4000-8000-000000000012') $$,
   'staff can anonymize the participant who authored a story'

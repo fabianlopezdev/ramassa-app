@@ -14,7 +14,7 @@ delete from public.team_member_permissions
 where profile_id = '5eed0000-0000-4000-8000-000000000002' and permission_code = 'team.manage';
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000001", "role": "authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000001", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select throws_ok(
   $$ select public.remove_staff_member('5eed0000-0000-4000-8000-000000000001') $$,
   '23514', null::text,
@@ -31,7 +31,7 @@ select is(
 insert into public.team_member_permissions (org_id, profile_id, permission_code)
 values ('5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-8000-000000000002', 'team.manage');
 set local role authenticated;
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000001", "role": "authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000001", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select lives_ok(
   $$ select public.remove_staff_member('5eed0000-0000-4000-8000-000000000003') $$,
   'removing someone else works while a team.manage holder remains'

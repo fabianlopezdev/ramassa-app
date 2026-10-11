@@ -32,6 +32,12 @@ export interface CallerIdentity {
    * yet verified with the second factor.
    */
   readonly permissions: ReadonlySet<string>;
+  /**
+   * When the caller last verified an authenticator code, in Unix seconds, from
+   * the verified token's `amr` claim; null without one. The erasure sweep needs
+   * a recent one (RAPP-235), the same rule the database applies.
+   */
+  readonly secondFactorVerifiedAt: number | null;
 }
 
 /**
@@ -60,6 +66,17 @@ export function readBearerToken(request: Request): string {
   return token;
 }
 
+const amrSchema = z.array(z.object({ method: z.string(), timestamp: z.number() }).loose());
+
+function totpVerifiedAt(amr: unknown): number | null {
+  const parsed = amrSchema.safeParse(amr);
+  if (!parsed.success) return null;
+  const times = parsed.data
+    .filter((entry) => entry.method === 'totp')
+    .map((entry) => entry.timestamp);
+  return times.length === 0 ? null : Math.max(...times);
+}
+
 /**
  * Verifies signature, expiry, issuer and audience, and returns the subject.
  * `authenticated` is the audience Supabase stamps on a signed-in user's token;
@@ -68,7 +85,7 @@ export function readBearerToken(request: Request): string {
 async function verifyAccessToken(options: {
   readonly token: string;
   readonly supabaseUrl: string;
-}): Promise<string> {
+}): Promise<{ readonly subject: string; readonly secondFactorVerifiedAt: number | null }> {
   const verified = await jwtVerify(options.token, getRemoteJwkSet(options.supabaseUrl), {
     issuer: `${options.supabaseUrl}/auth/v1`,
     audience: 'authenticated',
@@ -80,7 +97,7 @@ async function verifyAccessToken(options: {
   if (subject === undefined || subject.length === 0) {
     throw new AppError('AUTH-2', { message: 'Access token has no subject' });
   }
-  return subject;
+  return { subject, secondFactorVerifiedAt: totpVerifiedAt(verified.payload.amr) };
 }
 
 /**
@@ -102,6 +119,7 @@ const profileRowSchema = z.object({
  */
 async function fetchCallerProfile(options: {
   readonly userId: string;
+  readonly secondFactorVerifiedAt: number | null;
   readonly token: string;
   readonly supabaseUrl: string;
   readonly supabasePublishableKey: string;
@@ -145,7 +163,13 @@ async function fetchCallerProfile(options: {
     profile.role === 'staff' || profile.role === 'admin'
       ? await fetchCallerPermissions({ ...options, performFetch })
       : new Set<string>();
-  return { userId: profile.id, orgId: profile.org_id, role: profile.role, permissions };
+  return {
+    userId: profile.id,
+    orgId: profile.org_id,
+    role: profile.role,
+    permissions,
+    secondFactorVerifiedAt: options.secondFactorVerifiedAt,
+  };
 }
 
 async function fetchCallerPermissions(options: {
@@ -190,9 +214,10 @@ export async function resolveCallerIdentity(options: {
   readonly fetchImplementation?: typeof fetch;
 }): Promise<CallerIdentity> {
   const token = readBearerToken(options.request);
-  const userId = await verifyAccessToken({ token, supabaseUrl: options.supabaseUrl });
+  const verified = await verifyAccessToken({ token, supabaseUrl: options.supabaseUrl });
   return fetchCallerProfile({
-    userId,
+    userId: verified.subject,
+    secondFactorVerifiedAt: verified.secondFactorVerifiedAt,
     token,
     supabaseUrl: options.supabaseUrl,
     supabasePublishableKey: options.supabasePublishableKey,

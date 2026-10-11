@@ -1,3 +1,4 @@
+import { useStepUp } from '@/components/auth/step-up';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -188,6 +189,8 @@ export function DataExportWorkspace({
   readonly onSearchChange: (search: DataExportSearch) => void;
 }) {
   const { t } = useTranslation('admin');
+  // Every export asks for a fresh authenticator code first (RAPP-235).
+  const withStepUp = useStepUp();
   const [dataset, setDataset] = useState<DataExportRequest['dataset']>('participants');
   const [exportStart, setExportStart] = useState('');
   const [exportEnd, setExportEnd] = useState('');
@@ -227,7 +230,7 @@ export function DataExportWorkspace({
     setBusy(true);
     setNotice(null);
     const result = await safeAsync(async () => {
-      const exportData = await createDataExport(supabase, request);
+      const exportData = await withStepUp(() => createDataExport(supabase, request));
       const name = filename(exportData.dataset, exportData.scope);
       if (exportData.format === 'csv') downloadExportCsv(exportData, name);
       else await downloadExportXlsx(exportData, name);
@@ -239,7 +242,7 @@ export function DataExportWorkspace({
       const refreshed = await safeAsync(() => fetchAuditLogPage(supabase, {}));
       if (refreshed.ok) setAuditPage(refreshed.value);
     } else {
-      setNotice(t('exportFailed'));
+      setNotice(result.error.code === 'AUTH-9' ? t('errors:AUTH-9') : t('exportFailed'));
     }
     setBusy(false);
   }

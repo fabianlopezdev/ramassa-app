@@ -52,7 +52,7 @@ select is_empty(
 );
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000f1","role":"authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000f1","role":"authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select throws_like(
   $$ select count(*) from public.municipality_catalog $$,
   '%permission denied%',
@@ -65,7 +65,7 @@ insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-0000000000f2', 'municipality-invalid@test.local');
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000f1","role":"authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000f1","role":"authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select lives_ok(
   $$ select public.complete_onboarding(
        jsonb_build_object(
@@ -80,7 +80,7 @@ select lives_ok(
   'onboarding persists a canonical municipality'
 );
 
-set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000f2","role":"authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000f2","role":"authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select throws_like(
   $$ select public.complete_onboarding(
        jsonb_build_object(

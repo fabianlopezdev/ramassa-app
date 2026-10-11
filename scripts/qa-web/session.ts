@@ -76,6 +76,28 @@ export async function completeSecondFactor(page: Page, email?: string): Promise<
 }
 
 /**
+ * Answers the step-up prompt a risky action opens (RAPP-235) with the seed
+ * authenticator's next code. A code already used at sign-in is not accepted
+ * twice, so it waits for the next 30-second step first.
+ */
+export async function completeStepUp(page: Page): Promise<void> {
+  const prompt = page.getByTestId('step-up');
+  await expect(prompt).toBeVisible({ timeout: 30_000 });
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const secondsIntoStep = Math.floor(Date.now() / 1000) % 30;
+    await page.waitForTimeout((31 - secondsIntoStep) * 1000);
+    await prompt.locator('#step-up-code').fill(totpCode(SEED_TOTP_SECRET));
+    await prompt.getByRole('button', { name: 'Confirm' }).click();
+    const left = await expect(prompt)
+      .toHaveCount(0, { timeout: 10_000 })
+      .then(() => true)
+      .catch(() => false);
+    if (left) return;
+  }
+  await expect(prompt).toHaveCount(0, { timeout: 30_000 });
+}
+
+/**
  * The local stack, for the one spec that has to talk to something other than the
  * admin app: erasing a participant removes objects from R2, and proving that
  * needs a real object put there through the real upload path (RAPP-26).

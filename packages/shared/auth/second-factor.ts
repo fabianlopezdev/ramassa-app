@@ -8,7 +8,7 @@
  */
 import type { Session, SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
-import { AppError } from '../errors';
+import { AppError, databaseErrorCode } from '../errors';
 import type { AppRole } from '../schemas/auth';
 import type { Database } from '../types/database';
 
@@ -17,24 +17,31 @@ type Client = SupabaseClient<Database>;
 /** The roles whose access rules need an `aal2` session. */
 const SECOND_FACTOR_ROLES: readonly AppRole[] = ['staff', 'admin', 'entity'];
 
-/** The assurance level the access token carries, read without a round trip. */
-export function assuranceLevelOf(session: Session | null): 'aal1' | 'aal2' | null {
+/** The access token's claims, read without a round trip, or null when unreadable. */
+export function readAccessTokenClaims(session: Session | null): Record<string, unknown> | null {
   if (session === null || typeof session.access_token !== 'string') return null;
   const payload = session.access_token.split('.')[1];
   if (payload === undefined) return null;
   try {
-    const json = JSON.parse(
+    const json: unknown = JSON.parse(
       atob(
         payload
           .replace(/-/g, '+')
           .replace(/_/g, '/')
           .padEnd(Math.ceil(payload.length / 4) * 4, '='),
       ),
-    ) as { aal?: unknown };
-    return json.aal === 'aal2' ? 'aal2' : 'aal1';
+    );
+    return typeof json === 'object' && json !== null ? (json as Record<string, unknown>) : null;
   } catch {
     return null;
   }
+}
+
+/** The assurance level the access token carries, read without a round trip. */
+export function assuranceLevelOf(session: Session | null): 'aal1' | 'aal2' | null {
+  const claims = readAccessTokenClaims(session);
+  if (claims === null) return null;
+  return claims.aal === 'aal2' ? 'aal2' : 'aal1';
 }
 
 export function needsSecondFactor(role: AppRole | null, session: Session | null): boolean {
@@ -112,5 +119,5 @@ export async function resetSecondFactor(client: Client, profileId: string): Prom
   const { error } = await client.rpc('reset_second_factor', {
     p_profile_id: z.uuid().parse(profileId),
   });
-  if (error) throw new AppError('DB-1', { message: error.message });
+  if (error) throw new AppError(databaseErrorCode(error.message), { message: error.message });
 }

@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
-import { AppError } from './errors';
+import { AppError, databaseErrorCode } from './errors';
 import { SUPPORTED_LANGUAGES } from './i18n/languages';
 import { tokens } from './tokens';
 import type { Database } from './types/database';
@@ -225,7 +225,7 @@ export async function fetchPublicOrganizationBranding(
 }
 
 function databaseFailure(message: string): never {
-  throw new AppError('DB-1', { message });
+  throw new AppError(databaseErrorCode(message), { message });
 }
 
 export async function fetchOrganizationSettings(client: Client): Promise<OrganizationRow> {

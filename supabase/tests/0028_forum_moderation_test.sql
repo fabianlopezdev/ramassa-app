@@ -41,7 +41,7 @@ create temporary table rapp51_ids (kind text primary key, id uuid not null);
 grant select, insert, update, delete on table pg_temp.rapp51_ids to authenticated;
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000011","role":"authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000011","role":"authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 insert into pg_temp.rapp51_ids values (
   'post',
   public.create_forum_post(
@@ -58,7 +58,7 @@ insert into pg_temp.rapp51_ids values (
   )
 );
 
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000012","role":"authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000012","role":"authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select lives_ok(
   $$ select public.flag_forum_content(
     'post',
@@ -99,7 +99,7 @@ select is(
   'a player sees only her own flag'
 );
 
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000014","role":"authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000014","role":"authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select lives_ok(
   $$ select public.flag_forum_content(
     'post',
@@ -120,7 +120,7 @@ select is(
   'flagger anonymity hides the first player from the second'
 );
 
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000015","role":"authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000015","role":"authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select lives_ok(
   $$ select public.flag_forum_content(
     'post',
@@ -136,7 +136,7 @@ select is(
   'RLS hides a three-flag post from players immediately'
 );
 
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000002","role":"authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000002","role":"authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select is(
   (select visibility from public.forum_posts where id = (select id from pg_temp.rapp51_ids where kind = 'post')),
   'hidden_pending_review',
@@ -176,7 +176,7 @@ select is(
   'dismissal leaves no pending flags in the queue'
 );
 
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000012","role":"authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000012","role":"authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select is(
   (select count(*) from public.forum_posts where id = (select id from pg_temp.rapp51_ids where kind = 'post'))::integer,
   1,
@@ -191,7 +191,7 @@ select lives_ok(
   ) $$,
   'a player can flag a reply'
 );
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000014","role":"authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000014","role":"authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select lives_ok(
   $$ select public.flag_forum_content(
     'reply',
@@ -201,7 +201,7 @@ select lives_ok(
   ) $$,
   'a second player flags the reply'
 );
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000015","role":"authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000015","role":"authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select lives_ok(
   $$ select public.flag_forum_content(
     'reply',
@@ -217,7 +217,7 @@ select is(
   'RLS hides a three-flag reply from players immediately'
 );
 
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000002","role":"authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000002","role":"authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select lives_ok(
   $$ select public.moderate_forum_target(
     'reply',
@@ -294,7 +294,7 @@ select lives_ok(
   ) $$,
   'staff disables forum posting for a participant'
 );
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000012","role":"authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000012","role":"authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select throws_ok(
   $$ select public.create_forum_post(
     '5eed0000-0000-4000-8006-000000000002',
@@ -313,7 +313,7 @@ select throws_ok(
   'DENIAL: a soft-banned player cannot create a reply at the API'
 );
 
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000002","role":"authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000002","role":"authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select is(
   public.get_or_create_staff_conversation('5eed0000-0000-4000-8000-000000000011'),
   public.get_or_create_staff_conversation('5eed0000-0000-4000-8000-000000000011'),
@@ -426,7 +426,7 @@ select is(
 );
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000011","role":"authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000011","role":"authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 insert into pg_temp.rapp51_ids values (
   'erasure-post',
   public.create_forum_post(
@@ -435,7 +435,7 @@ insert into pg_temp.rapp51_ids values (
     null
   )
 );
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000027","role":"authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000027","role":"authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select public.flag_forum_content(
   'post',
   (select id from pg_temp.rapp51_ids where kind = 'erasure-post'),

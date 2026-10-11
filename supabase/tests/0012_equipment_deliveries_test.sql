@@ -62,7 +62,7 @@ select throws_ok(
 -- Who may read and write ----------------------------------------------------------------
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 
 select lives_ok(
   $$ insert into public.equipment_deliveries (profile_id, item, size, delivered_by, delivered_on)
@@ -107,7 +107,7 @@ select throws_ok(
 -- THE ASSERTION THIS TABLE'S POLICIES EXIST FOR. Her delivery log says which
 -- women needed boots and when, which is an inference about her circumstances
 -- that belongs to the team and not to the roster.
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000011", "role": "authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000011", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 
 select is(
   (select count(*) from public.equipment_deliveries)::int,
@@ -124,7 +124,7 @@ select throws_ok(
   'and cannot write herself one'
 );
 
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000004", "role": "authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000004", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 
 select is(
   (select count(*) from public.equipment_deliveries)::int,
@@ -142,7 +142,7 @@ select throws_ok(
 );
 
 -- An admin is staff for this purpose: she runs the same programme.
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000001", "role": "authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000001", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 
 select cmp_ok(
   (select count(*) from public.equipment_deliveries)::int,
@@ -175,7 +175,7 @@ select cmp_ok(
   'and removes nothing: the log is append-only through every path the API offers'
 );
 set local role authenticated;
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000001", "role": "authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000001", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 
 -- RGPD coverage ------------------------------------------------------------------------
 
@@ -203,7 +203,7 @@ select is(
 -- And the behaviour, not only the declaration: erasing her must leave nothing
 -- here. Driven through the real function so the runtime sweep is what proves it.
 set local role authenticated;
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000001", "role": "authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000001", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 
 insert into public.audit_log (org_id, actor_id, action, target_type, target_id)
 values (
@@ -226,7 +226,7 @@ select cmp_ok(
 );
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000001", "role": "authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000001", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 
 select lives_ok(
   $$ select public.delete_participant_permanently('5eed0000-0000-4000-8000-000000000011') $$,

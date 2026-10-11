@@ -16,7 +16,7 @@ select is(
 );
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000012","role":"authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000012","role":"authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 
 select lives_ok(
   $$ select public.create_feedback_submission(
@@ -59,21 +59,21 @@ select is(
   'the player receives her decrypted feedback content'
 );
 
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000013","role":"authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000013","role":"authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select is(
   (select count(*) from public.feedback_submissions)::integer,
   0,
   'DENIAL: another player cannot see the submission'
 );
 
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000004","role":"authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000004","role":"authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select is(
   (select count(*) from public.feedback_submissions)::integer,
   0,
   'DENIAL: entity users cannot see player feedback'
 );
 
-set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000002","role":"authenticated", "aal": "aal2"}';
+set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000002","role":"authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select is(
   (select count(*) from public.list_staff_feedback_submissions(null, null)
    where author_id = '5eed0000-0000-4000-8000-000000000012')::integer,

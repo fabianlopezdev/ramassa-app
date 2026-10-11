@@ -1,4 +1,5 @@
 import { SessionFreshness } from '@/components/auth/session-freshness';
+import { StepUpProvider } from '@/components/auth/step-up';
 import { OrganizationBrandingProvider } from '@/components/branding/organization-branding-provider';
 import { NotFoundFallback } from '@/components/not-found-fallback';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -76,7 +77,9 @@ function RootComponent() {
                 its absence crashed the whole staff area on load (RAPP-16). */}
             <OrganizationBrandingProvider>
               <TooltipProvider>
-                <Outlet />
+                <StepUpProvider>
+                  <Outlet />
+                </StepUpProvider>
               </TooltipProvider>
             </OrganizationBrandingProvider>
           </AuthProvider>

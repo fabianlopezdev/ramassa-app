@@ -16,6 +16,8 @@ const admin: CallerIdentity = {
   orgId: ORG,
   role: 'admin',
   permissions: new Set(['rgpd.erase', 'team.manage']),
+  // She entered her authenticator code a minute ago (RAPP-235).
+  secondFactorVerifiedAt: Math.floor(Date.now() / 1000) - 60,
 };
 // Today's staff hold rgpd.erase but not team.manage (RAPP-230), so they still
 // may not purge.
@@ -123,6 +125,24 @@ describe('handlePurgeParticipantMedia - who may ask', () => {
     );
     expect(response.status).toBe(403);
     expect(await readErrorCode(response)).toBe('AUTH-3');
+    expect(bucket.remaining()).toHaveLength(1);
+  });
+
+  // Erasure is a risky action (RAPP-235): an open session is not enough.
+  test.each([
+    ['no authenticator code in this session', null],
+    ['a code from 11 minutes ago', Math.floor(Date.now() / 1000) - 11 * 60],
+  ])('an admin with %s is asked for a new one, and nothing is deleted', async (_label, at) => {
+    const bucket = buildBucket([`${ORG}/profile-photos/${PARTICIPANT}/2026/07/a.jpg`]);
+    const response = await handlePurgeParticipantMedia(
+      buildRequest({ participantId: PARTICIPANT }),
+      buildDependencies({
+        resolveIdentity: async () => ({ ...admin, secondFactorVerifiedAt: at }),
+        bucket,
+      }),
+    );
+    expect(response.status).toBe(403);
+    expect(await readErrorCode(response)).toBe('AUTH-9');
     expect(bucket.remaining()).toHaveLength(1);
   });
 
