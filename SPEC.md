@@ -1620,3 +1620,9 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - A toggle the reader does not hold is shown but locked, as the database requires. Errors from the safety rules are shown in plain words inside the open dialog.
 - The web admin's menu, its Settings and Data guards, each Settings tab and the permanent erasure button follow the reader's permissions (`my_permissions`, loaded into the shared auth context) instead of the admin role. Organization details and branding are separate fields in the same form.
 - Removing a team member keeps at least one active `team.manage` holder.
+
+## App areas by account type (2026-10-11, RAPP-232, part of RAPP-211)
+
+- The app routes by account type: a player gets the five tabs, a team member the team screens her permissions open (attendance with `attendance.mark` or `attendance.reports`, messages with `messages.inbox`, otherwise a notice pointing to the web dashboard), and an entity contact a notice that her partner portal is on the web. An entity contact or an unknown account never lands in the player tabs.
+- Just after signing in, the screens wait for the account type before mounting. If the account cannot be checked and the device remembers nothing for it, a retry screen shows.
+- The device remembers each user's area and permissions (a navigation hint only), so an offline cold start still opens attendance. It replaces the earlier attendance-coach cache.

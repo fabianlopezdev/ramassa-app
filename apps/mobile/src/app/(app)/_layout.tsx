@@ -1,12 +1,13 @@
 import { AttendanceSyncWorker } from '@/components/attendance/attendance-sync-worker';
 import { PushPermissionRationale } from '@/components/push-permission-rationale';
-import { isAttendanceCoachCached, rememberAttendanceCoach } from '@/lib/attendance-coach-cache';
-import { privateStorage } from '@/lib/storage';
+import { areaHome, teamScreens } from '@/lib/account-area';
+import { useAccountAccess } from '@/lib/use-account-access';
 import { usePushRegistration } from '@/lib/use-push-registration';
+import { Redirect, usePathname, type Href } from 'expo-router';
 import { Stack } from 'expo-router/stack';
-import { useEffect } from 'react';
-import { Modal, View } from 'react-native';
+import { ActivityIndicator, Modal, View } from 'react-native';
 import { useAuth } from '@ramassa/shared/auth';
+import { tokens } from '@ramassa/shared/tokens';
 
 // Zone boundary (RAPP-12): a crash inside the signed-in area shows the
 // translated fallback here instead of unmounting the whole app.
@@ -15,19 +16,33 @@ export { ErrorFallback as ErrorBoundary } from '@/components/error-fallback';
 const hiddenHeaderScreenOptions = { headerShown: false } as const;
 
 export default function AppLayout() {
-  const { needsOnboarding, role, user } = useAuth();
+  const { user } = useAuth();
   const userId = user?.id ?? null;
-  const hasStaffRole = role === 'staff' || role === 'admin';
-  const isStaff =
-    hasStaffRole ||
-    (role === null && userId !== null && isAttendanceCoachCached(privateStorage, userId));
-  useEffect(() => {
-    if (userId === null || role === null) return;
-    rememberAttendanceCoach(privateStorage, userId, hasStaffRole);
-  }, [hasStaffRole, role, userId]);
+  // The area comes from the account type, never from its absence (RAPP-232):
+  // an entity contact or an unknown account never lands in the player tabs.
+  const { area, permissions } = useAccountAccess();
+  const team = teamScreens(permissions);
+  const isTeam = area === 'team';
+
   // Registers this device's push token for the signed-in user (RAPP-17), and
   // surfaces the translated rationale when the OS permission is undetermined.
   const { shouldShowRationale, acceptRationale, declineRationale } = usePushRegistration();
+  const pathname = usePathname();
+  const home = areaHome(area, permissions);
+
+  // Just after signing in, the account type is not known yet. The screens wait
+  // for it, so the stack mounts once with the right area and opens its first
+  // screen, instead of passing through a wrong one (RAPP-232).
+  if (area === 'resolving') {
+    return (
+      <View className="flex-1 items-center justify-center bg-neutral-50" testID="account-resolving">
+        <ActivityIndicator color={tokens.colors.primary.DEFAULT} />
+      </View>
+    );
+  }
+  if (home !== null && pathname === '/') {
+    return <Redirect href={home as Href} />;
+  }
 
   return (
     <>
@@ -39,7 +54,7 @@ export default function AppLayout() {
           network flake must never route an onboarded player back into the
           wizard. */}
       <Stack screenOptions={hiddenHeaderScreenOptions}>
-        <Stack.Protected guard={!needsOnboarding && !isStaff}>
+        <Stack.Protected guard={area === 'player'}>
           <Stack.Screen name="(tabs)" />
           {/* Pushed OVER the tabs, not inside them: the edit form and the
               erasure request are full-screen tasks, and the floating tab bar
@@ -67,17 +82,32 @@ export default function AppLayout() {
           <Stack.Screen name="feedback/index" />
           <Stack.Screen name="survey/[id]" />
         </Stack.Protected>
-        <Stack.Protected guard={!needsOnboarding && isStaff}>
+        {/* Team screens open by permission; the first one available is where a
+            team member lands. With none of them, team-home points to the web. */}
+        <Stack.Protected guard={isTeam && team.attendance}>
           <Stack.Screen name="attendance/index" />
           <Stack.Screen name="attendance/[id]" />
+        </Stack.Protected>
+        <Stack.Protected guard={isTeam && team.messages}>
           <Stack.Screen name="messages/index" />
           <Stack.Screen name="messages/[conversationId]" />
         </Stack.Protected>
-        <Stack.Protected guard={needsOnboarding}>
+        <Stack.Protected guard={isTeam && !team.attendance && !team.messages}>
+          <Stack.Screen name="team-home" />
+        </Stack.Protected>
+        <Stack.Protected guard={area === 'entity'}>
+          <Stack.Screen name="entity-portal" />
+        </Stack.Protected>
+        <Stack.Protected guard={area === 'unresolved'}>
+          <Stack.Screen name="account-unresolved" />
+        </Stack.Protected>
+        <Stack.Protected guard={area === 'onboarding'}>
           <Stack.Screen name="onboarding" />
         </Stack.Protected>
       </Stack>
-      {isStaff && userId !== null ? <AttendanceSyncWorker userId={userId} /> : null}
+      {isTeam && permissions.has('attendance.mark') && userId !== null ? (
+        <AttendanceSyncWorker userId={userId} />
+      ) : null}
 
       {/* Shown BEFORE the system dialog, never instead of it (SPEC UX rule).
           Dismissing counts as "not now": the OS is never asked, so iOS's single

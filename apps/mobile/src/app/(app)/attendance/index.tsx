@@ -6,9 +6,11 @@ import {
 import { AttendanceOccurrenceRow } from '@/components/attendance/attendance-occurrence-row';
 import { PageWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
+import { teamScreens } from '@/lib/account-area';
 import { useAttendanceOccurrences } from '@/lib/attendance';
 import { logout } from '@/lib/auth';
 import { useUnreadMessages } from '@/lib/messaging';
+import { useAccountAccess } from '@/lib/use-account-access';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useRouter, type Href } from 'expo-router';
@@ -38,6 +40,7 @@ export default function AttendanceOccurrencesScreen() {
   const { push } = useRouter();
   const { data, isPending, isError, error, refetch } = useAttendanceOccurrences();
   const unreadMessages = useUnreadMessages().data ?? 0;
+  const canOpenMessages = teamScreens(useAccountAccess().permissions).messages;
   const timeFormatter = useMemo(
     () =>
       new Intl.DateTimeFormat(i18n.resolvedLanguage ?? DEFAULT_LANGUAGE, {
@@ -93,19 +96,21 @@ export default function AttendanceOccurrencesScreen() {
               {t('title')}
             </Text>
             <View className="flex-row items-center gap-sm">
-              <PressableScale
-                testID="attendance-open-messages"
-                accessibilityLabel={tMessaging('unread', { count: unreadMessages })}
-                onPress={() => push('/messages' as Href)}
-                haptic="selection"
-                className="min-h-min justify-center px-sm"
-              >
-                <Text className={`text-sm font-semibold text-primary-dark ${languageFontClass}`}>
-                  {unreadMessages > 0
-                    ? tMessaging('managementUnread', { count: unreadMessages })
-                    : tMessaging('managementTitle')}
-                </Text>
-              </PressableScale>
+              {canOpenMessages ? (
+                <PressableScale
+                  testID="attendance-open-messages"
+                  accessibilityLabel={tMessaging('unread', { count: unreadMessages })}
+                  onPress={() => push('/messages' as Href)}
+                  haptic="selection"
+                  className="min-h-min justify-center px-sm"
+                >
+                  <Text className={`text-sm font-semibold text-primary-dark ${languageFontClass}`}>
+                    {unreadMessages > 0
+                      ? tMessaging('managementUnread', { count: unreadMessages })
+                      : tMessaging('managementTitle')}
+                  </Text>
+                </PressableScale>
+              ) : null}
               <PressableScale
                 testID="attendance-sign-out"
                 accessibilityLabel={tProfile('signOutAction')}
