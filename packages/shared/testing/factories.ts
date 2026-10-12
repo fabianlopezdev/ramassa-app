@@ -170,7 +170,6 @@ function derivedProfileFields(fixture: PersonFixture) {
     is_forum_banned: ordinal % 17 === 0,
     // Every account signs in with an emailed code since RAPP-224; the column
     // goes in RAPP-211.
-    auth_method: 'magic_link',
     sessions_valid_after: null,
   };
 }

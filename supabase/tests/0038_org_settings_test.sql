@@ -127,10 +127,12 @@ select is(
   'staff',
   'a staff invitation provisions the requested staff role for magic-link access'
 );
-select is(
-  (select auth_method from public.profiles where id = (select profile_id from rapp64_invited_staff)),
-  'magic_link',
-  'staff invitation reuses the established magic-link account infrastructure'
+select ok(
+  not exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'profiles' and column_name = 'auth_method'
+  ),
+  'profiles carry no sign-in method: every account signs in with an email code (RAPP-243)'
 );
 select is(
   (select count(*)::integer from public.list_staff_members()),
