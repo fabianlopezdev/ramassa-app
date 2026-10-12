@@ -55,5 +55,6 @@
   "deliveryRejected": "لم تُرسل. رُفضت هذه الرسالة.",
   "deliveryRejectedPermission": "لم تُرسل. لم يعد بإمكانكِ إرسال رسائل هنا.",
   "discard": "إزالة",
-  "selectConversation": "اختاري محادثة."
+  "selectConversation": "اختاري محادثة.",
+  "noUnread": "لا توجد رسائل غير مقروءة"
 }

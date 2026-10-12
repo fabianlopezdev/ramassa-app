@@ -55,5 +55,6 @@
   "deliveryRejected": "ارسال نشد. این پیام رد شد.",
   "deliveryRejectedPermission": "ارسال نشد. دیگر نمی‌توانید اینجا پیام بفرستید.",
   "discard": "حذف",
-  "selectConversation": "یک گفتگو را انتخاب کنید."
+  "selectConversation": "یک گفتگو را انتخاب کنید.",
+  "noUnread": "پیام خوانده‌نشده‌ای نیست"
 }

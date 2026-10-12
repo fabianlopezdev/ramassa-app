@@ -8,7 +8,11 @@ import { AttendanceSheet } from '@/components/attendance/attendance-sheet';
 import { PageWidth } from '@/components/layout/content-width';
 import { TeamBackToHome } from '@/components/team/team-back-to-home';
 import { useTeamLayout } from '@/components/team/team-layout-context';
+import { TodayMessagesCard } from '@/components/team/today-messages-card';
 import { useAttendanceOccurrences } from '@/lib/attendance';
+import { teamAreas } from '@/lib/team-shell';
+import { todaySections } from '@/lib/today';
+import { useAccountAccess } from '@/lib/use-account-access';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
@@ -48,7 +52,13 @@ export default function AttendanceOccurrencesScreen() {
       }),
     [i18n.resolvedLanguage],
   );
-  const isSplit = useTeamLayout() === 'sidebar';
+  const { t: tNav } = useTranslation('nav');
+  const layout = useTeamLayout();
+  const isSplit = layout === 'sidebar';
+  // In the large-button layout this is the Attendance button's screen; in tabs
+  // and the sidebar it is Today, with a section per area (RAPP-246).
+  const isToday = layout !== 'home';
+  const sections = todaySections(teamAreas(useAccountAccess().permissions));
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const open = useCallback(
     (id: string) => (isSplit ? setSelectedId(id) : push(`/attendance/${id}`)),
@@ -95,11 +105,16 @@ export default function AttendanceOccurrencesScreen() {
             accessibilityRole="header"
             className={`text-start text-3xl font-bold text-neutral-900 ${languageFontClass}`}
           >
-            {t('title')}
+            {isToday ? tNav('team.today') : t('title')}
           </Text>
           <Text className={`text-start text-md text-neutral-600 ${languageFontClass}`}>
-            {t('intro')}
+            {isToday ? tNav('team.todayIntro') : t('intro')}
           </Text>
+          {isToday && sections.includes('messages') ? (
+            <View className="pt-md">
+              <TodayMessagesCard />
+            </View>
+          ) : null}
           <Text
             className={`pt-md text-start text-xl font-bold text-neutral-900 ${languageFontClass}`}
           >
