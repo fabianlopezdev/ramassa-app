@@ -760,6 +760,53 @@ export type Database = {
           },
         ];
       };
+      equipment_item_types: {
+        Row: {
+          created_at: string;
+          default_value_cents: number | null;
+          id: string;
+          is_active: boolean;
+          key: string;
+          kind: string;
+          name: Json | null;
+          org_id: string;
+          sizes: string[];
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          default_value_cents?: number | null;
+          id?: string;
+          is_active?: boolean;
+          key: string;
+          kind: string;
+          name?: Json | null;
+          org_id: string;
+          sizes?: string[];
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          default_value_cents?: number | null;
+          id?: string;
+          is_active?: boolean;
+          key?: string;
+          kind?: string;
+          name?: Json | null;
+          org_id?: string;
+          sizes?: string[];
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'equipment_item_types_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       event_categories: {
         Row: {
           color: string;
@@ -2965,6 +3012,87 @@ export type Database = {
           },
         ];
       };
+      stock_movements: {
+        Row: {
+          created_at: string;
+          equipment_delivery_id: string | null;
+          id: string;
+          item_type_id: string;
+          kind: string;
+          occurred_at: string;
+          org_id: string;
+          participant_id: string | null;
+          quantity: number;
+          reason: string | null;
+          recorded_by: string | null;
+          size: string | null;
+        };
+        Insert: {
+          created_at?: string;
+          equipment_delivery_id?: string | null;
+          id?: string;
+          item_type_id: string;
+          kind: string;
+          occurred_at?: string;
+          org_id: string;
+          participant_id?: string | null;
+          quantity: number;
+          reason?: string | null;
+          recorded_by?: string | null;
+          size?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          equipment_delivery_id?: string | null;
+          id?: string;
+          item_type_id?: string;
+          kind?: string;
+          occurred_at?: string;
+          org_id?: string;
+          participant_id?: string | null;
+          quantity?: number;
+          reason?: string | null;
+          recorded_by?: string | null;
+          size?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'stock_movements_equipment_delivery_id_fkey';
+            columns: ['equipment_delivery_id'];
+            isOneToOne: false;
+            referencedRelation: 'equipment_deliveries';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'stock_movements_item_type_id_fkey';
+            columns: ['item_type_id'];
+            isOneToOne: false;
+            referencedRelation: 'equipment_item_types';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'stock_movements_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'stock_movements_participant_id_fkey';
+            columns: ['participant_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'stock_movements_recorded_by_fkey';
+            columns: ['recorded_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       survey_questions: {
         Row: {
           created_at: string;
@@ -4676,6 +4804,16 @@ export type Database = {
       sign_out_everywhere: {
         Args: { p_profile_id: string };
         Returns: undefined;
+      };
+      stock_levels: {
+        Args: never;
+        Returns: {
+          item_key: string;
+          item_type_id: string;
+          kind: string;
+          quantity: number;
+          size: string;
+        }[];
       };
       transition_deletion_request: {
         Args: {
