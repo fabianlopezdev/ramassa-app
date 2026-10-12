@@ -1709,6 +1709,15 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - Photos of the goods and of the delivery note or receipt (`equipment_arrival_photos`, up to ten) go to a staff-only `stock` upload folder that only `equipment.receive` can write. The arrival accepts only keys this person uploaded to this organization's stock folder. The media worker serves a stock photo only after `can_read_stock_object()` ties it to an arrival the caller may read.
 - Holders of `equipment.receive`, `equipment.count` or `equipment.items` read arrivals and their photos. Arrivals hold no participant data.
 
+## Stock and goods received: phone (2026-10-12, RAPP-250, part of RAPP-212)
+
+- A Stock area opens for `equipment.receive`, `equipment.count` or `equipment.items`. As in the design ("More: ... stock"), it has no tab or sidebar entry of its own: it opens from More, from a large button on the simple home, and from Today's Material section. It counts as an area, so a person whose only job is stock gets the simple home. A handover alone does not open it: coaches hand material out from the participant card.
+- Stock lists each item, in the reader's alphabetical order, with each size and its quantity. A quantity below zero shows in red with "Below zero. Count it." The goods received lately follow, with source, date, lines, total paid, problems and photos.
+- "Record goods received" (for `equipment.receive`) opens the form: donation, purchase or sponsor, and who gave it, the shop or the sponsor. Each item line has an item, a size, a quantity with minus and plus, and a value. A donation or sponsorship pre-fills the item's usual value; a purchase starts empty for the price. Two lines with the same item, size and value join into one. A purchase also records the total paid. Problems noted are free text.
+- Photos: "Photograph the goods", "Photograph the receipt" (camera) or "Choose from photos". Each uploads as it is added, to the staff-only stock folder. Save waits until the uploads finish.
+- Save needs a connection, and the screen says so when there is none. The form makes the arrival's id once, so a second press after a lost answer saves nothing twice.
+- The app asks for the camera only when someone takes a photo; Android drops the microphone permission that the picker would add.
+
 ## Staff-side languages (2026-10-11, RAPP-238, part of RAPP-211)
 
 - The staff side (the web admin, the team screens and the entity screens) is in Catalan, Spanish or English (`STAFF_LANGUAGES`). Player screens keep all five languages and right-to-left. Content stays five-language everywhere: this is the language of the screens themselves.

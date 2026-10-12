@@ -9,12 +9,17 @@
  *   sidebar  a tablet: a sidebar with every area, and list-and-detail views
  *
  * Areas join this list as their screens arrive (participants since RAPP-247,
- * material from RAPP-248); the app is not used before every phase is
+ * stock since RAPP-250); the app is not used before every phase is
  * done, so an area without screens is simply not here yet.
+ *
+ * Stock is a More area (design: "More: ... stock"): it has no tab or sidebar
+ * entry of its own, it opens from More, and from a large button on the
+ * simple home. It still counts as an area, so a person whose only job is
+ * stock gets that home.
  */
 import type { PermissionCode } from '@ramassa/shared/permissions';
 
-export type TeamArea = 'attendance' | 'participants' | 'messages';
+export type TeamArea = 'attendance' | 'participants' | 'messages' | 'stock';
 
 export type TeamLayout = 'tabs' | 'home' | 'sidebar';
 
@@ -40,6 +45,13 @@ export function teamAreas(permissions: ReadonlySet<PermissionCode>): readonly Te
   }
   if (permissions.has('participants.view')) areas.push('participants');
   if (permissions.has('messages.inbox')) areas.push('messages');
+  if (
+    permissions.has('equipment.receive') ||
+    permissions.has('equipment.count') ||
+    permissions.has('equipment.items')
+  ) {
+    areas.push('stock');
+  }
   return areas;
 }
 
@@ -55,9 +67,11 @@ export function teamLayout(input: {
 export function teamStart(
   areas: readonly TeamArea[],
   layout: TeamLayout,
-): '/home' | '/today' | '/participants' | '/messages' | '/team-home' {
+): '/home' | '/today' | '/participants' | '/messages' | '/more' | '/team-home' {
   if (areas.length === 0) return '/team-home';
   if (layout === 'home') return '/home';
   if (areas.includes('attendance')) return '/today';
-  return areas.includes('participants') ? '/participants' : '/messages';
+  if (areas.includes('participants')) return '/participants';
+  // Stock alone: More holds it.
+  return areas.includes('messages') ? '/messages' : '/more';
 }

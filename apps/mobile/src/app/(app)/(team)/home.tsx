@@ -54,6 +54,7 @@ export default function TeamHomeButtonsScreen() {
   const { t: tMessaging } = useTranslation('messaging');
   const { t: tAuth } = useTranslation('auth');
   const { t: tProfile } = useTranslation('profile');
+  const { t: tParticipants } = useTranslation('participants');
   const languageFontClass = useLanguageFontClass();
   const { push } = useRouter();
   const areas = teamAreas(useAccountAccess().permissions);
@@ -89,6 +90,13 @@ export default function TeamHomeButtonsScreen() {
               label={tMessaging('managementTitle')}
               detail={unread > 0 ? tMessaging('unread', { count: unread }) : undefined}
               onPress={() => push('/messages' as Href)}
+            />
+          ) : null}
+          {areas.includes('stock') ? (
+            <HomeButton
+              testID="team-home-stock"
+              label={tParticipants('stock.title')}
+              onPress={() => push('/stock' as Href)}
             />
           ) : null}
           <View className="gap-sm pt-md">

@@ -102,7 +102,9 @@ export default function AppLayout() {
             holding the areas the person's permissions open. A session sheet or
             a conversation opens over it. With no area, team-home points to the
             web. */}
-        <Stack.Protected guard={isTeam && (team.attendance || team.participants || team.messages)}>
+        <Stack.Protected
+          guard={isTeam && (team.attendance || team.participants || team.messages || team.stock)}
+        >
           <Stack.Screen name="(team)" />
         </Stack.Protected>
         <Stack.Protected guard={isTeam && team.participants}>
@@ -119,7 +121,15 @@ export default function AppLayout() {
         <Stack.Protected guard={isTeam && team.messages}>
           <Stack.Screen name="messages/[conversationId]" />
         </Stack.Protected>
-        <Stack.Protected guard={isTeam && !team.attendance && !team.participants && !team.messages}>
+        <Stack.Protected guard={isTeam && team.stock}>
+          <Stack.Screen name="stock" />
+        </Stack.Protected>
+        <Stack.Protected guard={isTeam && team.arrivals}>
+          <Stack.Screen name="arrival/new" />
+        </Stack.Protected>
+        <Stack.Protected
+          guard={isTeam && !team.attendance && !team.participants && !team.messages && !team.stock}
+        >
           <Stack.Screen name="team-home" />
         </Stack.Protected>
         <Stack.Protected guard={area === 'entity'}>

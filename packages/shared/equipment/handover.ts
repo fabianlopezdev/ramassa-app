@@ -75,6 +75,8 @@ export interface HandoverItemType {
   readonly key: string;
   readonly kind: 'player_kit' | 'team_equipment';
   readonly sizes: readonly string[];
+  /** What one donated item is worth, set in the item editor; pre-fills an arrival. */
+  readonly default_value_cents: number | null;
 }
 
 export interface ParticipantMaterialRow {
@@ -105,7 +107,7 @@ function databaseError(error: { readonly message: string; readonly code?: string
 export async function fetchHandoverItemTypes(client: Client): Promise<readonly HandoverItemType[]> {
   const { data, error } = await client
     .from('equipment_item_types')
-    .select('id, key, kind, sizes')
+    .select('id, key, kind, sizes, default_value_cents')
     .eq('is_active', true)
     .order('key');
   if (error) throw databaseError(error);

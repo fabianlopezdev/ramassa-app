@@ -59,6 +59,14 @@
           "faceIDPermission": "Ramassà uses Face ID to unlock the app when the app lock is on."
         }
       ],
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "Ramassà uses the camera when the team photographs goods received and their receipts.",
+          "photosPermission": "Ramassà opens your photos when you choose one to share.",
+          "microphonePermission": false
+        }
+      ],
       "./plugins/with-secure-backup-rules",
       [
         "@sentry/react-native/expo",

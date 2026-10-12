@@ -205,5 +205,73 @@
     "stockFine": "No stock to check.",
     "stockAlert": "{{item}}: below zero. Count it.",
     "saveFailed": "The handover was not saved. Try again."
+  },
+  "stock": {
+    "title": "Stock",
+    "intro": "What the team has in store, from every arrival, handover and return.",
+    "recordArrival": "Record goods received",
+    "levelsTitle": "In stock",
+    "levelsEmpty": "Nothing has arrived yet.",
+    "belowZero": "Below zero. Count it.",
+    "arrivalsTitle": "Recent arrivals",
+    "arrivalsEmpty": "No goods received yet.",
+    "source": {
+      "donation": "Donation",
+      "purchase": "Purchase",
+      "sponsor": "Sponsor"
+    },
+    "arrivalFrom": "{{source}} from {{name}}",
+    "problems": "Problems: {{text}}",
+    "totalPaid": "Paid {{amount}}",
+    "photo": {
+      "goods": "Photo of the goods",
+      "receipt": "Photo of the receipt"
+    },
+    "loadFailed": "Could not load the stock."
+  },
+  "arrival": {
+    "title": "Goods received",
+    "sourceLabel": "Where it came from",
+    "sourceName": {
+      "donation": "Who gave it",
+      "purchase": "Shop",
+      "sponsor": "Sponsor"
+    },
+    "linesLabel": "Items",
+    "noLines": "Add at least one item.",
+    "addLine": "Add the item",
+    "itemLabel": "Item",
+    "sizeLabel": "Size",
+    "quantityLabel": "Quantity",
+    "less": "One less",
+    "more": "One more",
+    "valueLabel": {
+      "donation": "Value of one item in euros",
+      "purchase": "Price of one item in euros",
+      "sponsor": "Value of one item in euros"
+    },
+    "valueHint": "The item's usual value is filled in. Change it if this one is different.",
+    "valueInvalid": "Write a price like 12,50.",
+    "lineSummary": "{{item}}: {{quantity}}",
+    "lineValue": "{{value}} each",
+    "removeLine": "Remove {{item}}",
+    "problemsLabel": "Problems noted",
+    "totalCostLabel": "Total paid in euros",
+    "photosLabel": "Photos",
+    "photosHint": "A photo of the goods, and one of the delivery note or receipt.",
+    "takePhoto": {
+      "goods": "Photograph the goods",
+      "receipt": "Photograph the receipt"
+    },
+    "choosePhoto": "Choose from photos",
+    "removePhoto": "Remove the photo",
+    "uploading": "Uploading the photo",
+    "photoFailed": "The photo was not uploaded. Try again.",
+    "cameraDenied": "Allow the camera in Settings to take a photo.",
+    "needsConnection": "Recording goods received needs a connection.",
+    "save": "Save the arrival",
+    "saving": "Saving",
+    "saveFailed": "The arrival was not saved. Try again.",
+    "remove": "Remove"
   }
 }
