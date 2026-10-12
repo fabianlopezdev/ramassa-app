@@ -31,6 +31,7 @@ function dependencies(
     authorizeGalleryObject: async () => true,
     authorizeFeedbackObject: async () => true,
     authorizeInternalDocumentObject: async () => true,
+    authorizeStockObject: async () => true,
     bucket: {
       get: async (key) =>
         key === objectKey
@@ -138,6 +139,25 @@ describe('handleServeMediaObject', () => {
       requestFor(documentObjectKey),
       dependencies({
         authorizeInternalDocumentObject: async () => false,
+        bucket: {
+          get: async () => {
+            storageReads += 1;
+            return null;
+          },
+        },
+      }),
+    );
+
+    expect(response.status).toBe(404);
+    expect(storageReads).toBe(0);
+  });
+
+  test('checks that an arrival photo belongs to an arrival she may read (RAPP-250)', async () => {
+    let storageReads = 0;
+    const response = await handleServeMediaObject(
+      requestFor(documentObjectKey.replace('/documents/', '/stock/').replace(/\.pdf$/, '.jpg')),
+      dependencies({
+        authorizeStockObject: async () => false,
         bucket: {
           get: async () => {
             storageReads += 1;
