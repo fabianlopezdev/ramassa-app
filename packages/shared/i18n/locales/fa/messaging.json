@@ -52,8 +52,6 @@
   "conversationRowLabel": "باز کردن گفت‌وگو با {{name}}. {{role}}. آخرین پیام: {{preview}}.",
   "backShort": "بازگشت",
   "backToConversations": "بازگشت به گفت‌وگوها",
-  "backToAttendance": "بازگشت به حضور و غیاب",
-  "managementUnread": "گفت‌وگوها ({{count}} خوانده‌نشده)",
   "deliveryRejected": "ارسال نشد. این پیام رد شد.",
   "deliveryRejectedPermission": "ارسال نشد. دیگر نمی‌توانید اینجا پیام بفرستید.",
   "discard": "حذف",
