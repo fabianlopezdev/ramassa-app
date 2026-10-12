@@ -8,13 +8,13 @@
  *            which is easier than a tab bar for a person with one job
  *   sidebar  a tablet: a sidebar with every area, and list-and-detail views
  *
- * Areas join this list as their screens arrive (participants in RAPP-247,
- * material in RAPP-248 and after); the app is not used before every phase is
+ * Areas join this list as their screens arrive (participants since RAPP-247,
+ * material from RAPP-248); the app is not used before every phase is
  * done, so an area without screens is simply not here yet.
  */
 import type { PermissionCode } from '@ramassa/shared/permissions';
 
-export type TeamArea = 'attendance' | 'messages';
+export type TeamArea = 'attendance' | 'participants' | 'messages';
 
 export type TeamLayout = 'tabs' | 'home' | 'sidebar';
 
@@ -38,6 +38,7 @@ export function teamAreas(permissions: ReadonlySet<PermissionCode>): readonly Te
   if (permissions.has('attendance.mark') || permissions.has('attendance.reports')) {
     areas.push('attendance');
   }
+  if (permissions.has('participants.view')) areas.push('participants');
   if (permissions.has('messages.inbox')) areas.push('messages');
   return areas;
 }
@@ -54,8 +55,9 @@ export function teamLayout(input: {
 export function teamStart(
   areas: readonly TeamArea[],
   layout: TeamLayout,
-): '/home' | '/today' | '/messages' | '/team-home' {
+): '/home' | '/today' | '/participants' | '/messages' | '/team-home' {
   if (areas.length === 0) return '/team-home';
   if (layout === 'home') return '/home';
-  return areas.includes('attendance') ? '/today' : '/messages';
+  if (areas.includes('attendance')) return '/today';
+  return areas.includes('participants') ? '/participants' : '/messages';
 }

@@ -98,10 +98,12 @@ export function forgetAccount(storage: AccountAreaStorage, userId: string): void
 /** The team screens a set of permissions opens in this phase (RAPP-232). */
 export function teamScreens(permissions: ReadonlySet<PermissionCode>): {
   readonly attendance: boolean;
+  readonly participants: boolean;
   readonly messages: boolean;
 } {
   return {
     attendance: permissions.has('attendance.mark') || permissions.has('attendance.reports'),
+    participants: permissions.has('participants.view'),
     messages: permissions.has('messages.inbox'),
   };
 }
@@ -120,6 +122,7 @@ export function areaHome(
 ):
   | '/home'
   | '/today'
+  | '/participants'
   | '/messages'
   | '/team-home'
   | '/entity-portal'

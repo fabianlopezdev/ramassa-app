@@ -55,7 +55,7 @@ test.describe.serial('app areas by account type', () => {
   // The team shell (RAPP-245): a wide screen gets the sidebar, a phone with one
   // or two areas the large-button start. Each shows only the areas her
   // permissions open.
-  test('attendance and the inbox: both areas, in the sidebar and on a phone', async ({ page }) => {
+  test('her full preset: the sidebar on a wide screen, tabs on a phone', async ({ page }) => {
     restoreStaff();
     await signInPlayer(page, STAFF_EMAIL);
     await completeSecondFactor(page, STAFF_EMAIL);
@@ -68,9 +68,10 @@ test.describe.serial('app areas by account type', () => {
 
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto(new URL('/', page.url()).href);
-    await expect(page.getByTestId('team-home-buttons')).toBeVisible({ timeout: 30_000 });
-    await expect(page.getByTestId('team-home-attendance')).toBeVisible();
-    await expect(page.getByTestId('team-home-messages')).toBeVisible();
+    // Attendance, participants and messages are three areas: tabs (RAPP-247).
+    await expect(page.getByRole('tab', { name: /Participants/ })).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByRole('tab', { name: /Messages/ })).toBeVisible();
+    await expect(page.getByTestId('team-home-buttons')).toHaveCount(0);
   });
 
   test('attendance without the inbox leaves messages out', async ({ page }) => {
@@ -94,6 +95,40 @@ test.describe.serial('app areas by account type', () => {
     await expect(page.getByTestId('team-sidebar-messages')).toBeVisible({ timeout: 30_000 });
     await expect(page.getByTestId('team-sidebar-today')).toHaveCount(0);
     await expect(page.getByRole('heading', { name: 'Conversations' })).toBeVisible();
+  });
+
+  // Quick participant lookup (RAPP-247): the card shows only what the
+  // person's field levels let the database return (RAPP-240).
+  test('participants alone: the card leaves out what she may not see', async ({ page }) => {
+    giveStaffOnly(['participants.view']);
+    await signInPlayer(page, STAFF_EMAIL);
+    await completeSecondFactor(page, STAFF_EMAIL);
+    await expect(page.getByTestId('team-sidebar-participants')).toBeVisible({ timeout: 30_000 });
+    await page.getByTestId('participant-search').fill('Aissa');
+    await page
+      .getByTestId(/participant-result-/)
+      .first()
+      .click();
+    const card = page.getByTestId('participant-card');
+    await expect(card.getByRole('heading', { name: 'Aissatou Diallo' })).toBeVisible();
+    await expect(card.getByText('Clothing size')).toBeVisible();
+    await expect(card.getByText('Phone', { exact: true })).toHaveCount(0);
+    await expect(card.getByText('Town', { exact: true })).toHaveCount(0);
+  });
+
+  test('with her full access, the same card shows the phone and town', async ({ page }) => {
+    restoreStaff();
+    await signInPlayer(page, STAFF_EMAIL);
+    await completeSecondFactor(page, STAFF_EMAIL);
+    await page.getByTestId('team-sidebar-participants').click();
+    await page.getByTestId('participant-search').fill('Aissa');
+    await page
+      .getByTestId(/participant-result-/)
+      .first()
+      .click();
+    const card = page.getByTestId('participant-card');
+    await expect(card.getByText('Phone', { exact: true })).toBeVisible({ timeout: 30_000 });
+    await expect(card.getByText('Town', { exact: true })).toBeVisible();
   });
 
   test('a team member with no app screen is pointed to the web dashboard', async ({ page }) => {

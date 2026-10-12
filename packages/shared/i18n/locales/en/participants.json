@@ -138,5 +138,7 @@
   "equipmentAddFailed": "We could not record the handover.",
   "inviteNoEmailHint": "If she has no email, help her create one first (for example a Gmail account), then invite her with that address.",
   "inviteAlreadyHasAccount": "This email already has an account. Find her in the participant list.",
-  "invitedReferralNote": "The entity's referral will be linked to her profile when she finishes registration."
+  "invitedReferralNote": "The entity's referral will be linked to her profile when she finishes registration.",
+  "selectParticipant": "Choose a participant to see her card.",
+  "lookupStart": "Type a name, town or entity."
 }

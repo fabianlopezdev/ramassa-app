@@ -12,6 +12,11 @@ describe('teamAreas', () => {
       'messages',
     ]);
     expect(teamAreas(codes('settings.branding'))).toEqual([]);
+    expect(teamAreas(codes('attendance.mark', 'participants.view', 'messages.inbox'))).toEqual([
+      'attendance',
+      'participants',
+      'messages',
+    ]);
   });
 });
 
@@ -33,6 +38,7 @@ describe('teamStart', () => {
     expect(teamStart(['attendance', 'messages'], 'home')).toBe('/home');
     expect(teamStart(['attendance', 'messages'], 'sidebar')).toBe('/today');
     expect(teamStart(['messages'], 'sidebar')).toBe('/messages');
+    expect(teamStart(['participants', 'messages'], 'tabs')).toBe('/participants');
   });
 
   test('no area in the app yet: the notice that points to the web', () => {

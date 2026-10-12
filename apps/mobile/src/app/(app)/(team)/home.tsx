@@ -76,6 +76,13 @@ export default function TeamHomeButtonsScreen() {
               onPress={() => push('/today' as Href)}
             />
           ) : null}
+          {areas.includes('participants') ? (
+            <HomeButton
+              testID="team-home-participants"
+              label={t('team.participants')}
+              onPress={() => push('/participants' as Href)}
+            />
+          ) : null}
           {areas.includes('messages') ? (
             <HomeButton
               testID="team-home-messages"
