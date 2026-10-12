@@ -127,6 +127,9 @@ export default function AppLayout() {
         <Stack.Protected guard={isTeam && team.arrivals}>
           <Stack.Screen name="arrival/new" />
         </Stack.Protected>
+        <Stack.Protected guard={isTeam && team.counts}>
+          <Stack.Screen name="count/[itemTypeId]" />
+        </Stack.Protected>
         <Stack.Protected
           guard={isTeam && !team.attendance && !team.participants && !team.messages && !team.stock}
         >

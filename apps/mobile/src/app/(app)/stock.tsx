@@ -155,11 +155,17 @@ export default function StockScreen() {
   const { t: tCommon } = useTranslation('common');
   const fontClass = useLanguageFontClass();
   const { back, push } = useRouter();
-  const canReceive = useAccountAccess().permissions.has('equipment.receive');
+  const { permissions } = useAccountAccess();
+  const canReceive = permissions.has('equipment.receive');
+  const canCount = permissions.has('equipment.count');
   const levels = useStockLevels();
   const arrivals = useRecentArrivals();
   const locale = i18n.resolvedLanguage ?? DEFAULT_LANGUAGE;
   const itemTypes = useHandoverItemTypes();
+  const typeIds = useMemo(
+    () => new Map((itemTypes.data ?? []).map((type) => [type.key, type.id] as const)),
+    [itemTypes.data],
+  );
   const sizeOrder = useMemo(
     () => new Map((itemTypes.data ?? []).map((type) => [type.key, type.sizes] as const)),
     [itemTypes.data],
@@ -234,9 +240,27 @@ export default function StockScreen() {
                 style={continuousCorners}
                 className="gap-sm rounded-md border border-neutral-200 bg-white p-md"
               >
-                <Text className={`text-start text-md font-semibold text-neutral-900 ${fontClass}`}>
-                  {item.label}
-                </Text>
+                <View className="flex-row items-center justify-between gap-sm">
+                  <Text
+                    className={`flex-1 text-start text-md font-semibold text-neutral-900 ${fontClass}`}
+                  >
+                    {item.label}
+                  </Text>
+                  {canCount && typeIds.has(item.itemKey) ? (
+                    <PressableScale
+                      testID={`stock-count-${item.itemKey}`}
+                      accessibilityRole="button"
+                      accessibilityLabel={t('count.actionLabel', { item: item.label })}
+                      onPress={() => push(`/count/${typeIds.get(item.itemKey)}` as Href)}
+                      haptic="tapLight"
+                      className="min-h-recommended justify-center px-sm"
+                    >
+                      <Text className={`font-semibold text-primary-dark ${fontClass}`}>
+                        {t('count.action')}
+                      </Text>
+                    </PressableScale>
+                  ) : null}
+                </View>
                 <View className="flex-row flex-wrap gap-sm">
                   {item.sizes.map((level) => {
                     const below = level.quantity < 0;

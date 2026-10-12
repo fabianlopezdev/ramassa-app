@@ -3178,10 +3178,67 @@ export type Database = {
           },
         ];
       };
+      stock_counts: {
+        Row: {
+          counted_at: string;
+          counted_by: string | null;
+          created_at: string;
+          id: string;
+          item_type_id: string;
+          lines: Json;
+          note: string | null;
+          org_id: string;
+        };
+        Insert: {
+          counted_at?: string;
+          counted_by?: string | null;
+          created_at?: string;
+          id?: string;
+          item_type_id: string;
+          lines: Json;
+          note?: string | null;
+          org_id: string;
+        };
+        Update: {
+          counted_at?: string;
+          counted_by?: string | null;
+          created_at?: string;
+          id?: string;
+          item_type_id?: string;
+          lines?: Json;
+          note?: string | null;
+          org_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'stock_counts_counted_by_fkey';
+            columns: ['counted_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'stock_counts_item_type_id_fkey';
+            columns: ['item_type_id'];
+            isOneToOne: false;
+            referencedRelation: 'equipment_item_types';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'stock_counts_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       stock_movements: {
         Row: {
           arrival_id: string | null;
           condition: string | null;
+          correction_reason: string | null;
+          count_id: string | null;
           created_at: string;
           equipment_delivery_id: string | null;
           id: string;
@@ -3199,6 +3256,8 @@ export type Database = {
         Insert: {
           arrival_id?: string | null;
           condition?: string | null;
+          correction_reason?: string | null;
+          count_id?: string | null;
           created_at?: string;
           equipment_delivery_id?: string | null;
           id?: string;
@@ -3216,6 +3275,8 @@ export type Database = {
         Update: {
           arrival_id?: string | null;
           condition?: string | null;
+          correction_reason?: string | null;
+          count_id?: string | null;
           created_at?: string;
           equipment_delivery_id?: string | null;
           id?: string;
@@ -3236,6 +3297,13 @@ export type Database = {
             columns: ['arrival_id'];
             isOneToOne: false;
             referencedRelation: 'equipment_arrivals';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'stock_movements_count_id_fkey';
+            columns: ['count_id'];
+            isOneToOne: false;
+            referencedRelation: 'stock_counts';
             referencedColumns: ['id'];
           },
           {
@@ -4718,6 +4786,14 @@ export type Database = {
         Args: { p_action: string; p_target_id: string; p_target_type: string };
         Returns: undefined;
       };
+      monthly_stock_count: {
+        Args: never;
+        Returns: {
+          item_key: string;
+          item_type_id: string;
+          last_counted_at: string;
+        }[];
+      };
       my_entity_invitation: {
         Args: never;
         Returns: {
@@ -4854,6 +4930,19 @@ export type Database = {
           results: Json;
         };
         Returns: number;
+      };
+      record_stock_count: {
+        Args: {
+          p_id: string;
+          p_item_type_id: string;
+          p_lines: Json;
+          p_note?: string;
+          p_reason?: string;
+        };
+        Returns: {
+          corrections: number;
+          count_id: string;
+        }[];
       };
       register_internal_document: {
         Args: {

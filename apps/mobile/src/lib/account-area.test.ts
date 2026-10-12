@@ -105,6 +105,7 @@ test('team screens follow permissions', () => {
     messages: false,
     stock: false,
     arrivals: false,
+    counts: false,
   });
   expect(teamScreens(new Set(['messages.inbox']))).toEqual({
     attendance: false,
@@ -112,6 +113,7 @@ test('team screens follow permissions', () => {
     messages: true,
     stock: false,
     arrivals: false,
+    counts: false,
   });
   expect(teamScreens(new Set(['participants.view']))).toEqual({
     attendance: false,
@@ -119,6 +121,7 @@ test('team screens follow permissions', () => {
     messages: false,
     stock: false,
     arrivals: false,
+    counts: false,
   });
   expect(teamScreens(new Set())).toEqual({
     attendance: false,
@@ -126,6 +129,7 @@ test('team screens follow permissions', () => {
     messages: false,
     stock: false,
     arrivals: false,
+    counts: false,
   });
   // Stock opens with counting too; recording an arrival needs receiving (RAPP-250).
   expect(teamScreens(new Set(['equipment.count']))).toEqual({
@@ -134,6 +138,7 @@ test('team screens follow permissions', () => {
     messages: false,
     stock: true,
     arrivals: false,
+    counts: true,
   });
 });
 

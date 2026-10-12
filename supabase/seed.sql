@@ -1519,6 +1519,17 @@ values
   )
 on conflict do nothing;
 
+-- Stock counts (RAPP-251) -------------------------------------------------------------
+--
+-- Balls were counted last month and matched the ledger, so this month's small
+-- count is still due and asks for an item that was never counted.
+
+insert into public.stock_counts (org_id, item_type_id, counted_by, counted_at, lines)
+select org_id, id, '5eed0000-0000-4000-8000-000000000002', now() - interval '45 days',
+  '[{"size": null, "expected": 12, "counted": 12}]'::jsonb
+from public.equipment_item_types
+where org_id = '5eed0000-0000-4000-8000-000000000000' and key = 'ball';
+
 -- Stock alerts (RAPP-249) --------------------------------------------------------------
 --
 -- Shorts XL never arrived, so handing a pair to Blanca took the size below zero

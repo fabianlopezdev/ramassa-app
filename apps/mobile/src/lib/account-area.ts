@@ -102,6 +102,7 @@ export function teamScreens(permissions: ReadonlySet<PermissionCode>): {
   readonly messages: boolean;
   readonly stock: boolean;
   readonly arrivals: boolean;
+  readonly counts: boolean;
 } {
   return {
     attendance: permissions.has('attendance.mark') || permissions.has('attendance.reports'),
@@ -109,6 +110,7 @@ export function teamScreens(permissions: ReadonlySet<PermissionCode>): {
     messages: permissions.has('messages.inbox'),
     stock: teamAreas(permissions).includes('stock'),
     arrivals: permissions.has('equipment.receive'),
+    counts: permissions.has('equipment.count'),
   };
 }
 

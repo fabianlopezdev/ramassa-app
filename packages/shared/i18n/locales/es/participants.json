@@ -273,5 +273,36 @@
     "saving": "Guardando",
     "saveFailed": "La llegada no se ha guardado. Vuelve a intentarlo.",
     "remove": "Quitar"
+  },
+  "count": {
+    "title": "Contar {{item}}",
+    "intro": "Cuenta lo que hay en la estantería, talla por talla. La app enseña sus números solo después de contar.",
+    "onShelf": "En la estantería",
+    "sizeLabel": "Talla {{size}}",
+    "toReview": "Revisar el recuento",
+    "matches": "El recuento coincide con el stock. No cambia nada.",
+    "differencesTitle": "Diferencias",
+    "difference": "{{size}}: el stock dice {{expected}}, en la estantería hay {{counted}}",
+    "differenceNoSize": "El stock dice {{expected}}, en la estantería hay {{counted}}",
+    "reasonLabel": "¿Por qué es distinto?",
+    "reason": {
+      "lost": "Perdido",
+      "damaged": "Estropeado y tirado",
+      "found": "Encontrado",
+      "earlier_miscount": "Contado mal antes",
+      "unrecorded_handover": "Entregado sin registrar",
+      "other": "Otro"
+    },
+    "noteLabel": "Nota",
+    "reasonRequired": "Elige por qué el recuento es distinto.",
+    "save": "Guardar el recuento",
+    "saving": "Guardando",
+    "saveFailed": "El recuento no se ha guardado. Vuelve a intentarlo.",
+    "needsConnection": "Contar necesita conexión.",
+    "back": "Volver al recuento",
+    "action": "Contar",
+    "actionLabel": "Contar {{item}}",
+    "monthlyTitle": "Recuento de este mes",
+    "monthlyItem": "{{item}}: cuenta lo que hay en la estantería."
   }
 }

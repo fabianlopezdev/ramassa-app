@@ -7,10 +7,14 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@ramassa/shared/auth';
 import {
+  fetchMonthlyCount,
   fetchRecentArrivals,
   fetchStockLevels,
   recordEquipmentArrival,
+  recordStockCount,
   type ArrivalInput,
+  type CountLine,
+  type CountReason,
 } from '@ramassa/shared/equipment';
 import { AppError } from '@ramassa/shared/errors';
 import { uploadFile } from '@ramassa/shared/upload-client';
@@ -43,6 +47,35 @@ export function useRecordArrival() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: ArrivalInput) => recordEquipmentArrival(supabase, input),
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: stockRoot(user?.id ?? SIGNED_OUT) }),
+        queryClient.invalidateQueries({ queryKey: ['stock-alerts', user?.id ?? SIGNED_OUT] }),
+      ]),
+  });
+}
+
+/** The item Today asks to count this month (RAPP-251), or null when done. */
+export function useMonthlyCount(enabled: boolean) {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: [...stockRoot(user?.id ?? SIGNED_OUT), 'monthly-count'],
+    queryFn: () => fetchMonthlyCount(supabase),
+    enabled: enabled && user !== null,
+  });
+}
+
+export function useRecordCount() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: {
+      readonly id: string;
+      readonly itemTypeId: string;
+      readonly lines: readonly CountLine[];
+      readonly reason: CountReason | null;
+      readonly note: string;
+    }) => recordStockCount(supabase, input),
     onSuccess: () =>
       Promise.all([
         queryClient.invalidateQueries({ queryKey: stockRoot(user?.id ?? SIGNED_OUT) }),

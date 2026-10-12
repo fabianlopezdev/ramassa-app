@@ -273,5 +273,36 @@
     "saving": "Desant",
     "saveFailed": "L'arribada no s'ha desat. Torna-ho a provar.",
     "remove": "Treure"
+  },
+  "count": {
+    "title": "Comptar {{item}}",
+    "intro": "Compta el que hi ha al prestatge, talla per talla. L'app ensenya els seus números només després de comptar.",
+    "onShelf": "Al prestatge",
+    "sizeLabel": "Talla {{size}}",
+    "toReview": "Revisar el recompte",
+    "matches": "El recompte coincideix amb l'estoc. No canvia res.",
+    "differencesTitle": "Diferències",
+    "difference": "{{size}}: l'estoc diu {{expected}}, al prestatge n'hi ha {{counted}}",
+    "differenceNoSize": "L'estoc diu {{expected}}, al prestatge n'hi ha {{counted}}",
+    "reasonLabel": "Per què és diferent?",
+    "reason": {
+      "lost": "Perdut",
+      "damaged": "Fet malbé i llençat",
+      "found": "Trobat",
+      "earlier_miscount": "Comptat malament abans",
+      "unrecorded_handover": "Lliurat sense registrar",
+      "other": "Altres"
+    },
+    "noteLabel": "Nota",
+    "reasonRequired": "Tria per què el recompte és diferent.",
+    "save": "Desar el recompte",
+    "saving": "Desant",
+    "saveFailed": "El recompte no s'ha desat. Torna-ho a provar.",
+    "needsConnection": "Comptar necessita connexió.",
+    "back": "Tornar al recompte",
+    "action": "Comptar",
+    "actionLabel": "Comptar {{item}}",
+    "monthlyTitle": "Recompte d'aquest mes",
+    "monthlyItem": "{{item}}: compta el que hi ha al prestatge."
   }
 }
