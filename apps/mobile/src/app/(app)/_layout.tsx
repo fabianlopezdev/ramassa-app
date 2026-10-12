@@ -1,7 +1,7 @@
 import { AttendanceSyncWorker } from '@/components/attendance/attendance-sync-worker';
 import { useAppLock } from '@/components/auth/app-lock';
 import { SecondFactorScreen } from '@/components/auth/second-factor-screen';
-import { StaffLanguageGate } from '@/components/auth/staff-language-gate';
+import { useStaffLanguage } from '@/components/auth/staff-language-gate';
 import { PushPermissionRationale } from '@/components/push-permission-rationale';
 import { areaHome, teamScreens } from '@/lib/account-area';
 import { useAccountAccess } from '@/lib/use-account-access';
@@ -26,6 +26,8 @@ export default function AppLayout() {
   const { area, permissions } = useAccountAccess();
   const team = teamScreens(permissions);
   const isTeam = area === 'team';
+  // Before any early return, so the authenticator screen is covered (RAPP-238).
+  useStaffLanguage(isTeam || area === 'entity');
 
   // Registers this device's push token for the signed-in user (RAPP-17), and
   // surfaces the translated rationale when the OS permission is undetermined.
@@ -117,7 +119,6 @@ export default function AppLayout() {
           <Stack.Screen name="onboarding" />
         </Stack.Protected>
       </Stack>
-      <StaffLanguageGate isStaffSide={isTeam || area === 'entity'} />
       {isTeam && permissions.has('attendance.mark') && userId !== null ? (
         <AttendanceSyncWorker userId={userId} />
       ) : null}

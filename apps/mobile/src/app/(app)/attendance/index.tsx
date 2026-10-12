@@ -89,43 +89,43 @@ export default function AttendanceOccurrencesScreen() {
     <SafeAreaView className="flex-1 bg-neutral-50" edges={['top', 'left', 'right']}>
       <PageWidth className="flex-1">
         <View className="gap-xs px-lg pb-md pt-lg">
-          <View className="flex-row items-center justify-between gap-md">
-            <Text
-              accessibilityRole="header"
-              className={`flex-1 text-start text-3xl font-bold text-neutral-900 ${languageFontClass}`}
-            >
-              {t('title')}
-            </Text>
-            <View className="flex-row items-center gap-sm">
-              {canOpenMessages ? (
-                <PressableScale
-                  testID="attendance-open-messages"
-                  accessibilityLabel={tMessaging('unread', { count: unreadMessages })}
-                  onPress={() => push('/messages' as Href)}
-                  haptic="selection"
-                  className="min-h-min justify-center px-sm"
-                >
-                  <Text className={`text-sm font-semibold text-primary-dark ${languageFontClass}`}>
-                    {unreadMessages > 0
-                      ? tMessaging('managementUnread', { count: unreadMessages })
-                      : tMessaging('managementTitle')}
-                  </Text>
-                </PressableScale>
-              ) : null}
-              <AppLockLink variant="link" />
+          {/* The links get their own row, so the title always has the full
+              width: three links beside it squeezed it out (RAPP-242). */}
+          <View className="flex-row flex-wrap items-center justify-end gap-sm">
+            {canOpenMessages ? (
               <PressableScale
-                testID="attendance-sign-out"
-                accessibilityLabel={tProfile('signOutAction')}
-                onPress={handleLogout}
-                haptic="tapLight"
+                testID="attendance-open-messages"
+                accessibilityLabel={tMessaging('unread', { count: unreadMessages })}
+                onPress={() => push('/messages' as Href)}
+                haptic="selection"
                 className="min-h-min justify-center px-sm"
               >
                 <Text className={`text-sm font-semibold text-primary-dark ${languageFontClass}`}>
-                  {tProfile('signOutAction')}
+                  {unreadMessages > 0
+                    ? tMessaging('managementUnread', { count: unreadMessages })
+                    : tMessaging('managementTitle')}
                 </Text>
               </PressableScale>
-            </View>
+            ) : null}
+            <AppLockLink variant="link" />
+            <PressableScale
+              testID="attendance-sign-out"
+              accessibilityLabel={tProfile('signOutAction')}
+              onPress={handleLogout}
+              haptic="tapLight"
+              className="min-h-min justify-center px-sm"
+            >
+              <Text className={`text-sm font-semibold text-primary-dark ${languageFontClass}`}>
+                {tProfile('signOutAction')}
+              </Text>
+            </PressableScale>
           </View>
+          <Text
+            accessibilityRole="header"
+            className={`text-start text-3xl font-bold text-neutral-900 ${languageFontClass}`}
+          >
+            {t('title')}
+          </Text>
           <Text className={`text-start text-md text-neutral-600 ${languageFontClass}`}>
             {t('intro')}
           </Text>

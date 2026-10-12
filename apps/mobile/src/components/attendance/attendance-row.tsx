@@ -123,7 +123,9 @@ export const AttendanceRow = memo(function AttendanceRow({
             <Text
               testID={`attendance-sync-${playerId}-${syncState}`}
               accessibilityLiveRegion="polite"
-              className={`text-start text-xs text-neutral-600 ${languageFontClass}`}
+              className={`text-start text-xs ${
+                syncState === 'rejected' ? 'font-semibold text-error' : 'text-neutral-600'
+              } ${languageFontClass}`}
             >
               {syncLabel}
             </Text>

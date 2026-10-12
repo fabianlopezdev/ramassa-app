@@ -13,7 +13,11 @@ import { useEffect } from 'react';
 import { I18nManager } from 'react-native';
 import { staffLanguageFor, useLanguage } from '@ramassa/shared/i18n';
 
-export function StaffLanguageGate({ isStaffSide }: { readonly isStaffSide: boolean }) {
+/**
+ * Called at the top of the signed-in layout, before any early return, so it
+ * also covers the authenticator screen a team member sees first.
+ */
+export function useStaffLanguage(isStaffSide: boolean): void {
   const { language, setLanguage } = useLanguage();
   const staffLanguage = staffLanguageFor(language);
 
@@ -28,6 +32,4 @@ export function StaffLanguageGate({ isStaffSide }: { readonly isStaffSide: boole
       }
     });
   }, [isStaffSide, language, setLanguage, staffLanguage]);
-
-  return null;
 }
