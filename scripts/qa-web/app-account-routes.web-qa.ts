@@ -131,6 +131,25 @@ test.describe.serial('app areas by account type', () => {
     await expect(card.getByText('Town', { exact: true })).toBeVisible();
   });
 
+  // Stock is a More area (RAPP-250): a person whose only job is counting
+  // stock gets the simple home with a Stock button on a phone, and More on a
+  // tablet; she cannot record goods received without equipment.receive.
+  test('counting alone opens Stock from the home and More, without goods received', async ({
+    page,
+  }) => {
+    giveStaffOnly(['equipment.count']);
+    await signInPlayer(page, STAFF_EMAIL);
+    await completeSecondFactor(page, STAFF_EMAIL);
+    await expect(page.getByTestId('team-more-stock')).toBeVisible({ timeout: 30_000 });
+    await page.getByTestId('team-more-stock').click();
+    await expect(page.getByTestId('stock-levels')).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByTestId('stock-record-arrival')).toHaveCount(0);
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(new URL('/', page.url()).href);
+    await expect(page.getByTestId('team-home-stock')).toBeVisible({ timeout: 30_000 });
+  });
+
   test('a team member with no app screen is pointed to the web dashboard', async ({ page }) => {
     giveStaffOnly(['settings.branding']);
     await signInPlayer(page, STAFF_EMAIL);

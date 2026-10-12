@@ -1,13 +1,16 @@
 /**
  * More (RAPP-245): what is not an area of its own. Settings (language and app
- * lock) and sign-out now; later phases add stock, the dashboard, the team and
- * the rest here.
+ * lock) and sign-out, and Stock for whoever receives, counts or edits
+ * material (RAPP-250); later phases add the dashboard, the team and the rest.
+ *
  */
 import { PageWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { TeamBackToHome } from '@/components/team/team-back-to-home';
 import { logout } from '@/lib/auth';
 import { continuousCorners } from '@/lib/continuous-corners';
+import { teamAreas } from '@/lib/team-shell';
+import { useAccountAccess } from '@/lib/use-account-access';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useRouter, type Href } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -18,6 +21,8 @@ export default function TeamMoreScreen() {
   const { t } = useTranslation('nav');
   const { t: tAuth } = useTranslation('auth');
   const { t: tProfile } = useTranslation('profile');
+  const { t: tParticipants } = useTranslation('participants');
+  const hasStock = teamAreas(useAccountAccess().permissions).includes('stock');
   const languageFontClass = useLanguageFontClass();
   const { push } = useRouter();
 
@@ -36,6 +41,21 @@ export default function TeamMoreScreen() {
           >
             {t('team.more')}
           </Text>
+          {hasStock ? (
+            <PressableScale
+              testID="team-more-stock"
+              accessibilityRole="button"
+              accessibilityLabel={tParticipants('stock.title')}
+              onPress={() => push('/stock' as Href)}
+              haptic="selection"
+              style={continuousCorners}
+              className="min-h-recommended justify-center rounded-md border border-neutral-200 bg-white px-md"
+            >
+              <Text className={`text-start text-md text-neutral-900 ${languageFontClass}`}>
+                {tParticipants('stock.title')}
+              </Text>
+            </PressableScale>
+          ) : null}
           <PressableScale
             testID="team-more-settings"
             accessibilityRole="button"

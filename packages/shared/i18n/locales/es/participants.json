@@ -205,5 +205,73 @@
     "stockFine": "No hay stock que revisar.",
     "stockAlert": "{{item}}: bajo cero. Cuéntalo.",
     "saveFailed": "La entrega no se ha guardado. Vuelve a intentarlo."
+  },
+  "stock": {
+    "title": "Stock",
+    "intro": "Lo que tiene el equipo en el almacén, a partir de cada llegada, entrega y devolución.",
+    "recordArrival": "Registrar material recibido",
+    "levelsTitle": "En stock",
+    "levelsEmpty": "Todavía no ha llegado nada.",
+    "belowZero": "Bajo cero. Cuéntalo.",
+    "arrivalsTitle": "Llegadas recientes",
+    "arrivalsEmpty": "Todavía no se ha recibido material.",
+    "source": {
+      "donation": "Donación",
+      "purchase": "Compra",
+      "sponsor": "Patrocinio"
+    },
+    "arrivalFrom": "{{source}} de {{name}}",
+    "problems": "Problemas: {{text}}",
+    "totalPaid": "Pagado {{amount}}",
+    "photo": {
+      "goods": "Foto del material",
+      "receipt": "Foto del recibo"
+    },
+    "loadFailed": "No se ha podido cargar el stock."
+  },
+  "arrival": {
+    "title": "Material recibido",
+    "sourceLabel": "De dónde viene",
+    "sourceName": {
+      "donation": "Quién lo ha donado",
+      "purchase": "Tienda",
+      "sponsor": "Patrocinador"
+    },
+    "linesLabel": "Artículos",
+    "noLines": "Añade al menos un artículo.",
+    "addLine": "Añadir el artículo",
+    "itemLabel": "Artículo",
+    "sizeLabel": "Talla",
+    "quantityLabel": "Cantidad",
+    "less": "Uno menos",
+    "more": "Uno más",
+    "valueLabel": {
+      "donation": "Valor de una unidad en euros",
+      "purchase": "Precio de una unidad en euros",
+      "sponsor": "Valor de una unidad en euros"
+    },
+    "valueHint": "Está el valor habitual del artículo. Cámbialo si este es distinto.",
+    "valueInvalid": "Escribe un precio como 12,50.",
+    "lineSummary": "{{item}}: {{quantity}}",
+    "lineValue": "{{value}} cada uno",
+    "removeLine": "Quitar {{item}}",
+    "problemsLabel": "Problemas detectados",
+    "totalCostLabel": "Total pagado en euros",
+    "photosLabel": "Fotos",
+    "photosHint": "Una foto del material y una del albarán o el recibo.",
+    "takePhoto": {
+      "goods": "Fotografiar el material",
+      "receipt": "Fotografiar el recibo"
+    },
+    "choosePhoto": "Elegir de las fotos",
+    "removePhoto": "Quitar la foto",
+    "uploading": "Subiendo la foto",
+    "photoFailed": "La foto no se ha subido. Vuelve a intentarlo.",
+    "cameraDenied": "Permite la cámara en Ajustes para hacer una foto.",
+    "needsConnection": "Registrar material recibido necesita conexión.",
+    "save": "Guardar la llegada",
+    "saving": "Guardando",
+    "saveFailed": "La llegada no se ha guardado. Vuelve a intentarlo.",
+    "remove": "Quitar"
   }
 }

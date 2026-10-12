@@ -18,6 +18,13 @@ describe('teamAreas', () => {
       'messages',
     ]);
   });
+
+  test('stock opens with receiving, counting or the item list; a handover alone does not', () => {
+    expect(teamAreas(codes('equipment.receive'))).toEqual(['stock']);
+    expect(teamAreas(codes('equipment.count'))).toEqual(['stock']);
+    expect(teamAreas(codes('equipment.items'))).toEqual(['stock']);
+    expect(teamAreas(codes('equipment.handover'))).toEqual([]);
+  });
 });
 
 describe('teamLayout', () => {
@@ -39,6 +46,11 @@ describe('teamStart', () => {
     expect(teamStart(['attendance', 'messages'], 'sidebar')).toBe('/today');
     expect(teamStart(['messages'], 'sidebar')).toBe('/messages');
     expect(teamStart(['participants', 'messages'], 'tabs')).toBe('/participants');
+  });
+
+  test('stock alone on a tablet opens More, which holds it', () => {
+    expect(teamStart(['stock'], 'sidebar')).toBe('/more');
+    expect(teamStart(['stock'], 'home')).toBe('/home');
   });
 
   test('no area in the app yet: the notice that points to the web', () => {

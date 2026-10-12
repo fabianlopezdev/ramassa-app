@@ -100,11 +100,15 @@ export function teamScreens(permissions: ReadonlySet<PermissionCode>): {
   readonly attendance: boolean;
   readonly participants: boolean;
   readonly messages: boolean;
+  readonly stock: boolean;
+  readonly arrivals: boolean;
 } {
   return {
     attendance: permissions.has('attendance.mark') || permissions.has('attendance.reports'),
     participants: permissions.has('participants.view'),
     messages: permissions.has('messages.inbox'),
+    stock: teamAreas(permissions).includes('stock'),
+    arrivals: permissions.has('equipment.receive'),
   };
 }
 
@@ -124,6 +128,7 @@ export function areaHome(
   | '/today'
   | '/participants'
   | '/messages'
+  | '/more'
   | '/team-home'
   | '/entity-portal'
   | '/account-unresolved'

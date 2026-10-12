@@ -205,5 +205,73 @@
     "stockFine": "No hi ha estoc per revisar.",
     "stockAlert": "{{item}}: sota zero. Compta'l.",
     "saveFailed": "El lliurament no s'ha desat. Torna-ho a provar."
+  },
+  "stock": {
+    "title": "Estoc",
+    "intro": "El que té l'equip al magatzem, a partir de cada arribada, lliurament i devolució.",
+    "recordArrival": "Registrar material rebut",
+    "levelsTitle": "En estoc",
+    "levelsEmpty": "Encara no ha arribat res.",
+    "belowZero": "Sota zero. Compta'l.",
+    "arrivalsTitle": "Arribades recents",
+    "arrivalsEmpty": "Encara no s'ha rebut material.",
+    "source": {
+      "donation": "Donació",
+      "purchase": "Compra",
+      "sponsor": "Patrocini"
+    },
+    "arrivalFrom": "{{source}} de {{name}}",
+    "problems": "Problemes: {{text}}",
+    "totalPaid": "Pagat {{amount}}",
+    "photo": {
+      "goods": "Foto del material",
+      "receipt": "Foto del rebut"
+    },
+    "loadFailed": "No s'ha pogut carregar l'estoc."
+  },
+  "arrival": {
+    "title": "Material rebut",
+    "sourceLabel": "D'on ve",
+    "sourceName": {
+      "donation": "Qui l'ha donat",
+      "purchase": "Botiga",
+      "sponsor": "Patrocinador"
+    },
+    "linesLabel": "Articles",
+    "noLines": "Afegeix almenys un article.",
+    "addLine": "Afegir l'article",
+    "itemLabel": "Article",
+    "sizeLabel": "Talla",
+    "quantityLabel": "Quantitat",
+    "less": "Un menys",
+    "more": "Un més",
+    "valueLabel": {
+      "donation": "Valor d'una unitat en euros",
+      "purchase": "Preu d'una unitat en euros",
+      "sponsor": "Valor d'una unitat en euros"
+    },
+    "valueHint": "Hi ha el valor habitual de l'article. Canvia'l si aquest és diferent.",
+    "valueInvalid": "Escriu un preu com 12,50.",
+    "lineSummary": "{{item}}: {{quantity}}",
+    "lineValue": "{{value}} cadascun",
+    "removeLine": "Treure {{item}}",
+    "problemsLabel": "Problemes detectats",
+    "totalCostLabel": "Total pagat en euros",
+    "photosLabel": "Fotos",
+    "photosHint": "Una foto del material i una de l'albarà o el rebut.",
+    "takePhoto": {
+      "goods": "Fotografiar el material",
+      "receipt": "Fotografiar el rebut"
+    },
+    "choosePhoto": "Triar de les fotos",
+    "removePhoto": "Treure la foto",
+    "uploading": "Pujant la foto",
+    "photoFailed": "La foto no s'ha pujat. Torna-ho a provar.",
+    "cameraDenied": "Permet la càmera a Configuració per fer una foto.",
+    "needsConnection": "Registrar material rebut necessita connexió.",
+    "save": "Desar l'arribada",
+    "saving": "Desant",
+    "saveFailed": "L'arribada no s'ha desat. Torna-ho a provar.",
+    "remove": "Treure"
   }
 }

@@ -1,0 +1,71 @@
+/**
+ * Stock and goods received on the phone (RAPP-250). Arrivals need a
+ * connection; the form makes the arrival's id once, so pressing Save again
+ * after a lost answer saves nothing twice. None of these reads is persisted
+ * to disk.
+ */
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '@ramassa/shared/auth';
+import {
+  fetchRecentArrivals,
+  fetchStockLevels,
+  recordEquipmentArrival,
+  type ArrivalInput,
+} from '@ramassa/shared/equipment';
+import { AppError } from '@ramassa/shared/errors';
+import { uploadFile } from '@ramassa/shared/upload-client';
+import { compressNativeStoryImage } from './native-image-compression';
+import { mobileClientEnv, supabase } from './supabase';
+
+const SIGNED_OUT = 'signed-out';
+const stockRoot = (userId: string) => ['stock', userId] as const;
+
+export function useStockLevels() {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: [...stockRoot(user?.id ?? SIGNED_OUT), 'levels'],
+    queryFn: () => fetchStockLevels(supabase),
+    enabled: user !== null,
+  });
+}
+
+export function useRecentArrivals() {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: [...stockRoot(user?.id ?? SIGNED_OUT), 'arrivals'],
+    queryFn: () => fetchRecentArrivals(supabase),
+    enabled: user !== null,
+  });
+}
+
+export function useRecordArrival() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: ArrivalInput) => recordEquipmentArrival(supabase, input),
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: stockRoot(user?.id ?? SIGNED_OUT) }),
+        queryClient.invalidateQueries({ queryKey: ['stock-alerts', user?.id ?? SIGNED_OUT] }),
+      ]),
+  });
+}
+
+export interface ArrivalPhotoDraft {
+  readonly uri: string;
+  readonly width: number;
+  readonly height: number;
+}
+
+/** Compresses and uploads one photo to the staff-only stock folder; returns its key. */
+export async function uploadArrivalPhoto(
+  draft: ArrivalPhotoDraft,
+  accessToken: string,
+): Promise<string> {
+  const mediaWorkerUrl = mobileClientEnv.EXPO_PUBLIC_MEDIA_WORKER_URL;
+  if (mediaWorkerUrl === undefined) throw new AppError('UPLOAD-1');
+  const image = await compressNativeStoryImage(draft);
+  const uploaded = await uploadFile({ mediaWorkerUrl, accessToken, folder: 'stock', file: image });
+  if (!uploaded.ok) throw uploaded.error;
+  return uploaded.value.objectKey;
+}
