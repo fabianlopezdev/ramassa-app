@@ -719,9 +719,15 @@ export type Database = {
           delivered_on: string;
           id: string;
           item: string;
+          mode: string;
           note: string | null;
           profile_id: string;
+          signature: Json | null;
+          signature_reason: string | null;
+          signature_state: string;
           size: string | null;
+          statement_language: string | null;
+          unit_code: string | null;
         };
         Insert: {
           created_at?: string;
@@ -729,9 +735,15 @@ export type Database = {
           delivered_on?: string;
           id?: string;
           item: string;
+          mode?: string;
           note?: string | null;
           profile_id: string;
+          signature?: Json | null;
+          signature_reason?: string | null;
+          signature_state?: string;
           size?: string | null;
+          statement_language?: string | null;
+          unit_code?: string | null;
         };
         Update: {
           created_at?: string;
@@ -739,9 +751,15 @@ export type Database = {
           delivered_on?: string;
           id?: string;
           item?: string;
+          mode?: string;
           note?: string | null;
           profile_id?: string;
+          signature?: Json | null;
+          signature_reason?: string | null;
+          signature_state?: string;
           size?: string | null;
+          statement_language?: string | null;
+          unit_code?: string | null;
         };
         Relationships: [
           {
@@ -762,6 +780,7 @@ export type Database = {
       };
       equipment_item_types: {
         Row: {
+          code_prefix: string | null;
           created_at: string;
           default_value_cents: number | null;
           id: string;
@@ -774,6 +793,7 @@ export type Database = {
           updated_at: string;
         };
         Insert: {
+          code_prefix?: string | null;
           created_at?: string;
           default_value_cents?: number | null;
           id?: string;
@@ -786,6 +806,7 @@ export type Database = {
           updated_at?: string;
         };
         Update: {
+          code_prefix?: string | null;
           created_at?: string;
           default_value_cents?: number | null;
           id?: string;
@@ -3012,8 +3033,61 @@ export type Database = {
           },
         ];
       };
+      stock_alerts: {
+        Row: {
+          id: string;
+          item_type_id: string;
+          opened_at: string;
+          org_id: string;
+          resolved_at: string | null;
+          resolved_by: string | null;
+          size: string | null;
+        };
+        Insert: {
+          id?: string;
+          item_type_id: string;
+          opened_at?: string;
+          org_id: string;
+          resolved_at?: string | null;
+          resolved_by?: string | null;
+          size?: string | null;
+        };
+        Update: {
+          id?: string;
+          item_type_id?: string;
+          opened_at?: string;
+          org_id?: string;
+          resolved_at?: string | null;
+          resolved_by?: string | null;
+          size?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'stock_alerts_item_type_id_fkey';
+            columns: ['item_type_id'];
+            isOneToOne: false;
+            referencedRelation: 'equipment_item_types';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'stock_alerts_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'stock_alerts_resolved_by_fkey';
+            columns: ['resolved_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       stock_movements: {
         Row: {
+          condition: string | null;
           created_at: string;
           equipment_delivery_id: string | null;
           id: string;
@@ -3028,6 +3102,7 @@ export type Database = {
           size: string | null;
         };
         Insert: {
+          condition?: string | null;
           created_at?: string;
           equipment_delivery_id?: string | null;
           id?: string;
@@ -3042,6 +3117,7 @@ export type Database = {
           size?: string | null;
         };
         Update: {
+          condition?: string | null;
           created_at?: string;
           equipment_delivery_id?: string | null;
           id?: string;
@@ -4567,6 +4643,20 @@ export type Database = {
           nationalities: string[];
         }[];
       };
+      participant_material: {
+        Args: { p_participant_id: string };
+        Returns: {
+          delivered_on: string;
+          delivery_id: string;
+          item_key: string;
+          mode: string;
+          return_condition: string;
+          returned_at: string;
+          signature_state: string;
+          size: string;
+          unit_code: string;
+        }[];
+      };
       personal_data_disposition: {
         Args: never;
         Returns: {
@@ -4599,6 +4689,28 @@ export type Database = {
       purge_expired_entity_referrals: {
         Args: { p_now?: string };
         Returns: number;
+      };
+      record_equipment_handover: {
+        Args: {
+          p_item_type_id: string;
+          p_mode: string;
+          p_note?: string;
+          p_participant_id: string;
+          p_signature?: Json;
+          p_signature_reason?: string;
+          p_signature_state: string;
+          p_size: string;
+          p_statement_language?: string;
+        };
+        Returns: {
+          delivery_id: string;
+          stock_after: number;
+          unit_code: string;
+        }[];
+      };
+      record_equipment_return: {
+        Args: { p_condition: string; p_delivery_id: string };
+        Returns: undefined;
       };
       record_push_delivery_results: {
         Args: {

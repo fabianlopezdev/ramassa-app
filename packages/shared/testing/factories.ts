@@ -65,6 +65,7 @@ export type TermsAcceptanceRow = Database['public']['Tables']['terms_acceptances
 export type DeletionRequestRow = Database['public']['Tables']['deletion_requests']['Row'];
 export type ParticipantNoteRow = Database['public']['Tables']['participant_notes']['Row'];
 export type EquipmentDeliveryRow = Database['public']['Tables']['equipment_deliveries']['Row'];
+export type StockAlertRow = Database['public']['Tables']['stock_alerts']['Row'];
 export type AuditLogRow = Database['public']['Tables']['audit_log']['Row'];
 export type InviteRow = Database['public']['Tables']['invites']['Row'];
 export type ServiceCategoryRow = Database['public']['Tables']['service_categories']['Row'];
@@ -1150,6 +1151,30 @@ export function buildEquipmentDelivery(
     delivered_by: seedUserId(deliverer.ordinal),
     note: null,
     created_at: FIXTURE_TIMESTAMP,
+    mode: 'given',
+    unit_code: 'B-0001',
+    signature: [
+      [
+        [10, 20],
+        [30, 40],
+      ],
+    ],
+    signature_state: 'signed',
+    signature_reason: null,
+    statement_language: 'ar',
+    ...overrides,
+  };
+}
+
+export function buildStockAlert(overrides: Partial<StockAlertRow> = {}): StockAlertRow {
+  return {
+    id: seedUserId(850),
+    org_id: SEED_ORGANIZATION_ID,
+    item_type_id: seedUserId(851),
+    size: 'XL',
+    opened_at: FIXTURE_TIMESTAMP,
+    resolved_at: null,
+    resolved_by: null,
     ...overrides,
   };
 }
