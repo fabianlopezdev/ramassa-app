@@ -4,14 +4,15 @@
 -- What these assertions defend:
 --   1. A handover saves her signature, or a refusal with a reason, and never
 --      neither: the record is evidence the item reached her.
---   2. Player kit gets the next unit code of its type; balls get none.
+--   2. Sending the same handover twice saves it once (the offline outbox retries).
+--      Player kit gets the next unit code of its type; balls get none.
 --   3. A handover is never blocked by stock: going below zero opens one alert.
 --   4. A return is graded once; an unusable item leaves stock again.
 --   5. Only equipment.handover holders record; a player reads no alert.
 --   6. Erasing her removes the signature with the record and keeps the stock.
 
 begin;
-select plan(20);
+select plan(23);
 
 create temp table handed (label text primary key, id uuid, code text, stock integer);
 grant all on handed to authenticated;
@@ -24,7 +25,7 @@ set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", 
 insert into handed
 select 'boots-a', delivery_id, unit_code, stock_after
   from public.record_equipment_handover(
-    '5eed0000-0000-4000-8000-000000000012',
+    gen_random_uuid(), now(), '5eed0000-0000-4000-8000-000000000012',
     (select id from public.equipment_item_types where key = 'boots'),
     '40', 'lent', 'signed', '[[[1,2],[3,4]]]'::jsonb, null, 'ar'
   );
@@ -40,28 +41,28 @@ select is(
 );
 select throws_ok(
   $$ select * from public.record_equipment_handover(
-       '5eed0000-0000-4000-8000-000000000012',
+       gen_random_uuid(), now(), '5eed0000-0000-4000-8000-000000000012',
        (select id from public.equipment_item_types where key = 'boots'),
        '40', 'given', 'signed') $$,
   '23514', null::text, 'signed without strokes is refused'
 );
 select throws_ok(
   $$ select * from public.record_equipment_handover(
-       '5eed0000-0000-4000-8000-000000000012',
+       gen_random_uuid(), now(), '5eed0000-0000-4000-8000-000000000012',
        (select id from public.equipment_item_types where key = 'boots'),
        '40', 'given', 'refused') $$,
   '23514', null::text, 'a refusal without a reason is refused'
 );
 select throws_ok(
   $$ select * from public.record_equipment_handover(
-       '5eed0000-0000-4000-8000-000000000012',
+       gen_random_uuid(), now(), '5eed0000-0000-4000-8000-000000000012',
        (select id from public.equipment_item_types where key = 'boots'),
        '40', 'given', 'not_collected') $$,
   '23514', 'STOCK/SIGNATURE_REQUIRED', 'the phone always collects a signature or a reason'
 );
 select throws_ok(
   $$ select * from public.record_equipment_handover(
-       '5eed0000-0000-4000-8000-000000000012',
+       gen_random_uuid(), now(), '5eed0000-0000-4000-8000-000000000012',
        (select id from public.equipment_item_types where key = 'boots'),
        '99', 'given', 'unable', null, 'Injured hand') $$,
   '23514', 'STOCK/SIZE_REQUIRED', 'a size outside the item''s sizes is refused'
@@ -70,7 +71,7 @@ select throws_ok(
 insert into handed
 select 'boots-b', delivery_id, unit_code, stock_after
   from public.record_equipment_handover(
-    '5eed0000-0000-4000-8000-000000000012',
+    gen_random_uuid(), now(), '5eed0000-0000-4000-8000-000000000012',
     (select id from public.equipment_item_types where key = 'boots'),
     '40', 'given', 'unable', null, 'Injured hand', 'ar'
   );
@@ -90,11 +91,31 @@ select is(
 insert into handed
 select 'ball', delivery_id, unit_code, stock_after
   from public.record_equipment_handover(
-    '5eed0000-0000-4000-8000-000000000012',
+    gen_random_uuid(), now(), '5eed0000-0000-4000-8000-000000000012',
     (select id from public.equipment_item_types where key = 'ball'),
     null, 'lent', 'signed', '[[[0,0]]]'::jsonb
   );
 select is((select code from handed where label = 'ball'), null, 'a ball has no unit code');
+
+select is(
+  (select delivery_id::text || ' ' || unit_code from public.record_equipment_handover(
+     (select id from handed where label = 'boots-a'), now(), '5eed0000-0000-4000-8000-000000000012',
+     (select id from public.equipment_item_types where key = 'boots'),
+     '40', 'lent', 'signed', '[[[1,2],[3,4]]]'::jsonb)),
+  (select id::text || ' ' || code from handed where label = 'boots-a'),
+  'the same handover sent again returns the saved record'
+);
+select is(
+  (select count(*)::int from public.equipment_deliveries where id = (select id from handed where label = 'boots-a')),
+  1, 'and saves nothing twice'
+);
+select throws_ok(
+  $$ select * from public.record_equipment_handover(
+       gen_random_uuid(), now() + interval '1 day', '5eed0000-0000-4000-8000-000000000012',
+       (select id from public.equipment_item_types where key = 'boots'),
+       '40', 'given', 'signed', '[[[0,0]]]'::jsonb) $$,
+  '23514', 'STOCK/HANDOVER_TIME', 'a handover in the future is refused'
+);
 
 -- 3. Stock below zero opens one alert ----------------------------------------------------------------
 
@@ -103,14 +124,14 @@ select is((select stock from handed where label = 'boots-b'), 2, 'two pairs out 
 insert into handed
 select 'gloves-a', delivery_id, unit_code, stock_after
   from public.record_equipment_handover(
-    '5eed0000-0000-4000-8000-000000000012',
+    gen_random_uuid(), now(), '5eed0000-0000-4000-8000-000000000012',
     (select id from public.equipment_item_types where key = 'gloves'),
     'M', 'given', 'signed', '[[[0,0]]]'::jsonb
   );
 insert into handed
 select 'gloves-b', delivery_id, unit_code, stock_after
   from public.record_equipment_handover(
-    '5eed0000-0000-4000-8000-000000000012',
+    gen_random_uuid(), now(), '5eed0000-0000-4000-8000-000000000012',
     (select id from public.equipment_item_types where key = 'gloves'),
     'M', 'given', 'signed', '[[[0,0]]]'::jsonb
   );
@@ -149,7 +170,7 @@ select is(
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000011", "role": "authenticated", "aal": "aal1"}';
 select throws_ok(
   $$ select * from public.record_equipment_handover(
-       '5eed0000-0000-4000-8000-000000000012',
+       gen_random_uuid(), now(), '5eed0000-0000-4000-8000-000000000012',
        (select id from public.equipment_item_types where key = 'boots'),
        '40', 'given', 'signed', '[[[0,0]]]'::jsonb) $$,
   '42501', null::text, 'a player records no handover'

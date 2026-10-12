@@ -10,5 +10,9 @@
   "water_bottle": "Botella de agua",
   "rucksack": "Mochila",
   "ball": "Balón",
-  "other": "Otros"
+  "other": "Otros",
+  "statementGiven": "He recibido de Ramassà: {{item}}. Es un regalo para mí.",
+  "statementLent": "He recibido de Ramassà en préstamo: {{item}}. Lo devolveré cuando el equipo me lo pida.",
+  "statementItemSize": "{{item}}, talla {{size}}",
+  "signHere": "Firma aquí con el dedo"
 }

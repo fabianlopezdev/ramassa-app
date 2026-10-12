@@ -3,17 +3,20 @@
  * pitch. A row appears only when the database returned a value, so the card
  * shows exactly what the person's field levels allow (RAPP-240) and never a
  * row of blanks. A screen of its own on a phone; the right half of the lookup
- * on a tablet.
+ * on a tablet. Her material and the handover button follow (RAPP-249).
  */
 import {
   AnnouncementEmptyState,
   AnnouncementFeedError,
   AnnouncementFeedSkeleton,
 } from '@/components/announcements/feed-states';
+import { ParticipantMaterial } from '@/components/equipment/participant-material';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useParticipantCard } from '@/lib/participant-lookup';
+import { useAccountAccess } from '@/lib/use-account-access';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
+import { useRouter, type Href } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, View } from 'react-native';
 import { toAppError } from '@ramassa/shared/errors';
@@ -46,6 +49,8 @@ export function ParticipantCard({
   const languageFontClass = useLanguageFontClass();
   const { data, isPending, isError, error, refetch, isFetching } =
     useParticipantCard(participantId);
+  const { push } = useRouter();
+  const canHandOver = useAccountAccess().permissions.has('equipment.handover');
 
   if (isPending) return <AnnouncementFeedSkeleton accessibilityLabel={t('title')} />;
   if (isError) {
@@ -122,6 +127,22 @@ export function ParticipantCard({
             <CardRow key={row.key} label={row.label} value={row.value as string} />
           ))}
       </View>
+      {canHandOver ? (
+        <PressableScale
+          testID="participant-hand-over"
+          accessibilityRole="button"
+          accessibilityLabel={t('material.handOver')}
+          onPress={() => push(`/handover/${participantId}` as Href)}
+          haptic="tapLight"
+          style={continuousCorners}
+          className="min-h-recommended items-center justify-center rounded-md bg-primary px-lg"
+        >
+          <Text className={`text-center text-md font-bold text-white ${languageFontClass}`}>
+            {t('material.handOver')}
+          </Text>
+        </PressableScale>
+      ) : null}
+      <ParticipantMaterial participantId={participantId} />
     </ScrollView>
   );
 }

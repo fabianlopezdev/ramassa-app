@@ -10,5 +10,9 @@
   "water_bottle": "Water bottle",
   "rucksack": "Rucksack",
   "ball": "Ball",
-  "other": "Other"
+  "other": "Other",
+  "statementGiven": "I have received from Ramassà: {{item}}. It is a gift for me to keep.",
+  "statementLent": "I have received from Ramassà on loan: {{item}}. I will give it back when the team asks.",
+  "statementItemSize": "{{item}}, size {{size}}",
+  "signHere": "Sign here with your finger"
 }

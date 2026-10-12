@@ -4692,6 +4692,8 @@ export type Database = {
       };
       record_equipment_handover: {
         Args: {
+          p_handed_over_at: string;
+          p_id: string;
           p_item_type_id: string;
           p_mode: string;
           p_note?: string;

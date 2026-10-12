@@ -140,5 +140,70 @@
   "inviteAlreadyHasAccount": "Aquest correu ja té un compte. Busca-la a la llista de participants.",
   "invitedReferralNote": "La derivació de l'entitat s'enllaçarà amb el seu perfil quan acabi el registre.",
   "selectParticipant": "Tria una participant per veure la seva fitxa.",
-  "lookupStart": "Escriu un nom, un poble o una entitat."
+  "lookupStart": "Escriu un nom, un poble o una entitat.",
+  "material": {
+    "handOver": "Lliurar material",
+    "handoverTitle": "Lliurar material",
+    "handoverFor": "A {{name}}",
+    "itemLabel": "Article",
+    "sizeLabel": "Talla",
+    "modeLabel": "Donat o prestat",
+    "mode": {
+      "given": "Donat per quedar-se'l",
+      "lent": "Prestat"
+    },
+    "toSignature": "Continuar a la seva signatura",
+    "chooseItem": "Tria l'article i la talla.",
+    "statementLanguageLabel": "Idioma de la declaració",
+    "signatureLabel": "La seva signatura",
+    "clearSignature": "Esborrar",
+    "signatureHint": "Signa amb el dit. Si no signa, tria per què a sota.",
+    "doesNotSign": "No signa",
+    "unsigned": {
+      "refused": "Es nega a signar",
+      "unable": "No pot signar"
+    },
+    "reasonLabel": "Motiu",
+    "signatureRequired": "Ha de signar, o tria per què no signa i escriu el motiu.",
+    "save": "Desar el lliurament",
+    "saving": "Desant",
+    "back": "Tornar a l'article",
+    "savedTitle": "Lliurament desat",
+    "savedUnitCode": "Codi d'unitat {{code}}. Escriu-lo a l'article.",
+    "savedOffline": "Desat en aquest telèfon. S'enviarà quan tinguis connexió.",
+    "savedBelowZero": "L'estoc d'aquest article ara és sota zero. Avui demana un recompte.",
+    "another": "Lliurar un altre article",
+    "done": "Fet",
+    "materialTitle": "Material",
+    "materialEmpty": "Encara no s'ha lliurat cap material.",
+    "given": "Donat el {{date}}",
+    "lent": "Prestat el {{date}}",
+    "returned": "Retornat el {{date}}: {{condition}}",
+    "signature": {
+      "refused": "Es va negar a signar",
+      "unable": "No va poder signar",
+      "not_collected": "Sense signatura"
+    },
+    "waiting": "Pendent d'enviar",
+    "rejected": "No s'ha desat. Torna-ho a provar o elimina'l.",
+    "retry": "Tornar-ho a provar",
+    "remove": "Eliminar",
+    "recordReturn": "Registrar la devolució",
+    "returnTitle": "Com ha tornat?",
+    "condition": {
+      "new": "Nou",
+      "good": "Bé",
+      "worn": "Gastat",
+      "unusable": "Inservible"
+    },
+    "unusableHint": "Un article inservible surt de l'estoc.",
+    "saveReturn": "Desar la devolució",
+    "cancel": "Cancel·lar",
+    "returnFailed": "La devolució no s'ha desat. Comprova la connexió i torna-ho a provar.",
+    "loadFailed": "No s'ha pogut carregar el seu material.",
+    "stockTitle": "Material",
+    "stockFine": "No hi ha estoc per revisar.",
+    "stockAlert": "{{item}}: sota zero. Compta'l.",
+    "saveFailed": "El lliurament no s'ha desat. Torna-ho a provar."
+  }
 }

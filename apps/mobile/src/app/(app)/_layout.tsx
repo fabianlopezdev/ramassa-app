@@ -2,6 +2,7 @@ import { AttendanceSyncWorker } from '@/components/attendance/attendance-sync-wo
 import { useAppLock } from '@/components/auth/app-lock';
 import { SecondFactorScreen } from '@/components/auth/second-factor-screen';
 import { useStaffLanguage } from '@/components/auth/staff-language-gate';
+import { HandoverSyncWorker } from '@/components/equipment/handover-sync-worker';
 import { PushPermissionRationale } from '@/components/push-permission-rationale';
 import { areaHome, teamScreens } from '@/lib/account-area';
 import { useAccountAccess } from '@/lib/use-account-access';
@@ -17,6 +18,9 @@ import { tokens } from '@ramassa/shared/tokens';
 export { ErrorFallback as ErrorBoundary } from '@/components/error-fallback';
 
 const hiddenHeaderScreenOptions = { headerShown: false } as const;
+// Her signature is a drag across the screen, which iOS would read as swipe back
+// and close the handover. The screen has its own Back button (RAPP-249).
+const noSwipeBackOptions = { gestureEnabled: false, fullScreenGestureEnabled: false } as const;
 
 export default function AppLayout() {
   const { user, needsSecondFactor, permissionsAreCurrent } = useAuth();
@@ -104,6 +108,11 @@ export default function AppLayout() {
         <Stack.Protected guard={isTeam && team.participants}>
           <Stack.Screen name="participant/[id]" />
         </Stack.Protected>
+        <Stack.Protected
+          guard={isTeam && team.participants && permissions.has('equipment.handover')}
+        >
+          <Stack.Screen name="handover/[participantId]" options={noSwipeBackOptions} />
+        </Stack.Protected>
         <Stack.Protected guard={isTeam && team.attendance}>
           <Stack.Screen name="attendance/[id]" />
         </Stack.Protected>
@@ -128,6 +137,9 @@ export default function AppLayout() {
       </Stack>
       {isTeam && permissions.has('attendance.mark') && userId !== null ? (
         <AttendanceSyncWorker userId={userId} />
+      ) : null}
+      {isTeam && permissions.has('equipment.handover') && userId !== null ? (
+        <HandoverSyncWorker userId={userId} />
       ) : null}
 
       {/* Shown BEFORE the system dialog, never instead of it (SPEC UX rule).

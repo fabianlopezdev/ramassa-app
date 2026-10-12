@@ -10,5 +10,9 @@
   "water_bottle": "Ampolla d'aigua",
   "rucksack": "Motxilla",
   "ball": "Pilota",
-  "other": "Altres"
+  "other": "Altres",
+  "statementGiven": "He rebut de Ramassà: {{item}}. És un regal per a mi.",
+  "statementLent": "He rebut de Ramassà en préstec: {{item}}. Ho tornaré quan l'equip m'ho demani.",
+  "statementItemSize": "{{item}}, talla {{size}}",
+  "signHere": "Signa aquí amb el dit"
 }
