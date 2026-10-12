@@ -140,5 +140,70 @@
   "inviteAlreadyHasAccount": "Este correo ya tiene una cuenta. Búscala en la lista de participantes.",
   "invitedReferralNote": "La derivación de la entidad se enlazará con su perfil cuando termine el registro.",
   "selectParticipant": "Elige una participante para ver su ficha.",
-  "lookupStart": "Escribe un nombre, un pueblo o una entidad."
+  "lookupStart": "Escribe un nombre, un pueblo o una entidad.",
+  "material": {
+    "handOver": "Entregar material",
+    "handoverTitle": "Entregar material",
+    "handoverFor": "A {{name}}",
+    "itemLabel": "Artículo",
+    "sizeLabel": "Talla",
+    "modeLabel": "Dado o prestado",
+    "mode": {
+      "given": "Dado para quedárselo",
+      "lent": "Prestado"
+    },
+    "toSignature": "Continuar a su firma",
+    "chooseItem": "Elige el artículo y la talla.",
+    "statementLanguageLabel": "Idioma de la declaración",
+    "signatureLabel": "Su firma",
+    "clearSignature": "Borrar",
+    "signatureHint": "Firma con el dedo. Si no firma, elige por qué abajo.",
+    "doesNotSign": "No firma",
+    "unsigned": {
+      "refused": "Se niega a firmar",
+      "unable": "No puede firmar"
+    },
+    "reasonLabel": "Motivo",
+    "signatureRequired": "Tiene que firmar, o elige por qué no firma y escribe el motivo.",
+    "save": "Guardar la entrega",
+    "saving": "Guardando",
+    "back": "Volver al artículo",
+    "savedTitle": "Entrega guardada",
+    "savedUnitCode": "Código de unidad {{code}}. Escríbelo en el artículo.",
+    "savedOffline": "Guardada en este teléfono. Se enviará cuando tengas conexión.",
+    "savedBelowZero": "El stock de este artículo ahora está bajo cero. Hoy pide un recuento.",
+    "another": "Entregar otro artículo",
+    "done": "Hecho",
+    "materialTitle": "Material",
+    "materialEmpty": "Todavía no se ha entregado material.",
+    "given": "Dado el {{date}}",
+    "lent": "Prestado el {{date}}",
+    "returned": "Devuelto el {{date}}: {{condition}}",
+    "signature": {
+      "refused": "Se negó a firmar",
+      "unable": "No pudo firmar",
+      "not_collected": "Sin firma"
+    },
+    "waiting": "Pendiente de enviar",
+    "rejected": "No se ha guardado. Vuelve a intentarlo o elimínalo.",
+    "retry": "Reintentar",
+    "remove": "Eliminar",
+    "recordReturn": "Registrar la devolución",
+    "returnTitle": "¿Cómo ha vuelto?",
+    "condition": {
+      "new": "Nuevo",
+      "good": "Bien",
+      "worn": "Gastado",
+      "unusable": "Inservible"
+    },
+    "unusableHint": "Un artículo inservible sale del stock.",
+    "saveReturn": "Guardar la devolución",
+    "cancel": "Cancelar",
+    "returnFailed": "La devolución no se ha guardado. Comprueba la conexión y vuelve a intentarlo.",
+    "loadFailed": "No se ha podido cargar su material.",
+    "stockTitle": "Material",
+    "stockFine": "No hay stock que revisar.",
+    "stockAlert": "{{item}}: bajo cero. Cuéntalo.",
+    "saveFailed": "La entrega no se ha guardado. Vuelve a intentarlo."
+  }
 }

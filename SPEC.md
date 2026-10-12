@@ -1683,13 +1683,23 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 ## Handover with signature and returns: database (2026-10-12, RAPP-249, part of RAPP-212)
 
 - `record_equipment_handover()` is the one way the phone records a handover, for `equipment.handover`: her, the item type, a size from the type's sizes, given or lent, and her signature. The record is final once saved.
+- Handovers save offline and go out later, so the phone makes the record's id and sends the time of the handover at the pitch. Sending the same id again returns the saved record and saves nothing twice. A time in the future, or more than 60 days back, is refused.
 - The signature is the stroke data of her finger on the staff device, stored on the handover record (`signature`), with the language of the statement she signed under. When she refuses or cannot sign, the record says so with a reason. The database refuses a record that is signed without strokes, or refused without a reason. Handovers recorded before this, or on the web admin, read "not collected".
 - Player kit gets the next unit code of its type at handover (boots B-0001, shin pads SP, socks SO, shorts SH, jersey J, tracksuit T, coat C, gloves G, water bottle WB, rucksack R, other O). Balls get none.
 - Stock never blocks a handover. When one takes an item below zero, it is saved and one open alert (`stock_alerts`, one per item and size) asks for a count. `equipment.count` and `equipment.handover` holders read the alerts.
 - `record_equipment_return()` takes a lent item back once, graded new, good, worn or unusable. An unusable item comes back and is written off in the same step, so stock does not count it.
 - `participant_material()` lists what she received, with the return and its grade.
 - Erasing her deletes her handover records and their signatures. The movements stay without her name, so stock stays right.
-- The phone flow, returns from her card and the Today alert are the second part of RAPP-249.
+
+## Handover with signature and returns: phone (2026-10-12, RAPP-249, part of RAPP-212)
+
+- Her card has a "Hand over material" button for `equipment.handover` and a Material section for everyone who opens the card: what she received, given or lent, the date, the unit code, a signature that is missing, and the return with its grade.
+- The handover screen has two steps. First the item, the size and given or lent; her size from her profile is chosen for her when the item comes in it (shoe size for boots, clothing size for the rest). Then the statement in her language, which staff can switch to another of the five, and the signature pad for her finger. When she does not sign, staff choose "refuses" or "cannot" and write the reason. Save stays off until there is a signature or a reason.
+- Saving puts the handover in the encrypted offline outbox (`ramassa.handover-outbox.v1`) and sends it at once when there is signal. Without signal the screen says it is saved on the phone, her card shows it as waiting, and a worker sends it on reconnect. A refused handover stays on her card with Try again and Remove.
+- After saving, the screen shows the unit code to write on the item, and says when stock went below zero.
+- A lent item gets "Record the return" on her card: New, Good, Worn or Unusable. Returns need a connection.
+- Today has a Material section for `equipment.count` and `equipment.handover`: one line per item and size below zero. The count screen follows in the stock count work.
+- The signature pad draws with `react-native-svg`, so the native app needs a rebuild.
 
 ## Staff-side languages (2026-10-11, RAPP-238, part of RAPP-211)
 

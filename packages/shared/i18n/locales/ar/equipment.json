@@ -10,5 +10,9 @@
   "water_bottle": "قارورة ماء",
   "rucksack": "حقيبة ظهر",
   "ball": "كرة",
-  "other": "أخرى"
+  "other": "أخرى",
+  "statementGiven": "استلمتُ من راماسا: {{item}}. إنها هدية لي.",
+  "statementLent": "استلمتُ من راماسا على سبيل الإعارة: {{item}}. سأعيدها عندما يطلب الفريق ذلك.",
+  "statementItemSize": "{{item}}، المقاس {{size}}",
+  "signHere": "وقّعي هنا بإصبعك"
 }

@@ -140,5 +140,70 @@
   "inviteAlreadyHasAccount": "This email already has an account. Find her in the participant list.",
   "invitedReferralNote": "The entity's referral will be linked to her profile when she finishes registration.",
   "selectParticipant": "Choose a participant to see her card.",
-  "lookupStart": "Type a name, town or entity."
+  "lookupStart": "Type a name, town or entity.",
+  "material": {
+    "handOver": "Hand over material",
+    "handoverTitle": "Hand over material",
+    "handoverFor": "To {{name}}",
+    "itemLabel": "Item",
+    "sizeLabel": "Size",
+    "modeLabel": "Given or lent",
+    "mode": {
+      "given": "Given to keep",
+      "lent": "Lent"
+    },
+    "toSignature": "Continue to her signature",
+    "chooseItem": "Choose the item and the size.",
+    "statementLanguageLabel": "Statement language",
+    "signatureLabel": "Her signature",
+    "clearSignature": "Clear",
+    "signatureHint": "She signs with her finger. If she does not sign, choose why below.",
+    "doesNotSign": "She does not sign",
+    "unsigned": {
+      "refused": "She refuses to sign",
+      "unable": "She cannot sign"
+    },
+    "reasonLabel": "Reason",
+    "signatureRequired": "She signs, or choose why she does not and write the reason.",
+    "save": "Save the handover",
+    "saving": "Saving",
+    "back": "Back to the item",
+    "savedTitle": "Handover saved",
+    "savedUnitCode": "Unit code {{code}}. Write it on the item.",
+    "savedOffline": "Saved on this phone. It goes out when you are online.",
+    "savedBelowZero": "Stock for this item is now below zero. Today asks for a count.",
+    "another": "Hand over another item",
+    "done": "Done",
+    "materialTitle": "Material",
+    "materialEmpty": "No material handed over yet.",
+    "given": "Given on {{date}}",
+    "lent": "Lent on {{date}}",
+    "returned": "Returned on {{date}}: {{condition}}",
+    "signature": {
+      "refused": "Refused to sign",
+      "unable": "Could not sign",
+      "not_collected": "No signature"
+    },
+    "waiting": "Waiting to send",
+    "rejected": "Not saved. Try again or remove it.",
+    "retry": "Try again",
+    "remove": "Remove",
+    "recordReturn": "Record the return",
+    "returnTitle": "How did it come back?",
+    "condition": {
+      "new": "New",
+      "good": "Good",
+      "worn": "Worn",
+      "unusable": "Unusable"
+    },
+    "unusableHint": "An unusable item leaves stock.",
+    "saveReturn": "Save the return",
+    "cancel": "Cancel",
+    "returnFailed": "The return was not saved. Check the connection and try again.",
+    "loadFailed": "Could not load her material.",
+    "stockTitle": "Material",
+    "stockFine": "No stock to check.",
+    "stockAlert": "{{item}}: below zero. Count it.",
+    "saveFailed": "The handover was not saved. Try again."
+  }
 }

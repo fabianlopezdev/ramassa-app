@@ -8,6 +8,7 @@ import { AttendanceSheet } from '@/components/attendance/attendance-sheet';
 import { PageWidth } from '@/components/layout/content-width';
 import { TeamBackToHome } from '@/components/team/team-back-to-home';
 import { useTeamLayout } from '@/components/team/team-layout-context';
+import { TodayMaterialCard } from '@/components/team/today-material-card';
 import { TodayMessagesCard } from '@/components/team/today-messages-card';
 import { useAttendanceOccurrences } from '@/lib/attendance';
 import { teamAreas } from '@/lib/team-shell';
@@ -58,7 +59,8 @@ export default function AttendanceOccurrencesScreen() {
   // In the large-button layout this is the Attendance button's screen; in tabs
   // and the sidebar it is Today, with a section per area (RAPP-246).
   const isToday = layout !== 'home';
-  const sections = todaySections(teamAreas(useAccountAccess().permissions));
+  const { permissions } = useAccountAccess();
+  const sections = todaySections(teamAreas(permissions), permissions);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const open = useCallback(
     (id: string) => (isSplit ? setSelectedId(id) : push(`/attendance/${id}`)),
@@ -110,6 +112,11 @@ export default function AttendanceOccurrencesScreen() {
           <Text className={`text-start text-md text-neutral-600 ${languageFontClass}`}>
             {isToday ? tNav('team.todayIntro') : t('intro')}
           </Text>
+          {isToday && sections.includes('material') ? (
+            <View className="pt-md">
+              <TodayMaterialCard />
+            </View>
+          ) : null}
           {isToday && sections.includes('messages') ? (
             <View className="pt-md">
               <TodayMessagesCard />
