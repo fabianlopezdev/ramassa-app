@@ -22,7 +22,12 @@ mock.module('@ramassa/shared/i18n', () => ({
   getLanguageDirection: (code: string) => (code === 'ar' || code === 'fa' ? 'rtl' : 'ltr'),
 }));
 
-const { StaffLanguageGate } = await import('./staff-language-gate');
+const { useStaffLanguage } = await import('./staff-language-gate');
+
+function StaffLanguageGate({ isStaffSide }: { readonly isStaffSide: boolean }) {
+  useStaffLanguage(isStaffSide);
+  return null;
+}
 
 beforeEach(() => {
   setLanguage.mockClear();
