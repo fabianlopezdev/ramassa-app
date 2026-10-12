@@ -62,6 +62,9 @@ test.describe.serial('app areas by account type', () => {
     await expect(page.getByTestId('team-sidebar-today')).toBeVisible({ timeout: 30_000 });
     await expect(page.getByTestId('team-sidebar-messages')).toBeVisible();
     await expect(page.getByTestId('team-sidebar-more')).toBeVisible();
+    // Today (RAPP-246): the unread conversations sit above today's sessions.
+    await expect(page.getByRole('heading', { name: 'Today', exact: true })).toBeVisible();
+    await expect(page.getByTestId('today-messages')).toBeVisible();
 
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto(new URL('/', page.url()).href);
@@ -76,6 +79,7 @@ test.describe.serial('app areas by account type', () => {
     await completeSecondFactor(page, STAFF_EMAIL);
     await expect(page.getByTestId('team-sidebar-today')).toBeVisible({ timeout: 30_000 });
     await expect(page.getByTestId('team-sidebar-messages')).toHaveCount(0);
+    await expect(page.getByTestId('today-messages')).toHaveCount(0);
 
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto(new URL('/', page.url()).href);

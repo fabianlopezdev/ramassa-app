@@ -1659,6 +1659,12 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - A session sheet or a conversation opens over the shell on a phone. The iOS app supports iPad (`supportsTablet`).
 - Every Realtime subscription has its own channel name (`realtimeTopic`): supabase-js reuses a channel of the same name, and a second listener on it threw, which crashed a screen where two parts both wanted the unread count.
 
+## Today (2026-10-12, RAPP-246, part of RAPP-212)
+
+- In the tab and sidebar layouts, the team's first screen is Today: what needs doing now, one section per area the person may use (`todaySections`), field work first. Now: the unread conversations (one tap to Messages) and today's sessions (one tap to take attendance; on a tablet the sheet opens beside the list).
+- In the large-button layout the Attendance button opens the same screen as plain Attendance.
+- Each later phase adds its own section (participants and material in phase 2, the review queue, forum reports, mentoring and deletion requests in phases 3 to 5). No section points to the web admin, because the app ships only when every phase is done.
+
 ## Staff-side languages (2026-10-11, RAPP-238, part of RAPP-211)
 
 - The staff side (the web admin, the team screens and the entity screens) is in Catalan, Spanish or English (`STAFF_LANGUAGES`). Player screens keep all five languages and right-to-left. Content stays five-language everywhere: this is the language of the screens themselves.

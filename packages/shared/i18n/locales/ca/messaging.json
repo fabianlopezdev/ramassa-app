@@ -55,5 +55,6 @@
   "deliveryRejected": "No s'ha enviat. Aquest missatge s'ha rebutjat.",
   "deliveryRejectedPermission": "No s'ha enviat. Ja no pots enviar missatges aquí.",
   "discard": "Treu-lo",
-  "selectConversation": "Tria una conversa."
+  "selectConversation": "Tria una conversa.",
+  "noUnread": "Cap missatge sense llegir"
 }
