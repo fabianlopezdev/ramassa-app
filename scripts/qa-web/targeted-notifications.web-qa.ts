@@ -13,6 +13,33 @@ function sqlLiteral(value: string): string {
   return `'${value.replaceAll("'", "''")}'`;
 }
 
+/**
+ * The audience step counts players with a push token. Earlier specs in a full
+ * run publish content, the local dispatcher sends it to Expo, Expo answers
+ * DeviceNotRegistered for the seed's fake tokens, and the pipeline rightly
+ * deletes them (measured 2026-10-12: 5 group tokens before a full run, 0 after,
+ * 19 deliveries pruned with PUSH-4). So this spec puts the seed tokens back
+ * itself, with the seed's own formula, instead of depending on run order
+ * (RAPP-228).
+ */
+test.beforeAll(() => {
+  queryDatabase(`
+    insert into public.push_tokens (id, user_id, token, platform, device_id)
+    select
+      ('5eed0000-0000-4000-8000-' || lpad((900 + ordinal)::text, 12, '0'))::uuid,
+      profile.id,
+      'ExponentPushToken[seed-' || lpad(ordinal::text, 4, '0') || ']',
+      case when ordinal % 2 = 0 then 'android' else 'ios' end,
+      'seed-device-' || lpad(ordinal::text, 4, '0')
+    from (
+      select id, right(id::text, 12)::int as ordinal
+      from public.profiles
+      where role = 'player' and id::text like '5eed0000-0000-4000-8000-%'
+    ) as profile
+    on conflict do nothing;
+  `);
+});
+
 test.afterAll(() => {
   queryDatabase(`
     begin;
