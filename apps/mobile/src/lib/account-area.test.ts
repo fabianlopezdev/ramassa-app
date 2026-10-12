@@ -127,10 +127,13 @@ test('while the first lookup after signing in runs, the area waits rather than f
 });
 
 test('each area starts on its own home; the player keeps the root', () => {
-  expect(areaHome('team', new Set(['attendance.mark', 'messages.inbox']))).toBe('/attendance');
-  expect(areaHome('team', new Set(['messages.inbox']))).toBe('/messages');
-  expect(areaHome('team', new Set(['settings.branding']))).toBe('/team-home');
-  expect(areaHome('entity', new Set())).toBe('/entity-portal');
-  expect(areaHome('unresolved', new Set())).toBe('/account-unresolved');
-  expect(areaHome('player', new Set())).toBeNull();
+  const phone = 390;
+  const tablet = 1024;
+  expect(areaHome('team', new Set(['attendance.mark', 'messages.inbox']), phone)).toBe('/home');
+  expect(areaHome('team', new Set(['attendance.mark', 'messages.inbox']), tablet)).toBe('/today');
+  expect(areaHome('team', new Set(['messages.inbox']), tablet)).toBe('/messages');
+  expect(areaHome('team', new Set(['settings.branding']), phone)).toBe('/team-home');
+  expect(areaHome('entity', new Set(), phone)).toBe('/entity-portal');
+  expect(areaHome('unresolved', new Set(), phone)).toBe('/account-unresolved');
+  expect(areaHome('player', new Set(), phone)).toBeNull();
 });

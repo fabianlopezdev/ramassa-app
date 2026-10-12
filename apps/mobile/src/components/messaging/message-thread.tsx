@@ -430,9 +430,12 @@ export function PlayerMessageThread({
 export function StaffMessageThread({
   conversationId,
   title,
+  showBack = true,
 }: {
   readonly conversationId: string;
   readonly title: string;
+  /** False in the tablet split view, where the list stays beside it (RAPP-245). */
+  readonly showBack?: boolean;
 }) {
   const { back } = useRouter();
   const { t } = useTranslation('messaging');
@@ -454,7 +457,7 @@ export function StaffMessageThread({
     <MessageThreadView
       title={participantTitle}
       controller={controller}
-      headerAccessory={backAction}
+      headerAccessory={showBack ? backAction : undefined}
     />
   );
 }

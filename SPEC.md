@@ -1649,6 +1649,16 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - **Live permissions:** every permission write moves the person's `team_member_access` row, and that table is in the Realtime publication. The shared auth context listens to the person's own row and reloads her permissions, so menus and screens follow at once, on the web and in the app. The permission rows are not published: a removal is a DELETE, which Realtime cannot filter.
 - **Offline outbox:** one shared core (`@ramassa/shared/offline`) for attendance and messages. Every change has an idempotency key (attendance: one per person per session, latest `marked_at` wins; messages: the id the phone makes). A failure that may pass is retried with a growing delay up to 30 seconds. A refusal (no permission, a broken rule, a missing record: AUTH-3, AUTH-9, DB-2, EVENTS-1, VALIDATION-1, mapped from the PostgreSQL code) stays on screen with a plain reason, Try again and Remove. It is never dropped silently.
 
+## Team shell (2026-10-12, RAPP-245, part of RAPP-212)
+
+- The team area has its own shell in the app (`(app)/(team)`), laid out by `teamLayout` from the person's areas and the screen width:
+  - **tablet** (768 points and wider): a sidebar with every area she may open, beside the open screen. Today and Messages show their list and the open item side by side.
+  - **phone with one or two areas:** a start screen with one large button per area, then Settings and sign-out. Each area screen has a "Back to the start" link.
+  - **phone with three or more areas:** native bottom tabs (Today, Participants, Content, Messages, More), each only when her permissions open it.
+- Areas join as their screens arrive: attendance (Today) and messages now, participants in RAPP-247, material from RAPP-248. More holds Settings and sign-out, and later the rest.
+- A session sheet or a conversation opens over the shell on a phone. The iOS app supports iPad (`supportsTablet`).
+- Every Realtime subscription has its own channel name (`realtimeTopic`): supabase-js reuses a channel of the same name, and a second listener on it threw, which crashed a screen where two parts both wanted the unread count.
+
 ## Staff-side languages (2026-10-11, RAPP-238, part of RAPP-211)
 
 - The staff side (the web admin, the team screens and the entity screens) is in Catalan, Spanish or English (`STAFF_LANGUAGES`). Player screens keep all five languages and right-to-left. Content stays five-language everywhere: this is the language of the screens themselves.

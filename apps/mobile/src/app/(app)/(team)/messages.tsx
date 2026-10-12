@@ -3,16 +3,17 @@ import {
   AnnouncementFeedError,
   AnnouncementFeedSkeleton,
 } from '@/components/announcements/feed-states';
-import { AppLockLink } from '@/components/auth/app-lock-link';
 import { PageWidth } from '@/components/layout/content-width';
+import { StaffMessageThread } from '@/components/messaging/message-thread';
 import { StaffConversationCard } from '@/components/messaging/staff-conversation-card';
-import { PressableScale } from '@/components/motion/pressable-scale';
+import { TeamBackToHome } from '@/components/team/team-back-to-home';
+import { useTeamLayout } from '@/components/team/team-layout-context';
 import { useStaffConversationList } from '@/lib/messaging';
 import { formatUnreadBadge } from '@/lib/unread-badge';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useRouter, type Href } from 'expo-router';
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -28,14 +29,21 @@ const listContentStyle = {
 } as const;
 const keyExtractor = (row: StaffConversationRow) => row.conversationId;
 
+// Two parts list, three parts open item, within sensible bounds.
+const listPaneStyle = { flex: 2, minWidth: 280, maxWidth: 400 } as const;
+const detailPaneStyle = { flex: 3 } as const;
+
 export default function StaffConversationsScreen() {
   const { t } = useTranslation('messaging');
   const fontClass = useLanguageFontClass();
-  const { back, push } = useRouter();
+  const { push } = useRouter();
   const { data, isPending, isError, isFetching, error, refetch } = useStaffConversationList();
+  const isSplit = useTeamLayout() === 'sidebar';
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const open = useCallback(
-    (conversationId: string) => push(`/messages/${conversationId}` as Href),
-    [push],
+    (conversationId: string) =>
+      isSplit ? setSelectedId(conversationId) : push(`/messages/${conversationId}` as Href),
+    [isSplit, push],
   );
   const renderItem = useCallback(
     ({ item }: ListRenderItemInfo<StaffConversationRow>) => {
@@ -82,24 +90,11 @@ export default function StaffConversationsScreen() {
     );
   }
   const conversations = data ?? EMPTY_CONVERSATIONS;
-  return (
-    <SafeAreaView className="flex-1 bg-neutral-50" edges={['top', 'left', 'right']}>
+  const list = (
+    <>
       <PageWidth className="flex-1">
         <View className="gap-sm px-lg pb-md pt-lg">
-          <View className="flex-row items-center justify-between">
-            <PressableScale
-              testID="staff-conversations-back"
-              accessibilityLabel={t('backToAttendance')}
-              onPress={back}
-              haptic="tapLight"
-              className="min-h-recommended self-start justify-center"
-            >
-              <Text className={`font-semibold text-primary-dark ${fontClass}`}>
-                {t('backShort')}
-              </Text>
-            </PressableScale>
-            <AppLockLink variant="link" />
-          </View>
+          <TeamBackToHome />
           <Text
             accessibilityRole="header"
             className={`text-start text-3xl font-bold text-neutral-900 ${fontClass}`}
@@ -128,6 +123,34 @@ export default function StaffConversationsScreen() {
           />
         )}
       </PageWidth>
+    </>
+  );
+  return (
+    <SafeAreaView className="flex-1 bg-neutral-50" edges={['top', 'left', 'right']}>
+      {isSplit ? (
+        // A tablet keeps the list beside the open item (RAPP-245).
+        <View className="flex-1 flex-row">
+          <View style={listPaneStyle}>{list}</View>
+          <View style={detailPaneStyle} className="border-s border-neutral-200 bg-white">
+            {selectedId === null ? (
+              <View className="flex-1 items-center justify-center p-lg">
+                <Text className={`text-center text-md text-neutral-600 ${fontClass}`}>
+                  {t('selectConversation')}
+                </Text>
+              </View>
+            ) : (
+              <StaffMessageThread
+                key={selectedId}
+                conversationId={selectedId}
+                title={t('staffTitle')}
+                showBack={false}
+              />
+            )}
+          </View>
+        </View>
+      ) : (
+        list
+      )}
     </SafeAreaView>
   );
 }

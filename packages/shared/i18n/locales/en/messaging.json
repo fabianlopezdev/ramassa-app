@@ -52,9 +52,8 @@
   "conversationRowLabel": "Open conversation with {{name}}. {{role}}. Latest message: {{preview}}.",
   "backShort": "Back",
   "backToConversations": "Back to conversations",
-  "backToAttendance": "Back to attendance",
-  "managementUnread": "Conversations ({{count}} unread)",
   "deliveryRejected": "Not sent. This message was refused.",
   "deliveryRejectedPermission": "Not sent. You can no longer send messages here.",
-  "discard": "Remove"
+  "discard": "Remove",
+  "selectConversation": "Choose a conversation."
 }

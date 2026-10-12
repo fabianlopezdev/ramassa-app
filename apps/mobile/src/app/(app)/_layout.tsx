@@ -8,7 +8,7 @@ import { useAccountAccess } from '@/lib/use-account-access';
 import { usePushRegistration } from '@/lib/use-push-registration';
 import { Redirect, usePathname, type Href } from 'expo-router';
 import { Stack } from 'expo-router/stack';
-import { ActivityIndicator, Modal, View } from 'react-native';
+import { ActivityIndicator, Modal, useWindowDimensions, View } from 'react-native';
 import { useAuth } from '@ramassa/shared/auth';
 import { tokens } from '@ramassa/shared/tokens';
 
@@ -34,7 +34,8 @@ export default function AppLayout() {
   const { shouldShowRationale, acceptRationale, declineRationale } = usePushRegistration();
   const pathname = usePathname();
   const { isCovered } = useAppLock();
-  const home = areaHome(area, permissions);
+  const { width } = useWindowDimensions();
+  const home = areaHome(area, permissions, width);
 
   // Just after signing in, the account type is not known yet. The screens wait
   // for it, so the stack mounts once with the right area and opens its first
@@ -93,14 +94,17 @@ export default function AppLayout() {
           <Stack.Screen name="feedback/index" />
           <Stack.Screen name="survey/[id]" />
         </Stack.Protected>
-        {/* Team screens open by permission; the first one available is where a
-            team member lands. With none of them, team-home points to the web. */}
+        {/* The team shell (RAPP-245): tabs, large buttons or a tablet sidebar,
+            holding the areas the person's permissions open. A session sheet or
+            a conversation opens over it. With no area, team-home points to the
+            web. */}
+        <Stack.Protected guard={isTeam && (team.attendance || team.messages)}>
+          <Stack.Screen name="(team)" />
+        </Stack.Protected>
         <Stack.Protected guard={isTeam && team.attendance}>
-          <Stack.Screen name="attendance/index" />
           <Stack.Screen name="attendance/[id]" />
         </Stack.Protected>
         <Stack.Protected guard={isTeam && team.messages}>
-          <Stack.Screen name="messages/index" />
           <Stack.Screen name="messages/[conversationId]" />
         </Stack.Protected>
         <Stack.Protected guard={isTeam && !team.attendance && !team.messages}>

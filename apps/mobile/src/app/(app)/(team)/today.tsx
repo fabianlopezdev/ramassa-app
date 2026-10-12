@@ -4,18 +4,15 @@ import {
   AnnouncementFeedSkeleton,
 } from '@/components/announcements/feed-states';
 import { AttendanceOccurrenceRow } from '@/components/attendance/attendance-occurrence-row';
-import { AppLockLink } from '@/components/auth/app-lock-link';
+import { AttendanceSheet } from '@/components/attendance/attendance-sheet';
 import { PageWidth } from '@/components/layout/content-width';
-import { PressableScale } from '@/components/motion/pressable-scale';
-import { teamScreens } from '@/lib/account-area';
+import { TeamBackToHome } from '@/components/team/team-back-to-home';
+import { useTeamLayout } from '@/components/team/team-layout-context';
 import { useAttendanceOccurrences } from '@/lib/attendance';
-import { logout } from '@/lib/auth';
-import { useUnreadMessages } from '@/lib/messaging';
-import { useAccountAccess } from '@/lib/use-account-access';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
-import { useRouter, type Href } from 'expo-router';
-import { useCallback, useMemo } from 'react';
+import { useRouter } from 'expo-router';
+import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -32,16 +29,16 @@ const listContentStyle = {
 } as const;
 const keyExtractor = (row: AttendanceOccurrenceListRow) => row.id;
 
+// Two parts list, three parts open item, within sensible bounds.
+const listPaneStyle = { flex: 2, minWidth: 280, maxWidth: 400 } as const;
+const detailPaneStyle = { flex: 3 } as const;
+
 export default function AttendanceOccurrencesScreen() {
   const { t, i18n } = useTranslation('attendance');
-  const { t: tProfile } = useTranslation('profile');
-  const { t: tMessaging } = useTranslation('messaging');
   const { language } = useLanguage();
   const languageFontClass = useLanguageFontClass();
   const { push } = useRouter();
   const { data, isPending, isError, error, refetch } = useAttendanceOccurrences();
-  const unreadMessages = useUnreadMessages().data ?? 0;
-  const canOpenMessages = teamScreens(useAccountAccess().permissions).messages;
   const timeFormatter = useMemo(
     () =>
       new Intl.DateTimeFormat(i18n.resolvedLanguage ?? DEFAULT_LANGUAGE, {
@@ -51,9 +48,13 @@ export default function AttendanceOccurrencesScreen() {
       }),
     [i18n.resolvedLanguage],
   );
-  const open = useCallback((id: string) => push(`/attendance/${id}`), [push]);
+  const isSplit = useTeamLayout() === 'sidebar';
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const open = useCallback(
+    (id: string) => (isSplit ? setSelectedId(id) : push(`/attendance/${id}`)),
+    [isSplit, push],
+  );
   const handleRetry = useCallback(() => void refetch(), [refetch]);
-  const handleLogout = useCallback(() => void logout(), []);
   const renderItem = useCallback(
     ({ item }: ListRenderItemInfo<AttendanceOccurrenceListRow>) => {
       const title = resolveLocalizedText(item.event.title, language)?.text ?? item.event.title.ca;
@@ -85,41 +86,11 @@ export default function AttendanceOccurrencesScreen() {
     );
   }
   const rows = data ?? EMPTY_OCCURRENCES;
-  return (
-    <SafeAreaView className="flex-1 bg-neutral-50" edges={['top', 'left', 'right']}>
+  const list = (
+    <>
       <PageWidth className="flex-1">
         <View className="gap-xs px-lg pb-md pt-lg">
-          {/* The links get their own row, so the title always has the full
-              width: three links beside it squeezed it out (RAPP-242). */}
-          <View className="flex-row flex-wrap items-center justify-end gap-sm">
-            {canOpenMessages ? (
-              <PressableScale
-                testID="attendance-open-messages"
-                accessibilityLabel={tMessaging('unread', { count: unreadMessages })}
-                onPress={() => push('/messages' as Href)}
-                haptic="selection"
-                className="min-h-min justify-center px-sm"
-              >
-                <Text className={`text-sm font-semibold text-primary-dark ${languageFontClass}`}>
-                  {unreadMessages > 0
-                    ? tMessaging('managementUnread', { count: unreadMessages })
-                    : tMessaging('managementTitle')}
-                </Text>
-              </PressableScale>
-            ) : null}
-            <AppLockLink variant="link" />
-            <PressableScale
-              testID="attendance-sign-out"
-              accessibilityLabel={tProfile('signOutAction')}
-              onPress={handleLogout}
-              haptic="tapLight"
-              className="min-h-min justify-center px-sm"
-            >
-              <Text className={`text-sm font-semibold text-primary-dark ${languageFontClass}`}>
-                {tProfile('signOutAction')}
-              </Text>
-            </PressableScale>
-          </View>
+          <TeamBackToHome />
           <Text
             accessibilityRole="header"
             className={`text-start text-3xl font-bold text-neutral-900 ${languageFontClass}`}
@@ -154,6 +125,29 @@ export default function AttendanceOccurrencesScreen() {
           />
         )}
       </PageWidth>
+    </>
+  );
+  return (
+    <SafeAreaView className="flex-1 bg-neutral-50" edges={['top', 'left', 'right']}>
+      {isSplit ? (
+        // A tablet keeps the list beside the open item (RAPP-245).
+        <View className="flex-1 flex-row">
+          <View style={listPaneStyle}>{list}</View>
+          <View style={detailPaneStyle} className="border-s border-neutral-200 bg-white">
+            {selectedId === null ? (
+              <View className="flex-1 items-center justify-center p-lg">
+                <Text className={`text-center text-md text-neutral-600 ${languageFontClass}`}>
+                  {t('selectSession')}
+                </Text>
+              </View>
+            ) : (
+              <AttendanceSheet key={selectedId} occurrenceId={selectedId} />
+            )}
+          </View>
+        </View>
+      ) : (
+        list
+      )}
     </SafeAreaView>
   );
 }

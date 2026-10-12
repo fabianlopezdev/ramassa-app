@@ -33,5 +33,13 @@
     "toggleSidebar": "نمایش یا پنهان‌کردن نوار کناری",
     "sidebarLabel": "نوار کناری",
     "sidebarDescription": "منوی ناوبری کناری"
+  },
+  "team": {
+    "today": "امروز",
+    "messages": "پیام‌ها",
+    "more": "بیشتر",
+    "homeTitle": "می‌خواهید چه کار کنید؟",
+    "navigation": "ناوبری تیم",
+    "backToHome": "بازگشت به شروع"
   }
 }

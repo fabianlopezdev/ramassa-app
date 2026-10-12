@@ -17,7 +17,8 @@
       "infoPlist": {
         "ExpoLocalization_supportsRTL": true
       },
-      "appleTeamId": "BM53DM6Z9A"
+      "appleTeamId": "BM53DM6Z9A",
+      "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {

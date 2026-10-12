@@ -59,5 +59,6 @@
   "syncRejected": "No s'ha desat. Aquesta marca s'ha rebutjat.",
   "syncRejectedPermission": "No s'ha desat. Ja no pots passar llista aquí.",
   "syncRetryAction": "Torna-ho a provar",
-  "syncDiscardAction": "Treu-la"
+  "syncDiscardAction": "Treu-la",
+  "selectSession": "Tria una sessió per passar llista."
 }

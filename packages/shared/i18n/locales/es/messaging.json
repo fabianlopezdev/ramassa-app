@@ -52,9 +52,8 @@
   "conversationRowLabel": "Abrir conversación con {{name}}. {{role}}. Último mensaje: {{preview}}.",
   "backShort": "Atrás",
   "backToConversations": "Volver a las conversaciones",
-  "backToAttendance": "Volver a asistencia",
-  "managementUnread": "Conversaciones ({{count}} sin leer)",
   "deliveryRejected": "No se ha enviado. Este mensaje se ha rechazado.",
   "deliveryRejectedPermission": "No se ha enviado. Ya no puedes enviar mensajes aquí.",
-  "discard": "Quitarlo"
+  "discard": "Quitarlo",
+  "selectConversation": "Elige una conversación."
 }

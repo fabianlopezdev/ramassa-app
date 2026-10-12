@@ -59,5 +59,6 @@
   "syncRejected": "Not saved. This mark was refused.",
   "syncRejectedPermission": "Not saved. You can no longer take attendance here.",
   "syncRetryAction": "Try again",
-  "syncDiscardAction": "Remove"
+  "syncDiscardAction": "Remove",
+  "selectSession": "Choose a session to take attendance."
 }

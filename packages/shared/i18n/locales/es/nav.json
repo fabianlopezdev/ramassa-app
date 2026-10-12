@@ -33,5 +33,13 @@
     "toggleSidebar": "Mostrar u ocultar el menú lateral",
     "sidebarLabel": "Menú lateral",
     "sidebarDescription": "Menú de navegación lateral"
+  },
+  "team": {
+    "today": "Hoy",
+    "messages": "Mensajes",
+    "more": "Más",
+    "homeTitle": "¿Qué quieres hacer?",
+    "navigation": "Navegación del equipo",
+    "backToHome": "Volver al inicio"
   }
 }

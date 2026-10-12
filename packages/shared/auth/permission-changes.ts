@@ -6,6 +6,7 @@
  */
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
+import { realtimeTopic } from '../lib/realtime-topic';
 import type { Database } from '../types/database';
 
 export function subscribeToOwnPermissionChanges(
@@ -18,7 +19,7 @@ export function subscribeToOwnPermissionChanges(
   if (!parsed.success) return () => undefined;
   const id = parsed.data;
   const channel = client
-    .channel(`permissions:${id}`)
+    .channel(realtimeTopic(`permissions:${id}`))
     .on(
       'postgres_changes',
       { event: '*', schema: 'public', table: 'team_member_access', filter: `profile_id=eq.${id}` },
