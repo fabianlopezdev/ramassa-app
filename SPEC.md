@@ -1718,6 +1718,14 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - Save needs a connection, and the screen says so when there is none. The form makes the arrival's id once, so a second press after a lost answer saves nothing twice.
 - The app asks for the camera only when someone takes a photo; Android drops the microphone permission that the picker would add.
 
+## Stock counts and corrections (2026-10-12, RAPP-251, part of RAPP-212)
+
+- A count records what is on the shelf for one item type, every size once (`stock_counts`, with what the ledger expected and what was counted per size). `record_stock_count()` saves it for `equipment.count`; the phone makes its id, so a resend saves nothing twice.
+- Where the shelf and the ledger differ, the difference becomes a `correction` movement with a reason from a fixed list: lost, damaged and thrown away, found, counted wrong before, handed over without a record, or other, plus an optional note. A difference without a reason is refused. Every count writes a `stock.count` audit entry with the lines, the reason and the number of corrections.
+- A count answers the item's open stock alerts.
+- Today asks whoever holds `equipment.count` for one small count a month (a cycle count): until an item has been counted this month (Madrid time), it shows the item with stock that was counted longest ago, never-counted first. One tap opens its count.
+- The count screen is blind: staff type what is on the shelf, size by size, before the app shows its own numbers. Then it lists the differences and asks for the reason. Stock shows a Count button on each item for `equipment.count`.
+
 ## Staff-side languages (2026-10-11, RAPP-238, part of RAPP-211)
 
 - The staff side (the web admin, the team screens and the entity screens) is in Catalan, Spanish or English (`STAFF_LANGUAGES`). Player screens keep all five languages and right-to-left. Content stays five-language everywhere: this is the language of the screens themselves.

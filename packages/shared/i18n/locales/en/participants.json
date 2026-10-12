@@ -273,5 +273,36 @@
     "saving": "Saving",
     "saveFailed": "The arrival was not saved. Try again.",
     "remove": "Remove"
+  },
+  "count": {
+    "title": "Count {{item}}",
+    "intro": "Count what is on the shelf, size by size. The app shows its own numbers only after you count.",
+    "onShelf": "On the shelf",
+    "sizeLabel": "Size {{size}}",
+    "toReview": "Check the count",
+    "matches": "The count matches the stock. Nothing changes.",
+    "differencesTitle": "Differences",
+    "difference": "{{size}}: the stock says {{expected}}, the shelf has {{counted}}",
+    "differenceNoSize": "The stock says {{expected}}, the shelf has {{counted}}",
+    "reasonLabel": "Why is it different?",
+    "reason": {
+      "lost": "Lost",
+      "damaged": "Damaged and thrown away",
+      "found": "Found",
+      "earlier_miscount": "Counted wrong before",
+      "unrecorded_handover": "Handed over without a record",
+      "other": "Other"
+    },
+    "noteLabel": "Note",
+    "reasonRequired": "Choose why the count is different.",
+    "save": "Save the count",
+    "saving": "Saving",
+    "saveFailed": "The count was not saved. Try again.",
+    "needsConnection": "Counting needs a connection.",
+    "back": "Back to the count",
+    "action": "Count",
+    "actionLabel": "Count {{item}}",
+    "monthlyTitle": "This month's count",
+    "monthlyItem": "{{item}}: count what is on the shelf."
   }
 }

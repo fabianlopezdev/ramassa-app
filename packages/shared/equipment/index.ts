@@ -49,3 +49,13 @@ export {
   type ArrivalSummary,
   type StockLevel,
 } from './arrivals';
+export {
+  COUNT_REASONS,
+  countDifferences,
+  fetchMonthlyCount,
+  recordStockCount,
+  type CountDifference,
+  type CountLine,
+  type CountReason,
+  type MonthlyCount,
+} from './counts';

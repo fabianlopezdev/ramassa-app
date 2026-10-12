@@ -2,11 +2,13 @@
  * Today's material section (RAPP-249): items whose stock went below zero
  * because a handover was never blocked by stock. Each asks for a count. For
  * whoever has the Stock area it opens Stock (RAPP-250); a coach who only
- * hands material out sees the lines without a link.
+ * hands material out sees the lines without a link. Whoever counts stock also
+ * gets this month's small count, one tap from the count screen (RAPP-251).
  */
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useStockAlerts } from '@/lib/handover';
+import { useMonthlyCount } from '@/lib/stock';
 import { teamAreas } from '@/lib/team-shell';
 import { useAccountAccess } from '@/lib/use-account-access';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
@@ -21,7 +23,9 @@ export function TodayMaterialCard() {
   const { t: tEquipment } = useTranslation('equipment');
   const fontClass = useLanguageFontClass();
   const { push } = useRouter();
-  const hasStock = teamAreas(useAccountAccess().permissions).includes('stock');
+  const { permissions } = useAccountAccess();
+  const hasStock = teamAreas(permissions).includes('stock');
+  const monthly = useMonthlyCount(permissions.has('equipment.count')).data ?? null;
   const alerts = useStockAlerts(true).data ?? [];
   const lines = alerts.map((alert) => ({
     id: alert.id,
@@ -58,7 +62,27 @@ export function TodayMaterialCard() {
     </>
   );
 
-  return hasStock ? (
+  const monthlyCard =
+    monthly === null ? null : (
+      <PressableScale
+        testID="today-monthly-count"
+        accessibilityRole="button"
+        accessibilityLabel={`${t('count.monthlyTitle')}, ${t('count.monthlyItem', { item: tEquipment(monthly.itemKey) })}`}
+        onPress={() => push(`/count/${monthly.itemTypeId}` as Href)}
+        haptic="selection"
+        style={continuousCorners}
+        className={`min-h-recommended ${cardClass}`}
+      >
+        <Text className={`text-start text-lg font-bold text-neutral-900 ${fontClass}`}>
+          {t('count.monthlyTitle')}
+        </Text>
+        <Text className={`text-start text-md font-semibold text-primary-dark ${fontClass}`}>
+          {t('count.monthlyItem', { item: tEquipment(monthly.itemKey) })}
+        </Text>
+      </PressableScale>
+    );
+
+  const alertsCard = hasStock ? (
     <PressableScale
       testID="today-material"
       accessibilityRole="button"
@@ -73,6 +97,13 @@ export function TodayMaterialCard() {
   ) : (
     <View testID="today-material" style={continuousCorners} className={cardClass}>
       {body}
+    </View>
+  );
+
+  return (
+    <View className="gap-md">
+      {alertsCard}
+      {monthlyCard}
     </View>
   );
 }
