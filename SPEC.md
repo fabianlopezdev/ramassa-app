@@ -1672,6 +1672,14 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - Both reads stay in memory: `participants` is not on the disk allow-list.
 - With attendance, participants and messages, a staff member has three areas, so a phone now shows the tabs.
 
+## Material stock ledger (2026-10-12, RAPP-248, part of RAPP-212)
+
+- Stock is never a typed count. Every change is a movement in `stock_movements` (arrival, handover, return, checkout, check-in, write-off, correction), signed: what comes in is positive, what goes out negative, a correction either way. The stock of an item in a size is the sum of its movements (`stock_levels()`).
+- `equipment_item_types` is the material catalog per organization: a key, a kind (player kit, which gets a unit code at handover, or counted team equipment), its sizes, a default value for donated arrivals, and later names for types staff add. Every organization starts with the twelve built-in items, by trigger when it is created.
+- Every handover recorded in `equipment_deliveries` becomes a -1 movement through a trigger, and the earlier ones were backfilled, so stock starts true. Movements are append-only: no client inserts, changes or deletes one.
+- Holders of any `equipment.*` permission read the ledger and the stock; `participants.view` also reads the catalog. Erasing a woman clears her link on the movement and keeps its quantity, so stock stays right.
+- Arrivals, the phone handover with signature, counts, checkouts and the item editor are RAPP-249 to RAPP-253.
+
 ## Staff-side languages (2026-10-11, RAPP-238, part of RAPP-211)
 
 - The staff side (the web admin, the team screens and the entity screens) is in Catalan, Spanish or English (`STAFF_LANGUAGES`). Player screens keep all five languages and right-to-left. Content stays five-language everywhere: this is the language of the screens themselves.

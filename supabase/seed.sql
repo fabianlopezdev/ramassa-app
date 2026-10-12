@@ -1437,6 +1437,28 @@ on conflict (occurrence_id, player_id) do nothing;
 
 select set_config('request.jwt.claims', '{}', false);
 
+-- Material stock (RAPP-248) --------------------------------------------------------------
+--
+-- One donated arrival a month ago, so stock starts above zero and the handovers
+-- below come out of it. Boots 36 to 42, jerseys and shorts S to L, balls: enough
+-- for a stock screen and a handover to show real numbers, and one size (boots
+-- 43) left at nothing so an empty size is reachable too.
+
+insert into public.stock_movements (org_id, item_type_id, size, quantity, kind, recorded_by, occurred_at, reason)
+select
+  item_type.org_id, item_type.id, arrival.size, arrival.quantity, 'arrival',
+  '5eed0000-0000-4000-8000-000000000002', now() - interval '30 days', 'Seed donation'
+from (values
+  ('boots', '36', 4), ('boots', '37', 4), ('boots', '38', 4), ('boots', '39', 4),
+  ('boots', '40', 4), ('boots', '41', 3), ('boots', '42', 3),
+  ('jersey', 'S', 6), ('jersey', 'M', 6), ('jersey', 'L', 6),
+  ('shorts', 'S', 6), ('shorts', 'M', 6), ('shorts', 'L', 6),
+  ('water_bottle', null, 10),
+  ('ball', null, 12)
+) as arrival (item_key, size, quantity)
+join public.equipment_item_types item_type
+  on item_type.org_id = '5eed0000-0000-4000-8000-000000000000' and item_type.key = arrival.item_key;
+
 -- Equipment deliveries (RAPP-27) -------------------------------------------------------
 --
 -- Two participants rather than one, and three items with two different staff
