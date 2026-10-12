@@ -1680,6 +1680,17 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - Holders of any `equipment.*` permission read the ledger and the stock; `participants.view` also reads the catalog. Erasing a woman clears her link on the movement and keeps its quantity, so stock stays right.
 - Arrivals, the phone handover with signature, counts, checkouts and the item editor are RAPP-249 to RAPP-253.
 
+## Handover with signature and returns: database (2026-10-12, RAPP-249, part of RAPP-212)
+
+- `record_equipment_handover()` is the one way the phone records a handover, for `equipment.handover`: her, the item type, a size from the type's sizes, given or lent, and her signature. The record is final once saved.
+- The signature is the stroke data of her finger on the staff device, stored on the handover record (`signature`), with the language of the statement she signed under. When she refuses or cannot sign, the record says so with a reason. The database refuses a record that is signed without strokes, or refused without a reason. Handovers recorded before this, or on the web admin, read "not collected".
+- Player kit gets the next unit code of its type at handover (boots B-0001, shin pads SP, socks SO, shorts SH, jersey J, tracksuit T, coat C, gloves G, water bottle WB, rucksack R, other O). Balls get none.
+- Stock never blocks a handover. When one takes an item below zero, it is saved and one open alert (`stock_alerts`, one per item and size) asks for a count. `equipment.count` and `equipment.handover` holders read the alerts.
+- `record_equipment_return()` takes a lent item back once, graded new, good, worn or unusable. An unusable item comes back and is written off in the same step, so stock does not count it.
+- `participant_material()` lists what she received, with the return and its grade.
+- Erasing her deletes her handover records and their signatures. The movements stay without her name, so stock stays right.
+- The phone flow, returns from her card and the Today alert are the second part of RAPP-249.
+
 ## Staff-side languages (2026-10-11, RAPP-238, part of RAPP-211)
 
 - The staff side (the web admin, the team screens and the entity screens) is in Catalan, Spanish or English (`STAFF_LANGUAGES`). Player screens keep all five languages and right-to-left. Content stays five-language everywhere: this is the language of the screens themselves.

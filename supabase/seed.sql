@@ -1491,6 +1491,24 @@ values
     'Segona ampolla, la primera es va perdre al camp.'
   )
 on conflict do nothing;
+
+-- Stock alerts (RAPP-249) --------------------------------------------------------------
+--
+-- Shorts XL never arrived, so handing a pair to Blanca took the size below zero
+-- and opened the alert that Today shows to whoever counts stock.
+
+insert into public.equipment_deliveries (profile_id, item, size, delivered_on, delivered_by, note)
+values (
+  '5eed0000-0000-4000-8000-000000000030',
+  'shorts', 'XL', current_date - 2,
+  '5eed0000-0000-4000-8000-000000000003',
+  null
+);
+
+insert into public.stock_alerts (org_id, item_type_id, size, opened_at)
+select org_id, id, 'XL', now() - interval '2 days'
+from public.equipment_item_types
+where org_id = '5eed0000-0000-4000-8000-000000000000' and key = 'shorts';
 -- Announcements -----------------------------------------------------------------
 -- One row for every list lifecycle, plus two currently visible rows whose pin
 -- order is meaningful. Published rows are complete in all five languages.

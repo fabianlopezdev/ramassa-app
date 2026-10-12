@@ -4,6 +4,7 @@ import {
   buildAnnouncement,
   buildAttendance,
   buildAuditLogEntry,
+  buildEquipmentDelivery,
   buildEvent,
   buildEventCategory,
   buildEventOccurrence,
@@ -27,6 +28,7 @@ import {
   buildServiceCategory,
   buildServiceImage,
   buildServiceInterest,
+  buildStockAlert,
 } from './factories';
 import {
   ONBOARDING_ACCOUNT_EMAIL,
@@ -377,5 +379,24 @@ describe('buildInvite', () => {
 
     expect(invite.invited_by).toBe(seedUserId(STAFF_FIXTURES[1]!.ordinal));
     expect(invite.invited_by).not.toBe(invite.accepted_by);
+  });
+});
+
+describe('buildEquipmentDelivery', () => {
+  test('is a signed handover, the state the phone always saves', () => {
+    // The database refuses "signed" without strokes; a factory that broke the
+    // rule would let a screen pass tests on a record that cannot exist.
+    const delivery = buildEquipmentDelivery();
+
+    expect(delivery.signature_state).toBe('signed');
+    expect(delivery.signature).not.toBeNull();
+    expect(delivery.signature_reason).toBeNull();
+  });
+});
+
+describe('buildStockAlert', () => {
+  test('defaults to open, which is what Today shows', () => {
+    expect(buildStockAlert().resolved_at).toBeNull();
+    expect(buildStockAlert().org_id).toBe(SEED_ORGANIZATION_ID);
   });
 });
