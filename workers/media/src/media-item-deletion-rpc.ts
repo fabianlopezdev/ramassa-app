@@ -96,6 +96,22 @@ export async function canReadFeedbackObject(
   return (await response.json()) === true;
 }
 
+/** Arrival photos (RAPP-250): served only when the database ties the key to an arrival she may read. */
+export async function canReadStockObject(
+  options: Omit<RpcOptions, 'mediaItemId'> & { readonly objectKey: string },
+): Promise<boolean> {
+  const response = await (options.fetchImplementation ?? fetch)(
+    `${options.supabaseUrl}/rest/v1/rpc/can_read_stock_object`,
+    {
+      method: 'POST',
+      headers: rpcHeaders({ ...options, mediaItemId: '' }),
+      body: JSON.stringify({ p_object_key: options.objectKey }),
+    },
+  );
+  if (!response.ok) throw new AppError('DB-1');
+  return (await response.json()) === true;
+}
+
 export async function canReadInternalDocumentObject(
   options: Omit<RpcOptions, 'mediaItemId'> & { readonly objectKey: string },
 ): Promise<boolean> {

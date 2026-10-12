@@ -33,6 +33,8 @@ export const UPLOAD_FOLDERS = [
   'services',
   'documents',
   'organization-branding',
+  // Photos of goods received and their receipts (RAPP-250).
+  'stock',
 ] as const;
 
 export const uploadFolderSchema = z.enum(UPLOAD_FOLDERS);
@@ -51,6 +53,7 @@ export const STAFF_ONLY_UPLOAD_FOLDERS = [
   'services',
   'documents',
   'organization-branding',
+  'stock',
 ] as const satisfies readonly UploadFolder[];
 
 /**
@@ -67,6 +70,7 @@ export const TEAM_FOLDER_PERMISSIONS: Readonly<
   services: ['services.edit', 'services.publish', 'services.review'],
   documents: ['settings.documents'],
   'organization-branding': ['settings.branding'],
+  stock: ['equipment.receive'],
 };
 
 /**

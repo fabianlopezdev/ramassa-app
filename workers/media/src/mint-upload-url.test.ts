@@ -145,6 +145,23 @@ describe('handleMintUploadUrl - denial paths', () => {
     expect(await readErrorCode(response)).toBe('AUTH-3');
   });
 
+  test('only a holder of equipment.receive may write arrival photos (RAPP-250)', async () => {
+    const receiver = await handleMintUploadUrl(
+      buildRequest({ ...validBody, folder: 'stock' }),
+      buildDependencies({
+        resolveIdentity: async () => ({ ...staff, permissions: new Set(['equipment.receive']) }),
+      }),
+    );
+    const coach = await handleMintUploadUrl(
+      buildRequest({ ...validBody, folder: 'stock' }),
+      buildDependencies({
+        resolveIdentity: async () => ({ ...staff, permissions: new Set(['equipment.handover']) }),
+      }),
+    );
+    expect(receiver.status).toBe(200);
+    expect(coach.status).toBe(403);
+  });
+
   test('a malformed JSON body is refused with VALIDATION-1', async () => {
     const response = await handleMintUploadUrl(buildRequest('{not json'), buildDependencies());
     expect(response.status).toBe(400);

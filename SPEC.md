@@ -1701,6 +1701,14 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - Today has a Material section for `equipment.count` and `equipment.handover`: one line per item and size below zero. The count screen follows in the stock count work.
 - The signature pad draws with `react-native-svg`, so the native app needs a rebuild.
 
+## Goods received: arrivals, database (2026-10-12, RAPP-250, part of RAPP-212)
+
+- An arrival is a goods received note (`equipment_arrivals`): when it came, who received it, the source (donation, purchase or sponsor) with an optional name, problems noted, and for a purchase the total cost from the receipt. `record_equipment_arrival()` saves it for `equipment.receive`.
+- Each line (item type, a size from its sizes, a quantity from 1 to 10,000) becomes a +quantity arrival movement linked to the arrival, so stock stays the sum of the ledger. A donated line takes the item type's default value unless staff type one; a purchased line records the price typed.
+- The phone makes the arrival's id, so a save sent again after a lost answer saves nothing twice. Arrivals need a connection.
+- Photos of the goods and of the delivery note or receipt (`equipment_arrival_photos`, up to ten) go to a staff-only `stock` upload folder that only `equipment.receive` can write. The arrival accepts only keys this person uploaded to this organization's stock folder. The media worker serves a stock photo only after `can_read_stock_object()` ties it to an arrival the caller may read.
+- Holders of `equipment.receive`, `equipment.count` or `equipment.items` read arrivals and their photos. Arrivals hold no participant data.
+
 ## Staff-side languages (2026-10-11, RAPP-238, part of RAPP-211)
 
 - The staff side (the web admin, the team screens and the entity screens) is in Catalan, Spanish or English (`STAFF_LANGUAGES`). Player screens keep all five languages and right-to-left. Content stays five-language everywhere: this is the language of the screens themselves.

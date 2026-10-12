@@ -28,6 +28,7 @@ import {
   canReadFeedbackObject,
   canReadInternalDocumentObject,
   canReadMediaObject,
+  canReadStockObject,
   completeMediaItemDeletion,
   prepareMediaItemDeletion,
 } from './media-item-deletion-rpc';
@@ -228,6 +229,13 @@ const handler: ExportedHandler<Env> = {
           }),
         authorizeInternalDocumentObject: (objectKey) =>
           canReadInternalDocumentObject({
+            objectKey,
+            token: readBearerToken(request),
+            supabaseUrl: config.supabaseUrl,
+            supabasePublishableKey: config.supabasePublishableKey,
+          }),
+        authorizeStockObject: (objectKey) =>
+          canReadStockObject({
             objectKey,
             token: readBearerToken(request),
             supabaseUrl: config.supabaseUrl,

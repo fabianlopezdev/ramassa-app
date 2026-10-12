@@ -29,6 +29,7 @@ export interface ServeMediaObjectDependencies {
   readonly authorizeGalleryObject: (objectKey: string) => Promise<boolean>;
   readonly authorizeFeedbackObject: (objectKey: string) => Promise<boolean>;
   readonly authorizeInternalDocumentObject: (objectKey: string) => Promise<boolean>;
+  readonly authorizeStockObject: (objectKey: string) => Promise<boolean>;
   readonly bucket: MediaObjectBucket;
   readonly corsHeaders?: Record<string, string>;
   readonly onError?: (error: unknown, context: Record<string, unknown>) => void;
@@ -120,6 +121,15 @@ export async function handleServeMediaObject(
       }
     } catch (thrown) {
       dependencies.onError?.(thrown, { stage: 'authorize-internal-document-object' });
+      return fail('DB-1');
+    }
+  }
+
+  if (objectKey.split('/')[1] === 'stock') {
+    try {
+      if (!(await dependencies.authorizeStockObject(objectKey))) return notFound(corsHeaders);
+    } catch (thrown) {
+      dependencies.onError?.(thrown, { stage: 'authorize-stock-object' });
       return fail('DB-1');
     }
   }

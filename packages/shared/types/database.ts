@@ -712,6 +712,99 @@ export type Database = {
           },
         ];
       };
+      equipment_arrival_photos: {
+        Row: {
+          arrival_id: string;
+          created_at: string;
+          id: string;
+          kind: string;
+          object_key: string;
+          org_id: string;
+        };
+        Insert: {
+          arrival_id: string;
+          created_at?: string;
+          id?: string;
+          kind: string;
+          object_key: string;
+          org_id: string;
+        };
+        Update: {
+          arrival_id?: string;
+          created_at?: string;
+          id?: string;
+          kind?: string;
+          object_key?: string;
+          org_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'equipment_arrival_photos_arrival_id_fkey';
+            columns: ['arrival_id'];
+            isOneToOne: false;
+            referencedRelation: 'equipment_arrivals';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'equipment_arrival_photos_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      equipment_arrivals: {
+        Row: {
+          created_at: string;
+          id: string;
+          org_id: string;
+          problems: string | null;
+          received_at: string;
+          received_by: string | null;
+          source: string;
+          source_name: string | null;
+          total_cost_cents: number | null;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          org_id: string;
+          problems?: string | null;
+          received_at: string;
+          received_by?: string | null;
+          source: string;
+          source_name?: string | null;
+          total_cost_cents?: number | null;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          org_id?: string;
+          problems?: string | null;
+          received_at?: string;
+          received_by?: string | null;
+          source?: string;
+          source_name?: string | null;
+          total_cost_cents?: number | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'equipment_arrivals_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'equipment_arrivals_received_by_fkey';
+            columns: ['received_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       equipment_deliveries: {
         Row: {
           created_at: string;
@@ -3087,6 +3180,7 @@ export type Database = {
       };
       stock_movements: {
         Row: {
+          arrival_id: string | null;
           condition: string | null;
           created_at: string;
           equipment_delivery_id: string | null;
@@ -3100,8 +3194,10 @@ export type Database = {
           reason: string | null;
           recorded_by: string | null;
           size: string | null;
+          unit_value_cents: number | null;
         };
         Insert: {
+          arrival_id?: string | null;
           condition?: string | null;
           created_at?: string;
           equipment_delivery_id?: string | null;
@@ -3115,8 +3211,10 @@ export type Database = {
           reason?: string | null;
           recorded_by?: string | null;
           size?: string | null;
+          unit_value_cents?: number | null;
         };
         Update: {
+          arrival_id?: string | null;
           condition?: string | null;
           created_at?: string;
           equipment_delivery_id?: string | null;
@@ -3130,8 +3228,16 @@ export type Database = {
           reason?: string | null;
           recorded_by?: string | null;
           size?: string | null;
+          unit_value_cents?: number | null;
         };
         Relationships: [
+          {
+            foreignKeyName: 'stock_movements_arrival_id_fkey';
+            columns: ['arrival_id'];
+            isOneToOne: false;
+            referencedRelation: 'equipment_arrivals';
+            referencedColumns: ['id'];
+          },
           {
             foreignKeyName: 'stock_movements_equipment_delivery_id_fkey';
             columns: ['equipment_delivery_id'];
@@ -3741,6 +3847,10 @@ export type Database = {
         Returns: boolean;
       };
       can_read_media_object: {
+        Args: { p_object_key: string };
+        Returns: boolean;
+      };
+      can_read_stock_object: {
         Args: { p_object_key: string };
         Returns: boolean;
       };
@@ -4689,6 +4799,19 @@ export type Database = {
       purge_expired_entity_referrals: {
         Args: { p_now?: string };
         Returns: number;
+      };
+      record_equipment_arrival: {
+        Args: {
+          p_id: string;
+          p_lines: Json;
+          p_photos?: Json;
+          p_problems?: string;
+          p_received_at: string;
+          p_source: string;
+          p_source_name?: string;
+          p_total_cost_cents?: number;
+        };
+        Returns: string;
       };
       record_equipment_handover: {
         Args: {

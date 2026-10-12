@@ -1444,9 +1444,36 @@ select set_config('request.jwt.claims', '{}', false);
 -- for a stock screen and a handover to show real numbers, and one size (boots
 -- 43) left at nothing so an empty size is reachable too.
 
-insert into public.stock_movements (org_id, item_type_id, size, quantity, kind, recorded_by, occurred_at, reason)
+-- Default values for donated items (RAPP-250), as someone with equipment.items
+-- would set them in the item editor: enough to see a donation pre-filled.
+update public.equipment_item_types set default_value_cents = value.cents
+from (values ('boots', 2500), ('jersey', 1200), ('shorts', 800), ('ball', 1500), ('water_bottle', 300))
+  as value (key, cents)
+where equipment_item_types.org_id = '5eed0000-0000-4000-8000-000000000000'
+  and equipment_item_types.key = value.key;
+
+-- The arrival itself (RAPP-250): a donation from a local club, with one photo
+-- of the boxes. The photo row points at no stored object; the stock folder is
+-- served only after the database check, and a missing object is a plain 404.
+insert into public.equipment_arrivals
+  (id, org_id, received_at, received_by, source, source_name, problems)
+values (
+  '5eed0000-0000-4000-8000-000000000a01', '5eed0000-0000-4000-8000-000000000000',
+  now() - interval '30 days', '5eed0000-0000-4000-8000-000000000002',
+  'donation', 'CF Vic', 'Two jerseys size M with a torn seam.'
+);
+
+insert into public.equipment_arrival_photos (arrival_id, org_id, object_key, kind)
+values (
+  '5eed0000-0000-4000-8000-000000000a01', '5eed0000-0000-4000-8000-000000000000',
+  '5eed0000-0000-4000-8000-000000000000/stock/5eed0000-0000-4000-8000-000000000002/2026/09/00000000000000000000000000000a01.jpg',
+  'goods'
+);
+
+insert into public.stock_movements (org_id, item_type_id, size, quantity, kind, arrival_id, unit_value_cents, recorded_by, occurred_at, reason)
 select
   item_type.org_id, item_type.id, arrival.size, arrival.quantity, 'arrival',
+  '5eed0000-0000-4000-8000-000000000a01', item_type.default_value_cents,
   '5eed0000-0000-4000-8000-000000000002', now() - interval '30 days', 'Seed donation'
 from (values
   ('boots', '36', 4), ('boots', '37', 4), ('boots', '38', 4), ('boots', '39', 4),
