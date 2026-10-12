@@ -1597,7 +1597,7 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 
 ## Protected profile columns (2026-10-10, RAPP-239)
 
-- A client cannot insert a profile directly, and cannot change `id`, `org_id`, `role`, `is_active`, `is_forum_banned`, `anonymized_at`, `terms_accepted_at`, `media_consent_at`, `auth_method`, `collaborating_entity_id` or `created_at` with a direct write. Each changes only through its own database action (onboarding, the profile and participant edits, activation, the forum ban, role changes, erasure). Before this, a staff member could make herself admin with one API call.
+- A client cannot insert a profile directly, and cannot change `id`, `org_id`, `role`, `is_active`, `is_forum_banned`, `anonymized_at`, `terms_accepted_at`, `media_consent_at`, `collaborating_entity_id` or `created_at` with a direct write. Each changes only through its own database action (onboarding, the profile and participant edits, activation, the forum ban, role changes, erasure). Before this, a staff member could make herself admin with one API call.
 - Enforced by the `profiles_guard_privileged_columns` trigger. The five actions that write profiles with the caller's rights mark their one write as trusted for that statement only.
 
 ## Team access rules read permissions (2026-10-10, RAPP-230, part of RAPP-211)

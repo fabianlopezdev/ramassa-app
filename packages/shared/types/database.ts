@@ -2104,7 +2104,6 @@ export type Database = {
         Row: {
           address: string | null;
           anonymized_at: string | null;
-          auth_method: string;
           avatar_url: string | null;
           city: string | null;
           clothing_size: string | null;
@@ -2140,7 +2139,6 @@ export type Database = {
         Insert: {
           address?: string | null;
           anonymized_at?: string | null;
-          auth_method?: string;
           avatar_url?: string | null;
           city?: string | null;
           clothing_size?: string | null;
@@ -2176,7 +2174,6 @@ export type Database = {
         Update: {
           address?: string | null;
           anonymized_at?: string | null;
-          auth_method?: string;
           avatar_url?: string | null;
           city?: string | null;
           clothing_size?: string | null;
@@ -3600,7 +3597,6 @@ export type Database = {
         Returns: {
           address: string | null;
           anonymized_at: string | null;
-          auth_method: string;
           avatar_url: string | null;
           city: string | null;
           clothing_size: string | null;
@@ -3898,7 +3894,6 @@ export type Database = {
         Returns: {
           address: string;
           anonymized_at: string;
-          auth_method: string;
           avatar_url: string;
           city: string;
           clothing_size: string;
