@@ -101,10 +101,24 @@ describe('the remembered account', () => {
 test('team screens follow permissions', () => {
   expect(teamScreens(new Set(['attendance.reports']))).toEqual({
     attendance: true,
+    participants: false,
     messages: false,
   });
-  expect(teamScreens(new Set(['messages.inbox']))).toEqual({ attendance: false, messages: true });
-  expect(teamScreens(new Set())).toEqual({ attendance: false, messages: false });
+  expect(teamScreens(new Set(['messages.inbox']))).toEqual({
+    attendance: false,
+    participants: false,
+    messages: true,
+  });
+  expect(teamScreens(new Set(['participants.view']))).toEqual({
+    attendance: false,
+    participants: true,
+    messages: false,
+  });
+  expect(teamScreens(new Set())).toEqual({
+    attendance: false,
+    participants: false,
+    messages: false,
+  });
 });
 
 test('while the first lookup after signing in runs, the area waits rather than failing', () => {

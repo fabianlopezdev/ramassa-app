@@ -138,5 +138,7 @@
   "equipmentAddFailed": "No hem pogut registrar el lliurament.",
   "inviteNoEmailHint": "Si no té correu electrònic, ajuda-la a crear-ne un primer (per exemple, un compte de Gmail) i convida-la amb aquesta adreça.",
   "inviteAlreadyHasAccount": "Aquest correu ja té un compte. Busca-la a la llista de participants.",
-  "invitedReferralNote": "La derivació de l'entitat s'enllaçarà amb el seu perfil quan acabi el registre."
+  "invitedReferralNote": "La derivació de l'entitat s'enllaçarà amb el seu perfil quan acabi el registre.",
+  "selectParticipant": "Tria una participant per veure la seva fitxa.",
+  "lookupStart": "Escriu un nom, un poble o una entitat."
 }

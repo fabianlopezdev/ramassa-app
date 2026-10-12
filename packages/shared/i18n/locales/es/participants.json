@@ -138,5 +138,7 @@
   "equipmentAddFailed": "No hemos podido registrar la entrega.",
   "inviteNoEmailHint": "Si no tiene correo electrónico, ayúdala a crear uno primero (por ejemplo, una cuenta de Gmail) e invítala con esa dirección.",
   "inviteAlreadyHasAccount": "Este correo ya tiene una cuenta. Búscala en la lista de participantes.",
-  "invitedReferralNote": "La derivación de la entidad se enlazará con su perfil cuando termine el registro."
+  "invitedReferralNote": "La derivación de la entidad se enlazará con su perfil cuando termine el registro.",
+  "selectParticipant": "Elige una participante para ver su ficha.",
+  "lookupStart": "Escribe un nombre, un pueblo o una entidad."
 }

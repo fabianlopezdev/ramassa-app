@@ -1665,6 +1665,13 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - In the large-button layout the Attendance button opens the same screen as plain Attendance.
 - Each later phase adds its own section (participants and material in phase 2, the review queue, forum reports, mentoring and deletion requests in phases 3 to 5). No section points to the web admin, because the app ships only when every phase is done.
 
+## Quick participant lookup (2026-10-12, RAPP-247, part of RAPP-212)
+
+- A Participants area in the team shell for `participants.view`: type at least two letters of a name, town or entity (`list_participants`), and open her card (`get_participant_profile`). On a phone the card is its own screen; on a tablet it opens beside the results.
+- The card shows a row only when the database returned a value: language, phone, town, entity, clothing and shoe size, and whether she is active. So it shows exactly what the person's field levels allow (RAPP-240). Opening a card writes an audit row, so it is not fetched again for five minutes.
+- Both reads stay in memory: `participants` is not on the disk allow-list.
+- With attendance, participants and messages, a staff member has three areas, so a phone now shows the tabs.
+
 ## Staff-side languages (2026-10-11, RAPP-238, part of RAPP-211)
 
 - The staff side (the web admin, the team screens and the entity screens) is in Catalan, Spanish or English (`STAFF_LANGUAGES`). Player screens keep all five languages and right-to-left. Content stays five-language everywhere: this is the language of the screens themselves.
