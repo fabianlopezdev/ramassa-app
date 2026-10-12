@@ -59,5 +59,6 @@
   "syncRejected": "No se ha guardado. Esta marca se ha rechazado.",
   "syncRejectedPermission": "No se ha guardado. Ya no puedes pasar lista aquí.",
   "syncRetryAction": "Volver a intentarlo",
-  "syncDiscardAction": "Quitarla"
+  "syncDiscardAction": "Quitarla",
+  "selectSession": "Elige una sesión para pasar lista."
 }

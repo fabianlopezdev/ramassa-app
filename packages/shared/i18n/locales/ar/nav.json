@@ -33,5 +33,13 @@
     "toggleSidebar": "إظهار أو إخفاء الشريط الجانبي",
     "sidebarLabel": "الشريط الجانبي",
     "sidebarDescription": "قائمة التنقل الجانبية"
+  },
+  "team": {
+    "today": "اليوم",
+    "messages": "الرسائل",
+    "more": "المزيد",
+    "homeTitle": "ماذا تريدين أن تفعلي؟",
+    "navigation": "تنقل الفريق",
+    "backToHome": "العودة إلى البداية"
   }
 }

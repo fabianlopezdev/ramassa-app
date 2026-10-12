@@ -4,6 +4,7 @@ import { addDays, format } from 'date-fns';
 import { z } from 'zod';
 import { AppError, databaseErrorCode } from './errors';
 import { MADRID_TIME_ZONE, toUtcInstant, type EventLocalizedText } from './events';
+import { realtimeTopic } from './lib/realtime-topic';
 import type { Database } from './types/database';
 
 export const ATTENDANCE_STATUSES = ['present', 'absent', 'excused'] as const;
@@ -607,7 +608,7 @@ export function subscribeToAttendance(
   onMark: (mark: AttendanceMark) => void,
 ): () => void {
   const channel = client
-    .channel(`attendance:${occurrenceId}`)
+    .channel(realtimeTopic(`attendance:${occurrenceId}`))
     .on(
       'postgres_changes',
       {

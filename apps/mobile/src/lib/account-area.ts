@@ -18,6 +18,7 @@
 import type { PermissionCode } from '@ramassa/shared/permissions';
 import { PERMISSION_CATALOG } from '@ramassa/shared/permissions';
 import type { AppRole } from '@ramassa/shared/schemas';
+import { teamAreas, teamLayout, teamStart } from './team-shell';
 
 export type AccountArea = 'player' | 'team' | 'entity' | 'onboarding' | 'resolving' | 'unresolved';
 
@@ -108,17 +109,25 @@ export function teamScreens(permissions: ReadonlySet<PermissionCode>): {
 /**
  * Where an area starts. `/` is the player home; for any other area the layout
  * redirects there explicitly, because the router's own fallback for an
- * unavailable `/` picks a screen by its own order (RAPP-232).
+ * unavailable `/` picks a screen by its own order (RAPP-232). A team member's
+ * start depends on the screen too: large buttons on a phone with one or two
+ * areas, otherwise her first area (RAPP-245).
  */
 export function areaHome(
   area: AccountArea,
   permissions: ReadonlySet<PermissionCode>,
-): '/attendance' | '/messages' | '/team-home' | '/entity-portal' | '/account-unresolved' | null {
+  width: number,
+):
+  | '/home'
+  | '/today'
+  | '/messages'
+  | '/team-home'
+  | '/entity-portal'
+  | '/account-unresolved'
+  | null {
   if (area === 'team') {
-    const screens = teamScreens(permissions);
-    if (screens.attendance) return '/attendance';
-    if (screens.messages) return '/messages';
-    return '/team-home';
+    const areas = teamAreas(permissions);
+    return teamStart(areas, teamLayout({ areaCount: areas.length, width }));
   }
   if (area === 'entity') return '/entity-portal';
   if (area === 'unresolved') return '/account-unresolved';

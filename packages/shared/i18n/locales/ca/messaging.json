@@ -56,5 +56,6 @@
   "managementUnread": "Converses ({{count}} sense llegir)",
   "deliveryRejected": "No s'ha enviat. Aquest missatge s'ha rebutjat.",
   "deliveryRejectedPermission": "No s'ha enviat. Ja no pots enviar missatges aquí.",
-  "discard": "Treu-lo"
+  "discard": "Treu-lo",
+  "selectConversation": "Tria una conversa."
 }

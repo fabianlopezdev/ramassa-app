@@ -1,6 +1,7 @@
 import type { RealtimePostgresInsertPayload, SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { AppError, databaseErrorCode, type AppErrorCode } from '../errors';
+import { realtimeTopic } from '../lib/realtime-topic';
 import { buildPrefixTsQuery } from '../participants/participant-query';
 import type { Database } from '../types/database';
 
@@ -457,7 +458,7 @@ export function subscribeToConversationMessages(
 ): () => void {
   const conversationId = z.uuid().parse(rawConversationId);
   const channel = client
-    .channel(`messages:${conversationId}`)
+    .channel(realtimeTopic(`messages:${conversationId}`))
     .on(
       'postgres_changes',
       {
@@ -484,7 +485,7 @@ export function subscribeToMessageActivity(
   onStatus?: (status: string) => void,
 ): () => void {
   const channel = client
-    .channel(`message-activity:${z.uuid().parse(ownerId)}`)
+    .channel(realtimeTopic(`message-activity:${z.uuid().parse(ownerId)}`))
     .on(
       'postgres_changes',
       { event: 'INSERT', schema: 'public', table: 'messages' },
@@ -505,7 +506,7 @@ export function subscribeToConversationQueue(
   onStatus?: (status: string) => void,
 ): () => void {
   const channel = client
-    .channel(`conversation-queue:${z.uuid().parse(ownerId)}`)
+    .channel(realtimeTopic(`conversation-queue:${z.uuid().parse(ownerId)}`))
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, onChange)
     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'conversations' }, onChange)
     .on(

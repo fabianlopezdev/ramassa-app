@@ -59,5 +59,6 @@
   "syncRejected": "ذخیره نشد. این علامت رد شد.",
   "syncRejectedPermission": "ذخیره نشد. دیگر نمی‌توانید اینجا حضور و غیاب کنید.",
   "syncRetryAction": "دوباره امتحان کنید",
-  "syncDiscardAction": "حذف"
+  "syncDiscardAction": "حذف",
+  "selectSession": "یک جلسه را برای حضور و غیاب انتخاب کنید."
 }

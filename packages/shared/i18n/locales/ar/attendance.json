@@ -59,5 +59,6 @@
   "syncRejected": "لم يُحفظ. رُفض هذا التسجيل.",
   "syncRejectedPermission": "لم يُحفظ. لم يعد بإمكانكِ تسجيل الحضور هنا.",
   "syncRetryAction": "حاولي مرة أخرى",
-  "syncDiscardAction": "إزالة"
+  "syncDiscardAction": "إزالة",
+  "selectSession": "اختاري جلسة لتسجيل الحضور."
 }

@@ -1,7 +1,8 @@
 import { describe, expect, test } from 'bun:test';
 
 const threadPath = new URL('../components/messaging/message-thread.tsx', import.meta.url);
-const conversationListPath = new URL('../app/(app)/messages/index.tsx', import.meta.url);
+const conversationListPath = new URL('../app/(app)/(team)/messages.tsx', import.meta.url);
+const teamBackToHomePath = new URL('../components/team/team-back-to-home.tsx', import.meta.url);
 const teamChatPath = new URL('../app/(app)/team-chat.tsx', import.meta.url);
 const conversationCardPath = new URL(
   '../components/messaging/staff-conversation-card.tsx',
@@ -82,7 +83,11 @@ describe('native messaging UI contract', () => {
     expect(conversationListSource).toContain("t('conversationRowLabel'");
     expect(conversationListSource).toContain('role: participantRole');
     expect(conversationListSource).toContain('preview: messagePreview');
-    expect(conversationListSource).toContain('className="min-h-recommended self-start');
+    // The way back to the start lives in the team shell since RAPP-245.
+    expect(conversationListSource).toContain('<TeamBackToHome />');
+    expect(await Bun.file(teamBackToHomePath).text()).toContain(
+      'className="min-h-recommended self-start',
+    );
     expect(threadSource).toContain('className="min-h-recommended justify-center');
     expect(conversationListSource).not.toContain('min-h-min');
     expect(threadSource).not.toContain('min-h-min');

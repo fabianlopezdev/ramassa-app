@@ -56,5 +56,6 @@
   "managementUnread": "گفت‌وگوها ({{count}} خوانده‌نشده)",
   "deliveryRejected": "ارسال نشد. این پیام رد شد.",
   "deliveryRejectedPermission": "ارسال نشد. دیگر نمی‌توانید اینجا پیام بفرستید.",
-  "discard": "حذف"
+  "discard": "حذف",
+  "selectConversation": "یک گفتگو را انتخاب کنید."
 }

@@ -33,5 +33,13 @@
     "toggleSidebar": "Mostra o amaga el menú lateral",
     "sidebarLabel": "Menú lateral",
     "sidebarDescription": "Menú de navegació lateral"
+  },
+  "team": {
+    "today": "Avui",
+    "messages": "Missatges",
+    "more": "Més",
+    "homeTitle": "Què vols fer?",
+    "navigation": "Navegació de l'equip",
+    "backToHome": "Torna a l'inici"
   }
 }
