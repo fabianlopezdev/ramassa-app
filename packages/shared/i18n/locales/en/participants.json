@@ -10,7 +10,6 @@
   "filterStatus": "Status",
   "filterDependents": "Dependants",
   "optionAll": "All",
-  "optionAllMasc": "All",
   "statusActive": "Active",
   "statusInactive": "Inactive",
   "dependentsWith": "With",
@@ -140,7 +139,6 @@
   "inviteAlreadyHasAccount": "This email already has an account. Find her in the participant list.",
   "invitedReferralNote": "The entity's referral will be linked to her profile when she finishes registration.",
   "selectParticipant": "Choose a participant to see her card.",
-  "lookupStart": "Type a name, town or entity.",
   "material": {
     "handOver": "Hand over material",
     "handoverTitle": "Hand over material",
@@ -377,5 +375,18 @@
     "codeTaken": "Another item already uses these code letters.",
     "summary": "{{kind}} · {{sizes}}",
     "inactive": "Switched off"
+  },
+  "list": {
+    "filtersAction": "Filters",
+    "filtersActionCount": "Filters ({{count}})",
+    "filtersTitle": "Filters",
+    "sortLabel": "Sort by",
+    "dirAsc": "Ascending",
+    "dirDesc": "Descending",
+    "filtersDone": "Show the participants",
+    "sortBy": "Sort by {{column}}",
+    "sortedBy": "{{column}}, sorted {{direction}}",
+    "loadingMore": "Loading more participants",
+    "dirLabel": "Order"
   }
 }
