@@ -388,5 +388,8 @@
     "sortedBy": "{{column}}, ordenat {{direction}}",
     "loadingMore": "Carregant més participants",
     "dirLabel": "Ordre"
+  },
+  "profile": {
+    "sensitiveHidden": "No veus el número de document, el telèfon, l'adreça ni el codi postal. Es queden com estan."
   }
 }

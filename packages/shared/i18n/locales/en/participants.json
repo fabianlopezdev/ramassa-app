@@ -388,5 +388,8 @@
     "sortedBy": "{{column}}, sorted {{direction}}",
     "loadingMore": "Loading more participants",
     "dirLabel": "Order"
+  },
+  "profile": {
+    "sensitiveHidden": "You do not see the document number, phone, address or postal code. They stay as they are."
   }
 }

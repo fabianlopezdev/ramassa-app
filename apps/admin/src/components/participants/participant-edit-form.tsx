@@ -19,6 +19,12 @@
  * because it is talking to her; this form is talking about her, so those two
  * carry field names instead. Everything else is a plain noun and is shared on
  * purpose.
+ *
+ * A team member without `participants.view_sensitive` reads no document
+ * number, phone, address or postal code (RAPP-320). The form hides those four
+ * inputs, says why, and validates with `profileEditWithoutSensitiveSchema`: the
+ * document rule cannot judge a number she was never shown, so the database runs
+ * it on the stored number and keeps the stored values, whatever the payload says.
  */
 
 import { AdminAuthField } from '@/components/auth/admin-auth-field';
@@ -37,6 +43,7 @@ import {
   CLOTHING_SIZES,
   DOCUMENT_TYPES,
   profileEditSchema,
+  profileEditWithoutSensitiveSchema,
   profileFromRow,
   SHOE_SIZES,
   type ProfileEdit,
@@ -45,8 +52,13 @@ import {
 
 type ProfileEditInput = z.input<typeof profileEditSchema>;
 
+const fullResolver = zodResolver(profileEditSchema);
+const withoutSensitiveResolver = zodResolver(profileEditWithoutSensitiveSchema);
+
 export interface ParticipantEditFormProps {
   readonly participant: ParticipantDetailRow;
+  /** Holds `participants.view_sensitive`: shows and validates the four encrypted fields. */
+  readonly canSeeSensitive: boolean;
   readonly onSubmit: (payload: UpdateOwnProfilePayload) => Promise<void>;
   readonly onCancel: () => void;
   /** Shown at the button when the write itself failed, not the validation. */
@@ -55,6 +67,7 @@ export interface ParticipantEditFormProps {
 
 export function ParticipantEditForm({
   participant,
+  canSeeSensitive,
   onSubmit,
   onCancel,
   errorMessage,
@@ -78,7 +91,7 @@ export function ParticipantEditForm({
     // collapsing them makes the resolver unassignable. Same shape as the
     // player-side editor, for the same reason.
   } = useForm<ProfileEditInput, unknown, ProfileEdit>({
-    resolver: zodResolver(profileEditSchema),
+    resolver: canSeeSensitive ? fullResolver : withoutSensitiveResolver,
     values: profileFromRow(participant) as ProfileEditInput,
   });
 
@@ -99,6 +112,14 @@ export function ParticipantEditForm({
 
   return (
     <form onSubmit={(event) => void save(event)} noValidate className="flex flex-col gap-6">
+      {canSeeSensitive ? null : (
+        <p
+          data-testid="participant-edit-sensitive-hidden"
+          className="text-start text-sm text-muted-foreground"
+        >
+          {t('participants:profile.sensitiveHidden')}
+        </p>
+      )}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <TextField
           control={control}
@@ -159,7 +180,7 @@ export function ParticipantEditForm({
         />
         {/* "No document" is a first-class answer, so the number disappears
             rather than sitting there demanding something she does not have. */}
-        {documentType === 'none' ? null : (
+        {!canSeeSensitive || documentType === 'none' ? null : (
           <TextField
             control={control}
             name="documentNumber"
@@ -174,21 +195,27 @@ export function ParticipantEditForm({
           />
         )}
 
-        <TextField
-          control={control}
-          name="phone"
-          label={t('profile:fieldPhone')}
-          placeholder={t('onboarding:phonePlaceholder')}
-          errorMessage={errors.phone ? t('onboarding:errorPhoneFormat') : undefined}
-        />
-        <TextField control={control} name="address" label={t('profile:fieldAddress')} />
+        {canSeeSensitive ? (
+          <>
+            <TextField
+              control={control}
+              name="phone"
+              label={t('profile:fieldPhone')}
+              placeholder={t('onboarding:phonePlaceholder')}
+              errorMessage={errors.phone ? t('onboarding:errorPhoneFormat') : undefined}
+            />
+            <TextField control={control} name="address" label={t('profile:fieldAddress')} />
+          </>
+        ) : null}
         <TextField control={control} name="city" label={t('profile:fieldCity')} />
-        <TextField
-          control={control}
-          name="postalCode"
-          label={t('profile:fieldPostalCode')}
-          errorMessage={errors.postalCode ? t('onboarding:errorPostalFormat') : undefined}
-        />
+        {canSeeSensitive ? (
+          <TextField
+            control={control}
+            name="postalCode"
+            label={t('profile:fieldPostalCode')}
+            errorMessage={errors.postalCode ? t('onboarding:errorPostalFormat') : undefined}
+          />
+        ) : null}
 
         <TextField
           control={control}
