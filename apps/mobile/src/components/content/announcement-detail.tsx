@@ -3,7 +3,7 @@
  * text, and pinning and deleting as the web admin's list has them. Deleting is
  * for `announcements.publish` holders, as the database requires, and asks
  * first. A screen of its own on a phone; the right half of the list on a
- * tablet. The editor comes with RAPP-341.
+ * tablet. Edit opens the editor (RAPP-341).
  */
 import {
   AnnouncementEmptyState,
@@ -16,6 +16,7 @@ import { continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { useAccountAccess } from '@/lib/use-account-access';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
+import { useRouter, type Href } from 'expo-router';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Platform, ScrollView, Text, View } from 'react-native';
@@ -51,6 +52,7 @@ export function AnnouncementDetail({
   const fontClass = useLanguageFontClass();
   const { permissions } = useAccountAccess();
   const canPublish = permissions.has('announcements.publish');
+  const { push } = useRouter();
   const announcement = useContentAnnouncement(announcementId);
   const { setPinned, remove } = useAnnouncementActions();
   const format = useMemo(
@@ -131,6 +133,19 @@ export function AnnouncementDetail({
         </Text>
       </View>
       <View className="flex-row flex-wrap gap-sm">
+        <PressableScale
+          testID="announcement-edit"
+          accessibilityRole="button"
+          accessibilityLabel={t('editAction')}
+          onPress={() => push(`/content-announcement-edit/${data.id}` as Href)}
+          haptic="tapLight"
+          style={continuousCorners}
+          className="min-h-recommended items-center justify-center rounded-md bg-primary px-lg"
+        >
+          <Text className={`text-center text-md font-bold text-white ${fontClass}`}>
+            {t('editAction')}
+          </Text>
+        </PressableScale>
         <PressableScale
           testID="announcement-pin"
           accessibilityRole="button"

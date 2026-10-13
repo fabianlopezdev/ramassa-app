@@ -64,5 +64,11 @@
   "imageAltRequired": "Afegeix una descripció de la imatge i aprova'n totes les traduccions.",
   "saveFailed": "No s'ha pogut desar l'avís.",
   "loadFailed": "No s'ha pogut carregar l'avís.",
-  "pinned": "Fixat"
+  "pinned": "Fixat",
+  "clearDate": "Treu la data",
+  "noExpiry": "Sense caducitat",
+  "editAction": "Edita",
+  "publishLocked": "Només qui pot publicar canvia la publicació.",
+  "draftRestored": "El text sense desar s'ha guardat en aquest telèfon.",
+  "imageChosen": "Foto triada. Es puja quan desis."
 }

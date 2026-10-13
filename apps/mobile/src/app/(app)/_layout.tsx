@@ -134,6 +134,7 @@ export default function AppLayout() {
         </Stack.Protected>
         <Stack.Protected guard={isTeam && team.content}>
           <Stack.Screen name="content-announcement/[id]" />
+          <Stack.Screen name="content-announcement-edit/[id]" />
         </Stack.Protected>
         <Stack.Protected guard={isTeam && team.attendance}>
           <Stack.Screen name="attendance/[id]" />

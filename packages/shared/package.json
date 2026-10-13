@@ -31,6 +31,7 @@
     "./equipment": "./equipment/index.ts",
     "./permissions": "./permissions/index.ts",
     "./translation": "./translation/index.ts",
+    "./translation/client": "./translation/client.ts",
     "./translation/react": "./translation/react.ts",
     "./announcements": "./announcements.ts",
     "./events": "./events.ts",

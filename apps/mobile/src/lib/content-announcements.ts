@@ -1,6 +1,7 @@
 /**
  * Announcements for the team on the phone (RAPP-340): the list with the web
- * admin's status filter, one announcement, pinning, and deleting. The database
+ * admin's status filter, one announcement, pinning, deleting, and the photo
+ * upload the editor uses (RAPP-341). The database
  * decides who may do what: `announcements.edit` or `announcements.publish` to
  * read and pin, `announcements.publish` to delete. Kept in memory: the
  * `content` root is not on the disk allow-list.
@@ -21,7 +22,10 @@ import {
   type AnnouncementStatusFilter,
 } from '@ramassa/shared/announcements';
 import { useAuth } from '@ramassa/shared/auth';
-import { supabase } from './supabase';
+import { AppError } from '@ramassa/shared/errors';
+import { uploadFile } from '@ramassa/shared/upload-client';
+import { compressNativeStoryImage } from './native-image-compression';
+import { mobileClientEnv, supabase } from './supabase';
 
 const SIGNED_OUT = 'signed-out';
 
@@ -64,4 +68,28 @@ export function useAnnouncementActions() {
     onSuccess: refresh,
   });
   return { setPinned, remove };
+}
+
+/**
+ * Compresses and uploads an announcement photo to the `announcements` folder
+ * (RAPP-341); returns its object key.
+ */
+export async function uploadAnnouncementImage(draft: {
+  readonly uri: string;
+  readonly width: number;
+  readonly height: number;
+}): Promise<string> {
+  const mediaWorkerUrl = mobileClientEnv.EXPO_PUBLIC_MEDIA_WORKER_URL;
+  if (mediaWorkerUrl === undefined) throw new AppError('UPLOAD-1');
+  const { data, error } = await supabase.auth.getSession();
+  if (error || data.session === null) throw new AppError('AUTH-2');
+  const image = await compressNativeStoryImage(draft);
+  const uploaded = await uploadFile({
+    mediaWorkerUrl,
+    accessToken: data.session.access_token,
+    folder: 'announcements',
+    file: image,
+  });
+  if (!uploaded.ok) throw uploaded.error;
+  return uploaded.value.objectKey;
 }

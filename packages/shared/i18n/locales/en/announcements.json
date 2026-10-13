@@ -64,5 +64,11 @@
   "imageAltRequired": "Add an image description, then generate and approve its translations.",
   "saveFailed": "The announcement could not be saved.",
   "loadFailed": "The announcement could not be loaded.",
-  "pinned": "Pinned"
+  "pinned": "Pinned",
+  "clearDate": "Remove the date",
+  "noExpiry": "No expiry",
+  "editAction": "Edit",
+  "publishLocked": "Only someone who can publish changes the publication.",
+  "draftRestored": "Your unsaved text was kept on this phone.",
+  "imageChosen": "Photo chosen. It uploads when you save."
 }

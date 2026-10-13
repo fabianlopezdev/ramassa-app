@@ -162,9 +162,21 @@ export default function ContentScreen() {
       >
         {tNav('team.content')}
       </Text>
-      <Text className={`text-start text-xl font-bold text-neutral-900 ${fontClass}`}>
-        {t('title')}
-      </Text>
+      <View className="flex-row flex-wrap items-center justify-between gap-sm">
+        <Text className={`text-start text-xl font-bold text-neutral-900 ${fontClass}`}>
+          {t('title')}
+        </Text>
+        <PressableScale
+          testID="content-announcement-new"
+          accessibilityRole="button"
+          accessibilityLabel={t('newAction')}
+          onPress={() => push('/content-announcement-edit/new' as Href)}
+          haptic="tapLight"
+          className="min-h-recommended justify-center"
+        >
+          <Text className={`font-semibold text-primary-dark ${fontClass}`}>{t('newAction')}</Text>
+        </PressableScale>
+      </View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
         <View className="flex-row gap-sm">
           {ANNOUNCEMENT_STATUS_FILTERS.map((candidate) => (
