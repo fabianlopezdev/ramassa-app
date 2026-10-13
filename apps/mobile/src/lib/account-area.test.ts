@@ -99,9 +99,11 @@ describe('the remembered account', () => {
 });
 
 test('team screens follow permissions', () => {
+  expect(teamScreens(new Set(['announcements.edit'])).content).toBe(true);
   expect(teamScreens(new Set(['attendance.reports']))).toEqual({
     attendance: true,
     participants: false,
+    content: false,
     messages: false,
     stock: false,
     arrivals: false,
@@ -112,6 +114,7 @@ test('team screens follow permissions', () => {
   expect(teamScreens(new Set(['messages.inbox']))).toEqual({
     attendance: false,
     participants: false,
+    content: false,
     messages: true,
     stock: false,
     arrivals: false,
@@ -122,6 +125,7 @@ test('team screens follow permissions', () => {
   expect(teamScreens(new Set(['participants.view']))).toEqual({
     attendance: false,
     participants: true,
+    content: false,
     messages: false,
     stock: false,
     arrivals: false,
@@ -132,6 +136,7 @@ test('team screens follow permissions', () => {
   expect(teamScreens(new Set())).toEqual({
     attendance: false,
     participants: false,
+    content: false,
     messages: false,
     stock: false,
     arrivals: false,
@@ -143,6 +148,7 @@ test('team screens follow permissions', () => {
   expect(teamScreens(new Set(['equipment.count']))).toEqual({
     attendance: false,
     participants: false,
+    content: false,
     messages: false,
     stock: true,
     arrivals: false,

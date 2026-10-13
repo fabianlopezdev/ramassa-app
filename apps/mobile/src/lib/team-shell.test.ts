@@ -27,6 +27,21 @@ describe('teamAreas', () => {
   });
 });
 
+describe('the content area (RAPP-340)', () => {
+  test('opens with announcement editing or publishing, after participants', () => {
+    expect(teamAreas(codes('announcements.edit'))).toEqual(['content']);
+    expect(
+      teamAreas(codes('announcements.publish', 'participants.view', 'messages.inbox')),
+    ).toEqual(['participants', 'content', 'messages']);
+    expect(teamAreas(codes('events.edit'))).toEqual([]);
+  });
+
+  test('content alone starts on content', () => {
+    expect(teamStart(['content'], 'sidebar')).toBe('/content');
+    expect(teamStart(['content', 'messages'], 'tabs')).toBe('/content');
+  });
+});
+
 describe('teamLayout', () => {
   test('a tablet always gets the sidebar', () => {
     expect(teamLayout({ areaCount: 1, width: 768 })).toBe('sidebar');

@@ -99,6 +99,7 @@ export function forgetAccount(storage: AccountAreaStorage, userId: string): void
 export function teamScreens(permissions: ReadonlySet<PermissionCode>): {
   readonly attendance: boolean;
   readonly participants: boolean;
+  readonly content: boolean;
   readonly messages: boolean;
   readonly stock: boolean;
   readonly arrivals: boolean;
@@ -109,6 +110,7 @@ export function teamScreens(permissions: ReadonlySet<PermissionCode>): {
   return {
     attendance: permissions.has('attendance.mark') || permissions.has('attendance.reports'),
     participants: permissions.has('participants.view'),
+    content: teamAreas(permissions).includes('content'),
     messages: permissions.has('messages.inbox'),
     stock: teamAreas(permissions).includes('stock'),
     arrivals: permissions.has('equipment.receive'),
@@ -133,6 +135,7 @@ export function areaHome(
   | '/home'
   | '/today'
   | '/participants'
+  | '/content'
   | '/messages'
   | '/more'
   | '/team-home'

@@ -1789,6 +1789,12 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - Her card ends with the GDPR section (for `rgpd.erase`): her open request when she has one, Anonymize, and Erase everything for holders of `team.manage` as well (the database requires both). Each opens a sheet that lists what the action does, says it cannot be undone, and asks for its word to be typed. Erasing follows ADR-023: the media worker purges her files and writes the receipt, then `delete_participant_permanently()` removes the record. After an erasure the card closes.
 - The phone's step-up check (`StepUpProvider`): first the device (biometrics or passcode, when the phone has one), then an authenticator code when the session has none from the last 10 minutes. When the database still refuses with AUTH-9, the code is asked once more and the action runs again. The web build asks only for the code. A cancelled step-up changes nothing.
 
+## Content area and announcements list on the phone (2026-10-13, RAPP-340, part of RAPP-214)
+
+- A Content area joins the team shell (a tab between Participants and Messages, a sidebar entry on a tablet, a button on the large-button home). It opens with `announcements.edit` or `announcements.publish`; the other content types widen it as phase 4 adds them, so nobody gets an empty screen.
+- Announcements list: status chips (all, draft, published, scheduled, expired, the web admin's filter), the total, pages that load on scroll, and each row's title, category, date, status and whether it is pinned. On a phone a row opens its own screen; on a tablet it opens beside the list.
+- One announcement shows its status, category, publication and expiry, and the Catalan text. Pin and unpin are there for anyone who reads it; Delete is for `announcements.publish` holders, as the database requires, and asks first. The editor comes in RAPP-341.
+
 ## Staff-side languages (2026-10-11, RAPP-238, part of RAPP-211)
 
 - The staff side (the web admin, the team screens and the entity screens) is in Catalan, Spanish or English (`STAFF_LANGUAGES`). Player screens keep all five languages and right-to-left. Content stays five-language everywhere: this is the language of the screens themselves.

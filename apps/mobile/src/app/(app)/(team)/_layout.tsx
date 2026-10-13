@@ -51,6 +51,7 @@ const compactSidebarStyle = {
 } as const;
 const todayIcon = { ios: 'sun.max.fill', android: 'today', web: 'today' } as const;
 const participantsIcon = { ios: 'person.2.fill', android: 'group', web: 'group' } as const;
+const contentIcon = { ios: 'doc.richtext.fill', android: 'article', web: 'article' } as const;
 const messagesIcon = {
   ios: 'bubble.left.and.bubble.right.fill',
   android: 'chat',
@@ -70,6 +71,7 @@ export default function TeamShellLayout() {
   const pathname = usePathname();
   const hasAttendance = areas.includes('attendance');
   const hasParticipants = areas.includes('participants');
+  const hasContent = areas.includes('content');
   const hasMessages = areas.includes('messages');
   const unread = useUnreadMessages().data ?? 0;
   const unreadBadge = unreadBadgeProps(unread);
@@ -105,6 +107,17 @@ export default function TeamShellLayout() {
                   isFocused={pathname === '/participants'}
                   label={t('team.participants')}
                   icon={participantsIcon}
+                />
+              </TabTrigger>
+            ) : null}
+            {hasContent ? (
+              <TabTrigger name="content" href="/content" asChild>
+                <TeamSidebarItem
+                  compact={compact}
+                  testID="team-sidebar-content"
+                  isFocused={pathname === '/content'}
+                  label={t('team.content')}
+                  icon={contentIcon}
                 />
               </TabTrigger>
             ) : null}
@@ -146,6 +159,9 @@ export default function TeamShellLayout() {
         <Stack.Protected guard={hasParticipants}>
           <Stack.Screen name="participants" />
         </Stack.Protected>
+        <Stack.Protected guard={hasContent}>
+          <Stack.Screen name="content" />
+        </Stack.Protected>
         <Stack.Protected guard={hasMessages}>
           <Stack.Screen name="messages" />
         </Stack.Protected>
@@ -176,6 +192,10 @@ export default function TeamShellLayout() {
         >
           <NativeTabs.Trigger.Icon sf="person.2.fill" md="group" />
           <NativeTabs.Trigger.Label>{t('team.participants')}</NativeTabs.Trigger.Label>
+        </NativeTabs.Trigger>
+        <NativeTabs.Trigger name="content" hidden={!hasContent} testID="team-tab-content">
+          <NativeTabs.Trigger.Icon sf="doc.richtext.fill" md="article" />
+          <NativeTabs.Trigger.Label>{t('team.content')}</NativeTabs.Trigger.Label>
         </NativeTabs.Trigger>
         <NativeTabs.Trigger name="messages" hidden={!hasMessages} testID="team-tab-messages">
           <NativeTabs.Trigger.Icon sf="bubble.left.and.bubble.right.fill" md="chat" />
