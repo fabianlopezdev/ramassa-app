@@ -6,7 +6,8 @@
  *
  * A field above the reader's level does not show at all. A field she may see
  * but nobody filled in says so, because a blank row looks like a field that
- * failed to load. Her material and the handover button come from RAPP-249.
+ * failed to load. The team's notes come from RAPP-282, her material and the
+ * handover button from RAPP-249.
  */
 import {
   AnnouncementEmptyState,
@@ -15,6 +16,7 @@ import {
 } from '@/components/announcements/feed-states';
 import { ParticipantMaterial } from '@/components/equipment/participant-material';
 import { PressableScale } from '@/components/motion/pressable-scale';
+import { ParticipantNotes } from '@/components/participants/participant-notes';
 import { DOCUMENT_TYPE_LABEL_KEYS } from '@/components/profile/profile-form-fields';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useParticipantCard, useParticipantWrites } from '@/lib/participant-lookup';
@@ -107,6 +109,7 @@ export function ParticipantCard({
   const canEdit = access.personal;
   const canChangeStatus = permissions.has('participants.deactivate');
   const canModerateForum = permissions.has('forum.moderate');
+  const canReadNotes = permissions.has('participants.notes');
   const locale = i18n.resolvedLanguage ?? DEFAULT_LANGUAGE;
   const formats = useMemo(
     () => ({
@@ -382,6 +385,7 @@ export function ParticipantCard({
           return <CardRow key={field} label={label} value={value} />;
         })}
       </View>
+      {canReadNotes ? <ParticipantNotes participantId={participantId} /> : null}
       <ParticipantMaterial participantId={participantId} />
     </ScrollView>
   );

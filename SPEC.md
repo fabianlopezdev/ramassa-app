@@ -1765,6 +1765,12 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - "Edit the record" (for `participants.view_personal`, the level `update_participant_profile` requires) opens a form with the same fields, pickers and rules as her own edit screen, plus date of birth, app language, referring entity and its contact. Without `participants.view_sensitive` the form leaves out the four encrypted fields and does not ask for the document number (`profileEditWithoutSensitiveSchema`); the database keeps the stored values. The screen closes only when the save succeeds.
 - "Deactivate" and "Reactivate" need `participants.deactivate`; the phone asks before it deactivates. "Disable forum posting" and "Enable forum posting" need `forum.moderate`. Each write reloads the card and the list.
 
+## Participant notes on the phone (2026-10-13, RAPP-282, part of RAPP-213)
+
+- The participant card shows the team's notes about her (`participant_notes`), newest first, each with its author and the date and time in Madrid. They are the same notes as in the web admin, and they need `participants.notes` to read and to add. Without it the card has no notes section.
+- "Add a note" opens a sheet with the text field above the keyboard, the reminder that notes cannot be edited or deleted, and Add and Cancel. An empty note or one over 4,000 characters is refused with a message (`participantNoteSchema`). After a save the sheet closes and the note is first in the list.
+- Like every native sheet, it hides while the app lock covers the app.
+
 ## Staff-side languages (2026-10-11, RAPP-238, part of RAPP-211)
 
 - The staff side (the web admin, the team screens and the entity screens) is in Catalan, Spanish or English (`STAFF_LANGUAGES`). Player screens keep all five languages and right-to-left. Content stays five-language everywhere: this is the language of the screens themselves.
