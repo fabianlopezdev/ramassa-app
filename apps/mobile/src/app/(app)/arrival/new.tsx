@@ -20,6 +20,7 @@ import {
 } from '@/lib/arrival-form';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useHandoverItemTypes } from '@/lib/handover';
+import { useItemLabel } from '@/lib/item-label';
 import { isNetworkStateOnline } from '@/lib/network-status';
 import { uploadArrivalPhoto, useRecordArrival } from '@/lib/stock';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
@@ -109,7 +110,7 @@ function OutlineButton({
 
 export default function NewArrivalScreen() {
   const { t, i18n } = useTranslation('participants');
-  const { t: tEquipment } = useTranslation('equipment');
+  const itemLabel = useItemLabel();
   const { t: tCommon } = useTranslation('common');
   const fontClass = useLanguageFontClass();
   const { back } = useRouter();
@@ -135,10 +136,11 @@ export default function NewArrivalScreen() {
 
   const types = useMemo(
     () =>
-      [...(itemTypes.data ?? [])].sort((left, right) =>
-        tEquipment(left.key).localeCompare(tEquipment(right.key), locale),
-      ),
-    [itemTypes.data, locale, tEquipment],
+      // Switched-off items leave the pickers (RAPP-253).
+      (itemTypes.data ?? [])
+        .filter((type) => type.is_active)
+        .sort((left, right) => itemLabel(left.key).localeCompare(itemLabel(right.key), locale)),
+    [itemTypes.data, locale, itemLabel],
   );
   const itemType = types.find((candidate) => candidate.id === itemTypeId) ?? null;
   const needsSize = itemType !== null && itemType.sizes.length > 0;
@@ -339,8 +341,8 @@ export default function NewArrivalScreen() {
             {lines.map((line, index) => {
               const item =
                 line.size === null
-                  ? tEquipment(line.itemKey)
-                  : `${tEquipment(line.itemKey)} ${line.size}`;
+                  ? itemLabel(line.itemKey)
+                  : `${itemLabel(line.itemKey)} ${line.size}`;
               return (
                 <View
                   key={`${line.itemTypeId}-${line.size ?? ''}-${line.unitValueCents ?? ''}`}
@@ -396,7 +398,7 @@ export default function NewArrivalScreen() {
                     key={type.id}
                     testID={`arrival-item-${type.key}`}
                     value={type.id}
-                    label={tEquipment(type.key)}
+                    label={itemLabel(type.key)}
                     selected={type.id === itemTypeId}
                     onSelect={chooseItem}
                     languageFontClass={fontClass}

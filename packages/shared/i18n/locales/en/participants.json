@@ -337,5 +337,45 @@
     "todayTitle": "Checked out and late",
     "todayRow": "{{item}}: {{quantity}} with {{name}}, due {{date}}",
     "todayMine": "{{item}}: {{quantity}} with you, due {{date}}"
+  },
+  "items": {
+    "title": "Items",
+    "intro": "The material the team hands out, counts and receives.",
+    "action": "Items",
+    "add": "Add an item",
+    "newTitle": "New item",
+    "editTitle": "Edit {{item}}",
+    "builtin": "Built-in item. Its name comes from the app's translations.",
+    "nameLabel": "Name in {{language}}",
+    "nameRequired": "Write at least the Catalan name.",
+    "kindLabel": "Kind",
+    "kind": {
+      "player_kit": "Player kit",
+      "team_equipment": "Team equipment"
+    },
+    "kindHint": "Player kit is handed to players and gets unit codes. Team equipment is counted.",
+    "sizesLabel": "Sizes",
+    "sizesHint": "Leave empty for an item without sizes. A size that still has stock cannot be removed.",
+    "noSizes": "No sizes",
+    "addSize": "Add the size",
+    "newSize": "New size",
+    "removeSize": "Remove size {{size}}",
+    "valueLabel": "Usual value of one piece in euros",
+    "valueHint": "Filled in on every donation of this item.",
+    "codeLabel": "Code letters",
+    "codeHint": "One to three letters for unit codes, for example AV for AV-0001.",
+    "activeLabel": "In use",
+    "active": {
+      "on": "In use",
+      "off": "Switched off"
+    },
+    "activeHint": "A switched-off item leaves the lists and keeps its history.",
+    "save": "Save the item",
+    "saving": "Saving",
+    "saveFailed": "The item was not saved. Try again.",
+    "sizeInStock": "Size {{size}} still has stock. Count it to zero or keep it.",
+    "codeTaken": "Another item already uses these code letters.",
+    "summary": "{{kind}} · {{sizes}}",
+    "inactive": "Switched off"
   }
 }

@@ -15,6 +15,7 @@ import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useHandoverItemTypes, useHandoverOutbox, type HandoverOutcome } from '@/lib/handover';
 import { handoverSignature, statementLanguageFor, suggestedSize } from '@/lib/handover-form';
+import { useItemLabel } from '@/lib/item-label';
 import { fontClassForLanguage } from '@/lib/language-font-class';
 import { useParticipantCard } from '@/lib/participant-lookup';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
@@ -34,7 +35,7 @@ import {
   type UnsignedState,
 } from '@ramassa/shared/equipment';
 import { toAppError, type AppErrorCode } from '@ramassa/shared/errors';
-import { isRtlLanguage, LANGUAGE_NATIVE_NAMES } from '@ramassa/shared/i18n';
+import { isRtlLanguage, LANGUAGE_NATIVE_NAMES, resolveLocalizedText } from '@ramassa/shared/i18n';
 
 type Step = 'item' | 'signature' | 'done';
 
@@ -123,7 +124,7 @@ export default function HandoverScreen() {
   const { participantId = '' } = useLocalSearchParams<{ participantId: string }>();
   const { back } = useRouter();
   const { t, i18n } = useTranslation('participants');
-  const { t: tEquipment } = useTranslation('equipment');
+  const itemLabel = useItemLabel();
   const { t: tCommon } = useTranslation('common');
   const fontClass = useLanguageFontClass();
   const her = useParticipantCard(participantId).data ?? null;
@@ -152,10 +153,13 @@ export default function HandoverScreen() {
   // In the reader's language order, so the list reads alphabetically.
   const types = useMemo(
     () =>
-      [...(itemTypes.data ?? [])].sort((left, right) =>
-        tEquipment(left.key).localeCompare(tEquipment(right.key), i18n.resolvedLanguage),
-      ),
-    [i18n.resolvedLanguage, itemTypes.data, tEquipment],
+      // Switched-off items leave the pickers (RAPP-253).
+      (itemTypes.data ?? [])
+        .filter((type) => type.is_active)
+        .sort((left, right) =>
+          itemLabel(left.key).localeCompare(itemLabel(right.key), i18n.resolvedLanguage),
+        ),
+    [i18n.resolvedLanguage, itemTypes.data, itemLabel],
   );
   const itemType = types.find((candidate) => candidate.id === itemTypeId) ?? null;
   const needsSize = itemType !== null && itemType.sizes.length > 0;
@@ -168,7 +172,11 @@ export default function HandoverScreen() {
   const statement = useMemo(() => {
     if (itemType === null) return '';
     const fixed = i18n.getFixedT(statementLanguage, 'equipment');
-    const item = fixed(itemType.key);
+    // A custom item carries its own names; a built-in uses the translations.
+    const item =
+      itemType.is_builtin || itemType.name === null
+        ? fixed(itemType.key)
+        : (resolveLocalizedText(itemType.name, statementLanguage)?.text ?? itemType.key);
     const itemWithSize = size === null ? item : fixed('statementItemSize', { item, size });
     return fixed(mode === 'given' ? 'statementGiven' : 'statementLent', { item: itemWithSize });
   }, [i18n, itemType, mode, size, statementLanguage]);
@@ -300,7 +308,7 @@ export default function HandoverScreen() {
                       key={type.id}
                       testID={`handover-item-${type.key}`}
                       value={type.id}
-                      label={tEquipment(type.key)}
+                      label={itemLabel(type.key)}
                       selected={type.id === itemTypeId}
                       onSelect={chooseItem}
                       languageFontClass={fontClass}

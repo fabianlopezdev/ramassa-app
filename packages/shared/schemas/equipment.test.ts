@@ -9,8 +9,8 @@ import {
 } from './equipment';
 
 /**
- * The item catalog as the DATABASE will enforce it, read from the migrations on
- * disk.
+ * The built-in items as the DATABASE creates them for every organization, read
+ * from the migrations on disk.
  *
  * Read from FILES rather than by asking the running database, which is what the
  * first version did. `bun test` does not reliably capture a child CLI's output
@@ -19,9 +19,10 @@ import {
  * test passed while the two catalogs genuinely disagreed. It was a check that
  * could not fail, in the file whose entire job is detecting drift.
  *
- * Every migration is scanned and the LAST definition wins, so a later migration
- * that alters the constraint is what this compares against rather than the
- * original one.
+ * Every migration is scanned and the LAST definition wins. Until RAPP-253 that
+ * was the delivery item check constraint; since then the catalog lives in
+ * `equipment_item_types` (the team can add items), and the fixed list must
+ * match the built-ins `create_builtin_item_types` makes.
  */
 function catalogInMigrations(): readonly string[] {
   const directory = join(import.meta.dir, '../../../supabase/migrations');
@@ -32,25 +33,27 @@ function catalogInMigrations(): readonly string[] {
   let latest: readonly string[] | undefined = undefined;
   for (const file of files) {
     const sql = readFileSync(join(directory, file), 'utf8');
-    const constraint = /item text not null check\s*\(([\s\S]*?)\)\s*,/.exec(sql);
-    if (constraint === null) continue;
-    latest = [...constraint[1]!.matchAll(/'([a-z_]+)'/g)].map((match) => match[1]!);
+    const builtins =
+      /function private\.create_builtin_item_types\([\s\S]*?on conflict \(org_id, key\) do nothing/.exec(
+        sql,
+      );
+    if (builtins === null) continue;
+    latest = [...builtins[0].matchAll(/\(p_org_id, '([a-z_]+)'/g)].map((match) => match[1]!);
   }
   if (latest === undefined) {
-    throw new Error('No equipment item check constraint found in any migration');
+    throw new Error('No built-in item types found in any migration');
   }
   return latest;
 }
 
 describe('the equipment catalog', () => {
   /**
-   * THE DRIFT TEST. The catalog exists twice on purpose: a TypeScript enum so
-   * the form can offer a picker, and a check constraint so a client that skips
-   * the picker is still refused. Two copies of a list is exactly how one of them
-   * quietly gains an item the other rejects, and the symptom would be a delivery
-   * the form accepts and the database throws out, in front of a staff member.
+   * THE DRIFT TEST. The built-ins exist twice: a TypeScript enum for the web
+   * admin's picker, and the rows every organization starts with. Two copies of
+   * a list is how one quietly gains an item the other lacks, and the symptom
+   * would be a delivery the form offers and the ledger trigger refuses.
    */
-  test('every item the database accepts is one the picker offers, and vice versa', () => {
+  test('every built-in item the database creates is one the picker offers, and vice versa', () => {
     expect([...catalogInMigrations()].sort()).toEqual([...EQUIPMENT_ITEMS].sort());
   });
 

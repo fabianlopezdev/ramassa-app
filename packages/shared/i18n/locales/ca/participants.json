@@ -337,5 +337,45 @@
     "todayTitle": "Deixat i amb retard",
     "todayRow": "{{item}}: {{quantity}} amb {{name}}, havia de tornar el {{date}}",
     "todayMine": "{{item}}: {{quantity}} amb tu, havia de tornar el {{date}}"
+  },
+  "items": {
+    "title": "Articles",
+    "intro": "El material que l'equip lliura, compta i rep.",
+    "action": "Articles",
+    "add": "Afegir un article",
+    "newTitle": "Article nou",
+    "editTitle": "Editar {{item}}",
+    "builtin": "Article de sèrie. El nom ve de les traduccions de l'app.",
+    "nameLabel": "Nom en {{language}}",
+    "nameRequired": "Escriu almenys el nom en català.",
+    "kindLabel": "Tipus",
+    "kind": {
+      "player_kit": "Equipament de jugadora",
+      "team_equipment": "Material d'equip"
+    },
+    "kindHint": "L'equipament de jugadora es lliura a les jugadores i porta codi d'unitat. El material d'equip es compta.",
+    "sizesLabel": "Talles",
+    "sizesHint": "Deixa-ho buit per a un article sense talles. Una talla que encara té estoc no es pot treure.",
+    "noSizes": "Sense talles",
+    "addSize": "Afegir la talla",
+    "newSize": "Talla nova",
+    "removeSize": "Treure la talla {{size}}",
+    "valueLabel": "Valor habitual d'una unitat en euros",
+    "valueHint": "Es posa a cada donació d'aquest article.",
+    "codeLabel": "Lletres del codi",
+    "codeHint": "D'una a tres lletres per als codis d'unitat, per exemple AV per a AV-0001.",
+    "activeLabel": "En ús",
+    "active": {
+      "on": "En ús",
+      "off": "Desactivat"
+    },
+    "activeHint": "Un article desactivat surt de les llistes i conserva l'historial.",
+    "save": "Desar l'article",
+    "saving": "Desant",
+    "saveFailed": "L'article no s'ha desat. Torna-ho a provar.",
+    "sizeInStock": "La talla {{size}} encara té estoc. Compta-la a zero o mantén-la.",
+    "codeTaken": "Un altre article ja fa servir aquestes lletres.",
+    "summary": "{{kind}} · {{sizes}}",
+    "inactive": "Desactivat"
   }
 }

@@ -54,7 +54,9 @@ select throws_ok(
   $$ insert into public.equipment_deliveries (profile_id, item, size, delivered_by, delivered_on)
      values ('5eed0000-0000-4000-8000-000000000011', 'unes botes qualsevol', '38',
              '5eed0000-0000-4000-8000-000000000002', current_date) $$,
-  '23514',
+  -- Since RAPP-253 the catalog is the organization's item types, which the team
+  -- can extend, and the ledger trigger refuses an item it does not have.
+  'P0001',
   null::text,
   'an item outside the catalog is refused by the database, not merely by the form'
 );

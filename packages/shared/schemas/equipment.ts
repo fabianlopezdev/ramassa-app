@@ -6,9 +6,10 @@
  * data exists to answer is "how many pairs of boots did we hand out this
  * season", asked by a funder, and a typed item answers it wrong forever:
  * "botes", "Botes", "bota" and "boots" are four buckets for one thing and no
- * later cleaning recovers what was meant. The list is mirrored by a check
- * constraint in the database, so a client that skips the picker is still
- * refused, and `equipment.test.ts` asserts the two agree.
+ * later cleaning recovers what was meant. This list is the twelve built-in
+ * items every organization starts with; since RAPP-253 the team can add items
+ * of its own, so the database refuses any item its catalog does not have, and
+ * `equipment.test.ts` asserts this list matches the built-ins.
  *
  * Values are stable machine tokens, not labels. The label a person reads is an
  * i18n key, so the same delivery reads "Botes" in Catalan and "أحذية" in Arabic

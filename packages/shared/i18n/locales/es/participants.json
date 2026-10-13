@@ -337,5 +337,45 @@
     "todayTitle": "Prestado y con retraso",
     "todayRow": "{{item}}: {{quantity}} con {{name}}, tenía que volver el {{date}}",
     "todayMine": "{{item}}: {{quantity}} contigo, tenía que volver el {{date}}"
+  },
+  "items": {
+    "title": "Artículos",
+    "intro": "El material que el equipo entrega, cuenta y recibe.",
+    "action": "Artículos",
+    "add": "Añadir un artículo",
+    "newTitle": "Artículo nuevo",
+    "editTitle": "Editar {{item}}",
+    "builtin": "Artículo de serie. Su nombre viene de las traducciones de la app.",
+    "nameLabel": "Nombre en {{language}}",
+    "nameRequired": "Escribe al menos el nombre en catalán.",
+    "kindLabel": "Tipo",
+    "kind": {
+      "player_kit": "Equipación de jugadora",
+      "team_equipment": "Material de equipo"
+    },
+    "kindHint": "La equipación de jugadora se entrega a las jugadoras y lleva código de unidad. El material de equipo se cuenta.",
+    "sizesLabel": "Tallas",
+    "sizesHint": "Déjalo vacío para un artículo sin tallas. Una talla que aún tiene stock no se puede quitar.",
+    "noSizes": "Sin tallas",
+    "addSize": "Añadir la talla",
+    "newSize": "Talla nueva",
+    "removeSize": "Quitar la talla {{size}}",
+    "valueLabel": "Valor habitual de una unidad en euros",
+    "valueHint": "Se pone en cada donación de este artículo.",
+    "codeLabel": "Letras del código",
+    "codeHint": "De una a tres letras para los códigos de unidad, por ejemplo AV para AV-0001.",
+    "activeLabel": "En uso",
+    "active": {
+      "on": "En uso",
+      "off": "Desactivado"
+    },
+    "activeHint": "Un artículo desactivado sale de las listas y conserva su historial.",
+    "save": "Guardar el artículo",
+    "saving": "Guardando",
+    "saveFailed": "El artículo no se ha guardado. Vuelve a intentarlo.",
+    "sizeInStock": "La talla {{size}} aún tiene stock. Cuéntala a cero o mantenla.",
+    "codeTaken": "Otro artículo ya usa estas letras.",
+    "summary": "{{kind}} · {{sizes}}",
+    "inactive": "Desactivado"
   }
 }

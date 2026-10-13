@@ -12,6 +12,7 @@ import { PressableScale } from '@/components/motion/pressable-scale';
 import { clampQuantity } from '@/lib/arrival-form';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useHandoverItemTypes } from '@/lib/handover';
+import { useItemLabel } from '@/lib/item-label';
 import { isNetworkStateOnline } from '@/lib/network-status';
 import { useCheckoutRecipients, useRecordCheckout } from '@/lib/stock';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
@@ -78,7 +79,7 @@ function StepButton({
 
 export default function NewCheckoutScreen() {
   const { t, i18n } = useTranslation('participants');
-  const { t: tEquipment } = useTranslation('equipment');
+  const itemLabel = useItemLabel();
   const { t: tCommon } = useTranslation('common');
   const fontClass = useLanguageFontClass();
   const { back } = useRouter();
@@ -99,10 +100,11 @@ export default function NewCheckoutScreen() {
 
   const types = useMemo(
     () =>
-      [...(itemTypes.data ?? [])].sort((left, right) =>
-        tEquipment(left.key).localeCompare(tEquipment(right.key), locale),
-      ),
-    [itemTypes.data, locale, tEquipment],
+      // Switched-off items leave the pickers (RAPP-253).
+      (itemTypes.data ?? [])
+        .filter((type) => type.is_active)
+        .sort((left, right) => itemLabel(left.key).localeCompare(itemLabel(right.key), locale)),
+    [itemTypes.data, locale, itemLabel],
   );
   const itemType = types.find((type) => type.id === itemTypeId) ?? null;
   const needsSize = itemType !== null && itemType.sizes.length > 0;
@@ -170,7 +172,7 @@ export default function NewCheckoutScreen() {
                 key={type.id}
                 testID={`checkout-item-${type.key}`}
                 value={type.id}
-                label={tEquipment(type.key)}
+                label={itemLabel(type.key)}
                 selected={type.id === itemTypeId}
                 onSelect={(id) => {
                   setItemTypeId(id);

@@ -8,6 +8,7 @@
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useStockAlerts } from '@/lib/handover';
+import { useItemLabel } from '@/lib/item-label';
 import { useMonthlyCount } from '@/lib/stock';
 import { teamAreas } from '@/lib/team-shell';
 import { useAccountAccess } from '@/lib/use-account-access';
@@ -20,7 +21,7 @@ const cardClass = 'gap-xs rounded-md border border-neutral-200 bg-white px-md py
 
 export function TodayMaterialCard() {
   const { t } = useTranslation('participants');
-  const { t: tEquipment } = useTranslation('equipment');
+  const itemLabel = useItemLabel();
   const fontClass = useLanguageFontClass();
   const { push } = useRouter();
   const { permissions } = useAccountAccess();
@@ -33,8 +34,8 @@ export function TodayMaterialCard() {
     text: t('material.stockAlert', {
       item:
         alert.size === null
-          ? tEquipment(alert.itemKey)
-          : `${tEquipment(alert.itemKey)} ${alert.size}`,
+          ? itemLabel(alert.itemKey)
+          : `${itemLabel(alert.itemKey)} ${alert.size}`,
     }),
   }));
   const details = lines.length === 0 ? [t('material.stockFine')] : lines.map((line) => line.text);
@@ -67,7 +68,7 @@ export function TodayMaterialCard() {
       <PressableScale
         testID="today-monthly-count"
         accessibilityRole="button"
-        accessibilityLabel={`${t('count.monthlyTitle')}, ${t('count.monthlyItem', { item: tEquipment(monthly.itemKey) })}`}
+        accessibilityLabel={`${t('count.monthlyTitle')}, ${t('count.monthlyItem', { item: itemLabel(monthly.itemKey) })}`}
         onPress={() => push(`/count/${monthly.itemTypeId}` as Href)}
         haptic="selection"
         style={continuousCorners}
@@ -77,7 +78,7 @@ export function TodayMaterialCard() {
           {t('count.monthlyTitle')}
         </Text>
         <Text className={`text-start text-md font-semibold text-primary-dark ${fontClass}`}>
-          {t('count.monthlyItem', { item: tEquipment(monthly.itemKey) })}
+          {t('count.monthlyItem', { item: itemLabel(monthly.itemKey) })}
         </Text>
       </PressableScale>
     );

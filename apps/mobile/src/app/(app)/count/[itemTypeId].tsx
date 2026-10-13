@@ -11,6 +11,7 @@ import { PageWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useHandoverItemTypes } from '@/lib/handover';
+import { useItemLabel } from '@/lib/item-label';
 import { isNetworkStateOnline } from '@/lib/network-status';
 import { useRecordCount, useStockLevels } from '@/lib/stock';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
@@ -78,7 +79,7 @@ export default function StockCountScreen() {
   const { itemTypeId = '' } = useLocalSearchParams<{ itemTypeId: string }>();
   const { back } = useRouter();
   const { t } = useTranslation('participants');
-  const { t: tEquipment } = useTranslation('equipment');
+  const itemLabel = useItemLabel();
   const { t: tCommon } = useTranslation('common');
   const fontClass = useLanguageFontClass();
   const isOnline = isNetworkStateOnline(useNetworkState());
@@ -121,7 +122,7 @@ export default function StockCountScreen() {
   );
   const differences = lines === null ? [] : countDifferences(lines, expected);
   const needsReason = differences.length > 0;
-  const item = itemType === null ? '' : tEquipment(itemType.key);
+  const item = itemType === null ? '' : itemLabel(itemType.key);
 
   const save = () => {
     if (lines === null || itemType === null || (needsReason && reason === null)) return;

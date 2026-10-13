@@ -1734,6 +1734,15 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - Stock has "Check out to a staff member" (item, size, quantity, person, back by tomorrow, in 3 days, in a week or in two weeks, note) and a Checked out list: late ones in red, each with Check in (how many came back, the condition, and how many are missing).
 - Today shows a late-checkout card: every late one for the storeroom, which opens Stock, and her own for the staff member who has the material.
 
+## Item types management (2026-10-13, RAPP-253, part of RAPP-212)
+
+- Holders of `equipment.items` keep the material catalog from Stock, Items: the twelve built-in items and any the team adds. `save_item_type()` creates or updates one and writes a `stock.item_save` audit entry.
+- A custom item has a name in Catalan (required) and, when given, Spanish, English, Arabic and Farsi; the app falls back to Catalan. Its key is generated (`custom_…`). Built-in items keep the app's translated name, their kind and their code letters; their sizes, usual value and whether they are in use can change.
+- Each item has its sizes (none for a sizeless item), player kit or team equipment, the usual value of one donated piece (pre-filled on donations), and, for player kit, one to three code letters for unit codes. Two items cannot share code letters.
+- A size that still has stock cannot be removed; the editor names the size. An item that is no longer used is switched off: it leaves the pickers (handover, goods received, checkout) and keeps its history.
+- Handovers may be of any item in the organization's catalog; the delivery item check gave way to the ledger trigger, which refuses an item the organization does not have. Every screen shows a custom item by its own name (`useItemLabel`), and the handover statement uses the name in her language.
+- The web admin's equipment log still labels items through the built-in translations only.
+
 ## Staff-side languages (2026-10-11, RAPP-238, part of RAPP-211)
 
 - The staff side (the web admin, the team screens and the entity screens) is in Catalan, Spanish or English (`STAFF_LANGUAGES`). Player screens keep all five languages and right-to-left. Content stays five-language everywhere: this is the language of the screens themselves.

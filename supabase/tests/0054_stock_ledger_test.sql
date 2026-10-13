@@ -16,7 +16,7 @@ select plan(12);
 
 select is(
   (select count(*)::int from public.equipment_item_types
-    where org_id = '5eed0000-0000-4000-8000-000000000000'),
+    where org_id = '5eed0000-0000-4000-8000-000000000000' and is_builtin),
   12, 'the seed organization has the twelve built-in item types'
 );
 

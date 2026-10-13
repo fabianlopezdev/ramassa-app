@@ -77,6 +77,11 @@ export interface HandoverItemType {
   readonly sizes: readonly string[];
   /** What one donated item is worth, set in the item editor; pre-fills an arrival. */
   readonly default_value_cents: number | null;
+  /** A custom item's name by language (RAPP-253); built-ins use the app's translations. */
+  readonly name: Readonly<Partial<Record<'ca' | 'es' | 'en' | 'ar' | 'fa', string>>> | null;
+  readonly is_builtin: boolean;
+  readonly is_active: boolean;
+  readonly code_prefix: string | null;
 }
 
 export interface ParticipantMaterialRow {
@@ -103,15 +108,17 @@ function databaseError(error: { readonly message: string; readonly code?: string
   return new AppError(databaseErrorCode(error.message, error.code), { message: error.message });
 }
 
-/** The active item types, in a stable order for the picker. */
+/**
+ * Every item type, switched-off ones included: their names are still needed
+ * for history. Pickers offer only the active ones.
+ */
 export async function fetchHandoverItemTypes(client: Client): Promise<readonly HandoverItemType[]> {
   const { data, error } = await client
     .from('equipment_item_types')
-    .select('id, key, kind, sizes, default_value_cents')
-    .eq('is_active', true)
+    .select('id, key, kind, sizes, default_value_cents, name, is_builtin, is_active, code_prefix')
     .order('key');
   if (error) throw databaseError(error);
-  return (data ?? []) as readonly HandoverItemType[];
+  return (data ?? []) as unknown as readonly HandoverItemType[];
 }
 
 export async function recordEquipmentHandover(
