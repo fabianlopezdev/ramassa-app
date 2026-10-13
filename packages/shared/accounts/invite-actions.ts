@@ -64,6 +64,31 @@ export async function fetchInvites(client: Client): Promise<readonly InviteRow[]
 }
 
 /** The entity default an invite carries into the wizard, if one is waiting. */
+/**
+ * Gives an open invite, even an expired one, 30 more days (RAPP-284). An
+ * invite sends no email, so this is what "resend" means: she can sign in
+ * with that address again. Returns the new expiry.
+ */
+export async function renewParticipantInvite(client: Client, inviteId: string): Promise<string> {
+  const { data, error } = await client.rpc('renew_participant_invite', { p_invite_id: inviteId });
+  if (error) {
+    throw new AppError('DB-1', { message: error.message });
+  }
+  return data;
+}
+
+/**
+ * Cancels an open invite (RAPP-284). The database also removes the empty
+ * account the invite made, when nothing else needs it, so the address can no
+ * longer sign in.
+ */
+export async function revokeParticipantInvite(client: Client, inviteId: string): Promise<void> {
+  const { error } = await client.rpc('revoke_participant_invite', { p_invite_id: inviteId });
+  if (error) {
+    throw new AppError('DB-1', { message: error.message });
+  }
+}
+
 export interface PendingInvite {
   readonly reference_entity: string | null;
   readonly invited_at: string;

@@ -26,6 +26,7 @@ import {
   type ParticipantListSearch,
 } from '@/lib/participant-filters';
 import { useParticipantList } from '@/lib/participant-lookup';
+import { useAccountAccess } from '@/lib/use-account-access';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { FlashList, type FlashListRef, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useRouter, type Href } from 'expo-router';
@@ -184,6 +185,7 @@ export default function ParticipantListScreen() {
   const { t: tErrors } = useTranslation('errors');
   const fontClass = useLanguageFontClass();
   const { push } = useRouter();
+  const canInvite = useAccountAccess().permissions.has('participants.invite');
   const isSplit = useTeamLayout() === 'sidebar';
   const [search, setSearch] = useState<ParticipantListSearch>(DEFAULT_SEARCH);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -274,12 +276,28 @@ export default function ParticipantListScreen() {
   const header = (
     <View className="gap-sm px-lg pb-md pt-lg">
       <TeamBackToHome />
-      <Text
-        accessibilityRole="header"
-        className={`text-start text-3xl font-bold text-neutral-900 ${fontClass}`}
-      >
-        {tNav('team.participants')}
-      </Text>
+      <View className="flex-row flex-wrap items-center justify-between gap-sm">
+        <Text
+          accessibilityRole="header"
+          className={`text-start text-3xl font-bold text-neutral-900 ${fontClass}`}
+        >
+          {tNav('team.participants')}
+        </Text>
+        {canInvite ? (
+          <PressableScale
+            testID="participants-invites"
+            accessibilityRole="button"
+            accessibilityLabel={t('invitesAction')}
+            onPress={() => push('/participant-invites' as Href)}
+            haptic="tapLight"
+            className="min-h-recommended justify-center"
+          >
+            <Text className={`font-semibold text-primary-dark ${fontClass}`}>
+              {t('invitesAction')}
+            </Text>
+          </PressableScale>
+        ) : null}
+      </View>
       <View className="flex-row items-center gap-sm">
         <TextInput
           testID="participant-search"
