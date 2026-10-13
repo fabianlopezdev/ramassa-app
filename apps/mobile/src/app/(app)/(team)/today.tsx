@@ -8,6 +8,7 @@ import { AttendanceSheet } from '@/components/attendance/attendance-sheet';
 import { PageWidth } from '@/components/layout/content-width';
 import { TeamBackToHome } from '@/components/team/team-back-to-home';
 import { useTeamLayout } from '@/components/team/team-layout-context';
+import { TodayCheckoutsCard } from '@/components/team/today-checkouts-card';
 import { TodayMaterialCard } from '@/components/team/today-material-card';
 import { TodayMessagesCard } from '@/components/team/today-messages-card';
 import { useAttendanceOccurrences } from '@/lib/attendance';
@@ -112,6 +113,8 @@ export default function AttendanceOccurrencesScreen() {
           <Text className={`text-start text-md text-neutral-600 ${languageFontClass}`}>
             {isToday ? tNav('team.todayIntro') : t('intro')}
           </Text>
+          {/* The card adds its own spacing, and nothing when nothing is late. */}
+          {isToday ? <TodayCheckoutsCard /> : null}
           {isToday && sections.includes('material') ? (
             <View className="pt-md">
               <TodayMaterialCard />

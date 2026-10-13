@@ -1530,6 +1530,25 @@ select org_id, id, '5eed0000-0000-4000-8000-000000000002', now() - interval '45 
 from public.equipment_item_types
 where org_id = '5eed0000-0000-4000-8000-000000000000' and key = 'ball';
 
+-- Staff checkouts (RAPP-252) ----------------------------------------------------------
+--
+-- Núria took six balls to a tournament five days ago and they were due back
+-- two days ago, so Today shows an overdue checkout.
+
+insert into public.staff_checkouts
+  (id, org_id, item_type_id, quantity, checked_out_to, checked_out_by, checked_out_at, expected_return_on, note)
+select '5eed0000-0000-4000-8000-000000000c01', org_id, id, 6,
+  '5eed0000-0000-4000-8000-000000000003', '5eed0000-0000-4000-8000-000000000002',
+  now() - interval '5 days', current_date - 2, 'Tournament in Girona.'
+from public.equipment_item_types
+where org_id = '5eed0000-0000-4000-8000-000000000000' and key = 'ball';
+
+insert into public.stock_movements (org_id, item_type_id, quantity, kind, checkout_id, recorded_by, occurred_at)
+select org_id, id, -6, 'checkout', '5eed0000-0000-4000-8000-000000000c01',
+  '5eed0000-0000-4000-8000-000000000002', now() - interval '5 days'
+from public.equipment_item_types
+where org_id = '5eed0000-0000-4000-8000-000000000000' and key = 'ball';
+
 -- Stock alerts (RAPP-249) --------------------------------------------------------------
 --
 -- Shorts XL never arrived, so handing a pair to Blanca took the size below zero

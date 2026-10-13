@@ -3,6 +3,7 @@
  * goods received lately with their photos. Opens from More, or from a large
  * button on the simple home. Recording an arrival needs `equipment.receive`.
  */
+import { StaffCheckouts } from '@/components/equipment/staff-checkouts';
 import { FailureNotice } from '@/components/error-code-line';
 import { PageWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
@@ -158,6 +159,7 @@ export default function StockScreen() {
   const { permissions } = useAccountAccess();
   const canReceive = permissions.has('equipment.receive');
   const canCount = permissions.has('equipment.count');
+  const canCheckOut = canReceive || canCount;
   const levels = useStockLevels();
   const arrivals = useRecentArrivals();
   const locale = i18n.resolvedLanguage ?? DEFAULT_LANGUAGE;
@@ -213,6 +215,22 @@ export default function StockScreen() {
             >
               <Text className={`text-center text-md font-bold text-white ${fontClass}`}>
                 {t('stock.recordArrival')}
+              </Text>
+            </PressableScale>
+          ) : null}
+
+          {canCheckOut ? (
+            <PressableScale
+              testID="stock-check-out"
+              accessibilityRole="button"
+              accessibilityLabel={t('checkout.action')}
+              onPress={() => push('/checkout/new' as Href)}
+              haptic="tapLight"
+              style={continuousCorners}
+              className="min-h-recommended items-center justify-center rounded-md border border-primary px-lg"
+            >
+              <Text className={`text-center text-md font-bold text-primary-dark ${fontClass}`}>
+                {t('checkout.action')}
               </Text>
             </PressableScale>
           ) : null}
@@ -288,6 +306,8 @@ export default function StockScreen() {
               </View>
             ))}
           </View>
+
+          <StaffCheckouts canCheckIn={canCheckOut} />
 
           <View className="gap-sm" testID="stock-arrivals">
             <Text

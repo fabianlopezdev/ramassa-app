@@ -7,14 +7,19 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@ramassa/shared/auth';
 import {
+  fetchCheckoutRecipients,
   fetchMonthlyCount,
+  fetchOpenCheckouts,
   fetchRecentArrivals,
   fetchStockLevels,
   recordEquipmentArrival,
+  recordStaffCheckin,
+  recordStaffCheckout,
   recordStockCount,
   type ArrivalInput,
   type CountLine,
   type CountReason,
+  type ReturnCondition,
 } from '@ramassa/shared/equipment';
 import { AppError } from '@ramassa/shared/errors';
 import { uploadFile } from '@ramassa/shared/upload-client';
@@ -81,6 +86,48 @@ export function useRecordCount() {
         queryClient.invalidateQueries({ queryKey: stockRoot(user?.id ?? SIGNED_OUT) }),
         queryClient.invalidateQueries({ queryKey: ['stock-alerts', user?.id ?? SIGNED_OUT] }),
       ]),
+  });
+}
+
+/** Open checkouts (RAPP-252): all of them for the storeroom, hers for a staff member. */
+export function useOpenCheckouts() {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: [...stockRoot(user?.id ?? SIGNED_OUT), 'checkouts'],
+    queryFn: () => fetchOpenCheckouts(supabase),
+    enabled: user !== null,
+  });
+}
+
+export function useCheckoutRecipients() {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: [...stockRoot(user?.id ?? SIGNED_OUT), 'checkout-recipients'],
+    queryFn: () => fetchCheckoutRecipients(supabase),
+    enabled: user !== null,
+  });
+}
+
+export function useRecordCheckout() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: Parameters<typeof recordStaffCheckout>[1]) =>
+      recordStaffCheckout(supabase, input),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: stockRoot(user?.id ?? SIGNED_OUT) }),
+  });
+}
+
+export function useRecordCheckin() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: {
+      readonly checkoutId: string;
+      readonly returned: number;
+      readonly condition: ReturnCondition | null;
+    }) => recordStaffCheckin(supabase, input),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: stockRoot(user?.id ?? SIGNED_OUT) }),
   });
 }
 

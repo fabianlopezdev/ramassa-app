@@ -304,5 +304,38 @@
     "actionLabel": "Comptar {{item}}",
     "monthlyTitle": "Recompte d'aquest mes",
     "monthlyItem": "{{item}}: compta el que hi ha al prestatge."
+  },
+  "checkout": {
+    "action": "Deixar a un membre de l'equip",
+    "title": "Deixar material",
+    "intro": "Per a un viatge o un esdeveniment. El material d'una sessió normal no es registra.",
+    "staffLabel": "Qui se l'emporta",
+    "returnLabel": "Tornarà",
+    "returnIn": {
+      "d1": "Demà",
+      "d3": "D'aquí a 3 dies",
+      "d7": "D'aquí a una setmana",
+      "d14": "D'aquí a dues setmanes"
+    },
+    "returnOn": "Tornarà el {{date}}",
+    "noteLabel": "Nota",
+    "save": "Deixar",
+    "saving": "Desant",
+    "saveFailed": "El préstec no s'ha desat. Torna-ho a provar.",
+    "needsConnection": "Deixar material necessita connexió.",
+    "chooseAll": "Tria l'article, la talla i qui se l'emporta.",
+    "listTitle": "Deixat",
+    "listEmpty": "No hi ha res deixat.",
+    "row": "{{item}}: {{quantity}} amb {{name}}",
+    "overdue": "Amb retard: havia de tornar el {{date}}",
+    "checkIn": "Recollir",
+    "checkInTitle": "Quants n'han tornat?",
+    "conditionLabel": "En quin estat?",
+    "missing": "Falten: {{count}}. Queden fora de l'estoc com a perduts.",
+    "saveCheckIn": "Desar la devolució",
+    "checkInFailed": "La devolució no s'ha desat. Torna-ho a provar.",
+    "todayTitle": "Deixat i amb retard",
+    "todayRow": "{{item}}: {{quantity}} amb {{name}}, havia de tornar el {{date}}",
+    "todayMine": "{{item}}: {{quantity}} amb tu, havia de tornar el {{date}}"
   }
 }

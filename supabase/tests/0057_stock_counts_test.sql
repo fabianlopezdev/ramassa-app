@@ -86,7 +86,8 @@ select is(
 select is(
   (select corrections from public.record_stock_count(gen_random_uuid(),
      (select id from public.equipment_item_types where key = 'ball'),
-     '[{"size": null, "counted": 12}]'::jsonb)),
+     -- Six of the twelve are out with a staff member (the RAPP-252 seed checkout).
+     '[{"size": null, "counted": 6}]'::jsonb)),
   0, 'a count that matches makes no correction'
 );
 
