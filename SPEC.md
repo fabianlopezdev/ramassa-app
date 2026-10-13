@@ -1759,6 +1759,12 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - A phone shows cards (name, town, entity, an inactive badge) and opens the card screen. A tablet shows a table: name, town and entity, plus status and date joined when the list pane is wide enough. Each column header sorts, and a second tap turns the order. The card opens beside the table.
 - A new search, filter or sort starts the list at the top. The list stays in memory: `participants` is not on the disk allow-list.
 
+## Participant record on the phone (2026-10-13, RAPP-281, part of RAPP-213)
+
+- The participant card shows her whole record, as the web admin does, within the reader's field levels: Basic fields for everyone with `participants.view`, Personal fields with `participants.view_personal`, and document number, phone, address and postal code with `participants.view_sensitive`. A field above the reader's level does not show. A field she may see that is empty says "Not filled in". The card also shows the date she joined, whether she has forum access, and that each look is logged.
+- "Edit the record" (for `participants.view_personal`, the level `update_participant_profile` requires) opens a form with the same fields, pickers and rules as her own edit screen, plus date of birth, app language, referring entity and its contact. Without `participants.view_sensitive` the form leaves out the four encrypted fields and does not ask for the document number (`profileEditWithoutSensitiveSchema`); the database keeps the stored values. The screen closes only when the save succeeds.
+- "Deactivate" and "Reactivate" need `participants.deactivate`; the phone asks before it deactivates. "Disable forum posting" and "Enable forum posting" need `forum.moderate`. Each write reloads the card and the list.
+
 ## Staff-side languages (2026-10-11, RAPP-238, part of RAPP-211)
 
 - The staff side (the web admin, the team screens and the entity screens) is in Catalan, Spanish or English (`STAFF_LANGUAGES`). Player screens keep all five languages and right-to-left. Content stays five-language everywhere: this is the language of the screens themselves.

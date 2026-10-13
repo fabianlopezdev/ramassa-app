@@ -20,37 +20,24 @@
  * translated message and a code.
  */
 
-import { AuthTextField } from '@/components/auth/auth-text-field';
 import { ErrorCodeLine, FailureNotice } from '@/components/error-code-line';
 import { ShakeOnError } from '@/components/motion/shake-on-error';
 import { SkeletonPulse } from '@/components/motion/skeleton-pulse';
-import { CountryPicker } from '@/components/onboarding/country-picker';
-import { MunicipalityPicker } from '@/components/onboarding/municipality-picker';
-import { OptionChip } from '@/components/onboarding/option-chip';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
+import { ProfileFormFields, type ProfileEditInput } from '@/components/profile/profile-form-fields';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { profileFormResetOptions, profileSaveCallbacks } from '@/lib/profile-save';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import type { z } from 'zod';
 import { toAppError, type AppErrorCode } from '@ramassa/shared/errors';
 import { useOwnProfile, useUpdateOwnProfile } from '@ramassa/shared/profile';
-import {
-  CLOTHING_SIZES,
-  DOCUMENT_TYPES,
-  profileEditSchema,
-  profileFromRow,
-  SHOE_SIZES,
-  type ProfileEdit,
-} from '@ramassa/shared/schemas';
-
-type ProfileEditInput = z.input<typeof profileEditSchema>;
+import { profileEditSchema, profileFromRow, type ProfileEdit } from '@ramassa/shared/schemas';
 
 /**
  * How many label+field pairs the loading placeholder draws. A skeleton, not a
@@ -59,36 +46,6 @@ type ProfileEditInput = z.input<typeof profileEditSchema>;
  * underneath it.
  */
 const LOADING_FIELD_COUNT = 5;
-
-/**
- * The document type's translation key, mapped explicitly and hoisted.
- *
- * Not built from the stored value (`documentType${type.charAt(0)...}`) for the
- * reason the profile read view already gives for its own mapping: a value that
- * ever stopped matching a key would put the raw key on screen instead of
- * failing loudly. Hoisting it also stops four string builds per render of a
- * form that re-renders whenever a watched field changes.
- */
-const DOCUMENT_TYPE_LABEL_KEYS = {
-  nie: 'onboarding:documentTypeNie',
-  passport: 'onboarding:documentTypePassport',
-  other: 'onboarding:documentTypeOther',
-  none: 'onboarding:documentTypeNone',
-} as const;
-
-/**
- * Everything that is not a digit, stripped from the dependants count so a
- * pasted "2 fills" or an Arabic-Indic keyboard's stray character cannot reach
- * `Number()`.
- *
- * Hoisted, and this one the React Compiler cannot do for us: a regex LITERAL
- * builds a fresh RegExp every time the expression is evaluated, and this one is
- * evaluated per KEYSTROKE inside an event handler rather than per render. The
- * compiler memoizes renders, not calls. Safe as a shared instance because
- * `String.prototype.replace` with a global regex resets `lastIndex` itself;
- * `.test()` is the one that would carry state between calls.
- */
-const NON_DIGITS = /\D/g;
 
 export default function ProfileEditScreen() {
   const { t } = useTranslation(['profile', 'onboarding']);
@@ -239,298 +196,14 @@ export default function ProfileEditScreen() {
       isContinueBusy={update.isPending}
       onBack={() => router.back()}
     >
-      <Controller
+      <ProfileFormFields
         control={control}
-        name="firstName"
-        render={({ field }) => (
-          <AuthTextField
-            // Same convention as the wizard's fields: the label is rendered
-            // twice on this control, as the visible caption and as the input's
-            // accessibility label, so matching by text is ambiguous and can
-            // resolve to the caption, which nothing can type into. The suite
-            // edits this field because it is the first one on both this screen
-            // and the profile screen, so proving an edit survives needs no
-            // scrolling on either.
-            testID="profile-edit-first-name"
-            label={t('onboarding:firstNameLabel')}
-            value={field.value}
-            onChangeText={field.onChange}
-            onBlur={field.onBlur}
-            errorMessage={errors.firstName ? t('onboarding:errorRequired') : undefined}
-            autoCapitalize="words"
-          />
-        )}
+        errors={errors}
+        documentType={documentType}
+        hasDependents={hasDependents}
+        audience="self"
+        testIDPrefix="profile-edit"
       />
-      <Controller
-        control={control}
-        name="lastName"
-        render={({ field }) => (
-          <AuthTextField
-            label={t('onboarding:lastNameLabel')}
-            value={field.value}
-            onChangeText={field.onChange}
-            onBlur={field.onBlur}
-            errorMessage={errors.lastName ? t('onboarding:errorRequired') : undefined}
-            autoCapitalize="words"
-          />
-        )}
-      />
-      <Controller
-        control={control}
-        name="placeOfBirth"
-        render={({ field }) => (
-          <AuthTextField
-            // The field the smoke suite edits. Chosen because the seed leaves it
-            // NULL for the participant the suite signs in as (deliberately: two
-            // rows keep a null so the "created before this field existed" case
-            // is covered), so the flow can type into it without first erasing
-            // what is there - and erasing an Arabic-script value through the
-            // Android driver hangs until Maestro's own two-minute deadline.
-            testID="profile-edit-place-of-birth"
-            label={t('onboarding:placeOfBirthLabel')}
-            value={field.value}
-            onChangeText={field.onChange}
-            onBlur={field.onBlur}
-            errorMessage={errors.placeOfBirth ? t('onboarding:errorRequired') : undefined}
-          />
-        )}
-      />
-      <Controller
-        control={control}
-        name="nationality"
-        render={({ field }) => (
-          <CountryPicker
-            label={t('onboarding:nationalityLabel')}
-            value={field.value}
-            onChange={field.onChange}
-            errorMessage={errors.nationality ? t('onboarding:errorRequired') : undefined}
-          />
-        )}
-      />
-
-      <View className="gap-xs">
-        <Text className={`text-start text-md font-medium text-neutral-800 ${languageFontClass}`}>
-          {t('onboarding:documentTypeLabel')}
-        </Text>
-        <Controller
-          control={control}
-          name="documentType"
-          render={({ field }) => (
-            <View className="flex-row flex-wrap gap-sm">
-              {DOCUMENT_TYPES.map((type) => (
-                <OptionChip
-                  key={type}
-                  label={t(DOCUMENT_TYPE_LABEL_KEYS[type])}
-                  accessibilityHint={t('onboarding:documentTypeLabel')}
-                  isSelected={field.value === type}
-                  onPress={() => field.onChange(type)}
-                />
-              ))}
-            </View>
-          )}
-        />
-      </View>
-
-      {documentType === 'none' ? null : (
-        <Controller
-          control={control}
-          name="documentNumber"
-          render={({ field }) => (
-            <AuthTextField
-              label={t('onboarding:documentNumberLabel')}
-              value={field.value ?? ''}
-              onChangeText={field.onChange}
-              onBlur={field.onBlur}
-              errorMessage={
-                errors.documentNumber
-                  ? documentType === 'nie'
-                    ? t('onboarding:errorNieFormat')
-                    : t('onboarding:errorRequired')
-                  : undefined
-              }
-              autoCapitalize="characters"
-            />
-          )}
-        />
-      )}
-
-      <Controller
-        control={control}
-        name="phone"
-        render={({ field }) => (
-          <AuthTextField
-            // Same testID convention as the wizard's fields, and for the same
-            // reason: the label is rendered TWICE on this control, once as the
-            // visible caption and once as the input's accessibility label, so
-            // matching a field by its text is ambiguous and can resolve to the
-            // caption, which nothing can type into. The suite edits this field.
-            testID="profile-edit-phone"
-            label={t('onboarding:phoneLabel')}
-            placeholder={t('onboarding:phonePlaceholder')}
-            value={field.value ?? ''}
-            onChangeText={field.onChange}
-            onBlur={field.onBlur}
-            errorMessage={errors.phone ? t('onboarding:errorPhoneFormat') : undefined}
-            keyboardType="phone-pad"
-          />
-        )}
-      />
-      <Controller
-        control={control}
-        name="address"
-        render={({ field }) => (
-          <AuthTextField
-            label={t('onboarding:addressLabel')}
-            value={field.value ?? ''}
-            onChangeText={field.onChange}
-            onBlur={field.onBlur}
-          />
-        )}
-      />
-      <Controller
-        control={control}
-        name="city"
-        render={({ field }) => (
-          <MunicipalityPicker
-            label={t('onboarding:cityLabel')}
-            value={field.value ?? ''}
-            onChange={field.onChange}
-            errorMessage={errors.city ? t('onboarding:errorMunicipalityInvalid') : undefined}
-          />
-        )}
-      />
-      <Controller
-        control={control}
-        name="postalCode"
-        render={({ field }) => (
-          <AuthTextField
-            label={t('onboarding:postalCodeLabel')}
-            value={field.value ?? ''}
-            onChangeText={field.onChange}
-            onBlur={field.onBlur}
-            errorMessage={errors.postalCode ? t('onboarding:errorPostalFormat') : undefined}
-            keyboardType="number-pad"
-          />
-        )}
-      />
-
-      <View className="gap-xs">
-        <Text className={`text-start text-md font-medium text-neutral-800 ${languageFontClass}`}>
-          {t('onboarding:hasDependentsLabel')}
-        </Text>
-        <Controller
-          control={control}
-          name="hasDependents"
-          render={({ field }) => (
-            <View className="flex-row flex-wrap gap-sm">
-              <OptionChip
-                label={t('onboarding:yesOption')}
-                accessibilityHint={t('onboarding:hasDependentsLabel')}
-                isSelected={field.value === true}
-                onPress={() => field.onChange(true)}
-              />
-              <OptionChip
-                label={t('onboarding:noOption')}
-                accessibilityHint={t('onboarding:hasDependentsLabel')}
-                isSelected={field.value === false}
-                onPress={() => field.onChange(false)}
-              />
-            </View>
-          )}
-        />
-      </View>
-
-      {hasDependents ? (
-        <Controller
-          control={control}
-          name="numDependents"
-          render={({ field }) => (
-            <AuthTextField
-              label={t('onboarding:numDependentsLabel')}
-              value={String(field.value ?? '')}
-              onChangeText={(text) => field.onChange(Number(text.replace(NON_DIGITS, '')) || 0)}
-              onBlur={field.onBlur}
-              errorMessage={errors.numDependents ? t('onboarding:errorDependentsRange') : undefined}
-              keyboardType="number-pad"
-            />
-          )}
-        />
-      ) : null}
-
-      <View className="gap-xs">
-        <Text className={`text-start text-md font-medium text-neutral-800 ${languageFontClass}`}>
-          {t('onboarding:clothingSizeLabel')}
-        </Text>
-        <Controller
-          control={control}
-          name="clothingSize"
-          render={({ field }) => (
-            <View className="flex-row flex-wrap gap-sm">
-              {CLOTHING_SIZES.map((size) => (
-                <OptionChip
-                  key={size}
-                  label={size}
-                  accessibilityHint={t('onboarding:clothingSizeLabel')}
-                  isSelected={field.value === size}
-                  onPress={() => field.onChange(size)}
-                />
-              ))}
-            </View>
-          )}
-        />
-      </View>
-
-      <View className="gap-xs">
-        <Text className={`text-start text-md font-medium text-neutral-800 ${languageFontClass}`}>
-          {t('onboarding:shoeSizeLabel')}
-        </Text>
-        <Controller
-          control={control}
-          name="shoeSize"
-          render={({ field }) => (
-            <View className="flex-row flex-wrap gap-sm">
-              {SHOE_SIZES.map((size) => (
-                <OptionChip
-                  key={size}
-                  label={size}
-                  accessibilityHint={t('onboarding:shoeSizeLabel')}
-                  isSelected={field.value === size}
-                  onPress={() => field.onChange(size)}
-                />
-              ))}
-            </View>
-          )}
-        />
-      </View>
-
-      {/* The revocable consent, in both directions. The wizard told her she
-          could change this from her profile; this is the control that keeps
-          that promise. */}
-      <View className="gap-xs">
-        <Text className={`text-start text-md font-medium text-neutral-800 ${languageFontClass}`}>
-          {t('onboarding:mediaConsentLabel')}
-        </Text>
-        <Controller
-          control={control}
-          name="mediaConsent"
-          render={({ field }) => (
-            <View className="flex-row flex-wrap gap-sm">
-              <OptionChip
-                label={t('onboarding:yesOption')}
-                accessibilityHint={t('onboarding:mediaConsentLabel')}
-                isSelected={field.value === true}
-                onPress={() => field.onChange(true)}
-              />
-              <OptionChip
-                label={t('onboarding:noOption')}
-                accessibilityHint={t('onboarding:mediaConsentLabel')}
-                isSelected={field.value === false}
-                onPress={() => field.onChange(false)}
-              />
-            </View>
-          )}
-        />
-      </View>
       {/* Rendered LAST, so it sits directly above the Save button. Put at the
           top of a form this long it would be off-screen at the moment it
           matters, which is the same failure it exists to fix. */}
