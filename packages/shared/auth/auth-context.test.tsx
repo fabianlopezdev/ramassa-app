@@ -273,13 +273,18 @@ test('a change to her access row reloads her permissions at once (RAPP-237)', as
     </AuthProvider>,
   );
   await waitFor(() => expect(textContentOf(getByTestId('permissions'))).toBe('attendance.mark'));
-  const channel = channels.find((entry) => entry.name.startsWith('permissions:'));
-  expect(channel?.filter).toEqual({
-    event: '*',
-    schema: 'public',
-    table: 'team_member_access',
-    filter: 'profile_id=eq.5eed0000-0000-4000-8000-000000000002',
-  });
+  // The channel opens in its own effect, which a slow runner reaches after the
+  // permissions have shown, so the test waits for it.
+  const findChannel = () => channels.find((entry) => entry.name.startsWith('permissions:'));
+  await waitFor(() =>
+    expect(findChannel()?.filter).toEqual({
+      event: '*',
+      schema: 'public',
+      table: 'team_member_access',
+      filter: 'profile_id=eq.5eed0000-0000-4000-8000-000000000002',
+    }),
+  );
+  const channel = findChannel();
 
   state.permissions = ['attendance.mark', 'messages.inbox'];
   await act(async () => channel?.handler());
