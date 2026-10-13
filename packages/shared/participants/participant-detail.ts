@@ -77,6 +77,31 @@ export function filterParticipantActivity(
   return filter === 'all' ? entries : entries.filter((entry) => entry.kind === filter);
 }
 
+const ACTIVITY_DETAIL_KEYS: Partial<Record<ParticipantActivityKind, Record<string, string>>> = {
+  attendance: {
+    present: 'attendance:statusPresent',
+    absent: 'attendance:statusAbsent',
+    excused: 'attendance:statusExcused',
+  },
+  event_signup: {
+    interested: 'participants:activity.signup.interested',
+    confirmed: 'participants:activity.signup.confirmed',
+    cancelled: 'participants:activity.signup.cancelled',
+  },
+};
+
+/**
+ * The translation key for an entry whose detail is a stored status code
+ * (attendance and sign-ups, RAPP-283), or null when the detail is already text
+ * to show as it is. An unknown code is shown as it is, so it is never hidden.
+ */
+export function activityDetailKey(
+  entry: Pick<ParticipantActivityEntry, 'kind' | 'detail'>,
+): string | null {
+  if (entry.detail === null) return null;
+  return ACTIVITY_DETAIL_KEYS[entry.kind]?.[entry.detail] ?? null;
+}
+
 /** A staff note as the thread renders it, with the author it is signed by. */
 export interface ParticipantNoteRow {
   readonly id: string;

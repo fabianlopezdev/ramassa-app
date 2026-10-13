@@ -20,6 +20,7 @@ import { AppError } from '@ramassa/shared/errors';
 import { setForumPostingDisabled } from '@ramassa/shared/forum';
 import {
   addParticipantNote,
+  fetchParticipantActivity,
   fetchParticipantDetail,
   fetchParticipantFilterOptions,
   fetchParticipantNotes,
@@ -121,4 +122,18 @@ export function useParticipantNotes(participantId: string) {
     onSuccess: () => queryClient.invalidateQueries({ queryKey }),
   });
   return { notes, addNote };
+}
+
+/**
+ * Her activity timeline (RAPP-283): attendance, sign-ups, services, messages,
+ * feedback and referral updates, newest first. Each source's own policies
+ * decide what the reader sees.
+ */
+export function useParticipantActivity(participantId: string) {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ['participants', user?.id ?? SIGNED_OUT, 'activity', participantId],
+    queryFn: () => fetchParticipantActivity(supabase, participantId),
+    enabled: user !== null && participantId.length > 0,
+  });
 }

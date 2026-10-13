@@ -15,6 +15,7 @@ import {
   fetchHandoverItemTypes,
   fetchOpenStockAlerts,
   fetchParticipantMaterial,
+  fetchParticipantMaterialDetail,
   recordEquipmentHandover,
   recordEquipmentReturn,
   type HandoverResult,
@@ -89,6 +90,19 @@ export function useParticipantMaterial(participantId: string) {
     queryKey: [...participantMaterialRoot(user?.id ?? SIGNED_OUT), participantId],
     queryFn: () => fetchParticipantMaterial(supabase, participantId),
     enabled: user !== null && participantId.length > 0,
+  });
+}
+
+/**
+ * One handover with who gave it, the note and her signature (RAPP-283), read
+ * when a row is opened. Under the material root, so a return reloads it too.
+ */
+export function useParticipantMaterialDetail(deliveryId: string) {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: [...participantMaterialRoot(user?.id ?? SIGNED_OUT), 'detail', deliveryId],
+    queryFn: () => fetchParticipantMaterialDetail(supabase, deliveryId),
+    enabled: user !== null && deliveryId.length > 0,
   });
 }
 

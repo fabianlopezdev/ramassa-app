@@ -169,3 +169,53 @@ export function SignaturePad({
     </View>
   );
 }
+
+/** How much smaller the saved signature is drawn than the pad it was drawn on. */
+const PREVIEW_SCALE = 0.6;
+
+/**
+ * A saved signature, read only, on her material history (RAPP-283). Drawn at
+ * the pad's proportions so it keeps the shape she drew.
+ */
+export function SignaturePreview({
+  strokes,
+  accessibilityLabel,
+}: {
+  readonly strokes: SignatureStrokes;
+  readonly accessibilityLabel: string;
+}) {
+  const [width, setWidth] = useState(0);
+  const height = PAD_HEIGHT * PREVIEW_SCALE;
+  const drawWidth = width * PREVIEW_SCALE;
+  const previewStyle = useMemo(() => ({ width: drawWidth, height }), [drawWidth, height]);
+  return (
+    <View
+      accessible
+      accessibilityRole="image"
+      accessibilityLabel={accessibilityLabel}
+      onLayout={(event: LayoutChangeEvent) => setWidth(event.nativeEvent.layout.width)}
+    >
+      {width === 0 ? null : (
+        <View
+          style={[previewStyle, continuousCorners]}
+          className="overflow-hidden rounded-md border border-neutral-200 bg-white"
+        >
+          <Svg width={drawWidth} height={height} pointerEvents="none">
+            {strokes.map((stroke, index) => (
+              <Path
+                // A saved signature never changes, so the index is a stable key.
+                key={index}
+                d={strokePath(stroke, drawWidth, height)}
+                stroke={tokens.colors.neutral[900]}
+                strokeWidth={STROKE_WIDTH * PREVIEW_SCALE}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                fill="none"
+              />
+            ))}
+          </Svg>
+        </View>
+      )}
+    </View>
+  );
+}

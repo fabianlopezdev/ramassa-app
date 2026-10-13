@@ -7,7 +7,7 @@
  * A field above the reader's level does not show at all. A field she may see
  * but nobody filled in says so, because a blank row looks like a field that
  * failed to load. The team's notes come from RAPP-282, her material and the
- * handover button from RAPP-249.
+ * handover button from RAPP-249, her activity timeline from RAPP-283.
  */
 import {
   AnnouncementEmptyState,
@@ -16,6 +16,7 @@ import {
 } from '@/components/announcements/feed-states';
 import { ParticipantMaterial } from '@/components/equipment/participant-material';
 import { PressableScale } from '@/components/motion/pressable-scale';
+import { ParticipantActivity } from '@/components/participants/participant-activity';
 import { ParticipantNotes } from '@/components/participants/participant-notes';
 import { DOCUMENT_TYPE_LABEL_KEYS } from '@/components/profile/profile-form-fields';
 import { continuousCorners } from '@/lib/continuous-corners';
@@ -387,6 +388,7 @@ export function ParticipantCard({
       </View>
       {canReadNotes ? <ParticipantNotes participantId={participantId} /> : null}
       <ParticipantMaterial participantId={participantId} />
+      <ParticipantActivity participantId={participantId} />
     </ScrollView>
   );
 }

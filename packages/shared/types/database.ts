@@ -5037,6 +5037,19 @@ export type Database = {
           unit_code: string;
         }[];
       };
+      participant_material_detail: {
+        Args: { p_delivery_id: string };
+        Returns: {
+          delivered_by_name: string;
+          delivery_id: string;
+          note: string;
+          returned_by_name: string;
+          signature: Json;
+          signature_reason: string;
+          signature_state: string;
+          statement_language: string;
+        }[];
+      };
       personal_data_disposition: {
         Args: never;
         Returns: {

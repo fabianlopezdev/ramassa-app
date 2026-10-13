@@ -18,6 +18,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+  activityDetailKey,
   filterParticipantActivity,
   PARTICIPANT_ACTIVITY_KINDS,
   type ParticipantActivityEntry,
@@ -51,11 +52,15 @@ const ACTIVITY_FILTERS: readonly ParticipantActivityFilter[] = [
 ];
 
 export function ParticipantActivity({ entries }: ParticipantActivityProps) {
-  const { t, i18n } = useTranslation('participants');
+  const { t, i18n } = useTranslation(['participants', 'attendance']);
   const locale = i18n.resolvedLanguage ?? 'ca';
   const [filter, setFilter] = useState<ParticipantActivityFilter>('all');
 
   const shown = filterParticipantActivity(entries, filter);
+  const detailText = (entry: ParticipantActivityEntry) => {
+    const key = activityDetailKey(entry);
+    return key === null ? entry.detail : t(key);
+  };
 
   return (
     <DetailSection title={t('sectionActivity')} description={t('activityIntro')}>
@@ -91,7 +96,10 @@ export function ParticipantActivity({ entries }: ParticipantActivityProps) {
                       {new Date(entry.occurred_at).toLocaleString(locale)}
                     </p>
                     {entry.detail === null ? null : (
-                      <p className="text-start text-sm text-muted-foreground">{entry.detail}</p>
+                      <p className="text-start text-sm text-muted-foreground">
+                        {/* Attendance and sign-ups store a status code (RAPP-283). */}
+                        {detailText(entry)}
+                      </p>
                     )}
                   </li>
                 ))}

@@ -1771,6 +1771,12 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - "Add a note" opens a sheet with the text field above the keyboard, the reminder that notes cannot be edited or deleted, and Add and Cancel. An empty note or one over 4,000 characters is refused with a message (`participantNoteSchema`). After a save the sheet closes and the note is first in the list.
 - Like every native sheet, it hides while the app lock covers the app.
 
+## Participant activity and material history (2026-10-13, RAPP-283, part of RAPP-213)
+
+- `participant_activity()` now also returns her attendance marks (at the session's start, with the event title) and her event sign-ups (with the event title). Their detail is the stored status code (present, absent, excused; interested, confirmed, cancelled), which the screens show in words (`activityDetailKey`). The function still runs with the caller's rights, so each table's policies decide what a reader sees. The web admin timeline shows the same words.
+- The participant card has an Activity section: everything or one source at a time (the web admin's filters), newest first, the first 10 at once and the rest on request.
+- Each item in her material opens its details (`participant_material_detail()`, same reach as `participant_material()`): who handed it over, the note, her signature drawn from the stored strokes or the reason she did not sign, the statement language, and who recorded the return.
+
 ## Staff-side languages (2026-10-11, RAPP-238, part of RAPP-211)
 
 - The staff side (the web admin, the team screens and the entity screens) is in Catalan, Spanish or English (`STAFF_LANGUAGES`). Player screens keep all five languages and right-to-left. Content stays five-language everywhere: this is the language of the screens themselves.

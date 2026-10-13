@@ -179,6 +179,40 @@ export async function fetchParticipantMaterial(
   }));
 }
 
+/** One handover with what the list leaves out (RAPP-283). */
+export interface ParticipantMaterialDetail {
+  readonly deliveredByName: string | null;
+  readonly note: string | null;
+  /** Null when she did not sign, or when the stored strokes are not readable. */
+  readonly strokes: SignatureStrokes | null;
+  readonly signatureReason: string | null;
+  readonly statementLanguage: StatementLanguage | null;
+  readonly returnedByName: string | null;
+}
+
+export async function fetchParticipantMaterialDetail(
+  client: Client,
+  deliveryId: string,
+): Promise<ParticipantMaterialDetail | null> {
+  const { data, error } = await client.rpc('participant_material_detail', {
+    p_delivery_id: deliveryId,
+  });
+  if (error) throw databaseError(error);
+  const row = data?.[0];
+  if (row === undefined) return null;
+  const strokes = signatureStrokesSchema.safeParse(row.signature);
+  const language = row.statement_language as StatementLanguage | null;
+  return {
+    deliveredByName: row.delivered_by_name ?? null,
+    note: row.note ?? null,
+    strokes: strokes.success ? strokes.data : null,
+    signatureReason: row.signature_reason ?? null,
+    statementLanguage:
+      language !== null && STATEMENT_LANGUAGES.includes(language) ? language : null,
+    returnedByName: row.returned_by_name ?? null,
+  };
+}
+
 /** A lent item that has not come back is the only one with a return to record. */
 export function awaitsReturn(row: ParticipantMaterialRow): boolean {
   return row.mode === 'lent' && row.returnedAt === null;

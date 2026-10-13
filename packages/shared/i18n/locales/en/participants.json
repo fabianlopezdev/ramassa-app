@@ -202,7 +202,17 @@
     "stockTitle": "Material",
     "stockFine": "No stock to check.",
     "stockAlert": "{{item}}: below zero. Count it.",
-    "saveFailed": "The handover was not saved. Try again."
+    "saveFailed": "The handover was not saved. Try again.",
+    "detail": {
+      "show": "Details",
+      "hide": "Hide details",
+      "handedBy": "Handed over by {{name}}",
+      "note": "Note: {{note}}",
+      "reason": "Reason: {{reason}}",
+      "language": "Statement shown in {{language}}",
+      "returnedBy": "Return recorded by {{name}}",
+      "loadFailed": "Could not load the details."
+    }
   },
   "stock": {
     "title": "Stock",
@@ -396,5 +406,14 @@
     "deactivateBody": "She leaves the active lists and keeps her record. You can reactivate her later.",
     "sensitiveHidden": "You do not see the document number, phone, address or postal code. They stay as they are.",
     "notesLoadFailed": "We could not load the notes."
+  },
+  "activity": {
+    "signup": {
+      "interested": "Interested",
+      "confirmed": "Confirmed",
+      "cancelled": "Cancelled"
+    },
+    "showAll": "Show all ({{count}})",
+    "loadFailed": "We could not load the activity."
   }
 }
