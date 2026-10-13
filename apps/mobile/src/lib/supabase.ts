@@ -33,6 +33,11 @@ export const mobileClientEnv = parseClientEnv({
     process.env.EXPO_PUBLIC_MEDIA_WORKER_URL,
     devServiceContext,
   ),
+  // Machine translation drafts for the team's content editors (RAPP-341).
+  EXPO_PUBLIC_TRANSLATION_WORKER_URL: resolveDevServiceUrl(
+    process.env.EXPO_PUBLIC_TRANSLATION_WORKER_URL,
+    devServiceContext,
+  ),
 });
 
 export const supabase = createSupabaseClient({

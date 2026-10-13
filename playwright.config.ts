@@ -63,7 +63,7 @@ export default defineConfig({
       timeout: 600_000,
     },
     {
-      command: `CI=1 RAMASSA_QA_PLAYER_PORT=${playerPort} EXPO_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321 EXPO_PUBLIC_SUPABASE_ANON_KEY=${supabasePublishableKey} EXPO_PUBLIC_MEDIA_WORKER_URL=http://127.0.0.1:${mediaPort} bun run scripts/start-player-web-qa.ts`,
+      command: `CI=1 RAMASSA_QA_PLAYER_PORT=${playerPort} EXPO_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321 EXPO_PUBLIC_SUPABASE_ANON_KEY=${supabasePublishableKey} EXPO_PUBLIC_MEDIA_WORKER_URL=http://127.0.0.1:${mediaPort} EXPO_PUBLIC_TRANSLATION_WORKER_URL=http://127.0.0.1:${translationPort} bun run scripts/start-player-web-qa.ts`,
       url: playerOrigin,
       reuseExistingServer: false,
       timeout: 600_000,

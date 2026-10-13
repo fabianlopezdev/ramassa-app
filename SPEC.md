@@ -1795,6 +1795,14 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - Announcements list: status chips (all, draft, published, scheduled, expired, the web admin's filter), the total, pages that load on scroll, and each row's title, category, date, status and whether it is pinned. On a phone a row opens its own screen; on a tablet it opens beside the list.
 - One announcement shows its status, category, publication and expiry, and the Catalan text. Pin and unpin are there for anyone who reads it; Delete is for `announcements.publish` holders, as the database requires, and asks first. The editor comes in RAPP-341.
 
+## Announcement editor on the phone (2026-10-13, RAPP-341, part of RAPP-214)
+
+- "New announcement" (in the list) and "Edit" (on one announcement) open the editor with the web admin's fields and rules: category, the Catalan title and text, an optional photo with its description, pinning, and the publication (draft, now, or scheduled, with an optional expiry). The photo is compressed and uploaded to the `announcements` folder when she saves.
+- Translations: "Generate translations" asks the translation Worker for machine drafts of each text. Under each text a row of language tabs (ES, EN, AR, FA) shows the state of each draft (needs review, approved, rejected); the open tab holds the draft to correct, right to left for Arabic and Farsi, with Approve, Reject and Approve all. Publishing needs every draft approved, as on the web admin.
+- The Worker call is shared by the web admin and the phone (`@ramassa/shared/translation/client`); the phone has the Worker address (`EXPO_PUBLIC_TRANSLATION_WORKER_URL`).
+- The text is kept on the device, encrypted, from her first change (`announcement-draft.ts`), and offered again when she comes back ("Your unsaved text was kept on this phone"). It is removed once the save succeeds. A chosen photo that is not uploaded yet is not kept, and kept translations need approving again. Because nothing is lost, the editor asks no question when she leaves.
+- Without `announcements.publish` the editor shows the publication read-only and keeps it as stored, because the database refuses any change to it.
+
 ## Staff-side languages (2026-10-11, RAPP-238, part of RAPP-211)
 
 - The staff side (the web admin, the team screens and the entity screens) is in Catalan, Spanish or English (`STAFF_LANGUAGES`). Player screens keep all five languages and right-to-left. Content stays five-language everywhere: this is the language of the screens themselves.
