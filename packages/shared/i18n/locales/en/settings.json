@@ -274,5 +274,34 @@
       "label": "Team management",
       "description": "Add and remove team members, edit presets and toggles, and reset a lost second factor."
     }
+  },
+  "handoff": {
+    "button": "Take photo with phone",
+    "title": "Take the photo with your phone",
+    "nameLabel": "Document name",
+    "defaultName": "Photo {{date}}",
+    "start": "Show the code",
+    "scan": "Scan this code with your phone's camera. On the phone, sign in as yourself.",
+    "expiresAt": "The code works once, until {{time}}.",
+    "waiting": "Waiting for the photo",
+    "done": "The photo arrived. It is in the documents list.",
+    "expired": "The code expired. Show a new one.",
+    "again": "Show a new code",
+    "close": "Close",
+    "failed": "The code could not be made. Try again.",
+    "qrLabel": "Code to scan with the phone",
+    "pageTitle": "Photo for the documents",
+    "pageIntro": "This photo becomes the document “{{name}}”.",
+    "openApp": "Open in the Ramassà app",
+    "takeHere": "Take the photo here",
+    "takePhoto": "Take the photo",
+    "choosePhoto": "Choose from photos",
+    "uploading": "Sending the photo",
+    "sent": "Sent. The photo is on the computer now. You can close this.",
+    "pageExpired": "This code has expired. Ask the computer for a new one.",
+    "pageUsed": "This code was already used.",
+    "notFound": "This code is not for this account. Sign in as the person who made it.",
+    "sendFailed": "The photo was not sent. Try again.",
+    "cameraDenied": "Allow the camera in Settings to take a photo."
   }
 }

@@ -33,6 +33,7 @@ function renderPanel(
     organization,
     permissions: ALL_SETTINGS,
     team: <p>Team access</p>,
+    photoHandoff: null,
     documents: [],
     documentQuery: '',
     entityManagement: <p>Entity settings</p>,

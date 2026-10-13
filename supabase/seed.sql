@@ -1559,6 +1559,20 @@ select org_id, id, -6, 'checkout', '5eed0000-0000-4000-8000-000000000c01',
 from public.equipment_item_types
 where org_id = '5eed0000-0000-4000-8000-000000000000' and key = 'ball';
 
+-- Photo handoffs (RAPP-254) ------------------------------------------------------------
+--
+-- One finished request from last week: Laia, who keeps the internal documents,
+-- photographed a signed form with her phone. Its document row is not seeded,
+-- so the handoff has no result.
+
+insert into public.photo_handoffs
+  (org_id, requested_by, target, document_name, created_at, expires_at, completed_at)
+values (
+  '5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-8000-000000000001',
+  'internal_document', 'Signed attendance form', now() - interval '7 days',
+  now() - interval '7 days' + interval '10 minutes', now() - interval '7 days' + interval '2 minutes'
+);
+
 -- Stock alerts (RAPP-249) --------------------------------------------------------------
 --
 -- Shorts XL never arrived, so handing a pair to Blanca took the size below zero
