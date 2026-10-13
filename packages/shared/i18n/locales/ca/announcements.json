@@ -63,5 +63,6 @@
   "translationRequired": "Genera i aprova totes les traduccions abans de publicar.",
   "imageAltRequired": "Afegeix una descripció de la imatge i aprova'n totes les traduccions.",
   "saveFailed": "No s'ha pogut desar l'avís.",
-  "loadFailed": "No s'ha pogut carregar l'avís."
+  "loadFailed": "No s'ha pogut carregar l'avís.",
+  "pinned": "Fixat"
 }

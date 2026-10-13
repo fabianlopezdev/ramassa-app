@@ -103,7 +103,10 @@ export default function AppLayout() {
             a conversation opens over it. With no area, team-home points to the
             web. */}
         <Stack.Protected
-          guard={isTeam && (team.attendance || team.participants || team.messages || team.stock)}
+          guard={
+            isTeam &&
+            (team.attendance || team.participants || team.content || team.messages || team.stock)
+          }
         >
           <Stack.Screen name="(team)" />
         </Stack.Protected>
@@ -129,6 +132,9 @@ export default function AppLayout() {
         >
           <Stack.Screen name="handover/[participantId]" options={noSwipeBackOptions} />
         </Stack.Protected>
+        <Stack.Protected guard={isTeam && team.content}>
+          <Stack.Screen name="content-announcement/[id]" />
+        </Stack.Protected>
         <Stack.Protected guard={isTeam && team.attendance}>
           <Stack.Screen name="attendance/[id]" />
         </Stack.Protected>
@@ -152,7 +158,14 @@ export default function AppLayout() {
           <Stack.Screen name="item-type/[id]" />
         </Stack.Protected>
         <Stack.Protected
-          guard={isTeam && !team.attendance && !team.participants && !team.messages && !team.stock}
+          guard={
+            isTeam &&
+            !team.attendance &&
+            !team.participants &&
+            !team.content &&
+            !team.messages &&
+            !team.stock
+          }
         >
           <Stack.Screen name="team-home" />
         </Stack.Protected>

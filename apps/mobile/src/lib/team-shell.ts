@@ -19,7 +19,7 @@
  */
 import type { PermissionCode } from '@ramassa/shared/permissions';
 
-export type TeamArea = 'attendance' | 'participants' | 'messages' | 'stock';
+export type TeamArea = 'attendance' | 'participants' | 'content' | 'messages' | 'stock';
 
 export type TeamLayout = 'tabs' | 'home' | 'sidebar';
 
@@ -44,6 +44,11 @@ export function teamAreas(permissions: ReadonlySet<PermissionCode>): readonly Te
     areas.push('attendance');
   }
   if (permissions.has('participants.view')) areas.push('participants');
+  // Content opens with the content types the app has (RAPP-340: announcements);
+  // later slices add events, knowledge and services.
+  if (permissions.has('announcements.edit') || permissions.has('announcements.publish')) {
+    areas.push('content');
+  }
   if (permissions.has('messages.inbox')) areas.push('messages');
   if (
     permissions.has('equipment.receive') ||
@@ -67,11 +72,12 @@ export function teamLayout(input: {
 export function teamStart(
   areas: readonly TeamArea[],
   layout: TeamLayout,
-): '/home' | '/today' | '/participants' | '/messages' | '/more' | '/team-home' {
+): '/home' | '/today' | '/participants' | '/content' | '/messages' | '/more' | '/team-home' {
   if (areas.length === 0) return '/team-home';
   if (layout === 'home') return '/home';
   if (areas.includes('attendance')) return '/today';
   if (areas.includes('participants')) return '/participants';
+  if (areas.includes('content')) return '/content';
   // Stock alone: More holds it.
   return areas.includes('messages') ? '/messages' : '/more';
 }
