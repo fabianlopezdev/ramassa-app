@@ -1744,6 +1744,14 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - Handovers may be of any item in the organization's catalog; the delivery item check gave way to the ledger trigger, which refuses an item the organization does not have. Every screen shows a custom item by its own name (`useItemLabel`), and the handover statement uses the name in her language.
 - The web admin's equipment log still labels items through the built-in translations only.
 
+## Desktop to phone photo handoff (2026-10-13, RAPP-254, part of RAPP-212)
+
+- On the web admin's internal documents tab, "Take photo with phone" asks for the document's name and shows a QR code. Behind it is a `photo_handoffs` row: single use, bound to the person who asked (only she reads it), valid ten minutes. `create_photo_handoff()` requires the target's own permission (`settings.documents` for internal documents).
+- The QR code opens `/photo-handoff/<id>` on the web admin, in the phone's browser. Signed in as the same person, the page offers "Open in the Ramassà app" (`ramassa://photo-handoff/<id>`) or "Take the photo here" with the phone's camera. The app screen takes or chooses the photo the same way.
+- The photo goes to the documents folder through the media worker, and `complete_photo_handoff()` registers it with `register_internal_document()`: the same checks as an upload at the desk. Photos only (JPEG, PNG, WebP). Someone else's code reads as no code; an expired or used code is refused.
+- The desk hears of the completion through Realtime (with a slow poll as a fallback), says the photo arrived and refreshes the list. The document is registered even if the desk closed the dialog.
+- Internal documents are the first target; receipts and the gallery can reuse the same handoff. Never photos of players.
+
 ## Participant list (2026-10-13, RAPP-280, part of RAPP-213)
 
 - The Participants area lists every participant the person may see, with no search needed (`list_participants`, 25 a page, more pages load on scroll). The total shows above the list.

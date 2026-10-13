@@ -142,6 +142,10 @@ export default function AppLayout() {
         >
           <Stack.Screen name="team-home" />
         </Stack.Protected>
+        {/* A photo the desk asked for (RAPP-254); the database checks who. */}
+        <Stack.Protected guard={isTeam}>
+          <Stack.Screen name="photo-handoff/[id]" />
+        </Stack.Protected>
         <Stack.Protected guard={area === 'entity'}>
           <Stack.Screen name="entity-portal" />
         </Stack.Protected>

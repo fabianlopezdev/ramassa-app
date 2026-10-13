@@ -2264,6 +2264,57 @@ export type Database = {
         };
         Relationships: [];
       };
+      photo_handoffs: {
+        Row: {
+          completed_at: string | null;
+          created_at: string;
+          document_name: string;
+          expires_at: string;
+          id: string;
+          org_id: string;
+          requested_by: string;
+          result_id: string | null;
+          target: string;
+        };
+        Insert: {
+          completed_at?: string | null;
+          created_at?: string;
+          document_name: string;
+          expires_at: string;
+          id?: string;
+          org_id: string;
+          requested_by: string;
+          result_id?: string | null;
+          target: string;
+        };
+        Update: {
+          completed_at?: string | null;
+          created_at?: string;
+          document_name?: string;
+          expires_at?: string;
+          id?: string;
+          org_id?: string;
+          requested_by?: string;
+          result_id?: string | null;
+          target?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'photo_handoffs_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'photo_handoffs_requested_by_fkey';
+            columns: ['requested_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       profiles: {
         Row: {
           address: string | null;
@@ -4129,6 +4180,15 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      complete_photo_handoff: {
+        Args: {
+          p_content_type: string;
+          p_file_size: number;
+          p_id: string;
+          p_object_key: string;
+        };
+        Returns: string;
+      };
       count_services_incompatible_with_category_schema: {
         Args: { p_category_id: string; p_metadata_schema: Json };
         Returns: number;
@@ -4187,6 +4247,13 @@ export type Database = {
           email: string;
           expires_at: string;
           invite_id: string;
+        }[];
+      };
+      create_photo_handoff: {
+        Args: { p_document_name: string; p_target: string };
+        Returns: {
+          expires_at: string;
+          handoff_id: string;
         }[];
       };
       create_targeted_notification_send: {
