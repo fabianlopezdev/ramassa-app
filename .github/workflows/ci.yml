@@ -43,7 +43,12 @@ jobs:
       - name: Test
         run: bun run test
 
+  # The WCAG browser check takes about 7 minutes (local Supabase in Docker, then
+  # every admin, portal and player web route). It runs on every push to main,
+  # which the preview deploy waits for, and on demand for any branch through
+  # workflow_dispatch. Pull requests wait only for the quality gates (RAPP-321).
   accessibility-web:
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
