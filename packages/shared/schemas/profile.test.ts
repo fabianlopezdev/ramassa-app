@@ -21,6 +21,7 @@ import {
 import {
   buildUpdateOwnProfilePayload,
   profileEditSchema,
+  profileEditWithoutSensitiveSchema,
   profileFromRow,
   type ProfileRow,
 } from './profile';
@@ -93,6 +94,34 @@ describe('profileEditSchema', () => {
     const editFields = new Set(Object.keys(profileEditSchema.shape));
     const missing = [...intakeFields].filter((field) => !editFields.has(field));
     expect(missing).toEqual([]);
+  });
+});
+
+describe('profileEditWithoutSensitiveSchema', () => {
+  const withoutSensitive = {
+    ...validEdit,
+    documentNumber: undefined,
+    phone: undefined,
+    address: undefined,
+    postalCode: undefined,
+  };
+
+  test('a staff form with no sensitive fields does not ask for the document number', () => {
+    expect(profileEditSchema.safeParse(withoutSensitive).success).toBe(false);
+    expect(profileEditWithoutSensitiveSchema.safeParse(withoutSensitive).success).toBe(true);
+  });
+
+  test('keeps every other rule, such as the age gate and place of birth', () => {
+    expect(
+      profileEditWithoutSensitiveSchema.safeParse({ ...withoutSensitive, placeOfBirth: '' })
+        .success,
+    ).toBe(false);
+    expect(
+      profileEditWithoutSensitiveSchema.safeParse({
+        ...withoutSensitive,
+        dateOfBirth: '2020-01-01',
+      }).success,
+    ).toBe(false);
   });
 });
 

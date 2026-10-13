@@ -388,5 +388,12 @@
     "sortedBy": "{{column}}, ordenat {{direction}}",
     "loadingMore": "Carregant més participants",
     "dirLabel": "Ordre"
+  },
+  "profile": {
+    "editTitle": "Edita la fitxa",
+    "saveFailed": "No hem pogut desar la fitxa. Torna-ho a provar.",
+    "deactivateTitle": "Vols desactivar {{name}}?",
+    "deactivateBody": "Surt de les llistes actives i conserva la fitxa. La pots reactivar més endavant.",
+    "sensitiveHidden": "No veus el número de document, el telèfon, l'adreça ni el codi postal. Es queden com estan."
   }
 }

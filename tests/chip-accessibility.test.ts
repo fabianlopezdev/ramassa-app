@@ -34,21 +34,16 @@ describe('question-aware option chips', () => {
     expect(occurrences(logistics, "accessibilityHint={t('shoeSizeLabel')}")).toBe(1);
   });
 
-  test('every profile-edit chip carries its localized visible question as context', async () => {
-    const profileEdit = await source('apps/mobile/src/app/(app)/profile-edit.tsx');
+  test('every profile form chip carries its localized visible question as context', async () => {
+    // The fields her own edit screen and the team's edit screen share (RAPP-281).
+    const fields = await source('apps/mobile/src/components/profile/profile-form-fields.tsx');
 
-    expect(occurrences(profileEdit, "accessibilityHint={t('onboarding:documentTypeLabel')}")).toBe(
-      1,
-    );
-    expect(occurrences(profileEdit, "accessibilityHint={t('onboarding:hasDependentsLabel')}")).toBe(
-      2,
-    );
-    expect(occurrences(profileEdit, "accessibilityHint={t('onboarding:clothingSizeLabel')}")).toBe(
-      1,
-    );
-    expect(occurrences(profileEdit, "accessibilityHint={t('onboarding:shoeSizeLabel')}")).toBe(1);
-    expect(occurrences(profileEdit, "accessibilityHint={t('onboarding:mediaConsentLabel')}")).toBe(
-      2,
-    );
+    expect(occurrences(fields, "accessibilityHint={t('onboarding:documentTypeLabel')}")).toBe(1);
+    expect(occurrences(fields, "accessibilityHint={t('onboarding:clothingSizeLabel')}")).toBe(1);
+    expect(occurrences(fields, "accessibilityHint={t('onboarding:shoeSizeLabel')}")).toBe(1);
+    expect(occurrences(fields, "accessibilityHint={t('profile:languageLabel')}")).toBe(1);
+    // The yes/no pairs take the same label their group shows as its caption.
+    expect(occurrences(fields, 'accessibilityHint={label}')).toBe(4);
+    expect(occurrences(fields, '<ChoiceGroup label={label}>')).toBe(2);
   });
 });
