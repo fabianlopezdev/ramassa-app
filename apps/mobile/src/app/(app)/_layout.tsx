@@ -110,6 +110,12 @@ export default function AppLayout() {
         <Stack.Protected guard={isTeam && team.participants}>
           <Stack.Screen name="participant/[id]" />
         </Stack.Protected>
+        {/* Editing a record needs the Personal level, as the database does (RAPP-281). */}
+        <Stack.Protected
+          guard={isTeam && team.participants && permissions.has('participants.view_personal')}
+        >
+          <Stack.Screen name="participant-edit/[id]" />
+        </Stack.Protected>
         <Stack.Protected
           guard={isTeam && team.participants && permissions.has('equipment.handover')}
         >

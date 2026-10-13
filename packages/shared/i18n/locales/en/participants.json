@@ -388,5 +388,12 @@
     "sortedBy": "{{column}}, sorted {{direction}}",
     "loadingMore": "Loading more participants",
     "dirLabel": "Order"
+  },
+  "profile": {
+    "editTitle": "Edit the record",
+    "saveFailed": "We could not save the record. Try again.",
+    "deactivateTitle": "Deactivate {{name}}?",
+    "deactivateBody": "She leaves the active lists and keeps her record. You can reactivate her later.",
+    "sensitiveHidden": "You do not see the document number, phone, address or postal code. They stay as they are."
   }
 }
