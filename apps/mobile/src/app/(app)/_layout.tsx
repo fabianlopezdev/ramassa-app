@@ -117,6 +117,11 @@ export default function AppLayout() {
           <Stack.Screen name="participant-edit/[id]" />
         </Stack.Protected>
         <Stack.Protected
+          guard={isTeam && team.participants && permissions.has('participants.invite')}
+        >
+          <Stack.Screen name="participant-invites" />
+        </Stack.Protected>
+        <Stack.Protected
           guard={isTeam && team.participants && permissions.has('equipment.handover')}
         >
           <Stack.Screen name="handover/[participantId]" options={noSwipeBackOptions} />

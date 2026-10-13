@@ -1777,6 +1777,12 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - The participant card has an Activity section: everything or one source at a time (the web admin's filters), newest first, the first 10 at once and the rest on request.
 - Each item in her material opens its details (`participant_material_detail()`, same reach as `participant_material()`): who handed it over, the note, her signature drawn from the stored strokes or the reason she did not sign, the statement language, and who recorded the return.
 
+## Participant invites on the phone (2026-10-13, RAPP-284, part of RAPP-213)
+
+- Holders of `participants.invite` open Invitations from the Participants screen: every invite of the organization, newest first, with its address, referring entity, who sent it and when, and whether it is pending (open until a date), accepted or expired.
+- "Invite a participant" opens a sheet with her email (the login schema) and an optional referring entity. The entity is chosen from the entities the organization already uses, or "Other" with a name, so one entity is not typed in several spellings. The sheet then says what she does next and until when the invite is open. An address that already has an account is refused with its own message.
+- An invite sends no email: it records her address and the empty account that lets her first code request succeed. So "resend" is `renew_participant_invite()`: an open invite, even an expired one, gets 30 more days. `revoke_participant_invite()` cancels an open invite and removes the empty account when nothing else needs it (no profile, no other open participant, staff or entity invitation for the address), so the address can no longer sign in. Both need `participants.invite` in the invite's organization, refuse a used invite, are rate-limited, and are audited without the address. Cancelling asks first.
+
 ## Staff-side languages (2026-10-11, RAPP-238, part of RAPP-211)
 
 - The staff side (the web admin, the team screens and the entity screens) is in Catalan, Spanish or English (`STAFF_LANGUAGES`). Player screens keep all five languages and right-to-left. Content stays five-language everywhere: this is the language of the screens themselves.

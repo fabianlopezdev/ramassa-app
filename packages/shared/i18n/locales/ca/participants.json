@@ -415,5 +415,23 @@
     },
     "showAll": "Mostra-ho tot ({{count}})",
     "loadFailed": "No hem pogut carregar l'activitat."
+  },
+  "invites": {
+    "row": "Enviada per {{name}} el {{date}}",
+    "rowNoName": "Enviada el {{date}}",
+    "openUntil": "Oberta fins al {{date}}",
+    "expiredOn": "Va caducar el {{date}}",
+    "acceptedOn": "Acceptada el {{date}}",
+    "renew": "Allarga 30 dies",
+    "cancel": "Anul·la la invitació",
+    "cancelTitle": "Vols anul·lar la invitació de {{email}}?",
+    "cancelBody": "Ja no podrà entrar amb aquesta adreça. La pots tornar a convidar més endavant.",
+    "keep": "Mantén-la",
+    "actionFailed": "No hem pogut canviar la invitació. Torna-ho a provar.",
+    "loadFailed": "No hem pogut carregar les invitacions.",
+    "emailLabel": "El seu correu",
+    "entityNone": "Cap",
+    "entityOther": "Una altra",
+    "entityOtherLabel": "Nom de l'entitat"
   }
 }

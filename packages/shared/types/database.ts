@@ -5184,6 +5184,10 @@ export type Database = {
         Args: { p_profile_id: string };
         Returns: undefined;
       };
+      renew_participant_invite: {
+        Args: { p_invite_id: string };
+        Returns: string;
+      };
       reorder_service_categories: {
         Args: { p_category_ids: string[] };
         Returns: undefined;
@@ -5208,6 +5212,10 @@ export type Database = {
           p_service_id: string;
         };
         Returns: string;
+      };
+      revoke_participant_invite: {
+        Args: { p_invite_id: string };
+        Returns: undefined;
       };
       save_admin_service: { Args: { p_payload: Json }; Returns: string };
       save_custom_notification_group: {

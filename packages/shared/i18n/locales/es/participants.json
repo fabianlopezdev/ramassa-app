@@ -415,5 +415,23 @@
     },
     "showAll": "Mostrar todo ({{count}})",
     "loadFailed": "No hemos podido cargar la actividad."
+  },
+  "invites": {
+    "row": "Enviada por {{name}} el {{date}}",
+    "rowNoName": "Enviada el {{date}}",
+    "openUntil": "Abierta hasta el {{date}}",
+    "expiredOn": "Caducó el {{date}}",
+    "acceptedOn": "Aceptada el {{date}}",
+    "renew": "Alargar 30 días",
+    "cancel": "Anular la invitación",
+    "cancelTitle": "¿Anular la invitación de {{email}}?",
+    "cancelBody": "Ya no podrá entrar con esta dirección. Puedes volver a invitarla más adelante.",
+    "keep": "Mantenerla",
+    "actionFailed": "No hemos podido cambiar la invitación. Inténtalo de nuevo.",
+    "loadFailed": "No hemos podido cargar las invitaciones.",
+    "emailLabel": "Su correo",
+    "entityNone": "Ninguna",
+    "entityOther": "Otra",
+    "entityOtherLabel": "Nombre de la entidad"
   }
 }

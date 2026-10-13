@@ -415,5 +415,23 @@
     },
     "showAll": "Show all ({{count}})",
     "loadFailed": "We could not load the activity."
+  },
+  "invites": {
+    "row": "Sent by {{name}} on {{date}}",
+    "rowNoName": "Sent on {{date}}",
+    "openUntil": "Open until {{date}}",
+    "expiredOn": "Expired on {{date}}",
+    "acceptedOn": "Accepted on {{date}}",
+    "renew": "Give 30 more days",
+    "cancel": "Cancel the invitation",
+    "cancelTitle": "Cancel the invitation for {{email}}?",
+    "cancelBody": "She can no longer sign in with this address. You can invite her again later.",
+    "keep": "Keep it",
+    "actionFailed": "We could not change the invitation. Try again.",
+    "loadFailed": "We could not load the invitations.",
+    "emailLabel": "Her email",
+    "entityNone": "None",
+    "entityOther": "Other",
+    "entityOtherLabel": "Name of the entity"
   }
 }
