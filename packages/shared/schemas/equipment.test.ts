@@ -1,12 +1,7 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, test } from 'bun:test';
-import {
-  EQUIPMENT_ITEMS,
-  equipmentDeliverySchema,
-  equipmentItemTakesSize,
-  SIZELESS_EQUIPMENT_ITEMS,
-} from './equipment';
+import { EQUIPMENT_ITEMS, equipmentDeliverySchemaFor } from './equipment';
 
 /**
  * The built-in items as the DATABASE creates them for every organization, read
@@ -48,59 +43,66 @@ function catalogInMigrations(): readonly string[] {
 
 describe('the equipment catalog', () => {
   /**
-   * THE DRIFT TEST. The built-ins exist twice: a TypeScript enum for the web
-   * admin's picker, and the rows every organization starts with. Two copies of
+   * THE DRIFT TEST. The built-ins exist twice: a TypeScript enum the delivery
+   * schema accepts, and the rows every organization starts with. Two copies of
    * a list is how one quietly gains an item the other lacks, and the symptom
-   * would be a delivery the form offers and the ledger trigger refuses.
+   * would be a delivery the picker offers and the schema refuses.
    */
   test('every built-in item the database creates is one the picker offers, and vice versa', () => {
     expect([...catalogInMigrations()].sort()).toEqual([...EQUIPMENT_ITEMS].sort());
   });
-
-  test('every sizeless item is a real item', () => {
-    for (const item of SIZELESS_EQUIPMENT_ITEMS) {
-      expect(EQUIPMENT_ITEMS).toContain(item);
-      expect(equipmentItemTakesSize(item)).toBe(false);
-    }
-  });
-
-  test('boots take a size', () => {
-    expect(equipmentItemTakesSize('boots')).toBe(true);
-  });
 });
 
-describe('equipmentDeliverySchema', () => {
+describe('equipmentDeliverySchemaFor', () => {
+  const bootSizes = ['37', '38', '39'];
   const valid = { item: 'boots', size: '38', deliveredOn: '2026-08-01' };
 
   test('a complete delivery is accepted', () => {
-    expect(equipmentDeliverySchema.safeParse(valid).success).toBe(true);
+    expect(equipmentDeliverySchemaFor(bootSizes).safeParse(valid).success).toBe(true);
   });
 
   /**
-   * The season report is asked which sizes ran out, so an item that has a size
+   * The season report is asked which sizes ran out, so an item that has sizes
    * must carry one. Without this the form would happily record a pair of boots
    * nobody can count.
    */
   test('boots without a size are refused, and the error lands on the size field', () => {
-    const result = equipmentDeliverySchema.safeParse({ ...valid, size: '' });
+    const result = equipmentDeliverySchemaFor(bootSizes).safeParse({ ...valid, size: '' });
     expect(result.success).toBe(false);
     expect(result.success ? [] : result.error.issues[0]?.path).toEqual(['size']);
   });
 
-  test('a water bottle without a size is fine', () => {
-    const result = equipmentDeliverySchema.safeParse({
-      item: 'water_bottle',
-      deliveredOn: '2026-08-01',
-    });
-    expect(result.success).toBe(true);
+  test('a size the item type does not have is refused', () => {
+    const result = equipmentDeliverySchemaFor(bootSizes).safeParse({ ...valid, size: '50' });
+    expect(result.success).toBe(false);
+  });
+
+  test('an item with no sizes is fine without one, and refuses one', () => {
+    const bottle = { item: 'water_bottle', deliveredOn: '2026-08-01' };
+    expect(equipmentDeliverySchemaFor([]).safeParse(bottle).success).toBe(true);
+    expect(equipmentDeliverySchemaFor([]).safeParse({ ...bottle, size: 'M' }).success).toBe(false);
+  });
+
+  /** A custom item stores its own key (RAPP-253): generated, or readable in the seed. */
+  test('a custom item key is accepted', () => {
+    const custom = { item: `custom_${'a1'.repeat(16)}`, size: 'M', deliveredOn: '2026-08-01' };
+    expect(equipmentDeliverySchemaFor(['M']).safeParse(custom).success).toBe(true);
+    const bibs = { item: 'custom_bibs', deliveredOn: '2026-08-01' };
+    expect(equipmentDeliverySchemaFor([]).safeParse(bibs).success).toBe(true);
   });
 
   test('an item outside the catalog is refused', () => {
-    expect(equipmentDeliverySchema.safeParse({ ...valid, item: 'hoverboard' }).success).toBe(false);
+    const schema = equipmentDeliverySchemaFor(bootSizes);
+    expect(schema.safeParse({ ...valid, item: 'hoverboard' }).success).toBe(false);
+    expect(schema.safeParse({ ...valid, item: 'Custom bibs' }).success).toBe(false);
+    expect(schema.safeParse({ ...valid, item: 'custom_' }).success).toBe(false);
   });
 
   test('a note longer than the column allows is refused before it reaches the database', () => {
-    const result = equipmentDeliverySchema.safeParse({ ...valid, note: 'x'.repeat(501) });
+    const result = equipmentDeliverySchemaFor(bootSizes).safeParse({
+      ...valid,
+      note: 'x'.repeat(501),
+    });
     expect(result.success).toBe(false);
   });
 });

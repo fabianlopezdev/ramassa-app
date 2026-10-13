@@ -10,6 +10,10 @@
  *
  * Cleanup is by the ids this file created, never by a tag written into a column,
  * for the reason the RGPD suite learned the hard way.
+ *
+ * Since RAPP-253 the picker offers the organization's own catalog, so the
+ * custom items this file adds are removed by their keys, with the ledger
+ * movements their handovers wrote.
  */
 
 import { expect, test, type Page } from '@playwright/test';
@@ -22,12 +26,46 @@ const SUBJECT = '5eed0000-0000-4000-8000-000000000025';
 
 const createdDeliveryIds: string[] = [];
 
+/** A custom item named in Catalan only, so an English screen shows the Catalan name. */
+const CUSTOM_KEY = `custom_${RUN_TAG}`;
+const CUSTOM_NAME_CA = `Armilla ${RUN_TAG}`;
+/** Switched off: it keeps its history and leaves the picker. */
+const INACTIVE_KEY = `custom_${RUN_TAG}_off`;
+const CUSTOM_KEYS = `'${CUSTOM_KEY}', '${INACTIVE_KEY}'`;
+
+test.beforeAll(() => {
+  // Added as the owner, in the subject's organization: what the item editor
+  // writes is covered by `item-types.web-qa.ts`, and this file is about the
+  // participant screen reading it.
+  queryDatabase(`
+    insert into public.equipment_item_types (org_id, key, name, kind, sizes, code_prefix, is_builtin, is_active)
+    select org_id, '${CUSTOM_KEY}', '{"ca": "${CUSTOM_NAME_CA}"}'::jsonb, 'team_equipment', array['S','M'], null, false, true
+      from public.profiles where id = '${SUBJECT}'
+    union all
+    select org_id, '${INACTIVE_KEY}', '{"ca": "Apagat ${RUN_TAG}"}'::jsonb, 'team_equipment', '{}', null, false, false
+      from public.profiles where id = '${SUBJECT}'
+  `);
+});
+
 test.afterAll(() => {
-  if (createdDeliveryIds.length === 0) return;
-  const ids = createdDeliveryIds.map((id) => `'${id}'`).join(', ');
-  // The table has no DELETE policy, on purpose, so this runs as the owner. That
-  // is the suite cleaning up after itself, not a product path.
-  queryDatabase(`delete from public.equipment_deliveries where id in (${ids})`);
+  // The tables have no DELETE policy, on purpose, so this runs as the owner.
+  // That is the suite cleaning up after itself, not a product path.
+  if (createdDeliveryIds.length > 0) {
+    const ids = createdDeliveryIds.map((id) => `'${id}'`).join(', ');
+    // Each delivery wrote a ledger movement (RAPP-248). Deleting the delivery
+    // only clears the movement's link, so the movement goes first: left behind,
+    // it lowers the seeded stock the pgTAP suite counts.
+    queryDatabase(`
+      delete from public.stock_movements where equipment_delivery_id in (${ids});
+      delete from public.equipment_deliveries where id in (${ids});
+    `);
+  }
+  // A movement holds its item type, so the custom item's go first.
+  queryDatabase(`
+    delete from public.stock_movements where item_type_id in (
+      select id from public.equipment_item_types where key in (${CUSTOM_KEYS}));
+    delete from public.equipment_item_types where key in (${CUSTOM_KEYS});
+  `);
 });
 
 /** Records the ids this run created, so afterAll can remove exactly those. */
@@ -53,9 +91,9 @@ async function recordDelivery(
     }),
   ).toBeVisible({ timeout: 20_000 });
 
-  await page.locator('select').last().selectOption(fields.item);
+  await page.locator('select[id$="-item"]').selectOption(fields.item);
   if (fields.size !== undefined) {
-    await page.locator('input[id$="-size"]').fill(fields.size);
+    await page.locator('select[id$="-size"]').selectOption(fields.size);
   }
   if (fields.note !== undefined) {
     await page.locator('input[id$="-note"]').fill(fields.note);
@@ -123,10 +161,10 @@ test.describe('recording a handover', () => {
       }),
     ).toBeVisible({ timeout: 20_000 });
 
-    await page.locator('select').last().selectOption('water_bottle');
+    await page.locator('select[id$="-item"]').selectOption('water_bottle');
     // The field is GONE, not merely ignored: a question that does nothing is a
     // question a staff member still has to answer.
-    await expect(page.locator('input[id$="-size"]')).toHaveCount(0);
+    await expect(page.locator('[id$="-size"]')).toHaveCount(0);
 
     await page.locator('input[id$="-note"]').fill(`Ampolla ${RUN_TAG}`);
     await page
@@ -166,6 +204,54 @@ test.describe('recording a handover', () => {
         `select count(*) from public.equipment_deliveries where profile_id = '${SUBJECT}'`,
       ),
     ).toBe(before);
+  });
+
+  /**
+   * A custom item (RAPP-253) is offered by its own name, with its own sizes,
+   * and the log shows that name rather than the key. This screen runs in
+   * English and the item is named in Catalan only, so the Catalan name is the
+   * fallback a staff member reads.
+   */
+  test('a custom item is offered by name with its sizes, and the log shows its name', async ({
+    page,
+  }) => {
+    await page.goto(`/participants/${SUBJECT}`);
+    await expect(
+      page.getByRole('heading', {
+        name: /material lliurat|equipment handed over|material entregado/i,
+      }),
+    ).toBeVisible({ timeout: 20_000 });
+
+    const itemPicker = page.locator('select[id$="-item"]');
+    await expect(itemPicker.locator(`option[value="${CUSTOM_KEY}"]`)).toHaveText(CUSTOM_NAME_CA);
+    // Switched off: kept for history, gone from the picker.
+    await expect(itemPicker.locator(`option[value="${INACTIVE_KEY}"]`)).toHaveCount(0);
+
+    await itemPicker.selectOption(CUSTOM_KEY);
+    // Its own sizes, and only those.
+    await expect(page.locator('select[id$="-size"] option:not([value=""])')).toHaveText(['S', 'M']);
+    await page.locator('select[id$="-size"]').selectOption('M');
+    await page.locator('input[id$="-note"]').fill(`Custom ${RUN_TAG}`);
+    await page
+      .getByRole('button', {
+        name: /registra el lliurament|record the handover|registra la entrega/i,
+      })
+      .click();
+
+    await expect
+      .poll(
+        () =>
+          queryDatabase(
+            `select item || '|' || coalesce(size, 'NULL') from public.equipment_deliveries
+              where note = 'Custom ${RUN_TAG}'`,
+          ),
+        { timeout: 15_000 },
+      )
+      .toBe(`${CUSTOM_KEY}|M`);
+
+    const row = page.getByRole('row').filter({ hasText: `Custom ${RUN_TAG}` });
+    await expect(row).toContainText(CUSTOM_NAME_CA, { timeout: 20_000 });
+    await expect(row).not.toContainText(CUSTOM_KEY);
   });
 
   /**

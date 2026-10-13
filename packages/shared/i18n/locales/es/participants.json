@@ -131,6 +131,7 @@
   "equipmentEmpty": "Todavía no se le ha entregado nada.",
   "equipmentColumnItem": "Material",
   "equipmentColumnSize": "Talla",
+  "equipmentSizeChoose": "Elige la talla",
   "equipmentColumnDate": "Fecha",
   "equipmentColumnNote": "Observaciones",
   "equipmentAddAction": "Registra la entrega",

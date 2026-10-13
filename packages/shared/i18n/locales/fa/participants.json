@@ -131,6 +131,7 @@
   "equipmentEmpty": "هنوز چیزی به او تحویل داده نشده است.",
   "equipmentColumnItem": "تجهیزات",
   "equipmentColumnSize": "سایز",
+  "equipmentSizeChoose": "سایز را انتخاب کنید",
   "equipmentColumnDate": "تاریخ",
   "equipmentColumnNote": "توضیحات",
   "equipmentAddAction": "ثبت تحویل",

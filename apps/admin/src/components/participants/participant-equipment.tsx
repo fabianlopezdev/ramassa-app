@@ -13,6 +13,11 @@
  * and a typed item answers it wrong forever: "botes", "Botes" and "bota" are
  * three buckets for one thing. The stored value is a stable token; what the
  * reader sees is her own language.
+ *
+ * The picker offers the organization's own catalog (RAPP-253): the active
+ * built-in items and the ones the team added, each with the sizes set for it.
+ * A custom item reads by its own name in her language, Catalan when that
+ * language is missing, so a delivery never shows up as its generated key.
  */
 
 import { DetailSection } from '@/components/detail/detail-section';
@@ -26,24 +31,24 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { useId, useState } from 'react';
+import { useId, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { type EquipmentDeliveryRow } from '@ramassa/shared/equipment';
 import {
-  EQUIPMENT_ITEMS,
-  equipmentDeliverySchema,
-  equipmentItemTakesSize,
-  type EquipmentItem,
-} from '@ramassa/shared/schemas';
+  itemTypeLabel,
+  type EquipmentDeliveryRow,
+  type HandoverItemType,
+} from '@ramassa/shared/equipment';
+import type { SupportedLanguage } from '@ramassa/shared/i18n';
+import { equipmentDeliverySchemaFor, type EquipmentDeliveryInput } from '@ramassa/shared/schemas';
 
 export interface ParticipantEquipmentProps {
   readonly deliveries: readonly EquipmentDeliveryRow[];
-  readonly onAdd: (delivery: {
-    readonly item: EquipmentItem;
-    readonly size?: string;
-    readonly deliveredOn: string;
-    readonly note?: string;
-  }) => Promise<void>;
+  /**
+   * The organization's item types, switched-off ones included: a delivery of
+   * an item nobody hands out any more still needs its name.
+   */
+  readonly itemTypes: readonly HandoverItemType[];
+  readonly onAdd: (delivery: EquipmentDeliveryInput) => Promise<void>;
   /** Set when the write itself failed, as opposed to the form being invalid. */
   readonly errorMessage?: string;
 }
@@ -56,28 +61,45 @@ function todayForInput(): string {
 
 export function ParticipantEquipment({
   deliveries,
+  itemTypes,
   onAdd,
   errorMessage,
 }: ParticipantEquipmentProps) {
   const { t, i18n } = useTranslation(['participants', 'equipment']);
   const locale = i18n.resolvedLanguage ?? 'ca';
+  const language = locale as SupportedLanguage;
   const fieldId = useId();
 
-  const [item, setItem] = useState<EquipmentItem>('boots');
+  const typesByKey = useMemo(() => new Map(itemTypes.map((type) => [type.key, type])), [itemTypes]);
+  const itemLabel = (key: string): string =>
+    itemTypeLabel(typesByKey.get(key), key, language, (value) => t(`equipment:${value}`));
+
+  // Switched-off items leave the picker (RAPP-253). In the reader's language
+  // order, so the list reads alphabetically, as it does on the phone.
+  const options = itemTypes
+    .filter((type) => type.is_active)
+    .map((type) => ({ type, label: itemLabel(type.key) }))
+    .sort((left, right) => left.label.localeCompare(right.label, locale));
+
+  const [item, setItem] = useState(
+    () =>
+      options.find((option) => option.type.key === 'boots')?.type.key ?? options[0]?.type.key ?? '',
+  );
   const [size, setSize] = useState('');
   const [deliveredOn, setDeliveredOn] = useState(todayForInput());
   const [note, setNote] = useState('');
   const [validationMessage, setValidationMessage] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
-  const takesSize = equipmentItemTakesSize(item);
+  const sizes = typesByKey.get(item)?.sizes ?? [];
+  const takesSize = sizes.length > 0;
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     // The same rules the schema enforces server-side, checked here so a staff
     // member is told what is missing rather than having the write refused and
     // surfaced as a generic failure.
-    const parsed = equipmentDeliverySchema.safeParse({
+    const parsed = equipmentDeliverySchemaFor(sizes).safeParse({
       item,
       size: takesSize ? size : undefined,
       deliveredOn,
@@ -112,9 +134,10 @@ export function ParticipantEquipment({
           <TableBody>
             {deliveries.map((delivery) => (
               <TableRow key={delivery.id}>
-                {/* The token rendered in her language. A missing key would show
-                    the raw token rather than an invented label. */}
-                <TableCell>{t(`equipment:${delivery.item}`)}</TableCell>
+                {/* The token rendered in her language, or a custom item's own
+                    name. A missing key would show the raw token rather than an
+                    invented label. */}
+                <TableCell>{itemLabel(delivery.item)}</TableCell>
                 <TableCell>{delivery.size ?? '—'}</TableCell>
                 <TableCell>{new Date(delivery.delivered_on).toLocaleDateString(locale)}</TableCell>
                 <TableCell>{delivery.note ?? ''}</TableCell>
@@ -133,12 +156,16 @@ export function ParticipantEquipment({
             <select
               id={`${fieldId}-item`}
               value={item}
-              onChange={(event) => setItem(event.target.value as EquipmentItem)}
+              onChange={(event) => {
+                setItem(event.target.value);
+                // Sizes belong to the item: a 38 chosen for boots is no size of a jersey.
+                setSize('');
+              }}
               className="h-10 rounded-md border bg-background px-3 text-sm"
             >
-              {EQUIPMENT_ITEMS.map((option) => (
-                <option key={option} value={option}>
-                  {t(`equipment:${option}`)}
+              {options.map((option) => (
+                <option key={option.type.key} value={option.type.key}>
+                  {option.label}
                 </option>
               ))}
             </select>
@@ -151,12 +178,22 @@ export function ParticipantEquipment({
               <label htmlFor={`${fieldId}-size`} className="text-start text-sm font-medium">
                 {t('equipmentColumnSize')}
               </label>
-              <Input
+              {/* A picker of the item's own sizes, for the reason the item is one:
+                  "38" and "38 " are two sizes to a report. Starts empty, so a
+                  size is chosen rather than left at the first one. */}
+              <select
                 id={`${fieldId}-size`}
                 value={size}
                 onChange={(event) => setSize(event.target.value)}
-                className="w-28"
-              />
+                className="h-10 w-28 rounded-md border bg-background px-3 text-sm"
+              >
+                <option value="">{t('equipmentSizeChoose')}</option>
+                {sizes.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
             </div>
           ) : null}
 

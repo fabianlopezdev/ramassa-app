@@ -37,42 +37,48 @@ export type EquipmentItem = (typeof EQUIPMENT_ITEMS)[number];
 export const equipmentItemSchema = z.enum(EQUIPMENT_ITEMS);
 
 /**
- * The items a size is meaningful for. A water bottle has no size, and a form
- * that asked for one would collect a fake value from a staff member who wanted
- * to move on.
+ * What `equipment_deliveries.item` holds: a built-in token, or a custom
+ * item's key (RAPP-253). `save_item_type` generates `custom_` and 32 hex
+ * digits; the seed uses readable ones such as `custom_bibs`. A label typed in
+ * is refused here, and the ledger trigger refuses a key the catalog lacks.
  */
-export const SIZELESS_EQUIPMENT_ITEMS = [
-  'water_bottle',
-  'rucksack',
-  'ball',
-] as const satisfies readonly EquipmentItem[];
-
-export function equipmentItemTakesSize(item: EquipmentItem): boolean {
-  return !(SIZELESS_EQUIPMENT_ITEMS as readonly EquipmentItem[]).includes(item);
-}
+export const equipmentItemKeySchema = z.union([
+  equipmentItemSchema,
+  z.string().regex(/^custom_[a-z0-9_]{1,64}$/),
+]);
 
 /**
- * What the add-delivery form submits. `deliveredOn` is a date, not a timestamp:
- * staff record that a handover happened on a day, often the day after, and a
- * time nobody observed would be invented precision.
+ * What the add-delivery form submits, for an item type with these sizes.
+ * `deliveredOn` is a date, not a timestamp: staff record that a handover
+ * happened on a day, often the day after, and a time nobody observed would be
+ * invented precision.
+ *
+ * The sizes come from the item type, because the team edits them (RAPP-253):
+ * a fixed list of sizeless items here would disagree with the catalog the
+ * moment somebody gave the rucksack a size or took them off the gloves.
  */
-export const equipmentDeliverySchema = z
-  .object({
-    item: equipmentItemSchema,
-    size: z.string().trim().max(20).optional(),
-    deliveredOn: z.iso.date(),
-    note: z.string().trim().max(500).optional(),
-  })
-  .superRefine((delivery, context) => {
-    // An item that takes a size must have one, or the season report cannot say
-    // which sizes ran out, which is the second question it is asked.
-    if (equipmentItemTakesSize(delivery.item) && (delivery.size ?? '') === '') {
-      context.addIssue({
-        code: 'custom',
-        path: ['size'],
-        message: 'This item needs a size',
-      });
-    }
-  });
+export function equipmentDeliverySchemaFor(sizes: readonly string[]) {
+  return z
+    .object({
+      item: equipmentItemKeySchema,
+      size: z.string().trim().max(20).optional(),
+      deliveredOn: z.iso.date(),
+      note: z.string().trim().max(500).optional(),
+    })
+    .superRefine((delivery, context) => {
+      // An item that takes a size must have one of its own, or the season
+      // report cannot say which sizes ran out, which is the second question it
+      // is asked. An item with no sizes stores none.
+      const size = delivery.size ?? '';
+      const isValid = sizes.length === 0 ? size === '' : sizes.includes(size);
+      if (!isValid) {
+        context.addIssue({
+          code: 'custom',
+          path: ['size'],
+          message: 'This item needs one of its sizes',
+        });
+      }
+    });
+}
 
-export type EquipmentDeliveryInput = z.infer<typeof equipmentDeliverySchema>;
+export type EquipmentDeliveryInput = z.infer<ReturnType<typeof equipmentDeliverySchemaFor>>;

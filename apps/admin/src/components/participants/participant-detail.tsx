@@ -34,7 +34,11 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { AttendanceParticipantStats, AttendanceReportRow } from '@ramassa/shared/attendance';
 import { useAuth } from '@ramassa/shared/auth';
-import { addEquipmentDelivery, type EquipmentDeliveryRow } from '@ramassa/shared/equipment';
+import {
+  addEquipmentDelivery,
+  type EquipmentDeliveryRow,
+  type HandoverItemType,
+} from '@ramassa/shared/equipment';
 import { setForumPostingDisabled } from '@ramassa/shared/forum';
 import {
   addParticipantNote,
@@ -44,13 +48,15 @@ import {
   type ParticipantDetailRow,
   type ParticipantNoteRow,
 } from '@ramassa/shared/participants';
-import type { EquipmentItem, UpdateOwnProfilePayload } from '@ramassa/shared/schemas';
+import type { EquipmentDeliveryInput, UpdateOwnProfilePayload } from '@ramassa/shared/schemas';
 
 export interface ParticipantDetailProps {
   readonly participant: ParticipantDetailRow;
   readonly notes: readonly ParticipantNoteRow[];
   readonly activity: readonly ParticipantActivityEntry[];
   readonly deliveries: readonly EquipmentDeliveryRow[];
+  /** The organization's item catalog, switched-off items included (RAPP-253). */
+  readonly itemTypes: readonly HandoverItemType[];
   readonly attendanceStats: AttendanceParticipantStats | null;
   readonly attendanceHistory: readonly AttendanceReportRow[];
   /**
@@ -66,6 +72,7 @@ export function ParticipantDetail({
   notes,
   activity,
   deliveries,
+  itemTypes,
   attendanceStats,
   attendanceHistory,
   openDeletionRequestReason,
@@ -116,12 +123,7 @@ export function ParticipantDetail({
     await router.invalidate();
   }
 
-  async function addDelivery(delivery: {
-    readonly item: EquipmentItem;
-    readonly size?: string;
-    readonly deliveredOn: string;
-    readonly note?: string;
-  }) {
+  async function addDelivery(delivery: EquipmentDeliveryInput) {
     setDeliveryErrorMessage(undefined);
     if (user === null) return;
     const result = await safeAsync(() =>
@@ -268,6 +270,7 @@ export function ParticipantDetail({
 
       <ParticipantEquipment
         deliveries={deliveries}
+        itemTypes={itemTypes}
         onAdd={addDelivery}
         errorMessage={deliveryErrorMessage}
       />

@@ -131,6 +131,7 @@
   "equipmentEmpty": "لم يُسلَّم لها شيء بعد.",
   "equipmentColumnItem": "المعدّات",
   "equipmentColumnSize": "المقاس",
+  "equipmentSizeChoose": "اختر المقاس",
   "equipmentColumnDate": "التاريخ",
   "equipmentColumnNote": "ملاحظات",
   "equipmentAddAction": "سجّلي التسليم",
