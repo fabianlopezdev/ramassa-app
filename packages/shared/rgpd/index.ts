@@ -4,6 +4,7 @@ export {
   DELETION_REQUEST_COLUMNS,
   eraseParticipant,
   fetchDeletionRequests,
+  fetchOpenDeletionRequestFor,
   resolveDeletionRequest,
   type DeletionRequestRow,
   type ErasureDependencies,

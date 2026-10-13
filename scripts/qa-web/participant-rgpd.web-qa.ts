@@ -416,7 +416,8 @@ test.describe('the erasure-request queue', () => {
     const participant = await createParticipantWithData(page, 'Queue');
 
     await page.goto('/participants/deletion-requests');
-    const row = page.locator('tr', { hasText: participant.id });
+    // The queue names her (RAPP-286); the link below still proves which record it is.
+    const row = page.locator('tr', { hasText: `Queue Rgpd ${RUN_TAG}` });
     await expect(row).toBeVisible({ timeout: 20_000 });
     // Her REASON, in her own words: the difference between "erase me" and "take
     // me off the photos" is decided by reading it.

@@ -2,6 +2,7 @@
 // below reaches transitively, so the SDK is live before the first render (RAPP-12).
 import { AppLockProvider } from '@/components/auth/app-lock';
 import { SessionFreshness } from '@/components/auth/session-freshness';
+import { StepUpProvider } from '@/components/auth/step-up';
 import { OrganizationBrandingProvider } from '@/components/branding/organization-branding-provider';
 import { ErrorFallback, type ErrorFallbackProps } from '@/components/error-fallback';
 import { PushNotificationResponseHandler } from '@/components/push-notification-response-handler';
@@ -220,7 +221,9 @@ function RootLayout() {
                 <PushNotificationResponseHandler />
                 {/* The app lock covers every screen once it engages (RAPP-236). */}
                 <AppLockProvider>
-                  <RootNavigator />
+                  <StepUpProvider>
+                    <RootNavigator />
+                  </StepUpProvider>
                 </AppLockProvider>
               </AuthFlowStatusProvider>
             </OrganizationBrandingProvider>

@@ -129,10 +129,12 @@ export interface DeletionRequestRow {
   readonly created_at: string;
   readonly resolution_note: string | null;
   readonly resolved_at: string | null;
+  /** Her name (Basic fields), so a list can say whose request it is (RAPP-286). */
+  readonly participant: { readonly first_name: string; readonly last_name: string } | null;
 }
 
 export const DELETION_REQUEST_COLUMNS =
-  'id, profile_id, reason, state, created_at, resolution_note, resolved_at';
+  'id, profile_id, reason, state, created_at, resolution_note, resolved_at, participant:profiles!deletion_requests_profile_id_fkey(first_name, last_name)';
 
 /**
  * The queue a participant fills from her own profile (RAPP-22) and staff work
@@ -151,7 +153,28 @@ export async function fetchDeletionRequests(
   if (error) {
     throw new AppError('DB-1', { message: error.message });
   }
-  return (data ?? []) as DeletionRequestRow[];
+  return (data ?? []) as unknown as DeletionRequestRow[];
+}
+
+/**
+ * Her open erasure request, if she has raised one (RAPP-286): the card shows
+ * it above the two GDPR actions, as the web admin does.
+ */
+export async function fetchOpenDeletionRequestFor(
+  client: Client,
+  participantId: string,
+): Promise<DeletionRequestRow | null> {
+  const { data, error } = await client
+    .from('deletion_requests')
+    .select(DELETION_REQUEST_COLUMNS)
+    .eq('profile_id', participantId)
+    .in('state', ['open', 'in_progress'])
+    .order('created_at', { ascending: false })
+    .limit(1);
+  if (error) {
+    throw new AppError('DB-1', { message: error.message });
+  }
+  return ((data ?? []) as unknown as DeletionRequestRow[])[0] ?? null;
 }
 
 export interface ResolveDeletionRequestParams {

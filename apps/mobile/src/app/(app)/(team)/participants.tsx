@@ -185,7 +185,9 @@ export default function ParticipantListScreen() {
   const { t: tErrors } = useTranslation('errors');
   const fontClass = useLanguageFontClass();
   const { push } = useRouter();
-  const canInvite = useAccountAccess().permissions.has('participants.invite');
+  const { permissions } = useAccountAccess();
+  const canInvite = permissions.has('participants.invite');
+  const canHandleRgpd = permissions.has('rgpd.erase');
   const isSplit = useTeamLayout() === 'sidebar';
   const [search, setSearch] = useState<ParticipantListSearch>(DEFAULT_SEARCH);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -283,20 +285,36 @@ export default function ParticipantListScreen() {
         >
           {tNav('team.participants')}
         </Text>
-        {canInvite ? (
-          <PressableScale
-            testID="participants-invites"
-            accessibilityRole="button"
-            accessibilityLabel={t('invitesAction')}
-            onPress={() => push('/participant-invites' as Href)}
-            haptic="tapLight"
-            className="min-h-recommended justify-center"
-          >
-            <Text className={`font-semibold text-primary-dark ${fontClass}`}>
-              {t('invitesAction')}
-            </Text>
-          </PressableScale>
-        ) : null}
+        <View className="flex-row flex-wrap gap-md">
+          {canHandleRgpd ? (
+            <PressableScale
+              testID="participants-deletion-requests"
+              accessibilityRole="button"
+              accessibilityLabel={t('deletionRequestsTitle')}
+              onPress={() => push('/deletion-requests' as Href)}
+              haptic="tapLight"
+              className="min-h-recommended justify-center"
+            >
+              <Text className={`font-semibold text-primary-dark ${fontClass}`}>
+                {t('deletionRequestsTitle')}
+              </Text>
+            </PressableScale>
+          ) : null}
+          {canInvite ? (
+            <PressableScale
+              testID="participants-invites"
+              accessibilityRole="button"
+              accessibilityLabel={t('invitesAction')}
+              onPress={() => push('/participant-invites' as Href)}
+              haptic="tapLight"
+              className="min-h-recommended justify-center"
+            >
+              <Text className={`font-semibold text-primary-dark ${fontClass}`}>
+                {t('invitesAction')}
+              </Text>
+            </PressableScale>
+          ) : null}
+        </View>
       </View>
       <View className="flex-row items-center gap-sm">
         <TextInput

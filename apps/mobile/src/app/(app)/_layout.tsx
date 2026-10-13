@@ -121,6 +121,9 @@ export default function AppLayout() {
         >
           <Stack.Screen name="participant-invites" />
         </Stack.Protected>
+        <Stack.Protected guard={isTeam && team.participants && permissions.has('rgpd.erase')}>
+          <Stack.Screen name="deletion-requests" />
+        </Stack.Protected>
         <Stack.Protected
           guard={isTeam && team.participants && permissions.has('equipment.handover')}
         >
