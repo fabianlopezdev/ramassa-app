@@ -10,7 +10,6 @@
   "filterStatus": "الحالة",
   "filterDependents": "أشخاص تحت الرعاية",
   "optionAll": "الكل",
-  "optionAllMasc": "الكل",
   "statusActive": "نشطات",
   "statusInactive": "غير نشطات",
   "dependentsWith": "نعم",
@@ -139,6 +138,5 @@
   "inviteNoEmailHint": "إذا لم يكن لديها بريد إلكتروني، ساعدها في إنشاء بريد أولاً (مثل حساب Gmail)، ثم ادعُها بهذا العنوان.",
   "inviteAlreadyHasAccount": "هذا البريد لديه حساب بالفعل. ابحث عنها في قائمة المشاركات.",
   "invitedReferralNote": "ستُربط إحالة الجهة بملفها الشخصي عندما تُنهي التسجيل.",
-  "selectParticipant": "اختاري مشاركة لرؤية بطاقتها.",
-  "lookupStart": "اكتبي اسمًا أو بلدة أو جهة."
+  "selectParticipant": "اختاري مشاركة لرؤية بطاقتها."
 }

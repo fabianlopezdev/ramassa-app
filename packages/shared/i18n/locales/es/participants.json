@@ -10,7 +10,6 @@
   "filterStatus": "Estado",
   "filterDependents": "Personas a cargo",
   "optionAll": "Todas",
-  "optionAllMasc": "Todos",
   "statusActive": "Activas",
   "statusInactive": "Inactivas",
   "dependentsWith": "Con",
@@ -140,7 +139,6 @@
   "inviteAlreadyHasAccount": "Este correo ya tiene una cuenta. Búscala en la lista de participantes.",
   "invitedReferralNote": "La derivación de la entidad se enlazará con su perfil cuando termine el registro.",
   "selectParticipant": "Elige una participante para ver su ficha.",
-  "lookupStart": "Escribe un nombre, un pueblo o una entidad.",
   "material": {
     "handOver": "Entregar material",
     "handoverTitle": "Entregar material",
@@ -377,5 +375,18 @@
     "codeTaken": "Otro artículo ya usa estas letras.",
     "summary": "{{kind}} · {{sizes}}",
     "inactive": "Desactivado"
+  },
+  "list": {
+    "filtersAction": "Filtros",
+    "filtersActionCount": "Filtros ({{count}})",
+    "filtersTitle": "Filtros",
+    "sortLabel": "Ordenar por",
+    "dirAsc": "Ascendente",
+    "dirDesc": "Descendente",
+    "filtersDone": "Ver las participantes",
+    "sortBy": "Ordenar por {{column}}",
+    "sortedBy": "{{column}}, ordenado {{direction}}",
+    "loadingMore": "Cargando más participantes",
+    "dirLabel": "Orden"
   }
 }

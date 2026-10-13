@@ -91,7 +91,7 @@ export function ParticipantsFilters({ search, filterOptions, onChange }: Partici
       <FilterSelect
         label={t('filterDependents')}
         value={search.dependents}
-        allLabel={t('optionAllMasc')}
+        allLabel={t('optionAll')}
         options={[
           { value: 'with', label: t('dependentsWith') },
           { value: 'without', label: t('dependentsWithout') },

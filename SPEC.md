@@ -1671,6 +1671,7 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - The card shows a row only when the database returned a value: language, phone, town, entity, clothing and shoe size, and whether she is active. So it shows exactly what the person's field levels allow (RAPP-240). Opening a card writes an audit row, so it is not fetched again for five minutes.
 - Both reads stay in memory: `participants` is not on the disk allow-list.
 - With attendance, participants and messages, a staff member has three areas, so a phone now shows the tabs.
+- 2026-10-13: the two-letter lookup gave way to the full list, see "Participant list" (RAPP-280).
 
 ## Material stock ledger (2026-10-12, RAPP-248, part of RAPP-212)
 
@@ -1742,6 +1743,13 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - A size that still has stock cannot be removed; the editor names the size. An item that is no longer used is switched off: it leaves the pickers (handover, goods received, checkout) and keeps its history.
 - Handovers may be of any item in the organization's catalog; the delivery item check gave way to the ledger trigger, which refuses an item the organization does not have. Every screen shows a custom item by its own name (`useItemLabel`), and the handover statement uses the name in her language.
 - The web admin's equipment log still labels items through the built-in translations only.
+
+## Participant list (2026-10-13, RAPP-280, part of RAPP-213)
+
+- The Participants area lists every participant the person may see, with no search needed (`list_participants`, 25 a page, more pages load on scroll). The total shows above the list.
+- The search field finds a name, town or entity. Chips filter by status (all, active, inactive). A filter sheet holds entity, nationality and dependants (each only when `participant_filter_options()` returns values) and the sort: name, town, nationality, entity or date joined, up or down. The Filters button shows how many sheet filters are on, and one action clears them all.
+- A phone shows cards (name, town, entity, an inactive badge) and opens the card screen. A tablet shows a table: name, town and entity, plus status and date joined when the list pane is wide enough. Each column header sorts, and a second tap turns the order. The card opens beside the table.
+- A new search, filter or sort starts the list at the top. The list stays in memory: `participants` is not on the disk allow-list.
 
 ## Staff-side languages (2026-10-11, RAPP-238, part of RAPP-211)
 
