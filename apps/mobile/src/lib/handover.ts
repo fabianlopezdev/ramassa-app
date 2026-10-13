@@ -71,10 +71,12 @@ export async function drainHandovers(
   return { delivered: result.delivered, nextRetryAt: result.nextRetryAt };
 }
 
+export const itemTypesKey = (userId: string) => ['equipment-item-types', userId] as const;
+
 export function useHandoverItemTypes() {
   const { user } = useAuth();
   return useQuery({
-    queryKey: ['equipment-item-types', user?.id ?? SIGNED_OUT],
+    queryKey: itemTypesKey(user?.id ?? SIGNED_OUT),
     queryFn: () => fetchHandoverItemTypes(supabase),
     enabled: user !== null,
     staleTime: ITEM_TYPES_STALE_MS,

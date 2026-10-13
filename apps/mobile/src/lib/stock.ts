@@ -16,13 +16,16 @@ import {
   recordStaffCheckin,
   recordStaffCheckout,
   recordStockCount,
+  saveItemType,
   type ArrivalInput,
   type CountLine,
   type CountReason,
+  type ItemTypeInput,
   type ReturnCondition,
 } from '@ramassa/shared/equipment';
 import { AppError } from '@ramassa/shared/errors';
 import { uploadFile } from '@ramassa/shared/upload-client';
+import { itemTypesKey } from './handover';
 import { compressNativeStoryImage } from './native-image-compression';
 import { mobileClientEnv, supabase } from './supabase';
 
@@ -128,6 +131,20 @@ export function useRecordCheckin() {
       readonly condition: ReturnCondition | null;
     }) => recordStaffCheckin(supabase, input),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: stockRoot(user?.id ?? SIGNED_OUT) }),
+  });
+}
+
+/** Saving an item (RAPP-253) refreshes the catalog and the stock built on it. */
+export function useSaveItemType() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: ItemTypeInput) => saveItemType(supabase, input),
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: itemTypesKey(user?.id ?? SIGNED_OUT) }),
+        queryClient.invalidateQueries({ queryKey: stockRoot(user?.id ?? SIGNED_OUT) }),
+      ]),
   });
 }
 

@@ -1452,6 +1452,16 @@ from (values ('boots', 2500), ('jersey', 1200), ('shorts', 800), ('ball', 1500),
 where equipment_item_types.org_id = '5eed0000-0000-4000-8000-000000000000'
   and equipment_item_types.key = value.key;
 
+-- A custom item (RAPP-253): training bibs, counted team equipment, named in all
+-- five languages, with two in stock from a sponsor's bag.
+insert into public.equipment_item_types
+  (id, org_id, key, name, kind, sizes, default_value_cents, is_builtin)
+values (
+  '5eed0000-0000-4000-8000-000000000b01', '5eed0000-0000-4000-8000-000000000000', 'custom_bibs',
+  '{"ca": "Petos", "es": "Petos", "en": "Bibs", "ar": "صدريات تدريب", "fa": "جلیقه تمرین"}'::jsonb,
+  'team_equipment', '{}', 300, false
+);
+
 -- The arrival itself (RAPP-250): a donation from a local club, with one photo
 -- of the boxes. The photo row points at no stored object; the stock folder is
 -- served only after the database check, and a missing object is a plain 404.

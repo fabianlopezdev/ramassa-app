@@ -69,3 +69,12 @@ export {
   type CheckoutRecipient,
   type OpenCheckout,
 } from './checkouts';
+export {
+  cleanSizes,
+  ITEM_NAME_LANGUAGES,
+  itemTypeLabel,
+  saveItemType,
+  type ItemName,
+  type ItemNameLanguage,
+  type ItemTypeInput,
+} from './item-types';

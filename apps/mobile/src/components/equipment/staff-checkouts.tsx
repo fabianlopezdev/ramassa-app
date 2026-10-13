@@ -7,6 +7,7 @@ import { ChoiceOption } from '@/components/equipment/choice-option';
 import { FailureNotice } from '@/components/error-code-line';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
+import { useItemLabel } from '@/lib/item-label';
 import { useOpenCheckouts, useRecordCheckin } from '@/lib/stock';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useState } from 'react';
@@ -158,7 +159,7 @@ function CheckInPanel({
 
 export function StaffCheckouts({ canCheckIn }: { readonly canCheckIn: boolean }) {
   const { t } = useTranslation('participants');
-  const { t: tEquipment } = useTranslation('equipment');
+  const itemLabel = useItemLabel();
   const fontClass = useLanguageFontClass();
   const formatDate = useCheckoutDate();
   const checkouts = useOpenCheckouts();
@@ -180,7 +181,7 @@ export function StaffCheckouts({ canCheckIn }: { readonly canCheckIn: boolean })
       ) : null}
       {rows.map((row) => {
         const item =
-          row.size === null ? tEquipment(row.itemKey) : `${tEquipment(row.itemKey)} ${row.size}`;
+          row.size === null ? itemLabel(row.itemKey) : `${itemLabel(row.itemKey)} ${row.size}`;
         return (
           <View
             key={row.id}

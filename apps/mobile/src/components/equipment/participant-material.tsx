@@ -8,6 +8,7 @@ import { FailureNotice } from '@/components/error-code-line';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useHandoverOutbox, useParticipantMaterial, useRecordReturn } from '@/lib/handover';
+import { useItemLabel } from '@/lib/item-label';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -148,7 +149,7 @@ function ReturnPanel({
 
 export function ParticipantMaterial({ participantId }: { readonly participantId: string }) {
   const { t } = useTranslation('participants');
-  const { t: tEquipment } = useTranslation('equipment');
+  const itemLabel = useItemLabel();
   const fontClass = useLanguageFontClass();
   const formatDate = useDateFormat();
   const material = useParticipantMaterial(participantId);
@@ -156,8 +157,8 @@ export function ParticipantMaterial({ participantId }: { readonly participantId:
   const waiting = entries.filter((entry) => entry.participantId === participantId);
   const [returning, setReturning] = useState<string | null>(null);
   const rows = material.data ?? [];
-  const itemLabel = (key: string, size: string | null) =>
-    size === null ? tEquipment(key) : `${tEquipment(key)} ${size}`;
+  const itemWithSize = (key: string, size: string | null) =>
+    size === null ? itemLabel(key) : `${itemLabel(key)} ${size}`;
 
   return (
     <View testID="participant-material" className="gap-sm">
@@ -178,7 +179,7 @@ export function ParticipantMaterial({ participantId }: { readonly participantId:
           className="gap-xs rounded-md border border-neutral-200 bg-white p-md"
         >
           <Text className={`text-start text-md font-semibold text-neutral-900 ${fontClass}`}>
-            {itemLabel(entry.itemKey, entry.size)}
+            {itemWithSize(entry.itemKey, entry.size)}
           </Text>
           <Text className={`text-start text-sm text-neutral-700 ${fontClass}`}>
             {entry.rejection == null ? t('material.waiting') : t('material.rejected')}
@@ -229,7 +230,7 @@ export function ParticipantMaterial({ participantId }: { readonly participantId:
           >
             <View className="flex-row flex-wrap items-baseline justify-between gap-sm">
               <Text className={`text-start text-md font-semibold text-neutral-900 ${fontClass}`}>
-                {itemLabel(row.itemKey, row.size)}
+                {itemWithSize(row.itemKey, row.size)}
               </Text>
               {row.unitCode === null ? null : (
                 <Text selectable className="text-sm font-semibold text-neutral-700">

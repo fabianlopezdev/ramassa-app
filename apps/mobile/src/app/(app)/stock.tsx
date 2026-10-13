@@ -9,6 +9,7 @@ import { PageWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useHandoverItemTypes } from '@/lib/handover';
+import { useItemLabel } from '@/lib/item-label';
 import { resolveMediaImageSource } from '@/lib/media-source';
 import { useRecentArrivals, useStockLevels } from '@/lib/stock';
 import { mobileClientEnv } from '@/lib/supabase';
@@ -57,7 +58,7 @@ function ArrivalPhoto({
 
 function ArrivalCard({ arrival }: { readonly arrival: ArrivalSummary }) {
   const { t, i18n } = useTranslation('participants');
-  const { t: tEquipment } = useTranslation('equipment');
+  const itemLabel = useItemLabel();
   const fontClass = useLanguageFontClass();
   const locale = i18n.resolvedLanguage ?? DEFAULT_LANGUAGE;
   const date = new Intl.DateTimeFormat(locale, {
@@ -91,8 +92,8 @@ function ArrivalCard({ arrival }: { readonly arrival: ArrivalSummary }) {
           {t('arrival.lineSummary', {
             item:
               line.size === null
-                ? tEquipment(line.itemKey)
-                : `${tEquipment(line.itemKey)} ${line.size}`,
+                ? itemLabel(line.itemKey)
+                : `${itemLabel(line.itemKey)} ${line.size}`,
             quantity: line.quantity,
           })}
         </Text>
@@ -152,7 +153,7 @@ function groupByItem(
 
 export default function StockScreen() {
   const { t, i18n } = useTranslation('participants');
-  const { t: tEquipment } = useTranslation('equipment');
+  const itemLabel = useItemLabel();
   const { t: tCommon } = useTranslation('common');
   const fontClass = useLanguageFontClass();
   const { back, push } = useRouter();
@@ -160,6 +161,7 @@ export default function StockScreen() {
   const canReceive = permissions.has('equipment.receive');
   const canCount = permissions.has('equipment.count');
   const canCheckOut = canReceive || canCount;
+  const canEditItems = permissions.has('equipment.items');
   const levels = useStockLevels();
   const arrivals = useRecentArrivals();
   const locale = i18n.resolvedLanguage ?? DEFAULT_LANGUAGE;
@@ -173,8 +175,8 @@ export default function StockScreen() {
     [itemTypes.data],
   );
   const items = useMemo(
-    () => groupByItem(levels.data ?? [], (key) => tEquipment(key), sizeOrder, locale),
-    [levels.data, locale, sizeOrder, tEquipment],
+    () => groupByItem(levels.data ?? [], (key) => itemLabel(key), sizeOrder, locale),
+    [levels.data, locale, sizeOrder, itemLabel],
   );
 
   return (
@@ -231,6 +233,22 @@ export default function StockScreen() {
             >
               <Text className={`text-center text-md font-bold text-primary-dark ${fontClass}`}>
                 {t('checkout.action')}
+              </Text>
+            </PressableScale>
+          ) : null}
+
+          {canEditItems ? (
+            <PressableScale
+              testID="stock-items"
+              accessibilityRole="button"
+              accessibilityLabel={t('items.action')}
+              onPress={() => push('/items' as Href)}
+              haptic="tapLight"
+              style={continuousCorners}
+              className="min-h-recommended items-center justify-center rounded-md border border-primary px-lg"
+            >
+              <Text className={`text-center text-md font-bold text-primary-dark ${fontClass}`}>
+                {t('items.action')}
               </Text>
             </PressableScale>
           ) : null}

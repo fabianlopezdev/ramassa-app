@@ -878,6 +878,7 @@ export type Database = {
           default_value_cents: number | null;
           id: string;
           is_active: boolean;
+          is_builtin: boolean;
           key: string;
           kind: string;
           name: Json | null;
@@ -891,6 +892,7 @@ export type Database = {
           default_value_cents?: number | null;
           id?: string;
           is_active?: boolean;
+          is_builtin?: boolean;
           key: string;
           kind: string;
           name?: Json | null;
@@ -904,6 +906,7 @@ export type Database = {
           default_value_cents?: number | null;
           id?: string;
           is_active?: boolean;
+          is_builtin?: boolean;
           key?: string;
           kind?: string;
           name?: Json | null;
@@ -5140,6 +5143,18 @@ export type Database = {
           p_name: Json;
           p_slug: string;
           p_sort_order: number;
+        };
+        Returns: string;
+      };
+      save_item_type: {
+        Args: {
+          p_code_prefix: string;
+          p_default_value_cents: number;
+          p_id: string;
+          p_is_active: boolean;
+          p_kind: string;
+          p_name: Json;
+          p_sizes: string[];
         };
         Returns: string;
       };
