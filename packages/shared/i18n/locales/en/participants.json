@@ -405,7 +405,8 @@
     "deactivateTitle": "Deactivate {{name}}?",
     "deactivateBody": "She leaves the active lists and keeps her record. You can reactivate her later.",
     "sensitiveHidden": "You do not see the document number, phone, address or postal code. They stay as they are.",
-    "notesLoadFailed": "We could not load the notes."
+    "notesLoadFailed": "We could not load the notes.",
+    "anonymizedName": "Anonymized participant"
   },
   "activity": {
     "signup": {

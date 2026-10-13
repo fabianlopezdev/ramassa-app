@@ -18,6 +18,7 @@ import { ParticipantMaterial } from '@/components/equipment/participant-material
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { ParticipantActivity } from '@/components/participants/participant-activity';
 import { ParticipantNotes } from '@/components/participants/participant-notes';
+import { ParticipantRgpd } from '@/components/participants/participant-rgpd';
 import { DOCUMENT_TYPE_LABEL_KEYS } from '@/components/profile/profile-form-fields';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useParticipantCard, useParticipantWrites } from '@/lib/participant-lookup';
@@ -111,6 +112,7 @@ export function ParticipantCard({
   const canChangeStatus = permissions.has('participants.deactivate');
   const canModerateForum = permissions.has('forum.moderate');
   const canReadNotes = permissions.has('participants.notes');
+  const canHandleRgpd = permissions.has('rgpd.erase');
   const locale = i18n.resolvedLanguage ?? DEFAULT_LANGUAGE;
   const formats = useMemo(
     () => ({
@@ -389,6 +391,7 @@ export function ParticipantCard({
       {canReadNotes ? <ParticipantNotes participantId={participantId} /> : null}
       <ParticipantMaterial participantId={participantId} />
       <ParticipantActivity participantId={participantId} />
+      {canHandleRgpd ? <ParticipantRgpd participant={data} onErased={() => onBack?.()} /> : null}
     </ScrollView>
   );
 }

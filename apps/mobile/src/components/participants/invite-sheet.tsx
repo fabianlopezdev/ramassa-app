@@ -141,7 +141,12 @@ export function InviteSheet({
           className="flex-1"
           behavior={process.env.EXPO_OS === 'ios' ? 'padding' : undefined}
         >
-          <ScrollView contentContainerClassName="gap-md p-lg" keyboardShouldPersistTaps="handled">
+          <ScrollView
+            contentContainerClassName="gap-md p-lg"
+            keyboardShouldPersistTaps="handled"
+            // The page sheet does not move with the keyboard, so the scroll view does.
+            automaticallyAdjustKeyboardInsets
+          >
             <Text
               accessibilityRole="header"
               className={`text-start text-2xl font-bold text-neutral-900 ${fontClass}`}

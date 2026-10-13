@@ -405,7 +405,8 @@
     "deactivateTitle": "¿Desactivar a {{name}}?",
     "deactivateBody": "Sale de las listas activas y conserva su ficha. Puedes reactivarla más adelante.",
     "sensitiveHidden": "No ves el número de documento, el teléfono, la dirección ni el código postal. Se quedan como están.",
-    "notesLoadFailed": "No hemos podido cargar las notas."
+    "notesLoadFailed": "No hemos podido cargar las notas.",
+    "anonymizedName": "Participante anonimizada"
   },
   "activity": {
     "signup": {

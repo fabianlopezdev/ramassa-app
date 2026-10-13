@@ -57,7 +57,15 @@ export function DeletionRequestsTable({ requests }: DeletionRequestsTableProps) 
           <TableBody>
             {requests.map((request) => (
               <TableRow key={request.id}>
-                <TableCell className="font-mono text-xs">{request.profile_id}</TableCell>
+                <TableCell>
+                  {/* Her name since RAPP-286; the id only when the name cannot be read. */}
+                  {request.participant === null ? (
+                    <span className="font-mono text-xs">{request.profile_id}</span>
+                  ) : (
+                    `${request.participant.first_name} ${request.participant.last_name}`.trim() ||
+                    t('profile.anonymizedName')
+                  )}
+                </TableCell>
                 <TableCell>
                   {request.reason === null || request.reason.trim().length === 0 ? (
                     <span className="text-muted-foreground">{t('deletionRequestNoReason')}</span>
