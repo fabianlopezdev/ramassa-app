@@ -1,7 +1,8 @@
 /**
  * Participants on the phone (RAPP-247, list since RAPP-280, editing since
- * RAPP-281): the roster with search, filters and sorting, her card, and the
- * writes the card offers. Both reads go through the
+ * RAPP-281, notes since RAPP-282): the roster with search, filters and
+ * sorting, her card, the team's notes about her, and the writes the card
+ * offers. Both reads go through the
  * database's field levels (RAPP-240): `list_participants` and
  * `get_participant_profile` return a field empty when the caller may not see
  * it, and ignore a filter on a field she may not read. Everything stays in
@@ -15,10 +16,13 @@ import {
   useQueryClient,
 } from '@tanstack/react-query';
 import { useAuth } from '@ramassa/shared/auth';
+import { AppError } from '@ramassa/shared/errors';
 import { setForumPostingDisabled } from '@ramassa/shared/forum';
 import {
+  addParticipantNote,
   fetchParticipantDetail,
   fetchParticipantFilterOptions,
+  fetchParticipantNotes,
   fetchParticipants,
   PARTICIPANT_PAGE_SIZE,
   setParticipantActive,
@@ -94,4 +98,27 @@ export function useParticipantWrites(participantId: string) {
     onSuccess: refresh,
   });
   return { updateProfile, setActive, setForumPosting };
+}
+
+/**
+ * The team's notes about her, newest first, for `participants.notes` holders.
+ * Notes cannot be edited or deleted, so adding one is the only write.
+ */
+export function useParticipantNotes(participantId: string) {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const queryKey = ['participants', user?.id ?? SIGNED_OUT, 'notes', participantId];
+  const notes = useQuery({
+    queryKey,
+    queryFn: () => fetchParticipantNotes(supabase, participantId),
+    enabled: user !== null && participantId.length > 0,
+  });
+  const addNote = useMutation({
+    mutationFn: (body: string) => {
+      if (user === null) throw new AppError('AUTH-1', { context: { reason: 'signed_out' } });
+      return addParticipantNote(supabase, { participantId, authorId: user.id, body });
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey }),
+  });
+  return { notes, addNote };
 }
