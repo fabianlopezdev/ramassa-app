@@ -304,5 +304,38 @@
     "actionLabel": "Count {{item}}",
     "monthlyTitle": "This month's count",
     "monthlyItem": "{{item}}: count what is on the shelf."
+  },
+  "checkout": {
+    "action": "Check out to a staff member",
+    "title": "Check out material",
+    "intro": "For a trip or an event. Material for a normal session is not recorded.",
+    "staffLabel": "Who takes it",
+    "returnLabel": "Back by",
+    "returnIn": {
+      "d1": "Tomorrow",
+      "d3": "In 3 days",
+      "d7": "In a week",
+      "d14": "In two weeks"
+    },
+    "returnOn": "Back by {{date}}",
+    "noteLabel": "Note",
+    "save": "Check out",
+    "saving": "Saving",
+    "saveFailed": "The checkout was not saved. Try again.",
+    "needsConnection": "Checking out needs a connection.",
+    "chooseAll": "Choose the item, the size and who takes it.",
+    "listTitle": "Checked out",
+    "listEmpty": "Nothing is checked out.",
+    "row": "{{item}}: {{quantity}} with {{name}}",
+    "overdue": "Late: due {{date}}",
+    "checkIn": "Check in",
+    "checkInTitle": "How many came back?",
+    "conditionLabel": "In what condition?",
+    "missing": "Missing: {{count}}. They stay out of stock as lost.",
+    "saveCheckIn": "Save the check-in",
+    "checkInFailed": "The check-in was not saved. Try again.",
+    "todayTitle": "Checked out and late",
+    "todayRow": "{{item}}: {{quantity}} with {{name}}, due {{date}}",
+    "todayMine": "{{item}}: {{quantity}} with you, due {{date}}"
   }
 }

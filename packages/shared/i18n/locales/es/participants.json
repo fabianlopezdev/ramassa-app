@@ -304,5 +304,38 @@
     "actionLabel": "Contar {{item}}",
     "monthlyTitle": "Recuento de este mes",
     "monthlyItem": "{{item}}: cuenta lo que hay en la estantería."
+  },
+  "checkout": {
+    "action": "Prestar a un miembro del equipo",
+    "title": "Prestar material",
+    "intro": "Para un viaje o un evento. El material de una sesión normal no se registra.",
+    "staffLabel": "Quién se lo lleva",
+    "returnLabel": "Volverá",
+    "returnIn": {
+      "d1": "Mañana",
+      "d3": "Dentro de 3 días",
+      "d7": "Dentro de una semana",
+      "d14": "Dentro de dos semanas"
+    },
+    "returnOn": "Volverá el {{date}}",
+    "noteLabel": "Nota",
+    "save": "Prestar",
+    "saving": "Guardando",
+    "saveFailed": "El préstamo no se ha guardado. Vuelve a intentarlo.",
+    "needsConnection": "Prestar material necesita conexión.",
+    "chooseAll": "Elige el artículo, la talla y quién se lo lleva.",
+    "listTitle": "Prestado",
+    "listEmpty": "No hay nada prestado.",
+    "row": "{{item}}: {{quantity}} con {{name}}",
+    "overdue": "Con retraso: tenía que volver el {{date}}",
+    "checkIn": "Recoger",
+    "checkInTitle": "¿Cuántos han vuelto?",
+    "conditionLabel": "¿En qué estado?",
+    "missing": "Faltan: {{count}}. Quedan fuera del stock como perdidos.",
+    "saveCheckIn": "Guardar la devolución",
+    "checkInFailed": "La devolución no se ha guardado. Vuelve a intentarlo.",
+    "todayTitle": "Prestado y con retraso",
+    "todayRow": "{{item}}: {{quantity}} con {{name}}, tenía que volver el {{date}}",
+    "todayMine": "{{item}}: {{quantity}} contigo, tenía que volver el {{date}}"
   }
 }

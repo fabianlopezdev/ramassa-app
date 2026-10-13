@@ -59,3 +59,13 @@ export {
   type CountReason,
   type MonthlyCount,
 } from './counts';
+export {
+  fetchCheckoutRecipients,
+  fetchOpenCheckouts,
+  recordStaffCheckin,
+  recordStaffCheckout,
+  RETURN_IN_DAYS,
+  returnDateIn,
+  type CheckoutRecipient,
+  type OpenCheckout,
+} from './checkouts';

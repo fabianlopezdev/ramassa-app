@@ -38,7 +38,9 @@ select is(
         -- Which manager may sign the target out depends on what kind of person she is.
         'sign_out_everywhere',
         -- A message counts as sent by the team when its sender is a team member.
-        'enqueue_message_push'
+        'enqueue_message_push',
+        -- Material is lent to team members only (RAPP-252).
+        'checkout_recipients', 'record_staff_checkout'
       )),
   '{}'::text[], 'a literal staff/admin role check remains only where it defines team membership'
 );

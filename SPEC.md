@@ -1726,6 +1726,14 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - Today asks whoever holds `equipment.count` for one small count a month (a cycle count): until an item has been counted this month (Madrid time), it shows the item with stock that was counted longest ago, never-counted first. One tap opens its count.
 - The count screen is blind: staff type what is on the shelf, size by size, before the app shows its own numbers. Then it lists the differences and asks for the reason. Stock shows a Count button on each item for `equipment.count`.
 
+## Staff checkout and check-in (2026-10-12, RAPP-252, part of RAPP-212)
+
+- Material for a normal session is never recorded. A longer loan to a staff member is (a trip, a tournament): `staff_checkouts` holds the item, size, quantity, who has it, who handed it out, the return date and a note. `record_staff_checkout()` takes the pieces out of stock with a `checkout` movement; the phone makes the id, so a resend saves nothing twice. Material goes to active staff and admins only (`checkout_recipients()`).
+- `record_staff_checkin()` records how many came back and their condition (new, good, worn, unusable). Returned pieces come back with a `checkin` movement; unusable ones are written off at once; pieces that did not come back stay out of stock as lost, and the checkout keeps how many returned. A checkout is checked in once.
+- The storeroom runs checkouts: `equipment.receive` or `equipment.count`. It reads every open checkout; a staff member reads the ones she has (`open_staff_checkouts()`, with the name and whether it is late).
+- Stock has "Check out to a staff member" (item, size, quantity, person, back by tomorrow, in 3 days, in a week or in two weeks, note) and a Checked out list: late ones in red, each with Check in (how many came back, the condition, and how many are missing).
+- Today shows a late-checkout card: every late one for the storeroom, which opens Stock, and her own for the staff member who has the material.
+
 ## Staff-side languages (2026-10-11, RAPP-238, part of RAPP-211)
 
 - The staff side (the web admin, the team screens and the entity screens) is in Catalan, Spanish or English (`STAFF_LANGUAGES`). Player screens keep all five languages and right-to-left. Content stays five-language everywhere: this is the language of the screens themselves.

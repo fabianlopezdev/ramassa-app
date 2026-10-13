@@ -3068,6 +3068,96 @@ export type Database = {
           },
         ];
       };
+      staff_checkouts: {
+        Row: {
+          checked_in_at: string | null;
+          checked_in_by: string | null;
+          checked_out_at: string;
+          checked_out_by: string | null;
+          checked_out_to: string | null;
+          created_at: string;
+          expected_return_on: string;
+          id: string;
+          item_type_id: string;
+          note: string | null;
+          org_id: string;
+          quantity: number;
+          return_condition: string | null;
+          returned_quantity: number | null;
+          size: string | null;
+        };
+        Insert: {
+          checked_in_at?: string | null;
+          checked_in_by?: string | null;
+          checked_out_at?: string;
+          checked_out_by?: string | null;
+          checked_out_to?: string | null;
+          created_at?: string;
+          expected_return_on: string;
+          id?: string;
+          item_type_id: string;
+          note?: string | null;
+          org_id: string;
+          quantity: number;
+          return_condition?: string | null;
+          returned_quantity?: number | null;
+          size?: string | null;
+        };
+        Update: {
+          checked_in_at?: string | null;
+          checked_in_by?: string | null;
+          checked_out_at?: string;
+          checked_out_by?: string | null;
+          checked_out_to?: string | null;
+          created_at?: string;
+          expected_return_on?: string;
+          id?: string;
+          item_type_id?: string;
+          note?: string | null;
+          org_id?: string;
+          quantity?: number;
+          return_condition?: string | null;
+          returned_quantity?: number | null;
+          size?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'staff_checkouts_checked_in_by_fkey';
+            columns: ['checked_in_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'staff_checkouts_checked_out_by_fkey';
+            columns: ['checked_out_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'staff_checkouts_checked_out_to_fkey';
+            columns: ['checked_out_to'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'staff_checkouts_item_type_id_fkey';
+            columns: ['item_type_id'];
+            isOneToOne: false;
+            referencedRelation: 'equipment_item_types';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'staff_checkouts_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       staff_invitations: {
         Row: {
           accepted_at: string | null;
@@ -3236,6 +3326,7 @@ export type Database = {
       stock_movements: {
         Row: {
           arrival_id: string | null;
+          checkout_id: string | null;
           condition: string | null;
           correction_reason: string | null;
           count_id: string | null;
@@ -3255,6 +3346,7 @@ export type Database = {
         };
         Insert: {
           arrival_id?: string | null;
+          checkout_id?: string | null;
           condition?: string | null;
           correction_reason?: string | null;
           count_id?: string | null;
@@ -3274,6 +3366,7 @@ export type Database = {
         };
         Update: {
           arrival_id?: string | null;
+          checkout_id?: string | null;
           condition?: string | null;
           correction_reason?: string | null;
           count_id?: string | null;
@@ -3297,6 +3390,13 @@ export type Database = {
             columns: ['arrival_id'];
             isOneToOne: false;
             referencedRelation: 'equipment_arrivals';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'stock_movements_checkout_id_fkey';
+            columns: ['checkout_id'];
+            isOneToOne: false;
+            referencedRelation: 'staff_checkouts';
             referencedColumns: ['id'];
           },
           {
@@ -3921,6 +4021,14 @@ export type Database = {
       can_read_stock_object: {
         Args: { p_object_key: string };
         Returns: boolean;
+      };
+      checkout_recipients: {
+        Args: never;
+        Returns: {
+          first_name: string;
+          last_name: string;
+          profile_id: string;
+        }[];
       };
       claim_push_deliveries: {
         Args: {
@@ -4812,6 +4920,22 @@ export type Database = {
       };
       my_permissions: { Args: never; Returns: string[] };
       my_session_is_current: { Args: never; Returns: boolean };
+      open_staff_checkouts: {
+        Args: never;
+        Returns: {
+          checked_out_at: string;
+          checkout_id: string;
+          expected_return_on: string;
+          is_overdue: boolean;
+          item_key: string;
+          note: string;
+          quantity: number;
+          size: string;
+          staff_first_name: string;
+          staff_id: string;
+          staff_last_name: string;
+        }[];
+      };
       participant_activity: {
         Args: { participant_id: string };
         Returns: {
@@ -4930,6 +5054,26 @@ export type Database = {
           results: Json;
         };
         Returns: number;
+      };
+      record_staff_checkin: {
+        Args: {
+          p_checkout_id: string;
+          p_condition?: string;
+          p_returned: number;
+        };
+        Returns: undefined;
+      };
+      record_staff_checkout: {
+        Args: {
+          p_expected_return_on: string;
+          p_id: string;
+          p_item_type_id: string;
+          p_note?: string;
+          p_quantity: number;
+          p_size: string;
+          p_staff_id: string;
+        };
+        Returns: string;
       };
       record_stock_count: {
         Args: {
