@@ -202,7 +202,17 @@
     "stockTitle": "Material",
     "stockFine": "No hay stock que revisar.",
     "stockAlert": "{{item}}: bajo cero. Cuéntalo.",
-    "saveFailed": "La entrega no se ha guardado. Vuelve a intentarlo."
+    "saveFailed": "La entrega no se ha guardado. Vuelve a intentarlo.",
+    "detail": {
+      "show": "Detalles",
+      "hide": "Ocultar los detalles",
+      "handedBy": "Entregado por {{name}}",
+      "note": "Nota: {{note}}",
+      "reason": "Motivo: {{reason}}",
+      "language": "Declaración mostrada en {{language}}",
+      "returnedBy": "Devolución registrada por {{name}}",
+      "loadFailed": "No se han podido cargar los detalles."
+    }
   },
   "stock": {
     "title": "Stock",
@@ -396,5 +406,14 @@
     "deactivateBody": "Sale de las listas activas y conserva su ficha. Puedes reactivarla más adelante.",
     "sensitiveHidden": "No ves el número de documento, el teléfono, la dirección ni el código postal. Se quedan como están.",
     "notesLoadFailed": "No hemos podido cargar las notas."
+  },
+  "activity": {
+    "signup": {
+      "interested": "Interesada",
+      "confirmed": "Confirmada",
+      "cancelled": "Cancelada"
+    },
+    "showAll": "Mostrar todo ({{count}})",
+    "loadFailed": "No hemos podido cargar la actividad."
   }
 }

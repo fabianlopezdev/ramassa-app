@@ -202,7 +202,17 @@
     "stockTitle": "Material",
     "stockFine": "No hi ha estoc per revisar.",
     "stockAlert": "{{item}}: sota zero. Compta'l.",
-    "saveFailed": "El lliurament no s'ha desat. Torna-ho a provar."
+    "saveFailed": "El lliurament no s'ha desat. Torna-ho a provar.",
+    "detail": {
+      "show": "Detalls",
+      "hide": "Amaga els detalls",
+      "handedBy": "Lliurat per {{name}}",
+      "note": "Nota: {{note}}",
+      "reason": "Motiu: {{reason}}",
+      "language": "Declaració mostrada en {{language}}",
+      "returnedBy": "Retorn registrat per {{name}}",
+      "loadFailed": "No s'han pogut carregar els detalls."
+    }
   },
   "stock": {
     "title": "Estoc",
@@ -396,5 +406,14 @@
     "deactivateBody": "Surt de les llistes actives i conserva la fitxa. La pots reactivar més endavant.",
     "sensitiveHidden": "No veus el número de document, el telèfon, l'adreça ni el codi postal. Es queden com estan.",
     "notesLoadFailed": "No hem pogut carregar les notes."
+  },
+  "activity": {
+    "signup": {
+      "interested": "Interessada",
+      "confirmed": "Confirmada",
+      "cancelled": "Cancel·lada"
+    },
+    "showAll": "Mostra-ho tot ({{count}})",
+    "loadFailed": "No hem pogut carregar l'activitat."
   }
 }

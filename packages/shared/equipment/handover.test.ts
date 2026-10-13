@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import { isAppError } from '../errors';
 import {
   awaitsReturn,
+  fetchParticipantMaterialDetail,
   recordEquipmentHandover,
   SIGNATURE_MAX_POINTS,
   signatureStrokesSchema,
@@ -125,5 +126,59 @@ describe('awaitsReturn', () => {
   test('a given item, or one already back, does not', () => {
     expect(awaitsReturn({ ...row, mode: 'given' })).toBe(false);
     expect(awaitsReturn({ ...row, returnedAt: '2026-10-13T09:00:00Z' })).toBe(false);
+  });
+});
+
+describe('fetchParticipantMaterialDetail', () => {
+  const row = {
+    delivery_id: 'd-1',
+    delivered_by_name: 'Marta Puig',
+    note: null,
+    signature: [
+      [
+        [10, 20],
+        [30, 40],
+      ],
+    ],
+    signature_state: 'signed',
+    signature_reason: null,
+    statement_language: 'ar',
+    returned_by_name: null,
+  };
+
+  test('reads the strokes and the names', async () => {
+    const { client, calls } = buildRpcClient({ data: [row] });
+    const detail = await fetchParticipantMaterialDetail(client, 'd-1');
+    expect(calls[0]).toEqual({
+      name: 'participant_material_detail',
+      args: { p_delivery_id: 'd-1' },
+    });
+    expect(detail).toEqual({
+      deliveredByName: 'Marta Puig',
+      note: null,
+      strokes: [
+        [
+          [10, 20],
+          [30, 40],
+        ],
+      ],
+      signatureReason: null,
+      statementLanguage: 'ar',
+      returnedByName: null,
+    });
+  });
+
+  test('unreadable strokes and an unknown language come back as null', async () => {
+    const { client } = buildRpcClient({
+      data: [{ ...row, signature: 'not strokes', statement_language: 'xx' }],
+    });
+    const detail = await fetchParticipantMaterialDetail(client, 'd-1');
+    expect(detail?.strokes).toBeNull();
+    expect(detail?.statementLanguage).toBeNull();
+  });
+
+  test('a handover the caller may not read is null', async () => {
+    const { client } = buildRpcClient({ data: [] });
+    expect(await fetchParticipantMaterialDetail(client, 'd-1')).toBeNull();
   });
 });

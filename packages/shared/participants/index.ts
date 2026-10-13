@@ -5,6 +5,7 @@ export {
   type ParticipantPage,
 } from './participant-actions';
 export {
+  activityDetailKey,
   filterParticipantActivity,
   noteAuthorName,
   PARTICIPANT_ACTIVITY_KINDS,
