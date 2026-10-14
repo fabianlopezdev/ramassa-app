@@ -5,7 +5,7 @@
  * preview (RAPP-373), a Worker result as a new review, and the review's
  * handlers for a `MultilingualField`.
  */
-import type { SupportedLanguage } from '@ramassa/shared/i18n';
+import { SUPPORTED_LANGUAGES, type SupportedLanguage } from '@ramassa/shared/i18n';
 import type {
   CreateTranslationReviewOptions,
   TranslationReview,
@@ -42,19 +42,21 @@ export function reviewTexts(
 
 /**
  * The unsaved text in every language, as a player screen reads stored content:
- * the Catalan source and the review's current texts, approved or not, for the
+ * the source and the review's current texts, approved or not, for the
  * player preview of a draft (RAPP-373). A language with no text yet is left
  * out, so the preview shows the fallback a player would get.
  */
 export function draftLocalizedContent(
   sourceText: string,
   review: TranslationReview | undefined,
+  // A participant story keeps the language it was written in.
+  sourceLanguage: SupportedLanguage = 'ca',
 ): Partial<Record<SupportedLanguage, string>> {
   const texts = reviewTexts(review) ?? {};
   return {
-    ca: sourceText,
+    [sourceLanguage]: sourceText,
     ...Object.fromEntries(
-      CATALAN_TRANSLATION_TARGETS.flatMap((language) => {
+      SUPPORTED_LANGUAGES.filter((language) => language !== sourceLanguage).flatMap((language) => {
         const text = texts[language];
         return typeof text === 'string' && text.trim().length > 0 ? [[language, text]] : [];
       }),

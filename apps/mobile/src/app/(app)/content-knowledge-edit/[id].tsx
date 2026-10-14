@@ -27,15 +27,22 @@ import { KNOWLEDGE_TYPE_KEYS } from '@/components/content/knowledge-labels';
 import { MultilingualField } from '@/components/content/multilingual-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { FailureNotice } from '@/components/error-code-line';
+import { KnowledgeArticle } from '@/components/knowledge/knowledge-article';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
+import { DraftPreviewSheet } from '@/components/preview/draft-preview-sheet';
 import { PUBLISH_MODES } from '@/lib/announcement-draft';
 import {
   contentKnowledgeRoot,
   useContentKnowledgeArticle,
   useContentKnowledgeCategories,
 } from '@/lib/content-knowledge';
-import { reviewHandlers, reviewOptions, reviewTexts } from '@/lib/content-translations';
+import {
+  draftLocalizedContent,
+  reviewHandlers,
+  reviewOptions,
+  reviewTexts,
+} from '@/lib/content-translations';
 import { uploadContentImage, type PickedPhoto } from '@/lib/content-upload';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
@@ -43,6 +50,7 @@ import {
   areKnowledgeTranslationsApproved,
   clearKnowledgeDraft,
   completeSourceBlocks,
+  draftKnowledgeBody,
   emptyBlock,
   generatedBody,
   initialKnowledgeMode,
@@ -124,10 +132,11 @@ function KnowledgeForm({
   const { t } = useTranslation('knowledge');
   const { t: tAnnouncements } = useTranslation('announcements');
   const { t: tErrors } = useTranslation('errors');
+  const { t: tCommon } = useTranslation('common');
   const fontClass = useLanguageFontClass();
   const { back } = useRouter();
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const userId = user?.id ?? '';
   const canPublish = useAccountAccess().permissions.has('knowledge.publish');
   const source = knowledgeSourceLanguage(article);
@@ -156,6 +165,13 @@ function KnowledgeForm({
     reviewOptions(form.title, restored?.titleTranslations ?? article?.title ?? null),
   );
   const sourceBlocks = form.body[source] ?? [];
+  // The player preview of this draft (RAPP-373): its unsaved text in every language.
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const previewTitle = draftLocalizedContent(form.title, titleReview.review, source);
+  const previewBody = draftKnowledgeBody(
+    form,
+    Object.fromEntries(Object.entries(pendingPhotos).map(([index, photo]) => [index, photo.uri])),
+  );
   const pendingSet = useMemo(
     () => new Set(Object.keys(pendingPhotos).map(Number)),
     [pendingPhotos],
@@ -550,6 +566,43 @@ function KnowledgeForm({
           </PressableScale>
         </View>
       ) : null}
+
+      <PressableScale
+        testID="knowledge-preview"
+        accessibilityRole="button"
+        accessibilityLabel={tCommon('previewAsPlayer')}
+        onPress={() => setIsPreviewOpen(true)}
+        isDisabled={form.title.trim().length === 0}
+        haptic="tapLight"
+        className="min-h-recommended items-center justify-center rounded-md border border-neutral-300 bg-white px-lg"
+      >
+        <Text className={`text-center text-md font-bold text-primary-dark ${fontClass}`}>
+          {tCommon('previewAsPlayer')}
+        </Text>
+      </PressableScale>
+      <DraftPreviewSheet
+        visible={isPreviewOpen}
+        onClose={() => setIsPreviewOpen(false)}
+        isMissing={(language) =>
+          (previewTitle[language] ?? '').trim().length === 0 || previewBody[language] === undefined
+        }
+      >
+        <KnowledgeArticle
+          article={{
+            title: previewTitle,
+            categoryName:
+              categories.find((category) => category.id === form.categoryId)?.name ?? {},
+            authorFirstName: article?.author_first_name ?? null,
+            body: previewBody,
+            imageUrl: article?.image_url ?? null,
+            videoUrl: form.videoUrl.trim().length === 0 ? null : form.videoUrl.trim(),
+            externalUrl: form.externalUrl.trim().length === 0 ? null : form.externalUrl.trim(),
+            storyImageUrls: article?.story_image_urls ?? [],
+          }}
+          accessToken={session?.access_token}
+          onOpenExternal={() => undefined}
+        />
+      </DraftPreviewSheet>
 
       {error === null || errorMessage === null ? null : (
         <FailureNotice code={error === 'invalid' ? 'VALIDATION-1' : error} message={errorMessage} />

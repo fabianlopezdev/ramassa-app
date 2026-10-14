@@ -3,34 +3,24 @@ import {
   AnnouncementFeedSkeleton,
   OfflineBanner,
 } from '@/components/announcements/feed-states';
-import { PlayerStructuredContent } from '@/components/knowledge/player-structured-content';
+import { KnowledgeArticle } from '@/components/knowledge/knowledge-article';
 import { PageWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
-import { composeContinuousViewStyle, continuousCorners } from '@/lib/continuous-corners';
-import { resolveMediaImageSource } from '@/lib/media-source';
 import { isNetworkStateOnline } from '@/lib/network-status';
 import { usePlayerKnowledgeArticle } from '@/lib/player-knowledge';
-import { mobileClientEnv } from '@/lib/supabase';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { Image } from 'expo-image';
 import { useNetworkState } from 'expo-network';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@ramassa/shared/auth';
 import { toAppError } from '@ramassa/shared/errors';
 import { resolveLocalizedText, useLanguage } from '@ramassa/shared/i18n';
 import { resolveLocalizedKnowledgeBlocks } from '@ramassa/shared/knowledge';
 import { tokens } from '@ramassa/shared/tokens';
-
-const styles = StyleSheet.create({
-  imageFrame: { width: '100%', height: tokens.contentWidth.form / 2 },
-  image: { width: '100%', height: '100%' },
-});
-const imageFrameStyle = composeContinuousViewStyle(styles.imageFrame);
 
 export default function PlayerKnowledgeDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -48,27 +38,6 @@ export default function PlayerKnowledgeDetailScreen() {
     article === undefined ? undefined : resolveLocalizedText(article.category.name, language);
   const body =
     article === undefined ? undefined : resolveLocalizedKnowledgeBlocks(article.body, language);
-  const coverSource = useMemo(
-    () =>
-      resolveMediaImageSource({
-        objectKeyOrUrl: article?.image_url ?? null,
-        mediaWorkerUrl: mobileClientEnv.EXPO_PUBLIC_MEDIA_WORKER_URL,
-        accessToken: session?.access_token,
-      }),
-    [article?.image_url, session?.access_token],
-  );
-  const storyImageSources = useMemo(
-    () =>
-      (article?.story_image_urls ?? []).flatMap((objectKey) => {
-        const source = resolveMediaImageSource({
-          objectKeyOrUrl: objectKey,
-          mediaWorkerUrl: mobileClientEnv.EXPO_PUBLIC_MEDIA_WORKER_URL,
-          accessToken: session?.access_token,
-        });
-        return source === null ? [] : [source];
-      }),
-    [article?.story_image_urls, session?.access_token],
-  );
   const openExternalResource = useCallback(() => {
     if (article?.external_url !== null && article?.external_url !== undefined) {
       void WebBrowser.openBrowserAsync(article.external_url);
@@ -145,76 +114,20 @@ export default function PlayerKnowledgeDetailScreen() {
             </Text>
           </View>
         ) : (
-          <View className="gap-lg">
-            <View className="gap-sm">
-              <Text
-                className={`text-start text-sm font-semibold text-primary-dark ${languageFontClass}`}
-              >
-                {category.text}
-              </Text>
-              <Text
-                accessibilityRole="header"
-                className={`text-start text-3xl font-bold text-neutral-900 ${languageFontClass}`}
-              >
-                {title.text}
-              </Text>
-              {article.author_first_name === null ? null : (
-                <Text className={`text-start text-sm text-neutral-600 ${languageFontClass}`}>
-                  {t('knowledge:byAuthor', { name: article.author_first_name })}
-                </Text>
-              )}
-            </View>
-            {coverSource === null ? null : (
-              <View className="overflow-hidden rounded-lg" style={imageFrameStyle}>
-                <Image
-                  source={coverSource}
-                  accessibilityLabel={title.text}
-                  cachePolicy="memory-disk"
-                  contentFit="cover"
-                  style={styles.image}
-                />
-              </View>
-            )}
-            <PlayerStructuredContent
-              blocks={body.blocks}
-              videoUrl={article.video_url}
-              title={title.text}
-              accessToken={session?.access_token}
-              unavailableLabel={t('knowledge:contentUnavailable')}
-            />
-            {storyImageSources.map((source, index) => (
-              <View
-                key={article.story_image_urls[index]}
-                className="overflow-hidden rounded-md"
-                style={imageFrameStyle}
-              >
-                <Image
-                  source={source}
-                  accessibilityLabel={t('knowledge:storyPhoto', {
-                    number: index + 1,
-                    title: title.text,
-                  })}
-                  cachePolicy="memory-disk"
-                  contentFit="cover"
-                  style={styles.image}
-                />
-              </View>
-            ))}
-            {article.external_url === null ? null : (
-              <PressableScale
-                accessibilityRole="link"
-                accessibilityLabel={t('knowledge:openExternalResource')}
-                onPress={openExternalResource}
-                haptic="tapLight"
-                style={continuousCorners}
-                className="min-h-recommended items-center justify-center rounded-md bg-primary px-lg"
-              >
-                <Text className={`text-md font-bold text-white ${languageFontClass}`}>
-                  {t('knowledge:openExternalResource')}
-                </Text>
-              </PressableScale>
-            )}
-          </View>
+          <KnowledgeArticle
+            article={{
+              title: article.title,
+              categoryName: article.category.name,
+              authorFirstName: article.author_first_name,
+              body: article.body,
+              imageUrl: article.image_url,
+              videoUrl: article.video_url,
+              externalUrl: article.external_url,
+              storyImageUrls: article.story_image_urls,
+            }}
+            accessToken={session?.access_token}
+            onOpenExternal={openExternalResource}
+          />
         )}
       </PageWidth>
     </ScrollView>

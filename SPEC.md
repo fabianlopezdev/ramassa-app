@@ -1800,7 +1800,7 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - Needed for launch (Fabián, 2026-10-14): staff see a draft as players will see it, in each language, before it is published, so a mistake never reaches players.
 - Each content editor has "Preview as player". It opens a sheet that draws the unsaved values with the player screen's own component: the Catalan source and each language's current translation, approved or not. A language with no text yet says so and shows the fallback a player gets. Nothing is saved and nobody else sees it.
 - The language chosen in the sheet applies inside it only, through its own translation instance, which never changes or stores the app's language. Arabic and Farsi lay out right to left inside the sheet with no restart.
-- Announcements first (`AnnouncementArticle`, shared with the player screen). Events, knowledge articles and services follow.
+- Announcements (`AnnouncementArticle`) and events (`EventArticle`, with the place, the places left and the sign-up action a player will see, which does nothing in the preview) share their drawing part with the player screen. Knowledge resources (`KnowledgeArticle`) draw the block body in each language, approved or not, with step photos still on the device, plus the video and external link; a story keeps its own source language. The preview button sits at the end of each form, after every field it draws. Services follow.
 - Checks: `app-draft-preview.web-qa.ts`, unit tests for `draftLocalizedContent`, and the iPhone simulator (Catalan and Arabic right to left).
 
 ## Preview as player on the phone (2026-10-14, RAPP-371, part of RAPP-214)
