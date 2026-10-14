@@ -39,6 +39,8 @@ export const mobileClientEnv = parseClientEnv({
     process.env.EXPO_PUBLIC_TRANSLATION_WORKER_URL,
     devServiceContext,
   ),
+  // The only origin the web build accepts a player preview from (RAPP-372).
+  EXPO_PUBLIC_ADMIN_WEB_URL: process.env.EXPO_PUBLIC_ADMIN_WEB_URL,
 });
 
 /** The signed-in person's own client. */

@@ -17,6 +17,33 @@ const playerPreviewCredentialsSchema = z.object({
 
 export type PlayerPreviewCredentials = z.infer<typeof playerPreviewCredentialsSchema>;
 
+/**
+ * The web admin's hand-off to the player web app (RAPP-372). The admin opens
+ * the player web app in a new tab; the tab says it is ready, and the admin
+ * sends the credentials and the screen to open, only to the player origin.
+ * The tab accepts them only from the admin origin.
+ */
+export const PLAYER_PREVIEW_READY = 'ramassa.player-preview.ready';
+export const PLAYER_PREVIEW_HANDOFF = 'ramassa.player-preview.handoff';
+export const PLAYER_PREVIEW_HANDOFF_PATH = '/preview-handoff';
+
+export const playerPreviewHandoffSchema = z.object({
+  type: z.literal(PLAYER_PREVIEW_HANDOFF),
+  credentials: playerPreviewCredentialsSchema,
+  // An app path only, never another site.
+  target: z
+    .string()
+    .regex(/^\/(?!\/)[\w\-/]*$/)
+    .nullable(),
+});
+
+export type PlayerPreviewHandoff = z.infer<typeof playerPreviewHandoffSchema>;
+
+/** The origin of a configured address, which `postMessage` compares. */
+export function originOf(url: string): string {
+  return new URL(url).origin;
+}
+
 export async function startPlayerPreview(
   client: SupabaseClient<Database>,
 ): Promise<PlayerPreviewCredentials> {

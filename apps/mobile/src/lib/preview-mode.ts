@@ -21,11 +21,13 @@ export interface PreviewModeStorage {
 export interface PreviewModeStore {
   /** True while the app shows the player preview. */
   isActive(): boolean;
-  start(target: string | null, returnLanguage: string): void;
+  start(target: string | null, returnLanguage: string, closesOnExit?: boolean): void;
   /** The player screen to open first, given once. */
   takeTarget(): string | null;
   /** Her own language, to return to when the preview ends. */
   returnLanguage(): string | null;
+  /** Opened from the web admin in its own tab, which closes when it ends (RAPP-372). */
+  closesOnExit(): boolean;
   end(): void;
   subscribe(listener: () => void): () => void;
 }
@@ -33,6 +35,7 @@ export interface PreviewModeStore {
 interface PreviewState {
   readonly target: string | null;
   readonly returnLanguage: string | null;
+  readonly closesOnExit: boolean;
 }
 
 function readState(storage: PreviewModeStorage): PreviewState | null {
@@ -41,10 +44,15 @@ function readState(storage: PreviewModeStorage): PreviewState | null {
   try {
     const parsed = JSON.parse(raw) as unknown;
     if (typeof parsed !== 'object' || parsed === null) return null;
-    const { target, returnLanguage } = parsed as { target?: unknown; returnLanguage?: unknown };
+    const { target, returnLanguage, closesOnExit } = parsed as {
+      target?: unknown;
+      returnLanguage?: unknown;
+      closesOnExit?: unknown;
+    };
     return {
       target: typeof target === 'string' && target.startsWith('/') ? target : null,
       returnLanguage: typeof returnLanguage === 'string' ? returnLanguage : null,
+      closesOnExit: closesOnExit === true,
     };
   } catch {
     return null;
@@ -59,8 +67,8 @@ export function createPreviewModeStore(storage: PreviewModeStorage): PreviewMode
   };
   return {
     isActive: () => active,
-    start(target, returnLanguage) {
-      storage.set(PREVIEW_STATE_KEY, JSON.stringify({ target, returnLanguage }));
+    start(target, returnLanguage, closesOnExit = false) {
+      storage.set(PREVIEW_STATE_KEY, JSON.stringify({ target, returnLanguage, closesOnExit }));
       active = true;
       notify();
     },
@@ -71,6 +79,7 @@ export function createPreviewModeStore(storage: PreviewModeStorage): PreviewMode
       return state.target;
     },
     returnLanguage: () => readState(storage)?.returnLanguage ?? null,
+    closesOnExit: () => readState(storage)?.closesOnExit === true,
     end() {
       storage.remove(PREVIEW_STATE_KEY);
       active = false;

@@ -15,7 +15,10 @@ import { shouldRestartForLanguage } from '@/components/auth/language-restart-pol
 import type { QueryClient } from '@tanstack/react-query';
 import { reloadAppAsync } from 'expo';
 import { I18nManager } from 'react-native';
-import { startPlayerPreview as requestPreviewCredentials } from '@ramassa/shared/auth';
+import {
+  startPlayerPreview as requestPreviewCredentials,
+  type PlayerPreviewCredentials,
+} from '@ramassa/shared/auth';
 import { AppError, type Result } from '@ramassa/shared/errors';
 import { isSupportedLanguage, type SupportedLanguage } from '@ramassa/shared/i18n';
 import { i18n } from './i18n';
@@ -37,21 +40,41 @@ async function showLanguage(language: SupportedLanguage): Promise<void> {
   }
 }
 
+async function enterPreview(
+  credentials: PlayerPreviewCredentials,
+  target: string | null,
+  closesOnExit: boolean,
+): Promise<boolean> {
+  const { error } = await previewSupabase.auth.signInWithPassword(credentials);
+  if (error !== null) return false;
+  previewQueryClient = createPreviewQueryClient();
+  markPreviewHandover();
+  previewMode.start(target, i18n.resolvedLanguage ?? i18n.language, closesOnExit);
+  return true;
+}
+
 export function startPreview(target: string | null): Promise<Result<void, AppError>> {
   return safeAsync(async () => {
     // A second start in the same moment replaces the password before this one
     // signs in (ADR-027), so a refused sign-in starts once more.
     for (let attempt = 0; attempt < 2; attempt += 1) {
       const credentials = await requestPreviewCredentials(ownSupabase);
-      const { error } = await previewSupabase.auth.signInWithPassword(credentials);
-      if (error === null) {
-        previewQueryClient = createPreviewQueryClient();
-        markPreviewHandover();
-        previewMode.start(target, i18n.resolvedLanguage ?? i18n.language);
-        return;
-      }
-      if (attempt === 1) throw new AppError('AUTH-1', { message: error.message });
+      if (await enterPreview(credentials, target, false)) return;
     }
+    throw new AppError('AUTH-1');
+  });
+}
+
+/**
+ * The web admin opened this tab and handed over the credentials it started
+ * the preview with (RAPP-372). The tab closes when the preview ends.
+ */
+export function startHandedOverPreview(
+  credentials: PlayerPreviewCredentials,
+  target: string | null,
+): Promise<Result<void, AppError>> {
+  return safeAsync(async () => {
+    if (!(await enterPreview(credentials, target, true))) throw new AppError('AUTH-1');
   });
 }
 
@@ -61,10 +84,16 @@ export function choosePreviewLanguage(language: SupportedLanguage): Promise<void
 
 export async function leavePreview(): Promise<void> {
   const returnLanguage = previewMode.returnLanguage();
+  const closesTab = previewMode.closesOnExit();
   markPreviewHandover();
   previewMode.end();
   previewQueryClient.clear();
   await previewSupabase.auth.signOut({ scope: 'local' });
+  // Opened from the web admin, the tab was only for the preview.
+  if (closesTab && process.env.EXPO_OS === 'web') {
+    window.close();
+    return;
+  }
   if (returnLanguage !== null && isSupportedLanguage(returnLanguage)) {
     await showLanguage(returnLanguage);
   }

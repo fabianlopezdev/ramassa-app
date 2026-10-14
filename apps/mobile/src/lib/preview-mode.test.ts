@@ -55,3 +55,16 @@ describe('createPreviewModeStore', () => {
     expect(createPreviewModeStore(storage).isActive()).toBe(false);
   });
 });
+
+describe('a preview opened from the web admin (RAPP-372)', () => {
+  test('closes its tab when it ends; one from the app does not', () => {
+    const storage = memoryStorage();
+    const store = createPreviewModeStore(storage);
+    store.start(null, 'ca');
+    expect(store.closesOnExit()).toBe(false);
+    store.start('/service/x', 'ca', true);
+    expect(store.closesOnExit()).toBe(true);
+    store.end();
+    expect(store.closesOnExit()).toBe(false);
+  });
+});

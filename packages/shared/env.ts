@@ -27,6 +27,12 @@ export const clientEnvSchema = z.object({
   // The staff-only translation Worker (RAPP-29). Optional at boot so the rest
   // of the admin remains usable when local translation is not running.
   EXPO_PUBLIC_TRANSLATION_WORKER_URL: z.url().optional(),
+  // The player preview from the web admin (RAPP-372): the admin opens the
+  // player web app at this address, and the player web app accepts the
+  // preview only from the admin's. Optional: without them the admin shows no
+  // preview button.
+  EXPO_PUBLIC_PLAYER_WEB_URL: z.url().optional(),
+  EXPO_PUBLIC_ADMIN_WEB_URL: z.url().optional(),
 });
 
 export const serverEnvSchema = clientEnvSchema.extend({

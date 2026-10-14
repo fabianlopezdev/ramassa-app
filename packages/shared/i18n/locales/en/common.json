@@ -31,5 +31,6 @@
   "previewStartFailed": "We could not open the player view.",
   "previewNotPublished": "Players see it once it is published.",
   "previewDraftTitle": "The draft as players will see it. Nobody sees it yet.",
-  "previewDraftMissing": "There is no text in this language yet. Players will see it in another language."
+  "previewDraftMissing": "There is no text in this language yet. Players will see it in another language.",
+  "previewOpening": "Opening the player view."
 }
