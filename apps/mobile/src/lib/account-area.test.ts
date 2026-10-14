@@ -107,6 +107,8 @@ test('team screens follow permissions', () => {
     eventCategories: false,
   });
   expect(teamScreens(new Set(['events.edit'])).eventCategories).toBe(true);
+  expect(teamScreens(new Set(['services.publish'])).serviceCategories).toBe(false);
+  expect(teamScreens(new Set(['services.edit'])).serviceCategories).toBe(true);
   expect(teamScreens(new Set(['attendance.reports']))).toEqual({
     attendance: true,
     participants: false,
@@ -116,6 +118,7 @@ test('team screens follow permissions', () => {
     eventCategories: false,
     knowledge: false,
     services: false,
+    serviceCategories: false,
     messages: false,
     stock: false,
     arrivals: false,
@@ -132,6 +135,7 @@ test('team screens follow permissions', () => {
     eventCategories: false,
     knowledge: false,
     services: false,
+    serviceCategories: false,
     messages: true,
     stock: false,
     arrivals: false,
@@ -148,6 +152,7 @@ test('team screens follow permissions', () => {
     eventCategories: false,
     knowledge: false,
     services: false,
+    serviceCategories: false,
     messages: false,
     stock: false,
     arrivals: false,
@@ -164,6 +169,7 @@ test('team screens follow permissions', () => {
     eventCategories: false,
     knowledge: false,
     services: false,
+    serviceCategories: false,
     messages: false,
     stock: false,
     arrivals: false,
@@ -181,6 +187,7 @@ test('team screens follow permissions', () => {
     eventCategories: false,
     knowledge: false,
     services: false,
+    serviceCategories: false,
     messages: false,
     stock: true,
     arrivals: false,

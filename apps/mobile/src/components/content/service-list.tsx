@@ -1,7 +1,8 @@
 /**
  * The services list of the Content area (RAPP-344), with the web admin's
  * filters: status chips and category chips. Each row shows the category, the
- * availability and how many players are interested. The screen above it
+ * availability and how many players are interested. Manage categories opens
+ * the category screens for `services.edit` holders (RAPP-347). The screen above it
  * (`content.tsx`) gives the top of the header and decides where a row opens.
  */
 import {
@@ -13,6 +14,7 @@ import { ChoiceOption } from '@/components/equipment/choice-option';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { useContentServiceCategories, useContentServices } from '@/lib/content-services';
 import { continuousCorners } from '@/lib/continuous-corners';
+import { useAccountAccess } from '@/lib/use-account-access';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { FlashList, type FlashListRef, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useRouter, type Href } from 'expo-router';
@@ -130,6 +132,7 @@ export function ServiceList({
   const fontClass = useLanguageFontClass();
   const language = (i18n.resolvedLanguage ?? DEFAULT_LANGUAGE) as SupportedLanguage;
   const { push } = useRouter();
+  const canEditCategories = useAccountAccess().permissions.has('services.edit');
   const [status, setStatus] = useState<ServiceSearch['status']>('all');
   const [category, setCategory] = useState<ServiceSearch['category']>('all');
   const categories = useContentServiceCategories();
@@ -164,16 +167,32 @@ export function ServiceList({
             {t('title')}
           </Text>
         ) : null}
-        <PressableScale
-          testID="content-service-new"
-          accessibilityRole="button"
-          accessibilityLabel={t('newAction')}
-          onPress={() => push('/content-service-edit/new' as Href)}
-          haptic="tapLight"
-          className="min-h-recommended justify-center"
-        >
-          <Text className={`font-semibold text-primary-dark ${fontClass}`}>{t('newAction')}</Text>
-        </PressableScale>
+        <View className="flex-row flex-wrap gap-md">
+          {canEditCategories ? (
+            <PressableScale
+              testID="content-service-categories"
+              accessibilityRole="button"
+              accessibilityLabel={t('categoriesAction')}
+              onPress={() => push('/content-service-categories' as Href)}
+              haptic="tapLight"
+              className="min-h-recommended justify-center"
+            >
+              <Text className={`font-semibold text-primary-dark ${fontClass}`}>
+                {t('categoriesAction')}
+              </Text>
+            </PressableScale>
+          ) : null}
+          <PressableScale
+            testID="content-service-new"
+            accessibilityRole="button"
+            accessibilityLabel={t('newAction')}
+            onPress={() => push('/content-service-edit/new' as Href)}
+            haptic="tapLight"
+            className="min-h-recommended justify-center"
+          >
+            <Text className={`font-semibold text-primary-dark ${fontClass}`}>{t('newAction')}</Text>
+          </PressableScale>
+        </View>
       </View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
         <View className="flex-row gap-sm">

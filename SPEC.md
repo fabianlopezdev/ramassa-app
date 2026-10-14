@@ -1795,6 +1795,15 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - Announcements list: status chips (all, draft, published, scheduled, expired, the web admin's filter), the total, pages that load on scroll, and each row's title, category, date, status and whether it is pinned. On a phone a row opens its own screen; on a tablet it opens beside the list.
 - One announcement shows its status, category, publication and expiry, and the Catalan text. Pin and unpin are there for anyone who reads it; Delete is for `announcements.publish` holders, as the database requires, and asks first. The editor comes in RAPP-341.
 
+## Service categories on the phone (2026-10-14, RAPP-347, part of RAPP-214)
+
+- "Manage categories" in the services list opens the categories for `services.edit` holders: in the order players see them, with how many own fields each has, Move up and Move down, and New, Edit and Delete. A category that still has services cannot be deleted; the database refuses it.
+- The category editor has the Catalan name with its translations (all five approved), the slug (made from a new category's name until she edits it), an icon and a colour as choices (a stored value outside them stays selectable), and the category's own fields.
+- The fields replace the web admin's schema JSON with controls. Each field is a card (name, key, type, required) with Move up, Move down, Edit and Remove; Edit opens it in a sheet: the Catalan name with its translations, the key (made from a new field's name; a stored field keeps its key, because services store their answers under it), the type (one option, several options, yes or no, number, text, date), required, filterable, a select's options and a number's minimum. A card says when a field still lacks data or translations.
+- A stored field whose Catalan name is unchanged keeps its five stored names, so editing a category does not ask for every name to be approved again. A changed or new name needs its translations.
+- Saving an edit first asks the database how many stored services the new fields would make invalid (`count_services_incompatible_with_category_schema`), and stops with that count, as the web admin does. Both apps store the same shape (`serviceMetadataSchemaDefinitionSchema`).
+- Option labels: an option is a short key, and the text players see comes from the app's translations (`services:option.<key>`), on the web admin too. A new key shows as typed until its translation is added; the editor says so.
+
 ## Services directory on the phone (2026-10-14, RAPP-344, part of RAPP-214)
 
 - The Content area shows services for `services.edit` or `services.publish` holders. The list has the web admin's status and category filters. Each row shows category, availability and how many players are interested. On a tablet a service opens beside the list.
