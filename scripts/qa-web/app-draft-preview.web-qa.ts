@@ -131,3 +131,35 @@ test('a new guide is previewed block by block, in Farsi right to left', async ({
     ).trim(),
   ).toBe('0');
 });
+
+test('a new service is previewed with its cost, contact and interest, in Spanish', async ({
+  page,
+}) => {
+  const title = `Teatre ${Date.now().toString(36)}`;
+  await signInPlayer(page, STAFF_EMAIL);
+  await completeSecondFactor(page, STAFF_EMAIL);
+  await page.getByTestId('team-sidebar-content').click({ timeout: 30_000 });
+  await page.getByTestId('content-kind-services').click({ timeout: 30_000 });
+  await page.getByTestId('content-service-new').click({ timeout: 30_000 });
+  await page.getByTestId('service-category-leisure-culture').click();
+  await page.getByTestId('service-title-source').fill(title);
+  await page.getByTestId('service-cost-paid').click();
+  await page.getByTestId('service-costAmount').fill('12,5');
+  await page.getByTestId('service-contactEmail').fill('teatre@example.test');
+  await page.getByTestId('service-generate').click();
+  await expect(page.getByTestId('service-title-draft-es')).toHaveValue(`[es] ${title}`, {
+    timeout: 30_000,
+  });
+
+  await page.getByTestId('service-preview').click();
+  await page.getByTestId('draft-preview-language-es').click();
+  const spanish = page.getByTestId('draft-preview-content-es');
+  await expect(spanish.getByRole('heading', { name: `[es] ${title}` })).toBeVisible();
+  await expect(spanish.getByText(/12,50\s€/)).toBeVisible();
+  await expect(spanish.getByRole('button', { name: 'Enviar correo' })).toBeVisible();
+  await expect(spanish.getByText('Me interesa')).toBeVisible();
+  await page.getByTestId('draft-preview-close').click();
+  expect(
+    queryDatabase(`select count(*) from public.services where title ->> 'ca' = '${title}';`).trim(),
+  ).toBe('0');
+});

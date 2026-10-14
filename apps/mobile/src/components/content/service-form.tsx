@@ -20,10 +20,17 @@ import { ChoiceOption } from '@/components/equipment/choice-option';
 import { FailureNotice } from '@/components/error-code-line';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
+import { DraftPreviewSheet } from '@/components/preview/draft-preview-sheet';
+import { ServiceArticle, ServiceInterestPreview } from '@/components/services/service-article';
 import { PUBLISH_MODES } from '@/lib/announcement-draft';
 import { serviceReviewsRoot } from '@/lib/content-service-reviews';
 import { contentServicesRoot } from '@/lib/content-services';
-import { reviewHandlers, reviewOptions, reviewTexts } from '@/lib/content-translations';
+import {
+  draftLocalizedContent,
+  reviewHandlers,
+  reviewOptions,
+  reviewTexts,
+} from '@/lib/content-translations';
 import { uploadContentImage, type PickedPhoto } from '@/lib/content-upload';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { safeAsync } from '@/lib/observability';
@@ -148,6 +155,7 @@ export function ServiceForm({
   const { t, i18n } = useTranslation('services');
   const { t: tAnnouncements } = useTranslation('announcements');
   const { t: tErrors } = useTranslation('errors');
+  const { t: tCommon } = useTranslation('common');
   const fontClass = useLanguageFontClass();
   const language = (i18n.resolvedLanguage ?? DEFAULT_LANGUAGE) as SupportedLanguage;
   const { back, dismissTo } = useRouter();
@@ -200,6 +208,9 @@ export function ServiceForm({
       restored?.descriptionTranslations ?? detail?.service.description ?? null,
     ),
   );
+  // The player preview of this draft (RAPP-373): its unsaved text in every language.
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const previewTitle = draftLocalizedContent(form.title, titleReview.review);
   const reviews = {
     title: titleReview.review,
     description: descriptionReview.review,
@@ -608,9 +619,73 @@ export function ServiceForm({
         )}
       </View>
 
+      <PressableScale
+        testID="service-preview"
+        accessibilityRole="button"
+        accessibilityLabel={tCommon('previewAsPlayer')}
+        onPress={() => setIsPreviewOpen(true)}
+        isDisabled={form.title.trim().length === 0}
+        haptic="tapLight"
+        className="min-h-recommended items-center justify-center rounded-md border border-neutral-300 bg-white px-lg"
+      >
+        <Text className={`text-center text-md font-bold text-primary-dark ${fontClass}`}>
+          {tCommon('previewAsPlayer')}
+        </Text>
+      </PressableScale>
+      <DraftPreviewSheet
+        visible={isPreviewOpen}
+        onClose={() => setIsPreviewOpen(false)}
+        isMissing={(previewLanguage) => (previewTitle[previewLanguage] ?? '').trim().length === 0}
+      >
+        <ServiceArticle
+          service={{
+            title: previewTitle,
+            description:
+              form.description.trim().length === 0
+                ? null
+                : draftLocalizedContent(form.description, descriptionReview.review),
+            images: form.images.flatMap((image) => {
+              const url = image.url ?? pendingPhotos[image.key]?.uri ?? null;
+              return url === null
+                ? []
+                : [
+                    {
+                      id: image.key,
+                      url,
+                      altText: draftLocalizedContent(image.alt, imageReviews[image.key]),
+                    },
+                  ];
+            }),
+            providerName: orNull(form.providerName),
+            location: orNull(form.location),
+            costType: form.costType,
+            costAmount: /^\d+([.,]\d{1,2})?$/.test(form.costAmount.trim())
+              ? Number(form.costAmount.trim().replace(',', '.'))
+              : null,
+            schedule: orNull(form.schedule),
+            availability: form.availability,
+            metadata: form.metadata,
+            contactPhone: orNull(form.contactPhone),
+            contactEmail: orNull(form.contactEmail),
+            externalUrl: orNull(form.externalUrl),
+          }}
+          formFields={category?.contract.formFields ?? []}
+          onOpenContact={() => undefined}
+          contactErrorCode={null}
+        >
+          <ServiceInterestPreview />
+        </ServiceArticle>
+      </DraftPreviewSheet>
+
       {error === null || errorMessage === null ? null : (
         <FailureNotice code={error === 'invalid' ? 'VALIDATION-1' : error} message={errorMessage} />
       )}
     </WizardFrame>
   );
+}
+
+/** A typed text, or nothing when it is blank, as a stored service holds it. */
+function orNull(value: string): string | null {
+  const trimmed = value.trim();
+  return trimmed.length === 0 ? null : trimmed;
 }
