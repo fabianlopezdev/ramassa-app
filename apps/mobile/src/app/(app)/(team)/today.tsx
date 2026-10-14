@@ -11,6 +11,7 @@ import { useTeamLayout } from '@/components/team/team-layout-context';
 import { TodayCheckoutsCard } from '@/components/team/today-checkouts-card';
 import { TodayForumCard } from '@/components/team/today-forum-card';
 import { TodayMaterialCard } from '@/components/team/today-material-card';
+import { TodayMentoringCard } from '@/components/team/today-mentoring-card';
 import { TodayMessagesCard } from '@/components/team/today-messages-card';
 import { TodayReviewsCard } from '@/components/team/today-reviews-card';
 import { useAttendanceOccurrences } from '@/lib/attendance';
@@ -130,6 +131,11 @@ export default function AttendanceOccurrencesScreen() {
           {isToday && sections.includes('forum') ? (
             <View className="pt-md">
               <TodayForumCard />
+            </View>
+          ) : null}
+          {isToday && sections.includes('mentoring') ? (
+            <View className="pt-md">
+              <TodayMentoringCard />
             </View>
           ) : null}
           {isToday && sections.includes('messages') ? (

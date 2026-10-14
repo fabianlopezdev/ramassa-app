@@ -1795,6 +1795,13 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - Announcements list: status chips (all, draft, published, scheduled, expired, the web admin's filter), the total, pages that load on scroll, and each row's title, category, date, status and whether it is pinned. On a phone a row opens its own screen; on a tablet it opens beside the list.
 - One announcement shows its status, category, publication and expiry, and the Catalan text. Pin and unpin are there for anyone who reads it; Delete is for `announcements.publish` holders, as the database requires, and asks first. The editor comes in RAPP-341.
 
+## Mentoring requests on the phone (2026-10-14, RAPP-382, part of RAPP-215)
+
+- `mentoring.manage` holders get "Mentories" in More, and Today shows how many requests wait to be scheduled. The screen shows how many requests and on which topics, and each request as the web admin does: the participant, when she asked, the status, the topic, her private note and her preferred slot.
+- An open request is scheduled with a date and time in Madrid, the team member who meets her (the first one until another is picked, as on the web admin) and the team's private notes; scheduling tells her. A scheduled request can be updated or marked completed.
+- Kept in memory only: the topic details and the notes are private.
+- Checks: `app-team-mentoring.web-qa.ts` (Today, schedule in Madrid time with the notice, complete), the player-to-staff `mentoring.web-qa.ts`, and the iPhone simulator.
+
 ## Forum moderation on the phone (2026-10-14, RAPP-380, part of RAPP-215)
 
 - `forum.moderate` holders get "Moderació del fòrum" in More, and Today shows how many reported items wait. The screen lists each reported post, reply or gallery photo, oldest report first, as the web admin does: how many reports, the kind, the category, the author, when it was first reported, the content (or the deleted mark), a photo's thumbnail, the reasons and the reporters' comments.
