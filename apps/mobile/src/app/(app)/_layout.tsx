@@ -132,9 +132,16 @@ export default function AppLayout() {
         >
           <Stack.Screen name="handover/[participantId]" options={noSwipeBackOptions} />
         </Stack.Protected>
-        <Stack.Protected guard={isTeam && team.content}>
+        <Stack.Protected guard={isTeam && team.announcements}>
           <Stack.Screen name="content-announcement/[id]" />
           <Stack.Screen name="content-announcement-edit/[id]" />
+        </Stack.Protected>
+        <Stack.Protected guard={isTeam && team.events}>
+          <Stack.Screen name="content-event/[id]" />
+          <Stack.Screen name="content-event-edit/[id]" />
+        </Stack.Protected>
+        <Stack.Protected guard={isTeam && team.eventCategories}>
+          <Stack.Screen name="content-event-categories" />
         </Stack.Protected>
         <Stack.Protected guard={isTeam && team.attendance}>
           <Stack.Screen name="attendance/[id]" />

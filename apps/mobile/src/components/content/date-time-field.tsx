@@ -2,7 +2,8 @@
  * A date and time for publishing content (RAPP-341): a date button and a time
  * button over one ISO value, with the native pickers the mentoring screen uses.
  * The web build has its own file (`date-time-field.web.tsx`), because the
- * native picker draws nothing there.
+ * native picker draws nothing there. With `inMadridTime` (event times,
+ * RAPP-342) it shows and sets the Madrid wall clock.
  */
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
@@ -13,7 +14,12 @@ import { useTranslation } from 'react-i18next';
 import { Platform, Text, View } from 'react-native';
 import { DEFAULT_LANGUAGE } from '@ramassa/shared/i18n';
 import { tokens } from '@ramassa/shared/tokens';
-import { combineDateAndTime, defaultPickerDate } from './date-time-value';
+import {
+  combineDateAndTime,
+  defaultPickerDate,
+  DEVICE_CLOCK,
+  MADRID_CLOCK,
+} from './date-time-value';
 
 export interface DateTimeFieldProps {
   readonly testID: string;
@@ -22,16 +28,26 @@ export interface DateTimeFieldProps {
   readonly onChange: (value: string | null) => void;
   /** Shown when there is no value; with it, the value can be removed. */
   readonly emptyLabel?: string;
+  /** The value is a Madrid time, shown and picked as such. */
+  readonly inMadridTime?: boolean;
 }
 
 type PickerMode = 'date' | 'time';
 
-export function DateTimeField({ testID, label, value, onChange, emptyLabel }: DateTimeFieldProps) {
+export function DateTimeField({
+  testID,
+  label,
+  value,
+  onChange,
+  emptyLabel,
+  inMadridTime = false,
+}: DateTimeFieldProps) {
   const { t, i18n } = useTranslation(['mentoring', 'announcements']);
   const fontClass = useLanguageFontClass();
   const language = i18n.resolvedLanguage ?? DEFAULT_LANGUAGE;
   const [activePicker, setActivePicker] = useState<PickerMode | null>(null);
-  const [draft, setDraft] = useState(() => defaultPickerDate(value));
+  const clock = inMadridTime ? MADRID_CLOCK : DEVICE_CLOCK;
+  const [draft, setDraft] = useState(() => defaultPickerDate(value, undefined, clock));
   const formats = useMemo(
     () => ({
       date: new Intl.DateTimeFormat(language, { dateStyle: 'medium' }),
@@ -39,14 +55,18 @@ export function DateTimeField({ testID, label, value, onChange, emptyLabel }: Da
     }),
     [language],
   );
-  const current = value === null ? null : new Date(value);
+  const current = value === null ? null : clock.toPicker(value);
 
   const open = (mode: PickerMode) => {
-    setDraft(defaultPickerDate(value));
+    setDraft(defaultPickerDate(value, undefined, clock));
     setActivePicker(mode);
   };
   const commit = (mode: PickerMode, picked: Date) => {
-    onChange(combineDateAndTime(defaultPickerDate(value), picked, mode).toISOString());
+    onChange(
+      clock.fromPicker(
+        combineDateAndTime(defaultPickerDate(value, undefined, clock), picked, mode),
+      ),
+    );
   };
   const handleChange = (_event: unknown, picked: Date) => {
     setDraft(picked);

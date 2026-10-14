@@ -21,6 +21,22 @@ import type { PermissionCode } from '@ramassa/shared/permissions';
 
 export type TeamArea = 'attendance' | 'participants' | 'content' | 'messages' | 'stock';
 
+/** The content types the Content area holds, in the web admin's menu order. */
+export type ContentKind = 'announcements' | 'events';
+
+/**
+ * The content types a person manages (RAPP-340 announcements, RAPP-342
+ * events); knowledge and services join in later slices.
+ */
+export function contentKinds(permissions: ReadonlySet<PermissionCode>): readonly ContentKind[] {
+  const kinds: ContentKind[] = [];
+  if (permissions.has('announcements.edit') || permissions.has('announcements.publish')) {
+    kinds.push('announcements');
+  }
+  if (permissions.has('events.edit') || permissions.has('events.publish')) kinds.push('events');
+  return kinds;
+}
+
 export type TeamLayout = 'tabs' | 'home' | 'sidebar';
 
 /** iPad mini portrait and most Android tablets start here. */
@@ -44,11 +60,7 @@ export function teamAreas(permissions: ReadonlySet<PermissionCode>): readonly Te
     areas.push('attendance');
   }
   if (permissions.has('participants.view')) areas.push('participants');
-  // Content opens with the content types the app has (RAPP-340: announcements);
-  // later slices add events, knowledge and services.
-  if (permissions.has('announcements.edit') || permissions.has('announcements.publish')) {
-    areas.push('content');
-  }
+  if (contentKinds(permissions).length > 0) areas.push('content');
   if (permissions.has('messages.inbox')) areas.push('messages');
   if (
     permissions.has('equipment.receive') ||

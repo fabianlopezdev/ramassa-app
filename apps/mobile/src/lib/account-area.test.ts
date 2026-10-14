@@ -100,10 +100,20 @@ describe('the remembered account', () => {
 
 test('team screens follow permissions', () => {
   expect(teamScreens(new Set(['announcements.edit'])).content).toBe(true);
+  expect(teamScreens(new Set(['events.publish']))).toMatchObject({
+    content: true,
+    announcements: false,
+    events: true,
+    eventCategories: false,
+  });
+  expect(teamScreens(new Set(['events.edit'])).eventCategories).toBe(true);
   expect(teamScreens(new Set(['attendance.reports']))).toEqual({
     attendance: true,
     participants: false,
     content: false,
+    announcements: false,
+    events: false,
+    eventCategories: false,
     messages: false,
     stock: false,
     arrivals: false,
@@ -115,6 +125,9 @@ test('team screens follow permissions', () => {
     attendance: false,
     participants: false,
     content: false,
+    announcements: false,
+    events: false,
+    eventCategories: false,
     messages: true,
     stock: false,
     arrivals: false,
@@ -126,6 +139,9 @@ test('team screens follow permissions', () => {
     attendance: false,
     participants: true,
     content: false,
+    announcements: false,
+    events: false,
+    eventCategories: false,
     messages: false,
     stock: false,
     arrivals: false,
@@ -137,6 +153,9 @@ test('team screens follow permissions', () => {
     attendance: false,
     participants: false,
     content: false,
+    announcements: false,
+    events: false,
+    eventCategories: false,
     messages: false,
     stock: false,
     arrivals: false,
@@ -149,6 +168,9 @@ test('team screens follow permissions', () => {
     attendance: false,
     participants: false,
     content: false,
+    announcements: false,
+    events: false,
+    eventCategories: false,
     messages: false,
     stock: true,
     arrivals: false,

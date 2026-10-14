@@ -27,11 +27,12 @@ import {
   type PublishMode,
 } from '@/lib/announcement-draft';
 import { uploadAnnouncementImage, useContentAnnouncement } from '@/lib/content-announcements';
+import { reviewHandlers, reviewOptions, reviewTexts } from '@/lib/content-translations';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { safeAsync } from '@/lib/observability';
 import { privateStorage } from '@/lib/storage';
 import { supabase } from '@/lib/supabase';
-import { requestCatalanTranslation } from '@/lib/translation-worker';
+import { generateDrafts } from '@/lib/translation-worker';
 import { useAccountAccess } from '@/lib/use-account-access';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useQueryClient } from '@tanstack/react-query';
@@ -53,39 +54,11 @@ import {
 } from '@ramassa/shared/announcements';
 import { useAuth } from '@ramassa/shared/auth';
 import { getErrorMessageKey, type AppErrorCode } from '@ramassa/shared/errors';
-import type { SupportedLanguage } from '@ramassa/shared/i18n';
 import { tokens } from '@ramassa/shared/tokens';
-import {
-  MAX_TRANSLATION_TEXT_LENGTH,
-  type CreateTranslationReviewOptions,
-  type TranslationReview,
-} from '@ramassa/shared/translation';
-import { CATALAN_TRANSLATION_TARGETS } from '@ramassa/shared/translation/client';
+import { MAX_TRANSLATION_TEXT_LENGTH } from '@ramassa/shared/translation';
 import { useTranslationReview } from '@ramassa/shared/translation/react';
 
 const MODE_KEYS = { draft: 'modeDraft', now: 'modeNow', scheduled: 'modeScheduled' } as const;
-
-/** The stored translations, or the restored draft's, as review options. */
-function reviewOptions(
-  sourceText: string,
-  translations: Partial<Record<string, string>> | null,
-): CreateTranslationReviewOptions | undefined {
-  if (translations === null) return undefined;
-  const found = Object.fromEntries(
-    CATALAN_TRANSLATION_TARGETS.flatMap((language) => {
-      const text = translations[language];
-      return typeof text === 'string' && text.length > 0 ? [[language, text]] : [];
-    }),
-  );
-  if (Object.keys(found).length === 0) return undefined;
-  return { sourceLanguage: 'ca', sourceText, translations: found };
-}
-
-function fromReview(review: TranslationReview | undefined): Record<string, string> | undefined {
-  return review === undefined
-    ? undefined
-    : Object.fromEntries(review.suggestions.map((s) => [s.language, s.reviewedText]));
-}
 
 function initialMode(announcement: AnnouncementListRow | undefined): PublishMode {
   if (announcement === undefined || announcement.status === 'draft') return 'draft';
@@ -155,9 +128,9 @@ function AnnouncementForm({
     if (userId.length === 0 || !isTouched) return;
     writeAnnouncementDraft(privateStorage, userId, announcementId, {
       ...form,
-      titleTranslations: fromReview(titleReview.review),
-      bodyTranslations: fromReview(bodyReview.review),
-      imageAltTranslations: fromReview(imageAltReview.review),
+      titleTranslations: reviewTexts(titleReview.review),
+      bodyTranslations: reviewTexts(bodyReview.review),
+      imageAltTranslations: reviewTexts(imageAltReview.review),
     });
   }, [
     announcementId,
@@ -178,33 +151,9 @@ function AnnouncementForm({
       { source: form.body, start: bodyReview.start },
       ...(hasImage ? [{ source: form.imageAlt, start: imageAltReview.start }] : []),
     ];
-    const results = await Promise.all(
-      requests.map(async (request) => ({
-        ...request,
-        result: await requestCatalanTranslation(request.source),
-      })),
-    );
+    const failure = await generateDrafts(requests);
     setIsGenerating(false);
-    const failed = results.find((item) => !item.result.ok);
-    if (failed !== undefined && !failed.result.ok) {
-      setErrorCode(failed.result.error.code);
-      return;
-    }
-    for (const item of results) {
-      if (item.result.ok) {
-        const generated = item.result.value;
-        item.start({
-          sourceLanguage: generated.sourceLanguage,
-          sourceText: generated.sourceText,
-          translations: Object.fromEntries(
-            generated.suggestions.map((suggestion) => [
-              suggestion.language,
-              suggestion.machineText,
-            ]),
-          ),
-        });
-      }
-    }
+    if (failure !== null) setErrorCode(failure);
   };
 
   const pickPhoto = async () => {
@@ -290,25 +239,7 @@ function AnnouncementForm({
     back();
   };
 
-  const reviewHandlers = (review: ReturnType<typeof useTranslationReview>) => ({
-    review: review.review,
-    onEdit: (language: SupportedLanguage, text: string) => {
-      setIsTouched(true);
-      review.edit(language, text);
-    },
-    onApprove: (language: SupportedLanguage) => {
-      setIsTouched(true);
-      review.approve(language);
-    },
-    onReject: (language: SupportedLanguage) => {
-      setIsTouched(true);
-      review.reject(language);
-    },
-    onApproveAll: () => {
-      for (const suggestion of review.review?.suggestions ?? [])
-        review.approve(suggestion.language);
-    },
-  });
+  const touch = () => setIsTouched(true);
   const canGenerate =
     form.title.trim().length > 0 &&
     form.body.trim().length > 0 &&
@@ -360,7 +291,7 @@ function AnnouncementForm({
         value={form.title}
         onChangeText={(title) => set({ title })}
         maxLength={MAX_ANNOUNCEMENT_TITLE_LENGTH}
-        {...reviewHandlers(titleReview)}
+        {...reviewHandlers(titleReview, touch)}
       />
       <MultilingualField
         testIDPrefix="body"
@@ -369,7 +300,7 @@ function AnnouncementForm({
         onChangeText={(body) => set({ body })}
         maxLength={MAX_TRANSLATION_TEXT_LENGTH}
         multiline
-        {...reviewHandlers(bodyReview)}
+        {...reviewHandlers(bodyReview, touch)}
       />
 
       <View className="gap-xs">
@@ -422,7 +353,7 @@ function AnnouncementForm({
           value={form.imageAlt}
           onChangeText={(imageAlt) => set({ imageAlt })}
           maxLength={MAX_ANNOUNCEMENT_ALT_LENGTH}
-          {...reviewHandlers(imageAltReview)}
+          {...reviewHandlers(imageAltReview, touch)}
         />
       ) : null}
 

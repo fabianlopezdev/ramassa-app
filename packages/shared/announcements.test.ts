@@ -196,6 +196,22 @@ describe('announcement publication validation', () => {
     ).toBe(true);
   });
 
+  test('a live announcement keeps its stored time, which the database returns with an offset', () => {
+    expect(
+      announcementInputSchema.safeParse({
+        category: 'info',
+        title: completeText,
+        body: completeText,
+        imageUrl: null,
+        imageAlt: null,
+        isPinned: false,
+        status: 'published',
+        publishedAt: '2026-10-14T12:42:12.183+00:00',
+        expiresAt: '2026-11-14T12:00:00+00:00',
+      }).success,
+    ).toBe(true);
+  });
+
   test('publishing refuses a missing language and an invalid schedule', () => {
     const incomplete = { ...completeText, fa: undefined };
     expect(

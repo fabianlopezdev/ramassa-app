@@ -96,14 +96,14 @@ export const eventInputSchema = z
     description: eventDescriptionSchema.nullable(),
     location: z.string().trim().min(1).max(MAX_EVENT_LOCATION_LENGTH),
     locationUrl: httpsUrlSchema.nullable(),
-    startsAt: z.iso.datetime(),
-    endsAt: z.iso.datetime().nullable(),
+    startsAt: z.iso.datetime({ offset: true }),
+    endsAt: z.iso.datetime({ offset: true }).nullable(),
     recurrenceRule: z.string().nullable(),
     maxParticipants: z.number().int().min(1).max(10_000).nullable(),
     signupMode: z.enum(EVENT_SIGNUP_MODES),
     status: z.enum(EVENT_STATUSES),
-    publishedAt: z.iso.datetime().nullable(),
-    expiresAt: z.iso.datetime().nullable(),
+    publishedAt: z.iso.datetime({ offset: true }).nullable(),
+    expiresAt: z.iso.datetime({ offset: true }).nullable(),
   })
   .superRefine((event, context) => {
     if (
