@@ -10,6 +10,7 @@
  * Without `announcements.publish` the publication is shown and kept as it is,
  * because the database refuses any change to it.
  */
+import { AnnouncementArticle } from '@/components/announcements/announcement-article';
 import { AnnouncementFeedSkeleton } from '@/components/announcements/feed-states';
 import { ANNOUNCEMENT_CATEGORY_KEYS } from '@/components/content/announcement-labels';
 import { DateTimeField } from '@/components/content/date-time-field';
@@ -18,6 +19,7 @@ import { ChoiceOption } from '@/components/equipment/choice-option';
 import { FailureNotice } from '@/components/error-code-line';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
+import { DraftPreviewSheet } from '@/components/preview/draft-preview-sheet';
 import {
   clearAnnouncementDraft,
   PUBLISH_MODES,
@@ -27,12 +29,18 @@ import {
   type PublishMode,
 } from '@/lib/announcement-draft';
 import { useContentAnnouncement } from '@/lib/content-announcements';
-import { reviewHandlers, reviewOptions, reviewTexts } from '@/lib/content-translations';
+import {
+  draftLocalizedContent,
+  reviewHandlers,
+  reviewOptions,
+  reviewTexts,
+} from '@/lib/content-translations';
 import { uploadContentImage } from '@/lib/content-upload';
 import { playHaptic } from '@/lib/haptics/haptics';
+import { resolveMediaImageSource } from '@/lib/media-source';
 import { safeAsync } from '@/lib/observability';
 import { privateStorage } from '@/lib/storage';
-import { supabase } from '@/lib/supabase';
+import { mobileClientEnv, supabase } from '@/lib/supabase';
 import { generateDrafts } from '@/lib/translation-worker';
 import { useAccountAccess } from '@/lib/use-account-access';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
@@ -91,10 +99,11 @@ function AnnouncementForm({
   readonly announcement: AnnouncementListRow | undefined;
 }) {
   const { t } = useTranslation('announcements');
+  const { t: tCommon } = useTranslation('common');
   const fontClass = useLanguageFontClass();
   const { back } = useRouter();
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const userId = user?.id ?? '';
   const canPublish = useAccountAccess().permissions.has('announcements.publish');
   const [restored] = useState(() => readAnnouncementDraft(privateStorage, userId, announcementId));
@@ -123,6 +132,18 @@ function AnnouncementForm({
     reviewOptions(form.imageAlt, restored?.imageAltTranslations ?? announcement?.image_alt ?? null),
   );
   const hasImage = photo !== null || form.imageUrl !== null;
+  // The player preview of this draft (RAPP-373): its unsaved text in every language.
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const previewTitle = draftLocalizedContent(form.title, titleReview.review);
+  const previewBody = draftLocalizedContent(form.body, bodyReview.review);
+  const previewImage =
+    photo === null
+      ? resolveMediaImageSource({
+          objectKeyOrUrl: form.imageUrl,
+          mediaWorkerUrl: mobileClientEnv.EXPO_PUBLIC_MEDIA_WORKER_URL,
+          accessToken: session?.access_token,
+        })
+      : { uri: photo.uri };
 
   // Kept on the device as she writes, so leaving the screen loses nothing.
   useEffect(() => {
@@ -380,6 +401,40 @@ function AnnouncementForm({
       <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
         {t('translationHelp')}
       </Text>
+
+      <PressableScale
+        testID="announcement-preview"
+        accessibilityRole="button"
+        accessibilityLabel={tCommon('previewAsPlayer')}
+        onPress={() => setIsPreviewOpen(true)}
+        isDisabled={form.title.trim().length === 0}
+        haptic="tapLight"
+        className="min-h-recommended items-center justify-center rounded-md border border-neutral-300 bg-white px-lg"
+      >
+        <Text className={`text-center text-md font-bold text-primary-dark ${fontClass}`}>
+          {tCommon('previewAsPlayer')}
+        </Text>
+      </PressableScale>
+      <DraftPreviewSheet
+        visible={isPreviewOpen}
+        onClose={() => setIsPreviewOpen(false)}
+        isMissing={(language) =>
+          (previewTitle[language] ?? '').trim().length === 0 ||
+          (previewBody[language] ?? '').trim().length === 0
+        }
+      >
+        <AnnouncementArticle
+          announcement={{
+            category: form.category,
+            isPinned: form.isPinned,
+            title: previewTitle,
+            body: previewBody,
+            imageAlt: hasImage ? draftLocalizedContent(form.imageAlt, imageAltReview.review) : null,
+            shownAt: form.publishedAt ?? new Date().toISOString(),
+          }}
+          imageSource={previewImage}
+        />
+      </DraftPreviewSheet>
 
       <View className="flex-row items-center justify-between gap-md">
         <Text className={`flex-1 text-start text-md text-neutral-800 ${fontClass}`}>
