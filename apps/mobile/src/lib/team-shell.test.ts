@@ -47,6 +47,11 @@ describe('the content area (RAPP-340)', () => {
     ]);
     expect(contentKinds(codes('events.edit'))).toEqual(['events']);
     expect(contentKinds(codes('participants.view'))).toEqual([]);
+    expect(contentKinds(codes('knowledge.publish', 'events.edit'))).toEqual([
+      'events',
+      'knowledge',
+    ]);
+    expect(teamAreas(codes('knowledge.edit'))).toEqual(['content']);
   });
 
   test('content alone starts on content', () => {

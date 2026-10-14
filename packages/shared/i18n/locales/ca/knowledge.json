@@ -140,5 +140,15 @@
   "storyPhoto": "Foto {{number}} de la història {{title}}",
   "openExternalResource": "Obre el recurs extern",
   "consentRecorded": "Consentiment de publicació registrat",
-  "consentRecordedDetail": "Acceptat el {{date}} en {{language}} amb la versió {{version}}. Aquest registre no es pot modificar."
+  "consentRecordedDetail": "Acceptat el {{date}} en {{language}} amb la versió {{version}}. Aquest registre no es pot modificar.",
+  "statusScheduled": "Programat",
+  "statusExpired": "Caducat",
+  "blockMoveUp": "Puja",
+  "blockMoveDown": "Baixa",
+  "blockEdit": "Edita",
+  "blockDone": "Fet",
+  "blockEmpty": "Bloc buit",
+  "invalidForm": "Revisa el recurs: cada bloc necessita el seu text, i cada imatge d'un pas, la seva descripció.",
+  "blockCancel": "Cancel·la",
+  "blockStep": "Pas"
 }

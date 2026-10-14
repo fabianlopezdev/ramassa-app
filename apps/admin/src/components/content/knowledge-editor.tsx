@@ -16,10 +16,12 @@ import {
 } from '@ramassa/shared/i18n';
 import { compressBrowserImage } from '@ramassa/shared/image-compression';
 import {
+  applyStepImageUrls,
   createKnowledgeArticle,
   KNOWLEDGE_CONTENT_TYPES,
   knowledgeArticleInputSchema,
   MAX_KNOWLEDGE_TITLE_LENGTH,
+  nextStoryPublicationState,
   normalizeVideoEmbedUrl,
   transitionParticipantStory,
   updateKnowledgeArticle,
@@ -39,12 +41,7 @@ import { useTranslationReview } from '@ramassa/shared/translation/react';
 import { uploadFile } from '@ramassa/shared/upload-client';
 import { AuthenticatedMediaImage } from './authenticated-media-image';
 import { KnowledgeBodyEditor } from './knowledge-body-editor';
-import {
-  applyStepImageUrls,
-  localDateTime,
-  nextStoryPublicationState,
-  translateKnowledgeBody,
-} from './knowledge-editor-helpers';
+import { localDateTime, translateKnowledgeBody } from './knowledge-editor-helpers';
 import { MultilingualEditor } from './multilingual-editor';
 import { ScheduledPublishFields, type PublishMode } from './scheduled-publish-fields';
 import { StructuredContentRenderer } from './structured-content-renderer';

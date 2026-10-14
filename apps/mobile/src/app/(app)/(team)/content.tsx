@@ -1,14 +1,16 @@
 /**
  * The Content area (RAPP-340): the content types the person manages, as the
- * web admin's Content menu has them, announcements and events (RAPP-342) so
- * far. With more than one type, chips at the top switch between their lists.
+ * web admin's Content menu has them: announcements, events (RAPP-342) and
+ * the knowledge base (RAPP-343) so far. With more than one type, chips at the top switch between their lists.
  * On a phone a row opens its own screen; on a tablet it opens beside the
- * list. Knowledge and services join in later slices of phase 4.
+ * list. Services join in a later slice of phase 4.
  */
 import { AnnouncementDetail } from '@/components/content/announcement-detail';
 import { AnnouncementList } from '@/components/content/announcement-list';
 import { EventDetail } from '@/components/content/event-detail';
 import { EventList } from '@/components/content/event-list';
+import { KnowledgeDetail } from '@/components/content/knowledge-detail';
+import { KnowledgeList } from '@/components/content/knowledge-list';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { PageWidth } from '@/components/layout/content-width';
 import { TeamBackToHome } from '@/components/team/team-back-to-home';
@@ -29,15 +31,17 @@ const DETAIL_MAX = 480;
 const KIND_LABELS = {
   announcements: 'announcements:title',
   events: 'events:title',
+  knowledge: 'knowledge:title',
 } as const satisfies Record<ContentKind, string>;
 
 const DETAIL_ROUTES = {
   announcements: '/content-announcement',
   events: '/content-event',
+  knowledge: '/content-knowledge',
 } as const satisfies Record<ContentKind, string>;
 
 export default function ContentScreen() {
-  const { t } = useTranslation(['announcements', 'events']);
+  const { t } = useTranslation(['announcements', 'events', 'knowledge']);
   const { t: tNav } = useTranslation('nav');
   const fontClass = useLanguageFontClass();
   const { push } = useRouter();
@@ -93,20 +97,24 @@ export default function ContentScreen() {
     </>
   );
 
+  const showTitle = kinds.length < 2;
   const list =
     kind === 'events' ? (
-      <EventList top={top} selectedId={selectedId} onOpen={open} showTitle={kinds.length < 2} />
+      <EventList top={top} selectedId={selectedId} onOpen={open} showTitle={showTitle} />
+    ) : kind === 'knowledge' ? (
+      <KnowledgeList top={top} selectedId={selectedId} onOpen={open} showTitle={showTitle} />
     ) : (
-      <AnnouncementList
-        top={top}
-        selectedId={selectedId}
-        onOpen={open}
-        showTitle={kinds.length < 2}
-      />
+      <AnnouncementList top={top} selectedId={selectedId} onOpen={open} showTitle={showTitle} />
     );
   const detail =
     selectedId === null ? null : kind === 'events' ? (
       <EventDetail key={selectedId} eventId={selectedId} onDeleted={() => setSelectedId(null)} />
+    ) : kind === 'knowledge' ? (
+      <KnowledgeDetail
+        key={selectedId}
+        articleId={selectedId}
+        onDeleted={() => setSelectedId(null)}
+      />
     ) : (
       <AnnouncementDetail
         key={selectedId}
