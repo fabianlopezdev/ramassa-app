@@ -68,6 +68,7 @@ mock.module('@ramassa/shared/auth', () => ({ useAuth: () => auth }));
 mock.module('@/lib/use-account-access', () => ({ useAccountAccess: () => ({ area }) }));
 
 const { AppLockProvider } = await import('./app-lock');
+const { markPreviewHandover } = await import('@/lib/preview-handover');
 
 function app() {
   return createElement(AppLockProvider, null, createElement('p', null, 'private screen'));
@@ -106,6 +107,15 @@ test('a team member at a cold start sees the lock, which asks for Face ID and op
   authenticates = true;
   fireEvent.click(view.getByRole('button', { name: 'appLockUnlockAction' }));
   await waitFor(() => expect(view.queryByText('appLockLockedTitle')).toBeNull());
+  view.unmount();
+});
+
+test('leaving the player preview mounts it again without a lock (RAPP-371)', async () => {
+  markPreviewHandover();
+  const view = render(app());
+  await settle();
+  expect(view.queryByText('appLockLockedTitle')).toBeNull();
+  expect(authenticateAsync).not.toHaveBeenCalled();
   view.unmount();
 });
 

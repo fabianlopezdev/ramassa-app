@@ -16,6 +16,7 @@ import {
   type AppLockSettings,
 } from '@/lib/app-lock';
 import { logout } from '@/lib/auth';
+import { takePreviewHandover } from '@/lib/preview-handover';
 import { privateStorage } from '@/lib/storage';
 import { useAccountAccess } from '@/lib/use-account-access';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
@@ -139,10 +140,12 @@ export function AppLockProvider({ children }: { readonly children: ReactNode }) 
   }, [appState]);
 
   // A cold start with a saved session starts locked. Signing in just now is
-  // proof enough, so it starts open; signing out drops the lock.
+  // proof enough, so it starts open; signing out drops the lock. Starting or
+  // leaving the player preview mounts this provider again while she holds the
+  // phone, which is not a start (RAPP-371).
   useEffect(() => {
     if (isLoading) return;
-    const isColdStart = previousUserId.current === undefined;
+    const isColdStart = previousUserId.current === undefined && !takePreviewHandover('app-lock');
     if (isColdStart || userId !== previousUserId.current) {
       setIsLocked(isColdStart && userId !== null);
       backgroundedAt.current = null;

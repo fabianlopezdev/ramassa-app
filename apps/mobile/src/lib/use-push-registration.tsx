@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '@ramassa/shared/auth';
+import { takePreviewHandover } from './preview-handover';
 import { usePreviewModeActive } from './preview-mode';
 import {
   registerPushToken,
@@ -41,7 +42,8 @@ export function usePushRegistration(): {
       if (cancelled) return;
 
       if (decision.kind === 'request-permission') {
-        setShouldShowRationale(true);
+        // Back from the player preview, she has already been asked this time.
+        if (!takePreviewHandover('push-rationale')) setShouldShowRationale(true);
         return;
       }
       if (decision.kind === 'register' && userId) {

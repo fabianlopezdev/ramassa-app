@@ -6,7 +6,7 @@ const supportedLanguages = ['ca', 'es', 'en', 'ar', 'fa'] as const;
 
 test('the service image carousel has a translated accessible name', async () => {
   const detailSource = await Bun.file(
-    path.join(repoRoot, 'apps/mobile/src/app/(app)/service/[id].tsx'),
+    path.join(repoRoot, 'apps/mobile/src/components/services/service-article.tsx'),
   ).text();
 
   expect(detailSource).toContain("accessibilityLabel={t('playerServices:images')}");

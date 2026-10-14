@@ -20,6 +20,7 @@ import { AppError, type Result } from '@ramassa/shared/errors';
 import { isSupportedLanguage, type SupportedLanguage } from '@ramassa/shared/i18n';
 import { i18n } from './i18n';
 import { safeAsync } from './observability';
+import { markPreviewHandover } from './preview-handover';
 import { createPreviewQueryClient } from './query-client';
 import { ownSupabase, previewMode, previewSupabase } from './supabase';
 
@@ -45,6 +46,7 @@ export function startPreview(target: string | null): Promise<Result<void, AppErr
       const { error } = await previewSupabase.auth.signInWithPassword(credentials);
       if (error === null) {
         previewQueryClient = createPreviewQueryClient();
+        markPreviewHandover();
         previewMode.start(target, i18n.resolvedLanguage ?? i18n.language);
         return;
       }
@@ -59,6 +61,7 @@ export function choosePreviewLanguage(language: SupportedLanguage): Promise<void
 
 export async function leavePreview(): Promise<void> {
   const returnLanguage = previewMode.returnLanguage();
+  markPreviewHandover();
   previewMode.end();
   previewQueryClient.clear();
   await previewSupabase.auth.signOut({ scope: 'local' });

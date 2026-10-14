@@ -4,13 +4,12 @@ import {
   OfflineBanner,
 } from '@/components/announcements/feed-states';
 import { FailureNotice } from '@/components/error-code-line';
-import { EventDetailLine } from '@/components/events/event-card';
 import { PageWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { SuccessPop } from '@/components/motion/success-pop';
+import { ServiceArticle } from '@/components/services/service-article';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { playErrorHaptic } from '@/lib/haptics/haptics';
-import { resolveMediaImageSource } from '@/lib/media-source';
 import { isNetworkStateOnline } from '@/lib/network-status';
 import { safeAsync } from '@/lib/observability';
 import {
@@ -18,103 +17,22 @@ import {
   usePlayerServiceDetail,
   useServiceInterest,
 } from '@/lib/player-services';
-import { mobileClientEnv } from '@/lib/supabase';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
-import { Image } from 'expo-image';
 import * as Linking from 'expo-linking';
 import { useNetworkState } from 'expo-network';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useAuth } from '@ramassa/shared/auth';
 import { toAppError, type AppErrorCode } from '@ramassa/shared/errors';
 import { resolveLocalizedText, useLanguage } from '@ramassa/shared/i18n';
-import {
-  buildServiceContactLinks,
-  type PlayerServiceImageRow,
-  type PlayerServiceRow,
-  type ServiceMetadataFieldDefinition,
-} from '@ramassa/shared/services';
 import { tokens } from '@ramassa/shared/tokens';
-
-const styles = StyleSheet.create({
-  images: { height: tokens.spacing['3xl'] * 3 },
-  imageFrame: {
-    width: tokens.contentWidth.form - tokens.spacing['3xl'] * 2,
-    height: tokens.spacing['3xl'] * 3,
-    borderRadius: tokens.radius.lg,
-    overflow: 'hidden',
-  },
-  image: {
-    width: tokens.contentWidth.form - tokens.spacing['3xl'] * 2,
-    height: tokens.spacing['3xl'] * 3,
-  },
-});
-const imageKeyExtractor = (image: PlayerServiceImageRow) => image.id;
-const ImageSeparator = () => <View className="w-sm" />;
-const imageFrameStyle: StyleProp<ViewStyle> = [styles.imageFrame, continuousCorners];
-
-function ServiceImage({
-  image,
-  alt,
-}: {
-  readonly image: PlayerServiceImageRow;
-  readonly alt: string;
-}) {
-  const { session } = useAuth();
-  const source = resolveMediaImageSource({
-    objectKeyOrUrl: image.url,
-    mediaWorkerUrl: mobileClientEnv.EXPO_PUBLIC_MEDIA_WORKER_URL,
-    accessToken: session?.access_token,
-  });
-  if (source === null) return null;
-  return (
-    <View accessible accessibilityRole="image" accessibilityLabel={alt} style={imageFrameStyle}>
-      <Image
-        source={source}
-        accessible={false}
-        contentFit="cover"
-        cachePolicy="memory-disk"
-        recyclingKey={image.url}
-        style={styles.image}
-      />
-    </View>
-  );
-}
-
-function ContactAction({
-  label,
-  url,
-  onOpen,
-}: {
-  readonly label: string;
-  readonly url: string;
-  readonly onOpen: (url: string) => void;
-}) {
-  const languageFontClass = useLanguageFontClass();
-  const handlePress = useCallback(() => onOpen(url), [onOpen, url]);
-  return (
-    <PressableScale
-      accessibilityLabel={label}
-      onPress={handlePress}
-      haptic="tapLight"
-      className="min-h-recommended basis-[48%] grow items-center justify-center rounded-md border border-primary px-md"
-      style={continuousCorners}
-    >
-      <Text className={`text-center text-md font-bold text-primary-dark ${languageFontClass}`}>
-        {label}
-      </Text>
-    </PressableScale>
-  );
-}
 
 export default function ServiceDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { back } = useRouter();
-  const { t, i18n } = useTranslation(['playerServices', 'errors']);
+  const { t } = useTranslation(['playerServices', 'errors']);
   const { language } = useLanguage();
   const languageFontClass = useLanguageFontClass();
   const networkState = useNetworkState();
@@ -128,39 +46,6 @@ export default function ServiceDetailScreen() {
   const service = serviceQuery.data;
   const category = categoriesQuery.data?.find((candidate) => candidate.id === service?.category_id);
   const title = service === undefined ? undefined : resolveLocalizedText(service.title, language);
-  const description =
-    service?.description === null || service?.description === undefined
-      ? undefined
-      : resolveLocalizedText(service.description, language);
-  const currencyFormatter = useMemo(
-    () =>
-      new Intl.NumberFormat(i18n.resolvedLanguage ?? 'ca', {
-        style: 'currency',
-        currency: 'EUR',
-      }),
-    [i18n.resolvedLanguage],
-  );
-  const cost =
-    service === undefined
-      ? null
-      : service.cost_amount === null
-        ? t(`playerServices:cost${capitalize(service.cost_type)}`)
-        : currencyFormatter.format(service.cost_amount);
-  const contactLinks = useMemo(
-    () =>
-      buildServiceContactLinks(
-        {
-          phone: service?.contact_phone ?? null,
-          email: service?.contact_email ?? null,
-          location: service?.location ?? null,
-          externalUrl: service?.external_url ?? null,
-        },
-        process.env.EXPO_OS === 'android' || process.env.EXPO_OS === 'ios'
-          ? process.env.EXPO_OS
-          : 'web',
-      ),
-    [service?.contact_email, service?.contact_phone, service?.external_url, service?.location],
-  );
   const androidInsets = useMemo(
     () =>
       process.env.EXPO_OS === 'android'
@@ -184,14 +69,6 @@ export default function ServiceDetailScreen() {
       interest.mutate({ serviceId: service.id, interested: !service.interested });
     }
   }, [interest, service]);
-  const renderImage = useCallback(
-    ({ item }: ListRenderItemInfo<PlayerServiceImageRow>) => {
-      const alt = resolveLocalizedText(item.alt_text, language);
-      return alt === undefined ? null : <ServiceImage image={item} alt={alt.text} />;
-    },
-    [language],
-  );
-
   useEffect(() => {
     if (interestErrorCode !== null) playErrorHaptic(interestErrorCode);
   }, [interestErrorCode]);
@@ -250,136 +127,30 @@ export default function ServiceDetailScreen() {
             </Text>
           </View>
         ) : (
-          <View className="gap-xl">
-            <View className="gap-md">
-              <Text
-                accessibilityRole="header"
-                className={`text-start text-3xl font-bold text-neutral-900 ${languageFontClass}`}
-              >
-                {title.text}
-              </Text>
-              {description === undefined ? null : (
-                <Text className={`text-start text-lg text-neutral-700 ${languageFontClass}`}>
-                  {description.text}
-                </Text>
-              )}
-            </View>
-
-            {service.images.length === 0 ? null : (
-              <FlashList
-                horizontal
-                accessibilityRole="list"
-                accessibilityLabel={t('playerServices:images')}
-                data={service.images}
-                renderItem={renderImage}
-                keyExtractor={imageKeyExtractor}
-                ItemSeparatorComponent={ImageSeparator}
-                style={styles.images}
-              />
-            )}
-
-            <View className="gap-md rounded-lg bg-neutral-50 p-lg" style={continuousCorners}>
-              <Text
-                accessibilityRole="header"
-                className={`text-start text-lg font-bold text-neutral-900 ${languageFontClass}`}
-              >
-                {t('playerServices:details')}
-              </Text>
-              {service.provider_name === null ? null : (
-                <EventDetailLine
-                  label={t('playerServices:provider')}
-                  value={service.provider_name}
-                  languageFontClass={languageFontClass}
-                />
-              )}
-              {service.location === null ? null : (
-                <EventDetailLine
-                  label={t('playerServices:location')}
-                  value={service.location}
-                  languageFontClass={languageFontClass}
-                />
-              )}
-              {cost === null ? null : (
-                <EventDetailLine
-                  label={t('playerServices:cost')}
-                  value={cost}
-                  languageFontClass={languageFontClass}
-                />
-              )}
-              {service.schedule === null ? null : (
-                <EventDetailLine
-                  label={t('playerServices:schedule')}
-                  value={service.schedule}
-                  languageFontClass={languageFontClass}
-                />
-              )}
-              <EventDetailLine
-                label={t('playerServices:availability')}
-                value={t(`playerServices:availability${availabilityKey(service.availability)}`)}
-                languageFontClass={languageFontClass}
-              />
-              {category?.contract.formFields.map((field) => {
-                const value = service.metadata[field.key];
-                const label = resolveLocalizedText(field.label, language);
-                if (value === undefined || value === null || label === undefined) return null;
-                return (
-                  <EventDetailLine
-                    key={field.key}
-                    label={label.text}
-                    value={metadataValueLabel(field, value, t)}
-                    languageFontClass={languageFontClass}
-                  />
-                );
-              })}
-            </View>
-
-            {Object.values(contactLinks).every((value) => value === null) ? null : (
-              <View className="gap-md">
-                <Text
-                  accessibilityRole="header"
-                  className={`text-start text-lg font-bold text-neutral-900 ${languageFontClass}`}
-                >
-                  {t('playerServices:contact')}
-                </Text>
-                <View className="flex-row flex-wrap gap-sm">
-                  {contactLinks.phone === null ? null : (
-                    <ContactAction
-                      label={t('playerServices:call')}
-                      url={contactLinks.phone}
-                      onOpen={openContact}
-                    />
-                  )}
-                  {contactLinks.email === null ? null : (
-                    <ContactAction
-                      label={t('playerServices:email')}
-                      url={contactLinks.email}
-                      onOpen={openContact}
-                    />
-                  )}
-                  {contactLinks.map === null ? null : (
-                    <ContactAction
-                      label={t('playerServices:map')}
-                      url={contactLinks.map}
-                      onOpen={openContact}
-                    />
-                  )}
-                  {contactLinks.external === null ? null : (
-                    <ContactAction
-                      label={t('playerServices:website')}
-                      url={contactLinks.external}
-                      onOpen={openContact}
-                    />
-                  )}
-                </View>
-                {contactErrorCode === null ? null : (
-                  <FailureNotice
-                    code={contactErrorCode}
-                    message={t(`errors:${contactErrorCode}`)}
-                  />
-                )}
-              </View>
-            )}
-
+          <ServiceArticle
+            service={{
+              title: service.title,
+              description: service.description,
+              images: service.images.map((image) => ({
+                id: image.id,
+                url: image.url,
+                altText: image.alt_text,
+              })),
+              providerName: service.provider_name,
+              location: service.location,
+              costType: service.cost_type,
+              costAmount: service.cost_amount,
+              schedule: service.schedule,
+              availability: service.availability,
+              metadata: service.metadata,
+              contactPhone: service.contact_phone,
+              contactEmail: service.contact_email,
+              externalUrl: service.external_url,
+            }}
+            formFields={category?.contract.formFields ?? []}
+            onOpenContact={(url) => void openContact(url)}
+            contactErrorCode={contactErrorCode}
+          >
             <PressableScale
               testID="service-interest-toggle"
               accessibilityLabel={
@@ -416,37 +187,9 @@ export default function ServiceDetailScreen() {
             {interestErrorCode === null ? null : (
               <FailureNotice code={interestErrorCode} message={t(`errors:${interestErrorCode}`)} />
             )}
-          </View>
+          </ServiceArticle>
         )}
       </PageWidth>
     </ScrollView>
   );
-}
-
-function metadataValueLabel(
-  field: ServiceMetadataFieldDefinition,
-  value: unknown,
-  t: ReturnType<typeof useTranslation>['t'],
-): string {
-  if (typeof value === 'boolean') return value ? t('filterYes') : t('filterNo');
-  if (Array.isArray(value)) {
-    return value.map((item) => optionLabel(item, t)).join(', ');
-  }
-  if (field.options !== undefined) return optionLabel(value, t);
-  return String(value);
-}
-
-function optionLabel(value: unknown, t: ReturnType<typeof useTranslation>['t']): string {
-  const raw = String(value);
-  return t(`option.${raw}`, { defaultValue: raw.replaceAll('_', ' ') });
-}
-
-function capitalize(value: string): string {
-  return `${value.slice(0, 1).toUpperCase()}${value.slice(1)}`;
-}
-
-function availabilityKey(value: PlayerServiceRow['availability']): string {
-  if (value === 'waiting_list') return 'WaitingList';
-  if (value === 'by_appointment') return 'ByAppointment';
-  return capitalize(value);
 }
