@@ -1795,6 +1795,14 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - Announcements list: status chips (all, draft, published, scheduled, expired, the web admin's filter), the total, pages that load on scroll, and each row's title, category, date, status and whether it is pinned. On a phone a row opens its own screen; on a tablet it opens beside the list.
 - One announcement shows its status, category, publication and expiry, and the Catalan text. Pin and unpin are there for anyone who reads it; Delete is for `announcements.publish` holders, as the database requires, and asks first. The editor comes in RAPP-341.
 
+## Forum moderation on the phone (2026-10-14, RAPP-380, part of RAPP-215)
+
+- `forum.moderate` holders get "Moderació del fòrum" in More, and Today shows how many reported items wait. The screen lists each reported post, reply or gallery photo, oldest report first, as the web admin does: how many reports, the kind, the category, the author, when it was first reported, the content (or the deleted mark), a photo's thumbnail, the reasons and the reporters' comments.
+- Actions: dismiss the reports, hide, delete (asks first; a photo is deleted with its files through the media Worker), contact the author (opens a conversation, for whoever has the inbox), and for a post, pin or unpin and move it to another category.
+- Forum posting bans stay on the participant's card (phase 3). Forum categories follow in RAPP-386.
+- The two forum counts now read correctly for any number ("Pendents: 1", "Avisos: 1"); the app has no plural forms, and "1 pending items" was wrong in English, on the web admin too.
+- Checks: `app-forum-moderation.web-qa.ts`, the web admin and player forum specs, and the iPhone simulator.
+
 ## Preview as player from the web admin (2026-10-14, RAPP-372, part of RAPP-214)
 
 - Every team member has "Preview as player" in the admin sidebar (the whole player app) and on each published announcement, event, knowledge resource and service (the player app open on that item). An item players cannot see yet says that players see it once it is published.

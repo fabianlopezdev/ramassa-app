@@ -1,14 +1,15 @@
 /**
  * More (RAPP-245): what is not an area of its own. Settings (language and app
  * lock) and sign-out, Stock for whoever receives, counts or edits material
- * (RAPP-250), and the player preview (RAPP-371); later phases add the
- * dashboard, the team and the rest.
+ * (RAPP-250), forum moderation (RAPP-380), and the player preview
+ * (RAPP-371); later phases add the dashboard, the team and the rest.
  *
  */
 import { PageWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { PreviewStartFailed, useStartPreview } from '@/components/preview/preview-as-player';
 import { TeamBackToHome } from '@/components/team/team-back-to-home';
+import { teamScreens } from '@/lib/account-area';
 import { logout } from '@/lib/auth';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { teamAreas } from '@/lib/team-shell';
@@ -26,7 +27,10 @@ export default function TeamMoreScreen() {
   const { t: tParticipants } = useTranslation('participants');
   const { t: tCommon } = useTranslation('common');
   const preview = useStartPreview();
-  const hasStock = teamAreas(useAccountAccess().permissions).includes('stock');
+  const { permissions } = useAccountAccess();
+  const hasStock = teamAreas(permissions).includes('stock');
+  const team = teamScreens(permissions);
+  const { t: tForum } = useTranslation('forum');
   const languageFontClass = useLanguageFontClass();
   const { push } = useRouter();
 
@@ -57,6 +61,21 @@ export default function TeamMoreScreen() {
             >
               <Text className={`text-start text-md text-neutral-900 ${languageFontClass}`}>
                 {tParticipants('stock.title')}
+              </Text>
+            </PressableScale>
+          ) : null}
+          {team.forumModeration ? (
+            <PressableScale
+              testID="team-more-forum"
+              accessibilityRole="button"
+              accessibilityLabel={tForum('moderationTitle')}
+              onPress={() => push('/forum-moderation' as Href)}
+              haptic="selection"
+              style={continuousCorners}
+              className="min-h-recommended justify-center rounded-md border border-neutral-200 bg-white px-md"
+            >
+              <Text className={`text-start text-md text-neutral-900 ${languageFontClass}`}>
+                {tForum('moderationTitle')}
               </Text>
             </PressableScale>
           ) : null}

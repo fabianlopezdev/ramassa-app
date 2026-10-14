@@ -9,9 +9,9 @@
 import type { PermissionCode } from '@ramassa/shared/permissions';
 import type { TeamArea } from './team-shell';
 
-export type TodaySection = 'attendance' | 'material' | 'reviews' | 'messages';
+export type TodaySection = 'attendance' | 'material' | 'reviews' | 'forum' | 'messages';
 
-const ORDER: readonly TodaySection[] = ['attendance', 'material', 'reviews', 'messages'];
+const ORDER: readonly TodaySection[] = ['attendance', 'material', 'reviews', 'forum', 'messages'];
 
 /** Stock below zero is for whoever counts it or hands it out (RAPP-249). */
 const MATERIAL_PERMISSIONS: readonly PermissionCode[] = ['equipment.count', 'equipment.handover'];
@@ -26,6 +26,7 @@ export function todaySections(
     }
     // Services that partner entities sent, waiting for review (RAPP-345).
     if (section === 'reviews') return permissions.has('services.review');
+    if (section === 'forum') return permissions.has('forum.moderate');
     return areas.includes(section);
   });
 }
