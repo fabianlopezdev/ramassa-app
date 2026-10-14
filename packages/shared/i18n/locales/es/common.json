@@ -29,5 +29,7 @@
   "previewExit": "Salir de la vista",
   "previewLanguage": "Idioma de la vista",
   "previewStartFailed": "No hemos podido abrir la vista de jugadora.",
-  "previewNotPublished": "Las jugadoras la verán cuando esté publicada."
+  "previewNotPublished": "Las jugadoras la verán cuando esté publicada.",
+  "previewDraftTitle": "Borrador como lo verán las jugadoras. Todavía no lo ve nadie.",
+  "previewDraftMissing": "Falta el texto en este idioma. Las jugadoras lo verán en otro idioma."
 }

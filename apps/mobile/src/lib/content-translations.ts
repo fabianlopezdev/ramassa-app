@@ -1,8 +1,9 @@
 /**
  * The translation review steps the phone's content editors share (RAPP-341,
  * RAPP-342): stored or kept translations as a review to start from, a review's
- * texts to keep on the device, a Worker result as a new review, and the
- * review's handlers for a `MultilingualField`.
+ * texts to keep on the device, the unsaved text per language for the draft
+ * preview (RAPP-373), a Worker result as a new review, and the review's
+ * handlers for a `MultilingualField`.
  */
 import type { SupportedLanguage } from '@ramassa/shared/i18n';
 import type {
@@ -37,6 +38,28 @@ export function reviewTexts(
   return review === undefined
     ? undefined
     : Object.fromEntries(review.suggestions.map((s) => [s.language, s.reviewedText]));
+}
+
+/**
+ * The unsaved text in every language, as a player screen reads stored content:
+ * the Catalan source and the review's current texts, approved or not, for the
+ * player preview of a draft (RAPP-373). A language with no text yet is left
+ * out, so the preview shows the fallback a player would get.
+ */
+export function draftLocalizedContent(
+  sourceText: string,
+  review: TranslationReview | undefined,
+): Partial<Record<SupportedLanguage, string>> {
+  const texts = reviewTexts(review) ?? {};
+  return {
+    ca: sourceText,
+    ...Object.fromEntries(
+      CATALAN_TRANSLATION_TARGETS.flatMap((language) => {
+        const text = texts[language];
+        return typeof text === 'string' && text.trim().length > 0 ? [[language, text]] : [];
+      }),
+    ),
+  };
 }
 
 /** A Worker result as the options of a new review of its machine drafts. */

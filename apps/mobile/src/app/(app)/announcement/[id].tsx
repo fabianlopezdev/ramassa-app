@@ -1,44 +1,32 @@
-import { announcementCategoryLabel } from '@/components/announcements/category-filters';
+import { AnnouncementArticle } from '@/components/announcements/announcement-article';
 import {
   AnnouncementFeedError,
   AnnouncementFeedSkeleton,
   OfflineBanner,
 } from '@/components/announcements/feed-states';
 import { PageWidth } from '@/components/layout/content-width';
-import { FadeSlideIn } from '@/components/motion/fade-slide-in';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { usePlayerAnnouncements } from '@/lib/announcement-feed';
-import { composeContinuousViewStyle } from '@/lib/continuous-corners';
 import { resolveMediaImageSource } from '@/lib/media-source';
 import { isNetworkStateOnline } from '@/lib/network-status';
 import { mobileClientEnv } from '@/lib/supabase';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { Image } from 'expo-image';
 import { useNetworkState } from 'expo-network';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@ramassa/shared/auth';
 import { toAppError } from '@ramassa/shared/errors';
 import { resolveLocalizedText, useLanguage } from '@ramassa/shared/i18n';
 import { tokens } from '@ramassa/shared/tokens';
 
-const styles = StyleSheet.create({
-  imageFrame: {
-    width: '100%',
-    height: tokens.contentWidth.form / 2,
-  },
-  image: { width: '100%', height: '100%' },
-});
-const imageFrameStyle = composeContinuousViewStyle(styles.imageFrame);
-
 export default function AnnouncementDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { back } = useRouter();
   const { session } = useAuth();
-  const { t, i18n } = useTranslation(['home', 'common']);
+  const { t } = useTranslation(['home', 'common']);
   const { language } = useLanguage();
   const languageFontClass = useLanguageFontClass();
   const networkState = useNetworkState();
@@ -51,10 +39,6 @@ export default function AnnouncementDetailScreen() {
     announcement === undefined ? undefined : resolveLocalizedText(announcement.title, language);
   const body =
     announcement === undefined ? undefined : resolveLocalizedText(announcement.body, language);
-  const imageAlt =
-    announcement?.image_alt === null || announcement?.image_alt === undefined
-      ? undefined
-      : resolveLocalizedText(announcement.image_alt, language);
   const imageSource = useMemo(
     () =>
       resolveMediaImageSource({
@@ -63,10 +47,6 @@ export default function AnnouncementDetailScreen() {
         accessToken: session?.access_token,
       }),
     [announcement?.image_url, session?.access_token],
-  );
-  const dateFormatter = useMemo(
-    () => new Intl.DateTimeFormat(i18n.resolvedLanguage ?? 'ca', { dateStyle: 'long' }),
-    [i18n.resolvedLanguage],
   );
   const insets = useSafeAreaInsets();
   const androidEdgeInsets = useMemo(
@@ -134,50 +114,17 @@ export default function AnnouncementDetailScreen() {
             </Text>
           </View>
         ) : (
-          <FadeSlideIn index={0}>
-            <View className="gap-md">
-              <View className="flex-row flex-wrap items-center gap-sm">
-                <View className="rounded-full bg-neutral-100 px-sm py-xs">
-                  <Text className={`text-sm font-medium text-neutral-700 ${languageFontClass}`}>
-                    {announcementCategoryLabel(announcement.category, t)}
-                  </Text>
-                </View>
-                {announcement.is_pinned ? (
-                  <View className="rounded-full bg-secondary px-sm py-xs">
-                    <Text className={`text-sm font-semibold text-neutral-900 ${languageFontClass}`}>
-                      {t('pinned')}
-                    </Text>
-                  </View>
-                ) : null}
-              </View>
-              <Text
-                accessibilityRole="header"
-                className={`text-start text-3xl font-bold text-neutral-900 ${languageFontClass}`}
-              >
-                {title.text}
-              </Text>
-              <Text className={`text-start text-sm text-neutral-500 ${languageFontClass}`}>
-                {dateFormatter.format(
-                  new Date(announcement.published_at ?? announcement.created_at),
-                )}
-              </Text>
-              {imageSource === null ? null : (
-                <View className="overflow-hidden rounded-lg" style={imageFrameStyle}>
-                  <Image
-                    source={imageSource}
-                    accessible={imageAlt !== undefined}
-                    accessibilityLabel={imageAlt?.text}
-                    cachePolicy="memory-disk"
-                    contentFit="cover"
-                    style={styles.image}
-                  />
-                </View>
-              )}
-              <Text className={`text-start text-lg text-neutral-800 ${languageFontClass}`}>
-                {body.text}
-              </Text>
-            </View>
-          </FadeSlideIn>
+          <AnnouncementArticle
+            announcement={{
+              category: announcement.category,
+              isPinned: announcement.is_pinned,
+              title: announcement.title,
+              body: announcement.body,
+              imageAlt: announcement.image_alt,
+              shownAt: announcement.published_at ?? announcement.created_at,
+            }}
+            imageSource={imageSource}
+          />
         )}
       </PageWidth>
     </ScrollView>
