@@ -237,8 +237,9 @@ export async function fetchServiceReviewQueue(
   );
   if (error) throw new AppError('DB-1', { message: error.message });
   const rows = z.array(serviceReviewQueueRowSchema).parse(data ?? []);
-  const items = rows
-    .map<ServiceReviewQueueItem>((row) => ({
+  // A copy and `sort`: the phone's Hermes engine has no `toSorted` (RAPP-345).
+  const items = [
+    ...rows.map<ServiceReviewQueueItem>((row) => ({
       kind: row.item_kind,
       id: row.item_id,
       serviceId: row.service_id,
@@ -250,13 +251,13 @@ export async function fetchServiceReviewQueue(
       changedAt: row.changed_at,
       previousService: row.previous_service,
       currentService: row.current_service,
-    }))
-    .toSorted((left, right) => {
-      const kindOrder =
-        Number(left.kind === 'published_edit') - Number(right.kind === 'published_edit');
-      if (kindOrder !== 0) return kindOrder;
-      const dateOrder = left.changedAt.localeCompare(right.changedAt);
-      return dateOrder === 0 ? left.id.localeCompare(right.id) : dateOrder;
-    });
+    })),
+  ].sort((left, right) => {
+    const kindOrder =
+      Number(left.kind === 'published_edit') - Number(right.kind === 'published_edit');
+    if (kindOrder !== 0) return kindOrder;
+    const dateOrder = left.changedAt.localeCompare(right.changedAt);
+    return dateOrder === 0 ? left.id.localeCompare(right.id) : dateOrder;
+  });
   return { items, total: rows[0]?.total_count ?? 0 };
 }

@@ -155,6 +155,10 @@ export default function AppLayout() {
           <Stack.Screen name="content-service-categories" />
           <Stack.Screen name="content-service-category/[id]" />
         </Stack.Protected>
+        <Stack.Protected guard={isTeam && team.serviceReviews}>
+          <Stack.Screen name="content-service-review/[id]" />
+          <Stack.Screen name="content-service-approve/[id]" />
+        </Stack.Protected>
         <Stack.Protected guard={isTeam && team.attendance}>
           <Stack.Screen name="attendance/[id]" />
         </Stack.Protected>

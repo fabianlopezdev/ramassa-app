@@ -11,6 +11,7 @@ import { useTeamLayout } from '@/components/team/team-layout-context';
 import { TodayCheckoutsCard } from '@/components/team/today-checkouts-card';
 import { TodayMaterialCard } from '@/components/team/today-material-card';
 import { TodayMessagesCard } from '@/components/team/today-messages-card';
+import { TodayReviewsCard } from '@/components/team/today-reviews-card';
 import { useAttendanceOccurrences } from '@/lib/attendance';
 import { teamAreas } from '@/lib/team-shell';
 import { todaySections } from '@/lib/today';
@@ -118,6 +119,11 @@ export default function AttendanceOccurrencesScreen() {
           {isToday && sections.includes('material') ? (
             <View className="pt-md">
               <TodayMaterialCard />
+            </View>
+          ) : null}
+          {isToday && sections.includes('reviews') ? (
+            <View className="pt-md">
+              <TodayReviewsCard />
             </View>
           ) : null}
           {isToday && sections.includes('messages') ? (

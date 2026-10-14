@@ -214,9 +214,8 @@ export function summarizeMentoringTopics(
 ): readonly { readonly topic: MentoringTopic; readonly count: number }[] {
   const counts = new Map<MentoringTopic, number>();
   for (const request of requests) counts.set(request.topic, (counts.get(request.topic) ?? 0) + 1);
-  return [...counts]
-    .map(([topic, count]) => ({ topic, count }))
-    .toSorted((a, b) => b.count - a.count);
+  // `sort` on the fresh array: the phone's Hermes engine has no `toSorted`.
+  return [...counts].map(([topic, count]) => ({ topic, count })).sort((a, b) => b.count - a.count);
 }
 
 export function getPrivateMentoringCalendarEntries(

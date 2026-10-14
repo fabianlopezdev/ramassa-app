@@ -18,3 +18,10 @@ test('material shows for whoever counts stock or hands it out', () => {
   expect(todaySections([], new Set<PermissionCode>(['equipment.count']))).toEqual(['material']);
   expect(todaySections([], new Set<PermissionCode>(['equipment.receive']))).toEqual([]);
 });
+
+test('waiting service reviews show for whoever reviews them (RAPP-345)', () => {
+  expect(
+    todaySections(['messages', 'content'], new Set<PermissionCode>(['services.review'])),
+  ).toEqual(['reviews', 'messages']);
+  expect(todaySections(['content'], new Set<PermissionCode>(['services.edit']))).toEqual([]);
+});
