@@ -572,6 +572,99 @@ export async function transitionParticipantStory(
   }
 }
 
+/**
+ * A translation of one text into several languages: the reviewed text per
+ * target language. The web admin and the phone each pass their own Worker call.
+ */
+export type TranslateKnowledgeText = (
+  text: string,
+  from: LanguageCode,
+  to: readonly LanguageCode[],
+) => Promise<Partial<Record<LanguageCode, string>>>;
+
+/**
+ * Machine translations of a body, block by block, keeping its structure: the
+ * source blocks stay as they are, and every other language gets the same
+ * blocks with translated text. A step keeps its image.
+ */
+export async function translateKnowledgeBody(
+  sourceBlocks: readonly KnowledgeBlock[],
+  sourceLanguage: LanguageCode,
+  translate: TranslateKnowledgeText,
+): Promise<LocalizedKnowledgeBody> {
+  const targetLanguages = languageCodeSchema.options.filter(
+    (language) => language !== sourceLanguage,
+  );
+  const translatedBlocks = await Promise.all(
+    sourceBlocks.map(async (block) => {
+      if (block.type === 'paragraph') {
+        return {
+          type: 'paragraph',
+          source: block,
+          text: await translate(block.text, sourceLanguage, targetLanguages),
+        } as const;
+      }
+      const [title, text, imageAlt] = await Promise.all([
+        translate(block.title, sourceLanguage, targetLanguages),
+        translate(block.text, sourceLanguage, targetLanguages),
+        block.imageAlt === null ? null : translate(block.imageAlt, sourceLanguage, targetLanguages),
+      ]);
+      return { type: 'step', source: block, title, text, imageAlt } as const;
+    }),
+  );
+
+  const body: Partial<Record<LanguageCode, KnowledgeBlock[]>> = {
+    [sourceLanguage]: [...sourceBlocks],
+  };
+  for (const language of targetLanguages) {
+    body[language] = translatedBlocks.map((translated) => {
+      if (translated.type === 'paragraph') {
+        return { type: 'paragraph', text: translated.text[language] ?? '' };
+      }
+      return {
+        type: 'step',
+        title: translated.title[language] ?? '',
+        text: translated.text[language] ?? '',
+        imageUrl: translated.source.imageUrl,
+        imageAlt: translated.imageAlt?.[language] ?? null,
+      };
+    });
+  }
+  return body as LocalizedKnowledgeBody;
+}
+
+/** Puts the uploaded step images (by block position) into every language. */
+export function applyStepImageUrls(
+  body: LocalizedKnowledgeBody,
+  imageUrls: Readonly<Record<number, string>>,
+): LocalizedKnowledgeBody {
+  return Object.fromEntries(
+    Object.entries(body).map(([language, blocks]) => [
+      language,
+      blocks?.map((block, index) =>
+        block.type === 'step' && imageUrls[index] !== undefined
+          ? { ...block, imageUrl: imageUrls[index] }
+          : block,
+      ),
+    ]),
+  ) as LocalizedKnowledgeBody;
+}
+
+/**
+ * The story state a save stores: unchanged when not publishing, published from
+ * review, and a published story stays published when its text is corrected.
+ * Staff resources have no story state.
+ */
+export function nextStoryPublicationState(
+  currentStatus: StoryStatus | null,
+  publishing: boolean,
+): StoryStatus | null {
+  if (currentStatus === null) return null;
+  if (!publishing) return currentStatus;
+  if (currentStatus === 'published' || currentStatus === 'in_review') return 'published';
+  throw new AppError('VALIDATION-1');
+}
+
 export async function deleteKnowledgeArticle(client: Client, articleId: string): Promise<void> {
   const { error } = await client.from('knowledge_articles').delete().eq('id', articleId);
   if (error) throw new AppError('DB-1', { message: error.message });

@@ -26,8 +26,9 @@ import {
   type AnnouncementDraft,
   type PublishMode,
 } from '@/lib/announcement-draft';
-import { uploadAnnouncementImage, useContentAnnouncement } from '@/lib/content-announcements';
+import { useContentAnnouncement } from '@/lib/content-announcements';
 import { reviewHandlers, reviewOptions, reviewTexts } from '@/lib/content-translations';
+import { uploadContentImage } from '@/lib/content-upload';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { safeAsync } from '@/lib/observability';
 import { privateStorage } from '@/lib/storage';
@@ -197,7 +198,8 @@ function AnnouncementForm({
     setIsSaving(true);
     const result = await safeAsync(
       async () => {
-        const imageUrl = photo === null ? form.imageUrl : await uploadAnnouncementImage(photo);
+        const imageUrl =
+          photo === null ? form.imageUrl : await uploadContentImage('announcements', photo);
         const input = {
           category: form.category,
           title: localizedTextFromReview(form.title, titleReview.review),

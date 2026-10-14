@@ -140,5 +140,15 @@
   "storyPhoto": "Foto {{number}} de la historia {{title}}",
   "openExternalResource": "Abrir el recurso externo",
   "consentRecorded": "Consentimiento de publicación registrado",
-  "consentRecordedDetail": "Aceptado el {{date}} en {{language}} con la versión {{version}}. Este registro no se puede modificar."
+  "consentRecordedDetail": "Aceptado el {{date}} en {{language}} con la versión {{version}}. Este registro no se puede modificar.",
+  "statusScheduled": "Programado",
+  "statusExpired": "Caducado",
+  "blockMoveUp": "Subir",
+  "blockMoveDown": "Bajar",
+  "blockEdit": "Editar",
+  "blockDone": "Hecho",
+  "blockEmpty": "Bloque vacío",
+  "invalidForm": "Revisa el recurso: cada bloque necesita su texto, y cada imagen de un paso, su descripción.",
+  "blockCancel": "Cancelar",
+  "blockStep": "Paso"
 }

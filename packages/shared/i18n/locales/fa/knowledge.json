@@ -140,5 +140,15 @@
   "storyPhoto": "عکس {{number}} از داستان {{title}}",
   "openExternalResource": "باز کردن منبع خارجی",
   "consentRecorded": "رضایت انتشار ثبت شد",
-  "consentRecordedDetail": "در تاریخ {{date}} به زبان {{language}} و با نسخه {{version}} پذیرفته شد. این سابقه قابل تغییر نیست."
+  "consentRecordedDetail": "در تاریخ {{date}} به زبان {{language}} و با نسخه {{version}} پذیرفته شد. این سابقه قابل تغییر نیست.",
+  "statusScheduled": "زمان‌بندی‌شده",
+  "statusExpired": "منقضی‌شده",
+  "blockMoveUp": "حرکت به بالا",
+  "blockMoveDown": "حرکت به پایین",
+  "blockEdit": "ویرایش",
+  "blockDone": "انجام شد",
+  "blockEmpty": "بلوک خالی",
+  "invalidForm": "منبع را بررسی کنید: هر بلوک به متن خود نیاز دارد و هر تصویر مرحله به توضیح خود.",
+  "blockCancel": "لغو",
+  "blockStep": "مرحله"
 }

@@ -1,9 +1,13 @@
 import { describe, expect, test } from 'bun:test';
 import {
+  applyStepImageUrls,
   canTransitionStoryStatus,
+  hasAlignedKnowledgeBlocks,
   knowledgeArticleInputSchema,
+  nextStoryPublicationState,
   normalizeVideoEmbedUrl,
   resolveLocalizedKnowledgeBlocks,
+  translateKnowledgeBody,
   type KnowledgeBlock,
 } from './knowledge';
 
@@ -187,5 +191,64 @@ describe('player knowledge localization', () => {
       language: 'ar',
       blocks: [{ type: 'paragraph', text: 'هذه قصتي الأصلية.' }],
     });
+  });
+});
+
+describe('the shared body translation (RAPP-343)', () => {
+  test('every language gets the same blocks, a step keeps its image', async () => {
+    const calls: string[] = [];
+    const body = await translateKnowledgeBody(
+      [
+        { type: 'paragraph', text: 'Hola' },
+        { type: 'step', title: 'Pas', text: 'Fes-ho', imageUrl: 'k/a.webp', imageAlt: 'Foto' },
+      ],
+      'ca',
+      async (text, from, to) => {
+        calls.push(`${from}:${text}`);
+        return Object.fromEntries(to.map((language) => [language, `[${language}] ${text}`]));
+      },
+    );
+    expect(calls.sort()).toEqual(['ca:Fes-ho', 'ca:Foto', 'ca:Hola', 'ca:Pas']);
+    expect(hasAlignedKnowledgeBlocks(body)).toBe(true);
+    expect(body.ar?.[1]).toEqual({
+      type: 'step',
+      title: '[ar] Pas',
+      text: '[ar] Fes-ho',
+      imageUrl: 'k/a.webp',
+      imageAlt: '[ar] Foto',
+    });
+  });
+
+  test('a story written in Farsi is translated from Farsi', async () => {
+    const body = await translateKnowledgeBody(
+      [{ type: 'paragraph', text: 'سلام' }],
+      'fa',
+      async (text, _from, to) =>
+        Object.fromEntries(to.map((language) => [language, `${language}`])),
+    );
+    expect(body.fa).toEqual([{ type: 'paragraph', text: 'سلام' }]);
+    expect(body.ca).toEqual([{ type: 'paragraph', text: 'ca' }]);
+  });
+
+  test('uploaded step images go into every language by position', () => {
+    const step = { type: 'step', title: 'T', text: 'X', imageUrl: null, imageAlt: null } as const;
+    const body = applyStepImageUrls(
+      {
+        ca: [{ type: 'paragraph', text: 'P' }, step],
+        es: [{ type: 'paragraph', text: 'P' }, step],
+      },
+      { 1: 'k/new.webp' },
+    );
+    expect(body.es?.[1]).toMatchObject({ imageUrl: 'k/new.webp' });
+    expect(body.ca?.[0]).toEqual({ type: 'paragraph', text: 'P' });
+  });
+
+  test('a story publishes from review, and a published one stays published when corrected', () => {
+    expect(nextStoryPublicationState(null, true)).toBeNull();
+    expect(nextStoryPublicationState('submitted', false)).toBe('submitted');
+    expect(nextStoryPublicationState('in_review', true)).toBe('published');
+    expect(nextStoryPublicationState('published', true)).toBe('published');
+    expect(() => nextStoryPublicationState('submitted', true)).toThrow();
+    expect(() => nextStoryPublicationState('rejected', true)).toThrow();
   });
 });
