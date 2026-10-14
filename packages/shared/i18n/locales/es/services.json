@@ -245,5 +245,11 @@
   "iconGraduationCap": "Formación",
   "iconTickets": "Entradas",
   "iconFileText": "Documento",
-  "iconCircle": "Círculo"
+  "iconCircle": "Círculo",
+  "reviewQueueShort": "Propuestas",
+  "reviewChangedAt": "Recibida el {{date}}",
+  "reviewLoadFailed": "No hemos podido cargar las propuestas.",
+  "reviewRejectHelp": "La entidad lee este comentario y puede corregir el servicio y volver a enviarlo.",
+  "reviewApproveAction": "Revisar y publicar",
+  "reviewDone": "Revisado"
 }

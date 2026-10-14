@@ -1,7 +1,9 @@
 /**
  * The Content area (RAPP-340): the content types the person manages, as the
  * web admin's Content menu has them: announcements, events (RAPP-342), the
- * knowledge base (RAPP-343) and services (RAPP-344). With more than one type, chips at the top switch between their lists.
+ * knowledge base (RAPP-343), services (RAPP-344) and the review queue of
+ * services partner entities send (RAPP-345). Today's review card opens the
+ * queue directly (`?kind=reviews`). With more than one type, chips at the top switch between their lists.
  * On a phone a row opens its own screen; on a tablet it opens beside the
  * list.
  */
@@ -13,6 +15,8 @@ import { KnowledgeDetail } from '@/components/content/knowledge-detail';
 import { KnowledgeList } from '@/components/content/knowledge-list';
 import { ServiceDetail } from '@/components/content/service-detail';
 import { ServiceList } from '@/components/content/service-list';
+import { ServiceReviewDetail } from '@/components/content/service-review-detail';
+import { ServiceReviewList } from '@/components/content/service-review-list';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { PageWidth } from '@/components/layout/content-width';
 import { TeamBackToHome } from '@/components/team/team-back-to-home';
@@ -20,8 +24,8 @@ import { useTeamLayout } from '@/components/team/team-layout-context';
 import { contentKinds, type ContentKind } from '@/lib/team-shell';
 import { useAccountAccess } from '@/lib/use-account-access';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { useRouter, type Href } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
+import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -35,6 +39,7 @@ const KIND_LABELS = {
   events: 'events:title',
   knowledge: 'knowledge:title',
   services: 'services:title',
+  reviews: 'services:reviewQueueShort',
 } as const satisfies Record<ContentKind, string>;
 
 const DETAIL_ROUTES = {
@@ -42,6 +47,7 @@ const DETAIL_ROUTES = {
   events: '/content-event',
   knowledge: '/content-knowledge',
   services: '/content-service',
+  reviews: '/content-service-review',
 } as const satisfies Record<ContentKind, string>;
 
 export default function ContentScreen() {
@@ -53,7 +59,15 @@ export default function ContentScreen() {
   const { width } = useWindowDimensions();
   const { permissions } = useAccountAccess();
   const kinds = useMemo(() => contentKinds(permissions), [permissions]);
-  const [chosenKind, setChosenKind] = useState<ContentKind | null>(null);
+  // Today's review card opens the queue directly.
+  const { kind: linkedKind, at: linkedAt } = useLocalSearchParams<{ kind?: string; at?: string }>();
+  const [chosenKind, setChosenKind] = useState<ContentKind | null>(
+    linkedKind === 'reviews' ? 'reviews' : null,
+  );
+  // The tab stays mounted, so a later link from Today changes the type too.
+  useEffect(() => {
+    if (linkedKind === 'reviews') setChosenKind('reviews');
+  }, [linkedKind, linkedAt]);
   const kind = chosenKind !== null && kinds.includes(chosenKind) ? chosenKind : kinds[0];
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const detailStyle = useMemo(
@@ -69,7 +83,7 @@ export default function ContentScreen() {
     (id: string) => {
       if (kind === undefined) return;
       if (isSplit) setSelectedId(id);
-      else push(`${DETAIL_ROUTES[kind]}/${id}` as Href);
+      else push(`${DETAIL_ROUTES[kind]}/${encodeURIComponent(id)}` as Href);
     },
     [isSplit, kind, push],
   );
@@ -109,12 +123,20 @@ export default function ContentScreen() {
       <KnowledgeList top={top} selectedId={selectedId} onOpen={open} showTitle={showTitle} />
     ) : kind === 'services' ? (
       <ServiceList top={top} selectedId={selectedId} onOpen={open} showTitle={showTitle} />
+    ) : kind === 'reviews' ? (
+      <ServiceReviewList top={top} selectedKey={selectedId} onOpen={open} showTitle={showTitle} />
     ) : (
       <AnnouncementList top={top} selectedId={selectedId} onOpen={open} showTitle={showTitle} />
     );
   const detail =
     selectedId === null ? null : kind === 'events' ? (
       <EventDetail key={selectedId} eventId={selectedId} onDeleted={() => setSelectedId(null)} />
+    ) : kind === 'reviews' ? (
+      <ServiceReviewDetail
+        key={selectedId}
+        reviewKey={selectedId}
+        onDone={() => setSelectedId(null)}
+      />
     ) : kind === 'services' ? (
       <ServiceDetail
         key={selectedId}

@@ -245,5 +245,11 @@
   "iconGraduationCap": "Training",
   "iconTickets": "Tickets",
   "iconFileText": "Document",
-  "iconCircle": "Circle"
+  "iconCircle": "Circle",
+  "reviewQueueShort": "Submissions",
+  "reviewChangedAt": "Received on {{date}}",
+  "reviewLoadFailed": "The submissions could not be loaded.",
+  "reviewRejectHelp": "The organization reads this comment and can correct the service and send it again.",
+  "reviewApproveAction": "Review and publish",
+  "reviewDone": "Reviewed"
 }

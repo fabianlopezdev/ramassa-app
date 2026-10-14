@@ -89,6 +89,22 @@ export default tseslint.config(
     },
   },
   {
+    // Code the phone runs (RAPP-345): Hermes lacks the ES2023 copying array
+    // methods, so `toSorted` threw "undefined is not a function" on iOS while
+    // every browser spec passed. Copy and sort instead.
+    files: ['apps/mobile/src/**/*.{ts,tsx}', 'packages/shared/**/*.{ts,tsx}'],
+    ignores: ['**/*.test.ts', '**/*.test.tsx'],
+    rules: {
+      'no-restricted-properties': [
+        'error',
+        ...['toSorted', 'toReversed', 'toSpliced'].map((property) => ({
+          property,
+          message: `Hermes has no Array.prototype.${property}; copy the array and use the mutating method.`,
+        })),
+      ],
+    },
+  },
+  {
     files: ['supabase/functions/**/*.ts'],
     languageOptions: {
       globals: globals.denoBuiltin,

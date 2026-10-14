@@ -1803,6 +1803,15 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - Every request of the preview account is read-only in the database (PostgREST's pre-request hook), so it changes nothing: no sign-up, post, message, read receipt or upload. The media worker refuses its uploads.
 - Checks: pgTAP `0063`, and `bun run db:test:player-preview` end to end against the local stack.
 
+## Service review queue on the phone (2026-10-14, RAPP-345, part of RAPP-214)
+
+- `services.review` holders get "Propostes" in the Content area, and Today shows how many services partner entities sent are waiting; one tap opens the queue.
+- The queue has the web admin's filters: kind (pending submission, or a change to a live service), category, and a search by service, entity or contact. Pending submissions come first, oldest first. On a tablet an item opens beside the queue.
+- A pending submission shows the service as the entity sent it, and the comment thread (comments the entity sees, or internal notes). "Review and publish" opens the service form in approval mode: the reviewer corrects the service, approves its translations, adds an optional comment the entity sees, and publishes; the app then goes back to the queue. Rejecting needs a comment; the entity reads it and can correct the service and send it again (`rejected` to `pending`). That is how changes are asked for: the web admin also has these two outcomes.
+- A change an entity made to a live service shows each changed field, before and now, as text (names in Catalan, option labels, dates, the category name, and the extra fields by their labels), and "Mark as reviewed".
+- The seeded live change now carries the before-and-after snapshots the trigger always records; without them the review page could not load it.
+- Hermes has no `Array.prototype.toSorted`, so the shared queue sort threw "undefined is not a function" on iOS while the browser specs passed. The shared code copies and sorts, and a lint rule now refuses `toSorted`, `toReversed` and `toSpliced` in code the phone runs.
+
 ## Service categories on the phone (2026-10-14, RAPP-347, part of RAPP-214)
 
 - "Manage categories" in the services list opens the categories for `services.edit` holders: in the order players see them, with how many own fields each has, Move up and Move down, and New, Edit and Delete. A category that still has services cannot be deleted; the database refuses it.
