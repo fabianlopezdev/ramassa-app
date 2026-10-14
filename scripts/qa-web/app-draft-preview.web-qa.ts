@@ -54,3 +54,35 @@ test('a new announcement is previewed per language before it is saved', async ({
     ).trim(),
   ).toBe('0');
 });
+
+test('a new event is previewed with its place, places and sign-up, in Spanish', async ({
+  page,
+}) => {
+  const title = `Taller ${Date.now().toString(36)}`;
+  await signInPlayer(page, STAFF_EMAIL);
+  await completeSecondFactor(page, STAFF_EMAIL);
+  await page.getByTestId('team-sidebar-content').click({ timeout: 30_000 });
+  await page.getByTestId('content-kind-events').click({ timeout: 30_000 });
+  await page.getByTestId('content-event-new').click({ timeout: 30_000 });
+  await page.getByTestId('event-title-source').fill(title);
+  await page.getByTestId('event-location').fill('Casal del barri');
+  await page.getByTestId('event-starts-at').fill('2027-03-01T18:30');
+  await page.getByTestId('event-capacity').fill('15');
+  await page.getByTestId('event-signup-confirm').click();
+  await page.getByTestId('event-generate').click();
+  await expect(page.getByTestId('event-title-draft-es')).toHaveValue(`[es] ${title}`, {
+    timeout: 30_000,
+  });
+
+  await page.getByTestId('event-preview').click();
+  await page.getByTestId('draft-preview-language-es').click();
+  const spanish = page.getByTestId('draft-preview-content-es');
+  await expect(spanish.getByRole('heading', { name: `[es] ${title}` })).toBeVisible();
+  await expect(spanish.getByText('Casal del barri')).toBeVisible();
+  await expect(spanish.getByText('15 de 15 plazas disponibles')).toBeVisible();
+  await expect(spanish.getByRole('button', { name: 'Confirmo que asistiré' })).toBeVisible();
+  await page.getByTestId('draft-preview-close').click();
+  expect(
+    queryDatabase(`select count(*) from public.events where title ->> 'ca' = '${title}';`).trim(),
+  ).toBe('0');
+});

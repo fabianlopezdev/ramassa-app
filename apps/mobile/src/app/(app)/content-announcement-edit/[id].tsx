@@ -402,40 +402,6 @@ function AnnouncementForm({
         {t('translationHelp')}
       </Text>
 
-      <PressableScale
-        testID="announcement-preview"
-        accessibilityRole="button"
-        accessibilityLabel={tCommon('previewAsPlayer')}
-        onPress={() => setIsPreviewOpen(true)}
-        isDisabled={form.title.trim().length === 0}
-        haptic="tapLight"
-        className="min-h-recommended items-center justify-center rounded-md border border-neutral-300 bg-white px-lg"
-      >
-        <Text className={`text-center text-md font-bold text-primary-dark ${fontClass}`}>
-          {tCommon('previewAsPlayer')}
-        </Text>
-      </PressableScale>
-      <DraftPreviewSheet
-        visible={isPreviewOpen}
-        onClose={() => setIsPreviewOpen(false)}
-        isMissing={(language) =>
-          (previewTitle[language] ?? '').trim().length === 0 ||
-          (previewBody[language] ?? '').trim().length === 0
-        }
-      >
-        <AnnouncementArticle
-          announcement={{
-            category: form.category,
-            isPinned: form.isPinned,
-            title: previewTitle,
-            body: previewBody,
-            imageAlt: hasImage ? draftLocalizedContent(form.imageAlt, imageAltReview.review) : null,
-            shownAt: form.publishedAt ?? new Date().toISOString(),
-          }}
-          imageSource={previewImage}
-        />
-      </DraftPreviewSheet>
-
       <View className="flex-row items-center justify-between gap-md">
         <Text className={`flex-1 text-start text-md text-neutral-800 ${fontClass}`}>
           {t('fieldPinned')}
@@ -492,6 +458,40 @@ function AnnouncementForm({
           </Text>
         )}
       </View>
+
+      <PressableScale
+        testID="announcement-preview"
+        accessibilityRole="button"
+        accessibilityLabel={tCommon('previewAsPlayer')}
+        onPress={() => setIsPreviewOpen(true)}
+        isDisabled={form.title.trim().length === 0}
+        haptic="tapLight"
+        className="min-h-recommended items-center justify-center rounded-md border border-neutral-300 bg-white px-lg"
+      >
+        <Text className={`text-center text-md font-bold text-primary-dark ${fontClass}`}>
+          {tCommon('previewAsPlayer')}
+        </Text>
+      </PressableScale>
+      <DraftPreviewSheet
+        visible={isPreviewOpen}
+        onClose={() => setIsPreviewOpen(false)}
+        isMissing={(language) =>
+          (previewTitle[language] ?? '').trim().length === 0 ||
+          (previewBody[language] ?? '').trim().length === 0
+        }
+      >
+        <AnnouncementArticle
+          announcement={{
+            category: form.category,
+            isPinned: form.isPinned,
+            title: previewTitle,
+            body: previewBody,
+            imageAlt: hasImage ? draftLocalizedContent(form.imageAlt, imageAltReview.review) : null,
+            shownAt: form.publishedAt ?? new Date().toISOString(),
+          }}
+          imageSource={previewImage}
+        />
+      </DraftPreviewSheet>
 
       {errorCode === null ? null : (
         <FailureNotice

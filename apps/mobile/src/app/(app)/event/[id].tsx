@@ -5,12 +5,10 @@ import {
 } from '@/components/announcements/feed-states';
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { ErrorCodeLine } from '@/components/error-code-line';
-import { EventDetailLine } from '@/components/events/event-card';
+import { EventArticle } from '@/components/events/event-article';
 import { PageWidth } from '@/components/layout/content-width';
-import { PressableScale } from '@/components/motion/pressable-scale';
 import { SuccessPop } from '@/components/motion/success-pop';
 import { EventSurveyPrompt } from '@/components/surveys/survey-prompt';
-import { continuousCorners } from '@/lib/continuous-corners';
 import { isEventSignupActionDisabled } from '@/lib/event-signup-policy';
 import { playErrorHaptic } from '@/lib/haptics/haptics';
 import { isNetworkStateOnline } from '@/lib/network-status';
@@ -25,12 +23,8 @@ import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { toAppError } from '@ramassa/shared/errors';
-import {
-  MADRID_TIME_ZONE,
-  nextEventSignupState,
-  type EventSignupState,
-} from '@ramassa/shared/events';
-import { DEFAULT_LANGUAGE, resolveLocalizedText, useLanguage } from '@ramassa/shared/i18n';
+import { nextEventSignupState, type EventSignupState } from '@ramassa/shared/events';
+import { resolveLocalizedText, useLanguage } from '@ramassa/shared/i18n';
 import { tokens } from '@ramassa/shared/tokens';
 
 function successKey(state: EventSignupState): string {
@@ -41,7 +35,7 @@ function successKey(state: EventSignupState): string {
 
 export default function EventDetailScreen() {
   const { id, occurrenceId } = useLocalSearchParams<{ id: string; occurrenceId?: string }>();
-  const { t, i18n } = useTranslation(['events', 'errors']);
+  const { t } = useTranslation(['events', 'errors']);
   const { language } = useLanguage();
   const languageFontClass = useLanguageFontClass();
   const networkState = useNetworkState();
@@ -59,10 +53,6 @@ export default function EventDetailScreen() {
     data?.find((candidate) => candidate.occurrence_id === occurrenceId) ??
     data?.find((candidate) => candidate.event.id === id);
   const title = row === undefined ? undefined : resolveLocalizedText(row.event.title, language);
-  const description =
-    row?.event.description === null || row?.event.description === undefined
-      ? undefined
-      : resolveLocalizedText(row.event.description, language);
   const category =
     row === undefined ? undefined : resolveLocalizedText(row.event.category.name, language);
   const currentState = row?.signup?.state ?? null;
@@ -84,23 +74,6 @@ export default function EventDetailScreen() {
     : row?.event.signup_mode === 'interest'
       ? t('playerInterestAction')
       : t('playerConfirmAction');
-  const dateFormatter = useMemo(
-    () =>
-      new Intl.DateTimeFormat(i18n.resolvedLanguage ?? DEFAULT_LANGUAGE, {
-        dateStyle: 'full',
-        timeZone: MADRID_TIME_ZONE,
-      }),
-    [i18n.resolvedLanguage],
-  );
-  const timeFormatter = useMemo(
-    () =>
-      new Intl.DateTimeFormat(i18n.resolvedLanguage ?? DEFAULT_LANGUAGE, {
-        hour: '2-digit',
-        minute: '2-digit',
-        timeZone: MADRID_TIME_ZONE,
-      }),
-    [i18n.resolvedLanguage],
-  );
   const insets = useSafeAreaInsets();
   const androidInsets = useMemo(
     () =>
@@ -186,88 +159,20 @@ export default function EventDetailScreen() {
             </View>
           ) : (
             <View className="gap-xl">
-              <View className="gap-md">
-                <View className="self-start rounded-full bg-neutral-100 px-sm py-xs">
-                  <Text className={`text-sm font-medium text-neutral-700 ${languageFontClass}`}>
-                    {category.text}
-                  </Text>
-                </View>
-                <Text
-                  accessibilityRole="header"
-                  className={`text-start text-3xl font-bold text-neutral-900 ${languageFontClass}`}
-                >
-                  {title.text}
-                </Text>
-                {description === undefined ? null : (
-                  <Text
-                    selectable
-                    className={`text-start text-lg text-neutral-700 ${languageFontClass}`}
-                  >
-                    {description.text}
-                  </Text>
-                )}
-              </View>
-
-              <View
-                accessibilityLabel={t('playerDetails')}
-                className="gap-md rounded-lg bg-neutral-50 p-lg"
-                style={continuousCorners}
+              <EventArticle
+                event={{
+                  title: row.event.title,
+                  description: row.event.description,
+                  categoryName: row.event.category.name,
+                  startsAt: row.occurrence_starts_at,
+                  endsAt: row.occurrence_ends_at,
+                  location: row.event.location,
+                  locationUrl: row.event.location_url,
+                  maxParticipants: row.event.max_participants,
+                  activeSignupCount: row.event.active_signup_count,
+                }}
+                onOpenMap={openMap}
               >
-                <EventDetailLine
-                  label={t('playerDate')}
-                  value={dateFormatter.format(new Date(row.occurrence_starts_at))}
-                  languageFontClass={languageFontClass}
-                />
-                <EventDetailLine
-                  label={t('playerTime')}
-                  value={timeFormatter.format(new Date(row.occurrence_starts_at))}
-                  languageFontClass={languageFontClass}
-                />
-                {row.occurrence_ends_at === null ? null : (
-                  <EventDetailLine
-                    label={t('playerEnds')}
-                    value={timeFormatter.format(new Date(row.occurrence_ends_at))}
-                    languageFontClass={languageFontClass}
-                  />
-                )}
-                <EventDetailLine
-                  label={t('playerLocation')}
-                  value={row.event.location}
-                  languageFontClass={languageFontClass}
-                />
-                {row.event.location_url === null ? null : (
-                  <PressableScale
-                    accessibilityRole="link"
-                    accessibilityLabel={t('playerOpenMap')}
-                    onPress={openMap}
-                    haptic="tapLight"
-                    style={continuousCorners}
-                    className="min-h-recommended items-center justify-center rounded-md border border-primary px-lg"
-                  >
-                    <Text className={`text-md font-bold text-primary ${languageFontClass}`}>
-                      {t('playerOpenMap')}
-                    </Text>
-                  </PressableScale>
-                )}
-              </View>
-
-              <View
-                className="gap-md rounded-lg border border-neutral-200 p-lg"
-                style={continuousCorners}
-              >
-                <Text
-                  accessibilityRole="header"
-                  className={`text-start text-lg font-bold tabular-nums text-neutral-900 ${languageFontClass}`}
-                >
-                  {row.event.max_participants === null
-                    ? t('playerUnlimited')
-                    : isFull
-                      ? t('playerFull')
-                      : t('playerPlaces', {
-                          remaining: row.event.max_participants - row.event.active_signup_count,
-                          total: row.event.max_participants,
-                        })}
-                </Text>
                 {currentState === 'confirmed' || currentState === 'interested' ? (
                   <Text
                     className={`text-start text-md font-semibold text-success ${languageFontClass}`}
@@ -313,7 +218,7 @@ export default function EventDetailScreen() {
                     </Text>
                   </SuccessPop>
                 ) : null}
-              </View>
+              </EventArticle>
               {row.occurrence_ends_at !== null &&
               Date.parse(row.occurrence_ends_at) <= Date.now() ? (
                 <EventSurveyPrompt eventId={row.event.id} />

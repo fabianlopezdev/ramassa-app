@@ -19,15 +19,22 @@ import { EVENT_SIGNUP_KEYS } from '@/components/content/event-labels';
 import { MultilingualField } from '@/components/content/multilingual-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { FailureNotice } from '@/components/error-code-line';
+import { EventArticle, EventSignupPreview } from '@/components/events/event-article';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
+import { DraftPreviewSheet } from '@/components/preview/draft-preview-sheet';
 import { PUBLISH_MODES } from '@/lib/announcement-draft';
 import {
   contentEventsRoot,
   useContentEvent,
   useContentEventCategories,
 } from '@/lib/content-events';
-import { reviewHandlers, reviewOptions, reviewTexts } from '@/lib/content-translations';
+import {
+  draftLocalizedContent,
+  reviewHandlers,
+  reviewOptions,
+  reviewTexts,
+} from '@/lib/content-translations';
 import {
   clearEventDraft,
   EVENT_RECURRENCES,
@@ -96,6 +103,7 @@ function EventForm({
   const { t } = useTranslation('events');
   const { t: tAnnouncements } = useTranslation('announcements');
   const { t: tErrors } = useTranslation('errors');
+  const { t: tCommon } = useTranslation('common');
   const fontClass = useLanguageFontClass();
   const { back, push } = useRouter();
   const queryClient = useQueryClient();
@@ -123,12 +131,15 @@ function EventForm({
   const titleReview = useTranslationReview(
     reviewOptions(form.title, restored?.titleTranslations ?? event?.title ?? null),
   );
+  // The player preview of this draft (RAPP-373).
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const descriptionReview = useTranslationReview(
     reviewOptions(
       form.description,
       restored?.descriptionTranslations ?? event?.description ?? null,
     ),
   );
+  const previewTitle = draftLocalizedContent(form.title, titleReview.review);
   const hasDescription = form.description.trim().length > 0;
 
   useEffect(() => {
@@ -450,6 +461,46 @@ function EventForm({
           </Text>
         )}
       </View>
+
+      <PressableScale
+        testID="event-preview"
+        accessibilityRole="button"
+        accessibilityLabel={tCommon('previewAsPlayer')}
+        onPress={() => setIsPreviewOpen(true)}
+        isDisabled={form.title.trim().length === 0}
+        haptic="tapLight"
+        className="min-h-recommended items-center justify-center rounded-md border border-neutral-300 bg-white px-lg"
+      >
+        <Text className={`text-center text-md font-bold text-primary-dark ${fontClass}`}>
+          {tCommon('previewAsPlayer')}
+        </Text>
+      </PressableScale>
+      <DraftPreviewSheet
+        visible={isPreviewOpen}
+        onClose={() => setIsPreviewOpen(false)}
+        isMissing={(language) => (previewTitle[language] ?? '').trim().length === 0}
+      >
+        <EventArticle
+          event={{
+            title: previewTitle,
+            description:
+              form.description.trim().length === 0
+                ? null
+                : draftLocalizedContent(form.description, descriptionReview.review),
+            categoryName:
+              categories.find((category) => category.id === form.categoryId)?.name ?? {},
+            startsAt: form.startsAt ?? new Date().toISOString(),
+            endsAt: form.endsAt,
+            location: form.location,
+            locationUrl: form.locationUrl.trim().length === 0 ? null : form.locationUrl,
+            maxParticipants: /^\d+$/.test(form.capacity) ? Number(form.capacity) : null,
+            activeSignupCount: 0,
+          }}
+          onOpenMap={() => undefined}
+        >
+          <EventSignupPreview signupMode={form.signupMode} />
+        </EventArticle>
+      </DraftPreviewSheet>
 
       {error === null || errorMessage === null ? null : (
         <FailureNotice code={error === 'invalid' ? 'VALIDATION-1' : error} message={errorMessage} />
