@@ -33,7 +33,11 @@ import { useAuth } from '@ramassa/shared/auth';
 import { getErrorMessageKey, toAppError } from '@ramassa/shared/errors';
 import { MADRID_TIME_ZONE } from '@ramassa/shared/events';
 import { DEFAULT_LANGUAGE, type SupportedLanguage } from '@ramassa/shared/i18n';
-import { getServiceLifecycle } from '@ramassa/shared/services';
+import {
+  getServiceLifecycle,
+  type AdminServiceCategory,
+  type AdminServiceDetail,
+} from '@ramassa/shared/services';
 import { tokens } from '@ramassa/shared/tokens';
 import {
   fieldLabel,
@@ -62,6 +66,117 @@ function Row({ label, value }: { readonly label: string; readonly value: string 
   );
 }
 
+/**
+ * A service's facts as staff read them (RAPP-344): description, the common
+ * fields, the category's extra fields and the photos. Also the body of a
+ * review (RAPP-345).
+ */
+export function ServiceFacts({
+  service,
+  images,
+  category,
+}: {
+  readonly service: AdminServiceDetail['service'];
+  readonly images: AdminServiceDetail['images'];
+  readonly category: AdminServiceCategory | undefined;
+}) {
+  const { t, i18n } = useTranslation('services');
+  const { t: tAnnouncements } = useTranslation('announcements');
+  const fontClass = useLanguageFontClass();
+  const language = (i18n.resolvedLanguage ?? DEFAULT_LANGUAGE) as SupportedLanguage;
+  const { session } = useAuth();
+  const format = useMemo(
+    () =>
+      new Intl.DateTimeFormat(language, {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+        timeZone: MADRID_TIME_ZONE,
+      }),
+    [language],
+  );
+  const cost = [
+    t(SERVICE_COST_KEYS[service.cost_type]),
+    service.cost_amount === null ? null : String(service.cost_amount),
+    service.cost_details,
+  ]
+    .filter(Boolean)
+    .join(' · ');
+  const date = (value: string | null) => (value === null ? null : format.format(new Date(value)));
+  return (
+    <>
+      {service.description === null ? null : (
+        <Text selectable className={`text-start text-md text-neutral-900 ${fontClass}`}>
+          {service.description.ca}
+        </Text>
+      )}
+      <View
+        style={continuousCorners}
+        className="gap-xs rounded-md border border-neutral-200 bg-white p-md"
+      >
+        <Row label={t('fieldProviderName')} value={service.provider_name} />
+        <Row
+          label={t('fieldLocation')}
+          value={[service.location, service.zone].filter(Boolean).join(' · ')}
+        />
+        <Row label={t('fieldCostType')} value={cost} />
+        <Row
+          label={t('fieldContactName')}
+          value={[service.contact_name, service.contact_role].filter(Boolean).join(' · ')}
+        />
+        <Row label={t('fieldContactPhone')} value={service.contact_phone} />
+        <Row label={t('fieldContactEmail')} value={service.contact_email} />
+        <Row label={t('fieldSchedule')} value={service.schedule} />
+        <Row label={t('fieldExternalUrl')} value={service.external_url} />
+        <Row
+          label={t('fieldAvailability')}
+          value={t(SERVICE_AVAILABILITY_KEYS[service.availability])}
+        />
+        <Row label={t('columnInterests')} value={String(service.interest_count)} />
+        <Row label={tAnnouncements('columnPublication')} value={date(service.published_at)} />
+        <Row label={tAnnouncements('columnExpiry')} value={date(service.expires_at)} />
+      </View>
+      {category === undefined || category.definition.fields.length === 0 ? null : (
+        <View
+          testID="service-detail-metadata"
+          style={continuousCorners}
+          className="gap-xs rounded-md border border-neutral-200 bg-white p-md"
+        >
+          {category.definition.fields.map((field) => (
+            <Row
+              key={field.key}
+              label={fieldLabel(field, language)}
+              value={formatMetadataValue(field, service.metadata[field.key], t)}
+            />
+          ))}
+        </View>
+      )}
+      {images.map((image, index) => {
+        const source = resolveMediaImageSource({
+          objectKeyOrUrl: image.url,
+          mediaWorkerUrl: mobileClientEnv.EXPO_PUBLIC_MEDIA_WORKER_URL,
+          accessToken: session?.access_token,
+        });
+        return source === null ? null : (
+          <View
+            key={image.id}
+            testID={`service-detail-image-${index}`}
+            className="overflow-hidden rounded-md"
+            style={imageFrameStyle}
+          >
+            <Image
+              source={source}
+              accessibilityLabel={image.alt_text.ca}
+              cachePolicy="memory-disk"
+              contentFit="cover"
+              style={styles.image}
+            />
+          </View>
+        );
+      })}
+    </>
+  );
+}
+
 export function ServiceDetail({
   serviceId,
   onBack,
@@ -72,28 +187,16 @@ export function ServiceDetail({
   readonly onDeleted: () => void;
 }) {
   const { t, i18n } = useTranslation('services');
-  const { t: tAnnouncements } = useTranslation('announcements');
   const { t: tCommon } = useTranslation('common');
   const { t: tProfile } = useTranslation('profile');
   const { t: tErrors } = useTranslation('errors');
   const fontClass = useLanguageFontClass();
   const language = (i18n.resolvedLanguage ?? DEFAULT_LANGUAGE) as SupportedLanguage;
   const canPublish = useAccountAccess().permissions.has('services.publish');
-  const { session } = useAuth();
   const { push } = useRouter();
   const detail = useContentService(serviceId);
   const categories = useContentServiceCategories();
   const { remove } = useServiceActions();
-  const format = useMemo(
-    () =>
-      new Intl.DateTimeFormat(language, {
-        dateStyle: 'medium',
-        timeStyle: 'short',
-        timeZone: MADRID_TIME_ZONE,
-      }),
-    [language],
-  );
-
   if (detail.isPending) return <AnnouncementFeedSkeleton accessibilityLabel={t('title')} />;
   if (detail.isError) {
     return (
@@ -117,14 +220,6 @@ export function ServiceDetail({
     publishedAt: service.published_at,
     expiresAt: service.expires_at,
   });
-  const cost = [
-    t(SERVICE_COST_KEYS[service.cost_type]),
-    service.cost_amount === null ? null : String(service.cost_amount),
-    service.cost_details,
-  ]
-    .filter(Boolean)
-    .join(' · ');
-  const date = (value: string | null) => (value === null ? null : format.format(new Date(value)));
   const confirmDelete = () => {
     const done = () =>
       remove.mutate(service.id, {
@@ -212,75 +307,7 @@ export function ServiceDetail({
           message={tErrors(getErrorMessageKey(toAppError(remove.error).code))}
         />
       ) : null}
-      {service.description === null ? null : (
-        <Text selectable className={`text-start text-md text-neutral-900 ${fontClass}`}>
-          {service.description.ca}
-        </Text>
-      )}
-      <View
-        style={continuousCorners}
-        className="gap-xs rounded-md border border-neutral-200 bg-white p-md"
-      >
-        <Row label={t('fieldProviderName')} value={service.provider_name} />
-        <Row
-          label={t('fieldLocation')}
-          value={[service.location, service.zone].filter(Boolean).join(' · ')}
-        />
-        <Row label={t('fieldCostType')} value={cost} />
-        <Row
-          label={t('fieldContactName')}
-          value={[service.contact_name, service.contact_role].filter(Boolean).join(' · ')}
-        />
-        <Row label={t('fieldContactPhone')} value={service.contact_phone} />
-        <Row label={t('fieldContactEmail')} value={service.contact_email} />
-        <Row label={t('fieldSchedule')} value={service.schedule} />
-        <Row label={t('fieldExternalUrl')} value={service.external_url} />
-        <Row
-          label={t('fieldAvailability')}
-          value={t(SERVICE_AVAILABILITY_KEYS[service.availability])}
-        />
-        <Row label={t('columnInterests')} value={String(service.interest_count)} />
-        <Row label={tAnnouncements('columnPublication')} value={date(service.published_at)} />
-        <Row label={tAnnouncements('columnExpiry')} value={date(service.expires_at)} />
-      </View>
-      {category === undefined || category.definition.fields.length === 0 ? null : (
-        <View
-          testID="service-detail-metadata"
-          style={continuousCorners}
-          className="gap-xs rounded-md border border-neutral-200 bg-white p-md"
-        >
-          {category.definition.fields.map((field) => (
-            <Row
-              key={field.key}
-              label={fieldLabel(field, language)}
-              value={formatMetadataValue(field, service.metadata[field.key], t)}
-            />
-          ))}
-        </View>
-      )}
-      {images.map((image, index) => {
-        const source = resolveMediaImageSource({
-          objectKeyOrUrl: image.url,
-          mediaWorkerUrl: mobileClientEnv.EXPO_PUBLIC_MEDIA_WORKER_URL,
-          accessToken: session?.access_token,
-        });
-        return source === null ? null : (
-          <View
-            key={image.id}
-            testID={`service-detail-image-${index}`}
-            className="overflow-hidden rounded-md"
-            style={imageFrameStyle}
-          >
-            <Image
-              source={source}
-              accessibilityLabel={image.alt_text.ca}
-              cachePolicy="memory-disk"
-              contentFit="cover"
-              style={styles.image}
-            />
-          </View>
-        );
-      })}
+      <ServiceFacts service={service} images={images} category={category} />
     </ScrollView>
   );
 }

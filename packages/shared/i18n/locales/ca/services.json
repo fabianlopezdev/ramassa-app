@@ -245,5 +245,11 @@
   "iconGraduationCap": "Formació",
   "iconTickets": "Entrades",
   "iconFileText": "Document",
-  "iconCircle": "Cercle"
+  "iconCircle": "Cercle",
+  "reviewQueueShort": "Propostes",
+  "reviewChangedAt": "Rebuda el {{date}}",
+  "reviewLoadFailed": "No hem pogut carregar les propostes.",
+  "reviewRejectHelp": "L'entitat llegeix aquest comentari i pot corregir el servei i tornar-lo a enviar.",
+  "reviewApproveAction": "Revisa i publica",
+  "reviewDone": "Revisat"
 }

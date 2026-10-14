@@ -431,7 +431,7 @@ values
 on conflict (id) do nothing;
 
 insert into public.service_submission_notifications (
-  id, org_id, service_id, kind, created_by, created_at
+  id, org_id, service_id, kind, created_by, created_at, previous_service, current_service
 )
 values (
   '5eed0000-0000-4000-800e-000000000001',
@@ -439,7 +439,10 @@ values (
   '5eed0000-0000-4000-800a-000000000011',
   'published_edit',
   '5eed0000-0000-4000-8000-000000000004',
-  now() - interval '3 hours'
+  now() - interval '3 hours',
+  -- The trigger always records both snapshots; the review screens diff them.
+  '{"schedule": "Dimarts de 10 a 13 h", "contact_phone": "+34938850000"}'::jsonb,
+  '{"schedule": "Dimarts i dijous de 10 a 13 h", "contact_phone": "+34938850011"}'::jsonb
 )
 on conflict (id) do nothing;
 
