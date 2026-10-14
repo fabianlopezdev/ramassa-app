@@ -121,5 +121,8 @@
   "colorAccent": "تمييز",
   "colorChart1": "مخطط 1",
   "colorChart2": "مخطط 2",
-  "colorChart3": "مخطط 3"
+  "colorChart3": "مخطط 3",
+  "categoriesHelpPhone": "استخدم «تحريك لأعلى» و«تحريك لأسفل» لترتيب الفئات. يراها المشاركون بهذا الترتيب.",
+  "sessionsTitle": "الجلسات ({{count}})",
+  "recurrenceEveryWeekSummary": "كل أسبوع، {{count}} جلسات"
 }

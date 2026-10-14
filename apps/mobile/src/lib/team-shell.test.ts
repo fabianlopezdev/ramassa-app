@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import type { PermissionCode } from '@ramassa/shared/permissions';
-import { isCompactSidebar, teamAreas, teamLayout, teamStart } from './team-shell';
+import { contentKinds, isCompactSidebar, teamAreas, teamLayout, teamStart } from './team-shell';
 
 const codes = (...list: PermissionCode[]) => new Set<PermissionCode>(list);
 
@@ -33,7 +33,20 @@ describe('the content area (RAPP-340)', () => {
     expect(
       teamAreas(codes('announcements.publish', 'participants.view', 'messages.inbox')),
     ).toEqual(['participants', 'content', 'messages']);
-    expect(teamAreas(codes('events.edit'))).toEqual([]);
+  });
+
+  test('events open it too, and the area lists the content types she manages (RAPP-342)', () => {
+    expect(teamAreas(codes('events.edit'))).toEqual(['content']);
+    expect(teamAreas(codes('events.publish', 'participants.view'))).toEqual([
+      'participants',
+      'content',
+    ]);
+    expect(contentKinds(codes('announcements.edit', 'events.publish'))).toEqual([
+      'announcements',
+      'events',
+    ]);
+    expect(contentKinds(codes('events.edit'))).toEqual(['events']);
+    expect(contentKinds(codes('participants.view'))).toEqual([]);
   });
 
   test('content alone starts on content', () => {

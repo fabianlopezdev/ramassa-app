@@ -54,8 +54,8 @@ export const announcementInputSchema = z
     imageAlt: announcementImageAltSchema.nullable(),
     isPinned: z.boolean(),
     status: z.enum(ANNOUNCEMENT_STATUSES),
-    publishedAt: z.iso.datetime().nullable(),
-    expiresAt: z.iso.datetime().nullable(),
+    publishedAt: z.iso.datetime({ offset: true }).nullable(),
+    expiresAt: z.iso.datetime({ offset: true }).nullable(),
   })
   .superRefine((announcement, context) => {
     if (announcement.expiresAt !== null && announcement.publishedAt !== null) {

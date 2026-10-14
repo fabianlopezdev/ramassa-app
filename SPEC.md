@@ -1795,6 +1795,15 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - Announcements list: status chips (all, draft, published, scheduled, expired, the web admin's filter), the total, pages that load on scroll, and each row's title, category, date, status and whether it is pinned. On a phone a row opens its own screen; on a tablet it opens beside the list.
 - One announcement shows its status, category, publication and expiry, and the Catalan text. Pin and unpin are there for anyone who reads it; Delete is for `announcements.publish` holders, as the database requires, and asks first. The editor comes in RAPP-341.
 
+## Events on the phone (2026-10-14, RAPP-342, part of RAPP-214)
+
+- The Content area holds the content types a person manages (`contentKinds`): announcements with `announcements.edit` or `announcements.publish`, events with `events.edit` or `events.publish`. With more than one, chips at the top switch between their lists. The Content area opens for either type.
+- The events list has the web admin's status and category filters. Each row shows the category, the start in Madrid time, the repetition ("Every week, 6 sessions") and the places taken. On a tablet an event opens beside the list.
+- One event shows its schedule, the place with its map link, places and sign-up mode, the publication, the description, and the sessions the database made from the schedule. Delete is for `events.publish` holders and asks first.
+- The editor has the web admin's fields: category, the Catalan title and an optional description with their translation review, place and map link, the schedule (once, or weekly every 1 to 4 weeks with up to 52 sessions), places, sign-up mode, and the publication. Times are Madrid times: the date and time pickers show and set the Madrid wall clock, whatever time zone the phone is set to. Publishing needs every translation approved. The form is kept on the device from her first change (`event-draft.ts`), as the announcement editor does. Without `events.publish` the publication is read-only.
+- Event categories (for `events.edit`): the list in the order players see it, Up and Down to reorder, and New, Edit and Delete. A category is saved only with all five names approved. A category that still has events cannot be deleted.
+- The shared content schemas (announcements, events, knowledge, services, surveys) accept times with an offset (`+00:00`), as the database returns them, so an edit that keeps a stored time saves. Before, the phone could not save an edited event (the check refused its stored start). The web admin sends the stored publication time of a live item in the same form.
+
 ## Announcement editor on the phone (2026-10-13, RAPP-341, part of RAPP-214)
 
 - "New announcement" (in the list) and "Edit" (on one announcement) open the editor with the web admin's fields and rules: category, the Catalan title and text, an optional photo with its description, pinning, and the publication (draft, now, or scheduled, with an optional expiry). The photo is compressed and uploaded to the `announcements` folder when she saves.

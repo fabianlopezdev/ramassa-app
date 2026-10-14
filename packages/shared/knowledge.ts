@@ -186,12 +186,12 @@ export const knowledgeArticleInputSchema = z
     submissionLanguage: languageCodeSchema.nullable().default(null),
     storyImageUrls: z.array(z.string().trim().min(1).max(2_000)).max(MAX_STORY_IMAGES).default([]),
     publicationConsent: z.boolean().nullable().default(null),
-    publicationConsentAt: z.iso.datetime().nullable().default(null),
+    publicationConsentAt: z.iso.datetime({ offset: true }).nullable().default(null),
     publicationConsentVersion: z.string().trim().min(1).max(100).nullable().default(null),
     reviewerNote: z.string().trim().max(MAX_KNOWLEDGE_REVIEWER_NOTE_LENGTH).nullable(),
     isPublished: z.boolean(),
-    publishedAt: z.iso.datetime().nullable(),
-    expiresAt: z.iso.datetime().nullable(),
+    publishedAt: z.iso.datetime({ offset: true }).nullable(),
+    expiresAt: z.iso.datetime({ offset: true }).nullable(),
   })
   .superRefine((article, context) => {
     if (article.videoUrl !== null && normalizeVideoEmbedUrl(article.videoUrl) === null) {

@@ -87,8 +87,8 @@ export const surveyDefinitionSchema = z
       'survey titles cannot exceed 160 characters',
     ),
     eventId: z.uuid().nullable(),
-    publishedAt: z.iso.datetime(),
-    closesAt: z.iso.datetime().nullable(),
+    publishedAt: z.iso.datetime({ offset: true }),
+    closesAt: z.iso.datetime({ offset: true }).nullable(),
     audience: notificationAudienceSchema,
     questions: z.array(surveyQuestionSchema).min(1).max(30),
   })

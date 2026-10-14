@@ -18,7 +18,7 @@
 import type { PermissionCode } from '@ramassa/shared/permissions';
 import { PERMISSION_CATALOG } from '@ramassa/shared/permissions';
 import type { AppRole } from '@ramassa/shared/schemas';
-import { teamAreas, teamLayout, teamStart } from './team-shell';
+import { contentKinds, teamAreas, teamLayout, teamStart } from './team-shell';
 
 export type AccountArea = 'player' | 'team' | 'entity' | 'onboarding' | 'resolving' | 'unresolved';
 
@@ -100,6 +100,9 @@ export function teamScreens(permissions: ReadonlySet<PermissionCode>): {
   readonly attendance: boolean;
   readonly participants: boolean;
   readonly content: boolean;
+  readonly announcements: boolean;
+  readonly events: boolean;
+  readonly eventCategories: boolean;
   readonly messages: boolean;
   readonly stock: boolean;
   readonly arrivals: boolean;
@@ -111,6 +114,9 @@ export function teamScreens(permissions: ReadonlySet<PermissionCode>): {
     attendance: permissions.has('attendance.mark') || permissions.has('attendance.reports'),
     participants: permissions.has('participants.view'),
     content: teamAreas(permissions).includes('content'),
+    announcements: contentKinds(permissions).includes('announcements'),
+    events: contentKinds(permissions).includes('events'),
+    eventCategories: permissions.has('events.edit'),
     messages: permissions.has('messages.inbox'),
     stock: teamAreas(permissions).includes('stock'),
     arrivals: permissions.has('equipment.receive'),

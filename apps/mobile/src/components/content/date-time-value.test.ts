@@ -3,6 +3,8 @@ import {
   combineDateAndTime,
   defaultPickerDate,
   fromLocalInputValue,
+  fromMadridWallClock,
+  madridWallClock,
   toLocalInputValue,
 } from './date-time-value';
 
@@ -25,5 +27,20 @@ describe('the date-and-time field', () => {
     expect(fromLocalInputValue(toLocalInputValue(iso))).toBe(iso);
     expect(toLocalInputValue(null)).toBe('');
     expect(fromLocalInputValue('')).toBeNull();
+  });
+
+  test('an event time is the Madrid wall clock in the picker and back', () => {
+    // 16:30 UTC on 14 October 2026 is 18:30 in Madrid (summer time).
+    const shown = madridWallClock('2026-10-14T16:30:00.000Z');
+    expect([shown.getDate(), shown.getHours(), shown.getMinutes()]).toEqual([14, 18, 30]);
+    expect(fromMadridWallClock(shown)).toBe('2026-10-14T16:30:00.000Z');
+    // In winter Madrid is one hour ahead of UTC.
+    expect(fromMadridWallClock(new Date(2026, 11, 1, 10, 0))).toBe('2026-12-01T09:00:00.000Z');
+  });
+
+  test('the web input reads and writes Madrid time for events', () => {
+    expect(toLocalInputValue('2026-10-14T16:30:00.000Z', true)).toBe('2026-10-14T18:30');
+    expect(fromLocalInputValue('2026-10-14T18:30', true)).toBe('2026-10-14T16:30:00.000Z');
+    expect(fromLocalInputValue('', true)).toBeNull();
   });
 });

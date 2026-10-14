@@ -121,5 +121,8 @@
   "colorAccent": "تاکیدی",
   "colorChart1": "نمودار 1",
   "colorChart2": "نمودار 2",
-  "colorChart3": "نمودار 3"
+  "colorChart3": "نمودار 3",
+  "categoriesHelpPhone": "با «حرکت به بالا» و «حرکت به پایین» ترتیب دسته‌ها را تعیین کنید. شرکت‌کنندگان آن‌ها را به همین ترتیب می‌بینند.",
+  "sessionsTitle": "جلسه‌ها ({{count}})",
+  "recurrenceEveryWeekSummary": "هر هفته، {{count}} جلسه"
 }

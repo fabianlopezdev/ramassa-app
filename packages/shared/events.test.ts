@@ -111,6 +111,17 @@ describe('event validation', () => {
     expect(eventInputSchema.parse(validEvent)).toEqual(validEvent);
   });
 
+  test('accepts stored times as the database returns them, with an offset', () => {
+    expect(
+      eventInputSchema.safeParse({
+        ...validEvent,
+        startsAt: '2026-03-23T16:30:00+00:00',
+        endsAt: '2026-03-23T18:00:00+00:00',
+        publishedAt: '2026-03-01T08:00:00.183+00:00',
+      }).success,
+    ).toBe(true);
+  });
+
   test('rejects non-https and javascript map links', () => {
     for (const locationUrl of [
       'http://maps.google.com/?q=Vic',

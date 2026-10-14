@@ -18,7 +18,14 @@ const inputStyle: CSSProperties = {
   padding: '0 12px',
 };
 
-export function DateTimeField({ testID, label, value, onChange, emptyLabel }: DateTimeFieldProps) {
+export function DateTimeField({
+  testID,
+  label,
+  value,
+  onChange,
+  emptyLabel,
+  inMadridTime = false,
+}: DateTimeFieldProps) {
   const { t } = useTranslation('announcements');
   return (
     <div dir="auto" style={{ display: 'grid', gap: 8 }}>
@@ -28,8 +35,10 @@ export function DateTimeField({ testID, label, value, onChange, emptyLabel }: Da
           id={testID}
           data-testid={testID}
           type="datetime-local"
-          value={toLocalInputValue(value)}
-          onChange={(event) => onChange(fromLocalInputValue(event.currentTarget.value))}
+          value={toLocalInputValue(value, inMadridTime)}
+          onChange={(event) =>
+            onChange(fromLocalInputValue(event.currentTarget.value, inMadridTime))
+          }
           style={inputStyle}
         />
       </label>

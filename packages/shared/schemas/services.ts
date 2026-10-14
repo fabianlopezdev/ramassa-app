@@ -27,8 +27,8 @@ export const serviceInputSchema = z
     availability: z.enum(SERVICE_AVAILABILITIES),
     metadata: z.record(z.string(), z.unknown()),
     status: z.enum(SERVICE_SUBMISSION_STATUSES),
-    publishedAt: z.iso.datetime().nullable(),
-    expiresAt: z.iso.datetime().nullable(),
+    publishedAt: z.iso.datetime({ offset: true }).nullable(),
+    expiresAt: z.iso.datetime({ offset: true }).nullable(),
   })
   .superRefine((service, context) => {
     const metadataResult = getServiceCategoryContract(
