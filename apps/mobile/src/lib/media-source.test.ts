@@ -60,4 +60,14 @@ describe('resolveMediaImageSource', () => {
       }),
     ).toBeNull();
   });
+
+  test('shows a photo still on the device, with no app credentials (RAPP-373)', () => {
+    expect(
+      resolveMediaImageSource({
+        objectKeyOrUrl: 'file:///var/mobile/photo.jpg',
+        mediaWorkerUrl: 'https://media.example.test',
+        accessToken: 'private-access-token',
+      }),
+    ).toEqual({ uri: 'file:///var/mobile/photo.jpg' });
+  });
 });

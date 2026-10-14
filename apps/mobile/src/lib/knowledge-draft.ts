@@ -309,6 +309,33 @@ function publicationTime(
  * in every language. Throws VALIDATION-1 when a story would publish outside
  * review.
  */
+/**
+ * The unsaved body in every language, approved or not, as a player screen
+ * reads a stored one, for the draft preview (RAPP-373). A step photo not
+ * uploaded yet shows from the device. A language whose blocks hold no text is
+ * left out, so the preview shows the fallback a player would get.
+ */
+export function draftKnowledgeBody(
+  form: KnowledgeDraft,
+  devicePhotoUris: Readonly<Record<number, string>>,
+): LocalizedKnowledgeBody {
+  return Object.fromEntries(
+    Object.entries(form.body).flatMap(([language, blocks]) => {
+      const stored = (blocks ?? []).map((block, index) => {
+        const next = toStoredBlock(block);
+        const photo = devicePhotoUris[index];
+        return next.type === 'step' && photo !== undefined ? { ...next, imageUrl: photo } : next;
+      });
+      const hasText = stored.some((block) =>
+        block.type === 'paragraph'
+          ? block.text.length > 0
+          : block.title.length > 0 || block.text.length > 0,
+      );
+      return hasText ? [[language, stored]] : [];
+    }),
+  ) as LocalizedKnowledgeBody;
+}
+
 export function toKnowledgeInput(
   form: KnowledgeDraft,
   titleReview: TranslationReview | undefined,

@@ -7,6 +7,7 @@ import { createTranslationReview, type TranslationReview } from '@ramassa/shared
 import {
   areKnowledgeTranslationsApproved,
   completeSourceBlocks,
+  draftKnowledgeBody,
   emptyBlock,
   generatedBody,
   moveBlock,
@@ -234,5 +235,46 @@ describe('the knowledge form (RAPP-343)', () => {
       JSON.stringify({ ...translatedForm(), mode: 'x' }),
     );
     expect(readKnowledgeDraft(storage, 'u1', 'new')).toBeNull();
+  });
+});
+
+describe('draftKnowledgeBody (RAPP-373)', () => {
+  test('every language with text, approved or not, with device photos in their steps', () => {
+    const form = {
+      ...startingKnowledgeDraft(undefined, 'category'),
+      body: {
+        ca: [
+          { type: 'paragraph' as const, text: ' Hola ' },
+          { type: 'step' as const, title: 'Pas', text: 'Fes-ho', imageUrl: null, imageAlt: '' },
+        ],
+        es: [
+          { type: 'paragraph' as const, text: 'Hola' },
+          { type: 'step' as const, title: 'Paso', text: 'Hazlo', imageUrl: null, imageAlt: '' },
+        ],
+        ar: [{ type: 'paragraph' as const, text: '  ' }],
+      },
+    };
+    expect(draftKnowledgeBody(form, { 1: 'file:///photo.jpg' })).toEqual({
+      ca: [
+        { type: 'paragraph', text: 'Hola' },
+        {
+          type: 'step',
+          title: 'Pas',
+          text: 'Fes-ho',
+          imageUrl: 'file:///photo.jpg',
+          imageAlt: null,
+        },
+      ],
+      es: [
+        { type: 'paragraph', text: 'Hola' },
+        {
+          type: 'step',
+          title: 'Paso',
+          text: 'Hazlo',
+          imageUrl: 'file:///photo.jpg',
+          imageAlt: null,
+        },
+      ],
+    });
   });
 });

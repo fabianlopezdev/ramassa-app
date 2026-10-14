@@ -86,3 +86,48 @@ test('a new event is previewed with its place, places and sign-up, in Spanish', 
     queryDatabase(`select count(*) from public.events where title ->> 'ca' = '${title}';`).trim(),
   ).toBe('0');
 });
+
+test('a new guide is previewed block by block, in Farsi right to left', async ({ page }) => {
+  const title = `Guia ${Date.now().toString(36)}`;
+  await signInPlayer(page, STAFF_EMAIL);
+  await completeSecondFactor(page, STAFF_EMAIL);
+  await page.getByTestId('team-sidebar-content').click({ timeout: 30_000 });
+  await page.getByTestId('content-kind-knowledge').click({ timeout: 30_000 });
+  await page.getByTestId('content-knowledge-new').click({ timeout: 30_000 });
+  await page.getByTestId('knowledge-type-tutorial').click();
+  await page.getByTestId('knowledge-title-source').fill(title);
+  await page.getByTestId('knowledge-block-0-edit').click();
+  await page.getByTestId('knowledge-block-text').fill('Introducció a la guia.');
+  await page.getByTestId('knowledge-block-done').click();
+  await page.getByTestId('knowledge-add-step').click();
+  await page.getByTestId('knowledge-block-title').fill('Prepara els documents');
+  await page.getByTestId('knowledge-block-text').fill('Porta el passaport.');
+  await page.getByTestId('knowledge-block-done').click();
+
+  // Before the translations, Farsi has no text of its own.
+  await page.getByTestId('knowledge-preview').click();
+  const sheet = page.getByTestId('draft-preview-sheet');
+  await expect(sheet.getByRole('heading', { name: title })).toBeVisible({ timeout: 30_000 });
+  await expect(sheet.getByText('Prepara els documents')).toBeVisible();
+  await page.getByTestId('draft-preview-language-fa').click();
+  await expect(page.getByTestId('draft-preview-missing')).toBeVisible();
+  await page.getByTestId('draft-preview-close').click();
+
+  await page.getByTestId('knowledge-generate').click();
+  await expect(page.getByTestId('knowledge-title-draft-es')).toHaveValue(`[es] ${title}`, {
+    timeout: 30_000,
+  });
+  await page.getByTestId('knowledge-preview').click();
+  await page.getByTestId('draft-preview-language-fa').click();
+  const farsi = page.getByTestId('draft-preview-content-fa');
+  await expect(farsi.getByRole('heading', { name: `[fa] ${title}` })).toBeVisible();
+  await expect(farsi.getByText('[fa] Prepara els documents')).toBeVisible();
+  await expect(farsi).toHaveCSS('direction', 'rtl');
+  await expect(page.getByTestId('draft-preview-missing')).toHaveCount(0);
+  await page.getByTestId('draft-preview-close').click();
+  expect(
+    queryDatabase(
+      `select count(*) from public.knowledge_articles where title ->> 'ca' = '${title}';`,
+    ).trim(),
+  ).toBe('0');
+});
