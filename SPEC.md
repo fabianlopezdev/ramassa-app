@@ -1795,6 +1795,14 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - Announcements list: status chips (all, draft, published, scheduled, expired, the web admin's filter), the total, pages that load on scroll, and each row's title, category, date, status and whether it is pinned. On a phone a row opens its own screen; on a tablet it opens beside the list.
 - One announcement shows its status, category, publication and expiry, and the Catalan text. Pin and unpin are there for anyone who reads it; Delete is for `announcements.publish` holders, as the database requires, and asks first. The editor comes in RAPP-341.
 
+## Preview player account (2026-10-14, RAPP-370, part of RAPP-214)
+
+- Each organization has one preview player account (`profiles.role = 'preview'`) with no personal data: a fixed name, no document, no contact details. It is created the first time a team member starts a preview. Decision and reasons: ADR-027.
+- `start_player_preview()` accepts only a team member with a verified second factor and a current session. It is rate-limited (60 an hour per person) and audited (`player_preview.start`). It gives the preview account a new random password and returns the address and password once; the app signs in with them on a second client, so the team member's own session is untouched. The password is stored only as its hash, and each start replaces it.
+- The database treats the preview as a player (`current_app_role()`), so it reads exactly what a player reads. Staff lists, counts, exports and push audiences select players only, so the preview account never shows in them.
+- Every request of the preview account is read-only in the database (PostgREST's pre-request hook), so it changes nothing: no sign-up, post, message, read receipt or upload. The media worker refuses its uploads.
+- Checks: pgTAP `0063`, and `bun run db:test:player-preview` end to end against the local stack.
+
 ## Service categories on the phone (2026-10-14, RAPP-347, part of RAPP-214)
 
 - "Manage categories" in the services list opens the categories for `services.edit` holders: in the order players see them, with how many own fields each has, Move up and Move down, and New, Edit and Delete. A category that still has services cannot be deleted; the database refuses it.

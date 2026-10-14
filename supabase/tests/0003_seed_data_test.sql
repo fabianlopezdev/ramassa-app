@@ -119,15 +119,20 @@ select is_empty(
 select is_empty(
   $$ select u.id from auth.users u
      join public.profiles p on p.id = u.id
-     where u.encrypted_password is distinct from
+     where (u.encrypted_password is distinct from
            extensions.crypt('ramassa-dev-password', u.encrypted_password)
-        or u.email_confirmed_at is null $$,
+        or u.email_confirmed_at is null)
+       and p.role <> 'preview' $$,
   'every seeded account has its expected development credential and a confirmed email'
 );
 
 -- `@example.test` is the fixture domain (RFC 2606): it can never reach a real inbox.
+-- The preview player account is made at run time, not seeded (RAPP-370), and its
+-- address is under `.invalid`, also reserved.
 select is_empty(
-  $$ select id from auth.users where email not like '%@example.test' $$,
+  $$ select u.id from auth.users u
+     where u.email not like '%@example.test'
+       and not exists (select 1 from public.profiles p where p.id = u.id and p.role = 'preview') $$,
   'no seeded account uses an address outside the reserved fixture domain'
 );
 

@@ -5378,6 +5378,7 @@ export type Database = {
         Args: { p_profile_id: string };
         Returns: undefined;
       };
+      start_player_preview: { Args: never; Returns: string };
       stock_levels: {
         Args: never;
         Returns: {

@@ -33,6 +33,10 @@ describe('resolveAccountArea', () => {
     expect(resolveAccountArea({ role: 'entity', needsOnboarding: false, remembered: null })).toBe(
       'entity',
     );
+    // The preview account sees the player app (RAPP-370).
+    expect(resolveAccountArea({ role: 'preview', needsOnboarding: false, remembered: null })).toBe(
+      'player',
+    );
   });
 
   test('an entity contact never resolves to the player tabs', () => {
