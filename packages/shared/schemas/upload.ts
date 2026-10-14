@@ -75,14 +75,17 @@ export const TEAM_FOLDER_PERMISSIONS: Readonly<
 
 /**
  * Whether this caller may write to this folder. Participant folders are open to
- * every signed-in role; a team folder needs one of its permissions, which the
- * database returns only for a session verified with the second factor.
+ * every signed-in role except the preview account; a team folder needs one of
+ * its permissions, which the database returns only for a session verified with
+ * the second factor.
  */
 export function isFolderWritableBy(
   folder: UploadFolder,
   role: AppRole,
   permissions: ReadonlySet<string>,
 ): boolean {
+  // The preview account changes nothing, uploads included (RAPP-370).
+  if (role === 'preview') return false;
   if (!(STAFF_ONLY_UPLOAD_FOLDERS as readonly UploadFolder[]).includes(folder)) return true;
   if (role !== 'staff' && role !== 'admin') return false;
   const needed = TEAM_FOLDER_PERMISSIONS[folder as (typeof STAFF_ONLY_UPLOAD_FOLDERS)[number]];

@@ -76,3 +76,4 @@ At every checkpoint commit (Checkpoints A, B, C, D in the Phase 1 plan, and equi
 | 024 | [Private R2 delivery through the media Worker](024-private-r2-delivery-through-media-worker.md)        | Accepted          | 2026-08-05 |
 | 025 | [Stable collaborating entity membership](025-stable-collaborating-entity-membership.md)                | Accepted          | 2026-08-14 |
 | 026 | [Native management in the mobile app](026-native-management-in-the-mobile-app.md)                      | Accepted          | 2026-10-08 |
+| 027 | [A preview player account per organization](027-preview-player-account.md)                             | Accepted          | 2026-10-14 |
