@@ -1795,6 +1795,14 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - Announcements list: status chips (all, draft, published, scheduled, expired, the web admin's filter), the total, pages that load on scroll, and each row's title, category, date, status and whether it is pinned. On a phone a row opens its own screen; on a tablet it opens beside the list.
 - One announcement shows its status, category, publication and expiry, and the Catalan text. Pin and unpin are there for anyone who reads it; Delete is for `announcements.publish` holders, as the database requires, and asks first. The editor comes in RAPP-341.
 
+## Preview as player from the web admin (2026-10-14, RAPP-372, part of RAPP-214)
+
+- Every team member has "Preview as player" in the admin sidebar (the whole player app) and on each published announcement, event, knowledge resource and service (the player app open on that item). An item players cannot see yet says that players see it once it is published.
+- It opens the player web app (the same Expo build, ADR-008) at `/preview-handoff` in a new tab, inside the click so the browser allows it. The admin then starts the preview with her own session (`start_player_preview()`, as on the phone) and, once the tab says it is ready, sends the address and password with `postMessage` to the player origin only. The tab accepts them only from the admin origin and only from the window that opened it, signs in on the preview client, and opens the item. Her admin session is untouched.
+- Leaving the preview closes the tab. A hand-off page opened on its own starts nothing.
+- Configuration: `EXPO_PUBLIC_PLAYER_WEB_URL` in the admin build and `EXPO_PUBLIC_ADMIN_WEB_URL` in the player web build. Without them the admin shows no preview button. Both are in `.env.example`.
+- Checks: `admin-player-preview.web-qa.ts`, unit tests for the hand-off message (an app path only, never another site) and the tab-closing state.
+
 ## Preview a draft as a player (2026-10-14, RAPP-373, part of RAPP-214)
 
 - Needed for launch (Fabián, 2026-10-14): staff see a draft as players will see it, in each language, before it is published, so a mistake never reaches players.

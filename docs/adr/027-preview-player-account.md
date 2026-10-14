@@ -7,6 +7,11 @@
 > Postgres, and no service-role key exists) and [ADR-026](026-native-management-in-the-mobile-app.md)
 > ("Preview as player" for every team member).
 
+> [!note] Amended 2026-10-14 (RAPP-372): the web admin opens the preview in the player web app.
+> The admin starts the preview with the person's own session and hands the address and password to
+> a new tab of the player web app with `postMessage`, between the two configured origins only
+> (`EXPO_PUBLIC_PLAYER_WEB_URL`, `EXPO_PUBLIC_ADMIN_WEB_URL`). Leaving closes the tab.
+
 ## Context
 
 A team member must be able to see, at any moment, what players see in the app, to confirm that a

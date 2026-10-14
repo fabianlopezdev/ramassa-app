@@ -32,5 +32,6 @@
   "previewStartFailed": "No hem pogut obrir la vista de jugadora.",
   "previewNotPublished": "Les jugadores la veuran quan estigui publicada.",
   "previewDraftTitle": "Esborrany com el veuran les jugadores. Encara no el veu ningú.",
-  "previewDraftMissing": "Falta el text en aquest idioma. Les jugadores el veuran en un altre idioma."
+  "previewDraftMissing": "Falta el text en aquest idioma. Les jugadores el veuran en un altre idioma.",
+  "previewOpening": "Obrint la vista de jugadora."
 }

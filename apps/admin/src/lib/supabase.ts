@@ -20,6 +20,8 @@ export const adminClientEnv = parseClientEnv({
   EXPO_PUBLIC_SENTRY_DSN: import.meta.env.VITE_SENTRY_DSN,
   EXPO_PUBLIC_MEDIA_WORKER_URL: import.meta.env.EXPO_PUBLIC_MEDIA_WORKER_URL,
   EXPO_PUBLIC_TRANSLATION_WORKER_URL: import.meta.env.EXPO_PUBLIC_TRANSLATION_WORKER_URL,
+  // Where "Preview as player" opens the player web app (RAPP-372).
+  EXPO_PUBLIC_PLAYER_WEB_URL: import.meta.env.EXPO_PUBLIC_PLAYER_WEB_URL,
 });
 
 export const supabase = createSupabaseClient({

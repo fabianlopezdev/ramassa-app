@@ -1,9 +1,14 @@
+import { PreviewAsPlayer } from '@/components/content/preview-as-player';
 import { ServiceEditor } from '@/components/content/service-editor';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabase';
 import { createFileRoute, Link, useNavigate, useRouter } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
-import { fetchAdminService, fetchServiceCategories } from '@ramassa/shared/services';
+import {
+  fetchAdminService,
+  fetchServiceCategories,
+  getServiceLifecycle,
+} from '@ramassa/shared/services';
 
 export const Route = createFileRoute('/_staff/content/services/$serviceId')({
   ssr: false,
@@ -24,9 +29,21 @@ function EditServicePage() {
   const router = useRouter();
   return (
     <section>
-      <Button asChild variant="link" className="m-4 mb-0">
-        <Link to="/content/services">{t('backToList')}</Link>
-      </Button>
+      <div className="m-4 mb-0 flex flex-wrap items-center justify-between gap-2">
+        <Button asChild variant="link">
+          <Link to="/content/services">{t('backToList')}</Link>
+        </Button>
+        <PreviewAsPlayer
+          target={`/service/${detail.service.id}`}
+          isVisibleToPlayers={
+            getServiceLifecycle({
+              status: detail.service.status,
+              publishedAt: detail.service.published_at,
+              expiresAt: detail.service.expires_at,
+            }) === 'published'
+          }
+        />
+      </div>
       <ServiceEditor
         detail={detail}
         categories={categories}

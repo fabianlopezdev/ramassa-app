@@ -31,5 +31,6 @@
   "previewStartFailed": "تعذّر فتح عرض اللاعبة.",
   "previewNotPublished": "ستراه اللاعبات بعد نشره.",
   "previewDraftTitle": "المسودة كما ستراها اللاعبات. لا أحد يراها بعد.",
-  "previewDraftMissing": "لا يوجد نص بهذه اللغة بعد. ستراه اللاعبات بلغة أخرى."
+  "previewDraftMissing": "لا يوجد نص بهذه اللغة بعد. ستراه اللاعبات بلغة أخرى.",
+  "previewOpening": "جارٍ فتح عرض اللاعبة."
 }
