@@ -107,6 +107,7 @@ export function teamScreens(permissions: ReadonlySet<PermissionCode>): {
   readonly services: boolean;
   readonly serviceCategories: boolean;
   readonly serviceReviews: boolean;
+  readonly forumModeration: boolean;
   readonly messages: boolean;
   readonly stock: boolean;
   readonly arrivals: boolean;
@@ -125,6 +126,7 @@ export function teamScreens(permissions: ReadonlySet<PermissionCode>): {
     services: contentKinds(permissions).includes('services'),
     serviceCategories: permissions.has('services.edit'),
     serviceReviews: permissions.has('services.review'),
+    forumModeration: permissions.has('forum.moderate'),
     messages: permissions.has('messages.inbox'),
     stock: teamAreas(permissions).includes('stock'),
     arrivals: permissions.has('equipment.receive'),

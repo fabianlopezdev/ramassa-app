@@ -25,3 +25,9 @@ test('waiting service reviews show for whoever reviews them (RAPP-345)', () => {
   ).toEqual(['reviews', 'messages']);
   expect(todaySections(['content'], new Set<PermissionCode>(['services.edit']))).toEqual([]);
 });
+
+test('open forum reports show for whoever moderates the forum (RAPP-380)', () => {
+  expect(todaySections([], new Set<PermissionCode>(['forum.moderate', 'services.review']))).toEqual(
+    ['reviews', 'forum'],
+  );
+});
