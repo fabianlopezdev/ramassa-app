@@ -204,5 +204,8 @@
     "tie": "TIE",
     "health_card": "Tarjeta sanitaria",
     "social_services": "Servicios sociales"
-  }
+  },
+  "valueYes": "Sí",
+  "valueNo": "No",
+  "loadFailed": "No hemos podido cargar los servicios."
 }

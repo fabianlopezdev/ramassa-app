@@ -204,5 +204,8 @@
     "tie": "TIE",
     "health_card": "Health card",
     "social_services": "Social services"
-  }
+  },
+  "valueYes": "Yes",
+  "valueNo": "No",
+  "loadFailed": "The services could not be loaded."
 }

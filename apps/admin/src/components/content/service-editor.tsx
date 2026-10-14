@@ -13,7 +13,9 @@ import { uploadContentTypeSchema } from '@ramassa/shared/schemas';
 import {
   approveEntityService,
   createAdminServiceInputSchema,
+  normalizedServiceMetadata,
   saveAdminService,
+  serviceMetadataDefaults,
   type AdminServiceCategory,
   type AdminServiceDetail,
 } from '@ramassa/shared/services';
@@ -30,12 +32,7 @@ import { approveAll, reviewOptions } from './announcement-editor';
 import { ImageUploadField, type ImageUploadState } from './image-upload-field';
 import { MultilingualEditor } from './multilingual-editor';
 import { ScheduledPublishFields, type PublishMode } from './scheduled-publish-fields';
-import {
-  normalizedServiceMetadata,
-  serviceMetadataDefaults,
-  ServiceSubmissionFields,
-  type ServiceFormValues,
-} from './service-submission-fields';
+import { ServiceSubmissionFields, type ServiceFormValues } from './service-submission-fields';
 import { TranslationReviewPanel } from './translation-review-panel';
 
 interface ServiceImageDraft {

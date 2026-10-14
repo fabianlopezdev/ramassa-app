@@ -1,6 +1,4 @@
 import {
-  normalizedServiceMetadata,
-  serviceMetadataDefaults,
   ServiceSubmissionFields,
   type ServiceFormValues,
 } from '@/components/content/service-submission-fields';
@@ -14,7 +12,11 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import type { AppErrorCode } from '@ramassa/shared/errors';
 import type { SupportedLanguage } from '@ramassa/shared/i18n';
-import type { AdminServiceCategory } from '@ramassa/shared/services';
+import {
+  normalizedServiceMetadata,
+  serviceMetadataDefaults,
+  type AdminServiceCategory,
+} from '@ramassa/shared/services';
 import {
   createEntityServiceInputSchema,
   saveEntityService,

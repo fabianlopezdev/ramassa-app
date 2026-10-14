@@ -575,3 +575,33 @@ export function createAdminServiceInputSchema(category: AdminServiceCategory) {
     }
   });
 }
+
+/** A form's starting extra-field values: stored ones, else empty per field type. */
+export function serviceMetadataDefaults(
+  category: AdminServiceCategory,
+  existing: Readonly<Record<string, unknown>> = {},
+): Record<string, unknown> {
+  return Object.fromEntries(
+    category.definition.fields.map((field) => [
+      field.key,
+      existing[field.key] ??
+        (field.type === 'boolean' ? false : field.type === 'string-array' ? [] : ''),
+    ]),
+  );
+}
+
+/** The extra-field values to store: the category's fields only, empty ones left out. */
+export function normalizedServiceMetadata(
+  category: AdminServiceCategory,
+  values: Readonly<Record<string, unknown>>,
+): Record<string, unknown> {
+  return Object.fromEntries(
+    category.definition.fields.flatMap((field) => {
+      const value = values[field.key];
+      if (value === '' || value === undefined || (Array.isArray(value) && value.length === 0)) {
+        return [];
+      }
+      return [[field.key, value]];
+    }),
+  );
+}
