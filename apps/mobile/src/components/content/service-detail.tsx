@@ -13,6 +13,7 @@ import {
 } from '@/components/announcements/feed-states';
 import { FailureNotice } from '@/components/error-code-line';
 import { PressableScale } from '@/components/motion/pressable-scale';
+import { PreviewItemAsPlayer } from '@/components/preview/preview-as-player';
 import {
   useContentService,
   useContentServiceCategories,
@@ -301,6 +302,10 @@ export function ServiceDetail({
           </PressableScale>
         ) : null}
       </View>
+      <PreviewItemAsPlayer
+        target={`/service/${service.id}`}
+        isVisibleToPlayers={lifecycle === 'published'}
+      />
       {remove.isError ? (
         <FailureNotice
           code={toAppError(remove.error).code}

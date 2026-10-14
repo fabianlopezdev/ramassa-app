@@ -11,8 +11,9 @@ import {
 } from '@ramassa/shared/auth';
 import type { AppError, Result } from '@ramassa/shared/errors';
 import { logger, safeAsync } from './observability';
+import { leavePreview } from './player-preview';
 import { removePushToken } from './push-notifications';
-import { supabase } from './supabase';
+import { previewMode, supabase } from './supabase';
 
 /** Reports a role-lookup failure from the AuthProvider to the wired logger/Sentry. */
 export function reportAuthError(error: AppError): void {
@@ -38,6 +39,12 @@ export function loginWithPassword(
 
 export function logout(): Promise<Result<void, AppError>> {
   return safeAsync(async () => {
+    // In the player preview, signing out leaves the preview; her own session
+    // and her device's push token stay (RAPP-371).
+    if (previewMode.isActive()) {
+      await leavePreview();
+      return;
+    }
     // Withdraw this device's push token BEFORE the session ends (RAPP-17). The
     // delete is RLS-scoped to auth.uid(), so it is impossible once signed out,
     // and skipping it would leave the next person to sign in on this device

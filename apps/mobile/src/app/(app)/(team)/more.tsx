@@ -1,11 +1,13 @@
 /**
  * More (RAPP-245): what is not an area of its own. Settings (language and app
- * lock) and sign-out, and Stock for whoever receives, counts or edits
- * material (RAPP-250); later phases add the dashboard, the team and the rest.
+ * lock) and sign-out, Stock for whoever receives, counts or edits material
+ * (RAPP-250), and the player preview (RAPP-371); later phases add the
+ * dashboard, the team and the rest.
  *
  */
 import { PageWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
+import { PreviewStartFailed, useStartPreview } from '@/components/preview/preview-as-player';
 import { TeamBackToHome } from '@/components/team/team-back-to-home';
 import { logout } from '@/lib/auth';
 import { continuousCorners } from '@/lib/continuous-corners';
@@ -22,6 +24,8 @@ export default function TeamMoreScreen() {
   const { t: tAuth } = useTranslation('auth');
   const { t: tProfile } = useTranslation('profile');
   const { t: tParticipants } = useTranslation('participants');
+  const { t: tCommon } = useTranslation('common');
+  const preview = useStartPreview();
   const hasStock = teamAreas(useAccountAccess().permissions).includes('stock');
   const languageFontClass = useLanguageFontClass();
   const { push } = useRouter();
@@ -56,6 +60,22 @@ export default function TeamMoreScreen() {
               </Text>
             </PressableScale>
           ) : null}
+          {/* Every team member, with no permission needed (ADR-026, RAPP-371). */}
+          <PressableScale
+            testID="team-more-preview"
+            accessibilityRole="button"
+            accessibilityLabel={tCommon('previewAsPlayer')}
+            onPress={() => void preview.start(null)}
+            isBusy={preview.isStarting}
+            haptic="selection"
+            style={continuousCorners}
+            className="min-h-recommended justify-center rounded-md border border-neutral-200 bg-white px-md"
+          >
+            <Text className={`text-start text-md text-neutral-900 ${languageFontClass}`}>
+              {tCommon('previewAsPlayer')}
+            </Text>
+          </PressableScale>
+          <PreviewStartFailed isShown={preview.hasFailed} />
           <PressableScale
             testID="team-more-settings"
             accessibilityRole="button"

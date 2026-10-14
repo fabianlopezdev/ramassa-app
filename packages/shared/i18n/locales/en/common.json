@@ -23,5 +23,11 @@
     "pageOf": "Page {{page}} of {{pages}}"
   },
   "loading": "Loading...",
-  "interfaceLanguageLabel": "Language"
+  "interfaceLanguageLabel": "Language",
+  "previewAsPlayer": "Preview as player",
+  "previewBarTitle": "Player view. No change is saved.",
+  "previewExit": "Leave the preview",
+  "previewLanguage": "Preview language",
+  "previewStartFailed": "We could not open the player view.",
+  "previewNotPublished": "Players see it once it is published."
 }

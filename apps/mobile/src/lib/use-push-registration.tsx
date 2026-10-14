@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '@ramassa/shared/auth';
+import { usePreviewModeActive } from './preview-mode';
 import {
   registerPushToken,
   requestPushPermission,
   resolvePushRegistrationDecision,
 } from './push-notifications';
+import { previewMode } from './supabase';
 
 /**
  * Drives push-token registration for the signed-in user (RAPP-17).
@@ -27,8 +29,11 @@ export function usePushRegistration(): {
   const { session, user } = useAuth();
   const [shouldShowRationale, setShouldShowRationale] = useState(false);
   const userId = user?.id ?? null;
+  // The player preview has no device of its own and changes nothing (RAPP-371).
+  const isPreview = usePreviewModeActive(previewMode);
 
   useEffect(() => {
+    if (isPreview) return undefined;
     let cancelled = false;
 
     void (async () => {
@@ -47,7 +52,7 @@ export function usePushRegistration(): {
     return () => {
       cancelled = true;
     };
-  }, [session, userId]);
+  }, [isPreview, session, userId]);
 
   const acceptRationale = useCallback(() => {
     setShouldShowRationale(false);

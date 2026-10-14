@@ -15,6 +15,7 @@ import {
 import { FailureNotice } from '@/components/error-code-line';
 import { PlayerStructuredContent } from '@/components/knowledge/player-structured-content';
 import { PressableScale } from '@/components/motion/pressable-scale';
+import { PreviewItemAsPlayer } from '@/components/preview/preview-as-player';
 import { useContentKnowledgeArticle, useKnowledgeActions } from '@/lib/content-knowledge';
 import { composeContinuousViewStyle, continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
@@ -27,6 +28,7 @@ import { useRouter, type Href } from 'expo-router';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { isContentVisible } from '@ramassa/shared/announcements';
 import { useAuth } from '@ramassa/shared/auth';
 import { getErrorMessageKey, toAppError } from '@ramassa/shared/errors';
 import { DEFAULT_LANGUAGE, LANGUAGE_NATIVE_NAMES } from '@ramassa/shared/i18n';
@@ -200,6 +202,14 @@ export function KnowledgeDetail({
           </PressableScale>
         ) : null}
       </View>
+      <PreviewItemAsPlayer
+        target={`/knowledge/${data.id}`}
+        isVisibleToPlayers={isContentVisible({
+          status: data.is_published ? 'published' : 'draft',
+          publishedAt: data.published_at,
+          expiresAt: data.expires_at,
+        })}
+      />
       {failure === null ? null : (
         <FailureNotice
           code={toAppError(failure).code}

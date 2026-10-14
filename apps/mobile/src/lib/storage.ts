@@ -44,6 +44,17 @@ export const authStorage = createProtectedStorage({
   randomBytes,
 }).storage as MMKV;
 
+// The preview player session (RAPP-371), apart from her own session so that
+// leaving the preview leaves hers as it was. Kept on the device, because a
+// right-to-left preview language restarts the app.
+export const previewAuthStorage = createProtectedStorage({
+  id: 'ramassa.preview-auth.v1',
+  keyName: 'ramassa.preview-auth.key.v1',
+  vault: keyVault,
+  factory: protectedStorageFactory,
+  randomBytes,
+}).storage as MMKV;
+
 export const privateStorage = createProtectedStorage({
   id: 'ramassa.private.v1',
   keyName: 'ramassa.private.key.v1',

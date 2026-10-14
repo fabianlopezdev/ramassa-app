@@ -1795,6 +1795,14 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - Announcements list: status chips (all, draft, published, scheduled, expired, the web admin's filter), the total, pages that load on scroll, and each row's title, category, date, status and whether it is pinned. On a phone a row opens its own screen; on a tablet it opens beside the list.
 - One announcement shows its status, category, publication and expiry, and the Catalan text. Pin and unpin are there for anyone who reads it; Delete is for `announcements.publish` holders, as the database requires, and asks first. The editor comes in RAPP-341.
 
+## Preview as player on the phone (2026-10-14, RAPP-371, part of RAPP-214)
+
+- Every team member has "Preview as player" in More, which opens the player app. A published announcement, event, knowledge article or service has it in its detail, which opens the player app on that item. An item players cannot see yet says that players see it once it is published.
+- The preview signs in as the organization's preview account on a second client (`previewSupabase`) with its own storage and storage key, so her own session stays signed in. Every data module reads through `supabase`, which points to the preview client while the preview shows. The preview has its own cache in memory; her persisted cache is neither shown nor dropped.
+- A bar above the player app says it is the player view and that no change is saved, offers the organization's languages, and leaves the preview. The language changes on this device only. A right-to-left language restarts the app, as it does for a player, and the preview comes back (its state is kept in encrypted storage until it ends). Leaving signs the preview out on this device and returns to her own language; after a right-to-left preview that is a restart, so the app lock asks for her face or code.
+- In the preview, Sign out leaves the preview, and push registration does not run.
+- Checks: `app-player-preview.web-qa.ts` (More, a restart, an announcement in Spanish, a draft), unit tests for the preview state and the start call, and the iPhone simulator (home, profile with no personal data, Arabic right to left, back to her session).
+
 ## Preview player account (2026-10-14, RAPP-370, part of RAPP-214)
 
 - Each organization has one preview player account (`profiles.role = 'preview'`) with no personal data: a fixed name, no document, no contact details. It is created the first time a team member starts a preview. Decision and reasons: ADR-027.

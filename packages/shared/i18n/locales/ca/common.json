@@ -24,5 +24,11 @@
     "pageOf": "Pàgina {{page}} de {{pages}}"
   },
   "loading": "Carregant...",
-  "interfaceLanguageLabel": "Idioma"
+  "interfaceLanguageLabel": "Idioma",
+  "previewAsPlayer": "Veure com a jugadora",
+  "previewBarTitle": "Vista de jugadora. No es desa cap canvi.",
+  "previewExit": "Surt de la vista",
+  "previewLanguage": "Idioma de la vista",
+  "previewStartFailed": "No hem pogut obrir la vista de jugadora.",
+  "previewNotPublished": "Les jugadores la veuran quan estigui publicada."
 }

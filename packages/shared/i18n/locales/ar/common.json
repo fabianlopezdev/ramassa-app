@@ -23,5 +23,11 @@
     "pageOf": "صفحة {{page}} من {{pages}}"
   },
   "loading": "جارٍ التحميل...",
-  "interfaceLanguageLabel": "اللغة"
+  "interfaceLanguageLabel": "اللغة",
+  "previewAsPlayer": "المعاينة كلاعبة",
+  "previewBarTitle": "عرض اللاعبة. لا يُحفظ أي تغيير.",
+  "previewExit": "الخروج من المعاينة",
+  "previewLanguage": "لغة المعاينة",
+  "previewStartFailed": "تعذّر فتح عرض اللاعبة.",
+  "previewNotPublished": "ستراه اللاعبات بعد نشره."
 }
