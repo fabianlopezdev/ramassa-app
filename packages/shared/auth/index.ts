@@ -28,4 +28,5 @@ export {
 } from './second-factor';
 export { isSamePermissionSet, subscribeToOwnPermissionChanges } from './permission-changes';
 export { isSessionCurrent, signOutEverywhere } from './sessions';
+export { startPlayerPreview, type PlayerPreviewCredentials } from './player-preview';
 export { confirmSecondFactor, hasRecentSecondFactor, secondFactorVerifiedAt } from './step-up';

@@ -28,19 +28,31 @@ import { privateStorage } from './storage';
 const STALE_TIME_MS = 60_000;
 const MAX_QUERY_ATTEMPTS_AFTER_THE_FIRST = 1;
 
-export const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: STALE_TIME_MS,
-      gcTime: ANNOUNCEMENT_CACHE_MAX_AGE_MS,
-      retry: (failureCount, error) =>
-        failureCount < MAX_QUERY_ATTEMPTS_AFTER_THE_FIRST && isRetryableError(error),
+function createAppQueryClient(): QueryClient {
+  return new QueryClient({
+    defaultOptions: {
+      queries: {
+        staleTime: STALE_TIME_MS,
+        gcTime: ANNOUNCEMENT_CACHE_MAX_AGE_MS,
+        retry: (failureCount, error) =>
+          failureCount < MAX_QUERY_ATTEMPTS_AFTER_THE_FIRST && isRetryableError(error),
+      },
+      // Writes are never retried automatically: this app's mutations are profile
+      // edits and RGPD requests, and a silent second attempt at "please erase my
+      // data" is not a retry, it is a second request.
+      mutations: { retry: 0 },
     },
-    // Writes are never retried automatically: this app's mutations are profile
-    // edits and RGPD requests, and a silent second attempt at "please erase my
-    // data" is not a retry, it is a second request.
-    mutations: { retry: 0 },
-  },
-});
+  });
+}
+
+export const queryClient = createAppQueryClient();
+
+/**
+ * A fresh cache for each player preview (RAPP-371), in memory only: what the
+ * preview account reads never mixes with her own cache or reaches the disk.
+ */
+export function createPreviewQueryClient(): QueryClient {
+  return createAppQueryClient();
+}
 
 export const queryPersister = createQueryPersister(privateStorage);

@@ -1,5 +1,5 @@
 /**
- * The app's single Supabase client (RAPP-13), created once at module scope so
+ * The app's Supabase client (RAPP-13), created once at module scope so
  * auth is ready before the first render. Session persistence rides on the MMKV
  * adapter, so a signed-in player stays signed in across cold starts (ADR-005).
  *
@@ -14,7 +14,8 @@ import { Platform } from 'react-native';
 import { parseClientEnv } from '@ramassa/shared/env';
 import { createMmkvSessionStorage, createSupabaseClient } from '@ramassa/shared/supabase';
 import { resolveDevServiceUrl } from './dev-service-url';
-import { authStorage } from './storage';
+import { createPreviewModeStore } from './preview-mode';
+import { authStorage, previewAuthStorage, privateStorage } from './storage';
 
 const devServiceContext = {
   isDev: __DEV__,
@@ -40,8 +41,40 @@ export const mobileClientEnv = parseClientEnv({
   ),
 });
 
-export const supabase = createSupabaseClient({
+/** The signed-in person's own client. */
+export const ownSupabase = createSupabaseClient({
   supabaseUrl: mobileClientEnv.EXPO_PUBLIC_SUPABASE_URL,
   supabaseAnonKey: mobileClientEnv.EXPO_PUBLIC_SUPABASE_ANON_KEY,
   storage: createMmkvSessionStorage(authStorage),
+});
+
+/**
+ * The player preview (RAPP-371, ADR-027): a team member sees the player app as
+ * the organization's preview account, on this second client, so her own
+ * session is untouched. The database makes every request of it read-only.
+ */
+export const previewSupabase = createSupabaseClient({
+  supabaseUrl: mobileClientEnv.EXPO_PUBLIC_SUPABASE_URL,
+  supabaseAnonKey: mobileClientEnv.EXPO_PUBLIC_SUPABASE_ANON_KEY,
+  storage: createMmkvSessionStorage(previewAuthStorage),
+  storageKey: 'ramassa-player-preview',
+});
+
+export const previewMode = createPreviewModeStore(privateStorage);
+
+type AppSupabaseClient = typeof ownSupabase;
+
+/**
+ * The client the screens use: the preview client while the preview shows,
+ * otherwise her own. Every data module imports this one, so the player screens
+ * need no change to read as the preview account.
+ */
+export const supabase: AppSupabaseClient = new Proxy(ownSupabase, {
+  get(_target, property) {
+    const client = previewMode.isActive() ? previewSupabase : ownSupabase;
+    const value: unknown = Reflect.get(client, property, client);
+    return typeof value === 'function'
+      ? (value as (...args: never[]) => unknown).bind(client)
+      : value;
+  },
 });

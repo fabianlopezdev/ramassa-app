@@ -13,6 +13,7 @@ import {
 } from '@/components/announcements/feed-states';
 import { FailureNotice } from '@/components/error-code-line';
 import { PressableScale } from '@/components/motion/pressable-scale';
+import { PreviewItemAsPlayer } from '@/components/preview/preview-as-player';
 import { useContentEvent, useContentEventOccurrences, useEventActions } from '@/lib/content-events';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
@@ -178,6 +179,10 @@ export function EventDetail({
           </PressableScale>
         ) : null}
       </View>
+      <PreviewItemAsPlayer
+        target={`/event/${data.id}`}
+        isVisibleToPlayers={lifecycle === 'published'}
+      />
       {remove.isError ? (
         <FailureNotice
           code={toAppError(remove.error).code}

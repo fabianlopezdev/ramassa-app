@@ -22,12 +22,19 @@ export interface SupabaseClientConfig {
   supabaseUrl: string;
   supabaseAnonKey: string;
   storage: SupabaseSessionStorage;
+  /**
+   * A second client in the same app needs its own key (RAPP-371): clients with
+   * the same key tell each other about sign-ins and sign-outs, so signing out
+   * the player preview would also sign out the person's own session.
+   */
+  storageKey?: string;
 }
 
 export function createSupabaseClient(config: SupabaseClientConfig): SupabaseClient<Database> {
   return createClient<Database>(config.supabaseUrl, config.supabaseAnonKey, {
     auth: {
       storage: config.storage,
+      ...(config.storageKey === undefined ? {} : { storageKey: config.storageKey }),
       persistSession: true,
       autoRefreshToken: true,
       // Email OTP verification is explicit in both apps, so neither runtime

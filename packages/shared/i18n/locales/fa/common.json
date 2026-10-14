@@ -23,5 +23,11 @@
     "pageOf": "صفحهٔ {{page}} از {{pages}}"
   },
   "loading": "در حال بارگذاری...",
-  "interfaceLanguageLabel": "زبان"
+  "interfaceLanguageLabel": "زبان",
+  "previewAsPlayer": "پیش‌نمایش به‌عنوان بازیکن",
+  "previewBarTitle": "نمای بازیکن. هیچ تغییری ذخیره نمی‌شود.",
+  "previewExit": "خروج از پیش‌نمایش",
+  "previewLanguage": "زبان پیش‌نمایش",
+  "previewStartFailed": "نمای بازیکن باز نشد.",
+  "previewNotPublished": "بازیکنان پس از انتشار آن را می‌بینند."
 }

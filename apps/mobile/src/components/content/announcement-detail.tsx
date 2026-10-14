@@ -11,6 +11,7 @@ import {
   AnnouncementFeedSkeleton,
 } from '@/components/announcements/feed-states';
 import { PressableScale } from '@/components/motion/pressable-scale';
+import { PreviewItemAsPlayer } from '@/components/preview/preview-as-player';
 import { useAnnouncementActions, useContentAnnouncement } from '@/lib/content-announcements';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
@@ -177,6 +178,10 @@ export function AnnouncementDetail({
           </PressableScale>
         ) : null}
       </View>
+      <PreviewItemAsPlayer
+        target={`/announcement/${data.id}`}
+        isVisibleToPlayers={lifecycle === 'published'}
+      />
       {setPinned.isError || remove.isError ? (
         <Text
           accessibilityLiveRegion="polite"
