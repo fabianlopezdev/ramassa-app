@@ -86,3 +86,16 @@ export function fromLocalInputValue(value: string, inMadridTime = false): string
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? null : date.toISOString();
 }
+
+/** A calendar date (`YYYY-MM-DD`) as a local date, or null when empty or broken. */
+export function fromIsoDate(value: string): Date | null {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (match === null) return null;
+  const date = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+/** A local date as a calendar date (`YYYY-MM-DD`). */
+export function toIsoDate(date: Date): string {
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}

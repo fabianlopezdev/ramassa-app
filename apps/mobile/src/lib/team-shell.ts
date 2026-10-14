@@ -22,11 +22,11 @@ import type { PermissionCode } from '@ramassa/shared/permissions';
 export type TeamArea = 'attendance' | 'participants' | 'content' | 'messages' | 'stock';
 
 /** The content types the Content area holds, in the web admin's menu order. */
-export type ContentKind = 'announcements' | 'events' | 'knowledge';
+export type ContentKind = 'announcements' | 'events' | 'knowledge' | 'services';
 
 /**
  * The content types a person manages (RAPP-340 announcements, RAPP-342
- * events, RAPP-343 knowledge); services join in a later slice.
+ * events, RAPP-343 knowledge, RAPP-344 services).
  */
 export function contentKinds(permissions: ReadonlySet<PermissionCode>): readonly ContentKind[] {
   const kinds: ContentKind[] = [];
@@ -36,6 +36,9 @@ export function contentKinds(permissions: ReadonlySet<PermissionCode>): readonly
   if (permissions.has('events.edit') || permissions.has('events.publish')) kinds.push('events');
   if (permissions.has('knowledge.edit') || permissions.has('knowledge.publish')) {
     kinds.push('knowledge');
+  }
+  if (permissions.has('services.edit') || permissions.has('services.publish')) {
+    kinds.push('services');
   }
   return kinds;
 }

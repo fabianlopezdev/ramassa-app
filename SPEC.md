@@ -1795,6 +1795,16 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - Announcements list: status chips (all, draft, published, scheduled, expired, the web admin's filter), the total, pages that load on scroll, and each row's title, category, date, status and whether it is pinned. On a phone a row opens its own screen; on a tablet it opens beside the list.
 - One announcement shows its status, category, publication and expiry, and the Catalan text. Pin and unpin are there for anyone who reads it; Delete is for `announcements.publish` holders, as the database requires, and asks first. The editor comes in RAPP-341.
 
+## Services directory on the phone (2026-10-14, RAPP-344, part of RAPP-214)
+
+- The Content area shows services for `services.edit` or `services.publish` holders. The list has the web admin's status and category filters. Each row shows category, availability and how many players are interested. On a tablet a service opens beside the list.
+- One service shows its status, category, description, provider, place, cost, contact, schedule, link, availability, the category's extra fields (option labels and yes or no in the screen language), its photos, and the publication. Delete is for `services.publish` holders and asks first.
+- The editor has the web admin's fields: category, the Catalan title and description with their translation review, provider, place, cost (an amount for paid and subsidized services), contact, schedule, link, availability, the category's extra fields as touch controls (chips for a select, toggling chips for a list, a switch for yes or no, the native date picker for a date, number and text fields), and up to twelve photos, each with a description and its translations, Move up, Move down and Remove. Photos are compressed and uploaded to `services` at save. Changing the category starts its extra fields again.
+- Publishing needs the title, the description and every photo description approved. The form is kept on the device from the first change (`service-draft.ts`); a chosen photo is not kept. Without `services.publish` the publication is read-only and kept as stored, as the permission screen describes.
+- The extra-field helpers (`serviceMetadataDefaults`, `normalizedServiceMetadata`) moved from the web admin into `@ramassa/shared/services`.
+- The app's web build compresses photos with `fetch` in place of expo-file-system, which has no web support. Before, every photo upload in the web build failed, so the browser specs could not cover one.
+- Service categories, with a native editor for their extra-field schema, follow in their own slice.
+
 ## Knowledge base on the phone (2026-10-14, RAPP-343, part of RAPP-214)
 
 - The Content area shows the knowledge base for `knowledge.edit` or `knowledge.publish` holders. The list has the web admin's filters (all content, staff resources, participant stories, and a story's review state). Each row shows category, type, status and, for a story, the author's first name. On a tablet a resource opens beside the list.

@@ -2,9 +2,11 @@ import { describe, expect, test } from 'bun:test';
 import {
   combineDateAndTime,
   defaultPickerDate,
+  fromIsoDate,
   fromLocalInputValue,
   fromMadridWallClock,
   madridWallClock,
+  toIsoDate,
   toLocalInputValue,
 } from './date-time-value';
 
@@ -42,5 +44,13 @@ describe('the date-and-time field', () => {
     expect(toLocalInputValue('2026-10-14T16:30:00.000Z', true)).toBe('2026-10-14T18:30');
     expect(fromLocalInputValue('2026-10-14T18:30', true)).toBe('2026-10-14T16:30:00.000Z');
     expect(fromLocalInputValue('', true)).toBeNull();
+  });
+
+  test('a calendar date goes both ways, and empty or broken means none', () => {
+    const date = fromIsoDate('2026-11-02');
+    expect([date?.getFullYear(), date?.getMonth(), date?.getDate()]).toEqual([2026, 10, 2]);
+    expect(toIsoDate(new Date(2026, 0, 5))).toBe('2026-01-05');
+    expect(fromIsoDate('')).toBeNull();
+    expect(fromIsoDate('2 Nov')).toBeNull();
   });
 });
