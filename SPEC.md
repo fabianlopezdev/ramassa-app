@@ -1795,6 +1795,12 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - Announcements list: status chips (all, draft, published, scheduled, expired, the web admin's filter), the total, pages that load on scroll, and each row's title, category, date, status and whether it is pinned. On a phone a row opens its own screen; on a tablet it opens beside the list.
 - One announcement shows its status, category, publication and expiry, and the Catalan text. Pin and unpin are there for anyone who reads it; Delete is for `announcements.publish` holders, as the database requires, and asks first. The editor comes in RAPP-341.
 
+## Direct writes to gallery items (2026-10-15, RAPP-388)
+
+- Signed-in users held UPDATE on every column of `media_items`, and the update policy let forum and gallery moderators write any row of their organization, so a moderator could repoint an item's file, change its uploader, caption or consent with an unaudited direct write.
+- Now only `moderation_state` and `flag_count` can be written directly, and only by `gallery.moderate` holders (`media_items_update_gallery_moderation`). Those are the two columns `moderate_forum_target`, which runs as the caller, sets on a reported item; it already required `gallery.moderate` for gallery items. Every other write goes through a SECURITY DEFINER function.
+- Checks: pgTAP `0065`, and the forum moderation specs (web admin and app), which hide and delete reported gallery items.
+
 ## Mentoring requests on the phone (2026-10-14, RAPP-382, part of RAPP-215)
 
 - `mentoring.manage` holders get "Mentories" in More, and Today shows how many requests wait to be scheduled. The screen shows how many requests and on which topics, and each request as the web admin does: the participant, when she asked, the status, the topic, her private note and her preferred slot.
