@@ -2,8 +2,8 @@
  * More (RAPP-245): what is not an area of its own. Settings (language and app
  * lock) and sign-out, Stock for whoever receives, counts or edits material
  * (RAPP-250), forum and gallery moderation (RAPP-380, RAPP-381), mentoring
- * (RAPP-382), and the player preview (RAPP-371); later phases add the dashboard, the team and the
- * rest.
+ * (RAPP-382), the feedback inbox (RAPP-383), and the player preview
+ * (RAPP-371); later phases add the dashboard, the team and the rest.
  *
  */
 import { PageWidth } from '@/components/layout/content-width';
@@ -34,6 +34,7 @@ export default function TeamMoreScreen() {
   const { t: tForum } = useTranslation('forum');
   const { t: tMentoring } = useTranslation('mentoring');
   const { t: tGallery } = useTranslation('gallery');
+  const { t: tFeedback } = useTranslation('feedback');
   const languageFontClass = useLanguageFontClass();
   const { push } = useRouter();
 
@@ -94,6 +95,21 @@ export default function TeamMoreScreen() {
             >
               <Text className={`text-start text-md text-neutral-900 ${languageFontClass}`}>
                 {tGallery('moderationTitle')}
+              </Text>
+            </PressableScale>
+          ) : null}
+          {team.feedback ? (
+            <PressableScale
+              testID="team-more-feedback"
+              accessibilityRole="button"
+              accessibilityLabel={tFeedback('inboxTitle')}
+              onPress={() => push('/team-feedback' as Href)}
+              haptic="selection"
+              style={continuousCorners}
+              className="min-h-recommended justify-center rounded-md border border-neutral-200 bg-white px-md"
+            >
+              <Text className={`text-start text-md text-neutral-900 ${languageFontClass}`}>
+                {tFeedback('inboxTitle')}
               </Text>
             </PressableScale>
           ) : null}
