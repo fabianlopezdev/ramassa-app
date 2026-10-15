@@ -1803,6 +1803,15 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - The member and selection counts now have singular and plural forms in the five languages ("1 membre", "2 membres"), also in the web admin.
 - Checks: `app-team-notification-groups.web-qa.ts` (accent-blind search, create, add a member, the group as an exact audience), `app-team-notifications.web-qa.ts`, the web admin `targeted-notifications.web-qa.ts`, the web admin unit tests, and the iPhone simulator.
 
+## Impact dashboard on the phone (2026-10-15, RAPP-400, part of RAPP-216)
+
+- `impact.view` holders get "Informe d'impacte" in More, as the web admin's dashboard (`get_impact_report`), redesigned for small screens as the design doc asks.
+- A period control: the last 7 days, the last 30 days, or this year from 1 January (the web admin's default), in Madrid days. An optional event category and collaborating entity. Each filter is one line that scrolls sideways, so the figures stay near the top.
+- One figure per card (participants, new participants, participants with attendance, attendance rate), two columns on a phone and four on a tablet, with a small trend line per month. A tap on a card with a trend opens its chart per month: bars with one-letter months, then the same numbers as a table with the full month names.
+- Categories, nationalities, age bands and entities show as bars with their numbers, where the web uses tables. Forum and referral figures as on the web. Groups too small to count stay suppressed, and a filtered group under three participants shows only the privacy note.
+- The web admin's dashboard nav item keeps no permission filter, because the dashboard is the staff landing page; the database refuses the report without `impact.view`.
+- Checks: `app-team-impact.web-qa.ts` (the default period, the cards against the database reply, the monthly chart and table, the period and category filters in the request), unit tests for the periods in three time zones and the screen flag, and the iPhone simulator.
+
 ## Notifications and targeted push on the phone (2026-10-15, RAPP-385, part of RAPP-215)
 
 - `notifications.send` holders get "Notificacions" in More, as the web admin's workspace. A message starts from a template or blank, in Catalan; the four translations are generated and must all be approved before it is sent or saved as a template.
