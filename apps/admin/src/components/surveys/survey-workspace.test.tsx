@@ -1,3 +1,4 @@
+import { StepUpProvider } from '@/components/auth/step-up';
 import { createAdminI18n } from '@/lib/i18n';
 import { fireEvent, render } from '@testing-library/react';
 import { expect, test } from 'bun:test';
@@ -7,17 +8,19 @@ import { SurveyWorkspace } from './survey-workspace';
 test('survey workspace exposes a translated builder, reusable audience picker, and visual question types', () => {
   const view = render(
     <I18nextProvider i18n={createAdminI18n('en')}>
-      <SurveyWorkspace
-        surveys={[]}
-        groups={[]}
-        options={{
-          serviceCategories: [],
-          events: [],
-          entities: [],
-          participants: [],
-        }}
-        onRefresh={async () => undefined}
-      />
+      <StepUpProvider>
+        <SurveyWorkspace
+          surveys={[]}
+          groups={[]}
+          options={{
+            serviceCategories: [],
+            events: [],
+            entities: [],
+            participants: [],
+          }}
+          onRefresh={async () => undefined}
+        />
+      </StepUpProvider>
     </I18nextProvider>,
   );
 
