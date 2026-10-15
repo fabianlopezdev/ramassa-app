@@ -1818,6 +1818,13 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - Kept in memory only: the feedback is private.
 - Checks: `app-team-feedback.web-qa.ts` (a player's idea, the filters, read to resolved, the chat), the player-to-staff `feedback.web-qa.ts`, unit tests for the status steps, and the iPhone simulator.
 
+## Gallery moderation on the web admin (2026-10-15, RAPP-387, part of RAPP-215)
+
+- `gallery.moderate` holders get "Gallery" in the web admin's staff navigation, as the phone's screen (RAPP-381): every gallery photo and video, newest first, with All, Visible and Hidden filters (Hidden includes hidden until reviewed).
+- Each card shows the photo (or "Video" without a thumbnail) in a fixed frame, who shared it and when, the caption, who can see it, its state and its reports. Hide and Show again go through `set_media_item_moderation`; Delete asks first and removes the item and its files through the media Worker.
+- The filter (`filterGallery`, `GALLERY_FILTERS`) moved from the phone into `packages/shared/media.ts`, so both use one function.
+- Checks: `admin-gallery.web-qa.ts` (navigation, hide, filters, show again with the audit trail, delete with the file), the phone's `app-team-gallery.web-qa.ts`, unit tests for the filter and the navigation, and screenshots at desktop and phone widths with a real photo.
+
 ## Direct writes to gallery items (2026-10-15, RAPP-388)
 
 - Signed-in users held UPDATE on every column of `media_items`, and the update policy let forum and gallery moderators write any row of their organization, so a moderator could repoint an item's file, change its uploader, caption or consent with an unaudited direct write.
