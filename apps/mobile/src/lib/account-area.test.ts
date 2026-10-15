@@ -292,7 +292,7 @@ test('each area starts on its own home; the player keeps the root', () => {
   expect(areaHome('team', new Set(['attendance.mark', 'messages.inbox']), tablet)).toBe('/today');
   expect(areaHome('team', new Set(['messages.inbox']), tablet)).toBe('/messages');
   expect(areaHome('team', new Set(['settings.branding']), phone)).toBe('/team-home');
-  expect(areaHome('entity', new Set(), phone)).toBe('/entity-portal');
+  expect(areaHome('entity', new Set(), phone)).toBe('/entity-home');
   expect(areaHome('unresolved', new Set(), phone)).toBe('/account-unresolved');
   expect(areaHome('player', new Set(), phone)).toBeNull();
 });

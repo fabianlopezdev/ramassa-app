@@ -1871,6 +1871,13 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - No step-up, as on the web admin.
 - Checks: `app-team-organization.web-qa.ts` (the contrast refusal, a new phone, colour and logo saved), the web admin `admin-settings.web-qa.ts`, unit tests for the languages and the screen flag, and the iPhone simulator.
 
+## Entity second factor and tabs on the phone (2026-10-15, RAPP-410, part of RAPP-217)
+
+- A partner entity's contact now verifies her authenticator code before her screens, as a team member does (`second-factor-screen.tsx` enrols or verifies). Before, the phone showed her a notice that the portal is on the web and never asked the code; the database already returned no data without it.
+- The notice is replaced by her own shell, `(entity)`, as the web portal's navigation: native bottom tabs on a phone and a sidebar on a tablet. Home (`/entity-home`) opens first and holds the app lock and sign-out; the impact comes in RAPP-411, and Referrals, Services, Events and Messages each appear with their slice (RAPP-412 to RAPP-415).
+- Fixed in passing: on the team's More screen, the last entry (sign-out) stayed behind the floating tab bar once the list grew; the list now keeps clear of it.
+- Checks: `app-account-routes.web-qa.ts` (an entity contact verifies her second factor, then lands on her own tabs; the team cases unchanged), unit tests for the entity home route, and the iPhone simulator.
+
 ## Notifications and targeted push on the phone (2026-10-15, RAPP-385, part of RAPP-215)
 
 - `notifications.send` holders get "Notificacions" in More, as the web admin's workspace. A message starts from a template or blank, in Catalan; the four translations are generated and must all be approved before it is sent or saved as a template.
