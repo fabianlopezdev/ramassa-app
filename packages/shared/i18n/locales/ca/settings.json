@@ -303,5 +303,8 @@
     "notFound": "Aquest codi no és per a aquest compte. Entra com la persona que l'ha fet.",
     "sendFailed": "La foto no s'ha enviat. Torna-ho a provar.",
     "cameraDenied": "Permet la càmera a Configuració per fer una foto."
-  }
+  },
+  "chooseLogo": "Tria un logotip",
+  "contrastTooLow": "Aquest color té un contrast de {{ratio}}:1 amb el text. Cal un mínim de 4,5:1.",
+  "colorInvalid": "Fes servir un color hexadecimal de sis xifres, com #0077B6."
 }

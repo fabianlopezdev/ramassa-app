@@ -111,6 +111,7 @@ export function teamScreens(permissions: ReadonlySet<PermissionCode>): {
   readonly galleryModeration: boolean;
   readonly feedback: boolean;
   readonly notifications: boolean;
+  readonly organization: boolean;
   readonly staff: boolean;
   readonly impact: boolean;
   readonly mentoring: boolean;
@@ -136,6 +137,7 @@ export function teamScreens(permissions: ReadonlySet<PermissionCode>): {
     galleryModeration: permissions.has('gallery.moderate'),
     feedback: permissions.has('feedback.view'),
     notifications: permissions.has('notifications.send'),
+    organization: permissions.has('settings.organization') || permissions.has('settings.branding'),
     staff: permissions.has('team.manage'),
     impact: permissions.has('impact.view'),
     mentoring: permissions.has('mentoring.manage'),
