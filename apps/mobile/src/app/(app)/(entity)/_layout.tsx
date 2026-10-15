@@ -16,6 +16,11 @@ import { tokens } from '@ramassa/shared/tokens';
 
 const TABLET_WIDTH = 768;
 const homeIcon = { ios: 'chart.bar.fill', android: 'insights', web: 'insights' } as const;
+const referralsIcon = {
+  ios: 'person.crop.circle.badge.plus',
+  android: 'person_add',
+  web: 'person_add',
+} as const;
 // A style object, as in the team shell: TabList puts its own row layout on its
 // child, and that wins over classes.
 const sidebarStyle = {
@@ -59,6 +64,15 @@ export default function EntityShellLayout() {
                 icon={homeIcon}
               />
             </TabTrigger>
+            <TabTrigger name="entity-referrals" href="/entity-referrals" asChild>
+              <TeamSidebarItem
+                compact={false}
+                testID="entity-sidebar-referrals"
+                isFocused={pathname === '/entity-referrals'}
+                label={t('entity.referrals')}
+                icon={referralsIcon}
+              />
+            </TabTrigger>
           </View>
         </TabList>
         <SafeAreaView edges={['top', 'right', 'bottom']} className="flex-1">
@@ -83,6 +97,10 @@ export default function EntityShellLayout() {
       <NativeTabs.Trigger name="entity-home" testID="entity-tab-home">
         <NativeTabs.Trigger.Icon sf="chart.bar.fill" md="insights" />
         <NativeTabs.Trigger.Label>{t('entity.dashboard')}</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="entity-referrals" testID="entity-tab-referrals">
+        <NativeTabs.Trigger.Icon sf="person.crop.circle.badge.plus" md="person_add" />
+        <NativeTabs.Trigger.Label>{t('entity.referrals')}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
     </NativeTabs>
   );

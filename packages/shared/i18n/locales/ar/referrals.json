@@ -36,6 +36,7 @@
   "createdLabel": "أرسلت",
   "updatesTitle": "التحديثات",
   "noUpdates": "لا توجد تحديثات بعد.",
+  "updatesAfterOnboarding": "يمكنكم مشاركة التحديثات بعد أن يستقبلها الفريق ويصبح لديها حساب.",
   "updateType": "نوع التغيير",
   "updateContent": "ما الذي تغير؟",
   "updateSubmit": "مشاركة التحديث",
