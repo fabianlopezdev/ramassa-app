@@ -4,9 +4,9 @@
  * (RAPP-250), forum and gallery moderation (RAPP-380, RAPP-381), mentoring
  * (RAPP-382), the feedback inbox (RAPP-383), notifications (RAPP-385), the
  * impact dashboard (RAPP-400), data exports and the audit log (RAPP-401), the
- * team (RAPP-404), the organization's settings (RAPP-403), collaborating
- * entities (RAPP-407), and the player preview (RAPP-371); later slices add the
- * rest.
+ * team (RAPP-404), the organization's settings (RAPP-403), internal documents
+ * (RAPP-406), collaborating entities (RAPP-407), and the player preview
+ * (RAPP-371); later slices add the rest.
  *
  */
 import { PageWidth } from '@/components/layout/content-width';
@@ -177,6 +177,21 @@ export default function TeamMoreScreen() {
             >
               <Text className={`text-start text-md text-neutral-900 ${languageFontClass}`}>
                 {tSettings('tabOrganization')}
+              </Text>
+            </PressableScale>
+          ) : null}
+          {team.documents ? (
+            <PressableScale
+              testID="team-more-documents"
+              accessibilityRole="button"
+              accessibilityLabel={tSettings('documentsTitle')}
+              onPress={() => push('/team-documents' as Href)}
+              haptic="selection"
+              style={continuousCorners}
+              className="min-h-recommended justify-center rounded-md border border-neutral-200 bg-white px-md"
+            >
+              <Text className={`text-start text-md text-neutral-900 ${languageFontClass}`}>
+                {tSettings('documentsTitle')}
               </Text>
             </PressableScale>
           ) : null}

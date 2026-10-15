@@ -178,6 +178,9 @@ export default function AppLayout() {
           <Stack.Screen name="team-entities" />
           <Stack.Screen name="team-entity/[id]" />
         </Stack.Protected>
+        <Stack.Protected guard={isTeam && team.documents}>
+          <Stack.Screen name="team-documents" />
+        </Stack.Protected>
         <Stack.Protected guard={isTeam && team.organization}>
           <Stack.Screen name="team-organization" />
         </Stack.Protected>
