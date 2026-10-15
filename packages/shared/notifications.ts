@@ -187,6 +187,26 @@ function localizedLabel(value: Json): string {
   return parsed.ca ?? parsed.es ?? parsed.en ?? Object.values(parsed)[0] ?? '';
 }
 
+function normalizedParticipantSearch(value: string) {
+  return value.normalize('NFD').replace(/\p{M}/gu, '').toLocaleLowerCase();
+}
+
+/**
+ * Participants whose name contains the search, ignoring case and accents, for
+ * picking a custom group's members. Shared by the web admin and the phone
+ * (RAPP-389).
+ */
+export function filterNotificationGroupParticipants(
+  participants: NotificationAudienceOptions['participants'],
+  search: string,
+) {
+  const query = normalizedParticipantSearch(search.trim());
+  if (query.length === 0) return participants;
+  return participants.filter((participant) =>
+    normalizedParticipantSearch(participant.fullName).includes(query),
+  );
+}
+
 export async function fetchNotificationAudienceOptions(
   client: QueryClient,
   signal?: AbortSignal,
