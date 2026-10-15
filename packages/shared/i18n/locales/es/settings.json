@@ -303,5 +303,8 @@
     "notFound": "Este código no es para esta cuenta. Entra como la persona que lo creó.",
     "sendFailed": "La foto no se ha enviado. Vuelve a intentarlo.",
     "cameraDenied": "Permite la cámara en Ajustes para hacer una foto."
-  }
+  },
+  "chooseLogo": "Elige un logotipo",
+  "contrastTooLow": "Este color tiene un contraste de {{ratio}}:1 con el texto. Se necesita un mínimo de 4,5:1.",
+  "colorInvalid": "Usa un color hexadecimal de seis cifras, como #0077B6."
 }
