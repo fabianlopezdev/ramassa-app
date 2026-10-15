@@ -5,8 +5,8 @@
  * (RAPP-382), the feedback inbox (RAPP-383), notifications (RAPP-385), the
  * impact dashboard (RAPP-400), data exports and the audit log (RAPP-401), the
  * team (RAPP-404), the organization's settings (RAPP-403), internal documents
- * (RAPP-406), surveys (RAPP-384), and the player preview (RAPP-371); later
- * slices add the rest.
+ * (RAPP-406), collaborating entities (RAPP-407), surveys (RAPP-384), and the
+ * player preview (RAPP-371); later slices add the rest.
  *
  */
 import { PageWidth } from '@/components/layout/content-width';
@@ -40,6 +40,7 @@ export default function TeamMoreScreen() {
   const { t: tFeedback } = useTranslation('feedback');
   const { t: tNotifications } = useTranslation('notifications');
   const { t: tSurveys } = useTranslation('surveys');
+  const { t: tEntities } = useTranslation('entity-management');
   const { t: tSettings } = useTranslation('settings');
   const { t: tAdmin } = useTranslation('admin');
   const languageFontClass = useLanguageFontClass();
@@ -52,7 +53,11 @@ export default function TeamMoreScreen() {
       testID="team-more"
     >
       <PageWidth className="flex-1">
-        <ScrollView contentContainerClassName="gap-md p-lg">
+        {/* The inset keeps the last entry, sign-out, clear of the floating tab bar. */}
+        <ScrollView
+          contentInsetAdjustmentBehavior="automatic"
+          contentContainerClassName="gap-md p-lg pb-3xl"
+        >
           <TeamBackToHome />
           <Text
             accessibilityRole="header"
@@ -192,6 +197,21 @@ export default function TeamMoreScreen() {
             >
               <Text className={`text-start text-md text-neutral-900 ${languageFontClass}`}>
                 {tSettings('documentsTitle')}
+              </Text>
+            </PressableScale>
+          ) : null}
+          {team.entities ? (
+            <PressableScale
+              testID="team-more-entities"
+              accessibilityRole="button"
+              accessibilityLabel={tEntities('managementTitle')}
+              onPress={() => push('/team-entities' as Href)}
+              haptic="selection"
+              style={continuousCorners}
+              className="min-h-recommended justify-center rounded-md border border-neutral-200 bg-white px-md"
+            >
+              <Text className={`text-start text-md text-neutral-900 ${languageFontClass}`}>
+                {tEntities('managementTitle')}
               </Text>
             </PressableScale>
           ) : null}

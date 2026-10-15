@@ -131,6 +131,7 @@ test('team screens follow permissions', () => {
     surveys: false,
     surveyEditor: false,
     surveyResults: false,
+    entities: false,
     documents: false,
     organization: false,
     dataExports: false,
@@ -163,6 +164,7 @@ test('team screens follow permissions', () => {
     surveys: false,
     surveyEditor: false,
     surveyResults: false,
+    entities: false,
     documents: false,
     organization: false,
     dataExports: false,
@@ -195,6 +197,7 @@ test('team screens follow permissions', () => {
     surveys: false,
     surveyEditor: false,
     surveyResults: false,
+    entities: false,
     documents: false,
     organization: false,
     dataExports: false,
@@ -227,6 +230,7 @@ test('team screens follow permissions', () => {
     surveys: false,
     surveyEditor: false,
     surveyResults: false,
+    entities: false,
     documents: false,
     organization: false,
     dataExports: false,
@@ -260,6 +264,7 @@ test('team screens follow permissions', () => {
     surveys: false,
     surveyEditor: false,
     surveyResults: false,
+    entities: false,
     documents: false,
     organization: false,
     dataExports: false,
@@ -302,7 +307,7 @@ test('each area starts on its own home; the player keeps the root', () => {
   expect(areaHome('team', new Set(['attendance.mark', 'messages.inbox']), tablet)).toBe('/today');
   expect(areaHome('team', new Set(['messages.inbox']), tablet)).toBe('/messages');
   expect(areaHome('team', new Set(['settings.branding']), phone)).toBe('/team-home');
-  expect(areaHome('entity', new Set(), phone)).toBe('/entity-portal');
+  expect(areaHome('entity', new Set(), phone)).toBe('/entity-home');
   expect(areaHome('unresolved', new Set(), phone)).toBe('/account-unresolved');
   expect(areaHome('player', new Set(), phone)).toBeNull();
 });
@@ -337,6 +342,11 @@ test('organization or branding settings open the organization screen', () => {
 test('settings.documents opens the internal documents', () => {
   expect(teamScreens(new Set(['settings.documents'])).documents).toBe(true);
   expect(teamScreens(new Set(['settings.branding'])).documents).toBe(false);
+});
+
+test('entities.manage opens the collaborating entities', () => {
+  expect(teamScreens(new Set(['entities.manage'])).entities).toBe(true);
+  expect(teamScreens(new Set(['team.manage'])).entities).toBe(false);
 });
 
 test('survey results alone open the survey list without the editor', () => {

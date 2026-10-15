@@ -1,6 +1,7 @@
 /**
- * The second factor in the app (RAPP-233), for a team member: her team screens
- * open only once her session is verified with an authenticator app. The phone
+ * The second factor in the app (RAPP-233), for a team member, and for a partner
+ * entity's contact (RAPP-410): their screens open only once the session is
+ * verified with an authenticator app. The phone
  * that shows this is usually the phone with the authenticator, so setting one
  * up offers the `otpauth://` link to open directly, and the secret as text.
  */

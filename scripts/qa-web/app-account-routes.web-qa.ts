@@ -46,10 +46,15 @@ test.describe.serial('app areas by account type', () => {
     });
   });
 
-  test('an entity contact sees the web portal notice, never the player tabs', async ({ page }) => {
+  // RAPP-410: her authenticator first, then her own tabs, never the player's.
+  test('an entity contact verifies her second factor, then lands on her own tabs', async ({
+    page,
+  }) => {
     await signInPlayer(page, ENTITY_EMAIL);
-    await expect(page.getByTestId('entity-portal-notice')).toBeVisible({ timeout: 30_000 });
+    await completeSecondFactor(page, ENTITY_EMAIL);
+    await expect(page.getByTestId('entity-home')).toBeVisible({ timeout: 30_000 });
     await expect(page.getByRole('tab', { name: 'Home', exact: true })).toHaveCount(0);
+    await expect(page.getByTestId('entity-sign-out')).toBeVisible();
   });
 
   // The team shell (RAPP-245): a wide screen gets the sidebar, a phone with one

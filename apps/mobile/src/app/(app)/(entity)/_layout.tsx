@@ -1,0 +1,89 @@
+/**
+ * The partner entity's shell on the phone (RAPP-410), as the web portal's
+ * navigation: Home, Referrals, Services, Events and Messages, as native
+ * bottom tabs on a phone and a sidebar on a tablet. A tab appears with the
+ * slice that builds its screen (RAPP-411 to RAPP-415). The database scopes
+ * every read to her own entity, and only once her second factor is verified.
+ */
+import { TeamSidebarItem } from '@/components/team/team-sidebar-item';
+import { usePathname } from 'expo-router';
+import { NativeTabs } from 'expo-router/native-tabs';
+import { TabList, Tabs, TabSlot, TabTrigger } from 'expo-router/ui';
+import { useTranslation } from 'react-i18next';
+import { useWindowDimensions, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { tokens } from '@ramassa/shared/tokens';
+
+const TABLET_WIDTH = 768;
+const homeIcon = { ios: 'chart.bar.fill', android: 'insights', web: 'insights' } as const;
+// A style object, as in the team shell: TabList puts its own row layout on its
+// child, and that wins over classes.
+const sidebarStyle = {
+  flexDirection: 'column',
+  justifyContent: 'flex-start',
+  alignItems: 'stretch',
+  gap: tokens.spacing.xs,
+  paddingHorizontal: tokens.spacing.sm,
+  paddingTop: tokens.spacing['3xl'],
+  backgroundColor: tokens.colors.white,
+  borderEndWidth: 1,
+  borderEndColor: tokens.colors.neutral[200],
+  width: 240,
+} as const;
+const shellRowStyle = {
+  flex: 1,
+  flexDirection: 'row',
+  backgroundColor: tokens.colors.neutral[50],
+} as const;
+
+export default function EntityShellLayout() {
+  const { t } = useTranslation('nav');
+  const { width } = useWindowDimensions();
+  const pathname = usePathname();
+
+  if (width >= TABLET_WIDTH) {
+    return (
+      <Tabs style={shellRowStyle}>
+        <TabList asChild>
+          <View
+            accessibilityRole="tablist"
+            accessibilityLabel={t('a11y.entityPortal')}
+            style={sidebarStyle}
+          >
+            <TabTrigger name="entity-home" href="/entity-home" asChild>
+              <TeamSidebarItem
+                compact={false}
+                testID="entity-sidebar-home"
+                isFocused={pathname === '/entity-home'}
+                label={t('entity.dashboard')}
+                icon={homeIcon}
+              />
+            </TabTrigger>
+          </View>
+        </TabList>
+        <SafeAreaView edges={['top', 'right', 'bottom']} className="flex-1">
+          <TabSlot />
+        </SafeAreaView>
+      </Tabs>
+    );
+  }
+
+  return (
+    <NativeTabs
+      backgroundColor={tokens.colors.white}
+      iconColor={{ default: tokens.colors.neutral[700], selected: tokens.colors.primary.dark }}
+      indicatorColor={tokens.colors.neutral[100]}
+      labelStyle={{
+        default: { color: tokens.colors.neutral[700] },
+        selected: { color: tokens.colors.primary.dark },
+      }}
+      labelVisibilityMode="labeled"
+      tintColor={tokens.colors.primary.dark}
+    >
+      <NativeTabs.Trigger name="entity-home" testID="entity-tab-home">
+        <NativeTabs.Trigger.Icon sf="chart.bar.fill" md="insights" />
+        <NativeTabs.Trigger.Label>{t('entity.dashboard')}</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+    </NativeTabs>
+  );
+}

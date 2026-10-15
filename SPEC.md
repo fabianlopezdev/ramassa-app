@@ -1856,6 +1856,13 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - Editing access and the presets come next (RAPP-405).
 - Checks: `app-team-staff.web-qa.ts` (invite on the Coach preset with the email, no reset of one's own factor, sign out everywhere, reset, remove, the audit rows), the web admin `team-access.web-qa.ts`, unit tests for the refusals and the screen flag, and the iPhone simulator.
 
+## Collaborating entities on the phone (2026-10-15, RAPP-407, part of RAPP-216)
+
+- `entities.manage` holders get "Entitats col·laboradores" in More, as the entities tab of the web admin's Settings: add an entity, then each entity with its status, collaborators, referrals and pending invitations.
+- A tap opens the entity (`team-entity/[id]`): Deactivate (asked first; its collaborators lose access, referral history stays) or Reactivate; invite a collaborator while the entity is active (the sign-in code goes by email); and each collaborator with Pending, Active or Inactive, Remove access (asked first) or Restore access, and Reset second factor (asked first).
+- Inviting, removing or restoring access and resetting a second factor ask for the step-up, as on the web; adding and switching an entity do not, as on the web.
+- Checks: `app-team-entities.web-qa.ts` (add, invite with the email, remove and restore access, deactivate and reactivate, against the database), unit tests for the screen flag, and the iPhone simulator.
+
 ## Internal documents on the phone (2026-10-15, RAPP-406, part of RAPP-216)
 
 - `settings.documents` holders get "Documents interns" in More, as the documents tab of the web admin's Settings: the organization's private documents (insurance, inventory, resources) with who added each, when, and its size (KB under 1 MB).
@@ -1872,6 +1879,13 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - After a save, the app reads the organization again (`useRefreshOrganizationBranding`), so the new colours apply at once.
 - No step-up, as on the web admin.
 - Checks: `app-team-organization.web-qa.ts` (the contrast refusal, a new phone, colour and logo saved), the web admin `admin-settings.web-qa.ts`, unit tests for the languages and the screen flag, and the iPhone simulator.
+
+## Entity second factor and tabs on the phone (2026-10-15, RAPP-410, part of RAPP-217)
+
+- A partner entity's contact now verifies her authenticator code before her screens, as a team member does (`second-factor-screen.tsx` enrols or verifies). Before, the phone showed her a notice that the portal is on the web and never asked the code; the database already returned no data without it.
+- The notice is replaced by her own shell, `(entity)`, as the web portal's navigation: native bottom tabs on a phone and a sidebar on a tablet. Home (`/entity-home`) opens first and holds the app lock and sign-out; the impact comes in RAPP-411, and Referrals, Services, Events and Messages each appear with their slice (RAPP-412 to RAPP-415).
+- Fixed in passing: on the team's More screen, the last entry (sign-out) stayed behind the floating tab bar once the list grew; the list now keeps clear of it.
+- Checks: `app-account-routes.web-qa.ts` (an entity contact verifies her second factor, then lands on her own tabs; the team cases unchanged), unit tests for the entity home route, and the iPhone simulator.
 
 ## Notifications and targeted push on the phone (2026-10-15, RAPP-385, part of RAPP-215)
 
