@@ -71,6 +71,5 @@
   "averageRating": "Media {{value}} de 5",
   "choiceLabel": "Opción {{number}} en catalán",
   "datesInvalid": "La fecha de cierre debe ser posterior a la de publicación.",
-  "publishAtRequired": "Elige cuándo se publica la encuesta.",
-  "choicesMinimum": "Una pregunta de opciones necesita al menos dos opciones."
+  "publishAtRequired": "Elige cuándo se publica la encuesta."
 }

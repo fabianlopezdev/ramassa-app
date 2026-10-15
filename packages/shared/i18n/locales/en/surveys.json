@@ -71,6 +71,5 @@
   "averageRating": "Average {{value}} of 5",
   "choiceLabel": "Choice {{number}} in Catalan",
   "datesInvalid": "The closing date must come after the publication date.",
-  "publishAtRequired": "Choose when the survey is published.",
-  "choicesMinimum": "A choice question needs at least two choices."
+  "publishAtRequired": "Choose when the survey is published."
 }

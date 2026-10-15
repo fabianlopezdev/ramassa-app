@@ -71,6 +71,5 @@
   "averageRating": "Mitjana {{value}} de 5",
   "choiceLabel": "Opció {{number}} en català",
   "datesInvalid": "La data de tancament ha de ser posterior a la de publicació.",
-  "publishAtRequired": "Tria quan es publica l'enquesta.",
-  "choicesMinimum": "Una pregunta d'opcions necessita almenys dues opcions."
+  "publishAtRequired": "Tria quan es publica l'enquesta."
 }

@@ -71,6 +71,5 @@
   "averageRating": "میانگین {{value}} از 5",
   "choiceLabel": "گزینه {{number}} به کاتالان",
   "datesInvalid": "تاریخ بسته شدن باید بعد از تاریخ انتشار باشد.",
-  "publishAtRequired": "زمان انتشار نظرسنجی را انتخاب کنید.",
-  "choicesMinimum": "پرسش گزینه ای دست کم به دو گزینه نیاز دارد."
+  "publishAtRequired": "زمان انتشار نظرسنجی را انتخاب کنید."
 }
