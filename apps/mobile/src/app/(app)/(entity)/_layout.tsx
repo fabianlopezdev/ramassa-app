@@ -29,6 +29,7 @@ const servicesIcon = {
   android: 'category',
   web: 'category',
 } as const;
+const eventsIcon = { ios: 'calendar', android: 'calendar_month', web: 'calendar_month' } as const;
 const messagesIcon = {
   ios: 'bubble.left.and.bubble.right.fill',
   android: 'chat',
@@ -96,6 +97,15 @@ export default function EntityShellLayout() {
                 icon={servicesIcon}
               />
             </TabTrigger>
+            <TabTrigger name="entity-events" href="/entity-events" asChild>
+              <TeamSidebarItem
+                compact={false}
+                testID="entity-sidebar-events"
+                isFocused={pathname === '/entity-events'}
+                label={t('entity.events')}
+                icon={eventsIcon}
+              />
+            </TabTrigger>
             <TabTrigger name="entity-messages" href="/entity-messages" asChild>
               <TeamSidebarItem
                 compact={false}
@@ -138,6 +148,10 @@ export default function EntityShellLayout() {
       <NativeTabs.Trigger name="entity-services" testID="entity-tab-services">
         <NativeTabs.Trigger.Icon sf="square.grid.2x2.fill" md="category" />
         <NativeTabs.Trigger.Label>{t('entity.services')}</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="entity-events" testID="entity-tab-events">
+        <NativeTabs.Trigger.Icon sf="calendar" md="calendar_month" />
+        <NativeTabs.Trigger.Label>{t('entity.events')}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="entity-messages" testID="entity-tab-messages">
         <NativeTabs.Trigger.Icon sf="bubble.left.and.bubble.right.fill" md="chat" />
