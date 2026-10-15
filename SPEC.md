@@ -1935,6 +1935,12 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - Phone: Share CSV on a survey's results, through the step-up (Face ID, then the code when needed) and the share sheet; the file is deleted from the phone afterwards.
 - Checks: pgTAP `0066_survey_export_test.sql` (rows and audit row, no recent code, no permission, unknown survey, rate limit), `surveys.web-qa.ts` (the web CSV and its audit row), `app-team-surveys.web-qa.ts` (the phone CSV and its audit row), and the iPhone simulator.
 
+## Message threads open at the newest message (2026-10-15, RAPP-433)
+
+- A chat on the phone opened a little short of its end: on Android the newest message's delivery line was hidden, on iOS half the newest bubble sat behind the composer. FlashList (2.0.2) renders from the bottom but measured the content after its first jump. The thread is shared, so every chat had it.
+- Now the list follows its end each time the measured content grows, until she drags it; new messages keep landing at the bottom as before.
+- Checks: the messaging contract tests, `app-entity-messages.web-qa.ts`, and the entity chat opened on the Android emulator (Fold) and the iPhone simulator, both showing the newest message with its delivery line.
+
 ## Dark status bar icons on Android (2026-10-15, RAPP-432)
 
 - On Android the clock, signal and battery icons at the top were white over the app's light screens, so nobody could see them. The app set no status bar style, and Android's transparent edge-to-edge bar defaults to light icons. The iPhone already showed them dark.
