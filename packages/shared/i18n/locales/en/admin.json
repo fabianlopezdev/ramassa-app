@@ -67,5 +67,11 @@
   "auditActor": "Actor",
   "auditTarget": "Target",
   "auditDetails": "Details",
-  "auditNext": "Next page"
+  "auditNext": "Next page",
+  "exportShare": "Share CSV",
+  "exportFullShare": "Share full CSV",
+  "exportShared": "Export ready with {{count}} rows.",
+  "exportPhoneNote": "On the phone, exports are CSV files. Excel files are on the web admin.",
+  "auditLoadMore": "Show more",
+  "exportPeriod": "Period (optional)"
 }

@@ -2,9 +2,9 @@
  * More (RAPP-245): what is not an area of its own. Settings (language and app
  * lock) and sign-out, Stock for whoever receives, counts or edits material
  * (RAPP-250), forum and gallery moderation (RAPP-380, RAPP-381), mentoring
- * (RAPP-382), the feedback inbox (RAPP-383), notifications (RAPP-385), and the
- * player preview (RAPP-371); later phases add the dashboard, the team and the
- * rest.
+ * (RAPP-382), the feedback inbox (RAPP-383), notifications (RAPP-385), data
+ * exports and the audit log (RAPP-401), and the player preview (RAPP-371);
+ * later slices add the team and the rest.
  *
  */
 import { PageWidth } from '@/components/layout/content-width';
@@ -112,6 +112,21 @@ export default function TeamMoreScreen() {
             >
               <Text className={`text-start text-md text-neutral-900 ${languageFontClass}`}>
                 {tFeedback('inboxTitle')}
+              </Text>
+            </PressableScale>
+          ) : null}
+          {team.dataExports || team.auditLog ? (
+            <PressableScale
+              testID="team-more-data"
+              accessibilityRole="button"
+              accessibilityLabel={t('staff.data')}
+              onPress={() => push('/team-data' as Href)}
+              haptic="selection"
+              style={continuousCorners}
+              className="min-h-recommended justify-center rounded-md border border-neutral-200 bg-white px-md"
+            >
+              <Text className={`text-start text-md text-neutral-900 ${languageFontClass}`}>
+                {t('staff.data')}
               </Text>
             </PressableScale>
           ) : null}

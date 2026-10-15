@@ -67,5 +67,11 @@
   "auditActor": "المنفذ",
   "auditTarget": "الهدف",
   "auditDetails": "التفاصيل",
-  "auditNext": "الصفحة التالية"
+  "auditNext": "الصفحة التالية",
+  "exportShare": "شارك ملف CSV",
+  "exportFullShare": "شارك ملف CSV الكامل",
+  "exportShared": "التصدير جاهز ويحتوي على {{count}} صفوف.",
+  "exportPhoneNote": "على الهاتف، التصديرات ملفات CSV. ملفات Excel متاحة في لوحة الإدارة على الويب.",
+  "auditLoadMore": "اعرض المزيد",
+  "exportPeriod": "الفترة (اختيارية)"
 }

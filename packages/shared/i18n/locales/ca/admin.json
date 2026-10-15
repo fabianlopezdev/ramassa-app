@@ -67,5 +67,11 @@
   "auditActor": "Actor",
   "auditTarget": "Objectiu",
   "auditDetails": "Detalls",
-  "auditNext": "Pàgina següent"
+  "auditNext": "Pàgina següent",
+  "exportShare": "Comparteix el CSV",
+  "exportFullShare": "Comparteix el CSV complet",
+  "exportShared": "Exportació a punt amb {{count}} files.",
+  "exportPhoneNote": "Al telèfon, les exportacions són fitxers CSV. Els fitxers Excel són a l'administració web.",
+  "auditLoadMore": "Mostra'n més",
+  "exportPeriod": "Període (opcional)"
 }
