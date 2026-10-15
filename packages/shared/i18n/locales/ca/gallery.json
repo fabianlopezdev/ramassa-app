@@ -13,7 +13,10 @@
   "openSettings": "Obre els ajustos",
   "caption": "Text opcional",
   "privacy": "Qui ho pot veure?",
-  "privacyLevels": { "community": "Tota la comunitat", "staff_only": "Només l'equip" },
+  "privacyLevels": {
+    "community": "Tota la comunitat",
+    "staff_only": "Només l'equip"
+  },
   "consentReminder": "Confirmo que totes les persones que hi apareixen han acceptat compartir aquest contingut.",
   "consentRequired": "Cal confirmar el consentiment abans de publicar.",
   "publish": "Publica",
@@ -36,5 +39,18 @@
   "deleteBody": "La foto o el vídeo i la seva miniatura s'eliminaran definitivament.",
   "cancel": "Cancel·la",
   "flag": "Informa d'un problema",
-  "back": "Enrere"
+  "back": "Enrere",
+  "moderationTitle": "Moderació de la galeria",
+  "moderationIntro": "Amaga o torna a mostrar qualsevol foto o vídeo, encara que ningú n'hagi informat.",
+  "moderationTotal": "Elements: {{count}}",
+  "filterAll": "Tot",
+  "filterVisible": "Visibles",
+  "filterHidden": "Amagats",
+  "stateHidden": "Amagat",
+  "statePending": "Amagat fins que es revisi",
+  "moderationHide": "Amaga",
+  "moderationShow": "Torna-ho a mostrar",
+  "moderationReports": "Avisos: {{count}}",
+  "moderationVideo": "Vídeo",
+  "moderationFailed": "No s'ha pogut completar l'acció."
 }

@@ -108,6 +108,7 @@ export function teamScreens(permissions: ReadonlySet<PermissionCode>): {
   readonly serviceCategories: boolean;
   readonly serviceReviews: boolean;
   readonly forumModeration: boolean;
+  readonly galleryModeration: boolean;
   readonly mentoring: boolean;
   readonly messages: boolean;
   readonly stock: boolean;
@@ -128,6 +129,7 @@ export function teamScreens(permissions: ReadonlySet<PermissionCode>): {
     serviceCategories: permissions.has('services.edit'),
     serviceReviews: permissions.has('services.review'),
     forumModeration: permissions.has('forum.moderate'),
+    galleryModeration: permissions.has('gallery.moderate'),
     mentoring: permissions.has('mentoring.manage'),
     messages: permissions.has('messages.inbox'),
     stock: teamAreas(permissions).includes('stock'),

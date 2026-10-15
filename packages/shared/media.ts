@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
-import { AppError } from './errors';
+import { AppError, databaseErrorCode } from './errors';
 import { tokens } from './tokens';
 import type { Database } from './types/database';
 
@@ -144,4 +144,27 @@ export async function setMediaItemPrivacy(
     p_privacy_level: mediaPrivacySchema.parse(privacyLevel),
   });
   if (error !== null) throw new AppError('DB-1', { message: error.message });
+}
+
+/** The two states a gallery moderator sets (RAPP-381). */
+export const galleryModerationStateSchema = z.enum(['visible', 'hidden']);
+export type GalleryModerationState = z.infer<typeof galleryModerationStateSchema>;
+
+/**
+ * Hides a gallery item or shows it again, also one nobody reported, for
+ * `gallery.moderate` holders (RAPP-381). Its open reports are closed and the
+ * change is audited. Removing an item goes through the media Worker.
+ */
+export async function setMediaItemModeration(
+  client: SupabaseClient<Database>,
+  mediaItemId: string,
+  state: GalleryModerationState,
+): Promise<void> {
+  const { error } = await client.rpc('set_media_item_moderation', {
+    p_media_item_id: z.uuid().parse(mediaItemId),
+    p_state: galleryModerationStateSchema.parse(state),
+  });
+  if (error !== null) {
+    throw new AppError(databaseErrorCode(error.message, error.code), { message: error.message });
+  }
 }
