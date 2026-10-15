@@ -13,7 +13,10 @@
   "openSettings": "Open settings",
   "caption": "Optional caption",
   "privacy": "Who can see it?",
-  "privacyLevels": { "community": "Everyone in the community", "staff_only": "Staff only" },
+  "privacyLevels": {
+    "community": "Everyone in the community",
+    "staff_only": "Staff only"
+  },
   "consentReminder": "I confirm that everyone shown has agreed to this media being shared.",
   "consentRequired": "You must confirm consent before publishing.",
   "publish": "Publish",
@@ -36,5 +39,18 @@
   "deleteBody": "The photo or video and its thumbnail will be deleted permanently.",
   "cancel": "Cancel",
   "flag": "Report a problem",
-  "back": "Back"
+  "back": "Back",
+  "moderationTitle": "Gallery moderation",
+  "moderationIntro": "Hide or show again any photo or video, also one nobody has reported.",
+  "moderationTotal": "Items: {{count}}",
+  "filterAll": "All",
+  "filterVisible": "Visible",
+  "filterHidden": "Hidden",
+  "stateHidden": "Hidden",
+  "statePending": "Hidden until reviewed",
+  "moderationHide": "Hide",
+  "moderationShow": "Show again",
+  "moderationReports": "Reports: {{count}}",
+  "moderationVideo": "Video",
+  "moderationFailed": "The action could not be completed."
 }

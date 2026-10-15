@@ -1,8 +1,8 @@
 /**
  * More (RAPP-245): what is not an area of its own. Settings (language and app
  * lock) and sign-out, Stock for whoever receives, counts or edits material
- * (RAPP-250), forum moderation (RAPP-380), mentoring (RAPP-382), and the
- * player preview (RAPP-371); later phases add the dashboard, the team and the
+ * (RAPP-250), forum and gallery moderation (RAPP-380, RAPP-381), mentoring
+ * (RAPP-382), and the player preview (RAPP-371); later phases add the dashboard, the team and the
  * rest.
  *
  */
@@ -33,6 +33,7 @@ export default function TeamMoreScreen() {
   const team = teamScreens(permissions);
   const { t: tForum } = useTranslation('forum');
   const { t: tMentoring } = useTranslation('mentoring');
+  const { t: tGallery } = useTranslation('gallery');
   const languageFontClass = useLanguageFontClass();
   const { push } = useRouter();
 
@@ -78,6 +79,21 @@ export default function TeamMoreScreen() {
             >
               <Text className={`text-start text-md text-neutral-900 ${languageFontClass}`}>
                 {tForum('moderationTitle')}
+              </Text>
+            </PressableScale>
+          ) : null}
+          {team.galleryModeration ? (
+            <PressableScale
+              testID="team-more-gallery"
+              accessibilityRole="button"
+              accessibilityLabel={tGallery('moderationTitle')}
+              onPress={() => push('/team-gallery' as Href)}
+              haptic="selection"
+              style={continuousCorners}
+              className="min-h-recommended justify-center rounded-md border border-neutral-200 bg-white px-md"
+            >
+              <Text className={`text-start text-md text-neutral-900 ${languageFontClass}`}>
+                {tGallery('moderationTitle')}
               </Text>
             </PressableScale>
           ) : null}

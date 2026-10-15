@@ -1795,6 +1795,14 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - Announcements list: status chips (all, draft, published, scheduled, expired, the web admin's filter), the total, pages that load on scroll, and each row's title, category, date, status and whether it is pinned. On a phone a row opens its own screen; on a tablet it opens beside the list.
 - One announcement shows its status, category, publication and expiry, and the Catalan text. Pin and unpin are there for anyone who reads it; Delete is for `announcements.publish` holders, as the database requires, and asks first. The editor comes in RAPP-341.
 
+## Gallery moderation on the phone (2026-10-15, RAPP-381, part of RAPP-215)
+
+- Fabián's call (2026-10-15): staff need to browse every gallery photo and video and hide, show again or remove one, also one nobody reported. Reported items stay in forum moderation too.
+- `gallery.moderate` holders get "Moderació de la galeria" in More: a grid, newest first (two columns on a phone, four on a tablet), with All, Visible and Hidden filters (Hidden includes items hidden until reviewed). A tap opens the item with its caption, who shared it and when, who can see it, its state and its reports.
+- Hide and Show again go through `set_media_item_moderation(p_media_item_id, p_state)`: `gallery.moderate` only, closes the item's open reports (hiding acts on them, showing dismisses them), resets its report count and writes `gallery.hide` or `gallery.show` to the audit log. Remove asks first and deletes the row and its files through the media Worker.
+- The web admin gets the same screen separately (RAPP-387).
+- Checks: pgTAP `0064`, `app-team-gallery.web-qa.ts` (hide, filter, show again with the audit trail; remove with the file), the forum moderation specs, and the iPhone simulator.
+
 ## Mentoring requests on the phone (2026-10-14, RAPP-382, part of RAPP-215)
 
 - `mentoring.manage` holders get "Mentories" in More, and Today shows how many requests wait to be scheduled. The screen shows how many requests and on which topics, and each request as the web admin does: the participant, when she asked, the status, the topic, her private note and her preferred slot.
