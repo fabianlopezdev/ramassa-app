@@ -24,6 +24,7 @@ const referralsIcon = {
   android: 'person_add',
   web: 'person_add',
 } as const;
+const eventsIcon = { ios: 'calendar', android: 'calendar_month', web: 'calendar_month' } as const;
 const messagesIcon = {
   ios: 'bubble.left.and.bubble.right.fill',
   android: 'chat',
@@ -82,6 +83,15 @@ export default function EntityShellLayout() {
                 icon={referralsIcon}
               />
             </TabTrigger>
+            <TabTrigger name="entity-events" href="/entity-events" asChild>
+              <TeamSidebarItem
+                compact={false}
+                testID="entity-sidebar-events"
+                isFocused={pathname === '/entity-events'}
+                label={t('entity.events')}
+                icon={eventsIcon}
+              />
+            </TabTrigger>
             <TabTrigger name="entity-messages" href="/entity-messages" asChild>
               <TeamSidebarItem
                 compact={false}
@@ -120,6 +130,10 @@ export default function EntityShellLayout() {
       <NativeTabs.Trigger name="entity-referrals" testID="entity-tab-referrals">
         <NativeTabs.Trigger.Icon sf="person.crop.circle.badge.plus" md="person_add" />
         <NativeTabs.Trigger.Label>{t('entity.referrals')}</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="entity-events" testID="entity-tab-events">
+        <NativeTabs.Trigger.Icon sf="calendar" md="calendar_month" />
+        <NativeTabs.Trigger.Label>{t('entity.events')}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="entity-messages" testID="entity-tab-messages">
         <NativeTabs.Trigger.Icon sf="bubble.left.and.bubble.right.fill" md="chat" />

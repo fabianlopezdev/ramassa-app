@@ -1911,6 +1911,13 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
   - On a tablet (web), the team and entity shells bound their tab slot. Before, a message thread there grew the page without end.
 - Checks: `app-entity-messages.web-qa.ts` (a team reply counted on the tab, read in the chat, an answer saved; the team thread keeps its height beside the sidebar), `app-account-routes.web-qa.ts`, the messaging contract tests, and the iPhone simulator (badge while on another tab, cleared on open, a sent message, the keyboard).
 
+## Entity events on the phone (2026-10-15, RAPP-412, part of RAPP-217)
+
+- A partner entity's contact gets the Events tab, as the web portal's events page: the published upcoming events (`list_entity_upcoming_events`), read only, in date order, with the title and description in her language, the place and a recurring mark.
+- The phone shows the date and the time, in the event's own time zone; the web page shows the date only.
+- With this slice the entity has all five tabs: Home, Referrals, Services, Events and Messages.
+- Checks: `app-entity-events.web-qa.ts` (the published upcoming events in order with titles and the recurring mark, and none that is a draft or past), and the iPhone simulator.
+
 ## Notifications and targeted push on the phone (2026-10-15, RAPP-385, part of RAPP-215)
 
 - `notifications.send` holders get "Notificacions" in More, as the web admin's workspace. A message starts from a template or blank, in Catalan; the four translations are generated and must all be approved before it is sent or saved as a template.
