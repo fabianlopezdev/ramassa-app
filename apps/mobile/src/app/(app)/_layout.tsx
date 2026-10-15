@@ -236,6 +236,8 @@ export default function AppLayout() {
         {/* The partner entity's tabs (RAPP-410), as the web portal. */}
         <Stack.Protected guard={area === 'entity'}>
           <Stack.Screen name="(entity)" />
+          <Stack.Screen name="entity-referral-new" />
+          <Stack.Screen name="entity-referral/[id]" />
         </Stack.Protected>
         <Stack.Protected guard={area === 'player' || area === 'team' || area === 'entity'}>
           <Stack.Screen name="app-lock" />
