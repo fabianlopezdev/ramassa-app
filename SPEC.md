@@ -1804,6 +1804,15 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - The CSV export waits for the phone's exports (RAPP-216), which ask for the second factor and use the share sheet, because the file names participants.
 - Checks: `app-team-surveys.web-qa.ts` (the seeded results against the database, the approval gate, a new survey with a rating and a choice question in five languages), the player and staff `surveys.web-qa.ts`, unit tests for the survey state and the screen flags, and the iPhone simulator.
 
+## Forum categories on the phone (2026-10-15, RAPP-386, part of RAPP-215)
+
+- `forum.moderate` holders open "Categories del fòrum" from forum moderation, as the category manager under the web admin's forum moderation: the categories in the order participants see them, with Up, Down, Edit and Delete. New and Edit open a sheet.
+- The name is written in Catalan; the four translations are generated and must all be approved, also again on an edit, as for event categories. The web form asks for the five names by hand.
+- A new category's identifier is made from the Catalan name (lowercase letters, numbers and hyphens) until it is changed by hand. Icon and colour are free text, as in the web admin, because nothing shows them yet; a new category starts with `bubble` and `neutral`.
+- Up and Down number every category again by tens (10, 20, 30), and save only those whose number changes. The web admin takes an order number instead.
+- A category with posts cannot be deleted: the database refuses it and the screen says so.
+- Checks: `app-forum-categories.web-qa.ts` (create in five languages with the made identifier, move up, edit, refused delete with a post, delete), the forum moderation specs, unit tests for the identifier, and the iPhone simulator.
+
 ## Custom notification groups on the phone (2026-10-15, RAPP-389, part of RAPP-215)
 
 - The notifications screen gets "Grups personalitzats": each group with its member count, New group and Edit, as the web admin's group form. A sheet takes the name and the participants, picked from a search that ignores case and accents; the selection stays while the search changes.
@@ -1811,6 +1820,15 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - Groups are not deleted on the phone, as in the web admin.
 - The member and selection counts now have singular and plural forms in the five languages ("1 membre", "2 membres"), also in the web admin.
 - Checks: `app-team-notification-groups.web-qa.ts` (accent-blind search, create, add a member, the group as an exact audience), `app-team-notifications.web-qa.ts`, the web admin `targeted-notifications.web-qa.ts`, the web admin unit tests, and the iPhone simulator.
+
+## Data exports and the audit log on the phone (2026-10-15, RAPP-401, part of RAPP-216)
+
+- Holders of any `export.*` permission or `audit.view` get "Dades i auditoria" in More, as the web admin's Data page.
+- Exports: only the datasets the person may export (participants, attendance, events), over an optional period. A default export, or a full one with a reason of 10 characters or more and a confirmation; a full participant export shows only for holders of `export.participants_sensitive` and `participants.view_sensitive`, as the database requires.
+- The step-up comes first (device check, then an authenticator code when the session has none from the last 10 minutes), because `create_data_export` refuses without it. The database also checks the dataset permission, limits the rate and writes the `data_export.*` audit row.
+- The rows become a CSV (`buildExportCsv`, the web admin's format), which opens in the system share sheet (`expo-sharing`, a new native module) and is deleted from the phone's cache when the sheet closes. The web build downloads it instead (`share-file.web.ts`). Excel stays on the web admin.
+- The audit log, for `audit.view` holders: entries newest first as cards, filtered by action, target type and period, 25 at a time with "Show more". The web admin's actor and target id filters stay on the web, because they take UUIDs.
+- Checks: `app-team-data.web-qa.ts` (no data screen without the permissions; a default events export and a full participant export against the CSV, the database and the audit rows; the audit filter), the web admin `data-exports-audit.web-qa.ts`, unit tests for the screen flags, and the iPhone simulator with the share sheet.
 
 ## Impact dashboard on the phone (2026-10-15, RAPP-400, part of RAPP-216)
 
@@ -1820,6 +1838,14 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - Categories, nationalities, age bands and entities show as bars with their numbers, where the web uses tables. Forum and referral figures as on the web. Groups too small to count stay suppressed, and a filtered group under three participants shows only the privacy note.
 - The web admin's dashboard nav item keeps no permission filter, because the dashboard is the staff landing page; the database refuses the report without `impact.view`.
 - Checks: `app-team-impact.web-qa.ts` (the default period, the cards against the database reply, the monthly chart and table, the period and category filters in the request), unit tests for the periods in three time zones and the screen flag, and the iPhone simulator.
+
+## Team access on the phone (2026-10-15, RAPP-405, part of RAPP-216)
+
+- The Team screen gets Edit access for each active person and a Presets section, as the web admin's Team tab and its dialogs.
+- Edit access opens a sheet: choose a preset and "Use this preset", then single switches grouped by area, each area with a switch for all of it. A switch the reader does not hold is shown but locked, with the reason above the list; "Use this preset" changes only the switches the reader holds (`presetWithinReach`, now shared with the web admin).
+- Presets: each with its permission count and how many people use it, Edit, and Restore default (built-in) or Delete (custom); New preset. A saved preset that people use opens "Apply the changes": everyone, some (picked by name) or nobody. Nobody's access changes until that choice.
+- Every change asks for the step-up, as on the web. A change to one's own access reads the permissions again at once. The database keeps at least one person with Team management and explains a refusal in the sheet.
+- Checks: `app-team-access.web-qa.ts` (Coach plus one switch reads as adjusted, a new preset applied to a person, an edit applied by choice, delete), the web admin `team-access.web-qa.ts`, unit tests for `presetWithinReach`, and the iPhone simulator.
 
 ## The team's accounts on the phone (2026-10-15, RAPP-404, part of RAPP-216)
 

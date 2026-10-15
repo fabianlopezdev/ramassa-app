@@ -76,5 +76,11 @@
   "impactChartMonthly": "{{metric}} در هر ماه",
   "impactChartEmpty": "برای این دوره داده کافی برای نمودار وجود ندارد.",
   "impactLoadFailed": "گزارش اثر بارگیری نشد.",
-  "impactClose": "بستن"
+  "impactClose": "بستن",
+  "exportShare": "اشتراک فایل CSV",
+  "exportFullShare": "اشتراک فایل CSV کامل",
+  "exportShared": "خروجی با {{count}} ردیف آماده است.",
+  "exportPhoneNote": "در تلفن، خروجی ها فایل CSV هستند. فایل های Excel در پنل مدیریت وب هستند.",
+  "auditLoadMore": "بیشتر نشان بده",
+  "exportPeriod": "دوره (اختیاری)"
 }

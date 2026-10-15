@@ -131,6 +131,8 @@ test('team screens follow permissions', () => {
     surveys: false,
     surveyEditor: false,
     surveyResults: false,
+    dataExports: false,
+    auditLog: false,
     staff: false,
     impact: false,
     mentoring: false,
@@ -159,6 +161,8 @@ test('team screens follow permissions', () => {
     surveys: false,
     surveyEditor: false,
     surveyResults: false,
+    dataExports: false,
+    auditLog: false,
     staff: false,
     impact: false,
     mentoring: false,
@@ -187,6 +191,8 @@ test('team screens follow permissions', () => {
     surveys: false,
     surveyEditor: false,
     surveyResults: false,
+    dataExports: false,
+    auditLog: false,
     staff: false,
     impact: false,
     mentoring: false,
@@ -215,6 +221,8 @@ test('team screens follow permissions', () => {
     surveys: false,
     surveyEditor: false,
     surveyResults: false,
+    dataExports: false,
+    auditLog: false,
     staff: false,
     impact: false,
     mentoring: false,
@@ -244,6 +252,8 @@ test('team screens follow permissions', () => {
     surveys: false,
     surveyEditor: false,
     surveyResults: false,
+    dataExports: false,
+    auditLog: false,
     staff: false,
     impact: false,
     mentoring: false,
@@ -287,16 +297,14 @@ test('each area starts on its own home; the player keeps the root', () => {
   expect(areaHome('player', new Set(), phone)).toBeNull();
 });
 
-test('survey results alone open the survey list without the editor', () => {
-  expect(teamScreens(new Set(['surveys.results']))).toMatchObject({
-    surveys: true,
-    surveyEditor: false,
-    surveyResults: true,
+test('any export permission opens the exports, and audit.view the audit log', () => {
+  expect(teamScreens(new Set(['export.events']))).toMatchObject({
+    dataExports: true,
+    auditLog: false,
   });
-  expect(teamScreens(new Set(['surveys.manage']))).toMatchObject({
-    surveys: true,
-    surveyEditor: true,
-    surveyResults: false,
+  expect(teamScreens(new Set(['audit.view']))).toMatchObject({
+    dataExports: false,
+    auditLog: true,
   });
 });
 
@@ -308,4 +316,17 @@ test('impact.view opens the impact dashboard', () => {
 test('team.manage opens the team screen', () => {
   expect(teamScreens(new Set(['team.manage'])).staff).toBe(true);
   expect(teamScreens(new Set(['settings.branding'])).staff).toBe(false);
+});
+
+test('survey results alone open the survey list without the editor', () => {
+  expect(teamScreens(new Set(['surveys.results']))).toMatchObject({
+    surveys: true,
+    surveyEditor: false,
+    surveyResults: true,
+  });
+  expect(teamScreens(new Set(['surveys.manage']))).toMatchObject({
+    surveys: true,
+    surveyEditor: true,
+    surveyResults: false,
+  });
 });
