@@ -4,8 +4,8 @@
  * (RAPP-250), forum and gallery moderation (RAPP-380, RAPP-381), mentoring
  * (RAPP-382), the feedback inbox (RAPP-383), notifications (RAPP-385),
  * surveys (RAPP-384), the impact dashboard (RAPP-400), data exports and the
- * audit log (RAPP-401), the team (RAPP-404), and the player preview (RAPP-371);
- * later slices add the rest.
+ * audit log (RAPP-401), the team (RAPP-404), the organization's settings
+ * (RAPP-403), and the player preview (RAPP-371); later slices add the rest.
  *
  */
 import { PageWidth } from '@/components/layout/content-width';
@@ -164,18 +164,18 @@ export default function TeamMoreScreen() {
               </Text>
             </PressableScale>
           ) : null}
-          {team.notifications ? (
+          {team.organization ? (
             <PressableScale
-              testID="team-more-notifications"
+              testID="team-more-organization"
               accessibilityRole="button"
-              accessibilityLabel={tNotifications('title')}
-              onPress={() => push('/team-notifications' as Href)}
+              accessibilityLabel={tSettings('tabOrganization')}
+              onPress={() => push('/team-organization' as Href)}
               haptic="selection"
               style={continuousCorners}
               className="min-h-recommended justify-center rounded-md border border-neutral-200 bg-white px-md"
             >
               <Text className={`text-start text-md text-neutral-900 ${languageFontClass}`}>
-                {tNotifications('title')}
+                {tSettings('tabOrganization')}
               </Text>
             </PressableScale>
           ) : null}
@@ -191,6 +191,21 @@ export default function TeamMoreScreen() {
             >
               <Text className={`text-start text-md text-neutral-900 ${languageFontClass}`}>
                 {tSurveys('title')}
+              </Text>
+            </PressableScale>
+          ) : null}
+          {team.notifications ? (
+            <PressableScale
+              testID="team-more-notifications"
+              accessibilityRole="button"
+              accessibilityLabel={tNotifications('title')}
+              onPress={() => push('/team-notifications' as Href)}
+              haptic="selection"
+              style={continuousCorners}
+              className="min-h-recommended justify-center rounded-md border border-neutral-200 bg-white px-md"
+            >
+              <Text className={`text-start text-md text-neutral-900 ${languageFontClass}`}>
+                {tNotifications('title')}
               </Text>
             </PressableScale>
           ) : null}
