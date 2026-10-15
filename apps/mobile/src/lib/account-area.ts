@@ -114,6 +114,7 @@ export function teamScreens(permissions: ReadonlySet<PermissionCode>): {
   readonly surveys: boolean;
   readonly surveyEditor: boolean;
   readonly surveyResults: boolean;
+  readonly documents: boolean;
   readonly organization: boolean;
   readonly dataExports: boolean;
   readonly auditLog: boolean;
@@ -145,6 +146,7 @@ export function teamScreens(permissions: ReadonlySet<PermissionCode>): {
     surveys: permissions.has('surveys.manage') || permissions.has('surveys.results'),
     surveyEditor: permissions.has('surveys.manage'),
     surveyResults: permissions.has('surveys.results'),
+    documents: permissions.has('settings.documents'),
     organization: permissions.has('settings.organization') || permissions.has('settings.branding'),
     dataExports:
       permissions.has('export.participants') ||
