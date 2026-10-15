@@ -131,6 +131,7 @@ test('team screens follow permissions', () => {
     surveys: false,
     surveyEditor: false,
     surveyResults: false,
+    staff: false,
     impact: false,
     mentoring: false,
     messages: false,
@@ -158,6 +159,7 @@ test('team screens follow permissions', () => {
     surveys: false,
     surveyEditor: false,
     surveyResults: false,
+    staff: false,
     impact: false,
     mentoring: false,
     messages: true,
@@ -185,6 +187,7 @@ test('team screens follow permissions', () => {
     surveys: false,
     surveyEditor: false,
     surveyResults: false,
+    staff: false,
     impact: false,
     mentoring: false,
     messages: false,
@@ -212,6 +215,7 @@ test('team screens follow permissions', () => {
     surveys: false,
     surveyEditor: false,
     surveyResults: false,
+    staff: false,
     impact: false,
     mentoring: false,
     messages: false,
@@ -240,6 +244,7 @@ test('team screens follow permissions', () => {
     surveys: false,
     surveyEditor: false,
     surveyResults: false,
+    staff: false,
     impact: false,
     mentoring: false,
     messages: false,
@@ -298,4 +303,9 @@ test('survey results alone open the survey list without the editor', () => {
 test('impact.view opens the impact dashboard', () => {
   expect(teamScreens(new Set(['impact.view'])).impact).toBe(true);
   expect(teamScreens(new Set(['export.attendance'])).impact).toBe(false);
+});
+
+test('team.manage opens the team screen', () => {
+  expect(teamScreens(new Set(['team.manage'])).staff).toBe(true);
+  expect(teamScreens(new Set(['settings.branding'])).staff).toBe(false);
 });
