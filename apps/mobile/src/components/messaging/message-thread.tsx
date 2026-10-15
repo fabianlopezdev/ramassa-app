@@ -6,9 +6,9 @@ import { continuousCorners } from '@/lib/continuous-corners';
 import { messageListKeyboardDismissMode, staffConversationTitle } from '@/lib/message-thread-state';
 import { useOwnConversation, useStaffConversation } from '@/lib/messaging';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
+import { FlashList, type FlashListRef, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
-import { memo, useCallback, useMemo, useState, type ReactNode } from 'react';
+import { memo, useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { KeyboardAvoidingView, Platform, Text, TextInput, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -267,6 +267,18 @@ function MessageThreadView({
       new Intl.DateTimeFormat(i18n.resolvedLanguage ?? DEFAULT_LANGUAGE, { dateStyle: 'medium' }),
     [i18n.resolvedLanguage],
   );
+  // FlashList renders from the bottom, but it stopped short of the end (on
+  // Android by a line, on iOS by half a bubble), so the newest message opened
+  // behind the composer. Until she drags the list, it follows the end each
+  // time the measured content grows (RAPP-433).
+  const listRef = useRef<FlashListRef<TimelineRow>>(null);
+  const followsNewest = useRef(true);
+  const showNewest = useCallback(() => {
+    if (followsNewest.current) void listRef.current?.scrollToEnd({ animated: false });
+  }, []);
+  const stopFollowing = useCallback(() => {
+    followsNewest.current = false;
+  }, []);
   const rows = useMemo(() => {
     const result: TimelineRow[] = [];
     let previousDay = '';
@@ -395,6 +407,10 @@ function MessageThreadView({
             />
           ) : (
             <FlashList
+              ref={listRef}
+              onLoad={showNewest}
+              onContentSizeChange={showNewest}
+              onScrollBeginDrag={stopFollowing}
               data={rows}
               renderItem={renderItem}
               keyExtractor={timelineKeyExtractor}

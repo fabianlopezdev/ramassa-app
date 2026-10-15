@@ -1935,6 +1935,12 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - Phone: Share CSV on a survey's results, through the step-up (Face ID, then the code when needed) and the share sheet; the file is deleted from the phone afterwards.
 - Checks: pgTAP `0066_survey_export_test.sql` (rows and audit row, no recent code, no permission, unknown survey, rate limit), `surveys.web-qa.ts` (the web CSV and its audit row), `app-team-surveys.web-qa.ts` (the phone CSV and its audit row), and the iPhone simulator.
 
+## Message threads open at the newest message (2026-10-15, RAPP-433)
+
+- A chat on the phone opened a little short of its end: on Android the newest message's delivery line was hidden, on iOS half the newest bubble sat behind the composer. FlashList (2.0.2) renders from the bottom but measured the content after its first jump. The thread is shared, so every chat had it.
+- Now the list follows its end each time the measured content grows, until she drags it; new messages keep landing at the bottom as before.
+- Checks: the messaging contract tests, `app-entity-messages.web-qa.ts`, and the entity chat opened on the Android emulator (Fold) and the iPhone simulator, both showing the newest message with its delivery line.
+
 ## Notifications and targeted push on the phone (2026-10-15, RAPP-385, part of RAPP-215)
 
 - `notifications.send` holders get "Notificacions" in More, as the web admin's workspace. A message starts from a template or blank, in Catalan; the four translations are generated and must all be approved before it is sent or saved as a template.
