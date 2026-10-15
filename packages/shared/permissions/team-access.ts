@@ -246,3 +246,19 @@ export function membersUsingPreset(
 ): readonly TeamMemberAccess[] {
   return members.filter((member) => member.presetId === presetId);
 }
+
+/**
+ * The database refuses a team change with a stable code in its message; each
+ * gets its own sentence in the `settings` namespace (RAPP-231). Shared by the
+ * web admin and the phone (RAPP-404).
+ */
+export function teamAccessErrorKey(error: unknown): string {
+  const text = error instanceof Error ? error.message : '';
+  if (text.includes('PERMISSIONS/LAST_TEAM_MANAGER') || text.includes('team.manage holder')) {
+    return 'team.errorLastManager';
+  }
+  if (text.includes('PERMISSIONS/NOT_HELD')) return 'team.errorNotHeld';
+  if (text.includes('PERMISSIONS/BUILTIN_PRESET')) return 'team.errorBuiltIn';
+  if (text.includes('PERMISSIONS/PRESET_NAME_REQUIRED')) return 'team.errorPresetName';
+  return 'actionError';
+}
