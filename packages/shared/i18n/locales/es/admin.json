@@ -76,5 +76,11 @@
   "impactChartMonthly": "{{metric}} por mes",
   "impactChartEmpty": "No hay datos suficientes para un gráfico en este periodo.",
   "impactLoadFailed": "No hemos podido cargar el informe de impacto.",
-  "impactClose": "Cerrar"
+  "impactClose": "Cerrar",
+  "exportShare": "Comparte el CSV",
+  "exportFullShare": "Comparte el CSV completo",
+  "exportShared": "Exportación lista con {{count}} filas.",
+  "exportPhoneNote": "En el teléfono, las exportaciones son archivos CSV. Los archivos Excel están en la administración web.",
+  "auditLoadMore": "Muestra más",
+  "exportPeriod": "Periodo (opcional)"
 }

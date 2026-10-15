@@ -165,6 +165,9 @@ export default function AppLayout() {
         <Stack.Protected guard={isTeam && team.notifications}>
           <Stack.Screen name="team-notifications" />
         </Stack.Protected>
+        <Stack.Protected guard={isTeam && (team.dataExports || team.auditLog)}>
+          <Stack.Screen name="team-data" />
+        </Stack.Protected>
         <Stack.Protected guard={isTeam && team.impact}>
           <Stack.Screen name="team-impact" />
         </Stack.Protected>

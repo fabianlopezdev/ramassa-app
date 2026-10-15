@@ -130,7 +130,8 @@
       "expo-video",
       "expo-image",
       "expo-status-bar",
-      "expo-web-browser"
+      "expo-web-browser",
+      "expo-sharing"
     ],
     "extra": {
       "supportsRTL": true,

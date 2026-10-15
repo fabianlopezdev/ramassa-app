@@ -1812,6 +1812,15 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - The member and selection counts now have singular and plural forms in the five languages ("1 membre", "2 membres"), also in the web admin.
 - Checks: `app-team-notification-groups.web-qa.ts` (accent-blind search, create, add a member, the group as an exact audience), `app-team-notifications.web-qa.ts`, the web admin `targeted-notifications.web-qa.ts`, the web admin unit tests, and the iPhone simulator.
 
+## Data exports and the audit log on the phone (2026-10-15, RAPP-401, part of RAPP-216)
+
+- Holders of any `export.*` permission or `audit.view` get "Dades i auditoria" in More, as the web admin's Data page.
+- Exports: only the datasets the person may export (participants, attendance, events), over an optional period. A default export, or a full one with a reason of 10 characters or more and a confirmation; a full participant export shows only for holders of `export.participants_sensitive` and `participants.view_sensitive`, as the database requires.
+- The step-up comes first (device check, then an authenticator code when the session has none from the last 10 minutes), because `create_data_export` refuses without it. The database also checks the dataset permission, limits the rate and writes the `data_export.*` audit row.
+- The rows become a CSV (`buildExportCsv`, the web admin's format), which opens in the system share sheet (`expo-sharing`, a new native module) and is deleted from the phone's cache when the sheet closes. The web build downloads it instead (`share-file.web.ts`). Excel stays on the web admin.
+- The audit log, for `audit.view` holders: entries newest first as cards, filtered by action, target type and period, 25 at a time with "Show more". The web admin's actor and target id filters stay on the web, because they take UUIDs.
+- Checks: `app-team-data.web-qa.ts` (no data screen without the permissions; a default events export and a full participant export against the CSV, the database and the audit rows; the audit filter), the web admin `data-exports-audit.web-qa.ts`, unit tests for the screen flags, and the iPhone simulator with the share sheet.
+
 ## Impact dashboard on the phone (2026-10-15, RAPP-400, part of RAPP-216)
 
 - `impact.view` holders get "Informe d'impacte" in More, as the web admin's dashboard (`get_impact_report`), redesigned for small screens as the design doc asks.
