@@ -5,6 +5,7 @@
  * rejection. Each one opens, and the actions its status allows (resubmit,
  * delete) are on its card. New service starts a submission.
  */
+import { EntityLoadFailure, hasLoadFailed } from '@/components/entity/entity-load-failure';
 import { EntityServiceStatus } from '@/components/entity/entity-service-status';
 import { PageWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
@@ -180,7 +181,9 @@ export default function EntityServicesScreen() {
             </View>
           )}
 
-          {services.data !== undefined && rows.length === 0 ? (
+          {hasLoadFailed(services) ? (
+            <EntityLoadFailure query={services} />
+          ) : services.data !== undefined && rows.length === 0 ? (
             <View className="gap-xs">
               <Text className={`text-start text-lg font-semibold text-neutral-900 ${fontClass}`}>
                 {t('emptyTitle')}

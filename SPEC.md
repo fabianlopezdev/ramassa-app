@@ -1941,6 +1941,12 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - Now the list follows its end each time the measured content grows, until she drags it; new messages keep landing at the bottom as before.
 - Checks: the messaging contract tests, `app-entity-messages.web-qa.ts`, and the entity chat opened on the Android emulator (Fold) and the iPhone simulator, both showing the newest message with its delivery line.
 
+## Entity screens say when their data does not load (2026-10-15, RAPP-434)
+
+- Offline, the entity's Referrals tab showed only its search field: no list, no message and no way to try again. Home, Services and Events had the same gap. Offline, React Query pauses a query instead of failing it, and these screens read only its data.
+- Now `EntityLoadFailure` (`components/entity/entity-load-failure.tsx`) shows on each of the four when there is no data and the load failed or waits for a connection: the error's own message (no connection when it waits), its code, and Try again. Her data stays in memory only, because it names people, so there is nothing saved to show instead. Messages already had its offline line.
+- Checks: the four entity specs, and the Android emulator offline (Referrals shows no connection with NETWORK-1) and online again (Try again shows the list).
+
 ## Notifications and targeted push on the phone (2026-10-15, RAPP-385, part of RAPP-215)
 
 - `notifications.send` holders get "Notificacions" in More, as the web admin's workspace. A message starts from a template or blank, in Catalan; the four translations are generated and must all be approved before it is sent or saved as a template.
