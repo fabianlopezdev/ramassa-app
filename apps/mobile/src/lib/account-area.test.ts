@@ -128,6 +128,7 @@ test('team screens follow permissions', () => {
     galleryModeration: false,
     feedback: false,
     notifications: false,
+    entities: false,
     documents: false,
     organization: false,
     dataExports: false,
@@ -157,6 +158,7 @@ test('team screens follow permissions', () => {
     galleryModeration: false,
     feedback: false,
     notifications: false,
+    entities: false,
     documents: false,
     organization: false,
     dataExports: false,
@@ -186,6 +188,7 @@ test('team screens follow permissions', () => {
     galleryModeration: false,
     feedback: false,
     notifications: false,
+    entities: false,
     documents: false,
     organization: false,
     dataExports: false,
@@ -215,6 +218,7 @@ test('team screens follow permissions', () => {
     galleryModeration: false,
     feedback: false,
     notifications: false,
+    entities: false,
     documents: false,
     organization: false,
     dataExports: false,
@@ -245,6 +249,7 @@ test('team screens follow permissions', () => {
     galleryModeration: false,
     feedback: false,
     notifications: false,
+    entities: false,
     documents: false,
     organization: false,
     dataExports: false,
@@ -322,4 +327,9 @@ test('organization or branding settings open the organization screen', () => {
 test('settings.documents opens the internal documents', () => {
   expect(teamScreens(new Set(['settings.documents'])).documents).toBe(true);
   expect(teamScreens(new Set(['settings.branding'])).documents).toBe(false);
+});
+
+test('entities.manage opens the collaborating entities', () => {
+  expect(teamScreens(new Set(['entities.manage'])).entities).toBe(true);
+  expect(teamScreens(new Set(['team.manage'])).entities).toBe(false);
 });
