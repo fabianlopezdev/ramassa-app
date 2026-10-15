@@ -6,6 +6,9 @@
  * every read to her own entity, and only once her second factor is verified.
  */
 import { TeamSidebarItem } from '@/components/team/team-sidebar-item';
+import { useUnreadMessages } from '@/lib/messaging';
+import { boundedTabSlotStyle } from '@/lib/tab-slot-style';
+import { unreadBadgeProps } from '@/lib/unread-badge';
 import { usePathname } from 'expo-router';
 import { NativeTabs } from 'expo-router/native-tabs';
 import { TabList, Tabs, TabSlot, TabTrigger } from 'expo-router/ui';
@@ -25,6 +28,11 @@ const servicesIcon = {
   ios: 'square.grid.2x2.fill',
   android: 'category',
   web: 'category',
+} as const;
+const messagesIcon = {
+  ios: 'bubble.left.and.bubble.right.fill',
+  android: 'chat',
+  web: 'chat',
 } as const;
 // A style object, as in the team shell: TabList puts its own row layout on its
 // child, and that wins over classes.
@@ -50,6 +58,7 @@ export default function EntityShellLayout() {
   const { t } = useTranslation('nav');
   const { width } = useWindowDimensions();
   const pathname = usePathname();
+  const unreadBadge = unreadBadgeProps(useUnreadMessages().data ?? 0);
 
   if (width >= TABLET_WIDTH) {
     return (
@@ -87,10 +96,20 @@ export default function EntityShellLayout() {
                 icon={servicesIcon}
               />
             </TabTrigger>
+            <TabTrigger name="entity-messages" href="/entity-messages" asChild>
+              <TeamSidebarItem
+                compact={false}
+                testID="entity-sidebar-messages"
+                isFocused={pathname === '/entity-messages'}
+                label={t('entity.messages')}
+                icon={messagesIcon}
+                badge={unreadBadge.hidden ? null : unreadBadge.children}
+              />
+            </TabTrigger>
           </View>
         </TabList>
         <SafeAreaView edges={['top', 'right', 'bottom']} className="flex-1">
-          <TabSlot />
+          <TabSlot style={boundedTabSlotStyle} />
         </SafeAreaView>
       </Tabs>
     );
@@ -119,6 +138,13 @@ export default function EntityShellLayout() {
       <NativeTabs.Trigger name="entity-services" testID="entity-tab-services">
         <NativeTabs.Trigger.Icon sf="square.grid.2x2.fill" md="category" />
         <NativeTabs.Trigger.Label>{t('entity.services')}</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="entity-messages" testID="entity-tab-messages">
+        <NativeTabs.Trigger.Icon sf="bubble.left.and.bubble.right.fill" md="chat" />
+        <NativeTabs.Trigger.Label>{t('entity.messages')}</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Badge hidden={unreadBadge.hidden}>
+          {unreadBadge.children}
+        </NativeTabs.Trigger.Badge>
       </NativeTabs.Trigger>
     </NativeTabs>
   );
