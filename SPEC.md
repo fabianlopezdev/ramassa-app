@@ -1812,6 +1812,14 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - The web admin's dashboard nav item keeps no permission filter, because the dashboard is the staff landing page; the database refuses the report without `impact.view`.
 - Checks: `app-team-impact.web-qa.ts` (the default period, the cards against the database reply, the monthly chart and table, the period and category filters in the request), unit tests for the periods in three time zones and the screen flag, and the iPhone simulator.
 
+## Team access on the phone (2026-10-15, RAPP-405, part of RAPP-216)
+
+- The Team screen gets Edit access for each active person and a Presets section, as the web admin's Team tab and its dialogs.
+- Edit access opens a sheet: choose a preset and "Use this preset", then single switches grouped by area, each area with a switch for all of it. A switch the reader does not hold is shown but locked, with the reason above the list; "Use this preset" changes only the switches the reader holds (`presetWithinReach`, now shared with the web admin).
+- Presets: each with its permission count and how many people use it, Edit, and Restore default (built-in) or Delete (custom); New preset. A saved preset that people use opens "Apply the changes": everyone, some (picked by name) or nobody. Nobody's access changes until that choice.
+- Every change asks for the step-up, as on the web. A change to one's own access reads the permissions again at once. The database keeps at least one person with Team management and explains a refusal in the sheet.
+- Checks: `app-team-access.web-qa.ts` (Coach plus one switch reads as adjusted, a new preset applied to a person, an edit applied by choice, delete), the web admin `team-access.web-qa.ts`, unit tests for `presetWithinReach`, and the iPhone simulator.
+
 ## The team's accounts on the phone (2026-10-15, RAPP-404, part of RAPP-216)
 
 - `team.manage` holders get "Equip" in More, as the web admin's Team tab: invite a person (first name, last name, email and a preset; Administration makes an admin account, any other preset a staff account), then each person with their access summary ("Staff, adjusted") and whether they are active.
