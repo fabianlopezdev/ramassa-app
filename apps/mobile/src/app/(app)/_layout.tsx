@@ -165,6 +165,15 @@ export default function AppLayout() {
         <Stack.Protected guard={isTeam && team.notifications}>
           <Stack.Screen name="team-notifications" />
         </Stack.Protected>
+        <Stack.Protected guard={isTeam && team.surveys}>
+          <Stack.Screen name="team-surveys" />
+        </Stack.Protected>
+        <Stack.Protected guard={isTeam && team.surveyEditor}>
+          <Stack.Screen name="team-survey-new" />
+        </Stack.Protected>
+        <Stack.Protected guard={isTeam && team.surveyResults}>
+          <Stack.Screen name="team-survey-results/[id]" />
+        </Stack.Protected>
         <Stack.Protected guard={isTeam && team.feedback}>
           <Stack.Screen name="team-feedback" />
         </Stack.Protected>

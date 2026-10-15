@@ -2,9 +2,9 @@
  * More (RAPP-245): what is not an area of its own. Settings (language and app
  * lock) and sign-out, Stock for whoever receives, counts or edits material
  * (RAPP-250), forum and gallery moderation (RAPP-380, RAPP-381), mentoring
- * (RAPP-382), the feedback inbox (RAPP-383), notifications (RAPP-385), and the
- * player preview (RAPP-371); later phases add the dashboard, the team and the
- * rest.
+ * (RAPP-382), the feedback inbox (RAPP-383), notifications (RAPP-385),
+ * surveys (RAPP-384), and the player preview (RAPP-371); later phases add the
+ * dashboard, the team and the rest.
  *
  */
 import { PageWidth } from '@/components/layout/content-width';
@@ -37,6 +37,7 @@ export default function TeamMoreScreen() {
   const { t: tGallery } = useTranslation('gallery');
   const { t: tFeedback } = useTranslation('feedback');
   const { t: tNotifications } = useTranslation('notifications');
+  const { t: tSurveys } = useTranslation('surveys');
   const languageFontClass = useLanguageFontClass();
   const { push } = useRouter();
 
@@ -127,6 +128,21 @@ export default function TeamMoreScreen() {
             >
               <Text className={`text-start text-md text-neutral-900 ${languageFontClass}`}>
                 {tNotifications('title')}
+              </Text>
+            </PressableScale>
+          ) : null}
+          {team.surveys ? (
+            <PressableScale
+              testID="team-more-surveys"
+              accessibilityRole="button"
+              accessibilityLabel={tSurveys('title')}
+              onPress={() => push('/team-surveys' as Href)}
+              haptic="selection"
+              style={continuousCorners}
+              className="min-h-recommended justify-center rounded-md border border-neutral-200 bg-white px-md"
+            >
+              <Text className={`text-start text-md text-neutral-900 ${languageFontClass}`}>
+                {tSurveys('title')}
               </Text>
             </PressableScale>
           ) : null}

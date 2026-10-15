@@ -61,5 +61,16 @@
   "reject": "رفض",
   "approve": "موافقة",
   "approveAll": "الموافقة على الكل",
-  "loadingResponses": "جارٍ تحميل الردود..."
+  "loadingResponses": "جارٍ تحميل الردود...",
+  "addChoice": "أضف خيارًا",
+  "removeChoice": "احذف الخيار",
+  "noSurveys": "لا توجد استبيانات بعد.",
+  "statusScheduled": "مجدول",
+  "statusOpen": "مفتوح",
+  "statusClosed": "مغلق",
+  "averageRating": "المتوسط {{value}} من 5",
+  "choiceLabel": "الخيار {{number}} بالكتالونية",
+  "datesInvalid": "يجب أن يكون تاريخ الإغلاق بعد تاريخ النشر.",
+  "publishAtRequired": "اختر موعد نشر الاستبيان.",
+  "choicesMinimum": "يحتاج سؤال الخيارات إلى خيارين على الأقل."
 }

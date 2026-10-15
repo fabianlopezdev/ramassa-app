@@ -128,6 +128,9 @@ test('team screens follow permissions', () => {
     galleryModeration: false,
     feedback: false,
     notifications: false,
+    surveys: false,
+    surveyEditor: false,
+    surveyResults: false,
     mentoring: false,
     messages: false,
     stock: false,
@@ -151,6 +154,9 @@ test('team screens follow permissions', () => {
     galleryModeration: false,
     feedback: false,
     notifications: false,
+    surveys: false,
+    surveyEditor: false,
+    surveyResults: false,
     mentoring: false,
     messages: true,
     stock: false,
@@ -174,6 +180,9 @@ test('team screens follow permissions', () => {
     galleryModeration: false,
     feedback: false,
     notifications: false,
+    surveys: false,
+    surveyEditor: false,
+    surveyResults: false,
     mentoring: false,
     messages: false,
     stock: false,
@@ -197,6 +206,9 @@ test('team screens follow permissions', () => {
     galleryModeration: false,
     feedback: false,
     notifications: false,
+    surveys: false,
+    surveyEditor: false,
+    surveyResults: false,
     mentoring: false,
     messages: false,
     stock: false,
@@ -221,6 +233,9 @@ test('team screens follow permissions', () => {
     galleryModeration: false,
     feedback: false,
     notifications: false,
+    surveys: false,
+    surveyEditor: false,
+    surveyResults: false,
     mentoring: false,
     messages: false,
     stock: true,
@@ -260,4 +275,17 @@ test('each area starts on its own home; the player keeps the root', () => {
   expect(areaHome('entity', new Set(), phone)).toBe('/entity-portal');
   expect(areaHome('unresolved', new Set(), phone)).toBe('/account-unresolved');
   expect(areaHome('player', new Set(), phone)).toBeNull();
+});
+
+test('survey results alone open the survey list without the editor', () => {
+  expect(teamScreens(new Set(['surveys.results']))).toMatchObject({
+    surveys: true,
+    surveyEditor: false,
+    surveyResults: true,
+  });
+  expect(teamScreens(new Set(['surveys.manage']))).toMatchObject({
+    surveys: true,
+    surveyEditor: true,
+    surveyResults: false,
+  });
 });
