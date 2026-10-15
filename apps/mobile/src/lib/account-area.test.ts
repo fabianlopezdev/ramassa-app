@@ -128,6 +128,8 @@ test('team screens follow permissions', () => {
     galleryModeration: false,
     feedback: false,
     notifications: false,
+    staff: false,
+    impact: false,
     mentoring: false,
     messages: false,
     stock: false,
@@ -151,6 +153,8 @@ test('team screens follow permissions', () => {
     galleryModeration: false,
     feedback: false,
     notifications: false,
+    staff: false,
+    impact: false,
     mentoring: false,
     messages: true,
     stock: false,
@@ -174,6 +178,8 @@ test('team screens follow permissions', () => {
     galleryModeration: false,
     feedback: false,
     notifications: false,
+    staff: false,
+    impact: false,
     mentoring: false,
     messages: false,
     stock: false,
@@ -197,6 +203,8 @@ test('team screens follow permissions', () => {
     galleryModeration: false,
     feedback: false,
     notifications: false,
+    staff: false,
+    impact: false,
     mentoring: false,
     messages: false,
     stock: false,
@@ -221,6 +229,8 @@ test('team screens follow permissions', () => {
     galleryModeration: false,
     feedback: false,
     notifications: false,
+    staff: false,
+    impact: false,
     mentoring: false,
     messages: false,
     stock: true,
@@ -260,4 +270,14 @@ test('each area starts on its own home; the player keeps the root', () => {
   expect(areaHome('entity', new Set(), phone)).toBe('/entity-portal');
   expect(areaHome('unresolved', new Set(), phone)).toBe('/account-unresolved');
   expect(areaHome('player', new Set(), phone)).toBeNull();
+});
+
+test('impact.view opens the impact dashboard', () => {
+  expect(teamScreens(new Set(['impact.view'])).impact).toBe(true);
+  expect(teamScreens(new Set(['export.attendance'])).impact).toBe(false);
+});
+
+test('team.manage opens the team screen', () => {
+  expect(teamScreens(new Set(['team.manage'])).staff).toBe(true);
+  expect(teamScreens(new Set(['settings.branding'])).staff).toBe(false);
 });

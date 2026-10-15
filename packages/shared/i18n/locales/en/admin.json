@@ -67,5 +67,14 @@
   "auditActor": "Actor",
   "auditTarget": "Target",
   "auditDetails": "Details",
-  "auditNext": "Next page"
+  "auditNext": "Next page",
+  "impactPeriod": "Period",
+  "impactPeriodWeek": "Last 7 days",
+  "impactPeriodMonth": "Last 30 days",
+  "impactPeriodYear": "This year",
+  "impactShowChart": "Show the monthly chart",
+  "impactChartMonthly": "{{metric}} per month",
+  "impactChartEmpty": "There is not enough data for a chart in this period.",
+  "impactLoadFailed": "The impact report could not be loaded.",
+  "impactClose": "Close"
 }
