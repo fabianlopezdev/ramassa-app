@@ -1795,6 +1795,13 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - Announcements list: status chips (all, draft, published, scheduled, expired, the web admin's filter), the total, pages that load on scroll, and each row's title, category, date, status and whether it is pinned. On a phone a row opens its own screen; on a tablet it opens beside the list.
 - One announcement shows its status, category, publication and expiry, and the Catalan text. Pin and unpin are there for anyone who reads it; Delete is for `announcements.publish` holders, as the database requires, and asks first. The editor comes in RAPP-341.
 
+## Feedback inbox on the phone (2026-10-15, RAPP-383, part of RAPP-215)
+
+- `feedback.view` holders get "Bústia de suggeriments" in More, as the web admin's inbox: how many of each kind arrived per month (shown by month name), filters by kind and status, and each submission with who sent it, when, its text and photo.
+- A submission only moves forward: new to read, in progress or resolved; read to in progress or resolved; in progress to resolved. Whoever has the inbox (`messages.inbox`) answers in the chat the submission opened.
+- Kept in memory only: the feedback is private.
+- Checks: `app-team-feedback.web-qa.ts` (a player's idea, the filters, read to resolved, the chat), the player-to-staff `feedback.web-qa.ts`, unit tests for the status steps, and the iPhone simulator.
+
 ## Gallery moderation on the phone (2026-10-15, RAPP-381, part of RAPP-215)
 
 - Fabián's call (2026-10-15): staff need to browse every gallery photo and video and hide, show again or remove one, also one nobody reported. Reported items stay in forum moderation too.
