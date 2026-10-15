@@ -67,5 +67,14 @@
   "auditActor": "عامل",
   "auditTarget": "هدف",
   "auditDetails": "جزئیات",
-  "auditNext": "صفحه بعد"
+  "auditNext": "صفحه بعد",
+  "impactPeriod": "دوره",
+  "impactPeriodWeek": "7 روز گذشته",
+  "impactPeriodMonth": "30 روز گذشته",
+  "impactPeriodYear": "امسال",
+  "impactShowChart": "نمودار ماهانه را نشان بده",
+  "impactChartMonthly": "{{metric}} در هر ماه",
+  "impactChartEmpty": "برای این دوره داده کافی برای نمودار وجود ندارد.",
+  "impactLoadFailed": "گزارش اثر بارگیری نشد.",
+  "impactClose": "بستن"
 }

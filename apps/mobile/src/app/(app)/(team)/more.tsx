@@ -3,8 +3,8 @@
  * lock) and sign-out, Stock for whoever receives, counts or edits material
  * (RAPP-250), forum and gallery moderation (RAPP-380, RAPP-381), mentoring
  * (RAPP-382), the feedback inbox (RAPP-383), notifications (RAPP-385),
- * surveys (RAPP-384), and the player preview (RAPP-371); later phases add the
- * dashboard, the team and the rest.
+ * surveys (RAPP-384), the impact dashboard (RAPP-400), and the player
+ * preview (RAPP-371); later slices add the team and the rest.
  *
  */
 import { PageWidth } from '@/components/layout/content-width';
@@ -38,6 +38,7 @@ export default function TeamMoreScreen() {
   const { t: tFeedback } = useTranslation('feedback');
   const { t: tNotifications } = useTranslation('notifications');
   const { t: tSurveys } = useTranslation('surveys');
+  const { t: tAdmin } = useTranslation('admin');
   const languageFontClass = useLanguageFontClass();
   const { push } = useRouter();
 
@@ -113,6 +114,21 @@ export default function TeamMoreScreen() {
             >
               <Text className={`text-start text-md text-neutral-900 ${languageFontClass}`}>
                 {tFeedback('inboxTitle')}
+              </Text>
+            </PressableScale>
+          ) : null}
+          {team.impact ? (
+            <PressableScale
+              testID="team-more-impact"
+              accessibilityRole="button"
+              accessibilityLabel={tAdmin('impactReportTitle')}
+              onPress={() => push('/team-impact' as Href)}
+              haptic="selection"
+              style={continuousCorners}
+              className="min-h-recommended justify-center rounded-md border border-neutral-200 bg-white px-md"
+            >
+              <Text className={`text-start text-md text-neutral-900 ${languageFontClass}`}>
+                {tAdmin('impactReportTitle')}
               </Text>
             </PressableScale>
           ) : null}

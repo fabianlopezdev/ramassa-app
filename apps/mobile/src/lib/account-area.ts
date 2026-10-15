@@ -114,6 +114,7 @@ export function teamScreens(permissions: ReadonlySet<PermissionCode>): {
   readonly surveys: boolean;
   readonly surveyEditor: boolean;
   readonly surveyResults: boolean;
+  readonly impact: boolean;
   readonly mentoring: boolean;
   readonly messages: boolean;
   readonly stock: boolean;
@@ -140,6 +141,7 @@ export function teamScreens(permissions: ReadonlySet<PermissionCode>): {
     surveys: permissions.has('surveys.manage') || permissions.has('surveys.results'),
     surveyEditor: permissions.has('surveys.manage'),
     surveyResults: permissions.has('surveys.results'),
+    impact: permissions.has('impact.view'),
     mentoring: permissions.has('mentoring.manage'),
     messages: permissions.has('messages.inbox'),
     stock: teamAreas(permissions).includes('stock'),

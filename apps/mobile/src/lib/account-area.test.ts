@@ -131,6 +131,7 @@ test('team screens follow permissions', () => {
     surveys: false,
     surveyEditor: false,
     surveyResults: false,
+    impact: false,
     mentoring: false,
     messages: false,
     stock: false,
@@ -157,6 +158,7 @@ test('team screens follow permissions', () => {
     surveys: false,
     surveyEditor: false,
     surveyResults: false,
+    impact: false,
     mentoring: false,
     messages: true,
     stock: false,
@@ -183,6 +185,7 @@ test('team screens follow permissions', () => {
     surveys: false,
     surveyEditor: false,
     surveyResults: false,
+    impact: false,
     mentoring: false,
     messages: false,
     stock: false,
@@ -209,6 +212,7 @@ test('team screens follow permissions', () => {
     surveys: false,
     surveyEditor: false,
     surveyResults: false,
+    impact: false,
     mentoring: false,
     messages: false,
     stock: false,
@@ -236,6 +240,7 @@ test('team screens follow permissions', () => {
     surveys: false,
     surveyEditor: false,
     surveyResults: false,
+    impact: false,
     mentoring: false,
     messages: false,
     stock: true,
@@ -288,4 +293,9 @@ test('survey results alone open the survey list without the editor', () => {
     surveyEditor: true,
     surveyResults: false,
   });
+});
+
+test('impact.view opens the impact dashboard', () => {
+  expect(teamScreens(new Set(['impact.view'])).impact).toBe(true);
+  expect(teamScreens(new Set(['export.attendance'])).impact).toBe(false);
 });
