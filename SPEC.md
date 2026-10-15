@@ -1894,6 +1894,14 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - Fixed in passing: on the team's More screen, the last entry (sign-out) stayed behind the floating tab bar once the list grew; the list now keeps clear of it.
 - Checks: `app-account-routes.web-qa.ts` (an entity contact verifies her second factor, then lands on her own tabs; the team cases unchanged), unit tests for the entity home route, and the iPhone simulator.
 
+## Entity referrals on the phone (2026-10-15, RAPP-413, part of RAPP-217)
+
+- A partner entity's contact gets the Referrals tab, as the web portal's referrals pages: the women her entity referred with their status, newest first, and a search over names, phone, email and entity that ignores case and accents (`filterReferrals`).
+- New referral asks first and last name, an optional phone and email, the documentation status and optional notes, and validates with the shared `createReferralSchema`. A refused field says why until it changes. Once sent, the referral opens.
+- One referral shows the contact details and the updates shared with the team, newest first. The entity shares an update (type and what changed) only once the team has welcomed the woman and she has an account, because the database refuses updates before that; until then a note says so.
+- Kept in memory only: referrals hold contact details.
+- Checks: `app-entity-referrals.web-qa.ts` (the refused fields, a referral sent and found by an accent-free search, the note before onboarding, an update on a referral with an account read back decrypted), `app-account-routes.web-qa.ts`, and the iPhone simulator.
+
 ## Entity messages on the phone (2026-10-15, RAPP-415, part of RAPP-217)
 
 - A partner entity's contact gets the Messages tab, as the web portal's messages page: her one general conversation with the team (`get_or_create_own_conversation`), in the phone's player thread with the entity title. The tab (and the tablet sidebar entry) shows her unread count.
