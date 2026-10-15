@@ -4,19 +4,21 @@
  * spread, how often each choice and each of yes and no was picked, and the
  * written answers with who wrote them; then each participant's response and
  * whether it is complete. Answers are attributed, so they stay in memory.
- * The CSV export waits for the phone's exports, which ask for the second
- * factor and use the share sheet.
+ * Share CSV (RAPP-402) asks for the step-up, the database records the export,
+ * and the file goes to the share sheet.
  */
 import { PageWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
-import { useStaffSurveys, useSurveyResponses } from '@/lib/team-surveys';
+import { playHaptic } from '@/lib/haptics/haptics';
+import { useStaffSurveys, useSurveyExport, useSurveyResponses } from '@/lib/team-surveys';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useMemo, type ReactNode } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { toAppError } from '@ramassa/shared/errors';
 import { DEFAULT_LANGUAGE } from '@ramassa/shared/i18n';
 import {
   aggregateSurveyResults,
@@ -82,6 +84,12 @@ export default function TeamSurveyResultsScreen() {
   const surveys = useStaffSurveys();
   const survey = surveys.data?.find((item) => item.id === id);
   const responses = useSurveyResponses(id, survey !== undefined);
+  const { t: tExport } = useTranslation(['admin', 'errors']);
+  const exportCsv = useSurveyExport(t('exportCsv'));
+  const [exportNotice, setExportNotice] = useState<{
+    readonly ok: boolean;
+    readonly text: string;
+  } | null>(null);
   const questions = useMemo<readonly SurveyQuestion[]>(
     () => [...(survey?.questions ?? [])].sort((left, right) => left.sortOrder - right.sortOrder),
     [survey],
@@ -211,6 +219,51 @@ export default function TeamSurveyResultsScreen() {
                   ].join(' · ')}
                 </Text>
               </View>
+              <PressableScale
+                testID="survey-export-csv"
+                accessibilityRole="button"
+                accessibilityLabel={tExport('admin:exportShare')}
+                onPress={() => {
+                  setExportNotice(null);
+                  exportCsv.mutate(survey, {
+                    onSuccess: (rows) => {
+                      playHaptic('success');
+                      setExportNotice({
+                        ok: true,
+                        text: tExport('admin:exportShared', { count: rows }),
+                      });
+                    },
+                    onError: (error) => {
+                      playHaptic('error');
+                      setExportNotice({
+                        ok: false,
+                        text:
+                          toAppError(error).code === 'AUTH-9'
+                            ? tExport('errors:AUTH-9')
+                            : tExport('admin:exportFailed'),
+                      });
+                    },
+                  });
+                }}
+                isBusy={exportCsv.isPending}
+                isDisabled={exportCsv.isPending}
+                haptic="tapLight"
+                style={continuousCorners}
+                className="min-h-recommended items-center justify-center self-start rounded-md border border-neutral-300 bg-white px-lg"
+              >
+                <Text className={`text-center text-md font-semibold text-neutral-900 ${fontClass}`}>
+                  {tExport('admin:exportShare')}
+                </Text>
+              </PressableScale>
+              {exportNotice === null ? null : (
+                <Text
+                  testID="survey-export-notice"
+                  accessibilityLiveRegion="polite"
+                  className={`text-start text-md ${exportNotice.ok ? 'text-success' : 'text-error'} ${fontClass}`}
+                >
+                  {exportNotice.text}
+                </Text>
+              )}
               {responses.isError ? (
                 <Text className={`text-start text-md text-error ${fontClass}`}>
                   {t('loadError')}

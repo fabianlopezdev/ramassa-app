@@ -1,8 +1,10 @@
+import { useStepUp } from '@/components/auth/step-up';
 import { MultilingualEditor } from '@/components/content/multilingual-editor';
 import { TranslationReviewPanel } from '@/components/content/translation-review-panel';
 import { AudiencePicker } from '@/components/notifications/audience-picker';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { safeAsync } from '@/lib/observability';
 import { supabase } from '@/lib/supabase';
 import { requestCatalanTranslation } from '@/lib/translation-worker';
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
@@ -15,6 +17,7 @@ import type {
 } from '@ramassa/shared/notifications';
 import {
   aggregateSurveyResults,
+  createSurveyExport,
   fetchSurveyResponses,
   resolveSurveyCopy,
   saveSurvey,
@@ -201,6 +204,12 @@ export function SurveyWorkspace({
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState<'saved' | 'error' | null>(null);
   const [selectedSurveyId, setSelectedSurveyId] = useState(surveys[0]?.id ?? '');
+  // The CSV names participants, so it asks for a fresh authenticator code and
+  // the database records the export (RAPP-402).
+  const withStepUp = useStepUp();
+  const { t: tExport } = useTranslation(['admin', 'errors']);
+  const [exporting, setExporting] = useState(false);
+  const [exportNotice, setExportNotice] = useState<string | null>(null);
   const [responses, setResponses] = useState<readonly SurveyResponse[]>([]);
   const [loadingResponses, setLoadingResponses] = useState(false);
   const selectedSurvey = surveys.find((survey) => survey.id === selectedSurveyId) ?? surveys[0];
@@ -307,6 +316,21 @@ export function SurveyWorkspace({
     } finally {
       setSaving(false);
     }
+  }
+
+  async function exportCsv(survey: StaffSurvey) {
+    setExporting(true);
+    setExportNotice(null);
+    const result = await safeAsync(async () => {
+      const exported = await withStepUp(() => createSurveyExport(supabase, survey.id));
+      await downloadCsv(`survey-${survey.id}.csv`, streamSurveyCsv(survey.questions, exported));
+    });
+    if (!result.ok) {
+      setExportNotice(
+        result.error.code === 'AUTH-9' ? tExport('errors:AUTH-9') : tExport('admin:exportFailed'),
+      );
+    }
+    setExporting(false);
   }
 
   return (
@@ -521,17 +545,19 @@ export function SurveyWorkspace({
             <Button
               type="button"
               variant="outline"
-              onClick={() =>
-                void downloadCsv(
-                  `survey-${selectedSurvey.id}.csv`,
-                  streamSurveyCsv(selectedSurvey.questions, responses),
-                )
-              }
+              data-testid="survey-export-csv"
+              disabled={exporting}
+              onClick={() => void exportCsv(selectedSurvey)}
             >
               {t('exportCsv')}
             </Button>
           ) : null}
         </div>
+        {exportNotice === null ? null : (
+          <p role="alert" className="text-sm text-destructive" data-testid="survey-export-error">
+            {exportNotice}
+          </p>
+        )}
         <div className="grid gap-3 md:grid-cols-3">
           {surveys.map((survey) => (
             <button
