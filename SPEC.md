@@ -1855,6 +1855,15 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - Upload a document adds one from the phone's files (`expo-document-picker`, a new native module, so the dev client needs a new build): PDF, Word or a photo, 10 MB at most; it is uploaded to `documents` and registered with `register_internal_document`.
 - Checks: `app-team-documents.web-qa.ts` (a PDF added, a search with no match, found by a search that ignores case, opened with the same bytes), unit tests for the document types, file names and the screen flag, and the iPhone simulator.
 
+## Organization settings on the phone (2026-10-15, RAPP-403, part of RAPP-216)
+
+- `settings.organization` and `settings.branding` holders get "Organització" in More, as the web admin's Organization tab. A field the reader may not change is shown but locked.
+- `settings.organization`: the name, the contact email and phone, the languages and the default language. A locked language (Catalan, when the grant requires it) stays on and the default; at least one language stays on (`organization-languages.ts`).
+- `settings.branding`: the logo, picked from the photo library, resized to 512 points wide at most and saved as PNG so transparency stays, uploaded to `organization-branding`; and the two brand colours as hex values with a swatch. Each colour shows its contrast with its text as it is typed, in the reader's number format, and a colour under 4.5:1 cannot be saved, as the database also refuses.
+- After a save, the app reads the organization again (`useRefreshOrganizationBranding`), so the new colours apply at once.
+- No step-up, as on the web admin.
+- Checks: `app-team-organization.web-qa.ts` (the contrast refusal, a new phone, colour and logo saved), the web admin `admin-settings.web-qa.ts`, unit tests for the languages and the screen flag, and the iPhone simulator.
+
 ## Notifications and targeted push on the phone (2026-10-15, RAPP-385, part of RAPP-215)
 
 - `notifications.send` holders get "Notificacions" in More, as the web admin's workspace. A message starts from a template or blank, in Catalan; the four translations are generated and must all be approved before it is sent or saved as a template.

@@ -129,6 +129,7 @@ test('team screens follow permissions', () => {
     feedback: false,
     notifications: false,
     documents: false,
+    organization: false,
     dataExports: false,
     auditLog: false,
     staff: false,
@@ -157,6 +158,7 @@ test('team screens follow permissions', () => {
     feedback: false,
     notifications: false,
     documents: false,
+    organization: false,
     dataExports: false,
     auditLog: false,
     staff: false,
@@ -185,6 +187,7 @@ test('team screens follow permissions', () => {
     feedback: false,
     notifications: false,
     documents: false,
+    organization: false,
     dataExports: false,
     auditLog: false,
     staff: false,
@@ -213,6 +216,7 @@ test('team screens follow permissions', () => {
     feedback: false,
     notifications: false,
     documents: false,
+    organization: false,
     dataExports: false,
     auditLog: false,
     staff: false,
@@ -242,6 +246,7 @@ test('team screens follow permissions', () => {
     feedback: false,
     notifications: false,
     documents: false,
+    organization: false,
     dataExports: false,
     auditLog: false,
     staff: false,
@@ -306,6 +311,12 @@ test('impact.view opens the impact dashboard', () => {
 test('team.manage opens the team screen', () => {
   expect(teamScreens(new Set(['team.manage'])).staff).toBe(true);
   expect(teamScreens(new Set(['settings.branding'])).staff).toBe(false);
+});
+
+test('organization or branding settings open the organization screen', () => {
+  expect(teamScreens(new Set(['settings.branding'])).organization).toBe(true);
+  expect(teamScreens(new Set(['settings.organization'])).organization).toBe(true);
+  expect(teamScreens(new Set(['settings.documents'])).organization).toBe(false);
 });
 
 test('settings.documents opens the internal documents', () => {
