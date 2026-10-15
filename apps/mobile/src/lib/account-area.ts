@@ -111,6 +111,7 @@ export function teamScreens(permissions: ReadonlySet<PermissionCode>): {
   readonly galleryModeration: boolean;
   readonly feedback: boolean;
   readonly notifications: boolean;
+  readonly entities: boolean;
   readonly dataExports: boolean;
   readonly auditLog: boolean;
   readonly staff: boolean;
@@ -138,6 +139,7 @@ export function teamScreens(permissions: ReadonlySet<PermissionCode>): {
     galleryModeration: permissions.has('gallery.moderate'),
     feedback: permissions.has('feedback.view'),
     notifications: permissions.has('notifications.send'),
+    entities: permissions.has('entities.manage'),
     dataExports:
       permissions.has('export.participants') ||
       permissions.has('export.participants_sensitive') ||

@@ -4,8 +4,8 @@
  * (RAPP-250), forum and gallery moderation (RAPP-380, RAPP-381), mentoring
  * (RAPP-382), the feedback inbox (RAPP-383), notifications (RAPP-385), the
  * impact dashboard (RAPP-400), data exports and the audit log (RAPP-401), the
- * team (RAPP-404), and the player preview (RAPP-371); later slices add the
- * rest.
+ * team (RAPP-404), collaborating entities (RAPP-407), and the player preview
+ * (RAPP-371); later slices add the rest.
  *
  */
 import { PageWidth } from '@/components/layout/content-width';
@@ -38,6 +38,7 @@ export default function TeamMoreScreen() {
   const { t: tGallery } = useTranslation('gallery');
   const { t: tFeedback } = useTranslation('feedback');
   const { t: tNotifications } = useTranslation('notifications');
+  const { t: tEntities } = useTranslation('entity-management');
   const { t: tSettings } = useTranslation('settings');
   const { t: tAdmin } = useTranslation('admin');
   const languageFontClass = useLanguageFontClass();
@@ -160,6 +161,21 @@ export default function TeamMoreScreen() {
             >
               <Text className={`text-start text-md text-neutral-900 ${languageFontClass}`}>
                 {t('staff.data')}
+              </Text>
+            </PressableScale>
+          ) : null}
+          {team.entities ? (
+            <PressableScale
+              testID="team-more-entities"
+              accessibilityRole="button"
+              accessibilityLabel={tEntities('managementTitle')}
+              onPress={() => push('/team-entities' as Href)}
+              haptic="selection"
+              style={continuousCorners}
+              className="min-h-recommended justify-center rounded-md border border-neutral-200 bg-white px-md"
+            >
+              <Text className={`text-start text-md text-neutral-900 ${languageFontClass}`}>
+                {tEntities('managementTitle')}
               </Text>
             </PressableScale>
           ) : null}

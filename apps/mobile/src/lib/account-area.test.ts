@@ -128,6 +128,7 @@ test('team screens follow permissions', () => {
     galleryModeration: false,
     feedback: false,
     notifications: false,
+    entities: false,
     dataExports: false,
     auditLog: false,
     staff: false,
@@ -155,6 +156,7 @@ test('team screens follow permissions', () => {
     galleryModeration: false,
     feedback: false,
     notifications: false,
+    entities: false,
     dataExports: false,
     auditLog: false,
     staff: false,
@@ -182,6 +184,7 @@ test('team screens follow permissions', () => {
     galleryModeration: false,
     feedback: false,
     notifications: false,
+    entities: false,
     dataExports: false,
     auditLog: false,
     staff: false,
@@ -209,6 +212,7 @@ test('team screens follow permissions', () => {
     galleryModeration: false,
     feedback: false,
     notifications: false,
+    entities: false,
     dataExports: false,
     auditLog: false,
     staff: false,
@@ -237,6 +241,7 @@ test('team screens follow permissions', () => {
     galleryModeration: false,
     feedback: false,
     notifications: false,
+    entities: false,
     dataExports: false,
     auditLog: false,
     staff: false,
@@ -301,4 +306,9 @@ test('impact.view opens the impact dashboard', () => {
 test('team.manage opens the team screen', () => {
   expect(teamScreens(new Set(['team.manage'])).staff).toBe(true);
   expect(teamScreens(new Set(['settings.branding'])).staff).toBe(false);
+});
+
+test('entities.manage opens the collaborating entities', () => {
+  expect(teamScreens(new Set(['entities.manage'])).entities).toBe(true);
+  expect(teamScreens(new Set(['team.manage'])).entities).toBe(false);
 });

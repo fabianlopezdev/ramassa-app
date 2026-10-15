@@ -1847,6 +1847,13 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - Editing access and the presets come next (RAPP-405).
 - Checks: `app-team-staff.web-qa.ts` (invite on the Coach preset with the email, no reset of one's own factor, sign out everywhere, reset, remove, the audit rows), the web admin `team-access.web-qa.ts`, unit tests for the refusals and the screen flag, and the iPhone simulator.
 
+## Collaborating entities on the phone (2026-10-15, RAPP-407, part of RAPP-216)
+
+- `entities.manage` holders get "Entitats col·laboradores" in More, as the entities tab of the web admin's Settings: add an entity, then each entity with its status, collaborators, referrals and pending invitations.
+- A tap opens the entity (`team-entity/[id]`): Deactivate (asked first; its collaborators lose access, referral history stays) or Reactivate; invite a collaborator while the entity is active (the sign-in code goes by email); and each collaborator with Pending, Active or Inactive, Remove access (asked first) or Restore access, and Reset second factor (asked first).
+- Inviting, removing or restoring access and resetting a second factor ask for the step-up, as on the web; adding and switching an entity do not, as on the web.
+- Checks: `app-team-entities.web-qa.ts` (add, invite with the email, remove and restore access, deactivate and reactivate, against the database), unit tests for the screen flag, and the iPhone simulator.
+
 ## Notifications and targeted push on the phone (2026-10-15, RAPP-385, part of RAPP-215)
 
 - `notifications.send` holders get "Notificacions" in More, as the web admin's workspace. A message starts from a template or blank, in Catalan; the four translations are generated and must all be approved before it is sent or saved as a template.
