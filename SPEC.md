@@ -1801,6 +1801,14 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - Now only `moderation_state` and `flag_count` can be written directly, and only by `gallery.moderate` holders (`media_items_update_gallery_moderation`). Those are the two columns `moderate_forum_target`, which runs as the caller, sets on a reported item; it already required `gallery.moderate` for gallery items. Every other write goes through a SECURITY DEFINER function.
 - Checks: pgTAP `0065`, and the forum moderation specs (web admin and app), which hide and delete reported gallery items.
 
+## Gallery moderation on the phone (2026-10-15, RAPP-381, part of RAPP-215)
+
+- Fabián's call (2026-10-15): staff need to browse every gallery photo and video and hide, show again or remove one, also one nobody reported. Reported items stay in forum moderation too.
+- `gallery.moderate` holders get "Moderació de la galeria" in More: a grid, newest first (two columns on a phone, four on a tablet), with All, Visible and Hidden filters (Hidden includes items hidden until reviewed). A tap opens the item with its caption, who shared it and when, who can see it, its state and its reports.
+- Hide and Show again go through `set_media_item_moderation(p_media_item_id, p_state)`: `gallery.moderate` only, closes the item's open reports (hiding acts on them, showing dismisses them), resets its report count and writes `gallery.hide` or `gallery.show` to the audit log. Remove asks first and deletes the row and its files through the media Worker.
+- The web admin gets the same screen separately (RAPP-387).
+- Checks: pgTAP `0064`, `app-team-gallery.web-qa.ts` (hide, filter, show again with the audit trail; remove with the file), the forum moderation specs, and the iPhone simulator.
+
 ## Mentoring requests on the phone (2026-10-14, RAPP-382, part of RAPP-215)
 
 - `mentoring.manage` holders get "Mentories" in More, and Today shows how many requests wait to be scheduled. The screen shows how many requests and on which topics, and each request as the web admin does: the participant, when she asked, the status, the topic, her private note and her preferred slot.

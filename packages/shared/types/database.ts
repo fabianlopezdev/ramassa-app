@@ -5350,6 +5350,10 @@ export type Database = {
         Args: { p_disabled: boolean; p_participant_id: string };
         Returns: undefined;
       };
+      set_media_item_moderation: {
+        Args: { p_media_item_id: string; p_state: string };
+        Returns: undefined;
+      };
       set_media_item_privacy: {
         Args: { p_media_item_id: string; p_privacy_level: string };
         Returns: undefined;
@@ -5378,7 +5382,7 @@ export type Database = {
         Args: { p_profile_id: string };
         Returns: undefined;
       };
-      start_player_preview: { Args: never; Returns: string };
+      start_player_preview: { Args: never; Returns: Json };
       stock_levels: {
         Args: never;
         Returns: {
