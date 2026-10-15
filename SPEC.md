@@ -1802,6 +1802,12 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - Kept in memory only: the feedback is private.
 - Checks: `app-team-feedback.web-qa.ts` (a player's idea, the filters, read to resolved, the chat), the player-to-staff `feedback.web-qa.ts`, unit tests for the status steps, and the iPhone simulator.
 
+## Direct writes to gallery items (2026-10-15, RAPP-388)
+
+- Signed-in users held UPDATE on every column of `media_items`, and the update policy let forum and gallery moderators write any row of their organization, so a moderator could repoint an item's file, change its uploader, caption or consent with an unaudited direct write.
+- Now only `moderation_state` and `flag_count` can be written directly, and only by `gallery.moderate` holders (`media_items_update_gallery_moderation`). Those are the two columns `moderate_forum_target`, which runs as the caller, sets on a reported item; it already required `gallery.moderate` for gallery items. Every other write goes through a SECURITY DEFINER function.
+- Checks: pgTAP `0065`, and the forum moderation specs (web admin and app), which hide and delete reported gallery items.
+
 ## Gallery moderation on the phone (2026-10-15, RAPP-381, part of RAPP-215)
 
 - Fabián's call (2026-10-15): staff need to browse every gallery photo and video and hide, show again or remove one, also one nobody reported. Reported items stay in forum moderation too.
