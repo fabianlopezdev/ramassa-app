@@ -85,6 +85,23 @@ export type MediaItemRow = z.infer<typeof mediaItemRowSchema>;
 const MEDIA_ITEM_COLUMNS =
   'id, org_id, uploaded_by, uploader_first_name, file_url, thumbnail_url, file_type, file_size, caption, privacy_level, moderation_state, flag_count, consent_acknowledged_at, consent_version, created_at, updated_at';
 
+/** The gallery moderation filters (RAPP-381, RAPP-387): hidden includes pending review. */
+export type GalleryFilter = 'all' | 'visible' | 'hidden';
+
+export const GALLERY_FILTERS: readonly GalleryFilter[] = ['all', 'visible', 'hidden'];
+
+export function filterGallery(
+  items: readonly MediaItemRow[],
+  filter: GalleryFilter,
+): readonly MediaItemRow[] {
+  if (filter === 'all') return items;
+  return items.filter((item) =>
+    filter === 'visible'
+      ? item.moderation_state === 'visible'
+      : item.moderation_state !== 'visible',
+  );
+}
+
 export async function fetchMediaItems(
   client: SupabaseClient<Database>,
   options: { readonly signal?: AbortSignal } = {},

@@ -47,7 +47,8 @@
   "saveGroup": "Guardar grupo",
   "groupSaved": "Grupo guardado.",
   "editGroup": "Editar",
-  "membersCount": "{{count}} miembros",
+  "membersCount_one": "1 miembro",
+  "membersCount_other": "{{count}} miembros",
   "historyTitle": "Historial de envíos",
   "historyEmpty": "Todavía no hay envíos dirigidos.",
   "historyAudience": "Público: {{audience}}",
@@ -61,5 +62,8 @@
   "stateAwaitingReceipts": "Esperando recibos",
   "stateRetrying": "Reintentando",
   "stateComplete": "Completado",
-  "error": "No se pudo completar la acción de notificación."
+  "error": "No se pudo completar la acción de notificación.",
+  "newGroup": "Nuevo grupo",
+  "groupSelected_one": "1 seleccionada",
+  "groupSelected_other": "{{count}} seleccionadas"
 }

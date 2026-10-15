@@ -1804,6 +1804,14 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - A category with posts cannot be deleted: the database refuses it and the screen says so.
 - Checks: `app-forum-categories.web-qa.ts` (create in five languages with the made identifier, move up, edit, refused delete with a post, delete), the forum moderation specs, unit tests for the identifier, and the iPhone simulator.
 
+## Custom notification groups on the phone (2026-10-15, RAPP-389, part of RAPP-215)
+
+- The notifications screen gets "Grups personalitzats": each group with its member count, New group and Edit, as the web admin's group form. A sheet takes the name and the participants, picked from a search that ignores case and accents; the selection stays while the search changes.
+- The search (`filterNotificationGroupParticipants`) moved from the web admin into `packages/shared/notifications.ts`, so both use one function.
+- Groups are not deleted on the phone, as in the web admin.
+- The member and selection counts now have singular and plural forms in the five languages ("1 membre", "2 membres"), also in the web admin.
+- Checks: `app-team-notification-groups.web-qa.ts` (accent-blind search, create, add a member, the group as an exact audience), `app-team-notifications.web-qa.ts`, the web admin `targeted-notifications.web-qa.ts`, the web admin unit tests, and the iPhone simulator.
+
 ## Notifications and targeted push on the phone (2026-10-15, RAPP-385, part of RAPP-215)
 
 - `notifications.send` holders get "Notificacions" in More, as the web admin's workspace. A message starts from a template or blank, in Catalan; the four translations are generated and must all be approved before it is sent or saved as a template.
@@ -1818,6 +1826,13 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - A submission only moves forward: new to read, in progress or resolved; read to in progress or resolved; in progress to resolved. Whoever has the inbox (`messages.inbox`) answers in the chat the submission opened.
 - Kept in memory only: the feedback is private.
 - Checks: `app-team-feedback.web-qa.ts` (a player's idea, the filters, read to resolved, the chat), the player-to-staff `feedback.web-qa.ts`, unit tests for the status steps, and the iPhone simulator.
+
+## Gallery moderation on the web admin (2026-10-15, RAPP-387, part of RAPP-215)
+
+- `gallery.moderate` holders get "Gallery" in the web admin's staff navigation, as the phone's screen (RAPP-381): every gallery photo and video, newest first, with All, Visible and Hidden filters (Hidden includes hidden until reviewed).
+- Each card shows the photo (or "Video" without a thumbnail) in a fixed frame, who shared it and when, the caption, who can see it, its state and its reports. Hide and Show again go through `set_media_item_moderation`; Delete asks first and removes the item and its files through the media Worker.
+- The filter (`filterGallery`, `GALLERY_FILTERS`) moved from the phone into `packages/shared/media.ts`, so both use one function.
+- Checks: `admin-gallery.web-qa.ts` (navigation, hide, filters, show again with the audit trail, delete with the file), the phone's `app-team-gallery.web-qa.ts`, unit tests for the filter and the navigation, and screenshots at desktop and phone widths with a real photo.
 
 ## Direct writes to gallery items (2026-10-15, RAPP-388)
 
