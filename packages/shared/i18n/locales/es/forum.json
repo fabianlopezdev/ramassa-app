@@ -111,5 +111,7 @@
   "categorySaveFailed": "No se ha podido guardar la categoría.",
   "categoryCreate": "Crear categoría",
   "categorySave": "Guardar categoría",
-  "gallery": "Galería"
+  "gallery": "Galería",
+  "categorySlugHelp": "Letras minúsculas, números y guiones. Se crea a partir del nombre en catalán.",
+  "categorySlugInvalid": "El identificador solo puede tener letras minúsculas, números y guiones."
 }

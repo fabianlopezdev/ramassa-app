@@ -111,5 +111,7 @@
   "categorySaveFailed": "دسته ذخیره نشد.",
   "categoryCreate": "ایجاد دسته",
   "categorySave": "ذخیره دسته",
-  "gallery": "گالری"
+  "gallery": "گالری",
+  "categorySlugHelp": "حروف کوچک، عدد و خط تیره. از نام کاتالان ساخته می شود.",
+  "categorySlugInvalid": "شناسه فقط می تواند حروف کوچک، عدد و خط تیره داشته باشد."
 }

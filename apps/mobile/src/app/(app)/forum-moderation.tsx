@@ -3,7 +3,8 @@
  * the web admin's moderation screen: each reported post, reply or gallery
  * photo with its reports, reasons and comments, and the team's actions on it.
  * Delete asks first. The author can be contacted by whoever has the inbox.
- * Forum posting bans stay on the participant's card.
+ * Forum posting bans stay on the participant's card. The forum categories open
+ * from here (RAPP-386).
  */
 import { AnnouncementFeedSkeleton } from '@/components/announcements/feed-states';
 import { ChoiceOption } from '@/components/equipment/choice-option';
@@ -344,6 +345,19 @@ export default function ForumModerationScreen() {
               </Text>
             ) : null}
           </View>
+          <PressableScale
+            testID="forum-moderation-categories"
+            accessibilityRole="button"
+            accessibilityLabel={t('categoryManagerTitle')}
+            onPress={() => push('/forum-categories' as Href)}
+            haptic="tapLight"
+            style={continuousCorners}
+            className="min-h-recommended items-center justify-center self-start rounded-md border border-neutral-300 bg-white px-lg"
+          >
+            <Text className={`text-center text-md font-bold text-primary-dark ${fontClass}`}>
+              {t('categoryManagerTitle')}
+            </Text>
+          </PressableScale>
           {hasFailed ? (
             <Text
               accessibilityLiveRegion="polite"

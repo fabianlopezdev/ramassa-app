@@ -179,6 +179,7 @@ export default function AppLayout() {
         </Stack.Protected>
         <Stack.Protected guard={isTeam && team.forumModeration}>
           <Stack.Screen name="forum-moderation" />
+          <Stack.Screen name="forum-categories" />
         </Stack.Protected>
         <Stack.Protected guard={isTeam && team.attendance}>
           <Stack.Screen name="attendance/[id]" />
