@@ -58,6 +58,24 @@ export function resolveAccountArea(input: {
   return input.isResolvingProfile === true ? 'resolving' : 'unresolved';
 }
 
+/**
+ * Whether her screens wait on the authenticator screen (RAPP-233, RAPP-410).
+ * A team member or entity contact without an `aal2` session waits. So does a
+ * session whose live role is not known yet but whose area this device
+ * remembers (RAPP-430): right after the email code that area is already
+ * known, and without this the shell mounted on the weaker session and its
+ * queries kept the empty answers the database gives it.
+ */
+export function awaitsSecondFactor(input: {
+  readonly area: AccountArea;
+  readonly role: AppRole | null;
+  readonly needsSecondFactor: boolean;
+  readonly assurance: 'aal1' | 'aal2' | null;
+}): boolean {
+  if (input.area !== 'team' && input.area !== 'entity') return false;
+  return input.needsSecondFactor || (input.role === null && input.assurance !== 'aal2');
+}
+
 export function rememberAccount(
   storage: AccountAreaStorage,
   userId: string,

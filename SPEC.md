@@ -1947,6 +1947,12 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - Now `EntityLoadFailure` (`components/entity/entity-load-failure.tsx`) shows on each of the four when there is no data and the load failed or waits for a connection: the error's own message (no connection when it waits), its code, and Try again. Her data stays in memory only, because it names people, so there is nothing saved to show instead. Messages already had its offline line.
 - Checks: the four entity specs, and the Android emulator offline (Referrals shows no connection with NETWORK-1) and online again (Try again shows the list).
 
+## No screen before the second factor after a fresh sign-in (2026-10-15, RAPP-430)
+
+- Right after the email code, the phone already knew the area this device remembered for her (team or entity), but the live role was still loading. The second-factor gate looked at the role only, so for a moment the shell mounted on the `aal1` session. Its queries ran then and kept the empty answers the database gives such a session: an entity contact saw an empty Home or Events tab until the next cold start.
+- Now `awaitsSecondFactor` (`lib/account-area.ts`) also sends a remembered team or entity area to the authenticator screen while the role is unknown and the session is not `aal2`. An `aal2` session with a remembered area still opens at once, as on an offline cold start.
+- Checks: unit tests for the gate, `app-account-routes.web-qa.ts` and `app-entity-home.web-qa.ts`, and a fresh entity sign-in on the iPhone simulator, measured with a log in the Home query (only `aal2` fetches, three rows).
+
 ## Dark status bar icons on Android (2026-10-15, RAPP-432)
 
 - On Android the clock, signal and battery icons at the top were white over the app's light screens, so nobody could see them. The app set no status bar style, and Android's transparent edge-to-edge bar defaults to light icons. The iPhone already showed them dark.
