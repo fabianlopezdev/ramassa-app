@@ -6,6 +6,9 @@
  * every read to her own entity, and only once her second factor is verified.
  */
 import { TeamSidebarItem } from '@/components/team/team-sidebar-item';
+import { useUnreadMessages } from '@/lib/messaging';
+import { boundedTabSlotStyle } from '@/lib/tab-slot-style';
+import { unreadBadgeProps } from '@/lib/unread-badge';
 import { usePathname } from 'expo-router';
 import { NativeTabs } from 'expo-router/native-tabs';
 import { TabList, Tabs, TabSlot, TabTrigger } from 'expo-router/ui';
@@ -16,6 +19,11 @@ import { tokens } from '@ramassa/shared/tokens';
 
 const TABLET_WIDTH = 768;
 const homeIcon = { ios: 'chart.bar.fill', android: 'insights', web: 'insights' } as const;
+const messagesIcon = {
+  ios: 'bubble.left.and.bubble.right.fill',
+  android: 'chat',
+  web: 'chat',
+} as const;
 // A style object, as in the team shell: TabList puts its own row layout on its
 // child, and that wins over classes.
 const sidebarStyle = {
@@ -40,6 +48,7 @@ export default function EntityShellLayout() {
   const { t } = useTranslation('nav');
   const { width } = useWindowDimensions();
   const pathname = usePathname();
+  const unreadBadge = unreadBadgeProps(useUnreadMessages().data ?? 0);
 
   if (width >= TABLET_WIDTH) {
     return (
@@ -59,10 +68,20 @@ export default function EntityShellLayout() {
                 icon={homeIcon}
               />
             </TabTrigger>
+            <TabTrigger name="entity-messages" href="/entity-messages" asChild>
+              <TeamSidebarItem
+                compact={false}
+                testID="entity-sidebar-messages"
+                isFocused={pathname === '/entity-messages'}
+                label={t('entity.messages')}
+                icon={messagesIcon}
+                badge={unreadBadge.hidden ? null : unreadBadge.children}
+              />
+            </TabTrigger>
           </View>
         </TabList>
         <SafeAreaView edges={['top', 'right', 'bottom']} className="flex-1">
-          <TabSlot />
+          <TabSlot style={boundedTabSlotStyle} />
         </SafeAreaView>
       </Tabs>
     );
@@ -83,6 +102,13 @@ export default function EntityShellLayout() {
       <NativeTabs.Trigger name="entity-home" testID="entity-tab-home">
         <NativeTabs.Trigger.Icon sf="chart.bar.fill" md="insights" />
         <NativeTabs.Trigger.Label>{t('entity.dashboard')}</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="entity-messages" testID="entity-tab-messages">
+        <NativeTabs.Trigger.Icon sf="bubble.left.and.bubble.right.fill" md="chat" />
+        <NativeTabs.Trigger.Label>{t('entity.messages')}</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Badge hidden={unreadBadge.hidden}>
+          {unreadBadge.children}
+        </NativeTabs.Trigger.Badge>
       </NativeTabs.Trigger>
     </NativeTabs>
   );
