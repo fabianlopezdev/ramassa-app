@@ -106,7 +106,7 @@ export function useForumModerationActions() {
 }
 
 /** A category as the save call takes it, with a new order or not. */
-export function forumCategoryInput(
+function forumCategoryInput(
   category: ForumCategoryRow,
   sortOrder = category.sort_order,
 ): ForumCategoryInput {
