@@ -5,6 +5,7 @@
  * case and accents, New referral, and a tap that opens one referral.
  */
 import { AuthTextField } from '@/components/auth/auth-text-field';
+import { EntityLoadFailure, hasLoadFailed } from '@/components/entity/entity-load-failure';
 import { PageWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
@@ -71,7 +72,9 @@ export default function EntityReferralsScreen() {
             </Text>
           </PressableScale>
 
-          {referrals.data !== undefined && all.length === 0 ? (
+          {hasLoadFailed(referrals) ? (
+            <EntityLoadFailure query={referrals} />
+          ) : referrals.data !== undefined && all.length === 0 ? (
             <View className="gap-xs">
               <Text className={`text-start text-lg font-semibold text-neutral-900 ${fontClass}`}>
                 {t('emptyTitle')}

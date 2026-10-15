@@ -8,6 +8,7 @@
  * and sign-out close the screen, as she has no More tab.
  */
 import { AppLockLink } from '@/components/auth/app-lock-link';
+import { EntityLoadFailure, hasLoadFailed } from '@/components/entity/entity-load-failure';
 import { PageWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { BarRow, MonthBars, Sparkline } from '@/components/team/impact-charts';
@@ -124,6 +125,7 @@ export default function EntityHomeScreen() {
               {tEntity('dashboardIntro')}
             </Text>
           </View>
+          {hasLoadFailed(dashboard) ? <EntityLoadFailure query={dashboard} /> : null}
 
           {impact === undefined ? null : impact.suppressed ? (
             <Section testID="entity-impact-suppressed" title={tEntity('privacyTitle')}>
