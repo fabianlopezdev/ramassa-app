@@ -2,9 +2,11 @@
  * Surveys in the app (RAPP-384), through the web build: the seeded survey's
  * results show the stars, the choices, yes and no, and the written answers
  * with who wrote them; then a new survey with a rating and a choice question
- * is saved only once all five languages are approved. Expected values come
+ * is saved only once all five languages are approved, and the results are
+ * shared as a CSV that the database records (RAPP-402). Expected values come
  * from the database.
  */
+import { readFileSync } from 'node:fs';
 import { expect, test, type Page } from '@playwright/test';
 import { completeSecondFactor, queryDatabase, signInPlayer, STAFF_EMAIL } from './session';
 
@@ -139,4 +141,41 @@ test('the seeded results are attributed, and a new survey needs every language a
     'rating:true:-;multiple_choice:true:option_1=5,option_2=5',
   ]);
   await expect(page.getByTestId(`team-survey-${saved[0]}`)).toBeVisible({ timeout: 30_000 });
+});
+
+test('the results are shared as a CSV, and the database records the export', async ({ page }) => {
+  await openSurveys(page);
+  await page.getByTestId(`team-survey-${SURVEY}`).click();
+  const names = queryDatabase(`
+    select string_agg(profile.first_name, ',') from public.survey_responses as response
+      join public.profiles as profile on profile.id = response.player_id
+     where response.survey_id = ${sql(SURVEY)};
+  `)
+    .trim()
+    .split(',');
+  const before = Number(
+    queryDatabase(`
+      select count(*) from public.audit_log
+       where action = 'survey_export' and target_id = ${sql(SURVEY)};
+    `).trim(),
+  );
+
+  // The web build downloads the file where the phone opens the share sheet.
+  const download = page.waitForEvent('download', { timeout: 60_000 });
+  await page.getByTestId('survey-export-csv').click({ timeout: 30_000 });
+  const file = await download;
+  const text = readFileSync((await file.path()) ?? '', 'utf8').replace(/^\uFEFF/, '');
+  const lines = text.trim().split('\r\n');
+  expect(lines[0]).toContain('"player_name"');
+  expect(lines).toHaveLength(names.length + 1);
+  for (const name of names) expect(text).toContain(name);
+  await expect(page.getByTestId('survey-export-notice')).toContainText(String(names.length));
+  expect(
+    Number(
+      queryDatabase(`
+        select count(*) from public.audit_log
+         where action = 'survey_export' and target_id = ${sql(SURVEY)};
+      `).trim(),
+    ),
+  ).toBe(before + 1);
 });

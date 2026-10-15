@@ -4256,6 +4256,7 @@ export type Database = {
           handoff_id: string;
         }[];
       };
+      create_survey_export: { Args: { p_survey_id: string }; Returns: Json };
       create_targeted_notification_send: {
         Args: {
           p_audience_config: Json;

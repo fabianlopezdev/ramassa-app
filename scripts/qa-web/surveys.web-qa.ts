@@ -141,4 +141,15 @@ test('Catalan and Arabic players complete every control and staff sees attribute
   expect(bytes.toString('utf8')).toContain(arabicPlayer.firstName);
   expect(bytes.toString('utf8')).toContain(catalanAnswer);
   expect(bytes.toString('utf8')).toContain(catalanPlayer.firstName);
+  // The export went through the database, which records it (RAPP-402).
+  expect(
+    queryDatabase(
+      `select count(*) from public.audit_log as log
+         join auth.users as account on account.id = log.actor_id
+        where log.action = 'survey_export'
+          and log.target_id = ${sqlLiteral(surveyId)}::uuid
+          and account.email = ${sqlLiteral(STAFF_EMAIL)}
+          and log.created_at > now() - interval '5 minutes'`,
+    ),
+  ).not.toBe('0');
 });
