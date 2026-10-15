@@ -1920,6 +1920,12 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - The delete confirm moved from forum moderation to `lib/confirm-delete.ts`, so both screens use one.
 - Checks: `app-entity-services.web-qa.ts` (her own submissions only, the form check, contact reuse, a submission sent with a comment; a draft deleted, a rejected one resubmitted and another corrected), and the iPhone simulator.
 
+## No screen before the second factor after a fresh sign-in (2026-10-15, RAPP-430)
+
+- Right after the email code, the phone already knew the area this device remembered for her (team or entity), but the live role was still loading. The second-factor gate looked at the role only, so for a moment the shell mounted on the `aal1` session. Its queries ran then and kept the empty answers the database gives such a session: an entity contact saw an empty Home or Events tab until the next cold start.
+- Now `awaitsSecondFactor` (`lib/account-area.ts`) also sends a remembered team or entity area to the authenticator screen while the role is unknown and the session is not `aal2`. An `aal2` session with a remembered area still opens at once, as on an offline cold start.
+- Checks: unit tests for the gate, `app-account-routes.web-qa.ts` and `app-entity-home.web-qa.ts`, and a fresh entity sign-in on the iPhone simulator, measured with a log in the Home query (only `aal2` fetches, three rows).
+
 ## Notifications and targeted push on the phone (2026-10-15, RAPP-385, part of RAPP-215)
 
 - `notifications.send` holders get "Notificacions" in More, as the web admin's workspace. A message starts from a template or blank, in Catalan; the four translations are generated and must all be approved before it is sent or saved as a template.

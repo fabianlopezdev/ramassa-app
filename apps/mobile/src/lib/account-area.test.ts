@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import {
   areaHome,
+  awaitsSecondFactor,
   forgetAccount,
   readRememberedAccount,
   rememberAccount,
@@ -359,5 +360,47 @@ test('survey results alone open the survey list without the editor', () => {
     surveys: true,
     surveyEditor: true,
     surveyResults: false,
+  });
+});
+
+describe('awaitsSecondFactor', () => {
+  const base = { role: null, needsSecondFactor: false } as const;
+
+  test('a remembered team or entity area waits while the role is unknown and the session is aal1', () => {
+    for (const area of ['team', 'entity'] as const) {
+      expect(awaitsSecondFactor({ ...base, area, assurance: 'aal1' })).toBe(true);
+      expect(awaitsSecondFactor({ ...base, area, assurance: null })).toBe(true);
+    }
+  });
+
+  test('an aal2 session with a remembered area goes on, as on an offline cold start', () => {
+    for (const area of ['team', 'entity'] as const) {
+      expect(awaitsSecondFactor({ ...base, area, assurance: 'aal2' })).toBe(false);
+    }
+  });
+
+  test('a known role follows needsSecondFactor', () => {
+    expect(
+      awaitsSecondFactor({
+        area: 'entity',
+        role: 'entity',
+        needsSecondFactor: true,
+        assurance: 'aal1',
+      }),
+    ).toBe(true);
+    expect(
+      awaitsSecondFactor({
+        area: 'team',
+        role: 'staff',
+        needsSecondFactor: false,
+        assurance: 'aal2',
+      }),
+    ).toBe(false);
+  });
+
+  test('players and the other areas never wait', () => {
+    for (const area of ['player', 'onboarding', 'resolving', 'unresolved'] as const) {
+      expect(awaitsSecondFactor({ ...base, area, assurance: 'aal1' })).toBe(false);
+    }
   });
 });

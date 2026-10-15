@@ -4,13 +4,13 @@ import { SecondFactorScreen } from '@/components/auth/second-factor-screen';
 import { useStaffLanguage } from '@/components/auth/staff-language-gate';
 import { HandoverSyncWorker } from '@/components/equipment/handover-sync-worker';
 import { PushPermissionRationale } from '@/components/push-permission-rationale';
-import { areaHome, teamScreens } from '@/lib/account-area';
+import { areaHome, awaitsSecondFactor, teamScreens } from '@/lib/account-area';
 import { useAccountAccess } from '@/lib/use-account-access';
 import { usePushRegistration } from '@/lib/use-push-registration';
 import { Redirect, usePathname, type Href } from 'expo-router';
 import { Stack } from 'expo-router/stack';
 import { ActivityIndicator, Modal, useWindowDimensions, View } from 'react-native';
-import { useAuth } from '@ramassa/shared/auth';
+import { assuranceLevelOf, useAuth } from '@ramassa/shared/auth';
 import { tokens } from '@ramassa/shared/tokens';
 
 // Zone boundary (RAPP-12): a crash inside the signed-in area shows the
@@ -23,7 +23,7 @@ const hiddenHeaderScreenOptions = { headerShown: false } as const;
 const noSwipeBackOptions = { gestureEnabled: false, fullScreenGestureEnabled: false } as const;
 
 export default function AppLayout() {
-  const { user, needsSecondFactor, permissionsAreCurrent } = useAuth();
+  const { user, session, role, needsSecondFactor, permissionsAreCurrent } = useAuth();
   const userId = user?.id ?? null;
   // The area comes from the account type, never from its absence (RAPP-232):
   // an entity contact or an unknown account never lands in the player tabs.
@@ -53,8 +53,16 @@ export default function AppLayout() {
   }
   // A team member verifies her authenticator before any team screen (RAPP-233),
   // and so does an entity contact before her portal (RAPP-410): until then the
-  // database lets the session reach nothing.
-  if ((isTeam || area === 'entity') && needsSecondFactor) {
+  // database lets the session reach nothing. That includes the moment after the
+  // email code when only the remembered area is known (RAPP-430).
+  if (
+    awaitsSecondFactor({
+      area,
+      role,
+      needsSecondFactor,
+      assurance: assuranceLevelOf(session),
+    })
+  ) {
     return <SecondFactorScreen />;
   }
   if (home !== null && pathname === '/') {
