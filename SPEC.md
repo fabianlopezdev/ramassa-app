@@ -1795,6 +1795,14 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - Announcements list: status chips (all, draft, published, scheduled, expired, the web admin's filter), the total, pages that load on scroll, and each row's title, category, date, status and whether it is pinned. On a phone a row opens its own screen; on a tablet it opens beside the list.
 - One announcement shows its status, category, publication and expiry, and the Catalan text. Pin and unpin are there for anyone who reads it; Delete is for `announcements.publish` holders, as the database requires, and asks first. The editor comes in RAPP-341.
 
+## Notifications and targeted push on the phone (2026-10-15, RAPP-385, part of RAPP-215)
+
+- `notifications.send` holders get "Notificacions" in More, as the web admin's workspace. A message starts from a template or blank, in Catalan; the four translations are generated and must all be approved before it is sent or saved as a template.
+- The audience picker (`components/team/audience-picker.tsx`, shared with surveys): every active participant, those interested in a service category, those signed up to an event, those referred by an entity, or a custom group. Once chosen, the screen shows live how many participants and devices it reaches; the send passes that count, so the database refuses it if the audience changed in between.
+- Save as template (name and category), and the send history with its counts and state.
+- Custom groups are managed separately (RAPP-389).
+- Checks: `app-team-notifications.web-qa.ts` (template, approval gate, exact group of 5 on 5 devices, deliveries in all five languages, history, save as template), the web admin `targeted-notifications.web-qa.ts`, and the iPhone simulator.
+
 ## Feedback inbox on the phone (2026-10-15, RAPP-383, part of RAPP-215)
 
 - `feedback.view` holders get "Bústia de suggeriments" in More, as the web admin's inbox: how many of each kind arrived per month (shown by month name), filters by kind and status, and each submission with who sent it, when, its text and photo.
