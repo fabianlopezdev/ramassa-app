@@ -1920,6 +1920,13 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - The delete confirm moved from forum moderation to `lib/confirm-delete.ts`, so both screens use one.
 - Checks: `app-entity-services.web-qa.ts` (her own submissions only, the form check, contact reuse, a submission sent with a comment; a draft deleted, a rejected one resubmitted and another corrected), and the iPhone simulator.
 
+## Entity events on the phone (2026-10-15, RAPP-412, part of RAPP-217)
+
+- A partner entity's contact gets the Events tab, as the web portal's events page: the published upcoming events (`list_entity_upcoming_events`), read only, in date order, with the title and description in her language, the place and a recurring mark.
+- The phone shows the date and the time, in the event's own time zone; the web page shows the date only.
+- With this slice the entity has all five tabs: Home, Referrals, Services, Events and Messages.
+- Checks: `app-entity-events.web-qa.ts` (the published upcoming events in order with titles and the recurring mark, and none that is a draft or past), and the iPhone simulator.
+
 ## Notifications and targeted push on the phone (2026-10-15, RAPP-385, part of RAPP-215)
 
 - `notifications.send` holders get "Notificacions" in More, as the web admin's workspace. A message starts from a template or blank, in Catalan; the four translations are generated and must all be approved before it is sent or saved as a template.
