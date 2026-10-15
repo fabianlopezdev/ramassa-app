@@ -162,6 +162,9 @@ export default function AppLayout() {
         <Stack.Protected guard={isTeam && team.mentoring}>
           <Stack.Screen name="team-mentoring" />
         </Stack.Protected>
+        <Stack.Protected guard={isTeam && team.notifications}>
+          <Stack.Screen name="team-notifications" />
+        </Stack.Protected>
         <Stack.Protected guard={isTeam && team.feedback}>
           <Stack.Screen name="team-feedback" />
         </Stack.Protected>

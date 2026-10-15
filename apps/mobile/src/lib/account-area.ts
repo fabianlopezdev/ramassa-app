@@ -110,6 +110,7 @@ export function teamScreens(permissions: ReadonlySet<PermissionCode>): {
   readonly forumModeration: boolean;
   readonly galleryModeration: boolean;
   readonly feedback: boolean;
+  readonly notifications: boolean;
   readonly mentoring: boolean;
   readonly messages: boolean;
   readonly stock: boolean;
@@ -132,6 +133,7 @@ export function teamScreens(permissions: ReadonlySet<PermissionCode>): {
     forumModeration: permissions.has('forum.moderate'),
     galleryModeration: permissions.has('gallery.moderate'),
     feedback: permissions.has('feedback.view'),
+    notifications: permissions.has('notifications.send'),
     mentoring: permissions.has('mentoring.manage'),
     messages: permissions.has('messages.inbox'),
     stock: teamAreas(permissions).includes('stock'),
