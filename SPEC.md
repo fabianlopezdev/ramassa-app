@@ -1927,6 +1927,14 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - With this slice the entity has all five tabs: Home, Referrals, Services, Events and Messages.
 - Checks: `app-entity-events.web-qa.ts` (the published upcoming events in order with titles and the recurring mark, and none that is a draft or past), and the iPhone simulator.
 
+## Survey CSV export with step-up and audit (2026-10-15, RAPP-402, part of RAPP-216)
+
+- The survey CSV names every participant who answered. Before, the web admin built it in the browser from `list_survey_responses`, with no recent second factor and no audit entry.
+- Now `create_survey_export(p_survey_id)` returns the rows only to a `surveys.results` holder with an authenticator code from the last 10 minutes, keeps the data exports' rate limit (five a minute), and writes one audit row (`survey_export`, target the survey) with the export id and the row count, without answers or names. Both apps build the same CSV from its rows (`createSurveyExport`, `buildSurveyCsv` / `streamSurveyCsv`).
+- Web admin: Export CSV goes through the step-up prompt and this function.
+- Phone: Share CSV on a survey's results, through the step-up (Face ID, then the code when needed) and the share sheet; the file is deleted from the phone afterwards.
+- Checks: pgTAP `0066_survey_export_test.sql` (rows and audit row, no recent code, no permission, unknown survey, rate limit), `surveys.web-qa.ts` (the web CSV and its audit row), `app-team-surveys.web-qa.ts` (the phone CSV and its audit row), and the iPhone simulator.
+
 ## Notifications and targeted push on the phone (2026-10-15, RAPP-385, part of RAPP-215)
 
 - `notifications.send` holders get "Notificacions" in More, as the web admin's workspace. A message starts from a template or blank, in Catalan; the four translations are generated and must all be approved before it is sent or saved as a template.

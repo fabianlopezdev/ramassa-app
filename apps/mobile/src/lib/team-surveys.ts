@@ -1,17 +1,27 @@
 /**
  * Surveys on the phone (RAPP-384), as the web admin's workspace: the staff
  * list with its response counts, a new survey saved and distributed, and the
- * attributed responses of one survey for `surveys.results` holders. The
- * audience reuses the notification groups and options. Kept in memory: the
- * responses name the participants.
+ * attributed responses of one survey for `surveys.results` holders, and
+ * their CSV (RAPP-402), which asks for the step-up first and goes to the share
+ * sheet. The audience reuses the notification groups and options. Kept in
+ * memory: the responses name the participants.
  */
+import { useStepUp } from '@/components/auth/step-up';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@ramassa/shared/auth';
 import {
   fetchCustomNotificationGroups,
   fetchNotificationAudienceOptions,
 } from '@ramassa/shared/notifications';
-import { fetchStaffSurveys, fetchSurveyResponses, saveSurvey } from '@ramassa/shared/surveys';
+import {
+  buildSurveyCsv,
+  createSurveyExport,
+  fetchStaffSurveys,
+  fetchSurveyResponses,
+  saveSurvey,
+  type StaffSurvey,
+} from '@ramassa/shared/surveys';
+import { shareFile } from './share-file';
 import { supabase } from './supabase';
 
 const SIGNED_OUT = 'signed-out';
@@ -60,5 +70,27 @@ export function useSaveSurvey() {
     mutationFn: (input: Parameters<typeof saveSurvey>[1]) => saveSurvey(supabase, input),
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: surveysRoot(user?.id ?? SIGNED_OUT) }),
+  });
+}
+
+/**
+ * The survey's CSV, as the web admin's Export CSV: the database asks for a
+ * recent authenticator code and records the export, then the file goes to the
+ * share sheet and is deleted from the phone afterwards.
+ */
+export function useSurveyExport(dialogTitle: string) {
+  const withStepUp = useStepUp();
+  return useMutation({
+    mutationFn: async (survey: Pick<StaffSurvey, 'id' | 'questions'>) => {
+      const responses = await withStepUp(() => createSurveyExport(supabase, survey.id));
+      await shareFile({
+        name: `survey-${survey.id}.csv`,
+        content: buildSurveyCsv(survey.questions, responses),
+        mimeType: 'text/csv',
+        uti: 'public.comma-separated-values-text',
+        dialogTitle,
+      });
+      return responses.length;
+    },
   });
 }
