@@ -61,5 +61,15 @@
   "reject": "Rechazar",
   "approve": "Aprobar",
   "approveAll": "Aprobar todo",
-  "loadingResponses": "Cargando las respuestas..."
+  "loadingResponses": "Cargando las respuestas...",
+  "addChoice": "Añade una opción",
+  "removeChoice": "Elimina la opción",
+  "noSurveys": "Todavía no hay encuestas.",
+  "statusScheduled": "Programada",
+  "statusOpen": "Abierta",
+  "statusClosed": "Cerrada",
+  "averageRating": "Media {{value}} de 5",
+  "choiceLabel": "Opción {{number}} en catalán",
+  "datesInvalid": "La fecha de cierre debe ser posterior a la de publicación.",
+  "publishAtRequired": "Elige cuándo se publica la encuesta."
 }

@@ -1795,6 +1795,15 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - Announcements list: status chips (all, draft, published, scheduled, expired, the web admin's filter), the total, pages that load on scroll, and each row's title, category, date, status and whether it is pinned. On a phone a row opens its own screen; on a tablet it opens beside the list.
 - One announcement shows its status, category, publication and expiry, and the Catalan text. Pin and unpin are there for anyone who reads it; Delete is for `announcements.publish` holders, as the database requires, and asks first. The editor comes in RAPP-341.
 
+## Surveys on the phone (2026-10-15, RAPP-384, part of RAPP-215)
+
+- `surveys.manage` and `surveys.results` holders get "Enquestes" in More, as the web admin's workspace: each survey with its state (scheduled, open or closed), when it closes, and how many responses and completed responses it has.
+- `surveys.manage` holders start a new survey: a Catalan title, an optional linked activity, when it is published and closes (Madrid time), who receives it (the shared audience picker, every active participant by default), and up to thirty questions (stars, a choice, yes or no, or free text; each one required or optional). One button asks for the drafts of every text; every language of every text must be approved before the survey is saved and distributed.
+- Choices take a Catalan label with its own review, so the five labels come from the drafts. The web admin asks for the five labels by hand and has two fixed choices; the phone allows two to twelve. Surveys are created only, as in the web admin, because a survey with responses cannot change.
+- `surveys.results` holders open a survey's results: the stars' average and spread, how often each choice and each of yes and no was picked, the written answers with who wrote them, and each participant's response with its state. Kept in memory: the answers are attributed.
+- The CSV export waits for the phone's exports (RAPP-216), which ask for the second factor and use the share sheet, because the file names participants.
+- Checks: `app-team-surveys.web-qa.ts` (the seeded results against the database, the approval gate, a new survey with a rating and a choice question in five languages), the player and staff `surveys.web-qa.ts`, unit tests for the survey state and the screen flags, and the iPhone simulator.
+
 ## Forum categories on the phone (2026-10-15, RAPP-386, part of RAPP-215)
 
 - `forum.moderate` holders open "Categories del fòrum" from forum moderation, as the category manager under the web admin's forum moderation: the categories in the order participants see them, with Up, Down, Edit and Delete. New and Edit open a sheet.

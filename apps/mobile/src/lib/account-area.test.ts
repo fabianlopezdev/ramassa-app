@@ -128,6 +128,9 @@ test('team screens follow permissions', () => {
     galleryModeration: false,
     feedback: false,
     notifications: false,
+    surveys: false,
+    surveyEditor: false,
+    surveyResults: false,
     entities: false,
     documents: false,
     organization: false,
@@ -158,6 +161,9 @@ test('team screens follow permissions', () => {
     galleryModeration: false,
     feedback: false,
     notifications: false,
+    surveys: false,
+    surveyEditor: false,
+    surveyResults: false,
     entities: false,
     documents: false,
     organization: false,
@@ -188,6 +194,9 @@ test('team screens follow permissions', () => {
     galleryModeration: false,
     feedback: false,
     notifications: false,
+    surveys: false,
+    surveyEditor: false,
+    surveyResults: false,
     entities: false,
     documents: false,
     organization: false,
@@ -218,6 +227,9 @@ test('team screens follow permissions', () => {
     galleryModeration: false,
     feedback: false,
     notifications: false,
+    surveys: false,
+    surveyEditor: false,
+    surveyResults: false,
     entities: false,
     documents: false,
     organization: false,
@@ -249,6 +261,9 @@ test('team screens follow permissions', () => {
     galleryModeration: false,
     feedback: false,
     notifications: false,
+    surveys: false,
+    surveyEditor: false,
+    surveyResults: false,
     entities: false,
     documents: false,
     organization: false,
@@ -332,4 +347,17 @@ test('settings.documents opens the internal documents', () => {
 test('entities.manage opens the collaborating entities', () => {
   expect(teamScreens(new Set(['entities.manage'])).entities).toBe(true);
   expect(teamScreens(new Set(['team.manage'])).entities).toBe(false);
+});
+
+test('survey results alone open the survey list without the editor', () => {
+  expect(teamScreens(new Set(['surveys.results']))).toMatchObject({
+    surveys: true,
+    surveyEditor: false,
+    surveyResults: true,
+  });
+  expect(teamScreens(new Set(['surveys.manage']))).toMatchObject({
+    surveys: true,
+    surveyEditor: true,
+    surveyResults: false,
+  });
 });

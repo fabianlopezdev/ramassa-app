@@ -111,6 +111,9 @@ export function teamScreens(permissions: ReadonlySet<PermissionCode>): {
   readonly galleryModeration: boolean;
   readonly feedback: boolean;
   readonly notifications: boolean;
+  readonly surveys: boolean;
+  readonly surveyEditor: boolean;
+  readonly surveyResults: boolean;
   readonly entities: boolean;
   readonly documents: boolean;
   readonly organization: boolean;
@@ -141,6 +144,9 @@ export function teamScreens(permissions: ReadonlySet<PermissionCode>): {
     galleryModeration: permissions.has('gallery.moderate'),
     feedback: permissions.has('feedback.view'),
     notifications: permissions.has('notifications.send'),
+    surveys: permissions.has('surveys.manage') || permissions.has('surveys.results'),
+    surveyEditor: permissions.has('surveys.manage'),
+    surveyResults: permissions.has('surveys.results'),
     entities: permissions.has('entities.manage'),
     documents: permissions.has('settings.documents'),
     organization: permissions.has('settings.organization') || permissions.has('settings.branding'),
