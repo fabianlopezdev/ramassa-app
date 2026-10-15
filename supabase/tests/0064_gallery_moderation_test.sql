@@ -12,6 +12,16 @@
 begin;
 select plan(11);
 
+-- Counted from here, so audit rows left by earlier runs do not count.
+select set_config('test.hides_before', (
+  select count(*)::text from public.audit_log
+   where action = 'gallery.hide' and target_id = '5eed0000-0000-4000-8014-000000000001'
+), true);
+select set_config('test.shows_before', (
+  select count(*)::text from public.audit_log
+   where action = 'gallery.show' and target_id = '5eed0000-0000-4000-8014-000000000001'
+), true);
+
 -- A player reports the item, through her own function.
 set local role authenticated;
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000012", "role": "authenticated"}';
@@ -62,7 +72,8 @@ select is(
 );
 select is(
   (select count(*)::int from public.audit_log
-    where action = 'gallery.hide' and target_id = '5eed0000-0000-4000-8014-000000000001'),
+    where action = 'gallery.hide' and target_id = '5eed0000-0000-4000-8014-000000000001')
+    - current_setting('test.hides_before')::int,
   1, 'and it is audited'
 );
 
@@ -78,8 +89,9 @@ select public.set_media_item_moderation('5eed0000-0000-4000-8014-000000000001', 
 reset role;
 select is(
   (select moderation_state || '|' ||
-          (select count(*) from public.audit_log where action = 'gallery.show'
-            and target_id = '5eed0000-0000-4000-8014-000000000001')
+          ((select count(*) from public.audit_log where action = 'gallery.show'
+             and target_id = '5eed0000-0000-4000-8014-000000000001')
+           - current_setting('test.shows_before')::int)
      from public.media_items where id = '5eed0000-0000-4000-8014-000000000001'),
   'visible|1', 'showing it again brings it back, audited'
 );
