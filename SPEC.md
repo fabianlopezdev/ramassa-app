@@ -1902,6 +1902,15 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - Kept in memory only: referrals hold contact details.
 - Checks: `app-entity-referrals.web-qa.ts` (the refused fields, a referral sent and found by an accent-free search, the note before onboarding, an update on a referral with an account read back decrypted), `app-account-routes.web-qa.ts`, and the iPhone simulator.
 
+## Entity messages on the phone (2026-10-15, RAPP-415, part of RAPP-217)
+
+- A partner entity's contact gets the Messages tab, as the web portal's messages page: her one general conversation with the team (`get_or_create_own_conversation`), in the phone's player thread with the entity title. The tab (and the tablet sidebar entry) shows her unread count.
+- Fixed in passing, for every thread on the phone:
+  - A thread marks messages read only while its screen is on view. Before, a thread in a tab stayed mounted behind another tab and read new messages at once, so the unread count never showed.
+  - On iOS the composer sits on the keyboard. Before, a thread in a tab left a gap the height of the tab bar between them (in a pushed screen, the height of the home indicator).
+  - On a tablet (web), the team and entity shells bound their tab slot. Before, a message thread there grew the page without end.
+- Checks: `app-entity-messages.web-qa.ts` (a team reply counted on the tab, read in the chat, an answer saved; the team thread keeps its height beside the sidebar), `app-account-routes.web-qa.ts`, the messaging contract tests, and the iPhone simulator (badge while on another tab, cleared on open, a sent message, the keyboard).
+
 ## Notifications and targeted push on the phone (2026-10-15, RAPP-385, part of RAPP-215)
 
 - `notifications.send` holders get "Notificacions" in More, as the web admin's workspace. A message starts from a template or blank, in Catalan; the four translations are generated and must all be approved before it is sent or saved as a template.

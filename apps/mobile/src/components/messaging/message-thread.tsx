@@ -243,6 +243,13 @@ function MessageThreadView({
   const { t, i18n } = useTranslation('messaging');
   const { user } = useAuth();
   const fontClass = useLanguageFontClass();
+  // The composer keeps the bottom inset clear (the home indicator, and the tab
+  // bar when the thread is a tab). The keyboard covers that inset, so iOS lifts
+  // the view only by the rest (RAPP-415); before, a tab left a gap the height
+  // of the tab bar between the composer and the keyboard.
+  const bottomInset = useSafeAreaInsets().bottom;
+  const keyboardOffset =
+    process.env.EXPO_OS === 'ios' ? -Math.max(bottomInset - tokens.spacing.sm, 0) : 0;
   const {
     messages,
     send,
@@ -355,6 +362,7 @@ function MessageThreadView({
       <KeyboardAvoidingView
         style={listStyle}
         behavior={process.env.EXPO_OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={keyboardOffset}
       >
         <PageWidth className="flex-1">
           <View className="border-b border-neutral-200 bg-white px-lg py-md">

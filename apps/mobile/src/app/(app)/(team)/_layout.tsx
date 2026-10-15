@@ -12,6 +12,7 @@
 import { TeamLayoutContext } from '@/components/team/team-layout-context';
 import { TeamSidebarItem } from '@/components/team/team-sidebar-item';
 import { useUnreadMessages } from '@/lib/messaging';
+import { boundedTabSlotStyle } from '@/lib/tab-slot-style';
 import { isCompactSidebar, teamAreas, teamLayout } from '@/lib/team-shell';
 import { unreadBadgeProps } from '@/lib/unread-badge';
 import { useAccountAccess } from '@/lib/use-account-access';
@@ -145,7 +146,7 @@ export default function TeamShellLayout() {
           </View>
         </TabList>
         <SafeAreaView edges={['top', 'right', 'bottom']} className="flex-1">
-          <TabSlot />
+          <TabSlot style={boundedTabSlotStyle} />
         </SafeAreaView>
       </Tabs>
     );
