@@ -4,6 +4,7 @@ import {
   fetchTeamAccess,
   membersUsingPreset,
   permissionsByArea,
+  presetWithinReach,
   summarizeAccess,
   teamAccessErrorKey,
   type PermissionPreset,
@@ -128,4 +129,14 @@ test('each refusal from the database gets its own sentence', () => {
     'team.errorPresetName',
   );
   expect(teamAccessErrorKey('something else')).toBe('actionError');
+});
+
+test('using a preset changes only the toggles the reader holds', () => {
+  const current = new Set<PermissionCode>(['attendance.mark', 'team.manage']);
+  const preset = { permissions: new Set<PermissionCode>(['participants.view']) };
+  const holds = (code: PermissionCode) => code !== 'team.manage';
+  expect([...presetWithinReach(current, preset, holds)].sort()).toEqual([
+    'participants.view',
+    'team.manage',
+  ]);
 });

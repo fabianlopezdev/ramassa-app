@@ -4,7 +4,9 @@
  * inviting, removing, resetting a second factor and signing someone out
  * everywhere. Every change but the sign-out asks for the step-up first, as on
  * the web; the database checks `team.manage`, keeps one team manager, and
- * audits each change. An invitation gets its sign-in code by email.
+ * audits each change. An invitation gets its sign-in code by email. A
+ * person's switches and the presets are changed here too (RAPP-405); a change
+ * to one's own access reads the permissions again at once.
  */
 import { useStepUp } from '@/components/auth/step-up';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -16,7 +18,12 @@ import {
 } from '@ramassa/shared/organization-settings';
 import {
   applyPermissionPreset,
+  deletePermissionPreset,
   fetchTeamAccess,
+  restorePermissionPresetDefault,
+  savePermissionPreset,
+  setTeamMemberPermissions,
+  type PermissionCode,
   type PermissionPreset,
 } from '@ramassa/shared/permissions';
 import { logout, sendEmailOtp } from './auth';
@@ -43,7 +50,7 @@ export function useTeamStaff() {
 }
 
 export function useStaffActions() {
-  const { user } = useAuth();
+  const { user, refreshProfile } = useAuth();
   const queryClient = useQueryClient();
   const withStepUp = useStepUp();
   const refresh = () =>
@@ -85,5 +92,56 @@ export function useStaffActions() {
     },
     onSettled: refresh,
   });
-  return { invite, remove, resetFactor, signOutAll };
+  const refreshIfMine = async (profileIds: readonly string[]) => {
+    if (user !== null && profileIds.includes(user.id)) await refreshProfile();
+  };
+  const saveAccess = useMutation({
+    mutationFn: async (input: {
+      readonly profileId: string;
+      readonly permissions: ReadonlySet<PermissionCode>;
+      readonly presetId: string | null;
+    }) => {
+      await withStepUp(() => setTeamMemberPermissions(supabase, input));
+      await refreshIfMine([input.profileId]);
+    },
+    onSettled: refresh,
+  });
+  const savePreset = useMutation({
+    mutationFn: (input: {
+      readonly presetId: string | null;
+      readonly name: string | null;
+      readonly permissions: ReadonlySet<PermissionCode>;
+    }) => withStepUp(() => savePermissionPreset(supabase, input)),
+    onSettled: refresh,
+  });
+  const applyPreset = useMutation({
+    mutationFn: async (input: {
+      readonly presetId: string;
+      readonly profileIds: readonly string[];
+    }) => {
+      await withStepUp(() => applyPermissionPreset(supabase, input.presetId, input.profileIds));
+      await refreshIfMine(input.profileIds);
+    },
+    onSettled: refresh,
+  });
+  const deletePreset = useMutation({
+    mutationFn: (presetId: string) => withStepUp(() => deletePermissionPreset(supabase, presetId)),
+    onSettled: refresh,
+  });
+  const restorePreset = useMutation({
+    mutationFn: (presetId: string) =>
+      withStepUp(() => restorePermissionPresetDefault(supabase, presetId)),
+    onSettled: refresh,
+  });
+  return {
+    invite,
+    remove,
+    resetFactor,
+    signOutAll,
+    saveAccess,
+    savePreset,
+    applyPreset,
+    deletePreset,
+    restorePreset,
+  };
 }

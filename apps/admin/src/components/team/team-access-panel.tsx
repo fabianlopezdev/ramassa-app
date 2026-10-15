@@ -33,6 +33,7 @@ import type { StaffMember } from '@ramassa/shared/organization-settings';
 import {
   membersUsingPreset,
   permissionsByArea,
+  presetWithinReach,
   sameCodes,
   summarizeAccess,
   teamAccessErrorKey,
@@ -598,18 +599,7 @@ function MemberAccessDialog({
             disabled={chosen === undefined}
             onClick={() => {
               if (chosen === undefined) return;
-              setPermissions((current) => {
-                const next = new Set<PermissionCode>();
-                for (const { codes } of permissionsByArea()) {
-                  for (const code of codes) {
-                    const wanted = reachable(code)
-                      ? chosen.permissions.has(code)
-                      : current.has(code);
-                    if (wanted) next.add(code);
-                  }
-                }
-                return next;
-              });
+              setPermissions((current) => presetWithinReach(current, chosen, reachable));
               setPresetId(chosen.id);
             }}
           >

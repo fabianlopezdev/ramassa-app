@@ -14,6 +14,7 @@ export {
   fetchTeamAccess,
   membersUsingPreset,
   permissionsByArea,
+  presetWithinReach,
   restorePermissionPresetDefault,
   sameCodes,
   savePermissionPreset,

@@ -4,12 +4,15 @@
  * their access summary and whether they are active, and for an active person
  * Sign out everywhere, Reset second factor (never one's own) and Remove
  * access. Each action asks first; the database explains a refusal, such as
- * removing the last team manager.
+ * removing the last team manager. Edit access opens a person's switches, and
+ * the presets are listed below with New, Edit, Restore default and Delete
+ * (RAPP-405). A saved preset that people use asks whom to apply it to.
  */
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { PageWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
+import { ApplyPresetSheet, MemberAccessSheet, PresetSheet } from '@/components/team/access-sheets';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { useStaffActions, useTeamStaff } from '@/lib/team-staff';
@@ -21,8 +24,10 @@ import { Alert, Platform, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@ramassa/shared/auth';
 import {
+  membersUsingPreset,
   summarizeAccess,
   teamAccessErrorKey,
+  type PermissionCode,
   type PermissionPreset,
   type TeamMemberAccess,
 } from '@ramassa/shared/permissions';
@@ -118,7 +123,24 @@ export default function TeamStaffScreen() {
   const { back } = useRouter();
   const { user } = useAuth();
   const { members, access } = useTeamStaff();
-  const { invite, remove, resetFactor, signOutAll } = useStaffActions();
+  const {
+    invite,
+    remove,
+    resetFactor,
+    signOutAll,
+    saveAccess,
+    savePreset,
+    applyPreset,
+    deletePreset,
+    restorePreset,
+  } = useStaffActions();
+  const { permissions: myPermissions } = useAuth();
+  const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
+  const [presetSheet, setPresetSheet] = useState<{
+    readonly preset: PermissionPreset | null;
+  } | null>(null);
+  const [applyPresetId, setApplyPresetId] = useState<string | null>(null);
+  const [sheetError, setSheetError] = useState<string | null>(null);
   const presets = access.data?.presets ?? [];
   const defaultPreset = presets.find((preset) => preset.builtinKey === 'staff') ?? presets[0];
   const [firstName, setFirstName] = useState('');
@@ -128,7 +150,31 @@ export default function TeamStaffScreen() {
   const [notice, setNotice] = useState<Notice>(null);
   const chosenPreset = presets.find((preset) => preset.id === (presetId ?? defaultPreset?.id));
   const isBusy =
-    invite.isPending || remove.isPending || resetFactor.isPending || signOutAll.isPending;
+    invite.isPending ||
+    remove.isPending ||
+    resetFactor.isPending ||
+    signOutAll.isPending ||
+    saveAccess.isPending ||
+    savePreset.isPending ||
+    applyPreset.isPending ||
+    deletePreset.isPending ||
+    restorePreset.isPending;
+  const holds = (code: PermissionCode) => myPermissions.has(code);
+  const teamMembers = members.data ?? [];
+  const editingMember = teamMembers.find((member) => member.profile_id === editingMemberId);
+  const applyingPreset = presets.find((preset) => preset.id === applyPresetId) ?? null;
+  const sheetDone = (success: string, close: () => void) => ({
+    onSuccess: () => {
+      playHaptic('success');
+      setSheetError(null);
+      setNotice({ ok: true, text: success });
+      close();
+    },
+    onError: (error: unknown) => {
+      playHaptic('error');
+      setSheetError(t(teamAccessErrorKey(error)));
+    },
+  });
 
   const presetName = (preset: PermissionPreset) =>
     preset.name ?? t(`team.preset.${preset.builtinKey ?? 'custom'}`);
@@ -289,7 +335,7 @@ export default function TeamStaffScreen() {
           </Section>
 
           <View className="gap-sm">
-            {(members.data ?? []).map((member) => {
+            {teamMembers.map((member) => {
               const name = `${member.first_name} ${member.last_name}`.trim();
               return (
                 <View
@@ -317,6 +363,15 @@ export default function TeamStaffScreen() {
                   </Text>
                   {member.is_active ? (
                     <View className="flex-row flex-wrap gap-sm">
+                      <RowAction
+                        testID={`staff-edit-access-${member.profile_id}`}
+                        label={t('team.editAccess')}
+                        isDisabled={isBusy}
+                        onPress={() => {
+                          setSheetError(null);
+                          setEditingMemberId(member.profile_id);
+                        }}
+                      />
                       <RowAction
                         testID={`staff-sign-out-${member.profile_id}`}
                         label={tAuth('signOutEverywhereAction')}
@@ -370,8 +425,146 @@ export default function TeamStaffScreen() {
               );
             })}
           </View>
+
+          <Section title={t('team.presetsTitle')} intro={t('team.presetsIntro')}>
+            <PressableScale
+              testID="preset-new"
+              accessibilityRole="button"
+              accessibilityLabel={t('team.newPreset')}
+              onPress={() => {
+                setSheetError(null);
+                setPresetSheet({ preset: null });
+              }}
+              isDisabled={isBusy}
+              haptic="tapLight"
+              style={continuousCorners}
+              className="min-h-recommended items-center justify-center self-start rounded-md border border-neutral-300 bg-white px-lg"
+            >
+              <Text className={`text-center text-md font-bold text-primary-dark ${fontClass}`}>
+                {t('team.newPreset')}
+              </Text>
+            </PressableScale>
+            {presets.map((preset) => {
+              const people = membersUsingPreset(preset.id, access.data?.members ?? []).length;
+              return (
+                <View
+                  key={preset.id}
+                  testID={`preset-row-${preset.builtinKey ?? preset.id}`}
+                  style={continuousCorners}
+                  className="gap-xs rounded-md bg-neutral-50 p-md"
+                >
+                  <Text className={`text-start text-md font-bold text-neutral-900 ${fontClass}`}>
+                    {preset.builtinKey === null
+                      ? presetName(preset)
+                      : `${presetName(preset)} · ${t('team.builtIn')}`}
+                  </Text>
+                  <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
+                    {t('team.presetSummary', { count: preset.permissions.size, people })}
+                  </Text>
+                  <View className="flex-row flex-wrap gap-sm">
+                    <RowAction
+                      testID={`preset-edit-${preset.builtinKey ?? preset.id}`}
+                      label={t('team.editPreset')}
+                      isDisabled={isBusy}
+                      onPress={() => {
+                        setSheetError(null);
+                        setPresetSheet({ preset });
+                      }}
+                    />
+                    {preset.builtinKey !== null ? (
+                      <RowAction
+                        testID={`preset-restore-${preset.builtinKey}`}
+                        label={t('team.restoreDefault')}
+                        isDisabled={isBusy}
+                        onPress={() =>
+                          restorePreset.mutate(preset.id, done(t('team.presetRestored')))
+                        }
+                      />
+                    ) : (
+                      <RowAction
+                        testID={`preset-delete-${preset.id}`}
+                        label={t('team.deletePreset')}
+                        isDisabled={isBusy}
+                        isDestructive
+                        onPress={() =>
+                          confirmThen(t('team.deletePreset'), presetName(preset), labels, () =>
+                            deletePreset.mutate(preset.id, done(t('team.presetDeleted'))),
+                          )
+                        }
+                      />
+                    )}
+                  </View>
+                </View>
+              );
+            })}
+          </Section>
         </PageWidth>
       </ScrollView>
+      <MemberAccessSheet
+        member={editingMember ?? null}
+        access={editingMember === undefined ? null : accessOf(editingMember.profile_id)}
+        presets={presets}
+        presetName={presetName}
+        holds={holds}
+        isBusy={saveAccess.isPending}
+        error={sheetError}
+        onClose={() => setEditingMemberId(null)}
+        onSave={(permissions, nextPresetId) => {
+          if (editingMember === undefined) return;
+          saveAccess.mutate(
+            { profileId: editingMember.profile_id, permissions, presetId: nextPresetId },
+            sheetDone(t('team.accessSaved'), () => setEditingMemberId(null)),
+          );
+        }}
+      />
+      <PresetSheet
+        visible={presetSheet !== null}
+        preset={presetSheet?.preset ?? null}
+        presetName={presetName}
+        holds={holds}
+        isBusy={savePreset.isPending}
+        error={sheetError}
+        onClose={() => setPresetSheet(null)}
+        onSave={(name, permissions) =>
+          savePreset.mutate(
+            { presetId: presetSheet?.preset?.id ?? null, name, permissions },
+            {
+              ...sheetDone(t('team.presetSaved'), () => setPresetSheet(null)),
+              onSuccess: (savedId) => {
+                playHaptic('success');
+                setSheetError(null);
+                setNotice({ ok: true, text: t('team.presetSaved') });
+                setPresetSheet(null);
+                // Nobody's access changes on its own: applying the edit is a choice.
+                if (membersUsingPreset(savedId, access.data?.members ?? []).length > 0) {
+                  setApplyPresetId(savedId);
+                }
+              },
+            },
+          )
+        }
+      />
+      <ApplyPresetSheet
+        preset={applyingPreset}
+        presetName={presetName}
+        users={teamMembers.filter((member) =>
+          membersUsingPreset(applyPresetId ?? '', access.data?.members ?? []).some(
+            (entry) => entry.profileId === member.profile_id,
+          ),
+        )}
+        isBusy={applyPreset.isPending}
+        error={sheetError}
+        onClose={() => setApplyPresetId(null)}
+        onApply={(profileIds) => {
+          if (applyPresetId === null) return;
+          applyPreset.mutate(
+            { presetId: applyPresetId, profileIds },
+            sheetDone(t('team.presetApplied', { count: profileIds.length }), () =>
+              setApplyPresetId(null),
+            ),
+          );
+        }}
+      />
     </SafeAreaView>
   );
 }
