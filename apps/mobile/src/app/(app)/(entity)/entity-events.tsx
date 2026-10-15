@@ -4,6 +4,7 @@
  * description in her language, the date and time where the event happens,
  * the place and a recurring mark.
  */
+import { EntityLoadFailure, hasLoadFailed } from '@/components/entity/entity-load-failure';
 import { PageWidth } from '@/components/layout/content-width';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useEntityUpcomingEvents } from '@/lib/entity-portal';
@@ -43,7 +44,9 @@ export default function EntityEventsScreen() {
               {t('eventsIntro')}
             </Text>
           </View>
-          {events.data !== undefined && rows.length === 0 ? (
+          {hasLoadFailed(events) ? (
+            <EntityLoadFailure query={events} />
+          ) : events.data !== undefined && rows.length === 0 ? (
             <Text
               testID="entity-events-empty"
               className={`text-start text-md text-neutral-600 ${fontClass}`}
