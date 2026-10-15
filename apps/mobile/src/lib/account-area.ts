@@ -113,6 +113,7 @@ export function teamScreens(permissions: ReadonlySet<PermissionCode>): {
   readonly notifications: boolean;
   readonly dataExports: boolean;
   readonly auditLog: boolean;
+  readonly staff: boolean;
   readonly impact: boolean;
   readonly mentoring: boolean;
   readonly messages: boolean;
@@ -143,6 +144,7 @@ export function teamScreens(permissions: ReadonlySet<PermissionCode>): {
       permissions.has('export.attendance') ||
       permissions.has('export.events'),
     auditLog: permissions.has('audit.view'),
+    staff: permissions.has('team.manage'),
     impact: permissions.has('impact.view'),
     mentoring: permissions.has('mentoring.manage'),
     messages: permissions.has('messages.inbox'),

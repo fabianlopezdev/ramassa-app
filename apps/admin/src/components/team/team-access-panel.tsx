@@ -35,6 +35,7 @@ import {
   permissionsByArea,
   sameCodes,
   summarizeAccess,
+  teamAccessErrorKey,
   type PermissionArea,
   type PermissionCode,
   type PermissionPreset,
@@ -538,14 +539,7 @@ export function TeamAccessPanel({
 
 /** The database refuses with a stable code in the message; each gets plain words. */
 function explainFailure(error: unknown, t: (key: string) => string): string {
-  const text = error instanceof Error ? error.message : '';
-  if (text.includes('PERMISSIONS/LAST_TEAM_MANAGER') || text.includes('team.manage holder')) {
-    return t('team.errorLastManager');
-  }
-  if (text.includes('PERMISSIONS/NOT_HELD')) return t('team.errorNotHeld');
-  if (text.includes('PERMISSIONS/BUILTIN_PRESET')) return t('team.errorBuiltIn');
-  if (text.includes('PERMISSIONS/PRESET_NAME_REQUIRED')) return t('team.errorPresetName');
-  return t('actionError');
+  return t(teamAccessErrorKey(error));
 }
 
 function MemberAccessDialog({

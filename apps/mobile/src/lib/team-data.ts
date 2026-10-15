@@ -32,7 +32,7 @@ const AUDIT_PAGE_SIZE = 25;
 const dataRoot = (userId: string) => ['team', userId, 'data'] as const;
 
 /** `ramassa-participants-default-2026-10-15.csv`, as the web admin names it. */
-export function exportFileName(exportData: Pick<DataExport, 'dataset' | 'scope' | 'generated_at'>) {
+function exportFileName(exportData: Pick<DataExport, 'dataset' | 'scope' | 'generated_at'>) {
   return `ramassa-${exportData.dataset}-${exportData.scope}-${exportData.generated_at.slice(0, 10)}.csv`;
 }
 
