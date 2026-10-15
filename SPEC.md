@@ -1911,6 +1911,15 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
   - On a tablet (web), the team and entity shells bound their tab slot. Before, a message thread there grew the page without end.
 - Checks: `app-entity-messages.web-qa.ts` (a team reply counted on the tab, read in the chat, an answer saved; the team thread keeps its height beside the sidebar), `app-account-routes.web-qa.ts`, the messaging contract tests, and the iPhone simulator (badge while on another tab, cleared on open, a sent message, the keyboard).
 
+## Entity services on the phone (2026-10-15, RAPP-414, part of RAPP-217)
+
+- A partner entity's contact gets the Services tab, as the web portal's services pages: the team's latest decisions on her submissions, then every submission of hers with its status (scheduled when published with a date to come), category and any reason for a rejection.
+- The actions follow `getEntityServiceActions`: a draft can be edited or deleted (asked first), a rejected one edited, deleted or resubmitted, a published one edited (it changes at once). One under review or approved shows read only with a note on what happens next.
+- The form (`components/entity/entity-service-form.tsx`) is in Catalan only, as on the web; the team translates on review. It has the category and its own fields (`ServiceMetadataFields`, shared with the team's form), the provider, place, cost, contact, schedule, link, availability and the requested publication and end dates. A contact she used before fills the contact fields in one tap, found by a search that ignores accents. The shared check runs before `saveEntityService`; saving a rejected one sends it for review again.
+- Each submission has its comment thread with the team (`addEntityServiceComment`); internal team notes stay hidden by the database.
+- The delete confirm moved from forum moderation to `lib/confirm-delete.ts`, so both screens use one.
+- Checks: `app-entity-services.web-qa.ts` (her own submissions only, the form check, contact reuse, a submission sent with a comment; a draft deleted, a rejected one resubmitted and another corrected), and the iPhone simulator.
+
 ## Notifications and targeted push on the phone (2026-10-15, RAPP-385, part of RAPP-215)
 
 - `notifications.send` holders get "Notificacions" in More, as the web admin's workspace. A message starts from a template or blank, in Catalan; the four translations are generated and must all be approved before it is sent or saved as a template.

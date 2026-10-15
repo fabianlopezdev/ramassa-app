@@ -247,6 +247,8 @@ export default function AppLayout() {
           <Stack.Screen name="(entity)" />
           <Stack.Screen name="entity-referral-new" />
           <Stack.Screen name="entity-referral/[id]" />
+          <Stack.Screen name="entity-service-new" />
+          <Stack.Screen name="entity-service/[id]" />
         </Stack.Protected>
         <Stack.Protected guard={area === 'player' || area === 'team' || area === 'entity'}>
           <Stack.Screen name="app-lock" />
