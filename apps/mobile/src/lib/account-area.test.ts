@@ -130,6 +130,7 @@ test('team screens follow permissions', () => {
     notifications: false,
     dataExports: false,
     auditLog: false,
+    impact: false,
     mentoring: false,
     messages: false,
     stock: false,
@@ -155,6 +156,7 @@ test('team screens follow permissions', () => {
     notifications: false,
     dataExports: false,
     auditLog: false,
+    impact: false,
     mentoring: false,
     messages: true,
     stock: false,
@@ -180,6 +182,7 @@ test('team screens follow permissions', () => {
     notifications: false,
     dataExports: false,
     auditLog: false,
+    impact: false,
     mentoring: false,
     messages: false,
     stock: false,
@@ -205,6 +208,7 @@ test('team screens follow permissions', () => {
     notifications: false,
     dataExports: false,
     auditLog: false,
+    impact: false,
     mentoring: false,
     messages: false,
     stock: false,
@@ -231,6 +235,7 @@ test('team screens follow permissions', () => {
     notifications: false,
     dataExports: false,
     auditLog: false,
+    impact: false,
     mentoring: false,
     messages: false,
     stock: true,
@@ -281,4 +286,9 @@ test('any export permission opens the exports, and audit.view the audit log', ()
     dataExports: false,
     auditLog: true,
   });
+});
+
+test('impact.view opens the impact dashboard', () => {
+  expect(teamScreens(new Set(['impact.view'])).impact).toBe(true);
+  expect(teamScreens(new Set(['export.attendance'])).impact).toBe(false);
 });
