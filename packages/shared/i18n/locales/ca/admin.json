@@ -76,5 +76,11 @@
   "impactChartMonthly": "{{metric}} per mes",
   "impactChartEmpty": "No hi ha prou dades per a un gràfic en aquest període.",
   "impactLoadFailed": "No hem pogut carregar l'informe d'impacte.",
-  "impactClose": "Tanca"
+  "impactClose": "Tanca",
+  "exportShare": "Comparteix el CSV",
+  "exportFullShare": "Comparteix el CSV complet",
+  "exportShared": "Exportació a punt amb {{count}} files.",
+  "exportPhoneNote": "Al telèfon, les exportacions són fitxers CSV. Els fitxers Excel són a l'administració web.",
+  "auditLoadMore": "Mostra'n més",
+  "exportPeriod": "Període (opcional)"
 }

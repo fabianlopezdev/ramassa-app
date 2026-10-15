@@ -112,6 +112,8 @@ export function teamScreens(permissions: ReadonlySet<PermissionCode>): {
   readonly feedback: boolean;
   readonly notifications: boolean;
   readonly organization: boolean;
+  readonly dataExports: boolean;
+  readonly auditLog: boolean;
   readonly staff: boolean;
   readonly impact: boolean;
   readonly mentoring: boolean;
@@ -138,6 +140,12 @@ export function teamScreens(permissions: ReadonlySet<PermissionCode>): {
     feedback: permissions.has('feedback.view'),
     notifications: permissions.has('notifications.send'),
     organization: permissions.has('settings.organization') || permissions.has('settings.branding'),
+    dataExports:
+      permissions.has('export.participants') ||
+      permissions.has('export.participants_sensitive') ||
+      permissions.has('export.attendance') ||
+      permissions.has('export.events'),
+    auditLog: permissions.has('audit.view'),
     staff: permissions.has('team.manage'),
     impact: permissions.has('impact.view'),
     mentoring: permissions.has('mentoring.manage'),
