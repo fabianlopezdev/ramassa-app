@@ -179,14 +179,14 @@ export function areaHome(
   | '/messages'
   | '/more'
   | '/team-home'
-  | '/entity-portal'
+  | '/entity-home'
   | '/account-unresolved'
   | null {
   if (area === 'team') {
     const areas = teamAreas(permissions);
     return teamStart(areas, teamLayout({ areaCount: areas.length, width }));
   }
-  if (area === 'entity') return '/entity-portal';
+  if (area === 'entity') return '/entity-home';
   if (area === 'unresolved') return '/account-unresolved';
   return null;
 }

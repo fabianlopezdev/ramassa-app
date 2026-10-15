@@ -50,7 +50,11 @@ export default function TeamMoreScreen() {
       testID="team-more"
     >
       <PageWidth className="flex-1">
-        <ScrollView contentContainerClassName="gap-md p-lg">
+        {/* The inset keeps the last entry, sign-out, clear of the floating tab bar. */}
+        <ScrollView
+          contentInsetAdjustmentBehavior="automatic"
+          contentContainerClassName="gap-md p-lg pb-3xl"
+        >
           <TeamBackToHome />
           <Text
             accessibilityRole="header"

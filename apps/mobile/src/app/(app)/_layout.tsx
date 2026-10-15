@@ -51,9 +51,10 @@ export default function AppLayout() {
       </View>
     );
   }
-  // A team member verifies her authenticator before any team screen (RAPP-233):
-  // until then the database lets her session reach nothing.
-  if (isTeam && needsSecondFactor) {
+  // A team member verifies her authenticator before any team screen (RAPP-233),
+  // and so does an entity contact before her portal (RAPP-410): until then the
+  // database lets the session reach nothing.
+  if ((isTeam || area === 'entity') && needsSecondFactor) {
     return <SecondFactorScreen />;
   }
   if (home !== null && pathname === '/') {
@@ -228,8 +229,9 @@ export default function AppLayout() {
         <Stack.Protected guard={isTeam}>
           <Stack.Screen name="photo-handoff/[id]" />
         </Stack.Protected>
+        {/* The partner entity's tabs (RAPP-410), as the web portal. */}
         <Stack.Protected guard={area === 'entity'}>
-          <Stack.Screen name="entity-portal" />
+          <Stack.Screen name="(entity)" />
         </Stack.Protected>
         <Stack.Protected guard={area === 'player' || area === 'team' || area === 'entity'}>
           <Stack.Screen name="app-lock" />
