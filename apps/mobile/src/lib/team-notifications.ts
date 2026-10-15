@@ -3,8 +3,9 @@
  * `notifications.send` holders, as the web admin's workspace: the templates,
  * custom groups and audience options, who exactly an audience reaches right
  * now (live, with their devices), sending a reviewed message in five
- * languages to them, saving it as a template, and the send history. Kept in
- * memory: the audience lists names.
+ * languages to them, saving it as a template, and the send history. Custom
+ * groups are created and changed here too (RAPP-389). Kept in memory: the
+ * audience lists names.
  */
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@ramassa/shared/auth';
@@ -15,6 +16,7 @@ import {
   fetchNotificationSendHistory,
   fetchNotificationTemplates,
   previewNotificationAudience,
+  saveCustomNotificationGroup,
   saveNotificationTemplate,
   type NotificationAudience,
 } from '@ramassa/shared/notifications';
@@ -79,5 +81,10 @@ export function useNotificationActions() {
       saveNotificationTemplate(supabase, input),
     onSuccess: refresh,
   });
-  return { send, saveTemplate };
+  const saveGroup = useMutation({
+    mutationFn: (input: Parameters<typeof saveCustomNotificationGroup>[1]) =>
+      saveCustomNotificationGroup(supabase, input),
+    onSuccess: refresh,
+  });
+  return { send, saveTemplate, saveGroup };
 }

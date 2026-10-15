@@ -47,7 +47,8 @@
   "saveGroup": "حفظ المجموعة",
   "groupSaved": "تم حفظ المجموعة.",
   "editGroup": "تعديل",
-  "membersCount": "{{count}} عضوات",
+  "membersCount_one": "عضوة واحدة",
+  "membersCount_other": "{{count}} عضوات",
   "historyTitle": "سجل الإرسال",
   "historyEmpty": "لا توجد عمليات إرسال موجهة بعد.",
   "historyAudience": "الجمهور: {{audience}}",
@@ -61,5 +62,8 @@
   "stateAwaitingReceipts": "بانتظار الإيصالات",
   "stateRetrying": "إعادة المحاولة",
   "stateComplete": "مكتمل",
-  "error": "تعذر إكمال إجراء الإشعار."
+  "error": "تعذر إكمال إجراء الإشعار.",
+  "newGroup": "مجموعة جديدة",
+  "groupSelected_one": "المختارات: {{count}}",
+  "groupSelected_other": "المختارات: {{count}}"
 }

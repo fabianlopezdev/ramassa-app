@@ -47,7 +47,8 @@
   "saveGroup": "Save group",
   "groupSaved": "Group saved.",
   "editGroup": "Edit",
-  "membersCount": "{{count}} members",
+  "membersCount_one": "1 member",
+  "membersCount_other": "{{count}} members",
   "historyTitle": "Send history",
   "historyEmpty": "No targeted sends yet.",
   "historyAudience": "Audience: {{audience}}",
@@ -61,5 +62,8 @@
   "stateAwaitingReceipts": "Awaiting receipts",
   "stateRetrying": "Retrying",
   "stateComplete": "Complete",
-  "error": "The notification action could not be completed."
+  "error": "The notification action could not be completed.",
+  "newGroup": "New group",
+  "groupSelected_one": "1 selected",
+  "groupSelected_other": "{{count}} selected"
 }

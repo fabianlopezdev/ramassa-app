@@ -47,7 +47,8 @@
   "saveGroup": "ذخیره گروه",
   "groupSaved": "گروه ذخیره شد.",
   "editGroup": "ویرایش",
-  "membersCount": "{{count}} عضو",
+  "membersCount_one": "{{count}} عضو",
+  "membersCount_other": "{{count}} عضو",
   "historyTitle": "تاریخچه ارسال",
   "historyEmpty": "هنوز ارسال هدفمندی وجود ندارد.",
   "historyAudience": "مخاطب: {{audience}}",
@@ -61,5 +62,8 @@
   "stateAwaitingReceipts": "در انتظار رسید",
   "stateRetrying": "تلاش دوباره",
   "stateComplete": "کامل",
-  "error": "اقدام اعلان انجام نشد."
+  "error": "اقدام اعلان انجام نشد.",
+  "newGroup": "گروه جدید",
+  "groupSelected_one": "{{count}} انتخاب شده",
+  "groupSelected_other": "{{count}} انتخاب شده"
 }

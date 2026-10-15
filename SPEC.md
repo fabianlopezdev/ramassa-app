@@ -1795,6 +1795,14 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - Announcements list: status chips (all, draft, published, scheduled, expired, the web admin's filter), the total, pages that load on scroll, and each row's title, category, date, status and whether it is pinned. On a phone a row opens its own screen; on a tablet it opens beside the list.
 - One announcement shows its status, category, publication and expiry, and the Catalan text. Pin and unpin are there for anyone who reads it; Delete is for `announcements.publish` holders, as the database requires, and asks first. The editor comes in RAPP-341.
 
+## Custom notification groups on the phone (2026-10-15, RAPP-389, part of RAPP-215)
+
+- The notifications screen gets "Grups personalitzats": each group with its member count, New group and Edit, as the web admin's group form. A sheet takes the name and the participants, picked from a search that ignores case and accents; the selection stays while the search changes.
+- The search (`filterNotificationGroupParticipants`) moved from the web admin into `packages/shared/notifications.ts`, so both use one function.
+- Groups are not deleted on the phone, as in the web admin.
+- The member and selection counts now have singular and plural forms in the five languages ("1 membre", "2 membres"), also in the web admin.
+- Checks: `app-team-notification-groups.web-qa.ts` (accent-blind search, create, add a member, the group as an exact audience), `app-team-notifications.web-qa.ts`, the web admin `targeted-notifications.web-qa.ts`, the web admin unit tests, and the iPhone simulator.
+
 ## Notifications and targeted push on the phone (2026-10-15, RAPP-385, part of RAPP-215)
 
 - `notifications.send` holders get "Notificacions" in More, as the web admin's workspace. A message starts from a template or blank, in Catalan; the four translations are generated and must all be approved before it is sent or saved as a template.

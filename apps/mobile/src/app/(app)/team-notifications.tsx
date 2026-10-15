@@ -4,7 +4,8 @@
  * from a template or blank, in Catalan, with the four translations generated
  * and approved; the audience shows live how many participants and devices it
  * reaches before anything goes out. The message can be saved as a template,
- * and the history shows how each send went. Custom groups are managed apart.
+ * and the history shows how each send went. Custom groups are created and
+ * changed in a sheet (RAPP-389).
  */
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { MultilingualField } from '@/components/content/multilingual-field';
@@ -12,6 +13,7 @@ import { ChoiceOption } from '@/components/equipment/choice-option';
 import { PageWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { AudiencePicker } from '@/components/team/audience-picker';
+import { NotificationGroupSheet } from '@/components/team/notification-group-sheet';
 import { reviewHandlers, reviewOptions } from '@/lib/content-translations';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
@@ -33,6 +35,7 @@ import { DEFAULT_LANGUAGE } from '@ramassa/shared/i18n';
 import {
   NOTIFICATION_TEMPLATE_CATEGORIES,
   notificationContentSchema,
+  type CustomNotificationGroup,
   type NotificationAudience,
   type NotificationSendHistory,
   type NotificationTemplateCategory,
@@ -104,6 +107,9 @@ export default function TeamNotificationsScreen() {
   const [templateName, setTemplateName] = useState('');
   const [templateCategory, setTemplateCategory] =
     useState<NotificationTemplateCategory>('engagement');
+  const [groupSheet, setGroupSheet] = useState<{
+    readonly group: CustomNotificationGroup | null;
+  } | null>(null);
   const titleReview = useTranslationReview();
   const bodyReview = useTranslationReview();
   const preview = useAudiencePreview(audience);
@@ -411,6 +417,57 @@ export default function TeamNotificationsScreen() {
             </PressableScale>
           </Section>
 
+          <Section title={t('groupsTitle')}>
+            <PressableScale
+              testID="notification-group-new"
+              accessibilityRole="button"
+              accessibilityLabel={t('newGroup')}
+              onPress={() => setGroupSheet({ group: null })}
+              isDisabled={options.data === undefined}
+              haptic="tapLight"
+              style={continuousCorners}
+              className="min-h-recommended items-center justify-center self-start rounded-md border border-neutral-300 bg-white px-lg"
+            >
+              <Text className={`text-center text-md font-bold text-primary-dark ${fontClass}`}>
+                {t('newGroup')}
+              </Text>
+            </PressableScale>
+            <View className="gap-sm">
+              {(groups.data ?? []).map((group) => (
+                <View
+                  key={group.id}
+                  testID={`notification-group-${group.id}`}
+                  style={continuousCorners}
+                  className="flex-row items-center justify-between gap-sm rounded-md bg-neutral-50 p-md"
+                >
+                  <View className="flex-1 gap-xs">
+                    <Text className={`text-start text-md font-bold text-neutral-900 ${fontClass}`}>
+                      {group.name}
+                    </Text>
+                    <Text
+                      className={`text-start text-sm tabular-nums text-neutral-600 ${fontClass}`}
+                    >
+                      {t('membersCount', { count: group.participantIds.length })}
+                    </Text>
+                  </View>
+                  <PressableScale
+                    testID={`notification-group-edit-${group.id}`}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${t('editGroup')}, ${group.name}`}
+                    onPress={() => setGroupSheet({ group })}
+                    isDisabled={options.data === undefined}
+                    haptic="tapLight"
+                    className="min-h-recommended justify-center px-xs"
+                  >
+                    <Text className={`font-semibold text-primary-dark ${fontClass}`}>
+                      {t('editGroup')}
+                    </Text>
+                  </PressableScale>
+                </View>
+              ))}
+            </View>
+          </Section>
+
           <Section title={t('historyTitle')}>
             {(history.data ?? []).length === 0 ? (
               <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
@@ -456,6 +513,12 @@ export default function TeamNotificationsScreen() {
           </Section>
         </PageWidth>
       </ScrollView>
+      <NotificationGroupSheet
+        visible={groupSheet !== null}
+        group={groupSheet?.group ?? null}
+        participants={options.data?.participants ?? []}
+        onClose={() => setGroupSheet(null)}
+      />
     </SafeAreaView>
   );
 }

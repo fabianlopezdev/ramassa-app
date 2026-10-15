@@ -47,7 +47,8 @@
   "saveGroup": "Desa el grup",
   "groupSaved": "Grup desat.",
   "editGroup": "Edita",
-  "membersCount": "{{count}} membres",
+  "membersCount_one": "1 membre",
+  "membersCount_other": "{{count}} membres",
   "historyTitle": "Historial d'enviaments",
   "historyEmpty": "Encara no hi ha enviaments dirigits.",
   "historyAudience": "Públic: {{audience}}",
@@ -61,5 +62,8 @@
   "stateAwaitingReceipts": "Esperant rebuts",
   "stateRetrying": "Reintentant",
   "stateComplete": "Completat",
-  "error": "No s'ha pogut completar l'acció de notificació."
+  "error": "No s'ha pogut completar l'acció de notificació.",
+  "newGroup": "Nou grup",
+  "groupSelected_one": "1 seleccionada",
+  "groupSelected_other": "{{count}} seleccionades"
 }
