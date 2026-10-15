@@ -1812,6 +1812,15 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - The web admin's dashboard nav item keeps no permission filter, because the dashboard is the staff landing page; the database refuses the report without `impact.view`.
 - Checks: `app-team-impact.web-qa.ts` (the default period, the cards against the database reply, the monthly chart and table, the period and category filters in the request), unit tests for the periods in three time zones and the screen flag, and the iPhone simulator.
 
+## The team's accounts on the phone (2026-10-15, RAPP-404, part of RAPP-216)
+
+- `team.manage` holders get "Equip" in More, as the web admin's Team tab: invite a person (first name, last name, email and a preset; Administration makes an admin account, any other preset a staff account), then each person with their access summary ("Staff, adjusted") and whether they are active.
+- For an active person: Sign out everywhere, Reset second factor (never one's own) and Remove access. Each asks first. Inviting, applying the preset, resetting and removing ask for the step-up, as on the web; signing out everywhere does not, as on the web and in the database. Signing oneself out everywhere also signs this phone out.
+- The invitation's sign-in code goes by email, as on the web.
+- The database's refusals get their sentences from one shared function (`teamAccessErrorKey` in `packages/shared/permissions/team-access.ts`), now used by the web admin too.
+- Editing access and the presets come next (RAPP-405).
+- Checks: `app-team-staff.web-qa.ts` (invite on the Coach preset with the email, no reset of one's own factor, sign out everywhere, reset, remove, the audit rows), the web admin `team-access.web-qa.ts`, unit tests for the refusals and the screen flag, and the iPhone simulator.
+
 ## Notifications and targeted push on the phone (2026-10-15, RAPP-385, part of RAPP-215)
 
 - `notifications.send` holders get "Notificacions" in More, as the web admin's workspace. A message starts from a template or blank, in Catalan; the four translations are generated and must all be approved before it is sent or saved as a template.

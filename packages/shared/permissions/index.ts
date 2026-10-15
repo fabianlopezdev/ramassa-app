@@ -19,6 +19,7 @@ export {
   savePermissionPreset,
   setTeamMemberPermissions,
   summarizeAccess,
+  teamAccessErrorKey,
   type AccessSummary,
   type PermissionPreset,
   type TeamMemberAccess,
