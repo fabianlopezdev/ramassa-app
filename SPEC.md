@@ -1871,6 +1871,13 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - No step-up, as on the web admin.
 - Checks: `app-team-organization.web-qa.ts` (the contrast refusal, a new phone, colour and logo saved), the web admin `admin-settings.web-qa.ts`, unit tests for the languages and the screen flag, and the iPhone simulator.
 
+## Entity home: impact and tracking on the phone (2026-10-15, RAPP-411, part of RAPP-217)
+
+- The entity's Home tab shows the web portal's impact page (`fetchEntityDashboard`): linked participants, active, present and the attendance rate, one figure per card with a small trend line per month (the staff dashboard's charts); the participation per month as bars with the same numbers as a table; and the tracking of each referred woman with her status, present, absent and excused, and her attendance rate as a bar.
+- With fewer than three referred women, the figures stay hidden and the privacy note shows, as on the web. The database scopes every row to her own entity.
+- The app lock and sign-out stay at the end of the screen.
+- Checks: `app-entity-home.web-qa.ts` (exactly her own tracking and none of another entity's; a small entity sees the privacy note and no figures), `app-account-routes.web-qa.ts`, and the iPhone simulator.
+
 ## Entity second factor and tabs on the phone (2026-10-15, RAPP-410, part of RAPP-217)
 
 - A partner entity's contact now verifies her authenticator code before her screens, as a team member does (`second-factor-screen.tsx` enrols or verifies). Before, the phone showed her a notice that the portal is on the web and never asked the code; the database already returned no data without it.
