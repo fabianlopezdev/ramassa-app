@@ -1847,6 +1847,14 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - Editing access and the presets come next (RAPP-405).
 - Checks: `app-team-staff.web-qa.ts` (invite on the Coach preset with the email, no reset of one's own factor, sign out everywhere, reset, remove, the audit rows), the web admin `team-access.web-qa.ts`, unit tests for the refusals and the screen flag, and the iPhone simulator.
 
+## Internal documents on the phone (2026-10-15, RAPP-406, part of RAPP-216)
+
+- `settings.documents` holders get "Documents interns" in More, as the documents tab of the web admin's Settings: the organization's private documents (insurance, inventory, resources) with who added each, when, and its size (KB under 1 MB).
+- The list follows the search as it is typed, after a short pause (`search_internal_documents`).
+- Open fetches the document through the media Worker with the person's session and hands it to the share sheet with its type (`document-file.ts`), so the phone offers the right apps; the copy is deleted from the cache when the sheet closes. The web build downloads it.
+- Upload a document adds one from the phone's files (`expo-document-picker`, a new native module, so the dev client needs a new build): PDF, Word or a photo, 10 MB at most; it is uploaded to `documents` and registered with `register_internal_document`.
+- Checks: `app-team-documents.web-qa.ts` (a PDF added, a search with no match, found by a search that ignores case, opened with the same bytes), unit tests for the document types, file names and the screen flag, and the iPhone simulator.
+
 ## Organization settings on the phone (2026-10-15, RAPP-403, part of RAPP-216)
 
 - `settings.organization` and `settings.branding` holders get "Organització" in More, as the web admin's Organization tab. A field the reader may not change is shown but locked.
