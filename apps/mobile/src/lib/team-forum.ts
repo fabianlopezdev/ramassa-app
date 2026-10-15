@@ -6,17 +6,22 @@
  * it (a photo through the media Worker, which also removes its files). A post
  * can also be pinned or moved to another category, and the author can be
  * contacted. Kept in memory: player content is not cached on the disk.
+ * The forum categories are managed here too (RAPP-386).
  */
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@ramassa/shared/auth';
 import { AppError } from '@ramassa/shared/errors';
 import {
   contactForumAuthor,
+  deleteForumCategory,
   fetchForumCategories,
   fetchForumModerationQueue,
   moderateForumTarget,
+  saveForumCategory,
   setForumPostCategory,
   setForumPostPinned,
+  type ForumCategoryInput,
+  type ForumCategoryRow,
   type ForumModerationAction,
   type ForumModerationQueueRow,
 } from '@ramassa/shared/forum';
@@ -98,4 +103,57 @@ export function useForumModerationActions() {
   });
 
   return { act, contact };
+}
+
+/** A category as the save call takes it, with a new order or not. */
+export function forumCategoryInput(
+  category: ForumCategoryRow,
+  sortOrder = category.sort_order,
+): ForumCategoryInput {
+  return {
+    id: category.id,
+    name: {
+      ca: category.name.ca ?? '',
+      es: category.name.es ?? '',
+      en: category.name.en ?? '',
+      ar: category.name.ar ?? '',
+      fa: category.name.fa ?? '',
+    },
+    slug: category.slug,
+    icon: category.icon,
+    color: category.color,
+    sortOrder,
+  };
+}
+
+/**
+ * Save, delete and reorder the forum categories (RAPP-386). A new order is
+ * saved as 10, 20, 30 and on, as the seeded categories are numbered, and only
+ * the categories whose number changes are saved.
+ */
+export function useForumCategoryActions() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const refresh = () =>
+    queryClient.invalidateQueries({ queryKey: forumModerationRoot(user?.id ?? SIGNED_OUT) });
+  const save = useMutation({
+    mutationFn: (input: ForumCategoryInput) => saveForumCategory(supabase, input),
+    onSuccess: refresh,
+  });
+  const remove = useMutation({
+    mutationFn: (categoryId: string) => deleteForumCategory(supabase, categoryId),
+    onSuccess: refresh,
+  });
+  const reorder = useMutation({
+    mutationFn: async (ordered: readonly ForumCategoryRow[]) => {
+      for (const [index, category] of ordered.entries()) {
+        const sortOrder = (index + 1) * 10;
+        if (category.sort_order !== sortOrder) {
+          await saveForumCategory(supabase, forumCategoryInput(category, sortOrder));
+        }
+      }
+    },
+    onSettled: refresh,
+  });
+  return { save, remove, reorder };
 }

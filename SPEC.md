@@ -1795,6 +1795,15 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - Announcements list: status chips (all, draft, published, scheduled, expired, the web admin's filter), the total, pages that load on scroll, and each row's title, category, date, status and whether it is pinned. On a phone a row opens its own screen; on a tablet it opens beside the list.
 - One announcement shows its status, category, publication and expiry, and the Catalan text. Pin and unpin are there for anyone who reads it; Delete is for `announcements.publish` holders, as the database requires, and asks first. The editor comes in RAPP-341.
 
+## Forum categories on the phone (2026-10-15, RAPP-386, part of RAPP-215)
+
+- `forum.moderate` holders open "Categories del fòrum" from forum moderation, as the category manager under the web admin's forum moderation: the categories in the order participants see them, with Up, Down, Edit and Delete. New and Edit open a sheet.
+- The name is written in Catalan; the four translations are generated and must all be approved, also again on an edit, as for event categories. The web form asks for the five names by hand.
+- A new category's identifier is made from the Catalan name (lowercase letters, numbers and hyphens) until it is changed by hand. Icon and colour are free text, as in the web admin, because nothing shows them yet; a new category starts with `bubble` and `neutral`.
+- Up and Down number every category again by tens (10, 20, 30), and save only those whose number changes. The web admin takes an order number instead.
+- A category with posts cannot be deleted: the database refuses it and the screen says so.
+- Checks: `app-forum-categories.web-qa.ts` (create in five languages with the made identifier, move up, edit, refused delete with a post, delete), the forum moderation specs, unit tests for the identifier, and the iPhone simulator.
+
 ## Notifications and targeted push on the phone (2026-10-15, RAPP-385, part of RAPP-215)
 
 - `notifications.send` holders get "Notificacions" in More, as the web admin's workspace. A message starts from a template or blank, in Catalan; the four translations are generated and must all be approved before it is sent or saved as a template.

@@ -111,5 +111,7 @@
   "categorySaveFailed": "تعذر حفظ الفئة.",
   "categoryCreate": "إنشاء الفئة",
   "categorySave": "حفظ الفئة",
-  "gallery": "المعرض"
+  "gallery": "المعرض",
+  "categorySlugHelp": "أحرف صغيرة وأرقام وشرطات. يُنشأ من الاسم بالكتالونية.",
+  "categorySlugInvalid": "يمكن أن يحتوي المعرّف على أحرف صغيرة وأرقام وشرطات فقط."
 }
