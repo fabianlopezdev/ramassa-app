@@ -79,3 +79,10 @@ test('the menu shows an item to a holder of any of its permissions, and the dash
   ).map((item) => item.to);
   expect(visible).toEqual(['/dashboard', '/attendance', '/messages']);
 });
+
+test('gallery moderators reach the gallery from primary navigation', () => {
+  const gallery = STAFF_NAV_ITEMS.find((item) => item.to === '/gallery');
+  expect(gallery).toBeDefined();
+  expect(holdsAnyPermission(new Set(['gallery.moderate']), gallery?.anyPermission)).toBe(true);
+  expect(holdsAnyPermission(new Set(['forum.moderate']), gallery?.anyPermission)).toBe(false);
+});

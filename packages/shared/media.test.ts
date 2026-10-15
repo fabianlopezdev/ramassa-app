@@ -3,8 +3,10 @@ import {
   createMediaItem,
   fetchMediaItem,
   fetchMediaItems,
+  filterGallery,
   mediaItemInputSchema,
   setMediaItemPrivacy,
+  type MediaItemRow,
 } from './media';
 import { tokens } from './tokens';
 
@@ -176,4 +178,18 @@ describe('media data boundaries', () => {
       ['set_media_item_privacy', { p_media_item_id: mediaId, p_privacy_level: 'staff_only' }],
     ]);
   });
+});
+
+const galleryItem = (id: string, moderation_state: MediaItemRow['moderation_state']) =>
+  ({ id, moderation_state }) as MediaItemRow;
+
+test('the gallery filters split visible items from hidden ones, pending review included', () => {
+  const items = [
+    galleryItem('a', 'visible'),
+    galleryItem('b', 'hidden'),
+    galleryItem('c', 'hidden_pending_review'),
+  ];
+  expect(filterGallery(items, 'all').map((row) => row.id)).toEqual(['a', 'b', 'c']);
+  expect(filterGallery(items, 'visible').map((row) => row.id)).toEqual(['a']);
+  expect(filterGallery(items, 'hidden').map((row) => row.id)).toEqual(['b', 'c']);
 });

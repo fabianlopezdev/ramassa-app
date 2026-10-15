@@ -10,7 +10,6 @@ import { useAppLock } from '@/components/auth/app-lock';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
-import { filterGallery, type GalleryFilter } from '@/lib/gallery-filter';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { resolveMediaImageSource } from '@/lib/media-source';
 import { mobileClientEnv } from '@/lib/supabase';
@@ -35,10 +34,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@ramassa/shared/auth';
 import { MADRID_TIME_ZONE } from '@ramassa/shared/events';
 import { DEFAULT_LANGUAGE } from '@ramassa/shared/i18n';
-import type { MediaItemRow } from '@ramassa/shared/media';
+import {
+  filterGallery,
+  GALLERY_FILTERS,
+  type GalleryFilter,
+  type MediaItemRow,
+} from '@ramassa/shared/media';
 import { tokens } from '@ramassa/shared/tokens';
 
-const FILTERS: readonly GalleryFilter[] = ['all', 'visible', 'hidden'];
 const FILTER_KEYS = {
   all: 'filterAll',
   visible: 'filterVisible',
@@ -324,7 +327,7 @@ export default function TeamGalleryScreen() {
       </View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
         <View className="flex-row gap-sm">
-          {FILTERS.map((candidate) => (
+          {GALLERY_FILTERS.map((candidate) => (
             <ChoiceOption
               key={candidate}
               testID={`team-gallery-filter-${candidate}`}
