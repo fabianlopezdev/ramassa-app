@@ -1953,6 +1953,12 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - Now `awaitsSecondFactor` (`lib/account-area.ts`) also sends a remembered team or entity area to the authenticator screen while the role is unknown and the session is not `aal2`. An `aal2` session with a remembered area still opens at once, as on an offline cold start.
 - Checks: unit tests for the gate, `app-account-routes.web-qa.ts` and `app-entity-home.web-qa.ts`, and a fresh entity sign-in on the iPhone simulator, measured with a log in the Home query (only `aal2` fetches, three rows).
 
+## Dark status bar icons on Android (2026-10-15, RAPP-432)
+
+- On Android the clock, signal and battery icons at the top were white over the app's light screens, so nobody could see them. The app set no status bar style, and Android's transparent edge-to-edge bar defaults to light icons. The iPhone already showed them dark.
+- The root layout now sets `StatusBar style="dark"` (`expo-status-bar`, already installed), because every screen of the app is light.
+- Checks: the Android emulator (Pixel 9 Pro Fold) and the iPhone simulator both show dark icons.
+
 ## Notifications and targeted push on the phone (2026-10-15, RAPP-385, part of RAPP-215)
 
 - `notifications.send` holders get "Notificacions" in More, as the web admin's workspace. A message starts from a template or blank, in Catalan; the four translations are generated and must all be approved before it is sent or saved as a template.

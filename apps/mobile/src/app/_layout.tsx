@@ -30,6 +30,7 @@ import { QueryClientProvider, useQueryClient } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { Stack } from 'expo-router/stack';
 import * as SplashScreen from 'expo-splash-screen';
+import { StatusBar } from 'expo-status-bar';
 import { useEffect, useMemo, useRef } from 'react';
 import { I18nextProvider } from 'react-i18next';
 import { Platform } from 'react-native';
@@ -202,6 +203,9 @@ function RootNavigator({ isPreview }: { readonly isPreview: boolean }) {
 function AppForSession({ isPreview }: { readonly isPreview: boolean }) {
   return (
     <>
+      {/* Every screen is light, so the clock and icons above it are dark. Android
+          drew them light on its transparent bar, which hid them (RAPP-432). */}
+      <StatusBar style="dark" />
       <SessionFreshness />
       <OrganizationBrandingProvider>
         <AuthFlowStatusProvider>
