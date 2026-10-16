@@ -83,7 +83,9 @@ select lives_ok(
     'phone', '+34930005499',
     'email', 'nataliia.rapp54@example.test',
     'documentationStatus', 'in_progress',
-    'notes', 'Suport en العربية'
+    'notes', 'Suport en العربية',
+    -- Required since RAPP-303: she agreed to share her data.
+    'consentConfirmed', true
   )) $$,
   'an entity can submit one validated multilingual referral'
 );
