@@ -83,7 +83,7 @@ export default function AppLayout() {
       </View>
     );
   }
-  if (mustSign && pathname !== '/authorization') {
+  if (mustSign && pathname !== '/authorization' && pathname !== '/profile-edit') {
     return <Redirect href={'/authorization' as Href} />;
   }
   if (!mustSign && home !== null && (pathname === '/' || pathname === '/authorization')) {
@@ -100,6 +100,11 @@ export default function AppLayout() {
           network flake must never route an onboarded player back into the
           wizard. */}
       <Stack screenOptions={hiddenHeaderScreenOptions}>
+        {/* Her profile edit, also while she must sign: re-registration lets
+            her correct her details before she signs (RAPP-306). */}
+        <Stack.Protected guard={area === 'player'}>
+          <Stack.Screen name="profile-edit" />
+        </Stack.Protected>
         <Stack.Protected guard={mustSign}>
           {/* Her signature is a drag, which iOS would read as swipe back. */}
           <Stack.Screen name="authorization" options={noSwipeBackOptions} />
@@ -114,7 +119,6 @@ export default function AppLayout() {
               already `/profile`, and a directory of the same name makes two
               routes claim one path. The push then resolves to the tab and the
               screen silently never opens. */}
-          <Stack.Screen name="profile-edit" />
           <Stack.Screen name="profile-delete-data" />
           <Stack.Screen name="announcement/[id]" />
           <Stack.Screen name="event/[id]" />

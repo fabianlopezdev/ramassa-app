@@ -10,6 +10,7 @@
 
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { ConsentRow } from '@/components/authorization/consent-row';
+import { ReregistrationSteps } from '@/components/authorization/reregistration-steps';
 import { SignaturePad } from '@/components/equipment/signature-pad';
 import { PageWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
@@ -54,6 +55,9 @@ export default function AuthorizationScreen() {
   const [isDrawing, setIsDrawing] = useState(false);
   const [problems, setProblems] = useState<ReadonlySet<Problem>>(new Set());
   const [hasFailed, setHasFailed] = useState(false);
+  // A returning player checks her details and answers the season questions
+  // first (RAPP-306); a new player signs straight away.
+  const [hasReregistered, setHasReregistered] = useState(false);
 
   const text = (value: AuthorizationText) => resolveLocalizedText(value, language)?.text ?? '';
 
@@ -75,6 +79,14 @@ export default function AuthorizationScreen() {
     );
   }
   const content = current.content;
+  if (current.isReturning && !hasReregistered) {
+    return (
+      <ReregistrationSteps
+        seasonName={current.seasonName}
+        onDone={() => setHasReregistered(true)}
+      />
+    );
+  }
 
   const submit = () => {
     // "No" is stored as the paper form asks for it, so staff read it in any language.

@@ -35,6 +35,9 @@ export interface SeasonAnswers {
   readonly specificNeeds: string;
 }
 
+export type SeasonQuestion =
+  'applicant_status' | 'supporting_entities' | 'childcare_need' | 'specific_needs';
+
 export const EMPTY_SEASON_ANSWERS: SeasonAnswers = {
   applicantStatus: null,
   supportingEntities: [],
@@ -82,6 +85,13 @@ export interface SeasonAnswerFieldsProps {
   readonly entityNames: readonly string[];
   /** False hides applicant status and specific needs (no participants.view_sensitive). */
   readonly showSensitive: boolean;
+  /**
+   * The season number is counted since RAPP-306: only the entity's referral
+   * still asks "which year is this for her" (it sets her earlier seasons).
+   */
+  readonly showSeasonNumber?: boolean;
+  /** Which questions to show; the wizard hides the ones already answered. */
+  readonly shows?: (question: SeasonQuestion) => boolean;
   readonly testIDPrefix: string;
 }
 
@@ -90,6 +100,8 @@ export function SeasonAnswerFields({
   onChange,
   entityNames,
   showSensitive,
+  showSeasonNumber = false,
+  shows = () => true,
   testIDPrefix,
 }: SeasonAnswerFieldsProps) {
   const { t } = useTranslation(['onboarding']);
@@ -116,7 +128,7 @@ export function SeasonAnswerFields({
 
   return (
     <View className="gap-lg" testID={`${testIDPrefix}-season`}>
-      {showSensitive ? (
+      {showSensitive && shows('applicant_status') ? (
         <Question label={t('onboarding:applicantStatusLabel')}>
           {APPLICANT_STATUSES.map((status) => (
             <OptionChip
@@ -132,71 +144,79 @@ export function SeasonAnswerFields({
         </Question>
       ) : null}
 
-      <View className="gap-sm">
-        <Question label={t('onboarding:supportingEntitiesLabel')}>
-          {offered.map((name) => (
+      {shows('supporting_entities') ? (
+        <View className="gap-sm">
+          <Question label={t('onboarding:supportingEntitiesLabel')}>
+            {offered.map((name) => (
+              <OptionChip
+                key={name}
+                label={name}
+                accessibilityHint={t('onboarding:supportingEntitiesLabel')}
+                isSelected={value.supportingEntities.includes(name)}
+                onPress={() => toggleEntity(name)}
+              />
+            ))}
+          </Question>
+          <View className="flex-row items-end gap-sm">
+            <View className="flex-1">
+              <AuthTextField
+                testID={`${testIDPrefix}-supporting-entity-other`}
+                label={t('onboarding:supportingEntitiesOtherLabel')}
+                value={otherEntity}
+                onChangeText={setOtherEntity}
+                onSubmitEditing={addOtherEntity}
+                maxLength={200}
+              />
+            </View>
+            <PressableScale
+              testID={`${testIDPrefix}-supporting-entity-add`}
+              accessibilityRole="button"
+              accessibilityLabel={t('onboarding:supportingEntitiesAddAction')}
+              onPress={addOtherEntity}
+              haptic="tapLight"
+              className="min-h-recommended justify-center rounded-md border border-primary px-md"
+            >
+              <Text className={`text-md font-semibold text-primary-dark ${fontClass}`}>
+                {t('onboarding:supportingEntitiesAddAction')}
+              </Text>
+            </PressableScale>
+          </View>
+        </View>
+      ) : null}
+
+      {showSeasonNumber ? (
+        <Question label={t('onboarding:seasonNumberLabel')}>
+          {SEASON_NUMBERS.map((season) => (
             <OptionChip
-              key={name}
-              label={name}
-              accessibilityHint={t('onboarding:supportingEntitiesLabel')}
-              isSelected={value.supportingEntities.includes(name)}
-              onPress={() => toggleEntity(name)}
+              key={season}
+              label={t(`onboarding:seasonNumber${season}`)}
+              accessibilityHint={t('onboarding:seasonNumberLabel')}
+              isSelected={value.seasonNumber === season}
+              onPress={() =>
+                onChange({ seasonNumber: value.seasonNumber === season ? null : season })
+              }
             />
           ))}
         </Question>
-        <View className="flex-row items-end gap-sm">
-          <View className="flex-1">
-            <AuthTextField
-              testID={`${testIDPrefix}-supporting-entity-other`}
-              label={t('onboarding:supportingEntitiesOtherLabel')}
-              value={otherEntity}
-              onChangeText={setOtherEntity}
-              onSubmitEditing={addOtherEntity}
-              maxLength={200}
+      ) : null}
+
+      {shows('childcare_need') ? (
+        <Question label={t('onboarding:childcareNeedLabel')}>
+          {CHILDCARE_NEEDS.map((need) => (
+            <OptionChip
+              key={need}
+              label={t(CHILDCARE_KEYS[need])}
+              accessibilityHint={t('onboarding:childcareNeedLabel')}
+              isSelected={value.childcareNeed === need}
+              onPress={() =>
+                onChange({ childcareNeed: value.childcareNeed === need ? null : need })
+              }
             />
-          </View>
-          <PressableScale
-            testID={`${testIDPrefix}-supporting-entity-add`}
-            accessibilityRole="button"
-            accessibilityLabel={t('onboarding:supportingEntitiesAddAction')}
-            onPress={addOtherEntity}
-            haptic="tapLight"
-            className="min-h-recommended justify-center rounded-md border border-primary px-md"
-          >
-            <Text className={`text-md font-semibold text-primary-dark ${fontClass}`}>
-              {t('onboarding:supportingEntitiesAddAction')}
-            </Text>
-          </PressableScale>
-        </View>
-      </View>
+          ))}
+        </Question>
+      ) : null}
 
-      <Question label={t('onboarding:seasonNumberLabel')}>
-        {SEASON_NUMBERS.map((season) => (
-          <OptionChip
-            key={season}
-            label={t(`onboarding:seasonNumber${season}`)}
-            accessibilityHint={t('onboarding:seasonNumberLabel')}
-            isSelected={value.seasonNumber === season}
-            onPress={() =>
-              onChange({ seasonNumber: value.seasonNumber === season ? null : season })
-            }
-          />
-        ))}
-      </Question>
-
-      <Question label={t('onboarding:childcareNeedLabel')}>
-        {CHILDCARE_NEEDS.map((need) => (
-          <OptionChip
-            key={need}
-            label={t(CHILDCARE_KEYS[need])}
-            accessibilityHint={t('onboarding:childcareNeedLabel')}
-            isSelected={value.childcareNeed === need}
-            onPress={() => onChange({ childcareNeed: value.childcareNeed === need ? null : need })}
-          />
-        ))}
-      </Question>
-
-      {showSensitive ? (
+      {showSensitive && shows('specific_needs') ? (
         <View className="gap-xs">
           <AuthTextField
             testID={`${testIDPrefix}-specific-needs`}

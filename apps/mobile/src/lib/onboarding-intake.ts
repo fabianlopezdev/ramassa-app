@@ -18,6 +18,7 @@ export const WIZARD_SCREEN_ROUTES: Readonly<Record<WizardScreen, Href>> = {
   background: '/onboarding/background',
   documentation: '/onboarding/documentation',
   logistics: '/onboarding/logistics',
+  season: '/onboarding/season',
   summary: '/onboarding/summary',
   terms: '/onboarding/terms',
 };
@@ -27,11 +28,14 @@ export const WIZARD_SCREEN_DRAFT_STEP: Readonly<Record<WizardScreen, OnboardingS
   background: 'background',
   documentation: 'documentation',
   logistics: 'logistics',
+  season: 'season',
   summary: 'summary',
   terms: 'terms',
 };
 
-type DraftSections = Required<Pick<OnboardingDraft, 'identity' | 'documentation' | 'logistics'>>;
+type DraftSections = Required<
+  Pick<OnboardingDraft, 'identity' | 'documentation' | 'logistics' | 'season'>
+>;
 
 /** The answered part of her profile, in the shape each screen's form edits. */
 export function seedDraftFromProfile(
@@ -41,6 +45,7 @@ export function seedDraftFromProfile(
   const identity: Record<string, unknown> = {};
   const documentation: Record<string, unknown> = {};
   const logistics: Record<string, unknown> = {};
+  const season: Record<string, unknown> = {};
   const has = (question: IntakeQuestion) => answered.has(question);
 
   if (has('first_name')) identity.firstName = profile.first_name;
@@ -82,7 +87,21 @@ export function seedDraftFromProfile(
   }
   if (has('shoe_size') && profile.shoe_size !== null) logistics.shoeSize = profile.shoe_size;
 
-  return { identity, documentation, logistics };
+  // The registration questions (RAPP-306).
+  if (has('applicant_status') && profile.applicant_status != null) {
+    season.applicantStatus = profile.applicant_status;
+  }
+  if (has('supporting_entities') && profile.supporting_entities != null) {
+    season.supportingEntities = profile.supporting_entities;
+  }
+  if (has('childcare_need') && profile.childcare_need != null) {
+    season.childcareNeed = profile.childcare_need;
+  }
+  if (has('specific_needs') && profile.specific_needs != null) {
+    season.specificNeeds = profile.specific_needs;
+  }
+
+  return { identity, documentation, logistics, season };
 }
 
 /** Her stored profile under the `complete_onboarding` payload keys. */
@@ -106,6 +125,10 @@ export function storedPayloadFromProfile(profile: ProfileRow): Record<string, un
     num_dependents: profile.num_dependents,
     clothing_size: profile.clothing_size,
     shoe_size: profile.shoe_size,
+    applicant_status: profile.applicant_status ?? null,
+    supporting_entities: profile.supporting_entities ?? null,
+    childcare_need: profile.childcare_need ?? null,
+    specific_needs: profile.specific_needs ?? null,
     media_consent: profile.media_consent,
   };
 }
