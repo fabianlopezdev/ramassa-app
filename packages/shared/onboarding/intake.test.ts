@@ -25,6 +25,8 @@ describe('screensToAsk', () => {
       'background',
       'documentation',
       'logistics',
+      // The registration questions, all optional (RAPP-306).
+      'season',
     ]);
   });
 
@@ -32,6 +34,7 @@ describe('screensToAsk', () => {
     expect(screensToAsk(answered('first_name', 'last_name', 'document'))).toEqual([
       'background',
       'logistics',
+      'season',
     ]);
   });
 
@@ -73,7 +76,8 @@ describe('navigation', () => {
   });
 
   test('after the last question screen comes the summary, then the terms', () => {
-    expect(nextWizardScreen('logistics', plan)).toBe('summary');
+    expect(nextWizardScreen('logistics', plan)).toBe('season');
+    expect(nextWizardScreen('season', plan)).toBe('summary');
     expect(nextWizardScreen('summary', plan)).toBe('terms');
   });
 
@@ -90,10 +94,11 @@ describe('navigation', () => {
   });
 
   test('the progress counts only the screens she sees', () => {
-    expect(wizardScreenPosition('background', plan)).toEqual({ step: 1, total: 4 });
-    expect(wizardScreenPosition('logistics', plan)).toEqual({ step: 2, total: 4 });
-    expect(wizardScreenPosition('summary', plan)).toEqual({ step: 3, total: 4 });
-    expect(wizardScreenPosition('terms', plan)).toEqual({ step: 4, total: 4 });
+    expect(wizardScreenPosition('background', plan)).toEqual({ step: 1, total: 5 });
+    expect(wizardScreenPosition('logistics', plan)).toEqual({ step: 2, total: 5 });
+    expect(wizardScreenPosition('season', plan)).toEqual({ step: 3, total: 5 });
+    expect(wizardScreenPosition('summary', plan)).toEqual({ step: 4, total: 5 });
+    expect(wizardScreenPosition('terms', plan)).toEqual({ step: 5, total: 5 });
   });
 });
 

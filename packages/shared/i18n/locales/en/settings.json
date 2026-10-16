@@ -350,5 +350,14 @@
     "image_rights": "Image rights",
     "newsletter": "Newsletter and communications",
     "messaging_groups": "Team messaging groups"
-  }
+  },
+  "seasonsTitle": "Seasons",
+  "seasonsIntro": "Publishing the current season's authorization makes returning players register again.",
+  "seasonName": "Name (for example 2027/28)",
+  "seasonStartsOn": "Starts on",
+  "seasonMakeCurrent": "Make it current",
+  "seasonCreate": "Create the season",
+  "seasonCreated": "Season created.",
+  "seasonCreateFailed": "The season could not be created.",
+  "seasonSetCurrent": "Make it current"
 }

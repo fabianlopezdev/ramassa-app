@@ -135,5 +135,11 @@
   "authorizationErrorHealth": "Responde a la pregunta de datos médicos.",
   "authorizationErrorSignature": "Firma con el dedo, o marca que no puedes dibujar la firma.",
   "authorizationSignFailed": "No se ha podido guardar la firma. Vuelve a intentarlo.",
-  "authorizationLoadFailed": "No se ha podido cargar la autorización."
+  "authorizationLoadFailed": "No se ha podido cargar la autorización.",
+  "seasonStepIntro": "Todas las preguntas son opcionales. Nos ayudan a acompañarte mejor esta temporada.",
+  "reregistrationTitle": "Inscripción para la temporada {{season}}",
+  "reregistrationReviewIntro": "¡Hola de nuevo! Antes de firmar la temporada, revisa tus datos. ¿Siguen siendo correctos?",
+  "reregistrationCorrect": "Sí, son correctos",
+  "reregistrationEdit": "Corregir mis datos",
+  "reregistrationSaveFailed": "No se han podido guardar las respuestas. Vuelve a intentarlo."
 }

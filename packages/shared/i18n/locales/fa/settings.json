@@ -85,5 +85,14 @@
     "image_rights": "حق تصویر",
     "newsletter": "خبرنامه و ارتباطات",
     "messaging_groups": "گروه‌های پیام‌رسان تیم"
-  }
+  },
+  "seasonsTitle": "فصل‌ها",
+  "seasonsIntro": "انتشار مجوز فصل فعلی باعث می‌شود بازیکنانی که برمی‌گردند دوباره ثبت‌نام کنند.",
+  "seasonName": "نام (برای مثال 2027/28)",
+  "seasonStartsOn": "شروع در",
+  "seasonMakeCurrent": "فعلی شود",
+  "seasonCreate": "ساخت فصل",
+  "seasonCreated": "فصل ساخته شد.",
+  "seasonCreateFailed": "فصل ساخته نشد.",
+  "seasonSetCurrent": "فعلی شود"
 }

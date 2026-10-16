@@ -15,6 +15,7 @@
 import { z } from 'zod';
 import { isCanonicalMunicipality } from '../i18n/municipalities';
 import { languageCodeSchema } from './language';
+import type { SeasonAnswerFields } from './season';
 
 /** Program constraint: younger players are staff-assisted edge cases with staff-created accounts. */
 export const MINIMUM_AGE_YEARS = 16;
@@ -225,6 +226,8 @@ export interface OnboardingSteps {
   identity: IdentityStep;
   documentation: DocumentationStep;
   logistics: LogisticsStep;
+  /** The registration questions (RAPP-306), all optional. */
+  season?: SeasonAnswerFields;
   terms: TermsStep;
 }
 
@@ -268,6 +271,19 @@ export function buildCompleteOnboardingPayload(steps: OnboardingSteps, terms: Te
     num_dependents: steps.logistics.numDependents,
     clothing_size: steps.logistics.clothingSize,
     shoe_size: steps.logistics.shoeSize,
+    // The registration questions (RAPP-306), only when the screen was shown.
+    ...(steps.season === undefined
+      ? {}
+      : {
+          applicant_status: steps.season.applicantStatus ?? null,
+          supporting_entities:
+            steps.season.supportingEntities === undefined ||
+            steps.season.supportingEntities.length === 0
+              ? null
+              : steps.season.supportingEntities,
+          childcare_need: steps.season.childcareNeed ?? null,
+          specific_needs: steps.season.specificNeeds ?? null,
+        }),
     media_consent: steps.terms.mediaConsent,
     terms_version: terms.termsVersion,
     locale_shown: terms.localeShown,

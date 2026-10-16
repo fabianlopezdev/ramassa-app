@@ -42,7 +42,14 @@ export const INTAKE_QUESTIONS = [
 export type IntakeQuestion = (typeof INTAKE_QUESTIONS)[number];
 
 /** The wizard screens that ask questions, in order. */
-export const QUESTION_SCREENS = ['identity', 'background', 'documentation', 'logistics'] as const;
+export const QUESTION_SCREENS = [
+  'identity',
+  'background',
+  'documentation',
+  'logistics',
+  // The registration questions, all optional (RAPP-306).
+  'season',
+] as const;
 export type QuestionScreen = (typeof QUESTION_SCREENS)[number];
 export type WizardScreen = QuestionScreen | 'summary' | 'terms';
 
@@ -65,6 +72,7 @@ export const SCREEN_QUESTIONS: Readonly<Record<QuestionScreen, readonly IntakeQu
     'clothing_size',
     'shoe_size',
   ],
+  season: ['applicant_status', 'supporting_entities', 'childcare_need', 'specific_needs'],
 };
 
 /**

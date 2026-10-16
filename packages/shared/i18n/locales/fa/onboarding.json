@@ -135,5 +135,11 @@
   "authorizationErrorHealth": "به سؤال اطلاعات پزشکی پاسخ دهید.",
   "authorizationErrorSignature": "با انگشت امضا کنید، یا تیک بزنید که نمی‌توانید امضا بکشید.",
   "authorizationSignFailed": "امضا ذخیره نشد. دوباره تلاش کنید.",
-  "authorizationLoadFailed": "مجوز بارگیری نشد."
+  "authorizationLoadFailed": "مجوز بارگیری نشد.",
+  "seasonStepIntro": "همه سؤال‌ها اختیاری‌اند. به ما کمک می‌کنند این فصل بهتر همراهتان باشیم.",
+  "reregistrationTitle": "ثبت‌نام برای فصل {{season}}",
+  "reregistrationReviewIntro": "خوش برگشتید! پیش از امضای فصل، اطلاعاتتان را بررسی کنید. هنوز درست است؟",
+  "reregistrationCorrect": "بله، درست است",
+  "reregistrationEdit": "اصلاح اطلاعاتم",
+  "reregistrationSaveFailed": "پاسخ‌ها ذخیره نشد. دوباره تلاش کنید."
 }

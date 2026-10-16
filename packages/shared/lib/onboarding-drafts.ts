@@ -30,6 +30,8 @@ export const ONBOARDING_STEPS = [
   'background',
   'documentation',
   'logistics',
+  // The registration questions (RAPP-306).
+  'season',
   // The summary of everything before the terms (RAPP-300).
   'summary',
   'terms',
@@ -47,6 +49,7 @@ const draftSchema = z.object({
   identity: z.record(z.string(), z.unknown()).optional(),
   documentation: z.record(z.string(), z.unknown()).optional(),
   logistics: z.record(z.string(), z.unknown()).optional(),
+  season: z.record(z.string(), z.unknown()).optional(),
   terms: z.record(z.string(), z.unknown()).optional(),
 });
 
@@ -55,6 +58,7 @@ export interface OnboardingDraft {
   identity?: Record<string, unknown>;
   documentation?: Record<string, unknown>;
   logistics?: Record<string, unknown>;
+  season?: Record<string, unknown>;
   terms?: Record<string, unknown>;
 }
 

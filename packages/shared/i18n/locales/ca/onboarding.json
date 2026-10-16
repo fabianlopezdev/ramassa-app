@@ -135,5 +135,11 @@
   "authorizationErrorHealth": "Respon la pregunta de dades mèdiques.",
   "authorizationErrorSignature": "Signa amb el dit, o marca que no pots dibuixar la signatura.",
   "authorizationSignFailed": "No s'ha pogut desar la signatura. Torna-ho a provar.",
-  "authorizationLoadFailed": "No s'ha pogut carregar l'autorització."
+  "authorizationLoadFailed": "No s'ha pogut carregar l'autorització.",
+  "seasonStepIntro": "Totes les preguntes són opcionals. Ens ajuden a acompanyar-te millor aquesta temporada.",
+  "reregistrationTitle": "Inscripció per a la temporada {{season}}",
+  "reregistrationReviewIntro": "Hola de nou! Abans de signar la temporada, revisa les teves dades. Encara són correctes?",
+  "reregistrationCorrect": "Sí, són correctes",
+  "reregistrationEdit": "Corregeix les meves dades",
+  "reregistrationSaveFailed": "No s'han pogut desar les respostes. Torna-ho a provar."
 }
