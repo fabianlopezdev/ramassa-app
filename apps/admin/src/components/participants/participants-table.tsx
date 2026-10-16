@@ -139,6 +139,10 @@ export function ParticipantsTable({ page, filterOptions, search }: ParticipantsT
           <Button asChild size="lg" variant="outline">
             <Link to="/participants/invites">{t('invitesAction')}</Link>
           </Button>
+          {/* Who has re-registered for the current season (RAPP-306). */}
+          <Button asChild size="lg" variant="outline">
+            <Link to="/participants/season">{t('seasonViewAction')}</Link>
+          </Button>
           <Button asChild size="lg">
             <Link to="/participants/new">{t('newAction')}</Link>
           </Button>

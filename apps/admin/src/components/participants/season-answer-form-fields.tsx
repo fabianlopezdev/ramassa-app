@@ -11,7 +11,7 @@ import { AdminAuthField } from '@/components/auth/admin-auth-field';
 import { SelectField, TextField } from '@/components/participants/participant-form-fields';
 import { Controller, type Control, type FieldValues, type Path } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { APPLICANT_STATUSES, CHILDCARE_NEEDS, SEASON_NUMBERS } from '@ramassa/shared/schemas';
+import { APPLICANT_STATUSES, CHILDCARE_NEEDS } from '@ramassa/shared/schemas';
 
 const APPLICANT_STATUS_KEYS = {
   asylum_seeker: 'onboarding:applicantStatusAsylumSeeker',
@@ -77,18 +77,8 @@ export function SeasonAnswerFormFields<Values extends FieldValues, Output>({
           />
         )}
       />
-      <SelectField
-        control={control}
-        name={name('seasonNumber')}
-        label={t('onboarding:seasonNumberLabel')}
-        emptyLabel={emptyLabel}
-        options={SEASON_NUMBERS.map((season) => ({
-          value: String(season),
-          label: t(`onboarding:seasonNumber${season}`),
-        }))}
-        toFieldValue={(value) => Number(value)}
-        fromFieldValue={(value) => String(value)}
-      />
+      {/* The season number is counted since RAPP-306: staff enter her
+          earlier seasons on the authorization panel instead. */}
       <SelectField
         control={control}
         name={name('childcareNeed')}

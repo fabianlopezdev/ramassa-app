@@ -15,6 +15,21 @@ import { useTranslation } from 'react-i18next';
 import type { ParticipantAuthorization, ParticipantConsent } from '@ramassa/shared/authorization';
 import type { SignatureStrokes } from '@ramassa/shared/equipment';
 import type { ParticipantDetailRow } from '@ramassa/shared/participants';
+import type { ParticipantSeasonAnswers } from '@ramassa/shared/seasons';
+
+const APPLICANT_STATUS_KEYS = {
+  asylum_seeker: 'applicantStatusAsylumSeeker',
+  refugee: 'applicantStatusRefugee',
+  migrant: 'applicantStatusMigrant',
+  other: 'applicantStatusOther',
+  prefer_not_to_say: 'applicantStatusPreferNotToSay',
+} as const;
+
+const CHILDCARE_KEYS = {
+  yes: 'childcareNeedYes',
+  no: 'childcareNeedNo',
+  maybe: 'childcareNeedMaybe',
+} as const;
 
 /** The strokes are 0..1000 on both axes, so they fill any box the same way. */
 function SignatureDrawing({
@@ -54,6 +69,9 @@ export interface ParticipantAuthorizationPanelProps {
   readonly consents: readonly ParticipantConsent[];
   readonly canSeeHealth: boolean;
   readonly onRecordPaper: (signedOn: string) => Promise<void>;
+  /** Her answers by season (RAPP-306). */
+  readonly seasonAnswers?: readonly ParticipantSeasonAnswers[];
+  readonly onSetPriorSeasons?: (count: number) => Promise<void>;
 }
 
 export function ParticipantAuthorizationPanel({
@@ -62,10 +80,25 @@ export function ParticipantAuthorizationPanel({
   consents,
   canSeeHealth,
   onRecordPaper,
+  seasonAnswers = [],
+  onSetPriorSeasons,
 }: ParticipantAuthorizationPanelProps) {
-  const { t, i18n } = useTranslation(['participants', 'settings', 'profile']);
+  const { t, i18n } = useTranslation(['participants', 'settings', 'profile', 'onboarding']);
   const locale = i18n.resolvedLanguage ?? 'ca';
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'failed'>('idle');
+  const [priorStatus, setPriorStatus] = useState<'idle' | 'saved' | 'failed'>('idle');
+
+  async function savePrior(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const count = Number(new FormData(event.currentTarget).get('prior-seasons') ?? '');
+    if (onSetPriorSeasons === undefined || !Number.isInteger(count)) return;
+    try {
+      await onSetPriorSeasons(count);
+      setPriorStatus('saved');
+    } catch {
+      setPriorStatus('failed');
+    }
+  }
   const date = (value: string) => new Date(value).toLocaleDateString(locale);
   const notProvided = t('profile:notProvided');
 
@@ -176,6 +209,80 @@ export function ParticipantAuthorizationPanel({
           </div>
         ) : null}
       </dl>
+
+      {/* The season number is counted: earlier seasons plus the seasons she
+          signed (RAPP-306). Staff enter the seasons before the app. */}
+      <div className="flex flex-col gap-2">
+        <p className="text-start text-sm font-medium" data-testid="participant-season-number">
+          {participant.season_number == null
+            ? notProvided
+            : t('participants:seasonNumberValue', { number: participant.season_number })}
+        </p>
+        {onSetPriorSeasons === undefined ? null : (
+          <form
+            className="flex flex-wrap items-end gap-3"
+            onSubmit={(event) => void savePrior(event)}
+          >
+            <label className="flex flex-col gap-1.5 text-sm font-medium">
+              <span>{t('participants:priorSeasonsLabel')}</span>
+              <input
+                id="prior-seasons"
+                name="prior-seasons"
+                type="number"
+                min={0}
+                max={20}
+                required
+                className="h-9 w-24 rounded-md border border-input bg-transparent px-3 text-sm"
+              />
+            </label>
+            <Button type="submit" variant="outline">
+              {t('participants:priorSeasonsSave')}
+            </Button>
+            {priorStatus === 'saved' ? (
+              <p aria-live="polite" className="text-start text-sm text-muted-foreground">
+                {t('participants:priorSeasonsSaved')}
+              </p>
+            ) : null}
+            {priorStatus === 'failed' ? (
+              <p role="alert" className="text-start text-sm text-destructive">
+                {t('participants:priorSeasonsFailed')}
+              </p>
+            ) : null}
+          </form>
+        )}
+      </div>
+
+      {seasonAnswers.length === 0 ? null : (
+        <div className="flex flex-col gap-1">
+          <h3 className="text-start text-sm font-semibold">
+            {t('participants:seasonAnswersTitle')}
+          </h3>
+          <ul className="flex flex-col gap-1" data-testid="participant-season-answers">
+            {seasonAnswers.map((answers) => (
+              <li key={answers.seasonName} className="text-start text-sm">
+                <span className="font-medium">{answers.seasonName}</span>
+                {': '}
+                {[
+                  answers.applicantStatus === null
+                    ? null
+                    : t(
+                        `onboarding:${APPLICANT_STATUS_KEYS[answers.applicantStatus as keyof typeof APPLICANT_STATUS_KEYS] ?? 'applicantStatusOther'}`,
+                      ),
+                  answers.childcareNeed === null
+                    ? null
+                    : `${t('onboarding:childcareNeedLabel')} ${t(`onboarding:${CHILDCARE_KEYS[answers.childcareNeed as keyof typeof CHILDCARE_KEYS] ?? 'childcareNeedMaybe'}`)}`,
+                  answers.supportingEntities.length === 0
+                    ? null
+                    : answers.supportingEntities.join(', '),
+                  answers.specificNeeds,
+                ]
+                  .filter((part) => part !== null && part !== '')
+                  .join(' · ') || notProvided}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <form
         className="flex flex-wrap items-end gap-3"

@@ -6,6 +6,7 @@ import { AuthorizationEditor } from '@/components/settings/authorization-editor'
 import { DocumentExplanationForm } from '@/components/settings/document-explanation-form';
 import { OrganizationSettingsPanel } from '@/components/settings/organization-settings-panel';
 import { PhotoHandoffButton } from '@/components/settings/photo-handoff-dialog';
+import { SeasonsPanel } from '@/components/settings/seasons-panel';
 import { TeamAccessPanel } from '@/components/team/team-access-panel';
 import { sendEmailOtp } from '@/lib/auth';
 import { SETTINGS_PERMISSIONS } from '@/lib/nav-items';
@@ -44,6 +45,7 @@ import {
   savePermissionPreset,
   setTeamMemberPermissions,
 } from '@ramassa/shared/permissions';
+import { createSeason, fetchSeasons, setCurrentSeason } from '@ramassa/shared/seasons';
 
 export const Route = createFileRoute('/_staff/settings')({
   ssr: false,
@@ -74,6 +76,7 @@ export const Route = createFileRoute('/_staff/settings')({
       requestedCollaborators,
       documentExplanation,
       authorizationVersions,
+      seasons,
     ] = await Promise.all([
       permissions.has('team.manage') ? fetchStaffMembers(supabase) : Promise.resolve([]),
       permissions.has('team.manage')
@@ -94,6 +97,7 @@ export const Route = createFileRoute('/_staff/settings')({
       permissions.has('settings.organization')
         ? fetchAuthorizationVersions(supabase)
         : Promise.resolve([]),
+      permissions.has('settings.organization') ? fetchSeasons(supabase) : Promise.resolve([]),
     ]);
     const selectedEntityId = entities.some((entity) => entity.id === deps.entityId)
       ? (deps.entityId ?? null)
@@ -106,6 +110,7 @@ export const Route = createFileRoute('/_staff/settings')({
           : await fetchEntityCollaborators(supabase, selectedEntityId);
     return {
       authorizationVersions,
+      seasons,
       collaborators,
       documentExplanation,
       documents,
@@ -252,13 +257,26 @@ function OrganizationSettingsScreen() {
       photoHandoff={<PhotoHandoffButton onDone={refresh} />}
       authorization={
         permissions.has('settings.organization') ? (
-          <AuthorizationEditor
-            versions={data.authorizationVersions}
-            onPublish={async (content) => {
-              await withStepUp(() => publishAuthorizationVersion(supabase, content));
-              await refresh();
-            }}
-          />
+          <>
+            <SeasonsPanel
+              seasons={data.seasons}
+              onCreate={async (input) => {
+                await withStepUp(() => createSeason(supabase, input));
+                await refresh();
+              }}
+              onSetCurrent={async (seasonId) => {
+                await withStepUp(() => setCurrentSeason(supabase, seasonId));
+                await refresh();
+              }}
+            />
+            <AuthorizationEditor
+              versions={data.authorizationVersions}
+              onPublish={async (content) => {
+                await withStepUp(() => publishAuthorizationVersion(supabase, content));
+                await refresh();
+              }}
+            />
+          </>
         ) : undefined
       }
       documentExplanation={
