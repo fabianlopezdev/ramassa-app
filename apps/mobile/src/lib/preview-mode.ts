@@ -92,6 +92,18 @@ export function createPreviewModeStore(storage: PreviewModeStorage): PreviewMode
   };
 }
 
+/**
+ * A person signed in on the phone (RAPP-420): no preview, and no preview
+ * session, is left to come back on a later start.
+ */
+export async function endPreviewForSignIn(
+  store: PreviewModeStore,
+  signOutPreview: () => Promise<unknown>,
+): Promise<void> {
+  if (store.isActive()) store.end();
+  await signOutPreview();
+}
+
 export function usePreviewModeActive(store: PreviewModeStore): boolean {
   return useSyncExternalStore(store.subscribe, store.isActive, store.isActive);
 }

@@ -16,25 +16,25 @@ export interface SupabaseSessionStorage {
   getItem(key: string): string | null | Promise<string | null>;
   setItem(key: string, value: string): void | Promise<void>;
   removeItem(key: string): void | Promise<void>;
+  /**
+   * The key the session is kept under, when the storage fixes one. Without it
+   * supabase-js names the key after the Supabase host (RAPP-420).
+   */
+  readonly sessionKey?: string;
 }
 
 export interface SupabaseClientConfig {
   supabaseUrl: string;
   supabaseAnonKey: string;
   storage: SupabaseSessionStorage;
-  /**
-   * A second client in the same app needs its own key (RAPP-371): clients with
-   * the same key tell each other about sign-ins and sign-outs, so signing out
-   * the player preview would also sign out the person's own session.
-   */
-  storageKey?: string;
 }
 
 export function createSupabaseClient(config: SupabaseClientConfig): SupabaseClient<Database> {
+  const { sessionKey } = config.storage;
   return createClient<Database>(config.supabaseUrl, config.supabaseAnonKey, {
     auth: {
       storage: config.storage,
-      ...(config.storageKey === undefined ? {} : { storageKey: config.storageKey }),
+      ...(sessionKey === undefined ? {} : { storageKey: sessionKey }),
       persistSession: true,
       autoRefreshToken: true,
       // Email OTP verification is explicit in both apps, so neither runtime
@@ -81,13 +81,99 @@ export interface MmkvLike {
   remove(key: string): boolean;
 }
 
+/** The session store also lists its keys, to find every session slot in it. */
+export interface SessionMmkvLike extends MmkvLike {
+  getAllKeys(): string[];
+}
+
+export interface MmkvSessionStorageOptions {
+  /**
+   * The one key the session lives under (RAPP-420). supabase-js's default,
+   * `sb-<first label of the Supabase host>-auth-token`, follows the host, and in
+   * development the host follows Metro's (`dev-service-url.ts`). So one store
+   * held a session per host, and a relaunch against another Metro brought back
+   * the person signed in there before. A second client in the same app needs
+   * its own key (RAPP-371): clients with the same key tell each other about
+   * sign-ins and sign-outs.
+   */
+  sessionKey: string;
+  /** A session for another person was written: a sign-in. A token refresh is not one. */
+  onPersonChange?: () => void;
+}
+
+const SESSION_SLOT_PATTERN = /^sb-.+-auth-token$/;
+const SESSION_SLOT_COMPANIONS = ['-code-verifier', '-user'] as const;
+
+function sessionSlotOf(key: string): string | null {
+  const companion = SESSION_SLOT_COMPANIONS.find((suffix) => key.endsWith(suffix));
+  const slot = companion === undefined ? key : key.slice(0, -companion.length);
+  return SESSION_SLOT_PATTERN.test(slot) ? slot : null;
+}
+
+function personOf(sessionJson: string | undefined): string | null {
+  if (sessionJson === undefined) return null;
+  try {
+    const parsed = JSON.parse(sessionJson) as { user?: { id?: unknown } } | null;
+    const id = parsed?.user?.id;
+    return typeof id === 'string' ? id : null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Mobile session storage backed by MMKV. Used by the mobile app.
+ *
+ * The store holds one session only (RAPP-420). Writing it removes every other
+ * session slot, so a sign-in leaves no older person behind to come back on a
+ * later start, and a sign-out leaves nothing. A store from an older build,
+ * whose slot was named after the host, keeps its session when it has exactly
+ * one; with more than one nothing says which person is current, so all go and
+ * the app starts signed out.
  */
-export function createMmkvSessionStorage(mmkv: MmkvLike): SupabaseSessionStorage {
+export function createMmkvSessionStorage(
+  mmkv: SessionMmkvLike,
+  { sessionKey, onPersonChange }: MmkvSessionStorageOptions,
+): SupabaseSessionStorage {
+  const ownKeys = new Set([
+    sessionKey,
+    ...SESSION_SLOT_COMPANIONS.map((suffix) => `${sessionKey}${suffix}`),
+  ]);
+  const otherSlotKeys = () =>
+    mmkv.getAllKeys().filter((key) => !ownKeys.has(key) && sessionSlotOf(key) !== null);
+  const removeOtherSlots = () => {
+    for (const key of otherSlotKeys()) mmkv.remove(key);
+  };
+
+  const adoptOlderSlot = (): string | null => {
+    const slots = otherSlotKeys().filter((key) => SESSION_SLOT_PATTERN.test(key));
+    const session = slots.length === 1 ? mmkv.getString(slots[0]!) : undefined;
+    removeOtherSlots();
+    if (session === undefined) return null;
+    mmkv.set(sessionKey, session);
+    return session;
+  };
+
   return {
-    getItem: (key) => mmkv.getString(key) ?? null,
-    setItem: (key, value) => mmkv.set(key, value),
-    removeItem: (key) => void mmkv.remove(key),
+    sessionKey,
+    getItem: (key) => {
+      const value = mmkv.getString(key);
+      if (value !== undefined) return value;
+      return key === sessionKey ? adoptOlderSlot() : null;
+    },
+    setItem: (key, value) => {
+      if (key !== sessionKey) {
+        mmkv.set(key, value);
+        return;
+      }
+      const previousPerson = personOf(mmkv.getString(key));
+      mmkv.set(key, value);
+      removeOtherSlots();
+      if (personOf(value) !== previousPerson) onPersonChange?.();
+    },
+    removeItem: (key) => {
+      mmkv.remove(key);
+      if (key === sessionKey) removeOtherSlots();
+    },
   };
 }
