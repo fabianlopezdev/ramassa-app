@@ -2,7 +2,7 @@
 -- Run with: bunx supabase test db
 --
 -- What these assertions defend:
---   1. The catalog has the 42 permissions and the built-in presets their
+--   1. The catalog has the 43 permissions (participants.view_health since RAPP-304) and the built-in presets their
 --      product defaults; every organization has the three built-in presets.
 --   2. Existing team members hold exactly the preset of their role, and nobody
 --      else holds anything. No access rule reads permissions yet (RAPP-230).
@@ -17,10 +17,10 @@ select plan(31);
 
 -- 1. Catalog and presets ----------------------------------------------------------------
 
-select is((select count(*)::int from public.permissions), 42, 'the catalog has 42 permissions');
+select is((select count(*)::int from public.permissions), 43, 'the catalog has 43 permissions');
 select is(
   (select count(*)::int from public.permission_preset_defaults where builtin_key = 'admin'),
-  42, 'the Admin default holds every permission'
+  43, 'the Admin default holds every permission'
 );
 select is(
   (select count(*)::int from public.permission_preset_defaults where builtin_key = 'staff'),
@@ -49,7 +49,7 @@ select is(
 
 select is(
   (select count(*)::int from public.team_member_permissions where profile_id = '5eed0000-0000-4000-8000-000000000001'),
-  42, 'the admin holds the Admin preset'
+  43, 'the admin holds the Admin preset'
 );
 select is(
   (select count(*)::int from public.team_member_permissions where profile_id = '5eed0000-0000-4000-8000-000000000002'),
@@ -186,7 +186,7 @@ reset role;
 update public.profiles set role = 'admin' where id = '5eed0000-0000-4000-8000-000000000002';
 select is(
   (select count(*)::int from public.team_member_permissions where profile_id = '5eed0000-0000-4000-8000-000000000002'),
-  42, 'a staff member promoted to admin gets the Admin preset'
+  43, 'a staff member promoted to admin gets the Admin preset'
 );
 
 insert into public.organizations (id, name, slug)

@@ -4,7 +4,8 @@
  *
  * Each permission is one toggle that names exactly what it opens. The same list
  * lives in the database (`public.permissions`, migration
- * `20261010170000_permission_catalog.sql`), and
+ * `20261010170000_permission_catalog.sql`, restated by later migrations that
+ * add a permission), and
  * `tests/permission-catalog-parity.test.ts` keeps the two equal, including the
  * order and the area of every entry.
  */
@@ -26,6 +27,8 @@ export const PERMISSION_CATALOG = [
   { code: 'participants.view', area: 'participants' },
   { code: 'participants.view_personal', area: 'participants' },
   { code: 'participants.view_sensitive', area: 'participants' },
+  // Her medical answer from the authorization (RAPP-304). Only Admin by default.
+  { code: 'participants.view_health', area: 'participants' },
   { code: 'participants.notes', area: 'participants' },
   { code: 'participants.invite', area: 'participants' },
   { code: 'participants.deactivate', area: 'participants' },

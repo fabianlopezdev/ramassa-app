@@ -70,6 +70,12 @@ export type StockAlertRow = Database['public']['Tables']['stock_alerts']['Row'];
 export type AuditLogRow = Database['public']['Tables']['audit_log']['Row'];
 export type InviteRow = Database['public']['Tables']['invites']['Row'];
 export type ProfileAnswerRow = Database['public']['Tables']['profile_answers']['Row'];
+export type SeasonRow = Database['public']['Tables']['seasons']['Row'];
+export type AuthorizationVersionRow = Database['public']['Tables']['authorization_versions']['Row'];
+export type AuthorizationSignatureRow =
+  Database['public']['Tables']['authorization_signatures']['Row'];
+export type AuthorizationConsentEventRow =
+  Database['public']['Tables']['authorization_consent_events']['Row'];
 export type IntakeQuestionStateRow = Database['public']['Tables']['intake_question_states']['Row'];
 export type ServiceCategoryRow = Database['public']['Tables']['service_categories']['Row'];
 export type ServiceRow = Database['public']['Tables']['services']['Row'];
@@ -702,6 +708,11 @@ export function buildProfileFromFixture(
     season_number: null,
     childcare_need: null,
     specific_needs: null,
+    // The authorization's medical answer and emergency contact (RAPP-304).
+    health_info: null,
+    emergency_contact_name: null,
+    emergency_contact_relation: null,
+    emergency_contact_phone: null,
     ...derivedProfileFields(fixture),
     ...overrides,
   };
@@ -1252,6 +1263,92 @@ export function buildIntakeQuestionState(
     state: 'ask',
     updated_at: FIXTURE_TIMESTAMP,
     updated_by: null,
+    ...overrides,
+  };
+}
+
+export const SEED_SEASON_ID = '5eed0000-0000-4000-8040-000000000001';
+export const SEED_AUTHORIZATION_VERSION_ID = '5eed0000-0000-4000-8041-000000000001';
+
+/** The current season of the seeded organization (RAPP-304). */
+export function buildSeason(overrides: Partial<SeasonRow> = {}): SeasonRow {
+  return {
+    id: SEED_SEASON_ID,
+    org_id: SEED_ORGANIZATION_ID,
+    name: '2026/27',
+    starts_on: '2026-09-01',
+    is_current: true,
+    created_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+/** A published authorization version with every consent and one section (RAPP-304). */
+export function buildAuthorizationVersion(
+  overrides: Partial<AuthorizationVersionRow> = {},
+): AuthorizationVersionRow {
+  const label = (text: string) => ({ ca: text });
+  return {
+    id: SEED_AUTHORIZATION_VERSION_ID,
+    org_id: SEED_ORGANIZATION_ID,
+    season_id: SEED_SEASON_ID,
+    version_number: 1,
+    content: {
+      title: label('Autorització 2026/27'),
+      sections: [{ key: 'participation', title: label('Participació'), body: label('Text.') }],
+      consents: {
+        participation: { required: true, label: label('Participo.') },
+        data_processing: { required: true, label: label('Dades.') },
+        code_of_conduct: { required: true, label: label('Codi.') },
+        health_data: { required: true, label: label('Salut.') },
+        image_rights: { required: false, label: label('Imatge.') },
+        newsletter: { required: false, label: label('Butlletí.') },
+        messaging_groups: { required: false, label: label('Grups.') },
+      },
+      attachments: [],
+    },
+    published_at: FIXTURE_TIMESTAMP,
+    published_by: null,
+    ...overrides,
+  };
+}
+
+/** A paper record for the season, the state most seeded players are in (RAPP-304). */
+export function buildAuthorizationSignature(
+  overrides: Partial<AuthorizationSignatureRow> = {},
+): AuthorizationSignatureRow {
+  return {
+    id: '5eed0000-0000-4000-8042-000000000099',
+    org_id: SEED_ORGANIZATION_ID,
+    profile_id:
+      PARTICIPANT_FIXTURES[1] === undefined ? '' : seedUserId(PARTICIPANT_FIXTURES[1].ordinal),
+    season_id: SEED_SEASON_ID,
+    version_id: null,
+    method: 'paper',
+    language: null,
+    device: null,
+    signed_at: FIXTURE_TIMESTAMP,
+    signature: null,
+    unable_to_draw: false,
+    paper_signed_on: '2026-09-15',
+    recorded_by: null,
+    ...overrides,
+  };
+}
+
+/** One consent given while signing (RAPP-304). */
+export function buildAuthorizationConsentEvent(
+  overrides: Partial<AuthorizationConsentEventRow> = {},
+): AuthorizationConsentEventRow {
+  return {
+    id: 1,
+    org_id: SEED_ORGANIZATION_ID,
+    profile_id: seedUserId(PARTICIPANT_FIXTURES[0]!.ordinal),
+    signature_id: '5eed0000-0000-4000-8042-000000000011',
+    consent_key: 'participation',
+    granted: true,
+    method: 'app',
+    decided_at: FIXTURE_TIMESTAMP,
     ...overrides,
   };
 }
