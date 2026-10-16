@@ -159,6 +159,9 @@ async function expectNoAxeViolations(page: Page, route: string): Promise<void> {
 
 async function expectSkipLinkTargetsMain(page: Page): Promise<void> {
   await waitForHydration(page);
+  // The auth loading screen is a <main> too, without this id. The skip link
+  // has nothing to reach until the page's own content is there (RAPP-438).
+  await expect(page.locator('#main-content')).toBeVisible({ timeout: 30_000 });
   await page.keyboard.press('Tab');
   const skipLink = page.getByRole('link', { name: 'Skip to main content' });
   await expect(skipLink).toBeFocused();

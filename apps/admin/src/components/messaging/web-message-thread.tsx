@@ -119,9 +119,12 @@ function WebMessageThread({
       ) : null}
       {state === 'ready' ? (
         <>
+          {/* The history scrolls, so it takes keyboard focus for arrow-key
+              scrolling (WCAG 2.1.1, RAPP-438). */}
           <section
-            className="min-h-0 flex-1 overflow-y-auto rounded-xl border border-border bg-muted/30 p-4"
+            className="min-h-0 flex-1 overflow-y-auto rounded-xl border border-border bg-muted/30 p-4 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             aria-label={t(titleKey)}
+            tabIndex={0}
           >
             {messages.length === 0 ? (
               <div className="grid h-full place-content-center gap-1 text-center">

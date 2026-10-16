@@ -76,10 +76,12 @@
   --secondary: var(--ramassa-color-secondary);
   --secondary-foreground: var(--ramassa-color-neutral-900);
   --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
+  /* Darker than the shadcn defaults so small muted text on --muted and red
+     text on a 10% red tint both stay above 4.5:1 (WCAG AA, RAPP-438). */
+  --muted-foreground: oklch(0.51 0 0);
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
+  --destructive: oklch(0.52 0.21 27.325);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);

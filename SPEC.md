@@ -1971,6 +1971,14 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - Still open, from the accessibility suite (which CI skips): see RAPP-438.
 - Checks: audit, build, typecheck, 111 admin unit tests, knip, and 13 web admin specs.
 
+## Accessibility suite green again (2026-10-16, RAPP-438)
+
+- Since the router upgrade the local WCAG 2.2 AA suite (`accessibility.web-qa.ts`, skipped in CI) failed in a set that changed between runs. Pages now fill in sooner, so axe saw content it used to miss, and the timing of one check changed.
+- Colour: `--muted-foreground` (oklch 0.51) and `--destructive` (oklch 0.52 0.21) are darker than the shadcn defaults. Small muted text on `--muted` measured 4.34:1 and red text on the 10% red badge 4.0:1. Both now pass 4.5:1, which fixes every place that uses them (message threads, entity service comments, the forum "Reports" badge).
+- Scroll areas a keyboard user could not reach (axe `scrollable-region-focusable`): the shared table container takes keyboard focus only while it scrolls sideways, measured after each render before paint, so a table that fits adds no tab stop; the staff message history always takes focus, because it scrolls.
+- The skip-link check waited for any `<main>`, which the auth loading screen also is. It now waits for `#main-content`, the page's own content, before pressing Tab. Measured: the click handler ran while only the loading screen was there.
+- Checks: `accessibility.web-qa.ts`, `participants.web-qa.ts` and `messaging.web-qa.ts`, 30 of 30 in two clean runs.
+
 ## Notifications and targeted push on the phone (2026-10-15, RAPP-385, part of RAPP-215)
 
 - `notifications.send` holders get "Notificacions" in More, as the web admin's workspace. A message starts from a template or blank, in Catalan; the four translations are generated and must all be approved before it is sent or saved as a template.
