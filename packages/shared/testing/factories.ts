@@ -195,6 +195,7 @@ export function buildOrganization(overrides: Partial<OrganizationRow> = {}): Org
     contact_email: 'contacte@example.test',
     contact_phone: '+34600000000',
     created_at: FIXTURE_TIMESTAMP,
+    document_step_explanation: null,
     ...overrides,
   };
 }
