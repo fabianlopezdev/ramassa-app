@@ -35,7 +35,7 @@ export interface SeasonAnswers {
   readonly specificNeeds: string;
 }
 
-export type SeasonQuestion =
+type SeasonQuestion =
   'applicant_status' | 'supporting_entities' | 'childcare_need' | 'specific_needs';
 
 export const EMPTY_SEASON_ANSWERS: SeasonAnswers = {
