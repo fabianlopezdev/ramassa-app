@@ -181,9 +181,11 @@ set local role authenticated;
 select set_config('request.jwt.claims',
   json_build_object('sub', (select id from referral_run where label = 'profile'),
                     'role', 'authenticated', 'aal', 'aal1')::text, true);
+-- The season number is counted since RAPP-306: "her fourth season" is three
+-- earlier ones, and the fourth counts once she signs it.
 select is(
   (select applicant_status || '|' || childcare_need || '|' || season_number from public.get_own_profile()),
-  'refugee|maybe|4', 'she reads her own answers'
+  'refugee|maybe|3', 'she reads her own answers'
 );
 
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000011", "role": "authenticated", "aal": "aal1"}';
