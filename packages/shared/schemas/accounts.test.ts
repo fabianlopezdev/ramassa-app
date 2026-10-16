@@ -15,24 +15,57 @@ test('createParticipantInviteSchema normalizes the address the way login does', 
   // identity that eventually signs in, capitals and padding included.
   const parsed = createParticipantInviteSchema.parse({
     email: '  Fatou.Ndiaye@Example.COM ',
+    firstName: 'Fatou',
+    lastName: 'Ndiaye',
   });
   expect(parsed.email).toBe('fatou.ndiaye@example.com');
 
-  expect(createParticipantInviteSchema.safeParse({ email: 'not-an-address' }).success).toBe(false);
+  expect(
+    createParticipantInviteSchema.safeParse({
+      email: 'not-an-address',
+      firstName: 'Fatou',
+      lastName: 'Ndiaye',
+    }).success,
+  ).toBe(false);
+});
+
+test('an invitation needs her first and last name, because it creates her profile (RAPP-300)', () => {
+  expect(
+    createParticipantInviteSchema.safeParse({ email: 'fatou@example.com', firstName: 'Fatou' })
+      .success,
+  ).toBe(false);
+  expect(
+    createParticipantInviteSchema.safeParse({
+      email: 'fatou@example.com',
+      firstName: '  ',
+      lastName: 'Ndiaye',
+    }).success,
+  ).toBe(false);
 });
 
 test('invite payload carries the address, the optional entity and referral, snake_cased', () => {
   expect(
     buildCreateParticipantInvitePayload(
-      { email: 'fatou.ndiaye@example.com', referenceEntity: ' CEAR Catalunya ' },
+      {
+        email: 'fatou.ndiaye@example.com',
+        firstName: 'Fatou',
+        lastName: 'Ndiaye',
+        referenceEntity: ' CEAR Catalunya ',
+      },
       '5eed0000-0000-4000-8010-000000000001',
     ),
   ).toEqual({
     email: 'fatou.ndiaye@example.com',
+    first_name: 'Fatou',
+    last_name: 'Ndiaye',
     reference_entity: 'CEAR Catalunya',
     referral_id: '5eed0000-0000-4000-8010-000000000001',
   });
-  const plain = buildCreateParticipantInvitePayload({ email: 'fatou.ndiaye@example.com' });
+  const plain = buildCreateParticipantInvitePayload({
+    email: 'fatou.ndiaye@example.com',
+    firstName: 'Fatou',
+    lastName: 'Ndiaye',
+  });
   expect(plain.reference_entity).toBeNull();
   expect(plain.referral_id).toBeNull();
 });

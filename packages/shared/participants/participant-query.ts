@@ -60,7 +60,8 @@ export const participantSearchSchema = z.object({
     .preprocess(absentAsNull, z.string().trim().max(100).nullable())
     .catch(null)
     .default(null),
-  status: z.enum(['all', 'active', 'inactive']).catch('all').default('all'),
+  // `invited`: women whose profile staff created and who have not joined yet (RAPP-300).
+  status: z.enum(['all', 'active', 'inactive', 'invited']).catch('all').default('all'),
   dependents: z.enum(['all', 'with', 'without']).catch('all').default('all'),
   sort: z.enum(PARTICIPANT_SORT_COLUMNS).catch('last_name').default('last_name'),
   dir: z.enum(['asc', 'desc']).catch('asc').default('asc'),
@@ -118,4 +119,6 @@ export interface ParticipantListRow {
   readonly is_active: boolean;
   readonly preferred_language: string;
   readonly created_at: string;
+  /** False for an invited woman who has not accepted the terms yet (RAPP-300). */
+  readonly joined: boolean;
 }

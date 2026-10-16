@@ -14,6 +14,7 @@
 import { expect, test } from 'bun:test';
 import { buildProfileFromFixture } from '../packages/shared/testing/factories';
 import {
+  INVITED_ACCOUNT_EMAIL,
   ONBOARDING_ACCOUNT_EMAIL,
   PARTICIPANT_FIXTURES,
   SEED_ACCOUNT_PASSWORD,
@@ -41,7 +42,12 @@ test('seed.sql seeds exactly the roster: no extra accounts, none missing', () =>
   const seededEmails = new Set(seedSql.match(/[\w.+-]+@[\w.-]+\.(?:test|invalid)\b/g) ?? []);
   // The onboarding drive account is auth-only ON PURPOSE: no profile, so the
   // wizard gate fires for it. It is part of the seed contract, not roster drift.
-  const expected = [...allFixtures.map((fixture) => fixture.email), ONBOARDING_ACCOUNT_EMAIL];
+  // The invited account (RAPP-300) has a not-joined profile, outside the roster.
+  const expected = [
+    ...allFixtures.map((fixture) => fixture.email),
+    ONBOARDING_ACCOUNT_EMAIL,
+    INVITED_ACCOUNT_EMAIL,
+  ];
   expect([...seededEmails].sort()).toEqual(expected.sort());
 });
 

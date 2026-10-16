@@ -21,7 +21,8 @@ import { useTranslation } from 'react-i18next';
 import { KeyboardAvoidingView, ScrollView, Text, View, type TextStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-const WIZARD_TOTAL_STEPS = 5;
+/** The full wizard: four question screens, the summary and the terms (RAPP-300). */
+const WIZARD_TOTAL_STEPS = 6;
 
 /**
  * Fixed-width digits for the "step X of Y" counter, so the line does not
@@ -38,6 +39,11 @@ export interface WizardFrameProps {
    * not exist.
    */
   readonly stepNumber?: number;
+  /**
+   * How many screens she will see. Fewer than the full wizard when staff or an
+   * entity already answered whole screens (RAPP-300).
+   */
+  readonly totalSteps?: number;
   readonly title: string;
   readonly intro?: string;
   readonly children: ReactNode;
@@ -68,6 +74,7 @@ function Frame({ children }: { readonly children: ReactNode }) {
 
 export function WizardFrame({
   stepNumber,
+  totalSteps = WIZARD_TOTAL_STEPS,
   title,
   intro,
   children,
@@ -115,7 +122,7 @@ export function WizardFrame({
                 style={tabularNumerals}
                 className={`text-sm text-neutral-500 ${languageFontClass}`}
               >
-                {t('stepOf', { current: stepNumber, total: WIZARD_TOTAL_STEPS })}
+                {t('stepOf', { current: stepNumber, total: totalSteps })}
               </Text>
             )}
           </View>
@@ -134,7 +141,7 @@ export function WizardFrame({
               accessibilityElementsHidden
               importantForAccessibility="no-hide-descendants"
             >
-              {Array.from({ length: WIZARD_TOTAL_STEPS }, (_unused, index) => (
+              {Array.from({ length: totalSteps }, (_unused, index) => (
                 <View
                   key={index}
                   className={`h-xs flex-1 rounded-full ${

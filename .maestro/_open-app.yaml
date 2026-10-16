@@ -12,6 +12,7 @@ name: _open-app
 env:
   DEV_CLIENT_URL: ramassa://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8082
   DEV_MENU_LABEL: Developer menu
+  DEV_MENU_LINK: ramassa://dev-menu
   LOCALE: ca
 ---
 # Clean install every run, so a smoke result never depends on what the previous
@@ -63,6 +64,29 @@ env:
     commands:
       - tapOn:
           text: '.*Close.*'
+      - waitForAnimationToEnd:
+          timeout: 3000
+
+# Since RAPP-115 a clean install asks for a language once the client's sheet
+# is closed, and that screen hides the developer menu. Catalan is the suite's
+# language and keeps the layout left to right, so no restart follows. The
+# button reads "Continua" once Catalan is chosen. The developer menu's entry
+# now sits on the signed-in Profile tab only, so the menu is opened by its own
+# route.
+- repeat:
+    times: 40
+    while:
+      notVisible: '.*${DEV_MENU_LABEL}.*'
+    commands:
+      - tapOn:
+          text: '^Català$'
+          optional: true
+      - tapOn:
+          text: '^(Continua|Continue)$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+      - openLink: ${DEV_MENU_LINK}
       - waitForAnimationToEnd:
           timeout: 3000
 - extendedWaitUntil:

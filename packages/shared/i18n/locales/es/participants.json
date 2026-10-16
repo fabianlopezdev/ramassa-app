@@ -435,5 +435,12 @@
     "entityNone": "Ninguna",
     "entityOther": "Otra",
     "entityOtherLabel": "Nombre de la entidad"
-  }
+  },
+  "inviteNameError": "Escribe el nombre y los apellidos.",
+  "invitedCompleteHint": "Hemos creado su perfil. Completa ahora lo que ya sabes de ella: el registro guiado solo le preguntará el resto.",
+  "invitedCompleteAction": "Completa sus datos",
+  "statusInvited": "Invitadas sin entrar",
+  "rowInvited": "Invitada, aún no ha entrado",
+  "prefillNotGiven": "Sin indicar",
+  "prefillHint": "Aún no ha entrado en la aplicación. Rellena solo lo que ya sabes de ella: el registro guiado le preguntará el resto, y el consentimiento lo da ella."
 }

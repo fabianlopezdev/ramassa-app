@@ -1,6 +1,7 @@
 import { loginWithPassword, logout } from '@/lib/auth';
 import {
   DEV_ALL_PLAYER_ACCOUNTS,
+  DEV_INVITED_CREDENTIALS,
   DEV_ONBOARDING_CREDENTIALS,
   DEV_PLAYER_ACCOUNTS,
   DEV_STAFF_ACCOUNTS,
@@ -121,6 +122,25 @@ export function DevAccountsSection() {
         <Text className="text-start text-xs text-neutral-400">
           {DEV_ONBOARDING_CREDENTIALS.email}
         </Text>
+      </Pressable>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`Sign in as ${DEV_INVITED_CREDENTIALS.email}`}
+        onPress={() => void signInAs(DEV_INVITED_CREDENTIALS)}
+        className={`min-h-recommended justify-center rounded-md border px-md py-sm active:opacity-70 ${
+          user?.email === DEV_INVITED_CREDENTIALS.email
+            ? 'border-primary bg-primary-light/20'
+            : 'border-neutral-200 bg-white'
+        }`}
+      >
+        <Text className="text-start text-md font-semibold text-neutral-900">
+          Invited player (staff answered part)
+        </Text>
+        <Text className="text-start text-sm text-neutral-500">
+          Lands on the wizard asking only what staff left out, then the summary. If it goes to the
+          tabs instead, the wizard was completed: reset with bun run db:reset.
+        </Text>
+        <Text className="text-start text-xs text-neutral-400">{DEV_INVITED_CREDENTIALS.email}</Text>
       </Pressable>
 
       <Text className="pt-xs text-sm font-semibold text-neutral-700">

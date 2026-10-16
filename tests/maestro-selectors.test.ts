@@ -37,6 +37,7 @@ const auditedSpecs = [
   '.maestro/phase8-survey-ca.yaml',
   '.maestro/smoke-auth.yaml',
   '.maestro/smoke-i18n.yaml',
+  '.maestro/smoke-onboarding-invited.yaml',
   '.maestro/smoke-onboarding.yaml',
   '.maestro/smoke-profile.yaml',
   '.maestro/smoke-shells.yaml',

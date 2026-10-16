@@ -29,6 +29,7 @@ import {
   setParticipantActive,
   updateParticipantProfile,
 } from '@ramassa/shared/participants';
+import type { ProfilePrefillPayload } from '@ramassa/shared/participants';
 import type { UpdateOwnProfilePayload } from '@ramassa/shared/schemas';
 import type { ParticipantListSearch } from './participant-filters';
 import { supabase } from './supabase';
@@ -85,7 +86,8 @@ export function useParticipantWrites(participantId: string) {
   const refresh = () =>
     queryClient.invalidateQueries({ queryKey: ['participants', user?.id ?? SIGNED_OUT] });
   const updateProfile = useMutation({
-    mutationFn: (payload: UpdateOwnProfilePayload) =>
+    // A full record, or only the changed fields of a woman who has not joined yet (RAPP-300).
+    mutationFn: (payload: UpdateOwnProfilePayload | ProfilePrefillPayload) =>
       updateParticipantProfile(supabase, participantId, payload),
     onSuccess: refresh,
   });

@@ -25,6 +25,7 @@ import {
   type ParticipantDetailRow,
   type ParticipantNoteRow,
 } from './participant-detail';
+import type { ProfilePrefillPayload } from './participant-prefill';
 
 type Client = SupabaseClient<Database>;
 
@@ -59,7 +60,8 @@ export async function fetchParticipantDetail(
 export async function updateParticipantProfile(
   client: Client,
   participantId: string,
-  payload: UpdateOwnProfilePayload,
+  // A full record, or only the changed fields of a woman who has not joined yet (RAPP-300).
+  payload: UpdateOwnProfilePayload | ProfilePrefillPayload,
 ): Promise<void> {
   const { error } = await client.rpc('update_participant_profile', {
     participant_id: participantId,

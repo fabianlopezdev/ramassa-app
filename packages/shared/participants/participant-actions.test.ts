@@ -31,6 +31,7 @@ const row = {
   is_active: true,
   preferred_language: 'ar',
   created_at: '2026-09-01T10:00:00Z',
+  joined: true,
 };
 
 describe('fetchParticipants', () => {

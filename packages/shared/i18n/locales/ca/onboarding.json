@@ -75,5 +75,16 @@
   "noCountryResults": "Cap país amb aquest nom. Prova d'escriure menys lletres.",
   "searchMunicipalityPlaceholder": "Busca el teu municipi",
   "noMunicipalityResults": "Cap municipi amb aquest nom. Prova d'escriure menys lletres.",
-  "municipalityNone": "No l'indico"
+  "municipalityNone": "No l'indico",
+  "intakeLoading": "Carregant les teves dades",
+  "intakeLoadFailed": "No hem pogut carregar les teves dades. Torna-ho a provar.",
+  "retryAction": "Torna-ho a provar",
+  "summaryTitle": "Són correctes les teves dades?",
+  "summaryIntro": "Revisa-les. Si alguna cosa no és correcta o ha canviat, toca Canvia.",
+  "summaryEditAction": "Canvia",
+  "summaryEditLabel": "Canvia: {{section}}",
+  "summaryNotGiven": "Sense indicar",
+  "summaryConfirmAction": "Sí, són correctes",
+  "summarySectionName": "Nom i cognoms",
+  "summaryDependentsYes": "Sí, {{count}}"
 }

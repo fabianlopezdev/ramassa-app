@@ -84,6 +84,7 @@ export function ParticipantsFilters({ search, filterOptions, onChange }: Partici
         options={[
           { value: 'active', label: t('statusActive') },
           { value: 'inactive', label: t('statusInactive') },
+          { value: 'invited', label: t('statusInvited') },
         ]}
         allValue="all"
         onSelect={(value) => onChange({ status: value as ParticipantSearch['status'] })}

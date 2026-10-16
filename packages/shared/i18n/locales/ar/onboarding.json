@@ -75,5 +75,16 @@
   "noCountryResults": "لا يوجد بلد بهذا الاسم. جرّبي كتابة حروف أقل.",
   "searchMunicipalityPlaceholder": "ابحثي عن بلديتك",
   "noMunicipalityResults": "لا توجد بلدية بهذا الاسم. جرّبي كتابة حروف أقل.",
-  "municipalityNone": "لن أحددها"
+  "municipalityNone": "لن أحددها",
+  "intakeLoading": "جارٍ تحميل بياناتك",
+  "intakeLoadFailed": "تعذّر تحميل بياناتك. حاولي مرة أخرى.",
+  "retryAction": "حاولي مرة أخرى",
+  "summaryTitle": "هل بياناتك صحيحة؟",
+  "summaryIntro": "راجعيها. إذا كان شيء غير صحيح أو تغيّر، اضغطي على «تغيير».",
+  "summaryEditAction": "تغيير",
+  "summaryEditLabel": "تغيير: {{section}}",
+  "summaryNotGiven": "غير محدد",
+  "summaryConfirmAction": "نعم، صحيحة",
+  "summarySectionName": "الاسم واسم العائلة",
+  "summaryDependentsYes": "نعم، {{count}}"
 }

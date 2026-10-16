@@ -50,6 +50,14 @@ export const SEED_TOTP_SECRET = 'JBSWY3DPEHPK3PXP';
  */
 export const ONBOARDING_ACCOUNT_EMAIL = 'onboarding@example.test';
 
+/**
+ * The seeded invited woman (RAPP-300): staff created her profile with her
+ * account and answered some questions, and she has not joined yet. Signing in
+ * as her shows the wizard asking only the rest. Mirrors `supabase/seed.sql`.
+ */
+export const INVITED_ACCOUNT_EMAIL = 'invited@example.test';
+export const INVITED_ACCOUNT_ID = '5eed0000-0000-4000-8000-000000000098';
+
 /** The terms version every seeded acceptance carries. Mirrors `supabase/seed.sql`. */
 export const SEED_TERMS_VERSION = '2026-07-01';
 

@@ -23,6 +23,7 @@ import {
   buildParticipants,
   buildParticipantStory,
   buildProfile,
+  buildProfileAnswer,
   buildPushToken,
   buildService,
   buildServiceCategory,
@@ -31,6 +32,7 @@ import {
   buildStockAlert,
 } from './factories';
 import {
+  INVITED_ACCOUNT_ID,
   ONBOARDING_ACCOUNT_EMAIL,
   PARTICIPANT_FIXTURES,
   SEED_ACCOUNT_PASSWORD,
@@ -398,5 +400,15 @@ describe('buildStockAlert', () => {
   test('defaults to open, which is what Today shows', () => {
     expect(buildStockAlert().resolved_at).toBeNull();
     expect(buildStockAlert().org_id).toBe(SEED_ORGANIZATION_ID);
+  });
+});
+
+describe('buildProfileAnswer', () => {
+  test('is a staff answer for the seeded invited woman, the state the wizard skips', () => {
+    const answer = buildProfileAnswer();
+
+    expect(answer.source).toBe('staff');
+    expect(answer.profile_id).toBe(INVITED_ACCOUNT_ID);
+    expect(answer.org_id).toBe(SEED_ORGANIZATION_ID);
   });
 });

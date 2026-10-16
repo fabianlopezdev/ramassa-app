@@ -21,6 +21,7 @@
 import { getLanguageFontFamilyKey, SUPPORTED_LANGUAGES } from '@ramassa/shared/i18n';
 import type { AppRole } from '@ramassa/shared/schemas';
 import {
+  INVITED_ACCOUNT_EMAIL,
   ONBOARDING_ACCOUNT_EMAIL,
   PARTICIPANT_FIXTURES,
   SEED_ACCOUNT_PASSWORD,
@@ -103,5 +104,16 @@ export const DEV_PLAYER_ACCOUNTS: readonly DevAccount[] = pickOneParticipantPerL
  */
 export const DEV_ONBOARDING_CREDENTIALS = {
   email: ONBOARDING_ACCOUNT_EMAIL,
+  password: SEED_ACCOUNT_PASSWORD,
+} as const;
+
+/**
+ * The seeded invited woman (RAPP-300): staff created her profile with her
+ * account and answered part of it, so the wizard asks only the rest, then the
+ * summary and the terms. After completing it she is a player; reset with
+ * `bun run db:reset` to get the invited state back.
+ */
+export const DEV_INVITED_CREDENTIALS = {
+  email: INVITED_ACCOUNT_EMAIL,
   password: SEED_ACCOUNT_PASSWORD,
 } as const;

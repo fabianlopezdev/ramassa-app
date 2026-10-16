@@ -435,5 +435,12 @@
     "entityNone": "None",
     "entityOther": "Other",
     "entityOtherLabel": "Name of the entity"
-  }
+  },
+  "inviteNameError": "Enter her first and last name.",
+  "invitedCompleteHint": "We created her profile. Now fill in what you already know about her: the guided sign-up will only ask her the rest.",
+  "invitedCompleteAction": "Complete her details",
+  "statusInvited": "Invited, not joined",
+  "rowInvited": "Invited, not joined yet",
+  "prefillNotGiven": "Not given",
+  "prefillHint": "She has not joined the app yet. Fill in only what you already know about her: the guided sign-up will ask her the rest, and the consent is hers to give."
 }

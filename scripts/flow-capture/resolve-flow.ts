@@ -17,6 +17,7 @@
 import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import {
+  INVITED_ACCOUNT_EMAIL,
   ONBOARDING_ACCOUNT_EMAIL,
   PARTICIPANT_FIXTURES,
   SEED_ACCOUNT_PASSWORD,
@@ -71,6 +72,8 @@ export function withFixtures(translate: Translator): Translator {
     'entity:email': captureEntity?.email,
     // The profile-less account the wizard flows sign in as (RAPP-21).
     'onboarding:email': ONBOARDING_ACCOUNT_EMAIL,
+    // The woman staff invited with part of her record filled in (RAPP-300).
+    'invited:email': INVITED_ACCOUNT_EMAIL,
   };
   return (key: string) => {
     if (key in accounts) {

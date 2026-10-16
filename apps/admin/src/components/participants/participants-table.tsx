@@ -100,7 +100,12 @@ export function ParticipantsTable({ page, filterOptions, search }: ParticipantsT
         id: 'status',
         header: t('columnStatus'),
         enableSorting: false,
-        cell: ({ row }) => (row.original.is_active ? t('rowActive') : t('rowInactive')),
+        cell: ({ row }) =>
+          !row.original.joined
+            ? t('rowInvited')
+            : row.original.is_active
+              ? t('rowActive')
+              : t('rowInactive'),
       },
     ],
     [t, none, locale],
