@@ -16,6 +16,7 @@
 import { z } from 'zod';
 import {
   documentationFields,
+  documentNumberToSend,
   identityStepSchema,
   logisticsFields,
   normalizeDependents,
@@ -114,7 +115,8 @@ export function profileFromRow(row: ProfileRow): Record<string, unknown> {
     placeOfBirth: row.place_of_birth ?? '',
     nationality: row.nationality ?? '',
     preferredLanguage: row.preferred_language,
-    documentType: row.document_type ?? 'none',
+    // Empty stays empty (RAPP-302): "not given" must never read as "I have none".
+    documentType: row.document_type ?? undefined,
     documentNumber: row.document_number ?? undefined,
     phone: row.phone ?? undefined,
     address: row.address ?? undefined,
@@ -149,8 +151,8 @@ export function buildUpdateOwnProfilePayload(edit: ProfileEdit) {
     place_of_birth: normalized.placeOfBirth,
     nationality: normalized.nationality,
     preferred_language: normalized.preferredLanguage,
-    document_type: normalized.documentType,
-    document_number: normalized.documentNumber ?? null,
+    document_type: normalized.documentType ?? null,
+    document_number: documentNumberToSend(normalized),
     phone: normalized.phone ?? null,
     address: normalized.address ?? null,
     city: normalized.city ?? null,

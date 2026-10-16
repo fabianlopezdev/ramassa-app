@@ -2078,6 +2078,7 @@ export type Database = {
           contact_phone: string | null;
           created_at: string;
           default_language: string;
+          document_step_explanation: Json | null;
           id: string;
           locked_default_language: string | null;
           logo_url: string | null;
@@ -2092,6 +2093,7 @@ export type Database = {
           contact_phone?: string | null;
           created_at?: string;
           default_language?: string;
+          document_step_explanation?: Json | null;
           id?: string;
           locked_default_language?: string | null;
           logo_url?: string | null;
@@ -2106,6 +2108,7 @@ export type Database = {
           contact_phone?: string | null;
           created_at?: string;
           default_language?: string;
+          document_step_explanation?: Json | null;
           id?: string;
           locked_default_language?: string | null;
           logo_url?: string | null;
@@ -4382,6 +4385,7 @@ export type Database = {
           role: string;
         }[];
       };
+      get_document_step_explanation: { Args: never; Returns: Json };
       get_entity_impact_summary: {
         Args: never;
         Returns: {
@@ -5377,6 +5381,10 @@ export type Database = {
         Args: { p_conversation_id: string; p_staff_id: string };
         Returns: undefined;
       };
+      set_document_step_explanation: {
+        Args: { p_explanation: Json };
+        Returns: Json;
+      };
       set_entity_collaborator_active: {
         Args: { p_is_active: boolean; p_profile_id: string };
         Returns: undefined;
@@ -5465,6 +5473,7 @@ export type Database = {
           contact_phone: string | null;
           created_at: string;
           default_language: string;
+          document_step_explanation: Json | null;
           id: string;
           locked_default_language: string | null;
           logo_url: string | null;

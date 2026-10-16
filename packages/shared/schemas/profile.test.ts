@@ -207,4 +207,14 @@ describe('profileFromRow', () => {
     };
     expect(profileEditSchema.safeParse(profileFromRow(sparse)).success).toBe(true);
   });
+
+  test('an empty document stays empty: it never becomes "I have none" (RAPP-302)', () => {
+    const form = profileFromRow({ ...row, document_type: null, document_number: null });
+    expect(form.documentType).toBeUndefined();
+    const parsed = profileEditSchema.parse(form);
+    expect(buildUpdateOwnProfilePayload(parsed)).toMatchObject({
+      document_type: null,
+      document_number: null,
+    });
+  });
 });

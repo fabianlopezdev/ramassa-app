@@ -41,6 +41,8 @@ interface OrganizationSettingsPanelProps {
   readonly team: ReactNode;
   /** "Take photo with phone" for a document (RAPP-254). */
   readonly photoHandoff: ReactNode;
+  /** The note under the wizard's document step (RAPP-302), for settings.organization. */
+  readonly documentExplanation?: ReactNode;
   readonly documents: readonly InternalDocument[];
   readonly documentQuery: string;
   readonly entityManagement: ReactNode;
@@ -102,6 +104,7 @@ export function OrganizationSettingsPanel({
   permissions,
   team,
   photoHandoff,
+  documentExplanation,
   documents,
   documentQuery,
   entityManagement,
@@ -448,6 +451,7 @@ export function OrganizationSettingsPanel({
               {pending === 'organization' ? t('working') : t('save')}
             </Button>
           </form>
+          {documentExplanation}
         </TabsContent>
 
         <TabsContent value="staff" className="space-y-6">

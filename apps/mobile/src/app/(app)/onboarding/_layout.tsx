@@ -13,7 +13,11 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@ramassa/shared/auth';
 import { toAppError } from '@ramassa/shared/errors';
-import { fetchMyAnsweredQuestions, nextWizardScreen } from '@ramassa/shared/intake';
+import {
+  fetchDocumentStepExplanation,
+  fetchMyAnsweredQuestions,
+  nextWizardScreen,
+} from '@ramassa/shared/intake';
 import { fetchOwnProfile } from '@ramassa/shared/profile';
 
 const hiddenHeaderScreenOptions = { headerShown: false } as const;
@@ -50,11 +54,12 @@ export default function OnboardingLayout() {
   const intake = useQuery({
     queryKey: ['onboarding-intake', user?.id ?? 'signed-out'],
     queryFn: async ({ signal }): Promise<WizardIntake> => {
-      const [profile, answered] = await Promise.all([
+      const [profile, answered, documentExplanation] = await Promise.all([
         fetchOwnProfile(supabase, { signal }),
         fetchMyAnsweredQuestions(supabase, { signal }),
+        fetchDocumentStepExplanation(supabase, { signal }),
       ]);
-      return { profile, answered };
+      return { profile, answered, documentExplanation };
     },
     enabled: user !== null,
     // Staff may change her record between two openings: always read it fresh.

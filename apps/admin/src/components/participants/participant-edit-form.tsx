@@ -176,6 +176,9 @@ export function ParticipantEditForm({
           control={control}
           name="documentType"
           label={t('onboarding:documentTypeLabel')}
+          // Optional (RAPP-302): staff may leave it empty when an entity does
+          // not share it. Empty is "not given", which is not "no document".
+          emptyLabel={t('onboarding:documentTypeNotGiven')}
           options={DOCUMENT_TYPES.map((type) => ({
             value: type,
             label: t(`onboarding:documentType${type.charAt(0).toUpperCase()}${type.slice(1)}`),
@@ -183,7 +186,7 @@ export function ParticipantEditForm({
         />
         {/* "No document" is a first-class answer, so the number disappears
             rather than sitting there demanding something she does not have. */}
-        {!canSeeSensitive || documentType === 'none' ? null : (
+        {!canSeeSensitive || documentType === undefined || documentType === 'none' ? null : (
           <TextField
             control={control}
             name="documentNumber"

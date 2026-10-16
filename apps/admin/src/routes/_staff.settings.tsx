@@ -2,6 +2,7 @@ import { RequireAuth } from '@/components/auth/require-auth';
 import { useStepUp } from '@/components/auth/step-up';
 import { ORGANIZATION_BRANDING_CHANGED_EVENT } from '@/components/branding/organization-branding-provider';
 import { EntityManagementPanel } from '@/components/entity/entity-management-panel';
+import { DocumentExplanationForm } from '@/components/settings/document-explanation-form';
 import { OrganizationSettingsPanel } from '@/components/settings/organization-settings-panel';
 import { PhotoHandoffButton } from '@/components/settings/photo-handoff-dialog';
 import { TeamAccessPanel } from '@/components/team/team-access-panel';
@@ -19,6 +20,7 @@ import {
   setEntityActive,
   setEntityCollaboratorActive,
 } from '@ramassa/shared/entity-management';
+import { fetchDocumentStepExplanation, saveDocumentStepExplanation } from '@ramassa/shared/intake';
 import {
   fetchOrganizationSettings,
   fetchStaffMembers,
@@ -56,22 +58,31 @@ export const Route = createFileRoute('/_staff/settings')({
       fetchOrganizationSettings(supabase),
     ]);
     const canManageEntities = permissions.has('entities.manage');
-    const [staffMembers, teamAccess, documents, entities, requestedCollaborators] =
-      await Promise.all([
-        permissions.has('team.manage') ? fetchStaffMembers(supabase) : Promise.resolve([]),
-        permissions.has('team.manage')
-          ? fetchTeamAccess(supabase)
-          : Promise.resolve({ presets: [], members: [] }),
-        permissions.has('settings.documents')
-          ? searchInternalDocuments(supabase, deps.documentQuery)
-          : Promise.resolve([]),
-        canManageEntities ? fetchManagedEntities(supabase) : Promise.resolve([]),
-        // The entity in the URL is fetched alongside; a stale or foreign id is
-        // simply not used below.
-        canManageEntities && deps.entityId !== undefined
-          ? fetchEntityCollaborators(supabase, deps.entityId).catch(() => null)
-          : Promise.resolve(null),
-      ]);
+    const [
+      staffMembers,
+      teamAccess,
+      documents,
+      entities,
+      requestedCollaborators,
+      documentExplanation,
+    ] = await Promise.all([
+      permissions.has('team.manage') ? fetchStaffMembers(supabase) : Promise.resolve([]),
+      permissions.has('team.manage')
+        ? fetchTeamAccess(supabase)
+        : Promise.resolve({ presets: [], members: [] }),
+      permissions.has('settings.documents')
+        ? searchInternalDocuments(supabase, deps.documentQuery)
+        : Promise.resolve([]),
+      canManageEntities ? fetchManagedEntities(supabase) : Promise.resolve([]),
+      // The entity in the URL is fetched alongside; a stale or foreign id is
+      // simply not used below.
+      canManageEntities && deps.entityId !== undefined
+        ? fetchEntityCollaborators(supabase, deps.entityId).catch(() => null)
+        : Promise.resolve(null),
+      permissions.has('settings.organization')
+        ? fetchDocumentStepExplanation(supabase)
+        : Promise.resolve(null),
+    ]);
     const selectedEntityId = entities.some((entity) => entity.id === deps.entityId)
       ? (deps.entityId ?? null)
       : (entities[0]?.id ?? null);
@@ -83,6 +94,7 @@ export const Route = createFileRoute('/_staff/settings')({
           : await fetchEntityCollaborators(supabase, selectedEntityId);
     return {
       collaborators,
+      documentExplanation,
       documents,
       documentQuery: deps.documentQuery,
       entities,
@@ -225,6 +237,17 @@ function OrganizationSettingsScreen() {
       permissions={permissions}
       team={team}
       photoHandoff={<PhotoHandoffButton onDone={refresh} />}
+      documentExplanation={
+        permissions.has('settings.organization') ? (
+          <DocumentExplanationForm
+            explanation={data.documentExplanation}
+            onSave={async (explanation) => {
+              await saveDocumentStepExplanation(supabase, explanation);
+              await refresh();
+            }}
+          />
+        ) : undefined
+      }
       accessToken={session?.access_token}
       documents={data.documents}
       documentQuery={data.documentQuery}

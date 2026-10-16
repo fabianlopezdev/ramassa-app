@@ -3,9 +3,15 @@
  * any) and at most one field. "No en tinc" is a first-class answer that
  * completes the step by itself, and the reassurance line states who can see
  * the number and that it is stored encrypted, in the player's language.
+ *
+ * The whole step is optional (RAPP-302). Entities often hold back documents to
+ * protect the women, so she can skip it and the type stays empty, which is
+ * different from "No en tinc". Staff can write a note under the intro on why
+ * Ramassà asks; with none written, nothing extra shows.
  */
 
 import { AuthTextField } from '@/components/auth/auth-text-field';
+import { PressableScale } from '@/components/motion/pressable-scale';
 import { OnboardingQuestionHeading } from '@/components/onboarding/onboarding-question-heading';
 import { OptionChip } from '@/components/onboarding/option-chip';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
@@ -13,7 +19,7 @@ import { WizardValidationSummary } from '@/components/onboarding/wizard-validati
 import { playHaptic } from '@/lib/haptics/haptics';
 import { onboardingDraftStore } from '@/lib/onboarding';
 import { documentationFormSchema } from '@/lib/onboarding-form';
-import { useWizardStep } from '@/lib/onboarding-intake-context';
+import { useWizardIntake, useWizardStep } from '@/lib/onboarding-intake-context';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { SymbolViewProps } from 'expo-symbols';
@@ -21,8 +27,9 @@ import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
+import { documentExplanationFor } from '@ramassa/shared/intake';
 import type { OnboardingStepName } from '@ramassa/shared/onboarding-drafts';
-import { DOCUMENT_TYPES, type DocumentationStep } from '@ramassa/shared/schemas';
+import { DOCUMENT_TYPES, type DocumentationStep, type LanguageCode } from '@ramassa/shared/schemas';
 
 const DOCUMENT_TYPE_LABEL_KEYS = {
   nie: 'documentTypeNie',
@@ -37,9 +44,14 @@ const documentSymbol: SymbolViewProps['name'] = {
 };
 
 export default function DocumentationStepScreen() {
-  const { t } = useTranslation('onboarding');
+  const { t, i18n } = useTranslation('onboarding');
   const languageFontClass = useLanguageFontClass();
   const step = useWizardStep('documentation');
+  const { documentExplanation } = useWizardIntake();
+  const explanation = documentExplanationFor(
+    documentExplanation,
+    (i18n.resolvedLanguage as LanguageCode | undefined) ?? 'ca',
+  );
   const [draft] = useState(() => onboardingDraftStore.loadDraft());
   const [hasSubmitErrors, setHasSubmitErrors] = useState(false);
 
@@ -48,12 +60,15 @@ export default function DocumentationStepScreen() {
     control,
     handleSubmit,
     getValues,
+    setValue,
     watch,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(documentationFormSchema),
     defaultValues: {
-      documentType: saved.documentType ?? ('nie' as const),
+      // Nothing chosen until she chooses: a preselected type would turn a
+      // skipped step into an answer she never gave.
+      documentType: saved.documentType,
       documentNumber: saved.documentNumber ?? '',
     },
   });
@@ -66,6 +81,15 @@ export default function DocumentationStepScreen() {
       currentStep,
       documentation: getValues(),
     });
+  }
+
+  // Skipping stores the step empty: no type, no number.
+  function skip() {
+    setHasSubmitErrors(false);
+    setValue('documentType', undefined);
+    setValue('documentNumber', '');
+    persist(step.nextDraftStep);
+    step.goNext();
   }
 
   const continueToLogistics = handleSubmit(
@@ -99,6 +123,14 @@ export default function DocumentationStepScreen() {
             }
       }
     >
+      {explanation === null ? null : (
+        <Text
+          testID="onboarding-document-explanation"
+          className={`text-start text-md text-neutral-700 ${languageFontClass}`}
+        >
+          {explanation}
+        </Text>
+      )}
       <WizardValidationSummary isVisible={hasSubmitErrors} message={t('errorSummary')} />
       <View className="gap-xs">
         <OnboardingQuestionHeading label={t('documentTypeLabel')} symbol={documentSymbol} />
@@ -120,7 +152,7 @@ export default function DocumentationStepScreen() {
         />
       </View>
 
-      {selectedType === 'none' ? null : (
+      {selectedType === undefined || selectedType === 'none' ? null : (
         <>
           <Controller
             control={control}
@@ -147,6 +179,19 @@ export default function DocumentationStepScreen() {
           </Text>
         </>
       )}
+
+      <PressableScale
+        testID="onboarding-document-skip"
+        accessibilityRole="button"
+        accessibilityLabel={t('documentSkipAction')}
+        onPress={skip}
+        haptic="tapLight"
+        className="min-h-recommended justify-center self-start rounded-md border border-primary px-md"
+      >
+        <Text className={`text-md font-semibold text-primary-dark ${languageFontClass}`}>
+          {t('documentSkipAction')}
+        </Text>
+      </PressableScale>
     </WizardFrame>
   );
 }

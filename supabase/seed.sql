@@ -48,6 +48,15 @@ values (
 )
 on conflict (id) do nothing;
 
+-- The staff-written note under the wizard's document step (RAPP-302). Catalan
+-- and Arabic only, so the other languages show the Catalan fallback.
+update public.organizations
+set document_step_explanation = jsonb_build_object(
+  'ca', 'Només el fem servir quan cal, per exemple per inscriure''t a un curs. Si l''entitat que t''acompanya el té, també ens el pot donar més endavant.',
+  'ar', 'نستخدمها فقط عند الحاجة، مثلًا لتسجيلكِ في دورة. وإذا كانت الجمعية التي ترافقكِ تحتفظ بها، يمكنها أن تعطينا إياها لاحقًا.'
+)
+where id = '5eed0000-0000-4000-8000-000000000000';
+
 -- Stable social-entity tenants (RAPP-55). These rows precede profiles because
 -- every entity-role profile must carry a durable membership foreign key.
 insert into public.collaborating_entities (id, org_id, name)

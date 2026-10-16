@@ -20,6 +20,7 @@ import {
 import {
   CLOTHING_SIZES,
   DOCUMENT_TYPES,
+  documentNumberToSend,
   identityStepSchema,
   logisticsFields,
   NIE_PATTERN,
@@ -208,7 +209,7 @@ export function buildProfilePrefillPayload(
   const payload: ProfilePrefillPayload = {};
   for (const field of fields) {
     let value = values[field] as string | number | boolean | undefined;
-    if (field === 'documentNumber' && values.documentType === 'none') value = undefined;
+    if (field === 'documentNumber' && documentNumberToSend(values) === null) value = undefined;
     if (field === 'numDependents' && values.hasDependents !== true) value = 0;
     payload[PAYLOAD_KEY[field]] = value ?? null;
   }
