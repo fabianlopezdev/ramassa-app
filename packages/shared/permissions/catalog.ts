@@ -29,6 +29,8 @@ export const PERMISSION_CATALOG = [
   { code: 'participants.view_sensitive', area: 'participants' },
   // Her medical answer from the authorization (RAPP-304). Only Admin by default.
   { code: 'participants.view_health', area: 'participants' },
+  // Hand a tablet to a player to sign the authorization (RAPP-305).
+  { code: 'consents.collect', area: 'participants' },
   { code: 'participants.notes', area: 'participants' },
   { code: 'participants.invite', area: 'participants' },
   { code: 'participants.deactivate', area: 'participants' },
@@ -85,6 +87,7 @@ const STAFF_DEFAULT_AREAS: readonly PermissionArea[] = [
 
 const STAFF_DEFAULT_EXTRAS: readonly PermissionCode[] = [
   'participants.view',
+  'consents.collect',
   'participants.view_personal',
   'participants.notes',
   'participants.invite',
@@ -99,6 +102,7 @@ export const BUILTIN_PRESET_DEFAULTS: Readonly<
 > = {
   coach: [
     'participants.view',
+    'consents.collect',
     'equipment.handover',
     'attendance.mark',
     'attendance.reports',

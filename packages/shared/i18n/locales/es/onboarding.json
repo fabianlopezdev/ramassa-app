@@ -141,5 +141,11 @@
   "reregistrationReviewIntro": "¡Hola de nuevo! Antes de firmar la temporada, revisa tus datos. ¿Siguen siendo correctos?",
   "reregistrationCorrect": "Sí, son correctos",
   "reregistrationEdit": "Corregir mis datos",
-  "reregistrationSaveFailed": "No se han podido guardar las respuestas. Vuelve a intentarlo."
+  "reregistrationSaveFailed": "No se han podido guardar las respuestas. Vuelve a intentarlo.",
+  "signingChooseLanguage": "{{name}}, elige tu idioma",
+  "signingFor": "Firma: {{name}}",
+  "signingChangeLanguage": "Cambiar el idioma",
+  "signingThanks": "Gracias, {{name}}. Has firmado la autorización.",
+  "signingGiveBack": "Devuelve la tableta al equipo.",
+  "signingSavedOnTablet": "Tu firma está guardada en esta tableta y se enviará cuando haya conexión."
 }

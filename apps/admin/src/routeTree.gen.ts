@@ -42,6 +42,7 @@ import { Route as StaffParticipantsInvitesRouteImport } from './routes/_staff.pa
 import { Route as StaffParticipantsNewRouteImport } from './routes/_staff.participants.new'
 import { Route as StaffParticipantsReferralsRouteImport } from './routes/_staff.participants.referrals'
 import { Route as StaffParticipantsSeasonRouteImport } from './routes/_staff.participants.season'
+import { Route as StaffParticipantsWalkInsRouteImport } from './routes/_staff.participants.walk-ins'
 import { Route as StaffPhotoHandoffHandoffIdRouteImport } from './routes/_staff.photo-handoff.$handoffId'
 import { Route as EntityPortalReferralsIndexRouteImport } from './routes/_entity.portal.referrals.index'
 import { Route as EntityPortalReferralsReferralIdRouteImport } from './routes/_entity.portal.referrals.$referralId'
@@ -235,6 +236,12 @@ const StaffParticipantsSeasonRoute = StaffParticipantsSeasonRouteImport.update({
   path: '/participants/season',
   getParentRoute: () => StaffRoute,
 } as any)
+const StaffParticipantsWalkInsRoute =
+  StaffParticipantsWalkInsRouteImport.update({
+    id: '/participants/walk-ins',
+    path: '/participants/walk-ins',
+    getParentRoute: () => StaffRoute,
+  } as any)
 const StaffPhotoHandoffHandoffIdRoute =
   StaffPhotoHandoffHandoffIdRouteImport.update({
     id: '/photo-handoff/$handoffId',
@@ -397,6 +404,7 @@ export interface FileRoutesByFullPath {
   '/participants/new': typeof StaffParticipantsNewRoute
   '/participants/referrals': typeof StaffParticipantsReferralsRoute
   '/participants/season': typeof StaffParticipantsSeasonRoute
+  '/participants/walk-ins': typeof StaffParticipantsWalkInsRoute
   '/photo-handoff/$handoffId': typeof StaffPhotoHandoffHandoffIdRoute
   '/portal/': typeof EntityPortalIndexRoute
   '/attendance/': typeof StaffAttendanceIndexRoute
@@ -448,6 +456,7 @@ export interface FileRoutesByTo {
   '/participants/new': typeof StaffParticipantsNewRoute
   '/participants/referrals': typeof StaffParticipantsReferralsRoute
   '/participants/season': typeof StaffParticipantsSeasonRoute
+  '/participants/walk-ins': typeof StaffParticipantsWalkInsRoute
   '/photo-handoff/$handoffId': typeof StaffPhotoHandoffHandoffIdRoute
   '/portal': typeof EntityPortalIndexRoute
   '/attendance': typeof StaffAttendanceIndexRoute
@@ -507,6 +516,7 @@ export interface FileRoutesById {
   '/_staff/participants/new': typeof StaffParticipantsNewRoute
   '/_staff/participants/referrals': typeof StaffParticipantsReferralsRoute
   '/_staff/participants/season': typeof StaffParticipantsSeasonRoute
+  '/_staff/participants/walk-ins': typeof StaffParticipantsWalkInsRoute
   '/_staff/photo-handoff/$handoffId': typeof StaffPhotoHandoffHandoffIdRoute
   '/_entity/portal/': typeof EntityPortalIndexRoute
   '/_staff/attendance/': typeof StaffAttendanceIndexRoute
@@ -565,6 +575,7 @@ export interface FileRouteTypes {
     | '/participants/new'
     | '/participants/referrals'
     | '/participants/season'
+    | '/participants/walk-ins'
     | '/photo-handoff/$handoffId'
     | '/portal/'
     | '/attendance/'
@@ -616,6 +627,7 @@ export interface FileRouteTypes {
     | '/participants/new'
     | '/participants/referrals'
     | '/participants/season'
+    | '/participants/walk-ins'
     | '/photo-handoff/$handoffId'
     | '/portal'
     | '/attendance'
@@ -674,6 +686,7 @@ export interface FileRouteTypes {
     | '/_staff/participants/new'
     | '/_staff/participants/referrals'
     | '/_staff/participants/season'
+    | '/_staff/participants/walk-ins'
     | '/_staff/photo-handoff/$handoffId'
     | '/_entity/portal/'
     | '/_staff/attendance/'
@@ -942,6 +955,13 @@ declare module '@tanstack/react-router' {
       path: '/participants/season'
       fullPath: '/participants/season'
       preLoaderRoute: typeof StaffParticipantsSeasonRouteImport
+      parentRoute: typeof StaffRoute
+    }
+    '/_staff/participants/walk-ins': {
+      id: '/_staff/participants/walk-ins'
+      path: '/participants/walk-ins'
+      fullPath: '/participants/walk-ins'
+      preLoaderRoute: typeof StaffParticipantsWalkInsRouteImport
       parentRoute: typeof StaffRoute
     }
     '/_staff/photo-handoff/$handoffId': {
@@ -1252,6 +1272,7 @@ interface StaffRouteChildren {
   StaffParticipantsNewRoute: typeof StaffParticipantsNewRoute
   StaffParticipantsReferralsRoute: typeof StaffParticipantsReferralsRoute
   StaffParticipantsSeasonRoute: typeof StaffParticipantsSeasonRoute
+  StaffParticipantsWalkInsRoute: typeof StaffParticipantsWalkInsRoute
   StaffPhotoHandoffHandoffIdRoute: typeof StaffPhotoHandoffHandoffIdRoute
   StaffParticipantsIndexRoute: typeof StaffParticipantsIndexRoute
 }
@@ -1276,6 +1297,7 @@ const StaffRouteChildren: StaffRouteChildren = {
   StaffParticipantsNewRoute: StaffParticipantsNewRoute,
   StaffParticipantsReferralsRoute: StaffParticipantsReferralsRoute,
   StaffParticipantsSeasonRoute: StaffParticipantsSeasonRoute,
+  StaffParticipantsWalkInsRoute: StaffParticipantsWalkInsRoute,
   StaffPhotoHandoffHandoffIdRoute: StaffPhotoHandoffHandoffIdRoute,
   StaffParticipantsIndexRoute: StaffParticipantsIndexRoute,
 }

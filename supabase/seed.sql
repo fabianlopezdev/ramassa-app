@@ -1241,6 +1241,25 @@ set health_info = public.encrypt_field('No'),
     emergency_contact_phone = public.encrypt_field('+34600000099')
 where id = '5eed0000-0000-4000-8000-000000000011';
 
+-- A walk-in signed on a coach's tablet at the first training (RAPP-305): a new
+-- woman with only her name, waiting for staff to confirm her with her email.
+insert into public.walk_in_signings
+  (id, org_id, first_name, last_name, version_id, payload, signed_at, collected_by)
+values (
+  '5eed0000-0000-4000-8043-000000000001',
+  '5eed0000-0000-4000-8000-000000000000',
+  'Salma', 'Idrissi',
+  '5eed0000-0000-4000-8041-000000000001',
+  public.encrypt_field(jsonb_build_object(
+    'consents', jsonb_build_object('participation', true, 'data_processing', true,
+                                   'code_of_conduct', true, 'health_data', true,
+                                   'image_rights', false, 'newsletter', false, 'messaging_groups', true),
+    'health_info', 'No', 'unable_to_draw', true, 'language', 'ar', 'device', 'iPad')::text),
+  timestamptz '2026-09-15 19:10:00+02',
+  '5eed0000-0000-4000-8000-000000000002'
+)
+on conflict (id) do nothing;
+
 -- Terms acceptances ----------------------------------------------------------------
 -- The consent EVENT behind each seeded player's `terms_accepted_at` (RAPP-21).
 -- Seeded in the language that player actually reads, because the whole point of

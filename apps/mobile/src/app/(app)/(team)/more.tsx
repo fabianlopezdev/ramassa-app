@@ -14,8 +14,9 @@ import { PressableScale } from '@/components/motion/pressable-scale';
 import { PreviewStartFailed, useStartPreview } from '@/components/preview/preview-as-player';
 import { TeamBackToHome } from '@/components/team/team-back-to-home';
 import { teamScreens } from '@/lib/account-area';
-import { logout } from '@/lib/auth';
 import { continuousCorners } from '@/lib/continuous-corners';
+import { useGuardedLogout } from '@/lib/sign-out-guard';
+import { usePendingSigningCount } from '@/lib/tablet-signing';
 import { teamAreas } from '@/lib/team-shell';
 import { useAccountAccess } from '@/lib/use-account-access';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
@@ -25,6 +26,8 @@ import { ScrollView, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function TeamMoreScreen() {
+  const signOut = useGuardedLogout();
+  const pendingSignings = usePendingSigningCount();
   const { t } = useTranslation('nav');
   const { t: tAuth } = useTranslation('auth');
   const { t: tProfile } = useTranslation('profile');
@@ -65,6 +68,33 @@ export default function TeamMoreScreen() {
           >
             {t('team.more')}
           </Text>
+          {/* Signing the authorization on this tablet (RAPP-305), with the count
+              of signings still waiting to sync. */}
+          {permissions.has('consents.collect') ? (
+            <PressableScale
+              testID="team-more-collect-signatures"
+              accessibilityRole="button"
+              accessibilityLabel={tParticipants('signing.title')}
+              accessibilityHint={
+                pendingSignings > 0
+                  ? tParticipants('signing.pending', { count: pendingSignings })
+                  : undefined
+              }
+              onPress={() => push('/collect-signatures' as Href)}
+              haptic="selection"
+              style={continuousCorners}
+              className="min-h-recommended justify-center gap-xs rounded-md border border-neutral-200 bg-white px-md py-sm"
+            >
+              <Text className={`text-start text-md text-neutral-900 ${languageFontClass}`}>
+                {tParticipants('signing.title')}
+              </Text>
+              {pendingSignings > 0 ? (
+                <Text className={`text-start text-sm text-primary-dark ${languageFontClass}`}>
+                  {tParticipants('signing.pending', { count: pendingSignings })}
+                </Text>
+              ) : null}
+            </PressableScale>
+          ) : null}
           {hasStock ? (
             <PressableScale
               testID="team-more-stock"
@@ -293,7 +323,7 @@ export default function TeamMoreScreen() {
             testID="team-more-sign-out"
             accessibilityRole="button"
             accessibilityLabel={tProfile('signOutAction')}
-            onPress={() => void logout()}
+            onPress={signOut}
             haptic="tapLight"
             className="min-h-recommended justify-center px-md"
           >
