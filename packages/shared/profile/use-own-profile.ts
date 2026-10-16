@@ -14,6 +14,7 @@
  */
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { documentNumberToSend } from '../schemas/onboarding';
 import type { ProfileEdit, ProfileRow } from '../schemas/profile';
 
 export const ownProfileQueryKey = ['own-profile'] as const;
@@ -79,8 +80,12 @@ function toRowShape(edit: Partial<ProfileEdit>): Partial<ProfileRow> {
   if (edit.placeOfBirth !== undefined) row.place_of_birth = edit.placeOfBirth;
   if (edit.nationality !== undefined) row.nationality = edit.nationality;
   if (edit.preferredLanguage !== undefined) row.preferred_language = edit.preferredLanguage;
-  if (edit.documentType !== undefined) row.document_type = edit.documentType;
-  if (edit.documentNumber !== undefined) row.document_number = edit.documentNumber;
+  // An emptied document is a real edit (RAPP-302), so the type is painted
+  // whenever the edit carries the documentation fields.
+  if ('documentType' in edit || edit.documentNumber !== undefined) {
+    row.document_type = edit.documentType ?? null;
+    row.document_number = documentNumberToSend(edit);
+  }
   if (edit.phone !== undefined) row.phone = edit.phone;
   if (edit.address !== undefined) row.address = edit.address;
   if (edit.city !== undefined) row.city = edit.city;

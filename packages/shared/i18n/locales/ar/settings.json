@@ -41,5 +41,13 @@
   "fundingNotice": "الإقرار بتمويل حكومة كتالونيا إلزامي ولا يمكن إزالته من هذه الإعدادات.",
   "chooseLogo": "اختر شعارًا",
   "contrastTooLow": "تباين هذا اللون مع النص {{ratio}}:1. يلزم 4.5:1 على الأقل.",
-  "colorInvalid": "استخدم لونًا سداسيًا من ست خانات مثل #0077B6."
+  "colorInvalid": "استخدم لونًا سداسيًا من ست خانات مثل #0077B6.",
+  "documentExplanationTitle": "ملاحظة حول وثيقة الهوية",
+  "documentExplanationIntro": "تظهر في التسجيل الموجَّه، تحت خطوة الوثيقة. اشرحوا لماذا تطلبونها وفيمَ تستخدمونها. الخطوة اختيارية: إن لم تكتبوا شيئًا، لا تظهر أي ملاحظة.",
+  "documentExplanationFallback": "إلزامية إذا كتبتَ الملاحظة، فهي النص الذي يظهر عندما تنقص لغة",
+  "documentExplanationSaved": "حُفظت الملاحظة.",
+  "documentExplanationCatalanRequired": "اكتب الملاحظة بالكتالونية: فهي النص الذي يظهر عندما تنقص لغة.",
+  "documentExplanationTooLong": "يمكن أن يحتوي كل نص على {{max}} حرفًا كحد أقصى.",
+  "documentExplanationFailed": "تعذّر حفظ الملاحظة. حاول مرة أخرى.",
+  "documentExplanationSave": "احفظ الملاحظة"
 }

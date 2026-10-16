@@ -117,6 +117,12 @@ describe('documentationStepSchema', () => {
       documentationStepSchema.safeParse({ documentType: 'other', documentNumber: '' }).success,
     ).toBe(false);
   });
+
+  test('the document can be skipped: an empty answer passes (RAPP-302)', () => {
+    const parsed = documentationStepSchema.parse({});
+    expect(parsed.documentType).toBeUndefined();
+    expect(parsed.documentNumber).toBeUndefined();
+  });
 });
 
 const validLogistics = {
@@ -263,5 +269,24 @@ describe('buildCompleteOnboardingPayload', () => {
     expect(payload.phone).toBeNull();
     expect(payload.reference_entity).toBeNull();
     expect(payload.media_consent).toBe(false);
+  });
+
+  test('a skipped document is sent empty, and a stray number is not sent without its type', () => {
+    const payload = buildCompleteOnboardingPayload(
+      {
+        identity: identityStepSchema.parse(validIdentity),
+        documentation: { documentNumber: 'X1234567L' },
+        logistics: logisticsStepSchema.parse({
+          referenceEntity: null,
+          hasDependents: false,
+          clothingSize: 'L',
+          shoeSize: '40',
+        }),
+        terms: termsStepSchema.parse({ termsAccepted: true }),
+      },
+      { termsVersion: '2026-07-01', localeShown: 'ca' },
+    );
+    expect(payload.document_type).toBeNull();
+    expect(payload.document_number).toBeNull();
   });
 });
