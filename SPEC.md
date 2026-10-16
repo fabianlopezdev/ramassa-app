@@ -1971,6 +1971,11 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - Still open, from the accessibility suite (which CI skips): see RAPP-438.
 - Checks: audit, build, typecheck, 111 admin unit tests, knip, and 13 web admin specs.
 
+## Web portal says when referral updates open (2026-10-15, RAPP-435)
+
+- A pending referral (no account yet, which the database guarantees) already had no update form on the partner web portal, but its Updates section gave no reason. It now shows the same note as the phone: updates can be shared once the team has welcomed her and she has an account.
+- Checks: `entity-referrals.web-qa.ts` (the note and no form on a new, pending referral; the update after onboarding as before).
+
 ## Accessibility suite green again (2026-10-16, RAPP-438)
 
 - Since the router upgrade the local WCAG 2.2 AA suite (`accessibility.web-qa.ts`, skipped in CI) failed in a set that changed between runs. Pages now fill in sooner, so axe saw content it used to miss, and the timing of one check changed.
