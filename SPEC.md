@@ -1991,6 +1991,13 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - Shared schema: `equipmentDeliverySchemaFor(sizes)` replaces `equipmentDeliverySchema` and accepts built-in tokens and `custom_` keys. The fixed `SIZELESS_EQUIPMENT_ITEMS` list is gone, because sizes are editable per item type.
 - Checks: `participant-equipment.web-qa.ts` (6, including a custom item with the Catalan fallback and a switched-off item) and `participants.web-qa.ts`.
 
+## Service publication times and review-only approval (2026-10-16, RAPP-360)
+
+- `services.publish` ("Publish, schedule, unpublish and delete services") now also covers the publication times. A team member with `services.edit` alone can still change the text, photos and contact details of a published service, but cannot change its `published_at` or `expires_at`. Before, edit-only could set an expiry or move the publish time later, which hid the service. Status moves to or from published already needed `services.publish`. This matches the publish guard on announcements, events and knowledge.
+- `services.review` ("Approve or reject the services partner entities submit") now approves an entity submission on its own. Before, approval also needed `services.publish`, because `review_entity_service` publishes through `save_admin_service`, so a reviewer without it saw the review queue and got a refusal on Approve.
+- How: `review_entity_service` marks the one service it approves with the transaction-local setting `ramassa.service_review_approval` and clears it right after. `save_admin_service` and the status trigger accept the mark only for that service. A client cannot set it, because the API calls only functions in the exposed schemas. Same pattern as `ramassa.trusted_profile_write`.
+- Checks: pgTAP `0067_services_publish_permission_test.sql` (11 cases), the full database suite, and the service browser specs (`admin-services`, `entity-services`, `service-review-queue`, `app-content-service-reviews`, `app-content-services`, `app-entity-services`).
+
 ## Notifications and targeted push on the phone (2026-10-15, RAPP-385, part of RAPP-215)
 
 - `notifications.send` holders get "Notificacions" in More, as the web admin's workspace. A message starts from a template or blank, in Catalan; the four translations are generated and must all be approved before it is sent or saved as a template.
