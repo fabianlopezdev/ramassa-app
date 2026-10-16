@@ -32,6 +32,7 @@ import {
   SelectField,
   TextField,
 } from '@/components/participants/participant-form-fields';
+import { SeasonAnswerFormFields } from '@/components/participants/season-answer-form-fields';
 import { Button } from '@/components/ui/button';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMemo, useState } from 'react';
@@ -269,6 +270,11 @@ export function ParticipantEditForm({
           name="shoeSize"
           label={t('onboarding:shoeSizeLabel')}
           options={SHOE_SIZES.map((size) => ({ value: size, label: size }))}
+        />
+        <SeasonAnswerFormFields
+          control={control}
+          canSeeSensitive={canSeeSensitive}
+          emptyLabel={t('profile:notProvided')}
         />
         <SelectField
           control={control}

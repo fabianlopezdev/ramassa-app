@@ -320,7 +320,10 @@ export function ParticipantDetail({
             errorMessage={saveErrorMessage}
           />
         ) : (
-          <ParticipantProfileFields participant={participant} />
+          <ParticipantProfileFields
+            participant={participant}
+            canSeeSensitive={permissions.has('participants.view_sensitive')}
+          />
         )}
       </DetailSection>
 

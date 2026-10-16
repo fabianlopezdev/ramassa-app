@@ -47,6 +47,17 @@ test.afterAll(() => {
        set referred_profile_id = null, assigned_staff_id = null, status = 'pending'
      where id = '${PENDING_REFERRAL_ID}'
        and referred_profile_id in (select id from qa_run_accounts);
+    -- Accepting it moved the seeded answers to her profile (RAPP-303): put them back.
+    update public.entity_referrals
+       set referred_phone = public.encrypt_field('+34930005401'),
+           referred_email = public.encrypt_field('amina.referral@example.test'),
+           intake_answers = public.encrypt_field(jsonb_build_object(
+             'date_of_birth', '1996-02-20', 'nationality', 'Marroc', 'document_type', 'none',
+             'city', 'Vic', 'applicant_status', 'migrant',
+             'supporting_entities', jsonb_build_array('Càritas Vic'),
+             'reference_contact_name', 'Sílvia Bosch', 'season_number', 2,
+             'childcare_need', 'yes', 'specific_needs', 'Prefereix entrenar a la tarda.')::text)
+     where id = '${PENDING_REFERRAL_ID}' and intake_answers is null;
     delete from public.profiles where id in (select id from qa_run_accounts);
     delete from auth.identities where user_id in (select id from qa_run_accounts);
     delete from auth.users where id in (select id from qa_run_accounts);
@@ -212,6 +223,8 @@ test.describe('inviting a participant', () => {
   test('an invitation opened from a referral carries it, and says so', async ({ page }) => {
     await page.goto(`/participants/new?referral=${PENDING_REFERRAL_ID}`);
     await expect(page.getByTestId('referral-prefill')).toBeVisible({ timeout: 15_000 });
+    // What the entity answered is shown before staff invite her (RAPP-303).
+    await expect(page.getByTestId('referral-answers')).toBeVisible();
 
     const email = `referred.${RUN_TAG}@example.test`;
     await invite(page, email);
@@ -222,6 +235,27 @@ test.describe('inviting a participant', () => {
     expect(queryDatabase(`select referral_id from public.invites where email = '${email}'`)).toBe(
       PENDING_REFERRAL_ID,
     );
+
+    // Her record holds the entity's answers, recorded as the entity's, and the
+    // referral keeps no copy of them (RAPP-303).
+    expect(
+      queryDatabase(
+        `select p.childcare_need || '|' || p.season_number || '|' || p.city || '|'
+                || public.decrypt_field(p.applicant_status)
+           from public.profiles p join auth.users u on u.id = p.id where u.email = '${email}'`,
+      ),
+    ).toBe('yes|2|Vic|migrant');
+    expect(
+      queryDatabase(
+        `select a.source from public.profile_answers a join auth.users u on u.id = a.profile_id
+          where u.email = '${email}' and a.question = 'season_number'`,
+      ),
+    ).toBe('entity');
+    expect(
+      queryDatabase(
+        `select (intake_answers is null)::text from public.entity_referrals where id = '${PENDING_REFERRAL_ID}'`,
+      ),
+    ).toBe('true');
   });
 
   test('an address that already has an account is refused with words', async ({ page }) => {
