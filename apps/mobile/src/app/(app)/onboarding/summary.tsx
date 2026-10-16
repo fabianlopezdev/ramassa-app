@@ -178,7 +178,7 @@ export default function SummaryStepScreen() {
               : t(DOCUMENT_TYPE_LABEL_KEYS[documentType] ?? 'documentTypeOther'),
           )}
         />
-        {documentType === 'none' ? null : (
+        {documentType === null || documentType === 'none' ? null : (
           <ProfileRow
             label={t('documentNumberLabel')}
             value={show(text(documentation.documentNumber))}

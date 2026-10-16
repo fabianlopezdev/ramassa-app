@@ -318,6 +318,14 @@ export function ProfileFormFields({
                 onPress={() => field.onChange(type)}
               />
             ))}
+            {/* The document is optional (RAPP-302). "Not given" is not "I have
+                none": choosing it empties the type and the number. */}
+            <OptionChip
+              label={t('onboarding:documentTypeNotGiven')}
+              accessibilityHint={t('onboarding:documentTypeLabel')}
+              isSelected={field.value === undefined}
+              onPress={() => field.onChange(undefined)}
+            />
           </ChoiceGroup>
         )}
       />

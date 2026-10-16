@@ -16,15 +16,21 @@ import {
   type WizardScreen,
 } from '@ramassa/shared/intake';
 import type { OnboardingStepName } from '@ramassa/shared/onboarding-drafts';
-import type { ProfileRow } from '@ramassa/shared/schemas';
+import type { LocalizedText, ProfileRow } from '@ramassa/shared/schemas';
 
 export interface WizardIntake {
   /** Her stored profile, or null when she has none yet (a self-started intake). */
   readonly profile: ProfileRow | null;
   readonly answered: AnsweredQuestions;
+  /** Staff's note under the document step (RAPP-302), or null when none is written. */
+  readonly documentExplanation: LocalizedText | null;
 }
 
-const EMPTY_INTAKE: WizardIntake = { profile: null, answered: new Set() };
+const EMPTY_INTAKE: WizardIntake = {
+  profile: null,
+  answered: new Set(),
+  documentExplanation: null,
+};
 
 const WizardIntakeContext = createContext<WizardIntake>(EMPTY_INTAKE);
 
