@@ -100,6 +100,12 @@ export const profileRowSchema = z.object({
   season_number: z.number().int().nullish(),
   childcare_need: z.enum(CHILDCARE_NEEDS).nullish(),
   specific_needs: z.string().nullish(),
+  // From the season authorization (RAPP-304). The medical answer reaches staff
+  // only with participants.view_health.
+  health_info: z.string().nullish(),
+  emergency_contact_name: z.string().nullish(),
+  emergency_contact_relation: z.string().nullish(),
+  emergency_contact_phone: z.string().nullish(),
 });
 
 export type ProfileRow = z.infer<typeof profileRowSchema>;

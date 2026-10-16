@@ -23,6 +23,7 @@
     "./offline": "./offline/outbox.ts",
     "./onboarding-drafts": "./lib/onboarding-drafts.ts",
     "./intake": "./onboarding/index.ts",
+    "./authorization": "./authorization/index.ts",
     "./testing": "./testing/index.ts",
     "./tokens/motion": "./tokens/motion.ts",
     "./profile": "./profile/index.ts",

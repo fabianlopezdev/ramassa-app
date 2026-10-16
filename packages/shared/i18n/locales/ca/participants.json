@@ -455,5 +455,25 @@
   "questionStatesFailed": "No s'han pogut desar les preguntes. Torna-ho a provar.",
   "questionStatesRequiredHint": "És obligatòria: respon-la abans de treure-la del registre.",
   "questionStatesAnswered": "Ja té resposta.",
-  "questionStatesUnanswered": "Encara sense resposta."
+  "questionStatesUnanswered": "Encara sense resposta.",
+  "authorizationTitle": "Autorització de la temporada",
+  "authorizationNone": "Encara no ha signat cap autorització.",
+  "authorizationSignedRow": "Temporada {{season}}: versió {{number}}, signada el {{date}} {{method}}",
+  "authorizationPaperRow": "Temporada {{season}}: signada en paper el {{date}}",
+  "authorizationUnableToDraw": "Va signar només amb les caselles: no podia dibuixar la signatura.",
+  "authorizationSignatureLabel": "La seva signatura",
+  "authorizationConsentsTitle": "Autoritzacions",
+  "authorizationGranted": "Sí",
+  "authorizationNotGranted": "No",
+  "authorizationEmergencyContact": "Contacte d'emergència",
+  "authorizationHealth": "Dades mèdiques",
+  "authorizationPaperDate": "Data de la signatura en paper",
+  "authorizationPaperAction": "Registra la signatura en paper",
+  "authorizationPaperSaved": "Signatura en paper registrada.",
+  "authorizationPaperFailed": "No s'ha pogut registrar. Torna-ho a provar.",
+  "authorizationMethod": {
+    "app": "a l'app",
+    "staff_device": "en un dispositiu de l'equip",
+    "paper": "en paper"
+  }
 }

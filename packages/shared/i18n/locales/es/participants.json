@@ -455,5 +455,25 @@
   "questionStatesFailed": "No se han podido guardar las preguntas. Vuelve a intentarlo.",
   "questionStatesRequiredHint": "Es obligatoria: respóndela antes de quitarla del registro.",
   "questionStatesAnswered": "Ya tiene respuesta.",
-  "questionStatesUnanswered": "Todavía sin respuesta."
+  "questionStatesUnanswered": "Todavía sin respuesta.",
+  "authorizationTitle": "Autorización de la temporada",
+  "authorizationNone": "Todavía no ha firmado ninguna autorización.",
+  "authorizationSignedRow": "Temporada {{season}}: versión {{number}}, firmada el {{date}} {{method}}",
+  "authorizationPaperRow": "Temporada {{season}}: firmada en papel el {{date}}",
+  "authorizationUnableToDraw": "Firmó solo con las casillas: no podía dibujar la firma.",
+  "authorizationSignatureLabel": "Su firma",
+  "authorizationConsentsTitle": "Autorizaciones",
+  "authorizationGranted": "Sí",
+  "authorizationNotGranted": "No",
+  "authorizationEmergencyContact": "Contacto de emergencia",
+  "authorizationHealth": "Datos médicos",
+  "authorizationPaperDate": "Fecha de la firma en papel",
+  "authorizationPaperAction": "Registrar la firma en papel",
+  "authorizationPaperSaved": "Firma en papel registrada.",
+  "authorizationPaperFailed": "No se ha podido registrar. Vuelve a intentarlo.",
+  "authorizationMethod": {
+    "app": "en la app",
+    "staff_device": "en un dispositivo del equipo",
+    "paper": "en papel"
+  }
 }
