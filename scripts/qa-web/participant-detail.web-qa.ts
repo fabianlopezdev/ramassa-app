@@ -190,6 +190,45 @@ test.describe('the participant detail view', () => {
   });
 
   /**
+   * The document is optional (RAPP-302): an entity may not share it. Staff
+   * choose "Not given", the type and number are stored empty, and the record
+   * shows it as not filled in. "Not given" must never become "I have none".
+   * The original values are put back, encrypted number included.
+   */
+  test('staff can leave the document empty, and it stays empty', async ({ page }) => {
+    const participantId = participantIdByLastName('Rojas');
+    const original = queryDatabase(
+      `select document_type || '|' || document_number::text from public.profiles where id = '${participantId}'`,
+    );
+    const [originalType, originalNumber] = original.split('|');
+    try {
+      await openDetail(page, participantId);
+      await page.getByRole('button', { name: /edita|edit/i }).click();
+      await page.locator('#participant-documentType').selectOption({ label: 'Not given' });
+      await expect(page.locator('#participant-documentNumber')).toHaveCount(0);
+      await page.getByRole('button', { name: /desa|save|guarda/i }).click();
+
+      await expect
+        .poll(
+          () =>
+            queryDatabase(
+              `select coalesce(document_type, 'empty') || '|' || coalesce(document_number::text, 'empty')
+                 from public.profiles where id = '${participantId}'`,
+            ),
+          { timeout: 15_000 },
+        )
+        .toBe('empty|empty');
+      await expect(page.getByText('Not filled in').first()).toBeVisible();
+    } finally {
+      queryDatabase(
+        `update public.profiles
+            set document_type = '${originalType}', document_number = '${originalNumber}'::bytea
+          where id = '${participantId}'`,
+      );
+    }
+  });
+
+  /**
    * An accented town has to survive the round trip. It is the same class of bug
    * RAPP-23 shipped, one layer down: a value that looks fine on the way in and
    * comes back folded.
