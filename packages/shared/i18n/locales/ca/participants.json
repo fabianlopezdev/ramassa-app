@@ -130,6 +130,7 @@
   "equipmentEmpty": "Encara no se li ha lliurat res.",
   "equipmentColumnItem": "Material",
   "equipmentColumnSize": "Talla",
+  "equipmentSizeChoose": "Tria la talla",
   "equipmentColumnDate": "Data",
   "equipmentColumnNote": "Observacions",
   "equipmentAddAction": "Registra el lliurament",

@@ -130,6 +130,7 @@
   "equipmentEmpty": "Nothing has been handed to her yet.",
   "equipmentColumnItem": "Item",
   "equipmentColumnSize": "Size",
+  "equipmentSizeChoose": "Choose a size",
   "equipmentColumnDate": "Date",
   "equipmentColumnNote": "Notes",
   "equipmentAddAction": "Record the handover",

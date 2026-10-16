@@ -26,7 +26,7 @@ import {
   fetchAttendanceHistory,
   fetchAttendanceParticipantStats,
 } from '@ramassa/shared/attendance';
-import { fetchEquipmentDeliveries } from '@ramassa/shared/equipment';
+import { fetchEquipmentDeliveries, fetchHandoverItemTypes } from '@ramassa/shared/equipment';
 import {
   fetchParticipantActivity,
   fetchParticipantDetail,
@@ -47,20 +47,31 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
         notes: [],
         activity: [],
         deliveries: [],
+        itemTypes: [],
         attendanceStats: null,
         attendanceHistory: [],
         openDeletionRequestReason: undefined,
       };
     }
-    const [notes, activity, openRequests, deliveries, attendanceStats, attendanceHistory] =
-      await Promise.all([
-        fetchParticipantNotes(supabase, params.participantId),
-        fetchParticipantActivity(supabase, params.participantId),
-        fetchDeletionRequests(supabase, 'open'),
-        fetchEquipmentDeliveries(supabase, params.participantId),
-        fetchAttendanceParticipantStats(supabase, params.participantId),
-        fetchAttendanceHistory(supabase, params.participantId),
-      ]);
+    const [
+      notes,
+      activity,
+      openRequests,
+      deliveries,
+      itemTypes,
+      attendanceStats,
+      attendanceHistory,
+    ] = await Promise.all([
+      fetchParticipantNotes(supabase, params.participantId),
+      fetchParticipantActivity(supabase, params.participantId),
+      fetchDeletionRequests(supabase, 'open'),
+      fetchEquipmentDeliveries(supabase, params.participantId),
+      // The organization's item catalog (RAPP-253): names for custom items in
+      // the log, and what the add form offers.
+      fetchHandoverItemTypes(supabase),
+      fetchAttendanceParticipantStats(supabase, params.participantId),
+      fetchAttendanceHistory(supabase, params.participantId),
+    ]);
     // Filtered here rather than asked for by participant: the queue read is one
     // round trip either way, and the same call feeds the staff-wide queue, so
     // there is one query to keep correct instead of two.
@@ -70,6 +81,7 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
       notes,
       activity,
       deliveries,
+      itemTypes,
       attendanceStats,
       attendanceHistory,
       // `undefined` = she never asked. `null` = she asked and gave no reason.
@@ -85,6 +97,7 @@ function ParticipantDetailPage() {
     notes,
     activity,
     deliveries,
+    itemTypes,
     attendanceStats,
     attendanceHistory,
     openDeletionRequestReason,
@@ -99,6 +112,7 @@ function ParticipantDetailPage() {
       notes={notes}
       activity={activity}
       deliveries={deliveries}
+      itemTypes={itemTypes}
       attendanceStats={attendanceStats}
       attendanceHistory={attendanceHistory}
       openDeletionRequestReason={openDeletionRequestReason}

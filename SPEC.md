@@ -1984,6 +1984,13 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - The skip-link check waited for any `<main>`, which the auth loading screen also is. It now waits for `#main-content`, the page's own content, before pressing Tab. Measured: the click handler ran while only the loading screen was there.
 - Checks: `accessibility.web-qa.ts`, `participants.web-qa.ts` and `messaging.web-qa.ts`, 30 of 30 in two clean runs.
 
+## Custom item types in the web participant equipment (2026-10-16, RAPP-272)
+
+- The web admin's equipment section on a participant page now uses the organization's item types, as the phone does. The delivery log shows a custom item by its name in the admin language, with Catalan as the fallback. Before, it showed the raw `equipment:custom_<hex>` key.
+- The add form offers the active item types (built-in and custom) sorted by label, and the size is a picker of that item type's sizes with a "Choose a size" start. An item type with no sizes asks for none.
+- Shared schema: `equipmentDeliverySchemaFor(sizes)` replaces `equipmentDeliverySchema` and accepts built-in tokens and `custom_` keys. The fixed `SIZELESS_EQUIPMENT_ITEMS` list is gone, because sizes are editable per item type.
+- Checks: `participant-equipment.web-qa.ts` (6, including a custom item with the Catalan fallback and a switched-off item) and `participants.web-qa.ts`.
+
 ## One session slot on the phone (2026-10-16, RAPP-420)
 
 - A relaunch could restore an older account. The phone's own client used supabase-js's default session key, which is named after the Supabase host. In development that host follows Metro's address (`127.0.0.1` or the Mac's LAN address), so a relaunch over the other address read an older slot. Reproduced on a simulator with `auth.sessions` showing the older session refreshed.
