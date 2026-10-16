@@ -8,9 +8,44 @@ import * as React from 'react';
  * announcements.
  */
 
+// Layout effects do not run on the server; the measure is a browser concern.
+const useBrowserLayoutEffect =
+  typeof window === 'undefined' ? React.useEffect : React.useLayoutEffect;
+
+/**
+ * Whether the container scrolls sideways. Only then does it take keyboard
+ * focus, so arrow keys can scroll a wide table; a table that fits adds no tab
+ * stop (WCAG 2.1.1, axe scrollable-region-focusable, RAPP-438).
+ */
+function useOverflowsX<T extends HTMLElement>() {
+  const ref = React.useRef<T>(null);
+  const [overflows, setOverflows] = React.useState(false);
+  const measure = React.useCallback(() => {
+    const element = ref.current;
+    if (element !== null) setOverflows(element.scrollWidth > element.clientWidth);
+  }, []);
+  // After every render, before paint: new rows arrive by re-rendering the
+  // table, so the tab stop is right before anything (or anyone) reads it.
+  useBrowserLayoutEffect(measure);
+  React.useEffect(() => {
+    const element = ref.current;
+    if (element === null || typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [measure]);
+  return { ref, overflows };
+}
+
 function Table({ className, ...props }: React.ComponentProps<'table'>) {
+  const { ref, overflows } = useOverflowsX<HTMLDivElement>();
   return (
-    <div data-slot="table-container" className="relative w-full overflow-x-auto">
+    <div
+      ref={ref}
+      data-slot="table-container"
+      className="relative w-full overflow-x-auto focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+      tabIndex={overflows ? 0 : undefined}
+    >
       <table
         data-slot="table"
         className={cn('w-full caption-bottom text-sm', className)}
