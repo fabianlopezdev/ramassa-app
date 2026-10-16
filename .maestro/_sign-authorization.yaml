@@ -1,0 +1,193 @@
+appId: com.ramassa.app
+name: _sign-authorization
+# A fragment: signs the season authorization (RAPP-304) with the shortest
+# lawful path. A new player meets it right after the wizard, before the tabs.
+# The medical answer is "No", the four required consents are ticked and she
+# signs with the ticks alone ("I cannot draw"), because Maestro cannot draw a
+# signature reliably on both platforms. Every tap is "until selected": a tap
+# that only reports COMPLETED proves nothing about the state it changed.
+---
+- extendedWaitUntil:
+    visible:
+      id: 'authorization-screen'
+    timeout: 60000
+- waitForAnimationToEnd:
+    timeout: 3000
+- repeat:
+    times: 15
+    while:
+      notVisible:
+        id: 'authorization-health-no'
+    commands:
+      - swipe:
+          start: 50%, 60%
+          end: 50%, 25%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 1200
+- repeat:
+    times: 4
+    while:
+      notVisible:
+        id: 'authorization-health-no'
+        selected: true
+    commands:
+      - tapOn:
+          id: 'authorization-health-no'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 1500
+- assertVisible:
+    id: 'authorization-health-no'
+    selected: true
+- repeat:
+    times: 15
+    while:
+      notVisible:
+        id: 'authorization-consent-participation'
+    commands:
+      - swipe:
+          start: 50%, 60%
+          end: 50%, 25%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 1200
+- repeat:
+    times: 4
+    while:
+      notVisible:
+        id: 'authorization-consent-participation'
+        selected: true
+    commands:
+      - tapOn:
+          id: 'authorization-consent-participation'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 1500
+- assertVisible:
+    id: 'authorization-consent-participation'
+    selected: true
+- repeat:
+    times: 15
+    while:
+      notVisible:
+        id: 'authorization-consent-data_processing'
+    commands:
+      - swipe:
+          start: 50%, 60%
+          end: 50%, 25%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 1200
+- repeat:
+    times: 4
+    while:
+      notVisible:
+        id: 'authorization-consent-data_processing'
+        selected: true
+    commands:
+      - tapOn:
+          id: 'authorization-consent-data_processing'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 1500
+- assertVisible:
+    id: 'authorization-consent-data_processing'
+    selected: true
+- repeat:
+    times: 15
+    while:
+      notVisible:
+        id: 'authorization-consent-code_of_conduct'
+    commands:
+      - swipe:
+          start: 50%, 60%
+          end: 50%, 25%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 1200
+- repeat:
+    times: 4
+    while:
+      notVisible:
+        id: 'authorization-consent-code_of_conduct'
+        selected: true
+    commands:
+      - tapOn:
+          id: 'authorization-consent-code_of_conduct'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 1500
+- assertVisible:
+    id: 'authorization-consent-code_of_conduct'
+    selected: true
+- repeat:
+    times: 15
+    while:
+      notVisible:
+        id: 'authorization-consent-health_data'
+    commands:
+      - swipe:
+          start: 50%, 60%
+          end: 50%, 25%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 1200
+- repeat:
+    times: 4
+    while:
+      notVisible:
+        id: 'authorization-consent-health_data'
+        selected: true
+    commands:
+      - tapOn:
+          id: 'authorization-consent-health_data'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 1500
+- assertVisible:
+    id: 'authorization-consent-health_data'
+    selected: true
+- repeat:
+    times: 15
+    while:
+      notVisible:
+        id: 'authorization-cannot-draw'
+    commands:
+      - swipe:
+          start: 50%, 60%
+          end: 50%, 25%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 1200
+- repeat:
+    times: 4
+    while:
+      notVisible:
+        id: 'authorization-cannot-draw'
+        selected: true
+    commands:
+      - tapOn:
+          id: 'authorization-cannot-draw'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 1500
+- assertVisible:
+    id: 'authorization-cannot-draw'
+    selected: true
+- repeat:
+    times: 15
+    while:
+      notVisible:
+        id: 'authorization-sign'
+    commands:
+      - swipe:
+          start: 50%, 60%
+          end: 50%, 25%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 1200
+- tapOn:
+    id: 'authorization-sign'
+- waitForAnimationToEnd:
+    timeout: 3000

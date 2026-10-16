@@ -5,12 +5,14 @@ import { useStaffLanguage } from '@/components/auth/staff-language-gate';
 import { HandoverSyncWorker } from '@/components/equipment/handover-sync-worker';
 import { PushPermissionRationale } from '@/components/push-permission-rationale';
 import { areaHome, awaitsSecondFactor, teamScreens } from '@/lib/account-area';
+import { useAuthorizationStatus } from '@/lib/authorization';
 import { useAccountAccess } from '@/lib/use-account-access';
 import { usePushRegistration } from '@/lib/use-push-registration';
 import { Redirect, usePathname, type Href } from 'expo-router';
 import { Stack } from 'expo-router/stack';
 import { ActivityIndicator, Modal, useWindowDimensions, View } from 'react-native';
 import { assuranceLevelOf, useAuth } from '@ramassa/shared/auth';
+import { needsAuthorization } from '@ramassa/shared/authorization';
 import { tokens } from '@ramassa/shared/tokens';
 
 // Zone boundary (RAPP-12): a crash inside the signed-in area shows the
@@ -40,6 +42,12 @@ export default function AppLayout() {
   const { isCovered } = useAppLock();
   const { width } = useWindowDimensions();
   const home = areaHome(area, permissions, width);
+  // The season authorization gate (RAPP-304): a player who has not signed the
+  // current version sees only the authorization screen. A failed lookup lets
+  // her in, as the onboarding gate does (RAPP-21): a network flake must never
+  // lock out a player who already signed.
+  const authorization = useAuthorizationStatus(area === 'player');
+  const mustSign = area === 'player' && needsAuthorization(authorization.data ?? null);
 
   // Just after signing in, the account type is not known yet. The screens wait
   // for it, so the stack mounts once with the right area and opens its first
@@ -65,7 +73,20 @@ export default function AppLayout() {
   ) {
     return <SecondFactorScreen />;
   }
-  if (home !== null && pathname === '/') {
+  if (area === 'player' && authorization.isPending) {
+    return (
+      <View
+        className="flex-1 items-center justify-center bg-neutral-50"
+        testID="authorization-resolving"
+      >
+        <ActivityIndicator color={tokens.colors.primary.DEFAULT} />
+      </View>
+    );
+  }
+  if (mustSign && pathname !== '/authorization') {
+    return <Redirect href={'/authorization' as Href} />;
+  }
+  if (!mustSign && home !== null && (pathname === '/' || pathname === '/authorization')) {
     return <Redirect href={home as Href} />;
   }
 
@@ -79,7 +100,11 @@ export default function AppLayout() {
           network flake must never route an onboarded player back into the
           wizard. */}
       <Stack screenOptions={hiddenHeaderScreenOptions}>
-        <Stack.Protected guard={area === 'player'}>
+        <Stack.Protected guard={mustSign}>
+          {/* Her signature is a drag, which iOS would read as swipe back. */}
+          <Stack.Screen name="authorization" options={noSwipeBackOptions} />
+        </Stack.Protected>
+        <Stack.Protected guard={area === 'player' && !mustSign}>
           <Stack.Screen name="(tabs)" />
           {/* Pushed OVER the tabs, not inside them: the edit form and the
               erasure request are full-screen tasks, and the floating tab bar

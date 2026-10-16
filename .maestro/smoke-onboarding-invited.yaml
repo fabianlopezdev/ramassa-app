@@ -432,6 +432,20 @@ env:
           duration: 600
       - waitForAnimationToEnd:
           timeout: 1500
+# Finishing makes her a player, and a player signs the season authorization
+# before the tabs (RAPP-304).
+- repeat:
+    times: 8
+    while:
+      notVisible:
+        id: 'authorization-screen'
+    commands:
+      - tapOn:
+          text: '^${FINISH}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- runFlow: _sign-authorization.yaml
 - repeat:
     times: 8
     while:
