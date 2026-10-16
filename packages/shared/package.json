@@ -22,6 +22,7 @@
     "./upload-client": "./lib/upload-client.ts",
     "./offline": "./offline/outbox.ts",
     "./onboarding-drafts": "./lib/onboarding-drafts.ts",
+    "./intake": "./onboarding/index.ts",
     "./testing": "./testing/index.ts",
     "./tokens/motion": "./tokens/motion.ts",
     "./profile": "./profile/index.ts",

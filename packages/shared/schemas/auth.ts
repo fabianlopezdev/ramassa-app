@@ -49,7 +49,9 @@ export type PasswordLogin = z.infer<typeof passwordLoginSchema>;
  * `profiles.role` (a text column) and read back through this schema so an
  * unexpected value fails loudly instead of silently unlocking the wrong UI.
  * `preview` is an organization's preview player account (RAPP-370, ADR-027):
- * it sees the player app and can change nothing.
+ * it sees the player app and can change nothing. `invited` is a woman whose
+ * profile staff created with her account and who has not accepted the terms
+ * yet (RAPP-300): she sees only the wizard.
  */
-export const appRoleSchema = z.enum(['player', 'staff', 'admin', 'entity', 'preview']);
+export const appRoleSchema = z.enum(['player', 'staff', 'admin', 'entity', 'preview', 'invited']);
 export type AppRole = z.infer<typeof appRoleSchema>;

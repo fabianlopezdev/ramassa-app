@@ -73,10 +73,12 @@ create table public.profile_answers (
   profile_id uuid not null references public.profiles (id) on delete cascade,
   org_id uuid not null references public.organizations (id) on delete cascade,
   question text not null check (question in (
+    -- intake-questions:start
     'first_name', 'last_name', 'date_of_birth', 'place_of_birth', 'nationality',
     'preferred_language', 'document', 'phone', 'address', 'city', 'postal_code',
     'reference_entity', 'reference_contact_name', 'dependents', 'clothing_size',
     'shoe_size', 'avatar'
+    -- intake-questions:end
   )),
   source text not null check (source in ('staff', 'entity', 'player')),
   answered_at timestamptz not null default now(),
