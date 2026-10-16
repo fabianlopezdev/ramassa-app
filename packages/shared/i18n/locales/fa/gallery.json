@@ -13,7 +13,10 @@
   "openSettings": "باز کردن تنظیمات",
   "caption": "توضیح اختیاری",
   "privacy": "چه کسی می‌تواند آن را ببیند؟",
-  "privacyLevels": { "community": "همه جامعه", "staff_only": "فقط تیم" },
+  "privacyLevels": {
+    "community": "همه جامعه",
+    "staff_only": "فقط تیم"
+  },
   "consentReminder": "تأیید می‌کنم همه افراد حاضر با اشتراک‌گذاری این رسانه موافقت کرده‌اند.",
   "consentRequired": "پیش از انتشار باید رضایت را تأیید کنید.",
   "publish": "انتشار",
@@ -36,5 +39,18 @@
   "deleteBody": "عکس یا ویدیو و تصویر بندانگشتی برای همیشه حذف می‌شوند.",
   "cancel": "لغو",
   "flag": "گزارش مشکل",
-  "back": "بازگشت"
+  "back": "بازگشت",
+  "moderationTitle": "نظارت بر گالری",
+  "moderationIntro": "هر عکس یا ویدیویی را پنهان کنید یا دوباره نشان دهید، حتی اگر کسی گزارشش نکرده باشد.",
+  "moderationTotal": "موارد: {{count}}",
+  "filterAll": "همه",
+  "filterVisible": "قابل مشاهده",
+  "filterHidden": "پنهان",
+  "stateHidden": "پنهان",
+  "statePending": "پنهان تا بررسی",
+  "moderationHide": "پنهان کردن",
+  "moderationShow": "نمایش دوباره",
+  "moderationReports": "گزارش‌ها: {{count}}",
+  "moderationVideo": "ویدیو",
+  "moderationFailed": "این کار انجام نشد."
 }

@@ -240,9 +240,45 @@ export function sameCodes(a: ReadonlySet<string>, b: ReadonlySet<string>): boole
 }
 
 /** The people whose last applied preset is this one ("Apply to the N people who use it?"). */
+/**
+ * A preset's permissions applied over a person's current ones, touching only
+ * the toggles the reader holds; the others keep their value, because the
+ * database refuses a change to a permission the reader does not hold
+ * (RAPP-231). Shared by the web admin and the phone (RAPP-405).
+ */
+export function presetWithinReach(
+  current: ReadonlySet<PermissionCode>,
+  preset: Pick<PermissionPreset, 'permissions'>,
+  holds: (code: PermissionCode) => boolean,
+): ReadonlySet<PermissionCode> {
+  const next = new Set<PermissionCode>();
+  for (const { codes } of permissionsByArea()) {
+    for (const code of codes) {
+      if (holds(code) ? preset.permissions.has(code) : current.has(code)) next.add(code);
+    }
+  }
+  return next;
+}
+
 export function membersUsingPreset(
   presetId: string,
   members: readonly TeamMemberAccess[],
 ): readonly TeamMemberAccess[] {
   return members.filter((member) => member.presetId === presetId);
+}
+
+/**
+ * The database refuses a team change with a stable code in its message; each
+ * gets its own sentence in the `settings` namespace (RAPP-231). Shared by the
+ * web admin and the phone (RAPP-404).
+ */
+export function teamAccessErrorKey(error: unknown): string {
+  const text = error instanceof Error ? error.message : '';
+  if (text.includes('PERMISSIONS/LAST_TEAM_MANAGER') || text.includes('team.manage holder')) {
+    return 'team.errorLastManager';
+  }
+  if (text.includes('PERMISSIONS/NOT_HELD')) return 'team.errorNotHeld';
+  if (text.includes('PERMISSIONS/BUILTIN_PRESET')) return 'team.errorBuiltIn';
+  if (text.includes('PERMISSIONS/PRESET_NAME_REQUIRED')) return 'team.errorPresetName';
+  return 'actionError';
 }

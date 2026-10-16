@@ -31,6 +31,7 @@
     "./equipment": "./equipment/index.ts",
     "./permissions": "./permissions/index.ts",
     "./translation": "./translation/index.ts",
+    "./translation/client": "./translation/client.ts",
     "./translation/react": "./translation/react.ts",
     "./announcements": "./announcements.ts",
     "./events": "./events.ts",
@@ -53,7 +54,8 @@
     "./surveys": "./surveys.ts",
     "./structured-content": "./structured-content/index.ts",
     "./image-compression": "./lib/image-compression.ts",
-    "./organization-settings": "./organization-settings.ts"
+    "./organization-settings": "./organization-settings.ts",
+    "./photo-handoff": "./photo-handoff.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

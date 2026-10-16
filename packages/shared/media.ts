@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
-import { AppError } from './errors';
+import { AppError, databaseErrorCode } from './errors';
 import { tokens } from './tokens';
 import type { Database } from './types/database';
 
@@ -85,6 +85,23 @@ export type MediaItemRow = z.infer<typeof mediaItemRowSchema>;
 const MEDIA_ITEM_COLUMNS =
   'id, org_id, uploaded_by, uploader_first_name, file_url, thumbnail_url, file_type, file_size, caption, privacy_level, moderation_state, flag_count, consent_acknowledged_at, consent_version, created_at, updated_at';
 
+/** The gallery moderation filters (RAPP-381, RAPP-387): hidden includes pending review. */
+export type GalleryFilter = 'all' | 'visible' | 'hidden';
+
+export const GALLERY_FILTERS: readonly GalleryFilter[] = ['all', 'visible', 'hidden'];
+
+export function filterGallery(
+  items: readonly MediaItemRow[],
+  filter: GalleryFilter,
+): readonly MediaItemRow[] {
+  if (filter === 'all') return items;
+  return items.filter((item) =>
+    filter === 'visible'
+      ? item.moderation_state === 'visible'
+      : item.moderation_state !== 'visible',
+  );
+}
+
 export async function fetchMediaItems(
   client: SupabaseClient<Database>,
   options: { readonly signal?: AbortSignal } = {},
@@ -144,4 +161,27 @@ export async function setMediaItemPrivacy(
     p_privacy_level: mediaPrivacySchema.parse(privacyLevel),
   });
   if (error !== null) throw new AppError('DB-1', { message: error.message });
+}
+
+/** The two states a gallery moderator sets (RAPP-381). */
+export const galleryModerationStateSchema = z.enum(['visible', 'hidden']);
+export type GalleryModerationState = z.infer<typeof galleryModerationStateSchema>;
+
+/**
+ * Hides a gallery item or shows it again, also one nobody reported, for
+ * `gallery.moderate` holders (RAPP-381). Its open reports are closed and the
+ * change is audited. Removing an item goes through the media Worker.
+ */
+export async function setMediaItemModeration(
+  client: SupabaseClient<Database>,
+  mediaItemId: string,
+  state: GalleryModerationState,
+): Promise<void> {
+  const { error } = await client.rpc('set_media_item_moderation', {
+    p_media_item_id: z.uuid().parse(mediaItemId),
+    p_state: galleryModerationStateSchema.parse(state),
+  });
+  if (error !== null) {
+    throw new AppError(databaseErrorCode(error.message, error.code), { message: error.message });
+  }
 }

@@ -10,7 +10,6 @@
   "filterStatus": "وضعیت",
   "filterDependents": "افراد تحت تکفل",
   "optionAll": "همه",
-  "optionAllMasc": "همه",
   "statusActive": "فعال",
   "statusInactive": "غیرفعال",
   "dependentsWith": "دارد",
@@ -140,6 +139,5 @@
   "inviteNoEmailHint": "اگر ایمیل ندارد، اول به او کمک کن یک ایمیل بسازد (مثلاً حساب Gmail) و بعد با همان نشانی دعوتش کن.",
   "inviteAlreadyHasAccount": "این ایمیل از قبل حساب دارد. او را در فهرست شرکت‌کنندگان پیدا کن.",
   "invitedReferralNote": "ارجاع نهاد پس از پایان ثبت‌نام او به پروفایلش وصل می‌شود.",
-  "selectParticipant": "یک شرکت‌کننده را انتخاب کنید تا کارت او را ببینید.",
-  "lookupStart": "یک نام، شهر یا نهاد بنویسید."
+  "selectParticipant": "یک شرکت‌کننده را انتخاب کنید تا کارت او را ببینید."
 }

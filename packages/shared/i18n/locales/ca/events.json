@@ -121,5 +121,8 @@
   "colorAccent": "Accent",
   "colorChart1": "Gràfic 1",
   "colorChart2": "Gràfic 2",
-  "colorChart3": "Gràfic 3"
+  "colorChart3": "Gràfic 3",
+  "categoriesHelpPhone": "Fes servir Puja i Baixa per ordenar les categories. Els participants les veuen en aquest ordre.",
+  "sessionsTitle": "Sessions ({{count}})",
+  "recurrenceEveryWeekSummary": "Cada setmana, {{count}} sessions"
 }

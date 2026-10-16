@@ -431,7 +431,7 @@ values
 on conflict (id) do nothing;
 
 insert into public.service_submission_notifications (
-  id, org_id, service_id, kind, created_by, created_at
+  id, org_id, service_id, kind, created_by, created_at, previous_service, current_service
 )
 values (
   '5eed0000-0000-4000-800e-000000000001',
@@ -439,7 +439,10 @@ values (
   '5eed0000-0000-4000-800a-000000000011',
   'published_edit',
   '5eed0000-0000-4000-8000-000000000004',
-  now() - interval '3 hours'
+  now() - interval '3 hours',
+  -- The trigger always records both snapshots; the review screens diff them.
+  '{"schedule": "Dimarts de 10 a 13 h", "contact_phone": "+34938850000"}'::jsonb,
+  '{"schedule": "Dimarts i dijous de 10 a 13 h", "contact_phone": "+34938850011"}'::jsonb
 )
 on conflict (id) do nothing;
 
@@ -1558,6 +1561,20 @@ select org_id, id, -6, 'checkout', '5eed0000-0000-4000-8000-000000000c01',
   '5eed0000-0000-4000-8000-000000000002', now() - interval '5 days'
 from public.equipment_item_types
 where org_id = '5eed0000-0000-4000-8000-000000000000' and key = 'ball';
+
+-- Photo handoffs (RAPP-254) ------------------------------------------------------------
+--
+-- One finished request from last week: Laia, who keeps the internal documents,
+-- photographed a signed form with her phone. Its document row is not seeded,
+-- so the handoff has no result.
+
+insert into public.photo_handoffs
+  (org_id, requested_by, target, document_name, created_at, expires_at, completed_at)
+values (
+  '5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-8000-000000000001',
+  'internal_document', 'Signed attendance form', now() - interval '7 days',
+  now() - interval '7 days' + interval '10 minutes', now() - interval '7 days' + interval '2 minutes'
+);
 
 -- Stock alerts (RAPP-249) --------------------------------------------------------------
 --

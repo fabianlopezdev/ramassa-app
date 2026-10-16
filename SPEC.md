@@ -1671,6 +1671,7 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - The card shows a row only when the database returned a value: language, phone, town, entity, clothing and shoe size, and whether she is active. So it shows exactly what the person's field levels allow (RAPP-240). Opening a card writes an audit row, so it is not fetched again for five minutes.
 - Both reads stay in memory: `participants` is not on the disk allow-list.
 - With attendance, participants and messages, a staff member has three areas, so a phone now shows the tabs.
+- 2026-10-13: the two-letter lookup gave way to the full list, see "Participant list" (RAPP-280).
 
 ## Material stock ledger (2026-10-12, RAPP-248, part of RAPP-212)
 
@@ -1742,6 +1743,390 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - A size that still has stock cannot be removed; the editor names the size. An item that is no longer used is switched off: it leaves the pickers (handover, goods received, checkout) and keeps its history.
 - Handovers may be of any item in the organization's catalog; the delivery item check gave way to the ledger trigger, which refuses an item the organization does not have. Every screen shows a custom item by its own name (`useItemLabel`), and the handover statement uses the name in her language.
 - The web admin's equipment log still labels items through the built-in translations only.
+
+## Desktop to phone photo handoff (2026-10-13, RAPP-254, part of RAPP-212)
+
+- On the web admin's internal documents tab, "Take photo with phone" asks for the document's name and shows a QR code. Behind it is a `photo_handoffs` row: single use, bound to the person who asked (only she reads it), valid ten minutes. `create_photo_handoff()` requires the target's own permission (`settings.documents` for internal documents).
+- The QR code opens `/photo-handoff/<id>` on the web admin, in the phone's browser. Signed in as the same person, the page offers "Open in the Ramassà app" (`ramassa://photo-handoff/<id>`) or "Take the photo here" with the phone's camera. The app screen takes or chooses the photo the same way.
+- The photo goes to the documents folder through the media worker, and `complete_photo_handoff()` registers it with `register_internal_document()`: the same checks as an upload at the desk. Photos only (JPEG, PNG, WebP). Someone else's code reads as no code; an expired or used code is refused.
+- The desk hears of the completion through Realtime (with a slow poll as a fallback), says the photo arrived and refreshes the list. The document is registered even if the desk closed the dialog.
+- Internal documents are the first target; receipts and the gallery can reuse the same handoff. Never photos of players.
+
+## Participant list (2026-10-13, RAPP-280, part of RAPP-213)
+
+- The Participants area lists every participant the person may see, with no search needed (`list_participants`, 25 a page, more pages load on scroll). The total shows above the list.
+- The search field finds a name, town or entity. Chips filter by status (all, active, inactive). A filter sheet holds entity, nationality and dependants (each only when `participant_filter_options()` returns values) and the sort: name, town, nationality, entity or date joined, up or down. The Filters button shows how many sheet filters are on, and one action clears them all.
+- A phone shows cards (name, town, entity, an inactive badge) and opens the card screen. A tablet shows a table: name, town and entity, plus status and date joined when the list pane is wide enough. Each column header sorts, and a second tap turns the order. The card opens beside the table.
+- A new search, filter or sort starts the list at the top. The list stays in memory: `participants` is not on the disk allow-list.
+
+## Participant record on the phone (2026-10-13, RAPP-281, part of RAPP-213)
+
+- The participant card shows her whole record, as the web admin does, within the reader's field levels: Basic fields for everyone with `participants.view`, Personal fields with `participants.view_personal`, and document number, phone, address and postal code with `participants.view_sensitive`. A field above the reader's level does not show. A field she may see that is empty says "Not filled in". The card also shows the date she joined, whether she has forum access, and that each look is logged.
+- "Edit the record" (for `participants.view_personal`, the level `update_participant_profile` requires) opens a form with the same fields, pickers and rules as her own edit screen, plus date of birth, app language, referring entity and its contact. Without `participants.view_sensitive` the form leaves out the four encrypted fields and does not ask for the document number (`profileEditWithoutSensitiveSchema`); the database keeps the stored values. The screen closes only when the save succeeds.
+- "Deactivate" and "Reactivate" need `participants.deactivate`; the phone asks before it deactivates. "Disable forum posting" and "Enable forum posting" need `forum.moderate`. Each write reloads the card and the list.
+
+## Participant notes on the phone (2026-10-13, RAPP-282, part of RAPP-213)
+
+- The participant card shows the team's notes about her (`participant_notes`), newest first, each with its author and the date and time in Madrid. They are the same notes as in the web admin, and they need `participants.notes` to read and to add. Without it the card has no notes section.
+- "Add a note" opens a sheet with the text field above the keyboard, the reminder that notes cannot be edited or deleted, and Add and Cancel. An empty note or one over 4,000 characters is refused with a message (`participantNoteSchema`). After a save the sheet closes and the note is first in the list.
+- Like every native sheet, it hides while the app lock covers the app.
+
+## Participant activity and material history (2026-10-13, RAPP-283, part of RAPP-213)
+
+- `participant_activity()` now also returns her attendance marks (at the session's start, with the event title) and her event sign-ups (with the event title). Their detail is the stored status code (present, absent, excused; interested, confirmed, cancelled), which the screens show in words (`activityDetailKey`). The function still runs with the caller's rights, so each table's policies decide what a reader sees. The web admin timeline shows the same words.
+- The participant card has an Activity section: everything or one source at a time (the web admin's filters), newest first, the first 10 at once and the rest on request.
+- Each item in her material opens its details (`participant_material_detail()`, same reach as `participant_material()`): who handed it over, the note, her signature drawn from the stored strokes or the reason she did not sign, the statement language, and who recorded the return.
+
+## Participant invites on the phone (2026-10-13, RAPP-284, part of RAPP-213)
+
+- Holders of `participants.invite` open Invitations from the Participants screen: every invite of the organization, newest first, with its address, referring entity, who sent it and when, and whether it is pending (open until a date), accepted or expired.
+- "Invite a participant" opens a sheet with her email (the login schema) and an optional referring entity. The entity is chosen from the entities the organization already uses, or "Other" with a name, so one entity is not typed in several spellings. The sheet then says what she does next and until when the invite is open. An address that already has an account is refused with its own message.
+- An invite sends no email: it records her address and the empty account that lets her first code request succeed. So "resend" is `renew_participant_invite()`: an open invite, even an expired one, gets 30 more days. `revoke_participant_invite()` cancels an open invite and removes the empty account when nothing else needs it (no profile, no other open participant, staff or entity invitation for the address), so the address can no longer sign in. Both need `participants.invite` in the invite's organization, refuse a used invite, are rate-limited, and are audited without the address. Cancelling asks first.
+
+## Deletion requests and GDPR actions on the phone (2026-10-13, RAPP-286, part of RAPP-213)
+
+- Holders of `rgpd.erase` open "Deletion requests" from the Participants screen: each open request with her name, her reason in her words, and the date, and a link to her record. An anonymized participant shows as "Anonymized participant". The web admin queue now shows the name too, where it showed the profile id.
+- Her card ends with the GDPR section (for `rgpd.erase`): her open request when she has one, Anonymize, and Erase everything for holders of `team.manage` as well (the database requires both). Each opens a sheet that lists what the action does, says it cannot be undone, and asks for its word to be typed. Erasing follows ADR-023: the media worker purges her files and writes the receipt, then `delete_participant_permanently()` removes the record. After an erasure the card closes.
+- The phone's step-up check (`StepUpProvider`): first the device (biometrics or passcode, when the phone has one), then an authenticator code when the session has none from the last 10 minutes. When the database still refuses with AUTH-9, the code is asked once more and the action runs again. The web build asks only for the code. A cancelled step-up changes nothing.
+
+## Content area and announcements list on the phone (2026-10-13, RAPP-340, part of RAPP-214)
+
+- A Content area joins the team shell (a tab between Participants and Messages, a sidebar entry on a tablet, a button on the large-button home). It opens with `announcements.edit` or `announcements.publish`; the other content types widen it as phase 4 adds them, so nobody gets an empty screen.
+- Announcements list: status chips (all, draft, published, scheduled, expired, the web admin's filter), the total, pages that load on scroll, and each row's title, category, date, status and whether it is pinned. On a phone a row opens its own screen; on a tablet it opens beside the list.
+- One announcement shows its status, category, publication and expiry, and the Catalan text. Pin and unpin are there for anyone who reads it; Delete is for `announcements.publish` holders, as the database requires, and asks first. The editor comes in RAPP-341.
+
+## Surveys on the phone (2026-10-15, RAPP-384, part of RAPP-215)
+
+- `surveys.manage` and `surveys.results` holders get "Enquestes" in More, as the web admin's workspace: each survey with its state (scheduled, open or closed), when it closes, and how many responses and completed responses it has.
+- `surveys.manage` holders start a new survey: a Catalan title, an optional linked activity, when it is published and closes (Madrid time), who receives it (the shared audience picker, every active participant by default), and up to thirty questions (stars, a choice, yes or no, or free text; each one required or optional). One button asks for the drafts of every text; every language of every text must be approved before the survey is saved and distributed.
+- Choices take a Catalan label with its own review, so the five labels come from the drafts. The web admin asks for the five labels by hand and has two fixed choices; the phone allows two to twelve. Surveys are created only, as in the web admin, because a survey with responses cannot change.
+- `surveys.results` holders open a survey's results: the stars' average and spread, how often each choice and each of yes and no was picked, the written answers with who wrote them, and each participant's response with its state. Kept in memory: the answers are attributed.
+- The CSV export waits for the phone's exports (RAPP-216), which ask for the second factor and use the share sheet, because the file names participants.
+- Checks: `app-team-surveys.web-qa.ts` (the seeded results against the database, the approval gate, a new survey with a rating and a choice question in five languages), the player and staff `surveys.web-qa.ts`, unit tests for the survey state and the screen flags, and the iPhone simulator.
+
+## Forum categories on the phone (2026-10-15, RAPP-386, part of RAPP-215)
+
+- `forum.moderate` holders open "Categories del fòrum" from forum moderation, as the category manager under the web admin's forum moderation: the categories in the order participants see them, with Up, Down, Edit and Delete. New and Edit open a sheet.
+- The name is written in Catalan; the four translations are generated and must all be approved, also again on an edit, as for event categories. The web form asks for the five names by hand.
+- A new category's identifier is made from the Catalan name (lowercase letters, numbers and hyphens) until it is changed by hand. Icon and colour are free text, as in the web admin, because nothing shows them yet; a new category starts with `bubble` and `neutral`.
+- Up and Down number every category again by tens (10, 20, 30), and save only those whose number changes. The web admin takes an order number instead.
+- A category with posts cannot be deleted: the database refuses it and the screen says so.
+- Checks: `app-forum-categories.web-qa.ts` (create in five languages with the made identifier, move up, edit, refused delete with a post, delete), the forum moderation specs, unit tests for the identifier, and the iPhone simulator.
+
+## Custom notification groups on the phone (2026-10-15, RAPP-389, part of RAPP-215)
+
+- The notifications screen gets "Grups personalitzats": each group with its member count, New group and Edit, as the web admin's group form. A sheet takes the name and the participants, picked from a search that ignores case and accents; the selection stays while the search changes.
+- The search (`filterNotificationGroupParticipants`) moved from the web admin into `packages/shared/notifications.ts`, so both use one function.
+- Groups are not deleted on the phone, as in the web admin.
+- The member and selection counts now have singular and plural forms in the five languages ("1 membre", "2 membres"), also in the web admin.
+- Checks: `app-team-notification-groups.web-qa.ts` (accent-blind search, create, add a member, the group as an exact audience), `app-team-notifications.web-qa.ts`, the web admin `targeted-notifications.web-qa.ts`, the web admin unit tests, and the iPhone simulator.
+
+## Data exports and the audit log on the phone (2026-10-15, RAPP-401, part of RAPP-216)
+
+- Holders of any `export.*` permission or `audit.view` get "Dades i auditoria" in More, as the web admin's Data page.
+- Exports: only the datasets the person may export (participants, attendance, events), over an optional period. A default export, or a full one with a reason of 10 characters or more and a confirmation; a full participant export shows only for holders of `export.participants_sensitive` and `participants.view_sensitive`, as the database requires.
+- The step-up comes first (device check, then an authenticator code when the session has none from the last 10 minutes), because `create_data_export` refuses without it. The database also checks the dataset permission, limits the rate and writes the `data_export.*` audit row.
+- The rows become a CSV (`buildExportCsv`, the web admin's format), which opens in the system share sheet (`expo-sharing`, a new native module) and is deleted from the phone's cache when the sheet closes. The web build downloads it instead (`share-file.web.ts`). Excel stays on the web admin.
+- The audit log, for `audit.view` holders: entries newest first as cards, filtered by action, target type and period, 25 at a time with "Show more". The web admin's actor and target id filters stay on the web, because they take UUIDs.
+- Checks: `app-team-data.web-qa.ts` (no data screen without the permissions; a default events export and a full participant export against the CSV, the database and the audit rows; the audit filter), the web admin `data-exports-audit.web-qa.ts`, unit tests for the screen flags, and the iPhone simulator with the share sheet.
+
+## Impact dashboard on the phone (2026-10-15, RAPP-400, part of RAPP-216)
+
+- `impact.view` holders get "Informe d'impacte" in More, as the web admin's dashboard (`get_impact_report`), redesigned for small screens as the design doc asks.
+- A period control: the last 7 days, the last 30 days, or this year from 1 January (the web admin's default), in Madrid days. An optional event category and collaborating entity. Each filter is one line that scrolls sideways, so the figures stay near the top.
+- One figure per card (participants, new participants, participants with attendance, attendance rate), two columns on a phone and four on a tablet, with a small trend line per month. A tap on a card with a trend opens its chart per month: bars with one-letter months, then the same numbers as a table with the full month names.
+- Categories, nationalities, age bands and entities show as bars with their numbers, where the web uses tables. Forum and referral figures as on the web. Groups too small to count stay suppressed, and a filtered group under three participants shows only the privacy note.
+- The web admin's dashboard nav item keeps no permission filter, because the dashboard is the staff landing page; the database refuses the report without `impact.view`.
+- Checks: `app-team-impact.web-qa.ts` (the default period, the cards against the database reply, the monthly chart and table, the period and category filters in the request), unit tests for the periods in three time zones and the screen flag, and the iPhone simulator.
+
+## Team access on the phone (2026-10-15, RAPP-405, part of RAPP-216)
+
+- The Team screen gets Edit access for each active person and a Presets section, as the web admin's Team tab and its dialogs.
+- Edit access opens a sheet: choose a preset and "Use this preset", then single switches grouped by area, each area with a switch for all of it. A switch the reader does not hold is shown but locked, with the reason above the list; "Use this preset" changes only the switches the reader holds (`presetWithinReach`, now shared with the web admin).
+- Presets: each with its permission count and how many people use it, Edit, and Restore default (built-in) or Delete (custom); New preset. A saved preset that people use opens "Apply the changes": everyone, some (picked by name) or nobody. Nobody's access changes until that choice.
+- Every change asks for the step-up, as on the web. A change to one's own access reads the permissions again at once. The database keeps at least one person with Team management and explains a refusal in the sheet.
+- Checks: `app-team-access.web-qa.ts` (Coach plus one switch reads as adjusted, a new preset applied to a person, an edit applied by choice, delete), the web admin `team-access.web-qa.ts`, unit tests for `presetWithinReach`, and the iPhone simulator.
+
+## The team's accounts on the phone (2026-10-15, RAPP-404, part of RAPP-216)
+
+- `team.manage` holders get "Equip" in More, as the web admin's Team tab: invite a person (first name, last name, email and a preset; Administration makes an admin account, any other preset a staff account), then each person with their access summary ("Staff, adjusted") and whether they are active.
+- For an active person: Sign out everywhere, Reset second factor (never one's own) and Remove access. Each asks first. Inviting, applying the preset, resetting and removing ask for the step-up, as on the web; signing out everywhere does not, as on the web and in the database. Signing oneself out everywhere also signs this phone out.
+- The invitation's sign-in code goes by email, as on the web.
+- The database's refusals get their sentences from one shared function (`teamAccessErrorKey` in `packages/shared/permissions/team-access.ts`), now used by the web admin too.
+- Editing access and the presets come next (RAPP-405).
+- Checks: `app-team-staff.web-qa.ts` (invite on the Coach preset with the email, no reset of one's own factor, sign out everywhere, reset, remove, the audit rows), the web admin `team-access.web-qa.ts`, unit tests for the refusals and the screen flag, and the iPhone simulator.
+
+## Collaborating entities on the phone (2026-10-15, RAPP-407, part of RAPP-216)
+
+- `entities.manage` holders get "Entitats col·laboradores" in More, as the entities tab of the web admin's Settings: add an entity, then each entity with its status, collaborators, referrals and pending invitations.
+- A tap opens the entity (`team-entity/[id]`): Deactivate (asked first; its collaborators lose access, referral history stays) or Reactivate; invite a collaborator while the entity is active (the sign-in code goes by email); and each collaborator with Pending, Active or Inactive, Remove access (asked first) or Restore access, and Reset second factor (asked first).
+- Inviting, removing or restoring access and resetting a second factor ask for the step-up, as on the web; adding and switching an entity do not, as on the web.
+- Checks: `app-team-entities.web-qa.ts` (add, invite with the email, remove and restore access, deactivate and reactivate, against the database), unit tests for the screen flag, and the iPhone simulator.
+
+## Internal documents on the phone (2026-10-15, RAPP-406, part of RAPP-216)
+
+- `settings.documents` holders get "Documents interns" in More, as the documents tab of the web admin's Settings: the organization's private documents (insurance, inventory, resources) with who added each, when, and its size (KB under 1 MB).
+- The list follows the search as it is typed, after a short pause (`search_internal_documents`).
+- Open fetches the document through the media Worker with the person's session and hands it to the share sheet with its type (`document-file.ts`), so the phone offers the right apps; the copy is deleted from the cache when the sheet closes. The web build downloads it.
+- Upload a document adds one from the phone's files (`expo-document-picker`, a new native module, so the dev client needs a new build): PDF, Word or a photo, 10 MB at most; it is uploaded to `documents` and registered with `register_internal_document`.
+- Checks: `app-team-documents.web-qa.ts` (a PDF added, a search with no match, found by a search that ignores case, opened with the same bytes), unit tests for the document types, file names and the screen flag, and the iPhone simulator.
+
+## Organization settings on the phone (2026-10-15, RAPP-403, part of RAPP-216)
+
+- `settings.organization` and `settings.branding` holders get "Organització" in More, as the web admin's Organization tab. A field the reader may not change is shown but locked.
+- `settings.organization`: the name, the contact email and phone, the languages and the default language. A locked language (Catalan, when the grant requires it) stays on and the default; at least one language stays on (`organization-languages.ts`).
+- `settings.branding`: the logo, picked from the photo library, resized to 512 points wide at most and saved as PNG so transparency stays, uploaded to `organization-branding`; and the two brand colours as hex values with a swatch. Each colour shows its contrast with its text as it is typed, in the reader's number format, and a colour under 4.5:1 cannot be saved, as the database also refuses.
+- After a save, the app reads the organization again (`useRefreshOrganizationBranding`), so the new colours apply at once.
+- No step-up, as on the web admin.
+- Checks: `app-team-organization.web-qa.ts` (the contrast refusal, a new phone, colour and logo saved), the web admin `admin-settings.web-qa.ts`, unit tests for the languages and the screen flag, and the iPhone simulator.
+
+## Entity home: impact and tracking on the phone (2026-10-15, RAPP-411, part of RAPP-217)
+
+- The entity's Home tab shows the web portal's impact page (`fetchEntityDashboard`): linked participants, active, present and the attendance rate, one figure per card with a small trend line per month (the staff dashboard's charts); the participation per month as bars with the same numbers as a table; and the tracking of each referred woman with her status, present, absent and excused, and her attendance rate as a bar.
+- With fewer than three referred women, the figures stay hidden and the privacy note shows, as on the web. The database scopes every row to her own entity.
+- The app lock and sign-out stay at the end of the screen.
+- Checks: `app-entity-home.web-qa.ts` (exactly her own tracking and none of another entity's; a small entity sees the privacy note and no figures), `app-account-routes.web-qa.ts`, and the iPhone simulator.
+
+## Entity second factor and tabs on the phone (2026-10-15, RAPP-410, part of RAPP-217)
+
+- A partner entity's contact now verifies her authenticator code before her screens, as a team member does (`second-factor-screen.tsx` enrols or verifies). Before, the phone showed her a notice that the portal is on the web and never asked the code; the database already returned no data without it.
+- The notice is replaced by her own shell, `(entity)`, as the web portal's navigation: native bottom tabs on a phone and a sidebar on a tablet. Home (`/entity-home`) opens first and holds the app lock and sign-out; the impact comes in RAPP-411, and Referrals, Services, Events and Messages each appear with their slice (RAPP-412 to RAPP-415).
+- Fixed in passing: on the team's More screen, the last entry (sign-out) stayed behind the floating tab bar once the list grew; the list now keeps clear of it.
+- Checks: `app-account-routes.web-qa.ts` (an entity contact verifies her second factor, then lands on her own tabs; the team cases unchanged), unit tests for the entity home route, and the iPhone simulator.
+
+## Entity referrals on the phone (2026-10-15, RAPP-413, part of RAPP-217)
+
+- A partner entity's contact gets the Referrals tab, as the web portal's referrals pages: the women her entity referred with their status, newest first, and a search over names, phone, email and entity that ignores case and accents (`filterReferrals`).
+- New referral asks first and last name, an optional phone and email, the documentation status and optional notes, and validates with the shared `createReferralSchema`. A refused field says why until it changes. Once sent, the referral opens.
+- One referral shows the contact details and the updates shared with the team, newest first. The entity shares an update (type and what changed) only once the team has welcomed the woman and she has an account, because the database refuses updates before that; until then a note says so.
+- Kept in memory only: referrals hold contact details.
+- Checks: `app-entity-referrals.web-qa.ts` (the refused fields, a referral sent and found by an accent-free search, the note before onboarding, an update on a referral with an account read back decrypted), `app-account-routes.web-qa.ts`, and the iPhone simulator.
+
+## Entity messages on the phone (2026-10-15, RAPP-415, part of RAPP-217)
+
+- A partner entity's contact gets the Messages tab, as the web portal's messages page: her one general conversation with the team (`get_or_create_own_conversation`), in the phone's player thread with the entity title. The tab (and the tablet sidebar entry) shows her unread count.
+- Fixed in passing, for every thread on the phone:
+  - A thread marks messages read only while its screen is on view. Before, a thread in a tab stayed mounted behind another tab and read new messages at once, so the unread count never showed.
+  - On iOS the composer sits on the keyboard. Before, a thread in a tab left a gap the height of the tab bar between them (in a pushed screen, the height of the home indicator).
+  - On a tablet (web), the team and entity shells bound their tab slot. Before, a message thread there grew the page without end.
+- Checks: `app-entity-messages.web-qa.ts` (a team reply counted on the tab, read in the chat, an answer saved; the team thread keeps its height beside the sidebar), `app-account-routes.web-qa.ts`, the messaging contract tests, and the iPhone simulator (badge while on another tab, cleared on open, a sent message, the keyboard).
+
+## Entity services on the phone (2026-10-15, RAPP-414, part of RAPP-217)
+
+- A partner entity's contact gets the Services tab, as the web portal's services pages: the team's latest decisions on her submissions, then every submission of hers with its status (scheduled when published with a date to come), category and any reason for a rejection.
+- The actions follow `getEntityServiceActions`: a draft can be edited or deleted (asked first), a rejected one edited, deleted or resubmitted, a published one edited (it changes at once). One under review or approved shows read only with a note on what happens next.
+- The form (`components/entity/entity-service-form.tsx`) is in Catalan only, as on the web; the team translates on review. It has the category and its own fields (`ServiceMetadataFields`, shared with the team's form), the provider, place, cost, contact, schedule, link, availability and the requested publication and end dates. A contact she used before fills the contact fields in one tap, found by a search that ignores accents. The shared check runs before `saveEntityService`; saving a rejected one sends it for review again.
+- Each submission has its comment thread with the team (`addEntityServiceComment`); internal team notes stay hidden by the database.
+- The delete confirm moved from forum moderation to `lib/confirm-delete.ts`, so both screens use one.
+- Checks: `app-entity-services.web-qa.ts` (her own submissions only, the form check, contact reuse, a submission sent with a comment; a draft deleted, a rejected one resubmitted and another corrected), and the iPhone simulator.
+
+## Entity events on the phone (2026-10-15, RAPP-412, part of RAPP-217)
+
+- A partner entity's contact gets the Events tab, as the web portal's events page: the published upcoming events (`list_entity_upcoming_events`), read only, in date order, with the title and description in her language, the place and a recurring mark.
+- The phone shows the date and the time, in the event's own time zone; the web page shows the date only.
+- With this slice the entity has all five tabs: Home, Referrals, Services, Events and Messages.
+- Checks: `app-entity-events.web-qa.ts` (the published upcoming events in order with titles and the recurring mark, and none that is a draft or past), and the iPhone simulator.
+
+## Survey CSV export with step-up and audit (2026-10-15, RAPP-402, part of RAPP-216)
+
+- The survey CSV names every participant who answered. Before, the web admin built it in the browser from `list_survey_responses`, with no recent second factor and no audit entry.
+- Now `create_survey_export(p_survey_id)` returns the rows only to a `surveys.results` holder with an authenticator code from the last 10 minutes, keeps the data exports' rate limit (five a minute), and writes one audit row (`survey_export`, target the survey) with the export id and the row count, without answers or names. Both apps build the same CSV from its rows (`createSurveyExport`, `buildSurveyCsv` / `streamSurveyCsv`).
+- Web admin: Export CSV goes through the step-up prompt and this function.
+- Phone: Share CSV on a survey's results, through the step-up (Face ID, then the code when needed) and the share sheet; the file is deleted from the phone afterwards.
+- Checks: pgTAP `0066_survey_export_test.sql` (rows and audit row, no recent code, no permission, unknown survey, rate limit), `surveys.web-qa.ts` (the web CSV and its audit row), `app-team-surveys.web-qa.ts` (the phone CSV and its audit row), and the iPhone simulator.
+
+## Message threads open at the newest message (2026-10-15, RAPP-433)
+
+- A chat on the phone opened a little short of its end: on Android the newest message's delivery line was hidden, on iOS half the newest bubble sat behind the composer. FlashList (2.0.2) renders from the bottom but measured the content after its first jump. The thread is shared, so every chat had it.
+- Now the list follows its end each time the measured content grows, until she drags it; new messages keep landing at the bottom as before.
+- Checks: the messaging contract tests, `app-entity-messages.web-qa.ts`, and the entity chat opened on the Android emulator (Fold) and the iPhone simulator, both showing the newest message with its delivery line.
+
+## Entity screens say when their data does not load (2026-10-15, RAPP-434)
+
+- Offline, the entity's Referrals tab showed only its search field: no list, no message and no way to try again. Home, Services and Events had the same gap. Offline, React Query pauses a query instead of failing it, and these screens read only its data.
+- Now `EntityLoadFailure` (`components/entity/entity-load-failure.tsx`) shows on each of the four when there is no data and the load failed or waits for a connection: the error's own message (no connection when it waits), its code, and Try again. Her data stays in memory only, because it names people, so there is nothing saved to show instead. Messages already had its offline line.
+- Checks: the four entity specs, and the Android emulator offline (Referrals shows no connection with NETWORK-1) and online again (Try again shows the list).
+
+## No screen before the second factor after a fresh sign-in (2026-10-15, RAPP-430)
+
+- Right after the email code, the phone already knew the area this device remembered for her (team or entity), but the live role was still loading. The second-factor gate looked at the role only, so for a moment the shell mounted on the `aal1` session. Its queries ran then and kept the empty answers the database gives such a session: an entity contact saw an empty Home or Events tab until the next cold start.
+- Now `awaitsSecondFactor` (`lib/account-area.ts`) also sends a remembered team or entity area to the authenticator screen while the role is unknown and the session is not `aal2`. An `aal2` session with a remembered area still opens at once, as on an offline cold start.
+- Checks: unit tests for the gate, `app-account-routes.web-qa.ts` and `app-entity-home.web-qa.ts`, and a fresh entity sign-in on the iPhone simulator, measured with a log in the Home query (only `aal2` fetches, three rows).
+
+## Dark status bar icons on Android (2026-10-15, RAPP-432)
+
+- On Android the clock, signal and battery icons at the top were white over the app's light screens, so nobody could see them. The app set no status bar style, and Android's transparent edge-to-edge bar defaults to light icons. The iPhone already showed them dark.
+- The root layout now sets `StatusBar style="dark"` (`expo-status-bar`, already installed), because every screen of the app is light.
+- Checks: the Android emulator (Pixel 9 Pro Fold) and the iPhone simulator both show dark icons.
+
+## Web admin on Vite 8 (2026-10-16, RAPP-437)
+
+- The web admin and partner portal build with Vite 8 (Rolldown) and run TanStack Start 1.169.2 with Router 1.170.44 (pinned exactly, so one router copy is installed). Plugins: `@vitejs/plugin-react` 6, `@cloudflare/vite-plugin` 1.64. The client bundle is smaller (3,684 KB against 3,788 KB) and builds in about a second.
+- Config: `build.rolldownOptions`, with the vendor split as a Rolldown code-splitting group that reuses `adminManualChunks`; `resolve.tsconfigPaths` replaces the manual `@` alias.
+- Fixed on the way:
+  - `RouteFocusManager` moves focus only on a navigation to another path. The newer router also reports renders for the first load and for data reloads, and focusing then took focus off the skip link.
+  - The root layout marks `data-hydrated` on `<html>` once React has mounted, and the browser specs' `waitForHydration` waits for it on the admin. Start 1.169 clears its stream global before the handlers are attached.
+  - The knowledge editor's paragraph field has a label.
+  - The participants spec checks that an entity contact lands on her portal. Counting every table only passed when it ran before the portal loaded.
+- Still open, from the accessibility suite (which CI skips): see RAPP-438.
+- Checks: audit, build, typecheck, 111 admin unit tests, knip, and 13 web admin specs.
+
+## Web portal says when referral updates open (2026-10-15, RAPP-435)
+
+- A pending referral (no account yet, which the database guarantees) already had no update form on the partner web portal, but its Updates section gave no reason. It now shows the same note as the phone: updates can be shared once the team has welcomed her and she has an account.
+- Checks: `entity-referrals.web-qa.ts` (the note and no form on a new, pending referral; the update after onboarding as before).
+
+## Accessibility suite green again (2026-10-16, RAPP-438)
+
+- Since the router upgrade the local WCAG 2.2 AA suite (`accessibility.web-qa.ts`, skipped in CI) failed in a set that changed between runs. Pages now fill in sooner, so axe saw content it used to miss, and the timing of one check changed.
+- Colour: `--muted-foreground` (oklch 0.51) and `--destructive` (oklch 0.52 0.21) are darker than the shadcn defaults. Small muted text on `--muted` measured 4.34:1 and red text on the 10% red badge 4.0:1. Both now pass 4.5:1, which fixes every place that uses them (message threads, entity service comments, the forum "Reports" badge).
+- Scroll areas a keyboard user could not reach (axe `scrollable-region-focusable`): the shared table container takes keyboard focus only while it scrolls sideways, measured after each render before paint, so a table that fits adds no tab stop; the staff message history always takes focus, because it scrolls.
+- The skip-link check waited for any `<main>`, which the auth loading screen also is. It now waits for `#main-content`, the page's own content, before pressing Tab. Measured: the click handler ran while only the loading screen was there.
+- Checks: `accessibility.web-qa.ts`, `participants.web-qa.ts` and `messaging.web-qa.ts`, 30 of 30 in two clean runs.
+
+## Custom item types in the web participant equipment (2026-10-16, RAPP-272)
+
+- The web admin's equipment section on a participant page now uses the organization's item types, as the phone does. The delivery log shows a custom item by its name in the admin language, with Catalan as the fallback. Before, it showed the raw `equipment:custom_<hex>` key.
+- The add form offers the active item types (built-in and custom) sorted by label, and the size is a picker of that item type's sizes with a "Choose a size" start. An item type with no sizes asks for none.
+- Shared schema: `equipmentDeliverySchemaFor(sizes)` replaces `equipmentDeliverySchema` and accepts built-in tokens and `custom_` keys. The fixed `SIZELESS_EQUIPMENT_ITEMS` list is gone, because sizes are editable per item type.
+- Checks: `participant-equipment.web-qa.ts` (6, including a custom item with the Catalan fallback and a switched-off item) and `participants.web-qa.ts`.
+
+## Notifications and targeted push on the phone (2026-10-15, RAPP-385, part of RAPP-215)
+
+- `notifications.send` holders get "Notificacions" in More, as the web admin's workspace. A message starts from a template or blank, in Catalan; the four translations are generated and must all be approved before it is sent or saved as a template.
+- The audience picker (`components/team/audience-picker.tsx`, shared with surveys): every active participant, those interested in a service category, those signed up to an event, those referred by an entity, or a custom group. Once chosen, the screen shows live how many participants and devices it reaches; the send passes that count, so the database refuses it if the audience changed in between.
+- Save as template (name and category), and the send history with its counts and state.
+- Custom groups are managed separately (RAPP-389).
+- Checks: `app-team-notifications.web-qa.ts` (template, approval gate, exact group of 5 on 5 devices, deliveries in all five languages, history, save as template), the web admin `targeted-notifications.web-qa.ts`, and the iPhone simulator.
+
+## Feedback inbox on the phone (2026-10-15, RAPP-383, part of RAPP-215)
+
+- `feedback.view` holders get "Bústia de suggeriments" in More, as the web admin's inbox: how many of each kind arrived per month (shown by month name), filters by kind and status, and each submission with who sent it, when, its text and photo.
+- A submission only moves forward: new to read, in progress or resolved; read to in progress or resolved; in progress to resolved. Whoever has the inbox (`messages.inbox`) answers in the chat the submission opened.
+- Kept in memory only: the feedback is private.
+- Checks: `app-team-feedback.web-qa.ts` (a player's idea, the filters, read to resolved, the chat), the player-to-staff `feedback.web-qa.ts`, unit tests for the status steps, and the iPhone simulator.
+
+## Gallery moderation on the web admin (2026-10-15, RAPP-387, part of RAPP-215)
+
+- `gallery.moderate` holders get "Gallery" in the web admin's staff navigation, as the phone's screen (RAPP-381): every gallery photo and video, newest first, with All, Visible and Hidden filters (Hidden includes hidden until reviewed).
+- Each card shows the photo (or "Video" without a thumbnail) in a fixed frame, who shared it and when, the caption, who can see it, its state and its reports. Hide and Show again go through `set_media_item_moderation`; Delete asks first and removes the item and its files through the media Worker.
+- The filter (`filterGallery`, `GALLERY_FILTERS`) moved from the phone into `packages/shared/media.ts`, so both use one function.
+- Checks: `admin-gallery.web-qa.ts` (navigation, hide, filters, show again with the audit trail, delete with the file), the phone's `app-team-gallery.web-qa.ts`, unit tests for the filter and the navigation, and screenshots at desktop and phone widths with a real photo.
+
+## Direct writes to gallery items (2026-10-15, RAPP-388)
+
+- Signed-in users held UPDATE on every column of `media_items`, and the update policy let forum and gallery moderators write any row of their organization, so a moderator could repoint an item's file, change its uploader, caption or consent with an unaudited direct write.
+- Now only `moderation_state` and `flag_count` can be written directly, and only by `gallery.moderate` holders (`media_items_update_gallery_moderation`). Those are the two columns `moderate_forum_target`, which runs as the caller, sets on a reported item; it already required `gallery.moderate` for gallery items. Every other write goes through a SECURITY DEFINER function.
+- Checks: pgTAP `0065`, and the forum moderation specs (web admin and app), which hide and delete reported gallery items.
+
+## Gallery moderation on the phone (2026-10-15, RAPP-381, part of RAPP-215)
+
+- Fabián's call (2026-10-15): staff need to browse every gallery photo and video and hide, show again or remove one, also one nobody reported. Reported items stay in forum moderation too.
+- `gallery.moderate` holders get "Moderació de la galeria" in More: a grid, newest first (two columns on a phone, four on a tablet), with All, Visible and Hidden filters (Hidden includes items hidden until reviewed). A tap opens the item with its caption, who shared it and when, who can see it, its state and its reports.
+- Hide and Show again go through `set_media_item_moderation(p_media_item_id, p_state)`: `gallery.moderate` only, closes the item's open reports (hiding acts on them, showing dismisses them), resets its report count and writes `gallery.hide` or `gallery.show` to the audit log. Remove asks first and deletes the row and its files through the media Worker.
+- The web admin gets the same screen separately (RAPP-387).
+- Checks: pgTAP `0064`, `app-team-gallery.web-qa.ts` (hide, filter, show again with the audit trail; remove with the file), the forum moderation specs, and the iPhone simulator.
+
+## Mentoring requests on the phone (2026-10-14, RAPP-382, part of RAPP-215)
+
+- `mentoring.manage` holders get "Mentories" in More, and Today shows how many requests wait to be scheduled. The screen shows how many requests and on which topics, and each request as the web admin does: the participant, when she asked, the status, the topic, her private note and her preferred slot.
+- An open request is scheduled with a date and time in Madrid, the team member who meets her (the first one until another is picked, as on the web admin) and the team's private notes; scheduling tells her. A scheduled request can be updated or marked completed.
+- Kept in memory only: the topic details and the notes are private.
+- Checks: `app-team-mentoring.web-qa.ts` (Today, schedule in Madrid time with the notice, complete), the player-to-staff `mentoring.web-qa.ts`, and the iPhone simulator.
+
+## Forum moderation on the phone (2026-10-14, RAPP-380, part of RAPP-215)
+
+- `forum.moderate` holders get "Moderació del fòrum" in More, and Today shows how many reported items wait. The screen lists each reported post, reply or gallery photo, oldest report first, as the web admin does: how many reports, the kind, the category, the author, when it was first reported, the content (or the deleted mark), a photo's thumbnail, the reasons and the reporters' comments.
+- Actions: dismiss the reports, hide, delete (asks first; a photo is deleted with its files through the media Worker), contact the author (opens a conversation, for whoever has the inbox), and for a post, pin or unpin and move it to another category.
+- Forum posting bans stay on the participant's card (phase 3). Forum categories follow in RAPP-386.
+- The two forum counts now read correctly for any number ("Pendents: 1", "Avisos: 1"). Those two keys had no plural forms, so English read "1 pending items", on the web admin too.
+- Checks: `app-forum-moderation.web-qa.ts`, the web admin and player forum specs, and the iPhone simulator.
+
+## Preview as player from the web admin (2026-10-14, RAPP-372, part of RAPP-214)
+
+- Every team member has "Preview as player" in the admin sidebar (the whole player app) and on each published announcement, event, knowledge resource and service (the player app open on that item). An item players cannot see yet says that players see it once it is published.
+- It opens the player web app (the same Expo build, ADR-008) at `/preview-handoff` in a new tab, inside the click so the browser allows it. The admin then starts the preview with her own session (`start_player_preview()`, as on the phone) and, once the tab says it is ready, sends the address and password with `postMessage` to the player origin only. The tab accepts them only from the admin origin and only from the window that opened it, signs in on the preview client, and opens the item. Her admin session is untouched.
+- Leaving the preview closes the tab. A hand-off page opened on its own starts nothing.
+- Configuration: `EXPO_PUBLIC_PLAYER_WEB_URL` in the admin build and `EXPO_PUBLIC_ADMIN_WEB_URL` in the player web build. Without them the admin shows no preview button. Both are in `.env.example`.
+- Checks: `admin-player-preview.web-qa.ts`, unit tests for the hand-off message (an app path only, never another site) and the tab-closing state.
+
+## Preview a draft as a player (2026-10-14, RAPP-373, part of RAPP-214)
+
+- Needed for launch (Fabián, 2026-10-14): staff see a draft as players will see it, in each language, before it is published, so a mistake never reaches players.
+- Each content editor has "Preview as player". It opens a sheet that draws the unsaved values with the player screen's own component: the Catalan source and each language's current translation, approved or not. A language with no text yet says so and shows the fallback a player gets. Nothing is saved and nobody else sees it.
+- The language chosen in the sheet applies inside it only, through its own translation instance, which never changes or stores the app's language. Arabic and Farsi lay out right to left inside the sheet with no restart.
+- Announcements (`AnnouncementArticle`) and events (`EventArticle`, with the place, the places left and the sign-up action a player will see, which does nothing in the preview) share their drawing part with the player screen. Knowledge resources (`KnowledgeArticle`) draw the block body in each language, approved or not, with step photos still on the device, plus the video and external link; a story keeps its own source language. The preview button sits at the end of each form, after every field it draws. Services (`ServiceArticle`) draw the photos, including ones still on the device, the details with the category's own fields (a field left blank is left out), the contact actions and the interest action a player will see, which does nothing in the preview. All four content types are covered.
+- Checks: `app-draft-preview.web-qa.ts`, unit tests for `draftLocalizedContent`, and the iPhone simulator (Catalan and Arabic right to left).
+
+## Preview as player on the phone (2026-10-14, RAPP-371, part of RAPP-214)
+
+- Every team member has "Preview as player" in More, which opens the player app. A published announcement, event, knowledge article or service has it in its detail, which opens the player app on that item. An item players cannot see yet says that players see it once it is published.
+- The preview signs in as the organization's preview account on a second client (`previewSupabase`) with its own storage and storage key, so her own session stays signed in. Every data module reads through `supabase`, which points to the preview client while the preview shows. The preview has its own cache in memory; her persisted cache is neither shown nor dropped.
+- A bar above the player app says it is the player view and that no change is saved, offers the organization's languages, and leaves the preview. The language changes on this device only. A right-to-left language restarts the app, as it does for a player, and the preview comes back (its state is kept in encrypted storage until it ends). Leaving signs the preview out on this device and returns to her own language; after a right-to-left preview that is a restart, so the app lock asks for her face or code.
+- In the preview, Sign out leaves the preview, and push registration does not run.
+- Checks: `app-player-preview.web-qa.ts` (More, a restart, an announcement in Spanish, a draft), unit tests for the preview state and the start call, and the iPhone simulator (home, profile with no personal data, Arabic right to left, back to her session).
+
+## Preview player account (2026-10-14, RAPP-370, part of RAPP-214)
+
+- Each organization has one preview player account (`profiles.role = 'preview'`) with no personal data: a fixed name, no document, no contact details. It is created the first time a team member starts a preview. Decision and reasons: ADR-027.
+- `start_player_preview()` accepts only a team member with a verified second factor and a current session. It is rate-limited (60 an hour per person) and audited (`player_preview.start`). It gives the preview account a new random password and returns the address and password once; the app signs in with them on a second client, so the team member's own session is untouched. The password is stored only as its hash, and each start replaces it.
+- The database treats the preview as a player (`current_app_role()`), so it reads exactly what a player reads. Staff lists, counts, exports and push audiences select players only, so the preview account never shows in them.
+- Every request of the preview account is read-only in the database (PostgREST's pre-request hook), so it changes nothing: no sign-up, post, message, read receipt or upload. The media worker refuses its uploads.
+- Checks: pgTAP `0063`, and `bun run db:test:player-preview` end to end against the local stack.
+
+## Service review queue on the phone (2026-10-14, RAPP-345, part of RAPP-214)
+
+- `services.review` holders get "Propostes" in the Content area, and Today shows how many services partner entities sent are waiting; one tap opens the queue.
+- The queue has the web admin's filters: kind (pending submission, or a change to a live service), category, and a search by service, entity or contact. Pending submissions come first, oldest first. On a tablet an item opens beside the queue.
+- A pending submission shows the service as the entity sent it, and the comment thread (comments the entity sees, or internal notes). "Review and publish" opens the service form in approval mode: the reviewer corrects the service, approves its translations, adds an optional comment the entity sees, and publishes; the app then goes back to the queue. Rejecting needs a comment; the entity reads it and can correct the service and send it again (`rejected` to `pending`). That is how changes are asked for: the web admin also has these two outcomes.
+- A change an entity made to a live service shows each changed field, before and now, as text (names in Catalan, option labels, dates, the category name, and the extra fields by their labels), and "Mark as reviewed".
+- The seeded live change now carries the before-and-after snapshots the trigger always records; without them the review page could not load it.
+- Hermes has no `Array.prototype.toSorted`, so the shared queue sort threw "undefined is not a function" on iOS while the browser specs passed. The shared code copies and sorts, and a lint rule now refuses `toSorted`, `toReversed` and `toSpliced` in code the phone runs.
+
+## Service categories on the phone (2026-10-14, RAPP-347, part of RAPP-214)
+
+- "Manage categories" in the services list opens the categories for `services.edit` holders: in the order players see them, with how many own fields each has, Move up and Move down, and New, Edit and Delete. A category that still has services cannot be deleted; the database refuses it.
+- The category editor has the Catalan name with its translations (all five approved), the slug (made from a new category's name until she edits it), an icon and a colour as choices (a stored value outside them stays selectable), and the category's own fields.
+- The fields replace the web admin's schema JSON with controls. Each field is a card (name, key, type, required) with Move up, Move down, Edit and Remove; Edit opens it in a sheet: the Catalan name with its translations, the key (made from a new field's name; a stored field keeps its key, because services store their answers under it), the type (one option, several options, yes or no, number, text, date), required, filterable, a select's options and a number's minimum. A card says when a field still lacks data or translations.
+- A stored field whose Catalan name is unchanged keeps its five stored names, so editing a category does not ask for every name to be approved again. A changed or new name needs its translations.
+- Saving an edit first asks the database how many stored services the new fields would make invalid (`count_services_incompatible_with_category_schema`), and stops with that count, as the web admin does. Both apps store the same shape (`serviceMetadataSchemaDefinitionSchema`).
+- Option labels: an option is a short key, and the text players see comes from the app's translations (`services:option.<key>`), on the web admin too. A new key shows as typed until its translation is added; the editor says so.
+
+## Services directory on the phone (2026-10-14, RAPP-344, part of RAPP-214)
+
+- The Content area shows services for `services.edit` or `services.publish` holders. The list has the web admin's status and category filters. Each row shows category, availability and how many players are interested. On a tablet a service opens beside the list.
+- One service shows its status, category, description, provider, place, cost, contact, schedule, link, availability, the category's extra fields (option labels and yes or no in the screen language), its photos, and the publication. Delete is for `services.publish` holders and asks first.
+- The editor has the web admin's fields: category, the Catalan title and description with their translation review, provider, place, cost (an amount for paid and subsidized services), contact, schedule, link, availability, the category's extra fields as touch controls (chips for a select, toggling chips for a list, a switch for yes or no, the native date picker for a date, number and text fields), and up to twelve photos, each with a description and its translations, Move up, Move down and Remove. Photos are compressed and uploaded to `services` at save. Changing the category starts its extra fields again.
+- Publishing needs the title, the description and every photo description approved. The form is kept on the device from the first change (`service-draft.ts`); a chosen photo is not kept. Without `services.publish` the publication is read-only and kept as stored, as the permission screen describes.
+- The extra-field helpers (`serviceMetadataDefaults`, `normalizedServiceMetadata`) moved from the web admin into `@ramassa/shared/services`.
+- The app's web build compresses photos with `fetch` in place of expo-file-system, which has no web support. Before, every photo upload in the web build failed, so the browser specs could not cover one.
+- Service categories, with a native editor for their extra-field schema, follow in their own slice.
+
+## Knowledge base on the phone (2026-10-14, RAPP-343, part of RAPP-214)
+
+- The Content area shows the knowledge base for `knowledge.edit` or `knowledge.publish` holders. The list has the web admin's filters (all content, staff resources, participant stories, and a story's review state). Each row shows category, type, status and, for a story, the author's first name. On a tablet a resource opens beside the list.
+- One resource shows its status, the blocks as a player reads them, a story's photos and recorded publication consent, and the reviewer's note. A story sent for review gets Start review. Delete is for `knowledge.publish` holders and asks first.
+- The block editor works on the shared block schema. The source blocks (Catalan, or a story's own language) show as cards with Move up, Move down, Edit and Remove; Edit opens one block at a time in a sheet (a paragraph, or a step with title, instructions, an optional photo and its description). Up and Down replace dragging, so reordering works with one tap and with VoiceOver and TalkBack. A step photo is compressed and uploaded to `knowledge-base` at save.
+- "Generate translations" drafts the title and every block in the four other languages. One tab per language shows whether its body is approved; the open tab holds that language's blocks to correct (right to left for Arabic and Farsi) and Approve. A change to the source blocks drops the translations, which must be generated again, as on the web admin. Publishing needs the title drafts and every body approved. Only approved translations are stored.
+- A story in review can be published, returned for changes or declined, with a message to the participant. The form is kept on the device from the first change (`knowledge-draft.ts`); a chosen step photo is not kept. Without `knowledge.publish` the publication is read-only.
+- Shared changes: the body translation, step-image and story-state helpers moved to `@ramassa/shared/knowledge` for both apps. A published story now stays published when its text is corrected and saved again (before, that save failed the story-state check). The knowledge strings gain the Scheduled and Expired states, which the web admin's status badge also uses.
+
+## Events on the phone (2026-10-14, RAPP-342, part of RAPP-214)
+
+- The Content area holds the content types a person manages (`contentKinds`): announcements with `announcements.edit` or `announcements.publish`, events with `events.edit` or `events.publish`. With more than one, chips at the top switch between their lists. The Content area opens for either type.
+- The events list has the web admin's status and category filters. Each row shows the category, the start in Madrid time, the repetition ("Every week, 6 sessions") and the places taken. On a tablet an event opens beside the list.
+- One event shows its schedule, the place with its map link, places and sign-up mode, the publication, the description, and the sessions the database made from the schedule. Delete is for `events.publish` holders and asks first.
+- The editor has the web admin's fields: category, the Catalan title and an optional description with their translation review, place and map link, the schedule (once, or weekly every 1 to 4 weeks with up to 52 sessions), places, sign-up mode, and the publication. Times are Madrid times: the date and time pickers show and set the Madrid wall clock, whatever time zone the phone is set to. Publishing needs every translation approved. The form is kept on the device from her first change (`event-draft.ts`), as the announcement editor does. Without `events.publish` the publication is read-only.
+- Event categories (for `events.edit`): the list in the order players see it, Up and Down to reorder, and New, Edit and Delete. A category is saved only with all five names approved. A category that still has events cannot be deleted.
+- The shared content schemas (announcements, events, knowledge, services, surveys) accept times with an offset (`+00:00`), as the database returns them, so an edit that keeps a stored time saves. Before, the phone could not save an edited event (the check refused its stored start). The web admin sends the stored publication time of a live item in the same form.
+
+## Announcement editor on the phone (2026-10-13, RAPP-341, part of RAPP-214)
+
+- "New announcement" (in the list) and "Edit" (on one announcement) open the editor with the web admin's fields and rules: category, the Catalan title and text, an optional photo with its description, pinning, and the publication (draft, now, or scheduled, with an optional expiry). The photo is compressed and uploaded to the `announcements` folder when she saves.
+- Translations: "Generate translations" asks the translation Worker for machine drafts of each text. Under each text a row of language tabs (ES, EN, AR, FA) shows the state of each draft (needs review, approved, rejected); the open tab holds the draft to correct, right to left for Arabic and Farsi, with Approve, Reject and Approve all. Publishing needs every draft approved, as on the web admin.
+- The Worker call is shared by the web admin and the phone (`@ramassa/shared/translation/client`); the phone has the Worker address (`EXPO_PUBLIC_TRANSLATION_WORKER_URL`).
+- The text is kept on the device, encrypted, from her first change (`announcement-draft.ts`), and offered again when she comes back ("Your unsaved text was kept on this phone"). It is removed once the save succeeds. A chosen photo that is not uploaded yet is not kept, and kept translations need approving again. Because nothing is lost, the editor asks no question when she leaves.
+- Without `announcements.publish` the editor shows the publication read-only and keeps it as stored, because the database refuses any change to it.
 
 ## Staff-side languages (2026-10-11, RAPP-238, part of RAPP-211)
 

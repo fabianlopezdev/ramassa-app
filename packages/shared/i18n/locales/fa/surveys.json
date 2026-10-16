@@ -61,5 +61,15 @@
   "reject": "رد",
   "approve": "تأیید",
   "approveAll": "تأیید همه",
-  "loadingResponses": "در حال بارگذاری پاسخ‌ها..."
+  "loadingResponses": "در حال بارگذاری پاسخ‌ها...",
+  "addChoice": "افزودن گزینه",
+  "removeChoice": "حذف گزینه",
+  "noSurveys": "هنوز نظرسنجی وجود ندارد.",
+  "statusScheduled": "برنامه ریزی شده",
+  "statusOpen": "باز",
+  "statusClosed": "بسته",
+  "averageRating": "میانگین {{value}} از 5",
+  "choiceLabel": "گزینه {{number}} به کاتالان",
+  "datesInvalid": "تاریخ بسته شدن باید بعد از تاریخ انتشار باشد.",
+  "publishAtRequired": "زمان انتشار نظرسنجی را انتخاب کنید."
 }

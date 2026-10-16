@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import type { PermissionCode } from '@ramassa/shared/permissions';
-import { isCompactSidebar, teamAreas, teamLayout, teamStart } from './team-shell';
+import { contentKinds, isCompactSidebar, teamAreas, teamLayout, teamStart } from './team-shell';
 
 const codes = (...list: PermissionCode[]) => new Set<PermissionCode>(list);
 
@@ -24,6 +24,45 @@ describe('teamAreas', () => {
     expect(teamAreas(codes('equipment.count'))).toEqual(['stock']);
     expect(teamAreas(codes('equipment.items'))).toEqual(['stock']);
     expect(teamAreas(codes('equipment.handover'))).toEqual([]);
+  });
+});
+
+describe('the content area (RAPP-340)', () => {
+  test('opens with announcement editing or publishing, after participants', () => {
+    expect(teamAreas(codes('announcements.edit'))).toEqual(['content']);
+    expect(
+      teamAreas(codes('announcements.publish', 'participants.view', 'messages.inbox')),
+    ).toEqual(['participants', 'content', 'messages']);
+  });
+
+  test('events open it too, and the area lists the content types she manages (RAPP-342)', () => {
+    expect(teamAreas(codes('events.edit'))).toEqual(['content']);
+    expect(teamAreas(codes('events.publish', 'participants.view'))).toEqual([
+      'participants',
+      'content',
+    ]);
+    expect(contentKinds(codes('announcements.edit', 'events.publish'))).toEqual([
+      'announcements',
+      'events',
+    ]);
+    expect(contentKinds(codes('events.edit'))).toEqual(['events']);
+    expect(contentKinds(codes('participants.view'))).toEqual([]);
+    expect(contentKinds(codes('knowledge.publish', 'events.edit'))).toEqual([
+      'events',
+      'knowledge',
+    ]);
+    expect(teamAreas(codes('knowledge.edit'))).toEqual(['content']);
+    expect(contentKinds(codes('services.review'))).toEqual(['reviews']);
+    expect(teamAreas(codes('services.review'))).toEqual(['content']);
+    expect(contentKinds(codes('services.edit', 'announcements.edit'))).toEqual([
+      'announcements',
+      'services',
+    ]);
+  });
+
+  test('content alone starts on content', () => {
+    expect(teamStart(['content'], 'sidebar')).toBe('/content');
+    expect(teamStart(['content', 'messages'], 'tabs')).toBe('/content');
   });
 });
 

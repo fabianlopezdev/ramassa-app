@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
-import { AppError } from './errors';
+import { AppError, databaseErrorCode } from './errors';
 import { isSupportedLanguage, type SupportedLanguage } from './i18n';
 import {
   notificationAudienceArguments,
@@ -87,8 +87,8 @@ export const surveyDefinitionSchema = z
       'survey titles cannot exceed 160 characters',
     ),
     eventId: z.uuid().nullable(),
-    publishedAt: z.iso.datetime(),
-    closesAt: z.iso.datetime().nullable(),
+    publishedAt: z.iso.datetime({ offset: true }),
+    closesAt: z.iso.datetime({ offset: true }).nullable(),
     audience: notificationAudienceSchema,
     questions: z.array(surveyQuestionSchema).min(1).max(30),
   })
@@ -553,13 +553,40 @@ export async function fetchSurveyResponses(
   return z
     .array(responseRowSchema)
     .parse(data ?? [])
-    .map((row) => ({
-      id: row.id,
-      playerId: row.player_id,
-      playerName: row.player_name,
-      language: isSupportedLanguage(row.language) ? row.language : ('ca' as SupportedLanguage),
-      answers: row.answers,
-      status: row.status,
-      completedAt: row.completed_at,
-    }));
+    .map(responseFromRow);
+}
+
+function responseFromRow(row: z.infer<typeof responseRowSchema>): SurveyResponse {
+  return {
+    id: row.id,
+    playerId: row.player_id,
+    playerName: row.player_name,
+    language: isSupportedLanguage(row.language) ? row.language : ('ca' as SupportedLanguage),
+    answers: row.answers,
+    status: row.status,
+    completedAt: row.completed_at,
+  };
+}
+
+const surveyExportSchema = z.object({
+  version: z.literal(1),
+  export_id: z.uuid(),
+  rows: z.array(responseRowSchema),
+});
+
+/**
+ * The responses of one survey for its CSV (RAPP-402). The database asks for a
+ * recent authenticator code (AUTH-9 when it is missing, so the step-up prompt
+ * can ask it) and writes the export to the audit log.
+ */
+export async function createSurveyExport(
+  client: RpcClient,
+  surveyId: string,
+): Promise<readonly SurveyResponse[]> {
+  const { data, error } = await client.rpc('create_survey_export', {
+    p_survey_id: z.uuid().parse(surveyId),
+  });
+  if (error !== null)
+    throw new AppError(databaseErrorCode(error.message), { message: error.message });
+  return surveyExportSchema.parse(data).rows.map(responseFromRow);
 }

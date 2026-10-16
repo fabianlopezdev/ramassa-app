@@ -13,6 +13,7 @@
     "attendance": "الحضور",
     "messages": "الرسائل",
     "forum": "الإشراف على المنتدى",
+    "gallery": "المعرض",
     "mentoring": "الإرشاد",
     "feedback": "الملاحظات",
     "notifications": "الإشعارات",
@@ -42,6 +43,7 @@
     "navigation": "تنقل الفريق",
     "backToHome": "العودة إلى البداية",
     "todayIntro": "ما يجب فعله الآن.",
-    "participants": "المشاركات"
+    "participants": "المشاركات",
+    "content": "المحتوى"
   }
 }

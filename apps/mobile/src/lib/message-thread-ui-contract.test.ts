@@ -137,8 +137,17 @@ describe('native messaging UI contract', () => {
     const source = await Bun.file(messagingPath).text();
     const readSync = source.slice(source.indexOf('const latestId'), source.indexOf('const send ='));
 
-    expect(readSync).toContain('if (!canDrainOutbox');
-    expect(readSync).toContain('[canDrainOutbox, conversationId, latestId');
+    expect(readSync).toContain('!canDrainOutbox ||');
+    expect(readSync).toMatch(/\[\s*canDrainOutbox,\s*conversationId,/);
+  });
+
+  test('marks messages read only while the thread is on view', async () => {
+    const source = await Bun.file(messagingPath).text();
+    const readSync = source.slice(source.indexOf('const latestId'), source.indexOf('const send ='));
+
+    expect(source).toContain('const isFocused = useIsFocused();');
+    expect(readSync).toContain('!isFocused ||');
+    expect(readSync).toMatch(/\[[^\]]*isFocused,[^\]]*\]/);
   });
 
   test('keeps composer updates isolated from the virtualized message timeline', async () => {

@@ -10,7 +10,6 @@
   "filterStatus": "Status",
   "filterDependents": "Dependants",
   "optionAll": "All",
-  "optionAllMasc": "All",
   "statusActive": "Active",
   "statusInactive": "Inactive",
   "dependentsWith": "With",
@@ -141,7 +140,6 @@
   "inviteAlreadyHasAccount": "This email already has an account. Find her in the participant list.",
   "invitedReferralNote": "The entity's referral will be linked to her profile when she finishes registration.",
   "selectParticipant": "Choose a participant to see her card.",
-  "lookupStart": "Type a name, town or entity.",
   "material": {
     "handOver": "Hand over material",
     "handoverTitle": "Hand over material",
@@ -205,7 +203,17 @@
     "stockTitle": "Material",
     "stockFine": "No stock to check.",
     "stockAlert": "{{item}}: below zero. Count it.",
-    "saveFailed": "The handover was not saved. Try again."
+    "saveFailed": "The handover was not saved. Try again.",
+    "detail": {
+      "show": "Details",
+      "hide": "Hide details",
+      "handedBy": "Handed over by {{name}}",
+      "note": "Note: {{note}}",
+      "reason": "Reason: {{reason}}",
+      "language": "Statement shown in {{language}}",
+      "returnedBy": "Return recorded by {{name}}",
+      "loadFailed": "Could not load the details."
+    }
   },
   "stock": {
     "title": "Stock",
@@ -378,5 +386,54 @@
     "codeTaken": "Another item already uses these code letters.",
     "summary": "{{kind}} · {{sizes}}",
     "inactive": "Switched off"
+  },
+  "list": {
+    "filtersAction": "Filters",
+    "filtersActionCount": "Filters ({{count}})",
+    "filtersTitle": "Filters",
+    "sortLabel": "Sort by",
+    "dirAsc": "Ascending",
+    "dirDesc": "Descending",
+    "filtersDone": "Show the participants",
+    "sortBy": "Sort by {{column}}",
+    "sortedBy": "{{column}}, sorted {{direction}}",
+    "loadingMore": "Loading more participants",
+    "dirLabel": "Order"
+  },
+  "profile": {
+    "editTitle": "Edit the record",
+    "saveFailed": "We could not save the record. Try again.",
+    "deactivateTitle": "Deactivate {{name}}?",
+    "deactivateBody": "She leaves the active lists and keeps her record. You can reactivate her later.",
+    "sensitiveHidden": "You do not see the document number, phone, address or postal code. They stay as they are.",
+    "notesLoadFailed": "We could not load the notes.",
+    "anonymizedName": "Anonymized participant"
+  },
+  "activity": {
+    "signup": {
+      "interested": "Interested",
+      "confirmed": "Confirmed",
+      "cancelled": "Cancelled"
+    },
+    "showAll": "Show all ({{count}})",
+    "loadFailed": "We could not load the activity."
+  },
+  "invites": {
+    "row": "Sent by {{name}} on {{date}}",
+    "rowNoName": "Sent on {{date}}",
+    "openUntil": "Open until {{date}}",
+    "expiredOn": "Expired on {{date}}",
+    "acceptedOn": "Accepted on {{date}}",
+    "renew": "Give 30 more days",
+    "cancel": "Cancel the invitation",
+    "cancelTitle": "Cancel the invitation for {{email}}?",
+    "cancelBody": "She can no longer sign in with this address. You can invite her again later.",
+    "keep": "Keep it",
+    "actionFailed": "We could not change the invitation. Try again.",
+    "loadFailed": "We could not load the invitations.",
+    "emailLabel": "Her email",
+    "entityNone": "None",
+    "entityOther": "Other",
+    "entityOtherLabel": "Name of the entity"
   }
 }

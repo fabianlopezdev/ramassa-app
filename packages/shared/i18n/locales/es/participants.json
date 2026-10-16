@@ -10,7 +10,6 @@
   "filterStatus": "Estado",
   "filterDependents": "Personas a cargo",
   "optionAll": "Todas",
-  "optionAllMasc": "Todos",
   "statusActive": "Activas",
   "statusInactive": "Inactivas",
   "dependentsWith": "Con",
@@ -141,7 +140,6 @@
   "inviteAlreadyHasAccount": "Este correo ya tiene una cuenta. Búscala en la lista de participantes.",
   "invitedReferralNote": "La derivación de la entidad se enlazará con su perfil cuando termine el registro.",
   "selectParticipant": "Elige una participante para ver su ficha.",
-  "lookupStart": "Escribe un nombre, un pueblo o una entidad.",
   "material": {
     "handOver": "Entregar material",
     "handoverTitle": "Entregar material",
@@ -205,7 +203,17 @@
     "stockTitle": "Material",
     "stockFine": "No hay stock que revisar.",
     "stockAlert": "{{item}}: bajo cero. Cuéntalo.",
-    "saveFailed": "La entrega no se ha guardado. Vuelve a intentarlo."
+    "saveFailed": "La entrega no se ha guardado. Vuelve a intentarlo.",
+    "detail": {
+      "show": "Detalles",
+      "hide": "Ocultar los detalles",
+      "handedBy": "Entregado por {{name}}",
+      "note": "Nota: {{note}}",
+      "reason": "Motivo: {{reason}}",
+      "language": "Declaración mostrada en {{language}}",
+      "returnedBy": "Devolución registrada por {{name}}",
+      "loadFailed": "No se han podido cargar los detalles."
+    }
   },
   "stock": {
     "title": "Stock",
@@ -378,5 +386,54 @@
     "codeTaken": "Otro artículo ya usa estas letras.",
     "summary": "{{kind}} · {{sizes}}",
     "inactive": "Desactivado"
+  },
+  "list": {
+    "filtersAction": "Filtros",
+    "filtersActionCount": "Filtros ({{count}})",
+    "filtersTitle": "Filtros",
+    "sortLabel": "Ordenar por",
+    "dirAsc": "Ascendente",
+    "dirDesc": "Descendente",
+    "filtersDone": "Ver las participantes",
+    "sortBy": "Ordenar por {{column}}",
+    "sortedBy": "{{column}}, ordenado {{direction}}",
+    "loadingMore": "Cargando más participantes",
+    "dirLabel": "Orden"
+  },
+  "profile": {
+    "editTitle": "Editar la ficha",
+    "saveFailed": "No hemos podido guardar la ficha. Inténtalo de nuevo.",
+    "deactivateTitle": "¿Desactivar a {{name}}?",
+    "deactivateBody": "Sale de las listas activas y conserva su ficha. Puedes reactivarla más adelante.",
+    "sensitiveHidden": "No ves el número de documento, el teléfono, la dirección ni el código postal. Se quedan como están.",
+    "notesLoadFailed": "No hemos podido cargar las notas.",
+    "anonymizedName": "Participante anonimizada"
+  },
+  "activity": {
+    "signup": {
+      "interested": "Interesada",
+      "confirmed": "Confirmada",
+      "cancelled": "Cancelada"
+    },
+    "showAll": "Mostrar todo ({{count}})",
+    "loadFailed": "No hemos podido cargar la actividad."
+  },
+  "invites": {
+    "row": "Enviada por {{name}} el {{date}}",
+    "rowNoName": "Enviada el {{date}}",
+    "openUntil": "Abierta hasta el {{date}}",
+    "expiredOn": "Caducó el {{date}}",
+    "acceptedOn": "Aceptada el {{date}}",
+    "renew": "Alargar 30 días",
+    "cancel": "Anular la invitación",
+    "cancelTitle": "¿Anular la invitación de {{email}}?",
+    "cancelBody": "Ya no podrá entrar con esta dirección. Puedes volver a invitarla más adelante.",
+    "keep": "Mantenerla",
+    "actionFailed": "No hemos podido cambiar la invitación. Inténtalo de nuevo.",
+    "loadFailed": "No hemos podido cargar las invitaciones.",
+    "emailLabel": "Su correo",
+    "entityNone": "Ninguna",
+    "entityOther": "Otra",
+    "entityOtherLabel": "Nombre de la entidad"
   }
 }

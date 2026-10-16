@@ -43,7 +43,12 @@ jobs:
       - name: Test
         run: bun run test
 
+  # The WCAG browser check takes about 7 minutes (local Supabase in Docker, then
+  # every admin, portal and player web route). It runs on every push to main,
+  # which the preview deploy waits for, and on demand for any branch through
+  # workflow_dispatch. Pull requests wait only for the quality gates (RAPP-321).
   accessibility-web:
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -59,8 +64,36 @@ jobs:
       - name: Install Chromium
         run: bunx playwright install --with-deps chromium
 
+      # The stack's images come from public.ecr.aws, which refuses anonymous
+      # pulls from busy shared runners ("toomanyrequests: Data limit exceeded").
+      # They are cached here and pulled only when the workflow or the Supabase
+      # config changes. The excluded services are the dashboard, its metadata
+      # API, analytics and image resizing: the browser gate uses none of them
+      # (RAPP-322).
+      - name: Restore Supabase images
+        id: supabase-images
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/supabase-images.tar
+          key: supabase-images-${{ runner.os }}-${{ hashFiles('.github/workflows/ci.yml', 'supabase/config.toml') }}
+
+      - name: Load cached Supabase images
+        if: steps.supabase-images.outputs.cache-hit == 'true'
+        run: docker load -i ~/supabase-images.tar
+
       - name: Start seeded local services
-        run: bunx supabase@2.90.0 start
+        run: bunx supabase@2.90.0 start -x studio,postgres-meta,logflare,vector,imgproxy
+
+      - name: Export Supabase images
+        if: steps.supabase-images.outputs.cache-hit != 'true'
+        run: docker save -o ~/supabase-images.tar $(docker ps --format '{{.Image}}' | grep '/supabase/' | sort -u)
+
+      - name: Cache Supabase images
+        if: steps.supabase-images.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ~/supabase-images.tar
+          key: ${{ steps.supabase-images.outputs.cache-primary-key }}
 
       - name: Export generated local public key
         run: |

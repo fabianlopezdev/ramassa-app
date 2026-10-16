@@ -78,13 +78,13 @@
   "flagConfirmation": "Gràcies. L'equip ho revisarà.",
   "postingDisabled": "Ara mateix no pots publicar ni respondre al fòrum. Pots continuar llegint-lo i contactar amb l'equip si necessites ajuda.",
   "moderationTitle": "Moderació del fòrum",
-  "moderationCount": "{{count}} elements pendents",
+  "moderationCount": "Pendents: {{count}}",
   "moderationActionFailed": "No s'ha pogut completar l'acció.",
   "moderationDeleteConfirm": "Vols esborrar aquest contingut?",
   "moderationEmptyTitle": "No hi ha avisos pendents",
   "moderationEmptyBody": "Els avisos nous apareixeran aquí.",
   "moderationUnknownCategory": "Categoria desconeguda",
-  "moderationFlags": "{{count}} avisos",
+  "moderationFlags": "Avisos: {{count}}",
   "moderationTarget": {
     "post": "Publicació",
     "reply": "Resposta",
@@ -111,5 +111,7 @@
   "categorySaveFailed": "No s'ha pogut desar la categoria.",
   "categoryCreate": "Crea la categoria",
   "categorySave": "Desa la categoria",
-  "gallery": "Galeria"
+  "gallery": "Galeria",
+  "categorySlugHelp": "Lletres minúscules, números i guions. Es crea a partir del nom en català.",
+  "categorySlugInvalid": "L'identificador només pot tenir lletres minúscules, números i guions."
 }

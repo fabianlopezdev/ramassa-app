@@ -1,9 +1,10 @@
 import { AnnouncementEditor } from '@/components/content/announcement-editor';
+import { PreviewAsPlayer } from '@/components/content/preview-as-player';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabase';
 import { createFileRoute, Link, useNavigate, useRouter } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
-import { fetchAnnouncement } from '@ramassa/shared/announcements';
+import { fetchAnnouncement, isContentVisible } from '@ramassa/shared/announcements';
 
 export const Route = createFileRoute('/_staff/content/announcements/$announcementId')({
   ssr: false,
@@ -18,9 +19,19 @@ function EditAnnouncementPage() {
   const router = useRouter();
   return (
     <section>
-      <Button asChild variant="link" className="m-4 mb-0">
-        <Link to="/content/announcements">{t('backToList')}</Link>
-      </Button>
+      <div className="m-4 mb-0 flex flex-wrap items-center justify-between gap-2">
+        <Button asChild variant="link">
+          <Link to="/content/announcements">{t('backToList')}</Link>
+        </Button>
+        <PreviewAsPlayer
+          target={`/announcement/${announcement.id}`}
+          isVisibleToPlayers={isContentVisible({
+            status: announcement.status,
+            publishedAt: announcement.published_at,
+            expiresAt: announcement.expires_at,
+          })}
+        />
+      </div>
       <AnnouncementEditor
         announcement={announcement}
         onSaved={async () => {

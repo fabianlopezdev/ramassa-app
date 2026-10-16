@@ -1,5 +1,6 @@
 import { useAdminBranding } from '@/components/branding/organization-branding-provider';
 import { AuthenticatedMediaImage } from '@/components/content/authenticated-media-image';
+import { PreviewAsPlayer } from '@/components/content/preview-as-player';
 import { LanguagePicker } from '@/components/language-picker';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -97,6 +98,8 @@ export function StaffSidebar() {
       </SidebarContent>
       <SidebarFooter className="border-t border-sidebar-border p-3 group-data-[collapsible=icon]:hidden">
         <LanguagePicker />
+        {/* Every team member, with no permission needed (ADR-026, RAPP-372). */}
+        <PreviewAsPlayer target={null} variant="ghost" />
         <p
           className="text-xs leading-5 text-sidebar-foreground/70"
           data-testid="generalitat-credit"

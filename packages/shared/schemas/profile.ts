@@ -23,17 +23,26 @@ import {
   refineDocumentNumber,
 } from './onboarding';
 
-export const profileEditSchema = z
-  .object({
-    ...identityStepSchema.shape,
-    ...documentationFields.shape,
-    ...logisticsFields.shape,
-    mediaConsent: z.boolean(),
-  })
+const profileEditFields = z.object({
+  ...identityStepSchema.shape,
+  ...documentationFields.shape,
+  ...logisticsFields.shape,
+  mediaConsent: z.boolean(),
+});
+
+export const profileEditSchema = profileEditFields
   .superRefine(refineDocumentNumber)
   .superRefine(refineDependents);
 
 export type ProfileEdit = z.infer<typeof profileEditSchema>;
+
+/**
+ * The staff form for a person without `participants.view_sensitive` (RAPP-281).
+ * Her screen has no document number, phone, address or postal code, so the
+ * document rule cannot run here: the database keeps the stored values and runs
+ * the same rule on the stored number instead.
+ */
+export const profileEditWithoutSensitiveSchema = profileEditFields.superRefine(refineDependents);
 
 /**
  * The row `public.get_own_profile()` returns: the profile with its encrypted

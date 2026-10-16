@@ -167,7 +167,14 @@ describe('folder authorization', () => {
     ).toBe(false);
   });
 
-  test('community folders are open to every signed-in role', () => {
+  test('the preview account uploads to no folder (RAPP-370)', () => {
+    for (const folder of UPLOAD_FOLDERS) {
+      const codes = new Set(Object.values(TEAM_FOLDER_PERMISSIONS).flat());
+      expect(isFolderWritableBy(folder, 'preview', codes)).toBe(false);
+    }
+  });
+
+  test('community folders are open to every signed-in role but the preview', () => {
     const staffOnlyFolders: readonly string[] = STAFF_ONLY_UPLOAD_FOLDERS;
     const communityFolders = UPLOAD_FOLDERS.filter((folder) => !staffOnlyFolders.includes(folder));
     expect(communityFolders.length).toBeGreaterThan(0);

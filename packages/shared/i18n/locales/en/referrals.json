@@ -36,6 +36,7 @@
   "createdLabel": "Sent",
   "updatesTitle": "Updates",
   "noUpdates": "No updates yet.",
+  "updatesAfterOnboarding": "You can share updates once the team has welcomed her and she has an account.",
   "updateType": "Type of change",
   "updateContent": "What changed?",
   "updateSubmit": "Share update",

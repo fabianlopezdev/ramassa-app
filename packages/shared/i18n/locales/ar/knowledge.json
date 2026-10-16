@@ -140,5 +140,15 @@
   "storyPhoto": "الصورة {{number}} من قصة {{title}}",
   "openExternalResource": "فتح المورد الخارجي",
   "consentRecorded": "تم تسجيل موافقة النشر",
-  "consentRecordedDetail": "تمت الموافقة في {{date}} باللغة {{language}} وبالإصدار {{version}}. لا يمكن تغيير هذا السجل."
+  "consentRecordedDetail": "تمت الموافقة في {{date}} باللغة {{language}} وبالإصدار {{version}}. لا يمكن تغيير هذا السجل.",
+  "statusScheduled": "مجدول",
+  "statusExpired": "منتهي الصلاحية",
+  "blockMoveUp": "تحريك لأعلى",
+  "blockMoveDown": "تحريك لأسفل",
+  "blockEdit": "تعديل",
+  "blockDone": "تم",
+  "blockEmpty": "كتلة فارغة",
+  "invalidForm": "راجع المورد: كل كتلة تحتاج إلى نصها، وكل صورة خطوة تحتاج إلى وصفها.",
+  "blockCancel": "إلغاء",
+  "blockStep": "خطوة"
 }

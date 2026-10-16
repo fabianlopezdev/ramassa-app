@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNetworkState } from 'expo-network';
+import { useIsFocused } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@ramassa/shared/auth';
 import { AppError, toAppError } from '@ramassa/shared/errors';
@@ -83,6 +84,9 @@ function useConversationThread(requestedConversationId: string | null) {
   const network = useNetworkState();
   const isOnline = isNetworkStateOnline(network);
   const canDrainOutbox = shouldDrainMessagingOutbox(network);
+  // A thread in a tab stays mounted while another tab shows (RAPP-415), so it
+  // marks messages read only while its screen is on view.
+  const isFocused = useIsFocused();
   const conversationKey = useMemo(
     () =>
       requestedConversationId === null
@@ -212,7 +216,14 @@ function useConversationThread(requestedConversationId: string | null) {
   const threadError = conversationQuery.error ?? messagesQuery.error ?? peerQuery.error;
   const latestId = latestDeliveredMessageId(messages);
   useEffect(() => {
-    if (!canDrainOutbox || conversationId === null || latestId === null || userId === null) return;
+    if (
+      !isFocused ||
+      !canDrainOutbox ||
+      conversationId === null ||
+      latestId === null ||
+      userId === null
+    )
+      return;
     const controller = new AbortController();
     void safeAsync(
       () =>
@@ -235,7 +246,15 @@ function useConversationThread(requestedConversationId: string | null) {
       }
     });
     return () => controller.abort();
-  }, [canDrainOutbox, conversationId, latestId, queryClient, requestedConversationId, userId]);
+  }, [
+    canDrainOutbox,
+    conversationId,
+    isFocused,
+    latestId,
+    queryClient,
+    requestedConversationId,
+    userId,
+  ]);
 
   const send = useCallback(
     (rawContent: string) => {

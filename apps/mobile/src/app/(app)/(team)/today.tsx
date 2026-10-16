@@ -9,8 +9,11 @@ import { PageWidth } from '@/components/layout/content-width';
 import { TeamBackToHome } from '@/components/team/team-back-to-home';
 import { useTeamLayout } from '@/components/team/team-layout-context';
 import { TodayCheckoutsCard } from '@/components/team/today-checkouts-card';
+import { TodayForumCard } from '@/components/team/today-forum-card';
 import { TodayMaterialCard } from '@/components/team/today-material-card';
+import { TodayMentoringCard } from '@/components/team/today-mentoring-card';
 import { TodayMessagesCard } from '@/components/team/today-messages-card';
+import { TodayReviewsCard } from '@/components/team/today-reviews-card';
 import { useAttendanceOccurrences } from '@/lib/attendance';
 import { teamAreas } from '@/lib/team-shell';
 import { todaySections } from '@/lib/today';
@@ -118,6 +121,21 @@ export default function AttendanceOccurrencesScreen() {
           {isToday && sections.includes('material') ? (
             <View className="pt-md">
               <TodayMaterialCard />
+            </View>
+          ) : null}
+          {isToday && sections.includes('reviews') ? (
+            <View className="pt-md">
+              <TodayReviewsCard />
+            </View>
+          ) : null}
+          {isToday && sections.includes('forum') ? (
+            <View className="pt-md">
+              <TodayForumCard />
+            </View>
+          ) : null}
+          {isToday && sections.includes('mentoring') ? (
+            <View className="pt-md">
+              <TodayMentoringCard />
             </View>
           ) : null}
           {isToday && sections.includes('messages') ? (

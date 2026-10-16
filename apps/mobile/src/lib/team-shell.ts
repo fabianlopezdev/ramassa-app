@@ -19,7 +19,31 @@
  */
 import type { PermissionCode } from '@ramassa/shared/permissions';
 
-export type TeamArea = 'attendance' | 'participants' | 'messages' | 'stock';
+export type TeamArea = 'attendance' | 'participants' | 'content' | 'messages' | 'stock';
+
+/** The content types the Content area holds, in the web admin's menu order. */
+export type ContentKind = 'announcements' | 'events' | 'knowledge' | 'services' | 'reviews';
+
+/**
+ * The content types a person manages (RAPP-340 announcements, RAPP-342
+ * events, RAPP-343 knowledge, RAPP-344 services, RAPP-345 the review queue of
+ * services that partner entities submit).
+ */
+export function contentKinds(permissions: ReadonlySet<PermissionCode>): readonly ContentKind[] {
+  const kinds: ContentKind[] = [];
+  if (permissions.has('announcements.edit') || permissions.has('announcements.publish')) {
+    kinds.push('announcements');
+  }
+  if (permissions.has('events.edit') || permissions.has('events.publish')) kinds.push('events');
+  if (permissions.has('knowledge.edit') || permissions.has('knowledge.publish')) {
+    kinds.push('knowledge');
+  }
+  if (permissions.has('services.edit') || permissions.has('services.publish')) {
+    kinds.push('services');
+  }
+  if (permissions.has('services.review')) kinds.push('reviews');
+  return kinds;
+}
 
 export type TeamLayout = 'tabs' | 'home' | 'sidebar';
 
@@ -44,6 +68,7 @@ export function teamAreas(permissions: ReadonlySet<PermissionCode>): readonly Te
     areas.push('attendance');
   }
   if (permissions.has('participants.view')) areas.push('participants');
+  if (contentKinds(permissions).length > 0) areas.push('content');
   if (permissions.has('messages.inbox')) areas.push('messages');
   if (
     permissions.has('equipment.receive') ||
@@ -67,11 +92,12 @@ export function teamLayout(input: {
 export function teamStart(
   areas: readonly TeamArea[],
   layout: TeamLayout,
-): '/home' | '/today' | '/participants' | '/messages' | '/more' | '/team-home' {
+): '/home' | '/today' | '/participants' | '/content' | '/messages' | '/more' | '/team-home' {
   if (areas.length === 0) return '/team-home';
   if (layout === 'home') return '/home';
   if (areas.includes('attendance')) return '/today';
   if (areas.includes('participants')) return '/participants';
+  if (areas.includes('content')) return '/content';
   // Stock alone: More holds it.
   return areas.includes('messages') ? '/messages' : '/more';
 }

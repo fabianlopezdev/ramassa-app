@@ -3,6 +3,7 @@ import { useStepUp } from '@/components/auth/step-up';
 import { ORGANIZATION_BRANDING_CHANGED_EVENT } from '@/components/branding/organization-branding-provider';
 import { EntityManagementPanel } from '@/components/entity/entity-management-panel';
 import { OrganizationSettingsPanel } from '@/components/settings/organization-settings-panel';
+import { PhotoHandoffButton } from '@/components/settings/photo-handoff-dialog';
 import { TeamAccessPanel } from '@/components/team/team-access-panel';
 import { sendEmailOtp } from '@/lib/auth';
 import { SETTINGS_PERMISSIONS } from '@/lib/nav-items';
@@ -223,6 +224,7 @@ function OrganizationSettingsScreen() {
       organization={data.organization}
       permissions={permissions}
       team={team}
+      photoHandoff={<PhotoHandoffButton onDone={refresh} />}
       accessToken={session?.access_token}
       documents={data.documents}
       documentQuery={data.documentQuery}

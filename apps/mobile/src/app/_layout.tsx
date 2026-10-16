@@ -2,8 +2,10 @@
 // below reaches transitively, so the SDK is live before the first render (RAPP-12).
 import { AppLockProvider } from '@/components/auth/app-lock';
 import { SessionFreshness } from '@/components/auth/session-freshness';
+import { StepUpProvider } from '@/components/auth/step-up';
 import { OrganizationBrandingProvider } from '@/components/branding/organization-branding-provider';
 import { ErrorFallback, type ErrorFallbackProps } from '@/components/error-fallback';
+import { PlayerPreviewFrame } from '@/components/preview/player-preview-frame';
 import { PushNotificationResponseHandler } from '@/components/push-notification-response-handler';
 import { reportAuthError } from '@/lib/auth';
 import { AuthFlowStatusProvider } from '@/lib/auth-flow-status';
@@ -11,6 +13,8 @@ import { shouldMountAuthRoutes } from '@/lib/auth-route-readiness';
 import { i18n } from '@/lib/i18n';
 import { configureNetworkStatus } from '@/lib/network-status';
 import { wrapRootComponent } from '@/lib/observability';
+import { currentPreviewQueryClient } from '@/lib/player-preview';
+import { usePreviewModeActive } from '@/lib/preview-mode';
 import { registerProfileQueries } from '@/lib/profile';
 import { configurePushNotificationPresentation } from '@/lib/push-notifications';
 import { queryClient, queryPersister } from '@/lib/query-client';
@@ -21,10 +25,12 @@ import {
   observeSessionIdentity,
   type PermissionSnapshot,
 } from '@/lib/session-cache';
-import { supabase } from '@/lib/supabase';
+import { ownSupabase, previewMode, previewSupabase } from '@/lib/supabase';
+import { QueryClientProvider, useQueryClient } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { Stack } from 'expo-router/stack';
 import * as SplashScreen from 'expo-splash-screen';
+import { StatusBar } from 'expo-status-bar';
 import { useEffect, useMemo, useRef } from 'react';
 import { I18nextProvider } from 'react-i18next';
 import { Platform } from 'react-native';
@@ -112,12 +118,13 @@ export function ErrorBoundary(props: ErrorFallbackProps) {
  * guard flips, so signing in lands in `(app)` and signing out returns to
  * `(auth)` with no manual navigation.
  */
-function RootNavigator() {
+function RootNavigator({ isPreview }: { readonly isPreview: boolean }) {
   const { session, isLoading, isResolvingProfile, permissions } = useAuth();
   const userId = session?.user.id ?? null;
   // The identity the cache currently holds data for. A ref, not state: this
   // drives an eviction, not a render.
   const cachedUserIdRef = useRef<string | null | undefined>(undefined);
+  const activeQueryClient = useQueryClient();
   // The profile query and its optimistic edit read the signed-in user's id, so
   // they are registered here where the session lives rather than at module
   // scope, and re-registered when the session changes.
@@ -136,17 +143,20 @@ function RootNavigator() {
   // (The profile read itself is safe either way: it resolves identity from the
   // session server-side rather than from anything captured here.)
   useEffect(() => {
-    registerProfileQueries(() => userId);
+    registerProfileQueries(() => userId, activeQueryClient);
+    // Her persisted cache follows her own session; the preview has its own.
+    if (isPreview) return;
     const observation = observeSessionIdentity(cachedUserIdRef.current, userId, isLoading);
     if (observation === null) return;
     cachedUserIdRef.current = observation.cachedUserId;
     if (observation.shouldDrop) {
       dropCachedServerState(queryClient, queryPersister);
     }
-  }, [isLoading, userId]);
+  }, [activeQueryClient, isLoading, isPreview, userId]);
   // A permission change empties the cache as well (RAPP-237).
   const permissionSnapshotRef = useRef<PermissionSnapshot | undefined>(undefined);
   useEffect(() => {
+    if (isPreview) return;
     const observation = observePermissionChange(
       permissionSnapshotRef.current,
       { userId, permissions },
@@ -155,7 +165,7 @@ function RootNavigator() {
     if (observation === null) return;
     permissionSnapshotRef.current = observation.snapshot;
     if (observation.shouldDrop) dropCachedServerState(queryClient, queryPersister);
-  }, [isLoading, isResolvingProfile, permissions, userId]);
+  }, [isLoading, isPreview, isResolvingProfile, permissions, userId]);
   // Screen transitions honour reduce-motion too (RAPP-70 scope item 5): the
   // native stack's default slide becomes a plain fade, which is the closest the
   // native navigator offers to "no movement". Set here rather than per screen so
@@ -190,7 +200,36 @@ function RootNavigator() {
   );
 }
 
+function AppForSession({ isPreview }: { readonly isPreview: boolean }) {
+  return (
+    <>
+      {/* Every screen is light, so the clock and icons above it are dark. Android
+          drew them light on its transparent bar, which hid them (RAPP-432). */}
+      <StatusBar style="dark" />
+      <SessionFreshness />
+      <OrganizationBrandingProvider>
+        <AuthFlowStatusProvider>
+          <PushNotificationResponseHandler />
+          {/* The app lock covers every screen once it engages (RAPP-236). */}
+          <AppLockProvider>
+            <StepUpProvider>
+              {isPreview ? (
+                <PlayerPreviewFrame>
+                  <RootNavigator isPreview />
+                </PlayerPreviewFrame>
+              ) : (
+                <RootNavigator isPreview={false} />
+              )}
+            </StepUpProvider>
+          </AppLockProvider>
+        </AuthFlowStatusProvider>
+      </OrganizationBrandingProvider>
+    </>
+  );
+}
+
 function RootLayout() {
+  const isPreview = usePreviewModeActive(previewMode);
   // The online manager notifies mounted React Query consumers. Starting its
   // async native probe at query-client module scope can resolve between render
   // and commit, which makes React report a state update on an unmounted root.
@@ -212,20 +251,26 @@ function RootLayout() {
         {/* Server-state cache for every screen that fetches (RAPP-19). Mounted
             above the auth provider so a future query can be keyed by session
             without the provider tree having to be reordered later. */}
-        <PersistQueryClientProvider client={queryClient} persistOptions={persistOptions}>
-          <AuthProvider client={supabase} onError={reportAuthError}>
-            <SessionFreshness />
-            <OrganizationBrandingProvider>
-              <AuthFlowStatusProvider>
-                <PushNotificationResponseHandler />
-                {/* The app lock covers every screen once it engages (RAPP-236). */}
-                <AppLockProvider>
-                  <RootNavigator />
-                </AppLockProvider>
-              </AuthFlowStatusProvider>
-            </OrganizationBrandingProvider>
-          </AuthProvider>
-        </PersistQueryClientProvider>
+        {/* The player preview (RAPP-371) mounts the same app on the preview
+            client and a fresh cache in memory, and mounts hers again when it
+            ends. Her persisted cache is never shown to, or written by, it. */}
+        {isPreview ? (
+          <QueryClientProvider key="preview" client={currentPreviewQueryClient()}>
+            <AuthProvider client={previewSupabase} onError={reportAuthError}>
+              <AppForSession isPreview />
+            </AuthProvider>
+          </QueryClientProvider>
+        ) : (
+          <PersistQueryClientProvider
+            key="own"
+            client={queryClient}
+            persistOptions={persistOptions}
+          >
+            <AuthProvider client={ownSupabase} onError={reportAuthError}>
+              <AppForSession isPreview={false} />
+            </AuthProvider>
+          </PersistQueryClientProvider>
+        )}
       </I18nextProvider>
     </GestureHandlerRootView>
   );

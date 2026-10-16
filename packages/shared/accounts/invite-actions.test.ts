@@ -17,6 +17,8 @@ import {
   fetchInvites,
   fetchMyPendingInvite,
   INVITE_ALREADY_HAS_ACCOUNT,
+  renewParticipantInvite,
+  revokeParticipantInvite,
 } from './invite-actions';
 import {
   INVITE_COLUMNS,
@@ -217,4 +219,23 @@ test('no invite, or an invite with no entity, leaves the field exactly as it was
   expect(prefilledReferenceEntity('', undefined)).toBe('');
   expect(prefilledReferenceEntity('', '')).toBe('');
   expect(prefilledReferenceEntity(undefined, null)).toBeUndefined();
+});
+
+test('renewing sends the invite id and returns the new expiry (RAPP-284)', async () => {
+  const calls: RpcCall[] = [];
+  const expiry = await renewParticipantInvite(
+    rpcClient({ data: '2026-11-12T10:00:00Z', error: null }, calls),
+    'invite-1',
+  );
+  expect(calls).toEqual([{ name: 'renew_participant_invite', args: { p_invite_id: 'invite-1' } }]);
+  expect(expiry).toBe('2026-11-12T10:00:00Z');
+});
+
+test('cancelling sends the invite id and fails as an AppError', async () => {
+  const calls: RpcCall[] = [];
+  await revokeParticipantInvite(rpcClient({ data: null, error: null }, calls), 'invite-1');
+  expect(calls).toEqual([{ name: 'revoke_participant_invite', args: { p_invite_id: 'invite-1' } }]);
+  expect(
+    revokeParticipantInvite(rpcClient({ data: null, error: { message: 'no' } }), 'invite-1'),
+  ).rejects.toBeInstanceOf(AppError);
 });

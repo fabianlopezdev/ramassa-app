@@ -13,6 +13,7 @@
     "attendance": "Asistencia",
     "messages": "Mensajes",
     "forum": "Moderación del foro",
+    "gallery": "Galería",
     "mentoring": "Mentorías",
     "feedback": "Sugerencias",
     "notifications": "Notificaciones",
@@ -42,6 +43,7 @@
     "navigation": "Navegación del equipo",
     "backToHome": "Volver al inicio",
     "todayIntro": "Lo que hay que hacer ahora.",
-    "participants": "Participantes"
+    "participants": "Participantes",
+    "content": "Contenido"
   }
 }

@@ -78,13 +78,13 @@
   "flagConfirmation": "متشکریم. تیم آن را بررسی می‌کند.",
   "postingDisabled": "در حال حاضر نمی‌توانید در انجمن پست بگذارید یا پاسخ دهید. همچنان می‌توانید مطالب را بخوانید و اگر کمک می‌خواهید با تیم تماس بگیرید.",
   "moderationTitle": "نظارت انجمن",
-  "moderationCount": "{{count}} مورد در انتظار",
+  "moderationCount": "در انتظار: {{count}}",
   "moderationActionFailed": "انجام این کار ممکن نبود.",
   "moderationDeleteConfirm": "این محتوا حذف شود؟",
   "moderationEmptyTitle": "گزارش در انتظاری نیست",
   "moderationEmptyBody": "گزارش‌های جدید اینجا نمایش داده می‌شوند.",
   "moderationUnknownCategory": "دسته ناشناخته",
-  "moderationFlags": "{{count}} گزارش",
+  "moderationFlags": "گزارش‌ها: {{count}}",
   "moderationTarget": {
     "post": "پست",
     "reply": "پاسخ",
@@ -111,5 +111,7 @@
   "categorySaveFailed": "دسته ذخیره نشد.",
   "categoryCreate": "ایجاد دسته",
   "categorySave": "ذخیره دسته",
-  "gallery": "گالری"
+  "gallery": "گالری",
+  "categorySlugHelp": "حروف کوچک، عدد و خط تیره. از نام کاتالان ساخته می شود.",
+  "categorySlugInvalid": "شناسه فقط می تواند حروف کوچک، عدد و خط تیره داشته باشد."
 }

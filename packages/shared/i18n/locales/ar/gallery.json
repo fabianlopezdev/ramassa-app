@@ -13,7 +13,10 @@
   "openSettings": "فتح الإعدادات",
   "caption": "وصف اختياري",
   "privacy": "من يمكنه رؤيته؟",
-  "privacyLevels": { "community": "كل المجتمع", "staff_only": "الفريق فقط" },
+  "privacyLevels": {
+    "community": "كل المجتمع",
+    "staff_only": "الفريق فقط"
+  },
   "consentReminder": "أؤكد أن جميع الأشخاص الظاهرين وافقوا على مشاركة هذا المحتوى.",
   "consentRequired": "يجب تأكيد الموافقة قبل النشر.",
   "publish": "نشر",
@@ -36,5 +39,18 @@
   "deleteBody": "سيتم حذف الصورة أو الفيديو والصورة المصغرة نهائيًا.",
   "cancel": "إلغاء",
   "flag": "الإبلاغ عن مشكلة",
-  "back": "رجوع"
+  "back": "رجوع",
+  "moderationTitle": "إشراف المعرض",
+  "moderationIntro": "أخفِ أو أظهر من جديد أي صورة أو فيديو، حتى لو لم يبلّغ عنه أحد.",
+  "moderationTotal": "العناصر: {{count}}",
+  "filterAll": "الكل",
+  "filterVisible": "الظاهرة",
+  "filterHidden": "المخفية",
+  "stateHidden": "مخفي",
+  "statePending": "مخفي حتى المراجعة",
+  "moderationHide": "إخفاء",
+  "moderationShow": "إظهار من جديد",
+  "moderationReports": "البلاغات: {{count}}",
+  "moderationVideo": "فيديو",
+  "moderationFailed": "تعذّر إكمال الإجراء."
 }

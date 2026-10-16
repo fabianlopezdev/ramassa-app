@@ -10,7 +10,6 @@
   "filterStatus": "Estat",
   "filterDependents": "Persones a càrrec",
   "optionAll": "Totes",
-  "optionAllMasc": "Tots",
   "statusActive": "Actives",
   "statusInactive": "Inactives",
   "dependentsWith": "Amb",
@@ -141,7 +140,6 @@
   "inviteAlreadyHasAccount": "Aquest correu ja té un compte. Busca-la a la llista de participants.",
   "invitedReferralNote": "La derivació de l'entitat s'enllaçarà amb el seu perfil quan acabi el registre.",
   "selectParticipant": "Tria una participant per veure la seva fitxa.",
-  "lookupStart": "Escriu un nom, un poble o una entitat.",
   "material": {
     "handOver": "Lliurar material",
     "handoverTitle": "Lliurar material",
@@ -205,7 +203,17 @@
     "stockTitle": "Material",
     "stockFine": "No hi ha estoc per revisar.",
     "stockAlert": "{{item}}: sota zero. Compta'l.",
-    "saveFailed": "El lliurament no s'ha desat. Torna-ho a provar."
+    "saveFailed": "El lliurament no s'ha desat. Torna-ho a provar.",
+    "detail": {
+      "show": "Detalls",
+      "hide": "Amaga els detalls",
+      "handedBy": "Lliurat per {{name}}",
+      "note": "Nota: {{note}}",
+      "reason": "Motiu: {{reason}}",
+      "language": "Declaració mostrada en {{language}}",
+      "returnedBy": "Retorn registrat per {{name}}",
+      "loadFailed": "No s'han pogut carregar els detalls."
+    }
   },
   "stock": {
     "title": "Estoc",
@@ -378,5 +386,54 @@
     "codeTaken": "Un altre article ja fa servir aquestes lletres.",
     "summary": "{{kind}} · {{sizes}}",
     "inactive": "Desactivat"
+  },
+  "list": {
+    "filtersAction": "Filtres",
+    "filtersActionCount": "Filtres ({{count}})",
+    "filtersTitle": "Filtres",
+    "sortLabel": "Ordenar per",
+    "dirAsc": "Ascendent",
+    "dirDesc": "Descendent",
+    "filtersDone": "Veure les participants",
+    "sortBy": "Ordenar per {{column}}",
+    "sortedBy": "{{column}}, ordenat {{direction}}",
+    "loadingMore": "Carregant més participants",
+    "dirLabel": "Ordre"
+  },
+  "profile": {
+    "editTitle": "Edita la fitxa",
+    "saveFailed": "No hem pogut desar la fitxa. Torna-ho a provar.",
+    "deactivateTitle": "Vols desactivar {{name}}?",
+    "deactivateBody": "Surt de les llistes actives i conserva la fitxa. La pots reactivar més endavant.",
+    "sensitiveHidden": "No veus el número de document, el telèfon, l'adreça ni el codi postal. Es queden com estan.",
+    "notesLoadFailed": "No hem pogut carregar les notes.",
+    "anonymizedName": "Participant anonimitzada"
+  },
+  "activity": {
+    "signup": {
+      "interested": "Interessada",
+      "confirmed": "Confirmada",
+      "cancelled": "Cancel·lada"
+    },
+    "showAll": "Mostra-ho tot ({{count}})",
+    "loadFailed": "No hem pogut carregar l'activitat."
+  },
+  "invites": {
+    "row": "Enviada per {{name}} el {{date}}",
+    "rowNoName": "Enviada el {{date}}",
+    "openUntil": "Oberta fins al {{date}}",
+    "expiredOn": "Va caducar el {{date}}",
+    "acceptedOn": "Acceptada el {{date}}",
+    "renew": "Allarga 30 dies",
+    "cancel": "Anul·la la invitació",
+    "cancelTitle": "Vols anul·lar la invitació de {{email}}?",
+    "cancelBody": "Ja no podrà entrar amb aquesta adreça. La pots tornar a convidar més endavant.",
+    "keep": "Mantén-la",
+    "actionFailed": "No hem pogut canviar la invitació. Torna-ho a provar.",
+    "loadFailed": "No hem pogut carregar les invitacions.",
+    "emailLabel": "El seu correu",
+    "entityNone": "Cap",
+    "entityOther": "Una altra",
+    "entityOtherLabel": "Nom de l'entitat"
   }
 }

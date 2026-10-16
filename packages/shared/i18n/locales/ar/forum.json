@@ -78,13 +78,13 @@
   "flagConfirmation": "شكرًا لك. سيراجع الفريق البلاغ.",
   "postingDisabled": "لا يمكنك النشر أو الرد في المنتدى الآن. يمكنك متابعة القراءة والتواصل مع الفريق إذا احتجت إلى مساعدة.",
   "moderationTitle": "الإشراف على المنتدى",
-  "moderationCount": "{{count}} عناصر قيد المراجعة",
+  "moderationCount": "قيد المراجعة: {{count}}",
   "moderationActionFailed": "تعذر إكمال الإجراء.",
   "moderationDeleteConfirm": "هل تريدين حذف هذا المحتوى؟",
   "moderationEmptyTitle": "لا توجد بلاغات معلقة",
   "moderationEmptyBody": "ستظهر البلاغات الجديدة هنا.",
   "moderationUnknownCategory": "فئة غير معروفة",
-  "moderationFlags": "{{count}} بلاغات",
+  "moderationFlags": "البلاغات: {{count}}",
   "moderationTarget": {
     "post": "منشور",
     "reply": "رد",
@@ -111,5 +111,7 @@
   "categorySaveFailed": "تعذر حفظ الفئة.",
   "categoryCreate": "إنشاء الفئة",
   "categorySave": "حفظ الفئة",
-  "gallery": "المعرض"
+  "gallery": "المعرض",
+  "categorySlugHelp": "أحرف صغيرة وأرقام وشرطات. يُنشأ من الاسم بالكتالونية.",
+  "categorySlugInvalid": "يمكن أن يحتوي المعرّف على أحرف صغيرة وأرقام وشرطات فقط."
 }

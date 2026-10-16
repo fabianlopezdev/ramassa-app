@@ -18,6 +18,38 @@ describe('accessibility CI local service contract', () => {
     expect(session).toContain('process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY');
   });
 
+  test('pull requests run only the quality gates; the browser gate runs on main and on demand', async () => {
+    const workflow = await readSource('.github/workflows/ci.yml');
+    const accessibilityJob = workflow.slice(workflow.indexOf('  accessibility-web:'));
+
+    expect(workflow).toContain('workflow_dispatch:');
+    expect(workflow).toMatch(/push:\n\s+branches: \[main\]/);
+    expect(accessibilityJob).toContain("if: github.event_name != 'pull_request'");
+    expect(workflow.slice(0, workflow.indexOf('  accessibility-web:'))).not.toContain(
+      'github.event_name',
+    );
+  });
+
+  test('the browser gate starts only the services it uses, from cached images', async () => {
+    const workflow = await readSource('.github/workflows/ci.yml');
+    const accessibilityJob = workflow.slice(workflow.indexOf('  accessibility-web:'));
+    const restore = accessibilityJob.indexOf('actions/cache/restore@');
+    const start = accessibilityJob.indexOf('supabase@2.90.0 start');
+    const save = accessibilityJob.indexOf('actions/cache/save@');
+
+    expect(accessibilityJob).toContain(
+      'supabase@2.90.0 start -x studio,postgres-meta,logflare,vector,imgproxy',
+    );
+    expect(accessibilityJob).toContain('docker load');
+    expect(accessibilityJob).toContain('docker save');
+    // Restored before the stack starts, saved right after it, so a failing
+    // browser check still leaves a warm cache for the next run.
+    expect(restore).toBeGreaterThan(-1);
+    expect(restore).toBeLessThan(start);
+    expect(save).toBeGreaterThan(start);
+    expect(save).toBeLessThan(accessibilityJob.indexOf('WCAG 2.2 AA browser gate'));
+  });
+
   test('the browser gate owns frame naming without auditing third-party frame internals', async () => {
     const accessibilityGate = await readSource('scripts/qa-web/accessibility.web-qa.ts');
 

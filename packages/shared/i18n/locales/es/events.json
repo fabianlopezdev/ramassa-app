@@ -121,5 +121,8 @@
   "colorAccent": "Acento",
   "colorChart1": "Gráfico 1",
   "colorChart2": "Gráfico 2",
-  "colorChart3": "Gráfico 3"
+  "colorChart3": "Gráfico 3",
+  "categoriesHelpPhone": "Usa Subir y Bajar para ordenar las categorías. Los participantes las ven en este orden.",
+  "sessionsTitle": "Sesiones ({{count}})",
+  "recurrenceEveryWeekSummary": "Cada semana, {{count}} sesiones"
 }

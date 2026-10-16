@@ -121,5 +121,8 @@
   "colorAccent": "Accent",
   "colorChart1": "Chart 1",
   "colorChart2": "Chart 2",
-  "colorChart3": "Chart 3"
+  "colorChart3": "Chart 3",
+  "categoriesHelpPhone": "Use Move up and Move down to order the categories. Participants see them in this order.",
+  "sessionsTitle": "Sessions ({{count}})",
+  "recurrenceEveryWeekSummary": "Every week, {{count}} sessions"
 }

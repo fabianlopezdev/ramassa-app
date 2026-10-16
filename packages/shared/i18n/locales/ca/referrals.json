@@ -36,6 +36,7 @@
   "createdLabel": "Enviada",
   "updatesTitle": "Actualitzacions",
   "noUpdates": "Encara no hi ha actualitzacions.",
+  "updatesAfterOnboarding": "Podreu compartir actualitzacions quan l’equip l’hagi acollida i tingui un compte.",
   "updateType": "Tipus de canvi",
   "updateContent": "Què ha canviat?",
   "updateSubmit": "Comparteix l’actualització",

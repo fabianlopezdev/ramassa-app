@@ -13,7 +13,10 @@
   "openSettings": "Abrir ajustes",
   "caption": "Texto opcional",
   "privacy": "¿Quién puede verlo?",
-  "privacyLevels": { "community": "Toda la comunidad", "staff_only": "Solo el equipo" },
+  "privacyLevels": {
+    "community": "Toda la comunidad",
+    "staff_only": "Solo el equipo"
+  },
   "consentReminder": "Confirmo que todas las personas que aparecen han aceptado compartir este contenido.",
   "consentRequired": "Debes confirmar el consentimiento antes de publicar.",
   "publish": "Publicar",
@@ -36,5 +39,18 @@
   "deleteBody": "La foto o el vídeo y su miniatura se eliminarán definitivamente.",
   "cancel": "Cancelar",
   "flag": "Informar de un problema",
-  "back": "Atrás"
+  "back": "Atrás",
+  "moderationTitle": "Moderación de la galería",
+  "moderationIntro": "Oculta o vuelve a mostrar cualquier foto o vídeo, aunque nadie haya informado de ello.",
+  "moderationTotal": "Elementos: {{count}}",
+  "filterAll": "Todo",
+  "filterVisible": "Visibles",
+  "filterHidden": "Ocultos",
+  "stateHidden": "Oculto",
+  "statePending": "Oculto hasta que se revise",
+  "moderationHide": "Ocultar",
+  "moderationShow": "Volver a mostrar",
+  "moderationReports": "Avisos: {{count}}",
+  "moderationVideo": "Vídeo",
+  "moderationFailed": "No se ha podido completar la acción."
 }

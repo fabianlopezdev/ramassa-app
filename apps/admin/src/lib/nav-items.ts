@@ -17,6 +17,7 @@ import {
   Database,
   FileText,
   HeartHandshake,
+  Images,
   Inbox,
   LayoutDashboard,
   MessageSquare,
@@ -99,6 +100,12 @@ export const STAFF_NAV_ITEMS = [
     icon: MessageSquare,
     labelKey: 'nav:staff.forum',
     anyPermission: ['forum.moderate', 'gallery.moderate'],
+  },
+  {
+    to: '/gallery',
+    icon: Images,
+    labelKey: 'nav:staff.gallery',
+    anyPermission: ['gallery.moderate'],
   },
   {
     to: '/mentoring',

@@ -13,6 +13,7 @@
     "attendance": "حضور و غیاب",
     "messages": "پیام‌ها",
     "forum": "نظارت انجمن",
+    "gallery": "گالری",
     "mentoring": "راهنمایی",
     "feedback": "بازخورد",
     "notifications": "اعلان‌ها",
@@ -42,6 +43,7 @@
     "navigation": "ناوبری تیم",
     "backToHome": "بازگشت به شروع",
     "todayIntro": "کارهایی که الان باید انجام شود.",
-    "participants": "شرکت‌کنندگان"
+    "participants": "شرکت‌کنندگان",
+    "content": "محتوا"
   }
 }

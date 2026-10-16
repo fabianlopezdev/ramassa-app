@@ -13,6 +13,7 @@
     "attendance": "Assistència",
     "messages": "Missatges",
     "forum": "Moderació del fòrum",
+    "gallery": "Galeria",
     "mentoring": "Mentories",
     "feedback": "Suggeriments",
     "notifications": "Notificacions",
@@ -42,6 +43,7 @@
     "navigation": "Navegació de l'equip",
     "backToHome": "Torna a l'inici",
     "todayIntro": "El que cal fer ara.",
-    "participants": "Participants"
+    "participants": "Participants",
+    "content": "Contingut"
   }
 }

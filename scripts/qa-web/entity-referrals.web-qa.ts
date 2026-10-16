@@ -118,6 +118,10 @@ test.describe.serial('entity referral product flow', () => {
     ).toBe(`${FIRST_NAME}|${LAST_NAME}|${EMAIL}|in_progress|${NOTES}|pending`);
     await expect(page.getByText(NOTES)).toBeVisible();
     await expect(page.locator('script').filter({ hasText: NOTES })).toHaveCount(0);
+    // Pending means no account yet, so the page says when updates open
+    // instead of offering a form the database would refuse (RAPP-435).
+    await expect(page.getByTestId('referral-updates-locked')).toBeVisible();
+    await expect(page.getByTestId('referral-update-submit')).toHaveCount(0);
 
     await page.reload();
     await expect(page.getByText(NOTES)).toBeVisible();

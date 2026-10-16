@@ -12,6 +12,7 @@
 import { describe, expect, test } from 'bun:test';
 import { participantNoteSchema } from '../schemas';
 import {
+  activityDetailKey,
   filterParticipantActivity,
   noteAuthorName,
   PARTICIPANT_ACTIVITY_KINDS,
@@ -109,5 +110,22 @@ describe('the activity timeline contract', () => {
 
   test('a kind with nothing in it yet is empty, not everything', () => {
     expect(filterParticipantActivity(entries, 'equipment')).toHaveLength(0);
+  });
+});
+
+describe('activityDetailKey', () => {
+  test('attendance and sign-up codes get their translation', () => {
+    expect(activityDetailKey({ kind: 'attendance', detail: 'excused' })).toBe(
+      'attendance:statusExcused',
+    );
+    expect(activityDetailKey({ kind: 'event_signup', detail: 'confirmed' })).toBe(
+      'participants:activity.signup.confirmed',
+    );
+  });
+
+  test('text details and unknown codes are shown as they are', () => {
+    expect(activityDetailKey({ kind: 'message', detail: 'present' })).toBeNull();
+    expect(activityDetailKey({ kind: 'attendance', detail: 'late' })).toBeNull();
+    expect(activityDetailKey({ kind: 'attendance', detail: null })).toBeNull();
   });
 });

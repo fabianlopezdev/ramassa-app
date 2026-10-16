@@ -274,5 +274,37 @@
       "label": "Gestió de l'equip",
       "description": "Afegir i treure persones de l'equip, editar perfils i permisos, i restablir un segon factor perdut."
     }
-  }
+  },
+  "handoff": {
+    "button": "Fer la foto amb el mòbil",
+    "title": "Fes la foto amb el mòbil",
+    "nameLabel": "Nom del document",
+    "defaultName": "Foto {{date}}",
+    "start": "Mostrar el codi",
+    "scan": "Escaneja aquest codi amb la càmera del mòbil. Al mòbil, entra amb el teu compte.",
+    "expiresAt": "El codi funciona una vegada, fins a les {{time}}.",
+    "waiting": "Esperant la foto",
+    "done": "La foto ha arribat. És a la llista de documents.",
+    "expired": "El codi ha caducat. Mostra'n un de nou.",
+    "again": "Mostrar un codi nou",
+    "close": "Tancar",
+    "failed": "No s'ha pogut fer el codi. Torna-ho a provar.",
+    "qrLabel": "Codi per escanejar amb el mòbil",
+    "pageTitle": "Foto per als documents",
+    "pageIntro": "Aquesta foto serà el document «{{name}}».",
+    "openApp": "Obrir a l'app Ramassà",
+    "takeHere": "Fer la foto aquí",
+    "takePhoto": "Fer la foto",
+    "choosePhoto": "Triar de les fotos",
+    "uploading": "Enviant la foto",
+    "sent": "Enviada. La foto ja és a l'ordinador. Pots tancar això.",
+    "pageExpired": "Aquest codi ha caducat. Demana'n un de nou a l'ordinador.",
+    "pageUsed": "Aquest codi ja s'ha fet servir.",
+    "notFound": "Aquest codi no és per a aquest compte. Entra com la persona que l'ha fet.",
+    "sendFailed": "La foto no s'ha enviat. Torna-ho a provar.",
+    "cameraDenied": "Permet la càmera a Configuració per fer una foto."
+  },
+  "chooseLogo": "Tria un logotip",
+  "contrastTooLow": "Aquest color té un contrast de {{ratio}}:1 amb el text. Cal un mínim de 4,5:1.",
+  "colorInvalid": "Fes servir un color hexadecimal de sis xifres, com #0077B6."
 }

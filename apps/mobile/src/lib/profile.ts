@@ -11,6 +11,7 @@
 import { logger, safeAsync } from '@/lib/observability';
 import { queryClient } from '@/lib/query-client';
 import { supabase } from '@/lib/supabase';
+import type { QueryClient } from '@tanstack/react-query';
 import type { AppError, Result } from '@ramassa/shared/errors';
 import {
   fetchOwnDeletionRequest,
@@ -29,25 +30,29 @@ import { buildUpdateOwnProfilePayload, type ProfileEdit } from '@ramassa/shared/
  * what the organization holds about her, and stale answers to that question are
  * worse than a spinner.
  */
-export function registerProfileQueries(currentProfileId: () => string | null): void {
+export function registerProfileQueries(
+  currentProfileId: () => string | null,
+  // The player preview has its own cache (RAPP-371), which needs the same defaults.
+  client: QueryClient = queryClient,
+): void {
   // `signal` is React Query's own, and it aborts the request when the query is
   // cancelled or the last screen using it unmounts. Forwarded rather than
   // dropped because this query refetches on EVERY entry to the tab (staleTime
   // 0), so leaving the tab mid-flight otherwise leaves the radio open on a
   // low-end phone for an answer nobody is waiting for.
-  queryClient.setQueryDefaults(ownProfileQueryKey, {
+  client.setQueryDefaults(ownProfileQueryKey, {
     queryFn: ({ signal }: { signal: AbortSignal }) => fetchOwnProfile(supabase, { signal }),
     staleTime: 0,
   });
 
-  queryClient.setQueryDefaults(ownDeletionRequestQueryKey, {
+  client.setQueryDefaults(ownDeletionRequestQueryKey, {
     queryFn: ({ signal }: { signal: AbortSignal }) => {
       const profileId = currentProfileId();
       return profileId === null ? null : fetchOwnDeletionRequest(supabase, profileId, { signal });
     },
   });
 
-  queryClient.setMutationDefaults(updateOwnProfileMutationKey, {
+  client.setMutationDefaults(updateOwnProfileMutationKey, {
     mutationFn: (edit: ProfileEdit) =>
       updateOwnProfile(supabase, buildUpdateOwnProfilePayload(edit)),
     onError: (error: unknown) => {

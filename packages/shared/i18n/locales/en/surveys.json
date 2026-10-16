@@ -61,5 +61,15 @@
   "reject": "Reject",
   "approve": "Approve",
   "approveAll": "Approve all",
-  "loadingResponses": "Loading responses..."
+  "loadingResponses": "Loading responses...",
+  "addChoice": "Add a choice",
+  "removeChoice": "Remove the choice",
+  "noSurveys": "There are no surveys yet.",
+  "statusScheduled": "Scheduled",
+  "statusOpen": "Open",
+  "statusClosed": "Closed",
+  "averageRating": "Average {{value}} of 5",
+  "choiceLabel": "Choice {{number}} in Catalan",
+  "datesInvalid": "The closing date must come after the publication date.",
+  "publishAtRequired": "Choose when the survey is published."
 }

@@ -78,13 +78,13 @@
   "flagConfirmation": "Thank you. The team will review it.",
   "postingDisabled": "You cannot post or reply in the forum right now. You can keep reading and contact the team if you need help.",
   "moderationTitle": "Forum moderation",
-  "moderationCount": "{{count}} pending items",
+  "moderationCount": "Pending: {{count}}",
   "moderationActionFailed": "The action could not be completed.",
   "moderationDeleteConfirm": "Delete this content?",
   "moderationEmptyTitle": "No pending reports",
   "moderationEmptyBody": "New reports will appear here.",
   "moderationUnknownCategory": "Unknown category",
-  "moderationFlags": "{{count}} reports",
+  "moderationFlags": "Reports: {{count}}",
   "moderationTarget": {
     "post": "Post",
     "reply": "Reply",
@@ -111,5 +111,7 @@
   "categorySaveFailed": "The category could not be saved.",
   "categoryCreate": "Create category",
   "categorySave": "Save category",
-  "gallery": "Gallery"
+  "gallery": "Gallery",
+  "categorySlugHelp": "Lowercase letters, numbers and hyphens. It is made from the Catalan name.",
+  "categorySlugInvalid": "The identifier can only have lowercase letters, numbers and hyphens."
 }

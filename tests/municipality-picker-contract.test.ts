@@ -6,7 +6,7 @@ import { repoRoot } from '../scripts/flow-capture/config';
 
 const screens: string[] = [
   'apps/mobile/src/app/(app)/onboarding/logistics.tsx',
-  'apps/mobile/src/app/(app)/profile-edit.tsx',
+  'apps/mobile/src/components/profile/profile-form-fields.tsx',
 ];
 
 describe('municipality picker integration', () => {

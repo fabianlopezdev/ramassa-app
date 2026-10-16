@@ -365,9 +365,25 @@ export function countInDatabase(sql: string): number {
 
 /** Waits until TanStack Start has replaced its server-rendered shell with interactive React. */
 export async function waitForHydration(page: Page): Promise<void> {
+  // The admin marks its own hydration (RAPP-437): TanStack Start 1.169 clears
+  // its stream global before the handlers are attached. The player web build
+  // has no marker, so the stream global alone still decides there.
   await page.waitForFunction(
-    () => (globalThis as { readonly $_TSR?: unknown }).$_TSR === undefined,
-    undefined,
+    (adminOrigin) => {
+      const browser = globalThis as unknown as {
+        readonly $_TSR?: unknown;
+        readonly location: { readonly origin: string };
+        readonly document: {
+          readonly documentElement: { readonly dataset: Record<string, string> };
+        };
+      };
+      return (
+        browser.$_TSR === undefined &&
+        (browser.location.origin !== adminOrigin ||
+          browser.document.documentElement.dataset.hydrated === 'true')
+      );
+    },
+    ADMIN_ORIGIN,
     { timeout: 300_000 },
   );
 }

@@ -140,5 +140,15 @@
   "storyPhoto": "Photo {{number}} from the story {{title}}",
   "openExternalResource": "Open external resource",
   "consentRecorded": "Publication consent recorded",
-  "consentRecordedDetail": "Accepted on {{date}} in {{language}} with version {{version}}. This record cannot be changed."
+  "consentRecordedDetail": "Accepted on {{date}} in {{language}} with version {{version}}. This record cannot be changed.",
+  "statusScheduled": "Scheduled",
+  "statusExpired": "Expired",
+  "blockMoveUp": "Move up",
+  "blockMoveDown": "Move down",
+  "blockEdit": "Edit",
+  "blockDone": "Done",
+  "blockEmpty": "Empty block",
+  "invalidForm": "Check the resource: every block needs its text, and every step image its description.",
+  "blockCancel": "Cancel",
+  "blockStep": "Step"
 }

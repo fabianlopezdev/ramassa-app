@@ -80,7 +80,7 @@ export function ParticipantDetail({
   const { t, i18n } = useTranslation(['participants', 'common', 'profile']);
   const locale = i18n.resolvedLanguage ?? 'ca';
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, permissions } = useAuth();
 
   const [isEditing, setIsEditing] = useState(false);
   const [saveErrorMessage, setSaveErrorMessage] = useState<string | undefined>(undefined);
@@ -254,6 +254,7 @@ export function ParticipantDetail({
         {isEditing ? (
           <ParticipantEditForm
             participant={participant}
+            canSeeSensitive={permissions.has('participants.view_sensitive')}
             onSubmit={saveProfile}
             onCancel={() => {
               setSaveErrorMessage(undefined);

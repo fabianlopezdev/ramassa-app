@@ -2264,6 +2264,57 @@ export type Database = {
         };
         Relationships: [];
       };
+      photo_handoffs: {
+        Row: {
+          completed_at: string | null;
+          created_at: string;
+          document_name: string;
+          expires_at: string;
+          id: string;
+          org_id: string;
+          requested_by: string;
+          result_id: string | null;
+          target: string;
+        };
+        Insert: {
+          completed_at?: string | null;
+          created_at?: string;
+          document_name: string;
+          expires_at: string;
+          id?: string;
+          org_id: string;
+          requested_by: string;
+          result_id?: string | null;
+          target: string;
+        };
+        Update: {
+          completed_at?: string | null;
+          created_at?: string;
+          document_name?: string;
+          expires_at?: string;
+          id?: string;
+          org_id?: string;
+          requested_by?: string;
+          result_id?: string | null;
+          target?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'photo_handoffs_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'photo_handoffs_requested_by_fkey';
+            columns: ['requested_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       profiles: {
         Row: {
           address: string | null;
@@ -4129,6 +4180,15 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      complete_photo_handoff: {
+        Args: {
+          p_content_type: string;
+          p_file_size: number;
+          p_id: string;
+          p_object_key: string;
+        };
+        Returns: string;
+      };
       count_services_incompatible_with_category_schema: {
         Args: { p_category_id: string; p_metadata_schema: Json };
         Returns: number;
@@ -4189,6 +4249,14 @@ export type Database = {
           invite_id: string;
         }[];
       };
+      create_photo_handoff: {
+        Args: { p_document_name: string; p_target: string };
+        Returns: {
+          expires_at: string;
+          handoff_id: string;
+        }[];
+      };
+      create_survey_export: { Args: { p_survey_id: string }; Returns: Json };
       create_targeted_notification_send: {
         Args: {
           p_audience_config: Json;
@@ -4970,6 +5038,19 @@ export type Database = {
           unit_code: string;
         }[];
       };
+      participant_material_detail: {
+        Args: { p_delivery_id: string };
+        Returns: {
+          delivered_by_name: string;
+          delivery_id: string;
+          note: string;
+          returned_by_name: string;
+          signature: Json;
+          signature_reason: string;
+          signature_state: string;
+          statement_language: string;
+        }[];
+      };
       personal_data_disposition: {
         Args: never;
         Returns: {
@@ -5104,6 +5185,10 @@ export type Database = {
         Args: { p_profile_id: string };
         Returns: undefined;
       };
+      renew_participant_invite: {
+        Args: { p_invite_id: string };
+        Returns: string;
+      };
       reorder_service_categories: {
         Args: { p_category_ids: string[] };
         Returns: undefined;
@@ -5128,6 +5213,10 @@ export type Database = {
           p_service_id: string;
         };
         Returns: string;
+      };
+      revoke_participant_invite: {
+        Args: { p_invite_id: string };
+        Returns: undefined;
       };
       save_admin_service: { Args: { p_payload: Json }; Returns: string };
       save_custom_notification_group: {
@@ -5262,6 +5351,10 @@ export type Database = {
         Args: { p_disabled: boolean; p_participant_id: string };
         Returns: undefined;
       };
+      set_media_item_moderation: {
+        Args: { p_media_item_id: string; p_state: string };
+        Returns: undefined;
+      };
       set_media_item_privacy: {
         Args: { p_media_item_id: string; p_privacy_level: string };
         Returns: undefined;
@@ -5290,6 +5383,7 @@ export type Database = {
         Args: { p_profile_id: string };
         Returns: undefined;
       };
+      start_player_preview: { Args: never; Returns: Json };
       stock_levels: {
         Args: never;
         Returns: {

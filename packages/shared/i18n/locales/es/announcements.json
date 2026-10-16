@@ -63,5 +63,12 @@
   "translationRequired": "Genera y aprueba todas las traducciones antes de publicar.",
   "imageAltRequired": "Añade una descripción de la imagen y aprueba todas sus traducciones.",
   "saveFailed": "No se pudo guardar el aviso.",
-  "loadFailed": "No se pudo cargar el aviso."
+  "loadFailed": "No se pudo cargar el aviso.",
+  "pinned": "Fijado",
+  "clearDate": "Quitar la fecha",
+  "noExpiry": "Sin caducidad",
+  "editAction": "Editar",
+  "publishLocked": "Solo quien puede publicar cambia la publicación.",
+  "draftRestored": "El texto sin guardar se ha conservado en este teléfono.",
+  "imageChosen": "Foto elegida. Se sube al guardar."
 }

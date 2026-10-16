@@ -274,5 +274,37 @@
       "label": "Gestión del equipo",
       "description": "Añadir y quitar personas del equipo, editar perfiles y permisos, y restablecer un segundo factor perdido."
     }
-  }
+  },
+  "handoff": {
+    "button": "Hacer la foto con el móvil",
+    "title": "Haz la foto con el móvil",
+    "nameLabel": "Nombre del documento",
+    "defaultName": "Foto {{date}}",
+    "start": "Mostrar el código",
+    "scan": "Escanea este código con la cámara del móvil. En el móvil, entra con tu cuenta.",
+    "expiresAt": "El código funciona una vez, hasta las {{time}}.",
+    "waiting": "Esperando la foto",
+    "done": "La foto ha llegado. Está en la lista de documentos.",
+    "expired": "El código ha caducado. Muestra uno nuevo.",
+    "again": "Mostrar un código nuevo",
+    "close": "Cerrar",
+    "failed": "No se ha podido crear el código. Vuelve a intentarlo.",
+    "qrLabel": "Código para escanear con el móvil",
+    "pageTitle": "Foto para los documentos",
+    "pageIntro": "Esta foto será el documento «{{name}}».",
+    "openApp": "Abrir en la app Ramassà",
+    "takeHere": "Hacer la foto aquí",
+    "takePhoto": "Hacer la foto",
+    "choosePhoto": "Elegir de las fotos",
+    "uploading": "Enviando la foto",
+    "sent": "Enviada. La foto ya está en el ordenador. Puedes cerrar esto.",
+    "pageExpired": "Este código ha caducado. Pide uno nuevo en el ordenador.",
+    "pageUsed": "Este código ya se ha usado.",
+    "notFound": "Este código no es para esta cuenta. Entra como la persona que lo creó.",
+    "sendFailed": "La foto no se ha enviado. Vuelve a intentarlo.",
+    "cameraDenied": "Permite la cámara en Ajustes para hacer una foto."
+  },
+  "chooseLogo": "Elige un logotipo",
+  "contrastTooLow": "Este color tiene un contraste de {{ratio}}:1 con el texto. Se necesita un mínimo de 4,5:1.",
+  "colorInvalid": "Usa un color hexadecimal de seis cifras, como #0077B6."
 }

@@ -2,12 +2,21 @@
  * Her material on the participant card (RAPP-249): what she received, handed
  * over from this phone and waiting to send, and lent items to take back. A
  * return is graded New, Good, Worn or Unusable; an unusable item leaves stock.
+ * Each row opens its details (RAPP-283): who handed it over, the note, her
+ * signature or why she did not sign, the statement language, and who recorded
+ * the return.
  */
 import { ChoiceOption } from '@/components/equipment/choice-option';
+import { SignaturePreview } from '@/components/equipment/signature-pad';
 import { FailureNotice } from '@/components/error-code-line';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
-import { useHandoverOutbox, useParticipantMaterial, useRecordReturn } from '@/lib/handover';
+import {
+  useHandoverOutbox,
+  useParticipantMaterial,
+  useParticipantMaterialDetail,
+  useRecordReturn,
+} from '@/lib/handover';
 import { useItemLabel } from '@/lib/item-label';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useMemo, useState } from 'react';
@@ -21,7 +30,7 @@ import {
 } from '@ramassa/shared/equipment';
 import { toAppError } from '@ramassa/shared/errors';
 import { MADRID_TIME_ZONE } from '@ramassa/shared/events';
-import { DEFAULT_LANGUAGE } from '@ramassa/shared/i18n';
+import { DEFAULT_LANGUAGE, LANGUAGE_NATIVE_NAMES } from '@ramassa/shared/i18n';
 import { tokens } from '@ramassa/shared/tokens';
 
 function useDateFormat() {
@@ -147,6 +156,53 @@ function ReturnPanel({
   );
 }
 
+function MaterialDetail({ deliveryId }: { readonly deliveryId: string }) {
+  const { t } = useTranslation('participants');
+  const fontClass = useLanguageFontClass();
+  const detail = useParticipantMaterialDetail(deliveryId);
+  if (detail.isPending) return <ActivityIndicator color={tokens.colors.primary.DEFAULT} />;
+  if (detail.isError || detail.data === null) {
+    return (
+      <Text className={`text-start text-sm text-error ${fontClass}`}>
+        {t('material.detail.loadFailed')}
+      </Text>
+    );
+  }
+  const data = detail.data;
+  const lines = [
+    data.deliveredByName === null
+      ? null
+      : t('material.detail.handedBy', { name: data.deliveredByName }),
+    data.note === null ? null : t('material.detail.note', { note: data.note }),
+    data.signatureReason === null
+      ? null
+      : t('material.detail.reason', { reason: data.signatureReason }),
+    data.statementLanguage === null
+      ? null
+      : t('material.detail.language', {
+          language: LANGUAGE_NATIVE_NAMES[data.statementLanguage],
+        }),
+    data.returnedByName === null
+      ? null
+      : t('material.detail.returnedBy', { name: data.returnedByName }),
+  ].filter((line): line is string => line !== null);
+  return (
+    <View className="gap-xs" testID={`material-detail-${deliveryId}`}>
+      {lines.map((line) => (
+        <Text key={line} className={`text-start text-sm text-neutral-800 ${fontClass}`}>
+          {line}
+        </Text>
+      ))}
+      {data.strokes === null ? null : (
+        <SignaturePreview
+          strokes={data.strokes}
+          accessibilityLabel={t('material.signatureLabel')}
+        />
+      )}
+    </View>
+  );
+}
+
 export function ParticipantMaterial({ participantId }: { readonly participantId: string }) {
   const { t } = useTranslation('participants');
   const itemLabel = useItemLabel();
@@ -156,6 +212,7 @@ export function ParticipantMaterial({ participantId }: { readonly participantId:
   const { entries, retry, discard } = useHandoverOutbox();
   const waiting = entries.filter((entry) => entry.participantId === participantId);
   const [returning, setReturning] = useState<string | null>(null);
+  const [opened, setOpened] = useState<string | null>(null);
   const rows = material.data ?? [];
   const itemWithSize = (key: string, size: string | null) =>
     size === null ? itemLabel(key) : `${itemLabel(key)} ${size}`;
@@ -243,6 +300,13 @@ export function ParticipantMaterial({ participantId }: { readonly participantId:
                 {detail}
               </Text>
             ))}
+            <TextLink
+              testID={`material-details-${row.deliveryId}`}
+              label={t(opened === row.deliveryId ? 'material.detail.hide' : 'material.detail.show')}
+              onPress={() => setOpened(opened === row.deliveryId ? null : row.deliveryId)}
+              fontClass={fontClass}
+            />
+            {opened === row.deliveryId ? <MaterialDetail deliveryId={row.deliveryId} /> : null}
             {awaitsReturn(row) && returning !== row.deliveryId ? (
               <TextLink
                 testID={`material-return-${row.deliveryId}`}
