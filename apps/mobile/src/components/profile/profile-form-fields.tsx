@@ -14,10 +14,12 @@ import { AuthTextField } from '@/components/auth/auth-text-field';
 import { CountryPicker } from '@/components/onboarding/country-picker';
 import { MunicipalityPicker } from '@/components/onboarding/municipality-picker';
 import { OptionChip } from '@/components/onboarding/option-chip';
+import { SeasonAnswerFields, type SeasonAnswers } from '@/components/profile/season-answer-fields';
+import { useSupportingEntityNames } from '@/lib/entity-referrals';
 import { composeIsoBirthDate } from '@/lib/onboarding-form';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useState, type ReactNode } from 'react';
-import { Controller, type Control, type FieldErrors } from 'react-hook-form';
+import { Controller, useController, type Control, type FieldErrors } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import type { z } from 'zod';
@@ -91,14 +93,17 @@ function ChoiceGroup({
  * it. The boxes keep what was typed, so a half-typed date stays on screen and
  * the shared schema names it invalid on Save.
  */
-function BirthDateField({
+export function BirthDateField({
   value,
   onChange,
   errorMessage,
+  testIDPrefix = 'participant-edit',
 }: {
   readonly value: string | undefined;
   readonly onChange: (iso: string) => void;
   readonly errorMessage: string | undefined;
+  /** Prefix of the three boxes' test ids. */
+  readonly testIDPrefix?: string;
 }) {
   const { t } = useTranslation('onboarding');
   const languageFontClass = useLanguageFontClass();
@@ -126,7 +131,7 @@ function BirthDateField({
       <View className="flex-row flex-wrap gap-sm">
         <View className="min-w-[72px] flex-1">
           <AuthTextField
-            testID="participant-edit-day"
+            testID={`${testIDPrefix}-day`}
             label={t('dayLabel')}
             value={parts.day}
             onChangeText={(text) => change('day', text)}
@@ -137,7 +142,7 @@ function BirthDateField({
         </View>
         <View className="min-w-[72px] flex-1">
           <AuthTextField
-            testID="participant-edit-month"
+            testID={`${testIDPrefix}-month`}
             label={t('monthLabel')}
             value={parts.month}
             onChangeText={(text) => change('month', text)}
@@ -148,7 +153,7 @@ function BirthDateField({
         </View>
         <View className="min-w-[96px] flex-[1.5]">
           <AuthTextField
-            testID="participant-edit-year"
+            testID={`${testIDPrefix}-year`}
             label={t('yearLabel')}
             value={parts.year}
             onChangeText={(text) => change('year', text)}
@@ -166,6 +171,63 @@ function BirthDateField({
           {errorMessage}
         </Text>
       )}
+    </View>
+  );
+}
+
+/**
+ * The season registration answers (RAPP-303) wired to this form: five
+ * controllers composed into the shared block. The partner entity names are
+ * offered to staff; her own screen lists only what she already has.
+ */
+function SeasonAnswerControllers({
+  control,
+  showSensitive,
+  testIDPrefix,
+}: {
+  readonly control: Control<ProfileEditInput, unknown, ProfileEdit>;
+  readonly showSensitive: boolean;
+  readonly testIDPrefix: string;
+}) {
+  const { t } = useTranslation(['onboarding']);
+  const languageFontClass = useLanguageFontClass();
+  const entityNames = useSupportingEntityNames();
+  const applicantStatus = useController({ control, name: 'applicantStatus' });
+  const supportingEntities = useController({ control, name: 'supportingEntities' });
+  const seasonNumber = useController({ control, name: 'seasonNumber' });
+  const childcareNeed = useController({ control, name: 'childcareNeed' });
+  const specificNeeds = useController({ control, name: 'specificNeeds' });
+  const value: SeasonAnswers = {
+    applicantStatus: (applicantStatus.field.value as SeasonAnswers['applicantStatus']) ?? null,
+    supportingEntities: (supportingEntities.field.value as string[] | undefined) ?? [],
+    seasonNumber: (seasonNumber.field.value as SeasonAnswers['seasonNumber']) ?? null,
+    childcareNeed: (childcareNeed.field.value as SeasonAnswers['childcareNeed']) ?? null,
+    specificNeeds: (specificNeeds.field.value as string | undefined) ?? '',
+  };
+  return (
+    <View className="gap-md">
+      <Text
+        accessibilityRole="header"
+        className={`text-start text-lg font-bold text-neutral-900 ${languageFontClass}`}
+      >
+        {t('onboarding:seasonSectionTitle')}
+      </Text>
+      <SeasonAnswerFields
+        testIDPrefix={testIDPrefix}
+        value={value}
+        entityNames={entityNames.data ?? []}
+        showSensitive={showSensitive}
+        onChange={(patch) => {
+          if ('applicantStatus' in patch)
+            applicantStatus.field.onChange(patch.applicantStatus ?? undefined);
+          if ('supportingEntities' in patch)
+            supportingEntities.field.onChange(patch.supportingEntities);
+          if ('seasonNumber' in patch) seasonNumber.field.onChange(patch.seasonNumber ?? undefined);
+          if ('childcareNeed' in patch)
+            childcareNeed.field.onChange(patch.childcareNeed ?? undefined);
+          if ('specificNeeds' in patch) specificNeeds.field.onChange(patch.specificNeeds);
+        }}
+      />
     </View>
   );
 }
@@ -535,6 +597,12 @@ export function ProfileFormFields({
       {/* The revocable consent, in both directions. The wizard told her she
           could change this from her profile; this is the control that keeps
           that promise. */}
+      <SeasonAnswerControllers
+        control={control}
+        showSensitive={showSensitive}
+        testIDPrefix={testIDPrefix}
+      />
+
       {showMediaConsent ? (
         <Controller
           control={control}
