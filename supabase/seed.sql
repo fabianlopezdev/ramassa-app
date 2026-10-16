@@ -1151,6 +1151,14 @@ from unnest(array[
 ]) as question
 on conflict (profile_id, question) do nothing;
 
+-- Staff choices for her wizard (RAPP-301): she reviews the clothing size staff
+-- entered, and she is not asked her phone.
+insert into public.intake_question_states (profile_id, org_id, question, state)
+values
+  ('5eed0000-0000-4000-8000-000000000098', '5eed0000-0000-4000-8000-000000000000', 'clothing_size', 'ask'),
+  ('5eed0000-0000-4000-8000-000000000098', '5eed0000-0000-4000-8000-000000000000', 'phone', 'skip')
+on conflict (profile_id, question) do nothing;
+
 -- Terms acceptances ----------------------------------------------------------------
 -- The consent EVENT behind each seeded player's `terms_accepted_at` (RAPP-21).
 -- Seeded in the language that player actually reads, because the whole point of

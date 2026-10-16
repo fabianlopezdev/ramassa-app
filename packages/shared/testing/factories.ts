@@ -70,6 +70,7 @@ export type StockAlertRow = Database['public']['Tables']['stock_alerts']['Row'];
 export type AuditLogRow = Database['public']['Tables']['audit_log']['Row'];
 export type InviteRow = Database['public']['Tables']['invites']['Row'];
 export type ProfileAnswerRow = Database['public']['Tables']['profile_answers']['Row'];
+export type IntakeQuestionStateRow = Database['public']['Tables']['intake_question_states']['Row'];
 export type ServiceCategoryRow = Database['public']['Tables']['service_categories']['Row'];
 export type ServiceRow = Database['public']['Tables']['services']['Row'];
 export type ServiceImageRow = Database['public']['Tables']['service_images']['Row'];
@@ -1227,6 +1228,24 @@ export function buildProfileAnswer(overrides: Partial<ProfileAnswerRow> = {}): P
     question: 'nationality',
     source: 'staff',
     answered_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+/**
+ * A staff choice for one wizard question (RAPP-301): the seeded invited woman
+ * reviews her clothing size although staff answered it.
+ */
+export function buildIntakeQuestionState(
+  overrides: Partial<IntakeQuestionStateRow> = {},
+): IntakeQuestionStateRow {
+  return {
+    profile_id: INVITED_ACCOUNT_ID,
+    org_id: SEED_ORGANIZATION_ID,
+    question: 'clothing_size',
+    state: 'ask',
+    updated_at: FIXTURE_TIMESTAMP,
+    updated_by: null,
     ...overrides,
   };
 }
