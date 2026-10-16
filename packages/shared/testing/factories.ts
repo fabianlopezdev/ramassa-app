@@ -27,6 +27,7 @@ import {
 } from '../services/definitions';
 import type { Database, Json } from '../types/database';
 import {
+  INVITED_ACCOUNT_ID,
   ONBOARDING_ACCOUNT_EMAIL,
   PARTICIPANT_FIXTURES,
   SEED_ORGANIZATION_ID,
@@ -68,6 +69,7 @@ export type EquipmentDeliveryRow = Database['public']['Tables']['equipment_deliv
 export type StockAlertRow = Database['public']['Tables']['stock_alerts']['Row'];
 export type AuditLogRow = Database['public']['Tables']['audit_log']['Row'];
 export type InviteRow = Database['public']['Tables']['invites']['Row'];
+export type ProfileAnswerRow = Database['public']['Tables']['profile_answers']['Row'];
 export type ServiceCategoryRow = Database['public']['Tables']['service_categories']['Row'];
 export type ServiceRow = Database['public']['Tables']['services']['Row'];
 export type ServiceImageRow = Database['public']['Tables']['service_images']['Row'];
@@ -1209,6 +1211,21 @@ export function buildInternalDocument(
     content_type: 'application/pdf',
     file_size: 32768,
     created_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+/**
+ * One answered intake question (RAPP-300). Defaults to a staff answer for the
+ * seeded invited woman, the state the wizard reads to skip a question.
+ */
+export function buildProfileAnswer(overrides: Partial<ProfileAnswerRow> = {}): ProfileAnswerRow {
+  return {
+    profile_id: INVITED_ACCOUNT_ID,
+    org_id: SEED_ORGANIZATION_ID,
+    question: 'nationality',
+    source: 'staff',
+    answered_at: FIXTURE_TIMESTAMP,
     ...overrides,
   };
 }

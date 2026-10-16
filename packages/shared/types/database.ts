@@ -2315,6 +2315,45 @@ export type Database = {
           },
         ];
       };
+      profile_answers: {
+        Row: {
+          answered_at: string;
+          org_id: string;
+          profile_id: string;
+          question: string;
+          source: string;
+        };
+        Insert: {
+          answered_at?: string;
+          org_id: string;
+          profile_id: string;
+          question: string;
+          source: string;
+        };
+        Update: {
+          answered_at?: string;
+          org_id?: string;
+          profile_id?: string;
+          question?: string;
+          source?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'profile_answers_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'profile_answers_profile_id_fkey';
+            columns: ['profile_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       profiles: {
         Row: {
           address: string | null;
@@ -4779,6 +4818,7 @@ export type Database = {
           has_dependents: boolean;
           id: string;
           is_active: boolean;
+          joined: boolean;
           last_name: string;
           nationality: string;
           num_dependents: number;
@@ -4973,6 +5013,7 @@ export type Database = {
           last_counted_at: string;
         }[];
       };
+      my_answered_questions: { Args: never; Returns: string[] };
       my_entity_invitation: {
         Args: never;
         Returns: {

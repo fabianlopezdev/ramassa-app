@@ -1079,6 +1079,69 @@ values (
 )
 on conflict (provider_id, provider) do nothing;
 
+-- The invited test account (RAPP-300) ------------------------------------------------
+-- A woman whose profile staff created with her account: role 'invited', no
+-- consent yet, and some questions answered by staff. Signing in as her shows
+-- the wizard asking only the rest, then the summary and the terms. Completing
+-- it locally makes her a player; the next `db reset` restores this state.
+
+insert into auth.users (
+  instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
+  raw_app_meta_data, raw_user_meta_data, created_at, updated_at,
+  confirmation_token, recovery_token, email_change, email_change_token_new,
+  email_change_token_current, reauthentication_token
+)
+values (
+  '00000000-0000-0000-0000-000000000000',
+  '5eed0000-0000-4000-8000-000000000098',
+  'authenticated',
+  'authenticated',
+  'invited@example.test',
+  extensions.crypt('ramassa-dev-password', extensions.gen_salt('bf')),
+  now(),
+  '{"provider":"email","providers":["email"]}'::jsonb,
+  '{}'::jsonb,
+  now(), now(), '', '', '', '', '', ''
+)
+on conflict (id) do nothing;
+
+insert into auth.identities (
+  provider_id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at
+)
+values (
+  '5eed0000-0000-4000-8000-000000000098',
+  '5eed0000-0000-4000-8000-000000000098',
+  jsonb_build_object('sub', '5eed0000-0000-4000-8000-000000000098', 'email', 'invited@example.test'),
+  'email',
+  now(), now(), now()
+)
+on conflict (provider_id, provider) do nothing;
+
+insert into public.profiles (
+  id, org_id, role, first_name, last_name, date_of_birth, nationality,
+  reference_entity, clothing_size, preferred_language
+)
+values (
+  '5eed0000-0000-4000-8000-000000000098',
+  '5eed0000-0000-4000-8000-000000000000',
+  'invited',
+  'Mariam',
+  'Keita',
+  '1999-03-14',
+  'Mali',
+  'Creu Roja Osona',
+  'M',
+  'ca'
+)
+on conflict (id) do nothing;
+
+insert into public.profile_answers (profile_id, org_id, question, source)
+select '5eed0000-0000-4000-8000-000000000098', '5eed0000-0000-4000-8000-000000000000', question, 'staff'
+from unnest(array[
+  'first_name', 'last_name', 'date_of_birth', 'nationality', 'reference_entity', 'clothing_size'
+]) as question
+on conflict (profile_id, question) do nothing;
+
 -- Terms acceptances ----------------------------------------------------------------
 -- The consent EVENT behind each seeded player's `terms_accepted_at` (RAPP-21).
 -- Seeded in the language that player actually reads, because the whole point of
@@ -1171,8 +1234,9 @@ values
 on conflict do nothing;
 
 -- Invites -----------------------------------------------------------------------------
--- Two invitations (RAPP-25), so the staff invite list is not an empty screen and
--- both states it has to render are reachable in the dev app.
+-- Three invitations (RAPP-25), so the staff invite list is not an empty screen and
+-- both states it has to render are reachable in the dev app. The third belongs to
+-- the invited test account (RAPP-300), whose profile staff created with it.
 --
 -- The PENDING one is addressed to the seeded onboarding account, which has an
 -- auth user and deliberately no profile: signing in as her and opening the
@@ -1184,6 +1248,15 @@ values
   (
     '5eed0000-0000-4000-8000-000000000000',
     'onboarding@example.test',
+    'Creu Roja Osona',
+    '5eed0000-0000-4000-8000-000000000002',
+    now() + interval '30 days',
+    null,
+    null
+  ),
+  (
+    '5eed0000-0000-4000-8000-000000000000',
+    'invited@example.test',
     'Creu Roja Osona',
     '5eed0000-0000-4000-8000-000000000002',
     now() + interval '30 days',
