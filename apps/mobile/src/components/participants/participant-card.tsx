@@ -157,6 +157,9 @@ export function ParticipantCard({
   }
 
   const name = `${data.first_name} ${data.last_name}`;
+  // Not joined yet: staff created her profile and she has not accepted the terms (RAPP-300).
+  // She can be edited, but not deactivated, handed material or moderated: she is not a player yet.
+  const hasJoined = data.terms_accepted_at !== null;
   const shown = (value: string | null) =>
     value === null || value.length === 0 ? tProfile('notProvided') : value;
   const row = (
@@ -297,7 +300,7 @@ export function ParticipantCard({
               data.is_active ? 'text-neutral-800' : 'text-neutral-600'
             } ${languageFontClass}`}
           >
-            {data.is_active ? t('rowActive') : t('rowInactive')}
+            {!hasJoined ? t('rowInvited') : data.is_active ? t('rowActive') : t('rowInactive')}
           </Text>
           {data.is_forum_banned ? (
             <Text className={`text-start text-sm font-semibold text-error ${languageFontClass}`}>
@@ -310,7 +313,7 @@ export function ParticipantCard({
         </Text>
       </View>
 
-      {canHandOver ? (
+      {canHandOver && hasJoined ? (
         <CardAction
           testID="participant-hand-over"
           label={t('material.handOver')}
@@ -318,7 +321,7 @@ export function ParticipantCard({
           isPrimary
         />
       ) : null}
-      {canEdit || canChangeStatus || canModerateForum ? (
+      {canEdit || (hasJoined && (canChangeStatus || canModerateForum)) ? (
         <View className="flex-row flex-wrap gap-sm">
           {canEdit ? (
             <CardAction
@@ -327,7 +330,7 @@ export function ParticipantCard({
               onPress={() => push(`/participant-edit/${participantId}` as Href)}
             />
           ) : null}
-          {canChangeStatus ? (
+          {canChangeStatus && hasJoined ? (
             <CardAction
               testID="participant-status"
               label={data.is_active ? t('statusActionDeactivate') : t('statusActionActivate')}
@@ -335,7 +338,7 @@ export function ParticipantCard({
               isBusy={setActive.isPending}
             />
           ) : null}
-          {canModerateForum ? (
+          {canModerateForum && hasJoined ? (
             <CardAction
               testID="participant-forum"
               label={

@@ -76,6 +76,18 @@ const DEFAULT_SEARCH: ParticipantListSearch = (({ page, ...rest }) => {
   return rest;
 })(participantSearchSchema.parse({}));
 
+/**
+ * The status a row says out loud: invited women who have not joined yet
+ * (RAPP-300), then inactive players. Null for an active player.
+ */
+function rowStatusLabel(
+  row: Pick<ParticipantListRow, 'joined' | 'is_active'>,
+  t: (key: string) => string,
+): string | null {
+  if (!row.joined) return t('rowInvited');
+  return row.is_active ? null : t('rowInactive');
+}
+
 function ParticipantRow({
   row,
   onOpen,
@@ -89,7 +101,8 @@ function ParticipantRow({
   const fontClass = useLanguageFontClass();
   const name = `${row.first_name} ${row.last_name}`;
   const detail = [row.city, row.reference_entity].filter(Boolean).join(' · ');
-  const label = [name, detail, row.is_active ? null : t('rowInactive')].filter(Boolean).join(', ');
+  const status = rowStatusLabel(row, t);
+  const label = [name, detail, status].filter(Boolean).join(', ');
   return (
     <PressableScale
       testID={`participant-result-${row.id}`}
@@ -105,10 +118,8 @@ function ParticipantRow({
     >
       <View className="flex-row flex-wrap items-baseline justify-between gap-sm">
         <Text className={`text-start text-md font-bold text-neutral-900 ${fontClass}`}>{name}</Text>
-        {row.is_active ? null : (
-          <Text className={`text-sm font-semibold text-neutral-600 ${fontClass}`}>
-            {t('rowInactive')}
-          </Text>
+        {status === null ? null : (
+          <Text className={`text-sm font-semibold text-neutral-600 ${fontClass}`}>{status}</Text>
         )}
       </View>
       {detail.length > 0 ? (
@@ -139,12 +150,7 @@ function TableRow({
     <PressableScale
       testID={`participant-result-${row.id}`}
       accessibilityRole="button"
-      accessibilityLabel={[
-        name,
-        row.city,
-        row.reference_entity,
-        row.is_active ? null : t('rowInactive'),
-      ]
+      accessibilityLabel={[name, row.city, row.reference_entity, rowStatusLabel(row, t)]
         .filter(Boolean)
         .join(', ')}
       onPress={() => onOpen(row.id)}
@@ -167,7 +173,7 @@ function TableRow({
       </View>
       {wide ? (
         <View style={columnStyle}>
-          <Text className={cell}>{row.is_active ? t('rowActive') : t('rowInactive')}</Text>
+          <Text className={cell}>{rowStatusLabel(row, t) ?? t('rowActive')}</Text>
         </View>
       ) : null}
       {wide ? (
@@ -344,7 +350,7 @@ export default function ParticipantListScreen() {
           accessibilityLabel={t('filterStatus')}
           className="flex-row gap-sm"
         >
-          {(['all', 'active', 'inactive'] as const).map((status) => (
+          {(['all', 'active', 'inactive', 'invited'] as const).map((status) => (
             <ChoiceOption
               key={status}
               testID={`participant-status-${status}`}
@@ -352,7 +358,13 @@ export default function ParticipantListScreen() {
               label={
                 status === 'all'
                   ? t('optionAll')
-                  : t(status === 'active' ? 'statusActive' : 'statusInactive')
+                  : t(
+                      status === 'active'
+                        ? 'statusActive'
+                        : status === 'inactive'
+                          ? 'statusInactive'
+                          : 'statusInvited',
+                    )
               }
               selected={search.status === status}
               onSelect={(value) => setSearch((current) => ({ ...current, status: value }))}

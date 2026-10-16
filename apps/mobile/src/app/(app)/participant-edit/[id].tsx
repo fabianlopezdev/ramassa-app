@@ -7,6 +7,11 @@
  * fields: the form leaves them out and the database keeps the stored values.
  * The screen leaves only when the database says the save worked; a failed save
  * keeps her edits on screen with a message and a code.
+ *
+ * A woman who has not joined yet (RAPP-300) gets the prefill rules the web
+ * admin uses: only what somebody answered shows, only her names are required,
+ * no media consent (hers to give), and only the changed fields are sent,
+ * because each one becomes a staff answer her wizard stops asking.
  */
 import { AnnouncementFeedSkeleton } from '@/components/announcements/feed-states';
 import { FailureNotice } from '@/components/error-code-line';
@@ -16,9 +21,11 @@ import { playHaptic } from '@/lib/haptics/haptics';
 import { useParticipantCard, useParticipantWrites } from '@/lib/participant-lookup';
 import { participantFieldAccess } from '@/lib/participant-profile';
 import { profileFormResetOptions } from '@/lib/profile-save';
+import { supabase } from '@/lib/supabase';
 import { useAccountAccess } from '@/lib/use-account-access';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useQuery } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -26,6 +33,13 @@ import { useTranslation } from 'react-i18next';
 import { Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { toAppError, type AppErrorCode } from '@ramassa/shared/errors';
+import {
+  buildProfilePrefillPayload,
+  fetchParticipantAnsweredQuestions,
+  prefillFromRow,
+  profilePrefillSchema,
+  type ProfilePrefill,
+} from '@ramassa/shared/participants';
 import {
   buildUpdateOwnProfilePayload,
   profileEditSchema,
@@ -36,6 +50,9 @@ import {
 
 const fullResolver = zodResolver(profileEditSchema);
 const withoutSensitiveResolver = zodResolver(profileEditWithoutSensitiveSchema);
+// Same field names as the full form, so the shared fields render it; the
+// schema differs (everything optional but the names).
+const prefillResolver = zodResolver(profilePrefillSchema) as unknown as typeof fullResolver;
 
 export default function ParticipantEditScreen() {
   const { id = '' } = useLocalSearchParams<{ id: string }>();
@@ -48,20 +65,31 @@ export default function ParticipantEditScreen() {
   const [isBlocked, setIsBlocked] = useState(false);
   const [failureCode, setFailureCode] = useState<AppErrorCode | null>(null);
 
-  const values = useMemo(
-    () =>
-      card.data === null || card.data === undefined
-        ? undefined
-        : (profileFromRow(card.data) as ProfileEditInput),
-    [card.data],
-  );
+  const isPrefill =
+    card.data !== null && card.data !== undefined && card.data.terms_accepted_at === null;
+  const answered = useQuery({
+    queryKey: ['participants', id, 'answered-questions'],
+    queryFn: () => fetchParticipantAnsweredQuestions(supabase, id),
+    enabled: isPrefill,
+  });
+  const values = useMemo(() => {
+    if (card.data === null || card.data === undefined) return undefined;
+    if (!isPrefill) return profileFromRow(card.data) as ProfileEditInput;
+    return answered.data === undefined
+      ? undefined
+      : (prefillFromRow(card.data, answered.data) as unknown as ProfileEditInput);
+  }, [answered.data, card.data, isPrefill]);
   const {
     control,
     handleSubmit,
     watch,
-    formState: { errors },
+    formState: { errors, dirtyFields },
   } = useForm<ProfileEditInput, unknown, ProfileEdit>({
-    resolver: access.sensitive ? fullResolver : withoutSensitiveResolver,
+    resolver: isPrefill
+      ? prefillResolver
+      : access.sensitive
+        ? fullResolver
+        : withoutSensitiveResolver,
     values,
     // Edits in progress survive the card reloading underneath the form.
     resetOptions: profileFormResetOptions,
@@ -71,7 +99,17 @@ export default function ParticipantEditScreen() {
     (edit) => {
       setIsBlocked(false);
       setFailureCode(null);
-      updateProfile.mutate(buildUpdateOwnProfilePayload(edit), {
+      const payload = isPrefill
+        ? buildProfilePrefillPayload(
+            edit as unknown as ProfilePrefill,
+            new Set(Object.keys(dirtyFields)),
+          )
+        : buildUpdateOwnProfilePayload(edit);
+      if (isPrefill && Object.keys(payload).length === 0) {
+        back();
+        return;
+      }
+      updateProfile.mutate(payload, {
         onSuccess: () => {
           playHaptic('success');
           back();
@@ -109,6 +147,7 @@ export default function ParticipantEditScreen() {
         hasDependents={watch('hasDependents')}
         audience="staff"
         showSensitive={access.sensitive}
+        showMediaConsent={!isPrefill}
         testIDPrefix="participant-edit"
       />
       {access.sensitive ? null : (

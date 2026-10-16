@@ -1,6 +1,7 @@
 /**
  * A new participant invite from the phone (RAPP-284), with the web admin's
- * rules: her email (the same login schema), and an optional referring entity
+ * rules: her first and last name, which create her profile with the invite
+ * (RAPP-300), her email (the same login schema), and an optional referring entity
  * that her guided registration shows pre-filled. The entity is a picker of the
  * entities the organization already uses, with "Other" for a new one, so the
  * same entity is not typed in three spellings.
@@ -17,6 +18,7 @@ import { playHaptic } from '@/lib/haptics/haptics';
 import type { useParticipantInvites } from '@/lib/participant-invites';
 import { useParticipantFilterOptions } from '@/lib/participant-lookup';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
+import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { KeyboardAvoidingView, Modal, ScrollView, Text, View } from 'react-native';
@@ -78,11 +80,15 @@ export function InviteSheet({
   readonly onClose: () => void;
   readonly create: ReturnType<typeof useParticipantInvites>['create'];
 }) {
-  const { t, i18n } = useTranslation('participants');
+  const { t, i18n } = useTranslation(['participants', 'onboarding', 'profile']);
   const fontClass = useLanguageFontClass();
   // A native Modal sits above the app lock's cover, so it hides while locked.
   const { isCovered } = useAppLock();
   const entities = useParticipantFilterOptions().data?.entities ?? [];
+  const router = useRouter();
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [nameError, setNameError] = useState<string | null>(null);
   const [email, setEmail] = useState('');
   const [entity, setEntity] = useState<string>(NONE);
   const [otherEntity, setOtherEntity] = useState('');
@@ -97,6 +103,9 @@ export function InviteSheet({
   }, [i18n.resolvedLanguage]);
 
   const reset = () => {
+    setFirstName('');
+    setLastName('');
+    setNameError(null);
     setEmail('');
     setEntity(NONE);
     setOtherEntity('');
@@ -110,12 +119,22 @@ export function InviteSheet({
   };
   const submit = () => {
     const referenceEntity = entity === NONE ? undefined : entity === OTHER ? otherEntity : entity;
-    const parsed = createParticipantInviteSchema.safeParse({ email, referenceEntity });
+    const parsed = createParticipantInviteSchema.safeParse({
+      email,
+      firstName,
+      lastName,
+      referenceEntity,
+    });
     if (!parsed.success) {
-      setEmailError(t('inviteEmailError'));
+      const invalid = new Set(parsed.error.issues.map((issue) => String(issue.path[0])));
+      setNameError(
+        invalid.has('firstName') || invalid.has('lastName') ? t('inviteNameError') : null,
+      );
+      setEmailError(invalid.has('email') ? t('inviteEmailError') : null);
       playHaptic('warning');
       return;
     }
+    setNameError(null);
     setEmailError(null);
     create.mutate(parsed.data, {
       onSuccess: (invite) => {
@@ -158,6 +177,24 @@ export function InviteSheet({
                 <Text className={`text-start text-md text-neutral-700 ${fontClass}`}>
                   {t('inviteIntro')}
                 </Text>
+                <AuthTextField
+                  testID="invite-first-name"
+                  label={t('onboarding:firstNameLabel')}
+                  value={firstName}
+                  onChangeText={setFirstName}
+                  isInvalid={nameError !== null && firstName.trim() === ''}
+                  autoCapitalize="words"
+                  autoComplete="off"
+                />
+                <AuthTextField
+                  testID="invite-last-name"
+                  label={t('onboarding:lastNameLabel')}
+                  value={lastName}
+                  onChangeText={setLastName}
+                  errorMessage={nameError ?? undefined}
+                  autoCapitalize="words"
+                  autoComplete="off"
+                />
                 <AuthTextField
                   testID="invite-email"
                   label={t('invites.emailLabel')}
@@ -238,7 +275,24 @@ export function InviteSheet({
                 <Text className={`text-start text-md text-neutral-800 ${fontClass}`}>
                   {t('invitedExpires', { date: formatDate(created.expires_at) })}
                 </Text>
+                {created.profile_id === null ? null : (
+                  <Text className={`text-start text-md text-neutral-800 ${fontClass}`}>
+                    {t('invitedCompleteHint')}
+                  </Text>
+                )}
                 <View className="flex-row flex-wrap gap-sm">
+                  {created.profile_id === null ? null : (
+                    <SheetButton
+                      testID="invite-complete"
+                      label={t('invitedCompleteAction')}
+                      onPress={() => {
+                        const profileId = created.profile_id;
+                        close();
+                        if (profileId !== null) router.push(`/participant/${profileId}`);
+                      }}
+                      isPrimary
+                    />
+                  )}
                   <SheetButton
                     testID="invite-another"
                     label={t('inviteAnotherAction')}
@@ -248,7 +302,7 @@ export function InviteSheet({
                     testID="invite-done"
                     label={t('material.done')}
                     onPress={close}
-                    isPrimary
+                    isPrimary={created.profile_id === null}
                   />
                 </View>
               </>

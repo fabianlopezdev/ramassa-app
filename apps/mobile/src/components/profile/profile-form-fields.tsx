@@ -103,6 +103,16 @@ function BirthDateField({
   const { t } = useTranslation('onboarding');
   const languageFontClass = useLanguageFontClass();
   const [parts, setParts] = useState(() => birthDateParts(value));
+  // A value set from outside (the form loading her record after this field
+  // mounted, RAPP-300) replaces the boxes. While she types, the form value is
+  // the typed parts composed, so this never undoes a half-typed date.
+  const [syncedValue, setSyncedValue] = useState(value);
+  if (value !== syncedValue) {
+    setSyncedValue(value);
+    if (value !== composeIsoBirthDate(parts.day, parts.month, parts.year)) {
+      setParts(birthDateParts(value));
+    }
+  }
   const change = (part: 'day' | 'month' | 'year', text: string) => {
     const next = { ...parts, [part]: text.replace(NON_DIGITS, '') };
     setParts(next);
@@ -167,6 +177,7 @@ export function ProfileFormFields({
   hasDependents,
   audience,
   showSensitive = true,
+  showMediaConsent = true,
   testIDPrefix,
 }: {
   readonly control: Control<ProfileEditInput, unknown, ProfileEdit>;
@@ -177,6 +188,8 @@ export function ProfileFormFields({
   readonly audience: 'self' | 'staff';
   /** Document number, phone, address and postal code. */
   readonly showSensitive?: boolean;
+  /** False for a woman who has not joined yet (RAPP-300): that consent is hers to give. */
+  readonly showMediaConsent?: boolean;
   readonly testIDPrefix: string;
 }) {
   const { t } = useTranslation(['profile', 'onboarding', 'participants']);
@@ -309,7 +322,8 @@ export function ProfileFormFields({
         )}
       />
 
-      {documentType === 'none' || !showSensitive ? null : (
+      {/* No number without a type: an unanswered document (RAPP-300) asks the type first. */}
+      {documentType === undefined || documentType === 'none' || !showSensitive ? null : (
         <Controller
           control={control}
           name="documentNumber"
@@ -513,31 +527,33 @@ export function ProfileFormFields({
       {/* The revocable consent, in both directions. The wizard told her she
           could change this from her profile; this is the control that keeps
           that promise. */}
-      <Controller
-        control={control}
-        name="mediaConsent"
-        render={({ field }) => {
-          const label = isStaff
-            ? t('profile:fieldMediaConsent')
-            : t('onboarding:mediaConsentLabel');
-          return (
-            <ChoiceGroup label={label}>
-              <OptionChip
-                label={t('onboarding:yesOption')}
-                accessibilityHint={label}
-                isSelected={field.value === true}
-                onPress={() => field.onChange(true)}
-              />
-              <OptionChip
-                label={t('onboarding:noOption')}
-                accessibilityHint={label}
-                isSelected={field.value === false}
-                onPress={() => field.onChange(false)}
-              />
-            </ChoiceGroup>
-          );
-        }}
-      />
+      {showMediaConsent ? (
+        <Controller
+          control={control}
+          name="mediaConsent"
+          render={({ field }) => {
+            const label = isStaff
+              ? t('profile:fieldMediaConsent')
+              : t('onboarding:mediaConsentLabel');
+            return (
+              <ChoiceGroup label={label}>
+                <OptionChip
+                  label={t('onboarding:yesOption')}
+                  accessibilityHint={label}
+                  isSelected={field.value === true}
+                  onPress={() => field.onChange(true)}
+                />
+                <OptionChip
+                  label={t('onboarding:noOption')}
+                  accessibilityHint={label}
+                  isSelected={field.value === false}
+                  onPress={() => field.onChange(false)}
+                />
+              </ChoiceGroup>
+            );
+          }}
+        />
+      ) : null}
     </>
   );
 }
