@@ -4,7 +4,9 @@ import {
   fetchTeamAccess,
   membersUsingPreset,
   permissionsByArea,
+  presetWithinReach,
   summarizeAccess,
+  teamAccessErrorKey,
   type PermissionPreset,
   type TeamMemberAccess,
 } from './team-access';
@@ -112,4 +114,29 @@ describe('fetchTeamAccess', () => {
     } as never;
     await expect(fetchTeamAccess(client)).rejects.toMatchObject({ code: 'DB-1' });
   });
+});
+
+test('each refusal from the database gets its own sentence', () => {
+  expect(teamAccessErrorKey(new Error('PERMISSIONS/LAST_TEAM_MANAGER'))).toBe(
+    'team.errorLastManager',
+  );
+  expect(teamAccessErrorKey(new Error('at least one team.manage holder'))).toBe(
+    'team.errorLastManager',
+  );
+  expect(teamAccessErrorKey(new Error('PERMISSIONS/NOT_HELD'))).toBe('team.errorNotHeld');
+  expect(teamAccessErrorKey(new Error('PERMISSIONS/BUILTIN_PRESET'))).toBe('team.errorBuiltIn');
+  expect(teamAccessErrorKey(new Error('PERMISSIONS/PRESET_NAME_REQUIRED'))).toBe(
+    'team.errorPresetName',
+  );
+  expect(teamAccessErrorKey('something else')).toBe('actionError');
+});
+
+test('using a preset changes only the toggles the reader holds', () => {
+  const current = new Set<PermissionCode>(['attendance.mark', 'team.manage']);
+  const preset = { permissions: new Set<PermissionCode>(['participants.view']) };
+  const holds = (code: PermissionCode) => code !== 'team.manage';
+  expect([...presetWithinReach(current, preset, holds)].sort()).toEqual([
+    'participants.view',
+    'team.manage',
+  ]);
 });

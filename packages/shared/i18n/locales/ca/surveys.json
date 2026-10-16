@@ -61,5 +61,15 @@
   "reject": "Rebutja",
   "approve": "Aprova",
   "approveAll": "Aprova-ho tot",
-  "loadingResponses": "S'estan carregant les respostes..."
+  "loadingResponses": "S'estan carregant les respostes...",
+  "addChoice": "Afegeix una opció",
+  "removeChoice": "Elimina l'opció",
+  "noSurveys": "Encara no hi ha enquestes.",
+  "statusScheduled": "Programada",
+  "statusOpen": "Oberta",
+  "statusClosed": "Tancada",
+  "averageRating": "Mitjana {{value}} de 5",
+  "choiceLabel": "Opció {{number}} en català",
+  "datesInvalid": "La data de tancament ha de ser posterior a la de publicació.",
+  "publishAtRequired": "Tria quan es publica l'enquesta."
 }

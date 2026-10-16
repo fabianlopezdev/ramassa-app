@@ -1,4 +1,3 @@
-import { fileURLToPath } from 'node:url';
 import { cloudflare } from '@cloudflare/vite-plugin';
 import { sentryTanstackStart } from '@sentry/tanstackstart-react/vite';
 import tailwindcss from '@tailwindcss/vite';
@@ -91,24 +90,24 @@ export default defineConfig({
   },
   build: {
     chunkSizeWarningLimit: ADMIN_CLIENT_CHUNK_BUDGET_KB,
-    rollupOptions: {
+    rolldownOptions: {
       onLog(level, log, handler) {
-        // Vite 7 reports its own empty CSS module map when release maps are
+        // Vite reports its own empty CSS module map when release maps are
         // enabled. Project transforms still provide real maps and are tested.
         if (isViteCssPostSourcemapDiagnostic(log)) return;
         handler(level, log);
       },
       output: {
-        manualChunks: adminManualChunks,
+        // Vite 8 bundles with Rolldown, whose manual split is a code-splitting
+        // group (RAPP-437). A module the function names nothing for stays in
+        // the automatic split, as with Rollup's manualChunks before.
+        codeSplitting: { groups: [{ name: adminManualChunks }] },
       },
     },
   },
   resolve: {
-    // The docs' `resolve.tsconfigPaths: true` requires a newer Vite than 7.x;
-    // mirror the tsconfig "@/*" path manually until the repo moves to Vite 8+.
-    alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url)),
-    },
+    // Vite 8 reads the tsconfig "@/*" path itself (RAPP-437).
+    tsconfigPaths: true,
   },
   plugins: [
     ramassaTokensCss(),

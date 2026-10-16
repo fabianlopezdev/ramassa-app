@@ -1,7 +1,15 @@
 import { i18n } from '@/lib/i18n';
 import { supabase } from '@/lib/supabase';
 import { vars } from 'nativewind';
-import { createContext, use, useEffect, useMemo, useState, type ReactNode } from 'react';
+import {
+  createContext,
+  use,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react';
 import { AppState, View } from 'react-native';
 import { useAuth } from '@ramassa/shared/auth';
 import {
@@ -16,15 +24,23 @@ import { tokens } from '@ramassa/shared/tokens';
 const fullScreenStyle = { flex: 1 } as const;
 const organizationSlug = process.env.EXPO_PUBLIC_ORGANIZATION_SLUG?.trim() || 'ramassa';
 const OrganizationBrandingContext = createContext<OrganizationRow | null>(null);
+const RefreshBrandingContext = createContext<() => void>(() => undefined);
 
 export function useOrganizationBranding(): OrganizationRow | null {
   return use(OrganizationBrandingContext);
+}
+
+/** Reads the organization again, after its settings change on the phone (RAPP-403). */
+export function useRefreshOrganizationBranding(): () => void {
+  return use(RefreshBrandingContext);
 }
 
 export function OrganizationBrandingProvider({ children }: { readonly children: ReactNode }) {
   const { session } = useAuth();
   const [organization, setOrganization] = useState<OrganizationRow | null>(null);
   const [publicBranding, setPublicBranding] = useState<PublicOrganizationBranding | null>(null);
+  const [version, setVersion] = useState(0);
+  const refresh = useCallback(() => setVersion((current) => current + 1), []);
 
   useEffect(() => {
     let active = true;
@@ -72,7 +88,7 @@ export function OrganizationBrandingProvider({ children }: { readonly children: 
     return () => {
       active = false;
     };
-  }, [session]);
+  }, [session, version]);
 
   const themeStyle = useMemo(
     () =>
@@ -92,8 +108,10 @@ export function OrganizationBrandingProvider({ children }: { readonly children: 
   );
 
   return (
-    <OrganizationBrandingContext value={organization}>
-      <View style={[fullScreenStyle, themeStyle]}>{children}</View>
-    </OrganizationBrandingContext>
+    <RefreshBrandingContext value={refresh}>
+      <OrganizationBrandingContext value={organization}>
+        <View style={[fullScreenStyle, themeStyle]}>{children}</View>
+      </OrganizationBrandingContext>
+    </RefreshBrandingContext>
   );
 }

@@ -36,6 +36,12 @@ function RootComponent() {
   const initialLanguage = Route.useLoaderData();
   const [i18n] = useState(() => createAdminI18n(initialLanguage));
   const [language, setLanguage] = useState<SupportedLanguage>(initialLanguage);
+  // Marks the document once React has taken over the server markup, so the
+  // browser specs act only after handlers are attached (RAPP-437): TanStack
+  // Start 1.169 clears its own stream global earlier than hydration ends.
+  useEffect(() => {
+    document.documentElement.dataset.hydrated = 'true';
+  }, []);
 
   // React owns <html lang dir>: explicit switches after mount flow through the
   // i18next event back into render, replacing the old direct DOM pokes.

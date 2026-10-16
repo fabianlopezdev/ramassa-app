@@ -2,8 +2,11 @@
  * More (RAPP-245): what is not an area of its own. Settings (language and app
  * lock) and sign-out, Stock for whoever receives, counts or edits material
  * (RAPP-250), forum and gallery moderation (RAPP-380, RAPP-381), mentoring
- * (RAPP-382), and the player preview (RAPP-371); later phases add the dashboard, the team and the
- * rest.
+ * (RAPP-382), the feedback inbox (RAPP-383), notifications (RAPP-385), the
+ * impact dashboard (RAPP-400), data exports and the audit log (RAPP-401), the
+ * team (RAPP-404), the organization's settings (RAPP-403), internal documents
+ * (RAPP-406), collaborating entities (RAPP-407), surveys (RAPP-384), and the
+ * player preview (RAPP-371); later slices add the rest.
  *
  */
 import { PageWidth } from '@/components/layout/content-width';
@@ -34,6 +37,12 @@ export default function TeamMoreScreen() {
   const { t: tForum } = useTranslation('forum');
   const { t: tMentoring } = useTranslation('mentoring');
   const { t: tGallery } = useTranslation('gallery');
+  const { t: tFeedback } = useTranslation('feedback');
+  const { t: tNotifications } = useTranslation('notifications');
+  const { t: tSurveys } = useTranslation('surveys');
+  const { t: tEntities } = useTranslation('entity-management');
+  const { t: tSettings } = useTranslation('settings');
+  const { t: tAdmin } = useTranslation('admin');
   const languageFontClass = useLanguageFontClass();
   const { push } = useRouter();
 
@@ -44,7 +53,11 @@ export default function TeamMoreScreen() {
       testID="team-more"
     >
       <PageWidth className="flex-1">
-        <ScrollView contentContainerClassName="gap-md p-lg">
+        {/* The inset keeps the last entry, sign-out, clear of the floating tab bar. */}
+        <ScrollView
+          contentInsetAdjustmentBehavior="automatic"
+          contentContainerClassName="gap-md p-lg pb-3xl"
+        >
           <TeamBackToHome />
           <Text
             accessibilityRole="header"
@@ -94,6 +107,141 @@ export default function TeamMoreScreen() {
             >
               <Text className={`text-start text-md text-neutral-900 ${languageFontClass}`}>
                 {tGallery('moderationTitle')}
+              </Text>
+            </PressableScale>
+          ) : null}
+          {team.feedback ? (
+            <PressableScale
+              testID="team-more-feedback"
+              accessibilityRole="button"
+              accessibilityLabel={tFeedback('inboxTitle')}
+              onPress={() => push('/team-feedback' as Href)}
+              haptic="selection"
+              style={continuousCorners}
+              className="min-h-recommended justify-center rounded-md border border-neutral-200 bg-white px-md"
+            >
+              <Text className={`text-start text-md text-neutral-900 ${languageFontClass}`}>
+                {tFeedback('inboxTitle')}
+              </Text>
+            </PressableScale>
+          ) : null}
+          {team.impact ? (
+            <PressableScale
+              testID="team-more-impact"
+              accessibilityRole="button"
+              accessibilityLabel={tAdmin('impactReportTitle')}
+              onPress={() => push('/team-impact' as Href)}
+              haptic="selection"
+              style={continuousCorners}
+              className="min-h-recommended justify-center rounded-md border border-neutral-200 bg-white px-md"
+            >
+              <Text className={`text-start text-md text-neutral-900 ${languageFontClass}`}>
+                {tAdmin('impactReportTitle')}
+              </Text>
+            </PressableScale>
+          ) : null}
+          {team.staff ? (
+            <PressableScale
+              testID="team-more-staff"
+              accessibilityRole="button"
+              accessibilityLabel={tSettings('team.title')}
+              onPress={() => push('/team-staff' as Href)}
+              haptic="selection"
+              style={continuousCorners}
+              className="min-h-recommended justify-center rounded-md border border-neutral-200 bg-white px-md"
+            >
+              <Text className={`text-start text-md text-neutral-900 ${languageFontClass}`}>
+                {tSettings('team.title')}
+              </Text>
+            </PressableScale>
+          ) : null}
+          {team.dataExports || team.auditLog ? (
+            <PressableScale
+              testID="team-more-data"
+              accessibilityRole="button"
+              accessibilityLabel={t('staff.data')}
+              onPress={() => push('/team-data' as Href)}
+              haptic="selection"
+              style={continuousCorners}
+              className="min-h-recommended justify-center rounded-md border border-neutral-200 bg-white px-md"
+            >
+              <Text className={`text-start text-md text-neutral-900 ${languageFontClass}`}>
+                {t('staff.data')}
+              </Text>
+            </PressableScale>
+          ) : null}
+          {team.organization ? (
+            <PressableScale
+              testID="team-more-organization"
+              accessibilityRole="button"
+              accessibilityLabel={tSettings('tabOrganization')}
+              onPress={() => push('/team-organization' as Href)}
+              haptic="selection"
+              style={continuousCorners}
+              className="min-h-recommended justify-center rounded-md border border-neutral-200 bg-white px-md"
+            >
+              <Text className={`text-start text-md text-neutral-900 ${languageFontClass}`}>
+                {tSettings('tabOrganization')}
+              </Text>
+            </PressableScale>
+          ) : null}
+          {team.documents ? (
+            <PressableScale
+              testID="team-more-documents"
+              accessibilityRole="button"
+              accessibilityLabel={tSettings('documentsTitle')}
+              onPress={() => push('/team-documents' as Href)}
+              haptic="selection"
+              style={continuousCorners}
+              className="min-h-recommended justify-center rounded-md border border-neutral-200 bg-white px-md"
+            >
+              <Text className={`text-start text-md text-neutral-900 ${languageFontClass}`}>
+                {tSettings('documentsTitle')}
+              </Text>
+            </PressableScale>
+          ) : null}
+          {team.entities ? (
+            <PressableScale
+              testID="team-more-entities"
+              accessibilityRole="button"
+              accessibilityLabel={tEntities('managementTitle')}
+              onPress={() => push('/team-entities' as Href)}
+              haptic="selection"
+              style={continuousCorners}
+              className="min-h-recommended justify-center rounded-md border border-neutral-200 bg-white px-md"
+            >
+              <Text className={`text-start text-md text-neutral-900 ${languageFontClass}`}>
+                {tEntities('managementTitle')}
+              </Text>
+            </PressableScale>
+          ) : null}
+          {team.surveys ? (
+            <PressableScale
+              testID="team-more-surveys"
+              accessibilityRole="button"
+              accessibilityLabel={tSurveys('title')}
+              onPress={() => push('/team-surveys' as Href)}
+              haptic="selection"
+              style={continuousCorners}
+              className="min-h-recommended justify-center rounded-md border border-neutral-200 bg-white px-md"
+            >
+              <Text className={`text-start text-md text-neutral-900 ${languageFontClass}`}>
+                {tSurveys('title')}
+              </Text>
+            </PressableScale>
+          ) : null}
+          {team.notifications ? (
+            <PressableScale
+              testID="team-more-notifications"
+              accessibilityRole="button"
+              accessibilityLabel={tNotifications('title')}
+              onPress={() => push('/team-notifications' as Href)}
+              haptic="selection"
+              style={continuousCorners}
+              className="min-h-recommended justify-center rounded-md border border-neutral-200 bg-white px-md"
+            >
+              <Text className={`text-start text-md text-neutral-900 ${languageFontClass}`}>
+                {tNotifications('title')}
               </Text>
             </PressableScale>
           ) : null}

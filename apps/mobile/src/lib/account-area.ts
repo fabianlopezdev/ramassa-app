@@ -58,6 +58,24 @@ export function resolveAccountArea(input: {
   return input.isResolvingProfile === true ? 'resolving' : 'unresolved';
 }
 
+/**
+ * Whether her screens wait on the authenticator screen (RAPP-233, RAPP-410).
+ * A team member or entity contact without an `aal2` session waits. So does a
+ * session whose live role is not known yet but whose area this device
+ * remembers (RAPP-430): right after the email code that area is already
+ * known, and without this the shell mounted on the weaker session and its
+ * queries kept the empty answers the database gives it.
+ */
+export function awaitsSecondFactor(input: {
+  readonly area: AccountArea;
+  readonly role: AppRole | null;
+  readonly needsSecondFactor: boolean;
+  readonly assurance: 'aal1' | 'aal2' | null;
+}): boolean {
+  if (input.area !== 'team' && input.area !== 'entity') return false;
+  return input.needsSecondFactor || (input.role === null && input.assurance !== 'aal2');
+}
+
 export function rememberAccount(
   storage: AccountAreaStorage,
   userId: string,
@@ -109,6 +127,18 @@ export function teamScreens(permissions: ReadonlySet<PermissionCode>): {
   readonly serviceReviews: boolean;
   readonly forumModeration: boolean;
   readonly galleryModeration: boolean;
+  readonly feedback: boolean;
+  readonly notifications: boolean;
+  readonly surveys: boolean;
+  readonly surveyEditor: boolean;
+  readonly surveyResults: boolean;
+  readonly entities: boolean;
+  readonly documents: boolean;
+  readonly organization: boolean;
+  readonly dataExports: boolean;
+  readonly auditLog: boolean;
+  readonly staff: boolean;
+  readonly impact: boolean;
   readonly mentoring: boolean;
   readonly messages: boolean;
   readonly stock: boolean;
@@ -130,6 +160,22 @@ export function teamScreens(permissions: ReadonlySet<PermissionCode>): {
     serviceReviews: permissions.has('services.review'),
     forumModeration: permissions.has('forum.moderate'),
     galleryModeration: permissions.has('gallery.moderate'),
+    feedback: permissions.has('feedback.view'),
+    notifications: permissions.has('notifications.send'),
+    surveys: permissions.has('surveys.manage') || permissions.has('surveys.results'),
+    surveyEditor: permissions.has('surveys.manage'),
+    surveyResults: permissions.has('surveys.results'),
+    entities: permissions.has('entities.manage'),
+    documents: permissions.has('settings.documents'),
+    organization: permissions.has('settings.organization') || permissions.has('settings.branding'),
+    dataExports:
+      permissions.has('export.participants') ||
+      permissions.has('export.participants_sensitive') ||
+      permissions.has('export.attendance') ||
+      permissions.has('export.events'),
+    auditLog: permissions.has('audit.view'),
+    staff: permissions.has('team.manage'),
+    impact: permissions.has('impact.view'),
     mentoring: permissions.has('mentoring.manage'),
     messages: permissions.has('messages.inbox'),
     stock: teamAreas(permissions).includes('stock'),
@@ -159,14 +205,14 @@ export function areaHome(
   | '/messages'
   | '/more'
   | '/team-home'
-  | '/entity-portal'
+  | '/entity-home'
   | '/account-unresolved'
   | null {
   if (area === 'team') {
     const areas = teamAreas(permissions);
     return teamStart(areas, teamLayout({ areaCount: areas.length, width }));
   }
-  if (area === 'entity') return '/entity-portal';
+  if (area === 'entity') return '/entity-home';
   if (area === 'unresolved') return '/account-unresolved';
   return null;
 }

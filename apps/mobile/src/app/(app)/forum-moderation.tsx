@@ -3,12 +3,14 @@
  * the web admin's moderation screen: each reported post, reply or gallery
  * photo with its reports, reasons and comments, and the team's actions on it.
  * Delete asks first. The author can be contacted by whoever has the inbox.
- * Forum posting bans stay on the participant's card.
+ * Forum posting bans stay on the participant's card. The forum categories open
+ * from here (RAPP-386).
  */
 import { AnnouncementFeedSkeleton } from '@/components/announcements/feed-states';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { PageWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
+import { confirmDelete } from '@/lib/confirm-delete';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { resolveMediaImageSource } from '@/lib/media-source';
@@ -26,7 +28,7 @@ import { Image } from 'expo-image';
 import { useRouter, type Href } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@ramassa/shared/auth';
 import { MADRID_TIME_ZONE } from '@ramassa/shared/events';
@@ -42,18 +44,6 @@ const styles = StyleSheet.create({
   thumbnail: { width: '100%', height: tokens.contentWidth.form / 2 },
 });
 const thumbnailStyle = [styles.thumbnail, continuousCorners];
-
-function confirmDelete(message: string, onConfirm: () => void, labels: readonly [string, string]) {
-  // The web build has no native alert, so it asks through the browser.
-  if (Platform.OS === 'web') {
-    if (window.confirm(message)) onConfirm();
-    return;
-  }
-  Alert.alert(message, undefined, [
-    { text: labels[0], style: 'cancel' },
-    { text: labels[1], style: 'destructive', onPress: onConfirm },
-  ]);
-}
 
 function ActionButton({
   testID,
@@ -344,6 +334,19 @@ export default function ForumModerationScreen() {
               </Text>
             ) : null}
           </View>
+          <PressableScale
+            testID="forum-moderation-categories"
+            accessibilityRole="button"
+            accessibilityLabel={t('categoryManagerTitle')}
+            onPress={() => push('/forum-categories' as Href)}
+            haptic="tapLight"
+            style={continuousCorners}
+            className="min-h-recommended items-center justify-center self-start rounded-md border border-neutral-300 bg-white px-lg"
+          >
+            <Text className={`text-center text-md font-bold text-primary-dark ${fontClass}`}>
+              {t('categoryManagerTitle')}
+            </Text>
+          </PressableScale>
           {hasFailed ? (
             <Text
               accessibilityLiveRegion="polite"

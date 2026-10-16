@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import type { SupportedLanguage } from '@ramassa/shared/i18n';
 import {
   createTargetedNotificationSend,
+  filterNotificationGroupParticipants,
   NOTIFICATION_TEMPLATE_CATEGORIES,
   notificationContentSchema,
   previewNotificationAudience,
@@ -75,21 +76,6 @@ function reviewedCopy(source: string, review: TranslationReview | undefined) {
 function stateKey(state: NotificationSendHistory['state']) {
   if (state === 'awaiting_receipts') return 'stateAwaitingReceipts';
   return `state${state.slice(0, 1).toUpperCase()}${state.slice(1)}`;
-}
-
-function normalizedParticipantSearch(value: string) {
-  return value.normalize('NFD').replace(/\p{M}/gu, '').toLocaleLowerCase();
-}
-
-export function filterNotificationGroupParticipants(
-  participants: NotificationAudienceOptions['participants'],
-  search: string,
-) {
-  const query = normalizedParticipantSearch(search.trim());
-  if (query.length === 0) return participants;
-  return participants.filter((participant) =>
-    normalizedParticipantSearch(participant.fullName).includes(query),
-  );
 }
 
 export function NotificationWorkspace({

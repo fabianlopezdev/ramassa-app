@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import {
   areaHome,
+  awaitsSecondFactor,
   forgetAccount,
   readRememberedAccount,
   rememberAccount,
@@ -126,6 +127,18 @@ test('team screens follow permissions', () => {
     serviceReviews: false,
     forumModeration: false,
     galleryModeration: false,
+    feedback: false,
+    notifications: false,
+    surveys: false,
+    surveyEditor: false,
+    surveyResults: false,
+    entities: false,
+    documents: false,
+    organization: false,
+    dataExports: false,
+    auditLog: false,
+    staff: false,
+    impact: false,
     mentoring: false,
     messages: false,
     stock: false,
@@ -147,6 +160,18 @@ test('team screens follow permissions', () => {
     serviceReviews: false,
     forumModeration: false,
     galleryModeration: false,
+    feedback: false,
+    notifications: false,
+    surveys: false,
+    surveyEditor: false,
+    surveyResults: false,
+    entities: false,
+    documents: false,
+    organization: false,
+    dataExports: false,
+    auditLog: false,
+    staff: false,
+    impact: false,
     mentoring: false,
     messages: true,
     stock: false,
@@ -168,6 +193,18 @@ test('team screens follow permissions', () => {
     serviceReviews: false,
     forumModeration: false,
     galleryModeration: false,
+    feedback: false,
+    notifications: false,
+    surveys: false,
+    surveyEditor: false,
+    surveyResults: false,
+    entities: false,
+    documents: false,
+    organization: false,
+    dataExports: false,
+    auditLog: false,
+    staff: false,
+    impact: false,
     mentoring: false,
     messages: false,
     stock: false,
@@ -189,6 +226,18 @@ test('team screens follow permissions', () => {
     serviceReviews: false,
     forumModeration: false,
     galleryModeration: false,
+    feedback: false,
+    notifications: false,
+    surveys: false,
+    surveyEditor: false,
+    surveyResults: false,
+    entities: false,
+    documents: false,
+    organization: false,
+    dataExports: false,
+    auditLog: false,
+    staff: false,
+    impact: false,
     mentoring: false,
     messages: false,
     stock: false,
@@ -211,6 +260,18 @@ test('team screens follow permissions', () => {
     serviceReviews: false,
     forumModeration: false,
     galleryModeration: false,
+    feedback: false,
+    notifications: false,
+    surveys: false,
+    surveyEditor: false,
+    surveyResults: false,
+    entities: false,
+    documents: false,
+    organization: false,
+    dataExports: false,
+    auditLog: false,
+    staff: false,
+    impact: false,
     mentoring: false,
     messages: false,
     stock: true,
@@ -247,7 +308,99 @@ test('each area starts on its own home; the player keeps the root', () => {
   expect(areaHome('team', new Set(['attendance.mark', 'messages.inbox']), tablet)).toBe('/today');
   expect(areaHome('team', new Set(['messages.inbox']), tablet)).toBe('/messages');
   expect(areaHome('team', new Set(['settings.branding']), phone)).toBe('/team-home');
-  expect(areaHome('entity', new Set(), phone)).toBe('/entity-portal');
+  expect(areaHome('entity', new Set(), phone)).toBe('/entity-home');
   expect(areaHome('unresolved', new Set(), phone)).toBe('/account-unresolved');
   expect(areaHome('player', new Set(), phone)).toBeNull();
+});
+
+test('any export permission opens the exports, and audit.view the audit log', () => {
+  expect(teamScreens(new Set(['export.events']))).toMatchObject({
+    dataExports: true,
+    auditLog: false,
+  });
+  expect(teamScreens(new Set(['audit.view']))).toMatchObject({
+    dataExports: false,
+    auditLog: true,
+  });
+});
+
+test('impact.view opens the impact dashboard', () => {
+  expect(teamScreens(new Set(['impact.view'])).impact).toBe(true);
+  expect(teamScreens(new Set(['export.attendance'])).impact).toBe(false);
+});
+
+test('team.manage opens the team screen', () => {
+  expect(teamScreens(new Set(['team.manage'])).staff).toBe(true);
+  expect(teamScreens(new Set(['settings.branding'])).staff).toBe(false);
+});
+
+test('organization or branding settings open the organization screen', () => {
+  expect(teamScreens(new Set(['settings.branding'])).organization).toBe(true);
+  expect(teamScreens(new Set(['settings.organization'])).organization).toBe(true);
+  expect(teamScreens(new Set(['settings.documents'])).organization).toBe(false);
+});
+
+test('settings.documents opens the internal documents', () => {
+  expect(teamScreens(new Set(['settings.documents'])).documents).toBe(true);
+  expect(teamScreens(new Set(['settings.branding'])).documents).toBe(false);
+});
+
+test('entities.manage opens the collaborating entities', () => {
+  expect(teamScreens(new Set(['entities.manage'])).entities).toBe(true);
+  expect(teamScreens(new Set(['team.manage'])).entities).toBe(false);
+});
+
+test('survey results alone open the survey list without the editor', () => {
+  expect(teamScreens(new Set(['surveys.results']))).toMatchObject({
+    surveys: true,
+    surveyEditor: false,
+    surveyResults: true,
+  });
+  expect(teamScreens(new Set(['surveys.manage']))).toMatchObject({
+    surveys: true,
+    surveyEditor: true,
+    surveyResults: false,
+  });
+});
+
+describe('awaitsSecondFactor', () => {
+  const base = { role: null, needsSecondFactor: false } as const;
+
+  test('a remembered team or entity area waits while the role is unknown and the session is aal1', () => {
+    for (const area of ['team', 'entity'] as const) {
+      expect(awaitsSecondFactor({ ...base, area, assurance: 'aal1' })).toBe(true);
+      expect(awaitsSecondFactor({ ...base, area, assurance: null })).toBe(true);
+    }
+  });
+
+  test('an aal2 session with a remembered area goes on, as on an offline cold start', () => {
+    for (const area of ['team', 'entity'] as const) {
+      expect(awaitsSecondFactor({ ...base, area, assurance: 'aal2' })).toBe(false);
+    }
+  });
+
+  test('a known role follows needsSecondFactor', () => {
+    expect(
+      awaitsSecondFactor({
+        area: 'entity',
+        role: 'entity',
+        needsSecondFactor: true,
+        assurance: 'aal1',
+      }),
+    ).toBe(true);
+    expect(
+      awaitsSecondFactor({
+        area: 'team',
+        role: 'staff',
+        needsSecondFactor: false,
+        assurance: 'aal2',
+      }),
+    ).toBe(false);
+  });
+
+  test('players and the other areas never wait', () => {
+    for (const area of ['player', 'onboarding', 'resolving', 'unresolved'] as const) {
+      expect(awaitsSecondFactor({ ...base, area, assurance: 'aal1' })).toBe(false);
+    }
+  });
 });

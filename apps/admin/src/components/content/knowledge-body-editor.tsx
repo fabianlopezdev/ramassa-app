@@ -111,6 +111,7 @@ function KnowledgeLanguageBlocks(props: KnowledgeLanguageBlocksProps) {
           {block.type === 'paragraph' ? (
             <Textarea
               data-testid={`knowledge-block-${index}-text-${props.language}`}
+              aria-label={t('paragraphText')}
               value={block.text}
               onChange={(event) => update(index, { ...block, text: event.target.value })}
             />

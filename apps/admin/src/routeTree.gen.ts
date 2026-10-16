@@ -9,122 +9,83 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as StaffRouteImport } from './routes/_staff'
-import { Route as EntityRouteImport } from './routes/_entity'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as StaffSurveysRouteImport } from './routes/_staff.surveys'
-import { Route as StaffSettingsRouteImport } from './routes/_staff.settings'
-import { Route as StaffNotificationsRouteImport } from './routes/_staff.notifications'
-import { Route as StaffMessagesRouteImport } from './routes/_staff.messages'
-import { Route as StaffMentoringRouteImport } from './routes/_staff.mentoring'
-import { Route as StaffForumRouteImport } from './routes/_staff.forum'
-import { Route as StaffFeedbackRouteImport } from './routes/_staff.feedback'
-import { Route as StaffDataRouteImport } from './routes/_staff.data'
-import { Route as StaffDashboardRouteImport } from './routes/_staff.dashboard'
-import { Route as StaffContentRouteImport } from './routes/_staff.content'
+import { Route as EntityRouteImport } from './routes/_entity'
+import { Route as StaffRouteImport } from './routes/_staff'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as StaffAttendanceRouteImport } from './routes/_staff.attendance'
-import { Route as StaffParticipantsIndexRouteImport } from './routes/_staff.participants.index'
-import { Route as StaffMessagesIndexRouteImport } from './routes/_staff.messages.index'
-import { Route as StaffContentIndexRouteImport } from './routes/_staff.content.index'
-import { Route as StaffAttendanceIndexRouteImport } from './routes/_staff.attendance.index'
+import { Route as StaffContentRouteImport } from './routes/_staff.content'
+import { Route as StaffDashboardRouteImport } from './routes/_staff.dashboard'
+import { Route as StaffDataRouteImport } from './routes/_staff.data'
+import { Route as StaffFeedbackRouteImport } from './routes/_staff.feedback'
+import { Route as StaffForumRouteImport } from './routes/_staff.forum'
+import { Route as StaffGalleryRouteImport } from './routes/_staff.gallery'
+import { Route as StaffMentoringRouteImport } from './routes/_staff.mentoring'
+import { Route as StaffMessagesRouteImport } from './routes/_staff.messages'
+import { Route as StaffNotificationsRouteImport } from './routes/_staff.notifications'
+import { Route as StaffSettingsRouteImport } from './routes/_staff.settings'
+import { Route as StaffSurveysRouteImport } from './routes/_staff.surveys'
 import { Route as EntityPortalIndexRouteImport } from './routes/_entity.portal.index'
-import { Route as StaffPhotoHandoffHandoffIdRouteImport } from './routes/_staff.photo-handoff.$handoffId'
-import { Route as StaffParticipantsReferralsRouteImport } from './routes/_staff.participants.referrals'
-import { Route as StaffParticipantsNewRouteImport } from './routes/_staff.participants.new'
-import { Route as StaffParticipantsInvitesRouteImport } from './routes/_staff.participants.invites'
-import { Route as StaffParticipantsDeletionRequestsRouteImport } from './routes/_staff.participants.deletion-requests'
-import { Route as StaffParticipantsParticipantIdRouteImport } from './routes/_staff.participants.$participantId'
-import { Route as StaffMessagesConversationIdRouteImport } from './routes/_staff.messages.$conversationId'
-import { Route as StaffAttendanceOccurrenceIdRouteImport } from './routes/_staff.attendance.$occurrenceId'
-import { Route as EntityPortalServicesRouteImport } from './routes/_entity.portal.services'
-import { Route as EntityPortalReferralsRouteImport } from './routes/_entity.portal.referrals'
-import { Route as EntityPortalMessagesRouteImport } from './routes/_entity.portal.messages'
 import { Route as EntityPortalEventsRouteImport } from './routes/_entity.portal.events'
-import { Route as StaffContentServicesIndexRouteImport } from './routes/_staff.content.services.index'
-import { Route as StaffContentKnowledgeIndexRouteImport } from './routes/_staff.content.knowledge.index'
-import { Route as StaffContentEventsIndexRouteImport } from './routes/_staff.content.events.index'
-import { Route as StaffContentAnnouncementsIndexRouteImport } from './routes/_staff.content.announcements.index'
-import { Route as EntityPortalServicesIndexRouteImport } from './routes/_entity.portal.services.index'
+import { Route as EntityPortalMessagesRouteImport } from './routes/_entity.portal.messages'
+import { Route as EntityPortalReferralsRouteImport } from './routes/_entity.portal.referrals'
+import { Route as EntityPortalServicesRouteImport } from './routes/_entity.portal.services'
+import { Route as StaffAttendanceIndexRouteImport } from './routes/_staff.attendance.index'
+import { Route as StaffAttendanceOccurrenceIdRouteImport } from './routes/_staff.attendance.$occurrenceId'
+import { Route as StaffContentIndexRouteImport } from './routes/_staff.content.index'
+import { Route as StaffMessagesIndexRouteImport } from './routes/_staff.messages.index'
+import { Route as StaffMessagesConversationIdRouteImport } from './routes/_staff.messages.$conversationId'
+import { Route as StaffParticipantsIndexRouteImport } from './routes/_staff.participants.index'
+import { Route as StaffParticipantsParticipantIdRouteImport } from './routes/_staff.participants.$participantId'
+import { Route as StaffParticipantsDeletionRequestsRouteImport } from './routes/_staff.participants.deletion-requests'
+import { Route as StaffParticipantsInvitesRouteImport } from './routes/_staff.participants.invites'
+import { Route as StaffParticipantsNewRouteImport } from './routes/_staff.participants.new'
+import { Route as StaffParticipantsReferralsRouteImport } from './routes/_staff.participants.referrals'
+import { Route as StaffPhotoHandoffHandoffIdRouteImport } from './routes/_staff.photo-handoff.$handoffId'
 import { Route as EntityPortalReferralsIndexRouteImport } from './routes/_entity.portal.referrals.index'
-import { Route as StaffContentServicesNewRouteImport } from './routes/_staff.content.services.new'
-import { Route as StaffContentServicesCategoriesRouteImport } from './routes/_staff.content.services.categories'
-import { Route as StaffContentServicesServiceIdRouteImport } from './routes/_staff.content.services.$serviceId'
-import { Route as StaffContentKnowledgeNewRouteImport } from './routes/_staff.content.knowledge.new'
-import { Route as StaffContentKnowledgeArticleIdRouteImport } from './routes/_staff.content.knowledge.$articleId'
-import { Route as StaffContentEventsNewRouteImport } from './routes/_staff.content.events.new'
-import { Route as StaffContentEventsCategoriesRouteImport } from './routes/_staff.content.events.categories'
-import { Route as StaffContentEventsEventIdRouteImport } from './routes/_staff.content.events.$eventId'
-import { Route as StaffContentAnnouncementsNewRouteImport } from './routes/_staff.content.announcements.new'
-import { Route as StaffContentAnnouncementsAnnouncementIdRouteImport } from './routes/_staff.content.announcements.$announcementId'
-import { Route as EntityPortalServicesNewRouteImport } from './routes/_entity.portal.services.new'
-import { Route as EntityPortalServicesServiceIdRouteImport } from './routes/_entity.portal.services.$serviceId'
-import { Route as EntityPortalReferralsNewRouteImport } from './routes/_entity.portal.referrals.new'
 import { Route as EntityPortalReferralsReferralIdRouteImport } from './routes/_entity.portal.referrals.$referralId'
+import { Route as EntityPortalReferralsNewRouteImport } from './routes/_entity.portal.referrals.new'
+import { Route as EntityPortalServicesIndexRouteImport } from './routes/_entity.portal.services.index'
+import { Route as EntityPortalServicesServiceIdRouteImport } from './routes/_entity.portal.services.$serviceId'
+import { Route as EntityPortalServicesNewRouteImport } from './routes/_entity.portal.services.new'
+import { Route as StaffContentAnnouncementsIndexRouteImport } from './routes/_staff.content.announcements.index'
+import { Route as StaffContentAnnouncementsAnnouncementIdRouteImport } from './routes/_staff.content.announcements.$announcementId'
+import { Route as StaffContentAnnouncementsNewRouteImport } from './routes/_staff.content.announcements.new'
+import { Route as StaffContentEventsIndexRouteImport } from './routes/_staff.content.events.index'
+import { Route as StaffContentEventsEventIdRouteImport } from './routes/_staff.content.events.$eventId'
+import { Route as StaffContentEventsCategoriesRouteImport } from './routes/_staff.content.events.categories'
+import { Route as StaffContentEventsNewRouteImport } from './routes/_staff.content.events.new'
+import { Route as StaffContentKnowledgeIndexRouteImport } from './routes/_staff.content.knowledge.index'
+import { Route as StaffContentKnowledgeArticleIdRouteImport } from './routes/_staff.content.knowledge.$articleId'
+import { Route as StaffContentKnowledgeNewRouteImport } from './routes/_staff.content.knowledge.new'
+import { Route as StaffContentServicesIndexRouteImport } from './routes/_staff.content.services.index'
+import { Route as StaffContentServicesServiceIdRouteImport } from './routes/_staff.content.services.$serviceId'
+import { Route as StaffContentServicesCategoriesRouteImport } from './routes/_staff.content.services.categories'
+import { Route as StaffContentServicesNewRouteImport } from './routes/_staff.content.services.new'
 import { Route as StaffContentServicesReviewsIndexRouteImport } from './routes/_staff.content.services.reviews.index'
 import { Route as StaffContentServicesReviewsServiceIdRouteImport } from './routes/_staff.content.services.reviews.$serviceId'
 
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const StaffRoute = StaffRouteImport.update({
-  id: '/_staff',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EntityRoute = EntityRouteImport.update({
   id: '/_entity',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const StaffRoute = StaffRouteImport.update({
+  id: '/_staff',
   getParentRoute: () => rootRouteImport,
 } as any)
-const StaffSurveysRoute = StaffSurveysRouteImport.update({
-  id: '/surveys',
-  path: '/surveys',
-  getParentRoute: () => StaffRoute,
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const StaffSettingsRoute = StaffSettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => StaffRoute,
-} as any)
-const StaffNotificationsRoute = StaffNotificationsRouteImport.update({
-  id: '/notifications',
-  path: '/notifications',
-  getParentRoute: () => StaffRoute,
-} as any)
-const StaffMessagesRoute = StaffMessagesRouteImport.update({
-  id: '/messages',
-  path: '/messages',
-  getParentRoute: () => StaffRoute,
-} as any)
-const StaffMentoringRoute = StaffMentoringRouteImport.update({
-  id: '/mentoring',
-  path: '/mentoring',
-  getParentRoute: () => StaffRoute,
-} as any)
-const StaffForumRoute = StaffForumRouteImport.update({
-  id: '/forum',
-  path: '/forum',
-  getParentRoute: () => StaffRoute,
-} as any)
-const StaffFeedbackRoute = StaffFeedbackRouteImport.update({
-  id: '/feedback',
-  path: '/feedback',
-  getParentRoute: () => StaffRoute,
-} as any)
-const StaffDataRoute = StaffDataRouteImport.update({
-  id: '/data',
-  path: '/data',
-  getParentRoute: () => StaffRoute,
-} as any)
-const StaffDashboardRoute = StaffDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
+const StaffAttendanceRoute = StaffAttendanceRouteImport.update({
+  id: '/attendance',
+  path: '/attendance',
   getParentRoute: () => StaffRoute,
 } as any)
 const StaffContentRoute = StaffContentRouteImport.update({
@@ -132,57 +93,117 @@ const StaffContentRoute = StaffContentRouteImport.update({
   path: '/content',
   getParentRoute: () => StaffRoute,
 } as any)
-const StaffAttendanceRoute = StaffAttendanceRouteImport.update({
-  id: '/attendance',
-  path: '/attendance',
+const StaffDashboardRoute = StaffDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => StaffRoute,
 } as any)
-const StaffParticipantsIndexRoute = StaffParticipantsIndexRouteImport.update({
-  id: '/participants/',
-  path: '/participants/',
+const StaffDataRoute = StaffDataRouteImport.update({
+  id: '/data',
+  path: '/data',
   getParentRoute: () => StaffRoute,
 } as any)
-const StaffMessagesIndexRoute = StaffMessagesIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => StaffMessagesRoute,
+const StaffFeedbackRoute = StaffFeedbackRouteImport.update({
+  id: '/feedback',
+  path: '/feedback',
+  getParentRoute: () => StaffRoute,
 } as any)
-const StaffContentIndexRoute = StaffContentIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => StaffContentRoute,
+const StaffForumRoute = StaffForumRouteImport.update({
+  id: '/forum',
+  path: '/forum',
+  getParentRoute: () => StaffRoute,
 } as any)
-const StaffAttendanceIndexRoute = StaffAttendanceIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => StaffAttendanceRoute,
+const StaffGalleryRoute = StaffGalleryRouteImport.update({
+  id: '/gallery',
+  path: '/gallery',
+  getParentRoute: () => StaffRoute,
+} as any)
+const StaffMentoringRoute = StaffMentoringRouteImport.update({
+  id: '/mentoring',
+  path: '/mentoring',
+  getParentRoute: () => StaffRoute,
+} as any)
+const StaffMessagesRoute = StaffMessagesRouteImport.update({
+  id: '/messages',
+  path: '/messages',
+  getParentRoute: () => StaffRoute,
+} as any)
+const StaffNotificationsRoute = StaffNotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => StaffRoute,
+} as any)
+const StaffSettingsRoute = StaffSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => StaffRoute,
+} as any)
+const StaffSurveysRoute = StaffSurveysRouteImport.update({
+  id: '/surveys',
+  path: '/surveys',
+  getParentRoute: () => StaffRoute,
 } as any)
 const EntityPortalIndexRoute = EntityPortalIndexRouteImport.update({
   id: '/portal/',
   path: '/portal/',
   getParentRoute: () => EntityRoute,
 } as any)
-const StaffPhotoHandoffHandoffIdRoute =
-  StaffPhotoHandoffHandoffIdRouteImport.update({
-    id: '/photo-handoff/$handoffId',
-    path: '/photo-handoff/$handoffId',
-    getParentRoute: () => StaffRoute,
+const EntityPortalEventsRoute = EntityPortalEventsRouteImport.update({
+  id: '/portal/events',
+  path: '/portal/events',
+  getParentRoute: () => EntityRoute,
+} as any)
+const EntityPortalMessagesRoute = EntityPortalMessagesRouteImport.update({
+  id: '/portal/messages',
+  path: '/portal/messages',
+  getParentRoute: () => EntityRoute,
+} as any)
+const EntityPortalReferralsRoute = EntityPortalReferralsRouteImport.update({
+  id: '/portal/referrals',
+  path: '/portal/referrals',
+  getParentRoute: () => EntityRoute,
+} as any)
+const EntityPortalServicesRoute = EntityPortalServicesRouteImport.update({
+  id: '/portal/services',
+  path: '/portal/services',
+  getParentRoute: () => EntityRoute,
+} as any)
+const StaffAttendanceIndexRoute = StaffAttendanceIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => StaffAttendanceRoute,
+} as any)
+const StaffAttendanceOccurrenceIdRoute =
+  StaffAttendanceOccurrenceIdRouteImport.update({
+    id: '/$occurrenceId',
+    path: '/$occurrenceId',
+    getParentRoute: () => StaffAttendanceRoute,
   } as any)
-const StaffParticipantsReferralsRoute =
-  StaffParticipantsReferralsRouteImport.update({
-    id: '/participants/referrals',
-    path: '/participants/referrals',
-    getParentRoute: () => StaffRoute,
+const StaffContentIndexRoute = StaffContentIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => StaffContentRoute,
+} as any)
+const StaffMessagesIndexRoute = StaffMessagesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => StaffMessagesRoute,
+} as any)
+const StaffMessagesConversationIdRoute =
+  StaffMessagesConversationIdRouteImport.update({
+    id: '/$conversationId',
+    path: '/$conversationId',
+    getParentRoute: () => StaffMessagesRoute,
   } as any)
-const StaffParticipantsNewRoute = StaffParticipantsNewRouteImport.update({
-  id: '/participants/new',
-  path: '/participants/new',
+const StaffParticipantsIndexRoute = StaffParticipantsIndexRouteImport.update({
+  id: '/participants/',
+  path: '/participants/',
   getParentRoute: () => StaffRoute,
 } as any)
-const StaffParticipantsInvitesRoute =
-  StaffParticipantsInvitesRouteImport.update({
-    id: '/participants/invites',
-    path: '/participants/invites',
+const StaffParticipantsParticipantIdRoute =
+  StaffParticipantsParticipantIdRouteImport.update({
+    id: '/participants/$participantId',
+    path: '/participants/$participantId',
     getParentRoute: () => StaffRoute,
   } as any)
 const StaffParticipantsDeletionRequestsRoute =
@@ -191,152 +212,33 @@ const StaffParticipantsDeletionRequestsRoute =
     path: '/participants/deletion-requests',
     getParentRoute: () => StaffRoute,
   } as any)
-const StaffParticipantsParticipantIdRoute =
-  StaffParticipantsParticipantIdRouteImport.update({
-    id: '/participants/$participantId',
-    path: '/participants/$participantId',
+const StaffParticipantsInvitesRoute =
+  StaffParticipantsInvitesRouteImport.update({
+    id: '/participants/invites',
+    path: '/participants/invites',
     getParentRoute: () => StaffRoute,
   } as any)
-const StaffMessagesConversationIdRoute =
-  StaffMessagesConversationIdRouteImport.update({
-    id: '/$conversationId',
-    path: '/$conversationId',
-    getParentRoute: () => StaffMessagesRoute,
-  } as any)
-const StaffAttendanceOccurrenceIdRoute =
-  StaffAttendanceOccurrenceIdRouteImport.update({
-    id: '/$occurrenceId',
-    path: '/$occurrenceId',
-    getParentRoute: () => StaffAttendanceRoute,
-  } as any)
-const EntityPortalServicesRoute = EntityPortalServicesRouteImport.update({
-  id: '/portal/services',
-  path: '/portal/services',
-  getParentRoute: () => EntityRoute,
+const StaffParticipantsNewRoute = StaffParticipantsNewRouteImport.update({
+  id: '/participants/new',
+  path: '/participants/new',
+  getParentRoute: () => StaffRoute,
 } as any)
-const EntityPortalReferralsRoute = EntityPortalReferralsRouteImport.update({
-  id: '/portal/referrals',
-  path: '/portal/referrals',
-  getParentRoute: () => EntityRoute,
-} as any)
-const EntityPortalMessagesRoute = EntityPortalMessagesRouteImport.update({
-  id: '/portal/messages',
-  path: '/portal/messages',
-  getParentRoute: () => EntityRoute,
-} as any)
-const EntityPortalEventsRoute = EntityPortalEventsRouteImport.update({
-  id: '/portal/events',
-  path: '/portal/events',
-  getParentRoute: () => EntityRoute,
-} as any)
-const StaffContentServicesIndexRoute =
-  StaffContentServicesIndexRouteImport.update({
-    id: '/services/',
-    path: '/services/',
-    getParentRoute: () => StaffContentRoute,
+const StaffParticipantsReferralsRoute =
+  StaffParticipantsReferralsRouteImport.update({
+    id: '/participants/referrals',
+    path: '/participants/referrals',
+    getParentRoute: () => StaffRoute,
   } as any)
-const StaffContentKnowledgeIndexRoute =
-  StaffContentKnowledgeIndexRouteImport.update({
-    id: '/knowledge/',
-    path: '/knowledge/',
-    getParentRoute: () => StaffContentRoute,
-  } as any)
-const StaffContentEventsIndexRoute = StaffContentEventsIndexRouteImport.update({
-  id: '/events/',
-  path: '/events/',
-  getParentRoute: () => StaffContentRoute,
-} as any)
-const StaffContentAnnouncementsIndexRoute =
-  StaffContentAnnouncementsIndexRouteImport.update({
-    id: '/announcements/',
-    path: '/announcements/',
-    getParentRoute: () => StaffContentRoute,
-  } as any)
-const EntityPortalServicesIndexRoute =
-  EntityPortalServicesIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => EntityPortalServicesRoute,
+const StaffPhotoHandoffHandoffIdRoute =
+  StaffPhotoHandoffHandoffIdRouteImport.update({
+    id: '/photo-handoff/$handoffId',
+    path: '/photo-handoff/$handoffId',
+    getParentRoute: () => StaffRoute,
   } as any)
 const EntityPortalReferralsIndexRoute =
   EntityPortalReferralsIndexRouteImport.update({
     id: '/',
     path: '/',
-    getParentRoute: () => EntityPortalReferralsRoute,
-  } as any)
-const StaffContentServicesNewRoute = StaffContentServicesNewRouteImport.update({
-  id: '/services/new',
-  path: '/services/new',
-  getParentRoute: () => StaffContentRoute,
-} as any)
-const StaffContentServicesCategoriesRoute =
-  StaffContentServicesCategoriesRouteImport.update({
-    id: '/services/categories',
-    path: '/services/categories',
-    getParentRoute: () => StaffContentRoute,
-  } as any)
-const StaffContentServicesServiceIdRoute =
-  StaffContentServicesServiceIdRouteImport.update({
-    id: '/services/$serviceId',
-    path: '/services/$serviceId',
-    getParentRoute: () => StaffContentRoute,
-  } as any)
-const StaffContentKnowledgeNewRoute =
-  StaffContentKnowledgeNewRouteImport.update({
-    id: '/knowledge/new',
-    path: '/knowledge/new',
-    getParentRoute: () => StaffContentRoute,
-  } as any)
-const StaffContentKnowledgeArticleIdRoute =
-  StaffContentKnowledgeArticleIdRouteImport.update({
-    id: '/knowledge/$articleId',
-    path: '/knowledge/$articleId',
-    getParentRoute: () => StaffContentRoute,
-  } as any)
-const StaffContentEventsNewRoute = StaffContentEventsNewRouteImport.update({
-  id: '/events/new',
-  path: '/events/new',
-  getParentRoute: () => StaffContentRoute,
-} as any)
-const StaffContentEventsCategoriesRoute =
-  StaffContentEventsCategoriesRouteImport.update({
-    id: '/events/categories',
-    path: '/events/categories',
-    getParentRoute: () => StaffContentRoute,
-  } as any)
-const StaffContentEventsEventIdRoute =
-  StaffContentEventsEventIdRouteImport.update({
-    id: '/events/$eventId',
-    path: '/events/$eventId',
-    getParentRoute: () => StaffContentRoute,
-  } as any)
-const StaffContentAnnouncementsNewRoute =
-  StaffContentAnnouncementsNewRouteImport.update({
-    id: '/announcements/new',
-    path: '/announcements/new',
-    getParentRoute: () => StaffContentRoute,
-  } as any)
-const StaffContentAnnouncementsAnnouncementIdRoute =
-  StaffContentAnnouncementsAnnouncementIdRouteImport.update({
-    id: '/announcements/$announcementId',
-    path: '/announcements/$announcementId',
-    getParentRoute: () => StaffContentRoute,
-  } as any)
-const EntityPortalServicesNewRoute = EntityPortalServicesNewRouteImport.update({
-  id: '/new',
-  path: '/new',
-  getParentRoute: () => EntityPortalServicesRoute,
-} as any)
-const EntityPortalServicesServiceIdRoute =
-  EntityPortalServicesServiceIdRouteImport.update({
-    id: '/$serviceId',
-    path: '/$serviceId',
-    getParentRoute: () => EntityPortalServicesRoute,
-  } as any)
-const EntityPortalReferralsNewRoute =
-  EntityPortalReferralsNewRouteImport.update({
-    id: '/new',
-    path: '/new',
     getParentRoute: () => EntityPortalReferralsRoute,
   } as any)
 const EntityPortalReferralsReferralIdRoute =
@@ -345,6 +247,110 @@ const EntityPortalReferralsReferralIdRoute =
     path: '/$referralId',
     getParentRoute: () => EntityPortalReferralsRoute,
   } as any)
+const EntityPortalReferralsNewRoute =
+  EntityPortalReferralsNewRouteImport.update({
+    id: '/new',
+    path: '/new',
+    getParentRoute: () => EntityPortalReferralsRoute,
+  } as any)
+const EntityPortalServicesIndexRoute =
+  EntityPortalServicesIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => EntityPortalServicesRoute,
+  } as any)
+const EntityPortalServicesServiceIdRoute =
+  EntityPortalServicesServiceIdRouteImport.update({
+    id: '/$serviceId',
+    path: '/$serviceId',
+    getParentRoute: () => EntityPortalServicesRoute,
+  } as any)
+const EntityPortalServicesNewRoute = EntityPortalServicesNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => EntityPortalServicesRoute,
+} as any)
+const StaffContentAnnouncementsIndexRoute =
+  StaffContentAnnouncementsIndexRouteImport.update({
+    id: '/announcements/',
+    path: '/announcements/',
+    getParentRoute: () => StaffContentRoute,
+  } as any)
+const StaffContentAnnouncementsAnnouncementIdRoute =
+  StaffContentAnnouncementsAnnouncementIdRouteImport.update({
+    id: '/announcements/$announcementId',
+    path: '/announcements/$announcementId',
+    getParentRoute: () => StaffContentRoute,
+  } as any)
+const StaffContentAnnouncementsNewRoute =
+  StaffContentAnnouncementsNewRouteImport.update({
+    id: '/announcements/new',
+    path: '/announcements/new',
+    getParentRoute: () => StaffContentRoute,
+  } as any)
+const StaffContentEventsIndexRoute = StaffContentEventsIndexRouteImport.update({
+  id: '/events/',
+  path: '/events/',
+  getParentRoute: () => StaffContentRoute,
+} as any)
+const StaffContentEventsEventIdRoute =
+  StaffContentEventsEventIdRouteImport.update({
+    id: '/events/$eventId',
+    path: '/events/$eventId',
+    getParentRoute: () => StaffContentRoute,
+  } as any)
+const StaffContentEventsCategoriesRoute =
+  StaffContentEventsCategoriesRouteImport.update({
+    id: '/events/categories',
+    path: '/events/categories',
+    getParentRoute: () => StaffContentRoute,
+  } as any)
+const StaffContentEventsNewRoute = StaffContentEventsNewRouteImport.update({
+  id: '/events/new',
+  path: '/events/new',
+  getParentRoute: () => StaffContentRoute,
+} as any)
+const StaffContentKnowledgeIndexRoute =
+  StaffContentKnowledgeIndexRouteImport.update({
+    id: '/knowledge/',
+    path: '/knowledge/',
+    getParentRoute: () => StaffContentRoute,
+  } as any)
+const StaffContentKnowledgeArticleIdRoute =
+  StaffContentKnowledgeArticleIdRouteImport.update({
+    id: '/knowledge/$articleId',
+    path: '/knowledge/$articleId',
+    getParentRoute: () => StaffContentRoute,
+  } as any)
+const StaffContentKnowledgeNewRoute =
+  StaffContentKnowledgeNewRouteImport.update({
+    id: '/knowledge/new',
+    path: '/knowledge/new',
+    getParentRoute: () => StaffContentRoute,
+  } as any)
+const StaffContentServicesIndexRoute =
+  StaffContentServicesIndexRouteImport.update({
+    id: '/services/',
+    path: '/services/',
+    getParentRoute: () => StaffContentRoute,
+  } as any)
+const StaffContentServicesServiceIdRoute =
+  StaffContentServicesServiceIdRouteImport.update({
+    id: '/services/$serviceId',
+    path: '/services/$serviceId',
+    getParentRoute: () => StaffContentRoute,
+  } as any)
+const StaffContentServicesCategoriesRoute =
+  StaffContentServicesCategoriesRouteImport.update({
+    id: '/services/categories',
+    path: '/services/categories',
+    getParentRoute: () => StaffContentRoute,
+  } as any)
+const StaffContentServicesNewRoute = StaffContentServicesNewRouteImport.update({
+  id: '/services/new',
+  path: '/services/new',
+  getParentRoute: () => StaffContentRoute,
+} as any)
 const StaffContentServicesReviewsIndexRoute =
   StaffContentServicesReviewsIndexRouteImport.update({
     id: '/services/reviews/',
@@ -367,6 +373,7 @@ export interface FileRoutesByFullPath {
   '/data': typeof StaffDataRoute
   '/feedback': typeof StaffFeedbackRoute
   '/forum': typeof StaffForumRoute
+  '/gallery': typeof StaffGalleryRoute
   '/mentoring': typeof StaffMentoringRoute
   '/messages': typeof StaffMessagesRouteWithChildren
   '/notifications': typeof StaffNotificationsRoute
@@ -419,6 +426,7 @@ export interface FileRoutesByTo {
   '/data': typeof StaffDataRoute
   '/feedback': typeof StaffFeedbackRoute
   '/forum': typeof StaffForumRoute
+  '/gallery': typeof StaffGalleryRoute
   '/mentoring': typeof StaffMentoringRoute
   '/notifications': typeof StaffNotificationsRoute
   '/settings': typeof StaffSettingsRoute
@@ -473,6 +481,7 @@ export interface FileRoutesById {
   '/_staff/data': typeof StaffDataRoute
   '/_staff/feedback': typeof StaffFeedbackRoute
   '/_staff/forum': typeof StaffForumRoute
+  '/_staff/gallery': typeof StaffGalleryRoute
   '/_staff/mentoring': typeof StaffMentoringRoute
   '/_staff/messages': typeof StaffMessagesRouteWithChildren
   '/_staff/notifications': typeof StaffNotificationsRoute
@@ -529,6 +538,7 @@ export interface FileRouteTypes {
     | '/data'
     | '/feedback'
     | '/forum'
+    | '/gallery'
     | '/mentoring'
     | '/messages'
     | '/notifications'
@@ -581,6 +591,7 @@ export interface FileRouteTypes {
     | '/data'
     | '/feedback'
     | '/forum'
+    | '/gallery'
     | '/mentoring'
     | '/notifications'
     | '/settings'
@@ -634,6 +645,7 @@ export interface FileRouteTypes {
     | '/_staff/data'
     | '/_staff/feedback'
     | '/_staff/forum'
+    | '/_staff/gallery'
     | '/_staff/mentoring'
     | '/_staff/messages'
     | '/_staff/notifications'
@@ -689,18 +701,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_staff': {
-      id: '/_staff'
-      path: ''
+    '/': {
+      id: '/'
+      path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof StaffRouteImport
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_entity': {
@@ -710,74 +715,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EntityRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
+    '/_staff': {
+      id: '/_staff'
+      path: ''
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+      preLoaderRoute: typeof StaffRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_staff/surveys': {
-      id: '/_staff/surveys'
-      path: '/surveys'
-      fullPath: '/surveys'
-      preLoaderRoute: typeof StaffSurveysRouteImport
-      parentRoute: typeof StaffRoute
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_staff/settings': {
-      id: '/_staff/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof StaffSettingsRouteImport
-      parentRoute: typeof StaffRoute
-    }
-    '/_staff/notifications': {
-      id: '/_staff/notifications'
-      path: '/notifications'
-      fullPath: '/notifications'
-      preLoaderRoute: typeof StaffNotificationsRouteImport
-      parentRoute: typeof StaffRoute
-    }
-    '/_staff/messages': {
-      id: '/_staff/messages'
-      path: '/messages'
-      fullPath: '/messages'
-      preLoaderRoute: typeof StaffMessagesRouteImport
-      parentRoute: typeof StaffRoute
-    }
-    '/_staff/mentoring': {
-      id: '/_staff/mentoring'
-      path: '/mentoring'
-      fullPath: '/mentoring'
-      preLoaderRoute: typeof StaffMentoringRouteImport
-      parentRoute: typeof StaffRoute
-    }
-    '/_staff/forum': {
-      id: '/_staff/forum'
-      path: '/forum'
-      fullPath: '/forum'
-      preLoaderRoute: typeof StaffForumRouteImport
-      parentRoute: typeof StaffRoute
-    }
-    '/_staff/feedback': {
-      id: '/_staff/feedback'
-      path: '/feedback'
-      fullPath: '/feedback'
-      preLoaderRoute: typeof StaffFeedbackRouteImport
-      parentRoute: typeof StaffRoute
-    }
-    '/_staff/data': {
-      id: '/_staff/data'
-      path: '/data'
-      fullPath: '/data'
-      preLoaderRoute: typeof StaffDataRouteImport
-      parentRoute: typeof StaffRoute
-    }
-    '/_staff/dashboard': {
-      id: '/_staff/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof StaffDashboardRouteImport
+    '/_staff/attendance': {
+      id: '/_staff/attendance'
+      path: '/attendance'
+      fullPath: '/attendance'
+      preLoaderRoute: typeof StaffAttendanceRouteImport
       parentRoute: typeof StaffRoute
     }
     '/_staff/content': {
@@ -787,123 +743,81 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StaffContentRouteImport
       parentRoute: typeof StaffRoute
     }
-    '/_staff/attendance': {
-      id: '/_staff/attendance'
-      path: '/attendance'
-      fullPath: '/attendance'
-      preLoaderRoute: typeof StaffAttendanceRouteImport
+    '/_staff/dashboard': {
+      id: '/_staff/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof StaffDashboardRouteImport
       parentRoute: typeof StaffRoute
     }
-    '/_staff/participants/': {
-      id: '/_staff/participants/'
-      path: '/participants'
-      fullPath: '/participants/'
-      preLoaderRoute: typeof StaffParticipantsIndexRouteImport
+    '/_staff/data': {
+      id: '/_staff/data'
+      path: '/data'
+      fullPath: '/data'
+      preLoaderRoute: typeof StaffDataRouteImport
       parentRoute: typeof StaffRoute
     }
-    '/_staff/messages/': {
-      id: '/_staff/messages/'
-      path: '/'
-      fullPath: '/messages/'
-      preLoaderRoute: typeof StaffMessagesIndexRouteImport
-      parentRoute: typeof StaffMessagesRoute
+    '/_staff/feedback': {
+      id: '/_staff/feedback'
+      path: '/feedback'
+      fullPath: '/feedback'
+      preLoaderRoute: typeof StaffFeedbackRouteImport
+      parentRoute: typeof StaffRoute
     }
-    '/_staff/content/': {
-      id: '/_staff/content/'
-      path: '/'
-      fullPath: '/content/'
-      preLoaderRoute: typeof StaffContentIndexRouteImport
-      parentRoute: typeof StaffContentRoute
+    '/_staff/forum': {
+      id: '/_staff/forum'
+      path: '/forum'
+      fullPath: '/forum'
+      preLoaderRoute: typeof StaffForumRouteImport
+      parentRoute: typeof StaffRoute
     }
-    '/_staff/attendance/': {
-      id: '/_staff/attendance/'
-      path: '/'
-      fullPath: '/attendance/'
-      preLoaderRoute: typeof StaffAttendanceIndexRouteImport
-      parentRoute: typeof StaffAttendanceRoute
+    '/_staff/gallery': {
+      id: '/_staff/gallery'
+      path: '/gallery'
+      fullPath: '/gallery'
+      preLoaderRoute: typeof StaffGalleryRouteImport
+      parentRoute: typeof StaffRoute
+    }
+    '/_staff/mentoring': {
+      id: '/_staff/mentoring'
+      path: '/mentoring'
+      fullPath: '/mentoring'
+      preLoaderRoute: typeof StaffMentoringRouteImport
+      parentRoute: typeof StaffRoute
+    }
+    '/_staff/messages': {
+      id: '/_staff/messages'
+      path: '/messages'
+      fullPath: '/messages'
+      preLoaderRoute: typeof StaffMessagesRouteImport
+      parentRoute: typeof StaffRoute
+    }
+    '/_staff/notifications': {
+      id: '/_staff/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof StaffNotificationsRouteImport
+      parentRoute: typeof StaffRoute
+    }
+    '/_staff/settings': {
+      id: '/_staff/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof StaffSettingsRouteImport
+      parentRoute: typeof StaffRoute
+    }
+    '/_staff/surveys': {
+      id: '/_staff/surveys'
+      path: '/surveys'
+      fullPath: '/surveys'
+      preLoaderRoute: typeof StaffSurveysRouteImport
+      parentRoute: typeof StaffRoute
     }
     '/_entity/portal/': {
       id: '/_entity/portal/'
       path: '/portal'
       fullPath: '/portal/'
       preLoaderRoute: typeof EntityPortalIndexRouteImport
-      parentRoute: typeof EntityRoute
-    }
-    '/_staff/photo-handoff/$handoffId': {
-      id: '/_staff/photo-handoff/$handoffId'
-      path: '/photo-handoff/$handoffId'
-      fullPath: '/photo-handoff/$handoffId'
-      preLoaderRoute: typeof StaffPhotoHandoffHandoffIdRouteImport
-      parentRoute: typeof StaffRoute
-    }
-    '/_staff/participants/referrals': {
-      id: '/_staff/participants/referrals'
-      path: '/participants/referrals'
-      fullPath: '/participants/referrals'
-      preLoaderRoute: typeof StaffParticipantsReferralsRouteImport
-      parentRoute: typeof StaffRoute
-    }
-    '/_staff/participants/new': {
-      id: '/_staff/participants/new'
-      path: '/participants/new'
-      fullPath: '/participants/new'
-      preLoaderRoute: typeof StaffParticipantsNewRouteImport
-      parentRoute: typeof StaffRoute
-    }
-    '/_staff/participants/invites': {
-      id: '/_staff/participants/invites'
-      path: '/participants/invites'
-      fullPath: '/participants/invites'
-      preLoaderRoute: typeof StaffParticipantsInvitesRouteImport
-      parentRoute: typeof StaffRoute
-    }
-    '/_staff/participants/deletion-requests': {
-      id: '/_staff/participants/deletion-requests'
-      path: '/participants/deletion-requests'
-      fullPath: '/participants/deletion-requests'
-      preLoaderRoute: typeof StaffParticipantsDeletionRequestsRouteImport
-      parentRoute: typeof StaffRoute
-    }
-    '/_staff/participants/$participantId': {
-      id: '/_staff/participants/$participantId'
-      path: '/participants/$participantId'
-      fullPath: '/participants/$participantId'
-      preLoaderRoute: typeof StaffParticipantsParticipantIdRouteImport
-      parentRoute: typeof StaffRoute
-    }
-    '/_staff/messages/$conversationId': {
-      id: '/_staff/messages/$conversationId'
-      path: '/$conversationId'
-      fullPath: '/messages/$conversationId'
-      preLoaderRoute: typeof StaffMessagesConversationIdRouteImport
-      parentRoute: typeof StaffMessagesRoute
-    }
-    '/_staff/attendance/$occurrenceId': {
-      id: '/_staff/attendance/$occurrenceId'
-      path: '/$occurrenceId'
-      fullPath: '/attendance/$occurrenceId'
-      preLoaderRoute: typeof StaffAttendanceOccurrenceIdRouteImport
-      parentRoute: typeof StaffAttendanceRoute
-    }
-    '/_entity/portal/services': {
-      id: '/_entity/portal/services'
-      path: '/portal/services'
-      fullPath: '/portal/services'
-      preLoaderRoute: typeof EntityPortalServicesRouteImport
-      parentRoute: typeof EntityRoute
-    }
-    '/_entity/portal/referrals': {
-      id: '/_entity/portal/referrals'
-      path: '/portal/referrals'
-      fullPath: '/portal/referrals'
-      preLoaderRoute: typeof EntityPortalReferralsRouteImport
-      parentRoute: typeof EntityRoute
-    }
-    '/_entity/portal/messages': {
-      id: '/_entity/portal/messages'
-      path: '/portal/messages'
-      fullPath: '/portal/messages'
-      preLoaderRoute: typeof EntityPortalMessagesRouteImport
       parentRoute: typeof EntityRoute
     }
     '/_entity/portal/events': {
@@ -913,40 +827,110 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EntityPortalEventsRouteImport
       parentRoute: typeof EntityRoute
     }
-    '/_staff/content/services/': {
-      id: '/_staff/content/services/'
-      path: '/services'
-      fullPath: '/content/services/'
-      preLoaderRoute: typeof StaffContentServicesIndexRouteImport
-      parentRoute: typeof StaffContentRoute
+    '/_entity/portal/messages': {
+      id: '/_entity/portal/messages'
+      path: '/portal/messages'
+      fullPath: '/portal/messages'
+      preLoaderRoute: typeof EntityPortalMessagesRouteImport
+      parentRoute: typeof EntityRoute
     }
-    '/_staff/content/knowledge/': {
-      id: '/_staff/content/knowledge/'
-      path: '/knowledge'
-      fullPath: '/content/knowledge/'
-      preLoaderRoute: typeof StaffContentKnowledgeIndexRouteImport
-      parentRoute: typeof StaffContentRoute
+    '/_entity/portal/referrals': {
+      id: '/_entity/portal/referrals'
+      path: '/portal/referrals'
+      fullPath: '/portal/referrals'
+      preLoaderRoute: typeof EntityPortalReferralsRouteImport
+      parentRoute: typeof EntityRoute
     }
-    '/_staff/content/events/': {
-      id: '/_staff/content/events/'
-      path: '/events'
-      fullPath: '/content/events/'
-      preLoaderRoute: typeof StaffContentEventsIndexRouteImport
-      parentRoute: typeof StaffContentRoute
+    '/_entity/portal/services': {
+      id: '/_entity/portal/services'
+      path: '/portal/services'
+      fullPath: '/portal/services'
+      preLoaderRoute: typeof EntityPortalServicesRouteImport
+      parentRoute: typeof EntityRoute
     }
-    '/_staff/content/announcements/': {
-      id: '/_staff/content/announcements/'
-      path: '/announcements'
-      fullPath: '/content/announcements/'
-      preLoaderRoute: typeof StaffContentAnnouncementsIndexRouteImport
-      parentRoute: typeof StaffContentRoute
-    }
-    '/_entity/portal/services/': {
-      id: '/_entity/portal/services/'
+    '/_staff/attendance/': {
+      id: '/_staff/attendance/'
       path: '/'
-      fullPath: '/portal/services/'
-      preLoaderRoute: typeof EntityPortalServicesIndexRouteImport
-      parentRoute: typeof EntityPortalServicesRoute
+      fullPath: '/attendance/'
+      preLoaderRoute: typeof StaffAttendanceIndexRouteImport
+      parentRoute: typeof StaffAttendanceRoute
+    }
+    '/_staff/attendance/$occurrenceId': {
+      id: '/_staff/attendance/$occurrenceId'
+      path: '/$occurrenceId'
+      fullPath: '/attendance/$occurrenceId'
+      preLoaderRoute: typeof StaffAttendanceOccurrenceIdRouteImport
+      parentRoute: typeof StaffAttendanceRoute
+    }
+    '/_staff/content/': {
+      id: '/_staff/content/'
+      path: '/'
+      fullPath: '/content/'
+      preLoaderRoute: typeof StaffContentIndexRouteImport
+      parentRoute: typeof StaffContentRoute
+    }
+    '/_staff/messages/': {
+      id: '/_staff/messages/'
+      path: '/'
+      fullPath: '/messages/'
+      preLoaderRoute: typeof StaffMessagesIndexRouteImport
+      parentRoute: typeof StaffMessagesRoute
+    }
+    '/_staff/messages/$conversationId': {
+      id: '/_staff/messages/$conversationId'
+      path: '/$conversationId'
+      fullPath: '/messages/$conversationId'
+      preLoaderRoute: typeof StaffMessagesConversationIdRouteImport
+      parentRoute: typeof StaffMessagesRoute
+    }
+    '/_staff/participants/': {
+      id: '/_staff/participants/'
+      path: '/participants'
+      fullPath: '/participants/'
+      preLoaderRoute: typeof StaffParticipantsIndexRouteImport
+      parentRoute: typeof StaffRoute
+    }
+    '/_staff/participants/$participantId': {
+      id: '/_staff/participants/$participantId'
+      path: '/participants/$participantId'
+      fullPath: '/participants/$participantId'
+      preLoaderRoute: typeof StaffParticipantsParticipantIdRouteImport
+      parentRoute: typeof StaffRoute
+    }
+    '/_staff/participants/deletion-requests': {
+      id: '/_staff/participants/deletion-requests'
+      path: '/participants/deletion-requests'
+      fullPath: '/participants/deletion-requests'
+      preLoaderRoute: typeof StaffParticipantsDeletionRequestsRouteImport
+      parentRoute: typeof StaffRoute
+    }
+    '/_staff/participants/invites': {
+      id: '/_staff/participants/invites'
+      path: '/participants/invites'
+      fullPath: '/participants/invites'
+      preLoaderRoute: typeof StaffParticipantsInvitesRouteImport
+      parentRoute: typeof StaffRoute
+    }
+    '/_staff/participants/new': {
+      id: '/_staff/participants/new'
+      path: '/participants/new'
+      fullPath: '/participants/new'
+      preLoaderRoute: typeof StaffParticipantsNewRouteImport
+      parentRoute: typeof StaffRoute
+    }
+    '/_staff/participants/referrals': {
+      id: '/_staff/participants/referrals'
+      path: '/participants/referrals'
+      fullPath: '/participants/referrals'
+      preLoaderRoute: typeof StaffParticipantsReferralsRouteImport
+      parentRoute: typeof StaffRoute
+    }
+    '/_staff/photo-handoff/$handoffId': {
+      id: '/_staff/photo-handoff/$handoffId'
+      path: '/photo-handoff/$handoffId'
+      fullPath: '/photo-handoff/$handoffId'
+      preLoaderRoute: typeof StaffPhotoHandoffHandoffIdRouteImport
+      parentRoute: typeof StaffRoute
     }
     '/_entity/portal/referrals/': {
       id: '/_entity/portal/referrals/'
@@ -955,81 +939,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EntityPortalReferralsIndexRouteImport
       parentRoute: typeof EntityPortalReferralsRoute
     }
-    '/_staff/content/services/new': {
-      id: '/_staff/content/services/new'
-      path: '/services/new'
-      fullPath: '/content/services/new'
-      preLoaderRoute: typeof StaffContentServicesNewRouteImport
-      parentRoute: typeof StaffContentRoute
+    '/_entity/portal/referrals/$referralId': {
+      id: '/_entity/portal/referrals/$referralId'
+      path: '/$referralId'
+      fullPath: '/portal/referrals/$referralId'
+      preLoaderRoute: typeof EntityPortalReferralsReferralIdRouteImport
+      parentRoute: typeof EntityPortalReferralsRoute
     }
-    '/_staff/content/services/categories': {
-      id: '/_staff/content/services/categories'
-      path: '/services/categories'
-      fullPath: '/content/services/categories'
-      preLoaderRoute: typeof StaffContentServicesCategoriesRouteImport
-      parentRoute: typeof StaffContentRoute
-    }
-    '/_staff/content/services/$serviceId': {
-      id: '/_staff/content/services/$serviceId'
-      path: '/services/$serviceId'
-      fullPath: '/content/services/$serviceId'
-      preLoaderRoute: typeof StaffContentServicesServiceIdRouteImport
-      parentRoute: typeof StaffContentRoute
-    }
-    '/_staff/content/knowledge/new': {
-      id: '/_staff/content/knowledge/new'
-      path: '/knowledge/new'
-      fullPath: '/content/knowledge/new'
-      preLoaderRoute: typeof StaffContentKnowledgeNewRouteImport
-      parentRoute: typeof StaffContentRoute
-    }
-    '/_staff/content/knowledge/$articleId': {
-      id: '/_staff/content/knowledge/$articleId'
-      path: '/knowledge/$articleId'
-      fullPath: '/content/knowledge/$articleId'
-      preLoaderRoute: typeof StaffContentKnowledgeArticleIdRouteImport
-      parentRoute: typeof StaffContentRoute
-    }
-    '/_staff/content/events/new': {
-      id: '/_staff/content/events/new'
-      path: '/events/new'
-      fullPath: '/content/events/new'
-      preLoaderRoute: typeof StaffContentEventsNewRouteImport
-      parentRoute: typeof StaffContentRoute
-    }
-    '/_staff/content/events/categories': {
-      id: '/_staff/content/events/categories'
-      path: '/events/categories'
-      fullPath: '/content/events/categories'
-      preLoaderRoute: typeof StaffContentEventsCategoriesRouteImport
-      parentRoute: typeof StaffContentRoute
-    }
-    '/_staff/content/events/$eventId': {
-      id: '/_staff/content/events/$eventId'
-      path: '/events/$eventId'
-      fullPath: '/content/events/$eventId'
-      preLoaderRoute: typeof StaffContentEventsEventIdRouteImport
-      parentRoute: typeof StaffContentRoute
-    }
-    '/_staff/content/announcements/new': {
-      id: '/_staff/content/announcements/new'
-      path: '/announcements/new'
-      fullPath: '/content/announcements/new'
-      preLoaderRoute: typeof StaffContentAnnouncementsNewRouteImport
-      parentRoute: typeof StaffContentRoute
-    }
-    '/_staff/content/announcements/$announcementId': {
-      id: '/_staff/content/announcements/$announcementId'
-      path: '/announcements/$announcementId'
-      fullPath: '/content/announcements/$announcementId'
-      preLoaderRoute: typeof StaffContentAnnouncementsAnnouncementIdRouteImport
-      parentRoute: typeof StaffContentRoute
-    }
-    '/_entity/portal/services/new': {
-      id: '/_entity/portal/services/new'
+    '/_entity/portal/referrals/new': {
+      id: '/_entity/portal/referrals/new'
       path: '/new'
-      fullPath: '/portal/services/new'
-      preLoaderRoute: typeof EntityPortalServicesNewRouteImport
+      fullPath: '/portal/referrals/new'
+      preLoaderRoute: typeof EntityPortalReferralsNewRouteImport
+      parentRoute: typeof EntityPortalReferralsRoute
+    }
+    '/_entity/portal/services/': {
+      id: '/_entity/portal/services/'
+      path: '/'
+      fullPath: '/portal/services/'
+      preLoaderRoute: typeof EntityPortalServicesIndexRouteImport
       parentRoute: typeof EntityPortalServicesRoute
     }
     '/_entity/portal/services/$serviceId': {
@@ -1039,19 +967,110 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EntityPortalServicesServiceIdRouteImport
       parentRoute: typeof EntityPortalServicesRoute
     }
-    '/_entity/portal/referrals/new': {
-      id: '/_entity/portal/referrals/new'
+    '/_entity/portal/services/new': {
+      id: '/_entity/portal/services/new'
       path: '/new'
-      fullPath: '/portal/referrals/new'
-      preLoaderRoute: typeof EntityPortalReferralsNewRouteImport
-      parentRoute: typeof EntityPortalReferralsRoute
+      fullPath: '/portal/services/new'
+      preLoaderRoute: typeof EntityPortalServicesNewRouteImport
+      parentRoute: typeof EntityPortalServicesRoute
     }
-    '/_entity/portal/referrals/$referralId': {
-      id: '/_entity/portal/referrals/$referralId'
-      path: '/$referralId'
-      fullPath: '/portal/referrals/$referralId'
-      preLoaderRoute: typeof EntityPortalReferralsReferralIdRouteImport
-      parentRoute: typeof EntityPortalReferralsRoute
+    '/_staff/content/announcements/': {
+      id: '/_staff/content/announcements/'
+      path: '/announcements'
+      fullPath: '/content/announcements/'
+      preLoaderRoute: typeof StaffContentAnnouncementsIndexRouteImport
+      parentRoute: typeof StaffContentRoute
+    }
+    '/_staff/content/announcements/$announcementId': {
+      id: '/_staff/content/announcements/$announcementId'
+      path: '/announcements/$announcementId'
+      fullPath: '/content/announcements/$announcementId'
+      preLoaderRoute: typeof StaffContentAnnouncementsAnnouncementIdRouteImport
+      parentRoute: typeof StaffContentRoute
+    }
+    '/_staff/content/announcements/new': {
+      id: '/_staff/content/announcements/new'
+      path: '/announcements/new'
+      fullPath: '/content/announcements/new'
+      preLoaderRoute: typeof StaffContentAnnouncementsNewRouteImport
+      parentRoute: typeof StaffContentRoute
+    }
+    '/_staff/content/events/': {
+      id: '/_staff/content/events/'
+      path: '/events'
+      fullPath: '/content/events/'
+      preLoaderRoute: typeof StaffContentEventsIndexRouteImport
+      parentRoute: typeof StaffContentRoute
+    }
+    '/_staff/content/events/$eventId': {
+      id: '/_staff/content/events/$eventId'
+      path: '/events/$eventId'
+      fullPath: '/content/events/$eventId'
+      preLoaderRoute: typeof StaffContentEventsEventIdRouteImport
+      parentRoute: typeof StaffContentRoute
+    }
+    '/_staff/content/events/categories': {
+      id: '/_staff/content/events/categories'
+      path: '/events/categories'
+      fullPath: '/content/events/categories'
+      preLoaderRoute: typeof StaffContentEventsCategoriesRouteImport
+      parentRoute: typeof StaffContentRoute
+    }
+    '/_staff/content/events/new': {
+      id: '/_staff/content/events/new'
+      path: '/events/new'
+      fullPath: '/content/events/new'
+      preLoaderRoute: typeof StaffContentEventsNewRouteImport
+      parentRoute: typeof StaffContentRoute
+    }
+    '/_staff/content/knowledge/': {
+      id: '/_staff/content/knowledge/'
+      path: '/knowledge'
+      fullPath: '/content/knowledge/'
+      preLoaderRoute: typeof StaffContentKnowledgeIndexRouteImport
+      parentRoute: typeof StaffContentRoute
+    }
+    '/_staff/content/knowledge/$articleId': {
+      id: '/_staff/content/knowledge/$articleId'
+      path: '/knowledge/$articleId'
+      fullPath: '/content/knowledge/$articleId'
+      preLoaderRoute: typeof StaffContentKnowledgeArticleIdRouteImport
+      parentRoute: typeof StaffContentRoute
+    }
+    '/_staff/content/knowledge/new': {
+      id: '/_staff/content/knowledge/new'
+      path: '/knowledge/new'
+      fullPath: '/content/knowledge/new'
+      preLoaderRoute: typeof StaffContentKnowledgeNewRouteImport
+      parentRoute: typeof StaffContentRoute
+    }
+    '/_staff/content/services/': {
+      id: '/_staff/content/services/'
+      path: '/services'
+      fullPath: '/content/services/'
+      preLoaderRoute: typeof StaffContentServicesIndexRouteImport
+      parentRoute: typeof StaffContentRoute
+    }
+    '/_staff/content/services/$serviceId': {
+      id: '/_staff/content/services/$serviceId'
+      path: '/services/$serviceId'
+      fullPath: '/content/services/$serviceId'
+      preLoaderRoute: typeof StaffContentServicesServiceIdRouteImport
+      parentRoute: typeof StaffContentRoute
+    }
+    '/_staff/content/services/categories': {
+      id: '/_staff/content/services/categories'
+      path: '/services/categories'
+      fullPath: '/content/services/categories'
+      preLoaderRoute: typeof StaffContentServicesCategoriesRouteImport
+      parentRoute: typeof StaffContentRoute
+    }
+    '/_staff/content/services/new': {
+      id: '/_staff/content/services/new'
+      path: '/services/new'
+      fullPath: '/content/services/new'
+      preLoaderRoute: typeof StaffContentServicesNewRouteImport
+      parentRoute: typeof StaffContentRoute
     }
     '/_staff/content/services/reviews/': {
       id: '/_staff/content/services/reviews/'
@@ -1202,6 +1221,7 @@ interface StaffRouteChildren {
   StaffDataRoute: typeof StaffDataRoute
   StaffFeedbackRoute: typeof StaffFeedbackRoute
   StaffForumRoute: typeof StaffForumRoute
+  StaffGalleryRoute: typeof StaffGalleryRoute
   StaffMentoringRoute: typeof StaffMentoringRoute
   StaffMessagesRoute: typeof StaffMessagesRouteWithChildren
   StaffNotificationsRoute: typeof StaffNotificationsRoute
@@ -1223,6 +1243,7 @@ const StaffRouteChildren: StaffRouteChildren = {
   StaffDataRoute: StaffDataRoute,
   StaffFeedbackRoute: StaffFeedbackRoute,
   StaffForumRoute: StaffForumRoute,
+  StaffGalleryRoute: StaffGalleryRoute,
   StaffMentoringRoute: StaffMentoringRoute,
   StaffMessagesRoute: StaffMessagesRouteWithChildren,
   StaffNotificationsRoute: StaffNotificationsRoute,

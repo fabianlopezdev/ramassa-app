@@ -67,5 +67,20 @@
   "auditActor": "المنفذ",
   "auditTarget": "الهدف",
   "auditDetails": "التفاصيل",
-  "auditNext": "الصفحة التالية"
+  "auditNext": "الصفحة التالية",
+  "impactPeriod": "الفترة",
+  "impactPeriodWeek": "آخر 7 أيام",
+  "impactPeriodMonth": "آخر 30 يومًا",
+  "impactPeriodYear": "هذا العام",
+  "impactShowChart": "اعرض الرسم البياني الشهري",
+  "impactChartMonthly": "{{metric}} شهريًا",
+  "impactChartEmpty": "لا توجد بيانات كافية لرسم بياني في هذه الفترة.",
+  "impactLoadFailed": "تعذّر تحميل تقرير الأثر.",
+  "impactClose": "إغلاق",
+  "exportShare": "شارك ملف CSV",
+  "exportFullShare": "شارك ملف CSV الكامل",
+  "exportShared": "التصدير جاهز ويحتوي على {{count}} صفوف.",
+  "exportPhoneNote": "على الهاتف، التصديرات ملفات CSV. ملفات Excel متاحة في لوحة الإدارة على الويب.",
+  "auditLoadMore": "اعرض المزيد",
+  "exportPeriod": "الفترة (اختيارية)"
 }

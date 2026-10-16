@@ -1795,6 +1795,223 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - Announcements list: status chips (all, draft, published, scheduled, expired, the web admin's filter), the total, pages that load on scroll, and each row's title, category, date, status and whether it is pinned. On a phone a row opens its own screen; on a tablet it opens beside the list.
 - One announcement shows its status, category, publication and expiry, and the Catalan text. Pin and unpin are there for anyone who reads it; Delete is for `announcements.publish` holders, as the database requires, and asks first. The editor comes in RAPP-341.
 
+## Surveys on the phone (2026-10-15, RAPP-384, part of RAPP-215)
+
+- `surveys.manage` and `surveys.results` holders get "Enquestes" in More, as the web admin's workspace: each survey with its state (scheduled, open or closed), when it closes, and how many responses and completed responses it has.
+- `surveys.manage` holders start a new survey: a Catalan title, an optional linked activity, when it is published and closes (Madrid time), who receives it (the shared audience picker, every active participant by default), and up to thirty questions (stars, a choice, yes or no, or free text; each one required or optional). One button asks for the drafts of every text; every language of every text must be approved before the survey is saved and distributed.
+- Choices take a Catalan label with its own review, so the five labels come from the drafts. The web admin asks for the five labels by hand and has two fixed choices; the phone allows two to twelve. Surveys are created only, as in the web admin, because a survey with responses cannot change.
+- `surveys.results` holders open a survey's results: the stars' average and spread, how often each choice and each of yes and no was picked, the written answers with who wrote them, and each participant's response with its state. Kept in memory: the answers are attributed.
+- The CSV export waits for the phone's exports (RAPP-216), which ask for the second factor and use the share sheet, because the file names participants.
+- Checks: `app-team-surveys.web-qa.ts` (the seeded results against the database, the approval gate, a new survey with a rating and a choice question in five languages), the player and staff `surveys.web-qa.ts`, unit tests for the survey state and the screen flags, and the iPhone simulator.
+
+## Forum categories on the phone (2026-10-15, RAPP-386, part of RAPP-215)
+
+- `forum.moderate` holders open "Categories del fòrum" from forum moderation, as the category manager under the web admin's forum moderation: the categories in the order participants see them, with Up, Down, Edit and Delete. New and Edit open a sheet.
+- The name is written in Catalan; the four translations are generated and must all be approved, also again on an edit, as for event categories. The web form asks for the five names by hand.
+- A new category's identifier is made from the Catalan name (lowercase letters, numbers and hyphens) until it is changed by hand. Icon and colour are free text, as in the web admin, because nothing shows them yet; a new category starts with `bubble` and `neutral`.
+- Up and Down number every category again by tens (10, 20, 30), and save only those whose number changes. The web admin takes an order number instead.
+- A category with posts cannot be deleted: the database refuses it and the screen says so.
+- Checks: `app-forum-categories.web-qa.ts` (create in five languages with the made identifier, move up, edit, refused delete with a post, delete), the forum moderation specs, unit tests for the identifier, and the iPhone simulator.
+
+## Custom notification groups on the phone (2026-10-15, RAPP-389, part of RAPP-215)
+
+- The notifications screen gets "Grups personalitzats": each group with its member count, New group and Edit, as the web admin's group form. A sheet takes the name and the participants, picked from a search that ignores case and accents; the selection stays while the search changes.
+- The search (`filterNotificationGroupParticipants`) moved from the web admin into `packages/shared/notifications.ts`, so both use one function.
+- Groups are not deleted on the phone, as in the web admin.
+- The member and selection counts now have singular and plural forms in the five languages ("1 membre", "2 membres"), also in the web admin.
+- Checks: `app-team-notification-groups.web-qa.ts` (accent-blind search, create, add a member, the group as an exact audience), `app-team-notifications.web-qa.ts`, the web admin `targeted-notifications.web-qa.ts`, the web admin unit tests, and the iPhone simulator.
+
+## Data exports and the audit log on the phone (2026-10-15, RAPP-401, part of RAPP-216)
+
+- Holders of any `export.*` permission or `audit.view` get "Dades i auditoria" in More, as the web admin's Data page.
+- Exports: only the datasets the person may export (participants, attendance, events), over an optional period. A default export, or a full one with a reason of 10 characters or more and a confirmation; a full participant export shows only for holders of `export.participants_sensitive` and `participants.view_sensitive`, as the database requires.
+- The step-up comes first (device check, then an authenticator code when the session has none from the last 10 minutes), because `create_data_export` refuses without it. The database also checks the dataset permission, limits the rate and writes the `data_export.*` audit row.
+- The rows become a CSV (`buildExportCsv`, the web admin's format), which opens in the system share sheet (`expo-sharing`, a new native module) and is deleted from the phone's cache when the sheet closes. The web build downloads it instead (`share-file.web.ts`). Excel stays on the web admin.
+- The audit log, for `audit.view` holders: entries newest first as cards, filtered by action, target type and period, 25 at a time with "Show more". The web admin's actor and target id filters stay on the web, because they take UUIDs.
+- Checks: `app-team-data.web-qa.ts` (no data screen without the permissions; a default events export and a full participant export against the CSV, the database and the audit rows; the audit filter), the web admin `data-exports-audit.web-qa.ts`, unit tests for the screen flags, and the iPhone simulator with the share sheet.
+
+## Impact dashboard on the phone (2026-10-15, RAPP-400, part of RAPP-216)
+
+- `impact.view` holders get "Informe d'impacte" in More, as the web admin's dashboard (`get_impact_report`), redesigned for small screens as the design doc asks.
+- A period control: the last 7 days, the last 30 days, or this year from 1 January (the web admin's default), in Madrid days. An optional event category and collaborating entity. Each filter is one line that scrolls sideways, so the figures stay near the top.
+- One figure per card (participants, new participants, participants with attendance, attendance rate), two columns on a phone and four on a tablet, with a small trend line per month. A tap on a card with a trend opens its chart per month: bars with one-letter months, then the same numbers as a table with the full month names.
+- Categories, nationalities, age bands and entities show as bars with their numbers, where the web uses tables. Forum and referral figures as on the web. Groups too small to count stay suppressed, and a filtered group under three participants shows only the privacy note.
+- The web admin's dashboard nav item keeps no permission filter, because the dashboard is the staff landing page; the database refuses the report without `impact.view`.
+- Checks: `app-team-impact.web-qa.ts` (the default period, the cards against the database reply, the monthly chart and table, the period and category filters in the request), unit tests for the periods in three time zones and the screen flag, and the iPhone simulator.
+
+## Team access on the phone (2026-10-15, RAPP-405, part of RAPP-216)
+
+- The Team screen gets Edit access for each active person and a Presets section, as the web admin's Team tab and its dialogs.
+- Edit access opens a sheet: choose a preset and "Use this preset", then single switches grouped by area, each area with a switch for all of it. A switch the reader does not hold is shown but locked, with the reason above the list; "Use this preset" changes only the switches the reader holds (`presetWithinReach`, now shared with the web admin).
+- Presets: each with its permission count and how many people use it, Edit, and Restore default (built-in) or Delete (custom); New preset. A saved preset that people use opens "Apply the changes": everyone, some (picked by name) or nobody. Nobody's access changes until that choice.
+- Every change asks for the step-up, as on the web. A change to one's own access reads the permissions again at once. The database keeps at least one person with Team management and explains a refusal in the sheet.
+- Checks: `app-team-access.web-qa.ts` (Coach plus one switch reads as adjusted, a new preset applied to a person, an edit applied by choice, delete), the web admin `team-access.web-qa.ts`, unit tests for `presetWithinReach`, and the iPhone simulator.
+
+## The team's accounts on the phone (2026-10-15, RAPP-404, part of RAPP-216)
+
+- `team.manage` holders get "Equip" in More, as the web admin's Team tab: invite a person (first name, last name, email and a preset; Administration makes an admin account, any other preset a staff account), then each person with their access summary ("Staff, adjusted") and whether they are active.
+- For an active person: Sign out everywhere, Reset second factor (never one's own) and Remove access. Each asks first. Inviting, applying the preset, resetting and removing ask for the step-up, as on the web; signing out everywhere does not, as on the web and in the database. Signing oneself out everywhere also signs this phone out.
+- The invitation's sign-in code goes by email, as on the web.
+- The database's refusals get their sentences from one shared function (`teamAccessErrorKey` in `packages/shared/permissions/team-access.ts`), now used by the web admin too.
+- Editing access and the presets come next (RAPP-405).
+- Checks: `app-team-staff.web-qa.ts` (invite on the Coach preset with the email, no reset of one's own factor, sign out everywhere, reset, remove, the audit rows), the web admin `team-access.web-qa.ts`, unit tests for the refusals and the screen flag, and the iPhone simulator.
+
+## Collaborating entities on the phone (2026-10-15, RAPP-407, part of RAPP-216)
+
+- `entities.manage` holders get "Entitats col·laboradores" in More, as the entities tab of the web admin's Settings: add an entity, then each entity with its status, collaborators, referrals and pending invitations.
+- A tap opens the entity (`team-entity/[id]`): Deactivate (asked first; its collaborators lose access, referral history stays) or Reactivate; invite a collaborator while the entity is active (the sign-in code goes by email); and each collaborator with Pending, Active or Inactive, Remove access (asked first) or Restore access, and Reset second factor (asked first).
+- Inviting, removing or restoring access and resetting a second factor ask for the step-up, as on the web; adding and switching an entity do not, as on the web.
+- Checks: `app-team-entities.web-qa.ts` (add, invite with the email, remove and restore access, deactivate and reactivate, against the database), unit tests for the screen flag, and the iPhone simulator.
+
+## Internal documents on the phone (2026-10-15, RAPP-406, part of RAPP-216)
+
+- `settings.documents` holders get "Documents interns" in More, as the documents tab of the web admin's Settings: the organization's private documents (insurance, inventory, resources) with who added each, when, and its size (KB under 1 MB).
+- The list follows the search as it is typed, after a short pause (`search_internal_documents`).
+- Open fetches the document through the media Worker with the person's session and hands it to the share sheet with its type (`document-file.ts`), so the phone offers the right apps; the copy is deleted from the cache when the sheet closes. The web build downloads it.
+- Upload a document adds one from the phone's files (`expo-document-picker`, a new native module, so the dev client needs a new build): PDF, Word or a photo, 10 MB at most; it is uploaded to `documents` and registered with `register_internal_document`.
+- Checks: `app-team-documents.web-qa.ts` (a PDF added, a search with no match, found by a search that ignores case, opened with the same bytes), unit tests for the document types, file names and the screen flag, and the iPhone simulator.
+
+## Organization settings on the phone (2026-10-15, RAPP-403, part of RAPP-216)
+
+- `settings.organization` and `settings.branding` holders get "Organització" in More, as the web admin's Organization tab. A field the reader may not change is shown but locked.
+- `settings.organization`: the name, the contact email and phone, the languages and the default language. A locked language (Catalan, when the grant requires it) stays on and the default; at least one language stays on (`organization-languages.ts`).
+- `settings.branding`: the logo, picked from the photo library, resized to 512 points wide at most and saved as PNG so transparency stays, uploaded to `organization-branding`; and the two brand colours as hex values with a swatch. Each colour shows its contrast with its text as it is typed, in the reader's number format, and a colour under 4.5:1 cannot be saved, as the database also refuses.
+- After a save, the app reads the organization again (`useRefreshOrganizationBranding`), so the new colours apply at once.
+- No step-up, as on the web admin.
+- Checks: `app-team-organization.web-qa.ts` (the contrast refusal, a new phone, colour and logo saved), the web admin `admin-settings.web-qa.ts`, unit tests for the languages and the screen flag, and the iPhone simulator.
+
+## Entity home: impact and tracking on the phone (2026-10-15, RAPP-411, part of RAPP-217)
+
+- The entity's Home tab shows the web portal's impact page (`fetchEntityDashboard`): linked participants, active, present and the attendance rate, one figure per card with a small trend line per month (the staff dashboard's charts); the participation per month as bars with the same numbers as a table; and the tracking of each referred woman with her status, present, absent and excused, and her attendance rate as a bar.
+- With fewer than three referred women, the figures stay hidden and the privacy note shows, as on the web. The database scopes every row to her own entity.
+- The app lock and sign-out stay at the end of the screen.
+- Checks: `app-entity-home.web-qa.ts` (exactly her own tracking and none of another entity's; a small entity sees the privacy note and no figures), `app-account-routes.web-qa.ts`, and the iPhone simulator.
+
+## Entity second factor and tabs on the phone (2026-10-15, RAPP-410, part of RAPP-217)
+
+- A partner entity's contact now verifies her authenticator code before her screens, as a team member does (`second-factor-screen.tsx` enrols or verifies). Before, the phone showed her a notice that the portal is on the web and never asked the code; the database already returned no data without it.
+- The notice is replaced by her own shell, `(entity)`, as the web portal's navigation: native bottom tabs on a phone and a sidebar on a tablet. Home (`/entity-home`) opens first and holds the app lock and sign-out; the impact comes in RAPP-411, and Referrals, Services, Events and Messages each appear with their slice (RAPP-412 to RAPP-415).
+- Fixed in passing: on the team's More screen, the last entry (sign-out) stayed behind the floating tab bar once the list grew; the list now keeps clear of it.
+- Checks: `app-account-routes.web-qa.ts` (an entity contact verifies her second factor, then lands on her own tabs; the team cases unchanged), unit tests for the entity home route, and the iPhone simulator.
+
+## Entity referrals on the phone (2026-10-15, RAPP-413, part of RAPP-217)
+
+- A partner entity's contact gets the Referrals tab, as the web portal's referrals pages: the women her entity referred with their status, newest first, and a search over names, phone, email and entity that ignores case and accents (`filterReferrals`).
+- New referral asks first and last name, an optional phone and email, the documentation status and optional notes, and validates with the shared `createReferralSchema`. A refused field says why until it changes. Once sent, the referral opens.
+- One referral shows the contact details and the updates shared with the team, newest first. The entity shares an update (type and what changed) only once the team has welcomed the woman and she has an account, because the database refuses updates before that; until then a note says so.
+- Kept in memory only: referrals hold contact details.
+- Checks: `app-entity-referrals.web-qa.ts` (the refused fields, a referral sent and found by an accent-free search, the note before onboarding, an update on a referral with an account read back decrypted), `app-account-routes.web-qa.ts`, and the iPhone simulator.
+
+## Entity messages on the phone (2026-10-15, RAPP-415, part of RAPP-217)
+
+- A partner entity's contact gets the Messages tab, as the web portal's messages page: her one general conversation with the team (`get_or_create_own_conversation`), in the phone's player thread with the entity title. The tab (and the tablet sidebar entry) shows her unread count.
+- Fixed in passing, for every thread on the phone:
+  - A thread marks messages read only while its screen is on view. Before, a thread in a tab stayed mounted behind another tab and read new messages at once, so the unread count never showed.
+  - On iOS the composer sits on the keyboard. Before, a thread in a tab left a gap the height of the tab bar between them (in a pushed screen, the height of the home indicator).
+  - On a tablet (web), the team and entity shells bound their tab slot. Before, a message thread there grew the page without end.
+- Checks: `app-entity-messages.web-qa.ts` (a team reply counted on the tab, read in the chat, an answer saved; the team thread keeps its height beside the sidebar), `app-account-routes.web-qa.ts`, the messaging contract tests, and the iPhone simulator (badge while on another tab, cleared on open, a sent message, the keyboard).
+
+## Entity services on the phone (2026-10-15, RAPP-414, part of RAPP-217)
+
+- A partner entity's contact gets the Services tab, as the web portal's services pages: the team's latest decisions on her submissions, then every submission of hers with its status (scheduled when published with a date to come), category and any reason for a rejection.
+- The actions follow `getEntityServiceActions`: a draft can be edited or deleted (asked first), a rejected one edited, deleted or resubmitted, a published one edited (it changes at once). One under review or approved shows read only with a note on what happens next.
+- The form (`components/entity/entity-service-form.tsx`) is in Catalan only, as on the web; the team translates on review. It has the category and its own fields (`ServiceMetadataFields`, shared with the team's form), the provider, place, cost, contact, schedule, link, availability and the requested publication and end dates. A contact she used before fills the contact fields in one tap, found by a search that ignores accents. The shared check runs before `saveEntityService`; saving a rejected one sends it for review again.
+- Each submission has its comment thread with the team (`addEntityServiceComment`); internal team notes stay hidden by the database.
+- The delete confirm moved from forum moderation to `lib/confirm-delete.ts`, so both screens use one.
+- Checks: `app-entity-services.web-qa.ts` (her own submissions only, the form check, contact reuse, a submission sent with a comment; a draft deleted, a rejected one resubmitted and another corrected), and the iPhone simulator.
+
+## Entity events on the phone (2026-10-15, RAPP-412, part of RAPP-217)
+
+- A partner entity's contact gets the Events tab, as the web portal's events page: the published upcoming events (`list_entity_upcoming_events`), read only, in date order, with the title and description in her language, the place and a recurring mark.
+- The phone shows the date and the time, in the event's own time zone; the web page shows the date only.
+- With this slice the entity has all five tabs: Home, Referrals, Services, Events and Messages.
+- Checks: `app-entity-events.web-qa.ts` (the published upcoming events in order with titles and the recurring mark, and none that is a draft or past), and the iPhone simulator.
+
+## Survey CSV export with step-up and audit (2026-10-15, RAPP-402, part of RAPP-216)
+
+- The survey CSV names every participant who answered. Before, the web admin built it in the browser from `list_survey_responses`, with no recent second factor and no audit entry.
+- Now `create_survey_export(p_survey_id)` returns the rows only to a `surveys.results` holder with an authenticator code from the last 10 minutes, keeps the data exports' rate limit (five a minute), and writes one audit row (`survey_export`, target the survey) with the export id and the row count, without answers or names. Both apps build the same CSV from its rows (`createSurveyExport`, `buildSurveyCsv` / `streamSurveyCsv`).
+- Web admin: Export CSV goes through the step-up prompt and this function.
+- Phone: Share CSV on a survey's results, through the step-up (Face ID, then the code when needed) and the share sheet; the file is deleted from the phone afterwards.
+- Checks: pgTAP `0066_survey_export_test.sql` (rows and audit row, no recent code, no permission, unknown survey, rate limit), `surveys.web-qa.ts` (the web CSV and its audit row), `app-team-surveys.web-qa.ts` (the phone CSV and its audit row), and the iPhone simulator.
+
+## Message threads open at the newest message (2026-10-15, RAPP-433)
+
+- A chat on the phone opened a little short of its end: on Android the newest message's delivery line was hidden, on iOS half the newest bubble sat behind the composer. FlashList (2.0.2) renders from the bottom but measured the content after its first jump. The thread is shared, so every chat had it.
+- Now the list follows its end each time the measured content grows, until she drags it; new messages keep landing at the bottom as before.
+- Checks: the messaging contract tests, `app-entity-messages.web-qa.ts`, and the entity chat opened on the Android emulator (Fold) and the iPhone simulator, both showing the newest message with its delivery line.
+
+## Entity screens say when their data does not load (2026-10-15, RAPP-434)
+
+- Offline, the entity's Referrals tab showed only its search field: no list, no message and no way to try again. Home, Services and Events had the same gap. Offline, React Query pauses a query instead of failing it, and these screens read only its data.
+- Now `EntityLoadFailure` (`components/entity/entity-load-failure.tsx`) shows on each of the four when there is no data and the load failed or waits for a connection: the error's own message (no connection when it waits), its code, and Try again. Her data stays in memory only, because it names people, so there is nothing saved to show instead. Messages already had its offline line.
+- Checks: the four entity specs, and the Android emulator offline (Referrals shows no connection with NETWORK-1) and online again (Try again shows the list).
+
+## No screen before the second factor after a fresh sign-in (2026-10-15, RAPP-430)
+
+- Right after the email code, the phone already knew the area this device remembered for her (team or entity), but the live role was still loading. The second-factor gate looked at the role only, so for a moment the shell mounted on the `aal1` session. Its queries ran then and kept the empty answers the database gives such a session: an entity contact saw an empty Home or Events tab until the next cold start.
+- Now `awaitsSecondFactor` (`lib/account-area.ts`) also sends a remembered team or entity area to the authenticator screen while the role is unknown and the session is not `aal2`. An `aal2` session with a remembered area still opens at once, as on an offline cold start.
+- Checks: unit tests for the gate, `app-account-routes.web-qa.ts` and `app-entity-home.web-qa.ts`, and a fresh entity sign-in on the iPhone simulator, measured with a log in the Home query (only `aal2` fetches, three rows).
+
+## Dark status bar icons on Android (2026-10-15, RAPP-432)
+
+- On Android the clock, signal and battery icons at the top were white over the app's light screens, so nobody could see them. The app set no status bar style, and Android's transparent edge-to-edge bar defaults to light icons. The iPhone already showed them dark.
+- The root layout now sets `StatusBar style="dark"` (`expo-status-bar`, already installed), because every screen of the app is light.
+- Checks: the Android emulator (Pixel 9 Pro Fold) and the iPhone simulator both show dark icons.
+
+## Web admin on Vite 8 (2026-10-16, RAPP-437)
+
+- The web admin and partner portal build with Vite 8 (Rolldown) and run TanStack Start 1.169.2 with Router 1.170.44 (pinned exactly, so one router copy is installed). Plugins: `@vitejs/plugin-react` 6, `@cloudflare/vite-plugin` 1.64. The client bundle is smaller (3,684 KB against 3,788 KB) and builds in about a second.
+- Config: `build.rolldownOptions`, with the vendor split as a Rolldown code-splitting group that reuses `adminManualChunks`; `resolve.tsconfigPaths` replaces the manual `@` alias.
+- Fixed on the way:
+  - `RouteFocusManager` moves focus only on a navigation to another path. The newer router also reports renders for the first load and for data reloads, and focusing then took focus off the skip link.
+  - The root layout marks `data-hydrated` on `<html>` once React has mounted, and the browser specs' `waitForHydration` waits for it on the admin. Start 1.169 clears its stream global before the handlers are attached.
+  - The knowledge editor's paragraph field has a label.
+  - The participants spec checks that an entity contact lands on her portal. Counting every table only passed when it ran before the portal loaded.
+- Still open, from the accessibility suite (which CI skips): see RAPP-438.
+- Checks: audit, build, typecheck, 111 admin unit tests, knip, and 13 web admin specs.
+
+## Web portal says when referral updates open (2026-10-15, RAPP-435)
+
+- A pending referral (no account yet, which the database guarantees) already had no update form on the partner web portal, but its Updates section gave no reason. It now shows the same note as the phone: updates can be shared once the team has welcomed her and she has an account.
+- Checks: `entity-referrals.web-qa.ts` (the note and no form on a new, pending referral; the update after onboarding as before).
+
+## Accessibility suite green again (2026-10-16, RAPP-438)
+
+- Since the router upgrade the local WCAG 2.2 AA suite (`accessibility.web-qa.ts`, skipped in CI) failed in a set that changed between runs. Pages now fill in sooner, so axe saw content it used to miss, and the timing of one check changed.
+- Colour: `--muted-foreground` (oklch 0.51) and `--destructive` (oklch 0.52 0.21) are darker than the shadcn defaults. Small muted text on `--muted` measured 4.34:1 and red text on the 10% red badge 4.0:1. Both now pass 4.5:1, which fixes every place that uses them (message threads, entity service comments, the forum "Reports" badge).
+- Scroll areas a keyboard user could not reach (axe `scrollable-region-focusable`): the shared table container takes keyboard focus only while it scrolls sideways, measured after each render before paint, so a table that fits adds no tab stop; the staff message history always takes focus, because it scrolls.
+- The skip-link check waited for any `<main>`, which the auth loading screen also is. It now waits for `#main-content`, the page's own content, before pressing Tab. Measured: the click handler ran while only the loading screen was there.
+- Checks: `accessibility.web-qa.ts`, `participants.web-qa.ts` and `messaging.web-qa.ts`, 30 of 30 in two clean runs.
+
+## Notifications and targeted push on the phone (2026-10-15, RAPP-385, part of RAPP-215)
+
+- `notifications.send` holders get "Notificacions" in More, as the web admin's workspace. A message starts from a template or blank, in Catalan; the four translations are generated and must all be approved before it is sent or saved as a template.
+- The audience picker (`components/team/audience-picker.tsx`, shared with surveys): every active participant, those interested in a service category, those signed up to an event, those referred by an entity, or a custom group. Once chosen, the screen shows live how many participants and devices it reaches; the send passes that count, so the database refuses it if the audience changed in between.
+- Save as template (name and category), and the send history with its counts and state.
+- Custom groups are managed separately (RAPP-389).
+- Checks: `app-team-notifications.web-qa.ts` (template, approval gate, exact group of 5 on 5 devices, deliveries in all five languages, history, save as template), the web admin `targeted-notifications.web-qa.ts`, and the iPhone simulator.
+
+## Feedback inbox on the phone (2026-10-15, RAPP-383, part of RAPP-215)
+
+- `feedback.view` holders get "Bústia de suggeriments" in More, as the web admin's inbox: how many of each kind arrived per month (shown by month name), filters by kind and status, and each submission with who sent it, when, its text and photo.
+- A submission only moves forward: new to read, in progress or resolved; read to in progress or resolved; in progress to resolved. Whoever has the inbox (`messages.inbox`) answers in the chat the submission opened.
+- Kept in memory only: the feedback is private.
+- Checks: `app-team-feedback.web-qa.ts` (a player's idea, the filters, read to resolved, the chat), the player-to-staff `feedback.web-qa.ts`, unit tests for the status steps, and the iPhone simulator.
+
+## Gallery moderation on the web admin (2026-10-15, RAPP-387, part of RAPP-215)
+
+- `gallery.moderate` holders get "Gallery" in the web admin's staff navigation, as the phone's screen (RAPP-381): every gallery photo and video, newest first, with All, Visible and Hidden filters (Hidden includes hidden until reviewed).
+- Each card shows the photo (or "Video" without a thumbnail) in a fixed frame, who shared it and when, the caption, who can see it, its state and its reports. Hide and Show again go through `set_media_item_moderation`; Delete asks first and removes the item and its files through the media Worker.
+- The filter (`filterGallery`, `GALLERY_FILTERS`) moved from the phone into `packages/shared/media.ts`, so both use one function.
+- Checks: `admin-gallery.web-qa.ts` (navigation, hide, filters, show again with the audit trail, delete with the file), the phone's `app-team-gallery.web-qa.ts`, unit tests for the filter and the navigation, and screenshots at desktop and phone widths with a real photo.
+
+## Direct writes to gallery items (2026-10-15, RAPP-388)
+
+- Signed-in users held UPDATE on every column of `media_items`, and the update policy let forum and gallery moderators write any row of their organization, so a moderator could repoint an item's file, change its uploader, caption or consent with an unaudited direct write.
+- Now only `moderation_state` and `flag_count` can be written directly, and only by `gallery.moderate` holders (`media_items_update_gallery_moderation`). Those are the two columns `moderate_forum_target`, which runs as the caller, sets on a reported item; it already required `gallery.moderate` for gallery items. Every other write goes through a SECURITY DEFINER function.
+- Checks: pgTAP `0065`, and the forum moderation specs (web admin and app), which hide and delete reported gallery items.
+
 ## Gallery moderation on the phone (2026-10-15, RAPP-381, part of RAPP-215)
 
 - Fabián's call (2026-10-15): staff need to browse every gallery photo and video and hide, show again or remove one, also one nobody reported. Reported items stay in forum moderation too.
