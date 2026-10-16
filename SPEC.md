@@ -1959,6 +1959,18 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - The root layout now sets `StatusBar style="dark"` (`expo-status-bar`, already installed), because every screen of the app is light.
 - Checks: the Android emulator (Pixel 9 Pro Fold) and the iPhone simulator both show dark icons.
 
+## Web admin on Vite 8 (2026-10-16, RAPP-437)
+
+- The web admin and partner portal build with Vite 8 (Rolldown) and run TanStack Start 1.169.2 with Router 1.170.44 (pinned exactly, so one router copy is installed). Plugins: `@vitejs/plugin-react` 6, `@cloudflare/vite-plugin` 1.64. The client bundle is smaller (3,684 KB against 3,788 KB) and builds in about a second.
+- Config: `build.rolldownOptions`, with the vendor split as a Rolldown code-splitting group that reuses `adminManualChunks`; `resolve.tsconfigPaths` replaces the manual `@` alias.
+- Fixed on the way:
+  - `RouteFocusManager` moves focus only on a navigation to another path. The newer router also reports renders for the first load and for data reloads, and focusing then took focus off the skip link.
+  - The root layout marks `data-hydrated` on `<html>` once React has mounted, and the browser specs' `waitForHydration` waits for it on the admin. Start 1.169 clears its stream global before the handlers are attached.
+  - The knowledge editor's paragraph field has a label.
+  - The participants spec checks that an entity contact lands on her portal. Counting every table only passed when it ran before the portal loaded.
+- Still open, from the accessibility suite (which CI skips): see RAPP-438.
+- Checks: audit, build, typecheck, 111 admin unit tests, knip, and 13 web admin specs.
+
 ## Notifications and targeted push on the phone (2026-10-15, RAPP-385, part of RAPP-215)
 
 - `notifications.send` holders get "Notificacions" in More, as the web admin's workspace. A message starts from a template or blank, in Catalan; the four translations are generated and must all be approved before it is sent or saved as a template.

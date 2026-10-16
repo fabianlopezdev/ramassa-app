@@ -194,9 +194,9 @@ test('an entity contact is routed away from the roster, not shown an empty one',
   await signIn(page, ENTITY_EMAIL);
   await page.goto('/participants');
 
-  await expect
-    .poll(() => new URL(page.url()).pathname, { timeout: 10_000 })
-    .not.toBe('/participants');
+  // She lands on her own portal (RAPP-437): its impact tables are hers, so
+  // the check is where she lands and that no roster search shows. Counting
+  // every table only passed when it ran before the portal had loaded.
+  await expect.poll(() => new URL(page.url()).pathname, { timeout: 10_000 }).toBe('/portal');
   await expect(page.getByRole('searchbox')).toHaveCount(0);
-  await expect(page.locator('table')).toHaveCount(0);
 });
