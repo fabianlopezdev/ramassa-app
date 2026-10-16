@@ -34,3 +34,14 @@ export {
   type ParticipantSearch,
   type ParticipantSortColumn,
 } from './participant-query';
+export {
+  buildProfilePrefillPayload,
+  fetchParticipantAnsweredQuestions,
+  prefillFromRow,
+  profilePrefillSchema,
+  type PrefillRow,
+  type ProfilePrefill,
+  type ProfilePrefillField,
+  type ProfilePrefillInput,
+  type ProfilePrefillPayload,
+} from './participant-prefill';

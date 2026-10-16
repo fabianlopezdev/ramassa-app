@@ -22,6 +22,8 @@ export interface CreatedParticipantInvite {
   readonly invite_id: string;
   readonly email: string;
   readonly expires_at: string;
+  /** Her new profile (RAPP-300); null only for an email-only invitation. */
+  readonly profile_id: string | null;
 }
 
 /** Set on the thrown error when the address already belongs to an account. */

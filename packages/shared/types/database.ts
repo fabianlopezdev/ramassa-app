@@ -4286,6 +4286,7 @@ export type Database = {
           email: string;
           expires_at: string;
           invite_id: string;
+          profile_id: string;
         }[];
       };
       create_photo_handoff: {

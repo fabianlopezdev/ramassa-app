@@ -435,5 +435,12 @@
     "entityNone": "Cap",
     "entityOther": "Una altra",
     "entityOtherLabel": "Nom de l'entitat"
-  }
+  },
+  "inviteNameError": "Escriu el nom i els cognoms.",
+  "invitedCompleteHint": "Hem creat el seu perfil. Completa ara el que ja saps d'ella: el registre guiat només li preguntarà la resta.",
+  "invitedCompleteAction": "Completa les seves dades",
+  "statusInvited": "Convidades sense entrar",
+  "rowInvited": "Convidada, encara no ha entrat",
+  "prefillNotGiven": "Sense indicar",
+  "prefillHint": "Encara no ha entrat a l'aplicació. Omple només el que ja saps d'ella: el registre guiat li preguntarà la resta, i el consentiment el dona ella."
 }

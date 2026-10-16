@@ -48,12 +48,15 @@ const createdInvite = {
   invite_id: '11110000-0000-4000-8000-000000000001',
   email: 'fatou.ndiaye@example.com',
   expires_at: '2026-08-31T12:00:00Z',
+  profile_id: '5eed0000-0000-4000-8000-000000000098',
 };
 
 test('createParticipantInvite sends the payload under the name the RPC declares', async () => {
   const calls: RpcCall[] = [];
   const payload = {
     email: 'fatou.ndiaye@example.com',
+    first_name: 'Fatou',
+    last_name: 'Ndiaye',
     reference_entity: 'CEAR Catalunya',
     referral_id: null,
   };
@@ -66,6 +69,8 @@ test('createParticipantInvite sends the payload under the name the RPC declares'
 test('createParticipantInvite returns the recorded invite with its expiry', async () => {
   const invite = await createParticipantInvite(rpcClient({ data: [createdInvite], error: null }), {
     email: 'fatou.ndiaye@example.com',
+    first_name: 'Fatou',
+    last_name: 'Ndiaye',
     reference_entity: null,
     referral_id: null,
   });
@@ -76,7 +81,13 @@ test('createParticipantInvite returns the recorded invite with its expiry', asyn
 test('an address that already has an account is tagged so staff get a clear message', async () => {
   const refused = createParticipantInvite(
     rpcClient({ data: null, error: { code: '23505', message: 'already belongs to an account' } }),
-    { email: 'fatou.ndiaye@example.com', reference_entity: null, referral_id: null },
+    {
+      email: 'fatou.ndiaye@example.com',
+      first_name: 'Fatou',
+      last_name: 'Ndiaye',
+      reference_entity: null,
+      referral_id: null,
+    },
   );
   await expect(refused).rejects.toBeInstanceOf(AppError);
   await refused.catch((error: AppError) =>
@@ -88,6 +99,8 @@ test('createParticipantInvite treats an empty result or a refusal as a failure',
   await expect(
     createParticipantInvite(rpcClient({ data: [], error: null }), {
       email: 'fatou.ndiaye@example.com',
+      first_name: 'Fatou',
+      last_name: 'Ndiaye',
       reference_entity: null,
       referral_id: null,
     }),
@@ -96,6 +109,8 @@ test('createParticipantInvite treats an empty result or a refusal as a failure',
   await expect(
     createParticipantInvite(rpcClient({ data: null, error: { message: 'rate limit reached' } }), {
       email: 'fatou.ndiaye@example.com',
+      first_name: 'Fatou',
+      last_name: 'Ndiaye',
       reference_entity: null,
       referral_id: null,
     }),

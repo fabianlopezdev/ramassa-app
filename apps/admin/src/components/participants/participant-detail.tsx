@@ -22,6 +22,7 @@ import { ParticipantActivity } from '@/components/participants/participant-activ
 import { ParticipantEditForm } from '@/components/participants/participant-edit-form';
 import { ParticipantEquipment } from '@/components/participants/participant-equipment';
 import { ParticipantNotes } from '@/components/participants/participant-notes';
+import { ParticipantPrefillForm } from '@/components/participants/participant-prefill-form';
 import { ParticipantProfileFields } from '@/components/participants/participant-profile-fields';
 import { ParticipantRgpd } from '@/components/participants/participant-rgpd';
 import { Badge } from '@/components/ui/badge';
@@ -40,6 +41,7 @@ import {
   type HandoverItemType,
 } from '@ramassa/shared/equipment';
 import { setForumPostingDisabled } from '@ramassa/shared/forum';
+import type { IntakeQuestion } from '@ramassa/shared/intake';
 import {
   addParticipantNote,
   setParticipantActive,
@@ -47,6 +49,7 @@ import {
   type ParticipantActivityEntry,
   type ParticipantDetailRow,
   type ParticipantNoteRow,
+  type ProfilePrefillPayload,
 } from '@ramassa/shared/participants';
 import type { EquipmentDeliveryInput, UpdateOwnProfilePayload } from '@ramassa/shared/schemas';
 
@@ -65,6 +68,8 @@ export interface ParticipantDetailProps {
    * her right and a different thing from not asking.
    */
   readonly openDeletionRequestReason?: string | null;
+  /** Answered intake questions, for a woman who has not joined yet (RAPP-300). */
+  readonly answeredQuestions?: readonly IntakeQuestion[];
 }
 
 export function ParticipantDetail({
@@ -76,12 +81,15 @@ export function ParticipantDetail({
   attendanceStats,
   attendanceHistory,
   openDeletionRequestReason,
+  answeredQuestions = [],
 }: ParticipantDetailProps) {
   const { t, i18n } = useTranslation(['participants', 'common', 'profile']);
   const locale = i18n.resolvedLanguage ?? 'ca';
   const router = useRouter();
   const { user, permissions } = useAuth();
 
+  // Not joined yet: staff created her profile and she has not accepted the terms (RAPP-300).
+  const hasJoined = participant.terms_accepted_at !== null;
   const [isEditing, setIsEditing] = useState(false);
   const [saveErrorMessage, setSaveErrorMessage] = useState<string | undefined>(undefined);
   const [noteErrorMessage, setNoteErrorMessage] = useState<string | undefined>(undefined);
@@ -93,7 +101,7 @@ export function ParticipantDetail({
   );
   const [isChangingForumStatus, setIsChangingForumStatus] = useState(false);
 
-  async function saveProfile(payload: UpdateOwnProfilePayload) {
+  async function saveProfile(payload: UpdateOwnProfilePayload | ProfilePrefillPayload) {
     setSaveErrorMessage(undefined);
     const result = await safeAsync(() =>
       updateParticipantProfile(supabase, participant.id, payload),
@@ -187,9 +195,13 @@ export function ParticipantDetail({
               <h1 className="text-start text-2xl font-semibold">
                 {`${participant.first_name} ${participant.last_name}`}
               </h1>
-              <Badge variant={participant.is_active ? 'secondary' : 'outline'}>
-                {participant.is_active ? t('rowActive') : t('rowInactive')}
-              </Badge>
+              {hasJoined ? (
+                <Badge variant={participant.is_active ? 'secondary' : 'outline'}>
+                  {participant.is_active ? t('rowActive') : t('rowInactive')}
+                </Badge>
+              ) : (
+                <Badge variant="outline">{t('rowInvited')}</Badge>
+              )}
               {participant.is_forum_banned ? (
                 <Badge variant="destructive">{t('forumBanned')}</Badge>
               ) : null}
@@ -207,15 +219,19 @@ export function ParticipantDetail({
                 {statusErrorMessage}
               </p>
             )}
-            <Button
-              type="button"
-              size="lg"
-              variant="outline"
-              disabled={isChangingStatus}
-              onClick={() => void toggleStatus()}
-            >
-              {participant.is_active ? t('statusActionDeactivate') : t('statusActionActivate')}
-            </Button>
+            {/* A woman who has not joined has nothing to deactivate: cancelling her
+                invitation removes her (RAPP-300). */}
+            {hasJoined ? (
+              <Button
+                type="button"
+                size="lg"
+                variant="outline"
+                disabled={isChangingStatus}
+                onClick={() => void toggleStatus()}
+              >
+                {participant.is_active ? t('statusActionDeactivate') : t('statusActionActivate')}
+              </Button>
+            ) : null}
             <Button
               type="button"
               size="lg"
@@ -251,7 +267,19 @@ export function ParticipantDetail({
           )
         }
       >
-        {isEditing ? (
+        {isEditing && !hasJoined ? (
+          <ParticipantPrefillForm
+            participant={participant}
+            answered={new Set(answeredQuestions)}
+            canSeeSensitive={permissions.has('participants.view_sensitive')}
+            onSubmit={saveProfile}
+            onCancel={() => {
+              setSaveErrorMessage(undefined);
+              setIsEditing(false);
+            }}
+            errorMessage={saveErrorMessage}
+          />
+        ) : isEditing ? (
           <ParticipantEditForm
             participant={participant}
             canSeeSensitive={permissions.has('participants.view_sensitive')}

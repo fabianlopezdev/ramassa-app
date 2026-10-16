@@ -41,6 +41,7 @@ test.afterAll(() => {
       select id from auth.users where email like '%${RUN_TAG}%';
 
     delete from public.audit_log where target_id in (select id from qa_run_invites);
+    delete from public.audit_log where target_id in (select id from qa_run_accounts);
     delete from public.invites where id in (select id from qa_run_invites);
     update public.entity_referrals
        set referred_profile_id = null, assigned_staff_id = null, status = 'pending'
@@ -58,6 +59,12 @@ async function invite(page: Page, email: string, entity?: string): Promise<void>
   if (!new URL(page.url()).pathname.endsWith('/participants/new')) {
     await page.goto('/participants/new');
   }
+  // Her name creates her profile with the invitation (RAPP-300). A referral
+  // already fills it, so only an empty field is typed into.
+  const firstName = page.locator('#new-participant-first-name');
+  if ((await firstName.inputValue()) === '') await firstName.fill('Qa');
+  const lastName = page.locator('#new-participant-last-name');
+  if ((await lastName.inputValue()) === '') await lastName.fill(`Invite ${RUN_TAG}`);
   await page.locator('#new-participant-email').fill(email);
   if (entity !== undefined) {
     await page.locator('#new-invite-entity').fill(entity);
@@ -100,10 +107,57 @@ test.describe('inviting a participant', () => {
     await expect(page.getByRole('heading', { name: INVITED })).toBeVisible({ timeout: 15_000 });
     expect(countInDatabase(`select count(*) from auth.users where email = '${email}'`)).toBe(1);
 
+    // Her profile exists from the invitation, as invited and without consent (RAPP-300).
+    expect(
+      queryDatabase(
+        `select p.role || ':' || (p.terms_accepted_at is null)::text from public.profiles p join auth.users u on u.id = p.id where u.email = '${email}'`,
+      ),
+    ).toBe('invited:true');
+
     const player = await (await browser.newContext({ locale: 'en-GB' })).newPage();
     await signInPlayer(player, email);
-    await expect(player.getByTestId('onboarding-first-name')).toBeVisible({ timeout: 30_000 });
+    // Staff gave her name, so the wizard skips the name screen and opens on the
+    // background questions (RAPP-300).
+    await expect(player.getByTestId('onboarding-day')).toBeVisible({ timeout: 30_000 });
+    await expect(player.getByTestId('onboarding-first-name')).toHaveCount(0);
     expect(new URL(player.url()).origin).toBe(PLAYER_ORIGIN);
+  });
+
+  test('staff open her new record and complete it in parts before she joins', async ({ page }) => {
+    const email = `complete.${RUN_TAG}@example.test`;
+    await invite(page, email);
+    await expect(page.getByRole('heading', { name: INVITED })).toBeVisible({ timeout: 15_000 });
+
+    await page
+      .getByRole('link', {
+        name: /completa les seves dades|complete her details|completa sus datos/i,
+      })
+      .click();
+    await expect(
+      page.getByText(/encara no ha entrat|not joined yet|aún no ha entrado/i).first(),
+    ).toBeVisible({ timeout: 15_000 });
+
+    await page
+      .getByRole('button', { name: /edita la fitxa|edit the record|edita la ficha/i })
+      .click();
+    await expect(page.getByTestId('participant-prefill-hint')).toBeVisible();
+    // Nothing anybody answered shows a value: no "M", no "no dependants".
+    await expect(page.locator('#participant-clothingSize')).toHaveValue('');
+    await expect(page.locator('#participant-hasDependents')).toHaveValue('');
+
+    await page.locator('#participant-clothingSize').selectOption('L');
+    await page.getByRole('button', { name: /^(desa|save|guardar)$/i }).click();
+
+    // Only the field she changed became a staff answer; the names came with the invitation.
+    await expect
+      .poll(
+        () =>
+          queryDatabase(
+            `select string_agg(a.question || ':' || a.source, ',' order by a.question) from public.profile_answers a join auth.users u on u.id = a.profile_id where u.email = '${email}'`,
+          ),
+        { timeout: 15_000 },
+      )
+      .toBe('clothing_size:staff,first_name:staff,last_name:staff');
   });
 
   test('an invitation opened from a referral carries it, and says so', async ({ page }) => {

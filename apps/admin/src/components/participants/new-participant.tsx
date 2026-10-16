@@ -74,6 +74,8 @@ export function NewParticipant({ referral = null }: { readonly referral?: Referr
           <InviteForm
             onInvited={setCreatedInvite}
             referralId={referral?.id ?? null}
+            initialFirstName={referral?.referredFirstName ?? ''}
+            initialLastName={referral?.referredLastName ?? ''}
             initialReferenceEntity={referral?.entityName ?? ''}
           />
         </>
@@ -82,17 +84,25 @@ export function NewParticipant({ referral = null }: { readonly referral?: Referr
   );
 }
 
-/** An address in, a recorded 30-day invitation (and her empty account) out. */
+/**
+ * Her name and address in; a recorded 30-day invitation, her account and her
+ * profile out (RAPP-300). Staff then complete what they know on her record,
+ * and her wizard asks only the rest.
+ */
 function InviteForm({
   onInvited,
   referralId,
+  initialFirstName,
+  initialLastName,
   initialReferenceEntity,
 }: {
   readonly onInvited: (invite: CreatedParticipantInvite) => void;
   readonly referralId: string | null;
+  readonly initialFirstName: string;
+  readonly initialLastName: string;
   readonly initialReferenceEntity: string;
 }) {
-  const { t } = useTranslation(['participants', 'auth']);
+  const { t } = useTranslation(['participants', 'auth', 'onboarding']);
   const [submitErrorMessage, setSubmitErrorMessage] = useState<string | undefined>(undefined);
 
   const {
@@ -101,7 +111,12 @@ function InviteForm({
     formState: { errors, isSubmitting },
   } = useForm<CreateParticipantInviteInput, unknown, CreateParticipantInvite>({
     resolver: zodResolver(createParticipantInviteSchema),
-    defaultValues: { email: '', referenceEntity: initialReferenceEntity },
+    defaultValues: {
+      email: '',
+      firstName: initialFirstName,
+      lastName: initialLastName,
+      referenceEntity: initialReferenceEntity,
+    },
   });
 
   const invite = handleSubmit(async (input) => {
@@ -124,6 +139,40 @@ function InviteForm({
     <form onSubmit={(event) => void invite(event)} noValidate className="flex flex-col gap-4">
       <p className="text-start text-sm text-muted-foreground">{t('inviteIntro')}</p>
       <p className="text-start text-sm text-muted-foreground">{t('inviteNoEmailHint')}</p>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <Controller
+          control={control}
+          name="firstName"
+          render={({ field }) => (
+            <AdminAuthField
+              id="new-participant-first-name"
+              label={t('onboarding:firstNameLabel')}
+              autoComplete="off"
+              errorMessage={errors.firstName ? t('inviteNameError') : undefined}
+              value={field.value ?? ''}
+              onChange={(event) => field.onChange(event.target.value)}
+              onBlur={field.onBlur}
+              ref={field.ref}
+            />
+          )}
+        />
+        <Controller
+          control={control}
+          name="lastName"
+          render={({ field }) => (
+            <AdminAuthField
+              id="new-participant-last-name"
+              label={t('onboarding:lastNameLabel')}
+              autoComplete="off"
+              errorMessage={errors.lastName ? t('inviteNameError') : undefined}
+              value={field.value ?? ''}
+              onChange={(event) => field.onChange(event.target.value)}
+              onBlur={field.onBlur}
+              ref={field.ref}
+            />
+          )}
+        />
+      </div>
       <Controller
         control={control}
         name="email"
@@ -190,7 +239,17 @@ function InvitedPanel({
       <p className="text-start text-sm text-muted-foreground">
         {t('invitedExpires', { date: new Date(invite.expires_at).toLocaleDateString(locale) })}
       </p>
+      {invite.profile_id === null ? null : (
+        <p className="text-start text-sm">{t('invitedCompleteHint')}</p>
+      )}
       <div className="grid grid-cols-1 gap-3 sm:flex sm:flex-wrap">
+        {invite.profile_id === null ? null : (
+          <Button asChild size="lg" className="h-12 w-full sm:w-auto">
+            <Link to="/participants/$participantId" params={{ participantId: invite.profile_id }}>
+              {t('invitedCompleteAction')}
+            </Link>
+          </Button>
+        )}
         <Button asChild size="lg" variant="outline" className="h-12 w-full sm:w-auto">
           <Link to="/participants/invites">{t('invitesAction')}</Link>
         </Button>

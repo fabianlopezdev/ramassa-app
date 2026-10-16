@@ -21,9 +21,14 @@
 import { expect, test, type Page } from '@playwright/test';
 import { countInDatabase as countRows, ENTITY_EMAIL, signIn, STAFF_EMAIL } from './session';
 
-/** Participants matching a predicate, as the DATABASE counts them. */
+/**
+ * Participants matching a predicate, as the DATABASE counts them. The roster
+ * lists invited women who have not joined yet too, marked as such (RAPP-300).
+ */
 function countInDatabase(where: string): number {
-  return countRows(`select count(*) from public.profiles where role = 'player' and ${where}`);
+  return countRows(
+    `select count(*) from public.profiles where role in ('player', 'invited') and ${where}`,
+  );
 }
 
 async function gotoRoster(page: Page): Promise<void> {
@@ -115,7 +120,8 @@ test.describe('participants roster', () => {
   });
 
   for (const filter of [
-    { name: 'status', query: 'status=inactive', where: 'is_active = false' },
+    { name: 'status', query: 'status=inactive', where: "role = 'player' and is_active = false" },
+    { name: 'invited status', query: 'status=invited', where: "role = 'invited'" },
     { name: 'dependants', query: 'dependents=with', where: 'has_dependents = true' },
     {
       name: 'entity',

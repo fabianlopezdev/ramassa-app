@@ -15,16 +15,16 @@
 --   6. Answers are written only by the functions, and read by her and staff.
 
 begin;
-select plan(30);
+select plan(32);
 
-create temp table invited (label text primary key, invite_id uuid, account_id uuid);
+create temp table invited (label text primary key, invite_id uuid, account_id uuid, returned_profile_id uuid);
 grant all on invited to authenticated;
 
 set local role authenticated;
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 
-insert into invited (label, invite_id)
-select 'amina', invite_id from public.create_participant_invite(jsonb_build_object(
+insert into invited (label, invite_id, returned_profile_id)
+select 'amina', invite_id, profile_id from public.create_participant_invite(jsonb_build_object(
   'email', 'amina.prefill@example.test',
   'first_name', 'Amina',
   'last_name', 'Diallo',
@@ -33,8 +33,8 @@ select 'amina', invite_id from public.create_participant_invite(jsonb_build_obje
   'clothing_size', 'M',
   'reference_entity', 'CEAR'
 ));
-insert into invited (label, invite_id)
-select 'email-only', invite_id
+insert into invited (label, invite_id, returned_profile_id)
+select 'email-only', invite_id, profile_id
 from public.create_participant_invite('{"email": "email.only@example.test"}'::jsonb);
 
 reset role;
@@ -85,6 +85,15 @@ select ok(
   (select accepted_at is null from public.invites
     where id = (select invite_id from invited where label = 'amina')),
   'creating her profile does not spend her invitation'
+);
+select is(
+  (select returned_profile_id from invited where label = 'amina'),
+  (select account_id from invited where label = 'amina'),
+  'the invitation returns her profile id, so staff can open her record'
+);
+select is(
+  (select returned_profile_id from invited where label = 'email-only'),
+  null, 'and none for an email-only invitation'
 );
 
 set local role authenticated;

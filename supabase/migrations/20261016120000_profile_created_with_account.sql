@@ -243,8 +243,10 @@ grant execute on function public.my_answered_questions() to authenticated;
 
 -- 3. An invitation with her name creates her profile ------------------------------------------
 
+drop function public.create_participant_invite(jsonb);
+
 create or replace function public.create_participant_invite(payload jsonb)
- RETURNS TABLE(invite_id uuid, email text, expires_at timestamp with time zone)
+ RETURNS TABLE(invite_id uuid, email text, expires_at timestamp with time zone, profile_id uuid)
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO ''
@@ -371,9 +373,14 @@ begin
     )
   );
 
-  return query select new_invite_id, email_value, invite_expires_at;
+  -- Her profile id, so staff can open her record and complete it; null for
+  -- an email-only invitation, which creates no profile.
+  return query select new_invite_id, email_value, invite_expires_at,
+    case when creates_profile then account_id end;
 end;
 $$;
+
+comment on function public.create_participant_invite is 'Invites a player by email: creates her auth account and, when staff give her first and last name, her profile as invited (without consent) with the answers staff know (RAPP-300). Records a 30-day invitation with an optional referring entity and pending referral. Returns the new profile id, or null for an email-only invitation. Staff only, audited, rate-limited.';
 
 -- 4. Staff complete a not-joined record in parts ------------------------------------------------
 

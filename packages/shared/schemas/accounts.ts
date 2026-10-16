@@ -17,8 +17,14 @@ import { loginEmailSchema } from './auth';
  * so the invite row matches the identity that eventually signs in, capitals
  * included.
  */
+/**
+ * Her name is required: the invitation creates her profile with it, so staff
+ * can complete what they know before her first login (RAPP-300).
+ */
 export const createParticipantInviteSchema = z.object({
   email: loginEmailSchema,
+  firstName: z.string().trim().min(1).max(100),
+  lastName: z.string().trim().min(1).max(100),
   referenceEntity: z.string().trim().optional(),
 });
 export type CreateParticipantInviteInput = z.input<typeof createParticipantInviteSchema>;
@@ -46,6 +52,8 @@ export function buildCreateParticipantInvitePayload(
 ) {
   return {
     email: input.email,
+    first_name: input.firstName.trim(),
+    last_name: input.lastName.trim(),
     reference_entity: normalizedEntity(input.referenceEntity),
     referral_id: referralId,
   };

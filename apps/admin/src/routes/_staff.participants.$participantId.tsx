@@ -29,6 +29,7 @@ import {
 import { fetchEquipmentDeliveries, fetchHandoverItemTypes } from '@ramassa/shared/equipment';
 import {
   fetchParticipantActivity,
+  fetchParticipantAnsweredQuestions,
   fetchParticipantDetail,
   fetchParticipantNotes,
 } from '@ramassa/shared/participants';
@@ -51,6 +52,7 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
         attendanceStats: null,
         attendanceHistory: [],
         openDeletionRequestReason: undefined,
+        answeredQuestions: [],
       };
     }
     const [
@@ -61,6 +63,7 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
       itemTypes,
       attendanceStats,
       attendanceHistory,
+      answered,
     ] = await Promise.all([
       fetchParticipantNotes(supabase, params.participantId),
       fetchParticipantActivity(supabase, params.participantId),
@@ -71,6 +74,11 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
       fetchHandoverItemTypes(supabase),
       fetchAttendanceParticipantStats(supabase, params.participantId),
       fetchAttendanceHistory(supabase, params.participantId),
+      // A woman who has not joined is completed in parts (RAPP-300): the form
+      // shows only what somebody answered. A joined player does not need it.
+      participant.terms_accepted_at === null
+        ? fetchParticipantAnsweredQuestions(supabase, params.participantId)
+        : Promise.resolve(new Set<never>()),
     ]);
     // Filtered here rather than asked for by participant: the queue read is one
     // round trip either way, and the same call feeds the staff-wide queue, so
@@ -86,6 +94,8 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
       attendanceHistory,
       // `undefined` = she never asked. `null` = she asked and gave no reason.
       openDeletionRequestReason: hers === undefined ? undefined : hers.reason,
+      // An array, not the Set: loader data stays plain and serializable.
+      answeredQuestions: [...answered],
     };
   },
   component: ParticipantDetailPage,
@@ -101,6 +111,7 @@ function ParticipantDetailPage() {
     attendanceStats,
     attendanceHistory,
     openDeletionRequestReason,
+    answeredQuestions,
   } = Route.useLoaderData();
 
   if (participant === null) {
@@ -116,6 +127,7 @@ function ParticipantDetailPage() {
       attendanceStats={attendanceStats}
       attendanceHistory={attendanceHistory}
       openDeletionRequestReason={openDeletionRequestReason}
+      answeredQuestions={answeredQuestions}
     />
   );
 }

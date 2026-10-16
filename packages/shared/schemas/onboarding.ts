@@ -74,7 +74,7 @@ export const DOCUMENT_TYPES = ['nie', 'passport', 'other', 'none'] as const;
 export type DocumentType = (typeof DOCUMENT_TYPES)[number];
 
 /** NIE: one letter, seven digits, one letter (RAPP-4 spec wording, exactly). */
-const NIE_PATTERN = /^[A-Z]\d{7}[A-Z]$/;
+export const NIE_PATTERN = /^[A-Z]\d{7}[A-Z]$/;
 
 /**
  * Step 2 — Documentació. `none` is a first-class answer that never blocks
