@@ -95,7 +95,16 @@ export function ReferralDetail({
         <h2 id="referral-updates-title" className="text-start text-lg font-semibold">
           {t('updatesTitle')}
         </h2>
-        {referral.status === 'pending' ? null : (
+        {referral.status === 'pending' ? (
+          // The database takes updates only once she has an account, which a
+          // pending referral never has, so the page says when they open.
+          <p
+            className="mt-4 text-start text-sm text-muted-foreground"
+            data-testid="referral-updates-locked"
+          >
+            {t('updatesAfterOnboarding')}
+          </p>
+        ) : (
           <div className="mt-4 flex flex-col gap-3">
             <label htmlFor="referral-update-type" className="text-start text-sm font-medium">
               {t('updateType')}

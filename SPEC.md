@@ -1971,6 +1971,11 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - Still open, from the accessibility suite (which CI skips): see RAPP-438.
 - Checks: audit, build, typecheck, 111 admin unit tests, knip, and 13 web admin specs.
 
+## Web portal says when referral updates open (2026-10-15, RAPP-435)
+
+- A pending referral (no account yet, which the database guarantees) already had no update form on the partner web portal, but its Updates section gave no reason. It now shows the same note as the phone: updates can be shared once the team has welcomed her and she has an account.
+- Checks: `entity-referrals.web-qa.ts` (the note and no form on a new, pending referral; the update after onboarding as before).
+
 ## Notifications and targeted push on the phone (2026-10-15, RAPP-385, part of RAPP-215)
 
 - `notifications.send` holders get "Notificacions" in More, as the web admin's workspace. A message starts from a template or blank, in Catalan; the four translations are generated and must all be approved before it is sent or saved as a template.
