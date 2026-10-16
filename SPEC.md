@@ -1991,6 +1991,13 @@ This supersedes the "Players (no email — rare)" admin-created row in the authe
 - Shared schema: `equipmentDeliverySchemaFor(sizes)` replaces `equipmentDeliverySchema` and accepts built-in tokens and `custom_` keys. The fixed `SIZELESS_EQUIPMENT_ITEMS` list is gone, because sizes are editable per item type.
 - Checks: `participant-equipment.web-qa.ts` (6, including a custom item with the Catalan fallback and a switched-off item) and `participants.web-qa.ts`.
 
+## One session slot on the phone (2026-10-16, RAPP-420)
+
+- A relaunch could restore an older account. The phone's own client used supabase-js's default session key, which is named after the Supabase host. In development that host follows Metro's address (`127.0.0.1` or the Mac's LAN address), so a relaunch over the other address read an older slot. Reproduced on a simulator with `auth.sessions` showing the older session refreshed.
+- Now `createMmkvSessionStorage` owns one fixed key (`sb-ramassa-auth-token`), a write removes every other session slot and its companions, and a sign-out removes them all. A sign-in by a different person ends the player preview.
+- On the first start with this code, a phone that still holds two old slots signs out once.
+- Checks: 9 new unit tests (one with the real supabase-js client on both addresses), the simulator relaunch across both addresses, `app-account-routes`, `app-player-preview`, `admin-player-preview` and `app-entity-messages`.
+
 ## Service publication times and review-only approval (2026-10-16, RAPP-360)
 
 - `services.publish` ("Publish, schedule, unpublish and delete services") now also covers the publication times. A team member with `services.edit` alone can still change the text, photos and contact details of a published service, but cannot change its `published_at` or `expires_at`. Before, edit-only could set an expiry or move the publish time later, which hid the service. Status moves to or from published already needed `services.publish`. This matches the publish guard on announcements, events and knowledge.

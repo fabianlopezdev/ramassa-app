@@ -1,5 +1,9 @@
 import { describe, expect, test } from 'bun:test';
-import { createPreviewModeStore, type PreviewModeStorage } from './preview-mode';
+import {
+  createPreviewModeStore,
+  endPreviewForSignIn,
+  type PreviewModeStorage,
+} from './preview-mode';
 
 function memoryStorage(): PreviewModeStorage & { readonly values: Map<string, string> } {
   const values = new Map<string, string>();
@@ -66,5 +70,39 @@ describe('a preview opened from the web admin (RAPP-372)', () => {
     expect(store.closesOnExit()).toBe(true);
     store.end();
     expect(store.closesOnExit()).toBe(false);
+  });
+});
+
+// RAPP-420: a sign-in leaves no other session of this app on the phone.
+describe('endPreviewForSignIn', () => {
+  test('ends a preview left on the phone and signs its session out', async () => {
+    const storage = memoryStorage();
+    const store = createPreviewModeStore(storage);
+    store.start(null, 'ca');
+    let previewSignOuts = 0;
+
+    await endPreviewForSignIn(store, async () => {
+      previewSignOuts += 1;
+    });
+
+    expect(store.isActive()).toBe(false);
+    expect(storage.values.size).toBe(0);
+    expect(previewSignOuts).toBe(1);
+  });
+
+  test('signs a stored preview session out even when no preview shows', async () => {
+    const store = createPreviewModeStore(memoryStorage());
+    let changes = 0;
+    store.subscribe(() => {
+      changes += 1;
+    });
+    let previewSignOuts = 0;
+
+    await endPreviewForSignIn(store, async () => {
+      previewSignOuts += 1;
+    });
+
+    expect(changes).toBe(0);
+    expect(previewSignOuts).toBe(1);
   });
 });

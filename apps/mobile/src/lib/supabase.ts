@@ -14,7 +14,7 @@ import { Platform } from 'react-native';
 import { parseClientEnv } from '@ramassa/shared/env';
 import { createMmkvSessionStorage, createSupabaseClient } from '@ramassa/shared/supabase';
 import { resolveDevServiceUrl } from './dev-service-url';
-import { createPreviewModeStore } from './preview-mode';
+import { createPreviewModeStore, endPreviewForSignIn } from './preview-mode';
 import { authStorage, previewAuthStorage, privateStorage } from './storage';
 
 const devServiceContext = {
@@ -43,11 +43,20 @@ export const mobileClientEnv = parseClientEnv({
   EXPO_PUBLIC_ADMIN_WEB_URL: process.env.EXPO_PUBLIC_ADMIN_WEB_URL,
 });
 
-/** The signed-in person's own client. */
+/**
+ * The signed-in person's own client. Its session key is fixed (RAPP-420), so a
+ * start against another Metro, whose host renames the Supabase URL, reads the
+ * same session. Signing in a person ends any player preview left on the phone,
+ * so no other session of this app is left to come back.
+ */
 export const ownSupabase = createSupabaseClient({
   supabaseUrl: mobileClientEnv.EXPO_PUBLIC_SUPABASE_URL,
   supabaseAnonKey: mobileClientEnv.EXPO_PUBLIC_SUPABASE_ANON_KEY,
-  storage: createMmkvSessionStorage(authStorage),
+  storage: createMmkvSessionStorage(authStorage, {
+    sessionKey: 'sb-ramassa-auth-token',
+    onPersonChange: () =>
+      void endPreviewForSignIn(previewMode, () => previewSupabase.auth.signOut({ scope: 'local' })),
+  }),
 });
 
 /**
@@ -58,8 +67,7 @@ export const ownSupabase = createSupabaseClient({
 export const previewSupabase = createSupabaseClient({
   supabaseUrl: mobileClientEnv.EXPO_PUBLIC_SUPABASE_URL,
   supabaseAnonKey: mobileClientEnv.EXPO_PUBLIC_SUPABASE_ANON_KEY,
-  storage: createMmkvSessionStorage(previewAuthStorage),
-  storageKey: 'ramassa-player-preview',
+  storage: createMmkvSessionStorage(previewAuthStorage, { sessionKey: 'ramassa-player-preview' }),
 });
 
 export const previewMode = createPreviewModeStore(privateStorage);

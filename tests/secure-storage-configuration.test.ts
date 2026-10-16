@@ -35,7 +35,7 @@ describe('secure mobile storage configuration', () => {
 
   test('auth and private data are routed away from the default plaintext MMKV instance', () => {
     expect(read('apps/mobile/src/lib/supabase.ts')).toContain(
-      'createMmkvSessionStorage(authStorage)',
+      'createMmkvSessionStorage(authStorage, {',
     );
     expect(read('apps/mobile/src/lib/onboarding.ts')).toContain(
       'createMmkvOnboardingDraftStore(privateStorage)',
