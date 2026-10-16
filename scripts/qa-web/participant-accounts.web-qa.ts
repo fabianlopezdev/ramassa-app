@@ -160,6 +160,55 @@ test.describe('inviting a participant', () => {
       .toBe('clothing_size:staff,first_name:staff,last_name:staff');
   });
 
+  /**
+   * Staff choose what her registration asks (RAPP-301), and her wizard follows.
+   * "She reviews everything" makes it ask her names although staff gave them,
+   * so her wizard opens on the name screen. Don't ask is not offered on a
+   * required question nobody answered.
+   */
+  test('staff choose what her registration asks, and her wizard follows', async ({
+    page,
+    browser,
+  }) => {
+    const email = `review.${RUN_TAG}@example.test`;
+    await invite(page, email);
+    await expect(page.getByRole('heading', { name: INVITED })).toBeVisible({ timeout: 15_000 });
+    await page
+      .getByRole('link', {
+        name: /completa les seves dades|complete her details|completa sus datos/i,
+      })
+      .click();
+
+    const states = page.getByTestId('participant-question-states');
+    await expect(states).toBeVisible({ timeout: 15_000 });
+    await expect(states.locator('#question-state-shoe_size option[value="skip"]')).toBeDisabled();
+
+    await states
+      .getByRole('button', { name: /que ho revisi tot|reviews everything|que lo revise todo/i })
+      .click();
+    await states.locator('#question-state-phone').selectOption('skip');
+    await states
+      .getByRole('button', { name: /desa les preguntes|save questions|guardar las preguntas/i })
+      .click();
+
+    await expect
+      .poll(
+        () =>
+          queryDatabase(
+            `select count(*) filter (where s.state = 'ask') || ':' || count(*) filter (where s.state = 'skip')
+               from public.intake_question_states s join auth.users u on u.id = s.profile_id
+              where u.email = '${email}'`,
+          ),
+        { timeout: 15_000 },
+      )
+      .toBe('15:1');
+
+    const player = await (await browser.newContext({ locale: 'en-GB' })).newPage();
+    await signInPlayer(player, email);
+    // Ask: the names staff gave are asked again, filled in for her to confirm.
+    await expect(player.getByTestId('onboarding-first-name')).toBeVisible({ timeout: 30_000 });
+  });
+
   test('an invitation opened from a referral carries it, and says so', async ({ page }) => {
     await page.goto(`/participants/new?referral=${PENDING_REFERRAL_ID}`);
     await expect(page.getByTestId('referral-prefill')).toBeVisible({ timeout: 15_000 });

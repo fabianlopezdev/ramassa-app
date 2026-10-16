@@ -27,6 +27,7 @@ import {
   fetchAttendanceParticipantStats,
 } from '@ramassa/shared/attendance';
 import { fetchEquipmentDeliveries, fetchHandoverItemTypes } from '@ramassa/shared/equipment';
+import { fetchParticipantQuestionStates } from '@ramassa/shared/intake';
 import {
   fetchParticipantActivity,
   fetchParticipantAnsweredQuestions,
@@ -53,6 +54,7 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
         attendanceHistory: [],
         openDeletionRequestReason: undefined,
         answeredQuestions: [],
+        questionStates: {},
       };
     }
     const [
@@ -64,6 +66,7 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
       attendanceStats,
       attendanceHistory,
       answered,
+      questionStates,
     ] = await Promise.all([
       fetchParticipantNotes(supabase, params.participantId),
       fetchParticipantActivity(supabase, params.participantId),
@@ -79,6 +82,10 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
       participant.terms_accepted_at === null
         ? fetchParticipantAnsweredQuestions(supabase, params.participantId)
         : Promise.resolve(new Set<never>()),
+      // What her wizard asks (RAPP-301): set only before she joins.
+      participant.terms_accepted_at === null
+        ? fetchParticipantQuestionStates(supabase, params.participantId)
+        : Promise.resolve({}),
     ]);
     // Filtered here rather than asked for by participant: the queue read is one
     // round trip either way, and the same call feeds the staff-wide queue, so
@@ -96,6 +103,7 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
       openDeletionRequestReason: hers === undefined ? undefined : hers.reason,
       // An array, not the Set: loader data stays plain and serializable.
       answeredQuestions: [...answered],
+      questionStates,
     };
   },
   component: ParticipantDetailPage,
@@ -112,6 +120,7 @@ function ParticipantDetailPage() {
     attendanceHistory,
     openDeletionRequestReason,
     answeredQuestions,
+    questionStates,
   } = Route.useLoaderData();
 
   if (participant === null) {
@@ -128,6 +137,7 @@ function ParticipantDetailPage() {
       attendanceHistory={attendanceHistory}
       openDeletionRequestReason={openDeletionRequestReason}
       answeredQuestions={answeredQuestions}
+      questionStates={questionStates}
     />
   );
 }
