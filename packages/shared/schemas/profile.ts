@@ -23,11 +23,19 @@ import {
   refineDependents,
   refineDocumentNumber,
 } from './onboarding';
+import {
+  APPLICANT_STATUSES,
+  CHILDCARE_NEEDS,
+  seasonAnswerFields,
+  seasonAnswersPayload,
+} from './season';
 
 const profileEditFields = z.object({
   ...identityStepSchema.shape,
   ...documentationFields.shape,
   ...logisticsFields.shape,
+  // The season registration answers (RAPP-303): she can correct them too.
+  ...seasonAnswerFields.shape,
   mediaConsent: z.boolean(),
 });
 
@@ -84,6 +92,14 @@ export const profileRowSchema = z.object({
   avatar_url: z.string().nullable(),
   media_consent: z.boolean(),
   terms_accepted_at: z.string().nullable(),
+  // The season registration answers (RAPP-303). Optional, so a server without
+  // them still parses. Applicant status and specific needs arrive only for her
+  // own profile, or for staff with participants.view_sensitive.
+  applicant_status: z.enum(APPLICANT_STATUSES).nullish(),
+  supporting_entities: z.array(z.string()).nullish(),
+  season_number: z.number().int().nullish(),
+  childcare_need: z.enum(CHILDCARE_NEEDS).nullish(),
+  specific_needs: z.string().nullish(),
 });
 
 export type ProfileRow = z.infer<typeof profileRowSchema>;
@@ -129,6 +145,11 @@ export function profileFromRow(row: ProfileRow): Record<string, unknown> {
     clothingSize: row.clothing_size ?? 'M',
     shoeSize: row.shoe_size ?? '38',
     avatarUrl: row.avatar_url ?? undefined,
+    applicantStatus: row.applicant_status ?? undefined,
+    supportingEntities: row.supporting_entities ?? [],
+    seasonNumber: row.season_number ?? undefined,
+    childcareNeed: row.childcare_need ?? undefined,
+    specificNeeds: row.specific_needs ?? undefined,
     mediaConsent: row.media_consent,
   };
 }
@@ -164,6 +185,7 @@ export function buildUpdateOwnProfilePayload(edit: ProfileEdit) {
     clothing_size: normalized.clothingSize,
     shoe_size: normalized.shoeSize,
     media_consent: normalized.mediaConsent,
+    ...seasonAnswersPayload(normalized),
   };
 }
 

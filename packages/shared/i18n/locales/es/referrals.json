@@ -53,5 +53,11 @@
   "staffQueueIntro": "Completa la acogida y vincula a la nueva participante con la entidad que la derivó.",
   "staffQueueAction": "Revisa derivaciones",
   "completeAction": "Completa la acogida",
-  "completionHelp": "Los datos de la derivación ya están preparados como valores iniciales."
+  "completionHelp": "Los datos de la derivación ya están preparados como valores iniciales.",
+  "consentLabel": "Ha aceptado que compartamos sus datos con Ramassà",
+  "consentRequired": "Tienes que confirmar que ha aceptado compartir sus datos.",
+  "privacyNote": "Ramassà trata estos datos para gestionar su inscripción y participación, con su consentimiento. Solo los ve el equipo de Ramassà.",
+  "seasonSectionIntro": "Todas las preguntas son opcionales. Rellenan su ficha cuando el equipo acepte la derivación, y ella podrá revisarlas.",
+  "dateOfBirthError": "Escribe una fecha válida.",
+  "documentNumberError": "Escribe el número del documento."
 }

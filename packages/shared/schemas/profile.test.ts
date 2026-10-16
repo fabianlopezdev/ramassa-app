@@ -148,6 +148,12 @@ describe('buildUpdateOwnProfilePayload', () => {
       clothing_size: 'M',
       shoe_size: '38',
       media_consent: false,
+      // The season registration answers (RAPP-303): none given here.
+      applicant_status: null,
+      supporting_entities: null,
+      season_number: null,
+      childcare_need: null,
+      specific_needs: null,
     });
   });
 
