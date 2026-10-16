@@ -26,6 +26,10 @@ import {
   fetchAttendanceHistory,
   fetchAttendanceParticipantStats,
 } from '@ramassa/shared/attendance';
+import {
+  fetchParticipantAuthorizations,
+  fetchParticipantConsents,
+} from '@ramassa/shared/authorization';
 import { fetchEquipmentDeliveries, fetchHandoverItemTypes } from '@ramassa/shared/equipment';
 import { fetchParticipantQuestionStates } from '@ramassa/shared/intake';
 import {
@@ -55,6 +59,8 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
         openDeletionRequestReason: undefined,
         answeredQuestions: [],
         questionStates: {},
+        authorizations: [],
+        consents: [],
       };
     }
     const [
@@ -67,6 +73,8 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
       attendanceHistory,
       answered,
       questionStates,
+      authorizations,
+      consents,
     ] = await Promise.all([
       fetchParticipantNotes(supabase, params.participantId),
       fetchParticipantActivity(supabase, params.participantId),
@@ -86,6 +94,10 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
       participant.terms_accepted_at === null
         ? fetchParticipantQuestionStates(supabase, params.participantId)
         : Promise.resolve({}),
+      // Her season authorizations and consents (RAPP-304). They need
+      // participants.view_personal; without it the panel simply shows none.
+      fetchParticipantAuthorizations(supabase, params.participantId).catch(() => []),
+      fetchParticipantConsents(supabase, params.participantId).catch(() => []),
     ]);
     // Filtered here rather than asked for by participant: the queue read is one
     // round trip either way, and the same call feeds the staff-wide queue, so
@@ -104,6 +116,8 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
       // An array, not the Set: loader data stays plain and serializable.
       answeredQuestions: [...answered],
       questionStates,
+      authorizations,
+      consents,
     };
   },
   component: ParticipantDetailPage,
@@ -121,6 +135,8 @@ function ParticipantDetailPage() {
     openDeletionRequestReason,
     answeredQuestions,
     questionStates,
+    authorizations,
+    consents,
   } = Route.useLoaderData();
 
   if (participant === null) {
@@ -138,6 +154,8 @@ function ParticipantDetailPage() {
       openDeletionRequestReason={openDeletionRequestReason}
       answeredQuestions={answeredQuestions}
       questionStates={questionStates}
+      authorizations={authorizations}
+      consents={consents}
     />
   );
 }

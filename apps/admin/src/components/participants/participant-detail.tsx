@@ -19,6 +19,7 @@
 import { ParticipantAttendanceReport } from '@/components/attendance/attendance-report';
 import { DetailSection } from '@/components/detail/detail-section';
 import { ParticipantActivity } from '@/components/participants/participant-activity';
+import { ParticipantAuthorizationPanel } from '@/components/participants/participant-authorization-panel';
 import { ParticipantEditForm } from '@/components/participants/participant-edit-form';
 import { ParticipantEquipment } from '@/components/participants/participant-equipment';
 import { ParticipantNotes } from '@/components/participants/participant-notes';
@@ -36,6 +37,11 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { AttendanceParticipantStats, AttendanceReportRow } from '@ramassa/shared/attendance';
 import { useAuth } from '@ramassa/shared/auth';
+import {
+  recordPaperAuthorization,
+  type ParticipantAuthorization,
+  type ParticipantConsent,
+} from '@ramassa/shared/authorization';
 import {
   addEquipmentDelivery,
   type EquipmentDeliveryRow,
@@ -78,6 +84,9 @@ export interface ParticipantDetailProps {
   readonly answeredQuestions?: readonly IntakeQuestion[];
   /** What her wizard asks, for a woman who has not joined yet (RAPP-301). */
   readonly questionStates?: QuestionStates;
+  /** Her season authorizations and consents (RAPP-304). */
+  readonly authorizations?: readonly ParticipantAuthorization[];
+  readonly consents?: readonly ParticipantConsent[];
 }
 
 export function ParticipantDetail({
@@ -91,6 +100,8 @@ export function ParticipantDetail({
   openDeletionRequestReason,
   answeredQuestions = [],
   questionStates = {},
+  authorizations = [],
+  consents = [],
 }: ParticipantDetailProps) {
   const { t, i18n } = useTranslation(['participants', 'common', 'profile']);
   const locale = i18n.resolvedLanguage ?? 'ca';
@@ -335,6 +346,19 @@ export function ParticipantDetail({
           errorMessage={questionStatesErrorMessage}
         />
       )}
+
+      {permissions.has('participants.view_personal') ? (
+        <ParticipantAuthorizationPanel
+          participant={participant}
+          authorizations={authorizations}
+          consents={consents}
+          canSeeHealth={permissions.has('participants.view_health')}
+          onRecordPaper={async (signedOn) => {
+            await recordPaperAuthorization(supabase, participant.id, signedOn);
+            await router.invalidate();
+          }}
+        />
+      ) : null}
 
       <ParticipantNotes notes={notes} onAdd={addNote} errorMessage={noteErrorMessage} />
 
