@@ -30,6 +30,8 @@ export const ONBOARDING_STEPS = [
   'background',
   'documentation',
   'logistics',
+  // The summary of everything before the terms (RAPP-300).
+  'summary',
   'terms',
 ] as const;
 export type OnboardingStepName = (typeof ONBOARDING_STEPS)[number];

@@ -14,14 +14,15 @@ import { WizardValidationSummary } from '@/components/onboarding/wizard-validati
 import { playHaptic } from '@/lib/haptics/haptics';
 import { onboardingDraftStore, usePendingInviteEntity } from '@/lib/onboarding';
 import { logisticsFormSchema, type LogisticsFormInput } from '@/lib/onboarding-form';
+import { useWizardStep } from '@/lib/onboarding-intake-context';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useRouter } from 'expo-router';
 import type { SymbolViewProps } from 'expo-symbols';
 import { useEffect, useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 import { prefilledReferenceEntity } from '@ramassa/shared/accounts';
+import type { OnboardingStepName } from '@ramassa/shared/onboarding-drafts';
 import { CLOTHING_SIZES, SHOE_SIZES, type LogisticsStep } from '@ramassa/shared/schemas';
 
 const entitySymbol: SymbolViewProps['name'] = {
@@ -52,7 +53,7 @@ const shoeSymbol: SymbolViewProps['name'] = {
 
 export default function LogisticsStepScreen() {
   const { t } = useTranslation('onboarding');
-  const router = useRouter();
+  const step = useWizardStep('logistics');
   const [draft] = useState(() => onboardingDraftStore.loadDraft());
   const [hasSubmitErrors, setHasSubmitErrors] = useState(false);
 
@@ -103,7 +104,7 @@ export default function LogisticsStepScreen() {
     }
   }, [invitedEntity, getValues, setValue]);
 
-  function persist(currentStep: 'documentation' | 'terms') {
+  function persist(currentStep: OnboardingStepName) {
     onboardingDraftStore.saveDraft({
       ...draft,
       currentStep,
@@ -114,8 +115,8 @@ export default function LogisticsStepScreen() {
   const continueToTerms = handleSubmit(
     () => {
       setHasSubmitErrors(false);
-      persist('terms');
-      router.push('/onboarding/terms');
+      persist(step.nextDraftStep);
+      step.goNext();
     },
     // One warning buzz per rejected submit, from the shared vocabulary. Same
     // placement and reasoning as step 1.
@@ -127,107 +128,122 @@ export default function LogisticsStepScreen() {
 
   return (
     <WizardFrame
-      stepNumber={4}
+      stepNumber={step.position.step}
+      totalSteps={step.position.total}
       title={t('logisticsTitle')}
       intro={t('logisticsIntro')}
       continueLabel={t('continueAction')}
       onContinue={continueToTerms}
-      onBack={() => {
-        persist('documentation');
-        // replace, not back(): a resumed stack has no history (see documentation.tsx).
-        router.replace('/onboarding/documentation');
-      }}
+      onBack={
+        step.goBack === null
+          ? undefined
+          : () => {
+              persist(step.previousDraftStep ?? 'logistics');
+              step.goBack?.();
+            }
+      }
     >
       <WizardValidationSummary isVisible={hasSubmitErrors} message={t('errorSummary')} />
-      <Controller
-        control={control}
-        name="phone"
-        render={({ field }) => (
-          <AuthTextField
-            label={t('phoneLabel')}
-            placeholder={t('phonePlaceholder')}
-            value={field.value ?? ''}
-            onChangeText={field.onChange}
-            onBlur={field.onBlur}
-            errorMessage={errors.phone ? t('errorPhoneFormat') : undefined}
-            keyboardType="phone-pad"
-            autoComplete="tel"
-          />
-        )}
-      />
-      <Controller
-        control={control}
-        name="address"
-        render={({ field }) => (
-          <AuthTextField
-            label={t('addressLabel')}
-            value={field.value ?? ''}
-            onChangeText={field.onChange}
-            onBlur={field.onBlur}
-            autoComplete="street-address"
-          />
-        )}
-      />
-      <Controller
-        control={control}
-        name="city"
-        render={({ field }) => (
-          <MunicipalityPicker
-            label={t('cityLabel')}
-            symbol={municipalitySymbol}
-            value={field.value ?? ''}
-            onChange={field.onChange}
-            errorMessage={errors.city ? t('errorMunicipalityInvalid') : undefined}
-          />
-        )}
-      />
-      <Controller
-        control={control}
-        name="postalCode"
-        render={({ field }) => (
-          <AuthTextField
-            label={t('postalCodeLabel')}
-            value={field.value ?? ''}
-            onChangeText={field.onChange}
-            onBlur={field.onBlur}
-            errorMessage={errors.postalCode ? t('errorPostalFormat') : undefined}
-            keyboardType="number-pad"
-            maxLength={5}
-          />
-        )}
-      />
-
-      <View className="gap-xs">
-        <OnboardingQuestionHeading label={t('referenceEntityLabel')} symbol={entitySymbol} />
+      {step.shouldAsk('phone') ? (
         <Controller
           control={control}
-          name="referenceEntity"
+          name="phone"
           render={({ field }) => (
-            <View className="gap-sm">
-              <OptionChip
-                label={t('referenceEntityNone')}
-                accessibilityHint={t('referenceEntityLabel')}
-                isSelected={isNoEntity}
-                onPress={() => field.onChange(field.value === null ? '' : null)}
-              />
-              {isNoEntity ? null : (
-                <AuthTextField
-                  // The question is already asked above the chip; repeating it
-                  // as the field's label read as two separate questions.
-                  label={t('referenceEntityPlaceholder')}
-                  placeholder={t('referenceEntityPlaceholder')}
-                  value={field.value ?? ''}
-                  onChangeText={field.onChange}
-                  onBlur={field.onBlur}
-                  isInvalid={Boolean(errors.referenceEntity)}
-                />
-              )}
-            </View>
+            <AuthTextField
+              label={t('phoneLabel')}
+              placeholder={t('phonePlaceholder')}
+              value={field.value ?? ''}
+              onChangeText={field.onChange}
+              onBlur={field.onBlur}
+              errorMessage={errors.phone ? t('errorPhoneFormat') : undefined}
+              keyboardType="phone-pad"
+              autoComplete="tel"
+            />
           )}
         />
-      </View>
+      ) : null}
+      {step.shouldAsk('address') ? (
+        <Controller
+          control={control}
+          name="address"
+          render={({ field }) => (
+            <AuthTextField
+              label={t('addressLabel')}
+              value={field.value ?? ''}
+              onChangeText={field.onChange}
+              onBlur={field.onBlur}
+              autoComplete="street-address"
+            />
+          )}
+        />
+      ) : null}
+      {step.shouldAsk('city') ? (
+        <Controller
+          control={control}
+          name="city"
+          render={({ field }) => (
+            <MunicipalityPicker
+              label={t('cityLabel')}
+              symbol={municipalitySymbol}
+              value={field.value ?? ''}
+              onChange={field.onChange}
+              errorMessage={errors.city ? t('errorMunicipalityInvalid') : undefined}
+            />
+          )}
+        />
+      ) : null}
+      {step.shouldAsk('postal_code') ? (
+        <Controller
+          control={control}
+          name="postalCode"
+          render={({ field }) => (
+            <AuthTextField
+              label={t('postalCodeLabel')}
+              value={field.value ?? ''}
+              onChangeText={field.onChange}
+              onBlur={field.onBlur}
+              errorMessage={errors.postalCode ? t('errorPostalFormat') : undefined}
+              keyboardType="number-pad"
+              maxLength={5}
+            />
+          )}
+        />
+      ) : null}
 
-      {isNoEntity ? null : (
+      {step.shouldAsk('reference_entity') ? (
+        <View className="gap-xs">
+          <OnboardingQuestionHeading label={t('referenceEntityLabel')} symbol={entitySymbol} />
+          <Controller
+            control={control}
+            name="referenceEntity"
+            render={({ field }) => (
+              <View className="gap-sm">
+                <OptionChip
+                  label={t('referenceEntityNone')}
+                  accessibilityHint={t('referenceEntityLabel')}
+                  isSelected={isNoEntity}
+                  onPress={() => field.onChange(field.value === null ? '' : null)}
+                />
+                {isNoEntity ? null : (
+                  <AuthTextField
+                    // The question is already asked above the chip; repeating it
+                    // as the field's label read as two separate questions.
+                    label={t('referenceEntityPlaceholder')}
+                    placeholder={t('referenceEntityPlaceholder')}
+                    value={field.value ?? ''}
+                    onChangeText={field.onChange}
+                    onBlur={field.onBlur}
+                    isInvalid={Boolean(errors.referenceEntity)}
+                  />
+                )}
+              </View>
+            )}
+          />
+        </View>
+      ) : null}
+
+      {isNoEntity ||
+      !(step.shouldAsk('reference_entity') || step.shouldAsk('reference_contact_name')) ? null : (
         <Controller
           control={control}
           name="referenceContactName"
@@ -243,88 +259,94 @@ export default function LogisticsStepScreen() {
         />
       )}
 
-      <View className="gap-xs">
-        <OnboardingQuestionHeading label={t('hasDependentsLabel')} symbol={dependentsSymbol} />
-        <Controller
-          control={control}
-          name="hasDependents"
-          render={({ field }) => (
-            <View className="flex-row gap-sm">
-              <OptionChip
-                label={t('yesOption')}
-                accessibilityHint={t('hasDependentsLabel')}
-                isSelected={field.value === true}
-                onPress={() => field.onChange(true)}
-              />
-              <OptionChip
-                label={t('noOption')}
-                accessibilityHint={t('hasDependentsLabel')}
-                isSelected={field.value === false}
-                onPress={() => field.onChange(false)}
-              />
-            </View>
-          )}
-        />
-        {hasDependents ? (
+      {step.shouldAsk('dependents') ? (
+        <View className="gap-xs">
+          <OnboardingQuestionHeading label={t('hasDependentsLabel')} symbol={dependentsSymbol} />
           <Controller
             control={control}
-            name="numDependents"
+            name="hasDependents"
             render={({ field }) => (
-              <AuthTextField
-                label={t('numDependentsLabel')}
-                value={field.value ?? ''}
-                onChangeText={field.onChange}
-                onBlur={field.onBlur}
-                errorMessage={errors.numDependents ? t('errorDependentsRange') : undefined}
-                keyboardType="number-pad"
-                maxLength={2}
-              />
+              <View className="flex-row gap-sm">
+                <OptionChip
+                  label={t('yesOption')}
+                  accessibilityHint={t('hasDependentsLabel')}
+                  isSelected={field.value === true}
+                  onPress={() => field.onChange(true)}
+                />
+                <OptionChip
+                  label={t('noOption')}
+                  accessibilityHint={t('hasDependentsLabel')}
+                  isSelected={field.value === false}
+                  onPress={() => field.onChange(false)}
+                />
+              </View>
             )}
           />
-        ) : null}
-      </View>
-
-      <View className="gap-xs">
-        <OnboardingQuestionHeading label={t('clothingSizeLabel')} symbol={clothingSymbol} />
-        <Controller
-          control={control}
-          name="clothingSize"
-          render={({ field }) => (
-            <View className="flex-row flex-wrap gap-sm">
-              {CLOTHING_SIZES.map((size) => (
-                <OptionChip
-                  key={size}
-                  label={size}
-                  accessibilityHint={t('clothingSizeLabel')}
-                  isSelected={field.value === size}
-                  onPress={() => field.onChange(size)}
+          {hasDependents ? (
+            <Controller
+              control={control}
+              name="numDependents"
+              render={({ field }) => (
+                <AuthTextField
+                  label={t('numDependentsLabel')}
+                  value={field.value ?? ''}
+                  onChangeText={field.onChange}
+                  onBlur={field.onBlur}
+                  errorMessage={errors.numDependents ? t('errorDependentsRange') : undefined}
+                  keyboardType="number-pad"
+                  maxLength={2}
                 />
-              ))}
-            </View>
-          )}
-        />
-      </View>
+              )}
+            />
+          ) : null}
+        </View>
+      ) : null}
 
-      <View className="gap-xs">
-        <OnboardingQuestionHeading label={t('shoeSizeLabel')} symbol={shoeSymbol} />
-        <Controller
-          control={control}
-          name="shoeSize"
-          render={({ field }) => (
-            <View className="flex-row flex-wrap gap-sm">
-              {SHOE_SIZES.map((size) => (
-                <OptionChip
-                  key={size}
-                  label={size}
-                  accessibilityHint={t('shoeSizeLabel')}
-                  isSelected={field.value === size}
-                  onPress={() => field.onChange(size)}
-                />
-              ))}
-            </View>
-          )}
-        />
-      </View>
+      {step.shouldAsk('clothing_size') ? (
+        <View className="gap-xs">
+          <OnboardingQuestionHeading label={t('clothingSizeLabel')} symbol={clothingSymbol} />
+          <Controller
+            control={control}
+            name="clothingSize"
+            render={({ field }) => (
+              <View className="flex-row flex-wrap gap-sm">
+                {CLOTHING_SIZES.map((size) => (
+                  <OptionChip
+                    key={size}
+                    label={size}
+                    accessibilityHint={t('clothingSizeLabel')}
+                    isSelected={field.value === size}
+                    onPress={() => field.onChange(size)}
+                  />
+                ))}
+              </View>
+            )}
+          />
+        </View>
+      ) : null}
+
+      {step.shouldAsk('shoe_size') ? (
+        <View className="gap-xs">
+          <OnboardingQuestionHeading label={t('shoeSizeLabel')} symbol={shoeSymbol} />
+          <Controller
+            control={control}
+            name="shoeSize"
+            render={({ field }) => (
+              <View className="flex-row flex-wrap gap-sm">
+                {SHOE_SIZES.map((size) => (
+                  <OptionChip
+                    key={size}
+                    label={size}
+                    accessibilityHint={t('shoeSizeLabel')}
+                    isSelected={field.value === size}
+                    onPress={() => field.onChange(size)}
+                  />
+                ))}
+              </View>
+            )}
+          />
+        </View>
+      ) : null}
     </WizardFrame>
   );
 }

@@ -13,15 +13,16 @@ import { WizardValidationSummary } from '@/components/onboarding/wizard-validati
 import { playHaptic } from '@/lib/haptics/haptics';
 import { onboardingDraftStore } from '@/lib/onboarding';
 import { identityFormSchema, type IdentityFormInput } from '@/lib/onboarding-form';
+import { useWizardStep } from '@/lib/onboarding-intake-context';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useRouter } from 'expo-router';
 import type { SymbolViewProps } from 'expo-symbols';
 import { useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { Text, useWindowDimensions, View } from 'react-native';
 import { LANGUAGE_NATIVE_NAMES, SUPPORTED_LANGUAGES, useLanguage } from '@ramassa/shared/i18n';
+import type { OnboardingStepName } from '@ramassa/shared/onboarding-drafts';
 import type { IdentityStep, LanguageCode } from '@ramassa/shared/schemas';
 
 const YEAR_FIELD_WIDTH_CLASS = 'flex-[1.4]';
@@ -41,7 +42,7 @@ export default function BackgroundStepScreen() {
   const { t, i18n } = useTranslation('onboarding');
   const languageFontClass = useLanguageFontClass();
   const { setLanguage } = useLanguage();
-  const router = useRouter();
+  const step = useWizardStep('background');
   const { fontScale } = useWindowDimensions();
   const isLargeText = fontScale >= LARGE_TEXT_STACK_THRESHOLD;
   const [draft] = useState(() => onboardingDraftStore.loadDraft());
@@ -71,7 +72,7 @@ export default function BackgroundStepScreen() {
     defaultValues,
   });
 
-  function persist(currentStep: 'identity' | 'documentation') {
+  function persist(currentStep: OnboardingStepName) {
     onboardingDraftStore.saveDraft({
       ...draft,
       currentStep,
@@ -82,8 +83,8 @@ export default function BackgroundStepScreen() {
   const continueToDocumentation = handleSubmit(
     () => {
       setHasSubmitErrors(false);
-      persist('documentation');
-      router.push('/onboarding/documentation');
+      persist(step.nextDraftStep);
+      step.goNext();
     },
     () => {
       setHasSubmitErrors(true);
@@ -106,136 +107,149 @@ export default function BackgroundStepScreen() {
 
   return (
     <WizardFrame
-      stepNumber={2}
+      stepNumber={step.position.step}
+      totalSteps={step.position.total}
       title={t('backgroundTitle')}
       intro={t('backgroundIntro')}
       continueLabel={t('continueAction')}
       onContinue={continueToDocumentation}
-      onBack={() => {
-        persist('identity');
-        router.replace('/onboarding');
-      }}
+      onBack={
+        step.goBack === null
+          ? undefined
+          : () => {
+              persist(step.previousDraftStep ?? 'background');
+              step.goBack?.();
+            }
+      }
     >
       <WizardValidationSummary isVisible={hasSubmitErrors} message={t('errorSummary')} />
-      <View className="gap-xs">
-        <Text className={`text-start text-md font-medium text-neutral-800 ${languageFontClass}`}>
-          {t('dateOfBirthLabel')}
-        </Text>
-        <View className={isLargeText ? 'gap-sm' : 'flex-row gap-sm'}>
-          <View className={isLargeText ? '' : 'flex-1'}>
-            <Controller
-              control={control}
-              name="day"
-              render={({ field }) => (
-                <AuthTextField
-                  testID="onboarding-day"
-                  label={t('dayLabel')}
-                  value={field.value}
-                  onChangeText={field.onChange}
-                  onBlur={field.onBlur}
-                  isInvalid={Boolean(errors.day)}
-                  keyboardType="number-pad"
-                  maxLength={2}
-                />
-              )}
-            />
-          </View>
-          <View className={isLargeText ? '' : 'flex-1'}>
-            <Controller
-              control={control}
-              name="month"
-              render={({ field }) => (
-                <AuthTextField
-                  testID="onboarding-month"
-                  label={t('monthLabel')}
-                  value={field.value}
-                  onChangeText={field.onChange}
-                  onBlur={field.onBlur}
-                  isInvalid={Boolean(errors.month)}
-                  keyboardType="number-pad"
-                  maxLength={2}
-                />
-              )}
-            />
-          </View>
-          <View className={isLargeText ? '' : YEAR_FIELD_WIDTH_CLASS}>
-            <Controller
-              control={control}
-              name="year"
-              render={({ field }) => (
-                <AuthTextField
-                  testID="onboarding-year"
-                  label={t('yearLabel')}
-                  value={field.value}
-                  onChangeText={field.onChange}
-                  onBlur={field.onBlur}
-                  isInvalid={Boolean(errors.year)}
-                  keyboardType="number-pad"
-                  maxLength={4}
-                />
-              )}
-            />
-          </View>
-        </View>
-        {dateErrorKey === null ? null : (
-          <Text
-            accessibilityLiveRegion="polite"
-            className={`text-start text-sm text-error ${languageFontClass}`}
-          >
-            {t(dateErrorKey)}
+      {step.shouldAsk('date_of_birth') ? (
+        <View className="gap-xs">
+          <Text className={`text-start text-md font-medium text-neutral-800 ${languageFontClass}`}>
+            {t('dateOfBirthLabel')}
           </Text>
-        )}
-      </View>
+          <View className={isLargeText ? 'gap-sm' : 'flex-row gap-sm'}>
+            <View className={isLargeText ? '' : 'flex-1'}>
+              <Controller
+                control={control}
+                name="day"
+                render={({ field }) => (
+                  <AuthTextField
+                    testID="onboarding-day"
+                    label={t('dayLabel')}
+                    value={field.value}
+                    onChangeText={field.onChange}
+                    onBlur={field.onBlur}
+                    isInvalid={Boolean(errors.day)}
+                    keyboardType="number-pad"
+                    maxLength={2}
+                  />
+                )}
+              />
+            </View>
+            <View className={isLargeText ? '' : 'flex-1'}>
+              <Controller
+                control={control}
+                name="month"
+                render={({ field }) => (
+                  <AuthTextField
+                    testID="onboarding-month"
+                    label={t('monthLabel')}
+                    value={field.value}
+                    onChangeText={field.onChange}
+                    onBlur={field.onBlur}
+                    isInvalid={Boolean(errors.month)}
+                    keyboardType="number-pad"
+                    maxLength={2}
+                  />
+                )}
+              />
+            </View>
+            <View className={isLargeText ? '' : YEAR_FIELD_WIDTH_CLASS}>
+              <Controller
+                control={control}
+                name="year"
+                render={({ field }) => (
+                  <AuthTextField
+                    testID="onboarding-year"
+                    label={t('yearLabel')}
+                    value={field.value}
+                    onChangeText={field.onChange}
+                    onBlur={field.onBlur}
+                    isInvalid={Boolean(errors.year)}
+                    keyboardType="number-pad"
+                    maxLength={4}
+                  />
+                )}
+              />
+            </View>
+          </View>
+          {dateErrorKey === null ? null : (
+            <Text
+              accessibilityLiveRegion="polite"
+              className={`text-start text-sm text-error ${languageFontClass}`}
+            >
+              {t(dateErrorKey)}
+            </Text>
+          )}
+        </View>
+      ) : null}
 
-      <Controller
-        control={control}
-        name="placeOfBirth"
-        render={({ field }) => (
-          <AuthTextField
-            testID="onboarding-place-of-birth"
-            label={t('placeOfBirthLabel')}
-            value={field.value ?? ''}
-            onChangeText={field.onChange}
-            onBlur={field.onBlur}
-            isInvalid={Boolean(errors.placeOfBirth)}
-          />
-        )}
-      />
-      <Controller
-        control={control}
-        name="nationality"
-        render={({ field }) => (
-          <CountryPicker
-            label={t('nationalityLabel')}
-            symbol={nationalitySymbol}
-            value={field.value}
-            onChange={field.onChange}
-          />
-        )}
-      />
-
-      <View className="gap-xs">
-        <OnboardingQuestionHeading label={t('preferredLanguageLabel')} symbol={languageSymbol} />
+      {step.shouldAsk('place_of_birth') ? (
         <Controller
           control={control}
-          name="preferredLanguage"
+          name="placeOfBirth"
           render={({ field }) => (
-            <View className="flex-row flex-wrap gap-sm">
-              {SUPPORTED_LANGUAGES.map((code) => (
-                <OptionChip
-                  key={code}
-                  label={LANGUAGE_NATIVE_NAMES[code]}
-                  isSelected={field.value === code}
-                  onPress={() => {
-                    field.onChange(code);
-                    void setLanguage(code);
-                  }}
-                />
-              ))}
-            </View>
+            <AuthTextField
+              testID="onboarding-place-of-birth"
+              label={t('placeOfBirthLabel')}
+              value={field.value ?? ''}
+              onChangeText={field.onChange}
+              onBlur={field.onBlur}
+              isInvalid={Boolean(errors.placeOfBirth)}
+            />
           )}
         />
-      </View>
+      ) : null}
+      {step.shouldAsk('nationality') ? (
+        <Controller
+          control={control}
+          name="nationality"
+          render={({ field }) => (
+            <CountryPicker
+              label={t('nationalityLabel')}
+              symbol={nationalitySymbol}
+              value={field.value}
+              onChange={field.onChange}
+            />
+          )}
+        />
+      ) : null}
+
+      {step.shouldAsk('preferred_language') ? (
+        <View className="gap-xs">
+          <OnboardingQuestionHeading label={t('preferredLanguageLabel')} symbol={languageSymbol} />
+          <Controller
+            control={control}
+            name="preferredLanguage"
+            render={({ field }) => (
+              <View className="flex-row flex-wrap gap-sm">
+                {SUPPORTED_LANGUAGES.map((code) => (
+                  <OptionChip
+                    key={code}
+                    label={LANGUAGE_NATIVE_NAMES[code]}
+                    isSelected={field.value === code}
+                    onPress={() => {
+                      field.onChange(code);
+                      void setLanguage(code);
+                    }}
+                  />
+                ))}
+              </View>
+            )}
+          />
+        </View>
+      ) : null}
     </WizardFrame>
   );
 }

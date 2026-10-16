@@ -24,6 +24,8 @@ import {
   identityFormSchema,
   logisticsFormSchema,
 } from '@/lib/onboarding-form';
+import { storedPayloadFromProfile } from '@/lib/onboarding-intake';
+import { useWizardIntake, useWizardStep } from '@/lib/onboarding-intake-context';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useRouter } from 'expo-router';
 import { SymbolView, type SymbolViewProps } from 'expo-symbols';
@@ -33,6 +35,8 @@ import { Text, View } from 'react-native';
 import { useAuth } from '@ramassa/shared/auth';
 import { CURRENT_TERMS_VERSION } from '@ramassa/shared/constants';
 import type { AppErrorCode } from '@ramassa/shared/errors';
+import { trimPayloadToAnswers } from '@ramassa/shared/intake';
+import type { OnboardingStepName } from '@ramassa/shared/onboarding-drafts';
 import { buildCompleteOnboardingPayload, termsStepSchema } from '@ramassa/shared/schemas';
 import type { LanguageCode } from '@ramassa/shared/schemas';
 import { tokens } from '@ramassa/shared/tokens';
@@ -101,6 +105,8 @@ export default function TermsStepScreen() {
   const languageFontClass = useLanguageFontClass();
   const router = useRouter();
   const { refreshProfile } = useAuth();
+  const intake = useWizardIntake();
+  const step = useWizardStep('terms');
   const [draft] = useState(() => onboardingDraftStore.loadDraft());
 
   const savedTerms = (draft?.terms ?? {}) as { termsAccepted?: boolean; mediaConsent?: boolean };
@@ -113,7 +119,7 @@ export default function TermsStepScreen() {
   // RAPP-12 taxonomy, decides whether the buzz is a warning or an error.
   const [failureCode, setFailureCode] = useState<AppErrorCode | null>(null);
 
-  function persist(currentStep: 'logistics' | 'terms') {
+  function persist(currentStep: OnboardingStepName) {
     onboardingDraftStore.saveDraft({
       ...draft,
       currentStep,
@@ -171,7 +177,16 @@ export default function TermsStepScreen() {
         },
       );
 
-      const result = await completeOnboarding(payload);
+      // Only what is new or changed travels (RAPP-300): the server keeps every
+      // stored value the payload leaves out, so a staff answer she only
+      // confirmed on the summary is never overwritten.
+      const result = await completeOnboarding(
+        trimPayloadToAnswers(
+          payload,
+          intake.answered,
+          intake.profile === null ? {} : storedPayloadFromProfile(intake.profile),
+        ),
+      );
       if (!result.ok) {
         // The shake and its buzz come from the code, so a system failure feels
         // different from the "you have not ticked the box" refusal above.
@@ -193,16 +208,16 @@ export default function TermsStepScreen() {
 
   return (
     <WizardFrame
-      stepNumber={5}
+      stepNumber={step.position.step}
+      totalSteps={step.position.total}
       title={t('termsTitle')}
       intro={t('termsIntro')}
       continueLabel={t('finishAction')}
       onContinue={() => void finish()}
       isContinueBusy={isSubmitting}
       onBack={() => {
-        persist('logistics');
-        // replace, not back(): a resumed stack has no history (see documentation.tsx).
-        router.replace('/onboarding/logistics');
+        persist(step.previousDraftStep ?? 'summary');
+        step.goBack?.();
       }}
     >
       <View className="gap-lg">

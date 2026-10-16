@@ -9,6 +9,7 @@ const backgroundSource = existsSync(backgroundPath) ? readFileSync(backgroundPat
 const documentationSource = readFileSync(join(onboardingDir, 'documentation.tsx'), 'utf8');
 const logisticsSource = readFileSync(join(onboardingDir, 'logistics.tsx'), 'utf8');
 const termsSource = readFileSync(join(onboardingDir, 'terms.tsx'), 'utf8');
+const summarySource = readFileSync(join(onboardingDir, 'summary.tsx'), 'utf8');
 const frameSource = readFileSync(
   join(import.meta.dir, '../components/onboarding/wizard-frame.tsx'),
   'utf8',
@@ -21,8 +22,11 @@ describe('the onboarding welcome split', () => {
     expect(welcomeSource).not.toContain('name="day"');
     expect(welcomeSource).not.toContain('name="nationality"');
     expect(welcomeSource).not.toContain('name="preferredLanguage"');
-    expect(welcomeSource).toContain("currentStep: 'background'");
-    expect(welcomeSource).toContain("router.push('/onboarding/background')");
+    // Where it goes next is the plan's call (RAPP-300): the background step,
+    // unless staff already answered it.
+    expect(welcomeSource).toContain("useWizardStep('identity')");
+    expect(welcomeSource).toContain('currentStep: step.nextDraftStep');
+    expect(welcomeSource).toContain('step.goNext()');
   });
 
   test('the new background step owns the remaining identity questions', () => {
@@ -35,13 +39,21 @@ describe('the onboarding welcome split', () => {
     expect(backgroundSource).toContain('name="preferredLanguage"');
   });
 
-  test('progress and back navigation include the new step', () => {
-    expect(frameSource).toContain('WIZARD_TOTAL_STEPS = 5');
-    expect(backgroundSource).toContain('stepNumber={2}');
-    expect(documentationSource).toContain('stepNumber={3}');
-    expect(documentationSource).toContain("persist('background')");
-    expect(documentationSource).toContain("router.replace('/onboarding/background')");
-    expect(logisticsSource).toContain('stepNumber={4}');
-    expect(termsSource).toContain('stepNumber={5}');
+  test('progress and navigation come from the plan, counting only the screens she sees', () => {
+    // Four question screens, the summary and the terms (RAPP-300).
+    expect(frameSource).toContain('WIZARD_TOTAL_STEPS = 6');
+    const screens = [
+      ['background', backgroundSource],
+      ['documentation', documentationSource],
+      ['logistics', logisticsSource],
+      ['summary', summarySource],
+      ['terms', termsSource],
+    ] as const;
+    for (const [screen, source] of screens) {
+      expect(source).toContain(`useWizardStep('${screen}')`);
+      expect(source).toContain('stepNumber={step.position.step}');
+      expect(source).toContain('totalSteps={step.position.total}');
+      expect(source).not.toMatch(/stepNumber=\{\d\}/);
+    }
   });
 });

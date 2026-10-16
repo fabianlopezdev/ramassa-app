@@ -13,14 +13,15 @@ import { WizardValidationSummary } from '@/components/onboarding/wizard-validati
 import { playHaptic } from '@/lib/haptics/haptics';
 import { onboardingDraftStore } from '@/lib/onboarding';
 import { documentationFormSchema } from '@/lib/onboarding-form';
+import { useWizardStep } from '@/lib/onboarding-intake-context';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useRouter } from 'expo-router';
 import type { SymbolViewProps } from 'expo-symbols';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
+import type { OnboardingStepName } from '@ramassa/shared/onboarding-drafts';
 import { DOCUMENT_TYPES, type DocumentationStep } from '@ramassa/shared/schemas';
 
 const DOCUMENT_TYPE_LABEL_KEYS = {
@@ -38,7 +39,7 @@ const documentSymbol: SymbolViewProps['name'] = {
 export default function DocumentationStepScreen() {
   const { t } = useTranslation('onboarding');
   const languageFontClass = useLanguageFontClass();
-  const router = useRouter();
+  const step = useWizardStep('documentation');
   const [draft] = useState(() => onboardingDraftStore.loadDraft());
   const [hasSubmitErrors, setHasSubmitErrors] = useState(false);
 
@@ -59,7 +60,7 @@ export default function DocumentationStepScreen() {
 
   const selectedType = watch('documentType');
 
-  function persist(currentStep: 'background' | 'logistics') {
+  function persist(currentStep: OnboardingStepName) {
     onboardingDraftStore.saveDraft({
       ...draft,
       currentStep,
@@ -70,8 +71,8 @@ export default function DocumentationStepScreen() {
   const continueToLogistics = handleSubmit(
     () => {
       setHasSubmitErrors(false);
-      persist('logistics');
-      router.push('/onboarding/logistics');
+      persist(step.nextDraftStep);
+      step.goNext();
     },
     // One warning buzz per rejected submit, from the shared vocabulary. Same
     // placement and reasoning as step 1.
@@ -83,18 +84,20 @@ export default function DocumentationStepScreen() {
 
   return (
     <WizardFrame
-      stepNumber={3}
+      stepNumber={step.position.step}
+      totalSteps={step.position.total}
       title={t('documentationTitle')}
       intro={t('documentationIntro')}
       continueLabel={t('continueAction')}
       onContinue={continueToLogistics}
-      onBack={() => {
-        persist('background');
-        // replace, not back(): after a resume the redirect REPLACED the route,
-        // so the stack has nothing under this screen and back() is a silent
-        // no-op. The draft, not the nav stack, is the wizard's source of truth.
-        router.replace('/onboarding/background');
-      }}
+      onBack={
+        step.goBack === null
+          ? undefined
+          : () => {
+              persist(step.previousDraftStep ?? 'documentation');
+              step.goBack?.();
+            }
+      }
     >
       <WizardValidationSummary isVisible={hasSubmitErrors} message={t('errorSummary')} />
       <View className="gap-xs">

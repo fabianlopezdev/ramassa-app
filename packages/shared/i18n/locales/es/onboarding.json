@@ -75,5 +75,16 @@
   "noCountryResults": "Ningún país con ese nombre. Prueba a escribir menos letras.",
   "searchMunicipalityPlaceholder": "Busca tu municipio",
   "noMunicipalityResults": "Ningún municipio con ese nombre. Prueba a escribir menos letras.",
-  "municipalityNone": "No lo indico"
+  "municipalityNone": "No lo indico",
+  "intakeLoading": "Cargando tus datos",
+  "intakeLoadFailed": "No hemos podido cargar tus datos. Vuelve a intentarlo.",
+  "retryAction": "Vuelve a intentarlo",
+  "summaryTitle": "¿Son correctos tus datos?",
+  "summaryIntro": "Revísalos. Si algo no es correcto o ha cambiado, toca Cambiar.",
+  "summaryEditAction": "Cambiar",
+  "summaryEditLabel": "Cambiar: {{section}}",
+  "summaryNotGiven": "Sin indicar",
+  "summaryConfirmAction": "Sí, son correctos",
+  "summarySectionName": "Nombre y apellidos",
+  "summaryDependentsYes": "Sí, {{count}}"
 }

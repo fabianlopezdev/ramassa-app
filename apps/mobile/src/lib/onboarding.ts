@@ -24,7 +24,7 @@ export const onboardingDraftStore = createMmkvOnboardingDraftStore(privateStorag
  * profile so the gate flips.
  */
 export function completeOnboarding(
-  payload: CompleteOnboardingPayload,
+  payload: Partial<CompleteOnboardingPayload>,
 ): Promise<Result<void, AppError>> {
   return safeAsync(
     async () => {

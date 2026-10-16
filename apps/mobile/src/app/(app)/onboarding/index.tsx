@@ -1,6 +1,9 @@
 /**
  * Wizard step 1: a warm, low-friction welcome that asks only for a name.
- * The front door also resumes an interrupted wizard from its stored step.
+ * The front door also resumes an interrupted wizard from its stored step, and
+ * the layout's seeding sets that step past what staff already answered (RAPP-300).
+ * Staff always give both names, so this screen shows only to a woman who
+ * started on her own, or when she corrects her name from the summary.
  */
 
 import { AuthTextField } from '@/components/auth/auth-text-field';
@@ -9,15 +12,16 @@ import { WizardValidationSummary } from '@/components/onboarding/wizard-validati
 import { playHaptic } from '@/lib/haptics/haptics';
 import { onboardingDraftStore } from '@/lib/onboarding';
 import { identityNameFormSchema, type IdentityNameFormInput } from '@/lib/onboarding-form';
+import { useWizardStep } from '@/lib/onboarding-intake-context';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Redirect, useRouter } from 'expo-router';
+import { Redirect } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 
 export default function IdentityStepScreen() {
   const { t } = useTranslation('onboarding');
-  const router = useRouter();
+  const step = useWizardStep('identity');
   const [draft] = useState(() => onboardingDraftStore.loadDraft());
   const [hasSubmitErrors, setHasSubmitErrors] = useState(false);
 
@@ -38,7 +42,7 @@ export default function IdentityStepScreen() {
     defaultValues,
   });
 
-  if (draft !== null && draft.currentStep !== 'identity') {
+  if (!step.isEditing && draft !== null && draft.currentStep !== 'identity') {
     return <Redirect href={`/onboarding/${draft.currentStep}`} />;
   }
 
@@ -47,10 +51,10 @@ export default function IdentityStepScreen() {
       setHasSubmitErrors(false);
       onboardingDraftStore.saveDraft({
         ...draft,
-        currentStep: 'background',
+        currentStep: step.nextDraftStep,
         identity: { ...(draft?.identity ?? {}), ...names },
       });
-      router.push('/onboarding/background');
+      step.goNext();
     },
     () => {
       setHasSubmitErrors(true);
@@ -60,11 +64,13 @@ export default function IdentityStepScreen() {
 
   return (
     <WizardFrame
-      stepNumber={1}
+      stepNumber={step.position.step}
+      totalSteps={step.position.total}
       title={t('identityTitle')}
       intro={t('identityIntro')}
       continueLabel={t('continueAction')}
       onContinue={continueToBackground}
+      onBack={step.goBack ?? undefined}
     >
       <WizardValidationSummary isVisible={hasSubmitErrors} message={t('errorSummary')} />
       <Controller

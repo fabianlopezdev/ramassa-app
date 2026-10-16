@@ -75,5 +75,16 @@
   "noCountryResults": "کشوری با این نام نیست. با حروف کمتری امتحان کنید.",
   "searchMunicipalityPlaceholder": "شهرتان را جست‌وجو کنید",
   "noMunicipalityResults": "شهری با این نام نیست. با حروف کمتری امتحان کنید.",
-  "municipalityNone": "خالی بگذارید"
+  "municipalityNone": "خالی بگذارید",
+  "intakeLoading": "در حال بارگیری اطلاعات شما",
+  "intakeLoadFailed": "بارگیری اطلاعات شما ممکن نشد. دوباره تلاش کنید.",
+  "retryAction": "دوباره تلاش کنید",
+  "summaryTitle": "آیا اطلاعات شما درست است؟",
+  "summaryIntro": "آن‌ها را بررسی کنید. اگر چیزی درست نیست یا تغییر کرده است، روی «تغییر» بزنید.",
+  "summaryEditAction": "تغییر",
+  "summaryEditLabel": "تغییر: {{section}}",
+  "summaryNotGiven": "مشخص نشده",
+  "summaryConfirmAction": "بله، درست است",
+  "summarySectionName": "نام و نام خانوادگی",
+  "summaryDependentsYes": "بله، {{count}}"
 }

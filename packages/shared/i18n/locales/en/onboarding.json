@@ -75,5 +75,16 @@
   "noCountryResults": "No country with that name. Try typing fewer letters.",
   "searchMunicipalityPlaceholder": "Search your municipality",
   "noMunicipalityResults": "No municipality with that name. Try typing fewer letters.",
-  "municipalityNone": "Leave blank"
+  "municipalityNone": "Leave blank",
+  "intakeLoading": "Loading your details",
+  "intakeLoadFailed": "We could not load your details. Please try again.",
+  "retryAction": "Try again",
+  "summaryTitle": "Are your details correct?",
+  "summaryIntro": "Check them. If something is wrong or has changed, tap Change.",
+  "summaryEditAction": "Change",
+  "summaryEditLabel": "Change: {{section}}",
+  "summaryNotGiven": "Not given",
+  "summaryConfirmAction": "Yes, they are correct",
+  "summarySectionName": "Name",
+  "summaryDependentsYes": "Yes, {{count}}"
 }
