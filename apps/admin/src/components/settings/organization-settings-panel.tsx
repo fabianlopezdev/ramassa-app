@@ -45,6 +45,8 @@ interface OrganizationSettingsPanelProps {
   readonly documentExplanation?: ReactNode;
   /** The participation authorization versions and editor (RAPP-304). */
   readonly authorization?: ReactNode;
+  /** The question builder (RAPP-307). */
+  readonly questions?: ReactNode;
   readonly documents: readonly InternalDocument[];
   readonly documentQuery: string;
   readonly entityManagement: ReactNode;
@@ -65,7 +67,8 @@ interface OrganizationSettingsPanelProps {
 
 type PendingAction = 'organization' | 'document' | 'download';
 
-export type SettingsTab = 'organization' | 'authorization' | 'staff' | 'documents' | 'entities';
+export type SettingsTab =
+  'organization' | 'authorization' | 'questions' | 'staff' | 'documents' | 'entities';
 
 /** The tabs a person may open, in display order (RAPP-231). */
 function visibleSettingsTabs(permissions: ReadonlySet<PermissionCode>): readonly SettingsTab[] {
@@ -75,6 +78,8 @@ function visibleSettingsTabs(permissions: ReadonlySet<PermissionCode>): readonly
   }
   // The season's participation authorization (RAPP-304).
   if (permissions.has('settings.organization')) tabs.push('authorization');
+  // The registration questions staff add and reword (RAPP-307).
+  if (permissions.has('settings.organization')) tabs.push('questions');
   if (permissions.has('team.manage')) tabs.push('staff');
   if (permissions.has('settings.documents')) tabs.push('documents');
   if (permissions.has('entities.manage')) tabs.push('entities');
@@ -110,6 +115,7 @@ export function OrganizationSettingsPanel({
   photoHandoff,
   documentExplanation,
   authorization,
+  questions,
   documents,
   documentQuery,
   entityManagement,
@@ -318,6 +324,9 @@ export function OrganizationSettingsPanel({
           ) : null}
           {tabs.includes('authorization') ? (
             <TabsTrigger value="authorization">{t('tabAuthorization')}</TabsTrigger>
+          ) : null}
+          {tabs.includes('questions') ? (
+            <TabsTrigger value="questions">{t('tabQuestions')}</TabsTrigger>
           ) : null}
           {tabs.includes('staff') ? <TabsTrigger value="staff">{t('tabTeam')}</TabsTrigger> : null}
           {tabs.includes('documents') ? (
@@ -550,6 +559,10 @@ export function OrganizationSettingsPanel({
         <TabsContent value="authorization" className="space-y-6">
           <SectionHeader title={t('tabAuthorization')} intro={t('authorizationIntro')} />
           {authorization}
+        </TabsContent>
+        <TabsContent value="questions" className="space-y-6">
+          <SectionHeader title={t('tabQuestions')} intro={t('questionsIntro')} />
+          {questions}
         </TabsContent>
         <TabsContent value="entities">{entityManagement}</TabsContent>
       </Tabs>

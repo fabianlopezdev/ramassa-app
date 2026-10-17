@@ -147,5 +147,11 @@
   "signingChangeLanguage": "تغییر زبان",
   "signingThanks": "متشکریم، {{name}}. شما مجوز را امضا کردید.",
   "signingGiveBack": "لطفاً تبلت را به تیم برگردانید.",
-  "signingSavedOnTablet": "امضای شما روی این تبلت ذخیره شده و وقتی اتصال برقرار شود ارسال می‌شود."
+  "signingSavedOnTablet": "امضای شما روی این تبلت ذخیره شده و وقتی اتصال برقرار شود ارسال می‌شود.",
+  "customMaybeOption": "شاید",
+  "customArchivedOption": "دیگر ارائه نمی‌شود",
+  "customQuestionsTitle": "پرسش‌های بیشتر",
+  "customReferralAnswersFailed": "ارجاع فرستاده شد. پاسخ‌های پرسش‌های بیشتر ذخیره نشد.",
+  "customReferralRetryAction": "دوباره پاسخ‌ها را ذخیره کنید",
+  "customReferralOpenAction": "ارجاع را باز کنید"
 }

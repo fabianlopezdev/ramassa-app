@@ -541,5 +541,10 @@
     "discard": "Descarta",
     "discardConfirm": "Vols descartar aquesta signatura? No es pot desfer.",
     "failed": "No s'ha pogut fer. Torna-ho a provar."
-  }
+  },
+  "questionStatesPresetName": "Nom del conjunt",
+  "questionStatesSavePreset": "Desa aquestes opcions com a conjunt",
+  "questionStatesPresetSaved": "Conjunt desat.",
+  "questionStatesPresetFailed": "No s'ha pogut desar el conjunt.",
+  "questionStatesDeletePreset": "Esborrar el conjunt {{name}}?"
 }

@@ -147,5 +147,11 @@
   "signingChangeLanguage": "Change the language",
   "signingThanks": "Thank you, {{name}}. You signed the authorization.",
   "signingGiveBack": "Please give the tablet back to the team.",
-  "signingSavedOnTablet": "Your signature is saved on this tablet and will be sent when there is a connection."
+  "signingSavedOnTablet": "Your signature is saved on this tablet and will be sent when there is a connection.",
+  "customMaybeOption": "Maybe",
+  "customArchivedOption": "no longer offered",
+  "customQuestionsTitle": "Additional questions",
+  "customReferralAnswersFailed": "The referral was sent. The answers to the additional questions could not be saved.",
+  "customReferralRetryAction": "Save the answers again",
+  "customReferralOpenAction": "Open the referral"
 }

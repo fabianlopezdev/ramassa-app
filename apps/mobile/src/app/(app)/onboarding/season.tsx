@@ -12,15 +12,16 @@ import {
   type SeasonAnswers,
 } from '@/components/profile/season-answer-fields';
 import { onboardingDraftStore } from '@/lib/onboarding';
-import { useWizardStep } from '@/lib/onboarding-intake-context';
+import { useBuiltinWording, useWizardStep } from '@/lib/onboarding-intake-context';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { OnboardingStepName } from '@ramassa/shared/onboarding-drafts';
+import type { OnboardingDraftStep } from '@ramassa/shared/onboarding-drafts';
 import { seasonAnswerFields } from '@ramassa/shared/schemas';
 
 export default function SeasonStepScreen() {
   const { t } = useTranslation('onboarding');
   const step = useWizardStep('season');
+  const wording = useBuiltinWording();
   const [draft] = useState(() => onboardingDraftStore.loadDraft());
   const [answers, setAnswers] = useState<SeasonAnswers>(() => {
     const saved = seasonAnswerFields.safeParse(draft?.season ?? {});
@@ -34,7 +35,7 @@ export default function SeasonStepScreen() {
     };
   });
 
-  function persist(currentStep: OnboardingStepName) {
+  function persist(currentStep: OnboardingDraftStep) {
     onboardingDraftStore.saveDraft({
       ...draft,
       currentStep,
@@ -76,6 +77,7 @@ export default function SeasonStepScreen() {
         entityNames={[]}
         showSensitive
         shows={step.shouldAsk}
+        wording={wording}
       />
     </WizardFrame>
   );

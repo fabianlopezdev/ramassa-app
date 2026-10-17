@@ -170,7 +170,9 @@ test.describe('the participant detail view', () => {
     const nextCity = before === 'Gurb' ? 'Calldetenes' : 'Gurb';
 
     await openDetail(page, participantId);
-    await page.getByRole('button', { name: /edita|edit/i }).click();
+    await page
+      .getByRole('button', { name: /^(edita la fitxa|edita la ficha|edit the record)$/i })
+      .click();
 
     const cityField = page.locator('#participant-city');
     await expect(cityField).toBeVisible();
@@ -203,7 +205,9 @@ test.describe('the participant detail view', () => {
     const [originalType, originalNumber] = original.split('|');
     try {
       await openDetail(page, participantId);
-      await page.getByRole('button', { name: /edita|edit/i }).click();
+      await page
+        .getByRole('button', { name: /^(edita la fitxa|edita la ficha|edit the record)$/i })
+        .click();
       await page.locator('#participant-documentType').selectOption({ label: 'Not given' });
       await expect(page.locator('#participant-documentNumber')).toHaveCount(0);
       await page.getByRole('button', { name: /^(desa|save|guardar)$/i }).click();
@@ -267,7 +271,9 @@ test.describe('the participant detail view', () => {
     const participantId = participantIdByLastName('Ribes');
 
     await openDetail(page, participantId);
-    await page.getByRole('button', { name: /edita|edit/i }).click();
+    await page
+      .getByRole('button', { name: /^(edita la fitxa|edita la ficha|edit the record)$/i })
+      .click();
     await page.locator('#participant-placeOfBirth').fill('Sant Julià de Vilatorta');
     await page.getByRole('button', { name: /^(desa|save|guardar)$/i }).click();
 

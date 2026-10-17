@@ -82,5 +82,6 @@
   "exportShared": "Export ready with {{count}} rows.",
   "exportPhoneNote": "On the phone, exports are CSV files. Excel files are on the web admin.",
   "auditLoadMore": "Show more",
-  "exportPeriod": "Period (optional)"
+  "exportPeriod": "Period (optional)",
+  "exportCustomAnswers": "Answers to the additional questions"
 }

@@ -1383,6 +1383,129 @@ export function buildWalkInSigning(overrides: Partial<WalkInSigningRow> = {}): W
   };
 }
 
+type PublicRow<Name extends keyof Database['public']['Tables']> =
+  Database['public']['Tables'][Name]['Row'];
+export type IntakeScreenRow = PublicRow<'intake_screens'>;
+export type CustomQuestionRow = PublicRow<'custom_questions'>;
+export type CustomQuestionOptionRow = PublicRow<'custom_question_options'>;
+export type CustomAnswerRow = PublicRow<'custom_answers'>;
+export type ReferralCustomAnswerRow = PublicRow<'referral_custom_answers'>;
+export type BuiltinQuestionOverrideRow = PublicRow<'builtin_question_overrides'>;
+export type IntakeStatePresetRow = PublicRow<'intake_state_presets'>;
+
+export const SEED_INTAKE_SCREEN_ID = '5eed0000-0000-4000-8044-000000000001';
+export const SEED_CUSTOM_QUESTION_ID = '5eed0000-0000-4000-8045-000000000001';
+const NO_SEASON_KEY = '00000000-0000-0000-0000-000000000000';
+
+/** The seeded "Transport" screen, after the logistics step (RAPP-307). */
+export function buildIntakeScreen(overrides: Partial<IntakeScreenRow> = {}): IntakeScreenRow {
+  return {
+    id: SEED_INTAKE_SCREEN_ID,
+    org_id: SEED_ORGANIZATION_ID,
+    title: { ca: 'Com arribes als entrenaments' },
+    intro: null,
+    after_screen: 'logistics',
+    sort_order: 0,
+    is_archived: false,
+    created_at: FIXTURE_TIMESTAMP,
+    updated_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+/** A Normal yes/no/maybe question on the wizard and the referral form (RAPP-307). */
+export function buildCustomQuestion(overrides: Partial<CustomQuestionRow> = {}): CustomQuestionRow {
+  return {
+    id: SEED_CUSTOM_QUESTION_ID,
+    org_id: SEED_ORGANIZATION_ID,
+    screen_id: SEED_INTAKE_SCREEN_ID,
+    question_type: 'yes_no_maybe',
+    label: { ca: 'Vens amb transport públic?' },
+    help: null,
+    privacy: 'normal',
+    placements: ['wizard', 'entity_form'],
+    sort_order: 0,
+    is_archived: false,
+    created_at: FIXTURE_TIMESTAMP,
+    updated_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+export function buildCustomQuestionOption(
+  overrides: Partial<CustomQuestionOptionRow> = {},
+): CustomQuestionOptionRow {
+  return {
+    id: '5eed0000-0000-4000-8046-000000000001',
+    org_id: SEED_ORGANIZATION_ID,
+    question_id: '5eed0000-0000-4000-8045-000000000002',
+    label: { ca: 'Una entitat' },
+    sort_order: 0,
+    is_archived: false,
+    ...overrides,
+  };
+}
+
+/** Her answer to a question with no season; a Sensitive one would be encrypted. */
+export function buildCustomAnswer(overrides: Partial<CustomAnswerRow> = {}): CustomAnswerRow {
+  return {
+    profile_id: seedUserId(11),
+    question_id: SEED_CUSTOM_QUESTION_ID,
+    season_key: NO_SEASON_KEY,
+    season_id: null,
+    org_id: SEED_ORGANIZATION_ID,
+    value: 'yes',
+    value_encrypted: null,
+    source: 'player',
+    answered_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+/** What an entity answered with a referral, always encrypted (no plain value here). */
+export function buildReferralCustomAnswer(
+  overrides: Partial<ReferralCustomAnswerRow> = {},
+): ReferralCustomAnswerRow {
+  return {
+    referral_id: '5eed0000-0000-4000-8010-000000000001',
+    question_id: SEED_CUSTOM_QUESTION_ID,
+    org_id: SEED_ORGANIZATION_ID,
+    value_encrypted: '',
+    created_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+export function buildBuiltinQuestionOverride(
+  overrides: Partial<BuiltinQuestionOverrideRow> = {},
+): BuiltinQuestionOverrideRow {
+  return {
+    org_id: SEED_ORGANIZATION_ID,
+    question: 'reference_entity',
+    label: { ca: "Quina entitat t'acompanya?" },
+    help: null,
+    is_hidden: false,
+    option_overrides: {},
+    updated_at: FIXTURE_TIMESTAMP,
+    updated_by: null,
+    ...overrides,
+  };
+}
+
+export function buildIntakeStatePreset(
+  overrides: Partial<IntakeStatePresetRow> = {},
+): IntakeStatePresetRow {
+  return {
+    id: '5eed0000-0000-4000-8047-000000000001',
+    org_id: SEED_ORGANIZATION_ID,
+    name: 'Només talles',
+    states: { clothing_size: 'ask', shoe_size: 'ask' },
+    created_at: FIXTURE_TIMESTAMP,
+    created_by: null,
+    ...overrides,
+  };
+}
+
 export type SeasonAnswersRow = Database['public']['Tables']['season_answers']['Row'];
 
 /** Her registration answers for the current season (RAPP-306). */

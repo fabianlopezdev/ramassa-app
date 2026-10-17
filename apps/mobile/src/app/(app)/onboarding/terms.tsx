@@ -18,13 +18,17 @@ import { WizardFrame } from '@/components/onboarding/wizard-frame';
 import { logout } from '@/lib/auth';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
-import { completeOnboarding, onboardingDraftStore } from '@/lib/onboarding';
+import {
+  completeOnboarding,
+  onboardingDraftStore,
+  saveWizardCustomAnswers,
+} from '@/lib/onboarding';
 import {
   documentationFormSchema,
   identityFormSchema,
   logisticsFormSchema,
 } from '@/lib/onboarding-form';
-import { storedPayloadFromProfile } from '@/lib/onboarding-intake';
+import { customAnswersToSave, storedPayloadFromProfile } from '@/lib/onboarding-intake';
 import { useWizardIntake, useWizardStep } from '@/lib/onboarding-intake-context';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useRouter } from 'expo-router';
@@ -36,7 +40,7 @@ import { useAuth } from '@ramassa/shared/auth';
 import { CURRENT_TERMS_VERSION } from '@ramassa/shared/constants';
 import type { AppErrorCode } from '@ramassa/shared/errors';
 import { trimPayloadToAnswers } from '@ramassa/shared/intake';
-import type { OnboardingStepName } from '@ramassa/shared/onboarding-drafts';
+import type { OnboardingDraftStep } from '@ramassa/shared/onboarding-drafts';
 import {
   buildCompleteOnboardingPayload,
   seasonAnswerFields,
@@ -123,7 +127,7 @@ export default function TermsStepScreen() {
   // RAPP-12 taxonomy, decides whether the buzz is a warning or an error.
   const [failureCode, setFailureCode] = useState<AppErrorCode | null>(null);
 
-  function persist(currentStep: OnboardingStepName) {
+  function persist(currentStep: OnboardingDraftStep) {
     onboardingDraftStore.saveDraft({
       ...draft,
       currentStep,
@@ -189,6 +193,23 @@ export default function TermsStepScreen() {
         },
       );
 
+      // Her answers to the staff questions (RAPP-307), only the new or changed
+      // ones, sent before the profile so a failure leaves her here to try again.
+      // A woman who started on her own has no profile to hold them until the
+      // profile is written, so hers go right after it.
+      const customAnswers = customAnswersToSave(
+        intake.customScreens,
+        draft?.custom,
+        intake.customAnswers,
+      );
+      if (intake.profile !== null) {
+        const saved = await saveWizardCustomAnswers(customAnswers);
+        if (!saved.ok) {
+          setFailureCode(saved.error.code);
+          return;
+        }
+      }
+
       // Only what is new or changed travels (RAPP-300): the server keeps every
       // stored value the payload leaves out, so a staff answer she only
       // confirmed on the summary is never overwritten.
@@ -204,6 +225,11 @@ export default function TermsStepScreen() {
         // different from the "you have not ticked the box" refusal above.
         setFailureCode(result.error.code);
         return;
+      }
+      if (intake.profile === null) {
+        // She has joined by now and cannot finish twice: a failure here is
+        // logged by safeAsync, and staff can complete the answers on her record.
+        await saveWizardCustomAnswers(customAnswers);
       }
       // The completed primary action of the whole flow (RAPP-70). No animation
       // to pair it with: the auth gate swaps this stack for the tabs the moment

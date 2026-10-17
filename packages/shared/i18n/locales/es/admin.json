@@ -82,5 +82,6 @@
   "exportShared": "Exportación lista con {{count}} filas.",
   "exportPhoneNote": "En el teléfono, las exportaciones son archivos CSV. Los archivos Excel están en la administración web.",
   "auditLoadMore": "Muestra más",
-  "exportPeriod": "Periodo (opcional)"
+  "exportPeriod": "Periodo (opcional)",
+  "exportCustomAnswers": "Respuestas a las preguntas adicionales"
 }

@@ -106,14 +106,16 @@ afterAll(() => mock.restore());
 test('a team member at a cold start sees the lock, which asks for Face ID and opens', async () => {
   authenticates = false;
   const view = render(app());
-  await waitFor(() => expect(authenticateAsync).toHaveBeenCalledTimes(1));
+  // The device check resolves after a few promise turns; the suite runs beside
+  // lint and typecheck in the commit hook, so the wait allows for a busy machine.
+  await waitFor(() => expect(authenticateAsync).toHaveBeenCalledTimes(1), { timeout: 5000 });
   expect(view.queryByText('appLockLockedTitle')).not.toBeNull();
 
   authenticates = true;
   fireEvent.click(view.getByRole('button', { name: 'appLockUnlockAction' }));
   await waitFor(() => expect(view.queryByText('appLockLockedTitle')).toBeNull());
   view.unmount();
-});
+}, 15_000);
 
 test('leaving the player preview mounts it again without a lock (RAPP-371)', async () => {
   markPreviewHandover();

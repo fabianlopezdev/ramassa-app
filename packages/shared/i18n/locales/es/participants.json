@@ -541,5 +541,10 @@
     "discard": "Descartar",
     "discardConfirm": "¿Quieres descartar esta firma? No se puede deshacer.",
     "failed": "No se ha podido hacer. Vuelve a intentarlo."
-  }
+  },
+  "questionStatesPresetName": "Nombre del conjunto",
+  "questionStatesSavePreset": "Guardar estas opciones como conjunto",
+  "questionStatesPresetSaved": "Conjunto guardado.",
+  "questionStatesPresetFailed": "No se ha podido guardar el conjunto.",
+  "questionStatesDeletePreset": "¿Borrar el conjunto {{name}}?"
 }

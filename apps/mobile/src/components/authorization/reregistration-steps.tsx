@@ -4,14 +4,23 @@
  * and can open her profile to correct them, then answers this season's
  * questions. Her answers are kept for this season; last season's stay as they
  * were.
+ *
+ * The seasonal questions staff added (RAPP-307) follow the built-in ones and
+ * save with them. When they cannot load, the built-in ones still work.
  */
 
 import { PageWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
+import {
+  CustomQuestionSections,
+  type CustomAnswerDraft,
+} from '@/components/onboarding/custom-question-field';
 import { ProfileRow, ProfileSection } from '@/components/profile/profile-section';
 import { SeasonAnswerFields, type SeasonAnswers } from '@/components/profile/season-answer-fields';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
+import { customAnswersToSave, mergedCustomAnswers } from '@/lib/onboarding-intake';
+import { useBuiltinWording } from '@/lib/onboarding-intake-context';
 import { supabase } from '@/lib/supabase';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useMutation, useQuery } from '@tanstack/react-query';
@@ -23,6 +32,17 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@ramassa/shared/auth';
 import { countryLabelForCanonical } from '@ramassa/shared/i18n/countries';
 import { municipalityLabelForCanonical } from '@ramassa/shared/i18n/municipalities';
+import type { IntakeQuestion } from '@ramassa/shared/intake';
+import {
+  EMPTY_INTAKE_CATALOG,
+  fetchIntakeCatalog,
+  fetchMyCustomAnswers,
+  hiddenBuiltinQuestions,
+  saveMyCustomAnswers,
+  seasonScreens,
+  type CustomAnswers,
+  type IntakeCatalog,
+} from '@ramassa/shared/intake-builder';
 import { fetchOwnProfile } from '@ramassa/shared/profile';
 import type { LanguageCode } from '@ramassa/shared/schemas';
 import { updateMySeasonAnswers } from '@ramassa/shared/seasons';
@@ -82,6 +102,7 @@ export function ReregistrationSteps({
   const [phase, setPhase] = useState<'review' | 'season'>('review');
   const [answers, setAnswers] = useState<SeasonAnswers | null>(null);
   const [hasFailed, setHasFailed] = useState(false);
+  const [customDraft, setCustomDraft] = useState<CustomAnswerDraft>({});
 
   // Read fresh: she may have just corrected her details on the profile screen.
   const profile = useQuery({
@@ -89,18 +110,44 @@ export function ReregistrationSteps({
     queryFn: ({ signal }) => fetchOwnProfile(supabase, { signal }),
     refetchOnMount: 'always',
   });
+  // The staff questions never block her: a failed load reads as none.
+  const staffQuestions = useQuery({
+    queryKey: ['reregistration-staff-questions', user?.id ?? 'signed-out'],
+    queryFn: async (): Promise<{ catalog: IntakeCatalog; answers: CustomAnswers }> => {
+      try {
+        const [catalog, answers] = await Promise.all([
+          fetchIntakeCatalog(supabase),
+          fetchMyCustomAnswers(supabase),
+        ]);
+        return { catalog, answers };
+      } catch {
+        return { catalog: EMPTY_INTAKE_CATALOG, answers: {} };
+      }
+    },
+    refetchOnMount: 'always',
+  });
+  const catalog = staffQuestions.data?.catalog ?? EMPTY_INTAKE_CATALOG;
+  const storedCustom = staffQuestions.data?.answers ?? {};
+  const customScreens = seasonScreens(catalog);
+  const hidden = hiddenBuiltinQuestions(catalog);
+  const wording = useBuiltinWording(catalog);
   const save = useMutation({
-    mutationFn: (value: SeasonAnswers) =>
-      updateMySeasonAnswers(supabase, {
+    mutationFn: async (value: SeasonAnswers) => {
+      await updateMySeasonAnswers(supabase, {
         applicantStatus: value.applicantStatus ?? undefined,
         supportingEntities: [...value.supportingEntities],
         childcareNeed: value.childcareNeed ?? undefined,
         specificNeeds: value.specificNeeds.trim() === '' ? undefined : value.specificNeeds,
-      }),
+      });
+      await saveMyCustomAnswers(
+        supabase,
+        customAnswersToSave(customScreens, customDraft, storedCustom),
+      );
+    },
   });
 
   const data = profile.data;
-  if (profile.isPending || data === undefined || data === null) {
+  if (profile.isPending || staffQuestions.isPending || data === undefined || data === null) {
     return (
       <View className="flex-1 items-center justify-center bg-neutral-50">
         <ActivityIndicator color={tokens.colors.primary.DEFAULT} />
@@ -193,6 +240,15 @@ export function ReregistrationSteps({
                 onChange={(patch) => setAnswers({ ...current, ...patch })}
                 entityNames={[]}
                 showSensitive
+                shows={(question: IntakeQuestion) => !hidden.has(question)}
+                wording={wording}
+              />
+              <CustomQuestionSections
+                screens={customScreens}
+                answers={mergedCustomAnswers(storedCustom, customDraft)}
+                onChange={(questionId, value) =>
+                  setCustomDraft((current) => ({ ...current, [questionId]: value }))
+                }
               />
               {hasFailed ? (
                 <Text

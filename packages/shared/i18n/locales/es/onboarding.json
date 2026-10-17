@@ -147,5 +147,11 @@
   "signingChangeLanguage": "Cambiar el idioma",
   "signingThanks": "Gracias, {{name}}. Has firmado la autorización.",
   "signingGiveBack": "Devuelve la tableta al equipo.",
-  "signingSavedOnTablet": "Tu firma está guardada en esta tableta y se enviará cuando haya conexión."
+  "signingSavedOnTablet": "Tu firma está guardada en esta tableta y se enviará cuando haya conexión.",
+  "customMaybeOption": "Quizás",
+  "customArchivedOption": "ya no se ofrece",
+  "customQuestionsTitle": "Preguntas adicionales",
+  "customReferralAnswersFailed": "La derivación se ha enviado. Las respuestas a las preguntas adicionales no se han podido guardar.",
+  "customReferralRetryAction": "Vuelve a guardar las respuestas",
+  "customReferralOpenAction": "Abre la derivación"
 }

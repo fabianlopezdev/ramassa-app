@@ -1260,6 +1260,82 @@ values (
 )
 on conflict (id) do nothing;
 
+-- The staff question builder (RAPP-307) ---------------------------------------------
+-- A "Transport" screen after the logistics step, with one question of each kind
+-- that matters: Normal yes/no/maybe on the wizard and the referral form; a
+-- single choice with one archived option; a Sensitive long text asked every
+-- season; and a staff-only short text. Player 0011 answered three of them.
+insert into public.intake_screens (id, org_id, title, intro, after_screen, sort_order)
+values (
+  '5eed0000-0000-4000-8044-000000000001', '5eed0000-0000-4000-8000-000000000000',
+  '{"ca":"Com arribes als entrenaments","es":"Cómo llegas a los entrenamientos","en":"How you get to training"}'::jsonb,
+  '{"ca":"Ens ajuda a organitzar els desplaçaments."}'::jsonb,
+  'logistics', 0)
+on conflict (id) do nothing;
+
+insert into public.custom_questions
+  (id, org_id, screen_id, question_type, label, help, privacy, placements, sort_order)
+values
+  ('5eed0000-0000-4000-8045-000000000001', '5eed0000-0000-4000-8000-000000000000',
+   '5eed0000-0000-4000-8044-000000000001', 'yes_no_maybe',
+   '{"ca":"Vens amb transport públic?","es":"¿Vienes en transporte público?","en":"Do you come by public transport?","ar":"هل تأتين بالمواصلات العامة؟","fa":"آیا با حمل و نقل عمومی می‌آیید؟"}'::jsonb,
+   null, 'normal', array['wizard', 'entity_form'], 0),
+  ('5eed0000-0000-4000-8045-000000000002', '5eed0000-0000-4000-8000-000000000000',
+   '5eed0000-0000-4000-8044-000000000001', 'single_choice',
+   '{"ca":"Com et vas assabentar de Ramassà?","en":"How did you hear about Ramassà?"}'::jsonb,
+   null, 'normal', array['wizard'], 1),
+  ('5eed0000-0000-4000-8045-000000000003', '5eed0000-0000-4000-8000-000000000000',
+   '5eed0000-0000-4000-8044-000000000001', 'long_text',
+   '{"ca":"Hi ha res que dificulti venir aquesta temporada?","en":"Is anything making it hard to come this season?"}'::jsonb,
+   '{"ca":"Només ho veurà l''equip amb permís."}'::jsonb, 'sensitive', array['season'], 2),
+  ('5eed0000-0000-4000-8045-000000000004', '5eed0000-0000-4000-8000-000000000000',
+   '5eed0000-0000-4000-8044-000000000001', 'short_text',
+   '{"ca":"Parada de metro més propera"}'::jsonb,
+   null, 'personal', array['staff'], 3)
+on conflict (id) do nothing;
+
+insert into public.custom_question_options (id, org_id, question_id, label, sort_order, is_archived)
+values
+  ('5eed0000-0000-4000-8046-000000000001', '5eed0000-0000-4000-8000-000000000000',
+   '5eed0000-0000-4000-8045-000000000002', '{"ca":"Una entitat","en":"An organization"}'::jsonb, 0, false),
+  ('5eed0000-0000-4000-8046-000000000002', '5eed0000-0000-4000-8000-000000000000',
+   '5eed0000-0000-4000-8045-000000000002', '{"ca":"Xarxes socials","en":"Social media"}'::jsonb, 1, false),
+  ('5eed0000-0000-4000-8046-000000000003', '5eed0000-0000-4000-8000-000000000000',
+   '5eed0000-0000-4000-8045-000000000002', '{"ca":"Un cartell","en":"A poster"}'::jsonb, 2, true)
+on conflict (id) do nothing;
+
+insert into public.custom_answers
+  (profile_id, question_id, season_key, season_id, org_id, value, value_encrypted, source)
+values
+  ('5eed0000-0000-4000-8000-000000000011', '5eed0000-0000-4000-8045-000000000001',
+   '00000000-0000-0000-0000-000000000000', null, '5eed0000-0000-4000-8000-000000000000',
+   '"yes"'::jsonb, null, 'player'),
+  ('5eed0000-0000-4000-8000-000000000011', '5eed0000-0000-4000-8045-000000000002',
+   '00000000-0000-0000-0000-000000000000', null, '5eed0000-0000-4000-8000-000000000000',
+   '"5eed0000-0000-4000-8046-000000000003"'::jsonb, null, 'player'),
+  ('5eed0000-0000-4000-8000-000000000011', '5eed0000-0000-4000-8045-000000000003',
+   '5eed0000-0000-4000-8040-000000000001', '5eed0000-0000-4000-8040-000000000001',
+   '5eed0000-0000-4000-8000-000000000000',
+   null, public.encrypt_field('"Treballo els dijous a la tarda."'), 'player')
+on conflict do nothing;
+
+-- The pending referral of Amina answered the referral-form question.
+insert into public.referral_custom_answers (referral_id, question_id, org_id, value_encrypted)
+values ('5eed0000-0000-4000-8010-000000000001', '5eed0000-0000-4000-8045-000000000001',
+        '5eed0000-0000-4000-8000-000000000000', public.encrypt_field('"maybe"'))
+on conflict do nothing;
+
+insert into public.builtin_question_overrides (org_id, question, label, help, option_overrides)
+values ('5eed0000-0000-4000-8000-000000000000', 'reference_entity',
+        '{"ca":"Quina entitat t''acompanya?","es":"¿Qué entidad te acompaña?","en":"Which organization supports you?"}'::jsonb,
+        null, '{}'::jsonb)
+on conflict do nothing;
+
+insert into public.intake_state_presets (id, org_id, name, states)
+values ('5eed0000-0000-4000-8047-000000000001', '5eed0000-0000-4000-8000-000000000000',
+        'Només talles', '{"clothing_size":"ask","shoe_size":"ask"}'::jsonb)
+on conflict (id) do nothing;
+
 -- Terms acceptances ----------------------------------------------------------------
 -- The consent EVENT behind each seeded player's `terms_accepted_at` (RAPP-21).
 -- Seeded in the language that player actually reads, because the whole point of

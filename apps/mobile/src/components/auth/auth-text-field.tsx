@@ -18,6 +18,8 @@ const queuedAnnouncement = { queue: true } as const;
 export interface AuthTextFieldProps extends TextInputProps {
   readonly label: string;
   readonly errorMessage?: string;
+  /** A help line under the field, such as the one staff write for a question (RAPP-307). */
+  readonly hint?: string | null;
   /** Marks the border without repeating a field-level error sentence. */
   readonly isInvalid?: boolean;
   readonly ref?: Ref<TextInput>;
@@ -26,6 +28,7 @@ export interface AuthTextFieldProps extends TextInputProps {
 export function AuthTextField({
   label,
   errorMessage,
+  hint,
   isInvalid,
   ref,
   style,
@@ -62,6 +65,9 @@ export function AuthTextField({
         } ${languageFontClass}`}
         {...inputProps}
       />
+      {hint == null || hint.trim() === '' ? null : (
+        <Text className={`text-start text-sm text-neutral-500 ${languageFontClass}`}>{hint}</Text>
+      )}
       {errorMessage === undefined ? null : (
         <Text
           selectable
