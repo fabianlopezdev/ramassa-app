@@ -175,7 +175,7 @@ test.describe('the participant detail view', () => {
     const cityField = page.locator('#participant-city');
     await expect(cityField).toBeVisible();
     await cityField.fill(nextCity);
-    await page.getByRole('button', { name: /desa|save|guarda/i }).click();
+    await page.getByRole('button', { name: /^(desa|save|guardar)$/i }).click();
 
     await expect
       .poll(() => queryDatabase(`select city from public.profiles where id = '${participantId}'`), {
@@ -206,7 +206,7 @@ test.describe('the participant detail view', () => {
       await page.getByRole('button', { name: /edita|edit/i }).click();
       await page.locator('#participant-documentType').selectOption({ label: 'Not given' });
       await expect(page.locator('#participant-documentNumber')).toHaveCount(0);
-      await page.getByRole('button', { name: /desa|save|guarda/i }).click();
+      await page.getByRole('button', { name: /^(desa|save|guardar)$/i }).click();
 
       await expect
         .poll(
@@ -269,7 +269,7 @@ test.describe('the participant detail view', () => {
     await openDetail(page, participantId);
     await page.getByRole('button', { name: /edita|edit/i }).click();
     await page.locator('#participant-placeOfBirth').fill('Sant Julià de Vilatorta');
-    await page.getByRole('button', { name: /desa|save|guarda/i }).click();
+    await page.getByRole('button', { name: /^(desa|save|guardar)$/i }).click();
 
     await expect
       .poll(
