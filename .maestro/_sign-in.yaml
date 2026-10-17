@@ -28,6 +28,12 @@ env:
       notVisible: '.*signed in as ${PLAYER_EMAIL}.*'
     commands:
       - openLink: ${DEV_MENU_LINK}?account=${PLAYER_EMAIL}
+      # A never-answered (erased) iOS simulator asks "Open in <app>?" for this
+      # link too, and the flow stalls on the login screen until it is answered
+      # (RAPP-501). A no-op on Android and once iOS has the answer.
+      - tapOn:
+          text: '^Open$'
+          optional: true
       - waitForAnimationToEnd:
           timeout: 3000
       - extendedWaitUntil:

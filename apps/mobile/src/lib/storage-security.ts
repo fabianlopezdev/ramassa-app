@@ -13,15 +13,31 @@ export interface StorageKeyVault {
   set(key: string, value: string): void;
 }
 
+export interface ProtectedStorageConfiguration {
+  id: string;
+  encryptionKey: string;
+  encryptionType: 'AES-256';
+  recoveryStrategy: 'discard-on-error';
+}
+
+// Deleting a store frees its native MMKV instance, but every JS handle opened
+// on it keeps a raw pointer to it. react-native-mmkv's createMMKV also registers
+// each handle with AppState, which calls checkContentChanged() on it when the
+// app becomes active, so a deleted store with a live handle aborts the app on
+// the next foreground (RAPP-501). `inspect` opens a handle with no listeners,
+// for a store that might be deleted. `create` opens the live handle, and its
+// id is never deleted afterwards.
 export interface ProtectedStorageFactory {
   exists(id: string): boolean;
-  create(configuration: {
-    id: string;
-    encryptionKey: string;
-    encryptionType: 'AES-256';
-    recoveryStrategy: 'discard-on-error';
-  }): StorageLike;
+  inspect(configuration: ProtectedStorageConfiguration): StorageLike;
+  create(configuration: ProtectedStorageConfiguration): StorageLike;
   delete(id: string): boolean;
+}
+
+export interface LegacyPreferencesStore {
+  inspect(): StorageLike;
+  open(): StorageLike;
+  delete(): void;
 }
 
 export type ProtectedStorageRecovery =
@@ -85,17 +101,24 @@ export function createStorageEncryptionKey(randomBytes: (count: number) => Uint8
   return key;
 }
 
+function encryptedStoreConfiguration(
+  id: string,
+  encryptionKey: string,
+): ProtectedStorageConfiguration {
+  return {
+    id,
+    encryptionKey,
+    encryptionType: 'AES-256',
+    recoveryStrategy: 'discard-on-error',
+  };
+}
+
 function createEncryptedStore(
   factory: ProtectedStorageFactory,
   id: string,
   encryptionKey: string,
 ): StorageLike {
-  return factory.create({
-    id,
-    encryptionKey,
-    encryptionType: 'AES-256',
-    recoveryStrategy: 'discard-on-error',
-  });
+  return factory.create(encryptedStoreConfiguration(id, encryptionKey));
 }
 
 function replaceStore(options: {
@@ -145,34 +168,41 @@ export function createProtectedStorage(options: {
     return { storage: replaceStore(options), recovery: 'reset-invalid-key' };
   }
 
-  const storage = createEncryptedStore(options.factory, options.id, storedKey);
-  if (storage.getString(STORAGE_KEY_SENTINEL) !== STORAGE_KEY_SENTINEL_VALUE) {
+  const probe = options.factory.inspect(encryptedStoreConfiguration(options.id, storedKey));
+  if (probe.getString(STORAGE_KEY_SENTINEL) !== STORAGE_KEY_SENTINEL_VALUE) {
     return { storage: replaceStore(options), recovery: 'reset-unreadable-store' };
   }
 
-  return { storage, recovery: 'reopened' };
+  return {
+    storage: createEncryptedStore(options.factory, options.id, storedKey),
+    recovery: 'reopened',
+  };
 }
 
 function isLowSensitivityKey(key: string): boolean {
   return LOW_SENSITIVITY_KEYS.has(key) || key.startsWith('ramassa.pushToken.');
 }
 
-export function rebuildLegacyPreferencesStorage(
-  storage: StorageLike,
-  recreate: () => StorageLike,
-): { storage: StorageLike; reset: boolean } {
-  if (storage.getString(LEGACY_RESET_MARKER) === LEGACY_RESET_COMPLETE) {
-    return { storage, reset: false };
+export function rebuildLegacyPreferencesStorage(store: LegacyPreferencesStore): {
+  storage: StorageLike;
+  reset: boolean;
+} {
+  const legacy = store.inspect();
+  if (legacy.getString(LEGACY_RESET_MARKER) === LEGACY_RESET_COMPLETE) {
+    return { storage: store.open(), reset: false };
   }
 
-  const preserved = storage
+  const preserved = legacy
     .getAllKeys()
     .filter(isLowSensitivityKey)
     .flatMap((key) => {
-      const value = storage.getString(key);
+      const value = legacy.getString(key);
       return value === undefined ? [] : [[key, value] as const];
     });
-  const replacement = recreate();
+  // Delete the file so the legacy plaintext values are gone from disk.
+  // MMKV clearAll() only truncates, which leaves them in the first page.
+  store.delete();
+  const replacement = store.open();
   for (const [key, value] of preserved) replacement.set(key, value);
   replacement.set(LEGACY_RESET_MARKER, LEGACY_RESET_COMPLETE);
   return { storage: replacement, reset: true };

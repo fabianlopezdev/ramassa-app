@@ -52,7 +52,9 @@ describe('secure mobile storage configuration', () => {
     expect(read('apps/mobile/src/lib/query-client.ts')).toContain(
       'createQueryPersister(privateStorage)',
     );
-    expect(read('apps/mobile/src/lib/storage.ts')).toContain("deleteMMKV('mmkv.default')");
+    const storage = read('apps/mobile/src/lib/storage.ts');
+    expect(storage).toContain("const LEGACY_PREFERENCES_ID = 'mmkv.default';");
+    expect(storage).toContain('deleteMMKV(LEGACY_PREFERENCES_ID)');
   });
 
   test('the dev runtime can deliberately prove session refresh persistence', () => {

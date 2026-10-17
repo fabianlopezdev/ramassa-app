@@ -4,38 +4,62 @@ import {
   createProtectedStorage,
   createStorageEncryptionKey,
   rebuildLegacyPreferencesStorage,
+  type LegacyPreferencesStore,
   type ProtectedStorageFactory,
   type StorageKeyVault,
   type StorageLike,
 } from './storage-security';
 
+// Models one native MMKV store. Every JS handle opened on the same id shares
+// it, and deleting the id frees it, so any later call through an old handle is
+// a use-after-free (RAPP-501).
 class FakeStorage implements StorageLike {
   readonly values = new Map<string, string>();
   trimCount = 0;
+  deleted = false;
 
   constructor(initial: Record<string, string> = {}) {
     for (const [key, value] of Object.entries(initial)) this.values.set(key, value);
   }
 
+  private assertOpen(): void {
+    if (this.deleted) throw new Error('MMKV call on a deleted native store');
+  }
+
   getAllKeys(): string[] {
+    this.assertOpen();
     return [...this.values.keys()];
   }
 
   getString(key: string): string | undefined {
+    this.assertOpen();
     return this.values.get(key);
   }
 
   set(key: string, value: string): void {
+    this.assertOpen();
     this.values.set(key, value);
   }
 
   remove(key: string): boolean {
+    this.assertOpen();
     return this.values.delete(key);
   }
 
   trim(): void {
+    this.assertOpen();
     this.trimCount += 1;
   }
+
+  checkContentChanged(): void {
+    this.assertOpen();
+  }
+}
+
+// react-native-mmkv's createMMKV registers every handle with AppState, which
+// calls checkContentChanged() on it each time the app becomes active.
+function foreground(liveHandles: readonly FakeStorage[]): void {
+  for (const handle of liveHandles) handle.checkContentChanged();
 }
 
 function fakeVault(initial: Record<string, string> = {}): StorageKeyVault & {
@@ -55,36 +79,71 @@ function fakeFactory(options: {
   initial?: Record<string, string>;
 }): ProtectedStorageFactory & {
   readonly createdWith: string[];
+  readonly liveHandles: FakeStorage[];
   deleteCount: number;
   latestStorage(): FakeStorage;
 } {
   let exists = options.exists;
   let storage = new FakeStorage(options.initial);
   const createdWith: string[] = [];
+  const liveHandles: FakeStorage[] = [];
+  const open = ({
+    encryptionKey,
+    encryptionType,
+  }: Parameters<ProtectedStorageFactory['create']>[0]) => {
+    createdWith.push(`${encryptionType}:${encryptionKey}`);
+    if (exists && options.readableKey !== undefined && encryptionKey !== options.readableKey) {
+      storage = new FakeStorage();
+    }
+    exists = true;
+    return storage;
+  };
   const factory = {
     createdWith,
+    liveHandles,
     deleteCount: 0,
     exists: () => exists,
-    create: ({
-      encryptionKey,
-      encryptionType,
-    }: Parameters<ProtectedStorageFactory['create']>[0]) => {
-      createdWith.push(`${encryptionType}:${encryptionKey}`);
-      if (exists && options.readableKey !== undefined && encryptionKey !== options.readableKey) {
-        storage = new FakeStorage();
-      }
-      exists = true;
-      return storage;
+    inspect: open,
+    create: (configuration: Parameters<ProtectedStorageFactory['create']>[0]) => {
+      const handle = open(configuration);
+      liveHandles.push(handle);
+      return handle;
     },
     delete: () => {
       factory.deleteCount += 1;
       exists = false;
+      storage.deleted = true;
       storage = new FakeStorage();
       return true;
     },
     latestStorage: () => storage,
   };
   return factory;
+}
+
+function fakeLegacyStore(initial: Record<string, string>): LegacyPreferencesStore & {
+  readonly liveHandles: FakeStorage[];
+  native(): FakeStorage;
+  openCount: number;
+} {
+  let storage = new FakeStorage(initial);
+  const liveHandles: FakeStorage[] = [];
+  const store = {
+    liveHandles,
+    openCount: 0,
+    native: () => storage,
+    inspect: () => storage,
+    open: () => {
+      store.openCount += 1;
+      liveHandles.push(storage);
+      return storage;
+    },
+    delete: () => {
+      storage.deleted = true;
+      storage = new FakeStorage();
+    },
+  };
+  return store;
 }
 
 const fixedRandomBytes = (count: number): Uint8Array =>
@@ -213,11 +272,40 @@ describe('createProtectedStorage', () => {
     expect(factory.deleteCount).toBe(1);
     expect(result.storage.getString('session')).toBeUndefined();
   });
+
+  test('every reset path leaves no live handle on a deleted store when the app returns to the foreground', () => {
+    const actualKey = createStorageEncryptionKey(fixedRandomBytes);
+    const cases: { vault: Record<string, string>; readableKey?: string }[] = [
+      { vault: {} },
+      { vault: { 'ramassa.auth.key.v1': 'too-short' } },
+      { vault: { 'ramassa.auth.key.v1': '/'.repeat(32) }, readableKey: actualKey },
+      { vault: { 'ramassa.auth.key.v1': actualKey }, readableKey: actualKey },
+    ];
+
+    for (const { vault, readableKey } of cases) {
+      const factory = fakeFactory({
+        exists: true,
+        readableKey,
+        initial: { 'ramassa.storage-key-check.v1': 'protected', session: 'opaque' },
+      });
+
+      const result = createProtectedStorage({
+        id: 'ramassa.auth.v1',
+        keyName: 'ramassa.auth.key.v1',
+        vault: fakeVault(vault),
+        factory,
+        randomBytes: fixedRandomBytes,
+      });
+
+      expect(() => foreground(factory.liveHandles)).not.toThrow();
+      expect(factory.liveHandles.at(-1)).toBe(result.storage as FakeStorage);
+    }
+  });
 });
 
 describe('rebuildLegacyPreferencesStorage', () => {
   test('replaces the legacy file and restores only low-sensitivity preferences', () => {
-    const storage = new FakeStorage({
+    const store = fakeLegacyStore({
       'sb-local-auth-token': 'session',
       'sb-local-auth-token-user': 'user',
       'ramassa.onboarding-draft': 'identity',
@@ -230,37 +318,49 @@ describe('rebuildLegacyPreferencesStorage', () => {
       'ramassa.pushToken.lastWritten': 'push-token',
       'ramassa.attendance-coach.user-id': 'staff',
     });
-    const replacement = new FakeStorage();
-    let rebuildCount = 0;
+    const legacy = store.native();
 
-    const result = rebuildLegacyPreferencesStorage(storage, () => {
-      rebuildCount += 1;
-      return replacement;
-    });
+    const result = rebuildLegacyPreferencesStorage(store);
 
     expect(result.reset).toBe(true);
-    expect(result.storage).toBe(replacement);
-    expect(rebuildCount).toBe(1);
-    expect(replacement.getAllKeys().sort()).toEqual([
+    expect(legacy.deleted).toBe(true);
+    expect(result.storage).toBe(store.native());
+    expect(store.openCount).toBe(1);
+    expect(store.native().getAllKeys().sort()).toEqual([
       'ramassa.deviceId',
       'ramassa.haptics.enabled',
       'ramassa.language',
       'ramassa.pushToken.lastWritten',
       'ramassa.secure-storage-reset.v1',
     ]);
-    expect(storage.getString('sb-local-auth-token')).toBe('session');
+  });
+
+  test('the reset never deletes a store that has a live handle, so the next foreground is safe', () => {
+    const store = fakeLegacyStore({
+      'sb-local-auth-token': 'session',
+      'ramassa.language': 'ca',
+    });
+
+    rebuildLegacyPreferencesStorage(store);
+
+    expect(store.liveHandles).toHaveLength(1);
+    expect(() => foreground(store.liveHandles)).not.toThrow();
   });
 
   test('the reset marker makes subsequent starts a no-op', () => {
-    const storage = new FakeStorage({
+    const store = fakeLegacyStore({
       'ramassa.secure-storage-reset.v1': 'complete',
       'ramassa.language': 'ar',
     });
-
-    const result = rebuildLegacyPreferencesStorage(storage, () => {
+    const native = store.native();
+    store.delete = () => {
       throw new AppError('UNEXPECTED-1');
-    });
+    };
 
-    expect(result).toEqual({ storage, reset: false });
+    const result = rebuildLegacyPreferencesStorage(store);
+
+    expect(result).toEqual({ storage: native, reset: false });
+    expect(native.getString('ramassa.language')).toBe('ar');
+    expect(() => foreground(store.liveHandles)).not.toThrow();
   });
 });
