@@ -20,7 +20,12 @@ test.beforeAll(() => {
     insert into public.walk_in_signings
       (id, org_id, first_name, last_name, version_id, payload, signed_at, collected_by)
     values ('${DISCARDED}', '5eed0000-0000-4000-8000-000000000000', 'Duplicada', 'Prova',
-            '5eed0000-0000-4000-8041-000000000001', null, now(),
+            '5eed0000-0000-4000-8041-000000000001',
+            public.encrypt_field(jsonb_build_object(
+              'consents', jsonb_build_object('participation', true, 'data_processing', true,
+                                             'code_of_conduct', true, 'health_data', true),
+              'health_info', 'No', 'unable_to_draw', true, 'language', 'ca')::text),
+            now(),
             '5eed0000-0000-4000-8000-000000000002')
     on conflict (id) do nothing;
   `);
