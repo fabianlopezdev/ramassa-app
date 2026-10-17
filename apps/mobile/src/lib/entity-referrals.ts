@@ -12,6 +12,7 @@ import {
   fetchEntityReferrals,
   fetchReferral,
   fetchReferralUpdates,
+  fetchSupportingEntityNames,
   submitReferralUpdate,
   type CreateReferral,
   type ReferralUpdateInput,
@@ -43,6 +44,16 @@ export function useEntityReferral(referralId: string) {
     enabled: user !== null,
   });
   return { referral, updates };
+}
+
+/** The organization's partner entities by name, for the referral form (RAPP-303). */
+export function useSupportingEntityNames() {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ['supporting-entity-names', user?.id ?? 'signed-out'],
+    queryFn: () => fetchSupportingEntityNames(supabase),
+    enabled: user !== null,
+  });
 }
 
 export function useReferralActions() {

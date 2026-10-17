@@ -17,6 +17,7 @@ import {
   SelectField,
   TextField,
 } from '@/components/participants/participant-form-fields';
+import { SeasonAnswerFormFields } from '@/components/participants/season-answer-form-fields';
 import { Button } from '@/components/ui/button';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMemo, useState } from 'react';
@@ -235,6 +236,11 @@ export function ParticipantPrefillForm({
           label={t('onboarding:shoeSizeLabel')}
           emptyLabel={notGiven}
           options={SHOE_SIZES.map((size) => ({ value: size, label: size }))}
+        />
+        <SeasonAnswerFormFields
+          control={control}
+          canSeeSensitive={canSeeSensitive}
+          emptyLabel={notGiven}
         />
       </div>
 

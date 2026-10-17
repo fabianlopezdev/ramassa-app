@@ -21,7 +21,11 @@ import { ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MADRID_TIME_ZONE } from '@ramassa/shared/events';
 import { DEFAULT_LANGUAGE } from '@ramassa/shared/i18n';
+import type { SupportedLanguage } from '@ramassa/shared/i18n';
+import { countryLabelForCanonical } from '@ramassa/shared/i18n/countries';
+import { municipalityLabelForCanonical } from '@ramassa/shared/i18n/municipalities';
 import { REFERRAL_UPDATE_TYPES } from '@ramassa/shared/referrals';
+import type { ReferralAnswers } from '@ramassa/shared/referrals';
 
 type UpdateType = (typeof REFERRAL_UPDATE_TYPES)[number];
 
@@ -53,9 +57,80 @@ function Detail({ label, value }: { readonly label: string; readonly value: stri
   );
 }
 
+/** The season answers as label and value rows, skipping what was not given. */
+function referralAnswerRows(
+  answers: ReferralAnswers,
+  t: (key: string) => string,
+  locale: string,
+): readonly { readonly label: string; readonly value: string }[] {
+  const rows: { label: string; value: string }[] = [];
+  const add = (labelKey: string, value: string | null) => {
+    if (value !== null && value !== '') rows.push({ label: t(labelKey), value });
+  };
+  const language = locale as SupportedLanguage;
+  add('onboarding:dateOfBirthLabel', answers.dateOfBirth);
+  add(
+    'onboarding:nationalityLabel',
+    answers.nationality === null
+      ? null
+      : (countryLabelForCanonical(answers.nationality, language) ?? answers.nationality),
+  );
+  add(
+    'onboarding:documentTypeLabel',
+    answers.documentType === null ? null : t(DOCUMENT_TYPE_KEYS[answers.documentType]),
+  );
+  add('onboarding:documentNumberLabel', answers.documentNumber);
+  add(
+    'onboarding:cityLabel',
+    answers.city === null
+      ? null
+      : (municipalityLabelForCanonical(answers.city, language) ?? answers.city),
+  );
+  add(
+    'onboarding:applicantStatusLabel',
+    answers.applicantStatus === null ? null : t(APPLICANT_STATUS_KEYS[answers.applicantStatus]),
+  );
+  add(
+    'onboarding:supportingEntitiesLabel',
+    answers.supportingEntities.length === 0 ? null : answers.supportingEntities.join(', '),
+  );
+  add('onboarding:referenceContactNameLabel', answers.referenceContactName);
+  add(
+    'onboarding:seasonNumberLabel',
+    answers.seasonNumber === null ? null : t(`onboarding:seasonNumber${answers.seasonNumber}`),
+  );
+  add(
+    'onboarding:childcareNeedLabel',
+    answers.childcareNeed === null ? null : t(CHILDCARE_KEYS[answers.childcareNeed]),
+  );
+  add('onboarding:specificNeedsLabel', answers.specificNeeds);
+  return rows;
+}
+
+const DOCUMENT_TYPE_KEYS = {
+  nie: 'onboarding:documentTypeNie',
+  passport: 'onboarding:documentTypePassport',
+  other: 'onboarding:documentTypeOther',
+  none: 'onboarding:documentTypeNone',
+} as const;
+
+const APPLICANT_STATUS_KEYS = {
+  asylum_seeker: 'onboarding:applicantStatusAsylumSeeker',
+  refugee: 'onboarding:applicantStatusRefugee',
+  migrant: 'onboarding:applicantStatusMigrant',
+  other: 'onboarding:applicantStatusOther',
+  prefer_not_to_say: 'onboarding:applicantStatusPreferNotToSay',
+} as const;
+
+const CHILDCARE_KEYS = {
+  yes: 'onboarding:childcareNeedYes',
+  no: 'onboarding:childcareNeedNo',
+  maybe: 'onboarding:childcareNeedMaybe',
+} as const;
+
 export default function EntityReferralScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { t, i18n } = useTranslation('referrals');
+  const { t, i18n } = useTranslation(['referrals', 'onboarding']);
   const fontClass = useLanguageFontClass();
   const { back } = useRouter();
   const { referral, updates } = useEntityReferral(id);
@@ -128,6 +203,15 @@ export default function EntityReferralScreen() {
                 <Detail label={t('createdLabel')} value={dates.format(new Date(data.createdAt))} />
                 {data.notes === null ? null : <Detail label={t('notes')} value={data.notes} />}
               </Section>
+
+              {/* What the entity sent, while the referral is pending (RAPP-303). */}
+              {data.answers === null ? null : (
+                <Section title={t('onboarding:seasonSectionTitle')}>
+                  {referralAnswerRows(data.answers, t, i18n.resolvedLanguage ?? 'ca').map((row) => (
+                    <Detail key={row.label} label={row.label} value={row.value} />
+                  ))}
+                </Section>
+              )}
 
               <Section title={t('updatesTitle')}>
                 {data.referredProfileId === null ? (

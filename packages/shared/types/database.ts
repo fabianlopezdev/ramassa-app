@@ -626,10 +626,13 @@ export type Database = {
         Row: {
           assigned_staff_id: string | null;
           collaborating_entity_id: string;
+          consent_confirmed_at: string | null;
+          consent_confirmed_by: string | null;
           created_at: string;
           documentation_status: string;
           entity_user_id: string;
           id: string;
+          intake_answers: string | null;
           notes: string | null;
           org_id: string;
           referred_email: string | null;
@@ -643,10 +646,13 @@ export type Database = {
         Insert: {
           assigned_staff_id?: string | null;
           collaborating_entity_id: string;
+          consent_confirmed_at?: string | null;
+          consent_confirmed_by?: string | null;
           created_at?: string;
           documentation_status: string;
           entity_user_id: string;
           id?: string;
+          intake_answers?: string | null;
           notes?: string | null;
           org_id: string;
           referred_email?: string | null;
@@ -660,10 +666,13 @@ export type Database = {
         Update: {
           assigned_staff_id?: string | null;
           collaborating_entity_id?: string;
+          consent_confirmed_at?: string | null;
+          consent_confirmed_by?: string | null;
           created_at?: string;
           documentation_status?: string;
           entity_user_id?: string;
           id?: string;
+          intake_answers?: string | null;
           notes?: string | null;
           org_id?: string;
           referred_email?: string | null;
@@ -2403,7 +2412,9 @@ export type Database = {
         Row: {
           address: string | null;
           anonymized_at: string | null;
+          applicant_status: string | null;
           avatar_url: string | null;
+          childcare_need: string | null;
           city: string | null;
           clothing_size: string | null;
           collaborating_entity_id: string | null;
@@ -2430,15 +2441,20 @@ export type Database = {
           reference_entity: string | null;
           role: string;
           search_document: unknown;
+          season_number: number | null;
           sessions_valid_after: string | null;
           shoe_size: string | null;
+          specific_needs: string | null;
+          supporting_entities: string[] | null;
           terms_accepted_at: string | null;
           updated_at: string;
         };
         Insert: {
           address?: string | null;
           anonymized_at?: string | null;
+          applicant_status?: string | null;
           avatar_url?: string | null;
+          childcare_need?: string | null;
           city?: string | null;
           clothing_size?: string | null;
           collaborating_entity_id?: string | null;
@@ -2465,15 +2481,20 @@ export type Database = {
           reference_entity?: string | null;
           role?: string;
           search_document?: unknown;
+          season_number?: number | null;
           sessions_valid_after?: string | null;
           shoe_size?: string | null;
+          specific_needs?: string | null;
+          supporting_entities?: string[] | null;
           terms_accepted_at?: string | null;
           updated_at?: string;
         };
         Update: {
           address?: string | null;
           anonymized_at?: string | null;
+          applicant_status?: string | null;
           avatar_url?: string | null;
+          childcare_need?: string | null;
           city?: string | null;
           clothing_size?: string | null;
           collaborating_entity_id?: string | null;
@@ -2500,8 +2521,11 @@ export type Database = {
           reference_entity?: string | null;
           role?: string;
           search_document?: unknown;
+          season_number?: number | null;
           sessions_valid_after?: string | null;
           shoe_size?: string | null;
+          specific_needs?: string | null;
+          supporting_entities?: string[] | null;
           terms_accepted_at?: string | null;
           updated_at?: string;
         };
@@ -4225,7 +4249,9 @@ export type Database = {
         Returns: {
           address: string | null;
           anonymized_at: string | null;
+          applicant_status: string | null;
           avatar_url: string | null;
+          childcare_need: string | null;
           city: string | null;
           clothing_size: string | null;
           collaborating_entity_id: string | null;
@@ -4252,8 +4278,11 @@ export type Database = {
           reference_entity: string | null;
           role: string;
           search_document: unknown;
+          season_number: number | null;
           sessions_valid_after: string | null;
           shoe_size: string | null;
+          specific_needs: string | null;
+          supporting_entities: string[] | null;
           terms_accepted_at: string | null;
           updated_at: string;
         };
@@ -4445,11 +4474,13 @@ export type Database = {
         Args: { p_referral_id: string };
         Returns: {
           assigned_staff_id: string;
+          consent_confirmed_at: string;
           created_at: string;
           documentation_status: string;
           entity_name: string;
           entity_user_id: string;
           id: string;
+          intake_answers: Json;
           notes: string;
           referred_email: string;
           referred_first_name: string;
@@ -4493,7 +4524,9 @@ export type Database = {
         Args: never;
         Returns: {
           address: string;
+          applicant_status: string;
           avatar_url: string;
+          childcare_need: string;
           city: string;
           clothing_size: string;
           date_of_birth: string;
@@ -4512,7 +4545,10 @@ export type Database = {
           preferred_language: string;
           reference_contact_name: string;
           reference_entity: string;
+          season_number: number;
           shoe_size: string;
+          specific_needs: string;
+          supporting_entities: string[];
           terms_accepted_at: string;
         }[];
       };
@@ -4541,7 +4577,9 @@ export type Database = {
         Returns: {
           address: string;
           anonymized_at: string;
+          applicant_status: string;
           avatar_url: string;
+          childcare_need: string;
           city: string;
           clothing_size: string;
           created_at: string;
@@ -4563,7 +4601,10 @@ export type Database = {
           preferred_language: string;
           reference_contact_name: string;
           reference_entity: string;
+          season_number: number;
           shoe_size: string;
+          specific_needs: string;
+          supporting_entities: string[];
           terms_accepted_at: string;
           updated_at: string;
         }[];
@@ -4992,6 +5033,7 @@ export type Database = {
           updated_at: string;
         }[];
       };
+      list_supporting_entity_names: { Args: never; Returns: string[] };
       list_survey_responses: {
         Args: { p_survey_id: string };
         Returns: {

@@ -924,6 +924,26 @@ values
   )
 on conflict (id) do nothing;
 
+-- The pending referral carries the season registration answers and the
+-- entity's consent (RAPP-303), so accepting it fills her profile.
+update public.entity_referrals
+set
+  intake_answers = public.encrypt_field(jsonb_build_object(
+    'date_of_birth', '1996-02-20',
+    'nationality', 'Marroc',
+    'document_type', 'none',
+    'city', 'Vic',
+    'applicant_status', 'migrant',
+    'supporting_entities', jsonb_build_array('Càritas Vic'),
+    'reference_contact_name', 'Sílvia Bosch',
+    'season_number', 2,
+    'childcare_need', 'yes',
+    'specific_needs', 'Prefereix entrenar a la tarda.'
+  )::text),
+  consent_confirmed_at = now() - interval '2 days',
+  consent_confirmed_by = '5eed0000-0000-4000-8000-000000000004'
+where id = '5eed0000-0000-4000-8010-000000000001';
+
 insert into public.entity_invitations (
   id, org_id, collaborating_entity_id, email, profile_id, invited_by,
   expires_at, accepted_at, created_at

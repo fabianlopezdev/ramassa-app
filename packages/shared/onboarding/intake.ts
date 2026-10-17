@@ -31,6 +31,13 @@ export const INTAKE_QUESTIONS = [
   'clothing_size',
   'shoe_size',
   'avatar',
+  // The season registration answers (RAPP-303): given by the entity or staff,
+  // on no wizard screen yet.
+  'applicant_status',
+  'supporting_entities',
+  'season_number',
+  'childcare_need',
+  'specific_needs',
 ] as const;
 export type IntakeQuestion = (typeof INTAKE_QUESTIONS)[number];
 
@@ -83,6 +90,11 @@ export const QUESTION_PAYLOAD_KEYS: Readonly<Record<IntakeQuestion, readonly str
   clothing_size: ['clothing_size'],
   shoe_size: ['shoe_size'],
   avatar: ['avatar_url'],
+  applicant_status: ['applicant_status'],
+  supporting_entities: ['supporting_entities'],
+  season_number: ['season_number'],
+  childcare_need: ['childcare_need'],
+  specific_needs: ['specific_needs'],
 };
 
 /**

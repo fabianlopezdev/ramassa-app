@@ -1,3 +1,4 @@
+import { ReferralAnswersList } from '@/components/referrals/referral-answers';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { safeAsync } from '@/lib/observability';
@@ -86,6 +87,12 @@ export function ReferralDetail({
             <dd className="text-start">{new Date(referral.createdAt).toLocaleString(locale)}</dd>
           </div>
         </dl>
+        {/* What the entity sent, while the referral is pending (RAPP-303). */}
+        {referral.answers === null ? null : (
+          <div className="mt-4">
+            <ReferralAnswersList answers={referral.answers} />
+          </div>
+        )}
         {referral.notes === null ? null : (
           <p className="mt-4 whitespace-pre-wrap text-start text-sm">{referral.notes}</p>
         )}

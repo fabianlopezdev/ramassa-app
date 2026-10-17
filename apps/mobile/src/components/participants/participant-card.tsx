@@ -88,6 +88,21 @@ function CardAction({
   );
 }
 
+/** The season answer choices in her language (RAPP-303). */
+const APPLICANT_STATUS_KEYS = {
+  asylum_seeker: 'applicantStatusAsylumSeeker',
+  refugee: 'applicantStatusRefugee',
+  migrant: 'applicantStatusMigrant',
+  other: 'applicantStatusOther',
+  prefer_not_to_say: 'applicantStatusPreferNotToSay',
+} as const;
+
+const CHILDCARE_KEYS = {
+  yes: 'childcareNeedYes',
+  no: 'childcareNeedNo',
+  maybe: 'childcareNeedMaybe',
+} as const;
+
 export function ParticipantCard({
   participantId,
   onBack,
@@ -230,6 +245,40 @@ export function ParticipantCard({
         return { label: tOnboarding('clothingSizeLabel'), value: shown(participant.clothing_size) };
       case 'shoeSize':
         return { label: tOnboarding('shoeSizeLabel'), value: shown(participant.shoe_size) };
+      case 'applicantStatus':
+        return {
+          label: tOnboarding('applicantStatusLabel'),
+          value:
+            participant.applicant_status == null
+              ? tProfile('notProvided')
+              : tOnboarding(APPLICANT_STATUS_KEYS[participant.applicant_status]),
+        };
+      case 'supportingEntities':
+        return {
+          label: tOnboarding('supportingEntitiesLabel'),
+          value: shown(participant.supporting_entities?.join(', ') ?? null),
+        };
+      case 'seasonNumber':
+        return {
+          label: tOnboarding('seasonNumberLabel'),
+          value:
+            participant.season_number == null
+              ? tProfile('notProvided')
+              : tOnboarding(`seasonNumber${participant.season_number}`),
+        };
+      case 'childcareNeed':
+        return {
+          label: tOnboarding('childcareNeedLabel'),
+          value:
+            participant.childcare_need == null
+              ? tProfile('notProvided')
+              : tOnboarding(CHILDCARE_KEYS[participant.childcare_need]),
+        };
+      case 'specificNeeds':
+        return {
+          label: tOnboarding('specificNeedsLabel'),
+          value: shown(participant.specific_needs ?? null),
+        };
       case 'mediaConsent':
         // The staff wording. Her own profile says "I appear in community photos".
         return {

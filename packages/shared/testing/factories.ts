@@ -696,6 +696,12 @@ export function buildProfileFromFixture(
     push_notifications_enabled: true,
     created_at: FIXTURE_TIMESTAMP,
     updated_at: FIXTURE_TIMESTAMP,
+    // The season registration answers (RAPP-303): not given unless a test says so.
+    applicant_status: null,
+    supporting_entities: null,
+    season_number: null,
+    childcare_need: null,
+    specific_needs: null,
     ...derivedProfileFields(fixture),
     ...overrides,
   };

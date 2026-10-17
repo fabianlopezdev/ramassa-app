@@ -14,6 +14,7 @@
  */
 
 import { AdminAuthField } from '@/components/auth/admin-auth-field';
+import { ReferralAnswersList } from '@/components/referrals/referral-answers';
 import { Button } from '@/components/ui/button';
 import { safeAsync } from '@/lib/observability';
 import { supabase } from '@/lib/supabase';
@@ -69,6 +70,12 @@ export function NewParticipant({ referral = null }: { readonly referral?: Referr
               <p className="mt-1 text-start text-sm text-muted-foreground">
                 {t('referrals:completionHelp')}
               </p>
+              {/* What the entity answered fills her record when she is invited (RAPP-303). */}
+              {referral.answers === null ? null : (
+                <div className="mt-3">
+                  <ReferralAnswersList answers={referral.answers} />
+                </div>
+              )}
             </div>
           )}
           <InviteForm
@@ -77,6 +84,7 @@ export function NewParticipant({ referral = null }: { readonly referral?: Referr
             initialFirstName={referral?.referredFirstName ?? ''}
             initialLastName={referral?.referredLastName ?? ''}
             initialReferenceEntity={referral?.entityName ?? ''}
+            initialEmail={referral?.referredEmail ?? ''}
           />
         </>
       )}
@@ -95,12 +103,15 @@ function InviteForm({
   initialFirstName,
   initialLastName,
   initialReferenceEntity,
+  initialEmail,
 }: {
   readonly onInvited: (invite: CreatedParticipantInvite) => void;
   readonly referralId: string | null;
   readonly initialFirstName: string;
   readonly initialLastName: string;
   readonly initialReferenceEntity: string;
+  /** The address the entity gave: accepting the referral clears it there (RAPP-303). */
+  readonly initialEmail: string;
 }) {
   const { t } = useTranslation(['participants', 'auth', 'onboarding']);
   const [submitErrorMessage, setSubmitErrorMessage] = useState<string | undefined>(undefined);
@@ -112,7 +123,7 @@ function InviteForm({
   } = useForm<CreateParticipantInviteInput, unknown, CreateParticipantInvite>({
     resolver: zodResolver(createParticipantInviteSchema),
     defaultValues: {
-      email: '',
+      email: initialEmail,
       firstName: initialFirstName,
       lastName: initialLastName,
       referenceEntity: initialReferenceEntity,

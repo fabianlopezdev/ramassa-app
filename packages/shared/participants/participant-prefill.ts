@@ -26,6 +26,7 @@ import {
   NIE_PATTERN,
   SHOE_SIZES,
 } from '../schemas/onboarding';
+import { seasonAnswerFields } from '../schemas/season';
 import type { Database } from '../types/database';
 
 type Client = SupabaseClient<Database>;
@@ -50,6 +51,12 @@ export interface PrefillRow {
   readonly num_dependents: number;
   readonly clothing_size: string | null;
   readonly shoe_size: string | null;
+  // The season registration answers (RAPP-303); absent from older reads.
+  readonly applicant_status?: string | null;
+  readonly supporting_entities?: readonly string[] | null;
+  readonly season_number?: number | null;
+  readonly childcare_need?: string | null;
+  readonly specific_needs?: string | null;
 }
 
 /** An empty input is an absent answer, never an invalid one. */
@@ -84,6 +91,7 @@ export const profilePrefillSchema = z
         .refine((value) => SHOE_SIZES.includes(value))
         .optional(),
     ),
+    ...seasonAnswerFields.shape,
   })
   .superRefine((values, context) => {
     if (
@@ -129,6 +137,11 @@ const FIELD_QUESTION: Readonly<Record<ProfilePrefillField, IntakeQuestion>> = {
   numDependents: 'dependents',
   clothingSize: 'clothing_size',
   shoeSize: 'shoe_size',
+  applicantStatus: 'applicant_status',
+  supportingEntities: 'supporting_entities',
+  seasonNumber: 'season_number',
+  childcareNeed: 'childcare_need',
+  specificNeeds: 'specific_needs',
 };
 
 /** The form's starting values: answered questions show, the rest stay empty. */
@@ -159,6 +172,14 @@ export function prefillFromRow(row: PrefillRow, answered: AnsweredQuestions): Pr
     clothingSize: value('clothingSize', row.clothing_size) as
       ProfilePrefillInput['clothingSize'] | undefined,
     shoeSize: value('shoeSize', row.shoe_size),
+    applicantStatus: value('applicantStatus', row.applicant_status ?? null) as
+      ProfilePrefillInput['applicantStatus'] | undefined,
+    supportingEntities: (value('supportingEntities', row.supporting_entities ?? null) ??
+      []) as string[],
+    seasonNumber: value('seasonNumber', row.season_number ?? null),
+    childcareNeed: value('childcareNeed', row.childcare_need ?? null) as
+      ProfilePrefillInput['childcareNeed'] | undefined,
+    specificNeeds: value('specificNeeds', row.specific_needs ?? null),
   };
 }
 
@@ -181,6 +202,11 @@ const PAYLOAD_KEY: Readonly<Record<ProfilePrefillField, string>> = {
   numDependents: 'num_dependents',
   clothingSize: 'clothing_size',
   shoeSize: 'shoe_size',
+  applicantStatus: 'applicant_status',
+  supportingEntities: 'supporting_entities',
+  seasonNumber: 'season_number',
+  childcareNeed: 'childcare_need',
+  specificNeeds: 'specific_needs',
 };
 
 /** Fields that travel together: one without the other means nothing. */
@@ -191,7 +217,7 @@ const TRAVELS_WITH: Readonly<Partial<Record<ProfilePrefillField, ProfilePrefillF
   numDependents: 'hasDependents',
 };
 
-export type ProfilePrefillPayload = Record<string, string | number | boolean | null>;
+export type ProfilePrefillPayload = Record<string, string | number | boolean | string[] | null>;
 
 /** The `update_participant_profile` payload for the changed fields only. */
 export function buildProfilePrefillPayload(
@@ -208,7 +234,9 @@ export function buildProfilePrefillPayload(
   }
   const payload: ProfilePrefillPayload = {};
   for (const field of fields) {
-    let value = values[field] as string | number | boolean | undefined;
+    let value = values[field] as string | number | boolean | string[] | undefined;
+    // An emptied list is "not answered" (RAPP-303).
+    if (Array.isArray(value) && value.length === 0) value = undefined;
     if (field === 'documentNumber' && documentNumberToSend(values) === null) value = undefined;
     if (field === 'numDependents' && values.hasDependents !== true) value = 0;
     payload[PAYLOAD_KEY[field]] = value ?? null;
