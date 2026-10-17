@@ -30,6 +30,9 @@ env:
       notVisible: '.*applied: language ${LOCALE}.*'
     commands:
       - openLink: ${DEV_MENU_LINK}?language=${LOCALE}
+      - tapOn:
+          text: '^Open$'
+          optional: true
       - waitForAnimationToEnd:
           timeout: 3000
 - extendedWaitUntil:

@@ -62,6 +62,9 @@ env:
       notVisible: '.*signed in as ${PLAYER_EMAIL}.*'
     commands:
       - openLink: ${DEV_MENU_LINK}?account=${PLAYER_EMAIL}
+      - tapOn:
+          text: '^Open$'
+          optional: true
       - waitForAnimationToEnd:
           timeout: 3000
       - extendedWaitUntil:
@@ -534,6 +537,9 @@ env:
       notVisible: '.*signed in as ${PLAYER_WITHOUT_REQUEST_EMAIL}.*'
     commands:
       - openLink: ${DEV_MENU_LINK}?account=${PLAYER_WITHOUT_REQUEST_EMAIL}
+      - tapOn:
+          text: '^Open$'
+          optional: true
       - waitForAnimationToEnd:
           timeout: 3000
       - extendedWaitUntil:

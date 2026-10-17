@@ -13,7 +13,7 @@ export interface StorageKeyVault {
   set(key: string, value: string): void;
 }
 
-export interface ProtectedStorageConfiguration {
+interface ProtectedStorageConfiguration {
   id: string;
   encryptionKey: string;
   encryptionType: 'AES-256';

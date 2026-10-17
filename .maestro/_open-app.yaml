@@ -112,6 +112,9 @@ env:
       - waitForAnimationToEnd:
           timeout: 3000
       - openLink: ${DEV_MENU_LINK}
+      - tapOn:
+          text: '^Open$'
+          optional: true
       - waitForAnimationToEnd:
           timeout: 3000
 - extendedWaitUntil:
