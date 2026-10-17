@@ -141,5 +141,11 @@
   "reregistrationReviewIntro": "Hola de nou! Abans de signar la temporada, revisa les teves dades. Encara són correctes?",
   "reregistrationCorrect": "Sí, són correctes",
   "reregistrationEdit": "Corregeix les meves dades",
-  "reregistrationSaveFailed": "No s'han pogut desar les respostes. Torna-ho a provar."
+  "reregistrationSaveFailed": "No s'han pogut desar les respostes. Torna-ho a provar.",
+  "signingChooseLanguage": "{{name}}, tria el teu idioma",
+  "signingFor": "Signa: {{name}}",
+  "signingChangeLanguage": "Canvia l'idioma",
+  "signingThanks": "Gràcies, {{name}}. Has signat l'autorització.",
+  "signingGiveBack": "Torna la tauleta a l'equip.",
+  "signingSavedOnTablet": "La teva signatura està desada en aquesta tauleta i s'enviarà quan hi hagi connexió."
 }

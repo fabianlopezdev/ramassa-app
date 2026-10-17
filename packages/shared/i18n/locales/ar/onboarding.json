@@ -141,5 +141,11 @@
   "reregistrationReviewIntro": "أهلًا بعودتكِ! قبل التوقيع على الموسم، راجعي بياناتكِ. هل ما زالت صحيحة؟",
   "reregistrationCorrect": "نعم، صحيحة",
   "reregistrationEdit": "صحّحي بياناتي",
-  "reregistrationSaveFailed": "تعذّر حفظ الإجابات. حاولي مرة أخرى."
+  "reregistrationSaveFailed": "تعذّر حفظ الإجابات. حاولي مرة أخرى.",
+  "signingChooseLanguage": "{{name}}، اختاري لغتك",
+  "signingFor": "التوقيع: {{name}}",
+  "signingChangeLanguage": "غيّري اللغة",
+  "signingThanks": "شكرًا، {{name}}. لقد وقّعتِ التفويض.",
+  "signingGiveBack": "أعيدي الجهاز اللوحي إلى الفريق.",
+  "signingSavedOnTablet": "توقيعك محفوظ على هذا الجهاز اللوحي وسيُرسل عند توفر الاتصال."
 }

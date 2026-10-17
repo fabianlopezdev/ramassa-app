@@ -25,13 +25,12 @@ const migration = readFileSync(
  * rows, which Admin's "every permission" rule covers.
  */
 const migrationsDirectory = resolve(import.meta.dir, '../supabase/migrations');
+const allMigrations = readdirSync(migrationsDirectory)
+  .filter((name) => name.endsWith('.sql'))
+  .sort()
+  .map((name) => readFileSync(resolve(migrationsDirectory, name), 'utf8'));
 const newestCatalogMigration =
-  readdirSync(migrationsDirectory)
-    .filter((name) => name.endsWith('.sql'))
-    .sort()
-    .map((name) => readFileSync(resolve(migrationsDirectory, name), 'utf8'))
-    .filter((sql) => sql.includes('-- permission-catalog:start'))
-    .at(-1) ?? migration;
+  allMigrations.filter((sql) => sql.includes('-- permission-catalog:start')).at(-1) ?? migration;
 
 function block(name: string, sql = migration): string {
   const start = sql.indexOf(`-- ${name}:start`);
@@ -60,13 +59,26 @@ describe('permission catalog parity', () => {
   });
 
   test('the Coach and Staff product defaults match the code', () => {
-    const rows = [
-      ...block('permission-preset-defaults').matchAll(/\('(coach|staff)', '([a-z_.]+)'\)/g),
-    ];
+    // Later migrations add defaults in their own block (RAPP-305), so the rows
+    // of every migration's block count, compared in catalog order.
+    const rows = allMigrations.flatMap((sql) =>
+      sql.includes('-- permission-preset-defaults:start')
+        ? [
+            ...block('permission-preset-defaults', sql).matchAll(
+              /\('(coach|staff)', '([a-z_.]+)'\)/g,
+            ),
+          ]
+        : [],
+    );
+    const catalogOrder = PERMISSION_CATALOG.map(({ code }) => code) as string[];
+    const inCatalogOrder = (codes: readonly string[]) =>
+      [...new Set(codes)].sort((a, b) => catalogOrder.indexOf(a) - catalogOrder.indexOf(b));
     const fromSql = (key: string) =>
-      rows.filter(([, builtinKey]) => builtinKey === key).map(([, , code]) => code);
-    expect(fromSql('coach')).toEqual([...BUILTIN_PRESET_DEFAULTS.coach]);
-    expect(fromSql('staff')).toEqual([...BUILTIN_PRESET_DEFAULTS.staff]);
+      inCatalogOrder(
+        rows.filter(([, builtinKey]) => builtinKey === key).map(([, , code]) => code!),
+      );
+    expect(fromSql('coach')).toEqual(inCatalogOrder(BUILTIN_PRESET_DEFAULTS.coach));
+    expect(fromSql('staff')).toEqual(inCatalogOrder(BUILTIN_PRESET_DEFAULTS.staff));
   });
 
   test('Admin holds every permission, and Staff keeps sensitive data and team management out', () => {

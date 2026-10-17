@@ -141,5 +141,11 @@
   "reregistrationReviewIntro": "خوش برگشتید! پیش از امضای فصل، اطلاعاتتان را بررسی کنید. هنوز درست است؟",
   "reregistrationCorrect": "بله، درست است",
   "reregistrationEdit": "اصلاح اطلاعاتم",
-  "reregistrationSaveFailed": "پاسخ‌ها ذخیره نشد. دوباره تلاش کنید."
+  "reregistrationSaveFailed": "پاسخ‌ها ذخیره نشد. دوباره تلاش کنید.",
+  "signingChooseLanguage": "{{name}}، زبان خود را انتخاب کنید",
+  "signingFor": "امضا: {{name}}",
+  "signingChangeLanguage": "تغییر زبان",
+  "signingThanks": "متشکریم، {{name}}. شما مجوز را امضا کردید.",
+  "signingGiveBack": "لطفاً تبلت را به تیم برگردانید.",
+  "signingSavedOnTablet": "امضای شما روی این تبلت ذخیره شده و وقتی اتصال برقرار شود ارسال می‌شود."
 }

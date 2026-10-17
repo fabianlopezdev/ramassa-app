@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import {
   defaultAppLockSettings,
+  effectiveAppLockSettings,
   readAppLockSettings,
   shouldLockOnReturn,
   writeAppLockSettings,
@@ -87,5 +88,24 @@ describe('shouldLockOnReturn', () => {
       }),
     ).toBe(false);
     expect(shouldLockOnReturn({ settings, backgroundedAtMs: null, nowMs: 10_000_000 })).toBe(false);
+  });
+});
+
+describe('effectiveAppLockSettings', () => {
+  test('a coach who turned the lock off has it on while signings wait (RAPP-305)', () => {
+    const off = { enabled: false, timeoutSeconds: 900 } as const;
+    expect(effectiveAppLockSettings(off, 0)).toEqual(off);
+    expect(effectiveAppLockSettings(off, 2)).toEqual({ enabled: true, timeoutSeconds: 60 });
+  });
+
+  test('a shorter timeout she chose stays; a longer one drops to a minute', () => {
+    expect(effectiveAppLockSettings({ enabled: true, timeoutSeconds: 0 }, 1)).toEqual({
+      enabled: true,
+      timeoutSeconds: 0,
+    });
+    expect(effectiveAppLockSettings({ enabled: true, timeoutSeconds: 900 }, 1)).toEqual({
+      enabled: true,
+      timeoutSeconds: 60,
+    });
   });
 });

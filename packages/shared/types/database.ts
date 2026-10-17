@@ -274,6 +274,7 @@ export type Database = {
           signed_at: string;
           unable_to_draw: boolean;
           version_id: string | null;
+          witnessed_by: string | null;
         };
         Insert: {
           device?: string | null;
@@ -289,6 +290,7 @@ export type Database = {
           signed_at?: string;
           unable_to_draw?: boolean;
           version_id?: string | null;
+          witnessed_by?: string | null;
         };
         Update: {
           device?: string | null;
@@ -304,6 +306,7 @@ export type Database = {
           signed_at?: string;
           unable_to_draw?: boolean;
           version_id?: string | null;
+          witnessed_by?: string | null;
         };
         Relationships: [
           {
@@ -339,6 +342,13 @@ export type Database = {
             columns: ['version_id'];
             isOneToOne: false;
             referencedRelation: 'authorization_versions';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'authorization_signatures_witnessed_by_fkey';
+            columns: ['witnessed_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
             referencedColumns: ['id'];
           },
         ];
@@ -4273,6 +4283,90 @@ export type Database = {
           },
         ];
       };
+      walk_in_signings: {
+        Row: {
+          collected_by: string | null;
+          created_at: string;
+          first_name: string;
+          id: string;
+          last_name: string;
+          org_id: string;
+          payload: string | null;
+          resolved_at: string | null;
+          resolved_by: string | null;
+          resolved_profile_id: string | null;
+          signed_at: string;
+          status: string;
+          version_id: string;
+        };
+        Insert: {
+          collected_by?: string | null;
+          created_at?: string;
+          first_name: string;
+          id: string;
+          last_name: string;
+          org_id: string;
+          payload?: string | null;
+          resolved_at?: string | null;
+          resolved_by?: string | null;
+          resolved_profile_id?: string | null;
+          signed_at: string;
+          status?: string;
+          version_id: string;
+        };
+        Update: {
+          collected_by?: string | null;
+          created_at?: string;
+          first_name?: string;
+          id?: string;
+          last_name?: string;
+          org_id?: string;
+          payload?: string | null;
+          resolved_at?: string | null;
+          resolved_by?: string | null;
+          resolved_profile_id?: string | null;
+          signed_at?: string;
+          status?: string;
+          version_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'walk_in_signings_collected_by_fkey';
+            columns: ['collected_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'walk_in_signings_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'walk_in_signings_resolved_by_fkey';
+            columns: ['resolved_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'walk_in_signings_resolved_profile_id_fkey';
+            columns: ['resolved_profile_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'walk_in_signings_version_id_fkey';
+            columns: ['version_id'];
+            isOneToOne: false;
+            referencedRelation: 'authorization_versions';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
     };
     Views: {
       attendance_category_stats: {
@@ -4603,6 +4697,10 @@ export type Database = {
         };
         Returns: string;
       };
+      confirm_walk_in: {
+        Args: { p_email: string; p_id: string };
+        Returns: string;
+      };
       count_services_incompatible_with_category_schema: {
         Args: { p_category_id: string; p_metadata_schema: Json };
         Returns: number;
@@ -4688,6 +4786,15 @@ export type Database = {
         Returns: string;
       };
       current_app_role: { Args: never; Returns: string };
+      current_authorization_for_signing: {
+        Args: never;
+        Returns: {
+          content: Json;
+          season_name: string;
+          version_id: string;
+          version_number: number;
+        }[];
+      };
       current_collaborating_entity_id: { Args: never; Returns: string };
       current_org_id: { Args: never; Returns: string };
       decrypt_field: { Args: { ciphertext: string }; Returns: string };
@@ -4713,6 +4820,7 @@ export type Database = {
         Args: { p_preset_id: string };
         Returns: undefined;
       };
+      discard_walk_in: { Args: { p_id: string }; Returns: undefined };
       edit_own_forum_post: {
         Args: { p_content: string; p_post_id: string };
         Returns: undefined;
@@ -5387,6 +5495,17 @@ export type Database = {
           title: Json;
         }[];
       };
+      list_walk_in_signings: {
+        Args: never;
+        Returns: {
+          collected_by_name: string;
+          created_at: string;
+          first_name: string;
+          id: string;
+          last_name: string;
+          signed_at: string;
+        }[];
+      };
       mark_attendance: {
         Args: {
           attendance_marked_at: string;
@@ -5413,6 +5532,10 @@ export type Database = {
       };
       mark_conversation_read: {
         Args: { p_conversation_id: string; p_message_id: string };
+        Returns: undefined;
+      };
+      merge_walk_in: {
+        Args: { p_id: string; p_profile_id: string };
         Returns: undefined;
       };
       moderate_forum_target: {
@@ -5685,6 +5808,16 @@ export type Database = {
         };
         Returns: string;
       };
+      record_staff_device_signature: {
+        Args: {
+          p_payload: Json;
+          p_profile_id: string;
+          p_signature_id: string;
+          p_signed_at: string;
+          p_version_id: string;
+        };
+        Returns: string;
+      };
       record_stock_count: {
         Args: {
           p_id: string;
@@ -5951,6 +6084,17 @@ export type Database = {
           quantity: number;
           size: string;
         }[];
+      };
+      submit_walk_in_signing: {
+        Args: {
+          p_first_name: string;
+          p_id: string;
+          p_last_name: string;
+          p_payload: Json;
+          p_signed_at: string;
+          p_version_id: string;
+        };
+        Returns: string;
       };
       transition_deletion_request: {
         Args: {

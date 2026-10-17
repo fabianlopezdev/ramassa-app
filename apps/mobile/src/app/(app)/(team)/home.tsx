@@ -5,9 +5,9 @@
  */
 import { PageWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
-import { logout } from '@/lib/auth';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useUnreadMessages } from '@/lib/messaging';
+import { useGuardedLogout } from '@/lib/sign-out-guard';
 import { teamAreas } from '@/lib/team-shell';
 import { useAccountAccess } from '@/lib/use-account-access';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
@@ -49,6 +49,7 @@ function HomeButton({
 }
 
 export default function TeamHomeButtonsScreen() {
+  const signOut = useGuardedLogout();
   const { t } = useTranslation('nav');
   const { t: tAttendance } = useTranslation('attendance');
   const { t: tMessaging } = useTranslation('messaging');
@@ -124,7 +125,7 @@ export default function TeamHomeButtonsScreen() {
               testID="team-home-sign-out"
               accessibilityRole="button"
               accessibilityLabel={tProfile('signOutAction')}
-              onPress={() => void logout()}
+              onPress={signOut}
               haptic="tapLight"
               className="min-h-recommended items-center justify-center"
             >

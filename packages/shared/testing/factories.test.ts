@@ -36,6 +36,7 @@ import {
   buildServiceImage,
   buildServiceInterest,
   buildStockAlert,
+  buildWalkInSigning,
 } from './factories';
 import {
   INVITED_ACCOUNT_ID,
@@ -419,6 +420,13 @@ describe('the authorization factories (RAPP-304)', () => {
     expect(paper.signature).toBeNull();
     expect(buildAuthorizationConsentEvent().granted).toBe(true);
     expect(buildSeasonAnswers().season_id).toBe(buildSeason().id);
+  });
+
+  test('a walk-in waits for review on the current version, with no profile yet', () => {
+    const walkIn = buildWalkInSigning();
+    expect(walkIn.status).toBe('pending');
+    expect(walkIn.version_id).toBe(buildAuthorizationVersion().id);
+    expect(walkIn.resolved_profile_id).toBeNull();
   });
 });
 

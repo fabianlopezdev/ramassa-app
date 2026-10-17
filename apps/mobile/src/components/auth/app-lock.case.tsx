@@ -41,6 +41,10 @@ const t = (key: string) => key;
 mock.module('react-i18next', () => ({ useTranslation: () => ({ t }) }));
 const logout = mock(async () => undefined);
 mock.module('@/lib/auth', () => ({ logout }));
+// The sign-out asks first when signings wait (RAPP-305); here none wait.
+mock.module('@/lib/sign-out-guard', () => ({ useGuardedLogout: () => () => void logout() }));
+let pendingSignings = 0;
+mock.module('@/lib/tablet-signing', () => ({ usePendingSigningCount: () => pendingSignings }));
 
 const stored = new Map<string, string>();
 mock.module('@/lib/storage', () => ({
@@ -95,6 +99,7 @@ beforeEach(() => {
   authenticateAsync.mockClear();
   auth = { user: { id: 'staff-1' }, isLoading: false };
   area = 'team';
+  pendingSignings = 0;
 });
 afterAll(() => mock.restore());
 
@@ -183,4 +188,19 @@ test('sign-out stays available on the lock screen', async () => {
   fireEvent.click(view.getByRole('button', { name: 'signOutAction' }));
   expect(logout).toHaveBeenCalledTimes(1);
   view.unmount();
+});
+
+test('a coach who turned the lock off is locked while signings wait on the tablet (RAPP-305)', async () => {
+  stored.set('ramassa.app-lock.v1:staff-1', JSON.stringify({ enabled: false, timeoutSeconds: 0 }));
+  authenticates = false;
+  const off = render(app());
+  await settle();
+  expect(off.queryByText('appLockLockedTitle')).toBeNull();
+  off.unmount();
+
+  pendingSignings = 2;
+  const waiting = render(app());
+  await waitFor(() => expect(authenticateAsync).toHaveBeenCalled());
+  expect(waiting.queryByText('appLockLockedTitle')).not.toBeNull();
+  waiting.unmount();
 });

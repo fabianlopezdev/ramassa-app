@@ -1334,6 +1334,7 @@ export function buildAuthorizationSignature(
     unable_to_draw: false,
     paper_signed_on: '2026-09-15',
     recorded_by: null,
+    witnessed_by: null,
     ...overrides,
   };
 }
@@ -1351,6 +1352,33 @@ export function buildAuthorizationConsentEvent(
     granted: true,
     method: 'app',
     decided_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+export type WalkInSigningRow = Database['public']['Tables']['walk_in_signings']['Row'];
+
+/**
+ * A woman who signed on a staff tablet with no account yet (RAPP-305). She waits
+ * for review; her signing is encrypted in the database, so the factory holds no
+ * payload.
+ */
+export function buildWalkInSigning(overrides: Partial<WalkInSigningRow> = {}): WalkInSigningRow {
+  return {
+    id: '5eed0000-0000-4000-8043-000000000001',
+    org_id: SEED_ORGANIZATION_ID,
+    first_name: 'Salma',
+    last_name: 'Idrissi',
+    version_id: SEED_AUTHORIZATION_VERSION_ID,
+    payload: null,
+    signed_at: FIXTURE_TIMESTAMP,
+    // The seeded staff member who held the tablet.
+    collected_by: seedUserId(2),
+    status: 'pending',
+    resolved_profile_id: null,
+    resolved_by: null,
+    resolved_at: null,
+    created_at: FIXTURE_TIMESTAMP,
     ...overrides,
   };
 }
