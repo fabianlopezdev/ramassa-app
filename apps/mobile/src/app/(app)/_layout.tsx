@@ -332,7 +332,9 @@ export default function AppLayout() {
           Dismissing counts as "not now": the OS is never asked, so iOS's single
           allotted prompt stays unspent for a later, better moment. */}
       <Modal
-        visible={shouldShowRationale && !isCovered && !isSigning}
+        // Never over the authorization she must sign (RAPP-304), nor in signing
+        // mode on a staff tablet (RAPP-305): it waits, then asks.
+        visible={shouldShowRationale && !isCovered && !mustSign && !isSigning}
         transparent
         animationType="fade"
         onRequestClose={declineRationale}
