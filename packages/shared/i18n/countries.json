@@ -20,16 +20,6 @@
     }
   },
   {
-    "code": "DD",
-    "names": {
-      "ca": "Alemanya",
-      "es": "Alemania",
-      "en": "Germany",
-      "ar": "ألمانيا",
-      "fa": "آلمان"
-    }
-  },
-  {
     "code": "DE",
     "names": {
       "ca": "Alemanya",
@@ -250,16 +240,6 @@
     }
   },
   {
-    "code": "DY",
-    "names": {
-      "ca": "Benín",
-      "es": "Benín",
-      "en": "Benin",
-      "ar": "بنين",
-      "fa": "بنین"
-    }
-  },
-  {
     "code": "BM",
     "names": {
       "ca": "Bermudes",
@@ -341,16 +321,6 @@
   },
   {
     "code": "BF",
-    "names": {
-      "ca": "Burkina Faso",
-      "es": "Burkina Faso",
-      "en": "Burkina Faso",
-      "ar": "بوركينا فاسو",
-      "fa": "بورکینافاسو"
-    }
-  },
-  {
-    "code": "HV",
     "names": {
       "ca": "Burkina Faso",
       "es": "Burkina Faso",
@@ -470,16 +440,6 @@
     }
   },
   {
-    "code": "ZR",
-    "names": {
-      "ca": "Congo - Kinshasa",
-      "es": "República Democrática del Congo",
-      "en": "Congo - Kinshasa",
-      "ar": "الكونغو - كينشاسا",
-      "fa": "کنگو - کینشاسا"
-    }
-  },
-  {
     "code": "KP",
     "names": {
       "ca": "Corea del Nord",
@@ -547,16 +507,6 @@
       "en": "Cuba",
       "ar": "كوبا",
       "fa": "کوبا"
-    }
-  },
-  {
-    "code": "AN",
-    "names": {
-      "ca": "Curaçao",
-      "es": "Curazao",
-      "en": "Curaçao",
-      "ar": "كوراساو",
-      "fa": "کوراسائو"
     }
   },
   {
@@ -751,16 +701,6 @@
   },
   {
     "code": "FR",
-    "names": {
-      "ca": "França",
-      "es": "Francia",
-      "en": "France",
-      "ar": "فرنسا",
-      "fa": "فرانسه"
-    }
-  },
-  {
-    "code": "FX",
     "names": {
       "ca": "França",
       "es": "Francia",
@@ -977,16 +917,6 @@
       "en": "Hungary",
       "ar": "هنغاريا",
       "fa": "مجارستان"
-    }
-  },
-  {
-    "code": "YD",
-    "names": {
-      "ca": "Iemen",
-      "es": "Yemen",
-      "en": "Yemen",
-      "ar": "اليمن",
-      "fa": "یمن"
     }
   },
   {
@@ -1670,16 +1600,6 @@
     }
   },
   {
-    "code": "BU",
-    "names": {
-      "ca": "Myanmar (Birmània)",
-      "es": "Myanmar (Birmania)",
-      "en": "Myanmar (Burma)",
-      "ar": "ميانمار (بورما)",
-      "fa": "میانمار (برمه)"
-    }
-  },
-  {
     "code": "MM",
     "names": {
       "ca": "Myanmar (Birmània)",
@@ -1930,16 +1850,6 @@
     }
   },
   {
-    "code": "UK",
-    "names": {
-      "ca": "Regne Unit",
-      "es": "Reino Unido",
-      "en": "United Kingdom",
-      "ar": "المملكة المتحدة",
-      "fa": "بریتانیا"
-    }
-  },
-  {
     "code": "CF",
     "names": {
       "ca": "República Centreafricana",
@@ -1981,16 +1891,6 @@
   },
   {
     "code": "RU",
-    "names": {
-      "ca": "Rússia",
-      "es": "Rusia",
-      "en": "Russia",
-      "ar": "روسيا",
-      "fa": "روسیه"
-    }
-  },
-  {
-    "code": "SU",
     "names": {
       "ca": "Rússia",
       "es": "Rusia",
@@ -2130,27 +2030,7 @@
     }
   },
   {
-    "code": "CS",
-    "names": {
-      "ca": "Sèrbia",
-      "es": "Serbia",
-      "en": "Serbia",
-      "ar": "صربيا",
-      "fa": "صربستان"
-    }
-  },
-  {
     "code": "RS",
-    "names": {
-      "ca": "Sèrbia",
-      "es": "Serbia",
-      "en": "Serbia",
-      "ar": "صربيا",
-      "fa": "صربستان"
-    }
-  },
-  {
-    "code": "YU",
     "names": {
       "ca": "Sèrbia",
       "es": "Serbia",
@@ -2380,16 +2260,6 @@
     }
   },
   {
-    "code": "TP",
-    "names": {
-      "ca": "Timor-Leste",
-      "es": "Timor-Leste",
-      "en": "Timor-Leste",
-      "ar": "تيمور - ليشتي",
-      "fa": "تیمور-لسته"
-    }
-  },
-  {
     "code": "TG",
     "names": {
       "ca": "Togo",
@@ -2530,16 +2400,6 @@
     }
   },
   {
-    "code": "NH",
-    "names": {
-      "ca": "Vanuatu",
-      "es": "Vanuatu",
-      "en": "Vanuatu",
-      "ar": "فانواتو",
-      "fa": "وانواتو"
-    }
-  },
-  {
     "code": "VU",
     "names": {
       "ca": "Vanuatu",
@@ -2557,16 +2417,6 @@
       "en": "Venezuela",
       "ar": "فنزويلا",
       "fa": "ونزوئلا"
-    }
-  },
-  {
-    "code": "VD",
-    "names": {
-      "ca": "Vietnam",
-      "es": "Vietnam",
-      "en": "Vietnam",
-      "ar": "فيتنام",
-      "fa": "ویتنام"
     }
   },
   {
@@ -2627,16 +2477,6 @@
       "en": "Zambia",
       "ar": "زامبيا",
       "fa": "زامبیا"
-    }
-  },
-  {
-    "code": "RH",
-    "names": {
-      "ca": "Zimbàbue",
-      "es": "Zimbabue",
-      "en": "Zimbabwe",
-      "ar": "زيمبابوي",
-      "fa": "زیمبابوه"
     }
   },
   {
