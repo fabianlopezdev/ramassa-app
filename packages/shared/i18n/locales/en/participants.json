@@ -495,7 +495,7 @@
   "reminderNotificationTitle": "Register for the {{season}} season",
   "reminderNotificationBody": "Open the app to check your details and sign the authorization for the {{season}} season.",
   "priorSeasonsLabel": "Seasons before the app",
-  "priorSeasonsSave": "Save",
+  "priorSeasonsSave": "Save the seasons",
   "priorSeasonsSaved": "Saved.",
   "priorSeasonsFailed": "It could not be saved.",
   "seasonNumberValue": "Season number {{number}}",

@@ -495,7 +495,7 @@
   "reminderNotificationTitle": "Inscriu-te a la temporada {{season}}",
   "reminderNotificationBody": "Obre l'app per revisar les teves dades i signar l'autorització de la temporada {{season}}.",
   "priorSeasonsLabel": "Temporades abans de l'app",
-  "priorSeasonsSave": "Desa",
+  "priorSeasonsSave": "Desa les temporades",
   "priorSeasonsSaved": "Desat.",
   "priorSeasonsFailed": "No s'ha pogut desar.",
   "seasonNumberValue": "Temporada número {{number}}",
