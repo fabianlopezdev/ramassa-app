@@ -30,11 +30,16 @@ export const ONBOARDING_STEPS = [
   'background',
   'documentation',
   'logistics',
+  // The registration questions (RAPP-306).
+  'season',
   // The summary of everything before the terms (RAPP-300).
   'summary',
   'terms',
 ] as const;
 export type OnboardingStepName = (typeof ONBOARDING_STEPS)[number];
+
+/** A step the draft can resume at: a built-in one, or a staff screen as `custom:<id>` (RAPP-307). */
+export type OnboardingDraftStep = OnboardingStepName | `custom:${string}`;
 
 /**
  * Partial, permissive shapes on purpose: a draft holds whatever the player has
@@ -43,19 +48,24 @@ export type OnboardingStepName = (typeof ONBOARDING_STEPS)[number];
  * this schema only guards against structural drift from older app versions.
  */
 const draftSchema = z.object({
-  currentStep: z.enum(ONBOARDING_STEPS),
+  currentStep: z.union([z.enum(ONBOARDING_STEPS), z.templateLiteral(['custom:', z.string()])]),
   identity: z.record(z.string(), z.unknown()).optional(),
   documentation: z.record(z.string(), z.unknown()).optional(),
   logistics: z.record(z.string(), z.unknown()).optional(),
+  season: z.record(z.string(), z.unknown()).optional(),
   terms: z.record(z.string(), z.unknown()).optional(),
+  // Her answers to the staff questions, by question id (RAPP-307).
+  custom: z.record(z.string(), z.union([z.string(), z.array(z.string())])).optional(),
 });
 
 export interface OnboardingDraft {
-  currentStep: OnboardingStepName;
+  currentStep: OnboardingDraftStep;
   identity?: Record<string, unknown>;
   documentation?: Record<string, unknown>;
   logistics?: Record<string, unknown>;
+  season?: Record<string, unknown>;
   terms?: Record<string, unknown>;
+  custom?: Record<string, string | readonly string[]>;
 }
 
 export interface OnboardingDraftStore {

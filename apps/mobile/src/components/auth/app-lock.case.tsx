@@ -41,6 +41,10 @@ const t = (key: string) => key;
 mock.module('react-i18next', () => ({ useTranslation: () => ({ t }) }));
 const logout = mock(async () => undefined);
 mock.module('@/lib/auth', () => ({ logout }));
+// The sign-out asks first when signings wait (RAPP-305); here none wait.
+mock.module('@/lib/sign-out-guard', () => ({ useGuardedLogout: () => () => void logout() }));
+let pendingSignings = 0;
+mock.module('@/lib/tablet-signing', () => ({ usePendingSigningCount: () => pendingSignings }));
 
 const stored = new Map<string, string>();
 mock.module('@/lib/storage', () => ({
@@ -95,20 +99,23 @@ beforeEach(() => {
   authenticateAsync.mockClear();
   auth = { user: { id: 'staff-1' }, isLoading: false };
   area = 'team';
+  pendingSignings = 0;
 });
 afterAll(() => mock.restore());
 
 test('a team member at a cold start sees the lock, which asks for Face ID and opens', async () => {
   authenticates = false;
   const view = render(app());
-  await waitFor(() => expect(authenticateAsync).toHaveBeenCalledTimes(1));
+  // The device check resolves after a few promise turns; the suite runs beside
+  // lint and typecheck in the commit hook, so the wait allows for a busy machine.
+  await waitFor(() => expect(authenticateAsync).toHaveBeenCalledTimes(1), { timeout: 5000 });
   expect(view.queryByText('appLockLockedTitle')).not.toBeNull();
 
   authenticates = true;
   fireEvent.click(view.getByRole('button', { name: 'appLockUnlockAction' }));
   await waitFor(() => expect(view.queryByText('appLockLockedTitle')).toBeNull());
   view.unmount();
-});
+}, 15_000);
 
 test('leaving the player preview mounts it again without a lock (RAPP-371)', async () => {
   markPreviewHandover();
@@ -183,4 +190,19 @@ test('sign-out stays available on the lock screen', async () => {
   fireEvent.click(view.getByRole('button', { name: 'signOutAction' }));
   expect(logout).toHaveBeenCalledTimes(1);
   view.unmount();
+});
+
+test('a coach who turned the lock off is locked while signings wait on the tablet (RAPP-305)', async () => {
+  stored.set('ramassa.app-lock.v1:staff-1', JSON.stringify({ enabled: false, timeoutSeconds: 0 }));
+  authenticates = false;
+  const off = render(app());
+  await settle();
+  expect(off.queryByText('appLockLockedTitle')).toBeNull();
+  off.unmount();
+
+  pendingSignings = 2;
+  const waiting = render(app());
+  await waitFor(() => expect(authenticateAsync).toHaveBeenCalled());
+  expect(waiting.queryByText('appLockLockedTitle')).not.toBeNull();
+  waiting.unmount();
 });

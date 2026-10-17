@@ -3,7 +3,7 @@ import {
   AnnouncementFeedSkeleton,
 } from '@/components/announcements/feed-states';
 import { onboardingDraftStore } from '@/lib/onboarding';
-import { seedDraftFromProfile, WIZARD_SCREEN_DRAFT_STEP } from '@/lib/onboarding-intake';
+import { customWizardPlan, seedDraftFromProfile, wizardDraftStep } from '@/lib/onboarding-intake';
 import { WizardIntakeProvider, type WizardIntake } from '@/lib/onboarding-intake-context';
 import { supabase } from '@/lib/supabase';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
@@ -13,10 +13,45 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@ramassa/shared/auth';
 import { toAppError } from '@ramassa/shared/errors';
-import { fetchMyAnsweredQuestions, nextWizardScreen } from '@ramassa/shared/intake';
+import {
+  fetchDocumentStepExplanation,
+  fetchMyAnsweredQuestions,
+  fetchMyQuestionsToAsk,
+  nextWizardScreen,
+  questionsNotAsked,
+} from '@ramassa/shared/intake';
+import {
+  EMPTY_INTAKE_CATALOG,
+  fetchIntakeCatalog,
+  fetchMyCustomAnswers,
+  hiddenBuiltinQuestions,
+  wizardScreens,
+  type CustomAnswers,
+  type IntakeCatalog,
+} from '@ramassa/shared/intake-builder';
 import { fetchOwnProfile } from '@ramassa/shared/profile';
 
 const hiddenHeaderScreenOptions = { headerShown: false } as const;
+
+/**
+ * The staff questions and her answers to them (RAPP-307). They never block the
+ * wizard: when either fails to load, it runs with the built-in questions only,
+ * as it did before staff could add their own.
+ */
+async function loadStaffQuestions(): Promise<{
+  readonly catalog: IntakeCatalog;
+  readonly answers: CustomAnswers;
+}> {
+  try {
+    const [catalog, answers] = await Promise.all([
+      fetchIntakeCatalog(supabase),
+      fetchMyCustomAnswers(supabase),
+    ]);
+    return { catalog, answers };
+  } catch {
+    return { catalog: EMPTY_INTAKE_CATALOG, answers: {} };
+  }
+}
 
 /**
  * Seeds the draft from what staff or an entity already answered (RAPP-300),
@@ -25,9 +60,9 @@ const hiddenHeaderScreenOptions = { headerShown: false } as const;
  */
 function seedWizardDraft(intake: WizardIntake): void {
   if (onboardingDraftStore.loadDraft() !== null || intake.profile === null) return;
-  const firstScreen = nextWizardScreen('start', intake.answered);
+  const firstScreen = nextWizardScreen('start', intake.notAsked, intake.customPlan);
   onboardingDraftStore.saveDraft({
-    currentStep: WIZARD_SCREEN_DRAFT_STEP[firstScreen],
+    currentStep: wizardDraftStep(firstScreen),
     ...seedDraftFromProfile(intake.profile, intake.answered),
   });
 }
@@ -50,11 +85,28 @@ export default function OnboardingLayout() {
   const intake = useQuery({
     queryKey: ['onboarding-intake', user?.id ?? 'signed-out'],
     queryFn: async ({ signal }): Promise<WizardIntake> => {
-      const [profile, answered] = await Promise.all([
+      const [profile, answered, toAsk, documentExplanation, staffQuestions] = await Promise.all([
         fetchOwnProfile(supabase, { signal }),
         fetchMyAnsweredQuestions(supabase, { signal }),
+        fetchMyQuestionsToAsk(supabase, { signal }),
+        fetchDocumentStepExplanation(supabase, { signal }),
+        loadStaffQuestions(),
       ]);
-      return { profile, answered };
+      const { catalog, answers } = staffQuestions;
+      const hidden = hiddenBuiltinQuestions(catalog);
+      const customScreens = wizardScreens(catalog);
+      return {
+        profile,
+        answered,
+        // A built-in question staff removed is never asked, so it never keeps a screen.
+        notAsked: new Set([...questionsNotAsked(toAsk), ...hidden]),
+        documentExplanation,
+        catalog,
+        customAnswers: answers,
+        customScreens,
+        customPlan: customWizardPlan(customScreens, answers),
+        hidden,
+      };
     },
     enabled: user !== null,
     // Staff may change her record between two openings: always read it fresh.

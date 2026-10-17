@@ -21,6 +21,7 @@ import { Link, useNavigate } from '@tanstack/react-router';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '@ramassa/shared/auth';
 import {
   PARTICIPANT_PAGE_SIZE,
   type ParticipantFilterOptions,
@@ -37,6 +38,7 @@ export interface ParticipantsTableProps {
 }
 
 export function ParticipantsTable({ page, filterOptions, search }: ParticipantsTableProps) {
+  const { permissions } = useAuth();
   const { t, i18n } = useTranslation(['participants', 'common', 'referrals']);
   const navigate = useNavigate({ from: '/participants/' });
   const locale = i18n.resolvedLanguage ?? 'ca';
@@ -138,6 +140,16 @@ export function ParticipantsTable({ page, filterOptions, search }: ParticipantsT
           </Button>
           <Button asChild size="lg" variant="outline">
             <Link to="/participants/invites">{t('invitesAction')}</Link>
+          </Button>
+          {/* Walk-ins who signed on a staff tablet (RAPP-305). */}
+          {permissions.has('participants.invite') ? (
+            <Button asChild size="lg" variant="outline">
+              <Link to="/participants/walk-ins">{t('walkIns.action')}</Link>
+            </Button>
+          ) : null}
+          {/* Who has re-registered for the current season (RAPP-306). */}
+          <Button asChild size="lg" variant="outline">
+            <Link to="/participants/season">{t('seasonViewAction')}</Link>
           </Button>
           <Button asChild size="lg">
             <Link to="/participants/new">{t('newAction')}</Link>

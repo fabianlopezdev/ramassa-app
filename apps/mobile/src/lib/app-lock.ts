@@ -76,3 +76,21 @@ export function shouldLockOnReturn(input: {
   if (!input.settings.enabled || input.backgroundedAtMs === null) return false;
   return input.nowMs - input.backgroundedAtMs >= input.settings.timeoutSeconds * 1000;
 }
+
+/**
+ * While signed authorizations wait on this tablet to sync (RAPP-305), they hold
+ * health data and signatures. The lock is then on whatever the setting says,
+ * and locks after a minute at most.
+ */
+export function effectiveAppLockSettings(
+  settings: AppLockSettings,
+  pendingSignings: number,
+): AppLockSettings {
+  if (pendingSignings === 0) return settings;
+  return {
+    enabled: true,
+    timeoutSeconds: settings.enabled
+      ? (Math.min(settings.timeoutSeconds, DEFAULT_TIMEOUT) as AppLockTimeout)
+      : DEFAULT_TIMEOUT,
+  };
+}

@@ -27,9 +27,28 @@ import type { ParticipantDetailRow } from '@ramassa/shared/participants';
 
 export interface ParticipantProfileFieldsProps {
   readonly participant: ParticipantDetailRow;
+  /** participants.view_sensitive: shows applicant status and specific needs (RAPP-303). */
+  readonly canSeeSensitive?: boolean;
 }
 
-export function ParticipantProfileFields({ participant }: ParticipantProfileFieldsProps) {
+const APPLICANT_STATUS_KEYS = {
+  asylum_seeker: 'onboarding:applicantStatusAsylumSeeker',
+  refugee: 'onboarding:applicantStatusRefugee',
+  migrant: 'onboarding:applicantStatusMigrant',
+  other: 'onboarding:applicantStatusOther',
+  prefer_not_to_say: 'onboarding:applicantStatusPreferNotToSay',
+} as const;
+
+const CHILDCARE_KEYS = {
+  yes: 'onboarding:childcareNeedYes',
+  no: 'onboarding:childcareNeedNo',
+  maybe: 'onboarding:childcareNeedMaybe',
+} as const;
+
+export function ParticipantProfileFields({
+  participant,
+  canSeeSensitive = false,
+}: ParticipantProfileFieldsProps) {
   const { t, i18n } = useTranslation(['participants', 'onboarding', 'profile', 'common']);
   const locale = i18n.resolvedLanguage ?? 'ca';
 
@@ -97,6 +116,46 @@ export function ParticipantProfileFields({ participant }: ParticipantProfileFiel
         value={shown(participant.clothing_size)}
       />
       <DetailField label={t('onboarding:shoeSizeLabel')} value={shown(participant.shoe_size)} />
+
+      {/* The season registration answers (RAPP-303). The two sensitive ones
+          show only to staff who may read them: for anyone else "not provided"
+          would be a false statement. */}
+      {canSeeSensitive ? (
+        <DetailField
+          label={t('onboarding:applicantStatusLabel')}
+          value={
+            participant.applicant_status == null
+              ? t('profile:notProvided')
+              : t(APPLICANT_STATUS_KEYS[participant.applicant_status])
+          }
+        />
+      ) : null}
+      <DetailField
+        label={t('onboarding:supportingEntitiesLabel')}
+        value={shown(participant.supporting_entities?.join(', '))}
+      />
+      <DetailField
+        label={t('onboarding:seasonNumberLabel')}
+        value={
+          participant.season_number == null
+            ? t('profile:notProvided')
+            : t(`onboarding:seasonNumber${participant.season_number}`)
+        }
+      />
+      <DetailField
+        label={t('onboarding:childcareNeedLabel')}
+        value={
+          participant.childcare_need == null
+            ? t('profile:notProvided')
+            : t(CHILDCARE_KEYS[participant.childcare_need])
+        }
+      />
+      {canSeeSensitive ? (
+        <DetailField
+          label={t('onboarding:specificNeedsLabel')}
+          value={shown(participant.specific_needs)}
+        />
+      ) : null}
       <DetailField
         label={t('profile:fieldMediaConsent')}
         // The staff-voiced wording, not the participant's own. Her profile says

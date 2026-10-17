@@ -27,7 +27,8 @@ function sqlLiteral(value: string): string {
 /**
  * The product path since RAPP-224: staff invite her from the referral, and the
  * referral links to her when the onboarding wizard creates her profile. The
- * profile insert stands in for the wizard she would complete in the app.
+ * profile insert stands in for the wizard she would complete in the app. Since
+ * the invitation creates her profile (RAPP-300), the insert completes it.
  */
 async function inviteFromReferralAndOnboard(page: Page): Promise<void> {
   await page.getByTestId(`complete-referral-${referralId}`).click();
@@ -46,6 +47,7 @@ async function inviteFromReferralAndOnboard(page: Page): Promise<void> {
     insert into public.profiles (id, org_id, role, first_name, last_name, terms_accepted_at)
     values (${sqlLiteral(accountId)}, '5eed0000-0000-4000-8000-000000000000', 'player',
             ${sqlLiteral(FIRST_NAME)}, ${sqlLiteral(LAST_NAME)}, now())
+    on conflict (id) do update set role = 'player', terms_accepted_at = now()
   `);
 }
 
@@ -99,6 +101,16 @@ test.describe.serial('entity referral product flow', () => {
     await page.locator('#referral-email').fill(EMAIL);
     await page.locator('#referral-documentation').selectOption('in_progress');
     await page.locator('#referral-notes').fill(NOTES);
+    // Without her consent the form refuses (RAPP-303).
+    await page.getByTestId('referral-submit').click();
+    await expect(page.getByText(/agreed to share her data|ha acceptat compartir/i)).toBeVisible();
+    // The season registration questions (RAPP-303).
+    await page.locator('#referral-date-of-birth').fill('1997-06-12');
+    await page.locator('#referral-applicant-status').selectOption('refugee');
+    await page.locator('#referral-season-number').selectOption('3');
+    await page.locator('#referral-childcare').selectOption('maybe');
+    await page.locator('#referral-specific-needs').fill('Necessita pauses.');
+    await page.locator('#referral-consent').check();
     await page.getByTestId('referral-submit').click();
     await expect(page).toHaveURL(/\/portal\/referrals\/[0-9a-f-]+$/, { timeout: 30_000 });
 
@@ -116,6 +128,16 @@ test.describe.serial('entity referral product flow', () => {
            from public.entity_referrals where id = ${sqlLiteral(referralId)}`,
       ),
     ).toBe(`${FIRST_NAME}|${LAST_NAME}|${EMAIL}|in_progress|${NOTES}|pending`);
+    expect(
+      queryDatabase(
+        `select (public.decrypt_field(intake_answers)::jsonb ->> 'applicant_status') || '|' ||
+                (public.decrypt_field(intake_answers)::jsonb ->> 'season_number') || '|' ||
+                (consent_confirmed_at is not null)::text
+           from public.entity_referrals where id = ${sqlLiteral(referralId)}`,
+      ),
+    ).toBe('refugee|3|true');
+    // The sender sees what it sent while the referral is pending.
+    await expect(page.getByTestId('referral-answers')).toContainText('Necessita pauses.');
     await expect(page.getByText(NOTES)).toBeVisible();
     await expect(page.locator('script').filter({ hasText: NOTES })).toHaveCount(0);
     // Pending means no account yet, so the page says when updates open

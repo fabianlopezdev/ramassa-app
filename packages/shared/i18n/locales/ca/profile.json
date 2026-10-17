@@ -42,5 +42,7 @@
   "fieldCity": "Municipi",
   "fieldPostalCode": "Codi postal",
   "fieldMediaConsent": "Fotos i històries",
-  "saveBlocked": "Falten dades. Revisa els camps marcats a dalt."
+  "saveBlocked": "Falten dades. Revisa els camps marcats a dalt.",
+  "consentsTitle": "Les meves autoritzacions",
+  "consentsIntro": "Pots canviar-les quan vulguis. Les obligatòries formen part de l'autorització que vas signar."
 }

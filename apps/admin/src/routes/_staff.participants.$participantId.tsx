@@ -26,7 +26,17 @@ import {
   fetchAttendanceHistory,
   fetchAttendanceParticipantStats,
 } from '@ramassa/shared/attendance';
+import {
+  fetchParticipantAuthorizations,
+  fetchParticipantConsents,
+} from '@ramassa/shared/authorization';
 import { fetchEquipmentDeliveries, fetchHandoverItemTypes } from '@ramassa/shared/equipment';
+import { fetchParticipantQuestionStates } from '@ramassa/shared/intake';
+import {
+  EMPTY_INTAKE_CATALOG,
+  fetchIntakeCatalog,
+  fetchParticipantCustomAnswers,
+} from '@ramassa/shared/intake-builder';
 import {
   fetchParticipantActivity,
   fetchParticipantAnsweredQuestions,
@@ -34,6 +44,7 @@ import {
   fetchParticipantNotes,
 } from '@ramassa/shared/participants';
 import { fetchDeletionRequests } from '@ramassa/shared/rgpd';
+import { fetchParticipantSeasonAnswers } from '@ramassa/shared/seasons';
 
 export const Route = createFileRoute('/_staff/participants/$participantId')({
   ssr: false,
@@ -53,6 +64,12 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
         attendanceHistory: [],
         openDeletionRequestReason: undefined,
         answeredQuestions: [],
+        questionStates: {},
+        authorizations: [],
+        consents: [],
+        seasonAnswers: [],
+        intakeCatalog: EMPTY_INTAKE_CATALOG,
+        customAnswers: [],
       };
     }
     const [
@@ -64,6 +81,12 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
       attendanceStats,
       attendanceHistory,
       answered,
+      questionStates,
+      authorizations,
+      consents,
+      seasonAnswers,
+      intakeCatalog,
+      customAnswers,
     ] = await Promise.all([
       fetchParticipantNotes(supabase, params.participantId),
       fetchParticipantActivity(supabase, params.participantId),
@@ -79,6 +102,19 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
       participant.terms_accepted_at === null
         ? fetchParticipantAnsweredQuestions(supabase, params.participantId)
         : Promise.resolve(new Set<never>()),
+      // What her wizard asks (RAPP-301): set only before she joins.
+      participant.terms_accepted_at === null
+        ? fetchParticipantQuestionStates(supabase, params.participantId)
+        : Promise.resolve({}),
+      // Her season authorizations and consents (RAPP-304). They need
+      // participants.view_personal; without it the panel simply shows none.
+      fetchParticipantAuthorizations(supabase, params.participantId).catch(() => []),
+      fetchParticipantConsents(supabase, params.participantId).catch(() => []),
+      // Her answers by season (RAPP-306).
+      fetchParticipantSeasonAnswers(supabase, params.participantId).catch(() => []),
+      // The questions staff added and her answers (RAPP-307); the page works without them.
+      fetchIntakeCatalog(supabase).catch(() => EMPTY_INTAKE_CATALOG),
+      fetchParticipantCustomAnswers(supabase, params.participantId).catch(() => []),
     ]);
     // Filtered here rather than asked for by participant: the queue read is one
     // round trip either way, and the same call feeds the staff-wide queue, so
@@ -96,6 +132,12 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
       openDeletionRequestReason: hers === undefined ? undefined : hers.reason,
       // An array, not the Set: loader data stays plain and serializable.
       answeredQuestions: [...answered],
+      questionStates,
+      authorizations,
+      consents,
+      seasonAnswers,
+      intakeCatalog,
+      customAnswers,
     };
   },
   component: ParticipantDetailPage,
@@ -112,6 +154,12 @@ function ParticipantDetailPage() {
     attendanceHistory,
     openDeletionRequestReason,
     answeredQuestions,
+    questionStates,
+    authorizations,
+    consents,
+    seasonAnswers,
+    intakeCatalog,
+    customAnswers,
   } = Route.useLoaderData();
 
   if (participant === null) {
@@ -128,6 +176,12 @@ function ParticipantDetailPage() {
       attendanceHistory={attendanceHistory}
       openDeletionRequestReason={openDeletionRequestReason}
       answeredQuestions={answeredQuestions}
+      questionStates={questionStates}
+      authorizations={authorizations}
+      consents={consents}
+      seasonAnswers={seasonAnswers}
+      intakeCatalog={intakeCatalog}
+      customAnswers={customAnswers}
     />
   );
 }

@@ -24,6 +24,7 @@ name: smoke-onboarding
 # Catalan pass needs no scrolling to reach its first control and runs on both
 # platforms. The Arabic layout direction is covered by `smoke-i18n`.
 env:
+  CUSTOM_SCREEN_TITLE: Com arribes als entrenaments
   DEV_CLIENT_URL: ramassa://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081
   DEV_MENU_LABEL: Developer menu
   DEV_MENU_LINK: ramassa://dev-menu
@@ -512,7 +513,70 @@ env:
       id: 'wizard-step-5'
     timeout: 20000
 
-# ── Step 5: summary ───────────────────────────────────────────────────────
+# ── Step 5: the staff screen seeded after logistics (RAPP-307) ─────────────
+- assertVisible:
+    text: '.*${CUSTOM_SCREEN_TITLE}.*'
+- tapOn:
+    id: 'custom-question-5eed0000-0000-4000-8045-000000000001-yes'
+- waitForAnimationToEnd:
+    timeout: 1500
+- repeat:
+    times: 8
+    while:
+      notVisible:
+        id: 'wizard-step-6'
+    commands:
+      - tapOn:
+          text: '^${CONTINUE}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 2000
+      - swipe:
+          start: 50%, 45%
+          end: 50%, 20%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 1200
+- extendedWaitUntil:
+    visible:
+      id: 'wizard-step-6'
+    timeout: 20000
+
+# ── The registration questions (RAPP-306): all optional, left empty ──────────
+- repeat:
+    times: 12
+    while:
+      notVisible: '^${CONTINUE}$'
+    commands:
+      - swipe:
+          start: 50%, 45%
+          end: 50%, 15%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 1500
+- repeat:
+    times: 8
+    while:
+      notVisible:
+        id: 'wizard-step-7'
+    commands:
+      - tapOn:
+          text: '^${CONTINUE}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 2000
+      - swipe:
+          start: 50%, 45%
+          end: 50%, 20%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 1200
+- extendedWaitUntil:
+    visible:
+      id: 'wizard-step-7'
+    timeout: 20000
+
+# ── Step 7: summary ───────────────────────────────────────────────────────
 # Everything she is about to save, before the terms (RAPP-300). The name she
 # typed on step 1 must be on it: that proves the summary reads the draft.
 - assertVisible: '.*Nadia.*'
@@ -531,7 +595,7 @@ env:
     times: 8
     while:
       notVisible:
-        id: 'wizard-step-6'
+        id: 'wizard-step-8'
     commands:
       - tapOn:
           text: '^${SUMMARY_CONFIRM}$'
@@ -540,10 +604,10 @@ env:
           timeout: 2000
 - extendedWaitUntil:
     visible:
-      id: 'wizard-step-6'
+      id: 'wizard-step-8'
     timeout: 20000
 
-# ── Step 6: terms ─────────────────────────────────────────────────────────────────
+# ── Step 8: terms ─────────────────────────────────────────────────────────────────
 # Consent is REQUIRED and the media consent beside it is not: accepting only
 # the terms is the minimum lawful path, so it is the one driven here. Selected
 # state again, because this chip looks identical pressed or not to a matcher
@@ -588,6 +652,20 @@ env:
           duration: 600
       - waitForAnimationToEnd:
           timeout: 1500
+# Finishing makes her a player, and a player signs the season authorization
+# before the tabs (RAPP-304).
+- repeat:
+    times: 8
+    while:
+      notVisible:
+        id: 'authorization-screen'
+    commands:
+      - tapOn:
+          text: '^${FINISH}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- runFlow: _sign-authorization.yaml
 - repeat:
     times: 8
     while:
@@ -614,6 +692,15 @@ env:
 - extendedWaitUntil:
     visible: '.*${HOME_FEED_TITLE}.*'
     timeout: 120000
+# The notification prompt waits until she has signed (RAPP-304), so it can
+# open over the home screen just now. Decline it before checking the tabs.
+- waitForAnimationToEnd:
+    timeout: 3000
+- tapOn:
+    text: '^${PUSH_DECLINE}$'
+    optional: true
+- waitForAnimationToEnd:
+    timeout: 2000
 - assertVisible:
     text: '^${TAB_HOME}$'
 - assertVisible:
@@ -624,4 +711,4 @@ env:
 # so run on its own it would pass against a wizard that simply had not rendered
 # yet.
 - assertNotVisible:
-    id: 'wizard-step-6'
+    id: 'wizard-step-8'

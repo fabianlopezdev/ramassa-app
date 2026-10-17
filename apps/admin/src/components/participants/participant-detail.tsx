@@ -19,11 +19,14 @@
 import { ParticipantAttendanceReport } from '@/components/attendance/attendance-report';
 import { DetailSection } from '@/components/detail/detail-section';
 import { ParticipantActivity } from '@/components/participants/participant-activity';
+import { ParticipantAuthorizationPanel } from '@/components/participants/participant-authorization-panel';
+import { ParticipantCustomAnswers } from '@/components/participants/participant-custom-answers';
 import { ParticipantEditForm } from '@/components/participants/participant-edit-form';
 import { ParticipantEquipment } from '@/components/participants/participant-equipment';
 import { ParticipantNotes } from '@/components/participants/participant-notes';
 import { ParticipantPrefillForm } from '@/components/participants/participant-prefill-form';
 import { ParticipantProfileFields } from '@/components/participants/participant-profile-fields';
+import { ParticipantQuestionStates } from '@/components/participants/participant-question-states';
 import { ParticipantRgpd } from '@/components/participants/participant-rgpd';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -36,12 +39,30 @@ import { useTranslation } from 'react-i18next';
 import type { AttendanceParticipantStats, AttendanceReportRow } from '@ramassa/shared/attendance';
 import { useAuth } from '@ramassa/shared/auth';
 import {
+  recordPaperAuthorization,
+  type ParticipantAuthorization,
+  type ParticipantConsent,
+} from '@ramassa/shared/authorization';
+import {
   addEquipmentDelivery,
   type EquipmentDeliveryRow,
   type HandoverItemType,
 } from '@ramassa/shared/equipment';
 import { setForumPostingDisabled } from '@ramassa/shared/forum';
-import type { IntakeQuestion } from '@ramassa/shared/intake';
+import {
+  questionStateChanges,
+  saveParticipantQuestionStates,
+  type IntakeQuestion,
+  type QuestionStates,
+} from '@ramassa/shared/intake';
+import {
+  deleteIntakePreset,
+  EMPTY_INTAKE_CATALOG,
+  saveIntakePreset,
+  setParticipantCustomAnswers,
+  type IntakeCatalog,
+  type ParticipantCustomAnswer,
+} from '@ramassa/shared/intake-builder';
 import {
   addParticipantNote,
   setParticipantActive,
@@ -52,6 +73,7 @@ import {
   type ProfilePrefillPayload,
 } from '@ramassa/shared/participants';
 import type { EquipmentDeliveryInput, UpdateOwnProfilePayload } from '@ramassa/shared/schemas';
+import { setPriorSeasons, type ParticipantSeasonAnswers } from '@ramassa/shared/seasons';
 
 export interface ParticipantDetailProps {
   readonly participant: ParticipantDetailRow;
@@ -70,6 +92,15 @@ export interface ParticipantDetailProps {
   readonly openDeletionRequestReason?: string | null;
   /** Answered intake questions, for a woman who has not joined yet (RAPP-300). */
   readonly answeredQuestions?: readonly IntakeQuestion[];
+  /** What her wizard asks, for a woman who has not joined yet (RAPP-301). */
+  readonly questionStates?: QuestionStates;
+  /** Her season authorizations and consents (RAPP-304). */
+  readonly authorizations?: readonly ParticipantAuthorization[];
+  readonly consents?: readonly ParticipantConsent[];
+  readonly seasonAnswers?: readonly ParticipantSeasonAnswers[];
+  /** The questions staff added, and her answers to them (RAPP-307). */
+  readonly intakeCatalog?: IntakeCatalog;
+  readonly customAnswers?: readonly ParticipantCustomAnswer[];
 }
 
 export function ParticipantDetail({
@@ -82,6 +113,12 @@ export function ParticipantDetail({
   attendanceHistory,
   openDeletionRequestReason,
   answeredQuestions = [],
+  questionStates = {},
+  authorizations = [],
+  consents = [],
+  seasonAnswers = [],
+  intakeCatalog = EMPTY_INTAKE_CATALOG,
+  customAnswers = [],
 }: ParticipantDetailProps) {
   const { t, i18n } = useTranslation(['participants', 'common', 'profile']);
   const locale = i18n.resolvedLanguage ?? 'ca';
@@ -93,6 +130,9 @@ export function ParticipantDetail({
   const [isEditing, setIsEditing] = useState(false);
   const [saveErrorMessage, setSaveErrorMessage] = useState<string | undefined>(undefined);
   const [noteErrorMessage, setNoteErrorMessage] = useState<string | undefined>(undefined);
+  const [questionStatesErrorMessage, setQuestionStatesErrorMessage] = useState<string | undefined>(
+    undefined,
+  );
   const [statusErrorMessage, setStatusErrorMessage] = useState<string | undefined>(undefined);
   const [isChangingStatus, setIsChangingStatus] = useState(false);
   const [deliveryErrorMessage, setDeliveryErrorMessage] = useState<string | undefined>(undefined);
@@ -111,6 +151,23 @@ export function ParticipantDetail({
       return;
     }
     setIsEditing(false);
+    await router.invalidate();
+  }
+
+  // Throws on failure, so the control does not say "saved" (RAPP-301).
+  async function saveQuestionStates(next: QuestionStates) {
+    setQuestionStatesErrorMessage(undefined);
+    const result = await safeAsync(() =>
+      saveParticipantQuestionStates(
+        supabase,
+        participant.id,
+        questionStateChanges(questionStates, next),
+      ),
+    );
+    if (!result.ok) {
+      setQuestionStatesErrorMessage(t('questionStatesFailed'));
+      throw result.error;
+    }
     await router.invalidate();
   }
 
@@ -291,9 +348,59 @@ export function ParticipantDetail({
             errorMessage={saveErrorMessage}
           />
         ) : (
-          <ParticipantProfileFields participant={participant} />
+          <ParticipantProfileFields
+            participant={participant}
+            canSeeSensitive={permissions.has('participants.view_sensitive')}
+          />
         )}
       </DetailSection>
+
+      {hasJoined ? null : (
+        <ParticipantQuestionStates
+          states={questionStates}
+          answered={new Set(answeredQuestions)}
+          onSave={saveQuestionStates}
+          errorMessage={questionStatesErrorMessage}
+          presets={intakeCatalog.presets}
+          onSavePreset={async (name, states) => {
+            await saveIntakePreset(supabase, { id: null, name, states });
+            await router.invalidate();
+          }}
+          onDeletePreset={async (id) => {
+            await deleteIntakePreset(supabase, id);
+            await router.invalidate();
+          }}
+        />
+      )}
+
+      <ParticipantCustomAnswers
+        catalog={intakeCatalog}
+        answers={customAnswers}
+        canEdit={permissions.has('participants.view_personal')}
+        canEditSensitive={permissions.has('participants.view_sensitive')}
+        onSave={async (answers) => {
+          await setParticipantCustomAnswers(supabase, participant.id, answers);
+          await router.invalidate();
+        }}
+      />
+
+      {permissions.has('participants.view_personal') ? (
+        <ParticipantAuthorizationPanel
+          participant={participant}
+          authorizations={authorizations}
+          consents={consents}
+          canSeeHealth={permissions.has('participants.view_health')}
+          onRecordPaper={async (signedOn) => {
+            await recordPaperAuthorization(supabase, participant.id, signedOn);
+            await router.invalidate();
+          }}
+          seasonAnswers={seasonAnswers}
+          onSetPriorSeasons={async (count) => {
+            await setPriorSeasons(supabase, participant.id, count);
+            await router.invalidate();
+          }}
+        />
+      ) : null}
 
       <ParticipantNotes notes={notes} onAdd={addNote} errorMessage={noteErrorMessage} />
 

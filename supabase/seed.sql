@@ -48,6 +48,15 @@ values (
 )
 on conflict (id) do nothing;
 
+-- The staff-written note under the wizard's document step (RAPP-302). Catalan
+-- and Arabic only, so the other languages show the Catalan fallback.
+update public.organizations
+set document_step_explanation = jsonb_build_object(
+  'ca', 'Només el fem servir quan cal, per exemple per inscriure''t a un curs. Si l''entitat que t''acompanya el té, també ens el pot donar més endavant.',
+  'ar', 'نستخدمها فقط عند الحاجة، مثلًا لتسجيلكِ في دورة. وإذا كانت الجمعية التي ترافقكِ تحتفظ بها، يمكنها أن تعطينا إياها لاحقًا.'
+)
+where id = '5eed0000-0000-4000-8000-000000000000';
+
 -- Stable social-entity tenants (RAPP-55). These rows precede profiles because
 -- every entity-role profile must carry a durable membership foreign key.
 insert into public.collaborating_entities (id, org_id, name)
@@ -915,6 +924,26 @@ values
   )
 on conflict (id) do nothing;
 
+-- The pending referral carries the season registration answers and the
+-- entity's consent (RAPP-303), so accepting it fills her profile.
+update public.entity_referrals
+set
+  intake_answers = public.encrypt_field(jsonb_build_object(
+    'date_of_birth', '1996-02-20',
+    'nationality', 'Marroc',
+    'document_type', 'none',
+    'city', 'Vic',
+    'applicant_status', 'migrant',
+    'supporting_entities', jsonb_build_array('Càritas Vic'),
+    'reference_contact_name', 'Sílvia Bosch',
+    'season_number', 2,
+    'childcare_need', 'yes',
+    'specific_needs', 'Prefereix entrenar a la tarda.'
+  )::text),
+  consent_confirmed_at = now() - interval '2 days',
+  consent_confirmed_by = '5eed0000-0000-4000-8000-000000000004'
+where id = '5eed0000-0000-4000-8010-000000000001';
+
 insert into public.entity_invitations (
   id, org_id, collaborating_entity_id, email, profile_id, invited_by,
   expires_at, accepted_at, created_at
@@ -1141,6 +1170,171 @@ from unnest(array[
   'first_name', 'last_name', 'date_of_birth', 'nationality', 'reference_entity', 'clothing_size'
 ]) as question
 on conflict (profile_id, question) do nothing;
+
+-- Staff choices for her wizard (RAPP-301): she reviews the clothing size staff
+-- entered, and she is not asked her phone.
+insert into public.intake_question_states (profile_id, org_id, question, state)
+values
+  ('5eed0000-0000-4000-8000-000000000098', '5eed0000-0000-4000-8000-000000000000', 'clothing_size', 'ask'),
+  ('5eed0000-0000-4000-8000-000000000098', '5eed0000-0000-4000-8000-000000000000', 'phone', 'skip')
+on conflict (profile_id, question) do nothing;
+
+-- The participation authorization (RAPP-304) -----------------------------------
+-- The 2026/27 season and version 1 of Ramassà's authorization: the text of the
+-- paper form (Spanish, its only language; the other languages fall back to it),
+-- with its email addresses replaced by reserved test addresses.
+-- Every seeded player signed it on paper in September, except Наталія (...022),
+-- who has not signed yet and so meets the authorization gate. The first player
+-- signed in the app, with a drawn signature and her consents.
+
+insert into public.seasons (id, org_id, name, starts_on, is_current)
+values ('5eed0000-0000-4000-8040-000000000001', '5eed0000-0000-4000-8000-000000000000',
+        '2026/27', '2026-09-01', true)
+on conflict (org_id, name) do nothing;
+
+insert into public.authorization_versions (id, org_id, season_id, version_number, content, published_at, published_by)
+values (
+  '5eed0000-0000-4000-8041-000000000001',
+  '5eed0000-0000-4000-8000-000000000000',
+  (select id from public.seasons where org_id = '5eed0000-0000-4000-8000-000000000000' and name = '2026/27'),
+  1,
+  -- The addresses are written with [at] so they are not read as seeded accounts.
+  replace($auth${"title": {"es": "Autorización de participación, tratamiento de datos y compromiso con el código de conducta. Temporada 2026/2027"}, "sections": [{"key": "medical", "title": {"es": "2. Datos médicos"}, "body": {"es": "Al hacer constar estos datos, la participante acepta de forma expresa el tratamiento de sus datos de salud, siendo estos necesarios para poder participar de forma segura en el Proyecto. En caso de no querer hacerlos constar, no podrá participar en el Programa.\n\nSi no sufres ninguna enfermedad, alergia, discapacidad, lesión o tratamiento médico relevante, responde NO.\n\nAE Ramassà se reserva el derecho a denegar la participación en una actividad concreta si una enfermedad, lesión o incapacidad impide a la persona participar con seguridad."}}, {"key": "insurance", "title": {"es": "3. Seguro"}, "body": {"es": "AE Ramassà declara tener contratada una póliza de responsabilidad civil para el desarrollo del programa, así como una póliza de accidentes para la persona participante. Se entiende por accidente la lesión corporal derivada de una causa violenta, repentina, externa y ajena a la intencionalidad de la persona asegurada; quedan excluidas las patologías preexistentes o de origen ajeno a la actividad."}}, {"key": "participation", "title": {"es": "4. Autorización de participación"}, "body": {"es": "Con la firma de este documento, yo, la persona firmante, AUTORIZO EXPRESA Y VOLUNTARIAMENTE mi participación en las actividades del Proyecto, y DECLARO, bajo mi responsabilidad, que la información aportada es cierta."}}, {"key": "data_processing", "title": {"es": "5. Tratamiento de datos de carácter personal"}, "body": {"es": "Responsable del tratamiento: Associació Esportiva Ramassà, con domicilio en Carretera de Ribes 4, Despatx 105, 08520 Les Franqueses del Vallès, en cumplimiento del RGPD (UE) 2016/679, la LOPDGDD 3/2018 y la LSSICE.\n\nTus datos se tratarán para gestionar tu inscripción y participación en el Proyecto, comunicarte cualquier incidencia o cambio, y cumplir con las obligaciones legales y aseguradoras derivadas de tu participación (incluida la comunicación a la compañía de seguros en caso de accidente). Podrán tratarse también, únicamente si lo autorizas de forma expresa marcando la casilla correspondiente, para el envío de la newsletter, comunicaciones informativas, invitaciones o encuestas, y para incluirte en grupos de mensajería instantánea del equipo.\n\nAE Ramassà, como entidad con proyección internacional, puede contar con proveedores que presten servicios desde fuera de la UE/EEE; en tal caso se garantizarán las salvaguardas exigidas por la normativa (cláusulas contractuales tipo u otras equivalentes).\n\nTus datos se conservarán durante el tiempo necesario para cumplir con la finalidad para la que se recogieron y con las obligaciones legales aplicables. Puedes ejercer en cualquier momento los derechos de acceso, rectificación, supresión, oposición, limitación y portabilidad escribiendo a dades[at]example.test, adjuntando un documento que acredite tu identidad, o dirigirte al Presidente de AE Ramassà (presidencia[at]example.test) para cualquier duda sobre el tratamiento de tus datos. También puedes presentar una reclamación ante la Agencia Española de Protección de Datos (www.agpd.es)."}}, {"key": "images", "title": {"es": "6. Autorización para la toma y uso de imágenes"}, "body": {"es": "La Guía de Temporada explica cómo se pide siempre tu permiso antes de tomarte una foto o vídeo, y que puedes decir que no en cualquier momento y sin consecuencias. Este apartado recoge los términos legales de esa misma autorización.\n\nMarcando la casilla correspondiente, AUTORIZO a AE Ramassà, por sí misma o a través de terceros autorizados, a:\n• Tomar fotografías, grabaciones, reportajes fotográficos, audiovisuales y/o sonoros de las actividades del Proyecto en las que participo.\n• Captar mi imagen, voz y nombre durante mi asistencia y participación en el Proyecto.\n• Utilizar y, en su caso, ceder a terceros, con fines publicitarios, promocionales y divulgativos del Proyecto y de AE Ramassà, los contenidos donde aparezca, a través de cualquier medio (web, redes sociales, prensa, exposiciones), sin que ello genere derecho a compensación económica.\n\nEstos usos se realizan siempre con la excepción de cualquier utilización que pudiera atentar contra el derecho al honor, la intimidad personal y familiar y la propia imagen, en los términos de la Ley Orgánica 1/1982.\n\nGarantías adicionales de protección (Política de Protección, secc. 8.6 y 9.1):\n• Las imágenes deben presentar a las personas de forma respetuosa y nunca se utilizarán de forma sexualizada ni de un modo que te muestre en una situación de vulnerabilidad.\n• Los pies de foto, nombres de archivo o descripciones no revelarán nunca tu estatus migratorio, de asilo, tu orientación sexual o identidad de género, salvo que tú lo autorices expresamente y por separado.\n• Puedes retirar este consentimiento en cualquier momento, sin necesidad de justificarlo y sin que ello afecte a tu participación en el Proyecto, escribiendo a femeni[at]example.test."}}, {"key": "obligations", "title": {"es": "7. Obligaciones de la participante"}, "body": {"es": "Con la firma de este documento, ENTIENDO, ACEPTO y ME COMPROMETO a respetar:\n• Los principios y valores de AE Ramassà y del Proyecto, así como las normas y reglamentos de las actividades (reglas del juego, competición, fair play, etc.).\n• Las instrucciones y decisiones del equipo de coordinación del Proyecto.\n• El buen uso de los espacios donde se desarrollan las actividades.\n• El Reglamento para la prevención de la violencia en espectáculos deportivos: no introducir bebidas alcohólicas, armas u objetos susceptibles de ser usados como bengalas o fuegos de artificio; no exhibir pancartas, símbolos o leyendas que inciten a la violencia; y no participar bajo los efectos del alcohol, estupefacientes o sustancias análogas. Cualquier sanción derivada del incumplimiento de este punto será asumida por la persona firmante.\n• El Código de Conducta de AE Ramassà, recogido en el apartado 8 de este mismo documento, incluido el compromiso de no discriminación."}}, {"key": "conduct", "title": {"es": "8. Compromiso con el Código de Conducta y la Política de Protección"}, "body": {"es": "AE Ramassà mantiene una política de tolerancia cero frente al acoso, el abuso, la explotación, la discriminación, el trato desigual, la coacción o la negligencia, con especial atención a las personas en situación de vulnerabilidad, incluidas las mujeres, las personas refugiadas y las personas LGBTQI+.\n\nMe comprometo a:\n• Tratar a todas las personas del equipo con respeto, independientemente de su etnia, color, género, idioma, religión, ideología, nacionalidad, origen social, discapacidad u orientación sexual.\n• No adoptar nunca un lenguaje o comportamiento acosador, abusivo, sexualmente provocativo, humillante o culturalmente inapropiado hacia ninguna compañera, entrenador/a, voluntario/a o miembro del Club.\n• Dejar que cada persona defina por sí misma la cercanía física, verbal y emocional con la que se siente cómoda, y respetar la misma decisión de las demás.\n• Usar los nombres y pronombres correctos de mis compañeras, y no revelar la orientación sexual, identidad de género o estatus migratorio o de asilo de nadie sin su consentimiento explícito.\n• No consumir alcohol ni sustancias ilegales durante las actividades del Proyecto.\n• Informar de inmediato de cualquier preocupación sobre mi seguridad o bienestar, o el de una compañera, siguiendo el procedimiento descrito a continuación."}}, {"key": "report", "title": {"es": "Cómo y a quién reportar una preocupación"}, "body": {"es": "La persona Delegada de Protección del Proyecto está aún por confirmarse. Mientras tanto, cualquier incomodidad, miedo, sensación de inseguridad, o cualquier incumplimiento de este Código puede comunicarse directamente y de forma confidencial a cualquiera de estos dos correos:\n• femeni[at]example.test\n• proteccio[at]example.test\n• En caso de emergencia o peligro inmediato, llama al 112.\n\nToda la información compartida se tratará de forma confidencial, compartiéndose únicamente con quien sea estrictamente necesario para poder ayudarte. Comunicar una preocupación de buena fe nunca tendrá consecuencias negativas para ti ni para tu lugar en el equipo, aunque finalmente la preocupación no se confirme."}}, {"key": "declaration", "title": {"es": "10. Declaración y firma"}, "body": {"es": "Con la firma de este documento, declaro haber leído, comprendido y aceptado de manera voluntaria y expresa el contenido íntegro de este formulario, incluidos el tratamiento de mis datos personales, la autorización de imagen, mis obligaciones como participante y mi compromiso con el Código de Conducta y la Política de Protección de AE Ramassà."}}], "consents": {"participation": {"required": true, "label": {"es": "Autorizo mi participación en las actividades del Proyecto y declaro que la información aportada es cierta."}}, "data_processing": {"required": true, "label": {"es": "Acepto el tratamiento de mis datos personales según el apartado 5."}}, "code_of_conduct": {"required": true, "label": {"es": "He recibido y comprendido la Guía de Temporada, la Política de Protección (safeguarding) y el Código de Conducta de AE Ramassà, y me comprometo a respetarlos."}}, "health_data": {"required": true, "label": {"es": "Acepto de forma expresa el tratamiento de mis datos de salud, necesarios para participar de forma segura en el Proyecto."}}, "image_rights": {"required": false, "label": {"es": "Autorizo la cesión de mis derechos de imagen, según los términos del apartado 6."}}, "newsletter": {"required": false, "label": {"es": "Acepto recibir información de AE Ramassà por medios electrónicos, teléfono o correo postal (newsletter, invitaciones, encuestas)."}}, "messaging_groups": {"required": false, "label": {"es": "Acepto que AE Ramassà me incluya en grupos de mensajería instantánea del equipo, con el fin de facilitar la comunicación con mis compañeras y el equipo técnico."}}}, "attachments": []}$auth$, '[at]', '@')::jsonb,
+  '2026-09-01 09:00:00+02',
+  '5eed0000-0000-4000-8000-000000000001'
+)
+on conflict (id) do nothing;
+
+insert into public.authorization_signatures (org_id, profile_id, season_id, method, paper_signed_on, recorded_by, signed_at)
+select p.org_id, p.id,
+       (select id from public.seasons where org_id = p.org_id and name = '2026/27'),
+       'paper', date '2026-09-15', '5eed0000-0000-4000-8000-000000000002', timestamptz '2026-09-15 19:00:00+02'
+  from public.profiles p
+ where p.role = 'player'
+   and p.id not in ('5eed0000-0000-4000-8000-000000000022', '5eed0000-0000-4000-8000-000000000011');
+
+insert into public.authorization_signatures
+  (id, org_id, profile_id, season_id, version_id, method, language, device, signed_at, signature)
+values (
+  '5eed0000-0000-4000-8042-000000000011',
+  '5eed0000-0000-4000-8000-000000000000',
+  '5eed0000-0000-4000-8000-000000000011',
+  (select id from public.seasons where org_id = '5eed0000-0000-4000-8000-000000000000' and name = '2026/27'),
+  '5eed0000-0000-4000-8041-000000000001',
+  'app', 'ar', 'iPhone', timestamptz '2026-09-20 18:30:00+02',
+  '[[[120,620],[200,480],[290,560],[380,410],[470,590],[560,450]],[[640,520],[760,500],[880,540]]]'::jsonb
+)
+on conflict (id) do nothing;
+
+insert into public.authorization_consent_events (org_id, profile_id, signature_id, consent_key, granted, method, decided_at)
+select '5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-8000-000000000011',
+       '5eed0000-0000-4000-8042-000000000011', consent.key, consent.granted, 'app',
+       timestamptz '2026-09-20 18:30:00+02'
+  from (values ('participation', true), ('data_processing', true), ('code_of_conduct', true),
+               ('health_data', true), ('image_rights', false), ('newsletter', true),
+               ('messaging_groups', true)) as consent(key, granted);
+
+update public.profiles
+set health_info = public.encrypt_field('No'),
+    emergency_contact_name = 'Layla Al-Hassan',
+    emergency_contact_relation = 'Germana',
+    emergency_contact_phone = public.encrypt_field('+34600000099')
+where id = '5eed0000-0000-4000-8000-000000000011';
+
+-- A walk-in signed on a coach's tablet at the first training (RAPP-305): a new
+-- woman with only her name, waiting for staff to confirm her with her email.
+insert into public.walk_in_signings
+  (id, org_id, first_name, last_name, version_id, payload, signed_at, collected_by)
+values (
+  '5eed0000-0000-4000-8043-000000000001',
+  '5eed0000-0000-4000-8000-000000000000',
+  'Salma', 'Idrissi',
+  '5eed0000-0000-4000-8041-000000000001',
+  public.encrypt_field(jsonb_build_object(
+    'consents', jsonb_build_object('participation', true, 'data_processing', true,
+                                   'code_of_conduct', true, 'health_data', true,
+                                   'image_rights', false, 'newsletter', false, 'messaging_groups', true),
+    'health_info', 'No', 'unable_to_draw', true, 'language', 'ar', 'device', 'iPad')::text),
+  timestamptz '2026-09-15 19:10:00+02',
+  '5eed0000-0000-4000-8000-000000000002'
+)
+on conflict (id) do nothing;
+
+-- The staff question builder (RAPP-307) ---------------------------------------------
+-- A "Transport" screen after the logistics step, with one question of each kind
+-- that matters: Normal yes/no/maybe on the wizard and the referral form; a
+-- single choice with one archived option; a Sensitive long text asked every
+-- season; and a staff-only short text. Player 0011 answered three of them.
+insert into public.intake_screens (id, org_id, title, intro, after_screen, sort_order)
+values (
+  '5eed0000-0000-4000-8044-000000000001', '5eed0000-0000-4000-8000-000000000000',
+  '{"ca":"Com arribes als entrenaments","es":"Cómo llegas a los entrenamientos","en":"How you get to training"}'::jsonb,
+  '{"ca":"Ens ajuda a organitzar els desplaçaments."}'::jsonb,
+  'logistics', 0)
+on conflict (id) do nothing;
+
+insert into public.custom_questions
+  (id, org_id, screen_id, question_type, label, help, privacy, placements, sort_order)
+values
+  ('5eed0000-0000-4000-8045-000000000001', '5eed0000-0000-4000-8000-000000000000',
+   '5eed0000-0000-4000-8044-000000000001', 'yes_no_maybe',
+   '{"ca":"Vens amb transport públic?","es":"¿Vienes en transporte público?","en":"Do you come by public transport?","ar":"هل تأتين بالمواصلات العامة؟","fa":"آیا با حمل و نقل عمومی می‌آیید؟"}'::jsonb,
+   null, 'normal', array['wizard', 'entity_form'], 0),
+  ('5eed0000-0000-4000-8045-000000000002', '5eed0000-0000-4000-8000-000000000000',
+   '5eed0000-0000-4000-8044-000000000001', 'single_choice',
+   '{"ca":"Com et vas assabentar de Ramassà?","en":"How did you hear about Ramassà?"}'::jsonb,
+   null, 'normal', array['wizard'], 1),
+  ('5eed0000-0000-4000-8045-000000000003', '5eed0000-0000-4000-8000-000000000000',
+   '5eed0000-0000-4000-8044-000000000001', 'long_text',
+   '{"ca":"Hi ha res que dificulti venir aquesta temporada?","en":"Is anything making it hard to come this season?"}'::jsonb,
+   '{"ca":"Només ho veurà l''equip amb permís."}'::jsonb, 'sensitive', array['season'], 2),
+  ('5eed0000-0000-4000-8045-000000000004', '5eed0000-0000-4000-8000-000000000000',
+   '5eed0000-0000-4000-8044-000000000001', 'short_text',
+   '{"ca":"Parada de metro més propera"}'::jsonb,
+   null, 'personal', array['staff'], 3)
+on conflict (id) do nothing;
+
+insert into public.custom_question_options (id, org_id, question_id, label, sort_order, is_archived)
+values
+  ('5eed0000-0000-4000-8046-000000000001', '5eed0000-0000-4000-8000-000000000000',
+   '5eed0000-0000-4000-8045-000000000002', '{"ca":"Una entitat","en":"An organization"}'::jsonb, 0, false),
+  ('5eed0000-0000-4000-8046-000000000002', '5eed0000-0000-4000-8000-000000000000',
+   '5eed0000-0000-4000-8045-000000000002', '{"ca":"Xarxes socials","en":"Social media"}'::jsonb, 1, false),
+  ('5eed0000-0000-4000-8046-000000000003', '5eed0000-0000-4000-8000-000000000000',
+   '5eed0000-0000-4000-8045-000000000002', '{"ca":"Un cartell","en":"A poster"}'::jsonb, 2, true)
+on conflict (id) do nothing;
+
+insert into public.custom_answers
+  (profile_id, question_id, season_key, season_id, org_id, value, value_encrypted, source)
+values
+  ('5eed0000-0000-4000-8000-000000000011', '5eed0000-0000-4000-8045-000000000001',
+   '00000000-0000-0000-0000-000000000000', null, '5eed0000-0000-4000-8000-000000000000',
+   '"yes"'::jsonb, null, 'player'),
+  ('5eed0000-0000-4000-8000-000000000011', '5eed0000-0000-4000-8045-000000000002',
+   '00000000-0000-0000-0000-000000000000', null, '5eed0000-0000-4000-8000-000000000000',
+   '"5eed0000-0000-4000-8046-000000000003"'::jsonb, null, 'player'),
+  ('5eed0000-0000-4000-8000-000000000011', '5eed0000-0000-4000-8045-000000000003',
+   '5eed0000-0000-4000-8040-000000000001', '5eed0000-0000-4000-8040-000000000001',
+   '5eed0000-0000-4000-8000-000000000000',
+   null, public.encrypt_field('"Treballo els dijous a la tarda."'), 'player')
+on conflict do nothing;
+
+-- The pending referral of Amina answered the referral-form question.
+insert into public.referral_custom_answers (referral_id, question_id, org_id, value_encrypted)
+values ('5eed0000-0000-4000-8010-000000000001', '5eed0000-0000-4000-8045-000000000001',
+        '5eed0000-0000-4000-8000-000000000000', public.encrypt_field('"maybe"'))
+on conflict do nothing;
+
+insert into public.builtin_question_overrides (org_id, question, label, help, option_overrides)
+values ('5eed0000-0000-4000-8000-000000000000', 'reference_entity',
+        '{"ca":"Quina entitat t''acompanya?","es":"¿Qué entidad te acompaña?","en":"Which organization supports you?"}'::jsonb,
+        null, '{}'::jsonb)
+on conflict do nothing;
+
+insert into public.intake_state_presets (id, org_id, name, states)
+values ('5eed0000-0000-4000-8047-000000000001', '5eed0000-0000-4000-8000-000000000000',
+        'Només talles', '{"clothing_size":"ask","shoe_size":"ask"}'::jsonb)
+on conflict (id) do nothing;
 
 -- Terms acceptances ----------------------------------------------------------------
 -- The consent EVENT behind each seeded player's `terms_accepted_at` (RAPP-21).

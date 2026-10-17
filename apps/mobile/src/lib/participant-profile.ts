@@ -33,6 +33,12 @@ const PARTICIPANT_PROFILE_FIELDS = [
   { key: 'dependents', level: 'personal' },
   { key: 'clothingSize', level: 'basic' },
   { key: 'shoeSize', level: 'basic' },
+  // The season registration answers (RAPP-303), at the levels the database applies.
+  { key: 'applicantStatus', level: 'sensitive' },
+  { key: 'supportingEntities', level: 'personal' },
+  { key: 'seasonNumber', level: 'basic' },
+  { key: 'childcareNeed', level: 'personal' },
+  { key: 'specificNeeds', level: 'sensitive' },
   { key: 'mediaConsent', level: 'basic' },
   { key: 'terms', level: 'basic' },
 ] as const satisfies readonly { readonly key: string; readonly level: ParticipantFieldLevel }[];

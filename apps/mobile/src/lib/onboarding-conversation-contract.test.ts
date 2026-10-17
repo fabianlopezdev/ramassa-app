@@ -21,15 +21,40 @@ describe('conversational onboarding controls', () => {
     expect(headingSource).toContain('aria-hidden');
     expect(headingSource).toContain('accessibilityElementsHidden');
     expect(headingSource).toContain('importantForAccessibility="no-hide-descendants"');
+    // Staff may reword a built-in question (RAPP-307): the app's label is the fallback.
     const uses = [
-      [background, "label={t('preferredLanguageLabel')}", 'languageSymbol'],
-      [background, "label={t('nationalityLabel')}", 'nationalitySymbol'],
-      [documentation, "label={t('documentTypeLabel')}", 'documentSymbol'],
-      [logistics, "label={t('cityLabel')}", 'municipalitySymbol'],
-      [logistics, "label={t('referenceEntityLabel')}", 'entitySymbol'],
-      [logistics, "label={t('hasDependentsLabel')}", 'dependentsSymbol'],
-      [logistics, "label={t('clothingSizeLabel')}", 'clothingSymbol'],
-      [logistics, "label={t('shoeSizeLabel')}", 'shoeSymbol'],
+      [
+        background,
+        "label={wording.label('preferred_language', t('preferredLanguageLabel'))}",
+        'languageSymbol',
+      ],
+      [
+        background,
+        "label={wording.label('nationality', t('nationalityLabel'))}",
+        'nationalitySymbol',
+      ],
+      [
+        documentation,
+        "label={wording.label('document', t('documentTypeLabel'))}",
+        'documentSymbol',
+      ],
+      [logistics, "label={wording.label('city', t('cityLabel'))}", 'municipalitySymbol'],
+      [
+        logistics,
+        "label={wording.label('reference_entity', t('referenceEntityLabel'))}",
+        'entitySymbol',
+      ],
+      [
+        logistics,
+        "label={wording.label('dependents', t('hasDependentsLabel'))}",
+        'dependentsSymbol',
+      ],
+      [
+        logistics,
+        "label={wording.label('clothing_size', t('clothingSizeLabel'))}",
+        'clothingSymbol',
+      ],
+      [logistics, "label={wording.label('shoe_size', t('shoeSizeLabel'))}", 'shoeSymbol'],
     ] as const;
     for (const [source, label, symbol] of uses) {
       expect(source).toContain('<OnboardingQuestionHeading');

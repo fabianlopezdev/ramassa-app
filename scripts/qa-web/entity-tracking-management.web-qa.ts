@@ -201,6 +201,7 @@ test.describe.serial('entity tracking, impact, events and administration', () =>
     await collaboratorPage.locator('#referral-first-name').fill('Samira');
     await collaboratorPage.locator('#referral-last-name').fill(`QA ${RUN_TAG}`);
     await collaboratorPage.locator('#referral-documentation').selectOption('in_progress');
+    await collaboratorPage.locator('#referral-consent').check();
     await collaboratorPage.getByTestId('referral-submit').click();
     await expect(collaboratorPage).toHaveURL(/\/portal\/referrals\/[0-9a-f-]+$/, {
       timeout: 30_000,

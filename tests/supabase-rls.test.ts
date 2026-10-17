@@ -8,12 +8,18 @@
  * not run `bunx supabase start`, while still gating the SQL layer locally.
  *
  * To exercise it: `bunx supabase start` then `bun test`.
+ *
+ * Two sessions on one machine can each run their own stack. Point this test
+ * at another one with SUPABASE_TEST_WORKDIR (a folder holding a `supabase/`
+ * config with its own project_id and ports) and SUPABASE_TEST_API_URL (that
+ * stack's REST URL). Both default to this repository's own stack.
  */
 
 import { spawnSync } from 'node:child_process';
 import { expect, test } from 'bun:test';
 
-const localApiUrl = 'http://127.0.0.1:54321/rest/v1/';
+const localApiUrl = process.env.SUPABASE_TEST_API_URL ?? 'http://127.0.0.1:54321/rest/v1/';
+const workdir = process.env.SUPABASE_TEST_WORKDIR ?? new URL('..', import.meta.url).pathname;
 
 async function isLocalStackReachable(): Promise<boolean> {
   try {
@@ -33,8 +39,8 @@ test.skipIf(!stackUp)(
     // any fails (verified), so the exit status is the source of truth. We do not
     // parse stdout: bun's spawnSync does not reliably capture the child CLI's
     // output, but the exit code is always correct.
-    const result = spawnSync('supabase', ['test', 'db'], {
-      cwd: new URL('..', import.meta.url).pathname,
+    const result = spawnSync('supabase', ['test', 'db', '--workdir', workdir], {
+      cwd: workdir,
       encoding: 'utf8',
     });
     if (result.status !== 0) {
