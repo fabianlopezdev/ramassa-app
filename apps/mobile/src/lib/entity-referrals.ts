@@ -8,6 +8,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@ramassa/shared/auth';
 import {
+  fetchIntakeCatalog,
+  referralScreens,
+  saveReferralCustomAnswers,
+  type CustomAnswerValue,
+  type IntakeScreen,
+} from '@ramassa/shared/intake-builder';
+import {
   createReferral,
   fetchEntityReferrals,
   fetchReferral,
@@ -56,6 +63,25 @@ export function useSupportingEntityNames() {
   });
 }
 
+/**
+ * The questions staff added to the referral form (RAPP-307), grouped by
+ * screen. A failed load reads as none: the form still works without them.
+ */
+export function useReferralQuestions() {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ['referral-questions', user?.id ?? 'signed-out'],
+    queryFn: async (): Promise<readonly IntakeScreen[]> => {
+      try {
+        return referralScreens(await fetchIntakeCatalog(supabase));
+      } catch {
+        return [];
+      }
+    },
+    enabled: user !== null,
+  });
+}
+
 export function useReferralActions() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -65,10 +91,17 @@ export function useReferralActions() {
     mutationFn: (input: CreateReferral) => createReferral(supabase, input),
     onSuccess: refresh,
   });
+  // Right after the referral is created: the database lets only its sender answer.
+  const saveAnswers = useMutation({
+    mutationFn: (input: {
+      readonly referralId: string;
+      readonly answers: Readonly<Record<string, CustomAnswerValue | null>>;
+    }) => saveReferralCustomAnswers(supabase, input.referralId, input.answers),
+  });
   const addUpdate = useMutation({
     mutationFn: (input: { readonly referralId: string; readonly update: ReferralUpdateInput }) =>
       submitReferralUpdate(supabase, input.referralId, input.update),
     onSuccess: refresh,
   });
-  return { create, addUpdate };
+  return { create, saveAnswers, addUpdate };
 }

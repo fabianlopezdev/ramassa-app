@@ -12,7 +12,8 @@ import { WizardValidationSummary } from '@/components/onboarding/wizard-validati
 import { playHaptic } from '@/lib/haptics/haptics';
 import { onboardingDraftStore } from '@/lib/onboarding';
 import { identityNameFormSchema, type IdentityNameFormInput } from '@/lib/onboarding-form';
-import { useWizardStep } from '@/lib/onboarding-intake-context';
+import { wizardStepRoute } from '@/lib/onboarding-intake';
+import { useBuiltinWording, useWizardStep } from '@/lib/onboarding-intake-context';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Redirect } from 'expo-router';
 import { useMemo, useState } from 'react';
@@ -22,6 +23,7 @@ import { useTranslation } from 'react-i18next';
 export default function IdentityStepScreen() {
   const { t } = useTranslation('onboarding');
   const step = useWizardStep('identity');
+  const wording = useBuiltinWording();
   const [draft] = useState(() => onboardingDraftStore.loadDraft());
   const [hasSubmitErrors, setHasSubmitErrors] = useState(false);
 
@@ -43,7 +45,7 @@ export default function IdentityStepScreen() {
   });
 
   if (!step.isEditing && draft !== null && draft.currentStep !== 'identity') {
-    return <Redirect href={`/onboarding/${draft.currentStep}`} />;
+    return <Redirect href={wizardStepRoute(draft.currentStep)} />;
   }
 
   const continueToBackground = handleSubmit(
@@ -79,7 +81,8 @@ export default function IdentityStepScreen() {
         render={({ field }) => (
           <AuthTextField
             testID="onboarding-first-name"
-            label={t('firstNameLabel')}
+            label={wording.label('first_name', t('firstNameLabel'))}
+            hint={wording.help('first_name')}
             value={field.value}
             onChangeText={field.onChange}
             onBlur={field.onBlur}
@@ -96,7 +99,8 @@ export default function IdentityStepScreen() {
         render={({ field }) => (
           <AuthTextField
             testID="onboarding-last-name"
-            label={t('lastNameLabel')}
+            label={wording.label('last_name', t('lastNameLabel'))}
+            hint={wording.help('last_name')}
             value={field.value}
             onChangeText={field.onChange}
             onBlur={field.onBlur}

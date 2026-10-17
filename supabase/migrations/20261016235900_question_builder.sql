@@ -687,7 +687,12 @@ declare
     or (jsonb_typeof(p_value) = 'array' and jsonb_array_length(p_value) = 0);
   stored jsonb := case when jsonb_typeof(p_value) = 'string' then to_jsonb(btrim(p_value #>> '{}')) else p_value end;
 begin
+  -- With no current season there is nowhere to keep a seasonal answer. Her
+  -- registration never stops on it; staff are told.
   if 'season' = any (p_question.placements) and season is null then
+    if p_source = 'player' then
+      return;
+    end if;
     raise check_violation using message = 'a seasonal question needs a current season';
   end if;
   if is_empty then

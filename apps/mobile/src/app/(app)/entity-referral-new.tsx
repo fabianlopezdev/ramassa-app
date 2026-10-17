@@ -5,12 +5,20 @@
  * questions entities answered in their own form until now, every one optional,
  * and the entity confirms she agreed to share her data. A field the form
  * refuses says why until it changes; once sent, the referral opens.
+ *
+ * The questions staff added for the referral form (RAPP-307) follow, grouped
+ * by screen. Their answers are saved right after the referral; when that
+ * fails, the form says the referral is saved and offers to try again.
  */
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { PageWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { CountryPicker } from '@/components/onboarding/country-picker';
+import {
+  CustomQuestionSections,
+  type CustomAnswerDraft,
+} from '@/components/onboarding/custom-question-field';
 import { MunicipalityPicker } from '@/components/onboarding/municipality-picker';
 import { OptionChip } from '@/components/onboarding/option-chip';
 import { BirthDateField } from '@/components/profile/profile-form-fields';
@@ -20,8 +28,13 @@ import {
   type SeasonAnswers,
 } from '@/components/profile/season-answer-fields';
 import { continuousCorners } from '@/lib/continuous-corners';
-import { useReferralActions, useSupportingEntityNames } from '@/lib/entity-referrals';
+import {
+  useReferralActions,
+  useReferralQuestions,
+  useSupportingEntityNames,
+} from '@/lib/entity-referrals';
 import { playHaptic } from '@/lib/haptics/haptics';
+import { customAnswersToSave } from '@/lib/onboarding-intake';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
@@ -100,7 +113,12 @@ export default function EntityReferralNewScreen() {
   const entityNames = useSupportingEntityNames();
   const fontClass = useLanguageFontClass();
   const { back, replace } = useRouter();
-  const { create } = useReferralActions();
+  const { create, saveAnswers } = useReferralActions();
+  const questions = useReferralQuestions();
+  const customScreens = questions.data ?? [];
+  const [customAnswers, setCustomAnswers] = useState<CustomAnswerDraft>({});
+  // Set when the referral is saved and its custom answers are not.
+  const [savedReferralId, setSavedReferralId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>({
     firstName: '',
     lastName: '',
@@ -144,16 +162,37 @@ export default function EntityReferralNewScreen() {
     }
     setInvalid(new Set());
     create.mutate(parsed.data, {
-      onSuccess: (referralId) => {
-        playHaptic('success');
-        replace(`/entity-referral/${referralId}` as Href);
-      },
+      onSuccess: (referralId) => saveCustomAnswers(referralId),
       onError: () => {
         playHaptic('error');
         setHasFailed(true);
       },
     });
   };
+
+  const openReferral = (referralId: string) => replace(`/entity-referral/${referralId}` as Href);
+
+  function saveCustomAnswers(referralId: string) {
+    const answers = customAnswersToSave(customScreens, customAnswers, {});
+    if (Object.keys(answers).length === 0) {
+      playHaptic('success');
+      openReferral(referralId);
+      return;
+    }
+    saveAnswers.mutate(
+      { referralId, answers },
+      {
+        onSuccess: () => {
+          playHaptic('success');
+          openReferral(referralId);
+        },
+        onError: () => {
+          playHaptic('error');
+          setSavedReferralId(referralId);
+        },
+      },
+    );
+  }
 
   const ERROR_KEYS: Readonly<Record<Field, string>> = {
     firstName: 'referrals:requiredError',
@@ -332,6 +371,24 @@ export default function EntityReferralNewScreen() {
             showSeasonNumber
           />
 
+          {customScreens.length === 0 ? null : (
+            <View className="gap-lg">
+              <Text
+                accessibilityRole="header"
+                className={`text-start text-xl font-bold text-neutral-900 ${fontClass}`}
+              >
+                {t('onboarding:customQuestionsTitle')}
+              </Text>
+              <CustomQuestionSections
+                screens={customScreens}
+                answers={customAnswers}
+                onChange={(questionId, value) =>
+                  setCustomAnswers((current) => ({ ...current, [questionId]: value }))
+                }
+              />
+            </View>
+          )}
+
           <View className="gap-xs">
             <OptionChip
               testID="entity-referral-consent"
@@ -359,21 +416,62 @@ export default function EntityReferralNewScreen() {
               {t('saveError')}
             </Text>
           ) : null}
-          <PressableScale
-            testID="entity-referral-save"
-            accessibilityRole="button"
-            accessibilityLabel={t('save')}
-            onPress={submit}
-            isBusy={create.isPending}
-            isDisabled={create.isPending}
-            haptic="tapLight"
-            style={continuousCorners}
-            className="min-h-recommended items-center justify-center rounded-md bg-primary px-lg"
-          >
-            <Text className={`text-center text-md font-bold text-white ${fontClass}`}>
-              {t('save')}
-            </Text>
-          </PressableScale>
+          {savedReferralId === null ? (
+            <PressableScale
+              testID="entity-referral-save"
+              accessibilityRole="button"
+              accessibilityLabel={t('save')}
+              onPress={submit}
+              isBusy={create.isPending || saveAnswers.isPending}
+              isDisabled={create.isPending || saveAnswers.isPending}
+              haptic="tapLight"
+              style={continuousCorners}
+              className="min-h-recommended items-center justify-center rounded-md bg-primary px-lg"
+            >
+              <Text className={`text-center text-md font-bold text-white ${fontClass}`}>
+                {t('save')}
+              </Text>
+            </PressableScale>
+          ) : (
+            // The referral exists: saving the form again would send it twice.
+            <View className="gap-sm">
+              <Text
+                testID="entity-referral-custom-answers-failed"
+                accessibilityLiveRegion="polite"
+                className={`text-start text-md text-error ${fontClass}`}
+              >
+                {t('onboarding:customReferralAnswersFailed')}
+              </Text>
+              <PressableScale
+                testID="entity-referral-custom-answers-retry"
+                accessibilityRole="button"
+                accessibilityLabel={t('onboarding:customReferralRetryAction')}
+                onPress={() => saveCustomAnswers(savedReferralId)}
+                isBusy={saveAnswers.isPending}
+                isDisabled={saveAnswers.isPending}
+                haptic="tapLight"
+                style={continuousCorners}
+                className="min-h-recommended items-center justify-center rounded-md bg-primary px-lg"
+              >
+                <Text className={`text-center text-md font-bold text-white ${fontClass}`}>
+                  {t('onboarding:customReferralRetryAction')}
+                </Text>
+              </PressableScale>
+              <PressableScale
+                testID="entity-referral-open-saved"
+                accessibilityRole="button"
+                accessibilityLabel={t('onboarding:customReferralOpenAction')}
+                onPress={() => openReferral(savedReferralId)}
+                haptic="tapLight"
+                style={continuousCorners}
+                className="min-h-recommended items-center justify-center rounded-md border border-primary bg-white px-lg"
+              >
+                <Text className={`text-center text-md font-bold text-primary-dark ${fontClass}`}>
+                  {t('onboarding:customReferralOpenAction')}
+                </Text>
+              </PressableScale>
+            </View>
+          )}
         </PageWidth>
       </ScrollView>
     </SafeAreaView>

@@ -18,7 +18,7 @@
 -- coach-preset staff member 0003 (no Personal level after the deletes below).
 
 begin;
-select plan(25);
+select plan(26);
 
 create temp table run (label text primary key, id uuid);
 grant all on run to authenticated;
@@ -224,6 +224,17 @@ select ok(
      where row ->> 'answer' = 'Ara treballo els dimarts.'),
   'the full export holds it, decrypted'
 );
+
+-- With no current season, her registration never stops on a seasonal question.
+reset role;
+update public.seasons set is_current = false where org_id = '5eed0000-0000-4000-8000-000000000000';
+set local role authenticated;
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000011", "role": "authenticated", "aal": "aal1"}';
+select lives_ok(
+  $$ select public.save_my_custom_answers('{"5eed0000-0000-4000-8045-000000000003":"Igual que sempre."}'::jsonb) $$,
+  'with no current season, a seasonal answer is skipped and her save goes through'
+);
+reset role;
 
 select * from finish();
 rollback;

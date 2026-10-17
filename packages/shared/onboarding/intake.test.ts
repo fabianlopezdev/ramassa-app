@@ -7,12 +7,15 @@
 import { describe, expect, test } from 'bun:test';
 import {
   answeredQuestionsSchema,
+  customStepId,
+  customStepKey,
   INTAKE_QUESTIONS,
   nextWizardScreen,
   previousWizardScreen,
   screensToAsk,
   trimPayloadToAnswers,
   wizardScreenPosition,
+  type CustomWizardScreen,
   type IntakeQuestion,
 } from './intake';
 
@@ -99,6 +102,76 @@ describe('navigation', () => {
     expect(wizardScreenPosition('season', plan)).toEqual({ step: 3, total: 5 });
     expect(wizardScreenPosition('summary', plan)).toEqual({ step: 4, total: 5 });
     expect(wizardScreenPosition('terms', plan)).toEqual({ step: 5, total: 5 });
+  });
+});
+
+describe('staff screens in the wizard (RAPP-307)', () => {
+  // Staff answered her names and her document: identity and documentation are skipped.
+  const plan = answered('first_name', 'last_name', 'document');
+  const transport: CustomWizardScreen = {
+    id: 'transport',
+    afterScreen: 'documentation',
+    isAnswered: false,
+  };
+  const health: CustomWizardScreen = { id: 'health', afterScreen: 'logistics', isAnswered: false };
+  const custom = [transport, health];
+
+  test('a step key names a built-in screen or a staff screen', () => {
+    expect(customStepKey('transport')).toBe('custom:transport');
+    expect(customStepId('custom:transport')).toBe('transport');
+    expect(customStepId('logistics')).toBeNull();
+  });
+
+  test('a staff screen shows after its built-in step, even when that step is skipped', () => {
+    expect(nextWizardScreen('background', plan, custom)).toBe('custom:transport');
+    expect(nextWizardScreen('custom:transport', plan, custom)).toBe('logistics');
+    expect(nextWizardScreen('logistics', plan, custom)).toBe('custom:health');
+    expect(nextWizardScreen('custom:health', plan, custom)).toBe('season');
+  });
+
+  test('staff screens after the same step keep the catalog order', () => {
+    const second: CustomWizardScreen = {
+      id: 'second',
+      afterScreen: 'logistics',
+      isAnswered: false,
+    };
+    expect(nextWizardScreen('custom:health', plan, [...custom, second])).toBe('custom:second');
+  });
+
+  test('a staff screen she already answered completely is skipped', () => {
+    const answeredTransport = [{ ...transport, isAnswered: true }, health];
+    expect(nextWizardScreen('background', plan, answeredTransport)).toBe('logistics');
+    expect(previousWizardScreen('logistics', plan, answeredTransport)).toBe('background');
+  });
+
+  test('back from the next step returns to the staff screen', () => {
+    expect(previousWizardScreen('logistics', plan, custom)).toBe('custom:transport');
+    expect(previousWizardScreen('custom:transport', plan, custom)).toBe('background');
+  });
+
+  test('a staff screen can be the first screen she sees', () => {
+    const everything = new Set(INTAKE_QUESTIONS);
+    expect(nextWizardScreen('start', everything, custom)).toBe('custom:transport');
+    expect(previousWizardScreen('custom:transport', everything, custom)).toBeNull();
+    expect(nextWizardScreen('custom:health', everything, custom)).toBe('summary');
+  });
+
+  test('the progress counts staff screens', () => {
+    expect(wizardScreenPosition('background', plan, custom)).toEqual({ step: 1, total: 7 });
+    expect(wizardScreenPosition('custom:transport', plan, custom)).toEqual({ step: 2, total: 7 });
+    expect(wizardScreenPosition('logistics', plan, custom)).toEqual({ step: 3, total: 7 });
+    expect(wizardScreenPosition('custom:health', plan, custom)).toEqual({ step: 4, total: 7 });
+    expect(wizardScreenPosition('terms', plan, custom)).toEqual({ step: 7, total: 7 });
+  });
+
+  test('an answered staff screen opened to edit moves on to the next screen she sees', () => {
+    const answeredTransport = [{ ...transport, isAnswered: true }, health];
+    expect(nextWizardScreen('custom:transport', plan, answeredTransport)).toBe('logistics');
+  });
+
+  test('with no staff screens the plan is the built-in one', () => {
+    expect(nextWizardScreen('background', plan, [])).toBe(nextWizardScreen('background', plan));
+    expect(wizardScreenPosition('season', plan, [])).toEqual(wizardScreenPosition('season', plan));
   });
 });
 

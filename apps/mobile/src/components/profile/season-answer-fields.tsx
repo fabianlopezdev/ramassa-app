@@ -7,11 +7,16 @@
  * record edit. Applicant status and specific needs are sensitive: a screen
  * without participants.view_sensitive passes `showSensitive={false}` and the
  * two never render.
+ *
+ * Her wizard and re-registration pass staff's wording (RAPP-307): reworded
+ * questions, help lines, and relabelled or hidden choices.
  */
 
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { OptionChip } from '@/components/onboarding/option-chip';
+import { QuestionHelp } from '@/components/onboarding/question-help';
+import type { BuiltinWording } from '@/lib/onboarding-intake-context';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -62,9 +67,11 @@ const CHILDCARE_KEYS: Readonly<Record<ChildcareNeed, string>> = {
 
 function Question({
   label,
+  help = null,
   children,
 }: {
   readonly label: string;
+  readonly help?: string | null;
   readonly children: React.ReactNode;
 }) {
   const fontClass = useLanguageFontClass();
@@ -73,6 +80,7 @@ function Question({
       <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
         {label}
       </Text>
+      <QuestionHelp text={help} />
       <View className="flex-row flex-wrap gap-sm">{children}</View>
     </View>
   );
@@ -92,6 +100,8 @@ export interface SeasonAnswerFieldsProps {
   readonly showSeasonNumber?: boolean;
   /** Which questions to show; the wizard hides the ones already answered. */
   readonly shows?: (question: SeasonQuestion) => boolean;
+  /** Staff's wording of these questions (RAPP-307); the app's own without it. */
+  readonly wording?: BuiltinWording;
   readonly testIDPrefix: string;
 }
 
@@ -102,9 +112,21 @@ export function SeasonAnswerFields({
   showSensitive,
   showSeasonNumber = false,
   shows = () => true,
+  wording,
   testIDPrefix,
 }: SeasonAnswerFieldsProps) {
   const { t } = useTranslation(['onboarding']);
+  const label = (question: SeasonQuestion, appLabel: string) =>
+    wording?.label(question, appLabel) ?? appLabel;
+  const help = (question: SeasonQuestion) => wording?.help(question) ?? null;
+  const applicantStatuses = APPLICANT_STATUSES.map((status) => ({
+    value: status,
+    label: t(APPLICANT_STATUS_KEYS[status]),
+  }));
+  const childcareNeeds = CHILDCARE_NEEDS.map((need) => ({
+    value: need,
+    label: t(CHILDCARE_KEYS[need]),
+  }));
   const fontClass = useLanguageFontClass();
   const [otherEntity, setOtherEntity] = useState('');
 
@@ -129,12 +151,18 @@ export function SeasonAnswerFields({
   return (
     <View className="gap-lg" testID={`${testIDPrefix}-season`}>
       {showSensitive && shows('applicant_status') ? (
-        <Question label={t('onboarding:applicantStatusLabel')}>
-          {APPLICANT_STATUSES.map((status) => (
+        <Question
+          label={label('applicant_status', t('onboarding:applicantStatusLabel'))}
+          help={help('applicant_status')}
+        >
+          {(
+            wording?.options('applicant_status', applicantStatuses, value.applicantStatus) ??
+            applicantStatuses
+          ).map(({ value: status, label: statusLabel }) => (
             <OptionChip
               key={status}
-              label={t(APPLICANT_STATUS_KEYS[status])}
-              accessibilityHint={t('onboarding:applicantStatusLabel')}
+              label={statusLabel}
+              accessibilityHint={label('applicant_status', t('onboarding:applicantStatusLabel'))}
               isSelected={value.applicantStatus === status}
               onPress={() =>
                 onChange({ applicantStatus: value.applicantStatus === status ? null : status })
@@ -146,7 +174,10 @@ export function SeasonAnswerFields({
 
       {shows('supporting_entities') ? (
         <View className="gap-sm">
-          <Question label={t('onboarding:supportingEntitiesLabel')}>
+          <Question
+            label={label('supporting_entities', t('onboarding:supportingEntitiesLabel'))}
+            help={help('supporting_entities')}
+          >
             {offered.map((name) => (
               <OptionChip
                 key={name}
@@ -201,12 +232,18 @@ export function SeasonAnswerFields({
       ) : null}
 
       {shows('childcare_need') ? (
-        <Question label={t('onboarding:childcareNeedLabel')}>
-          {CHILDCARE_NEEDS.map((need) => (
+        <Question
+          label={label('childcare_need', t('onboarding:childcareNeedLabel'))}
+          help={help('childcare_need')}
+        >
+          {(
+            wording?.options('childcare_need', childcareNeeds, value.childcareNeed) ??
+            childcareNeeds
+          ).map(({ value: need, label: needLabel }) => (
             <OptionChip
               key={need}
-              label={t(CHILDCARE_KEYS[need])}
-              accessibilityHint={t('onboarding:childcareNeedLabel')}
+              label={needLabel}
+              accessibilityHint={label('childcare_need', t('onboarding:childcareNeedLabel'))}
               isSelected={value.childcareNeed === need}
               onPress={() =>
                 onChange({ childcareNeed: value.childcareNeed === need ? null : need })
@@ -220,7 +257,8 @@ export function SeasonAnswerFields({
         <View className="gap-xs">
           <AuthTextField
             testID={`${testIDPrefix}-specific-needs`}
-            label={t('onboarding:specificNeedsLabel')}
+            label={label('specific_needs', t('onboarding:specificNeedsLabel'))}
+            hint={help('specific_needs')}
             value={value.specificNeeds}
             onChangeText={(specificNeeds) => onChange({ specificNeeds })}
             multiline
