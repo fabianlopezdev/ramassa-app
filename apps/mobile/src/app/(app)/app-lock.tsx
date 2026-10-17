@@ -10,6 +10,7 @@ import { PageWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { LanguageSwitcher } from '@/components/profile/language-switcher';
 import { APP_LOCK_TIMEOUTS, type AppLockTimeout } from '@/lib/app-lock';
+import { usePendingSigningCount } from '@/lib/tablet-signing';
 import { useAccountAccess } from '@/lib/use-account-access';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useRouter } from 'expo-router';
@@ -31,6 +32,8 @@ const switchTrackColor = { false: tokens.colors.neutral[300], true: tokens.color
 
 export default function AppLockScreen() {
   const { t } = useTranslation('auth');
+  const { t: tParticipants } = useTranslation('participants');
+  const pendingSignings = usePendingSigningCount();
   const router = useRouter();
   const languageFontClass = useLanguageFontClass();
   const { isAvailable, settings, saveSettings, confirmOwner } = useAppLock();
@@ -77,6 +80,16 @@ export default function AppLockScreen() {
               {t('appLockIntro')}
             </Text>
           </View>
+
+          {/* Signings waiting on this tablet keep the lock on (RAPP-305, RAPP-530). */}
+          {pendingSignings > 0 && isAvailable ? (
+            <Text
+              testID="app-lock-forced"
+              className={`text-start text-md font-semibold text-primary-dark ${languageFontClass}`}
+            >
+              {tParticipants('signing.lockForced', { count: pendingSignings })}
+            </Text>
+          ) : null}
 
           {isAvailable ? null : (
             <Text

@@ -122,6 +122,31 @@ describe('the shared outbox', () => {
   });
 });
 
+describe('a send that never answers', () => {
+  test('counts as a failed try after the time limit, so the queue moves on and retries it', async () => {
+    const outbox = createOutbox(memoryStorage(), 'owner', config('independent'));
+    outbox.enqueue(note('a', 1));
+    outbox.enqueue(note('b', 2));
+    const sent: string[] = [];
+    const result = await outbox.drain(
+      (entry) => {
+        if (entry.id === 'a') return new Promise<never>(() => undefined);
+        sent.push(entry.id);
+        return Promise.resolve(entry.id);
+      },
+      NOW,
+      { sendTimeoutMs: 20 },
+    );
+    expect(result).toMatchObject({ sent: 1, failed: 1, rejected: 0 });
+    expect(sent).toEqual(['b']);
+    expect(outbox.list().map((entry) => entry.id)).toEqual(['a']);
+    expect(outbox.list()[0]?.retryAt).not.toBeNull();
+    // The lane is free again: a later drain is not stuck behind the hung send.
+    const later = await outbox.drain(() => Promise.resolve('a'), new Date(NOW.getTime() + 60_000));
+    expect(later.sent).toBe(1);
+  });
+});
+
 describe('isFinalRejection', () => {
   test('refusals are final; connection and server failures are not', () => {
     for (const code of ['AUTH-3', 'AUTH-9', 'DB-2', 'EVENTS-1', 'VALIDATION-1'] as const) {

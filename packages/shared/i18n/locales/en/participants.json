@@ -525,7 +525,9 @@
     "signOutTitle_one": "1 signature is not sent yet",
     "signOutBody": "They stay encrypted on this tablet and are sent when you sign in here again. If you have a connection, wait until they are sent before you sign out.",
     "signOutStay": "Wait",
-    "signOutAnyway": "Sign out anyway"
+    "signOutAnyway": "Sign out anyway",
+    "lockForced": "The app locks while {{count}} signatures wait to be sent, even with the lock turned off.",
+    "lockForced_one": "The app locks while 1 signature waits to be sent, even with the lock turned off."
   },
   "walkIns": {
     "action": "New signatures",

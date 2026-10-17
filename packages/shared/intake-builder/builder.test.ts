@@ -8,6 +8,7 @@ import { isAppError } from '../errors';
 import {
   answerPayload,
   answerText,
+  builtinLabel,
   builtinOptions,
   canHideBuiltin,
   customAnswerError,
@@ -195,6 +196,13 @@ describe('built-in questions', () => {
     expect(canHideBuiltin('clothing_size')).toBe(false);
     expect(canHideBuiltin('phone')).toBe(true);
     expect(hiddenBuiltinQuestions(catalog)).toEqual(new Set(['phone']));
+  });
+
+  test("staff wording shows only in the language staff wrote it in; elsewhere the app's own stays", () => {
+    expect(builtinLabel(catalog, 'childcare_need', 'ca')).toBe(
+      'Necessites que et cuidem els fills?',
+    );
+    expect(builtinLabel(catalog, 'childcare_need', 'ar')).toBeNull();
   });
 
   test('options are relabelled or hidden, and her stored value stays visible', () => {

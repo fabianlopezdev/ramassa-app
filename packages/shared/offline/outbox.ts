@@ -9,6 +9,9 @@
  * Two kinds of failure:
  *   - a failure that may pass (no connection, a timeout, a server error) is
  *     retried with a growing delay, up to 30 seconds;
+ *   - a send that gets no answer within a time limit counts as a failure that
+ *     may pass (RAPP-530): a server that accepts the connection and never
+ *     answers would otherwise hold the queue, and every later retry, forever;
  *   - a refusal (no permission, a broken rule, a record that no longer exists)
  *     will fail the same way every time. The entry stays, marked rejected with
  *     its error code, so the screen can say so and offer a retry. It is never
@@ -68,6 +71,8 @@ export interface OutboxDrainResult<Result> {
 }
 
 const RETRY_BASE_MS = 1_000;
+/** How long one send may wait for an answer before it counts as a failed try. */
+export const SEND_TIMEOUT_MS = 20_000;
 const RETRY_MAX_MS = 30_000;
 const RETRY_BACKOFF_BASE = 2;
 
@@ -82,6 +87,24 @@ const FINAL_CODES: ReadonlySet<AppErrorCode> = new Set([
 
 export function isFinalRejection(error: unknown): error is { readonly code: AppErrorCode } {
   return isAppError(error) && FINAL_CODES.has(error.code);
+}
+
+class SendTimeoutError extends Error {
+  constructor() {
+    super('outbox send timed out');
+  }
+}
+
+/**
+ * The send, or a failure after `ms`. The request itself may still finish later;
+ * every entry carries its idempotency key, so a late answer saves nothing twice.
+ */
+function withSendTimeout<Result>(send: Promise<Result>, ms: number): Promise<Result> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new SendTimeoutError()), ms);
+  });
+  return Promise.race([send, timeout]).finally(() => clearTimeout(timer));
 }
 
 export function retryDelayMs(attemptCount: number): number {
@@ -194,6 +217,7 @@ export function createOutbox<Entry extends OutboxEntry>(
     drain: <Result>(
       send: (entry: Entry) => Promise<Result>,
       now: Date = new Date(),
+      options: { readonly sendTimeoutMs?: number } = {},
     ): Promise<OutboxDrainResult<Result>> =>
       serializeDrain(storage, `${config.key}:${ownerId}`, async () => {
         const nowMs = now.getTime();
@@ -208,7 +232,9 @@ export function createOutbox<Entry extends OutboxEntry>(
             continue;
           }
           try {
-            delivered.push(await send(entry));
+            delivered.push(
+              await withSendTimeout(send(entry), options.sendTimeoutMs ?? SEND_TIMEOUT_MS),
+            );
             update(entry, () => null);
           } catch (error) {
             if (isFinalRejection(error)) {

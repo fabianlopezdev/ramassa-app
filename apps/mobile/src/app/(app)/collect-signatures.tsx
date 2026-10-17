@@ -91,7 +91,8 @@ export default function CollectSignaturesScreen() {
           <PressableScale
             testID="collect-back"
             accessibilityLabel={tCommon('back')}
-            onPress={router.back}
+            // After signing mode the screen may have nothing under it (RAPP-530).
+            onPress={() => (router.canGoBack() ? router.back() : router.replace('/more' as Href))}
             haptic="tapLight"
             className="min-h-recommended self-start justify-center"
           >

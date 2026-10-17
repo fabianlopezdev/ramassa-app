@@ -525,7 +525,9 @@
     "signOutTitle_one": "1 signatura encara no s'ha enviat",
     "signOutBody": "Es queden xifrades en aquesta tauleta i s'envien quan tornis a entrar aquí. Si tens connexió, espera que s'enviïn abans de sortir.",
     "signOutStay": "Espera",
-    "signOutAnyway": "Surt igualment"
+    "signOutAnyway": "Surt igualment",
+    "lockForced": "La pantalla es bloqueja mentre {{count}} signatures esperen per enviar-se, encara que el bloqueig estigui desactivat.",
+    "lockForced_one": "La pantalla es bloqueja mentre 1 signatura espera per enviar-se, encara que el bloqueig estigui desactivat."
   },
   "walkIns": {
     "action": "Signatures noves",

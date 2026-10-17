@@ -28,6 +28,7 @@ import {
   type HandoverOutboxEntry,
 } from './handover-outbox';
 import { isNetworkStateOnline } from './network-status';
+import { finishesWithin, SCREEN_SEND_WAIT_MS } from './outbox-drain-loop';
 import { privateStorage } from './storage';
 import { supabase } from './supabase';
 
@@ -141,7 +142,10 @@ export function useHandoverOutbox() {
       outbox.enqueue(input);
       outboxChanged();
       if (!isOnline) return { state: 'waiting' };
-      const { delivered } = await drainHandovers(userId, queryClient);
+      // A server that never answers must not hold the screen (RAPP-530).
+      const drained = drainHandovers(userId, queryClient);
+      if (!(await finishesWithin(drained, SCREEN_SEND_WAIT_MS))) return { state: 'waiting' };
+      const { delivered } = await drained;
       const result = delivered.find((candidate) => candidate.deliveryId === input.id);
       return result === undefined ? { state: 'waiting' } : { state: 'saved', result };
     },
