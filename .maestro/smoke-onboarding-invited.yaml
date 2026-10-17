@@ -501,6 +501,15 @@ env:
 - extendedWaitUntil:
     visible: '.*${HOME_FEED_TITLE}.*'
     timeout: 120000
+# The notification prompt waits until she has signed (RAPP-304), so it can
+# open over the home screen just now. Decline it before checking the tabs.
+- waitForAnimationToEnd:
+    timeout: 3000
+- tapOn:
+    text: '^${PUSH_DECLINE}$'
+    optional: true
+- waitForAnimationToEnd:
+    timeout: 2000
 - assertVisible:
     text: '^${TAB_HOME}$'
 - assertNotVisible:
