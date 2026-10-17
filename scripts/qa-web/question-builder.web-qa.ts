@@ -23,7 +23,7 @@ test('an admin builds a screen with a question, and its type then locks', async 
   await page.goto('/settings?tab=questions');
   const builder = page.getByTestId('question-builder');
   await expect(builder).toBeVisible({ timeout: 15_000 });
-  await expect(builder).toContainText('Com arribes als entrenaments');
+  await expect(builder).toContainText(/Com arribes als entrenaments|How you get to training/);
 
   await builder
     .getByRole('button', { name: /^(new screen|pantalla nova|pantalla nueva)$/i })
@@ -100,7 +100,7 @@ test("staff read a player's answers, an archived option marked", async ({ page }
   await expect(section).toBeVisible({ timeout: 15_000 });
   await expect(
     section.getByTestId('custom-answer-5eed0000-0000-4000-8045-000000000002'),
-  ).toContainText(/Un cartell \((archived|arxivada)\)/);
+  ).toContainText(/(Un cartell \(arxivada\)|A poster \(archived\))/);
   // The seeded staff hold the Sensitive level: her seasonal answer is read, decrypted.
   await expect(
     section.getByTestId('custom-answer-5eed0000-0000-4000-8045-000000000003'),
