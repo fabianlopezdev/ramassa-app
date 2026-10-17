@@ -204,6 +204,197 @@ export type Database = {
           },
         ];
       };
+      authorization_consent_events: {
+        Row: {
+          consent_key: string;
+          decided_at: string;
+          granted: boolean;
+          id: number;
+          method: string;
+          org_id: string;
+          profile_id: string;
+          signature_id: string | null;
+        };
+        Insert: {
+          consent_key: string;
+          decided_at?: string;
+          granted: boolean;
+          id?: never;
+          method: string;
+          org_id: string;
+          profile_id: string;
+          signature_id?: string | null;
+        };
+        Update: {
+          consent_key?: string;
+          decided_at?: string;
+          granted?: boolean;
+          id?: never;
+          method?: string;
+          org_id?: string;
+          profile_id?: string;
+          signature_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'authorization_consent_events_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'authorization_consent_events_profile_id_fkey';
+            columns: ['profile_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'authorization_consent_events_signature_id_fkey';
+            columns: ['signature_id'];
+            isOneToOne: false;
+            referencedRelation: 'authorization_signatures';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      authorization_signatures: {
+        Row: {
+          device: string | null;
+          id: string;
+          language: string | null;
+          method: string;
+          org_id: string;
+          paper_signed_on: string | null;
+          profile_id: string;
+          recorded_by: string | null;
+          season_id: string;
+          signature: Json | null;
+          signed_at: string;
+          unable_to_draw: boolean;
+          version_id: string | null;
+        };
+        Insert: {
+          device?: string | null;
+          id?: string;
+          language?: string | null;
+          method: string;
+          org_id: string;
+          paper_signed_on?: string | null;
+          profile_id: string;
+          recorded_by?: string | null;
+          season_id: string;
+          signature?: Json | null;
+          signed_at?: string;
+          unable_to_draw?: boolean;
+          version_id?: string | null;
+        };
+        Update: {
+          device?: string | null;
+          id?: string;
+          language?: string | null;
+          method?: string;
+          org_id?: string;
+          paper_signed_on?: string | null;
+          profile_id?: string;
+          recorded_by?: string | null;
+          season_id?: string;
+          signature?: Json | null;
+          signed_at?: string;
+          unable_to_draw?: boolean;
+          version_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'authorization_signatures_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'authorization_signatures_profile_id_fkey';
+            columns: ['profile_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'authorization_signatures_recorded_by_fkey';
+            columns: ['recorded_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'authorization_signatures_season_id_fkey';
+            columns: ['season_id'];
+            isOneToOne: false;
+            referencedRelation: 'seasons';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'authorization_signatures_version_id_fkey';
+            columns: ['version_id'];
+            isOneToOne: false;
+            referencedRelation: 'authorization_versions';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      authorization_versions: {
+        Row: {
+          content: Json;
+          id: string;
+          org_id: string;
+          published_at: string;
+          published_by: string | null;
+          season_id: string;
+          version_number: number;
+        };
+        Insert: {
+          content: Json;
+          id?: string;
+          org_id: string;
+          published_at?: string;
+          published_by?: string | null;
+          season_id: string;
+          version_number: number;
+        };
+        Update: {
+          content?: Json;
+          id?: string;
+          org_id?: string;
+          published_at?: string;
+          published_by?: string | null;
+          season_id?: string;
+          version_number?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'authorization_versions_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'authorization_versions_published_by_fkey';
+            columns: ['published_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'authorization_versions_season_id_fkey';
+            columns: ['season_id'];
+            isOneToOne: false;
+            referencedRelation: 'seasons';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       collaborating_entities: {
         Row: {
           created_at: string;
@@ -2422,8 +2613,12 @@ export type Database = {
           date_of_birth: string | null;
           document_number: string | null;
           document_type: string | null;
+          emergency_contact_name: string | null;
+          emergency_contact_phone: string | null;
+          emergency_contact_relation: string | null;
           first_name: string;
           has_dependents: boolean;
+          health_info: string | null;
           id: string;
           is_active: boolean;
           is_forum_banned: boolean;
@@ -2462,8 +2657,12 @@ export type Database = {
           date_of_birth?: string | null;
           document_number?: string | null;
           document_type?: string | null;
+          emergency_contact_name?: string | null;
+          emergency_contact_phone?: string | null;
+          emergency_contact_relation?: string | null;
           first_name: string;
           has_dependents?: boolean;
+          health_info?: string | null;
           id: string;
           is_active?: boolean;
           is_forum_banned?: boolean;
@@ -2502,8 +2701,12 @@ export type Database = {
           date_of_birth?: string | null;
           document_number?: string | null;
           document_type?: string | null;
+          emergency_contact_name?: string | null;
+          emergency_contact_phone?: string | null;
+          emergency_contact_relation?: string | null;
           first_name?: string;
           has_dependents?: boolean;
+          health_info?: string | null;
           id?: string;
           is_active?: boolean;
           is_forum_banned?: boolean;
@@ -2804,6 +3007,41 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'entity_referrals';
             referencedColumns: ['org_id', 'id'];
+          },
+        ];
+      };
+      seasons: {
+        Row: {
+          created_at: string;
+          id: string;
+          is_current: boolean;
+          name: string;
+          org_id: string;
+          starts_on: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          is_current?: boolean;
+          name: string;
+          org_id: string;
+          starts_on: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          is_current?: boolean;
+          name?: string;
+          org_id?: string;
+          starts_on?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'seasons_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
           },
         ];
       };
@@ -4259,8 +4497,12 @@ export type Database = {
           date_of_birth: string | null;
           document_number: string | null;
           document_type: string | null;
+          emergency_contact_name: string | null;
+          emergency_contact_phone: string | null;
+          emergency_contact_relation: string | null;
           first_name: string;
           has_dependents: boolean;
+          health_info: string | null;
           id: string;
           is_active: boolean;
           is_forum_banned: boolean;
@@ -4532,8 +4774,12 @@ export type Database = {
           date_of_birth: string;
           document_number: string;
           document_type: string;
+          emergency_contact_name: string;
+          emergency_contact_phone: string;
+          emergency_contact_relation: string;
           first_name: string;
           has_dependents: boolean;
+          health_info: string;
           id: string;
           last_name: string;
           media_consent: boolean;
@@ -4586,8 +4832,12 @@ export type Database = {
           date_of_birth: string;
           document_number: string;
           document_type: string;
+          emergency_contact_name: string;
+          emergency_contact_phone: string;
+          emergency_contact_relation: string;
           first_name: string;
           has_dependents: boolean;
+          health_info: string;
           id: string;
           is_active: boolean;
           is_forum_banned: boolean;
@@ -4734,6 +4984,18 @@ export type Database = {
         Returns: boolean;
       };
       is_team_member: { Args: never; Returns: boolean };
+      list_authorization_versions: {
+        Args: never;
+        Returns: {
+          content: Json;
+          id: string;
+          is_current: boolean;
+          published_at: string;
+          season_id: string;
+          season_name: string;
+          version_number: number;
+        }[];
+      };
       list_collaborating_entities: {
         Args: never;
         Returns: {
@@ -5103,6 +5365,25 @@ export type Database = {
         }[];
       };
       my_answered_questions: { Args: never; Returns: string[] };
+      my_authorization_status: {
+        Args: never;
+        Returns: {
+          content: Json;
+          required: boolean;
+          season_id: string;
+          season_name: string;
+          version_id: string;
+          version_number: number;
+        }[];
+      };
+      my_consents: {
+        Args: never;
+        Returns: {
+          consent_key: string;
+          decided_at: string;
+          granted: boolean;
+        }[];
+      };
       my_entity_invitation: {
         Args: never;
         Returns: {
@@ -5146,6 +5427,29 @@ export type Database = {
           kind: string;
           occurred_at: string;
           title: string;
+        }[];
+      };
+      participant_authorizations: {
+        Args: { p_profile_id: string };
+        Returns: {
+          id: string;
+          language: string;
+          method: string;
+          paper_signed_on: string;
+          season_name: string;
+          signature: Json;
+          signed_at: string;
+          unable_to_draw: boolean;
+          version_number: number;
+        }[];
+      };
+      participant_consents: {
+        Args: { p_profile_id: string };
+        Returns: {
+          consent_key: string;
+          decided_at: string;
+          granted: boolean;
+          method: string;
         }[];
       };
       participant_filter_options: {
@@ -5214,6 +5518,10 @@ export type Database = {
           participant_id: string;
         }[];
       };
+      publish_authorization_version: {
+        Args: { p_content: Json };
+        Returns: string;
+      };
       purge_expired_entity_invitations: {
         Args: { p_now?: string };
         Returns: number;
@@ -5258,6 +5566,10 @@ export type Database = {
       record_equipment_return: {
         Args: { p_condition: string; p_delivery_id: string };
         Returns: undefined;
+      };
+      record_paper_authorization: {
+        Args: { p_profile_id: string; p_signed_on: string };
+        Returns: string;
       };
       record_push_delivery_results: {
         Args: {
@@ -5505,6 +5817,10 @@ export type Database = {
         Args: { p_media_item_id: string; p_privacy_level: string };
         Returns: undefined;
       };
+      set_optional_consent: {
+        Args: { p_granted: boolean; p_key: string };
+        Returns: undefined;
+      };
       set_participant_active: {
         Args: { next_is_active: boolean; participant_id: string };
         Returns: undefined;
@@ -5524,6 +5840,10 @@ export type Database = {
           p_profile_id: string;
         };
         Returns: undefined;
+      };
+      sign_authorization: {
+        Args: { p_payload: Json; p_version_id: string };
+        Returns: string;
       };
       sign_out_everywhere: {
         Args: { p_profile_id: string };

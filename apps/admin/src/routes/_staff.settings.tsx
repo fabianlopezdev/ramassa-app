@@ -2,6 +2,7 @@ import { RequireAuth } from '@/components/auth/require-auth';
 import { useStepUp } from '@/components/auth/step-up';
 import { ORGANIZATION_BRANDING_CHANGED_EVENT } from '@/components/branding/organization-branding-provider';
 import { EntityManagementPanel } from '@/components/entity/entity-management-panel';
+import { AuthorizationEditor } from '@/components/settings/authorization-editor';
 import { DocumentExplanationForm } from '@/components/settings/document-explanation-form';
 import { OrganizationSettingsPanel } from '@/components/settings/organization-settings-panel';
 import { PhotoHandoffButton } from '@/components/settings/photo-handoff-dialog';
@@ -12,6 +13,10 @@ import { supabase } from '@/lib/supabase';
 import { createFileRoute, useRouter } from '@tanstack/react-router';
 import { z } from 'zod';
 import { resetSecondFactor, signOutEverywhere, useAuth } from '@ramassa/shared/auth';
+import {
+  fetchAuthorizationVersions,
+  publishAuthorizationVersion,
+} from '@ramassa/shared/authorization';
 import {
   createManagedEntity,
   fetchEntityCollaborators,
@@ -45,7 +50,10 @@ export const Route = createFileRoute('/_staff/settings')({
   validateSearch: z.object({
     entity: z.uuid().optional().catch(undefined),
     q: z.string().max(120).optional().catch(undefined),
-    tab: z.enum(['organization', 'staff', 'documents', 'entities']).optional().catch(undefined),
+    tab: z
+      .enum(['organization', 'authorization', 'staff', 'documents', 'entities'])
+      .optional()
+      .catch(undefined),
   }),
   loaderDeps: ({ search }) => ({ entityId: search.entity, documentQuery: search.q ?? '' }),
   loader: async ({ deps }) => {
@@ -65,6 +73,7 @@ export const Route = createFileRoute('/_staff/settings')({
       entities,
       requestedCollaborators,
       documentExplanation,
+      authorizationVersions,
     ] = await Promise.all([
       permissions.has('team.manage') ? fetchStaffMembers(supabase) : Promise.resolve([]),
       permissions.has('team.manage')
@@ -82,6 +91,9 @@ export const Route = createFileRoute('/_staff/settings')({
       permissions.has('settings.organization')
         ? fetchDocumentStepExplanation(supabase)
         : Promise.resolve(null),
+      permissions.has('settings.organization')
+        ? fetchAuthorizationVersions(supabase)
+        : Promise.resolve([]),
     ]);
     const selectedEntityId = entities.some((entity) => entity.id === deps.entityId)
       ? (deps.entityId ?? null)
@@ -93,6 +105,7 @@ export const Route = createFileRoute('/_staff/settings')({
           ? requestedCollaborators
           : await fetchEntityCollaborators(supabase, selectedEntityId);
     return {
+      authorizationVersions,
       collaborators,
       documentExplanation,
       documents,
@@ -237,6 +250,17 @@ function OrganizationSettingsScreen() {
       permissions={permissions}
       team={team}
       photoHandoff={<PhotoHandoffButton onDone={refresh} />}
+      authorization={
+        permissions.has('settings.organization') ? (
+          <AuthorizationEditor
+            versions={data.authorizationVersions}
+            onPublish={async (content) => {
+              await withStepUp(() => publishAuthorizationVersion(supabase, content));
+              await refresh();
+            }}
+          />
+        ) : undefined
+      }
       documentExplanation={
         permissions.has('settings.organization') ? (
           <DocumentExplanationForm

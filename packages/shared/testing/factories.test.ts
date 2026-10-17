@@ -4,6 +4,9 @@ import {
   buildAnnouncement,
   buildAttendance,
   buildAuditLogEntry,
+  buildAuthorizationConsentEvent,
+  buildAuthorizationSignature,
+  buildAuthorizationVersion,
   buildEquipmentDelivery,
   buildEvent,
   buildEventCategory,
@@ -26,6 +29,7 @@ import {
   buildProfile,
   buildProfileAnswer,
   buildPushToken,
+  buildSeason,
   buildService,
   buildServiceCategory,
   buildServiceImage,
@@ -401,6 +405,18 @@ describe('buildStockAlert', () => {
   test('defaults to open, which is what Today shows', () => {
     expect(buildStockAlert().resolved_at).toBeNull();
     expect(buildStockAlert().org_id).toBe(SEED_ORGANIZATION_ID);
+  });
+});
+
+describe('the authorization factories (RAPP-304)', () => {
+  test('a current season, a version with every consent, a paper record, a consent', () => {
+    expect(buildSeason().is_current).toBe(true);
+    const version = buildAuthorizationVersion();
+    expect(Object.keys((version.content as { consents: object }).consents)).toHaveLength(7);
+    const paper = buildAuthorizationSignature();
+    expect(paper.method).toBe('paper');
+    expect(paper.signature).toBeNull();
+    expect(buildAuthorizationConsentEvent().granted).toBe(true);
   });
 });
 

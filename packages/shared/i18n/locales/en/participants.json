@@ -455,5 +455,25 @@
   "questionStatesFailed": "The questions could not be saved. Try again.",
   "questionStatesRequiredHint": "Required: answer it before you take it out of the registration.",
   "questionStatesAnswered": "Already answered.",
-  "questionStatesUnanswered": "Not answered yet."
+  "questionStatesUnanswered": "Not answered yet.",
+  "authorizationTitle": "Season authorization",
+  "authorizationNone": "She has not signed an authorization yet.",
+  "authorizationSignedRow": "Season {{season}}: version {{number}}, signed on {{date}} {{method}}",
+  "authorizationPaperRow": "Season {{season}}: signed on paper on {{date}}",
+  "authorizationUnableToDraw": "She signed with the boxes only: she could not draw her signature.",
+  "authorizationSignatureLabel": "Her signature",
+  "authorizationConsentsTitle": "Authorizations",
+  "authorizationGranted": "Yes",
+  "authorizationNotGranted": "No",
+  "authorizationEmergencyContact": "Emergency contact",
+  "authorizationHealth": "Medical information",
+  "authorizationPaperDate": "Date signed on paper",
+  "authorizationPaperAction": "Record the paper signature",
+  "authorizationPaperSaved": "Paper signature recorded.",
+  "authorizationPaperFailed": "It could not be recorded. Try again.",
+  "authorizationMethod": {
+    "app": "in the app",
+    "staff_device": "on a team device",
+    "paper": "on paper"
+  }
 }

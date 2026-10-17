@@ -159,5 +159,25 @@
   "questionStatesFailed": "تعذّر حفظ الأسئلة. حاول مرة أخرى.",
   "questionStatesRequiredHint": "إلزامي: أجب عنه قبل إخراجه من التسجيل.",
   "questionStatesAnswered": "لديه إجابة.",
-  "questionStatesUnanswered": "بلا إجابة بعد."
+  "questionStatesUnanswered": "بلا إجابة بعد.",
+  "authorizationTitle": "تفويض الموسم",
+  "authorizationNone": "لم توقّع أي تفويض بعد.",
+  "authorizationSignedRow": "الموسم {{season}}: النسخة {{number}}، وُقّعت في {{date}} {{method}}",
+  "authorizationPaperRow": "الموسم {{season}}: وُقّعت ورقيًا في {{date}}",
+  "authorizationUnableToDraw": "وقّعت بالمربعات فقط: لم تستطع رسم توقيعها.",
+  "authorizationSignatureLabel": "توقيعها",
+  "authorizationConsentsTitle": "الموافقات",
+  "authorizationGranted": "نعم",
+  "authorizationNotGranted": "لا",
+  "authorizationEmergencyContact": "جهة اتصال للطوارئ",
+  "authorizationHealth": "البيانات الطبية",
+  "authorizationPaperDate": "تاريخ التوقيع الورقي",
+  "authorizationPaperAction": "سجّل التوقيع الورقي",
+  "authorizationPaperSaved": "سُجّل التوقيع الورقي.",
+  "authorizationPaperFailed": "تعذّر التسجيل. حاول مرة أخرى.",
+  "authorizationMethod": {
+    "app": "في التطبيق",
+    "staff_device": "على جهاز الفريق",
+    "paper": "ورقيًا"
+  }
 }

@@ -159,5 +159,25 @@
   "questionStatesFailed": "سؤال‌ها ذخیره نشد. دوباره تلاش کنید.",
   "questionStatesRequiredHint": "الزامی است: پیش از برداشتن آن از ثبت‌نام، پاسخش را بدهید.",
   "questionStatesAnswered": "پاسخ دارد.",
-  "questionStatesUnanswered": "هنوز بی‌پاسخ."
+  "questionStatesUnanswered": "هنوز بی‌پاسخ.",
+  "authorizationTitle": "مجوز فصل",
+  "authorizationNone": "هنوز هیچ مجوزی امضا نکرده است.",
+  "authorizationSignedRow": "فصل {{season}}: نسخه {{number}}، امضاشده در {{date}} {{method}}",
+  "authorizationPaperRow": "فصل {{season}}: امضای کاغذی در {{date}}",
+  "authorizationUnableToDraw": "فقط با خانه‌ها امضا کرد: نمی‌توانست امضا بکشد.",
+  "authorizationSignatureLabel": "امضای او",
+  "authorizationConsentsTitle": "رضایت‌ها",
+  "authorizationGranted": "بله",
+  "authorizationNotGranted": "نه",
+  "authorizationEmergencyContact": "تماس اضطراری",
+  "authorizationHealth": "اطلاعات پزشکی",
+  "authorizationPaperDate": "تاریخ امضای کاغذی",
+  "authorizationPaperAction": "ثبت امضای کاغذی",
+  "authorizationPaperSaved": "امضای کاغذی ثبت شد.",
+  "authorizationPaperFailed": "ثبت انجام نشد. دوباره تلاش کنید.",
+  "authorizationMethod": {
+    "app": "در برنامه",
+    "staff_device": "روی دستگاه تیم",
+    "paper": "روی کاغذ"
+  }
 }

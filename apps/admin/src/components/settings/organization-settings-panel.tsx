@@ -43,6 +43,8 @@ interface OrganizationSettingsPanelProps {
   readonly photoHandoff: ReactNode;
   /** The note under the wizard's document step (RAPP-302), for settings.organization. */
   readonly documentExplanation?: ReactNode;
+  /** The participation authorization versions and editor (RAPP-304). */
+  readonly authorization?: ReactNode;
   readonly documents: readonly InternalDocument[];
   readonly documentQuery: string;
   readonly entityManagement: ReactNode;
@@ -63,7 +65,7 @@ interface OrganizationSettingsPanelProps {
 
 type PendingAction = 'organization' | 'document' | 'download';
 
-export type SettingsTab = 'organization' | 'staff' | 'documents' | 'entities';
+export type SettingsTab = 'organization' | 'authorization' | 'staff' | 'documents' | 'entities';
 
 /** The tabs a person may open, in display order (RAPP-231). */
 function visibleSettingsTabs(permissions: ReadonlySet<PermissionCode>): readonly SettingsTab[] {
@@ -71,6 +73,8 @@ function visibleSettingsTabs(permissions: ReadonlySet<PermissionCode>): readonly
   if (permissions.has('settings.organization') || permissions.has('settings.branding')) {
     tabs.push('organization');
   }
+  // The season's participation authorization (RAPP-304).
+  if (permissions.has('settings.organization')) tabs.push('authorization');
   if (permissions.has('team.manage')) tabs.push('staff');
   if (permissions.has('settings.documents')) tabs.push('documents');
   if (permissions.has('entities.manage')) tabs.push('entities');
@@ -105,6 +109,7 @@ export function OrganizationSettingsPanel({
   team,
   photoHandoff,
   documentExplanation,
+  authorization,
   documents,
   documentQuery,
   entityManagement,
@@ -310,6 +315,9 @@ export function OrganizationSettingsPanel({
         <TabsList className="max-w-full overflow-x-auto" variant="line">
           {tabs.includes('organization') ? (
             <TabsTrigger value="organization">{t('tabOrganization')}</TabsTrigger>
+          ) : null}
+          {tabs.includes('authorization') ? (
+            <TabsTrigger value="authorization">{t('tabAuthorization')}</TabsTrigger>
           ) : null}
           {tabs.includes('staff') ? <TabsTrigger value="staff">{t('tabTeam')}</TabsTrigger> : null}
           {tabs.includes('documents') ? (
@@ -539,6 +547,10 @@ export function OrganizationSettingsPanel({
           )}
         </TabsContent>
 
+        <TabsContent value="authorization" className="space-y-6">
+          <SectionHeader title={t('tabAuthorization')} intro={t('authorizationIntro')} />
+          {authorization}
+        </TabsContent>
         <TabsContent value="entities">{entityManagement}</TabsContent>
       </Tabs>
     </section>

@@ -19,6 +19,7 @@ import { ShakeOnError } from '@/components/motion/shake-on-error';
 import { SkeletonPulse } from '@/components/motion/skeleton-pulse';
 import { AttendanceHistorySection } from '@/components/profile/attendance-history-section';
 import { LanguageSwitcher } from '@/components/profile/language-switcher';
+import { MyConsentsSection } from '@/components/profile/my-consents-section';
 import { ProfileRow, ProfileSection } from '@/components/profile/profile-section';
 import { SeasonAnswerRows } from '@/components/profile/season-answer-rows';
 import { logout } from '@/lib/auth';
@@ -247,6 +248,8 @@ export default function ProfileScreen() {
               />
               <ProfileRow label={t('onboarding:shoeSizeLabel')} value={shown(profile.shoe_size)} />
             </ProfileSection>
+            {/* Her optional consents from the season authorization (RAPP-304). */}
+            <MyConsentsSection mediaConsent={profile.media_consent} />
             {/* The season registration answers (RAPP-303): hers to see and correct. */}
             <ProfileSection title={t('onboarding:seasonSectionTitle')}>
               <SeasonAnswerRows profile={profile} emptyLabel={t('notProvided')} />
