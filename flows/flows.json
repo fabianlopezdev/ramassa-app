@@ -4,7 +4,7 @@
   "vaultFlowsDir": "~/fabulousapps/second-brain/10-Projects/Ramassa-App/flows",
   "flowShotsSkillDir": "~/.claude/skills/flow-shots",
   "devices": {
-    "ios": "Ramassa Dev iPhone 17 Pro",
+    "ios": "Ramassa — iPhone 18 Pro",
     "android": "Ramassa_QA_Pixel_8"
   },
   "appId": "com.ramassa.app",

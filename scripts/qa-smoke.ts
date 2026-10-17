@@ -160,6 +160,11 @@ async function runSuiteOn(
   // The dev-client URL is only supplied to the flows that declare it, because
   // the resolver treats an undeclared override as an authoring mistake - which
   // it is, for a capture flow, and that check is worth keeping.
+  // Scripts a flow runs with `runScript` are read relative to the flow, which
+  // runs from `.flow-shots/`, so they are copied next to the resolved flows.
+  for (const file of (await readdir(suiteDir)).filter((name) => name.endsWith('.js'))) {
+    await Bun.write(path.join(repoRoot, '.flow-shots', file), Bun.file(path.join(suiteDir, file)));
+  }
   const translate = await loadTranslator('ca');
   const clientUrl = smokeDevClientUrl(platform, config.appId, config.scheme, metro.port);
   for (const file of (await readdir(suiteDir)).filter((name) => name.endsWith('.yaml'))) {

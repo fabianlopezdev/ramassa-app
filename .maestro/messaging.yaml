@@ -2,10 +2,6 @@ appId: com.ramassa.app
 name: messaging
 env:
   DEV_CLIENT_URL: ramassa://expo-development-client/?url=http%3A%2F%2Flocalhost%3A18049
-  DEV_MENU_LABEL: Developer menu
-  PLAYER_EMAIL: amina.alhassan@example.test
-  PLAYER_PASSWORD: ramassa-dev-password
-  LOGIN_TITLE: Inici de sessió
   BACK: Enrere
   PUSH_DECLINE: Ara no
   TAB_HOME: Inici
@@ -15,53 +11,11 @@ env:
   COMPOSER: Escriu un missatge
   OFFLINE: Sense connexió. Els missatges quedaran en cua.
 ---
-- clearState
-- openLink: ${DEV_CLIENT_URL}
-- tapOn:
-    text: '^Open$'
-    optional: true
-- extendedWaitUntil:
-    visible: '.*${DEV_MENU_LABEL}.*'
-    timeout: 240000
-- waitForAnimationToEnd:
-    timeout: 12000
-- repeat:
-    times: 4
-    while:
-      visible: '.*Close.*'
-    commands:
-      - tapOn: '.*Close.*'
-      - waitForAnimationToEnd:
-          timeout: 3000
-- runFlow:
-    file: _set-language.yaml
-    env:
-      LOCALE: ca
-- tapOn: '^Inicia la sessió amb contrasenya$'
-- tapOn: '^tu@exemple.com$'
-- inputText: ${PLAYER_EMAIL}
-- runFlow:
-    when:
-      platform: iOS
-    commands:
-      - waitForAnimationToEnd:
-          timeout: 1500
-      - tapOn:
-          text: '^Not Now$'
-          optional: true
-- tapOn: '^La teva contrasenya$'
-- inputText: ${PLAYER_PASSWORD}
-- runFlow:
-    when:
-      platform: iOS
-    commands:
-      - waitForAnimationToEnd:
-          timeout: 1500
-      - tapOn:
-          text: '^Not Now$'
-          optional: true
-- tapOn: '.*${LOGIN_TITLE}.*'
-- tapOn: '^Entra$'
+# Signed in through the shared fragments, like every other flow. The phone app
+# no longer has a password form: players sign in with an emailed code, which a
+# flow cannot read, so the seeded player comes from the developer menu.
+- runFlow: _open-app.yaml
+- runFlow: _sign-in.yaml
 - runFlow:
     when:
       platform: Android

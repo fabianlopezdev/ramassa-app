@@ -9,24 +9,25 @@ name: _set-language
 # "Inici de sessio is not visible" and reads like a broken login screen rather
 # than a locale mismatch.
 #
-# The dev menu is reachable pre-auth on purpose: its entry sits on the login
-# screen too, exactly so the language can be pinned before anyone signs in.
+# The menu is opened by its own route rather than by its entry, which sits on
+# the signed-in Profile tab only. The route answers in every dev build, signed
+# in or not, so the language can still be pinned before anyone signs in.
+env:
+  DEV_MENU_LINK: ramassa://dev-menu
 ---
-# Opening the dev menu is a LOOP, not one tap. A single tap is swallowed whenever
-# the client's explainer sheet is mid-flight over it, and the flow then waits out
-# its timeout on a login screen with the button plainly visible. The loop also
-# clears a late sheet, and it stops the instant the menu is actually open. The
-# The close control is pinned and has a stable accessibility ID, so it is the
-# authoritative signal that the menu is open on both platforms.
+# Opening the dev menu is a LOOP, not one link. A link that lands while the
+# client's explainer sheet is mid-flight can be dropped, and the loop stops the
+# instant the menu is actually open. The close control is pinned and has a
+# stable accessibility ID, so it is the authoritative signal that the menu is
+# open on both platforms. When a caller already has the menu open, the loop
+# runs zero times.
 - repeat:
     times: 6
     while:
       notVisible:
         id: dev-menu-close
     commands:
-      - tapOn:
-          id: dev-menu-entry
-          optional: true
+      - openLink: ${DEV_MENU_LINK}
       - waitForAnimationToEnd:
           timeout: 3000
 - extendedWaitUntil:
