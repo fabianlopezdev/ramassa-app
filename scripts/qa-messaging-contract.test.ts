@@ -7,12 +7,22 @@ const shellFlowPath = new URL('../.maestro/smoke-shells.yaml', import.meta.url);
 describe('durable messaging device flow', () => {
   test('isolates Maestro debug output per flow', () => {
     expect(
-      maestroSmokeCommand('emulator-5558', '/repo/.flow-shots/messaging.yaml', '/tmp/debug'),
+      maestroSmokeCommand(
+        'emulator-5558',
+        '/repo/.flow-shots/messaging.yaml',
+        '/tmp/debug',
+        '/tmp/debug/report.xml',
+      ),
     ).toEqual([
       'maestro',
       '--device',
       'emulator-5558',
       'test',
+      '--no-ansi',
+      '--format',
+      'junit',
+      '--output',
+      '/tmp/debug/report.xml',
       '--debug-output',
       '/tmp/debug',
       '--flatten-debug-output',

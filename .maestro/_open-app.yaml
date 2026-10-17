@@ -52,10 +52,29 @@ env:
           timeout: 5000
 
 # First launch after a state clear downloads the JS bundle, hence minutes.
+# Waited for in a loop rather than one long wait, because two things can stand
+# between the launch and the language screen on a busy Mac (RAPP-500): the
+# "Open in" confirmation can appear after the optional tap above has given up,
+# and a clean install has come up on the developer menu, signed out, instead
+# of its root. Each pass answers the one and closes the other.
+- repeat:
+    times: 40
+    while:
+      notVisible:
+        id: language-heading
+    commands:
+      - tapOn:
+          text: '^Open$'
+          optional: true
+      - tapOn:
+          id: dev-menu-close
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 5000
 - extendedWaitUntil:
     visible:
       id: language-heading
-    timeout: 240000
+    timeout: 30000
 
 # The development client shows an explainer sheet for its OWN menu a second or
 # two AFTER the app renders, so the wait below is waiting for it to APPEAR.

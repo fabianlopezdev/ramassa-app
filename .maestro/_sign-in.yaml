@@ -1,90 +1,45 @@
 appId: com.ramassa.app
 name: _sign-in
-# Signs in as a seeded player through the dev menu's account switcher. A
+# Signs in as a seeded player through the dev menu's account link. A
 # fragment: `smoke-auth` exercises this path as its
 # subject, the others just need to be past it.
 #
 # There is no client-side role to fake: role lives in `profiles.role`, resolved
-# from the session, so the switcher signs in for real against the local seeded
+# from the session, so the link signs in for real against the local seeded
 # stack. That is also what makes it deterministic - `supabase db reset` rebuilds
 # exactly these accounts.
 env:
-  DEV_MENU_LABEL: Developer menu
   DEV_MENU_LINK: ramassa://dev-menu
-  ACCOUNTS_SECTION: Accounts and roles
   PLAYER_EMAIL: '{{player:email}}'
   LOGIN_TITLE: '{{auth:emailLoginTitle}}'
 ---
-# Opening the dev menu is a LOOP, not one link. Signed out, the menu is reached
-# by its own route only, since its entry sits on the signed-in Profile tab. A
-# link landing while the client's explainer sheet is mid-flight can be dropped.
-# Stop on the pinned Close action, then scroll independently because the
-# Environment section can push the account switcher below the fold on smaller
-# Android screens.
+# One link opens the menu AND signs in (RAPP-500): the menu signs in as the
+# seeded account named by `?account=`, with the same password sign-in its
+# account rows use, then prints "applied: signed in as <email>" at the top.
+# Scrolling the menu to the row cost about a minute per flow; this costs
+# seconds, and the sign-in itself is unchanged.
+#
+# Still a LOOP: a link landing while the client's explainer sheet is mid-flight
+# can be dropped. The result line names the account, so a line left by an
+# earlier request cannot satisfy this one.
 - repeat:
     times: 6
     while:
-      notVisible:
-        id: dev-menu-close
+      notVisible: '.*signed in as ${PLAYER_EMAIL}.*'
     commands:
-      - openLink: ${DEV_MENU_LINK}
+      - openLink: ${DEV_MENU_LINK}?account=${PLAYER_EMAIL}
       - waitForAnimationToEnd:
           timeout: 3000
+      - extendedWaitUntil:
+          visible: '.*signed in as ${PLAYER_EMAIL}.*'
+          timeout: 10000
+          optional: true
 - extendedWaitUntil:
-    visible:
-      id: dev-menu-close
-    timeout: 15000
-- repeat:
-    times: 20
-    while:
-      notVisible: '.*${ACCOUNTS_SECTION}.*'
-    commands:
-      - swipe:
-          start: 50%, 70%
-          end: 50%, 48%
-          duration: 900
-      - waitForAnimationToEnd:
-          timeout: 1200
-- extendedWaitUntil:
-    visible: '.*${ACCOUNTS_SECTION}.*'
-    timeout: 15000
-# The menu opens with an interactive transition; a swipe landing while it is still
-# running cancels it and drops back to where we started.
-- waitForAnimationToEnd:
-    timeout: 5000
-
-# A bounded swipe loop rather than `scrollUntilVisible`: that built-in reaches
-# this row on the Android emulator, leaves it plainly on screen, and still
-# reports it as not found. The row is matched on the ADDRESS alone because iOS
-# exposes the row's accessibility label and Android the text node inside it.
-- repeat:
-    times: 20
-    while:
-      notVisible: '.*${PLAYER_EMAIL}.*'
-    commands:
-      - swipe:
-          start: 50%, 70%
-          end: 50%, 50%
-          duration: 900
-      - waitForAnimationToEnd:
-          timeout: 2500
-# The loop stops the instant a sliver is on screen, which parks the row under the
-# navigation bar where a tap does not reach it. A full extra swipe lifts the
-# entire row clear. The previous 65% to 55% move left the email at y=2176 on a
-# 2160px Android screen, so Maestro tapped below the app and reported success.
-- swipe:
-    start: 50%, 70%
-    end: 50%, 35%
-    duration: 900
-- waitForAnimationToEnd:
-    timeout: 2500
-- tapOn: '.*${PLAYER_EMAIL}.*'
-- waitForAnimationToEnd:
-    timeout: 3000
+    visible: '.*signed in as ${PLAYER_EMAIL}.*'
+    timeout: 30000
 
 # Close the dev menu. Signing in does NOT dismiss it: the session changes
-# underneath and the tapped row simply becomes the highlighted one, so nothing
-# is waitable until the menu is out of the way.
+# underneath, so nothing is waitable until the menu is out of the way.
 # Closing the menu is a LOOP too. Selecting a language re-renders the section, and
 # a tap dispatched into that re-render finds no `Close` in the hierarchy at all,
 # even though a screenshot taken a moment later shows it plainly.

@@ -8,7 +8,6 @@ env:
   STAFF_EMAIL: '{{staffOnly:email}}'
   LOGIN_TITLE: '{{auth:emailLoginTitle}}'
   ATTENDANCE_TITLE: '{{attendance:title}}'
-  ACCOUNTS_SECTION: Accounts and roles
   PUSH_DECLINE: '{{push:rationaleDecline}}'
   OFFLINE_BANNER: '{{attendance:offlineBanner}}'
 ---
@@ -20,40 +19,24 @@ env:
       LOCALE: ${LOCALE}
 # Attendance needs the seeded staff identity. The shared sign-in fragment owns
 # a player default, so this flow selects the staff fixture directly.
+# Signed in through the menu's account link (RAPP-500): one link opens the
+# menu and signs in as this seeded account with the same password sign-in the
+# account rows use. Scrolling the roster to the row cost about a minute.
 - repeat:
     times: 6
     while:
-      notVisible: '.*${ACCOUNTS_SECTION}.*'
+      notVisible: '.*signed in as ${STAFF_EMAIL}.*'
     commands:
-      - tapOn:
-          text: '.*Close.*'
-          optional: true
-      - openLink: ${DEV_MENU_LINK}
+      - openLink: ${DEV_MENU_LINK}?account=${STAFF_EMAIL}
       - waitForAnimationToEnd:
           timeout: 3000
+      - extendedWaitUntil:
+          visible: '.*signed in as ${STAFF_EMAIL}.*'
+          timeout: 10000
+          optional: true
 - extendedWaitUntil:
-    visible: '.*${ACCOUNTS_SECTION}.*'
-    timeout: 15000
-- waitForAnimationToEnd:
-    timeout: 5000
-- repeat:
-    times: 20
-    while:
-      notVisible: '.*${STAFF_EMAIL}.*'
-    commands:
-      - swipe:
-          start: 50%, 70%
-          end: 50%, 50%
-          duration: 900
-      - waitForAnimationToEnd:
-          timeout: 2500
-- swipe:
-    start: 50%, 65%
-    end: 50%, 55%
-    duration: 900
-- waitForAnimationToEnd:
-    timeout: 2500
-- tapOn: '.*${STAFF_EMAIL}.*'
+    visible: '.*signed in as ${STAFF_EMAIL}.*'
+    timeout: 30000
 - waitForAnimationToEnd:
     timeout: 10000
 - repeat:

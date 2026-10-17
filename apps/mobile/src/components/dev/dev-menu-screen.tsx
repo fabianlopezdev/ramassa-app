@@ -6,6 +6,7 @@ import { DevCacheSection } from './dev-cache-section';
 import { DevEnvironmentSection } from './dev-environment-section';
 import { DevErrorsSection } from './dev-errors-section';
 import { DevLanguageSection } from './dev-language-section';
+import { DevLinkSection } from './dev-link-section';
 import { DevLogsSection } from './dev-logs-section';
 import { DevMenuCloseButton } from './dev-menu-close-button';
 import { DevMotionSection } from './dev-motion-section';
@@ -17,6 +18,9 @@ import { DevPushSection } from './dev-push-section';
  * The developer menu (RAPP-19). Reachable only in dev builds; see
  * `src/app/dev-menu.tsx` for the gate that keeps this whole module out of a
  * release bundle.
+ *
+ * A `?language=..&account=..` link is applied first and reported at the top
+ * (RAPP-500); the smoke suite pins its language and account that way.
  *
  * Order is by how often it gets used: what am I running and as whom, then
  * switch who I am, then switch language, then the diagnostic panels.
@@ -63,6 +67,7 @@ export function DevMenuScreen() {
         contentContainerClassName="gap-md p-md pb-2xl"
         testID="dev-menu-scroll"
       >
+        <DevLinkSection />
         <DevEnvironmentSection />
         <DevAccountsSection />
         <DevLanguageSection />

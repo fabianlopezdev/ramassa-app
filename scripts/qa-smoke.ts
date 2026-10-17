@@ -1,9 +1,18 @@
 /**
  * The cumulative Maestro regression suite (RAPP-20).
  *
- *   bun run qa:smoke [--platform ios|android|both] [--only <substring>] [--metro-port <port>]
+ *   bun run qa:smoke [--platform ios|android|both] [--only <substring>]
+ *                    [--shards <n>] [--metro-port <first port>]
  *
- * `--only` narrows the run to the flows whose filename contains the substring.
+ * Since RAPP-500 a run never touches the shared dev database or simulator. It
+ * resets its own Supabase stack (`ramassa-qa`, ports 573xx, see
+ * `qa-smoke/supabase-stack.ts`), serves the app from its own Metro pointed at
+ * that stack, and on iOS splits the flows across `--shards` simulators of its
+ * own (default 3, `qa-smoke/shards.ts` says which flows must share one). One
+ * run at a time holds the stack and simulators; a second run waits for it.
+ *
+ * `--only` narrows the run to the flows whose filename contains the substring
+ * (or any of several, comma-separated).
  * It exists for ITERATING on one failing flow: a suite pass is minutes per
  * platform, and re-running all of it to see whether one selector now resolves
  * is how a green suite ends up taking an afternoon. A closure run never passes
@@ -23,63 +32,49 @@
  * screen it names.
  */
 
-import { readdir } from 'node:fs/promises';
+import { mkdir, readdir } from 'node:fs/promises';
 import path from 'node:path';
 import { loadFlowConfig, repoRoot, type FlowConfig, type Pass } from './flow-capture/config';
 import {
   ensureAndroidApp,
   ensureAndroidDevice,
-  ensureIosApp,
-  ensureIosDevice,
   pinAndroidStatusBar,
-  pinIosStatusBar,
   reverseMetroPort,
   reverseSupabasePort,
 } from './flow-capture/devices';
 import { devClientUrl, writeResolvedFlow } from './flow-capture/resolve-flow';
-import { ensureMetro } from './flow-capture/servers';
-import { log, run, runOrThrow } from './flow-capture/shell';
+import { log, runOrThrow } from './flow-capture/shell';
 import { loadTranslator } from './flow-capture/translations';
 import { assertAndroidTabLabelsDrawn } from './qa-android-tab-labels';
+import { prepareIosPool } from './qa-smoke/ios-pool';
+import { acquireQaLock } from './qa-smoke/lock';
+import { isDriverFailure, prepareMaestroHome, runMaestroFlow } from './qa-smoke/maestro-run';
+import { prewarmBundle, startQaMetro } from './qa-smoke/metro';
+import { planShards, sqlBefore, type Shard } from './qa-smoke/shards';
+import { assertQaStackUrl, prepareQaStack, QA_PROJECT_ID, qaSql } from './qa-smoke/supabase-stack';
+
+export { maestroSmokeCommand } from './qa-smoke/maestro-run';
 
 const suiteDir = path.join(repoRoot, '.maestro');
+const flowShotsDir = path.join(repoRoot, '.flow-shots');
+const durationsPath = path.join(flowShotsDir, 'qa-smoke-durations.json');
 
-/**
- * Rebuild the local seeded database before the suite runs (RAPP-28).
- *
- * Needed because one member CONSUMES seeded state: `smoke-onboarding` finishes
- * the wizard, which writes a profile for the profile-less intake account, and
- * the wizard gate then never fires for that account again. Without this the
- * flow would be green on its first run and, from the second on, would be
- * asserting against a screen it can no longer reach - a check that silently
- * stops testing the thing it is named after, which is the failure mode this
- * project has written down twice.
- *
- * Unconditional rather than "only when smoke-onboarding is in the run": a
- * cumulative suite whose result depends on what a previous run left behind is
- * not a regression net. It costs one reset per platform, and `qa:smoke` is a
- * closure gate, not a per-commit hook.
- *
- * Per PLATFORM, not once per invocation. The platforms run one after the other
- * against the SAME local database, so a single reset up front would let the
- * Android pass consume the intake account and leave the iOS pass signing in as
- * a woman who already has a profile: no wizard, and a failure that reads as a
- * broken gate on iOS only. Sequential execution is what makes this safe.
- *
- * `runOrThrow`, never `run`: a reset that failed silently would leave the suite
- * running against whatever state was already there, and every downstream
- * failure would name the wrong file. Local stack only, per contract rule 9 -
- * `supabase db reset` targets the Docker stack and has no remote target here.
- */
-async function resetSeededDatabase(): Promise<void> {
-  log('· resetting the local seeded database');
-  await runOrThrow(['bunx', 'supabase', 'db', 'reset'], { cwd: repoRoot, inherit: true });
-}
+/** The dev stack's API port. The QA run refuses any backend URL on it. */
+const DEV_API_PORT = 54321;
+
+/** First port the QA Metro tries. Far from the dev Metros on 8081/8082. */
+const QA_METRO_FIRST_PORT = 8190;
+
+/** Three simulators by default: the measured sweet spot is in the RAPP-500 notes. */
+const DEFAULT_IOS_SHARDS = 3;
 
 export interface SmokeResult {
   readonly flow: string;
   readonly platform: Pass;
   readonly passed: boolean;
+  readonly seconds: number;
+  readonly shard: number;
+  readonly note?: string;
 }
 
 /** Suite members only: a leading underscore marks a shared fragment. */
@@ -111,62 +106,40 @@ export function parseSmokeMetroPort(rawPort: string | undefined): number | undef
   return port;
 }
 
-export function maestroSmokeCommand(
-  device: string,
-  resolvedFlow: string,
-  debugOutputDir: string,
-): string[] {
-  return [
-    'maestro',
-    '--device',
-    device,
-    'test',
-    '--debug-output',
-    debugOutputDir,
-    '--flatten-debug-output',
-    resolvedFlow,
-  ];
+export function parseShardCount(raw: string | undefined): number | undefined {
+  if (raw === undefined) return undefined;
+  const count = Number(raw);
+  if (!Number.isInteger(count) || count < 1 || count > 8) {
+    throw new Error('--shards needs a whole number from 1 to 8');
+  }
+  return count;
 }
 
-async function runSuiteOn(
-  platform: 'ios' | 'android',
-  config: FlowConfig,
-  flows: readonly string[],
-): Promise<SmokeResult[]> {
-  await resetSeededDatabase();
+function minutes(seconds: number): string {
+  return `${Math.floor(seconds / 60)}m${String(seconds % 60).padStart(2, '0')}s`;
+}
 
-  const device =
-    platform === 'ios'
-      ? await ensureIosDevice(config.devices.ios)
-      : await ensureAndroidDevice(config.devices.android);
-  if (platform === 'ios') {
-    await ensureIosApp(device, config.appId);
-    await pinIosStatusBar(device);
-  } else {
-    await ensureAndroidApp(device, config.appId);
-    await pinAndroidStatusBar(device);
-  }
+async function readMeasuredDurations(): Promise<Record<string, number>> {
+  const file = Bun.file(durationsPath);
+  return (await file.exists()) ? ((await file.json()) as Record<string, number>) : {};
+}
 
-  const metro = await ensureMetro(config.metroPort, config.scheme);
-  if (platform === 'android') {
-    await reverseMetroPort(device, metro.port);
-    await reverseSupabasePort(device, process.env.EXPO_PUBLIC_SUPABASE_URL ?? '');
-  }
-
-  // Every fragment is resolved too, not just the suite members: `runFlow` reads
-  // the file on disk, so an unresolved fragment would drive the UI by a literal
-  // `{{nav:tabs.home}}`.
-  //
-  // The dev-client URL is only supplied to the flows that declare it, because
-  // the resolver treats an undeclared override as an authoring mistake - which
-  // it is, for a capture flow, and that check is worth keeping.
-  // Scripts a flow runs with `runScript` are read relative to the flow, which
-  // runs from `.flow-shots/`, so they are copied next to the resolved flows.
+/**
+ * Every fragment is resolved too, not just the suite members: `runFlow` reads
+ * the file on disk, so an unresolved fragment would drive the UI by a literal
+ * `{{nav:tabs.home}}`.
+ *
+ * The dev-client URL is only supplied to the flows that declare it, because
+ * the resolver treats an undeclared override as an authoring mistake - which
+ * it is, for a capture flow, and that check is worth keeping.
+ * Scripts a flow runs with `runScript` are read relative to the flow, which
+ * runs from `.flow-shots/`, so they are copied next to the resolved flows.
+ */
+async function resolveSuite(clientUrl: string): Promise<void> {
   for (const file of (await readdir(suiteDir)).filter((name) => name.endsWith('.js'))) {
-    await Bun.write(path.join(repoRoot, '.flow-shots', file), Bun.file(path.join(suiteDir, file)));
+    await Bun.write(path.join(flowShotsDir, file), Bun.file(path.join(suiteDir, file)));
   }
   const translate = await loadTranslator('ca');
-  const clientUrl = smokeDevClientUrl(platform, config.appId, config.scheme, metro.port);
   for (const file of (await readdir(suiteDir)).filter((name) => name.endsWith('.yaml'))) {
     const source = path.join(suiteDir, file);
     const declaresClientUrl = (await Bun.file(source).text()).includes('DEV_CLIENT_URL:');
@@ -176,66 +149,179 @@ async function runSuiteOn(
       declaresClientUrl ? { DEV_CLIENT_URL: clientUrl } : {},
     );
   }
+}
 
+async function runShard(
+  platform: 'ios' | 'android',
+  device: string,
+  shard: Shard,
+  shardCount: number,
+): Promise<SmokeResult[]> {
+  const label = shardCount === 1 ? `[${platform}]` : `[${platform} ${shard.index + 1}]`;
+  const maestroHome = path.join(flowShotsDir, 'maestro-home', `${platform}-${shard.index + 1}`);
+  await prepareMaestroHome(maestroHome);
   const results: SmokeResult[] = [];
-  let hasRunSurveyLocaleJourney = false;
-  try {
-    for (const flow of flows) {
-      if (platform === 'android') {
-        // Offline flows use real airplane mode. A failed assertion can stop a
-        // flow before its second toggle, and the AVD persists that state across
-        // app clears and emulator restarts. Normalize connectivity before every
-        // flow so one failure cannot turn the rest of the suite into skeleton
-        // timeouts that name unrelated screens.
-        await runOrThrow(
-          ['adb', '-s', device, 'shell', 'cmd', 'connectivity', 'airplane-mode', 'disable'],
-          { cwd: repoRoot },
-        );
-      }
-      const isSurveyLocaleJourney = flow.startsWith('phase8-survey-');
-      if (isSurveyLocaleJourney && hasRunSurveyLocaleJourney) {
-        // Survey completion is intentionally one-shot per player. Re-seed before
-        // the second locale so Catalan and Arabic exercise the same full journey
-        // independently instead of the latter inheriting a completed response.
-        await resetSeededDatabase();
-      }
-      log(`\n▸ ${flow} on ${platform} (${device})`);
-      const resolved = path.join(repoRoot, '.flow-shots', flow);
-      const debugOutput = path.join(repoRoot, '.flow-shots', 'debug', platform, flow);
-      const { exitCode } = await run(maestroSmokeCommand(device, resolved, debugOutput), {
-        cwd: path.join(repoRoot, '.flow-shots'),
-        inherit: true,
-      });
-      let passed = exitCode === 0;
-      if (passed && platform === 'android' && flow === 'smoke-shells.yaml') {
-        try {
-          await assertAndroidTabLabelsDrawn(device);
-        } catch (error) {
-          console.error(`✗ ${error instanceof Error ? error.message : String(error)}`);
-          passed = false;
-        }
-      }
-      results.push({ flow, platform, passed });
-      if (isSurveyLocaleJourney) hasRunSurveyLocaleJourney = true;
+  for (const [position, flow] of shard.flows.entries()) {
+    if (platform === 'android') {
+      // Offline flows use real airplane mode. A failed assertion can stop a
+      // flow before its second toggle, and the AVD persists that state across
+      // app clears and emulator restarts. Normalize connectivity before every
+      // flow so one failure cannot turn the rest of the suite into skeleton
+      // timeouts that name unrelated screens.
+      await runOrThrow(
+        ['adb', '-s', device, 'shell', 'cmd', 'connectivity', 'airplane-mode', 'disable'],
+        { cwd: repoRoot },
+      );
     }
-  } finally {
-    await metro.stop();
+    const sql = sqlBefore(flow, shard.flows.slice(0, position));
+    if (sql !== undefined) {
+      log(`${label} · undoing the previous survey response on ${QA_PROJECT_ID}`);
+      await qaSql(sql);
+    }
+    log(`\n${label} ▸ ${flow} (${position + 1}/${shard.flows.length})`);
+    const runOnce = async (): Promise<Awaited<ReturnType<typeof runMaestroFlow>>> =>
+      await runMaestroFlow({
+        device,
+        flowFile: path.join(flowShotsDir, flow),
+        cwd: flowShotsDir,
+        debugOutputDir: path.join(flowShotsDir, 'debug', platform, flow),
+        maestroHome,
+        label,
+        skipAdb: platform === 'ios',
+      });
+    let outcome = await runOnce();
+    let retried = false;
+    if (!outcome.passed && isDriverFailure(outcome.failure, outcome.note)) {
+      log(
+        `${label} · ${flow}: device driver failed (${outcome.failure ?? outcome.note}), running it once more`,
+      );
+      retried = true;
+      outcome = await runOnce();
+    }
+    let passed = outcome.passed;
+    if (passed && platform === 'android' && flow === 'smoke-shells.yaml') {
+      try {
+        await assertAndroidTabLabelsDrawn(device);
+      } catch (error) {
+        console.error(`✗ ${error instanceof Error ? error.message : String(error)}`);
+        passed = false;
+      }
+    }
+    if (outcome.note !== undefined) log(`${label} · ${flow}: ${outcome.note}`);
+    if (!passed && outcome.failure !== undefined) log(`${label} · ${flow}: ${outcome.failure}`);
+    log(`${label} ${passed ? '✓' : '✗'} ${flow} in ${minutes(outcome.seconds)}`);
+    results.push({
+      flow,
+      platform,
+      passed,
+      seconds: outcome.seconds,
+      shard: shard.index,
+      note: retried
+        ? `retried after a driver failure${outcome.note === undefined ? '' : `; ${outcome.note}`}`
+        : outcome.note,
+    });
   }
   return results;
+}
+
+/**
+ * One platform: a freshly reset QA database, the QA run's own Metro pointed at
+ * it, and the flows split across the devices. iOS gets `shardCount` simulators;
+ * Android runs on the one project AVD.
+ */
+async function runSuiteOn(
+  platform: 'ios' | 'android',
+  config: FlowConfig,
+  flows: readonly string[],
+  shardCount: number,
+  metroFirstPort: number,
+): Promise<SmokeResult[]> {
+  const started = Date.now();
+  const elapsed = (): string => minutes(Math.round((Date.now() - started) / 1000));
+
+  // Simulators boot while the stack resets; neither needs the other.
+  const devicesReady =
+    platform === 'ios'
+      ? prepareIosPool(config.devices.ios, config.appId, shardCount)
+      : (async () => {
+          const serial = await ensureAndroidDevice(config.devices.android);
+          await ensureAndroidApp(serial, config.appId);
+          await pinAndroidStatusBar(serial);
+          return { udids: [serial], shutdown: async () => {} };
+        })();
+  // A rejected promise nobody awaits yet would crash the process before the
+  // stack is ready, so the failure is held until it is awaited below.
+  devicesReady.catch(() => {});
+
+  const shutDownDevices = async (): Promise<void> => {
+    await devicesReady.then(async (ready) => await ready.shutdown()).catch(() => {});
+  };
+  let metro: Awaited<ReturnType<typeof startQaMetro>>;
+  let stackUrl: string;
+  try {
+    const stack = await prepareQaStack();
+    assertQaStackUrl(stack.apiUrl, DEV_API_PORT);
+    log(`· QA stack ready at ${stack.apiUrl} after ${elapsed()}`);
+    metro = await startQaMetro(metroFirstPort, config.scheme, {
+      EXPO_PUBLIC_SUPABASE_URL: stack.apiUrl,
+      EXPO_PUBLIC_SUPABASE_ANON_KEY: stack.anonKey,
+    });
+    stackUrl = stack.apiUrl;
+  } catch (error) {
+    await shutDownDevices();
+    throw error;
+  }
+  const pool = await devicesReady.catch(async (error: unknown) => {
+    await metro.stop();
+    throw error;
+  });
+  try {
+    await prewarmBundle(metro.port, platform);
+    if (platform === 'android') {
+      await reverseMetroPort(pool.udids[0]!, metro.port);
+      await reverseSupabasePort(pool.udids[0]!, stackUrl);
+    }
+    await resolveSuite(smokeDevClientUrl(platform, config.appId, config.scheme, metro.port));
+
+    const shards = planShards(flows, pool.udids.length, await readMeasuredDurations());
+    log(`· ready to run after ${elapsed()}; ${shards.length} shard(s):`);
+    for (const shard of shards) {
+      log(`  ${shard.index + 1}: ~${minutes(shard.estimatedSeconds)} · ${shard.flows.join(', ')}`);
+    }
+    const perShard = await Promise.all(
+      shards.map(
+        async (shard) => await runShard(platform, pool.udids[shard.index]!, shard, shards.length),
+      ),
+    );
+    log(`· ${platform} finished in ${elapsed()}`);
+    return perShard.flat();
+  } finally {
+    await metro.stop();
+    await pool.shutdown();
+  }
+}
+
+async function recordDurations(results: readonly SmokeResult[]): Promise<void> {
+  const measured = await readMeasuredDurations();
+  for (const result of results) {
+    // Failures stop early, so only a pass is a fair estimate for the next split.
+    if (result.passed && result.platform === 'ios') measured[result.flow] = result.seconds;
+  }
+  await mkdir(flowShotsDir, { recursive: true });
+  await Bun.write(durationsPath, `${JSON.stringify(measured, null, 2)}\n`);
 }
 
 export async function runSmokeSuite(
   platforms: readonly ('ios' | 'android')[],
   only?: string,
   metroPortOverride?: number,
+  shardCount = DEFAULT_IOS_SHARDS,
 ): Promise<boolean> {
-  const loadedConfig = await loadFlowConfig();
-  const config =
-    metroPortOverride === undefined
-      ? loadedConfig
-      : { ...loadedConfig, metroPort: metroPortOverride };
+  const config = await loadFlowConfig();
   const all = suiteFlows(await readdir(suiteDir));
-  const flows = only === undefined ? all : all.filter((flow) => flow.includes(only));
+  const wanted = only?.split(',').filter((part) => part !== '');
+  const flows =
+    wanted === undefined ? all : all.filter((flow) => wanted.some((part) => flow.includes(part)));
   if (all.length === 0) {
     throw new Error(`No smoke flows in ${suiteDir}`);
   }
@@ -246,32 +332,40 @@ export async function runSmokeSuite(
     log(`· --only ${only}: running ${flows.length} of ${all.length} flows`);
   }
 
+  const started = Date.now();
+  const release = await acquireQaLock(repoRoot);
   const results: SmokeResult[] = [];
   try {
     for (const platform of platforms) {
-      results.push(...(await runSuiteOn(platform, config, flows)));
+      results.push(
+        ...(await runSuiteOn(
+          platform,
+          config,
+          flows,
+          platform === 'ios' ? shardCount : 1,
+          metroPortOverride ?? QA_METRO_FIRST_PORT,
+        )),
+      );
     }
   } finally {
-    // Leave the database as the rest of the repo expects to find it.
-    //
-    // `smoke-onboarding` finishes the wizard, which SPENDS the intake account's
-    // invitation, and two pgTAP assertions are about exactly that invite
-    // ("completing onboarding marks the invite as spent", "a spent invite
-    // prefills nothing on a second run"). pgTAP runs inside `bun test`, which is
-    // a pre-commit gate - so without this a QA run leaves the repo unable to
-    // commit, and the red points at a seed-data file that is perfectly correct.
-    //
-    // In a `finally`, because a suite that fails half way through has left the
-    // database in exactly the state that needs clearing up.
-    await resetSeededDatabase();
+    await release();
   }
+  await recordDurations(results);
 
   log('\n─── smoke suite ───');
   for (const result of results) {
-    log(`${result.passed ? '✓' : '✗'} ${result.flow} · ${result.platform}`);
+    log(
+      `${result.passed ? '✓' : '✗'} ${result.flow} · ${result.platform} · shard ${result.shard + 1} · ` +
+        `${minutes(result.seconds)}${result.note === undefined ? '' : ` · ${result.note}`}`,
+    );
   }
   const failed = results.filter((result) => !result.passed);
-  log(`${results.length - failed.length}/${results.length} passed`);
+  const flowSeconds = results.reduce((sum, result) => sum + result.seconds, 0);
+  log(
+    `${results.length - failed.length}/${results.length} passed in ` +
+      `${minutes(Math.round((Date.now() - started) / 1000))} wall clock ` +
+      `(${minutes(flowSeconds)} of flow time)`,
+  );
   return failed.length === 0;
 }
 
@@ -285,6 +379,8 @@ if (import.meta.main) {
   const metroPort = parseSmokeMetroPort(
     metroPortIndex === -1 ? undefined : argv[metroPortIndex + 1],
   );
+  const shardsIndex = argv.indexOf('--shards');
+  const shards = parseShardCount(shardsIndex === -1 ? undefined : argv[shardsIndex + 1]);
   if (onlyIndex !== -1 && (only === undefined || only.startsWith('--'))) {
     console.error('--only needs a flow-name substring, e.g. --only i18n');
     process.exit(1);
@@ -303,7 +399,7 @@ if (import.meta.main) {
     process.exit(1);
   }
   try {
-    process.exit((await runSmokeSuite(platforms, only, metroPort)) ? 0 : 1);
+    process.exit((await runSmokeSuite(platforms, only, metroPort, shards)) ? 0 : 1);
   } catch (error) {
     console.error(`\n✗ ${error instanceof Error ? error.message : String(error)}\n`);
     process.exit(1);

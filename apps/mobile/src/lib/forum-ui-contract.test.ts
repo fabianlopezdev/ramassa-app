@@ -86,7 +86,9 @@ test('the cumulative native flow proves the lifecycle in Catalan and Arabic', as
   expect(source.match(/id: forum-publish/g)).toHaveLength(2);
   expect(source.match(/id: forum-submit-reply/g)).toHaveLength(2);
   expect(source.match(/id: forum-save-edit/g)).toHaveLength(2);
-  expect(source.match(/id: forum-confirm-delete/g)).toHaveLength(2);
+  // Each delete taps until the confirmation opens (RAPP-500), then confirms once.
+  expect(source.match(/^- tapOn:\n {4}id: forum-confirm-delete$/gm)).toHaveLength(2);
+  expect(source.match(/notVisible:\n {8}id: forum-confirm-delete/g)).toHaveLength(2);
   // iOS 27 no longer drops the keyboard on a drag, so every field hides it
   // explicitly on both platforms instead of dragging on iOS.
   expect(source).not.toMatch(/platform: iOS\n {4}commands:\n {6}- swipe:/);

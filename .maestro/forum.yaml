@@ -154,8 +154,20 @@ env:
 - extendedWaitUntil:
     visible: '.*rapp50-cat-edited.*'
     timeout: 30000
-- tapOn:
-    id: forum-delete
+# Tap until the confirmation opens (RAPP-500): a tap that lands while the
+# saved edit re-renders the post is dropped, and the next step then waits on
+# a dialog that never opened.
+- repeat:
+    times: 4
+    while:
+      notVisible:
+        id: forum-confirm-delete
+    commands:
+      - tapOn:
+          id: forum-delete
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
 - tapOn:
     id: forum-confirm-delete
 - extendedWaitUntil:
@@ -215,6 +227,11 @@ env:
       notVisible:
         id: forum-board
     commands:
+      # Switching to Arabic reloads the app, and the reloaded app can ask for
+      # notifications again, in Arabic, over the tab bar (RAPP-500).
+      - tapOn:
+          text: '^${ARABIC_PUSH_DECLINE}$'
+          optional: true
       - tapOn:
           id: player-tab-community
           optional: true
@@ -291,8 +308,20 @@ env:
 - extendedWaitUntil:
     visible: '.*rapp50-ar-edited.*'
     timeout: 30000
-- tapOn:
-    id: forum-delete
+# Tap until the confirmation opens (RAPP-500): a tap that lands while the
+# saved edit re-renders the post is dropped, and the next step then waits on
+# a dialog that never opened.
+- repeat:
+    times: 4
+    while:
+      notVisible:
+        id: forum-confirm-delete
+    commands:
+      - tapOn:
+          id: forum-delete
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
 - tapOn:
     id: forum-confirm-delete
 - extendedWaitUntil:
