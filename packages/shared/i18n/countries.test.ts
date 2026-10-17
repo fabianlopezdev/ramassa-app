@@ -46,6 +46,27 @@ describe('country options', () => {
     expect(arabic?.canonical).toBe('Síria');
   });
 
+  test('every country appears once: no two options share a canonical value', () => {
+    // RAPP-490: ICU also names retired codes (DY, ZR, HV...) after the country
+    // that replaced them, so Benín came twice and the admin pickers, keyed by
+    // canonical value, rendered duplicate React keys.
+    for (const locale of ['ca', 'es', 'en', 'ar', 'fa'] as const) {
+      const canonicals = getCountryOptions(locale).map((option) => option.canonical);
+      const repeated = canonicals.filter((value, index) => canonicals.indexOf(value) !== index);
+      expect(repeated).toEqual([]);
+    }
+  });
+
+  test('retired ISO codes are gone, their successors stay', () => {
+    const codes = new Set(getCountryOptions('ca').map((option) => option.code));
+    for (const retired of ['DY', 'HV', 'ZR', 'AN', 'YU', 'SU', 'UK']) {
+      expect(codes.has(retired)).toBe(false);
+    }
+    for (const current of ['BJ', 'BF', 'CD', 'CW', 'RS', 'RU', 'GB']) {
+      expect(codes.has(current)).toBe(true);
+    }
+  });
+
   test('the pinned commons exist in the list', () => {
     const codes = new Set(getCountryOptions('ca').map((option) => option.code));
     for (const code of COMMON_COUNTRY_CODES) {

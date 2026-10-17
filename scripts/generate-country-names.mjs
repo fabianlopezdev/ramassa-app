@@ -10,8 +10,9 @@
 // and the output is committed so the app bundles no ICU data and the list is
 // identical on every platform. Codes are discovered by probing every AA-ZZ
 // pair and keeping what ICU recognizes, minus the non-country regions ICU
-// also names (EU, UN, world zones): a hand-maintained code list would just be
-// a second thing to drift.
+// also names (EU, UN, world zones) and the retired codes ICU aliases to a
+// current one: a hand-maintained code list would just be a second thing to
+// drift.
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -49,6 +50,10 @@ for (const first of letters) {
     if (NON_COUNTRY_REGIONS.has(code)) continue;
     const english = displayNames.en.of(code);
     if (english === undefined || english === code) continue;
+    // ICU also names retired codes (DY, ZR, YU...) after their successor, which
+    // would list Benín twice under one canonical value (RAPP-490). Keep a code
+    // only when ICU's own alias table does not replace it.
+    if (new Intl.Locale(`und-${code}`).region !== code) continue;
     countries.push({
       code,
       names: Object.fromEntries(LANGUAGES.map((lang) => [lang, displayNames[lang].of(code)])),
