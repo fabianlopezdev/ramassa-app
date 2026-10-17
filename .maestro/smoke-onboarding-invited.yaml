@@ -19,6 +19,7 @@ name: smoke-onboarding-invited
 # Like `smoke-onboarding`, finishing spends the account: a second run needs a
 # `bun run db:reset` first, which `bun run qa:smoke` does before each platform.
 env:
+  CUSTOM_SCREEN_TITLE: Com arribes als entrenaments
   DEV_MENU_LABEL: Developer menu
   DEV_MENU_LINK: ramassa://dev-menu
   ACCOUNTS_SECTION: Accounts and roles
@@ -347,18 +348,13 @@ env:
       id: 'wizard-step-4'
     timeout: 20000
 
-# ── The registration questions (RAPP-306): all optional, left empty ──────────
-- repeat:
-    times: 12
-    while:
-      notVisible: '^${CONTINUE}$'
-    commands:
-      - swipe:
-          start: 50%, 45%
-          end: 50%, 15%
-          duration: 600
-      - waitForAnimationToEnd:
-          timeout: 1500
+# ── Step 4: the staff screen seeded after logistics (RAPP-307) ─────────────
+- assertVisible:
+    text: '.*${CUSTOM_SCREEN_TITLE}.*'
+- tapOn:
+    id: 'custom-question-5eed0000-0000-4000-8045-000000000001-yes'
+- waitForAnimationToEnd:
+    timeout: 1500
 - repeat:
     times: 8
     while:
@@ -381,7 +377,41 @@ env:
       id: 'wizard-step-5'
     timeout: 20000
 
-# ── Step 5: summary ────────────────────────────────────────────────────────────
+# ── The registration questions (RAPP-306): all optional, left empty ──────────
+- repeat:
+    times: 12
+    while:
+      notVisible: '^${CONTINUE}$'
+    commands:
+      - swipe:
+          start: 50%, 45%
+          end: 50%, 15%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 1500
+- repeat:
+    times: 8
+    while:
+      notVisible:
+        id: 'wizard-step-6'
+    commands:
+      - tapOn:
+          text: '^${CONTINUE}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 2000
+      - swipe:
+          start: 50%, 45%
+          end: 50%, 20%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 1200
+- extendedWaitUntil:
+    visible:
+      id: 'wizard-step-6'
+    timeout: 20000
+
+# ── Step 6: summary ────────────────────────────────────────────────────────────
 # What staff entered is on it, next to what she just answered.
 - assertVisible: '.*Mariam.*'
 - repeat:
@@ -411,7 +441,7 @@ env:
     times: 8
     while:
       notVisible:
-        id: 'wizard-step-6'
+        id: 'wizard-step-7'
     commands:
       - tapOn:
           text: '^${SUMMARY_CONFIRM}$'
@@ -426,10 +456,10 @@ env:
           timeout: 1200
 - extendedWaitUntil:
     visible:
-      id: 'wizard-step-6'
+      id: 'wizard-step-7'
     timeout: 20000
 
-# ── Step 6: terms ──────────────────────────────────────────────────────────────
+# ── Step 7: terms ──────────────────────────────────────────────────────────────
 - repeat:
     times: 10
     while:
@@ -513,4 +543,4 @@ env:
 - assertVisible:
     text: '^${TAB_HOME}$'
 - assertNotVisible:
-    id: 'wizard-step-6'
+    id: 'wizard-step-7'
