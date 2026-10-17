@@ -156,12 +156,19 @@ env:
           optional: true
       - waitForAnimationToEnd:
           timeout: 2000
-      - swipe:
-          start: 50%, 45%
-          end: 50%, 20%
-          duration: 600
-      - waitForAnimationToEnd:
-          timeout: 1200
+      # Only while the step has not changed yet: on Android the next step
+      # opens within the wait, and a swipe would scroll it (RAPP-530).
+      - runFlow:
+          when:
+            notVisible:
+              id: 'wizard-step-2'
+          commands:
+            - swipe:
+                start: 50%, 45%
+                end: 50%, 20%
+                duration: 600
+            - waitForAnimationToEnd:
+                timeout: 1200
 - extendedWaitUntil:
     visible:
       id: 'wizard-step-2'
@@ -216,12 +223,19 @@ env:
           optional: true
       - waitForAnimationToEnd:
           timeout: 2000
-      - swipe:
-          start: 50%, 45%
-          end: 50%, 20%
-          duration: 600
-      - waitForAnimationToEnd:
-          timeout: 1200
+      # Only while the step has not changed yet: on Android the next step
+      # opens within the wait, and a swipe would scroll it (RAPP-530).
+      - runFlow:
+          when:
+            notVisible:
+              id: 'wizard-step-3'
+          commands:
+            - swipe:
+                start: 50%, 45%
+                end: 50%, 20%
+                duration: 600
+            - waitForAnimationToEnd:
+                timeout: 1200
 - extendedWaitUntil:
     visible:
       id: 'wizard-step-3'
@@ -323,12 +337,19 @@ env:
           optional: true
       - waitForAnimationToEnd:
           timeout: 2000
-      - swipe:
-          start: 50%, 45%
-          end: 50%, 20%
-          duration: 600
-      - waitForAnimationToEnd:
-          timeout: 1200
+      # Only while the step has not changed yet: on Android the next step
+      # opens within the wait, and a swipe would scroll it (RAPP-530).
+      - runFlow:
+          when:
+            notVisible:
+              id: 'wizard-step-4'
+          commands:
+            - swipe:
+                start: 50%, 45%
+                end: 50%, 20%
+                duration: 600
+            - waitForAnimationToEnd:
+                timeout: 1200
 - extendedWaitUntil:
     visible:
       id: 'wizard-step-4'
@@ -352,12 +373,19 @@ env:
           optional: true
       - waitForAnimationToEnd:
           timeout: 2000
-      - swipe:
-          start: 50%, 45%
-          end: 50%, 20%
-          duration: 600
-      - waitForAnimationToEnd:
-          timeout: 1200
+      # Only while the step has not changed yet: on Android the next step
+      # opens within the wait, and a swipe would scroll it (RAPP-530).
+      - runFlow:
+          when:
+            notVisible:
+              id: 'wizard-step-5'
+          commands:
+            - swipe:
+                start: 50%, 45%
+                end: 50%, 20%
+                duration: 600
+            - waitForAnimationToEnd:
+                timeout: 1200
 - extendedWaitUntil:
     visible:
       id: 'wizard-step-5'
@@ -386,12 +414,19 @@ env:
           optional: true
       - waitForAnimationToEnd:
           timeout: 2000
-      - swipe:
-          start: 50%, 45%
-          end: 50%, 20%
-          duration: 600
-      - waitForAnimationToEnd:
-          timeout: 1200
+      # Only while the step has not changed yet: on Android the next step
+      # opens within the wait, and a swipe would scroll it (RAPP-530).
+      - runFlow:
+          when:
+            notVisible:
+              id: 'wizard-step-6'
+          commands:
+            - swipe:
+                start: 50%, 45%
+                end: 50%, 20%
+                duration: 600
+            - waitForAnimationToEnd:
+                timeout: 1200
 - extendedWaitUntil:
     visible:
       id: 'wizard-step-6'

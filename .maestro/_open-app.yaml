@@ -69,6 +69,11 @@ env:
       - tapOn:
           id: dev-menu-close
           optional: true
+      # On Android the development client's explainer sheet can open before the
+      # language screen and hide it; its ✕ reads "Close" (RAPP-530).
+      - tapOn:
+          text: '.*Close.*'
+          optional: true
       - waitForAnimationToEnd:
           timeout: 5000
 - extendedWaitUntil:

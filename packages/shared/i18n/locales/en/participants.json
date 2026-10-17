@@ -510,7 +510,7 @@
     "retry": "Try again",
     "loadFailed": "The authorization could not be loaded. Connect the tablet once to save it.",
     "nothingPublished": "No authorization is published for the current season.",
-    "needsDeviceLock": "Turn on a passcode or Face ID on this tablet. Leaving signing mode asks for your passcode.",
+    "needsDeviceLock": "Turn on a passcode, fingerprint or Face ID on this tablet. Leaving signing mode asks you to confirm it is you.",
     "existingPlayer": "Player in Ramassà",
     "walkIn": "New woman",
     "search": "Search by name",

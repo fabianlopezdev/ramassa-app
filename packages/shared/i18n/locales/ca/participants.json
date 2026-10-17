@@ -510,7 +510,7 @@
     "retry": "Torna-ho a provar",
     "loadFailed": "No s'ha pogut carregar l'autorització. Connecta la tauleta una vegada per desar-la.",
     "nothingPublished": "No hi ha cap autorització publicada per a la temporada actual.",
-    "needsDeviceLock": "Activa un codi o Face ID en aquesta tauleta. Sortir del mode de signatura demana el teu codi.",
+    "needsDeviceLock": "Activa un codi, l'empremta o Face ID en aquesta tauleta. Per sortir del mode de signatura caldrà verificar que ets tu.",
     "existingPlayer": "Jugadora de Ramassà",
     "walkIn": "Dona nova",
     "search": "Cerca per nom",
