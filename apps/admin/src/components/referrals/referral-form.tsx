@@ -1,16 +1,23 @@
 import { AdminAuthField } from '@/components/auth/admin-auth-field';
+import { CustomAnswerFields, readCustomAnswers } from '@/components/intake/custom-answer-fields';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { safeAsync } from '@/lib/observability';
 import { supabase } from '@/lib/supabase';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, useNavigate } from '@tanstack/react-router';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import type { SupportedLanguage } from '@ramassa/shared/i18n';
 import { getCountryOptions } from '@ramassa/shared/i18n/countries';
 import { getMunicipalityOptions } from '@ramassa/shared/i18n/municipalities';
+import {
+  EMPTY_INTAKE_CATALOG,
+  referralScreens,
+  saveReferralCustomAnswers,
+  type IntakeCatalog,
+} from '@ramassa/shared/intake-builder';
 import {
   createReferral,
   createReferralSchema,
@@ -81,9 +88,17 @@ function Labelled({
 export interface ReferralFormProps {
   /** The organization's partner entities, offered as other supporting entities (RAPP-303). */
   readonly entityNames?: readonly string[];
+  /** The questions staff added to this form (RAPP-307). */
+  readonly catalog?: IntakeCatalog;
 }
 
-export function ReferralForm({ entityNames = [] }: ReferralFormProps) {
+export function ReferralForm({
+  entityNames = [],
+  catalog = EMPTY_INTAKE_CATALOG,
+}: ReferralFormProps) {
+  const customScreens = referralScreens(catalog);
+  const formRef = useRef<HTMLFormElement>(null);
+  const [savedWithoutAnswers, setSavedWithoutAnswers] = useState<string | null>(null);
   const { t, i18n } = useTranslation(['referrals', 'onboarding']);
   const locale = (i18n.resolvedLanguage ?? 'ca') as SupportedLanguage;
   const countries = useMemo(() => getCountryOptions(locale), [locale]);
@@ -139,6 +154,23 @@ export function ReferralForm({ entityNames = [] }: ReferralFormProps) {
       setFailed(true);
       return;
     }
+    // The answers to the questions staff added go right after (RAPP-307). The
+    // referral is saved either way; if they fail, she is told so.
+    if (customScreens.length > 0 && formRef.current !== null) {
+      const answers = readCustomAnswers(
+        new FormData(formRef.current),
+        customScreens,
+        'referral-custom',
+      );
+      const saved = await safeAsync(
+        () => saveReferralCustomAnswers(supabase, result.value, answers),
+        { context: { operation: 'entity-referral-custom-answers' } },
+      );
+      if (!saved.ok) {
+        setSavedWithoutAnswers(result.value);
+        return;
+      }
+    }
     await navigate({
       to: '/portal/referrals/$referralId',
       params: { referralId: result.value },
@@ -158,6 +190,7 @@ export function ReferralForm({ entityNames = [] }: ReferralFormProps) {
         <p className="mt-1 text-start text-sm text-muted-foreground">{t('formIntro')}</p>
       </header>
       <form
+        ref={formRef}
         noValidate
         className="flex flex-col gap-4"
         onSubmit={(event) => void submit(event)}
@@ -487,6 +520,19 @@ export function ReferralForm({ entityNames = [] }: ReferralFormProps) {
             </Labelled>
           )}
         />
+        {customScreens.length === 0 ? null : (
+          <section className="flex flex-col gap-3" data-testid="referral-custom-questions">
+            <h2 className="text-start text-lg font-semibold">
+              {t('referrals:additionalQuestions')}
+            </h2>
+            <CustomAnswerFields
+              screens={customScreens}
+              values={{}}
+              prefix="referral-custom"
+              language={locale}
+            />
+          </section>
+        )}
         <Controller
           name="consentConfirmed"
           control={control}
@@ -513,6 +559,18 @@ export function ReferralForm({ entityNames = [] }: ReferralFormProps) {
             </div>
           )}
         />
+        {savedWithoutAnswers === null ? null : (
+          <p role="alert" className="text-start text-sm text-destructive">
+            {t('referrals:additionalAnswersFailed')}{' '}
+            <Link
+              to="/portal/referrals/$referralId"
+              params={{ referralId: savedWithoutAnswers }}
+              className="underline"
+            >
+              {t('referrals:openReferral')}
+            </Link>
+          </p>
+        )}
         {failed ? (
           <p role="alert" className="text-start text-sm text-destructive">
             {t('saveError')}

@@ -59,5 +59,8 @@
   "privacyNote": "Ramassà trata estos datos para gestionar su inscripción y participación, con su consentimiento. Solo los ve el equipo de Ramassà.",
   "seasonSectionIntro": "Todas las preguntas son opcionales. Rellenan su ficha cuando el equipo acepte la derivación, y ella podrá revisarlas.",
   "dateOfBirthError": "Escribe una fecha válida.",
-  "documentNumberError": "Escribe el número del documento."
+  "documentNumberError": "Escribe el número del documento.",
+  "additionalQuestions": "Preguntas adicionales",
+  "additionalAnswersFailed": "La derivación se ha enviado, pero las respuestas adicionales no se han guardado.",
+  "openReferral": "Abrir la derivación"
 }

@@ -82,5 +82,6 @@
   "exportShared": "Exportació a punt amb {{count}} files.",
   "exportPhoneNote": "Al telèfon, les exportacions són fitxers CSV. Els fitxers Excel són a l'administració web.",
   "auditLoadMore": "Mostra'n més",
-  "exportPeriod": "Període (opcional)"
+  "exportPeriod": "Període (opcional)",
+  "exportCustomAnswers": "Respostes a les preguntes addicionals"
 }

@@ -6,12 +6,15 @@ import { AuthorizationEditor } from '@/components/settings/authorization-editor'
 import { DocumentExplanationForm } from '@/components/settings/document-explanation-form';
 import { OrganizationSettingsPanel } from '@/components/settings/organization-settings-panel';
 import { PhotoHandoffButton } from '@/components/settings/photo-handoff-dialog';
+import { QuestionBuilder } from '@/components/settings/question-builder';
 import { SeasonsPanel } from '@/components/settings/seasons-panel';
 import { TeamAccessPanel } from '@/components/team/team-access-panel';
 import { sendEmailOtp } from '@/lib/auth';
+import { builtinQuestionOptions, QUESTION_LABEL_KEYS } from '@/lib/builtin-questions';
 import { SETTINGS_PERMISSIONS } from '@/lib/nav-items';
 import { supabase } from '@/lib/supabase';
 import { createFileRoute, useRouter } from '@tanstack/react-router';
+import { useTranslation } from 'react-i18next';
 import { z } from 'zod';
 import { resetSecondFactor, signOutEverywhere, useAuth } from '@ramassa/shared/auth';
 import {
@@ -26,7 +29,22 @@ import {
   setEntityActive,
   setEntityCollaboratorActive,
 } from '@ramassa/shared/entity-management';
-import { fetchDocumentStepExplanation, saveDocumentStepExplanation } from '@ramassa/shared/intake';
+import {
+  fetchDocumentStepExplanation,
+  saveDocumentStepExplanation,
+  WIZARD_QUESTIONS,
+} from '@ramassa/shared/intake';
+import {
+  archiveCustomQuestion,
+  archiveIntakeScreen,
+  EMPTY_INTAKE_CATALOG,
+  fetchIntakeCatalog,
+  reorderCustomQuestions,
+  reorderIntakeScreens,
+  saveBuiltinOverride,
+  saveCustomQuestion,
+  saveIntakeScreen,
+} from '@ramassa/shared/intake-builder';
 import {
   fetchOrganizationSettings,
   fetchStaffMembers,
@@ -53,7 +71,7 @@ export const Route = createFileRoute('/_staff/settings')({
     entity: z.uuid().optional().catch(undefined),
     q: z.string().max(120).optional().catch(undefined),
     tab: z
-      .enum(['organization', 'authorization', 'staff', 'documents', 'entities'])
+      .enum(['organization', 'authorization', 'questions', 'staff', 'documents', 'entities'])
       .optional()
       .catch(undefined),
   }),
@@ -77,6 +95,7 @@ export const Route = createFileRoute('/_staff/settings')({
       documentExplanation,
       authorizationVersions,
       seasons,
+      intakeCatalog,
     ] = await Promise.all([
       permissions.has('team.manage') ? fetchStaffMembers(supabase) : Promise.resolve([]),
       permissions.has('team.manage')
@@ -98,6 +117,9 @@ export const Route = createFileRoute('/_staff/settings')({
         ? fetchAuthorizationVersions(supabase)
         : Promise.resolve([]),
       permissions.has('settings.organization') ? fetchSeasons(supabase) : Promise.resolve([]),
+      permissions.has('settings.organization')
+        ? fetchIntakeCatalog(supabase)
+        : Promise.resolve(EMPTY_INTAKE_CATALOG),
     ]);
     const selectedEntityId = entities.some((entity) => entity.id === deps.entityId)
       ? (deps.entityId ?? null)
@@ -110,6 +132,7 @@ export const Route = createFileRoute('/_staff/settings')({
           : await fetchEntityCollaborators(supabase, selectedEntityId);
     return {
       authorizationVersions,
+      intakeCatalog,
       seasons,
       collaborators,
       documentExplanation,
@@ -138,6 +161,7 @@ function OrganizationSettingsScreen() {
   const navigate = Route.useNavigate();
   const router = useRouter();
   const { session, permissions, user, refreshProfile } = useAuth();
+  const { t } = useTranslation(['settings', 'onboarding']);
 
   async function refresh() {
     await router.invalidate({ sync: true });
@@ -277,6 +301,46 @@ function OrganizationSettingsScreen() {
               }}
             />
           </>
+        ) : undefined
+      }
+      questions={
+        permissions.has('settings.organization') ? (
+          <QuestionBuilder
+            catalog={data.intakeCatalog}
+            builtins={WIZARD_QUESTIONS.map((question) => ({
+              question,
+              label: t(QUESTION_LABEL_KEYS[question] ?? question),
+              options: builtinQuestionOptions(question, t),
+            }))}
+            onSaveScreen={async (draft) => {
+              await saveIntakeScreen(supabase, draft);
+              await refresh();
+            }}
+            onArchiveScreen={async (id) => {
+              await archiveIntakeScreen(supabase, id);
+              await refresh();
+            }}
+            onReorderScreens={async (afterScreen, ids) => {
+              await reorderIntakeScreens(supabase, afterScreen, ids);
+              await refresh();
+            }}
+            onSaveQuestion={async (draft) => {
+              await saveCustomQuestion(supabase, draft);
+              await refresh();
+            }}
+            onArchiveQuestion={async (id) => {
+              await archiveCustomQuestion(supabase, id);
+              await refresh();
+            }}
+            onReorderQuestions={async (screenId, ids) => {
+              await reorderCustomQuestions(supabase, screenId, ids);
+              await refresh();
+            }}
+            onSaveBuiltin={async (override) => {
+              await saveBuiltinOverride(supabase, override);
+              await refresh();
+            }}
+          />
         ) : undefined
       }
       documentExplanation={

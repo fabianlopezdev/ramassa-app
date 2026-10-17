@@ -4,13 +4,14 @@
  *   - Auto: asked only if nobody answered it;
  *   - Ask: always asked, opening with the staff answer for her to confirm;
  *   - Don't ask: never asked. Her summary still shows the value.
- * Two presets fill every choice at once; staff then change single questions
- * and save. Don't ask is not offered on a required question nobody answered,
+ * Two presets fill every choice at once, and so do the organization's own
+ * presets (RAPP-307); staff then change single questions and save. Don't ask is not offered on a required question nobody answered,
  * and the database refuses it too.
  */
 
 import { Button } from '@/components/ui/button';
-import { useState, type FormEvent } from 'react';
+import { QUESTION_LABEL_KEYS } from '@/lib/builtin-questions';
+import { useRef, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   canSkipQuestion,
@@ -23,26 +24,7 @@ import {
   type IntakeStatePreset,
   type QuestionStates,
 } from '@ramassa/shared/intake';
-
-/** The wizard's own question labels, so staff read what she reads. */
-const QUESTION_LABEL_KEYS: Readonly<Partial<Record<IntakeQuestion, string>>> = {
-  first_name: 'onboarding:firstNameLabel',
-  last_name: 'onboarding:lastNameLabel',
-  date_of_birth: 'onboarding:dateOfBirthLabel',
-  place_of_birth: 'onboarding:placeOfBirthLabel',
-  nationality: 'onboarding:nationalityLabel',
-  preferred_language: 'onboarding:preferredLanguageLabel',
-  document: 'onboarding:documentTypeLabel',
-  phone: 'onboarding:phoneLabel',
-  address: 'onboarding:addressLabel',
-  city: 'onboarding:cityLabel',
-  postal_code: 'onboarding:postalCodeLabel',
-  reference_entity: 'onboarding:referenceEntityLabel',
-  reference_contact_name: 'onboarding:referenceContactNameLabel',
-  dependents: 'onboarding:hasDependentsLabel',
-  clothing_size: 'onboarding:clothingSizeLabel',
-  shoe_size: 'onboarding:shoeSizeLabel',
-};
+import type { IntakePreset } from '@ramassa/shared/intake-builder';
 
 const STATE_LABEL_KEYS: Readonly<Record<IntakeQuestionState, string>> = {
   auto: 'participants:questionStateAuto',
@@ -55,6 +37,20 @@ export interface ParticipantQuestionStatesProps {
   readonly answered: AnsweredQuestions;
   readonly onSave: (next: QuestionStates) => Promise<void>;
   readonly errorMessage?: string;
+  /** The organization's own presets (RAPP-307). */
+  readonly presets?: readonly IntakePreset[];
+  readonly onSavePreset?: (name: string, states: QuestionStates) => Promise<void>;
+  readonly onDeletePreset?: (id: string) => Promise<void>;
+}
+
+function statesFromForm(form: HTMLFormElement): QuestionStates {
+  const fields = new FormData(form);
+  const next: Partial<Record<IntakeQuestion, 'ask' | 'skip'>> = {};
+  for (const question of WIZARD_QUESTIONS) {
+    const value = fields.get(`question-state-${question}`);
+    if (value === 'ask' || value === 'skip') next[question] = value;
+  }
+  return next;
 }
 
 export function ParticipantQuestionStates({
@@ -62,6 +58,9 @@ export function ParticipantQuestionStates({
   answered,
   onSave,
   errorMessage,
+  presets = [],
+  onSavePreset,
+  onDeletePreset,
 }: ParticipantQuestionStatesProps) {
   const { t } = useTranslation(['participants', 'onboarding']);
   // What the boxes start from: the saved states, or a preset staff just applied.
@@ -69,6 +68,27 @@ export function ParticipantQuestionStates({
   const [formKey, setFormKey] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+  const presetNameRef = useRef<HTMLInputElement>(null);
+  const [presetStatus, setPresetStatus] = useState<'idle' | 'saved' | 'failed'>('idle');
+
+  function applyStates(next: QuestionStates) {
+    setBase(next);
+    setFormKey((key) => key + 1);
+    setIsSaved(false);
+  }
+
+  async function savePreset() {
+    const name = presetNameRef.current?.value.trim() ?? '';
+    if (name === '' || formRef.current === null || onSavePreset === undefined) return;
+    try {
+      await onSavePreset(name, statesFromForm(formRef.current));
+      setPresetStatus('saved');
+      if (presetNameRef.current !== null) presetNameRef.current.value = '';
+    } catch {
+      setPresetStatus('failed');
+    }
+  }
 
   function applyPreset(preset: IntakeStatePreset) {
     // A preset never hides anything, so it is always allowed.
@@ -79,12 +99,7 @@ export function ParticipantQuestionStates({
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const fields = new FormData(event.currentTarget);
-    const next: Partial<Record<IntakeQuestion, 'ask' | 'skip'>> = {};
-    for (const question of WIZARD_QUESTIONS) {
-      const value = fields.get(`question-state-${question}`);
-      if (value === 'ask' || value === 'skip') next[question] = value;
-    }
+    const next = statesFromForm(event.currentTarget);
     setIsSaving(true);
     try {
       await onSave(next);
@@ -117,8 +132,39 @@ export function ParticipantQuestionStates({
         <Button type="button" variant="outline" onClick={() => applyPreset('review')}>
           {t('participants:questionStatesPresetReview')}
         </Button>
+        {presets.map((preset) => (
+          <span key={preset.id} className="inline-flex items-center gap-1">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => applyStates(preset.states as QuestionStates)}
+            >
+              {preset.name}
+            </Button>
+            {onDeletePreset === undefined ? null : (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                aria-label={t('participants:questionStatesDeletePreset', { name: preset.name })}
+                onClick={() => {
+                  if (
+                    window.confirm(
+                      t('participants:questionStatesDeletePreset', { name: preset.name }),
+                    )
+                  ) {
+                    void onDeletePreset(preset.id);
+                  }
+                }}
+              >
+                ×
+              </Button>
+            )}
+          </span>
+        ))}
       </div>
       <form
+        ref={formRef}
         key={formKey}
         className="flex flex-col gap-4"
         onSubmit={(event) => void submit(event)}
@@ -177,6 +223,37 @@ export function ParticipantQuestionStates({
           )}
         </div>
       </form>
+      {onSavePreset === undefined ? null : (
+        <div className="flex flex-wrap items-end gap-2 border-t pt-4">
+          <label className="flex min-w-56 flex-col gap-1.5 text-sm font-medium">
+            <span>{t('participants:questionStatesPresetName')}</span>
+            <input
+              ref={presetNameRef}
+              id="question-states-preset-name"
+              maxLength={80}
+              onChange={() => setPresetStatus('idle')}
+              className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
+            />
+          </label>
+          <Button type="button" variant="outline" onClick={() => void savePreset()}>
+            {t('participants:questionStatesSavePreset')}
+          </Button>
+          {presetStatus === 'idle' ? null : (
+            <p
+              aria-live="polite"
+              className={
+                presetStatus === 'saved'
+                  ? 'text-start text-sm text-muted-foreground'
+                  : 'text-start text-sm text-destructive'
+              }
+            >
+              {presetStatus === 'saved'
+                ? t('participants:questionStatesPresetSaved')
+                : t('participants:questionStatesPresetFailed')}
+            </p>
+          )}
+        </div>
+      )}
     </section>
   );
 }

@@ -33,6 +33,11 @@ import {
 import { fetchEquipmentDeliveries, fetchHandoverItemTypes } from '@ramassa/shared/equipment';
 import { fetchParticipantQuestionStates } from '@ramassa/shared/intake';
 import {
+  EMPTY_INTAKE_CATALOG,
+  fetchIntakeCatalog,
+  fetchParticipantCustomAnswers,
+} from '@ramassa/shared/intake-builder';
+import {
   fetchParticipantActivity,
   fetchParticipantAnsweredQuestions,
   fetchParticipantDetail,
@@ -63,6 +68,8 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
         authorizations: [],
         consents: [],
         seasonAnswers: [],
+        intakeCatalog: EMPTY_INTAKE_CATALOG,
+        customAnswers: [],
       };
     }
     const [
@@ -78,6 +85,8 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
       authorizations,
       consents,
       seasonAnswers,
+      intakeCatalog,
+      customAnswers,
     ] = await Promise.all([
       fetchParticipantNotes(supabase, params.participantId),
       fetchParticipantActivity(supabase, params.participantId),
@@ -103,6 +112,9 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
       fetchParticipantConsents(supabase, params.participantId).catch(() => []),
       // Her answers by season (RAPP-306).
       fetchParticipantSeasonAnswers(supabase, params.participantId).catch(() => []),
+      // The questions staff added and her answers (RAPP-307); the page works without them.
+      fetchIntakeCatalog(supabase).catch(() => EMPTY_INTAKE_CATALOG),
+      fetchParticipantCustomAnswers(supabase, params.participantId).catch(() => []),
     ]);
     // Filtered here rather than asked for by participant: the queue read is one
     // round trip either way, and the same call feeds the staff-wide queue, so
@@ -124,6 +136,8 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
       authorizations,
       consents,
       seasonAnswers,
+      intakeCatalog,
+      customAnswers,
     };
   },
   component: ParticipantDetailPage,
@@ -144,6 +158,8 @@ function ParticipantDetailPage() {
     authorizations,
     consents,
     seasonAnswers,
+    intakeCatalog,
+    customAnswers,
   } = Route.useLoaderData();
 
   if (participant === null) {
@@ -164,6 +180,8 @@ function ParticipantDetailPage() {
       authorizations={authorizations}
       consents={consents}
       seasonAnswers={seasonAnswers}
+      intakeCatalog={intakeCatalog}
+      customAnswers={customAnswers}
     />
   );
 }

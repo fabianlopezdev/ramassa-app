@@ -20,6 +20,7 @@ import { ParticipantAttendanceReport } from '@/components/attendance/attendance-
 import { DetailSection } from '@/components/detail/detail-section';
 import { ParticipantActivity } from '@/components/participants/participant-activity';
 import { ParticipantAuthorizationPanel } from '@/components/participants/participant-authorization-panel';
+import { ParticipantCustomAnswers } from '@/components/participants/participant-custom-answers';
 import { ParticipantEditForm } from '@/components/participants/participant-edit-form';
 import { ParticipantEquipment } from '@/components/participants/participant-equipment';
 import { ParticipantNotes } from '@/components/participants/participant-notes';
@@ -55,6 +56,14 @@ import {
   type QuestionStates,
 } from '@ramassa/shared/intake';
 import {
+  deleteIntakePreset,
+  EMPTY_INTAKE_CATALOG,
+  saveIntakePreset,
+  setParticipantCustomAnswers,
+  type IntakeCatalog,
+  type ParticipantCustomAnswer,
+} from '@ramassa/shared/intake-builder';
+import {
   addParticipantNote,
   setParticipantActive,
   updateParticipantProfile,
@@ -89,6 +98,9 @@ export interface ParticipantDetailProps {
   readonly authorizations?: readonly ParticipantAuthorization[];
   readonly consents?: readonly ParticipantConsent[];
   readonly seasonAnswers?: readonly ParticipantSeasonAnswers[];
+  /** The questions staff added, and her answers to them (RAPP-307). */
+  readonly intakeCatalog?: IntakeCatalog;
+  readonly customAnswers?: readonly ParticipantCustomAnswer[];
 }
 
 export function ParticipantDetail({
@@ -105,6 +117,8 @@ export function ParticipantDetail({
   authorizations = [],
   consents = [],
   seasonAnswers = [],
+  intakeCatalog = EMPTY_INTAKE_CATALOG,
+  customAnswers = [],
 }: ParticipantDetailProps) {
   const { t, i18n } = useTranslation(['participants', 'common', 'profile']);
   const locale = i18n.resolvedLanguage ?? 'ca';
@@ -347,8 +361,28 @@ export function ParticipantDetail({
           answered={new Set(answeredQuestions)}
           onSave={saveQuestionStates}
           errorMessage={questionStatesErrorMessage}
+          presets={intakeCatalog.presets}
+          onSavePreset={async (name, states) => {
+            await saveIntakePreset(supabase, { id: null, name, states });
+            await router.invalidate();
+          }}
+          onDeletePreset={async (id) => {
+            await deleteIntakePreset(supabase, id);
+            await router.invalidate();
+          }}
         />
       )}
+
+      <ParticipantCustomAnswers
+        catalog={intakeCatalog}
+        answers={customAnswers}
+        canEdit={permissions.has('participants.view_personal')}
+        canEditSensitive={permissions.has('participants.view_sensitive')}
+        onSave={async (answers) => {
+          await setParticipantCustomAnswers(supabase, participant.id, answers);
+          await router.invalidate();
+        }}
+      />
 
       {permissions.has('participants.view_personal') ? (
         <ParticipantAuthorizationPanel

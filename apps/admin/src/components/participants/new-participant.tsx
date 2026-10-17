@@ -15,6 +15,10 @@
 
 import { AdminAuthField } from '@/components/auth/admin-auth-field';
 import { ReferralAnswersList } from '@/components/referrals/referral-answers';
+import {
+  ReferralCustomAnswers,
+  type ReferralCustomAnswersProps,
+} from '@/components/referrals/referral-custom-answers';
 import { Button } from '@/components/ui/button';
 import { safeAsync } from '@/lib/observability';
 import { supabase } from '@/lib/supabase';
@@ -37,7 +41,14 @@ import {
   type CreateParticipantInviteInput,
 } from '@ramassa/shared/schemas';
 
-export function NewParticipant({ referral = null }: { readonly referral?: Referral | null }) {
+export function NewParticipant({
+  referral = null,
+  custom,
+}: {
+  readonly referral?: Referral | null;
+  /** What the entity answered to the questions staff added (RAPP-307). */
+  readonly custom?: ReferralCustomAnswersProps;
+}) {
   const { t } = useTranslation(['participants', 'referrals']);
   const [createdInvite, setCreatedInvite] = useState<CreatedParticipantInvite | null>(null);
 
@@ -74,6 +85,11 @@ export function NewParticipant({ referral = null }: { readonly referral?: Referr
               {referral.answers === null ? null : (
                 <div className="mt-3">
                   <ReferralAnswersList answers={referral.answers} />
+                </div>
+              )}
+              {custom === undefined ? null : (
+                <div className="mt-3">
+                  <ReferralCustomAnswers {...custom} />
                 </div>
               )}
             </div>

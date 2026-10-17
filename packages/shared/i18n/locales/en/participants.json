@@ -541,5 +541,10 @@
     "discard": "Discard",
     "discardConfirm": "Discard this signature? This cannot be undone.",
     "failed": "That did not work. Try again."
-  }
+  },
+  "questionStatesPresetName": "Preset name",
+  "questionStatesSavePreset": "Save these choices as a preset",
+  "questionStatesPresetSaved": "Preset saved.",
+  "questionStatesPresetFailed": "The preset could not be saved.",
+  "questionStatesDeletePreset": "Delete the preset {{name}}?"
 }

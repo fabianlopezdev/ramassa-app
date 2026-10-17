@@ -1,4 +1,8 @@
 import { ReferralAnswersList } from '@/components/referrals/referral-answers';
+import {
+  ReferralCustomAnswers,
+  type ReferralCustomAnswersProps,
+} from '@/components/referrals/referral-custom-answers';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { safeAsync } from '@/lib/observability';
@@ -19,9 +23,12 @@ import { ReferralStatus } from './referral-status';
 export function ReferralDetail({
   referral,
   initialUpdates,
+  custom,
 }: {
   readonly referral: Referral;
   readonly initialUpdates: readonly ReferralUpdateEntry[];
+  /** What the entity answered to the questions staff added (RAPP-307). */
+  readonly custom?: ReferralCustomAnswersProps;
 }) {
   const { t, i18n } = useTranslation('referrals');
   const locale = i18n.resolvedLanguage ?? 'ca';
@@ -91,6 +98,11 @@ export function ReferralDetail({
         {referral.answers === null ? null : (
           <div className="mt-4">
             <ReferralAnswersList answers={referral.answers} />
+          </div>
+        )}
+        {custom === undefined ? null : (
+          <div className="mt-4">
+            <ReferralCustomAnswers {...custom} />
           </div>
         )}
         {referral.notes === null ? null : (
