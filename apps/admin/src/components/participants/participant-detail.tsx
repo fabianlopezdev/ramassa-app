@@ -24,6 +24,7 @@ import { ParticipantEquipment } from '@/components/participants/participant-equi
 import { ParticipantNotes } from '@/components/participants/participant-notes';
 import { ParticipantPrefillForm } from '@/components/participants/participant-prefill-form';
 import { ParticipantProfileFields } from '@/components/participants/participant-profile-fields';
+import { ParticipantQuestionStates } from '@/components/participants/participant-question-states';
 import { ParticipantRgpd } from '@/components/participants/participant-rgpd';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -41,7 +42,12 @@ import {
   type HandoverItemType,
 } from '@ramassa/shared/equipment';
 import { setForumPostingDisabled } from '@ramassa/shared/forum';
-import type { IntakeQuestion } from '@ramassa/shared/intake';
+import {
+  questionStateChanges,
+  saveParticipantQuestionStates,
+  type IntakeQuestion,
+  type QuestionStates,
+} from '@ramassa/shared/intake';
 import {
   addParticipantNote,
   setParticipantActive,
@@ -70,6 +76,8 @@ export interface ParticipantDetailProps {
   readonly openDeletionRequestReason?: string | null;
   /** Answered intake questions, for a woman who has not joined yet (RAPP-300). */
   readonly answeredQuestions?: readonly IntakeQuestion[];
+  /** What her wizard asks, for a woman who has not joined yet (RAPP-301). */
+  readonly questionStates?: QuestionStates;
 }
 
 export function ParticipantDetail({
@@ -82,6 +90,7 @@ export function ParticipantDetail({
   attendanceHistory,
   openDeletionRequestReason,
   answeredQuestions = [],
+  questionStates = {},
 }: ParticipantDetailProps) {
   const { t, i18n } = useTranslation(['participants', 'common', 'profile']);
   const locale = i18n.resolvedLanguage ?? 'ca';
@@ -93,6 +102,9 @@ export function ParticipantDetail({
   const [isEditing, setIsEditing] = useState(false);
   const [saveErrorMessage, setSaveErrorMessage] = useState<string | undefined>(undefined);
   const [noteErrorMessage, setNoteErrorMessage] = useState<string | undefined>(undefined);
+  const [questionStatesErrorMessage, setQuestionStatesErrorMessage] = useState<string | undefined>(
+    undefined,
+  );
   const [statusErrorMessage, setStatusErrorMessage] = useState<string | undefined>(undefined);
   const [isChangingStatus, setIsChangingStatus] = useState(false);
   const [deliveryErrorMessage, setDeliveryErrorMessage] = useState<string | undefined>(undefined);
@@ -111,6 +123,23 @@ export function ParticipantDetail({
       return;
     }
     setIsEditing(false);
+    await router.invalidate();
+  }
+
+  // Throws on failure, so the control does not say "saved" (RAPP-301).
+  async function saveQuestionStates(next: QuestionStates) {
+    setQuestionStatesErrorMessage(undefined);
+    const result = await safeAsync(() =>
+      saveParticipantQuestionStates(
+        supabase,
+        participant.id,
+        questionStateChanges(questionStates, next),
+      ),
+    );
+    if (!result.ok) {
+      setQuestionStatesErrorMessage(t('questionStatesFailed'));
+      throw result.error;
+    }
     await router.invalidate();
   }
 
@@ -294,6 +323,15 @@ export function ParticipantDetail({
           <ParticipantProfileFields participant={participant} />
         )}
       </DetailSection>
+
+      {hasJoined ? null : (
+        <ParticipantQuestionStates
+          states={questionStates}
+          answered={new Set(answeredQuestions)}
+          onSave={saveQuestionStates}
+          errorMessage={questionStatesErrorMessage}
+        />
+      )}
 
       <ParticipantNotes notes={notes} onAdd={addNote} errorMessage={noteErrorMessage} />
 

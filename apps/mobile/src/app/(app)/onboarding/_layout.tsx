@@ -16,7 +16,9 @@ import { toAppError } from '@ramassa/shared/errors';
 import {
   fetchDocumentStepExplanation,
   fetchMyAnsweredQuestions,
+  fetchMyQuestionsToAsk,
   nextWizardScreen,
+  questionsNotAsked,
 } from '@ramassa/shared/intake';
 import { fetchOwnProfile } from '@ramassa/shared/profile';
 
@@ -29,7 +31,7 @@ const hiddenHeaderScreenOptions = { headerShown: false } as const;
  */
 function seedWizardDraft(intake: WizardIntake): void {
   if (onboardingDraftStore.loadDraft() !== null || intake.profile === null) return;
-  const firstScreen = nextWizardScreen('start', intake.answered);
+  const firstScreen = nextWizardScreen('start', intake.notAsked);
   onboardingDraftStore.saveDraft({
     currentStep: WIZARD_SCREEN_DRAFT_STEP[firstScreen],
     ...seedDraftFromProfile(intake.profile, intake.answered),
@@ -54,12 +56,13 @@ export default function OnboardingLayout() {
   const intake = useQuery({
     queryKey: ['onboarding-intake', user?.id ?? 'signed-out'],
     queryFn: async ({ signal }): Promise<WizardIntake> => {
-      const [profile, answered, documentExplanation] = await Promise.all([
+      const [profile, answered, toAsk, documentExplanation] = await Promise.all([
         fetchOwnProfile(supabase, { signal }),
         fetchMyAnsweredQuestions(supabase, { signal }),
+        fetchMyQuestionsToAsk(supabase, { signal }),
         fetchDocumentStepExplanation(supabase, { signal }),
       ]);
-      return { profile, answered, documentExplanation };
+      return { profile, answered, notAsked: questionsNotAsked(toAsk), documentExplanation };
     },
     enabled: user !== null,
     // Staff may change her record between two openings: always read it fresh.

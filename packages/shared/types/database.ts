@@ -1476,6 +1476,48 @@ export type Database = {
           },
         ];
       };
+      intake_question_states: {
+        Row: {
+          org_id: string;
+          profile_id: string;
+          question: string;
+          state: string;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          org_id: string;
+          profile_id: string;
+          question: string;
+          state: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          org_id?: string;
+          profile_id?: string;
+          question?: string;
+          state?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'intake_question_states_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'intake_question_states_profile_id_fkey';
+            columns: ['profile_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       internal_documents: {
         Row: {
           content_type: string;
@@ -5036,6 +5078,7 @@ export type Database = {
         }[];
       };
       my_permissions: { Args: never; Returns: string[] };
+      my_questions_to_ask: { Args: never; Returns: string[] };
       my_session_is_current: { Args: never; Returns: boolean };
       open_staff_checkouts: {
         Args: never;
@@ -5095,6 +5138,13 @@ export type Database = {
           signature_reason: string;
           signature_state: string;
           statement_language: string;
+        }[];
+      };
+      participant_question_states: {
+        Args: { p_profile_id: string };
+        Returns: {
+          question: string;
+          state: string;
         }[];
       };
       personal_data_disposition: {
@@ -5399,6 +5449,10 @@ export type Database = {
       };
       set_forum_posting_disabled: {
         Args: { p_disabled: boolean; p_participant_id: string };
+        Returns: undefined;
+      };
+      set_intake_question_states: {
+        Args: { p_profile_id: string; p_states: Json };
         Returns: undefined;
       };
       set_media_item_moderation: {

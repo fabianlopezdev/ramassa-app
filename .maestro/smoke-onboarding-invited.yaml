@@ -5,10 +5,11 @@ name: smoke-onboarding-invited
 #
 # The seed gives her name, date of birth, nationality, referring entity and
 # clothing size as staff answers. So the wizard must open on the background
-# screen with only place of birth and language left, skip the entity and the
-# clothing size on the logistics screen, and show what staff entered on the
-# summary. Five screens in all, numbered from 1, because the step count shows
-# only what she sees.
+# screen with only place of birth and language left, skip the entity on the
+# logistics screen, and show what staff entered on the summary. Staff also set
+# two choices (RAPP-301): she reviews the clothing size, which opens on the
+# staff answer M, and she is not asked her phone. Five screens in all,
+# numbered from 1, because the step count shows only what she sees.
 #
 # iOS lists a button below the fold in the accessibility tree, so a tap can
 # report success and press nothing. Each "until the next step" loop therefore
@@ -34,6 +35,7 @@ env:
   # and the shoe size chips show the catalogue value.
   LANGUAGE_CHIP: Català
   SHOE_SIZE: '38'
+  CLOTHING_SIZE: M
 ---
 - runFlow: _open-app.yaml
 
@@ -237,7 +239,7 @@ env:
       id: 'wizard-step-3'
     timeout: 20000
 
-# ── Step 3: logistics, without the entity and the clothing size ─────────────
+# ── Step 3: logistics, without the entity, with the clothing size to review ─
 - repeat:
     times: 10
     while:
@@ -263,6 +265,21 @@ env:
           timeout: 2000
 - assertVisible:
     text: '^${NO_OPTION}$'
+    selected: true
+# Ask (RAPP-301): the clothing size is asked, filled with the staff answer.
+- repeat:
+    times: 10
+    while:
+      notVisible: '^${CLOTHING_SIZE}$'
+    commands:
+      - swipe:
+          start: 50%, 45%
+          end: 50%, 20%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 1200
+- assertVisible:
+    text: '^${CLOTHING_SIZE}$'
     selected: true
 - swipe:
     start: 50%, 45%

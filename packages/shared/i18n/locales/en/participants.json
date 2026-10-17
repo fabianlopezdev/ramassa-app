@@ -442,5 +442,18 @@
   "statusInvited": "Invited, not joined",
   "rowInvited": "Invited, not joined yet",
   "prefillNotGiven": "Not given",
-  "prefillHint": "She has not joined the app yet. Fill in only what you already know about her: the guided sign-up will ask her the rest, and the consent is hers to give."
+  "prefillHint": "She has not joined the app yet. Fill in only what you already know about her: the guided sign-up will ask her the rest, and the consent is hers to give.",
+  "questionStatesTitle": "What her guided registration asks",
+  "questionStatesIntro": "Choose for each question whether the guided registration asks it. Auto: only if nobody answered it. Ask: always, with your answer for her to confirm. Don't ask: never, but she sees it on the summary.",
+  "questionStateAuto": "Auto",
+  "questionStateAsk": "Ask",
+  "questionStateSkip": "Don't ask",
+  "questionStatesPresetMissing": "Only what is missing",
+  "questionStatesPresetReview": "She reviews everything",
+  "questionStatesSave": "Save questions",
+  "questionStatesSaved": "Questions saved.",
+  "questionStatesFailed": "The questions could not be saved. Try again.",
+  "questionStatesRequiredHint": "Required: answer it before you take it out of the registration.",
+  "questionStatesAnswered": "Already answered.",
+  "questionStatesUnanswered": "Not answered yet."
 }

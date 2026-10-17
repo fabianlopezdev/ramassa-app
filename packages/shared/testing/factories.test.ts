@@ -13,6 +13,7 @@ import {
   buildForumFlag,
   buildForumPost,
   buildForumReply,
+  buildIntakeQuestionState,
   buildInvite,
   buildKnowledgeArticle,
   buildKnowledgeCategory,
@@ -400,6 +401,15 @@ describe('buildStockAlert', () => {
   test('defaults to open, which is what Today shows', () => {
     expect(buildStockAlert().resolved_at).toBeNull();
     expect(buildStockAlert().org_id).toBe(SEED_ORGANIZATION_ID);
+  });
+});
+
+describe('buildIntakeQuestionState', () => {
+  test("is a staff choice for the seeded invited woman's wizard", () => {
+    const state = buildIntakeQuestionState();
+    expect(state.profile_id).toBe(INVITED_ACCOUNT_ID);
+    expect(state.org_id).toBe(SEED_ORGANIZATION_ID);
+    expect(['ask', 'skip']).toContain(state.state);
   });
 });
 

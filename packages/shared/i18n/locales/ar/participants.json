@@ -146,5 +146,18 @@
   "statusInvited": "مدعوّات لم يدخلن بعد",
   "rowInvited": "مدعوّة، لم تدخل بعد",
   "prefillNotGiven": "غير محدد",
-  "prefillHint": "لم تدخل التطبيق بعد. املئي فقط ما تعرفينه عنها: سيسألها التسجيل الموجَّه عن الباقي، والموافقة قرارها هي."
+  "prefillHint": "لم تدخل التطبيق بعد. املئي فقط ما تعرفينه عنها: سيسألها التسجيل الموجَّه عن الباقي، والموافقة قرارها هي.",
+  "questionStatesTitle": "ما يسألها عنه التسجيل الموجَّه",
+  "questionStatesIntro": "اختر لكل سؤال إن كان التسجيل الموجَّه يطرحه عليها. تلقائي: فقط إن لم يُجب عنه أحد. اسأل: دائمًا، مع إجابتكم لتؤكدها. لا تسأل: أبدًا، لكنها ستراه في الملخص.",
+  "questionStateAuto": "تلقائي",
+  "questionStateAsk": "اسأل",
+  "questionStateSkip": "لا تسأل",
+  "questionStatesPresetMissing": "الناقص فقط",
+  "questionStatesPresetReview": "تراجع كل شيء",
+  "questionStatesSave": "احفظ الأسئلة",
+  "questionStatesSaved": "حُفظت الأسئلة.",
+  "questionStatesFailed": "تعذّر حفظ الأسئلة. حاول مرة أخرى.",
+  "questionStatesRequiredHint": "إلزامي: أجب عنه قبل إخراجه من التسجيل.",
+  "questionStatesAnswered": "لديه إجابة.",
+  "questionStatesUnanswered": "بلا إجابة بعد."
 }

@@ -442,5 +442,18 @@
   "statusInvited": "Invitadas sin entrar",
   "rowInvited": "Invitada, aún no ha entrado",
   "prefillNotGiven": "Sin indicar",
-  "prefillHint": "Aún no ha entrado en la aplicación. Rellena solo lo que ya sabes de ella: el registro guiado le preguntará el resto, y el consentimiento lo da ella."
+  "prefillHint": "Aún no ha entrado en la aplicación. Rellena solo lo que ya sabes de ella: el registro guiado le preguntará el resto, y el consentimiento lo da ella.",
+  "questionStatesTitle": "Qué le pregunta el registro guiado",
+  "questionStatesIntro": "Elige para cada pregunta si el registro guiado se la hace. Automático: solo si nadie la ha respondido. Preguntar: siempre, con vuestra respuesta para que la confirme. No preguntar: nunca, pero la verá en el resumen.",
+  "questionStateAuto": "Automático",
+  "questionStateAsk": "Preguntar",
+  "questionStateSkip": "No preguntar",
+  "questionStatesPresetMissing": "Solo lo que falta",
+  "questionStatesPresetReview": "Que lo revise todo",
+  "questionStatesSave": "Guardar las preguntas",
+  "questionStatesSaved": "Preguntas guardadas.",
+  "questionStatesFailed": "No se han podido guardar las preguntas. Vuelve a intentarlo.",
+  "questionStatesRequiredHint": "Es obligatoria: respóndela antes de quitarla del registro.",
+  "questionStatesAnswered": "Ya tiene respuesta.",
+  "questionStatesUnanswered": "Todavía sin respuesta."
 }

@@ -22,6 +22,12 @@ export interface WizardIntake {
   /** Her stored profile, or null when she has none yet (a self-started intake). */
   readonly profile: ProfileRow | null;
   readonly answered: AnsweredQuestions;
+  /**
+   * The questions her wizard does not ask (RAPP-301): answered ones on Auto,
+   * and the ones staff set to Don't ask. The planner and `shouldAsk` read
+   * this; seeding and the final payload keep reading `answered`.
+   */
+  readonly notAsked: AnsweredQuestions;
   /** Staff's note under the document step (RAPP-302), or null when none is written. */
   readonly documentExplanation: LocalizedText | null;
 }
@@ -29,6 +35,7 @@ export interface WizardIntake {
 const EMPTY_INTAKE: WizardIntake = {
   profile: null,
   answered: new Set(),
+  notAsked: new Set(),
   documentExplanation: null,
 };
 
@@ -64,24 +71,24 @@ export interface WizardStep {
 }
 
 export function useWizardStep(screen: WizardScreen): WizardStep {
-  const { answered } = useWizardIntake();
+  const { notAsked } = useWizardIntake();
   const router = useRouter();
   const { edit } = useLocalSearchParams<{ edit?: string }>();
   const isEditing = edit === '1';
 
   return useMemo<WizardStep>(() => {
-    const next: WizardScreen = isEditing ? 'summary' : nextWizardScreen(screen, answered);
+    const next: WizardScreen = isEditing ? 'summary' : nextWizardScreen(screen, notAsked);
     const previous: WizardScreen | null = isEditing
       ? 'summary'
-      : previousWizardScreen(screen, answered);
+      : previousWizardScreen(screen, notAsked);
     // Editing from the summary goes back to that same summary, which re-reads
     // the draft on focus. Without history (a cold start mid-edit), replace.
     const backToSummary = () =>
       router.canGoBack() ? router.back() : router.replace(WIZARD_SCREEN_ROUTES.summary);
     return {
       isEditing,
-      position: wizardScreenPosition(screen, answered),
-      shouldAsk: (question) => isEditing || !answered.has(question),
+      position: wizardScreenPosition(screen, notAsked),
+      shouldAsk: (question) => isEditing || !notAsked.has(question),
       nextDraftStep: WIZARD_SCREEN_DRAFT_STEP[next],
       goNext: isEditing ? backToSummary : () => router.push(WIZARD_SCREEN_ROUTES[next]),
       previousDraftStep: previous === null ? null : WIZARD_SCREEN_DRAFT_STEP[previous],
@@ -93,5 +100,5 @@ export function useWizardStep(screen: WizardScreen): WizardStep {
           ? null
           : () => router.replace(WIZARD_SCREEN_ROUTES[previous]),
     };
-  }, [answered, isEditing, router, screen]);
+  }, [notAsked, isEditing, router, screen]);
 }
