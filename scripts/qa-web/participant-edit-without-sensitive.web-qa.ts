@@ -77,7 +77,7 @@ test.describe('editing a record without the sensitive fields', () => {
       await page.getByRole('button', { name: /edita|edit/i }).click();
 
       await page.locator('#participant-placeOfBirth').fill(nextPlace);
-      await page.getByRole('button', { name: /desa|save|guarda/i }).click();
+      await page.getByRole('button', { name: /^(desa|save|guardar)$/i }).click();
 
       await expect.poll(() => placeOfBirth(id), { timeout: 15_000 }).toBe(nextPlace);
       expect(storedSensitiveValues(id)).toBe(sensitiveBefore);
