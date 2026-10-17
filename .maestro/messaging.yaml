@@ -191,6 +191,9 @@ env:
           id: message-sync-sending
       - stopApp
       - openLink: ${DEV_CLIENT_URL}
+      - tapOn:
+          text: '^Open$'
+          optional: true
       - waitForAnimationToEnd:
           timeout: 12000
       - repeat:

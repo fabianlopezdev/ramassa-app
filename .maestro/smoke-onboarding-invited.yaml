@@ -51,6 +51,9 @@ env:
       notVisible: '.*signed in as ${INVITED_EMAIL}.*'
     commands:
       - openLink: ${DEV_MENU_LINK}?account=${INVITED_EMAIL}
+      - tapOn:
+          text: '^Open$'
+          optional: true
       - waitForAnimationToEnd:
           timeout: 3000
       - extendedWaitUntil:

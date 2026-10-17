@@ -1,6 +1,13 @@
 import * as Crypto from 'expo-crypto';
 import * as SecureStore from 'expo-secure-store';
-import { createMMKV, deleteMMKV, existsMMKV, type MMKV } from 'react-native-mmkv';
+import {
+  createMMKV,
+  deleteMMKV,
+  existsMMKV,
+  type Configuration,
+  type MMKV,
+} from 'react-native-mmkv';
+import { NitroModules, type HybridObject } from 'react-native-nitro-modules';
 import {
   createProtectedStorage,
   rebuildLegacyPreferencesStorage,
@@ -22,18 +29,39 @@ const keyVault: StorageKeyVault = {
     }),
 };
 
+// react-native-mmkv's own native factory, reached through Nitro because the
+// package does not export it. Its createMMKV returns a bare handle: unlike the
+// package's createMMKV it adds no AppState listeners, so a store opened with it
+// can be deleted without leaving a handle that the next foreground calls into
+// (RAPP-501).
+interface NativeMMKVFactory extends HybridObject<{ ios: 'c++'; android: 'c++' }> {
+  createMMKV(configuration: Configuration): MMKV;
+}
+
+let nativeFactory: NativeMMKVFactory | undefined;
+
+function inspectMMKV(configuration: Configuration): MMKV {
+  // existsMMKV initializes MMKV through react-native-mmkv first.
+  existsMMKV(configuration.id);
+  nativeFactory ??= NitroModules.createHybridObject<NativeMMKVFactory>('MMKVFactory');
+  return nativeFactory.createMMKV(configuration);
+}
+
 const protectedStorageFactory: ProtectedStorageFactory = {
   exists: existsMMKV,
+  inspect: (configuration) => inspectMMKV(configuration),
   create: (configuration) => createMMKV(configuration),
   delete: deleteMMKV,
 };
 
 const randomBytes = (count: number): Uint8Array => Crypto.getRandomBytes(count);
 
-const legacyPreferencesStorage = createMMKV();
-export const preferencesStorage = rebuildLegacyPreferencesStorage(legacyPreferencesStorage, () => {
-  deleteMMKV('mmkv.default');
-  return createMMKV();
+const LEGACY_PREFERENCES_ID = 'mmkv.default';
+
+export const preferencesStorage = rebuildLegacyPreferencesStorage({
+  inspect: () => inspectMMKV({ id: LEGACY_PREFERENCES_ID }),
+  open: () => createMMKV({ id: LEGACY_PREFERENCES_ID }),
+  delete: () => void deleteMMKV(LEGACY_PREFERENCES_ID),
 }).storage as MMKV;
 
 export const authStorage = createProtectedStorage({
