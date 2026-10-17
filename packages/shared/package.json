@@ -25,6 +25,7 @@
     "./intake": "./onboarding/index.ts",
     "./authorization": "./authorization/index.ts",
     "./seasons": "./seasons/index.ts",
+    "./intake-builder": "./intake-builder/index.ts",
     "./testing": "./testing/index.ts",
     "./tokens/motion": "./tokens/motion.ts",
     "./profile": "./profile/index.ts",

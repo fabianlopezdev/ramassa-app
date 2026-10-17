@@ -7,6 +7,10 @@ import {
   buildAuthorizationConsentEvent,
   buildAuthorizationSignature,
   buildAuthorizationVersion,
+  buildBuiltinQuestionOverride,
+  buildCustomAnswer,
+  buildCustomQuestion,
+  buildCustomQuestionOption,
   buildEquipmentDelivery,
   buildEvent,
   buildEventCategory,
@@ -17,6 +21,8 @@ import {
   buildForumPost,
   buildForumReply,
   buildIntakeQuestionState,
+  buildIntakeScreen,
+  buildIntakeStatePreset,
   buildInvite,
   buildKnowledgeArticle,
   buildKnowledgeCategory,
@@ -29,6 +35,7 @@ import {
   buildProfile,
   buildProfileAnswer,
   buildPushToken,
+  buildReferralCustomAnswer,
   buildSeason,
   buildSeasonAnswers,
   buildService,
@@ -446,5 +453,27 @@ describe('buildProfileAnswer', () => {
     expect(answer.source).toBe('staff');
     expect(answer.profile_id).toBe(INVITED_ACCOUNT_ID);
     expect(answer.org_id).toBe(SEED_ORGANIZATION_ID);
+  });
+});
+
+describe('the question builder rows (RAPP-307)', () => {
+  test('a question sits on its screen, and an answer names both', () => {
+    const screen = buildIntakeScreen();
+    const question = buildCustomQuestion();
+    expect(question.screen_id).toBe(screen.id);
+    expect(buildCustomAnswer().question_id).toBe(question.id);
+    expect(buildReferralCustomAnswer().question_id).toBe(question.id);
+    expect(buildCustomQuestionOption().is_archived).toBe(false);
+  });
+
+  test('a plain answer has no encrypted copy, and the key of no season is the zero uuid', () => {
+    const answer = buildCustomAnswer();
+    expect(answer.value_encrypted).toBeNull();
+    expect(answer.season_key).toBe('00000000-0000-0000-0000-000000000000');
+  });
+
+  test('the override rewords and the preset asks the sizes', () => {
+    expect(buildBuiltinQuestionOverride().is_hidden).toBe(false);
+    expect(buildIntakeStatePreset().states).toEqual({ clothing_size: 'ask', shoe_size: 'ask' });
   });
 });

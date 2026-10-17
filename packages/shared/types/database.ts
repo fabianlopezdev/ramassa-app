@@ -405,6 +405,54 @@ export type Database = {
           },
         ];
       };
+      builtin_question_overrides: {
+        Row: {
+          help: Json | null;
+          is_hidden: boolean;
+          label: Json | null;
+          option_overrides: Json;
+          org_id: string;
+          question: string;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          help?: Json | null;
+          is_hidden?: boolean;
+          label?: Json | null;
+          option_overrides?: Json;
+          org_id: string;
+          question: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          help?: Json | null;
+          is_hidden?: boolean;
+          label?: Json | null;
+          option_overrides?: Json;
+          org_id?: string;
+          question?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'builtin_question_overrides_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'builtin_question_overrides_updated_by_fkey';
+            columns: ['updated_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       collaborating_entities: {
         Row: {
           created_at: string;
@@ -625,6 +673,71 @@ export type Database = {
           },
         ];
       };
+      custom_answers: {
+        Row: {
+          answered_at: string;
+          org_id: string;
+          profile_id: string;
+          question_id: string;
+          season_id: string | null;
+          season_key: string;
+          source: string;
+          value: Json | null;
+          value_encrypted: string | null;
+        };
+        Insert: {
+          answered_at?: string;
+          org_id: string;
+          profile_id: string;
+          question_id: string;
+          season_id?: string | null;
+          season_key?: string;
+          source: string;
+          value?: Json | null;
+          value_encrypted?: string | null;
+        };
+        Update: {
+          answered_at?: string;
+          org_id?: string;
+          profile_id?: string;
+          question_id?: string;
+          season_id?: string | null;
+          season_key?: string;
+          source?: string;
+          value?: Json | null;
+          value_encrypted?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'custom_answers_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'custom_answers_profile_id_fkey';
+            columns: ['profile_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'custom_answers_question_id_fkey';
+            columns: ['question_id'];
+            isOneToOne: false;
+            referencedRelation: 'custom_questions';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'custom_answers_season_id_fkey';
+            columns: ['season_id'];
+            isOneToOne: false;
+            referencedRelation: 'seasons';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       custom_notification_group_members: {
         Row: {
           created_at: string;
@@ -706,6 +819,108 @@ export type Database = {
             columns: ['org_id'];
             isOneToOne: false;
             referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      custom_question_options: {
+        Row: {
+          id: string;
+          is_archived: boolean;
+          label: Json;
+          org_id: string;
+          question_id: string;
+          sort_order: number;
+        };
+        Insert: {
+          id?: string;
+          is_archived?: boolean;
+          label: Json;
+          org_id: string;
+          question_id: string;
+          sort_order?: number;
+        };
+        Update: {
+          id?: string;
+          is_archived?: boolean;
+          label?: Json;
+          org_id?: string;
+          question_id?: string;
+          sort_order?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'custom_question_options_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'custom_question_options_question_id_fkey';
+            columns: ['question_id'];
+            isOneToOne: false;
+            referencedRelation: 'custom_questions';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      custom_questions: {
+        Row: {
+          created_at: string;
+          help: Json | null;
+          id: string;
+          is_archived: boolean;
+          label: Json;
+          org_id: string;
+          placements: string[];
+          privacy: string;
+          question_type: string;
+          screen_id: string;
+          sort_order: number;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          help?: Json | null;
+          id?: string;
+          is_archived?: boolean;
+          label: Json;
+          org_id: string;
+          placements: string[];
+          privacy: string;
+          question_type: string;
+          screen_id: string;
+          sort_order?: number;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          help?: Json | null;
+          id?: string;
+          is_archived?: boolean;
+          label?: Json;
+          org_id?: string;
+          placements?: string[];
+          privacy?: string;
+          question_type?: string;
+          screen_id?: string;
+          sort_order?: number;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'custom_questions_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'custom_questions_screen_id_fkey';
+            columns: ['screen_id'];
+            isOneToOne: false;
+            referencedRelation: 'intake_screens';
             referencedColumns: ['id'];
           },
         ];
@@ -1724,6 +1939,92 @@ export type Database = {
             columns: ['profile_id'];
             isOneToOne: false;
             referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      intake_screens: {
+        Row: {
+          after_screen: string;
+          created_at: string;
+          id: string;
+          intro: Json | null;
+          is_archived: boolean;
+          org_id: string;
+          sort_order: number;
+          title: Json;
+          updated_at: string;
+        };
+        Insert: {
+          after_screen: string;
+          created_at?: string;
+          id?: string;
+          intro?: Json | null;
+          is_archived?: boolean;
+          org_id: string;
+          sort_order?: number;
+          title: Json;
+          updated_at?: string;
+        };
+        Update: {
+          after_screen?: string;
+          created_at?: string;
+          id?: string;
+          intro?: Json | null;
+          is_archived?: boolean;
+          org_id?: string;
+          sort_order?: number;
+          title?: Json;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'intake_screens_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      intake_state_presets: {
+        Row: {
+          created_at: string;
+          created_by: string | null;
+          id: string;
+          name: string;
+          org_id: string;
+          states: Json;
+        };
+        Insert: {
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          name: string;
+          org_id: string;
+          states: Json;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          name?: string;
+          org_id?: string;
+          states?: Json;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'intake_state_presets_created_by_fkey';
+            columns: ['created_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'intake_state_presets_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
             referencedColumns: ['id'];
           },
         ];
@@ -2967,6 +3268,52 @@ export type Database = {
             columns: ['user_id'];
             isOneToOne: false;
             referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      referral_custom_answers: {
+        Row: {
+          created_at: string;
+          org_id: string;
+          question_id: string;
+          referral_id: string;
+          value_encrypted: string;
+        };
+        Insert: {
+          created_at?: string;
+          org_id: string;
+          question_id: string;
+          referral_id: string;
+          value_encrypted: string;
+        };
+        Update: {
+          created_at?: string;
+          org_id?: string;
+          question_id?: string;
+          referral_id?: string;
+          value_encrypted?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'referral_custom_answers_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'referral_custom_answers_question_id_fkey';
+            columns: ['question_id'];
+            isOneToOne: false;
+            referencedRelation: 'custom_questions';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'referral_custom_answers_referral_id_fkey';
+            columns: ['referral_id'];
+            isOneToOne: false;
+            referencedRelation: 'entity_referrals';
             referencedColumns: ['id'];
           },
         ];
@@ -4550,6 +4897,8 @@ export type Database = {
         Args: { p_preset_id: string; p_profile_ids: string[] };
         Returns: number;
       };
+      archive_custom_question: { Args: { p_id: string }; Returns: undefined };
+      archive_intake_screen: { Args: { p_id: string }; Returns: undefined };
       assert_within_hourly_limit: {
         Args: { limited_action: string; maximum_per_hour: number };
         Returns: undefined;
@@ -4807,6 +5156,7 @@ export type Database = {
         Args: { p_category_id: string };
         Returns: undefined;
       };
+      delete_intake_state_preset: { Args: { p_id: string }; Returns: undefined };
       delete_notification_template: {
         Args: { p_id: string };
         Returns: undefined;
@@ -5073,6 +5423,7 @@ export type Database = {
       };
       has_permission: { Args: { p_code: string }; Returns: boolean };
       immutable_unaccent: { Args: { value: string }; Returns: string };
+      intake_catalog: { Args: never; Returns: Json };
       invite_entity_collaborator: {
         Args: {
           p_collaborating_entity_id: string;
@@ -5571,6 +5922,13 @@ export type Database = {
           granted: boolean;
         }[];
       };
+      my_custom_answers: {
+        Args: never;
+        Returns: {
+          question_id: string;
+          value: Json;
+        }[];
+      };
       my_entity_invitation: {
         Args: never;
         Returns: {
@@ -5637,6 +5995,17 @@ export type Database = {
           decided_at: string;
           granted: boolean;
           method: string;
+        }[];
+      };
+      participant_custom_answers: {
+        Args: { p_profile_id: string };
+        Returns: {
+          answered_at: string;
+          question_id: string;
+          season_id: string;
+          season_name: string;
+          source: string;
+          value: Json;
         }[];
       };
       participant_filter_options: {
@@ -5831,6 +6200,13 @@ export type Database = {
           count_id: string;
         }[];
       };
+      referral_custom_answers: {
+        Args: { p_referral_id: string };
+        Returns: {
+          question_id: string;
+          value: Json;
+        }[];
+      };
       register_internal_document: {
         Args: {
           p_content_type: string;
@@ -5847,6 +6223,14 @@ export type Database = {
       renew_participant_invite: {
         Args: { p_invite_id: string };
         Returns: string;
+      };
+      reorder_custom_questions: {
+        Args: { p_ids: string[]; p_screen_id: string };
+        Returns: undefined;
+      };
+      reorder_intake_screens: {
+        Args: { p_after_screen: string; p_ids: string[] };
+        Returns: undefined;
       };
       reorder_service_categories: {
         Args: { p_category_ids: string[] };
@@ -5878,8 +6262,31 @@ export type Database = {
         Returns: undefined;
       };
       save_admin_service: { Args: { p_payload: Json }; Returns: string };
+      save_builtin_question_override: {
+        Args: {
+          p_help: Json;
+          p_is_hidden: boolean;
+          p_label: Json;
+          p_option_overrides: Json;
+          p_question: string;
+        };
+        Returns: undefined;
+      };
       save_custom_notification_group: {
         Args: { p_id: string; p_name: string; p_participant_ids: string[] };
+        Returns: string;
+      };
+      save_custom_question: {
+        Args: {
+          p_help: Json;
+          p_id: string;
+          p_label: Json;
+          p_options?: Json;
+          p_placements: string[];
+          p_privacy: string;
+          p_screen_id: string;
+          p_type: string;
+        };
         Returns: string;
       };
       save_entity_service: { Args: { p_payload: Json }; Returns: string };
@@ -5894,6 +6301,19 @@ export type Database = {
         };
         Returns: string;
       };
+      save_intake_screen: {
+        Args: {
+          p_after_screen: string;
+          p_id: string;
+          p_intro: Json;
+          p_title: Json;
+        };
+        Returns: string;
+      };
+      save_intake_state_preset: {
+        Args: { p_id: string; p_name: string; p_states: Json };
+        Returns: string;
+      };
       save_item_type: {
         Args: {
           p_code_prefix: string;
@@ -5906,6 +6326,7 @@ export type Database = {
         };
         Returns: string;
       };
+      save_my_custom_answers: { Args: { p_answers: Json }; Returns: undefined };
       save_notification_template: {
         Args: {
           p_body: Json;
@@ -5923,6 +6344,10 @@ export type Database = {
           p_preset_id: string;
         };
         Returns: string;
+      };
+      save_referral_custom_answers: {
+        Args: { p_answers: Json; p_referral_id: string };
+        Returns: undefined;
       };
       save_survey: {
         Args: {
@@ -6044,6 +6469,10 @@ export type Database = {
       };
       set_participant_active: {
         Args: { next_is_active: boolean; participant_id: string };
+        Returns: undefined;
+      };
+      set_participant_custom_answers: {
+        Args: { p_answers: Json; p_profile_id: string };
         Returns: undefined;
       };
       set_prior_seasons: {
