@@ -1,6 +1,7 @@
 appId: com.ramassa.app
 name: smoke-auth
-# Cold start -> sign in -> land in the player shell -> sign out -> back at login.
+# Cold start -> sign in -> land in the player shell -> sign out -> back at the
+# start of the signed-out route group, the language screen (RAPP-115).
 # The auth guard is the thing under test: the root navigator routes by session,
 # so signing in and out must move between the two route groups with no manual
 # navigation anywhere in this flow.
@@ -9,14 +10,16 @@ env:
   BACK: '{{common:back}}'
   PUSH_DECLINE: '{{push:rationaleDecline}}'
   DEV_MENU_LABEL: Developer menu
-  LOGIN_TITLE: '{{auth:loginTitle}}'
+  LOGIN_TITLE: '{{auth:emailLoginTitle}}'
+  LANGUAGE_TITLE: '{{auth:languageTitle}}'
   PROFILE_TITLE: '{{profile:title}}'
   SIGN_OUT: '{{auth:signOutAction}}'
   TAB_HOME: '{{nav:tabs.home}}'
   TAB_PROFILE: '{{nav:tabs.profile}}'
 ---
 - runFlow: _open-app.yaml
-# Cold start with no session lands on login, not on the app.
+# Cold start with no session stays signed out. `_open-app.yaml` chose the
+# language and continued, so the email login is in front.
 - assertVisible: '.*${LOGIN_TITLE}.*'
 - runFlow: _sign-in.yaml
 - runFlow: _relaunch.yaml
@@ -66,11 +69,13 @@ env:
 - waitForAnimationToEnd:
     timeout: 2000
 
-# Signing out clears the session and the guard flips back on its own.
+# Signing out clears the session and the guard flips back on its own. The
+# signed-out group opens on its anchor, the language screen. Its heading is the
+# chosen language's only, so the Catalan title is the one on screen.
 - tapOn:
     text: '^${SIGN_OUT}$'
 - extendedWaitUntil:
-    visible: '.*${LOGIN_TITLE}.*'
+    visible: '.*${LANGUAGE_TITLE}.*'
     timeout: 60000
 - assertNotVisible:
     text: '^${TAB_HOME}$'

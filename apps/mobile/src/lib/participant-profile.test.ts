@@ -8,6 +8,7 @@ describe('visibleProfileFields', () => {
       'entity',
       'clothingSize',
       'shoeSize',
+      'seasonNumber',
       'mediaConsent',
       'terms',
     ]);
@@ -19,10 +20,14 @@ describe('visibleProfileFields', () => {
     expect(fields).toContain('city');
     expect(fields).not.toContain('phone');
     expect(fields).not.toContain('documentNumber');
+    // The season answers (RAPP-303): childcare is personal, the needs are sensitive.
+    expect(fields).toContain('childcareNeed');
+    expect(fields).not.toContain('applicantStatus');
+    expect(fields).not.toContain('specificNeeds');
   });
 
   test('the sensitive level shows every field', () => {
-    expect(visibleProfileFields({ personal: true, sensitive: true })).toHaveLength(17);
+    expect(visibleProfileFields({ personal: true, sensitive: true })).toHaveLength(22);
   });
 });
 

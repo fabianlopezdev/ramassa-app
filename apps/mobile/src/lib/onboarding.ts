@@ -10,6 +10,7 @@ import { supabase } from '@/lib/supabase';
 import { useEffect, useState } from 'react';
 import { fetchMyPendingInvite } from '@ramassa/shared/accounts';
 import { AppError, type Result } from '@ramassa/shared/errors';
+import { saveMyCustomAnswers, type CustomAnswerValue } from '@ramassa/shared/intake-builder';
 import { createMmkvOnboardingDraftStore } from '@ramassa/shared/onboarding-drafts';
 import type { CompleteOnboardingPayload } from '@ramassa/shared/schemas';
 
@@ -35,6 +36,16 @@ export function completeOnboarding(
     },
     { code: 'DB-1' },
   );
+}
+
+/**
+ * Sends her answers to the staff questions (RAPP-307). Only new or changed
+ * ones are passed in; nothing to send makes no call.
+ */
+export function saveWizardCustomAnswers(
+  answers: Readonly<Record<string, CustomAnswerValue | null>>,
+): Promise<Result<void, AppError>> {
+  return safeAsync(() => saveMyCustomAnswers(supabase, answers), { code: 'DB-1' });
 }
 
 /**

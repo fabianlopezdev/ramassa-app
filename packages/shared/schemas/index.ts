@@ -36,6 +36,7 @@ export type ExpoMetroManifest = z.infer<typeof expoMetroManifestSchema>;
 export * from './accounts';
 export * from './auth';
 export * from './onboarding';
+export * from './season';
 export * from './participant-notes';
 export * from './profile';
 export * from './upload';

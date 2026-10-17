@@ -31,11 +31,25 @@ export const INTAKE_QUESTIONS = [
   'clothing_size',
   'shoe_size',
   'avatar',
+  // The season registration answers (RAPP-303): given by the entity or staff,
+  // on no wizard screen yet.
+  'applicant_status',
+  'supporting_entities',
+  'season_number',
+  'childcare_need',
+  'specific_needs',
 ] as const;
 export type IntakeQuestion = (typeof INTAKE_QUESTIONS)[number];
 
 /** The wizard screens that ask questions, in order. */
-export const QUESTION_SCREENS = ['identity', 'background', 'documentation', 'logistics'] as const;
+export const QUESTION_SCREENS = [
+  'identity',
+  'background',
+  'documentation',
+  'logistics',
+  // The registration questions, all optional (RAPP-306).
+  'season',
+] as const;
 export type QuestionScreen = (typeof QUESTION_SCREENS)[number];
 export type WizardScreen = QuestionScreen | 'summary' | 'terms';
 
@@ -58,6 +72,7 @@ export const SCREEN_QUESTIONS: Readonly<Record<QuestionScreen, readonly IntakeQu
     'clothing_size',
     'shoe_size',
   ],
+  season: ['applicant_status', 'supporting_entities', 'childcare_need', 'specific_needs'],
 };
 
 /**
@@ -83,6 +98,11 @@ export const QUESTION_PAYLOAD_KEYS: Readonly<Record<IntakeQuestion, readonly str
   clothing_size: ['clothing_size'],
   shoe_size: ['shoe_size'],
   avatar: ['avatar_url'],
+  applicant_status: ['applicant_status'],
+  supporting_entities: ['supporting_entities'],
+  season_number: ['season_number'],
+  childcare_need: ['childcare_need'],
+  specific_needs: ['specific_needs'],
 };
 
 /**
@@ -110,26 +130,93 @@ export function screensToAsk(answered: AnsweredQuestions): QuestionScreen[] {
   );
 }
 
-/** Every screen she will see, in order: the asked ones, the summary and the terms. */
-function visibleScreens(answered: AnsweredQuestions): WizardScreen[] {
-  return [...screensToAsk(answered), 'summary', 'terms'];
+/**
+ * A staff screen in the wizard (RAPP-307). It follows one built-in step and
+ * shows even when that step is skipped. A screen she already answered
+ * completely is skipped, as a built-in one is (RAPP-300).
+ */
+export interface CustomWizardScreen {
+  readonly id: string;
+  readonly afterScreen: QuestionScreen;
+  readonly isAnswered: boolean;
 }
 
-/** Where the wizard goes after `from`; `'start'` gives the first screen. */
+/** A wizard step: a built-in screen, or a staff screen as `custom:<id>`. */
+export type CustomStepKey = `custom:${string}`;
+export type WizardStepKey = WizardScreen | CustomStepKey;
+
+const CUSTOM_STEP_PREFIX = 'custom:';
+
+export function customStepKey(screenId: string): CustomStepKey {
+  return `${CUSTOM_STEP_PREFIX}${screenId}`;
+}
+
+export function isCustomStep(step: string): step is CustomStepKey {
+  return step.startsWith(CUSTOM_STEP_PREFIX);
+}
+
+/** The staff screen id of a step, or null for a built-in one. */
+export function customStepId(step: string): string | null {
+  return isCustomStep(step) ? step.slice(CUSTOM_STEP_PREFIX.length) : null;
+}
+
+/** Every step in order, shown or not: each built-in screen with its staff screens after it. */
+function fullOrder(custom: readonly CustomWizardScreen[]): WizardStepKey[] {
+  return [
+    ...QUESTION_SCREENS.flatMap((screen): WizardStepKey[] => [
+      screen,
+      ...custom
+        .filter((customScreen) => customScreen.afterScreen === screen)
+        .map((customScreen) => customStepKey(customScreen.id)),
+    ]),
+    'summary',
+    'terms',
+  ];
+}
+
+/** Every screen she will see, in order: the asked ones, the summary and the terms. */
+function visibleScreens(
+  answered: AnsweredQuestions,
+  custom: readonly CustomWizardScreen[],
+): WizardStepKey[] {
+  const asked = new Set<WizardStepKey>(screensToAsk(answered));
+  const answeredCustom = new Set(
+    custom.filter((screen) => screen.isAnswered).map((screen) => customStepKey(screen.id)),
+  );
+  return fullOrder(custom).filter((step) =>
+    isCustomStep(step)
+      ? !answeredCustom.has(step)
+      : step === 'summary' || step === 'terms' || asked.has(step),
+  );
+}
+
+/**
+ * Where the wizard goes after `from`; `'start'` gives the first screen. With
+ * no staff screens it only ever returns a built-in one.
+ */
 export function nextWizardScreen(
   from: WizardScreen | 'start',
   answered: AnsweredQuestions,
-): WizardScreen {
-  const screens = visibleScreens(answered);
+): WizardScreen;
+export function nextWizardScreen(
+  from: WizardStepKey | 'start',
+  answered: AnsweredQuestions,
+  custom: readonly CustomWizardScreen[],
+): WizardStepKey;
+export function nextWizardScreen(
+  from: WizardStepKey | 'start',
+  answered: AnsweredQuestions,
+  custom: readonly CustomWizardScreen[] = [],
+): WizardStepKey {
+  const screens = visibleScreens(answered, custom);
   if (from === 'start') return screens[0] ?? 'summary';
   const index = screens.indexOf(from);
   if (index === -1) {
     // A screen she was not shown (opened from the summary to edit): the next
     // screen after it in the full order that she does see.
-    const fullOrder: WizardScreen[] = [...QUESTION_SCREENS, 'summary', 'terms'];
+    const order = fullOrder(custom);
     return (
-      fullOrder.slice(fullOrder.indexOf(from) + 1).find((screen) => screens.includes(screen)) ??
-      'summary'
+      order.slice(order.indexOf(from) + 1).find((screen) => screens.includes(screen)) ?? 'summary'
     );
   }
   return screens[index + 1] ?? 'terms';
@@ -139,18 +226,29 @@ export function nextWizardScreen(
 export function previousWizardScreen(
   from: WizardScreen,
   answered: AnsweredQuestions,
-): WizardScreen | null {
-  const screens = visibleScreens(answered);
+): WizardScreen | null;
+export function previousWizardScreen(
+  from: WizardStepKey,
+  answered: AnsweredQuestions,
+  custom: readonly CustomWizardScreen[],
+): WizardStepKey | null;
+export function previousWizardScreen(
+  from: WizardStepKey,
+  answered: AnsweredQuestions,
+  custom: readonly CustomWizardScreen[] = [],
+): WizardStepKey | null {
+  const screens = visibleScreens(answered, custom);
   const index = screens.indexOf(from);
   return index > 0 ? (screens[index - 1] ?? null) : null;
 }
 
 /** The step number and total for the progress indicator, counting only what she sees. */
 export function wizardScreenPosition(
-  screen: WizardScreen,
+  screen: WizardStepKey,
   answered: AnsweredQuestions,
+  custom: readonly CustomWizardScreen[] = [],
 ): { step: number; total: number } {
-  const screens = visibleScreens(answered);
+  const screens = visibleScreens(answered, custom);
   return { step: Math.max(screens.indexOf(screen), 0) + 1, total: screens.length };
 }
 

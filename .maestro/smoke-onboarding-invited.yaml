@@ -5,10 +5,12 @@ name: smoke-onboarding-invited
 #
 # The seed gives her name, date of birth, nationality, referring entity and
 # clothing size as staff answers. So the wizard must open on the background
-# screen with only place of birth and language left, skip the entity and the
-# clothing size on the logistics screen, and show what staff entered on the
-# summary. Five screens in all, numbered from 1, because the step count shows
-# only what she sees.
+# screen with only place of birth and language left, skip the entity on the
+# logistics screen, and show what staff entered on the summary. Staff also set
+# two choices (RAPP-301): she reviews the clothing size, which opens on the
+# staff answer M, and she is not asked her phone. Six screens in all, with
+# the registration questions (RAPP-306),
+# numbered from 1, because the step count shows only what she sees.
 #
 # iOS lists a button below the fold in the accessibility tree, so a tap can
 # report success and press nothing. Each "until the next step" loop therefore
@@ -17,6 +19,7 @@ name: smoke-onboarding-invited
 # Like `smoke-onboarding`, finishing spends the account: a second run needs a
 # `bun run db:reset` first, which `bun run qa:smoke` does before each platform.
 env:
+  CUSTOM_SCREEN_TITLE: Com arribes als entrenaments
   DEV_MENU_LABEL: Developer menu
   DEV_MENU_LINK: ramassa://dev-menu
   ACCOUNTS_SECTION: Accounts and roles
@@ -34,6 +37,7 @@ env:
   # and the shoe size chips show the catalogue value.
   LANGUAGE_CHIP: Català
   SHOE_SIZE: '38'
+  CLOTHING_SIZE: M
 ---
 - runFlow: _open-app.yaml
 
@@ -237,7 +241,7 @@ env:
       id: 'wizard-step-3'
     timeout: 20000
 
-# ── Step 3: logistics, without the entity and the clothing size ─────────────
+# ── Step 3: logistics, without the entity, with the clothing size to review ─
 - repeat:
     times: 10
     while:
@@ -263,6 +267,21 @@ env:
           timeout: 2000
 - assertVisible:
     text: '^${NO_OPTION}$'
+    selected: true
+# Ask (RAPP-301): the clothing size is asked, filled with the staff answer.
+- repeat:
+    times: 10
+    while:
+      notVisible: '^${CLOTHING_SIZE}$'
+    commands:
+      - swipe:
+          start: 50%, 45%
+          end: 50%, 20%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 1200
+- assertVisible:
+    text: '^${CLOTHING_SIZE}$'
     selected: true
 - swipe:
     start: 50%, 45%
@@ -329,7 +348,70 @@ env:
       id: 'wizard-step-4'
     timeout: 20000
 
-# ── Step 4: summary ────────────────────────────────────────────────────────────
+# ── Step 4: the staff screen seeded after logistics (RAPP-307) ─────────────
+- assertVisible:
+    text: '.*${CUSTOM_SCREEN_TITLE}.*'
+- tapOn:
+    id: 'custom-question-5eed0000-0000-4000-8045-000000000001-yes'
+- waitForAnimationToEnd:
+    timeout: 1500
+- repeat:
+    times: 8
+    while:
+      notVisible:
+        id: 'wizard-step-5'
+    commands:
+      - tapOn:
+          text: '^${CONTINUE}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 2000
+      - swipe:
+          start: 50%, 45%
+          end: 50%, 20%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 1200
+- extendedWaitUntil:
+    visible:
+      id: 'wizard-step-5'
+    timeout: 20000
+
+# ── The registration questions (RAPP-306): all optional, left empty ──────────
+- repeat:
+    times: 12
+    while:
+      notVisible: '^${CONTINUE}$'
+    commands:
+      - swipe:
+          start: 50%, 45%
+          end: 50%, 15%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 1500
+- repeat:
+    times: 8
+    while:
+      notVisible:
+        id: 'wizard-step-6'
+    commands:
+      - tapOn:
+          text: '^${CONTINUE}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 2000
+      - swipe:
+          start: 50%, 45%
+          end: 50%, 20%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 1200
+- extendedWaitUntil:
+    visible:
+      id: 'wizard-step-6'
+    timeout: 20000
+
+# ── Step 6: summary ────────────────────────────────────────────────────────────
 # What staff entered is on it, next to what she just answered.
 - assertVisible: '.*Mariam.*'
 - repeat:
@@ -359,7 +441,7 @@ env:
     times: 8
     while:
       notVisible:
-        id: 'wizard-step-5'
+        id: 'wizard-step-7'
     commands:
       - tapOn:
           text: '^${SUMMARY_CONFIRM}$'
@@ -374,10 +456,10 @@ env:
           timeout: 1200
 - extendedWaitUntil:
     visible:
-      id: 'wizard-step-5'
+      id: 'wizard-step-7'
     timeout: 20000
 
-# ── Step 5: terms ──────────────────────────────────────────────────────────────
+# ── Step 7: terms ──────────────────────────────────────────────────────────────
 - repeat:
     times: 10
     while:
@@ -415,6 +497,20 @@ env:
           duration: 600
       - waitForAnimationToEnd:
           timeout: 1500
+# Finishing makes her a player, and a player signs the season authorization
+# before the tabs (RAPP-304).
+- repeat:
+    times: 8
+    while:
+      notVisible:
+        id: 'authorization-screen'
+    commands:
+      - tapOn:
+          text: '^${FINISH}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 3000
+- runFlow: _sign-authorization.yaml
 - repeat:
     times: 8
     while:
@@ -435,7 +531,16 @@ env:
 - extendedWaitUntil:
     visible: '.*${HOME_FEED_TITLE}.*'
     timeout: 120000
+# The notification prompt waits until she has signed (RAPP-304), so it can
+# open over the home screen just now. Decline it before checking the tabs.
+- waitForAnimationToEnd:
+    timeout: 3000
+- tapOn:
+    text: '^${PUSH_DECLINE}$'
+    optional: true
+- waitForAnimationToEnd:
+    timeout: 2000
 - assertVisible:
     text: '^${TAB_HOME}$'
 - assertNotVisible:
-    id: 'wizard-step-5'
+    id: 'wizard-step-7'

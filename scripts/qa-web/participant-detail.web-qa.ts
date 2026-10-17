@@ -170,12 +170,14 @@ test.describe('the participant detail view', () => {
     const nextCity = before === 'Gurb' ? 'Calldetenes' : 'Gurb';
 
     await openDetail(page, participantId);
-    await page.getByRole('button', { name: /edita|edit/i }).click();
+    await page
+      .getByRole('button', { name: /^(edita la fitxa|edita la ficha|edit the record)$/i })
+      .click();
 
     const cityField = page.locator('#participant-city');
     await expect(cityField).toBeVisible();
     await cityField.fill(nextCity);
-    await page.getByRole('button', { name: /desa|save|guarda/i }).click();
+    await page.getByRole('button', { name: /^(desa|save|guardar)$/i }).click();
 
     await expect
       .poll(() => queryDatabase(`select city from public.profiles where id = '${participantId}'`), {
@@ -203,10 +205,12 @@ test.describe('the participant detail view', () => {
     const [originalType, originalNumber] = original.split('|');
     try {
       await openDetail(page, participantId);
-      await page.getByRole('button', { name: /edita|edit/i }).click();
+      await page
+        .getByRole('button', { name: /^(edita la fitxa|edita la ficha|edit the record)$/i })
+        .click();
       await page.locator('#participant-documentType').selectOption({ label: 'Not given' });
       await expect(page.locator('#participant-documentNumber')).toHaveCount(0);
-      await page.getByRole('button', { name: /desa|save|guarda/i }).click();
+      await page.getByRole('button', { name: /^(desa|save|guardar)$/i }).click();
 
       await expect
         .poll(
@@ -229,6 +233,36 @@ test.describe('the participant detail view', () => {
   });
 
   /**
+   * A player who signed the season authorization on paper (RAPP-304): staff
+   * record it, and her app no longer asks her to sign. Removed afterwards, so
+   * the seeded player keeps meeting the gate.
+   */
+  test('staff record a paper authorization for the season', async ({ page }) => {
+    const participantId = participantIdByLastName('Шевченко');
+    try {
+      await openDetail(page, participantId);
+      const panel = page.getByTestId('participant-authorization');
+      await expect(panel).toBeVisible();
+      await panel.locator('#paper-signed-on').fill('2026-09-20');
+      await panel.getByRole('button', { name: /paper|paper/i }).click();
+      await expect
+        .poll(
+          () =>
+            queryDatabase(
+              `select paper_signed_on::text from public.authorization_signatures
+                where profile_id = '${participantId}' and method = 'paper'`,
+            ),
+          { timeout: 15_000 },
+        )
+        .toBe('2026-09-20');
+    } finally {
+      queryDatabase(
+        `delete from public.authorization_signatures where profile_id = '${participantId}' and method = 'paper'`,
+      );
+    }
+  });
+
+  /**
    * An accented town has to survive the round trip. It is the same class of bug
    * RAPP-23 shipped, one layer down: a value that looks fine on the way in and
    * comes back folded.
@@ -237,9 +271,11 @@ test.describe('the participant detail view', () => {
     const participantId = participantIdByLastName('Ribes');
 
     await openDetail(page, participantId);
-    await page.getByRole('button', { name: /edita|edit/i }).click();
+    await page
+      .getByRole('button', { name: /^(edita la fitxa|edita la ficha|edit the record)$/i })
+      .click();
     await page.locator('#participant-placeOfBirth').fill('Sant Julià de Vilatorta');
-    await page.getByRole('button', { name: /desa|save|guarda/i }).click();
+    await page.getByRole('button', { name: /^(desa|save|guardar)$/i }).click();
 
     await expect
       .poll(

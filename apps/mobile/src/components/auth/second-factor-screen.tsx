@@ -10,8 +10,8 @@ import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { PageWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
-import { logout } from '@/lib/auth';
 import { safeAsync } from '@/lib/observability';
+import { useGuardedLogout } from '@/lib/sign-out-guard';
 import { supabase } from '@/lib/supabase';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useEffect, useState } from 'react';
@@ -27,6 +27,7 @@ import type { AppErrorCode } from '@ramassa/shared/errors';
 import { tokens } from '@ramassa/shared/tokens';
 
 export function SecondFactorScreen() {
+  const signOut = useGuardedLogout();
   const { t } = useTranslation('auth');
   const { t: tProfile } = useTranslation('profile');
   const languageFontClass = useLanguageFontClass();
@@ -125,7 +126,7 @@ export function SecondFactorScreen() {
               testID="second-factor-sign-out"
               accessibilityRole="button"
               accessibilityLabel={tProfile('signOutAction')}
-              onPress={() => void logout()}
+              onPress={signOut}
               haptic="tapLight"
               className="min-h-recommended items-center justify-center px-lg"
             >

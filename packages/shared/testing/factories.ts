@@ -70,6 +70,13 @@ export type StockAlertRow = Database['public']['Tables']['stock_alerts']['Row'];
 export type AuditLogRow = Database['public']['Tables']['audit_log']['Row'];
 export type InviteRow = Database['public']['Tables']['invites']['Row'];
 export type ProfileAnswerRow = Database['public']['Tables']['profile_answers']['Row'];
+export type SeasonRow = Database['public']['Tables']['seasons']['Row'];
+export type AuthorizationVersionRow = Database['public']['Tables']['authorization_versions']['Row'];
+export type AuthorizationSignatureRow =
+  Database['public']['Tables']['authorization_signatures']['Row'];
+export type AuthorizationConsentEventRow =
+  Database['public']['Tables']['authorization_consent_events']['Row'];
+export type IntakeQuestionStateRow = Database['public']['Tables']['intake_question_states']['Row'];
 export type ServiceCategoryRow = Database['public']['Tables']['service_categories']['Row'];
 export type ServiceRow = Database['public']['Tables']['services']['Row'];
 export type ServiceImageRow = Database['public']['Tables']['service_images']['Row'];
@@ -695,6 +702,19 @@ export function buildProfileFromFixture(
     push_notifications_enabled: true,
     created_at: FIXTURE_TIMESTAMP,
     updated_at: FIXTURE_TIMESTAMP,
+    // The season registration answers (RAPP-303): not given unless a test says so.
+    applicant_status: null,
+    supporting_entities: null,
+    season_number: null,
+    childcare_need: null,
+    specific_needs: null,
+    // The authorization's medical answer and emergency contact (RAPP-304).
+    health_info: null,
+    emergency_contact_name: null,
+    emergency_contact_relation: null,
+    emergency_contact_phone: null,
+    // Seasons played before the app (RAPP-306).
+    prior_seasons: 0,
     ...derivedProfileFields(fixture),
     ...overrides,
   };
@@ -1227,6 +1247,278 @@ export function buildProfileAnswer(overrides: Partial<ProfileAnswerRow> = {}): P
     question: 'nationality',
     source: 'staff',
     answered_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+/**
+ * A staff choice for one wizard question (RAPP-301): the seeded invited woman
+ * reviews her clothing size although staff answered it.
+ */
+export function buildIntakeQuestionState(
+  overrides: Partial<IntakeQuestionStateRow> = {},
+): IntakeQuestionStateRow {
+  return {
+    profile_id: INVITED_ACCOUNT_ID,
+    org_id: SEED_ORGANIZATION_ID,
+    question: 'clothing_size',
+    state: 'ask',
+    updated_at: FIXTURE_TIMESTAMP,
+    updated_by: null,
+    ...overrides,
+  };
+}
+
+export const SEED_SEASON_ID = '5eed0000-0000-4000-8040-000000000001';
+export const SEED_AUTHORIZATION_VERSION_ID = '5eed0000-0000-4000-8041-000000000001';
+
+/** The current season of the seeded organization (RAPP-304). */
+export function buildSeason(overrides: Partial<SeasonRow> = {}): SeasonRow {
+  return {
+    id: SEED_SEASON_ID,
+    org_id: SEED_ORGANIZATION_ID,
+    name: '2026/27',
+    starts_on: '2026-09-01',
+    is_current: true,
+    created_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+/** A published authorization version with every consent and one section (RAPP-304). */
+export function buildAuthorizationVersion(
+  overrides: Partial<AuthorizationVersionRow> = {},
+): AuthorizationVersionRow {
+  const label = (text: string) => ({ ca: text });
+  return {
+    id: SEED_AUTHORIZATION_VERSION_ID,
+    org_id: SEED_ORGANIZATION_ID,
+    season_id: SEED_SEASON_ID,
+    version_number: 1,
+    content: {
+      title: label('Autorització 2026/27'),
+      sections: [{ key: 'participation', title: label('Participació'), body: label('Text.') }],
+      consents: {
+        participation: { required: true, label: label('Participo.') },
+        data_processing: { required: true, label: label('Dades.') },
+        code_of_conduct: { required: true, label: label('Codi.') },
+        health_data: { required: true, label: label('Salut.') },
+        image_rights: { required: false, label: label('Imatge.') },
+        newsletter: { required: false, label: label('Butlletí.') },
+        messaging_groups: { required: false, label: label('Grups.') },
+      },
+      attachments: [],
+    },
+    published_at: FIXTURE_TIMESTAMP,
+    published_by: null,
+    ...overrides,
+  };
+}
+
+/** A paper record for the season, the state most seeded players are in (RAPP-304). */
+export function buildAuthorizationSignature(
+  overrides: Partial<AuthorizationSignatureRow> = {},
+): AuthorizationSignatureRow {
+  return {
+    id: '5eed0000-0000-4000-8042-000000000099',
+    org_id: SEED_ORGANIZATION_ID,
+    profile_id:
+      PARTICIPANT_FIXTURES[1] === undefined ? '' : seedUserId(PARTICIPANT_FIXTURES[1].ordinal),
+    season_id: SEED_SEASON_ID,
+    version_id: null,
+    method: 'paper',
+    language: null,
+    device: null,
+    signed_at: FIXTURE_TIMESTAMP,
+    signature: null,
+    unable_to_draw: false,
+    paper_signed_on: '2026-09-15',
+    recorded_by: null,
+    witnessed_by: null,
+    ...overrides,
+  };
+}
+
+/** One consent given while signing (RAPP-304). */
+export function buildAuthorizationConsentEvent(
+  overrides: Partial<AuthorizationConsentEventRow> = {},
+): AuthorizationConsentEventRow {
+  return {
+    id: 1,
+    org_id: SEED_ORGANIZATION_ID,
+    profile_id: seedUserId(PARTICIPANT_FIXTURES[0]!.ordinal),
+    signature_id: '5eed0000-0000-4000-8042-000000000011',
+    consent_key: 'participation',
+    granted: true,
+    method: 'app',
+    decided_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+export type WalkInSigningRow = Database['public']['Tables']['walk_in_signings']['Row'];
+
+/**
+ * A woman who signed on a staff tablet with no account yet (RAPP-305). She waits
+ * for review; her signing is encrypted in the database, so the factory holds no
+ * payload.
+ */
+export function buildWalkInSigning(overrides: Partial<WalkInSigningRow> = {}): WalkInSigningRow {
+  return {
+    id: '5eed0000-0000-4000-8043-000000000001',
+    org_id: SEED_ORGANIZATION_ID,
+    first_name: 'Salma',
+    last_name: 'Idrissi',
+    version_id: SEED_AUTHORIZATION_VERSION_ID,
+    payload: null,
+    signed_at: FIXTURE_TIMESTAMP,
+    // The seeded staff member who held the tablet.
+    collected_by: seedUserId(2),
+    status: 'pending',
+    resolved_profile_id: null,
+    resolved_by: null,
+    resolved_at: null,
+    created_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+type PublicRow<Name extends keyof Database['public']['Tables']> =
+  Database['public']['Tables'][Name]['Row'];
+export type IntakeScreenRow = PublicRow<'intake_screens'>;
+export type CustomQuestionRow = PublicRow<'custom_questions'>;
+export type CustomQuestionOptionRow = PublicRow<'custom_question_options'>;
+export type CustomAnswerRow = PublicRow<'custom_answers'>;
+export type ReferralCustomAnswerRow = PublicRow<'referral_custom_answers'>;
+export type BuiltinQuestionOverrideRow = PublicRow<'builtin_question_overrides'>;
+export type IntakeStatePresetRow = PublicRow<'intake_state_presets'>;
+
+export const SEED_INTAKE_SCREEN_ID = '5eed0000-0000-4000-8044-000000000001';
+export const SEED_CUSTOM_QUESTION_ID = '5eed0000-0000-4000-8045-000000000001';
+const NO_SEASON_KEY = '00000000-0000-0000-0000-000000000000';
+
+/** The seeded "Transport" screen, after the logistics step (RAPP-307). */
+export function buildIntakeScreen(overrides: Partial<IntakeScreenRow> = {}): IntakeScreenRow {
+  return {
+    id: SEED_INTAKE_SCREEN_ID,
+    org_id: SEED_ORGANIZATION_ID,
+    title: { ca: 'Com arribes als entrenaments' },
+    intro: null,
+    after_screen: 'logistics',
+    sort_order: 0,
+    is_archived: false,
+    created_at: FIXTURE_TIMESTAMP,
+    updated_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+/** A Normal yes/no/maybe question on the wizard and the referral form (RAPP-307). */
+export function buildCustomQuestion(overrides: Partial<CustomQuestionRow> = {}): CustomQuestionRow {
+  return {
+    id: SEED_CUSTOM_QUESTION_ID,
+    org_id: SEED_ORGANIZATION_ID,
+    screen_id: SEED_INTAKE_SCREEN_ID,
+    question_type: 'yes_no_maybe',
+    label: { ca: 'Vens amb transport públic?' },
+    help: null,
+    privacy: 'normal',
+    placements: ['wizard', 'entity_form'],
+    sort_order: 0,
+    is_archived: false,
+    created_at: FIXTURE_TIMESTAMP,
+    updated_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+export function buildCustomQuestionOption(
+  overrides: Partial<CustomQuestionOptionRow> = {},
+): CustomQuestionOptionRow {
+  return {
+    id: '5eed0000-0000-4000-8046-000000000001',
+    org_id: SEED_ORGANIZATION_ID,
+    question_id: '5eed0000-0000-4000-8045-000000000002',
+    label: { ca: 'Una entitat' },
+    sort_order: 0,
+    is_archived: false,
+    ...overrides,
+  };
+}
+
+/** Her answer to a question with no season; a Sensitive one would be encrypted. */
+export function buildCustomAnswer(overrides: Partial<CustomAnswerRow> = {}): CustomAnswerRow {
+  return {
+    profile_id: seedUserId(11),
+    question_id: SEED_CUSTOM_QUESTION_ID,
+    season_key: NO_SEASON_KEY,
+    season_id: null,
+    org_id: SEED_ORGANIZATION_ID,
+    value: 'yes',
+    value_encrypted: null,
+    source: 'player',
+    answered_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+/** What an entity answered with a referral, always encrypted (no plain value here). */
+export function buildReferralCustomAnswer(
+  overrides: Partial<ReferralCustomAnswerRow> = {},
+): ReferralCustomAnswerRow {
+  return {
+    referral_id: '5eed0000-0000-4000-8010-000000000001',
+    question_id: SEED_CUSTOM_QUESTION_ID,
+    org_id: SEED_ORGANIZATION_ID,
+    value_encrypted: '',
+    created_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+export function buildBuiltinQuestionOverride(
+  overrides: Partial<BuiltinQuestionOverrideRow> = {},
+): BuiltinQuestionOverrideRow {
+  return {
+    org_id: SEED_ORGANIZATION_ID,
+    question: 'reference_entity',
+    label: { ca: "Quina entitat t'acompanya?" },
+    help: null,
+    is_hidden: false,
+    option_overrides: {},
+    updated_at: FIXTURE_TIMESTAMP,
+    updated_by: null,
+    ...overrides,
+  };
+}
+
+export function buildIntakeStatePreset(
+  overrides: Partial<IntakeStatePresetRow> = {},
+): IntakeStatePresetRow {
+  return {
+    id: '5eed0000-0000-4000-8047-000000000001',
+    org_id: SEED_ORGANIZATION_ID,
+    name: 'Només talles',
+    states: { clothing_size: 'ask', shoe_size: 'ask' },
+    created_at: FIXTURE_TIMESTAMP,
+    created_by: null,
+    ...overrides,
+  };
+}
+
+export type SeasonAnswersRow = Database['public']['Tables']['season_answers']['Row'];
+
+/** Her registration answers for the current season (RAPP-306). */
+export function buildSeasonAnswers(overrides: Partial<SeasonAnswersRow> = {}): SeasonAnswersRow {
+  return {
+    profile_id: seedUserId(PARTICIPANT_FIXTURES[0]!.ordinal),
+    season_id: SEED_SEASON_ID,
+    org_id: SEED_ORGANIZATION_ID,
+    applicant_status: null,
+    supporting_entities: null,
+    childcare_need: 'no',
+    specific_needs: null,
+    updated_at: FIXTURE_TIMESTAMP,
     ...overrides,
   };
 }

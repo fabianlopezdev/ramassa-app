@@ -8,7 +8,7 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { expect, test } from 'bun:test';
-import { INTAKE_QUESTIONS } from '@ramassa/shared/intake';
+import { INTAKE_QUESTIONS, REQUIRED_INTAKE_QUESTIONS } from '@ramassa/shared/intake';
 
 const migrationsDirectory = resolve(import.meta.dir, '../supabase/migrations');
 
@@ -31,4 +31,25 @@ test('the database question list has the same questions, in the same order, as t
     ([, question]) => question,
   );
   expect(fromSql).toEqual([...INTAKE_QUESTIONS]);
+});
+
+/**
+ * The required questions (RAPP-301) also live in two places: the shared list
+ * a test checks against the onboarding schemas, and the database function
+ * that refuses to hide an unanswered required question.
+ */
+test('the database required-question list matches the code', () => {
+  const sql = readdirSync(migrationsDirectory)
+    .filter((name) => name.endsWith('.sql'))
+    .sort()
+    .map((name) => readFileSync(resolve(migrationsDirectory, name), 'utf8'))
+    .filter((text) => text.includes('-- required-intake-questions:start'))
+    .at(-1);
+  expect(sql).toBeDefined();
+  const block = sql!.slice(
+    sql!.indexOf('-- required-intake-questions:start'),
+    sql!.indexOf('-- required-intake-questions:end'),
+  );
+  const fromSql = [...block.matchAll(/'([a-z_]+)'/g)].map(([, question]) => question);
+  expect(fromSql).toEqual([...REQUIRED_INTAKE_QUESTIONS]);
 });

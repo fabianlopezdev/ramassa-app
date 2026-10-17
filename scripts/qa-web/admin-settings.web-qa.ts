@@ -166,7 +166,8 @@ test.describe.serial('admin organization settings', () => {
         queryDatabase(`select count(*) from public.team_member_permissions grant_row
           join auth.users u on u.id = grant_row.profile_id where u.email = '${invitedEmail}'`),
       )
-      .toBe('42');
+      // Every permission in the catalog, however many it holds today.
+      .toBe(queryDatabase('select count(*) from public.permissions'));
     const memberRow = page.getByRole('row').filter({ hasText: invitedEmail });
     await memberRow.getByRole('button', { name: 'Remove access' }).click();
     await page.getByRole('button', { name: 'Confirm' }).click();
@@ -259,6 +260,47 @@ test('an admin writes the note under the wizard document step', async ({ page })
       delete from public.audit_log
        where created_at >= '${startedAt}'::timestamptz
          and action = 'organization.document_explanation_update';
+    `);
+  }
+});
+
+/**
+ * The season authorization (RAPP-304): an admin publishes a new version from
+ * the current one, after confirming, and it becomes the current version. The
+ * new version is removed again, so the seeded players stay signed.
+ */
+test('an admin publishes a new authorization version', async ({ page }) => {
+  const before = Number(queryDatabase('select count(*) from public.authorization_versions'));
+  try {
+    await signIn(page, ADMIN_EMAIL);
+    await page.goto('/settings?tab=authorization');
+    const editor = page.getByTestId('authorization-editor');
+    await expect(editor).toBeVisible();
+    await expect(editor.getByTestId('authorization-versions')).toContainText('2026/27');
+
+    await editor.locator('#authorization-language').selectOption('ca');
+    await editor.locator('#authorization-title').fill(`Autorització ${runTag}`);
+    await editor.getByTestId('authorization-publish').click();
+    // Publishing is final: it asks once more.
+    await expect(editor.getByRole('alert')).toContainText(/sign it again|signar de nou/);
+    await editor.getByTestId('authorization-publish').click();
+
+    await expect
+      .poll(() => Number(queryDatabase('select count(*) from public.authorization_versions')), {
+        timeout: 15_000,
+      })
+      .toBe(before + 1);
+    expect(
+      queryDatabase(
+        `select content -> 'title' ->> 'ca' from public.authorization_versions
+          order by published_at desc limit 1`,
+      ),
+    ).toBe(`Autorització ${runTag}`);
+  } finally {
+    queryDatabase(`
+      delete from public.authorization_versions where content -> 'title' ->> 'ca' = 'Autorització ${runTag}';
+      delete from public.audit_log
+       where created_at >= '${startedAt}'::timestamptz and action = 'authorization.publish';
     `);
   }
 });

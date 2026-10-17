@@ -34,10 +34,15 @@ env:
 # launcher in front. Retry the same explicit app link until the app surface is
 # present. On iOS the optional Open action handles the system confirmation on
 # every attempt.
+#
+# The app surface is the pre-auth language screen (RAPP-115), which a clean
+# install always opens on. Its heading is keyed by testID because its text is
+# in the device's language until a language is chosen.
 - repeat:
     times: 3
     while:
-      notVisible: '.*${DEV_MENU_LABEL}.*'
+      notVisible:
+        id: language-heading
     commands:
       - openLink: ${DEV_CLIENT_URL}
       - tapOn:
@@ -48,7 +53,8 @@ env:
 
 # First launch after a state clear downloads the JS bundle, hence minutes.
 - extendedWaitUntil:
-    visible: '.*${DEV_MENU_LABEL}.*'
+    visible:
+      id: language-heading
     timeout: 240000
 
 # The development client shows an explainer sheet for its OWN menu a second or

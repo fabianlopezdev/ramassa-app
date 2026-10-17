@@ -53,5 +53,14 @@
   "staffQueueIntro": "Completa l’acollida i vincula la nova participant amb l’entitat que l’ha derivada.",
   "staffQueueAction": "Revisa derivacions",
   "completeAction": "Completa l’acollida",
-  "completionHelp": "Les dades de la derivació ja estan preparades com a valors inicials."
+  "completionHelp": "Les dades de la derivació ja estan preparades com a valors inicials.",
+  "consentLabel": "Ha acceptat que compartim les seves dades amb Ramassà",
+  "consentRequired": "Cal que confirmis que ha acceptat compartir les seves dades.",
+  "privacyNote": "Ramassà tracta aquestes dades per gestionar la seva inscripció i participació, amb el seu consentiment. Només les veu l'equip de Ramassà.",
+  "seasonSectionIntro": "Totes les preguntes són opcionals. Omplen la seva fitxa quan l'equip accepti la derivació, i ella les podrà revisar.",
+  "dateOfBirthError": "Escriu una data vàlida.",
+  "documentNumberError": "Escriu el número del document.",
+  "additionalQuestions": "Preguntes addicionals",
+  "additionalAnswersFailed": "La derivació s'ha enviat, però les respostes addicionals no s'han desat.",
+  "openReferral": "Obre la derivació"
 }

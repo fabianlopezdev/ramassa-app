@@ -4,7 +4,6 @@ env:
   DEV_CLIENT_URL: ramassa://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8082
   DEV_MENU_LABEL: Developer menu
   LOCALE: ca
-  LOGIN_TITLE: '{{auth:loginTitle}}'
   TAB_PROFILE: '{{nav:tabs.profile}}'
   PROFILE_TITLE: '{{profile:title}}'
   HISTORY_TITLE: '{{attendance:participantHistoryTitle}}'

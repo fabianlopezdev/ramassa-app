@@ -3,9 +3,10 @@ name: attendance
 env:
   DEV_CLIENT_URL: ramassa://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081
   DEV_MENU_LABEL: Developer menu
+  DEV_MENU_LINK: ramassa://dev-menu
   LOCALE: ca
   STAFF_EMAIL: '{{staffOnly:email}}'
-  LOGIN_TITLE: '{{auth:loginTitle}}'
+  LOGIN_TITLE: '{{auth:emailLoginTitle}}'
   ATTENDANCE_TITLE: '{{attendance:title}}'
   ACCOUNTS_SECTION: Accounts and roles
   PUSH_DECLINE: '{{push:rationaleDecline}}'
@@ -27,9 +28,7 @@ env:
       - tapOn:
           text: '.*Close.*'
           optional: true
-      - tapOn:
-          text: '.*${DEV_MENU_LABEL}.*'
-          optional: true
+      - openLink: ${DEV_MENU_LINK}
       - waitForAnimationToEnd:
           timeout: 3000
 - extendedWaitUntil:
@@ -70,6 +69,8 @@ env:
           optional: true
       - waitForAnimationToEnd:
           timeout: 3000
+# Team accounts finish signing in with an authenticator code (RAPP-233).
+- runFlow: _second-factor.yaml
 - assertNotVisible: '.*${LOGIN_TITLE}.*'
 - tapOn:
     text: '^${PUSH_DECLINE}$'
@@ -80,6 +81,18 @@ env:
 - extendedWaitUntil:
     visible: '.*${ATTENDANCE_TITLE}.*'
     timeout: 30000
+# Today's sessions come after the Today cards. Drag to the bottom first with a
+# fixed number of drags: iOS reports a row under the floating tab bar as
+# visible, so a visibility loop stops early and the tap lands on the tab bar.
+- repeat:
+    times: 3
+    commands:
+      - swipe:
+          start: 50%, 70%
+          end: 50%, 25%
+          duration: 800
+      - waitForAnimationToEnd:
+          timeout: 1000
 - tapOn: ".*Sessió d'entrenament d'avui.*"
 - extendedWaitUntil:
     visible:

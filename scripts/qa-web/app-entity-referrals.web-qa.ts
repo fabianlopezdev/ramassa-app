@@ -55,6 +55,8 @@ test('a referral is sent, opened, and found by search', async ({ page }) => {
   await page
     .getByTestId('entity-referral-notes')
     .fill('Necessita acompanyament per a la primera visita.');
+  // She agreed that the entity shares her data (RAPP-303).
+  await page.getByTestId('entity-referral-consent').click();
   await page.getByTestId('entity-referral-save').click();
 
   await expect(page.getByTestId('entity-referral')).toBeVisible({ timeout: 30_000 });

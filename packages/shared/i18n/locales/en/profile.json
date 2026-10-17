@@ -42,5 +42,7 @@
   "fieldCity": "Town",
   "fieldPostalCode": "Postcode",
   "fieldMediaConsent": "Photos and stories",
-  "saveBlocked": "Something is missing. Check the highlighted fields above."
+  "saveBlocked": "Something is missing. Check the highlighted fields above.",
+  "consentsTitle": "My authorizations",
+  "consentsIntro": "You can change these whenever you want. The required ones are part of the authorization you signed."
 }

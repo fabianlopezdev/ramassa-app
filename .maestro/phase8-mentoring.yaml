@@ -56,19 +56,9 @@ env:
 - tapOn:
     id: mentoring-detail
 - inputText: rapp61-private-mentoring
-- runFlow:
-    when:
-      platform: Android
-    commands:
-      - hideKeyboard
-- runFlow:
-    when:
-      platform: iOS
-    commands:
-      - swipe:
-          start: 50%, 45%
-          end: 50%, 30%
-          duration: 700
+# iOS 27 no longer drops the keyboard when the screen is dragged, and the next
+# control then sits behind it. The hide command works on both platforms.
+- hideKeyboard
 - repeat:
     times: 8
     while:
@@ -82,19 +72,7 @@ env:
 - tapOn:
     id: mentoring-preferred-date
 - inputText: '2026-09-15'
-- runFlow:
-    when:
-      platform: Android
-    commands:
-      - hideKeyboard
-- runFlow:
-    when:
-      platform: iOS
-    commands:
-      - swipe:
-          start: 50%, 45%
-          end: 50%, 30%
-          duration: 700
+- hideKeyboard
 - repeat:
     times: 8
     while:
@@ -108,19 +86,7 @@ env:
 - tapOn:
     id: mentoring-preferred-time
 - inputText: '10:30'
-- runFlow:
-    when:
-      platform: Android
-    commands:
-      - hideKeyboard
-- runFlow:
-    when:
-      platform: iOS
-    commands:
-      - swipe:
-          start: 50%, 45%
-          end: 50%, 30%
-          duration: 700
+- hideKeyboard
 - repeat:
     times: 8
     while:

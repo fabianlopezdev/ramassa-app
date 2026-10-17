@@ -51,21 +51,22 @@ env:
 - tapOn:
     id: forum-flag-comment
 - inputText: rapp51-cat-private-info
-- runFlow:
-    when:
-      platform: Android
+# The keyboard covers the submit button. Dragging the sheet does not dismiss it
+# on iOS, because the content fits without scrolling and so no drag begins: the
+# tap then lands on a key and reports success. Hide the keyboard and submit
+# UNTIL the confirmation shows, so a tap that hit a key is simply retried.
+- repeat:
+    times: 3
+    while:
+      notVisible: '^${CATALAN_FLAG_CONFIRMATION}$'
     commands:
       - hideKeyboard
-- runFlow:
-    when:
-      platform: iOS
-    commands:
-      - swipe:
-          start: 50%, 45%
-          end: 50%, 35%
-          duration: 500
-- tapOn:
-    id: forum-flag-submit
+      - waitForAnimationToEnd:
+          timeout: 1500
+      - tapOn:
+          id: forum-flag-submit
+      - waitForAnimationToEnd:
+          timeout: 3000
 - extendedWaitUntil:
     visible: '^${CATALAN_FLAG_CONFIRMATION}$'
     timeout: 30000
@@ -105,19 +106,14 @@ env:
       platform: iOS
     commands:
       - inputText: rapp50-cat-post català مرحبا
-- runFlow:
-    when:
-      platform: Android
-    commands:
-      - hideKeyboard
-- runFlow:
-    when:
-      platform: iOS
-    commands:
-      - swipe:
-          start: 50%, 45%
-          end: 50%, 35%
-          duration: 500
+# iOS 27 no longer drops the keyboard when the screen is dragged, so the
+# action below each field stayed behind it. The hide command alone does not
+# close it over these multi-line fields either. A tap in the blank band under
+# the back button does: these screens drop the keyboard on a tap outside any
+# control, and on the post screen that tap is not delivered to anything.
+- hideKeyboard
+- tapOn:
+    point: 50%, 15%
 - tapOn:
     id: forum-publish
 - extendedWaitUntil:
@@ -136,19 +132,9 @@ env:
       platform: iOS
     commands:
       - inputText: rapp50-cat-reply resposta أهلا
-- runFlow:
-    when:
-      platform: Android
-    commands:
-      - hideKeyboard
-- runFlow:
-    when:
-      platform: iOS
-    commands:
-      - swipe:
-          start: 50%, 45%
-          end: 50%, 35%
-          duration: 500
+- hideKeyboard
+- tapOn:
+    point: 50%, 15%
 - tapOn:
     id: forum-submit-reply
 - extendedWaitUntil:
@@ -160,19 +146,9 @@ env:
     id: forum-edit-content
 - eraseText
 - inputText: rapp50-cat-edited
-- runFlow:
-    when:
-      platform: Android
-    commands:
-      - hideKeyboard
-- runFlow:
-    when:
-      platform: iOS
-    commands:
-      - swipe:
-          start: 50%, 45%
-          end: 50%, 35%
-          duration: 500
+- hideKeyboard
+- tapOn:
+    point: 50%, 15%
 - tapOn:
     id: forum-save-edit
 - extendedWaitUntil:
@@ -272,19 +248,9 @@ env:
       platform: iOS
     commands:
       - inputText: rapp50-ar-post مرحبا Ramassà
-- runFlow:
-    when:
-      platform: Android
-    commands:
-      - hideKeyboard
-- runFlow:
-    when:
-      platform: iOS
-    commands:
-      - swipe:
-          start: 50%, 45%
-          end: 50%, 35%
-          duration: 500
+- hideKeyboard
+- tapOn:
+    point: 50%, 15%
 - tapOn:
     id: forum-publish
 - extendedWaitUntil:
@@ -303,19 +269,9 @@ env:
       platform: iOS
     commands:
       - inputText: rapp50-ar-reply رد resposta
-- runFlow:
-    when:
-      platform: Android
-    commands:
-      - hideKeyboard
-- runFlow:
-    when:
-      platform: iOS
-    commands:
-      - swipe:
-          start: 50%, 45%
-          end: 50%, 35%
-          duration: 500
+- hideKeyboard
+- tapOn:
+    point: 50%, 15%
 - tapOn:
     id: forum-submit-reply
 - extendedWaitUntil:
@@ -327,19 +283,9 @@ env:
     id: forum-edit-content
 - eraseText
 - inputText: rapp50-ar-edited
-- runFlow:
-    when:
-      platform: Android
-    commands:
-      - hideKeyboard
-- runFlow:
-    when:
-      platform: iOS
-    commands:
-      - swipe:
-          start: 50%, 45%
-          end: 50%, 35%
-          duration: 500
+- hideKeyboard
+- tapOn:
+    point: 50%, 15%
 - tapOn:
     id: forum-save-edit
 - extendedWaitUntil:

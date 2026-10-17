@@ -55,6 +55,18 @@ describe('onboarding draft store', () => {
     });
   });
 
+  test('a draft resumes on a staff screen with her answers to it (RAPP-307)', () => {
+    const mmkv = makeFakeMmkv();
+    createMmkvOnboardingDraftStore(mmkv).saveDraft({
+      currentStep: 'custom:5eed0000-0000-4000-8000-000000000001',
+      custom: { a: 'yes', b: ['x', 'y'] },
+    });
+    expect(createMmkvOnboardingDraftStore(mmkv).loadDraft()).toEqual({
+      currentStep: 'custom:5eed0000-0000-4000-8000-000000000001',
+      custom: { a: 'yes', b: ['x', 'y'] },
+    });
+  });
+
   test('no draft reads as null, not as an empty object', () => {
     const store = createInMemoryOnboardingDraftStore();
     expect(store.loadDraft()).toBeNull();

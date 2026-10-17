@@ -102,73 +102,74 @@ export default function AttendanceOccurrencesScreen() {
     );
   }
   const rows = data ?? EMPTY_OCCURRENCES;
-  const list = (
-    <>
-      <PageWidth className="flex-1">
-        <View className="gap-xs px-lg pb-md pt-lg">
-          <TeamBackToHome />
-          <Text
-            accessibilityRole="header"
-            className={`text-start text-3xl font-bold text-neutral-900 ${languageFontClass}`}
-          >
-            {isToday ? tNav('team.today') : t('title')}
-          </Text>
-          <Text className={`text-start text-md text-neutral-600 ${languageFontClass}`}>
-            {isToday ? tNav('team.todayIntro') : t('intro')}
-          </Text>
-          {/* The card adds its own spacing, and nothing when nothing is late. */}
-          {isToday ? <TodayCheckoutsCard /> : null}
-          {isToday && sections.includes('material') ? (
-            <View className="pt-md">
-              <TodayMaterialCard />
-            </View>
-          ) : null}
-          {isToday && sections.includes('reviews') ? (
-            <View className="pt-md">
-              <TodayReviewsCard />
-            </View>
-          ) : null}
-          {isToday && sections.includes('forum') ? (
-            <View className="pt-md">
-              <TodayForumCard />
-            </View>
-          ) : null}
-          {isToday && sections.includes('mentoring') ? (
-            <View className="pt-md">
-              <TodayMentoringCard />
-            </View>
-          ) : null}
-          {isToday && sections.includes('messages') ? (
-            <View className="pt-md">
-              <TodayMessagesCard />
-            </View>
-          ) : null}
-          <Text
-            className={`pt-md text-start text-xl font-bold text-neutral-900 ${languageFontClass}`}
-          >
-            {t('today')}
-          </Text>
+  // The cards scroll WITH the sessions, as the list's header. Fixed above the
+  // list, they filled a phone screen once enough of them applied, and the
+  // sessions of the day sat under the tab bar where no one could reach them.
+  const header = (
+    <View className="gap-xs pb-md pt-lg">
+      <TeamBackToHome />
+      <Text
+        accessibilityRole="header"
+        className={`text-start text-3xl font-bold text-neutral-900 ${languageFontClass}`}
+      >
+        {isToday ? tNav('team.today') : t('title')}
+      </Text>
+      <Text className={`text-start text-md text-neutral-600 ${languageFontClass}`}>
+        {isToday ? tNav('team.todayIntro') : t('intro')}
+      </Text>
+      {/* The card adds its own spacing, and nothing when nothing is late. */}
+      {isToday ? <TodayCheckoutsCard /> : null}
+      {isToday && sections.includes('material') ? (
+        <View className="pt-md">
+          <TodayMaterialCard />
         </View>
-        {rows.length === 0 ? (
+      ) : null}
+      {isToday && sections.includes('reviews') ? (
+        <View className="pt-md">
+          <TodayReviewsCard />
+        </View>
+      ) : null}
+      {isToday && sections.includes('forum') ? (
+        <View className="pt-md">
+          <TodayForumCard />
+        </View>
+      ) : null}
+      {isToday && sections.includes('mentoring') ? (
+        <View className="pt-md">
+          <TodayMentoringCard />
+        </View>
+      ) : null}
+      {isToday && sections.includes('messages') ? (
+        <View className="pt-md">
+          <TodayMessagesCard />
+        </View>
+      ) : null}
+      <Text className={`pt-md text-start text-xl font-bold text-neutral-900 ${languageFontClass}`}>
+        {t('today')}
+      </Text>
+    </View>
+  );
+  const list = (
+    <PageWidth className="flex-1">
+      <FlashList
+        accessibilityRole="list"
+        accessibilityLabel={t('today')}
+        data={rows}
+        renderItem={renderItem}
+        keyExtractor={keyExtractor}
+        contentContainerStyle={listContentStyle}
+        contentInsetAdjustmentBehavior="automatic"
+        ItemSeparatorComponent={OccurrenceSeparator}
+        ListHeaderComponent={header}
+        ListEmptyComponent={
           <AnnouncementEmptyState
             title={t('noEventsTitle')}
             body={t('noEventsBody')}
             languageFontClass={languageFontClass}
           />
-        ) : (
-          <FlashList
-            accessibilityRole="list"
-            accessibilityLabel={t('today')}
-            data={rows}
-            renderItem={renderItem}
-            keyExtractor={keyExtractor}
-            contentContainerStyle={listContentStyle}
-            contentInsetAdjustmentBehavior="automatic"
-            ItemSeparatorComponent={OccurrenceSeparator}
-          />
-        )}
-      </PageWidth>
-    </>
+        }
+      />
+    </PageWidth>
   );
   return (
     <SafeAreaView className="flex-1 bg-neutral-50" edges={['top', 'left', 'right']}>
