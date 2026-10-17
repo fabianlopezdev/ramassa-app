@@ -212,7 +212,11 @@ test.describe('inviting a participant', () => {
           ),
         { timeout: 15_000 },
       )
-      .toBe('15:1');
+      // Every wizard question is Ask but the phone, which is Skip. Read from the
+      // database, so a new wizard question does not break this check.
+      .toBe(
+        `${Number(queryDatabase('select cardinality(private.wizard_intake_questions())')) - 1}:1`,
+      );
 
     const player = await (await browser.newContext({ locale: 'en-GB' })).newPage();
     await signInPlayer(player, email);

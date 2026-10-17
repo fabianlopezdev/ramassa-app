@@ -27,7 +27,8 @@ function sqlLiteral(value: string): string {
 /**
  * The product path since RAPP-224: staff invite her from the referral, and the
  * referral links to her when the onboarding wizard creates her profile. The
- * profile insert stands in for the wizard she would complete in the app.
+ * profile insert stands in for the wizard she would complete in the app. Since
+ * the invitation creates her profile (RAPP-300), the insert completes it.
  */
 async function inviteFromReferralAndOnboard(page: Page): Promise<void> {
   await page.getByTestId(`complete-referral-${referralId}`).click();
@@ -46,6 +47,7 @@ async function inviteFromReferralAndOnboard(page: Page): Promise<void> {
     insert into public.profiles (id, org_id, role, first_name, last_name, terms_accepted_at)
     values (${sqlLiteral(accountId)}, '5eed0000-0000-4000-8000-000000000000', 'player',
             ${sqlLiteral(FIRST_NAME)}, ${sqlLiteral(LAST_NAME)}, now())
+    on conflict (id) do update set role = 'player', terms_accepted_at = now()
   `);
 }
 
