@@ -38,8 +38,6 @@ env:
   # script; the pgTAP suite covers that storage path server-side instead.
   NEW_BIRTHPLACE: 'Homs'
   NEW_MUNICIPALITY: 'Gurb'
-  ACCOUNTS_SECTION: Accounts and roles
-  SHOW_ALL_ACCOUNTS: Show all
   PLAYER_EMAIL: '{{player:email}}'
   PLAYER_WITHOUT_REQUEST_EMAIL: '{{playerWithoutRequest:email}}'
   DELETE_TITLE: '{{profile:deleteTitle}}'
@@ -55,41 +53,24 @@ env:
 # Sign in through the seeded account switcher. This flow owns account selection
 # because it switches among several fixtures later, then waits on the current
 # feed heading to prove that the player shell has mounted.
+# Signed in through the menu's account link (RAPP-500): one link opens the
+# menu and signs in as this seeded account with the same password sign-in the
+# account rows use. Scrolling the roster to the row cost about a minute.
 - repeat:
     times: 6
     while:
-      notVisible: '.*${ACCOUNTS_SECTION}.*'
+      notVisible: '.*signed in as ${PLAYER_EMAIL}.*'
     commands:
-      - tapOn:
-          text: '.*Close.*'
-          optional: true
-      - openLink: ${DEV_MENU_LINK}
-      - swipe:
-          start: 50%, 70%
-          end: 50%, 40%
-          duration: 900
+      - openLink: ${DEV_MENU_LINK}?account=${PLAYER_EMAIL}
       - waitForAnimationToEnd:
           timeout: 3000
-- waitForAnimationToEnd:
-    timeout: 5000
-- repeat:
-    times: 20
-    while:
-      notVisible: '.*${PLAYER_EMAIL}.*'
-    commands:
-      - swipe:
-          start: 50%, 70%
-          end: 50%, 50%
-          duration: 900
-      - waitForAnimationToEnd:
-          timeout: 2500
-- swipe:
-    start: 50%, 65%
-    end: 50%, 55%
-    duration: 900
-- waitForAnimationToEnd:
-    timeout: 2500
-- tapOn: '.*${PLAYER_EMAIL}.*'
+      - extendedWaitUntil:
+          visible: '.*signed in as ${PLAYER_EMAIL}.*'
+          timeout: 10000
+          optional: true
+- extendedWaitUntil:
+    visible: '.*signed in as ${PLAYER_EMAIL}.*'
+    timeout: 30000
 - waitForAnimationToEnd:
     timeout: 3000
 - repeat:
@@ -544,53 +525,24 @@ env:
 # deliberately gives her an open request. Switch to the seeded player without
 # one, then prove the confirmation, cancellation, system back, and final
 # destructive submission from a clean request state.
-# Opened by its route, like the signed-out flows. The Profile entry sits at the
-# very bottom, where the loop stops on a sliver behind the floating tab bar
-# and the tap opens a tab instead. This step needs the menu itself, and
-# `forum.yaml` and `phase8-notification.yaml` still prove the Profile entry.
+# Signed in through the menu's account link (RAPP-500): one link opens the
+# menu and signs in as this seeded account with the same password sign-in the
+# account rows use. Scrolling the roster to the row cost about a minute.
 - repeat:
     times: 6
     while:
-      notVisible:
-        id: dev-menu-close
+      notVisible: '.*signed in as ${PLAYER_WITHOUT_REQUEST_EMAIL}.*'
     commands:
-      - openLink: ${DEV_MENU_LINK}
+      - openLink: ${DEV_MENU_LINK}?account=${PLAYER_WITHOUT_REQUEST_EMAIL}
       - waitForAnimationToEnd:
           timeout: 3000
-- waitForAnimationToEnd:
-    timeout: 4000
-- repeat:
-    times: 12
-    while:
-      notVisible: '.*${SHOW_ALL_ACCOUNTS}.*'
-    commands:
-      - swipe:
-          start: 50%, 70%
-          end: 50%, 50%
-          duration: 900
-      - waitForAnimationToEnd:
-          timeout: 2000
-- tapOn: '.*${SHOW_ALL_ACCOUNTS}.*'
-- waitForAnimationToEnd:
-    timeout: 2500
-- repeat:
-    times: 20
-    while:
-      notVisible: '.*${PLAYER_WITHOUT_REQUEST_EMAIL}.*'
-    commands:
-      - swipe:
-          start: 50%, 70%
-          end: 50%, 50%
-          duration: 900
-      - waitForAnimationToEnd:
-          timeout: 2000
-- swipe:
-    start: 50%, 65%
-    end: 50%, 55%
-    duration: 900
-- waitForAnimationToEnd:
-    timeout: 2000
-- tapOn: '.*${PLAYER_WITHOUT_REQUEST_EMAIL}.*'
+      - extendedWaitUntil:
+          visible: '.*signed in as ${PLAYER_WITHOUT_REQUEST_EMAIL}.*'
+          timeout: 10000
+          optional: true
+- extendedWaitUntil:
+    visible: '.*signed in as ${PLAYER_WITHOUT_REQUEST_EMAIL}.*'
+    timeout: 30000
 - waitForAnimationToEnd:
     timeout: 3000
 - repeat:

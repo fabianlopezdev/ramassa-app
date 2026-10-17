@@ -86,7 +86,7 @@ export async function ensureMetro(port: number, scheme: string): Promise<MetroSe
  * listening. Read from the Expo manifest rather than from `/status`, which
  * every Metro answers identically.
  */
-async function metroSchemes(port: number): Promise<readonly string[] | undefined> {
+export async function metroSchemes(port: number): Promise<readonly string[] | undefined> {
   try {
     const response = await fetch(`http://localhost:${port}/`, {
       headers: { 'expo-platform': 'android', accept: 'application/expo+json,application/json' },
@@ -132,7 +132,7 @@ export function resolveWebExportAssetPath(distDir: string, pathname: string): st
   return candidate;
 }
 
-async function isPortFree(port: number): Promise<boolean> {
+export async function isPortFree(port: number): Promise<boolean> {
   try {
     const probe = Bun.serve({ port, fetch: () => new Response() });
     await probe.stop(true);

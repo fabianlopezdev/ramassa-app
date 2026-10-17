@@ -15,76 +15,26 @@ name: _set-language
 env:
   DEV_MENU_LINK: ramassa://dev-menu
 ---
-# Opening the dev menu is a LOOP, not one link. A link that lands while the
-# client's explainer sheet is mid-flight can be dropped, and the loop stops the
-# instant the menu is actually open. The close control is pinned and has a
-# stable accessibility ID, so it is the authoritative signal that the menu is
-# open on both platforms. When a caller already has the menu open, the loop
-# runs zero times.
+# One link opens the menu AND pins the language (RAPP-500): the menu applies
+# `?language=` through the same `setLanguage` its buttons call, then prints
+# "applied: language <code>" at the top. Scrolling to the language buttons and
+# tapping until selected cost about a minute per flow; this costs seconds.
+#
+# Still a LOOP: a link landing while the client's explainer sheet is mid-flight
+# can be dropped, so it is re-sent until the result line is on screen. The
+# result line names the language, so a line left by an earlier request cannot
+# satisfy this one.
 - repeat:
     times: 6
     while:
-      notVisible:
-        id: dev-menu-close
+      notVisible: '.*applied: language ${LOCALE}.*'
     commands:
-      - openLink: ${DEV_MENU_LINK}
+      - openLink: ${DEV_MENU_LINK}?language=${LOCALE}
       - waitForAnimationToEnd:
           timeout: 3000
 - extendedWaitUntil:
-    visible:
-      id: dev-menu-close
+    visible: '.*applied: language ${LOCALE}.*'
     timeout: 15000
-# The menu opens with an interactive transition; a swipe landing while it is still
-# running cancels it and drops back to where we started.
-- waitForAnimationToEnd:
-    timeout: 5000
-
-# A bounded swipe loop rather than `scrollUntilVisible`, which reaches rows on
-# the Android emulator, leaves them plainly on screen, and still reports them as
-# not found.
-- repeat:
-    times: 20
-    while:
-      notVisible:
-        id: dev-language-${LOCALE}
-    commands:
-      - swipe:
-          start: 50%, 70%
-          end: 50%, 50%
-          duration: 900
-      - waitForAnimationToEnd:
-          timeout: 2500
-# Tap UNTIL selected, not tap-then-assert. These small buttons wrap onto two
-# rows and drift between the moment Maestro resolves their bounds and the moment
-# the touch is dispatched, so a tap landing in the padding between rows reports
-# COMPLETED having changed nothing at all. The loop's condition IS the outcome,
-# so it cannot exit without the selection actually having changed.
-#
-# `smoke-i18n.yaml` and the onboarding capture flow both already do this, with
-# the reasoning written out; this fragment - which every flow in the suite runs
-# through `_open-app.yaml` - was left on the naive single tap, so the flake it
-# describes could still fail any flow at random. It failed `smoke-auth` this way
-# on the 2026-08-02 closure run.
-- repeat:
-    times: 6
-    while:
-      notVisible:
-        id: dev-language-${LOCALE}
-        selected: true
-    commands:
-      - tapOn:
-          id: dev-language-${LOCALE}
-          optional: true
-      - waitForAnimationToEnd:
-          timeout: 2500
-# Assert WHAT was selected, immediately. A tap that reports COMPLETED has only
-# proved Maestro found the element and dispatched a touch at its reported
-# bounds; it has not proved the touch landed on that button. Checking here fails
-# on the tap, with the real selection in the artifact, instead of surfacing much
-# later as a tab bar in the wrong language.
-- assertVisible:
-    id: dev-language-${LOCALE}
-    selected: true
 
 # Crossing between LTR and RTL changes I18nManager for the next native start.
 # Let the app perform its supported reload while the dev menu still exposes the

@@ -305,7 +305,10 @@ describe('Maestro selector contracts', () => {
     expect(signIn).toContain('openLink: ${DEV_MENU_LINK}');
     expect(signIn).not.toContain('id: dev-menu-entry');
     expect(signIn).toMatch(/assertNotVisible: '\.\*\$\{LOGIN_TITLE\}\.\*'/);
-    expect(signIn).toContain('start: 50%, 70%\n    end: 50%, 35%');
+    // Signed in through the menu's account link (RAPP-500), and only once the
+    // menu reports that exact account: a stale line cannot pass for it.
+    expect(signIn).toContain('openLink: ${DEV_MENU_LINK}?account=${PLAYER_EMAIL}');
+    expect(signIn).toContain("visible: '.*signed in as ${PLAYER_EMAIL}.*'");
 
     const relaunch = await Bun.file(path.join(repoRoot, '.maestro/_relaunch.yaml')).text();
     // Localized defaults in the subflow shadow `runFlow.env` in Maestro. The
@@ -343,9 +346,11 @@ describe('Maestro selector contracts', () => {
     expect(setLanguage).toContain('openLink: ${DEV_MENU_LINK}');
     expect(setLanguage).not.toContain('id: dev-menu-entry');
     expect(setLanguage).toContain('id: dev-menu-close');
-    expect(setLanguage).toContain('id: dev-language-${LOCALE}');
+    // The language is pinned by the menu's link (RAPP-500), and only once the
+    // menu reports that exact language.
+    expect(setLanguage).toContain('openLink: ${DEV_MENU_LINK}?language=${LOCALE}');
+    expect(setLanguage).toContain("visible: '.*applied: language ${LOCALE}.*'");
     expect(setLanguage).not.toContain("text: '.*${DEV_MENU_LABEL}.*'");
-    expect(setLanguage).toMatch(/while:\n\s+notVisible:\n\s+id: dev-menu-close/);
     expect(setLanguage).toMatch(
       /visible: '\^Reload app to apply direction\$'[\s\S]*?tapOn: '\^Reload app to apply direction\$'/,
     );

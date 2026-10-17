@@ -57,3 +57,4 @@ excalidraw-diagram
 # Playwright web QA output (RAPP-99)
 test-results/
 playwright-report/
+.qa-supabase/

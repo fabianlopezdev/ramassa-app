@@ -109,23 +109,77 @@ env:
           duration: 800
       - waitForAnimationToEnd:
           timeout: 1000
-- tapOn:
-    id: story-publication-consent
+# Consent and submit until the outcome shows, never tap-then-assert (RAPP-500).
+# On iOS 27 a tap at the bottom of this form can land in the story field and
+# reopen the keyboard, and the next tap at the consent or submit bounds then
+# types a letter instead. Each pass hides the keyboard, brings the button back into view and
+# taps it; the loop ends on the success title, so a missed tap is retried and a
+# landed one is never repeated.
 - repeat:
-    times: 6
+    times: 4
     while:
-      notVisible:
-        id: story-submit-button
+      notVisible: '.*${SUCCESS_TITLE}.*'
     commands:
-      - swipe:
-          start: 50%, 76%
-          end: 50%, 48%
-          duration: 800
+      # `hideKeyboard` does not drop it over this multi-line field on iOS 27.
+      # A tap on the heading does: the form's scroll view dismisses the
+      # keyboard on any tap outside an input. Scroll up to reach the heading.
+      - repeat:
+          times: 4
+          while:
+            notVisible: '^${SUBMISSION_TITLE}$'
+          commands:
+            - swipe:
+                start: 50%, 30%
+                end: 50%, 80%
+                duration: 800
+      - tapOn:
+          text: '^${SUBMISSION_TITLE}$'
+          optional: true
       - waitForAnimationToEnd:
-          timeout: 1000
-- tapOn:
-    id: story-submit-button
-    enabled: true
+          timeout: 2000
+      # Back to the bottom with fixed drags, as above: iOS reports the button
+      # visible while it is still below the fold.
+      - repeat:
+          times: 4
+          commands:
+            - swipe:
+                start: 50%, 80%
+                end: 50%, 30%
+                duration: 800
+            - waitForAnimationToEnd:
+                timeout: 1000
+      # Consent until it reads as checked: a tap at its bounds while the
+      # keyboard was up typed a letter into the story instead.
+      - repeat:
+          times: 3
+          while:
+            notVisible:
+              id: story-publication-consent
+              checked: true
+          commands:
+            - tapOn:
+                id: story-publication-consent
+                optional: true
+            - waitForAnimationToEnd:
+                timeout: 1500
+      - repeat:
+          times: 6
+          while:
+            notVisible:
+              id: story-submit-button
+          commands:
+            - swipe:
+                start: 50%, 76%
+                end: 50%, 48%
+                duration: 800
+            - waitForAnimationToEnd:
+                timeout: 1000
+      - tapOn:
+          id: story-submit-button
+          enabled: true
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 5000
 - extendedWaitUntil:
     visible: '.*${SUCCESS_TITLE}.*'
     timeout: 60000
