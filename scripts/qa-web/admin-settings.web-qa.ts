@@ -166,7 +166,8 @@ test.describe.serial('admin organization settings', () => {
         queryDatabase(`select count(*) from public.team_member_permissions grant_row
           join auth.users u on u.id = grant_row.profile_id where u.email = '${invitedEmail}'`),
       )
-      .toBe('42');
+      // Every permission in the catalog, however many it holds today.
+      .toBe(queryDatabase('select count(*) from public.permissions'));
     const memberRow = page.getByRole('row').filter({ hasText: invitedEmail });
     await memberRow.getByRole('button', { name: 'Remove access' }).click();
     await page.getByRole('button', { name: 'Confirm' }).click();

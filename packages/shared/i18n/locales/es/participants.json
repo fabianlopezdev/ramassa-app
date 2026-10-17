@@ -495,7 +495,7 @@
   "reminderNotificationTitle": "Inscríbete en la temporada {{season}}",
   "reminderNotificationBody": "Abre la app para revisar tus datos y firmar la autorización de la temporada {{season}}.",
   "priorSeasonsLabel": "Temporadas antes de la app",
-  "priorSeasonsSave": "Guardar",
+  "priorSeasonsSave": "Guardar las temporadas",
   "priorSeasonsSaved": "Guardado.",
   "priorSeasonsFailed": "No se ha podido guardar.",
   "seasonNumberValue": "Temporada número {{number}}",
