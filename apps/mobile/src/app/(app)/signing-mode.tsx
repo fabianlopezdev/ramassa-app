@@ -46,6 +46,12 @@ import { tokens } from '@ramassa/shared/tokens';
 
 type Step = 'language' | 'form' | 'done';
 
+// Her language for the open session, in memory only. A link or notification
+// that lands back on signing mode mounts this screen again; she keeps her
+// language and returns to the form.
+let keptLanguage: { readonly startedAt: string; readonly language: SupportedLanguage } | null =
+  null;
+
 const rtlText = { writingDirection: 'rtl' } as const;
 const ltrText = { writingDirection: 'ltr' } as const;
 
@@ -77,8 +83,9 @@ export default function SigningModeScreen() {
   const authorization = useAuthorizationForSigning(true);
   const { record } = useSigningOutbox();
 
-  const [step, setStep] = useState<Step>('language');
-  const [language, setLanguage] = useState<SupportedLanguage | null>(null);
+  const kept = keptLanguage?.startedAt === session?.startedAt ? keptLanguage : null;
+  const [step, setStep] = useState<Step>(kept === null ? 'language' : 'form');
+  const [language, setLanguage] = useState<SupportedLanguage | null>(kept?.language ?? null);
   const [hasFailed, setHasFailed] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isWaiting, setIsWaiting] = useState(false);
@@ -139,6 +146,7 @@ export default function SigningModeScreen() {
                 accessibilityLabel={LANGUAGE_NATIVE_NAMES[candidate]}
                 onPress={() => {
                   setLanguage(candidate);
+                  keptLanguage = { startedAt: session.startedAt, language: candidate };
                   setStep('form');
                 }}
                 haptic="selection"

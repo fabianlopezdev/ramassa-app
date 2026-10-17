@@ -60,6 +60,10 @@ describe('the signing mode screen', () => {
     expect(leave.indexOf('await confirmOwner()')).toBeLessThan(leave.indexOf('end()'));
   });
 
+  test('a link that lands back on signing mode keeps her language for the session', () => {
+    expect(screen).toContain('keptLanguage?.startedAt === session?.startedAt');
+  });
+
   test('a signing with no drawing needs the coach to confirm she agreed', () => {
     expect(screen).toContain('signing.unableToDraw && !(await confirmOwner())');
   });
