@@ -4,6 +4,13 @@ import {
   buildAnnouncement,
   buildAttendance,
   buildAuditLogEntry,
+  buildAuthorizationConsentEvent,
+  buildAuthorizationSignature,
+  buildAuthorizationVersion,
+  buildBuiltinQuestionOverride,
+  buildCustomAnswer,
+  buildCustomQuestion,
+  buildCustomQuestionOption,
   buildEquipmentDelivery,
   buildEvent,
   buildEventCategory,
@@ -13,6 +20,9 @@ import {
   buildForumFlag,
   buildForumPost,
   buildForumReply,
+  buildIntakeQuestionState,
+  buildIntakeScreen,
+  buildIntakeStatePreset,
   buildInvite,
   buildKnowledgeArticle,
   buildKnowledgeCategory,
@@ -25,11 +35,15 @@ import {
   buildProfile,
   buildProfileAnswer,
   buildPushToken,
+  buildReferralCustomAnswer,
+  buildSeason,
+  buildSeasonAnswers,
   buildService,
   buildServiceCategory,
   buildServiceImage,
   buildServiceInterest,
   buildStockAlert,
+  buildWalkInSigning,
 } from './factories';
 import {
   INVITED_ACCOUNT_ID,
@@ -403,6 +417,35 @@ describe('buildStockAlert', () => {
   });
 });
 
+describe('the authorization factories (RAPP-304)', () => {
+  test('a current season, a version with every consent, a paper record, a consent', () => {
+    expect(buildSeason().is_current).toBe(true);
+    const version = buildAuthorizationVersion();
+    expect(Object.keys((version.content as { consents: object }).consents)).toHaveLength(7);
+    const paper = buildAuthorizationSignature();
+    expect(paper.method).toBe('paper');
+    expect(paper.signature).toBeNull();
+    expect(buildAuthorizationConsentEvent().granted).toBe(true);
+    expect(buildSeasonAnswers().season_id).toBe(buildSeason().id);
+  });
+
+  test('a walk-in waits for review on the current version, with no profile yet', () => {
+    const walkIn = buildWalkInSigning();
+    expect(walkIn.status).toBe('pending');
+    expect(walkIn.version_id).toBe(buildAuthorizationVersion().id);
+    expect(walkIn.resolved_profile_id).toBeNull();
+  });
+});
+
+describe('buildIntakeQuestionState', () => {
+  test("is a staff choice for the seeded invited woman's wizard", () => {
+    const state = buildIntakeQuestionState();
+    expect(state.profile_id).toBe(INVITED_ACCOUNT_ID);
+    expect(state.org_id).toBe(SEED_ORGANIZATION_ID);
+    expect(['ask', 'skip']).toContain(state.state);
+  });
+});
+
 describe('buildProfileAnswer', () => {
   test('is a staff answer for the seeded invited woman, the state the wizard skips', () => {
     const answer = buildProfileAnswer();
@@ -410,5 +453,27 @@ describe('buildProfileAnswer', () => {
     expect(answer.source).toBe('staff');
     expect(answer.profile_id).toBe(INVITED_ACCOUNT_ID);
     expect(answer.org_id).toBe(SEED_ORGANIZATION_ID);
+  });
+});
+
+describe('the question builder rows (RAPP-307)', () => {
+  test('a question sits on its screen, and an answer names both', () => {
+    const screen = buildIntakeScreen();
+    const question = buildCustomQuestion();
+    expect(question.screen_id).toBe(screen.id);
+    expect(buildCustomAnswer().question_id).toBe(question.id);
+    expect(buildReferralCustomAnswer().question_id).toBe(question.id);
+    expect(buildCustomQuestionOption().is_archived).toBe(false);
+  });
+
+  test('a plain answer has no encrypted copy, and the key of no season is the zero uuid', () => {
+    const answer = buildCustomAnswer();
+    expect(answer.value_encrypted).toBeNull();
+    expect(answer.season_key).toBe('00000000-0000-0000-0000-000000000000');
+  });
+
+  test('the override rewords and the preset asks the sizes', () => {
+    expect(buildBuiltinQuestionOverride().is_hidden).toBe(false);
+    expect(buildIntakeStatePreset().states).toEqual({ clothing_size: 'ask', shoe_size: 'ask' });
   });
 });

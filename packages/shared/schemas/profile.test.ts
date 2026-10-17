@@ -148,6 +148,12 @@ describe('buildUpdateOwnProfilePayload', () => {
       clothing_size: 'M',
       shoe_size: '38',
       media_consent: false,
+      // The season registration answers (RAPP-303): none given here.
+      applicant_status: null,
+      supporting_entities: null,
+      season_number: null,
+      childcare_need: null,
+      specific_needs: null,
     });
   });
 
@@ -206,5 +212,15 @@ describe('profileFromRow', () => {
       shoe_size: null,
     };
     expect(profileEditSchema.safeParse(profileFromRow(sparse)).success).toBe(true);
+  });
+
+  test('an empty document stays empty: it never becomes "I have none" (RAPP-302)', () => {
+    const form = profileFromRow({ ...row, document_type: null, document_number: null });
+    expect(form.documentType).toBeUndefined();
+    const parsed = profileEditSchema.parse(form);
+    expect(buildUpdateOwnProfilePayload(parsed)).toMatchObject({
+      document_type: null,
+      document_number: null,
+    });
   });
 });

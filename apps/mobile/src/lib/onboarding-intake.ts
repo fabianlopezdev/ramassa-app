@@ -9,8 +9,27 @@
  * it.
  */
 import type { Href } from 'expo-router';
-import type { IntakeQuestion, WizardScreen } from '@ramassa/shared/intake';
-import type { OnboardingDraft, OnboardingStepName } from '@ramassa/shared/onboarding-drafts';
+import {
+  customStepId,
+  isCustomStep,
+  type CustomWizardScreen,
+  type IntakeQuestion,
+  type WizardScreen,
+  type WizardStepKey,
+} from '@ramassa/shared/intake';
+import {
+  customAnswerError,
+  isEmptyAnswer,
+  isScreenAnswered,
+  type CustomAnswers,
+  type CustomAnswerValue,
+  type IntakeScreen,
+} from '@ramassa/shared/intake-builder';
+import type {
+  OnboardingDraft,
+  OnboardingDraftStep,
+  OnboardingStepName,
+} from '@ramassa/shared/onboarding-drafts';
 import type { ProfileRow } from '@ramassa/shared/schemas';
 
 export const WIZARD_SCREEN_ROUTES: Readonly<Record<WizardScreen, Href>> = {
@@ -18,20 +37,90 @@ export const WIZARD_SCREEN_ROUTES: Readonly<Record<WizardScreen, Href>> = {
   background: '/onboarding/background',
   documentation: '/onboarding/documentation',
   logistics: '/onboarding/logistics',
+  season: '/onboarding/season',
   summary: '/onboarding/summary',
   terms: '/onboarding/terms',
 };
 
-export const WIZARD_SCREEN_DRAFT_STEP: Readonly<Record<WizardScreen, OnboardingStepName>> = {
+const WIZARD_SCREEN_DRAFT_STEP: Readonly<Record<WizardScreen, OnboardingStepName>> = {
   identity: 'identity',
   background: 'background',
   documentation: 'documentation',
   logistics: 'logistics',
+  season: 'season',
   summary: 'summary',
   terms: 'terms',
 };
 
-type DraftSections = Required<Pick<OnboardingDraft, 'identity' | 'documentation' | 'logistics'>>;
+/** The route of any wizard step, a staff screen included (RAPP-307). */
+export function wizardStepRoute(step: WizardStepKey | OnboardingDraftStep): Href {
+  const screenId = customStepId(step);
+  return screenId === null
+    ? WIZARD_SCREEN_ROUTES[step as WizardScreen]
+    : (`/onboarding/custom/${screenId}` as Href);
+}
+
+/** The draft step that resumes at a wizard step: a staff screen keeps its own key. */
+export function wizardDraftStep(step: WizardStepKey): OnboardingDraftStep {
+  return isCustomStep(step) ? step : WIZARD_SCREEN_DRAFT_STEP[step];
+}
+
+/** The staff screens in the shape the wizard planner takes (RAPP-307). */
+export function customWizardPlan(
+  screens: readonly IntakeScreen[],
+  stored: CustomAnswers,
+): CustomWizardScreen[] {
+  return screens.map((screen) => ({
+    id: screen.id,
+    afterScreen: screen.afterScreen,
+    isAnswered: isScreenAnswered(screen, stored),
+  }));
+}
+
+/** Her answers as the wizard shows them: the stored ones, with her draft on top. */
+export function mergedCustomAnswers(
+  stored: CustomAnswers,
+  draft: Readonly<Record<string, CustomAnswerValue>> | undefined,
+): CustomAnswers {
+  return { ...stored, ...draft };
+}
+
+function sameAnswer(a: CustomAnswerValue | undefined, b: CustomAnswerValue | undefined): boolean {
+  if (isEmptyAnswer(a) || isEmptyAnswer(b)) return isEmptyAnswer(a) && isEmptyAnswer(b);
+  if (typeof a === 'string' || typeof b === 'string') {
+    return typeof a === 'string' && typeof b === 'string' && a.trim() === b.trim();
+  }
+  return [...(a ?? [])].sort().join('\n') === [...(b ?? [])].sort().join('\n');
+}
+
+/**
+ * The staff answers to send (RAPP-307), as the built-in ones (RAPP-300): only
+ * what she gave or changed, so an answer staff or her entity gave and she only
+ * confirmed keeps its source. An answer she emptied is sent as null, which
+ * removes it. A question no longer on her screens, or a value the server would
+ * refuse (a kept archived option), is left out.
+ */
+export function customAnswersToSave(
+  screens: readonly IntakeScreen[],
+  draft: Readonly<Record<string, CustomAnswerValue>> | undefined,
+  stored: CustomAnswers,
+): Record<string, CustomAnswerValue | null> {
+  const toSave: Record<string, CustomAnswerValue | null> = {};
+  for (const question of screens.flatMap((screen) => screen.questions)) {
+    const value = draft?.[question.id];
+    if (value === undefined || sameAnswer(value, stored[question.id])) continue;
+    if (isEmptyAnswer(value)) {
+      if (stored[question.id] !== undefined) toSave[question.id] = null;
+      continue;
+    }
+    if (customAnswerError(question, value) === null) toSave[question.id] = value;
+  }
+  return toSave;
+}
+
+type DraftSections = Required<
+  Pick<OnboardingDraft, 'identity' | 'documentation' | 'logistics' | 'season'>
+>;
 
 /** The answered part of her profile, in the shape each screen's form edits. */
 export function seedDraftFromProfile(
@@ -41,6 +130,7 @@ export function seedDraftFromProfile(
   const identity: Record<string, unknown> = {};
   const documentation: Record<string, unknown> = {};
   const logistics: Record<string, unknown> = {};
+  const season: Record<string, unknown> = {};
   const has = (question: IntakeQuestion) => answered.has(question);
 
   if (has('first_name')) identity.firstName = profile.first_name;
@@ -82,7 +172,21 @@ export function seedDraftFromProfile(
   }
   if (has('shoe_size') && profile.shoe_size !== null) logistics.shoeSize = profile.shoe_size;
 
-  return { identity, documentation, logistics };
+  // The registration questions (RAPP-306).
+  if (has('applicant_status') && profile.applicant_status != null) {
+    season.applicantStatus = profile.applicant_status;
+  }
+  if (has('supporting_entities') && profile.supporting_entities != null) {
+    season.supportingEntities = profile.supporting_entities;
+  }
+  if (has('childcare_need') && profile.childcare_need != null) {
+    season.childcareNeed = profile.childcare_need;
+  }
+  if (has('specific_needs') && profile.specific_needs != null) {
+    season.specificNeeds = profile.specific_needs;
+  }
+
+  return { identity, documentation, logistics, season };
 }
 
 /** Her stored profile under the `complete_onboarding` payload keys. */
@@ -106,6 +210,10 @@ export function storedPayloadFromProfile(profile: ProfileRow): Record<string, un
     num_dependents: profile.num_dependents,
     clothing_size: profile.clothing_size,
     shoe_size: profile.shoe_size,
+    applicant_status: profile.applicant_status ?? null,
+    supporting_entities: profile.supporting_entities ?? null,
+    childcare_need: profile.childcare_need ?? null,
+    specific_needs: profile.specific_needs ?? null,
     media_consent: profile.media_consent,
   };
 }

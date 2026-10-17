@@ -42,5 +42,7 @@
   "fieldCity": "Municipio",
   "fieldPostalCode": "Código postal",
   "fieldMediaConsent": "Fotos e historias",
-  "saveBlocked": "Faltan datos. Revisa los campos marcados arriba."
+  "saveBlocked": "Faltan datos. Revisa los campos marcados arriba.",
+  "consentsTitle": "Mis autorizaciones",
+  "consentsIntro": "Puedes cambiarlas cuando quieras. Las obligatorias forman parte de la autorización que firmaste."
 }

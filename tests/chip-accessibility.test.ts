@@ -38,7 +38,8 @@ describe('question-aware option chips', () => {
     // The fields her own edit screen and the team's edit screen share (RAPP-281).
     const fields = await source('apps/mobile/src/components/profile/profile-form-fields.tsx');
 
-    expect(occurrences(fields, "accessibilityHint={t('onboarding:documentTypeLabel')}")).toBe(1);
+    // The document types, then the "Not given" chip (RAPP-302): same question.
+    expect(occurrences(fields, "accessibilityHint={t('onboarding:documentTypeLabel')}")).toBe(2);
     expect(occurrences(fields, "accessibilityHint={t('onboarding:clothingSizeLabel')}")).toBe(1);
     expect(occurrences(fields, "accessibilityHint={t('onboarding:shoeSizeLabel')}")).toBe(1);
     expect(occurrences(fields, "accessibilityHint={t('profile:languageLabel')}")).toBe(1);

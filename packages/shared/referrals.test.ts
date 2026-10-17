@@ -3,6 +3,7 @@ import {
   buildReferralPayload,
   createReferralSchema,
   fetchEntityReferrals,
+  fetchSupportingEntityNames,
   filterReferrals,
   submitReferralUpdate,
   type Referral,
@@ -24,6 +25,8 @@ const REFERRALS: readonly Referral[] = [
     entityName: 'Creu Roja Osona',
     createdAt: '2026-08-14T10:00:00Z',
     updatedAt: '2026-08-14T10:00:00Z',
+    answers: null,
+    consentConfirmedAt: null,
   },
 ];
 
@@ -36,15 +39,17 @@ describe('referral intake validation', () => {
       email: ' NAT@example.test ',
       documentationStatus: 'in_progress',
       notes: ' دعم بالعربية ',
+      consentConfirmed: true,
     });
 
-    expect(buildReferralPayload(parsed)).toEqual({
+    expect(buildReferralPayload(parsed)).toMatchObject({
       firstName: 'Наталія',
       lastName: 'Àlvarez',
       phone: null,
       email: 'nat@example.test',
       documentationStatus: 'in_progress',
       notes: 'دعم بالعربية',
+      consentConfirmed: true,
     });
   });
 
@@ -57,6 +62,67 @@ describe('referral intake validation', () => {
         notes: 'x'.repeat(4001),
       }).success,
     ).toBe(false);
+  });
+});
+
+describe('the season registration questions (RAPP-303)', () => {
+  const minimal = {
+    firstName: 'Awa',
+    lastName: 'Sylla',
+    documentationStatus: 'missing' as const,
+    consentConfirmed: true as const,
+  };
+
+  test('the full form becomes the database payload', () => {
+    const parsed = createReferralSchema.parse({
+      ...minimal,
+      dateOfBirth: '1997-06-12',
+      nationality: ' Mali ',
+      documentType: 'passport',
+      documentNumber: ' ml123456 ',
+      city: 'Vic',
+      applicantStatus: 'refugee',
+      supportingEntities: [' Càritas Vic ', '', 'SOS Racisme'],
+      referenceContactName: 'Sílvia Bosch',
+      seasonNumber: '3',
+      childcareNeed: 'maybe',
+      specificNeeds: ' Necessita pauses. ',
+    });
+    expect(buildReferralPayload(parsed)).toMatchObject({
+      dateOfBirth: '1997-06-12',
+      nationality: 'Mali',
+      documentType: 'passport',
+      documentNumber: 'ML123456',
+      city: 'Vic',
+      applicantStatus: 'refugee',
+      supportingEntities: ['Càritas Vic', 'SOS Racisme'],
+      referenceContactName: 'Sílvia Bosch',
+      seasonNumber: 3,
+      childcareNeed: 'maybe',
+      specificNeeds: 'Necessita pauses.',
+    });
+  });
+
+  test('only the names and the consent are required', () => {
+    expect(createReferralSchema.safeParse(minimal).success).toBe(true);
+    expect(createReferralSchema.safeParse({ ...minimal, consentConfirmed: false }).success).toBe(
+      false,
+    );
+  });
+
+  test('an answer must be one of its choices', () => {
+    expect(createReferralSchema.safeParse({ ...minimal, seasonNumber: '6' }).success).toBe(false);
+    expect(createReferralSchema.safeParse({ ...minimal, childcareNeed: 'often' }).success).toBe(
+      false,
+    );
+    expect(createReferralSchema.safeParse({ ...minimal, dateOfBirth: '12/06/1997' }).success).toBe(
+      false,
+    );
+  });
+
+  test('a chosen document type that takes a number needs one', () => {
+    expect(createReferralSchema.safeParse({ ...minimal, documentType: 'nie' }).success).toBe(false);
+    expect(createReferralSchema.safeParse({ ...minimal, documentType: 'none' }).success).toBe(true);
   });
 });
 
@@ -117,5 +183,22 @@ describe('referral search', () => {
     expect(filterReferrals(REFERRALS, 'Нат')).toHaveLength(1);
     expect(filterReferrals(REFERRALS, 'creu')).toHaveLength(1);
     expect(filterReferrals(REFERRALS, 'أمينة')).toHaveLength(0);
+  });
+});
+
+describe('fetchSupportingEntityNames', () => {
+  test('reads the partner entity names', async () => {
+    const calls: string[] = [];
+    const client = {
+      rpc: async (name: string) => {
+        calls.push(name);
+        return { data: ['CEAR Catalunya', 'Creu Roja Osona'], error: null };
+      },
+    };
+    expect(await fetchSupportingEntityNames(client as never)).toEqual([
+      'CEAR Catalunya',
+      'Creu Roja Osona',
+    ]);
+    expect(calls).toEqual(['list_supporting_entity_names']);
   });
 });

@@ -10,14 +10,16 @@
 import { PageWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import {
+  effectiveAppLockSettings,
   readAppLockSettings,
   shouldLockOnReturn,
   writeAppLockSettings,
   type AppLockSettings,
 } from '@/lib/app-lock';
-import { logout } from '@/lib/auth';
 import { takePreviewHandover } from '@/lib/preview-handover';
+import { useGuardedLogout } from '@/lib/sign-out-guard';
 import { privateStorage } from '@/lib/storage';
+import { usePendingSigningCount } from '@/lib/tablet-signing';
 import { useAccountAccess } from '@/lib/use-account-access';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import * as LocalAuthentication from 'expo-local-authentication';
@@ -88,7 +90,14 @@ export function AppLockProvider({ children }: { readonly children: ReactNode }) 
     if (saved?.userId === userId) return saved.settings;
     return readAppLockSettings(privateStorage, userId, area);
   }, [userId, area, saved]);
-  const isEnabled = settings?.enabled === true;
+  // Signings waiting on this tablet hold health data: the lock is on while
+  // they wait, whatever she chose (RAPP-305). The screen still shows her choice.
+  const pendingSignings = usePendingSigningCount();
+  const lockSettings = useMemo(
+    () => (settings === null ? null : effectiveAppLockSettings(settings, pendingSignings)),
+    [settings, pendingSignings],
+  );
+  const isEnabled = lockSettings?.enabled === true;
 
   const [isAvailable, setIsAvailable] = useState(false);
   const [hasChecked, setHasChecked] = useState(!IS_NATIVE);
@@ -165,9 +174,9 @@ export function AppLockProvider({ children }: { readonly children: ReactNode }) 
       }
       if (next !== 'active') return;
       if (
-        settings !== null &&
+        lockSettings !== null &&
         shouldLockOnReturn({
-          settings,
+          settings: lockSettings,
           backgroundedAtMs: backgroundedAt.current,
           nowMs: Date.now(),
         })
@@ -177,7 +186,7 @@ export function AppLockProvider({ children }: { readonly children: ReactNode }) 
       backgroundedAt.current = null;
     });
     return () => subscription.remove();
-  }, [settings]);
+  }, [lockSettings]);
 
   const isActive = isEnabled && isAvailable;
   const showsLock = isEnabled && (!hasChecked || (isAvailable && isLocked));
@@ -232,6 +241,7 @@ function LockScreen({
   const { t } = useTranslation('auth');
   const { t: tProfile } = useTranslation('profile');
   const languageFontClass = useLanguageFontClass();
+  const signOut = useGuardedLogout();
 
   return (
     // The position is on a plain View: a className on the same element as a
@@ -270,7 +280,7 @@ function LockScreen({
                   testID="app-lock-sign-out"
                   accessibilityRole="button"
                   accessibilityLabel={tProfile('signOutAction')}
-                  onPress={() => void logout()}
+                  onPress={signOut}
                   haptic="tapLight"
                   className="min-h-recommended items-center justify-center rounded-md border border-neutral-300 px-lg"
                 >

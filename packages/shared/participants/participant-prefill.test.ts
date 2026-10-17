@@ -123,6 +123,15 @@ describe('buildProfilePrefillPayload', () => {
     });
   });
 
+  test('an emptied document type takes its number with it (RAPP-302)', () => {
+    expect(
+      buildProfilePrefillPayload(
+        { ...values, documentType: undefined, documentNumber: 'X1234567L' },
+        new Set(['documentType']),
+      ),
+    ).toEqual({ document_type: null, document_number: null });
+  });
+
   test('a field emptied by staff is sent empty, so the database clears it', () => {
     expect(
       buildProfilePrefillPayload({ ...values, nationality: undefined }, new Set(['nationality'])),

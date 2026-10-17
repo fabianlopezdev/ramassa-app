@@ -47,6 +47,17 @@ test.afterAll(() => {
        set referred_profile_id = null, assigned_staff_id = null, status = 'pending'
      where id = '${PENDING_REFERRAL_ID}'
        and referred_profile_id in (select id from qa_run_accounts);
+    -- Accepting it moved the seeded answers to her profile (RAPP-303): put them back.
+    update public.entity_referrals
+       set referred_phone = public.encrypt_field('+34930005401'),
+           referred_email = public.encrypt_field('amina.referral@example.test'),
+           intake_answers = public.encrypt_field(jsonb_build_object(
+             'date_of_birth', '1996-02-20', 'nationality', 'Marroc', 'document_type', 'none',
+             'city', 'Vic', 'applicant_status', 'migrant',
+             'supporting_entities', jsonb_build_array('Càritas Vic'),
+             'reference_contact_name', 'Sílvia Bosch', 'season_number', 2,
+             'childcare_need', 'yes', 'specific_needs', 'Prefereix entrenar a la tarda.')::text)
+     where id = '${PENDING_REFERRAL_ID}' and intake_answers is null;
     delete from public.profiles where id in (select id from qa_run_accounts);
     delete from auth.identities where user_id in (select id from qa_run_accounts);
     delete from auth.users where id in (select id from qa_run_accounts);
@@ -160,9 +171,64 @@ test.describe('inviting a participant', () => {
       .toBe('clothing_size:staff,first_name:staff,last_name:staff');
   });
 
+  /**
+   * Staff choose what her registration asks (RAPP-301), and her wizard follows.
+   * "She reviews everything" makes it ask her names although staff gave them,
+   * so her wizard opens on the name screen. Don't ask is not offered on a
+   * required question nobody answered.
+   */
+  test('staff choose what her registration asks, and her wizard follows', async ({
+    page,
+    browser,
+  }) => {
+    const email = `review.${RUN_TAG}@example.test`;
+    await invite(page, email);
+    await expect(page.getByRole('heading', { name: INVITED })).toBeVisible({ timeout: 15_000 });
+    await page
+      .getByRole('link', {
+        name: /completa les seves dades|complete her details|completa sus datos/i,
+      })
+      .click();
+
+    const states = page.getByTestId('participant-question-states');
+    await expect(states).toBeVisible({ timeout: 15_000 });
+    await expect(states.locator('#question-state-shoe_size option[value="skip"]')).toBeDisabled();
+
+    await states
+      .getByRole('button', { name: /que ho revisi tot|reviews everything|que lo revise todo/i })
+      .click();
+    await states.locator('#question-state-phone').selectOption('skip');
+    await states
+      .getByRole('button', { name: /desa les preguntes|save questions|guardar las preguntas/i })
+      .click();
+
+    await expect
+      .poll(
+        () =>
+          queryDatabase(
+            `select count(*) filter (where s.state = 'ask') || ':' || count(*) filter (where s.state = 'skip')
+               from public.intake_question_states s join auth.users u on u.id = s.profile_id
+              where u.email = '${email}'`,
+          ),
+        { timeout: 15_000 },
+      )
+      // Every wizard question is Ask but the phone, which is Skip. Read from the
+      // database, so a new wizard question does not break this check.
+      .toBe(
+        `${Number(queryDatabase('select cardinality(private.wizard_intake_questions())')) - 1}:1`,
+      );
+
+    const player = await (await browser.newContext({ locale: 'en-GB' })).newPage();
+    await signInPlayer(player, email);
+    // Ask: the names staff gave are asked again, filled in for her to confirm.
+    await expect(player.getByTestId('onboarding-first-name')).toBeVisible({ timeout: 30_000 });
+  });
+
   test('an invitation opened from a referral carries it, and says so', async ({ page }) => {
     await page.goto(`/participants/new?referral=${PENDING_REFERRAL_ID}`);
     await expect(page.getByTestId('referral-prefill')).toBeVisible({ timeout: 15_000 });
+    // What the entity answered is shown before staff invite her (RAPP-303).
+    await expect(page.getByTestId('referral-answers')).toBeVisible();
 
     const email = `referred.${RUN_TAG}@example.test`;
     await invite(page, email);
@@ -173,6 +239,27 @@ test.describe('inviting a participant', () => {
     expect(queryDatabase(`select referral_id from public.invites where email = '${email}'`)).toBe(
       PENDING_REFERRAL_ID,
     );
+
+    // Her record holds the entity's answers, recorded as the entity's, and the
+    // referral keeps no copy of them (RAPP-303).
+    expect(
+      queryDatabase(
+        `select p.childcare_need || '|' || p.season_number || '|' || p.city || '|'
+                || public.decrypt_field(p.applicant_status)
+           from public.profiles p join auth.users u on u.id = p.id where u.email = '${email}'`,
+      ),
+    ).toBe('yes|2|Vic|migrant');
+    expect(
+      queryDatabase(
+        `select a.source from public.profile_answers a join auth.users u on u.id = a.profile_id
+          where u.email = '${email}' and a.question = 'season_number'`,
+      ),
+    ).toBe('entity');
+    expect(
+      queryDatabase(
+        `select (intake_answers is null)::text from public.entity_referrals where id = '${PENDING_REFERRAL_ID}'`,
+      ),
+    ).toBe('true');
   });
 
   test('an address that already has an account is refused with words', async ({ page }) => {

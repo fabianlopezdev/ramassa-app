@@ -12,6 +12,11 @@ import { NewParticipant } from '@/components/participants/new-participant';
 import { supabase } from '@/lib/supabase';
 import { createFileRoute } from '@tanstack/react-router';
 import { z } from 'zod';
+import {
+  EMPTY_INTAKE_CATALOG,
+  fetchIntakeCatalog,
+  fetchReferralCustomAnswers,
+} from '@ramassa/shared/intake-builder';
 import { fetchReferral } from '@ramassa/shared/referrals';
 
 export const Route = createFileRoute('/_staff/participants/new')({
@@ -20,11 +25,20 @@ export const Route = createFileRoute('/_staff/participants/new')({
     referral: z.uuid().optional().catch(undefined),
   }),
   loaderDeps: ({ search }) => search,
-  loader: ({ deps }) =>
-    deps.referral === undefined ? Promise.resolve(null) : fetchReferral(supabase, deps.referral),
+  loader: async ({ deps }) => {
+    if (deps.referral === undefined) return { referral: null, custom: undefined };
+    // With the answers to the questions staff added to the form (RAPP-307).
+    const [referral, catalog, answers] = await Promise.all([
+      fetchReferral(supabase, deps.referral),
+      fetchIntakeCatalog(supabase).catch(() => EMPTY_INTAKE_CATALOG),
+      fetchReferralCustomAnswers(supabase, deps.referral).catch(() => ({})),
+    ]);
+    return { referral, custom: { catalog, answers } };
+  },
   component: NewParticipantPage,
 });
 
 function NewParticipantPage() {
-  return <NewParticipant referral={Route.useLoaderData()} />;
+  const { referral, custom } = Route.useLoaderData();
+  return <NewParticipant referral={referral} custom={custom} />;
 }

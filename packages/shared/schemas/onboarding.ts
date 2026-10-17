@@ -15,6 +15,7 @@
 import { z } from 'zod';
 import { isCanonicalMunicipality } from '../i18n/municipalities';
 import { languageCodeSchema } from './language';
+import type { SeasonAnswerFields } from './season';
 
 /** Program constraint: younger players are staff-assisted edge cases with staff-created accounts. */
 export const MINIMUM_AGE_YEARS = 16;
@@ -89,7 +90,10 @@ export const NIE_PATTERN = /^[A-Z]\d{7}[A-Z]$/;
  * different things for the same woman's NIE.
  */
 export const documentationFields = z.object({
-  documentType: z.enum(DOCUMENT_TYPES),
+  // Optional (RAPP-302): entities often hold back a woman's documents to
+  // protect her, so the step can be skipped. Empty means "not given", which
+  // is different from `none` ("I have no document").
+  documentType: z.enum(DOCUMENT_TYPES).optional(),
   documentNumber: z
     .string()
     .trim()
@@ -101,10 +105,10 @@ export const documentationFields = z.object({
 
 /** The conditional document rule, shared by intake and by editing. */
 export function refineDocumentNumber(
-  step: { documentType: DocumentType; documentNumber?: string },
+  step: { documentType?: DocumentType; documentNumber?: string },
   context: z.RefinementCtx,
 ): void {
-  if (step.documentType === 'none') return;
+  if (step.documentType === undefined || step.documentType === 'none') return;
   if (step.documentNumber === undefined) {
     context.addIssue({
       code: 'custom',
@@ -222,6 +226,8 @@ export interface OnboardingSteps {
   identity: IdentityStep;
   documentation: DocumentationStep;
   logistics: LogisticsStep;
+  /** The registration questions (RAPP-306), all optional. */
+  season?: SeasonAnswerFields;
   terms: TermsStep;
 }
 
@@ -236,6 +242,15 @@ export interface TermsContext {
  * mistyped key would silently become a NULL column, and this mapper plus its
  * test are the only guard.
  */
+/** A number travels only with a type that takes one. */
+export function documentNumberToSend(document: {
+  readonly documentType?: DocumentType;
+  readonly documentNumber?: string;
+}): string | null {
+  if (document.documentType === undefined || document.documentType === 'none') return null;
+  return document.documentNumber ?? null;
+}
+
 export function buildCompleteOnboardingPayload(steps: OnboardingSteps, terms: TermsContext) {
   return {
     first_name: steps.identity.firstName,
@@ -244,8 +259,8 @@ export function buildCompleteOnboardingPayload(steps: OnboardingSteps, terms: Te
     place_of_birth: steps.identity.placeOfBirth,
     nationality: steps.identity.nationality,
     preferred_language: steps.identity.preferredLanguage,
-    document_type: steps.documentation.documentType,
-    document_number: steps.documentation.documentNumber ?? null,
+    document_type: steps.documentation.documentType ?? null,
+    document_number: documentNumberToSend(steps.documentation),
     phone: steps.logistics.phone ?? null,
     address: steps.logistics.address ?? null,
     city: steps.logistics.city ?? null,
@@ -256,6 +271,19 @@ export function buildCompleteOnboardingPayload(steps: OnboardingSteps, terms: Te
     num_dependents: steps.logistics.numDependents,
     clothing_size: steps.logistics.clothingSize,
     shoe_size: steps.logistics.shoeSize,
+    // The registration questions (RAPP-306), only when the screen was shown.
+    ...(steps.season === undefined
+      ? {}
+      : {
+          applicant_status: steps.season.applicantStatus ?? null,
+          supporting_entities:
+            steps.season.supportingEntities === undefined ||
+            steps.season.supportingEntities.length === 0
+              ? null
+              : steps.season.supportingEntities,
+          childcare_need: steps.season.childcareNeed ?? null,
+          specific_needs: steps.season.specificNeeds ?? null,
+        }),
     media_consent: steps.terms.mediaConsent,
     terms_version: terms.termsVersion,
     locale_shown: terms.localeShown,

@@ -3,7 +3,13 @@ import { z } from 'zod';
 import { AppError, databaseErrorCode } from './errors';
 import type { Database } from './types/database';
 
-export const DATA_EXPORT_DATASETS = ['participants', 'attendance', 'events'] as const;
+// `custom_answers`: answers to the questions staff added (RAPP-307), one row per answer.
+export const DATA_EXPORT_DATASETS = [
+  'participants',
+  'custom_answers',
+  'attendance',
+  'events',
+] as const;
 export const DATA_EXPORT_SCOPES = ['default', 'full'] as const;
 export const DATA_EXPORT_FORMATS = ['csv', 'xlsx'] as const;
 export const SENSITIVE_EXPORT_COLUMNS = [

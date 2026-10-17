@@ -8,12 +8,13 @@ import { AuthTextField } from '@/components/auth/auth-text-field';
 import { CountryPicker } from '@/components/onboarding/country-picker';
 import { OnboardingQuestionHeading } from '@/components/onboarding/onboarding-question-heading';
 import { OptionChip } from '@/components/onboarding/option-chip';
+import { QuestionHelp } from '@/components/onboarding/question-help';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
 import { WizardValidationSummary } from '@/components/onboarding/wizard-validation-summary';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { onboardingDraftStore } from '@/lib/onboarding';
 import { identityFormSchema, type IdentityFormInput } from '@/lib/onboarding-form';
-import { useWizardStep } from '@/lib/onboarding-intake-context';
+import { useBuiltinWording, useWizardStep } from '@/lib/onboarding-intake-context';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { SymbolViewProps } from 'expo-symbols';
@@ -22,7 +23,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { Text, useWindowDimensions, View } from 'react-native';
 import { LANGUAGE_NATIVE_NAMES, SUPPORTED_LANGUAGES, useLanguage } from '@ramassa/shared/i18n';
-import type { OnboardingStepName } from '@ramassa/shared/onboarding-drafts';
+import type { OnboardingDraftStep } from '@ramassa/shared/onboarding-drafts';
 import type { IdentityStep, LanguageCode } from '@ramassa/shared/schemas';
 
 const YEAR_FIELD_WIDTH_CLASS = 'flex-[1.4]';
@@ -43,6 +44,7 @@ export default function BackgroundStepScreen() {
   const languageFontClass = useLanguageFontClass();
   const { setLanguage } = useLanguage();
   const step = useWizardStep('background');
+  const wording = useBuiltinWording();
   const { fontScale } = useWindowDimensions();
   const isLargeText = fontScale >= LARGE_TEXT_STACK_THRESHOLD;
   const [draft] = useState(() => onboardingDraftStore.loadDraft());
@@ -72,7 +74,7 @@ export default function BackgroundStepScreen() {
     defaultValues,
   });
 
-  function persist(currentStep: OnboardingStepName) {
+  function persist(currentStep: OnboardingDraftStep) {
     onboardingDraftStore.saveDraft({
       ...draft,
       currentStep,
@@ -126,8 +128,9 @@ export default function BackgroundStepScreen() {
       {step.shouldAsk('date_of_birth') ? (
         <View className="gap-xs">
           <Text className={`text-start text-md font-medium text-neutral-800 ${languageFontClass}`}>
-            {t('dateOfBirthLabel')}
+            {wording.label('date_of_birth', t('dateOfBirthLabel'))}
           </Text>
+          <QuestionHelp text={wording.help('date_of_birth')} />
           <View className={isLargeText ? 'gap-sm' : 'flex-row gap-sm'}>
             <View className={isLargeText ? '' : 'flex-1'}>
               <Controller
@@ -202,7 +205,8 @@ export default function BackgroundStepScreen() {
           render={({ field }) => (
             <AuthTextField
               testID="onboarding-place-of-birth"
-              label={t('placeOfBirthLabel')}
+              label={wording.label('place_of_birth', t('placeOfBirthLabel'))}
+              hint={wording.help('place_of_birth')}
               value={field.value ?? ''}
               onChangeText={field.onChange}
               onBlur={field.onBlur}
@@ -212,39 +216,55 @@ export default function BackgroundStepScreen() {
         />
       ) : null}
       {step.shouldAsk('nationality') ? (
-        <Controller
-          control={control}
-          name="nationality"
-          render={({ field }) => (
-            <CountryPicker
-              label={t('nationalityLabel')}
-              symbol={nationalitySymbol}
-              value={field.value}
-              onChange={field.onChange}
-            />
-          )}
-        />
+        <View className="gap-xs">
+          <Controller
+            control={control}
+            name="nationality"
+            render={({ field }) => (
+              <CountryPicker
+                label={wording.label('nationality', t('nationalityLabel'))}
+                symbol={nationalitySymbol}
+                value={field.value}
+                onChange={field.onChange}
+              />
+            )}
+          />
+          <QuestionHelp text={wording.help('nationality')} />
+        </View>
       ) : null}
 
       {step.shouldAsk('preferred_language') ? (
         <View className="gap-xs">
-          <OnboardingQuestionHeading label={t('preferredLanguageLabel')} symbol={languageSymbol} />
+          <OnboardingQuestionHeading
+            label={wording.label('preferred_language', t('preferredLanguageLabel'))}
+            symbol={languageSymbol}
+          />
+          <QuestionHelp text={wording.help('preferred_language')} />
           <Controller
             control={control}
             name="preferredLanguage"
             render={({ field }) => (
               <View className="flex-row flex-wrap gap-sm">
-                {SUPPORTED_LANGUAGES.map((code) => (
-                  <OptionChip
-                    key={code}
-                    label={LANGUAGE_NATIVE_NAMES[code]}
-                    isSelected={field.value === code}
-                    onPress={() => {
-                      field.onChange(code);
-                      void setLanguage(code);
-                    }}
-                  />
-                ))}
+                {wording
+                  .options(
+                    'preferred_language',
+                    SUPPORTED_LANGUAGES.map((code) => ({
+                      value: code,
+                      label: LANGUAGE_NATIVE_NAMES[code],
+                    })),
+                    field.value,
+                  )
+                  .map((option) => (
+                    <OptionChip
+                      key={option.value}
+                      label={option.label}
+                      isSelected={field.value === option.value}
+                      onPress={() => {
+                        field.onChange(option.value);
+                        void setLanguage(option.value);
+                      }}
+                    />
+                  ))}
               </View>
             )}
           />

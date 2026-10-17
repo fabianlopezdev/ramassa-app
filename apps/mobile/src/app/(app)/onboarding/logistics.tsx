@@ -9,12 +9,13 @@ import { AuthTextField } from '@/components/auth/auth-text-field';
 import { MunicipalityPicker } from '@/components/onboarding/municipality-picker';
 import { OnboardingQuestionHeading } from '@/components/onboarding/onboarding-question-heading';
 import { OptionChip } from '@/components/onboarding/option-chip';
+import { QuestionHelp } from '@/components/onboarding/question-help';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
 import { WizardValidationSummary } from '@/components/onboarding/wizard-validation-summary';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { onboardingDraftStore, usePendingInviteEntity } from '@/lib/onboarding';
 import { logisticsFormSchema, type LogisticsFormInput } from '@/lib/onboarding-form';
-import { useWizardStep } from '@/lib/onboarding-intake-context';
+import { useBuiltinWording, useWizardStep } from '@/lib/onboarding-intake-context';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { SymbolViewProps } from 'expo-symbols';
 import { useEffect, useRef, useState } from 'react';
@@ -22,7 +23,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 import { prefilledReferenceEntity } from '@ramassa/shared/accounts';
-import type { OnboardingStepName } from '@ramassa/shared/onboarding-drafts';
+import type { OnboardingDraftStep } from '@ramassa/shared/onboarding-drafts';
 import { CLOTHING_SIZES, SHOE_SIZES, type LogisticsStep } from '@ramassa/shared/schemas';
 
 const entitySymbol: SymbolViewProps['name'] = {
@@ -54,6 +55,7 @@ const shoeSymbol: SymbolViewProps['name'] = {
 export default function LogisticsStepScreen() {
   const { t } = useTranslation('onboarding');
   const step = useWizardStep('logistics');
+  const wording = useBuiltinWording();
   const [draft] = useState(() => onboardingDraftStore.loadDraft());
   const [hasSubmitErrors, setHasSubmitErrors] = useState(false);
 
@@ -104,7 +106,7 @@ export default function LogisticsStepScreen() {
     }
   }, [invitedEntity, getValues, setValue]);
 
-  function persist(currentStep: OnboardingStepName) {
+  function persist(currentStep: OnboardingDraftStep) {
     onboardingDraftStore.saveDraft({
       ...draft,
       currentStep,
@@ -150,7 +152,8 @@ export default function LogisticsStepScreen() {
           name="phone"
           render={({ field }) => (
             <AuthTextField
-              label={t('phoneLabel')}
+              label={wording.label('phone', t('phoneLabel'))}
+              hint={wording.help('phone')}
               placeholder={t('phonePlaceholder')}
               value={field.value ?? ''}
               onChangeText={field.onChange}
@@ -168,7 +171,8 @@ export default function LogisticsStepScreen() {
           name="address"
           render={({ field }) => (
             <AuthTextField
-              label={t('addressLabel')}
+              label={wording.label('address', t('addressLabel'))}
+              hint={wording.help('address')}
               value={field.value ?? ''}
               onChangeText={field.onChange}
               onBlur={field.onBlur}
@@ -183,7 +187,7 @@ export default function LogisticsStepScreen() {
           name="city"
           render={({ field }) => (
             <MunicipalityPicker
-              label={t('cityLabel')}
+              label={wording.label('city', t('cityLabel'))}
               symbol={municipalitySymbol}
               value={field.value ?? ''}
               onChange={field.onChange}
@@ -198,7 +202,8 @@ export default function LogisticsStepScreen() {
           name="postalCode"
           render={({ field }) => (
             <AuthTextField
-              label={t('postalCodeLabel')}
+              label={wording.label('postal_code', t('postalCodeLabel'))}
+              hint={wording.help('postal_code')}
               value={field.value ?? ''}
               onChangeText={field.onChange}
               onBlur={field.onBlur}
@@ -212,7 +217,11 @@ export default function LogisticsStepScreen() {
 
       {step.shouldAsk('reference_entity') ? (
         <View className="gap-xs">
-          <OnboardingQuestionHeading label={t('referenceEntityLabel')} symbol={entitySymbol} />
+          <OnboardingQuestionHeading
+            label={wording.label('reference_entity', t('referenceEntityLabel'))}
+            symbol={entitySymbol}
+          />
+          <QuestionHelp text={wording.help('reference_entity')} />
           <Controller
             control={control}
             name="referenceEntity"
@@ -249,7 +258,8 @@ export default function LogisticsStepScreen() {
           name="referenceContactName"
           render={({ field }) => (
             <AuthTextField
-              label={t('referenceContactNameLabel')}
+              label={wording.label('reference_contact_name', t('referenceContactNameLabel'))}
+              hint={wording.help('reference_contact_name')}
               value={field.value ?? ''}
               onChangeText={field.onChange}
               onBlur={field.onBlur}
@@ -261,7 +271,11 @@ export default function LogisticsStepScreen() {
 
       {step.shouldAsk('dependents') ? (
         <View className="gap-xs">
-          <OnboardingQuestionHeading label={t('hasDependentsLabel')} symbol={dependentsSymbol} />
+          <OnboardingQuestionHeading
+            label={wording.label('dependents', t('hasDependentsLabel'))}
+            symbol={dependentsSymbol}
+          />
+          <QuestionHelp text={wording.help('dependents')} />
           <Controller
             control={control}
             name="hasDependents"
@@ -304,7 +318,11 @@ export default function LogisticsStepScreen() {
 
       {step.shouldAsk('clothing_size') ? (
         <View className="gap-xs">
-          <OnboardingQuestionHeading label={t('clothingSizeLabel')} symbol={clothingSymbol} />
+          <OnboardingQuestionHeading
+            label={wording.label('clothing_size', t('clothingSizeLabel'))}
+            symbol={clothingSymbol}
+          />
+          <QuestionHelp text={wording.help('clothing_size')} />
           <Controller
             control={control}
             name="clothingSize"
@@ -327,7 +345,11 @@ export default function LogisticsStepScreen() {
 
       {step.shouldAsk('shoe_size') ? (
         <View className="gap-xs">
-          <OnboardingQuestionHeading label={t('shoeSizeLabel')} symbol={shoeSymbol} />
+          <OnboardingQuestionHeading
+            label={wording.label('shoe_size', t('shoeSizeLabel'))}
+            symbol={shoeSymbol}
+          />
+          <QuestionHelp text={wording.help('shoe_size')} />
           <Controller
             control={control}
             name="shoeSize"

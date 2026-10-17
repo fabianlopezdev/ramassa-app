@@ -74,10 +74,12 @@ test.describe('editing a record without the sensitive fields', () => {
       await signIn(page, LIMITED_EMAIL);
       await page.goto(`/participants/${id}`);
       await expect(page.getByRole('heading', { level: 1, name: /Mamani/ })).toBeVisible();
-      await page.getByRole('button', { name: /edita|edit/i }).click();
+      await page
+        .getByRole('button', { name: /^(edita la fitxa|edita la ficha|edit the record)$/i })
+        .click();
 
       await page.locator('#participant-placeOfBirth').fill(nextPlace);
-      await page.getByRole('button', { name: /desa|save|guarda/i }).click();
+      await page.getByRole('button', { name: /^(desa|save|guardar)$/i }).click();
 
       await expect.poll(() => placeOfBirth(id), { timeout: 15_000 }).toBe(nextPlace);
       expect(storedSensitiveValues(id)).toBe(sensitiveBefore);
@@ -94,7 +96,9 @@ test.describe('editing a record without the sensitive fields', () => {
     await signIn(page, LIMITED_EMAIL);
     await page.goto(`/participants/${id}`);
     await expect(page.getByRole('heading', { level: 1, name: /Mamani/ })).toBeVisible();
-    await page.getByRole('button', { name: /edita|edit/i }).click();
+    await page
+      .getByRole('button', { name: /^(edita la fitxa|edita la ficha|edit the record)$/i })
+      .click();
 
     await expect(page.locator('#participant-placeOfBirth')).toBeVisible();
     for (const field of ['documentNumber', 'phone', 'address', 'postalCode']) {

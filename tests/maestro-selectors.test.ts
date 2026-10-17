@@ -20,6 +20,7 @@ const auditedSpecs = [
   '.maestro/_relaunch.yaml',
   '.maestro/_second-factor.yaml',
   '.maestro/_set-language.yaml',
+  '.maestro/_sign-authorization.yaml',
   '.maestro/_sign-in.yaml',
   '.maestro/attendance-history.yaml',
   '.maestro/attendance-offline.yaml',

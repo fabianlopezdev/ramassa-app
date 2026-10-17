@@ -5,8 +5,16 @@
  */
 import { describe, expect, test } from 'bun:test';
 import type { IntakeQuestion } from '@ramassa/shared/intake';
+import type { CustomQuestion, IntakeScreen } from '@ramassa/shared/intake-builder';
 import type { ProfileRow } from '@ramassa/shared/schemas';
-import { seedDraftFromProfile, storedPayloadFromProfile } from './onboarding-intake';
+import {
+  customAnswersToSave,
+  customWizardPlan,
+  mergedCustomAnswers,
+  seedDraftFromProfile,
+  storedPayloadFromProfile,
+  wizardStepRoute,
+} from './onboarding-intake';
 
 const profile: ProfileRow = {
   id: '5eed0000-0000-4000-8000-000000000098',
@@ -90,6 +98,80 @@ describe('storedPayloadFromProfile', () => {
       num_dependents: 0,
       clothing_size: 'M',
       media_consent: false,
+    });
+  });
+});
+
+describe('staff screens in the wizard (RAPP-307)', () => {
+  const choice: CustomQuestion = {
+    id: 'q-choice',
+    screenId: 's-transport',
+    type: 'single_choice',
+    label: { ca: 'Com vens?' },
+    help: null,
+    privacy: 'normal',
+    placements: ['wizard'],
+    isArchived: false,
+    options: [
+      { id: 'o-bus', label: { ca: 'Bus' }, isArchived: false },
+      { id: 'o-old', label: { ca: 'Tren' }, isArchived: true },
+    ],
+  };
+  const note: CustomQuestion = {
+    ...choice,
+    id: 'q-note',
+    type: 'long_text',
+    label: { ca: 'Alguna cosa més?' },
+    options: [],
+  };
+  const screen: IntakeScreen = {
+    id: 's-transport',
+    title: { ca: 'Com arribes als entrenaments' },
+    intro: null,
+    afterScreen: 'logistics',
+    isArchived: false,
+    questions: [choice, note],
+  };
+
+  test('a step key opens its route, a staff screen under /onboarding/custom', () => {
+    expect(String(wizardStepRoute('logistics'))).toBe('/onboarding/logistics');
+    expect(String(wizardStepRoute('custom:s-transport'))).toBe('/onboarding/custom/s-transport');
+  });
+
+  test('the plan marks a staff screen answered only when every question has an answer', () => {
+    expect(customWizardPlan([screen], { 'q-choice': 'o-bus' })).toEqual([
+      { id: 's-transport', afterScreen: 'logistics', isAnswered: false },
+    ]);
+    expect(customWizardPlan([screen], { 'q-choice': 'o-bus', 'q-note': 'Res' })).toEqual([
+      { id: 's-transport', afterScreen: 'logistics', isAnswered: true },
+    ]);
+  });
+
+  test('only new or changed answers are sent, so a confirmed staff answer keeps its source', () => {
+    const stored = { 'q-choice': 'o-bus', 'q-note': 'Res' };
+    expect(
+      customAnswersToSave([screen], { 'q-choice': 'o-bus', 'q-note': ' Res ' }, stored),
+    ).toEqual({});
+    expect(customAnswersToSave([screen], { 'q-note': 'Vinc amb la meva filla' }, stored)).toEqual({
+      'q-note': 'Vinc amb la meva filla',
+    });
+  });
+
+  test('an answer she emptied is sent as null, which removes it', () => {
+    expect(customAnswersToSave([screen], { 'q-note': '  ' }, { 'q-note': 'Res' })).toEqual({
+      'q-note': null,
+    });
+    expect(customAnswersToSave([screen], { 'q-note': '' }, {})).toEqual({});
+  });
+
+  test('a kept archived option and an unknown question are not sent', () => {
+    expect(customAnswersToSave([screen], { 'q-choice': 'o-old', 'q-gone': 'x' }, {})).toEqual({});
+  });
+
+  test('the answers she sees are the stored ones with her draft on top', () => {
+    expect(mergedCustomAnswers({ a: 'stored', b: 'stored' }, { b: '' })).toEqual({
+      a: 'stored',
+      b: '',
     });
   });
 });
