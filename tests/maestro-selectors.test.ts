@@ -18,6 +18,7 @@ const auditedSpecs = [
   '.maestro/_open-app.yaml',
   '.maestro/_phase8-survey-journey.yaml',
   '.maestro/_relaunch.yaml',
+  '.maestro/_second-factor.yaml',
   '.maestro/_set-language.yaml',
   '.maestro/_sign-authorization.yaml',
   '.maestro/_sign-in.yaml',
@@ -298,7 +299,12 @@ describe('Maestro selector contracts', () => {
     }
 
     const signIn = await Bun.file(path.join(repoRoot, '.maestro/_sign-in.yaml')).text();
-    expect(signIn).toContain("LOGIN_TITLE: '{{auth:loginTitle}}'");
+    // Signed out, the app sits on the email login that `_open-app.yaml` leaves
+    // in front, and the developer menu opens by its route: its entry is on the
+    // signed-in Profile tab only.
+    expect(signIn).toContain("LOGIN_TITLE: '{{auth:emailLoginTitle}}'");
+    expect(signIn).toContain('openLink: ${DEV_MENU_LINK}');
+    expect(signIn).not.toContain('id: dev-menu-entry');
     expect(signIn).toMatch(/assertNotVisible: '\.\*\$\{LOGIN_TITLE\}\.\*'/);
     expect(signIn).toContain('start: 50%, 70%\n    end: 50%, 35%');
 
@@ -334,7 +340,9 @@ describe('Maestro selector contracts', () => {
     }
 
     const setLanguage = await Bun.file(path.join(repoRoot, '.maestro/_set-language.yaml')).text();
-    expect(setLanguage).toContain('id: dev-menu-entry');
+    expect(setLanguage).toContain('DEV_MENU_LINK: ramassa://dev-menu');
+    expect(setLanguage).toContain('openLink: ${DEV_MENU_LINK}');
+    expect(setLanguage).not.toContain('id: dev-menu-entry');
     expect(setLanguage).toContain('id: dev-menu-close');
     expect(setLanguage).toContain('id: dev-language-${LOCALE}');
     expect(setLanguage).not.toContain("text: '.*${DEV_MENU_LABEL}.*'");

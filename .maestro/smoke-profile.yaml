@@ -20,7 +20,7 @@ name: smoke-profile
 # anything written into a column the feature under test can rewrite.
 env:
   DEV_CLIENT_URL: ramassa://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081
-  DEV_MENU_LABEL: Developer menu
+  DEV_MENU_LINK: ramassa://dev-menu
   TAB_PROFILE: '{{nav:tabs.profile}}'
   HOME_FEED_TITLE: '{{home:feedTitle}}'
   PROFILE_TITLE: '{{profile:title}}'
@@ -63,9 +63,7 @@ env:
       - tapOn:
           text: '.*Close.*'
           optional: true
-      - tapOn:
-          text: '.*${DEV_MENU_LABEL}.*'
-          optional: true
+      - openLink: ${DEV_MENU_LINK}
       - swipe:
           start: 50%, 70%
           end: 50%, 40%
@@ -313,8 +311,26 @@ env:
           duration: 900
       - waitForAnimationToEnd:
           timeout: 1500
-- tapOn:
-    id: 'municipality-picker-open'
+# The loop stops on the first sliver of the button, which on a tall iPhone sits
+# under the home indicator where a tap does not reach it. Lift it clear and open
+# UNTIL the search field shows, so a tap that missed is simply retried.
+- repeat:
+    times: 4
+    while:
+      notVisible:
+        id: 'municipality-search-input'
+    commands:
+      - swipe:
+          start: 50%, 45%
+          end: 50%, 30%
+          duration: 900
+      - waitForAnimationToEnd:
+          timeout: 1500
+      - tapOn:
+          id: 'municipality-picker-open'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 2000
 - extendedWaitUntil:
     visible:
       id: 'municipality-search-input'
@@ -528,18 +544,19 @@ env:
 # deliberately gives her an open request. Switch to the seeded player without
 # one, then prove the confirmation, cancellation, system back, and final
 # destructive submission from a clean request state.
+# Opened by its route, like the signed-out flows. The Profile entry sits at the
+# very bottom, where the loop stops on a sliver behind the floating tab bar
+# and the tap opens a tab instead. This step needs the menu itself, and
+# `forum.yaml` and `phase8-notification.yaml` still prove the Profile entry.
 - repeat:
-    times: 20
+    times: 6
     while:
-      notVisible: '.*${DEV_MENU_LABEL}.*'
+      notVisible:
+        id: dev-menu-close
     commands:
-      - swipe:
-          start: 50%, 65%
-          end: 50%, 35%
-          duration: 900
+      - openLink: ${DEV_MENU_LINK}
       - waitForAnimationToEnd:
-          timeout: 1500
-- tapOn: '.*${DEV_MENU_LABEL}.*'
+          timeout: 3000
 - waitForAnimationToEnd:
     timeout: 4000
 - repeat:

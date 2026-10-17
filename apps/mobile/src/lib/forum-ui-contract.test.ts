@@ -87,9 +87,13 @@ test('the cumulative native flow proves the lifecycle in Catalan and Arabic', as
   expect(source.match(/id: forum-submit-reply/g)).toHaveLength(2);
   expect(source.match(/id: forum-save-edit/g)).toHaveLength(2);
   expect(source.match(/id: forum-confirm-delete/g)).toHaveLength(2);
-  expect(source).toContain(
-    'platform: iOS\n    commands:\n      - swipe:\n          start: 50%, 45%',
+  // iOS 27 no longer drops the keyboard on a drag, so every field hides it
+  // explicitly on both platforms instead of dragging on iOS.
+  expect(source).not.toMatch(/platform: iOS\n {4}commands:\n {6}- swipe:/);
+  expect(source.match(/^- hideKeyboard$/gm)?.length).toBeGreaterThanOrEqual(6);
+  // The flag sheet fits without scrolling, so a drag cannot dismiss the iOS
+  // keyboard over its submit button. Submission retries until it is confirmed.
+  expect(source).toMatch(
+    /while:\n {6}notVisible: '\^\$\{CATALAN_FLAG_CONFIRMATION\}\$'\n {4}commands:\n {6}- hideKeyboard[\s\S]*?id: forum-flag-submit/,
   );
-  expect(source.match(/platform: iOS\n {4}commands:\n {6}- swipe:/g)).toHaveLength(7);
-  expect(source.match(/platform: Android\n {4}commands:\n {6}- hideKeyboard/g)).toHaveLength(7);
 });

@@ -21,6 +21,7 @@ import {
   ONBOARDING_ACCOUNT_EMAIL,
   PARTICIPANT_FIXTURES,
   SEED_ACCOUNT_PASSWORD,
+  SEED_TOTP_SECRET,
   STAFF_FIXTURES,
 } from '@ramassa/shared/testing';
 import { repoRoot } from './config';
@@ -95,6 +96,9 @@ export function withFixtures(translate: Translator): Translator {
     ) {
       return SEED_ACCOUNT_PASSWORD;
     }
+    // The authenticator secret seeded for every team member (RAPP-233), so a
+    // flow signed in as staff can complete the second factor.
+    if (key === 'seed:totpSecret') return SEED_TOTP_SECRET;
     return translate(key);
   };
 }

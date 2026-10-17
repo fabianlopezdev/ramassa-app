@@ -1,0 +1,34 @@
+appId: com.ramassa.app
+name: _second-factor
+# Completes the authenticator step a team account meets after its password
+# (RAPP-233). A fragment for the flows that sign in as staff through the
+# developer menu. Every seeded team member has the same development secret, so
+# `totp.js` computes the code an authenticator app would show.
+#
+# Does nothing when the step is not on screen, so a caller can run it after any
+# sign-in.
+env:
+  SECRET: '{{seed:totpSecret}}'
+---
+# A LOOP, because a code computed in the last second of its 30-second step can
+# expire before the server checks it. A rejected code leaves the screen up, and
+# the next pass computes a fresh one.
+- repeat:
+    times: 3
+    while:
+      visible:
+        id: second-factor-code
+    commands:
+      - runScript: totp.js
+      - tapOn:
+          id: second-factor-code
+      - eraseText: 10
+      - inputText: ${output.totp}
+      - tapOn:
+          id: second-factor-verify
+      - waitForAnimationToEnd:
+          timeout: 5000
+- extendedWaitUntil:
+    notVisible:
+      id: second-factor
+    timeout: 30000

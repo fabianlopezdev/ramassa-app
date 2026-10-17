@@ -38,21 +38,27 @@ name: _phase8-survey-journey
 - tapOn:
     id: survey-free-text
 - inputText: rapp61-survey-response
-- runFlow:
-    when:
-      platform: Android
+# iOS 27 no longer drops the keyboard when the screen is dragged, and the next
+# control then sits behind it. The hide command works on both platforms in
+# Catalan, but in Arabic it reports success with the keyboard still up. The
+# screen drops the keyboard on a tap outside any control, so the question
+# heading is tapped too. Submit UNTIL the completion shows, so a tap that hit a
+# key is simply retried.
+- repeat:
+    times: 4
+    while:
+      notVisible:
+        id: survey-completion
     commands:
       - hideKeyboard
-- runFlow:
-    when:
-      platform: iOS
-    commands:
-      - swipe:
-          start: 50%, 45%
-          end: 50%, 25%
-          duration: 700
-- tapOn:
-    id: survey-next
+      - tapOn:
+          point: 50%, 30%
+      - waitForAnimationToEnd:
+          timeout: 1500
+      - tapOn:
+          id: survey-next
+      - waitForAnimationToEnd:
+          timeout: 3000
 - extendedWaitUntil:
     visible:
       id: survey-completion

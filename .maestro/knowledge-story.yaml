@@ -73,8 +73,30 @@ env:
 - tapOn:
     id: story-body-input
 - inputText: 'Playing football helped me feel welcome and supported.'
+# The consent and submit controls sit behind the keyboard. The hide command
+# alone does not close it over this multi-line field on iOS 27, so the blank
+# band under the back button is tapped too: the screen drops the keyboard on a
+# tap outside any control.
+- hideKeyboard
 - tapOn:
-    point: 50%, 18%
+    point: 50%, 15%
+- waitForAnimationToEnd:
+    timeout: 1500
+# iOS lists the consent switch and the submit button in its hierarchy while
+# they are still below the fold, so the loops below can believe they have
+# arrived and tap at bounds that are off screen, which lands on the story text
+# and reopens the keyboard. Reach the bottom of the form first with a fixed
+# number of drags, which needs no visibility condition. The drags start below
+# the story field so none of them lands in it.
+- repeat:
+    times: 4
+    commands:
+      - swipe:
+          start: 50%, 80%
+          end: 50%, 30%
+          duration: 800
+      - waitForAnimationToEnd:
+          timeout: 1000
 - repeat:
     times: 8
     while:
