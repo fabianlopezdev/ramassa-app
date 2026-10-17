@@ -18,7 +18,7 @@
 -- coach-preset staff member 0003 (no Personal level after the deletes below).
 
 begin;
-select plan(26);
+select plan(27);
 
 create temp table run (label text primary key, id uuid);
 grant all on run to authenticated;
@@ -233,6 +233,18 @@ set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000011", 
 select lives_ok(
   $$ select public.save_my_custom_answers('{"5eed0000-0000-4000-8045-000000000003":"Igual que sempre."}'::jsonb) $$,
   'with no current season, a seasonal answer is skipped and her save goes through'
+);
+reset role;
+
+-- A woman who started on her own has no profile yet, and still reads the questions.
+reset role;
+update public.seasons set is_current = true where id = '5eed0000-0000-4000-8040-000000000001';
+insert into auth.users (id, email) values ('0b5e0000-0000-4000-8000-000000000399', 'nobody-yet@example.test');
+set local role authenticated;
+set local request.jwt.claims = '{"sub": "0b5e0000-0000-4000-8000-000000000399", "role": "authenticated", "aal": "aal1"}';
+select ok(
+  jsonb_array_length(public.intake_catalog() -> 'screens') > 0,
+  'a woman with no profile yet reads the questions of the default organization'
 );
 reset role;
 

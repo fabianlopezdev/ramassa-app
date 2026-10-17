@@ -229,10 +229,12 @@ security definer
 set search_path = ''
 as $$
 declare
-  actor_org uuid := (select public.current_org_id());
+  -- A woman who started on her own has no profile until she completes the
+  -- wizard: she reads the default organization's questions.
+  actor_org uuid := coalesce((select public.current_org_id()), (select public.default_organization_id()));
   with_archived boolean := (select public.has_permission('settings.organization'));
 begin
-  if actor_org is null then
+  if (select auth.uid()) is null or actor_org is null then
     raise insufficient_privilege using message = 'the question catalog needs an account';
   end if;
   return jsonb_build_object(
