@@ -8,7 +8,8 @@ name: smoke-onboarding-invited
 # screen with only place of birth and language left, skip the entity on the
 # logistics screen, and show what staff entered on the summary. Staff also set
 # two choices (RAPP-301): she reviews the clothing size, which opens on the
-# staff answer M, and she is not asked her phone. Five screens in all,
+# staff answer M, and she is not asked her phone. Six screens in all, with
+# the registration questions (RAPP-306),
 # numbered from 1, because the step count shows only what she sees.
 #
 # iOS lists a button below the fold in the accessibility tree, so a tap can
@@ -346,7 +347,41 @@ env:
       id: 'wizard-step-4'
     timeout: 20000
 
-# ── Step 4: summary ────────────────────────────────────────────────────────────
+# ── The registration questions (RAPP-306): all optional, left empty ──────────
+- repeat:
+    times: 12
+    while:
+      notVisible: '^${CONTINUE}$'
+    commands:
+      - swipe:
+          start: 50%, 45%
+          end: 50%, 15%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 1500
+- repeat:
+    times: 8
+    while:
+      notVisible:
+        id: 'wizard-step-5'
+    commands:
+      - tapOn:
+          text: '^${CONTINUE}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 2000
+      - swipe:
+          start: 50%, 45%
+          end: 50%, 20%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 1200
+- extendedWaitUntil:
+    visible:
+      id: 'wizard-step-5'
+    timeout: 20000
+
+# ── Step 5: summary ────────────────────────────────────────────────────────────
 # What staff entered is on it, next to what she just answered.
 - assertVisible: '.*Mariam.*'
 - repeat:
@@ -376,7 +411,7 @@ env:
     times: 8
     while:
       notVisible:
-        id: 'wizard-step-5'
+        id: 'wizard-step-6'
     commands:
       - tapOn:
           text: '^${SUMMARY_CONFIRM}$'
@@ -391,10 +426,10 @@ env:
           timeout: 1200
 - extendedWaitUntil:
     visible:
-      id: 'wizard-step-5'
+      id: 'wizard-step-6'
     timeout: 20000
 
-# ── Step 5: terms ──────────────────────────────────────────────────────────────
+# ── Step 6: terms ──────────────────────────────────────────────────────────────
 - repeat:
     times: 10
     while:
@@ -478,4 +513,4 @@ env:
 - assertVisible:
     text: '^${TAB_HOME}$'
 - assertNotVisible:
-    id: 'wizard-step-5'
+    id: 'wizard-step-6'

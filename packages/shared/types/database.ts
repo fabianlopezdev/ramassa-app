@@ -2631,6 +2631,7 @@ export type Database = {
           place_of_birth: string | null;
           postal_code: string | null;
           preferred_language: string;
+          prior_seasons: number;
           push_notifications_enabled: boolean;
           reference_contact_name: string | null;
           reference_entity: string | null;
@@ -2675,6 +2676,7 @@ export type Database = {
           place_of_birth?: string | null;
           postal_code?: string | null;
           preferred_language?: string;
+          prior_seasons?: number;
           push_notifications_enabled?: boolean;
           reference_contact_name?: string | null;
           reference_entity?: string | null;
@@ -2719,6 +2721,7 @@ export type Database = {
           place_of_birth?: string | null;
           postal_code?: string | null;
           preferred_language?: string;
+          prior_seasons?: number;
           push_notifications_enabled?: boolean;
           reference_contact_name?: string | null;
           reference_entity?: string | null;
@@ -3007,6 +3010,61 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'entity_referrals';
             referencedColumns: ['org_id', 'id'];
+          },
+        ];
+      };
+      season_answers: {
+        Row: {
+          applicant_status: string | null;
+          childcare_need: string | null;
+          org_id: string;
+          profile_id: string;
+          season_id: string;
+          specific_needs: string | null;
+          supporting_entities: string[] | null;
+          updated_at: string;
+        };
+        Insert: {
+          applicant_status?: string | null;
+          childcare_need?: string | null;
+          org_id: string;
+          profile_id: string;
+          season_id: string;
+          specific_needs?: string | null;
+          supporting_entities?: string[] | null;
+          updated_at?: string;
+        };
+        Update: {
+          applicant_status?: string | null;
+          childcare_need?: string | null;
+          org_id?: string;
+          profile_id?: string;
+          season_id?: string;
+          specific_needs?: string | null;
+          supporting_entities?: string[] | null;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'season_answers_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'season_answers_profile_id_fkey';
+            columns: ['profile_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'season_answers_season_id_fkey';
+            columns: ['season_id'];
+            isOneToOne: false;
+            referencedRelation: 'seasons';
+            referencedColumns: ['id'];
           },
         ];
       };
@@ -4515,6 +4573,7 @@ export type Database = {
           place_of_birth: string | null;
           postal_code: string | null;
           preferred_language: string;
+          prior_seasons: number;
           push_notifications_enabled: boolean;
           reference_contact_name: string | null;
           reference_entity: string | null;
@@ -4611,6 +4670,10 @@ export type Database = {
           expires_at: string;
           handoff_id: string;
         }[];
+      };
+      create_season: {
+        Args: { p_make_current: boolean; p_name: string; p_starts_on: string };
+        Returns: string;
       };
       create_survey_export: { Args: { p_survey_id: string }; Returns: Json };
       create_targeted_notification_send: {
@@ -5369,6 +5432,7 @@ export type Database = {
         Args: never;
         Returns: {
           content: Json;
+          is_returning: boolean;
           required: boolean;
           season_id: string;
           season_name: string;
@@ -5491,6 +5555,18 @@ export type Database = {
         Returns: {
           question: string;
           state: string;
+        }[];
+      };
+      participant_season_answers: {
+        Args: { p_profile_id: string };
+        Returns: {
+          applicant_status: string;
+          childcare_need: string;
+          season_name: string;
+          specific_needs: string;
+          starts_on: string;
+          supporting_entities: string[];
+          updated_at: string;
         }[];
       };
       personal_data_disposition: {
@@ -5754,6 +5830,17 @@ export type Database = {
           uploader_name: string;
         }[];
       };
+      season_registration_status: {
+        Args: { p_season_id?: string };
+        Returns: {
+          first_name: string;
+          last_name: string;
+          method: string;
+          profile_id: string;
+          registered: boolean;
+          signed_at: string;
+        }[];
+      };
       send_message: {
         Args: {
           p_content: string;
@@ -5785,6 +5872,7 @@ export type Database = {
         Args: { p_conversation_id: string; p_staff_id: string };
         Returns: undefined;
       };
+      set_current_season: { Args: { p_season_id: string }; Returns: undefined };
       set_document_step_explanation: {
         Args: { p_explanation: Json };
         Returns: Json;
@@ -5823,6 +5911,10 @@ export type Database = {
       };
       set_participant_active: {
         Args: { next_is_active: boolean; participant_id: string };
+        Returns: undefined;
+      };
+      set_prior_seasons: {
+        Args: { p_count: number; p_profile_id: string };
         Returns: undefined;
       };
       set_service_interest: {
@@ -5870,6 +5962,10 @@ export type Database = {
       };
       transition_feedback_submission: {
         Args: { p_status: string; p_submission_id: string };
+        Returns: undefined;
+      };
+      update_my_season_answers: {
+        Args: { p_payload: Json };
         Returns: undefined;
       };
       update_organization_settings: {

@@ -535,7 +535,41 @@ env:
       id: 'wizard-step-5'
     timeout: 20000
 
-# ── Step 5: summary ───────────────────────────────────────────────────────
+# ── The registration questions (RAPP-306): all optional, left empty ──────────
+- repeat:
+    times: 12
+    while:
+      notVisible: '^${CONTINUE}$'
+    commands:
+      - swipe:
+          start: 50%, 45%
+          end: 50%, 15%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 1500
+- repeat:
+    times: 8
+    while:
+      notVisible:
+        id: 'wizard-step-6'
+    commands:
+      - tapOn:
+          text: '^${CONTINUE}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 2000
+      - swipe:
+          start: 50%, 45%
+          end: 50%, 20%
+          duration: 600
+      - waitForAnimationToEnd:
+          timeout: 1200
+- extendedWaitUntil:
+    visible:
+      id: 'wizard-step-6'
+    timeout: 20000
+
+# ── Step 6: summary ───────────────────────────────────────────────────────
 # Everything she is about to save, before the terms (RAPP-300). The name she
 # typed on step 1 must be on it: that proves the summary reads the draft.
 - assertVisible: '.*Nadia.*'
@@ -554,7 +588,7 @@ env:
     times: 8
     while:
       notVisible:
-        id: 'wizard-step-6'
+        id: 'wizard-step-7'
     commands:
       - tapOn:
           text: '^${SUMMARY_CONFIRM}$'
@@ -563,10 +597,10 @@ env:
           timeout: 2000
 - extendedWaitUntil:
     visible:
-      id: 'wizard-step-6'
+      id: 'wizard-step-7'
     timeout: 20000
 
-# ── Step 6: terms ─────────────────────────────────────────────────────────────────
+# ── Step 7: terms ─────────────────────────────────────────────────────────────────
 # Consent is REQUIRED and the media consent beside it is not: accepting only
 # the terms is the minimum lawful path, so it is the one driven here. Selected
 # state again, because this chip looks identical pressed or not to a matcher
@@ -670,4 +704,4 @@ env:
 # so run on its own it would pass against a wizard that simply had not rendered
 # yet.
 - assertNotVisible:
-    id: 'wizard-step-6'
+    id: 'wizard-step-7'

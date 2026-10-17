@@ -350,5 +350,14 @@
     "image_rights": "Derechos de imagen",
     "newsletter": "Boletín y comunicaciones",
     "messaging_groups": "Grupos de mensajería del equipo"
-  }
+  },
+  "seasonsTitle": "Temporadas",
+  "seasonsIntro": "Publicar la autorización de la temporada vigente hace que las jugadoras que vuelven se inscriban de nuevo.",
+  "seasonName": "Nombre (por ejemplo 2027/28)",
+  "seasonStartsOn": "Empieza el",
+  "seasonMakeCurrent": "Hacerla vigente",
+  "seasonCreate": "Crear la temporada",
+  "seasonCreated": "Temporada creada.",
+  "seasonCreateFailed": "No se ha podido crear la temporada.",
+  "seasonSetCurrent": "Hacerla vigente"
 }

@@ -37,7 +37,11 @@ import { CURRENT_TERMS_VERSION } from '@ramassa/shared/constants';
 import type { AppErrorCode } from '@ramassa/shared/errors';
 import { trimPayloadToAnswers } from '@ramassa/shared/intake';
 import type { OnboardingStepName } from '@ramassa/shared/onboarding-drafts';
-import { buildCompleteOnboardingPayload, termsStepSchema } from '@ramassa/shared/schemas';
+import {
+  buildCompleteOnboardingPayload,
+  seasonAnswerFields,
+  termsStepSchema,
+} from '@ramassa/shared/schemas';
 import type { LanguageCode } from '@ramassa/shared/schemas';
 import { tokens } from '@ramassa/shared/tokens';
 
@@ -159,6 +163,13 @@ export default function TermsStepScreen() {
         router.replace('/onboarding/logistics');
         return;
       }
+      // The registration questions (RAPP-306), all optional: a draft that does
+      // not parse goes back to that screen, as the others do.
+      const season = seasonAnswerFields.safeParse(draft?.season ?? {});
+      if (!season.success) {
+        router.replace('/onboarding/season');
+        return;
+      }
       const terms = termsStepSchema.parse({
         termsAccepted: true,
         mediaConsent: hasMediaConsent,
@@ -169,6 +180,7 @@ export default function TermsStepScreen() {
           identity: identity.data,
           documentation: documentation.data,
           logistics: logistics.data,
+          season: draft?.season === undefined ? undefined : season.data,
           terms,
         },
         {

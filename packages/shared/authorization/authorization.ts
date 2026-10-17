@@ -90,6 +90,8 @@ const statusRowSchema = z.object({
   season_name: z.string(),
   version_number: z.number().int(),
   content: authorizationContentSchema,
+  // Returning: she signed an earlier season (RAPP-306). Older servers omit it.
+  is_returning: z.boolean().optional().default(false),
 });
 
 export interface AuthorizationStatus {
@@ -99,6 +101,8 @@ export interface AuthorizationStatus {
   readonly seasonName: string;
   readonly versionNumber: number;
   readonly content: AuthorizationContent;
+  /** She signed an earlier season: this is re-registration (RAPP-306). */
+  readonly isReturning: boolean;
 }
 
 /**
@@ -123,6 +127,7 @@ export async function fetchMyAuthorizationStatus(
     seasonName: row.season_name,
     versionNumber: row.version_number,
     content: row.content,
+    isReturning: row.is_returning,
   };
 }
 

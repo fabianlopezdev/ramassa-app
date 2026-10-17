@@ -135,5 +135,11 @@
   "authorizationErrorHealth": "Answer the medical question.",
   "authorizationErrorSignature": "Sign with your finger, or tick that you cannot draw your signature.",
   "authorizationSignFailed": "Your signature could not be saved. Try again.",
-  "authorizationLoadFailed": "The authorization could not be loaded."
+  "authorizationLoadFailed": "The authorization could not be loaded.",
+  "seasonStepIntro": "Every question is optional. They help us support you better this season.",
+  "reregistrationTitle": "Registration for the {{season}} season",
+  "reregistrationReviewIntro": "Welcome back! Before you sign for the season, check your details. Are they still correct?",
+  "reregistrationCorrect": "Yes, they are correct",
+  "reregistrationEdit": "Correct my details",
+  "reregistrationSaveFailed": "Your answers could not be saved. Try again."
 }

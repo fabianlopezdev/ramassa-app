@@ -135,5 +135,11 @@
   "authorizationErrorHealth": "أجيبي عن سؤال البيانات الطبية.",
   "authorizationErrorSignature": "وقّعي بإصبعكِ، أو أشّري أنكِ لا تستطيعين رسم توقيعكِ.",
   "authorizationSignFailed": "تعذّر حفظ التوقيع. حاولي مرة أخرى.",
-  "authorizationLoadFailed": "تعذّر تحميل التفويض."
+  "authorizationLoadFailed": "تعذّر تحميل التفويض.",
+  "seasonStepIntro": "كل الأسئلة اختيارية. تساعدنا على مرافقتكِ بشكل أفضل هذا الموسم.",
+  "reregistrationTitle": "التسجيل لموسم {{season}}",
+  "reregistrationReviewIntro": "أهلًا بعودتكِ! قبل التوقيع على الموسم، راجعي بياناتكِ. هل ما زالت صحيحة؟",
+  "reregistrationCorrect": "نعم، صحيحة",
+  "reregistrationEdit": "صحّحي بياناتي",
+  "reregistrationSaveFailed": "تعذّر حفظ الإجابات. حاولي مرة أخرى."
 }

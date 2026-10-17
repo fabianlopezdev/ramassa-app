@@ -713,6 +713,8 @@ export function buildProfileFromFixture(
     emergency_contact_name: null,
     emergency_contact_relation: null,
     emergency_contact_phone: null,
+    // Seasons played before the app (RAPP-306).
+    prior_seasons: 0,
     ...derivedProfileFields(fixture),
     ...overrides,
   };
@@ -1349,6 +1351,23 @@ export function buildAuthorizationConsentEvent(
     granted: true,
     method: 'app',
     decided_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+export type SeasonAnswersRow = Database['public']['Tables']['season_answers']['Row'];
+
+/** Her registration answers for the current season (RAPP-306). */
+export function buildSeasonAnswers(overrides: Partial<SeasonAnswersRow> = {}): SeasonAnswersRow {
+  return {
+    profile_id: seedUserId(PARTICIPANT_FIXTURES[0]!.ordinal),
+    season_id: SEED_SEASON_ID,
+    org_id: SEED_ORGANIZATION_ID,
+    applicant_status: null,
+    supporting_entities: null,
+    childcare_need: 'no',
+    specific_needs: null,
+    updated_at: FIXTURE_TIMESTAMP,
     ...overrides,
   };
 }

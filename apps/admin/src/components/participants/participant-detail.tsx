@@ -64,6 +64,7 @@ import {
   type ProfilePrefillPayload,
 } from '@ramassa/shared/participants';
 import type { EquipmentDeliveryInput, UpdateOwnProfilePayload } from '@ramassa/shared/schemas';
+import { setPriorSeasons, type ParticipantSeasonAnswers } from '@ramassa/shared/seasons';
 
 export interface ParticipantDetailProps {
   readonly participant: ParticipantDetailRow;
@@ -87,6 +88,7 @@ export interface ParticipantDetailProps {
   /** Her season authorizations and consents (RAPP-304). */
   readonly authorizations?: readonly ParticipantAuthorization[];
   readonly consents?: readonly ParticipantConsent[];
+  readonly seasonAnswers?: readonly ParticipantSeasonAnswers[];
 }
 
 export function ParticipantDetail({
@@ -102,6 +104,7 @@ export function ParticipantDetail({
   questionStates = {},
   authorizations = [],
   consents = [],
+  seasonAnswers = [],
 }: ParticipantDetailProps) {
   const { t, i18n } = useTranslation(['participants', 'common', 'profile']);
   const locale = i18n.resolvedLanguage ?? 'ca';
@@ -355,6 +358,11 @@ export function ParticipantDetail({
           canSeeHealth={permissions.has('participants.view_health')}
           onRecordPaper={async (signedOn) => {
             await recordPaperAuthorization(supabase, participant.id, signedOn);
+            await router.invalidate();
+          }}
+          seasonAnswers={seasonAnswers}
+          onSetPriorSeasons={async (count) => {
+            await setPriorSeasons(supabase, participant.id, count);
             await router.invalidate();
           }}
         />

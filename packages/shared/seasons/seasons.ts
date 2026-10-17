@@ -1,0 +1,246 @@
+/**
+ * Seasons and re-registration (RAPP-306).
+ *
+ * Staff create seasons and choose the current one. Publishing the current
+ * season's authorization (RAPP-304) makes every returning player re-register:
+ * she checks her details, answers the season questions and signs. Her season
+ * answers are kept per season, and the season number is counted from the
+ * seasons she signed plus the ones she played before the app.
+ */
+import type { SupabaseClient } from '@supabase/supabase-js';
+import { z } from 'zod';
+import { AppError, databaseErrorCode } from '../errors';
+import {
+  createTargetedNotificationSend,
+  fetchCustomNotificationGroups,
+  previewNotificationAudience,
+  saveCustomNotificationGroup,
+  type NotificationContent,
+} from '../notifications';
+import { seasonAnswersPayload, type SeasonAnswerFields } from '../schemas/season';
+import type { Database, Json } from '../types/database';
+
+type Client = SupabaseClient<Database>;
+
+function failure(message: string): never {
+  throw new AppError(databaseErrorCode(message), { message });
+}
+
+const seasonRowSchema = z.object({
+  id: z.uuid(),
+  name: z.string(),
+  starts_on: z.string(),
+  is_current: z.boolean(),
+});
+
+export interface Season {
+  readonly id: string;
+  readonly name: string;
+  readonly startsOn: string;
+  readonly isCurrent: boolean;
+}
+
+export async function fetchSeasons(client: Client): Promise<readonly Season[]> {
+  const { data, error } = await client
+    .from('seasons')
+    .select('id, name, starts_on, is_current')
+    .order('starts_on', { ascending: false });
+  if (error) failure(error.message);
+  return z
+    .array(seasonRowSchema)
+    .parse(data ?? [])
+    .map((row) => ({
+      id: row.id,
+      name: row.name,
+      startsOn: row.starts_on,
+      isCurrent: row.is_current,
+    }));
+}
+
+export const newSeasonSchema = z.object({
+  name: z.string().trim().min(1).max(50),
+  startsOn: z.iso.date(),
+  makeCurrent: z.boolean(),
+});
+
+export async function createSeason(
+  client: Client,
+  input: z.input<typeof newSeasonSchema>,
+): Promise<string> {
+  const season = newSeasonSchema.parse(input);
+  const { data, error } = await client.rpc('create_season', {
+    p_name: season.name,
+    p_starts_on: season.startsOn,
+    p_make_current: season.makeCurrent,
+  });
+  if (error) failure(error.message);
+  return z.uuid().parse(data);
+}
+
+export async function setCurrentSeason(client: Client, seasonId: string): Promise<void> {
+  const { error } = await client.rpc('set_current_season', { p_season_id: seasonId });
+  if (error) failure(error.message);
+}
+
+/** The seasons she played before the app; the season number counts them. */
+export async function setPriorSeasons(
+  client: Client,
+  profileId: string,
+  count: number,
+): Promise<void> {
+  const { error } = await client.rpc('set_prior_seasons', {
+    p_profile_id: profileId,
+    p_count: z.number().int().min(0).max(20).parse(count),
+  });
+  if (error) failure(error.message);
+}
+
+/** Her season answers, from the re-registration flow. Only the four questions travel. */
+export function buildMySeasonAnswersPayload(answers: Partial<SeasonAnswerFields>): Json {
+  const payload = seasonAnswersPayload(answers);
+  return {
+    applicant_status: payload.applicant_status,
+    supporting_entities: payload.supporting_entities,
+    childcare_need: payload.childcare_need,
+    specific_needs: payload.specific_needs,
+  };
+}
+
+export async function updateMySeasonAnswers(
+  client: Client,
+  answers: Partial<SeasonAnswerFields>,
+): Promise<void> {
+  const { error } = await client.rpc('update_my_season_answers', {
+    p_payload: buildMySeasonAnswersPayload(answers),
+  });
+  if (error) failure(error.message);
+}
+
+const seasonAnswersRowSchema = z.object({
+  season_name: z.string(),
+  starts_on: z.string(),
+  applicant_status: z.string().nullable(),
+  supporting_entities: z.array(z.string()).nullable(),
+  childcare_need: z.string().nullable(),
+  specific_needs: z.string().nullable(),
+  updated_at: z.string(),
+});
+
+export interface ParticipantSeasonAnswers {
+  readonly seasonName: string;
+  readonly applicantStatus: string | null;
+  readonly supportingEntities: readonly string[];
+  readonly childcareNeed: string | null;
+  readonly specificNeeds: string | null;
+}
+
+export async function fetchParticipantSeasonAnswers(
+  client: Client,
+  profileId: string,
+): Promise<readonly ParticipantSeasonAnswers[]> {
+  const { data, error } = await client.rpc('participant_season_answers', {
+    p_profile_id: profileId,
+  });
+  if (error) failure(error.message);
+  return z
+    .array(seasonAnswersRowSchema)
+    .parse(data ?? [])
+    .map((row) => ({
+      seasonName: row.season_name,
+      applicantStatus: row.applicant_status,
+      supportingEntities: row.supporting_entities ?? [],
+      childcareNeed: row.childcare_need,
+      specificNeeds: row.specific_needs,
+    }));
+}
+
+const registrationRowSchema = z.object({
+  profile_id: z.uuid(),
+  first_name: z.string(),
+  last_name: z.string(),
+  registered: z.boolean(),
+  method: z.string().nullable(),
+  signed_at: z.string().nullable(),
+});
+
+export interface SeasonRegistration {
+  readonly profileId: string;
+  readonly name: string;
+  readonly registered: boolean;
+  readonly method: string | null;
+  readonly signedAt: string | null;
+}
+
+/** Every active player and whether she registered for the season (the current one by default). */
+export async function fetchSeasonRegistrations(
+  client: Client,
+  seasonId: string | null = null,
+): Promise<readonly SeasonRegistration[]> {
+  const { data, error } =
+    seasonId === null
+      ? await client.rpc('season_registration_status')
+      : await client.rpc('season_registration_status', { p_season_id: seasonId });
+  if (error) failure(error.message);
+  return z
+    .array(registrationRowSchema)
+    .parse(data ?? [])
+    .map((row) => ({
+      profileId: row.profile_id,
+      name: `${row.first_name} ${row.last_name}`.trim(),
+      registered: row.registered,
+      method: row.method,
+      signedAt: row.signed_at,
+    }));
+}
+
+export type RegistrationFilter = 'all' | 'registered' | 'pending';
+
+export function filterRegistrations(
+  rows: readonly SeasonRegistration[],
+  filter: RegistrationFilter,
+): readonly SeasonRegistration[] {
+  if (filter === 'all') return rows;
+  return rows.filter((row) => row.registered === (filter === 'registered'));
+}
+
+/** The custom notification group a season's reminders go to. */
+export function reminderGroupName(seasonName: string): string {
+  return `Reinscripció ${seasonName}`.slice(0, 80);
+}
+
+/**
+ * Reminds the players who have not re-registered, through the targeted
+ * notifications: their names go into the season's custom group, and the
+ * message goes to that group. Returns how many devices' owners it reached;
+ * zero sends nothing.
+ */
+export async function remindUnregisteredPlayers(
+  client: Client,
+  input: {
+    readonly seasonName: string;
+    readonly participantIds: readonly string[];
+    readonly title: NotificationContent;
+    readonly body: NotificationContent;
+  },
+): Promise<number> {
+  if (input.participantIds.length === 0) return 0;
+  const name = reminderGroupName(input.seasonName);
+  const existing = (await fetchCustomNotificationGroups(client)).find(
+    (group) => group.name === name,
+  );
+  const groupId = await saveCustomNotificationGroup(client, {
+    id: existing?.id,
+    name,
+    participantIds: input.participantIds,
+  });
+  const audience = { kind: 'custom_group' as const, customGroupId: groupId };
+  const reached = await previewNotificationAudience(client, audience);
+  if (reached.length === 0) return 0;
+  await createTargetedNotificationSend(client, {
+    title: input.title,
+    body: input.body,
+    audience,
+    expectedRecipientCount: reached.length,
+  });
+  return reached.length;
+}

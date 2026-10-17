@@ -12,7 +12,7 @@ import { ProfileRow, ProfileSection } from '@/components/profile/profile-section
 import { SeasonAnswerRows } from '@/components/profile/season-answer-rows';
 import { onboardingDraftStore } from '@/lib/onboarding';
 import { WIZARD_SCREEN_ROUTES } from '@/lib/onboarding-intake';
-import { useWizardIntake, useWizardStep } from '@/lib/onboarding-intake-context';
+import { useWizardStep } from '@/lib/onboarding-intake-context';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import { useCallback, useState } from 'react';
@@ -71,16 +71,6 @@ export default function SummaryStepScreen() {
   const { t, i18n } = useTranslation('onboarding');
   const router = useRouter();
   const step = useWizardStep('summary');
-  const { profile } = useWizardIntake();
-  // The season answers an entity or staff gave (RAPP-303). The wizard does
-  // not ask them yet, so the section shows only when somebody answered one.
-  const hasSeasonAnswers =
-    profile !== null &&
-    (profile.applicant_status != null ||
-      (profile.supporting_entities?.length ?? 0) > 0 ||
-      profile.season_number != null ||
-      profile.childcare_need != null ||
-      (profile.specific_needs ?? '') !== '');
   const locale = (i18n.resolvedLanguage as LanguageCode | undefined) ?? 'ca';
   const [draft, setDraft] = useState<OnboardingDraft | null>(() =>
     onboardingDraftStore.loadDraft(),
@@ -98,6 +88,7 @@ export default function SummaryStepScreen() {
   const identity: Section = draft?.identity ?? {};
   const documentation: Section = draft?.documentation ?? {};
   const logistics: Section = draft?.logistics ?? {};
+  const season: Section = draft?.season ?? {};
   const notGiven = t('summaryNotGiven');
   const show = (value: string | null) => value ?? notGiven;
 
@@ -239,11 +230,27 @@ export default function SummaryStepScreen() {
         />
       </ProfileSection>
 
-      {hasSeasonAnswers && profile !== null ? (
-        <ProfileSection title={t('seasonSectionTitle')}>
-          <SeasonAnswerRows profile={profile} emptyLabel={notGiven} />
-        </ProfileSection>
-      ) : null}
+      {/* The registration questions (RAPP-306), from her draft like the rest. */}
+      <ProfileSection title={t('seasonSectionTitle')}>
+        <SeasonAnswerRows
+          showSeasonNumber={false}
+          emptyLabel={notGiven}
+          profile={{
+            applicant_status: (season.applicantStatus as never) ?? null,
+            supporting_entities: Array.isArray(season.supportingEntities)
+              ? (season.supportingEntities as string[])
+              : null,
+            season_number: null,
+            childcare_need: (season.childcareNeed as never) ?? null,
+            specific_needs: text(season.specificNeeds),
+          }}
+        />
+        <EditButton
+          section="season"
+          title={t('seasonSectionTitle')}
+          onPress={() => edit('season')}
+        />
+      </ProfileSection>
     </WizardFrame>
   );
 }

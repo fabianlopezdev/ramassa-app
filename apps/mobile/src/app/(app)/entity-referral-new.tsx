@@ -329,6 +329,7 @@ export default function EntityReferralNewScreen() {
             onChange={(patch) => set({ season: { ...form.season, ...patch } })}
             entityNames={entityNames.data ?? []}
             showSensitive
+            showSeasonNumber
           />
 
           <View className="gap-xs">

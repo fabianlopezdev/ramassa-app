@@ -350,5 +350,14 @@
     "image_rights": "Drets d'imatge",
     "newsletter": "Butlletí i comunicacions",
     "messaging_groups": "Grups de missatgeria de l'equip"
-  }
+  },
+  "seasonsTitle": "Temporades",
+  "seasonsIntro": "Publicar l'autorització de la temporada vigent fa que les jugadores que tornen es tornin a inscriure.",
+  "seasonName": "Nom (per exemple 2027/28)",
+  "seasonStartsOn": "Comença el",
+  "seasonMakeCurrent": "Fes-la vigent",
+  "seasonCreate": "Crea la temporada",
+  "seasonCreated": "Temporada creada.",
+  "seasonCreateFailed": "No s'ha pogut crear la temporada.",
+  "seasonSetCurrent": "Fes-la vigent"
 }

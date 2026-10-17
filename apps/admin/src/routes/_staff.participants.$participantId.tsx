@@ -39,6 +39,7 @@ import {
   fetchParticipantNotes,
 } from '@ramassa/shared/participants';
 import { fetchDeletionRequests } from '@ramassa/shared/rgpd';
+import { fetchParticipantSeasonAnswers } from '@ramassa/shared/seasons';
 
 export const Route = createFileRoute('/_staff/participants/$participantId')({
   ssr: false,
@@ -61,6 +62,7 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
         questionStates: {},
         authorizations: [],
         consents: [],
+        seasonAnswers: [],
       };
     }
     const [
@@ -75,6 +77,7 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
       questionStates,
       authorizations,
       consents,
+      seasonAnswers,
     ] = await Promise.all([
       fetchParticipantNotes(supabase, params.participantId),
       fetchParticipantActivity(supabase, params.participantId),
@@ -98,6 +101,8 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
       // participants.view_personal; without it the panel simply shows none.
       fetchParticipantAuthorizations(supabase, params.participantId).catch(() => []),
       fetchParticipantConsents(supabase, params.participantId).catch(() => []),
+      // Her answers by season (RAPP-306).
+      fetchParticipantSeasonAnswers(supabase, params.participantId).catch(() => []),
     ]);
     // Filtered here rather than asked for by participant: the queue read is one
     // round trip either way, and the same call feeds the staff-wide queue, so
@@ -118,6 +123,7 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
       questionStates,
       authorizations,
       consents,
+      seasonAnswers,
     };
   },
   component: ParticipantDetailPage,
@@ -137,6 +143,7 @@ function ParticipantDetailPage() {
     questionStates,
     authorizations,
     consents,
+    seasonAnswers,
   } = Route.useLoaderData();
 
   if (participant === null) {
@@ -156,6 +163,7 @@ function ParticipantDetailPage() {
       questionStates={questionStates}
       authorizations={authorizations}
       consents={consents}
+      seasonAnswers={seasonAnswers}
     />
   );
 }

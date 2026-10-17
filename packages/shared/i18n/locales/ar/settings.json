@@ -85,5 +85,14 @@
     "image_rights": "حقوق الصورة",
     "newsletter": "النشرة والمراسلات",
     "messaging_groups": "مجموعات رسائل الفريق"
-  }
+  },
+  "seasonsTitle": "المواسم",
+  "seasonsIntro": "نشر تفويض الموسم الساري يجعل اللاعبات العائدات يسجّلن من جديد.",
+  "seasonName": "الاسم (مثلًا 2027/28)",
+  "seasonStartsOn": "يبدأ في",
+  "seasonMakeCurrent": "اجعله ساريًا",
+  "seasonCreate": "أنشئ الموسم",
+  "seasonCreated": "أُنشئ الموسم.",
+  "seasonCreateFailed": "تعذّر إنشاء الموسم.",
+  "seasonSetCurrent": "اجعله ساريًا"
 }

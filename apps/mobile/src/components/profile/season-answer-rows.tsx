@@ -25,7 +25,10 @@ const CHILDCARE_KEYS = {
 export function SeasonAnswerRows({
   profile,
   emptyLabel,
+  showSeasonNumber = true,
 }: {
+  /** Hidden in the wizard summary: the number is counted, not answered (RAPP-306). */
+  readonly showSeasonNumber?: boolean;
   readonly profile: Pick<
     ProfileRecord,
     | 'applicant_status'
@@ -55,14 +58,16 @@ export function SeasonAnswerRows({
             : profile.supporting_entities.join(', ')
         }
       />
-      <ProfileRow
-        label={t('onboarding:seasonNumberLabel')}
-        value={
-          profile.season_number == null
-            ? emptyLabel
-            : t(`onboarding:seasonNumber${profile.season_number}`)
-        }
-      />
+      {showSeasonNumber ? (
+        <ProfileRow
+          label={t('onboarding:seasonNumberLabel')}
+          value={
+            profile.season_number == null
+              ? emptyLabel
+              : t(`onboarding:seasonNumber${profile.season_number}`)
+          }
+        />
+      ) : null}
       <ProfileRow
         label={t('onboarding:childcareNeedLabel')}
         value={
