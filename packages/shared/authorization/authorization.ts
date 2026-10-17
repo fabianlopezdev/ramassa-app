@@ -134,7 +134,9 @@ export function needsAuthorization(status: AuthorizationStatus | null): boolean 
 /** What she gives when she signs, checked before it is sent. */
 export const authorizationSigningSchema = z
   .object({
-    consents: z.record(z.enum(CONSENT_KEYS), z.boolean()),
+    // Partial: an optional consent she never touched is simply absent. A
+    // zod 4 record over an enum would require every key.
+    consents: z.partialRecord(z.enum(CONSENT_KEYS), z.boolean()),
     healthInfo: z.string().trim().min(1).max(4000),
     emergencyContact: z
       .object({

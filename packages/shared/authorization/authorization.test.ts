@@ -67,6 +67,20 @@ describe('authorizationSigningSchema', () => {
     unableToDraw: false,
   };
 
+  test('she signs with only the required consents ticked; the optional ones may stay untouched', () => {
+    expect(
+      authorizationSigningSchema.safeParse({
+        ...valid,
+        consents: {
+          participation: true,
+          data_processing: true,
+          code_of_conduct: true,
+          health_data: true,
+        },
+      }).success,
+    ).toBe(true);
+  });
+
   test('accepts every required consent, the medical answer and a drawing', () => {
     expect(authorizationSigningSchema.safeParse(valid).success).toBe(true);
   });
