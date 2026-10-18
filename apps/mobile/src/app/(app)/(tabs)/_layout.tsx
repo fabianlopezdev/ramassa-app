@@ -1,7 +1,9 @@
 import { useUnreadMessages } from '@/lib/messaging';
+import { nativeTabsHostProps } from '@/lib/native-tabs-direction';
 import { unreadBadgeProps } from '@/lib/unread-badge';
 import { NativeTabs } from 'expo-router/native-tabs';
 import { useTranslation } from 'react-i18next';
+import { I18nManager } from 'react-native';
 import { tokens } from '@ramassa/shared/tokens';
 
 /**
@@ -9,8 +11,10 @@ import { tokens } from '@ramassa/shared/tokens';
  * primary IA (max 2 nav levels).
  *
  * NativeTabs (not JS tabs) on purpose: the native tab bar gives platform-correct
- * screen-reader labels, RTL mirroring (ar/fa), and >=48dp targets for free,
- * which is exactly what the WCAG requirement and RAPP-70's premium bar ask for.
+ * screen-reader labels and >=48dp targets for free, which is exactly what the
+ * WCAG requirement and RAPP-70's premium bar ask for. RTL mirroring (ar/fa) is
+ * NOT free on iOS: the native bar follows the phone's language, so the
+ * direction React Native uses is passed in explicitly (RAPP-531).
  * Every tab carries BOTH an icon and a text label (SPEC UX rule: icon-only
  * fails low-literacy users, text-only fails non-native speakers). Labels come
  * from the `nav` i18n namespace so all five languages translate and the
@@ -32,6 +36,8 @@ export default function TabsLayout() {
   const unreadBadge = unreadBadgeProps(unread);
   return (
     <NativeTabs
+      // The tab bar mirrors with the screens (RAPP-531).
+      unstable_nativeProps={nativeTabsHostProps(I18nManager.isRTL)}
       backgroundColor={tokens.colors.white}
       iconColor={{ default: tokens.colors.neutral[700], selected: tokens.colors.primary.dark }}
       indicatorColor={tokens.colors.neutral[100]}

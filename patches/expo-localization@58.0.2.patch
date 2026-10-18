@@ -1,3 +1,27 @@
+diff --git a/node_modules/expo-localization/.bun-tag-fcbe9171c442cdf9 b/.bun-tag-fcbe9171c442cdf9
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a/android/src/main/java/expo/modules/localization/LocalizationModule.kt b/android/src/main/java/expo/modules/localization/LocalizationModule.kt
+index 79ca5b7151c45eda543642eb966ce7455e3fc178..49050f6a7bffb786b08a5cb4b37a55ece3ea928f 100644
+--- a/android/src/main/java/expo/modules/localization/LocalizationModule.kt
++++ b/android/src/main/java/expo/modules/localization/LocalizationModule.kt
+@@ -59,7 +59,15 @@ class LocalizationModule : Module() {
+ 
+     // We call these methods before React loads to ensure it gets rendered correctly the first time the app is opened.
+     I18nUtil.instance.allowRTL(context, supportsRTL)
+-    I18nUtil.instance.forceRTL(context, forcesRTL)
++    // Preserve the direction chosen inside Ramassa across native restarts (RAPP-94,
++    // RAPP-531). Without this, every start reset it to left to right before React
++    // read it, so Arabic and Persian never laid out right to left on Android.
++    // A build that forces right to left still takes precedence.
++    val i18nPreferences =
++      context.getSharedPreferences("com.facebook.react.modules.i18nmanager.I18nUtil", Context.MODE_PRIVATE)
++    if (forcesRTL || !i18nPreferences.contains("RCTI18nUtil_forceRTL")) {
++      I18nUtil.instance.forceRTL(context, forcesRTL)
++    }
+   }
+ 
+   private fun getMeasurementSystem(locale: Locale): String? {
 diff --git a/ios/LocalizationModule.swift b/ios/LocalizationModule.swift
 index 0ac5bdb0947a9f64d86920b492830293790e8491..3ad09a67afcfa2ae87e8f648860a41446b2c73eb 100644
 --- a/ios/LocalizationModule.swift
