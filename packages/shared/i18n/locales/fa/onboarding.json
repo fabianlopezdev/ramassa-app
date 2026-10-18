@@ -153,5 +153,6 @@
   "customQuestionsTitle": "پرسش‌های بیشتر",
   "customReferralAnswersFailed": "ارجاع فرستاده شد. پاسخ‌های پرسش‌های بیشتر ذخیره نشد.",
   "customReferralRetryAction": "دوباره پاسخ‌ها را ذخیره کنید",
-  "customReferralOpenAction": "ارجاع را باز کنید"
+  "customReferralOpenAction": "ارجاع را باز کنید",
+  "authorizationSignatureHint": "اگر نمی‌توانید امضا بکشید، گزینهٔ پایین را برای امضای بدون طرح انتخاب کنید."
 }

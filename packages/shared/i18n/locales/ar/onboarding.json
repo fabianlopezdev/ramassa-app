@@ -105,7 +105,7 @@
   "seasonNumber3": "السنة الثالثة",
   "seasonNumber4": "السنة الرابعة",
   "seasonNumber5": "السنة الخامسة",
-  "childcareNeedLabel": "هل تحتاج إلى رعاية الأطفال أثناء التدريبات؟",
+  "childcareNeedLabel": "هل تحتاجين إلى رعاية الأطفال أثناء التدريبات؟",
   "childcareNeedYes": "نعم",
   "childcareNeedNo": "لا",
   "childcareNeedMaybe": "ربما، في بعض التدريبات",
@@ -153,5 +153,6 @@
   "customQuestionsTitle": "أسئلة إضافية",
   "customReferralAnswersFailed": "تم إرسال الإحالة. لم يتم حفظ الإجابات عن الأسئلة الإضافية.",
   "customReferralRetryAction": "احفظ الإجابات مرة أخرى",
-  "customReferralOpenAction": "افتح الإحالة"
+  "customReferralOpenAction": "افتح الإحالة",
+  "authorizationSignatureHint": "إذا لم تستطيعي الرسم، اختاري الخيار أدناه للتوقيع بدون رسم."
 }

@@ -51,6 +51,7 @@ export function SignaturePad({
   prompt,
   promptClassName,
   accessibilityLabel,
+  accessibilityHint,
 }: {
   readonly strokes: SignatureStrokes | null;
   readonly onChange: (strokes: SignatureStrokes | null) => void;
@@ -59,6 +60,8 @@ export function SignaturePad({
   readonly prompt: string;
   readonly promptClassName: string;
   readonly accessibilityLabel: string;
+  /** For a screen reader user, who cannot draw: where to sign instead (RAPP-530). */
+  readonly accessibilityHint?: string;
 }) {
   const [size, setSize] = useState({ width: 0, height: PAD_HEIGHT });
   const [drawing, setDrawing] = useState<Stroke | null>(null);
@@ -138,6 +141,7 @@ export function SignaturePad({
       testID="signature-pad"
       accessible
       accessibilityLabel={accessibilityLabel}
+      accessibilityHint={accessibilityHint}
       accessibilityValue={{ text: isEmpty ? '' : '✓' }}
       onLayout={handleLayout}
       style={[padStyle, continuousCorners]}

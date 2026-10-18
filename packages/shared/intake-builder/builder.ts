@@ -636,13 +636,22 @@ export function overrideFor(
   return catalog.overrides.find((override) => override.question === question);
 }
 
+/**
+ * Staff wording in exactly her language, or empty. A built-in question already
+ * has the app's own translation in every language, so a staff label written in
+ * Catalan only must not replace her Arabic one (RAPP-530).
+ */
+function exactText(text: BuilderText | null | undefined, language: LanguageCode): string {
+  return text?.[language]?.trim() ?? '';
+}
+
 /** Staff wording for a built-in question in her language, or null for the app's own. */
 export function builtinLabel(
   catalog: IntakeCatalog,
   question: IntakeQuestion,
   language: LanguageCode,
 ): string | null {
-  return textIn(overrideFor(catalog, question)?.label, language) || null;
+  return exactText(overrideFor(catalog, question)?.label, language) || null;
 }
 
 export function builtinHelp(
@@ -650,7 +659,7 @@ export function builtinHelp(
   question: IntakeQuestion,
   language: LanguageCode,
 ): string | null {
-  return textIn(overrideFor(catalog, question)?.help, language) || null;
+  return exactText(overrideFor(catalog, question)?.help, language) || null;
 }
 
 /** Hidden built-in questions: never asked, whatever their state. */
@@ -677,7 +686,7 @@ export function builtinOptions<Option extends { readonly value: string; readonly
   return options
     .filter((option) => changes[option.value]?.hidden !== true || option.value === keep)
     .map((option) => {
-      const label = textIn(changes[option.value]?.label, language);
+      const label = exactText(changes[option.value]?.label, language);
       return label === '' ? option : { ...option, label };
     });
 }

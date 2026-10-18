@@ -510,7 +510,7 @@
     "retry": "Reintentar",
     "loadFailed": "No se ha podido cargar la autorización. Conecta la tableta una vez para guardarla.",
     "nothingPublished": "No hay ninguna autorización publicada para la temporada actual.",
-    "needsDeviceLock": "Activa un código o Face ID en esta tableta. Salir del modo de firma pide tu código.",
+    "needsDeviceLock": "Activa un código, la huella o Face ID en esta tableta. Para salir del modo de firma tendrás que verificar que eres tú.",
     "existingPlayer": "Jugadora de Ramassà",
     "walkIn": "Mujer nueva",
     "search": "Buscar por nombre",
@@ -525,7 +525,9 @@
     "signOutTitle_one": "1 firma aún no se ha enviado",
     "signOutBody": "Se quedan cifradas en esta tableta y se envían cuando vuelvas a entrar aquí. Si tienes conexión, espera a que se envíen antes de salir.",
     "signOutStay": "Esperar",
-    "signOutAnyway": "Salir igualmente"
+    "signOutAnyway": "Salir igualmente",
+    "lockForced": "La pantalla se bloquea mientras {{count}} firmas esperan para enviarse, aunque el bloqueo esté desactivado.",
+    "lockForced_one": "La pantalla se bloquea mientras 1 firma espera para enviarse, aunque el bloqueo esté desactivado."
   },
   "walkIns": {
     "action": "Firmas nuevas",

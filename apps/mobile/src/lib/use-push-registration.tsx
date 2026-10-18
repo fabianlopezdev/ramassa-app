@@ -7,6 +7,7 @@ import {
   requestPushPermission,
   resolvePushRegistrationDecision,
 } from './push-notifications';
+import { declinePushRationale, hasDeclinedPushRationale } from './push-rationale-memory';
 import { previewMode } from './supabase';
 
 /**
@@ -30,6 +31,8 @@ export function usePushRegistration(): {
   const { session, user } = useAuth();
   const [shouldShowRationale, setShouldShowRationale] = useState(false);
   const userId = user?.id ?? null;
+  // Signing in or out re-runs the check; a refreshed session object does not.
+  const isSignedIn = Boolean(session);
   // The player preview has no device of its own and changes nothing (RAPP-371).
   const isPreview = usePreviewModeActive(previewMode);
 
@@ -38,11 +41,13 @@ export function usePushRegistration(): {
     let cancelled = false;
 
     void (async () => {
-      const decision = await resolvePushRegistrationDecision(Boolean(session));
+      const decision = await resolvePushRegistrationDecision(isSignedIn);
       if (cancelled) return;
 
       if (decision.kind === 'request-permission') {
         // Back from the player preview, she has already been asked this time.
+        // She said "not now" earlier in this run (RAPP-530).
+        if (hasDeclinedPushRationale(userId)) return;
         if (!takePreviewHandover('push-rationale')) setShouldShowRationale(true);
         return;
       }
@@ -54,7 +59,7 @@ export function usePushRegistration(): {
     return () => {
       cancelled = true;
     };
-  }, [isPreview, session, userId]);
+  }, [isPreview, isSignedIn, userId]);
 
   const acceptRationale = useCallback(() => {
     setShouldShowRationale(false);
@@ -71,7 +76,8 @@ export function usePushRegistration(): {
     // No token, no error, no nagging: the OS is never asked, so the one system
     // prompt iOS allows stays unspent for a later, better moment.
     setShouldShowRationale(false);
-  }, []);
+    declinePushRationale(userId);
+  }, [userId]);
 
   return { shouldShowRationale, acceptRationale, declineRationale };
 }

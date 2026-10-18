@@ -153,5 +153,6 @@
   "customQuestionsTitle": "Additional questions",
   "customReferralAnswersFailed": "The referral was sent. The answers to the additional questions could not be saved.",
   "customReferralRetryAction": "Save the answers again",
-  "customReferralOpenAction": "Open the referral"
+  "customReferralOpenAction": "Open the referral",
+  "authorizationSignatureHint": "If you cannot draw, choose the option below to sign without a drawing."
 }

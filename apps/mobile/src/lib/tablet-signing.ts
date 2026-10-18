@@ -18,6 +18,7 @@ import {
 } from '@ramassa/shared/authorization';
 import { AppError } from '@ramassa/shared/errors';
 import { isNetworkStateOnline } from './network-status';
+import { finishesWithin, SCREEN_SEND_WAIT_MS } from './outbox-drain-loop';
 import {
   endSigningSession,
   readAuthorizationForSigning,
@@ -100,7 +101,9 @@ export function useSigningOutbox() {
       outbox.enqueue(signing);
       changed();
       if (!isOnline) return 'waiting';
-      await drainSignings(userId);
+      // A server that never answers must not hold her on the form (RAPP-530):
+      // after a short wait she is told it is saved on the tablet, and it syncs.
+      await finishesWithin(drainSignings(userId), SCREEN_SEND_WAIT_MS);
       return outbox.list().some((entry) => entry.id === signing.id) ? 'waiting' : 'saved';
     },
     [isOnline, outbox, userId],
