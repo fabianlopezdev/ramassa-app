@@ -131,6 +131,7 @@ export default function SigningModeScreen() {
               {SUPPORTED_LANGUAGES.map((candidate) => (
                 <Text
                   key={candidate}
+                  accessibilityLanguage={candidate}
                   style={isRtlLanguage(candidate) ? rtlText : ltrText}
                   className={`text-xl font-bold text-neutral-900 ${fontClassForLanguage(candidate)}`}
                 >
@@ -144,6 +145,7 @@ export default function SigningModeScreen() {
                 testID={`signing-language-${candidate}`}
                 accessibilityRole="button"
                 accessibilityLabel={LANGUAGE_NATIVE_NAMES[candidate]}
+                accessibilityLanguage={candidate}
                 onPress={() => {
                   setLanguage(candidate);
                   keptLanguage = { startedAt: session.startedAt, language: candidate };

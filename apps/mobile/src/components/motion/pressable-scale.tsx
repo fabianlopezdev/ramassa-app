@@ -77,6 +77,10 @@ export interface PressableScaleProps {
    * which option a tap actually landed on. Omit for plain buttons.
    */
   readonly isSelected?: boolean;
+  /** An opening section: the screen reader says whether it is open (RAPP-530). */
+  readonly isExpanded?: boolean;
+  /** The language of the label, when it differs from the app's (RAPP-530). */
+  readonly accessibilityLanguage?: string;
 }
 
 export function PressableScale({
@@ -92,6 +96,8 @@ export function PressableScale({
   isDisabled = false,
   isBusy = false,
   isSelected,
+  isExpanded,
+  accessibilityLanguage,
 }: PressableScaleProps) {
   const isReducedMotion = useReducedMotion();
   const pressed = useSharedValue(0);
@@ -143,8 +149,9 @@ export function PressableScale({
         ? { checked: Boolean(isSelected) }
         : {}),
       ...(isSelected === undefined ? {} : { selected: isSelected }),
+      ...(isExpanded === undefined ? {} : { expanded: isExpanded }),
     }),
-    [accessibilityRole, isBusy, isInteractionBlocked, isSelected],
+    [accessibilityRole, isBusy, isExpanded, isInteractionBlocked, isSelected],
   );
 
   return (
@@ -155,6 +162,7 @@ export function PressableScale({
         accessibilityRole={accessibilityRole}
         accessibilityLabel={accessibilityLabel}
         accessibilityHint={accessibilityHint}
+        accessibilityLanguage={accessibilityLanguage}
         aria-checked={
           accessibilityRole === 'checkbox' ||
           accessibilityRole === 'radio' ||

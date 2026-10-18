@@ -153,5 +153,6 @@
   "customQuestionsTitle": "Preguntas adicionales",
   "customReferralAnswersFailed": "La derivación se ha enviado. Las respuestas a las preguntas adicionales no se han podido guardar.",
   "customReferralRetryAction": "Vuelve a guardar las respuestas",
-  "customReferralOpenAction": "Abre la derivación"
+  "customReferralOpenAction": "Abre la derivación",
+  "authorizationSignatureHint": "Si no puedes dibujar, elige la opción de abajo para firmar sin dibujo."
 }

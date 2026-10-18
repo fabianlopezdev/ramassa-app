@@ -129,6 +129,8 @@ export function AuthorizationForm({
       <SafeAreaView
         testID={testID}
         style={layout}
+        // The reader uses her language's voice, whatever the app's is (RAPP-530).
+        accessibilityLanguage={language}
         className="flex-1 bg-neutral-50"
         edges={['top', 'left', 'right']}
       >
@@ -167,6 +169,8 @@ export function AuthorizationForm({
                       accessibilityRole="button"
                       accessibilityLabel={text(section.title)}
                       onPress={() => setOpenSection(isOpen ? null : section.key)}
+                      isExpanded={isOpen}
+                      accessibilityLanguage={language}
                       haptic="tapLight"
                       className="min-h-recommended justify-center p-md"
                     >
@@ -312,6 +316,7 @@ export function AuthorizationForm({
                     prompt={t('authorizationSignaturePrompt')}
                     promptClassName={fontClass}
                     accessibilityLabel={t('authorizationSignatureLabel')}
+                    accessibilityHint={t('authorizationSignatureHint')}
                   />
                   {strokes === null ? null : (
                     <PressableScale
