@@ -7,13 +7,14 @@
  */
 import { TeamSidebarItem } from '@/components/team/team-sidebar-item';
 import { useUnreadMessages } from '@/lib/messaging';
+import { nativeTabsHostProps } from '@/lib/native-tabs-direction';
 import { boundedTabSlotStyle } from '@/lib/tab-slot-style';
 import { unreadBadgeProps } from '@/lib/unread-badge';
 import { usePathname } from 'expo-router';
 import { NativeTabs } from 'expo-router/native-tabs';
 import { TabList, Tabs, TabSlot, TabTrigger } from 'expo-router/ui';
 import { useTranslation } from 'react-i18next';
-import { useWindowDimensions, View } from 'react-native';
+import { I18nManager, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { tokens } from '@ramassa/shared/tokens';
 
@@ -127,6 +128,8 @@ export default function EntityShellLayout() {
 
   return (
     <NativeTabs
+      // The tab bar mirrors with the screens (RAPP-531).
+      unstable_nativeProps={nativeTabsHostProps(I18nManager.isRTL)}
       backgroundColor={tokens.colors.white}
       iconColor={{ default: tokens.colors.neutral[700], selected: tokens.colors.primary.dark }}
       indicatorColor={tokens.colors.neutral[100]}
