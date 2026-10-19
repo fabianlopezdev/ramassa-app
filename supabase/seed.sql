@@ -37,14 +37,21 @@ where not exists (
 
 begin;
 
--- The demo tenant. Ordinal 0 of the seed namespace.
-insert into public.organizations (id, name, slug, contact_email, contact_phone)
+-- The demo tenant. Ordinal 0 of the seed namespace. It carries Ramassà's own
+-- navy and logo, so a reset does not undo the branding set in the admin
+-- (RAPP-551). The logo object lives in the media worker's local R2 store, so
+-- on a machine without it the language screen simply shows no logo.
+insert into public.organizations (
+  id, name, slug, contact_email, contact_phone, primary_color, logo_url
+)
 values (
   '5eed0000-0000-4000-8000-000000000000',
   'AE Ramassà',
   'ramassa',
   'laia.ferrer@example.test',
-  '+34600000000'
+  '+34600000000',
+  '#001F60',
+  '5eed0000-0000-4000-8000-000000000000/organization-branding/5eed0000-0000-4000-8000-000000000001/2026/10/f19b4d81325241d0aab592f872705bbc.png'
 )
 on conflict (id) do nothing;
 
