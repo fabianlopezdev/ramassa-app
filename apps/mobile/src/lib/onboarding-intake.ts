@@ -30,9 +30,9 @@ import type {
   OnboardingDraftStep,
   OnboardingStepName,
 } from '@ramassa/shared/onboarding-drafts';
-import type { ProfileRow } from '@ramassa/shared/schemas';
+import type { LanguageCode, ProfileRow } from '@ramassa/shared/schemas';
 
-export const WIZARD_SCREEN_ROUTES: Readonly<Record<WizardScreen, Href>> = {
+export const WIZARD_SCREEN_ROUTES = {
   identity: '/onboarding',
   background: '/onboarding/background',
   documentation: '/onboarding/documentation',
@@ -40,7 +40,7 @@ export const WIZARD_SCREEN_ROUTES: Readonly<Record<WizardScreen, Href>> = {
   season: '/onboarding/season',
   summary: '/onboarding/summary',
   terms: '/onboarding/terms',
-};
+} as const satisfies Readonly<Record<WizardScreen, Href>>;
 
 const WIZARD_SCREEN_DRAFT_STEP: Readonly<Record<WizardScreen, OnboardingStepName>> = {
   identity: 'identity',
@@ -53,11 +53,16 @@ const WIZARD_SCREEN_DRAFT_STEP: Readonly<Record<WizardScreen, OnboardingStepName
 };
 
 /** The route of any wizard step, a staff screen included (RAPP-307). */
-export function wizardStepRoute(step: WizardStepKey | OnboardingDraftStep): Href {
+export function wizardStepRoute(
+  step: WizardStepKey | OnboardingDraftStep,
+  direction: 'forward' | 'back' = 'forward',
+): Href {
   const screenId = customStepId(step);
-  return screenId === null
-    ? WIZARD_SCREEN_ROUTES[step as WizardScreen]
-    : (`/onboarding/custom/${screenId}` as Href);
+  const route =
+    screenId === null
+      ? WIZARD_SCREEN_ROUTES[step as WizardScreen]
+      : `/onboarding/custom/${screenId}`;
+  return (direction === 'back' ? `${route}?entrance=none` : route) as Href;
 }
 
 /** The draft step that resumes at a wizard step: a staff screen keeps its own key. */
@@ -216,4 +221,12 @@ export function storedPayloadFromProfile(profile: ProfileRow): Record<string, un
     specific_needs: profile.specific_needs ?? null,
     media_consent: profile.media_consent,
   };
+}
+
+/** Preserve draft answers while carrying the language already chosen before login. */
+export function withSelectedLanguage(
+  draft: OnboardingDraft,
+  language: LanguageCode,
+): OnboardingDraft {
+  return { ...draft, identity: { ...draft.identity, preferredLanguage: language } };
 }

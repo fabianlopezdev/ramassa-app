@@ -28,7 +28,11 @@ import {
   identityFormSchema,
   logisticsFormSchema,
 } from '@/lib/onboarding-form';
-import { customAnswersToSave, storedPayloadFromProfile } from '@/lib/onboarding-intake';
+import {
+  customAnswersToSave,
+  storedPayloadFromProfile,
+  wizardStepRoute,
+} from '@/lib/onboarding-intake';
 import { useWizardIntake, useWizardStep } from '@/lib/onboarding-intake-context';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useRouter } from 'expo-router';
@@ -154,24 +158,24 @@ export default function TermsStepScreen() {
       // their data still in the draft, not into a dead end.
       const identity = identityFormSchema.safeParse(draft?.identity ?? {});
       if (!identity.success) {
-        router.replace('/onboarding');
+        router.replace(wizardStepRoute('identity', 'back'));
         return;
       }
       const documentation = documentationFormSchema.safeParse(draft?.documentation ?? {});
       if (!documentation.success) {
-        router.replace('/onboarding/documentation');
+        router.replace(wizardStepRoute('documentation', 'back'));
         return;
       }
       const logistics = logisticsFormSchema.safeParse(draft?.logistics ?? {});
       if (!logistics.success) {
-        router.replace('/onboarding/logistics');
+        router.replace(wizardStepRoute('logistics', 'back'));
         return;
       }
       // The registration questions (RAPP-306), all optional: a draft that does
       // not parse goes back to that screen, as the others do.
       const season = seasonAnswerFields.safeParse(draft?.season ?? {});
       if (!season.success) {
-        router.replace('/onboarding/season');
+        router.replace(wizardStepRoute('season', 'back'));
         return;
       }
       const terms = termsStepSchema.parse({

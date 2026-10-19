@@ -59,7 +59,7 @@ export type WizardScreen = QuestionScreen | 'summary' | 'terms';
  */
 export const SCREEN_QUESTIONS: Readonly<Record<QuestionScreen, readonly IntakeQuestion[]>> = {
   identity: ['first_name', 'last_name'],
-  background: ['date_of_birth', 'place_of_birth', 'nationality', 'preferred_language'],
+  background: ['date_of_birth', 'place_of_birth', 'nationality'],
   documentation: ['document'],
   logistics: [
     'phone',

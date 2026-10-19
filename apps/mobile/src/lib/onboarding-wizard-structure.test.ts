@@ -36,7 +36,7 @@ describe('the onboarding welcome split', () => {
     expect(backgroundSource).toContain('name="year"');
     expect(backgroundSource).toContain('name="placeOfBirth"');
     expect(backgroundSource).toContain('name="nationality"');
-    expect(backgroundSource).toContain('name="preferredLanguage"');
+    expect(backgroundSource).not.toContain('name="preferredLanguage"');
   });
 
   test('progress and navigation come from the plan, counting only the screens she sees', () => {

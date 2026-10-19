@@ -25,11 +25,6 @@ describe('conversational onboarding controls', () => {
     const uses = [
       [
         background,
-        "label={wording.label('preferred_language', t('preferredLanguageLabel'))}",
-        'languageSymbol',
-      ],
-      [
-        background,
         "label={wording.label('nationality', t('nationalityLabel'))}",
         'nationalitySymbol',
       ],
@@ -57,7 +52,9 @@ describe('conversational onboarding controls', () => {
       [logistics, "label={wording.label('shoe_size', t('shoeSizeLabel'))}", 'shoeSymbol'],
     ] as const;
     for (const [source, label, symbol] of uses) {
-      expect(source).toContain('<OnboardingQuestionHeading');
+      expect(source).toContain(
+        source === background ? '<CountryPicker' : '<OnboardingQuestionHeading',
+      );
       expect(source).toContain(label);
       expect(source).toContain(`symbol={${symbol}}`);
     }

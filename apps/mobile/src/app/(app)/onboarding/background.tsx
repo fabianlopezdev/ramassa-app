@@ -6,8 +6,6 @@
 
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { CountryPicker } from '@/components/onboarding/country-picker';
-import { OnboardingQuestionHeading } from '@/components/onboarding/onboarding-question-heading';
-import { OptionChip } from '@/components/onboarding/option-chip';
 import { QuestionHelp } from '@/components/onboarding/question-help';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
 import { WizardValidationSummary } from '@/components/onboarding/wizard-validation-summary';
@@ -22,17 +20,11 @@ import { useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { Text, useWindowDimensions, View } from 'react-native';
-import { LANGUAGE_NATIVE_NAMES, SUPPORTED_LANGUAGES, useLanguage } from '@ramassa/shared/i18n';
 import type { OnboardingDraftStep } from '@ramassa/shared/onboarding-drafts';
 import type { IdentityStep, LanguageCode } from '@ramassa/shared/schemas';
 
 const YEAR_FIELD_WIDTH_CLASS = 'flex-[1.4]';
 const LARGE_TEXT_STACK_THRESHOLD = 1.5;
-const languageSymbol: SymbolViewProps['name'] = {
-  ios: 'globe',
-  android: 'language',
-  web: 'language',
-};
 const nationalitySymbol: SymbolViewProps['name'] = {
   ios: 'globe.europe.africa.fill',
   android: 'public',
@@ -42,7 +34,6 @@ const nationalitySymbol: SymbolViewProps['name'] = {
 export default function BackgroundStepScreen() {
   const { t, i18n } = useTranslation('onboarding');
   const languageFontClass = useLanguageFontClass();
-  const { setLanguage } = useLanguage();
   const step = useWizardStep('background');
   const wording = useBuiltinWording();
   const { fontScale } = useWindowDimensions();
@@ -230,44 +221,6 @@ export default function BackgroundStepScreen() {
             )}
           />
           <QuestionHelp text={wording.help('nationality')} />
-        </View>
-      ) : null}
-
-      {step.shouldAsk('preferred_language') ? (
-        <View className="gap-xs">
-          <OnboardingQuestionHeading
-            label={wording.label('preferred_language', t('preferredLanguageLabel'))}
-            symbol={languageSymbol}
-          />
-          <QuestionHelp text={wording.help('preferred_language')} />
-          <Controller
-            control={control}
-            name="preferredLanguage"
-            render={({ field }) => (
-              <View className="flex-row flex-wrap gap-sm">
-                {wording
-                  .options(
-                    'preferred_language',
-                    SUPPORTED_LANGUAGES.map((code) => ({
-                      value: code,
-                      label: LANGUAGE_NATIVE_NAMES[code],
-                    })),
-                    field.value,
-                  )
-                  .map((option) => (
-                    <OptionChip
-                      key={option.value}
-                      label={option.label}
-                      isSelected={field.value === option.value}
-                      onPress={() => {
-                        field.onChange(option.value);
-                        void setLanguage(option.value);
-                      }}
-                    />
-                  ))}
-              </View>
-            )}
-          />
         </View>
       ) : null}
     </WizardFrame>

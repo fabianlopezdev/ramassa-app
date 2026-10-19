@@ -4,7 +4,7 @@
  * answered. Loaded once by the onboarding layout, which seeds the draft from it
  * before any screen mounts, and read by every screen through `useWizardStep`.
  */
-import { WIZARD_SCREEN_ROUTES, wizardDraftStep, wizardStepRoute } from '@/lib/onboarding-intake';
+import { wizardDraftStep, wizardStepRoute } from '@/lib/onboarding-intake';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { createContext, use, useMemo, type ReactNode } from 'react';
 import { useLanguage } from '@ramassa/shared/i18n';
@@ -117,7 +117,7 @@ export function useWizardStep(screen: WizardStepKey): WizardStep {
     // Editing from the summary goes back to that same summary, which re-reads
     // the draft on focus. Without history (a cold start mid-edit), replace.
     const backToSummary = () =>
-      router.canGoBack() ? router.back() : router.replace(WIZARD_SCREEN_ROUTES.summary);
+      router.canGoBack() ? router.back() : router.replace(wizardStepRoute('summary', 'back'));
     return {
       isEditing,
       position: wizardScreenPosition(screen, notAsked, customPlan),
@@ -131,7 +131,7 @@ export function useWizardStep(screen: WizardStepKey): WizardStep {
         ? backToSummary
         : previous === null
           ? null
-          : () => router.replace(wizardStepRoute(previous)),
+          : () => router.replace(wizardStepRoute(previous, 'back')),
     };
   }, [notAsked, customPlan, hidden, isEditing, router, screen]);
 }

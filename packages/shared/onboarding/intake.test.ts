@@ -42,7 +42,11 @@ describe('screensToAsk', () => {
   });
 
   test('one unanswered question keeps its screen', () => {
-    expect(screensToAsk(answered('date_of_birth', 'place_of_birth', 'nationality'))).toContain(
+    expect(screensToAsk(answered('date_of_birth', 'place_of_birth'))).toContain('background');
+  });
+
+  test('language selected before login never keeps an otherwise answered background screen', () => {
+    expect(screensToAsk(answered('date_of_birth', 'place_of_birth', 'nationality'))).not.toContain(
       'background',
     );
   });

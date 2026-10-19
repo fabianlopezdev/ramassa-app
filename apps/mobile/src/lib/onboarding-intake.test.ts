@@ -13,6 +13,7 @@ import {
   mergedCustomAnswers,
   seedDraftFromProfile,
   storedPayloadFromProfile,
+  withSelectedLanguage,
   wizardStepRoute,
 } from './onboarding-intake';
 
@@ -173,5 +174,30 @@ describe('staff screens in the wizard (RAPP-307)', () => {
       a: 'stored',
       b: '',
     });
+  });
+});
+
+describe('onboarding language and navigation', () => {
+  test('keeps the selected app language even when background is skipped, without losing draft answers', () => {
+    const draft = {
+      currentStep: 'summary' as const,
+      identity: { firstName: 'Laia', preferredLanguage: 'ca' },
+      logistics: { phone: '123' },
+    };
+    expect(withSelectedLanguage(draft, 'ar')).toEqual({
+      ...draft,
+      identity: { firstName: 'Laia', preferredLanguage: 'ar' },
+    });
+    expect(draft.identity.preferredLanguage).toBe('ca');
+    expect(withSelectedLanguage({ currentStep: 'identity' }, 'es').identity).toEqual({
+      preferredLanguage: 'es',
+    });
+  });
+  test('only returning to a step suppresses its entrance, including staff screens', () => {
+    expect(wizardStepRoute('background')).toBe('/onboarding/background');
+    expect(wizardStepRoute('background', 'back')).toBe('/onboarding/background?entrance=none');
+    expect(wizardStepRoute('custom:transport', 'back')).toBe(
+      '/onboarding/custom/transport?entrance=none',
+    );
   });
 });

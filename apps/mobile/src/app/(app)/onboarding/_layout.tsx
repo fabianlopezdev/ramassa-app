@@ -3,7 +3,12 @@ import {
   AnnouncementFeedSkeleton,
 } from '@/components/announcements/feed-states';
 import { onboardingDraftStore } from '@/lib/onboarding';
-import { customWizardPlan, seedDraftFromProfile, wizardDraftStep } from '@/lib/onboarding-intake';
+import {
+  customWizardPlan,
+  seedDraftFromProfile,
+  withSelectedLanguage,
+  wizardDraftStep,
+} from '@/lib/onboarding-intake';
 import { WizardIntakeProvider, type WizardIntake } from '@/lib/onboarding-intake-context';
 import { supabase } from '@/lib/supabase';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
@@ -13,6 +18,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@ramassa/shared/auth';
 import { toAppError } from '@ramassa/shared/errors';
+import { useLanguage } from '@ramassa/shared/i18n';
 import {
   fetchDocumentStepExplanation,
   fetchMyAnsweredQuestions,
@@ -30,6 +36,7 @@ import {
   type IntakeCatalog,
 } from '@ramassa/shared/intake-builder';
 import { fetchOwnProfile } from '@ramassa/shared/profile';
+import type { LanguageCode } from '@ramassa/shared/schemas';
 
 const hiddenHeaderScreenOptions = { headerShown: false } as const;
 
@@ -55,16 +62,16 @@ async function loadStaffQuestions(): Promise<{
 
 /**
  * Seeds the draft from what staff or an entity already answered (RAPP-300),
- * once: a draft that exists is her own work in progress and wins, and a woman
- * with no profile starts the full wizard as before.
+ * once: existing draft answers win. The app language comes from the initial
+ * language picker, including when staff answers let her skip background.
  */
-function seedWizardDraft(intake: WizardIntake): void {
-  if (onboardingDraftStore.loadDraft() !== null || intake.profile === null) return;
+function seedWizardDraft(intake: WizardIntake, language: LanguageCode): void {
   const firstScreen = nextWizardScreen('start', intake.notAsked, intake.customPlan);
-  onboardingDraftStore.saveDraft({
+  const draft = onboardingDraftStore.loadDraft() ?? {
     currentStep: wizardDraftStep(firstScreen),
-    ...seedDraftFromProfile(intake.profile, intake.answered),
-  });
+    ...(intake.profile === null ? {} : seedDraftFromProfile(intake.profile, intake.answered)),
+  };
+  onboardingDraftStore.saveDraft(withSelectedLanguage(draft, language));
 }
 
 /**
@@ -82,6 +89,7 @@ export default function OnboardingLayout() {
   const { t } = useTranslation('onboarding');
   const languageFontClass = useLanguageFontClass();
   const { user } = useAuth();
+  const { language } = useLanguage();
   const intake = useQuery({
     queryKey: ['onboarding-intake', user?.id ?? 'signed-out'],
     queryFn: async ({ signal }): Promise<WizardIntake> => {
@@ -117,9 +125,9 @@ export default function OnboardingLayout() {
 
   useEffect(() => {
     if (intake.data === undefined) return;
-    seedWizardDraft(intake.data);
+    seedWizardDraft(intake.data, language);
     setIsSeeded(true);
-  }, [intake.data]);
+  }, [intake.data, language]);
 
   if (intake.isError) {
     return (
