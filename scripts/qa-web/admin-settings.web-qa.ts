@@ -21,10 +21,23 @@ const onePixelPng = Buffer.from(
 
 test.setTimeout(180_000);
 
+// This suite runs on the main local stack, so it puts back the branding it
+// found instead of the defaults, which would wipe the real ones (RAPP-551).
+let savedBranding = '';
+
+test.beforeAll(() => {
+  savedBranding = queryDatabase(`
+    select primary_color || '|' || secondary_color || '|' || coalesce(logo_url, '')
+      from public.organizations
+     where slug = 'ramassa';
+  `);
+});
+
 test.afterAll(() => {
+  const [primary = '#0077B6', secondary = '#FFD166', logo = ''] = savedBranding.split('|');
   queryDatabase(`
     update public.organizations
-       set logo_url = null, primary_color = '#0077B6', secondary_color = '#FFD166'
+       set logo_url = nullif('${logo}', ''), primary_color = '${primary}', secondary_color = '${secondary}'
      where slug = 'ramassa';
     delete from public.internal_documents where name = '${documentName.replaceAll("'", "''")}';
     delete from public.staff_invitations where email = '${invitedEmail}';
