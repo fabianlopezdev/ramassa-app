@@ -77,6 +77,79 @@ out of band.
 dashboard edit), and `bun run db:types` is re-run after every migration and the
 result committed.
 
+### Local branding (colour and logo)
+
+`bun run db:reset` deletes everything set by hand in the admin. Anything that must
+survive a reset belongs in `supabase/seed.sql` (RAPP-550, RAPP-551).
+
+- The demo organisation is seeded with Ramassà's navy `#001F60` and the uploaded
+  logo's key. The secondary colour is the default `#FFD166`. If the real branding
+  changes in the admin, change the seed too.
+- The language screen loads the logo from the media worker, so run
+  `bun run media:dev` (port 8787). When the worker is down, the screen shows no logo
+  and no error.
+- The logo file lives only in the media worker's local R2 store
+  (`workers/media/.wrangler/state`). On another machine the seeded key points to no
+  file, and the language screen shows no logo.
+- The app reads the branding again when it returns to the foreground. After a
+  change, send the app to the background and open it again.
+- `bun run qa:web` runs against this main stack. A spec that changes the
+  organisation must save its values in `beforeAll` and put them back in `afterAll`,
+  as `scripts/qa-web/admin-settings.web-qa.ts` does. Writing the defaults back
+  wipes the real branding.
+
+To recover lost branding: read the hex from an older screenshot (the flow captures
+in the vault), and find the logo key in the local R2 metadata:
+
+```bash
+cd workers/media/.wrangler/state/v3/r2/miniflare-R2BucketObject
+sqlite3 "$(ls *.sqlite | grep -v metadata)" \
+  "select key from _mf_objects where key like '%organization-branding%';"
+```
+
+### Signing in as a brand-new player (the full wizard)
+
+Sign-in is invite-only. The app asks for a code with `shouldCreateUser: false`
+(ADR-005), so an email that has no account gets "Signups not allowed for otp" and
+the app shows **AUTH-1**. This is expected. The least the team can know about a
+player is her email, and the seed has accounts for both cases:
+
+| Account                   | State                                        | What the wizard asks                    |
+| ------------------------- | -------------------------------------------- | --------------------------------------- |
+| `onboarding@example.test` | Login only, no profile                       | Every question, including staff screens |
+| `invited@example.test`    | Profile created by staff, some answers given | Only the rest, then summary and terms   |
+
+Codes arrive in the local mailbox at <http://127.0.0.1:54324>. The dev build needs
+Metro (`bun run mobile:start`) when it relaunches.
+
+Finishing the wizard gives the account a profile, and the wizard does not come back
+for it. Deleting the profile is not a safe way back, because several tables block
+or keep that delete. To run the full wizard again, add another login-only account
+(change the email), or run `bun run db:reset`, which wipes all other local data:
+
+```sql
+with new_user as (
+  insert into auth.users (
+    instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
+    raw_app_meta_data, raw_user_meta_data, created_at, updated_at,
+    confirmation_token, recovery_token, email_change, email_change_token_new,
+    email_change_token_current, reauthentication_token
+  )
+  values (
+    '00000000-0000-0000-0000-000000000000', gen_random_uuid(), 'authenticated',
+    'authenticated', 'new.player@example.test', '', now(),
+    '{"provider":"email","providers":["email"]}', '{}', now(), now(),
+    '', '', '', '', '', ''
+  )
+  returning id, email
+)
+insert into auth.identities (provider_id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
+select id::text, id, jsonb_build_object('sub', id::text, 'email', email), 'email', now(), now(), now()
+from new_user;
+```
+
+Run it with `docker exec -i supabase_db_ramassa psql -U postgres < new-player.sql`.
+
 ### Production project (manual, one-time)
 
 The production Supabase project is **EU Frankfurt** (`eu-central-1`) on the Pro

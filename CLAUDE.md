@@ -366,5 +366,6 @@ Before ANY merge or deployment:
 - **Most users are on Android** — test Android first, always
 - **Catalan is mandatory** for the grant — never skip CA translations
 - **Closed-access distribution** — app is NOT public on app stores. Invite-link based access.
+- **Local dev data:** read README "Local branding" and "Signing in as a brand-new player" before touching the local stack. `db:reset` wipes anything set by hand in the admin, so put lasting values in `supabase/seed.sql`. An unknown email gets AUTH-1 by design (invite-only); test the full wizard as `onboarding@example.test`, with codes at http://127.0.0.1:54324.
 - **White-label architecture** — every table has `org_id`. Every query filters by org. Every style uses theme variables.
 - **RGPD with sensitive population** — refugee women's personal data. Treat security as non-negotiable.
