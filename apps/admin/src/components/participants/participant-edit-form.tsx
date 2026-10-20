@@ -187,6 +187,13 @@ export function ParticipantEditForm({
         />
         {/* "No document" is a first-class answer, so the number disappears
             rather than sitting there demanding something she does not have. */}
+        {documentType === 'other' ? (
+          <TextField
+            control={control}
+            name="documentName"
+            label={t('onboarding:documentNameLabel')}
+          />
+        ) : null}
         {!canSeeSensitive || documentType === undefined || documentType === 'none' ? null : (
           <TextField
             control={control}

@@ -12,7 +12,6 @@
 import { AppLockLink } from '@/components/auth/app-lock-link';
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { useOrganizationBranding } from '@/components/branding/organization-branding-provider';
-import { ErrorCodeLine } from '@/components/error-code-line';
 import { FadeSlideIn } from '@/components/motion/fade-slide-in';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { ShakeOnError } from '@/components/motion/shake-on-error';
@@ -189,10 +188,6 @@ export default function ProfileScreen() {
             >
               {t('loadFailed')}
             </Text>
-            {/* Translated message AND the short code (contract rule 7): the
-                retry button is the answer when it is a dead connection, and
-                the code is what tells staff when it is not. */}
-            <ErrorCodeLine code={loadFailureCode} />
             <AuthSubmitButton label={t('retryAction')} onPress={handleRetry} />
           </View>
         </ShakeOnError>
@@ -224,7 +219,11 @@ export default function ProfileScreen() {
             <ProfileSection title={t('sectionDocumentation')}>
               <ProfileRow
                 label={t('onboarding:documentTypeLabel')}
-                value={documentTypeLabel(profile.document_type, t)}
+                value={
+                  profile.document_type === 'other' && profile.document_name
+                    ? profile.document_name
+                    : documentTypeLabel(profile.document_type, t)
+                }
               />
               <ProfileRow
                 label={t('onboarding:documentNumberLabel')}

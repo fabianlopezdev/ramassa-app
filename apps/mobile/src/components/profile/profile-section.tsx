@@ -27,7 +27,7 @@ export function ProfileSection({
     <View className="gap-sm">
       <Text
         accessibilityRole="header"
-        className={`text-start text-lg font-semibold text-neutral-900 ${languageFontClass}`}
+        className={`text-start text-form font-semibold text-neutral-900 ${languageFontClass}`}
       >
         {title}
       </Text>
@@ -48,12 +48,12 @@ export function ProfileRow({ label, value }: { readonly label: string; readonly 
     // +34 600 111 222" rather than two disconnected fragments the listener has
     // to reassemble.
     <View accessible accessibilityLabel={`${label}: ${value}`} className="gap-xs py-xs">
-      <Text className={`text-start text-sm text-neutral-500 ${languageFontClass}`}>{label}</Text>
+      <Text className={`text-start text-form text-neutral-700 ${languageFontClass}`}>{label}</Text>
       {/* Selectable: this screen exists so a woman can READ what the
           organization holds about her, and a document or phone number she can
           long-press and copy is one she can also paste into a form or send to
           someone helping her. */}
-      <Text selectable className={`text-start text-md text-neutral-900 ${languageFontClass}`}>
+      <Text selectable className={`text-start text-form text-neutral-900 ${languageFontClass}`}>
         {value}
       </Text>
     </View>

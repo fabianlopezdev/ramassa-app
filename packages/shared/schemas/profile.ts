@@ -16,6 +16,7 @@
 import { z } from 'zod';
 import {
   documentationFields,
+  documentNameToSend,
   documentNumberToSend,
   identityStepSchema,
   logisticsFields,
@@ -79,6 +80,7 @@ export const profileRowSchema = z.object({
   preferred_language: z.string(),
   document_type: z.string().nullable(),
   document_number: z.string().nullable(),
+  document_name: z.string().nullable().optional(),
   phone: z.string().nullable(),
   address: z.string().nullable(),
   city: z.string().nullable(),
@@ -140,6 +142,7 @@ export function profileFromRow(row: ProfileRow): Record<string, unknown> {
     // Empty stays empty (RAPP-302): "not given" must never read as "I have none".
     documentType: row.document_type ?? undefined,
     documentNumber: row.document_number ?? undefined,
+    documentName: row.document_name ?? undefined,
     phone: row.phone ?? undefined,
     address: row.address ?? undefined,
     city: row.city ?? undefined,
@@ -180,6 +183,7 @@ export function buildUpdateOwnProfilePayload(edit: ProfileEdit) {
     preferred_language: normalized.preferredLanguage,
     document_type: normalized.documentType ?? null,
     document_number: documentNumberToSend(normalized),
+    document_name: documentNameToSend(normalized),
     phone: normalized.phone ?? null,
     address: normalized.address ?? null,
     city: normalized.city ?? null,

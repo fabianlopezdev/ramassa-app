@@ -9,5 +9,7 @@ import { Text } from 'react-native';
 export function QuestionHelp({ text }: { readonly text: string | null }) {
   const languageFontClass = useLanguageFontClass();
   if (text === null || text.trim() === '') return null;
-  return <Text className={`text-start text-sm text-neutral-500 ${languageFontClass}`}>{text}</Text>;
+  return (
+    <Text className={`text-start text-form text-neutral-700 ${languageFontClass}`}>{text}</Text>
+  );
 }

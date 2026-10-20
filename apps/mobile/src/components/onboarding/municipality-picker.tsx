@@ -25,8 +25,8 @@ import type { LanguageCode } from '@ramassa/shared/schemas';
 const MUNICIPALITY_ROW_CLASS = 'min-h-recommended justify-center rounded-md px-md';
 const MUNICIPALITY_ROW_SELECTED_CLASS =
   'min-h-recommended justify-center rounded-md bg-primary px-md';
-const MUNICIPALITY_LABEL_CLASS = 'text-start text-md text-neutral-900';
-const MUNICIPALITY_LABEL_SELECTED_CLASS = 'text-start text-md font-medium text-white';
+const MUNICIPALITY_LABEL_CLASS = 'text-start text-form text-neutral-900';
+const MUNICIPALITY_LABEL_SELECTED_CLASS = 'text-start text-form font-medium text-white';
 const INITIAL_ROWS = 12;
 const MOUNTED_VIEWPORTS = 5;
 const ROWS_PER_BATCH = 8;
@@ -146,7 +146,7 @@ export function MunicipalityPicker({
   const emptyMessage = (
     <Text
       accessibilityLiveRegion="polite"
-      className={`text-start text-md text-neutral-500 ${languageFontClass}`}
+      className={`text-start text-form text-neutral-700 ${languageFontClass}`}
     >
       {t('noMunicipalityResults')}
     </Text>
@@ -155,7 +155,7 @@ export function MunicipalityPicker({
   return (
     <View className="gap-xs">
       {symbol === undefined ? (
-        <Text className={`text-start text-md font-medium text-neutral-800 ${languageFontClass}`}>
+        <Text className={`text-start text-form font-medium text-neutral-800 ${languageFontClass}`}>
           {label}
         </Text>
       ) : (
@@ -187,7 +187,7 @@ export function MunicipalityPicker({
       {errorMessage === undefined ? null : (
         <Text
           accessibilityLiveRegion="polite"
-          className={`text-start text-sm text-error ${languageFontClass}`}
+          className={`text-start text-form text-error ${languageFontClass}`}
         >
           {errorMessage}
         </Text>
@@ -211,13 +211,13 @@ export function MunicipalityPicker({
                 haptic="selection"
                 className="min-h-min justify-center py-sm"
               >
-                <Text className={`text-md font-medium text-primary ${languageFontClass}`}>
+                <Text className={`text-form font-medium text-primary ${languageFontClass}`}>
                   {t('cancelAction')}
                 </Text>
               </PressableScale>
               <Text
                 accessibilityRole="header"
-                className={`text-lg font-semibold text-neutral-900 ${languageFontClass}`}
+                className={`text-form font-semibold text-neutral-900 ${languageFontClass}`}
               >
                 {label}
               </Text>

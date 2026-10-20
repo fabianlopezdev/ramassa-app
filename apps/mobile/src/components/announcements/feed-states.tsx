@@ -1,5 +1,4 @@
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
-import { ErrorCodeLine } from '@/components/error-code-line';
 import { CapsuleSkeletonPulse, SkeletonPulse } from '@/components/motion/skeleton-pulse';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { Text, View } from 'react-native';
@@ -89,7 +88,6 @@ export function AnnouncementFeedSkeleton({
 export function AnnouncementFeedError({
   message,
   retryLabel,
-  code,
   languageFontClass,
   onRetry,
   isLoading,
@@ -110,7 +108,6 @@ export function AnnouncementFeedError({
       >
         {message}
       </Text>
-      <ErrorCodeLine code={code} />
       <View className="w-full max-w-form">
         <AuthSubmitButton label={retryLabel} onPress={onRetry} isLoading={isLoading} />
       </View>

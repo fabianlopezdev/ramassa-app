@@ -80,7 +80,7 @@ function EditButton({
       haptic="tapLight"
       className="min-h-recommended justify-center self-start rounded-md border border-primary px-md"
     >
-      <Text className={`text-sm font-semibold text-primary-dark ${languageFontClass}`}>
+      <Text className={`text-form font-semibold text-primary-dark ${languageFontClass}`}>
         {t('summaryEditAction')}
       </Text>
     </PressableScale>
@@ -198,6 +198,7 @@ export default function SummaryStepScreen() {
 
   return (
     <WizardFrame
+      screenId={'summary'}
       stepNumber={step.position.step}
       totalSteps={step.position.total}
       title={t('summaryTitle')}
@@ -294,6 +295,12 @@ export default function SummaryStepScreen() {
                   )[0]?.label ?? null),
             )}
           />
+          {documentType === 'other' ? (
+            <ProfileRow
+              label={t('documentNameLabel')}
+              value={show(text(documentation.documentName))}
+            />
+          ) : null}
           {documentType === null || documentType === 'none' ? null : (
             <ProfileRow
               label={t('documentNumberLabel')}

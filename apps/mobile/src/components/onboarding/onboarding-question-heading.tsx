@@ -31,7 +31,7 @@ export function OnboardingQuestionHeading({
         />
       </View>
       <Text
-        className={`flex-1 text-start text-md font-medium text-neutral-800 ${languageFontClass}`}
+        className={`flex-1 text-start text-form font-medium text-neutral-800 ${languageFontClass}`}
       >
         {label}
       </Text>

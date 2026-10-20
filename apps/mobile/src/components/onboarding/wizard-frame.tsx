@@ -15,12 +15,15 @@
 
 import { AuthBackButton } from '@/components/auth/auth-back-button';
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
+import { AuthTitle } from '@/components/auth/auth-title';
 import { FormScreen } from '@/components/layout/form-screen';
+import { useOnboardingEntrance } from '@/lib/onboarding-entrance';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useLocalSearchParams } from 'expo-router';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View, type TextStyle } from 'react-native';
+import type { WizardStepKey } from '@ramassa/shared/intake';
 
 /** The full wizard: four question screens, the summary and the terms (RAPP-300). */
 const WIZARD_TOTAL_STEPS = 6;
@@ -33,6 +36,8 @@ const WIZARD_TOTAL_STEPS = 6;
 const tabularNumerals: TextStyle = { fontVariant: ['tabular-nums'] };
 
 export interface WizardFrameProps {
+  /** Stable identity, independent of language and position in a personalized wizard. */
+  readonly screenId?: WizardStepKey | 'documentation-details';
   /**
    * Omit outside the wizard. The profile edit screen reuses this frame for its
    * header, keyboard handling and pinned action, but it is not step N of
@@ -55,7 +60,12 @@ export interface WizardFrameProps {
   readonly onBack?: () => void;
 }
 
-export function WizardFrame({
+export function WizardFrame(props: WizardFrameProps) {
+  return <WizardFrameContent key={props.screenId} {...props} />;
+}
+
+function WizardFrameContent({
+  screenId,
   stepNumber,
   totalSteps = WIZARD_TOTAL_STEPS,
   title,
@@ -69,11 +79,11 @@ export function WizardFrame({
   const { t } = useTranslation('onboarding');
   const { entrance, edit } = useLocalSearchParams<{ entrance?: string; edit?: string }>();
   const languageFontClass = useLanguageFontClass();
+  const entranceMode = useOnboardingEntrance(screenId, entrance !== 'none' && edit !== '1');
 
   return (
     <FormScreen
-      key={stepNumber}
-      entrance={entrance === 'none' || edit === '1' ? 'none' : 'staggered'}
+      entrance={entranceMode}
       navigation={
         <View className="gap-sm px-lg pt-sm">
           <View className="min-h-min flex-row items-center justify-between">
@@ -89,7 +99,7 @@ export function WizardFrame({
               <Text
                 testID={`wizard-step-${stepNumber}`}
                 style={tabularNumerals}
-                className={`text-sm text-neutral-500 ${languageFontClass}`}
+                className={`text-form text-neutral-700 ${languageFontClass}`}
               >
                 {t('stepOf', { current: stepNumber, total: totalSteps })}
               </Text>
@@ -122,21 +132,7 @@ export function WizardFrame({
           )}
         </View>
       }
-      heading={
-        <View className="gap-xs">
-          <Text
-            accessibilityRole="header"
-            className={`text-start text-2xl font-bold text-neutral-900 ${languageFontClass}`}
-          >
-            {title}
-          </Text>
-          {intro === undefined ? null : (
-            <Text className={`text-start text-md text-neutral-600 ${languageFontClass}`}>
-              {intro}
-            </Text>
-          )}
-        </View>
-      }
+      heading={<AuthTitle title={title} subtitle={intro} align="start" />}
       bottomAction={
         <AuthSubmitButton label={continueLabel} onPress={onContinue} isLoading={isContinueBusy} />
       }

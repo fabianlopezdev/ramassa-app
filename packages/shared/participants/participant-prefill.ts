@@ -41,6 +41,7 @@ export interface PrefillRow {
   readonly preferred_language: string;
   readonly document_type: string | null;
   readonly document_number: string | null;
+  readonly document_name?: string | null;
   readonly phone: string | null;
   readonly address: string | null;
   readonly city: string | null;
@@ -74,6 +75,7 @@ export const profilePrefillSchema = z
       identityStepSchema.shape.preferredLanguage.optional(),
     ),
     documentType: z.preprocess(emptyAsAbsent, z.enum(DOCUMENT_TYPES).optional()),
+    documentName: z.preprocess(emptyAsAbsent, z.string().trim().max(100).optional()),
     documentNumber: z.preprocess(emptyAsAbsent, z.string().trim().toUpperCase().max(50).optional()),
     phone: logisticsFields.shape.phone,
     address: logisticsFields.shape.address,
@@ -127,6 +129,7 @@ const FIELD_QUESTION: Readonly<Record<ProfilePrefillField, IntakeQuestion>> = {
   preferredLanguage: 'preferred_language',
   documentType: 'document',
   documentNumber: 'document',
+  documentName: 'document',
   phone: 'phone',
   address: 'address',
   city: 'city',
@@ -161,6 +164,7 @@ export function prefillFromRow(row: PrefillRow, answered: AnsweredQuestions): Pr
     documentType: value('documentType', row.document_type) as
       ProfilePrefillInput['documentType'] | undefined,
     documentNumber: value('documentNumber', row.document_number),
+    documentName: value('documentName', row.document_name ?? null),
     phone: value('phone', row.phone),
     address: value('address', row.address),
     city: value('city', row.city),
@@ -192,6 +196,7 @@ const PAYLOAD_KEY: Readonly<Record<ProfilePrefillField, string>> = {
   preferredLanguage: 'preferred_language',
   documentType: 'document_type',
   documentNumber: 'document_number',
+  documentName: 'document_name',
   phone: 'phone',
   address: 'address',
   city: 'city',

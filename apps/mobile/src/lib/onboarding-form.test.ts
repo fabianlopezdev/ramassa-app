@@ -5,7 +5,7 @@
  * what THIS module adds on top.
  */
 
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, setSystemTime, test } from 'bun:test';
 import {
   composeIsoBirthDate,
   identityFormSchema,
@@ -47,7 +47,7 @@ describe('identityFormSchema', () => {
     expect(parsed.dateOfBirth).toBe('1995-03-04');
   });
 
-  test('an impossible date fails on the year field, not somewhere invisible', () => {
+  test('impossible day and month values identify their own fields', () => {
     const result = identityFormSchema.safeParse({
       ...identityBase,
       day: '99',
@@ -56,7 +56,8 @@ describe('identityFormSchema', () => {
     });
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.issues.some((issue) => issue.path[0] === 'year')).toBe(true);
+      expect(result.error.issues.some((issue) => issue.path[0] === 'day')).toBe(true);
+      expect(result.error.issues.some((issue) => issue.path[0] === 'month')).toBe(true);
     }
   });
 
@@ -107,4 +108,72 @@ describe('logisticsFormSchema', () => {
     });
     expect(result.success).toBe(false);
   });
+});
+
+describe('birth date field feedback', () => {
+  test.each([
+    ['90', '1', '1995', 'day', 'invalid date'],
+    ['1', '13', '1995', 'month', 'invalid date'],
+    ['1', '1', '1666', 'year', 'too old'],
+    ['31', '4', '1995', 'day', 'day not in month'],
+    ['29', '2', '1995', 'day', 'day not in month'],
+    ['', '1', '1995', 'day', 'required'],
+    ['1', '', '1995', 'month', 'required'],
+    ['1', '1', '', 'year', 'required'],
+    ['1', '1', '95', 'year', 'invalid date'],
+  ])('rejects %s/%s/%s with actionable field feedback', (day, month, year, path, message) => {
+    const result = identityFormSchema.safeParse({ ...identityBase, day, month, year });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues).toContainEqual(
+        expect.objectContaining({ path: [path], message }),
+      );
+    }
+  });
+});
+
+test('independent day, month and year mistakes are all identified', () => {
+  const result = identityFormSchema.safeParse({
+    ...identityBase,
+    day: '90',
+    month: '13',
+    year: '1666',
+  });
+  expect(result.success).toBe(false);
+  if (!result.success) {
+    for (const path of ['day', 'month', 'year']) {
+      expect(result.error.issues.some((issue) => issue.path[0] === path)).toBe(true);
+    }
+  }
+});
+
+test('a wrong month never incorrectly marks a valid day or year', () => {
+  const result = identityFormSchema.safeParse({
+    ...identityBase,
+    day: '12',
+    month: '13',
+    year: '1995',
+  });
+  expect(result.success).toBe(false);
+  if (!result.success) expect(result.error.issues.map((issue) => issue.path)).toEqual([['month']]);
+});
+
+test('a future date identifies the first part that makes it future', () => {
+  setSystemTime(new Date('2026-10-20T12:00:00Z'));
+  try {
+    for (const [day, month, year, field] of [
+      ['1', '1', '2027', 'year'],
+      ['1', '11', '2026', 'month'],
+      ['21', '10', '2026', 'day'],
+    ]) {
+      const result = identityFormSchema.safeParse({ ...identityBase, day, month, year });
+      expect(result.success).toBe(false);
+      if (!result.success)
+        expect(result.error.issues).toContainEqual(
+          expect.objectContaining({ path: [field], message: 'future date' }),
+        );
+    }
+  } finally {
+    setSystemTime();
+  }
 });

@@ -87,7 +87,7 @@ export const QUESTION_PAYLOAD_KEYS: Readonly<Record<IntakeQuestion, readonly str
   place_of_birth: ['place_of_birth'],
   nationality: ['nationality'],
   preferred_language: ['preferred_language'],
-  document: ['document_type', 'document_number'],
+  document: ['document_type', 'document_number', 'document_name'],
   phone: ['phone'],
   address: ['address'],
   city: ['city'],

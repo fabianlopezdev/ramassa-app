@@ -86,7 +86,11 @@ export function ParticipantProfileFields({
 
       <DetailField
         label={t('onboarding:documentTypeLabel')}
-        value={documentTypeLabel(participant.document_type, t)}
+        value={
+          participant.document_type === 'other' && participant.document_name
+            ? participant.document_name
+            : documentTypeLabel(participant.document_type, t)
+        }
       />
       <DetailField
         label={t('onboarding:documentNumberLabel')}

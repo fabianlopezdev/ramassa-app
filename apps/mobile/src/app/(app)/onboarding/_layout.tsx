@@ -3,6 +3,7 @@ import {
   AnnouncementFeedSkeleton,
 } from '@/components/announcements/feed-states';
 import { onboardingDraftStore } from '@/lib/onboarding';
+import { OnboardingEntranceProvider } from '@/lib/onboarding-entrance';
 import {
   customWizardPlan,
   seedDraftFromProfile,
@@ -86,6 +87,15 @@ function seedWizardDraft(intake: WizardIntake, language: LanguageCode): void {
  * the wizard asks only the rest.
  */
 export default function OnboardingLayout() {
+  const { user } = useAuth();
+  return (
+    <OnboardingEntranceProvider key={user?.id}>
+      <OnboardingScreens />
+    </OnboardingEntranceProvider>
+  );
+}
+
+function OnboardingScreens() {
   const { t } = useTranslation('onboarding');
   const languageFontClass = useLanguageFontClass();
   const { user } = useAuth();

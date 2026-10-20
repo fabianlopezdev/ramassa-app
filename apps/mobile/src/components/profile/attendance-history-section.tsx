@@ -1,4 +1,3 @@
-import { ErrorCodeLine } from '@/components/error-code-line';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { SkeletonPulse } from '@/components/motion/skeleton-pulse';
 import { ProfileSection } from '@/components/profile/profile-section';
@@ -39,7 +38,6 @@ export function AttendanceHistorySection() {
       ) : isError ? (
         <View className="gap-sm">
           <Text className={`text-start text-sm text-error ${fontClass}`}>{t('loadFailed')}</Text>
-          <ErrorCodeLine code="DB-1" />
           <PressableScale
             accessibilityLabel={t('retry')}
             isBusy={isFetching}

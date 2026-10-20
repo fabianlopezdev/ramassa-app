@@ -2922,6 +2922,7 @@ export type Database = {
           collaborating_entity_id: string | null;
           created_at: string;
           date_of_birth: string | null;
+          document_name: string | null;
           document_number: string | null;
           document_type: string | null;
           emergency_contact_name: string | null;
@@ -2967,6 +2968,7 @@ export type Database = {
           collaborating_entity_id?: string | null;
           created_at?: string;
           date_of_birth?: string | null;
+          document_name?: string | null;
           document_number?: string | null;
           document_type?: string | null;
           emergency_contact_name?: string | null;
@@ -3012,6 +3014,7 @@ export type Database = {
           collaborating_entity_id?: string | null;
           created_at?: string;
           date_of_birth?: string | null;
+          document_name?: string | null;
           document_number?: string | null;
           document_type?: string | null;
           emergency_contact_name?: string | null;
@@ -4996,6 +4999,7 @@ export type Database = {
           collaborating_entity_id: string | null;
           created_at: string;
           date_of_birth: string | null;
+          document_name: string | null;
           document_number: string | null;
           document_type: string | null;
           emergency_contact_name: string | null;
@@ -5293,6 +5297,7 @@ export type Database = {
           city: string;
           clothing_size: string;
           date_of_birth: string;
+          document_name: string;
           document_number: string;
           document_type: string;
           emergency_contact_name: string;
@@ -5351,6 +5356,7 @@ export type Database = {
           clothing_size: string;
           created_at: string;
           date_of_birth: string;
+          document_name: string;
           document_number: string;
           document_type: string;
           emergency_contact_name: string;

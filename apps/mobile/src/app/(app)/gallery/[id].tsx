@@ -3,7 +3,6 @@ import {
   AnnouncementFeedSkeleton,
   OfflineBanner,
 } from '@/components/announcements/feed-states';
-import { ErrorCodeLine } from '@/components/error-code-line';
 import { ForumFlagDialog } from '@/components/forum/forum-flag-dialog';
 import { PageWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
@@ -22,7 +21,6 @@ import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '@ramassa/shared/auth';
-import { toAppError } from '@ramassa/shared/errors';
 import type { ForumFlagInput } from '@ramassa/shared/forum';
 import type { MediaPrivacy } from '@ramassa/shared/media';
 import { tokens } from '@ramassa/shared/tokens';
@@ -58,7 +56,6 @@ export default function GalleryItemScreen() {
     'targetType' | 'targetId'
   > | null>(null);
   const item = query.data;
-  const loadErrorCode = query.error === null ? 'DB-1' : toAppError(query.error).code;
   const accessToken = session?.access_token;
   const canManage =
     item !== undefined && (item.uploaded_by === user?.id || role === 'staff' || role === 'admin');
@@ -177,7 +174,6 @@ export default function GalleryItemScreen() {
             <Text className={`text-start text-md text-neutral-700 ${languageFontClass}`}>
               {t('gallery:loadFailedHelp')}
             </Text>
-            <ErrorCodeLine code={loadErrorCode} />
             <PressableScale
               testID="gallery-detail-retry"
               accessibilityLabel={t('gallery:retry')}

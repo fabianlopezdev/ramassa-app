@@ -21,7 +21,7 @@ export function WizardValidationSummary({
       style={continuousCorners}
       className="rounded-md bg-error/10 p-md"
     >
-      <Text className={`text-start text-md font-medium text-error ${languageFontClass}`}>
+      <Text className={`text-start text-form font-medium text-error ${languageFontClass}`}>
         {message}
       </Text>
     </View>

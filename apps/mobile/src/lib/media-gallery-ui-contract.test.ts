@@ -44,7 +44,7 @@ test('upload shows the selected media with clear replace, remove, and permission
   expect(upload).toContain("t('gallery:selectedMediaPreview')");
   expect(upload).toContain("t('gallery:mediaPermissionDenied')");
   expect(upload).toContain('Linking.openSettings');
-  expect(upload).toContain('<ErrorCodeLine code="UPLOAD-2" />');
+  expect(upload).not.toContain('ErrorCodeLine');
 });
 
 test('item view exposes privacy editing, deletion, flagging, and video playback', () => {
@@ -55,11 +55,11 @@ test('item view exposes privacy editing, deletion, flagging, and video playback'
   expect(item).toContain('gallery-flag');
 });
 
-test('item load failure exposes actionable feedback, an error code, and a large retry action', () => {
+test('item load failure exposes actionable feedback without technical codes, and a large retry action', () => {
   expect(item).toContain('gallery-detail-load-error');
   expect(item).toContain('gallery-detail-retry');
   expect(item).toContain("t('gallery:loadFailedHelp')");
-  expect(item).toContain('<ErrorCodeLine code={loadErrorCode} />');
+  expect(item).not.toContain('ErrorCodeLine');
   expect(item).toContain('onPress={retryLoad}');
   expect(item).toContain('min-h-recommended');
 });

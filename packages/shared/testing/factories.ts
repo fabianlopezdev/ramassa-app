@@ -715,6 +715,7 @@ export function buildProfileFromFixture(
     emergency_contact_phone: null,
     // Seasons played before the app (RAPP-306).
     prior_seasons: 0,
+    document_name: null,
     ...derivedProfileFields(fixture),
     ...overrides,
   };

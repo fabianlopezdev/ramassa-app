@@ -77,7 +77,7 @@ function Question({
   const fontClass = useLanguageFontClass();
   return (
     <View className="gap-sm">
-      <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
+      <Text className={`text-start text-form font-medium text-neutral-800 ${fontClass}`}>
         {label}
       </Text>
       <QuestionHelp text={help} />
@@ -207,7 +207,7 @@ export function SeasonAnswerFields({
               haptic="tapLight"
               className="min-h-recommended justify-center rounded-md border border-primary px-md"
             >
-              <Text className={`text-md font-semibold text-primary-dark ${fontClass}`}>
+              <Text className={`text-form font-semibold text-primary-dark ${fontClass}`}>
                 {t('onboarding:supportingEntitiesAddAction')}
               </Text>
             </PressableScale>
@@ -264,7 +264,7 @@ export function SeasonAnswerFields({
             multiline
             maxLength={SPECIFIC_NEEDS_MAX_LENGTH}
           />
-          <Text className={`text-start text-sm text-neutral-500 ${fontClass}`}>
+          <Text className={`text-start text-form text-neutral-700 ${fontClass}`}>
             {t('onboarding:specificNeedsHint')}
           </Text>
         </View>

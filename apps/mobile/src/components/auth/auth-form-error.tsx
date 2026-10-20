@@ -1,11 +1,5 @@
-/**
- * The form-level error banner for the auth screens (RAPP-13): the friendly
- * translated message for an `AUTH-*` code PLUS the short stable code, so a
- * player (or the staff member helping them) can report exactly what happened.
- * Announced assertively to screen readers because it reports a failed action.
- */
+/** Accessible, translated auth feedback. Technical details stay in error reporting. */
 
-import { ErrorCodeLine } from '@/components/error-code-line';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useEffect } from 'react';
@@ -40,10 +34,9 @@ export function AuthFormError({ code }: { code: AppErrorCode | null }) {
       style={continuousCorners}
       className="gap-xs rounded-md bg-error/10 p-md"
     >
-      <Text className={`text-start text-md font-medium text-error ${languageFontClass}`}>
+      <Text className={`text-start text-form font-medium text-error ${languageFontClass}`}>
         {message}
       </Text>
-      <ErrorCodeLine code={code} />
     </View>
   );
 }

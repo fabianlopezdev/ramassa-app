@@ -43,6 +43,8 @@ export const errorCodeRegistry = defineCodes({
     domain: 'AUTH',
     description: 'A recent authenticator code is needed for this action',
   },
+  'AUTH-10': { domain: 'AUTH', description: 'Email has no provisioned account' },
+  'AUTH-11': { domain: 'AUTH', description: 'Email address cannot receive a sign-in code' },
   'DB-1': { domain: 'DB', description: 'Database operation failed' },
   'DB-2': { domain: 'DB', description: 'Requested record not found' },
   'DB-3': { domain: 'DB', description: 'Erasure did not complete and was rolled back' },

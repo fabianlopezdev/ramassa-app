@@ -101,10 +101,10 @@ function TermsTrustPoint({
         />
       </View>
       <View className="flex-1 gap-xs">
-        <Text className={`text-start text-md font-bold text-neutral-900 ${languageFontClass}`}>
+        <Text className={`text-start text-form font-bold text-neutral-900 ${languageFontClass}`}>
           {title}
         </Text>
-        <Text className={`text-start text-md leading-body text-neutral-600 ${languageFontClass}`}>
+        <Text className={`text-start text-form leading-body text-neutral-700 ${languageFontClass}`}>
           {body}
         </Text>
       </View>
@@ -250,6 +250,7 @@ export default function TermsStepScreen() {
 
   return (
     <WizardFrame
+      screenId={'terms'}
       stepNumber={step.position.step}
       totalSteps={step.position.total}
       title={t('termsTitle')}
@@ -291,14 +292,16 @@ export default function TermsStepScreen() {
         haptic="selection"
         className="min-h-recommended items-center justify-center rounded-md border border-neutral-300 bg-white px-lg"
       >
-        <Text className={`text-md font-bold text-primary ${languageFontClass}`}>
+        <Text className={`text-form font-bold text-primary ${languageFontClass}`}>
           {t(isFullTermsVisible ? 'termsHideFullAction' : 'termsReadFullAction')}
         </Text>
       </PressableScale>
 
       {isFullTermsVisible ? (
         <View style={continuousCorners} className="rounded-md bg-neutral-50 p-md">
-          <Text className={`text-start text-md leading-body text-neutral-800 ${languageFontClass}`}>
+          <Text
+            className={`text-start text-form leading-body text-neutral-800 ${languageFontClass}`}
+          >
             {t('termsBody')}
           </Text>
         </View>
@@ -322,7 +325,7 @@ export default function TermsStepScreen() {
       {hasAcceptError ? (
         <Text
           accessibilityLiveRegion="polite"
-          className={`text-start text-sm text-error ${languageFontClass}`}
+          className={`text-start text-form text-error ${languageFontClass}`}
         >
           {t('errorTermsRequired')}
         </Text>
@@ -334,7 +337,7 @@ export default function TermsStepScreen() {
           isSelected={hasMediaConsent}
           onPress={() => setHasMediaConsent((current) => !current)}
         />
-        <Text className={`text-start text-sm text-neutral-500 ${languageFontClass}`}>
+        <Text className={`text-start text-form text-neutral-700 ${languageFontClass}`}>
           {t('mediaConsentHint')}
         </Text>
       </View>
@@ -357,7 +360,7 @@ export default function TermsStepScreen() {
         haptic="selection"
         className="min-h-min items-center justify-center py-sm"
       >
-        <Text className={`text-md font-medium text-neutral-500 ${languageFontClass}`}>
+        <Text className={`text-form font-medium text-neutral-700 ${languageFontClass}`}>
           {t('termsDeclineAction')}
         </Text>
       </PressableScale>

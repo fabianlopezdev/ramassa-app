@@ -67,7 +67,7 @@ describe('native messaging UI contract', () => {
     expect(sharedStateSource).toContain('accessibilityRole="progressbar"');
     expect(sharedStateSource).toContain('accessibilityState={busyAccessibilityState}');
     expect(source).toContain('accessibilityRole="alert"');
-    expect(source).toContain('<ErrorCodeLine code={errorCode} />');
+    expect(source).not.toContain('ErrorCodeLine');
     expect(source).toContain("t('messageStatus'");
     expect(source).toContain('status: t(deliveryStatusKey(item.message))');
     expect(source).toContain('accessibilityLabel={statusAccessibilityLabel}');

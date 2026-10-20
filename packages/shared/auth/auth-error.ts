@@ -15,6 +15,7 @@ export interface SupabaseAuthErrorShape {
   readonly message?: string;
   readonly status?: number;
   readonly code?: string;
+  readonly name?: string;
 }
 
 const RATE_LIMIT_STATUS = 429;
@@ -53,4 +54,16 @@ export function mapSupabaseAuthError(
     return 'AUTH-4';
   }
   return fallback;
+}
+
+/** Request-stage failures must not be described as a wrong code the user never received. */
+export function mapEmailOtpRequestError(error: SupabaseAuthErrorShape): AppErrorCode {
+  if (error.status === 0 && error.name === 'AuthRetryableFetchError') return 'NETWORK-1';
+  if (error.code === 'email_address_invalid') return 'AUTH-11';
+  // GoTrue returns otp_disabled for multiple reasons. Only this specific
+  // closed-signup rejection identifies an email without a provisioned account.
+  if (error.code === 'otp_disabled' && error.message === 'Signups not allowed for otp') {
+    return 'AUTH-10';
+  }
+  return mapSupabaseAuthError(error);
 }

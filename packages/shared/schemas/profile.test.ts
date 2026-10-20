@@ -137,6 +137,7 @@ describe('buildUpdateOwnProfilePayload', () => {
       preferred_language: 'ar',
       document_type: 'nie',
       document_number: 'X1234567L',
+      document_name: null,
       phone: '+34600111222',
       address: 'Carrer Major 1',
       city: 'Vic',

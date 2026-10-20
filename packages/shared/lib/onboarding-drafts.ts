@@ -29,6 +29,7 @@ export const ONBOARDING_STEPS = [
   'identity',
   'background',
   'documentation',
+  'documentation-details',
   'logistics',
   // The registration questions (RAPP-306).
   'season',

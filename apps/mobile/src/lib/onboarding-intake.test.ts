@@ -193,7 +193,7 @@ describe('onboarding language and navigation', () => {
       preferredLanguage: 'es',
     });
   });
-  test('only returning to a step suppresses its entrance, including staff screens', () => {
+  test('back routes explicitly suppress entrance, including staff screens', () => {
     expect(wizardStepRoute('background')).toBe('/onboarding/background');
     expect(wizardStepRoute('background', 'back')).toBe('/onboarding/background?entrance=none');
     expect(wizardStepRoute('custom:transport', 'back')).toBe(

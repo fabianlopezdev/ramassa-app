@@ -59,6 +59,7 @@ export default function CustomStepScreen() {
 
   return (
     <WizardFrame
+      screenId={customStepKey(screenId)}
       stepNumber={step.position.step}
       totalSteps={step.position.total}
       title={textIn(screen.title, language)}

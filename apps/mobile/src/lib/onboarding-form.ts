@@ -15,6 +15,7 @@ import {
   documentationStepSchema,
   identityStepSchema,
   logisticsStepSchema,
+  MAXIMUM_AGE_YEARS,
 } from '@ramassa/shared/schemas';
 
 /** '7' -> '07'; anything non-numeric survives to fail the shared schema. */
@@ -32,31 +33,95 @@ export const identityNameFormSchema = identityStepSchema.pick({
 });
 export type IdentityNameFormInput = z.input<typeof identityNameFormSchema>;
 
-/**
- * The identity screen's form: shared fields plus the three date parts. The
- * composed date is validated by the SHARED schema via pipe, so "too young" and
- * "invalid date" are never re-implemented here; the refine only reports them
- * onto the `year` field, which is where the eye lands on a three-part row.
- */
+const birthDayInputSchema = z
+  .string()
+  .trim()
+  .min(1, 'required')
+  .refine(
+    (value) =>
+      value === '' || (/^\d{1,2}$/.test(value) && Number(value) >= 1 && Number(value) <= 31),
+    'invalid date',
+  );
+const birthMonthInputSchema = z
+  .string()
+  .trim()
+  .min(1, 'required')
+  .refine(
+    (value) =>
+      value === '' || (/^\d{1,2}$/.test(value) && Number(value) >= 1 && Number(value) <= 12),
+    'invalid date',
+  );
+const birthYearInputSchema = z
+  .string()
+  .trim()
+  .min(1, 'required')
+  .refine((value) => value === '' || /^\d{4}$/.test(value), 'invalid date')
+  .superRefine((value, context) => {
+    if (!/^\d{4}$/.test(value)) return;
+    const currentYear = new Date().getUTCFullYear();
+    if (Number(value) > currentYear) context.addIssue({ code: 'custom', message: 'future date' });
+    // The exact birthday still comes from the shared schema once all parts are valid.
+    if (Number(value) < currentYear - MAXIMUM_AGE_YEARS - 1)
+      context.addIssue({ code: 'custom', message: 'too old' });
+  });
+
+export type BirthDateField = 'day' | 'month' | 'year';
+
+/** Each field gets its own translated instruction and accessibility hint. */
+export function birthDateErrorKey(field: BirthDateField, message: string | undefined) {
+  if (message === undefined) return undefined;
+  if (message === 'required')
+    return (
+      {
+        day: 'errorBirthDayRequired',
+        month: 'errorBirthMonthRequired',
+        year: 'errorBirthYearRequired',
+      } as const
+    )[field];
+  if (message === 'too old') return 'errorBirthYear';
+  if (message === 'too young') return 'errorTooYoung';
+  if (message === 'future date') return 'errorBirthDateFuture';
+  if (message === 'day not in month') return 'errorBirthDayInMonth';
+  return (
+    {
+      day: 'errorBirthDayRange',
+      month: 'errorBirthMonthRange',
+      year: 'errorBirthYearFormat',
+    } as const
+  )[field];
+}
+
+/** The shared schema judges the date; this adapter attaches feedback to the part to fix. */
 export const identityFormSchema = identityStepSchema
   .omit({ dateOfBirth: true })
-  .extend({
-    day: z.string().trim().min(1).max(2),
-    month: z.string().trim().min(1).max(2),
-    year: z.string().trim().length(4),
-  })
+  .extend({ day: birthDayInputSchema, month: birthMonthInputSchema, year: birthYearInputSchema })
   .superRefine((form, context) => {
+    if (
+      !birthDayInputSchema.safeParse(form.day).success ||
+      !birthMonthInputSchema.safeParse(form.month).success ||
+      !birthYearInputSchema.safeParse(form.year).success
+    )
+      return;
     const iso = composeIsoBirthDate(form.day, form.month, form.year);
     const result = identityStepSchema.shape.dateOfBirth.safeParse(iso);
     if (!result.success) {
-      const isTooYoung = result.error.issues.some((issue) => issue.message === 'too young');
-      context.addIssue({
-        code: 'custom',
-        path: ['year'],
-        message: isTooYoung ? 'too young' : 'invalid date',
-      });
+      let message = result.error.issues[0]?.message ?? 'invalid date';
+      let field: BirthDateField = 'year';
+      if (message === 'invalid date') {
+        const birth = new Date(`${iso}T00:00:00Z`);
+        if (birth.getTime() > Date.now() && birth.toISOString().slice(0, 10) === iso) {
+          message = 'future date';
+          const now = new Date();
+          field = Number(form.month) > now.getUTCMonth() + 1 ? 'month' : 'day';
+        } else {
+          message = 'day not in month';
+          field = 'day';
+        }
+      }
+      context.addIssue({ code: 'custom', path: [field], message });
     }
   })
+
   .transform((form): z.input<typeof identityStepSchema> => ({
     firstName: form.firstName,
     lastName: form.lastName,

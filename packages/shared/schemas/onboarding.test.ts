@@ -14,7 +14,7 @@
  *   type checker crosses the SQL boundary.
  */
 
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, setSystemTime, test } from 'bun:test';
 import {
   buildCompleteOnboardingPayload,
   documentationStepSchema,
@@ -107,7 +107,7 @@ describe('documentationStepSchema', () => {
     ).toBe(false);
   });
 
-  test('passport and other require a number but not the NIE shape', () => {
+  test('passport requires a number, while Other can omit it', () => {
     expect(
       documentationStepSchema.safeParse({ documentType: 'passport', documentNumber: 'P-994412' })
         .success,
@@ -115,7 +115,7 @@ describe('documentationStepSchema', () => {
     expect(documentationStepSchema.safeParse({ documentType: 'passport' }).success).toBe(false);
     expect(
       documentationStepSchema.safeParse({ documentType: 'other', documentNumber: '' }).success,
-    ).toBe(false);
+    ).toBe(true);
   });
 
   test('the document can be skipped: an empty answer passes (RAPP-302)', () => {
@@ -232,6 +232,7 @@ describe('buildCompleteOnboardingPayload', () => {
       preferred_language: 'ar',
       document_type: 'nie',
       document_number: 'X1234567L',
+      document_name: null,
       phone: '+34600111222',
       address: 'Carrer Major 1, 2n',
       city: 'Vic',
@@ -289,4 +290,50 @@ describe('buildCompleteOnboardingPayload', () => {
     expect(payload.document_type).toBeNull();
     expect(payload.document_number).toBeNull();
   });
+});
+
+describe('birth date calendar and age safeguards', () => {
+  test.each([
+    '1995-02-29',
+    '2000-02-30',
+    '1995-04-31',
+    '1666-01-01',
+    '2999-01-01',
+    '1995-13-01',
+    '1995-01-90',
+  ])('rejects %s without normalizing it to another date', (dateOfBirth) => {
+    expect(identityStepSchema.safeParse({ ...validIdentity, dateOfBirth }).success).toBe(false);
+  });
+
+  test('accepts a real leap day', () => {
+    expect(
+      identityStepSchema.safeParse({ ...validIdentity, dateOfBirth: '2000-02-29' }).success,
+    ).toBe(true);
+  });
+});
+
+test('birth date age boundaries use the exact birthday, including future dates', () => {
+  setSystemTime(new Date('2026-10-20T12:00:00Z'));
+  try {
+    for (const [dateOfBirth, valid] of [
+      ['2010-10-20', true],
+      ['2010-10-21', false],
+      ['1905-10-21', true],
+      ['1905-10-20', false],
+      ['2026-10-21', false],
+    ] as const) {
+      expect(identityStepSchema.safeParse({ ...validIdentity, dateOfBirth }).success).toBe(valid);
+    }
+  } finally {
+    setSystemTime();
+  }
+});
+
+test('another document can be named without a number and sends its name separately', () => {
+  const result = documentationStepSchema.safeParse({
+    documentType: 'other',
+    documentName: 'Residence permit',
+  });
+  expect(result.success).toBe(true);
+  if (result.success) expect(result.data.documentName).toBe('Residence permit');
 });

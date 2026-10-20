@@ -1,12 +1,11 @@
 /**
  * What an entity screen shows when its data does not load (RAPP-434): the
- * error's own message, its code, and Try again. Offline the query does not
+ * error's translated message and Try again. Offline the query does not
  * fail, it waits (React Query pauses it), so that shows as no connection. Her
  * data stays in memory only, because it names people, so there is nothing
  * saved to show instead.
  */
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
-import { ErrorCodeLine } from '@/components/error-code-line';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useTranslation } from 'react-i18next';
@@ -44,7 +43,6 @@ export function EntityLoadFailure({ query }: { readonly query: LoadingQuery }) {
       >
         {t(getErrorMessageKey(code))}
       </Text>
-      <ErrorCodeLine code={code} />
       <AuthSubmitButton
         testID="entity-load-retry"
         label={t('retry')}

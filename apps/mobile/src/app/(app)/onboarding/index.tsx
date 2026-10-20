@@ -66,6 +66,7 @@ export default function IdentityStepScreen() {
 
   return (
     <WizardFrame
+      screenId={'identity'}
       stepNumber={step.position.step}
       totalSteps={step.position.total}
       title={t('identityTitle')}

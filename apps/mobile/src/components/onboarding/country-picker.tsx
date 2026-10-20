@@ -12,6 +12,7 @@
 
 import { useAppLock } from '@/components/auth/app-lock';
 import { AuthTextField } from '@/components/auth/auth-text-field';
+import { useFormFieldAppearance } from '@/components/forms/field-appearance';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { OnboardingQuestionHeading } from '@/components/onboarding/onboarding-question-heading';
 import { continuousCorners } from '@/lib/continuous-corners';
@@ -29,20 +30,17 @@ import {
   type CountryOption,
 } from '@ramassa/shared/i18n/countries';
 import type { LanguageCode } from '@ramassa/shared/schemas';
-import { tokens } from '@ramassa/shared/tokens';
 
 /**
  * Row classes as hoisted constants rather than a template literal rebuilt per
  * row per keystroke (contract rule 17's perf clause). Written out in full, not
  * composed, so Tailwind's scanner still sees every utility as a literal.
  */
-const countryFieldStyle = { ...continuousCorners, minHeight: tokens.tapTarget.recommended };
-
 const COUNTRY_ROW_CLASS = 'min-h-recommended justify-center rounded-md px-md active:opacity-70';
 const COUNTRY_ROW_SELECTED_CLASS =
   'min-h-recommended justify-center rounded-md bg-primary px-md active:opacity-70';
-const COUNTRY_LABEL_CLASS = 'text-start text-md text-neutral-900';
-const COUNTRY_LABEL_SELECTED_CLASS = 'text-start text-md font-medium text-white';
+const COUNTRY_LABEL_CLASS = 'text-start text-form text-neutral-900';
+const COUNTRY_LABEL_SELECTED_CLASS = 'text-start text-form font-medium text-white';
 
 /**
  * How many rows the list draws before its first commit. A row is 56dp
@@ -155,6 +153,7 @@ export function CountryPicker({
 
   const displayValue = value === '' ? null : (countryLabelForCanonical(value, locale) ?? value);
   const hasError = Boolean(errorMessage);
+  const fieldAppearance = useFormFieldAppearance(hasError);
 
   const closePicker = useCallback(() => {
     setIsOpen(false);
@@ -194,7 +193,7 @@ export function CountryPicker({
   const emptyMessage = (
     <Text
       accessibilityLiveRegion="polite"
-      className={`text-start text-md text-neutral-500 ${languageFontClass}`}
+      className={`text-start text-form text-neutral-700 ${languageFontClass}`}
     >
       {t('noCountryResults')}
     </Text>
@@ -203,7 +202,7 @@ export function CountryPicker({
   return (
     <View className="gap-xs">
       {symbol === undefined ? (
-        <Text className={`text-start text-md font-medium text-neutral-800 ${languageFontClass}`}>
+        <Text className={`text-start text-form font-medium text-neutral-800 ${languageFontClass}`}>
           {label}
         </Text>
       ) : (
@@ -217,13 +216,11 @@ export function CountryPicker({
         isExpanded={isOpen}
         onPress={() => setIsOpen(true)}
         haptic="selection"
-        style={countryFieldStyle}
-        className={`min-h-recommended justify-center rounded-md border px-md py-sm ${
-          hasError ? 'border-error' : 'border-neutral-300'
-        }`}
+        style={fieldAppearance.style}
+        className={`${fieldAppearance.className} justify-center`}
       >
         <Text
-          className={`text-start text-md ${displayValue === null ? 'text-neutral-600' : 'text-neutral-900'} ${languageFontClass}`}
+          className={`text-start text-form ${displayValue === null ? 'text-neutral-700' : 'text-neutral-900'} ${languageFontClass}`}
         >
           {displayValue ?? t('searchCountryPlaceholder')}
         </Text>
@@ -232,7 +229,7 @@ export function CountryPicker({
       {hasError ? (
         <Text
           accessibilityLiveRegion="polite"
-          className={`text-start text-sm text-error ${languageFontClass}`}
+          className={`text-start text-form text-error ${languageFontClass}`}
         >
           {errorMessage}
         </Text>
@@ -262,13 +259,13 @@ export function CountryPicker({
                 }}
                 className="min-h-recommended min-w-min justify-center py-sm active:opacity-70"
               >
-                <Text className={`text-md font-medium text-primary ${languageFontClass}`}>
+                <Text className={`text-form font-medium text-primary ${languageFontClass}`}>
                   {t('cancelAction')}
                 </Text>
               </Pressable>
               <Text
                 accessibilityRole="header"
-                className={`text-lg font-semibold text-neutral-900 ${languageFontClass}`}
+                className={`text-form font-semibold text-neutral-900 ${languageFontClass}`}
               >
                 {label}
               </Text>

@@ -14,6 +14,7 @@ const button = ({
   accessibilityLabel: string;
 }) => createElement('button', { onClick: onPress, 'aria-label': accessibilityLabel }, children);
 mock.module('react-native', () => ({
+  useWindowDimensions: () => ({ fontScale: 1 }),
   View: box,
   Text: box,
   Pressable: button,

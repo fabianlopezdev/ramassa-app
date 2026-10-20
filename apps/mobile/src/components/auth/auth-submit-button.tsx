@@ -49,7 +49,7 @@ export function AuthSubmitButton({
     >
       <View className="flex-row items-center justify-center gap-sm">
         {isBusy ? <ActivityIndicator accessible={false} color={tokens.colors.white} /> : null}
-        <Text className={`text-center text-md font-bold text-white ${languageFontClass}`}>
+        <Text className={`text-center text-form font-bold text-white ${languageFontClass}`}>
           {label}
         </Text>
       </View>

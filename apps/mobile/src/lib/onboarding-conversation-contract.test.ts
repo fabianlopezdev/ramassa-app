@@ -14,7 +14,7 @@ const questionHeadingPath = join(root, 'components/onboarding/onboarding-questio
 const summaryPath = join(root, 'components/onboarding/wizard-validation-summary.tsx');
 
 describe('conversational onboarding controls', () => {
-  test('every enumerable question named in RAPP-97 carries a pictogram', () => {
+  test('enumerable choice groups retain pictograms while nationality uses a plain label', () => {
     const questionHeading = Bun.file(questionHeadingPath);
     expect(questionHeading.size).toBeGreaterThan(0);
     const headingSource = readFileSync(questionHeadingPath, 'utf8');
@@ -22,17 +22,12 @@ describe('conversational onboarding controls', () => {
     expect(headingSource).toContain('accessibilityElementsHidden');
     expect(headingSource).toContain('importantForAccessibility="no-hide-descendants"');
     // Staff may reword a built-in question (RAPP-307): the app's label is the fallback.
+    expect(background).toContain("label={wording.label('nationality', t('nationalityLabel'))}");
+    expect(background).not.toContain('symbol=');
+    expect(documentation).toContain('SelectionChoiceCard');
+    expect(documentation).not.toContain('documentSymbol');
+    expect(background).not.toContain("intro={t('backgroundIntro')}");
     const uses = [
-      [
-        background,
-        "label={wording.label('nationality', t('nationalityLabel'))}",
-        'nationalitySymbol',
-      ],
-      [
-        documentation,
-        "label={wording.label('document', t('documentTypeLabel'))}",
-        'documentSymbol',
-      ],
       [logistics, "label={wording.label('city', t('cityLabel'))}", 'municipalitySymbol'],
       [
         logistics,
@@ -52,9 +47,7 @@ describe('conversational onboarding controls', () => {
       [logistics, "label={wording.label('shoe_size', t('shoeSizeLabel'))}", 'shoeSymbol'],
     ] as const;
     for (const [source, label, symbol] of uses) {
-      expect(source).toContain(
-        source === background ? '<CountryPicker' : '<OnboardingQuestionHeading',
-      );
+      expect(source).toContain('<OnboardingQuestionHeading');
       expect(source).toContain(label);
       expect(source).toContain(`symbol={${symbol}}`);
     }
@@ -70,7 +63,11 @@ describe('conversational onboarding controls', () => {
     expect(Bun.file(summaryPath).size).toBeGreaterThan(0);
     for (const source of [welcome, background, documentation, logistics]) {
       expect(source).toContain('<WizardValidationSummary');
-      expect(source).toContain("message={t('errorSummary')}");
+      expect(source).toContain(
+        source === documentation
+          ? "message={t('documentChooseError')}"
+          : "message={t('errorSummary')}",
+      );
       expect(source).toContain('setHasSubmitErrors(true)');
     }
     expect(welcome).not.toContain("errors.firstName ? t('errorRequired')");
@@ -99,6 +96,23 @@ test('all onboarding locales carry the new conversational copy', () => {
     ) as Record<string, string>;
     for (const key of [
       'errorSummary',
+      'documentChooseError',
+      'documentNieNumberTitle',
+      'documentPassportNumberTitle',
+      'documentOtherDetailsTitle',
+      'documentNameLabel',
+      'documentNameRequired',
+      'documentNumberLabel',
+      'errorBirthYear',
+      'errorBirthDayRange',
+      'errorBirthMonthRange',
+      'errorBirthYearFormat',
+      'errorBirthDayRequired',
+      'errorBirthMonthRequired',
+      'errorBirthYearRequired',
+      'errorBirthDayInMonth',
+      'errorBirthDateFuture',
+      'errorInvalidDate',
       'termsPointPurposeTitle',
       'termsPointPurposeBody',
       'termsPointProtectedTitle',

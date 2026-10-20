@@ -50,6 +50,7 @@ export default function SeasonStepScreen() {
 
   return (
     <WizardFrame
+      screenId={'season'}
       stepNumber={step.position.step}
       totalSteps={step.position.total}
       title={t('seasonSectionTitle')}

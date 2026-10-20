@@ -130,6 +130,7 @@ export default function LogisticsStepScreen() {
 
   return (
     <WizardFrame
+      screenId={'logistics'}
       stepNumber={step.position.step}
       totalSteps={step.position.total}
       title={t('logisticsTitle')}

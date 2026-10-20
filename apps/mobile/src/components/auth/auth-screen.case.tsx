@@ -262,3 +262,32 @@ for (const os of ['ios', 'android']) {
     keyboardVisible = false;
   });
 }
+
+test('revisiting a wizard screen skips the heading, form and CTA entrance together', async () => {
+  const { OnboardingEntranceProvider } = await import('../../lib/onboarding-entrance');
+  const form = (screenId: 'identity' | 'background') =>
+    createElement(
+      OnboardingEntranceProvider,
+      null,
+      createElement(WizardFrame, {
+        screenId,
+        title: screenId,
+        continueLabel: 'Continue',
+        onContinue: () => {},
+        children: createElement('input'),
+      }),
+    );
+  const view = render(form('identity'));
+  expect(view.container.querySelectorAll('[data-step]').length).toBe(3);
+  view.rerender(form('background'));
+  expect(view.container.querySelectorAll('[data-step]').length).toBe(3);
+  routeParams = { entrance: 'none' };
+  view.rerender(form('identity'));
+  expect(view.container.querySelector('[data-step]')).toBeNull();
+  routeParams = {};
+  view.rerender(form('background'));
+  expect(view.container.querySelector('[data-step]')).toBeNull();
+  expect(view.getByRole('textbox')).toBeTruthy();
+  expect(view.getByRole('button', { name: 'Continue' })).toBeTruthy();
+  view.unmount();
+});

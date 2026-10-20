@@ -14,7 +14,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { AppError } from '../errors';
 import { appRoleSchema, type AppRole } from '../schemas/auth';
 import type { Database } from '../types/database';
-import { mapSupabaseAuthError } from './auth-error';
+import { mapEmailOtpRequestError, mapSupabaseAuthError } from './auth-error';
 
 type Client = SupabaseClient<Database>;
 
@@ -31,9 +31,9 @@ export async function requestEmailOtp(
     options: { shouldCreateUser: false },
   });
   if (error) {
-    throw new AppError(mapSupabaseAuthError(error), {
+    throw new AppError(mapEmailOtpRequestError(error), {
       message: error.message,
-      context: { status: error.status },
+      context: { status: error.status, authCode: error.code },
     });
   }
 }
@@ -52,7 +52,7 @@ export async function verifyEmailOtp(client: Client, params: VerifyEmailOtpParam
   if (error) {
     throw new AppError(mapSupabaseAuthError(error, 'AUTH-4'), {
       message: error.message,
-      context: { status: error.status },
+      context: { status: error.status, authCode: error.code },
     });
   }
 }
@@ -74,7 +74,7 @@ export async function signInWithPassword(
     // A bare failure on the password path almost always means bad credentials.
     throw new AppError(mapSupabaseAuthError(error, 'AUTH-6'), {
       message: error.message,
-      context: { status: error.status },
+      context: { status: error.status, authCode: error.code },
     });
   }
 }

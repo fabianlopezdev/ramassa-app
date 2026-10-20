@@ -57,6 +57,8 @@ export function wizardStepRoute(
   step: WizardStepKey | OnboardingDraftStep,
   direction: 'forward' | 'back' = 'forward',
 ): Href {
+  if (step === 'documentation-details')
+    return `/onboarding/documentation-details${direction === 'back' ? '?entrance=none' : ''}` as Href;
   const screenId = customStepId(step);
   const route =
     screenId === null
@@ -156,6 +158,7 @@ export function seedDraftFromProfile(
 
   if (has('document') && profile.document_type !== null) {
     documentation.documentType = profile.document_type;
+    documentation.documentName = profile.document_name ?? undefined;
     if (profile.document_number !== null) documentation.documentNumber = profile.document_number;
   }
 
@@ -205,6 +208,7 @@ export function storedPayloadFromProfile(profile: ProfileRow): Record<string, un
     preferred_language: profile.preferred_language,
     document_type: profile.document_type,
     document_number: profile.document_number,
+    document_name: profile.document_name ?? null,
     phone: profile.phone,
     address: profile.address,
     city: profile.city,

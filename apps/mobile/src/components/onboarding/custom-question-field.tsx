@@ -99,7 +99,7 @@ export function CustomQuestionField({
 
   return (
     <View testID={testID} className="gap-sm">
-      <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
+      <Text className={`text-start text-form font-medium text-neutral-800 ${fontClass}`}>
         {label}
       </Text>
       <QuestionHelp text={help} />
@@ -147,12 +147,14 @@ export function CustomQuestionSections({
             <View className="gap-xs">
               <Text
                 accessibilityRole="header"
-                className={`text-start text-lg font-bold text-neutral-900 ${fontClass}`}
+                className={`text-start text-form font-bold text-neutral-900 ${fontClass}`}
               >
                 {textIn(screen.title, language)}
               </Text>
               {intro === '' ? null : (
-                <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>{intro}</Text>
+                <Text className={`text-start text-form text-neutral-700 ${fontClass}`}>
+                  {intro}
+                </Text>
               )}
             </View>
             {screen.questions.map((question) => (

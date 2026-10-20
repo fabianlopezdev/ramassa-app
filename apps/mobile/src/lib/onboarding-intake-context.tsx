@@ -1,3 +1,5 @@
+import { hasDocumentDetails } from '@/lib/documentation-step';
+import { onboardingDraftStore } from '@/lib/onboarding';
 /**
  * What the wizard knows before she types anything (RAPP-300): her stored
  * profile, if staff or an entity created it, and which questions are already
@@ -114,6 +116,11 @@ export function useWizardStep(screen: WizardStepKey): WizardStep {
     const previous: WizardStepKey | null = isEditing
       ? 'summary'
       : previousWizardScreen(screen, notAsked, customPlan);
+    const previousStep =
+      previous === 'documentation' &&
+      hasDocumentDetails(onboardingDraftStore.loadDraft()?.documentation?.documentType)
+        ? 'documentation-details'
+        : previous;
     // Editing from the summary goes back to that same summary, which re-reads
     // the draft on focus. Without history (a cold start mid-edit), replace.
     const backToSummary = () =>
@@ -124,14 +131,19 @@ export function useWizardStep(screen: WizardStepKey): WizardStep {
       shouldAsk: (question) => !hidden.has(question) && (isEditing || !notAsked.has(question)),
       nextDraftStep: wizardDraftStep(next),
       goNext: isEditing ? backToSummary : () => router.push(wizardStepRoute(next)),
-      previousDraftStep: previous === null ? null : wizardDraftStep(previous),
+      previousDraftStep:
+        previousStep === null
+          ? null
+          : previousStep === 'documentation-details'
+            ? previousStep
+            : wizardDraftStep(previousStep),
       // replace, not back(): after a resume the redirect REPLACED the route, so
       // the stack may hold nothing under this screen. The draft is the source of truth.
       goBack: isEditing
         ? backToSummary
         : previous === null
           ? null
-          : () => router.replace(wizardStepRoute(previous, 'back')),
+          : () => router.replace(wizardStepRoute(previousStep ?? previous, 'back')),
     };
   }, [notAsked, customPlan, hidden, isEditing, router, screen]);
 }
