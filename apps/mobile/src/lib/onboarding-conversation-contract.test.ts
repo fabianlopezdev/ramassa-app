@@ -8,13 +8,14 @@ const welcome = readFileSync(join(onboardingDir, 'index.tsx'), 'utf8');
 const background = readFileSync(join(onboardingDir, 'background.tsx'), 'utf8');
 const documentation = readFileSync(join(onboardingDir, 'documentation.tsx'), 'utf8');
 const logistics = readFileSync(join(onboardingDir, 'logistics.tsx'), 'utf8');
+const equipment = readFileSync(join(onboardingDir, 'equipment.tsx'), 'utf8');
 const terms = readFileSync(join(onboardingDir, 'terms.tsx'), 'utf8');
 const optionChip = readFileSync(join(root, 'components/onboarding/option-chip.tsx'), 'utf8');
 const questionHeadingPath = join(root, 'components/onboarding/onboarding-question-heading.tsx');
 const summaryPath = join(root, 'components/onboarding/wizard-validation-summary.tsx');
 
 describe('conversational onboarding controls', () => {
-  test('enumerable choice groups retain pictograms while nationality uses a plain label', () => {
+  test('contact, equipment, nationality and document choice use plain labels', () => {
     const questionHeading = Bun.file(questionHeadingPath);
     expect(questionHeading.size).toBeGreaterThan(0);
     const headingSource = readFileSync(questionHeadingPath, 'utf8');
@@ -27,41 +28,24 @@ describe('conversational onboarding controls', () => {
     expect(documentation).toContain('SelectionChoiceCard');
     expect(documentation).not.toContain('documentSymbol');
     expect(background).not.toContain("intro={t('backgroundIntro')}");
-    const uses = [
-      [logistics, "label={wording.label('city', t('cityLabel'))}", 'municipalitySymbol'],
-      [
-        logistics,
-        "label={wording.label('reference_entity', t('referenceEntityLabel'))}",
-        'entitySymbol',
-      ],
-      [
-        logistics,
-        "label={wording.label('dependents', t('hasDependentsLabel'))}",
-        'dependentsSymbol',
-      ],
-      [
-        logistics,
-        "label={wording.label('clothing_size', t('clothingSizeLabel'))}",
-        'clothingSymbol',
-      ],
-      [logistics, "label={wording.label('shoe_size', t('shoeSizeLabel'))}", 'shoeSymbol'],
-    ] as const;
-    for (const [source, label, symbol] of uses) {
+    expect(logistics).toContain("label={wording.label('city', t('cityLabel'))}");
+    for (const source of [logistics, equipment]) {
       expect(source).toContain('<OnboardingQuestionHeading');
-      expect(source).toContain(label);
-      expect(source).toContain(`symbol={${symbol}}`);
+      expect(source).not.toContain('symbol=');
+      expect(source).not.toContain('SymbolView');
     }
   });
 
   test('selected answers stay quieter than the solid primary action', () => {
-    expect(optionChip).toContain('border-primary bg-primary/10');
+    expect(optionChip).toContain('SelectionChoiceSurface');
+    expect(optionChip).toContain("isSelected ? 'font-bold' : 'font-medium'");
     expect(optionChip).not.toContain('border-primary bg-primary px-lg');
     expect(optionChip).not.toContain('text-white');
   });
 
   test('an empty submit presents one shared summary on every form step', () => {
     expect(Bun.file(summaryPath).size).toBeGreaterThan(0);
-    for (const source of [welcome, background, documentation, logistics]) {
+    for (const source of [welcome, background, documentation, logistics, equipment]) {
       expect(source).toContain('<WizardValidationSummary');
       expect(source).toContain(
         source === documentation
@@ -97,6 +81,12 @@ test('all onboarding locales carry the new conversational copy', () => {
     for (const key of [
       'errorSummary',
       'documentChooseError',
+      'equipmentTitle',
+      'equipmentIntro',
+      'municipalityOptionalHint',
+      'clearMunicipalityAction',
+      'referenceEntitySupportQuestion',
+      'referenceEntityRequired',
       'documentNieNumberTitle',
       'documentPassportNumberTitle',
       'documentOtherDetailsTitle',

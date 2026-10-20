@@ -66,7 +66,12 @@ export const tokens = {
   // interactive element is at least `min`; player-facing controls aim for `recommended`.
   tapTarget: { min: 48, recommended: 56 },
 
-  formField: { minHeight: 64, focusBorderWidth: 2, focusRingWidth: 4 },
+  formField: {
+    minHeight: 64,
+    focusBorderWidth: 2,
+    focusRingWidth: 4,
+    width: { short: 96, medium: 160 },
+  },
 
   onboarding: {
     languageHeadingMinHeight: 56,
@@ -140,6 +145,7 @@ export function tokensToCssVariables(source: TokenTree = tokens, prefix = 'ramas
     'lineHeight',
     'tapTarget',
     'contentWidth',
+    'formField',
   ]);
 
   const walk = (value: unknown, path: string[], group: string | null): void => {

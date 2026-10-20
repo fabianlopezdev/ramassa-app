@@ -8,6 +8,7 @@ const backgroundPath = join(onboardingDir, 'background.tsx');
 const backgroundSource = existsSync(backgroundPath) ? readFileSync(backgroundPath, 'utf8') : '';
 const documentationSource = readFileSync(join(onboardingDir, 'documentation.tsx'), 'utf8');
 const logisticsSource = readFileSync(join(onboardingDir, 'logistics.tsx'), 'utf8');
+const equipmentSource = readFileSync(join(onboardingDir, 'equipment.tsx'), 'utf8');
 const termsSource = readFileSync(join(onboardingDir, 'terms.tsx'), 'utf8');
 const summarySource = readFileSync(join(onboardingDir, 'summary.tsx'), 'utf8');
 const frameSource = readFileSync(
@@ -41,11 +42,12 @@ describe('the onboarding welcome split', () => {
 
   test('progress and navigation come from the plan, counting only the screens she sees', () => {
     // Four question screens, the summary and the terms (RAPP-300).
-    expect(frameSource).toContain('WIZARD_TOTAL_STEPS = 6');
+    expect(frameSource).toContain('WIZARD_TOTAL_STEPS = WIZARD_QUESTION_SCREENS.length + 2');
     const screens = [
       ['background', backgroundSource],
       ['documentation', documentationSource],
       ['logistics', logisticsSource],
+      ['equipment', equipmentSource],
       ['summary', summarySource],
       ['terms', termsSource],
     ] as const;

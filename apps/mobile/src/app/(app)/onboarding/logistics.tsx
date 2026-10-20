@@ -1,11 +1,6 @@
-/**
- * Wizard step 3 — Contacte i logística (RAPP-21). The longest step, so the
- * ordering is deliberate: optional contact details first (each skippable
- * without friction), then the questions that need an answer (entity, family,
- * sizes), everything tap-first where the answers are enumerable.
- */
-
+/** Contact and dependants, separate from equipment sizing. */
 import { AuthTextField } from '@/components/auth/auth-text-field';
+import { RadioOption } from '@/components/forms/radio-option';
 import { MunicipalityPicker } from '@/components/onboarding/municipality-picker';
 import { OnboardingQuestionHeading } from '@/components/onboarding/onboarding-question-heading';
 import { OptionChip } from '@/components/onboarding/option-chip';
@@ -13,44 +8,21 @@ import { QuestionHelp } from '@/components/onboarding/question-help';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
 import { WizardValidationSummary } from '@/components/onboarding/wizard-validation-summary';
 import { playHaptic } from '@/lib/haptics/haptics';
+import { mergeLogisticsDraft } from '@/lib/logistics-draft';
 import { onboardingDraftStore, usePendingInviteEntity } from '@/lib/onboarding';
-import { logisticsFormSchema, type LogisticsFormInput } from '@/lib/onboarding-form';
+import {
+  contactFormSchema,
+  type ContactFormInput,
+  type ContactFormValue,
+} from '@/lib/onboarding-form';
 import { useBuiltinWording, useWizardStep } from '@/lib/onboarding-intake-context';
 import { zodResolver } from '@hookform/resolvers/zod';
-import type { SymbolViewProps } from 'expo-symbols';
 import { useEffect, useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 import { prefilledReferenceEntity } from '@ramassa/shared/accounts';
 import type { OnboardingDraftStep } from '@ramassa/shared/onboarding-drafts';
-import { CLOTHING_SIZES, SHOE_SIZES, type LogisticsStep } from '@ramassa/shared/schemas';
-
-const entitySymbol: SymbolViewProps['name'] = {
-  ios: 'building.2.fill',
-  android: 'business',
-  web: 'business',
-};
-const municipalitySymbol: SymbolViewProps['name'] = {
-  ios: 'mappin.and.ellipse',
-  android: 'location_city',
-  web: 'location_city',
-};
-const dependentsSymbol: SymbolViewProps['name'] = {
-  ios: 'person.2.fill',
-  android: 'groups',
-  web: 'groups',
-};
-const clothingSymbol: SymbolViewProps['name'] = {
-  ios: 'tshirt.fill',
-  android: 'checkroom',
-  web: 'checkroom',
-};
-const shoeSymbol: SymbolViewProps['name'] = {
-  ios: 'figure.walk',
-  android: 'directions_walk',
-  web: 'directions_walk',
-};
 
 export default function LogisticsStepScreen() {
   const { t } = useTranslation('onboarding');
@@ -59,7 +31,7 @@ export default function LogisticsStepScreen() {
   const [draft] = useState(() => onboardingDraftStore.loadDraft());
   const [hasSubmitErrors, setHasSubmitErrors] = useState(false);
 
-  const saved = (draft?.logistics ?? {}) as Partial<LogisticsFormInput>;
+  const saved = (draft?.logistics ?? {}) as Partial<ContactFormInput>;
   const invitedEntity = usePendingInviteEntity();
 
   const {
@@ -69,25 +41,24 @@ export default function LogisticsStepScreen() {
     setValue,
     watch,
     formState: { errors },
-  } = useForm<LogisticsFormInput, unknown, LogisticsStep>({
-    resolver: zodResolver(logisticsFormSchema),
+  } = useForm<ContactFormInput, unknown, ContactFormValue>({
+    resolver: zodResolver(contactFormSchema),
     defaultValues: {
       phone: saved.phone ?? '',
       address: saved.address ?? '',
       city: saved.city ?? '',
       postalCode: saved.postalCode ?? '',
-      referenceEntity: saved.referenceEntity ?? '',
-      referenceContactName: saved.referenceContactName ?? '',
+      referenceEntity: saved.referenceEntity === null ? null : (saved.referenceEntity ?? ''),
+      hasReferenceEntity: saved.hasReferenceEntity ?? null,
+      referenceContactName:
+        saved.referenceEntity === null ? '' : (saved.referenceContactName ?? ''),
       hasDependents: saved.hasDependents ?? false,
       numDependents: saved.numDependents ?? '',
-      clothingSize: saved.clothingSize ?? '',
-      shoeSize: saved.shoeSize ?? '',
     },
   });
 
   const hasDependents = watch('hasDependents');
-  const referenceEntity = watch('referenceEntity');
-  const isNoEntity = referenceEntity === null;
+  const hasReferenceEntity = watch('hasReferenceEntity');
 
   /**
    * The entity a staff invitation carries, applied ONCE and only into a field
@@ -107,14 +78,10 @@ export default function LogisticsStepScreen() {
   }, [invitedEntity, getValues, setValue]);
 
   function persist(currentStep: OnboardingDraftStep) {
-    onboardingDraftStore.saveDraft({
-      ...draft,
-      currentStep,
-      logistics: getValues(),
-    });
+    onboardingDraftStore.saveDraft(mergeLogisticsDraft(draft, getValues(), currentStep));
   }
 
-  const continueToTerms = handleSubmit(
+  const continueToNextStep = handleSubmit(
     () => {
       setHasSubmitErrors(false);
       persist(step.nextDraftStep);
@@ -136,7 +103,7 @@ export default function LogisticsStepScreen() {
       title={t('logisticsTitle')}
       intro={t('logisticsIntro')}
       continueLabel={t('continueAction')}
-      onContinue={continueToTerms}
+      onContinue={continueToNextStep}
       onBack={
         step.goBack === null
           ? undefined
@@ -189,7 +156,6 @@ export default function LogisticsStepScreen() {
           render={({ field }) => (
             <MunicipalityPicker
               label={wording.label('city', t('cityLabel'))}
-              symbol={municipalitySymbol}
               value={field.value ?? ''}
               onChange={field.onChange}
               errorMessage={errors.city ? t('errorMunicipalityInvalid') : undefined}
@@ -211,6 +177,7 @@ export default function LogisticsStepScreen() {
               errorMessage={errors.postalCode ? t('errorPostalFormat') : undefined}
               keyboardType="number-pad"
               maxLength={5}
+              inputWidth="medium"
             />
           )}
         />
@@ -218,41 +185,64 @@ export default function LogisticsStepScreen() {
 
       {step.shouldAsk('reference_entity') ? (
         <View className="gap-xs">
-          <OnboardingQuestionHeading
-            label={wording.label('reference_entity', t('referenceEntityLabel'))}
-            symbol={entitySymbol}
-          />
+          <OnboardingQuestionHeading label={t('referenceEntitySupportQuestion')} />
           <QuestionHelp text={wording.help('reference_entity')} />
           <Controller
             control={control}
-            name="referenceEntity"
+            name="hasReferenceEntity"
             render={({ field }) => (
-              <View className="gap-sm">
-                <OptionChip
-                  label={t('referenceEntityNone')}
-                  accessibilityHint={t('referenceEntityLabel')}
-                  isSelected={isNoEntity}
-                  onPress={() => field.onChange(field.value === null ? '' : null)}
-                />
-                {isNoEntity ? null : (
-                  <AuthTextField
-                    // The question is already asked above the chip; repeating it
-                    // as the field's label read as two separate questions.
-                    label={t('referenceEntityPlaceholder')}
-                    placeholder={t('referenceEntityPlaceholder')}
-                    value={field.value ?? ''}
-                    onChangeText={field.onChange}
-                    onBlur={field.onBlur}
-                    isInvalid={Boolean(errors.referenceEntity)}
+              <View
+                className="flex-row gap-sm"
+                accessibilityRole="radiogroup"
+                accessibilityLabel={t('referenceEntitySupportQuestion')}
+              >
+                <View className="flex-1">
+                  <RadioOption
+                    label={t('yesOption')}
+                    accessibilityHint={t('referenceEntitySupportQuestion')}
+                    isSelected={field.value === true}
+                    onPress={() => {
+                      field.onChange(true);
+                      if (getValues('referenceEntity') === null) setValue('referenceEntity', '');
+                    }}
                   />
-                )}
+                </View>
+                <View className="flex-1">
+                  <RadioOption
+                    label={t('noOption')}
+                    accessibilityHint={t('referenceEntitySupportQuestion')}
+                    isSelected={field.value === false}
+                    onPress={() => {
+                      field.onChange(false);
+                      setValue('referenceEntity', null, { shouldValidate: true });
+                      setValue('referenceContactName', '');
+                    }}
+                  />
+                </View>
               </View>
             )}
           />
+          {hasReferenceEntity === true ? (
+            <Controller
+              control={control}
+              name="referenceEntity"
+              render={({ field }) => (
+                <AuthTextField
+                  label={wording.label('reference_entity', t('referenceEntityPlaceholder'))}
+                  placeholder={t('referenceEntityPlaceholder')}
+                  value={field.value ?? ''}
+                  onChangeText={field.onChange}
+                  onBlur={field.onBlur}
+                  errorMessage={errors.referenceEntity ? t('referenceEntityRequired') : undefined}
+                />
+              )}
+            />
+          ) : null}
         </View>
       ) : null}
 
-      {isNoEntity ||
+      {hasReferenceEntity === false ||
+      (step.shouldAsk('reference_entity') && hasReferenceEntity !== true) ||
       !(step.shouldAsk('reference_entity') || step.shouldAsk('reference_contact_name')) ? null : (
         <Controller
           control={control}
@@ -272,102 +262,52 @@ export default function LogisticsStepScreen() {
 
       {step.shouldAsk('dependents') ? (
         <View className="gap-xs">
-          <OnboardingQuestionHeading
-            label={wording.label('dependents', t('hasDependentsLabel'))}
-            symbol={dependentsSymbol}
-          />
+          <OnboardingQuestionHeading label={wording.label('dependents', t('hasDependentsLabel'))} />
           <QuestionHelp text={wording.help('dependents')} />
           <Controller
             control={control}
             name="hasDependents"
             render={({ field }) => (
               <View className="flex-row gap-sm">
-                <OptionChip
-                  label={t('yesOption')}
-                  accessibilityHint={t('hasDependentsLabel')}
-                  isSelected={field.value === true}
-                  onPress={() => field.onChange(true)}
-                />
-                <OptionChip
-                  label={t('noOption')}
-                  accessibilityHint={t('hasDependentsLabel')}
-                  isSelected={field.value === false}
-                  onPress={() => field.onChange(false)}
-                />
+                <View className="flex-1">
+                  <OptionChip
+                    label={t('yesOption')}
+                    accessibilityHint={t('hasDependentsLabel')}
+                    isSelected={field.value === true}
+                    onPress={() => field.onChange(true)}
+                  />
+                </View>
+                <View className="flex-1">
+                  <OptionChip
+                    label={t('noOption')}
+                    accessibilityHint={t('hasDependentsLabel')}
+                    isSelected={field.value === false}
+                    onPress={() => field.onChange(false)}
+                  />
+                </View>
               </View>
             )}
           />
           {hasDependents ? (
-            <Controller
-              control={control}
-              name="numDependents"
-              render={({ field }) => (
-                <AuthTextField
-                  label={t('numDependentsLabel')}
-                  value={field.value ?? ''}
-                  onChangeText={field.onChange}
-                  onBlur={field.onBlur}
-                  errorMessage={errors.numDependents ? t('errorDependentsRange') : undefined}
-                  keyboardType="number-pad"
-                  maxLength={2}
-                />
-              )}
-            />
+            <View className="pt-lg">
+              <Controller
+                control={control}
+                name="numDependents"
+                render={({ field }) => (
+                  <AuthTextField
+                    label={t('numDependentsLabel')}
+                    value={field.value ?? ''}
+                    onChangeText={field.onChange}
+                    onBlur={field.onBlur}
+                    errorMessage={errors.numDependents ? t('errorDependentsRange') : undefined}
+                    keyboardType="number-pad"
+                    maxLength={2}
+                    inputWidth="short"
+                  />
+                )}
+              />
+            </View>
           ) : null}
-        </View>
-      ) : null}
-
-      {step.shouldAsk('clothing_size') ? (
-        <View className="gap-xs">
-          <OnboardingQuestionHeading
-            label={wording.label('clothing_size', t('clothingSizeLabel'))}
-            symbol={clothingSymbol}
-          />
-          <QuestionHelp text={wording.help('clothing_size')} />
-          <Controller
-            control={control}
-            name="clothingSize"
-            render={({ field }) => (
-              <View className="flex-row flex-wrap gap-sm">
-                {CLOTHING_SIZES.map((size) => (
-                  <OptionChip
-                    key={size}
-                    label={size}
-                    accessibilityHint={t('clothingSizeLabel')}
-                    isSelected={field.value === size}
-                    onPress={() => field.onChange(size)}
-                  />
-                ))}
-              </View>
-            )}
-          />
-        </View>
-      ) : null}
-
-      {step.shouldAsk('shoe_size') ? (
-        <View className="gap-xs">
-          <OnboardingQuestionHeading
-            label={wording.label('shoe_size', t('shoeSizeLabel'))}
-            symbol={shoeSymbol}
-          />
-          <QuestionHelp text={wording.help('shoe_size')} />
-          <Controller
-            control={control}
-            name="shoeSize"
-            render={({ field }) => (
-              <View className="flex-row flex-wrap gap-sm">
-                {SHOE_SIZES.map((size) => (
-                  <OptionChip
-                    key={size}
-                    label={size}
-                    accessibilityHint={t('shoeSizeLabel')}
-                    isSelected={field.value === size}
-                    onPress={() => field.onChange(size)}
-                  />
-                ))}
-              </View>
-            )}
-          />
         </View>
       ) : null}
     </WizardFrame>

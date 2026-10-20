@@ -14,8 +14,11 @@ import { z } from 'zod';
 import {
   documentationStepSchema,
   identityStepSchema,
+  logisticsFields,
   logisticsStepSchema,
   MAXIMUM_AGE_YEARS,
+  normalizeDependents,
+  refineDependents,
 } from '@ramassa/shared/schemas';
 
 /** '7' -> '07'; anything non-numeric survives to fail the shared schema. */
@@ -138,19 +141,20 @@ export type IdentityFormInput = z.input<typeof identityFormSchema>;
  * typed as it arrives from a TextInput (a string) and converted before the
  * shared rule judges it.
  */
-export const logisticsFormSchema = z
-  .object({
-    phone: z.string().optional(),
-    address: z.string().optional(),
-    city: z.string().optional(),
-    postalCode: z.string().optional(),
-    referenceEntity: z.string().nullable(),
-    referenceContactName: z.string().optional(),
-    hasDependents: z.boolean(),
-    numDependents: z.string().optional(),
-    clothingSize: z.string(),
-    shoeSize: z.string(),
-  })
+const logisticsFormFields = z.object({
+  phone: z.string().optional(),
+  address: z.string().optional(),
+  city: z.string().optional(),
+  postalCode: z.string().optional(),
+  referenceEntity: z.string().nullable(),
+  referenceContactName: z.string().optional(),
+  hasDependents: z.boolean(),
+  numDependents: z.string().optional(),
+  clothingSize: z.string(),
+  shoeSize: z.string(),
+});
+
+export const logisticsFormSchema = logisticsFormFields
   .transform((form): z.input<typeof logisticsStepSchema> => ({
     phone: form.phone,
     address: form.address,
@@ -175,5 +179,45 @@ export const logisticsFormSchema = z
   }))
   .pipe(logisticsStepSchema);
 export type LogisticsFormInput = z.input<typeof logisticsFormSchema>;
+
+/** Screen-specific schemas reuse the joint stored fields and their validation rules. */
+const contactStepSchema = logisticsFields
+  .omit({ clothingSize: true, shoeSize: true })
+  .superRefine(refineDependents)
+  .transform(normalizeDependents);
+export const contactFormSchema = logisticsFormFields
+  .omit({ clothingSize: true, shoeSize: true })
+  .extend({ hasReferenceEntity: z.boolean().nullable().optional() })
+  .superRefine((form, ctx) => {
+    if (form.hasReferenceEntity === true && !form.referenceEntity?.trim()) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['referenceEntity'],
+        message: 'referenceEntityRequired',
+      });
+    }
+  })
+  .transform((form): z.input<typeof contactStepSchema> => ({
+    ...form,
+    referenceContactName: form.hasReferenceEntity === false ? '' : form.referenceContactName,
+    referenceEntity:
+      form.hasReferenceEntity === false ||
+      form.referenceEntity === null ||
+      form.referenceEntity.trim() === ''
+        ? null
+        : form.referenceEntity,
+    numDependents:
+      form.numDependents === undefined || form.numDependents.trim() === ''
+        ? 0
+        : Number(form.numDependents),
+  }))
+  .pipe(contactStepSchema);
+export type ContactFormInput = z.input<typeof contactFormSchema>;
+export type ContactFormValue = z.output<typeof contactFormSchema>;
+export const equipmentFormSchema = logisticsFormFields
+  .pick({ clothingSize: true, shoeSize: true })
+  .pipe(logisticsFields.pick({ clothingSize: true, shoeSize: true }));
+export type EquipmentFormInput = z.input<typeof equipmentFormSchema>;
+export type EquipmentFormValue = z.output<typeof equipmentFormSchema>;
 
 export { documentationStepSchema as documentationFormSchema };

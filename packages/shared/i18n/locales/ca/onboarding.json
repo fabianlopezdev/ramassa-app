@@ -27,8 +27,10 @@
   "documentReassurance": "Aquesta dada només la veu l'equip de Ramassà i es guarda xifrada.",
   "documentSkipAction": "Ara no, salta aquest pas",
   "documentTypeNotGiven": "Sense indicar",
-  "logisticsTitle": "Contacte i equipament",
-  "logisticsIntro": "Aquestes dades ens ajuden a contactar-te i a preparar el teu equipament.",
+  "equipmentTitle": "Equipament",
+  "equipmentIntro": "Quina talla de roba i quin número de calçat fas?",
+  "logisticsTitle": "Contacte i persones a càrrec",
+  "logisticsIntro": "Aquestes dades ens ajuden a contactar-te i a saber si tens persones a càrrec.",
   "phoneLabel": "Telèfon (opcional)",
   "phonePlaceholder": "+34 600 111 222",
   "addressLabel": "Adreça (opcional)",
@@ -77,7 +79,7 @@
   "noCountryResults": "Cap país amb aquest nom. Prova d'escriure menys lletres.",
   "searchMunicipalityPlaceholder": "Busca el teu municipi",
   "noMunicipalityResults": "Cap municipi amb aquest nom. Prova d'escriure menys lletres.",
-  "municipalityNone": "No l'indico",
+  "municipalityNone": "No vull indicar el municipi",
   "intakeLoading": "Carregant les teves dades",
   "intakeLoadFailed": "No hem pogut carregar les teves dades. Torna-ho a provar.",
   "retryAction": "Torna-ho a provar",
@@ -170,5 +172,9 @@
   "documentOtherDetailsTitle": "Quin document tens?",
   "documentNameLabel": "Nom del document",
   "documentNameRequired": "Escriu el nom del teu document.",
-  "documentNumberRequired": "Escriu el número del teu document."
+  "documentNumberRequired": "Escriu el número del teu document.",
+  "municipalityOptionalHint": "Pots deixar aquest camp en blanc.",
+  "clearMunicipalityAction": "Esborra el municipi seleccionat",
+  "referenceEntitySupportQuestion": "T’acompanya alguna entitat?",
+  "referenceEntityRequired": "Escriu el nom de l’entitat que t’acompanya."
 }

@@ -168,7 +168,13 @@ export default function TermsStepScreen() {
       }
       const logistics = logisticsFormSchema.safeParse(draft?.logistics ?? {});
       if (!logistics.success) {
-        router.replace(wizardStepRoute('logistics', 'back'));
+        const field = logistics.error.issues[0]?.path[0];
+        router.replace(
+          wizardStepRoute(
+            field === 'clothingSize' || field === 'shoeSize' ? 'equipment' : 'logistics',
+            'back',
+          ),
+        );
         return;
       }
       // The registration questions (RAPP-306), all optional: a draft that does

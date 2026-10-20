@@ -27,8 +27,10 @@
   "documentReassurance": "Only the Ramassà team can see this, and it is stored encrypted.",
   "documentSkipAction": "Not now, skip this step",
   "documentTypeNotGiven": "Not given",
-  "logisticsTitle": "Contact and kit",
-  "logisticsIntro": "These details help us reach you and prepare your kit.",
+  "equipmentTitle": "Equipment",
+  "equipmentIntro": "What clothing size and shoe size do you wear?",
+  "logisticsTitle": "Contact and dependants",
+  "logisticsIntro": "These details help us contact you and understand whether anyone depends on your care.",
   "phoneLabel": "Phone (optional)",
   "phonePlaceholder": "+34 600 111 222",
   "addressLabel": "Address (optional)",
@@ -77,7 +79,7 @@
   "noCountryResults": "No country with that name. Try typing fewer letters.",
   "searchMunicipalityPlaceholder": "Search your municipality",
   "noMunicipalityResults": "No municipality with that name. Try typing fewer letters.",
-  "municipalityNone": "Leave blank",
+  "municipalityNone": "I don’t want to give my municipality",
   "intakeLoading": "Loading your details",
   "intakeLoadFailed": "We could not load your details. Please try again.",
   "retryAction": "Try again",
@@ -170,5 +172,9 @@
   "documentOtherDetailsTitle": "What document do you have?",
   "documentNameLabel": "Document name",
   "documentNameRequired": "Enter the name of your document.",
-  "documentNumberRequired": "Enter your document number."
+  "documentNumberRequired": "Enter your document number.",
+  "municipalityOptionalHint": "You can leave this field blank.",
+  "clearMunicipalityAction": "Clear selected town or city",
+  "referenceEntitySupportQuestion": "Is an organisation supporting you?",
+  "referenceEntityRequired": "Enter the name of the organisation supporting you."
 }

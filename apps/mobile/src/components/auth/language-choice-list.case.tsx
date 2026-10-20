@@ -14,27 +14,48 @@ mock.module('@/components/motion/pressable-depth', () => ({
     style,
     faceStyle,
     faceClassName,
+    accessibilityRole,
   }: {
     readonly accessibilityLabel: string;
+    readonly accessibilityRole: string;
     readonly children: ReactNode;
     readonly isSelected?: boolean;
     readonly onPress: () => void;
     readonly testID?: string;
     readonly style: { paddingBottom: number };
-    readonly faceStyle: { height: number };
+    readonly faceStyle: { height?: number; minHeight?: number };
     readonly faceClassName: string;
   }) =>
     createElement(
       'button',
       {
         'aria-label': accessibilityLabel,
-        role: 'radio',
+        role: accessibilityRole,
         'aria-checked': isSelected,
         className: faceClassName,
         'data-testid': testID,
         onClick: onPress,
-        style: { height: faceStyle.height + style.paddingBottom },
+        style: { height: (faceStyle.height ?? faceStyle.minHeight ?? 0) + style.paddingBottom },
       },
+      children,
+    ),
+}));
+mock.module('@/lib/use-language-font-class', () => ({ useLanguageFontClass: () => '' }));
+mock.module('@/components/motion/pressable-scale', () => ({
+  PressableScale: ({
+    children,
+    onPress,
+    className,
+    accessibilityLabel,
+  }: {
+    children: ReactNode;
+    onPress: () => void;
+    className: string;
+    accessibilityLabel: string;
+  }) =>
+    createElement(
+      'button',
+      { onClick: onPress, className, 'aria-label': accessibilityLabel },
       children,
     ),
 }));
@@ -91,3 +112,21 @@ for (const scale of [1, 2]) {
     expect(heights[0]).toBe(`${64 * scale}px`);
   });
 }
+
+const { OptionChip } = await import('../onboarding/option-chip');
+test('compact option choices reuse the picker surface while keeping height and button semantics', () => {
+  fontScale = 1;
+  const onPress = mock(() => {});
+  const view = render(createElement(OptionChip, { label: 'M', isSelected: true, onPress }));
+  const option = view.getByRole('button', { name: 'M' });
+  expect(option.className).toContain('border-primary');
+  expect(option.style.height).toBe('64px');
+  expect(option.getAttribute('aria-checked')).toBe('true');
+  expect(option.querySelector('[aria-hidden="false"]') !== null).toBe(true);
+  fireEvent.click(option);
+  expect(onPress).toHaveBeenCalledTimes(1);
+  fontScale = 2;
+  view.rerender(createElement(OptionChip, { label: 'M', isSelected: false, onPress }));
+  expect(view.getByRole('button', { name: 'M' }).style.height).toBe('128px');
+  view.unmount();
+});

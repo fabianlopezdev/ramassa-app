@@ -23,10 +23,10 @@ import { useLocalSearchParams } from 'expo-router';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View, type TextStyle } from 'react-native';
-import type { WizardStepKey } from '@ramassa/shared/intake';
+import { WIZARD_QUESTION_SCREENS, type WizardStepKey } from '@ramassa/shared/intake';
 
 /** The full wizard: four question screens, the summary and the terms (RAPP-300). */
-const WIZARD_TOTAL_STEPS = 6;
+const WIZARD_TOTAL_STEPS = WIZARD_QUESTION_SCREENS.length + 2;
 
 /**
  * Fixed-width digits for the "step X of Y" counter, so the line does not

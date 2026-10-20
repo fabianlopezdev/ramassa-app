@@ -23,6 +23,7 @@ interface PressableDepthProps {
   readonly children: ReactNode;
   readonly shadow: ReactNode;
   readonly accessibilityLabel: string;
+  readonly accessibilityHint?: string;
   readonly accessibilityRole?: AccessibilityRole;
   readonly isSelected?: boolean;
   readonly testID?: string;
@@ -41,6 +42,7 @@ export function PressableDepth({
   children,
   shadow,
   accessibilityLabel,
+  accessibilityHint,
   accessibilityRole = 'button',
   isSelected,
   testID,
@@ -89,6 +91,7 @@ export function PressableDepth({
         testID={testID}
         accessibilityRole={accessibilityRole}
         accessibilityLabel={accessibilityLabel}
+        accessibilityHint={accessibilityHint}
         accessibilityState={
           isSelected === undefined ? undefined : { selected: isSelected, checked: isSelected }
         }

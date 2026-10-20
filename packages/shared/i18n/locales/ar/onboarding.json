@@ -27,8 +27,10 @@
   "documentReassurance": "هذه المعلومة يراها فريق راماسا فقط وتُحفظ مشفّرة.",
   "documentSkipAction": "ليس الآن، تخطَّي هذه الخطوة",
   "documentTypeNotGiven": "غير محدد",
-  "logisticsTitle": "التواصل والتجهيزات",
-  "logisticsIntro": "تساعدنا هذه البيانات على التواصل معكِ وتحضير تجهيزاتك.",
+  "equipmentTitle": "التجهيزات",
+  "equipmentIntro": "ما مقاس ملابسكِ وحذائكِ؟",
+  "logisticsTitle": "التواصل والأشخاص الذين تعتنين بهم",
+  "logisticsIntro": "تساعدنا هذه المعلومات على التواصل معكِ ومعرفة ما إذا كنتِ تعتنين بأشخاص آخرين.",
   "phoneLabel": "الهاتف (اختياري)",
   "phonePlaceholder": "+34 600 111 222",
   "addressLabel": "العنوان (اختياري)",
@@ -77,7 +79,7 @@
   "noCountryResults": "لا يوجد بلد بهذا الاسم. جرّبي كتابة حروف أقل.",
   "searchMunicipalityPlaceholder": "ابحثي عن بلديتك",
   "noMunicipalityResults": "لا توجد بلدية بهذا الاسم. جرّبي كتابة حروف أقل.",
-  "municipalityNone": "لن أحددها",
+  "municipalityNone": "لا أريد تحديد البلدية",
   "intakeLoading": "جارٍ تحميل بياناتك",
   "intakeLoadFailed": "تعذّر تحميل بياناتك. حاولي مرة أخرى.",
   "retryAction": "حاولي مرة أخرى",
@@ -170,5 +172,9 @@
   "documentOtherDetailsTitle": "ما الوثيقة التي لديك؟",
   "documentNameLabel": "اسم الوثيقة",
   "documentNameRequired": "أدخل اسم الوثيقة التي لديك.",
-  "documentNumberRequired": "أدخل رقم وثيقتك."
+  "documentNumberRequired": "أدخل رقم وثيقتك.",
+  "municipalityOptionalHint": "يمكنكِ ترك هذا الحقل فارغًا.",
+  "clearMunicipalityAction": "مسح البلدية المختارة",
+  "referenceEntitySupportQuestion": "هل تدعمكِ جمعية أو منظمة؟",
+  "referenceEntityRequired": "اكتبي اسم الجمعية أو المنظمة التي تدعمكِ."
 }

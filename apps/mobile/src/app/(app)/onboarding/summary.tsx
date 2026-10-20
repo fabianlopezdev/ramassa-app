@@ -31,9 +31,10 @@ import { countryLabelForCanonical } from '@ramassa/shared/i18n/countries';
 import { municipalityLabelForCanonical } from '@ramassa/shared/i18n/municipalities';
 import {
   customStepKey,
-  SCREEN_QUESTIONS,
+  WIZARD_SCREEN_QUESTIONS,
   type IntakeQuestion,
   type QuestionScreen,
+  type WizardQuestionScreen,
 } from '@ramassa/shared/intake';
 import {
   answerText,
@@ -171,9 +172,10 @@ export default function SummaryStepScreen() {
   const answers = mergedCustomAnswers(customAnswers, draft?.custom);
   const shows = (question: IntakeQuestion) => !hidden.has(question);
   // A built-in screen whose every question staff removed has nothing to correct.
-  const hasQuestions = (screen: QuestionScreen) => SCREEN_QUESTIONS[screen].some(shows);
+  const hasQuestions = (screen: WizardQuestionScreen) =>
+    WIZARD_SCREEN_QUESTIONS[screen].some(shows);
 
-  const edit = (screen: QuestionScreen) =>
+  const edit = (screen: WizardQuestionScreen) =>
     router.push(`${String(WIZARD_SCREEN_ROUTES[screen])}?edit=1` as Href);
 
   const birthDate =
@@ -363,20 +365,33 @@ export default function SummaryStepScreen() {
                 : t('noOption')
           }
         />
-        <ProfileRow
-          label={wording.label('clothing_size', t('clothingSizeLabel'))}
-          value={show(text(logistics.clothingSize))}
-        />
-        <ProfileRow
-          label={wording.label('shoe_size', t('shoeSizeLabel'))}
-          value={show(text(logistics.shoeSize))}
-        />
         <EditButton
           section="logistics"
           title={t('logisticsTitle')}
           onPress={() => edit('logistics')}
         />
       </ProfileSection>
+      {hasQuestions('equipment') ? (
+        <ProfileSection title={t('equipmentTitle')}>
+          {shows('clothing_size') ? (
+            <ProfileRow
+              label={wording.label('clothing_size', t('clothingSizeLabel'))}
+              value={show(text(logistics.clothingSize))}
+            />
+          ) : null}
+          {shows('shoe_size') ? (
+            <ProfileRow
+              label={wording.label('shoe_size', t('shoeSizeLabel'))}
+              value={show(text(logistics.shoeSize))}
+            />
+          ) : null}
+          <EditButton
+            section="equipment"
+            title={t('equipmentTitle')}
+            onPress={() => edit('equipment')}
+          />
+        </ProfileSection>
+      ) : null}
       <CustomSections after="logistics" answers={answers} language={locale} />
 
       {/* The registration questions (RAPP-306), from her draft like the rest. */}

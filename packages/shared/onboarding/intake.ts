@@ -51,7 +51,16 @@ export const QUESTION_SCREENS = [
   'season',
 ] as const;
 export type QuestionScreen = (typeof QUESTION_SCREENS)[number];
-export type WizardScreen = QuestionScreen | 'summary' | 'terms';
+export type WizardQuestionScreen = QuestionScreen | 'equipment';
+export type WizardScreen = WizardQuestionScreen | 'summary' | 'terms';
+export const WIZARD_QUESTION_SCREENS: readonly WizardQuestionScreen[] = [
+  'identity',
+  'background',
+  'documentation',
+  'logistics',
+  'equipment',
+  'season',
+];
 
 /**
  * The questions each screen asks. The avatar is on no screen: the wizard does
@@ -73,6 +82,17 @@ export const SCREEN_QUESTIONS: Readonly<Record<QuestionScreen, readonly IntakeQu
     'shoe_size',
   ],
   season: ['applicant_status', 'supporting_entities', 'childcare_need', 'specific_needs'],
+};
+
+/** Visual steps split the legacy logistics group without changing staff-screen anchors. */
+export const WIZARD_SCREEN_QUESTIONS: Readonly<
+  Record<WizardQuestionScreen, readonly IntakeQuestion[]>
+> = {
+  ...SCREEN_QUESTIONS,
+  logistics: SCREEN_QUESTIONS.logistics.filter(
+    (question) => question !== 'clothing_size' && question !== 'shoe_size',
+  ),
+  equipment: ['clothing_size', 'shoe_size'],
 };
 
 /**
@@ -124,9 +144,9 @@ export function isQuestionAnswered(answered: AnsweredQuestions, question: Intake
 }
 
 /** The question screens that still have something to ask, in order. */
-export function screensToAsk(answered: AnsweredQuestions): QuestionScreen[] {
-  return QUESTION_SCREENS.filter((screen) =>
-    SCREEN_QUESTIONS[screen].some((question) => !answered.has(question)),
+export function screensToAsk(answered: AnsweredQuestions): WizardQuestionScreen[] {
+  return WIZARD_QUESTION_SCREENS.filter((screen) =>
+    WIZARD_SCREEN_QUESTIONS[screen].some((question) => !answered.has(question)),
   );
 }
 
@@ -165,6 +185,7 @@ function fullOrder(custom: readonly CustomWizardScreen[]): WizardStepKey[] {
   return [
     ...QUESTION_SCREENS.flatMap((screen): WizardStepKey[] => [
       screen,
+      ...(screen === 'logistics' ? ['equipment' as const] : []),
       ...custom
         .filter((customScreen) => customScreen.afterScreen === screen)
         .map((customScreen) => customStepKey(customScreen.id)),

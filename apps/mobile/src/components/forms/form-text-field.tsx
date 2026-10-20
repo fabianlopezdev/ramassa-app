@@ -12,7 +12,14 @@ import { FieldFocusRing } from '@/components/forms/field-focus-ring';
 import { composeContinuousTextStyle } from '@/lib/continuous-corners';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useCallback, useEffect, useId, useMemo, type Ref } from 'react';
-import { AccessibilityInfo, Text, TextInput, View, type TextInputProps } from 'react-native';
+import {
+  AccessibilityInfo,
+  Text,
+  TextInput,
+  useWindowDimensions,
+  View,
+  type TextInputProps,
+} from 'react-native';
 import { tokens } from '@ramassa/shared/tokens';
 
 // Queued so VoiceOver finishes reading the pressed button before the error.
@@ -21,6 +28,8 @@ const queuedAnnouncement = { queue: true } as const;
 export interface FormTextFieldProps extends TextInputProps {
   readonly label: string;
   readonly errorMessage?: string;
+  /** Only the input frame narrows; labels and feedback keep the available width. */
+  readonly inputWidth?: 'full' | 'short' | 'medium';
   /** A help line under the field, such as the one staff write for a question (RAPP-307). */
   readonly hint?: string | null;
   /** Marks the border without repeating a field-level error sentence. */
@@ -33,6 +42,7 @@ export function FormTextField({
   errorMessage,
   hint,
   isInvalid,
+  inputWidth = 'full',
   ref,
   style,
   placeholder,
@@ -47,6 +57,18 @@ export function FormTextField({
   ...inputProps
 }: FormTextFieldProps) {
   const languageFontClass = useLanguageFontClass();
+  const { fontScale } = useWindowDimensions();
+  const frameStyle = useMemo(
+    () =>
+      inputWidth === 'full'
+        ? undefined
+        : {
+            width: tokens.formField.width[inputWidth] * Math.max(1, fontScale),
+            maxWidth: '100%' as const,
+            alignSelf: 'flex-start' as const,
+          },
+    [inputWidth, fontScale],
+  );
   const fieldId = useId();
   useEffect(() => () => fieldFocusOwner.remove(fieldId), [fieldId]);
   const canEdit = editable !== false && readOnly !== true;
@@ -108,7 +130,7 @@ export function FormTextField({
       <Text className={`text-start text-form font-medium text-neutral-800 ${languageFontClass}`}>
         {label}
       </Text>
-      <View className="relative">
+      <View className="relative" style={frameStyle}>
         <TextInput
           ref={ref}
           accessibilityLabel={label}

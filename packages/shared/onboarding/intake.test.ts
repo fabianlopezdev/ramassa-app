@@ -28,6 +28,7 @@ describe('screensToAsk', () => {
       'background',
       'documentation',
       'logistics',
+      'equipment',
       // The registration questions, all optional (RAPP-306).
       'season',
     ]);
@@ -37,6 +38,7 @@ describe('screensToAsk', () => {
     expect(screensToAsk(answered('first_name', 'last_name', 'document'))).toEqual([
       'background',
       'logistics',
+      'equipment',
       'season',
     ]);
   });
@@ -83,7 +85,8 @@ describe('navigation', () => {
   });
 
   test('after the last question screen comes the summary, then the terms', () => {
-    expect(nextWizardScreen('logistics', plan)).toBe('season');
+    expect(nextWizardScreen('logistics', plan)).toBe('equipment');
+    expect(nextWizardScreen('equipment', plan)).toBe('season');
     expect(nextWizardScreen('season', plan)).toBe('summary');
     expect(nextWizardScreen('summary', plan)).toBe('terms');
   });
@@ -101,11 +104,11 @@ describe('navigation', () => {
   });
 
   test('the progress counts only the screens she sees', () => {
-    expect(wizardScreenPosition('background', plan)).toEqual({ step: 1, total: 5 });
-    expect(wizardScreenPosition('logistics', plan)).toEqual({ step: 2, total: 5 });
-    expect(wizardScreenPosition('season', plan)).toEqual({ step: 3, total: 5 });
-    expect(wizardScreenPosition('summary', plan)).toEqual({ step: 4, total: 5 });
-    expect(wizardScreenPosition('terms', plan)).toEqual({ step: 5, total: 5 });
+    expect(wizardScreenPosition('background', plan)).toEqual({ step: 1, total: 6 });
+    expect(wizardScreenPosition('logistics', plan)).toEqual({ step: 2, total: 6 });
+    expect(wizardScreenPosition('season', plan)).toEqual({ step: 4, total: 6 });
+    expect(wizardScreenPosition('summary', plan)).toEqual({ step: 5, total: 6 });
+    expect(wizardScreenPosition('terms', plan)).toEqual({ step: 6, total: 6 });
   });
 });
 
@@ -129,7 +132,8 @@ describe('staff screens in the wizard (RAPP-307)', () => {
   test('a staff screen shows after its built-in step, even when that step is skipped', () => {
     expect(nextWizardScreen('background', plan, custom)).toBe('custom:transport');
     expect(nextWizardScreen('custom:transport', plan, custom)).toBe('logistics');
-    expect(nextWizardScreen('logistics', plan, custom)).toBe('custom:health');
+    expect(nextWizardScreen('logistics', plan, custom)).toBe('equipment');
+    expect(nextWizardScreen('equipment', plan, custom)).toBe('custom:health');
     expect(nextWizardScreen('custom:health', plan, custom)).toBe('season');
   });
 
@@ -161,11 +165,11 @@ describe('staff screens in the wizard (RAPP-307)', () => {
   });
 
   test('the progress counts staff screens', () => {
-    expect(wizardScreenPosition('background', plan, custom)).toEqual({ step: 1, total: 7 });
-    expect(wizardScreenPosition('custom:transport', plan, custom)).toEqual({ step: 2, total: 7 });
-    expect(wizardScreenPosition('logistics', plan, custom)).toEqual({ step: 3, total: 7 });
-    expect(wizardScreenPosition('custom:health', plan, custom)).toEqual({ step: 4, total: 7 });
-    expect(wizardScreenPosition('terms', plan, custom)).toEqual({ step: 7, total: 7 });
+    expect(wizardScreenPosition('background', plan, custom)).toEqual({ step: 1, total: 8 });
+    expect(wizardScreenPosition('custom:transport', plan, custom)).toEqual({ step: 2, total: 8 });
+    expect(wizardScreenPosition('logistics', plan, custom)).toEqual({ step: 3, total: 8 });
+    expect(wizardScreenPosition('custom:health', plan, custom)).toEqual({ step: 5, total: 8 });
+    expect(wizardScreenPosition('terms', plan, custom)).toEqual({ step: 8, total: 8 });
   });
 
   test('an answered staff screen opened to edit moves on to the next screen she sees', () => {

@@ -305,3 +305,23 @@ test('cancelling a different field preview restores the still-focused field', ()
   fireEvent.mouseUp(month);
   expect(rings.map((ring) => ring.style.opacity)).toEqual(['1', '0']);
 });
+
+test('short numeric fields keep full-width labels and errors, grow with text, and share their focus frame', () => {
+  const view = render(
+    createElement(FormTextField, {
+      label: 'Number of dependants',
+      inputWidth: 'short',
+      errorMessage: 'Enter a valid number',
+    }),
+  );
+  const input = view.getByRole('textbox');
+  const frame = input.parentElement!;
+  expect(frame.style.width).toBe('96px');
+  expect(frame.style.maxWidth).toBe('100%');
+  expect(frame.contains(view.getByText('Number of dependants'))).toBe(false);
+  expect(frame.contains(view.getByText('Enter a valid number'))).toBe(false);
+  expect(frame.contains(view.getByTestId('form-field-focus-ring'))).toBe(true);
+  fontScale = 2;
+  view.rerender(createElement(FormTextField, { label: 'Postcode', inputWidth: 'medium' }));
+  expect(view.getByRole('textbox').parentElement!.style.width).toBe('320px');
+});
