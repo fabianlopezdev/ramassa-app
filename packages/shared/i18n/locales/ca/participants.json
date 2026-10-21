@@ -561,5 +561,17 @@
   "questionStatesSavePreset": "Desa aquestes opcions com a conjunt",
   "questionStatesPresetSaved": "Conjunt desat.",
   "questionStatesPresetFailed": "No s'ha pogut desar el conjunt.",
-  "questionStatesDeletePreset": "Esborrar el conjunt {{name}}?"
+  "questionStatesDeletePreset": "Esborrar el conjunt {{name}}?",
+  "inviteReviewAction": "Següent: què se li preguntarà",
+  "inviteBackAction": "Torna a les seves dades",
+  "inviteQuestionsFor": "{{name}} ({{email}})",
+  "inviteQuestionsTitle": "Què se li preguntarà quan obri l'app",
+  "inviteQuestionsIntro": "Aquesta és la seva inscripció guiada, calculada a partir del que has introduït. Automàtic: només es pregunta si ningú no l'ha respost. Pregunta-ho: sempre, amb la teva resposta perquè la confirmi. No ho preguntis: mai, però la veu al resum. Canvia qualsevol pregunta i després crea la invitació.",
+  "inviteQuestionsSummary": "Se li preguntaran {{asked}} de {{total}} preguntes.",
+  "inviteQuestionAsked": "Se li pregunta",
+  "inviteQuestionNotAsked": "No se li pregunta",
+  "inviteQuestionAskedWhenItApplies": "Se li pregunta quan li correspon",
+  "inviteQuestionRemoved": "S'ha tret de la inscripció a Configuració, per això no es pregunta mai.",
+  "inviteQuestionsCustomTitle": "Les preguntes de la vostra organització",
+  "inviteQuestionsCustomHint": "Les respon ella mateixa, per això sempre es pregunten."
 }

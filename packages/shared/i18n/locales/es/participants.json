@@ -561,5 +561,17 @@
   "questionStatesSavePreset": "Guardar estas opciones como conjunto",
   "questionStatesPresetSaved": "Conjunto guardado.",
   "questionStatesPresetFailed": "No se ha podido guardar el conjunto.",
-  "questionStatesDeletePreset": "¿Borrar el conjunto {{name}}?"
+  "questionStatesDeletePreset": "¿Borrar el conjunto {{name}}?",
+  "inviteReviewAction": "Siguiente: qué se le preguntará",
+  "inviteBackAction": "Volver a sus datos",
+  "inviteQuestionsFor": "{{name}} ({{email}})",
+  "inviteQuestionsTitle": "Qué se le preguntará cuando abra la app",
+  "inviteQuestionsIntro": "Esta es su inscripción guiada, calculada a partir de lo que has introducido. Automático: solo se pregunta si nadie la ha respondido. Preguntar: siempre, con tu respuesta para que la confirme. No preguntar: nunca, pero la ve en el resumen. Cambia cualquier pregunta y después crea la invitación.",
+  "inviteQuestionsSummary": "Se le preguntarán {{asked}} de {{total}} preguntas.",
+  "inviteQuestionAsked": "Se le pregunta",
+  "inviteQuestionNotAsked": "No se le pregunta",
+  "inviteQuestionAskedWhenItApplies": "Se le pregunta cuando le corresponde",
+  "inviteQuestionRemoved": "Se quitó de la inscripción en Configuración, por eso nunca se pregunta.",
+  "inviteQuestionsCustomTitle": "Las preguntas de vuestra organización",
+  "inviteQuestionsCustomHint": "Las responde ella misma, por eso siempre se preguntan."
 }

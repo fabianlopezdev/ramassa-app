@@ -203,5 +203,17 @@
   "priorSeasonsSaved": "ذخیره شد.",
   "priorSeasonsFailed": "ذخیره نشد.",
   "seasonNumberValue": "فصل شماره {{number}}",
-  "seasonAnswersTitle": "پاسخ‌ها بر اساس فصل"
+  "seasonAnswersTitle": "پاسخ‌ها بر اساس فصل",
+  "inviteReviewAction": "بعدی: از او چه پرسیده می‌شود",
+  "inviteBackAction": "بازگشت به اطلاعات او",
+  "inviteQuestionsFor": "{{name}} ({{email}})",
+  "inviteQuestionsTitle": "وقتی برنامه را باز کند از او چه پرسیده می‌شود",
+  "inviteQuestionsIntro": "این ثبت‌نام راهنمای اوست که از روی آنچه وارد کردید محاسبه شده است. خودکار: فقط اگر کسی پاسخ نداده باشد پرسیده می‌شود. بپرس: همیشه، با پاسخ شما تا او تأیید کند. نپرس: هرگز، اما آن را در خلاصه می‌بیند. هر سؤالی را تغییر دهید و سپس دعوت را بسازید.",
+  "inviteQuestionsSummary": "از او {{asked}} سؤال از {{total}} سؤال پرسیده می‌شود.",
+  "inviteQuestionAsked": "از او پرسیده می‌شود",
+  "inviteQuestionNotAsked": "از او پرسیده نمی‌شود",
+  "inviteQuestionAskedWhenItApplies": "وقتی به او مربوط باشد پرسیده می‌شود",
+  "inviteQuestionRemoved": "در تنظیمات از ثبت‌نام حذف شده است، پس هرگز پرسیده نمی‌شود.",
+  "inviteQuestionsCustomTitle": "سؤال‌های سازمان شما",
+  "inviteQuestionsCustomHint": "خودش به این‌ها پاسخ می‌دهد، پس همیشه پرسیده می‌شوند."
 }

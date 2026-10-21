@@ -87,6 +87,12 @@ async function createParticipantWithData(
   const password = `rgpd-${RUN_TAG}-${firstName}`;
   await page.goto('/participants/new');
   await page.locator('#new-participant-email').fill(email);
+  // Her details, then what she will be asked, then the invitation (RAPP-618).
+  await page
+    .getByRole('button', {
+      name: /què se li preguntarà|what she will be asked|qué se le preguntará/i,
+    })
+    .click();
   await page
     .getByRole('button', { name: /crea la invitació|create the invitation|crea la invitación/i })
     .click();

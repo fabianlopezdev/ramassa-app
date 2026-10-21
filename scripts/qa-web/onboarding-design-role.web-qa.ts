@@ -164,6 +164,11 @@ test.describe.serial('the onboarding design role', () => {
     await page.getByLabel('First name').fill(TEST_PLAYER_NAME.firstName);
     await page.getByLabel('Last name').fill(TEST_PLAYER_NAME.lastName);
     await page.getByLabel('Email').fill(TEST_PLAYER_EMAIL);
+    // The last step shows what she will be asked (RAPP-618); the design role
+    // chooses for its test player too.
+    await page.getByRole('button', { name: 'Next: what she will be asked' }).click();
+    const review = page.getByTestId('invite-questions-review');
+    await review.locator('#invite-question-phone').selectOption('skip');
     await page.getByRole('button', { name: 'Create the invitation' }).click();
     await expect(page.getByRole('heading', { name: 'Invitation created', level: 2 })).toBeVisible({
       timeout: 20_000,
@@ -171,6 +176,12 @@ test.describe.serial('the onboarding design role', () => {
     expect(
       countInDatabase(
         `select count(*) from public.profiles p join auth.users u on u.id = p.id where u.email = '${TEST_PLAYER_EMAIL}' and p.is_test_account`,
+      ),
+    ).toBe(1);
+    expect(
+      countInDatabase(
+        `select count(*) from public.intake_question_states s join auth.users u on u.id = s.profile_id
+          where u.email = '${TEST_PLAYER_EMAIL}' and s.question = 'phone' and s.state = 'skip'`,
       ),
     ).toBe(1);
   });
