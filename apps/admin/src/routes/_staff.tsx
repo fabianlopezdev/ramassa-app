@@ -6,17 +6,18 @@ import { designRoleRedirect } from '@/lib/design-role-access';
 import { guardStaffRoute } from '@/lib/staff-route-guard';
 import { supabase } from '@/lib/supabase';
 import { createFileRoute, Navigate, Outlet, useLocation } from '@tanstack/react-router';
-import type { ReactNode } from 'react';
-import { useAuth } from '@ramassa/shared/auth';
+import { useEffect, type ReactNode } from 'react';
+import { assuranceLevelOf, useAuth } from '@ramassa/shared/auth';
 
 export const Route = createFileRoute('/_staff')({
   // The session lives in the browser (localStorage), so the guard below runs
   // there: with ssr false, beforeLoad and every child loader run on the client
   // (https://tanstack.com/start/latest/docs/framework/react/guide/selective-ssr).
   ssr: false,
-  // The design role's redirect is thrown before any child loader runs, so a
-  // forbidden page never asks the database for its data (RAPP-615).
-  beforeLoad: ({ location }) => guardStaffRoute(supabase, location.pathname),
+  // The second-factor step and the design role's redirect are thrown before
+  // any child loader runs, so a page never asks the database for data it
+  // would refuse (RAPP-615).
+  beforeLoad: ({ location, context }) => guardStaffRoute(supabase, context.staffAccess, location),
   component: StaffLayout,
 });
 
@@ -54,7 +55,19 @@ function StaffLayout() {
  * the data on its own.
  */
 function DesignRoleGate({ children }: { readonly children: ReactNode }) {
-  const { permissions } = useAuth();
+  const { session, role, permissions, permissionsAreCurrent } = useAuth();
+  const { staffAccess } = Route.useRouteContext();
+  // The guard's cache follows the auth state, which re-reads the permissions
+  // the moment someone changes them (RAPP-237): the next navigation then
+  // routes on the new set without asking the database again.
+  const userId = session?.user.id ?? null;
+  const isVerifiedTeam =
+    (role === 'staff' || role === 'admin') &&
+    permissionsAreCurrent &&
+    assuranceLevelOf(session) === 'aal2';
+  useEffect(() => {
+    if (userId !== null && isVerifiedTeam) staffAccess.rememberPermissions(userId, permissions);
+  }, [staffAccess, userId, isVerifiedTeam, permissions]);
   const pathname = useLocation({ select: (location) => location.pathname });
   const target = designRoleRedirect(pathname, permissions);
   if (target !== null) return <Navigate to={target} replace />;

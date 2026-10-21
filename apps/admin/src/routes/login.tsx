@@ -5,9 +5,11 @@ import {
 } from '@/components/auth/email-otp-form';
 import { NoAdminAccess } from '@/components/auth/no-admin-access';
 import { PasswordLoginForm } from '@/components/auth/password-login-form';
+import { SecondFactorScreen } from '@/components/auth/second-factor-screen';
 import { LanguagePicker } from '@/components/language-picker';
 import { Button } from '@/components/ui/button';
 import { roleLandingPath } from '@/lib/role-landing';
+import { isInternalPath } from '@/lib/staff-route-guard';
 import { createFileRoute, Navigate } from '@tanstack/react-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -17,10 +19,15 @@ import { useAuth } from '@ramassa/shared/auth';
 /**
  * `?code=1` opens the "I already have a code" step directly. The invitation
  * email links here (RAPP-225), so its code works without sending another email.
+ *
+ * A team member signed in with her first factor only does her second factor
+ * here (RAPP-233). The staff layout sends an unverified session here before
+ * any page loader runs, with the page she asked for in `next` (RAPP-615).
  */
 export const Route = createFileRoute('/login')({
   validateSearch: z.object({
     code: z.literal(1).optional().catch(undefined),
+    next: z.string().max(2000).refine(isInternalPath).optional().catch(undefined),
   }),
   component: LoginPage,
 });
@@ -29,7 +36,7 @@ type LoginMode = 'otp' | 'existing-code' | 'password';
 
 function LoginPage() {
   const { t } = useTranslation(['admin', 'auth', 'common']);
-  const { session, role } = useAuth();
+  const { session, role, needsSecondFactor } = useAuth();
   const search = Route.useSearch();
   const [mode, setMode] = useState<LoginMode>(search.code === 1 ? 'existing-code' : 'otp');
   const [sentToEmail, setSentToEmail] = useState<string | null>(null);
@@ -38,8 +45,18 @@ function LoginPage() {
   // with no admin home (a player) gets the terminal no-access state instead of
   // a redirect that would bounce straight back here.
   if (session && role) {
+    if (needsSecondFactor) return <SecondFactorScreen />;
     const landing = roleLandingPath(role);
-    return landing === null ? <NoAdminAccess /> : <Navigate to={landing} />;
+    if (landing === null) return <NoAdminAccess />;
+    // Back to the page she asked for: a team member only, and only inside the admin.
+    const next =
+      (role === 'staff' || role === 'admin') && search.next !== undefined ? search.next : null;
+    // `href` wins over `to` when both are given (router-core buildLocation).
+    return next === null ? (
+      <Navigate to={landing} />
+    ) : (
+      <Navigate to={landing} href={next} replace />
+    );
   }
 
   return (

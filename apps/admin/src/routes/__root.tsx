@@ -7,15 +7,25 @@ import { ADMIN_META_DESCRIPTION } from '@/lib/admin-metadata';
 import { reportAuthError } from '@/lib/auth';
 import { createAdminI18n } from '@/lib/i18n';
 import { getRequestLanguage } from '@/lib/request-language';
+import type { StaffAccessCache } from '@/lib/staff-route-guard';
 import { supabase } from '@/lib/supabase';
-import { createRootRoute, HeadContent, Outlet, Scripts } from '@tanstack/react-router';
+import { createRootRouteWithContext, HeadContent, Outlet, Scripts } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 import { I18nextProvider } from 'react-i18next';
 import { AuthProvider } from '@ramassa/shared/auth';
 import { getLanguageDirection, type SupportedLanguage } from '@ramassa/shared/i18n';
 import appCss from '../styles/app.css?url';
 
-export const Route = createRootRoute({
+/**
+ * What every route's `beforeLoad` receives (RAPP-615): the staff guard's
+ * per-session cache, created once with the router
+ * (https://tanstack.com/router/latest/docs/framework/react/guide/router-context).
+ */
+export interface AdminRouterContext {
+  readonly staffAccess: StaffAccessCache;
+}
+
+export const Route = createRootRouteWithContext<AdminRouterContext>()({
   head: () => ({
     meta: [
       { charSet: 'utf-8' },

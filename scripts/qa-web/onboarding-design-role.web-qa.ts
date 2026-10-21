@@ -13,7 +13,13 @@ import {
   TEST_PLAYER_EMAIL,
   TEST_PLAYER_NAME,
 } from '@ramassa/shared/testing';
-import { countInDatabase, signIn } from './session';
+import {
+  completeSecondFactor,
+  countInDatabase,
+  signIn,
+  signInFirstFactor,
+  STAFF_EMAIL,
+} from './session';
 
 test.setTimeout(120_000);
 
@@ -35,10 +41,11 @@ test.describe.serial('the onboarding design role', () => {
   });
 
   test('every other admin URL sends it back to the onboarding', async ({ page }) => {
-    await signIn(page, ONBOARDING_DESIGNER_EMAIL);
     // The data each forbidden page's loader asks for. The redirect is thrown in
     // the staff layout's beforeLoad, so none of these requests may leave the
-    // browser (RAPP-615).
+    // browser, from the first step of signing in on (RAPP-615). The listener
+    // is attached before signing in, so the landing after the second factor
+    // is recorded too.
     const forbiddenDataRequests = [
       '/rest/v1/rpc/get_impact_report',
       '/rest/v1/rpc/list_staff_conversations',
@@ -49,6 +56,8 @@ test.describe.serial('the onboarding design role', () => {
     page.on('request', (request) => {
       requested.push(new URL(request.url()).pathname);
     });
+    await signIn(page, ONBOARDING_DESIGNER_EMAIL);
+    await expect(page).toHaveURL(/\/onboarding$/, { timeout: 30_000 });
     for (const path of ['/dashboard', '/settings', '/data', '/participants/invites', '/messages']) {
       await page.goto(path);
       await expect(page).toHaveURL(/\/onboarding$/, { timeout: 20_000 });
@@ -57,6 +66,46 @@ test.describe.serial('the onboarding design role', () => {
     // The guard itself asked who she is: the recording works.
     expect(requested).toContain('/rest/v1/rpc/my_permissions');
     expect(requested.filter((pathname) => forbiddenDataRequests.includes(pathname))).toEqual([]);
+  });
+
+  test('a staff member asks for no page data before her second factor', async ({ page }) => {
+    // Attached before the first step: the password form, a page opened by URL
+    // while she is not verified yet, the second factor and the landing are all
+    // recorded, in order.
+    const requested: string[] = [];
+    page.on('request', (request) => {
+      requested.push(new URL(request.url()).pathname);
+    });
+    await signInFirstFactor(page, STAFF_EMAIL);
+    await expect(page.getByTestId('second-factor')).toBeVisible({ timeout: 30_000 });
+    // Opened by URL at aal1: the staff layout sends her back to the second
+    // factor before the dashboard's loader runs.
+    await page.goto('/dashboard');
+    await expect(page).toHaveURL(/\/login\?next=%2Fdashboard/, { timeout: 20_000 });
+    await completeSecondFactor(page, STAFF_EMAIL);
+    // Then the page she asked for.
+    await expect(page).toHaveURL(/\/dashboard/, { timeout: 30_000 });
+    await expect
+      .poll(() => requested.includes('/rest/v1/rpc/get_impact_report'), { timeout: 20_000 })
+      .toBe(true);
+    const verified = requested.findIndex((pathname) =>
+      /^\/auth\/v1\/factors\/[^/]+\/verify$/.test(pathname),
+    );
+    expect(verified).toBeGreaterThan(-1);
+    // The dashboard's data is asked for only once the session is verified.
+    expect(requested.indexOf('/rest/v1/rpc/get_impact_report')).toBeGreaterThan(verified);
+    // Navigating on asks the database nothing more for the guard.
+    const readsBefore = requested.filter(
+      (pathname) => pathname === '/rest/v1/rpc/my_permissions',
+    ).length;
+    const menu = page.getByRole('navigation', { name: 'Staff navigation' });
+    await menu.locator('a[href="/participants"]').click();
+    await expect(page).toHaveURL(/\/participants/, { timeout: 20_000 });
+    await menu.locator('a[href="/dashboard"]').click();
+    await expect(page).toHaveURL(/\/dashboard/, { timeout: 20_000 });
+    expect(requested.filter((pathname) => pathname === '/rest/v1/rpc/my_permissions')).toHaveLength(
+      readsBefore,
+    );
   });
 
   test('its roster holds the test player only, marked as a test', async ({ page }) => {

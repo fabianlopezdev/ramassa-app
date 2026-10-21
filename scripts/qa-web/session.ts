@@ -474,6 +474,20 @@ export async function signOut(page: Page): Promise<void> {
 }
 
 export async function signIn(page: Page, email: string): Promise<void> {
+  await signInFirstFactor(page, email);
+  const secondFactor = page.getByTestId('second-factor');
+  const settled = secondFactor
+    .or(page.getByRole('navigation').first())
+    .or(page.getByRole('alert').first());
+  await expect(settled.first()).toBeVisible({ timeout: 30_000 });
+  if ((await secondFactor.count()) > 0) await completeSecondFactor(page, email);
+}
+
+/**
+ * The password step alone: it resolves once the page has left the password
+ * form, which for a team member is her second-factor step (RAPP-615).
+ */
+export async function signInFirstFactor(page: Page, email: string): Promise<void> {
   // Signing out first makes this safe to call twice in one test. `/login` on
   // an authenticated session redirects to that role's landing, so a second
   // call would otherwise wait 20s for a form that is never coming and fail as
@@ -492,19 +506,17 @@ export async function signIn(page: Page, email: string): Promise<void> {
     await expect(page.locator('input[type="password"]')).toBeVisible({ timeout: 1_000 });
   }).toPass({ timeout: 20_000 });
 
+  // Team members and entity contacts verify their authenticator next (RAPP-233).
+  // A team member does it on the login page itself: the staff layout sends an
+  // unverified session back there before any page loads (RAPP-615).
+  const secondFactor = page.getByTestId('second-factor');
+  const isPastPassword = async () =>
+    !new URL(page.url()).pathname.includes('/login') || (await secondFactor.count()) > 0;
   await expect(async () => {
-    if (!new URL(page.url()).pathname.includes('/login')) return;
+    if (await isPastPassword()) return;
     await page.locator('input[type="email"]').fill(email);
     await page.locator('input[type="password"]').fill(SEED_PASSWORD);
     await page.locator('button[type="submit"]').click();
-    await expect(page).not.toHaveURL(/\/login/, { timeout: 3_000 });
+    await expect.poll(isPastPassword, { timeout: 3_000 }).toBe(true);
   }).toPass({ timeout: 20_000 });
-
-  // Team members and entity contacts verify their authenticator next (RAPP-233).
-  const secondFactor = page.getByTestId('second-factor');
-  const settled = secondFactor
-    .or(page.getByRole('navigation').first())
-    .or(page.getByRole('alert').first());
-  await expect(settled.first()).toBeVisible({ timeout: 30_000 });
-  if ((await secondFactor.count()) > 0) await completeSecondFactor(page, email);
 }
