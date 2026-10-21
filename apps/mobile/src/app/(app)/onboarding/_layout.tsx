@@ -3,7 +3,6 @@ import {
   AnnouncementFeedSkeleton,
 } from '@/components/announcements/feed-states';
 import { onboardingDraftStore } from '@/lib/onboarding';
-import { OnboardingEntranceProvider } from '@/lib/onboarding-entrance';
 import {
   customWizardPlan,
   seedDraftFromProfile,
@@ -18,7 +17,7 @@ import { Stack } from 'expo-router/stack';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@ramassa/shared/auth';
-import { toAppError } from '@ramassa/shared/errors';
+import { getErrorMessageKey, toAppError } from '@ramassa/shared/errors';
 import { useLanguage } from '@ramassa/shared/i18n';
 import {
   fetchDocumentStepExplanation,
@@ -88,11 +87,7 @@ function seedWizardDraft(intake: WizardIntake, language: LanguageCode): void {
  */
 export default function OnboardingLayout() {
   const { user } = useAuth();
-  return (
-    <OnboardingEntranceProvider key={user?.id}>
-      <OnboardingScreens />
-    </OnboardingEntranceProvider>
-  );
+  return <OnboardingScreens key={user?.id} />;
 }
 
 function OnboardingScreens() {
@@ -134,17 +129,20 @@ function OnboardingScreens() {
   const [isSeeded, setIsSeeded] = useState(false);
 
   useEffect(() => {
-    if (intake.data === undefined) return;
+    if (intake.data === undefined || user === null) return;
+    onboardingDraftStore.setUser(user.id);
     seedWizardDraft(intake.data, language);
     setIsSeeded(true);
-  }, [intake.data, language]);
+  }, [intake.data, language, user?.id]);
+  useEffect(() => () => onboardingDraftStore.setUser(null), []);
 
-  if (intake.isError) {
+  const isPaused = intake.data === undefined && intake.fetchStatus === 'paused';
+  if (intake.data === undefined && (intake.isError || isPaused)) {
     return (
       <AnnouncementFeedError
-        message={t('intakeLoadFailed')}
+        message={isPaused ? t(getErrorMessageKey('NETWORK-1')) : t('intakeLoadFailed')}
         retryLabel={t('retryAction')}
-        code={toAppError(intake.error).code}
+        code={isPaused ? 'NETWORK-1' : toAppError(intake.error).code}
         languageFontClass={languageFontClass}
         onRetry={() => void intake.refetch()}
         isLoading={intake.isFetching}

@@ -293,3 +293,22 @@ test('size grids keep three equal columns when they fit and reduce columns for n
   expect(optionGridColumnCount(356, 2)).toBe(2);
   expect(optionGridColumnCount(356, 3)).toBe(1);
 });
+
+for (const Component of [Contact, Equipment]) {
+  test(`${Component.name} preserves answers saved by later screens when returning Back`, () => {
+    const view = render(createElement(Component));
+    draft = {
+      ...draft,
+      season: { specificNeeds: 'Newer saved answer' },
+      logistics: { ...draft.logistics, clothingSize: 'XXL', shoeSize: '46', phone: '+34600123456' },
+    };
+    fireEvent.click(view.getByRole('button', { name: 'Back' }));
+    expect(draft.season?.specificNeeds).toBe('Newer saved answer');
+    if (Component === Contact) {
+      expect(draft.logistics?.clothingSize).toBe('XXL');
+      expect(draft.logistics?.shoeSize).toBe('46');
+    } else {
+      expect(draft.logistics?.phone).toBe('+34600123456');
+    }
+  });
+}

@@ -30,7 +30,9 @@ export function OptionChip({
       onPress={onPress}
       contentClassName="justify-center"
     >
-      <Text className={`text-center text-form font-medium text-primary ${languageFontClass}`}>
+      <Text
+        className={`text-center text-form font-medium ${isSelected ? 'text-neutral-900' : 'text-primary-dark'} ${languageFontClass}`}
+      >
         {label}
       </Text>
     </SelectionChoiceSurface>

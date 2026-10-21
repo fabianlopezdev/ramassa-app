@@ -1,21 +1,23 @@
 /**
- * Wizard step 4 — Termes i consentiments (RAPP-21). The full terms text is
+ * Onboarding terms and consent (RAPP-21). The full terms text is
  * readable in the player's language BEFORE anything is tapped; acceptance is
  * an explicit chip, never pre-ticked (RGPD: silence is not consent), and the
  * media consent is visibly separate and optional. Finishing calls the atomic
- * RPC, wipes the on-device draft (the only unencrypted copy of the intake
- * PII), and refreshes the auth profile so the gate flips into the app.
+ * RPC, clears the on-device draft, and refreshes the auth profile so the gate
+ * flips into the app.
  *
- * Declining ("Ara no") signs out: the app cannot hold a session for someone
- * who has not agreed to it holding their data. The draft is kept, so coming
- * back resumes here rather than starting over.
+ * Declining ("Ara no") asks first, then saves the draft and signs out only
+ * after confirmation. The protected device draft is kept, so signing back in
+ * here resumes at terms rather than starting over.
  */
 
+import { ConsentRow } from '@/components/authorization/consent-row';
+import { SignatureSection } from '@/components/authorization/signature-section';
 import { FailureNotice } from '@/components/error-code-line';
 import { PressableScale } from '@/components/motion/pressable-scale';
-import { OptionChip } from '@/components/onboarding/option-chip';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
 import { logout } from '@/lib/auth';
+import { confirmAction } from '@/lib/confirm-action';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
 import {
@@ -36,106 +38,67 @@ import {
 import { useWizardIntake, useWizardStep } from '@/lib/onboarding-intake-context';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useRouter } from 'expo-router';
-import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { useAuth } from '@ramassa/shared/auth';
 import { CURRENT_TERMS_VERSION } from '@ramassa/shared/constants';
+import { signatureStrokesSchema, type SignatureStrokes } from '@ramassa/shared/equipment';
 import type { AppErrorCode } from '@ramassa/shared/errors';
 import { trimPayloadToAnswers } from '@ramassa/shared/intake';
 import type { OnboardingDraftStep } from '@ramassa/shared/onboarding-drafts';
 import {
   buildCompleteOnboardingPayload,
   seasonAnswerFields,
+  termsSigningSchema,
   termsStepSchema,
 } from '@ramassa/shared/schemas';
 import type { LanguageCode } from '@ramassa/shared/schemas';
-import { tokens } from '@ramassa/shared/tokens';
-
-const purposeSymbol: SymbolViewProps['name'] = {
-  ios: 'calendar.badge.checkmark',
-  android: 'event_available',
-  web: 'event_available',
-};
-const protectedSymbol: SymbolViewProps['name'] = {
-  ios: 'lock.shield.fill',
-  android: 'shield_lock',
-  web: 'shield_lock',
-};
-const privateSymbol: SymbolViewProps['name'] = {
-  ios: 'hand.raised.fill',
-  android: 'privacy_tip',
-  web: 'privacy_tip',
-};
-const controlSymbol: SymbolViewProps['name'] = {
-  ios: 'slider.horizontal.3',
-  android: 'tune',
-  web: 'tune',
-};
-
-function TermsTrustPoint({
-  title,
-  body,
-  symbol,
-}: {
-  readonly title: string;
-  readonly body: string;
-  readonly symbol: SymbolViewProps['name'];
-}) {
-  const languageFontClass = useLanguageFontClass();
-  return (
-    <View className="flex-row items-start gap-sm">
-      <View
-        accessible={false}
-        aria-hidden
-        accessibilityElementsHidden
-        importantForAccessibility="no-hide-descendants"
-        className="h-xl w-xl items-center justify-center rounded-full bg-primary-light"
-      >
-        <SymbolView
-          accessible={false}
-          name={symbol}
-          size={tokens.fontSize.xl}
-          tintColor={tokens.colors.primary.dark}
-        />
-      </View>
-      <View className="flex-1 gap-xs">
-        <Text className={`text-start text-form font-bold text-neutral-900 ${languageFontClass}`}>
-          {title}
-        </Text>
-        <Text className={`text-start text-form leading-body text-neutral-700 ${languageFontClass}`}>
-          {body}
-        </Text>
-      </View>
-    </View>
-  );
-}
 
 export default function TermsStepScreen() {
   const { t, i18n } = useTranslation('onboarding');
   const languageFontClass = useLanguageFontClass();
   const router = useRouter();
-  const { refreshProfile } = useAuth();
+  const { user, refreshProfile } = useAuth();
   const intake = useWizardIntake();
   const step = useWizardStep('terms');
   const [draft] = useState(() => onboardingDraftStore.loadDraft());
 
-  const savedTerms = (draft?.terms ?? {}) as { termsAccepted?: boolean; mediaConsent?: boolean };
+  const signatureOwner = draft?.terms?.signatureOwnerId;
+  const sameSigner = user !== null && signatureOwner === user.id;
+  const savedTerms = ((signatureOwner !== undefined && !sameSigner ? {} : draft?.terms) ?? {}) as {
+    termsAccepted?: boolean;
+    mediaConsent?: boolean;
+  };
   const [isAccepted, setIsAccepted] = useState(savedTerms.termsAccepted === true);
   const [hasMediaConsent, setHasMediaConsent] = useState(savedTerms.mediaConsent === true);
+  const [strokes, setStrokes] = useState<SignatureStrokes | null>(() => {
+    const parsed = signatureStrokesSchema.safeParse(sameSigner ? draft?.terms?.strokes : null);
+    return parsed.success ? parsed.data : null;
+  });
+  const [unableToDraw, setUnableToDraw] = useState(
+    sameSigner && draft?.terms?.unableToDraw === true,
+  );
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [hasSignatureError, setHasSignatureError] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasAcceptError, setHasAcceptError] = useState(false);
-  const [isFullTermsVisible, setIsFullTermsVisible] = useState(false);
   // The FAILURE's own code, not a boolean: it drives the shake and, through the
   // RAPP-12 taxonomy, decides whether the buzz is a warning or an error.
   const [failureCode, setFailureCode] = useState<AppErrorCode | null>(null);
 
-  function persist(currentStep: OnboardingDraftStep) {
+  function persist(currentStep: OnboardingDraftStep, changes: Record<string, unknown> = {}) {
     onboardingDraftStore.saveDraft({
-      ...draft,
+      ...onboardingDraftStore.loadDraft(),
       currentStep,
-      terms: { termsAccepted: isAccepted, mediaConsent: hasMediaConsent },
+      terms: {
+        termsAccepted: isAccepted,
+        mediaConsent: hasMediaConsent,
+        strokes,
+        unableToDraw,
+        signatureOwnerId: user?.id,
+        ...changes,
+      },
     });
   }
 
@@ -149,6 +112,18 @@ export default function TermsStepScreen() {
       return;
     }
     setHasAcceptError(false);
+    const signing = termsSigningSchema.safeParse({
+      termsAccepted: isAccepted,
+      mediaConsent: hasMediaConsent,
+      strokes: unableToDraw ? null : strokes,
+      unableToDraw,
+    });
+    if (!signing.success) {
+      setHasSignatureError(true);
+      playHaptic('warning');
+      return;
+    }
+    setHasSignatureError(false);
     setFailureCode(null);
     setIsSubmitting(true);
     try {
@@ -229,6 +204,7 @@ export default function TermsStepScreen() {
           intake.answered,
           intake.profile === null ? {} : storedPayloadFromProfile(intake.profile),
         ),
+        signing.data,
       );
       if (!result.ok) {
         // The shake and its buzz come from the code, so a system failure feels
@@ -245,7 +221,7 @@ export default function TermsStepScreen() {
       // to pair it with: the auth gate swaps this stack for the tabs the moment
       // the profile refreshes, so the haptic is the confirmation that survives.
       playHaptic('success');
-      onboardingDraftStore.clearDraft();
+      if (user !== null) onboardingDraftStore.clearUserDraft(user.id);
       // Flips `needsOnboarding`; the (app) layout's guard then swaps this
       // stack out for the tabs. No manual navigation.
       await refreshProfile();
@@ -257,10 +233,11 @@ export default function TermsStepScreen() {
   return (
     <WizardFrame
       screenId={'terms'}
+      scrollEnabled={!isDrawing}
       stepNumber={step.position.step}
       totalSteps={step.position.total}
       title={t('termsTitle')}
-      intro={t('termsIntro')}
+      intro={t('mediaConsentHint')}
       continueLabel={t('finishAction')}
       onContinue={() => void finish()}
       isContinueBusy={isSubmitting}
@@ -269,54 +246,22 @@ export default function TermsStepScreen() {
         step.goBack?.();
       }}
     >
-      <View className="gap-lg">
-        <TermsTrustPoint
-          title={t('termsPointPurposeTitle')}
-          body={t('termsPointPurposeBody')}
-          symbol={purposeSymbol}
-        />
-        <TermsTrustPoint
-          title={t('termsPointProtectedTitle')}
-          body={t('termsPointProtectedBody')}
-          symbol={protectedSymbol}
-        />
-        <TermsTrustPoint
-          title={t('termsPointPrivateTitle')}
-          body={t('termsPointPrivateBody')}
-          symbol={privateSymbol}
-        />
-        <TermsTrustPoint
-          title={t('termsPointControlTitle')}
-          body={t('termsPointControlBody')}
-          symbol={controlSymbol}
-        />
+      <View style={continuousCorners} className="rounded-md bg-neutral-50 p-md">
+        <Text
+          selectable
+          className={`text-start text-form leading-body text-neutral-800 ${languageFontClass}`}
+        >
+          {t('termsBody')}
+        </Text>
       </View>
 
-      <PressableScale
-        accessibilityLabel={t(isFullTermsVisible ? 'termsHideFullAction' : 'termsReadFullAction')}
-        onPress={() => setIsFullTermsVisible((current) => !current)}
-        haptic="selection"
-        className="min-h-recommended items-center justify-center rounded-md border border-neutral-300 bg-white px-lg"
-      >
-        <Text className={`text-form font-bold text-primary ${languageFontClass}`}>
-          {t(isFullTermsVisible ? 'termsHideFullAction' : 'termsReadFullAction')}
-        </Text>
-      </PressableScale>
-
-      {isFullTermsVisible ? (
-        <View style={continuousCorners} className="rounded-md bg-neutral-50 p-md">
-          <Text
-            className={`text-start text-form leading-body text-neutral-800 ${languageFontClass}`}
-          >
-            {t('termsBody')}
-          </Text>
-        </View>
-      ) : null}
-
-      <OptionChip
+      <ConsentRow
+        testID="terms-acceptance"
+        required
+        requiredMark={t('authorizationRequiredMark')}
         label={t('termsAcceptLabel')}
-        isSelected={isAccepted}
-        onPress={() => {
+        checked={isAccepted}
+        onToggle={() => {
           setIsAccepted((current) => !current);
           // Both, as before the errors were split: a message about the last
           // attempt is stale the moment she changes her answer.
@@ -330,6 +275,7 @@ export default function TermsStepScreen() {
           tap that unblocks it. */}
       {hasAcceptError ? (
         <Text
+          selectable
           accessibilityLiveRegion="polite"
           className={`text-start text-form text-error ${languageFontClass}`}
         >
@@ -337,16 +283,32 @@ export default function TermsStepScreen() {
         </Text>
       ) : null}
 
-      <View className="gap-xs">
-        <OptionChip
-          label={t('mediaConsentLabel')}
-          isSelected={hasMediaConsent}
-          onPress={() => setHasMediaConsent((current) => !current)}
-        />
-        <Text className={`text-start text-form text-neutral-700 ${languageFontClass}`}>
-          {t('mediaConsentHint')}
-        </Text>
-      </View>
+      <ConsentRow
+        testID="terms-media-consent"
+        required={false}
+        requiredMark=""
+        label={t('mediaConsentLabel')}
+        checked={hasMediaConsent}
+        onToggle={() => setHasMediaConsent((current) => !current)}
+      />
+
+      <SignatureSection
+        strokes={strokes}
+        onChange={(value) => {
+          setStrokes(value);
+          setHasSignatureError(false);
+          persist('terms', { strokes: value });
+        }}
+        unableToDraw={unableToDraw}
+        onUnableToDrawChange={(value) => {
+          setUnableToDraw(value);
+          setHasSignatureError(false);
+          persist('terms', { unableToDraw: value });
+        }}
+        onDrawingChange={setIsDrawing}
+        hasError={hasSignatureError}
+        testID="terms-cannot-draw"
+      />
 
       {/* Mounted only while there IS a failure, so it never occupies a slot in
           the parent's gap. The code it carries (contract rule 7) matters more
@@ -359,10 +321,19 @@ export default function TermsStepScreen() {
 
       <PressableScale
         accessibilityLabel={t('termsDeclineAction')}
-        onPress={() => {
-          persist('terms');
-          void logout();
-        }}
+        isDisabled={isSubmitting}
+        onPress={() =>
+          confirmAction({
+            title: t('termsLeaveTitle'),
+            message: t('termsLeaveBody'),
+            cancelLabel: t('termsLeaveStayAction'),
+            confirmLabel: t('termsLeaveConfirmAction'),
+            onConfirm: () => {
+              persist('terms');
+              void logout();
+            },
+          })
+        }
         haptic="selection"
         className="min-h-min items-center justify-center py-sm"
       >

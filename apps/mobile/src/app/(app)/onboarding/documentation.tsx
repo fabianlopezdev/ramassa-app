@@ -61,12 +61,15 @@ export default function DocumentationStepScreen() {
     ),
     { value: 'skip' as const, label: t('documentSkipAction') },
   ];
-  const persist = (currentStep: typeof step.nextDraftStep) =>
+  const persist = (currentStep: typeof step.nextDraftStep) => {
+    const latest = onboardingDraftStore.loadDraft();
+    const current = (latest?.documentation ?? {}) as Partial<DocumentationStep>;
     onboardingDraftStore.saveDraft({
-      ...draft,
+      ...latest,
       currentStep,
-      documentation: choice === undefined ? saved : documentationForChoice(choice, saved),
+      documentation: choice === undefined ? current : documentationForChoice(choice, current),
     });
+  };
   const continueFromChoice = () => {
     if (choice === undefined) {
       setHasSubmitErrors(true);

@@ -202,3 +202,16 @@ test('editing opens details by replacement, so Continue returns to review', () =
   fireEvent.click(details.getByRole('button', { name: 'Back' }));
   expect(replace).toHaveBeenLastCalledWith('/onboarding/documentation?entrance=none&edit=1');
 });
+
+test('a mounted document choice preserves the number entered later when keeping the same type', () => {
+  draft.documentation = { documentType: 'passport' };
+  const view = render(createElement(Choice));
+  draft = {
+    ...draft,
+    documentation: { documentType: 'passport', documentNumber: 'P123' },
+    season: { childcareNeed: 'yes' },
+  };
+  fireEvent.click(view.getByRole('button', { name: ca.continueAction }));
+  expect(draft.documentation?.documentNumber).toBe('P123');
+  expect(draft.season?.childcareNeed).toBe('yes');
+});

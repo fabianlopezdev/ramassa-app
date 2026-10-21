@@ -665,17 +665,18 @@ env:
     times: 4
     while:
       notVisible:
-        text: '^${TERMS_ACCEPT}$'
+        id: 'terms-acceptance'
         selected: true
     commands:
       - tapOn:
-          text: '^${TERMS_ACCEPT}$'
+          id: 'terms-acceptance'
           optional: true
       - waitForAnimationToEnd:
           timeout: 2000
 - assertVisible:
-    text: '^${TERMS_ACCEPT}$'
+    id: 'terms-acceptance'
     selected: true
+- runFlow: _sign-app-terms.yaml
 
 # Finish. The button is pinned to the bottom of the frame, but the terms body
 # is long enough that it can still sit below the fold on a short screen.

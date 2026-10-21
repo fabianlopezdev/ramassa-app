@@ -36,9 +36,10 @@ describe('conversational onboarding controls', () => {
     }
   });
 
-  test('selected answers stay quieter than the solid primary action', () => {
+  test('selection keeps typography stable and distinct from the solid primary action', () => {
     expect(optionChip).toContain('SelectionChoiceSurface');
-    expect(optionChip).toContain("isSelected ? 'font-bold' : 'font-medium'");
+    expect(optionChip).toContain('text-center text-form font-medium');
+    expect(optionChip).not.toContain("isSelected ? 'font-bold'");
     expect(optionChip).not.toContain('border-primary bg-primary px-lg');
     expect(optionChip).not.toContain('text-white');
   });
@@ -59,14 +60,20 @@ describe('conversational onboarding controls', () => {
     expect(logistics).not.toContain("{t('errorRequired')}");
   });
 
-  test('terms lead with plain-language points and reveal legal text in one tap', () => {
-    expect(terms).toContain("t('termsPointPurposeTitle')");
-    expect(terms).toContain("t('termsPointProtectedTitle')");
-    expect(terms).toContain("t('termsPointPrivateTitle')");
-    expect(terms).toContain("t('termsPointControlTitle')");
-    expect(terms).toContain('isFullTermsVisible');
-    expect(terms).toContain("'termsReadFullAction'");
+  test('terms explanations precede the always-visible full legal text', () => {
+    const intro = readFileSync(join(root, 'components/onboarding/terms-introduction.tsx'), 'utf8');
+    for (const key of [
+      'termsPointPurposeTitle',
+      'termsPointProtectedTitle',
+      'termsPointPrivateTitle',
+      'termsPointControlTitle',
+    ])
+      expect(intro).toContain(`t('${key}')`);
+    expect(intro).toContain('<DataIcon');
+    expect(intro).toContain("'termsReadFullAction'");
     expect(terms).toContain("{t('termsBody')}");
+    expect(terms).not.toContain('isFullTermsVisible');
+    expect(terms).not.toContain('termsHideFullAction');
   });
 });
 
@@ -112,7 +119,7 @@ test('all onboarding locales carry the new conversational copy', () => {
       'termsPointControlTitle',
       'termsPointControlBody',
       'termsReadFullAction',
-      'termsHideFullAction',
+      'termsIntroTitle',
     ]) {
       expect(messages[key]).toBeTruthy();
     }

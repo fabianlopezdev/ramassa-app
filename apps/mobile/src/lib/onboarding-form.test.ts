@@ -8,6 +8,7 @@
 import { describe, expect, setSystemTime, test } from 'bun:test';
 import {
   composeIsoBirthDate,
+  contactFormSchema,
   identityFormSchema,
   identityNameFormSchema,
   logisticsFormSchema,
@@ -36,6 +37,36 @@ describe('identityNameFormSchema', () => {
 });
 
 describe('identityFormSchema', () => {
+  test.each([
+    ['٤', '٣', '١٩٩٥'],
+    ['۴', '۳', '۱۹۹۵'],
+    ['4', '۳', '١٩٩٥'],
+  ])('accepts localized decimal date parts %s/%s/%s', (day, month, year) => {
+    expect(composeIsoBirthDate(day, month, year)).toBe('1995-03-04');
+    expect(identityFormSchema.parse({ ...identityBase, day, month, year }).dateOfBirth).toBe(
+      '1995-03-04',
+    );
+  });
+
+  test.each([
+    ['٩٠', '١٣', '١٦٦٦'],
+    ['۹۰', '۱۳', '۱۶۶۶'],
+  ])('keeps strict date ranges for localized digits %s/%s/%s', (day, month, year) => {
+    const result = identityFormSchema.safeParse({ ...identityBase, day, month, year });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues).toContainEqual(
+        expect.objectContaining({ path: ['year'], message: 'too old' }),
+      );
+      expect(result.error.issues).toContainEqual(
+        expect.objectContaining({ path: ['month'], message: 'invalid date' }),
+      );
+      expect(result.error.issues).toContainEqual(
+        expect.objectContaining({ path: ['day'], message: 'invalid date' }),
+      );
+    }
+  });
+
   test('composes single-digit day and month into a valid ISO date', () => {
     expect(composeIsoBirthDate('4', '3', '1995')).toBe('1995-03-04');
     const parsed = identityFormSchema.parse({
@@ -77,6 +108,30 @@ describe('identityFormSchema', () => {
 });
 
 describe('logisticsFormSchema', () => {
+  test.each(['٢', '۲'])('accepts a localized dependent count %s', (numDependents) => {
+    const input = {
+      referenceEntity: null,
+      hasDependents: true,
+      numDependents,
+      clothingSize: 'M',
+      shoeSize: '38',
+    };
+    expect(logisticsFormSchema.parse(input).numDependents).toBe(2);
+    expect(contactFormSchema.parse(input).numDependents).toBe(2);
+  });
+
+  test.each(['١٦', '۱۶'])('keeps the dependent count limit for localized %s', (numDependents) => {
+    const input = {
+      referenceEntity: null,
+      hasDependents: true,
+      numDependents,
+      clothingSize: 'M',
+      shoeSize: '38',
+    };
+    expect(logisticsFormSchema.safeParse(input).success).toBe(false);
+    expect(contactFormSchema.safeParse(input).success).toBe(false);
+  });
+
   test('a TextInput count string becomes the number the shared schema judges', () => {
     const parsed = logisticsFormSchema.parse({
       referenceEntity: 'Creu Roja Osona',

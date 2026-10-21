@@ -25,7 +25,7 @@ import {
   observeSessionIdentity,
   type PermissionSnapshot,
 } from '@/lib/session-cache';
-import { ownSupabase, previewMode, previewSupabase } from '@/lib/supabase';
+import { mobileClientEnv, ownSupabase, previewMode, previewSupabase } from '@/lib/supabase';
 import { QueryClientProvider, useQueryClient } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { Stack } from 'expo-router/stack';
@@ -234,7 +234,10 @@ function RootLayout() {
   // async native probe at query-client module scope can resolve between render
   // and commit, which makes React report a state update on an unmounted root.
   useEffect(() => {
-    configureNetworkStatus();
+    configureNetworkStatus({
+      isDev: __DEV__,
+      backendUrl: mobileClientEnv.EXPO_PUBLIC_SUPABASE_URL,
+    });
   }, []);
 
   return (

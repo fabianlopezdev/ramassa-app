@@ -2,12 +2,14 @@ import { FormTextField, type FormTextFieldProps } from '@/components/forms/form-
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, useWindowDimensions, View } from 'react-native';
+import { Text, useWindowDimensions, View, type TextStyle } from 'react-native';
 import { tokens } from '@ramassa/shared/tokens';
 
 type FormTextAreaProps = Omit<FormTextFieldProps, 'multiline' | 'inputWidth' | 'maxLength'> & {
   readonly maxLength: number;
 };
+
+const counterStyle: TextStyle = { fontVariant: ['tabular-nums'] };
 
 /** A visible writing area and native length limit, using the same field focus and errors. */
 export function FormTextArea({ value = '', maxLength, style, ...props }: FormTextAreaProps) {
@@ -27,7 +29,7 @@ export function FormTextArea({ value = '', maxLength, style, ...props }: FormTex
   return (
     <View className="gap-sm">
       <FormTextField {...props} value={value} style={areaStyle} multiline maxLength={maxLength} />
-      <Text className={`text-end text-form text-neutral-700 ${fontClass}`}>
+      <Text style={counterStyle} className={`text-end text-form text-neutral-700 ${fontClass}`}>
         {t('characterCount', { count: value.length, limit: maxLength })}
       </Text>
     </View>

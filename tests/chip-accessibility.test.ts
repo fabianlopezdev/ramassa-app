@@ -20,18 +20,24 @@ describe('question-aware option chips', () => {
       /accessibilityLabel,\s+accessibilityHint,[\s\S]*?accessibilityLabel=\{accessibilityLabel\}\s+accessibilityHint=\{accessibilityHint\}/,
     );
     expect(optionChip).toContain('readonly accessibilityHint?: string;');
-    expect(optionChip).toMatch(
+    expect(optionChip).toContain('label={label}');
+    expect(optionChip).toContain('accessibilityHint={accessibilityHint}');
+    const surface = await source('apps/mobile/src/components/forms/selection-choice-surface.tsx');
+    expect(surface).toMatch(
       /accessibilityLabel=\{label\}\s+accessibilityHint=\{accessibilityHint\}/,
     );
   });
 
-  test('every logistics chip carries its localized visible question as context', async () => {
+  test('contact and equipment choices carry their localized visible question as context', async () => {
     const logistics = await source('apps/mobile/src/app/(app)/onboarding/logistics.tsx');
 
-    expect(occurrences(logistics, "accessibilityHint={t('referenceEntityLabel')}")).toBe(1);
+    const equipment = await source('apps/mobile/src/app/(app)/onboarding/equipment.tsx');
+    expect(occurrences(logistics, "accessibilityHint={t('referenceEntitySupportQuestion')}")).toBe(
+      2,
+    );
     expect(occurrences(logistics, "accessibilityHint={t('hasDependentsLabel')}")).toBe(2);
-    expect(occurrences(logistics, "accessibilityHint={t('clothingSizeLabel')}")).toBe(1);
-    expect(occurrences(logistics, "accessibilityHint={t('shoeSizeLabel')}")).toBe(1);
+    expect(occurrences(equipment, "accessibilityHint={t('clothingSizeLabel')}")).toBe(1);
+    expect(occurrences(equipment, "accessibilityHint={t('shoeSizeLabel')}")).toBe(1);
   });
 
   test('every profile form chip carries its localized visible question as context', async () => {

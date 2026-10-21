@@ -228,6 +228,7 @@ export function CountryPicker({
 
       {hasError ? (
         <Text
+          selectable
           accessibilityLiveRegion="polite"
           className={`text-start text-form text-error ${languageFontClass}`}
         >

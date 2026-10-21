@@ -82,6 +82,11 @@ describe('signing mode for a screen reader (RAPP-530)', () => {
   });
 
   test('the signature pad tells a screen reader user how to sign without drawing', () => {
-    expect(form).toContain("accessibilityHint={t('authorizationSignatureHint')}");
+    const signatureSection = readFileSync(
+      resolve(import.meta.dir, '../components/authorization/signature-section.tsx'),
+      'utf8',
+    );
+    expect(form).toContain('<SignatureSection');
+    expect(signatureSection).toContain("accessibilityHint={t('authorizationSignatureHint')}");
   });
 });

@@ -26,6 +26,7 @@ export function SelectionChoiceCard({
     <SelectionChoiceSurface
       testID={testID}
       label={label}
+      accessibilityLanguage={language}
       accessibilityRole={accessibilityRole}
       isSelected={isSelected}
       onPress={onPress}
@@ -35,7 +36,7 @@ export function SelectionChoiceCard({
     >
       <Text
         accessibilityLanguage={language}
-        className={`flex-1 text-start text-form font-medium text-primary ${fontClass}`}
+        className={`flex-1 text-start text-form font-medium ${isSelected ? 'text-neutral-900' : 'text-primary-dark'} ${fontClass}`}
       >
         {label}
       </Text>

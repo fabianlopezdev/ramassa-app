@@ -4,9 +4,11 @@ import { createElement, type ReactNode } from 'react';
 import ca from '../../../../packages/shared/i18n/locales/ca/onboarding.json';
 
 const next = mock(() => undefined);
-const save = mock(() => undefined);
+const save = mock((value: StoredDraft) => {
+  stored = value;
+});
 const countryTap = mock(() => undefined);
-const load = () => ({
+const initialDraft = () => ({
   identity: {
     firstName: 'Laia',
     lastName: 'Coromines',
@@ -18,6 +20,9 @@ const load = () => ({
     preferredLanguage: 'ca',
   },
 });
+type StoredDraft = ReturnType<typeof initialDraft> & { season?: Record<string, unknown> };
+let stored: StoredDraft = initialDraft();
+const load = () => stored;
 const Box = ({ children }: { children?: ReactNode }) => createElement('div', null, children);
 mock.module('react-native', () => ({
   Text: Box,
@@ -112,6 +117,7 @@ mock.module('@/components/auth/auth-text-field', () => ({
 const { default: Background } = await import('../app/(app)/onboarding/background');
 afterEach(cleanup);
 beforeEach(() => {
+  stored = initialDraft();
   next.mockClear();
   save.mockClear();
   countryTap.mockClear();
@@ -168,4 +174,25 @@ test('invalid saved dates show feedback on blur, block Continue, and clear after
   fireEvent.click(view.getByRole('button', { name: ca.continueAction }));
   await waitFor(() => expect(next).toHaveBeenCalledTimes(1));
   expect(save).toHaveBeenCalledTimes(1);
+});
+
+test('a revisited background form preserves names edited after its first mount and later sections', async () => {
+  const view = render(createElement(Background));
+  stored = {
+    ...stored,
+    identity: { ...stored.identity, firstName: 'New name', lastName: 'New surname' },
+    season: { childcareNeed: 'yes' },
+  };
+  for (const [label, value] of [
+    [ca.dayLabel, '1'],
+    [ca.monthLabel, '1'],
+    [ca.yearLabel, '1995'],
+  ]) {
+    fireEvent.input(view.getByRole('textbox', { name: label }), { target: { value } });
+  }
+  fireEvent.click(view.getByRole('button', { name: ca.continueAction }));
+  await waitFor(() => expect(next).toHaveBeenCalledTimes(1));
+  expect(stored.identity.firstName).toBe('New name');
+  expect(stored.identity.lastName).toBe('New surname');
+  expect(stored.season?.childcareNeed).toBe('yes');
 });

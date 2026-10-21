@@ -4,6 +4,7 @@ import { useCallback, useMemo, type ReactNode } from 'react';
 import {
   I18nManager,
   View,
+  type AccessibilityActionEvent,
   type AccessibilityRole,
   type StyleProp,
   type ViewStyle,
@@ -17,13 +18,19 @@ import {
   withTiming,
 } from 'react-native-reanimated';
 import { motionTokens } from '@ramassa/shared/tokens/motion';
+import { ACTIVATE_ACCESSIBILITY_ACTIONS } from './accessibility-actions';
 import { NativeWindAnimatedView } from './nativewind-animated-view';
+
+const PRESS_IN_TIMING = { duration: motionTokens.depthPress.inMs } as const;
+const PRESS_OUT_TIMING = { duration: motionTokens.depthPress.outMs } as const;
+const REDUCED_MOTION_TIMING = { duration: 0 } as const;
 
 interface PressableDepthProps {
   readonly children: ReactNode;
   readonly shadow: ReactNode;
   readonly accessibilityLabel: string;
   readonly accessibilityHint?: string;
+  readonly accessibilityLanguage?: string;
   readonly accessibilityRole?: AccessibilityRole;
   readonly isSelected?: boolean;
   readonly testID?: string;
@@ -43,6 +50,7 @@ export function PressableDepth({
   shadow,
   accessibilityLabel,
   accessibilityHint,
+  accessibilityLanguage,
   accessibilityRole = 'button',
   isSelected,
   testID,
@@ -58,23 +66,31 @@ export function PressableDepth({
   const reduced = useReducedMotion();
   const pressed = useSharedValue(0);
   const direction = I18nManager.isRTL ? -1 : 1;
+  const pressInTiming = reduced ? REDUCED_MOTION_TIMING : PRESS_IN_TIMING;
+  const pressOutTiming = reduced ? REDUCED_MOTION_TIMING : PRESS_OUT_TIMING;
   const handlePress = useCallback(() => {
     if (haptic !== undefined) playHaptic(haptic);
     onPress();
   }, [haptic, onPress]);
+  const handleAccessibilityAction = useCallback(
+    ({ nativeEvent }: AccessibilityActionEvent) => {
+      if (nativeEvent.actionName === 'activate') handlePress();
+    },
+    [handlePress],
+  );
   const tap = useMemo(
     () =>
       Gesture.Tap()
         .onBegin(() => {
-          pressed.set(withTiming(1, { duration: reduced ? 0 : motionTokens.depthPress.inMs }));
+          pressed.set(withTiming(1, pressInTiming));
         })
         .onFinalize(() => {
-          pressed.set(withTiming(0, { duration: reduced ? 0 : motionTokens.depthPress.outMs }));
+          pressed.set(withTiming(0, pressOutTiming));
         })
         .onEnd((_event, success) => {
           if (success) runOnJS(handlePress)();
         }),
-    [handlePress, pressed, reduced],
+    [handlePress, pressed, pressInTiming, pressOutTiming],
   );
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [
@@ -92,10 +108,16 @@ export function PressableDepth({
         accessibilityRole={accessibilityRole}
         accessibilityLabel={accessibilityLabel}
         accessibilityHint={accessibilityHint}
+        accessibilityLanguage={accessibilityLanguage}
+        onAccessibilityTap={handlePress}
+        accessibilityActions={ACTIVATE_ACCESSIBILITY_ACTIONS}
+        onAccessibilityAction={handleAccessibilityAction}
         accessibilityState={
           isSelected === undefined ? undefined : { selected: isSelected, checked: isSelected }
         }
-        aria-checked={accessibilityRole === 'radio' ? isSelected : undefined}
+        aria-checked={
+          accessibilityRole === 'radio' || accessibilityRole === 'checkbox' ? isSelected : undefined
+        }
         className={className}
         style={style}
       >

@@ -16,9 +16,10 @@ select is((select document_name from public.get_own_profile()), 'Residence permi
 select lives_ok($$ select public.update_own_profile(
   (select to_jsonb(p) from public.get_own_profile() p) || '{"document_name":""}'::jsonb) $$, 'legacy edits may clear the optional metadata');
 reset role;
-set local role anon;
-select throws_ok($$ select * from public.get_own_profile() $$, '42501', null::text, 'anonymous clients cannot read document names');
-reset role;
+-- Inspect the denied ACL: invoking it crashes the local Supabase 17.6 image.
+-- https://github.com/supabase/supautils/issues/214
+select ok(not has_function_privilege('anon', 'public.get_own_profile()', 'execute'),
+  'anonymous clients cannot read document names');
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000012","role":"authenticated","aal":"aal1"}';
 select is((select count(*)::integer from public.get_participant_profile('5eed0000-0000-4000-8000-000000000011')), 0, 'another player cannot read the participant document');

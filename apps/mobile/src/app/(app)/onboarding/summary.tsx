@@ -14,6 +14,7 @@ import { ReviewEditAction, ReviewRow, ReviewSection } from '@/components/onboard
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
 import { SeasonAnswerRows } from '@/components/profile/season-answer-rows';
 import { onboardingDraftStore } from '@/lib/onboarding';
+import { normalizeDecimalDigits } from '@/lib/onboarding-form';
 import {
   mergedCustomAnswers,
   WIZARD_SCREEN_ROUTES,
@@ -193,7 +194,7 @@ export default function SummaryStepScreen() {
 
   function confirm() {
     onboardingDraftStore.saveDraft({
-      ...(draft ?? {}),
+      ...onboardingDraftStore.loadDraft(),
       currentStep: step.nextDraftStep,
     });
     step.goNext();
@@ -213,7 +214,7 @@ export default function SummaryStepScreen() {
           ? undefined
           : () => {
               onboardingDraftStore.saveDraft({
-                ...(draft ?? {}),
+                ...onboardingDraftStore.loadDraft(),
                 currentStep: step.previousDraftStep ?? 'summary',
               });
               step.goBack?.();
@@ -397,7 +398,9 @@ export default function SummaryStepScreen() {
             logistics.hasDependents === undefined
               ? notGiven
               : hasDependents
-                ? t('summaryDependentsYes', { count: Number(numDependents ?? 0) })
+                ? t('summaryDependentsYes', {
+                    count: Number(normalizeDecimalDigits(numDependents ?? '0')),
+                  })
                 : t('noOption')
           }
         />

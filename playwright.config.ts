@@ -2,6 +2,9 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { defineConfig } from '@playwright/test';
+import { qaBackend } from './scripts/qa-web/backend';
+
+const { supabaseUrl } = qaBackend(process.env);
 
 const adminPort = process.env.RAMASSA_QA_ADMIN_PORT ?? '4193';
 const playerPort = process.env.RAMASSA_QA_PLAYER_PORT ?? '4194';
@@ -57,13 +60,13 @@ export default defineConfig({
       //
       // Port 4193 also keeps it clear of the dev server a person has open while
       // the suite runs.
-      command: `EXPO_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321 EXPO_PUBLIC_SUPABASE_ANON_KEY=${supabasePublishableKey} EXPO_PUBLIC_MEDIA_WORKER_URL=http://127.0.0.1:${mediaPort} EXPO_PUBLIC_TRANSLATION_WORKER_URL=http://127.0.0.1:${translationPort} EXPO_PUBLIC_PLAYER_WEB_URL=${playerOrigin} bun run --cwd apps/admin dev -- --port ${adminPort} --strictPort --force`,
+      command: `EXPO_PUBLIC_SUPABASE_URL=${supabaseUrl} EXPO_PUBLIC_SUPABASE_ANON_KEY=${supabasePublishableKey} EXPO_PUBLIC_MEDIA_WORKER_URL=http://127.0.0.1:${mediaPort} EXPO_PUBLIC_TRANSLATION_WORKER_URL=http://127.0.0.1:${translationPort} EXPO_PUBLIC_PLAYER_WEB_URL=${playerOrigin} bun run --cwd apps/admin dev -- --port ${adminPort} --strictPort --force`,
       url: adminOrigin,
       reuseExistingServer: false,
       timeout: 600_000,
     },
     {
-      command: `CI=1 RAMASSA_QA_PLAYER_PORT=${playerPort} EXPO_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321 EXPO_PUBLIC_SUPABASE_ANON_KEY=${supabasePublishableKey} EXPO_PUBLIC_MEDIA_WORKER_URL=http://127.0.0.1:${mediaPort} EXPO_PUBLIC_TRANSLATION_WORKER_URL=http://127.0.0.1:${translationPort} EXPO_PUBLIC_ADMIN_WEB_URL=${adminOrigin} bun run scripts/start-player-web-qa.ts`,
+      command: `CI=1 RAMASSA_QA_PLAYER_PORT=${playerPort} EXPO_PUBLIC_SUPABASE_URL=${supabaseUrl} EXPO_PUBLIC_SUPABASE_ANON_KEY=${supabasePublishableKey} EXPO_PUBLIC_MEDIA_WORKER_URL=http://127.0.0.1:${mediaPort} EXPO_PUBLIC_TRANSLATION_WORKER_URL=http://127.0.0.1:${translationPort} EXPO_PUBLIC_ADMIN_WEB_URL=${adminOrigin} bun run scripts/start-player-web-qa.ts`,
       url: playerOrigin,
       reuseExistingServer: false,
       timeout: 600_000,
@@ -77,13 +80,13 @@ export default defineConfig({
       // `--port 8893` matches EXPO_PUBLIC_MEDIA_WORKER_URL in the admin's env,
       // which Vite inlines at build time, and 4193 is in the Worker's CORS
       // allowlist for the same reason.
-      command: `bun run --cwd workers/media dev -- --port ${mediaPort} --persist-to ${workerStateRoot}/media --var LOCAL_UPLOAD_SIGNING_SECRET:${qaLocalUploadSigningSecret}`,
+      command: `bun run --cwd workers/media dev -- --port ${mediaPort} --persist-to ${workerStateRoot}/media --var LOCAL_UPLOAD_SIGNING_SECRET:${qaLocalUploadSigningSecret} --var SUPABASE_URL:${supabaseUrl}`,
       url: `http://127.0.0.1:${mediaPort}/health`,
       reuseExistingServer: false,
       timeout: 600_000,
     },
     {
-      command: `bun run --cwd workers/translation dev:qa -- --port ${translationPort} --persist-to ${workerStateRoot}/translation`,
+      command: `bun run --cwd workers/translation dev:qa -- --port ${translationPort} --persist-to ${workerStateRoot}/translation --var SUPABASE_URL:${supabaseUrl}`,
       url: `http://127.0.0.1:${translationPort}/health`,
       reuseExistingServer: false,
       timeout: 600_000,

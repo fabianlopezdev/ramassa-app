@@ -16,6 +16,8 @@ type Layout = (event: { nativeEvent: { layout: { height: number } } }) => void;
 let viewportLayout: Layout;
 let titleLayout: Layout;
 let footerLayout: Layout;
+let contentSizeChanged: (width: number, height: number) => void;
+let scrollChanged: (event: { nativeEvent: { contentOffset: { y: number } } }) => void;
 let contentStyle: { paddingTop: number; paddingBottom: number };
 const box = ({ children }: { children?: ReactNode }) => createElement('div', null, children);
 mock.module('react-native', () => ({
@@ -40,12 +42,24 @@ mock.module('react-native', () => ({
   ScrollView: ({
     children,
     contentContainerStyle,
+    scrollEnabled,
+    onContentSizeChange,
+    onScroll,
   }: {
     children: ReactNode;
     contentContainerStyle: typeof contentStyle;
+    scrollEnabled: boolean;
+    onContentSizeChange: typeof contentSizeChanged;
+    onScroll: typeof scrollChanged;
   }) => {
+    contentSizeChanged = onContentSizeChange;
+    scrollChanged = onScroll;
     contentStyle = contentContainerStyle;
-    return createElement('section', { 'data-testid': 'scroll' }, children);
+    return createElement(
+      'section',
+      { 'data-testid': 'scroll', 'data-scroll-enabled': scrollEnabled },
+      children,
+    );
   },
 }));
 mock.module('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
@@ -118,6 +132,7 @@ mock.module('@/components/motion/fade-slide-in', () => ({
   }) => createElement('div', { 'data-step': index, 'data-composite': composite }, children),
 }));
 const { AuthScreen } = await import('./auth-screen');
+const { FormScreen } = await import('../layout/form-screen');
 const { WizardFrame } = await import('../onboarding/wizard-frame');
 const originalOS = process.env.EXPO_OS;
 afterAll(() => {
@@ -290,4 +305,99 @@ test('revisiting a wizard screen skips the heading, form and CTA entrance togeth
   expect(view.getByRole('textbox')).toBeTruthy();
   expect(view.getByRole('button', { name: 'Continue' })).toBeTruthy();
   view.unmount();
+});
+
+test('signature drawing can pause the actual shared scroll container without moving the footer', () => {
+  const props = {
+    heading: createElement('h1', null, 'Season authorization'),
+    children: createElement('div', null, 'Signature pad'),
+    bottomAction: createElement('button', null, 'Sign and enter'),
+  };
+  const view = render(createElement(FormScreen, props));
+  expect(view.getByTestId('scroll').getAttribute('data-scroll-enabled')).toBe('true');
+  view.rerender(createElement(FormScreen, { ...props, scrollEnabled: false }));
+  expect(view.getByTestId('scroll').getAttribute('data-scroll-enabled')).toBe('false');
+  expect(view.getByRole('button').closest('footer')).toBeTruthy();
+  view.rerender(createElement(FormScreen, { ...props, scrollEnabled: true }));
+  expect(view.getByTestId('scroll').getAttribute('data-scroll-enabled')).toBe('true');
+});
+
+test('content end is reported only after the last text clears the fixed footer, once', () => {
+  const onEndReached = mock(() => {});
+  const view = render(
+    createElement(FormScreen, {
+      heading: createElement('h1', null, 'Read'),
+      children: createElement('p', null, 'Document'),
+      bottomAction: createElement('button', null, 'Continue'),
+      onEndReached,
+    }),
+  );
+  act(() => {
+    viewportLayout(layout(600));
+    footerLayout(layout(130));
+    contentSizeChanged(400, 1200);
+  });
+  expect(onEndReached).not.toHaveBeenCalled();
+  act(() => scrollChanged({ nativeEvent: { contentOffset: { y: 550 } } }));
+  expect(onEndReached).not.toHaveBeenCalled();
+  act(() => scrollChanged({ nativeEvent: { contentOffset: { y: 600 } } }));
+  expect(onEndReached).toHaveBeenCalledTimes(1);
+  act(() => scrollChanged({ nativeEvent: { contentOffset: { y: 610 } } }));
+  act(() => contentSizeChanged(400, 600));
+  expect(onEndReached).toHaveBeenCalledTimes(1);
+  view.unmount();
+});
+
+test('short documents and collapsed content can reach the visible end without a scroll gesture', () => {
+  const onEndReached = mock(() => {});
+  const view = render(
+    createElement(FormScreen, {
+      heading: null,
+      children: createElement('p', null, 'Document'),
+      bottomAction: null,
+      onEndReached,
+    }),
+  );
+  act(() => {
+    viewportLayout(layout(600));
+    contentSizeChanged(400, 1200);
+  });
+  expect(onEndReached).not.toHaveBeenCalled();
+  act(() => footerLayout(layout(130)));
+  expect(onEndReached).not.toHaveBeenCalled();
+  act(() => contentSizeChanged(400, 600));
+  expect(onEndReached).toHaveBeenCalledTimes(1);
+  view.unmount();
+  onEndReached.mockClear();
+  const short = render(
+    createElement(FormScreen, {
+      heading: null,
+      children: createElement('p', null, 'Short'),
+      bottomAction: null,
+      onEndReached,
+    }),
+  );
+  act(() => {
+    viewportLayout(layout(600));
+    footerLayout(layout(130));
+    contentSizeChanged(400, 600);
+  });
+  expect(onEndReached).toHaveBeenCalledTimes(1);
+  short.unmount();
+});
+
+test('a new document-end subscription can report the currently visible end', () => {
+  const firstDocumentEnd = mock(() => {});
+  const nextDocumentEnd = mock(() => {});
+  const props = { heading: null, children: null, bottomAction: null };
+  const view = render(createElement(FormScreen, { ...props, onEndReached: firstDocumentEnd }));
+  act(() => {
+    viewportLayout(layout(600));
+    footerLayout(layout(130));
+    contentSizeChanged(400, 600);
+  });
+  expect(firstDocumentEnd).toHaveBeenCalledTimes(1);
+  view.rerender(createElement(FormScreen, { ...props, onEndReached: nextDocumentEnd }));
+  expect(nextDocumentEnd).toHaveBeenCalledTimes(1);
+  expect(firstDocumentEnd).toHaveBeenCalledTimes(1);
 });

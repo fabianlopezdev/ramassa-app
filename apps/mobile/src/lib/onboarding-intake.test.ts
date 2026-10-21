@@ -14,6 +14,7 @@ import {
   seedDraftFromProfile,
   storedPayloadFromProfile,
   withSelectedLanguage,
+  wizardDraftStep,
   wizardStepRoute,
 } from './onboarding-intake';
 
@@ -200,4 +201,10 @@ describe('onboarding language and navigation', () => {
       '/onboarding/custom/transport?entrance=none',
     );
   });
+});
+
+test('the terms introduction has its own resumable route and back transition', () => {
+  expect(wizardStepRoute('terms-intro')).toBe('/onboarding/terms-intro');
+  expect(wizardStepRoute('terms-intro', 'back')).toBe('/onboarding/terms-intro?entrance=none');
+  expect(wizardDraftStep('terms-intro')).toBe('terms-intro');
 });

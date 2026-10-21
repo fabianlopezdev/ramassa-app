@@ -21,6 +21,7 @@
  */
 
 import { z } from 'zod';
+import { AppError } from '../errors';
 import { SUPPORT_NEED_CATEGORIES, type SupportNeedCategory } from '../schemas/support-needs';
 import type { MmkvLike } from './supabase';
 
@@ -41,6 +42,7 @@ export const ONBOARDING_STEPS = [
   'specific-needs',
   // The summary of everything before the terms (RAPP-300).
   'summary',
+  'terms-intro',
   'terms',
 ] as const;
 export type OnboardingStepName = (typeof ONBOARDING_STEPS)[number];
@@ -86,6 +88,11 @@ export interface OnboardingDraftStore {
   clearDraft(): void;
 }
 
+export interface AccountOnboardingDraftStore extends OnboardingDraftStore {
+  setUser(userId: string | null): void;
+  clearUserDraft(userId: string): void;
+}
+
 function parseStoredDraft(raw: string | undefined | null): OnboardingDraft | null {
   if (raw === undefined || raw === null) return null;
   try {
@@ -102,6 +109,36 @@ export function createMmkvOnboardingDraftStore(mmkv: MmkvLike): OnboardingDraftS
     loadDraft: () => parseStoredDraft(mmkv.getString(DRAFT_STORAGE_KEY)),
     saveDraft: (draft) => mmkv.set(DRAFT_STORAGE_KEY, JSON.stringify(draft)),
     clearDraft: () => void mmkv.remove(DRAFT_STORAGE_KEY),
+  };
+}
+
+/** Keep resumable answers private to the account that entered them on a shared phone. */
+export function createAccountOnboardingDraftStore(mmkv: MmkvLike): AccountOnboardingDraftStore {
+  let current: OnboardingDraftStore | null = null;
+  return {
+    setUser(userId) {
+      // Old drafts had no reliable owner. Never assign that personal data to
+      // whichever account happens to sign in after the app is updated.
+      mmkv.remove(DRAFT_STORAGE_KEY);
+      current =
+        userId === null
+          ? null
+          : createMmkvOnboardingDraftStore({
+              getString: (key) => mmkv.getString(`${key}.${userId}`),
+              set: (key, value) => mmkv.set(`${key}.${userId}`, value),
+              remove: (key) => mmkv.remove(`${key}.${userId}`),
+            });
+    },
+    loadDraft: () => current?.loadDraft() ?? null,
+    saveDraft(draft) {
+      if (current === null)
+        throw new AppError('UNEXPECTED-1', {
+          message: 'Onboarding draft requires a signed-in account',
+        });
+      current.saveDraft(draft);
+    },
+    clearDraft: () => current?.clearDraft(),
+    clearUserDraft: (userId) => void mmkv.remove(`${DRAFT_STORAGE_KEY}.${userId}`),
   };
 }
 

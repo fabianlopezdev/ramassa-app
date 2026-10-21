@@ -77,7 +77,9 @@ export default function LogisticsStepScreen() {
   }, [invitedEntity, getValues, setValue]);
 
   function persist(currentStep: OnboardingDraftStep) {
-    onboardingDraftStore.saveDraft(mergeLogisticsDraft(draft, getValues(), currentStep));
+    onboardingDraftStore.saveDraft(
+      mergeLogisticsDraft(onboardingDraftStore.loadDraft(), getValues(), currentStep),
+    );
   }
 
   const continueToNextStep = handleSubmit(
@@ -121,7 +123,6 @@ export default function LogisticsStepScreen() {
             <AuthTextField
               label={wording.label('phone', t('phoneLabel'))}
               hint={wording.help('phone')}
-              placeholder={t('phonePlaceholder')}
               value={field.value ?? ''}
               onChangeText={field.onChange}
               onBlur={field.onBlur}
@@ -230,7 +231,6 @@ export default function LogisticsStepScreen() {
               render={({ field }) => (
                 <AuthTextField
                   label={wording.label('reference_entity', t('referenceEntityPlaceholder'))}
-                  placeholder={t('referenceEntityPlaceholder')}
                   value={field.value ?? ''}
                   onChangeText={field.onChange}
                   onBlur={field.onBlur}

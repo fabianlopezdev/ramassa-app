@@ -12,6 +12,7 @@
 
 import { describe, expect, test } from 'bun:test';
 import {
+  createAccountOnboardingDraftStore,
   createInMemoryOnboardingDraftStore,
   createMmkvOnboardingDraftStore,
 } from './onboarding-drafts';
@@ -107,4 +108,74 @@ describe('onboarding draft store', () => {
     expect(draft?.identity).toBeUndefined();
     expect(draft?.logistics?.city).toBe('Vic');
   });
+});
+
+test('the introduction and existing terms drafts both resume without losing consent choices', () => {
+  for (const currentStep of ['terms-intro', 'terms'] as const) {
+    const mmkv = makeFakeMmkv();
+    const draft = {
+      currentStep,
+      identity: { firstName: 'Laia' },
+      terms: { termsAccepted: false, mediaConsent: true },
+    };
+    createMmkvOnboardingDraftStore(mmkv).saveDraft(draft);
+    expect(createMmkvOnboardingDraftStore(mmkv).loadDraft()).toEqual(draft);
+  }
+});
+
+describe('account-scoped onboarding drafts on a shared device', () => {
+  test('Not now retains A draft for A without exposing it to B or signed-out screens', () => {
+    const mmkv = makeFakeMmkv();
+    const store = createAccountOnboardingDraftStore(mmkv);
+    const first = {
+      currentStep: 'terms' as const,
+      identity: { firstName: 'Amina' },
+      documentation: { documentNumber: 'private-A' },
+      terms: { signatureOwnerId: 'player-a', mediaConsent: true },
+    };
+    store.setUser('player-a');
+    store.saveDraft(first);
+    store.setUser(null);
+    expect(store.loadDraft()).toBeNull();
+    expect(() => store.saveDraft(first)).toThrow();
+    store.setUser('player-b');
+    expect(store.loadDraft()).toBeNull();
+    const second = { currentStep: 'background' as const, identity: { firstName: 'Laia' } };
+    store.saveDraft(second);
+    store.setUser('player-a');
+    expect(store.loadDraft()).toEqual(first);
+    store.clearDraft();
+    expect(store.loadDraft()).toBeNull();
+    store.setUser('player-b');
+    expect(store.loadDraft()).toEqual(second);
+    const restarted = createAccountOnboardingDraftStore(mmkv);
+    restarted.setUser('player-b');
+    expect(restarted.loadDraft()).toEqual(second);
+  });
+
+  test('an unowned legacy draft is removed instead of being assigned to the next account', () => {
+    const mmkv = makeFakeMmkv();
+    createMmkvOnboardingDraftStore(mmkv).saveDraft({
+      currentStep: 'identity',
+      identity: { firstName: 'Unowned' },
+    });
+    const store = createAccountOnboardingDraftStore(mmkv);
+    store.setUser('player-b');
+    expect(store.loadDraft()).toBeNull();
+    expect(mmkv.backing.has('ramassa.onboarding-draft')).toBe(false);
+  });
+});
+
+test('a completed request clears its own account draft after another account becomes active', () => {
+  const mmkv = makeFakeMmkv();
+  const store = createAccountOnboardingDraftStore(mmkv);
+  store.setUser('player-a');
+  store.saveDraft({ currentStep: 'terms', identity: { firstName: 'Amina' } });
+  store.setUser('player-b');
+  const next = { currentStep: 'identity' as const, identity: { firstName: 'Laia' } };
+  store.saveDraft(next);
+  store.clearUserDraft('player-a');
+  expect(store.loadDraft()).toEqual(next);
+  store.setUser('player-a');
+  expect(store.loadDraft()).toBeNull();
 });

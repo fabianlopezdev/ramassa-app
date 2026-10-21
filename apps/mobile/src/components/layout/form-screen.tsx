@@ -2,16 +2,19 @@ import { AuthActionFooter } from '@/components/auth/auth-action-footer';
 import { FormWidth } from '@/components/layout/content-width';
 import { FadeSlideIn } from '@/components/motion/fade-slide-in';
 import { BlurTargetView } from 'expo-blur';
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   Keyboard,
   KeyboardAvoidingView,
   ScrollView,
   useWindowDimensions,
   View,
+  type StyleProp,
+  type ViewStyle,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { tokens } from '@ramassa/shared/tokens';
+import { motionTokens } from '@ramassa/shared/tokens/motion';
 
 const viewportStyle = { flex: 1, overflow: 'hidden' } as const;
 // NativeWind's remapped flex class overrides the height behavior's flex: 0.
@@ -20,6 +23,13 @@ const keyboardContainerStyle = { flex: 1 } as const;
 
 type FormScreenProps = {
   readonly entrance?: 'staggered' | 'none';
+  readonly testID?: string;
+  readonly style?: StyleProp<ViewStyle>;
+  readonly accessibilityLanguage?: string;
+  /** Pause scrolling while a signature pad owns the drawing gesture. */
+  readonly scrollEnabled?: boolean;
+  /** Fires once when the final content is visible above the fixed action. */
+  readonly onEndReached?: () => void;
   readonly navigation?: ReactNode;
   readonly heading: ReactNode;
   readonly children: ReactNode;
@@ -36,6 +46,11 @@ export function FormScreen({
   bottomAction,
   headingAnchor,
   entrance = 'staggered',
+  testID,
+  style,
+  accessibilityLanguage,
+  scrollEnabled = true,
+  onEndReached,
 }: FormScreenProps) {
   const [keyboardVisible, setKeyboardVisible] = useState(() => Keyboard.isVisible());
   useEffect(() => {
@@ -55,6 +70,8 @@ export function FormScreen({
   const [actionHeight, setActionHeight] = useState(0);
   const [viewportHeight, setViewportHeight] = useState(0);
   const [contentHeight, setContentHeight] = useState(0);
+  const scrollOffset = useRef(0);
+  const endReported = useRef(false);
   const blurTarget = useRef<View | null>(null);
   const { fontScale } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -84,8 +101,33 @@ export function FormScreen({
     }),
     [viewportHeight, headingHeight, actionHeight, estimatedActionHeight, bottomInset],
   );
+  useEffect(() => {
+    endReported.current = false;
+  }, [onEndReached]);
+  const reportEndIfVisible = useCallback(() => {
+    if (
+      onEndReached === undefined ||
+      endReported.current ||
+      actionHeight <= 0 ||
+      viewportHeight <= 0 ||
+      contentHeight <= 0
+    )
+      return;
+    const contentEnd = contentHeight - formContentStyle.paddingBottom;
+    const visibleEnd = scrollOffset.current + viewportHeight - actionHeight;
+    if (visibleEnd < contentEnd) return;
+    endReported.current = true;
+    onEndReached();
+  }, [onEndReached, actionHeight, viewportHeight, contentHeight, formContentStyle.paddingBottom]);
+  useEffect(() => reportEndIfVisible(), [reportEndIfVisible]);
   return (
-    <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right']}>
+    <SafeAreaView
+      testID={testID}
+      style={style}
+      accessibilityLanguage={accessibilityLanguage}
+      className="flex-1 bg-white"
+      edges={['top', 'left', 'right']}
+    >
       {navigation}
       <KeyboardAvoidingView
         style={keyboardContainerStyle}
@@ -107,6 +149,16 @@ export function FormScreen({
                 content extend behind the home indicator without a white strip. */}
             <ScrollView
               testID="auth-scroll-content"
+              scrollEnabled={scrollEnabled}
+              onScroll={
+                onEndReached === undefined
+                  ? undefined
+                  : ({ nativeEvent }) => {
+                      scrollOffset.current = nativeEvent.contentOffset.y;
+                      reportEndIfVisible();
+                    }
+              }
+              scrollEventThrottle={motionTokens.duration.fast}
               contentInsetAdjustmentBehavior="never"
               showsVerticalScrollIndicator={false}
               contentContainerClassName="grow px-lg"

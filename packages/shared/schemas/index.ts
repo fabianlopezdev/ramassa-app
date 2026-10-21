@@ -44,3 +44,5 @@ export * from './upload';
 export * from './equipment';
 export * from './forum';
 export * from './services';
+
+export * from './terms-signing';

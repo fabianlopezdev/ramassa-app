@@ -62,6 +62,7 @@ export type ConversationReadStateRow =
   Database['public']['Tables']['conversation_read_states']['Row'];
 export type ConversationAssignmentHistoryRow =
   Database['public']['Tables']['conversation_assignment_history']['Row'];
+export type AppTermsSignatureRow = Database['public']['Tables']['app_terms_signatures']['Row'];
 export type TermsAcceptanceRow = Database['public']['Tables']['terms_acceptances']['Row'];
 export type DeletionRequestRow = Database['public']['Tables']['deletion_requests']['Row'];
 export type ParticipantNoteRow = Database['public']['Tables']['participant_notes']['Row'];
@@ -1524,6 +1525,28 @@ export function buildSeasonAnswers(overrides: Partial<SeasonAnswersRow> = {}): S
     childcare_need: 'no',
     specific_needs: null,
     updated_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+/** Synthetic app-terms signing stays independent of season signing fixtures. */
+export function buildAppTermsSignature(
+  overrides: Partial<AppTermsSignatureRow> = {},
+): AppTermsSignatureRow {
+  const acceptance = buildTermsAcceptance();
+  return {
+    acceptance_id: acceptance.id,
+    profile_id: acceptance.profile_id,
+    org_id: SEED_ORGANIZATION_ID,
+    signature: [
+      [
+        [100, 200],
+        [300, 400],
+      ],
+    ],
+    unable_to_draw: false,
+    media_consent: false,
+    device: 'synthetic-seed',
     ...overrides,
   };
 }

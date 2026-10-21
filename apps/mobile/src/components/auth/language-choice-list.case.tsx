@@ -1,12 +1,15 @@
 import { fireEvent, render } from '@testing-library/react';
 import { afterAll, beforeEach, expect, mock, test } from 'bun:test';
 import { createElement, type ReactNode } from 'react';
+import { contrastRatio } from '@ramassa/shared/organization-settings';
+import { tokens } from '@ramassa/shared/tokens';
 
 const onChoose = mock(async () => undefined);
 
 mock.module('@/components/motion/pressable-depth', () => ({
   PressableDepth: ({
     accessibilityLabel,
+    accessibilityLanguage,
     children,
     isSelected,
     onPress,
@@ -17,6 +20,7 @@ mock.module('@/components/motion/pressable-depth', () => ({
     accessibilityRole,
   }: {
     readonly accessibilityLabel: string;
+    readonly accessibilityLanguage?: string;
     readonly accessibilityRole: string;
     readonly children: ReactNode;
     readonly isSelected?: boolean;
@@ -30,6 +34,7 @@ mock.module('@/components/motion/pressable-depth', () => ({
       'button',
       {
         'aria-label': accessibilityLabel,
+        lang: accessibilityLanguage,
         role: accessibilityRole,
         'aria-checked': isSelected,
         className: faceClassName,
@@ -63,7 +68,8 @@ mock.module('@/lib/continuous-corners', () => ({ continuousCorners: {} }));
 let fontScale = 1;
 mock.module('react-native', () => ({
   useWindowDimensions: () => ({ fontScale }),
-  Text: ({ children }: { readonly children: ReactNode }) => createElement('span', null, children),
+  Text: ({ children, className }: { readonly children: ReactNode; readonly className?: string }) =>
+    createElement('span', { className }, children),
   View: ({ children }: { readonly children: ReactNode }) => createElement('div', null, children),
 }));
 
@@ -90,8 +96,14 @@ test('renders all five languages in their own script and announces the selected 
     }),
   );
 
-  for (const nativeName of ['Català', 'Español', 'English', 'العربية', 'فارسی']) {
-    expect(view.getByRole('radio', { name: nativeName })).toBeTruthy();
+  for (const [language, nativeName] of [
+    ['ca', 'Català'],
+    ['es', 'Español'],
+    ['en', 'English'],
+    ['ar', 'العربية'],
+    ['fa', 'فارسی'],
+  ]) {
+    expect(view.getByRole('radio', { name: nativeName }).getAttribute('lang')).toBe(language);
   }
   expect(view.getByRole('radio', { name: 'Català' }).getAttribute('aria-checked')).toBe('true');
 
@@ -149,4 +161,42 @@ test('raised option buttons support unanswered single-choice questions', () => {
   if (option) fireEvent.click(option);
   expect(onPress).toHaveBeenCalledTimes(1);
   view.unmount();
+});
+
+function foregroundColor(label: HTMLElement): string {
+  const palette: Readonly<Record<string, string>> = {
+    'text-primary': tokens.colors.primary.DEFAULT,
+    'text-primary-dark': tokens.colors.primary.dark,
+    'text-neutral-900': tokens.colors.neutral[900],
+  };
+  const color = label.className
+    .split(' ')
+    .map((name) => palette[name])
+    .find(Boolean);
+  expect(color).toBeDefined();
+  return color!;
+}
+
+test('selected and unselected choice labels meet normal text contrast without changing typography', () => {
+  fontScale = 1;
+  const view = render(createElement(LanguageChoiceList, { selectedLanguage: 'ca', onChoose }));
+  const selected = view.getByText('Català');
+  const unselected = view.getByText('English');
+  expect(
+    contrastRatio(foregroundColor(selected), tokens.colors.secondary.DEFAULT),
+  ).toBeGreaterThanOrEqual(4.5);
+  expect(contrastRatio(foregroundColor(unselected), tokens.colors.white)).toBeGreaterThanOrEqual(
+    4.5,
+  );
+  expect(selected.classList.contains('font-medium')).toBe(true);
+  expect(unselected.classList.contains('font-medium')).toBe(true);
+  expect(selected.classList.contains('text-form')).toBe(true);
+  expect(unselected.classList.contains('text-form')).toBe(true);
+  view.unmount();
+  const choice = render(
+    createElement(OptionChip, { label: 'Yes', isSelected: true, onPress: () => {} }),
+  );
+  expect(
+    contrastRatio(foregroundColor(choice.getByText('Yes')), tokens.colors.secondary.DEFAULT),
+  ).toBeGreaterThanOrEqual(4.5);
 });

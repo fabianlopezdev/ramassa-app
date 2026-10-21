@@ -67,10 +67,20 @@ export default function BackgroundStepScreen() {
   });
 
   function persist(currentStep: OnboardingDraftStep) {
+    const latest = onboardingDraftStore.loadDraft();
+    const values = getValues();
     onboardingDraftStore.saveDraft({
-      ...draft,
+      ...latest,
       currentStep,
-      identity: getValues(),
+      identity: {
+        ...latest?.identity,
+        day: values.day,
+        month: values.month,
+        year: values.year,
+        placeOfBirth: values.placeOfBirth,
+        nationality: values.nationality,
+        preferredLanguage: values.preferredLanguage,
+      },
     });
   }
 
@@ -206,6 +216,7 @@ export default function BackgroundStepScreen() {
             {dateMessages.map(({ field, message }) =>
               message === undefined ? null : (
                 <Text
+                  selectable
                   key={field}
                   className={`text-start text-form text-error ${languageFontClass}`}
                 >

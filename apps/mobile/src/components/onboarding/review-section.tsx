@@ -1,9 +1,9 @@
+import { BrandSymbol, DataIcon } from '@/components/forms/data-icon';
 import { GlassIconSurface } from '@/components/forms/glass-icon-surface';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import type { ProfileRowProps } from '@/components/profile/profile-section';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { SymbolView, type SymbolViewProps } from 'expo-symbols';
-import { cssInterop } from 'nativewind';
+import type { SymbolViewProps } from 'expo-symbols';
 import type { ReactNode } from 'react';
 import { Text, View } from 'react-native';
 import { tokens } from '@ramassa/shared/tokens';
@@ -25,28 +25,7 @@ const symbols = {
   edit: { ios: 'pencil', android: 'edit', web: 'edit' },
 } as const satisfies Record<string, SymbolViewProps['name']>;
 
-const ThemedSymbol = cssInterop(SymbolView, {
-  className: { target: false, nativeStyleToProp: { color: 'tintColor' } },
-});
-
-const circleStyle = {
-  width: tokens.tapTarget.min,
-  height: tokens.tapTarget.min,
-  borderRadius: tokens.radius.full,
-  flexShrink: 0,
-} as const;
 const headingStyle = { flexBasis: tokens.formField.width.medium } as const;
-
-function ReviewSymbol({ name }: { readonly name: keyof typeof symbols }) {
-  return (
-    <ThemedSymbol
-      accessible={false}
-      name={symbols[name]}
-      size={tokens.spacing.lg}
-      className="text-primary-dark"
-    />
-  );
-}
 
 /** Icon-only correction action with the same accessible target on every section. */
 export function ReviewEditAction({
@@ -68,7 +47,7 @@ export function ReviewEditAction({
       className="min-h-recommended min-w-recommended items-center justify-center self-start rounded-full"
     >
       <GlassIconSurface>
-        <ReviewSymbol name="edit" />
+        <BrandSymbol name={symbols.edit} />
       </GlassIconSurface>
     </PressableScale>
   );
@@ -110,14 +89,7 @@ export function ReviewRow({ label, value, icon = 'document' }: ProfileRowProps) 
       accessibilityLabel={`${label}: ${value}`}
       className="flex-row items-center gap-md border-b border-neutral-200 py-md"
     >
-      <View
-        style={circleStyle}
-        className="items-center justify-center bg-secondary/20"
-        accessibilityElementsHidden
-        importantForAccessibility="no-hide-descendants"
-      >
-        <ReviewSymbol name={icon} />
-      </View>
+      <DataIcon name={symbols[icon]} />
       <View className="min-w-0 flex-1 gap-xs">
         <Text className={`text-start text-form text-neutral-700 ${fontClass}`}>{label}</Text>
         <Text

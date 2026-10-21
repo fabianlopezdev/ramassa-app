@@ -1,0 +1,13 @@
+appId: com.ramassa.app
+name: _sign-app-terms
+# Accessible app-terms signing for the synthetic onboarding test accounts.
+---
+- scrollUntilVisible:
+    element:
+      id: 'terms-cannot-draw'
+    direction: DOWN
+- tapOn:
+    id: 'terms-cannot-draw'
+- assertVisible:
+    id: 'terms-cannot-draw'
+    selected: true

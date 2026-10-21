@@ -4,6 +4,7 @@ import { PressableScale } from '@/components/motion/pressable-scale';
 import { OptionChip } from '@/components/onboarding/option-chip';
 import { optionGridColumnCount } from '@/components/onboarding/option-grid';
 import { QuestionHelp } from '@/components/onboarding/question-help';
+import { continuousCorners } from '@/lib/continuous-corners';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -81,12 +82,14 @@ export function SupportingEntitiesField({
           {value.map((entity) => (
             <View
               key={entity}
+              style={continuousCorners}
               className="w-full flex-row items-center gap-sm rounded-lg border border-neutral-200 bg-neutral-50 px-md py-sm"
             >
               <Text className={`flex-1 text-start text-form text-neutral-900 ${fontClass}`}>
                 {entity}
               </Text>
               <PressableScale
+                style={continuousCorners}
                 accessibilityRole="button"
                 accessibilityLabel={t('onboarding:supportingEntitiesRemoveAction', {
                   name: entity,

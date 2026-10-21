@@ -5,8 +5,29 @@ export interface NetworkStateLike {
   readonly isInternetReachable?: boolean;
 }
 
-export function isNetworkStateOnline(state: NetworkStateLike): boolean {
-  return state.isConnected !== false && state.isInternetReachable !== false;
+interface NetworkStatusContext {
+  readonly isDev: boolean;
+  readonly backendUrl: string;
+}
+
+function isLoopbackDevelopmentBackend(context?: NetworkStatusContext): boolean {
+  if (context?.isDev !== true) return false;
+  try {
+    const url = new URL(context.backendUrl);
+    return url.protocol === 'http:' && ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname);
+  } catch {
+    return false;
+  }
+}
+
+export function isNetworkStateOnline(
+  state: NetworkStateLike,
+  context?: NetworkStatusContext,
+): boolean {
+  return (
+    isLoopbackDevelopmentBackend(context) ||
+    (state.isConnected !== false && state.isInternetReachable !== false)
+  );
 }
 
 /**
@@ -14,8 +35,14 @@ export function isNetworkStateOnline(state: NetworkStateLike): boolean {
  * Network supplies the device listener, and onlineManager pauses radio work
  * while cached rows remain readable.
  */
-export function configureNetworkStatus(): void {
+export function configureNetworkStatus(context?: NetworkStatusContext): void {
   onlineManager.setEventListener((setOnline) => {
+    // USB port forwarding and simulator loopback do not use the device radio.
+    // Let local requests run; normal request errors still handle a stopped server.
+    if (isLoopbackDevelopmentBackend(context)) {
+      setOnline(true);
+      return;
+    }
     let disposed = false;
     let subscription: { remove(): void } | undefined;
 

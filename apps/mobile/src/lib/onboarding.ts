@@ -8,28 +8,34 @@ import { safeAsync } from '@/lib/observability';
 import { privateStorage } from '@/lib/storage';
 import { supabase } from '@/lib/supabase';
 import { useEffect, useState } from 'react';
+import { Platform } from 'react-native';
 import { fetchMyPendingInvite } from '@ramassa/shared/accounts';
 import { AppError, type Result } from '@ramassa/shared/errors';
 import { saveMyCustomAnswers, type CustomAnswerValue } from '@ramassa/shared/intake-builder';
-import { createMmkvOnboardingDraftStore } from '@ramassa/shared/onboarding-drafts';
+import { createAccountOnboardingDraftStore } from '@ramassa/shared/onboarding-drafts';
 import type { CompleteOnboardingPayload } from '@ramassa/shared/schemas';
+import { termsSigningPayload, type TermsSigning } from '@ramassa/shared/schemas';
 
 /** The one draft store the wizard screens share. */
-export const onboardingDraftStore = createMmkvOnboardingDraftStore(privateStorage);
+export const onboardingDraftStore = createAccountOnboardingDraftStore(privateStorage);
 
 /**
  * Completes onboarding through `public.complete_onboarding`: profile plus
  * terms acceptance in one server-side transaction, sensitive fields encrypted
  * there so the key never touches this device. On success the caller clears the
- * draft (the only unencrypted copy of the intake PII) and refreshes the auth
+ * protected draft copy of the intake answers and refreshes the auth
  * profile so the gate flips.
  */
 export function completeOnboarding(
   payload: Partial<CompleteOnboardingPayload>,
+  signing: TermsSigning,
 ): Promise<Result<void, AppError>> {
   return safeAsync(
     async () => {
-      const { error } = await supabase.rpc('complete_onboarding', { payload });
+      const { error } = await supabase.rpc('complete_onboarding_signed', {
+        payload,
+        p_signing: termsSigningPayload(signing, `${Platform.OS} ${String(Platform.Version)}`),
+      });
       if (error) {
         throw new AppError('DB-1', { message: error.message });
       }

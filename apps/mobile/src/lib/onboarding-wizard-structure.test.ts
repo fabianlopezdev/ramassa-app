@@ -41,8 +41,8 @@ describe('the onboarding welcome split', () => {
   });
 
   test('progress and navigation come from the plan, counting only the screens she sees', () => {
-    // Four question screens, the summary and the terms (RAPP-300).
-    expect(frameSource).toContain('WIZARD_TOTAL_STEPS = WIZARD_QUESTION_SCREENS.length + 2');
+    // Questions, summary, terms introduction and acceptance.
+    expect(frameSource).toContain('WIZARD_TOTAL_STEPS = WIZARD_QUESTION_SCREENS.length + 3');
     const screens = [
       ['background', backgroundSource],
       ['documentation', documentationSource],

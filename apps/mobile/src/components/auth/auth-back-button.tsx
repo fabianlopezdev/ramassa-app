@@ -9,6 +9,7 @@ export function AuthBackButton({ onPress }: { readonly onPress: () => void }) {
   const { t } = useTranslation('common');
   const icon = (
     <SymbolView
+      accessible={false}
       name={{
         ios: 'chevron.backward',
         android: I18nManager.isRTL ? 'arrow_forward' : 'arrow_back',

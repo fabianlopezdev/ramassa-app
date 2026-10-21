@@ -37,7 +37,7 @@ export function ErrorFallback({ error, retry }: ErrorFallbackProps) {
       >
         {t('fallbackTitle')}
       </Text>
-      <Text className={`text-center text-lg text-neutral-700 ${languageFontClass}`}>
+      <Text selectable className={`text-center text-lg text-neutral-700 ${languageFontClass}`}>
         {friendlyMessage}
       </Text>
       <PressableScale

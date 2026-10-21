@@ -1,7 +1,13 @@
 import type { HapticFeedback } from '@/lib/haptics/haptic-policy';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { useCallback, useMemo, type ReactNode } from 'react';
-import { StyleSheet, type AccessibilityRole, type StyleProp, type ViewStyle } from 'react-native';
+import {
+  StyleSheet,
+  type AccessibilityActionEvent,
+  type AccessibilityRole,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import {
   interpolate,
@@ -13,6 +19,7 @@ import {
 } from 'react-native-reanimated';
 import { tokens } from '@ramassa/shared/tokens';
 import { motionTokens, resolvePressScale } from '@ramassa/shared/tokens/motion';
+import { ACTIVATE_ACCESSIBILITY_ACTIONS } from './accessibility-actions';
 import { NativeWindAnimatedView } from './nativewind-animated-view';
 
 const PRESS_TIMING_CONFIG = { duration: motionTokens.duration.fast } as const;
@@ -103,17 +110,23 @@ export function PressableScale({
   const pressed = useSharedValue(0);
 
   const pressedScale = resolvePressScale(isReducedMotion);
-  const pressedOpacity = isReducedMotion ? 1 : 0.9;
+  const pressedOpacity = isReducedMotion ? 1 : motionTokens.press.opacity;
   const timingConfig = isReducedMotion ? REDUCED_MOTION_TIMING_CONFIG : PRESS_TIMING_CONFIG;
+  const isInteractionBlocked = isDisabled || isBusy;
 
   const handlePress = useCallback(() => {
+    if (isInteractionBlocked) return;
     if (haptic !== undefined) {
       playHaptic(haptic);
     }
     onPress();
-  }, [haptic, onPress]);
-
-  const isInteractionBlocked = isDisabled || isBusy;
+  }, [haptic, isInteractionBlocked, onPress]);
+  const handleAccessibilityAction = useCallback(
+    ({ nativeEvent }: AccessibilityActionEvent) => {
+      if (nativeEvent.actionName === 'activate') handlePress();
+    },
+    [handlePress],
+  );
 
   const tap = useMemo(
     () =>
@@ -125,8 +138,8 @@ export function PressableScale({
         .onFinalize(() => {
           pressed.set(withTiming(0, timingConfig));
         })
-        .onEnd(() => {
-          runOnJS(handlePress)();
+        .onEnd((_event, success) => {
+          if (success) runOnJS(handlePress)();
         }),
     [handlePress, isInteractionBlocked, pressed, timingConfig],
   );
@@ -163,6 +176,11 @@ export function PressableScale({
         accessibilityLabel={accessibilityLabel}
         accessibilityHint={accessibilityHint}
         accessibilityLanguage={accessibilityLanguage}
+        onAccessibilityTap={handlePress}
+        accessibilityActions={ACTIVATE_ACCESSIBILITY_ACTIONS}
+        onAccessibilityAction={handleAccessibilityAction}
+        aria-disabled={isInteractionBlocked}
+        aria-busy={isBusy}
         aria-checked={
           accessibilityRole === 'checkbox' ||
           accessibilityRole === 'radio' ||

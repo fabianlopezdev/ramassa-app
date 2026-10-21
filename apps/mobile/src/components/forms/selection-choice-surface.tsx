@@ -30,6 +30,7 @@ interface SelectionChoiceSurfaceProps {
   readonly children: ReactNode;
   readonly label: string;
   readonly accessibilityHint?: string;
+  readonly accessibilityLanguage?: string;
   readonly accessibilityRole?: AccessibilityRole;
   readonly testID?: string;
   readonly isSelected?: boolean;
@@ -44,6 +45,7 @@ export function SelectionChoiceSurface({
   children,
   label,
   accessibilityHint,
+  accessibilityLanguage,
   accessibilityRole = 'button',
   testID,
   isSelected,
@@ -67,6 +69,7 @@ export function SelectionChoiceSurface({
       testID={testID}
       accessibilityLabel={label}
       accessibilityHint={accessibilityHint}
+      accessibilityLanguage={accessibilityLanguage}
       accessibilityRole={accessibilityRole}
       isSelected={isSelected}
       onPress={onPress}

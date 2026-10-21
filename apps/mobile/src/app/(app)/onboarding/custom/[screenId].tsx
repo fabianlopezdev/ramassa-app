@@ -52,10 +52,11 @@ export default function CustomStepScreen() {
         return value === undefined ? [] : [[question.id, value]];
       }),
     );
+    const latest = onboardingDraftStore.loadDraft();
     onboardingDraftStore.saveDraft({
-      ...draft,
+      ...latest,
       currentStep,
-      custom: { ...draft?.custom, ...mine },
+      custom: { ...latest?.custom, ...mine },
     });
   }
 

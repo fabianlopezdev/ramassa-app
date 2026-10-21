@@ -37,7 +37,9 @@ export default function EquipmentStepScreen() {
     defaultValues: { clothingSize: saved.clothingSize ?? '', shoeSize: saved.shoeSize ?? '' },
   });
   const persist = (currentStep: OnboardingDraftStep) =>
-    onboardingDraftStore.saveDraft(mergeLogisticsDraft(draft, getValues(), currentStep));
+    onboardingDraftStore.saveDraft(
+      mergeLogisticsDraft(onboardingDraftStore.loadDraft(), getValues(), currentStep),
+    );
   const next = handleSubmit(
     () => {
       setHasSubmitErrors(false);

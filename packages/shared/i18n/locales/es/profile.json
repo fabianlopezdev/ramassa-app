@@ -36,7 +36,6 @@
   "loadFailed": "No hemos podido cargar tus datos. Inténtalo de nuevo.",
   "saveFailed": "No hemos podido guardar los cambios. Inténtalo de nuevo.",
   "retryAction": "Inténtalo de nuevo",
-  "backAction": "Atrás",
   "fieldPhone": "Teléfono",
   "fieldAddress": "Dirección",
   "fieldCity": "Municipio",

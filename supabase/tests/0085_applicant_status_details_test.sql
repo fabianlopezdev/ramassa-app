@@ -19,9 +19,10 @@ select public.update_my_season_answers('{"applicant_status":"migrant"}'::jsonb);
 select is((select applicant_status_details from public.get_own_profile()), null::text, 'choosing another status clears obsolete text');
 
 reset role;
-set local role anon;
-select throws_ok($$ select * from public.get_own_profile() $$, '42501', null::text, 'anonymous clients cannot read situation explanations');
-reset role;
+-- Denial is checked without triggering the local Supabase error-hint crash.
+-- https://github.com/supabase/supautils/issues/214
+select ok(not has_function_privilege('anon', 'public.get_own_profile()', 'execute'),
+  'anonymous clients cannot read situation explanations');
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000012","role":"authenticated","aal":"aal1"}';
 select is((select count(*)::integer from public.get_participant_profile('5eed0000-0000-4000-8000-000000000011')),0,'another player cannot read the explanation');

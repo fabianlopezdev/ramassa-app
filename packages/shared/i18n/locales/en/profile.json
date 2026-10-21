@@ -36,7 +36,6 @@
   "loadFailed": "We could not load your information. Please try again.",
   "saveFailed": "We could not save your changes. Please try again.",
   "retryAction": "Try again",
-  "backAction": "Back",
   "fieldPhone": "Phone",
   "fieldAddress": "Address",
   "fieldCity": "Town",

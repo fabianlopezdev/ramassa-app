@@ -59,7 +59,7 @@ export const SEASON_WIZARD_SCREENS = [
 ] as const;
 export type SeasonWizardScreen = (typeof SEASON_WIZARD_SCREENS)[number];
 export type WizardQuestionScreen = QuestionScreen | 'equipment' | SeasonWizardScreen;
-export type WizardScreen = WizardQuestionScreen | 'summary' | 'terms';
+export type WizardScreen = WizardQuestionScreen | 'summary' | 'terms-intro' | 'terms';
 export const WIZARD_QUESTION_SCREENS: readonly WizardQuestionScreen[] = [
   'identity',
   'background',
@@ -203,6 +203,7 @@ function fullOrder(custom: readonly CustomWizardScreen[]): WizardStepKey[] {
         .map((customScreen) => customStepKey(customScreen.id)),
     ]),
     'summary',
+    'terms-intro',
     'terms',
   ];
 }
@@ -219,7 +220,7 @@ function visibleScreens(
   return fullOrder(custom).filter((step) =>
     isCustomStep(step)
       ? !answeredCustom.has(step)
-      : step === 'summary' || step === 'terms' || asked.has(step),
+      : step === 'summary' || step === 'terms-intro' || step === 'terms' || asked.has(step),
   );
 }
 

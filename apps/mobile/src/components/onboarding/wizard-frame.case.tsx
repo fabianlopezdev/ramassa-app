@@ -8,8 +8,8 @@ mock.module('@/lib/onboarding-entrance', () => ({ useOnboardingEntrance: () => '
 mock.module('@/lib/use-language-font-class', () => ({ useLanguageFontClass: () => '' }));
 mock.module('react-i18next', () => ({
   useTranslation: () => ({
-    t: (_key: string, values: { current: number; total: number }) =>
-      `${values.current}/${values.total}`,
+    t: (key: string, values?: { current: number; total: number }) =>
+      values ? `${values.current}/${values.total}` : key,
   }),
 }));
 mock.module('react-native', () => ({

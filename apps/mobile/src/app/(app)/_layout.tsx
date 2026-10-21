@@ -7,6 +7,7 @@ import { HandoverSyncWorker } from '@/components/equipment/handover-sync-worker'
 import { PushPermissionRationale } from '@/components/push-permission-rationale';
 import { areaHome, awaitsSecondFactor, teamScreens } from '@/lib/account-area';
 import { useAuthorizationStatus } from '@/lib/authorization';
+import { OnboardingEntranceProvider } from '@/lib/onboarding-entrance';
 import { canPromptForPush } from '@/lib/push-prompt-eligibility';
 import { useSigningSession } from '@/lib/tablet-signing';
 import { useAccountAccess } from '@/lib/use-account-access';
@@ -28,6 +29,15 @@ const hiddenHeaderScreenOptions = { headerShown: false } as const;
 const noSwipeBackOptions = { gestureEnabled: false, fullScreenGestureEnabled: false } as const;
 
 export default function AppLayout() {
+  const { user } = useAuth();
+  return (
+    <OnboardingEntranceProvider key={user?.id}>
+      <AppNavigator />
+    </OnboardingEntranceProvider>
+  );
+}
+
+function AppNavigator() {
   const { user, session, role, needsSecondFactor, permissionsAreCurrent } = useAuth();
   const userId = user?.id ?? null;
   // The area comes from the account type, never from its absence (RAPP-232):
@@ -344,7 +354,7 @@ export default function AppLayout() {
       <Modal
         // Never over the authorization she must sign (RAPP-304), nor in signing
         // mode on a staff tablet (RAPP-305): it waits, then asks.
-        visible={shouldShowRationale}
+        visible={shouldShowRationale && !isCovered}
         transparent
         animationType="fade"
         onRequestClose={declineRationale}

@@ -1,21 +1,16 @@
-/**
- * Asks before a delete (RAPP-414, from forum moderation): a native alert with
- * Cancel and a destructive confirm, or the browser's confirm on the web build,
- * which has no native alert.
- */
-import { Alert, Platform } from 'react-native';
+import { confirmAction } from './confirm-action';
 
+/** The shared confirmation with the existing delete labels and destructive action. */
 export function confirmDelete(
   message: string,
   onConfirm: () => void,
   labels: readonly [cancel: string, confirm: string],
 ): void {
-  if (Platform.OS === 'web') {
-    if (window.confirm(message)) onConfirm();
-    return;
-  }
-  Alert.alert(message, undefined, [
-    { text: labels[0], style: 'cancel' },
-    { text: labels[1], style: 'destructive', onPress: onConfirm },
-  ]);
+  confirmAction({
+    title: message,
+    cancelLabel: labels[0],
+    confirmLabel: labels[1],
+    confirmStyle: 'destructive',
+    onConfirm,
+  });
 }

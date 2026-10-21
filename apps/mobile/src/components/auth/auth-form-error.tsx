@@ -34,7 +34,10 @@ export function AuthFormError({ code }: { code: AppErrorCode | null }) {
       style={continuousCorners}
       className="gap-xs rounded-md bg-error/10 p-md"
     >
-      <Text className={`text-start text-form font-medium text-error ${languageFontClass}`}>
+      <Text
+        selectable
+        className={`text-start text-form font-medium text-error ${languageFontClass}`}
+      >
         {message}
       </Text>
     </View>

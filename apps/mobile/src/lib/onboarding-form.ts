@@ -21,9 +21,21 @@ import {
   refineDependents,
 } from '@ramassa/shared/schemas';
 
-/** '7' -> '07'; anything non-numeric survives to fail the shared schema. */
+const ARABIC_DECIMAL_DIGITS = '٠١٢٣٤٥٦٧٨٩';
+const PERSIAN_DECIMAL_DIGITS = '۰۱۲۳۴۵۶۷۸۹';
+const LOCALIZED_DECIMAL_DIGITS = /[٠-٩۰-۹]/g;
+
+/** Keyboard digit glyphs change, but the stored date and count stay canonical. */
+export function normalizeDecimalDigits(value: string): string {
+  return value.replace(LOCALIZED_DECIMAL_DIGITS, (digit) => {
+    const arabic = ARABIC_DECIMAL_DIGITS.indexOf(digit);
+    return String(arabic === -1 ? PERSIAN_DECIMAL_DIGITS.indexOf(digit) : arabic);
+  });
+}
+
+/** '7' becomes '07'; non-numeric input still fails the shared schema. */
 export function composeIsoBirthDate(day: string, month: string, year: string): string {
-  return `${year.trim()}-${month.trim().padStart(2, '0')}-${day.trim().padStart(2, '0')}`;
+  return `${normalizeDecimalDigits(year.trim())}-${normalizeDecimalDigits(month.trim()).padStart(2, '0')}-${normalizeDecimalDigits(day.trim()).padStart(2, '0')}`;
 }
 
 /**
@@ -36,37 +48,41 @@ export const identityNameFormSchema = identityStepSchema.pick({
 });
 export type IdentityNameFormInput = z.input<typeof identityNameFormSchema>;
 
-const birthDayInputSchema = z
-  .string()
-  .trim()
-  .min(1, 'required')
-  .refine(
-    (value) =>
-      value === '' || (/^\d{1,2}$/.test(value) && Number(value) >= 1 && Number(value) <= 31),
-    'invalid date',
-  );
-const birthMonthInputSchema = z
-  .string()
-  .trim()
-  .min(1, 'required')
-  .refine(
-    (value) =>
-      value === '' || (/^\d{1,2}$/.test(value) && Number(value) >= 1 && Number(value) <= 12),
-    'invalid date',
-  );
-const birthYearInputSchema = z
-  .string()
-  .trim()
-  .min(1, 'required')
-  .refine((value) => value === '' || /^\d{4}$/.test(value), 'invalid date')
-  .superRefine((value, context) => {
-    if (!/^\d{4}$/.test(value)) return;
-    const currentYear = new Date().getUTCFullYear();
-    if (Number(value) > currentYear) context.addIssue({ code: 'custom', message: 'future date' });
-    // The exact birthday still comes from the shared schema once all parts are valid.
-    if (Number(value) < currentYear - MAXIMUM_AGE_YEARS - 1)
-      context.addIssue({ code: 'custom', message: 'too old' });
-  });
+const decimalInputSchema = z.string().trim().transform(normalizeDecimalDigits);
+const birthDayInputSchema = decimalInputSchema.pipe(
+  z
+    .string()
+    .min(1, 'required')
+    .refine(
+      (value) =>
+        value === '' || (/^\d{1,2}$/.test(value) && Number(value) >= 1 && Number(value) <= 31),
+      'invalid date',
+    ),
+);
+const birthMonthInputSchema = decimalInputSchema.pipe(
+  z
+    .string()
+    .min(1, 'required')
+    .refine(
+      (value) =>
+        value === '' || (/^\d{1,2}$/.test(value) && Number(value) >= 1 && Number(value) <= 12),
+      'invalid date',
+    ),
+);
+const birthYearInputSchema = decimalInputSchema.pipe(
+  z
+    .string()
+    .min(1, 'required')
+    .refine((value) => value === '' || /^\d{4}$/.test(value), 'invalid date')
+    .superRefine((value, context) => {
+      if (!/^\d{4}$/.test(value)) return;
+      const currentYear = new Date().getUTCFullYear();
+      if (Number(value) > currentYear) context.addIssue({ code: 'custom', message: 'future date' });
+      // The exact birthday still comes from the shared schema once all parts are valid.
+      if (Number(value) < currentYear - MAXIMUM_AGE_YEARS - 1)
+        context.addIssue({ code: 'custom', message: 'too old' });
+    }),
+);
 
 export type BirthDateField = 'day' | 'month' | 'year';
 
@@ -169,7 +185,7 @@ export const logisticsFormSchema = logisticsFormFields
     numDependents:
       form.numDependents === undefined || form.numDependents.trim() === ''
         ? 0
-        : Number(form.numDependents),
+        : Number(normalizeDecimalDigits(form.numDependents)),
     // Free strings until a chip is chosen ('' is the unchosen state), narrowed
     // here only for the type: the pipe validates them for real one line down,
     // so an invalid value fails the parse rather than reaching the profile.
@@ -178,7 +194,6 @@ export const logisticsFormSchema = logisticsFormFields
     avatarUrl: undefined,
   }))
   .pipe(logisticsStepSchema);
-export type LogisticsFormInput = z.input<typeof logisticsFormSchema>;
 
 /** Screen-specific schemas reuse the joint stored fields and their validation rules. */
 const contactStepSchema = logisticsFields
@@ -209,7 +224,7 @@ export const contactFormSchema = logisticsFormFields
     numDependents:
       form.numDependents === undefined || form.numDependents.trim() === ''
         ? 0
-        : Number(form.numDependents),
+        : Number(normalizeDecimalDigits(form.numDependents)),
   }))
   .pipe(contactStepSchema);
 export type ContactFormInput = z.input<typeof contactFormSchema>;

@@ -43,6 +43,7 @@ export const WIZARD_SCREEN_ROUTES = {
   'participation-support': '/onboarding/participation-support',
   'specific-needs': '/onboarding/specific-needs',
   summary: '/onboarding/summary',
+  'terms-intro': '/onboarding/terms-intro',
   terms: '/onboarding/terms',
 } as const satisfies Readonly<Record<WizardScreen, Href>>;
 
@@ -57,6 +58,7 @@ const WIZARD_SCREEN_DRAFT_STEP: Readonly<Record<WizardScreen, OnboardingStepName
   'participation-support': 'participation-support',
   'specific-needs': 'specific-needs',
   summary: 'summary',
+  'terms-intro': 'terms-intro',
   terms: 'terms',
 };
 

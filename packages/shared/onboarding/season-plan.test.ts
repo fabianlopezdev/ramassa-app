@@ -18,10 +18,10 @@ test('season topics advance separately before staff questions and summary', () =
   expect(nextWizardScreen('supporting-entities', unanswered)).toBe('participation-support');
   expect(previousWizardScreen('participation-support', unanswered)).toBe('supporting-entities');
   expect(nextWizardScreen('participation-support', unanswered)).toBe('specific-needs');
-  expect(wizardScreenPosition('season', unanswered, topics)).toEqual({ step: 9, total: 14 });
+  expect(wizardScreenPosition('season', unanswered, topics)).toEqual({ step: 9, total: 15 });
   expect(wizardScreenPosition('participation-support', unanswered, topics)).toEqual({
     step: 11,
-    total: 14,
+    total: 15,
   });
   const custom = [{ id: 'follow-up', afterScreen: 'season' as const, isAnswered: false }];
   expect(nextWizardScreen('specific-needs', unanswered, custom)).toBe('custom:follow-up');

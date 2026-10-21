@@ -49,7 +49,7 @@ export function FieldFocusRing({
     >
       <View
         style={focusBorderStyle}
-        className={tone === 'error' ? 'border-error' : 'border-secondary'}
+        className={tone === 'error' ? 'border-error' : 'border-primary-dark'}
       />
       <View
         style={focusRingStyle}

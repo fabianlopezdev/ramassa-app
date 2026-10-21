@@ -96,7 +96,8 @@ describe('navigation', () => {
     expect(nextWizardScreen('season', plan)).toBe('supporting-entities');
     expect(nextWizardScreen('supporting-entities', plan)).toBe('participation-support');
     expect(nextWizardScreen('participation-support', plan)).toBe('specific-needs');
-    expect(nextWizardScreen('summary', plan)).toBe('terms');
+    expect(nextWizardScreen('summary', plan)).toBe('terms-intro');
+    expect(nextWizardScreen('terms-intro', plan)).toBe('terms');
   });
 
   test('a fully prefilled woman goes straight to the summary', () => {
@@ -108,15 +109,15 @@ describe('navigation', () => {
   test('back goes to the previous asked screen, and the first one has no back', () => {
     expect(previousWizardScreen('logistics', plan)).toBe('background');
     expect(previousWizardScreen('background', plan)).toBeNull();
-    expect(previousWizardScreen('terms', plan)).toBe('summary');
+    expect(previousWizardScreen('terms', plan)).toBe('terms-intro');
   });
 
   test('the progress counts only the screens she sees', () => {
-    expect(wizardScreenPosition('background', plan)).toEqual({ step: 1, total: 9 });
-    expect(wizardScreenPosition('logistics', plan)).toEqual({ step: 2, total: 9 });
-    expect(wizardScreenPosition('season', plan)).toEqual({ step: 4, total: 9 });
-    expect(wizardScreenPosition('summary', plan)).toEqual({ step: 8, total: 9 });
-    expect(wizardScreenPosition('terms', plan)).toEqual({ step: 9, total: 9 });
+    expect(wizardScreenPosition('background', plan)).toEqual({ step: 1, total: 10 });
+    expect(wizardScreenPosition('logistics', plan)).toEqual({ step: 2, total: 10 });
+    expect(wizardScreenPosition('season', plan)).toEqual({ step: 4, total: 10 });
+    expect(wizardScreenPosition('summary', plan)).toEqual({ step: 8, total: 10 });
+    expect(wizardScreenPosition('terms', plan)).toEqual({ step: 10, total: 10 });
   });
 });
 
@@ -173,11 +174,11 @@ describe('staff screens in the wizard (RAPP-307)', () => {
   });
 
   test('the progress counts staff screens', () => {
-    expect(wizardScreenPosition('background', plan, custom)).toEqual({ step: 1, total: 11 });
-    expect(wizardScreenPosition('custom:transport', plan, custom)).toEqual({ step: 2, total: 11 });
-    expect(wizardScreenPosition('logistics', plan, custom)).toEqual({ step: 3, total: 11 });
-    expect(wizardScreenPosition('custom:health', plan, custom)).toEqual({ step: 5, total: 11 });
-    expect(wizardScreenPosition('terms', plan, custom)).toEqual({ step: 11, total: 11 });
+    expect(wizardScreenPosition('background', plan, custom)).toEqual({ step: 1, total: 12 });
+    expect(wizardScreenPosition('custom:transport', plan, custom)).toEqual({ step: 2, total: 12 });
+    expect(wizardScreenPosition('logistics', plan, custom)).toEqual({ step: 3, total: 12 });
+    expect(wizardScreenPosition('custom:health', plan, custom)).toEqual({ step: 5, total: 12 });
+    expect(wizardScreenPosition('terms', plan, custom)).toEqual({ step: 12, total: 12 });
   });
 
   test('an answered staff screen opened to edit moves on to the next screen she sees', () => {

@@ -173,6 +173,7 @@ export function MunicipalityPicker({
 
       {errorMessage === undefined ? null : (
         <Text
+          selectable
           accessibilityLiveRegion="polite"
           className={`text-start text-form text-error ${languageFontClass}`}
         >

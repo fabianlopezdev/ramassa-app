@@ -45,7 +45,11 @@ export default function DocumentDetailsScreen() {
   const type = saved.documentType;
   if (!hasDocumentDetails(type)) return <Redirect href="/onboarding/documentation" />;
   const persist = (currentStep: typeof step.nextDraftStep) =>
-    onboardingDraftStore.saveDraft({ ...draft, currentStep, documentation: getValues() });
+    onboardingDraftStore.saveDraft({
+      ...onboardingDraftStore.loadDraft(),
+      currentStep,
+      documentation: getValues(),
+    });
   const next = handleSubmit(
     () => {
       persist(step.nextDraftStep);

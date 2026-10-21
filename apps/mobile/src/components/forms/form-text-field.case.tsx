@@ -9,6 +9,8 @@ import {
   type Ref,
 } from 'react';
 import type { TextInput } from 'react-native';
+import { contrastRatio } from '@ramassa/shared/organization-settings';
+import { tokens } from '@ramassa/shared/tokens';
 
 let fontScale = 1;
 const flatten = (value: unknown): CSSProperties =>
@@ -235,6 +237,16 @@ test('a focused invalid field keeps a red focus ring and the same error feedback
   expect(ring.className).not.toContain('border-primary');
   expect(ring.className).not.toContain('border-secondary');
   expect(view.getByText('Enter a number').getAttribute('aria-live')).toBe('polite');
+});
+
+test('focus has a contrasting inner outline while retaining the secondary halo', () => {
+  const view = render(createElement(FormTextField, { label: 'Name' }));
+  fireEvent.focus(view.getByRole('textbox'));
+  const ring = view.getByTestId('form-field-focus-ring');
+  expect(ring.style.opacity).toBe('1');
+  expect(ring.children[0]?.className).toBe('border-primary-dark');
+  expect(ring.children[1]?.className).toBe('border-secondary/20');
+  expect(contrastRatio(tokens.colors.primary.dark, tokens.colors.white)).toBeGreaterThanOrEqual(3);
 });
 
 test('press-in gives feedback before focus, cancelled presses clear, and accepted taps keep it visible', () => {

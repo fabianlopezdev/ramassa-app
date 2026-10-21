@@ -9,7 +9,7 @@ const termsScreenSource = readFileSync(
   'utf8',
 );
 const termsBodyElement = termsScreenSource.match(
-  /<Text\s+className=\{`([^`]+)`\}\s*>\s*\{t\('termsBody'\)\}\s*<\/Text>/,
+  /<Text\s+(?:selectable\s+)?className=\{`([^`]+)`\}\s*>\s*\{t\('termsBody'\)\}\s*<\/Text>/,
 );
 
 test('the consent body component uses token-backed leading and the active language font', () => {

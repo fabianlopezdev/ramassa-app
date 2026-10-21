@@ -117,3 +117,25 @@ test('reduced motion gives immediate opacity feedback without travel', () => {
   view.unmount();
   reduced = false;
 });
+
+test('successive depth presses reuse their timing configuration', () => {
+  const view = render(
+    createElement(PressableDepth, {
+      accessibilityLabel: 'Continue',
+      onPress: () => {},
+      inlineOffset: 4,
+      blockOffset: 6,
+      shadow: 'shadow',
+      children: 'face',
+    }),
+  );
+  begin();
+  const firstPressTiming = timing.mock.calls.at(-1)?.[1];
+  finalize();
+  const firstReleaseTiming = timing.mock.calls.at(-1)?.[1];
+  begin();
+  expect(timing.mock.calls.at(-1)?.[1]).toBe(firstPressTiming);
+  finalize();
+  expect(timing.mock.calls.at(-1)?.[1]).toBe(firstReleaseTiming);
+  view.unmount();
+});

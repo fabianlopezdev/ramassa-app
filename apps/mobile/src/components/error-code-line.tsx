@@ -17,6 +17,7 @@ export function FailureNotice({
     <ShakeOnError errorCode={code}>
       <View className="gap-xs">
         <Text
+          selectable
           accessibilityLiveRegion="polite"
           className={`text-start text-form text-error ${languageFontClass}`}
         >
