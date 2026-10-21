@@ -32,6 +32,7 @@ const row = {
   preferred_language: 'ar',
   created_at: '2026-09-01T10:00:00Z',
   joined: true,
+  is_test_account: false,
 };
 
 describe('fetchParticipants', () => {

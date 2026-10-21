@@ -26,6 +26,11 @@ export const createParticipantInviteSchema = z.object({
   firstName: z.string().trim().min(1).max(100),
   lastName: z.string().trim().min(1).max(100),
   referenceEntity: z.string().trim().optional(),
+  /**
+   * A test player (RAPP-615), made up for designing the onboarding. Off unless
+   * staff turn it on; the database refuses it to anyone who may not set it.
+   */
+  isTestAccount: z.boolean().default(false),
 });
 export type CreateParticipantInviteInput = z.input<typeof createParticipantInviteSchema>;
 export type CreateParticipantInvite = z.infer<typeof createParticipantInviteSchema>;
@@ -47,15 +52,18 @@ function normalizedEntity(referenceEntity: string | undefined): string | null {
  * she finishes the onboarding wizard.
  */
 export function buildCreateParticipantInvitePayload(
-  input: CreateParticipantInvite,
+  input: CreateParticipantInviteInput,
   referralId: string | null = null,
 ) {
+  const isTestAccount = input.isTestAccount === true;
   return {
     email: input.email,
     first_name: input.firstName.trim(),
     last_name: input.lastName.trim(),
     reference_entity: normalizedEntity(input.referenceEntity),
-    referral_id: referralId,
+    // A test player is made up, so she never answers a real referral.
+    referral_id: isTestAccount ? null : referralId,
+    is_test_account: isTestAccount,
   };
 }
 export type CreateParticipantInvitePayload = ReturnType<typeof buildCreateParticipantInvitePayload>;

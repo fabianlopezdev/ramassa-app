@@ -29,12 +29,16 @@ import type { Database, Json } from '../types/database';
 import {
   INVITED_ACCOUNT_ID,
   ONBOARDING_ACCOUNT_EMAIL,
+  ONBOARDING_DESIGNER_ID,
+  ONBOARDING_DESIGNER_NAME,
   PARTICIPANT_FIXTURES,
   SEED_ORGANIZATION_ID,
   SEED_ORGANIZATION_SLUG,
   SEED_TERMS_VERSION,
   seedUserId,
   STAFF_FIXTURES,
+  TEST_PLAYER_ID,
+  TEST_PLAYER_NAME,
   type PersonFixture,
 } from './fixtures';
 
@@ -718,9 +722,42 @@ export function buildProfileFromFixture(
     // Seasons played before the app (RAPP-306).
     prior_seasons: 0,
     document_name: null,
+    // A real person unless a test says otherwise (RAPP-615).
+    is_test_account: false,
     ...derivedProfileFields(fixture),
     ...overrides,
   };
+}
+
+/**
+ * The seeded test player (RAPP-615): invited, not joined, a test account. A
+ * test about the design sandbox builds her instead of a roster participant,
+ * because a real participant must never be one.
+ */
+export function buildTestPlayer(overrides: Partial<ProfileRow> = {}): ProfileRow {
+  return buildProfileFromFixture(PARTICIPANT_FIXTURES[0]!, {
+    id: TEST_PLAYER_ID,
+    role: 'invited',
+    first_name: TEST_PLAYER_NAME.firstName,
+    last_name: TEST_PLAYER_NAME.lastName,
+    preferred_language: 'ca',
+    terms_accepted_at: null,
+    is_test_account: true,
+    ...overrides,
+  });
+}
+
+/** The seeded team member on the Onboarding design preset (RAPP-615). */
+export function buildOnboardingDesigner(overrides: Partial<ProfileRow> = {}): ProfileRow {
+  return buildProfileFromFixture(STAFF_FIXTURES[1]!, {
+    id: ONBOARDING_DESIGNER_ID,
+    role: 'staff',
+    first_name: ONBOARDING_DESIGNER_NAME.firstName,
+    last_name: ONBOARDING_DESIGNER_NAME.lastName,
+    preferred_language: 'ca',
+    is_test_account: true,
+    ...overrides,
+  });
 }
 
 export function buildPushToken(overrides: Partial<PushTokenRow> = {}): PushTokenRow {

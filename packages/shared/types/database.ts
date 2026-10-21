@@ -3007,6 +3007,7 @@ export type Database = {
           id: string;
           is_active: boolean;
           is_forum_banned: boolean;
+          is_test_account: boolean;
           last_name: string;
           media_consent_at: string | null;
           nationality: string | null;
@@ -3054,6 +3055,7 @@ export type Database = {
           id: string;
           is_active?: boolean;
           is_forum_banned?: boolean;
+          is_test_account?: boolean;
           last_name: string;
           media_consent_at?: string | null;
           nationality?: string | null;
@@ -3101,6 +3103,7 @@ export type Database = {
           id?: string;
           is_active?: boolean;
           is_forum_banned?: boolean;
+          is_test_account?: boolean;
           last_name?: string;
           media_consent_at?: string | null;
           nationality?: string | null;
@@ -5090,6 +5093,7 @@ export type Database = {
           id: string;
           is_active: boolean;
           is_forum_banned: boolean;
+          is_test_account: boolean;
           last_name: string;
           media_consent_at: string | null;
           nationality: string | null;
@@ -5146,6 +5150,7 @@ export type Database = {
           id: string;
           is_active: boolean;
           is_forum_banned: boolean;
+          is_test_account: boolean;
           last_name: string;
           media_consent_at: string | null;
           nationality: string | null;
@@ -5505,6 +5510,7 @@ export type Database = {
           id: string;
           is_active: boolean;
           is_forum_banned: boolean;
+          is_test_account: boolean;
           last_name: string;
           media_consent: boolean;
           nationality: string;
@@ -5833,6 +5839,7 @@ export type Database = {
           has_dependents: boolean;
           id: string;
           is_active: boolean;
+          is_test_account: boolean;
           joined: boolean;
           last_name: string;
           nationality: string;
@@ -5915,6 +5922,7 @@ export type Database = {
           first_name: string;
           invited_at: string;
           is_active: boolean;
+          is_test_account: boolean;
           last_name: string;
           profile_id: string;
           role: string;
@@ -6637,6 +6645,10 @@ export type Database = {
           p_preset_id?: string;
           p_profile_id: string;
         };
+        Returns: undefined;
+      };
+      set_team_member_test_account: {
+        Args: { p_is_test_account: boolean; p_profile_id: string };
         Returns: undefined;
       };
       sign_authorization: {

@@ -186,6 +186,8 @@ const staffMemberSchema = z.object({
   role: z.enum(['staff', 'admin']),
   is_active: z.boolean(),
   invited_at: z.string().nullable(),
+  /** A test account signs in with the staging fixed code (RAPP-615, RAPP-616). */
+  is_test_account: z.boolean(),
 });
 
 export type StaffMember = z.infer<typeof staffMemberSchema>;
@@ -295,6 +297,22 @@ export async function setStaffMemberRole(
   const { error } = await client.rpc('set_staff_member_role', {
     p_profile_id: z.uuid().parse(profileId),
     p_role: role,
+  });
+  if (error) databaseFailure(error.message);
+}
+
+/**
+ * Marks a team account as a test account, or back (RAPP-615). Team accounts
+ * only: the database refuses a player, and it audits the change.
+ */
+export async function setTeamMemberTestAccount(
+  client: Client,
+  profileId: string,
+  isTestAccount: boolean,
+): Promise<void> {
+  const { error } = await client.rpc('set_team_member_test_account', {
+    p_profile_id: z.uuid().parse(profileId),
+    p_is_test_account: isTestAccount,
   });
   if (error) databaseFailure(error.message);
 }

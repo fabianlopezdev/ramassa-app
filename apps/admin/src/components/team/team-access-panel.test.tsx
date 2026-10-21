@@ -30,6 +30,7 @@ const nuria: StaffMember = {
   role: 'staff',
   is_active: true,
   invited_at: '2026-08-22T10:00:00Z',
+  is_test_account: false,
 };
 
 const nuriaAsAdjustedCoach: TeamMemberAccess = {

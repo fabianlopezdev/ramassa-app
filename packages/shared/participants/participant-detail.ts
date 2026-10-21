@@ -29,6 +29,8 @@ export interface ParticipantDetailRow extends ProfileRow {
   readonly anonymized_at: string | null;
   readonly created_at: string;
   readonly updated_at: string;
+  /** A made-up player for designing the onboarding (RAPP-615). */
+  readonly is_test_account: boolean;
 }
 
 /**

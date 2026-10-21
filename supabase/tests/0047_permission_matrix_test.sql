@@ -40,7 +40,10 @@ select is(
         -- A message counts as sent by the team when its sender is a team member.
         'enqueue_message_push',
         -- Material is lent to team members only (RAPP-252).
-        'checkout_recipients', 'record_staff_checkout'
+        'checkout_recipients', 'record_staff_checkout',
+        -- Only a team account is marked as a test account; a player is a test
+        -- player from her creation or never (RAPP-615).
+        'set_team_member_test_account'
       )),
   '{}'::text[], 'a literal staff/admin role check remains only where it defines team membership'
 );

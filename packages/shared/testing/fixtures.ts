@@ -58,6 +58,21 @@ export const ONBOARDING_ACCOUNT_EMAIL = 'onboarding@example.test';
 export const INVITED_ACCOUNT_EMAIL = 'invited@example.test';
 export const INVITED_ACCOUNT_ID = '5eed0000-0000-4000-8000-000000000098';
 
+/**
+ * The onboarding design sandbox (RAPP-615). A team member on the built-in
+ * "Onboarding design" preset, who sees only the onboarding settings and the
+ * test players, and one test player, invited and not joined. Both are test
+ * accounts, so the staging fixed code (RAPP-616) signs them in. Outside the
+ * roster on purpose: no count of staff or players includes them. Mirrors
+ * `supabase/seed.sql`.
+ */
+export const ONBOARDING_DESIGNER_EMAIL = 'disseny@example.test';
+export const ONBOARDING_DESIGNER_ID = '5eed0000-0000-4000-8000-000000000097';
+export const ONBOARDING_DESIGNER_NAME = { firstName: 'Pau', lastName: 'Dissenya' } as const;
+export const TEST_PLAYER_EMAIL = 'jugadora.prova@example.test';
+export const TEST_PLAYER_ID = '5eed0000-0000-4000-8000-000000000096';
+export const TEST_PLAYER_NAME = { firstName: 'Joana', lastName: 'Prova' } as const;
+
 /** The terms version every seeded acceptance carries. Mirrors `supabase/seed.sql`. */
 export const SEED_TERMS_VERSION = '2026-07-01';
 

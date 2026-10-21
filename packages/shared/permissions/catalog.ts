@@ -35,6 +35,8 @@ export const PERMISSION_CATALOG = [
   { code: 'participants.invite', area: 'participants' },
   { code: 'participants.deactivate', area: 'participants' },
   { code: 'rgpd.erase', area: 'participants' },
+  // Create, view, edit and delete test players, and never a real one (RAPP-615).
+  { code: 'test_players.manage', area: 'participants' },
   { code: 'equipment.handover', area: 'material' },
   { code: 'equipment.receive', area: 'material' },
   { code: 'equipment.count', area: 'material' },
@@ -67,6 +69,9 @@ export const PERMISSION_CATALOG = [
   { code: 'export.events', area: 'impact' },
   { code: 'audit.view', area: 'impact' },
   { code: 'settings.organization', area: 'settings' },
+  // Everything a player sees in the onboarding: questions, the document note,
+  // seasons and the season authorization (RAPP-615).
+  { code: 'onboarding.design', area: 'settings' },
   { code: 'settings.branding', area: 'settings' },
   { code: 'settings.documents', area: 'settings' },
   { code: 'team.manage', area: 'settings' },
@@ -74,7 +79,7 @@ export const PERMISSION_CATALOG = [
 
 export type PermissionCode = (typeof PERMISSION_CATALOG)[number]['code'];
 
-export const BUILTIN_PRESET_KEYS = ['coach', 'staff', 'admin'] as const;
+export const BUILTIN_PRESET_KEYS = ['coach', 'staff', 'admin', 'onboarding_design'] as const;
 
 export type BuiltinPresetKey = (typeof BUILTIN_PRESET_KEYS)[number];
 
@@ -114,4 +119,10 @@ export const BUILTIN_PRESET_DEFAULTS: Readonly<
       STAFF_DEFAULT_EXTRAS.includes(permission.code),
   ).map((permission) => permission.code),
   admin: PERMISSION_CATALOG.map((permission) => permission.code),
+  // The onboarding design sandbox (RAPP-615): the onboarding settings and the
+  // test players, nothing else.
+  onboarding_design: ['test_players.manage', 'onboarding.design'],
 };
+
+/** The two permissions of the onboarding design role (RAPP-615). */
+export const ONBOARDING_DESIGN_PERMISSIONS = BUILTIN_PRESET_DEFAULTS.onboarding_design;

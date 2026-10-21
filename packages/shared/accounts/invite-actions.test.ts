@@ -59,6 +59,7 @@ test('createParticipantInvite sends the payload under the name the RPC declares'
     last_name: 'Ndiaye',
     reference_entity: 'CEAR Catalunya',
     referral_id: null,
+    is_test_account: false,
   };
   await createParticipantInvite(rpcClient({ data: [createdInvite], error: null }, calls), payload);
 
@@ -73,6 +74,7 @@ test('createParticipantInvite returns the recorded invite with its expiry', asyn
     last_name: 'Ndiaye',
     reference_entity: null,
     referral_id: null,
+    is_test_account: false,
   });
   expect(invite.email).toBe('fatou.ndiaye@example.com');
   expect(invite.expires_at).toBe('2026-08-31T12:00:00Z');
@@ -87,6 +89,7 @@ test('an address that already has an account is tagged so staff get a clear mess
       last_name: 'Ndiaye',
       reference_entity: null,
       referral_id: null,
+      is_test_account: false,
     },
   );
   await expect(refused).rejects.toBeInstanceOf(AppError);
@@ -103,6 +106,7 @@ test('createParticipantInvite treats an empty result or a refusal as a failure',
       last_name: 'Ndiaye',
       reference_entity: null,
       referral_id: null,
+      is_test_account: false,
     }),
   ).rejects.toBeInstanceOf(AppError);
 
@@ -113,6 +117,7 @@ test('createParticipantInvite treats an empty result or a refusal as a failure',
       last_name: 'Ndiaye',
       reference_entity: null,
       referral_id: null,
+      is_test_account: false,
     }),
   ).rejects.toBeInstanceOf(AppError);
 });

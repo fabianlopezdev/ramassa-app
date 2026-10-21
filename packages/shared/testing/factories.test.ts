@@ -28,6 +28,7 @@ import {
   buildKnowledgeArticle,
   buildKnowledgeCategory,
   buildMentoringRequest,
+  buildOnboardingDesigner,
   buildOrganization,
   buildParticipant,
   buildParticipantNote,
@@ -44,6 +45,7 @@ import {
   buildServiceImage,
   buildServiceInterest,
   buildStockAlert,
+  buildTestPlayer,
   buildWalkInSigning,
 } from './factories';
 import {
@@ -54,6 +56,7 @@ import {
   SEED_ORGANIZATION_ID,
   seedUserId,
   STAFF_FIXTURES,
+  TEST_PLAYER_ID,
 } from './fixtures';
 
 describe('fixtures — the roster the seed and the factories share', () => {
@@ -491,4 +494,30 @@ test('app terms signature fixtures are independently linked and overrideable', (
   ]);
   expect(row.unable_to_draw).toBe(false);
   expect(buildAppTermsSignature({ unable_to_draw: true, signature: null }).signature).toBeNull();
+});
+
+describe('onboarding design sandbox factories (RAPP-615)', () => {
+  test('the test player is an invited test account, never a roster participant', () => {
+    const player = buildTestPlayer();
+    expect(player.is_test_account).toBe(true);
+    expect(player.role).toBe('invited');
+    expect(player.id).toBe(TEST_PLAYER_ID);
+    expect(PARTICIPANT_FIXTURES.some((fixture) => seedUserId(fixture.ordinal) === player.id)).toBe(
+      false,
+    );
+  });
+
+  test('the designer is a staff test account outside the roster', () => {
+    const designer = buildOnboardingDesigner();
+    expect(designer.role).toBe('staff');
+    expect(designer.is_test_account).toBe(true);
+    expect(STAFF_FIXTURES.some((fixture) => seedUserId(fixture.ordinal) === designer.id)).toBe(
+      false,
+    );
+  });
+
+  test('every other factory builds a real person', () => {
+    expect(buildParticipant().is_test_account).toBe(false);
+    expect(buildProfile().is_test_account).toBe(false);
+  });
 });

@@ -121,4 +121,6 @@ export interface ParticipantListRow {
   readonly created_at: string;
   /** False for an invited woman who has not accepted the terms yet (RAPP-300). */
   readonly joined: boolean;
+  /** A made-up player for designing the onboarding (RAPP-615). */
+  readonly is_test_account: boolean;
 }

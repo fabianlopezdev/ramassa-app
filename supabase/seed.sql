@@ -2718,3 +2718,73 @@ insert into auth.mfa_factors (id, user_id, friendly_name, factor_type, status, s
 select gen_random_uuid(), profile.id, 'Ramassà (seed)', 'totp', 'verified', 'JBSWY3DPEHPK3PXP', now(), now()
 from public.profiles as profile
 where profile.role in ('staff', 'admin', 'entity');
+
+-- The onboarding design sandbox (RAPP-615) ------------------------------------------------------------
+-- A team member on the built-in "Onboarding design" preset (...097), who sees
+-- only the onboarding settings and the test players, and one test player
+-- (...096), invited and not joined, so signing in as her opens the wizard.
+-- Both are test accounts: on a stack with the fixed code switched on
+-- (RAPP-616) they sign in with it.
+
+insert into auth.users (
+  instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
+  raw_app_meta_data, raw_user_meta_data, created_at, updated_at,
+  confirmation_token, recovery_token, email_change, email_change_token_new,
+  email_change_token_current, reauthentication_token
+)
+select
+  '00000000-0000-0000-0000-000000000000', account.id, 'authenticated', 'authenticated', account.email,
+  extensions.crypt('ramassa-dev-password', extensions.gen_salt('bf')), now(),
+  '{"provider":"email","providers":["email"]}'::jsonb, '{}'::jsonb,
+  now(), now(), '', '', '', '', '', ''
+from (values
+  ('5eed0000-0000-4000-8000-000000000097'::uuid, 'disseny@example.test'),
+  ('5eed0000-0000-4000-8000-000000000096'::uuid, 'jugadora.prova@example.test')
+) as account(id, email)
+on conflict (id) do nothing;
+
+insert into auth.identities (
+  provider_id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at
+)
+select u.id::text, u.id, jsonb_build_object('sub', u.id::text, 'email', u.email, 'email_verified', true),
+       'email', now(), now(), now()
+from auth.users u
+where u.id in ('5eed0000-0000-4000-8000-000000000097', '5eed0000-0000-4000-8000-000000000096')
+on conflict (provider_id, provider) do nothing;
+
+insert into public.profiles (id, org_id, role, first_name, last_name, preferred_language, is_test_account)
+values
+  ('5eed0000-0000-4000-8000-000000000097', '5eed0000-0000-4000-8000-000000000000',
+   'staff', 'Pau', 'Dissenya', 'ca', true),
+  ('5eed0000-0000-4000-8000-000000000096', '5eed0000-0000-4000-8000-000000000000',
+   'invited', 'Joana', 'Prova', 'ca', true)
+on conflict (id) do nothing;
+
+-- Her open invitation, as create_participant_invite leaves it, so the purge
+-- of women who never joined keeps her.
+insert into public.invites (org_id, email, invited_by, expires_at)
+values ('5eed0000-0000-4000-8000-000000000000', 'jugadora.prova@example.test',
+        '5eed0000-0000-4000-8000-000000000097', now() + interval '30 days');
+
+-- Exactly the Onboarding design preset, replacing the Staff one a new staff
+-- account starts with.
+select private.write_member_permissions(
+  null,
+  '5eed0000-0000-4000-8000-000000000000',
+  '5eed0000-0000-4000-8000-000000000097',
+  array(select preset_permission.permission_code
+          from public.permission_preset_permissions as preset_permission
+          join public.permission_presets as preset on preset.id = preset_permission.preset_id
+         where preset.org_id = '5eed0000-0000-4000-8000-000000000000'
+           and preset.builtin_key = 'onboarding_design'),
+  (select preset.id from public.permission_presets as preset
+    where preset.org_id = '5eed0000-0000-4000-8000-000000000000'
+      and preset.builtin_key = 'onboarding_design')
+);
+
+insert into auth.mfa_factors (id, user_id, friendly_name, factor_type, status, secret, created_at, updated_at)
+select gen_random_uuid(), '5eed0000-0000-4000-8000-000000000097', 'Ramassà (seed)', 'totp', 'verified',
+       'JBSWY3DPEHPK3PXP', now(), now()
+where not exists (
+  select 1 from auth.mfa_factors where user_id = '5eed0000-0000-4000-8000-000000000097'
+);
