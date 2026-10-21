@@ -1086,6 +1086,8 @@ export function buildTermsAcceptance(
     terms_version: SEED_TERMS_VERSION,
     locale_shown: participant.preferredLanguage,
     accepted_at: FIXTURE_TIMESTAMP,
+    // Made by the test player scenario switches only (RAPP-619).
+    is_test_fixture: false,
     ...overrides,
   };
 }
@@ -1321,6 +1323,7 @@ export function buildSeason(overrides: Partial<SeasonRow> = {}): SeasonRow {
     starts_on: '2026-09-01',
     is_current: true,
     created_at: FIXTURE_TIMESTAMP,
+    is_test_fixture: false,
     ...overrides,
   };
 }
@@ -1366,6 +1369,7 @@ export function buildAuthorizationSignature(
       PARTICIPANT_FIXTURES[1] === undefined ? '' : seedUserId(PARTICIPANT_FIXTURES[1].ordinal),
     season_id: SEED_SEASON_ID,
     version_id: null,
+    is_test_fixture: false,
     method: 'paper',
     language: null,
     device: null,

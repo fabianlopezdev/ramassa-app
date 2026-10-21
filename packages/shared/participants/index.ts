@@ -45,3 +45,4 @@ export {
   type ProfilePrefillInput,
   type ProfilePrefillPayload,
 } from './participant-prefill';
+export * from './test-scenario';

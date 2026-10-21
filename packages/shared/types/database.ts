@@ -315,6 +315,7 @@ export type Database = {
         Row: {
           device: string | null;
           id: string;
+          is_test_fixture: boolean;
           language: string | null;
           method: string;
           org_id: string;
@@ -331,6 +332,7 @@ export type Database = {
         Insert: {
           device?: string | null;
           id?: string;
+          is_test_fixture?: boolean;
           language?: string | null;
           method: string;
           org_id: string;
@@ -347,6 +349,7 @@ export type Database = {
         Update: {
           device?: string | null;
           id?: string;
+          is_test_fixture?: boolean;
           language?: string | null;
           method?: string;
           org_id?: string;
@@ -3514,6 +3517,7 @@ export type Database = {
           created_at: string;
           id: string;
           is_current: boolean;
+          is_test_fixture: boolean;
           name: string;
           org_id: string;
           starts_on: string;
@@ -3522,6 +3526,7 @@ export type Database = {
           created_at?: string;
           id?: string;
           is_current?: boolean;
+          is_test_fixture?: boolean;
           name: string;
           org_id: string;
           starts_on: string;
@@ -3530,6 +3535,7 @@ export type Database = {
           created_at?: string;
           id?: string;
           is_current?: boolean;
+          is_test_fixture?: boolean;
           name?: string;
           org_id?: string;
           starts_on?: string;
@@ -4686,6 +4692,7 @@ export type Database = {
         Row: {
           accepted_at: string;
           id: string;
+          is_test_fixture: boolean;
           locale_shown: string;
           profile_id: string;
           terms_version: string;
@@ -4693,6 +4700,7 @@ export type Database = {
         Insert: {
           accepted_at?: string;
           id?: string;
+          is_test_fixture?: boolean;
           locale_shown: string;
           profile_id: string;
           terms_version: string;
@@ -4700,6 +4708,7 @@ export type Database = {
         Update: {
           accepted_at?: string;
           id?: string;
+          is_test_fixture?: boolean;
           locale_shown?: string;
           profile_id?: string;
           terms_version?: string;
@@ -6107,6 +6116,7 @@ export type Database = {
       my_permissions: { Args: never; Returns: string[] };
       my_questions_to_ask: { Args: never; Returns: string[] };
       my_session_is_current: { Args: never; Returns: boolean };
+      my_test_scenario_stamp: { Args: never; Returns: string };
       open_staff_checkouts: {
         Args: never;
         Returns: {
@@ -6663,6 +6673,10 @@ export type Database = {
         Args: { p_is_test_account: boolean; p_profile_id: string };
         Returns: undefined;
       };
+      set_test_player_scenario: {
+        Args: { p_change: Json; p_profile_id: string };
+        Returns: undefined;
+      };
       sign_authorization: {
         Args: { p_payload: Json; p_version_id: string };
         Returns: string;
@@ -6693,6 +6707,7 @@ export type Database = {
         };
         Returns: string;
       };
+      test_player_scenario: { Args: { p_profile_id: string }; Returns: Json };
       test_sign_in_account: { Args: { p_email: string }; Returns: string };
       test_sign_in_record_success: {
         Args: { p_profile_id: string };
