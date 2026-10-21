@@ -57,6 +57,46 @@ export async function verifyEmailOtp(client: Client, params: VerifyEmailOtpParam
   }
 }
 
+/**
+ * The sign-in code step, with the staging fixed code for test accounts
+ * (RAPP-616). The emailed code is always tried first. Only in a build with
+ * `EXPO_PUBLIC_TEST_SIGN_IN=true`, and only when that code is refused, the
+ * staging `test-sign-in` function is asked: for a test account and the fixed
+ * code it returns a token hash, which becomes a session through `verifyOtp`
+ * (https://supabase.com/docs/reference/javascript/auth-verifyotp, `token_hash`
+ * with type `email`). Any other outcome is the normal refusal, so a real
+ * account on staging sees exactly what it sees anywhere else.
+ */
+export async function verifyEmailCode(
+  client: Client,
+  params: VerifyEmailOtpParams,
+  options: { readonly testSignIn: boolean },
+): Promise<void> {
+  try {
+    await verifyEmailOtp(client, params);
+    return;
+  } catch (refused) {
+    if (!options.testSignIn) throw refused;
+    const exchanged = await tryTestSignIn(client, params);
+    if (!exchanged) throw refused;
+  }
+}
+
+async function tryTestSignIn(client: Client, params: VerifyEmailOtpParams): Promise<boolean> {
+  try {
+    const { data, error } = await client.functions.invoke<{ token_hash?: unknown }>(
+      'test-sign-in',
+      { body: { email: params.email, code: params.token } },
+    );
+    const tokenHash = data?.token_hash;
+    if (error || typeof tokenHash !== 'string' || tokenHash === '') return false;
+    const verified = await client.auth.verifyOtp({ token_hash: tokenHash, type: 'email' });
+    return verified.error === null;
+  } catch {
+    return false;
+  }
+}
+
 export interface PasswordLoginParams {
   readonly email: string;
   readonly password: string;

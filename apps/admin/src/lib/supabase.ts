@@ -22,6 +22,8 @@ export const adminClientEnv = parseClientEnv({
   EXPO_PUBLIC_TRANSLATION_WORKER_URL: import.meta.env.EXPO_PUBLIC_TRANSLATION_WORKER_URL,
   // Where "Preview as player" opens the player web app (RAPP-372).
   EXPO_PUBLIC_PLAYER_WEB_URL: import.meta.env.EXPO_PUBLIC_PLAYER_WEB_URL,
+  // Staging builds only: the fixed code of test accounts (RAPP-616).
+  EXPO_PUBLIC_TEST_SIGN_IN: import.meta.env.EXPO_PUBLIC_TEST_SIGN_IN,
 });
 
 export const supabase = createSupabaseClient({

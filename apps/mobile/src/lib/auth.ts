@@ -7,13 +7,20 @@ import {
   requestEmailOtp as sharedRequestEmailOtp,
   signInWithPassword as sharedSignInWithPassword,
   signOut as sharedSignOut,
-  verifyEmailOtp as sharedVerifyEmailOtp,
+  verifyEmailCode,
 } from '@ramassa/shared/auth';
+import { isTestSignInBuild } from '@ramassa/shared/env';
 import type { AppError, Result } from '@ramassa/shared/errors';
 import { logger, safeAsync } from './observability';
 import { leavePreview } from './player-preview';
 import { removePushToken } from './push-notifications';
-import { previewMode, supabase } from './supabase';
+import { mobileClientEnv, previewMode, supabase } from './supabase';
+
+/**
+ * A staging build (RAPP-616): the code step also accepts the fixed code of a
+ * test account, and the email step offers "I already have a code".
+ */
+export const testSignInBuild = isTestSignInBuild(mobileClientEnv);
 
 /** Reports a role-lookup failure from the AuthProvider to the wired logger/Sentry. */
 export function reportAuthError(error: AppError): void {
@@ -25,7 +32,10 @@ export function sendEmailOtp(email: string): Promise<Result<void, AppError>> {
 }
 
 export function confirmEmailOtp(email: string, token: string): Promise<Result<void, AppError>> {
-  return safeAsync(() => sharedVerifyEmailOtp(supabase, { email, token }), { code: 'AUTH-4' });
+  return safeAsync(
+    () => verifyEmailCode(supabase, { email, token }, { testSignIn: testSignInBuild }),
+    { code: 'AUTH-4' },
+  );
 }
 
 export function loginWithPassword(

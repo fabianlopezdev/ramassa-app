@@ -29,6 +29,12 @@ export function validateDeploymentEnv(source: Record<string, string | undefined>
   if (parsedUrl.hostname === 'localhost' || parsedUrl.hostname === '127.0.0.1') {
     throw new Error('EXPO_PUBLIC_SUPABASE_URL points to a local backend');
   }
+  // The fixed code of test accounts is a staging tool (RAPP-616). A production
+  // build must never ask for it, so a production deploy that carries the flag
+  // stops here.
+  if (source.TARGET_ENV === 'production' && source.EXPO_PUBLIC_TEST_SIGN_IN?.trim() === 'true') {
+    throw new Error('EXPO_PUBLIC_TEST_SIGN_IN must never be set for production');
+  }
 
   return {
     EXPO_PUBLIC_SUPABASE_URL: supabaseUrl,

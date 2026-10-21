@@ -41,6 +41,8 @@ export const mobileClientEnv = parseClientEnv({
   ),
   // The only origin the web build accepts a player preview from (RAPP-372).
   EXPO_PUBLIC_ADMIN_WEB_URL: process.env.EXPO_PUBLIC_ADMIN_WEB_URL,
+  // Staging builds only: the fixed code of test accounts (RAPP-616).
+  EXPO_PUBLIC_TEST_SIGN_IN: process.env.EXPO_PUBLIC_TEST_SIGN_IN,
 });
 
 /**

@@ -8,12 +8,17 @@ import {
   requestEmailOtp as sharedRequestEmailOtp,
   signInWithPassword as sharedSignInWithPassword,
   signOut as sharedSignOut,
-  verifyEmailOtp as sharedVerifyEmailOtp,
+  verifyEmailCode,
 } from '@ramassa/shared/auth';
 import { acceptPendingEntityInvitation } from '@ramassa/shared/entity-management';
+import { isTestSignInBuild } from '@ramassa/shared/env';
 import type { AppError, Result } from '@ramassa/shared/errors';
 import { logger, safeAsync } from './observability';
-import { supabase } from './supabase';
+import { adminClientEnv, supabase } from './supabase';
+
+// A staging build (RAPP-616): a refused code is also tried as the fixed code
+// of a test account.
+const testSignInBuild = isTestSignInBuild(adminClientEnv);
 
 export function sendEmailOtp(email: string): Promise<Result<void, AppError>> {
   return safeAsync(() => sharedRequestEmailOtp(supabase, { email }));
@@ -22,7 +27,7 @@ export function sendEmailOtp(email: string): Promise<Result<void, AppError>> {
 export function confirmEmailOtp(email: string, token: string): Promise<Result<void, AppError>> {
   return safeAsync(
     async () => {
-      await sharedVerifyEmailOtp(supabase, { email, token });
+      await verifyEmailCode(supabase, { email, token }, { testSignIn: testSignInBuild });
       await acceptPendingEntityInvitation(supabase);
     },
     { code: 'AUTH-4' },

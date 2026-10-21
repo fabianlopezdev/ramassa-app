@@ -35,3 +35,38 @@ describe('hosted Supabase deployment environment', () => {
     ).toThrow('EXPO_PUBLIC_SUPABASE_ANON_KEY is missing');
   });
 });
+
+describe('the staging fixed code for test accounts (RAPP-616)', () => {
+  test('a production deployment with the test sign-in flag is refused', () => {
+    expect(() =>
+      validateDeploymentEnv({
+        ...validDeploymentEnv,
+        TARGET_ENV: 'production',
+        EXPO_PUBLIC_TEST_SIGN_IN: 'true',
+      }),
+    ).toThrow('EXPO_PUBLIC_TEST_SIGN_IN must never be set for production');
+  });
+
+  test('a preview (staging) deployment may carry it, and production without it is fine', () => {
+    expect(() =>
+      validateDeploymentEnv({
+        ...validDeploymentEnv,
+        TARGET_ENV: 'preview',
+        EXPO_PUBLIC_TEST_SIGN_IN: 'true',
+      }),
+    ).not.toThrow();
+    expect(() =>
+      validateDeploymentEnv({ ...validDeploymentEnv, TARGET_ENV: 'production' }),
+    ).not.toThrow();
+  });
+
+  test('the deployment workflow hands the flag to the check and to both builds', async () => {
+    const workflow = await Bun.file(
+      new URL('../.github/workflows/deploy.yml', import.meta.url),
+    ).text();
+    const mentions = workflow.match(
+      /EXPO_PUBLIC_TEST_SIGN_IN: \$\{\{ vars\.EXPO_PUBLIC_TEST_SIGN_IN \}\}/g,
+    );
+    expect(mentions?.length).toBe(3);
+  });
+});

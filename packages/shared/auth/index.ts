@@ -12,6 +12,7 @@ export {
   requestEmailOtp,
   signInWithPassword,
   signOut,
+  verifyEmailCode,
   verifyEmailOtp,
   type PasswordLoginParams,
   type RequestEmailOtpParams,
