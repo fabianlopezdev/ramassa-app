@@ -68,6 +68,7 @@ export const tokens = {
 
   formField: {
     minHeight: 64,
+    textAreaMinHeight: 192,
     focusBorderWidth: 2,
     focusRingWidth: 4,
     width: { short: 96, medium: 160 },

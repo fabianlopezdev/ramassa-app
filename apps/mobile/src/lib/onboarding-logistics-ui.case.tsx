@@ -107,11 +107,23 @@ mock.module('@/components/onboarding/option-chip', () => ({
     label,
     onPress,
     isSelected,
+    accessibilityRole = 'button',
   }: {
     label: string;
     onPress: () => void;
     isSelected: boolean;
-  }) => createElement('button', { onClick: onPress, 'aria-pressed': isSelected }, label),
+    accessibilityRole?: 'button' | 'radio';
+  }) =>
+    createElement(
+      'button',
+      {
+        onClick: onPress,
+        role: accessibilityRole,
+        'aria-checked': isSelected,
+        'aria-pressed': isSelected,
+      },
+      label,
+    ),
 }));
 mock.module('@/components/onboarding/municipality-picker', () => ({
   MunicipalityPicker: () => null,

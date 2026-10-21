@@ -1263,17 +1263,20 @@ values (
 )
 on conflict (id) do nothing;
 
--- The staff question builder (RAPP-307) ---------------------------------------------
--- A "Transport" screen after the logistics step, with one question of each kind
--- that matters: Normal yes/no/maybe on the wizard and the referral form; a
--- single choice with one archived option; a Sensitive long text asked every
--- season; and a staff-only short text. Player 0011 answered three of them.
+-- The staff question builder (RAPP-307, RAPP-570) -----------------------------------
+-- One topic per player step: travel, discovery, participation barriers.
+-- Question IDs stay stable so existing answers and referral links remain valid.
 insert into public.intake_screens (id, org_id, title, intro, after_screen, sort_order)
-values (
-  '5eed0000-0000-4000-8044-000000000001', '5eed0000-0000-4000-8000-000000000000',
-  '{"ca":"Com arribes als entrenaments","es":"Cómo llegas a los entrenamientos","en":"How you get to training"}'::jsonb,
-  '{"ca":"Ens ajuda a organitzar els desplaçaments."}'::jsonb,
-  'logistics', 0)
+values
+  ('5eed0000-0000-4000-8044-000000000001', '5eed0000-0000-4000-8000-000000000000',
+   '{"ca":"Com arribes als entrenaments","es":"Cómo llegas a los entrenamientos","en":"How you get to training","ar":"كيف تصلين إلى التدريبات","fa":"چگونه به تمرین می‌آیید"}'::jsonb,
+   '{"ca":"Ens ajuda a organitzar els desplaçaments.","es":"Nos ayuda a organizar los desplazamientos.","en":"This helps us organise travel to training.","ar":"يساعدنا هذا على تنظيم التنقل إلى التدريبات.","fa":"این اطلاعات به ما کمک می‌کند رفت‌وآمد به تمرین را هماهنگ کنیم."}'::jsonb, 'logistics', 0),
+  ('5eed0000-0000-4000-8044-000000000002', '5eed0000-0000-4000-8000-000000000000',
+   '{"ca":"El teu primer contacte amb Ramassà","es":"Tu primer contacto con Ramassà","en":"Finding Ramassà","ar":"تعرّفكِ على راماسا","fa":"آشنایی با راماسا"}'::jsonb,
+   null, 'logistics', 1),
+  ('5eed0000-0000-4000-8044-000000000003', '5eed0000-0000-4000-8000-000000000000',
+   '{"ca":"Participació als entrenaments","es":"Participación en los entrenamientos","en":"Taking part in training","ar":"المشاركة في التدريبات","fa":"شرکت در تمرین‌ها"}'::jsonb,
+   null, 'logistics', 2)
 on conflict (id) do nothing;
 
 insert into public.custom_questions
@@ -1284,28 +1287,41 @@ values
    '{"ca":"Vens amb transport públic?","es":"¿Vienes en transporte público?","en":"Do you come by public transport?","ar":"هل تأتين بالمواصلات العامة؟","fa":"آیا با حمل و نقل عمومی می‌آیید؟"}'::jsonb,
    null, 'normal', array['wizard', 'entity_form'], 0),
   ('5eed0000-0000-4000-8045-000000000002', '5eed0000-0000-4000-8000-000000000000',
-   '5eed0000-0000-4000-8044-000000000001', 'single_choice',
-   '{"ca":"Com et vas assabentar de Ramassà?","en":"How did you hear about Ramassà?"}'::jsonb,
-   null, 'normal', array['wizard'], 1),
+   '5eed0000-0000-4000-8044-000000000002', 'single_choice',
+   '{"ca":"Com et vas assabentar de Ramassà?","es":"¿Cómo te enteraste de Ramassà?","en":"How did you hear about Ramassà?","ar":"كيف سمعتِ عن راماسا؟","fa":"چطور با راماسا آشنا شدید؟"}'::jsonb,
+   null, 'normal', array['wizard'], 0),
   ('5eed0000-0000-4000-8045-000000000003', '5eed0000-0000-4000-8000-000000000000',
-   '5eed0000-0000-4000-8044-000000000001', 'long_text',
-   '{"ca":"Hi ha res que dificulti venir aquesta temporada?","en":"Is anything making it hard to come this season?"}'::jsonb,
-   '{"ca":"Només ho veurà l''equip amb permís."}'::jsonb, 'sensitive', array['season'], 2),
+   '5eed0000-0000-4000-8044-000000000003', 'long_text',
+   '{"ca":"Què et dificulta venir als entrenaments?","es":"¿Qué te dificulta venir a los entrenamientos?","en":"What makes it difficult for you to attend training?","ar":"ما الذي يصعّب عليكِ الحضور إلى التدريبات؟","fa":"چه چیزی آمدن شما به تمرین را دشوار می‌کند؟"}'::jsonb,
+   null, 'sensitive', array['season'], 1),
   ('5eed0000-0000-4000-8045-000000000004', '5eed0000-0000-4000-8000-000000000000',
    '5eed0000-0000-4000-8044-000000000001', 'short_text',
    '{"ca":"Parada de metro més propera"}'::jsonb,
-   null, 'personal', array['staff'], 3)
+   null, 'personal', array['staff'], 3),
+  ('5eed0000-0000-4000-8045-000000000005', '5eed0000-0000-4000-8000-000000000000',
+   '5eed0000-0000-4000-8044-000000000003', 'single_choice',
+   '{"ca":"Hi ha res que dificulti venir aquesta temporada?","es":"¿Hay algo que te dificulte venir esta temporada?","en":"Is anything making it hard to come this season?","ar":"هل هناك ما يصعّب عليكِ الحضور هذا الموسم؟","fa":"آیا چیزی آمدن شما را در این فصل دشوار می‌کند؟"}'::jsonb,
+   null, 'sensitive', array['season'], 0)
 on conflict (id) do nothing;
 
 insert into public.custom_question_options (id, org_id, question_id, label, sort_order, is_archived)
 values
   ('5eed0000-0000-4000-8046-000000000001', '5eed0000-0000-4000-8000-000000000000',
-   '5eed0000-0000-4000-8045-000000000002', '{"ca":"Una entitat","en":"An organization"}'::jsonb, 0, false),
+   '5eed0000-0000-4000-8045-000000000002', '{"ca":"Una entitat","es":"Una entidad","en":"An organisation","ar":"جمعية أو منظمة","fa":"یک نهاد یا سازمان"}'::jsonb, 0, false),
   ('5eed0000-0000-4000-8046-000000000002', '5eed0000-0000-4000-8000-000000000000',
-   '5eed0000-0000-4000-8045-000000000002', '{"ca":"Xarxes socials","en":"Social media"}'::jsonb, 1, false),
+   '5eed0000-0000-4000-8045-000000000002', '{"ca":"Xarxes socials","es":"Redes sociales","en":"Social media","ar":"وسائل التواصل الاجتماعي","fa":"شبکه‌های اجتماعی"}'::jsonb, 1, false),
   ('5eed0000-0000-4000-8046-000000000003', '5eed0000-0000-4000-8000-000000000000',
-   '5eed0000-0000-4000-8045-000000000002', '{"ca":"Un cartell","en":"A poster"}'::jsonb, 2, true)
+   '5eed0000-0000-4000-8045-000000000002', '{"ca":"Un cartell","es":"Un cartel","en":"A poster","ar":"ملصق","fa":"یک پوستر"}'::jsonb, 2, true),
+  ('5eed0000-0000-4000-8046-000000000004', '5eed0000-0000-4000-8000-000000000000',
+   '5eed0000-0000-4000-8045-000000000005', '{"ca":"Sí","es":"Sí","en":"Yes","ar":"نعم","fa":"بله"}'::jsonb, 0, false),
+  ('5eed0000-0000-4000-8046-000000000005', '5eed0000-0000-4000-8000-000000000000',
+   '5eed0000-0000-4000-8045-000000000005', '{"ca":"No","es":"No","en":"No","ar":"لا","fa":"خیر"}'::jsonb, 1, false)
 on conflict (id) do nothing;
+
+-- Conditional participation follow-up, with existing encrypted answers retained (RAPP-572).
+update public.custom_questions
+   set show_when_question_id='5eed0000-0000-4000-8045-000000000005', show_when_option_id='5eed0000-0000-4000-8046-000000000004'
+ where id='5eed0000-0000-4000-8045-000000000003' and org_id='5eed0000-0000-4000-8000-000000000000';
 
 insert into public.custom_answers
   (profile_id, question_id, season_key, season_id, org_id, value, value_encrypted, source)

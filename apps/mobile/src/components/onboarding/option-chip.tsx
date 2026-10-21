@@ -6,6 +6,7 @@ export interface OptionChipProps {
   readonly testID?: string;
   readonly label: string;
   readonly accessibilityHint?: string;
+  readonly accessibilityRole?: 'button' | 'radio';
   readonly isSelected: boolean;
   readonly onPress: () => void;
 }
@@ -14,6 +15,7 @@ export function OptionChip({
   testID,
   label,
   accessibilityHint,
+  accessibilityRole = 'button',
   isSelected,
   onPress,
 }: OptionChipProps) {
@@ -23,6 +25,7 @@ export function OptionChip({
       testID={testID}
       label={label}
       accessibilityHint={accessibilityHint}
+      accessibilityRole={accessibilityRole}
       isSelected={isSelected}
       onPress={onPress}
       contentClassName="justify-center"

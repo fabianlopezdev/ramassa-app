@@ -1420,6 +1420,8 @@ export function buildCustomQuestion(overrides: Partial<CustomQuestionRow> = {}):
     id: SEED_CUSTOM_QUESTION_ID,
     org_id: SEED_ORGANIZATION_ID,
     screen_id: SEED_INTAKE_SCREEN_ID,
+    show_when_question_id: null,
+    show_when_option_id: null,
     question_type: 'yes_no_maybe',
     label: { ca: 'Vens amb transport públic?' },
     help: null,

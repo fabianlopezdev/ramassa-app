@@ -1,5 +1,5 @@
 import { OptionChip } from '@/components/onboarding/option-chip';
-import { useState } from 'react';
+import { Children, useState, type ReactNode } from 'react';
 import { useWindowDimensions, View } from 'react-native';
 import { tokens } from '@ramassa/shared/tokens';
 
@@ -23,32 +23,52 @@ interface OptionGridProps {
   readonly onChange: (value: string) => void;
 }
 
-/** Fixed column tracks keep all size buttons equal, including the final incomplete row. */
-export function OptionGrid({ options, value, accessibilityHint, onChange }: OptionGridProps) {
+/** Fixed column tracks also serve custom questions with translated option labels. */
+export function ChoiceGrid({
+  children,
+  maximumColumns = 3,
+}: {
+  readonly children: ReactNode;
+  readonly maximumColumns?: 2 | 3;
+}) {
   const { width, fontScale } = useWindowDimensions();
   const [measuredWidth, setMeasuredWidth] = useState<number | null>(null);
-  const columns = optionGridColumnCount(measuredWidth ?? width - tokens.spacing.lg * 2, fontScale);
-  const rows = Array.from({ length: Math.ceil(options.length / columns) }, (_, row) =>
-    Array.from({ length: columns }, (_, column) => options[row * columns + column]),
+  const items = Children.toArray(children);
+  const columns = Math.min(
+    maximumColumns,
+    Math.max(1, items.length),
+    optionGridColumnCount(measuredWidth ?? width - tokens.spacing.lg * 2, fontScale),
+  );
+  const rows = Array.from({ length: Math.ceil(items.length / columns) }, (_, row) =>
+    Array.from({ length: columns }, (_, column) => items[row * columns + column]),
   );
   return (
     <View className="gap-sm" onLayout={(event) => setMeasuredWidth(event.nativeEvent.layout.width)}>
-      {rows.map((row) => (
-        <View key={row[0]} className="flex-row gap-sm">
+      {rows.map((row, rowIndex) => (
+        <View key={rowIndex} className="flex-row gap-sm">
           {row.map((option, index) => (
-            <View key={option ?? `empty-${index}`} className="flex-1">
-              {option === undefined ? null : (
-                <OptionChip
-                  label={option}
-                  accessibilityHint={accessibilityHint}
-                  isSelected={value === option}
-                  onPress={() => onChange(option)}
-                />
-              )}
+            <View key={index} className="flex-1">
+              {option ?? null}
             </View>
           ))}
         </View>
       ))}
     </View>
+  );
+}
+
+export function OptionGrid({ options, value, accessibilityHint, onChange }: OptionGridProps) {
+  return (
+    <ChoiceGrid>
+      {options.map((option) => (
+        <OptionChip
+          key={option}
+          label={option}
+          accessibilityHint={accessibilityHint}
+          isSelected={value === option}
+          onPress={() => onChange(option)}
+        />
+      ))}
+    </ChoiceGrid>
   );
 }

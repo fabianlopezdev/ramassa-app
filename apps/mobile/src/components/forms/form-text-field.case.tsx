@@ -68,6 +68,7 @@ mock.module('react-native', () => ({
     ref,
     value,
     multiline,
+    maxLength,
   }: {
     accessibilityLabel: string;
     accessibilityHint?: string;
@@ -82,6 +83,7 @@ mock.module('react-native', () => ({
     ref?: Ref<HTMLInputElement>;
     value?: string;
     multiline?: boolean;
+    maxLength?: number;
   }) =>
     createElement('input', {
       ref,
@@ -90,6 +92,7 @@ mock.module('react-native', () => ({
       'data-hint': accessibilityHint,
       className,
       'data-multiline': multiline,
+      maxLength,
       style: flatten(style),
       onBlur,
       onFocus,
@@ -98,6 +101,12 @@ mock.module('react-native', () => ({
       onClick: onPress,
       onInput: (event: { target: { value: string } }) => onChangeText?.(event.target.value),
     }),
+}));
+mock.module('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (_key: string, values: { count: number; limit: number }) =>
+      `${values.count} / ${values.limit} characters`,
+  }),
 }));
 mock.module('@/lib/continuous-corners', () => ({
   continuousCorners: {},
@@ -201,7 +210,7 @@ test('only the focused field has a decorative ring and preserves caller callback
   expect(secondRing.style.opacity).toBe('0');
   fireEvent.focus(first);
   expect(ring.style.opacity).toBe('1');
-  expect(ring.className).toContain('border-primary');
+  expect(ring.className).toContain('border-secondary');
   expect(ring.getAttribute('data-pointer-events')).toBe('none');
   expect(ring.getAttribute('aria-hidden')).toBe('true');
   expect(onFocus).toHaveBeenCalledTimes(1);
@@ -224,6 +233,7 @@ test('a focused invalid field keeps a red focus ring and the same error feedback
   const ring = view.getByTestId('form-field-focus-ring');
   expect(ring.className).toContain('border-error');
   expect(ring.className).not.toContain('border-primary');
+  expect(ring.className).not.toContain('border-secondary');
   expect(view.getByText('Enter a number').getAttribute('aria-live')).toBe('polite');
 });
 
@@ -324,4 +334,35 @@ test('short numeric fields keep full-width labels and errors, grow with text, an
   fontScale = 2;
   view.rerender(createElement(FormTextField, { label: 'Postcode', inputWidth: 'medium' }));
   expect(view.getByRole('textbox').parentElement!.style.width).toBe('320px');
+});
+
+const { FormTextArea } = await import('./form-text-area');
+test('a text area gives visible writing space, a native limit, and an updating readable counter', () => {
+  const onChangeText = mock(() => {});
+  const view = render(
+    createElement(FormTextArea, {
+      label: 'What makes attending difficult?',
+      value: 'abc',
+      onChangeText,
+      maxLength: 4000,
+    }),
+  );
+  const input = view.getByRole('textbox') as HTMLInputElement;
+  expect(input.style.minHeight).toBe('192px');
+  expect(input.maxLength).toBe(4000);
+  expect(input.getAttribute('data-multiline')).toBe('true');
+  expect(view.getByText('3 / 4000 characters') !== null).toBe(true);
+  fireEvent.input(input, { target: { value: 'abcd' } });
+  expect(onChangeText).toHaveBeenCalledWith('abcd');
+  fontScale = 2;
+  view.rerender(
+    createElement(FormTextArea, {
+      label: 'What makes attending difficult?',
+      value: 'abcd',
+      onChangeText,
+      maxLength: 4000,
+    }),
+  );
+  expect(view.getByText('4 / 4000 characters') !== null).toBe(true);
+  expect((view.getByRole('textbox') as HTMLInputElement).style.minHeight).toBe('384px');
 });

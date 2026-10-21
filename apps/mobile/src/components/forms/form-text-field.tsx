@@ -149,7 +149,7 @@ export function FormTextField({
           editable={editable}
           readOnly={readOnly}
         />
-        <FieldFocusRing tone={hasError ? 'error' : 'primary'} fieldId={fieldId} />
+        <FieldFocusRing tone={hasError ? 'error' : 'secondary'} fieldId={fieldId} />
       </View>
       {hint == null || hint.trim() === '' ? null : (
         <Text className={`text-start text-form text-neutral-700 ${languageFontClass}`}>{hint}</Text>

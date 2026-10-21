@@ -130,3 +130,23 @@ test('compact option choices reuse the picker surface while keeping height and b
   expect(view.getByRole('button', { name: 'M' }).style.height).toBe('128px');
   view.unmount();
 });
+
+test('raised option buttons support unanswered single-choice questions', () => {
+  fontScale = 1;
+  const onPress = mock(() => {});
+  const view = render(
+    createElement(OptionChip, {
+      label: 'Yes',
+      accessibilityRole: 'radio',
+      isSelected: false,
+      onPress,
+    }),
+  );
+  const option = view.queryByRole('radio', { name: 'Yes' });
+  expect(option !== null).toBe(true);
+  expect(option?.getAttribute('aria-checked')).toBe('false');
+  expect(option?.className).toContain('border-primary');
+  if (option) fireEvent.click(option);
+  expect(onPress).toHaveBeenCalledTimes(1);
+  view.unmount();
+});

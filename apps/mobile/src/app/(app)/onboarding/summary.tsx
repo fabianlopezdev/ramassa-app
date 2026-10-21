@@ -38,6 +38,7 @@ import {
 } from '@ramassa/shared/intake';
 import {
   answerText,
+  isCustomQuestionVisible,
   isEmptyAnswer,
   textIn,
   type CustomAnswers,
@@ -115,20 +116,22 @@ function CustomSections({
           const title = textIn(screen.title, language);
           return (
             <ProfileSection key={screen.id} title={title}>
-              {screen.questions.map((question) => {
-                const value = answers[question.id];
-                return (
-                  <ProfileRow
-                    key={question.id}
-                    label={textIn(question.label, language)}
-                    value={
-                      value === undefined || isEmptyAnswer(value)
-                        ? t('summaryNotGiven')
-                        : answerText(question, value, language, words)
-                    }
-                  />
-                );
-              })}
+              {screen.questions
+                .filter((question) => isCustomQuestionVisible(question, answers))
+                .map((question) => {
+                  const value = answers[question.id];
+                  return (
+                    <ProfileRow
+                      key={question.id}
+                      label={textIn(question.label, language)}
+                      value={
+                        value === undefined || isEmptyAnswer(value)
+                          ? t('summaryNotGiven')
+                          : answerText(question, value, language, words)
+                      }
+                    />
+                  );
+                })}
               <EditButton
                 section={`custom-${screen.id}`}
                 title={title}

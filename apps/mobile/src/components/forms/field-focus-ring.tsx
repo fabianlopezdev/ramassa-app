@@ -31,7 +31,7 @@ export function FieldFocusRing({
   tone,
   fieldId,
 }: {
-  readonly tone: 'primary' | 'error';
+  readonly tone: 'secondary' | 'error';
   readonly fieldId: string;
 }) {
   const visibilityStyle = useAnimatedStyle(() => ({
@@ -45,15 +45,15 @@ export function FieldFocusRing({
       accessible={false}
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
-      className={`absolute inset-0 ${tone === 'error' ? 'border-error' : 'border-primary'}`}
+      className={`absolute inset-0 ${tone === 'error' ? 'border-error' : 'border-secondary'}`}
     >
       <View
         style={focusBorderStyle}
-        className={tone === 'error' ? 'border-error' : 'border-primary'}
+        className={tone === 'error' ? 'border-error' : 'border-secondary'}
       />
       <View
         style={focusRingStyle}
-        className={tone === 'error' ? 'border-error/20' : 'border-primary/20'}
+        className={tone === 'error' ? 'border-error/20' : 'border-secondary/20'}
       />
     </NativeWindAnimatedView>
   );

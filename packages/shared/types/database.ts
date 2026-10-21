@@ -877,6 +877,8 @@ export type Database = {
           privacy: string;
           question_type: string;
           screen_id: string;
+          show_when_option_id: string | null;
+          show_when_question_id: string | null;
           sort_order: number;
           updated_at: string;
         };
@@ -891,6 +893,8 @@ export type Database = {
           privacy: string;
           question_type: string;
           screen_id: string;
+          show_when_option_id?: string | null;
+          show_when_question_id?: string | null;
           sort_order?: number;
           updated_at?: string;
         };
@@ -905,6 +909,8 @@ export type Database = {
           privacy?: string;
           question_type?: string;
           screen_id?: string;
+          show_when_option_id?: string | null;
+          show_when_question_id?: string | null;
           sort_order?: number;
           updated_at?: string;
         };
@@ -921,6 +927,20 @@ export type Database = {
             columns: ['screen_id'];
             isOneToOne: false;
             referencedRelation: 'intake_screens';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'custom_questions_show_when_option_id_fkey';
+            columns: ['show_when_option_id'];
+            isOneToOne: false;
+            referencedRelation: 'custom_question_options';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'custom_questions_show_when_question_id_fkey';
+            columns: ['show_when_question_id'];
+            isOneToOne: false;
+            referencedRelation: 'custom_questions';
             referencedColumns: ['id'];
           },
         ];

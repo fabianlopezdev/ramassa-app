@@ -1,6 +1,5 @@
 /** Contact and dependants, separate from equipment sizing. */
 import { AuthTextField } from '@/components/auth/auth-text-field';
-import { RadioOption } from '@/components/forms/radio-option';
 import { MunicipalityPicker } from '@/components/onboarding/municipality-picker';
 import { OnboardingQuestionHeading } from '@/components/onboarding/onboarding-question-heading';
 import { OptionChip } from '@/components/onboarding/option-chip';
@@ -197,7 +196,8 @@ export default function LogisticsStepScreen() {
                 accessibilityLabel={t('referenceEntitySupportQuestion')}
               >
                 <View className="flex-1">
-                  <RadioOption
+                  <OptionChip
+                    accessibilityRole="radio"
                     label={t('yesOption')}
                     accessibilityHint={t('referenceEntitySupportQuestion')}
                     isSelected={field.value === true}
@@ -208,7 +208,8 @@ export default function LogisticsStepScreen() {
                   />
                 </View>
                 <View className="flex-1">
-                  <RadioOption
+                  <OptionChip
+                    accessibilityRole="radio"
                     label={t('noOption')}
                     accessibilityHint={t('referenceEntitySupportQuestion')}
                     isSelected={field.value === false}
