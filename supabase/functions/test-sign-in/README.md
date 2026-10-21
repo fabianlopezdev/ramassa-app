@@ -69,7 +69,9 @@ The function returns 404 again at once.
 - **Never** set `TEST_SIGN_IN_ENABLED` or `TEST_SIGN_IN_CODE` on the production project. Without them
   the function, even if deployed, answers 404 and touches nothing (`handler.test.ts` proves this).
 - **Never** set `EXPO_PUBLIC_TEST_SIGN_IN` for a production build. `bun run deploy:check-env` refuses
-  it when `TARGET_ENV=production`, and a production phone build profile must not carry it.
+  it when `TARGET_ENV=production` (web deploys), and the phone app's `eas-build-pre-install` hook
+  (`apps/mobile/scripts/check-eas-build-env.ts`) stops any EAS build whose profile is `production`
+  and carries the flag.
 - A production project has no test accounts to sign in as: test players exist only on staging.
 
 ## Marking an account as a test account

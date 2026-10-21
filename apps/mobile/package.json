@@ -74,7 +74,8 @@
     "typecheck": "tsc --noEmit",
     "test": "bun test",
     "web:export": "expo export --platform web",
-    "ios:ramassa": "expo run:ios --device \"Ramassa — iPhone 18 Pro\""
+    "ios:ramassa": "expo run:ios --device \"Ramassa — iPhone 18 Pro\"",
+    "eas-build-pre-install": "bun scripts/check-eas-build-env.ts"
   },
   "private": true,
   "expo": {
