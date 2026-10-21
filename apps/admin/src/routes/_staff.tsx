@@ -3,11 +3,20 @@ import { RequireAuth } from '@/components/auth/require-auth';
 import { StaffSidebar } from '@/components/nav/staff-sidebar';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { designRoleRedirect } from '@/lib/design-role-access';
+import { guardStaffRoute } from '@/lib/staff-route-guard';
+import { supabase } from '@/lib/supabase';
 import { createFileRoute, Navigate, Outlet, useLocation } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
 import { useAuth } from '@ramassa/shared/auth';
 
 export const Route = createFileRoute('/_staff')({
+  // The session lives in the browser (localStorage), so the guard below runs
+  // there: with ssr false, beforeLoad and every child loader run on the client
+  // (https://tanstack.com/start/latest/docs/framework/react/guide/selective-ssr).
+  ssr: false,
+  // The design role's redirect is thrown before any child loader runs, so a
+  // forbidden page never asks the database for its data (RAPP-615).
+  beforeLoad: ({ location }) => guardStaffRoute(supabase, location.pathname),
   component: StaffLayout,
 });
 
@@ -39,9 +48,10 @@ function StaffLayout() {
 
 /**
  * The onboarding design role (RAPP-615) reaches the onboarding page and the
- * test players only: every other staff URL, typed or followed, sends her back.
- * Guarding here, at the layout, keeps it deny-by-default for routes added
- * later. A UX gate like `RequireAuth`; the database refuses her the data.
+ * test players only. `beforeLoad` above redirects before any loader runs; this
+ * component gate also follows a permission change during the session (the
+ * permissions reload live), without a navigation. The database refuses her
+ * the data on its own.
  */
 function DesignRoleGate({ children }: { readonly children: ReactNode }) {
   const { permissions } = useAuth();

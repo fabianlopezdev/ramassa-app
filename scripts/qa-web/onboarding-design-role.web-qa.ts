@@ -36,10 +36,27 @@ test.describe.serial('the onboarding design role', () => {
 
   test('every other admin URL sends it back to the onboarding', async ({ page }) => {
     await signIn(page, ONBOARDING_DESIGNER_EMAIL);
+    // The data each forbidden page's loader asks for. The redirect is thrown in
+    // the staff layout's beforeLoad, so none of these requests may leave the
+    // browser (RAPP-615).
+    const forbiddenDataRequests = [
+      '/rest/v1/rpc/get_impact_report',
+      '/rest/v1/rpc/list_staff_conversations',
+      '/rest/v1/rpc/list_staff_members',
+      '/rest/v1/invites',
+    ];
+    const requested: string[] = [];
+    page.on('request', (request) => {
+      requested.push(new URL(request.url()).pathname);
+    });
     for (const path of ['/dashboard', '/settings', '/data', '/participants/invites', '/messages']) {
       await page.goto(path);
       await expect(page).toHaveURL(/\/onboarding$/, { timeout: 20_000 });
+      await expect(page.getByTestId('onboarding-design-page')).toBeVisible({ timeout: 20_000 });
     }
+    // The guard itself asked who she is: the recording works.
+    expect(requested).toContain('/rest/v1/rpc/my_permissions');
+    expect(requested.filter((pathname) => forbiddenDataRequests.includes(pathname))).toEqual([]);
   });
 
   test('its roster holds the test player only, marked as a test', async ({ page }) => {
