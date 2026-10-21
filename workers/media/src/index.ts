@@ -43,6 +43,7 @@ import {
   resolvePublicOrganizationLogo,
 } from './serve-organization-logo';
 import { readBearerToken, resolveCallerIdentity } from './supabase-identity';
+import { isDeletableTestPlayer } from './test-player-check';
 
 async function createUploadTarget(
   config: WorkerConfig,
@@ -165,6 +166,14 @@ const handler: ExportedHandler<Env> = {
             orgId: identity.orgId,
             participantId,
             objectsDeleted,
+            token: readBearerToken(request),
+            supabaseUrl: config.supabaseUrl,
+            supabasePublishableKey: config.supabasePublishableKey,
+          }),
+        // A test player is deleted without a new authenticator code (RAPP-617).
+        isDeletableTestPlayer: (participantId) =>
+          isDeletableTestPlayer({
+            participantId,
             token: readBearerToken(request),
             supabaseUrl: config.supabaseUrl,
             supabasePublishableKey: config.supabasePublishableKey,
