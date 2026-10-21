@@ -10,9 +10,10 @@ import {
   ONBOARDING_DESIGNER_EMAIL,
   PARTICIPANT_FIXTURES,
   seedUserId,
+  TEST_PLAYER_EMAIL,
   TEST_PLAYER_NAME,
 } from '@ramassa/shared/testing';
-import { signIn } from './session';
+import { countInDatabase, signIn } from './session';
 
 test.setTimeout(120_000);
 
@@ -72,5 +73,46 @@ test.describe.serial('the onboarding design role', () => {
     const option = page.getByRole('checkbox', { name: 'Test player' });
     await expect(option).toBeChecked({ timeout: 20_000 });
     await expect(option).toBeDisabled();
+  });
+
+  // RAPP-617: delete her, and create her again with the same address.
+  test('deletes the test player completely and creates her again', async ({ page }) => {
+    const fullName = `${TEST_PLAYER_NAME.firstName} ${TEST_PLAYER_NAME.lastName}`;
+    await signIn(page, ONBOARDING_DESIGNER_EMAIL);
+    await page.goto('/participants');
+    await page.getByRole('link', { name: fullName }).click();
+    await expect(page.getByRole('heading', { name: fullName, level: 1 })).toBeVisible({
+      timeout: 20_000,
+    });
+    // A real player has no such button; the test player does.
+    await page.getByRole('button', { name: 'Delete the test player' }).click();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toContainText('This cannot be undone.');
+    await dialog.getByRole('button', { name: 'Delete', exact: true }).click();
+    await expect(page).toHaveURL(/\/participants\/?(\?.*)?$/, { timeout: 30_000 });
+    expect(
+      countInDatabase(`select count(*) from auth.users where email = '${TEST_PLAYER_EMAIL}'`),
+    ).toBe(0);
+
+    await page.goto('/participants/new');
+    await page.getByLabel('First name').fill(TEST_PLAYER_NAME.firstName);
+    await page.getByLabel('Last name').fill(TEST_PLAYER_NAME.lastName);
+    await page.getByLabel('Email').fill(TEST_PLAYER_EMAIL);
+    await page.getByRole('button', { name: 'Create the invitation' }).click();
+    await expect(page.getByRole('heading', { name: 'Invitation created', level: 2 })).toBeVisible({
+      timeout: 20_000,
+    });
+    expect(
+      countInDatabase(
+        `select count(*) from public.profiles p join auth.users u on u.id = p.id where u.email = '${TEST_PLAYER_EMAIL}' and p.is_test_account`,
+      ),
+    ).toBe(1);
+  });
+
+  test('a real player has no delete button for an admin either', async ({ page }) => {
+    await signIn(page, 'laia.ferrer@example.test');
+    await page.goto(`/participants/${seedUserId(PARTICIPANT_FIXTURES[0]!.ordinal)}`);
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByRole('button', { name: 'Delete the test player' })).toHaveCount(0);
   });
 });

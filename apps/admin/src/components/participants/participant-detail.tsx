@@ -28,11 +28,13 @@ import { ParticipantPrefillForm } from '@/components/participants/participant-pr
 import { ParticipantProfileFields } from '@/components/participants/participant-profile-fields';
 import { ParticipantQuestionStates } from '@/components/participants/participant-question-states';
 import { ParticipantRgpd } from '@/components/participants/participant-rgpd';
+import { TestPlayerDelete } from '@/components/participants/test-player-delete';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { mediaWorkerUrl } from '@/lib/media-worker';
 import { safeAsync } from '@/lib/observability';
 import { supabase } from '@/lib/supabase';
-import { Link, useRouter } from '@tanstack/react-router';
+import { Link, useNavigate, useRouter } from '@tanstack/react-router';
 import { ArrowLeft } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -48,6 +50,7 @@ import {
   type EquipmentDeliveryRow,
   type HandoverItemType,
 } from '@ramassa/shared/equipment';
+import { AppError } from '@ramassa/shared/errors';
 import { setForumPostingDisabled } from '@ramassa/shared/forum';
 import {
   questionStateChanges,
@@ -72,9 +75,15 @@ import {
   type ParticipantNoteRow,
   type ProfilePrefillPayload,
 } from '@ramassa/shared/participants';
-import { isLimitedToTestPlayers, type PermissionCode } from '@ramassa/shared/permissions';
+import {
+  canDeleteTestPlayer,
+  isLimitedToTestPlayers,
+  type PermissionCode,
+} from '@ramassa/shared/permissions';
+import { deleteTestPlayer, eraseParticipant } from '@ramassa/shared/rgpd';
 import type { EquipmentDeliveryInput, UpdateOwnProfilePayload } from '@ramassa/shared/schemas';
 import { setPriorSeasons, type ParticipantSeasonAnswers } from '@ramassa/shared/seasons';
+import { purgeParticipantMedia } from '@ramassa/shared/upload-client';
 
 export interface ParticipantDetailProps {
   readonly participant: ParticipantDetailRow;
@@ -124,6 +133,7 @@ export function ParticipantDetail({
   const { t, i18n } = useTranslation(['participants', 'common', 'profile']);
   const locale = i18n.resolvedLanguage ?? 'ca';
   const router = useRouter();
+  const navigate = useNavigate();
   const { user, permissions } = useAuth();
 
   // Not joined yet: staff created her profile and she has not accepted the terms (RAPP-300).
@@ -148,6 +158,25 @@ export function ParticipantDetail({
     undefined,
   );
   const [isChangingForumStatus, setIsChangingForumStatus] = useState(false);
+
+  /**
+   * Deleting a test player (RAPP-617) is the RGPD erasure's two halves, in the
+   * same order (ADR-023): her files, then her record. The token is read at the
+   * moment of the call, so a session refreshed meanwhile is the one used.
+   */
+  async function deleteThisTestPlayer() {
+    const session = await supabase.auth.getSession();
+    const accessToken = session.data.session?.access_token;
+    if (accessToken === undefined) throw new AppError('AUTH-2');
+    const deleted = await eraseParticipant(participant.id, {
+      purgeMedia: () =>
+        purgeParticipantMedia({ mediaWorkerUrl, accessToken, participantId: participant.id }),
+      deleteRecord: () => deleteTestPlayer(supabase, participant.id),
+    });
+    if (!deleted.ok) throw deleted.error;
+    // Away from a record that no longer exists, without a way back to it.
+    await navigate({ to: '/participants', replace: true });
+  }
 
   async function saveProfile(payload: UpdateOwnProfilePayload | ProfilePrefillPayload) {
     setSaveErrorMessage(undefined);
@@ -410,6 +439,13 @@ export function ParticipantDetail({
             await setPriorSeasons(supabase, participant.id, count);
             await router.invalidate();
           }}
+        />
+      ) : null}
+
+      {isTestPlayer && canDeleteTestPlayer(permissions) ? (
+        <TestPlayerDelete
+          name={`${participant.first_name} ${participant.last_name}`.trim()}
+          onDelete={deleteThisTestPlayer}
         />
       ) : null}
 
