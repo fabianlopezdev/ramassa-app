@@ -178,7 +178,9 @@ select throws_ok(
 select throws_ok(
   $$ select * from public.create_participant_invite(
        '{"email":"amina.alhassan@example.test","first_name":"A","last_name":"B","is_test_account":true}'::jsonb) $$,
-  '23505', null::text, 'a test player is never an address that already has an account'
+  -- The neutral refusal: it never confirms the address is a real account (0093).
+  '22023', 'this address cannot be used for a test player',
+  'a test player is never an address that already has an account'
 );
 select lives_ok(
   $$ select * from public.create_participant_invite(
