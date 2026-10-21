@@ -1,7 +1,9 @@
+import { readFileSync } from 'node:fs';
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import {
   ENTITY_EMAIL,
+  PLAYER_ORIGIN,
   queryDatabase,
   signIn,
   signInPlayer as signInPlayerWithEmailCode,
@@ -9,6 +11,9 @@ import {
 } from './session';
 
 const wcagTags = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
+const commonEnglish = JSON.parse(
+  readFileSync('packages/shared/i18n/locales/en/common.json', 'utf8'),
+) as { loading: string };
 const ADMIN_EMAIL = 'laia.ferrer@example.test';
 const SEEDED = {
   announcement: '5eed0000-0000-4000-8001-000000000001',
@@ -300,6 +305,29 @@ test.describe('WCAG 2.2 AA regression gate', () => {
         await expectNoAxeViolations(page, route);
       });
     }
+  });
+
+  test('the player authorization loading gate has an accessible name on a slow connection', async ({
+    page,
+  }) => {
+    await signInPlayer(page);
+    await expect(page.getByTestId('open-knowledge-base')).toBeVisible();
+    const response = Promise.withResolvers<void>();
+    await page.route('**/rest/v1/rpc/my_authorization_status', async (route) => {
+      await response.promise;
+      await route.continue();
+    });
+    try {
+      await page.goto(`${PLAYER_ORIGIN}/community`, { waitUntil: 'domcontentloaded' });
+      await expect(page.getByTestId('authorization-resolving')).toBeVisible();
+      await expect(
+        page.getByRole('progressbar', { name: commonEnglish.loading, exact: true }),
+      ).toBeVisible();
+      await expectNoAxeViolations(page, 'player authorization loading gate');
+    } finally {
+      response.resolve();
+    }
+    await expect(page.getByTestId('authorization-resolving')).toHaveCount(0);
   });
 
   test('every practical static player web route has no axe violations', async ({ page }) => {

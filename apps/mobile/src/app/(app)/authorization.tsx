@@ -36,7 +36,10 @@ export default function AuthorizationScreen() {
   if (status.isPending) {
     return (
       <View className="flex-1 items-center justify-center bg-neutral-50">
-        <ActivityIndicator color={tokens.colors.primary.DEFAULT} />
+        <ActivityIndicator
+          accessibilityLabel={t('common:loading')}
+          color={tokens.colors.primary.DEFAULT}
+        />
       </View>
     );
   }

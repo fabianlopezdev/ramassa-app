@@ -14,6 +14,7 @@ import { useAccountAccess } from '@/lib/use-account-access';
 import { usePushRegistration } from '@/lib/use-push-registration';
 import { Redirect, usePathname, type Href } from 'expo-router';
 import { Stack } from 'expo-router/stack';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Modal, useWindowDimensions, View } from 'react-native';
 import { assuranceLevelOf, useAuth } from '@ramassa/shared/auth';
 import { needsAuthorization } from '@ramassa/shared/authorization';
@@ -38,6 +39,7 @@ export default function AppLayout() {
 }
 
 function AppNavigator() {
+  const { t } = useTranslation('common');
   const { user, session, role, needsSecondFactor, permissionsAreCurrent } = useAuth();
   const userId = user?.id ?? null;
   // The area comes from the account type, never from its absence (RAPP-232):
@@ -88,7 +90,10 @@ function AppNavigator() {
   if (area === 'resolving' || (isTeam && !needsSecondFactor && !permissionsAreCurrent)) {
     return (
       <View className="flex-1 items-center justify-center bg-neutral-50" testID="account-resolving">
-        <ActivityIndicator color={tokens.colors.primary.DEFAULT} />
+        <ActivityIndicator
+          accessibilityLabel={t('loading')}
+          color={tokens.colors.primary.DEFAULT}
+        />
       </View>
     );
   }
@@ -108,7 +113,10 @@ function AppNavigator() {
         className="flex-1 items-center justify-center bg-neutral-50"
         testID="authorization-resolving"
       >
-        <ActivityIndicator color={tokens.colors.primary.DEFAULT} />
+        <ActivityIndicator
+          accessibilityLabel={t('loading')}
+          color={tokens.colors.primary.DEFAULT}
+        />
       </View>
     );
   }
