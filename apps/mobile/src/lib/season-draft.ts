@@ -1,16 +1,24 @@
 import type { SeasonWizardScreen } from '@ramassa/shared/intake';
 import type { OnboardingDraft, OnboardingDraftStep } from '@ramassa/shared/onboarding-drafts';
 
+export function referringEntityForAdditionalSupport(draft: OnboardingDraft | null): string | null {
+  if (draft?.logistics?.hasReferenceEntity === false) return null;
+  const value = draft?.logistics?.referenceEntity;
+  return typeof value === 'string' ? value.trim() || null : null;
+}
+
 export const SEASON_SCREEN_TITLE_KEYS = {
   season: 'currentSituationTitle',
   'supporting-entities': 'supportingOrganisationsTitle',
   'participation-support': 'participationSupportTitle',
+  'specific-needs': 'supportNeedsTitle',
 } as const;
 
 const SCREEN_FIELDS = {
   season: ['applicantStatus'],
   'supporting-entities': ['supportingEntities'],
-  'participation-support': ['childcareNeed', 'specificNeeds'],
+  'participation-support': ['childcareNeed'],
+  'specific-needs': ['specificNeeds'],
 } as const;
 
 /** Merge only this screen's answers into the latest stored season draft. */

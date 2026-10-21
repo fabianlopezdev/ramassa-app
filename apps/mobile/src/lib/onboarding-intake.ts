@@ -41,6 +41,7 @@ export const WIZARD_SCREEN_ROUTES = {
   season: '/onboarding/season',
   'supporting-entities': '/onboarding/supporting-entities',
   'participation-support': '/onboarding/participation-support',
+  'specific-needs': '/onboarding/specific-needs',
   summary: '/onboarding/summary',
   terms: '/onboarding/terms',
 } as const satisfies Readonly<Record<WizardScreen, Href>>;
@@ -54,6 +55,7 @@ const WIZARD_SCREEN_DRAFT_STEP: Readonly<Record<WizardScreen, OnboardingStepName
   season: 'season',
   'supporting-entities': 'supporting-entities',
   'participation-support': 'participation-support',
+  'specific-needs': 'specific-needs',
   summary: 'summary',
   terms: 'terms',
 };
@@ -63,6 +65,8 @@ export function wizardStepRoute(
   step: WizardStepKey | OnboardingDraftStep,
   direction: 'forward' | 'back' = 'forward',
 ): Href {
+  if (step.startsWith('needs-detail:'))
+    return `/onboarding/specific-needs-details/${step.slice('needs-detail:'.length)}${direction === 'back' ? '?entrance=none' : ''}` as Href;
   if (step === 'applicant-status-details')
     return `/onboarding/applicant-status-details${direction === 'back' ? '?entrance=none' : ''}` as Href;
   if (step === 'documentation-details')
@@ -76,8 +80,14 @@ export function wizardStepRoute(
 }
 
 /** The draft step that resumes at a wizard step: a staff screen keeps its own key. */
-export function wizardDraftStep(step: WizardStepKey): OnboardingDraftStep {
-  return isCustomStep(step) ? step : WIZARD_SCREEN_DRAFT_STEP[step];
+export function wizardDraftStep(step: WizardStepKey | OnboardingDraftStep): OnboardingDraftStep {
+  if (
+    step === 'documentation-details' ||
+    step === 'applicant-status-details' ||
+    step.startsWith('needs-detail:')
+  )
+    return step as OnboardingDraftStep;
+  return isCustomStep(step) ? step : WIZARD_SCREEN_DRAFT_STEP[step as WizardScreen];
 }
 
 /** The staff screens in the shape the wizard planner takes (RAPP-307). */

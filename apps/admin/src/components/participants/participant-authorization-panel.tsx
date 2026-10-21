@@ -15,6 +15,7 @@ import { useTranslation } from 'react-i18next';
 import type { ParticipantAuthorization, ParticipantConsent } from '@ramassa/shared/authorization';
 import type { SignatureStrokes } from '@ramassa/shared/equipment';
 import type { ParticipantDetailRow } from '@ramassa/shared/participants';
+import { formatSupportNeeds } from '@ramassa/shared/schemas';
 import type { ParticipantSeasonAnswers } from '@ramassa/shared/seasons';
 
 const APPLICANT_STATUS_KEYS = {
@@ -274,7 +275,7 @@ export function ParticipantAuthorizationPanel({
                   answers.supportingEntities.length === 0
                     ? null
                     : answers.supportingEntities.join(', '),
-                  answers.specificNeeds,
+                  formatSupportNeeds(answers.specificNeeds, t),
                 ]
                   .filter((part) => part !== null && part !== '')
                   .join(' · ') || notProvided}

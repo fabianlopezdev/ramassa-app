@@ -11,6 +11,7 @@ export function SelectionChoiceCard({
   isSelected,
   rowStyle,
   onPress,
+  accessibilityRole = 'radio',
 }: {
   readonly testID?: string;
   readonly label: string;
@@ -19,12 +20,13 @@ export function SelectionChoiceCard({
   readonly isSelected: boolean;
   readonly rowStyle?: StyleProp<ViewStyle>;
   readonly onPress: () => void;
+  readonly accessibilityRole?: 'radio' | 'checkbox';
 }) {
   return (
     <SelectionChoiceSurface
       testID={testID}
       label={label}
-      accessibilityRole="radio"
+      accessibilityRole={accessibilityRole}
       isSelected={isSelected}
       onPress={onPress}
       className="w-full"

@@ -15,6 +15,7 @@
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { SelectionChoiceCard } from '@/components/auth/selection-choice-card';
 import { OptionChip } from '@/components/onboarding/option-chip';
+import { ChoiceGrid } from '@/components/onboarding/option-grid';
 import { QuestionHelp } from '@/components/onboarding/question-help';
 import type { BuiltinWording } from '@/lib/onboarding-intake-context';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
@@ -23,6 +24,7 @@ import { Text, View } from 'react-native';
 import {
   APPLICANT_STATUSES,
   CHILDCARE_NEEDS,
+  formatSupportNeeds,
   SEASON_NUMBERS,
   SPECIFIC_NEEDS_MAX_LENGTH,
   type ApplicantStatus,
@@ -103,6 +105,7 @@ export interface SeasonAnswerFieldsProps {
   readonly wording?: BuiltinWording;
   readonly testIDPrefix: string;
   readonly applicantStatusPresentation?: 'chips' | 'picker';
+  readonly referenceEntity?: string | null;
 }
 
 export function SeasonAnswerFields({
@@ -115,6 +118,7 @@ export function SeasonAnswerFields({
   wording,
   testIDPrefix,
   applicantStatusPresentation = 'chips',
+  referenceEntity,
 }: SeasonAnswerFieldsProps) {
   const { t } = useTranslation(['onboarding']);
   const label = (question: SeasonQuestion, appLabel: string) =>
@@ -195,7 +199,12 @@ export function SeasonAnswerFields({
           value={value.supportingEntities}
           onChange={(supportingEntities) => onChange({ supportingEntities })}
           entityNames={entityNames}
-          label={label('supporting_entities', t('onboarding:supportingEntitiesInstruction'))}
+          label={label(
+            'supporting_entities',
+            referenceEntity
+              ? t('onboarding:supportingEntitiesInstructionExcept', { entity: referenceEntity })
+              : t('onboarding:supportingEntitiesInstruction'),
+          )}
           help={help('supporting_entities')}
         />
       ) : null}
@@ -221,20 +230,24 @@ export function SeasonAnswerFields({
           label={label('childcare_need', t('onboarding:childcareNeedLabel'))}
           help={help('childcare_need')}
         >
-          {(
-            wording?.options('childcare_need', childcareNeeds, value.childcareNeed) ??
-            childcareNeeds
-          ).map(({ value: need, label: needLabel }) => (
-            <OptionChip
-              key={need}
-              label={needLabel}
-              accessibilityHint={label('childcare_need', t('onboarding:childcareNeedLabel'))}
-              isSelected={value.childcareNeed === need}
-              onPress={() =>
-                onChange({ childcareNeed: value.childcareNeed === need ? null : need })
-              }
-            />
-          ))}
+          <View className="w-full">
+            <ChoiceGrid maximumColumns={3}>
+              {(
+                wording?.options('childcare_need', childcareNeeds, value.childcareNeed) ??
+                childcareNeeds
+              ).map(({ value: need, label: needLabel }) => (
+                <OptionChip
+                  key={need}
+                  label={needLabel}
+                  accessibilityHint={label('childcare_need', t('onboarding:childcareNeedLabel'))}
+                  isSelected={value.childcareNeed === need}
+                  onPress={() =>
+                    onChange({ childcareNeed: value.childcareNeed === need ? null : need })
+                  }
+                />
+              ))}
+            </ChoiceGrid>
+          </View>
         </Question>
       ) : null}
 
@@ -244,7 +257,7 @@ export function SeasonAnswerFields({
             testID={`${testIDPrefix}-specific-needs`}
             label={label('specific_needs', t('onboarding:specificNeedsLabel'))}
             hint={help('specific_needs')}
-            value={value.specificNeeds}
+            value={formatSupportNeeds(value.specificNeeds, t)}
             onChangeText={(specificNeeds) => onChange({ specificNeeds })}
             multiline
             maxLength={SPECIFIC_NEEDS_MAX_LENGTH}

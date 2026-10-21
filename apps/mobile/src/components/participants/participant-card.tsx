@@ -37,6 +37,7 @@ import { toAppError } from '@ramassa/shared/errors';
 import { MADRID_TIME_ZONE } from '@ramassa/shared/events';
 import { DEFAULT_LANGUAGE, isSupportedLanguage, LANGUAGE_NATIVE_NAMES } from '@ramassa/shared/i18n';
 import type { ParticipantDetailRow } from '@ramassa/shared/participants';
+import { formatSupportNeeds } from '@ramassa/shared/schemas';
 
 function CardRow({ label, value }: { readonly label: string; readonly value: string }) {
   const languageFontClass = useLanguageFontClass();
@@ -277,7 +278,7 @@ export function ParticipantCard({
       case 'specificNeeds':
         return {
           label: tOnboarding('specificNeedsLabel'),
-          value: shown(participant.specific_needs ?? null),
+          value: shown(formatSupportNeeds(participant.specific_needs, tOnboarding)),
         };
       case 'mediaConsent':
         // The staff wording. Her own profile says "I appear in community photos".

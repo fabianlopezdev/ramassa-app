@@ -5,6 +5,7 @@
  * and readable only with participants.view_sensitive.
  */
 import { z } from 'zod';
+import { isValidSupportNeedsText, SUPPORT_NEEDS_MAX_LENGTH } from './support-needs';
 
 export const APPLICANT_STATUSES = [
   'asylum_seeker',
@@ -22,7 +23,7 @@ export type ChildcareNeed = (typeof CHILDCARE_NEEDS)[number];
 export const SEASON_NUMBERS = [1, 2, 3, 4, 5] as const;
 export type SeasonNumber = (typeof SEASON_NUMBERS)[number];
 
-export const SPECIFIC_NEEDS_MAX_LENGTH = 2000;
+export const SPECIFIC_NEEDS_MAX_LENGTH = SUPPORT_NEEDS_MAX_LENGTH;
 export const APPLICANT_STATUS_DETAILS_MAX_LENGTH = 2000;
 export const SUPPORTING_ENTITIES_MAX = 20;
 export const SUPPORTING_ENTITY_NAME_MAX_LENGTH = 200;
@@ -53,7 +54,7 @@ export const seasonAnswerFields = z.object({
   childcareNeed: z.preprocess(emptyAsAbsent, z.enum(CHILDCARE_NEEDS).optional()),
   specificNeeds: z.preprocess(
     emptyAsAbsent,
-    z.string().trim().max(SPECIFIC_NEEDS_MAX_LENGTH).optional(),
+    z.string().trim().refine(isValidSupportNeedsText).optional(),
   ),
 });
 

@@ -55,6 +55,7 @@ export const SEASON_WIZARD_SCREENS = [
   'season',
   'supporting-entities',
   'participation-support',
+  'specific-needs',
 ] as const;
 export type SeasonWizardScreen = (typeof SEASON_WIZARD_SCREENS)[number];
 export type WizardQuestionScreen = QuestionScreen | 'equipment' | SeasonWizardScreen;
@@ -101,7 +102,8 @@ export const WIZARD_SCREEN_QUESTIONS: Readonly<
   equipment: ['clothing_size', 'shoe_size'],
   season: ['applicant_status'],
   'supporting-entities': ['supporting_entities'],
-  'participation-support': ['childcare_need', 'specific_needs'],
+  'participation-support': ['childcare_need'],
+  'specific-needs': ['specific_needs'],
 };
 
 /**

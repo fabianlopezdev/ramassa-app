@@ -10,9 +10,8 @@
  * removed shows no row: it is never asked.
  */
 
-import { PressableScale } from '@/components/motion/pressable-scale';
+import { ReviewEditAction, ReviewRow, ReviewSection } from '@/components/onboarding/review-section';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
-import { ProfileRow, ProfileSection } from '@/components/profile/profile-section';
 import { SeasonAnswerRows } from '@/components/profile/season-answer-rows';
 import { onboardingDraftStore } from '@/lib/onboarding';
 import {
@@ -22,11 +21,9 @@ import {
 } from '@/lib/onboarding-intake';
 import { useBuiltinWording, useWizardIntake, useWizardStep } from '@/lib/onboarding-intake-context';
 import { SEASON_SCREEN_TITLE_KEYS } from '@/lib/season-draft';
-import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text } from 'react-native';
 import { LANGUAGE_NATIVE_NAMES } from '@ramassa/shared/i18n';
 import { countryLabelForCanonical } from '@ramassa/shared/i18n/countries';
 import { municipalityLabelForCanonical } from '@ramassa/shared/i18n/municipalities';
@@ -74,20 +71,12 @@ function EditButton({
   readonly onPress: () => void;
 }) {
   const { t } = useTranslation('onboarding');
-  const languageFontClass = useLanguageFontClass();
   return (
-    <PressableScale
+    <ReviewEditAction
       testID={`onboarding-summary-edit-${section}`}
-      accessibilityRole="button"
-      accessibilityLabel={t('summaryEditLabel', { section: title })}
+      label={t('summaryEditLabel', { section: title })}
       onPress={onPress}
-      haptic="tapLight"
-      className="min-h-recommended justify-center self-start rounded-md border border-primary px-md"
-    >
-      <Text className={`text-form font-semibold text-primary-dark ${languageFontClass}`}>
-        {t('summaryEditAction')}
-      </Text>
-    </PressableScale>
+    />
   );
 }
 
@@ -117,13 +106,27 @@ function CustomSections({
         .map((screen) => {
           const title = textIn(screen.title, language);
           return (
-            <ProfileSection key={screen.id} title={title}>
+            <ReviewSection
+              key={screen.id}
+              title={title}
+              action={
+                <EditButton
+                  section={`custom-${screen.id}`}
+                  title={title}
+                  onPress={() =>
+                    router.push(
+                      `${String(wizardStepRoute(customStepKey(screen.id)))}?edit=1` as Href,
+                    )
+                  }
+                />
+              }
+            >
               {screen.questions
                 .filter((question) => isCustomQuestionVisible(question, answers))
                 .map((question) => {
                   const value = answers[question.id];
                   return (
-                    <ProfileRow
+                    <ReviewRow
                       key={question.id}
                       label={textIn(question.label, language)}
                       value={
@@ -134,14 +137,7 @@ function CustomSections({
                     />
                   );
                 })}
-              <EditButton
-                section={`custom-${screen.id}`}
-                title={title}
-                onPress={() =>
-                  router.push(`${String(wizardStepRoute(customStepKey(screen.id)))}?edit=1` as Href)
-                }
-              />
-            </ProfileSection>
+            </ReviewSection>
           );
         })}
     </>
@@ -224,33 +220,51 @@ export default function SummaryStepScreen() {
             }
       }
     >
-      <ProfileSection title={t('summarySectionName')}>
-        <ProfileRow
+      <ReviewSection
+        title={t('summarySectionName')}
+        action={
+          <EditButton
+            section="identity"
+            title={t('summarySectionName')}
+            onPress={() => edit('identity')}
+          />
+        }
+      >
+        <ReviewRow
+          icon="person"
           label={wording.label('first_name', t('firstNameLabel'))}
           value={show(text(identity.firstName))}
         />
-        <ProfileRow
+        <ReviewRow
+          icon="person"
           label={wording.label('last_name', t('lastNameLabel'))}
           value={show(text(identity.lastName))}
         />
-        <EditButton
-          section="identity"
-          title={t('summarySectionName')}
-          onPress={() => edit('identity')}
-        />
-      </ProfileSection>
+      </ReviewSection>
       <CustomSections after="identity" answers={answers} language={locale} />
 
-      <ProfileSection title={t('backgroundTitle')}>
-        <ProfileRow
+      <ReviewSection
+        title={t('backgroundTitle')}
+        action={
+          <EditButton
+            section="background"
+            title={t('backgroundTitle')}
+            onPress={() => edit('background')}
+          />
+        }
+      >
+        <ReviewRow
+          icon="calendar"
           label={wording.label('date_of_birth', t('dateOfBirthLabel'))}
           value={show(birthDate)}
         />
-        <ProfileRow
+        <ReviewRow
+          icon="location"
           label={wording.label('place_of_birth', t('placeOfBirthLabel'))}
           value={show(text(identity.placeOfBirth))}
         />
-        <ProfileRow
+        <ReviewRow
+          icon="globe"
           label={wording.label('nationality', t('nationalityLabel'))}
           value={show(
             nationality === null
@@ -258,7 +272,8 @@ export default function SummaryStepScreen() {
               : (countryLabelForCanonical(nationality, locale) ?? nationality),
           )}
         />
-        <ProfileRow
+        <ReviewRow
+          icon="conversation"
           label={wording.label('preferred_language', t('preferredLanguageLabel'))}
           value={show(
             language === null
@@ -275,17 +290,22 @@ export default function SummaryStepScreen() {
                 )[0]?.label ?? language),
           )}
         />
-        <EditButton
-          section="background"
-          title={t('backgroundTitle')}
-          onPress={() => edit('background')}
-        />
-      </ProfileSection>
+      </ReviewSection>
       <CustomSections after="background" answers={answers} language={locale} />
 
       {hasQuestions('documentation') ? (
-        <ProfileSection title={t('documentationTitle')}>
-          <ProfileRow
+        <ReviewSection
+          title={t('documentationTitle')}
+          action={
+            <EditButton
+              section="documentation"
+              title={t('documentationTitle')}
+              onPress={() => edit('documentation')}
+            />
+          }
+        >
+          <ReviewRow
+            icon="document"
             label={wording.label('document', t('documentTypeLabel'))}
             value={show(
               documentType === null
@@ -303,41 +323,48 @@ export default function SummaryStepScreen() {
             )}
           />
           {documentType === 'other' ? (
-            <ProfileRow
+            <ReviewRow
               label={t('documentNameLabel')}
               value={show(text(documentation.documentName))}
             />
           ) : null}
           {documentType === null || documentType === 'none' ? null : (
-            <ProfileRow
+            <ReviewRow
               label={t('documentNumberLabel')}
               value={show(text(documentation.documentNumber))}
             />
           )}
-          <EditButton
-            section="documentation"
-            title={t('documentationTitle')}
-            onPress={() => edit('documentation')}
-          />
-        </ProfileSection>
+        </ReviewSection>
       ) : null}
       <CustomSections after="documentation" answers={answers} language={locale} />
 
-      <ProfileSection title={t('logisticsTitle')}>
+      <ReviewSection
+        title={t('logisticsTitle')}
+        action={
+          <EditButton
+            section="logistics"
+            title={t('logisticsTitle')}
+            onPress={() => edit('logistics')}
+          />
+        }
+      >
         {shows('phone') ? (
-          <ProfileRow
+          <ReviewRow
+            icon="phone"
             label={wording.label('phone', t('phoneLabel'))}
             value={show(text(logistics.phone))}
           />
         ) : null}
         {shows('address') ? (
-          <ProfileRow
+          <ReviewRow
+            icon="home"
             label={wording.label('address', t('addressLabel'))}
             value={show(text(logistics.address))}
           />
         ) : null}
         {shows('city') ? (
-          <ProfileRow
+          <ReviewRow
+            icon="location"
             label={wording.label('city', t('cityLabel'))}
             value={show(
               city === null ? null : (municipalityLabelForCanonical(city, locale) ?? city),
@@ -345,22 +372,26 @@ export default function SummaryStepScreen() {
           />
         ) : null}
         {shows('postal_code') ? (
-          <ProfileRow
+          <ReviewRow
+            icon="location"
             label={wording.label('postal_code', t('postalCodeLabel'))}
             value={show(text(logistics.postalCode))}
           />
         ) : null}
-        <ProfileRow
+        <ReviewRow
+          icon="entity"
           label={wording.label('reference_entity', t('referenceEntityLabel'))}
           value={logistics.referenceEntity === null ? t('referenceEntityNone') : show(entity)}
         />
         {entity === null || !shows('reference_contact_name') ? null : (
-          <ProfileRow
+          <ReviewRow
+            icon="person"
             label={wording.label('reference_contact_name', t('referenceContactNameLabel'))}
             value={show(text(logistics.referenceContactName))}
           />
         )}
-        <ProfileRow
+        <ReviewRow
+          icon="people"
           label={wording.label('dependents', t('hasDependentsLabel'))}
           value={
             logistics.hasDependents === undefined
@@ -370,40 +401,52 @@ export default function SummaryStepScreen() {
                 : t('noOption')
           }
         />
-        <EditButton
-          section="logistics"
-          title={t('logisticsTitle')}
-          onPress={() => edit('logistics')}
-        />
-      </ProfileSection>
+      </ReviewSection>
       {hasQuestions('equipment') ? (
-        <ProfileSection title={t('equipmentTitle')}>
+        <ReviewSection
+          title={t('equipmentTitle')}
+          action={
+            <EditButton
+              section="equipment"
+              title={t('equipmentTitle')}
+              onPress={() => edit('equipment')}
+            />
+          }
+        >
           {shows('clothing_size') ? (
-            <ProfileRow
+            <ReviewRow
+              icon="clothing"
               label={wording.label('clothing_size', t('clothingSizeLabel'))}
               value={show(text(logistics.clothingSize))}
             />
           ) : null}
           {shows('shoe_size') ? (
-            <ProfileRow
+            <ReviewRow
+              icon="shoes"
               label={wording.label('shoe_size', t('shoeSizeLabel'))}
               value={show(text(logistics.shoeSize))}
             />
           ) : null}
-          <EditButton
-            section="equipment"
-            title={t('equipmentTitle')}
-            onPress={() => edit('equipment')}
-          />
-        </ProfileSection>
+        </ReviewSection>
       ) : null}
       <CustomSections after="logistics" answers={answers} language={locale} />
 
       {/* The registration questions (RAPP-306), from her draft like the rest. */}
       {SEASON_WIZARD_SCREENS.map((screen) =>
         hasQuestions(screen) ? (
-          <ProfileSection key={screen} title={t(SEASON_SCREEN_TITLE_KEYS[screen])}>
+          <ReviewSection
+            key={screen}
+            title={t(SEASON_SCREEN_TITLE_KEYS[screen])}
+            action={
+              <EditButton
+                section={screen}
+                title={t(SEASON_SCREEN_TITLE_KEYS[screen])}
+                onPress={() => edit(screen)}
+              />
+            }
+          >
             <SeasonAnswerRows
+              rowComponent={ReviewRow}
               showSeasonNumber={false}
               emptyLabel={notGiven}
               wording={wording}
@@ -421,12 +464,7 @@ export default function SummaryStepScreen() {
                 specific_needs: text(season.specificNeeds),
               }}
             />
-            <EditButton
-              section={screen}
-              title={t(SEASON_SCREEN_TITLE_KEYS[screen])}
-              onPress={() => edit(screen)}
-            />
-          </ProfileSection>
+          </ReviewSection>
         ) : null,
       )}
       <CustomSections after="season" answers={answers} language={locale} />

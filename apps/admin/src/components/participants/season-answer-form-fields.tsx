@@ -11,7 +11,7 @@ import { AdminAuthField } from '@/components/auth/admin-auth-field';
 import { SelectField, TextField } from '@/components/participants/participant-form-fields';
 import { Controller, type Control, type FieldValues, type Path } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { APPLICANT_STATUSES, CHILDCARE_NEEDS } from '@ramassa/shared/schemas';
+import { APPLICANT_STATUSES, CHILDCARE_NEEDS, formatSupportNeeds } from '@ramassa/shared/schemas';
 
 const APPLICANT_STATUS_KEYS = {
   asylum_seeker: 'onboarding:applicantStatusAsylumSeeker',
@@ -90,6 +90,7 @@ export function SeasonAnswerFormFields<Values extends FieldValues, Output>({
         <TextField
           control={control}
           name={name('specificNeeds')}
+          formatValue={(value) => formatSupportNeeds(value, t)}
           label={t('onboarding:specificNeedsLabel')}
           placeholder={t('onboarding:specificNeedsHint')}
         />

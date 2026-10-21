@@ -21,6 +21,7 @@
  */
 
 import { z } from 'zod';
+import { SUPPORT_NEED_CATEGORIES, type SupportNeedCategory } from '../schemas/support-needs';
 import type { MmkvLike } from './supabase';
 
 const DRAFT_STORAGE_KEY = 'ramassa.onboarding-draft';
@@ -37,6 +38,7 @@ export const ONBOARDING_STEPS = [
   'applicant-status-details',
   'supporting-entities',
   'participation-support',
+  'specific-needs',
   // The summary of everything before the terms (RAPP-300).
   'summary',
   'terms',
@@ -44,7 +46,8 @@ export const ONBOARDING_STEPS = [
 export type OnboardingStepName = (typeof ONBOARDING_STEPS)[number];
 
 /** A step the draft can resume at: a built-in one, or a staff screen as `custom:<id>` (RAPP-307). */
-export type OnboardingDraftStep = OnboardingStepName | `custom:${string}`;
+export type OnboardingDraftStep =
+  OnboardingStepName | `custom:${string}` | `needs-detail:${SupportNeedCategory}`;
 
 /**
  * Partial, permissive shapes on purpose: a draft holds whatever the player has
@@ -53,7 +56,11 @@ export type OnboardingDraftStep = OnboardingStepName | `custom:${string}`;
  * this schema only guards against structural drift from older app versions.
  */
 const draftSchema = z.object({
-  currentStep: z.union([z.enum(ONBOARDING_STEPS), z.templateLiteral(['custom:', z.string()])]),
+  currentStep: z.union([
+    z.enum(ONBOARDING_STEPS),
+    z.templateLiteral(['custom:', z.string()]),
+    z.templateLiteral(['needs-detail:', z.enum(SUPPORT_NEED_CATEGORIES)]),
+  ]),
   identity: z.record(z.string(), z.unknown()).optional(),
   documentation: z.record(z.string(), z.unknown()).optional(),
   logistics: z.record(z.string(), z.unknown()).optional(),

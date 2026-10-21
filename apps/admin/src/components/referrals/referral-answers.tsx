@@ -12,6 +12,7 @@ import type { SupportedLanguage } from '@ramassa/shared/i18n';
 import { countryLabelForCanonical } from '@ramassa/shared/i18n/countries';
 import { municipalityLabelForCanonical } from '@ramassa/shared/i18n/municipalities';
 import type { ReferralAnswers } from '@ramassa/shared/referrals';
+import { formatSupportNeeds } from '@ramassa/shared/schemas';
 
 const APPLICANT_STATUS_KEYS = {
   asylum_seeker: 'onboarding:applicantStatusAsylumSeeker',
@@ -80,7 +81,7 @@ export function ReferralAnswersList({ answers }: { readonly answers: ReferralAns
     t('onboarding:childcareNeedLabel'),
     answers.childcareNeed === null ? null : t(CHILDCARE_KEYS[answers.childcareNeed]),
   );
-  add(t('onboarding:specificNeedsLabel'), answers.specificNeeds);
+  add(t('onboarding:specificNeedsLabel'), formatSupportNeeds(answers.specificNeeds, t));
 
   if (rows.length === 0) return null;
   return (

@@ -26,6 +26,7 @@ import { countryLabelForCanonical } from '@ramassa/shared/i18n/countries';
 import { municipalityLabelForCanonical } from '@ramassa/shared/i18n/municipalities';
 import { REFERRAL_UPDATE_TYPES } from '@ramassa/shared/referrals';
 import type { ReferralAnswers } from '@ramassa/shared/referrals';
+import { formatSupportNeeds } from '@ramassa/shared/schemas';
 
 type UpdateType = (typeof REFERRAL_UPDATE_TYPES)[number];
 
@@ -103,7 +104,7 @@ function referralAnswerRows(
     'onboarding:childcareNeedLabel',
     answers.childcareNeed === null ? null : t(CHILDCARE_KEYS[answers.childcareNeed]),
   );
-  add('onboarding:specificNeedsLabel', answers.specificNeeds);
+  add('onboarding:specificNeedsLabel', formatSupportNeeds(answers.specificNeeds, t));
   return rows;
 }
 

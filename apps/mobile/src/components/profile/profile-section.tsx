@@ -41,7 +41,26 @@ export function ProfileSection({
   );
 }
 
-export function ProfileRow({ label, value }: { readonly label: string; readonly value: string }) {
+export interface ProfileRowProps {
+  readonly label: string;
+  readonly value: string;
+  readonly icon?:
+    | 'person'
+    | 'calendar'
+    | 'location'
+    | 'globe'
+    | 'conversation'
+    | 'document'
+    | 'phone'
+    | 'home'
+    | 'entity'
+    | 'people'
+    | 'clothing'
+    | 'shoes'
+    | 'support';
+}
+
+export function ProfileRow({ label, value }: ProfileRowProps) {
   const languageFontClass = useLanguageFontClass();
   return (
     // One accessibility node per row, so a screen reader announces "Phone,

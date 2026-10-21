@@ -37,7 +37,8 @@ const tabularNumerals: TextStyle = { fontVariant: ['tabular-nums'] };
 
 export interface WizardFrameProps {
   /** Stable identity, independent of language and position in a personalized wizard. */
-  readonly screenId?: WizardStepKey | 'documentation-details' | 'applicant-status-details';
+  readonly screenId?:
+    WizardStepKey | 'documentation-details' | 'applicant-status-details' | `needs-detail:${string}`;
   /**
    * Omit outside the wizard. The profile edit screen reuses this frame for its
    * header, keyboard handling and pinned action, but it is not step N of
@@ -79,6 +80,7 @@ function WizardFrameContent({
   const { t } = useTranslation('onboarding');
   const { entrance, edit } = useLocalSearchParams<{ entrance?: string; edit?: string }>();
   const languageFontClass = useLanguageFontClass();
+  const showProgress = stepNumber !== undefined && edit !== '1';
   const entranceMode = useOnboardingEntrance(screenId, entrance !== 'none' && edit !== '1');
 
   return (
@@ -93,7 +95,7 @@ function WizardFrameContent({
                 every language, which is what the capture and QA suites anchor
                 on: the step TITLE scrolls away, so waiting on it reports "not
                 there yet" for a step that arrived fine. */}
-            {stepNumber === undefined ? (
+            {!showProgress ? (
               <View />
             ) : (
               <Text
@@ -114,7 +116,7 @@ function WizardFrameContent({
               most of this audience is) a screen reader still stopped on five
               unlabelled boxes between the header and the title. The same
               progress is already spoken by the "step X of Y" line above. */}
-          {stepNumber === undefined ? null : (
+          {!showProgress ? null : (
             <View
               className="flex-row gap-xs"
               accessibilityElementsHidden

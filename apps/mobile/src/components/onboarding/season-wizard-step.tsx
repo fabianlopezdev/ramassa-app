@@ -6,7 +6,11 @@ import {
 } from '@/components/profile/season-answer-fields';
 import { onboardingDraftStore } from '@/lib/onboarding';
 import { useBuiltinWording, useWizardStep } from '@/lib/onboarding-intake-context';
-import { mergeSeasonDraft, SEASON_SCREEN_TITLE_KEYS } from '@/lib/season-draft';
+import {
+  mergeSeasonDraft,
+  referringEntityForAdditionalSupport,
+  SEASON_SCREEN_TITLE_KEYS,
+} from '@/lib/season-draft';
 import { useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -55,7 +59,6 @@ export function SeasonWizardStep({ screen }: { readonly screen: SeasonWizardScre
       stepNumber={step.position.step}
       totalSteps={step.position.total}
       title={t(SEASON_SCREEN_TITLE_KEYS[screen])}
-      intro={screen === 'participation-support' ? t('seasonStepIntro') : undefined}
       continueLabel={t('continueAction')}
       onContinue={() => {
         if (screen === 'season' && answers.applicantStatus === 'other') {
@@ -90,6 +93,7 @@ export function SeasonWizardStep({ screen }: { readonly screen: SeasonWizardScre
           WIZARD_SCREEN_QUESTIONS[screen].includes(question) && step.shouldAsk(question)
         }
         applicantStatusPresentation="picker"
+        referenceEntity={referringEntityForAdditionalSupport(draft)}
         wording={wording}
       />
     </WizardFrame>

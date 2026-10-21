@@ -37,6 +37,7 @@ export * from './accounts';
 export * from './auth';
 export * from './onboarding';
 export * from './season';
+export * from './support-needs';
 export * from './participant-notes';
 export * from './profile';
 export * from './upload';

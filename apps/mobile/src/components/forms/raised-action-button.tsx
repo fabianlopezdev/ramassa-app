@@ -7,15 +7,17 @@ export function RaisedActionButton({
   label,
   onPress,
   testID,
+  accessibilityLabel,
 }: {
   readonly label: string;
   readonly onPress: () => void;
   readonly testID?: string;
+  readonly accessibilityLabel?: string;
 }) {
   const fontClass = useLanguageFontClass();
   return (
     <SelectionChoiceSurface
-      label={label}
+      label={accessibilityLabel ?? label}
       onPress={onPress}
       testID={testID}
       contentClassName="items-center justify-center"
