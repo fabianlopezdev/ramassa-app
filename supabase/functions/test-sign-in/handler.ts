@@ -28,7 +28,11 @@ export interface TestSignInSecrets {
 
 export interface TestSignInDependencies {
   readonly secrets: TestSignInSecrets;
-  /** Records one attempt; false when the address or the network is over its limit. */
+  /**
+   * Records one attempt; false when the address, the network or all attempts
+   * together are over their limit. The last one bounds a shared code however
+   * many addresses an attacker uses.
+   */
   readonly registerAttempt: (email: string, network: string) => Promise<boolean>;
   /** The id of an active test account with that address, or null. */
   readonly findTestAccount: (email: string) => Promise<string | null>;
@@ -79,9 +83,24 @@ function json(status: number, body: unknown): Response {
 // the door never says which addresses exist.
 const REFUSED = { error: 'TEST_SIGN_IN/REFUSED' } as const;
 
-function networkOf(request: Request): string {
-  const forwarded = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim();
-  return forwarded !== undefined && forwarded !== '' ? forwarded : 'unknown';
+/**
+ * The caller's network address, as the platform saw it. On hosted Supabase,
+ * Cloudflare sits in front and sets `cf-connecting-ip` itself (the address
+ * Supabase's own docs check in a pre-request filter:
+ * https://supabase.com/docs/guides/database/debugging-performance). Without
+ * it, the RIGHTMOST X-Forwarded-For entry: the one the last proxy appended.
+ * Never the leftmost one, which the caller writes: a new forged value on each
+ * request used to start a new counter every time.
+ */
+export function networkOf(request: Request): string {
+  const connecting = request.headers.get('cf-connecting-ip')?.trim();
+  if (connecting !== undefined && connecting !== '') return connecting;
+  const forwarded = request.headers
+    .get('x-forwarded-for')
+    ?.split(',')
+    .map((entry) => entry.trim())
+    .filter((entry) => entry !== '');
+  return forwarded?.at(-1) ?? 'unknown';
 }
 
 async function readBody(
@@ -124,11 +143,12 @@ export function createTestSignInHandler(
       if (!(await dependencies.registerAttempt(body.email, networkOf(request)))) {
         return json(429, { error: 'TEST_SIGN_IN/RATE_LIMITED' });
       }
-      if (!codesMatch(body.code, secrets.TEST_SIGN_IN_CODE ?? '')) {
-        return json(401, REFUSED);
-      }
+      // The same work for a wrong code, a real account and an unknown
+      // address: the lookup always runs, then one refusal. Answering a wrong
+      // code before the lookup made it measurably faster than a right one.
+      const codeIsRight = codesMatch(body.code, secrets.TEST_SIGN_IN_CODE ?? '');
       const profileId = await dependencies.findTestAccount(body.email);
-      if (profileId === null) {
+      if (!codeIsRight || profileId === null) {
         return json(401, REFUSED);
       }
       const tokenHash = await dependencies.createTokenHash(body.email);

@@ -19,9 +19,12 @@ Real accounts never use this path. They sign in with the emailed code, on stagin
 1. The app tries the normal `supabase.auth.verifyOtp({ email, token, type: 'email' })` first.
 2. Only when that is refused, and only in a build with `EXPO_PUBLIC_TEST_SIGN_IN=true`, the app calls
    this function with the address and the code.
-3. The function rate-limits the attempt (five per address and twenty per network address in fifteen
-   minutes), compares the code in constant time, and checks that the address belongs to an active test
-   account. A wrong code and a real account get the same answer.
+3. The function rate-limits the attempt: five per address, twenty per network address, and thirty in
+   all, in fifteen minutes. The network address is the one the platform saw: `cf-connecting-ip` (set
+   by Cloudflare in front of hosted Supabase), else the rightmost `X-Forwarded-For` entry, never the
+   leftmost one, which the caller writes. It then compares the code in constant time and always looks
+   the address up, so a wrong code, a real account and an unknown address do the same work and get
+   the same answer.
 4. It asks the Auth admin API for a sign-in link (`generateLink`, type `magiclink`) and returns only
    its hashed token: `{ "token_hash": "..." }`. The successful sign-in is written to the audit log.
 5. The app trades the hash for a session with `supabase.auth.verifyOtp({ token_hash, type: 'email' })`.

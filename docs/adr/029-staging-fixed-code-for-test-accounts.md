@@ -28,8 +28,11 @@ key.
    `TEST_SIGN_IN_CODE=<six digits>` are set. Only staging sets them.
 3. The app asks the function only in a build with `EXPO_PUBLIC_TEST_SIGN_IN=true`, and only after the
    normal code is refused. The deployment check refuses that flag for production.
-4. Attempts are rate limited in Postgres (hashed, kept one day), the code is compared in constant time,
-   a wrong code and a real account get the same answer, and every success is audited.
+4. Attempts are rate limited in Postgres (hashed, kept one day): per address, per network address as
+   the platform saw it (`cf-connecting-ip`, else the rightmost `X-Forwarded-For` entry), and thirty in
+   all per fifteen minutes, so a shared code cannot be brute-forced across addresses. The code is
+   compared in constant time, the address is always looked up, a wrong code and a real account get
+   the same answer, and every success is audited.
 5. The function uses the secret key that the platform gives every Edge Function. No new secret is
    stored anywhere, and the key is used only behind the two staging secrets.
 
