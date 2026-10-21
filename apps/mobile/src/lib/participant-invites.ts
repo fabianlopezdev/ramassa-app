@@ -12,6 +12,8 @@ import {
   revokeParticipantInvite,
 } from '@ramassa/shared/accounts';
 import { useAuth } from '@ramassa/shared/auth';
+import type { QuestionStates } from '@ramassa/shared/intake';
+import { fetchIntakeCatalog } from '@ramassa/shared/intake-builder';
 import {
   buildCreateParticipantInvitePayload,
   type CreateParticipantInvite,
@@ -30,9 +32,17 @@ export function useParticipantInvites() {
     queryFn: () => fetchInvites(supabase),
     enabled: user !== null,
   });
+  // With the questions staff confirmed she is asked (RAPP-618), saved in the
+  // same database call as the invitation.
   const create = useMutation({
-    mutationFn: (input: CreateParticipantInvite) =>
-      createParticipantInvite(supabase, buildCreateParticipantInvitePayload(input)),
+    mutationFn: (request: {
+      readonly input: CreateParticipantInvite;
+      readonly questionStates: QuestionStates;
+    }) =>
+      createParticipantInvite(
+        supabase,
+        buildCreateParticipantInvitePayload(request.input, null, request.questionStates),
+      ),
     onSuccess: refresh,
   });
   const renew = useMutation({
@@ -44,4 +54,19 @@ export function useParticipantInvites() {
     onSuccess: refresh,
   });
   return { invites, create, renew, revoke };
+}
+
+/**
+ * The organization's question catalog, which plans her wizard (RAPP-307), for
+ * the last step of a new invite (RAPP-618). Read fresh each time the sheet
+ * opens; in memory only, under the `participants` root.
+ */
+export function useInviteIntakeCatalog(enabled: boolean) {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ['participants', user?.id ?? SIGNED_OUT, 'intake-catalog'],
+    queryFn: () => fetchIntakeCatalog(supabase),
+    enabled: enabled && user !== null,
+    staleTime: 0,
+  });
 }

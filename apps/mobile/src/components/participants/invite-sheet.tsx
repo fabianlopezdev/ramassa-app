@@ -8,14 +8,18 @@
  *
  * The invite sends no email. The sheet says what to tell her, then shows the
  * result: what she does next and until when the invite is open.
+ *
+ * Before the invite is created, a last step shows what her guided
+ * registration will ask, and staff confirm or change it (RAPP-618).
  */
 import { useAppLock } from '@/components/auth/app-lock';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { PressableScale } from '@/components/motion/pressable-scale';
+import { InviteQuestionsStep } from '@/components/participants/invite-questions-step';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
-import type { useParticipantInvites } from '@/lib/participant-invites';
+import { useInviteIntakeCatalog, type useParticipantInvites } from '@/lib/participant-invites';
 import { useParticipantFilterOptions } from '@/lib/participant-lookup';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useRouter } from 'expo-router';
@@ -30,7 +34,17 @@ import {
 import { isAppError } from '@ramassa/shared/errors';
 import { MADRID_TIME_ZONE } from '@ramassa/shared/events';
 import { DEFAULT_LANGUAGE } from '@ramassa/shared/i18n';
-import { createParticipantInviteSchema } from '@ramassa/shared/schemas';
+import {
+  allowedQuestionStates,
+  answeredAtInvitation,
+  type QuestionStates,
+} from '@ramassa/shared/intake';
+import { EMPTY_INTAKE_CATALOG } from '@ramassa/shared/intake-builder';
+import {
+  buildCreateParticipantInvitePayload,
+  createParticipantInviteSchema,
+  type CreateParticipantInvite,
+} from '@ramassa/shared/schemas';
 
 const NONE = '__none__';
 const OTHER = '__other__';
@@ -94,6 +108,14 @@ export function InviteSheet({
   const [otherEntity, setOtherEntity] = useState('');
   const [emailError, setEmailError] = useState<string | null>(null);
   const [created, setCreated] = useState<CreatedParticipantInvite | null>(null);
+  // Her parsed details once staff move on to the questions (RAPP-618).
+  const [details, setDetails] = useState<CreateParticipantInvite | null>(null);
+  const [questionStates, setQuestionStates] = useState<QuestionStates>({});
+  const catalog = useInviteIntakeCatalog(visible).data ?? EMPTY_INTAKE_CATALOG;
+  const answered =
+    details === null
+      ? new Set<never>()
+      : answeredAtInvitation(buildCreateParticipantInvitePayload(details));
   const formatDate = useMemo(() => {
     const format = new Intl.DateTimeFormat(i18n.resolvedLanguage ?? DEFAULT_LANGUAGE, {
       dateStyle: 'long',
@@ -111,6 +133,8 @@ export function InviteSheet({
     setOtherEntity('');
     setEmailError(null);
     setCreated(null);
+    setDetails(null);
+    setQuestionStates({});
     create.reset();
   };
   const close = () => {
@@ -136,12 +160,20 @@ export function InviteSheet({
     }
     setNameError(null);
     setEmailError(null);
-    create.mutate(parsed.data, {
-      onSuccess: (invite) => {
-        playHaptic('success');
-        setCreated(invite);
+    create.reset();
+    setDetails(parsed.data);
+  };
+  const confirm = () => {
+    if (details === null) return;
+    create.mutate(
+      { input: details, questionStates: allowedQuestionStates(questionStates, answered) },
+      {
+        onSuccess: (invite) => {
+          playHaptic('success');
+          setCreated(invite);
+        },
       },
-    });
+    );
   };
   const hasAccount =
     create.isError &&
@@ -170,9 +202,50 @@ export function InviteSheet({
               accessibilityRole="header"
               className={`text-start text-2xl font-bold text-neutral-900 ${fontClass}`}
             >
-              {created === null ? t('newTitle') : t('invitedTitle')}
+              {created !== null
+                ? t('invitedTitle')
+                : details !== null
+                  ? t('inviteQuestionsTitle')
+                  : t('newTitle')}
             </Text>
-            {created === null ? (
+            {created === null && details !== null ? (
+              <>
+                <Text className={`text-start text-md text-neutral-800 ${fontClass}`}>
+                  {t('inviteQuestionsFor', {
+                    name: `${details.firstName} ${details.lastName}`,
+                    email: details.email,
+                  })}
+                </Text>
+                <InviteQuestionsStep
+                  answered={answered}
+                  states={questionStates}
+                  onChange={setQuestionStates}
+                  catalog={catalog}
+                />
+                {create.isError ? (
+                  <Text
+                    accessibilityLiveRegion="polite"
+                    className={`text-start text-sm text-error ${fontClass}`}
+                  >
+                    {hasAccount ? t('inviteAlreadyHasAccount') : t('inviteFailed')}
+                  </Text>
+                ) : null}
+                <View className="flex-row flex-wrap gap-sm">
+                  <SheetButton
+                    testID="invite-create"
+                    label={t('inviteAction')}
+                    onPress={confirm}
+                    isBusy={create.isPending}
+                    isPrimary
+                  />
+                  <SheetButton
+                    testID="invite-back"
+                    label={t('inviteBackAction')}
+                    onPress={() => setDetails(null)}
+                  />
+                </View>
+              </>
+            ) : created === null ? (
               <>
                 <Text className={`text-start text-md text-neutral-700 ${fontClass}`}>
                   {t('inviteIntro')}
@@ -244,20 +317,11 @@ export function InviteSheet({
                     {t('entityPrefillHint')}
                   </Text>
                 </View>
-                {create.isError ? (
-                  <Text
-                    accessibilityLiveRegion="polite"
-                    className={`text-start text-sm text-error ${fontClass}`}
-                  >
-                    {hasAccount ? t('inviteAlreadyHasAccount') : t('inviteFailed')}
-                  </Text>
-                ) : null}
                 <View className="flex-row flex-wrap gap-sm">
                   <SheetButton
-                    testID="invite-create"
-                    label={t('inviteAction')}
+                    testID="invite-review"
+                    label={t('inviteReviewAction')}
                     onPress={submit}
-                    isBusy={create.isPending}
                     isPrimary
                   />
                   <SheetButton

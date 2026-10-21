@@ -8,29 +8,8 @@ import { LANGUAGE_NATIVE_NAMES, SUPPORTED_LANGUAGES } from '@ramassa/shared/i18n
 import type { IntakeQuestion } from '@ramassa/shared/intake';
 import { APPLICANT_STATUSES, CHILDCARE_NEEDS, DOCUMENT_TYPES } from '@ramassa/shared/schemas';
 
-/** The wizard's own question labels, so staff read what she reads. */
-export const QUESTION_LABEL_KEYS: Readonly<Partial<Record<IntakeQuestion, string>>> = {
-  first_name: 'onboarding:firstNameLabel',
-  last_name: 'onboarding:lastNameLabel',
-  date_of_birth: 'onboarding:dateOfBirthLabel',
-  place_of_birth: 'onboarding:placeOfBirthLabel',
-  nationality: 'onboarding:nationalityLabel',
-  preferred_language: 'onboarding:preferredLanguageLabel',
-  document: 'onboarding:documentTypeLabel',
-  phone: 'onboarding:phoneLabel',
-  address: 'onboarding:addressLabel',
-  city: 'onboarding:cityLabel',
-  postal_code: 'onboarding:postalCodeLabel',
-  reference_entity: 'onboarding:referenceEntityLabel',
-  reference_contact_name: 'onboarding:referenceContactNameLabel',
-  dependents: 'onboarding:hasDependentsLabel',
-  clothing_size: 'onboarding:clothingSizeLabel',
-  shoe_size: 'onboarding:shoeSizeLabel',
-  applicant_status: 'onboarding:applicantStatusLabel',
-  supporting_entities: 'onboarding:supportingEntitiesLabel',
-  childcare_need: 'onboarding:childcareNeedLabel',
-  specific_needs: 'onboarding:specificNeedsLabel',
-};
+/** The wizard's own question labels, so staff read what she reads (shared with the phone, RAPP-618). */
+export { INTAKE_QUESTION_LABEL_KEYS as QUESTION_LABEL_KEYS } from '@ramassa/shared/intake';
 
 const DOCUMENT_TYPE_KEYS = {
   nie: 'onboarding:documentTypeNie',
