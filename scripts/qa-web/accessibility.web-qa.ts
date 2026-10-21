@@ -310,6 +310,7 @@ test.describe('WCAG 2.2 AA regression gate', () => {
   test('a busy login action announces its state without an unnamed decorative progressbar', async ({
     page,
   }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto(PLAYER_ORIGIN);
     await page.getByTestId('auth-language-en').click();
     await page.getByRole('button', { name: 'Continue', exact: true }).click();
@@ -335,6 +336,7 @@ test.describe('WCAG 2.2 AA regression gate', () => {
   test('the player authorization loading gate has an accessible name on a slow connection', async ({
     page,
   }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
     await signInPlayer(page);
     await expect(page.getByTestId('open-knowledge-base')).toBeVisible();
     const response = Promise.withResolvers<void>();
