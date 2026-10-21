@@ -20,6 +20,7 @@ import {
   Images,
   Inbox,
   LayoutDashboard,
+  ListChecks,
   MessageSquare,
   Settings,
   Share2,
@@ -28,6 +29,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import type { PermissionCode } from '@ramassa/shared/permissions';
+import { designRoleRedirect } from './design-role-access';
 
 export interface NavItem {
   readonly to: string;
@@ -40,6 +42,12 @@ export interface NavItem {
    */
   readonly anyPermission?: readonly PermissionCode[];
 }
+
+/** The onboarding page: Settings' own permission, or the design role (RAPP-615). */
+export const ONBOARDING_PERMISSIONS = [
+  'settings.organization',
+  'onboarding.design',
+] as const satisfies readonly PermissionCode[];
 
 /** The Data area: exports and the audit log. */
 export const DATA_PERMISSIONS = [
@@ -65,7 +73,20 @@ export const STAFF_NAV_ITEMS = [
     to: '/participants',
     icon: Users,
     labelKey: 'nav:staff.participants',
-    anyPermission: ['participants.view', 'participants.invite', 'referrals.manage', 'rgpd.erase'],
+    anyPermission: [
+      'participants.view',
+      'participants.invite',
+      'referrals.manage',
+      'rgpd.erase',
+      'test_players.manage',
+    ],
+  },
+  {
+    // Everything a player sees in the onboarding, on its own page (RAPP-615).
+    to: '/onboarding',
+    icon: ListChecks,
+    labelKey: 'nav:staff.onboarding',
+    anyPermission: ONBOARDING_PERMISSIONS,
   },
   {
     to: '/content',
@@ -146,6 +167,20 @@ export function holdsAnyPermission(
   anyPermission: readonly PermissionCode[] | undefined,
 ): boolean {
   return anyPermission === undefined || anyPermission.some((code) => permissions.has(code));
+}
+
+/**
+ * The items a team member sees: those whose permissions she holds, and for the
+ * onboarding design role only her two areas (RAPP-615).
+ */
+export function visibleStaffNavItems(
+  permissions: ReadonlySet<PermissionCode>,
+): readonly (typeof STAFF_NAV_ITEMS)[number][] {
+  return STAFF_NAV_ITEMS.filter(
+    (item) =>
+      holdsAnyPermission(permissions, 'anyPermission' in item ? item.anyPermission : undefined) &&
+      designRoleRedirect(item.to, permissions) === null,
+  );
 }
 
 export const ENTITY_NAV_ITEMS = [

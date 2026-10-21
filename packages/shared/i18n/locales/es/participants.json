@@ -1,5 +1,10 @@
 {
   "title": "Participantes",
+  "testPlayersTitle": "Jugadoras de prueba",
+  "newTestPlayerAction": "Nueva jugadora de prueba",
+  "testPlayerOption": "Jugadora de prueba",
+  "testPlayerOptionHelp": "Una jugadora inventada para probar la inscripción. Entra con el código fijo del entorno de pruebas y se puede borrar del todo.",
+  "testPlayerForcedHelp": "Con tu acceso solo creas jugadoras de prueba.",
   "summary": "{{count}} participantes",
   "summary_one": "1 participante",
   "searchLabel": "Buscar",
@@ -24,6 +29,7 @@
   "rowActive": "Activa",
   "rowInactive": "Inactiva",
   "rowNone": "—",
+  "testBadge": "Prueba",
   "emptyTitle": "Ninguna participante con estos filtros",
   "emptyBody": "Prueba con menos filtros u otra búsqueda.",
   "clearFilters": "Quitar los filtros",

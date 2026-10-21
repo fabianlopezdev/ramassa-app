@@ -1,5 +1,10 @@
 {
   "title": "Participants",
+  "testPlayersTitle": "Test players",
+  "newTestPlayerAction": "New test player",
+  "testPlayerOption": "Test player",
+  "testPlayerOptionHelp": "A made-up player to try the registration. She signs in with the fixed code of the test environment and can be deleted completely.",
+  "testPlayerForcedHelp": "With your access you create test players only.",
   "summary": "{{count}} participants",
   "summary_one": "1 participant",
   "searchLabel": "Search",
@@ -24,6 +29,7 @@
   "rowActive": "Active",
   "rowInactive": "Inactive",
   "rowNone": "—",
+  "testBadge": "Test",
   "emptyTitle": "No participants match these filters",
   "emptyBody": "Try fewer filters or a different search.",
   "clearFilters": "Clear filters",

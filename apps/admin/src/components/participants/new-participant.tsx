@@ -14,6 +14,7 @@
  */
 
 import { AdminAuthField } from '@/components/auth/admin-auth-field';
+import { TestPlayerOption } from '@/components/participants/test-player-option';
 import { ReferralAnswersList } from '@/components/referrals/referral-answers';
 import {
   ReferralCustomAnswers,
@@ -33,6 +34,8 @@ import {
   INVITE_ALREADY_HAS_ACCOUNT,
   type CreatedParticipantInvite,
 } from '@ramassa/shared/accounts';
+import { useAuth } from '@ramassa/shared/auth';
+import { isLimitedToTestPlayers, testPlayerOption } from '@ramassa/shared/permissions';
 import type { Referral } from '@ramassa/shared/referrals';
 import {
   buildCreateParticipantInvitePayload,
@@ -131,6 +134,10 @@ function InviteForm({
 }) {
   const { t } = useTranslation(['participants', 'auth', 'onboarding']);
   const [submitErrorMessage, setSubmitErrorMessage] = useState<string | undefined>(undefined);
+  const { permissions } = useAuth();
+  // A test player (RAPP-615) answers no real referral, so the option stays out
+  // of an invitation that carries one.
+  const testOption = referralId === null ? testPlayerOption(permissions) : 'hidden';
 
   const {
     control,
@@ -143,6 +150,7 @@ function InviteForm({
       firstName: initialFirstName,
       lastName: initialLastName,
       referenceEntity: initialReferenceEntity,
+      isTestAccount: testOption === 'forced',
     },
   });
 
@@ -233,6 +241,19 @@ function InviteForm({
           </div>
         )}
       />
+      {testOption === 'hidden' ? null : (
+        <Controller
+          control={control}
+          name="isTestAccount"
+          render={({ field }) => (
+            <TestPlayerOption
+              mode={testOption}
+              checked={field.value === true}
+              onChange={field.onChange}
+            />
+          )}
+        />
+      )}
       <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
         <Button type="submit" size="lg" className="h-12 w-full sm:w-auto" disabled={isSubmitting}>
           {t('inviteAction')}
@@ -258,6 +279,7 @@ function InvitedPanel({
 }) {
   const { t, i18n } = useTranslation('participants');
   const locale = i18n.resolvedLanguage ?? 'ca';
+  const { permissions } = useAuth();
   return (
     <section aria-live="polite" className="flex flex-col gap-4 rounded-md border p-4 sm:p-6">
       <h2 className="text-start text-xl font-semibold">{t('invitedTitle')}</h2>
@@ -277,9 +299,11 @@ function InvitedPanel({
             </Link>
           </Button>
         )}
-        <Button asChild size="lg" variant="outline" className="h-12 w-full sm:w-auto">
-          <Link to="/participants/invites">{t('invitesAction')}</Link>
-        </Button>
+        {isLimitedToTestPlayers(permissions) ? null : (
+          <Button asChild size="lg" variant="outline" className="h-12 w-full sm:w-auto">
+            <Link to="/participants/invites">{t('invitesAction')}</Link>
+          </Button>
+        )}
         <Button type="button" size="lg" className="h-12 w-full sm:w-auto" onClick={onInviteAnother}>
           {t('inviteAnotherAction')}
         </Button>

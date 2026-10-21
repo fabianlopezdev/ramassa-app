@@ -8,6 +8,7 @@
  * rules before the database has to refuse: a toggle the reader does not hold is
  * visible but locked, with the reason next to it.
  */
+import { TeamTestAccountToggle } from '@/components/team/team-test-account-toggle';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -74,6 +75,8 @@ export interface TeamAccessPanelProps {
   readonly onResetSecondFactor: (profileId: string) => Promise<void>;
   /** Ends every session of the person at once (RAPP-234). */
   readonly onSignOutEverywhere: (profileId: string) => Promise<void>;
+  /** Marks a team account as a test account (RAPP-615). */
+  readonly onSetTestAccount?: (profileId: string, isTestAccount: boolean) => Promise<void>;
 }
 
 type Message = { readonly kind: 'success' | 'error'; readonly text: string };
@@ -96,6 +99,7 @@ export function TeamAccessPanel({
   currentUserId,
   onResetSecondFactor,
   onSignOutEverywhere,
+  onSetTestAccount,
 }: TeamAccessPanelProps) {
   const { t } = useTranslation('settings');
   const [pending, setPending] = useState(false);
@@ -219,6 +223,18 @@ export function TeamAccessPanel({
                       </span>
                       <br />
                       <span className="text-xs text-muted-foreground">{member.email}</span>
+                      {onSetTestAccount === undefined ? null : (
+                        <>
+                          <br />
+                          <TeamTestAccountToggle
+                            name={`${member.first_name} ${member.last_name}`}
+                            isTestAccount={member.is_test_account}
+                            onChange={(isTestAccount) =>
+                              onSetTestAccount(member.profile_id, isTestAccount)
+                            }
+                          />
+                        </>
+                      )}
                     </TableCell>
                     <TableCell data-testid={`team-access-${member.profile_id}`}>
                       {summary.kind === 'custom'

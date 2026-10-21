@@ -88,6 +88,10 @@
       "nobody": "No, keep their access as it is"
     },
     "lockedHint": "You can only change permissions that you hold yourself. The others are shown but locked.",
+    "testAccount": "Test account",
+    "testAccountFor": "Test account: {{name}}",
+    "testAccountHelp": "A test account signs in with the fixed code of the test environment. Mark only the team accounts that run tests.",
+    "testAccountFailed": "The test account could not be changed. Try again.",
     "area": {
       "participants": "Participants",
       "material": "Material",
@@ -102,6 +106,7 @@
       "coach": "Coach",
       "staff": "Staff",
       "admin": "Admin",
+      "onboarding_design": "Registration design",
       "custom": "Custom"
     }
   },
@@ -133,6 +138,10 @@
     "rgpd_erase": {
       "label": "RGPD erasure",
       "description": "Handle deletion requests and erase a player's data. Permanent deletion also needs Team management."
+    },
+    "test_players_manage": {
+      "label": "Test players",
+      "description": "Create, view, edit and delete test players to try the registration. On its own, this permission shows no real player."
     },
     "equipment_handover": {
       "label": "Hand over material",
@@ -261,6 +270,10 @@
     "settings_organization": {
       "label": "Organization details",
       "description": "Edit the name, contact details and languages."
+    },
+    "onboarding_design": {
+      "label": "Registration design",
+      "description": "Edit what a player sees the first time she opens the app: questions, the document note, seasons and the season authorization."
     },
     "settings_branding": {
       "label": "Branding",
@@ -453,5 +466,9 @@
       "no": "No",
       "maybe": "Maybe"
     }
+  },
+  "onboardingPage": {
+    "title": "Registration",
+    "intro": "Everything a player sees when she opens the app for the first time. Changes reach the app at once, with no new version."
   }
 }

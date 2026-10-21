@@ -88,6 +88,10 @@
       "nobody": "No, mantener su acceso como está"
     },
     "lockedHint": "Solo puedes cambiar los permisos que tienes tú. Los demás se muestran bloqueados.",
+    "testAccount": "Cuenta de prueba",
+    "testAccountFor": "Cuenta de prueba: {{name}}",
+    "testAccountHelp": "Una cuenta de prueba entra con el código fijo del entorno de pruebas. Marca solo las cuentas del equipo que hacen pruebas.",
+    "testAccountFailed": "No se ha podido cambiar la cuenta de prueba. Vuelve a intentarlo.",
     "area": {
       "participants": "Participantes",
       "material": "Material",
@@ -102,6 +106,7 @@
       "coach": "Entrenador",
       "staff": "Equipo técnico",
       "admin": "Administración",
+      "onboarding_design": "Diseño de la inscripción",
       "custom": "Personalizado"
     }
   },
@@ -133,6 +138,10 @@
     "rgpd_erase": {
       "label": "Supresión RGPD",
       "description": "Gestionar las solicitudes de supresión y borrar los datos de una jugadora. La supresión definitiva también necesita Gestión del equipo."
+    },
+    "test_players_manage": {
+      "label": "Jugadoras de prueba",
+      "description": "Crear, ver, editar y borrar jugadoras de prueba para probar la inscripción. Este permiso solo no muestra ninguna jugadora real."
     },
     "equipment_handover": {
       "label": "Entregar material",
@@ -261,6 +270,10 @@
     "settings_organization": {
       "label": "Datos de la organización",
       "description": "Editar el nombre, los datos de contacto y los idiomas."
+    },
+    "onboarding_design": {
+      "label": "Diseño de la inscripción",
+      "description": "Editar lo que ve una jugadora la primera vez que abre la app: preguntas, nota del documento, temporadas y autorización de la temporada."
     },
     "settings_branding": {
       "label": "Imagen",
@@ -453,5 +466,9 @@
       "no": "No",
       "maybe": "Quizás"
     }
+  },
+  "onboardingPage": {
+    "title": "Inscripción",
+    "intro": "Todo lo que ve una jugadora cuando abre la app por primera vez. Los cambios llegan a la app enseguida, sin ninguna versión nueva."
   }
 }

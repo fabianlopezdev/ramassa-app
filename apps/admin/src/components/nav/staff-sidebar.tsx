@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/sidebar';
 import { mediaWorkerUrl } from '@/lib/media-worker';
 import { useUnreadMessageCount } from '@/lib/messaging';
-import { holdsAnyPermission, STAFF_NAV_ITEMS } from '@/lib/nav-items';
+import { visibleStaffNavItems } from '@/lib/nav-items';
 import { Link, useLocation } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@ramassa/shared/auth';
@@ -42,9 +42,7 @@ export function StaffSidebar() {
   const unread = useUnreadMessageCount();
   const { permissions, session } = useAuth();
   const organization = useAdminBranding();
-  const visibleItems = STAFF_NAV_ITEMS.filter((item) =>
-    holdsAnyPermission(permissions, 'anyPermission' in item ? item.anyPermission : undefined),
-  );
+  const visibleItems = visibleStaffNavItems(permissions);
 
   return (
     <Sidebar collapsible="icon" side={sidebarSideForDirection(i18n.dir())}>

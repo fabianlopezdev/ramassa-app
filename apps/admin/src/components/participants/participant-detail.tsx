@@ -72,6 +72,7 @@ import {
   type ParticipantNoteRow,
   type ProfilePrefillPayload,
 } from '@ramassa/shared/participants';
+import { isLimitedToTestPlayers, type PermissionCode } from '@ramassa/shared/permissions';
 import type { EquipmentDeliveryInput, UpdateOwnProfilePayload } from '@ramassa/shared/schemas';
 import { setPriorSeasons, type ParticipantSeasonAnswers } from '@ramassa/shared/seasons';
 
@@ -127,6 +128,13 @@ export function ParticipantDetail({
 
   // Not joined yet: staff created her profile and she has not accepted the terms (RAPP-300).
   const hasJoined = participant.terms_accepted_at !== null;
+  // A test player (RAPP-615) is made up: test_players.manage reads and edits
+  // all of her, as the database allows. The onboarding design role sees her
+  // record and answers only, because the team's tools are for real players.
+  const isTestPlayer = participant.is_test_account;
+  const teamTools = !isLimitedToTestPlayers(permissions);
+  const sees = (code: PermissionCode) =>
+    permissions.has(code) || (isTestPlayer && permissions.has('test_players.manage'));
   const [isEditing, setIsEditing] = useState(false);
   const [saveErrorMessage, setSaveErrorMessage] = useState<string | undefined>(undefined);
   const [noteErrorMessage, setNoteErrorMessage] = useState<string | undefined>(undefined);
@@ -262,6 +270,7 @@ export function ParticipantDetail({
               {participant.is_forum_banned ? (
                 <Badge variant="destructive">{t('forumBanned')}</Badge>
               ) : null}
+              {isTestPlayer ? <Badge variant="outline">{t('testBadge')}</Badge> : null}
             </div>
             <p className="text-start text-sm text-muted-foreground">
               {t('detailJoinedOn', {
@@ -278,7 +287,7 @@ export function ParticipantDetail({
             )}
             {/* A woman who has not joined has nothing to deactivate: cancelling her
                 invitation removes her (RAPP-300). */}
-            {hasJoined ? (
+            {hasJoined && teamTools ? (
               <Button
                 type="button"
                 size="lg"
@@ -289,17 +298,19 @@ export function ParticipantDetail({
                 {participant.is_active ? t('statusActionDeactivate') : t('statusActionActivate')}
               </Button>
             ) : null}
-            <Button
-              type="button"
-              size="lg"
-              variant="outline"
-              disabled={isChangingForumStatus}
-              onClick={() => void toggleForumPosting()}
-            >
-              {participant.is_forum_banned
-                ? t('forumPostingEnableAction')
-                : t('forumPostingDisableAction')}
-            </Button>
+            {teamTools ? (
+              <Button
+                type="button"
+                size="lg"
+                variant="outline"
+                disabled={isChangingForumStatus}
+                onClick={() => void toggleForumPosting()}
+              >
+                {participant.is_forum_banned
+                  ? t('forumPostingEnableAction')
+                  : t('forumPostingDisableAction')}
+              </Button>
+            ) : null}
           </div>
         </div>
         {forumStatusErrorMessage === undefined ? null : (
@@ -328,7 +339,7 @@ export function ParticipantDetail({
           <ParticipantPrefillForm
             participant={participant}
             answered={new Set(answeredQuestions)}
-            canSeeSensitive={permissions.has('participants.view_sensitive')}
+            canSeeSensitive={sees('participants.view_sensitive')}
             onSubmit={saveProfile}
             onCancel={() => {
               setSaveErrorMessage(undefined);
@@ -339,7 +350,7 @@ export function ParticipantDetail({
         ) : isEditing ? (
           <ParticipantEditForm
             participant={participant}
-            canSeeSensitive={permissions.has('participants.view_sensitive')}
+            canSeeSensitive={sees('participants.view_sensitive')}
             onSubmit={saveProfile}
             onCancel={() => {
               setSaveErrorMessage(undefined);
@@ -350,12 +361,12 @@ export function ParticipantDetail({
         ) : (
           <ParticipantProfileFields
             participant={participant}
-            canSeeSensitive={permissions.has('participants.view_sensitive')}
+            canSeeSensitive={sees('participants.view_sensitive')}
           />
         )}
       </DetailSection>
 
-      {hasJoined ? null : (
+      {hasJoined || !teamTools ? null : (
         <ParticipantQuestionStates
           states={questionStates}
           answered={new Set(answeredQuestions)}
@@ -376,15 +387,15 @@ export function ParticipantDetail({
       <ParticipantCustomAnswers
         catalog={intakeCatalog}
         answers={customAnswers}
-        canEdit={permissions.has('participants.view_personal')}
-        canEditSensitive={permissions.has('participants.view_sensitive')}
+        canEdit={sees('participants.view_personal')}
+        canEditSensitive={sees('participants.view_sensitive')}
         onSave={async (answers) => {
           await setParticipantCustomAnswers(supabase, participant.id, answers);
           await router.invalidate();
         }}
       />
 
-      {permissions.has('participants.view_personal') ? (
+      {teamTools && permissions.has('participants.view_personal') ? (
         <ParticipantAuthorizationPanel
           participant={participant}
           authorizations={authorizations}
@@ -402,25 +413,29 @@ export function ParticipantDetail({
         />
       ) : null}
 
-      <ParticipantNotes notes={notes} onAdd={addNote} errorMessage={noteErrorMessage} />
+      {teamTools ? (
+        <>
+          <ParticipantNotes notes={notes} onAdd={addNote} errorMessage={noteErrorMessage} />
 
-      <ParticipantEquipment
-        deliveries={deliveries}
-        itemTypes={itemTypes}
-        onAdd={addDelivery}
-        errorMessage={deliveryErrorMessage}
-      />
+          <ParticipantEquipment
+            deliveries={deliveries}
+            itemTypes={itemTypes}
+            onAdd={addDelivery}
+            errorMessage={deliveryErrorMessage}
+          />
 
-      <ParticipantAttendanceReport stats={attendanceStats} history={attendanceHistory} />
+          <ParticipantAttendanceReport stats={attendanceStats} history={attendanceHistory} />
 
-      <ParticipantActivity entries={activity} />
+          <ParticipantActivity entries={activity} />
 
-      {/* Last on the page, deliberately. These are the two gestures nobody
-          should reach by scrolling past something else. */}
-      <ParticipantRgpd
-        participant={participant}
-        openDeletionRequestReason={openDeletionRequestReason}
-      />
+          {/* Last on the page, deliberately. These are the two gestures nobody
+              should reach by scrolling past something else. */}
+          <ParticipantRgpd
+            participant={participant}
+            openDeletionRequestReason={openDeletionRequestReason}
+          />
+        </>
+      ) : null}
     </section>
   );
 }

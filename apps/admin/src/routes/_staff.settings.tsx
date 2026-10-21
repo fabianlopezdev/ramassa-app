@@ -2,25 +2,21 @@ import { RequireAuth } from '@/components/auth/require-auth';
 import { useStepUp } from '@/components/auth/step-up';
 import { ORGANIZATION_BRANDING_CHANGED_EVENT } from '@/components/branding/organization-branding-provider';
 import { EntityManagementPanel } from '@/components/entity/entity-management-panel';
-import { AuthorizationEditor } from '@/components/settings/authorization-editor';
-import { DocumentExplanationForm } from '@/components/settings/document-explanation-form';
+import {
+  OnboardingAuthorizationSection,
+  OnboardingDocumentSection,
+  OnboardingQuestionsSection,
+} from '@/components/settings/onboarding-design-sections';
 import { OrganizationSettingsPanel } from '@/components/settings/organization-settings-panel';
 import { PhotoHandoffButton } from '@/components/settings/photo-handoff-dialog';
-import { QuestionBuilder } from '@/components/settings/question-builder';
-import { SeasonsPanel } from '@/components/settings/seasons-panel';
 import { TeamAccessPanel } from '@/components/team/team-access-panel';
 import { sendEmailOtp } from '@/lib/auth';
-import { builtinQuestionOptions, QUESTION_LABEL_KEYS } from '@/lib/builtin-questions';
 import { SETTINGS_PERMISSIONS } from '@/lib/nav-items';
 import { supabase } from '@/lib/supabase';
 import { createFileRoute, useRouter } from '@tanstack/react-router';
-import { useTranslation } from 'react-i18next';
 import { z } from 'zod';
 import { resetSecondFactor, signOutEverywhere, useAuth } from '@ramassa/shared/auth';
-import {
-  fetchAuthorizationVersions,
-  publishAuthorizationVersion,
-} from '@ramassa/shared/authorization';
+import { fetchAuthorizationVersions } from '@ramassa/shared/authorization';
 import {
   createManagedEntity,
   fetchEntityCollaborators,
@@ -29,22 +25,8 @@ import {
   setEntityActive,
   setEntityCollaboratorActive,
 } from '@ramassa/shared/entity-management';
-import {
-  fetchDocumentStepExplanation,
-  saveDocumentStepExplanation,
-  WIZARD_QUESTIONS,
-} from '@ramassa/shared/intake';
-import {
-  archiveCustomQuestion,
-  archiveIntakeScreen,
-  EMPTY_INTAKE_CATALOG,
-  fetchIntakeCatalog,
-  reorderCustomQuestions,
-  reorderIntakeScreens,
-  saveBuiltinOverride,
-  saveCustomQuestion,
-  saveIntakeScreen,
-} from '@ramassa/shared/intake-builder';
+import { fetchDocumentStepExplanation } from '@ramassa/shared/intake';
+import { EMPTY_INTAKE_CATALOG, fetchIntakeCatalog } from '@ramassa/shared/intake-builder';
 import {
   fetchOrganizationSettings,
   fetchStaffMembers,
@@ -53,6 +35,7 @@ import {
   removeStaffMember,
   saveOrganizationSettings,
   searchInternalDocuments,
+  setTeamMemberTestAccount,
 } from '@ramassa/shared/organization-settings';
 import {
   applyPermissionPreset,
@@ -63,7 +46,7 @@ import {
   savePermissionPreset,
   setTeamMemberPermissions,
 } from '@ramassa/shared/permissions';
-import { createSeason, fetchSeasons, setCurrentSeason } from '@ramassa/shared/seasons';
+import { fetchSeasons } from '@ramassa/shared/seasons';
 
 export const Route = createFileRoute('/_staff/settings')({
   ssr: false,
@@ -161,7 +144,6 @@ function OrganizationSettingsScreen() {
   const navigate = Route.useNavigate();
   const router = useRouter();
   const { session, permissions, user, refreshProfile } = useAuth();
-  const { t } = useTranslation(['settings', 'onboarding']);
 
   async function refresh() {
     await router.invalidate({ sync: true });
@@ -265,6 +247,10 @@ function OrganizationSettingsScreen() {
         await withStepUp(() => resetSecondFactor(supabase, profileId));
         await refresh();
       }}
+      onSetTestAccount={async (profileId, isTestAccount) => {
+        await setTeamMemberTestAccount(supabase, profileId, isTestAccount);
+        await refresh();
+      }}
       onSignOutEverywhere={async (profileId) => {
         await signOutEverywhere(supabase, profileId);
         // Signing herself out ends this tab as well.
@@ -281,77 +267,20 @@ function OrganizationSettingsScreen() {
       photoHandoff={<PhotoHandoffButton onDone={refresh} />}
       authorization={
         permissions.has('settings.organization') ? (
-          <>
-            <SeasonsPanel
-              seasons={data.seasons}
-              onCreate={async (input) => {
-                await withStepUp(() => createSeason(supabase, input));
-                await refresh();
-              }}
-              onSetCurrent={async (seasonId) => {
-                await withStepUp(() => setCurrentSeason(supabase, seasonId));
-                await refresh();
-              }}
-            />
-            <AuthorizationEditor
-              versions={data.authorizationVersions}
-              onPublish={async (content) => {
-                await withStepUp(() => publishAuthorizationVersion(supabase, content));
-                await refresh();
-              }}
-            />
-          </>
+          <OnboardingAuthorizationSection
+            seasons={data.seasons}
+            versions={data.authorizationVersions}
+          />
         ) : undefined
       }
       questions={
         permissions.has('settings.organization') ? (
-          <QuestionBuilder
-            catalog={data.intakeCatalog}
-            builtins={WIZARD_QUESTIONS.map((question) => ({
-              question,
-              label: t(QUESTION_LABEL_KEYS[question] ?? question),
-              options: builtinQuestionOptions(question, t),
-            }))}
-            onSaveScreen={async (draft) => {
-              await saveIntakeScreen(supabase, draft);
-              await refresh();
-            }}
-            onArchiveScreen={async (id) => {
-              await archiveIntakeScreen(supabase, id);
-              await refresh();
-            }}
-            onReorderScreens={async (afterScreen, ids) => {
-              await reorderIntakeScreens(supabase, afterScreen, ids);
-              await refresh();
-            }}
-            onSaveQuestion={async (draft) => {
-              await saveCustomQuestion(supabase, draft);
-              await refresh();
-            }}
-            onArchiveQuestion={async (id) => {
-              await archiveCustomQuestion(supabase, id);
-              await refresh();
-            }}
-            onReorderQuestions={async (screenId, ids) => {
-              await reorderCustomQuestions(supabase, screenId, ids);
-              await refresh();
-            }}
-            onSaveBuiltin={async (override) => {
-              await saveBuiltinOverride(supabase, override);
-              await refresh();
-            }}
-          />
+          <OnboardingQuestionsSection catalog={data.intakeCatalog} />
         ) : undefined
       }
       documentExplanation={
         permissions.has('settings.organization') ? (
-          <DocumentExplanationForm
-            explanation={data.documentExplanation}
-            onSave={async (explanation) => {
-              await saveDocumentStepExplanation(supabase, explanation);
-              await refresh();
-            }}
-          />
+          <OnboardingDocumentSection explanation={data.documentExplanation} />
         ) : undefined
       }
       accessToken={session?.access_token}

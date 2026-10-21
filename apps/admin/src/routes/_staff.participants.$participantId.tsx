@@ -43,13 +43,17 @@ import {
   fetchParticipantDetail,
   fetchParticipantNotes,
 } from '@ramassa/shared/participants';
+import { fetchMyPermissions, isLimitedToTestPlayers } from '@ramassa/shared/permissions';
 import { fetchDeletionRequests } from '@ramassa/shared/rgpd';
 import { fetchParticipantSeasonAnswers } from '@ramassa/shared/seasons';
 
 export const Route = createFileRoute('/_staff/participants/$participantId')({
   ssr: false,
   loader: async ({ params }) => {
-    const participant = await fetchParticipantDetail(supabase, params.participantId);
+    const [participant, permissions] = await Promise.all([
+      fetchParticipantDetail(supabase, params.participantId),
+      fetchMyPermissions(supabase),
+    ]);
     // Nobody by that id, or nobody this staff member may read. The screen tells
     // those apart from a FAILED read, which throws and reaches the router's
     // error component with its code.
@@ -70,6 +74,35 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
         seasonAnswers: [],
         intakeCatalog: EMPTY_INTAKE_CATALOG,
         customAnswers: [],
+      };
+    }
+    // The onboarding design role (RAPP-615) opens test players only, and works
+    // with her record and her answers: the team's notes, material, attendance
+    // and authorization belong to real participants and are not read at all.
+    if (isLimitedToTestPlayers(permissions)) {
+      const [answered, intakeCatalog, customAnswers] = await Promise.all([
+        participant.terms_accepted_at === null
+          ? fetchParticipantAnsweredQuestions(supabase, params.participantId)
+          : Promise.resolve(new Set<never>()),
+        fetchIntakeCatalog(supabase).catch(() => EMPTY_INTAKE_CATALOG),
+        fetchParticipantCustomAnswers(supabase, params.participantId).catch(() => []),
+      ]);
+      return {
+        participant,
+        notes: [],
+        activity: [],
+        deliveries: [],
+        itemTypes: [],
+        attendanceStats: null,
+        attendanceHistory: [],
+        openDeletionRequestReason: undefined,
+        answeredQuestions: [...answered],
+        questionStates: {},
+        authorizations: [],
+        consents: [],
+        seasonAnswers: [],
+        intakeCatalog,
+        customAnswers,
       };
     }
     const [

@@ -16,6 +16,7 @@
 import { DataTable } from '@/components/data-table/data-table';
 import { DataTablePager } from '@/components/data-table/data-table-pager';
 import { ParticipantsFilters } from '@/components/participants/participants-filters';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Link, useNavigate } from '@tanstack/react-router';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
@@ -30,6 +31,7 @@ import {
   type ParticipantSearch,
   type ParticipantSortColumn,
 } from '@ramassa/shared/participants';
+import { isLimitedToTestPlayers } from '@ramassa/shared/permissions';
 
 export interface ParticipantsTableProps {
   readonly page: ParticipantPage;
@@ -61,13 +63,19 @@ export function ParticipantsTable({ page, filterOptions, search }: ParticipantsT
         // to a screen reader, and it fights with selecting the text in a cell,
         // which is how a staff member copies a town into an email.
         cell: ({ row }) => (
-          <Link
-            to="/participants/$participantId"
-            params={{ participantId: row.original.id }}
-            className="font-medium underline-offset-4 hover:underline"
-          >
-            {`${row.original.first_name} ${row.original.last_name}`}
-          </Link>
+          <span className="inline-flex flex-wrap items-center gap-2">
+            <Link
+              to="/participants/$participantId"
+              params={{ participantId: row.original.id }}
+              className="font-medium underline-offset-4 hover:underline"
+            >
+              {`${row.original.first_name} ${row.original.last_name}`}
+            </Link>
+            {/* A made-up player for designing the onboarding (RAPP-615). */}
+            {row.original.is_test_account ? (
+              <Badge variant="outline">{t('testBadge')}</Badge>
+            ) : null}
+          </span>
         ),
       },
       {
@@ -123,36 +131,47 @@ export function ParticipantsTable({ page, filterOptions, search }: ParticipantsT
   }
 
   const sorting: SortingState = [{ id: search.sort, desc: search.dir === 'desc' }];
+  // The onboarding design role (RAPP-615) works with test players only: no
+  // queues, invitations or season view, which all hold real participants.
+  const testPlayersOnly = isLimitedToTestPlayers(permissions);
 
   return (
     <section className="flex flex-col gap-4 p-6">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-semibold">{t('title')}</h1>
+          <h1 className="text-2xl font-semibold">
+            {testPlayersOnly ? t('testPlayersTitle') : t('title')}
+          </h1>
           <p className="text-sm text-muted-foreground">{t('summary', { count: page.total })}</p>
         </div>
         <div className="flex flex-wrap gap-3">
-          <Button asChild size="lg" variant="outline">
-            <Link to="/participants/referrals">{t('referrals:staffQueueAction')}</Link>
-          </Button>
-          <Button asChild size="lg" variant="outline">
-            <Link to="/participants/deletion-requests">{t('deletionRequestsTitle')}</Link>
-          </Button>
-          <Button asChild size="lg" variant="outline">
-            <Link to="/participants/invites">{t('invitesAction')}</Link>
-          </Button>
-          {/* Walk-ins who signed on a staff tablet (RAPP-305). */}
-          {permissions.has('participants.invite') ? (
-            <Button asChild size="lg" variant="outline">
-              <Link to="/participants/walk-ins">{t('walkIns.action')}</Link>
-            </Button>
-          ) : null}
-          {/* Who has re-registered for the current season (RAPP-306). */}
-          <Button asChild size="lg" variant="outline">
-            <Link to="/participants/season">{t('seasonViewAction')}</Link>
-          </Button>
+          {testPlayersOnly ? null : (
+            <>
+              <Button asChild size="lg" variant="outline">
+                <Link to="/participants/referrals">{t('referrals:staffQueueAction')}</Link>
+              </Button>
+              <Button asChild size="lg" variant="outline">
+                <Link to="/participants/deletion-requests">{t('deletionRequestsTitle')}</Link>
+              </Button>
+              <Button asChild size="lg" variant="outline">
+                <Link to="/participants/invites">{t('invitesAction')}</Link>
+              </Button>
+              {/* Walk-ins who signed on a staff tablet (RAPP-305). */}
+              {permissions.has('participants.invite') ? (
+                <Button asChild size="lg" variant="outline">
+                  <Link to="/participants/walk-ins">{t('walkIns.action')}</Link>
+                </Button>
+              ) : null}
+              {/* Who has re-registered for the current season (RAPP-306). */}
+              <Button asChild size="lg" variant="outline">
+                <Link to="/participants/season">{t('seasonViewAction')}</Link>
+              </Button>
+            </>
+          )}
           <Button asChild size="lg">
-            <Link to="/participants/new">{t('newAction')}</Link>
+            <Link to="/participants/new">
+              {testPlayersOnly ? t('newTestPlayerAction') : t('newAction')}
+            </Link>
           </Button>
         </div>
       </header>

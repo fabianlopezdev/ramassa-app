@@ -1,0 +1,99 @@
+/**
+ * Everything a player sees the first time she opens the app, on one page
+ * (RAPP-615): the questions, the document step note, and the seasons with
+ * their authorization.
+ *
+ * Settings shows the same sections in its tabs. This page exists so the
+ * onboarding design role, which holds `onboarding.design` and nothing of
+ * Settings, reaches them without the rest of Settings. `ssr: false` for the
+ * reason every staff screen gives (the session lives in localStorage,
+ * ADR-005).
+ */
+
+import { RequireAuth } from '@/components/auth/require-auth';
+import {
+  OnboardingAuthorizationSection,
+  OnboardingDocumentSection,
+  OnboardingQuestionsSection,
+} from '@/components/settings/onboarding-design-sections';
+import { ONBOARDING_PERMISSIONS } from '@/lib/nav-items';
+import { supabase } from '@/lib/supabase';
+import { createFileRoute } from '@tanstack/react-router';
+import { useTranslation } from 'react-i18next';
+import { fetchAuthorizationVersions } from '@ramassa/shared/authorization';
+import { fetchDocumentStepExplanation } from '@ramassa/shared/intake';
+import { EMPTY_INTAKE_CATALOG, fetchIntakeCatalog } from '@ramassa/shared/intake-builder';
+import { canDesignOnboarding, fetchMyPermissions } from '@ramassa/shared/permissions';
+import { fetchSeasons } from '@ramassa/shared/seasons';
+
+export const Route = createFileRoute('/_staff/onboarding')({
+  ssr: false,
+  loader: async () => {
+    // A person who may not design the onboarding gets nothing loaded: the
+    // guard below sends her away, and the database would refuse her anyway.
+    const permissions = await fetchMyPermissions(supabase);
+    if (!canDesignOnboarding(permissions)) {
+      return {
+        intakeCatalog: EMPTY_INTAKE_CATALOG,
+        documentExplanation: null,
+        seasons: [],
+        versions: [],
+      };
+    }
+    const [intakeCatalog, documentExplanation, seasons, versions] = await Promise.all([
+      fetchIntakeCatalog(supabase),
+      fetchDocumentStepExplanation(supabase),
+      fetchSeasons(supabase),
+      fetchAuthorizationVersions(supabase),
+    ]);
+    return { intakeCatalog, documentExplanation, seasons, versions };
+  },
+  component: OnboardingPage,
+});
+
+function OnboardingPage() {
+  return (
+    <RequireAuth allow={['staff', 'admin']} anyPermission={ONBOARDING_PERMISSIONS}>
+      <OnboardingDesignScreen />
+    </RequireAuth>
+  );
+}
+
+function OnboardingDesignScreen() {
+  const data = Route.useLoaderData();
+  const { t } = useTranslation('settings');
+  return (
+    <section className="flex flex-col gap-10 p-6" data-testid="onboarding-design-page">
+      <header className="max-w-3xl space-y-2">
+        <h1 className="text-start text-2xl font-semibold">{t('onboardingPage.title')}</h1>
+        <p className="text-start text-sm leading-6 text-muted-foreground">
+          {t('onboardingPage.intro')}
+        </p>
+      </header>
+
+      <section className="space-y-6" aria-labelledby="onboarding-questions-heading">
+        <header className="max-w-3xl space-y-2">
+          <h2 id="onboarding-questions-heading" className="text-xl font-semibold text-foreground">
+            {t('tabQuestions')}
+          </h2>
+          <p className="text-sm leading-6 text-muted-foreground">{t('questionsIntro')}</p>
+        </header>
+        <OnboardingQuestionsSection catalog={data.intakeCatalog} />
+        <OnboardingDocumentSection explanation={data.documentExplanation} />
+      </section>
+
+      <section className="space-y-6" aria-labelledby="onboarding-authorization-heading">
+        <header className="max-w-3xl space-y-2">
+          <h2
+            id="onboarding-authorization-heading"
+            className="text-xl font-semibold text-foreground"
+          >
+            {t('tabAuthorization')}
+          </h2>
+          <p className="text-sm leading-6 text-muted-foreground">{t('authorizationIntro')}</p>
+        </header>
+        <OnboardingAuthorizationSection seasons={data.seasons} versions={data.versions} />
+      </section>
+    </section>
+  );
+}

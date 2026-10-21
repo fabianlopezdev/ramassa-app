@@ -1,5 +1,10 @@
 {
   "title": "Participants",
+  "testPlayersTitle": "Jugadores de prova",
+  "newTestPlayerAction": "Nova jugadora de prova",
+  "testPlayerOption": "Jugadora de prova",
+  "testPlayerOptionHelp": "Una jugadora inventada per provar la inscripció. Entra amb el codi fix de l'entorn de proves i es pot esborrar del tot.",
+  "testPlayerForcedHelp": "Amb el teu accés només crees jugadores de prova.",
   "summary": "{{count}} participants",
   "summary_one": "1 participant",
   "searchLabel": "Cerca",
@@ -24,6 +29,7 @@
   "rowActive": "Activa",
   "rowInactive": "Inactiva",
   "rowNone": "—",
+  "testBadge": "Prova",
   "emptyTitle": "Cap participant amb aquests filtres",
   "emptyBody": "Prova amb menys filtres o una altra cerca.",
   "clearFilters": "Treu els filtres",

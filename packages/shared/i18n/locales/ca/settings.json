@@ -88,6 +88,10 @@
       "nobody": "No, mantén-ne l'accés com està"
     },
     "lockedHint": "Només pots canviar els permisos que tens tu. Els altres es mostren bloquejats.",
+    "testAccount": "Compte de prova",
+    "testAccountFor": "Compte de prova: {{name}}",
+    "testAccountHelp": "Un compte de prova entra amb el codi fix de l'entorn de proves. Marca només els comptes de l'equip que fan proves.",
+    "testAccountFailed": "No s'ha pogut canviar el compte de prova. Torna-ho a provar.",
     "area": {
       "participants": "Participants",
       "material": "Material",
@@ -102,6 +106,7 @@
       "coach": "Entrenador",
       "staff": "Equip tècnic",
       "admin": "Administració",
+      "onboarding_design": "Disseny de la inscripció",
       "custom": "Personalitzat"
     }
   },
@@ -133,6 +138,10 @@
     "rgpd_erase": {
       "label": "Supressió RGPD",
       "description": "Gestionar les sol·licituds de supressió i esborrar les dades d'una jugadora. La supressió definitiva també necessita Gestió de l'equip."
+    },
+    "test_players_manage": {
+      "label": "Jugadores de prova",
+      "description": "Crear, veure, editar i esborrar jugadores de prova per provar la inscripció. Aquest permís sol no mostra cap jugadora real."
     },
     "equipment_handover": {
       "label": "Lliurar material",
@@ -261,6 +270,10 @@
     "settings_organization": {
       "label": "Dades de l'organització",
       "description": "Editar el nom, les dades de contacte i els idiomes."
+    },
+    "onboarding_design": {
+      "label": "Disseny de la inscripció",
+      "description": "Editar el que veu una jugadora la primera vegada que obre l'app: preguntes, nota del document, temporades i autorització de la temporada."
     },
     "settings_branding": {
       "label": "Imatge",
@@ -453,5 +466,9 @@
       "no": "No",
       "maybe": "Potser"
     }
+  },
+  "onboardingPage": {
+    "title": "Inscripció",
+    "intro": "Tot el que veu una jugadora quan obre l'app per primera vegada. Els canvis arriben a l'app de seguida, sense cap versió nova."
   }
 }
