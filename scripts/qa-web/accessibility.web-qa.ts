@@ -307,6 +307,31 @@ test.describe('WCAG 2.2 AA regression gate', () => {
     }
   });
 
+  test('a busy login action announces its state without an unnamed decorative progressbar', async ({
+    page,
+  }) => {
+    await page.goto(PLAYER_ORIGIN);
+    await page.getByTestId('auth-language-en').click();
+    await page.getByRole('button', { name: 'Continue', exact: true }).click();
+    await page.getByRole('textbox', { name: 'Email', exact: true }).fill('synthetic@example.test');
+    const response = Promise.withResolvers<void>();
+    await page.route('**/auth/v1/otp', async (route) => {
+      await response.promise;
+      await route.fulfill({ status: 200, contentType: 'application/json', body: '{}' });
+    });
+    try {
+      const action = page.getByRole('button', { name: 'Send me a code', exact: true });
+      await action.click();
+      await expect(action).toHaveAttribute('aria-busy', 'true');
+      await expect(action).toBeDisabled();
+      await expect(page.getByRole('progressbar')).toHaveCount(0);
+      await expectNoAxeViolations(page, 'busy login action');
+    } finally {
+      response.resolve();
+    }
+    await expect(page.getByRole('heading', { name: 'Enter your code', exact: true })).toBeVisible();
+  });
+
   test('the player authorization loading gate has an accessible name on a slow connection', async ({
     page,
   }) => {

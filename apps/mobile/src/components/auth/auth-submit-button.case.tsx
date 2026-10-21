@@ -7,7 +7,8 @@ mock.module('react-native', () => ({
   View: box,
   Text: ({ children, className }: { children: ReactNode; className: string }) =>
     createElement('span', { className }, children),
-  ActivityIndicator: () => createElement('span', { role: 'progressbar' }),
+  ActivityIndicator: ({ 'aria-hidden': hidden }: { 'aria-hidden'?: boolean }) =>
+    createElement('span', { role: 'progressbar', 'aria-hidden': hidden }),
   useWindowDimensions: () => ({ fontScale: 1 }),
 }));
 mock.module('@/lib/continuous-corners', () => ({ continuousCorners: {} }));
@@ -60,7 +61,8 @@ test('busy action keeps its progress indicator and prevents a second submission'
   const view = render(
     createElement(AuthSubmitButton, { label: 'Continue', onPress, isLoading: true }),
   );
-  expect(view.getByRole('progressbar')).toBeTruthy();
+  expect(view.queryByRole('progressbar')).toBeNull();
+  expect(view.getByRole('progressbar', { hidden: true }).getAttribute('aria-hidden')).toBe('true');
   expect(view.getByRole('button').getAttribute('aria-busy')).toBe('true');
   fireEvent.click(view.getByRole('button'));
   expect(onPress).not.toHaveBeenCalled();

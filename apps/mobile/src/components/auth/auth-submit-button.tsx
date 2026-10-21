@@ -51,6 +51,9 @@ export function AuthSubmitButton({
         {isBusy ? (
           <ActivityIndicator
             accessible={false}
+            aria-hidden
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
             color={isDisabled ? tokens.colors.neutral[600] : tokens.colors.white}
           />
         ) : null}
