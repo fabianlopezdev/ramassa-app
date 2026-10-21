@@ -70,6 +70,9 @@ const draftSchema = z.object({
   terms: z.record(z.string(), z.unknown()).optional(),
   // Her answers to the staff questions, by question id (RAPP-307).
   custom: z.record(z.string(), z.union([z.string(), z.array(z.string())])).optional(),
+  // A test player's situation when the draft began (RAPP-619): a later change
+  // on her page makes the draft stale.
+  scenarioStamp: z.string().optional(),
 });
 
 export interface OnboardingDraft {
@@ -80,6 +83,7 @@ export interface OnboardingDraft {
   season?: Record<string, unknown>;
   terms?: Record<string, unknown>;
   custom?: Record<string, string | readonly string[]>;
+  scenarioStamp?: string;
 }
 
 export interface OnboardingDraftStore {

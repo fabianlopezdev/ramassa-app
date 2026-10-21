@@ -257,3 +257,18 @@ export function withSelectedLanguage(
 ): OnboardingDraft {
   return { ...draft, identity: { ...draft.identity, preferredLanguage: language } };
 }
+
+/**
+ * A test player's draft from before staff changed her situation on her page
+ * (RAPP-619) is dropped, so the next open shows the situation that was set:
+ * her draft would otherwise win over it, as it rightly does over staff
+ * prefill for a real woman (RAPP-300). Real women have no stamp, so their
+ * draft is always kept.
+ */
+export function draftForScenario(
+  draft: OnboardingDraft | null,
+  scenarioStamp: string | null,
+): OnboardingDraft | null {
+  if (draft === null || scenarioStamp === null) return draft;
+  return draft.scenarioStamp === scenarioStamp ? draft : null;
+}

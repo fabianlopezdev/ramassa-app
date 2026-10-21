@@ -5,6 +5,7 @@ import {
 import { onboardingDraftStore } from '@/lib/onboarding';
 import {
   customWizardPlan,
+  draftForScenario,
   seedDraftFromProfile,
   withSelectedLanguage,
   wizardDraftStep,
@@ -35,6 +36,7 @@ import {
   type CustomAnswers,
   type IntakeCatalog,
 } from '@ramassa/shared/intake-builder';
+import { fetchMyTestScenarioStamp } from '@ramassa/shared/participants';
 import { fetchOwnProfile } from '@ramassa/shared/profile';
 import type { LanguageCode } from '@ramassa/shared/schemas';
 
@@ -67,8 +69,10 @@ async function loadStaffQuestions(): Promise<{
  */
 function seedWizardDraft(intake: WizardIntake, language: LanguageCode): void {
   const firstScreen = nextWizardScreen('start', intake.notAsked, intake.customPlan);
-  const draft = onboardingDraftStore.loadDraft() ?? {
+  const scenarioStamp = intake.scenarioStamp ?? null;
+  const draft = draftForScenario(onboardingDraftStore.loadDraft(), scenarioStamp) ?? {
     currentStep: wizardDraftStep(firstScreen),
+    ...(scenarioStamp === null ? {} : { scenarioStamp }),
     ...(intake.profile === null ? {} : seedDraftFromProfile(intake.profile, intake.answered)),
   };
   onboardingDraftStore.saveDraft(withSelectedLanguage(draft, language));
@@ -98,13 +102,17 @@ function OnboardingScreens() {
   const intake = useQuery({
     queryKey: ['onboarding-intake', user?.id ?? 'signed-out'],
     queryFn: async ({ signal }): Promise<WizardIntake> => {
-      const [profile, answered, toAsk, documentExplanation, staffQuestions] = await Promise.all([
-        fetchOwnProfile(supabase, { signal }),
-        fetchMyAnsweredQuestions(supabase, { signal }),
-        fetchMyQuestionsToAsk(supabase, { signal }),
-        fetchDocumentStepExplanation(supabase, { signal }),
-        loadStaffQuestions(),
-      ]);
+      const [profile, answered, toAsk, documentExplanation, staffQuestions, scenarioStamp] =
+        await Promise.all([
+          fetchOwnProfile(supabase, { signal }),
+          fetchMyAnsweredQuestions(supabase, { signal }),
+          fetchMyQuestionsToAsk(supabase, { signal }),
+          fetchDocumentStepExplanation(supabase, { signal }),
+          loadStaffQuestions(),
+          // A test player's situation stamp (RAPP-619). It never blocks the
+          // wizard: without it, her draft is kept as for anyone.
+          fetchMyTestScenarioStamp(supabase).catch(() => null),
+        ]);
       const { catalog, answers } = staffQuestions;
       const hidden = hiddenBuiltinQuestions(catalog);
       const customScreens = wizardScreens(catalog);
@@ -121,6 +129,7 @@ function OnboardingScreens() {
         customScreens,
         customPlan: customWizardPlan(customScreens, answers),
         hidden,
+        scenarioStamp,
       };
     },
     enabled: user !== null,

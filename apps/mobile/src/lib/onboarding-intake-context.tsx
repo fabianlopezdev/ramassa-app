@@ -56,6 +56,11 @@ export interface WizardIntake {
   readonly customPlan: readonly CustomWizardScreen[];
   /** Built-in questions staff removed: never asked, even when editing. */
   readonly hidden: ReadonlySet<IntakeQuestion>;
+  /**
+   * For a test player, when staff last changed her situation (RAPP-619): a
+   * draft from before it is dropped. Null or absent for everyone else.
+   */
+  readonly scenarioStamp?: string | null;
 }
 
 const EMPTY_INTAKE: WizardIntake = {
