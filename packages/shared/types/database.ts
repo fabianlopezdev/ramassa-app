@@ -6360,6 +6360,10 @@ export type Database = {
           count_id: string;
         }[];
       };
+      referral_answer_keys: {
+        Args: { p_referral_id: string };
+        Returns: string[];
+      };
       referral_custom_answers: {
         Args: { p_referral_id: string };
         Returns: {

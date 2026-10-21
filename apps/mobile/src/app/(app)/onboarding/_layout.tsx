@@ -24,7 +24,7 @@ import {
   fetchMyAnsweredQuestions,
   fetchMyQuestionsToAsk,
   nextWizardScreen,
-  questionsNotAsked,
+  wizardNotAsked,
 } from '@ramassa/shared/intake';
 import {
   EMPTY_INTAKE_CATALOG,
@@ -111,8 +111,10 @@ function OnboardingScreens() {
       return {
         profile,
         answered,
-        // A built-in question staff removed is never asked, so it never keeps a screen.
-        notAsked: new Set([...questionsNotAsked(toAsk), ...hidden]),
+        // A built-in question staff removed is never asked, so it never keeps a
+        // screen. The staff preview of a new invitation plans with the same
+        // function (RAPP-618).
+        notAsked: wizardNotAsked(toAsk, hidden),
         documentExplanation,
         catalog,
         customAnswers: answers,

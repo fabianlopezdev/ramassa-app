@@ -50,13 +50,19 @@ function normalizedEntity(referenceEntity: string | undefined): string | null {
  * `referralId` is the pending partner-entity referral the invitation answers,
  * if staff opened the form from one. The database links it to her profile when
  * she finishes the onboarding wizard.
+ *
+ * `questionStates` is what staff confirmed her wizard asks (RAPP-618): only the
+ * questions set to Ask or Don't ask. The database saves them in the same
+ * transaction as the invitation, or creates nothing.
  */
 export function buildCreateParticipantInvitePayload(
   input: CreateParticipantInviteInput,
   referralId: string | null = null,
+  questionStates: Readonly<Record<string, 'ask' | 'skip'>> = {},
 ) {
   const isTestAccount = input.isTestAccount === true;
   return {
+    ...(Object.keys(questionStates).length === 0 ? {} : { question_states: questionStates }),
     email: input.email,
     first_name: input.firstName.trim(),
     last_name: input.lastName.trim(),

@@ -96,3 +96,12 @@ test('a test player (RAPP-615) is an ordinary invitation with the flag on and no
     buildCreateParticipantInvitePayload(parsed, '5eed0000-0000-4000-8010-000000000001'),
   ).toEqual(expect.objectContaining({ referral_id: null, is_test_account: true }));
 });
+
+test('the confirmed question states travel with the invitation, and only when set (RAPP-618)', () => {
+  const input = { email: 'fatou.ndiaye@example.com', firstName: 'Fatou', lastName: 'Ndiaye' };
+  expect('question_states' in buildCreateParticipantInvitePayload(input)).toBe(false);
+  expect(
+    buildCreateParticipantInvitePayload(input, null, { phone: 'skip', first_name: 'ask' })
+      .question_states,
+  ).toEqual({ phone: 'skip', first_name: 'ask' });
+});
