@@ -38,6 +38,7 @@ const piiKeys = new Set([
   'postaladdress',
   'document',
   'documentnumber',
+  'documentname',
   'passport',
   'passportnumber',
   'dni',

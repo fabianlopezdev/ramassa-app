@@ -2,7 +2,7 @@
  * Ramassà's participation authorization for the season (RAPP-304).
  *
  * A player without a valid authorization sees only this screen. She reads the
- * text staff published (each section opens), ticks each consent, gives the
+ * text staff published (always visible), ticks each consent, gives the
  * medical answer, optionally an emergency contact, and draws her signature with
  * her finger. A player who cannot draw (a screen reader, a motor impairment)
  * signs with the ticks alone, and the record says so.
@@ -36,7 +36,10 @@ export default function AuthorizationScreen() {
   if (status.isPending) {
     return (
       <View className="flex-1 items-center justify-center bg-neutral-50">
-        <ActivityIndicator color={tokens.colors.primary.DEFAULT} />
+        <ActivityIndicator
+          accessibilityLabel={t('common:loading')}
+          color={tokens.colors.primary.DEFAULT}
+        />
       </View>
     );
   }
@@ -44,7 +47,7 @@ export default function AuthorizationScreen() {
   if (status.isError || current === null || current === undefined) {
     return (
       <SafeAreaView className="flex-1 items-center justify-center bg-neutral-50 p-lg">
-        <Text className={`text-center text-md text-neutral-700 ${fontClass}`}>
+        <Text selectable className={`text-center text-form text-neutral-700 ${fontClass}`}>
           {t('authorizationLoadFailed')}
         </Text>
       </SafeAreaView>

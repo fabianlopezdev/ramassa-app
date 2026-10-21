@@ -1,5 +1,4 @@
 import { AuthTextField } from '@/components/auth/auth-text-field';
-import { ErrorCodeLine } from '@/components/error-code-line';
 import { FormWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
@@ -289,7 +288,6 @@ export default function GalleryUploadScreen() {
             >
               {t('gallery:mediaPermissionDenied')}
             </Text>
-            <ErrorCodeLine code="UPLOAD-2" />
             <PressableScale
               testID="gallery-open-settings"
               accessibilityLabel={t('gallery:openSettings')}

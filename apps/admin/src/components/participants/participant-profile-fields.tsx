@@ -24,6 +24,7 @@
 import { DetailField, DetailFieldList } from '@/components/detail/detail-section';
 import { useTranslation } from 'react-i18next';
 import type { ParticipantDetailRow } from '@ramassa/shared/participants';
+import { formatSupportNeeds } from '@ramassa/shared/schemas';
 
 export interface ParticipantProfileFieldsProps {
   readonly participant: ParticipantDetailRow;
@@ -86,7 +87,11 @@ export function ParticipantProfileFields({
 
       <DetailField
         label={t('onboarding:documentTypeLabel')}
-        value={documentTypeLabel(participant.document_type, t)}
+        value={
+          participant.document_type === 'other' && participant.document_name
+            ? participant.document_name
+            : documentTypeLabel(participant.document_type, t)
+        }
       />
       <DetailField
         label={t('onboarding:documentNumberLabel')}
@@ -153,7 +158,7 @@ export function ParticipantProfileFields({
       {canSeeSensitive ? (
         <DetailField
           label={t('onboarding:specificNeedsLabel')}
-          value={shown(participant.specific_needs)}
+          value={shown(formatSupportNeeds(participant.specific_needs, t))}
         />
       ) : null}
       <DetailField

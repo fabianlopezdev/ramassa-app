@@ -1,5 +1,5 @@
 {
-  "AUTH-1": "No hem pogut iniciar la sessió. Torna-ho a provar.",
+  "AUTH-1": "No hem pogut iniciar la sessió. Torna-ho a provar d’aquí a un moment. Si continua passant, demana ajuda a l’equip de Ramassà.",
   "AUTH-2": "La sessió ha caducat. Torna a entrar.",
   "AUTH-3": "No tens permís per fer aquesta acció.",
   "AUTH-4": "Aquest codi no és correcte o ha caducat. Demana'n un de nou.",
@@ -39,5 +39,7 @@
   "UNEXPECTED-1": "Alguna cosa ha fallat. Torna-ho a provar.",
   "fallbackTitle": "Alguna cosa ha fallat",
   "retry": "Torna-ho a provar",
-  "errorCodeLabel": "Codi d'error"
+  "errorCodeLabel": "Codi d'error",
+  "AUTH-10": "No hem trobat cap compte amb aquest correu electrònic. Comprova que sigui el que vas donar a l’equip de Ramassà. Si necessites ajuda, demana-la a l’equip.",
+  "AUTH-11": "No podem enviar un codi a aquesta adreça de correu electrònic. Comprova que l’hagis escrit bé i fes servir un correu que pugui rebre missatges."
 }

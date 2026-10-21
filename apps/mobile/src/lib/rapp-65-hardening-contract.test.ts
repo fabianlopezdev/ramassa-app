@@ -54,10 +54,12 @@ describe('RAPP-65 player hardening contract', () => {
     expect(messageThread).toContain("body={t('emptyBody')}");
   });
 
-  test('forum reply failures are taxonomy-mapped instead of presented as an empty thread', async () => {
+  test('forum reply failures show friendly guidance and retry instead of an empty thread', async () => {
     const forumDetail = await readMobileSource('app/(app)/forum/[id].tsx');
 
     expect(forumDetail).toContain('repliesQuery.isError');
-    expect(forumDetail).toContain('toAppError(repliesQuery.error).code');
+    expect(forumDetail).toContain("t('forum:loadFailed')");
+    expect(forumDetail).toContain('refetchReplies()');
+    expect(forumDetail).not.toContain('ErrorCodeLine');
   });
 });

@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import { SUPPORTED_LANGUAGES } from '../i18n/languages';
 import {
   buildAnnouncement,
+  buildAppTermsSignature,
   buildAttendance,
   buildAuditLogEntry,
   buildAuthorizationConsentEvent,
@@ -476,4 +477,18 @@ describe('the question builder rows (RAPP-307)', () => {
     expect(buildBuiltinQuestionOverride().is_hidden).toBe(false);
     expect(buildIntakeStatePreset().states).toEqual({ clothing_size: 'ask', shoe_size: 'ask' });
   });
+});
+
+test('app terms signature fixtures are independently linked and overrideable', () => {
+  const row = buildAppTermsSignature();
+  expect(row.profile_id).toBe(seedUserId(11));
+  expect(row.org_id).toBe(SEED_ORGANIZATION_ID);
+  expect(row.signature).toEqual([
+    [
+      [100, 200],
+      [300, 400],
+    ],
+  ]);
+  expect(row.unable_to_draw).toBe(false);
+  expect(buildAppTermsSignature({ unable_to_draw: true, signature: null }).signature).toBeNull();
 });

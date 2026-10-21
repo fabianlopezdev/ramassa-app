@@ -38,7 +38,7 @@ describe('secure mobile storage configuration', () => {
       'createMmkvSessionStorage(authStorage, {',
     );
     expect(read('apps/mobile/src/lib/onboarding.ts')).toContain(
-      'createMmkvOnboardingDraftStore(privateStorage)',
+      'createAccountOnboardingDraftStore(privateStorage)',
     );
     expect(read('apps/mobile/src/lib/messaging.ts')).toContain(
       'createMessagingOutbox(privateStorage, userId)',

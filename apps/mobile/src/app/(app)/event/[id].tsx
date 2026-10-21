@@ -4,7 +4,6 @@ import {
   OfflineBanner,
 } from '@/components/announcements/feed-states';
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
-import { ErrorCodeLine } from '@/components/error-code-line';
 import { EventArticle } from '@/components/events/event-article';
 import { PageWidth } from '@/components/layout/content-width';
 import { SuccessPop } from '@/components/motion/success-pop';
@@ -205,7 +204,6 @@ export default function EventDetailScreen() {
                     >
                       {t(`errors:${signupError.code}`)}
                     </Text>
-                    <ErrorCodeLine code={signupError.code} />
                   </View>
                 )}
                 {isSignupSuccess ? (

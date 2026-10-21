@@ -94,6 +94,58 @@ export type Database = {
           },
         ];
       };
+      app_terms_signatures: {
+        Row: {
+          acceptance_id: string;
+          device: string | null;
+          media_consent: boolean;
+          org_id: string;
+          profile_id: string;
+          signature: Json | null;
+          unable_to_draw: boolean;
+        };
+        Insert: {
+          acceptance_id: string;
+          device?: string | null;
+          media_consent: boolean;
+          org_id: string;
+          profile_id: string;
+          signature?: Json | null;
+          unable_to_draw: boolean;
+        };
+        Update: {
+          acceptance_id?: string;
+          device?: string | null;
+          media_consent?: boolean;
+          org_id?: string;
+          profile_id?: string;
+          signature?: Json | null;
+          unable_to_draw?: boolean;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'app_terms_signatures_acceptance_id_fkey';
+            columns: ['acceptance_id'];
+            isOneToOne: true;
+            referencedRelation: 'terms_acceptances';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'app_terms_signatures_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'app_terms_signatures_profile_id_fkey';
+            columns: ['profile_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       attendance: {
         Row: {
           id: string;
@@ -877,6 +929,8 @@ export type Database = {
           privacy: string;
           question_type: string;
           screen_id: string;
+          show_when_option_id: string | null;
+          show_when_question_id: string | null;
           sort_order: number;
           updated_at: string;
         };
@@ -891,6 +945,8 @@ export type Database = {
           privacy: string;
           question_type: string;
           screen_id: string;
+          show_when_option_id?: string | null;
+          show_when_question_id?: string | null;
           sort_order?: number;
           updated_at?: string;
         };
@@ -905,6 +961,8 @@ export type Database = {
           privacy?: string;
           question_type?: string;
           screen_id?: string;
+          show_when_option_id?: string | null;
+          show_when_question_id?: string | null;
           sort_order?: number;
           updated_at?: string;
         };
@@ -921,6 +979,20 @@ export type Database = {
             columns: ['screen_id'];
             isOneToOne: false;
             referencedRelation: 'intake_screens';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'custom_questions_show_when_option_id_fkey';
+            columns: ['show_when_option_id'];
+            isOneToOne: false;
+            referencedRelation: 'custom_question_options';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'custom_questions_show_when_question_id_fkey';
+            columns: ['show_when_question_id'];
+            isOneToOne: false;
+            referencedRelation: 'custom_questions';
             referencedColumns: ['id'];
           },
         ];
@@ -2915,6 +2987,7 @@ export type Database = {
           address: string | null;
           anonymized_at: string | null;
           applicant_status: string | null;
+          applicant_status_details: string | null;
           avatar_url: string | null;
           childcare_need: string | null;
           city: string | null;
@@ -2922,6 +2995,7 @@ export type Database = {
           collaborating_entity_id: string | null;
           created_at: string;
           date_of_birth: string | null;
+          document_name: string | null;
           document_number: string | null;
           document_type: string | null;
           emergency_contact_name: string | null;
@@ -2960,6 +3034,7 @@ export type Database = {
           address?: string | null;
           anonymized_at?: string | null;
           applicant_status?: string | null;
+          applicant_status_details?: string | null;
           avatar_url?: string | null;
           childcare_need?: string | null;
           city?: string | null;
@@ -2967,6 +3042,7 @@ export type Database = {
           collaborating_entity_id?: string | null;
           created_at?: string;
           date_of_birth?: string | null;
+          document_name?: string | null;
           document_number?: string | null;
           document_type?: string | null;
           emergency_contact_name?: string | null;
@@ -3005,6 +3081,7 @@ export type Database = {
           address?: string | null;
           anonymized_at?: string | null;
           applicant_status?: string | null;
+          applicant_status_details?: string | null;
           avatar_url?: string | null;
           childcare_need?: string | null;
           city?: string | null;
@@ -3012,6 +3089,7 @@ export type Database = {
           collaborating_entity_id?: string | null;
           created_at?: string;
           date_of_birth?: string | null;
+          document_name?: string | null;
           document_number?: string | null;
           document_type?: string | null;
           emergency_contact_name?: string | null;
@@ -3373,6 +3451,7 @@ export type Database = {
       season_answers: {
         Row: {
           applicant_status: string | null;
+          applicant_status_details: string | null;
           childcare_need: string | null;
           org_id: string;
           profile_id: string;
@@ -3383,6 +3462,7 @@ export type Database = {
         };
         Insert: {
           applicant_status?: string | null;
+          applicant_status_details?: string | null;
           childcare_need?: string | null;
           org_id: string;
           profile_id: string;
@@ -3393,6 +3473,7 @@ export type Database = {
         };
         Update: {
           applicant_status?: string | null;
+          applicant_status_details?: string | null;
           childcare_need?: string | null;
           org_id?: string;
           profile_id?: string;
@@ -4989,6 +5070,7 @@ export type Database = {
           address: string | null;
           anonymized_at: string | null;
           applicant_status: string | null;
+          applicant_status_details: string | null;
           avatar_url: string | null;
           childcare_need: string | null;
           city: string | null;
@@ -4996,6 +5078,63 @@ export type Database = {
           collaborating_entity_id: string | null;
           created_at: string;
           date_of_birth: string | null;
+          document_name: string | null;
+          document_number: string | null;
+          document_type: string | null;
+          emergency_contact_name: string | null;
+          emergency_contact_phone: string | null;
+          emergency_contact_relation: string | null;
+          first_name: string;
+          has_dependents: boolean;
+          health_info: string | null;
+          id: string;
+          is_active: boolean;
+          is_forum_banned: boolean;
+          last_name: string;
+          media_consent_at: string | null;
+          nationality: string | null;
+          num_dependents: number;
+          org_id: string;
+          phone: string | null;
+          place_of_birth: string | null;
+          postal_code: string | null;
+          preferred_language: string;
+          prior_seasons: number;
+          push_notifications_enabled: boolean;
+          reference_contact_name: string | null;
+          reference_entity: string | null;
+          role: string;
+          search_document: unknown;
+          season_number: number | null;
+          sessions_valid_after: string | null;
+          shoe_size: string | null;
+          specific_needs: string | null;
+          supporting_entities: string[] | null;
+          terms_accepted_at: string | null;
+          updated_at: string;
+        };
+        SetofOptions: {
+          from: '*';
+          to: 'profiles';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
+      complete_onboarding_signed: {
+        Args: { p_signing: Json; payload: Json };
+        Returns: {
+          address: string | null;
+          anonymized_at: string | null;
+          applicant_status: string | null;
+          applicant_status_details: string | null;
+          avatar_url: string | null;
+          childcare_need: string | null;
+          city: string | null;
+          clothing_size: string | null;
+          collaborating_entity_id: string | null;
+          created_at: string;
+          date_of_birth: string | null;
+          document_name: string | null;
           document_number: string | null;
           document_type: string | null;
           emergency_contact_name: string | null;
@@ -5288,11 +5427,13 @@ export type Database = {
         Returns: {
           address: string;
           applicant_status: string;
+          applicant_status_details: string;
           avatar_url: string;
           childcare_need: string;
           city: string;
           clothing_size: string;
           date_of_birth: string;
+          document_name: string;
           document_number: string;
           document_type: string;
           emergency_contact_name: string;
@@ -5345,12 +5486,14 @@ export type Database = {
           address: string;
           anonymized_at: string;
           applicant_status: string;
+          applicant_status_details: string;
           avatar_url: string;
           childcare_need: string;
           city: string;
           clothing_size: string;
           created_at: string;
           date_of_birth: string;
+          document_name: string;
           document_number: string;
           document_type: string;
           emergency_contact_name: string;
@@ -6053,6 +6196,7 @@ export type Database = {
         Args: { p_profile_id: string };
         Returns: {
           applicant_status: string;
+          applicant_status_details: string;
           childcare_need: string;
           season_name: string;
           specific_needs: string;

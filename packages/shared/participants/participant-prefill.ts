@@ -41,6 +41,7 @@ export interface PrefillRow {
   readonly preferred_language: string;
   readonly document_type: string | null;
   readonly document_number: string | null;
+  readonly document_name?: string | null;
   readonly phone: string | null;
   readonly address: string | null;
   readonly city: string | null;
@@ -53,6 +54,7 @@ export interface PrefillRow {
   readonly shoe_size: string | null;
   // The season registration answers (RAPP-303); absent from older reads.
   readonly applicant_status?: string | null;
+  readonly applicant_status_details?: string | null;
   readonly supporting_entities?: readonly string[] | null;
   readonly season_number?: number | null;
   readonly childcare_need?: string | null;
@@ -74,6 +76,7 @@ export const profilePrefillSchema = z
       identityStepSchema.shape.preferredLanguage.optional(),
     ),
     documentType: z.preprocess(emptyAsAbsent, z.enum(DOCUMENT_TYPES).optional()),
+    documentName: z.preprocess(emptyAsAbsent, z.string().trim().max(100).optional()),
     documentNumber: z.preprocess(emptyAsAbsent, z.string().trim().toUpperCase().max(50).optional()),
     phone: logisticsFields.shape.phone,
     address: logisticsFields.shape.address,
@@ -127,6 +130,7 @@ const FIELD_QUESTION: Readonly<Record<ProfilePrefillField, IntakeQuestion>> = {
   preferredLanguage: 'preferred_language',
   documentType: 'document',
   documentNumber: 'document',
+  documentName: 'document',
   phone: 'phone',
   address: 'address',
   city: 'city',
@@ -138,6 +142,7 @@ const FIELD_QUESTION: Readonly<Record<ProfilePrefillField, IntakeQuestion>> = {
   clothingSize: 'clothing_size',
   shoeSize: 'shoe_size',
   applicantStatus: 'applicant_status',
+  applicantStatusDetails: 'applicant_status',
   supportingEntities: 'supporting_entities',
   seasonNumber: 'season_number',
   childcareNeed: 'childcare_need',
@@ -161,6 +166,7 @@ export function prefillFromRow(row: PrefillRow, answered: AnsweredQuestions): Pr
     documentType: value('documentType', row.document_type) as
       ProfilePrefillInput['documentType'] | undefined,
     documentNumber: value('documentNumber', row.document_number),
+    documentName: value('documentName', row.document_name ?? null),
     phone: value('phone', row.phone),
     address: value('address', row.address),
     city: value('city', row.city),
@@ -174,6 +180,7 @@ export function prefillFromRow(row: PrefillRow, answered: AnsweredQuestions): Pr
     shoeSize: value('shoeSize', row.shoe_size),
     applicantStatus: value('applicantStatus', row.applicant_status ?? null) as
       ProfilePrefillInput['applicantStatus'] | undefined,
+    applicantStatusDetails: value('applicantStatusDetails', row.applicant_status_details ?? null),
     supportingEntities: (value('supportingEntities', row.supporting_entities ?? null) ??
       []) as string[],
     seasonNumber: value('seasonNumber', row.season_number ?? null),
@@ -192,6 +199,7 @@ const PAYLOAD_KEY: Readonly<Record<ProfilePrefillField, string>> = {
   preferredLanguage: 'preferred_language',
   documentType: 'document_type',
   documentNumber: 'document_number',
+  documentName: 'document_name',
   phone: 'phone',
   address: 'address',
   city: 'city',
@@ -203,6 +211,7 @@ const PAYLOAD_KEY: Readonly<Record<ProfilePrefillField, string>> = {
   clothingSize: 'clothing_size',
   shoeSize: 'shoe_size',
   applicantStatus: 'applicant_status',
+  applicantStatusDetails: 'applicant_status_details',
   supportingEntities: 'supporting_entities',
   seasonNumber: 'season_number',
   childcareNeed: 'childcare_need',

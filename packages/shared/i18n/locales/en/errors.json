@@ -1,5 +1,5 @@
 {
-  "AUTH-1": "We could not sign you in. Please try again.",
+  "AUTH-1": "We could not sign you in. Try again in a moment. If this keeps happening, ask the Ramassà team for help.",
   "AUTH-2": "Your session has expired. Please sign in again.",
   "AUTH-3": "You do not have permission to do this.",
   "AUTH-4": "This code is wrong or has expired. Request a new one.",
@@ -39,5 +39,7 @@
   "UNEXPECTED-1": "Something went wrong. Please try again.",
   "fallbackTitle": "Something went wrong",
   "retry": "Try again",
-  "errorCodeLabel": "Error code"
+  "errorCodeLabel": "Error code",
+  "AUTH-10": "We could not find an account with this email. Check that it is the email you gave the Ramassà team. If you need help, ask the team.",
+  "AUTH-11": "We cannot send a code to this email address. Check that you entered it correctly and use an email that can receive messages."
 }

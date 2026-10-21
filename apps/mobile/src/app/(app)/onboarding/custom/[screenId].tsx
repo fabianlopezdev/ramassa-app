@@ -22,7 +22,11 @@ import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 import { useLanguage } from '@ramassa/shared/i18n';
 import { customStepKey } from '@ramassa/shared/intake';
-import { textIn } from '@ramassa/shared/intake-builder';
+import {
+  isCustomQuestionVisible,
+  textIn,
+  updateCustomAnswer,
+} from '@ramassa/shared/intake-builder';
 import type { OnboardingDraftStep } from '@ramassa/shared/onboarding-drafts';
 
 export default function CustomStepScreen() {
@@ -48,10 +52,11 @@ export default function CustomStepScreen() {
         return value === undefined ? [] : [[question.id, value]];
       }),
     );
+    const latest = onboardingDraftStore.loadDraft();
     onboardingDraftStore.saveDraft({
-      ...draft,
+      ...latest,
       currentStep,
-      custom: { ...draft?.custom, ...mine },
+      custom: { ...latest?.custom, ...mine },
     });
   }
 
@@ -59,6 +64,7 @@ export default function CustomStepScreen() {
 
   return (
     <WizardFrame
+      screenId={customStepKey(screenId)}
       stepNumber={step.position.step}
       totalSteps={step.position.total}
       title={textIn(screen.title, language)}
@@ -78,14 +84,20 @@ export default function CustomStepScreen() {
       }
     >
       <View testID={`wizard-custom-${screen.id}`} className="gap-lg">
-        {screen.questions.map((question) => (
-          <CustomQuestionField
-            key={question.id}
-            question={question}
-            value={answers[question.id]}
-            onChange={(value) => setAnswers((current) => ({ ...current, [question.id]: value }))}
-          />
-        ))}
+        {screen.questions
+          .filter((question) => isCustomQuestionVisible(question, answers))
+          .map((question) => (
+            <CustomQuestionField
+              key={question.id}
+              question={question}
+              value={answers[question.id]}
+              onChange={(value) =>
+                setAnswers((current) =>
+                  updateCustomAnswer(screen.questions, current, question.id, value),
+                )
+              }
+            />
+          ))}
       </View>
     </WizardFrame>
   );

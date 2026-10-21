@@ -8,13 +8,14 @@ const welcome = readFileSync(join(onboardingDir, 'index.tsx'), 'utf8');
 const background = readFileSync(join(onboardingDir, 'background.tsx'), 'utf8');
 const documentation = readFileSync(join(onboardingDir, 'documentation.tsx'), 'utf8');
 const logistics = readFileSync(join(onboardingDir, 'logistics.tsx'), 'utf8');
+const equipment = readFileSync(join(onboardingDir, 'equipment.tsx'), 'utf8');
 const terms = readFileSync(join(onboardingDir, 'terms.tsx'), 'utf8');
 const optionChip = readFileSync(join(root, 'components/onboarding/option-chip.tsx'), 'utf8');
 const questionHeadingPath = join(root, 'components/onboarding/onboarding-question-heading.tsx');
 const summaryPath = join(root, 'components/onboarding/wizard-validation-summary.tsx');
 
 describe('conversational onboarding controls', () => {
-  test('every enumerable question named in RAPP-97 carries a pictogram', () => {
+  test('contact, equipment, nationality and document choice use plain labels', () => {
     const questionHeading = Bun.file(questionHeadingPath);
     expect(questionHeading.size).toBeGreaterThan(0);
     const headingSource = readFileSync(questionHeadingPath, 'utf8');
@@ -22,58 +23,36 @@ describe('conversational onboarding controls', () => {
     expect(headingSource).toContain('accessibilityElementsHidden');
     expect(headingSource).toContain('importantForAccessibility="no-hide-descendants"');
     // Staff may reword a built-in question (RAPP-307): the app's label is the fallback.
-    const uses = [
-      [
-        background,
-        "label={wording.label('preferred_language', t('preferredLanguageLabel'))}",
-        'languageSymbol',
-      ],
-      [
-        background,
-        "label={wording.label('nationality', t('nationalityLabel'))}",
-        'nationalitySymbol',
-      ],
-      [
-        documentation,
-        "label={wording.label('document', t('documentTypeLabel'))}",
-        'documentSymbol',
-      ],
-      [logistics, "label={wording.label('city', t('cityLabel'))}", 'municipalitySymbol'],
-      [
-        logistics,
-        "label={wording.label('reference_entity', t('referenceEntityLabel'))}",
-        'entitySymbol',
-      ],
-      [
-        logistics,
-        "label={wording.label('dependents', t('hasDependentsLabel'))}",
-        'dependentsSymbol',
-      ],
-      [
-        logistics,
-        "label={wording.label('clothing_size', t('clothingSizeLabel'))}",
-        'clothingSymbol',
-      ],
-      [logistics, "label={wording.label('shoe_size', t('shoeSizeLabel'))}", 'shoeSymbol'],
-    ] as const;
-    for (const [source, label, symbol] of uses) {
+    expect(background).toContain("label={wording.label('nationality', t('nationalityLabel'))}");
+    expect(background).not.toContain('symbol=');
+    expect(documentation).toContain('SelectionChoiceCard');
+    expect(documentation).not.toContain('documentSymbol');
+    expect(background).not.toContain("intro={t('backgroundIntro')}");
+    expect(logistics).toContain("label={wording.label('city', t('cityLabel'))}");
+    for (const source of [logistics, equipment]) {
       expect(source).toContain('<OnboardingQuestionHeading');
-      expect(source).toContain(label);
-      expect(source).toContain(`symbol={${symbol}}`);
+      expect(source).not.toContain('symbol=');
+      expect(source).not.toContain('SymbolView');
     }
   });
 
-  test('selected answers stay quieter than the solid primary action', () => {
-    expect(optionChip).toContain('border-primary bg-primary/10');
+  test('selection keeps typography stable and distinct from the solid primary action', () => {
+    expect(optionChip).toContain('SelectionChoiceSurface');
+    expect(optionChip).toContain('text-center text-form font-medium');
+    expect(optionChip).not.toContain("isSelected ? 'font-bold'");
     expect(optionChip).not.toContain('border-primary bg-primary px-lg');
     expect(optionChip).not.toContain('text-white');
   });
 
   test('an empty submit presents one shared summary on every form step', () => {
     expect(Bun.file(summaryPath).size).toBeGreaterThan(0);
-    for (const source of [welcome, background, documentation, logistics]) {
+    for (const source of [welcome, background, documentation, logistics, equipment]) {
       expect(source).toContain('<WizardValidationSummary');
-      expect(source).toContain("message={t('errorSummary')}");
+      expect(source).toContain(
+        source === documentation
+          ? "message={t('documentChooseError')}"
+          : "message={t('errorSummary')}",
+      );
       expect(source).toContain('setHasSubmitErrors(true)');
     }
     expect(welcome).not.toContain("errors.firstName ? t('errorRequired')");
@@ -81,14 +60,20 @@ describe('conversational onboarding controls', () => {
     expect(logistics).not.toContain("{t('errorRequired')}");
   });
 
-  test('terms lead with plain-language points and reveal legal text in one tap', () => {
-    expect(terms).toContain("t('termsPointPurposeTitle')");
-    expect(terms).toContain("t('termsPointProtectedTitle')");
-    expect(terms).toContain("t('termsPointPrivateTitle')");
-    expect(terms).toContain("t('termsPointControlTitle')");
-    expect(terms).toContain('isFullTermsVisible');
-    expect(terms).toContain("'termsReadFullAction'");
+  test('terms explanations precede the always-visible full legal text', () => {
+    const intro = readFileSync(join(root, 'components/onboarding/terms-introduction.tsx'), 'utf8');
+    for (const key of [
+      'termsPointPurposeTitle',
+      'termsPointProtectedTitle',
+      'termsPointPrivateTitle',
+      'termsPointControlTitle',
+    ])
+      expect(intro).toContain(`t('${key}')`);
+    expect(intro).toContain('<DataIcon');
+    expect(intro).toContain("'termsReadFullAction'");
     expect(terms).toContain("{t('termsBody')}");
+    expect(terms).not.toContain('isFullTermsVisible');
+    expect(terms).not.toContain('termsHideFullAction');
   });
 });
 
@@ -102,6 +87,29 @@ test('all onboarding locales carry the new conversational copy', () => {
     ) as Record<string, string>;
     for (const key of [
       'errorSummary',
+      'documentChooseError',
+      'equipmentTitle',
+      'equipmentIntro',
+      'municipalityOptionalHint',
+      'clearMunicipalityAction',
+      'referenceEntitySupportQuestion',
+      'referenceEntityRequired',
+      'documentNieNumberTitle',
+      'documentPassportNumberTitle',
+      'documentOtherDetailsTitle',
+      'documentNameLabel',
+      'documentNameRequired',
+      'documentNumberLabel',
+      'errorBirthYear',
+      'errorBirthDayRange',
+      'errorBirthMonthRange',
+      'errorBirthYearFormat',
+      'errorBirthDayRequired',
+      'errorBirthMonthRequired',
+      'errorBirthYearRequired',
+      'errorBirthDayInMonth',
+      'errorBirthDateFuture',
+      'errorInvalidDate',
       'termsPointPurposeTitle',
       'termsPointPurposeBody',
       'termsPointProtectedTitle',
@@ -111,7 +119,7 @@ test('all onboarding locales carry the new conversational copy', () => {
       'termsPointControlTitle',
       'termsPointControlBody',
       'termsReadFullAction',
-      'termsHideFullAction',
+      'termsIntroTitle',
     ]) {
       expect(messages[key]).toBeTruthy();
     }

@@ -1,5 +1,5 @@
 {
-  "AUTH-1": "No hemos podido iniciar la sesión. Vuelve a intentarlo.",
+  "AUTH-1": "No hemos podido iniciar la sesión. Vuelve a intentarlo en un momento. Si sigue ocurriendo, pide ayuda al equipo de Ramassà.",
   "AUTH-2": "La sesión ha caducado. Vuelve a entrar.",
   "AUTH-3": "No tienes permiso para hacer esta acción.",
   "AUTH-4": "Este código no es correcto o ha caducado. Solicita uno nuevo.",
@@ -39,5 +39,7 @@
   "UNEXPECTED-1": "Algo ha fallado. Vuelve a intentarlo.",
   "fallbackTitle": "Algo ha fallado",
   "retry": "Volver a intentarlo",
-  "errorCodeLabel": "Código de error"
+  "errorCodeLabel": "Código de error",
+  "AUTH-10": "No hemos encontrado una cuenta con este correo electrónico. Comprueba que sea el que diste al equipo de Ramassà. Si necesitas ayuda, pídela al equipo.",
+  "AUTH-11": "No podemos enviar un código a esta dirección de correo electrónico. Comprueba que la hayas escrito bien y usa un correo que pueda recibir mensajes."
 }

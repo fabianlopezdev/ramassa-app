@@ -23,20 +23,24 @@ import { previewMode } from './supabase';
  * fully usable without it, so a denial, a simulator, or the missing EAS
  * projectId simply means no token.
  */
-export function usePushRegistration(): {
+export function usePushRegistration(canPrompt: boolean): {
   shouldShowRationale: boolean;
   acceptRationale: () => void;
   declineRationale: () => void;
 } {
   const { session, user } = useAuth();
-  const [shouldShowRationale, setShouldShowRationale] = useState(false);
+  const [rationaleUserId, setRationaleUserId] = useState<string | null>(null);
   const userId = user?.id ?? null;
   // Signing in or out re-runs the check; a refreshed session object does not.
   const isSignedIn = Boolean(session);
   // The player preview has no device of its own and changes nothing (RAPP-371).
   const isPreview = usePreviewModeActive(previewMode);
 
+  const shouldShowRationale =
+    canPrompt && !isPreview && isSignedIn && userId !== null && rationaleUserId === userId;
+
   useEffect(() => {
+    setRationaleUserId(null);
     if (isPreview) return undefined;
     let cancelled = false;
 
@@ -45,10 +49,11 @@ export function usePushRegistration(): {
       if (cancelled) return;
 
       if (decision.kind === 'request-permission') {
+        if (!canPrompt || !isSignedIn || !userId) return;
         // Back from the player preview, she has already been asked this time.
         // She said "not now" earlier in this run (RAPP-530).
         if (hasDeclinedPushRationale(userId)) return;
-        if (!takePreviewHandover('push-rationale')) setShouldShowRationale(true);
+        if (!takePreviewHandover('push-rationale')) setRationaleUserId(userId);
         return;
       }
       if (decision.kind === 'register' && userId) {
@@ -59,10 +64,11 @@ export function usePushRegistration(): {
     return () => {
       cancelled = true;
     };
-  }, [isPreview, isSignedIn, userId]);
+  }, [canPrompt, isPreview, isSignedIn, userId]);
 
   const acceptRationale = useCallback(() => {
-    setShouldShowRationale(false);
+    if (!shouldShowRationale) return;
+    setRationaleUserId(null);
     void (async () => {
       // Only now does the real OS dialog appear.
       const status = await requestPushPermission();
@@ -70,12 +76,12 @@ export function usePushRegistration(): {
         await registerPushToken(userId);
       }
     })();
-  }, [userId]);
+  }, [shouldShowRationale, userId]);
 
   const declineRationale = useCallback(() => {
     // No token, no error, no nagging: the OS is never asked, so the one system
     // prompt iOS allows stays unspent for a later, better moment.
-    setShouldShowRationale(false);
+    setRationaleUserId(null);
     declinePushRationale(userId);
   }, [userId]);
 

@@ -9,15 +9,19 @@
  */
 
 import { AuthTextField } from '@/components/auth/auth-text-field';
+import { FormTextArea } from '@/components/forms/form-text-area';
 import { OptionChip } from '@/components/onboarding/option-chip';
+import { ChoiceGrid } from '@/components/onboarding/option-grid';
 import { QuestionHelp } from '@/components/onboarding/question-help';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useTranslation } from 'react-i18next';
 import { Text, View, type TextStyle } from 'react-native';
 import { useLanguage } from '@ramassa/shared/i18n';
 import {
+  isCustomQuestionVisible,
   liveOptions,
   textIn,
+  updateCustomAnswer,
   YES_NO_MAYBE,
   type CustomAnswerValue,
   type CustomQuestion,
@@ -56,6 +60,18 @@ export function CustomQuestionField({
 
   if (question.type === 'short_text' || question.type === 'long_text') {
     const isLong = question.type === 'long_text';
+    if (isLong)
+      return (
+        <FormTextArea
+          testID={`${testID}-input`}
+          label={label}
+          hint={help}
+          value={typeof value === 'string' ? value : ''}
+          onChangeText={onChange}
+          style={mixedDirectionInputStyle}
+          maxLength={LONG_TEXT_MAX_LENGTH}
+        />
+      );
     return (
       <View testID={testID}>
         <AuthTextField
@@ -99,11 +115,11 @@ export function CustomQuestionField({
 
   return (
     <View testID={testID} className="gap-sm">
-      <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
+      <Text className={`text-start text-form font-medium text-neutral-800 ${fontClass}`}>
         {label}
       </Text>
       <QuestionHelp text={help} />
-      <View className="flex-row flex-wrap gap-sm">
+      <ChoiceGrid maximumColumns={question.type === 'yes_no_maybe' ? 3 : 2}>
         {options.map((option) => (
           <OptionChip
             key={option.id}
@@ -118,7 +134,7 @@ export function CustomQuestionField({
             onPress={() => choose(option.id)}
           />
         ))}
-      </View>
+      </ChoiceGrid>
     </View>
   );
 }
@@ -147,22 +163,30 @@ export function CustomQuestionSections({
             <View className="gap-xs">
               <Text
                 accessibilityRole="header"
-                className={`text-start text-lg font-bold text-neutral-900 ${fontClass}`}
+                className={`text-start text-form font-bold text-neutral-900 ${fontClass}`}
               >
                 {textIn(screen.title, language)}
               </Text>
               {intro === '' ? null : (
-                <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>{intro}</Text>
+                <Text className={`text-start text-form text-neutral-700 ${fontClass}`}>
+                  {intro}
+                </Text>
               )}
             </View>
-            {screen.questions.map((question) => (
-              <CustomQuestionField
-                key={question.id}
-                question={question}
-                value={answers[question.id]}
-                onChange={(value) => onChange(question.id, value)}
-              />
-            ))}
+            {screen.questions
+              .filter((question) => isCustomQuestionVisible(question, answers))
+              .map((question) => (
+                <CustomQuestionField
+                  key={question.id}
+                  question={question}
+                  value={answers[question.id]}
+                  onChange={(value) => {
+                    const next = updateCustomAnswer(screen.questions, answers, question.id, value);
+                    for (const [id, answer] of Object.entries(next))
+                      if (answer !== answers[id]) onChange(id, answer);
+                  }}
+                />
+              ))}
           </View>
         );
       })}

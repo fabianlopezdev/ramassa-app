@@ -18,6 +18,7 @@ interface TextFieldProps<Values extends FieldValues, Output> {
   readonly type?: string;
   readonly placeholder?: string;
   readonly errorMessage?: string;
+  readonly formatValue?: (value: string) => string;
 }
 
 /**
@@ -33,6 +34,7 @@ export function TextField<Values extends FieldValues, Output>({
   type,
   placeholder,
   errorMessage,
+  formatValue,
 }: TextFieldProps<Values, Output>) {
   return (
     <Controller
@@ -46,7 +48,13 @@ export function TextField<Values extends FieldValues, Output>({
           placeholder={placeholder}
           errorMessage={errorMessage}
           className="h-9"
-          value={typeof field.value === 'string' ? field.value : (field.value ?? '').toString()}
+          value={
+            formatValue
+              ? formatValue(typeof field.value === 'string' ? field.value : '')
+              : typeof field.value === 'string'
+                ? field.value
+                : (field.value ?? '').toString()
+          }
           onChange={(event) => field.onChange(event.target.value)}
           onBlur={field.onBlur}
           ref={field.ref}

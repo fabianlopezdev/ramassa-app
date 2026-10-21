@@ -5,6 +5,7 @@
  * and readable only with participants.view_sensitive.
  */
 import { z } from 'zod';
+import { isValidSupportNeedsText, SUPPORT_NEEDS_MAX_LENGTH } from './support-needs';
 
 export const APPLICANT_STATUSES = [
   'asylum_seeker',
@@ -22,8 +23,10 @@ export type ChildcareNeed = (typeof CHILDCARE_NEEDS)[number];
 export const SEASON_NUMBERS = [1, 2, 3, 4, 5] as const;
 export type SeasonNumber = (typeof SEASON_NUMBERS)[number];
 
-export const SPECIFIC_NEEDS_MAX_LENGTH = 2000;
+export const SPECIFIC_NEEDS_MAX_LENGTH = SUPPORT_NEEDS_MAX_LENGTH;
+export const APPLICANT_STATUS_DETAILS_MAX_LENGTH = 2000;
 export const SUPPORTING_ENTITIES_MAX = 20;
+export const SUPPORTING_ENTITY_NAME_MAX_LENGTH = 200;
 
 /** An empty input is an absent answer, never an invalid one. */
 const emptyAsAbsent = (value: unknown) => (value === '' || value === null ? undefined : value);
@@ -35,8 +38,12 @@ const emptyAsAbsent = (value: unknown) => (value === '' || value === null ? unde
  */
 export const seasonAnswerFields = z.object({
   applicantStatus: z.preprocess(emptyAsAbsent, z.enum(APPLICANT_STATUSES).optional()),
+  applicantStatusDetails: z.preprocess(
+    emptyAsAbsent,
+    z.string().trim().max(APPLICANT_STATUS_DETAILS_MAX_LENGTH).optional(),
+  ),
   supportingEntities: z
-    .array(z.string().trim().max(200))
+    .array(z.string().trim().max(SUPPORTING_ENTITY_NAME_MAX_LENGTH))
     .max(SUPPORTING_ENTITIES_MAX)
     .optional()
     .transform((names) => names?.filter((name) => name.length > 0)),
@@ -47,7 +54,7 @@ export const seasonAnswerFields = z.object({
   childcareNeed: z.preprocess(emptyAsAbsent, z.enum(CHILDCARE_NEEDS).optional()),
   specificNeeds: z.preprocess(
     emptyAsAbsent,
-    z.string().trim().max(SPECIFIC_NEEDS_MAX_LENGTH).optional(),
+    z.string().trim().refine(isValidSupportNeedsText).optional(),
   ),
 });
 
@@ -57,6 +64,9 @@ export type SeasonAnswerFields = z.infer<typeof seasonAnswerFields>;
 export function seasonAnswersPayload(values: Partial<SeasonAnswerFields>) {
   return {
     applicant_status: values.applicantStatus ?? null,
+    ...(values.applicantStatusDetails === undefined
+      ? {}
+      : { applicant_status_details: values.applicantStatusDetails }),
     supporting_entities:
       values.supportingEntities === undefined || values.supportingEntities.length === 0
         ? null

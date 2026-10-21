@@ -21,6 +21,8 @@
  */
 
 import { z } from 'zod';
+import { AppError } from '../errors';
+import { SUPPORT_NEED_CATEGORIES, type SupportNeedCategory } from '../schemas/support-needs';
 import type { MmkvLike } from './supabase';
 
 const DRAFT_STORAGE_KEY = 'ramassa.onboarding-draft';
@@ -29,17 +31,25 @@ export const ONBOARDING_STEPS = [
   'identity',
   'background',
   'documentation',
+  'documentation-details',
   'logistics',
+  'equipment',
   // The registration questions (RAPP-306).
   'season',
+  'applicant-status-details',
+  'supporting-entities',
+  'participation-support',
+  'specific-needs',
   // The summary of everything before the terms (RAPP-300).
   'summary',
+  'terms-intro',
   'terms',
 ] as const;
 export type OnboardingStepName = (typeof ONBOARDING_STEPS)[number];
 
 /** A step the draft can resume at: a built-in one, or a staff screen as `custom:<id>` (RAPP-307). */
-export type OnboardingDraftStep = OnboardingStepName | `custom:${string}`;
+export type OnboardingDraftStep =
+  OnboardingStepName | `custom:${string}` | `needs-detail:${SupportNeedCategory}`;
 
 /**
  * Partial, permissive shapes on purpose: a draft holds whatever the player has
@@ -48,7 +58,11 @@ export type OnboardingDraftStep = OnboardingStepName | `custom:${string}`;
  * this schema only guards against structural drift from older app versions.
  */
 const draftSchema = z.object({
-  currentStep: z.union([z.enum(ONBOARDING_STEPS), z.templateLiteral(['custom:', z.string()])]),
+  currentStep: z.union([
+    z.enum(ONBOARDING_STEPS),
+    z.templateLiteral(['custom:', z.string()]),
+    z.templateLiteral(['needs-detail:', z.enum(SUPPORT_NEED_CATEGORIES)]),
+  ]),
   identity: z.record(z.string(), z.unknown()).optional(),
   documentation: z.record(z.string(), z.unknown()).optional(),
   logistics: z.record(z.string(), z.unknown()).optional(),
@@ -74,6 +88,11 @@ export interface OnboardingDraftStore {
   clearDraft(): void;
 }
 
+export interface AccountOnboardingDraftStore extends OnboardingDraftStore {
+  setUser(userId: string | null): void;
+  clearUserDraft(userId: string): void;
+}
+
 function parseStoredDraft(raw: string | undefined | null): OnboardingDraft | null {
   if (raw === undefined || raw === null) return null;
   try {
@@ -90,6 +109,36 @@ export function createMmkvOnboardingDraftStore(mmkv: MmkvLike): OnboardingDraftS
     loadDraft: () => parseStoredDraft(mmkv.getString(DRAFT_STORAGE_KEY)),
     saveDraft: (draft) => mmkv.set(DRAFT_STORAGE_KEY, JSON.stringify(draft)),
     clearDraft: () => void mmkv.remove(DRAFT_STORAGE_KEY),
+  };
+}
+
+/** Keep resumable answers private to the account that entered them on a shared phone. */
+export function createAccountOnboardingDraftStore(mmkv: MmkvLike): AccountOnboardingDraftStore {
+  let current: OnboardingDraftStore | null = null;
+  return {
+    setUser(userId) {
+      // Old drafts had no reliable owner. Never assign that personal data to
+      // whichever account happens to sign in after the app is updated.
+      mmkv.remove(DRAFT_STORAGE_KEY);
+      current =
+        userId === null
+          ? null
+          : createMmkvOnboardingDraftStore({
+              getString: (key) => mmkv.getString(`${key}.${userId}`),
+              set: (key, value) => mmkv.set(`${key}.${userId}`, value),
+              remove: (key) => mmkv.remove(`${key}.${userId}`),
+            });
+    },
+    loadDraft: () => current?.loadDraft() ?? null,
+    saveDraft(draft) {
+      if (current === null)
+        throw new AppError('UNEXPECTED-1', {
+          message: 'Onboarding draft requires a signed-in account',
+        });
+      current.saveDraft(draft);
+    },
+    clearDraft: () => current?.clearDraft(),
+    clearUserDraft: (userId) => void mmkv.remove(`${DRAFT_STORAGE_KEY}.${userId}`),
   };
 }
 

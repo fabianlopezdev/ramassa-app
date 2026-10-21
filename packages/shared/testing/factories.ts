@@ -62,6 +62,7 @@ export type ConversationReadStateRow =
   Database['public']['Tables']['conversation_read_states']['Row'];
 export type ConversationAssignmentHistoryRow =
   Database['public']['Tables']['conversation_assignment_history']['Row'];
+export type AppTermsSignatureRow = Database['public']['Tables']['app_terms_signatures']['Row'];
 export type TermsAcceptanceRow = Database['public']['Tables']['terms_acceptances']['Row'];
 export type DeletionRequestRow = Database['public']['Tables']['deletion_requests']['Row'];
 export type ParticipantNoteRow = Database['public']['Tables']['participant_notes']['Row'];
@@ -704,6 +705,7 @@ export function buildProfileFromFixture(
     updated_at: FIXTURE_TIMESTAMP,
     // The season registration answers (RAPP-303): not given unless a test says so.
     applicant_status: null,
+    applicant_status_details: null,
     supporting_entities: null,
     season_number: null,
     childcare_need: null,
@@ -715,6 +717,7 @@ export function buildProfileFromFixture(
     emergency_contact_phone: null,
     // Seasons played before the app (RAPP-306).
     prior_seasons: 0,
+    document_name: null,
     ...derivedProfileFields(fixture),
     ...overrides,
   };
@@ -1419,6 +1422,8 @@ export function buildCustomQuestion(overrides: Partial<CustomQuestionRow> = {}):
     id: SEED_CUSTOM_QUESTION_ID,
     org_id: SEED_ORGANIZATION_ID,
     screen_id: SEED_INTAKE_SCREEN_ID,
+    show_when_question_id: null,
+    show_when_option_id: null,
     question_type: 'yes_no_maybe',
     label: { ca: 'Vens amb transport públic?' },
     help: null,
@@ -1515,10 +1520,33 @@ export function buildSeasonAnswers(overrides: Partial<SeasonAnswersRow> = {}): S
     season_id: SEED_SEASON_ID,
     org_id: SEED_ORGANIZATION_ID,
     applicant_status: null,
+    applicant_status_details: null,
     supporting_entities: null,
     childcare_need: 'no',
     specific_needs: null,
     updated_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+/** Synthetic app-terms signing stays independent of season signing fixtures. */
+export function buildAppTermsSignature(
+  overrides: Partial<AppTermsSignatureRow> = {},
+): AppTermsSignatureRow {
+  const acceptance = buildTermsAcceptance();
+  return {
+    acceptance_id: acceptance.id,
+    profile_id: acceptance.profile_id,
+    org_id: SEED_ORGANIZATION_ID,
+    signature: [
+      [
+        [100, 200],
+        [300, 400],
+      ],
+    ],
+    unable_to_draw: false,
+    media_consent: false,
+    device: 'synthetic-seed',
     ...overrides,
   };
 }

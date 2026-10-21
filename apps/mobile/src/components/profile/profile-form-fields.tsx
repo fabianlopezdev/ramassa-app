@@ -392,6 +392,21 @@ export function ProfileFormFields({
         )}
       />
 
+      {documentType !== 'other' ? null : (
+        <Controller
+          control={control}
+          name="documentName"
+          render={({ field }) => (
+            <AuthTextField
+              label={t('onboarding:documentNameLabel')}
+              value={field.value ?? ''}
+              onChangeText={field.onChange}
+              onBlur={field.onBlur}
+              maxLength={100}
+            />
+          )}
+        />
+      )}
       {/* No number without a type: an unanswered document (RAPP-300) asks the type first. */}
       {documentType === undefined || documentType === 'none' || !showSensitive ? null : (
         <Controller

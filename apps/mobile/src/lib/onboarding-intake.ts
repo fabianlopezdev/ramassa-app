@@ -30,39 +30,66 @@ import type {
   OnboardingDraftStep,
   OnboardingStepName,
 } from '@ramassa/shared/onboarding-drafts';
-import type { ProfileRow } from '@ramassa/shared/schemas';
+import type { LanguageCode, ProfileRow } from '@ramassa/shared/schemas';
 
-export const WIZARD_SCREEN_ROUTES: Readonly<Record<WizardScreen, Href>> = {
+export const WIZARD_SCREEN_ROUTES = {
   identity: '/onboarding',
   background: '/onboarding/background',
   documentation: '/onboarding/documentation',
   logistics: '/onboarding/logistics',
+  equipment: '/onboarding/equipment',
   season: '/onboarding/season',
+  'supporting-entities': '/onboarding/supporting-entities',
+  'participation-support': '/onboarding/participation-support',
+  'specific-needs': '/onboarding/specific-needs',
   summary: '/onboarding/summary',
+  'terms-intro': '/onboarding/terms-intro',
   terms: '/onboarding/terms',
-};
+} as const satisfies Readonly<Record<WizardScreen, Href>>;
 
 const WIZARD_SCREEN_DRAFT_STEP: Readonly<Record<WizardScreen, OnboardingStepName>> = {
   identity: 'identity',
   background: 'background',
   documentation: 'documentation',
   logistics: 'logistics',
+  equipment: 'equipment',
   season: 'season',
+  'supporting-entities': 'supporting-entities',
+  'participation-support': 'participation-support',
+  'specific-needs': 'specific-needs',
   summary: 'summary',
+  'terms-intro': 'terms-intro',
   terms: 'terms',
 };
 
 /** The route of any wizard step, a staff screen included (RAPP-307). */
-export function wizardStepRoute(step: WizardStepKey | OnboardingDraftStep): Href {
+export function wizardStepRoute(
+  step: WizardStepKey | OnboardingDraftStep,
+  direction: 'forward' | 'back' = 'forward',
+): Href {
+  if (step.startsWith('needs-detail:'))
+    return `/onboarding/specific-needs-details/${step.slice('needs-detail:'.length)}${direction === 'back' ? '?entrance=none' : ''}` as Href;
+  if (step === 'applicant-status-details')
+    return `/onboarding/applicant-status-details${direction === 'back' ? '?entrance=none' : ''}` as Href;
+  if (step === 'documentation-details')
+    return `/onboarding/documentation-details${direction === 'back' ? '?entrance=none' : ''}` as Href;
   const screenId = customStepId(step);
-  return screenId === null
-    ? WIZARD_SCREEN_ROUTES[step as WizardScreen]
-    : (`/onboarding/custom/${screenId}` as Href);
+  const route =
+    screenId === null
+      ? WIZARD_SCREEN_ROUTES[step as WizardScreen]
+      : `/onboarding/custom/${screenId}`;
+  return (direction === 'back' ? `${route}?entrance=none` : route) as Href;
 }
 
 /** The draft step that resumes at a wizard step: a staff screen keeps its own key. */
-export function wizardDraftStep(step: WizardStepKey): OnboardingDraftStep {
-  return isCustomStep(step) ? step : WIZARD_SCREEN_DRAFT_STEP[step];
+export function wizardDraftStep(step: WizardStepKey | OnboardingDraftStep): OnboardingDraftStep {
+  if (
+    step === 'documentation-details' ||
+    step === 'applicant-status-details' ||
+    step.startsWith('needs-detail:')
+  )
+    return step as OnboardingDraftStep;
+  return isCustomStep(step) ? step : WIZARD_SCREEN_DRAFT_STEP[step as WizardScreen];
 }
 
 /** The staff screens in the shape the wizard planner takes (RAPP-307). */
@@ -151,6 +178,7 @@ export function seedDraftFromProfile(
 
   if (has('document') && profile.document_type !== null) {
     documentation.documentType = profile.document_type;
+    documentation.documentName = profile.document_name ?? undefined;
     if (profile.document_number !== null) documentation.documentNumber = profile.document_number;
   }
 
@@ -175,6 +203,8 @@ export function seedDraftFromProfile(
   // The registration questions (RAPP-306).
   if (has('applicant_status') && profile.applicant_status != null) {
     season.applicantStatus = profile.applicant_status;
+    if (profile.applicant_status === 'other')
+      season.applicantStatusDetails = profile.applicant_status_details ?? undefined;
   }
   if (has('supporting_entities') && profile.supporting_entities != null) {
     season.supportingEntities = profile.supporting_entities;
@@ -200,6 +230,7 @@ export function storedPayloadFromProfile(profile: ProfileRow): Record<string, un
     preferred_language: profile.preferred_language,
     document_type: profile.document_type,
     document_number: profile.document_number,
+    document_name: profile.document_name ?? null,
     phone: profile.phone,
     address: profile.address,
     city: profile.city,
@@ -211,9 +242,18 @@ export function storedPayloadFromProfile(profile: ProfileRow): Record<string, un
     clothing_size: profile.clothing_size,
     shoe_size: profile.shoe_size,
     applicant_status: profile.applicant_status ?? null,
+    applicant_status_details: profile.applicant_status_details ?? null,
     supporting_entities: profile.supporting_entities ?? null,
     childcare_need: profile.childcare_need ?? null,
     specific_needs: profile.specific_needs ?? null,
     media_consent: profile.media_consent,
   };
+}
+
+/** Preserve draft answers while carrying the language already chosen before login. */
+export function withSelectedLanguage(
+  draft: OnboardingDraft,
+  language: LanguageCode,
+): OnboardingDraft {
+  return { ...draft, identity: { ...draft.identity, preferredLanguage: language } };
 }

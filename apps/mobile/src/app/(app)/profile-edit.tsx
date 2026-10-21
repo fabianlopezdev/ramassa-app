@@ -20,7 +20,7 @@
  * translated message and a code.
  */
 
-import { ErrorCodeLine, FailureNotice } from '@/components/error-code-line';
+import { FailureNotice } from '@/components/error-code-line';
 import { ShakeOnError } from '@/components/motion/shake-on-error';
 import { SkeletonPulse } from '@/components/motion/skeleton-pulse';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
@@ -181,7 +181,6 @@ export default function ProfileEditScreen() {
             >
               {t('loadFailed')}
             </Text>
-            <ErrorCodeLine code={loadFailureCode} />
           </View>
         </ShakeOnError>
       </WizardFrame>

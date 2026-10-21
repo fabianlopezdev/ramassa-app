@@ -16,6 +16,7 @@
 import { z } from 'zod';
 import {
   documentationFields,
+  documentNameToSend,
   documentNumberToSend,
   identityStepSchema,
   logisticsFields,
@@ -79,6 +80,7 @@ export const profileRowSchema = z.object({
   preferred_language: z.string(),
   document_type: z.string().nullable(),
   document_number: z.string().nullable(),
+  document_name: z.string().nullable().optional(),
   phone: z.string().nullable(),
   address: z.string().nullable(),
   city: z.string().nullable(),
@@ -96,6 +98,7 @@ export const profileRowSchema = z.object({
   // them still parses. Applicant status and specific needs arrive only for her
   // own profile, or for staff with participants.view_sensitive.
   applicant_status: z.enum(APPLICANT_STATUSES).nullish(),
+  applicant_status_details: z.string().nullish(),
   supporting_entities: z.array(z.string()).nullish(),
   season_number: z.number().int().nullish(),
   childcare_need: z.enum(CHILDCARE_NEEDS).nullish(),
@@ -140,6 +143,7 @@ export function profileFromRow(row: ProfileRow): Record<string, unknown> {
     // Empty stays empty (RAPP-302): "not given" must never read as "I have none".
     documentType: row.document_type ?? undefined,
     documentNumber: row.document_number ?? undefined,
+    documentName: row.document_name ?? undefined,
     phone: row.phone ?? undefined,
     address: row.address ?? undefined,
     city: row.city ?? undefined,
@@ -152,6 +156,7 @@ export function profileFromRow(row: ProfileRow): Record<string, unknown> {
     shoeSize: row.shoe_size ?? '38',
     avatarUrl: row.avatar_url ?? undefined,
     applicantStatus: row.applicant_status ?? undefined,
+    applicantStatusDetails: row.applicant_status_details ?? undefined,
     supportingEntities: row.supporting_entities ?? [],
     seasonNumber: row.season_number ?? undefined,
     childcareNeed: row.childcare_need ?? undefined,
@@ -180,6 +185,7 @@ export function buildUpdateOwnProfilePayload(edit: ProfileEdit) {
     preferred_language: normalized.preferredLanguage,
     document_type: normalized.documentType ?? null,
     document_number: documentNumberToSend(normalized),
+    document_name: documentNameToSend(normalized),
     phone: normalized.phone ?? null,
     address: normalized.address ?? null,
     city: normalized.city ?? null,

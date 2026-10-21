@@ -184,3 +184,26 @@ test('fetchProfileSummary rejects an unknown role value', async () => {
     expect(isAppError(error)).toBe(true);
   }
 });
+
+test.each([
+  [{ status: 422, code: 'otp_disabled', message: 'Signups not allowed for otp' }, 'AUTH-10'],
+  [{ status: 422, code: 'otp_disabled', message: 'OTP login is disabled' }, 'AUTH-1'],
+  [{ status: 422, code: 'email_address_invalid', message: 'Invalid email' }, 'AUTH-11'],
+  [{ status: 403, code: 'email_address_not_authorized', message: 'SMTP restriction' }, 'AUTH-1'],
+  [{ status: 0, name: 'AuthRetryableFetchError', message: 'Network request failed' }, 'NETWORK-1'],
+  [{ status: 503, name: 'AuthRetryableFetchError', message: 'Service unavailable' }, 'AUTH-1'],
+  [{ status: 500, code: 'unexpected_failure', message: 'Internal server error' }, 'AUTH-1'],
+] as const)(
+  'email request maps %j to actionable guidance %s and retains diagnostics',
+  async (providerError, expectedCode) => {
+    const client = fakeAuthClient({ signInWithOtp: async () => ({ error: providerError }) });
+    await expect(requestEmailOtp(client, { email: 'player@example.com' })).rejects.toMatchObject({
+      code: expectedCode,
+      message: providerError.message,
+      context: {
+        status: providerError.status,
+        authCode: 'code' in providerError ? providerError.code : undefined,
+      },
+    });
+  },
+);

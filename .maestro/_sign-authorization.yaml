@@ -13,6 +13,11 @@ name: _sign-authorization
     timeout: 60000
 - waitForAnimationToEnd:
     timeout: 3000
+# Continue reads the document; consent is selected only on the final screen.
+- tapOn:
+    id: 'authorization-sign'
+- waitForAnimationToEnd:
+    timeout: 1500
 - repeat:
     times: 15
     while:
@@ -40,6 +45,10 @@ name: _sign-authorization
 - assertVisible:
     id: 'authorization-health-no'
     selected: true
+- tapOn:
+    id: 'authorization-sign'
+- waitForAnimationToEnd:
+    timeout: 1500
 - repeat:
     times: 15
     while:

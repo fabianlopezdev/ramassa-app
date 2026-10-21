@@ -7,11 +7,14 @@ import { HandoverSyncWorker } from '@/components/equipment/handover-sync-worker'
 import { PushPermissionRationale } from '@/components/push-permission-rationale';
 import { areaHome, awaitsSecondFactor, teamScreens } from '@/lib/account-area';
 import { useAuthorizationStatus } from '@/lib/authorization';
+import { OnboardingEntranceProvider } from '@/lib/onboarding-entrance';
+import { canPromptForPush } from '@/lib/push-prompt-eligibility';
 import { useSigningSession } from '@/lib/tablet-signing';
 import { useAccountAccess } from '@/lib/use-account-access';
 import { usePushRegistration } from '@/lib/use-push-registration';
 import { Redirect, usePathname, type Href } from 'expo-router';
 import { Stack } from 'expo-router/stack';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Modal, useWindowDimensions, View } from 'react-native';
 import { assuranceLevelOf, useAuth } from '@ramassa/shared/auth';
 import { needsAuthorization } from '@ramassa/shared/authorization';
@@ -27,6 +30,16 @@ const hiddenHeaderScreenOptions = { headerShown: false } as const;
 const noSwipeBackOptions = { gestureEnabled: false, fullScreenGestureEnabled: false } as const;
 
 export default function AppLayout() {
+  const { user } = useAuth();
+  return (
+    <OnboardingEntranceProvider key={user?.id}>
+      <AppNavigator />
+    </OnboardingEntranceProvider>
+  );
+}
+
+function AppNavigator() {
+  const { t } = useTranslation('common');
   const { user, session, role, needsSecondFactor, permissionsAreCurrent } = useAuth();
   const userId = user?.id ?? null;
   // The area comes from the account type, never from its absence (RAPP-232):
@@ -37,9 +50,6 @@ export default function AppLayout() {
   // Before any early return, so the authenticator screen is covered (RAPP-238).
   useStaffLanguage(isTeam || area === 'entity');
 
-  // Registers this device's push token for the signed-in user (RAPP-17), and
-  // surfaces the translated rationale when the OS permission is undetermined.
-  const { shouldShowRationale, acceptRationale, declineRationale } = usePushRegistration();
   const pathname = usePathname();
   const { isCovered } = useAppLock();
   const { width } = useWindowDimensions();
@@ -54,6 +64,25 @@ export default function AppLayout() {
   // other screen is off, so no link, notification or gesture opens one.
   const { session: signingSession } = useSigningSession();
   const isSigning = isTeam && signingSession !== null;
+  const requiresSecondFactor = awaitsSecondFactor({
+    area,
+    role,
+    needsSecondFactor,
+    assurance: assuranceLevelOf(session),
+  });
+  const canPrompt = canPromptForPush({
+    area,
+    pathname,
+    home,
+    isBlocked:
+      isCovered ||
+      mustSign ||
+      isSigning ||
+      requiresSecondFactor ||
+      (area === 'player' && authorization.isPending) ||
+      (isTeam && !permissionsAreCurrent),
+  });
+  const { shouldShowRationale, acceptRationale, declineRationale } = usePushRegistration(canPrompt);
 
   // Just after signing in, the account type is not known yet. The screens wait
   // for it, so the stack mounts once with the right area and opens its first
@@ -61,7 +90,10 @@ export default function AppLayout() {
   if (area === 'resolving' || (isTeam && !needsSecondFactor && !permissionsAreCurrent)) {
     return (
       <View className="flex-1 items-center justify-center bg-neutral-50" testID="account-resolving">
-        <ActivityIndicator color={tokens.colors.primary.DEFAULT} />
+        <ActivityIndicator
+          accessibilityLabel={t('loading')}
+          color={tokens.colors.primary.DEFAULT}
+        />
       </View>
     );
   }
@@ -69,14 +101,7 @@ export default function AppLayout() {
   // and so does an entity contact before her portal (RAPP-410): until then the
   // database lets the session reach nothing. That includes the moment after the
   // email code when only the remembered area is known (RAPP-430).
-  if (
-    awaitsSecondFactor({
-      area,
-      role,
-      needsSecondFactor,
-      assurance: assuranceLevelOf(session),
-    })
-  ) {
+  if (requiresSecondFactor) {
     return <SecondFactorScreen />;
   }
   if (isSigning && pathname !== '/signing-mode') {
@@ -88,7 +113,10 @@ export default function AppLayout() {
         className="flex-1 items-center justify-center bg-neutral-50"
         testID="authorization-resolving"
       >
-        <ActivityIndicator color={tokens.colors.primary.DEFAULT} />
+        <ActivityIndicator
+          accessibilityLabel={t('loading')}
+          color={tokens.colors.primary.DEFAULT}
+        />
       </View>
     );
   }
@@ -334,7 +362,7 @@ export default function AppLayout() {
       <Modal
         // Never over the authorization she must sign (RAPP-304), nor in signing
         // mode on a staff tablet (RAPP-305): it waits, then asks.
-        visible={shouldShowRationale && !isCovered && !mustSign && !isSigning}
+        visible={shouldShowRationale && !isCovered}
         transparent
         animationType="fade"
         onRequestClose={declineRationale}

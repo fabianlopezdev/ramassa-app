@@ -19,6 +19,8 @@ import type { SeasonAnswerFields } from './season';
 
 /** Program constraint: younger players are staff-assisted edge cases with staff-created accounts. */
 export const MINIMUM_AGE_YEARS = 16;
+/** Generous input safeguard for birth-year mistakes, shared across identity forms. */
+export const MAXIMUM_AGE_YEARS = 120;
 
 const NAME_MAX_LENGTH = 100;
 
@@ -56,13 +58,22 @@ function ageInYears(isoDate: string): number {
 export const identityStepSchema = z.object({
   firstName: anyScriptName,
   lastName: anyScriptName,
-  dateOfBirth: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/)
-    .refine((value) => !Number.isNaN(new Date(`${value}T00:00:00Z`).getTime()), {
-      message: 'invalid date',
-    })
-    .refine((value) => ageInYears(value) >= MINIMUM_AGE_YEARS, { message: 'too young' }),
+  dateOfBirth: z.string().superRefine((value, context) => {
+    const birth = new Date(`${value}T00:00:00Z`);
+    // Date parsing alone rolls e.g. 31 April into May. Require an exact round trip.
+    if (
+      !/^\d{4}-\d{2}-\d{2}$/.test(value) ||
+      Number.isNaN(birth.getTime()) ||
+      birth.toISOString().slice(0, 10) !== value ||
+      birth.getTime() > Date.now()
+    ) {
+      context.addIssue({ code: 'custom', message: 'invalid date' });
+      return;
+    }
+    const age = ageInYears(value);
+    if (age < MINIMUM_AGE_YEARS) context.addIssue({ code: 'custom', message: 'too young' });
+    if (age > MAXIMUM_AGE_YEARS) context.addIssue({ code: 'custom', message: 'too old' });
+  }),
   // Required since 2026-07-31 (Fabián): it was in Marc's kickoff field list,
   // and the optional marking was a minimization judgement, since reversed.
   placeOfBirth: z.string().trim().min(1).max(200),
@@ -94,6 +105,12 @@ export const documentationFields = z.object({
   // protect her, so the step can be skipped. Empty means "not given", which
   // is different from `none` ("I have no document").
   documentType: z.enum(DOCUMENT_TYPES).optional(),
+  documentName: z
+    .string()
+    .trim()
+    .max(100)
+    .transform((value) => (value === '' ? undefined : value))
+    .optional(),
   documentNumber: z
     .string()
     .trim()
@@ -110,11 +127,12 @@ export function refineDocumentNumber(
 ): void {
   if (step.documentType === undefined || step.documentType === 'none') return;
   if (step.documentNumber === undefined) {
-    context.addIssue({
-      code: 'custom',
-      path: ['documentNumber'],
-      message: 'required unless document type is none',
-    });
+    if (step.documentType !== 'other')
+      context.addIssue({
+        code: 'custom',
+        path: ['documentNumber'],
+        message: 'required unless document type is none',
+      });
     return;
   }
   if (step.documentType === 'nie' && !NIE_PATTERN.test(step.documentNumber)) {
@@ -251,6 +269,13 @@ export function documentNumberToSend(document: {
   return document.documentNumber ?? null;
 }
 
+export function documentNameToSend(document: {
+  readonly documentType?: DocumentType;
+  readonly documentName?: string;
+}): string | null {
+  return document.documentType === 'other' ? document.documentName?.trim() || null : null;
+}
+
 export function buildCompleteOnboardingPayload(steps: OnboardingSteps, terms: TermsContext) {
   return {
     first_name: steps.identity.firstName,
@@ -261,6 +286,7 @@ export function buildCompleteOnboardingPayload(steps: OnboardingSteps, terms: Te
     preferred_language: steps.identity.preferredLanguage,
     document_type: steps.documentation.documentType ?? null,
     document_number: documentNumberToSend(steps.documentation),
+    document_name: documentNameToSend(steps.documentation),
     phone: steps.logistics.phone ?? null,
     address: steps.logistics.address ?? null,
     city: steps.logistics.city ?? null,
@@ -276,6 +302,10 @@ export function buildCompleteOnboardingPayload(steps: OnboardingSteps, terms: Te
       ? {}
       : {
           applicant_status: steps.season.applicantStatus ?? null,
+          applicant_status_details:
+            steps.season.applicantStatus === 'other'
+              ? (steps.season.applicantStatusDetails ?? null)
+              : null,
           supporting_entities:
             steps.season.supportingEntities === undefined ||
             steps.season.supportingEntities.length === 0

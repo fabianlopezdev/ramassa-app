@@ -156,6 +156,13 @@ export function ParticipantPrefillForm({
             label: t(`onboarding:documentType${type.charAt(0).toUpperCase()}${type.slice(1)}`),
           }))}
         />
+        {documentType === 'other' ? (
+          <TextField
+            control={control}
+            name="documentName"
+            label={t('onboarding:documentNameLabel')}
+          />
+        ) : null}
         {!canSeeSensitive || documentType === undefined || documentType === 'none' ? null : (
           <TextField
             control={control}

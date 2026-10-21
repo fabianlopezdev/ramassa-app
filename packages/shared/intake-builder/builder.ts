@@ -97,6 +97,8 @@ const optionSchema = z.object({
 const questionSchema = z.object({
   id: z.uuid(),
   question_type: z.enum(CUSTOM_QUESTION_TYPES),
+  show_when_question_id: z.uuid().nullable().optional(),
+  show_when_option_id: z.uuid().nullable().optional(),
   label: anyLanguageTextSchema,
   help: anyLanguageTextSchema.nullable(),
   privacy: z.enum(QUESTION_PRIVACY_LEVELS),
@@ -150,6 +152,7 @@ export interface CustomOption {
 export interface CustomQuestion {
   readonly id: string;
   readonly screenId: string;
+  readonly showWhen?: { readonly questionId: string; readonly optionId: string };
   readonly type: CustomQuestionType;
   readonly label: BuilderText;
   readonly help: BuilderText | null;
@@ -205,6 +208,14 @@ export function parseIntakeCatalog(data: unknown): IntakeCatalog {
         id: question.id,
         screenId: screen.id,
         type: question.question_type,
+        ...(question.show_when_question_id && question.show_when_option_id
+          ? {
+              showWhen: {
+                questionId: question.show_when_question_id,
+                optionId: question.show_when_option_id,
+              },
+            }
+          : {}),
         label: question.label,
         help: question.help,
         privacy: question.privacy,
@@ -274,7 +285,9 @@ export const referralScreens = (catalog: IntakeCatalog) =>
 
 /** A screen she already answered completely is not shown again (RAPP-300). */
 export function isScreenAnswered(screen: IntakeScreen, answers: CustomAnswers): boolean {
-  return screen.questions.every((question) => answers[question.id] !== undefined);
+  return screen.questions
+    .filter((question) => isCustomQuestionVisible(question, answers))
+    .every((question) => answers[question.id] !== undefined);
 }
 
 export function liveOptions(question: CustomQuestion): readonly CustomOption[] {
@@ -285,6 +298,29 @@ export function liveOptions(question: CustomQuestion): readonly CustomOption[] {
 
 export type CustomAnswerValue = string | readonly string[];
 export type CustomAnswers = Readonly<Record<string, CustomAnswerValue>>;
+
+/** Conditions reference stable option IDs, never translated labels. */
+export function isCustomQuestionVisible(question: CustomQuestion, answers: CustomAnswers): boolean {
+  return (
+    question.showWhen === undefined ||
+    answers[question.showWhen.questionId] === question.showWhen.optionId
+  );
+}
+
+/** An explicit answer also clears explanations that no longer apply. */
+export function updateCustomAnswer(
+  questions: readonly CustomQuestion[],
+  answers: CustomAnswers,
+  questionId: string,
+  value: CustomAnswerValue,
+): CustomAnswers {
+  const next = { ...answers, [questionId]: value };
+  for (const question of questions) {
+    if (question.showWhen?.questionId === questionId && !isCustomQuestionVisible(question, next))
+      next[question.id] = '';
+  }
+  return next;
+}
 
 const answerValueSchema = z.union([z.string(), z.array(z.string())]);
 
@@ -507,6 +543,7 @@ export async function reorderIntakeScreens(
 export interface QuestionDraft {
   readonly id: string | null;
   readonly screenId: string;
+  readonly showWhen?: { readonly questionId: string; readonly optionId: string };
   readonly type: CustomQuestionType;
   readonly label: BuilderText;
   readonly help: BuilderText | null;

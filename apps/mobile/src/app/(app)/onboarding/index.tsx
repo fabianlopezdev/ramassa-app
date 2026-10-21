@@ -51,10 +51,11 @@ export default function IdentityStepScreen() {
   const continueToBackground = handleSubmit(
     (names) => {
       setHasSubmitErrors(false);
+      const latest = onboardingDraftStore.loadDraft();
       onboardingDraftStore.saveDraft({
-        ...draft,
+        ...latest,
         currentStep: step.nextDraftStep,
-        identity: { ...(draft?.identity ?? {}), ...names },
+        identity: { ...latest?.identity, ...names },
       });
       step.goNext();
     },
@@ -66,6 +67,7 @@ export default function IdentityStepScreen() {
 
   return (
     <WizardFrame
+      screenId={'identity'}
       stepNumber={step.position.step}
       totalSteps={step.position.total}
       title={t('identityTitle')}

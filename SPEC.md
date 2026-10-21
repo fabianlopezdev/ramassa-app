@@ -128,6 +128,16 @@ These are not guidelines — they are enforced during code review and `/react-na
 | **Language in settings**             | Language switcher lives in settings/profile. Set once during onboarding, rarely changed. Not a persistent UI element.               |
 | **No text-only screens**             | Use visual cues, icons, colors, and imagery to support understanding. Important for low-literacy and non-native speakers.           |
 
+### Onboarding interaction contract (2026-10-21)
+
+- A shared form layout owns the fixed bottom CTA, keyboard clearance, safe areas and scroll blur. The same primary action is used for language, login, intake and season authorization. Disabled actions use a distinct neutral surface and expose their disabled state to assistive technology.
+- Readable form text uses the shared 18-point `text-form` token, including help, errors, progress and legal choices. Text scales and wraps. Selection must not change font weight or button geometry.
+- Choice surfaces reuse the raised picker component and responsive equal-width grid. Selected fill comes from the dashboard secondary color, with a contrast-safe foreground. Ordinary text fields reuse the shared field component and immediate focus feedback.
+- Entrance motion runs once per screen during a signed-in onboarding session. Back navigation and revisiting a screen do not replay it. Reduced-motion preferences apply to all shared motion.
+- Staff-provided data determines which questions remain. Review edits return directly to the summary and hide the progress stepper. App registration and season authorization have separate progress and signatures, as recorded in [ADR-028](docs/adr/028-independent-app-and-season-signatures.md).
+- Each account owns its saved draft. Leaving without accepting terms preserves that account's saved answers for resumption. Unsaved typing is not promised to survive. An old draft without an identifiable owner is discarded rather than shown to another account.
+- Season document sections start collapsed. Continue remains disabled until the end of the visible document is reached. This is a navigation gate, not proof that the person has read or understood the document. Notification prompts wait until the required onboarding and authorization gates have cleared and the main app is reached.
+
 ---
 
 ## Target Users & What They Can Do

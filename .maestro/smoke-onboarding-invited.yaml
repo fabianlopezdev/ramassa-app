@@ -496,17 +496,18 @@ env:
     times: 4
     while:
       notVisible:
-        text: '^${TERMS_ACCEPT}$'
+        id: 'terms-acceptance'
         selected: true
     commands:
       - tapOn:
-          text: '^${TERMS_ACCEPT}$'
+          id: 'terms-acceptance'
           optional: true
       - waitForAnimationToEnd:
           timeout: 2000
 - assertVisible:
-    text: '^${TERMS_ACCEPT}$'
+    id: 'terms-acceptance'
     selected: true
+- runFlow: _sign-app-terms.yaml
 - repeat:
     times: 12
     while:

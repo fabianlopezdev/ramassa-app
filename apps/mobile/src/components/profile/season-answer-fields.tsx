@@ -13,24 +13,25 @@
  */
 
 import { AuthTextField } from '@/components/auth/auth-text-field';
-import { PressableScale } from '@/components/motion/pressable-scale';
+import { SelectionChoiceCard } from '@/components/auth/selection-choice-card';
 import { OptionChip } from '@/components/onboarding/option-chip';
+import { ChoiceGrid } from '@/components/onboarding/option-grid';
 import { QuestionHelp } from '@/components/onboarding/question-help';
 import type { BuiltinWording } from '@/lib/onboarding-intake-context';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import {
   APPLICANT_STATUSES,
   CHILDCARE_NEEDS,
+  formatSupportNeeds,
   SEASON_NUMBERS,
   SPECIFIC_NEEDS_MAX_LENGTH,
-  SUPPORTING_ENTITIES_MAX,
   type ApplicantStatus,
   type ChildcareNeed,
   type SeasonNumber,
 } from '@ramassa/shared/schemas';
+import { SupportingEntitiesField } from './supporting-entities-field';
 
 export interface SeasonAnswers {
   readonly applicantStatus: ApplicantStatus | null;
@@ -77,7 +78,7 @@ function Question({
   const fontClass = useLanguageFontClass();
   return (
     <View className="gap-sm">
-      <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
+      <Text className={`text-start text-form font-medium text-neutral-800 ${fontClass}`}>
         {label}
       </Text>
       <QuestionHelp text={help} />
@@ -103,6 +104,8 @@ export interface SeasonAnswerFieldsProps {
   /** Staff's wording of these questions (RAPP-307); the app's own without it. */
   readonly wording?: BuiltinWording;
   readonly testIDPrefix: string;
+  readonly applicantStatusPresentation?: 'chips' | 'picker';
+  readonly referenceEntity?: string | null;
 }
 
 export function SeasonAnswerFields({
@@ -114,6 +117,8 @@ export function SeasonAnswerFields({
   shows = () => true,
   wording,
   testIDPrefix,
+  applicantStatusPresentation = 'chips',
+  referenceEntity,
 }: SeasonAnswerFieldsProps) {
   const { t } = useTranslation(['onboarding']);
   const label = (question: SeasonQuestion, appLabel: string) =>
@@ -128,91 +133,80 @@ export function SeasonAnswerFields({
     label: t(CHILDCARE_KEYS[need]),
   }));
   const fontClass = useLanguageFontClass();
-  const [otherEntity, setOtherEntity] = useState('');
-
-  const offered = [
-    ...entityNames,
-    ...value.supportingEntities.filter((name) => !entityNames.includes(name)),
-  ];
-  const toggleEntity = (name: string) =>
-    onChange({
-      supportingEntities: value.supportingEntities.includes(name)
-        ? value.supportingEntities.filter((chosen) => chosen !== name)
-        : [...value.supportingEntities, name],
-    });
-  const addOtherEntity = () => {
-    const name = otherEntity.trim();
-    if (name === '' || value.supportingEntities.includes(name)) return;
-    if (value.supportingEntities.length >= SUPPORTING_ENTITIES_MAX) return;
-    onChange({ supportingEntities: [...value.supportingEntities, name] });
-    setOtherEntity('');
-  };
 
   return (
     <View className="gap-lg" testID={`${testIDPrefix}-season`}>
       {showSensitive && shows('applicant_status') ? (
-        <Question
-          label={label('applicant_status', t('onboarding:applicantStatusLabel'))}
-          help={help('applicant_status')}
+        <View
+          className="gap-sm"
+          accessibilityRole="radiogroup"
+          accessibilityLabel={
+            applicantStatusPresentation === 'picker'
+              ? t('onboarding:currentSituationTitle')
+              : label('applicant_status', t('onboarding:applicantStatusLabel'))
+          }
         >
-          {(
-            wording?.options('applicant_status', applicantStatuses, value.applicantStatus) ??
-            applicantStatuses
-          ).map(({ value: status, label: statusLabel }) => (
-            <OptionChip
-              key={status}
-              label={statusLabel}
-              accessibilityHint={label('applicant_status', t('onboarding:applicantStatusLabel'))}
-              isSelected={value.applicantStatus === status}
-              onPress={() =>
-                onChange({ applicantStatus: value.applicantStatus === status ? null : status })
-              }
-            />
-          ))}
-        </Question>
+          {applicantStatusPresentation === 'picker' ? null : (
+            <>
+              <Text className={`text-start text-form font-medium text-neutral-800 ${fontClass}`}>
+                {label('applicant_status', t('onboarding:applicantStatusLabel'))}
+              </Text>
+              <QuestionHelp text={help('applicant_status')} />
+            </>
+          )}
+          <View
+            className={
+              applicantStatusPresentation === 'picker' ? 'gap-sm' : 'flex-row flex-wrap gap-sm'
+            }
+          >
+            {(
+              wording?.options('applicant_status', applicantStatuses, value.applicantStatus) ??
+              applicantStatuses
+            ).map(({ value: status, label: statusLabel }) =>
+              applicantStatusPresentation === 'picker' ? (
+                <SelectionChoiceCard
+                  key={status}
+                  testID={`${testIDPrefix}-applicant-status-${status}`}
+                  label={statusLabel}
+                  fontClass={fontClass}
+                  isSelected={value.applicantStatus === status}
+                  onPress={() =>
+                    onChange({ applicantStatus: value.applicantStatus === status ? null : status })
+                  }
+                />
+              ) : (
+                <OptionChip
+                  key={status}
+                  label={statusLabel}
+                  accessibilityHint={label(
+                    'applicant_status',
+                    t('onboarding:applicantStatusLabel'),
+                  )}
+                  isSelected={value.applicantStatus === status}
+                  onPress={() =>
+                    onChange({ applicantStatus: value.applicantStatus === status ? null : status })
+                  }
+                />
+              ),
+            )}
+          </View>
+        </View>
       ) : null}
 
       {shows('supporting_entities') ? (
-        <View className="gap-sm">
-          <Question
-            label={label('supporting_entities', t('onboarding:supportingEntitiesLabel'))}
-            help={help('supporting_entities')}
-          >
-            {offered.map((name) => (
-              <OptionChip
-                key={name}
-                label={name}
-                accessibilityHint={t('onboarding:supportingEntitiesLabel')}
-                isSelected={value.supportingEntities.includes(name)}
-                onPress={() => toggleEntity(name)}
-              />
-            ))}
-          </Question>
-          <View className="flex-row items-end gap-sm">
-            <View className="flex-1">
-              <AuthTextField
-                testID={`${testIDPrefix}-supporting-entity-other`}
-                label={t('onboarding:supportingEntitiesOtherLabel')}
-                value={otherEntity}
-                onChangeText={setOtherEntity}
-                onSubmitEditing={addOtherEntity}
-                maxLength={200}
-              />
-            </View>
-            <PressableScale
-              testID={`${testIDPrefix}-supporting-entity-add`}
-              accessibilityRole="button"
-              accessibilityLabel={t('onboarding:supportingEntitiesAddAction')}
-              onPress={addOtherEntity}
-              haptic="tapLight"
-              className="min-h-recommended justify-center rounded-md border border-primary px-md"
-            >
-              <Text className={`text-md font-semibold text-primary-dark ${fontClass}`}>
-                {t('onboarding:supportingEntitiesAddAction')}
-              </Text>
-            </PressableScale>
-          </View>
-        </View>
+        <SupportingEntitiesField
+          testIDPrefix={testIDPrefix}
+          value={value.supportingEntities}
+          onChange={(supportingEntities) => onChange({ supportingEntities })}
+          entityNames={entityNames}
+          label={label(
+            'supporting_entities',
+            referenceEntity
+              ? t('onboarding:supportingEntitiesInstructionExcept', { entity: referenceEntity })
+              : t('onboarding:supportingEntitiesInstruction'),
+          )}
+          help={help('supporting_entities')}
+        />
       ) : null}
 
       {showSeasonNumber ? (
@@ -236,20 +230,24 @@ export function SeasonAnswerFields({
           label={label('childcare_need', t('onboarding:childcareNeedLabel'))}
           help={help('childcare_need')}
         >
-          {(
-            wording?.options('childcare_need', childcareNeeds, value.childcareNeed) ??
-            childcareNeeds
-          ).map(({ value: need, label: needLabel }) => (
-            <OptionChip
-              key={need}
-              label={needLabel}
-              accessibilityHint={label('childcare_need', t('onboarding:childcareNeedLabel'))}
-              isSelected={value.childcareNeed === need}
-              onPress={() =>
-                onChange({ childcareNeed: value.childcareNeed === need ? null : need })
-              }
-            />
-          ))}
+          <View className="w-full">
+            <ChoiceGrid maximumColumns={3}>
+              {(
+                wording?.options('childcare_need', childcareNeeds, value.childcareNeed) ??
+                childcareNeeds
+              ).map(({ value: need, label: needLabel }) => (
+                <OptionChip
+                  key={need}
+                  label={needLabel}
+                  accessibilityHint={label('childcare_need', t('onboarding:childcareNeedLabel'))}
+                  isSelected={value.childcareNeed === need}
+                  onPress={() =>
+                    onChange({ childcareNeed: value.childcareNeed === need ? null : need })
+                  }
+                />
+              ))}
+            </ChoiceGrid>
+          </View>
         </Question>
       ) : null}
 
@@ -259,12 +257,12 @@ export function SeasonAnswerFields({
             testID={`${testIDPrefix}-specific-needs`}
             label={label('specific_needs', t('onboarding:specificNeedsLabel'))}
             hint={help('specific_needs')}
-            value={value.specificNeeds}
+            value={formatSupportNeeds(value.specificNeeds, t)}
             onChangeText={(specificNeeds) => onChange({ specificNeeds })}
             multiline
             maxLength={SPECIFIC_NEEDS_MAX_LENGTH}
           />
-          <Text className={`text-start text-sm text-neutral-500 ${fontClass}`}>
+          <Text className={`text-start text-form text-neutral-700 ${fontClass}`}>
             {t('onboarding:specificNeedsHint')}
           </Text>
         </View>

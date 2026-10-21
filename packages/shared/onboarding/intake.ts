@@ -51,7 +51,23 @@ export const QUESTION_SCREENS = [
   'season',
 ] as const;
 export type QuestionScreen = (typeof QUESTION_SCREENS)[number];
-export type WizardScreen = QuestionScreen | 'summary' | 'terms';
+export const SEASON_WIZARD_SCREENS = [
+  'season',
+  'supporting-entities',
+  'participation-support',
+  'specific-needs',
+] as const;
+export type SeasonWizardScreen = (typeof SEASON_WIZARD_SCREENS)[number];
+export type WizardQuestionScreen = QuestionScreen | 'equipment' | SeasonWizardScreen;
+export type WizardScreen = WizardQuestionScreen | 'summary' | 'terms-intro' | 'terms';
+export const WIZARD_QUESTION_SCREENS: readonly WizardQuestionScreen[] = [
+  'identity',
+  'background',
+  'documentation',
+  'logistics',
+  'equipment',
+  ...SEASON_WIZARD_SCREENS,
+];
 
 /**
  * The questions each screen asks. The avatar is on no screen: the wizard does
@@ -59,7 +75,7 @@ export type WizardScreen = QuestionScreen | 'summary' | 'terms';
  */
 export const SCREEN_QUESTIONS: Readonly<Record<QuestionScreen, readonly IntakeQuestion[]>> = {
   identity: ['first_name', 'last_name'],
-  background: ['date_of_birth', 'place_of_birth', 'nationality', 'preferred_language'],
+  background: ['date_of_birth', 'place_of_birth', 'nationality'],
   documentation: ['document'],
   logistics: [
     'phone',
@@ -75,6 +91,21 @@ export const SCREEN_QUESTIONS: Readonly<Record<QuestionScreen, readonly IntakeQu
   season: ['applicant_status', 'supporting_entities', 'childcare_need', 'specific_needs'],
 };
 
+/** Visual steps split the legacy logistics group without changing staff-screen anchors. */
+export const WIZARD_SCREEN_QUESTIONS: Readonly<
+  Record<WizardQuestionScreen, readonly IntakeQuestion[]>
+> = {
+  ...SCREEN_QUESTIONS,
+  logistics: SCREEN_QUESTIONS.logistics.filter(
+    (question) => question !== 'clothing_size' && question !== 'shoe_size',
+  ),
+  equipment: ['clothing_size', 'shoe_size'],
+  season: ['applicant_status'],
+  'supporting-entities': ['supporting_entities'],
+  'participation-support': ['childcare_need'],
+  'specific-needs': ['specific_needs'],
+};
+
 /**
  * The `complete_onboarding` payload keys behind each question. Two-field
  * questions travel whole: a document type without its number, or a count
@@ -87,7 +118,7 @@ export const QUESTION_PAYLOAD_KEYS: Readonly<Record<IntakeQuestion, readonly str
   place_of_birth: ['place_of_birth'],
   nationality: ['nationality'],
   preferred_language: ['preferred_language'],
-  document: ['document_type', 'document_number'],
+  document: ['document_type', 'document_number', 'document_name'],
   phone: ['phone'],
   address: ['address'],
   city: ['city'],
@@ -98,7 +129,7 @@ export const QUESTION_PAYLOAD_KEYS: Readonly<Record<IntakeQuestion, readonly str
   clothing_size: ['clothing_size'],
   shoe_size: ['shoe_size'],
   avatar: ['avatar_url'],
-  applicant_status: ['applicant_status'],
+  applicant_status: ['applicant_status', 'applicant_status_details'],
   supporting_entities: ['supporting_entities'],
   season_number: ['season_number'],
   childcare_need: ['childcare_need'],
@@ -124,9 +155,9 @@ export function isQuestionAnswered(answered: AnsweredQuestions, question: Intake
 }
 
 /** The question screens that still have something to ask, in order. */
-export function screensToAsk(answered: AnsweredQuestions): QuestionScreen[] {
-  return QUESTION_SCREENS.filter((screen) =>
-    SCREEN_QUESTIONS[screen].some((question) => !answered.has(question)),
+export function screensToAsk(answered: AnsweredQuestions): WizardQuestionScreen[] {
+  return WIZARD_QUESTION_SCREENS.filter((screen) =>
+    WIZARD_SCREEN_QUESTIONS[screen].some((question) => !answered.has(question)),
   );
 }
 
@@ -165,11 +196,14 @@ function fullOrder(custom: readonly CustomWizardScreen[]): WizardStepKey[] {
   return [
     ...QUESTION_SCREENS.flatMap((screen): WizardStepKey[] => [
       screen,
+      ...(screen === 'logistics' ? ['equipment' as const] : []),
+      ...(screen === 'season' ? SEASON_WIZARD_SCREENS.slice(1) : []),
       ...custom
         .filter((customScreen) => customScreen.afterScreen === screen)
         .map((customScreen) => customStepKey(customScreen.id)),
     ]),
     'summary',
+    'terms-intro',
     'terms',
   ];
 }
@@ -186,7 +220,7 @@ function visibleScreens(
   return fullOrder(custom).filter((step) =>
     isCustomStep(step)
       ? !answeredCustom.has(step)
-      : step === 'summary' || step === 'terms' || asked.has(step),
+      : step === 'summary' || step === 'terms-intro' || step === 'terms' || asked.has(step),
   );
 }
 

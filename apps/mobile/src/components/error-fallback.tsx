@@ -1,9 +1,4 @@
-/**
- * The translated, accessible fallback screen every route-zone ErrorBoundary
- * renders (RAPP-12). Shows the friendly translated message PLUS the short
- * stable code (e.g. `AUTH-3`) so staff can report exactly what happened over
- * the phone; announces itself to screen readers and offers a retry.
- */
+/** Accessible recovery screen with internal logging and a friendly retry message. */
 
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
@@ -24,7 +19,6 @@ export function ErrorFallback({ error, retry }: ErrorFallbackProps) {
   const languageFontClass = useLanguageFontClass();
   const appError = toAppError(error);
   const friendlyMessage = t(getErrorMessageKey(appError.code));
-  const codeLine = `${t('errorCodeLabel')}: ${appError.code}`;
 
   useEffect(() => {
     // The boundary caught a render-time crash the safeAsync path never saw;
@@ -43,13 +37,8 @@ export function ErrorFallback({ error, retry }: ErrorFallbackProps) {
       >
         {t('fallbackTitle')}
       </Text>
-      <Text className={`text-center text-lg text-neutral-700 ${languageFontClass}`}>
+      <Text selectable className={`text-center text-lg text-neutral-700 ${languageFontClass}`}>
         {friendlyMessage}
-      </Text>
-      {/* Selectable: staff read this code out to report a fault, and copying it
-          beats transcribing it. */}
-      <Text selectable className={`text-center text-sm text-neutral-500 ${languageFontClass}`}>
-        {codeLine}
       </Text>
       <PressableScale
         accessibilityLabel={t('retry')}

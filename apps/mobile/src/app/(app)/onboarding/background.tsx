@@ -6,43 +6,33 @@
 
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { CountryPicker } from '@/components/onboarding/country-picker';
-import { OnboardingQuestionHeading } from '@/components/onboarding/onboarding-question-heading';
-import { OptionChip } from '@/components/onboarding/option-chip';
 import { QuestionHelp } from '@/components/onboarding/question-help';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
 import { WizardValidationSummary } from '@/components/onboarding/wizard-validation-summary';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { onboardingDraftStore } from '@/lib/onboarding';
-import { identityFormSchema, type IdentityFormInput } from '@/lib/onboarding-form';
+import {
+  birthDateErrorKey,
+  identityFormSchema,
+  type BirthDateField,
+  type IdentityFormInput,
+} from '@/lib/onboarding-form';
 import { useBuiltinWording, useWizardStep } from '@/lib/onboarding-intake-context';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { zodResolver } from '@hookform/resolvers/zod';
-import type { SymbolViewProps } from 'expo-symbols';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { Text, useWindowDimensions, View } from 'react-native';
-import { LANGUAGE_NATIVE_NAMES, SUPPORTED_LANGUAGES, useLanguage } from '@ramassa/shared/i18n';
+import { AccessibilityInfo, Text, useWindowDimensions, View } from 'react-native';
 import type { OnboardingDraftStep } from '@ramassa/shared/onboarding-drafts';
 import type { IdentityStep, LanguageCode } from '@ramassa/shared/schemas';
 
 const YEAR_FIELD_WIDTH_CLASS = 'flex-[1.4]';
 const LARGE_TEXT_STACK_THRESHOLD = 1.5;
-const languageSymbol: SymbolViewProps['name'] = {
-  ios: 'globe',
-  android: 'language',
-  web: 'language',
-};
-const nationalitySymbol: SymbolViewProps['name'] = {
-  ios: 'globe.europe.africa.fill',
-  android: 'public',
-  web: 'public',
-};
-
+const queuedAnnouncement = { queue: true } as const;
 export default function BackgroundStepScreen() {
   const { t, i18n } = useTranslation('onboarding');
   const languageFontClass = useLanguageFontClass();
-  const { setLanguage } = useLanguage();
   const step = useWizardStep('background');
   const wording = useBuiltinWording();
   const { fontScale } = useWindowDimensions();
@@ -68,17 +58,29 @@ export default function BackgroundStepScreen() {
     control,
     handleSubmit,
     getValues,
+    trigger,
     formState: { errors },
   } = useForm<IdentityFormInput, unknown, IdentityStep>({
     resolver: zodResolver(identityFormSchema),
     defaultValues,
+    mode: 'onBlur',
   });
 
   function persist(currentStep: OnboardingDraftStep) {
+    const latest = onboardingDraftStore.loadDraft();
+    const values = getValues();
     onboardingDraftStore.saveDraft({
-      ...draft,
+      ...latest,
       currentStep,
-      identity: getValues(),
+      identity: {
+        ...latest?.identity,
+        day: values.day,
+        month: values.month,
+        year: values.year,
+        placeOfBirth: values.placeOfBirth,
+        nationality: values.nationality,
+        preferredLanguage: values.preferredLanguage,
+      },
     });
   }
 
@@ -94,25 +96,28 @@ export default function BackgroundStepScreen() {
     },
   );
 
-  const hasEnteredDate = Boolean(
-    getValues('day').trim() || getValues('month').trim() || getValues('year').trim(),
-  );
-  const dateErrorKey = !hasEnteredDate
-    ? null
-    : errors.year?.message === 'too young'
-      ? 'errorTooYoung'
-      : errors.day || errors.month || errors.year
-        ? errors.year?.message === 'invalid date'
-          ? 'errorInvalidDate'
-          : 'errorRequired'
-        : null;
+  const dateMessages = (['day', 'month', 'year'] as const).map((field) => {
+    const key = birthDateErrorKey(field, errors[field]?.message);
+    return { field, message: key === undefined ? undefined : t(key) };
+  });
+  const messageFor = (field: BirthDateField) =>
+    dateMessages.find((error) => error.field === field)?.message;
+  const dateErrorMessage = dateMessages
+    .map((error) => error.message)
+    .filter(Boolean)
+    .join(' ');
+  useEffect(() => {
+    if (dateErrorMessage && process.env.EXPO_OS === 'ios') {
+      AccessibilityInfo.announceForAccessibilityWithOptions(dateErrorMessage, queuedAnnouncement);
+    }
+  }, [dateErrorMessage]);
 
   return (
     <WizardFrame
+      screenId={'background'}
       stepNumber={step.position.step}
       totalSteps={step.position.total}
       title={t('backgroundTitle')}
-      intro={t('backgroundIntro')}
       continueLabel={t('continueAction')}
       onContinue={continueToDocumentation}
       onBack={
@@ -127,7 +132,9 @@ export default function BackgroundStepScreen() {
       <WizardValidationSummary isVisible={hasSubmitErrors} message={t('errorSummary')} />
       {step.shouldAsk('date_of_birth') ? (
         <View className="gap-xs">
-          <Text className={`text-start text-md font-medium text-neutral-800 ${languageFontClass}`}>
+          <Text
+            className={`text-start text-form font-medium text-neutral-800 ${languageFontClass}`}
+          >
             {wording.label('date_of_birth', t('dateOfBirthLabel'))}
           </Text>
           <QuestionHelp text={wording.help('date_of_birth')} />
@@ -142,8 +149,14 @@ export default function BackgroundStepScreen() {
                     label={t('dayLabel')}
                     value={field.value}
                     onChangeText={field.onChange}
-                    onBlur={field.onBlur}
+                    onBlur={() => {
+                      field.onBlur();
+                      if (getValues('day') && getValues('month') && getValues('year')) {
+                        void trigger(['day', 'month', 'year']);
+                      }
+                    }}
                     isInvalid={Boolean(errors.day)}
+                    accessibilityHint={messageFor('day')}
                     keyboardType="number-pad"
                     maxLength={2}
                   />
@@ -160,8 +173,14 @@ export default function BackgroundStepScreen() {
                     label={t('monthLabel')}
                     value={field.value}
                     onChangeText={field.onChange}
-                    onBlur={field.onBlur}
+                    onBlur={() => {
+                      field.onBlur();
+                      if (getValues('day') && getValues('month') && getValues('year')) {
+                        void trigger(['day', 'month', 'year']);
+                      }
+                    }}
                     isInvalid={Boolean(errors.month)}
+                    accessibilityHint={messageFor('month')}
                     keyboardType="number-pad"
                     maxLength={2}
                   />
@@ -178,8 +197,14 @@ export default function BackgroundStepScreen() {
                     label={t('yearLabel')}
                     value={field.value}
                     onChangeText={field.onChange}
-                    onBlur={field.onBlur}
+                    onBlur={() => {
+                      field.onBlur();
+                      if (getValues('day') && getValues('month') && getValues('year')) {
+                        void trigger(['day', 'month', 'year']);
+                      }
+                    }}
                     isInvalid={Boolean(errors.year)}
+                    accessibilityHint={messageFor('year')}
                     keyboardType="number-pad"
                     maxLength={4}
                   />
@@ -187,14 +212,19 @@ export default function BackgroundStepScreen() {
               />
             </View>
           </View>
-          {dateErrorKey === null ? null : (
-            <Text
-              accessibilityLiveRegion="polite"
-              className={`text-start text-sm text-error ${languageFontClass}`}
-            >
-              {t(dateErrorKey)}
-            </Text>
-          )}
+          <View accessibilityLiveRegion="polite" className="gap-xs">
+            {dateMessages.map(({ field, message }) =>
+              message === undefined ? null : (
+                <Text
+                  selectable
+                  key={field}
+                  className={`text-start text-form text-error ${languageFontClass}`}
+                >
+                  {message}
+                </Text>
+              ),
+            )}
+          </View>
         </View>
       ) : null}
 
@@ -223,51 +253,12 @@ export default function BackgroundStepScreen() {
             render={({ field }) => (
               <CountryPicker
                 label={wording.label('nationality', t('nationalityLabel'))}
-                symbol={nationalitySymbol}
                 value={field.value}
                 onChange={field.onChange}
               />
             )}
           />
           <QuestionHelp text={wording.help('nationality')} />
-        </View>
-      ) : null}
-
-      {step.shouldAsk('preferred_language') ? (
-        <View className="gap-xs">
-          <OnboardingQuestionHeading
-            label={wording.label('preferred_language', t('preferredLanguageLabel'))}
-            symbol={languageSymbol}
-          />
-          <QuestionHelp text={wording.help('preferred_language')} />
-          <Controller
-            control={control}
-            name="preferredLanguage"
-            render={({ field }) => (
-              <View className="flex-row flex-wrap gap-sm">
-                {wording
-                  .options(
-                    'preferred_language',
-                    SUPPORTED_LANGUAGES.map((code) => ({
-                      value: code,
-                      label: LANGUAGE_NATIVE_NAMES[code],
-                    })),
-                    field.value,
-                  )
-                  .map((option) => (
-                    <OptionChip
-                      key={option.value}
-                      label={option.label}
-                      isSelected={field.value === option.value}
-                      onPress={() => {
-                        field.onChange(option.value);
-                        void setLanguage(option.value);
-                      }}
-                    />
-                  ))}
-              </View>
-            )}
-          />
         </View>
       ) : null}
     </WizardFrame>

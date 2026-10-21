@@ -1,5 +1,4 @@
 import { AnnouncementFeedSkeleton } from '@/components/announcements/feed-states';
-import { ErrorCodeLine } from '@/components/error-code-line';
 import { PageWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
@@ -258,7 +257,6 @@ function MessageThreadView({
     isOnline,
     isPending,
     isError,
-    errorCode,
     isRefetching,
     refetch,
   } = controller;
@@ -353,7 +351,6 @@ function MessageThreadView({
           >
             {t('loadError')}
           </Text>
-          {errorCode === null ? null : <ErrorCodeLine code={errorCode} />}
           <PressableScale
             accessibilityLabel={t('retry')}
             onPress={() => void refetch()}

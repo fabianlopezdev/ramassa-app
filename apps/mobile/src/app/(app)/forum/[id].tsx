@@ -1,7 +1,6 @@
 import { AnnouncementFeedSkeleton } from '@/components/announcements/feed-states';
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
-import { ErrorCodeLine } from '@/components/error-code-line';
 import { ForumFlagDialog } from '@/components/forum/forum-flag-dialog';
 import { ForumPlainText } from '@/components/forum/forum-plain-text';
 import { ForumReplyCard } from '@/components/forum/forum-reply-card';
@@ -191,7 +190,6 @@ export default function ForumPostDetailScreen() {
     return <AnnouncementFeedSkeleton accessibilityLabel={t('forum:loading')} />;
   }
   if (post === undefined) {
-    const loadCode = postQuery.error === null ? 'DB-1' : toAppError(postQuery.error).code;
     return (
       <SafeAreaView style={styles.screen}>
         <View className="flex-1 items-center justify-center gap-md px-lg">
@@ -202,7 +200,6 @@ export default function ForumPostDetailScreen() {
           >
             {t('forum:loadFailed')}
           </Text>
-          <ErrorCodeLine code={loadCode} />
           <PressableScale
             accessibilityLabel={t('forum:retry')}
             onPress={retryPost}
@@ -437,7 +434,6 @@ export default function ForumPostDetailScreen() {
               >
                 {t('forum:loadFailed')}
               </Text>
-              <ErrorCodeLine code={toAppError(repliesQuery.error).code} />
               <PressableScale
                 accessibilityLabel={t('forum:retry')}
                 onPress={() => void refetchReplies()}
@@ -499,7 +495,6 @@ export default function ForumPostDetailScreen() {
                       {errorMessage ?? t('forum:replyFailed')}
                     </Text>
                   )}
-                  {errorCode === null ? null : <ErrorCodeLine code={errorCode} />}
                   <AuthSubmitButton
                     testID="forum-submit-reply"
                     label={createReply.isPending ? t('forum:replying') : t('forum:reply')}

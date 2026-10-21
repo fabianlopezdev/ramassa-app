@@ -2,9 +2,9 @@
 
 import { useAppLock } from '@/components/auth/app-lock';
 import { AuthTextField } from '@/components/auth/auth-text-field';
+import { useFormFieldAppearance } from '@/components/forms/field-appearance';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { OnboardingQuestionHeading } from '@/components/onboarding/onboarding-question-heading';
-import { OptionChip } from '@/components/onboarding/option-chip';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
@@ -14,7 +14,6 @@ import { useTranslation } from 'react-i18next';
 import { FlatList, Modal, Pressable, Text, View, type ListRenderItemInfo } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
-  COMMON_MUNICIPALITY_CODES,
   getMunicipalityOptions,
   municipalityLabelForCanonical,
   searchMunicipalities,
@@ -25,8 +24,8 @@ import type { LanguageCode } from '@ramassa/shared/schemas';
 const MUNICIPALITY_ROW_CLASS = 'min-h-recommended justify-center rounded-md px-md';
 const MUNICIPALITY_ROW_SELECTED_CLASS =
   'min-h-recommended justify-center rounded-md bg-primary px-md';
-const MUNICIPALITY_LABEL_CLASS = 'text-start text-md text-neutral-900';
-const MUNICIPALITY_LABEL_SELECTED_CLASS = 'text-start text-md font-medium text-white';
+const MUNICIPALITY_LABEL_CLASS = 'text-start text-form text-neutral-900';
+const MUNICIPALITY_LABEL_SELECTED_CLASS = 'text-start text-form font-medium text-white';
 const INITIAL_ROWS = 12;
 const MOUNTED_VIEWPORTS = 5;
 const ROWS_PER_BATCH = 8;
@@ -104,23 +103,17 @@ export function MunicipalityPicker({
 
   const options = useMemo(() => getMunicipalityOptions(locale), [locale]);
   const { isCovered } = useAppLock();
-  const commonOptions = useMemo(
-    () =>
-      COMMON_MUNICIPALITY_CODES.map((code) =>
-        options.find((option) => option.code === code),
-      ).filter((option): option is MunicipalityOption => option !== undefined),
-    [options],
-  );
   const filtered = useMemo(
     () => searchMunicipalities(options, deferredQuery),
     [options, deferredQuery],
   );
   const displayValue =
     value === '' ? null : (municipalityLabelForCanonical(value, locale) ?? value);
-  const searchedSelectionLabel =
-    displayValue !== null && !commonOptions.some((option) => option.canonical === value)
-      ? displayValue
-      : null;
+  const fieldAppearance = useFormFieldAppearance(Boolean(errorMessage));
+  const closePicker = useCallback(() => {
+    setIsOpen(false);
+    setQuery('');
+  }, []);
 
   const choose = useCallback(
     (canonical: string) => {
@@ -146,7 +139,7 @@ export function MunicipalityPicker({
   const emptyMessage = (
     <Text
       accessibilityLiveRegion="polite"
-      className={`text-start text-md text-neutral-500 ${languageFontClass}`}
+      className={`text-start text-form text-neutral-700 ${languageFontClass}`}
     >
       {t('noMunicipalityResults')}
     </Text>
@@ -155,49 +148,40 @@ export function MunicipalityPicker({
   return (
     <View className="gap-xs">
       {symbol === undefined ? (
-        <Text className={`text-start text-md font-medium text-neutral-800 ${languageFontClass}`}>
+        <Text className={`text-start text-form font-medium text-neutral-800 ${languageFontClass}`}>
           {label}
         </Text>
       ) : (
         <OnboardingQuestionHeading label={label} symbol={symbol} />
       )}
-      <View className="flex-row flex-wrap gap-sm">
-        <OptionChip
-          testID="municipality-picker-clear"
-          label={t('municipalityNone')}
-          isSelected={value === ''}
-          onPress={() => choose('')}
-        />
-        {commonOptions.map((option) => (
-          <OptionChip
-            key={option.code}
-            label={option.label}
-            isSelected={value === option.canonical}
-            onPress={() => choose(option.canonical)}
-          />
-        ))}
-        <OptionChip
-          testID="municipality-picker-open"
-          label={searchedSelectionLabel ?? t('searchMunicipalityPlaceholder')}
-          isSelected={searchedSelectionLabel !== null}
-          onPress={() => setIsOpen(true)}
-        />
-      </View>
+      <PressableScale
+        testID="municipality-picker-open"
+        accessibilityLabel={`${label}: ${displayValue ?? t('searchMunicipalityPlaceholder')}`}
+        accessibilityHint={errorMessage}
+        isExpanded={isOpen}
+        onPress={() => setIsOpen(true)}
+        haptic="selection"
+        style={fieldAppearance.style}
+        className={`${fieldAppearance.className} justify-center`}
+      >
+        <Text
+          className={`text-start text-form ${displayValue === null ? 'text-neutral-700' : 'text-neutral-900'} ${languageFontClass}`}
+        >
+          {displayValue ?? t('searchMunicipalityPlaceholder')}
+        </Text>
+      </PressableScale>
 
       {errorMessage === undefined ? null : (
         <Text
+          selectable
           accessibilityLiveRegion="polite"
-          className={`text-start text-sm text-error ${languageFontClass}`}
+          className={`text-start text-form text-error ${languageFontClass}`}
         >
           {errorMessage}
         </Text>
       )}
 
-      <Modal
-        visible={isOpen && !isCovered}
-        animationType="slide"
-        onRequestClose={() => setIsOpen(false)}
-      >
+      <Modal visible={isOpen && !isCovered} animationType="slide" onRequestClose={closePicker}>
         <SafeAreaView
           accessibilityViewIsModal
           className="flex-1 bg-white"
@@ -205,19 +189,22 @@ export function MunicipalityPicker({
         >
           <View className="flex-1 gap-md p-lg">
             <View className="flex-row items-center justify-between">
-              <PressableScale
+              <Pressable
+                accessibilityRole="button"
                 accessibilityLabel={t('cancelAction')}
-                onPress={() => setIsOpen(false)}
-                haptic="selection"
-                className="min-h-min justify-center py-sm"
+                onPress={() => {
+                  playHaptic('selection');
+                  closePicker();
+                }}
+                className="min-h-recommended min-w-min justify-center py-sm active:opacity-70"
               >
-                <Text className={`text-md font-medium text-primary ${languageFontClass}`}>
+                <Text className={`text-form font-medium text-primary ${languageFontClass}`}>
                   {t('cancelAction')}
                 </Text>
-              </PressableScale>
+              </Pressable>
               <Text
                 accessibilityRole="header"
-                className={`text-lg font-semibold text-neutral-900 ${languageFontClass}`}
+                className={`text-form font-semibold text-neutral-900 ${languageFontClass}`}
               >
                 {label}
               </Text>
@@ -233,6 +220,23 @@ export function MunicipalityPicker({
               returnKeyType="done"
               submitBehavior="blurAndSubmit"
             />
+
+            {value === '' ? null : (
+              <Pressable
+                testID="municipality-picker-clear"
+                accessibilityRole="button"
+                accessibilityLabel={t('clearMunicipalityAction')}
+                onPress={() => {
+                  playHaptic('selection');
+                  choose('');
+                }}
+                className="min-h-recommended justify-center py-sm active:opacity-70"
+              >
+                <Text className={`text-form font-medium text-primary ${languageFontClass}`}>
+                  {t('clearMunicipalityAction')}
+                </Text>
+              </Pressable>
+            )}
 
             <FlatList
               testID="municipality-results"

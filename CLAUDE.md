@@ -48,6 +48,8 @@ bunx supabase studio                           # Local DB admin
 - `camelCase` for variables/functions, `PascalCase` for components, `snake_case` for DB columns
 - `kebab-case.tsx` for component files, Expo Router conventions for route files
 - RTL-ready: always `start`/`end`, never `left`/`right` in styles
+- Shared form fields (RAPP-564): new typed fields use `FormTextField` from `components/forms/form-text-field`. `AuthTextField` is a compatibility export of that component. Field-style picker openers reuse `useFormFieldAppearance`; do not duplicate height, border or corner styles. Field height and language/document choice height come from `tokens.formField.minHeight`, grow with text size, and fields omit the choice card shadow/fill.
+- Onboarding typography (RAPP-562): use `text-form` (18-point base) for all readable form content, including labels, values, help/privacy notices, errors, choices, picker sheets, progress and review rows. Keep headings larger, system text scaling enabled and text wrapping. Do not shrink secondary text to fit. Shared login/form components use the same token.
 - Never hardcode user-facing strings — always use i18n translation keys
 - Apply RLS policies on every new database table
 - Encrypt sensitive fields (document_number) via pgcrypto
@@ -70,7 +72,7 @@ bunx supabase studio                           # Local DB admin
 4. **Gates before every commit**: prettier, eslint, tsc --noEmit, bun test. Enforced by lefthook + commitlint (NOT husky/lint-staged; see RAPP-5).
 5. **`/react-native-perfection` runs at PHASE CLOSURE, not per task.** It is too slow per-commit. Each phase ends with a closure issue (RAPP-20, 28, 37, 40, 46, 49, 53, 56, 61, 69): full sweep -> closing commit -> direct platform QA -> QA report on the closure issue. Prefer ADB and Android platform tools on Android, stable direct simulator or XCTest tools on iOS, and Playwright on web. Maestro is a last resort only when the required behavior cannot be proved another way.
 6. **Zod is the single validation source** (`packages/shared/schemas/`): forms validate for UX, server re-validates for security, external API responses are parsed, `process.env` is validated at boot.
-7. **Errors are typed, never generic.** AppError taxonomy with stable codes (`AUTH/*`, `UPLOAD/*`...), `safeAsync` returning `Result<T, AppError>`, PII-redacting structured logger, Sentry on all three runtimes (mobile/admin/workers) with release = commit SHA. User-facing errors: translated + short code shown.
+7. **Errors are typed, never generic.** AppError taxonomy with stable codes (`AUTH/*`, `UPLOAD/*`...), `safeAsync` returning `Result<T, AppError>`, PII-redacting structured logger, Sentry on all three runtimes (mobile/admin/workers) with release = commit SHA. Mobile user-facing errors: translated, actionable guidance without technical codes (RAPP-556). Keep codes and provider diagnostics in structured logging and Sentry.
 8. **Design tokens only** (`packages/shared/tokens/`): no magic numbers, no raw colors/radii/spacing in components. Self-descriptive long names over comments; comments only where names cannot carry the meaning.
 9. **Dev DB is local Supabase (Docker)**, prod is Frankfurt. Never develop or run QA against prod. Every migration ships with RLS denial tests, seeds, factories, and RGPD-deletion coverage in the same issue.
 10. **Docs at latest versions**: each issue pins versions pulled at authoring; verify against current official docs at execution.

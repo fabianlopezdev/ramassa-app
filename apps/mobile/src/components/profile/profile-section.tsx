@@ -27,7 +27,7 @@ export function ProfileSection({
     <View className="gap-sm">
       <Text
         accessibilityRole="header"
-        className={`text-start text-lg font-semibold text-neutral-900 ${languageFontClass}`}
+        className={`text-start text-form font-semibold text-neutral-900 ${languageFontClass}`}
       >
         {title}
       </Text>
@@ -41,19 +41,38 @@ export function ProfileSection({
   );
 }
 
-export function ProfileRow({ label, value }: { readonly label: string; readonly value: string }) {
+export interface ProfileRowProps {
+  readonly label: string;
+  readonly value: string;
+  readonly icon?:
+    | 'person'
+    | 'calendar'
+    | 'location'
+    | 'globe'
+    | 'conversation'
+    | 'document'
+    | 'phone'
+    | 'home'
+    | 'entity'
+    | 'people'
+    | 'clothing'
+    | 'shoes'
+    | 'support';
+}
+
+export function ProfileRow({ label, value }: ProfileRowProps) {
   const languageFontClass = useLanguageFontClass();
   return (
     // One accessibility node per row, so a screen reader announces "Phone,
     // +34 600 111 222" rather than two disconnected fragments the listener has
     // to reassemble.
     <View accessible accessibilityLabel={`${label}: ${value}`} className="gap-xs py-xs">
-      <Text className={`text-start text-sm text-neutral-500 ${languageFontClass}`}>{label}</Text>
+      <Text className={`text-start text-form text-neutral-700 ${languageFontClass}`}>{label}</Text>
       {/* Selectable: this screen exists so a woman can READ what the
           organization holds about her, and a document or phone number she can
           long-press and copy is one she can also paste into a form or send to
           someone helping her. */}
-      <Text selectable className={`text-start text-md text-neutral-900 ${languageFontClass}`}>
+      <Text selectable className={`text-start text-form text-neutral-900 ${languageFontClass}`}>
         {value}
       </Text>
     </View>

@@ -15,7 +15,10 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { expect, type Page } from '@playwright/test';
 import type { SupportedLanguage } from '@ramassa/shared/i18n/languages';
+import { qaBackend } from './backend';
 import { totpCode } from './totp';
+
+const backend = qaBackend(process.env);
 
 export const STAFF_EMAIL = 'marta.puig@example.test';
 export const ENTITY_EMAIL = 'silvia.bosch@example.test';
@@ -105,11 +108,11 @@ export async function completeStepUp(page: Page): Promise<void> {
  * Local defaults, matching apps/admin/.env. They are not secrets: the
  * publishable key is in the client bundle by design.
  */
-export const SUPABASE_URL = 'http://127.0.0.1:54321';
+export const SUPABASE_URL = backend.supabaseUrl;
 export const SUPABASE_PUBLISHABLE_KEY =
   process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? 'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH';
 export const MEDIA_WORKER_URL = `http://127.0.0.1:${process.env.RAMASSA_QA_MEDIA_PORT ?? '8893'}`;
-export const MAILPIT_URL = 'http://127.0.0.1:54324';
+export const MAILPIT_URL = backend.mailpitUrl;
 export const ADMIN_ORIGIN = `http://localhost:${process.env.RAMASSA_QA_ADMIN_PORT ?? '4193'}`;
 export const PLAYER_ORIGIN = `http://localhost:${process.env.RAMASSA_QA_PLAYER_PORT ?? '4194'}`;
 
@@ -348,7 +351,7 @@ export async function uploadObjectAs(
 export function queryDatabase(sql: string): string {
   const container = execFileSync('docker', ['ps', '--format', '{{.Names}}'], { encoding: 'utf8' })
     .split('\n')
-    .find((name) => name === 'supabase_db_ramassa');
+    .find((name) => name === backend.databaseContainer);
   if (container === undefined) {
     throw new Error('The Ramassà local Supabase database is not running: bunx supabase start');
   }

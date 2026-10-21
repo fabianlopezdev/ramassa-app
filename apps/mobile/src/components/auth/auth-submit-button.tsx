@@ -32,24 +32,34 @@ export function AuthSubmitButton({
     [fontScale],
   );
   const isBusy = Boolean(isLoading);
-  const isInteractionBlocked = Boolean(disabled) || isBusy;
+  const isDisabled = Boolean(disabled);
 
   return (
     <PressableScale
       accessibilityLabel={label}
       onPress={onPress}
       haptic="tapLight"
-      isDisabled={Boolean(disabled)}
+      isDisabled={isDisabled}
       isBusy={isBusy}
       testID={testID}
       style={buttonStyle}
-      className={`min-h-recommended justify-center rounded-md bg-primary px-lg ${
-        isInteractionBlocked ? 'opacity-60' : ''
+      className={`min-h-recommended justify-center rounded-md px-lg ${
+        isDisabled ? 'bg-neutral-200' : 'bg-primary'
       }`}
     >
       <View className="flex-row items-center justify-center gap-sm">
-        {isBusy ? <ActivityIndicator accessible={false} color={tokens.colors.white} /> : null}
-        <Text className={`text-center text-md font-bold text-white ${languageFontClass}`}>
+        {isBusy ? (
+          <ActivityIndicator
+            accessible={false}
+            aria-hidden
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+            color={isDisabled ? tokens.colors.neutral[600] : tokens.colors.white}
+          />
+        ) : null}
+        <Text
+          className={`text-center text-form font-bold ${isDisabled ? 'text-neutral-600' : 'text-white'} ${languageFontClass}`}
+        >
           {label}
         </Text>
       </View>

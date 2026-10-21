@@ -1,6 +1,5 @@
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
-import { ErrorCodeLine } from '@/components/error-code-line';
 import { ForumCategoryOption } from '@/components/forum/forum-category-tabs';
 import { FormWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
@@ -288,7 +287,6 @@ export default function ForumPostComposerScreen() {
                 {validationMessage ?? t('forum:publishFailed')}
               </Text>
             )}
-            {errorCode === null ? null : <ErrorCodeLine code={errorCode} />}
             <AuthSubmitButton
               testID="forum-publish"
               label={createPost.isPending ? t('forum:publishing') : t('forum:publish')}

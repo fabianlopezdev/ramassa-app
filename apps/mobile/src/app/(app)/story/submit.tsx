@@ -1,6 +1,5 @@
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
-import { ErrorCodeLine } from '@/components/error-code-line';
 import { StoryImagePreview } from '@/components/knowledge/story-image-preview';
 import { FormWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
@@ -385,7 +384,6 @@ export default function StorySubmissionScreen() {
                     {validationMessage ?? t('knowledge:submissionFailed')}
                   </Text>
                 )}
-                {errorCode === null ? null : <ErrorCodeLine code={errorCode} />}
                 <AuthSubmitButton
                   testID="story-submit-button"
                   label={
