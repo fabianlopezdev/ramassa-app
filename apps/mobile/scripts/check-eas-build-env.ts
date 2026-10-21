@@ -15,15 +15,13 @@
  * No imports: it runs before the dependencies are installed.
  */
 
-export interface EasBuildEnv {
-  readonly EAS_BUILD_PROFILE?: string;
-  readonly EXPO_PUBLIC_TEST_SIGN_IN?: string;
-}
+/** The build's environment: `EAS_BUILD_PROFILE` and `EXPO_PUBLIC_TEST_SIGN_IN` are read. */
+export type EasBuildEnv = Readonly<Record<string, string | undefined>>;
 
 /** Throws when a production profile carries the flag with any value but off. */
 export function checkEasBuildEnv(env: EasBuildEnv): void {
-  const profile = env.EAS_BUILD_PROFILE?.trim() ?? '';
-  const flag = env.EXPO_PUBLIC_TEST_SIGN_IN?.trim() ?? '';
+  const profile = env['EAS_BUILD_PROFILE']?.trim() ?? '';
+  const flag = env['EXPO_PUBLIC_TEST_SIGN_IN']?.trim() ?? '';
   if (profile.startsWith('production') && flag !== '' && flag !== 'false') {
     throw new Error(
       `EXPO_PUBLIC_TEST_SIGN_IN must never be set for a production build (profile "${profile}")`,
