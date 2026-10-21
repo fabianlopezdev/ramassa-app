@@ -176,5 +176,12 @@
   "municipalityOptionalHint": "You can leave this field blank.",
   "clearMunicipalityAction": "Clear selected town or city",
   "referenceEntitySupportQuestion": "Is an organisation supporting you?",
-  "referenceEntityRequired": "Enter the name of the organisation supporting you."
+  "referenceEntityRequired": "Enter the name of the organisation supporting you.",
+  "currentSituationTitle": "Your current situation",
+  "supportingOrganisationsTitle": "Support from other organisations",
+  "participationSupportTitle": "Support to attend training",
+  "otherSituationTitle": "Tell us about your situation",
+  "otherSituationDetailsLabel": "Your situation",
+  "supportingEntitiesInstruction": "If other organisations or programmes are supporting you, please add them here.",
+  "supportingEntitiesRemoveAction": "Remove {{name}}"
 }

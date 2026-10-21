@@ -32,7 +32,7 @@ interface SelectionChoiceSurfaceProps {
   readonly accessibilityHint?: string;
   readonly accessibilityRole?: AccessibilityRole;
   readonly testID?: string;
-  readonly isSelected: boolean;
+  readonly isSelected?: boolean;
   readonly onPress: () => void;
   readonly className?: string;
   readonly contentClassName: string;
@@ -80,7 +80,7 @@ export function SelectionChoiceSurface({
       shadow={<View pointerEvents="none" className="rounded-lg bg-primary" style={shadowStyle} />}
     >
       <SelectionTransition
-        active={isSelected}
+        active={isSelected === true}
         duration="base"
         className="absolute inset-0 bg-secondary"
         style={continuousCorners}

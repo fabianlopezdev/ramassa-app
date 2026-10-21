@@ -120,7 +120,10 @@ export function useWizardStep(screen: WizardStepKey): WizardStep {
       previous === 'documentation' &&
       hasDocumentDetails(onboardingDraftStore.loadDraft()?.documentation?.documentType)
         ? 'documentation-details'
-        : previous;
+        : previous === 'season' &&
+            onboardingDraftStore.loadDraft()?.season?.applicantStatus === 'other'
+          ? 'applicant-status-details'
+          : previous;
     // Editing from the summary goes back to that same summary, which re-reads
     // the draft on focus. Without history (a cold start mid-edit), replace.
     const backToSummary = () =>
@@ -134,7 +137,7 @@ export function useWizardStep(screen: WizardStepKey): WizardStep {
       previousDraftStep:
         previousStep === null
           ? null
-          : previousStep === 'documentation-details'
+          : previousStep === 'documentation-details' || previousStep === 'applicant-status-details'
             ? previousStep
             : wizardDraftStep(previousStep),
       // replace, not back(): after a resume the redirect REPLACED the route, so

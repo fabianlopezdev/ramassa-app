@@ -34,6 +34,9 @@ export const ONBOARDING_STEPS = [
   'equipment',
   // The registration questions (RAPP-306).
   'season',
+  'applicant-status-details',
+  'supporting-entities',
+  'participation-support',
   // The summary of everything before the terms (RAPP-300).
   'summary',
   'terms',

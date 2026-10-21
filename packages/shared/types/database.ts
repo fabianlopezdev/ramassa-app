@@ -2935,6 +2935,7 @@ export type Database = {
           address: string | null;
           anonymized_at: string | null;
           applicant_status: string | null;
+          applicant_status_details: string | null;
           avatar_url: string | null;
           childcare_need: string | null;
           city: string | null;
@@ -2981,6 +2982,7 @@ export type Database = {
           address?: string | null;
           anonymized_at?: string | null;
           applicant_status?: string | null;
+          applicant_status_details?: string | null;
           avatar_url?: string | null;
           childcare_need?: string | null;
           city?: string | null;
@@ -3027,6 +3029,7 @@ export type Database = {
           address?: string | null;
           anonymized_at?: string | null;
           applicant_status?: string | null;
+          applicant_status_details?: string | null;
           avatar_url?: string | null;
           childcare_need?: string | null;
           city?: string | null;
@@ -3396,6 +3399,7 @@ export type Database = {
       season_answers: {
         Row: {
           applicant_status: string | null;
+          applicant_status_details: string | null;
           childcare_need: string | null;
           org_id: string;
           profile_id: string;
@@ -3406,6 +3410,7 @@ export type Database = {
         };
         Insert: {
           applicant_status?: string | null;
+          applicant_status_details?: string | null;
           childcare_need?: string | null;
           org_id: string;
           profile_id: string;
@@ -3416,6 +3421,7 @@ export type Database = {
         };
         Update: {
           applicant_status?: string | null;
+          applicant_status_details?: string | null;
           childcare_need?: string | null;
           org_id?: string;
           profile_id?: string;
@@ -5312,6 +5318,7 @@ export type Database = {
         Returns: {
           address: string;
           applicant_status: string;
+          applicant_status_details: string;
           avatar_url: string;
           childcare_need: string;
           city: string;
@@ -5370,6 +5377,7 @@ export type Database = {
           address: string;
           anonymized_at: string;
           applicant_status: string;
+          applicant_status_details: string;
           avatar_url: string;
           childcare_need: string;
           city: string;
@@ -6079,6 +6087,7 @@ export type Database = {
         Args: { p_profile_id: string };
         Returns: {
           applicant_status: string;
+          applicant_status_details: string;
           childcare_need: string;
           season_name: string;
           specific_needs: string;

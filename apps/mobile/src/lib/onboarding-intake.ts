@@ -39,6 +39,8 @@ export const WIZARD_SCREEN_ROUTES = {
   logistics: '/onboarding/logistics',
   equipment: '/onboarding/equipment',
   season: '/onboarding/season',
+  'supporting-entities': '/onboarding/supporting-entities',
+  'participation-support': '/onboarding/participation-support',
   summary: '/onboarding/summary',
   terms: '/onboarding/terms',
 } as const satisfies Readonly<Record<WizardScreen, Href>>;
@@ -50,6 +52,8 @@ const WIZARD_SCREEN_DRAFT_STEP: Readonly<Record<WizardScreen, OnboardingStepName
   logistics: 'logistics',
   equipment: 'equipment',
   season: 'season',
+  'supporting-entities': 'supporting-entities',
+  'participation-support': 'participation-support',
   summary: 'summary',
   terms: 'terms',
 };
@@ -59,6 +63,8 @@ export function wizardStepRoute(
   step: WizardStepKey | OnboardingDraftStep,
   direction: 'forward' | 'back' = 'forward',
 ): Href {
+  if (step === 'applicant-status-details')
+    return `/onboarding/applicant-status-details${direction === 'back' ? '?entrance=none' : ''}` as Href;
   if (step === 'documentation-details')
     return `/onboarding/documentation-details${direction === 'back' ? '?entrance=none' : ''}` as Href;
   const screenId = customStepId(step);
@@ -185,6 +191,8 @@ export function seedDraftFromProfile(
   // The registration questions (RAPP-306).
   if (has('applicant_status') && profile.applicant_status != null) {
     season.applicantStatus = profile.applicant_status;
+    if (profile.applicant_status === 'other')
+      season.applicantStatusDetails = profile.applicant_status_details ?? undefined;
   }
   if (has('supporting_entities') && profile.supporting_entities != null) {
     season.supportingEntities = profile.supporting_entities;
@@ -222,6 +230,7 @@ export function storedPayloadFromProfile(profile: ProfileRow): Record<string, un
     clothing_size: profile.clothing_size,
     shoe_size: profile.shoe_size,
     applicant_status: profile.applicant_status ?? null,
+    applicant_status_details: profile.applicant_status_details ?? null,
     supporting_entities: profile.supporting_entities ?? null,
     childcare_need: profile.childcare_need ?? null,
     specific_needs: profile.specific_needs ?? null,

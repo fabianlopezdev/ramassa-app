@@ -51,7 +51,13 @@ export const QUESTION_SCREENS = [
   'season',
 ] as const;
 export type QuestionScreen = (typeof QUESTION_SCREENS)[number];
-export type WizardQuestionScreen = QuestionScreen | 'equipment';
+export const SEASON_WIZARD_SCREENS = [
+  'season',
+  'supporting-entities',
+  'participation-support',
+] as const;
+export type SeasonWizardScreen = (typeof SEASON_WIZARD_SCREENS)[number];
+export type WizardQuestionScreen = QuestionScreen | 'equipment' | SeasonWizardScreen;
 export type WizardScreen = WizardQuestionScreen | 'summary' | 'terms';
 export const WIZARD_QUESTION_SCREENS: readonly WizardQuestionScreen[] = [
   'identity',
@@ -59,7 +65,7 @@ export const WIZARD_QUESTION_SCREENS: readonly WizardQuestionScreen[] = [
   'documentation',
   'logistics',
   'equipment',
-  'season',
+  ...SEASON_WIZARD_SCREENS,
 ];
 
 /**
@@ -93,6 +99,9 @@ export const WIZARD_SCREEN_QUESTIONS: Readonly<
     (question) => question !== 'clothing_size' && question !== 'shoe_size',
   ),
   equipment: ['clothing_size', 'shoe_size'],
+  season: ['applicant_status'],
+  'supporting-entities': ['supporting_entities'],
+  'participation-support': ['childcare_need', 'specific_needs'],
 };
 
 /**
@@ -118,7 +127,7 @@ export const QUESTION_PAYLOAD_KEYS: Readonly<Record<IntakeQuestion, readonly str
   clothing_size: ['clothing_size'],
   shoe_size: ['shoe_size'],
   avatar: ['avatar_url'],
-  applicant_status: ['applicant_status'],
+  applicant_status: ['applicant_status', 'applicant_status_details'],
   supporting_entities: ['supporting_entities'],
   season_number: ['season_number'],
   childcare_need: ['childcare_need'],
@@ -186,6 +195,7 @@ function fullOrder(custom: readonly CustomWizardScreen[]): WizardStepKey[] {
     ...QUESTION_SCREENS.flatMap((screen): WizardStepKey[] => [
       screen,
       ...(screen === 'logistics' ? ['equipment' as const] : []),
+      ...(screen === 'season' ? SEASON_WIZARD_SCREENS.slice(1) : []),
       ...custom
         .filter((customScreen) => customScreen.afterScreen === screen)
         .map((customScreen) => customStepKey(customScreen.id)),

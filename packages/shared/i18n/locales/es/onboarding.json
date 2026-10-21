@@ -176,5 +176,12 @@
   "municipalityOptionalHint": "Puedes dejar este campo en blanco.",
   "clearMunicipalityAction": "Borrar el municipio seleccionado",
   "referenceEntitySupportQuestion": "¿Te acompaña alguna entidad?",
-  "referenceEntityRequired": "Escribe el nombre de la entidad que te acompaña."
+  "referenceEntityRequired": "Escribe el nombre de la entidad que te acompaña.",
+  "currentSituationTitle": "Tu situación actual",
+  "supportingOrganisationsTitle": "Apoyo de otras entidades",
+  "participationSupportTitle": "Apoyo para asistir a los entrenamientos",
+  "otherSituationTitle": "Cuéntanos tu situación",
+  "otherSituationDetailsLabel": "Tu situación",
+  "supportingEntitiesInstruction": "Si otras entidades o programas te están dando apoyo, añádelos aquí.",
+  "supportingEntitiesRemoveAction": "Eliminar {{name}}"
 }

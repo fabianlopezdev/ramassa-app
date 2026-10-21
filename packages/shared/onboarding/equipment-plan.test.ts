@@ -22,7 +22,7 @@ test('equipment is independent of contact and only asks missing sizes', () => {
   expect(screensToAsk(new Set(INTAKE_QUESTIONS.filter((q) => q !== 'shoe_size')))).toEqual([
     'equipment',
   ]);
-  expect(wizardScreenPosition('equipment', new Set())).toEqual({ step: 5, total: 8 });
+  expect(wizardScreenPosition('equipment', new Set())).toEqual({ step: 5, total: 10 });
 });
 
 test('existing after-logistics staff screens follow the contact and equipment pair', () => {
@@ -46,7 +46,7 @@ test('separate custom topics follow equipment and keep independent progress and 
   expect(previousWizardScreen('custom:participation', unanswered, topics)).toBe('custom:discovery');
   expect(wizardScreenPosition('custom:participation', unanswered, topics)).toEqual({
     step: 8,
-    total: 11,
+    total: 13,
   });
   expect(nextWizardScreen('custom:participation', unanswered, topics)).toBe('season');
   expect(

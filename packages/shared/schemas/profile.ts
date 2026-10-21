@@ -98,6 +98,7 @@ export const profileRowSchema = z.object({
   // them still parses. Applicant status and specific needs arrive only for her
   // own profile, or for staff with participants.view_sensitive.
   applicant_status: z.enum(APPLICANT_STATUSES).nullish(),
+  applicant_status_details: z.string().nullish(),
   supporting_entities: z.array(z.string()).nullish(),
   season_number: z.number().int().nullish(),
   childcare_need: z.enum(CHILDCARE_NEEDS).nullish(),
@@ -155,6 +156,7 @@ export function profileFromRow(row: ProfileRow): Record<string, unknown> {
     shoeSize: row.shoe_size ?? '38',
     avatarUrl: row.avatar_url ?? undefined,
     applicantStatus: row.applicant_status ?? undefined,
+    applicantStatusDetails: row.applicant_status_details ?? undefined,
     supportingEntities: row.supporting_entities ?? [],
     seasonNumber: row.season_number ?? undefined,
     childcareNeed: row.childcare_need ?? undefined,

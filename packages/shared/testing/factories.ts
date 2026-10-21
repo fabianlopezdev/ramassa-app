@@ -704,6 +704,7 @@ export function buildProfileFromFixture(
     updated_at: FIXTURE_TIMESTAMP,
     // The season registration answers (RAPP-303): not given unless a test says so.
     applicant_status: null,
+    applicant_status_details: null,
     supporting_entities: null,
     season_number: null,
     childcare_need: null,
@@ -1518,6 +1519,7 @@ export function buildSeasonAnswers(overrides: Partial<SeasonAnswersRow> = {}): S
     season_id: SEED_SEASON_ID,
     org_id: SEED_ORGANIZATION_ID,
     applicant_status: null,
+    applicant_status_details: null,
     supporting_entities: null,
     childcare_need: 'no',
     specific_needs: null,

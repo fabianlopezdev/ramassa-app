@@ -37,7 +37,7 @@ const tabularNumerals: TextStyle = { fontVariant: ['tabular-nums'] };
 
 export interface WizardFrameProps {
   /** Stable identity, independent of language and position in a personalized wizard. */
-  readonly screenId?: WizardStepKey | 'documentation-details';
+  readonly screenId?: WizardStepKey | 'documentation-details' | 'applicant-status-details';
   /**
    * Omit outside the wizard. The profile edit screen reuses this frame for its
    * header, keyboard handling and pinned action, but it is not step N of

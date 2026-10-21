@@ -45,7 +45,7 @@ export function SeasonAnswerRows({
     | 'season_number'
     | 'childcare_need'
     | 'specific_needs'
-  >;
+  > & { readonly applicant_status_details?: string | null };
   readonly emptyLabel: string;
   /** Staff's wording of these questions (RAPP-307); the app's own without it. */
   readonly wording?: BuiltinWording;
@@ -72,6 +72,14 @@ export function SeasonAnswerRows({
                   t(APPLICANT_STATUS_KEYS[profile.applicant_status]),
                 )
           }
+        />
+      ) : null}
+      {shows('applicant_status') &&
+      profile.applicant_status === 'other' &&
+      profile.applicant_status_details ? (
+        <ProfileRow
+          label={t('onboarding:otherSituationDetailsLabel')}
+          value={profile.applicant_status_details}
         />
       ) : null}
       {shows('supporting_entities') ? (

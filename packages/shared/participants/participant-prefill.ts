@@ -54,6 +54,7 @@ export interface PrefillRow {
   readonly shoe_size: string | null;
   // The season registration answers (RAPP-303); absent from older reads.
   readonly applicant_status?: string | null;
+  readonly applicant_status_details?: string | null;
   readonly supporting_entities?: readonly string[] | null;
   readonly season_number?: number | null;
   readonly childcare_need?: string | null;
@@ -141,6 +142,7 @@ const FIELD_QUESTION: Readonly<Record<ProfilePrefillField, IntakeQuestion>> = {
   clothingSize: 'clothing_size',
   shoeSize: 'shoe_size',
   applicantStatus: 'applicant_status',
+  applicantStatusDetails: 'applicant_status',
   supportingEntities: 'supporting_entities',
   seasonNumber: 'season_number',
   childcareNeed: 'childcare_need',
@@ -178,6 +180,7 @@ export function prefillFromRow(row: PrefillRow, answered: AnsweredQuestions): Pr
     shoeSize: value('shoeSize', row.shoe_size),
     applicantStatus: value('applicantStatus', row.applicant_status ?? null) as
       ProfilePrefillInput['applicantStatus'] | undefined,
+    applicantStatusDetails: value('applicantStatusDetails', row.applicant_status_details ?? null),
     supportingEntities: (value('supportingEntities', row.supporting_entities ?? null) ??
       []) as string[],
     seasonNumber: value('seasonNumber', row.season_number ?? null),
@@ -208,6 +211,7 @@ const PAYLOAD_KEY: Readonly<Record<ProfilePrefillField, string>> = {
   clothingSize: 'clothing_size',
   shoeSize: 'shoe_size',
   applicantStatus: 'applicant_status',
+  applicantStatusDetails: 'applicant_status_details',
   supportingEntities: 'supporting_entities',
   seasonNumber: 'season_number',
   childcareNeed: 'childcare_need',

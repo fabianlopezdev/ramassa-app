@@ -176,5 +176,12 @@
   "municipalityOptionalHint": "می‌توانید این بخش را خالی بگذارید.",
   "clearMunicipalityAction": "پاک کردن شهر انتخاب‌شده",
   "referenceEntitySupportQuestion": "آیا نهاد یا سازمانی از شما حمایت می‌کند؟",
-  "referenceEntityRequired": "نام نهاد یا سازمانی را که از شما حمایت می‌کند وارد کنید."
+  "referenceEntityRequired": "نام نهاد یا سازمانی را که از شما حمایت می‌کند وارد کنید.",
+  "currentSituationTitle": "وضعیت فعلی شما",
+  "supportingOrganisationsTitle": "حمایت نهادهای دیگر",
+  "participationSupportTitle": "حمایت برای شرکت در تمرین‌ها",
+  "otherSituationTitle": "درباره وضعیت خود بگویید",
+  "otherSituationDetailsLabel": "وضعیت شما",
+  "supportingEntitiesInstruction": "اگر نهادها یا برنامه‌های دیگری از شما حمایت می‌کنند، لطفاً آن‌ها را اینجا اضافه کنید.",
+  "supportingEntitiesRemoveAction": "حذف {{name}}"
 }

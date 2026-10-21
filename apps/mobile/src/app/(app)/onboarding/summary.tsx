@@ -21,6 +21,7 @@ import {
   wizardStepRoute,
 } from '@/lib/onboarding-intake';
 import { useBuiltinWording, useWizardIntake, useWizardStep } from '@/lib/onboarding-intake-context';
+import { SEASON_SCREEN_TITLE_KEYS } from '@/lib/season-draft';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import { useCallback, useState } from 'react';
@@ -31,6 +32,7 @@ import { countryLabelForCanonical } from '@ramassa/shared/i18n/countries';
 import { municipalityLabelForCanonical } from '@ramassa/shared/i18n/municipalities';
 import {
   customStepKey,
+  SEASON_WIZARD_SCREENS,
   WIZARD_SCREEN_QUESTIONS,
   type IntakeQuestion,
   type QuestionScreen,
@@ -398,30 +400,35 @@ export default function SummaryStepScreen() {
       <CustomSections after="logistics" answers={answers} language={locale} />
 
       {/* The registration questions (RAPP-306), from her draft like the rest. */}
-      {hasQuestions('season') ? (
-        <ProfileSection title={t('seasonSectionTitle')}>
-          <SeasonAnswerRows
-            showSeasonNumber={false}
-            emptyLabel={notGiven}
-            wording={wording}
-            shows={shows}
-            profile={{
-              applicant_status: (season.applicantStatus as never) ?? null,
-              supporting_entities: Array.isArray(season.supportingEntities)
-                ? (season.supportingEntities as string[])
-                : null,
-              season_number: null,
-              childcare_need: (season.childcareNeed as never) ?? null,
-              specific_needs: text(season.specificNeeds),
-            }}
-          />
-          <EditButton
-            section="season"
-            title={t('seasonSectionTitle')}
-            onPress={() => edit('season')}
-          />
-        </ProfileSection>
-      ) : null}
+      {SEASON_WIZARD_SCREENS.map((screen) =>
+        hasQuestions(screen) ? (
+          <ProfileSection key={screen} title={t(SEASON_SCREEN_TITLE_KEYS[screen])}>
+            <SeasonAnswerRows
+              showSeasonNumber={false}
+              emptyLabel={notGiven}
+              wording={wording}
+              shows={(question) =>
+                WIZARD_SCREEN_QUESTIONS[screen].includes(question) && shows(question)
+              }
+              profile={{
+                applicant_status: (season.applicantStatus as never) ?? null,
+                applicant_status_details: text(season.applicantStatusDetails),
+                supporting_entities: Array.isArray(season.supportingEntities)
+                  ? (season.supportingEntities as string[])
+                  : null,
+                season_number: null,
+                childcare_need: (season.childcareNeed as never) ?? null,
+                specific_needs: text(season.specificNeeds),
+              }}
+            />
+            <EditButton
+              section={screen}
+              title={t(SEASON_SCREEN_TITLE_KEYS[screen])}
+              onPress={() => edit(screen)}
+            />
+          </ProfileSection>
+        ) : null,
+      )}
       <CustomSections after="season" answers={answers} language={locale} />
     </WizardFrame>
   );

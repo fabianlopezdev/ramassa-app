@@ -176,5 +176,12 @@
   "municipalityOptionalHint": "يمكنكِ ترك هذا الحقل فارغًا.",
   "clearMunicipalityAction": "مسح البلدية المختارة",
   "referenceEntitySupportQuestion": "هل تدعمكِ جمعية أو منظمة؟",
-  "referenceEntityRequired": "اكتبي اسم الجمعية أو المنظمة التي تدعمكِ."
+  "referenceEntityRequired": "اكتبي اسم الجمعية أو المنظمة التي تدعمكِ.",
+  "currentSituationTitle": "وضعكِ الحالي",
+  "supportingOrganisationsTitle": "دعم من منظمات أخرى",
+  "participationSupportTitle": "دعم لحضور التدريبات",
+  "otherSituationTitle": "أخبرينا عن وضعكِ",
+  "otherSituationDetailsLabel": "وضعكِ",
+  "supportingEntitiesInstruction": "إذا كانت منظمات أو برامج أخرى تدعمكِ، فأضيفيها هنا.",
+  "supportingEntitiesRemoveAction": "إزالة {{name}}"
 }

@@ -17,7 +17,7 @@ export function SelectionChoiceCard({
   readonly language?: string;
   readonly fontClass: string;
   readonly isSelected: boolean;
-  readonly rowStyle: StyleProp<ViewStyle>;
+  readonly rowStyle?: StyleProp<ViewStyle>;
   readonly onPress: () => void;
 }) {
   return (

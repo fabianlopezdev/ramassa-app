@@ -302,6 +302,10 @@ export function buildCompleteOnboardingPayload(steps: OnboardingSteps, terms: Te
       ? {}
       : {
           applicant_status: steps.season.applicantStatus ?? null,
+          applicant_status_details:
+            steps.season.applicantStatus === 'other'
+              ? (steps.season.applicantStatusDetails ?? null)
+              : null,
           supporting_entities:
             steps.season.supportingEntities === undefined ||
             steps.season.supportingEntities.length === 0

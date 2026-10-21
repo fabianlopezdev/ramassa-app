@@ -176,5 +176,12 @@
   "municipalityOptionalHint": "Pots deixar aquest camp en blanc.",
   "clearMunicipalityAction": "Esborra el municipi seleccionat",
   "referenceEntitySupportQuestion": "T’acompanya alguna entitat?",
-  "referenceEntityRequired": "Escriu el nom de l’entitat que t’acompanya."
+  "referenceEntityRequired": "Escriu el nom de l’entitat que t’acompanya.",
+  "currentSituationTitle": "La teva situació actual",
+  "supportingOrganisationsTitle": "Suport d’altres entitats",
+  "participationSupportTitle": "Suport per assistir als entrenaments",
+  "otherSituationTitle": "Explica’ns la teva situació",
+  "otherSituationDetailsLabel": "La teva situació",
+  "supportingEntitiesInstruction": "Si altres entitats o programes et donen suport, afegeix-los aquí.",
+  "supportingEntitiesRemoveAction": "Elimina {{name}}"
 }
