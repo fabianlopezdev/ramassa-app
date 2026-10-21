@@ -5314,6 +5314,10 @@ export type Database = {
         Args: { p_preset_id: string };
         Returns: undefined;
       };
+      delete_test_player: {
+        Args: { p_participant_id: string };
+        Returns: undefined;
+      };
       discard_walk_in: { Args: { p_id: string }; Returns: undefined };
       edit_own_forum_post: {
         Args: { p_content: string; p_post_id: string };
@@ -5608,6 +5612,10 @@ export type Database = {
           published_at: string;
           visible_at?: string;
         };
+        Returns: boolean;
+      };
+      is_deletable_test_player: {
+        Args: { p_profile_id: string };
         Returns: boolean;
       };
       is_event_recurrence_rule_valid: {
@@ -6680,6 +6688,15 @@ export type Database = {
           p_version_id: string;
         };
         Returns: string;
+      };
+      test_sign_in_account: { Args: { p_email: string }; Returns: string };
+      test_sign_in_record_success: {
+        Args: { p_profile_id: string };
+        Returns: undefined;
+      };
+      test_sign_in_register_attempt: {
+        Args: { p_email: string; p_network: string };
+        Returns: boolean;
       };
       transition_deletion_request: {
         Args: {

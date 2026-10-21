@@ -1,6 +1,7 @@
 export {
   anonymizeParticipant,
   deleteParticipantPermanently,
+  deleteTestPlayer,
   DELETION_REQUEST_COLUMNS,
   eraseParticipant,
   fetchDeletionRequests,

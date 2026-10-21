@@ -42,6 +42,8 @@ const ERASURE_ERROR_CODE_BY_TOKEN: readonly (readonly [string, AppErrorCode])[] 
   ['ANONYMIZE_NO_SUBJECT', 'DB-2'],
   ['ANONYMIZE_NOT_A_PARTICIPANT', 'DB-2'],
   ['ANONYMIZE_ALREADY_DONE', 'DB-2'],
+  // Deleting a test player (RAPP-617): a real player is never one.
+  ['TEST_PLAYER/NOT_A_TEST_PLAYER', 'DB-2'],
 ];
 
 function toTypedError(message: string): AppError {
@@ -73,6 +75,20 @@ export async function deleteParticipantPermanently(
 ): Promise<void> {
   const { error } = await client.rpc('delete_participant_permanently', {
     participant_id: participantId,
+  });
+  if (error) {
+    throw toTypedError(error.message);
+  }
+}
+
+/**
+ * Deletes a TEST player's record (RAPP-617), the second half of
+ * `eraseParticipant` for a made-up player: the database refuses a real one,
+ * and like the RGPD erasure it needs the media sweep's fresh receipt first.
+ */
+export async function deleteTestPlayer(client: Client, participantId: string): Promise<void> {
+  const { error } = await client.rpc('delete_test_player', {
+    p_participant_id: participantId,
   });
   if (error) {
     throw toTypedError(error.message);
