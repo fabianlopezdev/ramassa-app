@@ -130,7 +130,7 @@ export function GalleryModeration({ items }: { readonly items: readonly MediaIte
                 className="space-y-3 rounded-xl border border-neutral-200 bg-white p-4 shadow-sm"
               >
                 {/* A fixed frame, so the card keeps its shape while the photo loads. */}
-                <div className="flex aspect-[4/3] items-center justify-center overflow-hidden rounded-lg bg-neutral-100 text-sm font-semibold text-neutral-600">
+                <div className="flex aspect-[4/3] items-center justify-center overflow-hidden rounded-lg bg-muted text-sm font-semibold text-neutral-600">
                   {preview === null || mediaWorkerUrl === undefined ? (
                     t('moderationVideo')
                   ) : (
@@ -162,7 +162,7 @@ export function GalleryModeration({ items }: { readonly items: readonly MediaIte
                     {isVisible ? null : (
                       <span
                         data-testid={`gallery-state-${item.id}`}
-                        className="rounded-full bg-neutral-100 px-3 py-1 text-neutral-700"
+                        className="rounded-full bg-muted px-3 py-1 text-neutral-700"
                       >
                         {item.moderation_state === 'hidden' ? t('stateHidden') : t('statePending')}
                       </span>

@@ -173,7 +173,7 @@ export function StaffFeedbackInbox({
                   <span className="rounded-full bg-primary/10 px-3 py-1 text-neutral-800">
                     {t(typeKey[submission.type])}
                   </span>
-                  <span className="rounded-full bg-neutral-100 px-3 py-1 text-neutral-700">
+                  <span className="rounded-full bg-muted px-3 py-1 text-neutral-700">
                     {t(statusKey[submission.status])}
                   </span>
                 </div>

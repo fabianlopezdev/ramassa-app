@@ -359,7 +359,7 @@ export function NotificationWorkspace({
             data-testid="notification-confirmation"
             data-recipient-count={audience.length}
             data-device-count={deviceCount}
-            className="rounded-lg bg-neutral-50 p-4 text-sm text-neutral-800"
+            className="rounded-lg bg-canvas p-4 text-sm text-neutral-800"
             aria-live="polite"
           >
             {isPreviewing
@@ -506,7 +506,7 @@ export function NotificationWorkspace({
               <li
                 key={group.id}
                 data-testid={`notification-group-${group.id}`}
-                className="flex items-center justify-between gap-3 rounded-lg bg-neutral-50 p-3"
+                className="flex items-center justify-between gap-3 rounded-lg bg-canvas p-3"
               >
                 <span>
                   <strong>{group.name}</strong>

@@ -74,7 +74,7 @@ export function ParticipantsTable({ page, filterOptions, search }: ParticipantsT
             </Link>
             {/* A made-up player for designing the onboarding (RAPP-615). */}
             {row.original.is_test_account ? (
-              <Badge variant="outline">{t('testBadge')}</Badge>
+              <Badge variant="muted">{t('testBadge')}</Badge>
             ) : null}
           </span>
         ),

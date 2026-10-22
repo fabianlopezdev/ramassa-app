@@ -318,7 +318,7 @@ export function ParticipantDetail({
               {participant.is_forum_banned ? (
                 <Badge variant="destructive">{t('forumBanned')}</Badge>
               ) : null}
-              {isTestPlayer ? <Badge variant="outline">{t('testBadge')}</Badge> : null}
+              {isTestPlayer ? <Badge variant="muted">{t('testBadge')}</Badge> : null}
             </div>
             <p className="text-start text-sm text-muted-foreground">
               {t('detailJoinedOn', {

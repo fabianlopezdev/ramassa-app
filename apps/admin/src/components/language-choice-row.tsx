@@ -73,7 +73,7 @@ export function LanguageChoiceButtons({
             onKeyDown={(event) => onKeyDown(event, index)}
             className={
               checked
-                ? 'min-h-11 rounded-full bg-primary/10 px-4 text-sm font-semibold text-primary focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none'
+                ? 'min-h-11 rounded-full bg-muted px-4 text-sm font-semibold text-primary focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none'
                 : 'min-h-11 rounded-full px-4 text-sm text-muted-foreground hover:text-primary focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none'
             }
           >

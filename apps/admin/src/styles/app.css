@@ -78,13 +78,16 @@
   --primary-foreground: var(--ramassa-color-white);
   --secondary: var(--ramassa-color-secondary);
   --secondary-foreground: var(--ramassa-color-neutral-900);
-  --muted: oklch(0.97 0 0);
+  /* Small fills (selected items, badges, row hovers) take a deeper step of
+     the splash screen's warm white, so no cold grey is left (RAPP-631) and
+     they still show against the canvas. */
+  --muted: color-mix(in oklab, var(--ramassa-color-surface-warm), black 5%);
   /* Darker than the shadcn defaults so small muted text on --muted and red
      text on a 10% red tint both stay above 4.5:1 (WCAG AA, RAPP-438). */
   --muted-foreground: oklch(0.51 0 0);
-  /* Hover and selected surfaces carry a tint of the brand (RAPP-631), so a
-     ghost button or a menu row reads as the club's, never as plain grey. */
-  --accent: color-mix(in oklab, var(--ramassa-color-primary) 8%, white);
+  /* Hover and selected surfaces use the same warm fill with navy text
+     (RAPP-631), so a ghost button or a menu row reads as the club's. */
+  --accent: var(--muted);
   --accent-foreground: var(--ramassa-color-primary);
   --destructive: oklch(0.52 0.21 27.325);
   --border: oklch(0.922 0.006 85);
