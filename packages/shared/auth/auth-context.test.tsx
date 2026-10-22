@@ -13,6 +13,7 @@ function makeClient(options: {
   permissions?: readonly string[];
   sessionCurrent?: boolean;
   termsNeeded?: boolean | 'error';
+  secondFactorWaived?: boolean;
 }) {
   const rpcCalls: string[] = [];
   const localSignOuts: string[] = [];
@@ -58,6 +59,10 @@ function makeClient(options: {
         return { data: options.sessionCurrent ?? true, error: null };
       }
       // The app terms gate (RAPP-613), read for players only.
+      // The staging waiver (RAPP-628), asked below aal2 for team members and entity contacts.
+      if (name === 'my_second_factor_waived') {
+        return { data: options.secondFactorWaived ?? false, error: null };
+      }
       if (name === 'my_terms_acceptance_needed') {
         return options.termsNeeded === 'error'
           ? { data: null, error: { message: 'network' } }
@@ -387,4 +392,158 @@ test('a team member is never asked about the app terms', async () => {
   );
   await waitFor(() => expect(textContentOf(getByTestId('terms'))).toBe('ready|false'));
   expect(rpcCalls).not.toContain('my_terms_acceptance_needed');
+});
+
+// An access token carrying these claims, as Supabase issues it (RAPP-628).
+function sessionWithClaims(userId: string, claims: Record<string, unknown>) {
+  const encode = (value: unknown) =>
+    btoa(JSON.stringify(value)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  return {
+    user: { id: userId },
+    access_token: `${encode({ alg: 'none' })}.${encode({ sub: userId, ...claims })}.signature`,
+  };
+}
+
+function SecondFactorProbe() {
+  const {
+    isLoading,
+    needsSecondFactor,
+    secondFactorWaived,
+    permissions,
+    permissionsAreCurrent,
+    refreshProfile,
+  } = useAuth();
+  latestRefresh = refreshProfile;
+  const state = `${isLoading ? 'loading' : 'ready'}|${needsSecondFactor ? 'verify' : 'open'}|${
+    secondFactorWaived ? 'waived' : 'kept'
+  }|${permissionsAreCurrent ? 'current' : 'stale'}|${[...permissions].sort().join(',')}`;
+  return <span data-testid="second-factor">{state}</span>;
+}
+
+test('a waived test account at aal1 skips the second factor and reads her permissions (RAPP-628)', async () => {
+  const { client } = makeClient({
+    initialSession: sessionWithClaims('u1', { aal: 'aal1', session_id: 's1' }),
+    role: 'staff',
+    permissions: ['onboarding.design', 'test_players.manage'],
+    secondFactorWaived: true,
+  });
+  const { getByTestId } = render(
+    <AuthProvider client={client}>
+      <SecondFactorProbe />
+    </AuthProvider>,
+  );
+  await waitFor(() =>
+    expect(textContentOf(getByTestId('second-factor'))).toBe(
+      'ready|open|waived|current|onboarding.design,test_players.manage',
+    ),
+  );
+});
+
+test('a real team member at aal1 still verifies her authenticator', async () => {
+  const { client } = makeClient({
+    initialSession: sessionWithClaims('u1', { aal: 'aal1', session_id: 's1' }),
+    role: 'staff',
+    permissions: [],
+    secondFactorWaived: false,
+  });
+  const { getByTestId } = render(
+    <AuthProvider client={client}>
+      <SecondFactorProbe />
+    </AuthProvider>,
+  );
+  await waitFor(() =>
+    expect(textContentOf(getByTestId('second-factor'))).toBe('ready|verify|kept|current|'),
+  );
+});
+
+test('an entity contact can be waived too', async () => {
+  const { client } = makeClient({
+    initialSession: sessionWithClaims('u4', { aal: 'aal1', session_id: 's4' }),
+    role: 'entity',
+    secondFactorWaived: true,
+  });
+  const { getByTestId } = render(
+    <AuthProvider client={client}>
+      <SecondFactorProbe />
+    </AuthProvider>,
+  );
+  await waitFor(() =>
+    expect(textContentOf(getByTestId('second-factor'))).toBe('ready|open|waived|current|'),
+  );
+});
+
+test('a player and an aal2 session never ask about the waiver', async () => {
+  const player = makeClient({
+    initialSession: sessionWithClaims('u2', { aal: 'aal1', session_id: 's2' }),
+    role: 'player',
+    secondFactorWaived: true,
+  });
+  const playerView = render(
+    <AuthProvider client={player.client}>
+      <SecondFactorProbe />
+    </AuthProvider>,
+  );
+  await waitFor(() =>
+    expect(textContentOf(playerView.getByTestId('second-factor'))).toBe('ready|open|kept|current|'),
+  );
+  expect(player.rpcCalls).not.toContain('my_second_factor_waived');
+  playerView.unmount();
+
+  const verified = makeClient({
+    initialSession: sessionWithClaims('u1', { aal: 'aal2', session_id: 's1' }),
+    role: 'admin',
+    permissions: ['team.manage'],
+    secondFactorWaived: true,
+  });
+  const verifiedView = render(
+    <AuthProvider client={verified.client}>
+      <SecondFactorProbe />
+    </AuthProvider>,
+  );
+  await waitFor(() =>
+    expect(textContentOf(verifiedView.getByTestId('second-factor'))).toBe(
+      'ready|open|kept|current|team.manage',
+    ),
+  );
+  expect(verified.rpcCalls).not.toContain('my_second_factor_waived');
+});
+
+test('the waiver is asked once per session, not on every refresh', async () => {
+  const { client, rpcCalls, emit } = makeClient({
+    initialSession: sessionWithClaims('u1', { aal: 'aal1', session_id: 's1' }),
+    role: 'staff',
+    permissions: ['onboarding.design'],
+    secondFactorWaived: true,
+  });
+  const { getByTestId } = render(
+    <AuthProvider client={client}>
+      <SecondFactorProbe />
+    </AuthProvider>,
+  );
+  await waitFor(() =>
+    expect(textContentOf(getByTestId('second-factor'))).toBe(
+      'ready|open|waived|current|onboarding.design',
+    ),
+  );
+  // A token refresh keeps the session, and the wizard's refresh re-reads the profile.
+  await act(async () => {
+    emit(sessionWithClaims('u1', { aal: 'aal1', session_id: 's1', exp: 2 }));
+  });
+  await act(async () => {
+    await latestRefresh?.();
+  });
+  await waitFor(() =>
+    expect(textContentOf(getByTestId('second-factor'))).toBe(
+      'ready|open|waived|current|onboarding.design',
+    ),
+  );
+  expect(rpcCalls.filter((name) => name === 'my_second_factor_waived')).toHaveLength(1);
+
+  // A new session asks again.
+  await act(async () => {
+    emit(sessionWithClaims('u1', { aal: 'aal1', session_id: 's2' }));
+  });
+  await waitFor(() =>
+    expect(rpcCalls.filter((name) => name === 'my_second_factor_waived')).toHaveLength(2),
+  );
 });

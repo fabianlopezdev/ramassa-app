@@ -21,6 +21,8 @@ function fakeClient(options: {
   readonly role?: string | null;
   readonly permissions?: readonly string[];
   readonly permissionsFail?: boolean;
+  /** The staging waiver's answer (RAPP-628); 'fail' when the lookup fails. */
+  readonly secondFactorWaived?: boolean | 'fail';
 }): StaffRouteGuardClient & {
   readonly rpcCalls: string[];
   readonly profileReads: string[];
@@ -73,6 +75,11 @@ function fakeClient(options: {
     },
     rpc: async (name: string) => {
       rpcCalls.push(name);
+      if (name === 'my_second_factor_waived') {
+        return options.secondFactorWaived === 'fail'
+          ? { data: null, error: { message: 'network down' } }
+          : { data: options.secondFactorWaived ?? false, error: null };
+      }
       if (state.failPermissions) {
         return { data: null, error: { message: 'network down' } };
       }
@@ -169,14 +176,15 @@ describe('before the second factor no page loader runs (RAPP-615)', () => {
     const target = await redirectOf(client, '/dashboard?tab=x');
     expect(target?.to).toBe('/login');
     expect(target?.search).toEqual({ next: '/dashboard?tab=x' });
-    // Nothing that needs aal2 is asked first, not even the permissions.
-    expect(client.rpcCalls).toEqual([]);
+    // Nothing that needs aal2 is asked first, not even the permissions: only
+    // whether her second factor is waived (RAPP-628).
+    expect(client.rpcCalls).toEqual(['my_second_factor_waived']);
   });
 
   test('a staff member who must still set one up goes there too', async () => {
     const client = fakeClient({ signedIn: true, level: 'aal1', nextLevel: 'aal1', role: 'staff' });
     expect(await targetOf(client, '/participants')).toBe('/login');
-    expect(client.rpcCalls).toEqual([]);
+    expect(client.rpcCalls).toEqual(['my_second_factor_waived']);
   });
 
   test('an admin who must set one up goes there too', async () => {
@@ -235,5 +243,80 @@ describe('the guard reads the permissions once per session (RAPP-615)', () => {
     cache.clear();
     await redirectOf(client, '/onboarding', cache);
     expect(client.rpcCalls).toEqual(['my_permissions', 'my_permissions']);
+  });
+});
+
+describe('on staging a test account skips the second factor (RAPP-628)', () => {
+  test('a waived test account with an authenticator at aal1 reaches her areas', async () => {
+    const client = fakeClient({
+      signedIn: true,
+      level: 'aal1',
+      nextLevel: 'aal2',
+      permissions: DESIGN,
+      secondFactorWaived: true,
+    });
+    expect(await targetOf(client, '/onboarding')).toBeNull();
+    // The design role's redirect still applies.
+    expect(await targetOf(client, '/dashboard')).toBe('/onboarding');
+  });
+
+  test('a waived test account without an authenticator is never asked to set one up', async () => {
+    const client = fakeClient({
+      signedIn: true,
+      level: 'aal1',
+      nextLevel: 'aal1',
+      role: 'staff',
+      permissions: DESIGN,
+      secondFactorWaived: true,
+    });
+    expect(await targetOf(client, '/participants')).toBeNull();
+  });
+
+  test('a real team member still goes to the second-factor step', async () => {
+    const client = fakeClient({
+      signedIn: true,
+      level: 'aal1',
+      nextLevel: 'aal2',
+      secondFactorWaived: false,
+    });
+    expect(await targetOf(client, '/dashboard')).toBe('/login');
+    expect(client.rpcCalls).not.toContain('my_permissions');
+  });
+
+  test('a failed waiver lookup keeps the second factor, and the next navigation asks again', async () => {
+    const client = fakeClient({
+      signedIn: true,
+      level: 'aal1',
+      nextLevel: 'aal2',
+      secondFactorWaived: 'fail',
+    });
+    const cache = createStaffAccessCache();
+    expect(await targetOf(client, '/dashboard', cache)).toBe('/login');
+    expect(await targetOf(client, '/dashboard', cache)).toBe('/login');
+    expect(client.rpcCalls).toEqual(['my_second_factor_waived', 'my_second_factor_waived']);
+  });
+
+  test('the waiver is asked once per session', async () => {
+    const client = fakeClient({
+      signedIn: true,
+      level: 'aal1',
+      nextLevel: 'aal2',
+      permissions: DESIGN,
+      secondFactorWaived: true,
+    });
+    const cache = createStaffAccessCache();
+    for (const path of ['/onboarding', '/participants', '/dashboard']) {
+      await redirectOf(client, path, cache);
+    }
+    expect(client.rpcCalls.filter((name) => name === 'my_second_factor_waived')).toHaveLength(1);
+  });
+
+  test('a player and an aal2 session never ask about the waiver', async () => {
+    const player = fakeClient({ signedIn: true, level: 'aal1', nextLevel: 'aal1', role: 'player' });
+    expect(await targetOf(player, '/dashboard')).toBeNull();
+    expect(player.rpcCalls).toEqual([]);
+    const verified = fakeClient({ signedIn: true, permissions: DESIGN, secondFactorWaived: true });
+    await redirectOf(verified, '/onboarding');
+    expect(verified.rpcCalls).toEqual(['my_permissions']);
   });
 });

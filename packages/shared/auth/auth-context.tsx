@@ -32,7 +32,13 @@ import type { AppRole } from '../schemas/auth';
 import type { Database } from '../types/database';
 import { fetchProfileSummary } from './auth-actions';
 import { isSamePermissionSet, subscribeToOwnPermissionChanges } from './permission-changes';
-import { assuranceLevelOf, needsSecondFactor as sessionNeedsSecondFactor } from './second-factor';
+import {
+  assuranceLevelOf,
+  fetchSecondFactorWaived,
+  mayHaveSecondFactorWaived,
+  sessionIdOf,
+  needsSecondFactor as sessionNeedsSecondFactor,
+} from './second-factor';
 import { isSessionCurrent } from './sessions';
 
 type Client = SupabaseClient<Database>;
@@ -62,6 +68,13 @@ export interface AuthState {
    * is, so both apps show the second-factor step first.
    */
   readonly needsSecondFactor: boolean;
+  /**
+   * True for a test account's session on staging, where the second factor is
+   * switched off for test accounts (RAPP-628): she reaches her data at aal1 and
+   * never sees the authenticator step. Always false on production, for real
+   * accounts, for players and for sessions already at aal2.
+   */
+  readonly secondFactorWaived: boolean;
   /**
    * False just after the second factor verifies, until the permissions are read
    * again at the new assurance level (RAPP-233). Screens that route by
@@ -104,6 +117,7 @@ export function AuthProvider({ client, children, onError }: AuthProviderProps) {
   const [role, setRole] = useState<AppRole | null>(null);
   const [permissions, setPermissions] = useState<ReadonlySet<PermissionCode>>(NO_PERMISSIONS);
   const [permissionsLevel, setPermissionsLevel] = useState<'aal1' | 'aal2' | null>(null);
+  const [secondFactorWaived, setSecondFactorWaived] = useState(false);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const [needsTermsAcceptance, setNeedsTermsAcceptance] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -122,6 +136,9 @@ export function AuthProvider({ client, children, onError }: AuthProviderProps) {
   // overwrite the state of a newer one (sign in, then sign out quickly).
   const latestChangeRef = useRef(0);
   const sessionRef = useRef<Session | null>(null);
+  // The waiver is asked once per session (RAPP-628): a token refresh or a
+  // profile refresh keeps the same answer. A failed lookup is not kept.
+  const waiverRef = useRef<{ readonly key: string; readonly waived: boolean } | null>(null);
   const applySessionRef = useRef<((next: Session | null) => Promise<void>) | null>(null);
 
   useEffect(() => {
@@ -140,10 +157,12 @@ export function AuthProvider({ client, children, onError }: AuthProviderProps) {
         if (isSubscribed && latestChangeRef.current === changeId) {
           setRole(null);
           setPermissions(NO_PERMISSIONS);
+          setSecondFactorWaived(false);
           setNeedsOnboarding(false);
           setNeedsTermsAcceptance(false);
           setIsLoading(false);
         }
+        waiverRef.current = null;
         return;
       }
 
@@ -156,7 +175,10 @@ export function AuthProvider({ client, children, onError }: AuthProviderProps) {
         }
         const summary = await fetchProfileSummary(client, nextSession.user.id);
         const isTeamMember = summary?.role === 'staff' || summary?.role === 'admin';
-        const nextPermissions = isTeamMember ? await fetchMyPermissions(client) : NO_PERMISSIONS;
+        const [nextPermissions, waived] = await Promise.all([
+          isTeamMember ? fetchMyPermissions(client) : NO_PERMISSIONS,
+          readSecondFactorWaiver(summary?.role ?? null, nextSession),
+        ]);
         const joinedPlayer = summary?.role === 'player' && summary.termsAcceptedAt !== null;
         const termsNeeded = joinedPlayer
           ? await fetchTermsAcceptanceNeeded(client).catch(() => false)
@@ -169,6 +191,7 @@ export function AuthProvider({ client, children, onError }: AuthProviderProps) {
             isSamePermissionSet(current, nextPermissions) ? current : nextPermissions,
           );
           setPermissionsLevel(assuranceLevelOf(nextSession));
+          setSecondFactorWaived(waived);
           setNeedsOnboarding(summary === null || summary.termsAcceptedAt === null);
           setNeedsTermsAcceptance(termsNeeded);
         }
@@ -176,6 +199,7 @@ export function AuthProvider({ client, children, onError }: AuthProviderProps) {
         if (isSubscribed && latestChangeRef.current === changeId) {
           setRole(null);
           setPermissions(NO_PERMISSIONS);
+          setSecondFactorWaived(false);
           setNeedsOnboarding(false);
           setNeedsTermsAcceptance(false);
         }
@@ -185,6 +209,24 @@ export function AuthProvider({ client, children, onError }: AuthProviderProps) {
           setIsLoading(false);
           setIsResolvingProfile(false);
         }
+      }
+    }
+
+    // Only a team member or entity contact below aal2 asks (RAPP-628); a
+    // player costs no round trip. A failed lookup keeps the second factor.
+    async function readSecondFactorWaiver(
+      nextRole: AppRole | null,
+      nextSession: Session,
+    ): Promise<boolean> {
+      if (!mayHaveSecondFactorWaived(nextRole, nextSession)) return false;
+      const key = `${nextSession.user.id}:${sessionIdOf(nextSession) ?? ''}`;
+      if (waiverRef.current?.key === key) return waiverRef.current.waived;
+      try {
+        const waived = await fetchSecondFactorWaived(client);
+        waiverRef.current = { key, waived };
+        return waived;
+      } catch {
+        return false;
       }
     }
 
@@ -225,7 +267,8 @@ export function AuthProvider({ client, children, onError }: AuthProviderProps) {
       permissions,
       isLoading,
       isResolvingProfile,
-      needsSecondFactor: sessionNeedsSecondFactor(role, session),
+      needsSecondFactor: sessionNeedsSecondFactor(role, session, secondFactorWaived),
+      secondFactorWaived,
       permissionsAreCurrent:
         session === null ||
         (role !== 'staff' && role !== 'admin') ||
@@ -239,6 +282,7 @@ export function AuthProvider({ client, children, onError }: AuthProviderProps) {
       role,
       permissions,
       permissionsLevel,
+      secondFactorWaived,
       isLoading,
       isResolvingProfile,
       needsOnboarding,

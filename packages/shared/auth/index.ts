@@ -21,6 +21,8 @@ export {
 export { mapSupabaseAuthError, type SupabaseAuthErrorShape } from './auth-error';
 export {
   assuranceLevelOf,
+  fetchSecondFactorWaived,
+  mayHaveSecondFactorWaived,
   needsSecondFactor,
   resetSecondFactor,
   startSecondFactor,

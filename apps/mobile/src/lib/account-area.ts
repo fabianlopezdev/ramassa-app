@@ -27,6 +27,11 @@ type RememberedArea = Extract<AccountArea, 'player' | 'team' | 'entity'>;
 export interface RememberedAccount {
   readonly area: RememberedArea;
   readonly permissions: ReadonlySet<PermissionCode>;
+  /**
+   * Her second factor was waived (a staging test account, RAPP-628), so the
+   * moment after the email code does not show the authenticator step.
+   */
+  readonly secondFactorWaived?: boolean;
 }
 
 export interface AccountAreaStorage {
@@ -64,16 +69,23 @@ export function resolveAccountArea(input: {
  * session whose live role is not known yet but whose area this device
  * remembers (RAPP-430): right after the email code that area is already
  * known, and without this the shell mounted on the weaker session and its
- * queries kept the empty answers the database gives it.
+ * queries kept the empty answers the database gives it. A staging test
+ * account whose second factor is waived (RAPP-628) never waits: the database
+ * lets her session in at aal1.
  */
 export function awaitsSecondFactor(input: {
   readonly area: AccountArea;
   readonly role: AppRole | null;
   readonly needsSecondFactor: boolean;
   readonly assurance: 'aal1' | 'aal2' | null;
+  /** The live waiver once the role is known, the remembered one before. */
+  readonly secondFactorWaived?: boolean;
 }): boolean {
   if (input.area !== 'team' && input.area !== 'entity') return false;
-  return input.needsSecondFactor || (input.role === null && input.assurance !== 'aal2');
+  return (
+    input.needsSecondFactor ||
+    (input.role === null && input.assurance !== 'aal2' && input.secondFactorWaived !== true)
+  );
 }
 
 export function rememberAccount(
@@ -83,7 +95,11 @@ export function rememberAccount(
 ): void {
   storage.set(
     cacheKey(userId),
-    JSON.stringify({ area: account.area, permissions: [...account.permissions] }),
+    JSON.stringify({
+      area: account.area,
+      permissions: [...account.permissions],
+      ...(account.secondFactorWaived === true ? { secondFactorWaived: true } : {}),
+    }),
   );
 }
 
@@ -94,7 +110,11 @@ export function readRememberedAccount(
   const raw = storage.getString(cacheKey(userId));
   if (raw === undefined) return null;
   try {
-    const parsed = JSON.parse(raw) as { area?: unknown; permissions?: unknown };
+    const parsed = JSON.parse(raw) as {
+      area?: unknown;
+      permissions?: unknown;
+      secondFactorWaived?: unknown;
+    };
     if (parsed.area !== 'player' && parsed.area !== 'team' && parsed.area !== 'entity') {
       return null;
     }
@@ -103,7 +123,11 @@ export function readRememberedAccount(
           (code): code is PermissionCode => typeof code === 'string' && KNOWN_CODES.has(code),
         )
       : [];
-    return { area: parsed.area, permissions: new Set(permissions) };
+    return {
+      area: parsed.area,
+      permissions: new Set(permissions),
+      ...(parsed.secondFactorWaived === true ? { secondFactorWaived: true } : {}),
+    };
   } catch {
     return null;
   }

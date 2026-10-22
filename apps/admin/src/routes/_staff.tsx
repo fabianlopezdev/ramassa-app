@@ -56,16 +56,18 @@ function StaffLayout() {
  * the data on its own.
  */
 function DesignRoleGate({ children }: { readonly children: ReactNode }) {
-  const { session, role, permissions, permissionsAreCurrent } = useAuth();
+  const { session, role, permissions, permissionsAreCurrent, secondFactorWaived } = useAuth();
   const { staffAccess } = Route.useRouteContext();
   // The guard's cache follows the auth state, which re-reads the permissions
   // the moment someone changes them (RAPP-237): the next navigation then
   // routes on the new set without asking the database again.
   const userId = session?.user.id ?? null;
+  // A staging test account whose second factor is waived (RAPP-628) reads her
+  // permissions at aal1, so they are as complete as a verified session's.
   const isVerifiedTeam =
     (role === 'staff' || role === 'admin') &&
     permissionsAreCurrent &&
-    assuranceLevelOf(session) === 'aal2';
+    (assuranceLevelOf(session) === 'aal2' || secondFactorWaived);
   useEffect(() => {
     if (userId !== null && isVerifiedTeam) staffAccess.rememberPermissions(userId, permissions);
   }, [staffAccess, userId, isVerifiedTeam, permissions]);

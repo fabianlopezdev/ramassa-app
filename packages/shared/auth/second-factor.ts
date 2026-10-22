@@ -44,10 +44,53 @@ export function assuranceLevelOf(session: Session | null): 'aal1' | 'aal2' | nul
   return claims.aal === 'aal2' ? 'aal2' : 'aal1';
 }
 
-export function needsSecondFactor(role: AppRole | null, session: Session | null): boolean {
+/**
+ * Whether the session still needs the authenticator code. A session whose
+ * second factor is waived (a test account on staging, RAPP-628) does not: the
+ * database lets it in at aal1.
+ */
+export function needsSecondFactor(
+  role: AppRole | null,
+  session: Session | null,
+  secondFactorWaived = false,
+): boolean {
   return (
-    role !== null && SECOND_FACTOR_ROLES.includes(role) && assuranceLevelOf(session) !== 'aal2'
+    !secondFactorWaived &&
+    role !== null &&
+    SECOND_FACTOR_ROLES.includes(role) &&
+    assuranceLevelOf(session) !== 'aal2'
   );
+}
+
+/**
+ * Whether it is worth asking the database about a waiver (RAPP-628): only a
+ * team member or entity contact below aal2. A player never needs the second
+ * factor and an aal2 session already has it, so neither costs a round trip.
+ */
+export function mayHaveSecondFactorWaived(role: AppRole | null, session: Session | null): boolean {
+  return needsSecondFactor(role, session);
+}
+
+/**
+ * Whether the signed-in account skips the second factor: an active test
+ * account on staging, with the staging switch on (RAPP-628). Production never
+ * has the switch, so it answers false there. The database enforces it; this is
+ * what the screens route on.
+ */
+export async function fetchSecondFactorWaived(client: Client): Promise<boolean> {
+  const { data, error } = await client.rpc('my_second_factor_waived');
+  if (error) throw new AppError('AUTH-1', { message: error.message });
+  const parsed = z.boolean().safeParse(data);
+  if (!parsed.success) {
+    throw new AppError('AUTH-1', { message: 'Unexpected second factor waiver answer' });
+  }
+  return parsed.data;
+}
+
+/** The access token's session id, which stays the same across token refreshes. */
+export function sessionIdOf(session: Session | null): string | null {
+  const claims = readAccessTokenClaims(session);
+  return typeof claims?.session_id === 'string' ? claims.session_id : null;
 }
 
 export type SecondFactorStart =
