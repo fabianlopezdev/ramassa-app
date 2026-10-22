@@ -609,5 +609,7 @@
   "testScenarioCustomTitle": "Preguntes que ha afegit l’equip",
   "testScenarioCustomIntro": "Omple-les amb una resposta de prova vàlida de cada tipus, o buida-les. Un fitxer de prova no té contingut darrere.",
   "testScenarioFillAllCustom": "Omple-les totes",
-  "testScenarioClearAllCustom": "Buida-les totes"
+  "testScenarioClearAllCustom": "Buida-les totes",
+  "testScenarioDraftTerms": "El seu telèfon mostra l'esborrany dels termes de l'app. Quan es publiqui o es descarti, les acceptacions de prova d'aquest esborrany s'esborren.",
+  "testScenarioDraftAuthorization": "El seu telèfon mostra l'esborrany de l'autorització de temporada. Quan es publiqui o es descarti, les signatures de prova d'aquest esborrany s'esborren."
 }

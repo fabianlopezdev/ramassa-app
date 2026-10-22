@@ -237,6 +237,12 @@ export function AuthorizationEditor({
                     i18n.resolvedLanguage,
                   ),
                 })}
+                <span
+                  className="ms-2 rounded border border-dashed px-1.5 py-0.5 text-xs"
+                  data-testid="authorization-draft-note"
+                >
+                  {t('draftSeenByTestPlayers')}
+                </span>
               </li>
             )}
             {published.map((version) => (

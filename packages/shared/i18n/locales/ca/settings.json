@@ -698,5 +698,6 @@
     "previewAppText_other": "{{count}} textos del formulari mostren el text de l'app en aquest idioma.",
     "previewTablet": "A la tauleta de l'equip, el botó final diu: {{label}}",
     "previewStep": "{{label}} · pas {{step}} de {{total}}"
-  }
+  },
+  "draftSeenByTestPlayers": "Versió en esborrany (només la veuen les jugadores de prova)"
 }

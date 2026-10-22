@@ -609,5 +609,7 @@
   "testScenarioCustomTitle": "Preguntas que ha añadido el equipo",
   "testScenarioCustomIntro": "Rellénalas con una respuesta de prueba válida de cada tipo, o vacíalas. Un archivo de prueba no tiene contenido detrás.",
   "testScenarioFillAllCustom": "Rellenarlas todas",
-  "testScenarioClearAllCustom": "Vaciarlas todas"
+  "testScenarioClearAllCustom": "Vaciarlas todas",
+  "testScenarioDraftTerms": "Su teléfono muestra el borrador de los términos de la app. Cuando se publique o se descarte, las aceptaciones de prueba de este borrador se borran.",
+  "testScenarioDraftAuthorization": "Su teléfono muestra el borrador de la autorización de temporada. Cuando se publique o se descarte, las firmas de prueba de este borrador se borran."
 }

@@ -88,6 +88,32 @@ export function TestPlayerScenarioPanel({
         <p className="text-start text-sm text-muted-foreground">{t('testScenarioIntro')}</p>
       </div>
 
+      {scenario.termsDraft || scenario.authorizationDraft ? (
+        <div
+          className="flex flex-col gap-1 rounded-lg border border-dashed p-3"
+          data-testid="test-scenario-draft-note"
+          role="note"
+        >
+          <p className="text-start text-sm font-medium">{t('settings:draftSeenByTestPlayers')}</p>
+          {scenario.termsDraft ? (
+            <p
+              className="text-start text-sm text-muted-foreground"
+              data-testid="test-scenario-draft-terms"
+            >
+              {t('testScenarioDraftTerms')}
+            </p>
+          ) : null}
+          {scenario.authorizationDraft ? (
+            <p
+              className="text-start text-sm text-muted-foreground"
+              data-testid="test-scenario-draft-authorization"
+            >
+              {t('testScenarioDraftAuthorization')}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+
       <ScenarioRow
         testId="test-scenario-terms"
         title={t('testScenarioTermsTitle')}

@@ -105,3 +105,17 @@ test('the design role saves drafts but has no publish button', () => {
   expect(view.getByText('appTerms.publishNeedsAdmin')).toBeTruthy();
   expect(view.getByTestId('app-terms-discard')).toBeTruthy();
 });
+
+test('a draft says that only test players see it (RAPP-619)', () => {
+  const draft = version({
+    id: '5eed0000-0000-4000-8099-000000000099',
+    versionNumber: null,
+    publishedAt: null,
+    acceptanceCount: 0,
+  });
+  expect(renderEditor([draft, version()]).view.getByTestId('app-terms-draft-note')).toBeTruthy();
+});
+
+test('without a draft there is no draft note', () => {
+  expect(renderEditor([version()]).view.queryByTestId('app-terms-draft-note')).toBeNull();
+});

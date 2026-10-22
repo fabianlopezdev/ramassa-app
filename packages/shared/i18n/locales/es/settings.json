@@ -698,5 +698,6 @@
     "previewAppText_other": "{{count}} textos del formulario muestran el texto de la app en este idioma.",
     "previewTablet": "En la tableta del equipo, el botón final dice: {{label}}",
     "previewStep": "{{label}} · paso {{step}} de {{total}}"
-  }
+  },
+  "draftSeenByTestPlayers": "Versión en borrador (solo la ven las jugadoras de prueba)"
 }

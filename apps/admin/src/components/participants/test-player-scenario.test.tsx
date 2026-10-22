@@ -25,6 +25,8 @@ const scenario: TestPlayerScenario = {
   customAnswered: new Set(['5eed0000-0000-4000-8045-0000000000b2']),
   orgId: '5eed0000-0000-4000-8000-000000000000',
   language: 'ar',
+  termsDraft: false,
+  authorizationDraft: false,
 };
 
 const OWNER = {
@@ -65,10 +67,13 @@ const catalog = parseIntakeCatalog({
 });
 const customQuestions = scenarioCustomQuestions(catalog);
 
-function renderPanel(onChange = mock(async (change: TestPlayerScenarioChange) => void change)) {
+function renderPanel(
+  onChange = mock(async (change: TestPlayerScenarioChange) => void change),
+  shown: TestPlayerScenario = scenario,
+) {
   const view = render(
     <TestPlayerScenarioPanel
-      scenario={scenario}
+      scenario={shown}
       onChange={onChange}
       customQuestions={customQuestions}
       owner={OWNER}
@@ -159,4 +164,16 @@ test('staff questions of every type are filled with a valid sample, or cleared (
   for (const asked of customQuestions)
     expect(customAnswerError(asked, change.fill[asked.id] ?? null)).toBeNull();
   expect(change.fill['5eed0000-0000-4000-8045-0000000000b1']).toBe(3);
+});
+
+test('her page says when her phone shows a draft (RAPP-619)', () => {
+  const none = renderPanel().view;
+  expect(none.queryByTestId('test-scenario-draft-note')).toBeNull();
+  none.unmount();
+  const terms = renderPanel(undefined, { ...scenario, termsDraft: true });
+  expect(terms.view.getByTestId('test-scenario-draft-terms')).toBeTruthy();
+  expect(terms.view.queryByTestId('test-scenario-draft-authorization')).toBeNull();
+  terms.view.unmount();
+  const both = renderPanel(undefined, { ...scenario, termsDraft: true, authorizationDraft: true });
+  expect(both.view.getByTestId('test-scenario-draft-authorization')).toBeTruthy();
 });

@@ -698,5 +698,6 @@
     "previewAppText_other": "{{count}} form texts show the app's own text in this language.",
     "previewTablet": "On the team tablet, the final button says: {{label}}",
     "previewStep": "{{label}} · step {{step}} of {{total}}"
-  }
+  },
+  "draftSeenByTestPlayers": "Draft version (only test players see it)"
 }

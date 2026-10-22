@@ -161,3 +161,10 @@ test('cleaning drops empty languages and empty wording, and numbers the places',
   expect(cleaned.consents.participation?.position).toBe(6);
   expect(cleaned.consents.data_processing?.position).toBe(0);
 });
+
+test('a draft says that only test players see it (RAPP-619)', () => {
+  const withDraft = renderEditor([draftOf(), version()]).view;
+  expect(withDraft.getByTestId('authorization-draft-note')).toBeTruthy();
+  withDraft.unmount();
+  expect(renderEditor([version()]).view.queryByTestId('authorization-draft-note')).toBeNull();
+});

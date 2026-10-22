@@ -139,6 +139,12 @@ export function AppTermsEditor({
               {t('appTerms.draftRow', {
                 date: new Date(draft.updatedAt).toLocaleDateString(i18n.resolvedLanguage),
               })}
+              <span
+                className="ms-2 rounded border border-dashed px-1.5 py-0.5 text-xs"
+                data-testid="app-terms-draft-note"
+              >
+                {t('draftSeenByTestPlayers')}
+              </span>
             </li>
           )}
           {published.map((version, index) => (
