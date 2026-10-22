@@ -1,3 +1,4 @@
+export { dependentsShown, type DependentsShown } from './dependents';
 export {
   fetchParticipantFilterOptions,
   fetchParticipants,
@@ -45,3 +46,4 @@ export {
   type ProfilePrefillInput,
   type ProfilePrefillPayload,
 } from './participant-prefill';
+export * from './test-scenario';

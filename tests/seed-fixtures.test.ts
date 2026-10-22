@@ -16,12 +16,18 @@ import { buildProfileFromFixture } from '../packages/shared/testing/factories';
 import {
   INVITED_ACCOUNT_EMAIL,
   ONBOARDING_ACCOUNT_EMAIL,
+  ONBOARDING_DESIGNER_EMAIL,
+  ONBOARDING_DESIGNER_ID,
+  ONBOARDING_DESIGNER_NAME,
   PARTICIPANT_FIXTURES,
   SEED_ACCOUNT_PASSWORD,
   SEED_ORGANIZATION_ID,
   SEED_USER_ID_PREFIX,
   seedUserId,
   STAFF_FIXTURES,
+  TEST_PLAYER_EMAIL,
+  TEST_PLAYER_ID,
+  TEST_PLAYER_NAME,
 } from '../packages/shared/testing/fixtures';
 
 const seedSql = await Bun.file(new URL('../supabase/seed.sql', import.meta.url)).text();
@@ -47,6 +53,9 @@ test('seed.sql seeds exactly the roster: no extra accounts, none missing', () =>
     ...allFixtures.map((fixture) => fixture.email),
     ONBOARDING_ACCOUNT_EMAIL,
     INVITED_ACCOUNT_EMAIL,
+    // The onboarding design sandbox (RAPP-615), outside the roster too.
+    ONBOARDING_DESIGNER_EMAIL,
+    TEST_PLAYER_EMAIL,
   ];
   expect([...seededEmails].sort()).toEqual(expected.sort());
 });
@@ -107,4 +116,15 @@ test('most seeded participants have a birthplace, and a couple deliberately do n
   );
   expect(places.filter((place) => place === null).length).toBeGreaterThan(0);
   expect(places.filter((place) => place !== null).length).toBeGreaterThan(places.length / 2);
+});
+
+test('the seed has the onboarding design sandbox: a designer and a test player (RAPP-615)', () => {
+  for (const id of [ONBOARDING_DESIGNER_ID, TEST_PLAYER_ID]) expect(seedSql).toContain(id);
+  expect(seedSql).toContain(
+    `'staff', '${ONBOARDING_DESIGNER_NAME.firstName}', '${ONBOARDING_DESIGNER_NAME.lastName}', 'ca', true`,
+  );
+  expect(seedSql).toContain(
+    `'invited', '${TEST_PLAYER_NAME.firstName}', '${TEST_PLAYER_NAME.lastName}', 'ca', true`,
+  );
+  expect(seedSql).toContain("preset.builtin_key = 'onboarding_design'");
 });

@@ -12,6 +12,7 @@ import { NewParticipant } from '@/components/participants/new-participant';
 import { supabase } from '@/lib/supabase';
 import { createFileRoute } from '@tanstack/react-router';
 import { z } from 'zod';
+import { fetchReferralAnswerKeys } from '@ramassa/shared/intake';
 import {
   EMPTY_INTAKE_CATALOG,
   fetchIntakeCatalog,
@@ -26,19 +27,34 @@ export const Route = createFileRoute('/_staff/participants/new')({
   }),
   loaderDeps: ({ search }) => search,
   loader: async ({ deps }) => {
-    if (deps.referral === undefined) return { referral: null, custom: undefined };
-    // With the answers to the questions staff added to the form (RAPP-307).
-    const [referral, catalog, answers] = await Promise.all([
+    // The question catalog plans the last step, what she will be asked
+    // (RAPP-618). Without it the step shows the built-in questions only, as
+    // her wizard does when it cannot load the catalog.
+    if (deps.referral === undefined) {
+      const catalog = await fetchIntakeCatalog(supabase).catch(() => EMPTY_INTAKE_CATALOG);
+      return { referral: null, custom: undefined, catalog, entityAnswerKeys: [] };
+    }
+    // With the answers to the questions staff added to the form (RAPP-307),
+    // and which fields the entity answered, so the last step counts them.
+    const [referral, catalog, answers, entityAnswerKeys] = await Promise.all([
       fetchReferral(supabase, deps.referral),
       fetchIntakeCatalog(supabase).catch(() => EMPTY_INTAKE_CATALOG),
       fetchReferralCustomAnswers(supabase, deps.referral).catch(() => ({})),
+      fetchReferralAnswerKeys(supabase, deps.referral),
     ]);
-    return { referral, custom: { catalog, answers } };
+    return { referral, custom: { catalog, answers }, catalog, entityAnswerKeys };
   },
   component: NewParticipantPage,
 });
 
 function NewParticipantPage() {
-  const { referral, custom } = Route.useLoaderData();
-  return <NewParticipant referral={referral} custom={custom} />;
+  const { referral, custom, catalog, entityAnswerKeys } = Route.useLoaderData();
+  return (
+    <NewParticipant
+      referral={referral}
+      custom={custom}
+      catalog={catalog}
+      entityAnswerKeys={entityAnswerKeys}
+    />
+  );
 }

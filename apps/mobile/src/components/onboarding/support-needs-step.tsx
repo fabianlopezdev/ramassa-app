@@ -1,5 +1,8 @@
 import { SelectionChoiceCard } from '@/components/auth/selection-choice-card';
+import { FieldErrorText } from '@/components/onboarding/field-error-text';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
+import { WizardValidationSummary } from '@/components/onboarding/wizard-validation-summary';
+import { playHaptic } from '@/lib/haptics/haptics';
 import { onboardingDraftStore } from '@/lib/onboarding';
 import { useWizardStep } from '@/lib/onboarding-intake-context';
 import { mergeSupportNeedsDraft } from '@/lib/support-needs-draft';
@@ -21,6 +24,8 @@ export function SupportNeedsStep() {
   const step = useWizardStep('specific-needs');
   const router = useRouter();
   const fontClass = useLanguageFontClass();
+  // Staff can make this question required (RAPP-611): "None" is an answer.
+  const [isMissing, setIsMissing] = useState(false);
   const [answer, setAnswer] = useState(() =>
     supportNeedsForEditing(
       onboardingDraftStore.loadDraft()?.season?.specificNeeds as string | undefined,
@@ -35,6 +40,15 @@ export function SupportNeedsStep() {
       intro={t('supportNeedsChooseMultiple')}
       continueLabel={t('continueAction')}
       onContinue={() => {
+        if (
+          step.isRequired('specific_needs') &&
+          step.shouldAsk('specific_needs') &&
+          answer.categories.length === 0
+        ) {
+          setIsMissing(true);
+          playHaptic('warning');
+          return;
+        }
         const first = selectedSupportNeeds(answer)[0];
         if (first) {
           onboardingDraftStore.saveDraft(
@@ -70,6 +84,7 @@ export function SupportNeedsStep() {
             }
       }
     >
+      <WizardValidationSummary isVisible={isMissing} message={t('errorSummary')} />
       <View className="gap-sm" accessibilityLabel={t('supportNeedsTitle')}>
         {[...SUPPORT_NEED_CATEGORIES, 'none' as const].map((category) => (
           <SelectionChoiceCard
@@ -79,9 +94,16 @@ export function SupportNeedsStep() {
             label={t(SUPPORT_NEED_LABEL_KEYS[category])}
             fontClass={fontClass}
             isSelected={answer.categories.includes(category)}
-            onPress={() => setAnswer((current) => toggleSupportNeed(current, category))}
+            onPress={() => {
+              setAnswer((current) => toggleSupportNeed(current, category));
+              setIsMissing(false);
+            }}
           />
         ))}
+        <FieldErrorText
+          testID="onboarding-missing-specific_needs"
+          message={isMissing ? t('errorRequired') : undefined}
+        />
       </View>
     </WizardFrame>
   );

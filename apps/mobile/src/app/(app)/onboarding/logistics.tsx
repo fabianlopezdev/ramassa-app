@@ -3,20 +3,22 @@ import { AuthTextField } from '@/components/auth/auth-text-field';
 import { MunicipalityPicker } from '@/components/onboarding/municipality-picker';
 import { OnboardingQuestionHeading } from '@/components/onboarding/onboarding-question-heading';
 import { OptionChip } from '@/components/onboarding/option-chip';
+import { QuestionBlock } from '@/components/onboarding/question-block';
 import { QuestionHelp } from '@/components/onboarding/question-help';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
 import { WizardValidationSummary } from '@/components/onboarding/wizard-validation-summary';
 import { playHaptic } from '@/lib/haptics/haptics';
+import { useInvalidFieldFocus } from '@/lib/invalid-field-focus';
 import { mergeLogisticsDraft } from '@/lib/logistics-draft';
 import { onboardingDraftStore, usePendingInviteEntity } from '@/lib/onboarding';
 import {
-  contactFormSchema,
+  contactFormSchemaFor,
   type ContactFormInput,
   type ContactFormValue,
 } from '@/lib/onboarding-form';
-import { useBuiltinWording, useWizardStep } from '@/lib/onboarding-intake-context';
+import { useBuiltinWording, useWizardIntake, useWizardStep } from '@/lib/onboarding-intake-context';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
@@ -26,11 +28,21 @@ import type { OnboardingDraftStep } from '@ramassa/shared/onboarding-drafts';
 export default function LogisticsStepScreen() {
   const { t } = useTranslation('onboarding');
   const step = useWizardStep('logistics');
+  // Shown with the entity after Yes, unless staff removed it (RAPP-618).
+  const isContactRemoved = useWizardIntake().hidden.has('reference_contact_name');
   const wording = useBuiltinWording();
   const [draft] = useState(() => onboardingDraftStore.loadDraft());
   const [hasSubmitErrors, setHasSubmitErrors] = useState(false);
+  const focus = useInvalidFieldFocus();
 
   const saved = (draft?.logistics ?? {}) as Partial<ContactFormInput>;
+  // The organization's required list (RAPP-611): an optional question left unanswered is no answer.
+  // On this screen only her Yes or No answers the entity question (RAPP-25).
+  const isEntityAsked = step.shouldAsk('reference_entity');
+  const contactForm = useMemo(
+    () => contactFormSchemaFor(step.required, isEntityAsked),
+    [step.required, isEntityAsked],
+  );
   const invitedEntity = usePendingInviteEntity();
 
   const {
@@ -41,7 +53,7 @@ export default function LogisticsStepScreen() {
     watch,
     formState: { errors },
   } = useForm<ContactFormInput, unknown, ContactFormValue>({
-    resolver: zodResolver(contactFormSchema),
+    resolver: zodResolver(contactForm),
     defaultValues: {
       phone: saved.phone ?? '',
       address: saved.address ?? '',
@@ -51,7 +63,8 @@ export default function LogisticsStepScreen() {
       hasReferenceEntity: saved.hasReferenceEntity ?? null,
       referenceContactName:
         saved.referenceEntity === null ? '' : (saved.referenceContactName ?? ''),
-      hasDependents: saved.hasDependents ?? false,
+      // Unanswered until she taps one: a preselected No would answer for her.
+      hasDependents: saved.hasDependents ?? null,
       numDependents: saved.numDependents ?? '',
     },
   });
@@ -90,9 +103,10 @@ export default function LogisticsStepScreen() {
     },
     // One warning buzz per rejected submit, from the shared vocabulary. Same
     // placement and reasoning as step 1.
-    () => {
+    (invalid) => {
       setHasSubmitErrors(true);
       playHaptic('warning');
+      focus.focusFirst(Object.keys(invalid));
     },
   );
 
@@ -121,7 +135,7 @@ export default function LogisticsStepScreen() {
           name="phone"
           render={({ field }) => (
             <AuthTextField
-              label={wording.label('phone', t('phoneLabel'))}
+              label={wording.field('phone', t('phoneLabel'))}
               hint={wording.help('phone')}
               value={field.value ?? ''}
               onChangeText={field.onChange}
@@ -139,7 +153,7 @@ export default function LogisticsStepScreen() {
           name="address"
           render={({ field }) => (
             <AuthTextField
-              label={wording.label('address', t('addressLabel'))}
+              label={wording.field('address', t('addressLabel'))}
               hint={wording.help('address')}
               value={field.value ?? ''}
               onChangeText={field.onChange}
@@ -155,7 +169,7 @@ export default function LogisticsStepScreen() {
           name="city"
           render={({ field }) => (
             <MunicipalityPicker
-              label={wording.label('city', t('cityLabel'))}
+              label={wording.field('city', t('cityLabel'))}
               value={field.value ?? ''}
               onChange={field.onChange}
               errorMessage={errors.city ? t('errorMunicipalityInvalid') : undefined}
@@ -169,7 +183,7 @@ export default function LogisticsStepScreen() {
           name="postalCode"
           render={({ field }) => (
             <AuthTextField
-              label={wording.label('postal_code', t('postalCodeLabel'))}
+              label={wording.field('postal_code', t('postalCodeLabel'))}
               hint={wording.help('postal_code')}
               value={field.value ?? ''}
               onChangeText={field.onChange}
@@ -184,8 +198,17 @@ export default function LogisticsStepScreen() {
       ) : null}
 
       {step.shouldAsk('reference_entity') ? (
-        <View className="gap-xs">
-          <OnboardingQuestionHeading label={t('referenceEntitySupportQuestion')} />
+        <QuestionBlock
+          name="referenceEntity"
+          testID="question-reference_entity"
+          focus={focus}
+          errorMessage={
+            errors.referenceEntity && hasReferenceEntity !== true ? t('errorRequired') : undefined
+          }
+        >
+          <OnboardingQuestionHeading
+            label={wording.field('reference_entity', t('referenceEntitySupportQuestion'))}
+          />
           <QuestionHelp text={wording.help('reference_entity')} />
           <Controller
             control={control}
@@ -239,10 +262,11 @@ export default function LogisticsStepScreen() {
               )}
             />
           ) : null}
-        </View>
+        </QuestionBlock>
       ) : null}
 
-      {hasReferenceEntity === false ||
+      {isContactRemoved ||
+      hasReferenceEntity === false ||
       (step.shouldAsk('reference_entity') && hasReferenceEntity !== true) ||
       !(step.shouldAsk('reference_entity') || step.shouldAsk('reference_contact_name')) ? null : (
         <Controller
@@ -250,7 +274,7 @@ export default function LogisticsStepScreen() {
           name="referenceContactName"
           render={({ field }) => (
             <AuthTextField
-              label={wording.label('reference_contact_name', t('referenceContactNameLabel'))}
+              label={wording.field('reference_contact_name', t('referenceContactNameLabel'))}
               hint={wording.help('reference_contact_name')}
               value={field.value ?? ''}
               onChangeText={field.onChange}
@@ -262,16 +286,28 @@ export default function LogisticsStepScreen() {
       )}
 
       {step.shouldAsk('dependents') ? (
-        <View className="gap-xs">
-          <OnboardingQuestionHeading label={wording.label('dependents', t('hasDependentsLabel'))} />
+        <QuestionBlock
+          name="hasDependents"
+          testID="question-dependents"
+          focus={focus}
+          errorMessage={errors.hasDependents ? t('errorRequired') : undefined}
+        >
+          <OnboardingQuestionHeading label={wording.field('dependents', t('hasDependentsLabel'))} />
           <QuestionHelp text={wording.help('dependents')} />
           <Controller
             control={control}
             name="hasDependents"
             render={({ field }) => (
-              <View className="flex-row gap-sm">
+              // One answer of two, as the entity question: a radio group, so
+              // she and assistive technology read it as unanswered until she taps.
+              <View
+                className="flex-row gap-sm"
+                accessibilityRole="radiogroup"
+                accessibilityLabel={wording.label('dependents', t('hasDependentsLabel'))}
+              >
                 <View className="flex-1">
                   <OptionChip
+                    accessibilityRole="radio"
                     label={t('yesOption')}
                     accessibilityHint={t('hasDependentsLabel')}
                     isSelected={field.value === true}
@@ -280,6 +316,7 @@ export default function LogisticsStepScreen() {
                 </View>
                 <View className="flex-1">
                   <OptionChip
+                    accessibilityRole="radio"
                     label={t('noOption')}
                     accessibilityHint={t('hasDependentsLabel')}
                     isSelected={field.value === false}
@@ -309,7 +346,7 @@ export default function LogisticsStepScreen() {
               />
             </View>
           ) : null}
-        </View>
+        </QuestionBlock>
       ) : null}
     </WizardFrame>
   );

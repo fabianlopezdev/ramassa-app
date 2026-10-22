@@ -1,23 +1,24 @@
 /** Equipment sizes have their own step, with the shared wizard layout and motion. */
 import { OnboardingQuestionHeading } from '@/components/onboarding/onboarding-question-heading';
 import { OptionGrid } from '@/components/onboarding/option-grid';
+import { QuestionBlock } from '@/components/onboarding/question-block';
 import { QuestionHelp } from '@/components/onboarding/question-help';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
 import { WizardValidationSummary } from '@/components/onboarding/wizard-validation-summary';
 import { playHaptic } from '@/lib/haptics/haptics';
+import { useInvalidFieldFocus } from '@/lib/invalid-field-focus';
 import { mergeLogisticsDraft } from '@/lib/logistics-draft';
 import { onboardingDraftStore } from '@/lib/onboarding';
 import {
-  equipmentFormSchema,
+  equipmentFormSchemaFor,
   type EquipmentFormInput,
   type EquipmentFormValue,
 } from '@/lib/onboarding-form';
 import { useBuiltinWording, useWizardStep } from '@/lib/onboarding-intake-context';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { View } from 'react-native';
 import type { OnboardingDraftStep } from '@ramassa/shared/onboarding-drafts';
 import { CLOTHING_SIZES, SHOE_SIZES } from '@ramassa/shared/schemas';
 
@@ -28,12 +29,16 @@ export default function EquipmentStepScreen() {
   const [draft] = useState(() => onboardingDraftStore.loadDraft());
   const saved = (draft?.logistics ?? {}) as Partial<EquipmentFormInput>;
   const [hasSubmitErrors, setHasSubmitErrors] = useState(false);
-  const { control, handleSubmit, getValues } = useForm<
-    EquipmentFormInput,
-    unknown,
-    EquipmentFormValue
-  >({
-    resolver: zodResolver(equipmentFormSchema),
+  const focus = useInvalidFieldFocus();
+  // The organization's required list (RAPP-611): an optional size left out is unknown.
+  const equipmentForm = useMemo(() => equipmentFormSchemaFor(step.required), [step.required]);
+  const {
+    control,
+    handleSubmit,
+    getValues,
+    formState: { errors },
+  } = useForm<EquipmentFormInput, unknown, EquipmentFormValue>({
+    resolver: zodResolver(equipmentForm),
     defaultValues: { clothingSize: saved.clothingSize ?? '', shoeSize: saved.shoeSize ?? '' },
   });
   const persist = (currentStep: OnboardingDraftStep) =>
@@ -46,9 +51,10 @@ export default function EquipmentStepScreen() {
       persist(step.nextDraftStep);
       step.goNext();
     },
-    () => {
+    (invalid) => {
       setHasSubmitErrors(true);
       playHaptic('warning');
+      focus.focusFirst(Object.keys(invalid));
     },
   );
   return (
@@ -71,9 +77,14 @@ export default function EquipmentStepScreen() {
     >
       <WizardValidationSummary isVisible={hasSubmitErrors} message={t('errorSummary')} />
       {step.shouldAsk('clothing_size') ? (
-        <View className="gap-xs">
+        <QuestionBlock
+          name="clothingSize"
+          testID="question-clothing_size"
+          focus={focus}
+          errorMessage={errors.clothingSize ? t('errorRequired') : undefined}
+        >
           <OnboardingQuestionHeading
-            label={wording.label('clothing_size', t('clothingSizeLabel'))}
+            label={wording.field('clothing_size', t('clothingSizeLabel'))}
           />
           <QuestionHelp text={wording.help('clothing_size')} />
           <Controller
@@ -82,18 +93,23 @@ export default function EquipmentStepScreen() {
             render={({ field }) => (
               <OptionGrid
                 options={CLOTHING_SIZES}
-                value={field.value}
+                value={field.value ?? ''}
                 accessibilityHint={t('clothingSizeLabel')}
                 onChange={field.onChange}
               />
             )}
           />
-        </View>
+        </QuestionBlock>
       ) : null}
 
       {step.shouldAsk('shoe_size') ? (
-        <View className="gap-xs">
-          <OnboardingQuestionHeading label={wording.label('shoe_size', t('shoeSizeLabel'))} />
+        <QuestionBlock
+          name="shoeSize"
+          testID="question-shoe_size"
+          focus={focus}
+          errorMessage={errors.shoeSize ? t('errorRequired') : undefined}
+        >
+          <OnboardingQuestionHeading label={wording.field('shoe_size', t('shoeSizeLabel'))} />
           <QuestionHelp text={wording.help('shoe_size')} />
           <Controller
             control={control}
@@ -101,13 +117,13 @@ export default function EquipmentStepScreen() {
             render={({ field }) => (
               <OptionGrid
                 options={SHOE_SIZES}
-                value={field.value}
+                value={field.value ?? ''}
                 accessibilityHint={t('shoeSizeLabel')}
                 onChange={field.onChange}
               />
             )}
           />
-        </View>
+        </QuestionBlock>
       ) : null}
     </WizardFrame>
   );

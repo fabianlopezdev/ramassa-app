@@ -61,7 +61,12 @@ const presetPermissionRowSchema = z.object({
 const accessRowSchema = z.object({ profile_id: z.uuid(), preset_id: z.uuid().nullable() });
 const grantRowSchema = z.object({ profile_id: z.uuid(), permission_code: permissionCodeSchema });
 
-const BUILTIN_ORDER: Record<BuiltinPresetKey, number> = { coach: 0, staff: 1, admin: 2 };
+const BUILTIN_ORDER: Record<BuiltinPresetKey, number> = {
+  coach: 0,
+  staff: 1,
+  admin: 2,
+  onboarding_design: 3,
+};
 
 /**
  * Every preset and every team member's toggles in the caller's organization.

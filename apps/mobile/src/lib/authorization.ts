@@ -11,6 +11,7 @@ import {
   setOptionalConsent,
   signAuthorization,
   type AuthorizationConsentKey,
+  type AuthorizationContent,
   type AuthorizationSigning,
 } from '@ramassa/shared/authorization';
 import type { LanguageCode } from '@ramassa/shared/schemas';
@@ -38,11 +39,12 @@ export function useSignAuthorization() {
   return useMutation({
     mutationFn: (input: {
       readonly versionId: string;
+      readonly content: AuthorizationContent;
       readonly signing: AuthorizationSigning;
       readonly language: LanguageCode;
       readonly device: string | null;
     }) =>
-      signAuthorization(supabase, input.versionId, input.signing, {
+      signAuthorization(supabase, input.versionId, input.content, input.signing, {
         language: input.language,
         device: input.device,
       }),
@@ -70,8 +72,11 @@ export function useSetOptionalConsent() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (input: { readonly key: AuthorizationConsentKey; readonly granted: boolean }) =>
-      setOptionalConsent(supabase, input.key, input.granted),
+    mutationFn: (input: {
+      readonly key: AuthorizationConsentKey;
+      readonly granted: boolean;
+      readonly language: LanguageCode;
+    }) => setOptionalConsent(supabase, input.key, input.granted, input.language),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: consentsKey(user?.id ?? 'signed-out') });
       await queryClient.invalidateQueries({ queryKey: ['own-profile'] });

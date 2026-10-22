@@ -131,6 +131,7 @@ bun run db:test                                      # Local: pgTAP RLS + crypto
 bun run db:types                                     # Regenerate DB types (after every migration)
 bunx supabase db push                                # Prod: apply migrations to the linked project
 bunx eas build --platform android --profile preview  # Android build
+bun run --cwd apps/mobile build:staging:android      # Staging APK for testers (see below)
 ```
 
 ## Tech Stack
@@ -211,6 +212,84 @@ It needs these **repository secrets** (Settings → Secrets and variables → Ac
 
 Create the API token in the Cloudflare dashboard (Manage Account → API Tokens);
 Claude cannot create tokens or set repository secrets, so this step is manual.
+
+## Staging build for testing (RAPP-620)
+
+The staging variant is a separate app called **Ramassà Staging**, with the Android
+package `com.ramassa.app.staging`. It installs next to the real app, talks to the
+staging Supabase project, and takes over-the-air updates from the EAS channel
+`staging`, so most changes reach the tester's phone without a new build.
+
+How it is wired:
+
+- `apps/mobile/app.config.ts` keeps `app.json` as the base. With `APP_VARIANT`
+  unset it returns `app.json` unchanged, so production, development and preview
+  builds do not change. With `APP_VARIANT=staging` it sets the name, the package,
+  the update URL and a `fingerprint` runtime version.
+- `apps/mobile/eas.json` profile `staging`: internal distribution, an APK on
+  Android, channel `staging`, `APP_VARIANT=staging`, and the EAS environment
+  `preview`.
+- Only the staging variant has an update URL, so `expo-updates` stays switched off
+  in every other build.
+- The `eas-build-pre-install` hook refuses `APP_VARIANT` and
+  `EXPO_PUBLIC_TEST_SIGN_IN` on any production profile.
+- Staging Android builds without `google-services.json`, because that file only
+  knows `com.ramassa.app`. Push notifications are therefore off on staging. Add an
+  Android app `com.ramassa.app.staging` to the Firebase project first if staging
+  ever needs push.
+
+### 1. Set the EAS preview environment (names only, values from the staging project)
+
+Run from `apps/mobile`. `EXPO_PUBLIC_` values end up in the app bundle, so use
+`plaintext` or `sensitive`. A `secret` variable is not available when EAS reads the
+app config or publishes an update.
+
+```bash
+bunx eas-cli env:set --environment preview --name EXPO_PUBLIC_SUPABASE_URL --value <staging API URL> --visibility plaintext
+bunx eas-cli env:set --environment preview --name EXPO_PUBLIC_SUPABASE_ANON_KEY --value <staging publishable key> --visibility sensitive
+bunx eas-cli env:set --environment preview --name EXPO_PUBLIC_TEST_SIGN_IN --value true --visibility plaintext
+bunx eas-cli env:list --environment preview
+```
+
+Optional, when staging has them: `EXPO_PUBLIC_SENTRY_DSN`,
+`EXPO_PUBLIC_MEDIA_WORKER_URL`. The existing `preview` build profile also reads the
+`preview` environment, so a `preview` build would point at staging too.
+
+### 2. Build and install on Android
+
+```bash
+bun run --cwd apps/mobile build:staging:android
+```
+
+The first build asks EAS to create a new Android keystore, because the package is
+new. When the build is done, open its EAS link on the phone (or scan the QR code on
+the build page), download the APK, and allow the browser to install unknown apps
+when Android asks.
+
+### 3. Push an over-the-air update to the staging build
+
+```bash
+bun run --cwd apps/mobile update:staging:android --message "<what changed>"
+```
+
+The script sets `APP_VARIANT=staging` itself. Without it the config has no update
+URL and the publish stops. The phone downloads the update on the next launch and
+shows it on the launch after that. The runtime version is a fingerprint of the
+native project: an update reaches only builds with the same native code. After a
+native change (a new native package, or a plugin or permission change in
+`app.json`), make a new build. `bunx eas-cli fingerprint:compare` shows what
+changed.
+
+### iOS is blocked
+
+iOS staging needs a decision first: Ramassà's own Apple enrolment, or a temporary
+Fabulous Apps identifier (RAPP-83). `com.ramassa.app` is never used for staging.
+Until `STAGING_IOS_BUNDLE_ID` is set (in the `staging` profile `env` or the
+`preview` environment), the staging config has no iOS bundle identifier. EAS CLI
+then stops an iOS build before it creates credentials, and every iOS native step
+fails with the reason. Set `STAGING_APPLE_TEAM_ID` too if the Apple team changes.
+An internal iOS build also needs each tester's iPhone registered with
+`bunx eas-cli device:create` before the build.
 
 ## Push notifications (RAPP-17)
 

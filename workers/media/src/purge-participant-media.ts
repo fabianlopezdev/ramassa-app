@@ -71,6 +71,11 @@ export interface PurgeParticipantMediaDependencies {
   readonly onError?: (error: unknown, context: Record<string, unknown>) => void;
   /** The current time in milliseconds. Injected, so the step-up window is testable. */
   readonly now?: () => number;
+  /**
+   * Whether the caller may delete this person as a TEST player (RAPP-617),
+   * asked of Postgres with the caller's own token. Absent means no test path.
+   */
+  readonly isDeletableTestPlayer?: (participantId: string) => Promise<boolean>;
 }
 
 interface PurgeParticipantMediaResponse {
@@ -161,23 +166,18 @@ export async function handlePurgeParticipantMedia(
     return fail(isAppError(thrown) ? thrown.code : 'AUTH-2');
   }
 
-  // The same boundary Postgres draws on permanent erasure (ADR-023, RAPP-230):
-  // destroying what a participant uploaded is part of ending her record, which
-  // needs rgpd.erase and team.manage together.
-  if (
-    (identity.role !== 'staff' && identity.role !== 'admin') ||
-    !identity.permissions.has('rgpd.erase') ||
-    !identity.permissions.has('team.manage')
-  ) {
+  // Two ways in. Permanent erasure of anyone needs rgpd.erase and team.manage
+  // together, the boundary Postgres draws on the record (ADR-023, RAPP-230),
+  // and a recent authenticator code (RAPP-235). Deleting a TEST player
+  // (RAPP-617) needs test_players.manage or rgpd.erase, and Postgres confirms
+  // the person is a test player: she is made up, so no new code is asked.
+  const isTeam = identity.role === 'staff' || identity.role === 'admin';
+  const mayErase =
+    identity.permissions.has('rgpd.erase') && identity.permissions.has('team.manage');
+  const mayDeleteTestPlayers =
+    identity.permissions.has('test_players.manage') || identity.permissions.has('rgpd.erase');
+  if (!isTeam || (!mayErase && !mayDeleteTestPlayers)) {
     return fail('AUTH-3');
-  }
-
-  // Erasure is a risky action (RAPP-235): it needs an authenticator code from
-  // the last few minutes, the same rule the database applies to the record.
-  const verifiedAt = identity.secondFactorVerifiedAt;
-  const nowSeconds = (dependencies.now ?? Date.now)() / 1000;
-  if (verifiedAt === null || nowSeconds - verifiedAt >= STEP_UP_WINDOW_SECONDS) {
-    return fail('AUTH-9');
   }
 
   const body = await readJsonBody(request);
@@ -187,6 +187,29 @@ export async function handlePurgeParticipantMedia(
   }
 
   const participantId = parsed.data.participantId;
+
+  let isTestPlayer = false;
+  if (mayDeleteTestPlayers && dependencies.isDeletableTestPlayer !== undefined) {
+    try {
+      isTestPlayer = await dependencies.isDeletableTestPlayer(participantId);
+    } catch (thrown) {
+      dependencies.onError?.(thrown, { stage: 'test-player', participantId });
+      return fail('AUTH-3');
+    }
+  }
+
+  if (!isTestPlayer) {
+    if (!mayErase) {
+      return fail('AUTH-3');
+    }
+    // Erasure is a risky action (RAPP-235): it needs an authenticator code from
+    // the last few minutes, the same rule the database applies to the record.
+    const verifiedAt = identity.secondFactorVerifiedAt;
+    const nowSeconds = (dependencies.now ?? Date.now)() / 1000;
+    if (verifiedAt === null || nowSeconds - verifiedAt >= STEP_UP_WINDOW_SECONDS) {
+      return fail('AUTH-9');
+    }
+  }
 
   let objectsDeleted = 0;
   try {

@@ -15,20 +15,17 @@ import { ConsentRow } from '@/components/authorization/consent-row';
 import { SignatureSection } from '@/components/authorization/signature-section';
 import { FailureNotice } from '@/components/error-code-line';
 import { PressableScale } from '@/components/motion/pressable-scale';
+import { TermsBody } from '@/components/onboarding/terms-body';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
+import { appTermsWording } from '@/lib/app-terms-wording';
 import { logout } from '@/lib/auth';
 import { confirmAction } from '@/lib/confirm-action';
-import { continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
+import { completeOnboarding, onboardingDraftStore } from '@/lib/onboarding';
 import {
-  completeOnboarding,
-  onboardingDraftStore,
-  saveWizardCustomAnswers,
-} from '@/lib/onboarding';
-import {
-  documentationFormSchema,
-  identityFormSchema,
-  logisticsFormSchema,
+  documentationFormSchemaFor,
+  identityFormSchemaFor,
+  logisticsFormSchemaFor,
 } from '@/lib/onboarding-form';
 import {
   customAnswersToSave,
@@ -36,16 +33,21 @@ import {
   wizardStepRoute,
 } from '@/lib/onboarding-intake';
 import { useWizardIntake, useWizardStep } from '@/lib/onboarding-intake-context';
+import { useScreenWording } from '@/lib/screen-wording';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
+import { firstIncompleteStep } from '@/lib/wizard-completeness';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { Text } from 'react-native';
 import { useAuth } from '@ramassa/shared/auth';
-import { CURRENT_TERMS_VERSION } from '@ramassa/shared/constants';
 import { signatureStrokesSchema, type SignatureStrokes } from '@ramassa/shared/equipment';
 import type { AppErrorCode } from '@ramassa/shared/errors';
-import { trimPayloadToAnswers } from '@ramassa/shared/intake';
+import {
+  DEFAULT_REQUIRED_QUESTIONS,
+  DEFAULT_WIZARD_FLOW,
+  trimPayloadToAnswers,
+} from '@ramassa/shared/intake';
 import type { OnboardingDraftStep } from '@ramassa/shared/onboarding-drafts';
 import {
   buildCompleteOnboardingPayload,
@@ -62,7 +64,15 @@ export default function TermsStepScreen() {
   const { user, refreshProfile } = useAuth();
   const intake = useWizardIntake();
   const step = useWizardStep('terms');
+  // The current version staff published (RAPP-613), or the bundled text.
+  const wording = appTermsWording(
+    intake.catalog.terms,
+    (i18n.resolvedLanguage as LanguageCode | undefined) ?? 'ca',
+    (key) => t(key),
+  );
   const [draft] = useState(() => onboardingDraftStore.loadDraft());
+  // Staff wording of this screen's decline button (RAPP-612), or the app's own.
+  const declineLabel = useScreenWording('terms').text('decline_label', t('termsDeclineAction'));
 
   const signatureOwner = draft?.terms?.signatureOwnerId;
   const sameSigner = user !== null && signatureOwner === user.id;
@@ -131,17 +141,33 @@ export default function TermsStepScreen() {
       // so nothing unvalidated can reach the payload even from a tampered or
       // stale draft. A failed parse sends the player back to that step with
       // their data still in the draft, not into a dead end.
-      const identity = identityFormSchema.safeParse(draft?.identity ?? {});
+      // A required answer missing anywhere (RAPP-611, RAPP-612) sends her to
+      // that screen, before anything is sent.
+      const incomplete = firstIncompleteStep(draft, {
+        custom: intake.customPlan,
+        flow: intake.flow ?? DEFAULT_WIZARD_FLOW,
+        required: intake.required,
+        customScreens: intake.customScreens,
+        storedCustom: intake.customAnswers,
+      });
+      if (incomplete !== null) {
+        router.replace(wizardStepRoute(incomplete, 'back'));
+        return;
+      }
+      const required = intake.required ?? DEFAULT_REQUIRED_QUESTIONS;
+      const identity = identityFormSchemaFor(required).safeParse(draft?.identity ?? {});
       if (!identity.success) {
         router.replace(wizardStepRoute('identity', 'back'));
         return;
       }
-      const documentation = documentationFormSchema.safeParse(draft?.documentation ?? {});
+      const documentation = documentationFormSchemaFor(required).safeParse(
+        draft?.documentation ?? {},
+      );
       if (!documentation.success) {
         router.replace(wizardStepRoute('documentation', 'back'));
         return;
       }
-      const logistics = logisticsFormSchema.safeParse(draft?.logistics ?? {});
+      const logistics = logisticsFormSchemaFor(required).safeParse(draft?.logistics ?? {});
       if (!logistics.success) {
         const field = logistics.error.issues[0]?.path[0];
         router.replace(
@@ -172,28 +198,20 @@ export default function TermsStepScreen() {
           season: draft?.season === undefined ? undefined : season.data,
           terms,
         },
-        {
-          termsVersion: CURRENT_TERMS_VERSION,
-          localeShown: (i18n.resolvedLanguage as LanguageCode) ?? 'ca',
-        },
+        // The version and the language she was shown (RAPP-613): a newer
+        // version published while she read this one asks her again.
+        { termsVersion: wording.termsVersion, localeShown: wording.localeShown },
       );
 
       // Her answers to the staff questions (RAPP-307), only the new or changed
-      // ones, sent before the profile so a failure leaves her here to try again.
-      // A woman who started on her own has no profile to hold them until the
-      // profile is written, so hers go right after it.
+      // ones. They travel with her profile in the one signed call (RAPP-611),
+      // so a woman who started on her own keeps them too, and the required
+      // ones are checked there before anything is kept.
       const customAnswers = customAnswersToSave(
         intake.customScreens,
         draft?.custom,
         intake.customAnswers,
       );
-      if (intake.profile !== null) {
-        const saved = await saveWizardCustomAnswers(customAnswers);
-        if (!saved.ok) {
-          setFailureCode(saved.error.code);
-          return;
-        }
-      }
 
       // Only what is new or changed travels (RAPP-300): the server keeps every
       // stored value the payload leaves out, so a staff answer she only
@@ -205,17 +223,13 @@ export default function TermsStepScreen() {
           intake.profile === null ? {} : storedPayloadFromProfile(intake.profile),
         ),
         signing.data,
+        customAnswers,
       );
       if (!result.ok) {
         // The shake and its buzz come from the code, so a system failure feels
         // different from the "you have not ticked the box" refusal above.
         setFailureCode(result.error.code);
         return;
-      }
-      if (intake.profile === null) {
-        // She has joined by now and cannot finish twice: a failure here is
-        // logged by safeAsync, and staff can complete the answers on her record.
-        await saveWizardCustomAnswers(customAnswers);
       }
       // The completed primary action of the whole flow (RAPP-70). No animation
       // to pair it with: the auth gate swaps this stack for the tabs the moment
@@ -236,8 +250,8 @@ export default function TermsStepScreen() {
       scrollEnabled={!isDrawing}
       stepNumber={step.position.step}
       totalSteps={step.position.total}
-      title={t('termsTitle')}
-      intro={t('mediaConsentHint')}
+      title={wording.title}
+      intro={wording.mediaHint}
       continueLabel={t('finishAction')}
       onContinue={() => void finish()}
       isContinueBusy={isSubmitting}
@@ -246,20 +260,13 @@ export default function TermsStepScreen() {
         step.goBack?.();
       }}
     >
-      <View style={continuousCorners} className="rounded-md bg-neutral-50 p-md">
-        <Text
-          selectable
-          className={`text-start text-form leading-body text-neutral-800 ${languageFontClass}`}
-        >
-          {t('termsBody')}
-        </Text>
-      </View>
+      <TermsBody body={wording.body} />
 
       <ConsentRow
         testID="terms-acceptance"
         required
         requiredMark={t('authorizationRequiredMark')}
-        label={t('termsAcceptLabel')}
+        label={wording.acceptLabel}
         checked={isAccepted}
         onToggle={() => {
           setIsAccepted((current) => !current);
@@ -287,7 +294,7 @@ export default function TermsStepScreen() {
         testID="terms-media-consent"
         required={false}
         requiredMark=""
-        label={t('mediaConsentLabel')}
+        label={wording.mediaLabel}
         checked={hasMediaConsent}
         onToggle={() => setHasMediaConsent((current) => !current)}
       />
@@ -320,7 +327,7 @@ export default function TermsStepScreen() {
       )}
 
       <PressableScale
-        accessibilityLabel={t('termsDeclineAction')}
+        accessibilityLabel={declineLabel}
         isDisabled={isSubmitting}
         onPress={() =>
           confirmAction({
@@ -338,7 +345,7 @@ export default function TermsStepScreen() {
         className="min-h-min items-center justify-center py-sm"
       >
         <Text className={`text-form font-medium text-neutral-700 ${languageFontClass}`}>
-          {t('termsDeclineAction')}
+          {declineLabel}
         </Text>
       </PressableScale>
     </WizardFrame>

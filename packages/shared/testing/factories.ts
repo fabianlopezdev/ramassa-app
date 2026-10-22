@@ -29,12 +29,17 @@ import type { Database, Json } from '../types/database';
 import {
   INVITED_ACCOUNT_ID,
   ONBOARDING_ACCOUNT_EMAIL,
+  ONBOARDING_DESIGNER_ID,
+  ONBOARDING_DESIGNER_NAME,
   PARTICIPANT_FIXTURES,
+  SEED_APP_TERMS_VERSION_ID,
   SEED_ORGANIZATION_ID,
   SEED_ORGANIZATION_SLUG,
   SEED_TERMS_VERSION,
   seedUserId,
   STAFF_FIXTURES,
+  TEST_PLAYER_ID,
+  TEST_PLAYER_NAME,
   type PersonFixture,
 } from './fixtures';
 
@@ -73,6 +78,7 @@ export type InviteRow = Database['public']['Tables']['invites']['Row'];
 export type ProfileAnswerRow = Database['public']['Tables']['profile_answers']['Row'];
 export type SeasonRow = Database['public']['Tables']['seasons']['Row'];
 export type AuthorizationVersionRow = Database['public']['Tables']['authorization_versions']['Row'];
+export type AppTermsVersionRow = Database['public']['Tables']['app_terms_versions']['Row'];
 export type AuthorizationSignatureRow =
   Database['public']['Tables']['authorization_signatures']['Row'];
 export type AuthorizationConsentEventRow =
@@ -715,12 +721,46 @@ export function buildProfileFromFixture(
     emergency_contact_name: null,
     emergency_contact_relation: null,
     emergency_contact_phone: null,
+    emergency_contact_privacy: null,
     // Seasons played before the app (RAPP-306).
     prior_seasons: 0,
     document_name: null,
+    // A real person unless a test says otherwise (RAPP-615).
+    is_test_account: false,
     ...derivedProfileFields(fixture),
     ...overrides,
   };
+}
+
+/**
+ * The seeded test player (RAPP-615): invited, not joined, a test account. A
+ * test about the design sandbox builds her instead of a roster participant,
+ * because a real participant must never be one.
+ */
+export function buildTestPlayer(overrides: Partial<ProfileRow> = {}): ProfileRow {
+  return buildProfileFromFixture(PARTICIPANT_FIXTURES[0]!, {
+    id: TEST_PLAYER_ID,
+    role: 'invited',
+    first_name: TEST_PLAYER_NAME.firstName,
+    last_name: TEST_PLAYER_NAME.lastName,
+    preferred_language: 'ca',
+    terms_accepted_at: null,
+    is_test_account: true,
+    ...overrides,
+  });
+}
+
+/** The seeded team member on the Onboarding design preset (RAPP-615). */
+export function buildOnboardingDesigner(overrides: Partial<ProfileRow> = {}): ProfileRow {
+  return buildProfileFromFixture(STAFF_FIXTURES[1]!, {
+    id: ONBOARDING_DESIGNER_ID,
+    role: 'staff',
+    first_name: ONBOARDING_DESIGNER_NAME.firstName,
+    last_name: ONBOARDING_DESIGNER_NAME.lastName,
+    preferred_language: 'ca',
+    is_test_account: true,
+    ...overrides,
+  });
 }
 
 export function buildPushToken(overrides: Partial<PushTokenRow> = {}): PushTokenRow {
@@ -1049,6 +1089,12 @@ export function buildTermsAcceptance(
     terms_version: SEED_TERMS_VERSION,
     locale_shown: participant.preferredLanguage,
     accepted_at: FIXTURE_TIMESTAMP,
+    // Made by the test player scenario switches only (RAPP-619).
+    is_test_fixture: false,
+    // The version she accepted (RAPP-613): version 1 for every seeded acceptance.
+    version_id: SEED_APP_TERMS_VERSION_ID,
+    // Seeded acceptances predate app terms signatures, so the gate counts them.
+    accepted_before_signatures: true,
     ...overrides,
   };
 }
@@ -1284,11 +1330,16 @@ export function buildSeason(overrides: Partial<SeasonRow> = {}): SeasonRow {
     starts_on: '2026-09-01',
     is_current: true,
     created_at: FIXTURE_TIMESTAMP,
+    is_test_fixture: false,
     ...overrides,
   };
 }
 
-/** A published authorization version with every consent and one section (RAPP-304). */
+/**
+ * A published authorization version with every consent and one section
+ * (RAPP-304), in the editable shape (RAPP-614). Pass `season_id: null,
+ * version_number: null, published_at: null` for a draft.
+ */
 export function buildAuthorizationVersion(
   overrides: Partial<AuthorizationVersionRow> = {},
 ): AuthorizationVersionRow {
@@ -1302,18 +1353,57 @@ export function buildAuthorizationVersion(
       title: label('Autorització 2026/27'),
       sections: [{ key: 'participation', title: label('Participació'), body: label('Text.') }],
       consents: {
-        participation: { required: true, label: label('Participo.') },
-        data_processing: { required: true, label: label('Dades.') },
-        code_of_conduct: { required: true, label: label('Codi.') },
-        health_data: { required: true, label: label('Salut.') },
-        image_rights: { required: false, label: label('Imatge.') },
-        newsletter: { required: false, label: label('Butlletí.') },
-        messaging_groups: { required: false, label: label('Grups.') },
+        participation: { required: true, position: 0, label: label('Participo.') },
+        data_processing: { required: true, position: 1, label: label('Dades.') },
+        code_of_conduct: { required: true, position: 2, label: label('Codi.') },
+        health_data: { required: true, position: 3, label: label('Salut.') },
+        image_rights: { required: false, position: 4, label: label('Imatge.') },
+        newsletter: { required: false, position: 5, label: label('Butlletí.') },
+        messaging_groups: { required: false, position: 6, label: label('Grups.') },
       },
+      // Both questions asked with the RAPP-304 flags, no wording override (RAPP-614).
+      questions: {
+        health: { asked: true, required: true, privacy: 'health', texts: {} },
+        emergency_contact: { asked: true, required: false, privacy: 'personal', texts: {} },
+      },
+      texts: {},
       attachments: [],
     },
     published_at: FIXTURE_TIMESTAMP,
     published_by: null,
+    updated_at: FIXTURE_TIMESTAMP,
+    updated_by: null,
+    ...overrides,
+  };
+}
+
+/**
+ * A published app terms version (RAPP-613). Every organization starts with
+ * version 1, the bundled text; pass `version_number: null, published_at: null`
+ * for a draft.
+ */
+export function buildAppTermsVersion(
+  overrides: Partial<AppTermsVersionRow> = {},
+): AppTermsVersionRow {
+  const text = (value: string) => ({ ca: value });
+  return {
+    id: SEED_APP_TERMS_VERSION_ID,
+    org_id: SEED_ORGANIZATION_ID,
+    version_number: 1,
+    content: {
+      title: text('Termes i condicions de l’app'),
+      body: text('Text dels termes.'),
+      intro_title: text('Abans d’acceptar els termes'),
+      intro: text('A la pantalla següent podràs llegir els termes.'),
+      points: [{ title: text('Per què t’ho demanem'), body: text('Per organitzar l’activitat.') }],
+      accept_label: text('He llegit i accepto els termes'),
+      media_label: text('Accepto sortir a fotos (opcional)'),
+      media_hint: text('Pots canviar-ho quan vulguis.'),
+    },
+    published_at: FIXTURE_TIMESTAMP,
+    published_by: null,
+    updated_at: FIXTURE_TIMESTAMP,
+    updated_by: null,
     ...overrides,
   };
 }
@@ -1329,6 +1419,7 @@ export function buildAuthorizationSignature(
       PARTICIPANT_FIXTURES[1] === undefined ? '' : seedUserId(PARTICIPANT_FIXTURES[1].ordinal),
     season_id: SEED_SEASON_ID,
     version_id: null,
+    is_test_fixture: false,
     method: 'paper',
     language: null,
     device: null,
@@ -1355,6 +1446,11 @@ export function buildAuthorizationConsentEvent(
     granted: true,
     method: 'app',
     decided_at: FIXTURE_TIMESTAMP,
+    // The version and the words she was shown (RAPP-614).
+    version_id: SEED_AUTHORIZATION_VERSION_ID,
+    language: 'ca',
+    wording: 'Participo.',
+    required: true,
     ...overrides,
   };
 }
@@ -1409,6 +1505,9 @@ export function buildIntakeScreen(overrides: Partial<IntakeScreenRow> = {}): Int
     intro: null,
     after_screen: 'logistics',
     sort_order: 0,
+    // Where staff placed it in the question builder (RAPP-612): the flow reset restores it.
+    home_after_screen: overrides.after_screen ?? 'logistics',
+    home_sort_order: overrides.sort_order ?? 0,
     is_archived: false,
     created_at: FIXTURE_TIMESTAMP,
     updated_at: FIXTURE_TIMESTAMP,
@@ -1431,10 +1530,32 @@ export function buildCustomQuestion(overrides: Partial<CustomQuestionRow> = {}):
     placements: ['wizard', 'entity_form'],
     sort_order: 0,
     is_archived: false,
+    // A yes/no/maybe question takes no settings (RAPP-610).
+    settings: {},
+    // Optional unless staff say so (RAPP-611).
+    is_required: false,
     created_at: FIXTURE_TIMESTAMP,
     updated_at: FIXTURE_TIMESTAMP,
     ...overrides,
   };
+}
+
+/**
+ * A question of any type with its settings (RAPP-610), for tests that need a
+ * number, a date, a list, a consent, a file or a signature.
+ */
+export function buildTypedCustomQuestion(
+  type: CustomQuestionRow['question_type'],
+  settings: CustomQuestionRow['settings'],
+  overrides: Partial<CustomQuestionRow> = {},
+): CustomQuestionRow {
+  return buildCustomQuestion({
+    question_type: type,
+    settings,
+    placements:
+      type === 'file_upload' || type === 'signature' ? ['wizard'] : ['wizard', 'entity_form'],
+    ...overrides,
+  });
 }
 
 export function buildCustomQuestionOption(
@@ -1491,6 +1612,66 @@ export function buildBuiltinQuestionOverride(
     help: null,
     is_hidden: false,
     option_overrides: {},
+    updated_at: FIXTURE_TIMESTAMP,
+    updated_by: null,
+    ...overrides,
+  };
+}
+
+export type IntakeRequiredQuestionRow = PublicRow<'intake_required_questions'>;
+
+/** The seeded choice (RAPP-611): the phone stays optional, as by default. */
+export function buildIntakeRequiredQuestion(
+  overrides: Partial<IntakeRequiredQuestionRow> = {},
+): IntakeRequiredQuestionRow {
+  return {
+    org_id: SEED_ORGANIZATION_ID,
+    question: 'phone',
+    is_required: false,
+    updated_at: FIXTURE_TIMESTAMP,
+    updated_by: null,
+    ...overrides,
+  };
+}
+
+export type IntakeBuiltinScreenRow = PublicRow<'intake_builtin_screens'>;
+export type IntakeFlowOrderRow = PublicRow<'intake_flow_orders'>;
+
+/** The seeded help line on the summary screen (RAPP-612). */
+export function buildIntakeBuiltinScreen(
+  overrides: Partial<IntakeBuiltinScreenRow> = {},
+): IntakeBuiltinScreenRow {
+  return {
+    org_id: SEED_ORGANIZATION_ID,
+    screen: 'summary',
+    texts: { help: { ca: "Pots canviar qualsevol resposta abans d'acceptar els termes." } },
+    is_hidden: false,
+    updated_at: FIXTURE_TIMESTAMP,
+    updated_by: null,
+    ...overrides,
+  };
+}
+
+/** The seeded flow: the app's own order with the staff screens after equipment (RAPP-612). */
+export function buildIntakeFlowOrder(
+  overrides: Partial<IntakeFlowOrderRow> = {},
+): IntakeFlowOrderRow {
+  return {
+    org_id: SEED_ORGANIZATION_ID,
+    step_order: [
+      'identity',
+      'background',
+      'documentation',
+      'logistics',
+      'equipment',
+      `custom:${SEED_INTAKE_SCREEN_ID}`,
+      'custom:5eed0000-0000-4000-8044-000000000002',
+      'custom:5eed0000-0000-4000-8044-000000000003',
+      'season',
+      'supporting-entities',
+      'participation-support',
+      'specific-needs',
+    ],
     updated_at: FIXTURE_TIMESTAMP,
     updated_by: null,
     ...overrides,

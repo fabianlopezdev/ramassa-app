@@ -58,14 +58,14 @@ describe('permission catalog parity', () => {
     ]);
   });
 
-  test('the Coach and Staff product defaults match the code', () => {
+  test('the Coach, Staff and Onboarding design product defaults match the code', () => {
     // Later migrations add defaults in their own block (RAPP-305), so the rows
     // of every migration's block count, compared in catalog order.
     const rows = allMigrations.flatMap((sql) =>
       sql.includes('-- permission-preset-defaults:start')
         ? [
             ...block('permission-preset-defaults', sql).matchAll(
-              /\('(coach|staff)', '([a-z_.]+)'\)/g,
+              /\('(coach|staff|onboarding_design)', '([a-z_.]+)'\)/g,
             ),
           ]
         : [],
@@ -79,6 +79,20 @@ describe('permission catalog parity', () => {
       );
     expect(fromSql('coach')).toEqual(inCatalogOrder(BUILTIN_PRESET_DEFAULTS.coach));
     expect(fromSql('staff')).toEqual(inCatalogOrder(BUILTIN_PRESET_DEFAULTS.staff));
+    expect(fromSql('onboarding_design')).toEqual(
+      inCatalogOrder(BUILTIN_PRESET_DEFAULTS.onboarding_design),
+    );
+  });
+
+  test('Onboarding design holds exactly the onboarding and the test players (RAPP-615)', () => {
+    expect(BUILTIN_PRESET_DEFAULTS.onboarding_design).toEqual([
+      'test_players.manage',
+      'onboarding.design',
+    ]);
+    for (const preset of ['coach', 'staff'] as const) {
+      expect(BUILTIN_PRESET_DEFAULTS[preset]).not.toContain('onboarding.design');
+      expect(BUILTIN_PRESET_DEFAULTS[preset]).not.toContain('test_players.manage');
+    }
   });
 
   test('Admin holds every permission, and Staff keeps sensitive data and team management out', () => {

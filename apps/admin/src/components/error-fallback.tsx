@@ -8,13 +8,14 @@
 import { Button } from '@/components/ui/button';
 import { createAdminI18n, resolveClientLanguage } from '@/lib/i18n';
 import { logger } from '@/lib/observability';
-import type { ErrorComponentProps } from '@tanstack/react-router';
+import { useRouter, type ErrorComponentProps } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 import { I18nextProvider, useTranslation } from 'react-i18next';
 import { getErrorMessageKey, toAppError } from '@ramassa/shared/errors';
 
-function ErrorFallbackContent({ error, reset }: ErrorComponentProps) {
+function ErrorFallbackContent({ error }: ErrorComponentProps) {
   const { t } = useTranslation('errors');
+  const router = useRouter();
   const appError = toAppError(error);
   const friendlyMessage = t(getErrorMessageKey(appError.code));
 
@@ -32,7 +33,10 @@ function ErrorFallbackContent({ error, reset }: ErrorComponentProps) {
       <p className="text-muted-foreground text-center text-sm">
         {t('errorCodeLabel')}: {appError.code}
       </p>
-      <Button onClick={reset}>{t('retry')}</Button>
+      {/* invalidate runs beforeLoad and the loaders again and resets this
+          boundary; reset alone would show the same failure again
+          (https://tanstack.com/router/latest/docs/framework/react/guide/data-loading). */}
+      <Button onClick={() => void router.invalidate()}>{t('retry')}</Button>
     </main>
   );
 }

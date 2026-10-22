@@ -5,17 +5,24 @@
  * every finished profile is complete.
  */
 import { describe, expect, test } from 'bun:test';
-import { documentationFields, identityStepSchema, logisticsFields } from '../schemas/onboarding';
+import {
+  documentationStepSchema,
+  documentationStepSchemaFor,
+  identityStepSchema,
+  identityStepSchemaFor,
+  logisticsStepSchema,
+  logisticsStepSchemaFor,
+} from '../schemas/onboarding';
 import type { IntakeQuestion } from './intake';
 import {
   canSkipQuestion,
+  DEFAULT_REQUIRED_INTAKE_QUESTIONS,
   fetchMyQuestionsToAsk,
   fetchParticipantQuestionStates,
   INTAKE_STATE_PRESETS,
   questionStateChanges,
   questionStatesSchema,
   questionsToAsk,
-  REQUIRED_INTAKE_QUESTIONS,
   saveParticipantQuestionStates,
   WIZARD_QUESTIONS,
 } from './question-states';
@@ -31,28 +38,73 @@ const FIELD_QUESTION: Record<string, IntakeQuestion> = {
   nationality: 'nationality',
   preferredLanguage: 'preferred_language',
   documentType: 'document',
+  phone: 'phone',
+  address: 'address',
+  city: 'city',
+  postalCode: 'postal_code',
   referenceEntity: 'reference_entity',
+  referenceContactName: 'reference_contact_name',
   hasDependents: 'dependents',
   clothingSize: 'clothing_size',
   shoeSize: 'shoe_size',
 };
 
-describe('REQUIRED_INTAKE_QUESTIONS', () => {
-  test('is exactly what the onboarding schemas require, so it cannot drift', () => {
-    const required = new Set<IntakeQuestion>();
-    for (const schema of [identityStepSchema, documentationFields, logisticsFields]) {
-      const result = schema.safeParse({});
-      if (result.success) continue;
-      for (const issue of result.error.issues) {
-        const question = FIELD_QUESTION[String(issue.path[0])];
-        if (question !== undefined) required.add(question);
-      }
+/** The questions an empty step refuses, through the step schemas. */
+function requiredBy(
+  schemas: readonly { safeParse: (value: unknown) => { success: boolean; error?: unknown } }[],
+): Set<IntakeQuestion> {
+  const required = new Set<IntakeQuestion>();
+  for (const schema of schemas) {
+    const result = schema.safeParse({});
+    if (result.success) continue;
+    for (const issue of (result.error as { issues: { path: PropertyKey[] }[] }).issues) {
+      const question = FIELD_QUESTION[String(issue.path[0])];
+      if (question !== undefined) required.add(question);
     }
-    expect(new Set<IntakeQuestion>(REQUIRED_INTAKE_QUESTIONS)).toEqual(required);
+  }
+  return required;
+}
+
+describe('DEFAULT_REQUIRED_INTAKE_QUESTIONS', () => {
+  test('is exactly what the onboarding schemas require by default, so it cannot drift', () => {
+    expect(requiredBy([identityStepSchema, documentationStepSchema, logisticsStepSchema])).toEqual(
+      new Set<IntakeQuestion>(DEFAULT_REQUIRED_INTAKE_QUESTIONS),
+    );
   });
 
   test('the document is not required since RAPP-302', () => {
-    expect(REQUIRED_INTAKE_QUESTIONS).not.toContain('document');
+    expect(DEFAULT_REQUIRED_INTAKE_QUESTIONS).not.toContain('document');
+  });
+
+  test('the schemas follow the list staff choose; her names and language always stay (RAPP-611)', () => {
+    const chosen = new Set<IntakeQuestion>(['document', 'phone']);
+    expect(
+      requiredBy([
+        identityStepSchemaFor(chosen),
+        documentationStepSchemaFor(chosen),
+        logisticsStepSchemaFor(chosen),
+      ]),
+    ).toEqual(
+      new Set<IntakeQuestion>([
+        'first_name',
+        'last_name',
+        'preferred_language',
+        'document',
+        'phone',
+      ]),
+    );
+  });
+});
+
+describe('a required list staff chose (RAPP-611)', () => {
+  const sizesOptional = new Set<IntakeQuestion>(['first_name', 'last_name', 'phone']);
+  test("Don't ask follows it", () => {
+    expect(canSkipQuestion('clothing_size', answered(), sizesOptional)).toBe(true);
+    expect(canSkipQuestion('phone', answered(), sizesOptional)).toBe(false);
+    expect(canSkipQuestion('preferred_language', answered(), new Set())).toBe(false);
+  });
+  test('a skipped question made required is asked after all', () => {
+    expect(questionsToAsk(answered(), { phone: 'skip' }, sizesOptional).has('phone')).toBe(true);
   });
 });
 

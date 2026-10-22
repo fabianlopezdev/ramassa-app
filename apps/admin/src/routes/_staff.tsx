@@ -2,9 +2,23 @@ import { RouteFocusManager } from '@/components/accessibility/route-focus-manage
 import { RequireAuth } from '@/components/auth/require-auth';
 import { StaffSidebar } from '@/components/nav/staff-sidebar';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
-import { createFileRoute, Outlet } from '@tanstack/react-router';
+import { logout } from '@/lib/auth';
+import { designRoleRedirect } from '@/lib/design-role-access';
+import { guardStaffRoute } from '@/lib/staff-route-guard';
+import { supabase } from '@/lib/supabase';
+import { createFileRoute, Navigate, Outlet, useLocation } from '@tanstack/react-router';
+import { useEffect, type ReactNode } from 'react';
+import { assuranceLevelOf, useAuth } from '@ramassa/shared/auth';
 
 export const Route = createFileRoute('/_staff')({
+  // The session lives in the browser (localStorage), so the guard below runs
+  // there: with ssr false, beforeLoad and every child loader run on the client
+  // (https://tanstack.com/start/latest/docs/framework/react/guide/selective-ssr).
+  ssr: false,
+  // The second-factor step and the design role's redirect are thrown before
+  // any child loader runs, so a page never asks the database for data it
+  // would refuse (RAPP-615).
+  beforeLoad: ({ location, context }) => guardStaffRoute(supabase, context.staffAccess, location),
   component: StaffLayout,
 });
 
@@ -16,18 +30,47 @@ const STAFF_ROLES = ['staff', 'admin'] as const;
 function StaffLayout() {
   return (
     <RequireAuth allow={STAFF_ROLES}>
-      <SidebarProvider>
-        <RouteFocusManager targetId="main-content" />
-        <StaffSidebar />
-        {/* SidebarInset renders the page's single `main` landmark, so child
+      <DesignRoleGate>
+        <SidebarProvider>
+          <RouteFocusManager targetId="main-content" />
+          <StaffSidebar onSignOut={logout} />
+          {/* SidebarInset renders the page's single `main` landmark, so child
             routes render sections rather than nesting another `main`. */}
-        <SidebarInset id="main-content" tabIndex={-1}>
-          <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-4">
-            <SidebarTrigger />
-          </header>
-          <Outlet />
-        </SidebarInset>
-      </SidebarProvider>
+          <SidebarInset id="main-content" tabIndex={-1}>
+            <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-4">
+              <SidebarTrigger />
+            </header>
+            <Outlet />
+          </SidebarInset>
+        </SidebarProvider>
+      </DesignRoleGate>
     </RequireAuth>
   );
+}
+
+/**
+ * The onboarding design role (RAPP-615) reaches the onboarding page and the
+ * test players only. `beforeLoad` above redirects before any loader runs; this
+ * component gate also follows a permission change during the session (the
+ * permissions reload live), without a navigation. The database refuses her
+ * the data on its own.
+ */
+function DesignRoleGate({ children }: { readonly children: ReactNode }) {
+  const { session, role, permissions, permissionsAreCurrent } = useAuth();
+  const { staffAccess } = Route.useRouteContext();
+  // The guard's cache follows the auth state, which re-reads the permissions
+  // the moment someone changes them (RAPP-237): the next navigation then
+  // routes on the new set without asking the database again.
+  const userId = session?.user.id ?? null;
+  const isVerifiedTeam =
+    (role === 'staff' || role === 'admin') &&
+    permissionsAreCurrent &&
+    assuranceLevelOf(session) === 'aal2';
+  useEffect(() => {
+    if (userId !== null && isVerifiedTeam) staffAccess.rememberPermissions(userId, permissions);
+  }, [staffAccess, userId, isVerifiedTeam, permissions]);
+  const pathname = useLocation({ select: (location) => location.pathname });
+  const target = designRoleRedirect(pathname, permissions);
+  if (target !== null) return <Navigate to={target} replace />;
+  return <>{children}</>;
 }

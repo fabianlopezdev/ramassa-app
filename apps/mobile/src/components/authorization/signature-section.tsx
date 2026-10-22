@@ -7,6 +7,15 @@ import { Text, View } from 'react-native';
 import type { SignatureStrokes } from '@ramassa/shared/equipment';
 import type { SupportedLanguage } from '@ramassa/shared/i18n';
 
+/** Wording a version gives the final step (RAPP-614); a field left out shows the app's text. */
+export interface SignatureTexts {
+  readonly title?: string;
+  readonly prompt?: string;
+  readonly hint?: string;
+  readonly cannotDraw?: string;
+  readonly cannotDrawHint?: string;
+}
+
 /** Same signing interaction for app terms and the separate season authorization. */
 export function SignatureSection({
   strokes,
@@ -17,6 +26,7 @@ export function SignatureSection({
   hasError = false,
   language,
   testID = 'authorization-cannot-draw',
+  texts = {},
 }: {
   readonly strokes: SignatureStrokes | null;
   readonly onChange: (strokes: SignatureStrokes | null) => void;
@@ -26,6 +36,7 @@ export function SignatureSection({
   readonly hasError?: boolean;
   readonly testID?: string;
   readonly language?: SupportedLanguage;
+  readonly texts?: SignatureTexts;
 }) {
   const { t: translate, i18n } = useTranslation('onboarding');
   const t = language === undefined ? translate : i18n.getFixedT(language, 'onboarding');
@@ -33,7 +44,7 @@ export function SignatureSection({
   return (
     <View className="gap-sm">
       <Text className={`text-start text-lg font-bold text-neutral-900 ${fontClass}`}>
-        {t('authorizationSignatureTitle')}
+        {texts.title ?? t('authorizationSignatureTitle')}
       </Text>
       {unableToDraw ? null : (
         <>
@@ -41,10 +52,10 @@ export function SignatureSection({
             strokes={strokes}
             onChange={onChange}
             onDrawingChange={onDrawingChange}
-            prompt={t('authorizationSignaturePrompt')}
+            prompt={texts.prompt ?? t('authorizationSignaturePrompt')}
             promptClassName={fontClass}
             accessibilityLabel={t('authorizationSignatureLabel')}
-            accessibilityHint={t('authorizationSignatureHint')}
+            accessibilityHint={texts.hint ?? t('authorizationSignatureHint')}
           />
           {strokes === null ? null : (
             <PressableScale
@@ -63,7 +74,7 @@ export function SignatureSection({
       )}
       <ConsentRow
         testID={testID}
-        label={t('authorizationCannotDraw')}
+        label={texts.cannotDraw ?? t('authorizationCannotDraw')}
         required={false}
         requiredMark=""
         checked={unableToDraw}
@@ -71,7 +82,7 @@ export function SignatureSection({
       />
       {unableToDraw ? (
         <Text className={`text-start text-form text-neutral-700 ${fontClass}`}>
-          {t('authorizationCannotDrawHint')}
+          {texts.cannotDrawHint ?? t('authorizationCannotDrawHint')}
         </Text>
       ) : null}
       {hasError ? (

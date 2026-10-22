@@ -1,5 +1,10 @@
 import { expect, test } from 'bun:test';
-import { EnvironmentValidationError, parseClientEnv, parseServerEnv } from './env';
+import {
+  EnvironmentValidationError,
+  isTestSignInBuild,
+  parseClientEnv,
+  parseServerEnv,
+} from './env';
 
 const validClient = {
   EXPO_PUBLIC_SUPABASE_URL: 'https://project.supabase.co',
@@ -61,4 +66,21 @@ test('parseServerEnv requires the server-only service role key', () => {
 test('the client schema never surfaces the server-only service key (schema separation)', () => {
   const env = parseClientEnv(validServer);
   expect('SUPABASE_SERVICE_ROLE_KEY' in env).toBe(false);
+});
+
+test('the staging test sign-in flag is optional, and only the word true turns it on (RAPP-616)', () => {
+  expect(isTestSignInBuild(parseClientEnv(validClient))).toBe(false);
+  expect(
+    isTestSignInBuild(parseClientEnv({ ...validClient, EXPO_PUBLIC_TEST_SIGN_IN: 'true' })),
+  ).toBe(true);
+  expect(
+    isTestSignInBuild(parseClientEnv({ ...validClient, EXPO_PUBLIC_TEST_SIGN_IN: 'false' })),
+  ).toBe(false);
+  expect(() => parseClientEnv({ ...validClient, EXPO_PUBLIC_TEST_SIGN_IN: 'yes' })).toThrow(
+    EnvironmentValidationError,
+  );
+  // An unset build variable can arrive as an empty string: still off.
+  expect(isTestSignInBuild(parseClientEnv({ ...validClient, EXPO_PUBLIC_TEST_SIGN_IN: '' }))).toBe(
+    false,
+  );
 });

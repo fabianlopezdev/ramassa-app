@@ -142,6 +142,24 @@ describe('content-type helpers', () => {
 describe('folder authorization', () => {
   const none = new Set<string>();
 
+  test('her answer files have a private folder of their own, photos and PDFs only (RAPP-610)', () => {
+    expect(UPLOAD_FOLDERS).toContain('intake-answers');
+    expect(isFolderWritableBy('intake-answers', 'player', none)).toBe(true);
+    const request = { folder: 'intake-answers', contentLength: 2048 };
+    expect(
+      uploadUrlRequestSchema.safeParse({ ...request, contentType: 'application/pdf' }).success,
+    ).toBe(true);
+    expect(
+      uploadUrlRequestSchema.safeParse({ ...request, contentType: 'image/webp' }).success,
+    ).toBe(true);
+    expect(uploadUrlRequestSchema.safeParse({ ...request, contentType: 'video/mp4' }).success).toBe(
+      false,
+    );
+    expect(
+      uploadUrlRequestSchema.safeParse({ ...request, contentType: 'application/msword' }).success,
+    ).toBe(false);
+  });
+
   test('allows player feedback images in their dedicated private folder', () => {
     expect(UPLOAD_FOLDERS).toContain('feedback');
     expect(isFolderWritableBy('feedback' as never, 'player', none)).toBe(true);

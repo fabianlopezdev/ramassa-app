@@ -11,6 +11,7 @@
 
 import { z } from 'zod';
 import { loginEmailSchema } from './auth';
+import { personNameSchema, trimPersonName } from './person-name';
 
 /**
  * The address goes through the SAME normalization as login (trim, lowercase),
@@ -23,9 +24,14 @@ import { loginEmailSchema } from './auth';
  */
 export const createParticipantInviteSchema = z.object({
   email: loginEmailSchema,
-  firstName: z.string().trim().min(1).max(100),
-  lastName: z.string().trim().min(1).max(100),
+  firstName: personNameSchema,
+  lastName: personNameSchema,
   referenceEntity: z.string().trim().optional(),
+  /**
+   * A test player (RAPP-615), made up for designing the onboarding. Off unless
+   * staff turn it on; the database refuses it to anyone who may not set it.
+   */
+  isTestAccount: z.boolean().default(false),
 });
 export type CreateParticipantInviteInput = z.input<typeof createParticipantInviteSchema>;
 export type CreateParticipantInvite = z.infer<typeof createParticipantInviteSchema>;
@@ -45,17 +51,26 @@ function normalizedEntity(referenceEntity: string | undefined): string | null {
  * `referralId` is the pending partner-entity referral the invitation answers,
  * if staff opened the form from one. The database links it to her profile when
  * she finishes the onboarding wizard.
+ *
+ * `questionStates` is what staff confirmed her wizard asks (RAPP-618): only the
+ * questions set to Ask or Don't ask. The database saves them in the same
+ * transaction as the invitation, or creates nothing.
  */
 export function buildCreateParticipantInvitePayload(
-  input: CreateParticipantInvite,
+  input: CreateParticipantInviteInput,
   referralId: string | null = null,
+  questionStates: Readonly<Record<string, 'ask' | 'skip'>> = {},
 ) {
+  const isTestAccount = input.isTestAccount === true;
   return {
+    ...(Object.keys(questionStates).length === 0 ? {} : { question_states: questionStates }),
     email: input.email,
-    first_name: input.firstName.trim(),
-    last_name: input.lastName.trim(),
+    first_name: trimPersonName(input.firstName),
+    last_name: trimPersonName(input.lastName),
     reference_entity: normalizedEntity(input.referenceEntity),
-    referral_id: referralId,
+    // A test player is made up, so she never answers a real referral.
+    referral_id: isTestAccount ? null : referralId,
+    is_test_account: isTestAccount,
   };
 }
 export type CreateParticipantInvitePayload = ReturnType<typeof buildCreateParticipantInvitePayload>;

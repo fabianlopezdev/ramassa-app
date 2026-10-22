@@ -33,7 +33,7 @@ const CHILDCARE_KEYS = {
 } as const;
 
 /** The strokes are 0..1000 on both axes, so they fill any box the same way. */
-function SignatureDrawing({
+export function SignatureDrawing({
   strokes,
   label,
 }: {
@@ -62,6 +62,19 @@ function SignatureDrawing({
       ))}
     </svg>
   );
+}
+
+/**
+ * What her health line shows: her answer, that she withdrew the health data
+ * consent (her answer was then deleted, pending fix 25), or nothing given.
+ */
+export function healthAnswerState(
+  healthInfo: string | null | undefined,
+  consents: readonly ParticipantConsent[],
+): 'answer' | 'withdrawn' | 'none' {
+  if (healthInfo != null && healthInfo !== '') return 'answer';
+  const health = consents.find((consent) => consent.key === 'health_data');
+  return health !== undefined && !health.granted ? 'withdrawn' : 'none';
 }
 
 export interface ParticipantAuthorizationPanelProps {
@@ -101,6 +114,11 @@ export function ParticipantAuthorizationPanel({
     }
   }
   const date = (value: string) => new Date(value).toLocaleDateString(locale);
+  // A record from before the wording was kept (or a change outside the
+  // authorization) names the consent by its built-in name, or its key.
+  const consentName = (consent: ParticipantConsent) =>
+    consent.wording ??
+    t(`settings:authorizationConsent.${consent.key}`, { defaultValue: consent.key });
   const notProvided = t('profile:notProvided');
 
   async function recordPaper(event: FormEvent<HTMLFormElement>) {
@@ -170,12 +188,27 @@ export function ParticipantAuthorizationPanel({
           </h3>
           <ul className="flex flex-col gap-1" data-testid="participant-consents">
             {consents.map((consent) => (
-              <li key={consent.key} className="text-start text-sm">
-                {t(`settings:authorizationConsent.${consent.key}`)}:{' '}
-                {consent.granted
-                  ? t('participants:authorizationGranted')
-                  : t('participants:authorizationNotGranted')}{' '}
-                <span className="text-xs text-muted-foreground">({date(consent.decidedAt)})</span>
+              <li key={consent.key} className="flex flex-col text-start text-sm">
+                {/* The words she was shown (RAPP-614), in the language she read them. */}
+                <span lang={consent.language ?? undefined} dir="auto">
+                  {consentName(consent)}
+                </span>
+                <span>
+                  {consent.granted
+                    ? t('participants:authorizationGranted')
+                    : t('participants:authorizationNotGranted')}{' '}
+                  <span className="text-xs text-muted-foreground">
+                    (
+                    {consent.versionNumber === null
+                      ? date(consent.decidedAt)
+                      : t('participants:authorizationConsentVersion', {
+                          date: date(consent.decidedAt),
+                          season: consent.seasonName ?? '',
+                          number: consent.versionNumber,
+                        })}
+                    {consent.required === true ? ` · ${t('settings:authorizationRequired')}` : ''})
+                  </span>
+                </span>
               </li>
             ))}
           </ul>
@@ -205,7 +238,9 @@ export function ParticipantAuthorizationPanel({
               {t('participants:authorizationHealth')}
             </dt>
             <dd className="whitespace-pre-wrap text-start text-sm">
-              {participant.health_info ?? notProvided}
+              {healthAnswerState(participant.health_info, consents) === 'withdrawn'
+                ? t('participants:authorizationHealthConsentWithdrawn')
+                : (participant.health_info ?? notProvided)}
             </dd>
           </div>
         ) : null}

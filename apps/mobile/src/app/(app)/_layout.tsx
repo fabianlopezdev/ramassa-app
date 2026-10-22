@@ -40,7 +40,8 @@ export default function AppLayout() {
 
 function AppNavigator() {
   const { t } = useTranslation('common');
-  const { user, session, role, needsSecondFactor, permissionsAreCurrent } = useAuth();
+  const { user, session, role, needsSecondFactor, permissionsAreCurrent, needsTermsAcceptance } =
+    useAuth();
   const userId = user?.id ?? null;
   // The area comes from the account type, never from its absence (RAPP-232):
   // an entity contact or an unknown account never lands in the player tabs.
@@ -59,7 +60,11 @@ function AppNavigator() {
   // her in, as the onboarding gate does (RAPP-21): a network flake must never
   // lock out a player who already signed.
   const authorization = useAuthorizationStatus(area === 'player');
-  const mustSign = area === 'player' && needsAuthorization(authorization.data ?? null);
+  // A new app terms version (RAPP-613) comes first: she accepts it on the terms
+  // screen alone, then the season authorization if it is due.
+  const mustAcceptTerms = area === 'player' && needsTermsAcceptance;
+  const mustSign =
+    area === 'player' && !mustAcceptTerms && needsAuthorization(authorization.data ?? null);
   // Signing mode on a staff tablet (RAPP-305): while a player signs, every
   // other screen is off, so no link, notification or gesture opens one.
   const { session: signingSession } = useSigningSession();
@@ -76,6 +81,7 @@ function AppNavigator() {
     home,
     isBlocked:
       isCovered ||
+      mustAcceptTerms ||
       mustSign ||
       isSigning ||
       requiresSecondFactor ||
@@ -120,10 +126,18 @@ function AppNavigator() {
       </View>
     );
   }
+  if (mustAcceptTerms && pathname !== '/terms-update') {
+    return <Redirect href={'/terms-update' as Href} />;
+  }
   if (mustSign && pathname !== '/authorization' && pathname !== '/profile-edit') {
     return <Redirect href={'/authorization' as Href} />;
   }
-  if (!mustSign && home !== null && (pathname === '/' || pathname === '/authorization')) {
+  if (
+    !mustAcceptTerms &&
+    !mustSign &&
+    home !== null &&
+    (pathname === '/' || pathname === '/authorization' || pathname === '/terms-update')
+  ) {
     return <Redirect href={home as Href} />;
   }
 
@@ -150,11 +164,15 @@ function AppNavigator() {
           <Stack.Protected guard={area === 'player'}>
             <Stack.Screen name="profile-edit" />
           </Stack.Protected>
+          {/* A new app terms version (RAPP-613): the only screen until she accepts. */}
+          <Stack.Protected guard={mustAcceptTerms}>
+            <Stack.Screen name="terms-update" options={noSwipeBackOptions} />
+          </Stack.Protected>
           <Stack.Protected guard={mustSign}>
             {/* Her signature is a drag, which iOS would read as swipe back. */}
             <Stack.Screen name="authorization" options={noSwipeBackOptions} />
           </Stack.Protected>
-          <Stack.Protected guard={area === 'player' && !mustSign}>
+          <Stack.Protected guard={area === 'player' && !mustSign && !mustAcceptTerms}>
             <Stack.Screen name="(tabs)" />
             {/* Pushed OVER the tabs, not inside them: the edit form and the
               erasure request are full-screen tasks, and the floating tab bar

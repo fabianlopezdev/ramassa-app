@@ -2,9 +2,10 @@
 -- Run with: bunx supabase test db
 --
 -- What these assertions defend:
---   1. The catalog has the 44 permissions (participants.view_health since RAPP-304,
---      consents.collect since RAPP-305, in Coach, Staff and Admin) and the built-in presets their
---      product defaults; every organization has the three built-in presets.
+--   1. The catalog has the 46 permissions (participants.view_health since RAPP-304,
+--      consents.collect since RAPP-305, in Coach, Staff and Admin; test_players.manage and
+--      onboarding.design since RAPP-615) and the built-in presets their product defaults;
+--      every organization has the four built-in presets (Onboarding design since RAPP-615).
 --   2. Existing team members hold exactly the preset of their role, and nobody
 --      else holds anything. No access rule reads permissions yet (RAPP-230).
 --   3. has_permission answers only for an active team member of the org.
@@ -18,10 +19,10 @@ select plan(31);
 
 -- 1. Catalog and presets ----------------------------------------------------------------
 
-select is((select count(*)::int from public.permissions), 44, 'the catalog has 44 permissions');
+select is((select count(*)::int from public.permissions), 46, 'the catalog has 46 permissions');
 select is(
   (select count(*)::int from public.permission_preset_defaults where builtin_key = 'admin'),
-  44, 'the Admin default holds every permission'
+  46, 'the Admin default holds every permission'
 );
 select is(
   (select count(*)::int from public.permission_preset_defaults where builtin_key = 'staff'),
@@ -43,14 +44,14 @@ select ok(
 select is(
   (select count(*)::int from public.permission_presets
     where org_id = '5eed0000-0000-4000-8000-000000000000' and builtin_key is not null),
-  3, 'the organization has the three built-in presets'
+  4, 'the organization has the four built-in presets'
 );
 
 -- 2. Backfill -------------------------------------------------------------------------------
 
 select is(
   (select count(*)::int from public.team_member_permissions where profile_id = '5eed0000-0000-4000-8000-000000000001'),
-  44, 'the admin holds the Admin preset'
+  46, 'the admin holds the Admin preset'
 );
 select is(
   (select count(*)::int from public.team_member_permissions where profile_id = '5eed0000-0000-4000-8000-000000000002'),
@@ -95,7 +96,7 @@ update public.profiles set is_active = true where id = '5eed0000-0000-4000-8000-
 set local role authenticated;
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000001", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 
-select is((select count(*)::int from public.permission_presets), 3, 'with team.manage the admin reads the presets');
+select is((select count(*)::int from public.permission_presets), 4, 'with team.manage the admin reads the presets');
 
 select lives_ok(
   $$ select public.set_team_member_permissions(
@@ -187,14 +188,14 @@ reset role;
 update public.profiles set role = 'admin' where id = '5eed0000-0000-4000-8000-000000000002';
 select is(
   (select count(*)::int from public.team_member_permissions where profile_id = '5eed0000-0000-4000-8000-000000000002'),
-  44, 'a staff member promoted to admin gets the Admin preset'
+  46, 'a staff member promoted to admin gets the Admin preset'
 );
 
 insert into public.organizations (id, name, slug)
 values ('5eed0000-0000-4000-8000-0000000000aa', 'Second org', 'second-org-rapp229');
 select is(
   (select count(*)::int from public.permission_presets where org_id = '5eed0000-0000-4000-8000-0000000000aa'),
-  3, 'a new organization starts with the three built-in presets'
+  4, 'a new organization starts with the four built-in presets'
 );
 
 select * from finish();

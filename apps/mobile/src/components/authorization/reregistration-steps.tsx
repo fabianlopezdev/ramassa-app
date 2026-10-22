@@ -16,8 +16,14 @@ import {
   type CustomAnswerDraft,
 } from '@/components/onboarding/custom-question-field';
 import { ProfileRow, ProfileSection } from '@/components/profile/profile-section';
-import { SeasonAnswerFields, type SeasonAnswers } from '@/components/profile/season-answer-fields';
+import {
+  missingSeasonAnswers,
+  SeasonAnswerFields,
+  type SeasonAnswers,
+  type SeasonQuestion,
+} from '@/components/profile/season-answer-fields';
 import { continuousCorners } from '@/lib/continuous-corners';
+import { checkCustomAnswers } from '@/lib/custom-answer-errors';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { customAnswersToSave, mergedCustomAnswers } from '@/lib/onboarding-intake';
 import { useBuiltinWording } from '@/lib/onboarding-intake-context';
@@ -30,14 +36,21 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@ramassa/shared/auth';
+import {
+  AUTHORIZATION_BUNDLED_TEXT_KEYS,
+  authorizationWording,
+  type AuthorizationContent,
+  type AuthorizationTextField,
+} from '@ramassa/shared/authorization';
 import { countryLabelForCanonical } from '@ramassa/shared/i18n/countries';
 import { municipalityLabelForCanonical } from '@ramassa/shared/i18n/municipalities';
-import type { IntakeQuestion } from '@ramassa/shared/intake';
+import { isRequiredQuestion, type IntakeQuestion } from '@ramassa/shared/intake';
 import {
   EMPTY_INTAKE_CATALOG,
   fetchIntakeCatalog,
   fetchMyCustomAnswers,
-  hiddenBuiltinQuestions,
+  requiredBuiltinQuestions,
+  reregistrationAsks,
   saveMyCustomAnswers,
   seasonScreens,
   type CustomAnswers,
@@ -89,9 +102,12 @@ function ActionButton({
 
 export function ReregistrationSteps({
   seasonName,
+  texts,
   onDone,
 }: {
   readonly seasonName: string;
+  /** The version's wording (RAPP-614); a field left out shows the app's text. */
+  readonly texts?: AuthorizationContent['texts'];
   readonly onDone: () => void;
 }) {
   const { t, i18n } = useTranslation(['onboarding', 'profile']);
@@ -99,10 +115,19 @@ export function ReregistrationSteps({
   const router = useRouter();
   const { user } = useAuth();
   const locale = (i18n.resolvedLanguage as LanguageCode | undefined) ?? 'ca';
+  const words = (field: AuthorizationTextField) =>
+    (
+      authorizationWording(texts, field, locale) ??
+      t(AUTHORIZATION_BUNDLED_TEXT_KEYS.texts[field], { season: seasonName })
+    ).replace(/\{\{\s*season\s*\}\}/gu, seasonName);
   const [phase, setPhase] = useState<'review' | 'season'>('review');
   const [answers, setAnswers] = useState<SeasonAnswers | null>(null);
   const [hasFailed, setHasFailed] = useState(false);
   const [customDraft, setCustomDraft] = useState<CustomAnswerDraft>({});
+  // Each staff answer that does not fit its question, with the wizard's words (RAPP-610).
+  const [customErrors, setCustomErrors] = useState<Readonly<Record<string, string>>>({});
+  // The season questions staff made required (RAPP-611) that she left empty.
+  const [missing, setMissing] = useState<ReadonlySet<SeasonQuestion>>(new Set());
 
   // Read fresh: she may have just corrected her details on the profile screen.
   const profile = useQuery({
@@ -129,20 +154,26 @@ export function ReregistrationSteps({
   const catalog = staffQuestions.data?.catalog ?? EMPTY_INTAKE_CATALOG;
   const storedCustom = staffQuestions.data?.answers ?? {};
   const customScreens = seasonScreens(catalog);
-  const hidden = hiddenBuiltinQuestions(catalog);
+  // The same hide rule as her wizard (RAPP-612): a hidden season screen hides its question here too.
+  const asks = reregistrationAsks(catalog);
   const wording = useBuiltinWording(catalog);
   const save = useMutation({
-    mutationFn: async (value: SeasonAnswers) => {
+    mutationFn: async ({
+      season: value,
+      custom,
+    }: {
+      readonly season: SeasonAnswers;
+      readonly custom: CustomAnswerDraft;
+    }) => {
+      // Her staff answers first: the season call ends the re-registration and
+      // re-checks every required answer, staff ones included (RAPP-611).
+      await saveMyCustomAnswers(supabase, customAnswersToSave(customScreens, custom, storedCustom));
       await updateMySeasonAnswers(supabase, {
         applicantStatus: value.applicantStatus ?? undefined,
         supportingEntities: [...value.supportingEntities],
         childcareNeed: value.childcareNeed ?? undefined,
         specificNeeds: value.specificNeeds.trim() === '' ? undefined : value.specificNeeds,
       });
-      await saveMyCustomAnswers(
-        supabase,
-        customAnswersToSave(customScreens, customDraft, storedCustom),
-      );
     },
   });
 
@@ -183,10 +214,12 @@ export function ReregistrationSteps({
               accessibilityRole="header"
               className={`text-start text-2xl font-bold text-neutral-900 ${fontClass}`}
             >
-              {t('reregistrationTitle', { season: seasonName })}
+              {words('reregistration_title')}
             </Text>
             <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
-              {phase === 'review' ? t('reregistrationReviewIntro') : t('seasonStepIntro')}
+              {phase === 'review'
+                ? words('reregistration_intro')
+                : words('reregistration_season_intro')}
             </Text>
           </View>
 
@@ -221,13 +254,13 @@ export function ReregistrationSteps({
               </ProfileSection>
               <ActionButton
                 testID="reregistration-correct"
-                label={t('reregistrationCorrect')}
+                label={words('reregistration_correct_label')}
                 isPrimary
                 onPress={() => setPhase('season')}
               />
               <ActionButton
                 testID="reregistration-edit"
-                label={t('reregistrationEdit')}
+                label={words('reregistration_edit_label')}
                 isPrimary={false}
                 onPress={() => router.push('/profile-edit' as Href)}
               />
@@ -237,18 +270,30 @@ export function ReregistrationSteps({
               <SeasonAnswerFields
                 testIDPrefix="reregistration"
                 value={current}
-                onChange={(patch) => setAnswers({ ...current, ...patch })}
+                missing={missing}
+                onChange={(patch) => {
+                  setAnswers({ ...current, ...patch });
+                  setMissing(new Set());
+                }}
                 entityNames={[]}
                 showSensitive
-                shows={(question: IntakeQuestion) => !hidden.has(question)}
+                shows={(question: IntakeQuestion) => asks(question)}
                 wording={wording}
               />
               <CustomQuestionSections
                 screens={customScreens}
                 answers={mergedCustomAnswers(storedCustom, customDraft)}
-                onChange={(questionId, value) =>
-                  setCustomDraft((current) => ({ ...current, [questionId]: value }))
-                }
+                errors={customErrors}
+                onChange={(questionId, value) => {
+                  setCustomDraft((current) => ({ ...current, [questionId]: value }));
+                  setCustomErrors((current) =>
+                    current[questionId] === undefined
+                      ? current
+                      : Object.fromEntries(
+                          Object.entries(current).filter(([id]) => id !== questionId),
+                        ),
+                  );
+                }}
               />
               {hasFailed ? (
                 <Text
@@ -260,18 +305,47 @@ export function ReregistrationSteps({
               ) : null}
               <ActionButton
                 testID="reregistration-continue"
-                label={t('continueAction')}
+                label={words('continue_label')}
                 isPrimary
                 isBusy={save.isPending}
                 onPress={() => {
                   setHasFailed(false);
-                  save.mutate(current, {
-                    onSuccess: onDone,
-                    onError: () => {
-                      playHaptic('error');
-                      setHasFailed(true);
+                  // The same check and words as her wizard: nothing is sent
+                  // while an answer does not fit its question.
+                  const checked = checkCustomAnswers(
+                    customScreens.flatMap((screen) => screen.questions),
+                    mergedCustomAnswers(storedCustom, customDraft),
+                    t,
+                  );
+                  setCustomErrors(checked.errors);
+                  const required = requiredBuiltinQuestions(catalog);
+                  const unanswered = missingSeasonAnswers(
+                    current,
+                    (question) => asks(question) && isRequiredQuestion(question, required),
+                  );
+                  setMissing(unanswered);
+                  if (Object.keys(checked.errors).length > 0 || unanswered.size > 0) {
+                    playHaptic('warning');
+                    return;
+                  }
+                  // Tidied as the wizard does: a phone without separators.
+                  const tidied: CustomAnswerDraft = Object.fromEntries(
+                    Object.entries(customDraft).map(([id, value]) => [
+                      id,
+                      checked.answers[id] ?? value,
+                    ]),
+                  );
+                  setCustomDraft(tidied);
+                  save.mutate(
+                    { season: current, custom: tidied },
+                    {
+                      onSuccess: onDone,
+                      onError: () => {
+                        playHaptic('error');
+                        setHasFailed(true);
+                      },
                     },
-                  });
+                  );
                 }}
               />
             </>

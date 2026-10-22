@@ -14,6 +14,7 @@
 
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { SelectionChoiceCard } from '@/components/auth/selection-choice-card';
+import { FieldErrorText } from '@/components/onboarding/field-error-text';
 import { OptionChip } from '@/components/onboarding/option-chip';
 import { ChoiceGrid } from '@/components/onboarding/option-grid';
 import { QuestionHelp } from '@/components/onboarding/question-help';
@@ -41,8 +42,29 @@ export interface SeasonAnswers {
   readonly specificNeeds: string;
 }
 
-type SeasonQuestion =
+export type SeasonQuestion =
   'applicant_status' | 'supporting_entities' | 'childcare_need' | 'specific_needs';
+
+/**
+ * The season questions that need an answer and have none (RAPP-611): her
+ * wizard and her re-registration refuse to go on while one is missing.
+ */
+export function missingSeasonAnswers(
+  value: SeasonAnswers,
+  isRequiredHere: (question: SeasonQuestion) => boolean,
+): ReadonlySet<SeasonQuestion> {
+  const answered: Readonly<Record<SeasonQuestion, boolean>> = {
+    applicant_status: value.applicantStatus !== null,
+    supporting_entities: value.supportingEntities.some((name) => name.trim() !== ''),
+    childcare_need: value.childcareNeed !== null,
+    specific_needs: value.specificNeeds.trim() !== '',
+  };
+  return new Set(
+    (Object.keys(answered) as SeasonQuestion[]).filter(
+      (question) => isRequiredHere(question) && !answered[question],
+    ),
+  );
+}
 
 export const EMPTY_SEASON_ANSWERS: SeasonAnswers = {
   applicantStatus: null,
@@ -106,6 +128,8 @@ export interface SeasonAnswerFieldsProps {
   readonly testIDPrefix: string;
   readonly applicantStatusPresentation?: 'chips' | 'picker';
   readonly referenceEntity?: string | null;
+  /** Required questions she left empty (RAPP-611): each says so under it. */
+  readonly missing?: ReadonlySet<SeasonQuestion>;
 }
 
 export function SeasonAnswerFields({
@@ -119,6 +143,7 @@ export function SeasonAnswerFields({
   testIDPrefix,
   applicantStatusPresentation = 'chips',
   referenceEntity,
+  missing = new Set(),
 }: SeasonAnswerFieldsProps) {
   const { t } = useTranslation(['onboarding']);
   const label = (question: SeasonQuestion, appLabel: string) =>
@@ -133,6 +158,12 @@ export function SeasonAnswerFields({
     label: t(CHILDCARE_KEYS[need]),
   }));
   const fontClass = useLanguageFontClass();
+  const missingText = (question: SeasonQuestion) => (
+    <FieldErrorText
+      testID={`${testIDPrefix}-missing-${question}`}
+      message={missing.has(question) ? t('onboarding:errorRequired') : undefined}
+    />
+  );
 
   return (
     <View className="gap-lg" testID={`${testIDPrefix}-season`}>
@@ -190,6 +221,7 @@ export function SeasonAnswerFields({
               ),
             )}
           </View>
+          {missingText('applicant_status')}
         </View>
       ) : null}
 
@@ -208,6 +240,7 @@ export function SeasonAnswerFields({
           help={help('supporting_entities')}
         />
       ) : null}
+      {shows('supporting_entities') ? missingText('supporting_entities') : null}
 
       {showSeasonNumber ? (
         <Question label={t('onboarding:seasonNumberLabel')}>
@@ -250,6 +283,7 @@ export function SeasonAnswerFields({
           </View>
         </Question>
       ) : null}
+      {shows('childcare_need') ? missingText('childcare_need') : null}
 
       {showSensitive && shows('specific_needs') ? (
         <View className="gap-xs">
@@ -265,6 +299,7 @@ export function SeasonAnswerFields({
           <Text className={`text-start text-form text-neutral-700 ${fontClass}`}>
             {t('onboarding:specificNeedsHint')}
           </Text>
+          {missingText('specific_needs')}
         </View>
       ) : null}
     </View>

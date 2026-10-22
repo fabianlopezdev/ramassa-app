@@ -57,6 +57,7 @@ export default function AuthorizationScreen() {
     return (
       <ReregistrationSteps
         seasonName={current.seasonName}
+        texts={current.content.texts}
         onDone={() => setHasReregistered(true)}
       />
     );
@@ -75,6 +76,7 @@ export default function AuthorizationScreen() {
         sign.mutate(
           {
             versionId: current.versionId,
+            content: current.content,
             signing,
             language,
             device: `${Platform.OS} ${String(Platform.Version)}`,

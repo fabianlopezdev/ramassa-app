@@ -1,9 +1,13 @@
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
+import { WizardValidationSummary } from '@/components/onboarding/wizard-validation-summary';
 import {
   EMPTY_SEASON_ANSWERS,
+  missingSeasonAnswers,
   SeasonAnswerFields,
   type SeasonAnswers,
+  type SeasonQuestion,
 } from '@/components/profile/season-answer-fields';
+import { playHaptic } from '@/lib/haptics/haptics';
 import { onboardingDraftStore } from '@/lib/onboarding';
 import { useBuiltinWording, useWizardStep } from '@/lib/onboarding-intake-context';
 import {
@@ -37,6 +41,11 @@ export function SeasonWizardStep({ screen }: { readonly screen: SeasonWizardScre
     };
   });
 
+  // The season questions of this screen staff made required (RAPP-611) and she left empty.
+  const [missing, setMissing] = useState<ReadonlySet<SeasonQuestion>>(new Set());
+  const asked = (question: SeasonQuestion) =>
+    WIZARD_SCREEN_QUESTIONS[screen].includes(question) && step.shouldAsk(question);
+
   function persist(currentStep: OnboardingDraftStep) {
     onboardingDraftStore.saveDraft(
       mergeSeasonDraft(
@@ -61,6 +70,15 @@ export function SeasonWizardStep({ screen }: { readonly screen: SeasonWizardScre
       title={t(SEASON_SCREEN_TITLE_KEYS[screen])}
       continueLabel={t('continueAction')}
       onContinue={() => {
+        const unanswered = missingSeasonAnswers(
+          answers,
+          (question) => asked(question) && step.isRequired(question),
+        );
+        setMissing(unanswered);
+        if (unanswered.size > 0) {
+          playHaptic('warning');
+          return;
+        }
         if (screen === 'season' && answers.applicantStatus === 'other') {
           persist('applicant-status-details');
           const route =
@@ -81,17 +99,20 @@ export function SeasonWizardStep({ screen }: { readonly screen: SeasonWizardScre
             }
       }
     >
+      <WizardValidationSummary isVisible={missing.size > 0} message={t('errorSummary')} />
       <SeasonAnswerFields
         testIDPrefix="onboarding"
         value={answers}
-        onChange={(patch) => setAnswers((current) => ({ ...current, ...patch }))}
+        missing={missing}
+        onChange={(patch) => {
+          setAnswers((current) => ({ ...current, ...patch }));
+          setMissing(new Set());
+        }}
         // Her own wizard: she sees her own sensitive answers. Partner entity
         // names are not offered to her; she types the ones that support her.
         entityNames={[]}
         showSensitive
-        shows={(question) =>
-          WIZARD_SCREEN_QUESTIONS[screen].includes(question) && step.shouldAsk(question)
-        }
+        shows={asked}
         applicantStatusPresentation="picker"
         referenceEntity={referringEntityForAdditionalSupport(draft)}
         wording={wording}

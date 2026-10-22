@@ -191,36 +191,83 @@ export function customStepId(step: string): string | null {
   return isCustomStep(step) ? step.slice(CUSTOM_STEP_PREFIX.length) : null;
 }
 
-/** Every step in order, shown or not: each built-in screen with its staff screens after it. */
-function fullOrder(custom: readonly CustomWizardScreen[]): WizardStepKey[] {
-  return [
-    ...QUESTION_SCREENS.flatMap((screen): WizardStepKey[] => [
-      screen,
-      ...(screen === 'logistics' ? ['equipment' as const] : []),
-      ...(screen === 'season' ? SEASON_WIZARD_SCREENS.slice(1) : []),
-      ...custom
-        .filter((customScreen) => customScreen.afterScreen === screen)
-        .map((customScreen) => customStepKey(customScreen.id)),
-    ]),
-    'summary',
-    'terms-intro',
-    'terms',
-  ];
+/**
+ * The screens that always end the wizard, in this order: the summary of what
+ * she gave, then the terms (legal). Staff never move or hide them (RAPP-612).
+ */
+export const FINAL_WIZARD_SCREENS = ['summary', 'terms-intro', 'terms'] as const;
+
+/**
+ * How staff arranged the wizard (RAPP-612). `order` holds the built-in question
+ * screens and staff screens as staff placed them; a step it leaves out keeps
+ * its place after the step it followed in the app's own order, so an empty
+ * order is today's wizard. `hiddenScreens` are built-in screens staff hid;
+ * the catalog only lists ones with no required question.
+ */
+export interface WizardFlow {
+  readonly order: readonly WizardStepKey[];
+  readonly hiddenScreens: ReadonlySet<WizardQuestionScreen>;
+}
+
+export const DEFAULT_WIZARD_FLOW: WizardFlow = { order: [], hiddenScreens: new Set() };
+
+/** The app's own order: each built-in screen with its staff screens after it. */
+function defaultFlowOrder(custom: readonly CustomWizardScreen[]): WizardStepKey[] {
+  return QUESTION_SCREENS.flatMap((screen): WizardStepKey[] => [
+    screen,
+    ...(screen === 'logistics' ? ['equipment' as const] : []),
+    ...(screen === 'season' ? SEASON_WIZARD_SCREENS.slice(1) : []),
+    ...custom
+      .filter((customScreen) => customScreen.afterScreen === screen)
+      .map((customScreen) => customStepKey(customScreen.id)),
+  ]);
+}
+
+/**
+ * Every step in order, shown or not: the steps staff arranged, the ones they
+ * left out after the step they followed, then the summary and the terms. A
+ * step the app no longer knows (a removed staff screen) is ignored.
+ */
+export function wizardFlowOrder(
+  custom: readonly CustomWizardScreen[],
+  flow: WizardFlow = DEFAULT_WIZARD_FLOW,
+): WizardStepKey[] {
+  const defaults = defaultFlowOrder(custom);
+  const known = new Set<WizardStepKey>(defaults);
+  const placed: WizardStepKey[] = [];
+  for (const step of flow.order) {
+    if (known.has(step) && !placed.includes(step)) placed.push(step);
+  }
+  defaults.forEach((step, index) => {
+    if (placed.includes(step)) return;
+    const before = defaults
+      .slice(0, index)
+      .reverse()
+      .find((earlier) => placed.includes(earlier));
+    placed.splice(before === undefined ? 0 : placed.indexOf(before) + 1, 0, step);
+  });
+  return [...placed, ...FINAL_WIZARD_SCREENS];
+}
+
+function isHiddenScreen(step: WizardStepKey, flow: WizardFlow): boolean {
+  return !isCustomStep(step) && flow.hiddenScreens.has(step as WizardQuestionScreen);
 }
 
 /** Every screen she will see, in order: the asked ones, the summary and the terms. */
 function visibleScreens(
   answered: AnsweredQuestions,
   custom: readonly CustomWizardScreen[],
+  flow: WizardFlow,
 ): WizardStepKey[] {
   const asked = new Set<WizardStepKey>(screensToAsk(answered));
   const answeredCustom = new Set(
     custom.filter((screen) => screen.isAnswered).map((screen) => customStepKey(screen.id)),
   );
-  return fullOrder(custom).filter((step) =>
+  const final = new Set<WizardStepKey>(FINAL_WIZARD_SCREENS);
+  return wizardFlowOrder(custom, flow).filter((step) =>
     isCustomStep(step)
       ? !answeredCustom.has(step)
-      : step === 'summary' || step === 'terms-intro' || step === 'terms' || asked.has(step),
+      : final.has(step) || (asked.has(step) && !isHiddenScreen(step, flow)),
   );
 }
 
@@ -236,19 +283,21 @@ export function nextWizardScreen(
   from: WizardStepKey | 'start',
   answered: AnsweredQuestions,
   custom: readonly CustomWizardScreen[],
+  flow?: WizardFlow,
 ): WizardStepKey;
 export function nextWizardScreen(
   from: WizardStepKey | 'start',
   answered: AnsweredQuestions,
   custom: readonly CustomWizardScreen[] = [],
+  flow: WizardFlow = DEFAULT_WIZARD_FLOW,
 ): WizardStepKey {
-  const screens = visibleScreens(answered, custom);
+  const screens = visibleScreens(answered, custom, flow);
   if (from === 'start') return screens[0] ?? 'summary';
   const index = screens.indexOf(from);
   if (index === -1) {
     // A screen she was not shown (opened from the summary to edit): the next
     // screen after it in the full order that she does see.
-    const order = fullOrder(custom);
+    const order = wizardFlowOrder(custom, flow);
     return (
       order.slice(order.indexOf(from) + 1).find((screen) => screens.includes(screen)) ?? 'summary'
     );
@@ -265,13 +314,15 @@ export function previousWizardScreen(
   from: WizardStepKey,
   answered: AnsweredQuestions,
   custom: readonly CustomWizardScreen[],
+  flow?: WizardFlow,
 ): WizardStepKey | null;
 export function previousWizardScreen(
   from: WizardStepKey,
   answered: AnsweredQuestions,
   custom: readonly CustomWizardScreen[] = [],
+  flow: WizardFlow = DEFAULT_WIZARD_FLOW,
 ): WizardStepKey | null {
-  const screens = visibleScreens(answered, custom);
+  const screens = visibleScreens(answered, custom, flow);
   const index = screens.indexOf(from);
   return index > 0 ? (screens[index - 1] ?? null) : null;
 }
@@ -281,8 +332,9 @@ export function wizardScreenPosition(
   screen: WizardStepKey,
   answered: AnsweredQuestions,
   custom: readonly CustomWizardScreen[] = [],
+  flow: WizardFlow = DEFAULT_WIZARD_FLOW,
 ): { step: number; total: number } {
-  const screens = visibleScreens(answered, custom);
+  const screens = visibleScreens(answered, custom, flow);
   return { step: Math.max(screens.indexOf(screen), 0) + 1, total: screens.length };
 }
 

@@ -1,6 +1,6 @@
 /** Email OTP request and verification forms for the mobile login screen. */
 
-import { confirmEmailOtp, sendEmailOtp } from '@/lib/auth';
+import { confirmEmailOtp, sendEmailOtp, testSignInBuild } from '@/lib/auth';
 import { useAuthFlowStatus } from '@/lib/auth-flow-status';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -15,6 +15,7 @@ import {
 import type { AuthFormLayout } from './auth-form-layout';
 import { AuthSubmitButton } from './auth-submit-button';
 import { AuthTextField } from './auth-text-field';
+import { ExistingCodeLink } from './existing-code-link';
 
 /** Mirrors `emailOtpVerifySchema`, which accepts exactly six digits. */
 const EMAIL_OTP_CODE_LENGTH = 6;
@@ -52,30 +53,40 @@ export function EmailOtpRequestForm({
     onSent(email);
   }, warnInvalidSubmit);
 
+  // Staging builds only (RAPP-616): a test account types the fixed code, so
+  // the code step opens without sending an email.
+  const openCodeStep = handleSubmit(({ email }) => {
+    setErrorCode(null);
+    onSent(email);
+  }, warnInvalidSubmit);
+
   return renderLayout(
-    <Controller
-      control={control}
-      name="email"
-      render={({ field }) => (
-        <AuthTextField
-          label={t('emailLabel')}
-          placeholder={t('emailPlaceholder')}
-          value={field.value}
-          onChangeText={field.onChange}
-          onBlur={field.onBlur}
-          errorMessage={errors.email ? t('emailInvalid') : undefined}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          autoCorrect={false}
-          autoComplete="email"
-          textContentType="emailAddress"
-          inputMode="email"
-          returnKeyType="send"
-          onSubmitEditing={submit}
-          aria-busy={isSubmitting}
-        />
-      )}
-    />,
+    <>
+      <Controller
+        control={control}
+        name="email"
+        render={({ field }) => (
+          <AuthTextField
+            label={t('emailLabel')}
+            placeholder={t('emailPlaceholder')}
+            value={field.value}
+            onChangeText={field.onChange}
+            onBlur={field.onBlur}
+            errorMessage={errors.email ? t('emailInvalid') : undefined}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoCorrect={false}
+            autoComplete="email"
+            textContentType="emailAddress"
+            inputMode="email"
+            returnKeyType="send"
+            onSubmitEditing={submit}
+            aria-busy={isSubmitting}
+          />
+        )}
+      />
+      {testSignInBuild ? <ExistingCodeLink onPress={() => void openCodeStep()} /> : null}
+    </>,
     <AuthSubmitButton label={t('emailOtpAction')} onPress={submit} isLoading={isSubmitting} />,
   );
 }

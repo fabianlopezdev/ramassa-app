@@ -10,16 +10,21 @@
  */
 
 import { CustomAnswerFields, readCustomAnswers } from '@/components/intake/custom-answer-fields';
+import { SignatureDrawing } from '@/components/participants/participant-authorization-panel';
 import { Button } from '@/components/ui/button';
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { SignatureStrokes } from '@ramassa/shared/equipment';
 import { getErrorMessageKey, isAppError } from '@ramassa/shared/errors';
 import {
   answerText,
+  customAnswerError,
   screensFor,
   textIn,
   type CustomAnswers,
   type CustomAnswerValue,
+  type CustomQuestion,
+  type FileAnswer,
   type IntakeCatalog,
   type ParticipantCustomAnswer,
 } from '@ramassa/shared/intake-builder';
@@ -31,6 +36,73 @@ export interface ParticipantCustomAnswersProps {
   readonly canEdit: boolean;
   readonly canEditSensitive: boolean;
   readonly onSave: (answers: Readonly<Record<string, CustomAnswerValue | null>>) => Promise<void>;
+  /**
+   * Opens one of her private answer files (RAPP-610); undefined when this
+   * deployment has no media service, and the page says so.
+   */
+  readonly onOpenFile?: (objectKey: string) => Promise<void>;
+}
+
+/** A signature reads "signed"; staff who may read the answer open the drawing. */
+function SignatureAnswer({
+  strokes,
+  label,
+}: {
+  readonly strokes: unknown;
+  readonly label: string;
+}) {
+  const { t } = useTranslation('settings');
+  return (
+    <details className="text-sm">
+      <summary className="cursor-pointer text-start">
+        {t('questions.answers.signed')} · {t('questions.answers.viewSignature')}
+      </summary>
+      <div className="mt-2">
+        <SignatureDrawing strokes={strokes as SignatureStrokes} label={label} />
+      </div>
+    </details>
+  );
+}
+
+/** A file reads by its name, with a private link for staff who may read the answer. */
+function FileAnswerLink({
+  file,
+  onOpenFile,
+}: {
+  readonly file: FileAnswer;
+  readonly onOpenFile: ((objectKey: string) => Promise<void>) | undefined;
+}) {
+  const { t } = useTranslation('settings');
+  const [failed, setFailed] = useState(false);
+  if (onOpenFile === undefined) {
+    return (
+      <span>
+        {file.name} ·{' '}
+        <span className="text-muted-foreground">{t('questions.answers.fileUnavailable')}</span>
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex flex-wrap items-center gap-2">
+      <span>{file.name}</span>
+      <Button
+        type="button"
+        size="sm"
+        variant="outline"
+        onClick={() => {
+          setFailed(false);
+          onOpenFile(file.key).catch(() => setFailed(true));
+        }}
+      >
+        {t('questions.answers.openFile')}
+      </Button>
+      {failed ? (
+        <span role="alert" className="text-destructive">
+          {t('questions.answers.fileFailed')}
+        </span>
+      ) : null}
+    </span>
+  );
 }
 
 export function ParticipantCustomAnswers({
@@ -39,6 +111,7 @@ export function ParticipantCustomAnswers({
   canEdit,
   canEditSensitive,
   onSave,
+  onOpenFile,
 }: ParticipantCustomAnswersProps) {
   const { t, i18n } = useTranslation(['settings', 'participants', 'errors']);
   const language = (i18n.resolvedLanguage ?? 'ca') as LanguageCode;
@@ -63,6 +136,18 @@ export function ParticipantCustomAnswers({
     no: t('settings:questions.answers.no'),
     maybe: t('settings:questions.answers.maybe'),
     archived: t('settings:questions.archivedOption'),
+    signed: t('settings:questions.answers.signed'),
+  };
+  const renderAnswer = (question: CustomQuestion, row: ParticipantCustomAnswer) => {
+    if (question.type === 'signature')
+      return <SignatureAnswer strokes={row.value} label={textIn(question.label, language)} />;
+    if (
+      question.type === 'file_upload' &&
+      typeof row.value === 'object' &&
+      !Array.isArray(row.value)
+    )
+      return <FileAnswerLink file={row.value as FileAnswer} onOpenFile={onOpenFile} />;
+    return answerText(question, row.value, language, words, { answeredAt: row.answeredAt });
   };
   // The current value of each question: no season, or the newest season.
   const current: CustomAnswers = Object.fromEntries(
@@ -86,11 +171,29 @@ export function ParticipantCustomAnswers({
       // Only what changed: an answer kept on an archived option is not sent again,
       // because the database offers archived options to nobody.
       const read = readCustomAnswers(new FormData(event.currentTarget), editable, 'custom-answer');
+
       const changed = Object.fromEntries(
         Object.entries(read).filter(
           ([id, value]) => JSON.stringify(value) !== JSON.stringify(current[id] ?? null),
         ),
       );
+      // The shared check before the database's own (RAPP-610), on what changed:
+      // name each answer that does not fit its question.
+      const misfit = editable
+        .flatMap((screen) => screen.questions)
+        .filter(
+          (question) =>
+            question.id in changed &&
+            customAnswerError(question, changed[question.id] ?? null) !== null,
+        );
+      if (misfit.length > 0) {
+        setError(
+          t('settings:questions.answers.doesNotFit', {
+            questions: misfit.map((question) => textIn(question.label, language)).join(', '),
+          }),
+        );
+        return;
+      }
       if (Object.keys(changed).length > 0) await onSave(changed);
       setIsEditing(false);
     } catch (thrown) {
@@ -157,10 +260,10 @@ export function ParticipantCustomAnswers({
                       {rows.length === 0
                         ? t('settings:questions.notAnswered')
                         : rows.map((row) => (
-                            <p key={`${row.questionId}-${row.seasonId ?? 'none'}`} dir="auto">
+                            <div key={`${row.questionId}-${row.seasonId ?? 'none'}`} dir="auto">
                               {row.seasonName === null ? '' : `${row.seasonName}: `}
-                              {answerText(question, row.value, language, words)}
-                            </p>
+                              {renderAnswer(question, row)}
+                            </div>
                           ))}
                     </dd>
                   </div>

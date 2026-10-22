@@ -1193,7 +1193,7 @@ on conflict (profile_id, question) do nothing;
 insert into public.seasons (id, org_id, name, starts_on, is_current)
 values ('5eed0000-0000-4000-8040-000000000001', '5eed0000-0000-4000-8000-000000000000',
         '2026/27', '2026-09-01', true)
-on conflict (org_id, name) do nothing;
+on conflict (org_id, name) where not is_test_fixture do nothing;
 
 insert into public.authorization_versions (id, org_id, season_id, version_number, content, published_at, published_by)
 values (
@@ -1368,6 +1368,7 @@ values (
   "consents": {
     "participation": {
       "required": true,
+      "position": 0,
       "label": {
         "ca": "Autoritzo la meva participació en les activitats del Projecte i declaro que la informació aportada és certa.",
         "es": "Autorizo mi participación en las actividades del Proyecto y declaro que la información aportada es cierta.",
@@ -1378,6 +1379,7 @@ values (
     },
     "data_processing": {
       "required": true,
+      "position": 1,
       "label": {
         "ca": "Accepto el tractament de les meves dades personals segons l’apartat 4.",
         "es": "Acepto el tratamiento de mis datos personales según el apartado 4.",
@@ -1388,6 +1390,7 @@ values (
     },
     "code_of_conduct": {
       "required": true,
+      "position": 2,
       "label": {
         "ca": "He rebut i comprès la Guia de Temporada, la Política de Protecció (safeguarding) i el Codi de Conducta d’AE Ramassà, i em comprometo a respectar-los.",
         "es": "He recibido y comprendido la Guía de Temporada, la Política de Protección (safeguarding) y el Código de Conducta de AE Ramassà, y me comprometo a respetarlos.",
@@ -1398,6 +1401,7 @@ values (
     },
     "health_data": {
       "required": true,
+      "position": 3,
       "label": {
         "ca": "Accepto de manera expressa el tractament de les meves dades de salut, necessàries per participar de manera segura en el Projecte.",
         "es": "Acepto de forma expresa el tratamiento de mis datos de salud, necesarios para participar de forma segura en el Proyecto.",
@@ -1408,6 +1412,7 @@ values (
     },
     "image_rights": {
       "required": false,
+      "position": 4,
       "label": {
         "ca": "Autoritzo la cessió dels meus drets d’imatge segons els termes de l’apartat 5.",
         "es": "Autorizo la cesión de mis derechos de imagen, según los términos del apartado 5.",
@@ -1418,6 +1423,7 @@ values (
     },
     "newsletter": {
       "required": false,
+      "position": 5,
       "label": {
         "ca": "Accepto rebre informació d’AE Ramassà per mitjans electrònics, telèfon o correu postal (butlletí, invitacions, enquestes).",
         "es": "Acepto recibir información de AE Ramassà por medios electrónicos, teléfono o correo postal (newsletter, invitaciones, encuestas).",
@@ -1428,6 +1434,7 @@ values (
     },
     "messaging_groups": {
       "required": false,
+      "position": 6,
       "label": {
         "ca": "Accepto que AE Ramassà m’inclogui en grups de missatgeria instantània de l’equip per facilitar la comunicació amb les meves companyes i l’equip tècnic.",
         "es": "Acepto que AE Ramassà me incluya en grupos de mensajería instantánea del equipo, con el fin de facilitar la comunicación con mis compañeras y el equipo técnico.",
@@ -1437,7 +1444,22 @@ values (
       }
     }
   },
-  "attachments": []
+  "attachments": [],
+  "questions": {
+    "health": {
+      "asked": true,
+      "required": true,
+      "privacy": "health",
+      "texts": {}
+    },
+    "emergency_contact": {
+      "asked": true,
+      "required": false,
+      "privacy": "personal",
+      "texts": {}
+    }
+  },
+  "texts": {}
 }$auth$, '[at]', '@')::jsonb,
   '2026-09-01 09:00:00+02',
   '5eed0000-0000-4000-8000-000000000001'
@@ -1586,6 +1608,30 @@ values ('5eed0000-0000-4000-8000-000000000000', 'reference_entity',
         null, '{}'::jsonb)
 on conflict do nothing;
 
+-- Built-in screen wording and the flow order (RAPP-612). The order is the app's
+-- own, with the three staff screens after the equipment step, so the seeded
+-- wizard reads as before; the summary carries one help line in three languages
+-- (Arabic and Farsi show the bundled text).
+insert into public.intake_builtin_screens (org_id, screen, texts)
+values ('5eed0000-0000-4000-8000-000000000000', 'summary',
+        '{"help":{"ca":"Pots canviar qualsevol resposta abans d''acceptar els termes.","es":"Puedes cambiar cualquier respuesta antes de aceptar los términos.","en":"You can change any answer before you accept the terms."}}'::jsonb)
+on conflict do nothing;
+
+insert into public.intake_flow_orders (org_id, step_order)
+values ('5eed0000-0000-4000-8000-000000000000',
+        array['identity', 'background', 'documentation', 'logistics', 'equipment',
+              'custom:5eed0000-0000-4000-8044-000000000001',
+              'custom:5eed0000-0000-4000-8044-000000000002',
+              'custom:5eed0000-0000-4000-8044-000000000003',
+              'season', 'supporting-entities', 'participation-support', 'specific-needs'])
+on conflict do nothing;
+
+-- Which built-in questions are required (RAPP-611): the seed keeps the app's
+-- own list; one explicit row says the phone stays optional, as by default.
+insert into public.intake_required_questions (org_id, question, is_required)
+values ('5eed0000-0000-4000-8000-000000000000', 'phone', false)
+on conflict do nothing;
+
 insert into public.intake_state_presets (id, org_id, name, states)
 values ('5eed0000-0000-4000-8047-000000000001', '5eed0000-0000-4000-8000-000000000000',
         'Només talles', '{"clothing_size":"ask","shoe_size":"ask"}'::jsonb)
@@ -1596,11 +1642,15 @@ on conflict (id) do nothing;
 -- Seeded in the language that player actually reads, because the whole point of
 -- the record is which text in which language someone agreed to.
 
-insert into public.terms_acceptances (profile_id, terms_version, locale_shown)
+-- Accepted before app terms signatures existed (RAPP-584), so the signed-acceptance
+-- gate (RAPP-613) lets them in, as the deploy migration does for real players.
+-- Player ...011 also gets a signature row below.
+insert into public.terms_acceptances (profile_id, terms_version, locale_shown, accepted_before_signatures)
 select
   ('5eed0000-0000-4000-8000-' || lpad(r.ordinal::text, 12, '0'))::uuid,
   '2026-07-01',
-  r.preferred_language
+  r.preferred_language,
+  true
 from seed_roster r
 where r.app_role = 'player'
 on conflict do nothing;
@@ -2718,3 +2768,73 @@ insert into auth.mfa_factors (id, user_id, friendly_name, factor_type, status, s
 select gen_random_uuid(), profile.id, 'Ramassà (seed)', 'totp', 'verified', 'JBSWY3DPEHPK3PXP', now(), now()
 from public.profiles as profile
 where profile.role in ('staff', 'admin', 'entity');
+
+-- The onboarding design sandbox (RAPP-615) ------------------------------------------------------------
+-- A team member on the built-in "Onboarding design" preset (...097), who sees
+-- only the onboarding settings and the test players, and one test player
+-- (...096), invited and not joined, so signing in as her opens the wizard.
+-- Both are test accounts: on a stack with the fixed code switched on
+-- (RAPP-616) they sign in with it.
+
+insert into auth.users (
+  instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
+  raw_app_meta_data, raw_user_meta_data, created_at, updated_at,
+  confirmation_token, recovery_token, email_change, email_change_token_new,
+  email_change_token_current, reauthentication_token
+)
+select
+  '00000000-0000-0000-0000-000000000000', account.id, 'authenticated', 'authenticated', account.email,
+  extensions.crypt('ramassa-dev-password', extensions.gen_salt('bf')), now(),
+  '{"provider":"email","providers":["email"]}'::jsonb, '{}'::jsonb,
+  now(), now(), '', '', '', '', '', ''
+from (values
+  ('5eed0000-0000-4000-8000-000000000097'::uuid, 'disseny@example.test'),
+  ('5eed0000-0000-4000-8000-000000000096'::uuid, 'jugadora.prova@example.test')
+) as account(id, email)
+on conflict (id) do nothing;
+
+insert into auth.identities (
+  provider_id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at
+)
+select u.id::text, u.id, jsonb_build_object('sub', u.id::text, 'email', u.email, 'email_verified', true),
+       'email', now(), now(), now()
+from auth.users u
+where u.id in ('5eed0000-0000-4000-8000-000000000097', '5eed0000-0000-4000-8000-000000000096')
+on conflict (provider_id, provider) do nothing;
+
+insert into public.profiles (id, org_id, role, first_name, last_name, preferred_language, is_test_account)
+values
+  ('5eed0000-0000-4000-8000-000000000097', '5eed0000-0000-4000-8000-000000000000',
+   'staff', 'Pau', 'Dissenya', 'ca', true),
+  ('5eed0000-0000-4000-8000-000000000096', '5eed0000-0000-4000-8000-000000000000',
+   'invited', 'Joana', 'Prova', 'ca', true)
+on conflict (id) do nothing;
+
+-- Her open invitation, as create_participant_invite leaves it, so the purge
+-- of women who never joined keeps her.
+insert into public.invites (org_id, email, invited_by, expires_at)
+values ('5eed0000-0000-4000-8000-000000000000', 'jugadora.prova@example.test',
+        '5eed0000-0000-4000-8000-000000000097', now() + interval '30 days');
+
+-- Exactly the Onboarding design preset, replacing the Staff one a new staff
+-- account starts with.
+select private.write_member_permissions(
+  null,
+  '5eed0000-0000-4000-8000-000000000000',
+  '5eed0000-0000-4000-8000-000000000097',
+  array(select preset_permission.permission_code
+          from public.permission_preset_permissions as preset_permission
+          join public.permission_presets as preset on preset.id = preset_permission.preset_id
+         where preset.org_id = '5eed0000-0000-4000-8000-000000000000'
+           and preset.builtin_key = 'onboarding_design'),
+  (select preset.id from public.permission_presets as preset
+    where preset.org_id = '5eed0000-0000-4000-8000-000000000000'
+      and preset.builtin_key = 'onboarding_design')
+);
+
+insert into auth.mfa_factors (id, user_id, friendly_name, factor_type, status, secret, created_at, updated_at)
+select gen_random_uuid(), '5eed0000-0000-4000-8000-000000000097', 'Ramassà (seed)', 'totp', 'verified',
+       'JBSWY3DPEHPK3PXP', now(), now()
+where not exists (
+  select 1 from auth.mfa_factors where user_id = '5eed0000-0000-4000-8000-000000000097'
+);

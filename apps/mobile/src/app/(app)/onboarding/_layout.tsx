@@ -5,13 +5,16 @@ import {
 import { onboardingDraftStore } from '@/lib/onboarding';
 import {
   customWizardPlan,
+  draftForScenario,
   seedDraftFromProfile,
   withSelectedLanguage,
   wizardDraftStep,
 } from '@/lib/onboarding-intake';
 import { WizardIntakeProvider, type WizardIntake } from '@/lib/onboarding-intake-context';
+import { ScreenWordingProvider } from '@/lib/screen-wording';
 import { supabase } from '@/lib/supabase';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
+import { resumeStep } from '@/lib/wizard-completeness';
 import { useQuery } from '@tanstack/react-query';
 import { Stack } from 'expo-router/stack';
 import { useEffect, useState } from 'react';
@@ -20,21 +23,25 @@ import { useAuth } from '@ramassa/shared/auth';
 import { getErrorMessageKey, toAppError } from '@ramassa/shared/errors';
 import { useLanguage } from '@ramassa/shared/i18n';
 import {
+  DEFAULT_WIZARD_FLOW,
   fetchDocumentStepExplanation,
   fetchMyAnsweredQuestions,
   fetchMyQuestionsToAsk,
   nextWizardScreen,
-  questionsNotAsked,
+  wizardNotAsked,
 } from '@ramassa/shared/intake';
 import {
   EMPTY_INTAKE_CATALOG,
   fetchIntakeCatalog,
   fetchMyCustomAnswers,
   hiddenBuiltinQuestions,
+  requiredBuiltinQuestions,
+  wizardFlow,
   wizardScreens,
   type CustomAnswers,
   type IntakeCatalog,
 } from '@ramassa/shared/intake-builder';
+import { fetchMyTestScenarioStamp } from '@ramassa/shared/participants';
 import { fetchOwnProfile } from '@ramassa/shared/profile';
 import type { LanguageCode } from '@ramassa/shared/schemas';
 
@@ -66,12 +73,31 @@ async function loadStaffQuestions(): Promise<{
  * language picker, including when staff answers let her skip background.
  */
 function seedWizardDraft(intake: WizardIntake, language: LanguageCode): void {
-  const firstScreen = nextWizardScreen('start', intake.notAsked, intake.customPlan);
-  const draft = onboardingDraftStore.loadDraft() ?? {
+  const firstScreen = nextWizardScreen('start', intake.notAsked, intake.customPlan, intake.flow);
+  const scenarioStamp = intake.scenarioStamp ?? null;
+  const stored = draftForScenario(onboardingDraftStore.loadDraft(), scenarioStamp);
+  const draft = stored ?? {
     currentStep: wizardDraftStep(firstScreen),
+    ...(scenarioStamp === null ? {} : { scenarioStamp }),
     ...(intake.profile === null ? {} : seedDraftFromProfile(intake.profile, intake.answered)),
   };
-  onboardingDraftStore.saveDraft(withSelectedLanguage(draft, language));
+  const withLanguage = withSelectedLanguage(draft, language);
+  // Staff may have moved a screen before the step she reached (RAPP-612): she
+  // resumes at the first one still missing a required answer.
+  onboardingDraftStore.saveDraft(
+    stored === null
+      ? withLanguage
+      : {
+          ...withLanguage,
+          currentStep: resumeStep(withLanguage, {
+            custom: intake.customPlan,
+            flow: intake.flow ?? DEFAULT_WIZARD_FLOW,
+            required: intake.required,
+            customScreens: intake.customScreens,
+            storedCustom: intake.customAnswers,
+          }),
+        },
+  );
 }
 
 /**
@@ -98,27 +124,40 @@ function OnboardingScreens() {
   const intake = useQuery({
     queryKey: ['onboarding-intake', user?.id ?? 'signed-out'],
     queryFn: async ({ signal }): Promise<WizardIntake> => {
-      const [profile, answered, toAsk, documentExplanation, staffQuestions] = await Promise.all([
-        fetchOwnProfile(supabase, { signal }),
-        fetchMyAnsweredQuestions(supabase, { signal }),
-        fetchMyQuestionsToAsk(supabase, { signal }),
-        fetchDocumentStepExplanation(supabase, { signal }),
-        loadStaffQuestions(),
-      ]);
+      const [profile, answered, toAsk, documentExplanation, staffQuestions, scenarioStamp] =
+        await Promise.all([
+          fetchOwnProfile(supabase, { signal }),
+          fetchMyAnsweredQuestions(supabase, { signal }),
+          fetchMyQuestionsToAsk(supabase, { signal }),
+          fetchDocumentStepExplanation(supabase, { signal }),
+          loadStaffQuestions(),
+          // A test player's situation stamp (RAPP-619). It never blocks the
+          // wizard: without it, her draft is kept as for anyone.
+          fetchMyTestScenarioStamp(supabase).catch(() => null),
+        ]);
       const { catalog, answers } = staffQuestions;
       const hidden = hiddenBuiltinQuestions(catalog);
       const customScreens = wizardScreens(catalog);
       return {
         profile,
         answered,
-        // A built-in question staff removed is never asked, so it never keeps a screen.
-        notAsked: new Set([...questionsNotAsked(toAsk), ...hidden]),
+        // A built-in question staff removed is never asked, so it never keeps a
+        // screen. The staff preview of a new invitation plans with the same
+        // function (RAPP-618).
+        notAsked: wizardNotAsked(toAsk, hidden),
         documentExplanation,
         catalog,
         customAnswers: answers,
         customScreens,
         customPlan: customWizardPlan(customScreens, answers),
+        // The order and hidden screens staff arranged (RAPP-612). The staff
+        // preview of a new invitation reads the same flow.
+        flow: wizardFlow(catalog),
         hidden,
+        // The one required list (RAPP-611): every screen, the summary and the
+        // final check read it.
+        required: requiredBuiltinQuestions(catalog),
+        scenarioStamp,
       };
     },
     enabled: user !== null,
@@ -156,7 +195,10 @@ function OnboardingScreens() {
 
   return (
     <WizardIntakeProvider intake={intake.data}>
-      <Stack screenOptions={hiddenHeaderScreenOptions} />
+      {/* Staff wording of the built-in screens (RAPP-612), read by every frame. */}
+      <ScreenWordingProvider catalog={intake.data.catalog} language={language}>
+        <Stack screenOptions={hiddenHeaderScreenOptions} />
+      </ScreenWordingProvider>
     </WizardIntakeProvider>
   );
 }

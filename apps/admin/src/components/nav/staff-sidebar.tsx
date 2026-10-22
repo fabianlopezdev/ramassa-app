@@ -2,6 +2,7 @@ import { useAdminBranding } from '@/components/branding/organization-branding-pr
 import { AuthenticatedMediaImage } from '@/components/content/authenticated-media-image';
 import { PreviewAsPlayer } from '@/components/content/preview-as-player';
 import { LanguagePicker } from '@/components/language-picker';
+import { StaffSignOut } from '@/components/nav/staff-sign-out';
 import { Badge } from '@/components/ui/badge';
 import {
   Sidebar,
@@ -17,7 +18,7 @@ import {
 } from '@/components/ui/sidebar';
 import { mediaWorkerUrl } from '@/lib/media-worker';
 import { useUnreadMessageCount } from '@/lib/messaging';
-import { holdsAnyPermission, STAFF_NAV_ITEMS } from '@/lib/nav-items';
+import { visibleStaffNavItems } from '@/lib/nav-items';
 import { Link, useLocation } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@ramassa/shared/auth';
@@ -36,15 +37,18 @@ export function sidebarSideForDirection(direction: LayoutDirection): 'left' | 'r
  * `_staff` layout guards the whole area deny-by-default (RAPP-13). The item map
  * itself lives in `lib/nav-items` so its destinations stay directly testable.
  */
-export function StaffSidebar() {
+export interface StaffSidebarProps {
+  /** The layout passes the app's `logout`, so this file stays free of the client. */
+  readonly onSignOut: () => Promise<unknown>;
+}
+
+export function StaffSidebar({ onSignOut }: StaffSidebarProps) {
   const { t, i18n } = useTranslation(['nav', 'common']);
   const pathname = useLocation({ select: (location) => location.pathname });
   const unread = useUnreadMessageCount();
   const { permissions, session } = useAuth();
   const organization = useAdminBranding();
-  const visibleItems = STAFF_NAV_ITEMS.filter((item) =>
-    holdsAnyPermission(permissions, 'anyPermission' in item ? item.anyPermission : undefined),
-  );
+  const visibleItems = visibleStaffNavItems(permissions);
 
   return (
     <Sidebar collapsible="icon" side={sidebarSideForDirection(i18n.dir())}>
@@ -96,12 +100,16 @@ export function StaffSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter className="border-t border-sidebar-border p-3 group-data-[collapsible=icon]:hidden">
-        <LanguagePicker />
-        {/* Every team member, with no permission needed (ADR-026, RAPP-372). */}
-        <PreviewAsPlayer target={null} variant="ghost" />
+      <SidebarFooter className="border-t border-sidebar-border p-3">
+        <div className="flex flex-col gap-2 group-data-[collapsible=icon]:hidden">
+          <LanguagePicker />
+          {/* Every team member, with no permission needed (ADR-026, RAPP-372). */}
+          <PreviewAsPlayer target={null} variant="ghost" />
+        </div>
+        {/* Every team member, the design role included (RAPP-615); it stays in the icon rail. */}
+        <StaffSignOut onSignOut={onSignOut} />
         <p
-          className="text-xs leading-5 text-sidebar-foreground/70"
+          className="text-xs leading-5 text-sidebar-foreground/70 group-data-[collapsible=icon]:hidden"
           data-testid="generalitat-credit"
         >
           {t('common:fundingAcknowledgment')}

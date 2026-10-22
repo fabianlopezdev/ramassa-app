@@ -33,6 +33,14 @@ export const clientEnvSchema = z.object({
   // preview button.
   EXPO_PUBLIC_PLAYER_WEB_URL: z.url().optional(),
   EXPO_PUBLIC_ADMIN_WEB_URL: z.url().optional(),
+  // Staging builds only (RAPP-616): when a sign-in code is refused, the app
+  // also asks the staging `test-sign-in` function, which accepts the fixed
+  // code of a test account. Production never sets it, and the deployment
+  // check refuses it there. An empty value counts as unset.
+  EXPO_PUBLIC_TEST_SIGN_IN: z
+    .enum(['true', 'false', ''])
+    .optional()
+    .transform((value) => (value === '' ? undefined : value)),
 });
 
 export const serverEnvSchema = clientEnvSchema.extend({
@@ -41,6 +49,11 @@ export const serverEnvSchema = clientEnvSchema.extend({
 });
 
 export type ClientEnv = z.infer<typeof clientEnvSchema>;
+
+/** Whether this build may ask the staging test sign-in function (RAPP-616). */
+export function isTestSignInBuild(env: Pick<ClientEnv, 'EXPO_PUBLIC_TEST_SIGN_IN'>): boolean {
+  return env.EXPO_PUBLIC_TEST_SIGN_IN === 'true';
+}
 export type ServerEnv = z.infer<typeof serverEnvSchema>;
 
 export class EnvironmentValidationError extends Error {

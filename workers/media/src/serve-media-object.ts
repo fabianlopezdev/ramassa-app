@@ -30,6 +30,8 @@ export interface ServeMediaObjectDependencies {
   readonly authorizeFeedbackObject: (objectKey: string) => Promise<boolean>;
   readonly authorizeInternalDocumentObject: (objectKey: string) => Promise<boolean>;
   readonly authorizeStockObject: (objectKey: string) => Promise<boolean>;
+  /** Her answer files (RAPP-610): hers, or staff who may read the answer's privacy level. */
+  readonly authorizeCustomAnswerObject: (objectKey: string) => Promise<boolean>;
   readonly bucket: MediaObjectBucket;
   readonly corsHeaders?: Record<string, string>;
   readonly onError?: (error: unknown, context: Record<string, unknown>) => void;
@@ -130,6 +132,16 @@ export async function handleServeMediaObject(
       if (!(await dependencies.authorizeStockObject(objectKey))) return notFound(corsHeaders);
     } catch (thrown) {
       dependencies.onError?.(thrown, { stage: 'authorize-stock-object' });
+      return fail('DB-1');
+    }
+  }
+
+  if (objectKey.split('/')[1] === 'intake-answers') {
+    try {
+      if (!(await dependencies.authorizeCustomAnswerObject(objectKey)))
+        return notFound(corsHeaders);
+    } catch (thrown) {
+      dependencies.onError?.(thrown, { stage: 'authorize-custom-answer-object' });
       return fail('DB-1');
     }
   }

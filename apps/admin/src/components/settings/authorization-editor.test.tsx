@@ -1,0 +1,170 @@
+/**
+ * The season authorization editor (RAPP-614): staff shape the consents and
+ * the questions of a draft and see her phone's phases in each language, right
+ * to left for Arabic and Farsi; only an admin publishes, after a second click.
+ *
+ * Typing into a controlled field does not reach React in this test DOM (no
+ * admin test types text); the Playwright spec types and publishes for real.
+ */
+import { fireEvent, render, waitFor } from '@testing-library/react';
+import { expect, mock, test } from 'bun:test';
+import {
+  authorizationContentSchema,
+  type AuthorizationContent,
+  type AuthorizationVersion,
+} from '@ramassa/shared/authorization';
+import { buildAuthorizationVersion } from '@ramassa/shared/testing';
+import { AuthorizationEditor, cleanAuthorizationContent } from './authorization-editor';
+
+function version(overrides: Partial<AuthorizationVersion> = {}): AuthorizationVersion {
+  const row = buildAuthorizationVersion();
+  return {
+    id: row.id,
+    seasonName: '2026/27',
+    versionNumber: 1,
+    content: authorizationContentSchema.parse(row.content),
+    publishedAt: '2026-09-01T09:00:00Z',
+    isCurrent: true,
+    updatedAt: '2026-09-01T09:00:00Z',
+    ...overrides,
+  };
+}
+
+const draftOf = (content?: AuthorizationContent) =>
+  version({
+    id: '5eed0000-0000-4000-8041-000000000099',
+    seasonName: null,
+    versionNumber: null,
+    publishedAt: null,
+    isCurrent: false,
+    ...(content === undefined ? {} : { content }),
+  });
+
+function renderEditor(versions: readonly AuthorizationVersion[], canPublish = true) {
+  const onSaveDraft = mock(async (content: AuthorizationContent) => void content);
+  const onDiscardDraft = mock(async () => undefined);
+  const onPublish = mock(async () => 2);
+  const view = render(
+    <AuthorizationEditor
+      versions={versions}
+      canPublish={canPublish}
+      onSaveDraft={onSaveDraft}
+      onDiscardDraft={onDiscardDraft}
+      onPublish={onPublish}
+    />,
+  );
+  return { view, onSaveDraft, onDiscardDraft, onPublish };
+}
+
+function field(view: ReturnType<typeof render>, id: string) {
+  const element = view.container.querySelector<HTMLInputElement | HTMLSelectElement>(`#${id}`);
+  if (element === null) throw new Error(`no ${id}`);
+  return element;
+}
+
+test('the draft starts from the current version, its consents in order, in the preview too', () => {
+  const { view } = renderEditor([version()]);
+  expect(field(view, 'authorization-consent-label-participation').value).toBe('Participo.');
+  const preview = view.getByTestId('authorization-preview-consents').textContent ?? '';
+  expect(preview.indexOf('Participo.')).toBeLessThan(preview.indexOf('Grups.'));
+  expect(view.getByTestId('authorization-preview-health')).toBeTruthy();
+});
+
+test('in Arabic the fields and the preview read right to left, and say when the app text shows', () => {
+  const { view } = renderEditor([version()]);
+  fireEvent.change(field(view, 'authorization-language'), { target: { value: 'ar' } });
+  expect(view.getByTestId('authorization-preview-document').getAttribute('dir')).toBe('rtl');
+  expect(view.getByTestId('authorization-preview-consents').getAttribute('lang')).toBe('ar');
+  expect(field(view, 'authorization-text-intro').getAttribute('dir')).toBe('rtl');
+  expect(view.getByTestId('authorization-app-text')).toBeTruthy();
+});
+
+test('staff add a consent, mark it required, move it up and remove another', async () => {
+  const { view, onSaveDraft } = renderEditor([version()]);
+  fireEvent.click(view.getByTestId('authorization-consent-add'));
+  expect(view.getByTestId('authorization-consent-consent_8')).toBeTruthy();
+  fireEvent.click(field(view, 'authorization-consent-required-consent_8'));
+  const ups = view.getAllByRole('button', { name: 'authorizationEditor.moveUp' });
+  fireEvent.click(ups.at(-1)!);
+  const preview = view.getByTestId('authorization-preview-consents').textContent ?? '';
+  expect(preview.indexOf('Grups.')).toBeGreaterThan(preview.indexOf('Imatge.'));
+  fireEvent.click(view.getByTestId('authorization-consent-remove-newsletter'));
+  fireEvent.click(view.getByTestId('authorization-save'));
+  // The new consent has no words yet: the draft is refused until it has.
+  expect(view.getByRole('alert').textContent).toBe('authorizationEditor.invalid');
+  expect(onSaveDraft).not.toHaveBeenCalled();
+});
+
+test('image rights never become required, and the health consent is required with its question', () => {
+  const { view } = renderEditor([version()]);
+  expect(field(view, 'authorization-consent-required-image_rights').disabled).toBe(true);
+  expect(field(view, 'authorization-consent-required-health_data').disabled).toBe(true);
+  expect(view.queryByTestId('authorization-consent-remove-health_data')).toBeNull();
+});
+
+test('a question stops being asked only when optional, and the middle phase hides with both', async () => {
+  const { view, onSaveDraft } = renderEditor([version()]);
+  expect(field(view, 'authorization-health-asked').disabled).toBe(true);
+  fireEvent.click(field(view, 'authorization-health-required'));
+  expect(field(view, 'authorization-health-asked').disabled).toBe(false);
+  fireEvent.click(field(view, 'authorization-health-asked'));
+  fireEvent.click(field(view, 'authorization-emergency-asked'));
+  expect(view.queryByTestId('authorization-preview-health')).toBeNull();
+  fireEvent.click(view.getByTestId('authorization-save'));
+  await waitFor(() => expect(onSaveDraft).toHaveBeenCalledTimes(1));
+  const saved = onSaveDraft.mock.calls[0]![0];
+  expect(saved.questions.health).toMatchObject({ asked: false, required: false });
+  expect(saved.questions.emergency_contact.asked).toBe(false);
+  expect(authorizationContentSchema.safeParse(saved).success).toBe(true);
+});
+
+test('the emergency contact takes a privacy level', async () => {
+  const { view, onSaveDraft } = renderEditor([version()]);
+  fireEvent.change(field(view, 'authorization-emergency-privacy'), {
+    target: { value: 'sensitive' },
+  });
+  fireEvent.click(field(view, 'authorization-emergency-required'));
+  fireEvent.click(view.getByTestId('authorization-save'));
+  await waitFor(() => expect(onSaveDraft).toHaveBeenCalledTimes(1));
+  expect(onSaveDraft.mock.calls[0]![0].questions.emergency_contact).toMatchObject({
+    asked: true,
+    required: true,
+    privacy: 'sensitive',
+  });
+});
+
+test('an admin publishes the draft after confirming; the design role cannot', async () => {
+  const { view, onPublish } = renderEditor([draftOf(), version()]);
+  expect(view.getByTestId('authorization-draft-row')).toBeTruthy();
+  fireEvent.click(view.getByTestId('authorization-publish'));
+  expect(onPublish).not.toHaveBeenCalled();
+  fireEvent.click(view.getByTestId('authorization-publish'));
+  await waitFor(() => expect(onPublish).toHaveBeenCalledTimes(1));
+  view.unmount();
+  const design = renderEditor([draftOf(), version()], false);
+  expect(design.view.queryByTestId('authorization-publish')).toBeNull();
+  expect(design.view.getByText('authorizationEditor.publishNeedsAdmin')).toBeTruthy();
+  expect(design.view.getByTestId('authorization-discard')).toBeTruthy();
+});
+
+test('cleaning drops empty languages and empty wording, and numbers the places', () => {
+  const content = version().content;
+  const cleaned = cleanAuthorizationContent({
+    ...content,
+    consents: {
+      ...content.consents,
+      participation: { ...content.consents.participation!, position: 40 },
+    },
+    texts: { intro: { ca: '  ', ar: 'مرحبا' }, health_title: { ca: '' } },
+  });
+  expect(cleaned.texts).toEqual({ intro: { ar: 'مرحبا' } });
+  expect(cleaned.consents.participation?.position).toBe(6);
+  expect(cleaned.consents.data_processing?.position).toBe(0);
+});
+
+test('a draft says that only test players see it (RAPP-619)', () => {
+  const withDraft = renderEditor([draftOf(), version()]).view;
+  expect(withDraft.getByTestId('authorization-draft-note')).toBeTruthy();
+  withDraft.unmount();
+  expect(renderEditor([version()]).view.queryByTestId('authorization-draft-note')).toBeNull();
+});

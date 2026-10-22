@@ -146,6 +146,61 @@ export type Database = {
           },
         ];
       };
+      app_terms_versions: {
+        Row: {
+          content: Json;
+          id: string;
+          org_id: string;
+          published_at: string | null;
+          published_by: string | null;
+          updated_at: string;
+          updated_by: string | null;
+          version_number: number | null;
+        };
+        Insert: {
+          content: Json;
+          id?: string;
+          org_id: string;
+          published_at?: string | null;
+          published_by?: string | null;
+          updated_at?: string;
+          updated_by?: string | null;
+          version_number?: number | null;
+        };
+        Update: {
+          content?: Json;
+          id?: string;
+          org_id?: string;
+          published_at?: string | null;
+          published_by?: string | null;
+          updated_at?: string;
+          updated_by?: string | null;
+          version_number?: number | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'app_terms_versions_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'app_terms_versions_published_by_fkey';
+            columns: ['published_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'app_terms_versions_updated_by_fkey';
+            columns: ['updated_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       attendance: {
         Row: {
           id: string;
@@ -262,30 +317,42 @@ export type Database = {
           decided_at: string;
           granted: boolean;
           id: number;
+          language: string | null;
           method: string;
           org_id: string;
           profile_id: string;
+          required: boolean | null;
           signature_id: string | null;
+          version_id: string | null;
+          wording: string | null;
         };
         Insert: {
           consent_key: string;
           decided_at?: string;
           granted: boolean;
           id?: never;
+          language?: string | null;
           method: string;
           org_id: string;
           profile_id: string;
+          required?: boolean | null;
           signature_id?: string | null;
+          version_id?: string | null;
+          wording?: string | null;
         };
         Update: {
           consent_key?: string;
           decided_at?: string;
           granted?: boolean;
           id?: never;
+          language?: string | null;
           method?: string;
           org_id?: string;
           profile_id?: string;
+          required?: boolean | null;
           signature_id?: string | null;
+          version_id?: string | null;
+          wording?: string | null;
         };
         Relationships: [
           {
@@ -309,12 +376,20 @@ export type Database = {
             referencedRelation: 'authorization_signatures';
             referencedColumns: ['id'];
           },
+          {
+            foreignKeyName: 'authorization_consent_events_version_id_fkey';
+            columns: ['version_id'];
+            isOneToOne: false;
+            referencedRelation: 'authorization_versions';
+            referencedColumns: ['id'];
+          },
         ];
       };
       authorization_signatures: {
         Row: {
           device: string | null;
           id: string;
+          is_test_fixture: boolean;
           language: string | null;
           method: string;
           org_id: string;
@@ -331,6 +406,7 @@ export type Database = {
         Insert: {
           device?: string | null;
           id?: string;
+          is_test_fixture?: boolean;
           language?: string | null;
           method: string;
           org_id: string;
@@ -347,6 +423,7 @@ export type Database = {
         Update: {
           device?: string | null;
           id?: string;
+          is_test_fixture?: boolean;
           language?: string | null;
           method?: string;
           org_id?: string;
@@ -410,28 +487,34 @@ export type Database = {
           content: Json;
           id: string;
           org_id: string;
-          published_at: string;
+          published_at: string | null;
           published_by: string | null;
-          season_id: string;
-          version_number: number;
+          season_id: string | null;
+          updated_at: string;
+          updated_by: string | null;
+          version_number: number | null;
         };
         Insert: {
           content: Json;
           id?: string;
           org_id: string;
-          published_at?: string;
+          published_at?: string | null;
           published_by?: string | null;
-          season_id: string;
-          version_number: number;
+          season_id?: string | null;
+          updated_at?: string;
+          updated_by?: string | null;
+          version_number?: number | null;
         };
         Update: {
           content?: Json;
           id?: string;
           org_id?: string;
-          published_at?: string;
+          published_at?: string | null;
           published_by?: string | null;
-          season_id?: string;
-          version_number?: number;
+          season_id?: string | null;
+          updated_at?: string;
+          updated_by?: string | null;
+          version_number?: number | null;
         };
         Relationships: [
           {
@@ -453,6 +536,13 @@ export type Database = {
             columns: ['season_id'];
             isOneToOne: false;
             referencedRelation: 'seasons';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'authorization_versions_updated_by_fkey';
+            columns: ['updated_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
             referencedColumns: ['id'];
           },
         ];
@@ -923,12 +1013,14 @@ export type Database = {
           help: Json | null;
           id: string;
           is_archived: boolean;
+          is_required: boolean;
           label: Json;
           org_id: string;
           placements: string[];
           privacy: string;
           question_type: string;
           screen_id: string;
+          settings: Json;
           show_when_option_id: string | null;
           show_when_question_id: string | null;
           sort_order: number;
@@ -939,12 +1031,14 @@ export type Database = {
           help?: Json | null;
           id?: string;
           is_archived?: boolean;
+          is_required?: boolean;
           label: Json;
           org_id: string;
           placements: string[];
           privacy: string;
           question_type: string;
           screen_id: string;
+          settings?: Json;
           show_when_option_id?: string | null;
           show_when_question_id?: string | null;
           sort_order?: number;
@@ -955,12 +1049,14 @@ export type Database = {
           help?: Json | null;
           id?: string;
           is_archived?: boolean;
+          is_required?: boolean;
           label?: Json;
           org_id?: string;
           placements?: string[];
           privacy?: string;
           question_type?: string;
           screen_id?: string;
+          settings?: Json;
           show_when_option_id?: string | null;
           show_when_question_id?: string | null;
           sort_order?: number;
@@ -1973,6 +2069,84 @@ export type Database = {
           },
         ];
       };
+      intake_builtin_screens: {
+        Row: {
+          is_hidden: boolean;
+          org_id: string;
+          screen: string;
+          texts: Json;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          is_hidden?: boolean;
+          org_id: string;
+          screen: string;
+          texts?: Json;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          is_hidden?: boolean;
+          org_id?: string;
+          screen?: string;
+          texts?: Json;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'intake_builtin_screens_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'intake_builtin_screens_updated_by_fkey';
+            columns: ['updated_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      intake_flow_orders: {
+        Row: {
+          org_id: string;
+          step_order: string[];
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          org_id: string;
+          step_order: string[];
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          org_id?: string;
+          step_order?: string[];
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'intake_flow_orders_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: true;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'intake_flow_orders_updated_by_fkey';
+            columns: ['updated_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       intake_question_states: {
         Row: {
           org_id: string;
@@ -2015,10 +2189,51 @@ export type Database = {
           },
         ];
       };
+      intake_required_questions: {
+        Row: {
+          is_required: boolean;
+          org_id: string;
+          question: string;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          is_required: boolean;
+          org_id: string;
+          question: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          is_required?: boolean;
+          org_id?: string;
+          question?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'intake_required_questions_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'intake_required_questions_updated_by_fkey';
+            columns: ['updated_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       intake_screens: {
         Row: {
           after_screen: string;
           created_at: string;
+          home_after_screen: string;
+          home_sort_order: number;
           id: string;
           intro: Json | null;
           is_archived: boolean;
@@ -2030,6 +2245,8 @@ export type Database = {
         Insert: {
           after_screen: string;
           created_at?: string;
+          home_after_screen: string;
+          home_sort_order: number;
           id?: string;
           intro?: Json | null;
           is_archived?: boolean;
@@ -2041,6 +2258,8 @@ export type Database = {
         Update: {
           after_screen?: string;
           created_at?: string;
+          home_after_screen?: string;
+          home_sort_order?: number;
           id?: string;
           intro?: Json | null;
           is_archived?: boolean;
@@ -3000,13 +3219,15 @@ export type Database = {
           document_type: string | null;
           emergency_contact_name: string | null;
           emergency_contact_phone: string | null;
+          emergency_contact_privacy: string | null;
           emergency_contact_relation: string | null;
           first_name: string;
-          has_dependents: boolean;
+          has_dependents: boolean | null;
           health_info: string | null;
           id: string;
           is_active: boolean;
           is_forum_banned: boolean;
+          is_test_account: boolean;
           last_name: string;
           media_consent_at: string | null;
           nationality: string | null;
@@ -3047,13 +3268,15 @@ export type Database = {
           document_type?: string | null;
           emergency_contact_name?: string | null;
           emergency_contact_phone?: string | null;
+          emergency_contact_privacy?: string | null;
           emergency_contact_relation?: string | null;
           first_name: string;
-          has_dependents?: boolean;
+          has_dependents?: boolean | null;
           health_info?: string | null;
           id: string;
           is_active?: boolean;
           is_forum_banned?: boolean;
+          is_test_account?: boolean;
           last_name: string;
           media_consent_at?: string | null;
           nationality?: string | null;
@@ -3094,13 +3317,15 @@ export type Database = {
           document_type?: string | null;
           emergency_contact_name?: string | null;
           emergency_contact_phone?: string | null;
+          emergency_contact_privacy?: string | null;
           emergency_contact_relation?: string | null;
           first_name?: string;
-          has_dependents?: boolean;
+          has_dependents?: boolean | null;
           health_info?: string | null;
           id?: string;
           is_active?: boolean;
           is_forum_banned?: boolean;
+          is_test_account?: boolean;
           last_name?: string;
           media_consent_at?: string | null;
           nationality?: string | null;
@@ -3511,6 +3736,7 @@ export type Database = {
           created_at: string;
           id: string;
           is_current: boolean;
+          is_test_fixture: boolean;
           name: string;
           org_id: string;
           starts_on: string;
@@ -3519,6 +3745,7 @@ export type Database = {
           created_at?: string;
           id?: string;
           is_current?: boolean;
+          is_test_fixture?: boolean;
           name: string;
           org_id: string;
           starts_on: string;
@@ -3527,6 +3754,7 @@ export type Database = {
           created_at?: string;
           id?: string;
           is_current?: boolean;
+          is_test_fixture?: boolean;
           name?: string;
           org_id?: string;
           starts_on?: string;
@@ -4682,24 +4910,33 @@ export type Database = {
       terms_acceptances: {
         Row: {
           accepted_at: string;
+          accepted_before_signatures: boolean;
           id: string;
+          is_test_fixture: boolean;
           locale_shown: string;
           profile_id: string;
           terms_version: string;
+          version_id: string | null;
         };
         Insert: {
           accepted_at?: string;
+          accepted_before_signatures?: boolean;
           id?: string;
+          is_test_fixture?: boolean;
           locale_shown: string;
           profile_id: string;
           terms_version: string;
+          version_id?: string | null;
         };
         Update: {
           accepted_at?: string;
+          accepted_before_signatures?: boolean;
           id?: string;
+          is_test_fixture?: boolean;
           locale_shown?: string;
           profile_id?: string;
           terms_version?: string;
+          version_id?: string | null;
         };
         Relationships: [
           {
@@ -4707,6 +4944,13 @@ export type Database = {
             columns: ['profile_id'];
             isOneToOne: false;
             referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'terms_acceptances_version_id_fkey';
+            columns: ['version_id'];
+            isOneToOne: false;
+            referencedRelation: 'app_terms_versions';
             referencedColumns: ['id'];
           },
         ];
@@ -4912,6 +5156,7 @@ export type Database = {
           event_location: string | null;
           event_title: Json | null;
           first_name: string | null;
+          is_test_account: boolean | null;
           last_name: string | null;
           marked_at: string | null;
           occurrence_id: string | null;
@@ -4961,6 +5206,10 @@ export type Database = {
       };
     };
     Functions: {
+      accept_current_app_terms: {
+        Args: { p_locale_shown: string; p_signing: Json; p_version_id: string };
+        Returns: undefined;
+      };
       accept_my_entity_invitation: { Args: never; Returns: string };
       add_referral_update: {
         Args: {
@@ -4986,6 +5235,10 @@ export type Database = {
       };
       authorize_push_dispatch: {
         Args: { dispatch_secret: string };
+        Returns: boolean;
+      };
+      can_read_custom_answer_object: {
+        Args: { p_object_key: string };
         Returns: boolean;
       };
       can_read_feedback_object: {
@@ -5083,13 +5336,15 @@ export type Database = {
           document_type: string | null;
           emergency_contact_name: string | null;
           emergency_contact_phone: string | null;
+          emergency_contact_privacy: string | null;
           emergency_contact_relation: string | null;
           first_name: string;
-          has_dependents: boolean;
+          has_dependents: boolean | null;
           health_info: string | null;
           id: string;
           is_active: boolean;
           is_forum_banned: boolean;
+          is_test_account: boolean;
           last_name: string;
           media_consent_at: string | null;
           nationality: string | null;
@@ -5139,13 +5394,15 @@ export type Database = {
           document_type: string | null;
           emergency_contact_name: string | null;
           emergency_contact_phone: string | null;
+          emergency_contact_privacy: string | null;
           emergency_contact_relation: string | null;
           first_name: string;
-          has_dependents: boolean;
+          has_dependents: boolean | null;
           health_info: string | null;
           id: string;
           is_active: boolean;
           is_forum_banned: boolean;
+          is_test_account: boolean;
           last_name: string;
           media_consent_at: string | null;
           nationality: string | null;
@@ -5309,6 +5566,12 @@ export type Database = {
         Args: { p_preset_id: string };
         Returns: undefined;
       };
+      delete_test_player: {
+        Args: { p_participant_id: string };
+        Returns: undefined;
+      };
+      discard_app_terms_draft: { Args: never; Returns: undefined };
+      discard_authorization_draft: { Args: never; Returns: undefined };
       discard_walk_in: { Args: { p_id: string }; Returns: undefined };
       edit_own_forum_post: {
         Args: { p_content: string; p_post_id: string };
@@ -5316,6 +5579,10 @@ export type Database = {
       };
       encrypt_field: { Args: { plaintext: string }; Returns: string };
       encryption_key: { Args: never; Returns: string };
+      export_onboarding_setup: {
+        Args: { p_app_commit?: string };
+        Returns: Json;
+      };
       feedback_monthly_counts: {
         Args: never;
         Returns: {
@@ -5505,6 +5772,7 @@ export type Database = {
           id: string;
           is_active: boolean;
           is_forum_banned: boolean;
+          is_test_account: boolean;
           last_name: string;
           media_consent: boolean;
           nationality: string;
@@ -5566,6 +5834,7 @@ export type Database = {
       };
       has_permission: { Args: { p_code: string }; Returns: boolean };
       immutable_unaccent: { Args: { value: string }; Returns: string };
+      import_onboarding_setup: { Args: { p_document: Json }; Returns: Json };
       intake_catalog: { Args: never; Returns: Json };
       invite_entity_collaborator: {
         Args: {
@@ -5602,6 +5871,10 @@ export type Database = {
           published_at: string;
           visible_at?: string;
         };
+        Returns: boolean;
+      };
+      is_deletable_test_player: {
+        Args: { p_profile_id: string };
         Returns: boolean;
       };
       is_event_recurrence_rule_valid: {
@@ -5649,6 +5922,17 @@ export type Database = {
         Returns: boolean;
       };
       is_team_member: { Args: never; Returns: boolean };
+      list_app_terms_versions: {
+        Args: never;
+        Returns: {
+          acceptance_count: number;
+          content: Json;
+          id: string;
+          published_at: string;
+          updated_at: string;
+          version_number: number;
+        }[];
+      };
       list_authorization_versions: {
         Args: never;
         Returns: {
@@ -5658,6 +5942,7 @@ export type Database = {
           published_at: string;
           season_id: string;
           season_name: string;
+          updated_at: string;
           version_number: number;
         }[];
       };
@@ -5833,6 +6118,7 @@ export type Database = {
           has_dependents: boolean;
           id: string;
           is_active: boolean;
+          is_test_account: boolean;
           joined: boolean;
           last_name: string;
           nationality: string;
@@ -5915,6 +6201,7 @@ export type Database = {
           first_name: string;
           invited_at: string;
           is_active: boolean;
+          is_test_account: boolean;
           last_name: string;
           profile_id: string;
           role: string;
@@ -6049,6 +6336,7 @@ export type Database = {
         Args: never;
         Returns: {
           content: Json;
+          is_draft: boolean;
           is_returning: boolean;
           required: boolean;
           season_id: string;
@@ -6063,6 +6351,8 @@ export type Database = {
           consent_key: string;
           decided_at: string;
           granted: boolean;
+          language: string;
+          wording: string;
         }[];
       };
       my_custom_answers: {
@@ -6081,6 +6371,7 @@ export type Database = {
           invited_at: string;
         }[];
       };
+      my_intake_upload_org: { Args: never; Returns: string };
       my_pending_invite: {
         Args: never;
         Returns: {
@@ -6091,6 +6382,8 @@ export type Database = {
       my_permissions: { Args: never; Returns: string[] };
       my_questions_to_ask: { Args: never; Returns: string[] };
       my_session_is_current: { Args: never; Returns: boolean };
+      my_terms_acceptance_needed: { Args: never; Returns: boolean };
+      my_test_scenario_stamp: { Args: never; Returns: string };
       open_staff_checkouts: {
         Args: never;
         Returns: {
@@ -6137,7 +6430,12 @@ export type Database = {
           consent_key: string;
           decided_at: string;
           granted: boolean;
+          language: string;
           method: string;
+          required: boolean;
+          season_name: string;
+          version_number: number;
+          wording: string;
         }[];
       };
       participant_custom_answers: {
@@ -6230,6 +6528,12 @@ export type Database = {
           participant_id: string;
         }[];
       };
+      preview_onboarding_setup_import: {
+        Args: { p_document: Json };
+        Returns: Json;
+      };
+      publish_app_terms_draft: { Args: never; Returns: number };
+      publish_authorization_draft: { Args: never; Returns: number };
       publish_authorization_version: {
         Args: { p_content: Json };
         Returns: string;
@@ -6344,6 +6648,10 @@ export type Database = {
           count_id: string;
         }[];
       };
+      referral_answer_keys: {
+        Args: { p_referral_id: string };
+        Returns: string[];
+      };
       referral_custom_answers: {
         Args: { p_referral_id: string };
         Returns: {
@@ -6406,6 +6714,8 @@ export type Database = {
         Returns: undefined;
       };
       save_admin_service: { Args: { p_payload: Json }; Returns: string };
+      save_app_terms_draft: { Args: { p_content: Json }; Returns: string };
+      save_authorization_draft: { Args: { p_content: Json }; Returns: string };
       save_builtin_question_override: {
         Args: {
           p_help: Json;
@@ -6414,6 +6724,14 @@ export type Database = {
           p_option_overrides: Json;
           p_question: string;
         };
+        Returns: undefined;
+      };
+      save_builtin_question_required: {
+        Args: { p_is_required: boolean; p_question: string };
+        Returns: undefined;
+      };
+      save_builtin_screen: {
+        Args: { p_is_hidden: boolean; p_screen: string; p_texts: Json };
         Returns: undefined;
       };
       save_custom_notification_group: {
@@ -6429,9 +6747,14 @@ export type Database = {
           p_placements: string[];
           p_privacy: string;
           p_screen_id: string;
+          p_settings?: Json;
           p_type: string;
         };
         Returns: string;
+      };
+      save_custom_question_required: {
+        Args: { p_id: string; p_is_required: boolean };
+        Returns: undefined;
       };
       save_entity_service: { Args: { p_payload: Json }; Returns: string };
       save_forum_category: {
@@ -6444,6 +6767,10 @@ export type Database = {
           p_sort_order: number;
         };
         Returns: string;
+      };
+      save_intake_flow_order: {
+        Args: { p_order: string[] };
+        Returns: undefined;
       };
       save_intake_screen: {
         Args: {
@@ -6608,7 +6935,7 @@ export type Database = {
         Returns: undefined;
       };
       set_optional_consent: {
-        Args: { p_granted: boolean; p_key: string };
+        Args: { p_granted: boolean; p_key: string; p_language?: string };
         Returns: undefined;
       };
       set_participant_active: {
@@ -6637,6 +6964,14 @@ export type Database = {
           p_preset_id?: string;
           p_profile_id: string;
         };
+        Returns: undefined;
+      };
+      set_team_member_test_account: {
+        Args: { p_is_test_account: boolean; p_profile_id: string };
+        Returns: undefined;
+      };
+      set_test_player_scenario: {
+        Args: { p_change: Json; p_profile_id: string };
         Returns: undefined;
       };
       sign_authorization: {
@@ -6668,6 +7003,16 @@ export type Database = {
           p_version_id: string;
         };
         Returns: string;
+      };
+      test_player_scenario: { Args: { p_profile_id: string }; Returns: Json };
+      test_sign_in_account: { Args: { p_email: string }; Returns: string };
+      test_sign_in_record_success: {
+        Args: { p_profile_id: string };
+        Returns: undefined;
+      };
+      test_sign_in_register_attempt: {
+        Args: { p_email: string; p_network: string };
+        Returns: boolean;
       };
       transition_deletion_request: {
         Args: {

@@ -1,6 +1,7 @@
 export {
   BUILTIN_PRESET_DEFAULTS,
   BUILTIN_PRESET_KEYS,
+  ONBOARDING_DESIGN_PERMISSIONS,
   PERMISSION_AREAS,
   PERMISSION_CATALOG,
   type BuiltinPresetKey,
@@ -25,3 +26,9 @@ export {
   type PermissionPreset,
   type TeamMemberAccess,
 } from './team-access';
+export {
+  canDeleteTestPlayer,
+  canDesignOnboarding,
+  isLimitedToTestPlayers,
+  testPlayerOption,
+} from './test-players';

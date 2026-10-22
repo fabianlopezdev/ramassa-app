@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { expect, test } from 'bun:test';
+import { describe, expect, test } from 'bun:test';
 import { isAppError } from '../errors';
 import type { Database } from '../types/database';
 import {
@@ -7,6 +7,7 @@ import {
   fetchProfileSummary,
   requestEmailOtp,
   signInWithPassword,
+  verifyEmailCode,
   verifyEmailOtp,
 } from './auth-actions';
 
@@ -207,3 +208,81 @@ test.each([
     });
   },
 );
+
+describe('the staging fixed code for test accounts (RAPP-616)', () => {
+  function stagingClient(options: {
+    readonly normal: { error: unknown };
+    readonly invoke?: { data: unknown; error: unknown };
+    readonly hashVerify?: { error: unknown };
+  }) {
+    const calls: unknown[] = [];
+    const client = {
+      auth: {
+        verifyOtp: async (args: Record<string, unknown>) => {
+          calls.push(['verifyOtp', args]);
+          return 'token_hash' in args ? (options.hashVerify ?? { error: null }) : options.normal;
+        },
+      },
+      functions: {
+        invoke: async (name: string, args: unknown) => {
+          calls.push(['invoke', name, args]);
+          return options.invoke ?? { data: { token_hash: 'hash' }, error: null };
+        },
+      },
+    } as unknown as Client;
+    return { client, calls };
+  }
+
+  const refused = { error: { status: 403, message: 'Token has expired or is invalid' } };
+
+  test('the emailed code is tried first, and when it works the function is never called', async () => {
+    const { client, calls } = stagingClient({ normal: { error: null } });
+    await verifyEmailCode(
+      client,
+      { email: 'a@example.test', token: '123456' },
+      { testSignIn: true },
+    );
+    expect(calls).toEqual([
+      ['verifyOtp', { email: 'a@example.test', token: '123456', type: 'email' }],
+    ]);
+  });
+
+  test('a build without the flag never calls the function, and keeps the normal error', async () => {
+    const { client, calls } = stagingClient({ normal: refused });
+    await expect(
+      verifyEmailCode(client, { email: 'a@example.test', token: '123456' }, { testSignIn: false }),
+    ).rejects.toMatchObject({ code: 'AUTH-4' });
+    expect(calls).toHaveLength(1);
+  });
+
+  test('with the flag, a refused code asks the function and trades its hash for a session', async () => {
+    const { client, calls } = stagingClient({ normal: refused });
+    await verifyEmailCode(
+      client,
+      { email: 'a@example.test', token: '123456' },
+      { testSignIn: true },
+    );
+    expect(calls).toEqual([
+      ['verifyOtp', { email: 'a@example.test', token: '123456', type: 'email' }],
+      ['invoke', 'test-sign-in', { body: { email: 'a@example.test', code: '123456' } }],
+      ['verifyOtp', { token_hash: 'hash', type: 'email' }],
+    ]);
+  });
+
+  test('when the function refuses too, the person sees the normal invalid-code error', async () => {
+    const { client } = stagingClient({
+      normal: refused,
+      invoke: { data: null, error: { message: 'Edge Function returned a non-2xx status code' } },
+    });
+    await expect(
+      verifyEmailCode(client, { email: 'a@example.test', token: '123456' }, { testSignIn: true }),
+    ).rejects.toMatchObject({ code: 'AUTH-4' });
+  });
+
+  test('a hash that does not verify also ends in the normal error', async () => {
+    const { client } = stagingClient({ normal: refused, hashVerify: refused });
+    await expect(
+      verifyEmailCode(client, { email: 'a@example.test', token: '123456' }, { testSignIn: true }),
+    ).rejects.toMatchObject({ code: 'AUTH-4' });
+  });
+});

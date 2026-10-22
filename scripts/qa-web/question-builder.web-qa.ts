@@ -90,7 +90,8 @@ test('a question the app needs cannot be hidden, and the form says why', async (
   await page.getByTestId('builder-builtin-first_name').getByRole('button').click();
   const form = page.getByTestId('builtin-form');
   await expect(form.locator('[name="builtin-hidden"]')).toBeDisabled();
-  await expect(form).toContainText(/needs this answer|necessita aquesta resposta/i);
+  // A required question is never hidden (RAPP-611): the form says so.
+  await expect(form).toContainText(/is required|és obligatòria|es obligatoria/i);
 });
 
 test("staff read a player's answers, an archived option marked", async ({ page }) => {

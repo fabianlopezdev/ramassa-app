@@ -1,38 +1,74 @@
 /**
  * A question staff added in the question builder (RAPP-307), with the control
- * its type needs: a text field, yes / no / maybe chips, one choice or several.
- * Every staff question is optional, so tapping a chosen chip again clears it.
+ * its type needs (RAPP-610), each one the control the app's own screens use
+ * for that kind of answer, so a staff question looks like the rest:
  *
- * The texts are staff's, in her app language with the Catalan fallback built
- * in. A choice that was archived since she picked it stays visible and chosen,
- * marked as no longer offered, until she changes it.
+ *   - short and long text: the form text field and area;
+ *   - a number, a phone, an email: the form text field with the right keyboard;
+ *   - a date: day, month and year fields, as her date of birth;
+ *   - yes / no / maybe, yes / no, a choice: option chips; several: chips too;
+ *   - a long list: the searchable picker, as her country;
+ *   - a list she adds to: the supporting organizations list;
+ *   - one consent: the consent row of the authorization, with its own text;
+ *   - a file: a photo or a PDF, uploaded to her private folder;
+ *   - a signature: the authorization signature pad.
+ *
+ * Every staff question is optional (RAPP-611 adds required ones), so tapping a
+ * chosen chip again clears it. The texts are staff's, in her app language with
+ * the Catalan fallback. A choice that was archived since she picked it stays
+ * visible and chosen, marked as no longer offered, until she changes it.
+ * `errorMessage` is set by the screen when she continues with an answer that
+ * does not fit the question (the shared schema says so).
  */
 
 import { AuthTextField } from '@/components/auth/auth-text-field';
+import { ConsentRow } from '@/components/authorization/consent-row';
+import { SignaturePad } from '@/components/equipment/signature-pad';
 import { FormTextArea } from '@/components/forms/form-text-area';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
+import { PressableScale } from '@/components/motion/pressable-scale';
+import { FieldErrorText } from '@/components/onboarding/field-error-text';
 import { OptionChip } from '@/components/onboarding/option-chip';
 import { ChoiceGrid } from '@/components/onboarding/option-grid';
+import { OptionSearchPicker } from '@/components/onboarding/option-search-picker';
 import { QuestionHelp } from '@/components/onboarding/question-help';
+import { SupportingEntitiesField } from '@/components/profile/supporting-entities-field';
+import { continuousCorners } from '@/lib/continuous-corners';
+import {
+  answerUploadsAvailable,
+  pickAndUploadAnswerDocument,
+  pickAndUploadAnswerPhoto,
+} from '@/lib/custom-answer-upload';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View, type TextStyle } from 'react-native';
+import { ActivityIndicator, Text, View, type TextStyle } from 'react-native';
+import type { SignatureStrokes } from '@ramassa/shared/equipment';
+import { toAppError } from '@ramassa/shared/errors';
 import { useLanguage } from '@ramassa/shared/i18n';
 import {
+  consentSettings,
+  fileSettings,
   isCustomQuestionVisible,
+  itemListSettings,
+  LIST_ITEM_MAX_LENGTH,
   liveOptions,
+  LONG_TEXT_MAX_LENGTH,
+  numberSettings,
+  SHORT_TEXT_MAX_LENGTH,
   textIn,
   updateCustomAnswer,
+  YES_NO,
   YES_NO_MAYBE,
   type CustomAnswerValue,
   type CustomQuestion,
+  type FileAnswer,
   type IntakeScreen,
 } from '@ramassa/shared/intake-builder';
+import { tokens } from '@ramassa/shared/tokens';
 
 /** Her own words may be in another script than the app: let the text set its direction. */
 const mixedDirectionInputStyle: TextStyle = { writingDirection: 'auto' };
-
-const SHORT_TEXT_MAX_LENGTH = 500;
-const LONG_TEXT_MAX_LENGTH = 4000;
 
 const YES_NO_MAYBE_KEYS = {
   yes: 'onboarding:yesOption',
@@ -42,67 +78,430 @@ const YES_NO_MAYBE_KEYS = {
 
 export type CustomAnswerDraft = Readonly<Record<string, CustomAnswerValue>>;
 
-export function CustomQuestionField({
-  question,
-  value,
-  onChange,
-}: {
+export interface CustomQuestionFieldProps {
   readonly question: CustomQuestion;
   readonly value: CustomAnswerValue | undefined;
   readonly onChange: (value: CustomAnswerValue) => void;
-}) {
+  /** Shown under the control when her answer does not fit the question. */
+  readonly errorMessage?: string;
+  /** A signature question stops the screen scrolling while she draws. */
+  readonly onDrawingChange?: (isDrawing: boolean) => void;
+}
+
+function QuestionLabel({ text }: { readonly text: string }) {
+  const fontClass = useLanguageFontClass();
+  return (
+    <Text className={`text-start text-form font-medium text-neutral-800 ${fontClass}`}>{text}</Text>
+  );
+}
+
+const asText = (value: CustomAnswerValue | undefined): string =>
+  typeof value === 'string' ? value : typeof value === 'number' ? String(value) : '';
+
+/** A typed number in either decimal mark; anything else stays text, so the check can say so. */
+function parseTypedNumber(text: string): CustomAnswerValue {
+  const trimmed = text.trim();
+  if (trimmed === '') return '';
+  const normalized = trimmed.replace(',', '.');
+  return /^-?\d+(\.\d+)?$/.test(normalized) ? Number(normalized) : trimmed;
+}
+
+/** Day, month and year as the date answer: `YYYY-MM-DD`, or what she typed so far. */
+function composeDate(day: string, month: string, year: string): string {
+  if (day.trim() === '' && month.trim() === '' && year.trim() === '') return '';
+  return `${year.trim()}-${month.trim().padStart(2, '0')}-${day.trim().padStart(2, '0')}`;
+}
+
+function splitDate(value: CustomAnswerValue | undefined) {
+  const [year = '', month = '', day = ''] = typeof value === 'string' ? value.split('-') : [];
+  return { day, month, year };
+}
+
+function NumberField({ question, value, onChange, errorMessage, label, help, testID }: FieldProps) {
+  const [text, setText] = useState(asText(value));
+  const isWhole = numberSettings(question.settings).integer;
+  return (
+    <AuthTextField
+      testID={`${testID}-input`}
+      label={label}
+      hint={help}
+      value={text}
+      onChangeText={(next) => {
+        setText(next);
+        onChange(parseTypedNumber(next));
+      }}
+      keyboardType={isWhole ? 'number-pad' : 'decimal-pad'}
+      inputMode={isWhole ? 'numeric' : 'decimal'}
+      isInvalid={errorMessage !== undefined}
+      errorMessage={errorMessage}
+      maxLength={16}
+    />
+  );
+}
+
+function DateField({ value, onChange, errorMessage, label, help, testID }: FieldProps) {
+  const { t } = useTranslation('onboarding');
+  const [parts, setParts] = useState(() => splitDate(value));
+  const update = (part: 'day' | 'month' | 'year', next: string) => {
+    const changed = { ...parts, [part]: next };
+    setParts(changed);
+    onChange(composeDate(changed.day, changed.month, changed.year));
+  };
+  const isInvalid = errorMessage !== undefined;
+  return (
+    <View className="gap-xs" testID={testID}>
+      <QuestionLabel text={label} />
+      <QuestionHelp text={help} />
+      <View className="flex-row flex-wrap gap-sm">
+        <View className="min-w-[30%] flex-1">
+          <AuthTextField
+            testID={`${testID}-day`}
+            label={t('dayLabel')}
+            value={parts.day}
+            onChangeText={(next) => update('day', next)}
+            keyboardType="number-pad"
+            maxLength={2}
+            isInvalid={isInvalid}
+          />
+        </View>
+        <View className="min-w-[30%] flex-1">
+          <AuthTextField
+            testID={`${testID}-month`}
+            label={t('monthLabel')}
+            value={parts.month}
+            onChangeText={(next) => update('month', next)}
+            keyboardType="number-pad"
+            maxLength={2}
+            isInvalid={isInvalid}
+          />
+        </View>
+        <View className="min-w-[30%] flex-1">
+          <AuthTextField
+            testID={`${testID}-year`}
+            label={t('yearLabel')}
+            value={parts.year}
+            onChangeText={(next) => update('year', next)}
+            keyboardType="number-pad"
+            maxLength={4}
+            isInvalid={isInvalid}
+          />
+        </View>
+      </View>
+      <FieldErrorText message={errorMessage} />
+    </View>
+  );
+}
+
+function FileField({ question, value, onChange, errorMessage, label, help, testID }: FieldProps) {
+  const { t } = useTranslation('onboarding');
+  const fontClass = useLanguageFontClass();
+  const [isUploading, setIsUploading] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const file =
+    typeof value === 'object' && value !== null && !Array.isArray(value) && 'key' in value
+      ? (value as FileAnswer)
+      : null;
+  const canUpload = answerUploadsAvailable();
+  const acceptsDocuments = fileSettings(question.settings).accept === 'document';
+
+  async function pick(picker: () => Promise<FileAnswer | null>) {
+    setFailed(false);
+    setIsUploading(true);
+    try {
+      const uploaded = await picker();
+      if (uploaded !== null) onChange(uploaded);
+    } catch (error) {
+      toAppError(error);
+      setFailed(true);
+    } finally {
+      setIsUploading(false);
+    }
+  }
+
+  return (
+    <View className="gap-sm" testID={testID}>
+      <QuestionLabel text={label} />
+      <QuestionHelp text={help} />
+      {canUpload ? null : (
+        <Text
+          testID={`${testID}-unavailable`}
+          className={`text-start text-form text-neutral-700 ${fontClass}`}
+        >
+          {t('customFileUnavailable')}
+        </Text>
+      )}
+      {file === null ? null : (
+        <View
+          style={continuousCorners}
+          className="w-full flex-row items-center gap-sm rounded-lg border border-neutral-200 bg-neutral-50 px-md py-sm"
+        >
+          <Text
+            testID={`${testID}-name`}
+            className={`flex-1 text-start text-form text-neutral-900 ${fontClass}`}
+          >
+            {file.name}
+          </Text>
+          <PressableScale
+            style={continuousCorners}
+            accessibilityRole="button"
+            accessibilityLabel={t('customFileRemove', { name: file.name })}
+            onPress={() => onChange('')}
+            haptic="tapLight"
+            className="min-h-recommended min-w-recommended items-center justify-center rounded-md"
+          >
+            <Text
+              className={`text-xl font-medium text-primary ${fontClass}`}
+              accessibilityElementsHidden
+              importantForAccessibility="no"
+            >
+              ×
+            </Text>
+          </PressableScale>
+        </View>
+      )}
+      {canUpload && file === null ? (
+        isUploading ? (
+          <View className="flex-row items-center gap-sm" accessibilityLiveRegion="polite">
+            <ActivityIndicator color={tokens.colors.primary.DEFAULT} />
+            <Text className={`text-start text-form text-neutral-700 ${fontClass}`}>
+              {t('customFileUploading')}
+            </Text>
+          </View>
+        ) : (
+          <View className="flex-row flex-wrap gap-sm">
+            <RaisedActionButton
+              testID={`${testID}-photo`}
+              label={t('customChoosePhoto')}
+              onPress={() => void pick(pickAndUploadAnswerPhoto)}
+            />
+            {acceptsDocuments ? (
+              <RaisedActionButton
+                testID={`${testID}-document`}
+                label={t('customChooseDocument')}
+                onPress={() => void pick(pickAndUploadAnswerDocument)}
+              />
+            ) : null}
+          </View>
+        )
+      ) : null}
+      <FieldErrorText message={failed ? t('customFileUploadFailed') : errorMessage} />
+    </View>
+  );
+}
+
+function SignatureField({
+  value,
+  onChange,
+  errorMessage,
+  label,
+  help,
+  testID,
+  onDrawingChange,
+}: FieldProps) {
+  const { t } = useTranslation('onboarding');
+  const fontClass = useLanguageFontClass();
+  const strokes =
+    Array.isArray(value) && value.length > 0 && Array.isArray(value[0])
+      ? (value as unknown as SignatureStrokes)
+      : null;
+  return (
+    <View className="gap-sm" testID={testID}>
+      <QuestionLabel text={label} />
+      <QuestionHelp text={help} />
+      <SignaturePad
+        strokes={strokes}
+        onChange={(next) => onChange(next === null ? '' : next)}
+        onDrawingChange={onDrawingChange}
+        prompt={t('authorizationSignaturePrompt')}
+        promptClassName={fontClass}
+        accessibilityLabel={label}
+      />
+      {strokes === null ? null : (
+        <PressableScale
+          accessibilityRole="button"
+          accessibilityLabel={t('authorizationClearSignature')}
+          onPress={() => onChange('')}
+          haptic="tapLight"
+          className="min-h-recommended justify-center self-start"
+        >
+          <Text className={`text-form font-semibold text-primary-dark ${fontClass}`}>
+            {t('authorizationClearSignature')}
+          </Text>
+        </PressableScale>
+      )}
+      <FieldErrorText message={errorMessage} />
+    </View>
+  );
+}
+
+interface FieldProps extends CustomQuestionFieldProps {
+  readonly label: string;
+  readonly help: string | null;
+  readonly testID: string;
+}
+
+export function CustomQuestionField(props: CustomQuestionFieldProps) {
+  const { question, value, onChange, errorMessage } = props;
   const { t } = useTranslation(['onboarding']);
   const { language } = useLanguage();
   const fontClass = useLanguageFontClass();
   const label = textIn(question.label, language);
   const help = textIn(question.help, language) || null;
   const testID = `custom-question-${question.id}`;
+  const field: FieldProps = { ...props, label, help, testID };
 
-  if (question.type === 'short_text' || question.type === 'long_text') {
-    const isLong = question.type === 'long_text';
-    if (isLong)
+  switch (question.type) {
+    case 'long_text':
       return (
-        <FormTextArea
-          testID={`${testID}-input`}
+        <View testID={testID}>
+          <FormTextArea
+            testID={`${testID}-input`}
+            label={label}
+            hint={help}
+            value={asText(value)}
+            onChangeText={onChange}
+            style={mixedDirectionInputStyle}
+            maxLength={LONG_TEXT_MAX_LENGTH}
+          />
+          <FieldErrorText message={errorMessage} />
+        </View>
+      );
+    case 'short_text':
+    case 'phone':
+    case 'email':
+      return (
+        <View testID={testID}>
+          <AuthTextField
+            testID={`${testID}-input`}
+            label={label}
+            hint={help}
+            value={asText(value)}
+            onChangeText={onChange}
+            style={question.type === 'short_text' ? mixedDirectionInputStyle : undefined}
+            maxLength={question.type === 'short_text' ? SHORT_TEXT_MAX_LENGTH : 254}
+            isInvalid={errorMessage !== undefined}
+            errorMessage={errorMessage}
+            {...(question.type === 'phone'
+              ? {
+                  keyboardType: 'phone-pad' as const,
+                  inputMode: 'tel' as const,
+                  autoComplete: 'tel' as const,
+                  textContentType: 'telephoneNumber' as const,
+                  placeholder: t('phonePlaceholder'),
+                }
+              : question.type === 'email'
+                ? {
+                    keyboardType: 'email-address' as const,
+                    inputMode: 'email' as const,
+                    autoCapitalize: 'none' as const,
+                    autoCorrect: false,
+                    autoComplete: 'email' as const,
+                    textContentType: 'emailAddress' as const,
+                  }
+                : {})}
+          />
+        </View>
+      );
+    case 'number':
+      return (
+        <View testID={testID}>
+          <NumberField {...field} />
+        </View>
+      );
+    case 'date':
+      return <DateField {...field} />;
+    case 'file_upload':
+      return <FileField {...field} />;
+    case 'signature':
+      return <SignatureField {...field} />;
+    case 'consent':
+      return (
+        <View testID={testID} className="gap-sm">
+          <QuestionLabel text={label} />
+          <QuestionHelp text={help} />
+          <ConsentRow
+            testID={`${testID}-tick`}
+            label={textIn(consentSettings(question.settings).text, language)}
+            required={false}
+            requiredMark=""
+            checked={value === true}
+            onToggle={() => onChange(value !== true)}
+          />
+          <FieldErrorText message={errorMessage} />
+        </View>
+      );
+    case 'item_list':
+      return (
+        <View testID={testID}>
+          <SupportingEntitiesField
+            value={Array.isArray(value) ? (value as unknown as readonly string[]) : []}
+            onChange={onChange}
+            entityNames={[]}
+            label={label}
+            help={help}
+            testIDPrefix={testID}
+            inputLabel={t('customListItemLabel')}
+            removeLabel={(name) => t('supportingEntitiesRemoveAction', { name })}
+            maxItems={itemListSettings(question.settings).max_items}
+            maxLength={LIST_ITEM_MAX_LENGTH}
+          />
+          <FieldErrorText message={errorMessage} />
+        </View>
+      );
+    case 'search_choice': {
+      const chosen = typeof value === 'string' ? value : '';
+      const options = [
+        ...liveOptions(question),
+        ...question.options.filter((option) => option.isArchived && option.id === chosen),
+      ].map((option) => ({
+        id: option.id,
+        label: option.isArchived
+          ? `${textIn(option.label, language)} (${t('onboarding:customArchivedOption')})`
+          : textIn(option.label, language),
+        searchText: Object.values(option.label).join(' '),
+      }));
+      return (
+        <OptionSearchPicker
+          testID={testID}
           label={label}
-          hint={help}
-          value={typeof value === 'string' ? value : ''}
-          onChangeText={onChange}
-          style={mixedDirectionInputStyle}
-          maxLength={LONG_TEXT_MAX_LENGTH}
+          help={<QuestionHelp text={help} />}
+          value={chosen}
+          options={options}
+          onChange={onChange}
+          errorMessage={errorMessage}
         />
       );
-    return (
-      <View testID={testID}>
-        <AuthTextField
-          testID={`${testID}-input`}
-          label={label}
-          hint={help}
-          value={typeof value === 'string' ? value : ''}
-          onChangeText={onChange}
-          style={mixedDirectionInputStyle}
-          multiline={isLong}
-          maxLength={isLong ? LONG_TEXT_MAX_LENGTH : SHORT_TEXT_MAX_LENGTH}
-        />
-      </View>
-    );
+    }
+    default:
+      break;
   }
 
   const chosen: readonly string[] =
-    value === undefined ? [] : typeof value === 'string' ? (value === '' ? [] : [value]) : value;
-  const options: readonly { readonly id: string; readonly label: string }[] =
-    question.type === 'yes_no_maybe'
-      ? YES_NO_MAYBE.map((answer) => ({ id: answer, label: t(YES_NO_MAYBE_KEYS[answer]) }))
-      : [
-          ...liveOptions(question),
-          // Her stored choice stays visible after staff archive it.
-          ...question.options.filter((option) => option.isArchived && chosen.includes(option.id)),
-        ].map((option) => ({
-          id: option.id,
-          label: option.isArchived
-            ? `${textIn(option.label, language)} (${t('onboarding:customArchivedOption')})`
-            : textIn(option.label, language),
-        }));
+    value === undefined
+      ? []
+      : typeof value === 'string'
+        ? value === ''
+          ? []
+          : [value]
+        : Array.isArray(value) && value.every((item) => typeof item === 'string')
+          ? (value as unknown as readonly string[])
+          : [];
+  const isYesNo = question.type === 'yes_no_maybe' || question.type === 'yes_no';
+  const options: readonly { readonly id: string; readonly label: string }[] = isYesNo
+    ? (question.type === 'yes_no' ? YES_NO : YES_NO_MAYBE).map((answer) => ({
+        id: answer,
+        label: t(YES_NO_MAYBE_KEYS[answer]),
+      }))
+    : [
+        ...liveOptions(question),
+        // Her stored choice stays visible after staff archive it.
+        ...question.options.filter((option) => option.isArchived && chosen.includes(option.id)),
+      ].map((option) => ({
+        id: option.id,
+        label: option.isArchived
+          ? `${textIn(option.label, language)} (${t('onboarding:customArchivedOption')})`
+          : textIn(option.label, language),
+      }));
   const isMultiple = question.type === 'multiple_choice';
 
   const choose = (id: string) => {
@@ -119,15 +518,11 @@ export function CustomQuestionField({
         {label}
       </Text>
       <QuestionHelp text={help} />
-      <ChoiceGrid maximumColumns={question.type === 'yes_no_maybe' ? 3 : 2}>
+      <ChoiceGrid maximumColumns={isYesNo ? 3 : 2}>
         {options.map((option) => (
           <OptionChip
             key={option.id}
-            testID={
-              question.type === 'yes_no_maybe'
-                ? `${testID}-${option.id}`
-                : `custom-option-${option.id}`
-            }
+            testID={isYesNo ? `${testID}-${option.id}` : `custom-option-${option.id}`}
             label={option.label}
             accessibilityHint={label}
             isSelected={chosen.includes(option.id)}
@@ -135,6 +530,7 @@ export function CustomQuestionField({
           />
         ))}
       </ChoiceGrid>
+      <FieldErrorText message={errorMessage} />
     </View>
   );
 }
@@ -147,10 +543,14 @@ export function CustomQuestionSections({
   screens,
   answers,
   onChange,
+  errors = {},
+  onDrawingChange,
 }: {
   readonly screens: readonly IntakeScreen[];
   readonly answers: CustomAnswerDraft;
   readonly onChange: (questionId: string, value: CustomAnswerValue) => void;
+  readonly errors?: Readonly<Record<string, string>>;
+  readonly onDrawingChange?: (isDrawing: boolean) => void;
 }) {
   const { language } = useLanguage();
   const fontClass = useLanguageFontClass();
@@ -180,6 +580,8 @@ export function CustomQuestionSections({
                   key={question.id}
                   question={question}
                   value={answers[question.id]}
+                  errorMessage={errors[question.id]}
+                  onDrawingChange={onDrawingChange}
                   onChange={(value) => {
                     const next = updateCustomAnswer(screen.questions, answers, question.id, value);
                     for (const [id, answer] of Object.entries(next))

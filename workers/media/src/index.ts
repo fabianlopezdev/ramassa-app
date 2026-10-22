@@ -25,6 +25,7 @@ import { parseWorkerEnv, type WorkerConfig } from './env';
 import { buildCorsHeaders, errorResponse } from './http';
 import { buildLocalUploadUrl, handleLocalUpload, LOCAL_UPLOAD_PATH_PREFIX } from './local-upload';
 import {
+  canReadCustomAnswerObject,
   canReadFeedbackObject,
   canReadInternalDocumentObject,
   canReadMediaObject,
@@ -43,6 +44,7 @@ import {
   resolvePublicOrganizationLogo,
 } from './serve-organization-logo';
 import { readBearerToken, resolveCallerIdentity } from './supabase-identity';
+import { isDeletableTestPlayer } from './test-player-check';
 
 async function createUploadTarget(
   config: WorkerConfig,
@@ -134,6 +136,8 @@ const handler: ExportedHandler<Env> = {
             request: incoming,
             supabaseUrl: config.supabaseUrl,
             supabasePublishableKey: config.supabasePublishableKey,
+            // A woman with no profile yet uploads her own answer files (RAPP-610).
+            allowWithoutProfile: true,
           }),
         rateLimiter: env.UPLOAD_RATE_LIMITER,
         createUploadTarget: (target) => createUploadTarget(config, url.origin, target, new Date()),
@@ -165,6 +169,14 @@ const handler: ExportedHandler<Env> = {
             orgId: identity.orgId,
             participantId,
             objectsDeleted,
+            token: readBearerToken(request),
+            supabaseUrl: config.supabaseUrl,
+            supabasePublishableKey: config.supabasePublishableKey,
+          }),
+        // A test player is deleted without a new authenticator code (RAPP-617).
+        isDeletableTestPlayer: (participantId) =>
+          isDeletableTestPlayer({
+            participantId,
             token: readBearerToken(request),
             supabaseUrl: config.supabaseUrl,
             supabasePublishableKey: config.supabasePublishableKey,
@@ -236,6 +248,13 @@ const handler: ExportedHandler<Env> = {
           }),
         authorizeStockObject: (objectKey) =>
           canReadStockObject({
+            objectKey,
+            token: readBearerToken(request),
+            supabaseUrl: config.supabaseUrl,
+            supabasePublishableKey: config.supabasePublishableKey,
+          }),
+        authorizeCustomAnswerObject: (objectKey) =>
+          canReadCustomAnswerObject({
             objectKey,
             token: readBearerToken(request),
             supabaseUrl: config.supabaseUrl,

@@ -51,6 +51,7 @@ mock.module('@/lib/onboarding-intake-context', () => ({
   }),
   useBuiltinWording: () => ({
     label: (_key: string, fallback: string) => fallback,
+    field: (_key: string, fallback: string) => fallback,
     help: () => null,
   }),
 }));

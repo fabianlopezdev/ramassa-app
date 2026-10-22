@@ -1,5 +1,7 @@
 import { describe, expect, test } from 'bun:test';
+import { authorizationContentSchema } from '../authorization';
 import { SUPPORTED_LANGUAGES } from '../i18n/languages';
+import { questionSettingsSchema } from '../intake-builder/question-types';
 import {
   buildAnnouncement,
   buildAppTermsSignature,
@@ -21,13 +23,17 @@ import {
   buildForumFlag,
   buildForumPost,
   buildForumReply,
+  buildIntakeBuiltinScreen,
+  buildIntakeFlowOrder,
   buildIntakeQuestionState,
+  buildIntakeRequiredQuestion,
   buildIntakeScreen,
   buildIntakeStatePreset,
   buildInvite,
   buildKnowledgeArticle,
   buildKnowledgeCategory,
   buildMentoringRequest,
+  buildOnboardingDesigner,
   buildOrganization,
   buildParticipant,
   buildParticipantNote,
@@ -44,6 +50,8 @@ import {
   buildServiceImage,
   buildServiceInterest,
   buildStockAlert,
+  buildTestPlayer,
+  buildTypedCustomQuestion,
   buildWalkInSigning,
 } from './factories';
 import {
@@ -54,6 +62,7 @@ import {
   SEED_ORGANIZATION_ID,
   seedUserId,
   STAFF_FIXTURES,
+  TEST_PLAYER_ID,
 } from './fixtures';
 
 describe('fixtures — the roster the seed and the factories share', () => {
@@ -427,6 +436,9 @@ describe('the authorization factories (RAPP-304)', () => {
     expect(paper.method).toBe('paper');
     expect(paper.signature).toBeNull();
     expect(buildAuthorizationConsentEvent().granted).toBe(true);
+    expect(buildAuthorizationConsentEvent().wording).toBe('Participo.');
+    // The factory version is a valid editable version (RAPP-614).
+    expect(authorizationContentSchema.safeParse(version.content).success).toBe(true);
     expect(buildSeasonAnswers().season_id).toBe(buildSeason().id);
   });
 
@@ -473,10 +485,35 @@ describe('the question builder rows (RAPP-307)', () => {
     expect(answer.season_key).toBe('00000000-0000-0000-0000-000000000000');
   });
 
+  test('a typed question carries settings the shared schema accepts (RAPP-610)', () => {
+    const signature = buildTypedCustomQuestion('signature', {});
+    expect(signature.placements).toEqual(['wizard']);
+    const number = buildTypedCustomQuestion('number', { integer: true, max: 15 });
+    expect(questionSettingsSchema('number').safeParse(number.settings).success).toBe(true);
+    expect(buildCustomQuestion().settings).toEqual({});
+  });
+
   test('the override rewords and the preset asks the sizes', () => {
     expect(buildBuiltinQuestionOverride().is_hidden).toBe(false);
     expect(buildIntakeStatePreset().states).toEqual({ clothing_size: 'ask', shoe_size: 'ask' });
   });
+});
+
+test('the required choice matches the seed and stays optional by default (RAPP-611)', () => {
+  expect(buildIntakeRequiredQuestion()).toMatchObject({ question: 'phone', is_required: false });
+  expect(buildCustomQuestion().is_required).toBe(false);
+});
+
+test('built-in screen wording and the flow order match the seed (RAPP-612)', () => {
+  expect(buildIntakeBuiltinScreen().screen).toBe('summary');
+  expect(buildIntakeBuiltinScreen().is_hidden).toBe(false);
+  expect(buildIntakeBuiltinScreen({ screen: 'documentation', is_hidden: true }).is_hidden).toBe(
+    true,
+  );
+  const order = buildIntakeFlowOrder().step_order;
+  expect(order[0]).toBe('identity');
+  expect(order).toContain('custom:5eed0000-0000-4000-8044-000000000001');
+  expect(order).not.toContain('summary');
 });
 
 test('app terms signature fixtures are independently linked and overrideable', () => {
@@ -491,4 +528,30 @@ test('app terms signature fixtures are independently linked and overrideable', (
   ]);
   expect(row.unable_to_draw).toBe(false);
   expect(buildAppTermsSignature({ unable_to_draw: true, signature: null }).signature).toBeNull();
+});
+
+describe('onboarding design sandbox factories (RAPP-615)', () => {
+  test('the test player is an invited test account, never a roster participant', () => {
+    const player = buildTestPlayer();
+    expect(player.is_test_account).toBe(true);
+    expect(player.role).toBe('invited');
+    expect(player.id).toBe(TEST_PLAYER_ID);
+    expect(PARTICIPANT_FIXTURES.some((fixture) => seedUserId(fixture.ordinal) === player.id)).toBe(
+      false,
+    );
+  });
+
+  test('the designer is a staff test account outside the roster', () => {
+    const designer = buildOnboardingDesigner();
+    expect(designer.role).toBe('staff');
+    expect(designer.is_test_account).toBe(true);
+    expect(STAFF_FIXTURES.some((fixture) => seedUserId(fixture.ordinal) === designer.id)).toBe(
+      false,
+    );
+  });
+
+  test('every other factory builds a real person', () => {
+    expect(buildParticipant().is_test_account).toBe(false);
+    expect(buildProfile().is_test_account).toBe(false);
+  });
 });

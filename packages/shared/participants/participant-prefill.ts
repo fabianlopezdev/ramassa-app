@@ -48,7 +48,7 @@ export interface PrefillRow {
   readonly postal_code: string | null;
   readonly reference_entity: string | null;
   readonly reference_contact_name: string | null;
-  readonly has_dependents: boolean;
+  readonly has_dependents: boolean | null;
   readonly num_dependents: number;
   readonly clothing_size: string | null;
   readonly shoe_size: string | null;

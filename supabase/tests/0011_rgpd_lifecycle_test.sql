@@ -69,7 +69,8 @@ select has_function(
 select ok(
   position(
     'leftovers text[] := array[]::text[];'::text in
-    pg_get_functiondef('public.delete_participant_permanently(uuid)'::regprocedure)
+    -- The record half moved into a helper both erasure doors share (RAPP-617).
+    pg_get_functiondef('private.erase_participant_records(uuid, uuid, uuid, text)'::regprocedure)
   ) > 0,
   'the erasure post-check accumulator has an explicit array type'
 );

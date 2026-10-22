@@ -218,3 +218,50 @@ describe('handleMintUploadUrl - success path', () => {
     expect(signedWith).toEqual({ contentType: 'image/jpeg', contentLength: 500_000 });
   });
 });
+
+describe('handleMintUploadUrl - a woman with no profile yet (RAPP-610)', () => {
+  const selfStarted: CallerIdentity = {
+    userId: '0b1d9c2e-3f4a-4b5c-8d6e-9f0a1b2c3d4f',
+    orgId: '5eed0000-0000-4000-8000-000000000000',
+    role: 'invited',
+    permissions: new Set(),
+    secondFactorVerifiedAt: null,
+    withoutProfile: true,
+  };
+  const answerFile = {
+    folder: 'intake-answers',
+    contentType: 'application/pdf',
+    contentLength: 2048,
+  };
+
+  test('uploads an answer file into her own folder of the organization she registers in', async () => {
+    const response = await handleMintUploadUrl(
+      buildRequest(answerFile),
+      buildDependencies({ resolveIdentity: async () => selfStarted }),
+    );
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as { objectKey: string };
+    expect(
+      body.objectKey.startsWith(`${selfStarted.orgId}/intake-answers/${selfStarted.userId}/`),
+    ).toBe(true);
+  });
+
+  test('every other folder still needs a profile', async () => {
+    for (const folder of ['gallery', 'profile-photos', 'documents']) {
+      const response = await handleMintUploadUrl(
+        buildRequest({ folder, contentType: 'image/jpeg', contentLength: 2048 }),
+        buildDependencies({ resolveIdentity: async () => selfStarted }),
+      );
+      expect(response.status).toBe(401);
+      expect(await readErrorCode(response)).toBe('AUTH-2');
+    }
+  });
+
+  test('the same size and type limits apply', async () => {
+    const response = await handleMintUploadUrl(
+      buildRequest({ ...answerFile, contentType: 'application/x-msdownload' }),
+      buildDependencies({ resolveIdentity: async () => selfStarted }),
+    );
+    expect(response.status).toBe(400);
+  });
+});

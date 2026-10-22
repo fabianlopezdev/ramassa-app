@@ -38,6 +38,8 @@ mock.module('@/lib/onboarding', () => ({
 }));
 mock.module('@/lib/onboarding-intake-context', () => ({
   useWizardStep: () => ({
+    // Nothing staff made required here (RAPP-611).
+    isRequired: () => false,
     position: { step: 3, total: 8 },
     isEditing: editing,
     nextDraftStep: editing ? 'summary' : 'logistics',

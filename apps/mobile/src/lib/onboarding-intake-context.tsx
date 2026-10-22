@@ -10,14 +10,21 @@ import { wizardDraftStep, wizardStepRoute } from '@/lib/onboarding-intake';
 import { lastSupportNeedStep } from '@/lib/support-needs-draft';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { createContext, use, useMemo, type ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useLanguage } from '@ramassa/shared/i18n';
 import {
+  DEFAULT_REQUIRED_QUESTIONS,
+  DEFAULT_WIZARD_FLOW,
+  isRequiredQuestion,
   nextWizardScreen,
   previousWizardScreen,
+  questionFieldLabel,
   wizardScreenPosition,
   type AnsweredQuestions,
   type CustomWizardScreen,
   type IntakeQuestion,
+  type RequiredQuestions,
+  type WizardFlow,
   type WizardStepKey,
 } from '@ramassa/shared/intake';
 import {
@@ -25,6 +32,7 @@ import {
   builtinLabel,
   builtinOptions,
   EMPTY_INTAKE_CATALOG,
+  requiredBuiltinQuestions,
   type CustomAnswers,
   type IntakeCatalog,
   type IntakeScreen,
@@ -54,8 +62,23 @@ export interface WizardIntake {
   readonly customAnswers: CustomAnswers;
   readonly customScreens: readonly IntakeScreen[];
   readonly customPlan: readonly CustomWizardScreen[];
+  /**
+   * The screen order and hidden screens staff arranged (RAPP-612). Absent
+   * means the app's own order.
+   */
+  readonly flow?: WizardFlow;
   /** Built-in questions staff removed: never asked, even when editing. */
   readonly hidden: ReadonlySet<IntakeQuestion>;
+  /**
+   * The built-in questions that need an answer (RAPP-611), from the catalog.
+   * Absent means the app's own list.
+   */
+  readonly required?: RequiredQuestions;
+  /**
+   * For a test player, when staff last changed her situation (RAPP-619): a
+   * draft from before it is dropped. Null or absent for everyone else.
+   */
+  readonly scenarioStamp?: string | null;
 }
 
 const EMPTY_INTAKE: WizardIntake = {
@@ -96,6 +119,10 @@ export interface WizardStep {
    * A built-in question staff removed never shows (RAPP-307).
    */
   readonly shouldAsk: (question: IntakeQuestion) => boolean;
+  /** Whether staff made a built-in question required (RAPP-611); her names and language always are. */
+  readonly isRequired: (question: IntakeQuestion) => boolean;
+  /** The organization's required list, for the screen's form schema. */
+  readonly required: RequiredQuestions;
   /** The draft step to save before moving on, and the move itself. */
   readonly nextDraftStep: OnboardingDraftStep;
   readonly goNext: () => void;
@@ -105,7 +132,13 @@ export interface WizardStep {
 }
 
 export function useWizardStep(screen: WizardStepKey): WizardStep {
-  const { notAsked, customPlan, hidden } = useWizardIntake();
+  const {
+    notAsked,
+    customPlan,
+    hidden,
+    flow = DEFAULT_WIZARD_FLOW,
+    required = DEFAULT_REQUIRED_QUESTIONS,
+  } = useWizardIntake();
   const router = useRouter();
   const { edit } = useLocalSearchParams<{ edit?: string }>();
   const isEditing = edit === '1';
@@ -113,10 +146,10 @@ export function useWizardStep(screen: WizardStepKey): WizardStep {
   return useMemo<WizardStep>(() => {
     const next: WizardStepKey = isEditing
       ? 'summary'
-      : nextWizardScreen(screen, notAsked, customPlan);
+      : nextWizardScreen(screen, notAsked, customPlan, flow);
     const previous: WizardStepKey | null = isEditing
       ? 'summary'
-      : previousWizardScreen(screen, notAsked, customPlan);
+      : previousWizardScreen(screen, notAsked, customPlan, flow);
     const previousStep =
       previous === 'documentation' &&
       hasDocumentDetails(onboardingDraftStore.loadDraft()?.documentation?.documentType)
@@ -133,8 +166,10 @@ export function useWizardStep(screen: WizardStepKey): WizardStep {
       router.canGoBack() ? router.back() : router.replace(wizardStepRoute('summary', 'back'));
     return {
       isEditing,
-      position: wizardScreenPosition(screen, notAsked, customPlan),
+      position: wizardScreenPosition(screen, notAsked, customPlan, flow),
       shouldAsk: (question) => !hidden.has(question) && (isEditing || !notAsked.has(question)),
+      isRequired: (question) => isRequiredQuestion(question, required),
+      required,
       nextDraftStep: wizardDraftStep(next),
       goNext: isEditing ? backToSummary : () => router.push(wizardStepRoute(next)),
       previousDraftStep: previousStep === null ? null : wizardDraftStep(previousStep),
@@ -146,12 +181,17 @@ export function useWizardStep(screen: WizardStepKey): WizardStep {
           ? null
           : () => router.replace(wizardStepRoute(previousStep ?? previous, 'back')),
     };
-  }, [notAsked, customPlan, hidden, isEditing, router, screen]);
+  }, [notAsked, customPlan, flow, hidden, required, isEditing, router, screen]);
 }
 
 export interface BuiltinWording {
   /** Staff wording of a built-in question in her language, or the app's own (RAPP-307). */
   readonly label: (question: IntakeQuestion, appLabel: string) => string;
+  /**
+   * The label on the question's own screen: as `label`, with "(optional)"
+   * when the organization's required list makes it optional (pending fix 21).
+   */
+  readonly field: (question: IntakeQuestion, appLabel: string) => string;
   /** Staff help under a built-in question, or null when none is written. */
   readonly help: (question: IntakeQuestion) => string | null;
   /** The chip options of a built-in choice question: relabelled, hidden ones left out. */
@@ -167,13 +207,21 @@ export function useBuiltinWording(catalog?: IntakeCatalog): BuiltinWording {
   const intake = useWizardIntake();
   const { language } = useLanguage();
   const source = catalog ?? intake.catalog;
+  const { t } = useTranslation('onboarding');
   return useMemo<BuiltinWording>(
     () => ({
       label: (question, appLabel) => builtinLabel(source, question, language) ?? appLabel,
+      field: (question, appLabel) =>
+        questionFieldLabel(
+          question,
+          builtinLabel(source, question, language) ?? appLabel,
+          requiredBuiltinQuestions(source),
+          (label) => t('optionalFieldLabel', { label }),
+        ),
       help: (question) => builtinHelp(source, question, language),
       options: (question, options, keep = null) =>
         builtinOptions(source, question, options, language, keep),
     }),
-    [source, language],
+    [source, language, t],
   );
 }

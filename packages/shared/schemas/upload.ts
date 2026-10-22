@@ -35,6 +35,9 @@ export const UPLOAD_FOLDERS = [
   'organization-branding',
   // Photos of goods received and their receipts (RAPP-250).
   'stock',
+  // Files she gives in answer to a staff question (RAPP-610): private, served
+  // only to her and to staff who may read the question's privacy level.
+  'intake-answers',
 ] as const;
 
 export const uploadFolderSchema = z.enum(UPLOAD_FOLDERS);
@@ -177,6 +180,17 @@ export const uploadUrlRequestSchema = z
         code: 'custom',
         path: ['contentType'],
         message: 'Internal documents accept PDF, images, and Word documents only',
+      });
+    }
+    if (
+      request.folder === 'intake-answers' &&
+      kind !== 'image' &&
+      request.contentType !== 'application/pdf'
+    ) {
+      context.addIssue({
+        code: 'custom',
+        path: ['contentType'],
+        message: 'Answer files accept photos and PDF documents only',
       });
     }
     if (request.folder === 'organization-branding' && kind !== 'image') {

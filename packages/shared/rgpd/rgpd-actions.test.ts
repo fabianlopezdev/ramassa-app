@@ -3,6 +3,7 @@ import { AppError } from '../errors';
 import {
   anonymizeParticipant,
   deleteParticipantPermanently,
+  deleteTestPlayer,
   eraseParticipant,
   fetchDeletionRequests,
   resolveDeletionRequest,
@@ -212,5 +213,27 @@ describe('the deletion-request queue', () => {
         },
       },
     ]);
+  });
+});
+
+describe('deleteTestPlayer - a made-up player, gone completely (RAPP-617)', () => {
+  test('calls the RPC with her id', async () => {
+    const { client, calls } = buildClient();
+    await expect(deleteTestPlayer(client, PARTICIPANT)).resolves.toBeUndefined();
+    expect(calls).toEqual([
+      { name: 'delete_test_player', args: { p_participant_id: PARTICIPANT } },
+    ]);
+  });
+
+  test.each([
+    ['TEST_PLAYER/NOT_A_TEST_PLAYER: only a test player is deleted here', 'DB-2'],
+    ['TEST_PLAYER/PERMISSION: deleting a test player needs test_players.manage', 'DB-1'],
+    ['DELETION_MEDIA_NOT_PURGED: her uploaded media must be removed first', 'DB-4'],
+    ['DELETION_NO_SUBJECT: no such participant in this organization', 'DB-2'],
+  ])('%s maps to %s', async (message, expectedCode) => {
+    const { client } = buildClient({ rpcError: { message } });
+    await expect(deleteTestPlayer(client, PARTICIPANT)).rejects.toMatchObject({
+      code: expectedCode,
+    });
   });
 });

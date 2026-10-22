@@ -26,6 +26,7 @@ import {
   type ReactNode,
 } from 'react';
 import { AppError, type AppError as AppErrorType } from '../errors';
+import { fetchTermsAcceptanceNeeded } from '../onboarding/app-terms';
 import { fetchMyPermissions, type PermissionCode } from '../permissions';
 import type { AppRole } from '../schemas/auth';
 import type { Database } from '../types/database';
@@ -76,6 +77,13 @@ export interface AuthState {
    * player into the wizard is worse than showing an error.
    */
   readonly needsOnboarding: boolean;
+  /**
+   * True for a player who joined but has not accepted the current app terms
+   * version (RAPP-613): her app shows the terms screen alone until she does.
+   * False when the lookup fails, as for `needsOnboarding`: a network flake
+   * must never lock her out.
+   */
+  readonly needsTermsAcceptance: boolean;
   /** Re-reads the profile and permissions for the current session; the wizard calls it after `complete_onboarding` so the gate flips without a sign-out round trip, and the Team screen after changing the caller's own toggles. */
   readonly refreshProfile: () => Promise<void>;
 }
@@ -97,6 +105,7 @@ export function AuthProvider({ client, children, onError }: AuthProviderProps) {
   const [permissions, setPermissions] = useState<ReadonlySet<PermissionCode>>(NO_PERMISSIONS);
   const [permissionsLevel, setPermissionsLevel] = useState<'aal1' | 'aal2' | null>(null);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
+  const [needsTermsAcceptance, setNeedsTermsAcceptance] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isResolvingProfile, setIsResolvingProfile] = useState(false);
 
@@ -132,6 +141,7 @@ export function AuthProvider({ client, children, onError }: AuthProviderProps) {
           setRole(null);
           setPermissions(NO_PERMISSIONS);
           setNeedsOnboarding(false);
+          setNeedsTermsAcceptance(false);
           setIsLoading(false);
         }
         return;
@@ -147,6 +157,10 @@ export function AuthProvider({ client, children, onError }: AuthProviderProps) {
         const summary = await fetchProfileSummary(client, nextSession.user.id);
         const isTeamMember = summary?.role === 'staff' || summary?.role === 'admin';
         const nextPermissions = isTeamMember ? await fetchMyPermissions(client) : NO_PERMISSIONS;
+        const joinedPlayer = summary?.role === 'player' && summary.termsAcceptedAt !== null;
+        const termsNeeded = joinedPlayer
+          ? await fetchTermsAcceptanceNeeded(client).catch(() => false)
+          : false;
         if (isSubscribed && latestChangeRef.current === changeId) {
           setRole(summary?.role ?? null);
           // The same set object while nothing changed, so a screen can tell a
@@ -156,12 +170,14 @@ export function AuthProvider({ client, children, onError }: AuthProviderProps) {
           );
           setPermissionsLevel(assuranceLevelOf(nextSession));
           setNeedsOnboarding(summary === null || summary.termsAcceptedAt === null);
+          setNeedsTermsAcceptance(termsNeeded);
         }
       } catch (error) {
         if (isSubscribed && latestChangeRef.current === changeId) {
           setRole(null);
           setPermissions(NO_PERMISSIONS);
           setNeedsOnboarding(false);
+          setNeedsTermsAcceptance(false);
         }
         onErrorRef.current?.(error as AppErrorType);
       } finally {
@@ -215,6 +231,7 @@ export function AuthProvider({ client, children, onError }: AuthProviderProps) {
         (role !== 'staff' && role !== 'admin') ||
         permissionsLevel === assuranceLevelOf(session),
       needsOnboarding,
+      needsTermsAcceptance,
       refreshProfile,
     }),
     [
@@ -225,6 +242,7 @@ export function AuthProvider({ client, children, onError }: AuthProviderProps) {
       isLoading,
       isResolvingProfile,
       needsOnboarding,
+      needsTermsAcceptance,
       refreshProfile,
     ],
   );

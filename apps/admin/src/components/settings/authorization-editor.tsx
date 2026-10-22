@@ -1,39 +1,65 @@
 /**
- * The participation authorization, per season (RAPP-304): the published
- * versions, and an editor for the next one.
+ * The participation authorization, per season (RAPP-304), fully editable
+ * (RAPP-614): the published versions, one draft, and a live preview of what a
+ * player reads and answers.
  *
- * The editor starts from the current version. Staff pick a language and edit
- * every text in it: the title, each section, each consent's wording and the
- * season documents (a link each). A language left empty falls back to another
- * one when she reads it. Publishing is final: a published version is never
- * edited, and every player signs the new one on her next app open, so the
- * button asks once more before it publishes.
+ * Staff edit the draft language by language: the document (title, sections,
+ * season documents), the consents (add, remove, reorder, reword, mark
+ * required), the health question and the emergency contact (asked or not,
+ * required or not, their privacy level and wording), and the wording of the
+ * form and of re-registration. A wording field left empty shows the app's own
+ * text in her language; the preview shows that text and says so. Onboarding
+ * designers save and discard the draft; publishing needs
+ * settings.organization, because every player signs the new version on her
+ * next app open, so the button asks once more before it publishes.
  */
 
 import { AdminAuthField } from '@/components/auth/admin-auth-field';
+import { RequiredSwitch } from '@/components/settings/required-switch';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  AUTHORIZATION_CONSENTS,
+  AUTHORIZATION_BUNDLED_TEXT_KEYS,
+  AUTHORIZATION_TEXT_FIELDS,
   authorizationContentSchema,
+  authorizationWording,
+  EMERGENCY_TITLE_REQUIRED_KEY,
+  HEALTH_DATA_CONSENT,
+  IMAGE_RIGHTS_CONSENT,
+  isMiddlePhaseShown,
+  newConsentKey,
+  orderedConsents,
   type AuthorizationContent,
   type AuthorizationText,
   type AuthorizationVersion,
+  type EmergencyContactPrivacy,
 } from '@ramassa/shared/authorization';
-import { LANGUAGE_NATIVE_NAMES, SUPPORTED_LANGUAGES } from '@ramassa/shared/i18n/languages';
+import {
+  getLanguageDirection,
+  LANGUAGE_NATIVE_NAMES,
+  SUPPORTED_LANGUAGES,
+} from '@ramassa/shared/i18n/languages';
 import type { LanguageCode } from '@ramassa/shared/schemas';
+
+const PREVIEW_SEASON = '2026/27';
 
 const EMPTY_CONTENT: AuthorizationContent = {
   title: { ca: '' },
   sections: [{ key: 'section_1', title: { ca: '' }, body: { ca: '' } }],
-  consents: Object.fromEntries(
-    AUTHORIZATION_CONSENTS.map((consent) => [
-      consent.key,
-      { required: consent.required, label: { ca: '' } },
-    ]),
-  ) as AuthorizationContent['consents'],
+  consents: {
+    participation: { label: { ca: '' }, required: true, position: 0 },
+    data_processing: { label: { ca: '' }, required: true, position: 1 },
+    code_of_conduct: { label: { ca: '' }, required: true, position: 2 },
+    health_data: { label: { ca: '' }, required: true, position: 3 },
+    image_rights: { label: { ca: '' }, required: false, position: 4 },
+  },
+  questions: {
+    health: { asked: true, required: true, privacy: 'health', texts: {} },
+    emergency_contact: { asked: true, required: false, privacy: 'personal', texts: {} },
+  },
+  texts: {},
   attachments: [],
 };
 
@@ -46,7 +72,18 @@ function cleanText(text: AuthorizationText): AuthorizationText {
   );
 }
 
-function cleanContent(content: AuthorizationContent): AuthorizationContent {
+/** Wording overrides: a field with no text in any language is left out. */
+function cleanTexts<Texts extends Readonly<Record<string, AuthorizationText | undefined>>>(
+  texts: Texts,
+): Texts {
+  return Object.fromEntries(
+    Object.entries(texts)
+      .map(([field, text]) => [field, cleanText(text ?? {})] as const)
+      .filter(([, text]) => Object.keys(text).length > 0),
+  ) as Texts;
+}
+
+export function cleanAuthorizationContent(content: AuthorizationContent): AuthorizationContent {
   return {
     title: cleanText(content.title),
     sections: content.sections.map((section) => ({
@@ -54,12 +91,24 @@ function cleanContent(content: AuthorizationContent): AuthorizationContent {
       title: cleanText(section.title),
       body: cleanText(section.body),
     })),
+    // Places renumbered 0..n in the order shown.
     consents: Object.fromEntries(
-      Object.entries(content.consents).map(([key, consent]) => [
-        key,
-        { required: consent.required, label: cleanText(consent.label) },
+      orderedConsents(content).map((consent, position) => [
+        consent.key,
+        { label: cleanText(consent.label), required: consent.required, position },
       ]),
-    ) as AuthorizationContent['consents'],
+    ),
+    questions: {
+      health: {
+        ...content.questions.health,
+        texts: cleanTexts(content.questions.health.texts),
+      },
+      emergency_contact: {
+        ...content.questions.emergency_contact,
+        texts: cleanTexts(content.questions.emergency_contact.texts),
+      },
+    },
+    texts: cleanTexts(content.texts),
     attachments: content.attachments.map((attachment) => ({
       label: cleanText(attachment.label),
       url: attachment.url.trim(),
@@ -67,49 +116,57 @@ function cleanContent(content: AuthorizationContent): AuthorizationContent {
   };
 }
 
+type Status =
+  'idle' | 'saving' | 'saved' | 'discarded' | 'publishing' | 'published' | 'invalid' | 'failed';
+
 export interface AuthorizationEditorProps {
   readonly versions: readonly AuthorizationVersion[];
-  readonly onPublish: (content: AuthorizationContent) => Promise<void>;
+  /** settings.organization: only an admin decision makes every player sign again. */
+  readonly canPublish: boolean;
+  readonly onSaveDraft: (content: AuthorizationContent) => Promise<void>;
+  readonly onDiscardDraft: () => Promise<void>;
+  readonly onPublish: () => Promise<number>;
 }
 
-export function AuthorizationEditor({ versions, onPublish }: AuthorizationEditorProps) {
-  const { t, i18n } = useTranslation('settings');
-  const current = versions.find((version) => version.isCurrent) ?? null;
-  const [language, setLanguage] = useState<LanguageCode>(
-    (i18n.resolvedLanguage as LanguageCode | undefined) ?? 'ca',
+export function AuthorizationEditor({
+  versions,
+  canPublish,
+  onSaveDraft,
+  onDiscardDraft,
+  onPublish,
+}: AuthorizationEditorProps) {
+  const { t, i18n } = useTranslation(['settings', 'onboarding']);
+  const draft = versions.find((version) => version.publishedAt === null) ?? null;
+  const published = versions.filter((version) => version.publishedAt !== null);
+  const current = published.find((version) => version.isCurrent) ?? null;
+  const [language, setLanguage] = useState<LanguageCode>('ca');
+  const [content, setContent] = useState<AuthorizationContent>(
+    draft?.content ?? current?.content ?? EMPTY_CONTENT,
   );
-  const [content, setContent] = useState<AuthorizationContent>(current?.content ?? EMPTY_CONTENT);
   const [isConfirming, setIsConfirming] = useState(false);
-  const [status, setStatus] = useState<'idle' | 'publishing' | 'published' | 'invalid' | 'failed'>(
-    'idle',
-  );
+  const [status, setStatus] = useState<Status>('idle');
+  const direction = getLanguageDirection(language);
+  const isBusy = status === 'saving' || status === 'publishing';
 
   const edit = (next: AuthorizationContent) => {
     setContent(next);
     setIsConfirming(false);
     setStatus('idle');
   };
-  const inLanguage = (text: AuthorizationText) => text[language] ?? '';
-  const withLanguage = (text: AuthorizationText, value: string): AuthorizationText => ({
+  const inLanguage = (text: AuthorizationText | undefined) => text?.[language] ?? '';
+  const withLanguage = (text: AuthorizationText | undefined, value: string): AuthorizationText => ({
     ...text,
     [language]: value,
   });
+  /** The app's own text for a field in the language being edited. */
+  const bundled = (key: string) =>
+    t(`onboarding:${key}`, { lng: language, season: PREVIEW_SEASON });
 
-  async function publish() {
-    const parsed = authorizationContentSchema.safeParse(cleanContent(content));
-    if (!parsed.success) {
-      setStatus('invalid');
-      setIsConfirming(false);
-      return;
-    }
-    if (!isConfirming) {
-      setIsConfirming(true);
-      return;
-    }
-    setStatus('publishing');
+  async function run(next: Status, action: () => Promise<unknown>, done: Status) {
+    setStatus(next);
     try {
-      await onPublish(parsed.data);
-      setStatus('published');
+      await action();
+      setStatus(done);
     } catch {
       setStatus('failed');
     } finally {
@@ -117,20 +174,85 @@ export function AuthorizationEditor({ versions, onPublish }: AuthorizationEditor
     }
   }
 
+  async function saveDraft() {
+    const parsed = authorizationContentSchema.safeParse(cleanAuthorizationContent(content));
+    if (!parsed.success) {
+      setStatus('invalid');
+      return;
+    }
+    await run('saving', () => onSaveDraft(parsed.data), 'saved');
+  }
+
+  async function publish() {
+    if (!isConfirming) {
+      setIsConfirming(true);
+      return;
+    }
+    await run('publishing', onPublish, 'published');
+  }
+
+  const consents = orderedConsents(content);
+  const { health, emergency_contact: emergency } = content.questions;
+  const setConsents = (next: typeof consents) =>
+    edit({
+      ...content,
+      consents: Object.fromEntries(
+        next.map((consent, position) => [
+          consent.key,
+          { label: consent.label, required: consent.required, position },
+        ]),
+      ),
+    });
+  const setHealth = (next: Partial<typeof health>) => {
+    const merged = { ...health, ...next };
+    const healthConsent = content.consents[HEALTH_DATA_CONSENT];
+    edit({
+      ...content,
+      // A required health question needs its consent required too: set it with it.
+      consents:
+        merged.required && healthConsent !== undefined
+          ? { ...content.consents, [HEALTH_DATA_CONSENT]: { ...healthConsent, required: true } }
+          : content.consents,
+      questions: { ...content.questions, health: merged },
+    });
+  };
+  const setEmergency = (next: Partial<typeof emergency>) =>
+    edit({
+      ...content,
+      questions: { ...content.questions, emergency_contact: { ...emergency, ...next } },
+    });
+
   return (
-    <div className="flex max-w-4xl flex-col gap-6" data-testid="authorization-editor">
+    <div className="flex max-w-6xl flex-col gap-6" data-testid="authorization-editor">
       <section className="flex flex-col gap-2 rounded-xl border bg-card p-5">
         <h3 className="text-start text-base font-semibold">{t('authorizationVersionsTitle')}</h3>
         {versions.length === 0 ? (
           <p className="text-start text-sm text-muted-foreground">{t('authorizationNoVersions')}</p>
         ) : (
           <ul className="flex flex-col gap-1" data-testid="authorization-versions">
-            {versions.map((version) => (
+            {draft === null ? null : (
+              <li className="text-start text-sm" data-testid="authorization-draft-row">
+                {t('authorizationEditor.draftRow', {
+                  date: new Date(draft.updatedAt ?? Date.now()).toLocaleDateString(
+                    i18n.resolvedLanguage,
+                  ),
+                })}
+                <span
+                  className="ms-2 rounded border border-dashed px-1.5 py-0.5 text-xs"
+                  data-testid="authorization-draft-note"
+                >
+                  {t('draftSeenByTestPlayers')}
+                </span>
+              </li>
+            )}
+            {published.map((version) => (
               <li key={version.id} className="text-start text-sm">
                 {t('authorizationVersionRow', {
                   season: version.seasonName,
                   number: version.versionNumber,
-                  date: new Date(version.publishedAt).toLocaleDateString(i18n.resolvedLanguage),
+                  date: new Date(version.publishedAt ?? '').toLocaleDateString(
+                    i18n.resolvedLanguage,
+                  ),
                 })}
                 {version.isCurrent ? (
                   <span className="ms-2 rounded bg-muted px-1.5 py-0.5 text-xs">
@@ -143,216 +265,666 @@ export function AuthorizationEditor({ versions, onPublish }: AuthorizationEditor
         )}
       </section>
 
-      <section className="flex flex-col gap-4 rounded-xl border bg-card p-5">
-        <div className="flex flex-col gap-1">
-          <h3 className="text-start text-base font-semibold">{t('authorizationEditorTitle')}</h3>
-          <p className="text-start text-sm text-muted-foreground">
-            {t('authorizationEditorIntro')}
-          </p>
-        </div>
-        <label className="flex flex-col gap-1.5 text-sm font-medium">
-          <span>{t('authorizationLanguage')}</span>
-          <select
-            id="authorization-language"
-            value={language}
-            onChange={(event) => setLanguage(event.target.value as LanguageCode)}
-            className="h-9 max-w-xs rounded-md border border-input bg-transparent px-3 text-sm"
-          >
-            {SUPPORTED_LANGUAGES.map((code) => (
-              <option key={code} value={code}>
-                {LANGUAGE_NATIVE_NAMES[code]}
-              </option>
-            ))}
-          </select>
-        </label>
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,24rem)]">
+        <section className="flex flex-col gap-4 rounded-xl border bg-card p-5">
+          <div className="flex flex-col gap-1">
+            <h3 className="text-start text-base font-semibold">{t('authorizationEditorTitle')}</h3>
+            <p className="text-start text-sm text-muted-foreground">
+              {t('authorizationEditor.intro')}
+            </p>
+          </div>
+          <label className="flex flex-col gap-1.5 text-sm font-medium">
+            <span>{t('authorizationLanguage')}</span>
+            <select
+              id="authorization-language"
+              value={language}
+              onChange={(event) => setLanguage(event.target.value as LanguageCode)}
+              className="h-9 max-w-xs rounded-md border border-input bg-transparent px-3 text-sm"
+            >
+              {SUPPORTED_LANGUAGES.map((code) => (
+                <option key={code} value={code}>
+                  {LANGUAGE_NATIVE_NAMES[code]}
+                </option>
+              ))}
+            </select>
+          </label>
 
-        <AdminAuthField
-          id="authorization-title"
-          label={t('authorizationDocumentTitle')}
-          value={inLanguage(content.title)}
-          onChange={(event) =>
-            edit({ ...content, title: withLanguage(content.title, event.target.value) })
-          }
-        />
+          <AdminAuthField
+            id="authorization-title"
+            label={t('authorizationDocumentTitle')}
+            dir={direction}
+            value={inLanguage(content.title)}
+            onChange={(event) =>
+              edit({ ...content, title: withLanguage(content.title, event.target.value) })
+            }
+          />
 
-        <fieldset className="flex flex-col gap-4">
-          <legend className="text-start text-sm font-semibold">{t('authorizationSections')}</legend>
-          {content.sections.map((section, index) => (
-            <div key={section.key} className="flex flex-col gap-2 rounded-lg border p-3">
-              <AdminAuthField
-                id={`authorization-section-title-${index}`}
-                label={t('authorizationSectionTitle', { number: index + 1 })}
-                value={inLanguage(section.title)}
-                onChange={(event) =>
-                  edit({
-                    ...content,
-                    sections: content.sections.map((entry, at) =>
-                      at === index
-                        ? { ...entry, title: withLanguage(entry.title, event.target.value) }
-                        : entry,
-                    ),
-                  })
-                }
-              />
-              <label className="flex flex-col gap-1.5 text-sm font-medium">
-                <span>{t('authorizationSectionBody')}</span>
-                <Textarea
-                  id={`authorization-section-body-${index}`}
-                  rows={5}
-                  value={inLanguage(section.body)}
+          <fieldset className="flex flex-col gap-4">
+            <legend className="text-start text-sm font-semibold">
+              {t('authorizationSections')}
+            </legend>
+            {content.sections.map((section, index) => (
+              <div key={section.key} className="flex flex-col gap-2 rounded-lg border p-3">
+                <AdminAuthField
+                  id={`authorization-section-title-${index}`}
+                  label={t('authorizationSectionTitle', { number: index + 1 })}
+                  dir={direction}
+                  value={inLanguage(section.title)}
                   onChange={(event) =>
                     edit({
                       ...content,
                       sections: content.sections.map((entry, at) =>
                         at === index
-                          ? { ...entry, body: withLanguage(entry.body, event.target.value) }
+                          ? { ...entry, title: withLanguage(entry.title, event.target.value) }
                           : entry,
                       ),
                     })
                   }
                 />
-              </label>
-              {content.sections.length > 1 ? (
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-fit"
-                  onClick={() =>
-                    edit({ ...content, sections: content.sections.filter((_, at) => at !== index) })
-                  }
-                >
-                  {t('authorizationRemoveSection')}
-                </Button>
-              ) : null}
-            </div>
-          ))}
-          <Button
-            type="button"
-            variant="outline"
-            className="w-fit"
-            onClick={() => {
-              const used = new Set(content.sections.map((section) => section.key));
-              let number = content.sections.length + 1;
-              while (used.has(`section_${number}`)) number += 1;
-              edit({
-                ...content,
-                sections: [...content.sections, { key: `section_${number}`, title: {}, body: {} }],
-              });
-            }}
-          >
-            {t('authorizationAddSection')}
-          </Button>
-        </fieldset>
-
-        <fieldset className="flex flex-col gap-3">
-          <legend className="text-start text-sm font-semibold">{t('authorizationConsents')}</legend>
-          {AUTHORIZATION_CONSENTS.map((consent) => (
-            <AdminAuthField
-              key={consent.key}
-              id={`authorization-consent-${consent.key}`}
-              label={`${t(`authorizationConsent.${consent.key}`)}${
-                consent.required ? ` (${t('authorizationRequired')})` : ''
-              }`}
-              value={inLanguage(content.consents[consent.key].label)}
-              onChange={(event) =>
+                <label className="flex flex-col gap-1.5 text-sm font-medium">
+                  <span>{t('authorizationSectionBody')}</span>
+                  <Textarea
+                    id={`authorization-section-body-${index}`}
+                    rows={5}
+                    dir={direction}
+                    value={inLanguage(section.body)}
+                    onChange={(event) =>
+                      edit({
+                        ...content,
+                        sections: content.sections.map((entry, at) =>
+                          at === index
+                            ? { ...entry, body: withLanguage(entry.body, event.target.value) }
+                            : entry,
+                        ),
+                      })
+                    }
+                  />
+                </label>
+                {content.sections.length > 1 ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-fit"
+                    onClick={() =>
+                      edit({
+                        ...content,
+                        sections: content.sections.filter((_, at) => at !== index),
+                      })
+                    }
+                  >
+                    {t('authorizationRemoveSection')}
+                  </Button>
+                ) : null}
+              </div>
+            ))}
+            <Button
+              type="button"
+              variant="outline"
+              className="w-fit"
+              onClick={() => {
+                const used = new Set(content.sections.map((section) => section.key));
+                let number = content.sections.length + 1;
+                while (used.has(`section_${number}`)) number += 1;
                 edit({
                   ...content,
-                  consents: {
-                    ...content.consents,
-                    [consent.key]: {
-                      ...content.consents[consent.key],
-                      label: withLanguage(content.consents[consent.key].label, event.target.value),
+                  sections: [
+                    ...content.sections,
+                    { key: `section_${number}`, title: {}, body: {} },
+                  ],
+                });
+              }}
+            >
+              {t('authorizationAddSection')}
+            </Button>
+          </fieldset>
+
+          <fieldset className="flex flex-col gap-3" data-testid="authorization-consents">
+            <legend className="text-start text-sm font-semibold">
+              {t('authorizationEditor.consentsTitle')}
+            </legend>
+            <p className="text-start text-xs text-muted-foreground">
+              {t('authorizationEditor.consentsIntro')}
+            </p>
+            {consents.map((consent, index) => (
+              <div
+                key={consent.key}
+                className="flex flex-col gap-2 rounded-lg border p-3"
+                data-testid={`authorization-consent-${consent.key}`}
+              >
+                <AdminAuthField
+                  id={`authorization-consent-label-${consent.key}`}
+                  label={t('authorizationEditor.consentLabel', { number: index + 1 })}
+                  dir={direction}
+                  value={inLanguage(consent.label)}
+                  onChange={(event) =>
+                    setConsents(
+                      consents.map((entry) =>
+                        entry.key === consent.key
+                          ? { ...entry, label: withLanguage(entry.label, event.target.value) }
+                          : entry,
+                      ),
+                    )
+                  }
+                />
+                <RequiredSwitch
+                  id={`authorization-consent-required-${consent.key}`}
+                  checked={consent.required}
+                  disabled={isBusy}
+                  lockReason={
+                    consent.key === IMAGE_RIGHTS_CONSENT
+                      ? t('authorizationEditor.imageRightsLock')
+                      : consent.key === HEALTH_DATA_CONSENT && health.asked && health.required
+                        ? t('authorizationEditor.healthConsentLock')
+                        : undefined
+                  }
+                  onChange={(required) =>
+                    setConsents(
+                      consents.map((entry) =>
+                        entry.key === consent.key ? { ...entry, required } : entry,
+                      ),
+                    )
+                  }
+                />
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={index === 0}
+                    aria-label={t('authorizationEditor.moveUp', { number: index + 1 })}
+                    onClick={() => {
+                      const next = [...consents];
+                      [next[index - 1], next[index]] = [next[index]!, next[index - 1]!];
+                      setConsents(next);
+                    }}
+                  >
+                    {t('authorizationEditor.moveUpShort')}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={index === consents.length - 1}
+                    aria-label={t('authorizationEditor.moveDown', { number: index + 1 })}
+                    onClick={() => {
+                      const next = [...consents];
+                      [next[index], next[index + 1]] = [next[index + 1]!, next[index]!];
+                      setConsents(next);
+                    }}
+                  >
+                    {t('authorizationEditor.moveDownShort')}
+                  </Button>
+                  {consents.length > 1 && !(consent.key === HEALTH_DATA_CONSENT && health.asked) ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      data-testid={`authorization-consent-remove-${consent.key}`}
+                      onClick={() =>
+                        setConsents(consents.filter((entry) => entry.key !== consent.key))
+                      }
+                    >
+                      {t('authorizationEditor.removeConsent')}
+                    </Button>
+                  ) : null}
+                </div>
+              </div>
+            ))}
+            {consents.length < 20 ? (
+              <Button
+                type="button"
+                variant="outline"
+                className="w-fit"
+                data-testid="authorization-consent-add"
+                onClick={() =>
+                  setConsents([
+                    ...consents,
+                    {
+                      key: newConsentKey(content),
+                      label: {},
+                      required: false,
+                      position: consents.length,
                     },
-                  },
+                  ])
+                }
+              >
+                {t('authorizationEditor.addConsent')}
+              </Button>
+            ) : null}
+          </fieldset>
+
+          <fieldset className="flex flex-col gap-3" data-testid="authorization-health">
+            <legend className="text-start text-sm font-semibold">
+              {t('authorizationEditor.healthTitle')}
+            </legend>
+            <label className="flex items-center gap-2 text-start text-xs font-medium">
+              <input
+                id="authorization-health-asked"
+                data-testid="authorization-health-asked"
+                type="checkbox"
+                checked={health.asked}
+                disabled={health.required}
+                aria-describedby="authorization-hide-note"
+                onChange={(event) => setHealth({ asked: event.target.checked })}
+              />
+              <span>{t('authorizationEditor.asked')}</span>
+            </label>
+            <RequiredSwitch
+              id="authorization-health-required"
+              checked={health.required}
+              disabled={isBusy || !health.asked}
+              onChange={(required) => setHealth({ required })}
+            />
+            <p className="text-start text-xs text-muted-foreground">
+              {t('authorizationEditor.healthPrivacy')}
+            </p>
+            {AUTHORIZATION_TEXT_FIELDS.health.map((field) => (
+              <AdminAuthField
+                key={field}
+                id={`authorization-health-${field}`}
+                label={t(`authorizationEditor.healthField.${field}`)}
+                dir={direction}
+                placeholder={bundled(AUTHORIZATION_BUNDLED_TEXT_KEYS.health[field])}
+                value={inLanguage(health.texts[field])}
+                onChange={(event) =>
+                  setHealth({
+                    texts: {
+                      ...health.texts,
+                      [field]: withLanguage(health.texts[field], event.target.value),
+                    },
+                  })
+                }
+              />
+            ))}
+          </fieldset>
+
+          <fieldset className="flex flex-col gap-3" data-testid="authorization-emergency">
+            <legend className="text-start text-sm font-semibold">
+              {t('authorizationEditor.emergencyTitle')}
+            </legend>
+            <label className="flex items-center gap-2 text-start text-xs font-medium">
+              <input
+                id="authorization-emergency-asked"
+                data-testid="authorization-emergency-asked"
+                type="checkbox"
+                checked={emergency.asked}
+                disabled={emergency.required}
+                aria-describedby="authorization-hide-note"
+                onChange={(event) => setEmergency({ asked: event.target.checked })}
+              />
+              <span>{t('authorizationEditor.asked')}</span>
+            </label>
+            <RequiredSwitch
+              id="authorization-emergency-required"
+              checked={emergency.required}
+              disabled={isBusy || !emergency.asked}
+              onChange={(required) => setEmergency({ required })}
+            />
+            <label className="flex flex-col gap-1.5 text-sm font-medium">
+              <span>{t('authorizationEditor.privacy')}</span>
+              <select
+                id="authorization-emergency-privacy"
+                value={emergency.privacy}
+                onChange={(event) =>
+                  setEmergency({ privacy: event.target.value as EmergencyContactPrivacy })
+                }
+                className="h-9 max-w-xs rounded-md border border-input bg-transparent px-3 text-sm"
+              >
+                <option value="personal">{t('questions.privacyLevels.personal')}</option>
+                <option value="sensitive">{t('questions.privacyLevels.sensitive')}</option>
+              </select>
+              <span className="text-xs font-normal text-muted-foreground">
+                {t('authorizationEditor.emergencyPrivacyNote')}
+              </span>
+            </label>
+            {AUTHORIZATION_TEXT_FIELDS.emergency_contact.map((field) => (
+              <AdminAuthField
+                key={field}
+                id={`authorization-emergency-${field}`}
+                label={t(`authorizationEditor.emergencyField.${field}`)}
+                dir={direction}
+                placeholder={bundled(
+                  field === 'title' && emergency.required
+                    ? EMERGENCY_TITLE_REQUIRED_KEY
+                    : AUTHORIZATION_BUNDLED_TEXT_KEYS.emergency_contact[field],
+                )}
+                value={inLanguage(emergency.texts[field])}
+                onChange={(event) =>
+                  setEmergency({
+                    texts: {
+                      ...emergency.texts,
+                      [field]: withLanguage(emergency.texts[field], event.target.value),
+                    },
+                  })
+                }
+              />
+            ))}
+            <p id="authorization-hide-note" className="text-start text-xs text-muted-foreground">
+              {t('authorizationEditor.hideNote')}
+            </p>
+          </fieldset>
+
+          <fieldset className="flex flex-col gap-3" data-testid="authorization-texts">
+            <legend className="text-start text-sm font-semibold">
+              {t('authorizationEditor.textsTitle')}
+            </legend>
+            <p className="text-start text-xs text-muted-foreground">
+              {t('authorizationEditor.textsIntro')}
+            </p>
+            {AUTHORIZATION_TEXT_FIELDS.texts.map((field) => (
+              <AdminAuthField
+                key={field}
+                id={`authorization-text-${field}`}
+                label={t(`authorizationEditor.textField.${field}`)}
+                dir={direction}
+                placeholder={bundled(AUTHORIZATION_BUNDLED_TEXT_KEYS.texts[field])}
+                value={inLanguage(content.texts[field])}
+                onChange={(event) =>
+                  edit({
+                    ...content,
+                    texts: {
+                      ...content.texts,
+                      [field]: withLanguage(content.texts[field], event.target.value),
+                    },
+                  })
+                }
+              />
+            ))}
+          </fieldset>
+
+          <fieldset className="flex flex-col gap-3">
+            <legend className="text-start text-sm font-semibold">
+              {t('authorizationAttachments')}
+            </legend>
+            {content.attachments.map((attachment, index) => (
+              <div key={index} className="grid gap-2 sm:grid-cols-2">
+                <AdminAuthField
+                  id={`authorization-attachment-label-${index}`}
+                  label={t('authorizationAttachmentLabel')}
+                  dir={direction}
+                  value={inLanguage(attachment.label)}
+                  onChange={(event) =>
+                    edit({
+                      ...content,
+                      attachments: content.attachments.map((entry, at) =>
+                        at === index
+                          ? { ...entry, label: withLanguage(entry.label, event.target.value) }
+                          : entry,
+                      ),
+                    })
+                  }
+                />
+                <AdminAuthField
+                  id={`authorization-attachment-url-${index}`}
+                  label={t('authorizationAttachmentUrl')}
+                  type="url"
+                  value={attachment.url}
+                  onChange={(event) =>
+                    edit({
+                      ...content,
+                      attachments: content.attachments.map((entry, at) =>
+                        at === index ? { ...entry, url: event.target.value } : entry,
+                      ),
+                    })
+                  }
+                />
+              </div>
+            ))}
+            <Button
+              type="button"
+              variant="outline"
+              className="w-fit"
+              onClick={() =>
+                edit({
+                  ...content,
+                  attachments: [...content.attachments, { label: {}, url: 'https://' }],
                 })
               }
-            />
-          ))}
-        </fieldset>
+            >
+              {t('authorizationAddAttachment')}
+            </Button>
+          </fieldset>
 
-        <fieldset className="flex flex-col gap-3">
-          <legend className="text-start text-sm font-semibold">
-            {t('authorizationAttachments')}
-          </legend>
-          {content.attachments.map((attachment, index) => (
-            <div key={index} className="grid gap-2 sm:grid-cols-2">
-              <AdminAuthField
-                id={`authorization-attachment-label-${index}`}
-                label={t('authorizationAttachmentLabel')}
-                value={inLanguage(attachment.label)}
-                onChange={(event) =>
-                  edit({
-                    ...content,
-                    attachments: content.attachments.map((entry, at) =>
-                      at === index
-                        ? { ...entry, label: withLanguage(entry.label, event.target.value) }
-                        : entry,
-                    ),
-                  })
-                }
-              />
-              <AdminAuthField
-                id={`authorization-attachment-url-${index}`}
-                label={t('authorizationAttachmentUrl')}
-                type="url"
-                value={attachment.url}
-                onChange={(event) =>
-                  edit({
-                    ...content,
-                    attachments: content.attachments.map((entry, at) =>
-                      at === index ? { ...entry, url: event.target.value } : entry,
-                    ),
-                  })
-                }
-              />
-            </div>
-          ))}
-          <Button
-            type="button"
-            variant="outline"
-            className="w-fit"
-            onClick={() =>
-              edit({
-                ...content,
-                attachments: [...content.attachments, { label: {}, url: 'https://' }],
-              })
-            }
-          >
-            {t('authorizationAddAttachment')}
-          </Button>
-        </fieldset>
+          {isConfirming ? (
+            <p role="alert" className="text-start text-sm font-medium">
+              {t('authorizationPublishConfirm')}
+            </p>
+          ) : null}
+          {status === 'invalid' ? (
+            <p role="alert" className="text-start text-sm text-destructive">
+              {t('authorizationEditor.invalid')}
+            </p>
+          ) : null}
+          {status === 'failed' ? (
+            <p role="alert" className="text-start text-sm text-destructive">
+              {t('authorizationPublishFailed')}
+            </p>
+          ) : null}
+          {status === 'saved' || status === 'discarded' || status === 'published' ? (
+            <p aria-live="polite" className="text-start text-sm text-muted-foreground">
+              {t(`authorizationEditor.${status}`)}
+            </p>
+          ) : null}
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              disabled={isBusy}
+              onClick={() => void saveDraft()}
+              data-testid="authorization-save"
+            >
+              {t('authorizationEditor.saveDraft')}
+            </Button>
+            {draft === null ? null : (
+              <Button
+                type="button"
+                variant="outline"
+                disabled={isBusy}
+                onClick={() => void run('saving', onDiscardDraft, 'discarded')}
+                data-testid="authorization-discard"
+              >
+                {t('authorizationEditor.discardDraft')}
+              </Button>
+            )}
+            {canPublish && draft !== null ? (
+              <Button
+                type="button"
+                variant={isConfirming ? 'destructive' : 'secondary'}
+                disabled={isBusy}
+                onClick={() => void publish()}
+                data-testid="authorization-publish"
+              >
+                {isConfirming
+                  ? t('authorizationPublishConfirmAction')
+                  : t('authorizationPublishAction')}
+              </Button>
+            ) : null}
+          </div>
+          {canPublish ? null : (
+            <p className="text-start text-sm text-muted-foreground">
+              {t('authorizationEditor.publishNeedsAdmin')}
+            </p>
+          )}
+        </section>
 
-        {isConfirming ? (
-          <p role="alert" className="text-start text-sm font-medium">
-            {t('authorizationPublishConfirm')}
-          </p>
-        ) : null}
-        {status === 'invalid' ? (
-          <p role="alert" className="text-start text-sm text-destructive">
-            {t('authorizationInvalid')}
-          </p>
-        ) : null}
-        {status === 'failed' ? (
-          <p role="alert" className="text-start text-sm text-destructive">
-            {t('authorizationPublishFailed')}
-          </p>
-        ) : null}
-        {status === 'published' ? (
-          <p aria-live="polite" className="text-start text-sm text-muted-foreground">
-            {t('authorizationPublished')}
-          </p>
-        ) : null}
-        <Button
-          type="button"
-          size="lg"
-          className="w-fit"
-          disabled={status === 'publishing'}
-          onClick={() => void publish()}
-          data-testid="authorization-publish"
-        >
-          {isConfirming ? t('authorizationPublishConfirmAction') : t('authorizationPublishAction')}
-        </Button>
-      </section>
+        <AuthorizationPreview content={content} language={language} />
+      </div>
     </div>
+  );
+}
+
+/** What she reads, phase by phase, in the chosen language, as her phone shows it. */
+function AuthorizationPreview({
+  content,
+  language,
+}: {
+  readonly content: AuthorizationContent;
+  readonly language: LanguageCode;
+}) {
+  const { t } = useTranslation(['settings', 'onboarding']);
+  const direction = getLanguageDirection(language);
+  const app = (key: string) => t(`onboarding:${key}`, { lng: language, season: PREVIEW_SEASON });
+  const staffOr = (
+    texts: Readonly<Record<string, AuthorizationText | undefined>>,
+    field: string,
+    key: string,
+  ) =>
+    (authorizationWording(texts, field, language) ?? app(key)).replace(
+      /\{\{\s*season\s*\}\}/gu,
+      PREVIEW_SEASON,
+    );
+  const words = (field: keyof typeof AUTHORIZATION_BUNDLED_TEXT_KEYS.texts) =>
+    staffOr(content.texts, field, AUTHORIZATION_BUNDLED_TEXT_KEYS.texts[field]);
+  const label = (text: AuthorizationText) =>
+    text[language]?.trim() || text.ca?.trim() || Object.values(text).find(Boolean) || '';
+  const { health, emergency_contact: emergency } = content.questions;
+  const phases = isMiddlePhaseShown(content) ? 3 : 2;
+  const appTextFields = AUTHORIZATION_TEXT_FIELDS.texts.filter(
+    (field) => authorizationWording(content.texts, field, language) === undefined,
+  ).length;
+  return (
+    <aside
+      className="flex flex-col gap-4 rounded-xl border bg-muted/40 p-5"
+      aria-label={t('authorizationEditor.previewTitle')}
+      data-testid="authorization-preview"
+    >
+      <h3 className="text-start text-base font-semibold">
+        {t('authorizationEditor.previewTitle')}
+      </h3>
+      {appTextFields === 0 ? null : (
+        <p
+          className="text-start text-xs text-muted-foreground"
+          data-testid="authorization-app-text"
+        >
+          {t('authorizationEditor.previewAppText', { count: appTextFields })}
+        </p>
+      )}
+      <div
+        lang={language}
+        dir={direction}
+        className="flex flex-col gap-2 rounded-lg border bg-background p-4"
+        data-testid="authorization-preview-document"
+      >
+        <p className="text-start text-xs text-muted-foreground">
+          {t('authorizationEditor.previewStep', {
+            label: words('flow_label'),
+            step: 1,
+            total: phases,
+          })}
+        </p>
+        <p className="text-start text-lg font-semibold">{label(content.title)}</p>
+        <p className="text-start text-sm">{words('intro')}</p>
+        <p className="mt-2 rounded-md bg-primary px-3 py-2 text-center text-sm text-primary-foreground">
+          {words('continue_label')}
+        </p>
+      </div>
+      {phases === 3 ? (
+        <div
+          lang={language}
+          dir={direction}
+          className="flex flex-col gap-2 rounded-lg border bg-background p-4"
+          data-testid="authorization-preview-health"
+        >
+          <p className="text-start text-xs text-muted-foreground">
+            {t('authorizationEditor.previewStep', {
+              label: words('flow_label'),
+              step: 2,
+              total: 3,
+            })}
+          </p>
+          <p className="text-start text-lg font-semibold">{words('health_title')}</p>
+          {health.asked ? (
+            <>
+              <p className="text-start text-sm">
+                {staffOr(health.texts, 'question', AUTHORIZATION_BUNDLED_TEXT_KEYS.health.question)}
+              </p>
+              <p className="text-start text-sm text-muted-foreground">
+                {staffOr(health.texts, 'no_label', AUTHORIZATION_BUNDLED_TEXT_KEYS.health.no_label)}{' '}
+                ·{' '}
+                {staffOr(
+                  health.texts,
+                  'yes_label',
+                  AUTHORIZATION_BUNDLED_TEXT_KEYS.health.yes_label,
+                )}
+              </p>
+            </>
+          ) : null}
+          {emergency.asked ? (
+            <>
+              <p className="text-start text-sm font-semibold">
+                {staffOr(
+                  emergency.texts,
+                  'title',
+                  emergency.required
+                    ? EMERGENCY_TITLE_REQUIRED_KEY
+                    : AUTHORIZATION_BUNDLED_TEXT_KEYS.emergency_contact.title,
+                )}
+              </p>
+              {(['name_label', 'relation_label', 'phone_label'] as const).map((field) => (
+                <p key={field} className="text-start text-sm text-muted-foreground">
+                  {staffOr(
+                    emergency.texts,
+                    field,
+                    AUTHORIZATION_BUNDLED_TEXT_KEYS.emergency_contact[field],
+                  )}
+                </p>
+              ))}
+            </>
+          ) : null}
+        </div>
+      ) : null}
+      <div
+        lang={language}
+        dir={direction}
+        className="flex flex-col gap-2 rounded-lg border bg-background p-4"
+        data-testid="authorization-preview-consents"
+      >
+        <p className="text-start text-xs text-muted-foreground">
+          {t('authorizationEditor.previewStep', {
+            label: words('flow_label'),
+            step: phases,
+            total: phases,
+          })}
+        </p>
+        <p className="text-start text-lg font-semibold">{words('consents_title')}</p>
+        <ul className="flex flex-col gap-2">
+          {orderedConsents(content).map((consent) => (
+            <li key={consent.key} className="flex items-start gap-2 text-start text-sm">
+              <span
+                aria-hidden="true"
+                className="mt-0.5 inline-block size-4 shrink-0 rounded border"
+              />
+              <span>
+                {label(consent.label)}
+                {consent.required ? (
+                  <span className="block font-semibold">{words('required_mark')}</span>
+                ) : null}
+              </span>
+            </li>
+          ))}
+        </ul>
+        <p className="text-start text-sm font-semibold">{words('signature_title')}</p>
+        <p className="text-start text-sm text-muted-foreground">{words('signature_prompt')}</p>
+        <p className="text-start text-sm">{words('cannot_draw_label')}</p>
+        <p className="mt-2 rounded-md bg-primary px-3 py-2 text-center text-sm text-primary-foreground">
+          {words('sign_and_enter_label')}
+        </p>
+        <p className="text-start text-xs text-muted-foreground">
+          {t('authorizationEditor.previewTablet', { label: words('sign_label') })}
+        </p>
+      </div>
+      <div
+        lang={language}
+        dir={direction}
+        className="flex flex-col gap-2 rounded-lg border bg-background p-4"
+        data-testid="authorization-preview-reregistration"
+      >
+        <p className="text-start text-lg font-semibold">{words('reregistration_title')}</p>
+        <p className="text-start text-sm">{words('reregistration_intro')}</p>
+        <p className="text-start text-sm text-muted-foreground">
+          {words('reregistration_correct_label')} · {words('reregistration_edit_label')}
+        </p>
+        <p className="text-start text-sm">{words('reregistration_season_intro')}</p>
+      </div>
+    </aside>
   );
 }

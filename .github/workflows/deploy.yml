@@ -67,6 +67,9 @@ jobs:
         env:
           EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
           EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+          # Staging only (RAPP-616): set as a variable of the preview environment;
+          # this check refuses it for production.
+          EXPO_PUBLIC_TEST_SIGN_IN: ${{ vars.EXPO_PUBLIC_TEST_SIGN_IN }}
 
       # --- Admin (TanStack Start → Cloudflare Workers) ---
       - name: Build admin (${{ env.TARGET_ENV }})
@@ -74,6 +77,9 @@ jobs:
         env:
           EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
           EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+          # Staging only (RAPP-616): set as a variable of the preview environment;
+          # the check above refuses it for production.
+          EXPO_PUBLIC_TEST_SIGN_IN: ${{ vars.EXPO_PUBLIC_TEST_SIGN_IN }}
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
 
       - name: Deploy admin
@@ -89,6 +95,9 @@ jobs:
         env:
           EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
           EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+          # Staging only (RAPP-616): set as a variable of the preview environment;
+          # the check above refuses it for production.
+          EXPO_PUBLIC_TEST_SIGN_IN: ${{ vars.EXPO_PUBLIC_TEST_SIGN_IN }}
 
       - name: Deploy player web
         # main branch = Pages production alias; the preview target deploys to a

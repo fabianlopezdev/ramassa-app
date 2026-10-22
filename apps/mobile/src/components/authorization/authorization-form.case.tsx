@@ -3,7 +3,6 @@ import { act, fireEvent, render } from '@testing-library/react';
 import { afterAll, beforeEach, expect, mock, test } from 'bun:test';
 import { createElement, type ReactNode } from 'react';
 import {
-  AUTHORIZATION_CONSENTS,
   authorizationContentSchema,
   type AuthorizationContent,
   type AuthorizationSigning,
@@ -181,6 +180,16 @@ mock.module('@/components/equipment/signature-pad', () => ({
     ),
 }));
 const { AuthorizationForm } = await import('./authorization-form');
+// The RAPP-304 consents, as every converted version holds them (RAPP-614).
+const AUTHORIZATION_CONSENTS = [
+  { key: 'participation', required: true },
+  { key: 'data_processing', required: true },
+  { key: 'code_of_conduct', required: true },
+  { key: 'health_data', required: true },
+  { key: 'image_rights', required: false },
+  { key: 'newsletter', required: false },
+  { key: 'messaging_groups', required: false },
+] as const;
 const content: AuthorizationContent = {
   title: { en: 'Season authorization' },
   sections: [
@@ -191,8 +200,16 @@ const content: AuthorizationContent = {
     },
   ],
   consents: Object.fromEntries(
-    AUTHORIZATION_CONSENTS.map(({ key, required }) => [key, { required, label: { en: key } }]),
-  ) as AuthorizationContent['consents'],
+    AUTHORIZATION_CONSENTS.map(({ key, required }, position) => [
+      key,
+      { required, position, label: { en: key } },
+    ]),
+  ),
+  questions: {
+    health: { asked: true, required: true, privacy: 'health', texts: {} },
+    emergency_contact: { asked: true, required: false, privacy: 'personal', texts: {} },
+  },
+  texts: {},
   attachments: [],
 };
 const props = {
@@ -401,4 +418,149 @@ test('an optional emergency contact may contain just the details the player know
     relation: '',
     phone: '',
   });
+});
+
+// RAPP-614: everything comes from the version ---------------------------------------------------
+
+test('a consent staff added shows in its place and, required, blocks signing until ticked', () => {
+  const view = render(
+    createElement(AuthorizationForm, {
+      ...props,
+      content: {
+        ...content,
+        consents: {
+          ...content.consents,
+          team_photos: { required: true, position: 7, label: { en: 'Team photos' } },
+          participation: { ...content.consents.participation!, position: 8 },
+        },
+      },
+    }),
+  );
+  toConsentStage(view);
+  const labels = view.getAllByRole('checkbox').map((node) => node.textContent);
+  expect(labels.slice(-3)).toEqual(['Team photos', 'participation', 'authorizationCannotDraw']);
+  for (const { key, required } of AUTHORIZATION_CONSENTS)
+    if (required) fireEvent.click(view.getByRole('checkbox', { name: key }));
+  fireEvent.click(view.getByRole('checkbox', { name: 'authorizationCannotDraw' }));
+  fireEvent.click(view.getByRole('button', { name: 'authorizationSignAndEnterAction' }));
+  expect(submit).not.toHaveBeenCalled();
+  expect(view.getByText('authorizationErrorConsents')).toBeTruthy();
+  fireEvent.click(view.getByRole('checkbox', { name: 'Team photos' }));
+  fireEvent.click(view.getByRole('button', { name: 'authorizationSignAndEnterAction' }));
+  expect(submit).toHaveBeenCalledTimes(1);
+});
+
+test('a version that asks neither question has two phases', () => {
+  const view = render(
+    createElement(AuthorizationForm, {
+      ...props,
+      content: {
+        ...content,
+        questions: {
+          health: { asked: false, required: false, privacy: 'health', texts: {} },
+          emergency_contact: { asked: false, required: false, privacy: 'personal', texts: {} },
+        },
+      },
+    }),
+  );
+  expect(view.getByText('1/2')).toBeTruthy();
+  act(() => reachDocumentEnd?.());
+  fireEvent.click(view.getByRole('button', { name: 'continueAction' }));
+  expect(view.getByText('2/2')).toBeTruthy();
+  expect(view.queryByRole('button', { name: 'authorizationHealthNo' })).toBeNull();
+  for (const { key, required } of AUTHORIZATION_CONSENTS)
+    if (required) fireEvent.click(view.getByRole('checkbox', { name: key }));
+  fireEvent.click(view.getByRole('checkbox', { name: 'authorizationCannotDraw' }));
+  fireEvent.click(view.getByRole('button', { name: 'authorizationSignAndEnterAction' }));
+  expect(submit.mock.calls[0]?.[0].healthInfo).toBe('');
+  fireEvent.click(view.getByRole('button', { name: 'Back' }));
+  expect(view.getByText('1/2')).toBeTruthy();
+});
+
+test('staff wording shows in her language; a language they left empty shows the app text', () => {
+  const worded: AuthorizationContent = {
+    ...content,
+    texts: {
+      intro: { en: 'Read it for {{season}}.' },
+      health_title: { en: 'Your health' },
+      sign_and_enter_label: { en: 'Sign and play' },
+      cannot_draw_label: { en: 'I sign with ticks' },
+    },
+    questions: {
+      ...content.questions,
+      health: {
+        ...content.questions.health,
+        texts: { question: { en: 'Anything we should know?' } },
+      },
+    },
+  };
+  const view = render(createElement(AuthorizationForm, { ...props, content: worded }));
+  expect(view.getByText('Read it for 2026/27.')).toBeTruthy();
+  act(() => reachDocumentEnd?.());
+  fireEvent.click(view.getByRole('button', { name: 'continueAction' }));
+  expect(view.getByRole('heading', { name: 'Your health' })).toBeTruthy();
+  expect(view.getByText('Anything we should know?')).toBeTruthy();
+  fireEvent.click(view.getByRole('button', { name: 'authorizationHealthNo' }));
+  fireEvent.click(view.getByRole('button', { name: 'continueAction' }));
+  expect(view.getByRole('button', { name: 'Sign and play' })).toBeTruthy();
+  expect(view.getByRole('checkbox', { name: 'I sign with ticks' })).toBeTruthy();
+  view.unmount();
+  const arabic = render(
+    createElement(AuthorizationForm, { ...props, content: worded, language: 'ar' }),
+  );
+  expect(arabic.getByText('authorizationIntro')).toBeTruthy();
+});
+
+test('a required emergency contact asks a name and a phone before the consents', () => {
+  const view = render(
+    createElement(AuthorizationForm, {
+      ...props,
+      content: {
+        ...content,
+        questions: {
+          ...content.questions,
+          emergency_contact: { asked: true, required: true, privacy: 'sensitive', texts: {} },
+        },
+      },
+    }),
+  );
+  act(() => reachDocumentEnd?.());
+  fireEvent.click(view.getByRole('button', { name: 'continueAction' }));
+  expect(view.getByText('authorizationEmergencyTitleRequired')).toBeTruthy();
+  fireEvent.click(view.getByRole('button', { name: 'authorizationHealthNo' }));
+  fireEvent.click(view.getByRole('button', { name: 'continueAction' }));
+  expect(view.getByText('authorizationErrorEmergency')).toBeTruthy();
+  expect(view.getByText('2/3')).toBeTruthy();
+});
+
+test('an optional health answer given asks for the health data consent', () => {
+  const view = render(
+    createElement(AuthorizationForm, {
+      ...props,
+      content: {
+        ...content,
+        consents: {
+          ...content.consents,
+          health_data: { ...content.consents.health_data!, required: false },
+        },
+        questions: {
+          ...content.questions,
+          health: { asked: true, required: false, privacy: 'health', texts: {} },
+        },
+      },
+    }),
+  );
+  act(() => reachDocumentEnd?.());
+  fireEvent.click(view.getByRole('button', { name: 'continueAction' }));
+  fireEvent.click(view.getByRole('button', { name: 'authorizationHealthNo' }));
+  fireEvent.click(view.getByRole('button', { name: 'continueAction' }));
+  for (const key of ['participation', 'data_processing', 'code_of_conduct'])
+    fireEvent.click(view.getByRole('checkbox', { name: key }));
+  fireEvent.click(view.getByRole('checkbox', { name: 'authorizationCannotDraw' }));
+  fireEvent.click(view.getByRole('button', { name: 'authorizationSignAndEnterAction' }));
+  expect(submit).not.toHaveBeenCalled();
+  expect(view.getByText('authorizationErrorHealthConsent')).toBeTruthy();
+  fireEvent.click(view.getByRole('checkbox', { name: 'health_data' }));
+  fireEvent.click(view.getByRole('button', { name: 'authorizationSignAndEnterAction' }));
+  expect(submit).toHaveBeenCalledTimes(1);
 });

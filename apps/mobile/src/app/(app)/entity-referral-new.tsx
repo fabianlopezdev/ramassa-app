@@ -28,6 +28,7 @@ import {
   type SeasonAnswers,
 } from '@/components/profile/season-answer-fields';
 import { continuousCorners } from '@/lib/continuous-corners';
+import { checkCustomAnswers } from '@/lib/custom-answer-errors';
 import {
   useReferralActions,
   useReferralQuestions,
@@ -117,6 +118,8 @@ export default function EntityReferralNewScreen() {
   const questions = useReferralQuestions();
   const customScreens = questions.data ?? [];
   const [customAnswers, setCustomAnswers] = useState<CustomAnswerDraft>({});
+  // Each staff answer that does not fit its question, with the wizard's words (RAPP-610).
+  const [customErrors, setCustomErrors] = useState<Readonly<Record<string, string>>>({});
   // Set when the referral is saved and its custom answers are not.
   const [savedReferralId, setSavedReferralId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>({
@@ -149,6 +152,18 @@ export default function EntityReferralNewScreen() {
 
   const submit = () => {
     const parsed = createReferralSchema.safeParse(toInput(form));
+    // The staff questions are checked with the same words as her wizard, and
+    // nothing is sent while one does not fit.
+    const checked = checkCustomAnswers(
+      customScreens.flatMap((screen) => screen.questions),
+      customAnswers,
+      t,
+      // An entity gives what it knows: nothing is required here (RAPP-611).
+      { enforceRequired: false },
+    );
+    setCustomErrors(checked.errors);
+    const customFit = Object.keys(checked.errors).length === 0;
+    if (customFit) setCustomAnswers(checked.answers);
     if (!parsed.success) {
       setInvalid(
         new Set(
@@ -161,8 +176,12 @@ export default function EntityReferralNewScreen() {
       return;
     }
     setInvalid(new Set());
+    if (!customFit) {
+      playHaptic('warning');
+      return;
+    }
     create.mutate(parsed.data, {
-      onSuccess: (referralId) => saveCustomAnswers(referralId),
+      onSuccess: (referralId) => saveCustomAnswers(referralId, checked.answers),
       onError: () => {
         playHaptic('error');
         setHasFailed(true);
@@ -172,8 +191,8 @@ export default function EntityReferralNewScreen() {
 
   const openReferral = (referralId: string) => replace(`/entity-referral/${referralId}` as Href);
 
-  function saveCustomAnswers(referralId: string) {
-    const answers = customAnswersToSave(customScreens, customAnswers, {});
+  function saveCustomAnswers(referralId: string, tidied: CustomAnswerDraft = customAnswers) {
+    const answers = customAnswersToSave(customScreens, tidied, {});
     if (Object.keys(answers).length === 0) {
       playHaptic('success');
       openReferral(referralId);
@@ -351,13 +370,15 @@ export default function EntityReferralNewScreen() {
             />
           )}
           <MunicipalityPicker
-            label={t('onboarding:cityLabel')}
+            label={t('onboarding:optionalFieldLabel', { label: t('onboarding:cityLabel') })}
             value={form.city}
             onChange={(city) => set({ city })}
           />
           <AuthTextField
             testID="entity-referral-contact-name"
-            label={t('onboarding:referenceContactNameLabel')}
+            label={t('onboarding:optionalFieldLabel', {
+              label: t('onboarding:referenceContactNameLabel'),
+            })}
             value={form.referenceContactName}
             onChangeText={(referenceContactName) => set({ referenceContactName })}
             maxLength={200}
@@ -382,9 +403,17 @@ export default function EntityReferralNewScreen() {
               <CustomQuestionSections
                 screens={customScreens}
                 answers={customAnswers}
-                onChange={(questionId, value) =>
-                  setCustomAnswers((current) => ({ ...current, [questionId]: value }))
-                }
+                errors={customErrors}
+                onChange={(questionId, value) => {
+                  setCustomAnswers((current) => ({ ...current, [questionId]: value }));
+                  setCustomErrors((current) =>
+                    current[questionId] === undefined
+                      ? current
+                      : Object.fromEntries(
+                          Object.entries(current).filter(([id]) => id !== questionId),
+                        ),
+                  );
+                }}
               />
             </View>
           )}

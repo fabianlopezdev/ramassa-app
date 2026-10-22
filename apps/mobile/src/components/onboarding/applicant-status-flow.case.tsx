@@ -10,9 +10,16 @@ const goNext = mock(() => {});
 mock.module('@/lib/onboarding', () => ({ onboardingDraftStore: store }));
 mock.module('expo-router', () => ({ useRouter: () => ({ push, replace }), Redirect: () => null }));
 mock.module('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
+mock.module('@/lib/haptics/haptics', () => ({ playHaptic: () => {} }));
+mock.module('@/components/onboarding/wizard-validation-summary', () => ({
+  WizardValidationSummary: () => null,
+}));
+mock.module('@/components/onboarding/field-error-text', () => ({ FieldErrorText: () => null }));
 mock.module('@/lib/onboarding-intake-context', () => ({
   useBuiltinWording: () => ({}),
   useWizardStep: () => ({
+    // Nothing staff made required here (RAPP-611).
+    isRequired: () => false,
     position: { step: 9, total: 13 },
     isEditing: false,
     shouldAsk: () => true,
@@ -48,6 +55,7 @@ mock.module('@/components/onboarding/wizard-frame', () => ({
 }));
 mock.module('@/components/profile/season-answer-fields', () => ({
   EMPTY_SEASON_ANSWERS: {},
+  missingSeasonAnswers: () => new Set(),
   SeasonAnswerFields: ({ onChange }: { onChange: (patch: { applicantStatus: string }) => void }) =>
     createElement('button', { onClick: () => onChange({ applicantStatus: 'other' }) }, 'Other'),
 }));

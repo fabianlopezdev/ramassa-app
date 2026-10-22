@@ -60,6 +60,7 @@ test('invite payload carries the address, the optional entity and referral, snak
     last_name: 'Ndiaye',
     reference_entity: 'CEAR Catalunya',
     referral_id: '5eed0000-0000-4000-8010-000000000001',
+    is_test_account: false,
   });
   const plain = buildCreateParticipantInvitePayload({
     email: 'fatou.ndiaye@example.com',
@@ -68,4 +69,39 @@ test('invite payload carries the address, the optional entity and referral, snak
   });
   expect(plain.reference_entity).toBeNull();
   expect(plain.referral_id).toBeNull();
+});
+
+test('a test player (RAPP-615) is an ordinary invitation with the flag on and no referral', () => {
+  const parsed = createParticipantInviteSchema.parse({
+    email: 'joana.prova@example.test',
+    firstName: 'Joana',
+    lastName: 'Prova',
+    isTestAccount: true,
+  });
+  expect(buildCreateParticipantInvitePayload(parsed)).toEqual({
+    email: 'joana.prova@example.test',
+    first_name: 'Joana',
+    last_name: 'Prova',
+    reference_entity: null,
+    referral_id: null,
+    is_test_account: true,
+  });
+  // Absent means a real player: the flag is never on by accident.
+  expect(
+    createParticipantInviteSchema.parse({ email: 'a@example.test', firstName: 'A', lastName: 'B' })
+      .isTestAccount,
+  ).toBe(false);
+  // A made-up woman never answers a real referral.
+  expect(
+    buildCreateParticipantInvitePayload(parsed, '5eed0000-0000-4000-8010-000000000001'),
+  ).toEqual(expect.objectContaining({ referral_id: null, is_test_account: true }));
+});
+
+test('the confirmed question states travel with the invitation, and only when set (RAPP-618)', () => {
+  const input = { email: 'fatou.ndiaye@example.com', firstName: 'Fatou', lastName: 'Ndiaye' };
+  expect('question_states' in buildCreateParticipantInvitePayload(input)).toBe(false);
+  expect(
+    buildCreateParticipantInvitePayload(input, null, { phone: 'skip', first_name: 'ask' })
+      .question_states,
+  ).toEqual({ phone: 'skip', first_name: 'ask' });
 });

@@ -2,6 +2,10 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 select plan(18);
+
+-- The unsigned path is closed to clients (RAPP-624); this file checks its merge
+-- rules as the participant, so it grants it inside this rolled-back transaction.
+grant execute on function public.complete_onboarding(jsonb) to authenticated;
 select has_column('public', 'profiles', 'applicant_status_details', 'Other situation has its own encrypted field');
 select has_column('public', 'season_answers', 'applicant_status_details', 'the explanation belongs to the seasonal record too');
 set local role authenticated;

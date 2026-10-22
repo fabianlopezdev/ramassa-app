@@ -10,6 +10,7 @@ import type { ProfileRow } from '@ramassa/shared/schemas';
 import {
   customAnswersToSave,
   customWizardPlan,
+  draftForScenario,
   mergedCustomAnswers,
   seedDraftFromProfile,
   storedPayloadFromProfile,
@@ -114,6 +115,7 @@ describe('staff screens in the wizard (RAPP-307)', () => {
     privacy: 'normal',
     placements: ['wizard'],
     isArchived: false,
+    settings: {},
     options: [
       { id: 'o-bus', label: { ca: 'Bus' }, isArchived: false },
       { id: 'o-old', label: { ca: 'Tren' }, isArchived: true },
@@ -207,4 +209,24 @@ test('the terms introduction has its own resumable route and back transition', (
   expect(wizardStepRoute('terms-intro')).toBe('/onboarding/terms-intro');
   expect(wizardStepRoute('terms-intro', 'back')).toBe('/onboarding/terms-intro?entrance=none');
   expect(wizardDraftStep('terms-intro')).toBe('terms-intro');
+});
+
+describe('a test player whose situation staff changed (RAPP-619)', () => {
+  const draft = { currentStep: 'logistics' as const, scenarioStamp: '2026-10-22T10:00:00Z' };
+
+  test('her draft from before the change is dropped', () => {
+    expect(draftForScenario(draft, '2026-10-22T11:00:00Z')).toBeNull();
+    expect(draftForScenario({ currentStep: 'logistics' }, '2026-10-22T11:00:00Z')).toBeNull();
+  });
+
+  test('her draft from after it is kept', () => {
+    expect(draftForScenario(draft, '2026-10-22T10:00:00Z')).toBe(draft);
+  });
+
+  test('a real woman has no stamp, so her draft always wins (RAPP-300)', () => {
+    expect(draftForScenario({ currentStep: 'logistics' }, null)).toEqual({
+      currentStep: 'logistics',
+    });
+    expect(draftForScenario(null, null)).toBeNull();
+  });
 });

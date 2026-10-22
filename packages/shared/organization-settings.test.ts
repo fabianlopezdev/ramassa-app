@@ -2,7 +2,9 @@ import { describe, expect, test } from 'bun:test';
 import {
   brandThemeVariables,
   contrastRatio,
+  fetchStaffMembers,
   organizationSettingsSchema,
+  setTeamMemberTestAccount,
   validateBrandContrast,
 } from './organization-settings';
 
@@ -77,5 +79,59 @@ describe('organization settings contract', () => {
         defaultLanguage: 'ca',
       }).success,
     ).toBe(false);
+  });
+});
+
+describe('test team accounts (RAPP-615)', () => {
+  const MEMBER = '5eed0000-0000-4000-8000-000000000097';
+
+  test('the team list carries the test account flag', async () => {
+    const client = {
+      rpc: () =>
+        Promise.resolve({
+          data: [
+            {
+              profile_id: MEMBER,
+              first_name: 'Pau',
+              last_name: 'Dissenya',
+              email: 'disseny@example.test',
+              role: 'staff',
+              is_active: true,
+              invited_at: null,
+              is_test_account: true,
+            },
+          ],
+          error: null,
+        }),
+    } as never;
+    const [member] = await fetchStaffMembers(client);
+    expect(member?.is_test_account).toBe(true);
+  });
+
+  test('marking an account calls the audited RPC with her id and the flag', async () => {
+    const calls: { name: string; args: unknown }[] = [];
+    const client = {
+      rpc: (name: string, args: unknown) => {
+        calls.push({ name, args });
+        return Promise.resolve({ data: null, error: null });
+      },
+    } as never;
+    await setTeamMemberTestAccount(client, MEMBER, true);
+    expect(calls).toEqual([
+      {
+        name: 'set_team_member_test_account',
+        args: { p_profile_id: MEMBER, p_is_test_account: true },
+      },
+    ]);
+  });
+
+  test('a refusal arrives as a typed error', async () => {
+    const client = {
+      rpc: () =>
+        Promise.resolve({ data: null, error: { message: 'PERMISSIONS/TEAM_MANAGE_REQUIRED' } }),
+    } as never;
+    await expect(setTeamMemberTestAccount(client, MEMBER, false)).rejects.toMatchObject({
+      code: expect.any(String),
+    });
   });
 });

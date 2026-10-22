@@ -342,3 +342,77 @@ describe('handlePurgeParticipantMedia - the receipt', () => {
     expect(receipts).toEqual([]);
   });
 });
+
+describe('handlePurgeParticipantMedia - a test player (RAPP-617)', () => {
+  const designer: CallerIdentity = {
+    ...admin,
+    role: 'staff',
+    permissions: new Set(['test_players.manage', 'onboarding.design']),
+    // No recent authenticator code: deleting a made-up player is not a risky action.
+    secondFactorVerifiedAt: null,
+  };
+
+  test('the design role sweeps a test player, with no new authenticator code', async () => {
+    const bucket = buildBucket([`${ORG}/profile-photos/${PARTICIPANT}/2026/10/a.jpg`]);
+    const asked: string[] = [];
+    const receipts: string[] = [];
+    const response = await handlePurgeParticipantMedia(
+      buildRequest({ participantId: PARTICIPANT }),
+      buildDependencies({
+        resolveIdentity: async () => designer,
+        bucket,
+        isDeletableTestPlayer: async (participantId) => {
+          asked.push(participantId);
+          return true;
+        },
+        recordReceipt: async ({ participantId }) => {
+          receipts.push(participantId);
+        },
+      }),
+    );
+    expect(response.status).toBe(200);
+    expect(await readObjectsDeleted(response)).toBe(1);
+    expect(asked).toEqual([PARTICIPANT]);
+    expect(receipts).toEqual([PARTICIPANT]);
+    expect(bucket.remaining()).toHaveLength(0);
+  });
+
+  test('the design role is refused a real player, and nothing is deleted', async () => {
+    const bucket = buildBucket([`${ORG}/profile-photos/${PARTICIPANT}/2026/10/a.jpg`]);
+    const response = await handlePurgeParticipantMedia(
+      buildRequest({ participantId: PARTICIPANT }),
+      buildDependencies({
+        resolveIdentity: async () => designer,
+        bucket,
+        isDeletableTestPlayer: async () => false,
+      }),
+    );
+    expect(response.status).toBe(403);
+    expect(await readErrorCode(response)).toBe('AUTH-3');
+    expect(bucket.remaining()).toHaveLength(1);
+  });
+
+  test('without the test player check, the design role is refused', async () => {
+    const response = await handlePurgeParticipantMedia(
+      buildRequest({ participantId: PARTICIPANT }),
+      buildDependencies({ resolveIdentity: async () => designer }),
+    );
+    expect(response.status).toBe(403);
+  });
+
+  test('a participant with no team job cannot use the test player path', async () => {
+    const asked: string[] = [];
+    const response = await handlePurgeParticipantMedia(
+      buildRequest({ participantId: PARTICIPANT }),
+      buildDependencies({
+        resolveIdentity: async () => ({ ...player, permissions: new Set(['test_players.manage']) }),
+        isDeletableTestPlayer: async (participantId) => {
+          asked.push(participantId);
+          return true;
+        },
+      }),
+    );
+    expect(response.status).toBe(403);
+    expect(asked).toEqual([]);
+  });
+});

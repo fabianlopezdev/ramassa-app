@@ -16,6 +16,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { AppError, databaseErrorCode } from '../errors';
+import { personNameSchema, trimPersonName } from '../schemas/person-name';
 import type { Database, Json } from '../types/database';
 import { authorizationContentSchema, type AuthorizationContent } from './authorization';
 
@@ -70,9 +71,10 @@ export type TabletSigner =
   | { readonly kind: 'player'; readonly profileId: string; readonly name: string }
   | { readonly kind: 'walk_in'; readonly firstName: string; readonly lastName: string };
 
+/** Her names follow the same rule as every other name (RAPP-624). */
 export const walkInNameSchema = z.object({
-  firstName: z.string().trim().min(1).max(100),
-  lastName: z.string().trim().min(1).max(100),
+  firstName: personNameSchema,
+  lastName: personNameSchema,
 });
 
 /** One signing made on the tablet, as it waits in the outbox and as it is sent. */
@@ -102,8 +104,8 @@ export async function sendTabletSigning(client: Client, signing: TabletSigning):
         })
       : await client.rpc('submit_walk_in_signing', {
           p_id: signing.id,
-          p_first_name: signing.signer.firstName.trim(),
-          p_last_name: signing.signer.lastName.trim(),
+          p_first_name: trimPersonName(signing.signer.firstName),
+          p_last_name: trimPersonName(signing.signer.lastName),
           p_version_id: signing.versionId,
           p_payload: signing.payload,
           p_signed_at: signing.signedAt,

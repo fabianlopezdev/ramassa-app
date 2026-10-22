@@ -17,6 +17,7 @@
  */
 
 import { ParticipantAttendanceReport } from '@/components/attendance/attendance-report';
+import { loadAuthenticatedMediaObjectUrl } from '@/components/content/authenticated-media-image';
 import { DetailSection } from '@/components/detail/detail-section';
 import { ParticipantActivity } from '@/components/participants/participant-activity';
 import { ParticipantAuthorizationPanel } from '@/components/participants/participant-authorization-panel';
@@ -28,11 +29,14 @@ import { ParticipantPrefillForm } from '@/components/participants/participant-pr
 import { ParticipantProfileFields } from '@/components/participants/participant-profile-fields';
 import { ParticipantQuestionStates } from '@/components/participants/participant-question-states';
 import { ParticipantRgpd } from '@/components/participants/participant-rgpd';
+import { TestPlayerDelete } from '@/components/participants/test-player-delete';
+import { TestPlayerScenarioPanel } from '@/components/participants/test-player-scenario';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { mediaWorkerUrl } from '@/lib/media-worker';
 import { safeAsync } from '@/lib/observability';
 import { supabase } from '@/lib/supabase';
-import { Link, useRouter } from '@tanstack/react-router';
+import { Link, useNavigate, useRouter } from '@tanstack/react-router';
 import { ArrowLeft } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -48,6 +52,7 @@ import {
   type EquipmentDeliveryRow,
   type HandoverItemType,
 } from '@ramassa/shared/equipment';
+import { AppError } from '@ramassa/shared/errors';
 import { setForumPostingDisabled } from '@ramassa/shared/forum';
 import {
   questionStateChanges,
@@ -58,22 +63,34 @@ import {
 import {
   deleteIntakePreset,
   EMPTY_INTAKE_CATALOG,
+  requiredBuiltinQuestions,
   saveIntakePreset,
   setParticipantCustomAnswers,
+  uploadsAvailable,
   type IntakeCatalog,
   type ParticipantCustomAnswer,
 } from '@ramassa/shared/intake-builder';
 import {
   addParticipantNote,
+  scenarioCustomQuestions,
   setParticipantActive,
+  setTestPlayerScenario,
   updateParticipantProfile,
   type ParticipantActivityEntry,
   type ParticipantDetailRow,
   type ParticipantNoteRow,
   type ProfilePrefillPayload,
+  type TestPlayerScenario,
 } from '@ramassa/shared/participants';
+import {
+  canDeleteTestPlayer,
+  isLimitedToTestPlayers,
+  type PermissionCode,
+} from '@ramassa/shared/permissions';
+import { deleteTestPlayer, eraseParticipant } from '@ramassa/shared/rgpd';
 import type { EquipmentDeliveryInput, UpdateOwnProfilePayload } from '@ramassa/shared/schemas';
 import { setPriorSeasons, type ParticipantSeasonAnswers } from '@ramassa/shared/seasons';
+import { purgeParticipantMedia } from '@ramassa/shared/upload-client';
 
 export interface ParticipantDetailProps {
   readonly participant: ParticipantDetailRow;
@@ -101,6 +118,8 @@ export interface ParticipantDetailProps {
   /** The questions staff added, and her answers to them (RAPP-307). */
   readonly intakeCatalog?: IntakeCatalog;
   readonly customAnswers?: readonly ParticipantCustomAnswer[];
+  /** A test player's situation, for the scenario switches (RAPP-619); null for a real woman. */
+  readonly testScenario?: TestPlayerScenario | null;
 }
 
 export function ParticipantDetail({
@@ -119,14 +138,32 @@ export function ParticipantDetail({
   seasonAnswers = [],
   intakeCatalog = EMPTY_INTAKE_CATALOG,
   customAnswers = [],
+  testScenario = null,
 }: ParticipantDetailProps) {
   const { t, i18n } = useTranslation(['participants', 'common', 'profile']);
   const locale = i18n.resolvedLanguage ?? 'ca';
   const router = useRouter();
+  const navigate = useNavigate();
   const { user, permissions } = useAuth();
+  // Her answer files (RAPP-610) come through the media Worker, which asks the
+  // database whether this reader may open them; a blob URL opens in a new tab.
+  const openAnswerFile = async (objectKey: string) => {
+    const session = await supabase.auth.getSession();
+    const accessToken = session.data.session?.access_token;
+    if (accessToken === undefined) throw new AppError('AUTH-2');
+    const url = await loadAuthenticatedMediaObjectUrl({ objectKey, mediaWorkerUrl, accessToken });
+    window.open(url, '_blank', 'noopener');
+  };
 
   // Not joined yet: staff created her profile and she has not accepted the terms (RAPP-300).
   const hasJoined = participant.terms_accepted_at !== null;
+  // A test player (RAPP-615) is made up: test_players.manage reads and edits
+  // all of her, as the database allows. The onboarding design role sees her
+  // record and answers only, because the team's tools are for real players.
+  const isTestPlayer = participant.is_test_account;
+  const teamTools = !isLimitedToTestPlayers(permissions);
+  const sees = (code: PermissionCode) =>
+    permissions.has(code) || (isTestPlayer && permissions.has('test_players.manage'));
   const [isEditing, setIsEditing] = useState(false);
   const [saveErrorMessage, setSaveErrorMessage] = useState<string | undefined>(undefined);
   const [noteErrorMessage, setNoteErrorMessage] = useState<string | undefined>(undefined);
@@ -140,6 +177,25 @@ export function ParticipantDetail({
     undefined,
   );
   const [isChangingForumStatus, setIsChangingForumStatus] = useState(false);
+
+  /**
+   * Deleting a test player (RAPP-617) is the RGPD erasure's two halves, in the
+   * same order (ADR-023): her files, then her record. The token is read at the
+   * moment of the call, so a session refreshed meanwhile is the one used.
+   */
+  async function deleteThisTestPlayer() {
+    const session = await supabase.auth.getSession();
+    const accessToken = session.data.session?.access_token;
+    if (accessToken === undefined) throw new AppError('AUTH-2');
+    const deleted = await eraseParticipant(participant.id, {
+      purgeMedia: () =>
+        purgeParticipantMedia({ mediaWorkerUrl, accessToken, participantId: participant.id }),
+      deleteRecord: () => deleteTestPlayer(supabase, participant.id),
+    });
+    if (!deleted.ok) throw deleted.error;
+    // Away from a record that no longer exists, without a way back to it.
+    await navigate({ to: '/participants', replace: true });
+  }
 
   async function saveProfile(payload: UpdateOwnProfilePayload | ProfilePrefillPayload) {
     setSaveErrorMessage(undefined);
@@ -262,6 +318,7 @@ export function ParticipantDetail({
               {participant.is_forum_banned ? (
                 <Badge variant="destructive">{t('forumBanned')}</Badge>
               ) : null}
+              {isTestPlayer ? <Badge variant="outline">{t('testBadge')}</Badge> : null}
             </div>
             <p className="text-start text-sm text-muted-foreground">
               {t('detailJoinedOn', {
@@ -278,7 +335,7 @@ export function ParticipantDetail({
             )}
             {/* A woman who has not joined has nothing to deactivate: cancelling her
                 invitation removes her (RAPP-300). */}
-            {hasJoined ? (
+            {hasJoined && teamTools ? (
               <Button
                 type="button"
                 size="lg"
@@ -289,17 +346,19 @@ export function ParticipantDetail({
                 {participant.is_active ? t('statusActionDeactivate') : t('statusActionActivate')}
               </Button>
             ) : null}
-            <Button
-              type="button"
-              size="lg"
-              variant="outline"
-              disabled={isChangingForumStatus}
-              onClick={() => void toggleForumPosting()}
-            >
-              {participant.is_forum_banned
-                ? t('forumPostingEnableAction')
-                : t('forumPostingDisableAction')}
-            </Button>
+            {teamTools ? (
+              <Button
+                type="button"
+                size="lg"
+                variant="outline"
+                disabled={isChangingForumStatus}
+                onClick={() => void toggleForumPosting()}
+              >
+                {participant.is_forum_banned
+                  ? t('forumPostingEnableAction')
+                  : t('forumPostingDisableAction')}
+              </Button>
+            ) : null}
           </div>
         </div>
         {forumStatusErrorMessage === undefined ? null : (
@@ -328,7 +387,7 @@ export function ParticipantDetail({
           <ParticipantPrefillForm
             participant={participant}
             answered={new Set(answeredQuestions)}
-            canSeeSensitive={permissions.has('participants.view_sensitive')}
+            canSeeSensitive={sees('participants.view_sensitive')}
             onSubmit={saveProfile}
             onCancel={() => {
               setSaveErrorMessage(undefined);
@@ -339,7 +398,7 @@ export function ParticipantDetail({
         ) : isEditing ? (
           <ParticipantEditForm
             participant={participant}
-            canSeeSensitive={permissions.has('participants.view_sensitive')}
+            canSeeSensitive={sees('participants.view_sensitive')}
             onSubmit={saveProfile}
             onCancel={() => {
               setSaveErrorMessage(undefined);
@@ -350,18 +409,20 @@ export function ParticipantDetail({
         ) : (
           <ParticipantProfileFields
             participant={participant}
-            canSeeSensitive={permissions.has('participants.view_sensitive')}
+            canSeeSensitive={sees('participants.view_sensitive')}
           />
         )}
       </DetailSection>
 
-      {hasJoined ? null : (
+      {/* The design role chooses a test player's questions too (RAPP-618). */}
+      {hasJoined || (!teamTools && !isTestPlayer) ? null : (
         <ParticipantQuestionStates
           states={questionStates}
           answered={new Set(answeredQuestions)}
           onSave={saveQuestionStates}
           errorMessage={questionStatesErrorMessage}
           presets={intakeCatalog.presets}
+          required={requiredBuiltinQuestions(intakeCatalog)}
           onSavePreset={async (name, states) => {
             await saveIntakePreset(supabase, { id: null, name, states });
             await router.invalidate();
@@ -376,15 +437,16 @@ export function ParticipantDetail({
       <ParticipantCustomAnswers
         catalog={intakeCatalog}
         answers={customAnswers}
-        canEdit={permissions.has('participants.view_personal')}
-        canEditSensitive={permissions.has('participants.view_sensitive')}
+        canEdit={sees('participants.view_personal')}
+        canEditSensitive={sees('participants.view_sensitive')}
         onSave={async (answers) => {
           await setParticipantCustomAnswers(supabase, participant.id, answers);
           await router.invalidate();
         }}
+        onOpenFile={uploadsAvailable(mediaWorkerUrl) ? openAnswerFile : undefined}
       />
 
-      {permissions.has('participants.view_personal') ? (
+      {teamTools && permissions.has('participants.view_personal') ? (
         <ParticipantAuthorizationPanel
           participant={participant}
           authorizations={authorizations}
@@ -402,25 +464,52 @@ export function ParticipantDetail({
         />
       ) : null}
 
-      <ParticipantNotes notes={notes} onAdd={addNote} errorMessage={noteErrorMessage} />
+      {isTestPlayer && testScenario !== null ? (
+        <TestPlayerScenarioPanel
+          scenario={testScenario}
+          customQuestions={scenarioCustomQuestions(intakeCatalog)}
+          owner={
+            testScenario.orgId === null
+              ? undefined
+              : { orgId: testScenario.orgId, profileId: participant.id }
+          }
+          onChange={async (change) => {
+            await setTestPlayerScenario(supabase, participant.id, change);
+            await router.invalidate();
+          }}
+        />
+      ) : null}
 
-      <ParticipantEquipment
-        deliveries={deliveries}
-        itemTypes={itemTypes}
-        onAdd={addDelivery}
-        errorMessage={deliveryErrorMessage}
-      />
+      {isTestPlayer && canDeleteTestPlayer(permissions) ? (
+        <TestPlayerDelete
+          name={`${participant.first_name} ${participant.last_name}`.trim()}
+          onDelete={deleteThisTestPlayer}
+        />
+      ) : null}
 
-      <ParticipantAttendanceReport stats={attendanceStats} history={attendanceHistory} />
+      {teamTools ? (
+        <>
+          <ParticipantNotes notes={notes} onAdd={addNote} errorMessage={noteErrorMessage} />
 
-      <ParticipantActivity entries={activity} />
+          <ParticipantEquipment
+            deliveries={deliveries}
+            itemTypes={itemTypes}
+            onAdd={addDelivery}
+            errorMessage={deliveryErrorMessage}
+          />
 
-      {/* Last on the page, deliberately. These are the two gestures nobody
-          should reach by scrolling past something else. */}
-      <ParticipantRgpd
-        participant={participant}
-        openDeletionRequestReason={openDeletionRequestReason}
-      />
+          <ParticipantAttendanceReport stats={attendanceStats} history={attendanceHistory} />
+
+          <ParticipantActivity entries={activity} />
+
+          {/* Last on the page, deliberately. These are the two gestures nobody
+              should reach by scrolling past something else. */}
+          <ParticipantRgpd
+            participant={participant}
+            openDeletionRequestReason={openDeletionRequestReason}
+          />
+        </>
+      ) : null}
     </section>
   );
 }

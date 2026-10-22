@@ -20,6 +20,8 @@ let contentSizeChanged: (width: number, height: number) => void;
 let scrollChanged: (event: { nativeEvent: { contentOffset: { y: number } } }) => void;
 let contentStyle: { paddingTop: number; paddingBottom: number };
 const box = ({ children }: { children?: ReactNode }) => createElement('div', null, children);
+// FormScreen reads the reduced-motion setting for its reveal scroll.
+mock.module('react-native-reanimated', () => ({ useReducedMotion: () => false }));
 mock.module('react-native', () => ({
   Keyboard: {
     isVisible: () => keyboardVisible,

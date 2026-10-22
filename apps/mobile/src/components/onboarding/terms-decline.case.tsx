@@ -63,10 +63,12 @@ mock.module('@ramassa/shared/auth', () => ({
 }));
 mock.module('@/lib/onboarding-intake-context', () => ({
   useWizardIntake: () => ({
+    catalog: { screens: [], overrides: [], presets: [], terms: null },
     profile: null,
     answered: new Set(),
     customScreens: [],
     customAnswers: {},
+    customPlan: [],
   }),
   useWizardStep: (screen: string) => ({
     position: { step: screen === 'terms-intro' ? 14 : 15, total: 15 },

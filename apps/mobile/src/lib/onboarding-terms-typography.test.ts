@@ -4,13 +4,20 @@ import { expect, test } from 'bun:test';
 import arOnboarding from '../../../../packages/shared/i18n/locales/ar/onboarding.json';
 import faOnboarding from '../../../../packages/shared/i18n/locales/fa/onboarding.json';
 
-const termsScreenSource = readFileSync(
-  join(import.meta.dir, '../app/(app)/onboarding/terms.tsx'),
+// The body both terms screens show (RAPP-613: onboarding and a new version).
+const termsBodySource = readFileSync(
+  join(import.meta.dir, '../components/onboarding/terms-body.tsx'),
   'utf8',
 );
-const termsBodyElement = termsScreenSource.match(
-  /<Text\s+(?:selectable\s+)?className=\{`([^`]+)`\}\s*>\s*\{t\('termsBody'\)\}\s*<\/Text>/,
+const termsBodyElement = termsBodySource.match(
+  /<Text\s+(?:selectable\s+)?className=\{`([^`]+)`\}\s*>\s*\{body\}\s*<\/Text>/,
 );
+
+test('both terms screens show the body through that component', () => {
+  for (const screen of ['../app/(app)/onboarding/terms.tsx', '../app/(app)/terms-update.tsx']) {
+    expect(readFileSync(join(import.meta.dir, screen), 'utf8')).toContain('<TermsBody body=');
+  }
+});
 
 test('the consent body component uses token-backed leading and the active language font', () => {
   expect(termsBodyElement).not.toBeNull();

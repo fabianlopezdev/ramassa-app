@@ -129,6 +129,12 @@ export default defineConfig({
       silent: !isSentryBuildUploadEnabled(process.env.SENTRY_AUTH_TOKEN),
       sourcemaps: {
         disable: !isSentryBuildUploadEnabled(process.env.SENTRY_AUTH_TOKEN),
+        // The Cloudflare plugin writes Worker source maps into dist/server and
+        // tells wrangler to upload them, which fails if one is missing (RAPP-623,
+        // https://developers.cloudflare.com/workers/observability/source-maps/).
+        // Sentry deletes every .map by default, so delete only the public client
+        // maps (https://docs.sentry.io/platforms/javascript/guides/tanstackstart-react/sourcemaps/).
+        filesToDeleteAfterUpload: ['./dist/client/**/*.map'],
       },
       telemetry: false,
     }),

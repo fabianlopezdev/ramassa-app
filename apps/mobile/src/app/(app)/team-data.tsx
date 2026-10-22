@@ -34,6 +34,7 @@ type Dataset = DataExportRequest['dataset'];
 const DATASET_KEYS: Readonly<Record<Dataset, string>> = {
   participants: 'exportParticipants',
   custom_answers: 'exportCustomAnswers',
+  consents: 'exportConsents',
   attendance: 'exportAttendance',
   events: 'exportEvents',
 };
@@ -41,6 +42,8 @@ const DATASET_PERMISSIONS: Readonly<Record<Dataset, readonly PermissionCode[]>> 
   participants: ['export.participants', 'export.participants_sensitive'],
   // Answers to the questions staff added (RAPP-307), on the participants' permissions.
   custom_answers: ['export.participants', 'export.participants_sensitive'],
+  // Her consents with their wording (RAPP-614), on the participants' permissions.
+  consents: ['export.participants', 'export.participants_sensitive'],
   attendance: ['export.attendance'],
   events: ['export.events'],
 };

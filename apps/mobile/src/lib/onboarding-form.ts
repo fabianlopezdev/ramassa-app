@@ -12,13 +12,24 @@
 
 import { z } from 'zod';
 import {
-  documentationStepSchema,
-  identityStepSchema,
+  DEFAULT_REQUIRED_QUESTIONS,
+  isRequiredQuestion,
+  type RequiredQuestions,
+} from '@ramassa/shared/intake';
+import {
+  ALWAYS_CHECK,
+  birthDateSchema,
+  documentationStepSchemaFor,
+  identityFields,
+  identityStepSchemaFor,
+  LOGISTICS_FIELD_QUESTIONS,
+  logisticsFieldApplies,
   logisticsFields,
-  logisticsStepSchema,
+  logisticsStepSchemaFor,
   MAXIMUM_AGE_YEARS,
   normalizeDependents,
   refineDependents,
+  requireAnswers,
 } from '@ramassa/shared/schemas';
 
 const ARABIC_DECIMAL_DIGITS = '٠١٢٣٤٥٦٧٨٩';
@@ -42,7 +53,7 @@ export function composeIsoBirthDate(day: string, month: string, year: string): s
  * The welcome screen deliberately asks only for the person's name. The rest
  * of the identity record is collected on the following background screen.
  */
-export const identityNameFormSchema = identityStepSchema.pick({
+export const identityNameFormSchema = identityFields.pick({
   firstName: true,
   lastName: true,
 });
@@ -110,129 +121,218 @@ export function birthDateErrorKey(field: BirthDateField, message: string | undef
   )[field];
 }
 
-/** The shared schema judges the date; this adapter attaches feedback to the part to fix. */
-export const identityFormSchema = identityStepSchema
-  .omit({ dateOfBirth: true })
-  .extend({ day: birthDayInputSchema, month: birthMonthInputSchema, year: birthYearInputSchema })
-  .superRefine((form, context) => {
-    if (
-      !birthDayInputSchema.safeParse(form.day).success ||
-      !birthMonthInputSchema.safeParse(form.month).success ||
-      !birthYearInputSchema.safeParse(form.year).success
-    )
-      return;
-    const iso = composeIsoBirthDate(form.day, form.month, form.year);
-    const result = identityStepSchema.shape.dateOfBirth.safeParse(iso);
-    if (!result.success) {
-      let message = result.error.issues[0]?.message ?? 'invalid date';
-      let field: BirthDateField = 'year';
-      if (message === 'invalid date') {
-        const birth = new Date(`${iso}T00:00:00Z`);
-        if (birth.getTime() > Date.now() && birth.toISOString().slice(0, 10) === iso) {
-          message = 'future date';
-          const now = new Date();
-          field = Number(form.month) > now.getUTCMonth() + 1 ? 'month' : 'day';
-        } else {
-          message = 'day not in month';
-          field = 'day';
+/** Whether she typed any part of her birth date: none at all is no answer. */
+function hasBirthDateParts(form: { day?: string; month?: string; year?: string }): boolean {
+  return [form.day, form.month, form.year].some((part) => (part ?? '').trim() !== '');
+}
+
+/**
+ * The shared schema judges the date; this adapter attaches feedback to the
+ * part to fix. Her birth date is required unless staff made it optional
+ * (RAPP-611): then all three parts left empty are no answer, and a date she
+ * starts is still checked whole.
+ */
+export function identityFormSchemaFor(required: RequiredQuestions) {
+  const isBirthDateRequired = isRequiredQuestion('date_of_birth', required);
+  const part = decimalInputSchema.optional().default('');
+  return identityFields
+    .omit({ dateOfBirth: true })
+    .extend({ day: part, month: part, year: part })
+    .superRefine((form, context) => {
+      if (!isBirthDateRequired && !hasBirthDateParts(form)) return;
+      const parts = [
+        ['day', birthDayInputSchema],
+        ['month', birthMonthInputSchema],
+        ['year', birthYearInputSchema],
+      ] as const;
+      let partsValid = true;
+      for (const [field, schema] of parts) {
+        const result = schema.safeParse(form[field]);
+        if (!result.success) {
+          partsValid = false;
+          context.addIssue({
+            code: 'custom',
+            path: [field],
+            message: result.error.issues[0]?.message ?? 'invalid date',
+          });
         }
       }
-      context.addIssue({ code: 'custom', path: [field], message });
-    }
-  })
+      if (!partsValid) return;
+      const iso = composeIsoBirthDate(form.day, form.month, form.year);
+      const result = birthDateSchema.safeParse(iso);
+      if (!result.success) {
+        let message = result.error.issues[0]?.message ?? 'invalid date';
+        let field: BirthDateField = 'year';
+        if (message === 'invalid date') {
+          const birth = new Date(`${iso}T00:00:00Z`);
+          if (birth.getTime() > Date.now() && birth.toISOString().slice(0, 10) === iso) {
+            message = 'future date';
+            const now = new Date();
+            field = Number(form.month) > now.getUTCMonth() + 1 ? 'month' : 'day';
+          } else {
+            message = 'day not in month';
+            field = 'day';
+          }
+        }
+        context.addIssue({ code: 'custom', path: [field], message });
+      }
+    }, ALWAYS_CHECK)
+    .transform((form): z.input<typeof identityFields> => ({
+      firstName: form.firstName,
+      lastName: form.lastName,
+      dateOfBirth: hasBirthDateParts(form)
+        ? composeIsoBirthDate(form.day, form.month, form.year)
+        : undefined,
+      placeOfBirth: form.placeOfBirth,
+      nationality: form.nationality,
+      preferredLanguage: form.preferredLanguage,
+    }))
+    .pipe(identityStepSchemaFor(required));
+}
 
-  .transform((form): z.input<typeof identityStepSchema> => ({
-    firstName: form.firstName,
-    lastName: form.lastName,
-    dateOfBirth: composeIsoBirthDate(form.day, form.month, form.year),
-    placeOfBirth: form.placeOfBirth,
-    nationality: form.nationality,
-    preferredLanguage: form.preferredLanguage,
-  }))
-  .pipe(identityStepSchema);
+/** Her identity with the app's own required list. */
+export const identityFormSchema = identityFormSchemaFor(DEFAULT_REQUIRED_QUESTIONS);
 export type IdentityFormInput = z.input<typeof identityFormSchema>;
 
 /**
- * The logistics screen's form: the shared schema, with the dependents count
- * typed as it arrives from a TextInput (a string) and converted before the
- * shared rule judges it.
+ * The logistics screen's form fields as they arrive from the inputs: text,
+ * the dependants count as typed, and the yes/no choices unset (null) until
+ * she taps one.
  */
 const logisticsFormFields = z.object({
   phone: z.string().optional(),
   address: z.string().optional(),
   city: z.string().optional(),
   postalCode: z.string().optional(),
-  referenceEntity: z.string().nullable(),
+  referenceEntity: z.string().nullable().optional(),
   referenceContactName: z.string().optional(),
-  hasDependents: z.boolean(),
+  hasDependents: z.boolean().nullable().optional(),
   numDependents: z.string().optional(),
-  clothingSize: z.string(),
-  shoeSize: z.string(),
+  clothingSize: z.string().optional(),
+  shoeSize: z.string().optional(),
 });
 
-export const logisticsFormSchema = logisticsFormFields
-  .transform((form): z.input<typeof logisticsStepSchema> => ({
-    phone: form.phone,
-    address: form.address,
-    city: form.city,
-    postalCode: form.postalCode,
-    referenceEntity:
-      form.referenceEntity === null || form.referenceEntity.trim() === ''
-        ? null
-        : form.referenceEntity,
-    referenceContactName: form.referenceContactName,
-    hasDependents: form.hasDependents,
-    numDependents:
-      form.numDependents === undefined || form.numDependents.trim() === ''
-        ? 0
-        : Number(normalizeDecimalDigits(form.numDependents)),
-    // Free strings until a chip is chosen ('' is the unchosen state), narrowed
-    // here only for the type: the pipe validates them for real one line down,
-    // so an invalid value fails the parse rather than reaching the profile.
-    clothingSize: form.clothingSize as z.input<typeof logisticsStepSchema>['clothingSize'],
-    shoeSize: form.shoeSize,
-    avatarUrl: undefined,
-  }))
-  .pipe(logisticsStepSchema);
+function dependentsCount(numDependents: string | undefined): number {
+  return numDependents === undefined || numDependents.trim() === ''
+    ? 0
+    : Number(normalizeDecimalDigits(numDependents));
+}
 
-/** Screen-specific schemas reuse the joint stored fields and their validation rules. */
-const contactStepSchema = logisticsFields
-  .omit({ clothingSize: true, shoeSize: true })
-  .superRefine(refineDependents)
-  .transform(normalizeDependents);
-export const contactFormSchema = logisticsFormFields
-  .omit({ clothingSize: true, shoeSize: true })
-  .extend({ hasReferenceEntity: z.boolean().nullable().optional() })
-  .superRefine((form, ctx) => {
-    if (form.hasReferenceEntity === true && !form.referenceEntity?.trim()) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['referenceEntity'],
-        message: 'referenceEntityRequired',
-      });
-    }
-  })
-  .transform((form): z.input<typeof contactStepSchema> => ({
-    ...form,
-    referenceContactName: form.hasReferenceEntity === false ? '' : form.referenceContactName,
-    referenceEntity:
-      form.hasReferenceEntity === false ||
-      form.referenceEntity === null ||
-      form.referenceEntity.trim() === ''
-        ? null
-        : form.referenceEntity,
-    numDependents:
-      form.numDependents === undefined || form.numDependents.trim() === ''
-        ? 0
-        : Number(normalizeDecimalDigits(form.numDependents)),
-  }))
-  .pipe(contactStepSchema);
+/**
+ * Her entity answer: "None" (null) when she said no, the name she typed after
+ * yes, and no answer at all (undefined) when she chose neither. On the screen
+ * that asks it, only her choice answers: a suggested name does not (RAPP-25).
+ * Elsewhere (her draft re-checked later) a name staff gave her stays her
+ * answer.
+ */
+function entityAnswer(
+  form: {
+    readonly hasReferenceEntity?: boolean | null;
+    readonly referenceEntity?: string | null;
+  },
+  isAskedHere: boolean,
+): string | null | undefined {
+  if (form.hasReferenceEntity === false) return null;
+  if (form.hasReferenceEntity === true) return form.referenceEntity ?? '';
+  if (isAskedHere) return undefined;
+  if (form.referenceEntity === null) return null;
+  return form.referenceEntity?.trim() ? form.referenceEntity : undefined;
+}
+
+/** The contact screen's fields (the sizes have their own screen). */
+const contactFields = logisticsFields.omit({ clothingSize: true, shoeSize: true });
+
+/** The questions of the fields a schema holds, so one screen never asks another's. */
+function questionsOf(fields: readonly string[]) {
+  return Object.fromEntries(
+    Object.entries(LOGISTICS_FIELD_QUESTIONS).filter(([field]) => fields.includes(field)),
+  );
+}
+const CONTACT_QUESTIONS = questionsOf(Object.keys(contactFields.shape));
+const EQUIPMENT_QUESTIONS = questionsOf(['clothingSize', 'shoeSize']);
+
+/**
+ * The contact screen: the shared fields, with the questions staff made
+ * required (RAPP-611) refused when unanswered.
+ */
+export function contactFormSchemaFor(required: RequiredQuestions, isEntityAskedHere = false) {
+  return logisticsFormFields
+    .omit({ clothingSize: true, shoeSize: true })
+    .extend({ hasReferenceEntity: z.boolean().nullable().optional() })
+    .superRefine((form, ctx) => {
+      if (form.hasReferenceEntity === true && !form.referenceEntity?.trim()) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['referenceEntity'],
+          message: 'referenceEntityRequired',
+        });
+      }
+    })
+    .transform((form): z.input<typeof contactFields> => ({
+      phone: form.phone,
+      address: form.address,
+      city: form.city,
+      postalCode: form.postalCode,
+      referenceContactName: form.hasReferenceEntity === false ? '' : form.referenceContactName,
+      referenceEntity: entityAnswer(form, isEntityAskedHere),
+      hasDependents: form.hasDependents ?? undefined,
+      numDependents: dependentsCount(form.numDependents),
+    }))
+    .pipe(
+      contactFields
+        .superRefine(refineDependents)
+        .superRefine(
+          requireAnswers(CONTACT_QUESTIONS, required, logisticsFieldApplies),
+          ALWAYS_CHECK,
+        )
+        .transform(normalizeDependents),
+    );
+}
+export const contactFormSchema = contactFormSchemaFor(DEFAULT_REQUIRED_QUESTIONS);
 export type ContactFormInput = z.input<typeof contactFormSchema>;
 export type ContactFormValue = z.output<typeof contactFormSchema>;
-export const equipmentFormSchema = logisticsFormFields
-  .pick({ clothingSize: true, shoeSize: true })
-  .pipe(logisticsFields.pick({ clothingSize: true, shoeSize: true }));
+
+/** The sizes screen: a size left out is unknown unless staff made it required (RAPP-611). */
+export function equipmentFormSchemaFor(required: RequiredQuestions) {
+  return logisticsFormFields
+    .pick({ clothingSize: true, shoeSize: true })
+    .pipe(
+      logisticsFields
+        .pick({ clothingSize: true, shoeSize: true })
+        .superRefine(requireAnswers(EQUIPMENT_QUESTIONS, required), ALWAYS_CHECK),
+    );
+}
+export const equipmentFormSchema = equipmentFormSchemaFor(DEFAULT_REQUIRED_QUESTIONS);
 export type EquipmentFormInput = z.input<typeof equipmentFormSchema>;
 export type EquipmentFormValue = z.output<typeof equipmentFormSchema>;
 
-export { documentationStepSchema as documentationFormSchema };
+/**
+ * The whole logistics answer the terms step re-checks before sending: the
+ * contact and the sizes, from the same draft section, with the same list.
+ */
+export function logisticsFormSchemaFor(required: RequiredQuestions) {
+  return logisticsFormFields
+    .extend({ hasReferenceEntity: z.boolean().nullable().optional() })
+    .transform((form): z.input<typeof logisticsFields> => ({
+      phone: form.phone,
+      address: form.address,
+      city: form.city,
+      postalCode: form.postalCode,
+      referenceContactName: form.hasReferenceEntity === false ? '' : form.referenceContactName,
+      referenceEntity: entityAnswer(form, false),
+      hasDependents: form.hasDependents ?? undefined,
+      numDependents: dependentsCount(form.numDependents),
+      // Free strings until a chip is chosen ('' is the unchosen state),
+      // narrowed only for the type: the pipe validates them for real.
+      clothingSize: form.clothingSize as z.input<typeof logisticsFields>['clothingSize'],
+      shoeSize: form.shoeSize,
+      avatarUrl: undefined,
+    }))
+    .pipe(logisticsStepSchemaFor(required));
+}
+export const logisticsFormSchema = logisticsFormSchemaFor(DEFAULT_REQUIRED_QUESTIONS);
+
+/** The document step: "Not now" is no answer, refused when staff made the document required. */
+export function documentationFormSchemaFor(required: RequiredQuestions) {
+  return documentationStepSchemaFor(required);
+}

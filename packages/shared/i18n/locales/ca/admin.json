@@ -83,5 +83,6 @@
   "exportPhoneNote": "Al telèfon, les exportacions són fitxers CSV. Els fitxers Excel són a l'administració web.",
   "auditLoadMore": "Mostra'n més",
   "exportPeriod": "Període (opcional)",
-  "exportCustomAnswers": "Respostes a les preguntes addicionals"
+  "exportCustomAnswers": "Respostes a les preguntes addicionals",
+  "exportConsents": "Autoritzacions de temporada, amb el text de cada una"
 }

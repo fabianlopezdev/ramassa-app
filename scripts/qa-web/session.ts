@@ -436,8 +436,8 @@ export function queryDatabaseAsAddress(email: string, sql: string): string {
  *
  * It is needed because `/login` on an authenticated session redirects to that
  * role's landing, so a second `signIn` in one test would silently never see a
- * login form. Both landings carry the button: the staff dashboard, and the
- * terminal "no admin access" screen a participant lands on.
+ * login form. Every landing carries the button: the staff sidebar, the entity
+ * portal, and the terminal "no admin access" screen a participant lands on.
  */
 export async function signOut(page: Page): Promise<void> {
   const hasStoredSession = (await page.context().storageState()).origins.some((origin) =>
@@ -445,35 +445,60 @@ export async function signOut(page: Page): Promise<void> {
   );
   if (!hasStoredSession) return;
 
-  const signOutButton = page
-    .getByRole('button', {
-      name: /tanca la sessió|sign out|log out|cerrar sesión|تسجيل الخروج|خروج(?: از حساب)?/i,
-    })
+  // A team member signs out from the staff sidebar (RAPP-615): every staff
+  // page has it, the design role's onboarding page included. An entity
+  // contact and an account without admin access have their own button.
+  const staffSignOut = page.getByTestId('staff-sign-out');
+  const signOutButton = staffSignOut
+    .or(
+      page.getByRole('button', {
+        name: /tanca la sessió|sign out|log out|cerrar sesión|تسجيل الخروج|خروج(?: از حساب)?/i,
+      }),
+    )
     .first();
+  const sidebarToggle = page.locator('[data-sidebar="trigger"]').first();
   const loginEmailField = page.locator('input[type="email"]');
 
   // A stored browser session must be cleared through the product. The guarded
-  // dashboard reaches the authenticated role landing, where every role exposes
-  // the sign-out action. Waiting only for DOM content prevents a stalled
-  // development asset from holding the whole retry open until goto's default
-  // timeout.
+  // dashboard reaches the authenticated role landing (or, for the design role,
+  // the onboarding page), where every role exposes the sign-out action.
+  // Waiting only for DOM content prevents a stalled development asset from
+  // holding the whole retry open until goto's default timeout.
   await expect(async () => {
     await page.goto('/dashboard', { waitUntil: 'domcontentloaded', timeout: 10_000 });
-    await expect(signOutButton.or(loginEmailField).first()).toBeVisible({ timeout: 3_000 });
+    await expect(signOutButton.or(loginEmailField).first()).toBeAttached({ timeout: 3_000 });
     await waitForHydration(page);
   }).toPass({ timeout: 30_000 });
 
   // Already signed out: the guard sent an unauthenticated visitor to /login.
   if ((await signOutButton.count()) === 0) return;
 
-  // The same hydration retry the sign-in below needs, for the same reason.
+  // The same hydration retry the sign-in below needs, for the same reason. On
+  // a narrow screen the sidebar is a drawer: open it first.
   await expect(async () => {
-    await signOutButton.click();
+    if (!(await signOutButton.isVisible()) && (await sidebarToggle.isVisible())) {
+      await sidebarToggle.click();
+    }
+    await signOutButton.click({ timeout: 2_000 });
     await expect(page).toHaveURL(/\/login/, { timeout: 2_000 });
   }).toPass({ timeout: 20_000 });
 }
 
 export async function signIn(page: Page, email: string): Promise<void> {
+  await signInFirstFactor(page, email);
+  const secondFactor = page.getByTestId('second-factor');
+  const settled = secondFactor
+    .or(page.getByRole('navigation').first())
+    .or(page.getByRole('alert').first());
+  await expect(settled.first()).toBeVisible({ timeout: 30_000 });
+  if ((await secondFactor.count()) > 0) await completeSecondFactor(page, email);
+}
+
+/**
+ * The password step alone: it resolves once the page has left the password
+ * form, which for a team member is her second-factor step (RAPP-615).
+ */
+export async function signInFirstFactor(page: Page, email: string): Promise<void> {
   // Signing out first makes this safe to call twice in one test. `/login` on
   // an authenticated session redirects to that role's landing, so a second
   // call would otherwise wait 20s for a form that is never coming and fail as
@@ -492,19 +517,17 @@ export async function signIn(page: Page, email: string): Promise<void> {
     await expect(page.locator('input[type="password"]')).toBeVisible({ timeout: 1_000 });
   }).toPass({ timeout: 20_000 });
 
+  // Team members and entity contacts verify their authenticator next (RAPP-233).
+  // A team member does it on the login page itself: the staff layout sends an
+  // unverified session back there before any page loads (RAPP-615).
+  const secondFactor = page.getByTestId('second-factor');
+  const isPastPassword = async () =>
+    !new URL(page.url()).pathname.includes('/login') || (await secondFactor.count()) > 0;
   await expect(async () => {
-    if (!new URL(page.url()).pathname.includes('/login')) return;
+    if (await isPastPassword()) return;
     await page.locator('input[type="email"]').fill(email);
     await page.locator('input[type="password"]').fill(SEED_PASSWORD);
     await page.locator('button[type="submit"]').click();
-    await expect(page).not.toHaveURL(/\/login/, { timeout: 3_000 });
+    await expect.poll(isPastPassword, { timeout: 3_000 }).toBe(true);
   }).toPass({ timeout: 20_000 });
-
-  // Team members and entity contacts verify their authenticator next (RAPP-233).
-  const secondFactor = page.getByTestId('second-factor');
-  const settled = secondFactor
-    .or(page.getByRole('navigation').first())
-    .or(page.getByRole('alert').first());
-  await expect(settled.first()).toBeVisible({ timeout: 30_000 });
-  if ((await secondFactor.count()) > 0) await completeSecondFactor(page, email);
 }

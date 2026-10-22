@@ -12,7 +12,9 @@ function makeClient(options: {
   profile?: { data: unknown; error: unknown };
   permissions?: readonly string[];
   sessionCurrent?: boolean;
+  termsNeeded?: boolean | 'error';
 }) {
+  const rpcCalls: string[] = [];
   const localSignOuts: string[] = [];
   let onChange: AuthChangeCallback = () => {};
   const channels: { name: string; filter: unknown; handler: () => void; removed: boolean }[] = [];
@@ -50,10 +52,19 @@ function makeClient(options: {
       }),
     }),
     // `my_permissions`, read for team members only (RAPP-231).
-    rpc: async (name: string) =>
-      name === 'my_session_is_current'
-        ? { data: options.sessionCurrent ?? true, error: null }
-        : { data: state.permissions, error: null },
+    rpc: async (name: string) => {
+      rpcCalls.push(name);
+      if (name === 'my_session_is_current') {
+        return { data: options.sessionCurrent ?? true, error: null };
+      }
+      // The app terms gate (RAPP-613), read for players only.
+      if (name === 'my_terms_acceptance_needed') {
+        return options.termsNeeded === 'error'
+          ? { data: null, error: { message: 'network' } }
+          : { data: options.termsNeeded ?? false, error: null };
+      }
+      return { data: state.permissions, error: null };
+    },
     channel: (name: string) => {
       const entry = { name, filter: null as unknown, handler: () => {}, removed: false };
       channels.push(entry);
@@ -79,6 +90,7 @@ function makeClient(options: {
     emit: (session: unknown) => onChange('SIGNED_IN', session),
     localSignOuts,
     channels,
+    rpcCalls,
   };
 }
 
@@ -333,4 +345,46 @@ test('a refresh with the same codes keeps the same permission set', async () => 
     await latestRefresh?.();
   });
   expect(seen.at(-1)).toBe(before);
+});
+
+function TermsProbe() {
+  const { isLoading, needsTermsAcceptance } = useAuth();
+  return (
+    <span data-testid="terms">{`${isLoading ? 'loading' : 'ready'}|${String(needsTermsAcceptance)}`}</span>
+  );
+}
+
+test('a player who has not accepted the current app terms must accept them (RAPP-613)', async () => {
+  const { client } = makeClient({ initialSession: { user: { id: 'u1' } }, termsNeeded: true });
+  const { getByTestId } = render(
+    <AuthProvider client={client}>
+      <TermsProbe />
+    </AuthProvider>,
+  );
+  await waitFor(() => expect(textContentOf(getByTestId('terms'))).toBe('ready|true'));
+});
+
+test('a failed terms lookup lets her in, as the onboarding gate does', async () => {
+  const { client } = makeClient({ initialSession: { user: { id: 'u1' } }, termsNeeded: 'error' });
+  const { getByTestId } = render(
+    <AuthProvider client={client}>
+      <TermsProbe />
+    </AuthProvider>,
+  );
+  await waitFor(() => expect(textContentOf(getByTestId('terms'))).toBe('ready|false'));
+});
+
+test('a team member is never asked about the app terms', async () => {
+  const { client, rpcCalls } = makeClient({
+    initialSession: { user: { id: 'u1' } },
+    role: 'staff',
+    termsNeeded: true,
+  });
+  const { getByTestId } = render(
+    <AuthProvider client={client}>
+      <TermsProbe />
+    </AuthProvider>,
+  );
+  await waitFor(() => expect(textContentOf(getByTestId('terms'))).toBe('ready|false'));
+  expect(rpcCalls).not.toContain('my_terms_acceptance_needed');
 });

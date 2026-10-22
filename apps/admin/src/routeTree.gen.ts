@@ -23,6 +23,7 @@ import { Route as StaffGalleryRouteImport } from './routes/_staff.gallery'
 import { Route as StaffMentoringRouteImport } from './routes/_staff.mentoring'
 import { Route as StaffMessagesRouteImport } from './routes/_staff.messages'
 import { Route as StaffNotificationsRouteImport } from './routes/_staff.notifications'
+import { Route as StaffOnboardingRouteImport } from './routes/_staff.onboarding'
 import { Route as StaffSettingsRouteImport } from './routes/_staff.settings'
 import { Route as StaffSurveysRouteImport } from './routes/_staff.surveys'
 import { Route as EntityPortalIndexRouteImport } from './routes/_entity.portal.index'
@@ -133,6 +134,11 @@ const StaffMessagesRoute = StaffMessagesRouteImport.update({
 const StaffNotificationsRoute = StaffNotificationsRouteImport.update({
   id: '/notifications',
   path: '/notifications',
+  getParentRoute: () => StaffRoute,
+} as any)
+const StaffOnboardingRoute = StaffOnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
   getParentRoute: () => StaffRoute,
 } as any)
 const StaffSettingsRoute = StaffSettingsRouteImport.update({
@@ -390,6 +396,7 @@ export interface FileRoutesByFullPath {
   '/mentoring': typeof StaffMentoringRoute
   '/messages': typeof StaffMessagesRouteWithChildren
   '/notifications': typeof StaffNotificationsRoute
+  '/onboarding': typeof StaffOnboardingRoute
   '/settings': typeof StaffSettingsRoute
   '/surveys': typeof StaffSurveysRoute
   '/portal/events': typeof EntityPortalEventsRoute
@@ -444,6 +451,7 @@ export interface FileRoutesByTo {
   '/gallery': typeof StaffGalleryRoute
   '/mentoring': typeof StaffMentoringRoute
   '/notifications': typeof StaffNotificationsRoute
+  '/onboarding': typeof StaffOnboardingRoute
   '/settings': typeof StaffSettingsRoute
   '/surveys': typeof StaffSurveysRoute
   '/portal/events': typeof EntityPortalEventsRoute
@@ -502,6 +510,7 @@ export interface FileRoutesById {
   '/_staff/mentoring': typeof StaffMentoringRoute
   '/_staff/messages': typeof StaffMessagesRouteWithChildren
   '/_staff/notifications': typeof StaffNotificationsRoute
+  '/_staff/onboarding': typeof StaffOnboardingRoute
   '/_staff/settings': typeof StaffSettingsRoute
   '/_staff/surveys': typeof StaffSurveysRoute
   '/_entity/portal/events': typeof EntityPortalEventsRoute
@@ -561,6 +570,7 @@ export interface FileRouteTypes {
     | '/mentoring'
     | '/messages'
     | '/notifications'
+    | '/onboarding'
     | '/settings'
     | '/surveys'
     | '/portal/events'
@@ -615,6 +625,7 @@ export interface FileRouteTypes {
     | '/gallery'
     | '/mentoring'
     | '/notifications'
+    | '/onboarding'
     | '/settings'
     | '/surveys'
     | '/portal/events'
@@ -672,6 +683,7 @@ export interface FileRouteTypes {
     | '/_staff/mentoring'
     | '/_staff/messages'
     | '/_staff/notifications'
+    | '/_staff/onboarding'
     | '/_staff/settings'
     | '/_staff/surveys'
     | '/_entity/portal/events'
@@ -822,6 +834,13 @@ declare module '@tanstack/react-router' {
       path: '/notifications'
       fullPath: '/notifications'
       preLoaderRoute: typeof StaffNotificationsRouteImport
+      parentRoute: typeof StaffRoute
+    }
+    '/_staff/onboarding': {
+      id: '/_staff/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof StaffOnboardingRouteImport
       parentRoute: typeof StaffRoute
     }
     '/_staff/settings': {
@@ -1264,6 +1283,7 @@ interface StaffRouteChildren {
   StaffMentoringRoute: typeof StaffMentoringRoute
   StaffMessagesRoute: typeof StaffMessagesRouteWithChildren
   StaffNotificationsRoute: typeof StaffNotificationsRoute
+  StaffOnboardingRoute: typeof StaffOnboardingRoute
   StaffSettingsRoute: typeof StaffSettingsRoute
   StaffSurveysRoute: typeof StaffSurveysRoute
   StaffParticipantsParticipantIdRoute: typeof StaffParticipantsParticipantIdRoute
@@ -1288,6 +1308,7 @@ const StaffRouteChildren: StaffRouteChildren = {
   StaffMentoringRoute: StaffMentoringRoute,
   StaffMessagesRoute: StaffMessagesRouteWithChildren,
   StaffNotificationsRoute: StaffNotificationsRoute,
+  StaffOnboardingRoute: StaffOnboardingRoute,
   StaffSettingsRoute: StaffSettingsRoute,
   StaffSurveysRoute: StaffSurveysRoute,
   StaffParticipantsParticipantIdRoute: StaffParticipantsParticipantIdRoute,

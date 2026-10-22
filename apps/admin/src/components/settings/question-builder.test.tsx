@@ -4,7 +4,7 @@
  * built-in question the app needs cannot be hidden, and the form says why.
  */
 import { fireEvent, render, waitFor, within } from '@testing-library/react';
-import { expect, mock, test } from 'bun:test';
+import { describe, expect, mock, test } from 'bun:test';
 import { parseIntakeCatalog } from '@ramassa/shared/intake-builder';
 import { QuestionBuilder, type QuestionBuilderProps } from './question-builder';
 
@@ -72,6 +72,8 @@ function builder(overrides: Partial<QuestionBuilderProps> = {}) {
     onArchiveQuestion: mock(async () => undefined),
     onReorderQuestions: mock(async () => undefined),
     onSaveBuiltin: mock(async () => undefined),
+    onSaveBuiltinRequired: mock(async () => undefined),
+    onSaveCustomRequired: mock(async () => undefined),
     ...overrides,
   };
   return { props, view: render(<QuestionBuilder {...props} />) };
@@ -184,5 +186,168 @@ test('a built-in option is relabelled or hidden, but one stays visible', async (
   expect(override.optionOverrides).toEqual({
     yes: { label: {}, hidden: true },
     no: { label: { ca: 'Ara no' }, hidden: false },
+  });
+});
+
+// Every field kind the app uses (RAPP-610).
+
+function newQuestionOfType(view: ReturnType<typeof render>, type: string) {
+  fireEvent.click(view.getByRole('button', { name: /questions\.addQuestion|Add a question/ }));
+  const select = view.container.querySelector<HTMLSelectElement>('[name="question-type"]')!;
+  fireEvent.change(select, { target: { value: type } });
+}
+
+test('each type says in a line what it asks', () => {
+  const { view } = builder();
+  newQuestionOfType(view, 'item_list');
+  expect(view.getByTestId('type-description').textContent).toMatch(
+    /questions\.typeHelp\.item_list|adds items one by one/,
+  );
+});
+
+test('a number question sends its range and that it is whole', async () => {
+  const onSaveQuestion = mock(async () => undefined);
+  const { view } = builder({ onSaveQuestion });
+  newQuestionOfType(view, 'number');
+  input(view, 'question-label.ca').value = 'Quants fills tens?';
+  input(view, 'setting-integer').checked = true;
+  input(view, 'setting-min').value = '0';
+  input(view, 'setting-max').value = '15';
+  submit(view, 'question-form');
+  await waitFor(() => expect(onSaveQuestion).toHaveBeenCalledTimes(1));
+  const [draft] = onSaveQuestion.mock.calls[0] as unknown as [Record<string, unknown>];
+  expect(draft.settings).toEqual({ integer: true, min: 0, max: 15 });
+  expect(draft.options).toEqual([]);
+});
+
+test('a range upside down is refused before it is sent', async () => {
+  const onSaveQuestion = mock(async () => undefined);
+  const { view } = builder({ onSaveQuestion });
+  newQuestionOfType(view, 'number');
+  input(view, 'question-label.ca').value = 'Edat';
+  input(view, 'setting-min').value = '9';
+  input(view, 'setting-max').value = '1';
+  submit(view, 'question-form');
+  await waitFor(() =>
+    expect(view.getByText(/questions\.settingsInvalid|Check the settings/)).toBeTruthy(),
+  );
+  expect(onSaveQuestion).not.toHaveBeenCalled();
+});
+
+test('a consent sends its own text; a signature is asked of her only', async () => {
+  const onSaveQuestion = mock(async () => undefined);
+  const { view } = builder({ onSaveQuestion });
+  newQuestionOfType(view, 'consent');
+  input(view, 'question-label.ca').value = 'Transport';
+  input(view, 'setting-consent-text.ca').value = 'Accepto que em portin amb cotxe';
+  submit(view, 'question-form');
+  await waitFor(() => expect(onSaveQuestion).toHaveBeenCalledTimes(1));
+  const [draft] = onSaveQuestion.mock.calls[0] as unknown as [Record<string, unknown>];
+  expect(draft.settings).toEqual({ text: { ca: 'Accepto que em portin amb cotxe' } });
+
+  // Saved, the form closed: a new one for the signature.
+  newQuestionOfType(view, 'signature');
+  expect(input(view, 'question-placement-staff').disabled).toBe(true);
+  expect(input(view, 'question-placement-entity_form').disabled).toBe(true);
+  expect(input(view, 'question-placement-wizard').disabled).toBe(false);
+});
+
+test('a long searchable list takes options pasted one per line', async () => {
+  const onSaveQuestion = mock(async () => undefined);
+  const { view } = builder({ onSaveQuestion });
+  newQuestionOfType(view, 'search_choice');
+  input(view, 'question-label.ca').value = 'Barri';
+  view.container.querySelector<HTMLTextAreaElement>('[name="options-paste"]')!.value =
+    'Gràcia\nSants\n\nHorta\nSants';
+  submit(view, 'question-form');
+  await waitFor(() => expect(onSaveQuestion).toHaveBeenCalledTimes(1));
+  const [draft] = onSaveQuestion.mock.calls[0] as unknown as [Record<string, unknown>];
+  expect(draft.options).toEqual([
+    { id: null, label: { ca: 'Gràcia' } },
+    { id: null, label: { ca: 'Sants' } },
+    { id: null, label: { ca: 'Horta' } },
+  ]);
+});
+
+test('a file question warns staff when this server cannot store files', () => {
+  const offline = builder();
+  newQuestionOfType(offline.view, 'file_upload');
+  expect(offline.view.getByTestId('uploads-unavailable')).toBeTruthy();
+  offline.view.unmount();
+  const online = builder({ canStoreFiles: true });
+  newQuestionOfType(online.view, 'file_upload');
+  expect(online.view.queryByTestId('uploads-unavailable')).toBeNull();
+});
+
+test('the preview shows her phone in each language, right to left in Arabic and Farsi', () => {
+  const { view } = builder();
+  newQuestionOfType(view, 'date');
+  input(view, 'question-label.ca').value = 'Data d’arribada';
+  fireEvent.input(input(view, 'question-label.ca'));
+  const preview = view.getByTestId('question-preview');
+  expect(preview.getAttribute('dir')).toBe('ltr');
+  expect(view.getByTestId('question-preview-label').textContent).toBe('Data d’arribada');
+  fireEvent.change(view.getByTestId('question-preview-language'), { target: { value: 'ar' } });
+  expect(view.getByTestId('question-preview').getAttribute('dir')).toBe('rtl');
+  expect(view.getByTestId('question-preview').getAttribute('lang')).toBe('ar');
+  // No Arabic label written: her phone shows the Catalan, and the preview says so.
+  expect(view.getByTestId('question-preview-fallback')).toBeTruthy();
+  fireEvent.change(view.getByTestId('question-preview-language'), { target: { value: 'fa' } });
+  expect(view.getByTestId('question-preview').getAttribute('dir')).toBe('rtl');
+});
+
+describe('required or optional (RAPP-611)', () => {
+  const switchOf = (view: ReturnType<typeof render>, id: string) =>
+    view.getByTestId(id) as HTMLInputElement;
+
+  test('her first name is always required, and the switch says why', () => {
+    const { view } = builder();
+    const first = switchOf(view, 'builtin-required-first_name');
+    expect(first.checked).toBe(true);
+    expect(first.disabled).toBe(true);
+    expect(first.getAttribute('aria-describedby')).toBe('builtin-required-first_name-lock');
+  });
+
+  test('a built-in question switches to required and is saved at once', async () => {
+    const { view, props } = builder();
+    const childcare = switchOf(view, 'builtin-required-childcare_need');
+    expect(childcare.checked).toBe(false);
+    fireEvent.click(childcare);
+    await waitFor(() =>
+      expect(props.onSaveBuiltinRequired).toHaveBeenCalledWith('childcare_need', true),
+    );
+  });
+
+  test('the switch reads the one list from the catalog', () => {
+    const { view } = builder({
+      catalog: { ...catalog, requiredQuestions: ['first_name', 'last_name', 'childcare_need'] },
+    });
+    expect(switchOf(view, 'builtin-required-childcare_need').checked).toBe(true);
+  });
+
+  test('a staff question she answers can be required; the change is saved', async () => {
+    const { view, props } = builder();
+    const own = switchOf(view, `custom-required-${QUESTION}`);
+    expect(own.checked).toBe(false);
+    expect(own.disabled).toBe(false);
+    fireEvent.click(own);
+    await waitFor(() => expect(props.onSaveCustomRequired).toHaveBeenCalledWith(QUESTION, true));
+  });
+
+  test('a staff-only question cannot be required, and the switch says why', () => {
+    const staffOnly = {
+      ...catalog,
+      screens: catalog.screens.map((screen) => ({
+        ...screen,
+        questions: screen.questions.map((question) => ({
+          ...question,
+          placements: ['staff' as const],
+        })),
+      })),
+    };
+    const { view } = builder({ catalog: staffOnly });
+    const own = switchOf(view, `custom-required-${QUESTION}`);
+    expect(own.disabled).toBe(true);
+    expect(view.getByText('questions.requiredLock.notHers')).toBeTruthy();
   });
 });

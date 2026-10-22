@@ -1,5 +1,9 @@
 import { AdminAuthField } from '@/components/auth/admin-auth-field';
-import { CustomAnswerFields, readCustomAnswers } from '@/components/intake/custom-answer-fields';
+import {
+  customAnswerErrors,
+  CustomAnswerFields,
+  readCustomAnswers,
+} from '@/components/intake/custom-answer-fields';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { safeAsync } from '@/lib/observability';
@@ -106,6 +110,21 @@ export function ReferralForm({
   const [otherEntities, setOtherEntities] = useState('');
   const navigate = useNavigate();
   const [failed, setFailed] = useState(false);
+  // Each staff answer that does not fit its question, in her wizard's words (RAPP-610).
+  const [customErrors, setCustomErrors] = useState<Readonly<Record<string, string>>>({});
+
+  /** Reads the staff answers and shows what does not fit; null while something does not. */
+  function checkedCustomAnswers() {
+    if (customScreens.length === 0 || formRef.current === null) return {};
+    const answers = readCustomAnswers(
+      new FormData(formRef.current),
+      customScreens,
+      'referral-custom',
+    );
+    const errors = customAnswerErrors(customScreens, answers, t);
+    setCustomErrors(errors);
+    return Object.keys(errors).length === 0 ? answers : null;
+  }
   const {
     control,
     handleSubmit,
@@ -138,6 +157,9 @@ export function ReferralForm({
 
   const submit = handleSubmit(async (parsed) => {
     setFailed(false);
+    // Nothing is sent while a staff answer does not fit its question.
+    const answers = checkedCustomAnswers();
+    if (answers === null) return;
     // "Other" entities typed as a comma-separated list join the ticked ones.
     const typed = otherEntities
       .split(',')
@@ -156,12 +178,7 @@ export function ReferralForm({
     }
     // The answers to the questions staff added go right after (RAPP-307). The
     // referral is saved either way; if they fail, she is told so.
-    if (customScreens.length > 0 && formRef.current !== null) {
-      const answers = readCustomAnswers(
-        new FormData(formRef.current),
-        customScreens,
-        'referral-custom',
-      );
+    if (customScreens.length > 0) {
       const saved = await safeAsync(
         () => saveReferralCustomAnswers(supabase, result.value, answers),
         { context: { operation: 'entity-referral-custom-answers' } },
@@ -193,7 +210,12 @@ export function ReferralForm({
         ref={formRef}
         noValidate
         className="flex flex-col gap-4"
-        onSubmit={(event) => void submit(event)}
+        onSubmit={(event) => {
+          // The staff answers are checked even when another field is missing,
+          // so every message shows at once.
+          checkedCustomAnswers();
+          void submit(event);
+        }}
         data-testid="referral-form"
       >
         <Controller
@@ -373,7 +395,10 @@ export function ReferralForm({
           name="city"
           control={control}
           render={({ field }) => (
-            <Labelled id="referral-city" label={t('onboarding:cityLabel')}>
+            <Labelled
+              id="referral-city"
+              label={t('onboarding:optionalFieldLabel', { label: t('onboarding:cityLabel') })}
+            >
               <select
                 {...field}
                 value={field.value ?? ''}
@@ -455,7 +480,9 @@ export function ReferralForm({
               {...field}
               value={field.value ?? ''}
               id="referral-contact-name"
-              label={t('onboarding:referenceContactNameLabel')}
+              label={t('onboarding:optionalFieldLabel', {
+                label: t('onboarding:referenceContactNameLabel'),
+              })}
             />
           )}
         />
@@ -530,6 +557,7 @@ export function ReferralForm({
               values={{}}
               prefix="referral-custom"
               language={locale}
+              errors={customErrors}
             />
           </section>
         )}

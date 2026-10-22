@@ -14,23 +14,43 @@
  * why. Forms are uncontrolled and read with FormData.
  */
 
+import {
+  pastedOptions,
+  QuestionPreview,
+  QuestionSettingsFields,
+  readPreviewDraft,
+  readQuestionSettings,
+  TypeDescription,
+  TypeGuide,
+  type PreviewDraft,
+} from '@/components/settings/question-type-fields';
+import { RequiredSwitch } from '@/components/settings/required-switch';
 import { Button } from '@/components/ui/button';
-import { useState, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getErrorMessageKey, isAppError } from '@ramassa/shared/errors';
 import { LANGUAGE_NATIVE_NAMES, SUPPORTED_LANGUAGES } from '@ramassa/shared/i18n/languages';
-import type { IntakeQuestion } from '@ramassa/shared/intake';
 import {
-  BUILTIN_HIDE_LOCKS,
+  isRequiredQuestion,
+  type IntakeQuestion,
+  type RequiredQuestions,
+} from '@ramassa/shared/intake';
+import {
   BUILTIN_SCREENS,
+  builtinHideLock,
+  builtinRequiredLock,
   canHideBuiltin,
+  canRequireCustomQuestion,
   CUSTOM_QUESTION_TYPES,
   isChoiceType,
+  isCustomQuestionRequired,
   liveOptions,
   overrideFor,
+  placementsAllowedFor,
   QUESTION_PLACEMENTS,
   QUESTION_PRIVACY_LEVELS,
   questionDraftSchema,
+  requiredBuiltinQuestions,
   textIn,
   type BuilderText,
   type BuiltinOverride,
@@ -44,6 +64,7 @@ import {
   type QuestionPrivacy,
   type ScreenDraft,
 } from '@ramassa/shared/intake-builder';
+import type { LanguageCode } from '@ramassa/shared/schemas';
 
 interface BuiltinQuestionInfo {
   readonly question: IntakeQuestion;
@@ -63,6 +84,15 @@ export interface QuestionBuilderProps {
   readonly onArchiveQuestion: (id: string) => Promise<void>;
   readonly onReorderQuestions: (screenId: string, ids: readonly string[]) => Promise<void>;
   readonly onSaveBuiltin: (override: BuiltinOverride) => Promise<void>;
+  /** Make a built-in question required or optional (RAPP-611). */
+  readonly onSaveBuiltinRequired: (question: IntakeQuestion, isRequired: boolean) => Promise<void>;
+  /** Make a staff question required or optional where she answers it (RAPP-611). */
+  readonly onSaveCustomRequired: (questionId: string, isRequired: boolean) => Promise<void>;
+  /**
+   * Whether this deployment stores files (a media service is set up). A file
+   * question warns staff when it does not (RAPP-610).
+   */
+  readonly canStoreFiles?: boolean;
 }
 
 type Editing =
@@ -246,9 +276,11 @@ function QuestionForm({
   question,
   onSave,
   onCancel,
+  canStoreFiles,
 }: {
   readonly screenId: string;
   readonly question: CustomQuestion | null;
+  readonly canStoreFiles: boolean;
   readonly onSave: (draft: QuestionDraft) => Promise<void>;
   readonly onCancel: () => void;
 }) {
@@ -258,6 +290,25 @@ function QuestionForm({
   const [type, setType] = useState<CustomQuestionType>(question?.type ?? 'short_text');
   const kept = question === null ? [] : liveOptions(question);
   const [newOptions, setNewOptions] = useState(isNew ? 2 : 0);
+  const allowedPlacements = placementsAllowedFor(type);
+  const formRef = useRef<HTMLFormElement>(null);
+  const [previewLanguage, setPreviewLanguage] = useState<LanguageCode>('ca');
+  const optionNames = [
+    ...kept.map((option) => `option-${option.id}`),
+    ...Array.from({ length: newOptions }, (_, index) => `option-new-${index}`),
+  ];
+  const [preview, setPreview] = useState<PreviewDraft>(() => ({
+    type,
+    label: question?.label ?? {},
+    help: question?.help ?? {},
+    settings: question?.settings ?? {},
+    options: kept.map((option) => option.label),
+  }));
+  const refreshPreview = () => {
+    if (formRef.current !== null) setPreview(readPreviewDraft(formRef.current, type, optionNames));
+  };
+  // The type and the number of option fields change what the form holds.
+  useEffect(refreshPreview, [type, newOptions]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -274,6 +325,10 @@ function QuestionForm({
             id: null,
             label: textFromForm(fields, `option-new-${index}`),
           })).filter((option) => Object.keys(option.label).length > 0),
+          // A long list pasted one per line, in Catalan.
+          ...(type === 'search_choice'
+            ? pastedOptions(fields).map((ca) => ({ id: null, label: { ca } }))
+            : []),
         ]
       : [];
     const draft: QuestionDraft = {
@@ -289,17 +344,25 @@ function QuestionForm({
       placements: QUESTION_PLACEMENTS.filter(
         (placement) => fields.get(`question-placement-${placement}`) === 'on',
       ),
+      settings: readQuestionSettings(fields, type),
       options,
     };
     const checked = questionDraftSchema.safeParse(draft);
     if (!checked.success) {
-      const path = checked.error.issues[0]?.path[0];
+      const issue = checked.error.issues[0];
+      const path = issue?.path[0];
       action.setError(
         path === 'placements'
-          ? t('questions.placementNeeded')
+          ? issue?.message === 'placements of the type'
+            ? t('questions.placementNotForType')
+            : t('questions.placementNeeded')
           : path === 'options'
-            ? t('questions.optionsNeeded')
-            : t('questions.catalanNeeded'),
+            ? issue?.message === 'too many options'
+              ? t('questions.tooManyOptions')
+              : t('questions.optionsNeeded')
+            : path === 'settings'
+              ? t('questions.settingsInvalid')
+              : t('questions.catalanNeeded'),
       );
       return;
     }
@@ -307,144 +370,186 @@ function QuestionForm({
   }
 
   return (
-    <form
-      className="flex flex-col gap-3 rounded-xl border bg-card p-4"
-      data-testid="question-form"
-      onSubmit={(event) => void submit(event)}
-    >
-      <h3 className="text-start font-semibold">
-        {isNew ? t('questions.newQuestion') : t('questions.editQuestion')}
-      </h3>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <label className="flex flex-col gap-1.5 text-sm font-medium">
-          <span>{t('questions.type')}</span>
-          <select
-            name="question-type"
-            value={type}
-            disabled={!isNew}
-            onChange={(event) => setType(event.target.value as CustomQuestionType)}
-            className={inputClass}
-          >
-            {CUSTOM_QUESTION_TYPES.map((candidate) => (
-              <option key={candidate} value={candidate}>
-                {t(`questions.types.${candidate}`)}
-              </option>
-            ))}
-          </select>
-          {isNew ? null : (
-            <span className="text-start text-xs font-normal text-muted-foreground">
-              {t('questions.typeLocked')}
-            </span>
-          )}
-        </label>
-        <label className="flex flex-col gap-1.5 text-sm font-medium">
-          <span>{t('questions.privacy')}</span>
-          <select
-            name="question-privacy"
-            defaultValue={question?.privacy ?? 'personal'}
-            disabled={!isNew}
-            className={inputClass}
-          >
-            {QUESTION_PRIVACY_LEVELS.map((level) => (
-              <option key={level} value={level}>
-                {t(`questions.privacyLevels.${level}`)}
-              </option>
-            ))}
-          </select>
-          <span className="text-start text-xs font-normal text-muted-foreground">
-            {isNew ? t('questions.privacyHint') : t('questions.privacyLocked')}
-          </span>
-        </label>
-      </div>
-      <fieldset className="flex flex-col gap-2 rounded-lg border p-3">
-        <legend className="px-1 text-start text-sm font-medium">{t('questions.placements')}</legend>
-        {QUESTION_PLACEMENTS.map((placement) => (
-          <label key={placement} className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              name={`question-placement-${placement}`}
-              defaultChecked={question?.placements.includes(placement) ?? placement === 'wizard'}
-            />
-            <span>{t(`questions.placement.${placement}`)}</span>
+    <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,20rem)]">
+      <form
+        ref={formRef}
+        className="flex flex-col gap-3 rounded-xl border bg-card p-4"
+        data-testid="question-form"
+        onSubmit={(event) => void submit(event)}
+        onChange={refreshPreview}
+        onInput={refreshPreview}
+      >
+        <h3 className="text-start font-semibold">
+          {isNew ? t('questions.newQuestion') : t('questions.editQuestion')}
+        </h3>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="flex flex-col gap-1.5 text-sm font-medium">
+            <span>{t('questions.type')}</span>
+            <select
+              name="question-type"
+              value={type}
+              disabled={!isNew}
+              onChange={(event) => setType(event.target.value as CustomQuestionType)}
+              className={inputClass}
+            >
+              {CUSTOM_QUESTION_TYPES.map((candidate) => (
+                <option key={candidate} value={candidate}>
+                  {t(`questions.types.${candidate}`)}
+                </option>
+              ))}
+            </select>
+            <TypeDescription type={type} />
+            {isNew ? null : (
+              <span className="text-start text-xs font-normal text-muted-foreground">
+                {t('questions.typeLocked')}
+              </span>
+            )}
           </label>
-        ))}
-      </fieldset>
-      <LanguageFields
-        name="question-label"
-        legend={t('questions.label')}
-        value={question?.label}
-        isCatalanRequired
-      />
-      <LanguageFields
-        name="question-help"
-        legend={t('questions.help')}
-        value={question?.help}
-        isCatalanRequired={false}
-        isLong
-      />
-      {isChoiceType(type) ? (
-        <div className="flex flex-col gap-3" data-testid="question-options">
-          <p className="text-start text-sm font-medium">{t('questions.options')}</p>
-          {kept.map((option) => (
-            <div key={option.id} className="flex flex-col gap-1">
-              <LanguageFields
-                name={`option-${option.id}`}
-                legend={textIn(option.label, 'ca')}
-                value={option.label}
-                isCatalanRequired
+          <label className="flex flex-col gap-1.5 text-sm font-medium">
+            <span>{t('questions.privacy')}</span>
+            <select
+              name="question-privacy"
+              defaultValue={question?.privacy ?? 'personal'}
+              disabled={!isNew}
+              className={inputClass}
+            >
+              {QUESTION_PRIVACY_LEVELS.map((level) => (
+                <option key={level} value={level}>
+                  {t(`questions.privacyLevels.${level}`)}
+                </option>
+              ))}
+            </select>
+            <span className="text-start text-xs font-normal text-muted-foreground">
+              {isNew ? t('questions.privacyHint') : t('questions.privacyLocked')}
+            </span>
+          </label>
+        </div>
+        {isNew ? <TypeGuide /> : null}
+        <fieldset className="flex flex-col gap-2 rounded-lg border p-3">
+          <legend className="px-1 text-start text-sm font-medium">
+            {t('questions.placements')}
+          </legend>
+          {QUESTION_PLACEMENTS.map((placement) => (
+            <label key={placement} className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                name={`question-placement-${placement}`}
+                defaultChecked={question?.placements.includes(placement) ?? placement === 'wizard'}
+                disabled={!allowedPlacements.includes(placement)}
               />
-              <label className="flex items-center gap-2 text-xs">
-                <input type="checkbox" name={`option-remove-${option.id}`} />
-                <span>{t('questions.removeOption')}</span>
-              </label>
-            </div>
+              <span>{t(`questions.placement.${placement}`)}</span>
+            </label>
           ))}
-          {Array.from({ length: newOptions }, (_, index) => (
+          {allowedPlacements.length < QUESTION_PLACEMENTS.length ? (
+            <p className="text-start text-xs text-muted-foreground">
+              {t('questions.placementHers')}
+            </p>
+          ) : null}
+        </fieldset>
+        <LanguageFields
+          name="question-label"
+          legend={t('questions.label')}
+          value={question?.label}
+          isCatalanRequired
+        />
+        <LanguageFields
+          name="question-help"
+          legend={t('questions.help')}
+          value={question?.help}
+          isCatalanRequired={false}
+          isLong
+        />
+        <QuestionSettingsFields
+          key={type}
+          type={type}
+          settings={question?.type === type ? question.settings : undefined}
+          uploadsAvailable={canStoreFiles}
+          consentTextField={
             <LanguageFields
-              key={`new-${index}`}
-              name={`option-new-${index}`}
-              legend={t('questions.newOption', { number: kept.length + index + 1 })}
-              value={null}
-              isCatalanRequired={false}
+              name="setting-consent-text"
+              legend={t('questions.settings.consentText')}
+              value={
+                question !== null && 'text' in question.settings
+                  ? (question.settings as { readonly text: BuilderText }).text
+                  : null
+              }
+              isCatalanRequired
+              isLong
             />
-          ))}
-          <Button
-            type="button"
-            variant="outline"
-            className="self-start"
-            onClick={() => setNewOptions((count) => count + 1)}
-          >
-            {t('questions.addOption')}
+          }
+        />
+        {isChoiceType(type) ? (
+          <div className="flex flex-col gap-3" data-testid="question-options">
+            <p className="text-start text-sm font-medium">{t('questions.options')}</p>
+            {kept.map((option) => (
+              <div key={option.id} className="flex flex-col gap-1">
+                <LanguageFields
+                  name={`option-${option.id}`}
+                  legend={textIn(option.label, 'ca')}
+                  value={option.label}
+                  isCatalanRequired
+                />
+                <label className="flex items-center gap-2 text-xs">
+                  <input type="checkbox" name={`option-remove-${option.id}`} />
+                  <span>{t('questions.removeOption')}</span>
+                </label>
+              </div>
+            ))}
+            {Array.from({ length: newOptions }, (_, index) => (
+              <LanguageFields
+                key={`new-${index}`}
+                name={`option-new-${index}`}
+                legend={t('questions.newOption', { number: kept.length + index + 1 })}
+                value={null}
+                isCatalanRequired={false}
+              />
+            ))}
+            <Button
+              type="button"
+              variant="outline"
+              className="self-start"
+              onClick={() => setNewOptions((count) => count + 1)}
+            >
+              {t('questions.addOption')}
+            </Button>
+          </div>
+        ) : null}
+        <ErrorLine message={action.error} />
+        <div className="flex gap-2">
+          <Button type="submit" disabled={action.isBusy}>
+            {t('questions.saveQuestion')}
+          </Button>
+          <Button type="button" variant="ghost" onClick={onCancel}>
+            {t('questions.cancel')}
           </Button>
         </div>
-      ) : null}
-      <ErrorLine message={action.error} />
-      <div className="flex gap-2">
-        <Button type="submit" disabled={action.isBusy}>
-          {t('questions.saveQuestion')}
-        </Button>
-        <Button type="button" variant="ghost" onClick={onCancel}>
-          {t('questions.cancel')}
-        </Button>
-      </div>
-    </form>
+      </form>
+      <QuestionPreview
+        draft={preview}
+        language={previewLanguage}
+        onLanguageChange={setPreviewLanguage}
+      />
+    </div>
   );
 }
 
 function BuiltinForm({
   info,
   override,
+  required,
   onSave,
   onCancel,
 }: {
   readonly info: BuiltinQuestionInfo;
   readonly override: BuiltinOverride | undefined;
+  /** The organization's required list (RAPP-611): a required question never hides. */
+  readonly required: RequiredQuestions;
   readonly onSave: (override: BuiltinOverride) => Promise<void>;
   readonly onCancel: () => void;
 }) {
   const { t } = useTranslation('settings');
   const action = useAction();
-  const lock = BUILTIN_HIDE_LOCKS[info.question];
+  const lock = builtinHideLock(info.question, required);
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const fields = new FormData(event.currentTarget);
@@ -454,7 +559,7 @@ function BuiltinForm({
       question: info.question,
       label: Object.keys(label).length === 0 ? null : label,
       help: Object.keys(help).length === 0 ? null : help,
-      isHidden: canHideBuiltin(info.question) && fields.get('builtin-hidden') === 'on',
+      isHidden: canHideBuiltin(info.question, required) && fields.get('builtin-hidden') === 'on',
       optionOverrides: Object.fromEntries(
         info.options.map((option) => [
           option.value,
@@ -499,7 +604,7 @@ function BuiltinForm({
         <input
           type="checkbox"
           name="builtin-hidden"
-          defaultChecked={override?.isHidden ?? false}
+          defaultChecked={lock === undefined && (override?.isHidden ?? false)}
           disabled={lock !== undefined}
           aria-describedby={lock === undefined ? undefined : 'builtin-hidden-lock'}
         />
@@ -588,12 +693,17 @@ export function QuestionBuilder({
   onArchiveQuestion,
   onReorderQuestions,
   onSaveBuiltin,
+  onSaveBuiltinRequired,
+  onSaveCustomRequired,
+  canStoreFiles = false,
 }: QuestionBuilderProps) {
   const { t, i18n } = useTranslation('settings');
   const language = (i18n.resolvedLanguage ?? 'ca') as 'ca';
   const [editing, setEditing] = useState<Editing>(null);
   const action = useAction();
   const live = catalog.screens.filter((screen) => !screen.isArchived);
+  // The one required list (RAPP-611), as her phone reads it.
+  const required = requiredBuiltinQuestions(catalog);
 
   const placementsText = (question: CustomQuestion) =>
     question.placements
@@ -713,6 +823,20 @@ export function QuestionBuilder({
                                 {t(`questions.privacyLevels.${question.privacy}`)} ·{' '}
                                 {placementsText(question)}
                               </p>
+                              <RequiredSwitch
+                                id={`custom-required-${question.id}`}
+                                checked={isCustomQuestionRequired(question)}
+                                lockReason={
+                                  canRequireCustomQuestion(question)
+                                    ? undefined
+                                    : t('questions.requiredLock.notHers')
+                                }
+                                note={t('questions.requiredCustomNote')}
+                                disabled={action.isBusy}
+                                onChange={(next) =>
+                                  void action.run(() => onSaveCustomRequired(question.id, next))
+                                }
+                              />
                             </div>
                             <div className="flex flex-wrap gap-1">
                               <SmallButton
@@ -770,6 +894,7 @@ export function QuestionBuilder({
                               question={question}
                               onSave={onSaveQuestion}
                               onCancel={() => setEditing(null)}
+                              canStoreFiles={canStoreFiles}
                             />
                           ) : null}
                         </li>
@@ -783,6 +908,7 @@ export function QuestionBuilder({
                         question={null}
                         onSave={onSaveQuestion}
                         onCancel={() => setEditing(null)}
+                        canStoreFiles={canStoreFiles}
                       />
                     ) : (
                       <Button
@@ -825,12 +951,30 @@ export function QuestionBuilder({
                   <div className="flex flex-col gap-0.5">
                     <p className="text-start text-sm font-medium">{reworded || info.label}</p>
                     <p className="text-start text-xs text-muted-foreground">
-                      {override?.isHidden
+                      {override?.isHidden && canHideBuiltin(info.question, required)
                         ? t('questions.hidden')
                         : reworded
                           ? t('questions.reworded', { original: info.label })
                           : t('questions.asTheApp')}
                     </p>
+                    <RequiredSwitch
+                      id={`builtin-required-${info.question}`}
+                      checked={isRequiredQuestion(info.question, required)}
+                      lockReason={
+                        builtinRequiredLock(info.question) === undefined
+                          ? undefined
+                          : t('questions.requiredLock.always')
+                      }
+                      note={
+                        override?.isHidden && !canHideBuiltin(info.question, required)
+                          ? t('questions.requiredHiddenNote')
+                          : undefined
+                      }
+                      disabled={action.isBusy}
+                      onChange={(next) =>
+                        void action.run(() => onSaveBuiltinRequired(info.question, next))
+                      }
+                    />
                   </div>
                   <Button
                     type="button"
@@ -846,6 +990,7 @@ export function QuestionBuilder({
                   <BuiltinForm
                     info={info}
                     override={override}
+                    required={required}
                     onSave={onSaveBuiltin}
                     onCancel={() => setEditing(null)}
                   />

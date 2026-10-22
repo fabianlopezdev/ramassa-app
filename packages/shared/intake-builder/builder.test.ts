@@ -10,7 +10,9 @@ import {
   answerText,
   builtinLabel,
   builtinOptions,
+  builtinScreenText,
   canHideBuiltin,
+  canHideBuiltinScreen,
   customAnswerError,
   hiddenBuiltinQuestions,
   isScreenAnswered,
@@ -18,10 +20,15 @@ import {
   parseIntakeCatalog,
   questionDraftSchema,
   referralScreens,
+  reregistrationAsks,
+  saveBuiltinScreen,
   saveCustomQuestion,
   saveIntakeScreen,
+  saveWizardFlowOrder,
   seasonScreens,
+  wizardFlow,
   wizardScreens,
+  wizardScreensInFlowOrder,
   type CustomQuestion,
 } from './builder';
 
@@ -254,6 +261,7 @@ describe('building', () => {
       help: null,
       privacy: 'normal',
       placements: ['wizard'],
+      settings: {},
       options: [
         { id: '5eed0000-0000-4000-8046-000000000001', label: { ca: 'Entitat' } },
         { id: null, label: { ca: 'Una amiga' } },
@@ -269,6 +277,8 @@ describe('building', () => {
         p_help: null,
         p_privacy: 'normal',
         p_placements: ['wizard'],
+        // The type's settings travel with it (RAPP-610); a choice has none.
+        p_settings: {},
         p_options: [
           { id: '5eed0000-0000-4000-8046-000000000001', label: { ca: 'Entitat' } },
           { label: { ca: 'Una amiga' } },
@@ -295,5 +305,201 @@ describe('building', () => {
     expect(moved(['a', 'b', 'c'], 'b', -1)).toEqual(['b', 'a', 'c']);
     expect(moved(['a', 'b', 'c'], 'a', -1)).toEqual(['a', 'b', 'c']);
     expect(moved(['a', 'b', 'c'], 'c', 1)).toEqual(['a', 'b', 'c']);
+  });
+});
+
+describe('the catalog carries the app terms (RAPP-613)', () => {
+  test('no terms in the catalog means the bundled text', () => {
+    expect(catalog.terms).toBeNull();
+  });
+
+  test('the current version is read with its number', () => {
+    const text = (value: string) => ({ ca: value });
+    const withTerms = parseIntakeCatalog({
+      ...raw,
+      terms: {
+        id: '5eed0000-0000-4000-8099-000000000002',
+        version_number: 2,
+        content: {
+          title: text('Termes'),
+          body: text('Text.'),
+          intro_title: text('Abans'),
+          intro: text('Llegeix.'),
+          points: [{ title: text('Per què'), body: text('Per organitzar.') }],
+          accept_label: text('Accepto'),
+          media_label: text('Fotos'),
+          media_hint: text('Canvia-ho quan vulguis.'),
+        },
+      },
+    });
+    expect(withTerms.terms?.versionNumber).toBe(2);
+    expect(withTerms.terms?.content.body.ca).toBe('Text.');
+  });
+});
+
+describe('built-in screens staff edit and arrange (RAPP-612)', () => {
+  const arranged = parseIntakeCatalog({
+    ...raw,
+    builtin_screens: [
+      {
+        screen: 'summary',
+        texts: { title: { ca: 'Revisa-ho tot', ar: '' }, continue_label: { en: 'All good' } },
+        is_hidden: false,
+      },
+      { screen: 'documentation', texts: {}, is_hidden: true },
+      // Required questions: a stored hide never takes effect.
+      { screen: 'logistics', texts: {}, is_hidden: true },
+      // A screen this build does not know is dropped.
+      { screen: 'a-newer-screen', texts: {}, is_hidden: false },
+    ],
+    flow_order: ['season', `custom:${SCREEN}`, 'identity', 'not-a-step'],
+  });
+
+  test('an older server with neither gives the app its own order and wording', () => {
+    expect(catalog.screenSettings).toEqual([]);
+    expect(wizardFlow(catalog)).toEqual({ order: [], hiddenScreens: new Set() });
+  });
+
+  test('the stored order keeps built-in and staff steps, and drops what is not a step', () => {
+    expect(wizardFlow(arranged).order).toEqual(['season', `custom:${SCREEN}`, 'identity']);
+  });
+
+  test('a screen hides only when none of its questions is required', () => {
+    expect(canHideBuiltinScreen('documentation')).toBe(true);
+    expect(canHideBuiltinScreen('season')).toBe(true);
+    expect(canHideBuiltinScreen('identity')).toBe(false);
+    expect(canHideBuiltinScreen('background')).toBe(false);
+    expect(canHideBuiltinScreen('logistics')).toBe(false);
+    expect(canHideBuiltinScreen('equipment')).toBe(false);
+    expect(wizardFlow(arranged).hiddenScreens).toEqual(new Set(['documentation']));
+  });
+
+  test('the questions of a hidden screen are never asked, on the phone and in the staff preview', () => {
+    expect(hiddenBuiltinQuestions(arranged).has('document')).toBe(true);
+    expect(hiddenBuiltinQuestions(arranged).has('reference_entity')).toBe(false);
+  });
+
+  test("staff wording shows in the language they wrote it in; elsewhere the app's own text", () => {
+    expect(builtinScreenText(arranged, 'summary', 'title', 'ca')).toBe('Revisa-ho tot');
+    expect(builtinScreenText(arranged, 'summary', 'title', 'ar')).toBeNull();
+    expect(builtinScreenText(arranged, 'summary', 'title', 'es')).toBeNull();
+    expect(builtinScreenText(arranged, 'summary', 'continue_label', 'en')).toBe('All good');
+    expect(builtinScreenText(arranged, 'identity', 'title', 'ca')).toBeNull();
+  });
+
+  test('saving a screen sends only the fields it may have, with empty languages dropped', async () => {
+    const { client, calls } = clientReturning({ data: null, error: null });
+    await saveBuiltinScreen(client, {
+      screen: 'terms',
+      texts: { title: { ca: 'No' }, help: { ca: ' Ajuda ', es: '  ' }, decline_label: {} },
+      isHidden: false,
+    });
+    expect(calls).toEqual([
+      [
+        'save_builtin_screen',
+        { p_screen: 'terms', p_texts: { help: { ca: 'Ajuda' } }, p_is_hidden: false },
+      ],
+    ]);
+  });
+
+  test('saving the flow sends every movable step in order', async () => {
+    const { client, calls } = clientReturning({ data: null, error: null });
+    await saveWizardFlowOrder(client, ['season', 'custom:abc', 'identity']);
+    expect(calls).toEqual([
+      ['save_intake_flow_order', { p_order: ['season', 'custom:abc', 'identity'] }],
+    ]);
+  });
+});
+
+describe('staff screens in the order her phone shows them (RAPP-612, RAPP-618)', () => {
+  const screenAfter = (id: string, afterScreen: string, sortOrder: number) => ({
+    id,
+    title: { ca: id },
+    intro: null,
+    after_screen: afterScreen,
+    sort_order: sortOrder,
+    is_archived: false,
+    questions: [
+      {
+        id: id.replace('8044', '8045'),
+        question_type: 'short_text',
+        label: { ca: 'Pregunta' },
+        help: null,
+        privacy: 'normal',
+        placements: ['wizard'],
+        sort_order: 0,
+        is_archived: false,
+        options: [],
+      },
+    ],
+  });
+  const first = '5eed0000-0000-4000-8044-0000000000c1';
+  const second = '5eed0000-0000-4000-8044-0000000000c2';
+  const third = '5eed0000-0000-4000-8044-0000000000c3';
+  // The catalog lists screens by their anchor: the second one first.
+  const arranged = parseIntakeCatalog({
+    screens: [
+      screenAfter(second, 'identity', 0),
+      screenAfter(first, 'logistics', 0),
+      screenAfter(third, 'season', 0),
+    ],
+    overrides: [],
+    presets: [],
+    flow_order: [`custom:${first}`, `custom:${second}`, `custom:${third}`, 'identity'],
+  });
+
+  test('the preview lists them in the flow order, as the phone walks them', () => {
+    expect(wizardScreensInFlowOrder(arranged).map((screen) => screen.id)).toEqual([
+      first,
+      second,
+      third,
+    ]);
+  });
+
+  test('with no stored order they follow the app order of their anchors', () => {
+    const anchored = parseIntakeCatalog({
+      screens: [screenAfter(third, 'season', 0), screenAfter(second, 'identity', 0)],
+      overrides: [],
+      presets: [],
+    });
+    expect(wizardScreensInFlowOrder(anchored).map((screen) => screen.id)).toEqual([second, third]);
+  });
+});
+
+describe('re-registration follows the hide rule of her wizard (RAPP-612)', () => {
+  const hiding = (builtinScreens: unknown[], overrides: unknown[] = []) =>
+    parseIntakeCatalog({ screens: [], overrides, presets: [], builtin_screens: builtinScreens });
+
+  test('a hidden season screen removes its question from re-registration too', () => {
+    const asks = reregistrationAsks(hiding([{ screen: 'season', texts: {}, is_hidden: true }]));
+    expect(asks('applicant_status')).toBe(false);
+    expect(asks('supporting_entities')).toBe(true);
+    expect(asks('childcare_need')).toBe(true);
+  });
+
+  test('a hidden question is hidden in both; with nothing hidden she is asked all four', () => {
+    const asks = reregistrationAsks(
+      hiding(
+        [],
+        [
+          {
+            question: 'specific_needs',
+            label: null,
+            help: null,
+            is_hidden: true,
+            option_overrides: {},
+          },
+        ],
+      ),
+    );
+    expect(asks('specific_needs')).toBe(false);
+    const all = reregistrationAsks(hiding([]));
+    for (const question of [
+      'applicant_status',
+      'supporting_entities',
+      'childcare_need',
+      'specific_needs',
+    ] as const)
+      expect(all(question)).toBe(true);
   });
 });

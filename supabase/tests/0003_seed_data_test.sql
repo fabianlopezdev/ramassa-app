@@ -47,7 +47,9 @@ select is(
 );
 
 select is(
-  (select count(*) from public.profiles where role = 'staff')::int, 2,
+  -- The onboarding design account (RAPP-615) is outside the roster.
+  (select count(*) from public.profiles
+    where role = 'staff' and id <> '5eed0000-0000-4000-8000-000000000097')::int, 2,
   'two staff accounts are seeded'
 );
 

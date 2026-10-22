@@ -16,7 +16,7 @@ const playHaptic = mock((_feedback: string) => {
   void _feedback;
 });
 mock.module('@/lib/haptics/haptics', () => ({ playHaptic }));
-mock.module('@/lib/auth', () => ({ sendEmailOtp, confirmEmailOtp }));
+mock.module('@/lib/auth', () => ({ sendEmailOtp, confirmEmailOtp, testSignInBuild: false }));
 mock.module('@/lib/auth-flow-status', () => ({ useAuthFlowStatus: () => ({ setErrorCode }) }));
 mock.module('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 mock.module('react-native', () => ({
@@ -56,6 +56,10 @@ mock.module('./auth-submit-button', () => ({
     isLoading: boolean;
   }) => createElement('button', { onClick: onPress, disabled: isLoading }, label),
 }));
+mock.module('./existing-code-link', () => ({
+  ExistingCodeLink: ({ onPress }: { onPress: () => void }) =>
+    createElement('button', { onClick: onPress }, 'emailOtpExistingCodeAction'),
+}));
 const { EmailOtpRequestForm, EmailOtpVerifyForm } = await import('./email-otp-form');
 afterAll(() => mock.restore());
 const renderLayout = (fields: ReactNode, action: ReactNode) =>
@@ -81,6 +85,8 @@ test('separated email footer keeps validation and successful request callback', 
   await waitFor(() => expect(sent).toHaveBeenCalledWith('player@example.com'));
   expect(sendEmailOtp).toHaveBeenCalledWith('player@example.com');
   expect(playHaptic).toHaveBeenLastCalledWith('success');
+  // A production build offers no way round the email (RAPP-616).
+  expect(view.queryByRole('button', { name: 'emailOtpExistingCodeAction' })).toBeNull();
   view.unmount();
 });
 

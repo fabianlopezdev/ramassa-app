@@ -42,14 +42,19 @@ import {
   fetchParticipantAnsweredQuestions,
   fetchParticipantDetail,
   fetchParticipantNotes,
+  fetchTestPlayerScenario,
 } from '@ramassa/shared/participants';
+import { fetchMyPermissions, isLimitedToTestPlayers } from '@ramassa/shared/permissions';
 import { fetchDeletionRequests } from '@ramassa/shared/rgpd';
 import { fetchParticipantSeasonAnswers } from '@ramassa/shared/seasons';
 
 export const Route = createFileRoute('/_staff/participants/$participantId')({
   ssr: false,
   loader: async ({ params }) => {
-    const participant = await fetchParticipantDetail(supabase, params.participantId);
+    const [participant, permissions] = await Promise.all([
+      fetchParticipantDetail(supabase, params.participantId),
+      fetchMyPermissions(supabase),
+    ]);
     // Nobody by that id, or nobody this staff member may read. The screen tells
     // those apart from a FAILED read, which throws and reaches the router's
     // error component with its code.
@@ -70,6 +75,47 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
         seasonAnswers: [],
         intakeCatalog: EMPTY_INTAKE_CATALOG,
         customAnswers: [],
+        testScenario: null,
+      };
+    }
+    // A test player's situation, for the scenario switches (RAPP-619). The
+    // database answers for test players only.
+    const testScenario = participant.is_test_account
+      ? fetchTestPlayerScenario(supabase, params.participantId).catch(() => null)
+      : Promise.resolve(null);
+    // The onboarding design role (RAPP-615) opens test players only, and works
+    // with her record and her answers: the team's notes, material, attendance
+    // and authorization belong to real participants and are not read at all.
+    if (isLimitedToTestPlayers(permissions)) {
+      const [answered, questionStates, intakeCatalog, customAnswers, scenario] = await Promise.all([
+        participant.terms_accepted_at === null
+          ? fetchParticipantAnsweredQuestions(supabase, params.participantId)
+          : Promise.resolve(new Set<never>()),
+        // What a test player's wizard asks (RAPP-618): the design role sets it too.
+        participant.terms_accepted_at === null
+          ? fetchParticipantQuestionStates(supabase, params.participantId).catch(() => ({}))
+          : Promise.resolve({}),
+        fetchIntakeCatalog(supabase).catch(() => EMPTY_INTAKE_CATALOG),
+        fetchParticipantCustomAnswers(supabase, params.participantId).catch(() => []),
+        testScenario,
+      ]);
+      return {
+        participant,
+        notes: [],
+        activity: [],
+        deliveries: [],
+        itemTypes: [],
+        attendanceStats: null,
+        attendanceHistory: [],
+        openDeletionRequestReason: undefined,
+        answeredQuestions: [...answered],
+        questionStates,
+        authorizations: [],
+        consents: [],
+        seasonAnswers: [],
+        intakeCatalog,
+        customAnswers,
+        testScenario: scenario,
       };
     }
     const [
@@ -87,6 +133,7 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
       seasonAnswers,
       intakeCatalog,
       customAnswers,
+      scenario,
     ] = await Promise.all([
       fetchParticipantNotes(supabase, params.participantId),
       fetchParticipantActivity(supabase, params.participantId),
@@ -115,6 +162,7 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
       // The questions staff added and her answers (RAPP-307); the page works without them.
       fetchIntakeCatalog(supabase).catch(() => EMPTY_INTAKE_CATALOG),
       fetchParticipantCustomAnswers(supabase, params.participantId).catch(() => []),
+      testScenario,
     ]);
     // Filtered here rather than asked for by participant: the queue read is one
     // round trip either way, and the same call feeds the staff-wide queue, so
@@ -138,6 +186,7 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
       seasonAnswers,
       intakeCatalog,
       customAnswers,
+      testScenario: scenario,
     };
   },
   component: ParticipantDetailPage,
@@ -160,6 +209,7 @@ function ParticipantDetailPage() {
     seasonAnswers,
     intakeCatalog,
     customAnswers,
+    testScenario,
   } = Route.useLoaderData();
 
   if (participant === null) {
@@ -182,6 +232,7 @@ function ParticipantDetailPage() {
       seasonAnswers={seasonAnswers}
       intakeCatalog={intakeCatalog}
       customAnswers={customAnswers}
+      testScenario={testScenario}
     />
   );
 }

@@ -7,15 +7,18 @@ import { Text, View } from 'react-native';
 export function WizardValidationSummary({
   isVisible,
   message,
+  testID,
 }: {
   readonly isVisible: boolean;
   readonly message: string;
+  readonly testID?: string;
 }) {
   const languageFontClass = useLanguageFontClass();
   if (!isVisible) return null;
 
   return (
     <View
+      testID={testID}
       accessibilityRole="alert"
       accessibilityLiveRegion="assertive"
       style={continuousCorners}

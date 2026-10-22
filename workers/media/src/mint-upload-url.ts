@@ -92,6 +92,11 @@ export async function handleMintUploadUrl(
   }
 
   const folder: UploadFolder = parsed.data.folder;
+  // A woman with no profile yet (RAPP-610) writes only her own answer files;
+  // everything else still needs a profile.
+  if (identity.withoutProfile === true && folder !== 'intake-answers') {
+    return fail('AUTH-2');
+  }
   if (!isFolderWritableBy(folder, identity.role, identity.permissions)) {
     return fail('AUTH-3');
   }

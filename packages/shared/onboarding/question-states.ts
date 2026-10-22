@@ -35,11 +35,14 @@ export type IntakeQuestionState = (typeof INTAKE_QUESTION_STATES)[number];
 export type QuestionStates = Readonly<Partial<Record<IntakeQuestion, 'ask' | 'skip'>>>;
 
 /**
- * The questions a finished profile must answer: what the onboarding schemas
- * require (a test checks it against them). The document is optional since
- * RAPP-302. Mirrored by the database block marked `required-intake-questions`.
+ * The built-in questions a finished profile must answer when staff changed
+ * nothing: what the onboarding schemas require by default (a test checks it
+ * against them). The document is optional since RAPP-302. Staff change the
+ * list per organization (RAPP-611); the database holds the one list
+ * (`private.required_intake_questions`) and this default mirrors its block
+ * marked `required-intake-questions`.
  */
-export const REQUIRED_INTAKE_QUESTIONS = [
+export const DEFAULT_REQUIRED_INTAKE_QUESTIONS = [
   'first_name',
   'last_name',
   'date_of_birth',
@@ -51,6 +54,38 @@ export const REQUIRED_INTAKE_QUESTIONS = [
   'clothing_size',
   'shoe_size',
 ] as const satisfies readonly IntakeQuestion[];
+
+/**
+ * Always required, whatever staff choose (spec guard): her name, so staff and
+ * the app can address her, and her app language, so every screen can speak to
+ * her. Mirrors the block marked `locked-required-intake-questions`.
+ */
+export const LOCKED_REQUIRED_INTAKE_QUESTIONS = [
+  'first_name',
+  'last_name',
+  'preferred_language',
+] as const satisfies readonly IntakeQuestion[];
+
+/** The built-in questions that need an answer, for one organization. */
+export type RequiredQuestions = ReadonlySet<IntakeQuestion>;
+
+export const DEFAULT_REQUIRED_QUESTIONS: RequiredQuestions = new Set(
+  DEFAULT_REQUIRED_INTAKE_QUESTIONS,
+);
+
+export function isLockedRequiredQuestion(question: IntakeQuestion): boolean {
+  return (LOCKED_REQUIRED_INTAKE_QUESTIONS as readonly IntakeQuestion[]).includes(question);
+}
+
+/** The required list as the catalog sends it: the locked three always in, unknown names out. */
+export function requiredQuestionsFrom(questions: readonly string[]): RequiredQuestions {
+  return new Set([
+    ...LOCKED_REQUIRED_INTAKE_QUESTIONS,
+    ...questions.filter((question): question is IntakeQuestion =>
+      (INTAKE_QUESTIONS as readonly string[]).includes(question),
+    ),
+  ]);
+}
 
 /** Every question a wizard screen asks, in screen order. */
 export const WIZARD_QUESTIONS: readonly IntakeQuestion[] = QUESTION_SCREENS.flatMap(
@@ -66,19 +101,27 @@ export const INTAKE_STATE_PRESETS: Readonly<Record<IntakeStatePreset, QuestionSt
   review: Object.fromEntries(WIZARD_QUESTIONS.map((question) => [question, 'ask' as const])),
 };
 
-export function isRequiredQuestion(question: IntakeQuestion): boolean {
-  return (REQUIRED_INTAKE_QUESTIONS as readonly IntakeQuestion[]).includes(question);
+export function isRequiredQuestion(
+  question: IntakeQuestion,
+  required: RequiredQuestions = DEFAULT_REQUIRED_QUESTIONS,
+): boolean {
+  return isLockedRequiredQuestion(question) || required.has(question);
 }
 
 /** Don't ask is allowed on an optional question, or on a required one that has an answer. */
-export function canSkipQuestion(question: IntakeQuestion, answered: AnsweredQuestions): boolean {
-  return !isRequiredQuestion(question) || answered.has(question);
+export function canSkipQuestion(
+  question: IntakeQuestion,
+  answered: AnsweredQuestions,
+  required: RequiredQuestions = DEFAULT_REQUIRED_QUESTIONS,
+): boolean {
+  return !isRequiredQuestion(question, required) || answered.has(question);
 }
 
 /** The wizard questions she is asked. Mirrors `public.my_questions_to_ask()`. */
 export function questionsToAsk(
   answered: AnsweredQuestions,
   states: QuestionStates,
+  required: RequiredQuestions = DEFAULT_REQUIRED_QUESTIONS,
 ): ReadonlySet<IntakeQuestion> {
   return new Set(
     WIZARD_QUESTIONS.filter((question) => {
@@ -86,7 +129,7 @@ export function questionsToAsk(
       if (state === 'ask') return true;
       // A hidden required question whose answer was cleared since is asked
       // after all: a finished profile is always complete.
-      if (state === 'skip') return !canSkipQuestion(question, answered);
+      if (state === 'skip') return !canSkipQuestion(question, answered, required);
       return !answered.has(question);
     }),
   );

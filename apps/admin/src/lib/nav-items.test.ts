@@ -4,7 +4,13 @@ import {
   createInMemoryLanguageStorage,
   SUPPORTED_LANGUAGES,
 } from '@ramassa/shared/i18n';
-import { ENTITY_NAV_ITEMS, holdsAnyPermission, STAFF_NAV_ITEMS } from './nav-items';
+import type { PermissionCode } from '@ramassa/shared/permissions';
+import {
+  ENTITY_NAV_ITEMS,
+  holdsAnyPermission,
+  STAFF_NAV_ITEMS,
+  visibleStaffNavItems,
+} from './nav-items';
 
 const ALL_ITEMS = [...STAFF_NAV_ITEMS, ...ENTITY_NAV_ITEMS];
 
@@ -85,4 +91,27 @@ test('gallery moderators reach the gallery from primary navigation', () => {
   expect(gallery).toBeDefined();
   expect(holdsAnyPermission(new Set(['gallery.moderate']), gallery?.anyPermission)).toBe(true);
   expect(holdsAnyPermission(new Set(['forum.moderate']), gallery?.anyPermission)).toBe(false);
+});
+
+test('the onboarding design role sees the onboarding and the test players only (RAPP-615)', () => {
+  const design = new Set<PermissionCode>(['onboarding.design', 'test_players.manage']);
+  expect(visibleStaffNavItems(design).map((item) => item.to)).toEqual([
+    '/participants',
+    '/onboarding',
+  ]);
+});
+
+test('the onboarding page is in the menu for Settings, and unchanged for everyone else', () => {
+  const settings = new Set<PermissionCode>(['settings.organization']);
+  expect(visibleStaffNavItems(settings).map((item) => item.to)).toEqual([
+    '/dashboard',
+    '/onboarding',
+    '/settings',
+  ]);
+  const coach = new Set<PermissionCode>(['participants.view', 'attendance.mark']);
+  expect(visibleStaffNavItems(coach).map((item) => item.to)).toEqual([
+    '/dashboard',
+    '/participants',
+    '/attendance',
+  ]);
 });

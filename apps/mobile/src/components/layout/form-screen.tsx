@@ -1,5 +1,6 @@
 import { AuthActionFooter } from '@/components/auth/auth-action-footer';
 import { FormWidth } from '@/components/layout/content-width';
+import { FormRevealContext } from '@/components/layout/form-reveal';
 import { FadeSlideIn } from '@/components/motion/fade-slide-in';
 import { BlurTargetView } from 'expo-blur';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
@@ -12,6 +13,7 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
+import { useReducedMotion } from 'react-native-reanimated';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { tokens } from '@ramassa/shared/tokens';
 import { motionTokens } from '@ramassa/shared/tokens/motion';
@@ -73,6 +75,27 @@ export function FormScreen({
   const scrollOffset = useRef(0);
   const endReported = useRef(false);
   const blurTarget = useRef<View | null>(null);
+  const scrollView = useRef<ScrollView | null>(null);
+  const isReducedMotion = useReducedMotion();
+  // Brings a question into view, a little below the top edge (pending fix 20).
+  const reveal = useCallback(
+    (view: View) => {
+      if (process.env.EXPO_OS === 'web') {
+        (view as unknown as HTMLElement).scrollIntoView?.({
+          block: 'center',
+          behavior: isReducedMotion ? 'auto' : 'smooth',
+        });
+        return;
+      }
+      const scroll = scrollView.current;
+      const content = scroll?.getInnerViewRef();
+      if (scroll == null || content == null) return;
+      view.measureLayout(content, (_x, y) =>
+        scroll.scrollTo({ y: Math.max(0, y - tokens.spacing.lg), animated: !isReducedMotion }),
+      );
+    },
+    [isReducedMotion],
+  );
   const { fontScale } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const bottomInset = keyboardVisible ? 0 : insets.bottom;
@@ -148,6 +171,7 @@ export function FormScreen({
             {/* The footer owns the bottom inset so its blur and the scrolling
                 content extend behind the home indicator without a white strip. */}
             <ScrollView
+              ref={scrollView}
               testID="auth-scroll-content"
               scrollEnabled={scrollEnabled}
               onScroll={
@@ -171,7 +195,7 @@ export function FormScreen({
                   {heading}
                 </FormEntrance>
                 <FormEntrance entrance={entrance} index={1}>
-                  {children}
+                  <FormRevealContext value={reveal}>{children}</FormRevealContext>
                 </FormEntrance>
               </FormWidth>
             </ScrollView>

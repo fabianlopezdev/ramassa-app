@@ -11,7 +11,7 @@ import { useEffect, useState } from 'react';
 import { Platform } from 'react-native';
 import { fetchMyPendingInvite } from '@ramassa/shared/accounts';
 import { AppError, type Result } from '@ramassa/shared/errors';
-import { saveMyCustomAnswers, type CustomAnswerValue } from '@ramassa/shared/intake-builder';
+import { answerPayload, type CustomAnswerValue } from '@ramassa/shared/intake-builder';
 import { createAccountOnboardingDraftStore } from '@ramassa/shared/onboarding-drafts';
 import type { CompleteOnboardingPayload } from '@ramassa/shared/schemas';
 import { termsSigningPayload, type TermsSigning } from '@ramassa/shared/schemas';
@@ -29,11 +29,17 @@ export const onboardingDraftStore = createAccountOnboardingDraftStore(privateSto
 export function completeOnboarding(
   payload: Partial<CompleteOnboardingPayload>,
   signing: TermsSigning,
+  customAnswers: Readonly<Record<string, CustomAnswerValue | null>> = {},
 ): Promise<Result<void, AppError>> {
   return safeAsync(
     async () => {
       const { error } = await supabase.rpc('complete_onboarding_signed', {
-        payload,
+        // Her staff answers travel in the same call (RAPP-611): saved with her
+        // profile in one transaction, and the required ones re-checked there.
+        payload:
+          Object.keys(customAnswers).length === 0
+            ? payload
+            : { ...payload, custom_answers: answerPayload(customAnswers) },
         p_signing: termsSigningPayload(signing, `${Platform.OS} ${String(Platform.Version)}`),
       });
       if (error) {
@@ -42,16 +48,6 @@ export function completeOnboarding(
     },
     { code: 'DB-1' },
   );
-}
-
-/**
- * Sends her answers to the staff questions (RAPP-307). Only new or changed
- * ones are passed in; nothing to send makes no call.
- */
-export function saveWizardCustomAnswers(
-  answers: Readonly<Record<string, CustomAnswerValue | null>>,
-): Promise<Result<void, AppError>> {
-  return safeAsync(() => saveMyCustomAnswers(supabase, answers), { code: 'DB-1' });
 }
 
 /**
