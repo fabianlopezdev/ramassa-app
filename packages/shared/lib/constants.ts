@@ -13,13 +13,9 @@
  */
 export const PASSWORD_MIN_LENGTH = 8;
 
-/**
- * The terms-of-use version the wizard shows and records (RAPP-21). Bump it
- * when the text changes; every acceptance stores the version it was shown, so
- * a bump makes re-acceptance detectable without touching old records. Mirrors
- * the seeded acceptances (SEED_TERMS_VERSION in testing/).
- */
-export const CURRENT_TERMS_VERSION = '2026-07-01';
+// The app terms version is data since RAPP-613 (`app_terms_versions`): staff
+// publish new versions in the admin, and the phone reads the current one from
+// the onboarding catalog. The bundled text is version 1.
 
 /**
  * Optional monitored mailbox shown before authentication. It stays hidden

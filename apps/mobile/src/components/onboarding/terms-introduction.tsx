@@ -1,12 +1,14 @@
 import { DataIcon } from '@/components/forms/data-icon';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
+import { appTermsWording } from '@/lib/app-terms-wording';
 import { onboardingDraftStore } from '@/lib/onboarding';
-import { useWizardStep } from '@/lib/onboarding-intake-context';
+import { useWizardIntake, useWizardStep } from '@/lib/onboarding-intake-context';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import type { SymbolViewProps } from 'expo-symbols';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import type { OnboardingDraftStep } from '@ramassa/shared/onboarding-drafts';
+import type { LanguageCode } from '@ramassa/shared/schemas';
 
 const purposeSymbol: SymbolViewProps['name'] = {
   ios: 'calendar.badge.checkmark',
@@ -54,9 +56,18 @@ function TermsTrustPoint({
   );
 }
 
+/** The point icons in order; a version with more points repeats the last one. */
+const POINT_SYMBOLS = [purposeSymbol, protectedSymbol, privateSymbol, controlSymbol] as const;
+
 export function TermsIntroductionStep() {
-  const { t } = useTranslation('onboarding');
+  const { t, i18n } = useTranslation('onboarding');
   const step = useWizardStep('terms-intro');
+  // The current version's introduction (RAPP-613), or the bundled text.
+  const wording = appTermsWording(
+    useWizardIntake().catalog.terms,
+    (i18n.resolvedLanguage as LanguageCode | undefined) ?? 'ca',
+    (key) => t(key),
+  );
   const persist = (currentStep: OnboardingDraftStep) =>
     onboardingDraftStore.saveDraft({ ...onboardingDraftStore.loadDraft(), currentStep });
   return (
@@ -64,8 +75,8 @@ export function TermsIntroductionStep() {
       screenId="terms-intro"
       stepNumber={step.position.step}
       totalSteps={step.position.total}
-      title={t('termsIntroTitle')}
-      intro={t('termsIntro')}
+      title={wording.introTitle}
+      intro={wording.intro}
       continueLabel={t('termsReadFullAction')}
       onContinue={() => {
         persist(step.nextDraftStep);
@@ -81,26 +92,14 @@ export function TermsIntroductionStep() {
       }
     >
       <View className="gap-lg">
-        <TermsTrustPoint
-          title={t('termsPointPurposeTitle')}
-          body={t('termsPointPurposeBody')}
-          symbol={purposeSymbol}
-        />
-        <TermsTrustPoint
-          title={t('termsPointProtectedTitle')}
-          body={t('termsPointProtectedBody')}
-          symbol={protectedSymbol}
-        />
-        <TermsTrustPoint
-          title={t('termsPointPrivateTitle')}
-          body={t('termsPointPrivateBody')}
-          symbol={privateSymbol}
-        />
-        <TermsTrustPoint
-          title={t('termsPointControlTitle')}
-          body={t('termsPointControlBody')}
-          symbol={controlSymbol}
-        />
+        {wording.points.map((point, index) => (
+          <TermsTrustPoint
+            key={index}
+            title={point.title}
+            body={point.body}
+            symbol={POINT_SYMBOLS[Math.min(index, POINT_SYMBOLS.length - 1)]!}
+          />
+        ))}
       </View>
     </WizardFrame>
   );

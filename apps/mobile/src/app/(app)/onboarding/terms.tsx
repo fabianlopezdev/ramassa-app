@@ -15,10 +15,11 @@ import { ConsentRow } from '@/components/authorization/consent-row';
 import { SignatureSection } from '@/components/authorization/signature-section';
 import { FailureNotice } from '@/components/error-code-line';
 import { PressableScale } from '@/components/motion/pressable-scale';
+import { TermsBody } from '@/components/onboarding/terms-body';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
+import { appTermsWording } from '@/lib/app-terms-wording';
 import { logout } from '@/lib/auth';
 import { confirmAction } from '@/lib/confirm-action';
-import { continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
 import {
   completeOnboarding,
@@ -40,9 +41,8 @@ import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { Text } from 'react-native';
 import { useAuth } from '@ramassa/shared/auth';
-import { CURRENT_TERMS_VERSION } from '@ramassa/shared/constants';
 import { signatureStrokesSchema, type SignatureStrokes } from '@ramassa/shared/equipment';
 import type { AppErrorCode } from '@ramassa/shared/errors';
 import { trimPayloadToAnswers } from '@ramassa/shared/intake';
@@ -62,6 +62,12 @@ export default function TermsStepScreen() {
   const { user, refreshProfile } = useAuth();
   const intake = useWizardIntake();
   const step = useWizardStep('terms');
+  // The current version staff published (RAPP-613), or the bundled text.
+  const wording = appTermsWording(
+    intake.catalog.terms,
+    (i18n.resolvedLanguage as LanguageCode | undefined) ?? 'ca',
+    (key) => t(key),
+  );
   const [draft] = useState(() => onboardingDraftStore.loadDraft());
 
   const signatureOwner = draft?.terms?.signatureOwnerId;
@@ -172,10 +178,9 @@ export default function TermsStepScreen() {
           season: draft?.season === undefined ? undefined : season.data,
           terms,
         },
-        {
-          termsVersion: CURRENT_TERMS_VERSION,
-          localeShown: (i18n.resolvedLanguage as LanguageCode) ?? 'ca',
-        },
+        // The version and the language she was shown (RAPP-613): a newer
+        // version published while she read this one asks her again.
+        { termsVersion: wording.termsVersion, localeShown: wording.localeShown },
       );
 
       // Her answers to the staff questions (RAPP-307), only the new or changed
@@ -236,8 +241,8 @@ export default function TermsStepScreen() {
       scrollEnabled={!isDrawing}
       stepNumber={step.position.step}
       totalSteps={step.position.total}
-      title={t('termsTitle')}
-      intro={t('mediaConsentHint')}
+      title={wording.title}
+      intro={wording.mediaHint}
       continueLabel={t('finishAction')}
       onContinue={() => void finish()}
       isContinueBusy={isSubmitting}
@@ -246,20 +251,13 @@ export default function TermsStepScreen() {
         step.goBack?.();
       }}
     >
-      <View style={continuousCorners} className="rounded-md bg-neutral-50 p-md">
-        <Text
-          selectable
-          className={`text-start text-form leading-body text-neutral-800 ${languageFontClass}`}
-        >
-          {t('termsBody')}
-        </Text>
-      </View>
+      <TermsBody body={wording.body} />
 
       <ConsentRow
         testID="terms-acceptance"
         required
         requiredMark={t('authorizationRequiredMark')}
-        label={t('termsAcceptLabel')}
+        label={wording.acceptLabel}
         checked={isAccepted}
         onToggle={() => {
           setIsAccepted((current) => !current);
@@ -287,7 +285,7 @@ export default function TermsStepScreen() {
         testID="terms-media-consent"
         required={false}
         requiredMark=""
-        label={t('mediaConsentLabel')}
+        label={wording.mediaLabel}
         checked={hasMediaConsent}
         onToggle={() => setHasMediaConsent((current) => !current)}
       />

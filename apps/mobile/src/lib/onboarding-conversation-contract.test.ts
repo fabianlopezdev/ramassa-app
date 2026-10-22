@@ -62,16 +62,16 @@ describe('conversational onboarding controls', () => {
 
   test('terms explanations precede the always-visible full legal text', () => {
     const intro = readFileSync(join(root, 'components/onboarding/terms-introduction.tsx'), 'utf8');
-    for (const key of [
-      'termsPointPurposeTitle',
-      'termsPointProtectedTitle',
-      'termsPointPrivateTitle',
-      'termsPointControlTitle',
-    ])
-      expect(intro).toContain(`t('${key}')`);
+    // The points and the body come from the published terms version, or the
+    // bundled text when there is none (RAPP-613).
+    const wording = readFileSync(join(root, 'lib/app-terms-wording.ts'), 'utf8');
+    expect(wording).toContain("['Purpose', 'Protected', 'Private', 'Control']");
+    expect(wording).toContain('`termsPoint${point}Title`');
+    expect(wording).toContain("bundled('termsBody')");
+    expect(intro).toContain('wording.points.map');
     expect(intro).toContain('<DataIcon');
     expect(intro).toContain("'termsReadFullAction'");
-    expect(terms).toContain("{t('termsBody')}");
+    expect(terms).toContain('<TermsBody body={wording.body} />');
     expect(terms).not.toContain('isFullTermsVisible');
     expect(terms).not.toContain('termsHideFullAction');
   });
