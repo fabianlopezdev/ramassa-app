@@ -148,7 +148,7 @@ function ProfileCard({
         <CardHeader>
           <CardTitle>{t('account.profile.title')}</CardTitle>
         </CardHeader>
-        <CardContent className="grid gap-6 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-start">
+        <CardContent className="grid gap-6 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-center">
           <div className="flex flex-col items-center gap-3" data-testid="account-photo">
             <AccountAvatar
               account={account}
@@ -191,7 +191,7 @@ function ProfileCard({
               </p>
             )}
           </div>
-          <FieldGroup className="grid content-start gap-4 md:grid-cols-2">
+          <FieldGroup className="grid content-center gap-4 md:grid-cols-2">
             <Field data-invalid={showBlank && firstName.trim() === ''}>
               <FieldLabel htmlFor="account-first-name">{t('account.name.firstName')}</FieldLabel>
               <Input
