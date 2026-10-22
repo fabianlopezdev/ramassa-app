@@ -40,8 +40,10 @@ import {
   reorderCustomQuestions,
   reorderIntakeScreens,
   saveBuiltinOverride,
+  saveBuiltinQuestionRequired,
   saveBuiltinScreen,
   saveCustomQuestion,
+  saveCustomQuestionRequired,
   saveIntakeScreen,
   saveWizardFlowOrder,
   uploadsAvailable,
@@ -93,6 +95,14 @@ export function OnboardingQuestionsSection({ catalog }: { readonly catalog: Inta
       }}
       onSaveBuiltin={async (override) => {
         await saveBuiltinOverride(supabase, override);
+        await reload();
+      }}
+      onSaveBuiltinRequired={async (question, isRequired) => {
+        await saveBuiltinQuestionRequired(supabase, question, isRequired);
+        await reload();
+      }}
+      onSaveCustomRequired={async (questionId, isRequired) => {
+        await saveCustomQuestionRequired(supabase, questionId, isRequired);
         await reload();
       }}
     />

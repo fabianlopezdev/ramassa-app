@@ -63,6 +63,7 @@ import {
 import {
   deleteIntakePreset,
   EMPTY_INTAKE_CATALOG,
+  requiredBuiltinQuestions,
   saveIntakePreset,
   setParticipantCustomAnswers,
   uploadsAvailable,
@@ -421,6 +422,7 @@ export function ParticipantDetail({
           onSave={saveQuestionStates}
           errorMessage={questionStatesErrorMessage}
           presets={intakeCatalog.presets}
+          required={requiredBuiltinQuestions(intakeCatalog)}
           onSavePreset={async (name, states) => {
             await saveIntakePreset(supabase, { id: null, name, states });
             await router.invalidate();

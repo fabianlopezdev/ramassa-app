@@ -29,19 +29,27 @@ import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'rea
 import { useTranslation } from 'react-i18next';
 import { getErrorMessageKey, isAppError } from '@ramassa/shared/errors';
 import { LANGUAGE_NATIVE_NAMES, SUPPORTED_LANGUAGES } from '@ramassa/shared/i18n/languages';
-import type { IntakeQuestion } from '@ramassa/shared/intake';
 import {
-  BUILTIN_HIDE_LOCKS,
+  isRequiredQuestion,
+  type IntakeQuestion,
+  type RequiredQuestions,
+} from '@ramassa/shared/intake';
+import {
   BUILTIN_SCREENS,
+  builtinHideLock,
+  builtinRequiredLock,
   canHideBuiltin,
+  canRequireCustomQuestion,
   CUSTOM_QUESTION_TYPES,
   isChoiceType,
+  isCustomQuestionRequired,
   liveOptions,
   overrideFor,
   placementsAllowedFor,
   QUESTION_PLACEMENTS,
   QUESTION_PRIVACY_LEVELS,
   questionDraftSchema,
+  requiredBuiltinQuestions,
   textIn,
   type BuilderText,
   type BuiltinOverride,
@@ -75,6 +83,10 @@ export interface QuestionBuilderProps {
   readonly onArchiveQuestion: (id: string) => Promise<void>;
   readonly onReorderQuestions: (screenId: string, ids: readonly string[]) => Promise<void>;
   readonly onSaveBuiltin: (override: BuiltinOverride) => Promise<void>;
+  /** Make a built-in question required or optional (RAPP-611). */
+  readonly onSaveBuiltinRequired: (question: IntakeQuestion, isRequired: boolean) => Promise<void>;
+  /** Make a staff question required or optional where she answers it (RAPP-611). */
+  readonly onSaveCustomRequired: (questionId: string, isRequired: boolean) => Promise<void>;
   /**
    * Whether this deployment stores files (a media service is set up). A file
    * question warns staff when it does not (RAPP-610).
@@ -523,17 +535,20 @@ function QuestionForm({
 function BuiltinForm({
   info,
   override,
+  required,
   onSave,
   onCancel,
 }: {
   readonly info: BuiltinQuestionInfo;
   readonly override: BuiltinOverride | undefined;
+  /** The organization's required list (RAPP-611): a required question never hides. */
+  readonly required: RequiredQuestions;
   readonly onSave: (override: BuiltinOverride) => Promise<void>;
   readonly onCancel: () => void;
 }) {
   const { t } = useTranslation('settings');
   const action = useAction();
-  const lock = BUILTIN_HIDE_LOCKS[info.question];
+  const lock = builtinHideLock(info.question, required);
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const fields = new FormData(event.currentTarget);
@@ -543,7 +558,7 @@ function BuiltinForm({
       question: info.question,
       label: Object.keys(label).length === 0 ? null : label,
       help: Object.keys(help).length === 0 ? null : help,
-      isHidden: canHideBuiltin(info.question) && fields.get('builtin-hidden') === 'on',
+      isHidden: canHideBuiltin(info.question, required) && fields.get('builtin-hidden') === 'on',
       optionOverrides: Object.fromEntries(
         info.options.map((option) => [
           option.value,
@@ -588,7 +603,7 @@ function BuiltinForm({
         <input
           type="checkbox"
           name="builtin-hidden"
-          defaultChecked={override?.isHidden ?? false}
+          defaultChecked={lock === undefined && (override?.isHidden ?? false)}
           disabled={lock !== undefined}
           aria-describedby={lock === undefined ? undefined : 'builtin-hidden-lock'}
         />
@@ -642,6 +657,57 @@ function BuiltinForm({
   );
 }
 
+/**
+ * The required switch next to a question (RAPP-611). It saves at once; a
+ * locked one says why in plain words.
+ */
+function RequiredSwitch({
+  id,
+  checked,
+  lockReason,
+  note,
+  disabled,
+  onChange,
+}: {
+  readonly id: string;
+  readonly checked: boolean;
+  readonly lockReason?: string;
+  readonly note?: string;
+  readonly disabled: boolean;
+  readonly onChange: (next: boolean) => void;
+}) {
+  const { t } = useTranslation('settings');
+  const describedBy = [lockReason ? `${id}-lock` : null, note ? `${id}-note` : null]
+    .filter(Boolean)
+    .join(' ');
+  return (
+    <div className="flex flex-col gap-0.5">
+      <label className="flex items-center gap-2 text-start text-xs font-medium">
+        <input
+          id={id}
+          type="checkbox"
+          data-testid={id}
+          checked={checked}
+          disabled={disabled || lockReason !== undefined}
+          aria-describedby={describedBy === '' ? undefined : describedBy}
+          onChange={(event) => onChange(event.target.checked)}
+        />
+        <span>{t('questions.requiredSwitch')}</span>
+      </label>
+      {lockReason === undefined ? null : (
+        <p id={`${id}-lock`} className="text-start text-xs text-muted-foreground">
+          {lockReason}
+        </p>
+      )}
+      {note === undefined ? null : (
+        <p id={`${id}-note`} className="text-start text-xs text-muted-foreground">
+          {note}
+        </p>
+      )}
+    </div>
+  );
+}
+
 function SmallButton({
   label,
   onClick,
@@ -677,6 +743,8 @@ export function QuestionBuilder({
   onArchiveQuestion,
   onReorderQuestions,
   onSaveBuiltin,
+  onSaveBuiltinRequired,
+  onSaveCustomRequired,
   canStoreFiles = false,
 }: QuestionBuilderProps) {
   const { t, i18n } = useTranslation('settings');
@@ -684,6 +752,8 @@ export function QuestionBuilder({
   const [editing, setEditing] = useState<Editing>(null);
   const action = useAction();
   const live = catalog.screens.filter((screen) => !screen.isArchived);
+  // The one required list (RAPP-611), as her phone reads it.
+  const required = requiredBuiltinQuestions(catalog);
 
   const placementsText = (question: CustomQuestion) =>
     question.placements
@@ -803,6 +873,20 @@ export function QuestionBuilder({
                                 {t(`questions.privacyLevels.${question.privacy}`)} ·{' '}
                                 {placementsText(question)}
                               </p>
+                              <RequiredSwitch
+                                id={`custom-required-${question.id}`}
+                                checked={isCustomQuestionRequired(question)}
+                                lockReason={
+                                  canRequireCustomQuestion(question)
+                                    ? undefined
+                                    : t('questions.requiredLock.notHers')
+                                }
+                                note={t('questions.requiredCustomNote')}
+                                disabled={action.isBusy}
+                                onChange={(next) =>
+                                  void action.run(() => onSaveCustomRequired(question.id, next))
+                                }
+                              />
                             </div>
                             <div className="flex flex-wrap gap-1">
                               <SmallButton
@@ -917,12 +1001,30 @@ export function QuestionBuilder({
                   <div className="flex flex-col gap-0.5">
                     <p className="text-start text-sm font-medium">{reworded || info.label}</p>
                     <p className="text-start text-xs text-muted-foreground">
-                      {override?.isHidden
+                      {override?.isHidden && canHideBuiltin(info.question, required)
                         ? t('questions.hidden')
                         : reworded
                           ? t('questions.reworded', { original: info.label })
                           : t('questions.asTheApp')}
                     </p>
+                    <RequiredSwitch
+                      id={`builtin-required-${info.question}`}
+                      checked={isRequiredQuestion(info.question, required)}
+                      lockReason={
+                        builtinRequiredLock(info.question) === undefined
+                          ? undefined
+                          : t('questions.requiredLock.always')
+                      }
+                      note={
+                        override?.isHidden && !canHideBuiltin(info.question, required)
+                          ? t('questions.requiredHiddenNote')
+                          : undefined
+                      }
+                      disabled={action.isBusy}
+                      onChange={(next) =>
+                        void action.run(() => onSaveBuiltinRequired(info.question, next))
+                      }
+                    />
                   </div>
                   <Button
                     type="button"
@@ -938,6 +1040,7 @@ export function QuestionBuilder({
                   <BuiltinForm
                     info={info}
                     override={override}
+                    required={required}
                     onSave={onSaveBuiltin}
                     onCancel={() => setEditing(null)}
                   />

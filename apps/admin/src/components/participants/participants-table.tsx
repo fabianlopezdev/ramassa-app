@@ -24,6 +24,7 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@ramassa/shared/auth';
 import {
+  dependentsShown,
   PARTICIPANT_PAGE_SIZE,
   type ParticipantFilterOptions,
   type ParticipantListRow,
@@ -41,7 +42,7 @@ export interface ParticipantsTableProps {
 
 export function ParticipantsTable({ page, filterOptions, search }: ParticipantsTableProps) {
   const { permissions } = useAuth();
-  const { t, i18n } = useTranslation(['participants', 'common', 'referrals']);
+  const { t, i18n } = useTranslation(['participants', 'common', 'referrals', 'profile']);
   const navigate = useNavigate({ from: '/participants/' });
   const locale = i18n.resolvedLanguage ?? 'ca';
 
@@ -104,7 +105,16 @@ export function ParticipantsTable({ page, filterOptions, search }: ParticipantsT
         // Not sortable: the roster is not ordered by how many children someone
         // has, and offering it would suggest the team works that way.
         enableSorting: false,
-        cell: ({ row }) => (row.original.has_dependents ? row.original.num_dependents : none),
+        // Unknown is not "none" (RAPP-611): an optional dependants question
+        // she did not answer reads as not given.
+        cell: ({ row }) => {
+          const shown = dependentsShown(row.original.has_dependents, row.original.num_dependents);
+          return shown.kind === 'count'
+            ? shown.count
+            : shown.kind === 'unknown'
+              ? t('profile:notProvided')
+              : none;
+        },
       },
       {
         id: 'status',

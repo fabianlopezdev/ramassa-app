@@ -4,7 +4,7 @@
  * built-in question the app needs cannot be hidden, and the form says why.
  */
 import { fireEvent, render, waitFor, within } from '@testing-library/react';
-import { expect, mock, test } from 'bun:test';
+import { describe, expect, mock, test } from 'bun:test';
 import { parseIntakeCatalog } from '@ramassa/shared/intake-builder';
 import { QuestionBuilder, type QuestionBuilderProps } from './question-builder';
 
@@ -72,6 +72,8 @@ function builder(overrides: Partial<QuestionBuilderProps> = {}) {
     onArchiveQuestion: mock(async () => undefined),
     onReorderQuestions: mock(async () => undefined),
     onSaveBuiltin: mock(async () => undefined),
+    onSaveBuiltinRequired: mock(async () => undefined),
+    onSaveCustomRequired: mock(async () => undefined),
     ...overrides,
   };
   return { props, view: render(<QuestionBuilder {...props} />) };
@@ -292,4 +294,60 @@ test('the preview shows her phone in each language, right to left in Arabic and 
   expect(view.getByTestId('question-preview-fallback')).toBeTruthy();
   fireEvent.change(view.getByTestId('question-preview-language'), { target: { value: 'fa' } });
   expect(view.getByTestId('question-preview').getAttribute('dir')).toBe('rtl');
+});
+
+describe('required or optional (RAPP-611)', () => {
+  const switchOf = (view: ReturnType<typeof render>, id: string) =>
+    view.getByTestId(id) as HTMLInputElement;
+
+  test('her first name is always required, and the switch says why', () => {
+    const { view } = builder();
+    const first = switchOf(view, 'builtin-required-first_name');
+    expect(first.checked).toBe(true);
+    expect(first.disabled).toBe(true);
+    expect(first.getAttribute('aria-describedby')).toBe('builtin-required-first_name-lock');
+  });
+
+  test('a built-in question switches to required and is saved at once', async () => {
+    const { view, props } = builder();
+    const childcare = switchOf(view, 'builtin-required-childcare_need');
+    expect(childcare.checked).toBe(false);
+    fireEvent.click(childcare);
+    await waitFor(() =>
+      expect(props.onSaveBuiltinRequired).toHaveBeenCalledWith('childcare_need', true),
+    );
+  });
+
+  test('the switch reads the one list from the catalog', () => {
+    const { view } = builder({
+      catalog: { ...catalog, requiredQuestions: ['first_name', 'last_name', 'childcare_need'] },
+    });
+    expect(switchOf(view, 'builtin-required-childcare_need').checked).toBe(true);
+  });
+
+  test('a staff question she answers can be required; the change is saved', async () => {
+    const { view, props } = builder();
+    const own = switchOf(view, `custom-required-${QUESTION}`);
+    expect(own.checked).toBe(false);
+    expect(own.disabled).toBe(false);
+    fireEvent.click(own);
+    await waitFor(() => expect(props.onSaveCustomRequired).toHaveBeenCalledWith(QUESTION, true));
+  });
+
+  test('a staff-only question cannot be required, and the switch says why', () => {
+    const staffOnly = {
+      ...catalog,
+      screens: catalog.screens.map((screen) => ({
+        ...screen,
+        questions: screen.questions.map((question) => ({
+          ...question,
+          placements: ['staff' as const],
+        })),
+      })),
+    };
+    const { view } = builder({ catalog: staffOnly });
+    const own = switchOf(view, `custom-required-${QUESTION}`);
+    expect(own.disabled).toBe(true);
+    expect(view.getByText('questions.requiredLock.notHers')).toBeTruthy();
+  });
 });

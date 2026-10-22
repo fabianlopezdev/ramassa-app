@@ -44,6 +44,7 @@ import {
 import {
   canHideBuiltinScreen,
   moved,
+  requiredBuiltinQuestions,
   screenSettingsFor,
   textIn,
   wizardFlow,
@@ -301,7 +302,8 @@ function ScreenWordingForm({
   };
   const staff = (field: ScreenTextField): string => texts[field]?.[language]?.trim() ?? '';
   const shown = (field: ScreenTextField): string | undefined => staff(field) || bundled(field);
-  const hideable = isQuestionScreen(screen) && canHideBuiltinScreen(screen);
+  const hideable =
+    isQuestionScreen(screen) && canHideBuiltinScreen(screen, requiredBuiltinQuestions(catalog));
   const isTermsScreen = screen === 'terms-intro' || screen === 'terms';
   const terms =
     catalog.terms === null || catalog.terms === undefined

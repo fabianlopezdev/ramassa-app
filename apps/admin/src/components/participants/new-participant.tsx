@@ -45,7 +45,7 @@ import {
   answeredAtInvitation,
   type QuestionStates,
 } from '@ramassa/shared/intake';
-import type { IntakeCatalog } from '@ramassa/shared/intake-builder';
+import { requiredBuiltinQuestions, type IntakeCatalog } from '@ramassa/shared/intake-builder';
 import { isLimitedToTestPlayers, testPlayerOption } from '@ramassa/shared/permissions';
 import type { Referral } from '@ramassa/shared/referrals';
 import {
@@ -323,7 +323,7 @@ function InviteQuestionsStep({
         buildCreateParticipantInvitePayload(
           details,
           referralId,
-          allowedQuestionStates(states, answered),
+          allowedQuestionStates(states, answered, requiredBuiltinQuestions(catalog)),
         ),
       ),
     );

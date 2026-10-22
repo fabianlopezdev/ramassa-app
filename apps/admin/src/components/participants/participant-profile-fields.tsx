@@ -23,7 +23,11 @@
 
 import { DetailField, DetailFieldList } from '@/components/detail/detail-section';
 import { useTranslation } from 'react-i18next';
-import type { ParticipantDetailRow } from '@ramassa/shared/participants';
+import {
+  dependentsShown,
+  type DependentsShown,
+  type ParticipantDetailRow,
+} from '@ramassa/shared/participants';
 import { formatSupportNeeds } from '@ramassa/shared/schemas';
 
 export interface ParticipantProfileFieldsProps {
@@ -58,6 +62,12 @@ export function ParticipantProfileFields({
    * indistinguishable from a field the screen failed to load, and those need
    * very different reactions from the person looking at it.
    */
+  const dependentsText = (shownDependents: DependentsShown) =>
+    shownDependents.kind === 'count'
+      ? String(shownDependents.count)
+      : shownDependents.kind === 'none'
+        ? t('onboarding:noOption')
+        : t('profile:notProvided');
   const shown = (value: string | null | undefined) =>
     value === null || value === undefined || value === '' ? t('profile:notProvided') : value;
 
@@ -113,7 +123,8 @@ export function ParticipantProfileFields({
       <DetailField
         label={t('participants:columnDependents')}
         value={
-          participant.has_dependents ? String(participant.num_dependents) : t('onboarding:noOption')
+          // Unknown is not "no" (RAPP-611).
+          dependentsText(dependentsShown(participant.has_dependents, participant.num_dependents))
         }
       />
       <DetailField

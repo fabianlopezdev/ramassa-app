@@ -15,6 +15,7 @@ import { useRef, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   canSkipQuestion,
+  DEFAULT_REQUIRED_QUESTIONS,
   INTAKE_STATE_PRESETS,
   questionState,
   WIZARD_QUESTIONS,
@@ -23,6 +24,7 @@ import {
   type IntakeQuestionState,
   type IntakeStatePreset,
   type QuestionStates,
+  type RequiredQuestions,
 } from '@ramassa/shared/intake';
 import type { IntakePreset } from '@ramassa/shared/intake-builder';
 
@@ -39,6 +41,8 @@ export interface ParticipantQuestionStatesProps {
   readonly errorMessage?: string;
   /** The organization's own presets (RAPP-307). */
   readonly presets?: readonly IntakePreset[];
+  /** The organization's required list (RAPP-611); the app's own without it. */
+  readonly required?: RequiredQuestions;
   readonly onSavePreset?: (name: string, states: QuestionStates) => Promise<void>;
   readonly onDeletePreset?: (id: string) => Promise<void>;
 }
@@ -61,6 +65,7 @@ export function ParticipantQuestionStates({
   presets = [],
   onSavePreset,
   onDeletePreset,
+  required = DEFAULT_REQUIRED_QUESTIONS,
 }: ParticipantQuestionStatesProps) {
   const { t } = useTranslation(['participants', 'onboarding']);
   // What the boxes start from: the saved states, or a preset staff just applied.
@@ -173,7 +178,7 @@ export function ParticipantQuestionStates({
         <div className="grid gap-3 sm:grid-cols-2">
           {WIZARD_QUESTIONS.map((question) => {
             const id = `question-state-${question}`;
-            const skippable = canSkipQuestion(question, answered);
+            const skippable = canSkipQuestion(question, answered, required);
             const current = questionState(base, question);
             return (
               <div key={question} className="flex flex-col gap-1.5">
