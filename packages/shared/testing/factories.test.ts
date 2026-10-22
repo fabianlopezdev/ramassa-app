@@ -435,6 +435,7 @@ describe('the authorization factories (RAPP-304)', () => {
     expect(paper.method).toBe('paper');
     expect(paper.signature).toBeNull();
     expect(buildAuthorizationConsentEvent().granted).toBe(true);
+    expect(buildAuthorizationConsentEvent().wording).toBe('Participo.');
     expect(buildSeasonAnswers().season_id).toBe(buildSeason().id);
   });
 

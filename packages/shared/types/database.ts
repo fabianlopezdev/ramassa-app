@@ -317,30 +317,42 @@ export type Database = {
           decided_at: string;
           granted: boolean;
           id: number;
+          language: string | null;
           method: string;
           org_id: string;
           profile_id: string;
+          required: boolean | null;
           signature_id: string | null;
+          version_id: string | null;
+          wording: string | null;
         };
         Insert: {
           consent_key: string;
           decided_at?: string;
           granted: boolean;
           id?: never;
+          language?: string | null;
           method: string;
           org_id: string;
           profile_id: string;
+          required?: boolean | null;
           signature_id?: string | null;
+          version_id?: string | null;
+          wording?: string | null;
         };
         Update: {
           consent_key?: string;
           decided_at?: string;
           granted?: boolean;
           id?: never;
+          language?: string | null;
           method?: string;
           org_id?: string;
           profile_id?: string;
+          required?: boolean | null;
           signature_id?: string | null;
+          version_id?: string | null;
+          wording?: string | null;
         };
         Relationships: [
           {
@@ -362,6 +374,13 @@ export type Database = {
             columns: ['signature_id'];
             isOneToOne: false;
             referencedRelation: 'authorization_signatures';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'authorization_consent_events_version_id_fkey';
+            columns: ['version_id'];
+            isOneToOne: false;
+            referencedRelation: 'authorization_versions';
             referencedColumns: ['id'];
           },
         ];
@@ -468,28 +487,34 @@ export type Database = {
           content: Json;
           id: string;
           org_id: string;
-          published_at: string;
+          published_at: string | null;
           published_by: string | null;
-          season_id: string;
-          version_number: number;
+          season_id: string | null;
+          updated_at: string;
+          updated_by: string | null;
+          version_number: number | null;
         };
         Insert: {
           content: Json;
           id?: string;
           org_id: string;
-          published_at?: string;
+          published_at?: string | null;
           published_by?: string | null;
-          season_id: string;
-          version_number: number;
+          season_id?: string | null;
+          updated_at?: string;
+          updated_by?: string | null;
+          version_number?: number | null;
         };
         Update: {
           content?: Json;
           id?: string;
           org_id?: string;
-          published_at?: string;
+          published_at?: string | null;
           published_by?: string | null;
-          season_id?: string;
-          version_number?: number;
+          season_id?: string | null;
+          updated_at?: string;
+          updated_by?: string | null;
+          version_number?: number | null;
         };
         Relationships: [
           {
@@ -511,6 +536,13 @@ export type Database = {
             columns: ['season_id'];
             isOneToOne: false;
             referencedRelation: 'seasons';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'authorization_versions_updated_by_fkey';
+            columns: ['updated_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
             referencedColumns: ['id'];
           },
         ];
@@ -5534,6 +5566,7 @@ export type Database = {
         Returns: undefined;
       };
       discard_app_terms_draft: { Args: never; Returns: undefined };
+      discard_authorization_draft: { Args: never; Returns: undefined };
       discard_walk_in: { Args: { p_id: string }; Returns: undefined };
       edit_own_forum_post: {
         Args: { p_content: string; p_post_id: string };
@@ -5899,6 +5932,7 @@ export type Database = {
           published_at: string;
           season_id: string;
           season_name: string;
+          updated_at: string;
           version_number: number;
         }[];
       };
@@ -6306,6 +6340,8 @@ export type Database = {
           consent_key: string;
           decided_at: string;
           granted: boolean;
+          language: string;
+          wording: string;
         }[];
       };
       my_custom_answers: {
@@ -6383,7 +6419,12 @@ export type Database = {
           consent_key: string;
           decided_at: string;
           granted: boolean;
+          language: string;
           method: string;
+          required: boolean;
+          season_name: string;
+          version_number: number;
+          wording: string;
         }[];
       };
       participant_custom_answers: {
@@ -6477,6 +6518,7 @@ export type Database = {
         }[];
       };
       publish_app_terms_draft: { Args: never; Returns: number };
+      publish_authorization_draft: { Args: never; Returns: number };
       publish_authorization_version: {
         Args: { p_content: Json };
         Returns: string;
@@ -6658,6 +6700,7 @@ export type Database = {
       };
       save_admin_service: { Args: { p_payload: Json }; Returns: string };
       save_app_terms_draft: { Args: { p_content: Json }; Returns: string };
+      save_authorization_draft: { Args: { p_content: Json }; Returns: string };
       save_builtin_question_override: {
         Args: {
           p_help: Json;
@@ -6877,7 +6920,7 @@ export type Database = {
         Returns: undefined;
       };
       set_optional_consent: {
-        Args: { p_granted: boolean; p_key: string };
+        Args: { p_granted: boolean; p_key: string; p_language?: string };
         Returns: undefined;
       };
       set_participant_active: {

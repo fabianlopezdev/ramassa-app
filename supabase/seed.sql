@@ -1368,6 +1368,7 @@ values (
   "consents": {
     "participation": {
       "required": true,
+      "position": 0,
       "label": {
         "ca": "Autoritzo la meva participació en les activitats del Projecte i declaro que la informació aportada és certa.",
         "es": "Autorizo mi participación en las actividades del Proyecto y declaro que la información aportada es cierta.",
@@ -1378,6 +1379,7 @@ values (
     },
     "data_processing": {
       "required": true,
+      "position": 1,
       "label": {
         "ca": "Accepto el tractament de les meves dades personals segons l’apartat 4.",
         "es": "Acepto el tratamiento de mis datos personales según el apartado 4.",
@@ -1388,6 +1390,7 @@ values (
     },
     "code_of_conduct": {
       "required": true,
+      "position": 2,
       "label": {
         "ca": "He rebut i comprès la Guia de Temporada, la Política de Protecció (safeguarding) i el Codi de Conducta d’AE Ramassà, i em comprometo a respectar-los.",
         "es": "He recibido y comprendido la Guía de Temporada, la Política de Protección (safeguarding) y el Código de Conducta de AE Ramassà, y me comprometo a respetarlos.",
@@ -1398,6 +1401,7 @@ values (
     },
     "health_data": {
       "required": true,
+      "position": 3,
       "label": {
         "ca": "Accepto de manera expressa el tractament de les meves dades de salut, necessàries per participar de manera segura en el Projecte.",
         "es": "Acepto de forma expresa el tratamiento de mis datos de salud, necesarios para participar de forma segura en el Proyecto.",
@@ -1408,6 +1412,7 @@ values (
     },
     "image_rights": {
       "required": false,
+      "position": 4,
       "label": {
         "ca": "Autoritzo la cessió dels meus drets d’imatge segons els termes de l’apartat 5.",
         "es": "Autorizo la cesión de mis derechos de imagen, según los términos del apartado 5.",
@@ -1418,6 +1423,7 @@ values (
     },
     "newsletter": {
       "required": false,
+      "position": 5,
       "label": {
         "ca": "Accepto rebre informació d’AE Ramassà per mitjans electrònics, telèfon o correu postal (butlletí, invitacions, enquestes).",
         "es": "Acepto recibir información de AE Ramassà por medios electrónicos, teléfono o correo postal (newsletter, invitaciones, encuestas).",
@@ -1428,6 +1434,7 @@ values (
     },
     "messaging_groups": {
       "required": false,
+      "position": 6,
       "label": {
         "ca": "Accepto que AE Ramassà m’inclogui en grups de missatgeria instantània de l’equip per facilitar la comunicació amb les meves companyes i l’equip tècnic.",
         "es": "Acepto que AE Ramassà me incluya en grupos de mensajería instantánea del equipo, con el fin de facilitar la comunicación con mis compañeras y el equipo técnico.",
@@ -1437,7 +1444,22 @@ values (
       }
     }
   },
-  "attachments": []
+  "attachments": [],
+  "questions": {
+    "health": {
+      "asked": true,
+      "required": true,
+      "privacy": "health",
+      "texts": {}
+    },
+    "emergency_contact": {
+      "asked": true,
+      "required": false,
+      "privacy": "personal",
+      "texts": {}
+    }
+  },
+  "texts": {}
 }$auth$, '[at]', '@')::jsonb,
   '2026-09-01 09:00:00+02',
   '5eed0000-0000-4000-8000-000000000001'

@@ -1334,7 +1334,11 @@ export function buildSeason(overrides: Partial<SeasonRow> = {}): SeasonRow {
   };
 }
 
-/** A published authorization version with every consent and one section (RAPP-304). */
+/**
+ * A published authorization version with every consent and one section
+ * (RAPP-304), in the editable shape (RAPP-614). Pass `season_id: null,
+ * version_number: null, published_at: null` for a draft.
+ */
 export function buildAuthorizationVersion(
   overrides: Partial<AuthorizationVersionRow> = {},
 ): AuthorizationVersionRow {
@@ -1348,18 +1352,26 @@ export function buildAuthorizationVersion(
       title: label('Autorització 2026/27'),
       sections: [{ key: 'participation', title: label('Participació'), body: label('Text.') }],
       consents: {
-        participation: { required: true, label: label('Participo.') },
-        data_processing: { required: true, label: label('Dades.') },
-        code_of_conduct: { required: true, label: label('Codi.') },
-        health_data: { required: true, label: label('Salut.') },
-        image_rights: { required: false, label: label('Imatge.') },
-        newsletter: { required: false, label: label('Butlletí.') },
-        messaging_groups: { required: false, label: label('Grups.') },
+        participation: { required: true, position: 0, label: label('Participo.') },
+        data_processing: { required: true, position: 1, label: label('Dades.') },
+        code_of_conduct: { required: true, position: 2, label: label('Codi.') },
+        health_data: { required: true, position: 3, label: label('Salut.') },
+        image_rights: { required: false, position: 4, label: label('Imatge.') },
+        newsletter: { required: false, position: 5, label: label('Butlletí.') },
+        messaging_groups: { required: false, position: 6, label: label('Grups.') },
       },
+      // Both questions asked with the RAPP-304 flags, no wording override (RAPP-614).
+      questions: {
+        health: { asked: true, required: true, privacy: 'health', texts: {} },
+        emergency_contact: { asked: true, required: false, privacy: 'personal', texts: {} },
+      },
+      texts: {},
       attachments: [],
     },
     published_at: FIXTURE_TIMESTAMP,
     published_by: null,
+    updated_at: FIXTURE_TIMESTAMP,
+    updated_by: null,
     ...overrides,
   };
 }
@@ -1433,6 +1445,11 @@ export function buildAuthorizationConsentEvent(
     granted: true,
     method: 'app',
     decided_at: FIXTURE_TIMESTAMP,
+    // The version and the words she was shown (RAPP-614).
+    version_id: SEED_AUTHORIZATION_VERSION_ID,
+    language: 'ca',
+    wording: 'Participo.',
+    required: true,
     ...overrides,
   };
 }

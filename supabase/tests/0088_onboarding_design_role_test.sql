@@ -96,11 +96,13 @@ select ok(
   (select count(*) from public.list_authorization_versions()) >= 1,
   'the design role reads the authorization versions'
 );
+-- The design role drafts the authorization; publishing asks every player to
+-- sign again, so it needs settings.organization (RAPP-614, as the app terms).
 select lives_ok(
-  $$ select public.publish_authorization_version(
+  $$ select public.save_authorization_draft(
        (select content from public.authorization_versions
          where id = '5eed0000-0000-4000-8041-000000000001')) $$,
-  'the design role publishes a season authorization version'
+  'the design role saves a season authorization draft'
 );
 select throws_ok(
   $$ select public.update_organization_settings('Una altra', null, null, null, null, null, array['ca'], 'ca') $$,
@@ -258,7 +260,7 @@ select ok(
   (select count(*) from public.audit_log
     where actor_id = '5eed0000-0000-4000-8000-000000000097'
       and action in ('intake.screen_save', 'intake.builtin_save', 'organization.document_explanation_update',
-                     'intake.preset_save', 'season.create', 'authorization.publish', 'profile.update',
+                     'intake.preset_save', 'season.create', 'authorization.draft_saved', 'profile.update',
                      'invite.create')) >= 7,
   'every change by the design role is audited'
 );
