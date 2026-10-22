@@ -15,13 +15,27 @@
  * localStorage, ADR-005).
  */
 import { Page, PageHeader } from '@/components/layout/page';
-import { ProfilePhotoEditor } from '@/components/nav/profile-photo-dialog';
+import { AccountAvatar } from '@/components/nav/account-avatar';
+import { useOwnProfilePhoto } from '@/components/nav/profile-photo-dialog';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Field, FieldError, FieldGroup, FieldLabel, FieldTitle } from '@/components/ui/field';
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { safeAsync } from '@/lib/observability';
 import {
   fetchOwnEmailState,
@@ -34,7 +48,7 @@ import {
   type OwnEmailState,
 } from '@/lib/own-account';
 import { createFileRoute } from '@tanstack/react-router';
-import { MailCheck } from 'lucide-react';
+import { Camera, MailCheck, Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { z } from 'zod';
@@ -53,25 +67,21 @@ export const Route = createFileRoute('/_staff/account')({
 });
 
 function AccountPage() {
-  const { t } = useTranslation(['admin', 'common']);
+  const { t } = useTranslation('admin');
   const { account, reload } = useOwnAccount();
   if (account === null) return null;
 
   return (
+    // The email field, its button and the language select share one height
+    // (h-9, the input's), so the second row lines up control for control.
     <Page data-testid="account-page">
-      <PageHeader title={t('admin:account.title')} />
-      <div className="grid items-start gap-6 xl:grid-cols-2">
-        <NameCard account={account} onSaved={reload} />
+      <PageHeader title={t('account.title')} />
+      <ProfileCard account={account} onSaved={reload} />
+      {/* Grid items stretch by default; with h-full on both cards they keep
+        one height whatever either holds (RAPP-634). */}
+      <div className="grid gap-6 md:grid-cols-2 md:items-stretch">
         <EmailCard sessionEmail={account.email} />
         <LanguageCard />
-        <Card data-testid="account-photo">
-          <CardHeader>
-            <CardTitle>{t('admin:userMenu.profilePhoto')}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ProfilePhotoEditor account={account} onChanged={reload} layout="inline" />
-          </CardContent>
-        </Card>
       </div>
     </Page>
   );
@@ -79,7 +89,11 @@ function AccountPage() {
 
 type SaveStatus = 'idle' | 'working' | 'saved' | 'failed';
 
-function NameCard({
+/**
+ * Her photo and her name together, the way GitHub and Notion show a profile:
+ * the photo applies at once, the name with Save.
+ */
+function ProfileCard({
   account,
   onSaved,
 }: {
@@ -89,6 +103,7 @@ function NameCard({
   const { t } = useTranslation('admin');
   const { session } = useAuth();
   const userId = session?.user.id ?? null;
+  const photo = useOwnProfilePhoto(onSaved);
   const [firstName, setFirstName] = useState(account.firstName);
   const [lastName, setLastName] = useState(account.lastName);
   const [status, setStatus] = useState<SaveStatus>('idle');
@@ -128,13 +143,55 @@ function NameCard({
   };
 
   return (
-    <Card data-testid="account-name">
+    <Card data-testid="account-profile">
       <form onSubmit={(event) => void submit(event)} noValidate className="contents">
         <CardHeader>
-          <CardTitle>{t('account.name.title')}</CardTitle>
+          <CardTitle>{t('account.profile.title')}</CardTitle>
         </CardHeader>
-        <CardContent>
-          <FieldGroup className="grid gap-4 sm:grid-cols-2">
+        <CardContent className="grid gap-6 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-start">
+          <div className="flex flex-col items-center gap-3" data-testid="account-photo">
+            <AccountAvatar
+              account={account}
+              className="size-24 ring-4 ring-primary/10"
+              fallbackClassName="text-2xl"
+            />
+            {photo.fileInput}
+            <div className="flex flex-wrap justify-center gap-2">
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                disabled={photo.working}
+                data-testid="profile-photo-choose"
+                onClick={photo.choose}
+              >
+                <Camera aria-hidden="true" />
+                {account.avatarUrl === null ? t('profilePhoto.choose') : t('profilePhoto.replace')}
+              </Button>
+              {account.avatarUrl === null ? null : (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  disabled={photo.working}
+                  data-testid="profile-photo-remove"
+                  onClick={photo.remove}
+                >
+                  <Trash2 aria-hidden="true" />
+                  {t('profilePhoto.remove')}
+                </Button>
+              )}
+            </div>
+            <p role="status" className="min-h-4 text-center text-xs text-muted-foreground">
+              {photo.message}
+            </p>
+            {photo.problem === null ? null : (
+              <p role="alert" className="max-w-56 text-center text-xs text-destructive">
+                {photo.problem}
+              </p>
+            )}
+          </div>
+          <FieldGroup className="grid content-start gap-4 md:grid-cols-2">
             <Field data-invalid={showBlank && firstName.trim() === ''}>
               <FieldLabel htmlFor="account-first-name">{t('account.name.firstName')}</FieldLabel>
               <Input
@@ -165,17 +222,22 @@ function NameCard({
                 }}
               />
             </Field>
+            {showBlank && blank ? (
+              <FieldError className="md:col-span-2">{t('account.name.required')}</FieldError>
+            ) : null}
           </FieldGroup>
-          {showBlank && blank ? (
-            <FieldError className="mt-3">{t('account.name.required')}</FieldError>
-          ) : null}
         </CardContent>
         <CardFooter className="justify-between gap-3">
-          <SaveMessage
-            status={status}
-            saved={t('account.name.saved')}
-            failed={t('account.name.failed')}
-          />
+          <div className="min-h-5 min-w-0 text-sm">
+            <p role="status" className="text-muted-foreground">
+              {status === 'saved' ? t('account.name.saved') : null}
+            </p>
+            {status === 'failed' ? (
+              <p role="alert" className="text-destructive">
+                {t('account.name.failed')}
+              </p>
+            ) : null}
+          </div>
           <Button
             type="submit"
             disabled={unchanged || status === 'working'}
@@ -186,29 +248,6 @@ function NameCard({
         </CardFooter>
       </form>
     </Card>
-  );
-}
-
-function SaveMessage({
-  status,
-  saved,
-  failed,
-}: {
-  readonly status: SaveStatus;
-  readonly saved: string;
-  readonly failed: string;
-}) {
-  return (
-    <div className="min-h-5 min-w-0 text-sm">
-      <p role="status" className="text-muted-foreground">
-        {status === 'saved' ? saved : null}
-      </p>
-      {status === 'failed' ? (
-        <p role="alert" className="text-destructive">
-          {failed}
-        </p>
-      ) : null}
-    </div>
   );
 }
 
@@ -224,12 +263,11 @@ const EMAIL_PROBLEM_KEY: Record<EmailProblem, string> = {
 
 const emailSchema = z.email();
 
+/** Her sign-in email, changed through a dialog the way Vercel and Linear do it. */
 function EmailCard({ sessionEmail }: { readonly sessionEmail: string }) {
   const { t } = useTranslation('admin');
   const [state, setState] = useState<OwnEmailState>({ email: sessionEmail, pendingEmail: null });
-  const [next, setNext] = useState('');
-  const [working, setWorking] = useState(false);
-  const [problem, setProblem] = useState<EmailProblem | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   const refresh = useCallback(async () => {
     const result = await safeAsync(() => fetchOwnEmailState(sessionEmail), {
@@ -242,6 +280,73 @@ function EmailCard({ sessionEmail }: { readonly sessionEmail: string }) {
     void refresh();
   }, [refresh]);
 
+  return (
+    <Card className="h-full" data-testid="account-email">
+      <CardHeader>
+        <CardTitle id="account-email-title">{t('account.email.title')}</CardTitle>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-4">
+        <div className="flex gap-2">
+          <Input
+            readOnly
+            value={state.email}
+            dir="ltr"
+            aria-labelledby="account-email-title"
+            className="h-9 min-w-0 flex-1 bg-muted/40"
+            data-testid="account-email-current"
+          />
+          <Button
+            type="button"
+            variant="outline"
+            className="h-9"
+            data-testid="account-email-change"
+            onClick={() => setDialogOpen(true)}
+          >
+            {t('account.email.change')}
+          </Button>
+        </div>
+        {state.pendingEmail === null ? null : (
+          <Alert data-testid="account-email-pending" role="status">
+            <MailCheck aria-hidden="true" />
+            <AlertTitle>{t('account.email.pendingTitle')}</AlertTitle>
+            <AlertDescription>
+              {t('account.email.pendingBody', {
+                email: state.pendingEmail,
+                current: state.email,
+              })}
+            </AlertDescription>
+          </Alert>
+        )}
+      </CardContent>
+      <EmailChangeDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        currentEmail={state.email}
+        onSent={(email) => {
+          setState((current) => ({ ...current, pendingEmail: email }));
+          void refresh();
+        }}
+      />
+    </Card>
+  );
+}
+
+function EmailChangeDialog({
+  open,
+  onOpenChange,
+  currentEmail,
+  onSent,
+}: {
+  readonly open: boolean;
+  readonly onOpenChange: (open: boolean) => void;
+  readonly currentEmail: string;
+  readonly onSent: (email: string) => void;
+}) {
+  const { t } = useTranslation('admin');
+  const [next, setNext] = useState('');
+  const [working, setWorking] = useState(false);
+  const [problem, setProblem] = useState<EmailProblem | null>(null);
+
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (working) return;
@@ -250,7 +355,7 @@ function EmailCard({ sessionEmail }: { readonly sessionEmail: string }) {
       setProblem('invalid');
       return;
     }
-    if (email === state.email.toLowerCase()) {
+    if (email === currentEmail.toLowerCase()) {
       setProblem('same');
       return;
     }
@@ -260,38 +365,28 @@ function EmailCard({ sessionEmail }: { readonly sessionEmail: string }) {
     setWorking(false);
     if (outcome === 'sent') {
       setNext('');
-      setState((current) => ({ ...current, pendingEmail: email }));
-      void refresh();
+      onOpenChange(false);
+      onSent(email);
     } else {
       setProblem(outcome);
     }
   };
 
   return (
-    <Card data-testid="account-email">
-      <form onSubmit={(event) => void submit(event)} noValidate className="contents">
-        <CardHeader>
-          <CardTitle>{t('account.email.title')}</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4">
-          <dl className="grid gap-1 text-sm">
-            <dt className="text-muted-foreground">{t('account.email.current')}</dt>
-            <dd className="font-medium break-all" data-testid="account-email-current">
-              {state.email}
-            </dd>
-          </dl>
-          {state.pendingEmail === null ? null : (
-            <Alert data-testid="account-email-pending" role="status">
-              <MailCheck aria-hidden="true" />
-              <AlertTitle>{t('account.email.pendingTitle')}</AlertTitle>
-              <AlertDescription>
-                {t('account.email.pendingBody', {
-                  email: state.pendingEmail,
-                  current: state.email,
-                })}
-              </AlertDescription>
-            </Alert>
-          )}
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) {
+          setNext('');
+          setProblem(null);
+        }
+        onOpenChange(nextOpen);
+      }}
+    >
+      <DialogContent className="sm:max-w-md" data-testid="account-email-dialog">
+        <form onSubmit={(event) => void submit(event)} noValidate className="grid gap-4">
+          <DialogTitle>{t('account.email.dialogTitle')}</DialogTitle>
+          <DialogDescription>{t('account.email.dialogBody')}</DialogDescription>
           <Field data-invalid={problem !== null}>
             <FieldLabel htmlFor="account-new-email">{t('account.email.new')}</FieldLabel>
             <Input
@@ -315,54 +410,62 @@ function EmailCard({ sessionEmail }: { readonly sessionEmail: string }) {
               </FieldError>
             )}
           </Field>
-        </CardContent>
-        <CardFooter className="justify-end">
-          <Button
-            type="submit"
-            disabled={working || next.trim() === ''}
-            data-testid="account-email-submit"
-          >
-            {working ? t('account.email.sending') : t('account.email.submit')}
-          </Button>
-        </CardFooter>
-      </form>
-    </Card>
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <DialogClose asChild>
+              <Button type="button" variant="outline">
+                {t('account.cancel')}
+              </Button>
+            </DialogClose>
+            <Button
+              type="submit"
+              disabled={working || next.trim() === ''}
+              data-testid="account-email-submit"
+            >
+              {working ? t('account.email.sending') : t('account.email.submit')}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
 
+/** A preference: it applies the moment she picks it, with no Save. */
 function LanguageCard() {
   const { t } = useTranslation('common');
   const { language, setLanguage } = useLanguage();
   const current = staffLanguageFor(language);
-  const label = t('interfaceLanguageLabel');
 
   return (
-    <Card data-testid="account-language">
+    <Card className="h-full" data-testid="account-language">
       <CardHeader>
-        <CardTitle id="account-language-title">{label}</CardTitle>
+        <CardTitle id="account-language-title">{t('interfaceLanguageLabel')}</CardTitle>
       </CardHeader>
       <CardContent>
-        <RadioGroup
+        <Select
           value={current}
           onValueChange={(value) => void setLanguage(value as SupportedLanguage)}
-          aria-labelledby="account-language-title"
-          className="grid gap-3 sm:grid-cols-3"
         >
-          {STAFF_LANGUAGES.map((code) => (
-            <FieldLabel key={code} htmlFor={`account-language-${code}`}>
-              <Field orientation="horizontal">
-                <FieldTitle lang={code} className="flex-1">
-                  {LANGUAGE_NATIVE_NAMES[code]}
-                </FieldTitle>
-                <RadioGroupItem
-                  value={code}
-                  id={`account-language-${code}`}
-                  data-testid={`language-choice-${code}`}
-                />
-              </Field>
-            </FieldLabel>
-          ))}
-        </RadioGroup>
+          <SelectTrigger
+            aria-labelledby="account-language-title"
+            className="w-full rounded-md shadow-xs data-[size=default]:h-9"
+            data-testid="account-language-select"
+          >
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {STAFF_LANGUAGES.map((code) => (
+              <SelectItem
+                key={code}
+                value={code}
+                lang={code}
+                data-testid={`language-choice-${code}`}
+              >
+                {LANGUAGE_NATIVE_NAMES[code]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </CardContent>
     </Card>
   );

@@ -106,8 +106,11 @@
     "title": "El meu compte",
     "save": "Desa",
     "saving": "S'està desant…",
+    "cancel": "Cancel·la",
+    "profile": {
+      "title": "Perfil"
+    },
     "name": {
-      "title": "Nom i cognoms",
       "firstName": "Nom",
       "lastName": "Cognoms",
       "saved": "Nom desat.",
@@ -116,9 +119,8 @@
     },
     "email": {
       "title": "Correu electrònic",
-      "current": "Correu actual",
       "new": "Correu nou",
-      "submit": "Canvia el correu",
+      "submit": "Envia l'enllaç",
       "sending": "S'està enviant…",
       "pendingTitle": "Pendent de confirmar",
       "pendingBody": "Obre l'enllaç que hem enviat a {{email}}. Si també te n'arriba un a {{current}}, obre'ls tots dos. Fins aleshores entres amb {{current}}.",
@@ -126,7 +128,10 @@
       "same": "Ja és el teu correu.",
       "taken": "Aquest correu ja té un compte.",
       "rateLimited": "Massa intents. Espera uns minuts i torna-ho a provar.",
-      "failed": "No s'ha pogut demanar el canvi. Torna-ho a provar."
+      "failed": "No s'ha pogut demanar el canvi. Torna-ho a provar.",
+      "change": "Canvia",
+      "dialogTitle": "Canvia el correu",
+      "dialogBody": "T'enviarem un enllaç per confirmar-lo."
     }
   },
   "todos": {

@@ -106,8 +106,11 @@
     "title": "Mi cuenta",
     "save": "Guardar",
     "saving": "Guardando…",
+    "cancel": "Cancelar",
+    "profile": {
+      "title": "Perfil"
+    },
     "name": {
-      "title": "Nombre y apellidos",
       "firstName": "Nombre",
       "lastName": "Apellidos",
       "saved": "Nombre guardado.",
@@ -116,9 +119,8 @@
     },
     "email": {
       "title": "Correo electrónico",
-      "current": "Correo actual",
       "new": "Correo nuevo",
-      "submit": "Cambiar el correo",
+      "submit": "Enviar el enlace",
       "sending": "Enviando…",
       "pendingTitle": "Pendiente de confirmar",
       "pendingBody": "Abre el enlace que hemos enviado a {{email}}. Si también te llega uno a {{current}}, abre los dos. Hasta entonces entras con {{current}}.",
@@ -126,7 +128,10 @@
       "same": "Ya es tu correo.",
       "taken": "Este correo ya tiene una cuenta.",
       "rateLimited": "Demasiados intentos. Espera unos minutos y vuelve a intentarlo.",
-      "failed": "No se ha podido pedir el cambio. Vuelve a intentarlo."
+      "failed": "No se ha podido pedir el cambio. Vuelve a intentarlo.",
+      "change": "Cambiar",
+      "dialogTitle": "Cambiar el correo",
+      "dialogBody": "Te enviaremos un enlace para confirmarlo."
     }
   },
   "todos": {

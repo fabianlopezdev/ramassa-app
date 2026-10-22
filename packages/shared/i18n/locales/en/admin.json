@@ -106,8 +106,11 @@
     "title": "My account",
     "save": "Save",
     "saving": "Saving…",
+    "cancel": "Cancel",
+    "profile": {
+      "title": "Profile"
+    },
     "name": {
-      "title": "Name",
       "firstName": "First name",
       "lastName": "Last name",
       "saved": "Name saved.",
@@ -116,9 +119,8 @@
     },
     "email": {
       "title": "Email",
-      "current": "Current email",
       "new": "New email",
-      "submit": "Change email",
+      "submit": "Send link",
       "sending": "Sending…",
       "pendingTitle": "Waiting for confirmation",
       "pendingBody": "Open the link we sent to {{email}}. If {{current}} also gets one, open both. Until then you sign in with {{current}}.",
@@ -126,7 +128,10 @@
       "same": "This is already your email.",
       "taken": "This email already has an account.",
       "rateLimited": "Too many attempts. Wait a few minutes and try again.",
-      "failed": "The change could not be requested. Please try again."
+      "failed": "The change could not be requested. Please try again.",
+      "change": "Change",
+      "dialogTitle": "Change email",
+      "dialogBody": "We will send a link to confirm it."
     }
   },
   "todos": {

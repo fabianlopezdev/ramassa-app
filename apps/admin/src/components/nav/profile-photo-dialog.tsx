@@ -19,9 +19,8 @@ import { mediaWorkerUrl } from '@/lib/media-worker';
 import { safeAsync } from '@/lib/observability';
 import { setOwnAvatar, type OwnAccount } from '@/lib/own-account';
 import { supabase } from '@/lib/supabase';
-import { cn } from '@/lib/utils';
 import { Camera, Trash2 } from 'lucide-react';
-import { useRef, useState, type ChangeEvent } from 'react';
+import { useRef, useState, type ChangeEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@ramassa/shared/auth';
 import { AppError } from '@ramassa/shared/errors';
@@ -55,27 +54,29 @@ async function uploadProfilePhoto(file: File): Promise<string> {
   return result.value.objectKey;
 }
 
-export interface ProfilePhotoEditorProps {
-  readonly account: OwnAccount;
-  /** Reads her account again so the top bar shows the new photo. */
-  readonly onChanged: () => void;
-  /** `inline` puts the buttons beside the photo, for the account page (RAPP-634). */
-  readonly layout?: 'stacked' | 'inline';
+export interface OwnProfilePhoto {
+  /** Opens the file picker. */
+  readonly choose: () => void;
+  readonly remove: () => void;
+  readonly working: boolean;
+  /** Progress or success, for a `role="status"` line. */
+  readonly message: string | null;
+  /** A failure, for a `role="alert"` line. */
+  readonly problem: string | null;
+  /** The hidden file input; render it once next to the buttons. */
+  readonly fileInput: ReactNode;
 }
 
-/** Choose, replace or remove her photo; the dialog and the account page share it. */
-export function ProfilePhotoEditor({
-  account,
-  onChanged,
-  layout = 'stacked',
-}: ProfilePhotoEditorProps) {
-  const { t } = useTranslation(['admin', 'common']);
+/**
+ * Choose, replace or remove her photo (RAPP-633). The dialog and the account
+ * page's profile card (RAPP-634) lay the same actions out their own way.
+ */
+export function useOwnProfilePhoto(onChanged: () => void): OwnProfilePhoto {
+  const { t } = useTranslation('admin');
   const { session } = useAuth();
   const userId = session?.user.id ?? null;
   const input = useRef<HTMLInputElement | null>(null);
   const [status, setStatus] = useState<PhotoStatus>('idle');
-  const working = status === 'working';
-  const inline = layout === 'inline';
 
   const save = async (avatarUrl: () => Promise<string | null>, done: PhotoStatus) => {
     if (userId === null) return;
@@ -101,33 +102,26 @@ export function ProfilePhotoEditor({
 
   const message =
     status === 'working'
-      ? t('admin:profilePhoto.working')
+      ? t('profilePhoto.working')
       : status === 'saved'
-        ? t('admin:profilePhoto.saved')
+        ? t('profilePhoto.saved')
         : status === 'removed'
-          ? t('admin:profilePhoto.removed')
+          ? t('profilePhoto.removed')
           : null;
   const problem =
     status === 'failed'
-      ? t('admin:profilePhoto.failed')
+      ? t('profilePhoto.failed')
       : status === 'wrong-type'
-        ? t('admin:profilePhoto.wrongType')
+        ? t('profilePhoto.wrongType')
         : null;
 
-  return (
-    <div
-      className={cn(
-        'flex gap-4',
-        inline
-          ? 'flex-col items-start sm:flex-row sm:items-center sm:gap-6'
-          : 'flex-col items-center py-2',
-      )}
-    >
-      <AccountAvatar
-        account={account}
-        className={cn('ring-4 ring-primary/10', inline ? 'size-20' : 'size-28')}
-        fallbackClassName={inline ? 'text-2xl' : 'text-3xl'}
-      />
+  return {
+    choose: () => input.current?.click(),
+    remove: () => void save(async () => null, 'removed'),
+    working: status === 'working',
+    message,
+    problem,
+    fileInput: (
       <input
         ref={input}
         type="file"
@@ -138,43 +132,60 @@ export function ProfilePhotoEditor({
         data-testid="profile-photo-input"
         onChange={onFile}
       />
-      <div className={cn('flex flex-col gap-2', inline ? 'items-start' : 'items-center')}>
-        <div className={cn('flex flex-wrap gap-2', inline ? 'justify-start' : 'justify-center')}>
+    ),
+  };
+}
+
+function ProfilePhotoEditor({
+  account,
+  onChanged,
+}: {
+  readonly account: OwnAccount;
+  readonly onChanged: () => void;
+}) {
+  const { t } = useTranslation('admin');
+  const photo = useOwnProfilePhoto(onChanged);
+  return (
+    <div className="flex flex-col items-center gap-4 py-2">
+      <AccountAvatar
+        account={account}
+        className="size-28 ring-4 ring-primary/10"
+        fallbackClassName="text-3xl"
+      />
+      {photo.fileInput}
+      <div className="flex flex-wrap justify-center gap-2">
+        <Button
+          type="button"
+          size="lg"
+          disabled={photo.working}
+          data-testid="profile-photo-choose"
+          onClick={photo.choose}
+        >
+          <Camera aria-hidden="true" />
+          {account.avatarUrl === null ? t('profilePhoto.choose') : t('profilePhoto.replace')}
+        </Button>
+        {account.avatarUrl === null ? null : (
           <Button
             type="button"
             size="lg"
-            disabled={working}
-            data-testid="profile-photo-choose"
-            onClick={() => input.current?.click()}
+            variant="outline"
+            disabled={photo.working}
+            data-testid="profile-photo-remove"
+            onClick={photo.remove}
           >
-            <Camera aria-hidden="true" />
-            {account.avatarUrl === null
-              ? t('admin:profilePhoto.choose')
-              : t('admin:profilePhoto.replace')}
+            <Trash2 aria-hidden="true" />
+            {t('profilePhoto.remove')}
           </Button>
-          {account.avatarUrl === null ? null : (
-            <Button
-              type="button"
-              size="lg"
-              variant="outline"
-              disabled={working}
-              data-testid="profile-photo-remove"
-              onClick={() => void save(async () => null, 'removed')}
-            >
-              <Trash2 aria-hidden="true" />
-              {t('admin:profilePhoto.remove')}
-            </Button>
-          )}
-        </div>
-        <p role="status" className="min-h-5 text-sm text-muted-foreground">
-          {message}
-        </p>
-        {problem === null ? null : (
-          <p role="alert" className="text-sm text-destructive">
-            {problem}
-          </p>
         )}
       </div>
+      <p role="status" className="min-h-5 text-sm text-muted-foreground">
+        {photo.message}
+      </p>
+      {photo.problem === null ? null : (
+        <p role="alert" className="text-sm text-destructive">
+          {photo.problem}
+        </p>
+      )}
     </div>
   );
 }

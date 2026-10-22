@@ -17,11 +17,10 @@ test('the account page offers the three staff languages and the choice sticks', 
   await expect(menu).toBeVisible({ timeout: 30_000 });
   await menu.click();
   await page.getByTestId('user-menu-account').click();
-  const choice = page.getByTestId('account-language').getByRole('radio');
-  await expect(choice).toHaveCount(3);
-  await expect(page.getByTestId('account-language')).toContainText('Català');
-  await expect(page.getByTestId('account-language')).toContainText('Español');
-  await expect(page.getByTestId('account-language')).toContainText('English');
+  // A shadcn Select that applies at once (RAPP-634).
+  const select = page.getByTestId('account-language-select');
+  await select.click();
+  await expect(page.getByRole('option')).toHaveText(['Català', 'Español', 'English']);
 
   await page.getByTestId('language-choice-en').click();
   await expect(page.locator('html')).toHaveAttribute('lang', 'en');
@@ -31,7 +30,8 @@ test('the account page offers the three staff languages and the choice sticks', 
 
   await page.reload();
   await expect(page.locator('html')).toHaveAttribute('lang', 'en');
-  await expect(page.getByTestId('language-choice-en')).toHaveAttribute('aria-checked', 'true');
+  await expect(select).toHaveText('English');
+  await select.click();
   await page.getByTestId('language-choice-ca').click();
   await expect(page.locator('html')).toHaveAttribute('lang', 'ca');
 });
