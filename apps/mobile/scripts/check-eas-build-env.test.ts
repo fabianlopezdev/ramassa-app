@@ -49,10 +49,37 @@ describe('a native production build never carries the test sign-in flag (RAPP-61
     }
   });
 
+  test('the staging profile may carry the flag (RAPP-620)', () => {
+    expect(() =>
+      checkEasBuildEnv({
+        EAS_BUILD_PROFILE: 'staging',
+        APP_VARIANT: 'staging',
+        EXPO_PUBLIC_TEST_SIGN_IN: 'true',
+      }),
+    ).not.toThrow();
+  });
+
+  test('a production profile never builds the staging variant (RAPP-620)', () => {
+    expect(() =>
+      checkEasBuildEnv({ EAS_BUILD_PROFILE: 'production', APP_VARIANT: 'staging' }),
+    ).toThrow('APP_VARIANT');
+    expect(() =>
+      checkEasBuildEnv({ EAS_BUILD_PROFILE: 'production', APP_VARIANT: ' ' }),
+    ).not.toThrow();
+  });
+
   test('the hook script exits non-zero for a production build with the flag', () => {
     expect(runHook({ EAS_BUILD_PROFILE: 'production', EXPO_PUBLIC_TEST_SIGN_IN: 'true' })).toBe(1);
     expect(runHook({ EAS_BUILD_PROFILE: 'production' })).toBe(0);
     expect(runHook({ EAS_BUILD_PROFILE: 'preview', EXPO_PUBLIC_TEST_SIGN_IN: 'true' })).toBe(0);
+    expect(
+      runHook({
+        EAS_BUILD_PROFILE: 'staging',
+        APP_VARIANT: 'staging',
+        EXPO_PUBLIC_TEST_SIGN_IN: 'true',
+      }),
+    ).toBe(0);
+    expect(runHook({ EAS_BUILD_PROFILE: 'production', APP_VARIANT: 'staging' })).toBe(1);
   });
 
   test('EAS runs the check before installing anything', () => {
