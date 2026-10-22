@@ -35,9 +35,6 @@
       // knip cannot load metro.config.js: NativeWind resolves tailwind.config from the
       // process cwd, which is the repo root here. Metro adds no entry files of its own.
       "metro": false,
-      // knip infers expo-updates unless app.json disables updates. Ramassa ships no
-      // over-the-air updates today; that decision stays open in RAPP-68.
-      "ignoreDependencies": ["expo-updates"],
     },
     "apps/admin": {
       // CSS is included so knip reads the Tailwind 4 `@import`s in src/styles/app.css.
