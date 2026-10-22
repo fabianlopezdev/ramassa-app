@@ -25,6 +25,7 @@ test('a published version replaces every text, in her language or Catalan', () =
   const terms: CurrentAppTerms = {
     id: '5eed0000-0000-4000-8099-000000000002',
     versionNumber: 2,
+    isDraft: false,
     content: {
       ...bundled,
       body: { ca: 'Text legal nou.' },
@@ -38,5 +39,18 @@ test('a published version replaces every text, in her language or Catalan', () =
   expect(wording.points).toEqual([{ title: 'Un solo punto', body: 'Explicació.' }]);
   expect(wording.title).toBe(es.termsTitle);
   expect(wording.termsVersion).toBe('2');
+  expect(wording.versionId).toBe(terms.id);
+});
+
+test('a test player shown the draft accepts it as the draft (RAPP-619)', () => {
+  const terms: CurrentAppTerms = {
+    id: '5eed0000-0000-4000-8099-000000000003',
+    versionNumber: null,
+    isDraft: true,
+    content: { ...bundled, body: { ca: 'Esborrany.' } },
+  };
+  const wording = appTermsWording(terms, 'ca', bundledText);
+  expect(wording.body).toBe('Esborrany.');
+  expect(wording.termsVersion).toBe('draft');
   expect(wording.versionId).toBe(terms.id);
 });

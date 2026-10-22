@@ -156,18 +156,29 @@ export function resolveAppTerms(
   };
 }
 
-/** The current published version, as the onboarding catalog carries it. */
+/**
+ * The version she is shown, as the onboarding catalog carries it: the current
+ * published one, or the draft for a test player (RAPP-619).
+ */
 export interface CurrentAppTerms {
   readonly id: string;
-  readonly versionNumber: number;
+  /** Null for a draft. */
+  readonly versionNumber: number | null;
+  readonly isDraft: boolean;
   readonly content: AppTermsContent;
 }
 
-const catalogTermsSchema = z.object({
-  id: z.uuid(),
-  version_number: z.number().int().min(1),
-  content: appTermsDraftSchema,
-});
+const catalogTermsSchema = z
+  .object({
+    id: z.uuid(),
+    version_number: z.number().int().min(1).nullable(),
+    content: appTermsDraftSchema,
+    // Older servers omit it: every version they send is published.
+    is_draft: z.boolean().optional().default(false),
+  })
+  .refine((terms) => terms.is_draft === (terms.version_number === null), {
+    message: 'a published version has its number and a draft has none',
+  });
 
 /**
  * The catalog's `terms`. A version this build cannot read gives null, and the
@@ -179,6 +190,7 @@ export function appTermsFromCatalog(raw: unknown): CurrentAppTerms | null {
   return {
     id: parsed.data.id,
     versionNumber: parsed.data.version_number,
+    isDraft: parsed.data.is_draft,
     content: parsed.data.content,
   };
 }

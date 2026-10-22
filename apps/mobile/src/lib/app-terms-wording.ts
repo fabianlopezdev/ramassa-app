@@ -12,7 +12,7 @@ import {
 import type { LanguageCode } from '@ramassa/shared/schemas';
 
 export interface AppTermsWording extends ResolvedAppTerms {
-  /** What her acceptance names: the version number she was shown. */
+  /** What her acceptance names: the version number she was shown, or 'draft'. */
   readonly termsVersion: string;
   /** The version she accepts again from the terms screen alone; null for the bundled text. */
   readonly versionId: string | null;
@@ -31,7 +31,8 @@ export function appTermsWording(
   if (terms != null) {
     return {
       ...resolveAppTerms(terms.content, language),
-      termsVersion: String(terms.versionNumber),
+      // A test player's draft has no number yet (RAPP-619).
+      termsVersion: terms.versionNumber === null ? 'draft' : String(terms.versionNumber),
       versionId: terms.id,
     };
   }

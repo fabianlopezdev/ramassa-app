@@ -72,6 +72,33 @@ describe('the catalog carries the current version', () => {
     expect(appTermsFromCatalog({ id: 'x', version_number: 2, content: {} })).toBeNull();
     expect(appTermsFromCatalog(null)).toBeNull();
   });
+
+  test('a test player reads the draft, with no number (RAPP-619)', () => {
+    const draft = appTermsFromCatalog({
+      id: '5eed0000-0000-4000-8099-000000000003',
+      version_number: null,
+      content: bundled,
+      is_draft: true,
+    });
+    expect(draft?.versionNumber).toBeNull();
+    expect(draft?.isDraft).toBe(true);
+    expect(
+      appTermsFromCatalog({
+        id: '5eed0000-0000-4000-8099-000000000001',
+        version_number: 2,
+        content: bundled,
+      })?.isDraft,
+    ).toBe(false);
+    // A published version always has its number; a draft never does.
+    expect(
+      appTermsFromCatalog({
+        id: '5eed0000-0000-4000-8099-000000000003',
+        version_number: null,
+        content: bundled,
+        is_draft: false,
+      }),
+    ).toBeNull();
+  });
 });
 
 describe('staff save and publish through the database', () => {

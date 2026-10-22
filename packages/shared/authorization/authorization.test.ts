@@ -373,7 +373,31 @@ describe('the gate', () => {
     const status = await fetchMyAuthorizationStatus(client);
     expect(needsAuthorization(status)).toBe(true);
     expect(status?.seasonName).toBe('2026/27');
+    expect(status?.isDraft).toBe(false);
     expect(calls).toEqual([['my_authorization_status']]);
+  });
+
+  test('a test player is asked to sign the draft, with no number (RAPP-619)', async () => {
+    const version = buildAuthorizationVersion();
+    const { client } = clientReturning({
+      data: [
+        {
+          required: true,
+          version_id: '5eed0000-0000-4000-8041-000000000009',
+          season_id: version.season_id,
+          season_name: '2026/27',
+          version_number: null,
+          content: version.content,
+          is_returning: false,
+          is_draft: true,
+        },
+      ],
+      error: null,
+    });
+    const status = await fetchMyAuthorizationStatus(client);
+    expect(status?.isDraft).toBe(true);
+    expect(status?.versionNumber).toBeNull();
+    expect(needsAuthorization(status)).toBe(true);
   });
 
   test('a failed read is a typed DB-1 error', async () => {

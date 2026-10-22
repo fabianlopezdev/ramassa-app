@@ -108,6 +108,27 @@ describe('the scenario calls (RAPP-619)', () => {
     expect(scenario.returning).toBe(true);
     expect(scenario.answered.has('phone')).toBe(true);
     expect(scenario.language).toBe('ar');
+    // An older server sends no draft flags: nothing is a draft.
+    expect(scenario.termsDraft).toBe(false);
+    expect(scenario.authorizationDraft).toBe(false);
+  });
+
+  test('her page knows when her phone shows a draft (RAPP-619)', async () => {
+    const scenario = await fetchTestPlayerScenario(
+      client({
+        terms_accepted: false,
+        current_season: '2026/27',
+        signed_this_season: false,
+        returning: false,
+        answered: [],
+        preferred_language: 'ca',
+        terms_draft: true,
+        authorization_draft: true,
+      }),
+      id,
+    );
+    expect(scenario.termsDraft).toBe(true);
+    expect(scenario.authorizationDraft).toBe(true);
   });
 
   test('her app reads the stamp, or none', async () => {

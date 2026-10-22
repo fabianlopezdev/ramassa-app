@@ -196,6 +196,9 @@ export const testPlayerScenarioSchema = z
     custom_answered: z.array(z.string()).optional(),
     org_id: z.uuid().optional(),
     preferred_language: z.enum(['ca', 'es', 'en', 'ar', 'fa']).catch('ca'),
+    // Her phone shows the draft terms or authorization (RAPP-619); an older server sends neither.
+    terms_draft: z.boolean().optional().default(false),
+    authorization_draft: z.boolean().optional().default(false),
   })
   .transform((row) => ({
     termsAccepted: row.terms_accepted,
@@ -206,6 +209,8 @@ export const testPlayerScenarioSchema = z
     customAnswered: new Set(row.custom_answered ?? []),
     orgId: row.org_id ?? null,
     language: row.preferred_language as LanguageCode,
+    termsDraft: row.terms_draft,
+    authorizationDraft: row.authorization_draft,
   }));
 export type TestPlayerScenario = z.infer<typeof testPlayerScenarioSchema>;
 

@@ -275,10 +275,12 @@ const statusRowSchema = z.object({
   version_id: z.uuid(),
   season_id: z.uuid(),
   season_name: z.string(),
-  version_number: z.number().int(),
+  // Null for the draft a test player is shown (RAPP-619).
+  version_number: z.number().int().nullable(),
   content: authorizationContentSchema,
   // Returning: she signed an earlier season (RAPP-306). Older servers omit it.
   is_returning: z.boolean().optional().default(false),
+  is_draft: z.boolean().optional().default(false),
 });
 
 export interface AuthorizationStatus {
@@ -286,10 +288,13 @@ export interface AuthorizationStatus {
   readonly versionId: string;
   readonly seasonId: string;
   readonly seasonName: string;
-  readonly versionNumber: number;
+  /** Null for a draft. */
+  readonly versionNumber: number | null;
   readonly content: AuthorizationContent;
   /** She signed an earlier season: this is re-registration (RAPP-306). */
   readonly isReturning: boolean;
+  /** A test player is shown the organization's draft (RAPP-619). */
+  readonly isDraft: boolean;
 }
 
 /**
@@ -315,6 +320,7 @@ export async function fetchMyAuthorizationStatus(
     versionNumber: row.version_number,
     content: row.content,
     isReturning: row.is_returning,
+    isDraft: row.is_draft,
   };
 }
 
