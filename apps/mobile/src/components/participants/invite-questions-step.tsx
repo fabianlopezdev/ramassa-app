@@ -26,6 +26,7 @@ import {
   hiddenBuiltinQuestions,
   isScreenAnswered,
   textIn,
+  wizardFlow,
   wizardScreens,
   type IntakeCatalog,
 } from '@ramassa/shared/intake-builder';
@@ -68,7 +69,13 @@ export function InviteQuestionsStep({
   const { t } = useTranslation(['participants', 'onboarding']);
   const fontClass = useLanguageFontClass();
   const { language } = useLanguage();
-  const rows = previewWizardQuestions(answered, states, hiddenBuiltinQuestions(catalog));
+  const rows = previewWizardQuestions(
+    answered,
+    states,
+    hiddenBuiltinQuestions(catalog),
+    // In the order her screens come, as staff arranged them (RAPP-612).
+    wizardFlow(catalog),
+  );
   const customScreens = wizardScreens(catalog).filter((screen) => !isScreenAnswered(screen, {}));
   const customCount = customScreens.reduce((total, screen) => total + screen.questions.length, 0);
   const presets: readonly {

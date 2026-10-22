@@ -12,12 +12,14 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { createContext, use, useMemo, type ReactNode } from 'react';
 import { useLanguage } from '@ramassa/shared/i18n';
 import {
+  DEFAULT_WIZARD_FLOW,
   nextWizardScreen,
   previousWizardScreen,
   wizardScreenPosition,
   type AnsweredQuestions,
   type CustomWizardScreen,
   type IntakeQuestion,
+  type WizardFlow,
   type WizardStepKey,
 } from '@ramassa/shared/intake';
 import {
@@ -54,6 +56,11 @@ export interface WizardIntake {
   readonly customAnswers: CustomAnswers;
   readonly customScreens: readonly IntakeScreen[];
   readonly customPlan: readonly CustomWizardScreen[];
+  /**
+   * The screen order and hidden screens staff arranged (RAPP-612). Absent
+   * means the app's own order.
+   */
+  readonly flow?: WizardFlow;
   /** Built-in questions staff removed: never asked, even when editing. */
   readonly hidden: ReadonlySet<IntakeQuestion>;
   /**
@@ -110,7 +117,7 @@ export interface WizardStep {
 }
 
 export function useWizardStep(screen: WizardStepKey): WizardStep {
-  const { notAsked, customPlan, hidden } = useWizardIntake();
+  const { notAsked, customPlan, hidden, flow = DEFAULT_WIZARD_FLOW } = useWizardIntake();
   const router = useRouter();
   const { edit } = useLocalSearchParams<{ edit?: string }>();
   const isEditing = edit === '1';
@@ -118,10 +125,10 @@ export function useWizardStep(screen: WizardStepKey): WizardStep {
   return useMemo<WizardStep>(() => {
     const next: WizardStepKey = isEditing
       ? 'summary'
-      : nextWizardScreen(screen, notAsked, customPlan);
+      : nextWizardScreen(screen, notAsked, customPlan, flow);
     const previous: WizardStepKey | null = isEditing
       ? 'summary'
-      : previousWizardScreen(screen, notAsked, customPlan);
+      : previousWizardScreen(screen, notAsked, customPlan, flow);
     const previousStep =
       previous === 'documentation' &&
       hasDocumentDetails(onboardingDraftStore.loadDraft()?.documentation?.documentType)
@@ -138,7 +145,7 @@ export function useWizardStep(screen: WizardStepKey): WizardStep {
       router.canGoBack() ? router.back() : router.replace(wizardStepRoute('summary', 'back'));
     return {
       isEditing,
-      position: wizardScreenPosition(screen, notAsked, customPlan),
+      position: wizardScreenPosition(screen, notAsked, customPlan, flow),
       shouldAsk: (question) => !hidden.has(question) && (isEditing || !notAsked.has(question)),
       nextDraftStep: wizardDraftStep(next),
       goNext: isEditing ? backToSummary : () => router.push(wizardStepRoute(next)),
@@ -151,7 +158,7 @@ export function useWizardStep(screen: WizardStepKey): WizardStep {
           ? null
           : () => router.replace(wizardStepRoute(previousStep ?? previous, 'back')),
     };
-  }, [notAsked, customPlan, hidden, isEditing, router, screen]);
+  }, [notAsked, customPlan, flow, hidden, isEditing, router, screen]);
 }
 
 export interface BuiltinWording {

@@ -5,9 +5,10 @@
  * shows, even when staff answered everything, because what is stored about her
  * is hers to check.
  *
- * Staff's own screens (RAPP-307) show after the built-in step they follow,
- * each under its title with its own Change button. A built-in question staff
- * removed shows no row: it is never asked.
+ * The sections follow the wizard's order as staff arranged it (RAPP-612):
+ * built-in screens and staff screens (RAPP-307), each under its title with its
+ * own Change button. A built-in question staff removed, or a screen staff hid,
+ * shows no row: it is never asked.
  */
 
 import { ReviewEditAction, ReviewRow, ReviewSection } from '@/components/onboarding/review-section';
@@ -21,19 +22,22 @@ import {
   wizardStepRoute,
 } from '@/lib/onboarding-intake';
 import { useBuiltinWording, useWizardIntake, useWizardStep } from '@/lib/onboarding-intake-context';
+import { useScreenTitle } from '@/lib/screen-wording';
 import { SEASON_SCREEN_TITLE_KEYS } from '@/lib/season-draft';
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { Fragment, useCallback, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LANGUAGE_NATIVE_NAMES } from '@ramassa/shared/i18n';
 import { countryLabelForCanonical } from '@ramassa/shared/i18n/countries';
 import { municipalityLabelForCanonical } from '@ramassa/shared/i18n/municipalities';
 import {
+  customStepId,
   customStepKey,
+  DEFAULT_WIZARD_FLOW,
   SEASON_WIZARD_SCREENS,
   WIZARD_SCREEN_QUESTIONS,
+  wizardFlowOrder,
   type IntakeQuestion,
-  type QuestionScreen,
   type WizardQuestionScreen,
 } from '@ramassa/shared/intake';
 import {
@@ -42,6 +46,7 @@ import {
   isEmptyAnswer,
   textIn,
   type CustomAnswers,
+  type IntakeScreen,
 } from '@ramassa/shared/intake-builder';
 import type { OnboardingDraft } from '@ramassa/shared/onboarding-drafts';
 import type { LanguageCode } from '@ramassa/shared/schemas';
@@ -81,67 +86,55 @@ function EditButton({
   );
 }
 
-/** The staff screens that follow one built-in step, each with her answers (RAPP-307). */
-function CustomSections({
-  after,
+/** A staff screen with her answers (RAPP-307). */
+function CustomSection({
+  screen,
   answers,
   language,
 }: {
-  readonly after: QuestionScreen;
+  readonly screen: IntakeScreen;
   readonly answers: CustomAnswers;
   readonly language: LanguageCode;
 }) {
   const { t } = useTranslation('onboarding');
   const router = useRouter();
-  const { customScreens } = useWizardIntake();
   const words = {
     yes: t('yesOption'),
     no: t('noOption'),
     maybe: t('customMaybeOption'),
     archived: t('customArchivedOption'),
   };
+  const title = textIn(screen.title, language);
   return (
-    <>
-      {customScreens
-        .filter((screen) => screen.afterScreen === after)
-        .map((screen) => {
-          const title = textIn(screen.title, language);
+    <ReviewSection
+      title={title}
+      action={
+        <EditButton
+          section={`custom-${screen.id}`}
+          title={title}
+          onPress={() =>
+            router.push(`${String(wizardStepRoute(customStepKey(screen.id)))}?edit=1` as Href)
+          }
+        />
+      }
+    >
+      {screen.questions
+        .filter((question) => isCustomQuestionVisible(question, answers))
+        .map((question) => {
+          const value = answers[question.id];
           return (
-            <ReviewSection
-              key={screen.id}
-              title={title}
-              action={
-                <EditButton
-                  section={`custom-${screen.id}`}
-                  title={title}
-                  onPress={() =>
-                    router.push(
-                      `${String(wizardStepRoute(customStepKey(screen.id)))}?edit=1` as Href,
-                    )
-                  }
-                />
+            <ReviewRow
+              key={question.id}
+              label={textIn(question.label, language)}
+              value={
+                value === undefined || isEmptyAnswer(value)
+                  ? t('summaryNotGiven')
+                  : answerText(question, value, language, words)
               }
-            >
-              {screen.questions
-                .filter((question) => isCustomQuestionVisible(question, answers))
-                .map((question) => {
-                  const value = answers[question.id];
-                  return (
-                    <ReviewRow
-                      key={question.id}
-                      label={textIn(question.label, language)}
-                      value={
-                        value === undefined || isEmptyAnswer(value)
-                          ? t('summaryNotGiven')
-                          : answerText(question, value, language, words)
-                      }
-                    />
-                  );
-                })}
-            </ReviewSection>
+            />
           );
         })}
-    </>
+    </ReviewSection>
   );
 }
 
@@ -149,8 +142,16 @@ export default function SummaryStepScreen() {
   const { t, i18n } = useTranslation('onboarding');
   const router = useRouter();
   const step = useWizardStep('summary');
-  const { customAnswers, hidden } = useWizardIntake();
+  const {
+    customAnswers,
+    hidden,
+    customScreens,
+    customPlan,
+    flow = DEFAULT_WIZARD_FLOW,
+  } = useWizardIntake();
   const wording = useBuiltinWording();
+  // A section is titled as staff worded its screen (RAPP-612), or as before.
+  const screenTitle = useScreenTitle();
   const locale = (i18n.resolvedLanguage as LanguageCode | undefined) ?? 'ca';
   const [draft, setDraft] = useState<OnboardingDraft | null>(() =>
     onboardingDraftStore.loadDraft(),
@@ -192,35 +193,42 @@ export default function SummaryStepScreen() {
   const hasDependents = logistics.hasDependents === true;
   const numDependents = text(logistics.numDependents);
 
-  function confirm() {
-    onboardingDraftStore.saveDraft({
-      ...onboardingDraftStore.loadDraft(),
-      currentStep: step.nextDraftStep,
-    });
-    step.goNext();
-  }
-
-  return (
-    <WizardFrame
-      screenId={'summary'}
-      stepNumber={step.position.step}
-      totalSteps={step.position.total}
-      title={t('summaryTitle')}
-      intro={t('summaryIntro')}
-      continueLabel={t('summaryConfirmAction')}
-      onContinue={confirm}
-      onBack={
-        step.goBack === null
-          ? undefined
-          : () => {
-              onboardingDraftStore.saveDraft({
-                ...onboardingDraftStore.loadDraft(),
-                currentStep: step.previousDraftStep ?? 'summary',
-              });
-              step.goBack?.();
-            }
-      }
-    >
+  // Each built-in screen's section, placed below in the order staff arranged.
+  const seasonSection = (screen: (typeof SEASON_WIZARD_SCREENS)[number]): ReactNode =>
+    hasQuestions(screen) ? (
+      <ReviewSection
+        title={screenTitle(screen, t(SEASON_SCREEN_TITLE_KEYS[screen]))}
+        action={
+          <EditButton
+            section={screen}
+            title={screenTitle(screen, t(SEASON_SCREEN_TITLE_KEYS[screen]))}
+            onPress={() => edit(screen)}
+          />
+        }
+      >
+        <SeasonAnswerRows
+          rowComponent={ReviewRow}
+          showSeasonNumber={false}
+          emptyLabel={notGiven}
+          wording={wording}
+          shows={(question) =>
+            WIZARD_SCREEN_QUESTIONS[screen].includes(question) && shows(question)
+          }
+          profile={{
+            applicant_status: (season.applicantStatus as never) ?? null,
+            applicant_status_details: text(season.applicantStatusDetails),
+            supporting_entities: Array.isArray(season.supportingEntities)
+              ? (season.supportingEntities as string[])
+              : null,
+            season_number: null,
+            childcare_need: (season.childcareNeed as never) ?? null,
+            specific_needs: text(season.specificNeeds),
+          }}
+        />
+      </ReviewSection>
+    ) : null;
+  const sections: Readonly<Partial<Record<WizardQuestionScreen, ReactNode>>> = {
+    identity: (
       <ReviewSection
         title={t('summarySectionName')}
         action={
@@ -242,14 +250,14 @@ export default function SummaryStepScreen() {
           value={show(text(identity.lastName))}
         />
       </ReviewSection>
-      <CustomSections after="identity" answers={answers} language={locale} />
-
+    ),
+    background: (
       <ReviewSection
-        title={t('backgroundTitle')}
+        title={screenTitle('background', t('backgroundTitle'))}
         action={
           <EditButton
             section="background"
-            title={t('backgroundTitle')}
+            title={screenTitle('background', t('backgroundTitle'))}
             onPress={() => edit('background')}
           />
         }
@@ -292,59 +300,57 @@ export default function SummaryStepScreen() {
           )}
         />
       </ReviewSection>
-      <CustomSections after="background" answers={answers} language={locale} />
-
-      {hasQuestions('documentation') ? (
-        <ReviewSection
-          title={t('documentationTitle')}
-          action={
-            <EditButton
-              section="documentation"
-              title={t('documentationTitle')}
-              onPress={() => edit('documentation')}
-            />
-          }
-        >
-          <ReviewRow
-            icon="document"
-            label={wording.label('document', t('documentTypeLabel'))}
-            value={show(
-              documentType === null
-                ? null
-                : (wording.options(
-                    'document',
-                    [
-                      {
-                        value: documentType,
-                        label: t(DOCUMENT_TYPE_LABEL_KEYS[documentType] ?? 'documentTypeOther'),
-                      },
-                    ],
-                    documentType,
-                  )[0]?.label ?? null),
-            )}
-          />
-          {documentType === 'other' ? (
-            <ReviewRow
-              label={t('documentNameLabel')}
-              value={show(text(documentation.documentName))}
-            />
-          ) : null}
-          {documentType === null || documentType === 'none' ? null : (
-            <ReviewRow
-              label={t('documentNumberLabel')}
-              value={show(text(documentation.documentNumber))}
-            />
-          )}
-        </ReviewSection>
-      ) : null}
-      <CustomSections after="documentation" answers={answers} language={locale} />
-
+    ),
+    documentation: hasQuestions('documentation') ? (
       <ReviewSection
-        title={t('logisticsTitle')}
+        title={screenTitle('documentation', t('documentationTitle'))}
+        action={
+          <EditButton
+            section="documentation"
+            title={screenTitle('documentation', t('documentationTitle'))}
+            onPress={() => edit('documentation')}
+          />
+        }
+      >
+        <ReviewRow
+          icon="document"
+          label={wording.label('document', t('documentTypeLabel'))}
+          value={show(
+            documentType === null
+              ? null
+              : (wording.options(
+                  'document',
+                  [
+                    {
+                      value: documentType,
+                      label: t(DOCUMENT_TYPE_LABEL_KEYS[documentType] ?? 'documentTypeOther'),
+                    },
+                  ],
+                  documentType,
+                )[0]?.label ?? null),
+          )}
+        />
+        {documentType === 'other' ? (
+          <ReviewRow
+            label={t('documentNameLabel')}
+            value={show(text(documentation.documentName))}
+          />
+        ) : null}
+        {documentType === null || documentType === 'none' ? null : (
+          <ReviewRow
+            label={t('documentNumberLabel')}
+            value={show(text(documentation.documentNumber))}
+          />
+        )}
+      </ReviewSection>
+    ) : null,
+    logistics: (
+      <ReviewSection
+        title={screenTitle('logistics', t('logisticsTitle'))}
         action={
           <EditButton
             section="logistics"
-            title={t('logisticsTitle')}
+            title={screenTitle('logistics', t('logisticsTitle'))}
             onPress={() => edit('logistics')}
           />
         }
@@ -405,72 +411,80 @@ export default function SummaryStepScreen() {
           }
         />
       </ReviewSection>
-      {hasQuestions('equipment') ? (
-        <ReviewSection
-          title={t('equipmentTitle')}
-          action={
-            <EditButton
-              section="equipment"
-              title={t('equipmentTitle')}
-              onPress={() => edit('equipment')}
-            />
-          }
-        >
-          {shows('clothing_size') ? (
-            <ReviewRow
-              icon="clothing"
-              label={wording.label('clothing_size', t('clothingSizeLabel'))}
-              value={show(text(logistics.clothingSize))}
-            />
-          ) : null}
-          {shows('shoe_size') ? (
-            <ReviewRow
-              icon="shoes"
-              label={wording.label('shoe_size', t('shoeSizeLabel'))}
-              value={show(text(logistics.shoeSize))}
-            />
-          ) : null}
-        </ReviewSection>
-      ) : null}
-      <CustomSections after="logistics" answers={answers} language={locale} />
+    ),
+    equipment: hasQuestions('equipment') ? (
+      <ReviewSection
+        title={screenTitle('equipment', t('equipmentTitle'))}
+        action={
+          <EditButton
+            section="equipment"
+            title={screenTitle('equipment', t('equipmentTitle'))}
+            onPress={() => edit('equipment')}
+          />
+        }
+      >
+        {shows('clothing_size') ? (
+          <ReviewRow
+            icon="clothing"
+            label={wording.label('clothing_size', t('clothingSizeLabel'))}
+            value={show(text(logistics.clothingSize))}
+          />
+        ) : null}
+        {shows('shoe_size') ? (
+          <ReviewRow
+            icon="shoes"
+            label={wording.label('shoe_size', t('shoeSizeLabel'))}
+            value={show(text(logistics.shoeSize))}
+          />
+        ) : null}
+      </ReviewSection>
+    ) : null,
+    ...Object.fromEntries(SEASON_WIZARD_SCREENS.map((screen) => [screen, seasonSection(screen)])),
+  };
 
-      {/* The registration questions (RAPP-306), from her draft like the rest. */}
-      {SEASON_WIZARD_SCREENS.map((screen) =>
-        hasQuestions(screen) ? (
-          <ReviewSection
-            key={screen}
-            title={t(SEASON_SCREEN_TITLE_KEYS[screen])}
-            action={
-              <EditButton
-                section={screen}
-                title={t(SEASON_SCREEN_TITLE_KEYS[screen])}
-                onPress={() => edit(screen)}
-              />
+  function confirm() {
+    onboardingDraftStore.saveDraft({
+      ...onboardingDraftStore.loadDraft(),
+      currentStep: step.nextDraftStep,
+    });
+    step.goNext();
+  }
+
+  return (
+    <WizardFrame
+      screenId={'summary'}
+      stepNumber={step.position.step}
+      totalSteps={step.position.total}
+      title={t('summaryTitle')}
+      intro={t('summaryIntro')}
+      continueLabel={t('summaryConfirmAction')}
+      onContinue={confirm}
+      onBack={
+        step.goBack === null
+          ? undefined
+          : () => {
+              onboardingDraftStore.saveDraft({
+                ...onboardingDraftStore.loadDraft(),
+                currentStep: step.previousDraftStep ?? 'summary',
+              });
+              step.goBack?.();
             }
-          >
-            <SeasonAnswerRows
-              rowComponent={ReviewRow}
-              showSeasonNumber={false}
-              emptyLabel={notGiven}
-              wording={wording}
-              shows={(question) =>
-                WIZARD_SCREEN_QUESTIONS[screen].includes(question) && shows(question)
-              }
-              profile={{
-                applicant_status: (season.applicantStatus as never) ?? null,
-                applicant_status_details: text(season.applicantStatusDetails),
-                supporting_entities: Array.isArray(season.supportingEntities)
-                  ? (season.supportingEntities as string[])
-                  : null,
-                season_number: null,
-                childcare_need: (season.childcareNeed as never) ?? null,
-                specific_needs: text(season.specificNeeds),
-              }}
-            />
-          </ReviewSection>
-        ) : null,
-      )}
-      <CustomSections after="season" answers={answers} language={locale} />
+      }
+    >
+      {wizardFlowOrder(customPlan, flow).map((step) => {
+        const customId = customStepId(step);
+        const custom =
+          customId === null ? undefined : customScreens.find((screen) => screen.id === customId);
+        return (
+          <Fragment key={step}>
+            {custom === undefined ? (
+              (sections[step as WizardQuestionScreen] ?? null)
+            ) : (
+              <CustomSection screen={custom} answers={answers} language={locale} />
+            )}
+          </Fragment>
+        );
+      })}
     </WizardFrame>
   );
 }

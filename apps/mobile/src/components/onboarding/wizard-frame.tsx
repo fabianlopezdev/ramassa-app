@@ -11,13 +11,20 @@
  * Progress is a BAR plus a "step X of Y" line, not just text: the SPEC's
  * low-literacy rule is visual progress, and five segments filling up needs no
  * reading at all.
+ *
+ * Inside the wizard, staff wording of a built-in screen (RAPP-612) replaces
+ * the title, intro and button the screen passes, in her language only, and a
+ * help line staff wrote shows first in the body. Validation messages are the
+ * screens' own and never change.
  */
 
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTitle } from '@/components/auth/auth-title';
 import { FormScreen } from '@/components/layout/form-screen';
+import { QuestionHelp } from '@/components/onboarding/question-help';
 import { WizardProgress } from '@/components/onboarding/wizard-progress';
 import { useOnboardingEntrance } from '@/lib/onboarding-entrance';
+import { useScreenWording } from '@/lib/screen-wording';
 import { useLocalSearchParams } from 'expo-router';
 import type { ReactNode } from 'react';
 import { View } from 'react-native';
@@ -73,6 +80,7 @@ function WizardFrameContent({
   const { entrance, edit } = useLocalSearchParams<{ entrance?: string; edit?: string }>();
   const showProgress = stepNumber !== undefined && edit !== '1';
   const entranceMode = useOnboardingEntrance(screenId, entrance !== 'none' && edit !== '1');
+  const wording = useScreenWording(screenId);
 
   return (
     <FormScreen
@@ -85,12 +93,25 @@ function WizardFrameContent({
           onBack={onBack}
         />
       }
-      heading={<AuthTitle title={title} subtitle={intro} align="start" />}
+      heading={
+        <AuthTitle
+          title={wording.text('title', title)}
+          subtitle={wording.text('intro', intro)}
+          align="start"
+        />
+      }
       bottomAction={
-        <AuthSubmitButton label={continueLabel} onPress={onContinue} isLoading={isContinueBusy} />
+        <AuthSubmitButton
+          label={wording.text('continue_label', continueLabel)}
+          onPress={onContinue}
+          isLoading={isContinueBusy}
+        />
       }
     >
-      <View className="gap-lg">{children}</View>
+      <View className="gap-lg">
+        <QuestionHelp text={wording.help} />
+        {children}
+      </View>
     </FormScreen>
   );
 }

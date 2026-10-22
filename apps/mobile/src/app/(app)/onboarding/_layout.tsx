@@ -11,6 +11,7 @@ import {
   wizardDraftStep,
 } from '@/lib/onboarding-intake';
 import { WizardIntakeProvider, type WizardIntake } from '@/lib/onboarding-intake-context';
+import { ScreenWordingProvider } from '@/lib/screen-wording';
 import { supabase } from '@/lib/supabase';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useQuery } from '@tanstack/react-query';
@@ -32,6 +33,7 @@ import {
   fetchIntakeCatalog,
   fetchMyCustomAnswers,
   hiddenBuiltinQuestions,
+  wizardFlow,
   wizardScreens,
   type CustomAnswers,
   type IntakeCatalog,
@@ -68,7 +70,7 @@ async function loadStaffQuestions(): Promise<{
  * language picker, including when staff answers let her skip background.
  */
 function seedWizardDraft(intake: WizardIntake, language: LanguageCode): void {
-  const firstScreen = nextWizardScreen('start', intake.notAsked, intake.customPlan);
+  const firstScreen = nextWizardScreen('start', intake.notAsked, intake.customPlan, intake.flow);
   const scenarioStamp = intake.scenarioStamp ?? null;
   const draft = draftForScenario(onboardingDraftStore.loadDraft(), scenarioStamp) ?? {
     currentStep: wizardDraftStep(firstScreen),
@@ -128,6 +130,9 @@ function OnboardingScreens() {
         customAnswers: answers,
         customScreens,
         customPlan: customWizardPlan(customScreens, answers),
+        // The order and hidden screens staff arranged (RAPP-612). The staff
+        // preview of a new invitation reads the same flow.
+        flow: wizardFlow(catalog),
         hidden,
         scenarioStamp,
       };
@@ -167,7 +172,10 @@ function OnboardingScreens() {
 
   return (
     <WizardIntakeProvider intake={intake.data}>
-      <Stack screenOptions={hiddenHeaderScreenOptions} />
+      {/* Staff wording of the built-in screens (RAPP-612), read by every frame. */}
+      <ScreenWordingProvider catalog={intake.data.catalog} language={language}>
+        <Stack screenOptions={hiddenHeaderScreenOptions} />
+      </ScreenWordingProvider>
     </WizardIntakeProvider>
   );
 }

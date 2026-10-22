@@ -37,6 +37,7 @@ import {
   wizardStepRoute,
 } from '@/lib/onboarding-intake';
 import { useWizardIntake, useWizardStep } from '@/lib/onboarding-intake-context';
+import { useScreenWording } from '@/lib/screen-wording';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
@@ -69,6 +70,8 @@ export default function TermsStepScreen() {
     (key) => t(key),
   );
   const [draft] = useState(() => onboardingDraftStore.loadDraft());
+  // Staff wording of this screen's decline button (RAPP-612), or the app's own.
+  const declineLabel = useScreenWording('terms').text('decline_label', t('termsDeclineAction'));
 
   const signatureOwner = draft?.terms?.signatureOwnerId;
   const sameSigner = user !== null && signatureOwner === user.id;
@@ -318,7 +321,7 @@ export default function TermsStepScreen() {
       )}
 
       <PressableScale
-        accessibilityLabel={t('termsDeclineAction')}
+        accessibilityLabel={declineLabel}
         isDisabled={isSubmitting}
         onPress={() =>
           confirmAction({
@@ -336,7 +339,7 @@ export default function TermsStepScreen() {
         className="min-h-min items-center justify-center py-sm"
       >
         <Text className={`text-form font-medium text-neutral-700 ${languageFontClass}`}>
-          {t('termsDeclineAction')}
+          {declineLabel}
         </Text>
       </PressableScale>
     </WizardFrame>
