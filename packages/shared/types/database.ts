@@ -2158,6 +2158,8 @@ export type Database = {
         Row: {
           after_screen: string;
           created_at: string;
+          home_after_screen: string;
+          home_sort_order: number;
           id: string;
           intro: Json | null;
           is_archived: boolean;
@@ -2169,6 +2171,8 @@ export type Database = {
         Insert: {
           after_screen: string;
           created_at?: string;
+          home_after_screen: string;
+          home_sort_order: number;
           id?: string;
           intro?: Json | null;
           is_archived?: boolean;
@@ -2180,6 +2184,8 @@ export type Database = {
         Update: {
           after_screen?: string;
           created_at?: string;
+          home_after_screen?: string;
+          home_sort_order?: number;
           id?: string;
           intro?: Json | null;
           is_archived?: boolean;

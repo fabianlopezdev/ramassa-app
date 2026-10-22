@@ -1487,6 +1487,9 @@ export function buildIntakeScreen(overrides: Partial<IntakeScreenRow> = {}): Int
     intro: null,
     after_screen: 'logistics',
     sort_order: 0,
+    // Where staff placed it in the question builder (RAPP-612): the flow reset restores it.
+    home_after_screen: overrides.after_screen ?? 'logistics',
+    home_sort_order: overrides.sort_order ?? 0,
     is_archived: false,
     created_at: FIXTURE_TIMESTAMP,
     updated_at: FIXTURE_TIMESTAMP,
