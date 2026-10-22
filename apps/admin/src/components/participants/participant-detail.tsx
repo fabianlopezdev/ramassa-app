@@ -29,6 +29,7 @@ import { ParticipantProfileFields } from '@/components/participants/participant-
 import { ParticipantQuestionStates } from '@/components/participants/participant-question-states';
 import { ParticipantRgpd } from '@/components/participants/participant-rgpd';
 import { TestPlayerDelete } from '@/components/participants/test-player-delete';
+import { TestPlayerScenarioPanel } from '@/components/participants/test-player-scenario';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { mediaWorkerUrl } from '@/lib/media-worker';
@@ -69,11 +70,13 @@ import {
 import {
   addParticipantNote,
   setParticipantActive,
+  setTestPlayerScenario,
   updateParticipantProfile,
   type ParticipantActivityEntry,
   type ParticipantDetailRow,
   type ParticipantNoteRow,
   type ProfilePrefillPayload,
+  type TestPlayerScenario,
 } from '@ramassa/shared/participants';
 import {
   canDeleteTestPlayer,
@@ -111,6 +114,8 @@ export interface ParticipantDetailProps {
   /** The questions staff added, and her answers to them (RAPP-307). */
   readonly intakeCatalog?: IntakeCatalog;
   readonly customAnswers?: readonly ParticipantCustomAnswer[];
+  /** A test player's situation, for the scenario switches (RAPP-619); null for a real woman. */
+  readonly testScenario?: TestPlayerScenario | null;
 }
 
 export function ParticipantDetail({
@@ -129,6 +134,7 @@ export function ParticipantDetail({
   seasonAnswers = [],
   intakeCatalog = EMPTY_INTAKE_CATALOG,
   customAnswers = [],
+  testScenario = null,
 }: ParticipantDetailProps) {
   const { t, i18n } = useTranslation(['participants', 'common', 'profile']);
   const locale = i18n.resolvedLanguage ?? 'ca';
@@ -395,7 +401,8 @@ export function ParticipantDetail({
         )}
       </DetailSection>
 
-      {hasJoined || !teamTools ? null : (
+      {/* The design role chooses a test player's questions too (RAPP-618). */}
+      {hasJoined || (!teamTools && !isTestPlayer) ? null : (
         <ParticipantQuestionStates
           states={questionStates}
           answered={new Set(answeredQuestions)}
@@ -437,6 +444,16 @@ export function ParticipantDetail({
           seasonAnswers={seasonAnswers}
           onSetPriorSeasons={async (count) => {
             await setPriorSeasons(supabase, participant.id, count);
+            await router.invalidate();
+          }}
+        />
+      ) : null}
+
+      {isTestPlayer && testScenario !== null ? (
+        <TestPlayerScenarioPanel
+          scenario={testScenario}
+          onChange={async (change) => {
+            await setTestPlayerScenario(supabase, participant.id, change);
             await router.invalidate();
           }}
         />

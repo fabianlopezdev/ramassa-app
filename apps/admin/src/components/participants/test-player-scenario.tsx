@@ -1,0 +1,254 @@
+/**
+ * Scenario switches on a test player (RAPP-619). The person designing the
+ * onboarding sets the situation of a made-up woman, then opens the app as her:
+ *   - which wizard questions she already has answered (a fixed sample answer
+ *     in her language, recorded as a staff answer, or nothing);
+ *   - whether she accepted the app terms (joined) or goes through the
+ *     onboarding again;
+ *   - whether she signed this season's authorization;
+ *   - whether she is a new player or returns from an earlier season;
+ *   - and a reset to a brand-new invited player.
+ * Only on a test player: the page shows it for no one else, and the database
+ * refuses every switch on a real woman.
+ */
+
+import { Button } from '@/components/ui/button';
+import { QUESTION_LABEL_KEYS } from '@/lib/builtin-questions';
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { CURRENT_TERMS_VERSION } from '@ramassa/shared/constants';
+import { WIZARD_QUESTIONS, type IntakeQuestion } from '@ramassa/shared/intake';
+import {
+  sampleAnswerPayload,
+  sampleAnswersFor,
+  type TestPlayerScenario,
+  type TestPlayerScenarioChange,
+} from '@ramassa/shared/participants';
+
+/** Fill all also answers her language, which the wizard asks before its screens. */
+const FILL_ALL_QUESTIONS: readonly IntakeQuestion[] = [...WIZARD_QUESTIONS, 'preferred_language'];
+
+const REQUIRED_ANSWERS_REFUSAL = 'fill her required answers';
+const JOINED_REFUSAL = 'she has joined';
+const NO_SEASON_REFUSAL = 'no current season';
+
+export function TestPlayerScenarioPanel({
+  scenario,
+  onChange,
+}: {
+  readonly scenario: TestPlayerScenario;
+  /** One switch, one database call. Throws when refused. */
+  readonly onChange: (change: TestPlayerScenarioChange) => Promise<void>;
+}) {
+  const { t } = useTranslation(['participants', 'onboarding']);
+  const [working, setWorking] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const language = scenario.language;
+
+  async function apply(change: TestPlayerScenarioChange) {
+    setWorking(true);
+    setErrorMessage(null);
+    try {
+      await onChange(change);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '';
+      setErrorMessage(
+        message.includes(REQUIRED_ANSWERS_REFUSAL)
+          ? t('testScenarioNeedsRequiredAnswers')
+          : message.includes(JOINED_REFUSAL)
+            ? t('testScenarioJoinedKeepsRequired')
+            : message.includes(NO_SEASON_REFUSAL)
+              ? t('testScenarioNoSeason')
+              : t('testScenarioFailed'),
+      );
+    } finally {
+      setWorking(false);
+    }
+  }
+
+  return (
+    <section
+      aria-labelledby="test-scenario-title"
+      className="flex flex-col gap-5 rounded-xl border bg-card p-5"
+      data-testid="test-player-scenario"
+    >
+      <div className="flex flex-col gap-1">
+        <h2 id="test-scenario-title" className="text-start text-lg font-semibold">
+          {t('testScenarioTitle')}
+        </h2>
+        <p className="text-start text-sm text-muted-foreground">{t('testScenarioIntro')}</p>
+      </div>
+
+      <ScenarioRow
+        testId="test-scenario-terms"
+        title={t('testScenarioTermsTitle')}
+        state={scenario.termsAccepted ? t('testScenarioTermsAccepted') : t('testScenarioTermsNot')}
+        action={
+          scenario.termsAccepted
+            ? t('testScenarioTermsUnsetAction')
+            : t('testScenarioTermsSetAction')
+        }
+        disabled={working}
+        onPress={() =>
+          void apply({
+            kind: 'terms',
+            accepted: !scenario.termsAccepted,
+            terms_version: CURRENT_TERMS_VERSION,
+          })
+        }
+      />
+      <ScenarioRow
+        testId="test-scenario-season"
+        title={
+          scenario.currentSeason === null
+            ? t('testScenarioNoSeason')
+            : t('testScenarioSeasonTitle', { season: scenario.currentSeason })
+        }
+        state={
+          scenario.signedThisSeason ? t('testScenarioSeasonSigned') : t('testScenarioSeasonNot')
+        }
+        action={
+          scenario.signedThisSeason
+            ? t('testScenarioSeasonUnsetAction')
+            : t('testScenarioSeasonSetAction')
+        }
+        disabled={working || scenario.currentSeason === null}
+        onPress={() => void apply({ kind: 'season_signature', signed: !scenario.signedThisSeason })}
+      />
+      <ScenarioRow
+        testId="test-scenario-returning"
+        title={t('testScenarioReturningTitle')}
+        state={scenario.returning ? t('testScenarioReturning') : t('testScenarioNew')}
+        action={
+          scenario.returning
+            ? t('testScenarioReturningUnsetAction')
+            : t('testScenarioReturningSetAction')
+        }
+        disabled={working || scenario.currentSeason === null}
+        onPress={() => void apply({ kind: 'returning', returning: !scenario.returning })}
+      />
+
+      <div className="flex flex-col gap-3 border-t pt-4">
+        <div className="flex flex-col gap-1">
+          <h3 className="text-start text-base font-semibold">{t('testScenarioAnswersTitle')}</h3>
+          <p className="text-start text-sm text-muted-foreground">
+            {t('testScenarioAnswersIntro')}
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            disabled={working}
+            onClick={() =>
+              void apply({ kind: 'answers', fill: sampleAnswersFor(FILL_ALL_QUESTIONS, language) })
+            }
+          >
+            {t('testScenarioFillAll')}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={working}
+            onClick={() => void apply({ kind: 'answers', clear: FILL_ALL_QUESTIONS })}
+          >
+            {t('testScenarioClearAll')}
+          </Button>
+        </div>
+        <ul className="flex flex-col divide-y">
+          {WIZARD_QUESTIONS.map((question) => {
+            const isAnswered = scenario.answered.has(question);
+            return (
+              <li
+                key={question}
+                className="flex flex-wrap items-center justify-between gap-2 py-2"
+                data-testid={`test-scenario-answer-${question}`}
+                data-answered={isAnswered ? 'true' : 'false'}
+              >
+                <span className="text-start text-sm">
+                  {t(QUESTION_LABEL_KEYS[question] ?? question)}
+                  {' · '}
+                  <span className="text-muted-foreground">
+                    {isAnswered ? t('questionStatesAnswered') : t('questionStatesUnanswered')}
+                  </span>
+                </span>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  disabled={working}
+                  aria-label={
+                    isAnswered
+                      ? t('testScenarioClearOne', {
+                          question: t(QUESTION_LABEL_KEYS[question] ?? question),
+                        })
+                      : t('testScenarioFillOne', {
+                          question: t(QUESTION_LABEL_KEYS[question] ?? question),
+                        })
+                  }
+                  onClick={() =>
+                    void apply(
+                      isAnswered
+                        ? { kind: 'answers', clear: [question] }
+                        : { kind: 'answers', fill: sampleAnswerPayload(question, language) },
+                    )
+                  }
+                >
+                  {isAnswered ? t('testScenarioClear') : t('testScenarioFill')}
+                </Button>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+
+      <div className="flex flex-col gap-2 border-t pt-4">
+        <p className="text-start text-sm text-muted-foreground">{t('testScenarioResetHint')}</p>
+        <Button
+          type="button"
+          variant="outline"
+          className="w-fit"
+          disabled={working}
+          onClick={() => void apply({ kind: 'reset' })}
+        >
+          {t('testScenarioReset')}
+        </Button>
+      </div>
+      {errorMessage === null ? null : (
+        <p role="alert" className="text-start text-sm text-destructive">
+          {errorMessage}
+        </p>
+      )}
+    </section>
+  );
+}
+
+function ScenarioRow({
+  testId,
+  title,
+  state,
+  action,
+  disabled,
+  onPress,
+}: {
+  readonly testId: string;
+  readonly title: string;
+  readonly state: string;
+  readonly action: string;
+  readonly disabled: boolean;
+  readonly onPress: () => void;
+}) {
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3" data-testid={testId}>
+      <div className="flex flex-col gap-0.5">
+        <p className="text-start text-sm font-medium">{title}</p>
+        <p className="text-start text-sm text-muted-foreground" data-testid={`${testId}-state`}>
+          {state}
+        </p>
+      </div>
+      <Button type="button" variant="outline" disabled={disabled} onClick={onPress}>
+        {action}
+      </Button>
+    </div>
+  );
+}
