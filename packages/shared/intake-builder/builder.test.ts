@@ -10,7 +10,9 @@ import {
   answerText,
   builtinLabel,
   builtinOptions,
+  builtinScreenText,
   canHideBuiltin,
+  canHideBuiltinScreen,
   customAnswerError,
   hiddenBuiltinQuestions,
   isScreenAnswered,
@@ -18,9 +20,12 @@ import {
   parseIntakeCatalog,
   questionDraftSchema,
   referralScreens,
+  saveBuiltinScreen,
   saveCustomQuestion,
   saveIntakeScreen,
+  saveWizardFlowOrder,
   seasonScreens,
+  wizardFlow,
   wizardScreens,
   type CustomQuestion,
 } from './builder';
@@ -324,5 +329,79 @@ describe('the catalog carries the app terms (RAPP-613)', () => {
     });
     expect(withTerms.terms?.versionNumber).toBe(2);
     expect(withTerms.terms?.content.body.ca).toBe('Text.');
+  });
+});
+
+describe('built-in screens staff edit and arrange (RAPP-612)', () => {
+  const arranged = parseIntakeCatalog({
+    ...raw,
+    builtin_screens: [
+      {
+        screen: 'summary',
+        texts: { title: { ca: 'Revisa-ho tot', ar: '' }, continue_label: { en: 'All good' } },
+        is_hidden: false,
+      },
+      { screen: 'documentation', texts: {}, is_hidden: true },
+      // Required questions: a stored hide never takes effect.
+      { screen: 'logistics', texts: {}, is_hidden: true },
+      // A screen this build does not know is dropped.
+      { screen: 'a-newer-screen', texts: {}, is_hidden: false },
+    ],
+    flow_order: ['season', `custom:${SCREEN}`, 'identity', 'not-a-step'],
+  });
+
+  test('an older server with neither gives the app its own order and wording', () => {
+    expect(catalog.screenSettings).toEqual([]);
+    expect(wizardFlow(catalog)).toEqual({ order: [], hiddenScreens: new Set() });
+  });
+
+  test('the stored order keeps built-in and staff steps, and drops what is not a step', () => {
+    expect(wizardFlow(arranged).order).toEqual(['season', `custom:${SCREEN}`, 'identity']);
+  });
+
+  test('a screen hides only when none of its questions is required', () => {
+    expect(canHideBuiltinScreen('documentation')).toBe(true);
+    expect(canHideBuiltinScreen('season')).toBe(true);
+    expect(canHideBuiltinScreen('identity')).toBe(false);
+    expect(canHideBuiltinScreen('background')).toBe(false);
+    expect(canHideBuiltinScreen('logistics')).toBe(false);
+    expect(canHideBuiltinScreen('equipment')).toBe(false);
+    expect(wizardFlow(arranged).hiddenScreens).toEqual(new Set(['documentation']));
+  });
+
+  test('the questions of a hidden screen are never asked, on the phone and in the staff preview', () => {
+    expect(hiddenBuiltinQuestions(arranged).has('document')).toBe(true);
+    expect(hiddenBuiltinQuestions(arranged).has('reference_entity')).toBe(false);
+  });
+
+  test("staff wording shows in the language they wrote it in; elsewhere the app's own text", () => {
+    expect(builtinScreenText(arranged, 'summary', 'title', 'ca')).toBe('Revisa-ho tot');
+    expect(builtinScreenText(arranged, 'summary', 'title', 'ar')).toBeNull();
+    expect(builtinScreenText(arranged, 'summary', 'title', 'es')).toBeNull();
+    expect(builtinScreenText(arranged, 'summary', 'continue_label', 'en')).toBe('All good');
+    expect(builtinScreenText(arranged, 'identity', 'title', 'ca')).toBeNull();
+  });
+
+  test('saving a screen sends only the fields it may have, with empty languages dropped', async () => {
+    const { client, calls } = clientReturning({ data: null, error: null });
+    await saveBuiltinScreen(client, {
+      screen: 'terms',
+      texts: { title: { ca: 'No' }, help: { ca: ' Ajuda ', es: '  ' }, decline_label: {} },
+      isHidden: false,
+    });
+    expect(calls).toEqual([
+      [
+        'save_builtin_screen',
+        { p_screen: 'terms', p_texts: { help: { ca: 'Ajuda' } }, p_is_hidden: false },
+      ],
+    ]);
+  });
+
+  test('saving the flow sends every movable step in order', async () => {
+    const { client, calls } = clientReturning({ data: null, error: null });
+    await saveWizardFlowOrder(client, ['season', 'custom:abc', 'identity']);
+    expect(calls).toEqual([
+      ['save_intake_flow_order', { p_order: ['season', 'custom:abc', 'identity'] }],
+    ]);
   });
 });

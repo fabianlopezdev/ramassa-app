@@ -19,11 +19,17 @@ import { z } from 'zod';
 import { AppError, databaseErrorCode } from '../errors';
 import type { Database } from '../types/database';
 import {
+  DEFAULT_WIZARD_FLOW,
   INTAKE_QUESTIONS,
+  isCustomStep,
   QUESTION_PAYLOAD_KEYS,
   SCREEN_QUESTIONS,
+  WIZARD_SCREEN_QUESTIONS,
+  wizardFlowOrder,
   type AnsweredQuestions,
   type IntakeQuestion,
+  type WizardFlow,
+  type WizardQuestionScreen,
 } from './intake';
 import {
   canSkipQuestion,
@@ -119,14 +125,27 @@ function phoneAsking(
   return notAsked.has(question) ? 'not-asked' : 'asked';
 }
 
-/** Every wizard question in screen order, with what her wizard does with it. */
+/** Every wizard question in the order her screens come, as staff arranged them (RAPP-612). */
+export function wizardQuestionsInFlowOrder(
+  flow: WizardFlow = DEFAULT_WIZARD_FLOW,
+): readonly IntakeQuestion[] {
+  return wizardFlowOrder([], flow)
+    .filter(
+      (step): step is WizardQuestionScreen =>
+        !isCustomStep(step) && step in WIZARD_SCREEN_QUESTIONS,
+    )
+    .flatMap((screen) => WIZARD_SCREEN_QUESTIONS[screen]);
+}
+
+/** Every wizard question in her screen order, with what her wizard does with it. */
 export function previewWizardQuestions(
   answered: AnsweredQuestions,
   states: QuestionStates,
   hidden: ReadonlySet<IntakeQuestion> = new Set(),
+  flow: WizardFlow = DEFAULT_WIZARD_FLOW,
 ): readonly WizardQuestionPreview[] {
   const notAsked = wizardNotAsked(questionsToAsk(answered, states), hidden);
-  return WIZARD_QUESTIONS.map((question) => {
+  return wizardQuestionsInFlowOrder(flow).map((question) => {
     const asking = phoneAsking(question, notAsked, hidden);
     return {
       question,

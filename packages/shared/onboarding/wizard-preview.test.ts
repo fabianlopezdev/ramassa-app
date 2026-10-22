@@ -149,3 +149,24 @@ describe('fetchReferralAnswerKeys (RAPP-618)', () => {
     expect(calls).toEqual([['referral_answer_keys', { p_referral_id: referral }]]);
   });
 });
+
+describe('the staff preview follows the flow staff arranged (RAPP-612)', () => {
+  test('with no flow the questions keep the screen order', () => {
+    expect(previewWizardQuestions(new Set(), {}).map((row) => row.question)).toEqual([
+      ...WIZARD_QUESTIONS,
+    ]);
+  });
+
+  test("a moved screen's questions move with it", () => {
+    const rows = previewWizardQuestions(new Set(), {}, new Set(), {
+      order: ['season', 'identity'],
+      hiddenScreens: new Set(),
+    });
+    expect(rows.map((row) => row.question).slice(0, 3)).toEqual([
+      'applicant_status',
+      'supporting_entities',
+      'childcare_need',
+    ]);
+    expect(rows).toHaveLength(WIZARD_QUESTIONS.length);
+  });
+});

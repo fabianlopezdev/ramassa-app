@@ -21,8 +21,24 @@ import { z } from 'zod';
 import { AppError, databaseErrorCode } from '../errors';
 import { resolveLocalizedText } from '../i18n/localized-content';
 import { appTermsFromCatalog, type CurrentAppTerms } from '../onboarding/app-terms';
-import { QUESTION_SCREENS, type IntakeQuestion } from '../onboarding/intake';
+import {
+  isCustomStep,
+  QUESTION_SCREENS,
+  WIZARD_QUESTION_SCREENS,
+  WIZARD_SCREEN_QUESTIONS,
+  type IntakeQuestion,
+  type WizardFlow,
+  type WizardQuestionScreen,
+  type WizardStepKey,
+} from '../onboarding/intake';
 import { REQUIRED_INTAKE_QUESTIONS, WIZARD_QUESTIONS } from '../onboarding/question-states';
+import {
+  isEditableWizardScreen,
+  SCREEN_TEXT_FIELDS,
+  screenTextFields,
+  type EditableWizardScreen,
+  type ScreenTextField,
+} from '../onboarding/screen-texts';
 import type { LanguageCode } from '../schemas/language';
 import type { Database, Json } from '../types/database';
 
@@ -138,10 +154,20 @@ const presetSchema = z.object({
   states: z.record(z.string(), z.enum(['ask', 'skip'])),
 });
 
+const builtinScreenSchema = z.object({
+  screen: z.string(),
+  texts: z.record(z.string(), anyLanguageTextSchema),
+  is_hidden: z.boolean(),
+});
+
 export const intakeCatalogSchema = z.object({
   screens: z.array(screenSchema),
   overrides: z.array(overrideSchema),
   presets: z.array(presetSchema),
+  // Staff wording of the built-in screens and the flow order (RAPP-612). An
+  // older server sends neither: the app's own wording and order stay.
+  builtin_screens: z.array(builtinScreenSchema).optional(),
+  flow_order: z.array(z.string()).nullable().optional(),
   // The current app terms version (RAPP-613), read leniently: a version this
   // build cannot read leaves the bundled text in place.
   terms: z.unknown().optional(),
@@ -185,6 +211,13 @@ export interface BuiltinOverride {
   >;
 }
 
+/** Staff wording and the hide switch of one built-in screen (RAPP-612). */
+export interface BuiltinScreenSettings {
+  readonly screen: EditableWizardScreen;
+  readonly texts: Readonly<Partial<Record<ScreenTextField, BuilderText>>>;
+  readonly isHidden: boolean;
+}
+
 export interface IntakePreset {
   readonly id: string;
   readonly name: string;
@@ -195,6 +228,10 @@ export interface IntakeCatalog {
   readonly screens: readonly IntakeScreen[];
   readonly overrides: readonly BuiltinOverride[];
   readonly presets: readonly IntakePreset[];
+  /** Staff wording of the built-in screens (RAPP-612); empty means the app's own. */
+  readonly screenSettings?: readonly BuiltinScreenSettings[];
+  /** The wizard steps as staff arranged them (RAPP-612); empty means the app's own order. */
+  readonly flowOrder?: readonly string[];
   /** The app terms she accepts (RAPP-613); none means the bundled text. */
   readonly terms?: CurrentAppTerms | null;
 }
@@ -203,6 +240,8 @@ export const EMPTY_INTAKE_CATALOG: IntakeCatalog = {
   screens: [],
   overrides: [],
   presets: [],
+  screenSettings: [],
+  flowOrder: [],
   terms: null,
 };
 
@@ -249,6 +288,22 @@ export function parseIntakeCatalog(data: unknown): IntakeCatalog {
         optionOverrides: override.option_overrides,
       })),
     presets: raw.presets,
+    screenSettings: (raw.builtin_screens ?? []).flatMap((entry) =>
+      isEditableWizardScreen(entry.screen)
+        ? [
+            {
+              screen: entry.screen,
+              texts: Object.fromEntries(
+                Object.entries(entry.texts).filter(([field]) =>
+                  (SCREEN_TEXT_FIELDS as readonly string[]).includes(field),
+                ),
+              ),
+              isHidden: entry.is_hidden,
+            },
+          ]
+        : [],
+    ),
+    flowOrder: raw.flow_order ?? [],
     terms: appTermsFromCatalog(raw.terms ?? null),
   };
 }
@@ -711,13 +766,18 @@ export function builtinHelp(
   return exactText(overrideFor(catalog, question)?.help, language) || null;
 }
 
-/** Hidden built-in questions: never asked, whatever their state. */
+/**
+ * Hidden built-in questions: never asked, whatever their state. The questions
+ * of a screen staff hid (RAPP-612) count too, so her phone, her summary and
+ * the staff preview all leave them out.
+ */
 export function hiddenBuiltinQuestions(catalog: IntakeCatalog): ReadonlySet<IntakeQuestion> {
-  return new Set(
-    catalog.overrides
+  return new Set([
+    ...catalog.overrides
       .filter((override) => override.isHidden && canHideBuiltin(override.question))
       .map((override) => override.question),
-  );
+    ...[...wizardFlow(catalog).hiddenScreens].flatMap((screen) => WIZARD_SCREEN_QUESTIONS[screen]),
+  ]);
 }
 
 /**
@@ -738,6 +798,93 @@ export function builtinOptions<Option extends { readonly value: string; readonly
       const label = exactText(changes[option.value]?.label, language);
       return label === '' ? option : { ...option, label };
     });
+}
+
+// Built-in screens (RAPP-612) ------------------------------------------------------------------
+
+/**
+ * A built-in screen can be hidden only when none of its questions is required.
+ * It reads the one required list (`canHideBuiltin`), which RAPP-611 makes data,
+ * so a screen whose question becomes required shows again by itself.
+ */
+export function canHideBuiltinScreen(screen: WizardQuestionScreen): boolean {
+  return WIZARD_SCREEN_QUESTIONS[screen].every(canHideBuiltin);
+}
+
+function isWizardQuestionScreen(screen: string): screen is WizardQuestionScreen {
+  return (WIZARD_QUESTION_SCREENS as readonly string[]).includes(screen);
+}
+
+function isFlowStep(step: string): step is WizardStepKey {
+  return isWizardQuestionScreen(step) || (isCustomStep(step) && step.length > 'custom:'.length);
+}
+
+/** The flow staff arranged, as the wizard planner takes it. */
+export function wizardFlow(catalog: IntakeCatalog): WizardFlow {
+  return {
+    order: (catalog.flowOrder ?? []).filter(isFlowStep),
+    hiddenScreens: new Set(
+      (catalog.screenSettings ?? [])
+        .filter((settings) => settings.isHidden)
+        .map((settings) => settings.screen)
+        .filter(isWizardQuestionScreen)
+        .filter(canHideBuiltinScreen),
+    ),
+  };
+}
+
+export function screenSettingsFor(
+  catalog: IntakeCatalog,
+  screen: EditableWizardScreen,
+): BuiltinScreenSettings | undefined {
+  return (catalog.screenSettings ?? []).find((settings) => settings.screen === screen);
+}
+
+/**
+ * Staff wording of a built-in screen in exactly her language, or null for the
+ * app's own text. As for questions (RAPP-530), Catalan written by staff never
+ * replaces her Arabic: the app already has every language bundled.
+ */
+export function builtinScreenText(
+  catalog: IntakeCatalog,
+  screen: EditableWizardScreen,
+  field: ScreenTextField,
+  language: LanguageCode,
+): string | null {
+  if (!screenTextFields(screen).includes(field)) return null;
+  return exactText(screenSettingsFor(catalog, screen)?.texts[field], language) || null;
+}
+
+export async function saveBuiltinScreen(
+  client: Client,
+  settings: {
+    readonly screen: EditableWizardScreen;
+    readonly texts: Readonly<Partial<Record<ScreenTextField, BuilderText>>>;
+    readonly isHidden: boolean;
+  },
+): Promise<void> {
+  const texts = Object.fromEntries(
+    screenTextFields(settings.screen).flatMap((field) => {
+      const text = settings.texts[field];
+      const cleaned = text === undefined ? {} : cleanText(text);
+      return Object.keys(cleaned).length > 0 ? [[field, cleaned]] : [];
+    }),
+  );
+  const { error } = await client.rpc('save_builtin_screen', {
+    p_screen: settings.screen,
+    p_texts: texts as Json,
+    p_is_hidden: settings.isHidden,
+  });
+  if (error) throw databaseError(error);
+}
+
+/** The order of the movable steps; the summary and the terms always end it. */
+export async function saveWizardFlowOrder(
+  client: Client,
+  order: readonly WizardStepKey[],
+): Promise<void> {
+  const { error } = await client.rpc('save_intake_flow_order', { p_order: [...order] });
+  if (error) throw databaseError(error);
 }
 
 // Organization presets (RAPP-301) -------------------------------------------------------------

@@ -9,14 +9,18 @@ import {
   answeredQuestionsSchema,
   customStepId,
   customStepKey,
+  DEFAULT_WIZARD_FLOW,
+  FINAL_WIZARD_SCREENS,
   INTAKE_QUESTIONS,
   nextWizardScreen,
   previousWizardScreen,
   screensToAsk,
   trimPayloadToAnswers,
+  wizardFlowOrder,
   wizardScreenPosition,
   type CustomWizardScreen,
   type IntakeQuestion,
+  type WizardFlow,
 } from './intake';
 
 const answered = (...questions: IntakeQuestion[]) => new Set<IntakeQuestion>(questions);
@@ -189,6 +193,102 @@ describe('staff screens in the wizard (RAPP-307)', () => {
   test('with no staff screens the plan is the built-in one', () => {
     expect(nextWizardScreen('background', plan, [])).toBe(nextWizardScreen('background', plan));
     expect(wizardScreenPosition('season', plan, [])).toEqual(wizardScreenPosition('season', plan));
+  });
+});
+
+describe('the flow staff arrange (RAPP-612)', () => {
+  const nobody = answered();
+  const transport: CustomWizardScreen = {
+    id: 'transport',
+    afterScreen: 'logistics',
+    isAnswered: false,
+  };
+  const flow = (order: string[], hidden: string[] = []): WizardFlow => ({
+    order: order as WizardFlow['order'],
+    hiddenScreens: new Set(hidden) as WizardFlow['hiddenScreens'],
+  });
+
+  test('with no stored order the flow is the order the app always had', () => {
+    expect(wizardFlowOrder([transport], DEFAULT_WIZARD_FLOW)).toEqual([
+      'identity',
+      'background',
+      'documentation',
+      'logistics',
+      'equipment',
+      'custom:transport',
+      'season',
+      'supporting-entities',
+      'participation-support',
+      'specific-needs',
+      'summary',
+      'terms-intro',
+      'terms',
+    ]);
+  });
+
+  test('staff move a built-in screen and place their own screen anywhere', () => {
+    const order = wizardFlowOrder(
+      [transport],
+      flow([
+        'custom:transport',
+        'identity',
+        'season',
+        'background',
+        'documentation',
+        'logistics',
+        'equipment',
+        'supporting-entities',
+        'participation-support',
+        'specific-needs',
+      ]),
+    );
+    expect(order.slice(0, 4)).toEqual(['custom:transport', 'identity', 'season', 'background']);
+    expect(nextWizardScreen('start', nobody, [transport], flow(order))).toBe('custom:transport');
+    expect(nextWizardScreen('identity', nobody, [transport], flow(order))).toBe('season');
+    expect(previousWizardScreen('background', nobody, [transport], flow(order))).toBe('season');
+  });
+
+  test('the summary and the terms always end the flow, whatever the stored order says', () => {
+    const order = wizardFlowOrder(
+      [],
+      flow(['terms', 'summary', 'logistics', 'terms-intro', 'identity']),
+    );
+    expect(order.slice(-3)).toEqual([...FINAL_WIZARD_SCREENS]);
+    expect(order.filter((step) => step === 'terms')).toHaveLength(1);
+    expect(order[0]).toBe('logistics');
+  });
+
+  test('a screen missing from the stored order keeps its place after the step it followed', () => {
+    const order = wizardFlowOrder([transport], flow(['equipment', 'logistics']));
+    expect(order.indexOf('custom:transport')).toBe(order.indexOf('equipment') + 1);
+    expect(order).toContain('identity');
+    expect(new Set(order).size).toBe(order.length);
+  });
+
+  test('unknown steps and staff screens that no longer exist are ignored', () => {
+    const order = wizardFlowOrder([], flow(['custom:gone', 'nowhere', 'background', 'identity']));
+    expect(order).not.toContain('custom:gone');
+    expect(order).not.toContain('nowhere');
+    expect(order[0]).toBe('background');
+  });
+
+  test('a hidden screen is never shown and the progress counts without it', () => {
+    const hidden = flow([], ['documentation']);
+    expect(nextWizardScreen('background', nobody, [], hidden)).toBe('logistics');
+    expect(wizardScreenPosition('logistics', nobody, [], hidden)).toEqual({ step: 3, total: 11 });
+  });
+
+  test('the progress counter follows the edited order', () => {
+    const moved = flow(['season', 'identity']);
+    expect(wizardScreenPosition('season', nobody, [], moved)).toEqual({ step: 1, total: 12 });
+    // The season's own screens were left out of the stored order, so they keep
+    // following it.
+    expect(wizardScreenPosition('supporting-entities', nobody, [], moved)).toEqual({
+      step: 2,
+      total: 12,
+    });
+    expect(wizardScreenPosition('identity', nobody, [], moved)).toEqual({ step: 5, total: 12 });
+    expect(wizardScreenPosition('summary', nobody, [], moved)).toEqual({ step: 10, total: 12 });
   });
 });
 
