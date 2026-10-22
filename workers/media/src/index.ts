@@ -25,6 +25,7 @@ import { parseWorkerEnv, type WorkerConfig } from './env';
 import { buildCorsHeaders, errorResponse } from './http';
 import { buildLocalUploadUrl, handleLocalUpload, LOCAL_UPLOAD_PATH_PREFIX } from './local-upload';
 import {
+  canReadCustomAnswerObject,
   canReadFeedbackObject,
   canReadInternalDocumentObject,
   canReadMediaObject,
@@ -245,6 +246,13 @@ const handler: ExportedHandler<Env> = {
           }),
         authorizeStockObject: (objectKey) =>
           canReadStockObject({
+            objectKey,
+            token: readBearerToken(request),
+            supabaseUrl: config.supabaseUrl,
+            supabasePublishableKey: config.supabasePublishableKey,
+          }),
+        authorizeCustomAnswerObject: (objectKey) =>
+          canReadCustomAnswerObject({
             objectKey,
             token: readBearerToken(request),
             supabaseUrl: config.supabaseUrl,

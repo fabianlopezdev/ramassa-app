@@ -13,6 +13,7 @@ const identity: CallerIdentity = {
 const objectKey = `${identity.orgId}/announcements/${identity.userId}/2026/08/0123456789abcdef0123456789abcdef.jpg`;
 const galleryObjectKey = `${identity.orgId}/gallery/${identity.userId}/2026/08/1123456789abcdef0123456789abcdef.jpg`;
 const feedbackObjectKey = `${identity.orgId}/feedback/${identity.userId}/2026/08/2123456789abcdef0123456789abcdef.jpg`;
+const answerObjectKey = `${identity.orgId}/intake-answers/${identity.userId}/2026/10/4123456789abcdef0123456789abcdef.pdf`;
 const documentObjectKey = `${identity.orgId}/documents/${identity.userId}/2026/08/3123456789abcdef0123456789abcdef.pdf`;
 
 function requestFor(key: string = objectKey, method = 'GET'): Request {
@@ -32,6 +33,7 @@ function dependencies(
     authorizeFeedbackObject: async () => true,
     authorizeInternalDocumentObject: async () => true,
     authorizeStockObject: async () => true,
+    authorizeCustomAnswerObject: async () => true,
     bucket: {
       get: async (key) =>
         key === objectKey
@@ -130,6 +132,30 @@ describe('handleServeMediaObject', () => {
     );
 
     expect(response.status).toBe(404);
+    expect(storageReads).toBe(0);
+  });
+
+  test('checks that an answer file is hers or readable at its privacy level first (RAPP-610)', async () => {
+    let storageReads = 0;
+    const checked: string[] = [];
+    const response = await handleServeMediaObject(
+      requestFor(answerObjectKey),
+      dependencies({
+        authorizeCustomAnswerObject: async (key) => {
+          checked.push(key);
+          return false;
+        },
+        bucket: {
+          get: async () => {
+            storageReads += 1;
+            return null;
+          },
+        },
+      }),
+    );
+
+    expect(response.status).toBe(404);
+    expect(checked).toEqual([answerObjectKey]);
     expect(storageReads).toBe(0);
   });
 

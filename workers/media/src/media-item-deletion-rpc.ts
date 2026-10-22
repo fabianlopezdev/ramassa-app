@@ -126,3 +126,19 @@ export async function canReadInternalDocumentObject(
   if (!response.ok) throw new AppError('DB-1');
   return (await response.json()) === true;
 }
+
+/** Her answer files (RAPP-610): served to her, and to staff who may read the answer's privacy level. */
+export async function canReadCustomAnswerObject(
+  options: Omit<RpcOptions, 'mediaItemId'> & { readonly objectKey: string },
+): Promise<boolean> {
+  const response = await (options.fetchImplementation ?? fetch)(
+    `${options.supabaseUrl}/rest/v1/rpc/can_read_custom_answer_object`,
+    {
+      method: 'POST',
+      headers: rpcHeaders({ ...options, mediaItemId: '' }),
+      body: JSON.stringify({ p_object_key: options.objectKey }),
+    },
+  );
+  if (!response.ok) throw new AppError('DB-1');
+  return (await response.json()) === true;
+}
