@@ -180,7 +180,7 @@ describe('EAS has a staging profile for an internal Android build (RAPP-620)', (
       environment: 'preview',
       channel: 'staging',
       autoIncrement: true,
-      env: { APP_VARIANT: 'staging' },
+      env: { APP_VARIANT: 'staging', SENTRY_DISABLE_AUTO_UPLOAD: 'true' },
       android: { buildType: 'apk' },
     });
   });
