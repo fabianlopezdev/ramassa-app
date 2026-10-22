@@ -6381,6 +6381,7 @@ export type Database = {
       };
       my_permissions: { Args: never; Returns: string[] };
       my_questions_to_ask: { Args: never; Returns: string[] };
+      my_second_factor_waived: { Args: never; Returns: boolean };
       my_session_is_current: { Args: never; Returns: boolean };
       my_terms_acceptance_needed: { Args: never; Returns: boolean };
       my_test_scenario_stamp: { Args: never; Returns: string };
