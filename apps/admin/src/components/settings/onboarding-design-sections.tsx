@@ -13,6 +13,7 @@
 import { useStepUp } from '@/components/auth/step-up';
 import { AppTermsEditor } from '@/components/settings/app-terms-editor';
 import { AuthorizationEditor } from '@/components/settings/authorization-editor';
+import { BuiltinScreensEditor } from '@/components/settings/builtin-screens-editor';
 import { DocumentExplanationForm } from '@/components/settings/document-explanation-form';
 import { QuestionBuilder } from '@/components/settings/question-builder';
 import { SeasonsPanel } from '@/components/settings/seasons-panel';
@@ -38,8 +39,10 @@ import {
   reorderCustomQuestions,
   reorderIntakeScreens,
   saveBuiltinOverride,
+  saveBuiltinScreen,
   saveCustomQuestion,
   saveIntakeScreen,
+  saveWizardFlowOrder,
   type IntakeCatalog,
 } from '@ramassa/shared/intake-builder';
 import type { LocalizedText } from '@ramassa/shared/schemas';
@@ -87,6 +90,27 @@ export function OnboardingQuestionsSection({ catalog }: { readonly catalog: Inta
       }}
       onSaveBuiltin={async (override) => {
         await saveBuiltinOverride(supabase, override);
+        await reload();
+      }}
+    />
+  );
+}
+
+/**
+ * The built-in screens (RAPP-612): their order with the organization's own
+ * screens, and their wording in each language.
+ */
+export function OnboardingScreensSection({ catalog }: { readonly catalog: IntakeCatalog }) {
+  const reload = useReload();
+  return (
+    <BuiltinScreensEditor
+      catalog={catalog}
+      onSaveScreen={async (draft) => {
+        await saveBuiltinScreen(supabase, draft);
+        await reload();
+      }}
+      onSaveOrder={async (order) => {
+        await saveWizardFlowOrder(supabase, order);
         await reload();
       }}
     />

@@ -7,6 +7,7 @@ import {
   OnboardingAuthorizationSection,
   OnboardingDocumentSection,
   OnboardingQuestionsSection,
+  OnboardingScreensSection,
 } from '@/components/settings/onboarding-design-sections';
 import { OrganizationSettingsPanel } from '@/components/settings/organization-settings-panel';
 import { PhotoHandoffButton } from '@/components/settings/photo-handoff-dialog';
@@ -285,7 +286,11 @@ function OrganizationSettingsScreen() {
       }
       questions={
         permissions.has('settings.organization') ? (
-          <OnboardingQuestionsSection catalog={data.intakeCatalog} />
+          <>
+            {/* The screens' order and wording (RAPP-612), above their questions. */}
+            <OnboardingScreensSection catalog={data.intakeCatalog} />
+            <OnboardingQuestionsSection catalog={data.intakeCatalog} />
+          </>
         ) : undefined
       }
       documentExplanation={

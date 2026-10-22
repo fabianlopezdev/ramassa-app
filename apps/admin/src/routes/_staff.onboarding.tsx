@@ -1,7 +1,8 @@
 /**
  * Everything a player sees the first time she opens the app, on one page
- * (RAPP-615): the questions, the document step note, the app terms (RAPP-613),
- * and the seasons with their authorization.
+ * (RAPP-615): the screens with their order and wording (RAPP-612), the
+ * questions, the document step note, the app terms (RAPP-613), and the
+ * seasons with their authorization.
  *
  * Settings shows the same sections in its tabs. This page exists so the
  * onboarding design role, which holds `onboarding.design` and nothing of
@@ -16,6 +17,7 @@ import {
   OnboardingAuthorizationSection,
   OnboardingDocumentSection,
   OnboardingQuestionsSection,
+  OnboardingScreensSection,
 } from '@/components/settings/onboarding-design-sections';
 import { ONBOARDING_PERMISSIONS } from '@/lib/nav-items';
 import { supabase } from '@/lib/supabase';
@@ -82,6 +84,18 @@ function OnboardingDesignScreen() {
           {t('onboardingPage.intro')}
         </p>
       </header>
+
+      <section className="space-y-6" aria-labelledby="onboarding-screens-heading">
+        <header className="max-w-3xl space-y-2">
+          <h2 id="onboarding-screens-heading" className="text-xl font-semibold text-foreground">
+            {t('builtinScreens.sectionTitle')}
+          </h2>
+          <p className="text-sm leading-6 text-muted-foreground">
+            {t('builtinScreens.sectionIntro')}
+          </p>
+        </header>
+        <OnboardingScreensSection catalog={data.intakeCatalog} />
+      </section>
 
       <section className="space-y-6" aria-labelledby="onboarding-questions-heading">
         <header className="max-w-3xl space-y-2">
