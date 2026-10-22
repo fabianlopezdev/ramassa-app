@@ -211,6 +211,9 @@ test.describe('WCAG 2.2 AA regression gate', () => {
     page,
   }) => {
     await page.goto('/login');
+    // The login fades in once its brand colours are known (RAPP-626); axe
+    // measures what a person sees, so it waits for the finished screen.
+    await expect(page.locator('[data-branding-ready="true"]')).toHaveCSS('opacity', '1');
 
     await expectSkipLinkTargetsMain(page);
     await expectNoAxeViolations(page, '/login');
