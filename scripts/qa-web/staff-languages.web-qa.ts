@@ -33,5 +33,6 @@ test('the login page offers the same three', async ({ page }) => {
   await page.goto('/login');
   await expect(page.locator('html')).toHaveAttribute('lang', 'ca');
   await expect(page.locator('html')).toHaveAttribute('dir', 'ltr');
-  await expect(page.getByTestId('language-picker').locator('option')).toHaveCount(3);
+  await expect(page.getByTestId('language-choice').getByRole('radio')).toHaveCount(3);
+  await expect(page.getByRole('radio', { name: 'Català' })).toHaveAttribute('aria-checked', 'true');
 });

@@ -1,3 +1,4 @@
+import { ControlCenterHeader } from '@/components/auth/control-center-header';
 import {
   EmailOtpExistingCodeForm,
   EmailOtpRequestForm,
@@ -6,8 +7,11 @@ import {
 import { NoAdminAccess } from '@/components/auth/no-admin-access';
 import { PasswordLoginForm } from '@/components/auth/password-login-form';
 import { SecondFactorScreen } from '@/components/auth/second-factor-screen';
-import { LanguagePicker } from '@/components/language-picker';
+import { usePublicBrandingReady } from '@/components/branding/organization-branding-provider';
+import { LanguageChoiceRow } from '@/components/language-choice-row';
 import { Button } from '@/components/ui/button';
+import { mediaWorkerUrl } from '@/lib/media-worker';
+import { publicOrganizationLogoUrl } from '@/lib/organization-slug';
 import { roleLandingPath } from '@/lib/role-landing';
 import { isInternalPath } from '@/lib/staff-route-guard';
 import { createFileRoute, Navigate } from '@tanstack/react-router';
@@ -36,6 +40,7 @@ type LoginMode = 'otp' | 'existing-code' | 'password';
 
 function LoginPage() {
   const { t } = useTranslation(['admin', 'auth', 'common']);
+  const brandingReady = usePublicBrandingReady();
   const { session, role, needsSecondFactor } = useAuth();
   const search = Route.useSearch();
   const [mode, setMode] = useState<LoginMode>(search.code === 1 ? 'existing-code' : 'otp');
@@ -65,16 +70,21 @@ function LoginPage() {
       tabIndex={-1}
       className="flex min-h-svh flex-col items-center justify-center p-6"
     >
-      <div className="flex w-full max-w-sm flex-col gap-6">
-        <div className="flex flex-col gap-1 text-start">
-          <h1 className="text-2xl font-bold text-foreground">{t('admin:loginTitle')}</h1>
+      <div
+        className={`flex w-full max-w-sm flex-col gap-6 motion-safe:transition-opacity motion-safe:duration-300 ${brandingReady ? 'opacity-100' : 'opacity-0'}`}
+        data-branding-ready={brandingReady}
+      >
+        <ControlCenterHeader
+          title={t('admin:loginTitle')}
+          logoUrl={publicOrganizationLogoUrl(mediaWorkerUrl)}
+        >
           {mode === 'otp' && !sentToEmail ? (
             <p className="text-muted-foreground text-sm">{t('auth:loginSubtitle')}</p>
           ) : null}
           {mode === 'existing-code' && !sentToEmail ? (
             <p className="text-muted-foreground text-sm">{t('auth:emailOtpExistingCodeBody')}</p>
           ) : null}
-        </div>
+        </ControlCenterHeader>
 
         {sentToEmail ? (
           <div className="flex flex-col gap-4 text-start" aria-live="polite">
@@ -90,7 +100,7 @@ function LoginPage() {
         ) : mode === 'otp' ? (
           <div className="flex flex-col gap-4">
             <EmailOtpRequestForm onSent={setSentToEmail} />
-            <p className="text-muted-foreground text-start text-sm">{t('auth:emailOtpHint')}</p>
+            <p className="text-muted-foreground text-center text-sm">{t('auth:emailOtpHint')}</p>
             <Button variant="link" className="self-center" onClick={() => setMode('existing-code')}>
               {t('auth:emailOtpExistingCodeAction')}
             </Button>
@@ -113,7 +123,7 @@ function LoginPage() {
             </Button>
           </div>
         )}
-        <LanguagePicker className="self-start" />
+        <LanguageChoiceRow className="self-center" />
       </div>
     </main>
   );

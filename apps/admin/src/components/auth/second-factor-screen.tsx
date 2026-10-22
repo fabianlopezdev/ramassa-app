@@ -7,10 +7,13 @@
  */
 import { AuthFormError } from '@/components/auth/auth-form-error';
 import { AuthLoading } from '@/components/auth/auth-loading';
+import { ControlCenterHeader } from '@/components/auth/control-center-header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { logout } from '@/lib/auth';
+import { mediaWorkerUrl } from '@/lib/media-worker';
 import { safeAsync } from '@/lib/observability';
+import { publicOrganizationLogoUrl } from '@/lib/organization-slug';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from '@tanstack/react-router';
 import { useEffect, useState, type FormEvent } from 'react';
@@ -68,14 +71,14 @@ export function SecondFactorScreen() {
       data-testid="second-factor"
     >
       <div className="flex w-full max-w-sm flex-col gap-5">
-        <div className="flex flex-col gap-1 text-start">
-          <h1 className="text-2xl font-bold text-foreground">
-            {start?.kind === 'enroll' ? t('secondFactorEnrollTitle') : t('secondFactorTitle')}
-          </h1>
+        <ControlCenterHeader
+          title={start?.kind === 'enroll' ? t('secondFactorEnrollTitle') : t('secondFactorTitle')}
+          logoUrl={publicOrganizationLogoUrl(mediaWorkerUrl)}
+        >
           <p className="text-muted-foreground text-sm">
             {start?.kind === 'enroll' ? t('secondFactorEnrollIntro') : t('secondFactorIntro')}
           </p>
-        </div>
+        </ControlCenterHeader>
 
         {start?.kind === 'enroll' ? (
           <div className="flex flex-col items-start gap-3">
