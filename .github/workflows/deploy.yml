@@ -80,6 +80,8 @@ jobs:
           # Staging only (RAPP-616): set as a variable of the preview environment;
           # the check above refuses it for production.
           EXPO_PUBLIC_TEST_SIGN_IN: ${{ vars.EXPO_PUBLIC_TEST_SIGN_IN }}
+          # The hosted media worker (RAPP-627): logo, photos and uploads.
+          EXPO_PUBLIC_MEDIA_WORKER_URL: ${{ vars.EXPO_PUBLIC_MEDIA_WORKER_URL }}
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
 
       - name: Deploy admin
@@ -98,6 +100,8 @@ jobs:
           # Staging only (RAPP-616): set as a variable of the preview environment;
           # the check above refuses it for production.
           EXPO_PUBLIC_TEST_SIGN_IN: ${{ vars.EXPO_PUBLIC_TEST_SIGN_IN }}
+          # The hosted media worker (RAPP-627): logo, photos and uploads.
+          EXPO_PUBLIC_MEDIA_WORKER_URL: ${{ vars.EXPO_PUBLIC_MEDIA_WORKER_URL }}
 
       - name: Deploy player web
         # main branch = Pages production alias; the preview target deploys to a
