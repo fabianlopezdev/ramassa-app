@@ -100,8 +100,7 @@ export function StaffSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      {/* Sign out and the language moved to the top bar, and the funding credit
-        to the foot of every page (RAPP-632). */}
+      {/* Sign out moved to the top bar (RAPP-632). */}
       <SidebarFooter className="p-3 group-data-[collapsible=icon]:hidden">
         {/* Every team member, with no permission needed (ADR-026, RAPP-372). */}
         <PreviewAsPlayer

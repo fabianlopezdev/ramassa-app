@@ -97,7 +97,6 @@ test.describe.serial('admin organization settings', () => {
         async () => (await page.getByTestId('organization-theme-root').getAttribute('style')) ?? '',
       )
       .toContain('--ramassa-primary-rgb: 0 90 140');
-    await expect(page.getByTestId('generalitat-credit')).toBeVisible();
     const adminLogo = page.getByRole('img', { name: 'AE Ramassà' }).first();
     await expect(adminLogo).toBeVisible();
     await expect

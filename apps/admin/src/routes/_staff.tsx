@@ -1,6 +1,5 @@
 import { RouteFocusManager } from '@/components/accessibility/route-focus-manager';
 import { RequireAuth } from '@/components/auth/require-auth';
-import { FundingFooter } from '@/components/nav/funding-footer';
 import { StaffSidebar } from '@/components/nav/staff-sidebar';
 import { TodoBell } from '@/components/nav/todo-bell';
 import { UserMenu } from '@/components/nav/user-menu';
@@ -54,7 +53,6 @@ function StaffLayout() {
                 </div>
               </header>
               <Outlet />
-              <FundingFooter />
             </SidebarInset>
           </SidebarProvider>
         </TodoCountsProvider>
