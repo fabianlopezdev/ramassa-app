@@ -316,7 +316,18 @@ function ScreenWordingForm({
       ? terms?.mediaHint
       : terms?.intro
     : shown('intro');
-  const usesBundled = fields.some((field) => staff(field) === '' && bundled(field) !== undefined);
+  // Per field, what her phone shows in this language when staff wrote nothing
+  // in it: the app's own text where the app has one; nothing where it has none
+  // (the help line), even if staff wrote it in another language.
+  const withAppText = fields.filter((field) => staff(field) === '' && bundled(field) !== undefined);
+  const showingNothing = fields.filter(
+    (field) =>
+      staff(field) === '' &&
+      bundled(field) === undefined &&
+      Object.values(texts[field] ?? {}).some((value) => (value ?? '').trim() !== ''),
+  );
+  const fieldNames = (list: readonly ScreenTextField[]) =>
+    list.map((field) => t(`builtinScreens.field.${field}`)).join(', ');
 
   const edit = (field: ScreenTextField, value: string) => {
     setTexts({ ...texts, [field]: { ...texts[field], [language]: value } });
@@ -435,9 +446,22 @@ function ScreenWordingForm({
         aria-label={t('builtinScreens.previewTitle')}
       >
         <h4 className="text-start text-sm font-semibold">{t('builtinScreens.previewTitle')}</h4>
-        {usesBundled ? (
-          <p className="text-start text-xs text-muted-foreground" data-testid="screen-fallback">
-            {t('builtinScreens.previewFallback')}
+        {withAppText.length > 0 ? (
+          <p
+            className="text-start text-xs text-muted-foreground"
+            data-testid="screen-fallback"
+            data-fields={withAppText.join(',')}
+          >
+            {t('builtinScreens.previewFallbackFields', { fields: fieldNames(withAppText) })}
+          </p>
+        ) : null}
+        {showingNothing.length > 0 ? (
+          <p
+            className="text-start text-xs text-muted-foreground"
+            data-testid="screen-nothing-shows"
+            data-fields={showingNothing.join(',')}
+          >
+            {t('builtinScreens.previewNothingShows', { fields: fieldNames(showingNothing) })}
           </p>
         ) : null}
         <div

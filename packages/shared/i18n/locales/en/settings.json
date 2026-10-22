@@ -606,7 +606,8 @@
     "saved": "Text saved.",
     "failed": "Could not save. Please try again.",
     "previewTitle": "How it looks on her phone",
-    "previewFallback": "Some fields have no text in this language: the app's text shows.",
+    "previewFallbackFields": "No text in this language for: {{fields}}. Her phone shows the app's own text instead.",
+    "previewNothingShows": "Written only in other languages: {{fields}}. The app has no text of its own for it, so nothing shows in this language.",
     "screenName": {
       "identity": "Name",
       "background": "Background",

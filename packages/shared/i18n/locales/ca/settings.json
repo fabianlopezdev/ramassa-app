@@ -606,7 +606,8 @@
     "saved": "Text desat.",
     "failed": "No s'ha pogut desar. Torna-ho a provar.",
     "previewTitle": "Com ho veu al mòbil",
-    "previewFallback": "Algun camp no té text en aquesta llengua: es mostra el text de l'app.",
+    "previewFallbackFields": "No hi ha text en aquesta llengua per a: {{fields}}. El seu mòbil hi mostra el text de l'aplicació.",
+    "previewNothingShows": "Escrit només en altres llengües: {{fields}}. L'aplicació no en té cap text propi, així que en aquesta llengua no s'hi mostra res.",
     "screenName": {
       "identity": "Nom",
       "background": "Origen",

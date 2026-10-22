@@ -606,7 +606,8 @@
     "saved": "Texto guardado.",
     "failed": "No se ha podido guardar. Vuelve a intentarlo.",
     "previewTitle": "Cómo lo ve en el móvil",
-    "previewFallback": "Algún campo no tiene texto en este idioma: se muestra el texto de la app.",
+    "previewFallbackFields": "No hay texto en este idioma para: {{fields}}. Su móvil muestra el texto de la aplicación.",
+    "previewNothingShows": "Escrito solo en otros idiomas: {{fields}}. La aplicación no tiene texto propio para ello, así que en este idioma no se muestra nada.",
     "screenName": {
       "identity": "Nombre",
       "background": "Origen",

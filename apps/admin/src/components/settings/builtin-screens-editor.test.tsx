@@ -115,6 +115,20 @@ test('the summary shows its staff wording in Catalan, and the app text in Arabic
   expect(view.getByTestId('screen-fallback')).toBeTruthy();
 });
 
+test('the fallback note is right per field: the help has no app text, so nothing shows', () => {
+  const { view } = renderEditor();
+  fireEvent.change(element(view, 'builtin-screen-select'), { target: { value: 'summary' } });
+  // In Catalan the title and help are written: only the empty fields with app text are named.
+  expect(view.getByTestId('screen-fallback').dataset.fields).toBe('intro,continue_label');
+  expect(view.queryByTestId('screen-nothing-shows')).toBeNull();
+
+  fireEvent.change(element(view, 'builtin-screen-language'), { target: { value: 'ar' } });
+  // The title falls back to the app's own text; the help, written only in
+  // Catalan, has no app text and shows nothing in Arabic.
+  expect(view.getByTestId('screen-fallback').dataset.fields).toBe('title,intro,continue_label');
+  expect(view.getByTestId('screen-nothing-shows').dataset.fields).toBe('help');
+});
+
 test('the terms screen has no title field: it is the terms version', () => {
   const { view } = renderEditor();
   fireEvent.change(element(view, 'builtin-screen-select'), { target: { value: 'terms' } });
