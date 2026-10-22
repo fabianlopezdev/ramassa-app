@@ -133,7 +133,7 @@
       "description": "Your sign-in code arrives here."
     },
     "photo": {
-      "description": "Shown next to your name in the Control Center."
+      "description": "Players see it next to your messages, posts and articles."
     }
   },
   "todos": {

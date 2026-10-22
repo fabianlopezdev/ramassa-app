@@ -133,7 +133,7 @@
       "description": "Aquí te llega el código para entrar."
     },
     "photo": {
-      "description": "Se muestra junto a tu nombre en el Centro de Control."
+      "description": "Los participantes la ven junto a tus mensajes, publicaciones y artículos."
     }
   },
   "todos": {

@@ -133,7 +133,7 @@
       "description": "Aquí t'arriba el codi per entrar."
     },
     "photo": {
-      "description": "Es mostra al costat del teu nom al Centre de Control."
+      "description": "Els participants la veuen al costat dels teus missatges, publicacions i articles."
     }
   },
   "todos": {
