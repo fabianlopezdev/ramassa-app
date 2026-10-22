@@ -64,6 +64,19 @@ export function SignatureDrawing({
   );
 }
 
+/**
+ * What her health line shows: her answer, that she withdrew the health data
+ * consent (her answer was then deleted, pending fix 25), or nothing given.
+ */
+export function healthAnswerState(
+  healthInfo: string | null | undefined,
+  consents: readonly ParticipantConsent[],
+): 'answer' | 'withdrawn' | 'none' {
+  if (healthInfo != null && healthInfo !== '') return 'answer';
+  const health = consents.find((consent) => consent.key === 'health_data');
+  return health !== undefined && !health.granted ? 'withdrawn' : 'none';
+}
+
 export interface ParticipantAuthorizationPanelProps {
   readonly participant: ParticipantDetailRow;
   readonly authorizations: readonly ParticipantAuthorization[];
@@ -225,7 +238,9 @@ export function ParticipantAuthorizationPanel({
               {t('participants:authorizationHealth')}
             </dt>
             <dd className="whitespace-pre-wrap text-start text-sm">
-              {participant.health_info ?? notProvided}
+              {healthAnswerState(participant.health_info, consents) === 'withdrawn'
+                ? t('participants:authorizationHealthConsentWithdrawn')
+                : (participant.health_info ?? notProvided)}
             </dd>
           </div>
         ) : null}

@@ -611,5 +611,6 @@
   "testScenarioFillAllCustom": "Omple-les totes",
   "testScenarioClearAllCustom": "Buida-les totes",
   "testScenarioDraftTerms": "El seu telèfon mostra l'esborrany dels termes de l'app. Quan es publiqui o es descarti, les acceptacions de prova d'aquest esborrany s'esborren.",
-  "testScenarioDraftAuthorization": "El seu telèfon mostra l'esborrany de l'autorització de temporada. Quan es publiqui o es descarti, les signatures de prova d'aquest esborrany s'esborren."
+  "testScenarioDraftAuthorization": "El seu telèfon mostra l'esborrany de l'autorització de temporada. Quan es publiqui o es descarti, les signatures de prova d'aquest esborrany s'esborren.",
+  "authorizationHealthConsentWithdrawn": "Consentiment retirat: la seva resposta de salut s'ha esborrat"
 }
