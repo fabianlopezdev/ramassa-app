@@ -1,25 +1,34 @@
 /**
  * A person's first or last name (RAPP-624, pending fix 28).
  *
- * JavaScript's `trim()` removes Unicode whitespace but not the zero-width
- * characters, so a name of only U+200B passed `z.string().trim().min(1)`.
- * The edges are trimmed of the whitespace `trim()` removes plus U+180E,
- * U+200B to U+200D and U+2060: the exact set of the database's
- * `private.name_trim` (20261022211000), so the form and every database path
- * agree on which names are blank. Inner spaces stay.
+ * A name is trimmed at its edges of every invisible character: Unicode
+ * White_Space plus Default_Ignorable_Code_Point (the zero-width characters,
+ * the direction marks and isolates, the soft hyphen, the Hangul fillers, the
+ * variation selectors and the tag characters). What is left must hold one
+ * character that is neither invisible nor a combining mark (a mark alone has
+ * no letter to sit on), or the name is blank. Inner characters stay, so a
+ * Persian name keeps its zero-width non-joiner.
  *
- * https://tc39.es/ecma262/#sec-string.prototype.trim
+ * The database's `private.name_trim` (20261022215000) holds the same two
+ * classes as code point ranges, and a parity test compares them over every
+ * code point. Unicode property escapes work in Hermes (its compiler checks
+ * them at build time), in every browser the admin supports and in Bun.
+ *
+ * https://tc39.es/ecma262/#sec-runtime-semantics-unicodematchproperty-p
+ * https://www.unicode.org/reports/tr44/#Default_Ignorable_Code_Point
  */
 import { z } from 'zod';
 
 const PERSON_NAME_MAX_LENGTH = 100;
 
-const EDGE_CHARACTERS =
-  '[\\u0009-\\u000d\\u0020\\u00a0\\u1680\\u180e\\u2000-\\u200d\\u2028\\u2029\\u202f\\u205f\\u2060\\u3000\\ufeff]+';
-const NAME_EDGES = new RegExp(`^${EDGE_CHARACTERS}|${EDGE_CHARACTERS}$`, 'gu');
+const INVISIBLE_EDGES =
+  /^[\p{White_Space}\p{Default_Ignorable_Code_Point}]+|[\p{White_Space}\p{Default_Ignorable_Code_Point}]+$/gu;
+const BASE_CHARACTER = /[^\p{White_Space}\p{Default_Ignorable_Code_Point}\p{M}]/u;
 
+/** The name without invisible edges, or '' when nothing visible stands on its own. */
 export function trimPersonName(value: string): string {
-  return value.replace(NAME_EDGES, '');
+  const trimmed = value.replace(INVISIBLE_EDGES, '');
+  return BASE_CHARACTER.test(trimmed) ? trimmed : '';
 }
 
 /** Trimmed of invisible edges, non-empty, bounded. */

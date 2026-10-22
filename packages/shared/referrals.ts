@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { AppError } from './errors';
 import { DOCUMENT_TYPES, NIE_PATTERN } from './schemas/onboarding';
+import { personNameSchema, trimPersonName } from './schemas/person-name';
 import {
   APPLICANT_STATUSES,
   CHILDCARE_NEEDS,
@@ -69,8 +70,8 @@ const optionalIsoDate = z
  */
 export const createReferralSchema = z
   .object({
-    firstName: z.string().trim().min(1).max(100),
-    lastName: z.string().trim().min(1).max(100),
+    firstName: personNameSchema,
+    lastName: personNameSchema,
     phone: optionalTrimmedText(50),
     email: optionalEmail,
     documentationStatus: z.enum(DOCUMENTATION_STATUSES),
@@ -87,7 +88,14 @@ export const createReferralSchema = z
       .optional()
       .default([])
       .transform((names) => names.filter((name) => name.length > 0)),
-    referenceContactName: optionalTrimmedText(200),
+    // A contact's name of only invisible characters is no name (RAPP-624).
+    referenceContactName: z
+      .string()
+      .overwrite(trimPersonName)
+      .max(200)
+      .optional()
+      .default('')
+      .transform((value) => (value.length === 0 ? null : value)),
     seasonNumber: z.preprocess(
       (value) => (value === '' || value === undefined || value === null ? null : Number(value)),
       z.number().int().min(1).max(5).nullable(),

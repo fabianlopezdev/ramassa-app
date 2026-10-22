@@ -21,6 +21,7 @@ import { signatureStrokesSchema, type SignatureStrokes } from '../equipment/hand
 import { AppError, databaseErrorCode } from '../errors';
 import { withCancellation, type CancellableRequest } from '../lib/cancellation';
 import type { LanguageCode } from '../schemas/language';
+import { trimPersonName } from '../schemas/person-name';
 import type { Database, Json } from '../types/database';
 
 type Client = SupabaseClient<Database>;
@@ -336,7 +337,8 @@ const signingShape = z.object({
   healthInfo: z.string().trim().max(4000),
   emergencyContact: z
     .object({
-      name: z.string().trim().max(200),
+      // A name of only invisible characters is no name (RAPP-624).
+      name: z.string().overwrite(trimPersonName).max(200),
       relation: z.string().trim().max(100),
       phone: z.string().trim().max(50),
     })

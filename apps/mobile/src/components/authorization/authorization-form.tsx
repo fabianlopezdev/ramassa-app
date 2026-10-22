@@ -51,6 +51,7 @@ import {
 } from '@ramassa/shared/authorization';
 import type { SignatureStrokes } from '@ramassa/shared/equipment';
 import { isRtlLanguage, resolveLocalizedText, type SupportedLanguage } from '@ramassa/shared/i18n';
+import { trimPersonName } from '@ramassa/shared/schemas';
 
 type Problem = 'consents' | 'health' | 'healthConsent' | 'emergency' | 'signature';
 
@@ -156,7 +157,9 @@ export function AuthorizationForm({
       consents,
       healthInfo,
       emergencyContact:
-        contact.name.trim() === '' && contact.relation.trim() === '' && contact.phone.trim() === ''
+        trimPersonName(contact.name) === '' &&
+        contact.relation.trim() === '' &&
+        contact.phone.trim() === ''
           ? undefined
           : contact,
       strokes: unableToDraw ? null : strokes,
@@ -257,7 +260,7 @@ export function AuthorizationForm({
                 if (
                   emergency.asked &&
                   emergency.required &&
-                  (contact.name.trim() === '' || contact.phone.trim() === '')
+                  (trimPersonName(contact.name) === '' || contact.phone.trim() === '')
                 ) {
                   found.add('emergency');
                 }
