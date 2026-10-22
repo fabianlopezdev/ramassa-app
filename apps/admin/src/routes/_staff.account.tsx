@@ -185,11 +185,7 @@ function AccountForm({
           <FieldSet>
             <FieldLegend className="sr-only">{t('admin:account.title')}</FieldLegend>
             <FieldGroup>
-              <SettingRow
-                label={t('admin:userMenu.profilePhoto')}
-                description={t('admin:account.photo.description')}
-                testId="account-photo"
-              >
+              <SettingRow label={t('admin:userMenu.profilePhoto')} testId="account-photo">
                 <div className="flex flex-wrap items-center gap-4">
                   <AccountAvatar
                     account={account}
@@ -226,6 +222,8 @@ function AccountForm({
                     )}
                   </div>
                 </div>
+                {/* Under the photo and its buttons, where she decides what to show. */}
+                <FieldDescription>{t('admin:account.photo.description')}</FieldDescription>
                 {photo.message === null ? null : (
                   <p role="status" className="text-sm text-muted-foreground">
                     {photo.message}
