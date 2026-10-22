@@ -34,6 +34,13 @@ async function inviteFromReferralAndOnboard(page: Page): Promise<void> {
   await page.getByTestId(`complete-referral-${referralId}`).click();
   await expect(page.getByTestId('referral-prefill')).toContainText(FIRST_NAME);
   await page.locator('#new-participant-email').fill(EMAIL);
+  // Her details, then the step that shows what she will be asked (RAPP-618).
+  await page
+    .getByRole('button', {
+      name: /què se li preguntarà|what she will be asked|qué se le preguntará/i,
+    })
+    .click();
+  await expect(page.getByTestId('invite-questions-review')).toBeVisible({ timeout: 15_000 });
   await page
     .getByRole('button', { name: /crea la invitació|create the invitation|crea la invitación/i })
     .click();
