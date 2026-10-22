@@ -82,7 +82,7 @@ export function BuiltinScreensEditor({
   onSaveOrder,
 }: BuiltinScreensEditorProps) {
   return (
-    <div className="flex max-w-6xl flex-col gap-6" data-testid="builtin-screens-editor">
+    <div className="flex flex-col gap-6" data-testid="builtin-screens-editor">
       <FlowOrderPanel catalog={catalog} onSaveOrder={onSaveOrder} />
       <ScreenWordingPanel catalog={catalog} onSaveScreen={onSaveScreen} />
     </div>

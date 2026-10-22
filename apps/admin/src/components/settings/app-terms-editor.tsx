@@ -130,7 +130,7 @@ export function AppTermsEditor({
   const isBusy = status === 'saving' || status === 'publishing';
 
   return (
-    <div className="flex max-w-6xl flex-col gap-6" data-testid="app-terms-editor">
+    <div className="flex flex-col gap-6" data-testid="app-terms-editor">
       <section className="flex flex-col gap-2 rounded-xl border bg-card p-5">
         <h3 className="text-start text-base font-semibold">{t('appTerms.versionsTitle')}</h3>
         <ul className="flex flex-col gap-1" data-testid="app-terms-versions">

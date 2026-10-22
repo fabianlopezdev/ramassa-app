@@ -173,7 +173,7 @@ export function SetupTransfer({
 
   return (
     <section
-      className="flex max-w-3xl flex-col gap-4 rounded-xl border bg-card p-5"
+      className="flex flex-col gap-4 rounded-xl border bg-card p-5"
       data-testid="setup-transfer"
       aria-labelledby="setup-transfer-title"
     >

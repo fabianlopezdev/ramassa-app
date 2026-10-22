@@ -19,6 +19,7 @@
 import { ParticipantAttendanceReport } from '@/components/attendance/attendance-report';
 import { loadAuthenticatedMediaObjectUrl } from '@/components/content/authenticated-media-image';
 import { DetailSection } from '@/components/detail/detail-section';
+import { Page } from '@/components/layout/page';
 import { ParticipantActivity } from '@/components/participants/participant-activity';
 import { ParticipantAuthorizationPanel } from '@/components/participants/participant-authorization-panel';
 import { ParticipantCustomAnswers } from '@/components/participants/participant-custom-answers';
@@ -292,7 +293,7 @@ export function ParticipantDetail({
   }
 
   return (
-    <section className="flex flex-col gap-6 p-6">
+    <Page>
       <header className="flex flex-col gap-3">
         <Link
           to="/participants"
@@ -510,6 +511,6 @@ export function ParticipantDetail({
           />
         </>
       ) : null}
-    </section>
+    </Page>
   );
 }

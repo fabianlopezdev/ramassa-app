@@ -12,6 +12,7 @@
  * would be all harness and no horse.
  */
 
+import { Page } from '@/components/layout/page';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -51,7 +52,7 @@ export function InvitesTable({ invites }: InvitesTableProps) {
   const now = new Date();
 
   return (
-    <section className="flex flex-col gap-4 p-6">
+    <Page className="gap-4">
       <header className="flex flex-col gap-3">
         <Link
           to="/participants"
@@ -110,6 +111,6 @@ export function InvitesTable({ invites }: InvitesTableProps) {
           </TableBody>
         </Table>
       )}
-    </section>
+    </Page>
   );
 }

@@ -12,6 +12,7 @@
  * Her signing itself is never shown here: it holds her medical answer.
  */
 
+import { Page } from '@/components/layout/page';
 import { Button } from '@/components/ui/button';
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -76,7 +77,7 @@ export function WalkInQueue({ walkIns, players, onConfirm, onMerge, onDiscard }:
   }
 
   return (
-    <section className="flex flex-col gap-4 p-6" data-testid="walk-in-queue">
+    <Page className="gap-4" data-testid="walk-in-queue">
       <header className="flex flex-col gap-1">
         <h1 className="text-start text-2xl font-semibold">{t('walkIns.title')}</h1>
         <p className="text-start text-sm text-muted-foreground">{t('walkIns.intro')}</p>
@@ -182,6 +183,6 @@ export function WalkInQueue({ walkIns, players, onConfirm, onMerge, onDiscard }:
           })}
         </ul>
       )}
-    </section>
+    </Page>
   );
 }

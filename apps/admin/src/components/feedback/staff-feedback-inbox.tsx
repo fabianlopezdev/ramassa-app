@@ -1,4 +1,5 @@
 import { AuthenticatedMediaImage } from '@/components/content/authenticated-media-image';
+import { Page } from '@/components/layout/page';
 import { adminClientEnv, supabase } from '@/lib/supabase';
 import { Link, useRouter } from '@tanstack/react-router';
 import { useMemo, useState } from 'react';
@@ -81,7 +82,7 @@ export function StaffFeedbackInbox({
   }
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-8 px-4 py-8 sm:px-6">
+    <Page className="gap-8">
       <header className="space-y-2">
         <h1 className="text-3xl font-bold">{t('inboxTitle')}</h1>
         <p className="text-neutral-600">{t('inboxIntro')}</p>
@@ -219,6 +220,6 @@ export function StaffFeedbackInbox({
           ))}
         </ol>
       </section>
-    </div>
+    </Page>
   );
 }

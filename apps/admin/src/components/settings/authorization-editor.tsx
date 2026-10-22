@@ -223,7 +223,7 @@ export function AuthorizationEditor({
     });
 
   return (
-    <div className="flex max-w-6xl flex-col gap-6" data-testid="authorization-editor">
+    <div className="flex flex-col gap-6" data-testid="authorization-editor">
       <section className="flex flex-col gap-2 rounded-xl border bg-card p-5">
         <h3 className="text-start text-base font-semibold">{t('authorizationVersionsTitle')}</h3>
         {versions.length === 0 ? (

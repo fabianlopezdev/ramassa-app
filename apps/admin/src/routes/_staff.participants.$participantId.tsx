@@ -17,6 +17,7 @@
  * opening.
  */
 
+import { Page } from '@/components/layout/page';
 import { ParticipantDetail } from '@/components/participants/participant-detail';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabase';
@@ -246,12 +247,12 @@ function ParticipantDetailPage() {
 function ParticipantNotFound() {
   const { t } = useTranslation('participants');
   return (
-    <section className="flex flex-col items-start gap-3 p-6">
+    <Page className="items-start gap-3">
       <h1 className="text-start text-2xl font-semibold">{t('detailNotFoundTitle')}</h1>
       <p className="text-start text-sm text-muted-foreground">{t('detailNotFoundBody')}</p>
       <Button asChild variant="outline" size="lg">
         <Link to="/participants">{t('detailBackToList')}</Link>
       </Button>
-    </section>
+    </Page>
   );
 }

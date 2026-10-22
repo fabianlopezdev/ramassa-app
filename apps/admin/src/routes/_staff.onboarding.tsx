@@ -13,6 +13,7 @@
  */
 
 import { RequireAuth } from '@/components/auth/require-auth';
+import { Page, PageHeader, PageSection } from '@/components/layout/page';
 import {
   OnboardingAppTermsSection,
   OnboardingAuthorizationSection,
@@ -79,69 +80,38 @@ function OnboardingDesignScreen() {
   const data = Route.useLoaderData();
   const { t } = useTranslation('settings');
   return (
-    <section className="flex flex-col gap-10 p-6" data-testid="onboarding-design-page">
-      <header className="max-w-3xl space-y-2">
-        <h1 className="text-start text-2xl font-semibold">{t('onboardingPage.title')}</h1>
-        <p className="text-start text-sm leading-6 text-muted-foreground">
-          {t('onboardingPage.intro')}
-        </p>
-      </header>
+    <Page className="gap-10" data-testid="onboarding-design-page">
+      <PageHeader title={t('onboardingPage.title')} description={t('onboardingPage.intro')} />
 
       {/* Staging to production at launch (RAPP-621): admins import, designers download. */}
       <OnboardingSetupTransferSection canImport={data.canPublishTerms} />
 
-      <section className="space-y-6" aria-labelledby="onboarding-screens-heading">
-        <header className="max-w-3xl space-y-2">
-          <h2 id="onboarding-screens-heading" className="text-xl font-semibold text-foreground">
-            {t('builtinScreens.sectionTitle')}
-          </h2>
-          <p className="text-sm leading-6 text-muted-foreground">
-            {t('builtinScreens.sectionIntro')}
-          </p>
-        </header>
+      <PageSection
+        title={t('builtinScreens.sectionTitle')}
+        description={t('builtinScreens.sectionIntro')}
+      >
         <OnboardingScreensSection catalog={data.intakeCatalog} />
-      </section>
+      </PageSection>
 
-      <section className="space-y-6" aria-labelledby="onboarding-questions-heading">
-        <header className="max-w-3xl space-y-2">
-          <h2 id="onboarding-questions-heading" className="text-xl font-semibold text-foreground">
-            {t('tabQuestions')}
-          </h2>
-          <p className="text-sm leading-6 text-muted-foreground">{t('questionsIntro')}</p>
-        </header>
+      <PageSection title={t('tabQuestions')} description={t('questionsIntro')}>
         <OnboardingQuestionsSection catalog={data.intakeCatalog} />
         <OnboardingDocumentSection explanation={data.documentExplanation} />
-      </section>
+      </PageSection>
 
-      <section className="space-y-6" aria-labelledby="onboarding-terms-heading">
-        <header className="max-w-3xl space-y-2">
-          <h2 id="onboarding-terms-heading" className="text-xl font-semibold text-foreground">
-            {t('appTerms.sectionTitle')}
-          </h2>
-          <p className="text-sm leading-6 text-muted-foreground">{t('appTerms.sectionIntro')}</p>
-        </header>
+      <PageSection title={t('appTerms.sectionTitle')} description={t('appTerms.sectionIntro')}>
         <OnboardingAppTermsSection
           versions={data.termsVersions}
           canPublish={data.canPublishTerms}
         />
-      </section>
+      </PageSection>
 
-      <section className="space-y-6" aria-labelledby="onboarding-authorization-heading">
-        <header className="max-w-3xl space-y-2">
-          <h2
-            id="onboarding-authorization-heading"
-            className="text-xl font-semibold text-foreground"
-          >
-            {t('tabAuthorization')}
-          </h2>
-          <p className="text-sm leading-6 text-muted-foreground">{t('authorizationIntro')}</p>
-        </header>
+      <PageSection title={t('tabAuthorization')} description={t('authorizationIntro')}>
         <OnboardingAuthorizationSection
           seasons={data.seasons}
           versions={data.versions}
           canPublish={data.canPublishTerms}
         />
-      </section>
-    </section>
+      </PageSection>
+    </Page>
   );
 }

@@ -1,3 +1,4 @@
+import { Page } from '@/components/layout/page';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { safeAsync } from '@/lib/observability';
@@ -64,7 +65,7 @@ export function ServicesTable({
   }
 
   return (
-    <section className="flex flex-col gap-4 p-6">
+    <Page className="gap-4">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold">{t('services:title')}</h1>
@@ -241,7 +242,7 @@ export function ServicesTable({
           {t('services:next')}
         </Button>
       </footer>
-    </section>
+    </Page>
   );
 }
 

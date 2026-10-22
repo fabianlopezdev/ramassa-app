@@ -90,7 +90,7 @@ function WebMessageThread({
   return (
     <div
       data-testid="message-thread"
-      className="mx-auto flex h-[calc(100dvh-3.5rem)] w-full max-w-4xl flex-col px-4 py-5 sm:px-6"
+      className="flex h-[calc(100dvh-3.5rem)] w-full min-w-0 flex-col p-4 sm:p-6"
     >
       <header className="mb-4 border-b border-border pb-4">
         <h1 className="text-2xl font-semibold tracking-tight">

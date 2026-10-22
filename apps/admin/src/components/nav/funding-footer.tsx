@@ -11,7 +11,7 @@ export function FundingFooter({ className }: { readonly className?: string }) {
   const { t } = useTranslation('common');
   return (
     <footer
-      className={cn('mt-auto border-t border-border/70 px-6 py-4', className)}
+      className={cn('mt-auto border-t border-border/70 px-4 py-4 sm:px-6', className)}
       data-testid="funding-footer"
     >
       <p className="text-xs leading-5 text-muted-foreground" data-testid="generalitat-credit">

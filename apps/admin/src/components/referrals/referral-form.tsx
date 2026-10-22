@@ -4,6 +4,7 @@ import {
   CustomAnswerFields,
   readCustomAnswers,
 } from '@/components/intake/custom-answer-fields';
+import { Page } from '@/components/layout/page';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { safeAsync } from '@/lib/observability';
@@ -195,7 +196,7 @@ export function ReferralForm({
   });
 
   return (
-    <section className="mx-auto flex w-full max-w-2xl flex-col gap-6 p-6">
+    <Page>
       <header>
         <Link
           to="/portal/referrals"
@@ -608,6 +609,6 @@ export function ReferralForm({
           {t('save')}
         </Button>
       </form>
-    </section>
+    </Page>
   );
 }

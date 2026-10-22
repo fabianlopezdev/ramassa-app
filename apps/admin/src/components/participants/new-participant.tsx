@@ -18,6 +18,7 @@
  */
 
 import { AdminAuthField } from '@/components/auth/admin-auth-field';
+import { Page } from '@/components/layout/page';
 import { InviteQuestionsReview } from '@/components/participants/invite-questions-review';
 import { TestPlayerOption } from '@/components/participants/test-player-option';
 import { ReferralAnswersList } from '@/components/referrals/referral-answers';
@@ -77,7 +78,7 @@ export function NewParticipant({
   const referralId = referral?.id ?? null;
 
   return (
-    <section className="flex w-full max-w-2xl flex-col gap-6 px-4 py-5 sm:p-6">
+    <Page>
       <header className="flex flex-col gap-3">
         <Link
           to="/participants"
@@ -148,7 +149,7 @@ export function NewParticipant({
           />
         </>
       )}
-    </section>
+    </Page>
   );
 }
 

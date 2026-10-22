@@ -1,3 +1,4 @@
+import { pageClassName } from '@/components/layout/page';
 import { Button } from '@/components/ui/button';
 import { mediaWorkerUrl } from '@/lib/media-worker';
 import { safeAsync } from '@/lib/observability';
@@ -398,7 +399,7 @@ function ServiceEditorForm({
   return (
     <FormProvider {...form}>
       <form
-        className="flex flex-col gap-6 p-6"
+        className={pageClassName()}
         onSubmit={submit}
         data-testid={
           workflow.kind === 'submission-approval' ? 'service-approval-editor' : 'service-editor'

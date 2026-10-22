@@ -1,4 +1,5 @@
 import { AuthenticatedMediaImage } from '@/components/content/authenticated-media-image';
+import { Page } from '@/components/layout/page';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -100,7 +101,7 @@ export function ForumModeration({ queue, categories }: ForumModerationProps) {
   }
 
   return (
-    <section className="flex flex-col gap-6 p-6">
+    <Page>
       <header className="space-y-1">
         <h1 className="text-start text-2xl font-semibold">{t('moderationTitle')}</h1>
         <p className="text-start text-sm text-muted-foreground">
@@ -241,7 +242,7 @@ export function ForumModeration({ queue, categories }: ForumModerationProps) {
         </ol>
       )}
       <ForumCategoryManager categories={categories} />
-    </section>
+    </Page>
   );
 }
 

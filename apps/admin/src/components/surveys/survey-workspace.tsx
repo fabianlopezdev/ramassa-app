@@ -1,6 +1,7 @@
 import { useStepUp } from '@/components/auth/step-up';
 import { MultilingualEditor } from '@/components/content/multilingual-editor';
 import { TranslationReviewPanel } from '@/components/content/translation-review-panel';
+import { Page } from '@/components/layout/page';
 import { AudiencePicker } from '@/components/notifications/audience-picker';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -334,7 +335,7 @@ export function SurveyWorkspace({
   }
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-10 px-4 py-8 sm:px-6">
+    <Page className="gap-10">
       <header className="space-y-2">
         <h1 className="text-3xl font-bold">{t('title')}</h1>
         <p className="text-neutral-600">{t('intro')}</p>
@@ -616,10 +617,7 @@ export function SurveyWorkspace({
                   ) : aggregate.type === 'multiple_choice' ? (
                     <ul className="mt-3 space-y-2">
                       {Object.entries(aggregate.counts).map(([choice, count]) => (
-                        <li
-                          key={choice}
-                          className="flex justify-between rounded-lg bg-canvas p-2"
-                        >
+                        <li key={choice} className="flex justify-between rounded-lg bg-canvas p-2">
                           <span>{resolveChoiceLabel(question, choice, resolvedLanguage)}</span>
                           <strong>{count}</strong>
                         </li>
@@ -678,6 +676,6 @@ export function SurveyWorkspace({
           </div>
         ) : null}
       </section>
-    </div>
+    </Page>
   );
 }

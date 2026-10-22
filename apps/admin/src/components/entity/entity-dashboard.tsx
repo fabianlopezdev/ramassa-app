@@ -1,3 +1,4 @@
+import { Page, PageHeader } from '@/components/layout/page';
 import {
   Table,
   TableBody,
@@ -43,11 +44,8 @@ export function EntityDashboard({
   const hasSection = (section: 'impact' | 'tracking' | 'events') => sections.includes(section);
 
   return (
-    <section className="space-y-8 p-4 sm:p-6">
-      <header className="max-w-3xl space-y-2">
-        <h1 className="text-2xl font-semibold">{t('dashboardTitle')}</h1>
-        <p className="text-sm leading-6 text-muted-foreground">{t('dashboardIntro')}</p>
-      </header>
+    <Page className="gap-8">
+      <PageHeader title={t('dashboardTitle')} description={t('dashboardIntro')} />
 
       {hasSection('impact') ? (
         <section aria-labelledby="entity-impact-heading" className="space-y-4">
@@ -202,6 +200,6 @@ export function EntityDashboard({
           )}
         </section>
       ) : null}
-    </section>
+    </Page>
   );
 }

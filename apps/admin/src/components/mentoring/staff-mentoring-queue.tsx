@@ -1,3 +1,4 @@
+import { Page } from '@/components/layout/page';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -115,10 +116,10 @@ export function StaffMentoringQueue({
   };
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-8 p-4 sm:p-6 lg:p-8">
+    <Page className="gap-8">
       <header className="space-y-2">
         <h1 className="text-3xl font-semibold tracking-tight">{t('adminTitle')}</h1>
-        <p className="max-w-3xl text-muted-foreground">{t('adminIntro')}</p>
+        <p className="text-muted-foreground">{t('adminIntro')}</p>
         <p className="text-sm font-medium">{t('adminQueueCount', { count: requests.length })}</p>
       </header>
 
@@ -286,7 +287,7 @@ export function StaffMentoringQueue({
           })}
         </ol>
       )}
-    </div>
+    </Page>
   );
 }
 

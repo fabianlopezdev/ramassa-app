@@ -2,6 +2,7 @@ import {
   AuthenticatedMediaImage,
   loadAuthenticatedMediaObjectUrl,
 } from '@/components/content/authenticated-media-image';
+import { Page, PageHeader } from '@/components/layout/page';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -97,7 +98,7 @@ function Field({ label, children }: { readonly label: string; readonly children:
 
 function SectionHeader({ title, intro }: { readonly title: string; readonly intro: string }) {
   return (
-    <header className="max-w-3xl space-y-2">
+    <header className="space-y-2">
       <h2 className="text-xl font-semibold text-foreground">{title}</h2>
       <p className="text-sm leading-6 text-muted-foreground">{intro}</p>
     </header>
@@ -277,11 +278,8 @@ export function OrganizationSettingsPanel({
   }
 
   return (
-    <section className="space-y-6 p-4 sm:p-6" data-testid="organization-settings">
-      <header className="max-w-3xl space-y-2">
-        <h1 className="text-2xl font-semibold">{t('title')}</h1>
-        <p className="text-sm leading-6 text-muted-foreground">{t('intro')}</p>
-      </header>
+    <Page data-testid="organization-settings">
+      <PageHeader title={t('title')} description={t('intro')} />
 
       <div className="pointer-events-none fixed inset-x-4 top-4 z-50 sm:start-auto sm:end-6 sm:w-96">
         {(['success', 'error'] as const).map((kind) => (
@@ -340,7 +338,7 @@ export function OrganizationSettingsPanel({
         <TabsContent value="organization" className="space-y-6">
           <SectionHeader title={t('tabOrganization')} intro={t('intro')} />
           <form
-            className="grid max-w-3xl gap-5 rounded-xl border bg-card p-5"
+            className="grid gap-5 rounded-xl border bg-card p-5"
             onSubmit={submitOrganization}
             onChange={() => setMessage(null)}
             data-testid="organization-settings-form"
@@ -478,7 +476,7 @@ export function OrganizationSettingsPanel({
         <TabsContent value="documents" className="space-y-6">
           <SectionHeader title={t('documentsTitle')} intro={t('documentsIntro')} />
           <form
-            className="flex max-w-2xl gap-2"
+            className="flex gap-2"
             onSubmit={(event) => {
               event.preventDefault();
               void onSearchDocuments(query);
@@ -494,7 +492,7 @@ export function OrganizationSettingsPanel({
             </Button>
           </form>
           <form
-            className="grid max-w-2xl gap-3 rounded-xl border bg-card p-4"
+            className="grid gap-3 rounded-xl border bg-card p-4"
             onSubmit={submitDocument}
             data-testid="document-upload-form"
           >
@@ -566,6 +564,6 @@ export function OrganizationSettingsPanel({
         </TabsContent>
         <TabsContent value="entities">{entityManagement}</TabsContent>
       </Tabs>
-    </section>
+    </Page>
   );
 }

@@ -1,5 +1,6 @@
 import { DataTable } from '@/components/data-table/data-table';
 import { DataTablePager } from '@/components/data-table/data-table-pager';
+import { Page } from '@/components/layout/page';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { safeAsync } from '@/lib/observability';
@@ -144,7 +145,7 @@ export function KnowledgeArticlesTable({ page, search }: KnowledgeArticlesTableP
 
   const pages = Math.max(1, Math.ceil(page.total / KNOWLEDGE_PAGE_SIZE));
   return (
-    <section className="flex flex-col gap-4 p-6" data-testid="knowledge-table">
+    <Page className="gap-4" data-testid="knowledge-table">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold">{t('knowledge:title')}</h1>
@@ -230,7 +231,7 @@ export function KnowledgeArticlesTable({ page, search }: KnowledgeArticlesTableP
           void navigate({ search: (previous) => ({ ...previous, page: next }) })
         }
       />
-    </section>
+    </Page>
   );
 }
 

@@ -1,5 +1,6 @@
 import { MultilingualEditor } from '@/components/content/multilingual-editor';
 import { TranslationReviewPanel } from '@/components/content/translation-review-panel';
+import { Page } from '@/components/layout/page';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/lib/supabase';
@@ -264,7 +265,7 @@ export function NotificationWorkspace({
   );
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-10 px-4 py-8 sm:px-6">
+    <Page className="gap-10">
       <header className="space-y-2">
         <h1 className="text-3xl font-bold">{t('title')}</h1>
         <p className="text-neutral-600">{t('intro')}</p>
@@ -569,6 +570,6 @@ export function NotificationWorkspace({
           ))}
         </ol>
       </section>
-    </div>
+    </Page>
   );
 }

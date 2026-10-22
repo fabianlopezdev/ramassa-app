@@ -1,6 +1,7 @@
 import { EntityServiceEditor } from '@/components/entity/entity-service-editor';
 import { EntityServiceReadonly } from '@/components/entity/entity-service-readonly';
 import { EntityServiceThread } from '@/components/entity/entity-service-thread';
+import { Page } from '@/components/layout/page';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabase';
 import { createFileRoute, Link, useRouter } from '@tanstack/react-router';
@@ -33,7 +34,7 @@ function EntityServicePage() {
   const router = useRouter();
   const canEdit = getEntityServiceActions(service.status).includes('edit');
   return (
-    <section className="mx-auto grid w-full max-w-4xl gap-6 p-6">
+    <Page>
       <Button asChild variant="link" className="w-fit px-0">
         <Link to="/portal/services">{t('backToList')}</Link>
       </Button>
@@ -51,6 +52,6 @@ function EntityServicePage() {
         <EntityServiceReadonly service={service} />
       )}
       <EntityServiceThread serviceId={service.id} initialComments={comments} />
-    </section>
+    </Page>
   );
 }

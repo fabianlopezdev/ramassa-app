@@ -1,3 +1,4 @@
+import { Page } from '@/components/layout/page';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,7 +28,7 @@ export function ServiceReviewQueue({ page, search, categories }: ServiceReviewQu
   }
 
   return (
-    <section className="flex flex-col gap-5 p-6">
+    <Page className="gap-5">
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold">{t('reviewQueueTitle')}</h1>
@@ -162,6 +163,6 @@ export function ServiceReviewQueue({ page, search, categories }: ServiceReviewQu
           {t('next')}
         </Button>
       </nav>
-    </section>
+    </Page>
   );
 }

@@ -7,6 +7,7 @@
  * The reminder goes in every language she may read, from the app's own copy.
  */
 
+import { Page } from '@/components/layout/page';
 import { Button } from '@/components/ui/button';
 import { Link } from '@tanstack/react-router';
 import { useState } from 'react';
@@ -83,7 +84,7 @@ export function SeasonRegistrations({
   }
 
   return (
-    <section className="flex flex-col gap-4 p-6" data-testid="season-registrations">
+    <Page className="gap-4" data-testid="season-registrations">
       <header className="flex flex-col gap-1">
         <h1 className="text-start text-2xl font-semibold">
           {t('seasonViewTitle', { season: season.name })}
@@ -173,6 +174,6 @@ export function SeasonRegistrations({
           </li>
         ))}
       </ul>
-    </section>
+    </Page>
   );
 }

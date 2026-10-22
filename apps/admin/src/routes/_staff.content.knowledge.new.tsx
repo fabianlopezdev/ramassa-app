@@ -17,7 +17,7 @@ function NewKnowledgePage() {
   const router = useRouter();
   return (
     <section>
-      <Button asChild variant="link" className="m-4 mb-0">
+      <Button asChild variant="link" className="mx-4 mt-4 sm:mx-6 sm:mt-6">
         <Link to="/content/knowledge">{t('backToList')}</Link>
       </Button>
       <KnowledgeEditor
