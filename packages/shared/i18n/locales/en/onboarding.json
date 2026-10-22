@@ -65,6 +65,7 @@
   "mediaConsentLabel": "I'm happy to appear in community photos and stories (optional)",
   "mediaConsentHint": "You can change your photo and video permission at any time from your profile.",
   "termsDeclineAction": "Not now",
+  "termsUpdateLoadFailed": "We could not load the new terms. Here is the text you already know. Try again to accept the new ones.",
   "termsLeaveTitle": "Leave without accepting the terms?",
   "termsLeaveBody": "You will be signed out. You cannot enter the app until you accept the terms. Your answers will stay saved on this device. Sign in again here to continue.",
   "termsLeaveStayAction": "Keep reviewing",

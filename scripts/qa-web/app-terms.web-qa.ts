@@ -3,8 +3,8 @@
  * an admin writes a draft on the onboarding page, sees the phone's screens in
  * Spanish and in Arabic (right to left), publishes it as version 2, and a
  * player who had joined meets the new terms alone on her next open, accepts
- * them, and reaches her home. The design role writes drafts and cannot
- * publish.
+ * them, and reaches her home; when her terms cannot be read she sees the
+ * bundled text and a retry. The design role writes drafts and cannot publish.
  */
 import { readFileSync } from 'node:fs';
 import { expect, test } from '@playwright/test';
@@ -16,6 +16,9 @@ const ORG = '5eed0000-0000-4000-8000-000000000000';
 const PLAYER = '5eed0000-0000-4000-8000-000000000024';
 const onboardingEs = JSON.parse(
   readFileSync('packages/shared/i18n/locales/es/onboarding.json', 'utf8'),
+) as Record<string, string>;
+const errorsEs = JSON.parse(
+  readFileSync('packages/shared/i18n/locales/es/errors.json', 'utf8'),
 ) as Record<string, string>;
 
 test.use({ actionTimeout: 15_000 });
@@ -106,9 +109,21 @@ test('a player who joined accepts version 2 on its own screen, then reaches her 
   page,
 }) => {
   test.setTimeout(180_000);
+  // First her terms cannot be read: she gets the bundled text and a retry,
+  // never a spinner that locks her out (verifier finding 2).
+  await page.route('**/rest/v1/rpc/intake_catalog*', (route) =>
+    route.fulfill({ status: 503, contentType: 'application/json', body: '{"message":"down"}' }),
+  );
   await signInPlayer(page, 'maria.rojas@example.test', 'es');
   await expect(page).toHaveURL(`${PLAYER_ORIGIN}/terms-update`, { timeout: 60_000 });
-  await expect(page.getByText(NEW_BODY)).toBeVisible();
+  await expect(page.getByText(onboardingEs.termsUpdateLoadFailed!)).toBeVisible({
+    timeout: 60_000,
+  });
+  await expect(page.getByTestId('terms-update-acceptance')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: onboardingEs.termsDeclineAction })).toBeVisible();
+  await page.unroute('**/rest/v1/rpc/intake_catalog*');
+  await page.getByRole('button', { name: errorsEs.retry, exact: true }).click();
+  await expect(page.getByText(NEW_BODY)).toBeVisible({ timeout: 30_000 });
   // No wizard: no progress, no other step.
   await page.getByTestId('terms-update-acceptance').click();
   await page.getByTestId('terms-update-cannot-draw').click();

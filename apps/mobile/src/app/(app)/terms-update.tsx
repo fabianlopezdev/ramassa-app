@@ -39,7 +39,7 @@ import {
 import { tokens } from '@ramassa/shared/tokens';
 
 export default function TermsUpdateScreen() {
-  const { t, i18n } = useTranslation(['onboarding', 'common']);
+  const { t, i18n } = useTranslation(['onboarding', 'common', 'errors']);
   const languageFontClass = useLanguageFontClass();
   const { user, refreshProfile } = useAuth();
   const current = useQuery({
@@ -56,6 +56,22 @@ export default function TermsUpdateScreen() {
     refetchOnMount: 'always',
   });
 
+  if (current.data === undefined && current.isError) {
+    // Her terms could not be read: she reads the bundled text, retries, or
+    // leaves. Accepting needs the version id, so the fallback is never sent.
+    return (
+      <TermsUnavailable
+        wording={appTermsWording(
+          null,
+          (i18n.resolvedLanguage as LanguageCode | undefined) ?? 'ca',
+          (key) => t(key),
+        )}
+        failureCode={toAppError(current.error).code}
+        isRetrying={current.isFetching}
+        onRetry={() => void current.refetch()}
+      />
+    );
+  }
   if (current.data === undefined) {
     return (
       <View
@@ -81,6 +97,60 @@ export default function TermsUpdateScreen() {
       languageFontClass={languageFontClass}
       onAccepted={refreshProfile}
     />
+  );
+}
+
+function TermsUnavailable({
+  wording,
+  failureCode,
+  isRetrying,
+  onRetry,
+}: {
+  readonly wording: ReturnType<typeof appTermsWording>;
+  readonly failureCode: AppErrorCode;
+  readonly isRetrying: boolean;
+  readonly onRetry: () => void;
+}) {
+  const { t } = useTranslation(['onboarding', 'errors']);
+  return (
+    <WizardFrame
+      screenId={'terms'}
+      title={wording.title}
+      continueLabel={t('errors:retry')}
+      onContinue={onRetry}
+      isContinueBusy={isRetrying}
+    >
+      <FailureNotice code={failureCode} message={t('termsUpdateLoadFailed')} />
+      <TermsBody body={wording.body} />
+      <NotNowAction isDisabled={isRetrying} />
+    </WizardFrame>
+  );
+}
+
+/** "Not now" asks first, then signs her out; the gate brings her back here. */
+function NotNowAction({ isDisabled }: { readonly isDisabled: boolean }) {
+  const { t } = useTranslation('onboarding');
+  const languageFontClass = useLanguageFontClass();
+  return (
+    <PressableScale
+      accessibilityLabel={t('termsDeclineAction')}
+      isDisabled={isDisabled}
+      onPress={() =>
+        confirmAction({
+          title: t('termsLeaveTitle'),
+          message: t('termsLeaveBody'),
+          cancelLabel: t('termsLeaveStayAction'),
+          confirmLabel: t('termsLeaveConfirmAction'),
+          onConfirm: () => void logout(),
+        })
+      }
+      haptic="selection"
+      className="min-h-min items-center justify-center py-sm"
+    >
+      <Text className={`text-form font-medium text-neutral-700 ${languageFontClass}`}>
+        {t('termsDeclineAction')}
+      </Text>
+    </PressableScale>
   );
 }
 
@@ -210,25 +280,7 @@ function TermsUpdateForm({
         <FailureNotice code={failureCode} message={t('completionFailed')} />
       )}
 
-      <PressableScale
-        accessibilityLabel={t('termsDeclineAction')}
-        isDisabled={isSubmitting}
-        onPress={() =>
-          confirmAction({
-            title: t('termsLeaveTitle'),
-            message: t('termsLeaveBody'),
-            cancelLabel: t('termsLeaveStayAction'),
-            confirmLabel: t('termsLeaveConfirmAction'),
-            onConfirm: () => void logout(),
-          })
-        }
-        haptic="selection"
-        className="min-h-min items-center justify-center py-sm"
-      >
-        <Text className={`text-form font-medium text-neutral-700 ${languageFontClass}`}>
-          {t('termsDeclineAction')}
-        </Text>
-      </PressableScale>
+      <NotNowAction isDisabled={isSubmitting} />
     </WizardFrame>
   );
 }

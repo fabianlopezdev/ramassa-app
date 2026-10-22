@@ -65,6 +65,7 @@
   "mediaConsentLabel": "Acepto salir en fotos e historias de la comunidad (opcional)",
   "mediaConsentHint": "Puedes cambiar el permiso para utilizar fotos y vídeos cuando quieras desde tu perfil.",
   "termsDeclineAction": "Ahora no",
+  "termsUpdateLoadFailed": "No hemos podido cargar los términos nuevos. Aquí tienes el texto que ya conoces. Vuelve a intentarlo para aceptar los nuevos.",
   "termsLeaveTitle": "¿Quieres salir sin aceptar los términos?",
   "termsLeaveBody": "Se cerrará tu sesión. Para entrar en la aplicación tendrás que aceptar los términos. Tus respuestas quedarán guardadas en este dispositivo. Vuelve a iniciar sesión aquí para continuar.",
   "termsLeaveStayAction": "Seguir revisando",

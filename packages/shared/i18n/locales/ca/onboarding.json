@@ -65,6 +65,7 @@
   "mediaConsentLabel": "Accepto sortir a fotos i històries de la comunitat (opcional)",
   "mediaConsentHint": "Pots canviar el permís per utilitzar fotos i vídeos quan vulguis des del teu perfil.",
   "termsDeclineAction": "Ara no",
+  "termsUpdateLoadFailed": "No hem pogut carregar els termes nous. Aquí tens el text que ja coneixes. Torna-ho a provar per acceptar els nous.",
   "termsLeaveTitle": "Vols sortir sense acceptar els termes?",
   "termsLeaveBody": "Es tancarà la sessió. Per entrar a l’app, hauràs d’acceptar els termes. Les teves respostes quedaran desades en aquest dispositiu. Torna a iniciar-hi la sessió per continuar.",
   "termsLeaveStayAction": "Continua revisant",

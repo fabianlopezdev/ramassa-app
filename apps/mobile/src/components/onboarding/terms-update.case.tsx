@@ -39,8 +39,23 @@ mock.module('react-native', () => ({
   Text: ({ children }: { children: ReactNode }) => createElement('span', null, children),
   View: ({ children }: { children: ReactNode }) => createElement('div', null, children),
 }));
+const refetch = mock(async () => {});
+type QueryState = {
+  data: { terms: typeof terms; mediaConsent: boolean } | undefined;
+  isError: boolean;
+  isFetching: boolean;
+  refetch: typeof refetch;
+  error?: Error;
+};
+const loaded: QueryState = {
+  data: { terms, mediaConsent: true },
+  isError: false,
+  isFetching: false,
+  refetch,
+};
+let queryState: QueryState = loaded;
 mock.module('@tanstack/react-query', () => ({
-  useQuery: () => ({ data: { terms, mediaConsent: true } }),
+  useQuery: () => queryState,
   // Imported, never called, by modules the screen pulls in.
   useMutation: () => ({}),
   useQueryClient: () => ({}),
@@ -59,7 +74,8 @@ mock.module('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key, i18n: { resolvedLanguage: 'en' } }),
 }));
 mock.module('@/components/error-code-line', () => ({
-  FailureNotice: ({ code }: { code: string }) => createElement('span', null, `failure ${code}`),
+  FailureNotice: ({ code, message }: { code: string; message: string }) =>
+    createElement('div', null, createElement('span', null, `failure ${code}`), message),
 }));
 mock.module('@/components/motion/pressable-scale', () => ({
   PressableScale: ({
@@ -124,6 +140,8 @@ mock.module('@/components/onboarding/wizard-frame', () => ({
 const { default: TermsUpdate } = await import('../../app/(app)/terms-update');
 afterAll(() => mock.restore());
 beforeEach(() => {
+  queryState = loaded;
+  refetch.mockClear();
   rpc.mockClear();
   refreshProfile.mockClear();
   logout.mockClear();
@@ -178,4 +196,34 @@ test('Not now asks first, then signs her out', () => {
   alert.mock.calls[0]?.[2]?.[1]?.onPress?.();
   expect(logout).toHaveBeenCalledTimes(1);
   expect(rpc).not.toHaveBeenCalled();
+});
+
+test('when the terms cannot be read, she reads the bundled text and can retry or leave', () => {
+  queryState = {
+    data: undefined,
+    isError: true,
+    isFetching: false,
+    refetch,
+    error: new Error('connection reset'),
+  };
+  const screen = render(createElement(TermsUpdate));
+  // The bundled text, never a spinner forever.
+  expect(screen.getByRole('heading', { name: 'termsTitle' })).toBeTruthy();
+  expect(screen.getByText('termsBody')).toBeTruthy();
+  expect(screen.getByText('termsUpdateLoadFailed')).toBeTruthy();
+  // Accepting needs the version, so the fallback offers no acceptance.
+  expect(screen.queryByRole('checkbox')).toBeNull();
+  fireEvent.click(screen.getByRole('button', { name: 'errors:retry' }));
+  expect(refetch).toHaveBeenCalledTimes(1);
+  expect(rpc).not.toHaveBeenCalled();
+  // And she can still sign out.
+  fireEvent.click(screen.getByRole('button', { name: 'termsDeclineAction' }));
+  alert.mock.calls[0]?.[2]?.[1]?.onPress?.();
+  expect(logout).toHaveBeenCalledTimes(1);
+});
+
+test('while the first read is still running, she sees the loader', () => {
+  queryState = { data: undefined, isError: false, isFetching: true, refetch };
+  const screen = render(createElement(TermsUpdate));
+  expect(screen.getByText('loading')).toBeTruthy();
 });
