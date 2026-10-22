@@ -17,6 +17,10 @@
 begin;
 select plan(19);
 
+-- The unsigned path is closed to clients (RAPP-624); this file checks its merge
+-- rules as the participant, so it grants it inside this rolled-back transaction.
+grant execute on function public.complete_onboarding(jsonb) to authenticated;
+
 create temp table account (label text primary key, id uuid);
 insert into account
 select 'onboarding', id from auth.users where email = 'onboarding@example.test'

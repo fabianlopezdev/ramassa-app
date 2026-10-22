@@ -1,6 +1,10 @@
 begin;
 select plan(17);
 
+-- The unsigned path is closed to clients (RAPP-624); this file checks its merge
+-- rules as the participant, so it grants it inside this rolled-back transaction.
+grant execute on function public.complete_onboarding(jsonb) to authenticated;
+
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000011","role":"authenticated","aal":"aal1"}';
 select lives_ok($$ select public.update_own_profile(

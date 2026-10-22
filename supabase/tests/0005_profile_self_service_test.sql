@@ -24,6 +24,10 @@
 begin;
 select plan(20);
 
+-- The unsigned path is closed to clients (RAPP-624); this file checks its merge
+-- rules as the participant, so it grants it inside this rolled-back transaction.
+grant execute on function public.complete_onboarding(jsonb) to authenticated;
+
 -- Setup ------------------------------------------------------------------------
 
 select vault.create_secret('test-encryption-key', 'app_encryption_key', 'pgTAP test key')

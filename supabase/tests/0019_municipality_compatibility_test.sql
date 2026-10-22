@@ -3,6 +3,10 @@
 begin;
 select plan(14);
 
+-- The unsigned path is closed to clients (RAPP-624); this file checks its merge
+-- rules as the participant, so it grants it inside this rolled-back transaction.
+grant execute on function public.complete_onboarding(jsonb) to authenticated;
+
 select has_table('public', 'municipality_catalog', 'the generated municipality catalogue exists');
 select has_column('public', 'municipality_catalog', 'code', 'catalogue keeps the IDESCAT code');
 select has_view(
