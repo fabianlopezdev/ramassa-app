@@ -4,9 +4,11 @@ import { AppError, databaseErrorCode } from './errors';
 import type { Database } from './types/database';
 
 // `custom_answers`: answers to the questions staff added (RAPP-307), one row per answer.
+// `consents`: every consent decision with the words she was shown (RAPP-614).
 export const DATA_EXPORT_DATASETS = [
   'participants',
   'custom_answers',
+  'consents',
   'attendance',
   'events',
 ] as const;

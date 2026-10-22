@@ -24,6 +24,7 @@ import {
   TypeGuide,
   type PreviewDraft,
 } from '@/components/settings/question-type-fields';
+import { RequiredSwitch } from '@/components/settings/required-switch';
 import { Button } from '@/components/ui/button';
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -654,57 +655,6 @@ function BuiltinForm({
         </Button>
       </div>
     </form>
-  );
-}
-
-/**
- * The required switch next to a question (RAPP-611). It saves at once; a
- * locked one says why in plain words.
- */
-function RequiredSwitch({
-  id,
-  checked,
-  lockReason,
-  note,
-  disabled,
-  onChange,
-}: {
-  readonly id: string;
-  readonly checked: boolean;
-  readonly lockReason?: string;
-  readonly note?: string;
-  readonly disabled: boolean;
-  readonly onChange: (next: boolean) => void;
-}) {
-  const { t } = useTranslation('settings');
-  const describedBy = [lockReason ? `${id}-lock` : null, note ? `${id}-note` : null]
-    .filter(Boolean)
-    .join(' ');
-  return (
-    <div className="flex flex-col gap-0.5">
-      <label className="flex items-center gap-2 text-start text-xs font-medium">
-        <input
-          id={id}
-          type="checkbox"
-          data-testid={id}
-          checked={checked}
-          disabled={disabled || lockReason !== undefined}
-          aria-describedby={describedBy === '' ? undefined : describedBy}
-          onChange={(event) => onChange(event.target.checked)}
-        />
-        <span>{t('questions.requiredSwitch')}</span>
-      </label>
-      {lockReason === undefined ? null : (
-        <p id={`${id}-lock`} className="text-start text-xs text-muted-foreground">
-          {lockReason}
-        </p>
-      )}
-      {note === undefined ? null : (
-        <p id={`${id}-note`} className="text-start text-xs text-muted-foreground">
-          {note}
-        </p>
-      )}
-    </div>
   );
 }
 

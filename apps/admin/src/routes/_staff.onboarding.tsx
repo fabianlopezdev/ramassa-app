@@ -131,7 +131,11 @@ function OnboardingDesignScreen() {
           </h2>
           <p className="text-sm leading-6 text-muted-foreground">{t('authorizationIntro')}</p>
         </header>
-        <OnboardingAuthorizationSection seasons={data.seasons} versions={data.versions} />
+        <OnboardingAuthorizationSection
+          seasons={data.seasons}
+          versions={data.versions}
+          canPublish={data.canPublishTerms}
+        />
       </section>
     </section>
   );

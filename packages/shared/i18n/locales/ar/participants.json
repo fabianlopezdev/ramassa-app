@@ -167,6 +167,7 @@
   "authorizationUnableToDraw": "وقّعت بالمربعات فقط: لم تستطع رسم توقيعها.",
   "authorizationSignatureLabel": "توقيعها",
   "authorizationConsentsTitle": "الموافقات",
+  "authorizationConsentVersion": "{{date}}، موسم {{season}}، النسخة {{number}}",
   "authorizationGranted": "نعم",
   "authorizationNotGranted": "لا",
   "authorizationEmergencyContact": "جهة اتصال للطوارئ",

@@ -476,6 +476,7 @@
   "authorizationUnableToDraw": "She signed with the boxes only: she could not draw her signature.",
   "authorizationSignatureLabel": "Her signature",
   "authorizationConsentsTitle": "Authorizations",
+  "authorizationConsentVersion": "{{date}}, {{season}} season, version {{number}}",
   "authorizationGranted": "Yes",
   "authorizationNotGranted": "No",
   "authorizationEmergencyContact": "Emergency contact",

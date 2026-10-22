@@ -167,6 +167,7 @@
   "authorizationUnableToDraw": "فقط با خانه‌ها امضا کرد: نمی‌توانست امضا بکشد.",
   "authorizationSignatureLabel": "امضای او",
   "authorizationConsentsTitle": "رضایت‌ها",
+  "authorizationConsentVersion": "{{date}}، فصل {{season}}، نسخه {{number}}",
   "authorizationGranted": "بله",
   "authorizationNotGranted": "نه",
   "authorizationEmergencyContact": "تماس اضطراری",

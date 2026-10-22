@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'bun:test';
+import { authorizationContentSchema } from '../authorization';
 import { SUPPORTED_LANGUAGES } from '../i18n/languages';
 import { questionSettingsSchema } from '../intake-builder/question-types';
 import {
@@ -436,6 +437,8 @@ describe('the authorization factories (RAPP-304)', () => {
     expect(paper.signature).toBeNull();
     expect(buildAuthorizationConsentEvent().granted).toBe(true);
     expect(buildAuthorizationConsentEvent().wording).toBe('Participo.');
+    // The factory version is a valid editable version (RAPP-614).
+    expect(authorizationContentSchema.safeParse(version.content).success).toBe(true);
     expect(buildSeasonAnswers().season_id).toBe(buildSeason().id);
   });
 

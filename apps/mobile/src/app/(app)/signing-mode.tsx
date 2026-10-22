@@ -210,10 +210,12 @@ export default function SigningModeScreen() {
         id: randomUUID(),
         signer: session.signer,
         versionId: current.versionId,
-        payload: buildSignPayload(signing, {
-          language,
-          device: `${Platform.OS} ${String(Platform.Version)}`,
-        }),
+        // The version's own consents and questions (RAPP-614).
+        payload: buildSignPayload(
+          signing,
+          { language, device: `${Platform.OS} ${String(Platform.Version)}` },
+          current.content,
+        ),
         signedAt: new Date().toISOString(),
       });
       setIsWaiting(outcome === 'waiting');

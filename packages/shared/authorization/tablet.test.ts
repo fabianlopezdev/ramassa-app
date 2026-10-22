@@ -52,7 +52,7 @@ describe('fetchAuthorizationForSigning', () => {
     });
     const found = await fetchAuthorizationForSigning(client);
     expect(found?.versionId).toBe(version.id);
-    expect(found?.content.consents.health_data.required).toBe(true);
+    expect(found?.content.consents.health_data?.required).toBe(true);
     expect(
       await fetchAuthorizationForSigning(clientReturning({ data: [], error: null }).client),
     ).toBe(null);

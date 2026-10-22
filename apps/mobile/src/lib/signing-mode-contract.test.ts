@@ -87,6 +87,9 @@ describe('signing mode for a screen reader (RAPP-530)', () => {
       'utf8',
     );
     expect(form).toContain('<SignatureSection');
-    expect(signatureSection).toContain("accessibilityHint={t('authorizationSignatureHint')}");
+    // The version may reword the hint (RAPP-614); the app's own hint is the fallback.
+    expect(signatureSection).toContain(
+      "accessibilityHint={texts.hint ?? t('authorizationSignatureHint')}",
+    );
   });
 });

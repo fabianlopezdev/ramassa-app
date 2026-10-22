@@ -280,6 +280,7 @@ function OrganizationSettingsScreen() {
             <OnboardingAuthorizationSection
               seasons={data.seasons}
               versions={data.authorizationVersions}
+              canPublish
             />
           </>
         ) : undefined

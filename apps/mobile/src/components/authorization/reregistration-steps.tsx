@@ -36,6 +36,12 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@ramassa/shared/auth';
+import {
+  AUTHORIZATION_BUNDLED_TEXT_KEYS,
+  authorizationWording,
+  type AuthorizationContent,
+  type AuthorizationTextField,
+} from '@ramassa/shared/authorization';
 import { countryLabelForCanonical } from '@ramassa/shared/i18n/countries';
 import { municipalityLabelForCanonical } from '@ramassa/shared/i18n/municipalities';
 import { isRequiredQuestion, type IntakeQuestion } from '@ramassa/shared/intake';
@@ -96,9 +102,12 @@ function ActionButton({
 
 export function ReregistrationSteps({
   seasonName,
+  texts,
   onDone,
 }: {
   readonly seasonName: string;
+  /** The version's wording (RAPP-614); a field left out shows the app's text. */
+  readonly texts?: AuthorizationContent['texts'];
   readonly onDone: () => void;
 }) {
   const { t, i18n } = useTranslation(['onboarding', 'profile']);
@@ -106,6 +115,11 @@ export function ReregistrationSteps({
   const router = useRouter();
   const { user } = useAuth();
   const locale = (i18n.resolvedLanguage as LanguageCode | undefined) ?? 'ca';
+  const words = (field: AuthorizationTextField) =>
+    (
+      authorizationWording(texts, field, locale) ??
+      t(AUTHORIZATION_BUNDLED_TEXT_KEYS.texts[field], { season: seasonName })
+    ).replace(/\{\{\s*season\s*\}\}/gu, seasonName);
   const [phase, setPhase] = useState<'review' | 'season'>('review');
   const [answers, setAnswers] = useState<SeasonAnswers | null>(null);
   const [hasFailed, setHasFailed] = useState(false);
@@ -200,10 +214,12 @@ export function ReregistrationSteps({
               accessibilityRole="header"
               className={`text-start text-2xl font-bold text-neutral-900 ${fontClass}`}
             >
-              {t('reregistrationTitle', { season: seasonName })}
+              {words('reregistration_title')}
             </Text>
             <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
-              {phase === 'review' ? t('reregistrationReviewIntro') : t('seasonStepIntro')}
+              {phase === 'review'
+                ? words('reregistration_intro')
+                : words('reregistration_season_intro')}
             </Text>
           </View>
 
@@ -238,13 +254,13 @@ export function ReregistrationSteps({
               </ProfileSection>
               <ActionButton
                 testID="reregistration-correct"
-                label={t('reregistrationCorrect')}
+                label={words('reregistration_correct_label')}
                 isPrimary
                 onPress={() => setPhase('season')}
               />
               <ActionButton
                 testID="reregistration-edit"
-                label={t('reregistrationEdit')}
+                label={words('reregistration_edit_label')}
                 isPrimary={false}
                 onPress={() => router.push('/profile-edit' as Href)}
               />
@@ -289,7 +305,7 @@ export function ReregistrationSteps({
               ) : null}
               <ActionButton
                 testID="reregistration-continue"
-                label={t('continueAction')}
+                label={words('continue_label')}
                 isPrimary
                 isBusy={save.isPending}
                 onPress={() => {

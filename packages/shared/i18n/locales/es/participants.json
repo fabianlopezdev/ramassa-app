@@ -476,6 +476,7 @@
   "authorizationUnableToDraw": "Firmó solo con las casillas: no podía dibujar la firma.",
   "authorizationSignatureLabel": "Su firma",
   "authorizationConsentsTitle": "Autorizaciones",
+  "authorizationConsentVersion": "{{date}}, temporada {{season}}, versión {{number}}",
   "authorizationGranted": "Sí",
   "authorizationNotGranted": "No",
   "authorizationEmergencyContact": "Contacto de emergencia",

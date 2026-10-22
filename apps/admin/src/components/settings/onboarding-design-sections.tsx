@@ -23,7 +23,9 @@ import { supabase } from '@/lib/supabase';
 import { useRouter } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import {
-  publishAuthorizationVersion,
+  discardAuthorizationDraft,
+  publishAuthorizationDraft,
+  saveAuthorizationDraft,
   type AuthorizationVersion,
 } from '@ramassa/shared/authorization';
 import {
@@ -147,12 +149,19 @@ export function OnboardingDocumentSection({
   );
 }
 
+/**
+ * The seasons and their authorization (RAPP-304, RAPP-614). Onboarding
+ * designers write the draft; only settings.organization publishes it, because
+ * a publish makes every player sign again.
+ */
 export function OnboardingAuthorizationSection({
   seasons,
   versions,
+  canPublish,
 }: {
   readonly seasons: readonly Season[];
   readonly versions: readonly AuthorizationVersion[];
+  readonly canPublish: boolean;
 }) {
   const reload = useReload();
   // Risky changes ask for a fresh authenticator code first (RAPP-235).
@@ -172,9 +181,19 @@ export function OnboardingAuthorizationSection({
       />
       <AuthorizationEditor
         versions={versions}
-        onPublish={async (content) => {
-          await withStepUp(() => publishAuthorizationVersion(supabase, content));
+        canPublish={canPublish}
+        onSaveDraft={async (content) => {
+          await saveAuthorizationDraft(supabase, content);
           await reload();
+        }}
+        onDiscardDraft={async () => {
+          await discardAuthorizationDraft(supabase);
+          await reload();
+        }}
+        onPublish={async () => {
+          const number = await withStepUp(() => publishAuthorizationDraft(supabase));
+          await reload();
+          return number;
         }}
       />
     </>

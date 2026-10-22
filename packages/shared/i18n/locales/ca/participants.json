@@ -476,6 +476,7 @@
   "authorizationUnableToDraw": "Va signar només amb les caselles: no podia dibuixar la signatura.",
   "authorizationSignatureLabel": "La seva signatura",
   "authorizationConsentsTitle": "Autoritzacions",
+  "authorizationConsentVersion": "{{date}}, temporada {{season}}, versió {{number}}",
   "authorizationGranted": "Sí",
   "authorizationNotGranted": "No",
   "authorizationEmergencyContact": "Contacte d'emergència",

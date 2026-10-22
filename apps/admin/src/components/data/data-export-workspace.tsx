@@ -269,6 +269,7 @@ export function DataExportWorkspace({
           >
             <option value="participants">{t('exportParticipants')}</option>
             <option value="custom_answers">{t('exportCustomAnswers')}</option>
+            <option value="consents">{t('exportConsents')}</option>
             <option value="attendance">{t('exportAttendance')}</option>
             <option value="events">{t('exportEvents')}</option>
           </select>

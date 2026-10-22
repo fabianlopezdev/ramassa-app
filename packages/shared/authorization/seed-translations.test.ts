@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { expect, test } from 'bun:test';
 import { resolveLocalizedText, SUPPORTED_LANGUAGES } from '../i18n';
-import { AUTHORIZATION_CONSENTS, authorizationContentSchema } from './authorization';
+import { authorizationContentSchema, orderedConsents } from './authorization';
 
 const seed = readFileSync(`${import.meta.dir}/../../../supabase/seed.sql`, 'utf8');
 const raw = seed.match(/\$auth\$([\s\S]*?)\$auth\$/)?.[1];
@@ -38,7 +38,18 @@ test('season authorization has all five languages without fallback in every publ
     expect(content.sections.find((s) => s.key === 'images')?.body[language]).toContain('1/1982');
     expect(content.sections.find((s) => s.key === 'report')?.body[language]).toContain('112');
   }
-  for (const { key, required } of AUTHORIZATION_CONSENTS)
-    expect(content.consents[key].required).toBe(required);
+  // The seeded version 1, converted to the editable shape (RAPP-614): the
+  // RAPP-304 order and flags, both questions asked, no wording override.
+  expect(orderedConsents(content).map(({ key, required }) => `${key}:${required}`)).toEqual([
+    'participation:true',
+    'data_processing:true',
+    'code_of_conduct:true',
+    'health_data:true',
+    'image_rights:false',
+    'newsletter:false',
+    'messaging_groups:false',
+  ]);
+  expect(content.questions.health.required).toBe(true);
+  expect(content.texts).toEqual({});
   expect(content.attachments).toEqual([]);
 });

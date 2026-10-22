@@ -23,7 +23,7 @@ test('visible sections start at one and internal consent references follow their
     },
     { key: 'report', title: { es: 'Cómo reportar' }, body: { es: 'Informe' } },
   ];
-  original.consents.data_processing.label = {
+  original.consents.data_processing!.label = {
     es: 'Acepto según el apartado 5.',
     ca: 'Accepto segons l’apartat 5.',
   };
@@ -35,8 +35,8 @@ test('visible sections start at one and internal consent references follow their
     '4. Cómo reportar',
   ]);
   expect(result.sections[0]?.title.ca).toBe('1. Dades mèdiques');
-  expect(result.consents.data_processing.label.es).toBe('Acepto según el apartado 2.');
-  expect(result.consents.data_processing.label.ca).toBe('Accepto segons l’apartat 2.');
+  expect(result.consents.data_processing!.label.es).toBe('Acepto según el apartado 2.');
+  expect(result.consents.data_processing!.label.ca).toBe('Accepto segons l’apartat 2.');
   expect(result.sections[2]?.body.es).toBe('Según el apartado 2 de este mismo documento.');
   expect(result.sections[1]?.body.es).toBe(original.sections[1]?.body.es);
   expect(original.sections[0]?.title.es).toBe('2. Datos médicos');
