@@ -107,10 +107,8 @@
     "save": "Save",
     "saving": "Saving…",
     "cancel": "Cancel",
-    "profile": {
-      "title": "Profile"
-    },
     "name": {
+      "label": "Name",
       "firstName": "First name",
       "lastName": "Last name",
       "saved": "Name saved.",
@@ -131,7 +129,11 @@
       "failed": "The change could not be requested. Please try again.",
       "change": "Change",
       "dialogTitle": "Change email",
-      "dialogBody": "We will send a link to confirm it."
+      "dialogBody": "We will send a link to confirm it.",
+      "description": "Your sign-in code arrives here."
+    },
+    "photo": {
+      "description": "Shown next to your name in the Control Center."
     }
   },
   "todos": {

@@ -107,10 +107,8 @@
     "save": "Desa",
     "saving": "S'està desant…",
     "cancel": "Cancel·la",
-    "profile": {
-      "title": "Perfil"
-    },
     "name": {
+      "label": "Nom",
       "firstName": "Nom",
       "lastName": "Cognoms",
       "saved": "Nom desat.",
@@ -131,7 +129,11 @@
       "failed": "No s'ha pogut demanar el canvi. Torna-ho a provar.",
       "change": "Canvia",
       "dialogTitle": "Canvia el correu",
-      "dialogBody": "T'enviarem un enllaç per confirmar-lo."
+      "dialogBody": "T'enviarem un enllaç per confirmar-lo.",
+      "description": "Aquí t'arriba el codi per entrar."
+    },
+    "photo": {
+      "description": "Es mostra al costat del teu nom al Centre de Control."
     }
   },
   "todos": {

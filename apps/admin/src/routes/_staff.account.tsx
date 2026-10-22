@@ -19,7 +19,6 @@ import { AccountAvatar } from '@/components/nav/account-avatar';
 import { useOwnProfilePhoto } from '@/components/nav/profile-photo-dialog';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Dialog,
   DialogClose,
@@ -27,7 +26,17 @@ import {
   DialogDescription,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
+import {
+  Field,
+  FieldContent,
+  FieldDescription,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+  FieldLegend,
+  FieldSeparator,
+  FieldSet,
+} from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -49,7 +58,7 @@ import {
 } from '@/lib/own-account';
 import { createFileRoute } from '@tanstack/react-router';
 import { Camera, MailCheck, Trash2 } from 'lucide-react';
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { z } from 'zod';
 import { useAuth } from '@ramassa/shared/auth';
@@ -66,41 +75,63 @@ export const Route = createFileRoute('/_staff/account')({
   component: AccountPage,
 });
 
-function AccountPage() {
-  const { t } = useTranslation('admin');
-  const { account, reload } = useOwnAccount();
-  if (account === null) return null;
+/**
+ * The layout follows shadcn's `field-responsive` example: one setting per
+ * row, the label and its description at the start, the control at the end.
+ * Every control sits in a column of one fixed width (25rem from the field
+ * group's `md` container size), so each control starts at the same x and
+ * keeps its natural size on a wide monitor. Below that size the row stacks
+ * the label above the control.
+ */
+const CONTROL_COLUMN = 'flex w-full flex-col gap-3 @md/field-group:w-100!';
 
+function SettingRow({
+  label,
+  labelFor,
+  description,
+  testId,
+  children,
+}: {
+  readonly label: string;
+  /** The control the label names, when there is one input to point at. */
+  readonly labelFor?: string;
+  readonly description?: string;
+  readonly testId: string;
+  readonly children: ReactNode;
+}) {
   return (
-    // The email field, its button and the language select share one height
-    // (h-9, the input's), so the second row lines up control for control.
-    <Page data-testid="account-page">
-      <PageHeader title={t('account.title')} />
-      <ProfileCard account={account} onSaved={reload} />
-      {/* Grid items stretch by default; with h-full on both cards they keep
-        one height whatever either holds (RAPP-634). */}
-      <div className="grid gap-6 md:grid-cols-2 md:items-stretch">
-        <EmailCard sessionEmail={account.email} />
-        <LanguageCard />
-      </div>
-    </Page>
+    <Field orientation="responsive" data-testid={testId}>
+      <FieldContent>
+        {labelFor === undefined ? (
+          <FieldLabel asChild>
+            <span>{label}</span>
+          </FieldLabel>
+        ) : (
+          <FieldLabel htmlFor={labelFor}>{label}</FieldLabel>
+        )}
+        {description === undefined ? null : <FieldDescription>{description}</FieldDescription>}
+      </FieldContent>
+      <div className={CONTROL_COLUMN}>{children}</div>
+    </Field>
   );
 }
 
 type SaveStatus = 'idle' | 'working' | 'saved' | 'failed';
 
-/**
- * Her photo and her name together, the way GitHub and Notion show a profile:
- * the photo applies at once, the name with Save.
- */
-function ProfileCard({
+function AccountPage() {
+  const { account, reload } = useOwnAccount();
+  if (account === null) return null;
+  return <AccountForm account={account} onSaved={reload} />;
+}
+
+function AccountForm({
   account,
   onSaved,
 }: {
   readonly account: OwnAccount;
   readonly onSaved: () => void;
 }) {
-  const { t } = useTranslation('admin');
+  const { t } = useTranslation(['admin', 'common']);
   const { session } = useAuth();
   const userId = session?.user.id ?? null;
   const photo = useOwnProfilePhoto(onSaved);
@@ -143,111 +174,145 @@ function ProfileCard({
   };
 
   return (
-    <Card data-testid="account-profile">
-      <form onSubmit={(event) => void submit(event)} noValidate className="contents">
-        <CardHeader>
-          <CardTitle>{t('account.profile.title')}</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-6 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-center">
-          <div className="flex flex-col items-center gap-3" data-testid="account-photo">
-            <AccountAvatar
-              account={account}
-              className="size-24 ring-4 ring-primary/10"
-              fallbackClassName="text-2xl"
-            />
-            {photo.fileInput}
-            <div className="flex flex-wrap justify-center gap-2">
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                disabled={photo.working}
-                data-testid="profile-photo-choose"
-                onClick={photo.choose}
+    <Page data-testid="account-page">
+      <PageHeader title={t('admin:account.title')} />
+      <div className="w-full max-w-4xl">
+        <form
+          onSubmit={(event) => void submit(event)}
+          noValidate
+          className="rounded-xl border bg-card p-4 text-card-foreground sm:p-6"
+        >
+          <FieldSet>
+            <FieldLegend className="sr-only">{t('admin:account.title')}</FieldLegend>
+            <FieldGroup>
+              <SettingRow
+                label={t('admin:userMenu.profilePhoto')}
+                description={t('admin:account.photo.description')}
+                testId="account-photo"
               >
-                <Camera aria-hidden="true" />
-                {account.avatarUrl === null ? t('profilePhoto.choose') : t('profilePhoto.replace')}
-              </Button>
-              {account.avatarUrl === null ? null : (
+                <div className="flex flex-wrap items-center gap-4">
+                  <AccountAvatar
+                    account={account}
+                    className="size-16 ring-4 ring-primary/10"
+                    fallbackClassName="text-lg"
+                  />
+                  {photo.fileInput}
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      disabled={photo.working}
+                      data-testid="profile-photo-choose"
+                      onClick={photo.choose}
+                    >
+                      <Camera aria-hidden="true" />
+                      {account.avatarUrl === null
+                        ? t('admin:profilePhoto.choose')
+                        : t('admin:profilePhoto.replace')}
+                    </Button>
+                    {account.avatarUrl === null ? null : (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        disabled={photo.working}
+                        data-testid="profile-photo-remove"
+                        onClick={photo.remove}
+                      >
+                        <Trash2 aria-hidden="true" />
+                        {t('admin:profilePhoto.remove')}
+                      </Button>
+                    )}
+                  </div>
+                </div>
+                {photo.message === null ? null : (
+                  <p role="status" className="text-sm text-muted-foreground">
+                    {photo.message}
+                  </p>
+                )}
+                {photo.problem === null ? null : (
+                  <p role="alert" className="text-sm text-destructive">
+                    {photo.problem}
+                  </p>
+                )}
+              </SettingRow>
+
+              <FieldSeparator />
+
+              <SettingRow
+                label={t('admin:account.name.label')}
+                labelFor="account-first-name"
+                testId="account-name"
+              >
+                {/* Two halves of the 25rem column: 12rem each, about w-48. */}
+                <div className="grid grid-cols-2 gap-4">
+                  <Input
+                    id="account-first-name"
+                    autoComplete="given-name"
+                    maxLength={OWN_NAME_MAX_LENGTH}
+                    value={firstName}
+                    aria-label={t('admin:account.name.firstName')}
+                    aria-invalid={showBlank && firstName.trim() === ''}
+                    data-testid="account-first-name"
+                    onChange={(event) => {
+                      setFirstName(event.target.value);
+                      setStatus('idle');
+                    }}
+                  />
+                  <Input
+                    id="account-last-name"
+                    autoComplete="family-name"
+                    maxLength={OWN_NAME_MAX_LENGTH}
+                    value={lastName}
+                    aria-label={t('admin:account.name.lastName')}
+                    aria-invalid={showBlank && lastName.trim() === ''}
+                    data-testid="account-last-name"
+                    onChange={(event) => {
+                      setLastName(event.target.value);
+                      setStatus('idle');
+                    }}
+                  />
+                </div>
+                {showBlank && blank ? (
+                  <FieldError>{t('admin:account.name.required')}</FieldError>
+                ) : null}
+              </SettingRow>
+
+              <FieldSeparator />
+
+              <EmailRow sessionEmail={account.email} />
+
+              <FieldSeparator />
+
+              <LanguageRow />
+
+              <FieldSeparator />
+
+              <Field orientation="responsive" className="@md/field-group:justify-end">
+                <div className="min-w-0 text-sm @md/field-group:text-end">
+                  <p role="status" className="text-muted-foreground">
+                    {status === 'saved' ? t('admin:account.name.saved') : null}
+                  </p>
+                  {status === 'failed' ? (
+                    <p role="alert" className="text-destructive">
+                      {t('admin:account.name.failed')}
+                    </p>
+                  ) : null}
+                </div>
                 <Button
-                  type="button"
-                  size="sm"
-                  variant="ghost"
-                  disabled={photo.working}
-                  data-testid="profile-photo-remove"
-                  onClick={photo.remove}
+                  type="submit"
+                  disabled={unchanged || status === 'working'}
+                  data-testid="account-name-save"
                 >
-                  <Trash2 aria-hidden="true" />
-                  {t('profilePhoto.remove')}
+                  {status === 'working' ? t('admin:account.saving') : t('admin:account.save')}
                 </Button>
-              )}
-            </div>
-            <p role="status" className="min-h-4 text-center text-xs text-muted-foreground">
-              {photo.message}
-            </p>
-            {photo.problem === null ? null : (
-              <p role="alert" className="max-w-56 text-center text-xs text-destructive">
-                {photo.problem}
-              </p>
-            )}
-          </div>
-          <FieldGroup className="grid content-center gap-4 md:grid-cols-2">
-            <Field data-invalid={showBlank && firstName.trim() === ''}>
-              <FieldLabel htmlFor="account-first-name">{t('account.name.firstName')}</FieldLabel>
-              <Input
-                id="account-first-name"
-                autoComplete="given-name"
-                maxLength={OWN_NAME_MAX_LENGTH}
-                value={firstName}
-                aria-invalid={showBlank && firstName.trim() === ''}
-                data-testid="account-first-name"
-                onChange={(event) => {
-                  setFirstName(event.target.value);
-                  setStatus('idle');
-                }}
-              />
-            </Field>
-            <Field data-invalid={showBlank && lastName.trim() === ''}>
-              <FieldLabel htmlFor="account-last-name">{t('account.name.lastName')}</FieldLabel>
-              <Input
-                id="account-last-name"
-                autoComplete="family-name"
-                maxLength={OWN_NAME_MAX_LENGTH}
-                value={lastName}
-                aria-invalid={showBlank && lastName.trim() === ''}
-                data-testid="account-last-name"
-                onChange={(event) => {
-                  setLastName(event.target.value);
-                  setStatus('idle');
-                }}
-              />
-            </Field>
-            {showBlank && blank ? (
-              <FieldError className="md:col-span-2">{t('account.name.required')}</FieldError>
-            ) : null}
-          </FieldGroup>
-        </CardContent>
-        <CardFooter className="justify-between gap-3">
-          <div className="min-h-5 min-w-0 text-sm">
-            <p role="status" className="text-muted-foreground">
-              {status === 'saved' ? t('account.name.saved') : null}
-            </p>
-            {status === 'failed' ? (
-              <p role="alert" className="text-destructive">
-                {t('account.name.failed')}
-              </p>
-            ) : null}
-          </div>
-          <Button
-            type="submit"
-            disabled={unchanged || status === 'working'}
-            data-testid="account-name-save"
-          >
-            {status === 'working' ? t('account.saving') : t('account.save')}
-          </Button>
-        </CardFooter>
-      </form>
-    </Card>
+              </Field>
+            </FieldGroup>
+          </FieldSet>
+        </form>
+      </div>
+    </Page>
   );
 }
 
@@ -263,8 +328,11 @@ const EMAIL_PROBLEM_KEY: Record<EmailProblem, string> = {
 
 const emailSchema = z.email();
 
-/** Her sign-in email, changed through a dialog the way Vercel and Linear do it. */
-function EmailCard({ sessionEmail }: { readonly sessionEmail: string }) {
+/**
+ * Her sign-in email, read-only with Change beside it. The change happens in a
+ * dialog, the way Vercel and Linear do it, and waits for her confirmation.
+ */
+function EmailRow({ sessionEmail }: { readonly sessionEmail: string }) {
   const { t } = useTranslation('admin');
   const [state, setState] = useState<OwnEmailState>({ email: sessionEmail, pendingEmail: null });
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -281,43 +349,43 @@ function EmailCard({ sessionEmail }: { readonly sessionEmail: string }) {
   }, [refresh]);
 
   return (
-    <Card className="h-full" data-testid="account-email">
-      <CardHeader>
-        <CardTitle id="account-email-title">{t('account.email.title')}</CardTitle>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-4">
-        <div className="flex gap-2">
-          <Input
-            readOnly
-            value={state.email}
-            dir="ltr"
-            aria-labelledby="account-email-title"
-            className="h-9 min-w-0 flex-1 bg-muted/40"
-            data-testid="account-email-current"
-          />
-          <Button
-            type="button"
-            variant="outline"
-            className="h-9"
-            data-testid="account-email-change"
-            onClick={() => setDialogOpen(true)}
-          >
-            {t('account.email.change')}
-          </Button>
-        </div>
-        {state.pendingEmail === null ? null : (
-          <Alert data-testid="account-email-pending" role="status">
-            <MailCheck aria-hidden="true" />
-            <AlertTitle>{t('account.email.pendingTitle')}</AlertTitle>
-            <AlertDescription>
-              {t('account.email.pendingBody', {
-                email: state.pendingEmail,
-                current: state.email,
-              })}
-            </AlertDescription>
-          </Alert>
-        )}
-      </CardContent>
+    <SettingRow
+      label={t('account.email.title')}
+      labelFor="account-email-current"
+      description={t('account.email.description')}
+      testId="account-email"
+    >
+      <div className="flex gap-2">
+        <Input
+          id="account-email-current"
+          readOnly
+          value={state.email}
+          dir="ltr"
+          className="min-w-0 flex-1 bg-muted/40"
+          data-testid="account-email-current"
+        />
+        <Button
+          type="button"
+          variant="outline"
+          className="h-9"
+          data-testid="account-email-change"
+          onClick={() => setDialogOpen(true)}
+        >
+          {t('account.email.change')}
+        </Button>
+      </div>
+      {state.pendingEmail === null ? null : (
+        <Alert data-testid="account-email-pending" role="status">
+          <MailCheck aria-hidden="true" />
+          <AlertTitle>{t('account.email.pendingTitle')}</AlertTitle>
+          <AlertDescription>
+            {t('account.email.pendingBody', {
+              email: state.pendingEmail,
+              current: state.email,
+            })}
+          </AlertDescription>
+        </Alert>
+      )}
       <EmailChangeDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
@@ -327,7 +395,7 @@ function EmailCard({ sessionEmail }: { readonly sessionEmail: string }) {
           void refresh();
         }}
       />
-    </Card>
+    </SettingRow>
   );
 }
 
@@ -349,6 +417,9 @@ function EmailChangeDialog({
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    // The dialog renders in a portal, but React still bubbles its submit to
+    // the page's name form, which would save the name too.
+    event.stopPropagation();
     if (working) return;
     const email = next.trim().toLowerCase();
     if (!emailSchema.safeParse(email).success) {
@@ -431,42 +502,36 @@ function EmailChangeDialog({
 }
 
 /** A preference: it applies the moment she picks it, with no Save. */
-function LanguageCard() {
+function LanguageRow() {
   const { t } = useTranslation('common');
   const { language, setLanguage } = useLanguage();
   const current = staffLanguageFor(language);
 
   return (
-    <Card className="h-full" data-testid="account-language">
-      <CardHeader>
-        <CardTitle id="account-language-title">{t('interfaceLanguageLabel')}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Select
-          value={current}
-          onValueChange={(value) => void setLanguage(value as SupportedLanguage)}
+    <SettingRow
+      label={t('interfaceLanguageLabel')}
+      labelFor="account-language-select"
+      testId="account-language"
+    >
+      <Select
+        value={current}
+        onValueChange={(value) => void setLanguage(value as SupportedLanguage)}
+      >
+        <SelectTrigger
+          id="account-language-select"
+          className="w-full rounded-md shadow-xs data-[size=default]:h-9 @md/field-group:w-48"
+          data-testid="account-language-select"
         >
-          <SelectTrigger
-            aria-labelledby="account-language-title"
-            className="w-full rounded-md shadow-xs data-[size=default]:h-9"
-            data-testid="account-language-select"
-          >
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {STAFF_LANGUAGES.map((code) => (
-              <SelectItem
-                key={code}
-                value={code}
-                lang={code}
-                data-testid={`language-choice-${code}`}
-              >
-                {LANGUAGE_NATIVE_NAMES[code]}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </CardContent>
-    </Card>
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {STAFF_LANGUAGES.map((code) => (
+            <SelectItem key={code} value={code} lang={code} data-testid={`language-choice-${code}`}>
+              {LANGUAGE_NATIVE_NAMES[code]}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </SettingRow>
   );
 }

@@ -107,10 +107,8 @@
     "save": "Guardar",
     "saving": "Guardando…",
     "cancel": "Cancelar",
-    "profile": {
-      "title": "Perfil"
-    },
     "name": {
+      "label": "Nombre",
       "firstName": "Nombre",
       "lastName": "Apellidos",
       "saved": "Nombre guardado.",
@@ -131,7 +129,11 @@
       "failed": "No se ha podido pedir el cambio. Vuelve a intentarlo.",
       "change": "Cambiar",
       "dialogTitle": "Cambiar el correo",
-      "dialogBody": "Te enviaremos un enlace para confirmarlo."
+      "dialogBody": "Te enviaremos un enlace para confirmarlo.",
+      "description": "Aquí te llega el código para entrar."
+    },
+    "photo": {
+      "description": "Se muestra junto a tu nombre en el Centro de Control."
     }
   },
   "todos": {
