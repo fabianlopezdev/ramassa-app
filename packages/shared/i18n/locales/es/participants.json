@@ -604,5 +604,9 @@
   "testScenarioReset": "Volver a jugadora nueva",
   "testScenarioNeedsRequiredAnswers": "Rellena primero las respuestas obligatorias. Solo puede entrar con ellas.",
   "testScenarioJoinedKeepsRequired": "Ya ha entrado, por eso las respuestas obligatorias se mantienen. Marca primero las condiciones como no aceptadas.",
-  "testScenarioFailed": "El cambio no se ha guardado. Vuelve a intentarlo."
+  "testScenarioFailed": "El cambio no se ha guardado. Vuelve a intentarlo.",
+  "testScenarioCustomTitle": "Preguntas que ha añadido el equipo",
+  "testScenarioCustomIntro": "Rellénalas con una respuesta de prueba válida de cada tipo, o vacíalas. Un archivo de prueba no tiene contenido detrás.",
+  "testScenarioFillAllCustom": "Rellenarlas todas",
+  "testScenarioClearAllCustom": "Vaciarlas todas"
 }

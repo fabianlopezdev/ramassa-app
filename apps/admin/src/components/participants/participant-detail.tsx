@@ -17,6 +17,7 @@
  */
 
 import { ParticipantAttendanceReport } from '@/components/attendance/attendance-report';
+import { loadAuthenticatedMediaObjectUrl } from '@/components/content/authenticated-media-image';
 import { DetailSection } from '@/components/detail/detail-section';
 import { ParticipantActivity } from '@/components/participants/participant-activity';
 import { ParticipantAuthorizationPanel } from '@/components/participants/participant-authorization-panel';
@@ -64,11 +65,13 @@ import {
   EMPTY_INTAKE_CATALOG,
   saveIntakePreset,
   setParticipantCustomAnswers,
+  uploadsAvailable,
   type IntakeCatalog,
   type ParticipantCustomAnswer,
 } from '@ramassa/shared/intake-builder';
 import {
   addParticipantNote,
+  scenarioCustomQuestions,
   setParticipantActive,
   setTestPlayerScenario,
   updateParticipantProfile,
@@ -141,6 +144,15 @@ export function ParticipantDetail({
   const router = useRouter();
   const navigate = useNavigate();
   const { user, permissions } = useAuth();
+  // Her answer files (RAPP-610) come through the media Worker, which asks the
+  // database whether this reader may open them; a blob URL opens in a new tab.
+  const openAnswerFile = async (objectKey: string) => {
+    const session = await supabase.auth.getSession();
+    const accessToken = session.data.session?.access_token;
+    if (accessToken === undefined) throw new AppError('AUTH-2');
+    const url = await loadAuthenticatedMediaObjectUrl({ objectKey, mediaWorkerUrl, accessToken });
+    window.open(url, '_blank', 'noopener');
+  };
 
   // Not joined yet: staff created her profile and she has not accepted the terms (RAPP-300).
   const hasJoined = participant.terms_accepted_at !== null;
@@ -429,6 +441,7 @@ export function ParticipantDetail({
           await setParticipantCustomAnswers(supabase, participant.id, answers);
           await router.invalidate();
         }}
+        onOpenFile={uploadsAvailable(mediaWorkerUrl) ? openAnswerFile : undefined}
       />
 
       {teamTools && permissions.has('participants.view_personal') ? (
@@ -452,6 +465,12 @@ export function ParticipantDetail({
       {isTestPlayer && testScenario !== null ? (
         <TestPlayerScenarioPanel
           scenario={testScenario}
+          customQuestions={scenarioCustomQuestions(intakeCatalog)}
+          owner={
+            testScenario.orgId === null
+              ? undefined
+              : { orgId: testScenario.orgId, profileId: participant.id }
+          }
           onChange={async (change) => {
             await setTestPlayerScenario(supabase, participant.id, change);
             await router.invalidate();

@@ -604,5 +604,9 @@
   "testScenarioReset": "Reset to brand-new player",
   "testScenarioNeedsRequiredAnswers": "Fill her required answers first. She can only join with them.",
   "testScenarioJoinedKeepsRequired": "She has joined, so her required answers stay. Mark the terms as not accepted first.",
-  "testScenarioFailed": "The change was not saved. Try again."
+  "testScenarioFailed": "The change was not saved. Try again.",
+  "testScenarioCustomTitle": "Questions staff added",
+  "testScenarioCustomIntro": "Fill them with a valid test answer of each type, or clear them. A test file has no content behind it.",
+  "testScenarioFillAllCustom": "Fill them all",
+  "testScenarioClearAllCustom": "Clear them all"
 }

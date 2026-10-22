@@ -30,6 +30,7 @@ const catalog: IntakeCatalog = {
           privacy: 'normal',
           placements: ['wizard'],
           isArchived: false,
+          settings: {},
           options: [],
         },
       ],

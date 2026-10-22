@@ -33,7 +33,7 @@ const CHILDCARE_KEYS = {
 } as const;
 
 /** The strokes are 0..1000 on both axes, so they fill any box the same way. */
-function SignatureDrawing({
+export function SignatureDrawing({
   strokes,
   label,
 }: {

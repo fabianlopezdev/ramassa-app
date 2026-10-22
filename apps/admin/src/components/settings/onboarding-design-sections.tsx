@@ -18,6 +18,7 @@ import { DocumentExplanationForm } from '@/components/settings/document-explanat
 import { QuestionBuilder } from '@/components/settings/question-builder';
 import { SeasonsPanel } from '@/components/settings/seasons-panel';
 import { builtinQuestionOptions, QUESTION_LABEL_KEYS } from '@/lib/builtin-questions';
+import { mediaWorkerUrl } from '@/lib/media-worker';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
@@ -43,6 +44,7 @@ import {
   saveCustomQuestion,
   saveIntakeScreen,
   saveWizardFlowOrder,
+  uploadsAvailable,
   type IntakeCatalog,
 } from '@ramassa/shared/intake-builder';
 import type { LocalizedText } from '@ramassa/shared/schemas';
@@ -59,6 +61,7 @@ export function OnboardingQuestionsSection({ catalog }: { readonly catalog: Inta
   return (
     <QuestionBuilder
       catalog={catalog}
+      canStoreFiles={uploadsAvailable(mediaWorkerUrl)}
       builtins={WIZARD_QUESTIONS.map((question) => ({
         question,
         label: t(QUESTION_LABEL_KEYS[question] ?? question),

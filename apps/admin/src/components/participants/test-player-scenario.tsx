@@ -7,6 +7,8 @@
  *     onboarding again;
  *   - whether she signed this season's authorization;
  *   - whether she is a new player or returns from an earlier season;
+ *   - which staff questions she answered, every type of question included
+ *     (RAPP-610: a sample file in her own folder, a sample signature);
  *   - and a reset to a brand-new invited player.
  * Only on a test player: the page shows it for no one else, and the database
  * refuses every switch on a real woman.
@@ -17,9 +19,11 @@ import { QUESTION_LABEL_KEYS } from '@/lib/builtin-questions';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { WIZARD_QUESTIONS, type IntakeQuestion } from '@ramassa/shared/intake';
+import { textIn, type CustomQuestion } from '@ramassa/shared/intake-builder';
 import {
   sampleAnswerPayload,
   sampleAnswersFor,
+  sampleCustomAnswersFor,
   type TestPlayerScenario,
   type TestPlayerScenarioChange,
 } from '@ramassa/shared/participants';
@@ -34,12 +38,18 @@ const NO_SEASON_REFUSAL = 'no current season';
 export function TestPlayerScenarioPanel({
   scenario,
   onChange,
+  customQuestions = [],
+  owner,
 }: {
   readonly scenario: TestPlayerScenario;
   /** One switch, one database call. Throws when refused. */
   readonly onChange: (change: TestPlayerScenarioChange) => Promise<void>;
+  /** The staff questions her wizard or season asks (RAPP-610). */
+  readonly customQuestions?: readonly CustomQuestion[];
+  /** Her organization and id: a sample file lives in her own private folder. */
+  readonly owner?: { readonly orgId: string; readonly profileId: string };
 }) {
-  const { t } = useTranslation(['participants', 'onboarding']);
+  const { t } = useTranslation(['participants', 'onboarding', 'settings']);
   const [working, setWorking] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const language = scenario.language;
@@ -198,6 +208,92 @@ export function TestPlayerScenarioPanel({
           })}
         </ul>
       </div>
+
+      {customQuestions.length === 0 || owner === undefined ? null : (
+        <div className="flex flex-col gap-3 border-t pt-4" data-testid="test-scenario-custom">
+          <div className="flex flex-col gap-1">
+            <h3 className="text-start text-base font-semibold">{t('testScenarioCustomTitle')}</h3>
+            <p className="text-start text-sm text-muted-foreground">
+              {t('testScenarioCustomIntro')}
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={working}
+              onClick={() =>
+                void apply({
+                  kind: 'custom_answers',
+                  fill: sampleCustomAnswersFor(customQuestions, language, owner),
+                })
+              }
+            >
+              {t('testScenarioFillAllCustom')}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={working}
+              onClick={() =>
+                void apply({
+                  kind: 'custom_answers',
+                  clear: customQuestions.map((question) => question.id),
+                })
+              }
+            >
+              {t('testScenarioClearAllCustom')}
+            </Button>
+          </div>
+          <ul className="flex flex-col divide-y">
+            {customQuestions.map((question) => {
+              const isAnswered = scenario.customAnswered.has(question.id);
+              const label = textIn(question.label, 'ca');
+              return (
+                <li
+                  key={question.id}
+                  className="flex flex-wrap items-center justify-between gap-2 py-2"
+                  data-testid={`test-scenario-custom-${question.id}`}
+                  data-answered={isAnswered ? 'true' : 'false'}
+                >
+                  <span className="text-start text-sm">
+                    {label}
+                    {' · '}
+                    <span className="text-muted-foreground">
+                      {t(`settings:questions.types.${question.type}`)}
+                      {' · '}
+                      {isAnswered ? t('questionStatesAnswered') : t('questionStatesUnanswered')}
+                    </span>
+                  </span>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    disabled={working}
+                    aria-label={
+                      isAnswered
+                        ? t('testScenarioClearOne', { question: label })
+                        : t('testScenarioFillOne', { question: label })
+                    }
+                    onClick={() =>
+                      void apply(
+                        isAnswered
+                          ? { kind: 'custom_answers', clear: [question.id] }
+                          : {
+                              kind: 'custom_answers',
+                              fill: sampleCustomAnswersFor([question], language, owner),
+                            },
+                      )
+                    }
+                  >
+                    {isAnswered ? t('testScenarioClear') : t('testScenarioFill')}
+                  </Button>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
 
       <div className="flex flex-col gap-2 border-t pt-4">
         <p className="text-start text-sm text-muted-foreground">{t('testScenarioResetHint')}</p>
