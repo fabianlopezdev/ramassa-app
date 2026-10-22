@@ -699,5 +699,80 @@
     "previewTablet": "On the team tablet, the final button says: {{label}}",
     "previewStep": "{{label}} · step {{step}} of {{total}}"
   },
-  "draftSeenByTestPlayers": "Draft version (only test players see it)"
+  "draftSeenByTestPlayers": "Draft version (only test players see it)",
+  "setupTransfer": {
+    "title": "Move the onboarding setup",
+    "intro": "Download the whole onboarding as one file (screens, questions, wording, terms, seasons and authorization) to import it into another organization, for example from staging to production. The file carries no person: no test players, answers, consents or signatures.",
+    "download": "Download setup",
+    "downloaded": "File downloaded.",
+    "downloadFailed": "The download failed. Try again.",
+    "importTitle": "Import setup",
+    "importIntro": "Only an organization with no onboarding setup yet can import, and only once. You see what will be imported before anything is created.",
+    "chooseFile": "Setup file (.json)",
+    "notSetup": "This file is not an onboarding setup downloaded from here.",
+    "unknownVersion": "This file uses version {{version}} of the format and this app reads version 1. Download it again from an app of the same version.",
+    "damaged": "The file is incomplete or damaged. Download it again.",
+    "previewing": "Checking the file…",
+    "failed": "The import failed. Nothing was created. Try again.",
+    "previewTitle": "What will be imported",
+    "previewSource": "File downloaded on {{date}}, app {{commit}}.",
+    "noCommit": "no version",
+    "count": {
+      "screens": "Screens",
+      "questions": "Questions",
+      "options": "Options",
+      "builtin_screens": "App screen wording",
+      "builtin_question_overrides": "Changes to app questions",
+      "flow_order_steps": "Order steps",
+      "required_questions": "Required or optional questions",
+      "presets": "Presets",
+      "document_step_explanation": "Document step note",
+      "app_terms_versions": "Terms versions",
+      "seasons": "Seasons",
+      "authorization_versions": "Authorization versions"
+    },
+    "legal": {
+      "appTerms": {
+        "draft": "App terms: the draft is imported as a draft.",
+        "published": "App terms: version {{number}} is imported as a draft.",
+        "bundled": "App terms: they are the app's own and already here, so they are not imported.",
+        "none": "App terms: the file has none."
+      },
+      "authorization": {
+        "draft": "Authorization: the draft is imported as a draft.",
+        "published": "Authorization: version {{number}} of {{season}} is imported as a draft.",
+        "none": "Authorization: the file has none."
+      }
+    },
+    "warning": {
+      "legal_drafts": "The terms and the authorization arrive as drafts. An admin must review and publish them before players see them.",
+      "app_terms_history": "{{count}} earlier published terms versions are not imported; their history stays in the source organization.",
+      "authorization_history": "{{count}} earlier published authorization versions are not imported; their history stays in the source organization.",
+      "attachment_links": "The authorization documents link to {{hosts}}. Check that they open from this organization.",
+      "no_current_season": "No season in the file is the current one: mark one before you publish the authorization."
+    },
+    "commitDiffers": "The file was downloaded with app version {{file}} and this is {{app}}. If the import fails, download it again with the same version.",
+    "blockersTitle": "This organization already has an onboarding setup, and an import never overwrites it:",
+    "blocker": {
+      "screens": "screens",
+      "questions": "questions",
+      "builtin_question_overrides": "changes to app questions",
+      "builtin_screens": "app screen wording",
+      "flow_order": "screen order",
+      "required_questions": "required or optional questions",
+      "presets": "presets",
+      "document_step_explanation": "document step note",
+      "app_terms": "its own app terms",
+      "seasons": "seasons",
+      "authorization": "authorization"
+    },
+    "problem": "The database would refuse this file: {{problem}}",
+    "confirm": "Import",
+    "confirmAlert": "The import creates everything shown and can run only once. Click again to confirm.",
+    "confirmAgain": "Confirm the import",
+    "cancel": "Cancel",
+    "importing": "Importing…",
+    "imported": "Setup imported.",
+    "mustPublish": "Next step: review and publish the terms and the authorization on this page."
+  }
 }

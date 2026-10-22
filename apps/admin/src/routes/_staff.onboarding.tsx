@@ -2,7 +2,8 @@
  * Everything a player sees the first time she opens the app, on one page
  * (RAPP-615): the screens with their order and wording (RAPP-612), the
  * questions, the document step note, the app terms (RAPP-613), and the
- * seasons with their authorization.
+ * seasons with their authorization, and moving the whole setup to another
+ * organization (RAPP-621).
  *
  * Settings shows the same sections in its tabs. This page exists so the
  * onboarding design role, which holds `onboarding.design` and nothing of
@@ -18,6 +19,7 @@ import {
   OnboardingDocumentSection,
   OnboardingQuestionsSection,
   OnboardingScreensSection,
+  OnboardingSetupTransferSection,
 } from '@/components/settings/onboarding-design-sections';
 import { ONBOARDING_PERMISSIONS } from '@/lib/nav-items';
 import { supabase } from '@/lib/supabase';
@@ -84,6 +86,9 @@ function OnboardingDesignScreen() {
           {t('onboardingPage.intro')}
         </p>
       </header>
+
+      {/* Staging to production at launch (RAPP-621): admins import, designers download. */}
+      <OnboardingSetupTransferSection canImport={data.canPublishTerms} />
 
       <section className="space-y-6" aria-labelledby="onboarding-screens-heading">
         <header className="max-w-3xl space-y-2">

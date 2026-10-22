@@ -699,5 +699,80 @@
     "previewTablet": "En la tableta del equipo, el botón final dice: {{label}}",
     "previewStep": "{{label}} · paso {{step}} de {{total}}"
   },
-  "draftSeenByTestPlayers": "Versión en borrador (solo la ven las jugadoras de prueba)"
+  "draftSeenByTestPlayers": "Versión en borrador (solo la ven las jugadoras de prueba)",
+  "setupTransfer": {
+    "title": "Mover la configuración de la inscripción",
+    "intro": "Descarga aquí toda la inscripción en un archivo (pantallas, preguntas, textos, términos, temporadas y autorización) para importarla en otra organización, por ejemplo de pruebas a producción. El archivo no lleva ninguna persona: ni jugadoras de prueba, ni respuestas, ni consentimientos, ni firmas.",
+    "download": "Descargar la configuración",
+    "downloaded": "Archivo descargado.",
+    "downloadFailed": "No se ha podido descargar. Vuelve a intentarlo.",
+    "importTitle": "Importar una configuración",
+    "importIntro": "Solo una organización sin inscripción configurada puede importar, y solo una vez. Antes de crear nada verás qué se importará.",
+    "chooseFile": "Archivo de configuración (.json)",
+    "notSetup": "Este archivo no es una configuración de la inscripción descargada desde aquí.",
+    "unknownVersion": "Este archivo es de la versión {{version}} del formato y esta app lee la versión 1. Descárgalo de nuevo desde una app de la misma versión.",
+    "damaged": "El archivo está incompleto o dañado. Descárgalo de nuevo.",
+    "previewing": "Comprobando el archivo…",
+    "failed": "No se ha podido importar. No se ha creado nada. Vuelve a intentarlo.",
+    "previewTitle": "Qué se importará",
+    "previewSource": "Archivo descargado el {{date}}, app {{commit}}.",
+    "noCommit": "sin versión",
+    "count": {
+      "screens": "Pantallas",
+      "questions": "Preguntas",
+      "options": "Opciones",
+      "builtin_screens": "Textos de pantallas de la app",
+      "builtin_question_overrides": "Cambios en preguntas de la app",
+      "flow_order_steps": "Pasos del orden",
+      "required_questions": "Preguntas obligatorias u opcionales",
+      "presets": "Plantillas",
+      "document_step_explanation": "Nota del paso del documento",
+      "app_terms_versions": "Versiones de los términos",
+      "seasons": "Temporadas",
+      "authorization_versions": "Versiones de la autorización"
+    },
+    "legal": {
+      "appTerms": {
+        "draft": "Términos de la app: el borrador se importa como borrador.",
+        "published": "Términos de la app: la versión {{number}} se importa como borrador.",
+        "bundled": "Términos de la app: son los de la app y ya están, no se importan.",
+        "none": "Términos de la app: el archivo no los lleva."
+      },
+      "authorization": {
+        "draft": "Autorización: el borrador se importa como borrador.",
+        "published": "Autorización: la versión {{number}} de {{season}} se importa como borrador.",
+        "none": "Autorización: el archivo no la lleva."
+      }
+    },
+    "warning": {
+      "legal_drafts": "Los términos y la autorización llegan como borradores. Una persona administradora los tiene que revisar y publicar antes de que las jugadoras los vean.",
+      "app_terms_history": "{{count}} versiones publicadas anteriores de los términos no se importan; el historial se queda en la organización de origen.",
+      "authorization_history": "{{count}} versiones publicadas anteriores de la autorización no se importan; el historial se queda en la organización de origen.",
+      "attachment_links": "Los documentos de la autorización enlazan a {{hosts}}. Comprueba que se abren desde esta organización.",
+      "no_current_season": "Ninguna temporada del archivo es la vigente: marca una antes de publicar la autorización."
+    },
+    "commitDiffers": "El archivo se descargó con la versión {{file}} de la app y esta es la {{app}}. Si falla, descárgalo de nuevo con la misma versión.",
+    "blockersTitle": "Esta organización ya tiene configuración de la inscripción, y la importación nunca la sobrescribe:",
+    "blocker": {
+      "screens": "pantallas",
+      "questions": "preguntas",
+      "builtin_question_overrides": "cambios en preguntas de la app",
+      "builtin_screens": "textos de pantallas de la app",
+      "flow_order": "orden de las pantallas",
+      "required_questions": "preguntas obligatorias u opcionales",
+      "presets": "plantillas",
+      "document_step_explanation": "nota del paso del documento",
+      "app_terms": "términos de la app propios",
+      "seasons": "temporadas",
+      "authorization": "autorización"
+    },
+    "problem": "La base de datos no aceptaría este archivo: {{problem}}",
+    "confirm": "Importar",
+    "confirmAlert": "La importación crea todo lo que se muestra y solo se puede hacer una vez. Vuelve a hacer clic para confirmar.",
+    "confirmAgain": "Confirmar la importación",
+    "cancel": "Cancelar",
+    "importing": "Importando…",
+    "imported": "Configuración importada.",
+    "mustPublish": "Paso siguiente: revisa y publica los términos y la autorización en esta página."
+  }
 }
