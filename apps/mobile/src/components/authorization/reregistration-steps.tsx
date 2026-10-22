@@ -18,6 +18,7 @@ import {
 import { ProfileRow, ProfileSection } from '@/components/profile/profile-section';
 import { SeasonAnswerFields, type SeasonAnswers } from '@/components/profile/season-answer-fields';
 import { continuousCorners } from '@/lib/continuous-corners';
+import { checkCustomAnswers } from '@/lib/custom-answer-errors';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { customAnswersToSave, mergedCustomAnswers } from '@/lib/onboarding-intake';
 import { useBuiltinWording } from '@/lib/onboarding-intake-context';
@@ -103,6 +104,8 @@ export function ReregistrationSteps({
   const [answers, setAnswers] = useState<SeasonAnswers | null>(null);
   const [hasFailed, setHasFailed] = useState(false);
   const [customDraft, setCustomDraft] = useState<CustomAnswerDraft>({});
+  // Each staff answer that does not fit its question, with the wizard's words (RAPP-610).
+  const [customErrors, setCustomErrors] = useState<Readonly<Record<string, string>>>({});
 
   // Read fresh: she may have just corrected her details on the profile screen.
   const profile = useQuery({
@@ -133,17 +136,20 @@ export function ReregistrationSteps({
   const asks = reregistrationAsks(catalog);
   const wording = useBuiltinWording(catalog);
   const save = useMutation({
-    mutationFn: async (value: SeasonAnswers) => {
+    mutationFn: async ({
+      season: value,
+      custom,
+    }: {
+      readonly season: SeasonAnswers;
+      readonly custom: CustomAnswerDraft;
+    }) => {
       await updateMySeasonAnswers(supabase, {
         applicantStatus: value.applicantStatus ?? undefined,
         supportingEntities: [...value.supportingEntities],
         childcareNeed: value.childcareNeed ?? undefined,
         specificNeeds: value.specificNeeds.trim() === '' ? undefined : value.specificNeeds,
       });
-      await saveMyCustomAnswers(
-        supabase,
-        customAnswersToSave(customScreens, customDraft, storedCustom),
-      );
+      await saveMyCustomAnswers(supabase, customAnswersToSave(customScreens, custom, storedCustom));
     },
   });
 
@@ -247,9 +253,17 @@ export function ReregistrationSteps({
               <CustomQuestionSections
                 screens={customScreens}
                 answers={mergedCustomAnswers(storedCustom, customDraft)}
-                onChange={(questionId, value) =>
-                  setCustomDraft((current) => ({ ...current, [questionId]: value }))
-                }
+                errors={customErrors}
+                onChange={(questionId, value) => {
+                  setCustomDraft((current) => ({ ...current, [questionId]: value }));
+                  setCustomErrors((current) =>
+                    current[questionId] === undefined
+                      ? current
+                      : Object.fromEntries(
+                          Object.entries(current).filter(([id]) => id !== questionId),
+                        ),
+                  );
+                }}
               />
               {hasFailed ? (
                 <Text
@@ -266,13 +280,36 @@ export function ReregistrationSteps({
                 isBusy={save.isPending}
                 onPress={() => {
                   setHasFailed(false);
-                  save.mutate(current, {
-                    onSuccess: onDone,
-                    onError: () => {
-                      playHaptic('error');
-                      setHasFailed(true);
+                  // The same check and words as her wizard: nothing is sent
+                  // while an answer does not fit its question.
+                  const checked = checkCustomAnswers(
+                    customScreens.flatMap((screen) => screen.questions),
+                    mergedCustomAnswers(storedCustom, customDraft),
+                    t,
+                  );
+                  setCustomErrors(checked.errors);
+                  if (Object.keys(checked.errors).length > 0) {
+                    playHaptic('warning');
+                    return;
+                  }
+                  // Tidied as the wizard does: a phone without separators.
+                  const tidied: CustomAnswerDraft = Object.fromEntries(
+                    Object.entries(customDraft).map(([id, value]) => [
+                      id,
+                      checked.answers[id] ?? value,
+                    ]),
+                  );
+                  setCustomDraft(tidied);
+                  save.mutate(
+                    { season: current, custom: tidied },
+                    {
+                      onSuccess: onDone,
+                      onError: () => {
+                        playHaptic('error');
+                        setHasFailed(true);
+                      },
                     },
-                  });
+                  );
                 }}
               />
             </>

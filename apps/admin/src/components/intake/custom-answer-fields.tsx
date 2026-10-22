@@ -13,6 +13,7 @@
 import { useTranslation } from 'react-i18next';
 import {
   consentSettings,
+  customAnswerMessage,
   dateSettings,
   isStaffWritable,
   itemListSettings,
@@ -24,6 +25,7 @@ import {
   textIn,
   YES_NO,
   YES_NO_MAYBE,
+  type AnswerTranslate,
   type CustomAnswers,
   type CustomAnswerValue,
   type CustomQuestion,
@@ -66,6 +68,24 @@ function readOne(
   }
 }
 
+/**
+ * {question id: message} for each answer that does not fit its question, in
+ * the words her wizard uses (RAPP-610). An empty answer is not checked here.
+ */
+export function customAnswerErrors(
+  screens: readonly IntakeScreen[],
+  answers: Readonly<Record<string, CustomAnswerValue | null>>,
+  t: AnswerTranslate,
+): Record<string, string> {
+  const errors: Record<string, string> = {};
+  for (const question of screens.flatMap((screen) => screen.questions)) {
+    const value = answers[question.id];
+    const message = value == null ? undefined : customAnswerMessage(question, value, t);
+    if (message !== undefined) errors[question.id] = message;
+  }
+  return errors;
+}
+
 /** {question id: value, or null to clear} for every question staff may write. */
 export function readCustomAnswers(
   fields: FormData,
@@ -85,11 +105,14 @@ function QuestionInput({
   value,
   prefix,
   language,
+  error,
 }: {
   readonly question: CustomQuestion;
   readonly value: CustomAnswerValue | undefined;
   readonly prefix: string;
   readonly language: LanguageCode;
+  /** What does not fit, in the words her wizard uses (RAPP-610). */
+  readonly error?: string;
 }) {
   const { t } = useTranslation('settings');
   const name = fieldName(prefix, question);
@@ -105,6 +128,16 @@ function QuestionInput({
   const options = question.options.filter(
     (option) => !option.isArchived || option.id === value || chosenIds.includes(option.id),
   );
+  const errorLine =
+    error === undefined ? null : (
+      <span
+        role="alert"
+        className="text-start text-xs font-normal text-destructive"
+        data-testid={`${name}-error`}
+      >
+        {error}
+      </span>
+    );
   const helpLine =
     helpId === undefined ? null : (
       <span id={helpId} className="text-start text-xs font-normal text-muted-foreground">
@@ -140,6 +173,7 @@ function QuestionInput({
           </label>
         ))}
         {helpLine}
+        {errorLine}
       </fieldset>
     );
   }
@@ -153,6 +187,7 @@ function QuestionInput({
           <span>{textIn(consentSettings(question.settings).text, language)}</span>
         </label>
         {helpLine}
+        {errorLine}
       </fieldset>
     );
   }
@@ -268,6 +303,7 @@ function QuestionInput({
       <span className="text-start">{label}</span>
       {control}
       {helpLine}
+      {errorLine}
     </label>
   );
 }
@@ -277,11 +313,14 @@ export function CustomAnswerFields({
   values,
   prefix,
   language,
+  errors = {},
 }: {
   readonly screens: readonly IntakeScreen[];
   readonly values: CustomAnswers;
   readonly prefix: string;
   readonly language: LanguageCode;
+  /** {question id: message} for answers that do not fit (RAPP-610). */
+  readonly errors?: Readonly<Record<string, string>>;
 }) {
   return (
     <div className="flex flex-col gap-4">
@@ -297,6 +336,7 @@ export function CustomAnswerFields({
               value={values[question.id]}
               prefix={prefix}
               language={language}
+              error={errors[question.id]}
             />
           ))}
         </fieldset>
