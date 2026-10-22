@@ -1509,10 +1509,30 @@ export function buildCustomQuestion(overrides: Partial<CustomQuestionRow> = {}):
     placements: ['wizard', 'entity_form'],
     sort_order: 0,
     is_archived: false,
+    // A yes/no/maybe question takes no settings (RAPP-610).
+    settings: {},
     created_at: FIXTURE_TIMESTAMP,
     updated_at: FIXTURE_TIMESTAMP,
     ...overrides,
   };
+}
+
+/**
+ * A question of any type with its settings (RAPP-610), for tests that need a
+ * number, a date, a list, a consent, a file or a signature.
+ */
+export function buildTypedCustomQuestion(
+  type: CustomQuestionRow['question_type'],
+  settings: CustomQuestionRow['settings'],
+  overrides: Partial<CustomQuestionRow> = {},
+): CustomQuestionRow {
+  return buildCustomQuestion({
+    question_type: type,
+    settings,
+    placements:
+      type === 'file_upload' || type === 'signature' ? ['wizard'] : ['wizard', 'entity_form'],
+    ...overrides,
+  });
 }
 
 export function buildCustomQuestionOption(

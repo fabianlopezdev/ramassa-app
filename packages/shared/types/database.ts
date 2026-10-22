@@ -987,6 +987,7 @@ export type Database = {
           privacy: string;
           question_type: string;
           screen_id: string;
+          settings: Json;
           show_when_option_id: string | null;
           show_when_question_id: string | null;
           sort_order: number;
@@ -1003,6 +1004,7 @@ export type Database = {
           privacy: string;
           question_type: string;
           screen_id: string;
+          settings?: Json;
           show_when_option_id?: string | null;
           show_when_question_id?: string | null;
           sort_order?: number;
@@ -1019,6 +1021,7 @@ export type Database = {
           privacy?: string;
           question_type?: string;
           screen_id?: string;
+          settings?: Json;
           show_when_option_id?: string | null;
           show_when_question_id?: string | null;
           sort_order?: number;
@@ -5151,6 +5154,10 @@ export type Database = {
         Args: { dispatch_secret: string };
         Returns: boolean;
       };
+      can_read_custom_answer_object: {
+        Args: { p_object_key: string };
+        Returns: boolean;
+      };
       can_read_feedback_object: {
         Args: { p_object_key: string };
         Returns: boolean;
@@ -6629,6 +6636,7 @@ export type Database = {
           p_placements: string[];
           p_privacy: string;
           p_screen_id: string;
+          p_settings?: Json;
           p_type: string;
         };
         Returns: string;

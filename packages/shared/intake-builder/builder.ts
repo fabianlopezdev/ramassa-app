@@ -41,6 +41,30 @@ import {
 } from '../onboarding/screen-texts';
 import type { LanguageCode } from '../schemas/language';
 import type { Database, Json } from '../types/database';
+import {
+  CUSTOM_QUESTION_TYPES,
+  customAnswerSchema,
+  customAnswerValueSchema,
+  isOptionType,
+  maxOptionsFor,
+  parseQuestionSettings,
+  placementsAllowedFor,
+  QUESTION_PLACEMENTS,
+  questionSettingsSchema,
+  type CustomAnswerValue,
+  type CustomQuestionType,
+  type FileAnswer,
+  type QuestionPlacement,
+  type QuestionSettings,
+} from './question-types';
+
+export {
+  CUSTOM_QUESTION_TYPES,
+  QUESTION_PLACEMENTS,
+  type CustomAnswerValue,
+  type CustomQuestionType,
+  type QuestionPlacement,
+};
 
 type Client = SupabaseClient<Database>;
 
@@ -48,20 +72,8 @@ function databaseError(error: { readonly message: string; readonly code?: string
   return new AppError(databaseErrorCode(error.message, error.code), { message: error.message });
 }
 
-export const CUSTOM_QUESTION_TYPES = [
-  'short_text',
-  'long_text',
-  'yes_no_maybe',
-  'single_choice',
-  'multiple_choice',
-] as const;
-export type CustomQuestionType = (typeof CUSTOM_QUESTION_TYPES)[number];
-
 export const QUESTION_PRIVACY_LEVELS = ['normal', 'personal', 'sensitive'] as const;
 export type QuestionPrivacy = (typeof QUESTION_PRIVACY_LEVELS)[number];
-
-export const QUESTION_PLACEMENTS = ['wizard', 'entity_form', 'season', 'staff'] as const;
-export type QuestionPlacement = (typeof QUESTION_PLACEMENTS)[number];
 
 export const YES_NO_MAYBE = ['yes', 'no', 'maybe'] as const;
 
@@ -69,8 +81,9 @@ export const YES_NO_MAYBE = ['yes', 'no', 'maybe'] as const;
 export const BUILTIN_SCREENS = QUESTION_SCREENS;
 export type BuiltinScreen = (typeof BUILTIN_SCREENS)[number];
 
+/** Answered by picking options staff wrote: cards, checkboxes or the searchable list. */
 export function isChoiceType(type: CustomQuestionType): boolean {
-  return type === 'single_choice' || type === 'multiple_choice';
+  return isOptionType(type);
 }
 
 // Localized text as stored: any of the five languages, Catalan required for a label.
@@ -122,6 +135,8 @@ const questionSchema = z.object({
   placements: z.array(z.enum(QUESTION_PLACEMENTS)),
   sort_order: z.number().int(),
   is_archived: z.boolean(),
+  // Per-type settings (RAPP-610); an older server sends none.
+  settings: z.unknown().optional(),
   options: z.array(optionSchema),
 });
 
@@ -189,6 +204,8 @@ export interface CustomQuestion {
   readonly privacy: QuestionPrivacy;
   readonly placements: readonly QuestionPlacement[];
   readonly isArchived: boolean;
+  /** The type's settings (RAPP-610): a number's range, a date's ages, a consent's text... */
+  readonly settings: QuestionSettings;
   readonly options: readonly CustomOption[];
 }
 
@@ -271,6 +288,7 @@ export function parseIntakeCatalog(data: unknown): IntakeCatalog {
         privacy: question.privacy,
         placements: question.placements,
         isArchived: question.is_archived,
+        settings: parseQuestionSettings(question.question_type, question.settings),
         options: question.options.map((option) => ({
           id: option.id,
           label: option.label,
@@ -363,7 +381,6 @@ export function liveOptions(question: CustomQuestion): readonly CustomOption[] {
 
 // Answers -------------------------------------------------------------------------------------
 
-export type CustomAnswerValue = string | readonly string[];
 export type CustomAnswers = Readonly<Record<string, CustomAnswerValue>>;
 
 /** Conditions reference stable option IDs, never translated labels. */
@@ -389,39 +406,34 @@ export function updateCustomAnswer(
   return next;
 }
 
-const answerValueSchema = z.union([z.string(), z.array(z.string())]);
+const answerValueSchema = customAnswerValueSchema;
 
-/** Checks a value against its question, as the database does. Null clears it. */
+/**
+ * Checks a value against its question with the type's one schema
+ * (`customAnswerSchema`), as the database does. Null or an empty value clears
+ * it, which is always allowed: every staff question is optional (RAPP-611
+ * makes some required).
+ */
 export function customAnswerError(
   question: CustomQuestion,
   value: CustomAnswerValue | null,
 ): 'invalid' | null {
-  if (value === null) return null;
-  const live = new Set(liveOptions(question).map((option) => option.id));
-  switch (question.type) {
-    case 'short_text':
-      return typeof value === 'string' && value.trim().length <= 500 ? null : 'invalid';
-    case 'long_text':
-      return typeof value === 'string' && value.trim().length <= 4000 ? null : 'invalid';
-    case 'yes_no_maybe':
-      return typeof value === 'string' && (YES_NO_MAYBE as readonly string[]).includes(value)
-        ? null
-        : 'invalid';
-    case 'single_choice':
-      return typeof value === 'string' && live.has(value) ? null : 'invalid';
-    case 'multiple_choice':
-      return Array.isArray(value) &&
-        new Set(value).size === value.length &&
-        value.every((id) => live.has(id))
-        ? null
-        : 'invalid';
-  }
+  if (value === null || isEmptyAnswer(value)) return null;
+  return customAnswerSchema(question).safeParse(
+    typeof value === 'string' && question.type !== 'phone' && question.type !== 'email'
+      ? value.trim()
+      : value,
+  ).success
+    ? null
+    : 'invalid';
 }
 
-/** True when the value says nothing: empty text or no option chosen. */
+/** True when the value says nothing: empty text, nothing chosen, an unticked consent. */
 export function isEmptyAnswer(value: CustomAnswerValue | null | undefined): boolean {
-  if (value == null) return true;
-  return typeof value === 'string' ? value.trim() === '' : value.length === 0;
+  if (value == null || value === false) return true;
+  if (typeof value === 'string') return value.trim() === '';
+  if (Array.isArray(value)) return value.length === 0;
+  return false;
 }
 
 /** The value to send: null for an empty answer, which removes it. */
@@ -429,12 +441,29 @@ export function answerPayload(answers: Readonly<Record<string, CustomAnswerValue
   return Object.fromEntries(
     Object.entries(answers).map(([id, value]) => [
       id,
-      isEmptyAnswer(value) ? null : typeof value === 'string' ? value.trim() : [...(value ?? [])],
+      isEmptyAnswer(value)
+        ? null
+        : typeof value === 'string'
+          ? value.trim()
+          : Array.isArray(value)
+            ? [...value]
+            : value,
     ]),
   ) as Json;
 }
 
-/** An answer in words: option labels in her language, an archived option marked. */
+/** The time a consent was given, in the organization's time zone. */
+const ORGANIZATION_TIME_ZONE = 'Europe/Madrid';
+
+function isFileAnswer(value: CustomAnswerValue): value is FileAnswer {
+  return typeof value === 'object' && !Array.isArray(value) && 'key' in value;
+}
+
+/**
+ * An answer in words: option labels in her language (an archived option
+ * marked), a date and a number in the reader's language, a list joined, a
+ * consent as yes with its time, a signature as signed, a file by its name.
+ */
 export function answerText(
   question: CustomQuestion,
   value: CustomAnswerValue,
@@ -444,13 +473,47 @@ export function answerText(
     readonly no: string;
     readonly maybe: string;
     readonly archived: string;
+    readonly signed?: string;
   },
+  context: { readonly answeredAt?: string } = {},
 ): string {
-  if (question.type === 'yes_no_maybe' && typeof value === 'string') {
+  if (
+    (question.type === 'yes_no_maybe' || question.type === 'yes_no') &&
+    typeof value === 'string'
+  ) {
     return value === 'yes' ? words.yes : value === 'no' ? words.no : words.maybe;
   }
-  if (!isChoiceType(question.type)) return typeof value === 'string' ? value : value.join(', ');
-  const ids = typeof value === 'string' ? [value] : value;
+  if (question.type === 'consent') {
+    if (value !== true) return words.no;
+    if (context.answeredAt === undefined) return words.yes;
+    const at = new Intl.DateTimeFormat(language, {
+      dateStyle: 'short',
+      timeStyle: 'short',
+      timeZone: ORGANIZATION_TIME_ZONE,
+    }).format(new Date(context.answeredAt));
+    return `${words.yes} (${at})`;
+  }
+  if (question.type === 'signature') return words.signed ?? words.yes;
+  if (isFileAnswer(value)) return value.name;
+  if (question.type === 'date' && typeof value === 'string') {
+    const [year, month, day] = value.split('-').map(Number) as [number, number, number];
+    return new Intl.DateTimeFormat(language, {
+      day: 'numeric',
+      month: 'numeric',
+      year: 'numeric',
+      timeZone: 'UTC',
+    }).format(new Date(Date.UTC(year, month - 1, day)));
+  }
+  if (typeof value === 'number') {
+    return new Intl.NumberFormat(language, { useGrouping: false, maximumFractionDigits: 6 }).format(
+      value,
+    );
+  }
+  if (typeof value === 'boolean') return value ? words.yes : words.no;
+  if (!isChoiceType(question.type)) {
+    return typeof value === 'string' ? value : (value as readonly unknown[]).map(String).join(', ');
+  }
+  const ids = typeof value === 'string' ? [value] : (value as readonly string[]);
   return ids
     .map((id) => {
       const option = question.options.find((candidate) => candidate.id === id);
@@ -616,6 +679,8 @@ export interface QuestionDraft {
   readonly help: BuilderText | null;
   readonly privacy: QuestionPrivacy;
   readonly placements: readonly QuestionPlacement[];
+  /** The type's settings (RAPP-610); `{}` for a type that has none. */
+  readonly settings: QuestionSettings;
   /** In order; an option without an id is new, an existing one left out is archived. */
   readonly options: readonly { readonly id: string | null; readonly label: BuilderText }[];
 }
@@ -625,6 +690,7 @@ export const questionDraftSchema = z
     label: catalanTextSchema,
     placements: z.array(z.enum(QUESTION_PLACEMENTS)).min(1),
     type: z.enum(CUSTOM_QUESTION_TYPES),
+    settings: z.unknown().optional(),
     options: z.array(z.object({ id: z.string().nullable(), label: catalanTextSchema })),
   })
   .superRefine((draft, context) => {
@@ -632,8 +698,18 @@ export const questionDraftSchema = z
     if (choice && draft.options.length < 2) {
       context.addIssue({ code: 'custom', path: ['options'], message: 'two options' });
     }
+    if (choice && draft.options.length > maxOptionsFor(draft.type)) {
+      context.addIssue({ code: 'custom', path: ['options'], message: 'too many options' });
+    }
     if (!choice && draft.options.length > 0) {
       context.addIssue({ code: 'custom', path: ['options'], message: 'no options' });
+    }
+    if (!questionSettingsSchema(draft.type).safeParse(draft.settings ?? {}).success) {
+      context.addIssue({ code: 'custom', path: ['settings'], message: 'settings of the type' });
+    }
+    const allowed = placementsAllowedFor(draft.type);
+    if (draft.placements.some((placement) => !allowed.includes(placement))) {
+      context.addIssue({ code: 'custom', path: ['placements'], message: 'placements of the type' });
     }
   });
 
@@ -647,6 +723,7 @@ export async function saveCustomQuestion(client: Client, draft: QuestionDraft): 
     p_help: (help !== null && Object.keys(help).length > 0 ? help : null) as Json,
     p_privacy: draft.privacy,
     p_placements: [...draft.placements],
+    p_settings: draft.settings as Json,
     p_options: draft.options.map((option) =>
       option.id === null
         ? { label: cleanText(option.label) }

@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { SUPPORTED_LANGUAGES } from '../i18n/languages';
+import { questionSettingsSchema } from '../intake-builder/question-types';
 import {
   buildAnnouncement,
   buildAppTermsSignature,
@@ -48,6 +49,7 @@ import {
   buildServiceInterest,
   buildStockAlert,
   buildTestPlayer,
+  buildTypedCustomQuestion,
   buildWalkInSigning,
 } from './factories';
 import {
@@ -476,6 +478,14 @@ describe('the question builder rows (RAPP-307)', () => {
     const answer = buildCustomAnswer();
     expect(answer.value_encrypted).toBeNull();
     expect(answer.season_key).toBe('00000000-0000-0000-0000-000000000000');
+  });
+
+  test('a typed question carries settings the shared schema accepts (RAPP-610)', () => {
+    const signature = buildTypedCustomQuestion('signature', {});
+    expect(signature.placements).toEqual(['wizard']);
+    const number = buildTypedCustomQuestion('number', { integer: true, max: 15 });
+    expect(questionSettingsSchema('number').safeParse(number.settings).success).toBe(true);
+    expect(buildCustomQuestion().settings).toEqual({});
   });
 
   test('the override rewords and the preset asks the sizes', () => {

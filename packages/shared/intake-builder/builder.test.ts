@@ -259,6 +259,7 @@ describe('building', () => {
       help: null,
       privacy: 'normal',
       placements: ['wizard'],
+      settings: {},
       options: [
         { id: '5eed0000-0000-4000-8046-000000000001', label: { ca: 'Entitat' } },
         { id: null, label: { ca: 'Una amiga' } },
@@ -274,6 +275,8 @@ describe('building', () => {
         p_help: null,
         p_privacy: 'normal',
         p_placements: ['wizard'],
+        // The type's settings travel with it (RAPP-610); a choice has none.
+        p_settings: {},
         p_options: [
           { id: '5eed0000-0000-4000-8046-000000000001', label: { ca: 'Entitat' } },
           { label: { ca: 'Una amiga' } },

@@ -17,6 +17,7 @@ const gate: CustomQuestion = {
   privacy: 'sensitive',
   placements: ['season'],
   isArchived: false,
+  settings: {},
   options: [
     { id: 'yes', label: { ca: 'Sí' }, isArchived: false },
     { id: 'no', label: { ca: 'No' }, isArchived: false },

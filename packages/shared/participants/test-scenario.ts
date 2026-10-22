@@ -16,6 +16,13 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { AppError, databaseErrorCode } from '../errors';
+import {
+  isAskedOfHer,
+  sampleCustomAnswer,
+  type CustomAnswerValue,
+  type CustomQuestion,
+  type IntakeCatalog,
+} from '../intake-builder';
 import { QUESTION_PAYLOAD_KEYS, type IntakeQuestion } from '../onboarding/intake';
 import type { LanguageCode } from '../schemas/language';
 import { encodeSupportNeeds } from '../schemas/support-needs';
@@ -120,11 +127,45 @@ export function sampleAnswersFor(
   return Object.assign({}, ...questions.map((question) => sampleAnswerPayload(question, language)));
 }
 
+/** The staff questions her wizard or her season asks, live ones only. */
+export function scenarioCustomQuestions(catalog: IntakeCatalog): readonly CustomQuestion[] {
+  return catalog.screens
+    .filter((screen) => !screen.isArchived)
+    .flatMap((screen) => screen.questions)
+    .filter((question) => !question.isArchived && isAskedOfHer(question));
+}
+
+/**
+ * A valid sample answer for each of these staff questions, in her language
+ * (RAPP-610): every type, a file and a signature included. A choice question
+ * with no live option has no sample and is left out.
+ */
+export function sampleCustomAnswersFor(
+  questions: readonly CustomQuestion[],
+  language: LanguageCode,
+  owner: { readonly orgId: string; readonly profileId: string },
+): Readonly<Record<string, CustomAnswerValue>> {
+  return Object.fromEntries(
+    questions.flatMap((question) => {
+      const sample = sampleCustomAnswer(question, language, owner);
+      return sample === '' || (Array.isArray(sample) && sample.length === 0)
+        ? []
+        : [[question.id, sample]];
+    }),
+  );
+}
+
 export type TestPlayerScenarioChange =
   | {
       readonly kind: 'answers';
       readonly fill?: Readonly<Record<string, unknown>>;
       readonly clear?: readonly IntakeQuestion[];
+    }
+  | {
+      /** Staff questions (RAPP-610): {question id: sample answer} and ids to clear. */
+      readonly kind: 'custom_answers';
+      readonly fill?: Readonly<Record<string, CustomAnswerValue>>;
+      readonly clear?: readonly string[];
     }
   | { readonly kind: 'terms'; readonly accepted: boolean }
   | { readonly kind: 'season_signature'; readonly signed: boolean }
@@ -151,6 +192,9 @@ export const testPlayerScenarioSchema = z
     signed_this_season: z.boolean(),
     returning: z.boolean(),
     answered: z.array(z.string()),
+    // The staff questions she has an answer to (RAPP-610); an older server sends none.
+    custom_answered: z.array(z.string()).optional(),
+    org_id: z.uuid().optional(),
     preferred_language: z.enum(['ca', 'es', 'en', 'ar', 'fa']).catch('ca'),
   })
   .transform((row) => ({
@@ -159,6 +203,8 @@ export const testPlayerScenarioSchema = z
     signedThisSeason: row.signed_this_season,
     returning: row.returning,
     answered: new Set(row.answered),
+    customAnswered: new Set(row.custom_answered ?? []),
+    orgId: row.org_id ?? null,
     language: row.preferred_language as LanguageCode,
   }));
 export type TestPlayerScenario = z.infer<typeof testPlayerScenarioSchema>;

@@ -22,6 +22,7 @@
 
 import { z } from 'zod';
 import { AppError } from '../errors';
+import { customAnswerValueSchema, type CustomAnswerValue } from '../intake-builder/question-types';
 import { SUPPORT_NEED_CATEGORIES, type SupportNeedCategory } from '../schemas/support-needs';
 import type { MmkvLike } from './supabase';
 
@@ -69,7 +70,8 @@ const draftSchema = z.object({
   season: z.record(z.string(), z.unknown()).optional(),
   terms: z.record(z.string(), z.unknown()).optional(),
   // Her answers to the staff questions, by question id (RAPP-307).
-  custom: z.record(z.string(), z.union([z.string(), z.array(z.string())])).optional(),
+  // Every type of answer (RAPP-610): text, a number, true, a list, a signature, a file.
+  custom: z.record(z.string(), customAnswerValueSchema).optional(),
   // A test player's situation when the draft began (RAPP-619): a later change
   // on her page makes the draft stale.
   scenarioStamp: z.string().optional(),
@@ -82,7 +84,7 @@ export interface OnboardingDraft {
   logistics?: Record<string, unknown>;
   season?: Record<string, unknown>;
   terms?: Record<string, unknown>;
-  custom?: Record<string, string | readonly string[]>;
+  custom?: Record<string, CustomAnswerValue>;
   scenarioStamp?: string;
 }
 

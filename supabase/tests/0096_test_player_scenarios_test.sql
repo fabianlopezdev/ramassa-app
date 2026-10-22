@@ -159,7 +159,8 @@ select is(
 
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000097", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select is(
-  public.test_player_scenario('5eed0000-0000-4000-8000-000000000096') - 'answered' - 'preferred_language',
+  public.test_player_scenario('5eed0000-0000-4000-8000-000000000096') - 'answered' - 'preferred_language'
+    - 'custom_answered' - 'org_id',
   '{"terms_accepted": true, "current_season": "2026/27", "signed_this_season": false, "returning": true}'::jsonb,
   'her page reads the situation'
 );
