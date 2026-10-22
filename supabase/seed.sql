@@ -1193,7 +1193,7 @@ on conflict (profile_id, question) do nothing;
 insert into public.seasons (id, org_id, name, starts_on, is_current)
 values ('5eed0000-0000-4000-8040-000000000001', '5eed0000-0000-4000-8000-000000000000',
         '2026/27', '2026-09-01', true)
-on conflict (org_id, name) do nothing;
+on conflict (org_id, name) where not is_test_fixture do nothing;
 
 insert into public.authorization_versions (id, org_id, season_id, version_number, content, published_at, published_by)
 values (
