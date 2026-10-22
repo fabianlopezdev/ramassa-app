@@ -128,5 +128,17 @@
       "rateLimited": "Too many attempts. Wait a few minutes and try again.",
       "failed": "The change could not be requested. Please try again."
     }
+  },
+  "todos": {
+    "title": "To do",
+    "triggerLabel": "To do: {{count}}",
+    "empty": "Nothing waiting.",
+    "messages": "Unread messages",
+    "referrals": "Referrals to review",
+    "walkIns": "New signatures",
+    "deletionRequests": "Deletion requests",
+    "mentoring": "Mentoring requests",
+    "feedback": "New feedback",
+    "forumReports": "Reports to moderate"
   }
 }

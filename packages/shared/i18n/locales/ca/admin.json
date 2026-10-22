@@ -128,5 +128,17 @@
       "rateLimited": "Massa intents. Espera uns minuts i torna-ho a provar.",
       "failed": "No s'ha pogut demanar el canvi. Torna-ho a provar."
     }
+  },
+  "todos": {
+    "title": "Pendents",
+    "triggerLabel": "Pendents: {{count}}",
+    "empty": "Res pendent.",
+    "messages": "Missatges sense llegir",
+    "referrals": "Derivacions per revisar",
+    "walkIns": "Signatures noves",
+    "deletionRequests": "Peticions d'esborrat",
+    "mentoring": "Mentories sol·licitades",
+    "feedback": "Suggeriments nous",
+    "forumReports": "Denúncies per moderar"
   }
 }

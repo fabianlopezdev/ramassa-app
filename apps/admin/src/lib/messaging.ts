@@ -49,9 +49,14 @@ export function isCurrentWebConversationRequest(
   return requestId === latestRequestId && !signal.aborted;
 }
 
-export function useUnreadMessageCount() {
+/**
+ * Her unread messages, kept live by the message activity channel. `enabled`
+ * false skips the query and the channel, for a team member without the inbox
+ * (RAPP-635).
+ */
+export function useUnreadMessageCount(enabled = true) {
   const { user } = useAuth();
-  const userId = user?.id ?? null;
+  const userId = enabled ? (user?.id ?? null) : null;
   const [count, setCount] = useState(0);
   useEffect(() => {
     if (userId === null) {

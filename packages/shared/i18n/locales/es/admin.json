@@ -128,5 +128,17 @@
       "rateLimited": "Demasiados intentos. Espera unos minutos y vuelve a intentarlo.",
       "failed": "No se ha podido pedir el cambio. Vuelve a intentarlo."
     }
+  },
+  "todos": {
+    "title": "Pendientes",
+    "triggerLabel": "Pendientes: {{count}}",
+    "empty": "Nada pendiente.",
+    "messages": "Mensajes sin leer",
+    "referrals": "Derivaciones por revisar",
+    "walkIns": "Firmas nuevas",
+    "deletionRequests": "Solicitudes de borrado",
+    "mentoring": "Mentorías solicitadas",
+    "feedback": "Sugerencias nuevas",
+    "forumReports": "Denuncias por moderar"
   }
 }
