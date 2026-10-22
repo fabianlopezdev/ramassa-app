@@ -1,6 +1,7 @@
 /**
  * EAS Build's `eas-build-pre-install` hook (RAPP-616): a native production
- * build never carries the staging test sign-in flag.
+ * build never carries the staging test sign-in flag, and never builds the
+ * staging app variant (RAPP-620, `APP_VARIANT` read by app.config.ts).
  *
  * `bun run deploy:check-env` guards the web deploys only. A phone build reads
  * `EXPO_PUBLIC_TEST_SIGN_IN` from its EAS profile or environment and inlines
@@ -15,16 +16,27 @@
  * No imports: it runs before the dependencies are installed.
  */
 
-/** The build's environment: `EAS_BUILD_PROFILE` and `EXPO_PUBLIC_TEST_SIGN_IN` are read. */
+/** The build's environment: `EAS_BUILD_PROFILE`, `EXPO_PUBLIC_TEST_SIGN_IN` and `APP_VARIANT` are read. */
 export type EasBuildEnv = Readonly<Record<string, string | undefined>>;
 
-/** Throws when a production profile carries the flag with any value but off. */
+/**
+ * Throws when a production profile carries the flag with any value but off, or
+ * any app variant. Every other profile (development, preview, staging) may
+ * carry both.
+ */
 export function checkEasBuildEnv(env: EasBuildEnv): void {
   const profile = env['EAS_BUILD_PROFILE']?.trim() ?? '';
+  if (!profile.startsWith('production')) return;
   const flag = env['EXPO_PUBLIC_TEST_SIGN_IN']?.trim() ?? '';
-  if (profile.startsWith('production') && flag !== '' && flag !== 'false') {
+  if (flag !== '' && flag !== 'false') {
     throw new Error(
       `EXPO_PUBLIC_TEST_SIGN_IN must never be set for a production build (profile "${profile}")`,
+    );
+  }
+  const variant = env['APP_VARIANT']?.trim() ?? '';
+  if (variant !== '') {
+    throw new Error(
+      `APP_VARIANT must never be set for a production build (profile "${profile}", variant "${variant}")`,
     );
   }
 }
