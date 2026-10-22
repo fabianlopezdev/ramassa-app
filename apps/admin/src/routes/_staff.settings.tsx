@@ -3,6 +3,7 @@ import { useStepUp } from '@/components/auth/step-up';
 import { ORGANIZATION_BRANDING_CHANGED_EVENT } from '@/components/branding/organization-branding-provider';
 import { EntityManagementPanel } from '@/components/entity/entity-management-panel';
 import {
+  OnboardingAppTermsSection,
   OnboardingAuthorizationSection,
   OnboardingDocumentSection,
   OnboardingQuestionsSection,
@@ -25,7 +26,7 @@ import {
   setEntityActive,
   setEntityCollaboratorActive,
 } from '@ramassa/shared/entity-management';
-import { fetchDocumentStepExplanation } from '@ramassa/shared/intake';
+import { fetchAppTermsVersions, fetchDocumentStepExplanation } from '@ramassa/shared/intake';
 import { EMPTY_INTAKE_CATALOG, fetchIntakeCatalog } from '@ramassa/shared/intake-builder';
 import {
   fetchOrganizationSettings,
@@ -78,6 +79,7 @@ export const Route = createFileRoute('/_staff/settings')({
       documentExplanation,
       authorizationVersions,
       seasons,
+      appTermsVersions,
       intakeCatalog,
     ] = await Promise.all([
       permissions.has('team.manage') ? fetchStaffMembers(supabase) : Promise.resolve([]),
@@ -101,6 +103,9 @@ export const Route = createFileRoute('/_staff/settings')({
         : Promise.resolve([]),
       permissions.has('settings.organization') ? fetchSeasons(supabase) : Promise.resolve([]),
       permissions.has('settings.organization')
+        ? fetchAppTermsVersions(supabase)
+        : Promise.resolve([]),
+      permissions.has('settings.organization')
         ? fetchIntakeCatalog(supabase)
         : Promise.resolve(EMPTY_INTAKE_CATALOG),
     ]);
@@ -114,6 +119,7 @@ export const Route = createFileRoute('/_staff/settings')({
           ? requestedCollaborators
           : await fetchEntityCollaborators(supabase, selectedEntityId);
     return {
+      appTermsVersions,
       authorizationVersions,
       intakeCatalog,
       seasons,
@@ -267,10 +273,14 @@ function OrganizationSettingsScreen() {
       photoHandoff={<PhotoHandoffButton onDone={refresh} />}
       authorization={
         permissions.has('settings.organization') ? (
-          <OnboardingAuthorizationSection
-            seasons={data.seasons}
-            versions={data.authorizationVersions}
-          />
+          <>
+            {/* The app terms sit with the other legal text she accepts (RAPP-613). */}
+            <OnboardingAppTermsSection versions={data.appTermsVersions} canPublish />
+            <OnboardingAuthorizationSection
+              seasons={data.seasons}
+              versions={data.authorizationVersions}
+            />
+          </>
         ) : undefined
       }
       questions={

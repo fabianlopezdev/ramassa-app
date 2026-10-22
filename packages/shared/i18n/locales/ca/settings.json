@@ -470,5 +470,43 @@
   "onboardingPage": {
     "title": "Inscripció",
     "intro": "Tot el que veu una jugadora quan obre l'app per primera vegada. Els canvis arriben a l'app de seguida, sense cap versió nova."
+  },
+  "appTerms": {
+    "sectionTitle": "Termes de l'app",
+    "sectionIntro": "El text que totes les jugadores accepten abans d'entrar a l'app, amb la pantalla d'introducció. Una versió publicada ja no canvia; quan en publiqueu una de nova, cada jugadora l'accepta en obrir l'app.",
+    "versionsTitle": "Versions",
+    "versionRow": "Versió {{number}}, publicada el {{date}}: {{count}} acceptacions",
+    "draftRow": "Esborrany, desat el {{date}}",
+    "currentBadge": "Vigent",
+    "editorTitle": "Esborrany de la versió següent",
+    "editorIntro": "Escriu cada text en cada llengua. El català és obligatori; una llengua buida mostra el text en català.",
+    "language": "Llengua",
+    "field": {
+      "intro_title": "Títol de la pantalla d'introducció",
+      "intro": "Text de la pantalla d'introducció",
+      "title": "Títol dels termes",
+      "body": "Text dels termes",
+      "accept_label": "Text per acceptar els termes",
+      "media_label": "Text del permís de fotos i vídeos",
+      "media_hint": "Nota sobre el permís de fotos i vídeos"
+    },
+    "points": "Punts de la introducció",
+    "pointTitle": "Punt {{number}}: títol",
+    "pointBody": "Punt {{number}}: text",
+    "addPoint": "Afegeix un punt",
+    "removePoint": "Treu aquest punt",
+    "saveDraft": "Desa l'esborrany",
+    "discardDraft": "Descarta l'esborrany",
+    "publishAction": "Publica la versió",
+    "publishConfirm": "Un cop publicada, la versió no es pot canviar i cada jugadora l'haurà d'acceptar en obrir l'app.",
+    "publishConfirmAction": "Sí, publica la versió {{number}}",
+    "publishNeedsAdmin": "Només qui gestiona la configuració de l'organització pot publicar. Desa l'esborrany i avisa'ls.",
+    "invalid": "Cada text necessita la versió en català.",
+    "failed": "No s'ha pogut desar. Torna-ho a provar.",
+    "saved": "Esborrany desat.",
+    "discarded": "Esborrany descartat.",
+    "published": "Versió publicada. Cada jugadora l'acceptarà en obrir l'app.",
+    "previewTitle": "Com ho veurà al mòbil",
+    "previewFallback": "Aquesta llengua encara no té text: es mostra en {{language}}."
   }
 }

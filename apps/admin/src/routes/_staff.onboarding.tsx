@@ -1,7 +1,7 @@
 /**
  * Everything a player sees the first time she opens the app, on one page
- * (RAPP-615): the questions, the document step note, and the seasons with
- * their authorization.
+ * (RAPP-615): the questions, the document step note, the app terms (RAPP-613),
+ * and the seasons with their authorization.
  *
  * Settings shows the same sections in its tabs. This page exists so the
  * onboarding design role, which holds `onboarding.design` and nothing of
@@ -12,6 +12,7 @@
 
 import { RequireAuth } from '@/components/auth/require-auth';
 import {
+  OnboardingAppTermsSection,
   OnboardingAuthorizationSection,
   OnboardingDocumentSection,
   OnboardingQuestionsSection,
@@ -21,7 +22,7 @@ import { supabase } from '@/lib/supabase';
 import { createFileRoute } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { fetchAuthorizationVersions } from '@ramassa/shared/authorization';
-import { fetchDocumentStepExplanation } from '@ramassa/shared/intake';
+import { fetchAppTermsVersions, fetchDocumentStepExplanation } from '@ramassa/shared/intake';
 import { EMPTY_INTAKE_CATALOG, fetchIntakeCatalog } from '@ramassa/shared/intake-builder';
 import { canDesignOnboarding, fetchMyPermissions } from '@ramassa/shared/permissions';
 import { fetchSeasons } from '@ramassa/shared/seasons';
@@ -38,15 +39,26 @@ export const Route = createFileRoute('/_staff/onboarding')({
         documentExplanation: null,
         seasons: [],
         versions: [],
+        termsVersions: [],
+        canPublishTerms: false,
       };
     }
-    const [intakeCatalog, documentExplanation, seasons, versions] = await Promise.all([
-      fetchIntakeCatalog(supabase),
-      fetchDocumentStepExplanation(supabase),
-      fetchSeasons(supabase),
-      fetchAuthorizationVersions(supabase),
-    ]);
-    return { intakeCatalog, documentExplanation, seasons, versions };
+    const [intakeCatalog, documentExplanation, seasons, versions, termsVersions] =
+      await Promise.all([
+        fetchIntakeCatalog(supabase),
+        fetchDocumentStepExplanation(supabase),
+        fetchSeasons(supabase),
+        fetchAuthorizationVersions(supabase),
+        fetchAppTermsVersions(supabase),
+      ]);
+    return {
+      intakeCatalog,
+      documentExplanation,
+      seasons,
+      versions,
+      termsVersions,
+      canPublishTerms: permissions.has('settings.organization'),
+    };
   },
   component: OnboardingPage,
 });
@@ -80,6 +92,19 @@ function OnboardingDesignScreen() {
         </header>
         <OnboardingQuestionsSection catalog={data.intakeCatalog} />
         <OnboardingDocumentSection explanation={data.documentExplanation} />
+      </section>
+
+      <section className="space-y-6" aria-labelledby="onboarding-terms-heading">
+        <header className="max-w-3xl space-y-2">
+          <h2 id="onboarding-terms-heading" className="text-xl font-semibold text-foreground">
+            {t('appTerms.sectionTitle')}
+          </h2>
+          <p className="text-sm leading-6 text-muted-foreground">{t('appTerms.sectionIntro')}</p>
+        </header>
+        <OnboardingAppTermsSection
+          versions={data.termsVersions}
+          canPublish={data.canPublishTerms}
+        />
       </section>
 
       <section className="space-y-6" aria-labelledby="onboarding-authorization-heading">

@@ -1,6 +1,7 @@
 /**
  * The onboarding settings, wired to the database (RAPP-615): the question
- * builder, the document step note, and the seasons with their authorization.
+ * builder, the document step note, the app terms (RAPP-613), and the seasons
+ * with their authorization.
  *
  * Settings shows them in its tabs, and the onboarding page shows them on their
  * own, so the onboarding design role reaches them without the rest of
@@ -10,6 +11,7 @@
  */
 
 import { useStepUp } from '@/components/auth/step-up';
+import { AppTermsEditor } from '@/components/settings/app-terms-editor';
 import { AuthorizationEditor } from '@/components/settings/authorization-editor';
 import { DocumentExplanationForm } from '@/components/settings/document-explanation-form';
 import { QuestionBuilder } from '@/components/settings/question-builder';
@@ -22,7 +24,14 @@ import {
   publishAuthorizationVersion,
   type AuthorizationVersion,
 } from '@ramassa/shared/authorization';
-import { saveDocumentStepExplanation, WIZARD_QUESTIONS } from '@ramassa/shared/intake';
+import {
+  discardAppTermsDraft,
+  publishAppTermsDraft,
+  saveAppTermsDraft,
+  saveDocumentStepExplanation,
+  WIZARD_QUESTIONS,
+  type AppTermsVersion,
+} from '@ramassa/shared/intake';
 import {
   archiveCustomQuestion,
   archiveIntakeScreen,
@@ -132,5 +141,39 @@ export function OnboardingAuthorizationSection({
         }}
       />
     </>
+  );
+}
+
+/**
+ * The app terms (RAPP-613). Onboarding designers write the draft; only
+ * settings.organization publishes, because a publish asks every player again.
+ */
+export function OnboardingAppTermsSection({
+  versions,
+  canPublish,
+}: {
+  readonly versions: readonly AppTermsVersion[];
+  readonly canPublish: boolean;
+}) {
+  const reload = useReload();
+  const withStepUp = useStepUp();
+  return (
+    <AppTermsEditor
+      versions={versions}
+      canPublish={canPublish}
+      onSaveDraft={async (content) => {
+        await saveAppTermsDraft(supabase, content);
+        await reload();
+      }}
+      onDiscardDraft={async () => {
+        await discardAppTermsDraft(supabase);
+        await reload();
+      }}
+      onPublish={async () => {
+        const number = await withStepUp(() => publishAppTermsDraft(supabase));
+        await reload();
+        return number;
+      }}
+    />
   );
 }

@@ -470,5 +470,43 @@
   "onboardingPage": {
     "title": "Registration",
     "intro": "Everything a player sees when she opens the app for the first time. Changes reach the app at once, with no new version."
+  },
+  "appTerms": {
+    "sectionTitle": "App terms",
+    "sectionIntro": "The text every player accepts before entering the app, with the introduction screen before it. A published version never changes; when you publish a new one, every player accepts it when she opens the app.",
+    "versionsTitle": "Versions",
+    "versionRow": "Version {{number}}, published {{date}}: {{count}} acceptances",
+    "draftRow": "Draft, saved {{date}}",
+    "currentBadge": "Current",
+    "editorTitle": "Draft of the next version",
+    "editorIntro": "Write each text in each language. Catalan is required; an empty language shows the Catalan text.",
+    "language": "Language",
+    "field": {
+      "intro_title": "Introduction screen title",
+      "intro": "Introduction screen text",
+      "title": "Terms title",
+      "body": "Terms text",
+      "accept_label": "Text to accept the terms",
+      "media_label": "Photo and video permission text",
+      "media_hint": "Note about the photo and video permission"
+    },
+    "points": "Introduction points",
+    "pointTitle": "Point {{number}}: title",
+    "pointBody": "Point {{number}}: text",
+    "addPoint": "Add a point",
+    "removePoint": "Remove this point",
+    "saveDraft": "Save the draft",
+    "discardDraft": "Discard the draft",
+    "publishAction": "Publish the version",
+    "publishConfirm": "Once published, the version cannot change and every player will have to accept it when she opens the app.",
+    "publishConfirmAction": "Yes, publish version {{number}}",
+    "publishNeedsAdmin": "Only people who manage the organization settings can publish. Save the draft and tell them.",
+    "invalid": "Every text needs its Catalan version.",
+    "failed": "Could not save. Try again.",
+    "saved": "Draft saved.",
+    "discarded": "Draft discarded.",
+    "published": "Version published. Every player will accept it when she opens the app.",
+    "previewTitle": "How she will see it on her phone",
+    "previewFallback": "This language has no text yet: it shows in {{language}}."
   }
 }
