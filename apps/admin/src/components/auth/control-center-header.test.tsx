@@ -7,14 +7,14 @@ import { expect, test } from 'bun:test';
 import { ControlCenterHeader } from './control-center-header';
 
 test('shows the title as the page heading', () => {
-  const view = render(<ControlCenterHeader title="Centre de Control del Ramassà" />);
-  expect(view.getByRole('heading', { level: 1 }).textContent).toBe('Centre de Control del Ramassà');
+  const view = render(<ControlCenterHeader title="Centre de Control" />);
+  expect(view.getByRole('heading', { level: 1 }).textContent).toBe('Centre de Control');
 });
 
 test('the logo comes from the public branding link and appears once it loads', () => {
   const view = render(
     <ControlCenterHeader
-      title="Ramassà Control Center"
+      title="Control Center"
       logoUrl="https://media.example.test/branding/ramassa/logo"
     />,
   );
@@ -27,13 +27,13 @@ test('the logo comes from the public branding link and appears once it loads', (
 
 test('a logo that fails to load leaves no broken image', () => {
   const view = render(
-    <ControlCenterHeader title="Ramassà Control Center" logoUrl="https://media.example.test/x" />,
+    <ControlCenterHeader title="Control Center" logoUrl="https://media.example.test/x" />,
   );
   fireEvent.error(view.getByTestId('control-center-logo'));
   expect(view.queryByTestId('control-center-logo')).toBeNull();
 });
 
 test('without a media link there is no image at all', () => {
-  const view = render(<ControlCenterHeader title="Ramassà Control Center" logoUrl={null} />);
+  const view = render(<ControlCenterHeader title="Control Center" logoUrl={null} />);
   expect(view.queryByTestId('control-center-logo')).toBeNull();
 });
