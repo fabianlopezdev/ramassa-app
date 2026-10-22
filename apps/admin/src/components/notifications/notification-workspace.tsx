@@ -264,7 +264,7 @@ export function NotificationWorkspace({
   );
 
   return (
-    <main className="mx-auto w-full max-w-6xl space-y-10 px-4 py-8 sm:px-6">
+    <div className="mx-auto w-full max-w-6xl space-y-10 px-4 py-8 sm:px-6">
       <header className="space-y-2">
         <h1 className="text-3xl font-bold text-neutral-950">{t('title')}</h1>
         <p className="text-neutral-600">{t('intro')}</p>
@@ -569,6 +569,6 @@ export function NotificationWorkspace({
           ))}
         </ol>
       </section>
-    </main>
+    </div>
   );
 }

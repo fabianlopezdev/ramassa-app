@@ -115,7 +115,7 @@ export function StaffMentoringQueue({
   };
 
   return (
-    <main className="mx-auto w-full max-w-7xl space-y-8 p-4 sm:p-6 lg:p-8">
+    <div className="mx-auto w-full max-w-7xl space-y-8 p-4 sm:p-6 lg:p-8">
       <header className="space-y-2">
         <h1 className="text-3xl font-semibold tracking-tight">{t('adminTitle')}</h1>
         <p className="max-w-3xl text-muted-foreground">{t('adminIntro')}</p>
@@ -286,7 +286,7 @@ export function StaffMentoringQueue({
           })}
         </ol>
       )}
-    </main>
+    </div>
   );
 }
 

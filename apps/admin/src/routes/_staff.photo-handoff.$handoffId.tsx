@@ -66,7 +66,7 @@ function PhotoHandoffPage() {
   }
 
   return (
-    <main className="mx-auto grid max-w-md gap-4 p-6" data-testid="photo-handoff-page">
+    <div className="mx-auto grid max-w-md gap-4 p-6" data-testid="photo-handoff-page">
       <h1 className="text-2xl font-bold">{t('handoff.pageTitle')}</h1>
       {state === 'missing' ? <p role="alert">{t('handoff.notFound')}</p> : null}
       {state === 'expired' ? <p role="alert">{t('handoff.pageExpired')}</p> : null}
@@ -97,6 +97,6 @@ function PhotoHandoffPage() {
           {status === 'failed' ? <p role="alert">{t('handoff.sendFailed')}</p> : null}
         </>
       ) : null}
-    </main>
+    </div>
   );
 }
