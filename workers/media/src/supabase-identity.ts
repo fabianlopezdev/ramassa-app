@@ -38,6 +38,13 @@ export interface CallerIdentity {
    * a recent one (RAPP-235), the same rule the database applies.
    */
   readonly secondFactorVerifiedAt: number | null;
+  /**
+   * A woman who signed up on her own and has no profile until her wizard ends
+   * (RAPP-610). Only the upload mint accepts such a caller, and only for her
+   * own `intake-answers` folder; `orgId` is the organization her registration
+   * uses, from `my_intake_upload_org()`.
+   */
+  readonly withoutProfile?: true;
 }
 
 /**
@@ -117,13 +124,15 @@ const profileRowSchema = z.object({
  * forwarded, so the row comes back only if RLS lets that user read it; a
  * deactivated or deleted participant gets nothing and is denied.
  */
-async function fetchCallerProfile(options: {
+export async function fetchCallerProfile(options: {
   readonly userId: string;
   readonly secondFactorVerifiedAt: number | null;
   readonly token: string;
   readonly supabaseUrl: string;
   readonly supabasePublishableKey: string;
   readonly fetchImplementation?: typeof fetch;
+  /** The upload mint only: a caller with no profile at all may still be identified. */
+  readonly allowWithoutProfile?: boolean;
 }): Promise<CallerIdentity> {
   const performFetch = options.fetchImplementation ?? fetch;
   const profileUrl = new URL(`${options.supabaseUrl}/rest/v1/profiles`);
@@ -155,6 +164,19 @@ async function fetchCallerProfile(options: {
 
   const profile = rows.data[0];
   if (profile === undefined) {
+    if (options.allowWithoutProfile === true) {
+      const orgId = await fetchUploadOrgWithoutProfile({ ...options, performFetch });
+      if (orgId !== null) {
+        return {
+          userId: options.userId,
+          orgId,
+          role: 'invited',
+          permissions: new Set(),
+          secondFactorVerifiedAt: options.secondFactorVerifiedAt,
+          withoutProfile: true,
+        };
+      }
+    }
     // RLS returned nothing: deactivated, deleted, or never provisioned.
     throw new AppError('AUTH-2', { message: 'No readable profile for this identity' });
   }
@@ -170,6 +192,36 @@ async function fetchCallerProfile(options: {
     permissions,
     secondFactorVerifiedAt: options.secondFactorVerifiedAt,
   };
+}
+
+/**
+ * The organization a caller with no profile at all registers in, or null for
+ * anyone with a profile in any state (a deactivated player included). The
+ * database decides, from the caller's own token (RAPP-610).
+ */
+async function fetchUploadOrgWithoutProfile(options: {
+  readonly token: string;
+  readonly supabaseUrl: string;
+  readonly supabasePublishableKey: string;
+  readonly performFetch: typeof fetch;
+}): Promise<string | null> {
+  const { performFetch } = options;
+  const response = await performFetch(`${options.supabaseUrl}/rest/v1/rpc/my_intake_upload_org`, {
+    method: 'POST',
+    headers: {
+      apikey: options.supabasePublishableKey,
+      Authorization: `Bearer ${options.token}`,
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: '{}',
+  });
+  if (!response.ok) return null;
+  const orgId = z
+    .guid()
+    .nullable()
+    .safeParse(await response.json());
+  return orgId.success ? orgId.data : null;
 }
 
 async function fetchCallerPermissions(options: {
@@ -212,6 +264,8 @@ export async function resolveCallerIdentity(options: {
   readonly supabaseUrl: string;
   readonly supabasePublishableKey: string;
   readonly fetchImplementation?: typeof fetch;
+  /** The upload mint only (RAPP-610): see `CallerIdentity.withoutProfile`. */
+  readonly allowWithoutProfile?: boolean;
 }): Promise<CallerIdentity> {
   const token = readBearerToken(options.request);
   const verified = await verifyAccessToken({ token, supabaseUrl: options.supabaseUrl });
@@ -222,5 +276,6 @@ export async function resolveCallerIdentity(options: {
     supabaseUrl: options.supabaseUrl,
     supabasePublishableKey: options.supabasePublishableKey,
     fetchImplementation: options.fetchImplementation,
+    allowWithoutProfile: options.allowWithoutProfile,
   });
 }

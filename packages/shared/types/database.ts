@@ -6282,6 +6282,7 @@ export type Database = {
           invited_at: string;
         }[];
       };
+      my_intake_upload_org: { Args: never; Returns: string };
       my_pending_invite: {
         Args: never;
         Returns: {

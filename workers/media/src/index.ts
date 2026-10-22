@@ -136,6 +136,8 @@ const handler: ExportedHandler<Env> = {
             request: incoming,
             supabaseUrl: config.supabaseUrl,
             supabasePublishableKey: config.supabasePublishableKey,
+            // A woman with no profile yet uploads her own answer files (RAPP-610).
+            allowWithoutProfile: true,
           }),
         rateLimiter: env.UPLOAD_RATE_LIMITER,
         createUploadTarget: (target) => createUploadTarget(config, url.origin, target, new Date()),
