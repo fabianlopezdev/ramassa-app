@@ -1,8 +1,9 @@
 /**
- * The user button at the right of the top bar (RAPP-632): her photo, or her
- * initials when she has none. It opens a menu with her name and email, her
- * profile photo (RAPP-633, in its own dialog) and Sign out, for every team member, the design
- * role included (RAPP-615), and for entity contacts. Signing out clears the
+ * The user button at the end of the top bar (RAPP-632): her photo, or her
+ * initials when she has none. It opens a menu with her name and email, then
+ * her account page (RAPP-634) for every team member, the design role included
+ * (RAPP-615), and Sign out. The entity portal has no account page, so there the
+ * menu keeps the profile photo dialog (RAPP-633). Signing out clears the
  * session; the guard then sends her to /login.
  */
 import { AccountAvatar } from '@/components/nav/account-avatar';
@@ -20,7 +21,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { accountDisplayName, useOwnAccount } from '@/lib/own-account';
 import { cn } from '@/lib/utils';
-import { Camera, ChevronDown, LogOut } from 'lucide-react';
+import { Link } from '@tanstack/react-router';
+import { Camera, ChevronDown, LogOut, UserRound } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -28,9 +30,11 @@ export interface UserMenuProps {
   /** The layout passes the app's `logout`. */
   readonly onSignOut: () => Promise<unknown>;
   readonly tone?: TopBarTone;
+  /** The team's account page; without it the menu offers the photo dialog. */
+  readonly accountPage?: '/account';
 }
 
-export function UserMenu({ onSignOut, tone = 'light' }: UserMenuProps) {
+export function UserMenu({ onSignOut, tone = 'light', accountPage }: UserMenuProps) {
   const { t } = useTranslation(['admin', 'auth']);
   const { account, reload } = useOwnAccount();
   const [photoOpen, setPhotoOpen] = useState(false);
@@ -70,13 +74,22 @@ export function UserMenu({ onSignOut, tone = 'light' }: UserMenuProps) {
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
-            <DropdownMenuItem
-              data-testid="user-menu-profile-photo"
-              onSelect={() => setPhotoOpen(true)}
-            >
-              <Camera aria-hidden="true" />
-              {t('admin:userMenu.profilePhoto')}
-            </DropdownMenuItem>
+            {accountPage === undefined ? (
+              <DropdownMenuItem
+                data-testid="user-menu-profile-photo"
+                onSelect={() => setPhotoOpen(true)}
+              >
+                <Camera aria-hidden="true" />
+                {t('admin:userMenu.profilePhoto')}
+              </DropdownMenuItem>
+            ) : (
+              <DropdownMenuItem asChild data-testid="user-menu-account">
+                <Link to={accountPage}>
+                  <UserRound aria-hidden="true" />
+                  {t('admin:userMenu.account')}
+                </Link>
+              </DropdownMenuItem>
+            )}
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
@@ -87,12 +100,14 @@ export function UserMenu({ onSignOut, tone = 'light' }: UserMenuProps) {
           </DropdownMenuGroup>
         </DropdownMenuContent>
       </DropdownMenu>
-      <ProfilePhotoDialog
-        open={photoOpen}
-        onOpenChange={setPhotoOpen}
-        account={account}
-        onChanged={reload}
-      />
+      {accountPage === undefined ? (
+        <ProfilePhotoDialog
+          open={photoOpen}
+          onOpenChange={setPhotoOpen}
+          account={account}
+          onChanged={reload}
+        />
+      ) : null}
     </>
   );
 }

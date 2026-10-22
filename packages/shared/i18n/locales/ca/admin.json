@@ -88,7 +88,8 @@
   "entityPortalSubtitle": "Portal d'entitats",
   "userMenu": {
     "label": "Menú del compte de {{name}}",
-    "profilePhoto": "Foto de perfil"
+    "profilePhoto": "Foto de perfil",
+    "account": "El meu compte"
   },
   "profilePhoto": {
     "description": "La teva foto substitueix les inicials al Centre de Control.",
@@ -100,5 +101,32 @@
     "removed": "Foto treta.",
     "failed": "No s'ha pogut desar la foto. Torna-ho a provar.",
     "wrongType": "Tria una imatge JPG, PNG o WebP."
+  },
+  "account": {
+    "title": "El meu compte",
+    "save": "Desa",
+    "saving": "S'està desant…",
+    "name": {
+      "title": "Nom i cognoms",
+      "firstName": "Nom",
+      "lastName": "Cognoms",
+      "saved": "Nom desat.",
+      "failed": "No s'ha pogut desar el nom. Torna-ho a provar.",
+      "required": "Escriu el nom i els cognoms."
+    },
+    "email": {
+      "title": "Correu electrònic",
+      "current": "Correu actual",
+      "new": "Correu nou",
+      "submit": "Canvia el correu",
+      "sending": "S'està enviant…",
+      "pendingTitle": "Pendent de confirmar",
+      "pendingBody": "Obre l'enllaç que hem enviat a {{email}}. Si també te n'arriba un a {{current}}, obre'ls tots dos. Fins aleshores entres amb {{current}}.",
+      "invalid": "Escriu un correu vàlid.",
+      "same": "Ja és el teu correu.",
+      "taken": "Aquest correu ja té un compte.",
+      "rateLimited": "Massa intents. Espera uns minuts i torna-ho a provar.",
+      "failed": "No s'ha pogut demanar el canvi. Torna-ho a provar."
+    }
   }
 }

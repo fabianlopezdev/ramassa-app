@@ -1,7 +1,6 @@
 import { RouteFocusManager } from '@/components/accessibility/route-focus-manager';
 import { RequireAuth } from '@/components/auth/require-auth';
 import { FundingFooter } from '@/components/nav/funding-footer';
-import { LanguageMenu } from '@/components/nav/language-menu';
 import { StaffSidebar } from '@/components/nav/staff-sidebar';
 import { UserMenu } from '@/components/nav/user-menu';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
@@ -40,13 +39,14 @@ function StaffLayout() {
           {/* SidebarInset renders the page's single `main` landmark, so child
             routes render sections rather than nesting another `main`. */}
           <SidebarInset id="main-content" tabIndex={-1} className="bg-canvas">
-            {/* The top bar (RAPP-632): the sidebar toggle at the start, the
-              language and her user menu at the end. */}
+            {/* The top bar (RAPP-632): the sidebar toggle at the start, her
+              user menu at the end. The language moved to her account page
+              (RAPP-634). The actions row keeps the slot before the user
+              button for the notifications button. */}
             <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b border-border bg-background/90 px-4 shadow-xs backdrop-blur">
               <SidebarTrigger />
-              <div className="ms-auto flex items-center gap-1">
-                <LanguageMenu />
-                <UserMenu onSignOut={logout} />
+              <div className="ms-auto flex items-center gap-2" data-testid="top-bar-actions">
+                <UserMenu onSignOut={logout} accountPage="/account" />
               </div>
             </header>
             <Outlet />

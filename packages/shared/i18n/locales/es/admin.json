@@ -88,7 +88,8 @@
   "entityPortalSubtitle": "Portal de entidades",
   "userMenu": {
     "label": "Menú de la cuenta de {{name}}",
-    "profilePhoto": "Foto de perfil"
+    "profilePhoto": "Foto de perfil",
+    "account": "Mi cuenta"
   },
   "profilePhoto": {
     "description": "Tu foto sustituye a las iniciales en el Centro de Control.",
@@ -100,5 +101,32 @@
     "removed": "Foto quitada.",
     "failed": "No se ha podido guardar la foto. Vuelve a intentarlo.",
     "wrongType": "Elige una imagen JPG, PNG o WebP."
+  },
+  "account": {
+    "title": "Mi cuenta",
+    "save": "Guardar",
+    "saving": "Guardando…",
+    "name": {
+      "title": "Nombre y apellidos",
+      "firstName": "Nombre",
+      "lastName": "Apellidos",
+      "saved": "Nombre guardado.",
+      "failed": "No se ha podido guardar el nombre. Vuelve a intentarlo.",
+      "required": "Escribe el nombre y los apellidos."
+    },
+    "email": {
+      "title": "Correo electrónico",
+      "current": "Correo actual",
+      "new": "Correo nuevo",
+      "submit": "Cambiar el correo",
+      "sending": "Enviando…",
+      "pendingTitle": "Pendiente de confirmar",
+      "pendingBody": "Abre el enlace que hemos enviado a {{email}}. Si también te llega uno a {{current}}, abre los dos. Hasta entonces entras con {{current}}.",
+      "invalid": "Escribe un correo válido.",
+      "same": "Ya es tu correo.",
+      "taken": "Este correo ya tiene una cuenta.",
+      "rateLimited": "Demasiados intentos. Espera unos minutos y vuelve a intentarlo.",
+      "failed": "No se ha podido pedir el cambio. Vuelve a intentarlo."
+    }
   }
 }

@@ -1,8 +1,8 @@
 /**
  * The login's language choice (RAPP-626): Catalan, Spanish and English side by
  * side, one tap to switch. A radio group, so arrow keys move along the row
- * (https://www.w3.org/WAI/ARIA/apg/patterns/radio/). Inside the app the top
- * bar has the compact LanguageMenu (RAPP-632).
+ * (https://www.w3.org/WAI/ARIA/apg/patterns/radio/). Inside the app her
+ * account page has the same choice as radio cards (RAPP-634).
  */
 import { useRef, type KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';

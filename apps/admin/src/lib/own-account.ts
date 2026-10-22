@@ -1,9 +1,15 @@
 /**
  * The signed-in team member's or entity contact's own account, for the top
- * bar's user menu (RAPP-632): her name, email and profile photo. The name and
- * photo are Basic columns of her own profile row, which the row policy lets
- * her read and update (`profiles_update_self_no_escalation`); the photo is an
- * object key in the media worker's `profile-photos` folder (RAPP-633).
+ * bar's user menu (RAPP-632) and her account page (RAPP-634): her name, email
+ * and profile photo. The name and photo are Basic columns of her own profile
+ * row, which the row policy lets her read and update
+ * (`profiles_update_self_no_escalation`); the profile guard refuses a blank
+ * name. The photo is an object key in the media worker's `profile-photos`
+ * folder (RAPP-633). The email lives only in Supabase Auth: no table keeps a
+ * copy, so a change there needs no sync.
+ *
+ * Every `useOwnAccount` reads the row again when any of them saves, so the top
+ * bar follows the account page at once.
  */
 import { supabase } from '@/lib/supabase';
 import { useCallback, useEffect, useState } from 'react';
@@ -50,9 +56,84 @@ export async function setOwnAvatar(userId: string, avatarUrl: string | null): Pr
   if (error) throw new AppError('DB-1', { message: error.message });
 }
 
+/** The longest name the profile accepts (the onboarding's limit). */
+export const OWN_NAME_MAX_LENGTH = 100;
+
+/** Sets her own first and last name (RAPP-634), trimmed. Neither may be blank. */
+export async function setOwnName(
+  userId: string,
+  firstName: string,
+  lastName: string,
+): Promise<void> {
+  const { error } = await supabase
+    .from('profiles')
+    .update({ first_name: firstName.trim(), last_name: lastName.trim() })
+    .eq('id', userId);
+  if (error) throw new AppError('DB-1', { message: error.message });
+}
+
+export type EmailChangeOutcome = 'sent' | 'taken' | 'invalid' | 'rate-limited' | 'failed';
+
+/** Supabase Auth error codes (https://supabase.com/docs/guides/auth/debugging/error-codes). */
+function emailChangeOutcomeFor(code: string | undefined): EmailChangeOutcome {
+  if (code === 'email_exists' || code === 'user_already_exists') return 'taken';
+  if (code === 'email_address_invalid' || code === 'validation_failed') return 'invalid';
+  if (code === 'over_email_send_rate_limit' || code === 'over_request_rate_limit') {
+    return 'rate-limited';
+  }
+  return 'failed';
+}
+
+/**
+ * Asks Supabase Auth to move her sign-in to a new email (RAPP-634). Nothing
+ * changes until she confirms from the email Supabase sends; with secure email
+ * change on, both the old and the new address get a link and both must be
+ * opened. The link brings her back to the account page.
+ */
+export async function requestOwnEmailChange(email: string): Promise<EmailChangeOutcome> {
+  const redirectTo =
+    typeof window === 'undefined' ? undefined : `${window.location.origin}/account`;
+  const { error } = await supabase.auth.updateUser(
+    { email: email.trim() },
+    redirectTo === undefined ? undefined : { emailRedirectTo: redirectTo },
+  );
+  return error === null ? 'sent' : emailChangeOutcomeFor(error.code);
+}
+
+export interface OwnEmailState {
+  /** Her current sign-in email, read from the server. */
+  readonly email: string;
+  /** The address waiting for her confirmation, or null. */
+  readonly pendingEmail: string | null;
+}
+
+/**
+ * Her email as the server has it now, with any change still waiting for
+ * confirmation. When the change went through since the session was issued,
+ * the session is refreshed so the top bar shows the new address.
+ */
+export async function fetchOwnEmailState(sessionEmail: string): Promise<OwnEmailState> {
+  const { data, error } = await supabase.auth.getUser();
+  if (error) throw new AppError('AUTH-2', { message: error.message });
+  const email = data.user.email ?? sessionEmail;
+  if (email !== sessionEmail) await supabase.auth.refreshSession();
+  const pending = data.user.new_email;
+  return {
+    email,
+    pendingEmail: typeof pending === 'string' && pending.length > 0 ? pending : null,
+  };
+}
+
+const OWN_ACCOUNT_CHANGED = 'ramassa:own-account-changed';
+
+/** Tells every mounted `useOwnAccount` to read her row again. */
+export function announceOwnAccountChanged(): void {
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event(OWN_ACCOUNT_CHANGED));
+}
+
 export interface OwnAccountState {
   readonly account: OwnAccount | null;
-  /** Reads the row again, after a photo change. */
+  /** Reads the row again in every place that shows it, after a change. */
   readonly reload: () => void;
 }
 
@@ -82,7 +163,13 @@ export function useOwnAccount(): OwnAccountState {
     };
   }, [userId, version]);
 
-  const reload = useCallback(() => setVersion((current) => current + 1), []);
+  useEffect(() => {
+    const onChanged = () => setVersion((current) => current + 1);
+    window.addEventListener(OWN_ACCOUNT_CHANGED, onChanged);
+    return () => window.removeEventListener(OWN_ACCOUNT_CHANGED, onChanged);
+  }, []);
+
+  const reload = useCallback(() => announceOwnAccountChanged(), []);
 
   const account: OwnAccount | null =
     userId === null

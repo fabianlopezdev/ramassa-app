@@ -2,7 +2,8 @@
  * Where the onboarding design role may go in the admin (RAPP-615).
  *
  * A person whose only access is `onboarding.design` and `test_players.manage`
- * reaches the onboarding page and the test players, and every other admin URL
+ * reaches the onboarding page, the test players and her own account page
+ * (RAPP-634), and every other admin URL
  * sends her back. This is the screen half: the database refuses her every
  * other read and write on its own (`private.limited_to_test_players`).
  *
@@ -22,6 +23,11 @@ function isTestPlayerPath(pathname: string): boolean {
   return child === undefined || child === 'new' || UUID_SEGMENT.test(child);
 }
 
+/** Her own account page (RAPP-634): every team member reaches it. */
+function isOwnAccountPath(pathname: string): boolean {
+  return pathname === '/account' || pathname === '/account/';
+}
+
 function isOnboardingPath(pathname: string): boolean {
   return pathname === '/onboarding' || pathname.startsWith('/onboarding/');
 }
@@ -36,6 +42,7 @@ export function designRoleRedirect(
   permissions: ReadonlySet<PermissionCode>,
 ): DesignRoleLanding | null {
   if (!isLimitedToTestPlayers(permissions)) return null;
+  if (isOwnAccountPath(pathname)) return null;
   if (permissions.has('onboarding.design') && isOnboardingPath(pathname)) return null;
   if (permissions.has('test_players.manage') && isTestPlayerPath(pathname)) return null;
   return designRoleLanding(permissions);

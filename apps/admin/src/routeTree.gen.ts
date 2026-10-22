@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as EntityRouteImport } from './routes/_entity'
 import { Route as StaffRouteImport } from './routes/_staff'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as StaffAccountRouteImport } from './routes/_staff.account'
 import { Route as StaffAttendanceRouteImport } from './routes/_staff.attendance'
 import { Route as StaffContentRouteImport } from './routes/_staff.content'
 import { Route as StaffDashboardRouteImport } from './routes/_staff.dashboard'
@@ -85,6 +86,11 @@ const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
   getParentRoute: () => rootRouteImport,
+} as any)
+const StaffAccountRoute = StaffAccountRouteImport.update({
+  id: '/account',
+  path: '/account',
+  getParentRoute: () => StaffRoute,
 } as any)
 const StaffAttendanceRoute = StaffAttendanceRouteImport.update({
   id: '/attendance',
@@ -386,6 +392,7 @@ const StaffContentServicesReviewsServiceIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/account': typeof StaffAccountRoute
   '/attendance': typeof StaffAttendanceRouteWithChildren
   '/content': typeof StaffContentRouteWithChildren
   '/dashboard': typeof StaffDashboardRoute
@@ -444,6 +451,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/account': typeof StaffAccountRoute
   '/dashboard': typeof StaffDashboardRoute
   '/data': typeof StaffDataRoute
   '/feedback': typeof StaffFeedbackRoute
@@ -500,6 +508,7 @@ export interface FileRoutesById {
   '/_entity': typeof EntityRouteWithChildren
   '/_staff': typeof StaffRouteWithChildren
   '/login': typeof LoginRoute
+  '/_staff/account': typeof StaffAccountRoute
   '/_staff/attendance': typeof StaffAttendanceRouteWithChildren
   '/_staff/content': typeof StaffContentRouteWithChildren
   '/_staff/dashboard': typeof StaffDashboardRoute
@@ -560,6 +569,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/login'
+    | '/account'
     | '/attendance'
     | '/content'
     | '/dashboard'
@@ -618,6 +628,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/login'
+    | '/account'
     | '/dashboard'
     | '/data'
     | '/feedback'
@@ -673,6 +684,7 @@ export interface FileRouteTypes {
     | '/_entity'
     | '/_staff'
     | '/login'
+    | '/_staff/account'
     | '/_staff/attendance'
     | '/_staff/content'
     | '/_staff/dashboard'
@@ -765,6 +777,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_staff/account': {
+      id: '/_staff/account'
+      path: '/account'
+      fullPath: '/account'
+      preLoaderRoute: typeof StaffAccountRouteImport
+      parentRoute: typeof StaffRoute
     }
     '/_staff/attendance': {
       id: '/_staff/attendance'
@@ -1273,6 +1292,7 @@ const StaffMessagesRouteWithChildren = StaffMessagesRoute._addFileChildren(
 )
 
 interface StaffRouteChildren {
+  StaffAccountRoute: typeof StaffAccountRoute
   StaffAttendanceRoute: typeof StaffAttendanceRouteWithChildren
   StaffContentRoute: typeof StaffContentRouteWithChildren
   StaffDashboardRoute: typeof StaffDashboardRoute
@@ -1298,6 +1318,7 @@ interface StaffRouteChildren {
 }
 
 const StaffRouteChildren: StaffRouteChildren = {
+  StaffAccountRoute: StaffAccountRoute,
   StaffAttendanceRoute: StaffAttendanceRouteWithChildren,
   StaffContentRoute: StaffContentRouteWithChildren,
   StaffDashboardRoute: StaffDashboardRoute,
@@ -1336,10 +1357,13 @@ export const routeTree = rootRouteImport
   ._addFileTypes<FileRouteTypes>()
 
 import type { getRouter } from './router.tsx'
+
 import type { createStart } from '@tanstack/react-start'
+
 declare module '@tanstack/react-start' {
   interface Register {
     ssr: true
+
     router: Awaited<ReturnType<typeof getRouter>>
   }
 }
