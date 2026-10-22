@@ -75,6 +75,8 @@ export const TEST_PLAYER_NAME = { firstName: 'Joana', lastName: 'Prova' } as con
 
 /** The terms version every seeded acceptance carries. Mirrors `supabase/seed.sql`. */
 export const SEED_TERMS_VERSION = '2026-07-01';
+/** App terms version 1 in factories (RAPP-613); the database makes its own per organization. */
+export const SEED_APP_TERMS_VERSION_ID = '5eed0000-0000-4000-8099-000000000001';
 
 /**
  * Seed user IDs are derived from an ordinal rather than listed, so the SQL and

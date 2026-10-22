@@ -297,3 +297,32 @@ describe('building', () => {
     expect(moved(['a', 'b', 'c'], 'c', 1)).toEqual(['a', 'b', 'c']);
   });
 });
+
+describe('the catalog carries the app terms (RAPP-613)', () => {
+  test('no terms in the catalog means the bundled text', () => {
+    expect(catalog.terms).toBeNull();
+  });
+
+  test('the current version is read with its number', () => {
+    const text = (value: string) => ({ ca: value });
+    const withTerms = parseIntakeCatalog({
+      ...raw,
+      terms: {
+        id: '5eed0000-0000-4000-8099-000000000002',
+        version_number: 2,
+        content: {
+          title: text('Termes'),
+          body: text('Text.'),
+          intro_title: text('Abans'),
+          intro: text('Llegeix.'),
+          points: [{ title: text('Per què'), body: text('Per organitzar.') }],
+          accept_label: text('Accepto'),
+          media_label: text('Fotos'),
+          media_hint: text('Canvia-ho quan vulguis.'),
+        },
+      },
+    });
+    expect(withTerms.terms?.versionNumber).toBe(2);
+    expect(withTerms.terms?.content.body.ca).toBe('Text.');
+  });
+});

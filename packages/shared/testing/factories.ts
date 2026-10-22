@@ -32,6 +32,7 @@ import {
   ONBOARDING_DESIGNER_ID,
   ONBOARDING_DESIGNER_NAME,
   PARTICIPANT_FIXTURES,
+  SEED_APP_TERMS_VERSION_ID,
   SEED_ORGANIZATION_ID,
   SEED_ORGANIZATION_SLUG,
   SEED_TERMS_VERSION,
@@ -77,6 +78,7 @@ export type InviteRow = Database['public']['Tables']['invites']['Row'];
 export type ProfileAnswerRow = Database['public']['Tables']['profile_answers']['Row'];
 export type SeasonRow = Database['public']['Tables']['seasons']['Row'];
 export type AuthorizationVersionRow = Database['public']['Tables']['authorization_versions']['Row'];
+export type AppTermsVersionRow = Database['public']['Tables']['app_terms_versions']['Row'];
 export type AuthorizationSignatureRow =
   Database['public']['Tables']['authorization_signatures']['Row'];
 export type AuthorizationConsentEventRow =
@@ -1088,6 +1090,8 @@ export function buildTermsAcceptance(
     accepted_at: FIXTURE_TIMESTAMP,
     // Made by the test player scenario switches only (RAPP-619).
     is_test_fixture: false,
+    // The version she accepted (RAPP-613): version 1 for every seeded acceptance.
+    version_id: SEED_APP_TERMS_VERSION_ID,
     ...overrides,
   };
 }
@@ -1354,6 +1358,37 @@ export function buildAuthorizationVersion(
     },
     published_at: FIXTURE_TIMESTAMP,
     published_by: null,
+    ...overrides,
+  };
+}
+
+/**
+ * A published app terms version (RAPP-613). Every organization starts with
+ * version 1, the bundled text; pass `version_number: null, published_at: null`
+ * for a draft.
+ */
+export function buildAppTermsVersion(
+  overrides: Partial<AppTermsVersionRow> = {},
+): AppTermsVersionRow {
+  const text = (value: string) => ({ ca: value });
+  return {
+    id: SEED_APP_TERMS_VERSION_ID,
+    org_id: SEED_ORGANIZATION_ID,
+    version_number: 1,
+    content: {
+      title: text('Termes i condicions de l’app'),
+      body: text('Text dels termes.'),
+      intro_title: text('Abans d’acceptar els termes'),
+      intro: text('A la pantalla següent podràs llegir els termes.'),
+      points: [{ title: text('Per què t’ho demanem'), body: text('Per organitzar l’activitat.') }],
+      accept_label: text('He llegit i accepto els termes'),
+      media_label: text('Accepto sortir a fotos (opcional)'),
+      media_hint: text('Pots canviar-ho quan vulguis.'),
+    },
+    published_at: FIXTURE_TIMESTAMP,
+    published_by: null,
+    updated_at: FIXTURE_TIMESTAMP,
+    updated_by: null,
     ...overrides,
   };
 }

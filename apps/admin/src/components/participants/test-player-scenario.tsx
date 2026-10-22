@@ -16,7 +16,6 @@ import { Button } from '@/components/ui/button';
 import { QUESTION_LABEL_KEYS } from '@/lib/builtin-questions';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CURRENT_TERMS_VERSION } from '@ramassa/shared/constants';
 import { WIZARD_QUESTIONS, type IntakeQuestion } from '@ramassa/shared/intake';
 import {
   sampleAnswerPayload,
@@ -90,11 +89,8 @@ export function TestPlayerScenarioPanel({
         }
         disabled={working}
         onPress={() =>
-          void apply({
-            kind: 'terms',
-            accepted: !scenario.termsAccepted,
-            terms_version: CURRENT_TERMS_VERSION,
-          })
+          // The database accepts the current app terms version (RAPP-613).
+          void apply({ kind: 'terms', accepted: !scenario.termsAccepted })
         }
       />
       <ScenarioRow

@@ -126,7 +126,7 @@ export type TestPlayerScenarioChange =
       readonly fill?: Readonly<Record<string, unknown>>;
       readonly clear?: readonly IntakeQuestion[];
     }
-  | { readonly kind: 'terms'; readonly accepted: boolean; readonly terms_version?: string }
+  | { readonly kind: 'terms'; readonly accepted: boolean }
   | { readonly kind: 'season_signature'; readonly signed: boolean }
   | { readonly kind: 'returning'; readonly returning: boolean }
   | { readonly kind: 'reset' };

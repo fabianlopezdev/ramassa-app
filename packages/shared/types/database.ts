@@ -146,6 +146,61 @@ export type Database = {
           },
         ];
       };
+      app_terms_versions: {
+        Row: {
+          content: Json;
+          id: string;
+          org_id: string;
+          published_at: string | null;
+          published_by: string | null;
+          updated_at: string;
+          updated_by: string | null;
+          version_number: number | null;
+        };
+        Insert: {
+          content: Json;
+          id?: string;
+          org_id: string;
+          published_at?: string | null;
+          published_by?: string | null;
+          updated_at?: string;
+          updated_by?: string | null;
+          version_number?: number | null;
+        };
+        Update: {
+          content?: Json;
+          id?: string;
+          org_id?: string;
+          published_at?: string | null;
+          published_by?: string | null;
+          updated_at?: string;
+          updated_by?: string | null;
+          version_number?: number | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'app_terms_versions_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'app_terms_versions_published_by_fkey';
+            columns: ['published_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'app_terms_versions_updated_by_fkey';
+            columns: ['updated_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       attendance: {
         Row: {
           id: string;
@@ -4696,6 +4751,7 @@ export type Database = {
           locale_shown: string;
           profile_id: string;
           terms_version: string;
+          version_id: string | null;
         };
         Insert: {
           accepted_at?: string;
@@ -4704,6 +4760,7 @@ export type Database = {
           locale_shown: string;
           profile_id: string;
           terms_version: string;
+          version_id?: string | null;
         };
         Update: {
           accepted_at?: string;
@@ -4712,6 +4769,7 @@ export type Database = {
           locale_shown?: string;
           profile_id?: string;
           terms_version?: string;
+          version_id?: string | null;
         };
         Relationships: [
           {
@@ -4719,6 +4777,13 @@ export type Database = {
             columns: ['profile_id'];
             isOneToOne: false;
             referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'terms_acceptances_version_id_fkey';
+            columns: ['version_id'];
+            isOneToOne: false;
+            referencedRelation: 'app_terms_versions';
             referencedColumns: ['id'];
           },
         ];
@@ -4974,6 +5039,10 @@ export type Database = {
       };
     };
     Functions: {
+      accept_current_app_terms: {
+        Args: { p_locale_shown: string; p_signing: Json; p_version_id: string };
+        Returns: undefined;
+      };
       accept_my_entity_invitation: { Args: never; Returns: string };
       add_referral_update: {
         Args: {
@@ -5328,6 +5397,7 @@ export type Database = {
         Args: { p_participant_id: string };
         Returns: undefined;
       };
+      discard_app_terms_draft: { Args: never; Returns: undefined };
       discard_walk_in: { Args: { p_id: string }; Returns: undefined };
       edit_own_forum_post: {
         Args: { p_content: string; p_post_id: string };
@@ -5673,6 +5743,17 @@ export type Database = {
         Returns: boolean;
       };
       is_team_member: { Args: never; Returns: boolean };
+      list_app_terms_versions: {
+        Args: never;
+        Returns: {
+          acceptance_count: number;
+          content: Json;
+          id: string;
+          published_at: string;
+          updated_at: string;
+          version_number: number;
+        }[];
+      };
       list_authorization_versions: {
         Args: never;
         Returns: {
@@ -6117,6 +6198,7 @@ export type Database = {
       my_permissions: { Args: never; Returns: string[] };
       my_questions_to_ask: { Args: never; Returns: string[] };
       my_session_is_current: { Args: never; Returns: boolean };
+      my_terms_acceptance_needed: { Args: never; Returns: boolean };
       my_test_scenario_stamp: { Args: never; Returns: string };
       open_staff_checkouts: {
         Args: never;
@@ -6257,6 +6339,7 @@ export type Database = {
           participant_id: string;
         }[];
       };
+      publish_app_terms_draft: { Args: never; Returns: number };
       publish_authorization_version: {
         Args: { p_content: Json };
         Returns: string;
@@ -6437,6 +6520,7 @@ export type Database = {
         Returns: undefined;
       };
       save_admin_service: { Args: { p_payload: Json }; Returns: string };
+      save_app_terms_draft: { Args: { p_content: Json }; Returns: string };
       save_builtin_question_override: {
         Args: {
           p_help: Json;

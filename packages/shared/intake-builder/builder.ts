@@ -20,6 +20,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { AppError, databaseErrorCode } from '../errors';
 import { resolveLocalizedText } from '../i18n/localized-content';
+import { appTermsFromCatalog, type CurrentAppTerms } from '../onboarding/app-terms';
 import { QUESTION_SCREENS, type IntakeQuestion } from '../onboarding/intake';
 import { REQUIRED_INTAKE_QUESTIONS, WIZARD_QUESTIONS } from '../onboarding/question-states';
 import type { LanguageCode } from '../schemas/language';
@@ -141,6 +142,9 @@ export const intakeCatalogSchema = z.object({
   screens: z.array(screenSchema),
   overrides: z.array(overrideSchema),
   presets: z.array(presetSchema),
+  // The current app terms version (RAPP-613), read leniently: a version this
+  // build cannot read leaves the bundled text in place.
+  terms: z.unknown().optional(),
 });
 
 export interface CustomOption {
@@ -191,9 +195,16 @@ export interface IntakeCatalog {
   readonly screens: readonly IntakeScreen[];
   readonly overrides: readonly BuiltinOverride[];
   readonly presets: readonly IntakePreset[];
+  /** The app terms she accepts (RAPP-613); none means the bundled text. */
+  readonly terms?: CurrentAppTerms | null;
 }
 
-export const EMPTY_INTAKE_CATALOG: IntakeCatalog = { screens: [], overrides: [], presets: [] };
+export const EMPTY_INTAKE_CATALOG: IntakeCatalog = {
+  screens: [],
+  overrides: [],
+  presets: [],
+  terms: null,
+};
 
 export function parseIntakeCatalog(data: unknown): IntakeCatalog {
   const raw = intakeCatalogSchema.parse(data);
@@ -238,6 +249,7 @@ export function parseIntakeCatalog(data: unknown): IntakeCatalog {
         optionOverrides: override.option_overrides,
       })),
     presets: raw.presets,
+    terms: appTermsFromCatalog(raw.terms ?? null),
   };
 }
 

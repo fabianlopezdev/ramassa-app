@@ -35,13 +35,11 @@ test('each switch sends one change', async () => {
   await waitFor(() => expect(onChange).toHaveBeenLastCalledWith({ kind: 'reset' }));
 });
 
-test('accepting the terms sends the current terms version', async () => {
+test('accepting the terms sends no version: the database accepts the current one (RAPP-613)', async () => {
   const { view, onChange } = renderPanel();
   fireEvent.click(view.getByText('testScenarioTermsSetAction'));
   await waitFor(() => expect(onChange).toHaveBeenCalledTimes(1));
-  const change = onChange.mock.calls[0]?.[0] as { kind: string; terms_version?: string };
-  expect(change.kind).toBe('terms');
-  expect(change.terms_version).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  expect(onChange.mock.calls[0]?.[0]).toEqual({ kind: 'terms', accepted: true });
 });
 
 test('a question is filled with the sample in her language, or cleared', async () => {
