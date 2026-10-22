@@ -177,8 +177,10 @@ test('contact has plain labels, excludes sizing, and continues while preserving 
   fireEvent.click(view.getByRole('button', { name: ca.continueAction }));
   await waitFor(() => expect(view.getByRole('alert')).toBeTruthy());
   expect(next).not.toHaveBeenCalled();
-  fireEvent.click(view.getByRole('radio', { name: ca.noOption }));
-  fireEvent.click(view.getByRole('button', { name: ca.noOption }));
+  // The organisation's No, then the dependants' No.
+  const [entityNo, dependentsNo] = view.getAllByRole('radio', { name: ca.noOption });
+  fireEvent.click(entityNo!);
+  fireEvent.click(dependentsNo!);
   fireEvent.click(view.getByRole('button', { name: ca.continueAction }));
   await waitFor(() => expect(next).toHaveBeenCalledTimes(1));
   expect(draft.currentStep).toBe('equipment');
@@ -210,13 +212,15 @@ test('equipment requires sizes, preserves contact, and Back saves without valida
 
 test('organisation starts unanswered, Yes reveals fields, and No removes stale details', async () => {
   const view = render(createElement(Contact));
-  expect(view.getByRole('radio', { name: ca.yesOption }).getAttribute('aria-checked')).toBe(
+  expect(view.getAllByRole('radio', { name: ca.yesOption })[0]!.getAttribute('aria-checked')).toBe(
     'false',
   );
-  expect(view.getByRole('radio', { name: ca.noOption }).getAttribute('aria-checked')).toBe('false');
+  expect(view.getAllByRole('radio', { name: ca.noOption })[0]!.getAttribute('aria-checked')).toBe(
+    'false',
+  );
   expect(view.queryByRole('textbox', { name: ca.referenceEntityPlaceholder })).toBeNull();
   expect(view.queryByRole('textbox', { name: ca.referenceContactNameLabel })).toBeNull();
-  fireEvent.click(view.getByRole('radio', { name: ca.yesOption }));
+  fireEvent.click(view.getAllByRole('radio', { name: ca.yesOption })[0]!);
   fireEvent.click(view.getByRole('button', { name: ca.continueAction }));
   await waitFor(() => expect(view.getByRole('alert')).toBeTruthy());
   expect(next).not.toHaveBeenCalled();
@@ -226,24 +230,24 @@ test('organisation starts unanswered, Yes reveals fields, and No removes stale d
   fireEvent.input(view.getByRole('textbox', { name: ca.referenceContactNameLabel }), {
     target: { value: 'Maria' },
   });
-  fireEvent.click(view.getByRole('radio', { name: ca.noOption }));
+  fireEvent.click(view.getAllByRole('radio', { name: ca.noOption })[0]!);
   expect(view.queryByRole('textbox', { name: ca.referenceEntityPlaceholder })).toBeNull();
-  fireEvent.click(view.getByRole('button', { name: ca.noOption }));
+  fireEvent.click(view.getAllByRole('radio', { name: ca.noOption })[1]!);
   fireEvent.click(view.getByRole('button', { name: ca.continueAction }));
   await waitFor(() => expect(next).toHaveBeenCalledTimes(1));
   expect(draft.logistics?.referenceEntity).toBeNull();
   expect(draft.logistics?.referenceContactName).toBe('');
   view.unmount();
   const reopened = render(createElement(Contact));
-  expect(reopened.getByRole('radio', { name: ca.noOption }).getAttribute('aria-checked')).toBe(
-    'true',
-  );
+  expect(
+    reopened.getAllByRole('radio', { name: ca.noOption })[0]!.getAttribute('aria-checked'),
+  ).toBe('true');
 });
 
 test('a contact question staff removed stays hidden after Yes (RAPP-618)', () => {
   removed = new Set(['reference_contact_name']);
   const view = render(createElement(Contact));
-  fireEvent.click(view.getByRole('radio', { name: ca.yesOption }));
+  fireEvent.click(view.getAllByRole('radio', { name: ca.yesOption })[0]!);
   expect(view.getByRole('textbox', { name: ca.referenceEntityPlaceholder })).toBeTruthy();
   expect(view.queryByRole('textbox', { name: ca.referenceContactNameLabel })).toBeNull();
 });
@@ -251,12 +255,14 @@ test('a contact question staff removed stays hidden after Yes (RAPP-618)', () =>
 test('suggested organisations do not answer the question; Yes reveals the retained suggestion', () => {
   draft.logistics = { ...draft.logistics, referenceEntity: 'CEAR', referenceContactName: 'Maria' };
   const view = render(createElement(Contact));
-  expect(view.getByRole('radio', { name: ca.yesOption }).getAttribute('aria-checked')).toBe(
+  expect(view.getAllByRole('radio', { name: ca.yesOption })[0]!.getAttribute('aria-checked')).toBe(
     'false',
   );
-  expect(view.getByRole('radio', { name: ca.noOption }).getAttribute('aria-checked')).toBe('false');
+  expect(view.getAllByRole('radio', { name: ca.noOption })[0]!.getAttribute('aria-checked')).toBe(
+    'false',
+  );
   expect(view.queryByRole('textbox', { name: ca.referenceEntityPlaceholder }) === null).toBe(true);
-  fireEvent.click(view.getByRole('radio', { name: ca.yesOption }));
+  fireEvent.click(view.getAllByRole('radio', { name: ca.yesOption })[0]!);
   expect(
     (view.getByRole('textbox', { name: ca.referenceEntityPlaceholder }) as HTMLInputElement).value,
   ).toBe('CEAR');
@@ -264,36 +270,36 @@ test('suggested organisations do not answer the question; Yes reveals the retain
   draft.logistics = { clothingSize: 'M', shoeSize: '38' };
   invite = 'Creu Roja';
   const invited = render(createElement(Contact));
-  expect(invited.getByRole('radio', { name: ca.yesOption }).getAttribute('aria-checked')).toBe(
-    'false',
-  );
+  expect(
+    invited.getAllByRole('radio', { name: ca.yesOption })[0]!.getAttribute('aria-checked'),
+  ).toBe('false');
   expect(invited.queryByRole('textbox', { name: ca.referenceEntityPlaceholder }) === null).toBe(
     true,
   );
-  fireEvent.click(invited.getByRole('radio', { name: ca.yesOption }));
+  fireEvent.click(invited.getAllByRole('radio', { name: ca.yesOption })[0]!);
   expect(
     (invited.getByRole('textbox', { name: ca.referenceEntityPlaceholder }) as HTMLInputElement)
       .value,
   ).toBe('Creu Roja');
-  fireEvent.click(invited.getByRole('radio', { name: ca.noOption }));
+  fireEvent.click(invited.getAllByRole('radio', { name: ca.noOption })[0]!);
   fireEvent.click(invited.getByRole('button', { name: 'Back' }));
   invited.unmount();
   const resumed = render(createElement(Contact));
-  expect(resumed.getByRole('radio', { name: ca.noOption }).getAttribute('aria-checked')).toBe(
-    'true',
-  );
+  expect(
+    resumed.getAllByRole('radio', { name: ca.noOption })[0]!.getAttribute('aria-checked'),
+  ).toBe('true');
   expect(resumed.queryByRole('textbox', { name: ca.referenceEntityPlaceholder })).toBeNull();
 });
 
 test('an unfinished Yes answer survives Back without being mistaken for No', () => {
   const view = render(createElement(Contact));
-  fireEvent.click(view.getByRole('radio', { name: ca.yesOption }));
+  fireEvent.click(view.getAllByRole('radio', { name: ca.yesOption })[0]!);
   fireEvent.click(view.getByRole('button', { name: 'Back' }));
   view.unmount();
   const resumed = render(createElement(Contact));
-  expect(resumed.getByRole('radio', { name: ca.yesOption }).getAttribute('aria-checked')).toBe(
-    'true',
-  );
+  expect(
+    resumed.getAllByRole('radio', { name: ca.yesOption })[0]!.getAttribute('aria-checked'),
+  ).toBe('true');
   expect(
     (resumed.getByRole('textbox', { name: ca.referenceEntityPlaceholder }) as HTMLInputElement)
       .value,

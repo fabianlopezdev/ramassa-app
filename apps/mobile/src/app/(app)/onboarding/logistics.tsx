@@ -280,9 +280,16 @@ export default function LogisticsStepScreen() {
             control={control}
             name="hasDependents"
             render={({ field }) => (
-              <View className="flex-row gap-sm">
+              // One answer of two, as the entity question: a radio group, so
+              // she and assistive technology read it as unanswered until she taps.
+              <View
+                className="flex-row gap-sm"
+                accessibilityRole="radiogroup"
+                accessibilityLabel={wording.label('dependents', t('hasDependentsLabel'))}
+              >
                 <View className="flex-1">
                   <OptionChip
+                    accessibilityRole="radio"
                     label={t('yesOption')}
                     accessibilityHint={t('hasDependentsLabel')}
                     isSelected={field.value === true}
@@ -291,6 +298,7 @@ export default function LogisticsStepScreen() {
                 </View>
                 <View className="flex-1">
                   <OptionChip
+                    accessibilityRole="radio"
                     label={t('noOption')}
                     accessibilityHint={t('hasDependentsLabel')}
                     isSelected={field.value === false}
