@@ -284,6 +284,16 @@ test.describe('inviting a participant', () => {
       'data-asked',
       'true',
     );
+    // Her name screen shows both names, as on her phone (RAPP-618).
+    await expect(review.getByTestId('invite-question-last_name')).toHaveAttribute(
+      'data-asked',
+      'true',
+    );
+    // Her contact shows only once she has an entity.
+    await expect(review.getByTestId('invite-question-reference_contact_name')).toHaveAttribute(
+      'data-asking',
+      'when-it-applies',
+    );
     await expect(review.getByTestId('invite-question-phone')).toHaveAttribute(
       'data-asked',
       'false',

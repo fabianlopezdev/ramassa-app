@@ -21,6 +21,7 @@ import {
   type IntakeQuestion,
   type IntakeQuestionState,
   type QuestionStates,
+  type WizardQuestionAsking,
 } from '@ramassa/shared/intake';
 import {
   builtinLabel,
@@ -31,6 +32,13 @@ import {
   type IntakeCatalog,
 } from '@ramassa/shared/intake-builder';
 import type { LanguageCode } from '@ramassa/shared/schemas';
+
+/** What her phone does with the question, in words staff read. */
+const ASKING_LABEL_KEYS: Readonly<Record<WizardQuestionAsking, string>> = {
+  asked: 'participants:inviteQuestionAsked',
+  'when-it-applies': 'participants:inviteQuestionAskedWhenItApplies',
+  'not-asked': 'participants:inviteQuestionNotAsked',
+};
 
 const STATE_LABEL_KEYS: Readonly<Record<IntakeQuestionState, string>> = {
   auto: 'participants:questionStateAuto',
@@ -132,15 +140,14 @@ export function InviteQuestionsReview({
               className="grid gap-2 py-3 sm:grid-cols-[1fr_12rem] sm:items-center"
               data-testid={id}
               data-asked={row.isAsked ? 'true' : 'false'}
+              data-asking={row.asking}
             >
               <div className="flex flex-col gap-0.5">
                 <label htmlFor={id} className="text-start text-sm font-medium">
                   {label}
                 </label>
                 <p className="text-start text-xs text-muted-foreground">
-                  {row.isAsked
-                    ? t('participants:inviteQuestionAsked')
-                    : t('participants:inviteQuestionNotAsked')}
+                  {t(ASKING_LABEL_KEYS[row.asking])}
                   {' · '}
                   {row.isAnswered
                     ? t('participants:questionStatesAnswered')

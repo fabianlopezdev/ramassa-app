@@ -6,6 +6,7 @@ import ca from '../../../../packages/shared/i18n/locales/ca/onboarding.json';
 
 let draft: OnboardingDraft;
 let invite: string | null = null;
+let removed: ReadonlySet<string> = new Set();
 const next = mock(() => {});
 const back = mock(() => {});
 const box = ({ children }: { children?: ReactNode }) => createElement('div', null, children);
@@ -57,6 +58,7 @@ mock.module('@/lib/onboarding', () => ({
   usePendingInviteEntity: () => invite,
 }));
 mock.module('@/lib/onboarding-intake-context', () => ({
+  useWizardIntake: () => ({ hidden: removed }),
   useBuiltinWording: () => ({
     label: (_key: string, fallback: string) => fallback,
     help: () => null,
@@ -151,6 +153,7 @@ const { default: Contact } = await import('../app/(app)/onboarding/logistics');
 const { default: Equipment } = await import('../app/(app)/onboarding/equipment');
 afterEach(cleanup);
 beforeEach(() => {
+  removed = new Set();
   draft = { currentStep: 'logistics', logistics: { clothingSize: 'M', shoeSize: '38' } };
   invite = null;
   next.mockClear();
@@ -223,6 +226,14 @@ test('organisation starts unanswered, Yes reveals fields, and No removes stale d
   expect(reopened.getByRole('radio', { name: ca.noOption }).getAttribute('aria-checked')).toBe(
     'true',
   );
+});
+
+test('a contact question staff removed stays hidden after Yes (RAPP-618)', () => {
+  removed = new Set(['reference_contact_name']);
+  const view = render(createElement(Contact));
+  fireEvent.click(view.getByRole('radio', { name: ca.yesOption }));
+  expect(view.getByRole('textbox', { name: ca.referenceEntityPlaceholder })).toBeTruthy();
+  expect(view.queryByRole('textbox', { name: ca.referenceContactNameLabel })).toBeNull();
 });
 
 test('suggested organisations do not answer the question; Yes reveals the retained suggestion', () => {

@@ -19,6 +19,7 @@ import {
   type IntakeQuestion,
   type IntakeQuestionState,
   type QuestionStates,
+  type WizardQuestionAsking,
 } from '@ramassa/shared/intake';
 import {
   builtinLabel,
@@ -28,6 +29,13 @@ import {
   wizardScreens,
   type IntakeCatalog,
 } from '@ramassa/shared/intake-builder';
+
+/** What her phone does with the question, in words staff read. */
+const ASKING_LABEL_KEYS: Readonly<Record<WizardQuestionAsking, string>> = {
+  asked: 'inviteQuestionAsked',
+  'when-it-applies': 'inviteQuestionAskedWhenItApplies',
+  'not-asked': 'inviteQuestionNotAsked',
+};
 
 const STATE_LABEL_KEYS: Readonly<Record<IntakeQuestionState, string>> = {
   auto: 'questionStateAuto',
@@ -125,7 +133,7 @@ export function InviteQuestionsStep({
               testID={`invite-question-${row.question}-status`}
               className={`text-start text-sm text-neutral-600 ${fontClass}`}
             >
-              {row.isAsked ? t('inviteQuestionAsked') : t('inviteQuestionNotAsked')}
+              {t(ASKING_LABEL_KEYS[row.asking])}
               {' · '}
               {row.isAnswered ? t('questionStatesAnswered') : t('questionStatesUnanswered')}
             </Text>

@@ -150,7 +150,8 @@ export function TestPlayerScenarioPanel({
             type="button"
             variant="outline"
             disabled={working}
-            onClick={() => void apply({ kind: 'answers', clear: FILL_ALL_QUESTIONS })}
+            // Her app language has no wizard screen: it is never cleared (RAPP-618).
+            onClick={() => void apply({ kind: 'answers', clear: WIZARD_QUESTIONS })}
           >
             {t('testScenarioClearAll')}
           </Button>

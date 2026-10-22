@@ -8,7 +8,11 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { expect, test } from 'bun:test';
-import { INTAKE_QUESTIONS, REQUIRED_INTAKE_QUESTIONS } from '@ramassa/shared/intake';
+import {
+  INTAKE_QUESTIONS,
+  REQUIRED_INTAKE_QUESTIONS,
+  WIZARD_QUESTIONS,
+} from '@ramassa/shared/intake';
 
 const migrationsDirectory = resolve(import.meta.dir, '../supabase/migrations');
 
@@ -52,4 +56,27 @@ test('the database required-question list matches the code', () => {
   );
   const fromSql = [...block.matchAll(/'([a-z_]+)'/g)].map(([, question]) => question);
   expect(fromSql).toEqual([...REQUIRED_INTAKE_QUESTIONS]);
+});
+
+/**
+ * The questions a wizard screen asks also live in two places (RAPP-618): the
+ * screens the phone walks and `private.wizard_intake_questions()`, which
+ * `my_questions_to_ask()` lists. A question on no screen (her app language,
+ * set by the language picker) must not be on it, or the preview staff see
+ * says she is asked something her phone never shows.
+ */
+test('the database wizard-question list is the questions the screens ask', () => {
+  const sql = readdirSync(migrationsDirectory)
+    .filter((name) => name.endsWith('.sql'))
+    .sort()
+    .map((name) => readFileSync(resolve(migrationsDirectory, name), 'utf8'))
+    .filter((text) => text.includes('-- wizard-intake-questions:start'))
+    .at(-1);
+  expect(sql).toBeDefined();
+  const block = sql!.slice(
+    sql!.indexOf('-- wizard-intake-questions:start'),
+    sql!.indexOf('-- wizard-intake-questions:end'),
+  );
+  const fromSql = [...block.matchAll(/'([a-z_]+)'/g)].map(([, question]) => question);
+  expect(fromSql).toEqual([...WIZARD_QUESTIONS]);
 });

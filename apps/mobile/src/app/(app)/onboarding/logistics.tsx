@@ -14,7 +14,7 @@ import {
   type ContactFormInput,
   type ContactFormValue,
 } from '@/lib/onboarding-form';
-import { useBuiltinWording, useWizardStep } from '@/lib/onboarding-intake-context';
+import { useBuiltinWording, useWizardIntake, useWizardStep } from '@/lib/onboarding-intake-context';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect, useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
@@ -26,6 +26,8 @@ import type { OnboardingDraftStep } from '@ramassa/shared/onboarding-drafts';
 export default function LogisticsStepScreen() {
   const { t } = useTranslation('onboarding');
   const step = useWizardStep('logistics');
+  // Shown with the entity after Yes, unless staff removed it (RAPP-618).
+  const isContactRemoved = useWizardIntake().hidden.has('reference_contact_name');
   const wording = useBuiltinWording();
   const [draft] = useState(() => onboardingDraftStore.loadDraft());
   const [hasSubmitErrors, setHasSubmitErrors] = useState(false);
@@ -242,7 +244,8 @@ export default function LogisticsStepScreen() {
         </View>
       ) : null}
 
-      {hasReferenceEntity === false ||
+      {isContactRemoved ||
+      hasReferenceEntity === false ||
       (step.shouldAsk('reference_entity') && hasReferenceEntity !== true) ||
       !(step.shouldAsk('reference_entity') || step.shouldAsk('reference_contact_name')) ? null : (
         <Controller

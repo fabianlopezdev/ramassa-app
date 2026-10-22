@@ -21,6 +21,7 @@ import type { Database } from '../types/database';
 import {
   INTAKE_QUESTIONS,
   QUESTION_PAYLOAD_KEYS,
+  SCREEN_QUESTIONS,
   type AnsweredQuestions,
   type IntakeQuestion,
 } from './intake';
@@ -71,16 +72,51 @@ export function answeredAtInvitation(
   );
 }
 
+/**
+ * What her phone does with a question: shows it, shows it only when an
+ * earlier answer makes it apply, or never shows it.
+ */
+export type WizardQuestionAsking = 'asked' | 'when-it-applies' | 'not-asked';
+
 export interface WizardQuestionPreview {
   readonly question: IntakeQuestion;
   readonly state: IntakeQuestionState;
   readonly isAnswered: boolean;
-  /** Whether her wizard shows the question. */
+  /** Whether her wizard may show the question (asked, or asked when it applies). */
   readonly isAsked: boolean;
+  readonly asking: WizardQuestionAsking;
   /** Removed from the registration in Settings: never asked, whatever its state. */
   readonly isRemoved: boolean;
   /** Don't ask is allowed: optional, or required and answered. */
   readonly canSkip: boolean;
+}
+
+/** Screens whose fields always show together: her name screen shows both names. */
+const SCREENS_SHOWN_WHOLE: readonly (readonly IntakeQuestion[])[] = [SCREEN_QUESTIONS.identity];
+
+/**
+ * What her phone shows, field by field, from the questions it plans with:
+ *   - her name screen shows both names whenever it shows (`identity` has no
+ *     per-field rule);
+ *   - her contact at the entity shows only once she has an entity: after
+ *     "Yes" when the entity is asked, and whenever the entity or the contact
+ *     is asked (`logistics`), unless staff removed the contact.
+ */
+function phoneAsking(
+  question: IntakeQuestion,
+  notAsked: AnsweredQuestions,
+  hidden: ReadonlySet<IntakeQuestion>,
+): WizardQuestionAsking {
+  if (question === 'reference_contact_name') {
+    if (hidden.has(question)) return 'not-asked';
+    const entityAsked = !notAsked.has('reference_entity');
+    return entityAsked || !notAsked.has(question) ? 'when-it-applies' : 'not-asked';
+  }
+  const wholeScreen = SCREENS_SHOWN_WHOLE.find((screen) => screen.includes(question));
+  if (wholeScreen !== undefined) {
+    return wholeScreen.some((other) => !notAsked.has(other)) ? 'asked' : 'not-asked';
+  }
+  return notAsked.has(question) ? 'not-asked' : 'asked';
 }
 
 /** Every wizard question in screen order, with what her wizard does with it. */
@@ -90,14 +126,18 @@ export function previewWizardQuestions(
   hidden: ReadonlySet<IntakeQuestion> = new Set(),
 ): readonly WizardQuestionPreview[] {
   const notAsked = wizardNotAsked(questionsToAsk(answered, states), hidden);
-  return WIZARD_QUESTIONS.map((question) => ({
-    question,
-    state: questionState(states, question),
-    isAnswered: answered.has(question),
-    isAsked: !notAsked.has(question),
-    isRemoved: hidden.has(question),
-    canSkip: canSkipQuestion(question, answered),
-  }));
+  return WIZARD_QUESTIONS.map((question) => {
+    const asking = phoneAsking(question, notAsked, hidden);
+    return {
+      question,
+      state: questionState(states, question),
+      isAnswered: answered.has(question),
+      isAsked: asking !== 'not-asked',
+      asking,
+      isRemoved: hidden.has(question),
+      canSkip: canSkipQuestion(question, answered),
+    };
+  });
 }
 
 /**

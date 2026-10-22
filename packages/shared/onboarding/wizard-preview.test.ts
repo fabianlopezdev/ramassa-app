@@ -57,12 +57,53 @@ describe('the preview staff confirm before inviting (RAPP-618)', () => {
 
   test('Ask and Don’t ask change single questions, as her phone will', () => {
     const answered = answeredAtInvitation(invitation());
-    const rows = previewWizardQuestions(answered, { first_name: 'ask', phone: 'skip' });
-    // The same case the database test checks through my_questions_to_ask().
+    const rows = previewWizardQuestions(answered, { date_of_birth: 'ask', phone: 'skip' });
     expect(asked(rows)).toEqual(
-      WIZARD_QUESTIONS.filter((question) => question !== 'last_name' && question !== 'phone'),
+      WIZARD_QUESTIONS.filter(
+        (question) => question !== 'first_name' && question !== 'last_name' && question !== 'phone',
+      ),
     );
-    expect(rows.find((row) => row.question === 'first_name')?.state).toBe('ask');
+    expect(rows.find((row) => row.question === 'date_of_birth')?.state).toBe('ask');
+  });
+
+  test('her name screen shows both names: asking one asks the other too', () => {
+    const answered = answeredAtInvitation(invitation());
+    const rows = previewWizardQuestions(answered, { first_name: 'ask' });
+    // my_questions_to_ask() lists first_name only, but the identity screen
+    // always shows both fields, so the preview says both are asked.
+    expect(rows.find((row) => row.question === 'first_name')?.asking).toBe('asked');
+    expect(rows.find((row) => row.question === 'last_name')?.asking).toBe('asked');
+    const neither = previewWizardQuestions(answered, {});
+    expect(neither.find((row) => row.question === 'last_name')?.asking).toBe('not-asked');
+  });
+
+  test('her contact at the entity is asked only after she says she has one', () => {
+    const contact = (rows: ReturnType<typeof previewWizardQuestions>) =>
+      rows.find((row) => row.question === 'reference_contact_name');
+    // Nobody answered the entity: the phone asks it, then the contact after "Yes".
+    expect(contact(previewWizardQuestions(answeredAtInvitation(invitation()), {}))?.asking).toBe(
+      'when-it-applies',
+    );
+    // Staff answered both: nothing to ask.
+    const both = new Set([
+      ...answeredAtInvitation(invitation('Creu Roja')),
+      'reference_contact_name' as const,
+    ]);
+    expect(contact(previewWizardQuestions(both, {}))?.asking).toBe('not-asked');
+    // The entity is asked again, so the contact shows with it after "Yes".
+    expect(contact(previewWizardQuestions(both, { reference_entity: 'ask' }))?.asking).toBe(
+      'when-it-applies',
+    );
+    // Removed in Settings: never shown, even with the entity.
+    expect(
+      contact(
+        previewWizardQuestions(
+          answeredAtInvitation(invitation()),
+          {},
+          new Set(['reference_contact_name']),
+        ),
+      )?.asking,
+    ).toBe('not-asked');
   });
 
   test('the review preset asks everything', () => {

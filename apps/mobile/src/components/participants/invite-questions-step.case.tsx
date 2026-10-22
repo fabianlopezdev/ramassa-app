@@ -50,8 +50,12 @@ test('shows what she is asked, as her phone plans it, and changes a question (RA
   expect(view.getByTestId('invite-question-first_name-status').textContent).toContain(
     'inviteQuestionAsked',
   );
+  // Her name screen shows both names, so asking one asks the other too.
   expect(view.getByTestId('invite-question-last_name-status').textContent).toContain(
-    'inviteQuestionNotAsked',
+    'inviteQuestionAsked',
+  );
+  expect(view.getByTestId('invite-question-reference_contact_name-status').textContent).toContain(
+    'inviteQuestionAskedWhenItApplies',
   );
   fireEvent.click(view.getByTestId('invite-question-phone-skip'));
   expect(onChange).toHaveBeenCalledWith({ first_name: 'ask', phone: 'skip' });
