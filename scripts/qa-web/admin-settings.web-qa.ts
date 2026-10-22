@@ -278,12 +278,17 @@ test('an admin writes the note under the wizard document step', async ({ page })
 });
 
 /**
- * The season authorization (RAPP-304): an admin publishes a new version from
- * the current one, after confirming, and it becomes the current version. The
- * new version is removed again, so the seeded players stay signed.
+ * The season authorization (RAPP-304): an admin saves a draft from the
+ * current version (RAPP-614) and publishes it, after confirming, and it
+ * becomes the current version. The new version is removed again, so the
+ * seeded players stay signed.
  */
 test('an admin publishes a new authorization version', async ({ page }) => {
-  const before = Number(queryDatabase('select count(*) from public.authorization_versions'));
+  const before = Number(
+    queryDatabase(
+      'select count(*) from public.authorization_versions where published_at is not null',
+    ),
+  );
   try {
     await signIn(page, ADMIN_EMAIL);
     await page.goto('/settings?tab=authorization');
@@ -293,15 +298,23 @@ test('an admin publishes a new authorization version', async ({ page }) => {
 
     await editor.locator('#authorization-language').selectOption('ca');
     await editor.locator('#authorization-title').fill(`Autorització ${runTag}`);
+    await editor.getByTestId('authorization-save').click();
+    await expect(editor.getByTestId('authorization-draft-row')).toBeVisible();
     await editor.getByTestId('authorization-publish').click();
     // Publishing is final: it asks once more.
     await expect(editor.getByRole('alert')).toContainText(/sign it again|signar de nou/);
     await editor.getByTestId('authorization-publish').click();
 
     await expect
-      .poll(() => Number(queryDatabase('select count(*) from public.authorization_versions')), {
-        timeout: 15_000,
-      })
+      .poll(
+        () =>
+          Number(
+            queryDatabase(
+              'select count(*) from public.authorization_versions where published_at is not null',
+            ),
+          ),
+        { timeout: 15_000 },
+      )
       .toBe(before + 1);
     expect(
       queryDatabase(
@@ -311,9 +324,11 @@ test('an admin publishes a new authorization version', async ({ page }) => {
     ).toBe(`Autorització ${runTag}`);
   } finally {
     queryDatabase(`
+      alter table public.authorization_versions disable trigger authorization_versions_immutable;
       delete from public.authorization_versions where content -> 'title' ->> 'ca' = 'Autorització ${runTag}';
+      alter table public.authorization_versions enable trigger authorization_versions_immutable;
       delete from public.audit_log
-       where created_at >= '${startedAt}'::timestamptz and action = 'authorization.publish';
+       where created_at >= '${startedAt}'::timestamptz and action like 'authorization.%';
     `);
   }
 });
