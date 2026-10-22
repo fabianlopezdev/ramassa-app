@@ -8,13 +8,13 @@ import { playHaptic } from '@/lib/haptics/haptics';
 import { mergeLogisticsDraft } from '@/lib/logistics-draft';
 import { onboardingDraftStore } from '@/lib/onboarding';
 import {
-  equipmentFormSchema,
+  equipmentFormSchemaFor,
   type EquipmentFormInput,
   type EquipmentFormValue,
 } from '@/lib/onboarding-form';
 import { useBuiltinWording, useWizardStep } from '@/lib/onboarding-intake-context';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
@@ -28,12 +28,14 @@ export default function EquipmentStepScreen() {
   const [draft] = useState(() => onboardingDraftStore.loadDraft());
   const saved = (draft?.logistics ?? {}) as Partial<EquipmentFormInput>;
   const [hasSubmitErrors, setHasSubmitErrors] = useState(false);
+  // The organization's required list (RAPP-611): an optional size left out is unknown.
+  const equipmentForm = useMemo(() => equipmentFormSchemaFor(step.required), [step.required]);
   const { control, handleSubmit, getValues } = useForm<
     EquipmentFormInput,
     unknown,
     EquipmentFormValue
   >({
-    resolver: zodResolver(equipmentFormSchema),
+    resolver: zodResolver(equipmentForm),
     defaultValues: { clothingSize: saved.clothingSize ?? '', shoeSize: saved.shoeSize ?? '' },
   });
   const persist = (currentStep: OnboardingDraftStep) =>
@@ -82,7 +84,7 @@ export default function EquipmentStepScreen() {
             render={({ field }) => (
               <OptionGrid
                 options={CLOTHING_SIZES}
-                value={field.value}
+                value={field.value ?? ''}
                 accessibilityHint={t('clothingSizeLabel')}
                 onChange={field.onChange}
               />
@@ -101,7 +103,7 @@ export default function EquipmentStepScreen() {
             render={({ field }) => (
               <OptionGrid
                 options={SHOE_SIZES}
-                value={field.value}
+                value={field.value ?? ''}
                 accessibilityHint={t('shoeSizeLabel')}
                 onChange={field.onChange}
               />

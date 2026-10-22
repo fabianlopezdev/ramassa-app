@@ -39,7 +39,7 @@ import {
   answeredAtInvitation,
   type QuestionStates,
 } from '@ramassa/shared/intake';
-import { EMPTY_INTAKE_CATALOG } from '@ramassa/shared/intake-builder';
+import { EMPTY_INTAKE_CATALOG, requiredBuiltinQuestions } from '@ramassa/shared/intake-builder';
 import {
   buildCreateParticipantInvitePayload,
   createParticipantInviteSchema,
@@ -166,7 +166,14 @@ export function InviteSheet({
   const confirm = () => {
     if (details === null) return;
     create.mutate(
-      { input: details, questionStates: allowedQuestionStates(questionStates, answered) },
+      {
+        input: details,
+        questionStates: allowedQuestionStates(
+          questionStates,
+          answered,
+          requiredBuiltinQuestions(catalog),
+        ),
+      },
       {
         onSuccess: (invite) => {
           playHaptic('success');

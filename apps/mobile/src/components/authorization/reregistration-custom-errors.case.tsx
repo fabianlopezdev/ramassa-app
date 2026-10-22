@@ -102,6 +102,7 @@ mock.module('@/components/profile/profile-section', () => ({
 }));
 mock.module('@/components/profile/season-answer-fields', () => ({
   SeasonAnswerFields: () => null,
+  missingSeasonAnswers: () => new Set(),
 }));
 let answer: (value: CustomAnswerValue) => void = () => {};
 mock.module('@/components/onboarding/custom-question-field', () => ({

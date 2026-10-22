@@ -340,7 +340,7 @@ export function ProfileFormFields({
         render={({ field }) => (
           <CountryPicker
             label={t('onboarding:nationalityLabel')}
-            value={field.value}
+            value={field.value ?? ''}
             onChange={field.onChange}
             errorMessage={errors.nationality ? t('onboarding:errorRequired') : undefined}
           />

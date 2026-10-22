@@ -68,6 +68,7 @@ mock.module('@/lib/onboarding-intake-context', () => ({
     answered: new Set(),
     customScreens: [],
     customAnswers: {},
+    customPlan: [],
   }),
   useWizardStep: (screen: string) => ({
     position: { step: screen === 'terms-intro' ? 14 : 15, total: 15 },

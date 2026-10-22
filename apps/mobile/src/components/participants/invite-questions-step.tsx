@@ -25,6 +25,7 @@ import {
   builtinLabel,
   hiddenBuiltinQuestions,
   isScreenAnswered,
+  requiredBuiltinQuestions,
   textIn,
   wizardFlow,
   wizardScreensInFlowOrder,
@@ -75,6 +76,8 @@ export function InviteQuestionsStep({
     hiddenBuiltinQuestions(catalog),
     // In the order her screens come, as staff arranged them (RAPP-612).
     wizardFlow(catalog),
+    // The organization's required list (RAPP-611), as her phone reads it.
+    requiredBuiltinQuestions(catalog),
   );
   // In the order her phone shows them (RAPP-612), never the catalog's anchor order.
   const customScreens = wizardScreensInFlowOrder(catalog).filter(

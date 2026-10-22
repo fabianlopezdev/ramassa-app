@@ -1,12 +1,14 @@
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, expect, mock, test } from 'bun:test';
 import { createElement, type ReactNode } from 'react';
+import { DEFAULT_REQUIRED_QUESTIONS } from '@ramassa/shared/intake';
 import type { OnboardingDraft } from '@ramassa/shared/onboarding-drafts';
 import ca from '../../../../packages/shared/i18n/locales/ca/onboarding.json';
 
 let draft: OnboardingDraft;
 let invite: string | null = null;
 let removed: ReadonlySet<string> = new Set();
+let required: ReadonlySet<string> = DEFAULT_REQUIRED_QUESTIONS;
 const next = mock(() => {});
 const back = mock(() => {});
 const box = ({ children }: { children?: ReactNode }) => createElement('div', null, children);
@@ -66,6 +68,8 @@ mock.module('@/lib/onboarding-intake-context', () => ({
   useWizardStep: (screen: string) => ({
     position: { step: screen === 'logistics' ? 4 : 5, total: 8 },
     shouldAsk: () => true,
+    required,
+    isRequired: (question: string) => required.has(question),
     nextDraftStep: screen === 'logistics' ? 'equipment' : 'season',
     previousDraftStep: screen === 'equipment' ? 'logistics' : 'documentation',
     goNext: next,
@@ -154,6 +158,7 @@ const { default: Equipment } = await import('../app/(app)/onboarding/equipment')
 afterEach(cleanup);
 beforeEach(() => {
   removed = new Set();
+  required = DEFAULT_REQUIRED_QUESTIONS;
   draft = { currentStep: 'logistics', logistics: { clothingSize: 'M', shoeSize: '38' } };
   invite = null;
   next.mockClear();
@@ -168,6 +173,12 @@ test('contact has plain labels, excludes sizing, and continues while preserving 
   fireEvent.input(view.getByRole('textbox', { name: ca.phoneLabel }), {
     target: { value: '+34600111222' },
   });
+  // The organisation and dependants questions are required by default (RAPP-611).
+  fireEvent.click(view.getByRole('button', { name: ca.continueAction }));
+  await waitFor(() => expect(view.getByRole('alert')).toBeTruthy());
+  expect(next).not.toHaveBeenCalled();
+  fireEvent.click(view.getByRole('radio', { name: ca.noOption }));
+  fireEvent.click(view.getByRole('button', { name: ca.noOption }));
   fireEvent.click(view.getByRole('button', { name: ca.continueAction }));
   await waitFor(() => expect(next).toHaveBeenCalledTimes(1));
   expect(draft.currentStep).toBe('equipment');
@@ -217,6 +228,7 @@ test('organisation starts unanswered, Yes reveals fields, and No removes stale d
   });
   fireEvent.click(view.getByRole('radio', { name: ca.noOption }));
   expect(view.queryByRole('textbox', { name: ca.referenceEntityPlaceholder })).toBeNull();
+  fireEvent.click(view.getByRole('button', { name: ca.noOption }));
   fireEvent.click(view.getByRole('button', { name: ca.continueAction }));
   await waitFor(() => expect(next).toHaveBeenCalledTimes(1));
   expect(draft.logistics?.referenceEntity).toBeNull();
@@ -323,3 +335,11 @@ for (const Component of [Contact, Equipment]) {
     }
   });
 }
+
+test('dependants and the organisation made optional by staff can stay unanswered (RAPP-611)', async () => {
+  required = new Set(['first_name', 'last_name']);
+  const view = render(createElement(Contact));
+  fireEvent.click(view.getByRole('button', { name: ca.continueAction }));
+  await waitFor(() => expect(next).toHaveBeenCalledTimes(1));
+  expect(draft.logistics?.hasDependents).toBeNull();
+});

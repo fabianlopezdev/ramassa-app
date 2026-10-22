@@ -13,7 +13,7 @@ import { playHaptic } from '@/lib/haptics/haptics';
 import { onboardingDraftStore } from '@/lib/onboarding';
 import {
   birthDateErrorKey,
-  identityFormSchema,
+  identityFormSchemaFor,
   type BirthDateField,
   type IdentityFormInput,
 } from '@/lib/onboarding-form';
@@ -40,6 +40,7 @@ export default function BackgroundStepScreen() {
   const [draft] = useState(() => onboardingDraftStore.loadDraft());
   const [hasSubmitErrors, setHasSubmitErrors] = useState(false);
 
+  const identityForm = useMemo(() => identityFormSchemaFor(step.required), [step.required]);
   const defaultValues = useMemo<IdentityFormInput>(() => {
     const saved = (draft?.identity ?? {}) as Partial<IdentityFormInput>;
     return {
@@ -61,7 +62,8 @@ export default function BackgroundStepScreen() {
     trigger,
     formState: { errors },
   } = useForm<IdentityFormInput, unknown, IdentityStep>({
-    resolver: zodResolver(identityFormSchema),
+    // The organization's required list (RAPP-611): an optional question left empty is no answer.
+    resolver: zodResolver(identityForm),
     defaultValues,
     mode: 'onBlur',
   });
@@ -253,7 +255,7 @@ export default function BackgroundStepScreen() {
             render={({ field }) => (
               <CountryPicker
                 label={wording.label('nationality', t('nationalityLabel'))}
-                value={field.value}
+                value={field.value ?? ''}
                 onChange={field.onChange}
               />
             )}

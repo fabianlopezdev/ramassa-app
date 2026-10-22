@@ -27,6 +27,7 @@ import { SignaturePad } from '@/components/equipment/signature-pad';
 import { FormTextArea } from '@/components/forms/form-text-area';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PressableScale } from '@/components/motion/pressable-scale';
+import { FieldErrorText } from '@/components/onboarding/field-error-text';
 import { OptionChip } from '@/components/onboarding/option-chip';
 import { ChoiceGrid } from '@/components/onboarding/option-grid';
 import { OptionSearchPicker } from '@/components/onboarding/option-search-picker';
@@ -85,20 +86,6 @@ export interface CustomQuestionFieldProps {
   readonly errorMessage?: string;
   /** A signature question stops the screen scrolling while she draws. */
   readonly onDrawingChange?: (isDrawing: boolean) => void;
-}
-
-function ErrorText({ message }: { readonly message: string | undefined }) {
-  const fontClass = useLanguageFontClass();
-  if (message === undefined) return null;
-  return (
-    <Text
-      selectable
-      accessibilityLiveRegion="polite"
-      className={`text-start text-form text-error ${fontClass}`}
-    >
-      {message}
-    </Text>
-  );
 }
 
 function QuestionLabel({ text }: { readonly text: string }) {
@@ -200,7 +187,7 @@ function DateField({ value, onChange, errorMessage, label, help, testID }: Field
           />
         </View>
       </View>
-      <ErrorText message={errorMessage} />
+      <FieldErrorText message={errorMessage} />
     </View>
   );
 }
@@ -297,7 +284,7 @@ function FileField({ question, value, onChange, errorMessage, label, help, testI
           </View>
         )
       ) : null}
-      <ErrorText message={failed ? t('customFileUploadFailed') : errorMessage} />
+      <FieldErrorText message={failed ? t('customFileUploadFailed') : errorMessage} />
     </View>
   );
 }
@@ -342,7 +329,7 @@ function SignatureField({
           </Text>
         </PressableScale>
       )}
-      <ErrorText message={errorMessage} />
+      <FieldErrorText message={errorMessage} />
     </View>
   );
 }
@@ -376,7 +363,7 @@ export function CustomQuestionField(props: CustomQuestionFieldProps) {
             style={mixedDirectionInputStyle}
             maxLength={LONG_TEXT_MAX_LENGTH}
           />
-          <ErrorText message={errorMessage} />
+          <FieldErrorText message={errorMessage} />
         </View>
       );
     case 'short_text':
@@ -440,7 +427,7 @@ export function CustomQuestionField(props: CustomQuestionFieldProps) {
             checked={value === true}
             onToggle={() => onChange(value !== true)}
           />
-          <ErrorText message={errorMessage} />
+          <FieldErrorText message={errorMessage} />
         </View>
       );
     case 'item_list':
@@ -458,7 +445,7 @@ export function CustomQuestionField(props: CustomQuestionFieldProps) {
             maxItems={itemListSettings(question.settings).max_items}
             maxLength={LIST_ITEM_MAX_LENGTH}
           />
-          <ErrorText message={errorMessage} />
+          <FieldErrorText message={errorMessage} />
         </View>
       );
     case 'search_choice': {
@@ -543,7 +530,7 @@ export function CustomQuestionField(props: CustomQuestionFieldProps) {
           />
         ))}
       </ChoiceGrid>
-      <ErrorText message={errorMessage} />
+      <FieldErrorText message={errorMessage} />
     </View>
   );
 }

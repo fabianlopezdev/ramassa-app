@@ -66,3 +66,31 @@ test('a screen is tidied and checked: a phone loses its spaces, a bad email is n
   expect(checked.answers.phone).toBe('+34600111222');
   expect(checked.errors).toEqual({ email: 'onboarding:customErrorEmail' });
 });
+
+describe('a required staff question (RAPP-611)', () => {
+  const required = { ...question('short_text'), isRequired: true };
+
+  test('blocks when empty, in her wizard and re-registration', () => {
+    expect(checkCustomAnswers([required], {}, t).errors).toEqual({
+      short_text: 'onboarding:errorRequired',
+    });
+    expect(checkCustomAnswers([required], { short_text: '  ' }, t).errors).toEqual({
+      short_text: 'onboarding:errorRequired',
+    });
+    expect(checkCustomAnswers([required], { short_text: 'Sí' }, t).errors).toEqual({});
+  });
+
+  test('never on the entity referral form', () => {
+    expect(checkCustomAnswers([required], {}, t, { enforceRequired: false }).errors).toEqual({});
+  });
+
+  test('an unticked required consent is missing', () => {
+    const consent = {
+      ...question('consent', { text: { ca: 'Accepto' } }),
+      isRequired: true,
+    };
+    expect(checkCustomAnswers([consent], { consent: false }, t).errors).toEqual({
+      consent: 'onboarding:errorRequired',
+    });
+  });
+});

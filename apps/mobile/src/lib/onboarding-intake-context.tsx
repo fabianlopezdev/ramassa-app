@@ -12,13 +12,16 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { createContext, use, useMemo, type ReactNode } from 'react';
 import { useLanguage } from '@ramassa/shared/i18n';
 import {
+  DEFAULT_REQUIRED_QUESTIONS,
   DEFAULT_WIZARD_FLOW,
+  isRequiredQuestion,
   nextWizardScreen,
   previousWizardScreen,
   wizardScreenPosition,
   type AnsweredQuestions,
   type CustomWizardScreen,
   type IntakeQuestion,
+  type RequiredQuestions,
   type WizardFlow,
   type WizardStepKey,
 } from '@ramassa/shared/intake';
@@ -64,6 +67,11 @@ export interface WizardIntake {
   /** Built-in questions staff removed: never asked, even when editing. */
   readonly hidden: ReadonlySet<IntakeQuestion>;
   /**
+   * The built-in questions that need an answer (RAPP-611), from the catalog.
+   * Absent means the app's own list.
+   */
+  readonly required?: RequiredQuestions;
+  /**
    * For a test player, when staff last changed her situation (RAPP-619): a
    * draft from before it is dropped. Null or absent for everyone else.
    */
@@ -108,6 +116,10 @@ export interface WizardStep {
    * A built-in question staff removed never shows (RAPP-307).
    */
   readonly shouldAsk: (question: IntakeQuestion) => boolean;
+  /** Whether staff made a built-in question required (RAPP-611); her names and language always are. */
+  readonly isRequired: (question: IntakeQuestion) => boolean;
+  /** The organization's required list, for the screen's form schema. */
+  readonly required: RequiredQuestions;
   /** The draft step to save before moving on, and the move itself. */
   readonly nextDraftStep: OnboardingDraftStep;
   readonly goNext: () => void;
@@ -117,7 +129,13 @@ export interface WizardStep {
 }
 
 export function useWizardStep(screen: WizardStepKey): WizardStep {
-  const { notAsked, customPlan, hidden, flow = DEFAULT_WIZARD_FLOW } = useWizardIntake();
+  const {
+    notAsked,
+    customPlan,
+    hidden,
+    flow = DEFAULT_WIZARD_FLOW,
+    required = DEFAULT_REQUIRED_QUESTIONS,
+  } = useWizardIntake();
   const router = useRouter();
   const { edit } = useLocalSearchParams<{ edit?: string }>();
   const isEditing = edit === '1';
@@ -147,6 +165,8 @@ export function useWizardStep(screen: WizardStepKey): WizardStep {
       isEditing,
       position: wizardScreenPosition(screen, notAsked, customPlan, flow),
       shouldAsk: (question) => !hidden.has(question) && (isEditing || !notAsked.has(question)),
+      isRequired: (question) => isRequiredQuestion(question, required),
+      required,
       nextDraftStep: wizardDraftStep(next),
       goNext: isEditing ? backToSummary : () => router.push(wizardStepRoute(next)),
       previousDraftStep: previousStep === null ? null : wizardDraftStep(previousStep),
@@ -158,7 +178,7 @@ export function useWizardStep(screen: WizardStepKey): WizardStep {
           ? null
           : () => router.replace(wizardStepRoute(previousStep ?? previous, 'back')),
     };
-  }, [notAsked, customPlan, flow, hidden, isEditing, router, screen]);
+  }, [notAsked, customPlan, flow, hidden, required, isEditing, router, screen]);
 }
 
 export interface BuiltinWording {

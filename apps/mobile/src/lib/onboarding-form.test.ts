@@ -10,8 +10,10 @@ import {
   composeIsoBirthDate,
   contactFormSchema,
   identityFormSchema,
+  identityFormSchemaFor,
   identityNameFormSchema,
   logisticsFormSchema,
+  logisticsFormSchemaFor,
 } from './onboarding-form';
 
 const identityBase = {
@@ -143,14 +145,37 @@ describe('logisticsFormSchema', () => {
     expect(parsed.numDependents).toBe(2);
   });
 
-  test('an empty entity string reads as the explicit None, matching the chip', () => {
-    const parsed = logisticsFormSchema.parse({
+  test('the No chip is the explicit None; an empty entity with no choice is no answer (RAPP-611)', () => {
+    const answered = logisticsFormSchema.parse({
       referenceEntity: '',
+      hasReferenceEntity: false,
       hasDependents: false,
       clothingSize: 'S',
       shoeSize: '36',
     });
-    expect(parsed.referenceEntity).toBeNull();
+    expect(answered.referenceEntity).toBeNull();
+    const unanswered = {
+      referenceEntity: '',
+      hasDependents: false,
+      clothingSize: 'S',
+      shoeSize: '36',
+    };
+    // Required by default: refused until she chooses.
+    expect(logisticsFormSchema.safeParse(unanswered).success).toBe(false);
+    // Made optional by staff: no answer, never "None".
+    const optional = logisticsFormSchemaFor(new Set(['first_name', 'last_name']));
+    expect(optional.parse(unanswered).referenceEntity).toBeUndefined();
+  });
+
+  test('sizes and dependants left out are unknown when staff made them optional (RAPP-611)', () => {
+    const optional = logisticsFormSchemaFor(new Set(['first_name', 'last_name']));
+    const parsed = optional.parse({ referenceEntity: null });
+    expect(parsed.clothingSize).toBeUndefined();
+    expect(parsed.shoeSize).toBeUndefined();
+    expect(parsed.hasDependents).toBeUndefined();
+    expect(parsed.numDependents).toBe(0);
+    // A size given is still checked.
+    expect(optional.safeParse({ referenceEntity: null, shoeSize: '99' }).success).toBe(false);
   });
 
   test('a non-numeric count fails instead of becoming NaN dependents', () => {
@@ -231,4 +256,59 @@ test('a future date identifies the first part that makes it future', () => {
   } finally {
     setSystemTime();
   }
+});
+
+describe('identity with a required list staff chose (RAPP-611)', () => {
+  const namesOnly = identityFormSchemaFor(new Set(['first_name', 'last_name']));
+
+  test('an optional birth date left empty, and an optional place, are no answer', () => {
+    const parsed = namesOnly.parse({
+      firstName: 'Amina',
+      lastName: 'Diallo',
+      day: '',
+      month: '',
+      year: '',
+      placeOfBirth: '',
+      preferredLanguage: 'ca',
+    });
+    expect(parsed.dateOfBirth).toBeUndefined();
+    expect(parsed.placeOfBirth).toBeUndefined();
+    expect(parsed.nationality).toBeUndefined();
+  });
+
+  test('a birth date she starts is still checked whole', () => {
+    const result = namesOnly.safeParse({
+      firstName: 'Amina',
+      lastName: 'Diallo',
+      day: '4',
+      month: '',
+      year: '1999',
+      preferredLanguage: 'ca',
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error.issues[0]?.path).toEqual(['month']);
+  });
+
+  test('her names stay required whatever the list', () => {
+    expect(
+      identityFormSchemaFor(new Set()).safeParse({
+        firstName: ' ',
+        lastName: 'Diallo',
+        preferredLanguage: 'ca',
+      }).success,
+    ).toBe(false);
+  });
+
+  test('by default her place of birth is required', () => {
+    const result = identityFormSchema.safeParse({
+      ...identityBase,
+      day: '4',
+      month: '3',
+      year: '1999',
+      placeOfBirth: '',
+    });
+    expect(result.success).toBe(false);
+    if (!result.success)
+      expect(result.error.issues.map((issue) => issue.path[0])).toContain('placeOfBirth');
+  });
 });

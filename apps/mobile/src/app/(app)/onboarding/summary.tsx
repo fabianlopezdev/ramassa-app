@@ -26,7 +26,7 @@ import {
 import { useBuiltinWording, useWizardIntake, useWizardStep } from '@/lib/onboarding-intake-context';
 import { useScreenTitle } from '@/lib/screen-wording';
 import { SEASON_SCREEN_TITLE_KEYS } from '@/lib/season-draft';
-import { firstIncompleteScreen } from '@/lib/wizard-completeness';
+import { firstIncompleteStep } from '@/lib/wizard-completeness';
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import { Fragment, useCallback, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -42,6 +42,7 @@ import {
   wizardFlowOrder,
   type IntakeQuestion,
   type WizardQuestionScreen,
+  type WizardStepKey,
 } from '@ramassa/shared/intake';
 import {
   answerText,
@@ -160,7 +161,15 @@ export default function SummaryStepScreen() {
     customScreens,
     customPlan,
     flow = DEFAULT_WIZARD_FLOW,
+    required,
   } = useWizardIntake();
+  const completeness = {
+    custom: customPlan,
+    flow,
+    required,
+    customScreens,
+    storedCustom: customAnswers,
+  };
   const wording = useBuiltinWording();
   // A section is titled as staff worded its screen (RAPP-612), or as before.
   const screenTitle = useScreenTitle();
@@ -171,7 +180,7 @@ export default function SummaryStepScreen() {
 
   // The screen that still misses a required answer when she last confirmed
   // (RAPP-612), or null. Re-checked whenever she comes back.
-  const [missingScreen, setMissingScreen] = useState<WizardQuestionScreen | null>(null);
+  const [missingStep, setMissingStep] = useState<WizardStepKey | null>(null);
 
   // A correction made on another screen comes back here through router.back(),
   // which shows this same screen again: re-read the draft, or it would show
@@ -180,10 +189,18 @@ export default function SummaryStepScreen() {
     useCallback(() => {
       const latest = onboardingDraftStore.loadDraft();
       setDraft(latest);
-      setMissingScreen((current) =>
-        current === null ? null : firstIncompleteScreen(latest, customPlan, flow),
+      setMissingStep((current) =>
+        current === null
+          ? null
+          : firstIncompleteStep(latest, {
+              custom: customPlan,
+              flow,
+              required,
+              customScreens,
+              storedCustom: customAnswers,
+            }),
       );
-    }, [customPlan, flow]),
+    }, [customPlan, flow, required, customScreens, customAnswers]),
   );
 
   const identity: Section = draft?.identity ?? {};
@@ -462,7 +479,15 @@ export default function SummaryStepScreen() {
     ...Object.fromEntries(SEASON_WIZARD_SCREENS.map((screen) => [screen, seasonSection(screen)])),
   };
 
-  const sectionTitle = (screen: WizardQuestionScreen): string =>
+  const sectionTitle = (step: WizardStepKey): string => {
+    const customId = customStepId(step);
+    if (customId !== null) {
+      const screen = customScreens.find((candidate) => candidate.id === customId);
+      return screen === undefined ? t('summaryTitle') : textIn(screen.title, locale);
+    }
+    return builtinSectionTitle(step as WizardQuestionScreen);
+  };
+  const builtinSectionTitle = (screen: WizardQuestionScreen): string =>
     screen === 'identity'
       ? t('summarySectionName')
       : (SEASON_WIZARD_SCREENS as readonly string[]).includes(screen)
@@ -475,11 +500,12 @@ export default function SummaryStepScreen() {
   function confirm() {
     // A required answer is missing (staff may have moved a screen she never
     // saw): she cannot confirm, and goes to that screen to answer it.
-    const incomplete = firstIncompleteScreen(onboardingDraftStore.loadDraft(), customPlan, flow);
+    const incomplete = firstIncompleteStep(onboardingDraftStore.loadDraft(), completeness);
     if (incomplete !== null) {
-      setMissingScreen(incomplete);
+      setMissingStep(incomplete);
       playHaptic('warning');
-      edit(incomplete);
+      if (customStepId(incomplete) === null) edit(incomplete as WizardQuestionScreen);
+      else router.push(`${String(wizardStepRoute(incomplete))}?edit=1` as Href);
       return;
     }
     onboardingDraftStore.saveDraft({
@@ -512,11 +538,11 @@ export default function SummaryStepScreen() {
     >
       <WizardValidationSummary
         testID="summary-missing-required"
-        isVisible={missingScreen !== null}
+        isVisible={missingStep !== null}
         message={
-          missingScreen === null
+          missingStep === null
             ? ''
-            : t('summaryMissingRequired', { section: sectionTitle(missingScreen) })
+            : t('summaryMissingRequired', { section: sectionTitle(missingStep) })
         }
       />
       {wizardFlowOrder(customPlan, flow).map((step) => {

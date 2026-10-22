@@ -5,8 +5,14 @@
  */
 import { describe, expect, test } from 'bun:test';
 import type { WizardFlow } from '@ramassa/shared/intake';
+import type { IntakeScreen } from '@ramassa/shared/intake-builder';
 import type { OnboardingDraft } from '@ramassa/shared/onboarding-drafts';
-import { firstIncompleteScreen, isScreenComplete, resumeStep } from './wizard-completeness';
+import {
+  firstIncompleteScreen,
+  firstIncompleteStep,
+  isScreenComplete,
+  resumeStep,
+} from './wizard-completeness';
 
 const appOrder: WizardFlow = { order: [], hiddenScreens: new Set() };
 // Staff moved the sizes and the season screens before her name.
@@ -74,24 +80,84 @@ describe('firstIncompleteScreen', () => {
 
 describe('resumeStep', () => {
   test('a screen moved before the step she reached, still unanswered, is where she resumes', () => {
-    expect(resumeStep(atLogistics, [], moved)).toBe('equipment');
+    expect(resumeStep(atLogistics, { custom: [], flow: moved })).toBe('equipment');
   });
 
   test('in the app order she resumes where she stopped', () => {
-    expect(resumeStep(atLogistics, [], appOrder)).toBe('logistics');
+    expect(resumeStep(atLogistics, { custom: [], flow: appOrder })).toBe('logistics');
   });
 
   test('a draft resting on the summary goes back to the missing screen', () => {
     const atSummary: OnboardingDraft = { ...atLogistics, currentStep: 'summary' };
-    expect(resumeStep(atSummary, [], appOrder)).toBe('logistics');
+    expect(resumeStep(atSummary, { custom: [], flow: appOrder })).toBe('logistics');
   });
 
   test('a detail screen counts as its question screen', () => {
     const atDetails: OnboardingDraft = { ...atLogistics, currentStep: 'documentation-details' };
-    expect(resumeStep(atDetails, [], appOrder)).toBe('documentation-details');
+    expect(resumeStep(atDetails, { custom: [], flow: appOrder })).toBe('documentation-details');
   });
 
   test('a complete draft resumes where it was', () => {
-    expect(resumeStep(complete, [], moved)).toBe('summary');
+    expect(resumeStep(complete, { custom: [], flow: moved })).toBe('summary');
+  });
+});
+
+describe('the required list staff chose (RAPP-611)', () => {
+  const sizesOptional = new Set(['first_name', 'last_name', 'place_of_birth'] as const);
+
+  test('optional sizes left out never block her', () => {
+    const withoutSizes: OnboardingDraft = {
+      ...complete,
+      logistics: { ...complete.logistics, clothingSize: '', shoeSize: '' },
+    };
+    expect(
+      firstIncompleteStep(withoutSizes, { custom: [], flow: appOrder, required: sizesOptional }),
+    ).toBeNull();
+  });
+
+  test('a season question made required blocks until answered', () => {
+    const childcareRequired = new Set([...sizesOptional, 'childcare_need'] as const);
+    expect(
+      firstIncompleteStep(complete, { custom: [], flow: appOrder, required: childcareRequired }),
+    ).toBe('participation-support');
+    expect(
+      firstIncompleteStep(
+        { ...complete, season: { childcareNeed: 'no' } },
+        { custom: [], flow: appOrder, required: childcareRequired },
+      ),
+    ).toBeNull();
+  });
+
+  test('a required staff question with no answer is where she goes', () => {
+    const screen: IntakeScreen = {
+      id: 'transport',
+      title: { ca: 'Transport' },
+      intro: null,
+      afterScreen: 'logistics',
+      isArchived: false,
+      questions: [
+        {
+          id: 'q1',
+          screenId: 'transport',
+          type: 'short_text',
+          label: { ca: 'Com arribes?' },
+          help: null,
+          privacy: 'normal',
+          placements: ['wizard'],
+          isArchived: false,
+          isRequired: true,
+          settings: {},
+          options: [],
+        },
+      ],
+    };
+    const context = {
+      custom: [{ id: 'transport', afterScreen: 'logistics' as const, isAnswered: false }],
+      flow: appOrder,
+      customScreens: [screen],
+    };
+    expect(firstIncompleteStep(complete, context)).toBe('custom:transport');
+    expect(firstIncompleteStep({ ...complete, custom: { q1: 'Bus' } }, context)).toBeNull();
+    expect(firstIncompleteStep(complete, { ...context, storedCustom: { q1: 'Tren' } })).toBeNull();
   });
 });

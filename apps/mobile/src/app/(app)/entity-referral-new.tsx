@@ -158,6 +158,8 @@ export default function EntityReferralNewScreen() {
       customScreens.flatMap((screen) => screen.questions),
       customAnswers,
       t,
+      // An entity gives what it knows: nothing is required here (RAPP-611).
+      { enforceRequired: false },
     );
     setCustomErrors(checked.errors);
     const customFit = Object.keys(checked.errors).length === 0;

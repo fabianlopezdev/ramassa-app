@@ -10,13 +10,13 @@ import { playHaptic } from '@/lib/haptics/haptics';
 import { mergeLogisticsDraft } from '@/lib/logistics-draft';
 import { onboardingDraftStore, usePendingInviteEntity } from '@/lib/onboarding';
 import {
-  contactFormSchema,
+  contactFormSchemaFor,
   type ContactFormInput,
   type ContactFormValue,
 } from '@/lib/onboarding-form';
 import { useBuiltinWording, useWizardIntake, useWizardStep } from '@/lib/onboarding-intake-context';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
@@ -33,6 +33,13 @@ export default function LogisticsStepScreen() {
   const [hasSubmitErrors, setHasSubmitErrors] = useState(false);
 
   const saved = (draft?.logistics ?? {}) as Partial<ContactFormInput>;
+  // The organization's required list (RAPP-611): an optional question left unanswered is no answer.
+  // On this screen only her Yes or No answers the entity question (RAPP-25).
+  const isEntityAsked = step.shouldAsk('reference_entity');
+  const contactForm = useMemo(
+    () => contactFormSchemaFor(step.required, isEntityAsked),
+    [step.required, isEntityAsked],
+  );
   const invitedEntity = usePendingInviteEntity();
 
   const {
@@ -43,7 +50,7 @@ export default function LogisticsStepScreen() {
     watch,
     formState: { errors },
   } = useForm<ContactFormInput, unknown, ContactFormValue>({
-    resolver: zodResolver(contactFormSchema),
+    resolver: zodResolver(contactForm),
     defaultValues: {
       phone: saved.phone ?? '',
       address: saved.address ?? '',
@@ -53,7 +60,8 @@ export default function LogisticsStepScreen() {
       hasReferenceEntity: saved.hasReferenceEntity ?? null,
       referenceContactName:
         saved.referenceEntity === null ? '' : (saved.referenceContactName ?? ''),
-      hasDependents: saved.hasDependents ?? false,
+      // Unanswered until she taps one: a preselected No would answer for her.
+      hasDependents: saved.hasDependents ?? null,
       numDependents: saved.numDependents ?? '',
     },
   });

@@ -35,6 +35,7 @@ import {
   fetchIntakeCatalog,
   fetchMyCustomAnswers,
   hiddenBuiltinQuestions,
+  requiredBuiltinQuestions,
   wizardFlow,
   wizardScreens,
   type CustomAnswers,
@@ -88,11 +89,13 @@ function seedWizardDraft(intake: WizardIntake, language: LanguageCode): void {
       ? withLanguage
       : {
           ...withLanguage,
-          currentStep: resumeStep(
-            withLanguage,
-            intake.customPlan,
-            intake.flow ?? DEFAULT_WIZARD_FLOW,
-          ),
+          currentStep: resumeStep(withLanguage, {
+            custom: intake.customPlan,
+            flow: intake.flow ?? DEFAULT_WIZARD_FLOW,
+            required: intake.required,
+            customScreens: intake.customScreens,
+            storedCustom: intake.customAnswers,
+          }),
         },
   );
 }
@@ -151,6 +154,9 @@ function OnboardingScreens() {
         // preview of a new invitation reads the same flow.
         flow: wizardFlow(catalog),
         hidden,
+        // The one required list (RAPP-611): every screen, the summary and the
+        // final check read it.
+        required: requiredBuiltinQuestions(catalog),
         scenarioStamp,
       };
     },

@@ -26,8 +26,15 @@ mock.module('@/lib/use-language-font-class', () => ({ useLanguageFontClass: () =
 mock.module('react-native', () => ({
   View: ({ children }: { children: ReactNode }) => createElement('div', null, children),
 }));
+mock.module('@/lib/haptics/haptics', () => ({ playHaptic: () => {} }));
+mock.module('@/components/onboarding/wizard-validation-summary', () => ({
+  WizardValidationSummary: () => null,
+}));
+mock.module('@/components/onboarding/field-error-text', () => ({ FieldErrorText: () => null }));
 mock.module('@/lib/onboarding-intake-context', () => ({
   useWizardStep: () => ({
+    // Nothing staff made required here (RAPP-611).
+    isRequired: () => false,
     position: { step: 12, total: 14 },
     isEditing: editing,
     nextDraftStep: 'summary',

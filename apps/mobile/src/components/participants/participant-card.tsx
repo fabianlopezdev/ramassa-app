@@ -36,7 +36,11 @@ import { Alert, Platform, ScrollView, Text, View } from 'react-native';
 import { toAppError } from '@ramassa/shared/errors';
 import { MADRID_TIME_ZONE } from '@ramassa/shared/events';
 import { DEFAULT_LANGUAGE, isSupportedLanguage, LANGUAGE_NATIVE_NAMES } from '@ramassa/shared/i18n';
-import type { ParticipantDetailRow } from '@ramassa/shared/participants';
+import {
+  dependentsShown,
+  type DependentsShown,
+  type ParticipantDetailRow,
+} from '@ramassa/shared/participants';
 import { formatSupportNeeds } from '@ramassa/shared/schemas';
 
 function CardRow({ label, value }: { readonly label: string; readonly value: string }) {
@@ -176,6 +180,12 @@ export function ParticipantCard({
   // Not joined yet: staff created her profile and she has not accepted the terms (RAPP-300).
   // She can be edited, but not deactivated, handed material or moderated: she is not a player yet.
   const hasJoined = data.terms_accepted_at !== null;
+  const dependentsText = (shownDependents: DependentsShown) =>
+    shownDependents.kind === 'count'
+      ? String(shownDependents.count)
+      : shownDependents.kind === 'none'
+        ? tOnboarding('noOption')
+        : tProfile('notProvided');
   const shown = (value: string | null) =>
     value === null || value.length === 0 ? tProfile('notProvided') : value;
   const row = (
@@ -238,9 +248,10 @@ export function ParticipantCard({
       case 'dependents':
         return {
           label: t('columnDependents'),
-          value: participant.has_dependents
-            ? String(participant.num_dependents)
-            : tOnboarding('noOption'),
+          // Unknown is not "no" (RAPP-611).
+          value: dependentsText(
+            dependentsShown(participant.has_dependents, participant.num_dependents),
+          ),
         };
       case 'clothingSize':
         return { label: tOnboarding('clothingSizeLabel'), value: shown(participant.clothing_size) };

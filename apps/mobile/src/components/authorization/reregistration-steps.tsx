@@ -16,7 +16,12 @@ import {
   type CustomAnswerDraft,
 } from '@/components/onboarding/custom-question-field';
 import { ProfileRow, ProfileSection } from '@/components/profile/profile-section';
-import { SeasonAnswerFields, type SeasonAnswers } from '@/components/profile/season-answer-fields';
+import {
+  missingSeasonAnswers,
+  SeasonAnswerFields,
+  type SeasonAnswers,
+  type SeasonQuestion,
+} from '@/components/profile/season-answer-fields';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { checkCustomAnswers } from '@/lib/custom-answer-errors';
 import { playHaptic } from '@/lib/haptics/haptics';
@@ -33,11 +38,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@ramassa/shared/auth';
 import { countryLabelForCanonical } from '@ramassa/shared/i18n/countries';
 import { municipalityLabelForCanonical } from '@ramassa/shared/i18n/municipalities';
-import type { IntakeQuestion } from '@ramassa/shared/intake';
+import { isRequiredQuestion, type IntakeQuestion } from '@ramassa/shared/intake';
 import {
   EMPTY_INTAKE_CATALOG,
   fetchIntakeCatalog,
   fetchMyCustomAnswers,
+  requiredBuiltinQuestions,
   reregistrationAsks,
   saveMyCustomAnswers,
   seasonScreens,
@@ -106,6 +112,8 @@ export function ReregistrationSteps({
   const [customDraft, setCustomDraft] = useState<CustomAnswerDraft>({});
   // Each staff answer that does not fit its question, with the wizard's words (RAPP-610).
   const [customErrors, setCustomErrors] = useState<Readonly<Record<string, string>>>({});
+  // The season questions staff made required (RAPP-611) that she left empty.
+  const [missing, setMissing] = useState<ReadonlySet<SeasonQuestion>>(new Set());
 
   // Read fresh: she may have just corrected her details on the profile screen.
   const profile = useQuery({
@@ -143,13 +151,15 @@ export function ReregistrationSteps({
       readonly season: SeasonAnswers;
       readonly custom: CustomAnswerDraft;
     }) => {
+      // Her staff answers first: the season call ends the re-registration and
+      // re-checks every required answer, staff ones included (RAPP-611).
+      await saveMyCustomAnswers(supabase, customAnswersToSave(customScreens, custom, storedCustom));
       await updateMySeasonAnswers(supabase, {
         applicantStatus: value.applicantStatus ?? undefined,
         supportingEntities: [...value.supportingEntities],
         childcareNeed: value.childcareNeed ?? undefined,
         specificNeeds: value.specificNeeds.trim() === '' ? undefined : value.specificNeeds,
       });
-      await saveMyCustomAnswers(supabase, customAnswersToSave(customScreens, custom, storedCustom));
     },
   });
 
@@ -244,7 +254,11 @@ export function ReregistrationSteps({
               <SeasonAnswerFields
                 testIDPrefix="reregistration"
                 value={current}
-                onChange={(patch) => setAnswers({ ...current, ...patch })}
+                missing={missing}
+                onChange={(patch) => {
+                  setAnswers({ ...current, ...patch });
+                  setMissing(new Set());
+                }}
                 entityNames={[]}
                 showSensitive
                 shows={(question: IntakeQuestion) => asks(question)}
@@ -288,7 +302,13 @@ export function ReregistrationSteps({
                     t,
                   );
                   setCustomErrors(checked.errors);
-                  if (Object.keys(checked.errors).length > 0) {
+                  const required = requiredBuiltinQuestions(catalog);
+                  const unanswered = missingSeasonAnswers(
+                    current,
+                    (question) => asks(question) && isRequiredQuestion(question, required),
+                  );
+                  setMissing(unanswered);
+                  if (Object.keys(checked.errors).length > 0 || unanswered.size > 0) {
                     playHaptic('warning');
                     return;
                   }

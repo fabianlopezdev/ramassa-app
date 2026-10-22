@@ -59,7 +59,10 @@ export default function DocumentationStepScreen() {
       DOCUMENT_TYPES.map((value) => ({ value, label: t(labelKeys[value]) })),
       choice === 'skip' ? null : (choice ?? null),
     ),
-    { value: 'skip' as const, label: t('documentSkipAction') },
+    // "Not now" is no answer: staff can make the document required (RAPP-611).
+    ...(step.isRequired('document')
+      ? []
+      : [{ value: 'skip' as const, label: t('documentSkipAction') }]),
   ];
   const persist = (currentStep: typeof step.nextDraftStep) => {
     const latest = onboardingDraftStore.loadDraft();
@@ -71,7 +74,7 @@ export default function DocumentationStepScreen() {
     });
   };
   const continueFromChoice = () => {
-    if (choice === undefined) {
+    if (choice === undefined || (choice === 'skip' && step.isRequired('document'))) {
       setHasSubmitErrors(true);
       playHaptic('warning');
       return;

@@ -21,15 +21,11 @@ import { appTermsWording } from '@/lib/app-terms-wording';
 import { logout } from '@/lib/auth';
 import { confirmAction } from '@/lib/confirm-action';
 import { playHaptic } from '@/lib/haptics/haptics';
+import { completeOnboarding, onboardingDraftStore } from '@/lib/onboarding';
 import {
-  completeOnboarding,
-  onboardingDraftStore,
-  saveWizardCustomAnswers,
-} from '@/lib/onboarding';
-import {
-  documentationFormSchema,
-  identityFormSchema,
-  logisticsFormSchema,
+  documentationFormSchemaFor,
+  identityFormSchemaFor,
+  logisticsFormSchemaFor,
 } from '@/lib/onboarding-form';
 import {
   customAnswersToSave,
@@ -39,6 +35,7 @@ import {
 import { useWizardIntake, useWizardStep } from '@/lib/onboarding-intake-context';
 import { useScreenWording } from '@/lib/screen-wording';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
+import { firstIncompleteStep } from '@/lib/wizard-completeness';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -46,7 +43,11 @@ import { Text } from 'react-native';
 import { useAuth } from '@ramassa/shared/auth';
 import { signatureStrokesSchema, type SignatureStrokes } from '@ramassa/shared/equipment';
 import type { AppErrorCode } from '@ramassa/shared/errors';
-import { trimPayloadToAnswers } from '@ramassa/shared/intake';
+import {
+  DEFAULT_REQUIRED_QUESTIONS,
+  DEFAULT_WIZARD_FLOW,
+  trimPayloadToAnswers,
+} from '@ramassa/shared/intake';
 import type { OnboardingDraftStep } from '@ramassa/shared/onboarding-drafts';
 import {
   buildCompleteOnboardingPayload,
@@ -140,17 +141,33 @@ export default function TermsStepScreen() {
       // so nothing unvalidated can reach the payload even from a tampered or
       // stale draft. A failed parse sends the player back to that step with
       // their data still in the draft, not into a dead end.
-      const identity = identityFormSchema.safeParse(draft?.identity ?? {});
+      // A required answer missing anywhere (RAPP-611, RAPP-612) sends her to
+      // that screen, before anything is sent.
+      const incomplete = firstIncompleteStep(draft, {
+        custom: intake.customPlan,
+        flow: intake.flow ?? DEFAULT_WIZARD_FLOW,
+        required: intake.required,
+        customScreens: intake.customScreens,
+        storedCustom: intake.customAnswers,
+      });
+      if (incomplete !== null) {
+        router.replace(wizardStepRoute(incomplete, 'back'));
+        return;
+      }
+      const required = intake.required ?? DEFAULT_REQUIRED_QUESTIONS;
+      const identity = identityFormSchemaFor(required).safeParse(draft?.identity ?? {});
       if (!identity.success) {
         router.replace(wizardStepRoute('identity', 'back'));
         return;
       }
-      const documentation = documentationFormSchema.safeParse(draft?.documentation ?? {});
+      const documentation = documentationFormSchemaFor(required).safeParse(
+        draft?.documentation ?? {},
+      );
       if (!documentation.success) {
         router.replace(wizardStepRoute('documentation', 'back'));
         return;
       }
-      const logistics = logisticsFormSchema.safeParse(draft?.logistics ?? {});
+      const logistics = logisticsFormSchemaFor(required).safeParse(draft?.logistics ?? {});
       if (!logistics.success) {
         const field = logistics.error.issues[0]?.path[0];
         router.replace(
@@ -187,21 +204,14 @@ export default function TermsStepScreen() {
       );
 
       // Her answers to the staff questions (RAPP-307), only the new or changed
-      // ones, sent before the profile so a failure leaves her here to try again.
-      // A woman who started on her own has no profile to hold them until the
-      // profile is written, so hers go right after it.
+      // ones. They travel with her profile in the one signed call (RAPP-611),
+      // so a woman who started on her own keeps them too, and the required
+      // ones are checked there before anything is kept.
       const customAnswers = customAnswersToSave(
         intake.customScreens,
         draft?.custom,
         intake.customAnswers,
       );
-      if (intake.profile !== null) {
-        const saved = await saveWizardCustomAnswers(customAnswers);
-        if (!saved.ok) {
-          setFailureCode(saved.error.code);
-          return;
-        }
-      }
 
       // Only what is new or changed travels (RAPP-300): the server keeps every
       // stored value the payload leaves out, so a staff answer she only
@@ -213,17 +223,13 @@ export default function TermsStepScreen() {
           intake.profile === null ? {} : storedPayloadFromProfile(intake.profile),
         ),
         signing.data,
+        customAnswers,
       );
       if (!result.ok) {
         // The shake and its buzz come from the code, so a system failure feels
         // different from the "you have not ticked the box" refusal above.
         setFailureCode(result.error.code);
         return;
-      }
-      if (intake.profile === null) {
-        // She has joined by now and cannot finish twice: a failure here is
-        // logged by safeAsync, and staff can complete the answers on her record.
-        await saveWizardCustomAnswers(customAnswers);
       }
       // The completed primary action of the whole flow (RAPP-70). No animation
       // to pair it with: the auth gate swaps this stack for the tabs the moment
