@@ -279,14 +279,24 @@ function isCalendarDate(value: string): boolean {
   );
 }
 
+/** Characters as she sees them (code points), the way Postgres `length` counts. */
+function characterCount(text: string): number {
+  return [...text].length;
+}
+
 /**
  * The one check of an answer. `private.custom_answer_value_valid` in the
  * database states the same rules; change both together.
  */
 export function customAnswerSchema(question: AnswerQuestionShape): z.ZodType<CustomAnswerValue> {
   const live = new Set(question.options.filter((option) => !option.isArchived).map((o) => o.id));
+  // Lengths count characters as she sees them (code points), as Postgres
+  // `length` does: an emoji is one, never two UTF-16 units.
   const trimmedText = (max: number) =>
-    z.string().refine((value) => value.trim().length >= 1 && value.trim().length <= max);
+    z.string().refine((value) => {
+      const length = characterCount(value.trim());
+      return length >= 1 && length <= max;
+    });
   switch (question.type) {
     case 'short_text':
       return trimmedText(SHORT_TEXT_MAX_LENGTH);
@@ -325,7 +335,10 @@ export function customAnswerSchema(question: AnswerQuestionShape): z.ZodType<Cus
     case 'phone':
       return z.string().regex(PHONE_PATTERN);
     case 'email':
-      return z.string().max(EMAIL_MAX_LENGTH).regex(EMAIL_PATTERN);
+      return z
+        .string()
+        .refine((value) => characterCount(value) <= EMAIL_MAX_LENGTH)
+        .regex(EMAIL_PATTERN);
     case 'item_list': {
       const settings = itemListSettings(question.settings);
       return z
@@ -335,7 +348,9 @@ export function customAnswerSchema(question: AnswerQuestionShape): z.ZodType<Cus
         .refine((items) =>
           items.every(
             (item) =>
-              item === item.trim() && item.length >= 1 && item.length <= LIST_ITEM_MAX_LENGTH,
+              item === item.trim() &&
+              characterCount(item) >= 1 &&
+              characterCount(item) <= LIST_ITEM_MAX_LENGTH,
           ),
         )
         .refine((items) => new Set(items).size === items.length);
@@ -346,7 +361,11 @@ export function customAnswerSchema(question: AnswerQuestionShape): z.ZodType<Cus
       const accepted = FILE_CONTENT_TYPES[fileSettings(question.settings).accept];
       return z.strictObject({
         key: z.string().regex(FILE_KEY_PATTERN),
-        name: z.string().min(1).max(FILE_NAME_MAX_LENGTH),
+        name: z
+          .string()
+          .refine(
+            (name) => characterCount(name) >= 1 && characterCount(name) <= FILE_NAME_MAX_LENGTH,
+          ),
         content_type: z.string().refine((type) => accepted.includes(type)),
         size: z.int().min(1).max(FILE_MAX_BYTES),
       });

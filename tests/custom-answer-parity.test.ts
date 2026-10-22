@@ -121,6 +121,37 @@ const CASES: readonly Case[] = [
   ['signature', {}, [[[0.5, 3]]]],
   ['signature', {}, []],
   ['signature', {}, [[]]],
+  // Whitespace the way JavaScript's trim sees it (RAPP-610): tabs, new lines,
+  // a no-break space and an ideographic space are blank, and padding is not
+  // part of the answer.
+  ['short_text', {}, '\t\n'],
+  ['short_text', {}, ' '],
+  ['short_text', {}, '\u00a0\u3000'],
+  ['long_text', {}, '\n\n\n'],
+  ['short_text', {}, '\u00a0Hola\u3000'],
+  ['item_list', { max_items: 2 }, ['A\u00a0']],
+  ['item_list', { max_items: 2 }, ['\tA']],
+  // Length counts characters as she sees them (code points), so an emoji is one.
+  ['short_text', {}, '😀'.repeat(500)],
+  ['short_text', {}, '😀'.repeat(501)],
+  ['long_text', {}, '😀'.repeat(4000)],
+  ['item_list', { max_items: 2 }, ['😀'.repeat(120)]],
+  ['item_list', { max_items: 2 }, ['😀'.repeat(121)]],
+  [
+    'file_upload',
+    { accept: 'document' },
+    file('pdf', 'application/pdf', { name: `${'😀'.repeat(116)}.pdf` }),
+  ],
+  [
+    'file_upload',
+    { accept: 'document' },
+    file('pdf', 'application/pdf', { name: `${'😀'.repeat(117)}.pdf` }),
+  ],
+  ['email', {}, `${'é'.repeat(240)}@exemple.cat`],
+  // A padded fixed value is not the value.
+  ['yes_no_maybe', {}, ' maybe '],
+  ['yes_no', {}, ' yes'],
+  ['single_choice', {}, ` ${LIVE[0]}`],
 ];
 
 function container(): string | null {
@@ -175,6 +206,92 @@ test.skipIf(database === null)(
     expect(fromSchema).toContain('f');
   },
   30_000,
+);
+
+const CHOICE_TYPES: readonly CustomQuestionType[] = [
+  'single_choice',
+  'search_choice',
+  'multiple_choice',
+];
+
+/**
+ * The same cases through the real call her phone makes,
+ * `save_my_custom_answers`, as the seeded player: an answer counts as accepted
+ * when a row is stored. A blank answer removes rather than stores, which is
+ * what refusing it means for her.
+ */
+test.skipIf(database === null)(
+  'saving through save_my_custom_answers stores exactly what the shared schema accepts',
+  () => {
+    const cases = JSON.stringify(
+      CASES.map(([type, settings, value]) => ({ type, settings, value })),
+    ).replaceAll("'", "''");
+    const sql = `begin;
+create function pg_temp.verdicts(p_cases jsonb) returns text language plpgsql as $f$
+declare
+  entry jsonb;
+  question uuid;
+  screen uuid;
+  verdicts text := '';
+begin
+  insert into public.intake_screens (org_id, title, after_screen)
+  values ('${ORG}', '{"ca": "Paritat"}', 'logistics') returning id into screen;
+  for entry in select value from jsonb_array_elements(p_cases) with ordinality as c(value, n) order by n loop
+    insert into public.custom_questions (org_id, screen_id, question_type, label, privacy, placements, settings)
+    values ('${ORG}', screen, entry ->> 'type', '{"ca": "Pregunta"}', 'normal', array['wizard'],
+            entry -> 'settings')
+    returning id into question;
+    if entry ->> 'type' in ('${CHOICE_TYPES.join("','")}') then
+      insert into public.custom_question_options (id, org_id, question_id, label, sort_order)
+      values ('${LIVE[0]}', '${ORG}', question, '{"ca": "A"}', 0),
+             ('${LIVE[1]}', '${ORG}', question, '{"ca": "B"}', 1)
+      on conflict (id) do update set question_id = excluded.question_id;
+    end if;
+    perform set_config('request.jwt.claims', '{"sub": "${HER}", "role": "authenticated"}', true);
+    perform set_config('role', 'authenticated', true);
+    begin
+      perform public.save_my_custom_answers(jsonb_build_object(question::text, entry -> 'value'));
+    exception when others then
+      null;
+    end;
+    perform set_config('role', 'postgres', true);
+    verdicts := verdicts || case when exists (select 1 from public.custom_answers a
+                                               where a.question_id = question) then 't' else 'f' end;
+  end loop;
+  return verdicts;
+end
+$f$;
+select pg_temp.verdicts('${cases}'::jsonb);
+rollback;`;
+    const output = execFileSync(
+      'docker',
+      ['exec', '-i', database!, 'psql', '-U', 'postgres', '-d', 'postgres', '-t', '-A', '-q'],
+      { encoding: 'utf8', input: sql },
+    );
+    const fromDatabase = output
+      .split('\n')
+      .find((line) => /^[tf]+$/.test(line.trim()))
+      ?.trim();
+    const fromSchema = CASES.map(([type, settings, value]) =>
+      customAnswerSchema({
+        type,
+        settings,
+        options: LIVE.map((id) => ({ id, isArchived: false })),
+      }).safeParse(value).success
+        ? 't'
+        : 'f',
+    ).join('');
+    expect(fromDatabase?.length).toBe(CASES.length);
+    const differing = CASES.flatMap(([type, , value], index) =>
+      fromDatabase![index] === fromSchema[index]
+        ? []
+        : [
+            `${type} ${JSON.stringify(value).slice(0, 60)}: saved ${fromDatabase![index]} zod ${fromSchema[index]}`,
+          ],
+    );
+    expect(differing).toEqual([]);
+  },
+  60_000,
 );
 
 test.skipIf(database !== null)('answer parity skipped: no isolated database container', () => {
