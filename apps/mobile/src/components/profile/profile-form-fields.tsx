@@ -443,7 +443,7 @@ export function ProfileFormFields({
               // matching a field by its text is ambiguous and can resolve to the
               // caption, which nothing can type into. The suite edits this field.
               testID={`${testIDPrefix}-phone`}
-              label={t('onboarding:phoneLabel')}
+              label={t('onboarding:optionalFieldLabel', { label: t('onboarding:phoneLabel') })}
               placeholder={t('onboarding:phonePlaceholder')}
               value={field.value ?? ''}
               onChangeText={field.onChange}
@@ -460,7 +460,7 @@ export function ProfileFormFields({
           name="address"
           render={({ field }) => (
             <AuthTextField
-              label={t('onboarding:addressLabel')}
+              label={t('onboarding:optionalFieldLabel', { label: t('onboarding:addressLabel') })}
               value={field.value ?? ''}
               onChangeText={field.onChange}
               onBlur={field.onBlur}
@@ -473,7 +473,7 @@ export function ProfileFormFields({
         name="city"
         render={({ field }) => (
           <MunicipalityPicker
-            label={t('onboarding:cityLabel')}
+            label={t('onboarding:optionalFieldLabel', { label: t('onboarding:cityLabel') })}
             value={field.value ?? ''}
             onChange={field.onChange}
             errorMessage={errors.city ? t('onboarding:errorMunicipalityInvalid') : undefined}
@@ -486,7 +486,7 @@ export function ProfileFormFields({
           name="postalCode"
           render={({ field }) => (
             <AuthTextField
-              label={t('onboarding:postalCodeLabel')}
+              label={t('onboarding:optionalFieldLabel', { label: t('onboarding:postalCodeLabel') })}
               value={field.value ?? ''}
               onChangeText={field.onChange}
               onBlur={field.onBlur}
@@ -519,7 +519,9 @@ export function ProfileFormFields({
           name="referenceContactName"
           render={({ field }) => (
             <AuthTextField
-              label={t('onboarding:referenceContactNameLabel')}
+              label={t('onboarding:optionalFieldLabel', {
+                label: t('onboarding:referenceContactNameLabel'),
+              })}
               value={field.value ?? ''}
               onChangeText={field.onChange}
               onBlur={field.onBlur}

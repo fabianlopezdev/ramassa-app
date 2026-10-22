@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, expect, mock, test } from 'bun:test';
-import { createElement, type ReactNode } from 'react';
-import { DEFAULT_REQUIRED_QUESTIONS } from '@ramassa/shared/intake';
+import { createElement, forwardRef, type ReactNode } from 'react';
+import { DEFAULT_REQUIRED_QUESTIONS, questionFieldLabel } from '@ramassa/shared/intake';
 import type { OnboardingDraft } from '@ramassa/shared/onboarding-drafts';
 import ca from '../../../../packages/shared/i18n/locales/ca/onboarding.json';
 
@@ -11,14 +11,24 @@ let removed: ReadonlySet<string> = new Set();
 let required: ReadonlySet<string> = DEFAULT_REQUIRED_QUESTIONS;
 const next = mock(() => {});
 const back = mock(() => {});
-const box = ({ children }: { children?: ReactNode }) => createElement('div', null, children);
+const focused: Element[] = [];
+const box = forwardRef<HTMLDivElement, { children?: ReactNode; testID?: string }>(
+  ({ children, testID }, ref) => createElement('div', { ref, 'data-testid': testID }, children),
+);
 mock.module('react-native', () => ({
   View: box,
   Text: box,
   useWindowDimensions: () => ({ width: 402, fontScale: 1 }),
+  AccessibilityInfo: {
+    sendAccessibilityEvent: (node: Element, event: string) => {
+      if (event === 'focus') focused.push(node);
+    },
+  },
 }));
+const translate = (key: string, values?: { label?: string }) =>
+  (ca[key as keyof typeof ca] ?? key).replace('{{label}}', values?.label ?? '');
 mock.module('react-i18next', () => ({
-  useTranslation: () => ({ t: (key: string) => ca[key as keyof typeof ca] ?? key }),
+  useTranslation: () => ({ t: translate }),
 }));
 mock.module('@/lib/haptics/haptics', () => ({ playHaptic: () => {} }));
 mock.module('@/lib/use-language-font-class', () => ({ useLanguageFontClass: () => '' }));
@@ -63,6 +73,10 @@ mock.module('@/lib/onboarding-intake-context', () => ({
   useWizardIntake: () => ({ hidden: removed }),
   useBuiltinWording: () => ({
     label: (_key: string, fallback: string) => fallback,
+    field: (key: Parameters<typeof questionFieldLabel>[0], fallback: string) =>
+      questionFieldLabel(key, fallback, required as never, (label) =>
+        translate('optionalFieldLabel', { label }),
+      ),
     help: () => null,
   }),
   useWizardStep: (screen: string) => ({
@@ -153,6 +167,7 @@ mock.module('@/components/auth/auth-text-field', () => ({
       onBlur,
     }),
 }));
+const optional = (label: string) => translate('optionalFieldLabel', { label });
 const { default: Contact } = await import('../app/(app)/onboarding/logistics');
 const { default: Equipment } = await import('../app/(app)/onboarding/equipment');
 afterEach(cleanup);
@@ -161,6 +176,7 @@ beforeEach(() => {
   required = DEFAULT_REQUIRED_QUESTIONS;
   draft = { currentStep: 'logistics', logistics: { clothingSize: 'M', shoeSize: '38' } };
   invite = null;
+  focused.length = 0;
   next.mockClear();
   back.mockClear();
 });
@@ -170,7 +186,7 @@ test('contact has plain labels, excludes sizing, and continues while preserving 
   expect(view.queryByText(ca.clothingSizeLabel)).toBeNull();
   expect(view.queryByText(ca.shoeSizeLabel)).toBeNull();
   expect(view.container.querySelector('[data-has-icon="true"]')).toBeNull();
-  fireEvent.input(view.getByRole('textbox', { name: ca.phoneLabel }), {
+  fireEvent.input(view.getByRole('textbox', { name: optional(ca.phoneLabel) }), {
     target: { value: '+34600111222' },
   });
   // The organisation and dependants questions are required by default (RAPP-611).
@@ -219,7 +235,7 @@ test('organisation starts unanswered, Yes reveals fields, and No removes stale d
     'false',
   );
   expect(view.queryByRole('textbox', { name: ca.referenceEntityPlaceholder })).toBeNull();
-  expect(view.queryByRole('textbox', { name: ca.referenceContactNameLabel })).toBeNull();
+  expect(view.queryByRole('textbox', { name: optional(ca.referenceContactNameLabel) })).toBeNull();
   fireEvent.click(view.getAllByRole('radio', { name: ca.yesOption })[0]!);
   fireEvent.click(view.getByRole('button', { name: ca.continueAction }));
   await waitFor(() => expect(view.getByRole('alert')).toBeTruthy());
@@ -227,7 +243,7 @@ test('organisation starts unanswered, Yes reveals fields, and No removes stale d
   fireEvent.input(view.getByRole('textbox', { name: ca.referenceEntityPlaceholder }), {
     target: { value: 'Creu Roja' },
   });
-  fireEvent.input(view.getByRole('textbox', { name: ca.referenceContactNameLabel }), {
+  fireEvent.input(view.getByRole('textbox', { name: optional(ca.referenceContactNameLabel) }), {
     target: { value: 'Maria' },
   });
   fireEvent.click(view.getAllByRole('radio', { name: ca.noOption })[0]!);
@@ -249,7 +265,7 @@ test('a contact question staff removed stays hidden after Yes (RAPP-618)', () =>
   const view = render(createElement(Contact));
   fireEvent.click(view.getAllByRole('radio', { name: ca.yesOption })[0]!);
   expect(view.getByRole('textbox', { name: ca.referenceEntityPlaceholder })).toBeTruthy();
-  expect(view.queryByRole('textbox', { name: ca.referenceContactNameLabel })).toBeNull();
+  expect(view.queryByRole('textbox', { name: optional(ca.referenceContactNameLabel) })).toBeNull();
 });
 
 test('suggested organisations do not answer the question; Yes reveals the retained suggestion', () => {
@@ -348,4 +364,53 @@ test('dependants and the organisation made optional by staff can stay unanswered
   fireEvent.click(view.getByRole('button', { name: ca.continueAction }));
   await waitFor(() => expect(next).toHaveBeenCalledTimes(1));
   expect(draft.logistics?.hasDependents).toBeNull();
+});
+
+test('a blocked Continue marks the missing dependants answer and moves focus to it (pending fix 20)', async () => {
+  const view = render(createElement(Contact));
+  fireEvent.click(view.getAllByRole('radio', { name: ca.noOption })[0]!);
+  fireEvent.click(view.getByRole('button', { name: ca.continueAction }));
+  await waitFor(() => expect(view.getByRole('alert')).toBeTruthy());
+  const group = view.getByTestId('question-dependents');
+  expect(group.textContent).toContain(ca.errorRequired);
+  expect(view.getByTestId('question-reference_entity').textContent).not.toContain(ca.errorRequired);
+  await waitFor(() => expect(group.contains(focused.at(-1) ?? null)).toBe(true));
+  expect(focused.at(-1)?.textContent).toBe(ca.errorRequired);
+  expect(next).not.toHaveBeenCalled();
+});
+
+test('the first missing answer gets the focus when several are missing', async () => {
+  const view = render(createElement(Contact));
+  fireEvent.click(view.getByRole('button', { name: ca.continueAction }));
+  await waitFor(() => expect(focused.length).toBe(1));
+  expect(view.getByTestId('question-reference_entity').contains(focused[0]!)).toBe(true);
+  expect(view.getByTestId('question-dependents').textContent).toContain(ca.errorRequired);
+});
+
+test('the sizes say which one is missing, and say optional once staff make them so (pending fixes 20, 21)', async () => {
+  draft = { currentStep: 'equipment', logistics: {} };
+  const view = render(createElement(Equipment));
+  expect(view.getByText(ca.clothingSizeLabel)).toBeTruthy();
+  fireEvent.click(view.getByRole('button', { name: 'M' }));
+  fireEvent.click(view.getByRole('button', { name: ca.continueAction }));
+  await waitFor(() =>
+    expect(view.getByTestId('question-shoe_size').contains(focused.at(-1) ?? null)).toBe(true),
+  );
+  expect(view.getByTestId('question-shoe_size').textContent).toContain(ca.errorRequired);
+  expect(view.getByTestId('question-clothing_size').textContent).not.toContain(ca.errorRequired);
+  view.unmount();
+  required = new Set(['first_name', 'last_name', 'reference_entity', 'dependents']);
+  const optionalSizes = render(createElement(Equipment));
+  expect(optionalSizes.getByText(optional(ca.clothingSizeLabel))).toBeTruthy();
+  expect(optionalSizes.getByText(optional(ca.shoeSizeLabel))).toBeTruthy();
+});
+
+test('the phone label follows the required list (pending fix 21)', () => {
+  const view = render(createElement(Contact));
+  expect(view.getByRole('textbox', { name: optional(ca.phoneLabel) })).toBeTruthy();
+  view.unmount();
+  required = new Set([...DEFAULT_REQUIRED_QUESTIONS, 'phone']);
+  const phoneRequired = render(createElement(Contact));
+  expect(phoneRequired.getByRole('textbox', { name: ca.phoneLabel })).toBeTruthy();
+  expect(ca.phoneLabel).not.toContain('(');
 });

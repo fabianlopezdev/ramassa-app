@@ -17,9 +17,11 @@ const HER = `(select id from auth.users where email = '${TEST_PLAYER_EMAIL}')`;
 // The seeded "public transport?" question on the travel screen: her wizard and the referral form.
 const SCREEN = '5eed0000-0000-4000-8044-000000000001';
 const QUESTION = '5eed0000-0000-4000-8045-000000000001';
-const onboardingEn = JSON.parse(
-  readFileSync('packages/shared/i18n/locales/en/onboarding.json', 'utf8'),
-) as Record<string, string>;
+const onboardingIn = (language: string) =>
+  JSON.parse(
+    readFileSync(`packages/shared/i18n/locales/${language}/onboarding.json`, 'utf8'),
+  ) as Record<string, string>;
+const onboardingEn = onboardingIn('en');
 
 test.use({ actionTimeout: 15_000 });
 test.describe.configure({ mode: 'serial' });
@@ -97,6 +99,37 @@ test('the design role makes the sizes optional and a staff question required', a
     ),
   ).not.toBe('0');
 });
+
+// Pending fixes 20 and 21: a blocked Continue says under the question what is
+// missing and moves focus there; "(optional)" follows the required list.
+for (const language of ['ca', 'ar'] as const) {
+  test(`in ${language}, Continue marks the missing dependants answer and focuses it`, async ({
+    browser,
+  }) => {
+    test.setTimeout(180_000);
+    const words = onboardingIn(language);
+    const player = await (await browser.newContext({ locale: language })).newPage();
+    await signInPlayer(player, TEST_PLAYER_EMAIL, language);
+    await expect(player).toHaveURL(`${PLAYER_ORIGIN}/onboarding/logistics`, { timeout: 60_000 });
+    // The phone is optional by default: its label says so, from the list.
+    await expect(
+      player.getByText(words.optionalFieldLabel!.replace('{{label}}', words.phoneLabel!), {
+        exact: true,
+      }),
+    ).toBeVisible();
+    // The organisation answered, the dependants question left out.
+    await player.getByRole('radio', { name: words.noOption, exact: true }).first().click();
+    await player.getByRole('button', { name: words.continueAction, exact: true }).click();
+    const dependants = player.getByTestId('question-dependents');
+    await expect(dependants.getByText(words.errorRequired!, { exact: true })).toBeVisible();
+    await expect(
+      player.getByTestId('question-reference_entity').getByText(words.errorRequired!),
+    ).toHaveCount(0);
+    await expect(dependants.getByText(words.errorRequired!, { exact: true })).toBeFocused();
+    await expect(dependants).toBeInViewport();
+    await expect(player).toHaveURL(`${PLAYER_ORIGIN}/onboarding/logistics`);
+  });
+}
 
 test('she skips the optional sizes, and the summary sends her to the required staff question', async ({
   browser,

@@ -370,13 +370,15 @@ export default function EntityReferralNewScreen() {
             />
           )}
           <MunicipalityPicker
-            label={t('onboarding:cityLabel')}
+            label={t('onboarding:optionalFieldLabel', { label: t('onboarding:cityLabel') })}
             value={form.city}
             onChange={(city) => set({ city })}
           />
           <AuthTextField
             testID="entity-referral-contact-name"
-            label={t('onboarding:referenceContactNameLabel')}
+            label={t('onboarding:optionalFieldLabel', {
+              label: t('onboarding:referenceContactNameLabel'),
+            })}
             value={form.referenceContactName}
             onChangeText={(referenceContactName) => set({ referenceContactName })}
             maxLength={200}

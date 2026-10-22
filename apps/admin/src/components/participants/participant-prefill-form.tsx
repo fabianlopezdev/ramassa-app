@@ -204,7 +204,9 @@ export function ParticipantPrefillForm({
         <TextField
           control={control}
           name="referenceContactName"
-          label={t('onboarding:referenceContactNameLabel')}
+          label={t('onboarding:optionalFieldLabel', {
+            label: t('onboarding:referenceContactNameLabel'),
+          })}
         />
         <SelectField
           control={control}

@@ -395,7 +395,10 @@ export function ReferralForm({
           name="city"
           control={control}
           render={({ field }) => (
-            <Labelled id="referral-city" label={t('onboarding:cityLabel')}>
+            <Labelled
+              id="referral-city"
+              label={t('onboarding:optionalFieldLabel', { label: t('onboarding:cityLabel') })}
+            >
               <select
                 {...field}
                 value={field.value ?? ''}
@@ -477,7 +480,9 @@ export function ReferralForm({
               {...field}
               value={field.value ?? ''}
               id="referral-contact-name"
-              label={t('onboarding:referenceContactNameLabel')}
+              label={t('onboarding:optionalFieldLabel', {
+                label: t('onboarding:referenceContactNameLabel'),
+              })}
             />
           )}
         />

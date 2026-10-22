@@ -10,6 +10,7 @@ import { wizardDraftStep, wizardStepRoute } from '@/lib/onboarding-intake';
 import { lastSupportNeedStep } from '@/lib/support-needs-draft';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { createContext, use, useMemo, type ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useLanguage } from '@ramassa/shared/i18n';
 import {
   DEFAULT_REQUIRED_QUESTIONS,
@@ -17,6 +18,7 @@ import {
   isRequiredQuestion,
   nextWizardScreen,
   previousWizardScreen,
+  questionFieldLabel,
   wizardScreenPosition,
   type AnsweredQuestions,
   type CustomWizardScreen,
@@ -30,6 +32,7 @@ import {
   builtinLabel,
   builtinOptions,
   EMPTY_INTAKE_CATALOG,
+  requiredBuiltinQuestions,
   type CustomAnswers,
   type IntakeCatalog,
   type IntakeScreen,
@@ -184,6 +187,11 @@ export function useWizardStep(screen: WizardStepKey): WizardStep {
 export interface BuiltinWording {
   /** Staff wording of a built-in question in her language, or the app's own (RAPP-307). */
   readonly label: (question: IntakeQuestion, appLabel: string) => string;
+  /**
+   * The label on the question's own screen: as `label`, with "(optional)"
+   * when the organization's required list makes it optional (pending fix 21).
+   */
+  readonly field: (question: IntakeQuestion, appLabel: string) => string;
   /** Staff help under a built-in question, or null when none is written. */
   readonly help: (question: IntakeQuestion) => string | null;
   /** The chip options of a built-in choice question: relabelled, hidden ones left out. */
@@ -199,13 +207,21 @@ export function useBuiltinWording(catalog?: IntakeCatalog): BuiltinWording {
   const intake = useWizardIntake();
   const { language } = useLanguage();
   const source = catalog ?? intake.catalog;
+  const { t } = useTranslation('onboarding');
   return useMemo<BuiltinWording>(
     () => ({
       label: (question, appLabel) => builtinLabel(source, question, language) ?? appLabel,
+      field: (question, appLabel) =>
+        questionFieldLabel(
+          question,
+          builtinLabel(source, question, language) ?? appLabel,
+          requiredBuiltinQuestions(source),
+          (label) => t('optionalFieldLabel', { label }),
+        ),
       help: (question) => builtinHelp(source, question, language),
       options: (question, options, keep = null) =>
         builtinOptions(source, question, options, language, keep),
     }),
-    [source, language],
+    [source, language, t],
   );
 }

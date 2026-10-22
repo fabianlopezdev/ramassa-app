@@ -23,12 +23,12 @@ describe('conversational onboarding controls', () => {
     expect(headingSource).toContain('accessibilityElementsHidden');
     expect(headingSource).toContain('importantForAccessibility="no-hide-descendants"');
     // Staff may reword a built-in question (RAPP-307): the app's label is the fallback.
-    expect(background).toContain("label={wording.label('nationality', t('nationalityLabel'))}");
+    expect(background).toContain("label={wording.field('nationality', t('nationalityLabel'))}");
     expect(background).not.toContain('symbol=');
     expect(documentation).toContain('SelectionChoiceCard');
     expect(documentation).not.toContain('documentSymbol');
     expect(background).not.toContain("intro={t('backgroundIntro')}");
-    expect(logistics).toContain("label={wording.label('city', t('cityLabel'))}");
+    expect(logistics).toContain("label={wording.field('city', t('cityLabel'))}");
     for (const source of [logistics, equipment]) {
       expect(source).toContain('<OnboardingQuestionHeading');
       expect(source).not.toContain('symbol=');

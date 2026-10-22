@@ -6,10 +6,12 @@
 
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { CountryPicker } from '@/components/onboarding/country-picker';
+import { QuestionBlock } from '@/components/onboarding/question-block';
 import { QuestionHelp } from '@/components/onboarding/question-help';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
 import { WizardValidationSummary } from '@/components/onboarding/wizard-validation-summary';
 import { playHaptic } from '@/lib/haptics/haptics';
+import { useInvalidFieldFocus } from '@/lib/invalid-field-focus';
 import { onboardingDraftStore } from '@/lib/onboarding';
 import {
   birthDateErrorKey,
@@ -39,6 +41,7 @@ export default function BackgroundStepScreen() {
   const isLargeText = fontScale >= LARGE_TEXT_STACK_THRESHOLD;
   const [draft] = useState(() => onboardingDraftStore.loadDraft());
   const [hasSubmitErrors, setHasSubmitErrors] = useState(false);
+  const focus = useInvalidFieldFocus();
 
   const identityForm = useMemo(() => identityFormSchemaFor(step.required), [step.required]);
   const defaultValues = useMemo<IdentityFormInput>(() => {
@@ -92,9 +95,10 @@ export default function BackgroundStepScreen() {
       persist(step.nextDraftStep);
       step.goNext();
     },
-    () => {
+    (invalid) => {
       setHasSubmitErrors(true);
       playHaptic('warning');
+      focus.focusFirst(Object.keys(invalid));
     },
   );
 
@@ -137,7 +141,7 @@ export default function BackgroundStepScreen() {
           <Text
             className={`text-start text-form font-medium text-neutral-800 ${languageFontClass}`}
           >
-            {wording.label('date_of_birth', t('dateOfBirthLabel'))}
+            {wording.field('date_of_birth', t('dateOfBirthLabel'))}
           </Text>
           <QuestionHelp text={wording.help('date_of_birth')} />
           <View className={isLargeText ? 'gap-sm' : 'flex-row gap-sm'}>
@@ -231,37 +235,49 @@ export default function BackgroundStepScreen() {
       ) : null}
 
       {step.shouldAsk('place_of_birth') ? (
-        <Controller
-          control={control}
+        <QuestionBlock
           name="placeOfBirth"
-          render={({ field }) => (
-            <AuthTextField
-              testID="onboarding-place-of-birth"
-              label={wording.label('place_of_birth', t('placeOfBirthLabel'))}
-              hint={wording.help('place_of_birth')}
-              value={field.value ?? ''}
-              onChangeText={field.onChange}
-              onBlur={field.onBlur}
-              isInvalid={Boolean(errors.placeOfBirth)}
-            />
-          )}
-        />
+          testID="question-place_of_birth"
+          focus={focus}
+          errorMessage={errors.placeOfBirth ? t('errorRequired') : undefined}
+        >
+          <Controller
+            control={control}
+            name="placeOfBirth"
+            render={({ field }) => (
+              <AuthTextField
+                testID="onboarding-place-of-birth"
+                label={wording.field('place_of_birth', t('placeOfBirthLabel'))}
+                hint={wording.help('place_of_birth')}
+                value={field.value ?? ''}
+                onChangeText={field.onChange}
+                onBlur={field.onBlur}
+                isInvalid={Boolean(errors.placeOfBirth)}
+              />
+            )}
+          />
+        </QuestionBlock>
       ) : null}
       {step.shouldAsk('nationality') ? (
-        <View className="gap-xs">
+        <QuestionBlock
+          name="nationality"
+          testID="question-nationality"
+          focus={focus}
+          errorMessage={errors.nationality ? t('errorRequired') : undefined}
+        >
           <Controller
             control={control}
             name="nationality"
             render={({ field }) => (
               <CountryPicker
-                label={wording.label('nationality', t('nationalityLabel'))}
+                label={wording.field('nationality', t('nationalityLabel'))}
                 value={field.value ?? ''}
                 onChange={field.onChange}
               />
             )}
           />
           <QuestionHelp text={wording.help('nationality')} />
-        </View>
+        </QuestionBlock>
       ) : null}
     </WizardFrame>
   );
