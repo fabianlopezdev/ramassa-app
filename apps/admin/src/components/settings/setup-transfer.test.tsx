@@ -189,7 +189,7 @@ test('the database refusing an empty file reads as the same sentence', async () 
   expect(view.queryByTestId('setup-import-confirm')).toBeNull();
 });
 
-test('any other refusal shows the database sentence without its code', async () => {
+test('any other refusal reads as its own translated sentence, never the database English', async () => {
   const { view } = renderTransfer(true, {
     ...PREVIEW,
     canImport: false,
@@ -198,7 +198,11 @@ test('any other refusal shows the database sentence without its code', async () 
   });
   choose(view, JSON.stringify(FILE));
   await waitFor(() => expect(view.getByTestId('setup-import-problem')).toBeTruthy());
-  expect(view.getByTestId('setup-import-problem').getAttribute('data-problem')).toBe(
+  const problem = view.getByTestId('setup-import-problem');
+  expect(problem.getAttribute('data-code')).toBe('REFUSED_VALUE');
+  expect(problem.textContent).toBe('setupTransfer.databaseProblem.refusedValue');
+  // The English sentence stays only for support, out of sight.
+  expect(problem.getAttribute('data-problem')).toBe(
     'a question in the file has a value this app does not accept.',
   );
 });

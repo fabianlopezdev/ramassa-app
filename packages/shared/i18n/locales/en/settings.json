@@ -768,7 +768,39 @@
       "seasons": "seasons",
       "authorization": "authorization"
     },
-    "problem": "The database would refuse this file: {{problem}}",
+    "databaseProblem": {
+      "tooLarge": "The file is larger than 5 MB. Download it again from an app at the same version.",
+      "notEmpty": "This organization already has an onboarding setup, and an import never overwrites it.",
+      "refusedValue": "The file has a value this app does not accept ({{part}}). Download it again from an app at the same version.",
+      "unknown": "The database would refuse this file, so nothing can be imported. Download it again from an app at the same version.",
+      "malformed": {
+        "twoCurrentSeasons": "The file marks more than one season as the current one. Download it again.",
+        "repeatedId": "The same id appears twice in the file. Download it again.",
+        "conditionOutside": "A question in the file depends on a question or an option that is not in the file. Download it again.",
+        "flowTooMany": "The screen order in the file has more than 200 steps. Download it again.",
+        "flowRepeated": "The screen order in the file names a step twice. Download it again.",
+        "flowFixedEnd": "The screen order in the file moves the summary, the terms or the authorization, which always end the onboarding. Download it again.",
+        "flowArchived": "The screen order in the file names an archived screen. Download it again.",
+        "flowMissing": "The screen order in the file names a step that is not in the file. Download it again.",
+        "presetWizard": "A preset in the file asks or skips questions of the registration wizard. Download it again.",
+        "wrongForm": "A value in the file has the wrong form (a date, a number or an id). Download it again from an app at the same version."
+      },
+      "part": {
+        "screen": "a screen",
+        "question": "a question",
+        "option": "an answer option",
+        "builtinQuestionOverride": "a change to an app question",
+        "builtinScreen": "the wording of an app screen",
+        "flowOrder": "the screen order",
+        "requiredQuestions": "the list of required questions",
+        "preset": "a preset",
+        "documentStepExplanation": "the document step note",
+        "season": "a season",
+        "appTerms": "the app terms",
+        "authorization": "the authorization",
+        "other": "a part of the file"
+      }
+    },
     "confirm": "Import",
     "confirmAlert": "The import creates everything shown and can run only once. Click again to confirm.",
     "confirmAgain": "Confirm the import",

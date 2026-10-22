@@ -22,6 +22,7 @@ import {
   type OnboardingSetupPreview,
   type OnboardingSetupWarning,
 } from '@ramassa/shared/intake';
+import { describeSetupProblem } from './setup-problem';
 
 type Raw = Readonly<Record<string, unknown>>;
 
@@ -78,17 +79,6 @@ const REFUSAL_MESSAGE_KEYS = {
   damaged: 'setupTransfer.damaged',
   empty: 'setupTransfer.empty',
 } as const satisfies Record<Refusal['reason'], string>;
-
-/** `ONBOARDING_SETUP/EMPTY: ...` from the database, as its code and its sentence. */
-function databaseProblem(problem: string): {
-  readonly code: string | null;
-  readonly sentence: string;
-} {
-  const match = /^ONBOARDING_SETUP\/([A-Z_]+): ([\s\S]*)$/.exec(problem);
-  return match === null
-    ? { code: null, sentence: problem }
-    : { code: match[1]!, sentence: match[2]! };
-}
 
 type Stage =
   | { readonly kind: 'idle' }
@@ -353,7 +343,7 @@ function SetupPreview({
     .filter((text): text is string => text !== null);
   const commitDiffers =
     preview.appCommit !== null && appCommit !== null && preview.appCommit !== appCommit;
-  const problem = preview.problem === null ? null : databaseProblem(preview.problem);
+  const problem = preview.problem === null ? null : describeSetupProblem(preview.problem);
   return (
     <div className="flex flex-col gap-3 rounded-lg border p-4" data-testid="setup-import-preview">
       <h4 className="text-start text-sm font-semibold">{t('setupTransfer.previewTitle')}</h4>
@@ -401,11 +391,13 @@ function SetupPreview({
           role="alert"
           className="text-start text-sm text-destructive"
           data-testid="setup-import-problem"
-          data-problem={problem.sentence}
+          data-code={problem.code}
+          data-problem={preview.problem?.replace(/^ONBOARDING_SETUP\/[A-Z_]+: /, '')}
         >
-          {problem.code === 'EMPTY'
-            ? t(REFUSAL_MESSAGE_KEYS.empty)
-            : t('setupTransfer.problem', { problem: problem.sentence })}
+          {t(problem.key, {
+            ...problem.values,
+            ...(problem.values.part === undefined ? {} : { part: t(problem.values.part) }),
+          })}
         </p>
       ) : null}
       {isConfirming ? (

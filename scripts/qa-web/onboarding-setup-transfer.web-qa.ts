@@ -155,6 +155,19 @@ test.describe.serial('moving the onboarding setup', () => {
     await transfer.getByTestId('setup-import-file').setInputFiles(other);
     await expect(transfer.getByTestId('setup-import-refused')).toContainText('version 2');
 
+    // A file the database refuses reads in her language, without its English
+    // sentence: a screen twice is caught only by the database.
+    const repeated = test.info().outputPath('repeated.json');
+    const document = JSON.parse(text) as { screens: unknown[] };
+    expect(document.screens.length).toBeGreaterThan(0);
+    document.screens.push(document.screens[0]);
+    writeFileSync(repeated, JSON.stringify(document));
+    await transfer.getByTestId('setup-import-file').setInputFiles(repeated);
+    const problem = transfer.getByTestId('setup-import-problem');
+    await expect(problem).toHaveAttribute('data-code', 'MALFORMED', { timeout: 30_000 });
+    await expect(problem).toHaveText('The same id appears twice in the file. Download it again.');
+    await expect(transfer.getByTestId('setup-import-confirm')).toHaveCount(0);
+
     await transfer.getByTestId('setup-import-file').setInputFiles(downloadedPath);
     const preview = transfer.getByTestId('setup-import-preview');
     await expect(preview).toBeVisible({ timeout: 30_000 });

@@ -768,7 +768,39 @@
       "seasons": "temporadas",
       "authorization": "autorización"
     },
-    "problem": "La base de datos no aceptaría este archivo: {{problem}}",
+    "databaseProblem": {
+      "tooLarge": "El archivo ocupa más de 5 MB. Descárgalo de nuevo desde una app de la misma versión.",
+      "notEmpty": "Esta organización ya tiene configuración de la inscripción, y la importación nunca la sobrescribe.",
+      "refusedValue": "El archivo tiene un valor que esta app no acepta ({{part}}). Descárgalo de nuevo desde una app de la misma versión.",
+      "unknown": "La base de datos rechazaría este archivo, así que no se puede importar. Descárgalo de nuevo desde una app de la misma versión.",
+      "malformed": {
+        "twoCurrentSeasons": "El archivo marca más de una temporada como vigente. Descárgalo de nuevo.",
+        "repeatedId": "El mismo identificador aparece dos veces en el archivo. Descárgalo de nuevo.",
+        "conditionOutside": "Una pregunta del archivo depende de una pregunta o de una opción que no está en él. Descárgalo de nuevo.",
+        "flowTooMany": "El orden de las pantallas del archivo tiene más de 200 pasos. Descárgalo de nuevo.",
+        "flowRepeated": "El orden de las pantallas del archivo repite un paso. Descárgalo de nuevo.",
+        "flowFixedEnd": "El orden de las pantallas del archivo mueve el resumen, los términos o la autorización, que siempre cierran la inscripción. Descárgalo de nuevo.",
+        "flowArchived": "El orden de las pantallas del archivo incluye una pantalla archivada. Descárgalo de nuevo.",
+        "flowMissing": "El orden de las pantallas del archivo incluye un paso que no está en el archivo. Descárgalo de nuevo.",
+        "presetWizard": "Una plantilla del archivo pregunta o salta preguntas del asistente de inscripción. Descárgalo de nuevo.",
+        "wrongForm": "Un valor del archivo no tiene la forma correcta (una fecha, un número o un identificador). Descárgalo de nuevo desde una app de la misma versión."
+      },
+      "part": {
+        "screen": "una pantalla",
+        "question": "una pregunta",
+        "option": "una opción de respuesta",
+        "builtinQuestionOverride": "un cambio en una pregunta de la app",
+        "builtinScreen": "el texto de una pantalla de la app",
+        "flowOrder": "el orden de las pantallas",
+        "requiredQuestions": "la lista de preguntas obligatorias",
+        "preset": "una plantilla",
+        "documentStepExplanation": "la nota del paso del documento",
+        "season": "una temporada",
+        "appTerms": "los términos de la app",
+        "authorization": "la autorización",
+        "other": "una parte del archivo"
+      }
+    },
     "confirm": "Importar",
     "confirmAlert": "La importación crea todo lo que se muestra y solo se puede hacer una vez. Vuelve a hacer clic para confirmar.",
     "confirmAgain": "Confirmar la importación",

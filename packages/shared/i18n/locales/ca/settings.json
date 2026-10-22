@@ -768,7 +768,39 @@
       "seasons": "temporades",
       "authorization": "autorització"
     },
-    "problem": "La base de dades no acceptaria aquest fitxer: {{problem}}",
+    "databaseProblem": {
+      "tooLarge": "El fitxer ocupa més de 5 MB. Descarrega'l de nou des d'una app de la mateixa versió.",
+      "notEmpty": "Aquesta organització ja té configuració de la inscripció, i la importació mai la sobreescriu.",
+      "refusedValue": "El fitxer té un valor que aquesta app no accepta ({{part}}). Descarrega'l de nou des d'una app de la mateixa versió.",
+      "unknown": "La base de dades refusaria aquest fitxer, així que no es pot importar. Descarrega'l de nou des d'una app de la mateixa versió.",
+      "malformed": {
+        "twoCurrentSeasons": "El fitxer marca més d'una temporada com a vigent. Descarrega'l de nou.",
+        "repeatedId": "El mateix identificador apareix dues vegades al fitxer. Descarrega'l de nou.",
+        "conditionOutside": "Una pregunta del fitxer depèn d'una pregunta o d'una opció que no hi és. Descarrega'l de nou.",
+        "flowTooMany": "L'ordre de les pantalles del fitxer té més de 200 passos. Descarrega'l de nou.",
+        "flowRepeated": "L'ordre de les pantalles del fitxer repeteix un pas. Descarrega'l de nou.",
+        "flowFixedEnd": "L'ordre de les pantalles del fitxer mou el resum, els termes o l'autorització, que sempre tanquen la inscripció. Descarrega'l de nou.",
+        "flowArchived": "L'ordre de les pantalles del fitxer inclou una pantalla arxivada. Descarrega'l de nou.",
+        "flowMissing": "L'ordre de les pantalles del fitxer inclou un pas que no és al fitxer. Descarrega'l de nou.",
+        "presetWizard": "Una plantilla del fitxer pregunta o salta preguntes de l'assistent d'inscripció. Descarrega'l de nou.",
+        "wrongForm": "Un valor del fitxer no té la forma correcta (una data, un número o un identificador). Descarrega'l de nou des d'una app de la mateixa versió."
+      },
+      "part": {
+        "screen": "una pantalla",
+        "question": "una pregunta",
+        "option": "una opció de resposta",
+        "builtinQuestionOverride": "un canvi a una pregunta de l'app",
+        "builtinScreen": "el text d'una pantalla de l'app",
+        "flowOrder": "l'ordre de les pantalles",
+        "requiredQuestions": "la llista de preguntes obligatòries",
+        "preset": "una plantilla",
+        "documentStepExplanation": "la nota del pas del document",
+        "season": "una temporada",
+        "appTerms": "els termes de l'app",
+        "authorization": "l'autorització",
+        "other": "una part del fitxer"
+      }
+    },
     "confirm": "Importar",
     "confirmAlert": "La importació crea tot el que es mostra i només es pot fer una vegada. Torna a fer clic per confirmar.",
     "confirmAgain": "Confirmar la importació",
