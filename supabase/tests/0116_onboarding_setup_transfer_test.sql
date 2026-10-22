@@ -23,7 +23,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
-select plan(41);
+select plan(42);
 
 create temp table run (label text primary key, doc jsonb) on commit drop;
 grant all on run to authenticated;
@@ -287,6 +287,13 @@ select is(
   0,
   'the import publishes no legal text'
 );
+set local role authenticated;
+select is(
+  (select array_agg(is_current) from public.list_authorization_versions()),
+  array[false],
+  'the imported authorization draft lists as not current, never as unknown'
+);
+reset role;
 select ok(
   (select doc -> 'legal' -> 'app_terms' ->> 'source' = 'draft' and (doc -> 'legal' -> 'app_terms' ->> 'imported')::boolean
      from run where label = 'report'),
