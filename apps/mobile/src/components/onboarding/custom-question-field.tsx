@@ -112,7 +112,7 @@ const asText = (value: CustomAnswerValue | undefined): string =>
   typeof value === 'string' ? value : typeof value === 'number' ? String(value) : '';
 
 /** A typed number in either decimal mark; anything else stays text, so the check can say so. */
-export function parseTypedNumber(text: string): CustomAnswerValue {
+function parseTypedNumber(text: string): CustomAnswerValue {
   const trimmed = text.trim();
   if (trimmed === '') return '';
   const normalized = trimmed.replace(',', '.');
@@ -120,7 +120,7 @@ export function parseTypedNumber(text: string): CustomAnswerValue {
 }
 
 /** Day, month and year as the date answer: `YYYY-MM-DD`, or what she typed so far. */
-export function composeDate(day: string, month: string, year: string): string {
+function composeDate(day: string, month: string, year: string): string {
   if (day.trim() === '' && month.trim() === '' && year.trim() === '') return '';
   return `${year.trim()}-${month.trim().padStart(2, '0')}-${day.trim().padStart(2, '0')}`;
 }

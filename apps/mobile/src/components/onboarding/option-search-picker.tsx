@@ -39,14 +39,11 @@ export interface SearchOption {
 }
 
 /** Lowercase without accents, so "Gracia" finds "Gràcia". */
-export function foldForSearch(text: string): string {
+function foldForSearch(text: string): string {
   return text.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
 }
 
-export function searchOptions(
-  options: readonly SearchOption[],
-  query: string,
-): readonly SearchOption[] {
+function searchOptions(options: readonly SearchOption[], query: string): readonly SearchOption[] {
   const folded = foldForSearch(query);
   if (folded === '') return options;
   return options.filter((option) => foldForSearch(option.searchText).includes(folded));

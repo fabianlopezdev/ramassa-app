@@ -35,7 +35,7 @@ import type { LanguageCode } from '@ramassa/shared/schemas';
 const inputClass = 'h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm';
 
 /** Reads `<name>.<language>` inputs back into localized text. */
-export function textFromForm(fields: FormData, name: string): BuilderText {
+function textFromForm(fields: FormData, name: string): BuilderText {
   return Object.fromEntries(
     SUPPORTED_LANGUAGES.flatMap((language) => {
       const value = fields.get(`${name}.${language}`);
