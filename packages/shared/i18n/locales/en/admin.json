@@ -87,6 +87,18 @@
   "exportConsents": "Season consents, with the words of each",
   "entityPortalSubtitle": "Entity portal",
   "userMenu": {
-    "label": "Account menu for {{name}}"
+    "label": "Account menu for {{name}}",
+    "profilePhoto": "Profile photo"
+  },
+  "profilePhoto": {
+    "description": "Your photo replaces your initials in the Control Center.",
+    "choose": "Choose a photo",
+    "replace": "Change photo",
+    "remove": "Remove photo",
+    "working": "Saving…",
+    "saved": "Photo saved.",
+    "removed": "Photo removed.",
+    "failed": "The photo could not be saved. Please try again.",
+    "wrongType": "Choose a JPG, PNG or WebP image."
   }
 }
