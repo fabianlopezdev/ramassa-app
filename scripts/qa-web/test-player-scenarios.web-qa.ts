@@ -14,7 +14,6 @@ import {
   PARTICIPANT_FIXTURES,
   seedUserId,
   TEST_PLAYER_EMAIL,
-  TEST_PLAYER_ID,
 } from '@ramassa/shared/testing';
 import {
   countInDatabase,
@@ -27,14 +26,22 @@ import {
 
 test.setTimeout(240_000);
 
+/**
+ * Her id, read by address: the design role spec deletes the seeded test
+ * player and creates her again (RAPP-617), so the seed id may be gone.
+ */
+const testPlayerId = () =>
+  queryDatabase(`select id from auth.users where email = '${TEST_PLAYER_EMAIL}'`).trim();
+const HER = `(select id from auth.users where email = '${TEST_PLAYER_EMAIL}')`;
+
 test.afterAll(() => {
   // Back to the seed: invited, nothing answered, nothing signed, an open invitation.
   queryDatabase(`
     begin;
-    delete from public.authorization_signatures where profile_id = '${TEST_PLAYER_ID}';
-    delete from public.terms_acceptances where profile_id = '${TEST_PLAYER_ID}';
-    delete from public.profile_answers where profile_id = '${TEST_PLAYER_ID}';
-    update public.profiles set role = 'invited', terms_accepted_at = null where id = '${TEST_PLAYER_ID}';
+    delete from public.authorization_signatures where profile_id = ${HER};
+    delete from public.terms_acceptances where profile_id = ${HER};
+    delete from public.profile_answers where profile_id = ${HER};
+    update public.profiles set role = 'invited', terms_accepted_at = null where id = ${HER};
     update public.invites set accepted_at = null, accepted_by = null, expires_at = now() + interval '30 days'
      where email = '${TEST_PLAYER_EMAIL}';
     commit;
@@ -42,7 +49,7 @@ test.afterAll(() => {
 });
 
 async function openTestPlayer(page: Page): Promise<void> {
-  await page.goto(`/participants/${TEST_PLAYER_ID}`);
+  await page.goto(`/participants/${testPlayerId()}`);
   await expect(page.getByTestId('test-player-scenario')).toBeVisible({ timeout: 20_000 });
 }
 
@@ -82,7 +89,7 @@ test.describe.serial('scenario switches on a test player', () => {
     // Recorded as staff answers, so her wizard treats them as answered.
     expect(
       countInDatabase(
-        `select count(*) from public.profile_answers where profile_id = '${TEST_PLAYER_ID}' and source <> 'staff'`,
+        `select count(*) from public.profile_answers where profile_id = ${HER} and source <> 'staff'`,
       ),
     ).toBe(0);
 
@@ -91,7 +98,7 @@ test.describe.serial('scenario switches on a test player', () => {
     await expect(page.getByTestId('test-scenario-season-state')).toHaveText(/^Not signed/);
     expect(
       countInDatabase(
-        `select count(*) from public.authorization_signatures where profile_id = '${TEST_PLAYER_ID}' and not is_test_fixture`,
+        `select count(*) from public.authorization_signatures where profile_id = ${HER} and not is_test_fixture`,
       ),
     ).toBe(0);
 
@@ -127,9 +134,7 @@ test.describe.serial('scenario switches on a test player', () => {
       timeout: 20_000,
     });
     await expect(page.getByTestId('test-scenario-returning-state')).toHaveText(/^New/);
-    expect(queryDatabase(`select role from public.profiles where id = '${TEST_PLAYER_ID}'`)).toBe(
-      'invited',
-    );
+    expect(queryDatabase(`select role from public.profiles where id = ${HER}`)).toBe('invited');
 
     const player = await openAppAsHer(browser);
     // A brand-new invited woman: staff gave her name, so the wizard opens on
