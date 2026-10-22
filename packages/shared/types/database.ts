@@ -981,6 +981,7 @@ export type Database = {
           help: Json | null;
           id: string;
           is_archived: boolean;
+          is_required: boolean;
           label: Json;
           org_id: string;
           placements: string[];
@@ -998,6 +999,7 @@ export type Database = {
           help?: Json | null;
           id?: string;
           is_archived?: boolean;
+          is_required?: boolean;
           label: Json;
           org_id: string;
           placements: string[];
@@ -1015,6 +1017,7 @@ export type Database = {
           help?: Json | null;
           id?: string;
           is_archived?: boolean;
+          is_required?: boolean;
           label?: Json;
           org_id?: string;
           placements?: string[];
@@ -2154,6 +2157,45 @@ export type Database = {
           },
         ];
       };
+      intake_required_questions: {
+        Row: {
+          is_required: boolean;
+          org_id: string;
+          question: string;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          is_required: boolean;
+          org_id: string;
+          question: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          is_required?: boolean;
+          org_id?: string;
+          question?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'intake_required_questions_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'intake_required_questions_updated_by_fkey';
+            columns: ['updated_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       intake_screens: {
         Row: {
           after_screen: string;
@@ -3147,7 +3189,7 @@ export type Database = {
           emergency_contact_phone: string | null;
           emergency_contact_relation: string | null;
           first_name: string;
-          has_dependents: boolean;
+          has_dependents: boolean | null;
           health_info: string | null;
           id: string;
           is_active: boolean;
@@ -3195,7 +3237,7 @@ export type Database = {
           emergency_contact_phone?: string | null;
           emergency_contact_relation?: string | null;
           first_name: string;
-          has_dependents?: boolean;
+          has_dependents?: boolean | null;
           health_info?: string | null;
           id: string;
           is_active?: boolean;
@@ -3243,7 +3285,7 @@ export type Database = {
           emergency_contact_phone?: string | null;
           emergency_contact_relation?: string | null;
           first_name?: string;
-          has_dependents?: boolean;
+          has_dependents?: boolean | null;
           health_info?: string | null;
           id?: string;
           is_active?: boolean;
@@ -5261,7 +5303,7 @@ export type Database = {
           emergency_contact_phone: string | null;
           emergency_contact_relation: string | null;
           first_name: string;
-          has_dependents: boolean;
+          has_dependents: boolean | null;
           health_info: string | null;
           id: string;
           is_active: boolean;
@@ -5318,7 +5360,7 @@ export type Database = {
           emergency_contact_phone: string | null;
           emergency_contact_relation: string | null;
           first_name: string;
-          has_dependents: boolean;
+          has_dependents: boolean | null;
           health_info: string | null;
           id: string;
           is_active: boolean;
@@ -6626,6 +6668,10 @@ export type Database = {
         };
         Returns: undefined;
       };
+      save_builtin_question_required: {
+        Args: { p_is_required: boolean; p_question: string };
+        Returns: undefined;
+      };
       save_builtin_screen: {
         Args: { p_is_hidden: boolean; p_screen: string; p_texts: Json };
         Returns: undefined;
@@ -6647,6 +6693,10 @@ export type Database = {
           p_type: string;
         };
         Returns: string;
+      };
+      save_custom_question_required: {
+        Args: { p_id: string; p_is_required: boolean };
+        Returns: undefined;
       };
       save_entity_service: { Args: { p_payload: Json }; Returns: string };
       save_forum_category: {

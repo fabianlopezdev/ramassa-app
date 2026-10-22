@@ -1514,6 +1514,8 @@ export function buildCustomQuestion(overrides: Partial<CustomQuestionRow> = {}):
     is_archived: false,
     // A yes/no/maybe question takes no settings (RAPP-610).
     settings: {},
+    // Optional unless staff say so (RAPP-611).
+    is_required: false,
     created_at: FIXTURE_TIMESTAMP,
     updated_at: FIXTURE_TIMESTAMP,
     ...overrides,
@@ -1592,6 +1594,22 @@ export function buildBuiltinQuestionOverride(
     help: null,
     is_hidden: false,
     option_overrides: {},
+    updated_at: FIXTURE_TIMESTAMP,
+    updated_by: null,
+    ...overrides,
+  };
+}
+
+export type IntakeRequiredQuestionRow = PublicRow<'intake_required_questions'>;
+
+/** The seeded choice (RAPP-611): the phone stays optional, as by default. */
+export function buildIntakeRequiredQuestion(
+  overrides: Partial<IntakeRequiredQuestionRow> = {},
+): IntakeRequiredQuestionRow {
+  return {
+    org_id: SEED_ORGANIZATION_ID,
+    question: 'phone',
+    is_required: false,
     updated_at: FIXTURE_TIMESTAMP,
     updated_by: null,
     ...overrides,

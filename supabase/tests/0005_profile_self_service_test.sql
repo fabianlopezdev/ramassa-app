@@ -52,6 +52,7 @@ select public.complete_onboarding(
     'phone', '+34600111222', 'address', 'Carrer Major 1', 'city', 'Vic',
     'postal_code', '08500', 'has_dependents', false, 'num_dependents', 0,
     'clothing_size', 'M', 'shoe_size', '38',
+    'reference_entity', null,
     'media_consent', false,
     'terms_version', '2026-07-01', 'locale_shown', 'ar'
   )

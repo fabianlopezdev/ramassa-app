@@ -1604,6 +1604,12 @@ values ('5eed0000-0000-4000-8000-000000000000',
               'season', 'supporting-entities', 'participation-support', 'specific-needs'])
 on conflict do nothing;
 
+-- Which built-in questions are required (RAPP-611): the seed keeps the app's
+-- own list; one explicit row says the phone stays optional, as by default.
+insert into public.intake_required_questions (org_id, question, is_required)
+values ('5eed0000-0000-4000-8000-000000000000', 'phone', false)
+on conflict do nothing;
+
 insert into public.intake_state_presets (id, org_id, name, states)
 values ('5eed0000-0000-4000-8047-000000000001', '5eed0000-0000-4000-8000-000000000000',
         'Només talles', '{"clothing_size":"ask","shoe_size":"ask"}'::jsonb)

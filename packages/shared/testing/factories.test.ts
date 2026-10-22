@@ -25,6 +25,7 @@ import {
   buildIntakeBuiltinScreen,
   buildIntakeFlowOrder,
   buildIntakeQuestionState,
+  buildIntakeRequiredQuestion,
   buildIntakeScreen,
   buildIntakeStatePreset,
   buildInvite,
@@ -492,6 +493,11 @@ describe('the question builder rows (RAPP-307)', () => {
     expect(buildBuiltinQuestionOverride().is_hidden).toBe(false);
     expect(buildIntakeStatePreset().states).toEqual({ clothing_size: 'ask', shoe_size: 'ask' });
   });
+});
+
+test('the required choice matches the seed and stays optional by default (RAPP-611)', () => {
+  expect(buildIntakeRequiredQuestion()).toMatchObject({ question: 'phone', is_required: false });
+  expect(buildCustomQuestion().is_required).toBe(false);
 });
 
 test('built-in screen wording and the flow order match the seed (RAPP-612)', () => {

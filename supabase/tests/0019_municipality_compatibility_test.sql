@@ -78,6 +78,7 @@ select lives_ok(
          'nationality', 'Síria', 'document_type', 'none',
          'city', 'Vic', 'has_dependents', false, 'num_dependents', 0,
          'clothing_size', 'M', 'shoe_size', '38',
+    'reference_entity', null,
          'terms_version', '2026-07-01', 'locale_shown', 'ca'
        )
      ) $$,
@@ -93,6 +94,7 @@ select throws_like(
          'nationality', 'Síria', 'document_type', 'none',
          'city', 'Vich', 'has_dependents', false, 'num_dependents', 0,
          'clothing_size', 'M', 'shoe_size', '38',
+    'reference_entity', null,
          'terms_version', '2026-07-01', 'locale_shown', 'ca'
        )
      ) $$,
