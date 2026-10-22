@@ -380,7 +380,8 @@ select ok(
   'emptied again, the organization can import again'
 );
 select ok(
-  (select not (p ->> 'can_import')::boolean and p ->> 'problem' like '%custom_questions%'
+  (select not (p ->> 'can_import')::boolean
+          and p ->> 'problem' like 'ONBOARDING_SETUP/REFUSED_VALUE: a question in the file%'
      from public.preview_onboarding_setup_import(jsonb_set((select doc from run where label = 'first'),
        '{screens,1,questions,0,question_type}', '"not_a_type"')) p),
   'a file the database would refuse is reported by the preview'
