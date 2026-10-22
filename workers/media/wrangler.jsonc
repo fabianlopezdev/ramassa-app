@@ -55,6 +55,47 @@
     },
   ],
   "env": {
+    // Hosted staging (RAPP-627): the Fabulous Apps account, which RAPP-83 allows
+    // for development and preview, its own EU bucket, and the staging Supabase
+    // project. Uploads use the loopback mode: presigned mode needs R2 S3 keys,
+    // which only the Cloudflare dashboard issues, and staging holds made-up data
+    // only. LOCAL_UPLOAD_SIGNING_SECRET is a Worker secret.
+    "staging": {
+      "name": "ramassa-media-staging",
+      "vars": {
+        "UPLOAD_MODE": "local",
+        "SENTRY_RELEASE": "",
+        "R2_BUCKET_NAME": "ramassa-media-staging",
+        "R2_ACCOUNT_ID": "c636c0649634aedd544d6a827b862d5a",
+        "SUPABASE_URL": "https://lzxqzpwetvvmybzbigly.supabase.co",
+        "SUPABASE_PUBLISHABLE_KEY": "sb_publishable_qnTtn4m4TV11gqUDK3u3Pg_kREDYOuB",
+        "ALLOWED_ORIGINS": "https://ramassa-admin-preview.fabian-c63.workers.dev,https://preview.ramassa-player-web.pages.dev,https://ramassa-player-web.pages.dev,ramassa://",
+      },
+      "r2_buckets": [
+        {
+          "binding": "MEDIA_BUCKET",
+          "bucket_name": "ramassa-media-staging",
+          "jurisdiction": "eu",
+        },
+      ],
+      "ratelimits": [
+        {
+          "name": "UPLOAD_RATE_LIMITER",
+          "namespace_id": "1001",
+          "simple": {
+            "limit": 20,
+            "period": 60,
+          },
+        },
+      ],
+      "observability": {
+        "enabled": true,
+        "head_sampling_rate": 1,
+      },
+      "version_metadata": {
+        "binding": "CF_VERSION_METADATA",
+      },
+    },
     "production": {
       "vars": {
         "UPLOAD_MODE": "r2-presigned",
