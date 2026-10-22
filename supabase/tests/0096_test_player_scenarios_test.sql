@@ -161,7 +161,8 @@ set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000097", 
 select is(
   public.test_player_scenario('5eed0000-0000-4000-8000-000000000096') - 'answered' - 'preferred_language'
     - 'custom_answered' - 'org_id',
-  '{"terms_accepted": true, "current_season": "2026/27", "signed_this_season": false, "returning": true}'::jsonb,
+  '{"terms_accepted": true, "current_season": "2026/27", "signed_this_season": false, "returning": true,
+    "terms_draft": false, "authorization_draft": false}'::jsonb,
   'her page reads the situation'
 );
 reset role;

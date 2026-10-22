@@ -6326,6 +6326,7 @@ export type Database = {
         Args: never;
         Returns: {
           content: Json;
+          is_draft: boolean;
           is_returning: boolean;
           required: boolean;
           season_id: string;
