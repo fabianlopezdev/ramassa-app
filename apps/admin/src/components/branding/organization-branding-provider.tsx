@@ -32,7 +32,6 @@ const BRAND_ALIASES = {
   '--primary': 'var(--ramassa-color-primary)',
   '--secondary': 'var(--ramassa-color-secondary)',
   '--ring': 'var(--ramassa-color-primary)',
-  '--accent': 'color-mix(in oklab, var(--ramassa-color-primary) 8%, white)',
   '--accent-foreground': 'var(--ramassa-color-primary)',
   // The navy sidebar with its yellow active marker (RAPP-631).
   '--sidebar': 'var(--ramassa-color-primary)',
