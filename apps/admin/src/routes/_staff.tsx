@@ -1,14 +1,14 @@
 import { RouteFocusManager } from '@/components/accessibility/route-focus-manager';
 import { RequireAuth } from '@/components/auth/require-auth';
+import { NotificationBell } from '@/components/nav/notification-bell';
 import { StaffSidebar } from '@/components/nav/staff-sidebar';
-import { TodoBell } from '@/components/nav/todo-bell';
 import { UserMenu } from '@/components/nav/user-menu';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { Toaster } from '@/components/ui/sonner';
 import { logout } from '@/lib/auth';
 import { designRoleRedirect } from '@/lib/design-role-access';
 import { guardStaffRoute } from '@/lib/staff-route-guard';
 import { supabase } from '@/lib/supabase';
-import { TodoCountsProvider } from '@/lib/todo-counts';
 import { createFileRoute, Navigate, Outlet, useLocation } from '@tanstack/react-router';
 import { useEffect, type ReactNode } from 'react';
 import { assuranceLevelOf, useAuth } from '@ramassa/shared/auth';
@@ -34,28 +34,27 @@ function StaffLayout() {
   return (
     <RequireAuth allow={STAFF_ROLES}>
       <DesignRoleGate>
-        {/* The bell and the sidebar's Messages badge share one source (RAPP-635). */}
-        <TodoCountsProvider>
-          <SidebarProvider>
-            <RouteFocusManager targetId="main-content" />
-            <StaffSidebar />
-            {/* SidebarInset renders the page's single `main` landmark, so child
+        <SidebarProvider>
+          <RouteFocusManager targetId="main-content" />
+          <StaffSidebar />
+          {/* SidebarInset renders the page's single `main` landmark, so child
             routes render sections rather than nesting another `main`. */}
-            <SidebarInset id="main-content" tabIndex={-1} className="bg-canvas">
-              {/* The top bar (RAPP-632): the sidebar toggle at the start, the
-              to-do bell (RAPP-635) and her user menu at the end. The language
+          <SidebarInset id="main-content" tabIndex={-1} className="bg-canvas">
+            {/* The top bar (RAPP-632): the sidebar toggle at the start, the
+              notification bell (RAPP-640) and her user menu at the end. The language
               moved to her account page (RAPP-634). */}
-              <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b border-border bg-background/90 px-4 shadow-xs backdrop-blur">
-                <SidebarTrigger />
-                <div className="ms-auto flex items-center gap-2" data-testid="top-bar-actions">
-                  <TodoBell />
-                  <UserMenu onSignOut={logout} accountPage="/account" />
-                </div>
-              </header>
-              <Outlet />
-            </SidebarInset>
-          </SidebarProvider>
-        </TodoCountsProvider>
+            <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b border-border bg-background/90 px-4 shadow-xs backdrop-blur">
+              <SidebarTrigger />
+              <div className="ms-auto flex items-center gap-2" data-testid="top-bar-actions">
+                <NotificationBell />
+                <UserMenu onSignOut={logout} accountPage="/account" />
+              </div>
+            </header>
+            <Outlet />
+          </SidebarInset>
+          {/* Confirmations such as a deleted notification (RAPP-640). */}
+          <Toaster position="bottom-right" />
+        </SidebarProvider>
       </DesignRoleGate>
     </RequireAuth>
   );

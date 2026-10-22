@@ -13,8 +13,8 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from '@/components/ui/sidebar';
+import { useUnreadMessageCount } from '@/lib/messaging';
 import { visibleStaffNavItems } from '@/lib/nav-items';
-import { useTodoCounts } from '@/lib/todo-counts';
 import { Link, useLocation } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@ramassa/shared/auth';
@@ -44,9 +44,9 @@ export function sidebarSideForDirection(direction: LayoutDirection): 'left' | 'r
 export function StaffSidebar() {
   const { t, i18n } = useTranslation(['nav', 'common', 'admin']);
   const pathname = useLocation({ select: (location) => location.pathname });
-  // The same count as the bell's Messages row (RAPP-635).
-  const { unreadMessages: unread } = useTodoCounts();
   const { permissions } = useAuth();
+  // Only for someone with the inbox, so the design role asks nothing.
+  const unread = useUnreadMessageCount(permissions.has('messages.inbox'));
   const visibleItems = visibleStaffNavItems(permissions);
 
   return (

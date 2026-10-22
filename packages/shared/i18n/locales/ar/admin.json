@@ -133,16 +133,33 @@
       "description": "يراها المشاركون بجانب رسائلك ومنشوراتك ومقالاتك."
     }
   },
-  "todos": {
-    "title": "المهام المعلّقة",
-    "triggerLabel": "المهام المعلّقة: {{count}}",
-    "empty": "لا شيء بانتظارك.",
-    "messages": "رسائل غير مقروءة",
-    "referrals": "إحالات للمراجعة",
-    "walkIns": "توقيعات جديدة",
-    "deletionRequests": "طلبات الحذف",
-    "mentoring": "طلبات الإرشاد",
-    "feedback": "ملاحظات جديدة",
-    "forumReports": "بلاغات للمراجعة"
+  "bell": {
+    "title": "الإشعارات",
+    "description": "أحدث إشعاراتك.",
+    "openUnread": "الإشعارات، {{count}} غير مقروءة",
+    "close": "إغلاق",
+    "loading": "جارٍ التحميل…",
+    "loadFailed": "تعذّر تحميل الإشعارات.",
+    "empty": "لا توجد لديك إشعارات.",
+    "selectAll": "تحديد الكل",
+    "deleteSelected": "حذف ({{count}})",
+    "select": "تحديد: {{text}}",
+    "deleteOne": "حذف: {{text}}",
+    "unread": "غير مقروء",
+    "deleted_one": "تم حذف الإشعار.",
+    "deleted_other": "تم حذف {{count}} إشعارات.",
+    "deleteFailed": "تعذّر الحذف. حاول مرة أخرى.",
+    "someone": "شخص ما",
+    "events": {
+      "message_one": "رسالة جديدة من {{name}}",
+      "message_other": "{{count}} رسائل جديدة من {{name}}",
+      "referral": "إحالة جديدة من {{name}}",
+      "walk_in": "توقيع جديد من {{name}}",
+      "deletion_request": "{{name}} تطلب حذف بياناتها",
+      "mentoring_request": "{{name}} تطلب جلسة إرشاد",
+      "feedback": "ملاحظة جديدة من {{name}}",
+      "forum_report": "تم الإبلاغ عن محتوى في المنتدى",
+      "gallery_report": "تم الإبلاغ عن صورة في المعرض"
+    }
   }
 }

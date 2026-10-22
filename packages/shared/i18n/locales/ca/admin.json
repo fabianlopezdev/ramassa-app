@@ -136,16 +136,33 @@
       "description": "Els participants la veuen al costat dels teus missatges, publicacions i articles."
     }
   },
-  "todos": {
-    "title": "Pendents",
-    "triggerLabel": "Pendents: {{count}}",
-    "empty": "Res pendent.",
-    "messages": "Missatges sense llegir",
-    "referrals": "Derivacions per revisar",
-    "walkIns": "Signatures noves",
-    "deletionRequests": "Peticions d'esborrat",
-    "mentoring": "Mentories sol·licitades",
-    "feedback": "Suggeriments nous",
-    "forumReports": "Denúncies per moderar"
+  "bell": {
+    "title": "Notificacions",
+    "description": "Les teves notificacions més recents.",
+    "openUnread": "Notificacions, {{count}} sense llegir",
+    "close": "Tanca",
+    "loading": "Carregant…",
+    "loadFailed": "No s'han pogut carregar les notificacions.",
+    "empty": "No tens notificacions.",
+    "selectAll": "Selecciona-ho tot",
+    "deleteSelected": "Esborra ({{count}})",
+    "select": "Selecciona: {{text}}",
+    "deleteOne": "Esborra: {{text}}",
+    "unread": "Sense llegir",
+    "deleted_one": "Notificació esborrada.",
+    "deleted_other": "{{count}} notificacions esborrades.",
+    "deleteFailed": "No s'han pogut esborrar. Torna-ho a provar.",
+    "someone": "Algú",
+    "events": {
+      "message_one": "Missatge nou de {{name}}",
+      "message_other": "{{count}} missatges nous de {{name}}",
+      "referral": "Derivació nova de {{name}}",
+      "walk_in": "Signatura nova de {{name}}",
+      "deletion_request": "{{name}} demana esborrar les seves dades",
+      "mentoring_request": "{{name}} demana una mentoria",
+      "feedback": "Suggeriment nou de {{name}}",
+      "forum_report": "Contingut del fòrum denunciat",
+      "gallery_report": "Foto de la galeria denunciada"
+    }
   }
 }

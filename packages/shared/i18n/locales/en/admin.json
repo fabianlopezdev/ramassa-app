@@ -136,16 +136,33 @@
       "description": "Players see it next to your messages, posts and articles."
     }
   },
-  "todos": {
-    "title": "To do",
-    "triggerLabel": "To do: {{count}}",
-    "empty": "Nothing waiting.",
-    "messages": "Unread messages",
-    "referrals": "Referrals to review",
-    "walkIns": "New signatures",
-    "deletionRequests": "Deletion requests",
-    "mentoring": "Mentoring requests",
-    "feedback": "New feedback",
-    "forumReports": "Reports to moderate"
+  "bell": {
+    "title": "Notifications",
+    "description": "Your latest notifications.",
+    "openUnread": "Notifications, {{count}} unread",
+    "close": "Close",
+    "loading": "Loading…",
+    "loadFailed": "The notifications could not be loaded.",
+    "empty": "You have no notifications.",
+    "selectAll": "Select all",
+    "deleteSelected": "Delete ({{count}})",
+    "select": "Select: {{text}}",
+    "deleteOne": "Delete: {{text}}",
+    "unread": "Unread",
+    "deleted_one": "Notification deleted.",
+    "deleted_other": "{{count}} notifications deleted.",
+    "deleteFailed": "They could not be deleted. Please try again.",
+    "someone": "Someone",
+    "events": {
+      "message_one": "New message from {{name}}",
+      "message_other": "{{count}} new messages from {{name}}",
+      "referral": "New referral from {{name}}",
+      "walk_in": "New signature from {{name}}",
+      "deletion_request": "{{name}} asks to delete her data",
+      "mentoring_request": "{{name}} asks for mentoring",
+      "feedback": "New feedback from {{name}}",
+      "forum_report": "Forum content reported",
+      "gallery_report": "Gallery photo reported"
+    }
   }
 }

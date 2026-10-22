@@ -136,16 +136,33 @@
       "description": "Los participantes la ven junto a tus mensajes, publicaciones y artículos."
     }
   },
-  "todos": {
-    "title": "Pendientes",
-    "triggerLabel": "Pendientes: {{count}}",
-    "empty": "Nada pendiente.",
-    "messages": "Mensajes sin leer",
-    "referrals": "Derivaciones por revisar",
-    "walkIns": "Firmas nuevas",
-    "deletionRequests": "Solicitudes de borrado",
-    "mentoring": "Mentorías solicitadas",
-    "feedback": "Sugerencias nuevas",
-    "forumReports": "Denuncias por moderar"
+  "bell": {
+    "title": "Notificaciones",
+    "description": "Tus notificaciones más recientes.",
+    "openUnread": "Notificaciones, {{count}} sin leer",
+    "close": "Cerrar",
+    "loading": "Cargando…",
+    "loadFailed": "No se han podido cargar las notificaciones.",
+    "empty": "No tienes notificaciones.",
+    "selectAll": "Seleccionar todo",
+    "deleteSelected": "Borrar ({{count}})",
+    "select": "Seleccionar: {{text}}",
+    "deleteOne": "Borrar: {{text}}",
+    "unread": "Sin leer",
+    "deleted_one": "Notificación borrada.",
+    "deleted_other": "{{count}} notificaciones borradas.",
+    "deleteFailed": "No se han podido borrar. Vuelve a intentarlo.",
+    "someone": "Alguien",
+    "events": {
+      "message_one": "Mensaje nuevo de {{name}}",
+      "message_other": "{{count}} mensajes nuevos de {{name}}",
+      "referral": "Derivación nueva de {{name}}",
+      "walk_in": "Firma nueva de {{name}}",
+      "deletion_request": "{{name}} pide borrar sus datos",
+      "mentoring_request": "{{name}} pide una mentoría",
+      "feedback": "Sugerencia nueva de {{name}}",
+      "forum_report": "Contenido del foro denunciado",
+      "gallery_report": "Foto de la galería denunciada"
+    }
   }
 }
