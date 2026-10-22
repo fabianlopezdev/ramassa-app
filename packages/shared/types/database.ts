@@ -4924,6 +4924,7 @@ export type Database = {
           event_location: string | null;
           event_title: Json | null;
           first_name: string | null;
+          is_test_account: boolean | null;
           last_name: string | null;
           marked_at: string | null;
           occurrence_id: string | null;
