@@ -33,6 +33,13 @@ const catalanText = anyLanguageText.refine((text) => (text.ca ?? '').trim().leng
   message: 'Catalan is required',
 });
 const configId = z.uuid();
+/** The summary, the terms and the authorization always end the onboarding. */
+const FLOW_ORDER_END_STEPS: ReadonlySet<string> = new Set([
+  'summary',
+  'terms-intro',
+  'terms',
+  'authorization',
+]);
 const position = z.number().int();
 
 const optionSchema = z.strictObject({
@@ -152,9 +159,26 @@ export const onboardingSetupDocumentSchema = z
         context.addIssue({ code: 'custom', message: 'a condition points outside the file' });
       }
     }
-    for (const step of document.flow_order ?? []) {
-      if (step.startsWith('custom:') && !screens.has(step.slice('custom:'.length))) {
-        context.addIssue({ code: 'custom', message: 'the flow order names a missing screen' });
+    // The checks save_intake_flow_order makes (pending fix 31); the database
+    // also checks that every built-in step exists.
+    const archivedScreens = new Set(
+      document.screens.filter((screen) => screen.is_archived).map((screen) => screen.id),
+    );
+    const flowOrder = document.flow_order ?? [];
+    if (new Set(flowOrder).size !== flowOrder.length) {
+      context.addIssue({ code: 'custom', message: 'the flow order names a step twice' });
+    }
+    for (const step of flowOrder) {
+      if (FLOW_ORDER_END_STEPS.has(step)) {
+        context.addIssue({ code: 'custom', message: 'the flow order names an end step' });
+      }
+      if (step.startsWith('custom:')) {
+        const screenId = step.slice('custom:'.length);
+        if (!screens.has(screenId)) {
+          context.addIssue({ code: 'custom', message: 'the flow order names a missing screen' });
+        } else if (archivedScreens.has(screenId)) {
+          context.addIssue({ code: 'custom', message: 'the flow order names an archived screen' });
+        }
       }
     }
     for (const version of document.authorization.published) {
@@ -176,8 +200,32 @@ export type OnboardingSetupFileRead =
       readonly raw: Readonly<Record<string, unknown>>;
     }
   | { readonly ok: false; readonly reason: 'not_setup' }
+  | { readonly ok: false; readonly reason: 'version_not_number' }
   | { readonly ok: false; readonly reason: 'unknown_version'; readonly version: unknown }
-  | { readonly ok: false; readonly reason: 'damaged'; readonly issues: readonly string[] };
+  | { readonly ok: false; readonly reason: 'damaged'; readonly issues: readonly string[] }
+  | { readonly ok: false; readonly reason: 'empty' };
+
+/**
+ * Nothing in the file would be imported (pending fix 33). The database also
+ * counts the bundled app terms version 1 as nothing, which it alone can
+ * recognise, and refuses that file with `ONBOARDING_SETUP/EMPTY`.
+ */
+function holdsNoSetup(document: OnboardingSetupDocument): boolean {
+  return (
+    document.screens.length === 0 &&
+    document.builtin_question_overrides.length === 0 &&
+    document.builtin_screens.length === 0 &&
+    (document.flow_order ?? []).length === 0 &&
+    document.required_questions.length === 0 &&
+    document.presets.length === 0 &&
+    document.document_step_explanation === null &&
+    document.app_terms.published.length === 0 &&
+    document.app_terms.draft === null &&
+    document.seasons.length === 0 &&
+    document.authorization.published.length === 0 &&
+    document.authorization.draft === null
+  );
+}
 
 /** Reads a chosen file: an export of this schema version, or why not. */
 export function readOnboardingSetupFile(text: string): OnboardingSetupFileRead {
@@ -196,8 +244,10 @@ export function readOnboardingSetupFile(text: string): OnboardingSetupFileRead {
     return { ok: false, reason: 'not_setup' };
   }
   const raw = value as Record<string, unknown>;
+  // "1" as a string is not a version (pending fix 33).
+  if (typeof raw.schema_version !== 'number') return { ok: false, reason: 'version_not_number' };
   if (raw.schema_version !== ONBOARDING_SETUP_SCHEMA_VERSION) {
-    return { ok: false, reason: 'unknown_version', version: raw.schema_version ?? null };
+    return { ok: false, reason: 'unknown_version', version: raw.schema_version };
   }
   const parsed = onboardingSetupDocumentSchema.safeParse(raw);
   if (!parsed.success) {
@@ -207,6 +257,7 @@ export function readOnboardingSetupFile(text: string): OnboardingSetupFileRead {
       issues: parsed.error.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`),
     };
   }
+  if (holdsNoSetup(parsed.data)) return { ok: false, reason: 'empty' };
   return { ok: true, document: parsed.data, raw };
 }
 

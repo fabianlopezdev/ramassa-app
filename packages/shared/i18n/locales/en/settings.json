@@ -711,7 +711,9 @@
     "chooseFile": "Setup file (.json)",
     "notSetup": "This file is not an onboarding setup downloaded from here.",
     "unknownVersion": "This file uses version {{version}} of the format and this app reads version 1. Download it again from an app of the same version.",
+    "versionNotNumber": "schema_version must be the number 1. Download the file again from this page.",
     "damaged": "The file is incomplete or damaged. Download it again.",
+    "empty": "The file holds no onboarding setup to import. Download it again from the organization where it was designed.",
     "previewing": "Checking the file…",
     "failed": "The import failed. Nothing was created. Try again.",
     "previewTitle": "What will be imported",
@@ -727,9 +729,9 @@
       "required_questions": "Required or optional questions",
       "presets": "Presets",
       "document_step_explanation": "Document step note",
-      "app_terms_versions": "Terms versions",
+      "app_terms_versions": "Terms drafts",
       "seasons": "Seasons",
-      "authorization_versions": "Authorization versions"
+      "authorization_versions": "Authorization drafts"
     },
     "legal": {
       "appTerms": {

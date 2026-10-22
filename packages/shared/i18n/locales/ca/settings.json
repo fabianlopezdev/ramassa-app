@@ -711,7 +711,9 @@
     "chooseFile": "Fitxer de configuració (.json)",
     "notSetup": "Aquest fitxer no és una configuració de la inscripció descarregada des d'aquí.",
     "unknownVersion": "Aquest fitxer és de la versió {{version}} del format i aquesta app llegeix la versió 1. Descarrega'l de nou des d'una app de la mateixa versió.",
+    "versionNotNumber": "L'esquema del fitxer (schema_version) ha de ser el número 1. Descarrega'l de nou des d'aquesta pàgina.",
     "damaged": "El fitxer està incomplet o malmès. Descarrega'l de nou.",
+    "empty": "El fitxer no conté cap configuració de l'onboarding per importar. Descarrega-la de nou des de l'organització on està dissenyada.",
     "previewing": "Comprovant el fitxer…",
     "failed": "No s'ha pogut importar. No s'ha creat res. Torna-ho a provar.",
     "previewTitle": "Què s'importarà",
@@ -727,9 +729,9 @@
       "required_questions": "Preguntes obligatòries o opcionals",
       "presets": "Plantilles",
       "document_step_explanation": "Nota del pas del document",
-      "app_terms_versions": "Versions dels termes",
+      "app_terms_versions": "Esborranys dels termes",
       "seasons": "Temporades",
-      "authorization_versions": "Versions de l'autorització"
+      "authorization_versions": "Esborranys de l'autorització"
     },
     "legal": {
       "appTerms": {

@@ -136,6 +136,57 @@ describe('reading a setup file', () => {
     });
   });
 
+  test('schema_version must be the number 1: a string or nothing is named as such', () => {
+    expect(readOnboardingSetupFile(asFile(document({ schema_version: '1' })))).toEqual({
+      ok: false,
+      reason: 'version_not_number',
+    });
+    const withoutVersion: Record<string, unknown> = document();
+    delete withoutVersion.schema_version;
+    expect(readOnboardingSetupFile(asFile(withoutVersion))).toEqual({
+      ok: false,
+      reason: 'version_not_number',
+    });
+  });
+
+  test('a file with no setup in it is refused as empty', () => {
+    const empty = document({
+      screens: [],
+      builtin_question_overrides: [],
+      builtin_screens: [],
+      flow_order: null,
+      required_questions: [],
+      presets: [],
+      document_step_explanation: null,
+      app_terms: { published: [], draft: null },
+      seasons: [],
+      authorization: { published: [], draft: null },
+    });
+    expect(readOnboardingSetupFile(asFile(empty))).toEqual({ ok: false, reason: 'empty' });
+    expect(
+      readOnboardingSetupFile(asFile({ ...empty, presets: [{ name: 'Derivada', states: {} }] })).ok,
+    ).toBe(true);
+  });
+
+  test('the flow order passes the same checks as the screen order editor', () => {
+    for (const flow_order of [
+      ['identity', 'identity'],
+      ['identity', 'summary'],
+      ['identity', 'authorization'],
+    ]) {
+      expect(readOnboardingSetupFile(asFile(document({ flow_order })))).toMatchObject({
+        ok: false,
+        reason: 'damaged',
+      });
+    }
+    const archived = document();
+    archived.screens[0]!.is_archived = true;
+    expect(readOnboardingSetupFile(asFile(archived))).toMatchObject({
+      ok: false,
+      reason: 'damaged',
+    });
+  });
+
   test('a damaged export is refused', () => {
     const broken = document();
     (broken.screens[0] as Record<string, unknown>).questions = 'none';

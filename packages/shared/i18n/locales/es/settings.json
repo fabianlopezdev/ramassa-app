@@ -711,7 +711,9 @@
     "chooseFile": "Archivo de configuración (.json)",
     "notSetup": "Este archivo no es una configuración de la inscripción descargada desde aquí.",
     "unknownVersion": "Este archivo es de la versión {{version}} del formato y esta app lee la versión 1. Descárgalo de nuevo desde una app de la misma versión.",
+    "versionNotNumber": "El esquema del archivo (schema_version) debe ser el número 1. Descárgalo de nuevo desde esta página.",
     "damaged": "El archivo está incompleto o dañado. Descárgalo de nuevo.",
+    "empty": "El archivo no contiene ninguna configuración del onboarding que importar. Descárgala de nuevo desde la organización donde está diseñada.",
     "previewing": "Comprobando el archivo…",
     "failed": "No se ha podido importar. No se ha creado nada. Vuelve a intentarlo.",
     "previewTitle": "Qué se importará",
@@ -727,9 +729,9 @@
       "required_questions": "Preguntas obligatorias u opcionales",
       "presets": "Plantillas",
       "document_step_explanation": "Nota del paso del documento",
-      "app_terms_versions": "Versiones de los términos",
+      "app_terms_versions": "Borradores de los términos",
       "seasons": "Temporadas",
-      "authorization_versions": "Versiones de la autorización"
+      "authorization_versions": "Borradores de la autorización"
     },
     "legal": {
       "appTerms": {

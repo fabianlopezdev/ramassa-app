@@ -150,3 +150,55 @@ test('a file from another app version is flagged', async () => {
   choose(view, JSON.stringify(FILE));
   await waitFor(() => expect(view.getByTestId('setup-commit-differs')).toBeTruthy());
 });
+
+test('schema_version as a string is refused as not the number 1, and never sent', async () => {
+  const { view, onPreview } = renderTransfer();
+  choose(view, JSON.stringify({ ...FILE, schema_version: '1' }));
+  await waitFor(() => expect(view.getByTestId('setup-import-refused')).toBeTruthy());
+  const refused = view.getByTestId('setup-import-refused');
+  expect(refused.getAttribute('data-reason')).toBe('version_not_number');
+  expect(refused.textContent).toBe('setupTransfer.versionNotNumber');
+  expect(onPreview).not.toHaveBeenCalled();
+});
+
+test('a file with no setup in it is refused as empty, and never sent', async () => {
+  const { view, onPreview } = renderTransfer();
+  choose(
+    view,
+    JSON.stringify({
+      ...FILE,
+      app_terms: { published: [], draft: null },
+      authorization: { published: [], draft: null },
+    }),
+  );
+  await waitFor(() => expect(view.getByTestId('setup-import-refused')).toBeTruthy());
+  expect(view.getByTestId('setup-import-refused').getAttribute('data-reason')).toBe('empty');
+  expect(view.getByTestId('setup-import-refused').textContent).toBe('setupTransfer.empty');
+  expect(onPreview).not.toHaveBeenCalled();
+});
+
+test('the database refusing an empty file reads as the same sentence', async () => {
+  const { view } = renderTransfer(true, {
+    ...PREVIEW,
+    canImport: false,
+    problem: 'ONBOARDING_SETUP/EMPTY: the file holds no onboarding setup to import',
+  });
+  choose(view, JSON.stringify(FILE));
+  await waitFor(() => expect(view.getByTestId('setup-import-problem')).toBeTruthy());
+  expect(view.getByTestId('setup-import-problem').textContent).toBe('setupTransfer.empty');
+  expect(view.queryByTestId('setup-import-confirm')).toBeNull();
+});
+
+test('any other refusal shows the database sentence without its code', async () => {
+  const { view } = renderTransfer(true, {
+    ...PREVIEW,
+    canImport: false,
+    problem:
+      'ONBOARDING_SETUP/REFUSED_VALUE: a question in the file has a value this app does not accept.',
+  });
+  choose(view, JSON.stringify(FILE));
+  await waitFor(() => expect(view.getByTestId('setup-import-problem')).toBeTruthy());
+  expect(view.getByTestId('setup-import-problem').getAttribute('data-problem')).toBe(
+    'a question in the file has a value this app does not accept.',
+  );
+});

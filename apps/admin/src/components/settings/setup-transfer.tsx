@@ -65,8 +65,30 @@ const WARNING_KEYS = [
 
 type Refusal =
   | { readonly reason: 'not_setup' }
+  | { readonly reason: 'version_not_number' }
   | { readonly reason: 'unknown_version'; readonly version: unknown }
-  | { readonly reason: 'damaged' };
+  | { readonly reason: 'damaged' }
+  | { readonly reason: 'empty' };
+
+/** The message of each refusal the file reader names. */
+const REFUSAL_MESSAGE_KEYS = {
+  not_setup: 'setupTransfer.notSetup',
+  version_not_number: 'setupTransfer.versionNotNumber',
+  unknown_version: 'setupTransfer.unknownVersion',
+  damaged: 'setupTransfer.damaged',
+  empty: 'setupTransfer.empty',
+} as const satisfies Record<Refusal['reason'], string>;
+
+/** `ONBOARDING_SETUP/EMPTY: ...` from the database, as its code and its sentence. */
+function databaseProblem(problem: string): {
+  readonly code: string | null;
+  readonly sentence: string;
+} {
+  const match = /^ONBOARDING_SETUP\/([A-Z_]+): ([\s\S]*)$/.exec(problem);
+  return match === null
+    ? { code: null, sentence: problem }
+    : { code: match[1]!, sentence: match[2]! };
+}
 
 type Stage =
   | { readonly kind: 'idle' }
@@ -217,6 +239,7 @@ export function SetupTransfer({
               role="alert"
               className="text-start text-sm text-destructive"
               data-testid="setup-import-refused"
+              data-reason={stage.refusal.reason}
               data-version={
                 stage.refusal.reason === 'unknown_version'
                   ? String(stage.refusal.version)
@@ -224,8 +247,10 @@ export function SetupTransfer({
               }
             >
               {stage.refusal.reason === 'unknown_version'
-                ? t('setupTransfer.unknownVersion', { version: String(stage.refusal.version) })
-                : t(`setupTransfer.${stage.refusal.reason === 'damaged' ? 'damaged' : 'notSetup'}`)}
+                ? t(REFUSAL_MESSAGE_KEYS.unknown_version, {
+                    version: String(stage.refusal.version),
+                  })
+                : t(REFUSAL_MESSAGE_KEYS[stage.refusal.reason])}
             </p>
           ) : null}
           {stage.kind === 'previewing' ? (
@@ -328,6 +353,7 @@ function SetupPreview({
     .filter((text): text is string => text !== null);
   const commitDiffers =
     preview.appCommit !== null && appCommit !== null && preview.appCommit !== appCommit;
+  const problem = preview.problem === null ? null : databaseProblem(preview.problem);
   return (
     <div className="flex flex-col gap-3 rounded-lg border p-4" data-testid="setup-import-preview">
       <h4 className="text-start text-sm font-semibold">{t('setupTransfer.previewTitle')}</h4>
@@ -370,13 +396,16 @@ function SetupPreview({
           </ul>
         </div>
       ) : null}
-      {preview.problem !== null ? (
+      {problem !== null ? (
         <p
           role="alert"
           className="text-start text-sm text-destructive"
           data-testid="setup-import-problem"
+          data-problem={problem.sentence}
         >
-          {t('setupTransfer.problem', { problem: preview.problem })}
+          {problem.code === 'EMPTY'
+            ? t(REFUSAL_MESSAGE_KEYS.empty)
+            : t('setupTransfer.problem', { problem: problem.sentence })}
         </p>
       ) : null}
       {isConfirming ? (
