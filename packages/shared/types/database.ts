@@ -5253,6 +5253,10 @@ export type Database = {
         Args: { p_object_key: string };
         Returns: boolean;
       };
+      can_read_profile_photo_object: {
+        Args: { p_object_key: string };
+        Returns: boolean;
+      };
       can_read_stock_object: {
         Args: { p_object_key: string };
         Returns: boolean;
@@ -5822,6 +5826,14 @@ export type Database = {
           status: string;
           title: Json;
           total_count: number;
+        }[];
+      };
+      get_staff_cards: {
+        Args: { p_profile_ids: string[] };
+        Returns: {
+          avatar_url: string | null;
+          first_name: string | null;
+          id: string;
         }[];
       };
       get_unread_message_count: {
