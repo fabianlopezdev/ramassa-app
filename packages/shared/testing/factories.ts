@@ -1092,6 +1092,8 @@ export function buildTermsAcceptance(
     is_test_fixture: false,
     // The version she accepted (RAPP-613): version 1 for every seeded acceptance.
     version_id: SEED_APP_TERMS_VERSION_ID,
+    // Seeded acceptances predate app terms signatures, so the gate counts them.
+    accepted_before_signatures: true,
     ...overrides,
   };
 }

@@ -1614,11 +1614,15 @@ on conflict (id) do nothing;
 -- Seeded in the language that player actually reads, because the whole point of
 -- the record is which text in which language someone agreed to.
 
-insert into public.terms_acceptances (profile_id, terms_version, locale_shown)
+-- Accepted before app terms signatures existed (RAPP-584), so the signed-acceptance
+-- gate (RAPP-613) lets them in, as the deploy migration does for real players.
+-- Player ...011 also gets a signature row below.
+insert into public.terms_acceptances (profile_id, terms_version, locale_shown, accepted_before_signatures)
 select
   ('5eed0000-0000-4000-8000-' || lpad(r.ordinal::text, 12, '0'))::uuid,
   '2026-07-01',
-  r.preferred_language
+  r.preferred_language,
+  true
 from seed_roster r
 where r.app_role = 'player'
 on conflict do nothing;

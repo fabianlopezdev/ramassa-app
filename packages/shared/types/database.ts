@@ -4824,6 +4824,7 @@ export type Database = {
       terms_acceptances: {
         Row: {
           accepted_at: string;
+          accepted_before_signatures: boolean;
           id: string;
           is_test_fixture: boolean;
           locale_shown: string;
@@ -4833,6 +4834,7 @@ export type Database = {
         };
         Insert: {
           accepted_at?: string;
+          accepted_before_signatures?: boolean;
           id?: string;
           is_test_fixture?: boolean;
           locale_shown: string;
@@ -4842,6 +4844,7 @@ export type Database = {
         };
         Update: {
           accepted_at?: string;
+          accepted_before_signatures?: boolean;
           id?: string;
           is_test_fixture?: boolean;
           locale_shown?: string;
