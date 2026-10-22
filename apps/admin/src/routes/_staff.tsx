@@ -2,6 +2,7 @@ import { RouteFocusManager } from '@/components/accessibility/route-focus-manage
 import { RequireAuth } from '@/components/auth/require-auth';
 import { StaffSidebar } from '@/components/nav/staff-sidebar';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { logout } from '@/lib/auth';
 import { designRoleRedirect } from '@/lib/design-role-access';
 import { guardStaffRoute } from '@/lib/staff-route-guard';
 import { supabase } from '@/lib/supabase';
@@ -32,7 +33,7 @@ function StaffLayout() {
       <DesignRoleGate>
         <SidebarProvider>
           <RouteFocusManager targetId="main-content" />
-          <StaffSidebar />
+          <StaffSidebar onSignOut={logout} />
           {/* SidebarInset renders the page's single `main` landmark, so child
             routes render sections rather than nesting another `main`. */}
           <SidebarInset id="main-content" tabIndex={-1}>

@@ -1,6 +1,5 @@
 import { ImpactDashboard } from '@/components/analytics/impact-dashboard';
 import { Button } from '@/components/ui/button';
-import { logout } from '@/lib/auth';
 import { impactDashboardSearchSchema } from '@/lib/impact-dashboard-search';
 import { safeAsync } from '@/lib/observability';
 import { supabase } from '@/lib/supabase';
@@ -59,7 +58,7 @@ function DevForcedErrorTriggers() {
 }
 
 function DashboardPage() {
-  const { t } = useTranslation(['admin', 'auth']);
+  const { t } = useTranslation('admin');
   const impactReport = Route.useLoaderData();
   const navigate = Route.useNavigate();
   // A section, not a main: the staff layout's SidebarInset is already the
@@ -82,10 +81,6 @@ function DashboardPage() {
           })
         }
       />
-      {/* Signing out clears the session; RequireAuth then redirects to /login. */}
-      <Button variant="outline" onClick={() => void logout()}>
-        {t('auth:signOutAction')}
-      </Button>
       {import.meta.env.DEV ? <DevForcedErrorTriggers /> : null}
     </section>
   );
