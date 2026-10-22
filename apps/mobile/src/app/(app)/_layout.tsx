@@ -45,7 +45,7 @@ function AppNavigator() {
   const userId = user?.id ?? null;
   // The area comes from the account type, never from its absence (RAPP-232):
   // an entity contact or an unknown account never lands in the player tabs.
-  const { area, permissions } = useAccountAccess();
+  const { area, permissions, secondFactorWaived } = useAccountAccess();
   const team = teamScreens(permissions);
   const isTeam = area === 'team';
   // Before any early return, so the authenticator screen is covered (RAPP-238).
@@ -74,6 +74,7 @@ function AppNavigator() {
     role,
     needsSecondFactor,
     assurance: assuranceLevelOf(session),
+    secondFactorWaived,
   });
   const canPrompt = canPromptForPush({
     area,

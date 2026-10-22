@@ -17,7 +17,9 @@
  *     should be given the option to go through MFA"
  *     (https://supabase.com/docs/guides/auth/auth-mfa/totp, "Add a challenge
  *     step to sign in"). A team member without an authenticator yet (aal1,
- *     aal1) must set one up, so her role decides (RAPP-233).
+ *     aal1) must set one up, so her role decides (RAPP-233). On staging, a
+ *     test account whose second factor is waived (RAPP-628) is let through
+ *     at aal1, as the database lets her in.
  *   - the design role, outside its two areas, goes back to them.
  *
  * The guard reads the session and the permissions itself, because
@@ -31,7 +33,11 @@
 
 import { designRoleRedirect } from '@/lib/design-role-access';
 import { redirect } from '@tanstack/react-router';
-import { fetchProfileSummary, needsSecondFactor } from '@ramassa/shared/auth';
+import {
+  fetchProfileSummary,
+  fetchSecondFactorWaived,
+  needsSecondFactor,
+} from '@ramassa/shared/auth';
 import { AppError } from '@ramassa/shared/errors';
 import { fetchMyPermissions, type PermissionCode } from '@ramassa/shared/permissions';
 import type { AppRole } from '@ramassa/shared/schemas';
@@ -41,12 +47,15 @@ export type StaffRouteGuardClient = ReturnType<typeof createSupabaseClient>;
 
 /**
  * What the guard learned about the signed-in person, kept for her session:
- * her role (read only while her session is aal1) and her permissions at aal2.
+ * her role and whether her second factor is waived (both read only while her
+ * session is aal1), and her permissions at aal2 (or at aal1 when waived).
  * A failed read is dropped, so the next navigation asks again and a passing
  * network error never closes the staff area for good.
  */
 export interface StaffAccessCache {
   role(userId: string, load: () => Promise<AppRole | null>): Promise<AppRole | null>;
+  /** Whether her second factor is waived on staging (RAPP-628). */
+  secondFactorWaived(userId: string, load: () => Promise<boolean>): Promise<boolean>;
   permissions(
     userId: string,
     load: () => Promise<ReadonlySet<PermissionCode>>,
@@ -80,13 +89,16 @@ function memo<Value>() {
 
 export function createStaffAccessCache(): StaffAccessCache {
   const roles = memo<AppRole | null>();
+  const waivers = memo<boolean>();
   const permissions = memo<ReadonlySet<PermissionCode>>();
   return {
     role: (userId, load) => roles.get(userId, load),
+    secondFactorWaived: (userId, load) => waivers.get(userId, load),
     permissions: (userId, load) => permissions.get(userId, load),
     rememberPermissions: (userId, next) => permissions.set(userId, next),
     clear: () => {
       roles.clear();
+      waivers.clear();
       permissions.clear();
     },
   };
@@ -128,7 +140,14 @@ export async function guardStaffRoute(
         ),
         session,
       );
-    if (mustVerify) {
+    // A failed lookup keeps the second factor; the cache drops it, so the
+    // next navigation asks again.
+    const isWaived =
+      mustVerify &&
+      (await cache
+        .secondFactorWaived(userId, () => fetchSecondFactorWaived(client))
+        .catch(() => false));
+    if (mustVerify && !isWaived) {
       throw redirect({
         to: '/login',
         search: isInternalPath(location.href) ? { next: location.href } : {},
@@ -137,7 +156,7 @@ export async function guardStaffRoute(
     }
     // A player or a profile still being created: the layout's gate shows her
     // the right screen.
-    return;
+    if (!isWaived) return;
   }
 
   const permissions = await cache.permissions(userId, () => fetchMyPermissions(client));

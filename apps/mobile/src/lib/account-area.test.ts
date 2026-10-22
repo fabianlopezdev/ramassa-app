@@ -101,6 +101,23 @@ describe('the remembered account', () => {
     );
     expect(readRememberedAccount(storage, 'u1')?.permissions).toEqual(new Set(['attendance.mark']));
   });
+
+  test('remembers a waived second factor, and only a real true (RAPP-628)', () => {
+    const storage = memoryStorage();
+    rememberAccount(storage, 'u1', {
+      area: 'team',
+      permissions: new Set(['onboarding.design']),
+      secondFactorWaived: true,
+    });
+    expect(readRememberedAccount(storage, 'u1')?.secondFactorWaived).toBe(true);
+    rememberAccount(storage, 'u1', { area: 'team', permissions: new Set() });
+    expect(readRememberedAccount(storage, 'u1')?.secondFactorWaived).toBeFalsy();
+    storage.set(
+      'ramassa.account-area.v1:u1',
+      JSON.stringify({ area: 'team', permissions: [], secondFactorWaived: 'yes' }),
+    );
+    expect(readRememberedAccount(storage, 'u1')?.secondFactorWaived).toBeFalsy();
+  });
 });
 
 test('team screens follow permissions', () => {
@@ -396,6 +413,17 @@ describe('awaitsSecondFactor', () => {
         assurance: 'aal2',
       }),
     ).toBe(false);
+  });
+
+  test('a remembered waiver goes on while the role is unknown (RAPP-628)', () => {
+    for (const area of ['team', 'entity'] as const) {
+      expect(
+        awaitsSecondFactor({ ...base, area, assurance: 'aal1', secondFactorWaived: true }),
+      ).toBe(false);
+      expect(
+        awaitsSecondFactor({ ...base, area, assurance: 'aal1', secondFactorWaived: false }),
+      ).toBe(true);
+    }
   });
 
   test('players and the other areas never wait', () => {

@@ -30,7 +30,7 @@ Real accounts never use this path. They sign in with the emailed code, on stagin
 5. The app trades the hash for a session with `supabase.auth.verifyOtp({ token_hash, type: 'email' })`.
 
 Everything after sign-in is unchanged: a team account still verifies its authenticator (second
-factor), and a player still meets the onboarding gate.
+factor), unless the staging switch below is on, and a player still meets the onboarding gate.
 
 Sources: <https://supabase.com/docs/reference/javascript/auth-admin-generatelink>,
 <https://supabase.com/docs/reference/javascript/auth-verifyotp> (`token_hash`, type `email`; the
@@ -73,6 +73,31 @@ The function returns 404 again at once.
   (`apps/mobile/scripts/check-eas-build-env.ts`) stops any EAS build whose profile is `production`
   and carries the flag.
 - A production project has no test accounts to sign in as: test players exist only on staging.
+
+## Test accounts without the second factor (staging only, RAPP-628)
+
+The people testing the onboarding sign in with test team accounts many times a day. On staging they
+can skip the authenticator app (second factor, RAPP-233). One database switch does it, for **active
+test accounts only**. A real team account or entity contact still verifies her authenticator, on
+staging too.
+
+Switch it on, in the SQL editor of the **staging** project:
+
+```sql
+insert into private.staging_switches (name, enabled)
+values ('test_accounts_skip_second_factor', true)
+on conflict (name) do update set enabled = excluded.enabled, changed_at = now();
+```
+
+Switch it off with the same statement and `false`, or delete the row. The apps read the switch when a
+session starts, so a person already signed in signs out and in again to see the change.
+
+- The migration (`20261022220000_staging_test_accounts_skip_second_factor.sql`) inserts **no row**,
+  so the switch is off on every fresh database.
+- **Production must never have this row.** Without it, every session below `aal2` is refused exactly
+  as before. Check with `select * from private.staging_switches;`: on production it returns nothing.
+- No app can read or change the switch. The apps only ask `my_second_factor_waived()`, which answers
+  for the signed-in account.
 
 ## Marking an account as a test account
 

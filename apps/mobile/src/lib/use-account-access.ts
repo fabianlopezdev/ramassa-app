@@ -20,8 +20,11 @@ const NO_PERMISSIONS: ReadonlySet<PermissionCode> = new Set();
 export function useAccountAccess(): {
   readonly area: AccountArea;
   readonly permissions: ReadonlySet<PermissionCode>;
+  /** A staging test account's waived second factor (RAPP-628), live or remembered. */
+  readonly secondFactorWaived: boolean;
 } {
-  const { role, needsOnboarding, user, permissions, isResolvingProfile } = useAuth();
+  const { role, needsOnboarding, user, permissions, isResolvingProfile, secondFactorWaived } =
+    useAuth();
   const userId = user?.id ?? null;
   const remembered = useMemo(
     () => (userId === null ? null : readRememberedAccount(privateStorage, userId)),
@@ -32,11 +35,17 @@ export function useAccountAccess(): {
 
   useEffect(() => {
     if (userId === null || role === null || needsOnboarding) return;
-    rememberAccount(privateStorage, userId, { area: areaForRole(role), permissions });
-  }, [needsOnboarding, permissions, role, userId]);
+    rememberAccount(privateStorage, userId, {
+      area: areaForRole(role),
+      permissions,
+      secondFactorWaived,
+    });
+  }, [needsOnboarding, permissions, role, secondFactorWaived, userId]);
 
   return {
     area: resolveAccountArea({ role, needsOnboarding, isResolvingProfile, remembered }),
     permissions: role !== null ? permissions : (remembered?.permissions ?? NO_PERMISSIONS),
+    secondFactorWaived:
+      role !== null ? secondFactorWaived : remembered?.secondFactorWaived === true,
   };
 }
