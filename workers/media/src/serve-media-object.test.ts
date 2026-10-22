@@ -14,6 +14,7 @@ const objectKey = `${identity.orgId}/announcements/${identity.userId}/2026/08/01
 const galleryObjectKey = `${identity.orgId}/gallery/${identity.userId}/2026/08/1123456789abcdef0123456789abcdef.jpg`;
 const feedbackObjectKey = `${identity.orgId}/feedback/${identity.userId}/2026/08/2123456789abcdef0123456789abcdef.jpg`;
 const answerObjectKey = `${identity.orgId}/intake-answers/${identity.userId}/2026/10/4123456789abcdef0123456789abcdef.pdf`;
+const staffPhotoObjectKey = `${identity.orgId}/profile-photos/0d6b3c4a-1e2f-4a5b-8c7d-9e0f1a2b3c4d/2026/10/5123456789abcdef0123456789abcdef.jpg`;
 const documentObjectKey = `${identity.orgId}/documents/${identity.userId}/2026/08/3123456789abcdef0123456789abcdef.pdf`;
 
 function requestFor(key: string = objectKey, method = 'GET'): Request {
@@ -34,6 +35,7 @@ function dependencies(
     authorizeInternalDocumentObject: async () => true,
     authorizeStockObject: async () => true,
     authorizeCustomAnswerObject: async () => true,
+    authorizeProfilePhotoObject: async () => true,
     bucket: {
       get: async (key) =>
         key === objectKey
@@ -194,6 +196,76 @@ describe('handleServeMediaObject', () => {
     );
 
     expect(response.status).toBe(404);
+    expect(storageReads).toBe(0);
+  });
+
+  test('asks the database before serving a profile photo (RAPP-639)', async () => {
+    const asked: string[] = [];
+    let storageReads = 0;
+    const refused = await handleServeMediaObject(
+      requestFor(staffPhotoObjectKey),
+      dependencies({
+        authorizeProfilePhotoObject: async (key) => {
+          asked.push(key);
+          return false;
+        },
+        bucket: {
+          get: async () => {
+            storageReads += 1;
+            return null;
+          },
+        },
+      }),
+    );
+
+    expect(refused.status).toBe(404);
+    expect(asked).toEqual([staffPhotoObjectKey]);
+    expect(storageReads).toBe(0);
+  });
+
+  test("serves a team member's current photo the database allows (RAPP-639)", async () => {
+    const response = await handleServeMediaObject(
+      requestFor(staffPhotoObjectKey),
+      dependencies({
+        authorizeProfilePhotoObject: async (key) => key === staffPhotoObjectKey,
+        bucket: {
+          get: async (key) =>
+            key === staffPhotoObjectKey
+              ? {
+                  body: new Blob(['staff photo']).stream(),
+                  size: 11,
+                  httpEtag: '"staff-etag"',
+                  writeHttpMetadata(headers) {
+                    headers.set('content-type', 'image/jpeg');
+                  },
+                }
+              : null,
+        },
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.text()).toBe('staff photo');
+  });
+
+  test('a failed profile photo check is a database error and reads nothing', async () => {
+    let storageReads = 0;
+    const response = await handleServeMediaObject(
+      requestFor(staffPhotoObjectKey),
+      dependencies({
+        authorizeProfilePhotoObject: async () => {
+          throw new Error('network down');
+        },
+        bucket: {
+          get: async () => {
+            storageReads += 1;
+            return null;
+          },
+        },
+      }),
+    );
+
+    expect(response.status).toBeGreaterThanOrEqual(500);
     expect(storageReads).toBe(0);
   });
 
