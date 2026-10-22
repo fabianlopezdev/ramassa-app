@@ -88,7 +88,7 @@ function WebMessageThread({
   );
 
   return (
-    <main
+    <div
       data-testid="message-thread"
       className="mx-auto flex h-[calc(100dvh-3.5rem)] w-full max-w-4xl flex-col px-4 py-5 sm:px-6"
     >
@@ -161,7 +161,7 @@ function WebMessageThread({
           <WebMessageComposer send={send} sendState={sendState} sendErrorCode={sendErrorCode} />
         </>
       ) : null}
-    </main>
+    </div>
   );
 }
 
