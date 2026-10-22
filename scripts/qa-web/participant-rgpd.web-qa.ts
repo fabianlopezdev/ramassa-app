@@ -74,8 +74,8 @@ test.afterAll(() => {
  * rows an erasure has to reach: a staff note, a device token, a consent record
  * and an erasure request she raised herself.
  *
- * The invitation (and her account) comes from the product. Her profile stands
- * in for the onboarding wizard she would complete, and a test-only password
+ * The invitation (her account and her profile) comes from the product. Her
+ * joining stands in for the onboarding wizard she would complete, and a test-only password
  * lets the media spec act as her through the API. The four attached rows are
  * inserted directly, because the features that create them are later phases.
  */
@@ -86,6 +86,9 @@ async function createParticipantWithData(
   const email = `rgpd.${firstName.toLowerCase()}.${RUN_TAG}@example.test`;
   const password = `rgpd-${RUN_TAG}-${firstName}`;
   await page.goto('/participants/new');
+  // Her first and last name are required to create her (RAPP-618).
+  await page.locator('#new-participant-first-name').fill(firstName);
+  await page.locator('#new-participant-last-name').fill(`Rgpd ${RUN_TAG}`);
   await page.locator('#new-participant-email').fill(email);
   // Her details, then what she will be asked, then the invitation (RAPP-618).
   await page
@@ -107,9 +110,10 @@ async function createParticipantWithData(
   mintedParticipantIds.push(id);
 
   queryDatabase(`
-    insert into public.profiles (id, org_id, role, first_name, last_name, terms_accepted_at)
-      values ('${id}', '5eed0000-0000-4000-8000-000000000000', 'player', '${firstName}',
-              'Rgpd ${RUN_TAG}', now());
+    -- The invitation made her profile with her name (RAPP-618): she joins.
+    update public.profiles
+       set role = 'player', terms_accepted_at = now()
+     where id = '${id}';
     update auth.users
        set encrypted_password = extensions.crypt('${password}', extensions.gen_salt('bf'))
      where id = '${id}';
