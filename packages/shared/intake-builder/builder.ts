@@ -22,10 +22,12 @@ import { AppError, databaseErrorCode } from '../errors';
 import { resolveLocalizedText } from '../i18n/localized-content';
 import { appTermsFromCatalog, type CurrentAppTerms } from '../onboarding/app-terms';
 import {
+  customStepKey,
   isCustomStep,
   QUESTION_SCREENS,
   WIZARD_QUESTION_SCREENS,
   WIZARD_SCREEN_QUESTIONS,
+  wizardFlowOrder,
   type IntakeQuestion,
   type WizardFlow,
   type WizardQuestionScreen,
@@ -364,6 +366,26 @@ export function screensFor(
 
 export const wizardScreens = (catalog: IntakeCatalog, afterScreen?: BuiltinScreen) =>
   screensFor(catalog, isAskedOfHer, afterScreen);
+
+/**
+ * Her wizard's staff screens in the order her phone walks them (RAPP-612): the
+ * flow staff arranged, so the staff preview of an invitation (RAPP-618) lists
+ * them as she will see them, never in the catalog's anchor order.
+ */
+export function wizardScreensInFlowOrder(catalog: IntakeCatalog): readonly IntakeScreen[] {
+  const screens = wizardScreens(catalog);
+  const order = wizardFlowOrder(
+    screens.map((screen) => ({
+      id: screen.id,
+      afterScreen: screen.afterScreen,
+      isAnswered: false,
+    })),
+    wizardFlow(catalog),
+  );
+  const position = (screen: IntakeScreen) => order.indexOf(customStepKey(screen.id));
+  return [...screens].sort((a, b) => position(a) - position(b));
+}
+
 export const seasonScreens = (catalog: IntakeCatalog) => screensFor(catalog, isSeasonal);
 export const referralScreens = (catalog: IntakeCatalog) =>
   screensFor(catalog, (question) => question.placements.includes('entity_form'));

@@ -103,3 +103,49 @@ test('a question removed in Settings is never asked and cannot be changed', () =
   expect(row(view, 'phone').dataset.asked).toBe('false');
   expect(choice(view, 'phone').disabled).toBe(true);
 });
+
+test('staff screens are listed in the order her phone shows them (RAPP-612)', () => {
+  const screen = (id: string, afterScreen: 'identity' | 'logistics' | 'season') => ({
+    id,
+    title: { ca: id },
+    intro: null,
+    afterScreen,
+    isArchived: false,
+    questions: [
+      {
+        id: `${id}-question`,
+        screenId: id,
+        type: 'short_text' as const,
+        label: { ca: `Pregunta ${id}` },
+        help: null,
+        privacy: 'normal' as const,
+        placements: ['wizard' as const],
+        isArchived: false,
+        settings: {},
+        options: [],
+      },
+    ],
+  });
+  // The catalog lists screens by their anchor: C2 first.
+  const catalog: IntakeCatalog = {
+    ...EMPTY_INTAKE_CATALOG,
+    screens: [screen('C2', 'identity'), screen('C1', 'logistics'), screen('C3', 'season')],
+    flowOrder: ['custom:C1', 'custom:C2', 'custom:C3', 'identity'],
+  };
+  const view = render(
+    <InviteQuestionsReview
+      answered={answered}
+      states={{}}
+      onChange={() => undefined}
+      catalog={catalog}
+    />,
+  );
+  const listed = [
+    ...view.container.querySelectorAll('[data-testid^="invite-custom-question-"]'),
+  ].map((element) => element.getAttribute('data-testid'));
+  expect(listed).toEqual([
+    'invite-custom-question-C1-question',
+    'invite-custom-question-C2-question',
+    'invite-custom-question-C3-question',
+  ]);
+});

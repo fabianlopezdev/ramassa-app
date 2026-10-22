@@ -29,7 +29,7 @@ import {
   isScreenAnswered,
   textIn,
   wizardFlow,
-  wizardScreens,
+  wizardScreensInFlowOrder,
   type IntakeCatalog,
 } from '@ramassa/shared/intake-builder';
 import type { LanguageCode } from '@ramassa/shared/schemas';
@@ -82,7 +82,10 @@ export function InviteQuestionsReview({
     wizardFlow(catalog),
   );
   // Her answers to the organization's questions are empty when she is created.
-  const customScreens = wizardScreens(catalog).filter((screen) => !isScreenAnswered(screen, {}));
+  // In the order her phone shows them (RAPP-612), never the catalog's anchor order.
+  const customScreens = wizardScreensInFlowOrder(catalog).filter(
+    (screen) => !isScreenAnswered(screen, {}),
+  );
   const customCount = customScreens.reduce((total, screen) => total + screen.questions.length, 0);
   const askedCount = rows.filter((row) => row.isAsked).length + customCount;
 

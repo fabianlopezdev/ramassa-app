@@ -27,6 +27,7 @@ import {
   seasonScreens,
   wizardFlow,
   wizardScreens,
+  wizardScreensInFlowOrder,
   type CustomQuestion,
 } from './builder';
 
@@ -406,5 +407,60 @@ describe('built-in screens staff edit and arrange (RAPP-612)', () => {
     expect(calls).toEqual([
       ['save_intake_flow_order', { p_order: ['season', 'custom:abc', 'identity'] }],
     ]);
+  });
+});
+
+describe('staff screens in the order her phone shows them (RAPP-612, RAPP-618)', () => {
+  const screenAfter = (id: string, afterScreen: string, sortOrder: number) => ({
+    id,
+    title: { ca: id },
+    intro: null,
+    after_screen: afterScreen,
+    sort_order: sortOrder,
+    is_archived: false,
+    questions: [
+      {
+        id: id.replace('8044', '8045'),
+        question_type: 'short_text',
+        label: { ca: 'Pregunta' },
+        help: null,
+        privacy: 'normal',
+        placements: ['wizard'],
+        sort_order: 0,
+        is_archived: false,
+        options: [],
+      },
+    ],
+  });
+  const first = '5eed0000-0000-4000-8044-0000000000c1';
+  const second = '5eed0000-0000-4000-8044-0000000000c2';
+  const third = '5eed0000-0000-4000-8044-0000000000c3';
+  // The catalog lists screens by their anchor: the second one first.
+  const arranged = parseIntakeCatalog({
+    screens: [
+      screenAfter(second, 'identity', 0),
+      screenAfter(first, 'logistics', 0),
+      screenAfter(third, 'season', 0),
+    ],
+    overrides: [],
+    presets: [],
+    flow_order: [`custom:${first}`, `custom:${second}`, `custom:${third}`, 'identity'],
+  });
+
+  test('the preview lists them in the flow order, as the phone walks them', () => {
+    expect(wizardScreensInFlowOrder(arranged).map((screen) => screen.id)).toEqual([
+      first,
+      second,
+      third,
+    ]);
+  });
+
+  test('with no stored order they follow the app order of their anchors', () => {
+    const anchored = parseIntakeCatalog({
+      screens: [screenAfter(third, 'season', 0), screenAfter(second, 'identity', 0)],
+      overrides: [],
+      presets: [],
+    });
+    expect(wizardScreensInFlowOrder(anchored).map((screen) => screen.id)).toEqual([second, third]);
   });
 });

@@ -27,7 +27,7 @@ import {
   isScreenAnswered,
   textIn,
   wizardFlow,
-  wizardScreens,
+  wizardScreensInFlowOrder,
   type IntakeCatalog,
 } from '@ramassa/shared/intake-builder';
 
@@ -76,7 +76,10 @@ export function InviteQuestionsStep({
     // In the order her screens come, as staff arranged them (RAPP-612).
     wizardFlow(catalog),
   );
-  const customScreens = wizardScreens(catalog).filter((screen) => !isScreenAnswered(screen, {}));
+  // In the order her phone shows them (RAPP-612), never the catalog's anchor order.
+  const customScreens = wizardScreensInFlowOrder(catalog).filter(
+    (screen) => !isScreenAnswered(screen, {}),
+  );
   const customCount = customScreens.reduce((total, screen) => total + screen.questions.length, 0);
   const presets: readonly {
     readonly id: string;
