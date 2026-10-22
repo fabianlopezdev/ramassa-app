@@ -1,6 +1,9 @@
 import { RouteFocusManager } from '@/components/accessibility/route-focus-manager';
 import { RequireAuth } from '@/components/auth/require-auth';
+import { FundingFooter } from '@/components/nav/funding-footer';
+import { LanguageMenu } from '@/components/nav/language-menu';
 import { StaffSidebar } from '@/components/nav/staff-sidebar';
+import { UserMenu } from '@/components/nav/user-menu';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { logout } from '@/lib/auth';
 import { designRoleRedirect } from '@/lib/design-role-access';
@@ -33,14 +36,21 @@ function StaffLayout() {
       <DesignRoleGate>
         <SidebarProvider>
           <RouteFocusManager targetId="main-content" />
-          <StaffSidebar onSignOut={logout} />
+          <StaffSidebar />
           {/* SidebarInset renders the page's single `main` landmark, so child
             routes render sections rather than nesting another `main`. */}
           <SidebarInset id="main-content" tabIndex={-1} className="bg-canvas">
+            {/* The top bar (RAPP-632): the sidebar toggle at the start, the
+              language and her user menu at the end. */}
             <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b border-border bg-background/90 px-4 shadow-xs backdrop-blur">
               <SidebarTrigger />
+              <div className="ms-auto flex items-center gap-1">
+                <LanguageMenu />
+                <UserMenu onSignOut={logout} />
+              </div>
             </header>
             <Outlet />
+            <FundingFooter />
           </SidebarInset>
         </SidebarProvider>
       </DesignRoleGate>

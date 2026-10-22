@@ -436,8 +436,8 @@ export function queryDatabaseAsAddress(email: string, sql: string): string {
  *
  * It is needed because `/login` on an authenticated session redirects to that
  * role's landing, so a second `signIn` in one test would silently never see a
- * login form. Every landing carries the button: the staff sidebar, the entity
- * portal, and the terminal "no admin access" screen a participant lands on.
+ * login form. Every landing carries it: the user menu in the staff and entity
+ * top bars, and the terminal "no admin access" screen a participant lands on.
  */
 export async function signOut(page: Page): Promise<void> {
   const hasStoredSession = (await page.context().storageState()).origins.some((origin) =>
@@ -445,18 +445,16 @@ export async function signOut(page: Page): Promise<void> {
   );
   if (!hasStoredSession) return;
 
-  // A team member signs out from the staff sidebar (RAPP-615): every staff
-  // page has it, the design role's onboarding page included. An entity
-  // contact and an account without admin access have their own button.
-  const staffSignOut = page.getByTestId('staff-sign-out');
-  const signOutButton = staffSignOut
-    .or(
-      page.getByRole('button', {
-        name: /tanca la sessió|sign out|log out|cerrar sesión|تسجيل الخروج|خروج(?: از حساب)?/i,
-      }),
-    )
-    .first();
-  const sidebarToggle = page.locator('[data-sidebar="trigger"]').first();
+  // A team member and an entity contact sign out from the user menu at the
+  // end of the top bar (RAPP-632): every staff page has it, the design role's
+  // onboarding page included. An account without admin access and the
+  // second-factor step have their own button.
+  const userMenu = page.getByTestId('user-menu-trigger');
+  const menuSignOut = page.getByTestId('staff-sign-out');
+  const screenSignOut = page.getByRole('button', {
+    name: /tanca la sessió|sign out|log out|cerrar sesión|تسجيل الخروج|خروج(?: از حساب)?/i,
+  });
+  const signOutEntry = userMenu.or(screenSignOut).first();
   const loginEmailField = page.locator('input[type="email"]');
 
   // A stored browser session must be cleared through the product. The guarded
@@ -466,20 +464,22 @@ export async function signOut(page: Page): Promise<void> {
   // holding the whole retry open until goto's default timeout.
   await expect(async () => {
     await page.goto('/dashboard', { waitUntil: 'domcontentloaded', timeout: 10_000 });
-    await expect(signOutButton.or(loginEmailField).first()).toBeAttached({ timeout: 3_000 });
+    await expect(signOutEntry.or(loginEmailField).first()).toBeAttached({ timeout: 3_000 });
     await waitForHydration(page);
   }).toPass({ timeout: 30_000 });
 
   // Already signed out: the guard sent an unauthenticated visitor to /login.
-  if ((await signOutButton.count()) === 0) return;
+  if ((await signOutEntry.count()) === 0) return;
 
-  // The same hydration retry the sign-in below needs, for the same reason. On
-  // a narrow screen the sidebar is a drawer: open it first.
+  // The same hydration retry the sign-in below needs, for the same reason. The
+  // menu opens first; a retry with the menu already open goes straight on.
   await expect(async () => {
-    if (!(await signOutButton.isVisible()) && (await sidebarToggle.isVisible())) {
-      await sidebarToggle.click();
+    if ((await userMenu.count()) > 0) {
+      if (!(await menuSignOut.isVisible())) await userMenu.click({ timeout: 2_000 });
+      await menuSignOut.click({ timeout: 2_000 });
+    } else {
+      await screenSignOut.first().click({ timeout: 2_000 });
     }
-    await signOutButton.click({ timeout: 2_000 });
     await expect(page).toHaveURL(/\/login/, { timeout: 2_000 });
   }).toPass({ timeout: 20_000 });
 }

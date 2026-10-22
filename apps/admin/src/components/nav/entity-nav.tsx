@@ -1,8 +1,7 @@
 import { OrganizationBrand } from '@/components/branding/organization-brand';
-import { LanguagePicker } from '@/components/language-picker';
+import { LanguageMenu } from '@/components/nav/language-menu';
+import { UserMenu } from '@/components/nav/user-menu';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { logout } from '@/lib/auth';
 import { useUnreadMessageCount } from '@/lib/messaging';
 import { ENTITY_NAV_ITEMS } from '@/lib/nav-items';
 import { cn } from '@/lib/utils';
@@ -21,8 +20,13 @@ import { useTranslation } from 'react-i18next';
  * deny-by-default (RAPP-13). The item map lives in `lib/nav-items`, namespaced
  * under /portal so it can never collide with a staff route.
  */
-export function EntityNav() {
-  const { t } = useTranslation(['nav', 'common', 'auth', 'admin']);
+export interface EntityNavProps {
+  /** The layout passes the app's `logout`, so this file stays free of the client. */
+  readonly onSignOut: () => Promise<unknown>;
+}
+
+export function EntityNav({ onSignOut }: EntityNavProps) {
+  const { t } = useTranslation(['nav', 'common', 'admin']);
   const pathname = useLocation({ select: (location) => location.pathname });
   const unread = useUnreadMessageCount();
 
@@ -74,10 +78,11 @@ export function EntityNav() {
             })}
           </ul>
         </nav>
-        <LanguagePicker className="ms-auto" />
-        <Button variant="outline" onClick={() => void logout()}>
-          {t('auth:signOutAction')}
-        </Button>
+        {/* The language and her user menu, as in the staff top bar (RAPP-632). */}
+        <div className="ms-auto flex items-center gap-1">
+          <LanguageMenu tone="brand" />
+          <UserMenu onSignOut={onSignOut} tone="brand" />
+        </div>
       </div>
     </header>
   );

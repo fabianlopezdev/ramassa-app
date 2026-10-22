@@ -48,22 +48,28 @@ function isAbsoluteHttpUrl(value: string): boolean {
 }
 
 /**
- * Browser image elements cannot attach an Authorization header. Fetch the
- * protected object first, then give the element a short-lived local blob URL.
+ * A displayable link for a protected media object: browser image elements
+ * cannot attach an Authorization header, so the object is fetched first and
+ * handed over as a short-lived local blob URL. An absolute http(s) link is
+ * returned as it is; null while loading, when signed out, or on failure.
  */
-export function AuthenticatedMediaImage({
-  objectKeyOrUrl,
-  mediaWorkerUrl,
-  accessToken,
-  alt,
-  className,
-}: AuthenticatedMediaImageProps) {
-  const absoluteUrl = isAbsoluteHttpUrl(objectKeyOrUrl) ? objectKeyOrUrl : null;
+export function useAuthenticatedMediaUrl(
+  objectKeyOrUrl: string | null,
+  mediaWorkerUrl: string,
+  accessToken: string | undefined,
+): string | null {
+  const absoluteUrl =
+    objectKeyOrUrl !== null && isAbsoluteHttpUrl(objectKeyOrUrl) ? objectKeyOrUrl : null;
   const [resolvedUrl, setResolvedUrl] = useState<string | null>(absoluteUrl);
 
   useEffect(() => {
     setResolvedUrl(absoluteUrl);
-    if (absoluteUrl !== null || mediaWorkerUrl.length === 0 || accessToken === undefined) {
+    if (
+      objectKeyOrUrl === null ||
+      absoluteUrl !== null ||
+      mediaWorkerUrl.length === 0 ||
+      accessToken === undefined
+    ) {
       return undefined;
     }
 
@@ -85,7 +91,7 @@ export function AuthenticatedMediaImage({
       })
       .catch(() => {
         if (!controller.signal.aborted) {
-          logger.warn('knowledge preview image could not be loaded', { code: 'UPLOAD-1' });
+          logger.warn('media image could not be loaded', { code: 'UPLOAD-1' });
         }
       });
 
@@ -95,6 +101,17 @@ export function AuthenticatedMediaImage({
     };
   }, [absoluteUrl, accessToken, mediaWorkerUrl, objectKeyOrUrl]);
 
+  return resolvedUrl;
+}
+
+export function AuthenticatedMediaImage({
+  objectKeyOrUrl,
+  mediaWorkerUrl,
+  accessToken,
+  alt,
+  className,
+}: AuthenticatedMediaImageProps) {
+  const resolvedUrl = useAuthenticatedMediaUrl(objectKeyOrUrl, mediaWorkerUrl, accessToken);
   return resolvedUrl === null ? null : (
     <img src={resolvedUrl} alt={alt} className={className} loading="lazy" />
   );

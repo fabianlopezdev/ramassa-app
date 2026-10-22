@@ -7,22 +7,11 @@
  */
 import { useAdminBranding } from '@/components/branding/organization-branding-provider';
 import { AuthenticatedMediaImage } from '@/components/content/authenticated-media-image';
+import { organizationInitials } from '@/lib/initials';
 import { mediaWorkerUrl } from '@/lib/media-worker';
 import { cn } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@ramassa/shared/auth';
-
-/** Up to two initials from the organization's name, for the logo-less tile. */
-export function organizationInitials(name: string): string {
-  const words = name
-    .split(/\s+/u)
-    .map((word) => word.replace(/[^\p{L}\p{N}]/gu, ''))
-    .filter((word) => word.length > 0);
-  return words
-    .slice(0, 2)
-    .map((word) => word.charAt(0).toLocaleUpperCase())
-    .join('');
-}
 
 export function OrganizationLogoTile({ className }: { readonly className?: string }) {
   const { t } = useTranslation('common');

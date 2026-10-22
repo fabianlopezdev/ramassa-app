@@ -85,5 +85,8 @@
   "exportPeriod": "Periodo (opcional)",
   "exportCustomAnswers": "Respuestas a las preguntas adicionales",
   "exportConsents": "Autorizaciones de temporada, con el texto de cada una",
-  "entityPortalSubtitle": "Portal de entidades"
+  "entityPortalSubtitle": "Portal de entidades",
+  "userMenu": {
+    "label": "Menú de la cuenta de {{name}}"
+  }
 }
