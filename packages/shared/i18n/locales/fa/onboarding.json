@@ -95,6 +95,7 @@
   "summaryEditAction": "تغییر",
   "summaryEditLabel": "تغییر: {{section}}",
   "summaryNotGiven": "مشخص نشده",
+  "summaryMissingRequired": "یک پاسخ ضروری در «{{section}}» کم است. برای ادامه به آن پاسخ دهید.",
   "summaryConfirmAction": "بله، درست است",
   "summarySectionName": "نام و نام خانوادگی",
   "summaryDependentsYes": "بله، {{count}}",

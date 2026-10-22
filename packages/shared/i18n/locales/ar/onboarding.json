@@ -95,6 +95,7 @@
   "summaryEditAction": "تغيير",
   "summaryEditLabel": "تغيير: {{section}}",
   "summaryNotGiven": "غير محدد",
+  "summaryMissingRequired": "هناك إجابة مطلوبة ناقصة في «{{section}}». أجيبي عنها للمتابعة.",
   "summaryConfirmAction": "نعم، صحيحة",
   "summarySectionName": "الاسم واسم العائلة",
   "summaryDependentsYes": "نعم، {{count}}",

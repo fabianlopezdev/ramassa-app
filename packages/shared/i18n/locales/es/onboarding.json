@@ -95,6 +95,7 @@
   "summaryEditAction": "Cambiar",
   "summaryEditLabel": "Cambiar: {{section}}",
   "summaryNotGiven": "Sin indicar",
+  "summaryMissingRequired": "Falta una respuesta obligatoria en «{{section}}». Respóndela para continuar.",
   "summaryConfirmAction": "Sí, son correctos",
   "summarySectionName": "Nombre y apellidos",
   "summaryDependentsYes": "Sí, {{count}}",

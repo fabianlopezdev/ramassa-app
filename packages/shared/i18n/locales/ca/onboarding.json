@@ -95,6 +95,7 @@
   "summaryEditAction": "Canvia",
   "summaryEditLabel": "Canvia: {{section}}",
   "summaryNotGiven": "Sense indicar",
+  "summaryMissingRequired": "Falta una resposta obligatòria a «{{section}}». Respon-la per continuar.",
   "summaryConfirmAction": "Sí, són correctes",
   "summarySectionName": "Nom i cognoms",
   "summaryDependentsYes": "Sí, {{count}}",

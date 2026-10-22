@@ -14,6 +14,7 @@ import { WizardIntakeProvider, type WizardIntake } from '@/lib/onboarding-intake
 import { ScreenWordingProvider } from '@/lib/screen-wording';
 import { supabase } from '@/lib/supabase';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
+import { resumeStep } from '@/lib/wizard-completeness';
 import { useQuery } from '@tanstack/react-query';
 import { Stack } from 'expo-router/stack';
 import { useEffect, useState } from 'react';
@@ -22,6 +23,7 @@ import { useAuth } from '@ramassa/shared/auth';
 import { getErrorMessageKey, toAppError } from '@ramassa/shared/errors';
 import { useLanguage } from '@ramassa/shared/i18n';
 import {
+  DEFAULT_WIZARD_FLOW,
   fetchDocumentStepExplanation,
   fetchMyAnsweredQuestions,
   fetchMyQuestionsToAsk,
@@ -72,12 +74,27 @@ async function loadStaffQuestions(): Promise<{
 function seedWizardDraft(intake: WizardIntake, language: LanguageCode): void {
   const firstScreen = nextWizardScreen('start', intake.notAsked, intake.customPlan, intake.flow);
   const scenarioStamp = intake.scenarioStamp ?? null;
-  const draft = draftForScenario(onboardingDraftStore.loadDraft(), scenarioStamp) ?? {
+  const stored = draftForScenario(onboardingDraftStore.loadDraft(), scenarioStamp);
+  const draft = stored ?? {
     currentStep: wizardDraftStep(firstScreen),
     ...(scenarioStamp === null ? {} : { scenarioStamp }),
     ...(intake.profile === null ? {} : seedDraftFromProfile(intake.profile, intake.answered)),
   };
-  onboardingDraftStore.saveDraft(withSelectedLanguage(draft, language));
+  const withLanguage = withSelectedLanguage(draft, language);
+  // Staff may have moved a screen before the step she reached (RAPP-612): she
+  // resumes at the first one still missing a required answer.
+  onboardingDraftStore.saveDraft(
+    stored === null
+      ? withLanguage
+      : {
+          ...withLanguage,
+          currentStep: resumeStep(
+            withLanguage,
+            intake.customPlan,
+            intake.flow ?? DEFAULT_WIZARD_FLOW,
+          ),
+        },
+  );
 }
 
 /**

@@ -13,7 +13,9 @@
 
 import { ReviewEditAction, ReviewRow, ReviewSection } from '@/components/onboarding/review-section';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
+import { WizardValidationSummary } from '@/components/onboarding/wizard-validation-summary';
 import { SeasonAnswerRows } from '@/components/profile/season-answer-rows';
+import { playHaptic } from '@/lib/haptics/haptics';
 import { onboardingDraftStore } from '@/lib/onboarding';
 import { normalizeDecimalDigits } from '@/lib/onboarding-form';
 import {
@@ -24,6 +26,7 @@ import {
 import { useBuiltinWording, useWizardIntake, useWizardStep } from '@/lib/onboarding-intake-context';
 import { useScreenTitle } from '@/lib/screen-wording';
 import { SEASON_SCREEN_TITLE_KEYS } from '@/lib/season-draft';
+import { firstIncompleteScreen } from '@/lib/wizard-completeness';
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import { Fragment, useCallback, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -59,6 +62,14 @@ const DOCUMENT_TYPE_LABEL_KEYS: Readonly<Record<string, string>> = {
 };
 
 type Section = Record<string, unknown>;
+
+/** The bundled section titles of the built-in screens outside the season group. */
+const BUILTIN_SECTION_TITLE_KEYS: Readonly<Partial<Record<WizardQuestionScreen, string>>> = {
+  background: 'backgroundTitle',
+  documentation: 'documentationTitle',
+  logistics: 'logisticsTitle',
+  equipment: 'equipmentTitle',
+};
 
 function text(value: unknown): string | null {
   if (typeof value !== 'string') return null;
@@ -158,13 +169,21 @@ export default function SummaryStepScreen() {
     onboardingDraftStore.loadDraft(),
   );
 
+  // The screen that still misses a required answer when she last confirmed
+  // (RAPP-612), or null. Re-checked whenever she comes back.
+  const [missingScreen, setMissingScreen] = useState<WizardQuestionScreen | null>(null);
+
   // A correction made on another screen comes back here through router.back(),
   // which shows this same screen again: re-read the draft, or it would show
   // what she just changed.
   useFocusEffect(
     useCallback(() => {
-      setDraft(onboardingDraftStore.loadDraft());
-    }, []),
+      const latest = onboardingDraftStore.loadDraft();
+      setDraft(latest);
+      setMissingScreen((current) =>
+        current === null ? null : firstIncompleteScreen(latest, customPlan, flow),
+      );
+    }, [customPlan, flow]),
   );
 
   const identity: Section = draft?.identity ?? {};
@@ -443,7 +462,26 @@ export default function SummaryStepScreen() {
     ...Object.fromEntries(SEASON_WIZARD_SCREENS.map((screen) => [screen, seasonSection(screen)])),
   };
 
+  const sectionTitle = (screen: WizardQuestionScreen): string =>
+    screen === 'identity'
+      ? t('summarySectionName')
+      : (SEASON_WIZARD_SCREENS as readonly string[]).includes(screen)
+        ? screenTitle(
+            screen,
+            t(SEASON_SCREEN_TITLE_KEYS[screen as keyof typeof SEASON_SCREEN_TITLE_KEYS]),
+          )
+        : screenTitle(screen, t(BUILTIN_SECTION_TITLE_KEYS[screen] ?? 'summaryTitle'));
+
   function confirm() {
+    // A required answer is missing (staff may have moved a screen she never
+    // saw): she cannot confirm, and goes to that screen to answer it.
+    const incomplete = firstIncompleteScreen(onboardingDraftStore.loadDraft(), customPlan, flow);
+    if (incomplete !== null) {
+      setMissingScreen(incomplete);
+      playHaptic('warning');
+      edit(incomplete);
+      return;
+    }
     onboardingDraftStore.saveDraft({
       ...onboardingDraftStore.loadDraft(),
       currentStep: step.nextDraftStep,
@@ -472,6 +510,15 @@ export default function SummaryStepScreen() {
             }
       }
     >
+      <WizardValidationSummary
+        testID="summary-missing-required"
+        isVisible={missingScreen !== null}
+        message={
+          missingScreen === null
+            ? ''
+            : t('summaryMissingRequired', { section: sectionTitle(missingScreen) })
+        }
+      />
       {wizardFlowOrder(customPlan, flow).map((step) => {
         const customId = customStepId(step);
         const custom =

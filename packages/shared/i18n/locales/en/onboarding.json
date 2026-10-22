@@ -95,6 +95,7 @@
   "summaryEditAction": "Change",
   "summaryEditLabel": "Change: {{section}}",
   "summaryNotGiven": "Not given",
+  "summaryMissingRequired": "A required answer is missing in “{{section}}”. Answer it to continue.",
   "summaryConfirmAction": "Yes, they are correct",
   "summarySectionName": "Name",
   "summaryDependentsYes": "Yes, {{count}}",

@@ -14,8 +14,19 @@ mock.module('expo-router', () => ({
 mock.module('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key, i18n: { resolvedLanguage: 'ca' } }),
 }));
+mock.module('@/components/onboarding/wizard-validation-summary', () => ({
+  WizardValidationSummary: ({
+    isVisible,
+    message,
+    testID,
+  }: {
+    isVisible: boolean;
+    message: string;
+    testID?: string;
+  }) => (isVisible ? createElement('div', { 'data-testid': testID }, message) : null),
+}));
+mock.module('@/lib/haptics/haptics', () => ({ playHaptic: () => {} }));
 mock.module('@/lib/use-language-font-class', () => ({ useLanguageFontClass: () => '' }));
-mock.module('@/lib/onboarding-form', () => ({ normalizeDecimalDigits: (value: string) => value }));
 mock.module('@/components/profile/season-answer-rows', () => ({ SeasonAnswerRows: () => null }));
 mock.module('@/components/onboarding/review-section', () => ({
   ReviewSection: ({ title, children }: { title: string; children: ReactNode }) =>
