@@ -100,7 +100,6 @@ function LoginPage() {
         ) : mode === 'otp' ? (
           <div className="flex flex-col gap-4">
             <EmailOtpRequestForm onSent={setSentToEmail} />
-            <p className="text-muted-foreground text-center text-sm">{t('auth:emailOtpHint')}</p>
             <Button variant="link" className="self-center" onClick={() => setMode('existing-code')}>
               {t('auth:emailOtpExistingCodeAction')}
             </Button>
