@@ -13,6 +13,9 @@ import {
   type CustomAnswerDraft,
 } from '@/components/onboarding/custom-question-field';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
+import { WizardValidationSummary } from '@/components/onboarding/wizard-validation-summary';
+import { checkCustomAnswers } from '@/lib/custom-answer-errors';
+import { playHaptic } from '@/lib/haptics/haptics';
 import { onboardingDraftStore } from '@/lib/onboarding';
 import { mergedCustomAnswers, WIZARD_SCREEN_ROUTES } from '@/lib/onboarding-intake';
 import { useWizardIntake, useWizardStep } from '@/lib/onboarding-intake-context';
@@ -39,16 +42,18 @@ export default function CustomStepScreen() {
   const [answers, setAnswers] = useState<CustomAnswerDraft>(() =>
     mergedCustomAnswers(customAnswers, draft?.custom),
   );
+  const [errors, setErrors] = useState<Readonly<Record<string, string>>>({});
+  const [isDrawing, setIsDrawing] = useState(false);
   const screen = customScreens.find((candidate) => candidate.id === screenId);
 
   // Staff removed the screen since her draft was saved: the summary shows the rest.
   if (screen === undefined) return <Redirect href={WIZARD_SCREEN_ROUTES.summary} />;
 
-  function persist(currentStep: OnboardingDraftStep) {
+  function persist(currentStep: OnboardingDraftStep, saved: CustomAnswerDraft = answers) {
     if (screen === undefined) return;
     const mine = Object.fromEntries(
       screen.questions.flatMap((question) => {
-        const value = answers[question.id];
+        const value = saved[question.id];
         return value === undefined ? [] : [[question.id, value]];
       }),
     );
@@ -69,9 +74,19 @@ export default function CustomStepScreen() {
       totalSteps={step.position.total}
       title={textIn(screen.title, language)}
       intro={intro === '' ? undefined : intro}
+      scrollEnabled={!isDrawing}
       continueLabel={t('continueAction')}
       onContinue={() => {
-        persist(step.nextDraftStep);
+        // The shared schema checks each answer before she leaves the screen,
+        // as the database will (RAPP-610); a phone or an email is tidied first.
+        const checked = checkCustomAnswers(screen.questions, answers, t);
+        setAnswers(checked.answers);
+        setErrors(checked.errors);
+        if (Object.keys(checked.errors).length > 0) {
+          playHaptic('warning');
+          return;
+        }
+        persist(step.nextDraftStep, checked.answers);
         step.goNext();
       }}
       onBack={
@@ -83,6 +98,10 @@ export default function CustomStepScreen() {
             }
       }
     >
+      <WizardValidationSummary
+        isVisible={Object.keys(errors).length > 0}
+        message={t('errorSummary')}
+      />
       <View testID={`wizard-custom-${screen.id}`} className="gap-lg">
         {screen.questions
           .filter((question) => isCustomQuestionVisible(question, answers))
@@ -91,11 +110,20 @@ export default function CustomStepScreen() {
               key={question.id}
               question={question}
               value={answers[question.id]}
-              onChange={(value) =>
+              errorMessage={errors[question.id]}
+              onDrawingChange={setIsDrawing}
+              onChange={(value) => {
                 setAnswers((current) =>
                   updateCustomAnswer(screen.questions, current, question.id, value),
-                )
-              }
+                );
+                if (errors[question.id] !== undefined) {
+                  setErrors((current) =>
+                    Object.fromEntries(
+                      Object.entries(current).filter(([id]) => id !== question.id),
+                    ),
+                  );
+                }
+              }}
             />
           ))}
       </View>

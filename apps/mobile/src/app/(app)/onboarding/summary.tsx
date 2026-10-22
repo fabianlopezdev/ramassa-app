@@ -103,6 +103,7 @@ function CustomSection({
     no: t('noOption'),
     maybe: t('customMaybeOption'),
     archived: t('customArchivedOption'),
+    signed: t('customSigned'),
   };
   const title = textIn(screen.title, language);
   return (

@@ -112,12 +112,21 @@ export function mergedCustomAnswers(
   return { ...stored, ...draft };
 }
 
+function isStringList(value: CustomAnswerValue | undefined): value is readonly string[] {
+  return Array.isArray(value) && value.every((item) => typeof item === 'string');
+}
+
 function sameAnswer(a: CustomAnswerValue | undefined, b: CustomAnswerValue | undefined): boolean {
   if (isEmptyAnswer(a) || isEmptyAnswer(b)) return isEmptyAnswer(a) && isEmptyAnswer(b);
   if (typeof a === 'string' || typeof b === 'string') {
     return typeof a === 'string' && typeof b === 'string' && a.trim() === b.trim();
   }
-  return [...(a ?? [])].sort().join('\n') === [...(b ?? [])].sort().join('\n');
+  // A choice of several is the same answer in any order; every other value
+  // (a list she ordered, a number, a signature, a file) compares as written.
+  if (isStringList(a) && isStringList(b)) {
+    return [...a].sort().join('\n') === [...b].sort().join('\n');
+  }
+  return JSON.stringify(a) === JSON.stringify(b);
 }
 
 /**

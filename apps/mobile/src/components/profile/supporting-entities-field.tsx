@@ -15,6 +15,12 @@ import {
 } from '@ramassa/shared/schemas';
 import { tokens } from '@ramassa/shared/tokens';
 
+/**
+ * A list she builds one item at a time: suggestions to tap, a field to type
+ * another, and the added items with a remove control. The supporting
+ * organizations question uses it, and so does a staff "list" question
+ * (RAPP-610) with its own field label, add label and limit.
+ */
 export function SupportingEntitiesField({
   value,
   onChange,
@@ -22,6 +28,11 @@ export function SupportingEntitiesField({
   label,
   help,
   testIDPrefix,
+  inputLabel,
+  addLabel,
+  removeLabel,
+  maxItems = SUPPORTING_ENTITIES_MAX,
+  maxLength = SUPPORTING_ENTITY_NAME_MAX_LENGTH,
 }: {
   readonly value: readonly string[];
   readonly onChange: (value: readonly string[]) => void;
@@ -29,6 +40,11 @@ export function SupportingEntitiesField({
   readonly label: string;
   readonly help?: string | null;
   readonly testIDPrefix: string;
+  readonly inputLabel?: string;
+  readonly addLabel?: string;
+  readonly removeLabel?: (name: string) => string;
+  readonly maxItems?: number;
+  readonly maxLength?: number;
 }) {
   const { t } = useTranslation('onboarding');
   const fontClass = useLanguageFontClass();
@@ -37,8 +53,7 @@ export function SupportingEntitiesField({
   const [name, setName] = useState('');
   const add = (candidate: string) => {
     const trimmed = candidate.trim();
-    if (trimmed === '' || value.includes(trimmed) || value.length >= SUPPORTING_ENTITIES_MAX)
-      return;
+    if (trimmed === '' || value.includes(trimmed) || value.length >= maxItems) return;
     onChange([...value, trimmed]);
     setName('');
   };
@@ -64,16 +79,16 @@ export function SupportingEntitiesField({
         <View className={isInline ? 'flex-1' : 'w-full'}>
           <AuthTextField
             testID={`${testIDPrefix}-supporting-entity-other`}
-            label={t('onboarding:supportingEntitiesOtherLabel')}
+            label={inputLabel ?? t('onboarding:supportingEntitiesOtherLabel')}
             value={name}
             onChangeText={setName}
             onSubmitEditing={() => add(name)}
-            maxLength={SUPPORTING_ENTITY_NAME_MAX_LENGTH}
+            maxLength={maxLength}
           />
         </View>
         <RaisedActionButton
           testID={`${testIDPrefix}-supporting-entity-add`}
-          label={t('onboarding:supportingEntitiesAddAction')}
+          label={addLabel ?? t('onboarding:supportingEntitiesAddAction')}
           onPress={() => add(name)}
         />
       </View>
@@ -91,9 +106,10 @@ export function SupportingEntitiesField({
               <PressableScale
                 style={continuousCorners}
                 accessibilityRole="button"
-                accessibilityLabel={t('onboarding:supportingEntitiesRemoveAction', {
-                  name: entity,
-                })}
+                accessibilityLabel={
+                  removeLabel?.(entity) ??
+                  t('onboarding:supportingEntitiesRemoveAction', { name: entity })
+                }
                 onPress={() => onChange(value.filter((existing) => existing !== entity))}
                 haptic="tapLight"
                 className="min-h-recommended min-w-recommended items-center justify-center rounded-md"

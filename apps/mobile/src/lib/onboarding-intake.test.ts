@@ -115,6 +115,7 @@ describe('staff screens in the wizard (RAPP-307)', () => {
     privacy: 'normal',
     placements: ['wizard'],
     isArchived: false,
+    settings: {},
     options: [
       { id: 'o-bus', label: { ca: 'Bus' }, isArchived: false },
       { id: 'o-old', label: { ca: 'Tren' }, isArchived: true },
