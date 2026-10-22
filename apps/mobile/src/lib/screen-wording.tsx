@@ -47,7 +47,7 @@ export interface ScreenWording {
 }
 
 /** The wording of one screen from a catalog: pure, for the frame and its tests. */
-export function screenWording(
+function screenWording(
   source: ScreenWordingSource | null,
   screen: EditableWizardScreen | null,
 ): ScreenWording {
