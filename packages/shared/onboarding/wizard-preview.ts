@@ -33,12 +33,15 @@ import {
 } from './intake';
 import {
   canSkipQuestion,
+  DEFAULT_REQUIRED_QUESTIONS,
+  isRequiredQuestion,
   questionsNotAsked,
   questionState,
   questionsToAsk,
   WIZARD_QUESTIONS,
   type IntakeQuestionState,
   type QuestionStates,
+  type RequiredQuestions,
 } from './question-states';
 
 /** The questions her wizard does not ask: not asked by the rules, or removed in Settings. */
@@ -93,6 +96,8 @@ export interface WizardQuestionPreview {
   readonly asking: WizardQuestionAsking;
   /** Removed from the registration in Settings: never asked, whatever its state. */
   readonly isRemoved: boolean;
+  /** Staff made it required, or it always is (RAPP-611). */
+  readonly isRequired: boolean;
   /** Don't ask is allowed: optional, or required and answered. */
   readonly canSkip: boolean;
 }
@@ -143,8 +148,10 @@ export function previewWizardQuestions(
   states: QuestionStates,
   hidden: ReadonlySet<IntakeQuestion> = new Set(),
   flow: WizardFlow = DEFAULT_WIZARD_FLOW,
+  // The organization's required list (RAPP-611), as her phone reads it.
+  required: RequiredQuestions = DEFAULT_REQUIRED_QUESTIONS,
 ): readonly WizardQuestionPreview[] {
-  const notAsked = wizardNotAsked(questionsToAsk(answered, states), hidden);
+  const notAsked = wizardNotAsked(questionsToAsk(answered, states, required), hidden);
   return wizardQuestionsInFlowOrder(flow).map((question) => {
     const asking = phoneAsking(question, notAsked, hidden);
     return {
@@ -154,7 +161,8 @@ export function previewWizardQuestions(
       isAsked: asking !== 'not-asked',
       asking,
       isRemoved: hidden.has(question),
-      canSkip: canSkipQuestion(question, answered),
+      isRequired: isRequiredQuestion(question, required),
+      canSkip: canSkipQuestion(question, answered, required),
     };
   });
 }
@@ -166,12 +174,14 @@ export function previewWizardQuestions(
 export function allowedQuestionStates(
   states: QuestionStates,
   answered: AnsweredQuestions,
+  required: RequiredQuestions = DEFAULT_REQUIRED_QUESTIONS,
 ): QuestionStates {
   const allowed: Partial<Record<IntakeQuestion, 'ask' | 'skip'>> = {};
   for (const question of WIZARD_QUESTIONS) {
     const state = states[question];
     if (state === 'ask') allowed[question] = 'ask';
-    if (state === 'skip' && canSkipQuestion(question, answered)) allowed[question] = 'skip';
+    if (state === 'skip' && canSkipQuestion(question, answered, required))
+      allowed[question] = 'skip';
   }
   return allowed;
 }

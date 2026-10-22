@@ -460,8 +460,7 @@
     "hideQuestion": "No facis aquesta pregunta",
     "hideOption": "Amaga aquesta opció",
     "lock": {
-      "required": "L'app necessita aquesta resposta per inscriure-la, així que sempre es pregunta.",
-      "equipment": "L'estoc de material fa servir aquesta resposta, així que sempre es pregunta.",
+      "required": "Aquesta pregunta és obligatòria, així que sempre es pregunta. Fes-la opcional abans d'amagar-la.",
       "optionsList": "Les respostes surten d'una llista fixa que fa servir l'app (països, municipis o talles), així que només es pot canviar el text de la pregunta.",
       "optionValues": "Pots canviar el text de les opcions o amagar-les. No en pots afegir ni treure, perquè l'app llegeix què vol dir cadascuna."
     },
@@ -530,7 +529,14 @@
       "language": "Idioma de la vista prèvia",
       "fallback": "Aquesta pregunta no té text en aquest idioma: ella la veu en català.",
       "optionCount": "Opcions a la llista: {{count}}"
-    }
+    },
+    "requiredSwitch": "Obligatòria",
+    "requiredLock": {
+      "always": "El nom, els cognoms i la llengua de l'aplicació sempre són obligatoris: l'equip i l'aplicació els necessiten per adreçar-s'hi.",
+      "notHers": "Només pot ser obligatòria una pregunta que respon ella mateixa, a la inscripció o cada temporada."
+    },
+    "requiredCustomNote": "Obligatòria: no pot acabar la inscripció ni la reinscripció sense respondre-la. El formulari de derivació de l'entitat no l'exigeix mai.",
+    "requiredHiddenNote": "Està amagada, però mentre sigui obligatòria es pregunta igualment."
   },
   "onboardingPage": {
     "title": "Inscripció",

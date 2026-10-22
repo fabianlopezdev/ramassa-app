@@ -1,3 +1,4 @@
+export { dependentsShown, type DependentsShown } from './dependents';
 export {
   fetchParticipantFilterOptions,
   fetchParticipants,

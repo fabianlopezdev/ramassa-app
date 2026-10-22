@@ -69,9 +69,17 @@ describe('profileEditSchema', () => {
     expect(profileEditSchema.safeParse(tooYoung).success).toBe(false);
   });
 
-  test('keeps place of birth required, exactly as intake does', () => {
-    const withoutPlace = { ...validEdit, placeOfBirth: '' };
-    expect(profileEditSchema.safeParse(withoutPlace).success).toBe(false);
+  test('a place of birth left empty is unknown; a given one is checked as in intake (RAPP-611)', () => {
+    // Staff choose whether it is required; her registration and re-registration
+    // enforce that list. An edit checks every value it is given.
+    expect(profileEditSchema.safeParse({ ...validEdit, placeOfBirth: '' }).success).toBe(true);
+    expect(
+      profileEditSchema.safeParse({ ...validEdit, placeOfBirth: 'x'.repeat(201) }).success,
+    ).toBe(false);
+  });
+
+  test('her names stay required in every edit', () => {
+    expect(profileEditSchema.safeParse({ ...validEdit, firstName: ' ' }).success).toBe(false);
   });
 
   test('having no document is still a first-class answer', () => {
@@ -111,11 +119,11 @@ describe('profileEditWithoutSensitiveSchema', () => {
     expect(profileEditWithoutSensitiveSchema.safeParse(withoutSensitive).success).toBe(true);
   });
 
-  test('keeps every other rule, such as the age gate and place of birth', () => {
+  test('keeps every other rule, such as the age gate', () => {
     expect(
       profileEditWithoutSensitiveSchema.safeParse({ ...withoutSensitive, placeOfBirth: '' })
         .success,
-    ).toBe(false);
+    ).toBe(true);
     expect(
       profileEditWithoutSensitiveSchema.safeParse({
         ...withoutSensitive,

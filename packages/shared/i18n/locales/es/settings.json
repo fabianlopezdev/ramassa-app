@@ -460,8 +460,7 @@
     "hideQuestion": "No hacer esta pregunta",
     "hideOption": "Ocultar esta opción",
     "lock": {
-      "required": "La app necesita esta respuesta para inscribirla, así que siempre se pregunta.",
-      "equipment": "El stock de material usa esta respuesta, así que siempre se pregunta.",
+      "required": "Esta pregunta es obligatoria, así que siempre se pregunta. Hazla opcional antes de ocultarla.",
       "optionsList": "Las respuestas salen de una lista fija que usa la app (países, municipios o tallas), así que solo se puede cambiar el texto de la pregunta.",
       "optionValues": "Puedes cambiar el texto de las opciones u ocultarlas. No puedes añadir ni quitar, porque la app lee qué significa cada una."
     },
@@ -530,7 +529,14 @@
       "language": "Idioma de la vista previa",
       "fallback": "Esta pregunta no tiene texto en este idioma: ella la ve en catalán.",
       "optionCount": "Opciones en la lista: {{count}}"
-    }
+    },
+    "requiredSwitch": "Obligatoria",
+    "requiredLock": {
+      "always": "El nombre, los apellidos y el idioma de la aplicación siempre son obligatorios: el equipo y la aplicación los necesitan para dirigirse a ella.",
+      "notHers": "Solo puede ser obligatoria una pregunta que responde ella misma, en la inscripción o cada temporada."
+    },
+    "requiredCustomNote": "Obligatoria: no puede terminar la inscripción ni la reinscripción sin responderla. El formulario de derivación de la entidad nunca la exige.",
+    "requiredHiddenNote": "Está oculta, pero mientras sea obligatoria se pregunta igualmente."
   },
   "onboardingPage": {
     "title": "Inscripción",

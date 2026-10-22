@@ -8,6 +8,7 @@
  */
 import {
   customAnswerError,
+  isCustomQuestionRequired,
   isCustomQuestionVisible,
   isEmptyAnswer,
   type CustomAnswers,
@@ -66,23 +67,37 @@ export function customAnswerMessage(
 }
 
 /**
+ * Where an answer is given: her wizard and her re-registration require the
+ * questions staff made required (RAPP-611); the entity's referral form never
+ * does, because an entity gives what it knows and she answers the rest.
+ */
+export interface CheckCustomAnswersOptions {
+  readonly enforceRequired?: boolean;
+}
+
+/**
  * The answers of a screen, tidied (a phone without separators, an email in
- * lower case), and the message of each one that does not fit. A question she
- * cannot see is not checked.
+ * lower case), and the message of each one that does not fit, or that is
+ * required and missing. A question she cannot see is not checked.
  */
 export function checkCustomAnswers(
   questions: readonly CustomQuestion[],
   answers: CustomAnswers,
   t: AnswerTranslate,
+  { enforceRequired = true }: CheckCustomAnswersOptions = {},
 ): { readonly answers: CustomAnswers; readonly errors: Readonly<Record<string, string>> } {
   const tidied: Record<string, CustomAnswerValue> = { ...answers };
   const errors: Record<string, string> = {};
   for (const question of questions) {
+    if (!isCustomQuestionVisible(question, answers)) continue;
     const value = answers[question.id];
-    if (value === undefined || !isCustomQuestionVisible(question, answers)) continue;
-    tidied[question.id] = isEmptyAnswer(value)
-      ? value
-      : normalizeCustomAnswerInput(question, value);
+    if (value === undefined || isEmptyAnswer(value)) {
+      if (enforceRequired && isCustomQuestionRequired(question)) {
+        errors[question.id] = t('onboarding:errorRequired');
+      }
+      continue;
+    }
+    tidied[question.id] = normalizeCustomAnswerInput(question, value);
     const message = customAnswerMessage(question, value, t);
     if (message !== undefined) errors[question.id] = message;
   }

@@ -33,7 +33,14 @@ import {
   type WizardQuestionScreen,
   type WizardStepKey,
 } from '../onboarding/intake';
-import { REQUIRED_INTAKE_QUESTIONS, WIZARD_QUESTIONS } from '../onboarding/question-states';
+import {
+  DEFAULT_REQUIRED_QUESTIONS,
+  isLockedRequiredQuestion,
+  isRequiredQuestion,
+  requiredQuestionsFrom,
+  WIZARD_QUESTIONS,
+  type RequiredQuestions,
+} from '../onboarding/question-states';
 import {
   isEditableWizardScreen,
   SCREEN_TEXT_FIELDS,
@@ -139,6 +146,8 @@ const questionSchema = z.object({
   is_archived: z.boolean(),
   // Per-type settings (RAPP-610); an older server sends none.
   settings: z.unknown().optional(),
+  // Required where she answers it (RAPP-611); an older server sends none: optional.
+  is_required: z.boolean().optional(),
   options: z.array(optionSchema),
 });
 
@@ -188,6 +197,9 @@ export const intakeCatalogSchema = z.object({
   // The current app terms version (RAPP-613), read leniently: a version this
   // build cannot read leaves the bundled text in place.
   terms: z.unknown().optional(),
+  // The built-in questions that need an answer (RAPP-611). An older server
+  // sends none: the app's own list.
+  required_questions: z.array(z.string()).optional(),
 });
 
 export interface CustomOption {
@@ -208,6 +220,11 @@ export interface CustomQuestion {
   readonly isArchived: boolean;
   /** The type's settings (RAPP-610): a number's range, a date's ages, a consent's text... */
   readonly settings: QuestionSettings;
+  /**
+   * She must answer it in her wizard and each season (RAPP-611). Never on the
+   * entity referral form: an entity gives what it knows. Absent: optional.
+   */
+  readonly isRequired?: boolean;
   readonly options: readonly CustomOption[];
 }
 
@@ -253,6 +270,8 @@ export interface IntakeCatalog {
   readonly flowOrder?: readonly string[];
   /** The app terms she accepts (RAPP-613); none means the bundled text. */
   readonly terms?: CurrentAppTerms | null;
+  /** The built-in questions that need an answer (RAPP-611); absent means the app's own list. */
+  readonly requiredQuestions?: readonly IntakeQuestion[];
 }
 
 export const EMPTY_INTAKE_CATALOG: IntakeCatalog = {
@@ -291,6 +310,7 @@ export function parseIntakeCatalog(data: unknown): IntakeCatalog {
         placements: question.placements,
         isArchived: question.is_archived,
         settings: parseQuestionSettings(question.question_type, question.settings),
+        isRequired: question.is_required === true,
         options: question.options.map((option) => ({
           id: option.id,
           label: option.label,
@@ -325,7 +345,25 @@ export function parseIntakeCatalog(data: unknown): IntakeCatalog {
     ),
     flowOrder: raw.flow_order ?? [],
     terms: appTermsFromCatalog(raw.terms ?? null),
+    ...(raw.required_questions === undefined
+      ? {}
+      : { requiredQuestions: [...requiredQuestionsFrom(raw.required_questions)] }),
   };
+}
+
+/**
+ * The built-in questions that need an answer for this organization
+ * (RAPP-611): the one list her phone, her summary and the staff preview read.
+ */
+export function requiredBuiltinQuestions(catalog: IntakeCatalog): RequiredQuestions {
+  return catalog.requiredQuestions === undefined
+    ? DEFAULT_REQUIRED_QUESTIONS
+    : requiredQuestionsFrom(catalog.requiredQuestions);
+}
+
+/** Whether she must answer a staff question where she is asked it (RAPP-611). */
+export function isCustomQuestionRequired(question: CustomQuestion): boolean {
+  return question.isRequired === true;
 }
 
 export async function fetchIntakeCatalog(client: Client): Promise<IntakeCatalog> {
@@ -788,16 +826,63 @@ export function moved(ids: readonly string[], id: string, step: -1 | 1): readonl
 
 /**
  * Why a built-in control is locked, as a translation key under
- * `settings:questions.lock.*`. Wording is never locked.
+ * `settings:questions.lock.*`, or undefined. Wording is never locked. A
+ * required question is never hidden (RAPP-611 makes the list data).
  */
-export const BUILTIN_HIDE_LOCKS: Readonly<Partial<Record<IntakeQuestion, string>>> = {
-  ...Object.fromEntries(REQUIRED_INTAKE_QUESTIONS.map((question) => [question, 'required'])),
-  clothing_size: 'equipment',
-  shoe_size: 'equipment',
-};
+export function builtinHideLock(
+  question: IntakeQuestion,
+  required: RequiredQuestions = DEFAULT_REQUIRED_QUESTIONS,
+): 'required' | undefined {
+  return isRequiredQuestion(question, required) ? 'required' : undefined;
+}
 
-export function canHideBuiltin(question: IntakeQuestion): boolean {
-  return BUILTIN_HIDE_LOCKS[question] === undefined;
+export function canHideBuiltin(
+  question: IntakeQuestion,
+  required: RequiredQuestions = DEFAULT_REQUIRED_QUESTIONS,
+): boolean {
+  return builtinHideLock(question, required) === undefined;
+}
+
+/**
+ * Why the required switch of a built-in question is locked (spec guard): her
+ * first name, last name and app language are always required.
+ */
+export function builtinRequiredLock(question: IntakeQuestion): 'always' | undefined {
+  return isLockedRequiredQuestion(question) ? 'always' : undefined;
+}
+
+/** Staff make a built-in question required or optional (RAPP-611); the database audits it. */
+export async function saveBuiltinQuestionRequired(
+  client: Client,
+  question: IntakeQuestion,
+  isRequired: boolean,
+): Promise<void> {
+  const { error } = await client.rpc('save_builtin_question_required', {
+    p_question: question,
+    p_is_required: isRequired,
+  });
+  if (error) throw databaseError(error);
+}
+
+/**
+ * Whether a staff question can be required: only where she answers it
+ * herself, her wizard or each season. A staff-only or referral-only question
+ * is never hers to answer.
+ */
+export function canRequireCustomQuestion(question: Pick<CustomQuestion, 'placements'>): boolean {
+  return question.placements.includes('wizard') || question.placements.includes('season');
+}
+
+export async function saveCustomQuestionRequired(
+  client: Client,
+  questionId: string,
+  isRequired: boolean,
+): Promise<void> {
+  const { error } = await client.rpc('save_custom_question_required', {
+    p_id: questionId,
+    p_is_required: isRequired,
+  });
+  if (error) throw databaseError(error);
 }
 
 export async function saveBuiltinOverride(
@@ -871,9 +956,10 @@ export function builtinHelp(
  * the staff preview all leave them out.
  */
 export function hiddenBuiltinQuestions(catalog: IntakeCatalog): ReadonlySet<IntakeQuestion> {
+  const required = requiredBuiltinQuestions(catalog);
   return new Set([
     ...catalog.overrides
-      .filter((override) => override.isHidden && canHideBuiltin(override.question))
+      .filter((override) => override.isHidden && canHideBuiltin(override.question, required))
       .map((override) => override.question),
     ...[...wizardFlow(catalog).hiddenScreens].flatMap((screen) => WIZARD_SCREEN_QUESTIONS[screen]),
   ]);
@@ -914,11 +1000,14 @@ export function builtinOptions<Option extends { readonly value: string; readonly
 
 /**
  * A built-in screen can be hidden only when none of its questions is required.
- * It reads the one required list (`canHideBuiltin`), which RAPP-611 makes data,
- * so a screen whose question becomes required shows again by itself.
+ * It reads the one required list (RAPP-611), so a screen whose question
+ * becomes required shows again by itself.
  */
-export function canHideBuiltinScreen(screen: WizardQuestionScreen): boolean {
-  return WIZARD_SCREEN_QUESTIONS[screen].every(canHideBuiltin);
+export function canHideBuiltinScreen(
+  screen: WizardQuestionScreen,
+  required: RequiredQuestions = DEFAULT_REQUIRED_QUESTIONS,
+): boolean {
+  return WIZARD_SCREEN_QUESTIONS[screen].every((question) => canHideBuiltin(question, required));
 }
 
 function isWizardQuestionScreen(screen: string): screen is WizardQuestionScreen {
@@ -931,6 +1020,7 @@ function isFlowStep(step: string): step is WizardStepKey {
 
 /** The flow staff arranged, as the wizard planner takes it. */
 export function wizardFlow(catalog: IntakeCatalog): WizardFlow {
+  const required = requiredBuiltinQuestions(catalog);
   return {
     order: (catalog.flowOrder ?? []).filter(isFlowStep),
     hiddenScreens: new Set(
@@ -938,7 +1028,7 @@ export function wizardFlow(catalog: IntakeCatalog): WizardFlow {
         .filter((settings) => settings.isHidden)
         .map((settings) => settings.screen)
         .filter(isWizardQuestionScreen)
-        .filter(canHideBuiltinScreen),
+        .filter((screen) => canHideBuiltinScreen(screen, required)),
     ),
   };
 }

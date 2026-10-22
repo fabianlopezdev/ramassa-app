@@ -18,7 +18,7 @@ import {
   documentationFields,
   documentNameToSend,
   documentNumberToSend,
-  identityStepSchema,
+  identityFields,
   logisticsFields,
   normalizeDependents,
   refineDependents,
@@ -32,7 +32,7 @@ import {
 } from './season';
 
 const profileEditFields = z.object({
-  ...identityStepSchema.shape,
+  ...identityFields.shape,
   ...documentationFields.shape,
   ...logisticsFields.shape,
   // The season registration answers (RAPP-303): she can correct them too.
@@ -87,7 +87,8 @@ export const profileRowSchema = z.object({
   postal_code: z.string().nullable(),
   reference_entity: z.string().nullable(),
   reference_contact_name: z.string().nullable(),
-  has_dependents: z.boolean(),
+  // Null when nobody answered (RAPP-611): unknown, never "no".
+  has_dependents: z.boolean().nullable(),
   num_dependents: z.number(),
   clothing_size: z.string().nullable(),
   shoe_size: z.string().nullable(),
@@ -150,10 +151,12 @@ export function profileFromRow(row: ProfileRow): Record<string, unknown> {
     postalCode: row.postal_code ?? undefined,
     referenceEntity: row.reference_entity,
     referenceContactName: row.reference_contact_name ?? undefined,
-    hasDependents: row.has_dependents,
+    // Unknown stays unknown (RAPP-611): a size or a dependants answer nobody
+    // gave is never filled in for her, so a save cannot invent one.
+    hasDependents: row.has_dependents ?? undefined,
     numDependents: row.num_dependents,
-    clothingSize: row.clothing_size ?? 'M',
-    shoeSize: row.shoe_size ?? '38',
+    clothingSize: row.clothing_size ?? '',
+    shoeSize: row.shoe_size ?? '',
     avatarUrl: row.avatar_url ?? undefined,
     applicantStatus: row.applicant_status ?? undefined,
     applicantStatusDetails: row.applicant_status_details ?? undefined,
@@ -179,9 +182,9 @@ export function buildUpdateOwnProfilePayload(edit: ProfileEdit) {
   return {
     first_name: normalized.firstName,
     last_name: normalized.lastName,
-    date_of_birth: normalized.dateOfBirth,
-    place_of_birth: normalized.placeOfBirth,
-    nationality: normalized.nationality,
+    date_of_birth: normalized.dateOfBirth ?? null,
+    place_of_birth: normalized.placeOfBirth ?? null,
+    nationality: normalized.nationality ?? null,
     preferred_language: normalized.preferredLanguage,
     document_type: normalized.documentType ?? null,
     document_number: documentNumberToSend(normalized),
@@ -190,12 +193,12 @@ export function buildUpdateOwnProfilePayload(edit: ProfileEdit) {
     address: normalized.address ?? null,
     city: normalized.city ?? null,
     postal_code: normalized.postalCode ?? null,
-    reference_entity: normalized.referenceEntity,
+    reference_entity: normalized.referenceEntity ?? null,
     reference_contact_name: normalized.referenceContactName ?? null,
-    has_dependents: normalized.hasDependents,
+    has_dependents: normalized.hasDependents ?? null,
     num_dependents: normalized.numDependents,
-    clothing_size: normalized.clothingSize,
-    shoe_size: normalized.shoeSize,
+    clothing_size: normalized.clothingSize ?? null,
+    shoe_size: normalized.shoeSize ?? null,
     media_consent: normalized.mediaConsent,
     ...seasonAnswersPayload(normalized),
   };

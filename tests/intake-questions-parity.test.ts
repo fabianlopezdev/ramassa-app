@@ -9,8 +9,9 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { expect, test } from 'bun:test';
 import {
+  DEFAULT_REQUIRED_INTAKE_QUESTIONS,
   INTAKE_QUESTIONS,
-  REQUIRED_INTAKE_QUESTIONS,
+  LOCKED_REQUIRED_INTAKE_QUESTIONS,
   WIZARD_QUESTIONS,
 } from '@ramassa/shared/intake';
 
@@ -37,25 +38,34 @@ test('the database question list has the same questions, in the same order, as t
   expect(fromSql).toEqual([...INTAKE_QUESTIONS]);
 });
 
-/**
- * The required questions (RAPP-301) also live in two places: the shared list
- * a test checks against the onboarding schemas, and the database function
- * that refuses to hide an unanswered required question.
- */
-test('the database required-question list matches the code', () => {
+/** The newest migration block between two markers, as the list of names it holds. */
+function newestBlock(marker: string): string[] {
   const sql = readdirSync(migrationsDirectory)
     .filter((name) => name.endsWith('.sql'))
     .sort()
     .map((name) => readFileSync(resolve(migrationsDirectory, name), 'utf8'))
-    .filter((text) => text.includes('-- required-intake-questions:start'))
+    .filter((text) => text.includes(`-- ${marker}:start`))
     .at(-1);
   expect(sql).toBeDefined();
-  const block = sql!.slice(
-    sql!.indexOf('-- required-intake-questions:start'),
-    sql!.indexOf('-- required-intake-questions:end'),
-  );
-  const fromSql = [...block.matchAll(/'([a-z_]+)'/g)].map(([, question]) => question);
-  expect(fromSql).toEqual([...REQUIRED_INTAKE_QUESTIONS]);
+  const block = sql!.slice(sql!.indexOf(`-- ${marker}:start`), sql!.indexOf(`-- ${marker}:end`));
+  return [...block.matchAll(/'([a-z_]+)'/g)].map(([, question]) => question!);
+}
+
+/**
+ * The required questions (RAPP-301, RAPP-611) are data per organization; the
+ * DEFAULT list, which applies until staff change one, lives in two places: the
+ * shared list a test checks against the onboarding schemas, and
+ * `private.default_required_intake_questions()`.
+ */
+test('the database default required list matches the code', () => {
+  expect(newestBlock('required-intake-questions')).toEqual([...DEFAULT_REQUIRED_INTAKE_QUESTIONS]);
+});
+
+/** The three always required (spec guard) in both places. */
+test('the database locked required list matches the code', () => {
+  expect(newestBlock('locked-required-intake-questions')).toEqual([
+    ...LOCKED_REQUIRED_INTAKE_QUESTIONS,
+  ]);
 });
 
 /**

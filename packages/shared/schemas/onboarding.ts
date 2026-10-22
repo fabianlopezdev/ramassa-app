@@ -14,8 +14,56 @@
 
 import { z } from 'zod';
 import { isCanonicalMunicipality } from '../i18n/municipalities';
+import type { IntakeQuestion } from '../onboarding/intake';
+import {
+  DEFAULT_REQUIRED_QUESTIONS,
+  isRequiredQuestion,
+  type RequiredQuestions,
+} from '../onboarding/question-states';
 import { languageCodeSchema } from './language';
 import type { SeasonAnswerFields } from './season';
+
+/**
+ * Which questions need an answer is data (RAPP-611): staff choose per
+ * organization, her first name, last name and app language always. Each step
+ * is therefore an object of fields that judge a value only when one is given,
+ * plus `requireAnswers`, which refuses a missing answer to a required
+ * question. The default exports keep the app's own list.
+ */
+export type FieldQuestions = Readonly<Record<string, IntakeQuestion>>;
+
+/** An answer was given: a value, "None" (null) where the step allows it, a non-empty list. */
+function isGiven(value: unknown): boolean {
+  if (value === undefined || value === '') return false;
+  if (Array.isArray(value)) return value.length > 0;
+  return true;
+}
+
+/**
+ * A refinement that adds the issue `required` on each field whose question is
+ * required and has no answer. `null` counts as an answer ("None"); a field
+ * that only applies after another answer says so through `appliesTo`.
+ */
+/**
+ * Run the required check even when another field already failed, so every
+ * missing answer is marked at once (https://zod.dev/api#refinements, `when`).
+ */
+export const ALWAYS_CHECK = { when: () => true } as const;
+
+export function requireAnswers<T extends Record<string, unknown>>(
+  fields: FieldQuestions,
+  required: RequiredQuestions,
+  appliesTo: (field: string, value: T) => boolean = () => true,
+) {
+  return (value: T, context: z.RefinementCtx): void => {
+    for (const [field, question] of Object.entries(fields)) {
+      if (!isRequiredQuestion(question, required) || !appliesTo(field, value)) continue;
+      if (!isGiven(value[field])) {
+        context.addIssue({ code: 'custom', path: [field], message: 'required' });
+      }
+    }
+  };
+}
 
 /** Program constraint: younger players are staff-assisted edge cases with staff-created accounts. */
 export const MINIMUM_AGE_YEARS = 16;
@@ -54,33 +102,72 @@ function ageInYears(isoDate: string): number {
   return beforeBirthday ? age - 1 : age;
 }
 
-/** Step 1 — Identitat. */
-export const identityStepSchema = z.object({
+/** A birth date: a real calendar day, not in the future, and an age the programme takes. */
+export const birthDateSchema = z.string().superRefine((value, context) => {
+  const birth = new Date(`${value}T00:00:00Z`);
+  // Date parsing alone rolls e.g. 31 April into May. Require an exact round trip.
+  if (
+    !/^\d{4}-\d{2}-\d{2}$/.test(value) ||
+    Number.isNaN(birth.getTime()) ||
+    birth.toISOString().slice(0, 10) !== value ||
+    birth.getTime() > Date.now()
+  ) {
+    context.addIssue({ code: 'custom', message: 'invalid date' });
+    return;
+  }
+  const age = ageInYears(value);
+  if (age < MINIMUM_AGE_YEARS) context.addIssue({ code: 'custom', message: 'too young' });
+  if (age > MAXIMUM_AGE_YEARS) context.addIssue({ code: 'custom', message: 'too old' });
+});
+
+/** An optional answer of free text: '' from an untouched input is no answer. */
+function optionalTrimmed(max: number) {
+  return z
+    .string()
+    .trim()
+    .max(max)
+    .optional()
+    .transform((value) => (value === '' ? undefined : value));
+}
+
+/**
+ * Step 1 — Identitat, as fields. Her names and app language are always
+ * required; her birth date, place of birth and nationality are required by
+ * default (place of birth since 2026-07-31, Fabián) and staff may make them
+ * optional (RAPP-611). A value given is always checked.
+ */
+export const identityFields = z.object({
   firstName: anyScriptName,
   lastName: anyScriptName,
-  dateOfBirth: z.string().superRefine((value, context) => {
-    const birth = new Date(`${value}T00:00:00Z`);
-    // Date parsing alone rolls e.g. 31 April into May. Require an exact round trip.
-    if (
-      !/^\d{4}-\d{2}-\d{2}$/.test(value) ||
-      Number.isNaN(birth.getTime()) ||
-      birth.toISOString().slice(0, 10) !== value ||
-      birth.getTime() > Date.now()
-    ) {
-      context.addIssue({ code: 'custom', message: 'invalid date' });
-      return;
-    }
-    const age = ageInYears(value);
-    if (age < MINIMUM_AGE_YEARS) context.addIssue({ code: 'custom', message: 'too young' });
-    if (age > MAXIMUM_AGE_YEARS) context.addIssue({ code: 'custom', message: 'too old' });
-  }),
-  // Required since 2026-07-31 (Fabián): it was in Marc's kickoff field list,
-  // and the optional marking was a minimization judgement, since reversed.
-  placeOfBirth: z.string().trim().min(1).max(200),
-  nationality: z.string().trim().min(1).max(100),
+  dateOfBirth: z
+    .string()
+    .optional()
+    .transform((value) => (value === '' ? undefined : value))
+    .pipe(birthDateSchema.optional()),
+  placeOfBirth: optionalTrimmed(200),
+  nationality: optionalTrimmed(100),
   preferredLanguage: languageCodeSchema,
 });
-export type IdentityStep = z.infer<typeof identityStepSchema>;
+
+export const IDENTITY_FIELD_QUESTIONS: FieldQuestions = {
+  firstName: 'first_name',
+  lastName: 'last_name',
+  dateOfBirth: 'date_of_birth',
+  placeOfBirth: 'place_of_birth',
+  nationality: 'nationality',
+  preferredLanguage: 'preferred_language',
+};
+
+export function identityStepSchemaFor(required: RequiredQuestions) {
+  return identityFields.superRefine(
+    requireAnswers(IDENTITY_FIELD_QUESTIONS, required),
+    ALWAYS_CHECK,
+  );
+}
+
+/** The identity step with the app's own required list. */
+export const identityStepSchema = identityStepSchemaFor(DEFAULT_REQUIRED_QUESTIONS);
+export type IdentityStep = z.infer<typeof identityFields>;
 
 export const DOCUMENT_TYPES = ['nie', 'passport', 'other', 'none'] as const;
 export type DocumentType = (typeof DOCUMENT_TYPES)[number];
@@ -144,8 +231,17 @@ export function refineDocumentNumber(
   }
 }
 
-export const documentationStepSchema = documentationFields.superRefine(refineDocumentNumber);
-export type DocumentationStep = z.infer<typeof documentationStepSchema>;
+export const DOCUMENTATION_FIELD_QUESTIONS: FieldQuestions = { documentType: 'document' };
+
+/** The document step; staff may make the document required (RAPP-611): "none" is an answer. */
+export function documentationStepSchemaFor(required: RequiredQuestions) {
+  return documentationFields
+    .superRefine(refineDocumentNumber)
+    .superRefine(requireAnswers(DOCUMENTATION_FIELD_QUESTIONS, required), ALWAYS_CHECK);
+}
+
+export const documentationStepSchema = documentationStepSchemaFor(DEFAULT_REQUIRED_QUESTIONS);
+export type DocumentationStep = z.infer<typeof documentationFields>;
 
 export const CLOTHING_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'] as const;
 export type ClothingSize = (typeof CLOTHING_SIZES)[number];
@@ -172,9 +268,11 @@ const optionalPhone = z
   });
 
 /**
- * Step 3 — Contacte i logística. `referenceEntity: null` is the explicit
- * "Cap / None" choice, distinct from the field being absent: the wizard
- * requires an ANSWER, not an entity.
+ * Step 3 — Contacte i logística, as fields. `referenceEntity: null` is the
+ * explicit "Cap / None" choice, distinct from the field being absent: when the
+ * entity is required, the wizard requires an ANSWER, not an entity. A
+ * dependants answer left out, or a size left out, is unknown (RAPP-611): only
+ * a required question needs one.
  */
 export const logisticsFields = z.object({
   phone: optionalPhone,
@@ -188,23 +286,50 @@ export const logisticsFields = z.object({
     .refine((value) => value === undefined || /^\d{5}$/.test(value), {
       message: 'a postal code is five digits',
     }),
-  referenceEntity: z.string().trim().min(1).max(200).nullable(),
+  referenceEntity: z.string().trim().min(1).max(200).nullable().optional(),
   referenceContactName: optionalText,
-  hasDependents: z.boolean(),
+  hasDependents: z.boolean().optional(),
   numDependents: z.number().int().min(0).max(15).optional().default(0),
-  clothingSize: z.enum(CLOTHING_SIZES),
-  shoeSize: z.string().refine((value) => SHOE_SIZES.includes(value), {
-    message: 'expected an EU size between 34 and 46',
-  }),
+  clothingSize: z
+    .union([z.enum(CLOTHING_SIZES), z.literal('')])
+    .optional()
+    .transform((value) => (value === '' ? undefined : value)),
+  shoeSize: z
+    .string()
+    .optional()
+    .transform((value) => (value === '' ? undefined : value))
+    .refine((value) => value === undefined || SHOE_SIZES.includes(value), {
+      message: 'expected an EU size between 34 and 46',
+    }),
   avatarUrl: z.url().optional(),
 });
 
+export const LOGISTICS_FIELD_QUESTIONS: FieldQuestions = {
+  phone: 'phone',
+  address: 'address',
+  city: 'city',
+  postalCode: 'postal_code',
+  referenceEntity: 'reference_entity',
+  referenceContactName: 'reference_contact_name',
+  hasDependents: 'dependents',
+  clothingSize: 'clothing_size',
+  shoeSize: 'shoe_size',
+};
+
+/** Her contact at the entity is asked only once she names one. */
+export function logisticsFieldApplies(
+  field: string,
+  value: { readonly referenceEntity?: string | null },
+): boolean {
+  return field !== 'referenceContactName' || typeof value.referenceEntity === 'string';
+}
+
 /** The dependants rule, shared by intake and by editing. */
 export function refineDependents(
-  step: { hasDependents: boolean; numDependents: number },
+  step: { hasDependents?: boolean | null; numDependents: number },
   context: z.RefinementCtx,
 ): void {
-  if (step.hasDependents && step.numDependents < 1) {
+  if (step.hasDependents === true && step.numDependents < 1) {
     context.addIssue({
       code: 'custom',
       path: ['numDependents'],
@@ -214,20 +339,37 @@ export function refineDependents(
 }
 
 /**
- * Without dependants the count is FORCED to 0, so a toggled-then-untoggled form
- * cannot smuggle a stale count through. Exported because the profile edit path
- * has to apply the same normalization on its way to the RPC.
+ * Without dependants (or with no answer) the count is FORCED to 0, so a
+ * toggled-then-untoggled form cannot smuggle a stale count through. Exported
+ * because the profile edit path has to apply the same normalization on its
+ * way to the RPC.
  */
-export function normalizeDependents<T extends { hasDependents: boolean; numDependents: number }>(
-  step: T,
-): T {
-  return step.hasDependents ? step : { ...step, numDependents: 0 };
+export function normalizeDependents<
+  T extends { hasDependents?: boolean | null; numDependents: number },
+>(step: T): T {
+  return step.hasDependents === true ? step : { ...step, numDependents: 0 };
 }
 
-export const logisticsStepSchema = logisticsFields
-  .superRefine(refineDependents)
-  .transform(normalizeDependents);
+export function logisticsStepSchemaFor(required: RequiredQuestions) {
+  return logisticsFields
+    .superRefine(refineDependents)
+    .superRefine(
+      requireAnswers(LOGISTICS_FIELD_QUESTIONS, required, logisticsFieldApplies),
+      ALWAYS_CHECK,
+    )
+    .transform(normalizeDependents);
+}
+
+export const logisticsStepSchema = logisticsStepSchemaFor(DEFAULT_REQUIRED_QUESTIONS);
 export type LogisticsStep = z.infer<typeof logisticsStepSchema>;
+
+/** The season screens' questions, all optional by default (RAPP-306, RAPP-611). */
+export const SEASON_FIELD_QUESTIONS: FieldQuestions = {
+  applicantStatus: 'applicant_status',
+  supportingEntities: 'supporting_entities',
+  childcareNeed: 'childcare_need',
+  specificNeeds: 'specific_needs',
+};
 
 /**
  * Step 4 — Termes. Acceptance must be literally true (RGPD: silence is not
@@ -280,9 +422,10 @@ export function buildCompleteOnboardingPayload(steps: OnboardingSteps, terms: Te
   return {
     first_name: steps.identity.firstName,
     last_name: steps.identity.lastName,
-    date_of_birth: steps.identity.dateOfBirth,
-    place_of_birth: steps.identity.placeOfBirth,
-    nationality: steps.identity.nationality,
+    // An optional answer she did not give travels as none (RAPP-611).
+    date_of_birth: steps.identity.dateOfBirth ?? null,
+    place_of_birth: steps.identity.placeOfBirth ?? null,
+    nationality: steps.identity.nationality ?? null,
     preferred_language: steps.identity.preferredLanguage,
     document_type: steps.documentation.documentType ?? null,
     document_number: documentNumberToSend(steps.documentation),
@@ -291,12 +434,17 @@ export function buildCompleteOnboardingPayload(steps: OnboardingSteps, terms: Te
     address: steps.logistics.address ?? null,
     city: steps.logistics.city ?? null,
     postal_code: steps.logistics.postalCode ?? null,
-    reference_entity: steps.logistics.referenceEntity,
+    // The entity travels only when answered: "None" is null, and a key left
+    // out is no answer, so the server keeps what is stored (RAPP-611).
+    ...(steps.logistics.referenceEntity === undefined
+      ? {}
+      : { reference_entity: steps.logistics.referenceEntity }),
     reference_contact_name: steps.logistics.referenceContactName ?? null,
-    has_dependents: steps.logistics.hasDependents,
+    // No answer to dependants is unknown (null), never "no".
+    has_dependents: steps.logistics.hasDependents ?? null,
     num_dependents: steps.logistics.numDependents,
-    clothing_size: steps.logistics.clothingSize,
-    shoe_size: steps.logistics.shoeSize,
+    clothing_size: steps.logistics.clothingSize ?? null,
+    shoe_size: steps.logistics.shoeSize ?? null,
     // The registration questions (RAPP-306), only when the screen was shown.
     ...(steps.season === undefined
       ? {}
