@@ -1573,6 +1573,50 @@ export function buildBuiltinQuestionOverride(
   };
 }
 
+export type IntakeBuiltinScreenRow = PublicRow<'intake_builtin_screens'>;
+export type IntakeFlowOrderRow = PublicRow<'intake_flow_orders'>;
+
+/** The seeded help line on the summary screen (RAPP-612). */
+export function buildIntakeBuiltinScreen(
+  overrides: Partial<IntakeBuiltinScreenRow> = {},
+): IntakeBuiltinScreenRow {
+  return {
+    org_id: SEED_ORGANIZATION_ID,
+    screen: 'summary',
+    texts: { help: { ca: "Pots canviar qualsevol resposta abans d'acceptar els termes." } },
+    is_hidden: false,
+    updated_at: FIXTURE_TIMESTAMP,
+    updated_by: null,
+    ...overrides,
+  };
+}
+
+/** The seeded flow: the app's own order with the staff screens after equipment (RAPP-612). */
+export function buildIntakeFlowOrder(
+  overrides: Partial<IntakeFlowOrderRow> = {},
+): IntakeFlowOrderRow {
+  return {
+    org_id: SEED_ORGANIZATION_ID,
+    step_order: [
+      'identity',
+      'background',
+      'documentation',
+      'logistics',
+      'equipment',
+      `custom:${SEED_INTAKE_SCREEN_ID}`,
+      'custom:5eed0000-0000-4000-8044-000000000002',
+      'custom:5eed0000-0000-4000-8044-000000000003',
+      'season',
+      'supporting-entities',
+      'participation-support',
+      'specific-needs',
+    ],
+    updated_at: FIXTURE_TIMESTAMP,
+    updated_by: null,
+    ...overrides,
+  };
+}
+
 export function buildIntakeStatePreset(
   overrides: Partial<IntakeStatePresetRow> = {},
 ): IntakeStatePresetRow {

@@ -2031,6 +2031,84 @@ export type Database = {
           },
         ];
       };
+      intake_builtin_screens: {
+        Row: {
+          is_hidden: boolean;
+          org_id: string;
+          screen: string;
+          texts: Json;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          is_hidden?: boolean;
+          org_id: string;
+          screen: string;
+          texts?: Json;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          is_hidden?: boolean;
+          org_id?: string;
+          screen?: string;
+          texts?: Json;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'intake_builtin_screens_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'intake_builtin_screens_updated_by_fkey';
+            columns: ['updated_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      intake_flow_orders: {
+        Row: {
+          org_id: string;
+          step_order: string[];
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          org_id: string;
+          step_order: string[];
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          org_id?: string;
+          step_order?: string[];
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'intake_flow_orders_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: true;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'intake_flow_orders_updated_by_fkey';
+            columns: ['updated_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       intake_question_states: {
         Row: {
           org_id: string;
@@ -6531,6 +6609,10 @@ export type Database = {
         };
         Returns: undefined;
       };
+      save_builtin_screen: {
+        Args: { p_is_hidden: boolean; p_screen: string; p_texts: Json };
+        Returns: undefined;
+      };
       save_custom_notification_group: {
         Args: { p_id: string; p_name: string; p_participant_ids: string[] };
         Returns: string;
@@ -6559,6 +6641,10 @@ export type Database = {
           p_sort_order: number;
         };
         Returns: string;
+      };
+      save_intake_flow_order: {
+        Args: { p_order: string[] };
+        Returns: undefined;
       };
       save_intake_screen: {
         Args: {

@@ -1586,6 +1586,24 @@ values ('5eed0000-0000-4000-8000-000000000000', 'reference_entity',
         null, '{}'::jsonb)
 on conflict do nothing;
 
+-- Built-in screen wording and the flow order (RAPP-612). The order is the app's
+-- own, with the three staff screens after the equipment step, so the seeded
+-- wizard reads as before; the summary carries one help line in three languages
+-- (Arabic and Farsi show the bundled text).
+insert into public.intake_builtin_screens (org_id, screen, texts)
+values ('5eed0000-0000-4000-8000-000000000000', 'summary',
+        '{"help":{"ca":"Pots canviar qualsevol resposta abans d''acceptar els termes.","es":"Puedes cambiar cualquier respuesta antes de aceptar los términos.","en":"You can change any answer before you accept the terms."}}'::jsonb)
+on conflict do nothing;
+
+insert into public.intake_flow_orders (org_id, step_order)
+values ('5eed0000-0000-4000-8000-000000000000',
+        array['identity', 'background', 'documentation', 'logistics', 'equipment',
+              'custom:5eed0000-0000-4000-8044-000000000001',
+              'custom:5eed0000-0000-4000-8044-000000000002',
+              'custom:5eed0000-0000-4000-8044-000000000003',
+              'season', 'supporting-entities', 'participation-support', 'specific-needs'])
+on conflict do nothing;
+
 insert into public.intake_state_presets (id, org_id, name, states)
 values ('5eed0000-0000-4000-8047-000000000001', '5eed0000-0000-4000-8000-000000000000',
         'Només talles', '{"clothing_size":"ask","shoe_size":"ask"}'::jsonb)

@@ -21,6 +21,8 @@ import {
   buildForumFlag,
   buildForumPost,
   buildForumReply,
+  buildIntakeBuiltinScreen,
+  buildIntakeFlowOrder,
   buildIntakeQuestionState,
   buildIntakeScreen,
   buildIntakeStatePreset,
@@ -480,6 +482,18 @@ describe('the question builder rows (RAPP-307)', () => {
     expect(buildBuiltinQuestionOverride().is_hidden).toBe(false);
     expect(buildIntakeStatePreset().states).toEqual({ clothing_size: 'ask', shoe_size: 'ask' });
   });
+});
+
+test('built-in screen wording and the flow order match the seed (RAPP-612)', () => {
+  expect(buildIntakeBuiltinScreen().screen).toBe('summary');
+  expect(buildIntakeBuiltinScreen().is_hidden).toBe(false);
+  expect(buildIntakeBuiltinScreen({ screen: 'documentation', is_hidden: true }).is_hidden).toBe(
+    true,
+  );
+  const order = buildIntakeFlowOrder().step_order;
+  expect(order[0]).toBe('identity');
+  expect(order).toContain('custom:5eed0000-0000-4000-8044-000000000001');
+  expect(order).not.toContain('summary');
 });
 
 test('app terms signature fixtures are independently linked and overrideable', () => {
