@@ -1,9 +1,11 @@
 import { AnnouncementFeedSkeleton } from '@/components/announcements/feed-states';
 import { PageWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
+import { PERSON_AVATAR_SIZE, PersonAvatar } from '@/components/people/person-avatar';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { messageListKeyboardDismissMode, staffConversationTitle } from '@/lib/message-thread-state';
 import { useOwnConversation, useStaffConversation } from '@/lib/messaging';
+import { useStaffCards } from '@/lib/staff-cards';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { FlashList, type FlashListRef, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
@@ -20,9 +22,25 @@ import {
 } from '@ramassa/shared/messaging';
 import { tokens } from '@ramassa/shared/tokens';
 
+/**
+ * Where a message sits in a run: consecutive messages from the same sender on
+ * the same day (RAPP-639). Like WhatsApp, iMessage and Slack group chats, a
+ * run from someone else shows the sender's name above its first bubble and
+ * her avatar beside its last; her own messages show neither.
+ */
+interface MessageRun {
+  readonly isFirst: boolean;
+  readonly isLast: boolean;
+}
+
 type TimelineRow =
   | { readonly kind: 'day'; readonly id: string; readonly label: string }
-  | { readonly kind: 'message'; readonly id: string; readonly message: ChatMessage };
+  | {
+      readonly kind: 'message';
+      readonly id: string;
+      readonly message: ChatMessage;
+      readonly run: MessageRun;
+    };
 
 const screenStyle = { flex: 1, backgroundColor: tokens.colors.neutral[50] } as const;
 const listStyle = { flex: 1 } as const;
@@ -35,6 +53,8 @@ const composerStyle = {
   borderTopColor: tokens.colors.neutral[200],
 } as const;
 const messageBubbleWidthStyle = { maxWidth: tokens.messaging.messageBubbleMaxWidth } as const;
+/** Keeps a run's bubbles in one column where no avatar is drawn. */
+const avatarSlotStyle = { width: PERSON_AVATAR_SIZE.small } as const;
 const timelineKeyExtractor = (row: TimelineRow) => row.id;
 const timelineItemType = (row: TimelineRow) => row.kind;
 const timelineVisibleContentPosition = {
@@ -55,6 +75,10 @@ const MessageBubble = memo(function MessageBubble({
   discardLabel,
   onRetry,
   onDiscard,
+  senderName,
+  senderAvatarKey,
+  showSenderName,
+  showSenderAvatar,
 }: {
   readonly id: string;
   readonly content: string | null;
@@ -69,10 +93,49 @@ const MessageBubble = memo(function MessageBubble({
   readonly discardLabel: string;
   readonly onRetry: (id: string) => void;
   readonly onDiscard: (id: string) => void;
+  /** Someone else's message only (RAPP-639). */
+  readonly senderName: string;
+  readonly senderAvatarKey: string | null;
+  /** Above the first bubble of her run. */
+  readonly showSenderName: boolean;
+  /** Beside the last bubble of her run. */
+  readonly showSenderAvatar: boolean;
 }) {
   const isRejected = deliveryState === 'rejected';
   const handleRetry = useCallback(() => onRetry(id), [id, onRetry]);
   const handleDiscard = useCallback(() => onDiscard(id), [id, onDiscard]);
+  if (!isOwn) {
+    return (
+      <View className="flex-row items-end gap-sm self-start pb-sm">
+        {showSenderAvatar ? (
+          <PersonAvatar name={senderName} avatarKey={senderAvatarKey} size="small" />
+        ) : (
+          <View style={avatarSlotStyle} />
+        )}
+        <View style={messageBubbleWidthStyle} className="gap-xs">
+          {showSenderName ? (
+            <Text
+              className={`ps-sm text-start text-xs font-semibold text-neutral-600 ${languageClass}`}
+            >
+              {senderName}
+            </Text>
+          ) : null}
+          <View
+            style={continuousCorners}
+            className={`rounded-2xl bg-white px-md py-sm ${showSenderAvatar ? 'rounded-es-sm' : ''}`}
+          >
+            <Text
+              selectable
+              accessibilityLabel={accessibilityLabel}
+              className={`text-neutral-900 ${languageClass}`}
+            >
+              {content}
+            </Text>
+          </View>
+        </View>
+      </View>
+    );
+  }
   return (
     <View
       style={messageBubbleWidthStyle}
@@ -280,7 +343,7 @@ function MessageThreadView({
   const rows = useMemo(() => {
     const result: TimelineRow[] = [];
     let previousDay = '';
-    for (const message of messages) {
+    messages.forEach((message, index) => {
       const day = message.createdAt.slice(0, 10);
       if (day !== previousDay) {
         result.push({
@@ -290,10 +353,29 @@ function MessageThreadView({
         });
         previousDay = day;
       }
-      result.push({ kind: 'message', id: message.id, message });
-    }
+      // A run ends at a different sender or at a new day.
+      const before = messages[index - 1];
+      const after = messages[index + 1];
+      const sameRun = (other: ChatMessage | undefined) =>
+        other !== undefined &&
+        other.senderId === message.senderId &&
+        other.createdAt.slice(0, 10) === day;
+      result.push({
+        kind: 'message',
+        id: message.id,
+        message,
+        run: { isFirst: !sameRun(before), isLast: !sameRun(after) },
+      });
+    });
     return result;
   }, [dateFormatter, messages]);
+  // Everyone else in the thread, looked up once (RAPP-639): a team member's
+  // first name and photo. Anyone without a card keeps the thread's title.
+  const otherSenderIds = useMemo(
+    () => messages.filter((message) => message.senderId !== user?.id).map((m) => m.senderId),
+    [messages, user?.id],
+  );
+  const staffCards = useStaffCards(otherSenderIds);
   const renderItem = useCallback(
     ({ item }: ListRenderItemInfo<TimelineRow>) => {
       if (item.kind === 'day') {
@@ -308,8 +390,14 @@ function MessageThreadView({
         );
       }
       const isOwn = item.message.senderId === user?.id;
+      const card = isOwn ? undefined : staffCards.get(item.message.senderId);
+      const senderName = card?.firstName ?? title;
       return (
         <MessageBubble
+          senderName={senderName}
+          senderAvatarKey={card?.avatarKey ?? null}
+          showSenderName={!isOwn && item.run.isFirst}
+          showSenderAvatar={!isOwn && item.run.isLast}
           id={item.message.id}
           content={item.message.content}
           deliveryState={item.message.deliveryState}
@@ -321,7 +409,7 @@ function MessageThreadView({
           onDiscard={discardMessage}
           languageClass={fontClass}
           accessibilityLabel={t('messageFrom', {
-            sender: isOwn ? t('messageSenderYou') : title,
+            sender: isOwn ? t('messageSenderYou') : senderName,
             content: item.message.content,
           })}
           statusAccessibilityLabel={t('messageStatus', {
@@ -330,7 +418,7 @@ function MessageThreadView({
         />
       );
     },
-    [discardMessage, fontClass, retryMessage, t, title, user?.id],
+    [discardMessage, fontClass, retryMessage, staffCards, t, title, user?.id],
   );
 
   if (isPending && isOnline) {

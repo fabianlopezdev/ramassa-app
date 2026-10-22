@@ -12,6 +12,7 @@ import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { isNetworkStateOnline } from '@/lib/network-status';
 import { useForumCategories, useForumPosts } from '@/lib/player-forum';
+import { useStaffCards } from '@/lib/staff-cards';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useNetworkState } from 'expo-network';
@@ -54,6 +55,12 @@ export default function CommunityScreen() {
     () => filterForumPostsByCategory(postsQuery.data ?? EMPTY_POSTS, categoryId),
     [categoryId, postsQuery.data],
   );
+  // One lookup for every author in the feed: the team's photos (RAPP-639).
+  const authorIds = useMemo(
+    () => (postsQuery.data ?? EMPTY_POSTS).map((post) => post.author_id),
+    [postsQuery.data],
+  );
+  const staffCards = useStaffCards(authorIds);
   const contentStyle = useMemo(
     () => [
       styles.content,
@@ -85,6 +92,7 @@ export default function CommunityScreen() {
           <ForumPostCard
             post={item}
             authorLabel={t('forum:postBy', { name: item.author_first_name })}
+            authorAvatarKey={staffCards.get(item.author_id)?.avatarKey ?? null}
             repliesLabel={t('forum:repliesCount', { count: item.reply_count })}
             pinnedLabel={t('forum:pinned')}
             imageAlt={t('forum:imageAlt', { name: item.author_first_name })}
@@ -97,7 +105,7 @@ export default function CommunityScreen() {
         </FadeSlideIn>
       </PageWidth>
     ),
-    [languageFontClass, openLinkLabel, openPost, session?.access_token, t],
+    [languageFontClass, openLinkLabel, openPost, session?.access_token, staffCards, t],
   );
 
   if ((categoriesQuery.isPending || postsQuery.isPending) && postsQuery.data === undefined) {

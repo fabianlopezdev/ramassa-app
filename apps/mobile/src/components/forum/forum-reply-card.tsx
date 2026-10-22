@@ -1,5 +1,6 @@
 import { ForumPlainText } from '@/components/forum/forum-plain-text';
 import { PressableScale } from '@/components/motion/pressable-scale';
+import { AuthorLine } from '@/components/people/person-avatar';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { memo, useCallback } from 'react';
 import { Text, View } from 'react-native';
@@ -8,6 +9,7 @@ import type { ForumReplyRow } from '@ramassa/shared/forum';
 export const ForumReplyCard = memo(function ForumReplyCard({
   reply,
   authorLabel,
+  authorAvatarKey,
   tombstone,
   languageFontClass,
   openLinkLabel,
@@ -18,6 +20,8 @@ export const ForumReplyCard = memo(function ForumReplyCard({
 }: {
   readonly reply: ForumReplyRow;
   readonly authorLabel: string;
+  /** A team member's photo (RAPP-639); players show their initial. */
+  readonly authorAvatarKey: string | null;
   readonly tombstone: string;
   readonly languageFontClass: string;
   readonly openLinkLabel: (url: string) => string;
@@ -34,9 +38,12 @@ export const ForumReplyCard = memo(function ForumReplyCard({
         className="gap-sm rounded-lg border border-neutral-200 bg-neutral-50 p-md"
         style={continuousCorners}
       >
-        <Text className={`text-start text-sm font-bold text-primary-dark ${languageFontClass}`}>
-          {authorLabel}
-        </Text>
+        <AuthorLine
+          name={reply.author_first_name}
+          avatarKey={authorAvatarKey}
+          label={authorLabel}
+          languageFontClass={languageFontClass}
+        />
         {reply.content === null ? (
           <Text className={`text-start text-md italic text-neutral-600 ${languageFontClass}`}>
             {tombstone}
