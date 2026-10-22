@@ -279,7 +279,7 @@ export function OrganizationSettingsPanel({
   return (
     <section className="space-y-6 p-4 sm:p-6" data-testid="organization-settings">
       <header className="max-w-3xl space-y-2">
-        <h1 className="text-2xl font-semibold text-foreground">{t('title')}</h1>
+        <h1 className="text-2xl font-semibold">{t('title')}</h1>
         <p className="text-sm leading-6 text-muted-foreground">{t('intro')}</p>
       </header>
 

@@ -84,5 +84,6 @@
   "auditLoadMore": "Mostra'n més",
   "exportPeriod": "Període (opcional)",
   "exportCustomAnswers": "Respostes a les preguntes addicionals",
-  "exportConsents": "Autoritzacions de temporada, amb el text de cada una"
+  "exportConsents": "Autoritzacions de temporada, amb el text de cada una",
+  "entityPortalSubtitle": "Portal d'entitats"
 }

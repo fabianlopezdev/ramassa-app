@@ -80,7 +80,7 @@ export function GalleryModeration({ items }: { readonly items: readonly MediaIte
   return (
     <div className="mx-auto w-full max-w-6xl space-y-8 px-4 py-8 sm:px-6">
       <header className="space-y-2">
-        <h1 className="text-3xl font-bold text-neutral-950">{t('moderationTitle')}</h1>
+        <h1 className="text-3xl font-bold">{t('moderationTitle')}</h1>
         <p className="text-neutral-600">{t('moderationIntro')}</p>
       </header>
 

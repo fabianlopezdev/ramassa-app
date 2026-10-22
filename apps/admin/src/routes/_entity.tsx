@@ -16,7 +16,7 @@ const ENTITY_ROLES = ['entity'] as const;
 function EntityLayout() {
   return (
     <RequireAuth allow={ENTITY_ROLES}>
-      <div className="min-h-screen">
+      <div className="min-h-screen bg-canvas">
         <RouteFocusManager targetId="main-content" />
         <EntityNav />
         {/* The portal's single `main` landmark; child routes render sections. */}

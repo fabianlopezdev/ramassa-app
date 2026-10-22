@@ -84,5 +84,6 @@
   "auditLoadMore": "Show more",
   "exportPeriod": "Period (optional)",
   "exportCustomAnswers": "Answers to the additional questions",
-  "exportConsents": "Season consents, with the words of each"
+  "exportConsents": "Season consents, with the words of each",
+  "entityPortalSubtitle": "Entity portal"
 }

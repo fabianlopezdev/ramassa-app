@@ -1,3 +1,4 @@
+import { OrganizationBrand } from '@/components/branding/organization-brand';
 import { LanguagePicker } from '@/components/language-picker';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -21,15 +22,20 @@ import { useTranslation } from 'react-i18next';
  * under /portal so it can never collide with a staff route.
  */
 export function EntityNav() {
-  const { t } = useTranslation(['nav', 'common', 'auth']);
+  const { t } = useTranslation(['nav', 'common', 'auth', 'admin']);
   const pathname = useLocation({ select: (location) => location.pathname });
   const unread = useUnreadMessageCount();
 
   return (
-    <header className="border-b border-border bg-background">
-      <div className="flex h-14 items-center gap-6 px-4">
-        <Link to="/portal" className="text-base font-semibold text-foreground">
-          {t('common:appName')}
+    // The portal bar wears the brand like the staff sidebar (RAPP-631): the
+    // primary colour, white text, a yellow marker under the current page.
+    <header className="sticky top-0 z-10 bg-primary text-primary-foreground shadow-md">
+      <div className="flex min-h-16 flex-wrap items-center gap-x-6 gap-y-2 px-4 py-2">
+        <Link
+          to="/portal"
+          className="rounded-lg outline-none focus-visible:ring-3 focus-visible:ring-secondary"
+        >
+          <OrganizationBrand subtitle={t('admin:entityPortalSubtitle')} />
         </Link>
         <nav aria-label={t('nav:a11y.entityPortal')}>
           <ul className="flex items-center gap-1">
@@ -43,17 +49,19 @@ export function EntityNav() {
                     to={item.to}
                     aria-current={isActive ? 'page' : undefined}
                     className={cn(
-                      'inline-flex h-9 items-center gap-2 rounded-md px-3 text-sm font-medium transition-colors',
-                      'outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
+                      'relative inline-flex h-10 items-center gap-2 rounded-lg px-3 text-sm font-medium transition-colors',
+                      'outline-none focus-visible:ring-3 focus-visible:ring-secondary',
+                      'after:absolute after:inset-x-3 after:-bottom-1 after:h-1 after:rounded-full after:bg-secondary after:opacity-0',
                       isActive
-                        ? 'bg-muted text-foreground'
-                        : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+                        ? 'bg-white/15 font-semibold text-primary-foreground after:opacity-100 [&>svg]:text-secondary'
+                        : 'text-primary-foreground/80 hover:bg-white/10 hover:text-primary-foreground',
                     )}
                   >
                     <Icon className="size-4" aria-hidden="true" />
                     <span>{label}</span>
                     {item.to === '/portal/messages' && unread > 0 ? (
                       <Badge
+                        variant="secondary"
                         data-testid="entity-message-badge"
                         aria-label={t('messaging:unread', { count: unread })}
                       >

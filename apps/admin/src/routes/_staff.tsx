@@ -36,8 +36,8 @@ function StaffLayout() {
           <StaffSidebar onSignOut={logout} />
           {/* SidebarInset renders the page's single `main` landmark, so child
             routes render sections rather than nesting another `main`. */}
-          <SidebarInset id="main-content" tabIndex={-1}>
-            <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-4">
+          <SidebarInset id="main-content" tabIndex={-1} className="bg-canvas">
+            <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b border-border bg-background/90 px-4 shadow-xs backdrop-blur">
               <SidebarTrigger />
             </header>
             <Outlet />

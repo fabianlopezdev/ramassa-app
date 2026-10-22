@@ -45,7 +45,7 @@ export function EntityDashboard({
   return (
     <section className="space-y-8 p-4 sm:p-6">
       <header className="max-w-3xl space-y-2">
-        <h1 className="text-2xl font-semibold text-foreground">{t('dashboardTitle')}</h1>
+        <h1 className="text-2xl font-semibold">{t('dashboardTitle')}</h1>
         <p className="text-sm leading-6 text-muted-foreground">{t('dashboardIntro')}</p>
       </header>
 

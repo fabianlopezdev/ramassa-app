@@ -65,7 +65,7 @@ function DashboardPage() {
   // page's single `main` landmark (RAPP-16).
   return (
     <section className="flex flex-col items-start gap-6 p-6">
-      <h1 className="text-lg font-semibold text-foreground">{t('admin:dashboardTitle')}</h1>
+      <h1 className="text-2xl font-bold">{t('admin:dashboardTitle')}</h1>
       <ImpactDashboard
         report={impactReport}
         onFiltersChange={(filters) =>

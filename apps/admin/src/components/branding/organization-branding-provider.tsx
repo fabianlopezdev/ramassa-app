@@ -31,7 +31,13 @@ export const ORGANIZATION_BRANDING_CHANGED_EVENT = 'ramassa:organization-brandin
 const BRAND_ALIASES = {
   '--primary': 'var(--ramassa-color-primary)',
   '--secondary': 'var(--ramassa-color-secondary)',
-  '--sidebar-primary': 'var(--ramassa-color-primary)',
+  '--ring': 'var(--ramassa-color-primary)',
+  '--accent': 'color-mix(in oklab, var(--ramassa-color-primary) 8%, white)',
+  '--accent-foreground': 'var(--ramassa-color-primary)',
+  // The navy sidebar with its yellow active marker (RAPP-631).
+  '--sidebar': 'var(--ramassa-color-primary)',
+  '--sidebar-primary': 'var(--ramassa-color-secondary)',
+  '--sidebar-ring': 'var(--ramassa-color-secondary)',
 } as const;
 
 export function useAdminBranding(): OrganizationRow | null {
@@ -118,6 +124,18 @@ export function OrganizationBrandingProvider({ children }: { readonly children: 
       }) as CSSProperties,
     [organization, publicBranding],
   );
+
+  // Menus, dialogs and the phone-width sidebar render in a portal under
+  // <body>, outside the wrapper below, so the brand colours are set on the
+  // document root as well; app.css derives every brand variable from them.
+  useEffect(() => {
+    const root = document.documentElement;
+    const entries = Object.entries(style) as [string, string][];
+    for (const [name, value] of entries) root.style.setProperty(name, value);
+    return () => {
+      for (const [name] of entries) root.style.removeProperty(name);
+    };
+  }, [style]);
 
   return (
     <AdminBrandingContext value={organization}>
