@@ -602,6 +602,7 @@
     "detailNote": "This screen opens depending on the previous answer. A title of your own replaces the title of every case.",
     "hideLabel": "Hide this screen",
     "hideLocked": "It has a required question, so it always shows.",
+    "hideReregistrationNote": "Hiding it also stops re-registration asking its question each season, so the app and re-registration always ask the same.",
     "save": "Save text",
     "saved": "Text saved.",
     "failed": "Could not save. Please try again.",

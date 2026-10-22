@@ -880,6 +880,17 @@ export function hiddenBuiltinQuestions(catalog: IntakeCatalog): ReadonlySet<Inta
 }
 
 /**
+ * Whether re-registration (RAPP-306) asks a built-in season question. It
+ * follows her wizard (RAPP-612): a question staff hid, or one on a screen
+ * staff hid, is hidden in both, so hiding the season screen also stops
+ * re-registration asking her situation. One rule, so the two never disagree.
+ */
+export function reregistrationAsks(catalog: IntakeCatalog): (question: IntakeQuestion) => boolean {
+  const hidden = hiddenBuiltinQuestions(catalog);
+  return (question) => !hidden.has(question);
+}
+
+/**
  * The options of a built-in choice question as she sees them: hidden ones left
  * out (unless it is her stored value), relabelled ones in staff wording.
  */

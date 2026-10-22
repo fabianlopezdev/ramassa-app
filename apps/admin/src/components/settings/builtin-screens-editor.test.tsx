@@ -156,3 +156,13 @@ test('a screen with a required question cannot be hidden; an optional one is', a
     isHidden: true,
   });
 });
+
+test('hiding a season screen says it also leaves re-registration (RAPP-612)', () => {
+  const { view } = renderEditor();
+  fireEvent.change(element(view, 'builtin-screen-select'), { target: { value: 'season' } });
+  expect(view.getByTestId('hide-reregistration-note')).toBeTruthy();
+  fireEvent.change(element(view, 'builtin-screen-select'), {
+    target: { value: 'documentation' },
+  });
+  expect(view.queryByTestId('hide-reregistration-note')).toBeNull();
+});

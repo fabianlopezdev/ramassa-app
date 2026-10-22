@@ -602,6 +602,7 @@
     "detailNote": "Aquesta pantalla s'obre segons la resposta anterior. Un títol propi substitueix el títol de cada cas.",
     "hideLabel": "Amagar aquesta pantalla",
     "hideLocked": "Té una pregunta obligatòria, així que sempre es mostra.",
+    "hideReregistrationNote": "Si l'amagues, la reinscripció de cada temporada tampoc no en farà la pregunta, perquè l'aplicació i la reinscripció preguntin sempre el mateix.",
     "save": "Desar el text",
     "saved": "Text desat.",
     "failed": "No s'ha pogut desar. Torna-ho a provar.",

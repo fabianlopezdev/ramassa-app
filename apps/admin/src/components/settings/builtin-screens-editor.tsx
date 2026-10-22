@@ -33,6 +33,7 @@ import {
   isCustomStep,
   resolveAppTerms,
   screenTextFields,
+  SEASON_WIZARD_SCREENS,
   WIZARD_QUESTION_SCREENS,
   wizardFlowOrder,
   type EditableWizardScreen,
@@ -418,6 +419,15 @@ function ScreenWordingForm({
                 {t('builtinScreens.hideLocked')}
               </p>
             )}
+            {/* Re-registration follows the same hide (RAPP-612): one rule for both. */}
+            {(SEASON_WIZARD_SCREENS as readonly string[]).includes(screen) ? (
+              <p
+                className="text-start text-xs text-muted-foreground"
+                data-testid="hide-reregistration-note"
+              >
+                {t('builtinScreens.hideReregistrationNote')}
+              </p>
+            ) : null}
           </div>
         ) : null}
         {status === 'failed' ? (

@@ -602,6 +602,7 @@
     "detailNote": "Esta pantalla se abre según la respuesta anterior. Un título propio sustituye el título de cada caso.",
     "hideLabel": "Ocultar esta pantalla",
     "hideLocked": "Tiene una pregunta obligatoria, así que siempre se muestra.",
+    "hideReregistrationNote": "Si la ocultas, la reinscripción de cada temporada tampoco hará su pregunta, para que la aplicación y la reinscripción pregunten siempre lo mismo.",
     "save": "Guardar el texto",
     "saved": "Texto guardado.",
     "failed": "No se ha podido guardar. Vuelve a intentarlo.",

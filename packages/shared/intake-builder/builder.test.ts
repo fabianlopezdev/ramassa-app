@@ -20,6 +20,7 @@ import {
   parseIntakeCatalog,
   questionDraftSchema,
   referralScreens,
+  reregistrationAsks,
   saveBuiltinScreen,
   saveCustomQuestion,
   saveIntakeScreen,
@@ -462,5 +463,43 @@ describe('staff screens in the order her phone shows them (RAPP-612, RAPP-618)',
       presets: [],
     });
     expect(wizardScreensInFlowOrder(anchored).map((screen) => screen.id)).toEqual([second, third]);
+  });
+});
+
+describe('re-registration follows the hide rule of her wizard (RAPP-612)', () => {
+  const hiding = (builtinScreens: unknown[], overrides: unknown[] = []) =>
+    parseIntakeCatalog({ screens: [], overrides, presets: [], builtin_screens: builtinScreens });
+
+  test('a hidden season screen removes its question from re-registration too', () => {
+    const asks = reregistrationAsks(hiding([{ screen: 'season', texts: {}, is_hidden: true }]));
+    expect(asks('applicant_status')).toBe(false);
+    expect(asks('supporting_entities')).toBe(true);
+    expect(asks('childcare_need')).toBe(true);
+  });
+
+  test('a hidden question is hidden in both; with nothing hidden she is asked all four', () => {
+    const asks = reregistrationAsks(
+      hiding(
+        [],
+        [
+          {
+            question: 'specific_needs',
+            label: null,
+            help: null,
+            is_hidden: true,
+            option_overrides: {},
+          },
+        ],
+      ),
+    );
+    expect(asks('specific_needs')).toBe(false);
+    const all = reregistrationAsks(hiding([]));
+    for (const question of [
+      'applicant_status',
+      'supporting_entities',
+      'childcare_need',
+      'specific_needs',
+    ] as const)
+      expect(all(question)).toBe(true);
   });
 });

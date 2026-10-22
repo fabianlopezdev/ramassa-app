@@ -37,7 +37,7 @@ import {
   EMPTY_INTAKE_CATALOG,
   fetchIntakeCatalog,
   fetchMyCustomAnswers,
-  hiddenBuiltinQuestions,
+  reregistrationAsks,
   saveMyCustomAnswers,
   seasonScreens,
   type CustomAnswers,
@@ -129,7 +129,8 @@ export function ReregistrationSteps({
   const catalog = staffQuestions.data?.catalog ?? EMPTY_INTAKE_CATALOG;
   const storedCustom = staffQuestions.data?.answers ?? {};
   const customScreens = seasonScreens(catalog);
-  const hidden = hiddenBuiltinQuestions(catalog);
+  // The same hide rule as her wizard (RAPP-612): a hidden season screen hides its question here too.
+  const asks = reregistrationAsks(catalog);
   const wording = useBuiltinWording(catalog);
   const save = useMutation({
     mutationFn: async (value: SeasonAnswers) => {
@@ -240,7 +241,7 @@ export function ReregistrationSteps({
                 onChange={(patch) => setAnswers({ ...current, ...patch })}
                 entityNames={[]}
                 showSensitive
-                shows={(question: IntakeQuestion) => !hidden.has(question)}
+                shows={(question: IntakeQuestion) => asks(question)}
                 wording={wording}
               />
               <CustomQuestionSections
