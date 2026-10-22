@@ -3219,6 +3219,7 @@ export type Database = {
           document_type: string | null;
           emergency_contact_name: string | null;
           emergency_contact_phone: string | null;
+          emergency_contact_privacy: string | null;
           emergency_contact_relation: string | null;
           first_name: string;
           has_dependents: boolean | null;
@@ -3267,6 +3268,7 @@ export type Database = {
           document_type?: string | null;
           emergency_contact_name?: string | null;
           emergency_contact_phone?: string | null;
+          emergency_contact_privacy?: string | null;
           emergency_contact_relation?: string | null;
           first_name: string;
           has_dependents?: boolean | null;
@@ -3315,6 +3317,7 @@ export type Database = {
           document_type?: string | null;
           emergency_contact_name?: string | null;
           emergency_contact_phone?: string | null;
+          emergency_contact_privacy?: string | null;
           emergency_contact_relation?: string | null;
           first_name?: string;
           has_dependents?: boolean | null;
@@ -5333,6 +5336,7 @@ export type Database = {
           document_type: string | null;
           emergency_contact_name: string | null;
           emergency_contact_phone: string | null;
+          emergency_contact_privacy: string | null;
           emergency_contact_relation: string | null;
           first_name: string;
           has_dependents: boolean | null;
@@ -5390,6 +5394,7 @@ export type Database = {
           document_type: string | null;
           emergency_contact_name: string | null;
           emergency_contact_phone: string | null;
+          emergency_contact_privacy: string | null;
           emergency_contact_relation: string | null;
           first_name: string;
           has_dependents: boolean | null;
@@ -5574,6 +5579,10 @@ export type Database = {
       };
       encrypt_field: { Args: { plaintext: string }; Returns: string };
       encryption_key: { Args: never; Returns: string };
+      export_onboarding_setup: {
+        Args: { p_app_commit?: string };
+        Returns: Json;
+      };
       feedback_monthly_counts: {
         Args: never;
         Returns: {
@@ -5825,6 +5834,7 @@ export type Database = {
       };
       has_permission: { Args: { p_code: string }; Returns: boolean };
       immutable_unaccent: { Args: { value: string }; Returns: string };
+      import_onboarding_setup: { Args: { p_document: Json }; Returns: Json };
       intake_catalog: { Args: never; Returns: Json };
       invite_entity_collaborator: {
         Args: {
@@ -6517,6 +6527,10 @@ export type Database = {
           language: string;
           participant_id: string;
         }[];
+      };
+      preview_onboarding_setup_import: {
+        Args: { p_document: Json };
+        Returns: Json;
       };
       publish_app_terms_draft: { Args: never; Returns: number };
       publish_authorization_draft: { Args: never; Returns: number };
