@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { AppError, databaseErrorCode } from './errors';
 import { SUPPORTED_LANGUAGES } from './i18n/languages';
+import { personNameSchema } from './schemas/person-name';
 import { tokens } from './tokens';
 import type { Database } from './types/database';
 
@@ -277,8 +278,8 @@ export async function inviteStaffMember(
 ): Promise<{ readonly profileId: string; readonly email: string; readonly expiresAt: string }> {
   const { data, error } = await client.rpc('invite_staff_member', {
     p_email: z.email().parse(input.email.trim().toLowerCase()),
-    p_first_name: z.string().trim().min(1).max(100).parse(input.firstName),
-    p_last_name: z.string().trim().min(1).max(100).parse(input.lastName),
+    p_first_name: personNameSchema.parse(input.firstName),
+    p_last_name: personNameSchema.parse(input.lastName),
     p_role: input.role,
   });
   if (error) databaseFailure(error.message);

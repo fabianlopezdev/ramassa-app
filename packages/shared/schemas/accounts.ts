@@ -11,6 +11,7 @@
 
 import { z } from 'zod';
 import { loginEmailSchema } from './auth';
+import { personNameSchema, trimPersonName } from './person-name';
 
 /**
  * The address goes through the SAME normalization as login (trim, lowercase),
@@ -23,8 +24,8 @@ import { loginEmailSchema } from './auth';
  */
 export const createParticipantInviteSchema = z.object({
   email: loginEmailSchema,
-  firstName: z.string().trim().min(1).max(100),
-  lastName: z.string().trim().min(1).max(100),
+  firstName: personNameSchema,
+  lastName: personNameSchema,
   referenceEntity: z.string().trim().optional(),
   /**
    * A test player (RAPP-615), made up for designing the onboarding. Off unless
@@ -64,8 +65,8 @@ export function buildCreateParticipantInvitePayload(
   return {
     ...(Object.keys(questionStates).length === 0 ? {} : { question_states: questionStates }),
     email: input.email,
-    first_name: input.firstName.trim(),
-    last_name: input.lastName.trim(),
+    first_name: trimPersonName(input.firstName),
+    last_name: trimPersonName(input.lastName),
     reference_entity: normalizedEntity(input.referenceEntity),
     // A test player is made up, so she never answers a real referral.
     referral_id: isTestAccount ? null : referralId,

@@ -21,6 +21,7 @@ import {
   type RequiredQuestions,
 } from '../onboarding/question-states';
 import { languageCodeSchema } from './language';
+import { personNameSchema } from './person-name';
 import type { SeasonAnswerFields } from './season';
 
 /**
@@ -70,10 +71,8 @@ export const MINIMUM_AGE_YEARS = 16;
 /** Generous input safeguard for birth-year mistakes, shared across identity forms. */
 export const MAXIMUM_AGE_YEARS = 120;
 
-const NAME_MAX_LENGTH = 100;
-
-/** A required human name in any script: trimmed, non-empty, bounded. */
-const anyScriptName = z.string().trim().min(1).max(NAME_MAX_LENGTH);
+/** A required human name in any script: trimmed of invisible edges, non-empty, bounded. */
+const anyScriptName = personNameSchema;
 
 /** Optional free text where '' from an untouched input means "not provided". */
 const optionalText = z
