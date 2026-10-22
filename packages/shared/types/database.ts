@@ -4282,6 +4282,45 @@ export type Database = {
           },
         ];
       };
+      staff_notifications: {
+        Row: {
+          created_at: string;
+          deleted_at: string | null;
+          event: string;
+          id: string;
+          org_id: string;
+          params: Json;
+          path: string;
+          read_at: string | null;
+          recipient_id: string;
+          source_id: string | null;
+        };
+        Insert: {
+          created_at?: string;
+          deleted_at?: string | null;
+          event: string;
+          id?: string;
+          org_id: string;
+          params?: Json;
+          path: string;
+          read_at?: string | null;
+          recipient_id: string;
+          source_id?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          deleted_at?: string | null;
+          event?: string;
+          id?: string;
+          org_id?: string;
+          params?: Json;
+          path?: string;
+          read_at?: string | null;
+          recipient_id?: string;
+          source_id?: string | null;
+        };
+        Relationships: [];
+      };
       staff_invitations: {
         Row: {
           accepted_at: string | null;
@@ -5548,6 +5587,10 @@ export type Database = {
       current_org_id: { Args: never; Returns: string };
       decrypt_field: { Args: { ciphertext: string }; Returns: string };
       default_organization_id: { Args: never; Returns: string };
+      delete_staff_notifications: {
+        Args: { p_ids: string[] };
+        Returns: number;
+      };
       delete_custom_notification_group: {
         Args: { p_id: string };
         Returns: undefined;
@@ -5934,6 +5977,22 @@ export type Database = {
         Returns: boolean;
       };
       is_team_member: { Args: never; Returns: boolean };
+      mark_staff_notification_read: {
+        Args: { p_id: string };
+        Returns: undefined;
+      };
+      list_staff_notifications: {
+        Args: { p_limit?: number };
+        Returns: {
+          created_at: string;
+          event: string;
+          id: string;
+          name: string | null;
+          params: Json;
+          path: string;
+          read_at: string | null;
+        }[];
+      };
       list_app_terms_versions: {
         Args: never;
         Returns: {
