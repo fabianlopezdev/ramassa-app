@@ -33,7 +33,14 @@ export const Route = createRootRouteWithContext<AdminRouterContext>()({
       { name: 'description', content: ADMIN_META_DESCRIPTION },
       { title: 'Ramassa Admin' },
     ],
-    links: [{ rel: 'stylesheet', href: appCss }],
+    links: [
+      { rel: 'stylesheet', href: appCss },
+      // The club crest without its wordmark, so it reads at tab size.
+      { rel: 'icon', href: '/favicon.ico', sizes: '16x16 32x32 48x48' },
+      { rel: 'icon', type: 'image/png', sizes: '32x32', href: '/favicon-32.png' },
+      { rel: 'icon', type: 'image/png', sizes: '192x192', href: '/icon-192.png' },
+      { rel: 'apple-touch-icon', sizes: '180x180', href: '/apple-touch-icon.png' },
+    ],
   }),
   // Resolved once per request on the server (cookie -> Accept-Language -> ca)
   // and dehydrated, so the client hydrates in the language the server rendered.
