@@ -347,7 +347,7 @@ function ScreenCard({
   );
 }
 
-/** The add card: a dashed card of the same size, after the last movable screen. */
+/** The add card: a dashed card that takes its row's height, after the last movable screen. */
 function AddScreenCard({ order }: { readonly order: readonly WizardStepKey[] }) {
   const { t } = useTranslation('settings');
   const [isOpen, setIsOpen] = useState(false);
@@ -359,13 +359,7 @@ function AddScreenCard({ order }: { readonly order: readonly WizardStepKey[] }) 
         className="group/add flex w-full rounded-2xl text-start outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
         data-testid="board-add-screen"
       >
-        <CardFrame className="border-dashed border-foreground/20 bg-transparent transition-colors group-hover/add:border-primary/60 group-hover/add:bg-primary/5">
-          {/* The same rows as a screen card, unseen, so both have one size. */}
-          <div aria-hidden className="invisible flex flex-col gap-3">
-            <div className="h-7" />
-            <div className="aspect-[3/5] w-full" />
-            <div className="h-8" />
-          </div>
+        <CardFrame className="h-full min-h-40 border-dashed border-foreground/20 bg-transparent transition-colors group-hover/add:border-primary/60 group-hover/add:bg-primary/5">
           <span className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-sm font-medium text-muted-foreground transition-colors group-hover/add:text-primary">
             <span className="flex size-11 items-center justify-center rounded-full border border-dashed border-current">
               <Plus aria-hidden className="size-5" />
