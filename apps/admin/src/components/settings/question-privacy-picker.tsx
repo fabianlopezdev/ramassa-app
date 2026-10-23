@@ -41,6 +41,9 @@ export function QuestionPrivacyPicker({
 }) {
   const { t } = useTranslation('settings');
   const note = (level: QuestionPrivacy) => t(`questions.privacyNotes.${level}`);
+  const example = (level: QuestionPrivacy) => t(`questions.privacyExamples.${level}`);
+  // Who sees it, then what kind of question belongs there.
+  const describe = (level: QuestionPrivacy) => `${note(level)} ${example(level)}`;
   return (
     <CardPickerField
       label={t('questions.privacy')}
@@ -55,7 +58,10 @@ export function QuestionPrivacyPicker({
       }
       name={t(`questions.privacyLevels.${value}`)}
       description={
-        <span className="text-start text-xs font-normal text-muted-foreground">{note(value)}</span>
+        <span className="flex flex-col gap-0.5 text-start text-xs font-normal text-muted-foreground">
+          <span>{note(value)}</span>
+          <span className="italic">{example(value)}</span>
+        </span>
       }
       dialogClassName="max-w-3xl"
       dialogNote={t('questions.privacyPermanent')}
@@ -66,7 +72,7 @@ export function QuestionPrivacyPicker({
           values={QUESTION_PRIVACY_LEVELS}
           value={value}
           label={t('questions.privacy')}
-          describe={note}
+          describe={describe}
           onPick={pick}
           cardRefs={cardRefs}
           className="grid-cols-1 sm:grid-cols-3"
@@ -80,6 +86,9 @@ export function QuestionPrivacyPicker({
               </span>
               <span aria-hidden className="text-xs leading-4 text-muted-foreground">
                 {note(level)}
+              </span>
+              <span aria-hidden className="text-xs leading-4 text-muted-foreground italic">
+                {example(level)}
               </span>
             </span>
           )}

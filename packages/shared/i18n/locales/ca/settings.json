@@ -418,9 +418,14 @@
       "sensitive": "Sensible"
     },
     "privacyNotes": {
-      "normal": "La llegeix tothom de l’equip que pot veure participants.",
-      "personal": "A la seva fitxa la veu l’equip amb el permís Veure dades personals. Qui pot exportar participants també la rep a l’exportació.",
-      "sensitive": "Es desa xifrada i només la llegeix l’equip amb el permís Veure dades sensibles. Només surt a l’exportació amb dades sensibles."
+      "normal": "La veu tot l'equip que treballa amb les jugadores.",
+      "personal": "Només la veu qui té permís de dades personals. També surt quan s'exporten les jugadores.",
+      "sensitive": "Es guarda xifrada. Només la veu qui té permís de dades sensibles."
+    },
+    "privacyExamples": {
+      "normal": "Per exemple: la talla de samarreta, si li agrada el futbol.",
+      "personal": "Per exemple: l'adreça, el telèfon, la data de naixement.",
+      "sensitive": "Per exemple: salut, situació legal, religió."
     },
     "privacyPermanent": "Tria-ho bé: després no es pot canviar.",
     "privacyLocked": "El nivell de privacitat no pot canviar, perquè ja hi ha respostes desades amb aquest nivell.",

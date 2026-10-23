@@ -418,9 +418,14 @@
       "sensitive": "Sensible"
     },
     "privacyNotes": {
-      "normal": "La lee todo el equipo que puede ver participantes.",
-      "personal": "En su ficha la ve el equipo con el permiso Ver datos personales. Quien puede exportar participantes también la recibe en la exportación.",
-      "sensitive": "Se guarda cifrada y solo la lee el equipo con el permiso Ver datos sensibles. Solo sale en la exportación con datos sensibles."
+      "normal": "La ve todo el equipo que trabaja con las jugadoras.",
+      "personal": "Solo la ve quien tiene permiso de datos personales. También sale cuando se exportan las jugadoras.",
+      "sensitive": "Se guarda cifrada. Solo la ve quien tiene permiso de datos sensibles."
+    },
+    "privacyExamples": {
+      "normal": "Por ejemplo: la talla de camiseta, si le gusta el fútbol.",
+      "personal": "Por ejemplo: la dirección, el teléfono, la fecha de nacimiento.",
+      "sensitive": "Por ejemplo: salud, situación legal, religión."
     },
     "privacyPermanent": "Elígelo bien: después no se puede cambiar.",
     "privacyLocked": "El nivel de privacidad no puede cambiar, porque ya hay respuestas guardadas con este nivel.",

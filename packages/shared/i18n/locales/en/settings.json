@@ -418,9 +418,14 @@
       "sensitive": "Sensitive"
     },
     "privacyNotes": {
-      "normal": "Anyone on the team who can see participants reads it.",
-      "personal": "On her page, team members with See personal details see it. Whoever can export participants also gets it in the export.",
-      "sensitive": "It is stored encrypted, and only team members with See sensitive details read it. Only the export with sensitive details includes it."
+      "normal": "Everyone on the team who works with the players sees it.",
+      "personal": "Only people with the personal details permission see it. It also goes out when players are exported.",
+      "sensitive": "It is stored encrypted. Only people with the sensitive details permission see it."
+    },
+    "privacyExamples": {
+      "normal": "For example: T-shirt size, whether she likes football.",
+      "personal": "For example: address, phone, date of birth.",
+      "sensitive": "For example: health, legal situation, religion."
     },
     "privacyPermanent": "Choose with care: it cannot change later.",
     "privacyLocked": "The privacy level cannot change, because answers are already stored at this level.",
