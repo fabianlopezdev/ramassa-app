@@ -1181,3 +1181,83 @@ export async function deleteIntakePreset(client: Client, id: string): Promise<vo
   const { error } = await client.rpc('delete_intake_state_preset', { p_id: id });
   if (error) throw databaseError(error);
 }
+
+// Per-player choices on staff questions (RAPP-643) --------------------------------------------------
+
+/**
+ * Staff's Ask or Don't ask on the questions they wrote, for one player, by
+ * question id. No entry is Auto: asked unless she already answered it.
+ */
+export type CustomQuestionStates = Readonly<Record<string, 'ask' | 'skip'>>;
+
+/** How a staff question travels in the `question_states` object, beside the app's own. */
+export function customStateKey(questionId: string): `custom:${string}` {
+  return `custom:${questionId}`;
+}
+
+/** Don't ask is allowed on a staff question: optional, or required and answered. */
+export function canSkipCustomQuestion(
+  question: CustomQuestion,
+  answers: CustomAnswers = {},
+): boolean {
+  return !isCustomQuestionRequired(question) || answers[question.id] !== undefined;
+}
+
+/**
+ * The staff choices to send with the invitation, keyed `custom:<id>`: Don't
+ * ask on a question it is not allowed for falls back to Auto, as the database
+ * would refuse it, and a question no longer live is left out.
+ */
+export function allowedCustomQuestionStates(
+  states: CustomQuestionStates,
+  catalog: IntakeCatalog,
+): Readonly<Record<string, 'ask' | 'skip'>> {
+  const live = new Map(
+    catalog.screens
+      .filter((screen) => !screen.isArchived)
+      .flatMap((screen) => screen.questions.filter((question) => !question.isArchived))
+      .map((question) => [question.id, question] as const),
+  );
+  return Object.fromEntries(
+    Object.entries(states).flatMap(([id, state]) => {
+      const question = live.get(id);
+      if (question === undefined) return [];
+      if (state === 'skip' && !canSkipCustomQuestion(question)) return [];
+      return [[customStateKey(id), state]];
+    }),
+  );
+}
+
+/**
+ * Her staff screens with the staff choices applied, as her phone plans
+ * them: a question set to Don't ask is left out, and a screen with nothing
+ * left is no screen.
+ */
+export function withCustomAsking(
+  screens: readonly IntakeScreen[],
+  asking: ReadonlyMap<string, boolean>,
+): readonly IntakeScreen[] {
+  return screens
+    .map((screen) => ({
+      ...screen,
+      questions: screen.questions.filter((question) => asking.get(question.id) !== false),
+    }))
+    .filter((screen) => screen.questions.length > 0);
+}
+
+/**
+ * Whether her wizard asks each staff question with a choice (RAPP-643): true
+ * for Ask, false for Don't ask. She never reads the staff setting itself.
+ */
+export async function fetchMyCustomQuestionAsking(
+  client: Client,
+): Promise<ReadonlyMap<string, boolean>> {
+  const { data, error } = await client.rpc('my_custom_question_asking');
+  if (error) throw databaseError(error);
+  return new Map(
+    z
+      .array(z.object({ question_id: z.uuid(), is_asked: z.boolean() }))
+      .parse(data ?? [])
+      .map((row) => [row.question_id, row.is_asked] as const),
+  );
+}
