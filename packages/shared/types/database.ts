@@ -2231,6 +2231,7 @@ export type Database = {
       intake_screens: {
         Row: {
           after_screen: string;
+          builtin_screen: string | null;
           created_at: string;
           home_after_screen: string;
           home_sort_order: number;
@@ -2244,6 +2245,7 @@ export type Database = {
         };
         Insert: {
           after_screen: string;
+          builtin_screen?: string | null;
           created_at?: string;
           home_after_screen: string;
           home_sort_order: number;
@@ -2257,6 +2259,7 @@ export type Database = {
         };
         Update: {
           after_screen?: string;
+          builtin_screen?: string | null;
           created_at?: string;
           home_after_screen?: string;
           home_sort_order?: number;
@@ -5626,6 +5629,10 @@ export type Database = {
       };
       encrypt_field: { Args: { plaintext: string }; Returns: string };
       encryption_key: { Args: never; Returns: string };
+      ensure_builtin_screen_holder: {
+        Args: { p_screen: string; p_title: Json };
+        Returns: string;
+      };
       export_onboarding_setup: {
         Args: { p_app_commit?: string };
         Returns: Json;
