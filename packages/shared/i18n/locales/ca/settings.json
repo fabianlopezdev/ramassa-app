@@ -419,7 +419,7 @@
     },
     "privacyNotes": {
       "normal": "La llegeix tothom de l’equip que pot veure participants.",
-      "personal": "Només la llegeix l’equip amb el permís Veure dades personals. També surt a l’exportació de participants, com la data de naixement.",
+      "personal": "A la seva fitxa la veu l’equip amb el permís Veure dades personals. Qui pot exportar participants també la rep a l’exportació.",
       "sensitive": "Es desa xifrada i només la llegeix l’equip amb el permís Veure dades sensibles. Només surt a l’exportació amb dades sensibles."
     },
     "privacyPermanent": "Tria-ho bé: després no es pot canviar.",

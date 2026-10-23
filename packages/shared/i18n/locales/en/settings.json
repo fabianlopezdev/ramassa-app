@@ -419,7 +419,7 @@
     },
     "privacyNotes": {
       "normal": "Anyone on the team who can see participants reads it.",
-      "personal": "Only team members with See personal details read it. The participant export includes it, like the date of birth.",
+      "personal": "On her page, team members with See personal details see it. Whoever can export participants also gets it in the export.",
       "sensitive": "It is stored encrypted, and only team members with See sensitive details read it. Only the export with sensitive details includes it."
     },
     "privacyPermanent": "Choose with care: it cannot change later.",

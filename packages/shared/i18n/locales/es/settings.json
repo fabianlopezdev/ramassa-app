@@ -419,7 +419,7 @@
     },
     "privacyNotes": {
       "normal": "La lee todo el equipo que puede ver participantes.",
-      "personal": "Solo la lee el equipo con el permiso Ver datos personales. También sale en la exportación de participantes, como la fecha de nacimiento.",
+      "personal": "En su ficha la ve el equipo con el permiso Ver datos personales. Quien puede exportar participantes también la recibe en la exportación.",
       "sensitive": "Se guarda cifrada y solo la lee el equipo con el permiso Ver datos sensibles. Solo sale en la exportación con datos sensibles."
     },
     "privacyPermanent": "Elígelo bien: después no se puede cambiar.",
