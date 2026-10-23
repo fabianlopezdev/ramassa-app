@@ -612,5 +612,13 @@
   "testScenarioClearAllCustom": "Vaciarlas todas",
   "testScenarioDraftTerms": "Su teléfono muestra el borrador de los términos de la app. Cuando se publique o se descarte, las aceptaciones de prueba de este borrador se borran.",
   "testScenarioDraftAuthorization": "Su teléfono muestra el borrador de la autorización de temporada. Cuando se publique o se descarte, las firmas de prueba de este borrador se borran.",
-  "authorizationHealthConsentWithdrawn": "Consentimiento retirado: su respuesta de salud se ha borrado"
+  "authorizationHealthConsentWithdrawn": "Consentimiento retirado: su respuesta de salud se ha borrado",
+  "inviteChoiceAuto": "Automático",
+  "inviteChoiceAsk": "Pregúntalo",
+  "inviteChoiceSkip": "No lo preguntes",
+  "inviteScreenAsk": "Preguntar {{screen}}",
+  "inviteScreenSkipped": "Omitida",
+  "inviteScreenNotAsked": "No se pregunta",
+  "inviteScreenQuestions": "Preguntas",
+  "inviteScreenRequired": "Tiene una pregunta obligatoria sin respuesta."
 }

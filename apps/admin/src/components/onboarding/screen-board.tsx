@@ -66,7 +66,8 @@ import { PhoneMiniature } from './phone-preview';
 import { stepContent, type Translate } from './screen-content';
 
 /** Every card shares one track width, so each row's cards have one size. */
-const GRID = 'grid grid-cols-2 gap-4 sm:grid-cols-[repeat(auto-fill,minmax(11.5rem,1fr))]';
+export const BOARD_GRID =
+  'grid grid-cols-2 gap-4 sm:grid-cols-[repeat(auto-fill,minmax(11.5rem,1fr))]';
 
 /** The name staff know a screen by, in the dashboard's language. */
 export function stepName(step: BoardStep, language: LanguageCode, t: Translate): string {
@@ -188,7 +189,11 @@ function BoardGrid({
       onDragEnd={(event) => void drop(event)}
     >
       <SortableContext items={[...order]} strategy={rectSortingStrategy}>
-        <ol className={GRID} aria-label={t('onboardingBoard.listLabel')} data-testid="screen-board">
+        <ol
+          className={BOARD_GRID}
+          aria-label={t('onboardingBoard.listLabel')}
+          data-testid="screen-board"
+        >
           {order.map((key, index) => {
             const view = card(key, index + 1);
             return view === null ? null : (
@@ -251,7 +256,7 @@ function SortableCard({
 }
 
 /** The parts every card has, so the add card keeps the same size. */
-function CardFrame({
+export function CardFrame({
   className,
   children,
 }: {
