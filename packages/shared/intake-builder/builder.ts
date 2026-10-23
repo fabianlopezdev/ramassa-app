@@ -28,6 +28,7 @@ import {
   WIZARD_QUESTION_SCREENS,
   WIZARD_SCREEN_QUESTIONS,
   wizardFlowOrder,
+  type CustomWizardScreen,
   type IntakeQuestion,
   type WizardFlow,
   type WizardQuestionScreen,
@@ -158,6 +159,8 @@ const screenSchema = z.object({
   after_screen: z.enum(QUESTION_SCREENS),
   sort_order: z.number().int(),
   is_archived: z.boolean(),
+  // The app screen whose added questions it holds (RAPP-642); an older server sends none.
+  builtin_screen: z.string().nullable().optional(),
   questions: z.array(questionSchema),
 });
 
@@ -235,6 +238,13 @@ export interface IntakeScreen {
   readonly afterScreen: BuiltinScreen;
   readonly isArchived: boolean;
   readonly questions: readonly CustomQuestion[];
+  /**
+   * Set when this holds the questions staff added to an app screen
+   * (RAPP-642): they show on that screen, after its own questions, and it is
+   * never a step of its own. Its title is the app screen's, for the places
+   * that list questions by screen (re-registration, the entity form, staff).
+   */
+  readonly builtinScreen?: WizardQuestionScreen | null;
 }
 
 export interface BuiltinOverride {
@@ -292,6 +302,10 @@ export function parseIntakeCatalog(data: unknown): IntakeCatalog {
       intro: screen.intro,
       afterScreen: screen.after_screen,
       isArchived: screen.is_archived,
+      builtinScreen:
+        screen.builtin_screen != null && isWizardQuestionScreen(screen.builtin_screen)
+          ? screen.builtin_screen
+          : null,
       questions: screen.questions.map((question) => ({
         id: question.id,
         screenId: screen.id,
@@ -412,16 +426,71 @@ export const wizardScreens = (catalog: IntakeCatalog, afterScreen?: BuiltinScree
  */
 export function wizardScreensInFlowOrder(catalog: IntakeCatalog): readonly IntakeScreen[] {
   const screens = wizardScreens(catalog);
-  const order = wizardFlowOrder(
-    screens.map((screen) => ({
-      id: screen.id,
-      afterScreen: screen.afterScreen,
-      isAnswered: false,
-    })),
-    wizardFlow(catalog),
-  );
-  const position = (screen: IntakeScreen) => order.indexOf(customStepKey(screen.id));
+  const order = wizardFlowOrder(customWizardPlan(screens), wizardFlow(catalog));
+  // Added questions sit on their app screen (RAPP-642).
+  const position = (screen: IntakeScreen) =>
+    order.indexOf(screen.builtinScreen ?? customStepKey(screen.id));
   return [...screens].sort((a, b) => position(a) - position(b));
+}
+
+/** Staff screens as the wizard planner takes them, holders of added questions included (RAPP-642). */
+export function customWizardPlan(
+  screens: readonly IntakeScreen[],
+  isAnswered: (screen: IntakeScreen) => boolean = () => false,
+): CustomWizardScreen[] {
+  return screens.map((screen) => ({
+    id: screen.id,
+    afterScreen: screen.afterScreen,
+    isAnswered: isAnswered(screen),
+    builtinScreen: screen.builtinScreen ?? null,
+  }));
+}
+
+/** A staff screen of its own, a step of the wizard: not a holder of added questions. */
+export function isOwnScreen(screen: IntakeScreen): boolean {
+  return screen.builtinScreen == null;
+}
+
+/** The live holder of an app screen's added questions (RAPP-642), if staff added any. */
+export function holderOf(
+  catalog: IntakeCatalog,
+  screen: WizardQuestionScreen,
+): IntakeScreen | undefined {
+  return catalog.screens.find((each) => !each.isArchived && each.builtinScreen === screen);
+}
+
+/** The live questions staff added to an app screen (RAPP-642), in their order. */
+export function addedQuestions(
+  catalog: IntakeCatalog,
+  screen: WizardQuestionScreen,
+): readonly CustomQuestion[] {
+  return holderOf(catalog, screen)?.questions.filter((question) => !question.isArchived) ?? [];
+}
+
+/** Whether an added question on the app screen is required: then it always shows. */
+export function hasRequiredAddedQuestion(
+  catalog: IntakeCatalog,
+  screen: WizardQuestionScreen,
+): boolean {
+  return addedQuestions(catalog, screen).some(isCustomQuestionRequired);
+}
+
+/**
+ * The holder of an app screen's added questions, made on first use. `title`
+ * is the app screen's own title in the five languages, for the places that
+ * list questions by screen.
+ */
+export async function ensureBuiltinScreenHolder(
+  client: Client,
+  screen: WizardQuestionScreen,
+  title: BuilderText,
+): Promise<string> {
+  const { data, error } = await client.rpc('ensure_builtin_screen_holder', {
+    p_screen: screen,
+    p_title: cleanText(title) as Json,
+  });
+  if (error) throw databaseError(error);
+  return z.uuid().parse(data);
 }
 
 export const seasonScreens = (catalog: IntakeCatalog) => screensFor(catalog, isSeasonal);
@@ -1028,7 +1097,9 @@ export function wizardFlow(catalog: IntakeCatalog): WizardFlow {
         .filter((settings) => settings.isHidden)
         .map((settings) => settings.screen)
         .filter(isWizardQuestionScreen)
-        .filter((screen) => canHideBuiltinScreen(screen, required)),
+        .filter((screen) => canHideBuiltinScreen(screen, required))
+        // A required added question keeps its screen shown (RAPP-642).
+        .filter((screen) => !hasRequiredAddedQuestion(catalog, screen)),
     ),
   };
 }
