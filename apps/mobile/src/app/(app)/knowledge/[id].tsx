@@ -8,6 +8,7 @@ import { PageWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { isNetworkStateOnline } from '@/lib/network-status';
 import { usePlayerKnowledgeArticle } from '@/lib/player-knowledge';
+import { useStaffCards } from '@/lib/staff-cards';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useNetworkState } from 'expo-network';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -33,6 +34,17 @@ export default function PlayerKnowledgeDetailScreen() {
   const isOffline = !isNetworkStateOnline(networkState);
   const query = usePlayerKnowledgeArticle(id);
   const article = query.data;
+  // A team article names its author with her photo; a story keeps the
+  // player's first name with her initial (RAPP-639).
+  const staffAuthorIds = useMemo(
+    () => [article?.content_type === 'participant_story' ? null : article?.created_by],
+    [article?.content_type, article?.created_by],
+  );
+  const staffCards = useStaffCards(staffAuthorIds);
+  const staffAuthor =
+    article?.created_by === null || article?.created_by === undefined
+      ? undefined
+      : staffCards.get(article.created_by);
   const title = article === undefined ? undefined : resolveLocalizedText(article.title, language);
   const category =
     article === undefined ? undefined : resolveLocalizedText(article.category.name, language);
@@ -118,7 +130,8 @@ export default function PlayerKnowledgeDetailScreen() {
             article={{
               title: article.title,
               categoryName: article.category.name,
-              authorFirstName: article.author_first_name,
+              authorFirstName: article.author_first_name ?? staffAuthor?.firstName ?? null,
+              authorAvatarKey: staffAuthor?.avatarKey ?? null,
               body: article.body,
               imageUrl: article.image_url,
               videoUrl: article.video_url,

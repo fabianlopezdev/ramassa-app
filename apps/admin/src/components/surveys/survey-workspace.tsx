@@ -1,6 +1,7 @@
 import { useStepUp } from '@/components/auth/step-up';
 import { MultilingualEditor } from '@/components/content/multilingual-editor';
 import { TranslationReviewPanel } from '@/components/content/translation-review-panel';
+import { Page } from '@/components/layout/page';
 import { AudiencePicker } from '@/components/notifications/audience-picker';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -334,9 +335,9 @@ export function SurveyWorkspace({
   }
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-10 px-4 py-8 sm:px-6">
+    <Page className="gap-10">
       <header className="space-y-2">
-        <h1 className="text-3xl font-bold text-neutral-950">{t('title')}</h1>
+        <h1 className="text-3xl font-bold">{t('title')}</h1>
         <p className="text-neutral-600">{t('intro')}</p>
       </header>
 
@@ -489,7 +490,7 @@ export function SurveyWorkspace({
               </div>
               <QuestionPromptEditor question={question} onUpdate={updateQuestion} />
               {question.type === 'multiple_choice' ? (
-                <fieldset className="space-y-3 rounded-lg bg-neutral-50 p-4">
+                <fieldset className="space-y-3 rounded-lg bg-canvas p-4">
                   <legend className="px-2 font-medium">{t('choices')}</legend>
                   {question.options?.map((option, optionIndex) => (
                     <div key={option.id} className="grid gap-2 md:grid-cols-5">
@@ -603,7 +604,7 @@ export function SurveyWorkspace({
                             {rating}
                             {STAR_SYMBOL}
                           </span>
-                          <span className="h-2 flex-1 rounded-full bg-neutral-100">
+                          <span className="h-2 flex-1 rounded-full bg-muted">
                             <span
                               className="block h-2 rounded-full bg-primary"
                               style={{ width: `${(count / aggregates.responseCount) * 100}%` }}
@@ -616,10 +617,7 @@ export function SurveyWorkspace({
                   ) : aggregate.type === 'multiple_choice' ? (
                     <ul className="mt-3 space-y-2">
                       {Object.entries(aggregate.counts).map(([choice, count]) => (
-                        <li
-                          key={choice}
-                          className="flex justify-between rounded-lg bg-neutral-50 p-2"
-                        >
+                        <li key={choice} className="flex justify-between rounded-lg bg-canvas p-2">
                           <span>{resolveChoiceLabel(question, choice, resolvedLanguage)}</span>
                           <strong>{count}</strong>
                         </li>
@@ -632,7 +630,7 @@ export function SurveyWorkspace({
                         <br />
                         {aggregate.yes}
                       </div>
-                      <div className="rounded-lg bg-neutral-50 p-3">
+                      <div className="rounded-lg bg-canvas p-3">
                         <strong>{t('no')}</strong>
                         <br />
                         {aggregate.no}
@@ -641,7 +639,7 @@ export function SurveyWorkspace({
                   ) : (
                     <ul className="mt-3 space-y-2">
                       {aggregate.answers.map((answer) => (
-                        <li key={answer.playerId} className="rounded-lg bg-neutral-50 p-3">
+                        <li key={answer.playerId} className="rounded-lg bg-canvas p-3">
                           <strong>{answer.playerName}</strong>
                           <p>{answer.value}</p>
                         </li>
@@ -678,6 +676,6 @@ export function SurveyWorkspace({
           </div>
         ) : null}
       </section>
-    </div>
+    </Page>
   );
 }

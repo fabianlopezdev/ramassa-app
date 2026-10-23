@@ -90,5 +90,91 @@
   "seasonCreate": "أنشئ الموسم",
   "seasonCreated": "أُنشئ الموسم.",
   "seasonCreateFailed": "تعذّر إنشاء الموسم.",
-  "seasonSetCurrent": "اجعله ساريًا"
+  "seasonSetCurrent": "اجعله ساريًا",
+  "onboardingBoard": {
+    "authorization": "تفويض الموسم",
+    "listLabel": "شاشات التسجيل",
+    "step": "الخطوة {{number}}",
+    "stepOf": "الخطوة {{number}} من {{total}}",
+    "questionCount_zero": "لا أسئلة",
+    "questionCount_one": "سؤال واحد",
+    "questionCount_two": "سؤالان",
+    "questionCount_few": "{{count}} أسئلة",
+    "questionCount_many": "{{count}} سؤالًا",
+    "questionCount_other": "{{count}} سؤال",
+    "fixed": "ثابتة في النهاية",
+    "notShown": "لا تظهر",
+    "dragHandle": "انقل {{screen}}",
+    "edit": "تعديل",
+    "editScreen": "تعديل {{screen}}",
+    "addScreen": "أضف شاشة",
+    "newScreen": "شاشة جديدة",
+    "screenName": "الاسم",
+    "nameNeeded": "اكتب اسمًا.",
+    "create": "أنشئ",
+    "cancel": "إلغاء",
+    "createFailed": "تعذّر إنشاء الشاشة. حاول مرة أخرى.",
+    "orderFailed": "تعذّر حفظ الترتيب. حاول مرة أخرى.",
+    "more": "المزيد",
+    "export": "تصدير",
+    "import": "استيراد",
+    "resetTitle": "هل تريد العودة إلى ترتيب التطبيق؟",
+    "reset": "عودة",
+    "notFound": "هذه الشاشة غير موجودة",
+    "screen": "الشاشة",
+    "wording": "النص",
+    "saved": "تم الحفظ.",
+    "noQuestions": "لا توجد أسئلة بعد.",
+    "required": "إلزامي",
+    "editingLanguage": "اللغة التي تكتب بها",
+    "phone": "كيف تظهر على هاتفها",
+    "phoneLanguage": "لغة الهاتف",
+    "hideScreen": "أخفِ الشاشة",
+    "delete": "احذف",
+    "deleteScreen": "احذف الشاشة",
+    "deleteScreenTitle": "هل تريد حذف هذه الشاشة؟",
+    "deleteScreenBody": "لن تظهر في التطبيق مع أسئلتها. تبقى الإجابات المقدَّمة محفوظة.",
+    "deleted": "تم حذف {{screen}}.",
+    "deleteFailed": "تعذّر الحذف. حاول مرة أخرى.",
+    "deleteQuestion": "احذف {{question}}",
+    "deleteQuestionTitle": "هل تريد حذف هذا السؤال؟",
+    "deleteQuestionBody": "لن يظهر في التطبيق. تبقى الإجابات المقدَّمة محفوظة.",
+    "dnd": {
+      "instructions": "لنقلها، اضغط المسافة أو الإدخال، واستخدم الأسهم، ثم اضغط المسافة أو الإدخال مرة أخرى لإفلاتها. زر الهروب يلغي.",
+      "picked": "التقطت {{screen}} في الموضع {{position}}.",
+      "over": "{{screen}} في الموضع {{position}}.",
+      "outside": "{{screen}} خارج القائمة.",
+      "dropped": "أفلتّ {{screen}} في الموضع {{position}}.",
+      "cancelled": "أُلغي النقل. عادت {{screen}} إلى مكانها."
+    }
+  },
+  "questions": {
+    "picker": {
+      "change": "تغيير"
+    },
+    "typeSamples": {
+      "shortText": "مريم",
+      "longText": "أعيش مع طفليّ في جيرونا منذ ثلاث سنوات.",
+      "email": "maryam@example.com",
+      "number": "3",
+      "option1": "صباحًا",
+      "option2": "بعد الظهر",
+      "option3": "مساءً",
+      "search1": "المغرب",
+      "search2": "السنغال",
+      "listItem": "الخدمات الاجتماعية",
+      "consent": "أوافق"
+    },
+    "privacyNotes": {
+      "normal": "يراها كل الفريق الذي يعمل مع اللاعبات.",
+      "personal": "لا يراها إلا من لديه إذن البيانات الشخصية. وتظهر أيضاً عند تصدير اللاعبات.",
+      "sensitive": "تُحفظ مشفّرة. لا يراها إلا من لديه إذن البيانات الحساسة."
+    },
+    "privacyExamples": {
+      "normal": "مثلاً: مقاس القميص، هل تحب كرة القدم.",
+      "personal": "مثلاً: العنوان، الهاتف، تاريخ الميلاد.",
+      "sensitive": "مثلاً: الصحة، الوضع القانوني، الدين."
+    },
+    "privacyPermanent": "اختر بعناية: لا يمكن تغييره لاحقًا."
+  }
 }

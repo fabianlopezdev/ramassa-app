@@ -1,4 +1,5 @@
 import { EntityServiceEditor } from '@/components/entity/entity-service-editor';
+import { Page } from '@/components/layout/page';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabase';
 import { createFileRoute, Link, useNavigate, useRouter } from '@tanstack/react-router';
@@ -24,7 +25,7 @@ function NewEntityServicePage() {
   const navigate = useNavigate();
   const router = useRouter();
   return (
-    <section className="mx-auto grid w-full max-w-4xl gap-6 p-6">
+    <Page>
       <Button asChild variant="link" className="w-fit px-0">
         <Link to="/portal/services">{t('backToList')}</Link>
       </Button>
@@ -39,6 +40,6 @@ function NewEntityServicePage() {
           await navigate({ to: '/portal/services/$serviceId', params: { serviceId } });
         }}
       />
-    </section>
+    </Page>
   );
 }

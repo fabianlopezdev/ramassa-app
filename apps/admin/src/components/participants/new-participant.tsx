@@ -18,6 +18,7 @@
  */
 
 import { AdminAuthField } from '@/components/auth/admin-auth-field';
+import { Page } from '@/components/layout/page';
 import { InviteQuestionsReview } from '@/components/participants/invite-questions-review';
 import { TestPlayerOption } from '@/components/participants/test-player-option';
 import { ReferralAnswersList } from '@/components/referrals/referral-answers';
@@ -45,7 +46,12 @@ import {
   answeredAtInvitation,
   type QuestionStates,
 } from '@ramassa/shared/intake';
-import { requiredBuiltinQuestions, type IntakeCatalog } from '@ramassa/shared/intake-builder';
+import {
+  allowedCustomQuestionStates,
+  requiredBuiltinQuestions,
+  type CustomQuestionStates,
+  type IntakeCatalog,
+} from '@ramassa/shared/intake-builder';
 import { isLimitedToTestPlayers, testPlayerOption } from '@ramassa/shared/permissions';
 import type { Referral } from '@ramassa/shared/referrals';
 import {
@@ -77,7 +83,7 @@ export function NewParticipant({
   const referralId = referral?.id ?? null;
 
   return (
-    <section className="flex w-full max-w-2xl flex-col gap-6 px-4 py-5 sm:p-6">
+    <Page>
       <header className="flex flex-col gap-3">
         <Link
           to="/participants"
@@ -148,7 +154,7 @@ export function NewParticipant({
           />
         </>
       )}
-    </section>
+    </Page>
   );
 }
 
@@ -305,6 +311,8 @@ function InviteQuestionsStep({
 }) {
   const { t } = useTranslation(['participants', 'common']);
   const [states, setStates] = useState<QuestionStates>({});
+  // Her choices on Ramassà's own questions (RAPP-643), sent with the app's own.
+  const [customStates, setCustomStates] = useState<CustomQuestionStates>({});
   const [isCreating, setIsCreating] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
   const basePayload = buildCreateParticipantInvitePayload(details, referralId);
@@ -320,11 +328,10 @@ function InviteQuestionsStep({
     const result = await safeAsync(() =>
       createParticipantInvite(
         supabase,
-        buildCreateParticipantInvitePayload(
-          details,
-          referralId,
-          allowedQuestionStates(states, answered, requiredBuiltinQuestions(catalog)),
-        ),
+        buildCreateParticipantInvitePayload(details, referralId, {
+          ...allowedQuestionStates(states, answered, requiredBuiltinQuestions(catalog)),
+          ...allowedCustomQuestionStates(customStates, catalog),
+        }),
       ),
     );
     setIsCreating(false);
@@ -351,6 +358,8 @@ function InviteQuestionsStep({
         answered={answered}
         states={states}
         onChange={setStates}
+        customStates={customStates}
+        onCustomChange={setCustomStates}
         catalog={catalog}
       />
       <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">

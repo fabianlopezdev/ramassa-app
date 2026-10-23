@@ -14,6 +14,7 @@ describe('the onboarding design role reaches its two areas only (RAPP-615)', () 
       '/participants/',
       '/participants/new',
       `/participants/${PLAYER_ID}`,
+      '/account',
     ]) {
       expect(designRoleRedirect(path, DESIGN)).toBeNull();
     }

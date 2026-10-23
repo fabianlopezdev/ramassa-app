@@ -612,5 +612,14 @@
   "testScenarioClearAllCustom": "Clear them all",
   "testScenarioDraftTerms": "Her phone shows the draft of the app terms. When it is published or discarded, the test acceptances of this draft are deleted.",
   "testScenarioDraftAuthorization": "Her phone shows the draft of the season authorization. When it is published or discarded, the test signatures of this draft are deleted.",
-  "authorizationHealthConsentWithdrawn": "Consent withdrawn: her health answer was deleted"
+  "authorizationHealthConsentWithdrawn": "Consent withdrawn: her health answer was deleted",
+  "inviteChoiceAuto": "Auto",
+  "inviteChoiceAsk": "Ask",
+  "inviteChoiceSkip": "Don't ask",
+  "inviteScreenAsk": "Ask {{screen}}",
+  "inviteScreenSkipped": "Skipped",
+  "inviteScreenNotAsked": "Not asked",
+  "inviteScreenQuestions": "Questions",
+  "inviteScreenRequired": "It has a required question nobody answered.",
+  "inviteScreenCount": "{{asked}} of {{total}} questions"
 }

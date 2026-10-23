@@ -84,5 +84,85 @@
   "auditLoadMore": "Mostra'n més",
   "exportPeriod": "Període (opcional)",
   "exportCustomAnswers": "Respostes a les preguntes addicionals",
-  "exportConsents": "Autoritzacions de temporada, amb el text de cada una"
+  "exportConsents": "Autoritzacions de temporada, amb el text de cada una",
+  "entityPortalSubtitle": "Portal d'entitats",
+  "userMenu": {
+    "label": "Menú del compte de {{name}}",
+    "profilePhoto": "Foto de perfil",
+    "account": "El meu compte"
+  },
+  "profilePhoto": {
+    "description": "La teva foto substitueix les inicials al Centre de Control.",
+    "choose": "Tria una foto",
+    "replace": "Canvia la foto",
+    "remove": "Treu la foto",
+    "working": "S'està desant…",
+    "saved": "Foto desada.",
+    "removed": "Foto treta.",
+    "failed": "No s'ha pogut desar la foto. Torna-ho a provar.",
+    "wrongType": "Tria una imatge JPG, PNG o WebP."
+  },
+  "account": {
+    "title": "El meu compte",
+    "save": "Desa",
+    "saving": "S'està desant…",
+    "cancel": "Cancel·la",
+    "name": {
+      "label": "Nom",
+      "firstName": "Nom",
+      "lastName": "Cognoms",
+      "saved": "Nom desat.",
+      "failed": "No s'ha pogut desar el nom. Torna-ho a provar.",
+      "required": "Escriu el nom i els cognoms."
+    },
+    "email": {
+      "title": "Correu electrònic",
+      "new": "Correu nou",
+      "submit": "Envia l'enllaç",
+      "sending": "S'està enviant…",
+      "pendingTitle": "Pendent de confirmar",
+      "pendingBody": "Obre l'enllaç que hem enviat a {{email}}. Si també te n'arriba un a {{current}}, obre'ls tots dos. Fins aleshores entres amb {{current}}.",
+      "invalid": "Escriu un correu vàlid.",
+      "same": "Ja és el teu correu.",
+      "taken": "Aquest correu ja té un compte.",
+      "rateLimited": "Massa intents. Espera uns minuts i torna-ho a provar.",
+      "failed": "No s'ha pogut demanar el canvi. Torna-ho a provar.",
+      "change": "Canvia",
+      "dialogTitle": "Canvia el correu",
+      "dialogBody": "T'enviarem un enllaç per confirmar-lo.",
+      "description": "Aquí t'arriba el codi per entrar."
+    },
+    "photo": {
+      "description": "Els participants la veuen al costat dels teus missatges, publicacions i articles."
+    }
+  },
+  "bell": {
+    "title": "Notificacions",
+    "description": "Les teves notificacions més recents.",
+    "openUnread": "Notificacions, {{count}} sense llegir",
+    "close": "Tanca",
+    "loading": "Carregant…",
+    "loadFailed": "No s'han pogut carregar les notificacions.",
+    "empty": "No tens notificacions.",
+    "selectAll": "Selecciona-ho tot",
+    "deleteSelected": "Esborra ({{count}})",
+    "select": "Selecciona: {{text}}",
+    "deleteOne": "Esborra: {{text}}",
+    "unread": "Sense llegir",
+    "deleted_one": "Notificació esborrada.",
+    "deleted_other": "{{count}} notificacions esborrades.",
+    "deleteFailed": "No s'han pogut esborrar. Torna-ho a provar.",
+    "someone": "Algú",
+    "events": {
+      "message_one": "Missatge nou de {{name}}",
+      "message_other": "{{count}} missatges nous de {{name}}",
+      "referral": "Derivació nova de {{name}}",
+      "walk_in": "Signatura nova de {{name}}",
+      "deletion_request": "{{name}} demana esborrar les seves dades",
+      "mentoring_request": "{{name}} demana una mentoria",
+      "feedback": "Suggeriment nou de {{name}}",
+      "forum_report": "Contingut del fòrum denunciat",
+      "gallery_report": "Foto de la galeria denunciada"
+    }
+  }
 }

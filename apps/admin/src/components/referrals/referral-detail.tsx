@@ -1,3 +1,4 @@
+import { Page } from '@/components/layout/page';
 import { ReferralAnswersList } from '@/components/referrals/referral-answers';
 import {
   ReferralCustomAnswers,
@@ -56,7 +57,7 @@ export function ReferralDetail({
   }
 
   return (
-    <section className="mx-auto flex w-full max-w-4xl flex-col gap-6 p-6">
+    <Page>
       <header>
         <Link
           to="/portal/referrals"
@@ -186,6 +187,6 @@ export function ReferralDetail({
           </ol>
         )}
       </section>
-    </section>
+    </Page>
   );
 }

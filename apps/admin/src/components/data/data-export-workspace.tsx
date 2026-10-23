@@ -1,4 +1,5 @@
 import { useStepUp } from '@/components/auth/step-up';
+import { Page } from '@/components/layout/page';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -253,10 +254,10 @@ export function DataExportWorkspace({
   }
 
   return (
-    <section className="flex flex-col gap-8 p-6">
+    <Page className="gap-8">
       <header className="space-y-2">
         <h1 className="text-xl font-semibold">{t('exportTitle')}</h1>
-        <p className="max-w-3xl text-sm text-muted-foreground">{t('exportDescription')}</p>
+        <p className="text-sm text-muted-foreground">{t('exportDescription')}</p>
       </header>
 
       <div className="grid gap-4 md:grid-cols-3">
@@ -395,6 +396,6 @@ export function DataExportWorkspace({
           </Button>
         ) : null}
       </section>
-    </section>
+    </Page>
   );
 }

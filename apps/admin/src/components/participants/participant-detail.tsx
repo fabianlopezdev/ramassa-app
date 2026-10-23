@@ -19,6 +19,7 @@
 import { ParticipantAttendanceReport } from '@/components/attendance/attendance-report';
 import { loadAuthenticatedMediaObjectUrl } from '@/components/content/authenticated-media-image';
 import { DetailSection } from '@/components/detail/detail-section';
+import { Page } from '@/components/layout/page';
 import { ParticipantActivity } from '@/components/participants/participant-activity';
 import { ParticipantAuthorizationPanel } from '@/components/participants/participant-authorization-panel';
 import { ParticipantCustomAnswers } from '@/components/participants/participant-custom-answers';
@@ -55,20 +56,22 @@ import {
 import { AppError } from '@ramassa/shared/errors';
 import { setForumPostingDisabled } from '@ramassa/shared/forum';
 import {
-  questionStateChanges,
   saveParticipantQuestionStates,
   type IntakeQuestion,
   type QuestionStates,
 } from '@ramassa/shared/intake';
 import {
+  choiceChanges,
   deleteIntakePreset,
   EMPTY_INTAKE_CATALOG,
-  requiredBuiltinQuestions,
   saveIntakePreset,
   setParticipantCustomAnswers,
   uploadsAvailable,
+  type CustomAnswers,
+  type CustomQuestionStates,
   type IntakeCatalog,
   type ParticipantCustomAnswer,
+  type PlayerChoices,
 } from '@ramassa/shared/intake-builder';
 import {
   addParticipantNote,
@@ -92,6 +95,15 @@ import type { EquipmentDeliveryInput, UpdateOwnProfilePayload } from '@ramassa/s
 import { setPriorSeasons, type ParticipantSeasonAnswers } from '@ramassa/shared/seasons';
 import { purgeParticipantMedia } from '@ramassa/shared/upload-client';
 
+/** Her answers to Ramassà's questions outside any season, the ones her wizard reads. */
+function wizardCustomAnswers(answers: readonly ParticipantCustomAnswer[]): CustomAnswers {
+  return Object.fromEntries(
+    answers
+      .filter((answer) => answer.seasonId === null)
+      .map((answer) => [answer.questionId, answer.value]),
+  );
+}
+
 export interface ParticipantDetailProps {
   readonly participant: ParticipantDetailRow;
   readonly notes: readonly ParticipantNoteRow[];
@@ -111,6 +123,8 @@ export interface ParticipantDetailProps {
   readonly answeredQuestions?: readonly IntakeQuestion[];
   /** What her wizard asks, for a woman who has not joined yet (RAPP-301). */
   readonly questionStates?: QuestionStates;
+  /** Her choices on Ramassà's questions (RAPP-645). */
+  readonly customQuestionStates?: CustomQuestionStates;
   /** Her season authorizations and consents (RAPP-304). */
   readonly authorizations?: readonly ParticipantAuthorization[];
   readonly consents?: readonly ParticipantConsent[];
@@ -133,6 +147,7 @@ export function ParticipantDetail({
   openDeletionRequestReason,
   answeredQuestions = [],
   questionStates = {},
+  customQuestionStates = {},
   authorizations = [],
   consents = [],
   seasonAnswers = [],
@@ -211,13 +226,14 @@ export function ParticipantDetail({
   }
 
   // Throws on failure, so the control does not say "saved" (RAPP-301).
-  async function saveQuestionStates(next: QuestionStates) {
+  async function saveQuestionStates(next: PlayerChoices) {
     setQuestionStatesErrorMessage(undefined);
     const result = await safeAsync(() =>
       saveParticipantQuestionStates(
         supabase,
         participant.id,
-        questionStateChanges(questionStates, next),
+        // The app's questions and Ramassà's, only what changed (RAPP-645).
+        choiceChanges({ states: questionStates, customStates: customQuestionStates }, next),
       ),
     );
     if (!result.ok) {
@@ -292,7 +308,7 @@ export function ParticipantDetail({
   }
 
   return (
-    <section className="flex flex-col gap-6 p-6">
+    <Page>
       <header className="flex flex-col gap-3">
         <Link
           to="/participants"
@@ -318,7 +334,7 @@ export function ParticipantDetail({
               {participant.is_forum_banned ? (
                 <Badge variant="destructive">{t('forumBanned')}</Badge>
               ) : null}
-              {isTestPlayer ? <Badge variant="outline">{t('testBadge')}</Badge> : null}
+              {isTestPlayer ? <Badge variant="muted">{t('testBadge')}</Badge> : null}
             </div>
             <p className="text-start text-sm text-muted-foreground">
               {t('detailJoinedOn', {
@@ -418,11 +434,12 @@ export function ParticipantDetail({
       {hasJoined || (!teamTools && !isTestPlayer) ? null : (
         <ParticipantQuestionStates
           states={questionStates}
+          customStates={customQuestionStates}
           answered={new Set(answeredQuestions)}
+          customAnswers={wizardCustomAnswers(customAnswers)}
+          catalog={intakeCatalog}
           onSave={saveQuestionStates}
           errorMessage={questionStatesErrorMessage}
-          presets={intakeCatalog.presets}
-          required={requiredBuiltinQuestions(intakeCatalog)}
           onSavePreset={async (name, states) => {
             await saveIntakePreset(supabase, { id: null, name, states });
             await router.invalidate();
@@ -510,6 +527,6 @@ export function ParticipantDetail({
           />
         </>
       ) : null}
-    </section>
+    </Page>
   );
 }

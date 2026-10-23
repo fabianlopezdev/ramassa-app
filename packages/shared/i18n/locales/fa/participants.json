@@ -247,5 +247,14 @@
   "testScenarioReset": "بازگرداندن به بازیکن جدید",
   "testScenarioNeedsRequiredAnswers": "ابتدا پاسخ‌های الزامی او را پر کنید. فقط با آن‌ها می‌تواند عضو شود.",
   "testScenarioJoinedKeepsRequired": "او عضو شده است، پس پاسخ‌های الزامی‌اش می‌ماند. ابتدا شرایط را پذیرفته نشده علامت بزنید.",
-  "testScenarioFailed": "تغییر ذخیره نشد. دوباره امتحان کنید."
+  "testScenarioFailed": "تغییر ذخیره نشد. دوباره امتحان کنید.",
+  "inviteChoiceAuto": "خودکار",
+  "inviteChoiceAsk": "بپرس",
+  "inviteChoiceSkip": "نپرس",
+  "inviteScreenAsk": "پرسیدن {{screen}}",
+  "inviteScreenSkipped": "رد شده",
+  "inviteScreenNotAsked": "پرسیده نمی‌شود",
+  "inviteScreenQuestions": "پرسش‌ها",
+  "inviteScreenRequired": "یک پرسش الزامی دارد که کسی پاسخ نداده است.",
+  "inviteScreenCount": "{{asked}} از {{total}} پرسش"
 }

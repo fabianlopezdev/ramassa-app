@@ -247,5 +247,14 @@
   "testScenarioReset": "أعدها لاعبة جديدة",
   "testScenarioNeedsRequiredAnswers": "املأ إجاباتها الإلزامية أولًا. لا يمكنها الانضمام بدونها.",
   "testScenarioJoinedKeepsRequired": "لقد انضمّت، لذلك تبقى إجاباتها الإلزامية. علّم الشروط كغير مقبولة أولًا.",
-  "testScenarioFailed": "لم يُحفظ التغيير. حاول مرة أخرى."
+  "testScenarioFailed": "لم يُحفظ التغيير. حاول مرة أخرى.",
+  "inviteChoiceAuto": "تلقائي",
+  "inviteChoiceAsk": "اسألها",
+  "inviteChoiceSkip": "لا تسألها",
+  "inviteScreenAsk": "اسأل {{screen}}",
+  "inviteScreenSkipped": "متخطاة",
+  "inviteScreenNotAsked": "لا تُسأل",
+  "inviteScreenQuestions": "الأسئلة",
+  "inviteScreenRequired": "فيها سؤال إلزامي لم يُجب عنه أحد.",
+  "inviteScreenCount": "{{asked}} من {{total}} أسئلة"
 }

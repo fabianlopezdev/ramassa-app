@@ -1,5 +1,6 @@
 import { ForumPlainText } from '@/components/forum/forum-plain-text';
 import { PressableScale } from '@/components/motion/pressable-scale';
+import { AuthorLine } from '@/components/people/person-avatar';
 import { composeContinuousViewStyle } from '@/lib/continuous-corners';
 import { resolveMediaImageSource } from '@/lib/media-source';
 import { mobileClientEnv } from '@/lib/supabase';
@@ -27,6 +28,7 @@ const cardStyle = composeContinuousViewStyle(styles.card);
 export const ForumPostCard = memo(function ForumPostCard({
   post,
   authorLabel,
+  authorAvatarKey,
   repliesLabel,
   pinnedLabel,
   imageAlt,
@@ -38,6 +40,8 @@ export const ForumPostCard = memo(function ForumPostCard({
 }: {
   readonly post: ForumPostRow;
   readonly authorLabel: string;
+  /** A team member's photo (RAPP-639); players show their initial. */
+  readonly authorAvatarKey: string | null;
   readonly repliesLabel: string;
   readonly pinnedLabel: string;
   readonly imageAlt: string;
@@ -79,9 +83,12 @@ export const ForumPostCard = memo(function ForumPostCard({
       )}
       <View className="gap-sm p-md">
         <View className="flex-row flex-wrap items-center gap-sm">
-          <Text className={`text-start text-sm font-bold text-primary-dark ${languageFontClass}`}>
-            {authorLabel}
-          </Text>
+          <AuthorLine
+            name={post.author_first_name}
+            avatarKey={authorAvatarKey}
+            label={authorLabel}
+            languageFontClass={languageFontClass}
+          />
           {post.is_pinned ? (
             <Text
               className={`rounded-full bg-secondary-light px-sm py-xs text-xs font-semibold text-neutral-900 ${languageFontClass}`}

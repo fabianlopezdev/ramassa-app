@@ -8,6 +8,7 @@
  * moderation.
  */
 import { AuthenticatedMediaImage } from '@/components/content/authenticated-media-image';
+import { Page } from '@/components/layout/page';
 import { adminClientEnv, supabase } from '@/lib/supabase';
 import { useRouter } from '@tanstack/react-router';
 import { useMemo, useState } from 'react';
@@ -78,9 +79,9 @@ export function GalleryModeration({ items }: { readonly items: readonly MediaIte
   }
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-8 px-4 py-8 sm:px-6">
+    <Page className="gap-8">
       <header className="space-y-2">
-        <h1 className="text-3xl font-bold text-neutral-950">{t('moderationTitle')}</h1>
+        <h1 className="text-3xl font-bold">{t('moderationTitle')}</h1>
         <p className="text-neutral-600">{t('moderationIntro')}</p>
       </header>
 
@@ -130,7 +131,7 @@ export function GalleryModeration({ items }: { readonly items: readonly MediaIte
                 className="space-y-3 rounded-xl border border-neutral-200 bg-white p-4 shadow-sm"
               >
                 {/* A fixed frame, so the card keeps its shape while the photo loads. */}
-                <div className="flex aspect-[4/3] items-center justify-center overflow-hidden rounded-lg bg-neutral-100 text-sm font-semibold text-neutral-600">
+                <div className="flex aspect-[4/3] items-center justify-center overflow-hidden rounded-lg bg-muted text-sm font-semibold text-neutral-600">
                   {preview === null || mediaWorkerUrl === undefined ? (
                     t('moderationVideo')
                   ) : (
@@ -162,7 +163,7 @@ export function GalleryModeration({ items }: { readonly items: readonly MediaIte
                     {isVisible ? null : (
                       <span
                         data-testid={`gallery-state-${item.id}`}
-                        className="rounded-full bg-neutral-100 px-3 py-1 text-neutral-700"
+                        className="rounded-full bg-muted px-3 py-1 text-neutral-700"
                       >
                         {item.moderation_state === 'hidden' ? t('stateHidden') : t('statePending')}
                       </span>
@@ -203,6 +204,6 @@ export function GalleryModeration({ items }: { readonly items: readonly MediaIte
           })}
         </ol>
       </section>
-    </div>
+    </Page>
   );
 }

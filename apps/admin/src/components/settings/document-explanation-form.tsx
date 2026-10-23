@@ -70,7 +70,7 @@ export function DocumentExplanationForm({ explanation, onSave }: DocumentExplana
 
   return (
     <form
-      className="grid max-w-3xl gap-4 rounded-xl border bg-card p-5"
+      className="grid gap-4 rounded-xl border bg-card p-5"
       onSubmit={(event) => void submit(event)}
       onChange={() => setStatus('idle')}
       data-testid="document-explanation-form"

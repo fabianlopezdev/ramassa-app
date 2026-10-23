@@ -34,8 +34,10 @@ import {
   EMPTY_INTAKE_CATALOG,
   fetchIntakeCatalog,
   fetchMyCustomAnswers,
+  fetchMyCustomQuestionAsking,
   hiddenBuiltinQuestions,
   requiredBuiltinQuestions,
+  withCustomAsking,
   wizardFlow,
   wizardScreens,
   type CustomAnswers,
@@ -55,15 +57,19 @@ const hiddenHeaderScreenOptions = { headerShown: false } as const;
 async function loadStaffQuestions(): Promise<{
   readonly catalog: IntakeCatalog;
   readonly answers: CustomAnswers;
+  readonly asking: ReadonlyMap<string, boolean>;
 }> {
   try {
-    const [catalog, answers] = await Promise.all([
+    const [catalog, answers, asking] = await Promise.all([
       fetchIntakeCatalog(supabase),
       fetchMyCustomAnswers(supabase),
+      // Staff's Ask or Don't ask on their questions for her (RAPP-643). Without
+      // it every staff question is asked, as before.
+      fetchMyCustomQuestionAsking(supabase).catch(() => new Map<string, boolean>()),
     ]);
-    return { catalog, answers };
+    return { catalog, answers, asking };
   } catch {
-    return { catalog: EMPTY_INTAKE_CATALOG, answers: {} };
+    return { catalog: EMPTY_INTAKE_CATALOG, answers: {}, asking: new Map() };
   }
 }
 
@@ -135,9 +141,14 @@ function OnboardingScreens() {
           // wizard: without it, her draft is kept as for anyone.
           fetchMyTestScenarioStamp(supabase).catch(() => null),
         ]);
-      const { catalog, answers } = staffQuestions;
+      const { catalog, answers, asking } = staffQuestions;
       const hidden = hiddenBuiltinQuestions(catalog);
-      const customScreens = wizardScreens(catalog);
+      // A staff question set to Don't ask is never asked; a screen with none
+      // left is skipped (RAPP-643).
+      const customScreens = withCustomAsking(wizardScreens(catalog), asking);
+      const asked = new Set(
+        [...asking].flatMap(([questionId, isAsked]) => (isAsked ? [questionId] : [])),
+      );
       return {
         profile,
         answered,
@@ -149,7 +160,7 @@ function OnboardingScreens() {
         catalog,
         customAnswers: answers,
         customScreens,
-        customPlan: customWizardPlan(customScreens, answers),
+        customPlan: customWizardPlan(customScreens, answers, asked),
         // The order and hidden screens staff arranged (RAPP-612). The staff
         // preview of a new invitation reads the same flow.
         flow: wizardFlow(catalog),

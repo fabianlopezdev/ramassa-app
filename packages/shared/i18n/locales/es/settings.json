@@ -106,7 +106,7 @@
       "coach": "Entrenador",
       "staff": "Equipo técnico",
       "admin": "Administración",
-      "onboarding_design": "Diseño de la inscripción",
+      "onboarding_design": "Diseño del onboarding",
       "custom": "Personalizado"
     }
   },
@@ -272,7 +272,7 @@
       "description": "Editar el nombre, los datos de contacto y los idiomas."
     },
     "onboarding_design": {
-      "label": "Diseño de la inscripción",
+      "label": "Diseño del onboarding",
       "description": "Editar lo que ve una jugadora la primera vez que abre la app: preguntas, nota del documento, temporadas y autorización de la temporada."
     },
     "settings_branding": {
@@ -417,7 +417,17 @@
       "personal": "Personal",
       "sensitive": "Sensible"
     },
-    "privacyHint": "Elígelo bien: después no se puede cambiar. Las respuestas sensibles se cifran y solo las lee el equipo con el nivel Sensible.",
+    "privacyNotes": {
+      "normal": "La ve todo el equipo que trabaja con las jugadoras.",
+      "personal": "Solo la ve quien tiene permiso de datos personales. También sale cuando se exportan las jugadoras.",
+      "sensitive": "Se guarda cifrada. Solo la ve quien tiene permiso de datos sensibles."
+    },
+    "privacyExamples": {
+      "normal": "Por ejemplo: la talla de camiseta, si le gusta el fútbol.",
+      "personal": "Por ejemplo: la dirección, el teléfono, la fecha de nacimiento.",
+      "sensitive": "Por ejemplo: salud, situación legal, religión."
+    },
+    "privacyPermanent": "Elígelo bien: después no se puede cambiar.",
     "privacyLocked": "El nivel de privacidad no puede cambiar, porque ya hay respuestas guardadas con este nivel.",
     "placements": "Dónde sale",
     "placement": {
@@ -496,7 +506,6 @@
       "file_upload": "Ella envía una foto o un PDF. Es privado: solo lo ve el equipo que puede leer este nivel.",
       "signature": "Ella firma con el dedo, como en la autorización."
     },
-    "typeGuide": "Qué pregunta cada tipo",
     "placementNotForType": "Una foto, un archivo o una firma solo se piden a ella: en su registro o cada temporada.",
     "placementHers": "Este tipo solo se pide a ella, en su registro o cada temporada.",
     "tooManyOptions": "Hay demasiadas opciones para este tipo. Para una lista larga, elige \"Una opción de una lista larga\".",
@@ -532,10 +541,26 @@
       "notHers": "Solo puede ser obligatoria una pregunta que responde ella misma, en la inscripción o cada temporada."
     },
     "requiredCustomNote": "Obligatoria: no puede terminar la inscripción ni la reinscripción sin responderla. El formulario de derivación de la entidad nunca la exige.",
-    "requiredHiddenNote": "Está oculta, pero mientras sea obligatoria se pregunta igualmente."
+    "requiredHiddenNote": "Está oculta, pero mientras sea obligatoria se pregunta igualmente.",
+    "picker": {
+      "change": "Cambiar"
+    },
+    "typeSamples": {
+      "shortText": "María",
+      "longText": "Vivo con mis dos hijos en Girona desde hace tres años.",
+      "email": "maria@ejemplo.es",
+      "number": "3",
+      "option1": "Mañana",
+      "option2": "Tarde",
+      "option3": "Noche",
+      "search1": "Marruecos",
+      "search2": "Senegal",
+      "listItem": "Servicios sociales",
+      "consent": "Estoy de acuerdo"
+    }
   },
   "onboardingPage": {
-    "title": "Inscripción",
+    "title": "Onboarding",
     "intro": "Todo lo que ve una jugadora cuando abre la app por primera vez. Los cambios llegan a la app enseguida, sin ninguna versión nueva."
   },
   "appTerms": {
@@ -700,113 +725,57 @@
     "previewStep": "{{label}} · paso {{step}} de {{total}}"
   },
   "draftSeenByTestPlayers": "Versión en borrador (solo la ven las jugadoras de prueba)",
-  "setupTransfer": {
-    "title": "Mover la configuración de la inscripción",
-    "intro": "Descarga aquí toda la inscripción en un archivo (pantallas, preguntas, textos, términos, temporadas y autorización) para importarla en otra organización, por ejemplo de pruebas a producción. El archivo no lleva ninguna persona: ni jugadoras de prueba, ni respuestas, ni consentimientos, ni firmas.",
-    "download": "Descargar la configuración",
-    "downloaded": "Archivo descargado.",
-    "downloadFailed": "No se ha podido descargar. Vuelve a intentarlo.",
-    "importTitle": "Importar una configuración",
-    "importIntro": "Solo una organización sin inscripción configurada puede importar, y solo una vez. Antes de crear nada verás qué se importará.",
-    "chooseFile": "Archivo de configuración (.json)",
-    "notSetup": "Este archivo no es una configuración de la inscripción descargada desde aquí.",
-    "unknownVersion": "Este archivo es de la versión {{version}} del formato y esta app lee la versión 1. Descárgalo de nuevo desde una app de la misma versión.",
-    "versionNotNumber": "El esquema del archivo (schema_version) debe ser el número 1. Descárgalo de nuevo desde esta página.",
-    "damaged": "El archivo está incompleto o dañado. Descárgalo de nuevo.",
-    "empty": "El archivo no contiene ninguna configuración del onboarding que importar. Descárgala de nuevo desde la organización donde está diseñada.",
-    "previewing": "Comprobando el archivo…",
-    "failed": "No se ha podido importar. No se ha creado nada. Vuelve a intentarlo.",
-    "previewTitle": "Qué se importará",
-    "previewSource": "Archivo descargado el {{date}}, app {{commit}}.",
-    "noCommit": "sin versión",
-    "count": {
-      "screens": "Pantallas",
-      "questions": "Preguntas",
-      "options": "Opciones",
-      "builtin_screens": "Textos de pantallas de la app",
-      "builtin_question_overrides": "Cambios en preguntas de la app",
-      "flow_order_steps": "Pasos del orden",
-      "required_questions": "Preguntas obligatorias u opcionales",
-      "presets": "Plantillas",
-      "document_step_explanation": "Nota del paso del documento",
-      "app_terms_versions": "Borradores de los términos",
-      "seasons": "Temporadas",
-      "authorization_versions": "Borradores de la autorización"
-    },
-    "legal": {
-      "appTerms": {
-        "draft": "Términos de la app: el borrador se importa como borrador.",
-        "published": "Términos de la app: la versión {{number}} se importa como borrador.",
-        "bundled": "Términos de la app: son los de la app y ya están, no se importan.",
-        "none": "Términos de la app: el archivo no los lleva."
-      },
-      "authorization": {
-        "draft": "Autorización: el borrador se importa como borrador.",
-        "published": "Autorización: la versión {{number}} de {{season}} se importa como borrador.",
-        "none": "Autorización: el archivo no la lleva."
-      }
-    },
-    "warning": {
-      "legal_drafts": "Los términos y la autorización llegan como borradores. Una persona administradora los tiene que revisar y publicar antes de que las jugadoras los vean.",
-      "app_terms_history": "{{count}} versiones publicadas anteriores de los términos no se importan; el historial se queda en la organización de origen.",
-      "authorization_history": "{{count}} versiones publicadas anteriores de la autorización no se importan; el historial se queda en la organización de origen.",
-      "attachment_links": "Los documentos de la autorización enlazan a {{hosts}}. Comprueba que se abren desde esta organización.",
-      "no_current_season": "Ninguna temporada del archivo es la vigente: marca una antes de publicar la autorización."
-    },
-    "commitDiffers": "El archivo se descargó con la versión {{file}} de la app y esta es la {{app}}. Si falla, descárgalo de nuevo con la misma versión.",
-    "blockersTitle": "Esta organización ya tiene configuración de la inscripción, y la importación nunca la sobrescribe:",
-    "blocker": {
-      "screens": "pantallas",
-      "questions": "preguntas",
-      "builtin_question_overrides": "cambios en preguntas de la app",
-      "builtin_screens": "textos de pantallas de la app",
-      "flow_order": "orden de las pantallas",
-      "required_questions": "preguntas obligatorias u opcionales",
-      "presets": "plantillas",
-      "document_step_explanation": "nota del paso del documento",
-      "app_terms": "términos de la app propios",
-      "seasons": "temporadas",
-      "authorization": "autorización"
-    },
-    "databaseProblem": {
-      "tooLarge": "El archivo ocupa más de 5 MB. Descárgalo de nuevo desde una app de la misma versión.",
-      "notEmpty": "Esta organización ya tiene configuración de la inscripción, y la importación nunca la sobrescribe.",
-      "refusedValue": "El archivo tiene un valor que esta app no acepta ({{part}}). Descárgalo de nuevo desde una app de la misma versión.",
-      "unknown": "La base de datos rechazaría este archivo, así que no se puede importar. Descárgalo de nuevo desde una app de la misma versión.",
-      "malformed": {
-        "twoCurrentSeasons": "El archivo marca más de una temporada como vigente. Descárgalo de nuevo.",
-        "repeatedId": "El mismo identificador aparece dos veces en el archivo. Descárgalo de nuevo.",
-        "conditionOutside": "Una pregunta del archivo depende de una pregunta o de una opción que no está en él. Descárgalo de nuevo.",
-        "flowTooMany": "El orden de las pantallas del archivo tiene más de 200 pasos. Descárgalo de nuevo.",
-        "flowRepeated": "El orden de las pantallas del archivo repite un paso. Descárgalo de nuevo.",
-        "flowFixedEnd": "El orden de las pantallas del archivo mueve el resumen, los términos o la autorización, que siempre cierran la inscripción. Descárgalo de nuevo.",
-        "flowArchived": "El orden de las pantallas del archivo incluye una pantalla archivada. Descárgalo de nuevo.",
-        "flowMissing": "El orden de las pantallas del archivo incluye un paso que no está en el archivo. Descárgalo de nuevo.",
-        "presetWizard": "Una plantilla del archivo pregunta o salta preguntas del asistente de inscripción. Descárgalo de nuevo.",
-        "wrongForm": "Un valor del archivo no tiene la forma correcta (una fecha, un número o un identificador). Descárgalo de nuevo desde una app de la misma versión."
-      },
-      "part": {
-        "screen": "una pantalla",
-        "question": "una pregunta",
-        "option": "una opción de respuesta",
-        "builtinQuestionOverride": "un cambio en una pregunta de la app",
-        "builtinScreen": "el texto de una pantalla de la app",
-        "flowOrder": "el orden de las pantallas",
-        "requiredQuestions": "la lista de preguntas obligatorias",
-        "preset": "una plantilla",
-        "documentStepExplanation": "la nota del paso del documento",
-        "season": "una temporada",
-        "appTerms": "los términos de la app",
-        "authorization": "la autorización",
-        "other": "una parte del archivo"
-      }
-    },
-    "confirm": "Importar",
-    "confirmAlert": "La importación crea todo lo que se muestra y solo se puede hacer una vez. Vuelve a hacer clic para confirmar.",
-    "confirmAgain": "Confirmar la importación",
+  "onboardingBoard": {
+    "authorization": "Autorización de la temporada",
+    "listLabel": "Pantallas de la inscripción",
+    "step": "Paso {{number}}",
+    "stepOf": "Paso {{number}} de {{total}}",
+    "questionCount_one": "{{count}} pregunta",
+    "questionCount_other": "{{count}} preguntas",
+    "fixed": "Fija al final",
+    "notShown": "No se muestra",
+    "dragHandle": "Mover {{screen}}",
+    "edit": "Editar",
+    "editScreen": "Editar {{screen}}",
+    "addScreen": "Añadir una pantalla",
+    "newScreen": "Nueva pantalla",
+    "screenName": "Nombre",
+    "nameNeeded": "Escribe un nombre.",
+    "create": "Crear",
     "cancel": "Cancelar",
-    "importing": "Importando…",
-    "imported": "Configuración importada.",
-    "mustPublish": "Paso siguiente: revisa y publica los términos y la autorización en esta página."
+    "createFailed": "No se ha podido crear la pantalla. Vuelve a intentarlo.",
+    "orderFailed": "No se ha podido guardar el orden. Vuelve a intentarlo.",
+    "more": "Más",
+    "export": "Exportar",
+    "import": "Importar",
+    "resetTitle": "¿Volver al orden de la app?",
+    "reset": "Volver",
+    "notFound": "Esta pantalla no existe",
+    "screen": "Pantalla",
+    "wording": "Texto",
+    "saved": "Guardado.",
+    "noQuestions": "Todavía no hay preguntas.",
+    "required": "Obligatoria",
+    "editingLanguage": "Idioma en el que escribes",
+    "phone": "Cómo lo ve en el móvil",
+    "phoneLanguage": "Idioma del móvil",
+    "hideScreen": "Ocultar la pantalla",
+    "delete": "Eliminar",
+    "deleteScreen": "Eliminar la pantalla",
+    "deleteScreenTitle": "¿Eliminar esta pantalla?",
+    "deleteScreenBody": "Dejará de salir en la app con sus preguntas. Las respuestas ya dadas se conservan.",
+    "deleted": "Se ha eliminado {{screen}}.",
+    "deleteFailed": "No se ha podido eliminar. Vuelve a intentarlo.",
+    "deleteQuestion": "Eliminar {{question}}",
+    "deleteQuestionTitle": "¿Eliminar esta pregunta?",
+    "deleteQuestionBody": "Dejará de salir en la app. Las respuestas ya dadas se conservan.",
+    "dnd": {
+      "instructions": "Para moverla, pulsa espacio o intro, usa las flechas y vuelve a pulsar espacio o intro para soltarla. Escape cancela.",
+      "picked": "Has cogido {{screen}}, en la posición {{position}}.",
+      "over": "{{screen}} está en la posición {{position}}.",
+      "outside": "{{screen}} está fuera de la lista.",
+      "dropped": "Has soltado {{screen}} en la posición {{position}}.",
+      "cancelled": "Movimiento cancelado. {{screen}} vuelve a su sitio."
+    }
   }
 }

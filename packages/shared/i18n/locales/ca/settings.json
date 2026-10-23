@@ -106,7 +106,7 @@
       "coach": "Entrenador",
       "staff": "Equip tècnic",
       "admin": "Administració",
-      "onboarding_design": "Disseny de la inscripció",
+      "onboarding_design": "Disseny de l'onboarding",
       "custom": "Personalitzat"
     }
   },
@@ -272,7 +272,7 @@
       "description": "Editar el nom, les dades de contacte i els idiomes."
     },
     "onboarding_design": {
-      "label": "Disseny de la inscripció",
+      "label": "Disseny de l'onboarding",
       "description": "Editar el que veu una jugadora la primera vegada que obre l'app: preguntes, nota del document, temporades i autorització de la temporada."
     },
     "settings_branding": {
@@ -417,7 +417,17 @@
       "personal": "Personal",
       "sensitive": "Sensible"
     },
-    "privacyHint": "Tria-ho bé: després no es pot canviar. Les respostes sensibles es xifren i només les llegeix l'equip amb el nivell Sensible.",
+    "privacyNotes": {
+      "normal": "La veu tot l'equip que treballa amb les jugadores.",
+      "personal": "Només la veu qui té permís de dades personals. També surt quan s'exporten les jugadores.",
+      "sensitive": "Es guarda xifrada. Només la veu qui té permís de dades sensibles."
+    },
+    "privacyExamples": {
+      "normal": "Per exemple: la talla de samarreta, si li agrada el futbol.",
+      "personal": "Per exemple: l'adreça, el telèfon, la data de naixement.",
+      "sensitive": "Per exemple: salut, situació legal, religió."
+    },
+    "privacyPermanent": "Tria-ho bé: després no es pot canviar.",
     "privacyLocked": "El nivell de privacitat no pot canviar, perquè ja hi ha respostes desades amb aquest nivell.",
     "placements": "On surt",
     "placement": {
@@ -496,7 +506,6 @@
       "file_upload": "Ella envia una foto o un PDF. És privat: només el veu l’equip que pot llegir aquest nivell.",
       "signature": "Ella signa amb el dit, com a l’autorització."
     },
-    "typeGuide": "Què pregunta cada tipus",
     "placementNotForType": "Una foto, un fitxer o una signatura només es demanen a ella: al seu registre o cada temporada.",
     "placementHers": "Aquest tipus només es demana a ella, al seu registre o cada temporada.",
     "tooManyOptions": "Hi ha massa opcions per a aquest tipus. Per a una llista llarga, tria \"Una opció d’una llista llarga\".",
@@ -532,10 +541,26 @@
       "notHers": "Només pot ser obligatòria una pregunta que respon ella mateixa, a la inscripció o cada temporada."
     },
     "requiredCustomNote": "Obligatòria: no pot acabar la inscripció ni la reinscripció sense respondre-la. El formulari de derivació de l'entitat no l'exigeix mai.",
-    "requiredHiddenNote": "Està amagada, però mentre sigui obligatòria es pregunta igualment."
+    "requiredHiddenNote": "Està amagada, però mentre sigui obligatòria es pregunta igualment.",
+    "picker": {
+      "change": "Canvia"
+    },
+    "typeSamples": {
+      "shortText": "Maria",
+      "longText": "Visc amb els meus dos fills a Girona des de fa tres anys.",
+      "email": "maria@exemple.cat",
+      "number": "3",
+      "option1": "Matí",
+      "option2": "Tarda",
+      "option3": "Vespre",
+      "search1": "Marroc",
+      "search2": "Senegal",
+      "listItem": "Serveis socials",
+      "consent": "Hi estic d’acord"
+    }
   },
   "onboardingPage": {
-    "title": "Inscripció",
+    "title": "Onboarding",
     "intro": "Tot el que veu una jugadora quan obre l'app per primera vegada. Els canvis arriben a l'app de seguida, sense cap versió nova."
   },
   "appTerms": {
@@ -700,113 +725,57 @@
     "previewStep": "{{label}} · pas {{step}} de {{total}}"
   },
   "draftSeenByTestPlayers": "Versió en esborrany (només la veuen les jugadores de prova)",
-  "setupTransfer": {
-    "title": "Moure la configuració de la inscripció",
-    "intro": "Descarrega aquí tota la inscripció en un fitxer (pantalles, preguntes, textos, termes, temporades i autorització) per importar-la en una altra organització, per exemple de proves a producció. El fitxer no porta cap persona: ni jugadores de prova, ni respostes, ni consentiments, ni signatures.",
-    "download": "Descarregar la configuració",
-    "downloaded": "Fitxer descarregat.",
-    "downloadFailed": "No s'ha pogut descarregar. Torna-ho a provar.",
-    "importTitle": "Importar una configuració",
-    "importIntro": "Només una organització sense inscripció configurada pot importar, i només una vegada. Abans de crear res veuràs què s'importarà.",
-    "chooseFile": "Fitxer de configuració (.json)",
-    "notSetup": "Aquest fitxer no és una configuració de la inscripció descarregada des d'aquí.",
-    "unknownVersion": "Aquest fitxer és de la versió {{version}} del format i aquesta app llegeix la versió 1. Descarrega'l de nou des d'una app de la mateixa versió.",
-    "versionNotNumber": "L'esquema del fitxer (schema_version) ha de ser el número 1. Descarrega'l de nou des d'aquesta pàgina.",
-    "damaged": "El fitxer està incomplet o malmès. Descarrega'l de nou.",
-    "empty": "El fitxer no conté cap configuració de l'onboarding per importar. Descarrega-la de nou des de l'organització on està dissenyada.",
-    "previewing": "Comprovant el fitxer…",
-    "failed": "No s'ha pogut importar. No s'ha creat res. Torna-ho a provar.",
-    "previewTitle": "Què s'importarà",
-    "previewSource": "Fitxer descarregat el {{date}}, app {{commit}}.",
-    "noCommit": "sense versió",
-    "count": {
-      "screens": "Pantalles",
-      "questions": "Preguntes",
-      "options": "Opcions",
-      "builtin_screens": "Textos de pantalles de l'app",
-      "builtin_question_overrides": "Canvis a preguntes de l'app",
-      "flow_order_steps": "Passos de l'ordre",
-      "required_questions": "Preguntes obligatòries o opcionals",
-      "presets": "Plantilles",
-      "document_step_explanation": "Nota del pas del document",
-      "app_terms_versions": "Esborranys dels termes",
-      "seasons": "Temporades",
-      "authorization_versions": "Esborranys de l'autorització"
-    },
-    "legal": {
-      "appTerms": {
-        "draft": "Termes de l'app: l'esborrany s'importa com a esborrany.",
-        "published": "Termes de l'app: la versió {{number}} s'importa com a esborrany.",
-        "bundled": "Termes de l'app: són els de l'app i ja hi són, no s'importen.",
-        "none": "Termes de l'app: el fitxer no en porta."
-      },
-      "authorization": {
-        "draft": "Autorització: l'esborrany s'importa com a esborrany.",
-        "published": "Autorització: la versió {{number}} de {{season}} s'importa com a esborrany.",
-        "none": "Autorització: el fitxer no en porta."
-      }
-    },
-    "warning": {
-      "legal_drafts": "Els termes i l'autorització arriben com a esborranys. Una persona administradora els ha de revisar i publicar abans que les jugadores els vegin.",
-      "app_terms_history": "{{count}} versions publicades anteriors dels termes no s'importen; l'historial queda a l'organització d'origen.",
-      "authorization_history": "{{count}} versions publicades anteriors de l'autorització no s'importen; l'historial queda a l'organització d'origen.",
-      "attachment_links": "Els documents de l'autorització enllacen a {{hosts}}. Comprova que s'obren des d'aquesta organització.",
-      "no_current_season": "Cap temporada del fitxer és la vigent: marca'n una abans de publicar l'autorització."
-    },
-    "commitDiffers": "El fitxer es va descarregar amb la versió {{file}} de l'app i aquesta és la {{app}}. Si falla, descarrega'l de nou amb la mateixa versió.",
-    "blockersTitle": "Aquesta organització ja té configuració de la inscripció, i la importació mai la sobreescriu:",
-    "blocker": {
-      "screens": "pantalles",
-      "questions": "preguntes",
-      "builtin_question_overrides": "canvis a preguntes de l'app",
-      "builtin_screens": "textos de pantalles de l'app",
-      "flow_order": "ordre de les pantalles",
-      "required_questions": "preguntes obligatòries o opcionals",
-      "presets": "plantilles",
-      "document_step_explanation": "nota del pas del document",
-      "app_terms": "termes de l'app propis",
-      "seasons": "temporades",
-      "authorization": "autorització"
-    },
-    "databaseProblem": {
-      "tooLarge": "El fitxer ocupa més de 5 MB. Descarrega'l de nou des d'una app de la mateixa versió.",
-      "notEmpty": "Aquesta organització ja té configuració de la inscripció, i la importació mai la sobreescriu.",
-      "refusedValue": "El fitxer té un valor que aquesta app no accepta ({{part}}). Descarrega'l de nou des d'una app de la mateixa versió.",
-      "unknown": "La base de dades refusaria aquest fitxer, així que no es pot importar. Descarrega'l de nou des d'una app de la mateixa versió.",
-      "malformed": {
-        "twoCurrentSeasons": "El fitxer marca més d'una temporada com a vigent. Descarrega'l de nou.",
-        "repeatedId": "El mateix identificador apareix dues vegades al fitxer. Descarrega'l de nou.",
-        "conditionOutside": "Una pregunta del fitxer depèn d'una pregunta o d'una opció que no hi és. Descarrega'l de nou.",
-        "flowTooMany": "L'ordre de les pantalles del fitxer té més de 200 passos. Descarrega'l de nou.",
-        "flowRepeated": "L'ordre de les pantalles del fitxer repeteix un pas. Descarrega'l de nou.",
-        "flowFixedEnd": "L'ordre de les pantalles del fitxer mou el resum, els termes o l'autorització, que sempre tanquen la inscripció. Descarrega'l de nou.",
-        "flowArchived": "L'ordre de les pantalles del fitxer inclou una pantalla arxivada. Descarrega'l de nou.",
-        "flowMissing": "L'ordre de les pantalles del fitxer inclou un pas que no és al fitxer. Descarrega'l de nou.",
-        "presetWizard": "Una plantilla del fitxer pregunta o salta preguntes de l'assistent d'inscripció. Descarrega'l de nou.",
-        "wrongForm": "Un valor del fitxer no té la forma correcta (una data, un número o un identificador). Descarrega'l de nou des d'una app de la mateixa versió."
-      },
-      "part": {
-        "screen": "una pantalla",
-        "question": "una pregunta",
-        "option": "una opció de resposta",
-        "builtinQuestionOverride": "un canvi a una pregunta de l'app",
-        "builtinScreen": "el text d'una pantalla de l'app",
-        "flowOrder": "l'ordre de les pantalles",
-        "requiredQuestions": "la llista de preguntes obligatòries",
-        "preset": "una plantilla",
-        "documentStepExplanation": "la nota del pas del document",
-        "season": "una temporada",
-        "appTerms": "els termes de l'app",
-        "authorization": "l'autorització",
-        "other": "una part del fitxer"
-      }
-    },
-    "confirm": "Importar",
-    "confirmAlert": "La importació crea tot el que es mostra i només es pot fer una vegada. Torna a fer clic per confirmar.",
-    "confirmAgain": "Confirmar la importació",
-    "cancel": "Cancel·lar",
-    "importing": "Important…",
-    "imported": "Configuració importada.",
-    "mustPublish": "Pas següent: revisa i publica els termes i l'autorització en aquesta pàgina."
+  "onboardingBoard": {
+    "authorization": "Autorització de la temporada",
+    "listLabel": "Pantalles de la inscripció",
+    "step": "Pas {{number}}",
+    "stepOf": "Pas {{number}} de {{total}}",
+    "questionCount_one": "{{count}} pregunta",
+    "questionCount_other": "{{count}} preguntes",
+    "fixed": "Fixa al final",
+    "notShown": "No es mostra",
+    "dragHandle": "Mou {{screen}}",
+    "edit": "Edita",
+    "editScreen": "Edita {{screen}}",
+    "addScreen": "Afegeix una pantalla",
+    "newScreen": "Nova pantalla",
+    "screenName": "Nom",
+    "nameNeeded": "Escriu un nom.",
+    "create": "Crea",
+    "cancel": "Cancel·la",
+    "createFailed": "No s'ha pogut crear la pantalla. Torna-ho a provar.",
+    "orderFailed": "No s'ha pogut desar l'ordre. Torna-ho a provar.",
+    "more": "Més",
+    "export": "Exporta",
+    "import": "Importa",
+    "resetTitle": "Vols tornar a l'ordre de l'app?",
+    "reset": "Torna-hi",
+    "notFound": "Aquesta pantalla no existeix",
+    "screen": "Pantalla",
+    "wording": "Text",
+    "saved": "Desat.",
+    "noQuestions": "Encara no hi ha preguntes.",
+    "required": "Obligatòria",
+    "editingLanguage": "Llengua en què escrius",
+    "phone": "Com ho veu al mòbil",
+    "phoneLanguage": "Llengua del mòbil",
+    "hideScreen": "Amaga la pantalla",
+    "delete": "Elimina",
+    "deleteScreen": "Elimina la pantalla",
+    "deleteScreenTitle": "Vols eliminar aquesta pantalla?",
+    "deleteScreenBody": "Deixarà de sortir a l'app amb les seves preguntes. Les respostes ja donades es mantenen.",
+    "deleted": "S'ha eliminat {{screen}}.",
+    "deleteFailed": "No s'ha pogut eliminar. Torna-ho a provar.",
+    "deleteQuestion": "Elimina {{question}}",
+    "deleteQuestionTitle": "Vols eliminar aquesta pregunta?",
+    "deleteQuestionBody": "Deixarà de sortir a l'app. Les respostes ja donades es mantenen.",
+    "dnd": {
+      "instructions": "Per moure-la, prem espai o retorn, fes servir les fletxes i torna a prémer espai o retorn per deixar-la. Escapada cancel·la.",
+      "picked": "Has agafat {{screen}}, a la posició {{position}}.",
+      "over": "{{screen}} és a la posició {{position}}.",
+      "outside": "{{screen}} és fora de la llista.",
+      "dropped": "Has deixat {{screen}} a la posició {{position}}.",
+      "cancelled": "Moviment cancel·lat. {{screen}} torna al seu lloc."
+    }
   }
 }

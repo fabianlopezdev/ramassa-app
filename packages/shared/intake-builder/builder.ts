@@ -28,6 +28,7 @@ import {
   WIZARD_QUESTION_SCREENS,
   WIZARD_SCREEN_QUESTIONS,
   wizardFlowOrder,
+  type CustomWizardScreen,
   type IntakeQuestion,
   type WizardFlow,
   type WizardQuestionScreen,
@@ -158,6 +159,8 @@ const screenSchema = z.object({
   after_screen: z.enum(QUESTION_SCREENS),
   sort_order: z.number().int(),
   is_archived: z.boolean(),
+  // The app screen whose added questions it holds (RAPP-642); an older server sends none.
+  builtin_screen: z.string().nullable().optional(),
   questions: z.array(questionSchema),
 });
 
@@ -235,6 +238,13 @@ export interface IntakeScreen {
   readonly afterScreen: BuiltinScreen;
   readonly isArchived: boolean;
   readonly questions: readonly CustomQuestion[];
+  /**
+   * Set when this holds the questions staff added to an app screen
+   * (RAPP-642): they show on that screen, after its own questions, and it is
+   * never a step of its own. Its title is the app screen's, for the places
+   * that list questions by screen (re-registration, the entity form, staff).
+   */
+  readonly builtinScreen?: WizardQuestionScreen | null;
 }
 
 export interface BuiltinOverride {
@@ -292,6 +302,10 @@ export function parseIntakeCatalog(data: unknown): IntakeCatalog {
       intro: screen.intro,
       afterScreen: screen.after_screen,
       isArchived: screen.is_archived,
+      builtinScreen:
+        screen.builtin_screen != null && isWizardQuestionScreen(screen.builtin_screen)
+          ? screen.builtin_screen
+          : null,
       questions: screen.questions.map((question) => ({
         id: question.id,
         screenId: screen.id,
@@ -412,16 +426,71 @@ export const wizardScreens = (catalog: IntakeCatalog, afterScreen?: BuiltinScree
  */
 export function wizardScreensInFlowOrder(catalog: IntakeCatalog): readonly IntakeScreen[] {
   const screens = wizardScreens(catalog);
-  const order = wizardFlowOrder(
-    screens.map((screen) => ({
-      id: screen.id,
-      afterScreen: screen.afterScreen,
-      isAnswered: false,
-    })),
-    wizardFlow(catalog),
-  );
-  const position = (screen: IntakeScreen) => order.indexOf(customStepKey(screen.id));
+  const order = wizardFlowOrder(customWizardPlan(screens), wizardFlow(catalog));
+  // Added questions sit on their app screen (RAPP-642).
+  const position = (screen: IntakeScreen) =>
+    order.indexOf(screen.builtinScreen ?? customStepKey(screen.id));
   return [...screens].sort((a, b) => position(a) - position(b));
+}
+
+/** Staff screens as the wizard planner takes them, holders of added questions included (RAPP-642). */
+export function customWizardPlan(
+  screens: readonly IntakeScreen[],
+  isAnswered: (screen: IntakeScreen) => boolean = () => false,
+): CustomWizardScreen[] {
+  return screens.map((screen) => ({
+    id: screen.id,
+    afterScreen: screen.afterScreen,
+    isAnswered: isAnswered(screen),
+    builtinScreen: screen.builtinScreen ?? null,
+  }));
+}
+
+/** A staff screen of its own, a step of the wizard: not a holder of added questions. */
+export function isOwnScreen(screen: IntakeScreen): boolean {
+  return screen.builtinScreen == null;
+}
+
+/** The live holder of an app screen's added questions (RAPP-642), if staff added any. */
+export function holderOf(
+  catalog: IntakeCatalog,
+  screen: WizardQuestionScreen,
+): IntakeScreen | undefined {
+  return catalog.screens.find((each) => !each.isArchived && each.builtinScreen === screen);
+}
+
+/** The live questions staff added to an app screen (RAPP-642), in their order. */
+export function addedQuestions(
+  catalog: IntakeCatalog,
+  screen: WizardQuestionScreen,
+): readonly CustomQuestion[] {
+  return holderOf(catalog, screen)?.questions.filter((question) => !question.isArchived) ?? [];
+}
+
+/** Whether an added question on the app screen is required: then it always shows. */
+export function hasRequiredAddedQuestion(
+  catalog: IntakeCatalog,
+  screen: WizardQuestionScreen,
+): boolean {
+  return addedQuestions(catalog, screen).some(isCustomQuestionRequired);
+}
+
+/**
+ * The holder of an app screen's added questions, made on first use. `title`
+ * is the app screen's own title in the five languages, for the places that
+ * list questions by screen.
+ */
+export async function ensureBuiltinScreenHolder(
+  client: Client,
+  screen: WizardQuestionScreen,
+  title: BuilderText,
+): Promise<string> {
+  const { data, error } = await client.rpc('ensure_builtin_screen_holder', {
+    p_screen: screen,
+    p_title: cleanText(title) as Json,
+  });
+  if (error) throw databaseError(error);
+  return z.uuid().parse(data);
 }
 
 export const seasonScreens = (catalog: IntakeCatalog) => screensFor(catalog, isSeasonal);
@@ -1028,7 +1097,9 @@ export function wizardFlow(catalog: IntakeCatalog): WizardFlow {
         .filter((settings) => settings.isHidden)
         .map((settings) => settings.screen)
         .filter(isWizardQuestionScreen)
-        .filter((screen) => canHideBuiltinScreen(screen, required)),
+        .filter((screen) => canHideBuiltinScreen(screen, required))
+        // A required added question keeps its screen shown (RAPP-642).
+        .filter((screen) => !hasRequiredAddedQuestion(catalog, screen)),
     ),
   };
 }
@@ -1109,4 +1180,84 @@ export async function saveIntakePreset(
 export async function deleteIntakePreset(client: Client, id: string): Promise<void> {
   const { error } = await client.rpc('delete_intake_state_preset', { p_id: id });
   if (error) throw databaseError(error);
+}
+
+// Per-player choices on staff questions (RAPP-643) --------------------------------------------------
+
+/**
+ * Staff's Ask or Don't ask on the questions they wrote, for one player, by
+ * question id. No entry is Auto: asked unless she already answered it.
+ */
+export type CustomQuestionStates = Readonly<Record<string, 'ask' | 'skip'>>;
+
+/** How a staff question travels in the `question_states` object, beside the app's own. */
+export function customStateKey(questionId: string): `custom:${string}` {
+  return `custom:${questionId}`;
+}
+
+/** Don't ask is allowed on a staff question: optional, or required and answered. */
+export function canSkipCustomQuestion(
+  question: CustomQuestion,
+  answers: CustomAnswers = {},
+): boolean {
+  return !isCustomQuestionRequired(question) || answers[question.id] !== undefined;
+}
+
+/**
+ * The staff choices to send with the invitation, keyed `custom:<id>`: Don't
+ * ask on a question it is not allowed for falls back to Auto, as the database
+ * would refuse it, and a question no longer live is left out.
+ */
+export function allowedCustomQuestionStates(
+  states: CustomQuestionStates,
+  catalog: IntakeCatalog,
+): Readonly<Record<string, 'ask' | 'skip'>> {
+  const live = new Map(
+    catalog.screens
+      .filter((screen) => !screen.isArchived)
+      .flatMap((screen) => screen.questions.filter((question) => !question.isArchived))
+      .map((question) => [question.id, question] as const),
+  );
+  return Object.fromEntries(
+    Object.entries(states).flatMap(([id, state]) => {
+      const question = live.get(id);
+      if (question === undefined) return [];
+      if (state === 'skip' && !canSkipCustomQuestion(question)) return [];
+      return [[customStateKey(id), state]];
+    }),
+  );
+}
+
+/**
+ * Her staff screens with the staff choices applied, as her phone plans
+ * them: a question set to Don't ask is left out, and a screen with nothing
+ * left is no screen.
+ */
+export function withCustomAsking(
+  screens: readonly IntakeScreen[],
+  asking: ReadonlyMap<string, boolean>,
+): readonly IntakeScreen[] {
+  return screens
+    .map((screen) => ({
+      ...screen,
+      questions: screen.questions.filter((question) => asking.get(question.id) !== false),
+    }))
+    .filter((screen) => screen.questions.length > 0);
+}
+
+/**
+ * Whether her wizard asks each staff question with a choice (RAPP-643): true
+ * for Ask, false for Don't ask. She never reads the staff setting itself.
+ */
+export async function fetchMyCustomQuestionAsking(
+  client: Client,
+): Promise<ReadonlyMap<string, boolean>> {
+  const { data, error } = await client.rpc('my_custom_question_asking');
+  if (error) throw databaseError(error);
+  return new Map(
+    z
+      .array(z.object({ question_id: z.uuid(), is_asked: z.boolean() }))
+      .parse(data ?? [])
+      .map((row) => [row.question_id, row.is_asked] as const),
+  );
 }

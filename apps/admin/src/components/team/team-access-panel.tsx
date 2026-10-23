@@ -163,7 +163,7 @@ export function TeamAccessPanel({
       <MessageToast message={message} onClose={() => setMessage(null)} />
 
       <section className="space-y-4">
-        <header className="max-w-3xl space-y-2">
+        <header className="space-y-2">
           <h2 className="text-xl font-semibold text-foreground">{t('team.title')}</h2>
           <p className="text-sm leading-6 text-muted-foreground">{t('team.intro')}</p>
         </header>
@@ -309,7 +309,7 @@ export function TeamAccessPanel({
       </section>
 
       <section className="space-y-4">
-        <header className="flex max-w-3xl flex-wrap items-end justify-between gap-3">
+        <header className="flex flex-wrap items-end justify-between gap-3">
           <div className="space-y-2">
             <h2 className="text-xl font-semibold text-foreground">{t('team.presetsTitle')}</h2>
             <p className="text-sm leading-6 text-muted-foreground">{t('team.presetsIntro')}</p>
@@ -318,7 +318,7 @@ export function TeamAccessPanel({
             {t('team.newPreset')}
           </Button>
         </header>
-        <ul className="grid max-w-3xl gap-3">
+        <ul className="grid gap-3 xl:grid-cols-2">
           {presets.map((preset) => {
             const users = membersUsingPreset(preset.id, access).length;
             return (

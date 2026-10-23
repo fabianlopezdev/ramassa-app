@@ -14,12 +14,15 @@ export function PreviewAsPlayer({
   isVisibleToPlayers = true,
   variant = 'outline',
   className,
+  buttonClassName,
 }: {
   /** The item's player screen, such as `/announcement/<id>`, or none for the app. */
   readonly target: string | null;
   readonly isVisibleToPlayers?: boolean;
   readonly variant?: 'outline' | 'ghost';
   readonly className?: string;
+  /** Extra classes for the button itself, such as the navy sidebar's colours. */
+  readonly buttonClassName?: string;
 }) {
   const { t } = useTranslation('common');
   const [isOpening, setIsOpening] = useState(false);
@@ -37,6 +40,7 @@ export function PreviewAsPlayer({
       <Button
         type="button"
         variant={variant}
+        className={buttonClassName}
         data-testid={target === null ? 'admin-preview-app' : 'admin-preview-as-player'}
         disabled={isOpening}
         onClick={() => {

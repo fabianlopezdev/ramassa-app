@@ -14,6 +14,7 @@
  * record with erasure in mind.
  */
 
+import { Page } from '@/components/layout/page';
 import { Button } from '@/components/ui/button';
 import {
   Table,
@@ -36,7 +37,7 @@ export function DeletionRequestsTable({ requests }: DeletionRequestsTableProps) 
   const locale = i18n.resolvedLanguage ?? 'ca';
 
   return (
-    <section className="flex flex-col gap-4 p-6">
+    <Page className="gap-4">
       <header className="flex flex-col gap-1">
         <h1 className="text-start text-2xl font-semibold">{t('deletionRequestsTitle')}</h1>
         <p className="text-start text-sm text-muted-foreground">{t('deletionRequestsHint')}</p>
@@ -89,6 +90,6 @@ export function DeletionRequestsTable({ requests }: DeletionRequestsTableProps) 
           </TableBody>
         </Table>
       )}
-    </section>
+    </Page>
   );
 }

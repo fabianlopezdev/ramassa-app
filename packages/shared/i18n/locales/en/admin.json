@@ -84,5 +84,85 @@
   "auditLoadMore": "Show more",
   "exportPeriod": "Period (optional)",
   "exportCustomAnswers": "Answers to the additional questions",
-  "exportConsents": "Season consents, with the words of each"
+  "exportConsents": "Season consents, with the words of each",
+  "entityPortalSubtitle": "Entity portal",
+  "userMenu": {
+    "label": "Account menu for {{name}}",
+    "profilePhoto": "Profile photo",
+    "account": "My account"
+  },
+  "profilePhoto": {
+    "description": "Your photo replaces your initials in the Control Center.",
+    "choose": "Choose a photo",
+    "replace": "Change photo",
+    "remove": "Remove photo",
+    "working": "Saving…",
+    "saved": "Photo saved.",
+    "removed": "Photo removed.",
+    "failed": "The photo could not be saved. Please try again.",
+    "wrongType": "Choose a JPG, PNG or WebP image."
+  },
+  "account": {
+    "title": "My account",
+    "save": "Save",
+    "saving": "Saving…",
+    "cancel": "Cancel",
+    "name": {
+      "label": "Name",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "saved": "Name saved.",
+      "failed": "The name could not be saved. Please try again.",
+      "required": "Enter your first and last name."
+    },
+    "email": {
+      "title": "Email",
+      "new": "New email",
+      "submit": "Send link",
+      "sending": "Sending…",
+      "pendingTitle": "Waiting for confirmation",
+      "pendingBody": "Open the link we sent to {{email}}. If {{current}} also gets one, open both. Until then you sign in with {{current}}.",
+      "invalid": "Enter a valid email.",
+      "same": "This is already your email.",
+      "taken": "This email already has an account.",
+      "rateLimited": "Too many attempts. Wait a few minutes and try again.",
+      "failed": "The change could not be requested. Please try again.",
+      "change": "Change",
+      "dialogTitle": "Change email",
+      "dialogBody": "We will send a link to confirm it.",
+      "description": "Your sign-in code arrives here."
+    },
+    "photo": {
+      "description": "Players see it next to your messages, posts and articles."
+    }
+  },
+  "bell": {
+    "title": "Notifications",
+    "description": "Your latest notifications.",
+    "openUnread": "Notifications, {{count}} unread",
+    "close": "Close",
+    "loading": "Loading…",
+    "loadFailed": "The notifications could not be loaded.",
+    "empty": "You have no notifications.",
+    "selectAll": "Select all",
+    "deleteSelected": "Delete ({{count}})",
+    "select": "Select: {{text}}",
+    "deleteOne": "Delete: {{text}}",
+    "unread": "Unread",
+    "deleted_one": "Notification deleted.",
+    "deleted_other": "{{count}} notifications deleted.",
+    "deleteFailed": "They could not be deleted. Please try again.",
+    "someone": "Someone",
+    "events": {
+      "message_one": "New message from {{name}}",
+      "message_other": "{{count}} new messages from {{name}}",
+      "referral": "New referral from {{name}}",
+      "walk_in": "New signature from {{name}}",
+      "deletion_request": "{{name}} asks to delete her data",
+      "mentoring_request": "{{name}} asks for mentoring",
+      "feedback": "New feedback from {{name}}",
+      "forum_report": "Forum content reported",
+      "gallery_report": "Gallery photo reported"
+    }
+  }
 }

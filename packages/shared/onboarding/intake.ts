@@ -170,6 +170,17 @@ export interface CustomWizardScreen {
   readonly id: string;
   readonly afterScreen: QuestionScreen;
   readonly isAnswered: boolean;
+  /**
+   * Set when the screen holds the questions staff added to an app screen
+   * (RAPP-642): they show on that screen, so it is never a step of its own,
+   * and while one is unanswered that app screen shows.
+   */
+  readonly builtinScreen?: WizardQuestionScreen | null;
+}
+
+/** A staff screen of its own, a step of the wizard. */
+function isOwnStep(screen: CustomWizardScreen): boolean {
+  return screen.builtinScreen == null;
 }
 
 /** A wizard step: a built-in screen, or a staff screen as `custom:<id>`. */
@@ -218,7 +229,7 @@ function defaultFlowOrder(custom: readonly CustomWizardScreen[]): WizardStepKey[
     ...(screen === 'logistics' ? ['equipment' as const] : []),
     ...(screen === 'season' ? SEASON_WIZARD_SCREENS.slice(1) : []),
     ...custom
-      .filter((customScreen) => customScreen.afterScreen === screen)
+      .filter((customScreen) => isOwnStep(customScreen) && customScreen.afterScreen === screen)
       .map((customScreen) => customStepKey(customScreen.id)),
   ]);
 }
@@ -259,7 +270,13 @@ function visibleScreens(
   custom: readonly CustomWizardScreen[],
   flow: WizardFlow,
 ): WizardStepKey[] {
-  const asked = new Set<WizardStepKey>(screensToAsk(answered));
+  const asked = new Set<WizardStepKey>([
+    ...screensToAsk(answered),
+    // An app screen with an added question she has not answered (RAPP-642).
+    ...custom.flatMap((screen) =>
+      screen.builtinScreen == null || screen.isAnswered ? [] : [screen.builtinScreen],
+    ),
+  ]);
   const answeredCustom = new Set(
     custom.filter((screen) => screen.isAnswered).map((screen) => customStepKey(screen.id)),
   );

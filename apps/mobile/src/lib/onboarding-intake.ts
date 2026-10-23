@@ -92,15 +92,24 @@ export function wizardDraftStep(step: WizardStepKey | OnboardingDraftStep): Onbo
   return isCustomStep(step) ? step : WIZARD_SCREEN_DRAFT_STEP[step as WizardScreen];
 }
 
-/** The staff screens in the shape the wizard planner takes (RAPP-307). */
+/**
+ * The staff screens in the shape the wizard planner takes (RAPP-307). The
+ * questions staff added to an app screen (RAPP-642) keep that screen showing
+ * while one is unanswered, and are never a step of their own.
+ */
 export function customWizardPlan(
   screens: readonly IntakeScreen[],
   stored: CustomAnswers,
+  // The staff questions set to Ask for her (RAPP-643): asked even when answered.
+  asked: ReadonlySet<string> = new Set(),
 ): CustomWizardScreen[] {
   return screens.map((screen) => ({
     id: screen.id,
     afterScreen: screen.afterScreen,
-    isAnswered: isScreenAnswered(screen, stored),
+    isAnswered:
+      isScreenAnswered(screen, stored) &&
+      !screen.questions.some((question) => asked.has(question.id)),
+    builtinScreen: screen.builtinScreen ?? null,
   }));
 }
 

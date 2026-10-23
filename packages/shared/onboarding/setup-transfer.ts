@@ -74,6 +74,8 @@ const screenSchema = z.strictObject({
   home_after_screen: z.string().min(1),
   home_sort_order: position,
   is_archived: z.boolean(),
+  // The app screen whose added questions it holds (RAPP-642); absent in an older file.
+  builtin_screen: z.string().min(1).nullable().optional(),
   questions: z.array(questionSchema),
 });
 

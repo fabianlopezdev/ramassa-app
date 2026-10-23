@@ -1,4 +1,5 @@
 import { DetailSection } from '@/components/detail/detail-section';
+import { Page } from '@/components/layout/page';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Link } from '@tanstack/react-router';
@@ -81,7 +82,7 @@ export function AttendanceOccurrenceReport({
   );
 
   return (
-    <section className="flex flex-col gap-6 p-4 md:p-6">
+    <Page>
       <Button asChild variant="ghost" className="w-fit">
         <Link to="/attendance">{t('reportBack')}</Link>
       </Button>
@@ -100,7 +101,7 @@ export function AttendanceOccurrenceReport({
       {rows.length === 0 ? (
         <div className="flex min-h-48 flex-col items-center justify-center gap-2 rounded-lg border p-6 text-center">
           <h2 className="text-lg font-semibold">{t('reportEmptyTitle')}</h2>
-          <p className="max-w-prose text-sm text-muted-foreground">{t('reportEmptyBody')}</p>
+          <p className="text-sm text-muted-foreground">{t('reportEmptyBody')}</p>
         </div>
       ) : (
         <>
@@ -131,7 +132,7 @@ export function AttendanceOccurrenceReport({
           </div>
         </>
       )}
-    </section>
+    </Page>
   );
 }
 

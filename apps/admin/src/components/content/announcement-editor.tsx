@@ -1,3 +1,4 @@
+import { pageClassName } from '@/components/layout/page';
 import { Button } from '@/components/ui/button';
 import { mediaWorkerUrl } from '@/lib/media-worker';
 import { safeAsync } from '@/lib/observability';
@@ -242,7 +243,7 @@ export function AnnouncementEditor({ announcement, onSaved }: AnnouncementEditor
     title.trim().length > 0 && body.trim().length > 0 && (!hasImage || imageAlt.trim().length > 0);
 
   return (
-    <form className="flex flex-col gap-6 p-6" onSubmit={submit} data-testid="announcement-editor">
+    <form className={pageClassName()} onSubmit={submit} data-testid="announcement-editor">
       <header className="flex flex-col gap-1">
         <h1 className="text-2xl font-semibold">
           {announcement === undefined ? t('announcements:newAction') : t('announcements:editTitle')}

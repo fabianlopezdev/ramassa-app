@@ -138,6 +138,9 @@ export function firstIncompleteStep(
     }
     if (!isQuestionScreen(step) || context.flow.hiddenScreens.has(step)) continue;
     if (!isScreenComplete(step, draft, required)) return step;
+    // The questions staff added to this screen (RAPP-642).
+    const holder = context.customScreens?.find((candidate) => candidate.builtinScreen === step);
+    if (holder !== undefined && !isCustomScreenComplete(holder, answers)) return step;
   }
   return null;
 }

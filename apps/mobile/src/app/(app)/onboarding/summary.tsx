@@ -98,6 +98,42 @@ function EditButton({
   );
 }
 
+/** Her answers to staff questions, one row each (RAPP-307). */
+function CustomRows({
+  screen,
+  answers,
+  language,
+}: {
+  readonly screen: IntakeScreen;
+  readonly answers: CustomAnswers;
+  readonly language: LanguageCode;
+}) {
+  const { t } = useTranslation('onboarding');
+  const words = {
+    yes: t('yesOption'),
+    no: t('noOption'),
+    maybe: t('customMaybeOption'),
+    archived: t('customArchivedOption'),
+    signed: t('customSigned'),
+  };
+  return screen.questions
+    .filter((question) => isCustomQuestionVisible(question, answers))
+    .map((question) => {
+      const value = answers[question.id];
+      return (
+        <ReviewRow
+          key={question.id}
+          label={textIn(question.label, language)}
+          value={
+            value === undefined || isEmptyAnswer(value)
+              ? t('summaryNotGiven')
+              : answerText(question, value, language, words)
+          }
+        />
+      );
+    });
+}
+
 /** A staff screen with her answers (RAPP-307). */
 function CustomSection({
   screen,
@@ -108,15 +144,7 @@ function CustomSection({
   readonly answers: CustomAnswers;
   readonly language: LanguageCode;
 }) {
-  const { t } = useTranslation('onboarding');
   const router = useRouter();
-  const words = {
-    yes: t('yesOption'),
-    no: t('noOption'),
-    maybe: t('customMaybeOption'),
-    archived: t('customArchivedOption'),
-    signed: t('customSigned'),
-  };
   const title = textIn(screen.title, language);
   return (
     <ReviewSection
@@ -131,22 +159,7 @@ function CustomSection({
         />
       }
     >
-      {screen.questions
-        .filter((question) => isCustomQuestionVisible(question, answers))
-        .map((question) => {
-          const value = answers[question.id];
-          return (
-            <ReviewRow
-              key={question.id}
-              label={textIn(question.label, language)}
-              value={
-                value === undefined || isEmptyAnswer(value)
-                  ? t('summaryNotGiven')
-                  : answerText(question, value, language, words)
-              }
-            />
-          );
-        })}
+      <CustomRows screen={screen} answers={answers} language={language} />
     </ReviewSection>
   );
 }
@@ -211,9 +224,18 @@ export default function SummaryStepScreen() {
   const show = (value: string | null) => value ?? notGiven;
   const answers = mergedCustomAnswers(customAnswers, draft?.custom);
   const shows = (question: IntakeQuestion) => !hidden.has(question);
+  // The questions staff added to a built-in screen (RAPP-642), under its own rows.
+  const holderOf = (screen: WizardQuestionScreen) =>
+    customScreens.find((candidate) => candidate.builtinScreen === screen);
+  const added = (screen: WizardQuestionScreen): ReactNode => {
+    const holder = holderOf(screen);
+    return holder === undefined ? null : (
+      <CustomRows screen={holder} answers={answers} language={locale} />
+    );
+  };
   // A built-in screen whose every question staff removed has nothing to correct.
   const hasQuestions = (screen: WizardQuestionScreen) =>
-    WIZARD_SCREEN_QUESTIONS[screen].some(shows);
+    WIZARD_SCREEN_QUESTIONS[screen].some(shows) || holderOf(screen) !== undefined;
 
   const edit = (screen: WizardQuestionScreen) =>
     router.push(`${String(WIZARD_SCREEN_ROUTES[screen])}?edit=1` as Href);
@@ -262,6 +284,7 @@ export default function SummaryStepScreen() {
             specific_needs: text(season.specificNeeds),
           }}
         />
+        {added(screen)}
       </ReviewSection>
     ) : null;
   const sections: Readonly<Partial<Record<WizardQuestionScreen, ReactNode>>> = {
@@ -286,6 +309,7 @@ export default function SummaryStepScreen() {
           label={wording.label('last_name', t('lastNameLabel'))}
           value={show(text(identity.lastName))}
         />
+        {added('identity')}
       </ReviewSection>
     ),
     background: (
@@ -336,6 +360,7 @@ export default function SummaryStepScreen() {
                 )[0]?.label ?? language),
           )}
         />
+        {added('background')}
       </ReviewSection>
     ),
     documentation: hasQuestions('documentation') ? (
@@ -379,6 +404,7 @@ export default function SummaryStepScreen() {
             value={show(text(documentation.documentNumber))}
           />
         )}
+        {added('documentation')}
       </ReviewSection>
     ) : null,
     logistics: (
@@ -447,6 +473,7 @@ export default function SummaryStepScreen() {
                 : t('noOption')
           }
         />
+        {added('logistics')}
       </ReviewSection>
     ),
     equipment: hasQuestions('equipment') ? (
@@ -474,6 +501,7 @@ export default function SummaryStepScreen() {
             value={show(text(logistics.shoeSize))}
           />
         ) : null}
+        {added('equipment')}
       </ReviewSection>
     ) : null,
     ...Object.fromEntries(SEASON_WIZARD_SCREENS.map((screen) => [screen, seasonSection(screen)])),

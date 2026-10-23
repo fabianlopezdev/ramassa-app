@@ -1,4 +1,5 @@
 import { DataTable } from '@/components/data-table/data-table';
+import { Page } from '@/components/layout/page';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Link, useNavigate } from '@tanstack/react-router';
@@ -116,7 +117,7 @@ export function AttendanceOverview({
   );
 
   return (
-    <section className="flex flex-col gap-6 p-4 md:p-6">
+    <Page>
       <header className="flex flex-col gap-1">
         <h1 className="text-2xl font-semibold">{t('overviewTitle')}</h1>
         <p className="text-sm text-muted-foreground">
@@ -124,7 +125,7 @@ export function AttendanceOverview({
         </p>
       </header>
 
-      <div className="grid max-w-3xl gap-4 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <label className="flex flex-col gap-2">
           <span className="text-sm font-medium">{t('searchLabel')}</span>
           <Input
@@ -162,11 +163,11 @@ export function AttendanceOverview({
           empty={
             <div className="flex min-h-48 flex-col items-center justify-center gap-2 p-6 text-center">
               <h2 className="text-lg font-semibold">{t('emptyTitle')}</h2>
-              <p className="max-w-prose text-sm text-muted-foreground">{t('emptyBody')}</p>
+              <p className="text-sm text-muted-foreground">{t('emptyBody')}</p>
             </div>
           }
         />
       </div>
-    </section>
+    </Page>
   );
 }

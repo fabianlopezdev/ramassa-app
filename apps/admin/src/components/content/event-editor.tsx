@@ -1,3 +1,4 @@
+import { pageClassName } from '@/components/layout/page';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { safeAsync } from '@/lib/observability';
@@ -204,7 +205,7 @@ export function EventEditor({ categories, event, onSaved }: EventEditorProps) {
   };
 
   return (
-    <form className="flex flex-col gap-6 p-6" onSubmit={submit} data-testid="event-editor">
+    <form className={pageClassName()} onSubmit={submit} data-testid="event-editor">
       <h1 className="text-2xl font-semibold">
         {event === undefined ? t('events:newAction') : t('events:editTitle')}
       </h1>

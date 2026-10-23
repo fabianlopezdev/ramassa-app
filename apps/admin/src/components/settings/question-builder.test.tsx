@@ -90,6 +90,12 @@ function submit(view: ReturnType<typeof render>, testId: string) {
   fireEvent.submit(form);
 }
 
+/** Picks a type in the picker's grid (RAPP-646). */
+function pickType(view: ReturnType<typeof render>, type: string) {
+  fireEvent.click(view.getByTestId('question-type-change'));
+  fireEvent.click(view.getByTestId(`question-type-option-${type}`));
+}
+
 test('a new screen is saved with its Catalan title and its step', async () => {
   const onSaveScreen = mock(async () => undefined);
   const { view } = builder({ onSaveScreen });
@@ -112,8 +118,7 @@ test('a new choice question needs two options before it is sent', async () => {
   const onSaveQuestion = mock(async () => undefined);
   const { view } = builder({ onSaveQuestion });
   fireEvent.click(view.getByRole('button', { name: /questions\.addQuestion|Add a question/ }));
-  const type = view.container.querySelector<HTMLSelectElement>('[name="question-type"]')!;
-  fireEvent.change(type, { target: { value: 'multiple_choice' } });
+  pickType(view, 'multiple_choice');
   input(view, 'question-label.ca').value = 'Qui viu amb tu?';
   input(view, 'option-new-0.ca').value = 'Fills';
   submit(view, 'question-form');
@@ -136,12 +141,8 @@ test('an existing question locks its type and privacy; a removed option is left 
   const { view } = builder({ onSaveQuestion });
   const row = view.getByTestId(`builder-question-${QUESTION}`);
   fireEvent.click(within(row).getByRole('button', { name: /^(questions\.edit|Edit)$/ }));
-  expect(view.container.querySelector<HTMLSelectElement>('[name="question-type"]')!.disabled).toBe(
-    true,
-  );
-  expect(
-    view.container.querySelector<HTMLSelectElement>('[name="question-privacy"]')!.disabled,
-  ).toBe(true);
+  expect(view.queryByTestId('question-type-change')).toBeNull();
+  expect(view.queryByTestId('question-privacy-change')).toBeNull();
   input(view, 'option-remove-5eed0000-0000-4000-8046-000000000001').checked = true;
   fireEvent.click(view.getByRole('button', { name: /questions\.addOption|Add an option/ }));
   input(view, 'option-new-0.ca').value = 'Una amiga';
@@ -193,8 +194,7 @@ test('a built-in option is relabelled or hidden, but one stays visible', async (
 
 function newQuestionOfType(view: ReturnType<typeof render>, type: string) {
   fireEvent.click(view.getByRole('button', { name: /questions\.addQuestion|Add a question/ }));
-  const select = view.container.querySelector<HTMLSelectElement>('[name="question-type"]')!;
-  fireEvent.change(select, { target: { value: type } });
+  pickType(view, type);
 }
 
 test('each type says in a line what it asks', () => {

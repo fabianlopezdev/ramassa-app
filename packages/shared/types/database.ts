@@ -1007,6 +1007,55 @@ export type Database = {
           },
         ];
       };
+      custom_question_states: {
+        Row: {
+          org_id: string;
+          profile_id: string;
+          question_id: string;
+          state: string;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          org_id: string;
+          profile_id: string;
+          question_id: string;
+          state: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          org_id?: string;
+          profile_id?: string;
+          question_id?: string;
+          state?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'custom_question_states_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'custom_question_states_profile_id_fkey';
+            columns: ['profile_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'custom_question_states_question_id_fkey';
+            columns: ['question_id'];
+            isOneToOne: false;
+            referencedRelation: 'custom_questions';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       custom_questions: {
         Row: {
           created_at: string;
@@ -2231,6 +2280,7 @@ export type Database = {
       intake_screens: {
         Row: {
           after_screen: string;
+          builtin_screen: string | null;
           created_at: string;
           home_after_screen: string;
           home_sort_order: number;
@@ -2244,6 +2294,7 @@ export type Database = {
         };
         Insert: {
           after_screen: string;
+          builtin_screen?: string | null;
           created_at?: string;
           home_after_screen: string;
           home_sort_order: number;
@@ -2257,6 +2308,7 @@ export type Database = {
         };
         Update: {
           after_screen?: string;
+          builtin_screen?: string | null;
           created_at?: string;
           home_after_screen?: string;
           home_sort_order?: number;
@@ -4282,6 +4334,45 @@ export type Database = {
           },
         ];
       };
+      staff_notifications: {
+        Row: {
+          created_at: string;
+          deleted_at: string | null;
+          event: string;
+          id: string;
+          org_id: string;
+          params: Json;
+          path: string;
+          read_at: string | null;
+          recipient_id: string;
+          source_id: string | null;
+        };
+        Insert: {
+          created_at?: string;
+          deleted_at?: string | null;
+          event: string;
+          id?: string;
+          org_id: string;
+          params?: Json;
+          path: string;
+          read_at?: string | null;
+          recipient_id: string;
+          source_id?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          deleted_at?: string | null;
+          event?: string;
+          id?: string;
+          org_id?: string;
+          params?: Json;
+          path?: string;
+          read_at?: string | null;
+          recipient_id?: string;
+          source_id?: string | null;
+        };
+        Relationships: [];
+      };
       staff_invitations: {
         Row: {
           accepted_at: string | null;
@@ -5253,6 +5344,10 @@ export type Database = {
         Args: { p_object_key: string };
         Returns: boolean;
       };
+      can_read_profile_photo_object: {
+        Args: { p_object_key: string };
+        Returns: boolean;
+      };
       can_read_stock_object: {
         Args: { p_object_key: string };
         Returns: boolean;
@@ -5544,6 +5639,10 @@ export type Database = {
       current_org_id: { Args: never; Returns: string };
       decrypt_field: { Args: { ciphertext: string }; Returns: string };
       default_organization_id: { Args: never; Returns: string };
+      delete_staff_notifications: {
+        Args: { p_ids: string[] };
+        Returns: number;
+      };
       delete_custom_notification_group: {
         Args: { p_id: string };
         Returns: undefined;
@@ -5579,6 +5678,10 @@ export type Database = {
       };
       encrypt_field: { Args: { plaintext: string }; Returns: string };
       encryption_key: { Args: never; Returns: string };
+      ensure_builtin_screen_holder: {
+        Args: { p_screen: string; p_title: Json };
+        Returns: string;
+      };
       export_onboarding_setup: {
         Args: { p_app_commit?: string };
         Returns: Json;
@@ -5824,6 +5927,14 @@ export type Database = {
           total_count: number;
         }[];
       };
+      get_staff_cards: {
+        Args: { p_profile_ids: string[] };
+        Returns: {
+          avatar_url: string | null;
+          first_name: string | null;
+          id: string;
+        }[];
+      };
       get_unread_message_count: {
         Args: { p_conversation_id?: string };
         Returns: number;
@@ -5922,6 +6033,22 @@ export type Database = {
         Returns: boolean;
       };
       is_team_member: { Args: never; Returns: boolean };
+      mark_staff_notification_read: {
+        Args: { p_id: string };
+        Returns: undefined;
+      };
+      list_staff_notifications: {
+        Args: { p_limit?: number };
+        Returns: {
+          created_at: string;
+          event: string;
+          id: string;
+          name: string | null;
+          params: Json;
+          path: string;
+          read_at: string | null;
+        }[];
+      };
       list_app_terms_versions: {
         Args: never;
         Returns: {
@@ -6380,6 +6507,10 @@ export type Database = {
         }[];
       };
       my_permissions: { Args: never; Returns: string[] };
+      my_custom_question_asking: {
+        Args: never;
+        Returns: { is_asked: boolean; question_id: string }[];
+      };
       my_questions_to_ask: { Args: never; Returns: string[] };
       my_second_factor_waived: { Args: never; Returns: boolean };
       my_session_is_current: { Args: never; Returns: boolean };

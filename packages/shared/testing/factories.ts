@@ -1509,6 +1509,8 @@ export function buildIntakeScreen(overrides: Partial<IntakeScreenRow> = {}): Int
     home_after_screen: overrides.after_screen ?? 'logistics',
     home_sort_order: overrides.sort_order ?? 0,
     is_archived: false,
+    // A screen of its own; a holder of an app screen's added questions names it (RAPP-642).
+    builtin_screen: null,
     created_at: FIXTURE_TIMESTAMP,
     updated_at: FIXTURE_TIMESTAMP,
     ...overrides,

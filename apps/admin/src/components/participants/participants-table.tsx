@@ -15,6 +15,7 @@
 
 import { DataTable } from '@/components/data-table/data-table';
 import { DataTablePager } from '@/components/data-table/data-table-pager';
+import { Page } from '@/components/layout/page';
 import { ParticipantsFilters } from '@/components/participants/participants-filters';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -73,9 +74,7 @@ export function ParticipantsTable({ page, filterOptions, search }: ParticipantsT
               {`${row.original.first_name} ${row.original.last_name}`}
             </Link>
             {/* A made-up player for designing the onboarding (RAPP-615). */}
-            {row.original.is_test_account ? (
-              <Badge variant="outline">{t('testBadge')}</Badge>
-            ) : null}
+            {row.original.is_test_account ? <Badge variant="muted">{t('testBadge')}</Badge> : null}
           </span>
         ),
       },
@@ -146,7 +145,7 @@ export function ParticipantsTable({ page, filterOptions, search }: ParticipantsT
   const testPlayersOnly = isLimitedToTestPlayers(permissions);
 
   return (
-    <section className="flex flex-col gap-4 p-6">
+    <Page className="gap-4">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl font-semibold">
@@ -235,6 +234,6 @@ export function ParticipantsTable({ page, filterOptions, search }: ParticipantsT
         pages={pages}
         onPageChange={(next) => void navigate({ search: (prev) => ({ ...prev, page: next }) })}
       />
-    </section>
+    </Page>
   );
 }
