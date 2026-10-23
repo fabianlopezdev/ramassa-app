@@ -1007,6 +1007,55 @@ export type Database = {
           },
         ];
       };
+      custom_question_states: {
+        Row: {
+          org_id: string;
+          profile_id: string;
+          question_id: string;
+          state: string;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          org_id: string;
+          profile_id: string;
+          question_id: string;
+          state: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          org_id?: string;
+          profile_id?: string;
+          question_id?: string;
+          state?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'custom_question_states_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'custom_question_states_profile_id_fkey';
+            columns: ['profile_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'custom_question_states_question_id_fkey';
+            columns: ['question_id'];
+            isOneToOne: false;
+            referencedRelation: 'custom_questions';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       custom_questions: {
         Row: {
           created_at: string;
@@ -6458,6 +6507,10 @@ export type Database = {
         }[];
       };
       my_permissions: { Args: never; Returns: string[] };
+      my_custom_question_asking: {
+        Args: never;
+        Returns: { is_asked: boolean; question_id: string }[];
+      };
       my_questions_to_ask: { Args: never; Returns: string[] };
       my_second_factor_waived: { Args: never; Returns: boolean };
       my_session_is_current: { Args: never; Returns: boolean };
