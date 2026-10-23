@@ -752,6 +752,5 @@
       "dropped": "Has soltado {{screen}} en la posición {{position}}.",
       "cancelled": "Movimiento cancelado. {{screen}} vuelve a su sitio."
     },
-    "addedQuestions": "Preguntas añadidas"
   }
 }

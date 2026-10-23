@@ -578,13 +578,15 @@ function useQuestionOrder(screenId: string | null, questions: readonly CustomQue
 }
 
 /**
- * Questions staff write (RAPP-307), on a Ramassà screen or added to an app
- * screen (RAPP-642): Add question with every type, edit, required, drag into
- * place, and delete behind a confirm.
+ * A screen's questions in one list (RAPP-642): an app screen's own questions
+ * first, then the ones staff write (RAPP-307), and Add question under them.
+ * Staff questions take every type, edit, required, drag into place, and
+ * delete behind a confirm.
  */
 function StaffQuestionsSection({
   title,
   testId,
+  leading,
   screenId,
   questions,
   language,
@@ -597,6 +599,8 @@ function StaffQuestionsSection({
 }: {
   readonly title: string;
   readonly testId: string;
+  /** An app screen's own question rows, listed before the staff questions. */
+  readonly leading?: ReactNode;
   /** The screen that holds them; null for an app screen with none added yet. */
   readonly screenId: string | null;
   readonly questions: readonly CustomQuestion[];
@@ -610,34 +614,18 @@ function StaffQuestionsSection({
 }) {
   const { t } = useTranslation('settings');
   return (
-    <EditorSection
-      title={title}
-      testId={testId}
-      actions={
-        editing === NEW_QUESTION ? null : (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => onEdit(NEW_QUESTION)}
-            data-testid={`${testId}-add`}
-          >
-            <Plus aria-hidden data-icon="inline-start" />
-            {t('questions.addQuestion')}
-          </Button>
-        )
-      }
-    >
+    <EditorSection title={title} testId={testId}>
       <div className="flex flex-col gap-4">
-        {questions.length === 0 && editing !== NEW_QUESTION ? (
+        {questions.length === 0 && leading === undefined && editing !== NEW_QUESTION ? (
           <p className="text-start text-sm text-muted-foreground">
             {t('onboardingBoard.noQuestions')}
           </p>
         ) : null}
-        {questions.length === 0 || screenId === null ? null : (
+        {questions.length === 0 && leading === undefined ? null : (
           <CustomQuestionList
-            screenId={screenId}
-            questions={questions}
+            screenId={screenId ?? ''}
+            leading={leading}
+            questions={screenId === null ? [] : questions}
             language={language}
             editing={editing}
             onReorder={onReorder}
@@ -657,7 +645,19 @@ function StaffQuestionsSection({
             onSave={onSaveNew}
             onCancel={onClose}
           />
-        ) : null}
+        ) : (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="self-start"
+            onClick={() => onEdit(NEW_QUESTION)}
+            data-testid={`${testId}-add`}
+          >
+            <Plus aria-hidden data-icon="inline-start" />
+            {t('questions.addQuestion')}
+          </Button>
+        )}
       </div>
     </EditorSection>
   );
@@ -665,6 +665,7 @@ function StaffQuestionsSection({
 
 function CustomQuestionList({
   screenId,
+  leading,
   questions,
   language,
   editing,
@@ -674,6 +675,7 @@ function CustomQuestionList({
   onPreviewChange,
 }: {
   readonly screenId: string;
+  readonly leading?: ReactNode;
   readonly questions: readonly CustomQuestion[];
   readonly language: LanguageCode;
   readonly editing: string | null;
@@ -731,6 +733,7 @@ function CustomQuestionList({
     >
       <SortableContext items={ids} strategy={verticalListSortingStrategy}>
         <ol className="flex flex-col divide-y rounded-lg border" data-testid="question-list">
+          {leading}
           {questions.map((question) => (
             <CustomQuestionRow
               key={question.id}
@@ -1073,6 +1076,30 @@ function AppScreenEditor({
     </div>
   );
 
+  const builtinRows =
+    questions.length === 0
+      ? undefined
+      : questions.map((question) => (
+          <BuiltinQuestionRow
+            key={question}
+            catalog={catalog}
+            question={question}
+            language={language}
+            isHidden={hiddenQuestions.has(question)}
+            isEditing={editing === question}
+            onEdit={() => {
+              setEditingLabel(undefined);
+              setEditing(question);
+              setShownScreen('main');
+            }}
+            onClose={() => {
+              setEditing(null);
+              setEditingLabel(undefined);
+            }}
+            onLabelChange={setEditingLabel}
+          />
+        ));
+
   return (
     <div className="flex flex-col gap-8">
       <EditorColumns
@@ -1107,36 +1134,11 @@ function AppScreenEditor({
                 }}
               />
             )}
-            {questions.length === 0 ? null : (
-              <EditorSection title={t('tabQuestions')} testId="builtin-questions">
-                <ol className="flex flex-col divide-y rounded-lg border">
-                  {questions.map((question) => (
-                    <BuiltinQuestionRow
-                      key={question}
-                      catalog={catalog}
-                      question={question}
-                      language={language}
-                      isHidden={hiddenQuestions.has(question)}
-                      isEditing={editing === question}
-                      onEdit={() => {
-                        setEditingLabel(undefined);
-                        setEditing(question);
-                        setShownScreen('main');
-                      }}
-                      onClose={() => {
-                        setEditing(null);
-                        setEditingLabel(undefined);
-                      }}
-                      onLabelChange={setEditingLabel}
-                    />
-                  ))}
-                </ol>
-              </EditorSection>
-            )}
             {step.kind === 'builtin' ? (
               <StaffQuestionsSection
-                title={t('onboardingBoard.addedQuestions')}
-                testId="added-questions"
+                title={t('tabQuestions')}
+                testId="screen-questions"
+                leading={builtinRows}
                 screenId={holder?.id ?? null}
                 questions={added}
                 language={language}
@@ -1157,7 +1159,11 @@ function AppScreenEditor({
                   await reload();
                 }}
               />
-            ) : null}
+            ) : questions.length === 0 ? null : (
+              <EditorSection title={t('tabQuestions')} testId="builtin-questions">
+                <ol className="flex flex-col divide-y rounded-lg border">{builtinRows}</ol>
+              </EditorSection>
+            )}
             {step.key === 'documentation' ? (
               <OnboardingDocumentSection explanation={data.documentExplanation} />
             ) : null}
