@@ -200,7 +200,8 @@ export async function fetchParticipantQuestionStates(
 export async function saveParticipantQuestionStates(
   client: Client,
   profileId: string,
-  changes: Partial<Record<IntakeQuestion, IntakeQuestionState>>,
+  // A Ramassà question travels as `custom:<id>` (RAPP-645).
+  changes: Readonly<Record<string, IntakeQuestionState>>,
 ): Promise<void> {
   const { error } = await client.rpc('set_intake_question_states', {
     p_profile_id: profileId,
