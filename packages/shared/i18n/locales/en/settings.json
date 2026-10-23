@@ -751,6 +751,6 @@
       "outside": "{{screen}} is outside the list.",
       "dropped": "Dropped {{screen}} at position {{position}}.",
       "cancelled": "Move cancelled. {{screen}} is back in its place."
-    },
+    }
   }
 }

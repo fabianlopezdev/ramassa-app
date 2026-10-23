@@ -751,6 +751,6 @@
       "outside": "{{screen}} és fora de la llista.",
       "dropped": "Has deixat {{screen}} a la posició {{position}}.",
       "cancelled": "Moviment cancel·lat. {{screen}} torna al seu lloc."
-    },
+    }
   }
 }
