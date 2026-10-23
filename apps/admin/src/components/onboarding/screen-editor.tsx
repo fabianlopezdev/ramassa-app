@@ -732,7 +732,10 @@ function CustomQuestionList({
       }}
     >
       <SortableContext items={ids} strategy={verticalListSortingStrategy}>
-        <ol className="flex flex-col divide-y rounded-lg border" data-testid="question-list">
+        <ol
+          className="group/list flex flex-col divide-y rounded-lg border"
+          data-testid="question-list"
+        >
           {leading}
           {questions.map((question) => (
             <CustomQuestionRow
@@ -812,6 +815,7 @@ function CustomQuestionRow({
           size="icon-sm"
           className="cursor-grab touch-none text-muted-foreground active:cursor-grabbing"
           aria-label={t('onboardingBoard.dragHandle', { screen: label })}
+          data-question-handle=""
           {...attributes}
           {...listeners}
         >
@@ -1370,6 +1374,11 @@ function BuiltinQuestionRow({
   return (
     <li className="flex flex-col gap-3 p-3" data-testid={`builtin-row-${question}`}>
       <div className="flex items-center gap-3">
+        {/* Keeps every name in the list on one line when staff rows carry a grip. */}
+        <span
+          aria-hidden
+          className="hidden size-7 shrink-0 group-has-[[data-question-handle]]/list:block"
+        />
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
           <p className="truncate text-start text-sm font-medium">{reworded || appLabel}</p>
           <p className="truncate text-start text-xs text-muted-foreground">
