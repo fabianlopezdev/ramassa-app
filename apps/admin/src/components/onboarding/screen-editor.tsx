@@ -641,6 +641,7 @@ function StaffQuestionsSection({
             question={null}
             canStoreFiles={uploadsAvailable(mediaWorkerUrl)}
             withPreview={false}
+            withPlacements={false}
             onPreviewChange={onPreviewChange}
             onSave={onSaveNew}
             onCancel={onClose}
@@ -868,6 +869,7 @@ function CustomQuestionRow({
           question={question}
           canStoreFiles={uploadsAvailable(mediaWorkerUrl)}
           withPreview={false}
+          withPlacements={false}
           onPreviewChange={onPreviewChange}
           onSave={async (next) => {
             await saveCustomQuestion(supabase, next);

@@ -324,12 +324,19 @@ export function QuestionForm({
   canStoreFiles,
   withPreview = true,
   onPreviewChange,
+  withPlacements = true,
 }: {
   readonly screenId: string;
   readonly question: CustomQuestion | null;
   readonly canStoreFiles: boolean;
   readonly onSave: (draft: QuestionDraft) => Promise<void>;
   readonly onCancel: () => void;
+  /**
+   * False on the Onboarding page (RAPP-643), the template of her
+   * registration: a new question shows there only, and an existing one keeps
+   * every place it already has. Settings keeps the choice.
+   */
+  readonly withPlacements?: boolean;
   /** False where the page draws its own phone (the screen editor, RAPP-641). */
   readonly withPreview?: boolean;
   /** Each change as her phone would show it, for that page's phone. */
@@ -395,9 +402,11 @@ export function QuestionForm({
         return Object.keys(help).length === 0 ? null : help;
       })(),
       privacy: (question?.privacy ?? fields.get('question-privacy')) as QuestionPrivacy,
-      placements: QUESTION_PLACEMENTS.filter(
-        (placement) => fields.get(`question-placement-${placement}`) === 'on',
-      ),
+      placements: withPlacements
+        ? QUESTION_PLACEMENTS.filter(
+            (placement) => fields.get(`question-placement-${placement}`) === 'on',
+          )
+        : (question?.placements ?? ['wizard']),
       settings: readQuestionSettings(fields, type),
       options,
     };
@@ -483,7 +492,7 @@ export function QuestionForm({
           </label>
         </div>
         {isNew ? <TypeGuide /> : null}
-        <fieldset className="flex flex-col gap-2 rounded-lg border p-3">
+        <fieldset className="flex flex-col gap-2 rounded-lg border p-3" hidden={!withPlacements}>
           <legend className="px-1 text-start text-sm font-medium">
             {t('questions.placements')}
           </legend>
