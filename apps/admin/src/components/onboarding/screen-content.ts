@@ -21,6 +21,7 @@ import {
   type ScreenTextField,
 } from '@ramassa/shared/intake';
 import {
+  addedQuestions,
   builtinHelp,
   builtinLabel,
   builtinOptions,
@@ -298,11 +299,15 @@ export function stepContent(
 
   return {
     ...base,
-    questions:
-      overrides.questions ??
-      builtinScreenQuestions(catalog, step.key).map((question) =>
+    questions: overrides.questions ?? [
+      ...builtinScreenQuestions(catalog, step.key).map((question) =>
         builtinPhoneQuestion(catalog, question, language, t),
       ),
+      // Then the questions staff added to it (RAPP-642).
+      ...addedQuestions(catalog, step.key)
+        .filter(isAskedOfHer)
+        .map((question) => customPhoneQuestion(question, language)),
+    ],
     lines:
       step.key === 'documentation' && (overrides.documentNote ?? '') !== ''
         ? [overrides.documentNote ?? '']

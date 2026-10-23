@@ -23,6 +23,7 @@ import {
 } from '@ramassa/shared/intake';
 import {
   isAskedOfHer,
+  isOwnScreen,
   wizardFlow,
   type IntakeCatalog,
   type IntakeScreen,
@@ -37,8 +38,9 @@ export type BoardStep =
   | { readonly kind: 'builtin'; readonly key: WizardQuestionScreen }
   | { readonly kind: 'locked'; readonly key: LockedStep };
 
+/** The live staff screens of their own; a holder of an app screen's added questions is no card (RAPP-642). */
 export function liveScreens(catalog: IntakeCatalog): readonly IntakeScreen[] {
-  return catalog.screens.filter((screen) => !screen.isArchived);
+  return catalog.screens.filter((screen) => !screen.isArchived && isOwnScreen(screen));
 }
 
 /** The movable steps in her order: the app's question screens and every live staff screen. */

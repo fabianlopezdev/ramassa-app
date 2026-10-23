@@ -81,7 +81,7 @@ import { ChevronLeft, GripVertical, Plus, Trash2 } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { getLanguageDirection } from '@ramassa/shared/i18n/languages';
+import { getLanguageDirection, SUPPORTED_LANGUAGES } from '@ramassa/shared/i18n/languages';
 import {
   BUNDLED_SCREEN_TEXT_KEYS,
   DETAIL_SCREEN_PARENTS,
@@ -102,6 +102,9 @@ import {
   canHideBuiltin,
   canHideBuiltinScreen,
   canRequireCustomQuestion,
+  ensureBuiltinScreenHolder,
+  hasRequiredAddedQuestion,
+  holderOf,
   isAskedOfHer,
   isCustomQuestionRequired,
   overrideFor,
@@ -120,6 +123,7 @@ import {
   type CustomQuestion,
   type IntakeCatalog,
   type IntakeScreen,
+  type QuestionDraft,
 } from '@ramassa/shared/intake-builder';
 import type { LanguageCode } from '@ramassa/shared/schemas';
 import { allSteps, editableScreenOf, stepFromRouteId, type BoardStep } from './board-steps';
@@ -401,14 +405,10 @@ function CustomScreenEditor({
   const [isSaving, setIsSaving] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
   const [draft, setDraft] = useState<PreviewDraft | null>(null);
-  const questions = screen.questions.filter((question) => !question.isArchived);
-  const [order, setOrder] = useState<readonly string[]>(() => questions.map((each) => each.id));
-  // A question added or archived since: the saved order again.
-  const ids = questions.map((each) => each.id);
-  const ordered =
-    [...order].sort().join() === [...ids].sort().join()
-      ? order.flatMap((id) => questions.filter((question) => question.id === id))
-      : questions;
+  const { ordered, reorder } = useQuestionOrder(
+    screen.id,
+    screen.questions.filter((question) => !question.isArchived),
+  );
 
   async function saveScreen() {
     if ((title.ca ?? '').trim() === '') {
@@ -523,77 +523,143 @@ function CustomScreenEditor({
             </FieldGroup>
           </EditorSection>
 
-          <EditorSection
+          <StaffQuestionsSection
             title={t('tabQuestions')}
             testId="screen-questions"
-            actions={
-              editing === NEW_QUESTION ? null : (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setDraft(null);
-                    setEditing(NEW_QUESTION);
-                  }}
-                  data-testid="question-add"
-                >
-                  <Plus aria-hidden data-icon="inline-start" />
-                  {t('questions.addQuestion')}
-                </Button>
-              )
-            }
-          >
-            <div className="flex flex-col gap-4">
-              {ordered.length === 0 && editing !== NEW_QUESTION ? (
-                <p className="text-start text-sm text-muted-foreground">
-                  {t('onboardingBoard.noQuestions')}
-                </p>
-              ) : null}
-              {ordered.length === 0 ? null : (
-                <CustomQuestionList
-                  screenId={screen.id}
-                  questions={ordered}
-                  language={language}
-                  editing={editing}
-                  onReorder={async (next) => {
-                    const previous = order;
-                    setOrder(next);
-                    try {
-                      await reorderCustomQuestions(supabase, screen.id, next);
-                      await reload();
-                    } catch {
-                      setOrder(previous);
-                      toast.error(t('onboardingBoard.orderFailed'));
-                    }
-                  }}
-                  onEdit={(id) => {
-                    setDraft(null);
-                    setEditing(id);
-                  }}
-                  onClose={close}
-                  onPreviewChange={setDraft}
-                />
-              )}
-              {editing === NEW_QUESTION ? (
-                <QuestionForm
-                  screenId={screen.id}
-                  question={null}
-                  canStoreFiles={uploadsAvailable(mediaWorkerUrl)}
-                  withPreview={false}
-                  onPreviewChange={setDraft}
-                  onSave={async (next) => {
-                    await saveCustomQuestion(supabase, next);
-                    await reload();
-                  }}
-                  onCancel={close}
-                />
-              ) : null}
-            </div>
-          </EditorSection>
+            questions={ordered}
+            language={language}
+            editing={editing}
+            onEdit={(id) => {
+              setDraft(null);
+              setEditing(id);
+            }}
+            onClose={close}
+            onPreviewChange={setDraft}
+            onReorder={reorder}
+            onSaveNew={async (next) => {
+              await saveCustomQuestion(supabase, next);
+              await reload();
+            }}
+            screenId={screen.id}
+          />
         </>
       }
     />
+  );
+}
+
+/**
+ * The saved order of a screen's staff questions, moved at once when staff drop
+ * one and put back with a toast when saving fails.
+ */
+function useQuestionOrder(screenId: string | null, questions: readonly CustomQuestion[]) {
+  const { t } = useTranslation('settings');
+  const reload = useReload();
+  const [order, setOrder] = useState<readonly string[]>(() => questions.map((each) => each.id));
+  // A question added or archived since: the saved order again.
+  const ids = questions.map((each) => each.id);
+  const ordered =
+    [...order].sort().join() === [...ids].sort().join()
+      ? order.flatMap((id) => questions.filter((question) => question.id === id))
+      : questions;
+  async function reorder(next: readonly string[]) {
+    if (screenId === null) return;
+    const previous = order;
+    setOrder(next);
+    try {
+      await reorderCustomQuestions(supabase, screenId, next);
+      await reload();
+    } catch {
+      setOrder(previous);
+      toast.error(t('onboardingBoard.orderFailed'));
+    }
+  }
+  return { ordered, reorder };
+}
+
+/**
+ * Questions staff write (RAPP-307), on a Ramassà screen or added to an app
+ * screen (RAPP-642): Add question with every type, edit, required, drag into
+ * place, and delete behind a confirm.
+ */
+function StaffQuestionsSection({
+  title,
+  testId,
+  screenId,
+  questions,
+  language,
+  editing,
+  onEdit,
+  onClose,
+  onPreviewChange,
+  onReorder,
+  onSaveNew,
+}: {
+  readonly title: string;
+  readonly testId: string;
+  /** The screen that holds them; null for an app screen with none added yet. */
+  readonly screenId: string | null;
+  readonly questions: readonly CustomQuestion[];
+  readonly language: LanguageCode;
+  readonly editing: string | null;
+  readonly onEdit: (id: string) => void;
+  readonly onClose: () => void;
+  readonly onPreviewChange: (draft: PreviewDraft) => void;
+  readonly onReorder: (ids: readonly string[]) => Promise<void>;
+  readonly onSaveNew: (draft: QuestionDraft) => Promise<void>;
+}) {
+  const { t } = useTranslation('settings');
+  return (
+    <EditorSection
+      title={title}
+      testId={testId}
+      actions={
+        editing === NEW_QUESTION ? null : (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => onEdit(NEW_QUESTION)}
+            data-testid={`${testId}-add`}
+          >
+            <Plus aria-hidden data-icon="inline-start" />
+            {t('questions.addQuestion')}
+          </Button>
+        )
+      }
+    >
+      <div className="flex flex-col gap-4">
+        {questions.length === 0 && editing !== NEW_QUESTION ? (
+          <p className="text-start text-sm text-muted-foreground">
+            {t('onboardingBoard.noQuestions')}
+          </p>
+        ) : null}
+        {questions.length === 0 || screenId === null ? null : (
+          <CustomQuestionList
+            screenId={screenId}
+            questions={questions}
+            language={language}
+            editing={editing}
+            onReorder={onReorder}
+            onEdit={onEdit}
+            onClose={onClose}
+            onPreviewChange={onPreviewChange}
+          />
+        )}
+        {editing === NEW_QUESTION ? (
+          <QuestionForm
+            // An app screen's holder is made with the first question, on save.
+            screenId={screenId ?? ''}
+            question={null}
+            canStoreFiles={uploadsAvailable(mediaWorkerUrl)}
+            withPreview={false}
+            onPreviewChange={onPreviewChange}
+            onSave={onSaveNew}
+            onCancel={onClose}
+          />
+        ) : null}
+      </div>
+    </EditorSection>
   );
 }
 
@@ -888,6 +954,28 @@ function AppScreenEditor({
   const [editing, setEditing] = useState<IntakeQuestion | null>(null);
   const [editingLabel, setEditingLabel] = useState<BuilderText | undefined>(undefined);
   const currentSeason = data.seasons.find((season) => season.isCurrent);
+  const reload = useReload();
+  // The questions staff added to this app screen (RAPP-642), on its holder.
+  const holder = step.kind === 'builtin' ? holderOf(catalog, step.key) : undefined;
+  const { ordered: added, reorder: reorderAdded } = useQuestionOrder(
+    holder?.id ?? null,
+    holder?.questions.filter((question) => !question.isArchived) ?? [],
+  );
+  const [editingAdded, setEditingAdded] = useState<string | null>(null);
+  const [addedDraft, setAddedDraft] = useState<PreviewDraft | null>(null);
+  const closeAdded = () => {
+    setEditingAdded(null);
+    setAddedDraft(null);
+  };
+  // The holder is titled as the app screen, in every language, for the places
+  // that list questions by screen (re-registration, the entity form, staff).
+  const holderTitle = (screen: WizardQuestionScreen): BuilderText =>
+    Object.fromEntries(
+      SUPPORTED_LANGUAGES.map((code) => [
+        code,
+        builtinWording(screen, screenSettingsFor(catalog, screen)?.texts ?? {}, code, t).title,
+      ]),
+    ) as BuilderText;
 
   const questions = step.kind === 'builtin' ? WIZARD_SCREEN_QUESTIONS[step.key] : [];
   const hiddenQuestions = new Set(
@@ -898,17 +986,36 @@ function AppScreenEditor({
       )
       .map((override) => override.question),
   );
-  const phoneQuestions = questions
-    .filter((question) => question === editing || !hiddenQuestions.has(question))
-    .map((question) =>
-      builtinPhoneQuestion(
-        catalog,
-        question,
-        previewLanguage,
-        t,
-        question === editing ? editingLabel : undefined,
+  const phoneQuestions: PhoneQuestion[] = [
+    ...questions
+      .filter((question) => question === editing || !hiddenQuestions.has(question))
+      .map((question) =>
+        builtinPhoneQuestion(
+          catalog,
+          question,
+          previewLanguage,
+          t,
+          question === editing ? editingLabel : undefined,
+        ),
       ),
-    );
+    // Then the added ones she is asked, the one being edited as typed.
+    ...added.flatMap((question) => {
+      if (question.id === editingAdded && addedDraft !== null) {
+        return [
+          draftPhoneQuestion(
+            question.id,
+            addedDraft,
+            previewLanguage,
+            isCustomQuestionRequired(question),
+          ),
+        ];
+      }
+      return isAskedOfHer(question) ? [customPhoneQuestion(question, previewLanguage)] : [];
+    }),
+    ...(editingAdded === NEW_QUESTION && addedDraft !== null
+      ? [draftPhoneQuestion(NEW_QUESTION, addedDraft, previewLanguage, false)]
+      : []),
+  ];
   const detailContent = (): PhoneContent => {
     const wording = builtinWording(
       detail as EditableWizardScreen,
@@ -961,7 +1068,7 @@ function AppScreenEditor({
         language={previewLanguage}
         step={number}
         total={total}
-        highlight={editing ?? undefined}
+        highlight={editing ?? editingAdded ?? undefined}
       />
     </div>
   );
@@ -1026,6 +1133,31 @@ function AppScreenEditor({
                 </ol>
               </EditorSection>
             )}
+            {step.kind === 'builtin' ? (
+              <StaffQuestionsSection
+                title={t('onboardingBoard.addedQuestions')}
+                testId="added-questions"
+                screenId={holder?.id ?? null}
+                questions={added}
+                language={language}
+                editing={editingAdded}
+                onEdit={(id) => {
+                  setAddedDraft(null);
+                  setEditingAdded(id);
+                  setShownScreen('main');
+                }}
+                onClose={closeAdded}
+                onPreviewChange={setAddedDraft}
+                onReorder={reorderAdded}
+                onSaveNew={async (next) => {
+                  const screenId =
+                    holder?.id ??
+                    (await ensureBuiltinScreenHolder(supabase, step.key, holderTitle(step.key)));
+                  await saveCustomQuestion(supabase, { ...next, screenId });
+                  await reload();
+                }}
+              />
+            ) : null}
             {step.key === 'documentation' ? (
               <OnboardingDocumentSection explanation={data.documentExplanation} />
             ) : null}
@@ -1090,7 +1222,10 @@ function WordingSection({
   const fields = screenTextFields(screen);
   const direction = getLanguageDirection(language);
   const hideable =
-    isQuestionScreen(screen) && canHideBuiltinScreen(screen, requiredBuiltinQuestions(catalog));
+    isQuestionScreen(screen) &&
+    canHideBuiltinScreen(screen, requiredBuiltinQuestions(catalog)) &&
+    // A required added question keeps the screen shown (RAPP-642).
+    !hasRequiredAddedQuestion(catalog, screen);
   const bundled = (field: ScreenTextField): string => {
     const key = BUNDLED_SCREEN_TEXT_KEYS[screen][field];
     return key === undefined ? '' : t(`onboarding:${key}`, { lng: language });

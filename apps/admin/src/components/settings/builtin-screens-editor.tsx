@@ -43,6 +43,8 @@ import {
 } from '@ramassa/shared/intake';
 import {
   canHideBuiltinScreen,
+  customWizardPlan,
+  hasRequiredAddedQuestion,
   moved,
   requiredBuiltinQuestions,
   screenSettingsFor,
@@ -101,14 +103,9 @@ function FlowOrderPanel({
   const customScreens = wizardScreens(catalog);
   const flow = wizardFlow(catalog);
   const [order, setOrder] = useState<readonly WizardStepKey[]>(() =>
-    wizardFlowOrder(
-      customScreens.map((screen) => ({
-        id: screen.id,
-        afterScreen: screen.afterScreen,
-        isAnswered: false,
-      })),
-      flow,
-    ).filter((step) => !(['summary', 'terms-intro', 'terms'] as readonly string[]).includes(step)),
+    wizardFlowOrder(customWizardPlan(customScreens), flow).filter(
+      (step) => !(['summary', 'terms-intro', 'terms'] as readonly string[]).includes(step),
+    ),
   );
   const [status, setStatus] = useState<Status>('idle');
 
@@ -303,7 +300,10 @@ function ScreenWordingForm({
   const staff = (field: ScreenTextField): string => texts[field]?.[language]?.trim() ?? '';
   const shown = (field: ScreenTextField): string | undefined => staff(field) || bundled(field);
   const hideable =
-    isQuestionScreen(screen) && canHideBuiltinScreen(screen, requiredBuiltinQuestions(catalog));
+    isQuestionScreen(screen) &&
+    canHideBuiltinScreen(screen, requiredBuiltinQuestions(catalog)) &&
+    // A required question staff added to it keeps it shown (RAPP-642).
+    !hasRequiredAddedQuestion(catalog, screen);
   const isTermsScreen = screen === 'terms-intro' || screen === 'terms';
   const terms =
     catalog.terms === null || catalog.terms === undefined
