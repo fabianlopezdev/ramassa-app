@@ -17,7 +17,6 @@ import { BuiltinScreensEditor } from '@/components/settings/builtin-screens-edit
 import { DocumentExplanationForm } from '@/components/settings/document-explanation-form';
 import { QuestionBuilder } from '@/components/settings/question-builder';
 import { SeasonsPanel } from '@/components/settings/seasons-panel';
-import { SetupTransfer } from '@/components/settings/setup-transfer';
 import { builtinQuestionOptions, QUESTION_LABEL_KEYS } from '@/lib/builtin-questions';
 import { mediaWorkerUrl } from '@/lib/media-worker';
 import { supabase } from '@/lib/supabase';
@@ -31,9 +30,6 @@ import {
 } from '@ramassa/shared/authorization';
 import {
   discardAppTermsDraft,
-  exportOnboardingSetup,
-  importOnboardingSetup,
-  previewOnboardingSetupImport,
   publishAppTermsDraft,
   saveAppTermsDraft,
   saveDocumentStepExplanation,
@@ -57,38 +53,6 @@ import {
 } from '@ramassa/shared/intake-builder';
 import type { LocalizedText } from '@ramassa/shared/schemas';
 import { createSeason, setCurrentSeason, type Season } from '@ramassa/shared/seasons';
-
-/** The admin build's commit (the Sentry release), written into a setup file. */
-export const APP_COMMIT = (import.meta.env.VITE_COMMIT_SHA as string | undefined) ?? null;
-
-/** Hands the browser one file to save, without leaving the page. */
-export function saveFile(name: string, text: string) {
-  const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = name;
-  link.click();
-  URL.revokeObjectURL(url);
-}
-
-/** Download and import of the whole setup (RAPP-621). */
-export function OnboardingSetupTransferSection({ canImport }: { readonly canImport: boolean }) {
-  const reload = useReload();
-  return (
-    <SetupTransfer
-      canImport={canImport}
-      appCommit={APP_COMMIT}
-      onExport={() => exportOnboardingSetup(supabase, APP_COMMIT)}
-      onPreview={(raw) => previewOnboardingSetupImport(supabase, raw)}
-      onImport={async (raw) => {
-        const report = await importOnboardingSetup(supabase, raw);
-        await reload();
-        return report;
-      }}
-      onDownload={saveFile}
-    />
-  );
-}
 
 export function useReload() {
   const router = useRouter();
