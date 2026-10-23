@@ -1,29 +1,27 @@
 /**
- * The last step of creating a participant (RAPP-618, RAPP-643): her own copy
- * of the Onboarding board. The board is the template; here staff decide what
- * this one player is asked, before the invitation exists.
+ * One player's copy of the Onboarding board (RAPP-643, RAPP-645). The board is
+ * the template; here staff decide what this one player is asked: as the last
+ * step of creating her, and on her page until she joins.
  *
  * Each screen her plan can show is a card, in her order, with the board's
  * phone miniature drawn from her choices. A card's switch asks or skips the
  * whole screen: skipping sets each of its questions to Don't ask. Opening a
  * card lists its questions, the app's own and Ramassà's in one list, each with
- * Auto, Ask or Don't ask (RAPP-301). Don't ask is not offered on a required
- * question nobody answered, and a screen holding one cannot be skipped. The
- * summary, the terms and the authorization always end it, locked.
+ * Auto, Ask or Don't ask (RAPP-301) and whether it is answered. Don't ask is
+ * not offered on a required question nobody answered, and a screen holding
+ * one cannot be skipped. The summary, the terms and the authorization always
+ * end it, locked.
  *
- * What she is asked is computed with the same shared functions her phone
- * plans with (`previewWizardQuestions` for the app's questions). The presets
- * fill every choice at once.
+ * The plan is shared (`playerPlan`), so this page, the staff phone and her
+ * phone agree. The presets fill every choice at once.
  */
 
-import { allSteps, type BoardStep } from '@/components/onboarding/board-steps';
 import { PhoneMiniature } from '@/components/onboarding/phone-preview';
 import { BOARD_GRID, CardFrame, stepName } from '@/components/onboarding/screen-board';
 import {
   builtinPhoneQuestion,
   customPhoneQuestion,
   stepContent,
-  type PhoneQuestion,
 } from '@/components/onboarding/screen-content';
 import { Button } from '@/components/ui/button';
 import {
@@ -37,32 +35,30 @@ import { Switch } from '@/components/ui/switch';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { QUESTION_LABEL_KEYS } from '@/lib/builtin-questions';
 import { cn } from '@/lib/utils';
-import { EyeOff, Lock } from 'lucide-react';
-import { useState } from 'react';
+import { EyeOff, Lock, X } from 'lucide-react';
+import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  INTAKE_STATE_PRESETS,
-  previewWizardQuestions,
-  WIZARD_SCREEN_QUESTIONS,
-  type AnsweredQuestions,
-  type IntakeQuestion,
-  type IntakeQuestionState,
-  type QuestionStates,
-  type WizardQuestionAsking,
-  type WizardQuestionPreview,
+import type {
+  AnsweredQuestions,
+  IntakeQuestionState,
+  QuestionStates,
+  WizardQuestionAsking,
 } from '@ramassa/shared/intake';
 import {
   builtinLabel,
-  canSkipCustomQuestion,
-  hiddenBuiltinQuestions,
-  holderOf,
-  isAskedOfHer,
-  requiredBuiltinQuestions,
+  PLAYER_PRESETS,
+  playerPlan,
+  presetChoices,
   textIn,
-  wizardFlow,
-  type CustomQuestion,
+  withQuestionChoice,
+  withScreenChoice,
+  type CustomAnswers,
   type CustomQuestionStates,
   type IntakeCatalog,
+  type IntakePreset,
+  type PlanQuestion,
+  type PlanScreen,
+  type PlayerChoices,
 } from '@ramassa/shared/intake-builder';
 import type { LanguageCode } from '@ramassa/shared/schemas';
 
@@ -78,6 +74,156 @@ const CHOICE_LABEL_KEYS: Readonly<Record<IntakeQuestionState, string>> = {
   skip: 'participants:inviteChoiceSkip',
 };
 
+export interface PlayerQuestionsBoardProps {
+  readonly catalog: IntakeCatalog;
+  /** What is recorded as answered on her profile. */
+  readonly answered: AnsweredQuestions;
+  /** Her answers to Ramassà's questions; none for a player not created yet. */
+  readonly customAnswers?: CustomAnswers;
+  readonly choices: PlayerChoices;
+  readonly onChange: (next: PlayerChoices) => void;
+  /** An organization preset can be deleted here (her page). */
+  readonly onDeletePreset?: (preset: IntakePreset) => void;
+  /** Under the cards: her page's Save, for example. */
+  readonly footer?: ReactNode;
+  readonly testId?: string;
+}
+
+/** Her screens as cards, with the count, the presets and a sheet per screen. */
+export function PlayerQuestionsBoard({
+  catalog,
+  answered,
+  customAnswers = {},
+  choices,
+  onChange,
+  onDeletePreset,
+  footer,
+  testId = 'player-questions',
+}: PlayerQuestionsBoardProps) {
+  const { t, i18n } = useTranslation(['participants', 'settings', 'onboarding']);
+  const language = (i18n.resolvedLanguage ?? 'ca') as LanguageCode;
+  const [openKey, setOpenKey] = useState<string | null>(null);
+  const plan = playerPlan(catalog, answered, choices, customAnswers);
+  const open = plan.screens.find((screen) => screen.step.key === openKey) ?? null;
+  const labelOf = (question: PlanQuestion): string =>
+    question.kind === 'builtin'
+      ? (builtinLabel(catalog, question.question, language) ??
+        t(QUESTION_LABEL_KEYS[question.question] ?? question.question))
+      : textIn(question.question.label, language);
+
+  return (
+    <section
+      aria-labelledby={`${testId}-title`}
+      className="flex flex-col gap-6"
+      data-testid={testId}
+    >
+      <header className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
+        <div className="flex min-w-0 flex-col gap-1">
+          <h2 id={`${testId}-title`} className="text-start text-lg font-semibold">
+            {t('participants:inviteQuestionsTitle')}
+          </h2>
+          <p aria-live="polite" className="text-start text-sm text-muted-foreground">
+            {t('participants:inviteQuestionsSummary', {
+              asked: plan.askedCount,
+              total: plan.total,
+            })}
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => onChange(PLAYER_PRESETS.missing(catalog))}
+          >
+            {t('participants:questionStatesPresetMissing')}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => onChange(PLAYER_PRESETS.review(catalog))}
+          >
+            {t('participants:questionStatesPresetReview')}
+          </Button>
+          {catalog.presets.map((preset) => (
+            <span key={preset.id} className="inline-flex items-center">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className={onDeletePreset === undefined ? undefined : 'rounded-e-none'}
+                onClick={() =>
+                  onChange(presetChoices(catalog, preset.states as QuestionStates, false))
+                }
+              >
+                {preset.name}
+              </Button>
+              {onDeletePreset === undefined ? null : (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon-sm"
+                  className="rounded-s-none border-s-0"
+                  aria-label={t('participants:questionStatesDeletePreset', { name: preset.name })}
+                  onClick={() => onDeletePreset(preset)}
+                >
+                  <X aria-hidden />
+                </Button>
+              )}
+            </span>
+          ))}
+        </div>
+      </header>
+
+      <ol className={BOARD_GRID} aria-label={t('settings:onboardingBoard.listLabel')}>
+        {plan.screens.map((screen) => (
+          <li
+            key={screen.step.key}
+            className="flex"
+            data-testid={`invite-screen-${screen.step.key}`}
+          >
+            <PlayerScreenCard
+              screen={screen}
+              catalog={catalog}
+              language={language}
+              onOpen={() => setOpenKey(screen.step.key)}
+              onSwitch={(isAsked) => onChange(withScreenChoice(choices, screen, isAsked))}
+            />
+          </li>
+        ))}
+      </ol>
+
+      {footer}
+
+      <Sheet open={open !== null} onOpenChange={(isOpen) => (isOpen ? null : setOpenKey(null))}>
+        <SheetContent className="w-full gap-0 sm:max-w-lg" data-testid="invite-screen-sheet">
+          {open === null ? null : (
+            <>
+              <SheetHeader className="border-b">
+                <SheetTitle>{stepName(open.step, language, t)}</SheetTitle>
+                <SheetDescription className="sr-only">
+                  {t('participants:inviteScreenQuestions')}
+                </SheetDescription>
+              </SheetHeader>
+              <ul className="flex flex-col divide-y overflow-y-auto px-4">
+                {open.questions.map((question) => (
+                  <QuestionChoice
+                    key={question.key}
+                    question={question}
+                    label={labelOf(question)}
+                    onChange={(state) => onChange(withQuestionChoice(choices, question, state))}
+                  />
+                ))}
+              </ul>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
+    </section>
+  );
+}
+
 export interface InviteQuestionsReviewProps {
   /** What the invitation will record as answered. */
   readonly answered: AnsweredQuestions;
@@ -89,59 +235,7 @@ export interface InviteQuestionsReviewProps {
   readonly catalog: IntakeCatalog;
 }
 
-/** One question of a screen, the app's or Ramassà's, as this step shows it. */
-interface QuestionRow {
-  readonly kind: 'builtin' | 'custom';
-  readonly key: string;
-  readonly label: string;
-  readonly state: IntakeQuestionState;
-  readonly asking: WizardQuestionAsking;
-  readonly canSkip: boolean;
-  readonly phone: PhoneQuestion;
-  readonly set: (state: IntakeQuestionState) => void;
-}
-
-interface ScreenView {
-  readonly step: BoardStep;
-  readonly number: number;
-  readonly name: string;
-  readonly rows: readonly QuestionRow[];
-}
-
-function withState(
-  states: QuestionStates,
-  question: IntakeQuestion,
-  state: IntakeQuestionState,
-): QuestionStates {
-  const next: Partial<Record<IntakeQuestion, 'ask' | 'skip'>> = { ...states };
-  if (state === 'auto') delete next[question];
-  else next[question] = state;
-  return next;
-}
-
-function withCustomState(
-  states: CustomQuestionStates,
-  questionId: string,
-  state: IntakeQuestionState,
-): CustomQuestionStates {
-  const next: Record<string, 'ask' | 'skip'> = { ...states };
-  if (state === 'auto') delete next[questionId];
-  else next[questionId] = state;
-  return next;
-}
-
-/** Her questions of a screen: the app's own, then Ramassà's, never a removed one. */
-function questionsOf(step: BoardStep, catalog: IntakeCatalog) {
-  const live = (questions: readonly CustomQuestion[]) =>
-    questions.filter((question) => !question.isArchived && isAskedOfHer(question));
-  if (step.kind === 'custom') return { builtin: [], custom: live(step.screen.questions) };
-  if (step.kind === 'locked') return { builtin: [], custom: [] };
-  return {
-    builtin: WIZARD_SCREEN_QUESTIONS[step.key],
-    custom: live(holderOf(catalog, step.key)?.questions ?? []),
-  };
-}
-
+/** The last step of creating a participant (RAPP-618, RAPP-643). */
 export function InviteQuestionsReview({
   answered,
   states,
@@ -150,230 +244,55 @@ export function InviteQuestionsReview({
   onCustomChange = () => undefined,
   catalog,
 }: InviteQuestionsReviewProps) {
-  const { t, i18n } = useTranslation(['participants', 'settings', 'onboarding']);
-  const language = (i18n.resolvedLanguage ?? 'ca') as LanguageCode;
-  const [openKey, setOpenKey] = useState<string | null>(null);
-  const flow = wizardFlow(catalog);
-  const previews = new Map<IntakeQuestion, WizardQuestionPreview>(
-    // The organization's removed questions and required list, as her phone reads them.
-    previewWizardQuestions(
-      answered,
-      states,
-      hiddenBuiltinQuestions(catalog),
-      flow,
-      requiredBuiltinQuestions(catalog),
-    ).map((row) => [row.question, row]),
-  );
-  const rowsOf = (step: BoardStep): QuestionRow[] => {
-    const { builtin, custom } = questionsOf(step, catalog);
-    return [
-      ...builtin.flatMap((question): QuestionRow[] => {
-        const preview = previews.get(question);
-        if (preview === undefined || preview.isRemoved) return [];
-        // A preset may hold Don't ask where it is not allowed: Auto is what is saved.
-        const state = preview.state === 'skip' && !preview.canSkip ? 'auto' : preview.state;
-        return [
-          {
-            kind: 'builtin',
-            key: question,
-            label:
-              builtinLabel(catalog, question, language) ??
-              t(QUESTION_LABEL_KEYS[question] ?? question),
-            state,
-            asking: preview.asking,
-            canSkip: preview.canSkip,
-            phone: builtinPhoneQuestion(catalog, question, language, t),
-            set: (next) => onChange(withState(states, question, next)),
-          },
-        ];
-      }),
-      ...custom.map((question): QuestionRow => {
-        const canSkip = canSkipCustomQuestion(question);
-        const saved = customStates[question.id] ?? 'auto';
-        const state = saved === 'skip' && !canSkip ? 'auto' : saved;
-        return {
-          kind: 'custom',
-          key: question.id,
-          label: textIn(question.label, language),
-          state,
-          // She has answered none of them yet: Auto asks, as Ask does.
-          asking:
-            state === 'skip'
-              ? 'not-asked'
-              : question.showWhen === undefined
-                ? 'asked'
-                : 'when-it-applies',
-          canSkip,
-          phone: customPhoneQuestion(question, language),
-          set: (next) => onCustomChange(withCustomState(customStates, question.id, next)),
-        };
-      }),
-    ];
-  };
-
-  // Only the screens her plan can show: none staff hid, none with nothing for her.
-  const screens: ScreenView[] = allSteps(catalog)
-    .flatMap((step) => {
-      if (step.kind === 'builtin' && flow.hiddenScreens.has(step.key)) return [];
-      const rows = rowsOf(step);
-      return step.kind !== 'locked' && rows.length === 0 ? [] : [{ step, rows }];
-    })
-    .map(({ step, rows }, index) => ({
-      step,
-      rows,
-      number: index + 1,
-      name: stepName(step, language, t),
-    }));
-  const all = screens.flatMap((screen) => screen.rows);
-  const askedCount = all.filter((row) => row.asking !== 'not-asked').length;
-  const open = screens.find((screen) => screen.step.key === openKey) ?? null;
-
-  /** Ask every question of a screen again (Auto), or skip each one that may be skipped. */
-  function setScreen(screen: ScreenView, isAsked: boolean) {
-    let nextStates = states;
-    let nextCustom = customStates;
-    for (const row of screen.rows) {
-      const state: IntakeQuestionState = isAsked ? 'auto' : row.canSkip ? 'skip' : row.state;
-      if (row.kind === 'builtin') {
-        nextStates = withState(nextStates, row.key as IntakeQuestion, state);
-      } else {
-        nextCustom = withCustomState(nextCustom, row.key, state);
-      }
-    }
-    onChange(nextStates);
-    onCustomChange(nextCustom);
-  }
-
-  /** A preset fills every choice: the app's questions from it, Ramassà's Ask or Auto. */
-  function applyPreset(next: QuestionStates, askAll: boolean) {
-    onChange(next);
-    onCustomChange(
-      askAll
-        ? Object.fromEntries(
-            screens.flatMap((screen) =>
-              screen.rows
-                .filter((row) => row.kind === 'custom')
-                .map((row) => [row.key, 'ask' as const]),
-            ),
-          )
-        : {},
-    );
-  }
-
   return (
-    <section
-      aria-labelledby="invite-questions-title"
-      className="flex flex-col gap-6"
-      data-testid="invite-questions-review"
-    >
-      <header className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
-        <div className="flex min-w-0 flex-col gap-1">
-          <h2 id="invite-questions-title" className="text-start text-lg font-semibold">
-            {t('participants:inviteQuestionsTitle')}
-          </h2>
-          <p aria-live="polite" className="text-start text-sm text-muted-foreground">
-            {t('participants:inviteQuestionsSummary', { asked: askedCount, total: all.length })}
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => applyPreset(INTAKE_STATE_PRESETS.missing, false)}
-          >
-            {t('participants:questionStatesPresetMissing')}
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => applyPreset(INTAKE_STATE_PRESETS.review, true)}
-          >
-            {t('participants:questionStatesPresetReview')}
-          </Button>
-          {catalog.presets.map((preset) => (
-            <Button
-              key={preset.id}
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => applyPreset(preset.states as QuestionStates, false)}
-            >
-              {preset.name}
-            </Button>
-          ))}
-        </div>
-      </header>
-
-      <ol className={BOARD_GRID} aria-label={t('settings:onboardingBoard.listLabel')}>
-        {screens.map((screen) => (
-          <li
-            key={screen.step.key}
-            className="flex"
-            data-testid={`invite-screen-${screen.step.key}`}
-          >
-            <InviteScreenCard
-              screen={screen}
-              catalog={catalog}
-              language={language}
-              onOpen={() => setOpenKey(screen.step.key)}
-              onSwitch={(isAsked) => setScreen(screen, isAsked)}
-            />
-          </li>
-        ))}
-      </ol>
-
-      <Sheet open={open !== null} onOpenChange={(isOpen) => (isOpen ? null : setOpenKey(null))}>
-        <SheetContent className="w-full gap-0 sm:max-w-lg" data-testid="invite-screen-sheet">
-          {open === null ? null : (
-            <>
-              <SheetHeader className="border-b">
-                <SheetTitle>{open.name}</SheetTitle>
-                <SheetDescription className="sr-only">
-                  {t('participants:inviteScreenQuestions')}
-                </SheetDescription>
-              </SheetHeader>
-              <ul className="flex flex-col divide-y overflow-y-auto px-4">
-                {open.rows.map((row) => (
-                  <QuestionChoice key={row.key} row={row} />
-                ))}
-              </ul>
-            </>
-          )}
-        </SheetContent>
-      </Sheet>
-    </section>
+    <PlayerQuestionsBoard
+      catalog={catalog}
+      answered={answered}
+      choices={{ states, customStates }}
+      onChange={(next) => {
+        onChange(next.states);
+        onCustomChange(next.customStates);
+      }}
+      testId="invite-questions-review"
+    />
   );
 }
 
-function InviteScreenCard({
+function PlayerScreenCard({
   screen,
   catalog,
   language,
   onOpen,
   onSwitch,
 }: {
-  readonly screen: ScreenView;
+  readonly screen: PlanScreen;
   readonly catalog: IntakeCatalog;
   readonly language: LanguageCode;
   readonly onOpen: () => void;
   readonly onSwitch: (isAsked: boolean) => void;
 }) {
   const { t } = useTranslation(['participants', 'settings', 'onboarding']);
-  const { step, rows, name, number } = screen;
+  const { step, questions, number, isSkipped, mustAsk, askedCount } = screen;
   const isLocked = step.kind === 'locked';
-  const asked = rows.filter((row) => row.asking !== 'not-asked');
-  const isSkipped = rows.length > 0 && rows.every((row) => row.state === 'skip');
-  // A required question nobody answered keeps the screen: it cannot be skipped.
-  const keeps = rows.some((row) => !row.canSkip);
+  const name = stepName(step, language, t);
   const status = isSkipped
     ? t('participants:inviteScreenSkipped')
-    : !isLocked && asked.length === 0
+    : !isLocked && askedCount === 0
       ? t('participants:inviteScreenNotAsked')
       : null;
+  // The miniature draws only what she will be asked.
   const content = stepContent(catalog, step, language, t, {
-    ...(isLocked ? {} : { questions: asked.map((row) => row.phone) }),
+    ...(isLocked
+      ? {}
+      : {
+          questions: questions
+            .filter((question) => question.asking !== 'not-asked')
+            .map((question) =>
+              question.kind === 'builtin'
+                ? builtinPhoneQuestion(catalog, question.question, language, t)
+                : customPhoneQuestion(question.question, language),
+            ),
+        }),
   });
   const switchId = `invite-screen-switch-${step.key}`;
   return (
@@ -399,19 +318,19 @@ function InviteScreenCard({
         ) : (
           <span
             className="flex size-7 items-center justify-center"
-            title={keeps ? t('participants:inviteScreenRequired') : undefined}
+            title={mustAsk ? t('participants:inviteScreenRequired') : undefined}
           >
             <Switch
               id={switchId}
               size="sm"
               checked={!isSkipped}
-              disabled={keeps}
+              disabled={mustAsk}
               onCheckedChange={onSwitch}
               aria-label={t('participants:inviteScreenAsk', { screen: name })}
-              aria-describedby={keeps ? `${switchId}-reason` : undefined}
+              aria-describedby={mustAsk ? `${switchId}-reason` : undefined}
               data-testid={switchId}
             />
-            {keeps ? (
+            {mustAsk ? (
               <span id={`${switchId}-reason`} className="sr-only">
                 {t('participants:inviteScreenRequired')}
               </span>
@@ -450,33 +369,45 @@ function InviteScreenCard({
   );
 }
 
-function QuestionChoice({ row }: { readonly row: QuestionRow }) {
+function QuestionChoice({
+  question,
+  label,
+  onChange,
+}: {
+  readonly question: PlanQuestion;
+  readonly label: string;
+  readonly onChange: (state: IntakeQuestionState) => void;
+}) {
   const { t } = useTranslation('participants');
-  const id = `invite-question-${row.key}`;
+  const id = `invite-question-${question.key}`;
   return (
     <li
       className="flex flex-col gap-2 py-4"
       data-testid={id}
-      data-asking={row.asking}
-      data-state={row.state}
+      data-asking={question.asking}
+      data-state={question.state}
     >
       <div className="flex flex-col gap-0.5">
         <p id={`${id}-label`} className="text-start text-sm font-medium">
-          {row.label}
-          {row.phone.isRequired ? <span className="text-primary"> *</span> : null}
+          {label}
+          {question.isRequired ? <span className="text-primary"> *</span> : null}
         </p>
         <p className="text-start text-xs text-muted-foreground">
-          {t(ASKING_LABEL_KEYS[row.asking])}
+          {t(ASKING_LABEL_KEYS[question.asking])}
+          {' · '}
+          {question.isAnswered
+            ? t('participants:questionStatesAnswered')
+            : t('participants:questionStatesUnanswered')}
         </p>
       </div>
       <ToggleGroup
         type="single"
         variant="outline"
         size="sm"
-        value={row.state}
+        value={question.state}
         onValueChange={(next) => {
           // Pressing the chosen one again keeps it.
-          if (next !== '') row.set(next as IntakeQuestionState);
+          if (next !== '') onChange(next as IntakeQuestionState);
         }}
         aria-labelledby={`${id}-label`}
         className="w-fit"
@@ -485,7 +416,7 @@ function QuestionChoice({ row }: { readonly row: QuestionRow }) {
           <ToggleGroupItem
             key={state}
             value={state}
-            disabled={state === 'skip' && !row.canSkip}
+            disabled={state === 'skip' && !question.canSkip}
             className="px-3 data-[state=on]:bg-primary/10 data-[state=on]:text-primary"
             data-testid={`${id}-${state}`}
           >
@@ -493,7 +424,7 @@ function QuestionChoice({ row }: { readonly row: QuestionRow }) {
           </ToggleGroupItem>
         ))}
       </ToggleGroup>
-      {row.canSkip ? null : (
+      {question.canSkip ? null : (
         <p className="text-start text-xs text-muted-foreground">
           {t('participants:questionStatesRequiredHint')}
         </p>

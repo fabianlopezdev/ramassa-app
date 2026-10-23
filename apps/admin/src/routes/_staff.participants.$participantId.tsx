@@ -32,11 +32,12 @@ import {
   fetchParticipantConsents,
 } from '@ramassa/shared/authorization';
 import { fetchEquipmentDeliveries, fetchHandoverItemTypes } from '@ramassa/shared/equipment';
-import { fetchParticipantQuestionStates } from '@ramassa/shared/intake';
 import {
   EMPTY_INTAKE_CATALOG,
   fetchIntakeCatalog,
+  fetchParticipantChoices,
   fetchParticipantCustomAnswers,
+  NO_CHOICES,
 } from '@ramassa/shared/intake-builder';
 import {
   fetchParticipantActivity,
@@ -71,6 +72,7 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
         openDeletionRequestReason: undefined,
         answeredQuestions: [],
         questionStates: {},
+        customQuestionStates: {},
         authorizations: [],
         consents: [],
         seasonAnswers: [],
@@ -88,14 +90,14 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
     // with her record and her answers: the team's notes, material, attendance
     // and authorization belong to real participants and are not read at all.
     if (isLimitedToTestPlayers(permissions)) {
-      const [answered, questionStates, intakeCatalog, customAnswers, scenario] = await Promise.all([
+      const [answered, choices, intakeCatalog, customAnswers, scenario] = await Promise.all([
         participant.terms_accepted_at === null
           ? fetchParticipantAnsweredQuestions(supabase, params.participantId)
           : Promise.resolve(new Set<never>()),
         // What a test player's wizard asks (RAPP-618): the design role sets it too.
         participant.terms_accepted_at === null
-          ? fetchParticipantQuestionStates(supabase, params.participantId).catch(() => ({}))
-          : Promise.resolve({}),
+          ? fetchParticipantChoices(supabase, params.participantId).catch(() => NO_CHOICES)
+          : Promise.resolve(NO_CHOICES),
         fetchIntakeCatalog(supabase).catch(() => EMPTY_INTAKE_CATALOG),
         fetchParticipantCustomAnswers(supabase, params.participantId).catch(() => []),
         testScenario,
@@ -110,7 +112,9 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
         attendanceHistory: [],
         openDeletionRequestReason: undefined,
         answeredQuestions: [...answered],
-        questionStates,
+        // The app's questions and Ramassà's (RAPP-645).
+        questionStates: choices.states,
+        customQuestionStates: choices.customStates,
         authorizations: [],
         consents: [],
         seasonAnswers: [],
@@ -128,7 +132,7 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
       attendanceStats,
       attendanceHistory,
       answered,
-      questionStates,
+      choices,
       authorizations,
       consents,
       seasonAnswers,
@@ -152,8 +156,8 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
         : Promise.resolve(new Set<never>()),
       // What her wizard asks (RAPP-301): set only before she joins.
       participant.terms_accepted_at === null
-        ? fetchParticipantQuestionStates(supabase, params.participantId)
-        : Promise.resolve({}),
+        ? fetchParticipantChoices(supabase, params.participantId)
+        : Promise.resolve(NO_CHOICES),
       // Her season authorizations and consents (RAPP-304). They need
       // participants.view_personal; without it the panel simply shows none.
       fetchParticipantAuthorizations(supabase, params.participantId).catch(() => []),
@@ -181,7 +185,9 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
       openDeletionRequestReason: hers === undefined ? undefined : hers.reason,
       // An array, not the Set: loader data stays plain and serializable.
       answeredQuestions: [...answered],
-      questionStates,
+      // The app's questions and Ramassà's (RAPP-645).
+      questionStates: choices.states,
+      customQuestionStates: choices.customStates,
       authorizations,
       consents,
       seasonAnswers,
@@ -205,6 +211,7 @@ function ParticipantDetailPage() {
     openDeletionRequestReason,
     answeredQuestions,
     questionStates,
+    customQuestionStates,
     authorizations,
     consents,
     seasonAnswers,
@@ -228,6 +235,7 @@ function ParticipantDetailPage() {
       openDeletionRequestReason={openDeletionRequestReason}
       answeredQuestions={answeredQuestions}
       questionStates={questionStates}
+      customQuestionStates={customQuestionStates}
       authorizations={authorizations}
       consents={consents}
       seasonAnswers={seasonAnswers}
