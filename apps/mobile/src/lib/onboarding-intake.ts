@@ -100,11 +100,15 @@ export function wizardDraftStep(step: WizardStepKey | OnboardingDraftStep): Onbo
 export function customWizardPlan(
   screens: readonly IntakeScreen[],
   stored: CustomAnswers,
+  // The staff questions set to Ask for her (RAPP-643): asked even when answered.
+  asked: ReadonlySet<string> = new Set(),
 ): CustomWizardScreen[] {
   return screens.map((screen) => ({
     id: screen.id,
     afterScreen: screen.afterScreen,
-    isAnswered: isScreenAnswered(screen, stored),
+    isAnswered:
+      isScreenAnswered(screen, stored) &&
+      !screen.questions.some((question) => asked.has(question.id)),
     builtinScreen: screen.builtinScreen ?? null,
   }));
 }
