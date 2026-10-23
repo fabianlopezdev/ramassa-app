@@ -106,7 +106,7 @@
       "coach": "Entrenador",
       "staff": "Equipo técnico",
       "admin": "Administración",
-      "onboarding_design": "Diseño de la inscripción",
+      "onboarding_design": "Diseño del onboarding",
       "custom": "Personalizado"
     }
   },
@@ -272,7 +272,7 @@
       "description": "Editar el nombre, los datos de contacto y los idiomas."
     },
     "onboarding_design": {
-      "label": "Diseño de la inscripción",
+      "label": "Diseño del onboarding",
       "description": "Editar lo que ve una jugadora la primera vez que abre la app: preguntas, nota del documento, temporadas y autorización de la temporada."
     },
     "settings_branding": {

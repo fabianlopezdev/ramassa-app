@@ -106,7 +106,7 @@
       "coach": "Coach",
       "staff": "Staff",
       "admin": "Admin",
-      "onboarding_design": "Registration design",
+      "onboarding_design": "Onboarding design",
       "custom": "Custom"
     }
   },
@@ -272,7 +272,7 @@
       "description": "Edit the name, contact details and languages."
     },
     "onboarding_design": {
-      "label": "Registration design",
+      "label": "Onboarding design",
       "description": "Edit what a player sees the first time she opens the app: questions, the document note, seasons and the season authorization."
     },
     "settings_branding": {
