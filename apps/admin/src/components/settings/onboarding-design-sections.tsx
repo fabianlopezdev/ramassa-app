@@ -59,10 +59,10 @@ import type { LocalizedText } from '@ramassa/shared/schemas';
 import { createSeason, setCurrentSeason, type Season } from '@ramassa/shared/seasons';
 
 /** The admin build's commit (the Sentry release), written into a setup file. */
-const APP_COMMIT = (import.meta.env.VITE_COMMIT_SHA as string | undefined) ?? null;
+export const APP_COMMIT = (import.meta.env.VITE_COMMIT_SHA as string | undefined) ?? null;
 
 /** Hands the browser one file to save, without leaving the page. */
-function saveFile(name: string, text: string) {
+export function saveFile(name: string, text: string) {
   const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
   const link = document.createElement('a');
   link.href = url;
@@ -90,7 +90,7 @@ export function OnboardingSetupTransferSection({ canImport }: { readonly canImpo
   );
 }
 
-function useReload() {
+export function useReload() {
   const router = useRouter();
   return () => router.invalidate({ sync: true });
 }

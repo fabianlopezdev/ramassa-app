@@ -26,7 +26,15 @@ import {
 } from '@/components/settings/question-type-fields';
 import { RequiredSwitch } from '@/components/settings/required-switch';
 import { Button } from '@/components/ui/button';
-import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+  type ReactNode,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { getErrorMessageKey, isAppError } from '@ramassa/shared/errors';
 import { LANGUAGE_NATIVE_NAMES, SUPPORTED_LANGUAGES } from '@ramassa/shared/i18n/languages';
@@ -66,7 +74,7 @@ import {
 } from '@ramassa/shared/intake-builder';
 import type { LanguageCode } from '@ramassa/shared/schemas';
 
-interface BuiltinQuestionInfo {
+export interface BuiltinQuestionInfo {
   readonly question: IntakeQuestion;
   /** The app's own label, in the staff member's language. */
   readonly label: string;
@@ -117,6 +125,13 @@ function textFromForm(fields: FormData, name: string): BuilderText {
   ) as BuilderText;
 }
 
+/**
+ * The language a screen editor writes in (RAPP-641). Inside it the forms show
+ * one box per text, in that language; the other languages stay in the form,
+ * hidden, so FormData still reads all five.
+ */
+export const EditingLanguageContext = createContext<LanguageCode | null>(null);
+
 function LanguageFields({
   name,
   legend,
@@ -131,6 +146,36 @@ function LanguageFields({
   readonly isLong?: boolean;
 }) {
   const { t } = useTranslation('settings');
+  const editing = useContext(EditingLanguageContext);
+  if (editing !== null) {
+    return (
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor={`${name}.${editing}`} className="text-start text-sm font-medium">
+          {legend}
+          {editing === 'ca' && isCatalanRequired ? (
+            <span className="text-muted-foreground"> ({t('questions.required')})</span>
+          ) : null}
+        </label>
+        {SUPPORTED_LANGUAGES.map((language) => {
+          const id = `${name}.${language}`;
+          const shared = {
+            id,
+            name: id,
+            defaultValue: value?.[language] ?? '',
+            dir: language === 'ar' || language === 'fa' ? 'rtl' : 'auto',
+            lang: language,
+            hidden: language !== editing,
+            className: isLong ? `${inputClass} h-auto min-h-16 py-2` : inputClass,
+          } as const;
+          return isLong ? (
+            <textarea key={language} {...shared} rows={2} />
+          ) : (
+            <input key={language} {...shared} type="text" />
+          );
+        })}
+      </div>
+    );
+  }
   return (
     <fieldset className="flex flex-col gap-2 rounded-lg border p-3">
       <legend className="px-1 text-start text-sm font-medium">{legend}</legend>
@@ -159,7 +204,7 @@ function LanguageFields({
   );
 }
 
-function ErrorLine({ message }: { readonly message: string | null }) {
+export function ErrorLine({ message }: { readonly message: string | null }) {
   return message === null ? null : (
     <p aria-live="polite" className="text-start text-sm text-destructive">
       {message}
@@ -167,7 +212,7 @@ function ErrorLine({ message }: { readonly message: string | null }) {
   );
 }
 
-function useAction() {
+export function useAction() {
   const { t } = useTranslation(['settings', 'errors']);
   const [isBusy, setIsBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -271,18 +316,24 @@ function ScreenForm({
   );
 }
 
-function QuestionForm({
+export function QuestionForm({
   screenId,
   question,
   onSave,
   onCancel,
   canStoreFiles,
+  withPreview = true,
+  onPreviewChange,
 }: {
   readonly screenId: string;
   readonly question: CustomQuestion | null;
   readonly canStoreFiles: boolean;
   readonly onSave: (draft: QuestionDraft) => Promise<void>;
   readonly onCancel: () => void;
+  /** False where the page draws its own phone (the screen editor, RAPP-641). */
+  readonly withPreview?: boolean;
+  /** Each change as her phone would show it, for that page's phone. */
+  readonly onPreviewChange?: (draft: PreviewDraft) => void;
 }) {
   const { t } = useTranslation('settings');
   const action = useAction();
@@ -305,7 +356,10 @@ function QuestionForm({
     options: kept.map((option) => option.label),
   }));
   const refreshPreview = () => {
-    if (formRef.current !== null) setPreview(readPreviewDraft(formRef.current, type, optionNames));
+    if (formRef.current === null) return;
+    const next = readPreviewDraft(formRef.current, type, optionNames);
+    setPreview(next);
+    onPreviewChange?.(next);
   };
   // The type and the number of option fields change what the form holds.
   useEffect(refreshPreview, [type, newOptions]);
@@ -370,7 +424,11 @@ function QuestionForm({
   }
 
   return (
-    <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,20rem)]">
+    <div
+      className={
+        withPreview ? 'grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,20rem)]' : 'grid gap-4'
+      }
+    >
       <form
         ref={formRef}
         className="flex flex-col gap-3 rounded-xl border bg-card p-4"
@@ -524,21 +582,24 @@ function QuestionForm({
           </Button>
         </div>
       </form>
-      <QuestionPreview
-        draft={preview}
-        language={previewLanguage}
-        onLanguageChange={setPreviewLanguage}
-      />
+      {withPreview ? (
+        <QuestionPreview
+          draft={preview}
+          language={previewLanguage}
+          onLanguageChange={setPreviewLanguage}
+        />
+      ) : null}
     </div>
   );
 }
 
-function BuiltinForm({
+export function BuiltinForm({
   info,
   override,
   required,
   onSave,
   onCancel,
+  onLabelChange,
 }: {
   readonly info: BuiltinQuestionInfo;
   readonly override: BuiltinOverride | undefined;
@@ -546,6 +607,8 @@ function BuiltinForm({
   readonly required: RequiredQuestions;
   readonly onSave: (override: BuiltinOverride) => Promise<void>;
   readonly onCancel: () => void;
+  /** The label as typed, for a phone preview beside the form (RAPP-641). */
+  readonly onLabelChange?: (label: BuilderText) => void;
 }) {
   const { t } = useTranslation('settings');
   const action = useAction();
@@ -584,6 +647,9 @@ function BuiltinForm({
       className="flex flex-col gap-3 rounded-xl border bg-card p-4"
       data-testid="builtin-form"
       onSubmit={(event) => void submit(event)}
+      onInput={(event) =>
+        onLabelChange?.(textFromForm(new FormData(event.currentTarget), 'builtin-label'))
+      }
     >
       <h3 className="text-start font-semibold">{info.label}</h3>
       <p className="text-start text-sm text-muted-foreground">{t('questions.builtinIntro')}</p>

@@ -118,8 +118,6 @@ export function SetupTransfer({
   const [downloadStatus, setDownloadStatus] = useState<'idle' | 'working' | 'done' | 'failed'>(
     'idle',
   );
-  const [stage, setStage] = useState<Stage>({ kind: 'idle' });
-  const [isConfirming, setIsConfirming] = useState(false);
 
   async function download() {
     setDownloadStatus('working');
@@ -129,45 +127,6 @@ export function SetupTransfer({
       setDownloadStatus('done');
     } catch {
       setDownloadStatus('failed');
-    }
-  }
-
-  async function choose(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    event.target.value = '';
-    setIsConfirming(false);
-    if (file === undefined) return;
-    const read = readOnboardingSetupFile(await file.text());
-    if (!read.ok) {
-      setStage({
-        kind: 'refused',
-        refusal:
-          read.reason === 'unknown_version'
-            ? { reason: 'unknown_version', version: read.version }
-            : { reason: read.reason },
-      });
-      return;
-    }
-    setStage({ kind: 'previewing' });
-    try {
-      const preview = await onPreview(read.raw);
-      setStage({ kind: 'preview', raw: read.raw, document: read.document, preview });
-    } catch {
-      setStage({ kind: 'failed' });
-    }
-  }
-
-  async function confirm(raw: Raw) {
-    if (!isConfirming) {
-      setIsConfirming(true);
-      return;
-    }
-    setIsConfirming(false);
-    setStage({ kind: 'importing' });
-    try {
-      setStage({ kind: 'imported', report: await onImport(raw) });
-    } catch {
-      setStage({ kind: 'failed' });
     }
   }
 
@@ -212,69 +171,126 @@ export function SetupTransfer({
           <p className="text-start text-sm text-muted-foreground">
             {t('setupTransfer.importIntro')}
           </p>
-          <label className="flex flex-col gap-1 text-start text-sm font-medium">
-            {t('setupTransfer.chooseFile')}
-            <input
-              type="file"
-              accept="application/json,.json"
-              className="text-sm"
-              onChange={(event) => void choose(event)}
-              disabled={stage.kind === 'previewing' || stage.kind === 'importing'}
-              data-testid="setup-import-file"
-            />
-          </label>
-
-          {stage.kind === 'refused' ? (
-            <p
-              role="alert"
-              className="text-start text-sm text-destructive"
-              data-testid="setup-import-refused"
-              data-reason={stage.refusal.reason}
-              data-version={
-                stage.refusal.reason === 'unknown_version'
-                  ? String(stage.refusal.version)
-                  : undefined
-              }
-            >
-              {stage.refusal.reason === 'unknown_version'
-                ? t(REFUSAL_MESSAGE_KEYS.unknown_version, {
-                    version: String(stage.refusal.version),
-                  })
-                : t(REFUSAL_MESSAGE_KEYS[stage.refusal.reason])}
-            </p>
-          ) : null}
-          {stage.kind === 'previewing' ? (
-            <p aria-live="polite" className="text-start text-sm text-muted-foreground">
-              {t('setupTransfer.previewing')}
-            </p>
-          ) : null}
-          {stage.kind === 'failed' ? (
-            <p role="alert" className="text-start text-sm text-destructive">
-              {t('setupTransfer.failed')}
-            </p>
-          ) : null}
-
-          {stage.kind === 'preview' ? (
-            <SetupPreview
-              preview={stage.preview}
-              appCommit={appCommit}
-              isConfirming={isConfirming}
-              onConfirm={() => void confirm(stage.raw)}
-              onCancel={() => {
-                setIsConfirming(false);
-                setStage({ kind: 'idle' });
-              }}
-            />
-          ) : null}
-          {stage.kind === 'importing' ? (
-            <p aria-live="polite" className="text-start text-sm text-muted-foreground">
-              {t('setupTransfer.importing')}
-            </p>
-          ) : null}
-          {stage.kind === 'imported' ? <SetupReport report={stage.report} /> : null}
+          <SetupImport appCommit={appCommit} onPreview={onPreview} onImport={onImport} />
         </div>
       ) : null}
     </section>
+  );
+}
+
+/**
+ * The import half on its own (RAPP-641): the registration board opens it in a
+ * dialog from its More menu.
+ */
+export function SetupImport({
+  appCommit,
+  onPreview,
+  onImport,
+}: Pick<SetupTransferProps, 'appCommit' | 'onPreview' | 'onImport'>) {
+  const { t } = useTranslation('settings');
+  const [stage, setStage] = useState<Stage>({ kind: 'idle' });
+  const [isConfirming, setIsConfirming] = useState(false);
+
+  async function choose(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    setIsConfirming(false);
+    if (file === undefined) return;
+    const read = readOnboardingSetupFile(await file.text());
+    if (!read.ok) {
+      setStage({
+        kind: 'refused',
+        refusal:
+          read.reason === 'unknown_version'
+            ? { reason: 'unknown_version', version: read.version }
+            : { reason: read.reason },
+      });
+      return;
+    }
+    setStage({ kind: 'previewing' });
+    try {
+      const preview = await onPreview(read.raw);
+      setStage({ kind: 'preview', raw: read.raw, document: read.document, preview });
+    } catch {
+      setStage({ kind: 'failed' });
+    }
+  }
+
+  async function confirm(raw: Raw) {
+    if (!isConfirming) {
+      setIsConfirming(true);
+      return;
+    }
+    setIsConfirming(false);
+    setStage({ kind: 'importing' });
+    try {
+      setStage({ kind: 'imported', report: await onImport(raw) });
+    } catch {
+      setStage({ kind: 'failed' });
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-3" data-testid="setup-import">
+      <label className="flex flex-col gap-1 text-start text-sm font-medium">
+        {t('setupTransfer.chooseFile')}
+        <input
+          type="file"
+          accept="application/json,.json"
+          className="text-sm"
+          onChange={(event) => void choose(event)}
+          disabled={stage.kind === 'previewing' || stage.kind === 'importing'}
+          data-testid="setup-import-file"
+        />
+      </label>
+
+      {stage.kind === 'refused' ? (
+        <p
+          role="alert"
+          className="text-start text-sm text-destructive"
+          data-testid="setup-import-refused"
+          data-reason={stage.refusal.reason}
+          data-version={
+            stage.refusal.reason === 'unknown_version' ? String(stage.refusal.version) : undefined
+          }
+        >
+          {stage.refusal.reason === 'unknown_version'
+            ? t(REFUSAL_MESSAGE_KEYS.unknown_version, {
+                version: String(stage.refusal.version),
+              })
+            : t(REFUSAL_MESSAGE_KEYS[stage.refusal.reason])}
+        </p>
+      ) : null}
+      {stage.kind === 'previewing' ? (
+        <p aria-live="polite" className="text-start text-sm text-muted-foreground">
+          {t('setupTransfer.previewing')}
+        </p>
+      ) : null}
+      {stage.kind === 'failed' ? (
+        <p role="alert" className="text-start text-sm text-destructive">
+          {t('setupTransfer.failed')}
+        </p>
+      ) : null}
+
+      {stage.kind === 'preview' ? (
+        <SetupPreview
+          preview={stage.preview}
+          appCommit={appCommit}
+          isConfirming={isConfirming}
+          onConfirm={() => void confirm(stage.raw)}
+          onCancel={() => {
+            setIsConfirming(false);
+            setStage({ kind: 'idle' });
+          }}
+        />
+      ) : null}
+      {stage.kind === 'importing' ? (
+        <p aria-live="polite" className="text-start text-sm text-muted-foreground">
+          {t('setupTransfer.importing')}
+        </p>
+      ) : null}
+      {stage.kind === 'imported' ? <SetupReport report={stage.report} /> : null}
+    </div>
   );
 }
 

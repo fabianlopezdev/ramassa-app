@@ -337,7 +337,117 @@ const chipClass = 'rounded-full border px-3 py-1 text-sm';
 /**
  * Her phone's control for this question, in one language: the same parts
  * and the app's own words (Day, Month, Year, Add, Sign here) in that language.
+ * The registration board's phone preview (RAPP-641) draws its questions with
+ * it too; there a searchable list shows its box without the option count.
  */
+export function QuestionControl({
+  draft,
+  language,
+  showOptionCount = true,
+}: {
+  readonly draft: PreviewDraft;
+  readonly language: LanguageCode;
+  readonly showOptionCount?: boolean;
+}) {
+  const { t } = useTranslation(['settings', 'onboarding']);
+  const phone = (key: string, values: Record<string, unknown> = {}) =>
+    t(`onboarding:${key}`, { ...values, lng: language });
+  const number = numberSettings(draft.settings);
+  switch (draft.type) {
+    case 'short_text':
+    case 'phone':
+    case 'email':
+      return (
+        <div className={boxClass}>{draft.type === 'phone' ? phone('phonePlaceholder') : ' '}</div>
+      );
+    case 'long_text':
+      return <div className={`${boxClass} h-16`} />;
+    case 'number':
+      return (
+        <div className={boxClass}>
+          {number.min !== undefined || number.max !== undefined
+            ? `${number.min ?? ''} – ${number.max ?? ''}`
+            : ' '}
+        </div>
+      );
+    case 'date':
+      return (
+        <div className="grid grid-cols-3 gap-2">
+          {['dayLabel', 'monthLabel', 'yearLabel'].map((key) => (
+            <div key={key} className={boxClass}>
+              {phone(key)}
+            </div>
+          ))}
+        </div>
+      );
+    case 'yes_no':
+    case 'yes_no_maybe':
+      return (
+        <div className="flex flex-wrap gap-2">
+          {(draft.type === 'yes_no'
+            ? ['yesOption', 'noOption']
+            : ['yesOption', 'noOption', 'customMaybeOption']
+          ).map((key) => (
+            <span key={key} className={chipClass}>
+              {phone(key)}
+            </span>
+          ))}
+        </div>
+      );
+    case 'single_choice':
+    case 'multiple_choice':
+      return (
+        <div className="flex flex-wrap gap-2">
+          {draft.options.map((option, index) => (
+            <span key={index} className={chipClass}>
+              {textIn(option, language)}
+            </span>
+          ))}
+        </div>
+      );
+    case 'search_choice':
+      return (
+        <div className="flex flex-col gap-1">
+          <div className={boxClass}>{phone('customSearchPlaceholder')}</div>
+          {showOptionCount ? (
+            <span className="text-xs text-muted-foreground">
+              {t('settings:questions.preview.optionCount', { count: draft.options.length })}
+            </span>
+          ) : null}
+        </div>
+      );
+    case 'item_list':
+      return (
+        <div className="flex gap-2">
+          <div className={`${boxClass} flex-1`}>{phone('customListItemLabel')}</div>
+          <span className={chipClass}>{phone('supportingEntitiesAddAction')}</span>
+        </div>
+      );
+    case 'consent':
+      return (
+        <label className="flex items-center gap-2 rounded-md border p-2 text-sm">
+          <span aria-hidden className="h-4 w-4 rounded border-2 border-primary" />
+          <span>{textIn(consentSettings(draft.settings).text, language)}</span>
+        </label>
+      );
+    case 'file_upload':
+      return (
+        <div className="flex flex-wrap gap-2">
+          <span className={chipClass}>{phone('customChoosePhoto')}</span>
+          {fileSettings(draft.settings).accept === 'document' ? (
+            <span className={chipClass}>{phone('customChooseDocument')}</span>
+          ) : null}
+        </div>
+      );
+    case 'signature':
+      return (
+        <div className={`${boxClass} flex h-20 items-center justify-center border-dashed`}>
+          {phone('authorizationSignaturePrompt')}
+        </div>
+      );
+  }
+}
+
 export function QuestionPreview({
   draft,
   language,
@@ -348,108 +458,11 @@ export function QuestionPreview({
   readonly onLanguageChange: (language: LanguageCode) => void;
 }) {
   const { t } = useTranslation(['settings', 'onboarding']);
-  const phone = (key: string, values: Record<string, unknown> = {}) =>
-    t(`onboarding:${key}`, { ...values, lng: language });
   const direction = getLanguageDirection(language);
   const label = textIn(draft.label, language);
   const help = textIn(draft.help, language);
   const usesCatalan =
     (draft.label[language] ?? '').trim() === '' && (draft.label.ca ?? '').trim() !== '';
-  const number = numberSettings(draft.settings);
-
-  const control = (() => {
-    switch (draft.type) {
-      case 'short_text':
-      case 'phone':
-      case 'email':
-        return (
-          <div className={boxClass}>{draft.type === 'phone' ? phone('phonePlaceholder') : ' '}</div>
-        );
-      case 'long_text':
-        return <div className={`${boxClass} h-16`} />;
-      case 'number':
-        return (
-          <div className={boxClass}>
-            {number.min !== undefined || number.max !== undefined
-              ? `${number.min ?? ''} – ${number.max ?? ''}`
-              : ' '}
-          </div>
-        );
-      case 'date':
-        return (
-          <div className="grid grid-cols-3 gap-2">
-            {['dayLabel', 'monthLabel', 'yearLabel'].map((key) => (
-              <div key={key} className={boxClass}>
-                {phone(key)}
-              </div>
-            ))}
-          </div>
-        );
-      case 'yes_no':
-      case 'yes_no_maybe':
-        return (
-          <div className="flex flex-wrap gap-2">
-            {(draft.type === 'yes_no'
-              ? ['yesOption', 'noOption']
-              : ['yesOption', 'noOption', 'customMaybeOption']
-            ).map((key) => (
-              <span key={key} className={chipClass}>
-                {phone(key)}
-              </span>
-            ))}
-          </div>
-        );
-      case 'single_choice':
-      case 'multiple_choice':
-        return (
-          <div className="flex flex-wrap gap-2">
-            {draft.options.map((option, index) => (
-              <span key={index} className={chipClass}>
-                {textIn(option, language)}
-              </span>
-            ))}
-          </div>
-        );
-      case 'search_choice':
-        return (
-          <div className="flex flex-col gap-1">
-            <div className={boxClass}>{phone('customSearchPlaceholder')}</div>
-            <span className="text-xs text-muted-foreground">
-              {t('settings:questions.preview.optionCount', { count: draft.options.length })}
-            </span>
-          </div>
-        );
-      case 'item_list':
-        return (
-          <div className="flex gap-2">
-            <div className={`${boxClass} flex-1`}>{phone('customListItemLabel')}</div>
-            <span className={chipClass}>{phone('supportingEntitiesAddAction')}</span>
-          </div>
-        );
-      case 'consent':
-        return (
-          <label className="flex items-center gap-2 rounded-md border p-2 text-sm">
-            <span aria-hidden className="h-4 w-4 rounded border-2 border-primary" />
-            <span>{textIn(consentSettings(draft.settings).text, language)}</span>
-          </label>
-        );
-      case 'file_upload':
-        return (
-          <div className="flex flex-wrap gap-2">
-            <span className={chipClass}>{phone('customChoosePhoto')}</span>
-            {fileSettings(draft.settings).accept === 'document' ? (
-              <span className={chipClass}>{phone('customChooseDocument')}</span>
-            ) : null}
-          </div>
-        );
-      case 'signature':
-        return (
-          <div className={`${boxClass} flex h-20 items-center justify-center border-dashed`}>
-            {phone('authorizationSignaturePrompt')}
-          </div>
-        );
-    }
-  })();
 
   return (
     <aside
@@ -492,7 +505,7 @@ export function QuestionPreview({
           {label === '' ? ' ' : label}
         </p>
         {help === '' ? null : <p className="text-start text-xs text-muted-foreground">{help}</p>}
-        {control}
+        <QuestionControl draft={draft} language={language} />
       </div>
     </aside>
   );
