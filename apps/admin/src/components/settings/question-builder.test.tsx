@@ -142,9 +142,7 @@ test('an existing question locks its type and privacy; a removed option is left 
   const row = view.getByTestId(`builder-question-${QUESTION}`);
   fireEvent.click(within(row).getByRole('button', { name: /^(questions\.edit|Edit)$/ }));
   expect(view.queryByTestId('question-type-change')).toBeNull();
-  expect(
-    view.container.querySelector<HTMLSelectElement>('[name="question-privacy"]')!.disabled,
-  ).toBe(true);
+  expect(view.queryByTestId('question-privacy-change')).toBeNull();
   input(view, 'option-remove-5eed0000-0000-4000-8046-000000000001').checked = true;
   fireEvent.click(view.getByRole('button', { name: /questions\.addOption|Add an option/ }));
   input(view, 'option-new-0.ca').value = 'Una amiga';

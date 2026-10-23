@@ -417,7 +417,12 @@
       "personal": "Personal",
       "sensitive": "Sensible"
     },
-    "privacyHint": "Elígelo bien: después no se puede cambiar. Las respuestas sensibles se cifran y solo las lee el equipo con el nivel Sensible.",
+    "privacyNotes": {
+      "normal": "La lee todo el equipo que puede ver participantes.",
+      "personal": "Solo la lee el equipo con el permiso Ver datos personales. También sale en la exportación de participantes, como la fecha de nacimiento.",
+      "sensitive": "Se guarda cifrada y solo la lee el equipo con el permiso Ver datos sensibles. Solo sale en la exportación con datos sensibles."
+    },
+    "privacyPermanent": "Elígelo bien: después no se puede cambiar.",
     "privacyLocked": "El nivel de privacidad no puede cambiar, porque ya hay respuestas guardadas con este nivel.",
     "placements": "Dónde sale",
     "placement": {
@@ -496,7 +501,6 @@
       "file_upload": "Ella envía una foto o un PDF. Es privado: solo lo ve el equipo que puede leer este nivel.",
       "signature": "Ella firma con el dedo, como en la autorización."
     },
-    "typeGuide": "Qué pregunta cada tipo",
     "placementNotForType": "Una foto, un archivo o una firma solo se piden a ella: en su registro o cada temporada.",
     "placementHers": "Este tipo solo se pide a ella, en su registro o cada temporada.",
     "tooManyOptions": "Hay demasiadas opciones para este tipo. Para una lista larga, elige \"Una opción de una lista larga\".",
@@ -533,7 +537,7 @@
     },
     "requiredCustomNote": "Obligatoria: no puede terminar la inscripción ni la reinscripción sin responderla. El formulario de derivación de la entidad nunca la exige.",
     "requiredHiddenNote": "Está oculta, pero mientras sea obligatoria se pregunta igualmente.",
-    "typePicker": {
+    "picker": {
       "change": "Cambiar"
     },
     "typeSamples": {

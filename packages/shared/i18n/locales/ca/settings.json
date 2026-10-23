@@ -417,7 +417,12 @@
       "personal": "Personal",
       "sensitive": "Sensible"
     },
-    "privacyHint": "Tria-ho bé: després no es pot canviar. Les respostes sensibles es xifren i només les llegeix l'equip amb el nivell Sensible.",
+    "privacyNotes": {
+      "normal": "La llegeix tothom de l’equip que pot veure participants.",
+      "personal": "Només la llegeix l’equip amb el permís Veure dades personals. També surt a l’exportació de participants, com la data de naixement.",
+      "sensitive": "Es desa xifrada i només la llegeix l’equip amb el permís Veure dades sensibles. Només surt a l’exportació amb dades sensibles."
+    },
+    "privacyPermanent": "Tria-ho bé: després no es pot canviar.",
     "privacyLocked": "El nivell de privacitat no pot canviar, perquè ja hi ha respostes desades amb aquest nivell.",
     "placements": "On surt",
     "placement": {
@@ -496,7 +501,6 @@
       "file_upload": "Ella envia una foto o un PDF. És privat: només el veu l’equip que pot llegir aquest nivell.",
       "signature": "Ella signa amb el dit, com a l’autorització."
     },
-    "typeGuide": "Què pregunta cada tipus",
     "placementNotForType": "Una foto, un fitxer o una signatura només es demanen a ella: al seu registre o cada temporada.",
     "placementHers": "Aquest tipus només es demana a ella, al seu registre o cada temporada.",
     "tooManyOptions": "Hi ha massa opcions per a aquest tipus. Per a una llista llarga, tria \"Una opció d’una llista llarga\".",
@@ -533,7 +537,7 @@
     },
     "requiredCustomNote": "Obligatòria: no pot acabar la inscripció ni la reinscripció sense respondre-la. El formulari de derivació de l'entitat no l'exigeix mai.",
     "requiredHiddenNote": "Està amagada, però mentre sigui obligatòria es pregunta igualment.",
-    "typePicker": {
+    "picker": {
       "change": "Canvia"
     },
     "typeSamples": {

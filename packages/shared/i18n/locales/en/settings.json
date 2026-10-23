@@ -417,7 +417,12 @@
       "personal": "Personal",
       "sensitive": "Sensitive"
     },
-    "privacyHint": "Choose with care: it cannot change later. Sensitive answers are encrypted and only staff with the Sensitive level read them.",
+    "privacyNotes": {
+      "normal": "Anyone on the team who can see participants reads it.",
+      "personal": "Only team members with See personal details read it. The participant export includes it, like the date of birth.",
+      "sensitive": "It is stored encrypted, and only team members with See sensitive details read it. Only the export with sensitive details includes it."
+    },
+    "privacyPermanent": "Choose with care: it cannot change later.",
     "privacyLocked": "The privacy level cannot change, because answers are already stored at this level.",
     "placements": "Where it shows",
     "placement": {
@@ -496,7 +501,6 @@
       "file_upload": "She sends a photo or a PDF. It is private: only staff who may read this level see it.",
       "signature": "She signs with her finger, as in the authorization."
     },
-    "typeGuide": "What each type asks",
     "placementNotForType": "A photo, a file or a signature is asked of her only: in her registration or every season.",
     "placementHers": "This type is asked of her only, in her registration or every season.",
     "tooManyOptions": "There are too many options for this type. For a long list, choose \"One choice from a long list\".",
@@ -533,7 +537,7 @@
     },
     "requiredCustomNote": "Required: she cannot finish her registration or re-registration without it. The entity referral form never requires it.",
     "requiredHiddenNote": "It is hidden, but while it is required it is asked anyway.",
-    "typePicker": {
+    "picker": {
       "change": "Change"
     },
     "typeSamples": {

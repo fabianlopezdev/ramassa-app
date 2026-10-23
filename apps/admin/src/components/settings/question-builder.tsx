@@ -14,6 +14,7 @@
  * why. Forms are uncontrolled and read with FormData.
  */
 
+import { QuestionPrivacyPicker } from '@/components/settings/question-privacy-picker';
 import {
   pastedOptions,
   QuestionPreview,
@@ -54,7 +55,6 @@ import {
   overrideFor,
   placementsAllowedFor,
   QUESTION_PLACEMENTS,
-  QUESTION_PRIVACY_LEVELS,
   questionDraftSchema,
   requiredBuiltinQuestions,
   textIn,
@@ -344,6 +344,7 @@ export function QuestionForm({
   const action = useAction();
   const isNew = question === null;
   const [type, setType] = useState<CustomQuestionType>(question?.type ?? 'short_text');
+  const [privacy, setPrivacy] = useState<QuestionPrivacy>(question?.privacy ?? 'personal');
   const kept = question === null ? [] : liveOptions(question);
   const [newOptions, setNewOptions] = useState(isNew ? 2 : 0);
   const allowedPlacements = placementsAllowedFor(type);
@@ -399,7 +400,7 @@ export function QuestionForm({
         const help = textFromForm(fields, 'question-help');
         return Object.keys(help).length === 0 ? null : help;
       })(),
-      privacy: (question?.privacy ?? fields.get('question-privacy')) as QuestionPrivacy,
+      privacy: question?.privacy ?? privacy,
       placements: withPlacements
         ? QUESTION_PLACEMENTS.filter(
             (placement) => fields.get(`question-placement-${placement}`) === 'on',
@@ -447,36 +448,15 @@ export function QuestionForm({
         <h3 className="text-start font-semibold">
           {isNew ? t('questions.newQuestion') : t('questions.editQuestion')}
         </h3>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div className="sm:col-span-2">
-            <QuestionTypePicker
-              value={type}
-              onChange={setType}
-              isLocked={!isNew}
-              warnings={
-                canStoreFiles ? {} : { file_upload: t('questions.settings.uploadsUnavailable') }
-              }
-            />
-          </div>
-          <label className="flex flex-col gap-1.5 text-sm font-medium">
-            <span>{t('questions.privacy')}</span>
-            <select
-              name="question-privacy"
-              defaultValue={question?.privacy ?? 'personal'}
-              disabled={!isNew}
-              className={inputClass}
-            >
-              {QUESTION_PRIVACY_LEVELS.map((level) => (
-                <option key={level} value={level}>
-                  {t(`questions.privacyLevels.${level}`)}
-                </option>
-              ))}
-            </select>
-            <span className="text-start text-xs font-normal text-muted-foreground">
-              {isNew ? t('questions.privacyHint') : t('questions.privacyLocked')}
-            </span>
-          </label>
-        </div>
+        <QuestionTypePicker
+          value={type}
+          onChange={setType}
+          isLocked={!isNew}
+          warnings={
+            canStoreFiles ? {} : { file_upload: t('questions.settings.uploadsUnavailable') }
+          }
+        />
+        <QuestionPrivacyPicker value={privacy} onChange={setPrivacy} isLocked={!isNew} />
         <fieldset className="flex flex-col gap-2 rounded-lg border p-3" hidden={!withPlacements}>
           <legend className="px-1 text-start text-sm font-medium">
             {t('questions.placements')}
