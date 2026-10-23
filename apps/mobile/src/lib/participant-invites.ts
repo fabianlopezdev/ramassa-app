@@ -12,7 +12,6 @@ import {
   revokeParticipantInvite,
 } from '@ramassa/shared/accounts';
 import { useAuth } from '@ramassa/shared/auth';
-import type { QuestionStates } from '@ramassa/shared/intake';
 import { fetchIntakeCatalog } from '@ramassa/shared/intake-builder';
 import {
   buildCreateParticipantInvitePayload,
@@ -37,7 +36,8 @@ export function useParticipantInvites() {
   const create = useMutation({
     mutationFn: (request: {
       readonly input: CreateParticipantInvite;
-      readonly questionStates: QuestionStates;
+      // A Ramassà question travels as `custom:<id>` (RAPP-644).
+      readonly questionStates: Readonly<Record<string, 'ask' | 'skip'>>;
     }) =>
       createParticipantInvite(
         supabase,

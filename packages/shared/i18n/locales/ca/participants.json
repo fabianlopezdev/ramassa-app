@@ -620,5 +620,6 @@
   "inviteScreenSkipped": "Omesa",
   "inviteScreenNotAsked": "No es pregunta",
   "inviteScreenQuestions": "Preguntes",
-  "inviteScreenRequired": "Té una pregunta obligatòria sense resposta."
+  "inviteScreenRequired": "Té una pregunta obligatòria sense resposta.",
+  "inviteScreenCount": "{{asked}} de {{total}} preguntes"
 }

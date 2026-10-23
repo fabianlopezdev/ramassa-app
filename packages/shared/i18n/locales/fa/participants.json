@@ -255,5 +255,6 @@
   "inviteScreenSkipped": "رد شده",
   "inviteScreenNotAsked": "پرسیده نمی‌شود",
   "inviteScreenQuestions": "پرسش‌ها",
-  "inviteScreenRequired": "یک پرسش الزامی دارد که کسی پاسخ نداده است."
+  "inviteScreenRequired": "یک پرسش الزامی دارد که کسی پاسخ نداده است.",
+  "inviteScreenCount": "{{asked}} از {{total}} پرسش"
 }

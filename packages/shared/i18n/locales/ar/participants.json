@@ -255,5 +255,6 @@
   "inviteScreenSkipped": "متخطاة",
   "inviteScreenNotAsked": "لا تُسأل",
   "inviteScreenQuestions": "الأسئلة",
-  "inviteScreenRequired": "فيها سؤال إلزامي لم يُجب عنه أحد."
+  "inviteScreenRequired": "فيها سؤال إلزامي لم يُجب عنه أحد.",
+  "inviteScreenCount": "{{asked}} من {{total}} أسئلة"
 }

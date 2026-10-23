@@ -620,5 +620,6 @@
   "inviteScreenSkipped": "Skipped",
   "inviteScreenNotAsked": "Not asked",
   "inviteScreenQuestions": "Questions",
-  "inviteScreenRequired": "It has a required question nobody answered."
+  "inviteScreenRequired": "It has a required question nobody answered.",
+  "inviteScreenCount": "{{asked}} of {{total}} questions"
 }
