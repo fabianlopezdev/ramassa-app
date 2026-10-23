@@ -16,17 +16,24 @@
  * the title, intro and button the screen passes, in her language only, and a
  * help line staff wrote shows first in the body. Validation messages are the
  * screens' own and never change.
+ *
+ * The questions staff added to a built-in screen (RAPP-642) follow the
+ * screen's own questions. Continue checks and saves them before the screen's
+ * own Continue runs; Back saves them.
  */
 
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTitle } from '@/components/auth/auth-title';
 import { FormScreen } from '@/components/layout/form-screen';
+import { useAddedQuestions } from '@/components/onboarding/added-questions';
 import { QuestionHelp } from '@/components/onboarding/question-help';
 import { WizardProgress } from '@/components/onboarding/wizard-progress';
+import { WizardValidationSummary } from '@/components/onboarding/wizard-validation-summary';
 import { useOnboardingEntrance } from '@/lib/onboarding-entrance';
 import { useScreenWording } from '@/lib/screen-wording';
 import { useLocalSearchParams } from 'expo-router';
 import type { ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 import { WIZARD_QUESTION_SCREENS, type WizardStepKey } from '@ramassa/shared/intake';
 
@@ -81,16 +88,25 @@ function WizardFrameContent({
   const showProgress = stepNumber !== undefined && edit !== '1';
   const entranceMode = useOnboardingEntrance(screenId, entrance !== 'none' && edit !== '1');
   const wording = useScreenWording(screenId);
+  const { t } = useTranslation('onboarding');
+  const added = useAddedQuestions(screenId);
 
   return (
     <FormScreen
       entrance={entranceMode}
-      scrollEnabled={scrollEnabled}
+      scrollEnabled={added.isDrawing ? false : scrollEnabled}
       navigation={
         <WizardProgress
           step={showProgress ? stepNumber : undefined}
           total={totalSteps}
-          onBack={onBack}
+          onBack={
+            onBack === undefined || !added.hasQuestions
+              ? onBack
+              : () => {
+                  added.save();
+                  onBack();
+                }
+          }
         />
       }
       heading={
@@ -103,7 +119,13 @@ function WizardFrameContent({
       bottomAction={
         <AuthSubmitButton
           label={wording.text('continue_label', continueLabel)}
-          onPress={onContinue}
+          onPress={
+            added.hasQuestions
+              ? () => {
+                  if (added.checkAndSave()) onContinue();
+                }
+              : onContinue
+          }
           isLoading={isContinueBusy}
         />
       }
@@ -111,6 +133,12 @@ function WizardFrameContent({
       <View className="gap-lg">
         <QuestionHelp text={wording.help} />
         {children}
+        <WizardValidationSummary
+          testID="wizard-added-errors"
+          isVisible={added.hasErrors}
+          message={t('errorSummary')}
+        />
+        {added.fields}
       </View>
     </FormScreen>
   );
