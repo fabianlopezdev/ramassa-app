@@ -147,5 +147,23 @@
       "dropped": "أفلتّ {{screen}} في الموضع {{position}}.",
       "cancelled": "أُلغي النقل. عادت {{screen}} إلى مكانها."
     }
+  },
+  "questions": {
+    "typePicker": {
+      "change": "تغيير"
+    },
+    "typeSamples": {
+      "shortText": "مريم",
+      "longText": "أعيش مع طفليّ في جيرونا منذ ثلاث سنوات.",
+      "email": "maryam@example.com",
+      "number": "3",
+      "option1": "صباحًا",
+      "option2": "بعد الظهر",
+      "option3": "مساءً",
+      "search1": "المغرب",
+      "search2": "السنغال",
+      "listItem": "الخدمات الاجتماعية",
+      "consent": "أوافق"
+    }
   }
 }

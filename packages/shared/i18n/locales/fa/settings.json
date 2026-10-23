@@ -143,5 +143,23 @@
       "dropped": "{{screen}} را در جایگاه {{position}} رها کردید.",
       "cancelled": "جابه‌جایی لغو شد. {{screen}} به جای خود برگشت."
     }
+  },
+  "questions": {
+    "typePicker": {
+      "change": "تغییر"
+    },
+    "typeSamples": {
+      "shortText": "مریم",
+      "longText": "سه سال است که با دو فرزندم در جیرونا زندگی می‌کنم.",
+      "email": "maryam@example.com",
+      "number": "3",
+      "option1": "صبح",
+      "option2": "بعدازظهر",
+      "option3": "عصر",
+      "search1": "مراکش",
+      "search2": "سنگال",
+      "listItem": "خدمات اجتماعی",
+      "consent": "موافقم"
+    }
   }
 }

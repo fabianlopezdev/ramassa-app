@@ -9,6 +9,7 @@
  * rebuilt from the form on every change (`readPreviewDraft`).
  */
 
+import { cn } from '@/lib/utils';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -18,7 +19,6 @@ import {
 } from '@ramassa/shared/i18n/languages';
 import {
   consentSettings,
-  CUSTOM_QUESTION_TYPES,
   dateSettings,
   fileSettings,
   itemListSettings,
@@ -103,26 +103,6 @@ export function TypeDescription({ type }: { readonly type: CustomQuestionType })
     >
       {t(`questions.typeHelp.${type}`)}
     </span>
-  );
-}
-
-/** Every type with its line, for staff choosing one. */
-export function TypeGuide() {
-  const { t } = useTranslation('settings');
-  return (
-    <details className="rounded-lg border p-3 text-sm">
-      <summary className="cursor-pointer text-start font-medium">
-        {t('questions.typeGuide')}
-      </summary>
-      <dl className="mt-2 grid gap-x-4 gap-y-1 sm:grid-cols-[minmax(0,10rem)_minmax(0,1fr)]">
-        {CUSTOM_QUESTION_TYPES.map((type) => (
-          <div key={type} className="contents">
-            <dt className="text-start font-medium">{t(`questions.types.${type}`)}</dt>
-            <dd className="text-start text-muted-foreground">{t(`questions.typeHelp.${type}`)}</dd>
-          </div>
-        ))}
-      </dl>
-    </details>
   );
 }
 
@@ -333,41 +313,105 @@ export function readPreviewDraft(
 const boxClass =
   'rounded-md border border-input bg-background px-3 py-2 text-sm text-muted-foreground';
 const chipClass = 'rounded-full border px-3 py-1 text-sm';
+/** A filled answer in the type picker's pictures (RAPP-646): her words in the box. */
+const filledClass = 'text-foreground';
+const chosenChipClass = 'border-primary bg-primary/10 text-foreground';
+
+/** The mark a chosen chip carries in a picture: a dot for one option, a tick for several. */
+function ChoiceMark({
+  isMultiple,
+  isChosen,
+}: {
+  readonly isMultiple: boolean;
+  readonly isChosen: boolean;
+}) {
+  return (
+    <span
+      aria-hidden
+      className={cn(
+        'inline-flex size-3.5 shrink-0 items-center justify-center border-[1.5px]',
+        isMultiple ? 'rounded-[3px]' : 'rounded-full',
+        isChosen ? 'border-primary bg-primary text-primary-foreground' : 'border-input',
+      )}
+    >
+      {isChosen ? (
+        isMultiple ? (
+          <svg viewBox="0 0 12 12" className="size-2.5" fill="none">
+            <path
+              d="M2.5 6.2 5 8.5l4.5-5"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        ) : (
+          <span className="size-1.5 rounded-full bg-primary-foreground" />
+        )
+      ) : null}
+    </span>
+  );
+}
 
 /**
  * Her phone's control for this question, in one language: the same parts
  * and the app's own words (Day, Month, Year, Add, Sign here) in that language.
  * The registration board's phone preview (RAPP-641) draws its questions with
  * it too; there a searchable list shows its box without the option count.
+ *
+ * `isExample` draws it answered, with sample words in that language, for the
+ * type picker (RAPP-646): a filled box, chosen options, an added item, a
+ * ticked consent and a drawn signature, so each type reads apart at a glance.
  */
 export function QuestionControl({
   draft,
   language,
   showOptionCount = true,
+  isExample = false,
 }: {
   readonly draft: PreviewDraft;
   readonly language: LanguageCode;
   readonly showOptionCount?: boolean;
+  readonly isExample?: boolean;
 }) {
   const { t } = useTranslation(['settings', 'onboarding']);
   const phone = (key: string, values: Record<string, unknown> = {}) =>
     t(`onboarding:${key}`, { ...values, lng: language });
+  const sample = (key: string) => t(`settings:questions.typeSamples.${key}`, { lng: language });
   const number = numberSettings(draft.settings);
   switch (draft.type) {
     case 'short_text':
     case 'phone':
     case 'email':
       return (
-        <div className={boxClass}>{draft.type === 'phone' ? phone('phonePlaceholder') : ' '}</div>
+        <div className={cn(boxClass, isExample && `${filledClass} truncate`)}>
+          {draft.type === 'phone' ? (
+            <bdi dir="ltr">{phone('phonePlaceholder')}</bdi>
+          ) : isExample ? (
+            draft.type === 'email' ? (
+              <bdi dir="ltr">{sample('email')}</bdi>
+            ) : (
+              sample('shortText')
+            )
+          ) : (
+            ' '
+          )}
+        </div>
       );
     case 'long_text':
-      return <div className={`${boxClass} h-16`} />;
+      return (
+        <div className={cn(boxClass, 'h-16', isExample && `${filledClass} line-clamp-3`)}>
+          {isExample ? sample('longText') : null}
+        </div>
+      );
     case 'number':
       return (
-        <div className={boxClass}>
-          {number.min !== undefined || number.max !== undefined
-            ? `${number.min ?? ''} – ${number.max ?? ''}`
-            : ' '}
+        <div className={cn(boxClass, isExample && filledClass)}>
+          {isExample
+            ? sample('number')
+            : number.min !== undefined || number.max !== undefined
+              ? `${number.min ?? ''} – ${number.max ?? ''}`
+              : ' '}
         </div>
       );
     case 'date':
@@ -387,29 +431,48 @@ export function QuestionControl({
           {(draft.type === 'yes_no'
             ? ['yesOption', 'noOption']
             : ['yesOption', 'noOption', 'customMaybeOption']
-          ).map((key) => (
-            <span key={key} className={chipClass}>
+          ).map((key, index) => (
+            <span key={key} className={cn(chipClass, isExample && index === 0 && chosenChipClass)}>
               {phone(key)}
             </span>
           ))}
         </div>
       );
     case 'single_choice':
-    case 'multiple_choice':
+    case 'multiple_choice': {
+      const isMultiple = draft.type === 'multiple_choice';
       return (
         <div className="flex flex-wrap gap-2">
-          {draft.options.map((option, index) => (
-            <span key={index} className={chipClass}>
-              {textIn(option, language)}
-            </span>
-          ))}
+          {draft.options.map((option, index) => {
+            const isChosen = isExample && (index === 0 || (isMultiple && index === 2));
+            return (
+              <span
+                key={index}
+                className={cn(
+                  chipClass,
+                  isExample && 'inline-flex items-center gap-1.5',
+                  isChosen && chosenChipClass,
+                )}
+              >
+                {isExample ? <ChoiceMark isMultiple={isMultiple} isChosen={isChosen} /> : null}
+                {textIn(option, language)}
+              </span>
+            );
+          })}
         </div>
       );
+    }
     case 'search_choice':
       return (
         <div className="flex flex-col gap-1">
           <div className={boxClass}>{phone('customSearchPlaceholder')}</div>
-          {showOptionCount ? (
+          {isExample ? (
+            draft.options.map((option, index) => (
+              <div key={index} className="rounded-md border px-3 py-1.5 text-start text-sm">
+                {textIn(option, language)}
+              </div>
+            ))
+          ) : showOptionCount ? (
             <span className="text-xs text-muted-foreground">
               {t('settings:questions.preview.optionCount', { count: draft.options.length })}
             </span>
@@ -418,16 +481,34 @@ export function QuestionControl({
       );
     case 'item_list':
       return (
-        <div className="flex gap-2">
-          <div className={`${boxClass} flex-1`}>{phone('customListItemLabel')}</div>
-          <span className={chipClass}>{phone('supportingEntitiesAddAction')}</span>
+        <div className="flex flex-col gap-2">
+          <div className="flex gap-2">
+            <div className={cn(boxClass, 'flex-1', isExample && 'min-w-0 truncate')}>
+              {phone('customListItemLabel')}
+            </div>
+            <span className={chipClass}>{phone('supportingEntitiesAddAction')}</span>
+          </div>
+          {isExample ? (
+            <div className="flex items-center justify-between gap-2 rounded-md border bg-muted/50 px-3 py-1.5 text-sm">
+              <span className="truncate text-start">{sample('listItem')}</span>
+              <span aria-hidden className="text-primary">
+                ×
+              </span>
+            </div>
+          ) : null}
         </div>
       );
     case 'consent':
       return (
         <label className="flex items-center gap-2 rounded-md border p-2 text-sm">
-          <span aria-hidden className="h-4 w-4 rounded border-2 border-primary" />
-          <span>{textIn(consentSettings(draft.settings).text, language)}</span>
+          {isExample ? (
+            <ChoiceMark isMultiple isChosen />
+          ) : (
+            <span aria-hidden className="h-4 w-4 rounded border-2 border-primary" />
+          )}
+          <span>
+            {isExample ? sample('consent') : textIn(consentSettings(draft.settings).text, language)}
+          </span>
         </label>
       );
     case 'file_upload':
@@ -442,7 +523,19 @@ export function QuestionControl({
     case 'signature':
       return (
         <div className={`${boxClass} flex h-20 items-center justify-center border-dashed`}>
-          {phone('authorizationSignaturePrompt')}
+          {isExample ? (
+            <svg aria-hidden viewBox="0 0 120 40" className="h-10 w-28 text-foreground" fill="none">
+              <path
+                d="M6 28c8-14 14-20 18-16s-6 18 0 18 10-22 16-20-2 16 4 16 8-12 14-12 2 10 8 10 10-6 16-8 10 2 14 0"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          ) : (
+            phone('authorizationSignaturePrompt')
+          )}
         </div>
       );
   }

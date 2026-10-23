@@ -532,7 +532,23 @@
       "notHers": "Solo puede ser obligatoria una pregunta que responde ella misma, en la inscripción o cada temporada."
     },
     "requiredCustomNote": "Obligatoria: no puede terminar la inscripción ni la reinscripción sin responderla. El formulario de derivación de la entidad nunca la exige.",
-    "requiredHiddenNote": "Está oculta, pero mientras sea obligatoria se pregunta igualmente."
+    "requiredHiddenNote": "Está oculta, pero mientras sea obligatoria se pregunta igualmente.",
+    "typePicker": {
+      "change": "Cambiar"
+    },
+    "typeSamples": {
+      "shortText": "María",
+      "longText": "Vivo con mis dos hijos en Girona desde hace tres años.",
+      "email": "maria@ejemplo.es",
+      "number": "3",
+      "option1": "Mañana",
+      "option2": "Tarde",
+      "option3": "Noche",
+      "search1": "Marruecos",
+      "search2": "Senegal",
+      "listItem": "Servicios sociales",
+      "consent": "Estoy de acuerdo"
+    }
   },
   "onboardingPage": {
     "title": "Onboarding",

@@ -20,10 +20,9 @@ import {
   QuestionSettingsFields,
   readPreviewDraft,
   readQuestionSettings,
-  TypeDescription,
-  TypeGuide,
   type PreviewDraft,
 } from '@/components/settings/question-type-fields';
+import { QuestionTypePicker } from '@/components/settings/question-type-picker';
 import { RequiredSwitch } from '@/components/settings/required-switch';
 import { Button } from '@/components/ui/button';
 import {
@@ -49,7 +48,6 @@ import {
   builtinRequiredLock,
   canHideBuiltin,
   canRequireCustomQuestion,
-  CUSTOM_QUESTION_TYPES,
   isChoiceType,
   isCustomQuestionRequired,
   liveOptions,
@@ -450,28 +448,16 @@ export function QuestionForm({
           {isNew ? t('questions.newQuestion') : t('questions.editQuestion')}
         </h3>
         <div className="grid gap-3 sm:grid-cols-2">
-          <label className="flex flex-col gap-1.5 text-sm font-medium">
-            <span>{t('questions.type')}</span>
-            <select
-              name="question-type"
+          <div className="sm:col-span-2">
+            <QuestionTypePicker
               value={type}
-              disabled={!isNew}
-              onChange={(event) => setType(event.target.value as CustomQuestionType)}
-              className={inputClass}
-            >
-              {CUSTOM_QUESTION_TYPES.map((candidate) => (
-                <option key={candidate} value={candidate}>
-                  {t(`questions.types.${candidate}`)}
-                </option>
-              ))}
-            </select>
-            <TypeDescription type={type} />
-            {isNew ? null : (
-              <span className="text-start text-xs font-normal text-muted-foreground">
-                {t('questions.typeLocked')}
-              </span>
-            )}
-          </label>
+              onChange={setType}
+              isLocked={!isNew}
+              warnings={
+                canStoreFiles ? {} : { file_upload: t('questions.settings.uploadsUnavailable') }
+              }
+            />
+          </div>
           <label className="flex flex-col gap-1.5 text-sm font-medium">
             <span>{t('questions.privacy')}</span>
             <select
@@ -491,7 +477,6 @@ export function QuestionForm({
             </span>
           </label>
         </div>
-        {isNew ? <TypeGuide /> : null}
         <fieldset className="flex flex-col gap-2 rounded-lg border p-3" hidden={!withPlacements}>
           <legend className="px-1 text-start text-sm font-medium">
             {t('questions.placements')}
