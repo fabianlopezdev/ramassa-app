@@ -535,7 +535,7 @@
     "requiredHiddenNote": "It is hidden, but while it is required it is asked anyway."
   },
   "onboardingPage": {
-    "title": "Registration",
+    "title": "Onboarding",
     "intro": "Everything a player sees when she opens the app for the first time. Changes reach the app at once, with no new version."
   },
   "appTerms": {

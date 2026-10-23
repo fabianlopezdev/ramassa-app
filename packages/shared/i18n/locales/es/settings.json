@@ -535,7 +535,7 @@
     "requiredHiddenNote": "Está oculta, pero mientras sea obligatoria se pregunta igualmente."
   },
   "onboardingPage": {
-    "title": "Inscripción",
+    "title": "Onboarding",
     "intro": "Todo lo que ve una jugadora cuando abre la app por primera vez. Los cambios llegan a la app enseguida, sin ninguna versión nueva."
   },
   "appTerms": {

@@ -535,7 +535,7 @@
     "requiredHiddenNote": "Està amagada, però mentre sigui obligatòria es pregunta igualment."
   },
   "onboardingPage": {
-    "title": "Inscripció",
+    "title": "Onboarding",
     "intro": "Tot el que veu una jugadora quan obre l'app per primera vegada. Els canvis arriben a l'app de seguida, sense cap versió nova."
   },
   "appTerms": {
