@@ -410,7 +410,7 @@ export function QuestionControl({
           {isExample
             ? sample('number')
             : number.min !== undefined || number.max !== undefined
-              ? `${number.min ?? ''} – ${number.max ?? ''}`
+              ? `${number.min ?? ''}-${number.max ?? ''}`
               : ' '}
         </div>
       );
