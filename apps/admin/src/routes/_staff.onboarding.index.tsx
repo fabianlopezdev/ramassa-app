@@ -13,7 +13,6 @@
 
 import { RequireAuth } from '@/components/auth/require-auth';
 import { Page, PageHeader } from '@/components/layout/page';
-import { BoardMenu } from '@/components/onboarding/board-menu';
 import { ScreenBoard } from '@/components/onboarding/screen-board';
 import { ONBOARDING_PERMISSIONS } from '@/lib/nav-items';
 import { loadOnboardingDesign } from '@/lib/onboarding-design';
@@ -39,10 +38,7 @@ function OnboardingBoard() {
   const { t } = useTranslation('settings');
   return (
     <Page data-testid="onboarding-design-page">
-      <PageHeader
-        title={t('onboardingPage.title')}
-        actions={<BoardMenu canImport={data.canPublishTerms} />}
-      />
+      <PageHeader title={t('onboardingPage.title')} />
       <ScreenBoard catalog={data.intakeCatalog} />
     </Page>
   );

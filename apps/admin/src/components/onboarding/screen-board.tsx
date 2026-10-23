@@ -170,17 +170,7 @@ function BoardGrid({
       miniature: (
         <PhoneMiniature content={content} language={language} isDimmed={status !== null} />
       ),
-      meta:
-        status !== null ? (
-          <span className="inline-flex items-center gap-1 text-muted-foreground">
-            <EyeOff aria-hidden className="size-3.5" />
-            {status}
-          </span>
-        ) : step.kind === 'locked' ? (
-          t('onboardingBoard.fixed')
-        ) : (
-          t('onboardingBoard.questionCount', { count: content.questions.length })
-        ),
+      status,
     };
   };
   const active = activeKey === null ? null : card(String(activeKey), positionOf(activeKey));
@@ -282,7 +272,7 @@ function ScreenCard({
   number,
   name,
   miniature,
-  meta,
+  status,
   handle,
   isLifted = false,
 }: {
@@ -290,7 +280,8 @@ function ScreenCard({
   readonly number: number;
   readonly name: string;
   readonly miniature: ReactNode;
-  readonly meta: ReactNode;
+  /** Hidden or not shown to her; null when the screen shows normally. */
+  readonly status: string | null;
   /** The grip of a movable card; null for a locked card or the lifted copy. */
   readonly handle: Handle | null;
   readonly isLifted?: boolean;
@@ -308,8 +299,14 @@ function ScreenCard({
       )}
     >
       <header className="flex h-7 items-center justify-between gap-2">
-        <span className="text-xs font-medium text-muted-foreground tabular-nums">
+        <span className="flex min-w-0 items-center gap-2 text-xs font-medium text-muted-foreground tabular-nums">
           {t('onboardingBoard.step', { number })}
+          {status === null ? null : (
+            <span className="inline-flex min-w-0 items-center gap-1 font-normal">
+              <EyeOff aria-hidden className="size-3.5 shrink-0" />
+              <span className="truncate">{status}</span>
+            </span>
+          )}
         </span>
         {isLocked ? (
           <span
@@ -336,22 +333,16 @@ function ScreenCard({
       <Link to={to} params={params} tabIndex={-1} aria-hidden className="block rounded-xl">
         {miniature}
       </Link>
-      <div className="flex flex-col gap-2">
-        <h3 className="line-clamp-2 h-10 text-start text-sm leading-5 font-semibold">{name}</h3>
-        <div className="flex h-7 items-center justify-between gap-2">
-          <span className="min-w-0 truncate text-start text-xs text-muted-foreground">{meta}</span>
-          <Button asChild variant="outline" size="sm">
-            <Link
-              to={to}
-              params={params}
-              aria-label={t('onboardingBoard.editScreen', { screen: name })}
-              data-testid={`board-edit-${step.key}`}
-            >
-              {t('onboardingBoard.edit')}
-            </Link>
-          </Button>
-        </div>
-      </div>
+      <Button asChild variant="outline" size="sm" className="w-full">
+        <Link
+          to={to}
+          params={params}
+          aria-label={t('onboardingBoard.editScreen', { screen: name })}
+          data-testid={`board-edit-${step.key}`}
+        >
+          {t('onboardingBoard.edit')}
+        </Link>
+      </Button>
     </CardFrame>
   );
 }
@@ -373,10 +364,7 @@ function AddScreenCard({ order }: { readonly order: readonly WizardStepKey[] }) 
           <div aria-hidden className="invisible flex flex-col gap-3">
             <div className="h-7" />
             <div className="aspect-[3/5] w-full" />
-            <div className="flex flex-col gap-2">
-              <div className="h-10" />
-              <div className="h-7" />
-            </div>
+            <div className="h-8" />
           </div>
           <span className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-sm font-medium text-muted-foreground transition-colors group-hover/add:text-primary">
             <span className="flex size-11 items-center justify-center rounded-full border border-dashed border-current">
