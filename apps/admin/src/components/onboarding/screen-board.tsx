@@ -47,6 +47,7 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { customStepKey, type WizardStepKey } from '@ramassa/shared/intake';
 import {
+  flowStepName,
   saveIntakeScreen,
   saveWizardFlowOrder,
   textIn,
@@ -71,9 +72,7 @@ export const BOARD_GRID =
 
 /** The name staff know a screen by, in the dashboard's language. */
 export function stepName(step: BoardStep, language: LanguageCode, t: Translate): string {
-  if (step.kind === 'custom') return textIn(step.screen.title, language);
-  if (step.key === 'authorization') return t('settings:onboardingBoard.authorization');
-  return t(`settings:builtinScreens.screenName.${step.key}`);
+  return flowStepName(step, language, t);
 }
 
 export function ScreenBoard({ catalog }: { readonly catalog: IntakeCatalog }) {

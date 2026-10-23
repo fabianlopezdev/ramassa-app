@@ -41,6 +41,7 @@ import {
   previewWizardQuestions,
   type WizardQuestionAsking,
 } from '../onboarding/wizard-preview';
+import type { LanguageCode } from '../schemas/language';
 import type { Database } from '../types/database';
 import {
   allowedCustomQuestionStates,
@@ -52,6 +53,7 @@ import {
   isCustomQuestionRequired,
   isOwnScreen,
   requiredBuiltinQuestions,
+  textIn,
   wizardFlow,
   type CustomAnswers,
   type CustomQuestion,
@@ -112,6 +114,20 @@ export function flowSteps(catalog: IntakeCatalog): readonly FlowStep[] {
   return [...movableOrder(catalog), ...LOCKED_STEPS]
     .map((key) => flowStep(catalog, key))
     .filter((step): step is FlowStep => step !== null);
+}
+
+/**
+ * The name staff know a step by, in their language: a Ramassà screen's
+ * title, else the app screen's name from the `settings` translations.
+ */
+export function flowStepName(
+  step: FlowStep,
+  language: LanguageCode,
+  t: (key: string) => string,
+): string {
+  if (step.kind === 'custom') return textIn(step.screen.title, language);
+  if (step.key === 'authorization') return t('settings:onboardingBoard.authorization');
+  return t(`settings:builtinScreens.screenName.${step.key}`);
 }
 
 /** A Ramassà screen her phone shows: it holds a live question asked of her. */
