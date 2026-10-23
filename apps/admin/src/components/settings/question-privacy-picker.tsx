@@ -79,7 +79,7 @@ export function QuestionPrivacyPicker({
           testId="question-privacy-option"
         >
           {(level) => (
-            <span className="flex flex-col gap-2 p-2">
+            <span className="flex flex-1 flex-col gap-2 p-2">
               <LevelIcon level={level} />
               <span className="text-sm leading-5 font-medium">
                 {t(`questions.privacyLevels.${level}`)}
@@ -87,7 +87,8 @@ export function QuestionPrivacyPicker({
               <span aria-hidden className="text-xs leading-4 text-muted-foreground">
                 {note(level)}
               </span>
-              <span aria-hidden className="text-xs leading-4 text-muted-foreground italic">
+              {/* Pinned to the bottom, so the three examples line up. */}
+              <span aria-hidden className="mt-auto text-xs leading-4 text-muted-foreground italic">
                 {example(level)}
               </span>
             </span>
