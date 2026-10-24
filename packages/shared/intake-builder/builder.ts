@@ -450,7 +450,7 @@ export function withPlacementsOf(catalog: IntakeCatalog, question: CustomQuestio
 }
 
 /** A custom field as a question of the old shape, for a screen that has no holder row. */
-function questionFromField(
+export function questionFromField(
   layout: ProfileLayout,
   field: ProfileField,
   placement: FieldPlacement,

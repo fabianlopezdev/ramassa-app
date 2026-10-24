@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { AppError } from './errors';
+import type { CustomAnswerValue } from './intake-builder/question-types';
 import { DOCUMENT_TYPES, NIE_PATTERN } from './schemas/onboarding';
 import { personNameSchema, trimPersonName } from './schemas/person-name';
 import {
@@ -117,9 +118,23 @@ export const createReferralSchema = z
 export type CreateReferralInput = z.input<typeof createReferralSchema>;
 export type CreateReferral = z.output<typeof createReferralSchema>;
 
-export function buildReferralPayload(referral: CreateReferral): Json {
+/** Answers to the Ramassà fields of the form (RAPP-652), by field id; empty ones left out. */
+export type ReferralFieldAnswers = Readonly<Record<string, CustomAnswerValue | null>>;
+
+export function buildReferralPayload(
+  referral: CreateReferral,
+  fields: ReferralFieldAnswers | null = null,
+): Json {
   const hasNumber = referral.documentType !== null && referral.documentType !== 'none';
   return {
+    // Saved with the referral in the same call, so it is never left without them.
+    ...(fields === null
+      ? {}
+      : {
+          fields: Object.fromEntries(
+            Object.entries(fields).filter(([, value]) => value !== null),
+          ) as Json,
+        }),
     firstName: referral.firstName,
     lastName: referral.lastName,
     phone: referral.phone,
@@ -328,12 +343,17 @@ export async function fetchSupportingEntityNames(
   return z.array(z.string()).parse(data ?? []);
 }
 
+/**
+ * Sends a referral. `fields` carries the answers to the Ramassà fields of the
+ * form (RAPP-652); the database then checks every required field at once.
+ */
 export async function createReferral(
   client: Pick<Client, 'rpc'>,
   input: CreateReferral,
+  fields: ReferralFieldAnswers | null = null,
 ): Promise<string> {
   const { data, error } = await client.rpc('create_entity_referral', {
-    p_payload: buildReferralPayload(input),
+    p_payload: buildReferralPayload(input, fields),
   });
   if (error) databaseFailure(error.message);
   return z.uuid().parse(data);
