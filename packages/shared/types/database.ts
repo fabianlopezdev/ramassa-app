@@ -6906,6 +6906,7 @@ export type Database = {
         Args: { p_document: Json };
         Returns: Json;
       };
+      profile_field_answer_count: { Args: { p_id: string }; Returns: number };
       publish_app_terms_draft: { Args: never; Returns: number };
       publish_authorization_draft: { Args: never; Returns: number };
       publish_authorization_version: {
