@@ -15,7 +15,7 @@
  */
 
 import { createHash } from 'node:crypto';
-import { cp, mkdir, rm } from 'node:fs/promises';
+import { cp, mkdir, readdir, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { repoRoot } from '../flow-capture/config';
@@ -98,15 +98,45 @@ export function parseStatusEnv(output: string): QaStackEnv {
  */
 const startedConfigHashFile = path.join(tmpdir(), `${QA_PROJECT_ID}-config.sha256`);
 
+/**
+ * Kong serves the email templates from a bind mount of each FILE. A template
+ * deleted and written again is a new file the running container never sees, so
+ * auth falls back to Supabase's default email (no code layout, no login
+ * button). Templates are therefore rewritten in place; everything else is
+ * replaced, so a deleted migration or test leaves the copy too.
+ */
+const TEMPLATES_DIR = 'templates';
+
+async function syncTemplatesInPlace(source: string, target: string): Promise<void> {
+  const sourceDir = path.join(source, TEMPLATES_DIR);
+  const targetDir = path.join(target, TEMPLATES_DIR);
+  await mkdir(targetDir, { recursive: true });
+  const wanted = await readdir(sourceDir);
+  for (const name of await readdir(targetDir)) {
+    if (!wanted.includes(name)) await rm(path.join(targetDir, name), { recursive: true });
+  }
+  for (const name of wanted) {
+    await Bun.write(path.join(targetDir, name), Bun.file(path.join(sourceDir, name)));
+  }
+}
+
 async function syncWorkdir(): Promise<string> {
   const source = path.join(repoRoot, 'supabase');
   const target = path.join(qaWorkdir, 'supabase');
-  await rm(qaWorkdir, { recursive: true, force: true });
-  await mkdir(qaWorkdir, { recursive: true });
+  await mkdir(target, { recursive: true });
+  for (const name of await readdir(qaWorkdir)) {
+    if (name !== 'supabase') await rm(path.join(qaWorkdir, name), { recursive: true, force: true });
+  }
+  for (const name of await readdir(target)) {
+    if (name !== TEMPLATES_DIR) await rm(path.join(target, name), { recursive: true, force: true });
+  }
   await cp(source, target, {
     recursive: true,
-    filter: (file) => !/[/\\](\.temp|\.branches)([/\\]|$)/.test(file),
+    filter: (file) =>
+      !/[/\\](\.temp|\.branches)([/\\]|$)/.test(file) &&
+      path.relative(source, file).split(path.sep)[0] !== TEMPLATES_DIR,
   });
+  await syncTemplatesInPlace(source, target);
   const devConfig = await Bun.file(path.join(source, 'config.toml')).text();
   const config = qaConfigToml(devConfig);
   await Bun.write(path.join(target, 'config.toml'), config);
