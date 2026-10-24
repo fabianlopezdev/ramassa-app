@@ -169,16 +169,18 @@ test.describe('inviting a participant', () => {
       page.getByText(/encara no ha entrat|not joined yet|aún no ha entrado/i).first(),
     ).toBeVisible({ timeout: 15_000 });
 
-    await page
-      .getByRole('button', { name: /edita la fitxa|edit the record|edita la ficha/i })
-      .click();
-    await expect(page.getByTestId('participant-prefill-hint')).toBeVisible();
-    // Nothing anybody answered shows a value: no "M", no "no dependants".
-    await expect(page.locator('#participant-clothingSize')).toHaveValue('');
-    await expect(page.locator('#participant-hasDependents')).toHaveValue('');
+    // Her page on the Fitxa layout (RAPP-653): nothing anybody answered shows
+    // a value (no "M", no "no dependants"), and a field is edited on its row.
+    const notFilled = /sense omplir|not filled in|sin rellenar/i;
+    await expect(page.getByTestId('fitxa-field-clothing_size-value')).toHaveText(notFilled);
+    await expect(page.getByTestId('fitxa-field-dependents-value')).toHaveText(notFilled);
 
-    await page.locator('#participant-clothingSize').selectOption('L');
-    await page.getByRole('button', { name: /^(desa|save|guardar)$/i }).click();
+    await page.getByTestId('fitxa-field-clothing_size-edit').click();
+    const editor = page.getByTestId('fitxa-field-clothing_size-editor');
+    await expect(editor.locator('#participant-clothingSize')).toHaveValue('');
+    await editor.locator('#participant-clothingSize').selectOption('L');
+    await editor.getByRole('button', { name: /^(desa|save|guardar)$/i }).click();
+    await expect(page.getByTestId('fitxa-field-clothing_size-value')).toHaveText('L');
 
     // Only the field she changed became a staff answer; the names came with the invitation.
     await expect
@@ -211,17 +213,31 @@ test.describe('inviting a participant', () => {
       })
       .click();
 
-    const states = page.getByTestId('participant-question-states');
-    await expect(states).toBeVisible({ timeout: 15_000 });
-    await expect(states.locator('#question-state-shoe_size option[value="skip"]')).toBeDisabled();
+    // The choice sits on each field's row of her page (RAPP-653) and saves at once.
+    const choices = page.getByTestId('participant-choices');
+    await expect(choices).toBeVisible({ timeout: 15_000 });
+    await page.getByTestId('fitxa-field-shoe_size-choice').click();
+    await expect(page.getByTestId('fitxa-field-shoe_size-choice-skip')).toHaveAttribute(
+      'data-disabled',
+      '',
+    );
+    await page.keyboard.press('Escape');
 
-    await states
+    await choices
       .getByRole('button', { name: /que ho revisi tot|reviews everything|que lo revise todo/i })
       .click();
-    await states.locator('#question-state-phone').selectOption('skip');
-    await states
-      .getByRole('button', { name: /desa les preguntes|save questions|guardar las preguntas/i })
-      .click();
+    await expect(page.getByTestId('fitxa-field-phone-choice')).toHaveAttribute(
+      'data-state-choice',
+      'ask',
+      { timeout: 15_000 },
+    );
+    await page.getByTestId('fitxa-field-phone-choice').click();
+    await page.getByTestId('fitxa-field-phone-choice-skip').click();
+    await expect(page.getByTestId('fitxa-field-phone-choice')).toHaveAttribute(
+      'data-state-choice',
+      'skip',
+      { timeout: 15_000 },
+    );
 
     await expect
       .poll(

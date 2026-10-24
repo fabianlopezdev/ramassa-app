@@ -97,13 +97,14 @@ test('a question the app needs cannot be hidden, and the form says why', async (
 test("staff read a player's answers, an archived option marked", async ({ page }) => {
   await signIn(page, STAFF_EMAIL);
   await page.goto(`/participants/${PLAYER_ID}`);
-  const section = page.getByTestId('participant-custom-answers');
+  // Her answers sit on their Fitxa fields (RAPP-653).
+  const section = page.getByTestId('participant-fitxa');
   await expect(section).toBeVisible({ timeout: 15_000 });
   await expect(
-    section.getByTestId('custom-answer-5eed0000-0000-4000-8045-000000000002'),
+    section.getByTestId('fitxa-field-5eed0000-0000-4000-8045-000000000002-value'),
   ).toContainText(/(Un cartell \(arxivada\)|A poster \(archived\))/);
   // The seeded staff hold the Sensitive level: her seasonal answer is read, decrypted.
   await expect(
-    section.getByTestId('custom-answer-5eed0000-0000-4000-8045-000000000003'),
+    section.getByTestId('fitxa-field-5eed0000-0000-4000-8045-000000000003-value'),
   ).toContainText('Treballo els dijous a la tarda.');
 });

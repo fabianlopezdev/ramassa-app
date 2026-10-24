@@ -55,6 +55,14 @@ async function openDetail(page: Page, participantId: string): Promise<void> {
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
 }
 
+/** Opens one field's editor on its row of the Fitxa (RAPP-653) and returns it. */
+async function editField(page: Page, key: string) {
+  await page.getByTestId(`fitxa-field-${key}-edit`).click();
+  const editor = page.getByTestId(`fitxa-field-${key}-editor`);
+  await expect(editor).toBeVisible();
+  return editor;
+}
+
 test.describe('the participant detail view', () => {
   test.beforeEach(async ({ page }) => {
     await signIn(page, STAFF_EMAIL);
@@ -147,8 +155,9 @@ test.describe('the participant detail view', () => {
 
     await openDetail(page, participantId);
 
-    await expect(page.getByText(phone, { exact: true })).toBeVisible();
-    await expect(page.getByText(documentNumber, { exact: true })).toBeVisible();
+    // Her page on the Fitxa layout (RAPP-653): the document field reads its type and number.
+    await expect(page.getByTestId('fitxa-field-phone-value')).toHaveText(phone);
+    await expect(page.getByTestId('fitxa-field-document-value')).toContainText(documentNumber);
     // The screen says the look was logged, rather than logging it silently.
     await expect(page.getByText(/registrada|logged|registrado/i)).toBeVisible();
   });
@@ -170,20 +179,26 @@ test.describe('the participant detail view', () => {
     const nextCity = before === 'Gurb' ? 'Calldetenes' : 'Gurb';
 
     await openDetail(page, participantId);
-    await page
-      .getByRole('button', { name: /^(edita la fitxa|edita la ficha|edit the record)$/i })
-      .click();
-
-    const cityField = page.locator('#participant-city');
+    // Inline, on the field's own row (RAPP-653).
+    const editor = await editField(page, 'city');
+    const cityField = editor.locator('#participant-city');
     await expect(cityField).toBeVisible();
     await cityField.fill(nextCity);
-    await page.getByRole('button', { name: /^(desa|save|guardar)$/i }).click();
+    await editor.getByRole('button', { name: /^(desa|save|guardar)$/i }).click();
 
     await expect
       .poll(() => queryDatabase(`select city from public.profiles where id = '${participantId}'`), {
         timeout: 15_000,
       })
       .toBe(nextCity);
+    // Her page says who gave the answer, and the database agrees (RAPP-653).
+    await expect(page.getByTestId('fitxa-field-city-source')).toContainText('Marta Puig');
+    expect(
+      queryDatabase(
+        `select source || '/' || answered_by from public.profile_answers
+          where profile_id = '${participantId}' and question = 'city'`,
+      ),
+    ).toBe('staff/5eed0000-0000-4000-8000-000000000002');
 
     // "Reflected in the table" is an acceptance criterion, so it is asserted in
     // the table rather than inferred from the detail view having re-rendered.
@@ -205,12 +220,10 @@ test.describe('the participant detail view', () => {
     const [originalType, originalNumber] = original.split('|');
     try {
       await openDetail(page, participantId);
-      await page
-        .getByRole('button', { name: /^(edita la fitxa|edita la ficha|edit the record)$/i })
-        .click();
-      await page.locator('#participant-documentType').selectOption({ label: 'Not given' });
-      await expect(page.locator('#participant-documentNumber')).toHaveCount(0);
-      await page.getByRole('button', { name: /^(desa|save|guardar)$/i }).click();
+      const editor = await editField(page, 'document');
+      await editor.locator('#participant-documentType').selectOption({ label: 'Not given' });
+      await expect(editor.locator('#participant-documentNumber')).toHaveCount(0);
+      await editor.getByRole('button', { name: /^(desa|save|guardar)$/i }).click();
 
       await expect
         .poll(
@@ -271,11 +284,9 @@ test.describe('the participant detail view', () => {
     const participantId = participantIdByLastName('Ribes');
 
     await openDetail(page, participantId);
-    await page
-      .getByRole('button', { name: /^(edita la fitxa|edita la ficha|edit the record)$/i })
-      .click();
-    await page.locator('#participant-placeOfBirth').fill('Sant Julià de Vilatorta');
-    await page.getByRole('button', { name: /^(desa|save|guardar)$/i }).click();
+    const editor = await editField(page, 'place_of_birth');
+    await editor.locator('#participant-placeOfBirth').fill('Sant Julià de Vilatorta');
+    await editor.getByRole('button', { name: /^(desa|save|guardar)$/i }).click();
 
     await expect
       .poll(

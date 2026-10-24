@@ -170,22 +170,19 @@ test('the design role fills every type for the test player, and her page reads e
        where a.profile_id = ${HER} and q.screen_id = '${screenId()}'`),
   ).toBe('number,search_choice,date,item_list,consent,signature,file_upload,yes_no,phone,email');
 
-  const answers = page.getByTestId('participant-custom-answers');
-  await expect(answers.getByTestId(`custom-answer-${questionId('Fills')}`)).toHaveText('0');
-  await expect(answers.getByTestId(`custom-answer-${questionId('Idiomes')}`)).toHaveText(
-    'عنصر اختبار',
-  );
-  await expect(answers.getByTestId(`custom-answer-${questionId('Arribada')}`)).toHaveText(
-    /^\d{1,2}\/\d{1,2}\/\d{4}$/,
-  );
-  await expect(answers.getByTestId(`custom-answer-${questionId('Cotxe')}`)).toHaveText(
-    /^(Yes|Sí) \(.+\)$/,
-  );
-  const signature = answers.getByTestId(`custom-answer-${questionId('Signatura')}`);
+  // Her answers sit on their Fitxa fields (RAPP-653).
+  const answers = page.getByTestId('participant-fitxa');
+  const answer = (name: string) => answers.getByTestId(`fitxa-field-${questionId(name)}-value`);
+  await expect(answer('Fills')).toHaveText('0');
+  await expect(answer('Idiomes')).toHaveText('عنصر اختبار');
+  await expect(answer('Arribada')).toHaveText(/^\d{1,2}\/\d{1,2}\/\d{4}$/);
+  await expect(answer('Cotxe')).toHaveText(/^(Yes|Sí) \(.+\)$/);
+  const signature = answer('Signatura');
   await expect(signature).toContainText(/Signed|Signat/);
-  await signature.getByText(/Show the signature|Mostra la signatura/).click();
-  await expect(signature.locator('svg')).toBeVisible();
-  const file = answers.getByTestId(`custom-answer-${questionId('Informe')}`);
+  await signature.getByRole('button', { name: /Show the signature|Mostra la signatura/ }).click();
+  await expect(page.getByRole('dialog').locator('svg')).toBeVisible();
+  await page.keyboard.press('Escape');
+  const file = answer('Informe');
   await expect(file).toContainText('prova.pdf');
   await expect(file.getByRole('button', { name: /Open the file|Obre el fitxer/ })).toBeVisible();
 });

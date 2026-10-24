@@ -4,8 +4,9 @@
  *
  * Such a person gets no document number, phone, address or postal code from
  * `get_participant_profile`. The database keeps the stored values when she
- * saves and checks the document rule on the stored number. The form has to do
- * its part: it hides the four fields, says why, and does not refuse to save a
+ * saves and checks the document rule on the stored number. Her page does its
+ * part (RAPP-653): the Sensible fields of the Fitxa show locked, with the
+ * level they need and no Edit, and saving another field does not refuse a
  * participant with a NIE because of a number it was never shown.
  *
  * The permission is removed for the spec and put back after it, the way the
@@ -74,12 +75,10 @@ test.describe('editing a record without the sensitive fields', () => {
       await signIn(page, LIMITED_EMAIL);
       await page.goto(`/participants/${id}`);
       await expect(page.getByRole('heading', { level: 1, name: /Mamani/ })).toBeVisible();
-      await page
-        .getByRole('button', { name: /^(edita la fitxa|edita la ficha|edit the record)$/i })
-        .click();
-
-      await page.locator('#participant-placeOfBirth').fill(nextPlace);
-      await page.getByRole('button', { name: /^(desa|save|guardar)$/i }).click();
+      await page.getByTestId('fitxa-field-place_of_birth-edit').click();
+      const editor = page.getByTestId('fitxa-field-place_of_birth-editor');
+      await editor.locator('#participant-placeOfBirth').fill(nextPlace);
+      await editor.getByRole('button', { name: /^(desa|save|guardar)$/i }).click();
 
       await expect.poll(() => placeOfBirth(id), { timeout: 15_000 }).toBe(nextPlace);
       expect(storedSensitiveValues(id)).toBe(sensitiveBefore);
@@ -90,22 +89,28 @@ test.describe('editing a record without the sensitive fields', () => {
     }
   });
 
-  test('the form hides the four sensitive fields and says so', async ({ page }) => {
+  test('her page locks the Sensible fields and says which level they need', async ({ page }) => {
     const id = participantId();
+    const phone = queryDatabase(
+      `select public.decrypt_field(phone) from public.profiles where id = '${id}';`,
+    );
 
     await signIn(page, LIMITED_EMAIL);
     await page.goto(`/participants/${id}`);
     await expect(page.getByRole('heading', { level: 1, name: /Mamani/ })).toBeVisible();
-    await page
-      .getByRole('button', { name: /^(edita la fitxa|edita la ficha|edit the record)$/i })
-      .click();
 
-    await expect(page.locator('#participant-placeOfBirth')).toBeVisible();
-    for (const field of ['documentNumber', 'phone', 'address', 'postalCode']) {
-      await expect(page.locator(`#participant-${field}`)).toHaveCount(0);
+    await expect(page.getByTestId('fitxa-field-place_of_birth-edit')).toBeVisible();
+    for (const field of ['document', 'phone', 'address', 'postal_code']) {
+      await expect(page.getByTestId(`fitxa-field-${field}`)).toHaveAttribute(
+        'data-locked',
+        'sensitive',
+      );
+      await expect(page.getByTestId(`fitxa-field-${field}-value`)).toHaveText(
+        /sensibles|sensitive|sensibles/i,
+      );
+      await expect(page.getByTestId(`fitxa-field-${field}-edit`)).toHaveCount(0);
     }
-    await expect(page.getByTestId('participant-edit-sensitive-hidden')).toBeVisible();
-    // The document TYPE is not sensitive: she can still be moved to "no document".
-    await expect(page.locator('#participant-documentType')).toBeVisible();
+    // The value never reached the page.
+    if (phone !== '') await expect(page.getByText(phone)).toHaveCount(0);
   });
 });
