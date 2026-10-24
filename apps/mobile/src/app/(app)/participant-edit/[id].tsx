@@ -36,6 +36,7 @@ import { toAppError, type AppErrorCode } from '@ramassa/shared/errors';
 import {
   buildProfilePrefillPayload,
   fetchParticipantAnsweredQuestions,
+  hasJoined,
   prefillFromRow,
   profilePrefillSchema,
   type ProfilePrefill,
@@ -65,8 +66,7 @@ export default function ParticipantEditScreen() {
   const [isBlocked, setIsBlocked] = useState(false);
   const [failureCode, setFailureCode] = useState<AppErrorCode | null>(null);
 
-  const isPrefill =
-    card.data !== null && card.data !== undefined && card.data.terms_accepted_at === null;
+  const isPrefill = card.data !== null && card.data !== undefined && !hasJoined(card.data);
   const answered = useQuery({
     queryKey: ['participants', id, 'answered-questions'],
     queryFn: () => fetchParticipantAnsweredQuestions(supabase, id),

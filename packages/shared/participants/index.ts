@@ -8,6 +8,7 @@ export {
 export {
   activityDetailKey,
   filterParticipantActivity,
+  hasJoined,
   noteAuthorName,
   PARTICIPANT_ACTIVITY_KINDS,
   PARTICIPANT_NOTE_COLUMNS,

@@ -32,10 +32,11 @@ import {
   type ParticipantCustomAnswer,
   type PlayerChoices,
 } from '@ramassa/shared/intake-builder';
-import type {
-  ParticipantDetailRow,
-  ProfileAnswerOrigin,
-  ProfilePrefillPayload,
+import {
+  hasJoined,
+  type ParticipantDetailRow,
+  type ProfileAnswerOrigin,
+  type ProfilePrefillPayload,
 } from '@ramassa/shared/participants';
 import type { PermissionCode } from '@ramassa/shared/permissions';
 import type { UpdateOwnProfilePayload } from '@ramassa/shared/schemas';
@@ -85,7 +86,7 @@ export function ParticipantFitxa({
   const locale = i18n.resolvedLanguage ?? 'ca';
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isChoiceBusy, setIsChoiceBusy] = useState(false);
-  const hasJoined = participant.terms_accepted_at !== null;
+  const joined = hasJoined(participant);
   const layout = catalog.layout ?? EMPTY_PROFILE_LAYOUT;
   const answers = useMemo(() => answersByField(customAnswers), [customAnswers]);
   const answered = useMemo(() => new Set(answeredQuestions), [answeredQuestions]);
@@ -118,7 +119,7 @@ export function ParticipantFitxa({
     layout,
     answers,
     origins: new Map(origins.map((origin) => [origin.question, origin])),
-    answered: hasJoined ? null : answered,
+    answered: joined ? null : answered,
     sees,
     canEdit: sees('participants.view_personal'),
     choices: showChoices ? planQuestionsByField(plan, layout.fields) : null,
@@ -197,7 +198,7 @@ export function ParticipantFitxa({
           <ProfileAnswerRow
             {...accountRow}
             // The consent is hers to give before she joins (RAPP-300).
-            {...(hasJoined ? editable('media_consent') : {})}
+            {...(joined ? editable('media_consent') : {})}
             name={t('profile:fieldMediaConsent')}
             value={
               participant.media_consent

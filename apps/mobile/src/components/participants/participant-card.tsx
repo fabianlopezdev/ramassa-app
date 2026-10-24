@@ -38,6 +38,7 @@ import { MADRID_TIME_ZONE } from '@ramassa/shared/events';
 import { DEFAULT_LANGUAGE, isSupportedLanguage, LANGUAGE_NATIVE_NAMES } from '@ramassa/shared/i18n';
 import {
   dependentsShown,
+  hasJoined,
   type DependentsShown,
   type ParticipantDetailRow,
 } from '@ramassa/shared/participants';
@@ -179,7 +180,7 @@ export function ParticipantCard({
   const name = `${data.first_name} ${data.last_name}`;
   // Not joined yet: staff created her profile and she has not accepted the terms (RAPP-300).
   // She can be edited, but not deactivated, handed material or moderated: she is not a player yet.
-  const hasJoined = data.terms_accepted_at !== null;
+  const joined = hasJoined(data);
   const dependentsText = (shownDependents: DependentsShown) =>
     shownDependents.kind === 'count'
       ? String(shownDependents.count)
@@ -361,7 +362,7 @@ export function ParticipantCard({
               data.is_active ? 'text-neutral-800' : 'text-neutral-600'
             } ${languageFontClass}`}
           >
-            {!hasJoined ? t('rowInvited') : data.is_active ? t('rowActive') : t('rowInactive')}
+            {!joined ? t('rowInvited') : data.is_active ? t('rowActive') : t('rowInactive')}
           </Text>
           {data.is_forum_banned ? (
             <Text className={`text-start text-sm font-semibold text-error ${languageFontClass}`}>
@@ -374,7 +375,7 @@ export function ParticipantCard({
         </Text>
       </View>
 
-      {canHandOver && hasJoined ? (
+      {canHandOver && joined ? (
         <CardAction
           testID="participant-hand-over"
           label={t('material.handOver')}
@@ -382,7 +383,7 @@ export function ParticipantCard({
           isPrimary
         />
       ) : null}
-      {canEdit || (hasJoined && (canChangeStatus || canModerateForum)) ? (
+      {canEdit || (joined && (canChangeStatus || canModerateForum)) ? (
         <View className="flex-row flex-wrap gap-sm">
           {canEdit ? (
             <CardAction
@@ -391,7 +392,7 @@ export function ParticipantCard({
               onPress={() => push(`/participant-edit/${participantId}` as Href)}
             />
           ) : null}
-          {canChangeStatus && hasJoined ? (
+          {canChangeStatus && joined ? (
             <CardAction
               testID="participant-status"
               label={data.is_active ? t('statusActionDeactivate') : t('statusActionActivate')}
@@ -399,7 +400,7 @@ export function ParticipantCard({
               isBusy={setActive.isPending}
             />
           ) : null}
-          {canModerateForum && hasJoined ? (
+          {canModerateForum && joined ? (
             <CardAction
               testID="participant-forum"
               label={

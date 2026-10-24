@@ -31,6 +31,18 @@ export interface ParticipantDetailRow extends ProfileRow {
   readonly updated_at: string;
   /** A made-up player for designing the onboarding (RAPP-615). */
   readonly is_test_account: boolean;
+  /** `invited` until she joins, then `player` (RAPP-300). */
+  readonly role: string;
+}
+
+/**
+ * Whether she joined, read the way `update_participant_profile` reads it: only
+ * an invited woman is completed in parts. A joined player may never have
+ * accepted the terms (records from before them), so `terms_accepted_at` cannot
+ * say it (RAPP-653).
+ */
+export function hasJoined(participant: Pick<ParticipantDetailRow, 'role'>): boolean {
+  return participant.role !== 'invited';
 }
 
 /**

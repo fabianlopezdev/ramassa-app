@@ -69,6 +69,7 @@ import {
 } from '@ramassa/shared/intake-builder';
 import {
   addParticipantNote,
+  hasJoined,
   scenarioCustomQuestions,
   setParticipantActive,
   setTestPlayerScenario,
@@ -159,8 +160,8 @@ export function ParticipantDetail({
     window.open(url, '_blank', 'noopener');
   };
 
-  // Not joined yet: staff created her profile and she has not accepted the terms (RAPP-300).
-  const hasJoined = participant.terms_accepted_at !== null;
+  // Not joined yet: staff created her profile and invited her (RAPP-300, RAPP-653).
+  const joined = hasJoined(participant);
   // A test player (RAPP-615) is made up: test_players.manage reads and edits
   // all of her, as the database allows. The onboarding design role sees her
   // record and answers only, because the team's tools are for real players.
@@ -307,7 +308,7 @@ export function ParticipantDetail({
               <h1 className="text-start text-2xl font-semibold">
                 {`${participant.first_name} ${participant.last_name}`}
               </h1>
-              {hasJoined ? (
+              {joined ? (
                 <Badge variant={participant.is_active ? 'secondary' : 'outline'}>
                   {participant.is_active ? t('rowActive') : t('rowInactive')}
                 </Badge>
@@ -334,7 +335,7 @@ export function ParticipantDetail({
             )}
             {/* A woman who has not joined has nothing to deactivate: cancelling her
                 invitation removes her (RAPP-300). */}
-            {hasJoined && teamTools ? (
+            {joined && teamTools ? (
               <Button
                 type="button"
                 size="lg"
@@ -376,9 +377,7 @@ export function ParticipantDetail({
         choices={{ states: questionStates, customStates: customQuestionStates }}
         // Set only before she joins (RAPP-301); the design role chooses a test
         // player's too (RAPP-618). The database needs participants.view_personal.
-        showChoices={
-          !hasJoined && (teamTools || isTestPlayer) && sees('participants.view_personal')
-        }
+        showChoices={!joined && (teamTools || isTestPlayer) && sees('participants.view_personal')}
         sees={sees}
         onSaveBuiltin={saveProfile}
         onSaveCustom={async (fieldId, value) => {

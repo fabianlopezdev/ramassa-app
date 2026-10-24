@@ -46,6 +46,7 @@ import {
   fetchParticipantNotes,
   fetchParticipantProfileAnswers,
   fetchTestPlayerScenario,
+  hasJoined,
 } from '@ramassa/shared/participants';
 import { fetchMyPermissions, isLimitedToTestPlayers } from '@ramassa/shared/permissions';
 import { fetchDeletionRequests } from '@ramassa/shared/rgpd';
@@ -94,11 +95,11 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
     if (isLimitedToTestPlayers(permissions)) {
       const [answered, choices, intakeCatalog, customAnswers, profileOrigins, scenario] =
         await Promise.all([
-          participant.terms_accepted_at === null
+          !hasJoined(participant)
             ? fetchParticipantAnsweredQuestions(supabase, params.participantId)
             : Promise.resolve(new Set<never>()),
           // What a test player's wizard asks (RAPP-618): the design role sets it too.
-          participant.terms_accepted_at === null
+          !hasJoined(participant)
             ? fetchParticipantChoices(supabase, params.participantId).catch(() => NO_CHOICES)
             : Promise.resolve(NO_CHOICES),
           fetchIntakeCatalog(supabase).catch(() => EMPTY_INTAKE_CATALOG),
@@ -158,11 +159,11 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
       fetchAttendanceHistory(supabase, params.participantId),
       // A woman who has not joined is completed in parts (RAPP-300): the form
       // shows only what somebody answered. A joined player does not need it.
-      participant.terms_accepted_at === null
+      !hasJoined(participant)
         ? fetchParticipantAnsweredQuestions(supabase, params.participantId)
         : Promise.resolve(new Set<never>()),
       // What her wizard asks (RAPP-301): set only before she joins.
-      participant.terms_accepted_at === null
+      !hasJoined(participant)
         ? fetchParticipantChoices(supabase, params.participantId)
         : Promise.resolve(NO_CHOICES),
       // Her season authorizations and consents (RAPP-304). They need

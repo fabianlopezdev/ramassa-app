@@ -14,6 +14,7 @@ import { participantNoteSchema } from '../schemas';
 import {
   activityDetailKey,
   filterParticipantActivity,
+  hasJoined,
   noteAuthorName,
   PARTICIPANT_ACTIVITY_KINDS,
   type ParticipantActivityEntry,
@@ -127,5 +128,12 @@ describe('activityDetailKey', () => {
     expect(activityDetailKey({ kind: 'message', detail: 'present' })).toBeNull();
     expect(activityDetailKey({ kind: 'attendance', detail: 'late' })).toBeNull();
     expect(activityDetailKey({ kind: 'attendance', detail: null })).toBeNull();
+  });
+});
+
+describe('hasJoined', () => {
+  test('only an invited woman has not joined, whether or not a player accepted the terms', () => {
+    expect(hasJoined({ role: 'invited' })).toBe(false);
+    expect(hasJoined({ role: 'player' })).toBe(true);
   });
 });
