@@ -159,7 +159,8 @@
       "mentoring_request": "{{name}} تطلب جلسة إرشاد",
       "feedback": "ملاحظة جديدة من {{name}}",
       "forum_report": "تم الإبلاغ عن محتوى في المنتدى",
-      "gallery_report": "تم الإبلاغ عن صورة في المعرض"
+      "gallery_report": "تم الإبلاغ عن صورة في المعرض",
+      "field_created": "حقل جديد في ملف اللاعبة: {{name}}"
     }
   }
 }

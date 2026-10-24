@@ -4,6 +4,7 @@
   "tabOrganization": "سازمان",
   "tabDocuments": "اسناد",
   "tabEntities": "نهادها",
+  "tabProfileLayout": "پرونده بازیکن",
   "organizationName": "نام سازمان",
   "contactEmail": "ایمیل تماس",
   "contactPhone": "تلفن تماس",
@@ -172,5 +173,50 @@
     "outside": "{{item}} بیرون از فهرست است.",
     "dropped": "{{item}} را در جایگاه {{position}} رها کردید.",
     "cancelled": "جابه‌جایی لغو شد. {{item}} به جای خود برگشت."
+  },
+  "profileLayout": {
+    "title": "پرونده بازیکن",
+    "addSection": "افزودن بخش",
+    "newSection": "بخش تازه",
+    "sectionName": "نام بخش",
+    "saveSection": "ذخیره بخش",
+    "addField": "افزودن فیلد",
+    "newField": "فیلد تازه",
+    "editField": "ویرایش فیلد",
+    "fieldName": "نام",
+    "saveField": "ذخیره فیلد",
+    "fieldCount_one": "{{count}} فیلد",
+    "fieldCount_other": "{{count}} فیلد",
+    "emptySection": "هنوز فیلدی نیست.",
+    "moveSection": "جابه‌جایی بخش {{section}}",
+    "moveField": "جابه‌جایی فیلد {{field}}",
+    "renameSection": "تغییر نام {{section}}",
+    "editNamed": "ویرایش {{field}}",
+    "builtinLock": "ثابت‌شده توسط برنامه",
+    "fromApp": "از برنامه",
+    "createdBy": "ساخته‌شده توسط {{name}}، {{date}}",
+    "createdOn": "ساخته‌شده در {{date}}",
+    "archived": "فیلد بایگانی شد.",
+    "archiveTitle": "«{{field}}» بایگانی شود؟",
+    "archiveBody": "دیگر در هیچ جا پرسیده نمی‌شود. پاسخ‌ها نگه داشته می‌شوند.",
+    "archiveBodyNone": "دیگر در هیچ جا پرسیده نمی‌شود. هیچ پاسخی ندارد.",
+    "archiveBodyCount_one": "دیگر در هیچ جا پرسیده نمی‌شود. پاسخ آن نگه داشته می‌شود.",
+    "archiveBodyCount_other": "دیگر در هیچ جا پرسیده نمی‌شود. {{count}} پاسخ آن نگه داشته می‌شود.",
+    "counts": {
+      "sections_one": "{{count}} بخش",
+      "sections_other": "{{count}} بخش",
+      "fields_one": "{{count}} فیلد",
+      "fields_other": "{{count}} فیلد",
+      "sensitive_one": "{{count}} حساس",
+      "sensitive_other": "{{count}} حساس",
+      "teamOnly_one": "{{count}} فقط تیم",
+      "teamOnly_other": "{{count}} فقط تیم"
+    },
+    "surface": {
+      "onboarding": "برنامه",
+      "entity_form": "نهاد",
+      "season": "فصل",
+      "teamOnly": "فقط تیم"
+    }
   }
 }

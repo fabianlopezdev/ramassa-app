@@ -122,14 +122,14 @@ async function targetOf(
 describe('the staff layout guards before any loader runs (RAPP-615)', () => {
   test('the design role is redirected from a forbidden URL by a thrown redirect', async () => {
     const client = fakeClient({ signedIn: true, permissions: DESIGN });
-    for (const path of ['/dashboard', '/settings', '/messages', '/participants/invites']) {
+    for (const path of ['/dashboard', '/data', '/messages', '/participants/invites']) {
       expect(await targetOf(client, path)).toBe('/onboarding');
     }
   });
 
   test('the design role reaches the onboarding and the test players', async () => {
     const client = fakeClient({ signedIn: true, permissions: DESIGN });
-    for (const path of ['/onboarding', '/participants', '/participants/new']) {
+    for (const path of ['/onboarding', '/participants', '/participants/new', '/settings']) {
       expect(await targetOf(client, path)).toBeNull();
     }
   });

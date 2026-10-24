@@ -5,6 +5,7 @@
   "tabTeam": "Equipo",
   "tabDocuments": "Documentos",
   "tabEntities": "Entidades",
+  "tabProfileLayout": "Ficha de la jugadora",
   "organizationName": "Nombre de la organización",
   "contactEmail": "Correo de contacto",
   "contactPhone": "Teléfono de contacto",
@@ -777,5 +778,50 @@
     "outside": "{{item}} está fuera de la lista.",
     "dropped": "Has soltado {{item}} en la posición {{position}}.",
     "cancelled": "Movimiento cancelado. {{item}} vuelve a su sitio."
+  },
+  "profileLayout": {
+    "title": "Ficha de la jugadora",
+    "addSection": "Añade una sección",
+    "newSection": "Sección nueva",
+    "sectionName": "Nombre de la sección",
+    "saveSection": "Guarda la sección",
+    "addField": "Añade un campo",
+    "newField": "Campo nuevo",
+    "editField": "Edita el campo",
+    "fieldName": "Nombre",
+    "saveField": "Guarda el campo",
+    "fieldCount_one": "{{count}} campo",
+    "fieldCount_other": "{{count}} campos",
+    "emptySection": "Aún no hay campos.",
+    "moveSection": "Mueve la sección {{section}}",
+    "moveField": "Mueve el campo {{field}}",
+    "renameSection": "Cambia el nombre de {{section}}",
+    "editNamed": "Edita {{field}}",
+    "builtinLock": "Fijado por la app",
+    "fromApp": "de la app",
+    "createdBy": "creado por {{name}}, {{date}}",
+    "createdOn": "creado el {{date}}",
+    "archived": "Campo archivado.",
+    "archiveTitle": "¿Quieres archivar «{{field}}»?",
+    "archiveBody": "Ya no se preguntará en ningún sitio. Las respuestas se conservan.",
+    "archiveBodyNone": "Ya no se preguntará en ningún sitio. No tiene ninguna respuesta.",
+    "archiveBodyCount_one": "Ya no se preguntará en ningún sitio. Se conserva su respuesta.",
+    "archiveBodyCount_other": "Ya no se preguntará en ningún sitio. Se conservan sus {{count}} respuestas.",
+    "counts": {
+      "sections_one": "{{count}} sección",
+      "sections_other": "{{count}} secciones",
+      "fields_one": "{{count}} campo",
+      "fields_other": "{{count}} campos",
+      "sensitive_one": "{{count}} sensible",
+      "sensitive_other": "{{count}} sensibles",
+      "teamOnly_one": "{{count}} solo equipo",
+      "teamOnly_other": "{{count}} solo equipo"
+    },
+    "surface": {
+      "onboarding": "App",
+      "entity_form": "Entidad",
+      "season": "Temporada",
+      "teamOnly": "Solo equipo"
+    }
   }
 }

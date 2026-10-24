@@ -58,9 +58,13 @@ export const DATA_PERMISSIONS = [
   'audit.view',
 ] as const satisfies readonly PermissionCode[];
 
-/** The Settings area: one tab per permission (organization, team, documents, entities). */
+/**
+ * The Settings area: one tab per permission (organization, team, documents,
+ * entities), and the Fitxa de la jugadora for the design role (RAPP-650).
+ */
 export const SETTINGS_PERMISSIONS = [
   'settings.organization',
+  'onboarding.design',
   'settings.branding',
   'settings.documents',
   'entities.manage',

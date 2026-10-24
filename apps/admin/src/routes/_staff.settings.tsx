@@ -11,9 +11,11 @@ import {
 } from '@/components/settings/onboarding-design-sections';
 import { OrganizationSettingsPanel } from '@/components/settings/organization-settings-panel';
 import { PhotoHandoffButton } from '@/components/settings/photo-handoff-dialog';
+import { ProfileLayoutPanel } from '@/components/profile-layout/profile-layout-panel';
 import { TeamAccessPanel } from '@/components/team/team-access-panel';
 import { sendEmailOtp } from '@/lib/auth';
 import { SETTINGS_PERMISSIONS } from '@/lib/nav-items';
+import { canDesignProfileLayout } from '@/lib/profile-layout';
 import { supabase } from '@/lib/supabase';
 import { createFileRoute, useRouter } from '@tanstack/react-router';
 import { z } from 'zod';
@@ -28,7 +30,7 @@ import {
   setEntityCollaboratorActive,
 } from '@ramassa/shared/entity-management';
 import { fetchAppTermsVersions, fetchDocumentStepExplanation } from '@ramassa/shared/intake';
-import { EMPTY_INTAKE_CATALOG, fetchIntakeCatalog } from '@ramassa/shared/intake-builder';
+import { fetchIntakeCatalog } from '@ramassa/shared/intake-builder';
 import {
   fetchOrganizationSettings,
   fetchStaffMembers,
@@ -56,7 +58,15 @@ export const Route = createFileRoute('/_staff/settings')({
     entity: z.uuid().optional().catch(undefined),
     q: z.string().max(120).optional().catch(undefined),
     tab: z
-      .enum(['organization', 'authorization', 'questions', 'staff', 'documents', 'entities'])
+      .enum([
+        'organization',
+        'authorization',
+        'profile-layout',
+        'questions',
+        'staff',
+        'documents',
+        'entities',
+      ])
       .optional()
       .catch(undefined),
   }),
@@ -106,9 +116,10 @@ export const Route = createFileRoute('/_staff/settings')({
       permissions.has('settings.organization')
         ? fetchAppTermsVersions(supabase)
         : Promise.resolve([]),
-      permissions.has('settings.organization')
-        ? fetchIntakeCatalog(supabase)
-        : Promise.resolve(EMPTY_INTAKE_CATALOG),
+      // The Fitxa de la jugadora reads the layout for everyone in Settings
+      // (RAPP-650); the catalog holds no answers, and who created a field
+      // only for the people who design it.
+      fetchIntakeCatalog(supabase),
     ]);
     const selectedEntityId = entities.some((entity) => entity.id === deps.entityId)
       ? (deps.entityId ?? null)
@@ -293,6 +304,12 @@ function OrganizationSettingsScreen() {
             <OnboardingQuestionsSection catalog={data.intakeCatalog} />
           </>
         ) : undefined
+      }
+      profileLayout={
+        <ProfileLayoutPanel
+          catalog={data.intakeCatalog}
+          canEdit={canDesignProfileLayout(permissions)}
+        />
       }
       documentExplanation={
         permissions.has('settings.organization') ? (

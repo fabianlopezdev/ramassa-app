@@ -394,6 +394,13 @@ export async function saveProfileField(client: Client, draft: ProfileFieldDraft)
   return z.uuid().parse(data);
 }
 
+/** How many answers a field keeps, hers and the entities' (RAPP-650); designers only. */
+export async function profileFieldAnswerCount(client: Client, id: string): Promise<number> {
+  const { data, error } = await client.rpc('profile_field_answer_count', { p_id: id });
+  if (error) throw databaseError(error);
+  return z.number().int().nonnegative().parse(data);
+}
+
 export async function archiveProfileField(client: Client, id: string): Promise<void> {
   const { error } = await client.rpc('archive_profile_field', { p_id: id });
   if (error) throw databaseError(error);

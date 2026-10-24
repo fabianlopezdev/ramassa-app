@@ -93,11 +93,12 @@ test('gallery moderators reach the gallery from primary navigation', () => {
   expect(holdsAnyPermission(new Set(['forum.moderate']), gallery?.anyPermission)).toBe(false);
 });
 
-test('the onboarding design role sees the onboarding and the test players only (RAPP-615)', () => {
+test('the onboarding design role sees the onboarding, the test players and the Fitxa (RAPP-615, RAPP-650)', () => {
   const design = new Set<PermissionCode>(['onboarding.design', 'test_players.manage']);
   expect(visibleStaffNavItems(design).map((item) => item.to)).toEqual([
     '/participants',
     '/onboarding',
+    '/settings',
   ]);
 });
 

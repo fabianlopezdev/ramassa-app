@@ -159,7 +159,8 @@
       "mentoring_request": "{{name}} درخواست منتورینگ دارد",
       "feedback": "بازخورد تازه از {{name}}",
       "forum_report": "محتوای انجمن گزارش شد",
-      "gallery_report": "عکس گالری گزارش شد"
+      "gallery_report": "عکس گالری گزارش شد",
+      "field_created": "فیلد تازه در پرونده بازیکن: {{name}}"
     }
   }
 }

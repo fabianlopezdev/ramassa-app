@@ -4,6 +4,7 @@
   "tabOrganization": "المؤسسة",
   "tabDocuments": "الوثائق",
   "tabEntities": "الجهات",
+  "tabProfileLayout": "ملف اللاعبة",
   "organizationName": "اسم المؤسسة",
   "contactEmail": "بريد التواصل",
   "contactPhone": "هاتف التواصل",
@@ -176,5 +177,50 @@
     "outside": "{{item}} خارج القائمة.",
     "dropped": "أفلتّ {{item}} في الموضع {{position}}.",
     "cancelled": "أُلغي النقل. عادت {{item}} إلى مكانها."
+  },
+  "profileLayout": {
+    "title": "ملف اللاعبة",
+    "addSection": "أضف قسمًا",
+    "newSection": "قسم جديد",
+    "sectionName": "اسم القسم",
+    "saveSection": "احفظ القسم",
+    "addField": "أضف حقلًا",
+    "newField": "حقل جديد",
+    "editField": "عدّل الحقل",
+    "fieldName": "الاسم",
+    "saveField": "احفظ الحقل",
+    "fieldCount_one": "{{count}} حقل",
+    "fieldCount_other": "{{count}} حقول",
+    "emptySection": "لا توجد حقول بعد.",
+    "moveSection": "انقل القسم {{section}}",
+    "moveField": "انقل الحقل {{field}}",
+    "renameSection": "غيّر اسم {{section}}",
+    "editNamed": "عدّل {{field}}",
+    "builtinLock": "يحدده التطبيق",
+    "fromApp": "من التطبيق",
+    "createdBy": "أنشأه {{name}}، {{date}}",
+    "createdOn": "أُنشئ في {{date}}",
+    "archived": "أُرشف الحقل.",
+    "archiveTitle": "هل تريد أرشفة «{{field}}»؟",
+    "archiveBody": "لن يُسأل عنه في أي مكان. تُحفظ الإجابات.",
+    "archiveBodyNone": "لن يُسأل عنه في أي مكان. ليست له أي إجابة.",
+    "archiveBodyCount_one": "لن يُسأل عنه في أي مكان. تُحفظ إجابته.",
+    "archiveBodyCount_other": "لن يُسأل عنه في أي مكان. تُحفظ إجاباته البالغة {{count}}.",
+    "counts": {
+      "sections_one": "{{count}} قسم",
+      "sections_other": "{{count}} أقسام",
+      "fields_one": "{{count}} حقل",
+      "fields_other": "{{count}} حقول",
+      "sensitive_one": "{{count}} حساس",
+      "sensitive_other": "{{count}} حساسة",
+      "teamOnly_one": "{{count}} للفريق فقط",
+      "teamOnly_other": "{{count}} للفريق فقط"
+    },
+    "surface": {
+      "onboarding": "التطبيق",
+      "entity_form": "الجهة",
+      "season": "الموسم",
+      "teamOnly": "للفريق فقط"
+    }
   }
 }

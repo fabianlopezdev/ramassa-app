@@ -48,6 +48,8 @@ interface OrganizationSettingsPanelProps {
   readonly authorization?: ReactNode;
   /** The question builder (RAPP-307). */
   readonly questions?: ReactNode;
+  /** The Fitxa de la jugadora (RAPP-650): every team member who opens Settings reads it. */
+  readonly profileLayout?: ReactNode;
   readonly documents: readonly InternalDocument[];
   readonly documentQuery: string;
   readonly entityManagement: ReactNode;
@@ -69,7 +71,13 @@ interface OrganizationSettingsPanelProps {
 type PendingAction = 'organization' | 'document' | 'download';
 
 export type SettingsTab =
-  'organization' | 'authorization' | 'questions' | 'staff' | 'documents' | 'entities';
+  | 'organization'
+  | 'authorization'
+  | 'profile-layout'
+  | 'questions'
+  | 'staff'
+  | 'documents'
+  | 'entities';
 
 /** The tabs a person may open, in display order (RAPP-231). */
 function visibleSettingsTabs(permissions: ReadonlySet<PermissionCode>): readonly SettingsTab[] {
@@ -79,6 +87,8 @@ function visibleSettingsTabs(permissions: ReadonlySet<PermissionCode>): readonly
   }
   // The season's participation authorization (RAPP-304).
   if (permissions.has('settings.organization')) tabs.push('authorization');
+  // The player profile layout (RAPP-650): read by all, edited by its designers.
+  tabs.push('profile-layout');
   // The registration questions staff add and reword (RAPP-307).
   if (permissions.has('settings.organization')) tabs.push('questions');
   if (permissions.has('team.manage')) tabs.push('staff');
@@ -117,6 +127,7 @@ export function OrganizationSettingsPanel({
   documentExplanation,
   authorization,
   questions,
+  profileLayout,
   documents,
   documentQuery,
   entityManagement,
@@ -322,6 +333,9 @@ export function OrganizationSettingsPanel({
           ) : null}
           {tabs.includes('authorization') ? (
             <TabsTrigger value="authorization">{t('tabAuthorization')}</TabsTrigger>
+          ) : null}
+          {tabs.includes('profile-layout') ? (
+            <TabsTrigger value="profile-layout">{t('tabProfileLayout')}</TabsTrigger>
           ) : null}
           {tabs.includes('questions') ? (
             <TabsTrigger value="questions">{t('tabQuestions')}</TabsTrigger>
@@ -557,6 +571,9 @@ export function OrganizationSettingsPanel({
         <TabsContent value="authorization" className="space-y-6">
           <SectionHeader title={t('tabAuthorization')} intro={t('authorizationIntro')} />
           {authorization}
+        </TabsContent>
+        <TabsContent value="profile-layout" className="space-y-6">
+          {profileLayout}
         </TabsContent>
         <TabsContent value="questions" className="space-y-6">
           <SectionHeader title={t('tabQuestions')} intro={t('questionsIntro')} />

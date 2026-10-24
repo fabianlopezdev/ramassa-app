@@ -5,6 +5,7 @@
   "tabTeam": "Equip",
   "tabDocuments": "Documents",
   "tabEntities": "Entitats",
+  "tabProfileLayout": "Fitxa de la jugadora",
   "organizationName": "Nom de l'organització",
   "contactEmail": "Correu de contacte",
   "contactPhone": "Telèfon de contacte",
@@ -777,5 +778,50 @@
     "outside": "{{item}} és fora de la llista.",
     "dropped": "Has deixat {{item}} a la posició {{position}}.",
     "cancelled": "Moviment cancel·lat. {{item}} torna al seu lloc."
+  },
+  "profileLayout": {
+    "title": "Fitxa de la jugadora",
+    "addSection": "Afegeix una secció",
+    "newSection": "Secció nova",
+    "sectionName": "Nom de la secció",
+    "saveSection": "Desa la secció",
+    "addField": "Afegeix un camp",
+    "newField": "Camp nou",
+    "editField": "Edita el camp",
+    "fieldName": "Nom",
+    "saveField": "Desa el camp",
+    "fieldCount_one": "{{count}} camp",
+    "fieldCount_other": "{{count}} camps",
+    "emptySection": "Cap camp encara.",
+    "moveSection": "Mou la secció {{section}}",
+    "moveField": "Mou el camp {{field}}",
+    "renameSection": "Canvia el nom de {{section}}",
+    "editNamed": "Edita {{field}}",
+    "builtinLock": "Fixat per l'app",
+    "fromApp": "de l'app",
+    "createdBy": "creat per {{name}}, {{date}}",
+    "createdOn": "creat el {{date}}",
+    "archived": "Camp arxivat.",
+    "archiveTitle": "Vols arxivar «{{field}}»?",
+    "archiveBody": "Ja no es preguntarà enlloc. Les respostes es conserven.",
+    "archiveBodyNone": "Ja no es preguntarà enlloc. No té cap resposta.",
+    "archiveBodyCount_one": "Ja no es preguntarà enlloc. Es conserva la seva resposta.",
+    "archiveBodyCount_other": "Ja no es preguntarà enlloc. Es conserven les seves {{count}} respostes.",
+    "counts": {
+      "sections_one": "{{count}} secció",
+      "sections_other": "{{count}} seccions",
+      "fields_one": "{{count}} camp",
+      "fields_other": "{{count}} camps",
+      "sensitive_one": "{{count}} sensible",
+      "sensitive_other": "{{count}} sensibles",
+      "teamOnly_one": "{{count}} només equip",
+      "teamOnly_other": "{{count}} només equip"
+    },
+    "surface": {
+      "onboarding": "App",
+      "entity_form": "Entitat",
+      "season": "Temporada",
+      "teamOnly": "Només equip"
+    }
   }
 }

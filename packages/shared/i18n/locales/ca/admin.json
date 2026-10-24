@@ -162,7 +162,8 @@
       "mentoring_request": "{{name}} demana una mentoria",
       "feedback": "Suggeriment nou de {{name}}",
       "forum_report": "Contingut del fòrum denunciat",
-      "gallery_report": "Foto de la galeria denunciada"
+      "gallery_report": "Foto de la galeria denunciada",
+      "field_created": "Camp nou a la fitxa: {{name}}"
     }
   }
 }

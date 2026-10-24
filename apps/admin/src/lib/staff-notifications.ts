@@ -21,6 +21,7 @@ export const STAFF_NOTIFICATION_EVENTS = [
   'feedback',
   'forum_report',
   'gallery_report',
+  'field_created',
 ] as const;
 export type StaffNotificationEvent = (typeof STAFF_NOTIFICATION_EVENTS)[number];
 

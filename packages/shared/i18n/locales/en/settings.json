@@ -5,6 +5,7 @@
   "tabTeam": "Team",
   "tabDocuments": "Documents",
   "tabEntities": "Entities",
+  "tabProfileLayout": "Player profile",
   "organizationName": "Organization name",
   "contactEmail": "Contact email",
   "contactPhone": "Contact phone",
@@ -777,5 +778,50 @@
     "outside": "{{item}} is outside the list.",
     "dropped": "Dropped {{item}} at position {{position}}.",
     "cancelled": "Move cancelled. {{item}} is back in its place."
+  },
+  "profileLayout": {
+    "title": "Player profile",
+    "addSection": "Add a section",
+    "newSection": "New section",
+    "sectionName": "Section name",
+    "saveSection": "Save section",
+    "addField": "Add a field",
+    "newField": "New field",
+    "editField": "Edit field",
+    "fieldName": "Name",
+    "saveField": "Save field",
+    "fieldCount_one": "{{count}} field",
+    "fieldCount_other": "{{count}} fields",
+    "emptySection": "No fields yet.",
+    "moveSection": "Move section {{section}}",
+    "moveField": "Move field {{field}}",
+    "renameSection": "Rename {{section}}",
+    "editNamed": "Edit {{field}}",
+    "builtinLock": "Fixed by the app",
+    "fromApp": "from the app",
+    "createdBy": "created by {{name}}, {{date}}",
+    "createdOn": "created on {{date}}",
+    "archived": "Field archived.",
+    "archiveTitle": "Archive “{{field}}”?",
+    "archiveBody": "It will not be asked anywhere. Its answers are kept.",
+    "archiveBodyNone": "It will not be asked anywhere. It has no answers.",
+    "archiveBodyCount_one": "It will not be asked anywhere. Its answer is kept.",
+    "archiveBodyCount_other": "It will not be asked anywhere. Its {{count}} answers are kept.",
+    "counts": {
+      "sections_one": "{{count}} section",
+      "sections_other": "{{count}} sections",
+      "fields_one": "{{count}} field",
+      "fields_other": "{{count}} fields",
+      "sensitive_one": "{{count}} sensitive",
+      "sensitive_other": "{{count}} sensitive",
+      "teamOnly_one": "{{count}} team only",
+      "teamOnly_other": "{{count}} team only"
+    },
+    "surface": {
+      "onboarding": "App",
+      "entity_form": "Entity",
+      "season": "Season",
+      "teamOnly": "Team only"
+    }
   }
 }

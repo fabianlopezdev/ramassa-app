@@ -104,6 +104,7 @@ export function FieldForm({
   withPreview = false,
   onPreviewChange,
   isFramed = true,
+  secondaryAction,
   testId = 'field-form',
 }: {
   /** Null for a new one. */
@@ -126,6 +127,8 @@ export function FieldForm({
   readonly onPreviewChange?: (draft: PreviewDraft) => void;
   /** False inside a dialog, which is its own frame. */
   readonly isFramed?: boolean;
+  /** A button at the start of the button row, such as Archive. */
+  readonly secondaryAction?: ReactNode;
   readonly testId?: string;
 }) {
   const { t } = useTranslation('settings');
@@ -309,6 +312,7 @@ export function FieldForm({
         ) : null}
         <ErrorLine message={action.error} />
         <div className={cn('flex gap-2', !isFramed && 'justify-end')}>
+          {secondaryAction === undefined ? null : <div className="me-auto">{secondaryAction}</div>}
           {isFramed ? null : (
             <Button type="button" variant="outline" onClick={onCancel}>
               {t('questions.cancel')}
