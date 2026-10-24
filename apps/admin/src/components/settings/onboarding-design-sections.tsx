@@ -1,7 +1,8 @@
 /**
- * The onboarding settings, wired to the database (RAPP-615): the question
- * builder, the document step note, the app terms (RAPP-613), and the seasons
- * with their authorization.
+ * The onboarding settings, wired to the database (RAPP-615): the document
+ * step note, the app terms (RAPP-613), and the seasons with their
+ * authorization. Her screens and the fields they ask live on the Onboarding
+ * board and the Fitxa (RAPP-641, RAPP-650).
  *
  * Settings shows them in its tabs, and the onboarding page shows them on their
  * own, so the onboarding design role reaches them without the rest of
@@ -13,15 +14,10 @@
 import { useStepUp } from '@/components/auth/step-up';
 import { AppTermsEditor } from '@/components/settings/app-terms-editor';
 import { AuthorizationEditor } from '@/components/settings/authorization-editor';
-import { BuiltinScreensEditor } from '@/components/settings/builtin-screens-editor';
 import { DocumentExplanationForm } from '@/components/settings/document-explanation-form';
-import { QuestionBuilder } from '@/components/settings/question-builder';
 import { SeasonsPanel } from '@/components/settings/seasons-panel';
-import { builtinQuestionOptions, QUESTION_LABEL_KEYS } from '@/lib/builtin-questions';
-import { mediaWorkerUrl } from '@/lib/media-worker';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from '@tanstack/react-router';
-import { useTranslation } from 'react-i18next';
 import {
   discardAuthorizationDraft,
   publishAuthorizationDraft,
@@ -33,103 +29,14 @@ import {
   publishAppTermsDraft,
   saveAppTermsDraft,
   saveDocumentStepExplanation,
-  WIZARD_QUESTIONS,
   type AppTermsVersion,
 } from '@ramassa/shared/intake';
-import {
-  archiveCustomQuestion,
-  archiveIntakeScreen,
-  reorderCustomQuestions,
-  reorderIntakeScreens,
-  saveBuiltinOverride,
-  saveBuiltinQuestionRequired,
-  saveBuiltinScreen,
-  saveCustomQuestion,
-  saveCustomQuestionRequired,
-  saveIntakeScreen,
-  saveWizardFlowOrder,
-  uploadsAvailable,
-  type IntakeCatalog,
-} from '@ramassa/shared/intake-builder';
 import type { LocalizedText } from '@ramassa/shared/schemas';
 import { createSeason, setCurrentSeason, type Season } from '@ramassa/shared/seasons';
 
 export function useReload() {
   const router = useRouter();
   return () => router.invalidate({ sync: true });
-}
-
-export function OnboardingQuestionsSection({ catalog }: { readonly catalog: IntakeCatalog }) {
-  const { t } = useTranslation(['settings', 'onboarding']);
-  const reload = useReload();
-  return (
-    <QuestionBuilder
-      catalog={catalog}
-      canStoreFiles={uploadsAvailable(mediaWorkerUrl)}
-      builtins={WIZARD_QUESTIONS.map((question) => ({
-        question,
-        label: t(QUESTION_LABEL_KEYS[question] ?? question),
-        options: builtinQuestionOptions(question, t),
-      }))}
-      onSaveScreen={async (draft) => {
-        await saveIntakeScreen(supabase, draft);
-        await reload();
-      }}
-      onArchiveScreen={async (id) => {
-        await archiveIntakeScreen(supabase, id);
-        await reload();
-      }}
-      onReorderScreens={async (afterScreen, ids) => {
-        await reorderIntakeScreens(supabase, afterScreen, ids);
-        await reload();
-      }}
-      onSaveQuestion={async (draft) => {
-        await saveCustomQuestion(supabase, draft);
-        await reload();
-      }}
-      onArchiveQuestion={async (id) => {
-        await archiveCustomQuestion(supabase, id);
-        await reload();
-      }}
-      onReorderQuestions={async (screenId, ids) => {
-        await reorderCustomQuestions(supabase, screenId, ids);
-        await reload();
-      }}
-      onSaveBuiltin={async (override) => {
-        await saveBuiltinOverride(supabase, override);
-        await reload();
-      }}
-      onSaveBuiltinRequired={async (question, isRequired) => {
-        await saveBuiltinQuestionRequired(supabase, question, isRequired);
-        await reload();
-      }}
-      onSaveCustomRequired={async (questionId, isRequired) => {
-        await saveCustomQuestionRequired(supabase, questionId, isRequired);
-        await reload();
-      }}
-    />
-  );
-}
-
-/**
- * The built-in screens (RAPP-612): their order with the organization's own
- * screens, and their wording in each language.
- */
-export function OnboardingScreensSection({ catalog }: { readonly catalog: IntakeCatalog }) {
-  const reload = useReload();
-  return (
-    <BuiltinScreensEditor
-      catalog={catalog}
-      onSaveScreen={async (draft) => {
-        await saveBuiltinScreen(supabase, draft);
-        await reload();
-      }}
-      onSaveOrder={async (order) => {
-        await saveWizardFlowOrder(supabase, order);
-        await reload();
-      }}
-    />
-  );
 }
 
 export function OnboardingDocumentSection({

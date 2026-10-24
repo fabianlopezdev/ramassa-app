@@ -129,7 +129,7 @@ function BoardGrid({
     const status =
       step.kind === 'builtin' && hidden.has(step.key)
         ? t('builtinScreens.hiddenBadge')
-        : step.kind === 'custom' && !isShownToHer(step.screen)
+        : step.kind === 'custom' && !isShownToHer(catalog, step.screen)
           ? t('onboardingBoard.notShown')
           : null;
     return {

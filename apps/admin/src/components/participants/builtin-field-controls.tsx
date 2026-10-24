@@ -60,7 +60,7 @@ export type BuiltinEditKey =
   | 'specific_needs'
   | 'media_consent';
 
-export const BUILTIN_EDIT_KEYS: readonly BuiltinEditKey[] = [
+const BUILTIN_EDIT_KEYS: readonly BuiltinEditKey[] = [
   'first_name',
   'last_name',
   'date_of_birth',

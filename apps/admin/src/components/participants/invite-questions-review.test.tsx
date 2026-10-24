@@ -111,26 +111,46 @@ test('staff screens are listed in the order her phone shows them (RAPP-612)', ()
     intro: null,
     afterScreen,
     isArchived: false,
-    questions: [
-      {
-        id: `${id}-question`,
-        screenId: id,
-        type: 'short_text' as const,
-        label: { ca: `Pregunta ${id}` },
-        help: null,
-        privacy: 'normal' as const,
-        placements: ['wizard' as const],
-        isArchived: false,
-        settings: {},
-        options: [],
-      },
-    ],
+  });
+  const field = (id: string) => ({
+    id: `${id}-question`,
+    sectionId: 'support',
+    kind: 'custom' as const,
+    builtinKey: null,
+    type: 'short_text' as const,
+    label: { ca: `Pregunta ${id}` },
+    help: null,
+    privacy: 'normal' as const,
+    defaultRequired: false,
+    settings: {},
+    sortOrder: 0,
+    isArchived: false,
+    createdAt: '2026-10-23T10:00:00Z',
+    createdBy: null,
+    createdByName: null,
+    hasAnswers: null,
+    options: [],
+  });
+  const placement = (id: string) => ({
+    id: `${id}-placement`,
+    fieldId: `${id}-question`,
+    surface: 'onboarding' as const,
+    screenKey: id,
+    sortOrder: 0,
+    required: false,
+    labelOverride: null,
+    helpOverride: null,
   });
   // The catalog lists screens by their anchor: C2 first.
   const catalog: IntakeCatalog = {
     ...EMPTY_INTAKE_CATALOG,
     screens: [screen('C2', 'identity'), screen('C1', 'logistics'), screen('C3', 'season')],
     flowOrder: ['custom:C1', 'custom:C2', 'custom:C3', 'identity'],
+    layout: {
+      sections: [],
+      fields: ['C1', 'C2', 'C3'].map(field),
+      placements: ['C2', 'C1', 'C3'].map(placement),
+    },
   };
   const view = render(
     <InviteQuestionsReview

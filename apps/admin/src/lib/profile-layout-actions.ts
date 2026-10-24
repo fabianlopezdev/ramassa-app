@@ -116,5 +116,3 @@ export function useProfileLayoutActions() {
     },
   };
 }
-
-export type ProfileLayoutActions = ReturnType<typeof useProfileLayoutActions>;

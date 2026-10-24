@@ -33,35 +33,56 @@ const OWNER = {
   orgId: '5eed0000-0000-4000-8000-000000000000',
   profileId: '5eed0000-0000-4000-8000-000000000096',
 };
-const question = (id: string, type: string, settings: unknown = {}) => ({
-  id,
-  question_type: type,
-  label: { ca: `Pregunta ${type}` },
-  help: null,
-  privacy: 'personal',
-  placements: ['wizard'],
-  sort_order: 0,
-  is_archived: false,
-  settings,
-  options: [],
-});
+const SCREEN = '5eed0000-0000-4000-8044-0000000000b1';
+const SECTION = '5eed0000-0000-4000-8047-0000000000b1';
+const fields: readonly (readonly [string, string, unknown])[] = [
+  ['5eed0000-0000-4000-8045-0000000000b1', 'number', { integer: true, min: 3 }],
+  ['5eed0000-0000-4000-8045-0000000000b2', 'signature', {}],
+  ['5eed0000-0000-4000-8045-0000000000b3', 'file_upload', { accept: 'photo' }],
+  ['5eed0000-0000-4000-8045-0000000000b4', 'consent', { text: { ca: 'Accepto' } }],
+];
 const catalog = parseIntakeCatalog({
   screens: [
     {
-      id: '5eed0000-0000-4000-8044-0000000000b1',
+      id: SCREEN,
       title: { ca: 'Més' },
       intro: null,
       after_screen: 'logistics',
       sort_order: 0,
       is_archived: false,
-      questions: [
-        question('5eed0000-0000-4000-8045-0000000000b1', 'number', { integer: true, min: 3 }),
-        question('5eed0000-0000-4000-8045-0000000000b2', 'signature'),
-        question('5eed0000-0000-4000-8045-0000000000b3', 'file_upload', { accept: 'photo' }),
-        question('5eed0000-0000-4000-8045-0000000000b4', 'consent', { text: { ca: 'Accepto' } }),
-      ],
     },
   ],
+  sections: [
+    { id: SECTION, key: 'support', title: { ca: 'Suport' }, sort_order: 6, is_builtin: true },
+  ],
+  fields: fields.map(([id, type, settings], index) => ({
+    id,
+    section_id: SECTION,
+    kind: 'custom',
+    builtin_key: null,
+    question_type: type,
+    label: { ca: `Pregunta ${type}` },
+    help: null,
+    privacy: 'personal',
+    default_required: false,
+    settings,
+    show_when_field_id: null,
+    show_when_option_id: null,
+    sort_order: index,
+    is_archived: false,
+    created_at: '2026-10-23T10:00:00Z',
+    options: [],
+  })),
+  placements: fields.map(([id], index) => ({
+    id: `5eed0000-0000-4000-8048-0000000000b${index + 1}`,
+    field_id: id,
+    surface: 'onboarding',
+    screen_key: SCREEN,
+    sort_order: index,
+    required: false,
+    label_override: null,
+    help_override: null,
+  })),
   overrides: [],
   presets: [],
 });

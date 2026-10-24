@@ -20,7 +20,7 @@ import {
 import type { PermissionCode } from '@ramassa/shared/permissions';
 
 /** The permissions that design the layout, as `private.require_question_builder` checks. */
-export const PROFILE_LAYOUT_DESIGN_PERMISSIONS = [
+const PROFILE_LAYOUT_DESIGN_PERMISSIONS = [
   'settings.organization',
   'onboarding.design',
 ] as const satisfies readonly PermissionCode[];

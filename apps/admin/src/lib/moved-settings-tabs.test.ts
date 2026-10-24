@@ -7,6 +7,8 @@ test('the Settings tabs that became pages forward to them (RAPP-654)', () => {
   expect(movedSettingsTab('/settings', { tab: 'profile-layout' })).toEqual({
     to: '/profile-layout',
   });
+  // The old question builder's tab opens the Fitxa (RAPP-656).
+  expect(movedSettingsTab('/settings', { tab: 'questions' })).toEqual({ to: '/profile-layout' });
   expect(movedSettingsTab('/settings/', { tab: 'referral-form' })).toEqual({
     to: '/entities/referral-form',
   });

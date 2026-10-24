@@ -9,6 +9,7 @@ import {
   answerText,
   entityFormItemsOf,
   entityFormQuestions,
+  questionOfField,
   textIn,
   type CustomAnswers,
   type CustomQuestion,
@@ -28,9 +29,13 @@ function answeredQuestions(
 ): readonly CustomQuestion[] {
   const onForm = entityFormQuestions(entityFormItemsOf(catalog));
   const listed = new Set(onForm.map((question) => question.id));
-  const others = catalog.screens
-    .flatMap((screen) => screen.questions)
-    .filter((question) => !listed.has(question.id));
+  const layout = catalog.layout;
+  const others =
+    layout === undefined
+      ? []
+      : layout.fields
+          .filter((field) => field.kind === 'custom' && !listed.has(field.id))
+          .map((field) => questionOfField(layout, field));
   return [...onForm, ...others].filter((question) => answers[question.id] !== undefined);
 }
 

@@ -14,8 +14,7 @@ import { LANGUAGE_NATIVE_NAMES, SUPPORTED_LANGUAGES } from '@ramassa/shared/i18n
 import type { BuilderText } from '@ramassa/shared/intake-builder';
 import type { LanguageCode } from '@ramassa/shared/schemas';
 
-export const TEXT_INPUT_CLASS =
-  'h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm';
+const TEXT_INPUT_CLASS = 'h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm';
 
 /** The language a form writes in; null shows every language at once. */
 export const EditingLanguageContext = createContext<LanguageCode | null>(null);

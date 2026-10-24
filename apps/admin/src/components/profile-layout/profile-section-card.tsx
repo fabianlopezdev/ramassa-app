@@ -30,7 +30,7 @@ import {
 import type { LanguageCode } from '@ramassa/shared/schemas';
 
 /** The id of a section's list as a drop target, apart from the section card itself. */
-export function sectionBodyId(sectionId: string): string {
+function sectionBodyId(sectionId: string): string {
   return `body:${sectionId}`;
 }
 

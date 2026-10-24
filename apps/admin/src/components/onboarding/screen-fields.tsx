@@ -20,9 +20,9 @@ import {
   type PlacementWordingDraft,
 } from '@/components/fields/placement-wording-form';
 import { EditorSection } from '@/components/layout/editor-section';
+import { BuiltinForm } from '@/components/onboarding/builtin-question-form';
 import { FieldDialog } from '@/components/profile-layout/field-dialog';
 import { useReload } from '@/components/settings/onboarding-design-sections';
-import { BuiltinForm } from '@/components/settings/question-builder';
 import { SortableList, type SortableHandle } from '@/components/ui-patterns/sortable-list';
 import { Button } from '@/components/ui/button';
 import { builtinQuestionOptions, QUESTION_LABEL_KEYS } from '@/lib/builtin-questions';
@@ -372,7 +372,7 @@ function BuiltinPlacementRow({
 }: {
   readonly catalog: IntakeCatalog;
   readonly question: IntakeQuestion;
-  /** Its field on the Fitxa; absent from an older server. */
+  /** Its field on the Fitxa; absent while the catalog has no layout. */
   readonly field: ProfileField | undefined;
   readonly sectionName: (field: ProfileField) => string;
   readonly language: LanguageCode;

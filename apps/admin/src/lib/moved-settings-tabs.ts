@@ -14,9 +14,13 @@
  * router.
  */
 
-/** The `tab` values that now live on their own pages. */
+/**
+ * The `tab` values that now live on their own pages. The Questions tab held
+ * the old question builder: its fields live on the Fitxa (RAPP-656).
+ */
 export const MOVED_SETTINGS_TABS = [
   'profile-layout',
+  'questions',
   'referral-form',
   'staff',
   'entities',
@@ -40,6 +44,7 @@ export function movedSettingsTab(
   if (!isSettingsPath(pathname)) return null;
   switch (search['tab']) {
     case 'profile-layout':
+    case 'questions':
       return { to: '/profile-layout' };
     case 'referral-form':
       return { to: '/entities/referral-form' };

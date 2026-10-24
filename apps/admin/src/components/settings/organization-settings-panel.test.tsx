@@ -101,18 +101,19 @@ test('document search delegates the typed query', async () => {
 test('a tab shows only to a holder of its permission (RAPP-231)', () => {
   const { view } = renderPanel({
     permissions: new Set(['settings.documents']),
-    initialTab: 'questions',
+    initialTab: 'authorization',
   });
-  expect(view.queryByRole('tab', { name: /tabQuestions|Questions/ })).toBeNull();
+  expect(view.queryByRole('tab', { name: /tabAuthorization|Authorization/ })).toBeNull();
   expect(view.queryByRole('tab', { name: /tabOrganization|Organization/ })).toBeNull();
   expect(
     view.getByRole('tab', { name: /tabDocuments|Documents/ }).getAttribute('aria-selected'),
   ).toBe('true');
 });
 
-test('the pages with their own menu item are no longer Settings tabs (RAPP-654)', () => {
+test('the pages with their own menu item are no longer Settings tabs (RAPP-654, RAPP-656)', () => {
   const { view } = renderPanel();
   for (const name of [
+    /tabQuestions|^Questions$/,
     /tabTeam|^Team$/,
     /tabEntities|^Entities$/,
     /tabProfileLayout|Player profile/,

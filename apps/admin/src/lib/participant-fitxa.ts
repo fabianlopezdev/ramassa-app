@@ -66,7 +66,7 @@ export function answersByField(
 }
 
 /** The permission a privacy level needs to be read. */
-export const LEVEL_PERMISSION: Readonly<Record<QuestionPrivacy, PermissionCode>> = {
+const LEVEL_PERMISSION: Readonly<Record<QuestionPrivacy, PermissionCode>> = {
   normal: 'participants.view',
   personal: 'participants.view_personal',
   sensitive: 'participants.view_sensitive',

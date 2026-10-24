@@ -62,7 +62,7 @@ import {
   archiveIntakeScreen,
   canHideBuiltin,
   canHideBuiltinScreen,
-  hasRequiredAddedQuestion,
+  hasRequiredPlacedField,
   requiredBuiltinQuestions,
   saveBuiltinScreen,
   saveIntakeScreen,
@@ -70,7 +70,7 @@ import {
   textIn,
   type BuilderText,
   type IntakeCatalog,
-  type IntakeScreen,
+  type RamassaScreen,
 } from '@ramassa/shared/intake-builder';
 import type { LanguageCode } from '@ramassa/shared/schemas';
 import { allSteps, editableScreenOf, stepFromRouteId, type BoardStep } from './board-steps';
@@ -151,14 +151,14 @@ function EditorHeader({
   );
 }
 
-function DeleteScreen({ screen, name }: { readonly screen: IntakeScreen; readonly name: string }) {
+function DeleteScreen({ screen, name }: { readonly screen: RamassaScreen; readonly name: string }) {
   const { t } = useTranslation('settings');
   const navigate = useNavigate();
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   async function remove() {
     try {
-      // Archived: her answers stay with the screen (RAPP-307).
+      // Archived: the fields leave the screen and stay on the Fitxa with her answers (RAPP-656).
       await archiveIntakeScreen(supabase, screen.id);
       await navigate({ to: '/onboarding' });
       await router.invalidate();
@@ -233,7 +233,7 @@ function CustomScreenEditor({
   total,
 }: {
   readonly data: OnboardingDesignData;
-  readonly screen: IntakeScreen;
+  readonly screen: RamassaScreen;
   readonly step: BoardStep;
   readonly number: number;
   readonly total: number;
@@ -600,8 +600,8 @@ function WordingSection({
   const hideable =
     isQuestionScreen(screen) &&
     canHideBuiltinScreen(screen, requiredBuiltinQuestions(catalog)) &&
-    // A required added question keeps the screen shown (RAPP-642).
-    !hasRequiredAddedQuestion(catalog, screen);
+    // A required field placed on it keeps the screen shown (RAPP-642).
+    !hasRequiredPlacedField(catalog, screen);
   const bundled = (field: ScreenTextField): string => {
     const key = BUNDLED_SCREEN_TEXT_KEYS[screen][field];
     return key === undefined ? '' : t(`onboarding:${key}`, { lng: language });

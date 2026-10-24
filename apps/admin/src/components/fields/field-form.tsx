@@ -3,9 +3,9 @@
  * in the five languages, its type from the tiles (RAPP-646), its privacy from
  * the cards (RAPP-647), the type's settings and, for a choice, its options.
  *
- * The Fitxa de la jugadora opens it for a field; the old question forms wrap
- * it and add their own places (`extra`, `validate`). The type never changes
- * once saved, and the privacy level is locked by the caller (once answers
+ * The Fitxa de la jugadora and the onboarding picker open it for a field
+ * (RAPP-650, RAPP-651). Where a field is asked is never part of it: that is
+ * a placement. The type never changes once saved, and the privacy level is locked by the caller (once answers
  * exist for a field). A removed option is archived and the answers that
  * chose it keep it. The form is uncontrolled and read with FormData.
  */
@@ -97,8 +97,6 @@ export function FieldForm({
   submitLabel,
   isPrivacyLocked,
   canStoreFiles,
-  extra,
-  validate,
   onSave,
   onCancel,
   withPreview = false,
@@ -110,15 +108,11 @@ export function FieldForm({
   /** Null for a new one. */
   readonly value: FieldFormValue | null;
   readonly title: string;
-  /** The legend of the name: "Name" for a field, "Question" for a question. */
+  /** The legend of the name input. */
   readonly nameLegend: string;
   readonly submitLabel: string;
   readonly isPrivacyLocked: boolean;
   readonly canStoreFiles: boolean;
-  /** More inputs after the privacy, given the chosen type (the old question's places). */
-  readonly extra?: (type: CustomQuestionType) => ReactNode;
-  /** One more check on submit, with the form's values; a message refuses the save. */
-  readonly validate?: (fields: FormData, type: CustomQuestionType) => string | null;
   readonly onSave: (draft: FieldFormDraft, fields: FormData) => Promise<void>;
   readonly onCancel: () => void;
   /** A preview of her phone beside the form. */
@@ -205,11 +199,6 @@ export function FieldForm({
       );
       return;
     }
-    const refused = validate?.(fields, type) ?? null;
-    if (refused !== null) {
-      action.setError(refused);
-      return;
-    }
     if (await action.run(() => onSave(draft, fields))) onCancel();
   }
 
@@ -247,7 +236,6 @@ export function FieldForm({
           onChange={setPrivacy}
           isLocked={isPrivacyLocked}
         />
-        {extra?.(type)}
         <LanguageFields
           name="question-help"
           legend={t('questions.help')}

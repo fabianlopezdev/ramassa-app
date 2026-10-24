@@ -4,8 +4,6 @@ import {
   OnboardingAppTermsSection,
   OnboardingAuthorizationSection,
   OnboardingDocumentSection,
-  OnboardingQuestionsSection,
-  OnboardingScreensSection,
 } from '@/components/settings/onboarding-design-sections';
 import {
   isSettingsTab,
@@ -21,7 +19,6 @@ import { z } from 'zod';
 import { useAuth } from '@ramassa/shared/auth';
 import { fetchAuthorizationVersions } from '@ramassa/shared/authorization';
 import { fetchAppTermsVersions, fetchDocumentStepExplanation } from '@ramassa/shared/intake';
-import { fetchIntakeCatalog } from '@ramassa/shared/intake-builder';
 import {
   fetchOrganizationSettings,
   registerInternalDocument,
@@ -33,9 +30,9 @@ import { fetchSeasons } from '@ramassa/shared/seasons';
 
 export const Route = createFileRoute('/_staff/settings')({
   ssr: false,
-  // The tabs that became pages (Fitxa, referral form, team, entities) stay
-  // valid here, with the entity, so the staff layout can forward their old
-  // links before this page loads (RAPP-654).
+  // The tabs that became pages (Fitxa, the old Questions tab, referral form,
+  // team, entities) stay valid here, with the entity, so the staff layout can
+  // forward their old links before this page loads (RAPP-654, RAPP-656).
   validateSearch: z.object({
     q: z.string().max(120).optional().catch(undefined),
     tab: z
@@ -54,36 +51,25 @@ export const Route = createFileRoute('/_staff/settings')({
       fetchMyPermissions(supabase),
       fetchOrganizationSettings(supabase),
     ]);
-    const [
-      documents,
-      documentExplanation,
-      authorizationVersions,
-      seasons,
-      appTermsVersions,
-      intakeCatalog,
-    ] = await Promise.all([
-      permissions.has('settings.documents')
-        ? searchInternalDocuments(supabase, deps.documentQuery)
-        : Promise.resolve([]),
-      permissions.has('settings.organization')
-        ? fetchDocumentStepExplanation(supabase)
-        : Promise.resolve(null),
-      permissions.has('settings.organization')
-        ? fetchAuthorizationVersions(supabase)
-        : Promise.resolve([]),
-      permissions.has('settings.organization') ? fetchSeasons(supabase) : Promise.resolve([]),
-      permissions.has('settings.organization')
-        ? fetchAppTermsVersions(supabase)
-        : Promise.resolve([]),
-      // The onboarding screens and questions sections (RAPP-307, RAPP-612).
-      permissions.has('settings.organization')
-        ? fetchIntakeCatalog(supabase)
-        : Promise.resolve(null),
-    ]);
+    const [documents, documentExplanation, authorizationVersions, seasons, appTermsVersions] =
+      await Promise.all([
+        permissions.has('settings.documents')
+          ? searchInternalDocuments(supabase, deps.documentQuery)
+          : Promise.resolve([]),
+        permissions.has('settings.organization')
+          ? fetchDocumentStepExplanation(supabase)
+          : Promise.resolve(null),
+        permissions.has('settings.organization')
+          ? fetchAuthorizationVersions(supabase)
+          : Promise.resolve([]),
+        permissions.has('settings.organization') ? fetchSeasons(supabase) : Promise.resolve([]),
+        permissions.has('settings.organization')
+          ? fetchAppTermsVersions(supabase)
+          : Promise.resolve([]),
+      ]);
     return {
       appTermsVersions,
       authorizationVersions,
-      intakeCatalog,
       seasons,
       documentExplanation,
       documents,
@@ -129,15 +115,6 @@ function OrganizationSettingsScreen() {
               versions={data.authorizationVersions}
               canPublish
             />
-          </>
-        ) : undefined
-      }
-      questions={
-        data.intakeCatalog !== null ? (
-          <>
-            {/* The screens' order and wording (RAPP-612), above their questions. */}
-            <OnboardingScreensSection catalog={data.intakeCatalog} />
-            <OnboardingQuestionsSection catalog={data.intakeCatalog} />
           </>
         ) : undefined
       }

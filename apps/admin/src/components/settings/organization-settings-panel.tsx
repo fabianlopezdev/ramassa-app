@@ -44,8 +44,6 @@ interface OrganizationSettingsPanelProps {
   readonly documentExplanation?: ReactNode;
   /** The participation authorization versions and editor (RAPP-304). */
   readonly authorization?: ReactNode;
-  /** The question builder (RAPP-307). */
-  readonly questions?: ReactNode;
   readonly documents: readonly InternalDocument[];
   readonly documentQuery: string;
   readonly accessToken: string | undefined;
@@ -65,7 +63,7 @@ interface OrganizationSettingsPanelProps {
 
 type PendingAction = 'organization' | 'document' | 'download';
 
-export const SETTINGS_TABS = ['organization', 'authorization', 'questions', 'documents'] as const;
+export const SETTINGS_TABS = ['organization', 'authorization', 'documents'] as const;
 
 export type SettingsTab = (typeof SETTINGS_TABS)[number];
 
@@ -76,7 +74,8 @@ export function isSettingsTab(value: string | undefined): value is SettingsTab {
 /**
  * The tabs a person may open, in display order (RAPP-231). The Fitxa, the
  * referral form, the team and the entities have their own menu items and
- * pages since RAPP-654, so each is reachable from one place.
+ * pages since RAPP-654, so each is reachable from one place. Her screens and
+ * the fields they ask are on the Onboarding board and the Fitxa (RAPP-656).
  */
 function visibleSettingsTabs(permissions: ReadonlySet<PermissionCode>): readonly SettingsTab[] {
   const tabs: SettingsTab[] = [];
@@ -85,8 +84,6 @@ function visibleSettingsTabs(permissions: ReadonlySet<PermissionCode>): readonly
   }
   // The season's participation authorization (RAPP-304).
   if (permissions.has('settings.organization')) tabs.push('authorization');
-  // The registration questions staff add and reword (RAPP-307).
-  if (permissions.has('settings.organization')) tabs.push('questions');
   if (permissions.has('settings.documents')) tabs.push('documents');
   return tabs;
 }
@@ -119,7 +116,6 @@ export function OrganizationSettingsPanel({
   photoHandoff,
   documentExplanation,
   authorization,
-  questions,
   documents,
   documentQuery,
   accessToken,
@@ -324,9 +320,6 @@ export function OrganizationSettingsPanel({
           ) : null}
           {tabs.includes('authorization') ? (
             <TabsTrigger value="authorization">{t('tabAuthorization')}</TabsTrigger>
-          ) : null}
-          {tabs.includes('questions') ? (
-            <TabsTrigger value="questions">{t('tabQuestions')}</TabsTrigger>
           ) : null}
           {tabs.includes('documents') ? (
             <TabsTrigger value="documents">{t('tabDocuments')}</TabsTrigger>
@@ -551,10 +544,6 @@ export function OrganizationSettingsPanel({
         <TabsContent value="authorization" className="space-y-6">
           <SectionHeader title={t('tabAuthorization')} intro={t('authorizationIntro')} />
           {authorization}
-        </TabsContent>
-        <TabsContent value="questions" className="space-y-6">
-          <SectionHeader title={t('tabQuestions')} intro={t('questionsIntro')} />
-          {questions}
         </TabsContent>
       </Tabs>
     </Page>

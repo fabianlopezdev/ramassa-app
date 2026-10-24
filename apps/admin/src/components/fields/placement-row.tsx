@@ -22,7 +22,7 @@ import { useTranslation } from 'react-i18next';
 import type { CustomQuestionType, QuestionPrivacy } from '@ramassa/shared/intake-builder';
 
 /** "Required" as a switch that saves at once (RAPP-611); a locked one says why. */
-export function RequiredToggle({
+function RequiredToggle({
   id,
   checked,
   lockReason,
