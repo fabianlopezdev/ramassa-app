@@ -8,11 +8,12 @@ import { completeSecondFactor, queryDatabase, signInPlayer, STAFF_EMAIL } from '
 
 test.setTimeout(180_000);
 
+// The roster lists invited women too, not joined yet (RAPP-300).
 const count = (where: string) =>
   Number(
     queryDatabase(`
       select count(*) from public.profiles
-       where role = 'player' and org_id = '5eed0000-0000-4000-8000-000000000000'
+       where role in ('player', 'invited') and org_id = '5eed0000-0000-4000-8000-000000000000'
          and anonymized_at is null ${where};
     `).trim(),
   );
@@ -26,7 +27,9 @@ test('the roster with search, chips, filters and sorting', async ({ page }) => {
   await expect(total).toHaveText(`${count('')} participants`, { timeout: 30_000 });
 
   await page.getByTestId('participant-status-inactive').click();
-  await expect(total).toHaveText(new RegExp(`^${count('and not is_active')} participants?$`));
+  await expect(total).toHaveText(
+    new RegExp(`^${count("and role = 'player' and not is_active")} participants?$`),
+  );
   await page.getByTestId('participant-status-all').click();
 
   await page.getByTestId('participant-filters').click();
