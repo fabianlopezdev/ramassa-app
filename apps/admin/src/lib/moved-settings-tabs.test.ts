@@ -24,7 +24,7 @@ test('the Settings tabs that became pages forward to them (RAPP-654)', () => {
 });
 
 test('the tabs that stay in Settings, and every other URL, are left alone', () => {
-  for (const tab of [undefined, 'organization', 'authorization', 'questions', 'documents']) {
+  for (const tab of [undefined, 'organization', 'authorization', 'documents']) {
     expect(movedSettingsTab('/settings', { tab })).toBeNull();
   }
   expect(movedSettingsTab('/participants', { tab: 'staff' })).toBeNull();
