@@ -171,9 +171,9 @@ export interface CustomWizardScreen {
   readonly afterScreen: QuestionScreen;
   readonly isAnswered: boolean;
   /**
-   * Set when the screen holds the questions staff added to an app screen
-   * (RAPP-642): they show on that screen, so it is never a step of its own,
-   * and while one is unanswered that app screen shows.
+   * Set for the Ramassà fields placed on an app screen (RAPP-642, RAPP-649):
+   * they show on that screen, so it is never a step of its own, and while one
+   * is unanswered that app screen shows.
    */
   readonly builtinScreen?: WizardQuestionScreen | null;
 }
@@ -272,7 +272,7 @@ function visibleScreens(
 ): WizardStepKey[] {
   const asked = new Set<WizardStepKey>([
     ...screensToAsk(answered),
-    // An app screen with an added question she has not answered (RAPP-642).
+    // An app screen with a placed field she has not answered (RAPP-642).
     ...custom.flatMap((screen) =>
       screen.builtinScreen == null || screen.isAnswered ? [] : [screen.builtinScreen],
     ),

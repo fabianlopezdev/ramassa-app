@@ -148,29 +148,55 @@ describe('missingEntityFormFields', () => {
 
 describe('her onboarding after the entity answered', () => {
   const QUESTION = '5eed0000-0000-4000-8045-000000000001';
+  const SCREEN = '5eed0000-0000-4000-8044-000000000001';
+  const SECTION = '5eed0000-0000-4000-8047-000000000007';
+  const placement = (id: string, surface: string, screenKey: string | null) => ({
+    id,
+    field_id: QUESTION,
+    surface,
+    screen_key: screenKey,
+    sort_order: 0,
+    required: false,
+    label_override: null,
+    help_override: null,
+  });
   const catalog = parseIntakeCatalog({
     screens: [
       {
-        id: '5eed0000-0000-4000-8044-000000000001',
+        id: SCREEN,
         title: { ca: 'Com arribes' },
         intro: null,
         after_screen: 'logistics',
         sort_order: 0,
         is_archived: false,
-        questions: [
-          {
-            id: QUESTION,
-            question_type: 'yes_no_maybe',
-            label: { ca: 'Transport públic?' },
-            help: null,
-            privacy: 'normal',
-            placements: ['wizard', 'entity_form'],
-            sort_order: 0,
-            is_archived: false,
-            options: [],
-          },
-        ],
       },
+    ],
+    sections: [
+      { id: SECTION, key: 'support', title: { ca: 'Suport' }, sort_order: 6, is_builtin: true },
+    ],
+    fields: [
+      {
+        id: QUESTION,
+        section_id: SECTION,
+        kind: 'custom',
+        builtin_key: null,
+        question_type: 'yes_no_maybe',
+        label: { ca: 'Transport públic?' },
+        help: null,
+        privacy: 'normal',
+        default_required: false,
+        settings: {},
+        show_when_field_id: null,
+        show_when_option_id: null,
+        sort_order: 0,
+        is_archived: false,
+        created_at: '2026-10-23T10:00:00Z',
+        options: [],
+      },
+    ],
+    placements: [
+      placement('5eed0000-0000-4000-8048-000000000001', 'onboarding', SCREEN),
+      placement('5eed0000-0000-4000-8048-000000000002', 'entity_form', null),
     ],
     overrides: [],
     presets: [],

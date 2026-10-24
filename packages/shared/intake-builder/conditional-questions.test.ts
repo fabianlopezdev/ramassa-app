@@ -10,12 +10,10 @@ import {
 
 const gate: CustomQuestion = {
   id: 'gate',
-  screenId: 'participation',
   type: 'single_choice',
   label: { ca: 'Hi ha dificultats?' },
   help: null,
   privacy: 'sensitive',
-  placements: ['season'],
   isArchived: false,
   settings: {},
   options: [

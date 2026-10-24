@@ -44,14 +44,11 @@ import {
 import type { LanguageCode } from '../schemas/language';
 import type { Database } from '../types/database';
 import {
-  addedQuestions,
   allowedCustomQuestionStates,
   canSkipCustomQuestion,
   customStateKey,
   hiddenBuiltinQuestions,
-  isAskedOfHer,
   isCustomQuestionRequired,
-  isOwnScreen,
   placedQuestions,
   requiredBuiltinQuestions,
   textIn,
@@ -60,7 +57,7 @@ import {
   type CustomQuestion,
   type CustomQuestionStates,
   type IntakeCatalog,
-  type IntakeScreen,
+  type RamassaScreen,
 } from './builder';
 
 // Her screens in order -------------------------------------------------------------------------------
@@ -71,13 +68,13 @@ export type LockedStep = (typeof LOCKED_STEPS)[number];
 
 /** One screen of her onboarding: a Ramassà screen, an app question screen, or a locked end. */
 export type FlowStep =
-  | { readonly kind: 'custom'; readonly key: WizardStepKey; readonly screen: IntakeScreen }
+  | { readonly kind: 'custom'; readonly key: WizardStepKey; readonly screen: RamassaScreen }
   | { readonly kind: 'builtin'; readonly key: WizardQuestionScreen }
   | { readonly kind: 'locked'; readonly key: LockedStep };
 
-/** The live Ramassà screens of their own; a holder of an app screen's added questions is none. */
-export function liveScreens(catalog: IntakeCatalog): readonly IntakeScreen[] {
-  return catalog.screens.filter((screen) => !screen.isArchived && isOwnScreen(screen));
+/** The live Ramassà screens. */
+export function liveScreens(catalog: IntakeCatalog): readonly RamassaScreen[] {
+  return catalog.screens.filter((screen) => !screen.isArchived);
 }
 
 /** The movable steps in her order: the app's question screens and every live Ramassà screen. */
@@ -131,9 +128,9 @@ export function flowStepName(
   return t(`settings:builtinScreens.screenName.${step.key}`);
 }
 
-/** A Ramassà screen her phone shows: it holds a live question asked of her. */
-export function isShownToHer(screen: IntakeScreen): boolean {
-  return screen.questions.some((question) => !question.isArchived && isAskedOfHer(question));
+/** A Ramassà screen her phone shows: a live field is placed on it. */
+export function isShownToHer(catalog: IntakeCatalog, screen: RamassaScreen): boolean {
+  return placedQuestions(catalog, screen.id).length > 0;
 }
 
 // Her choices --------------------------------------------------------------------------------------
@@ -182,10 +179,6 @@ export interface PlayerPlan {
   readonly total: number;
 }
 
-function liveForHer(questions: readonly CustomQuestion[]): readonly CustomQuestion[] {
-  return questions.filter((question) => !question.isArchived && isAskedOfHer(question));
-}
-
 /**
  * Her plan: only the screens it can show (none staff hid, none with nothing
  * for her), the locked ends last. `customAnswers` are her answers to Ramassà's
@@ -226,7 +219,7 @@ export function playerPlan(
       ];
     });
   const customQuestions = (questions: readonly CustomQuestion[]): PlanQuestion[] =>
-    liveForHer(questions).map((question): PlanQuestion => {
+    questions.map((question): PlanQuestion => {
       const canSkip = canSkipCustomQuestion(question, customAnswers);
       const saved = choices.customStates[question.id] ?? 'auto';
       const state = saved === 'skip' && !canSkip ? 'auto' : saved;
@@ -254,8 +247,8 @@ export function playerPlan(
       if (step.kind === 'builtin' && flow.hiddenScreens.has(step.key)) return [];
       const questions =
         step.kind === 'custom'
-          ? customQuestions(placedQuestions(catalog, step.screen.id, step.screen.questions))
-          : [...builtinQuestions(step.key), ...customQuestions(addedQuestions(catalog, step.key))];
+          ? customQuestions(placedQuestions(catalog, step.screen.id))
+          : [...builtinQuestions(step.key), ...customQuestions(placedQuestions(catalog, step.key))];
       return questions.length === 0 ? [] : [{ step, questions }];
     })
     .map(({ step, questions }, index): PlanScreen => ({
@@ -323,10 +316,8 @@ export function presetChoices(
 ): PlayerChoices {
   if (!askAll) return { states, customStates: {} };
   const ids = liveScreens(catalog)
-    .flatMap((screen) => liveForHer(placedQuestions(catalog, screen.id, screen.questions)))
-    .concat(
-      WIZARD_QUESTION_SCREENS.flatMap((screen) => liveForHer(addedQuestions(catalog, screen))),
-    )
+    .flatMap((screen) => placedQuestions(catalog, screen.id))
+    .concat(WIZARD_QUESTION_SCREENS.flatMap((screen) => placedQuestions(catalog, screen)))
     .map((question) => question.id);
   return {
     states,

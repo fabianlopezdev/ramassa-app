@@ -130,10 +130,7 @@
     "deleteScreenTitle": "این صفحه حذف شود؟",
     "deleteScreenBody": "همراه با پرسش‌هایش دیگر در برنامه دیده نمی‌شود. پاسخ‌های داده‌شده نگه داشته می‌شوند.",
     "deleted": "{{screen}} حذف شد.",
-    "deleteFailed": "حذف ممکن نشد. دوباره تلاش کنید.",
-    "deleteQuestion": "حذف {{question}}",
-    "deleteQuestionTitle": "این پرسش حذف شود؟",
-    "deleteQuestionBody": "دیگر در برنامه دیده نمی‌شود. پاسخ‌های داده‌شده نگه داشته می‌شوند."
+    "deleteFailed": "حذف ممکن نشد. دوباره تلاش کنید."
   },
   "questions": {
     "picker": {

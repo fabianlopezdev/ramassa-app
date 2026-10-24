@@ -45,9 +45,6 @@ export const CUSTOM_QUESTION_TYPES = [
 ] as const;
 export type CustomQuestionType = (typeof CUSTOM_QUESTION_TYPES)[number];
 
-export const QUESTION_PLACEMENTS = ['wizard', 'entity_form', 'season', 'staff'] as const;
-export type QuestionPlacement = (typeof QUESTION_PLACEMENTS)[number];
-
 /** Types answered by picking options staff wrote. */
 export const OPTION_TYPES = ['single_choice', 'multiple_choice', 'search_choice'] as const;
 
@@ -58,16 +55,6 @@ export function isOptionType(type: CustomQuestionType): boolean {
 /** A searchable list may be long; cards stay short enough to tap through. */
 export function maxOptionsFor(type: CustomQuestionType): number {
   return type === 'search_choice' ? 500 : 60;
-}
-
-/**
- * A file or a signature is hers to give: never the entity's form, never staff
- * only. The database refuses the same.
- */
-export function placementsAllowedFor(type: CustomQuestionType): readonly QuestionPlacement[] {
-  return type === 'file_upload' || type === 'signature'
-    ? ['wizard', 'season']
-    : QUESTION_PLACEMENTS;
 }
 
 /** Staff may complete or correct every answer but a file or a signature, which are hers to give. */

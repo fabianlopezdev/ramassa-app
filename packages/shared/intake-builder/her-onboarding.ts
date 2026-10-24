@@ -9,8 +9,7 @@
  *
  * Her phone plans with `herOnboarding`, the staff phone preview with
  * `onboardingScreenQuestions`, so both show the same fields with the same
- * words. A server that sends no layout (older than RAPP-649) is read through
- * the old question shape, so her app keeps working against it.
+ * words. A catalog that could not load has no layout: no Ramassà field.
  */
 import {
   customStepKey,
@@ -21,13 +20,9 @@ import {
   type WizardQuestionScreen,
 } from '../onboarding/intake';
 import {
-  isAskedOfHer,
-  isOwnScreen,
   isScreenAnswered,
   questionFromField,
-  seasonScreens,
   withCustomAsking,
-  withPlacementsOf,
   wizardFlow,
   type CustomAnswers,
   type CustomQuestion,
@@ -52,7 +47,7 @@ export function placedQuestion(
 ): CustomQuestion {
   const wording = placementWording(placement, field);
   return {
-    ...questionFromField(layout, field, placement),
+    ...questionFromField(field, placement),
     label: wording.label,
     help: wording.help,
   };
@@ -80,22 +75,14 @@ export function onboardingScreenQuestions(
   catalog: IntakeCatalog,
   screenKey: string,
 ): readonly CustomQuestion[] {
-  if (catalog.layout !== undefined) {
-    return placedQuestionsOn(catalog.layout, 'onboarding', screenKey);
-  }
-  // An older server: the screen's questions in the old shape (a holder for an app screen).
-  const screen = catalog.screens.find(
-    (each) => !each.isArchived && (each.id === screenKey || each.builtinScreen === screenKey),
-  );
-  return (screen?.questions ?? [])
-    .map((question) => withPlacementsOf(catalog, question))
-    .filter((question) => !question.isArchived && isAskedOfHer(question));
+  return catalog.layout === undefined
+    ? []
+    : placedQuestionsOn(catalog.layout, 'onboarding', screenKey);
 }
 
 /** The fields her season re-registration asks again, in their order, worded for her. */
 export function seasonFormQuestions(catalog: IntakeCatalog): readonly CustomQuestion[] {
-  if (catalog.layout !== undefined) return placedQuestionsOn(catalog.layout, 'season');
-  return seasonScreens(catalog).flatMap((screen) => screen.questions);
+  return catalog.layout === undefined ? [] : placedQuestionsOn(catalog.layout, 'season');
 }
 
 /** The step of the app's own order an app screen belongs to. */
@@ -175,8 +162,11 @@ export function herOnboarding(
   asking: ReadonlyMap<string, boolean> = new Map(),
 ): HerOnboarding {
   const own = catalog.screens
-    .filter((screen) => !screen.isArchived && isOwnScreen(screen))
-    .map((screen) => ({ ...screen, questions: onboardingScreenQuestions(catalog, screen.id) }));
+    .filter((screen) => !screen.isArchived)
+    .map((screen): IntakeScreen => ({
+      ...screen,
+      questions: onboardingScreenQuestions(catalog, screen.id),
+    }));
   const onAppScreens = WIZARD_QUESTION_SCREENS.flatMap((screen) => {
     const group = appScreenGroup(catalog, screen);
     return group === null ? [] : [group];

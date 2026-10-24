@@ -23,10 +23,13 @@ import { appTermsDraftSchema } from './app-terms';
 type Client = SupabaseClient<Database>;
 
 export const ONBOARDING_SETUP_FORMAT = 'ramassa.onboarding-setup';
-/** The schema version this build writes: 2 adds the profile layout (RAPP-649). */
-export const ONBOARDING_SETUP_SCHEMA_VERSION = 2;
-/** The versions this build reads: a version 1 file still imports. */
-export const ONBOARDING_SETUP_READABLE_VERSIONS: readonly number[] = [1, 2];
+/**
+ * The schema version this build writes: 3 carries the profile layout alone
+ * (RAPP-656). Version 2 added it beside the old question shape (RAPP-649).
+ */
+export const ONBOARDING_SETUP_SCHEMA_VERSION = 3;
+/** The versions this build reads: the database reads a version 1 or 2 file as version 3. */
+export const ONBOARDING_SETUP_READABLE_VERSIONS: readonly number[] = [1, 2, 3];
 
 /** Text in any of the five languages (help lines, intros, overrides). */
 const anyLanguageText = z.partialRecord(languageCodeSchema, z.string());
@@ -51,7 +54,8 @@ const optionSchema = z.strictObject({
   is_archived: z.boolean(),
 });
 
-const questionSchema = z.strictObject({
+/** A question on a screen, in a version 1 or 2 file: version 3 has fields and placements. */
+const olderQuestionSchema = z.strictObject({
   id: configId,
   question_type: z.string().min(1),
   label: catalanText,
@@ -76,22 +80,25 @@ const screenSchema = z.strictObject({
   home_after_screen: z.string().min(1),
   home_sort_order: position,
   is_archived: z.boolean(),
-  // The app screen whose added questions it holds (RAPP-642); absent in an older file.
+  // A version 1 or 2 file only: the app screen a holder held (RAPP-642), and
+  // the screen's questions. The database reads them as fields and placements.
   builtin_screen: z.string().min(1).nullable().optional(),
-  questions: z.array(questionSchema),
+  questions: z.array(olderQuestionSchema).optional(),
 });
 
 export const onboardingSetupDocumentSchema = z
   .strictObject({
     format: z.literal(ONBOARDING_SETUP_FORMAT),
-    schema_version: z.union([z.literal(1), z.literal(2)]),
+    schema_version: z.union([z.literal(1), z.literal(2), z.literal(3)]),
     app_commit: z.string().max(64).nullable(),
     exported_at: z.string().min(1),
     screens: z.array(screenSchema),
-    // The profile layout (RAPP-649), in a version 2 file; the database checks each row.
+    // The profile layout (RAPP-649), from version 2 on; the database checks each row.
     sections: z.array(z.record(z.string(), z.unknown())).optional(),
     fields: z
-      .array(z.looseObject({ options: z.array(z.record(z.string(), z.unknown())) }))
+      .array(
+        z.looseObject({ kind: z.string(), options: z.array(z.record(z.string(), z.unknown())) }),
+      )
       .optional(),
     placements: z.array(z.record(z.string(), z.unknown())).optional(),
     builtin_question_overrides: z.array(
@@ -153,15 +160,25 @@ export const onboardingSetupDocumentSchema = z
   })
   .superRefine((document, context) => {
     if (
-      document.schema_version === 2 &&
+      document.schema_version >= 2 &&
       (document.sections === undefined ||
         document.fields === undefined ||
         document.placements === undefined)
     ) {
-      context.addIssue({ code: 'custom', message: 'a version 2 file carries the profile layout' });
+      context.addIssue({ code: 'custom', message: 'the file carries the profile layout' });
+    }
+    if (
+      document.schema_version === 1 &&
+      document.screens.some((screen) => screen.questions === undefined)
+    ) {
+      context.addIssue({ code: 'custom', message: 'a version 1 screen carries its questions' });
     }
     const screens = new Set(document.screens.map((screen) => screen.id));
-    const questions = document.screens.flatMap((screen) => screen.questions);
+    // A version 1 file's questions; a later file's are read from its fields.
+    const questions =
+      document.schema_version === 1
+        ? document.screens.flatMap((screen) => screen.questions ?? [])
+        : [];
     const questionIds = new Set(questions.map((question) => question.id));
     const optionIds = new Set(
       questions.flatMap((question) => question.options.map((option) => option.id)),
@@ -231,6 +248,7 @@ export type OnboardingSetupFileRead =
 function holdsNoSetup(document: OnboardingSetupDocument): boolean {
   return (
     document.screens.length === 0 &&
+    !(document.fields ?? []).some((field) => field.kind === 'custom') &&
     document.builtin_question_overrides.length === 0 &&
     document.builtin_screens.length === 0 &&
     (document.flow_order ?? []).length === 0 &&

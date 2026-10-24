@@ -1486,27 +1486,6 @@ export function buildWalkInSigning(overrides: Partial<WalkInSigningRow> = {}): W
 type PublicRow<Name extends keyof Database['public']['Tables']> =
   Database['public']['Tables'][Name]['Row'];
 export type IntakeScreenRow = PublicRow<'intake_screens'>;
-type CustomQuestionViewRow = Database['public']['Views']['custom_questions']['Row'];
-type AlwaysSetQuestionColumn =
-  | 'id'
-  | 'org_id'
-  | 'question_type'
-  | 'label'
-  | 'privacy'
-  | 'placements'
-  | 'sort_order'
-  | 'is_archived'
-  | 'settings'
-  | 'is_required'
-  | 'created_at'
-  | 'updated_at';
-/**
- * The old question shape, a view over fields and placements since RAPP-649.
- * Generated view columns are all nullable; these never are.
- */
-export type CustomQuestionRow = Omit<CustomQuestionViewRow, AlwaysSetQuestionColumn> & {
-  [Column in AlwaysSetQuestionColumn]: NonNullable<CustomQuestionViewRow[Column]>;
-};
 export type ProfileSectionRow = PublicRow<'profile_sections'>;
 export type ProfileFieldRow = PublicRow<'profile_fields'>;
 export type FieldPlacementRow = PublicRow<'field_placements'>;
@@ -1533,55 +1512,10 @@ export function buildIntakeScreen(overrides: Partial<IntakeScreenRow> = {}): Int
     home_after_screen: overrides.after_screen ?? 'logistics',
     home_sort_order: overrides.sort_order ?? 0,
     is_archived: false,
-    // A screen of its own; a holder of an app screen's added questions names it (RAPP-642).
-    builtin_screen: null,
     created_at: FIXTURE_TIMESTAMP,
     updated_at: FIXTURE_TIMESTAMP,
     ...overrides,
   };
-}
-
-/** A Normal yes/no/maybe question on the wizard and the referral form (RAPP-307). */
-export function buildCustomQuestion(overrides: Partial<CustomQuestionRow> = {}): CustomQuestionRow {
-  return {
-    id: SEED_CUSTOM_QUESTION_ID,
-    org_id: SEED_ORGANIZATION_ID,
-    screen_id: SEED_INTAKE_SCREEN_ID,
-    show_when_question_id: null,
-    show_when_option_id: null,
-    question_type: 'yes_no_maybe',
-    label: { ca: 'Vens amb transport públic?' },
-    help: null,
-    privacy: 'normal',
-    placements: ['wizard', 'entity_form'],
-    sort_order: 0,
-    is_archived: false,
-    // A yes/no/maybe question takes no settings (RAPP-610).
-    settings: {},
-    // Optional unless staff say so (RAPP-611).
-    is_required: false,
-    created_at: FIXTURE_TIMESTAMP,
-    updated_at: FIXTURE_TIMESTAMP,
-    ...overrides,
-  };
-}
-
-/**
- * A question of any type with its settings (RAPP-610), for tests that need a
- * number, a date, a list, a consent, a file or a signature.
- */
-export function buildTypedCustomQuestion(
-  type: CustomQuestionRow['question_type'],
-  settings: CustomQuestionRow['settings'],
-  overrides: Partial<CustomQuestionRow> = {},
-): CustomQuestionRow {
-  return buildCustomQuestion({
-    question_type: type,
-    settings,
-    placements:
-      type === 'file_upload' || type === 'signature' ? ['wizard'] : ['wizard', 'entity_form'],
-    ...overrides,
-  });
 }
 
 export const SEED_SUPPORT_SECTION_KEY = 'support';
@@ -1618,13 +1552,24 @@ export function buildProfileField(overrides: Partial<ProfileFieldRow> = {}): Pro
     show_when_field_id: null,
     show_when_option_id: null,
     sort_order: 100,
-    legacy_screen_id: SEED_INTAKE_SCREEN_ID,
     created_by: null,
     is_archived: false,
     created_at: FIXTURE_TIMESTAMP,
     updated_at: FIXTURE_TIMESTAMP,
     ...overrides,
   };
+}
+
+/**
+ * A field of any type with its settings (RAPP-610), for tests that need a
+ * number, a date, a list, a consent, a file or a signature.
+ */
+export function buildTypedProfileField(
+  type: ProfileFieldRow['question_type'],
+  settings: ProfileFieldRow['settings'],
+  overrides: Partial<ProfileFieldRow> = {},
+): ProfileFieldRow {
+  return buildProfileField({ question_type: type, settings, ...overrides });
 }
 
 /** The transport field on its onboarding screen (RAPP-649). */

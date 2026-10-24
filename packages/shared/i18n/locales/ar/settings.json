@@ -134,10 +134,7 @@
     "deleteScreenTitle": "هل تريد حذف هذه الشاشة؟",
     "deleteScreenBody": "لن تظهر في التطبيق مع أسئلتها. تبقى الإجابات المقدَّمة محفوظة.",
     "deleted": "تم حذف {{screen}}.",
-    "deleteFailed": "تعذّر الحذف. حاول مرة أخرى.",
-    "deleteQuestion": "احذف {{question}}",
-    "deleteQuestionTitle": "هل تريد حذف هذا السؤال؟",
-    "deleteQuestionBody": "لن يظهر في التطبيق. تبقى الإجابات المقدَّمة محفوظة."
+    "deleteFailed": "تعذّر الحذف. حاول مرة أخرى."
   },
   "questions": {
     "picker": {

@@ -17,7 +17,8 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { AppError, databaseErrorCode } from '../errors';
 import {
-  isAskedOfHer,
+  placementsOf,
+  questionOfField,
   sampleCustomAnswer,
   type CustomAnswerValue,
   type CustomQuestion,
@@ -127,12 +128,18 @@ export function sampleAnswersFor(
   return Object.assign({}, ...questions.map((question) => sampleAnswerPayload(question, language)));
 }
 
-/** The staff questions her wizard or her season asks, live ones only. */
+/** The live Ramassà fields her onboarding or her season form asks. */
 export function scenarioCustomQuestions(catalog: IntakeCatalog): readonly CustomQuestion[] {
-  return catalog.screens
-    .filter((screen) => !screen.isArchived)
-    .flatMap((screen) => screen.questions)
-    .filter((question) => !question.isArchived && isAskedOfHer(question));
+  const layout = catalog.layout;
+  if (layout === undefined) return [];
+  return layout.fields
+    .filter(
+      (field) =>
+        field.kind === 'custom' &&
+        !field.isArchived &&
+        placementsOf(layout, field.id).some((placement) => placement.surface !== 'entity_form'),
+    )
+    .map((field) => questionOfField(layout, field));
 }
 
 /**

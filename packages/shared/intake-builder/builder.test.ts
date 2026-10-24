@@ -1,7 +1,7 @@
 /**
- * The staff question builder (RAPP-307): the catalog as the apps read it,
- * where each question shows, answer checks, the built-in guards, and what the
- * actions send.
+ * The onboarding catalog (RAPP-307, RAPP-649): the catalog as the apps read
+ * it, the fields each screen asks from its placements, answer checks, the
+ * built-in guards, and what the actions send.
  */
 import { describe, expect, test } from 'bun:test';
 import { isAppError } from '../errors';
@@ -16,21 +16,18 @@ import {
   customAnswerError,
   hiddenBuiltinQuestions,
   isScreenAnswered,
-  moved,
   parseIntakeCatalog,
-  questionDraftSchema,
-  referralScreens,
+  placedQuestions,
+  profileFieldDraftSchema,
+  questionOfField,
   reregistrationAsks,
   saveBuiltinScreen,
-  saveCustomQuestion,
   saveIntakeScreen,
   saveWizardFlowOrder,
-  seasonScreens,
   wizardFlow,
-  wizardScreens,
-  wizardScreensInFlowOrder,
   type CustomQuestion,
 } from './builder';
+import { fieldById } from './profile-layout';
 
 function clientReturning(result: { data: unknown; error: unknown }) {
   const calls: unknown[] = [];
@@ -44,6 +41,59 @@ function clientReturning(result: { data: unknown; error: unknown }) {
 }
 
 const SCREEN = '5eed0000-0000-4000-8044-000000000001';
+const SECTION = '5eed0000-0000-4000-8047-000000000007';
+const TRANSPORT = '5eed0000-0000-4000-8045-000000000001';
+const HEARD = '5eed0000-0000-4000-8045-000000000002';
+const SEASON = '5eed0000-0000-4000-8045-000000000003';
+const METRO = '5eed0000-0000-4000-8045-000000000004';
+
+const fieldRow = (
+  id: string,
+  type: string,
+  label: Record<string, string>,
+  privacy: string,
+  sortOrder: number,
+  options: unknown[] = [],
+) => ({
+  id,
+  section_id: SECTION,
+  kind: 'custom',
+  builtin_key: null,
+  question_type: type,
+  label,
+  help: null,
+  privacy,
+  default_required: false,
+  settings: {},
+  show_when_field_id: null,
+  show_when_option_id: null,
+  sort_order: sortOrder,
+  is_archived: false,
+  created_at: '2026-10-23T10:00:00Z',
+  options,
+});
+
+let placementCount = 0;
+const placementRow = (
+  fieldId: string,
+  surface: string,
+  screenKey: string | null,
+  sortOrder: number,
+  required = false,
+) => {
+  placementCount += 1;
+  return {
+    id: `5eed0000-0000-4000-8048-${String(placementCount).padStart(12, '0')}`,
+    field_id: fieldId,
+    surface,
+    screen_key: screenKey,
+    sort_order: sortOrder,
+    required,
+    label_override: null,
+    help_override: null,
+  };
+};
+
 const raw = {
   screens: [
     {
@@ -53,66 +103,36 @@ const raw = {
       after_screen: 'logistics',
       sort_order: 0,
       is_archived: false,
-      questions: [
-        {
-          id: '5eed0000-0000-4000-8045-000000000001',
-          question_type: 'yes_no_maybe',
-          label: { ca: 'Transport públic?' },
-          help: null,
-          privacy: 'normal',
-          placements: ['wizard', 'entity_form'],
-          sort_order: 0,
-          is_archived: false,
-          options: [],
-        },
-        {
-          id: '5eed0000-0000-4000-8045-000000000002',
-          question_type: 'single_choice',
-          label: { ca: 'Com et vas assabentar?' },
-          help: null,
-          privacy: 'normal',
-          placements: ['wizard'],
-          sort_order: 1,
-          is_archived: false,
-          options: [
-            {
-              id: '5eed0000-0000-4000-8046-000000000001',
-              label: { ca: 'Entitat', en: 'Organization' },
-              sort_order: 0,
-              is_archived: false,
-            },
-            {
-              id: '5eed0000-0000-4000-8046-000000000003',
-              label: { ca: 'Cartell' },
-              sort_order: 2,
-              is_archived: true,
-            },
-          ],
-        },
-        {
-          id: '5eed0000-0000-4000-8045-000000000003',
-          question_type: 'long_text',
-          label: { ca: 'Dificultats aquesta temporada?' },
-          help: null,
-          privacy: 'sensitive',
-          placements: ['season'],
-          sort_order: 2,
-          is_archived: false,
-          options: [],
-        },
-        {
-          id: '5eed0000-0000-4000-8045-000000000004',
-          question_type: 'short_text',
-          label: { ca: 'Parada de metro' },
-          help: null,
-          privacy: 'personal',
-          placements: ['staff'],
-          sort_order: 3,
-          is_archived: false,
-          options: [],
-        },
-      ],
     },
+  ],
+  sections: [
+    { id: SECTION, key: 'support', title: { ca: 'Suport' }, sort_order: 6, is_builtin: true },
+  ],
+  fields: [
+    fieldRow(TRANSPORT, 'yes_no_maybe', { ca: 'Transport públic?' }, 'normal', 0),
+    fieldRow(HEARD, 'single_choice', { ca: 'Com et vas assabentar?' }, 'normal', 1, [
+      {
+        id: '5eed0000-0000-4000-8046-000000000001',
+        label: { ca: 'Entitat', en: 'Organization' },
+        sort_order: 0,
+        is_archived: false,
+      },
+      {
+        id: '5eed0000-0000-4000-8046-000000000003',
+        label: { ca: 'Cartell' },
+        sort_order: 2,
+        is_archived: true,
+      },
+    ]),
+    fieldRow(SEASON, 'long_text', { ca: 'Dificultats aquesta temporada?' }, 'sensitive', 2),
+    fieldRow(METRO, 'short_text', { ca: 'Parada de metro' }, 'personal', 3),
+  ],
+  placements: [
+    placementRow(TRANSPORT, 'onboarding', SCREEN, 0),
+    placementRow(HEARD, 'onboarding', SCREEN, 1),
+    placementRow(SEASON, 'onboarding', SCREEN, 2),
+    placementRow(TRANSPORT, 'entity_form', null, 0),
+    placementRow(SEASON, 'season', null, 0, true),
   ],
   overrides: [
     {
@@ -136,34 +156,40 @@ const raw = {
   ],
 };
 const catalog = parseIntakeCatalog(raw);
-const [transport, heard, season, metro] = catalog.screens[0]!.questions as [
-  CustomQuestion,
+const [transport, heard, season] = placedQuestions(catalog, SCREEN) as [
   CustomQuestion,
   CustomQuestion,
   CustomQuestion,
 ];
 
-describe('where each question shows', () => {
-  test('the wizard asks her wizard and season questions, never a staff-only one', () => {
-    const [screen] = wizardScreens(catalog, 'logistics');
-    expect(screen?.questions.map((question) => question.id)).toEqual([
-      transport.id,
-      heard.id,
-      season.id,
+describe('where each field is asked', () => {
+  test('a screen asks the fields placed on it, in order; a team-only field is on none', () => {
+    expect(placedQuestions(catalog, SCREEN).map(({ id }) => id)).toEqual([
+      TRANSPORT,
+      HEARD,
+      SEASON,
     ]);
-    expect(wizardScreens(catalog, 'identity')).toEqual([]);
+    expect(placedQuestions(catalog, 'identity')).toEqual([]);
+    expect(catalog.screens[0]).toEqual({
+      id: SCREEN,
+      title: { ca: 'Com arribes', en: 'How you get here' },
+      intro: null,
+      afterScreen: 'logistics',
+      isArchived: false,
+    });
   });
 
-  test('re-registration asks the season questions; the referral form its own', () => {
-    expect(seasonScreens(catalog)[0]?.questions.map(({ id }) => id)).toEqual([season.id]);
-    expect(referralScreens(catalog)[0]?.questions.map(({ id }) => id)).toEqual([transport.id]);
-    expect(metro.placements).toEqual(['staff']);
+  test('her page reads a field as required when a placement of hers is', () => {
+    const layout = catalog.layout!;
+    expect(questionOfField(layout, fieldById(layout, SEASON)!).isRequired).toBe(true);
+    expect(questionOfField(layout, fieldById(layout, TRANSPORT)!).isRequired).toBe(false);
+    expect(questionOfField(layout, fieldById(layout, METRO)!).isRequired).toBe(false);
   });
 
   test('a screen she answered completely is skipped', () => {
-    const [screen] = referralScreens(catalog);
-    expect(isScreenAnswered(screen!, {})).toBe(false);
-    expect(isScreenAnswered(screen!, { [transport.id]: 'yes' })).toBe(true);
+    const screen = { ...catalog.screens[0]!, questions: [transport] };
+    expect(isScreenAnswered(screen, {})).toBe(false);
+    expect(isScreenAnswered(screen, { [transport.id]: 'yes' })).toBe(true);
   });
 });
 
@@ -228,14 +254,14 @@ describe('built-in questions', () => {
 });
 
 describe('building', () => {
-  test('a choice question needs two options and a Catalan label', () => {
-    const base = { label: { ca: 'Qui?' }, placements: ['wizard'], type: 'single_choice' };
+  test('a choice field needs two options and a Catalan name', () => {
+    const base = { label: { ca: 'Qui?' }, type: 'single_choice' };
     expect(
-      questionDraftSchema.safeParse({ ...base, options: [{ id: null, label: { ca: 'A' } }] })
+      profileFieldDraftSchema.safeParse({ ...base, options: [{ id: null, label: { ca: 'A' } }] })
         .success,
     ).toBe(false);
     expect(
-      questionDraftSchema.safeParse({
+      profileFieldDraftSchema.safeParse({
         ...base,
         options: [
           { id: null, label: { ca: 'A' } },
@@ -244,53 +270,14 @@ describe('building', () => {
       }).success,
     ).toBe(true);
     expect(
-      questionDraftSchema.safeParse({ ...base, label: { en: 'Who?' }, options: [] }).success,
+      profileFieldDraftSchema.safeParse({ ...base, label: { en: 'Who?' }, options: [] }).success,
     ).toBe(false);
-    expect(questionDraftSchema.safeParse({ ...base, placements: [], options: [] }).success).toBe(
-      false,
-    );
   });
 
-  test('a saved question sends its options in order, new ones without an id', async () => {
-    const { client, calls } = clientReturning({ data: heard.id, error: null });
-    await saveCustomQuestion(client, {
-      id: heard.id,
-      screenId: SCREEN,
-      type: 'single_choice',
-      label: { ca: 'Com et vas assabentar?', es: ' ' },
-      help: null,
-      privacy: 'normal',
-      placements: ['wizard'],
-      settings: {},
-      options: [
-        { id: '5eed0000-0000-4000-8046-000000000001', label: { ca: 'Entitat' } },
-        { id: null, label: { ca: 'Una amiga' } },
-      ],
-    });
-    expect(calls[0]).toEqual([
-      'save_custom_question',
-      {
-        p_id: heard.id,
-        p_screen_id: SCREEN,
-        p_type: 'single_choice',
-        p_label: { ca: 'Com et vas assabentar?' },
-        p_help: null,
-        p_privacy: 'normal',
-        p_placements: ['wizard'],
-        // The type's settings travel with it (RAPP-610); a choice has none.
-        p_settings: {},
-        p_options: [
-          { id: '5eed0000-0000-4000-8046-000000000001', label: { ca: 'Entitat' } },
-          { label: { ca: 'Una amiga' } },
-        ],
-      },
-    ]);
-  });
-
-  test('a changed type is refused by the database in words', async () => {
+  test('a refusal from the database comes back in words', async () => {
     const { client } = clientReturning({
       data: null,
-      error: { message: 'the type of a question never changes', code: '23514' },
+      error: { message: 'a screen needs a title in Catalan', code: '23514' },
     });
     const failure = await saveIntakeScreen(client, {
       id: null,
@@ -299,12 +286,6 @@ describe('building', () => {
       afterScreen: 'identity',
     }).catch((error: unknown) => error);
     expect(isAppError(failure) && failure.code).toBe('VALIDATION-1');
-  });
-
-  test('reordering moves one step, and the ends stay put', () => {
-    expect(moved(['a', 'b', 'c'], 'b', -1)).toEqual(['b', 'a', 'c']);
-    expect(moved(['a', 'b', 'c'], 'a', -1)).toEqual(['a', 'b', 'c']);
-    expect(moved(['a', 'b', 'c'], 'c', 1)).toEqual(['a', 'b', 'c']);
   });
 });
 
@@ -355,7 +336,7 @@ describe('built-in screens staff edit and arrange (RAPP-612)', () => {
     flow_order: ['season', `custom:${SCREEN}`, 'identity', 'not-a-step'],
   });
 
-  test('an older server with neither gives the app its own order and wording', () => {
+  test('a catalog with neither gives the app its own order and wording', () => {
     expect(catalog.screenSettings).toEqual([]);
     expect(wizardFlow(catalog)).toEqual({ order: [], hiddenScreens: new Set() });
   });
@@ -408,61 +389,6 @@ describe('built-in screens staff edit and arrange (RAPP-612)', () => {
     expect(calls).toEqual([
       ['save_intake_flow_order', { p_order: ['season', 'custom:abc', 'identity'] }],
     ]);
-  });
-});
-
-describe('staff screens in the order her phone shows them (RAPP-612, RAPP-618)', () => {
-  const screenAfter = (id: string, afterScreen: string, sortOrder: number) => ({
-    id,
-    title: { ca: id },
-    intro: null,
-    after_screen: afterScreen,
-    sort_order: sortOrder,
-    is_archived: false,
-    questions: [
-      {
-        id: id.replace('8044', '8045'),
-        question_type: 'short_text',
-        label: { ca: 'Pregunta' },
-        help: null,
-        privacy: 'normal',
-        placements: ['wizard'],
-        sort_order: 0,
-        is_archived: false,
-        options: [],
-      },
-    ],
-  });
-  const first = '5eed0000-0000-4000-8044-0000000000c1';
-  const second = '5eed0000-0000-4000-8044-0000000000c2';
-  const third = '5eed0000-0000-4000-8044-0000000000c3';
-  // The catalog lists screens by their anchor: the second one first.
-  const arranged = parseIntakeCatalog({
-    screens: [
-      screenAfter(second, 'identity', 0),
-      screenAfter(first, 'logistics', 0),
-      screenAfter(third, 'season', 0),
-    ],
-    overrides: [],
-    presets: [],
-    flow_order: [`custom:${first}`, `custom:${second}`, `custom:${third}`, 'identity'],
-  });
-
-  test('the preview lists them in the flow order, as the phone walks them', () => {
-    expect(wizardScreensInFlowOrder(arranged).map((screen) => screen.id)).toEqual([
-      first,
-      second,
-      third,
-    ]);
-  });
-
-  test('with no stored order they follow the app order of their anchors', () => {
-    const anchored = parseIntakeCatalog({
-      screens: [screenAfter(third, 'season', 0), screenAfter(second, 'identity', 0)],
-      overrides: [],
-      presets: [],
-    });
-    expect(wizardScreensInFlowOrder(anchored).map((screen) => screen.id)).toEqual([second, third]);
   });
 });
 

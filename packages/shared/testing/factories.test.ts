@@ -12,13 +12,13 @@ import {
   buildAuthorizationVersion,
   buildBuiltinQuestionOverride,
   buildCustomAnswer,
-  buildCustomQuestion,
   buildCustomQuestionOption,
   buildEquipmentDelivery,
   buildEvent,
   buildEventCategory,
   buildEventOccurrence,
   buildEventSignup,
+  buildFieldPlacement,
   buildForumCategory,
   buildForumFlag,
   buildForumPost,
@@ -41,6 +41,7 @@ import {
   buildParticipantStory,
   buildProfile,
   buildProfileAnswer,
+  buildProfileField,
   buildPushToken,
   buildReferralCustomAnswer,
   buildSeason,
@@ -51,7 +52,7 @@ import {
   buildServiceInterest,
   buildStockAlert,
   buildTestPlayer,
-  buildTypedCustomQuestion,
+  buildTypedProfileField,
   buildWalkInSigning,
 } from './factories';
 import {
@@ -470,12 +471,12 @@ describe('buildProfileAnswer', () => {
 });
 
 describe('the question builder rows (RAPP-307)', () => {
-  test('a question sits on its screen, and an answer names both', () => {
+  test('a field is placed on its screen, and an answer names the field', () => {
     const screen = buildIntakeScreen();
-    const question = buildCustomQuestion();
-    expect(question.screen_id).toBe(screen.id);
-    expect(buildCustomAnswer().question_id).toBe(question.id);
-    expect(buildReferralCustomAnswer().question_id).toBe(question.id);
+    const field = buildProfileField();
+    expect(buildFieldPlacement().screen_key).toBe(screen.id);
+    expect(buildCustomAnswer().question_id).toBe(field.id);
+    expect(buildReferralCustomAnswer().question_id).toBe(field.id);
     expect(buildCustomQuestionOption().is_archived).toBe(false);
   });
 
@@ -485,12 +486,11 @@ describe('the question builder rows (RAPP-307)', () => {
     expect(answer.season_key).toBe('00000000-0000-0000-0000-000000000000');
   });
 
-  test('a typed question carries settings the shared schema accepts (RAPP-610)', () => {
-    const signature = buildTypedCustomQuestion('signature', {});
-    expect(signature.placements).toEqual(['wizard']);
-    const number = buildTypedCustomQuestion('number', { integer: true, max: 15 });
+  test('a typed field carries settings the shared schema accepts (RAPP-610)', () => {
+    expect(buildTypedProfileField('signature', {}).question_type).toBe('signature');
+    const number = buildTypedProfileField('number', { integer: true, max: 15 });
     expect(questionSettingsSchema('number').safeParse(number.settings).success).toBe(true);
-    expect(buildCustomQuestion().settings).toEqual({});
+    expect(buildProfileField().settings).toEqual({});
   });
 
   test('the override rewords and the preset asks the sizes', () => {
@@ -501,7 +501,7 @@ describe('the question builder rows (RAPP-307)', () => {
 
 test('the required choice matches the seed and stays optional by default (RAPP-611)', () => {
   expect(buildIntakeRequiredQuestion()).toMatchObject({ question: 'phone', is_required: false });
-  expect(buildCustomQuestion().is_required).toBe(false);
+  expect(buildFieldPlacement().required).toBe(false);
 });
 
 test('built-in screen wording and the flow order match the seed (RAPP-612)', () => {

@@ -8,7 +8,7 @@ import {
   answerText,
   customAnswerError,
   isEmptyAnswer,
-  questionDraftSchema,
+  profileFieldDraftSchema,
   type CustomQuestion,
 } from './builder';
 import {
@@ -18,7 +18,6 @@ import {
   isOptionType,
   normalizeCustomAnswerInput,
   parseQuestionSettings,
-  placementsAllowedFor,
   questionSettingsSchema,
   sampleCustomAnswer,
   uploadsAvailable,
@@ -36,12 +35,10 @@ function question(
 ): CustomQuestion {
   return {
     id: '5eed0000-0000-4000-8045-0000000000aa',
-    screenId: '5eed0000-0000-4000-8044-0000000000aa',
     type,
     label: { ca: 'Pregunta' },
     help: null,
     privacy: 'personal',
-    placements: ['wizard'],
     isArchived: false,
     settings,
     options: isOptionType(type)
@@ -88,12 +85,6 @@ describe('the types', () => {
       'file_upload',
       'signature',
     ]);
-  });
-
-  test('only her own answers can be a file or a signature', () => {
-    expect(placementsAllowedFor('file_upload')).toEqual(['wizard', 'season']);
-    expect(placementsAllowedFor('signature')).toEqual(['wizard', 'season']);
-    expect(placementsAllowedFor('number')).toEqual(['wizard', 'entity_form', 'season', 'staff']);
   });
 
   test('a file question warns staff when this app has no upload service', () => {
@@ -153,29 +144,18 @@ describe('settings per type', () => {
     expect(parseQuestionSettings('item_list', {})).toEqual({ max_items: 20 });
   });
 
-  test('the draft schema checks the settings and the placements of the type', () => {
-    const base = {
-      label: { ca: 'Pregunta' },
-      placements: ['wizard'] as const,
-      options: [],
-    };
+  test('the draft schema checks the settings of the type', () => {
+    const base = { label: { ca: 'Pregunta' }, options: [] };
     expect(
-      questionDraftSchema.safeParse({ ...base, type: 'number', settings: { integer: true } })
+      profileFieldDraftSchema.safeParse({ ...base, type: 'number', settings: { integer: true } })
         .success,
     ).toBe(true);
     expect(
-      questionDraftSchema.safeParse({ ...base, type: 'number', settings: { min: 'a' } }).success,
+      profileFieldDraftSchema.safeParse({ ...base, type: 'number', settings: { min: 'a' } })
+        .success,
     ).toBe(false);
     expect(
-      questionDraftSchema.safeParse({
-        ...base,
-        type: 'signature',
-        placements: ['staff'],
-        settings: {},
-      }).success,
-    ).toBe(false);
-    expect(
-      questionDraftSchema.safeParse({
+      profileFieldDraftSchema.safeParse({
         ...base,
         type: 'search_choice',
         settings: {},

@@ -1,8 +1,7 @@
 /**
  * Her onboarding and her season form read from the placements (RAPP-655):
  * the fields of each screen in their order, the wording per language with its
- * fallback, required per surface, staff's choice per player, and an older
- * server read through the old question shape.
+ * fallback, required per surface, and staff's choice per player.
  */
 import { describe, expect, test } from 'bun:test';
 import type { CustomQuestion, IntakeCatalog, IntakeScreen } from './builder';
@@ -142,7 +141,7 @@ describe('herOnboarding', () => {
     expect(textIn(bus?.label, 'es')).toBe('Vens amb bus?');
   });
 
-  test('a field placed on an app screen with no holder is a group on that screen', () => {
+  test('a field placed on an app screen is a group on that screen', () => {
     const { screens, plan } = herOnboarding(catalogWith(LAYOUT_PLACEMENTS));
     const equipment = appScreenFields(screens, 'equipment');
     expect(equipment?.id).toBe(appScreenGroupId('equipment'));
@@ -200,39 +199,10 @@ describe('herOnboarding', () => {
     );
   });
 
-  test('an older server is read through its holder screen and the old question shape', () => {
-    const holderQuestion: CustomQuestion = {
-      id: GLOVES.id,
-      screenId: OLD_SCREEN,
-      type: 'short_text',
-      label: { ca: 'Talla de guants' },
-      help: null,
-      privacy: 'normal',
-      placements: ['wizard'],
-      isArchived: false,
-      settings: {},
-      isRequired: true,
-      options: [],
-    };
-    const old: IntakeCatalog = {
-      screens: [
-        {
-          id: OLD_SCREEN,
-          title: { ca: 'Talles' },
-          intro: null,
-          afterScreen: 'logistics',
-          isArchived: false,
-          builtinScreen: 'equipment',
-          questions: [holderQuestion, { ...holderQuestion, id: STOP.id, placements: ['staff'] }],
-        },
-      ],
-      overrides: [],
-      presets: [],
-    };
-    const { screens, plan } = herOnboarding(old);
-    expect(ids(appScreenFields(screens, 'equipment')?.questions ?? [])).toEqual([GLOVES.id]);
-    expect(plan).toHaveLength(1);
-    expect(plan[0]?.builtinScreen).toBe('equipment');
+  test('a catalog that could not load asks no Ramassà field', () => {
+    const empty: IntakeCatalog = { screens: [], overrides: [], presets: [] };
+    expect(herOnboarding(empty)).toEqual({ screens: [], plan: [] });
+    expect(onboardingScreenQuestions(empty, 'equipment')).toEqual([]);
   });
 });
 
@@ -243,33 +213,7 @@ describe('seasonFormQuestions', () => {
     expect(textIn(questions[0]?.label, 'ca')).toBe('Aquesta temporada, vens amb bus?');
   });
 
-  test('an older server reads the seasonal questions of the old screens', () => {
-    const seasonal: CustomQuestion = {
-      id: BARRIER.id,
-      screenId: OLD_SCREEN,
-      type: 'long_text',
-      label: { ca: 'Què et dificulta venir?' },
-      help: null,
-      privacy: 'sensitive',
-      placements: ['wizard', 'season'],
-      isArchived: false,
-      settings: {},
-      options: [],
-    };
-    const old: IntakeCatalog = {
-      screens: [
-        {
-          id: OLD_SCREEN,
-          title: { ca: 'Participació' },
-          intro: null,
-          afterScreen: 'logistics',
-          isArchived: false,
-          questions: [seasonal],
-        },
-      ],
-      overrides: [],
-      presets: [],
-    };
-    expect(ids(seasonFormQuestions(old))).toEqual([BARRIER.id]);
+  test('a catalog that could not load asks nothing again', () => {
+    expect(seasonFormQuestions({ screens: [], overrides: [], presets: [] })).toEqual([]);
   });
 });

@@ -111,8 +111,7 @@ export function entityFormItemsOf(catalog: IntakeCatalog): readonly EntityFormIt
 }
 
 /**
- * The form when the layout cannot be read (an older server, or the catalog
- * failed to load): the built-in fields in the app's order, her names
+ * The form when the layout cannot be read (the catalog failed to load): the built-in fields in the app's order, her names
  * required, with no wording of their own, so each app shows its own label.
  */
 export function entityFormFallbackItems(): readonly EntityFormItem[] {

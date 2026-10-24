@@ -129,11 +129,42 @@ describe('reading a setup file', () => {
   });
 
   test('an unknown schema version is refused by number', () => {
-    expect(readOnboardingSetupFile(asFile(document({ schema_version: 3 })))).toEqual({
+    expect(readOnboardingSetupFile(asFile(document({ schema_version: 4 })))).toEqual({
       ok: false,
       reason: 'unknown_version',
-      version: 3,
+      version: 4,
     });
+  });
+
+  test('a version 3 file carries screens and the profile layout, and nothing older', () => {
+    const screen = { ...document().screens[0]! } as Record<string, unknown>;
+    delete screen.questions;
+    const layout = {
+      sections: [{ id: 'support', key: 'support', title: { ca: 'Suport' }, sort_order: 6 }],
+      fields: [{ id: GATE, kind: 'custom', section_id: 'support', options: [] }],
+      placements: [{ field_id: GATE, surface: 'season', screen_key: null }],
+    };
+    const current = document({ schema_version: 3, screens: [screen], ...layout });
+    expect(readOnboardingSetupFile(asFile(current)).ok).toBe(true);
+    expect(
+      readOnboardingSetupFile(asFile(document({ schema_version: 3, screens: [screen] }))),
+    ).toMatchObject({ ok: false, reason: 'damaged' });
+    // Fields alone are a setup: a team-only field travels too.
+    const fieldsOnly = document({
+      schema_version: 3,
+      ...layout,
+      screens: [],
+      builtin_question_overrides: [],
+      builtin_screens: [],
+      flow_order: null,
+      required_questions: [],
+      presets: [],
+      document_step_explanation: null,
+      app_terms: { published: [], draft: null },
+      seasons: [],
+      authorization: { published: [], draft: null },
+    });
+    expect(readOnboardingSetupFile(asFile(fieldsOnly)).ok).toBe(true);
   });
 
   test('schema_version must be the number 1: a string or nothing is named as such', () => {

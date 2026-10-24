@@ -23,11 +23,7 @@ import { resolveLocalizedText } from '../i18n/localized-content';
 import { INTAKE_QUESTIONS, type IntakeQuestion } from '../onboarding/intake';
 import type { LanguageCode } from '../schemas/language';
 import type { Database, Json } from '../types/database';
-import {
-  CUSTOM_QUESTION_TYPES,
-  type CustomQuestionType,
-  type QuestionPlacement,
-} from './question-types';
+import { CUSTOM_QUESTION_TYPES, type CustomQuestionType } from './question-types';
 
 type Client = SupabaseClient<Database>;
 
@@ -181,10 +177,7 @@ function isIntakeQuestion(key: string | null): key is IntakeQuestion {
   return key !== null && (INTAKE_QUESTIONS as readonly string[]).includes(key);
 }
 
-/**
- * The layout from the catalog. An older server sends none: undefined, and the
- * readers fall back to the old question shape.
- */
+/** The layout from the catalog; undefined when the catalog sends none. */
 export function parseProfileLayout(raw: {
   readonly sections?: unknown;
   readonly fields?: unknown;
@@ -302,23 +295,6 @@ export function placementsOnSurface(
 /** No surface asks it: the team fills it in on her page. */
 export function isTeamOnly(layout: ProfileLayout, fieldId: string): boolean {
   return placementsOf(layout, fieldId).length === 0;
-}
-
-/**
- * The places of a field in the old question words (`wizard`, `entity_form`,
- * `season`, `staff` for none), for the readers that still take them.
- */
-export function legacyPlacementsOf(
-  layout: ProfileLayout,
-  fieldId: string,
-): readonly QuestionPlacement[] {
-  const surfaces = new Set(placementsOf(layout, fieldId).map((placement) => placement.surface));
-  if (surfaces.size === 0) return ['staff'];
-  return [
-    ...(surfaces.has('onboarding') ? (['wizard'] as const) : []),
-    ...(surfaces.has('entity_form') ? (['entity_form'] as const) : []),
-    ...(surfaces.has('season') ? (['season'] as const) : []),
-  ];
 }
 
 const SCREEN_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
