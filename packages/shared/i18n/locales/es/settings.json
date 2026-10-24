@@ -471,10 +471,6 @@
       "optionsList": "Las respuestas salen de una lista fija que usa la app (países, municipios o tallas), así que solo se puede cambiar el texto de la pregunta.",
       "optionValues": "Puedes cambiar el texto de las opciones u ocultarlas. No puedes añadir ni quitar, porque la app lee qué significa cada una."
     },
-    "answersTitle": "Preguntas adicionales",
-    "editAnswers": "Editar las respuestas",
-    "saveAnswers": "Guardar las respuestas",
-    "notAnswered": "Sin respuesta",
     "noAnswer": "Ninguna respuesta",
     "archivedOption": "archivada",
     "answers": {

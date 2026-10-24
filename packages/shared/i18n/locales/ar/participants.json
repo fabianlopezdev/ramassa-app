@@ -146,7 +146,6 @@
   "statusInvited": "مدعوّات لم يدخلن بعد",
   "rowInvited": "مدعوّة، لم تدخل بعد",
   "prefillNotGiven": "غير محدد",
-  "prefillHint": "لم تدخل التطبيق بعد. املئي فقط ما تعرفينه عنها: سيسألها التسجيل الموجَّه عن الباقي، والموافقة قرارها هي.",
   "questionStatesTitle": "ما يسألها عنه التسجيل الموجَّه",
   "questionStatesIntro": "اختر لكل سؤال إن كان التسجيل الموجَّه يطرحه عليها. تلقائي: فقط إن لم يُجب عنه أحد. اسأل: دائمًا، مع إجابتكم لتؤكدها. لا تسأل: أبدًا، لكنها ستراه في الملخص.",
   "questionStateAuto": "تلقائي",
@@ -154,8 +153,6 @@
   "questionStateSkip": "لا تسأل",
   "questionStatesPresetMissing": "الناقص فقط",
   "questionStatesPresetReview": "تراجع كل شيء",
-  "questionStatesSave": "احفظ الأسئلة",
-  "questionStatesSaved": "حُفظت الأسئلة.",
   "questionStatesFailed": "تعذّر حفظ الأسئلة. حاول مرة أخرى.",
   "questionStatesRequiredHint": "إلزامي: أجب عنه قبل إخراجه من التسجيل.",
   "questionStatesAnswered": "لديه إجابة.",
@@ -256,5 +253,25 @@
   "inviteScreenNotAsked": "لا تُسأل",
   "inviteScreenQuestions": "الأسئلة",
   "inviteScreenRequired": "فيها سؤال إلزامي لم يُجب عنه أحد.",
-  "inviteScreenCount": "{{asked}} من {{total}} أسئلة"
+  "inviteScreenCount": "{{asked}} من {{total}} أسئلة",
+  "fitxa": {
+    "sourcePlayer": "هي نفسها",
+    "sourceEntity": "{{name}} (جهة)",
+    "sourceEntityUnknown": "جهة",
+    "sourceStaffUnknown": "الفريق",
+    "locked": {
+      "personal": "يتطلب إذن البيانات الشخصية",
+      "sensitive": "يتطلب إذن البيانات الحساسة"
+    },
+    "edit": "تعديل",
+    "editNamed": "تعديل {{field}}",
+    "choiceNamed": "{{field}}: {{choice}}",
+    "accountTitle": "الحساب",
+    "olderSeasons_zero": "لا مواسم أخرى",
+    "olderSeasons_one": "موسم آخر",
+    "olderSeasons_two": "موسمان آخران",
+    "olderSeasons_few": "{{count}} مواسم أخرى",
+    "olderSeasons_many": "{{count}} موسمًا آخر",
+    "olderSeasons_other": "{{count}} موسم آخر"
+  }
 }

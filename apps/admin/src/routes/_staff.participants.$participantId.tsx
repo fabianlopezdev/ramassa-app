@@ -44,6 +44,7 @@ import {
   fetchParticipantAnsweredQuestions,
   fetchParticipantDetail,
   fetchParticipantNotes,
+  fetchParticipantProfileAnswers,
   fetchTestPlayerScenario,
 } from '@ramassa/shared/participants';
 import { fetchMyPermissions, isLimitedToTestPlayers } from '@ramassa/shared/permissions';
@@ -78,6 +79,7 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
         seasonAnswers: [],
         intakeCatalog: EMPTY_INTAKE_CATALOG,
         customAnswers: [],
+        profileOrigins: [],
         testScenario: null,
       };
     }
@@ -90,18 +92,21 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
     // with her record and her answers: the team's notes, material, attendance
     // and authorization belong to real participants and are not read at all.
     if (isLimitedToTestPlayers(permissions)) {
-      const [answered, choices, intakeCatalog, customAnswers, scenario] = await Promise.all([
-        participant.terms_accepted_at === null
-          ? fetchParticipantAnsweredQuestions(supabase, params.participantId)
-          : Promise.resolve(new Set<never>()),
-        // What a test player's wizard asks (RAPP-618): the design role sets it too.
-        participant.terms_accepted_at === null
-          ? fetchParticipantChoices(supabase, params.participantId).catch(() => NO_CHOICES)
-          : Promise.resolve(NO_CHOICES),
-        fetchIntakeCatalog(supabase).catch(() => EMPTY_INTAKE_CATALOG),
-        fetchParticipantCustomAnswers(supabase, params.participantId).catch(() => []),
-        testScenario,
-      ]);
+      const [answered, choices, intakeCatalog, customAnswers, profileOrigins, scenario] =
+        await Promise.all([
+          participant.terms_accepted_at === null
+            ? fetchParticipantAnsweredQuestions(supabase, params.participantId)
+            : Promise.resolve(new Set<never>()),
+          // What a test player's wizard asks (RAPP-618): the design role sets it too.
+          participant.terms_accepted_at === null
+            ? fetchParticipantChoices(supabase, params.participantId).catch(() => NO_CHOICES)
+            : Promise.resolve(NO_CHOICES),
+          fetchIntakeCatalog(supabase).catch(() => EMPTY_INTAKE_CATALOG),
+          fetchParticipantCustomAnswers(supabase, params.participantId).catch(() => []),
+          // Who gave her answers to the app's own fields (RAPP-653).
+          fetchParticipantProfileAnswers(supabase, params.participantId).catch(() => []),
+          testScenario,
+        ]);
       return {
         participant,
         notes: [],
@@ -120,6 +125,7 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
         seasonAnswers: [],
         intakeCatalog,
         customAnswers,
+        profileOrigins,
         testScenario: scenario,
       };
     }
@@ -138,6 +144,7 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
       seasonAnswers,
       intakeCatalog,
       customAnswers,
+      profileOrigins,
       scenario,
     ] = await Promise.all([
       fetchParticipantNotes(supabase, params.participantId),
@@ -167,6 +174,8 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
       // The questions staff added and her answers (RAPP-307); the page works without them.
       fetchIntakeCatalog(supabase).catch(() => EMPTY_INTAKE_CATALOG),
       fetchParticipantCustomAnswers(supabase, params.participantId).catch(() => []),
+      // Who gave her answers to the app's own fields (RAPP-653).
+      fetchParticipantProfileAnswers(supabase, params.participantId).catch(() => []),
       testScenario,
     ]);
     // Filtered here rather than asked for by participant: the queue read is one
@@ -193,6 +202,7 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
       seasonAnswers,
       intakeCatalog,
       customAnswers,
+      profileOrigins,
       testScenario: scenario,
     };
   },
@@ -217,6 +227,7 @@ function ParticipantDetailPage() {
     seasonAnswers,
     intakeCatalog,
     customAnswers,
+    profileOrigins,
     testScenario,
   } = Route.useLoaderData();
 
@@ -241,6 +252,7 @@ function ParticipantDetailPage() {
       seasonAnswers={seasonAnswers}
       intakeCatalog={intakeCatalog}
       customAnswers={customAnswers}
+      profileOrigins={profileOrigins}
       testScenario={testScenario}
     />
   );

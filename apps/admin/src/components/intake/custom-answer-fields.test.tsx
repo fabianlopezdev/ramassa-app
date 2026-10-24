@@ -5,7 +5,7 @@
 import { render } from '@testing-library/react';
 import { expect, test } from 'bun:test';
 import type { IntakeScreen } from '@ramassa/shared/intake-builder';
-import { customAnswerErrors, CustomAnswerFields } from './custom-answer-fields';
+import { customAnswerErrorsOf, CustomAnswerInput } from './custom-answer-fields';
 
 const t = (key: string, values?: Record<string, unknown>) =>
   values === undefined ? key : `${key} ${JSON.stringify(values)}`;
@@ -45,22 +45,29 @@ const screen: IntakeScreen = {
 };
 
 test('each answer that does not fit gets its own message; empty and fitting ones none', () => {
-  expect(customAnswerErrors([screen], { children: 2.5, email: 'ana@example' }, t)).toEqual({
+  expect(
+    customAnswerErrorsOf(screen.questions, { children: 2.5, email: 'ana@example' }, t),
+  ).toEqual({
     children: 'onboarding:customErrorNumberWhole',
     email: 'onboarding:customErrorEmail',
   });
-  expect(customAnswerErrors([screen], { children: 3, email: null }, t)).toEqual({});
+  expect(customAnswerErrorsOf(screen.questions, { children: 3, email: null }, t)).toEqual({});
 });
 
 test('the message shows under its own question', () => {
   const view = render(
-    <CustomAnswerFields
-      screens={[screen]}
-      values={{}}
-      prefix="referral-custom"
-      language="ca"
-      errors={{ children: 'Escriu un nombre sencer.' }}
-    />,
+    <>
+      {screen.questions.map((question) => (
+        <CustomAnswerInput
+          key={question.id}
+          question={question}
+          value={undefined}
+          prefix="referral-custom"
+          language="ca"
+          error={question.id === 'children' ? 'Escriu un nombre sencer.' : undefined}
+        />
+      ))}
+    </>,
   );
   expect(view.getByTestId('referral-custom-children-error').textContent).toBe(
     'Escriu un nombre sencer.',

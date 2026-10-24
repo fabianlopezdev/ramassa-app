@@ -23,6 +23,8 @@ import {
   customPhoneQuestion,
   stepContent,
 } from '@/components/onboarding/screen-content';
+import { CHOICE_LABEL_KEYS } from '@/components/participants/choice-menu';
+import { PlayerChoicePresets } from '@/components/participants/player-choice-presets';
 import { Button } from '@/components/ui/button';
 import {
   Sheet,
@@ -35,7 +37,7 @@ import { Switch } from '@/components/ui/switch';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { QUESTION_LABEL_KEYS } from '@/lib/builtin-questions';
 import { cn } from '@/lib/utils';
-import { EyeOff, Lock, X } from 'lucide-react';
+import { EyeOff, Lock } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type {
@@ -46,9 +48,7 @@ import type {
 } from '@ramassa/shared/intake';
 import {
   builtinLabel,
-  PLAYER_PRESETS,
   playerPlan,
-  presetChoices,
   textIn,
   withQuestionChoice,
   withScreenChoice,
@@ -66,12 +66,6 @@ const ASKING_LABEL_KEYS: Readonly<Record<WizardQuestionAsking, string>> = {
   asked: 'participants:inviteQuestionAsked',
   'when-it-applies': 'participants:inviteQuestionAskedWhenItApplies',
   'not-asked': 'participants:inviteQuestionNotAsked',
-};
-
-const CHOICE_LABEL_KEYS: Readonly<Record<IntakeQuestionState, string>> = {
-  auto: 'participants:inviteChoiceAuto',
-  ask: 'participants:inviteChoiceAsk',
-  skip: 'participants:inviteChoiceSkip',
 };
 
 export interface PlayerQuestionsBoardProps {
@@ -129,51 +123,11 @@ export function PlayerQuestionsBoard({
             })}
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => onChange(PLAYER_PRESETS.missing(catalog))}
-          >
-            {t('participants:questionStatesPresetMissing')}
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => onChange(PLAYER_PRESETS.review(catalog))}
-          >
-            {t('participants:questionStatesPresetReview')}
-          </Button>
-          {catalog.presets.map((preset) => (
-            <span key={preset.id} className="inline-flex items-center">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className={onDeletePreset === undefined ? undefined : 'rounded-e-none'}
-                onClick={() =>
-                  onChange(presetChoices(catalog, preset.states as QuestionStates, false))
-                }
-              >
-                {preset.name}
-              </Button>
-              {onDeletePreset === undefined ? null : (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon-sm"
-                  className="rounded-s-none border-s-0"
-                  aria-label={t('participants:questionStatesDeletePreset', { name: preset.name })}
-                  onClick={() => onDeletePreset(preset)}
-                >
-                  <X aria-hidden />
-                </Button>
-              )}
-            </span>
-          ))}
-        </div>
+        <PlayerChoicePresets
+          catalog={catalog}
+          onChange={onChange}
+          onDeletePreset={onDeletePreset}
+        />
       </header>
 
       <ol className={BOARD_GRID} aria-label={t('settings:onboardingBoard.listLabel')}>

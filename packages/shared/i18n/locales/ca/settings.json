@@ -471,10 +471,6 @@
       "optionsList": "Les respostes surten d'una llista fixa que fa servir l'app (països, municipis o talles), així que només es pot canviar el text de la pregunta.",
       "optionValues": "Pots canviar el text de les opcions o amagar-les. No en pots afegir ni treure, perquè l'app llegeix què vol dir cadascuna."
     },
-    "answersTitle": "Preguntes addicionals",
-    "editAnswers": "Edita les respostes",
-    "saveAnswers": "Desa les respostes",
-    "notAnswered": "Sense resposta",
     "noAnswer": "Cap resposta",
     "archivedOption": "arxivada",
     "answers": {

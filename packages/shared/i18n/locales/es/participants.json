@@ -455,7 +455,6 @@
   "statusInvited": "Invitadas sin entrar",
   "rowInvited": "Invitada, aún no ha entrado",
   "prefillNotGiven": "Sin indicar",
-  "prefillHint": "Aún no ha entrado en la aplicación. Rellena solo lo que ya sabes de ella: el registro guiado le preguntará el resto, y el consentimiento lo da ella.",
   "questionStatesTitle": "Qué le pregunta el registro guiado",
   "questionStatesIntro": "Elige para cada pregunta si el registro guiado se la hace. Automático: solo si nadie la ha respondido. Preguntar: siempre, con vuestra respuesta para que la confirme. No preguntar: nunca, pero la verá en el resumen.",
   "questionStateAuto": "Automático",
@@ -463,8 +462,6 @@
   "questionStateSkip": "No preguntar",
   "questionStatesPresetMissing": "Solo lo que falta",
   "questionStatesPresetReview": "Que lo revise todo",
-  "questionStatesSave": "Guardar las preguntas",
-  "questionStatesSaved": "Preguntas guardadas.",
   "questionStatesFailed": "No se han podido guardar las preguntas. Vuelve a intentarlo.",
   "questionStatesRequiredHint": "Es obligatoria: respóndela antes de quitarla del registro.",
   "questionStatesAnswered": "Ya tiene respuesta.",
@@ -621,5 +618,21 @@
   "inviteScreenNotAsked": "No se pregunta",
   "inviteScreenQuestions": "Preguntas",
   "inviteScreenRequired": "Tiene una pregunta obligatoria sin respuesta.",
-  "inviteScreenCount": "{{asked}} de {{total}} preguntas"
+  "inviteScreenCount": "{{asked}} de {{total}} preguntas",
+  "fitxa": {
+    "sourcePlayer": "Ella misma",
+    "sourceEntity": "{{name}} (entidad)",
+    "sourceEntityUnknown": "Entidad",
+    "sourceStaffUnknown": "Equipo",
+    "locked": {
+      "personal": "Requiere el permiso de datos personales",
+      "sensitive": "Requiere el permiso de datos sensibles"
+    },
+    "edit": "Editar",
+    "editNamed": "Editar {{field}}",
+    "choiceNamed": "{{field}}: {{choice}}",
+    "accountTitle": "Cuenta",
+    "olderSeasons_one": "{{count}} temporada más",
+    "olderSeasons_other": "{{count}} temporadas más"
+  }
 }

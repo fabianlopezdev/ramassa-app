@@ -18,17 +18,12 @@
 
 import { ParticipantAttendanceReport } from '@/components/attendance/attendance-report';
 import { loadAuthenticatedMediaObjectUrl } from '@/components/content/authenticated-media-image';
-import { DetailSection } from '@/components/detail/detail-section';
 import { Page } from '@/components/layout/page';
 import { ParticipantActivity } from '@/components/participants/participant-activity';
 import { ParticipantAuthorizationPanel } from '@/components/participants/participant-authorization-panel';
-import { ParticipantCustomAnswers } from '@/components/participants/participant-custom-answers';
-import { ParticipantEditForm } from '@/components/participants/participant-edit-form';
 import { ParticipantEquipment } from '@/components/participants/participant-equipment';
+import { ParticipantFitxa } from '@/components/participants/participant-fitxa';
 import { ParticipantNotes } from '@/components/participants/participant-notes';
-import { ParticipantPrefillForm } from '@/components/participants/participant-prefill-form';
-import { ParticipantProfileFields } from '@/components/participants/participant-profile-fields';
-import { ParticipantQuestionStates } from '@/components/participants/participant-question-states';
 import { ParticipantRgpd } from '@/components/participants/participant-rgpd';
 import { TestPlayerDelete } from '@/components/participants/test-player-delete';
 import { TestPlayerScenarioPanel } from '@/components/participants/test-player-scenario';
@@ -67,7 +62,6 @@ import {
   saveIntakePreset,
   setParticipantCustomAnswers,
   uploadsAvailable,
-  type CustomAnswers,
   type CustomQuestionStates,
   type IntakeCatalog,
   type ParticipantCustomAnswer,
@@ -82,6 +76,7 @@ import {
   type ParticipantActivityEntry,
   type ParticipantDetailRow,
   type ParticipantNoteRow,
+  type ProfileAnswerOrigin,
   type ProfilePrefillPayload,
   type TestPlayerScenario,
 } from '@ramassa/shared/participants';
@@ -94,15 +89,6 @@ import { deleteTestPlayer, eraseParticipant } from '@ramassa/shared/rgpd';
 import type { EquipmentDeliveryInput, UpdateOwnProfilePayload } from '@ramassa/shared/schemas';
 import { setPriorSeasons, type ParticipantSeasonAnswers } from '@ramassa/shared/seasons';
 import { purgeParticipantMedia } from '@ramassa/shared/upload-client';
-
-/** Her answers to Ramassà's questions outside any season, the ones her wizard reads. */
-function wizardCustomAnswers(answers: readonly ParticipantCustomAnswer[]): CustomAnswers {
-  return Object.fromEntries(
-    answers
-      .filter((answer) => answer.seasonId === null)
-      .map((answer) => [answer.questionId, answer.value]),
-  );
-}
 
 export interface ParticipantDetailProps {
   readonly participant: ParticipantDetailRow;
@@ -132,6 +118,8 @@ export interface ParticipantDetailProps {
   /** The questions staff added, and her answers to them (RAPP-307). */
   readonly intakeCatalog?: IntakeCatalog;
   readonly customAnswers?: readonly ParticipantCustomAnswer[];
+  /** Who gave her answers to the app's own fields (RAPP-653). */
+  readonly profileOrigins?: readonly ProfileAnswerOrigin[];
   /** A test player's situation, for the scenario switches (RAPP-619); null for a real woman. */
   readonly testScenario?: TestPlayerScenario | null;
 }
@@ -153,6 +141,7 @@ export function ParticipantDetail({
   seasonAnswers = [],
   intakeCatalog = EMPTY_INTAKE_CATALOG,
   customAnswers = [],
+  profileOrigins = [],
   testScenario = null,
 }: ParticipantDetailProps) {
   const { t, i18n } = useTranslation(['participants', 'common', 'profile']);
@@ -179,8 +168,6 @@ export function ParticipantDetail({
   const teamTools = !isLimitedToTestPlayers(permissions);
   const sees = (code: PermissionCode) =>
     permissions.has(code) || (isTestPlayer && permissions.has('test_players.manage'));
-  const [isEditing, setIsEditing] = useState(false);
-  const [saveErrorMessage, setSaveErrorMessage] = useState<string | undefined>(undefined);
   const [noteErrorMessage, setNoteErrorMessage] = useState<string | undefined>(undefined);
   const [questionStatesErrorMessage, setQuestionStatesErrorMessage] = useState<string | undefined>(
     undefined,
@@ -212,16 +199,12 @@ export function ParticipantDetail({
     await navigate({ to: '/participants', replace: true });
   }
 
+  // Throws on failure, so the field's editor stays open and says so.
   async function saveProfile(payload: UpdateOwnProfilePayload | ProfilePrefillPayload) {
-    setSaveErrorMessage(undefined);
     const result = await safeAsync(() =>
       updateParticipantProfile(supabase, participant.id, payload),
     );
-    if (!result.ok) {
-      setSaveErrorMessage(t('profile:saveFailed'));
-      return;
-    }
-    setIsEditing(false);
+    if (!result.ok) throw result.error;
     await router.invalidate();
   }
 
@@ -384,81 +367,34 @@ export function ParticipantDetail({
         )}
       </header>
 
-      <DetailSection
-        title={t('sectionProfile')}
-        // Said out loud rather than left implicit: reading this block wrote an
-        // audit row naming this staff member and this moment. A logged action
-        // nobody was told about is a surprise, and this team's trust is the
-        // product.
-        description={t('accessLogged')}
-        action={
-          isEditing ? null : (
-            <Button type="button" size="lg" onClick={() => setIsEditing(true)}>
-              {t('editAction')}
-            </Button>
-          )
-        }
-      >
-        {isEditing && !hasJoined ? (
-          <ParticipantPrefillForm
-            participant={participant}
-            answered={new Set(answeredQuestions)}
-            canSeeSensitive={sees('participants.view_sensitive')}
-            onSubmit={saveProfile}
-            onCancel={() => {
-              setSaveErrorMessage(undefined);
-              setIsEditing(false);
-            }}
-            errorMessage={saveErrorMessage}
-          />
-        ) : isEditing ? (
-          <ParticipantEditForm
-            participant={participant}
-            canSeeSensitive={sees('participants.view_sensitive')}
-            onSubmit={saveProfile}
-            onCancel={() => {
-              setSaveErrorMessage(undefined);
-              setIsEditing(false);
-            }}
-            errorMessage={saveErrorMessage}
-          />
-        ) : (
-          <ParticipantProfileFields
-            participant={participant}
-            canSeeSensitive={sees('participants.view_sensitive')}
-          />
-        )}
-      </DetailSection>
-
-      {/* The design role chooses a test player's questions too (RAPP-618). */}
-      {hasJoined || (!teamTools && !isTestPlayer) ? null : (
-        <ParticipantQuestionStates
-          states={questionStates}
-          customStates={customQuestionStates}
-          answered={new Set(answeredQuestions)}
-          customAnswers={wizardCustomAnswers(customAnswers)}
-          catalog={intakeCatalog}
-          onSave={saveQuestionStates}
-          errorMessage={questionStatesErrorMessage}
-          onSavePreset={async (name, states) => {
-            await saveIntakePreset(supabase, { id: null, name, states });
-            await router.invalidate();
-          }}
-          onDeletePreset={async (id) => {
-            await deleteIntakePreset(supabase, id);
-            await router.invalidate();
-          }}
-        />
-      )}
-
-      <ParticipantCustomAnswers
+      <ParticipantFitxa
+        participant={participant}
         catalog={intakeCatalog}
-        answers={customAnswers}
-        canEdit={sees('participants.view_personal')}
-        canEditSensitive={sees('participants.view_sensitive')}
-        onSave={async (answers) => {
-          await setParticipantCustomAnswers(supabase, participant.id, answers);
+        customAnswers={customAnswers}
+        origins={profileOrigins}
+        answeredQuestions={answeredQuestions}
+        choices={{ states: questionStates, customStates: customQuestionStates }}
+        // Set only before she joins (RAPP-301); the design role chooses a test
+        // player's too (RAPP-618). The database needs participants.view_personal.
+        showChoices={
+          !hasJoined && (teamTools || isTestPlayer) && sees('participants.view_personal')
+        }
+        sees={sees}
+        onSaveBuiltin={saveProfile}
+        onSaveCustom={async (fieldId, value) => {
+          await setParticipantCustomAnswers(supabase, participant.id, { [fieldId]: value });
           await router.invalidate();
+        }}
+        onSaveChoices={saveQuestionStates}
+        choicesError={questionStatesErrorMessage}
+        onSavePreset={async (name, states) => {
+          await saveIntakePreset(supabase, { id: null, name, states });
+          await router.invalidate();
+        }}
+        onDeletePreset={(preset) => {
+          if (window.confirm(t('questionStatesDeletePreset', { name: preset.name }))) {
+            void deleteIntakePreset(supabase, preset.id).then(() => router.invalidate());
+          }
         }}
         onOpenFile={uploadsAvailable(mediaWorkerUrl) ? openAnswerFile : undefined}
       />

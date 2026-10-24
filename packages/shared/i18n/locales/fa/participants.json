@@ -146,7 +146,6 @@
   "statusInvited": "دعوت‌شده، هنوز وارد نشده",
   "rowInvited": "دعوت‌شده، هنوز وارد نشده",
   "prefillNotGiven": "مشخص نشده",
-  "prefillHint": "او هنوز وارد برنامه نشده است. فقط آنچه درباره او می‌دانید را پر کنید: ثبت‌نام راهنما بقیه را از او می‌پرسد و رضایت را خودش می‌دهد.",
   "questionStatesTitle": "آنچه ثبت‌نام راهنما از او می‌پرسد",
   "questionStatesIntro": "برای هر سؤال انتخاب کنید که ثبت‌نام راهنما آن را بپرسد یا نه. خودکار: فقط اگر کسی پاسخ نداده باشد. بپرس: همیشه، با پاسخ شما تا آن را تأیید کند. نپرس: هرگز، اما آن را در خلاصه می‌بیند.",
   "questionStateAuto": "خودکار",
@@ -154,8 +153,6 @@
   "questionStateSkip": "نپرس",
   "questionStatesPresetMissing": "فقط آنچه کم است",
   "questionStatesPresetReview": "همه را بازبینی کند",
-  "questionStatesSave": "ذخیره سؤال‌ها",
-  "questionStatesSaved": "سؤال‌ها ذخیره شد.",
   "questionStatesFailed": "سؤال‌ها ذخیره نشد. دوباره تلاش کنید.",
   "questionStatesRequiredHint": "الزامی است: پیش از برداشتن آن از ثبت‌نام، پاسخش را بدهید.",
   "questionStatesAnswered": "پاسخ دارد.",
@@ -256,5 +253,21 @@
   "inviteScreenNotAsked": "پرسیده نمی‌شود",
   "inviteScreenQuestions": "پرسش‌ها",
   "inviteScreenRequired": "یک پرسش الزامی دارد که کسی پاسخ نداده است.",
-  "inviteScreenCount": "{{asked}} از {{total}} پرسش"
+  "inviteScreenCount": "{{asked}} از {{total}} پرسش",
+  "fitxa": {
+    "sourcePlayer": "خودش",
+    "sourceEntity": "{{name}} (نهاد)",
+    "sourceEntityUnknown": "نهاد",
+    "sourceStaffUnknown": "تیم",
+    "locked": {
+      "personal": "به مجوز داده‌های شخصی نیاز دارد",
+      "sensitive": "به مجوز داده‌های حساس نیاز دارد"
+    },
+    "edit": "ویرایش",
+    "editNamed": "ویرایش {{field}}",
+    "choiceNamed": "{{field}}: {{choice}}",
+    "accountTitle": "حساب",
+    "olderSeasons_one": "{{count}} فصل دیگر",
+    "olderSeasons_other": "{{count}} فصل دیگر"
+  }
 }

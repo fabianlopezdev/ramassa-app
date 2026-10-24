@@ -455,7 +455,6 @@
   "statusInvited": "Convidades sense entrar",
   "rowInvited": "Convidada, encara no ha entrat",
   "prefillNotGiven": "Sense indicar",
-  "prefillHint": "Encara no ha entrat a l'aplicació. Omple només el que ja saps d'ella: el registre guiat li preguntarà la resta, i el consentiment el dona ella.",
   "questionStatesTitle": "Què li pregunta el registre guiat",
   "questionStatesIntro": "Tria per a cada pregunta si el registre guiat li fa. Automàtic: només si ningú no l'ha respost. Preguntar: sempre, amb la vostra resposta perquè la confirmi. No preguntar: mai, però ho veurà al resum.",
   "questionStateAuto": "Automàtic",
@@ -463,8 +462,6 @@
   "questionStateSkip": "No preguntar",
   "questionStatesPresetMissing": "Només el que falta",
   "questionStatesPresetReview": "Que ho revisi tot",
-  "questionStatesSave": "Desa les preguntes",
-  "questionStatesSaved": "Preguntes desades.",
   "questionStatesFailed": "No s'han pogut desar les preguntes. Torna-ho a provar.",
   "questionStatesRequiredHint": "És obligatòria: respon-la abans de treure-la del registre.",
   "questionStatesAnswered": "Ja té resposta.",
@@ -621,5 +618,21 @@
   "inviteScreenNotAsked": "No es pregunta",
   "inviteScreenQuestions": "Preguntes",
   "inviteScreenRequired": "Té una pregunta obligatòria sense resposta.",
-  "inviteScreenCount": "{{asked}} de {{total}} preguntes"
+  "inviteScreenCount": "{{asked}} de {{total}} preguntes",
+  "fitxa": {
+    "sourcePlayer": "Ella mateixa",
+    "sourceEntity": "{{name}} (entitat)",
+    "sourceEntityUnknown": "Entitat",
+    "sourceStaffUnknown": "Equip",
+    "locked": {
+      "personal": "Cal el permís de dades personals",
+      "sensitive": "Cal el permís de dades sensibles"
+    },
+    "edit": "Edita",
+    "editNamed": "Edita {{field}}",
+    "choiceNamed": "{{field}}: {{choice}}",
+    "accountTitle": "Compte",
+    "olderSeasons_one": "{{count}} temporada més",
+    "olderSeasons_other": "{{count}} temporades més"
+  }
 }

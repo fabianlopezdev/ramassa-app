@@ -1,13 +1,13 @@
 /**
- * Inputs for the questions staff added (RAPP-307), grouped by their screen:
- * on the participant page and on the entity referral form. Uncontrolled, read
- * back with `readCustomAnswers` from the form's FormData.
+ * The input of a question staff added (RAPP-307), on her page (RAPP-653) and
+ * on the entity referral form. Uncontrolled, read back with
+ * `readCustomAnswersOf` from the form's FormData.
  *
  * Every type has its input (RAPP-610): a number and a date input, yes / no, a
  * phone and an email field, a list of options however long, a list typed one
  * item per line, one consent tick. A file or a signature is hers to give, so
  * staff read it and never write it: it is not an input here, and
- * `readCustomAnswers` leaves it out.
+ * `readCustomAnswersOf` leaves it out.
  */
 
 import { useTranslation } from 'react-i18next';
@@ -26,10 +26,8 @@ import {
   YES_NO,
   YES_NO_MAYBE,
   type AnswerTranslate,
-  type CustomAnswers,
   type CustomAnswerValue,
   type CustomQuestion,
-  type IntakeScreen,
 } from '@ramassa/shared/intake-builder';
 import type { LanguageCode } from '@ramassa/shared/schemas';
 
@@ -72,19 +70,6 @@ function readOne(
  * {question id: message} for each answer that does not fit its question, in
  * the words her wizard uses (RAPP-610). An empty answer is not checked here.
  */
-export function customAnswerErrors(
-  screens: readonly IntakeScreen[],
-  answers: Readonly<Record<string, CustomAnswerValue | null>>,
-  t: AnswerTranslate,
-): Record<string, string> {
-  return customAnswerErrorsOf(
-    screens.flatMap((screen) => screen.questions),
-    answers,
-    t,
-  );
-}
-
-/** As `customAnswerErrors`, for questions in a list (the entity form, RAPP-652). */
 export function customAnswerErrorsOf(
   questions: readonly CustomQuestion[],
   answers: Readonly<Record<string, CustomAnswerValue | null>>,
@@ -100,19 +85,6 @@ export function customAnswerErrorsOf(
 }
 
 /** {question id: value, or null to clear} for every question staff may write. */
-export function readCustomAnswers(
-  fields: FormData,
-  screens: readonly IntakeScreen[],
-  prefix: string,
-): Record<string, CustomAnswerValue | null> {
-  return readCustomAnswersOf(
-    fields,
-    screens.flatMap((screen) => screen.questions),
-    prefix,
-  );
-}
-
-/** As `readCustomAnswers`, for questions in a list (the entity form, RAPP-652). */
 export function readCustomAnswersOf(
   fields: FormData,
   questions: readonly CustomQuestion[],
@@ -343,42 +315,5 @@ export function CustomAnswerInput({
       {helpLine}
       {errorLine}
     </label>
-  );
-}
-
-export function CustomAnswerFields({
-  screens,
-  values,
-  prefix,
-  language,
-  errors = {},
-}: {
-  readonly screens: readonly IntakeScreen[];
-  readonly values: CustomAnswers;
-  readonly prefix: string;
-  readonly language: LanguageCode;
-  /** {question id: message} for answers that do not fit (RAPP-610). */
-  readonly errors?: Readonly<Record<string, string>>;
-}) {
-  return (
-    <div className="flex flex-col gap-4">
-      {screens.map((screen) => (
-        <fieldset key={screen.id} className="flex flex-col gap-3 rounded-lg border p-3">
-          <legend className="px-1 text-start text-sm font-semibold">
-            {textIn(screen.title, language)}
-          </legend>
-          {screen.questions.map((question) => (
-            <CustomAnswerInput
-              key={question.id}
-              question={question}
-              value={values[question.id]}
-              prefix={prefix}
-              language={language}
-              error={errors[question.id]}
-            />
-          ))}
-        </fieldset>
-      ))}
-    </div>
   );
 }

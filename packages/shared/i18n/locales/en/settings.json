@@ -471,10 +471,6 @@
       "optionsList": "The answers come from a fixed list the app uses (countries, municipalities or sizes), so only the question can be reworded.",
       "optionValues": "You can reword or hide options. You cannot add or remove them, because the app reads what each one means."
     },
-    "answersTitle": "Additional questions",
-    "editAnswers": "Edit the answers",
-    "saveAnswers": "Save the answers",
-    "notAnswered": "Not answered",
     "noAnswer": "No answer",
     "archivedOption": "archived",
     "answers": {
