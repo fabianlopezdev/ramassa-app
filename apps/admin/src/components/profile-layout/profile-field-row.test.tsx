@@ -3,8 +3,10 @@
  * Ramassà one in Edit for a designer and in nothing for a reader; the creator
  * line names who added it.
  */
+import { createAdminI18n } from '@/lib/i18n';
 import { fireEvent, render } from '@testing-library/react';
 import { expect, mock, test } from 'bun:test';
+import { I18nextProvider } from 'react-i18next';
 import type { ProfileField } from '@ramassa/shared/intake-builder';
 import { ProfileFieldRow, shortDate } from './profile-field-row';
 
@@ -34,9 +36,11 @@ function field(overrides: Partial<ProfileField> = {}): ProfileField {
 test('a Ramassà field opens with Edit for a designer', () => {
   const onEdit = mock(() => undefined);
   const view = render(
-    <ProfileFieldRow field={field()} surfaces={[]} handle={null} canEdit onEdit={onEdit} />,
+    <I18nextProvider i18n={createAdminI18n('ca')}>
+      <ProfileFieldRow field={field()} surfaces={[]} handle={null} canEdit onEdit={onEdit} />
+    </I18nextProvider>,
   );
-  expect(view.container.textContent).toContain('Pau Dissenya');
+  expect(view.container.textContent).toContain('creat per Pau Dissenya');
   fireEvent.click(view.getByTestId(`profile-field-edit-${field().id}`));
   expect(onEdit).toHaveBeenCalledTimes(1);
 });
