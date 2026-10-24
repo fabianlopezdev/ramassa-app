@@ -823,5 +823,37 @@
       "season": "Season",
       "teamOnly": "Team only"
     }
+  },
+  "fieldPicker": {
+    "title": "Add a field to {{screen}}",
+    "description": "Pick fields from the player profile for this screen.",
+    "close": "Close",
+    "search": "Search for a field",
+    "searchPlaceholder": "Search for a field…",
+    "sections": "Profile sections",
+    "results": "Results",
+    "noResults": "No field matches.",
+    "here": "Already on this screen",
+    "elsewhere": "Already asked on step {{number}}",
+    "elsewhereApp": "Already asked on another screen",
+    "withController": "Goes with “{{field}}”",
+    "newField": "New field…",
+    "newFieldIn": "Created in {{section}}",
+    "add_one": "Add {{count}} field",
+    "add_other": "Add {{count}} fields",
+    "addNone": "Add",
+    "failed": "Some fields could not be added. Try again."
+  },
+  "placement": {
+    "fromApp": "App field · {{section}}",
+    "fromAppAlone": "App field",
+    "fromRamassa": "Ramassà field · {{section}}",
+    "askHer": "How we ask her (optional)",
+    "saveWording": "Save",
+    "removeNamed": "Remove {{field}} from the screen",
+    "removeTitle": "Remove “{{field}}” from this screen?",
+    "removeBody": "The field stays on the player profile.",
+    "remove": "Remove",
+    "removeConditionFirst": "First remove “{{field}}”, which depends on it."
   }
 }

@@ -222,5 +222,41 @@
       "season": "الموسم",
       "teamOnly": "للفريق فقط"
     }
+  },
+  "fieldPicker": {
+    "title": "أضف حقلًا إلى {{screen}}",
+    "description": "اختر حقولًا من ملف اللاعبة لهذه الشاشة.",
+    "close": "إغلاق",
+    "search": "ابحث عن حقل",
+    "searchPlaceholder": "ابحث عن حقل…",
+    "sections": "أقسام الملف",
+    "results": "النتائج",
+    "noResults": "لا يوجد حقل مطابق.",
+    "here": "موجود في هذه الشاشة",
+    "elsewhere": "يُسأل في الخطوة {{number}}",
+    "elsewhereApp": "يُسأل في شاشة أخرى",
+    "withController": "يأتي مع «{{field}}»",
+    "newField": "حقل جديد…",
+    "newFieldIn": "يُنشأ في {{section}}",
+    "add_zero": "أضف",
+    "add_one": "أضف حقلًا واحدًا",
+    "add_two": "أضف حقلين",
+    "add_few": "أضف {{count}} حقول",
+    "add_many": "أضف {{count}} حقلًا",
+    "add_other": "أضف {{count}} حقل",
+    "addNone": "أضف",
+    "failed": "تعذّرت إضافة كل الحقول. حاول مرة أخرى."
+  },
+  "placement": {
+    "fromApp": "حقل من التطبيق · {{section}}",
+    "fromAppAlone": "حقل من التطبيق",
+    "fromRamassa": "حقل من Ramassà · {{section}}",
+    "askHer": "كيف نسألها (اختياري)",
+    "saveWording": "حفظ",
+    "removeNamed": "أزل {{field}} من الشاشة",
+    "removeTitle": "هل تريد إزالة «{{field}}» من هذه الشاشة؟",
+    "removeBody": "يبقى الحقل في الملف.",
+    "remove": "إزالة",
+    "removeConditionFirst": "أزل أولًا «{{field}}»، فهو يعتمد عليه."
   }
 }

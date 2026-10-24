@@ -36,12 +36,15 @@ export function LanguageFields({
   value,
   isCatalanRequired,
   isLong = false,
+  placeholder,
 }: {
   readonly name: string;
   readonly legend: string;
   readonly value: BuilderText | null | undefined;
   readonly isCatalanRequired: boolean;
   readonly isLong?: boolean;
+  /** Shown in an empty box, per language: what she reads when nothing is written. */
+  readonly placeholder?: (language: LanguageCode) => string;
 }) {
   const { t } = useTranslation('settings');
   const editing = useContext(EditingLanguageContext);
@@ -64,6 +67,7 @@ export function LanguageFields({
             dir: language === 'ar' || language === 'fa' ? 'rtl' : 'auto',
             lang: language,
             hidden: language !== editing,
+            placeholder: placeholder?.(language),
             className: inputClass,
           } as const;
           return isLong ? (
@@ -90,6 +94,7 @@ export function LanguageFields({
           dir: language === 'ar' || language === 'fa' ? 'rtl' : 'auto',
           lang: language,
           required: language === 'ca' && isCatalanRequired,
+          placeholder: placeholder?.(language),
           className: inputClass,
         } as const;
         return (

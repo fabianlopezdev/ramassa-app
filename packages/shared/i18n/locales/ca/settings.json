@@ -823,5 +823,37 @@
       "season": "Temporada",
       "teamOnly": "Només equip"
     }
+  },
+  "fieldPicker": {
+    "title": "Afegeix un camp a {{screen}}",
+    "description": "Tria camps de la fitxa per a aquesta pantalla.",
+    "close": "Tanca",
+    "search": "Cerca un camp",
+    "searchPlaceholder": "Cerca un camp…",
+    "sections": "Seccions de la fitxa",
+    "results": "Resultats",
+    "noResults": "Cap camp coincideix.",
+    "here": "Ja és en aquesta pantalla",
+    "elsewhere": "Ja es pregunta a Pas {{number}}",
+    "elsewhereApp": "Ja es pregunta en una altra pantalla",
+    "withController": "Va amb «{{field}}»",
+    "newField": "Camp nou…",
+    "newFieldIn": "Es crea a {{section}}",
+    "add_one": "Afegeix {{count}} camp",
+    "add_other": "Afegeix {{count}} camps",
+    "addNone": "Afegeix",
+    "failed": "No s'han pogut afegir tots els camps. Torna-ho a provar."
+  },
+  "placement": {
+    "fromApp": "Camp de l'app · {{section}}",
+    "fromAppAlone": "Camp de l'app",
+    "fromRamassa": "Camp de Ramassà · {{section}}",
+    "askHer": "Com li ho preguntem (opcional)",
+    "saveWording": "Desa",
+    "removeNamed": "Treu {{field}} de la pantalla",
+    "removeTitle": "Vols treure «{{field}}» d'aquesta pantalla?",
+    "removeBody": "El camp es queda a la fitxa.",
+    "remove": "Treu",
+    "removeConditionFirst": "Primer treu «{{field}}», que en depèn."
   }
 }

@@ -2,7 +2,8 @@
  * A field of the Fitxa in a dialog (RAPP-650): new from a section's "Add a
  * field", or opened with Edit. The form writes one language at a time. Its
  * privacy card is locked once the field has answers, and Archive asks first,
- * saying how many answers the field keeps.
+ * saying how many answers the field keeps. The onboarding picker (RAPP-651)
+ * opens it for a new field, with the section chosen there.
  */
 
 import { FieldForm, type FieldFormDraft } from '@/components/fields/field-form';
@@ -47,9 +48,10 @@ export function FieldDialog({
   readonly field: ProfileField | null;
   readonly isOpen: boolean;
   readonly onOpenChange: (open: boolean) => void;
-  readonly onSave: (draft: FieldFormDraft) => Promise<void>;
-  readonly onArchive: () => Promise<void>;
-  readonly answerCount: () => Promise<number>;
+  readonly onSave: (draft: FieldFormDraft) => Promise<unknown>;
+  /** Left out where a field is never archived, such as a new one. */
+  readonly onArchive?: () => Promise<void>;
+  readonly answerCount?: () => Promise<number>;
 }) {
   const { t, i18n } = useTranslation('settings');
   const [language, setLanguage] = useState<LanguageCode>('ca');
@@ -62,13 +64,14 @@ export function FieldDialog({
     setAnswers(null);
     setIsConfirming(true);
     try {
-      setAnswers(await answerCount());
+      setAnswers(answerCount === undefined ? null : await answerCount());
     } catch {
       // The dialog still asks, without the number.
     }
   }
 
   async function archive() {
+    if (onArchive === undefined) return;
     try {
       await onArchive();
       onOpenChange(false);
@@ -110,10 +113,12 @@ export function FieldDialog({
             isPrivacyLocked={isPrivacyLocked(field)}
             canStoreFiles={uploadsAvailable(mediaWorkerUrl)}
             isFramed={false}
-            onSave={(draft) => onSave(draft)}
+            onSave={async (draft) => {
+              await onSave(draft);
+            }}
             onCancel={() => onOpenChange(false)}
             secondaryAction={
-              field === null ? undefined : (
+              field === null || onArchive === undefined ? undefined : (
                 <Button
                   type="button"
                   variant="ghost"

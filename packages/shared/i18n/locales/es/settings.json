@@ -823,5 +823,37 @@
       "season": "Temporada",
       "teamOnly": "Solo equipo"
     }
+  },
+  "fieldPicker": {
+    "title": "Añade un campo a {{screen}}",
+    "description": "Elige campos de la ficha para esta pantalla.",
+    "close": "Cerrar",
+    "search": "Busca un campo",
+    "searchPlaceholder": "Busca un campo…",
+    "sections": "Secciones de la ficha",
+    "results": "Resultados",
+    "noResults": "Ningún campo coincide.",
+    "here": "Ya está en esta pantalla",
+    "elsewhere": "Ya se pregunta en el paso {{number}}",
+    "elsewhereApp": "Ya se pregunta en otra pantalla",
+    "withController": "Va con «{{field}}»",
+    "newField": "Campo nuevo…",
+    "newFieldIn": "Se crea en {{section}}",
+    "add_one": "Añade {{count}} campo",
+    "add_other": "Añade {{count}} campos",
+    "addNone": "Añade",
+    "failed": "No se han podido añadir todos los campos. Vuelve a intentarlo."
+  },
+  "placement": {
+    "fromApp": "Campo de la app · {{section}}",
+    "fromAppAlone": "Campo de la app",
+    "fromRamassa": "Campo de Ramassà · {{section}}",
+    "askHer": "Cómo se lo preguntamos (opcional)",
+    "saveWording": "Guardar",
+    "removeNamed": "Quita {{field}} de la pantalla",
+    "removeTitle": "¿Quieres quitar «{{field}}» de esta pantalla?",
+    "removeBody": "El campo se queda en la ficha.",
+    "remove": "Quitar",
+    "removeConditionFirst": "Primero quita «{{field}}», que depende de él."
   }
 }

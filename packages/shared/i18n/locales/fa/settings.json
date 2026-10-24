@@ -218,5 +218,37 @@
       "season": "فصل",
       "teamOnly": "فقط تیم"
     }
+  },
+  "fieldPicker": {
+    "title": "افزودن فیلد به {{screen}}",
+    "description": "فیلدهایی از پرونده بازیکن برای این صفحه انتخاب کنید.",
+    "close": "بستن",
+    "search": "جست‌وجوی فیلد",
+    "searchPlaceholder": "جست‌وجوی فیلد…",
+    "sections": "بخش‌های پرونده",
+    "results": "نتایج",
+    "noResults": "هیچ فیلدی پیدا نشد.",
+    "here": "در همین صفحه هست",
+    "elsewhere": "در مرحله {{number}} پرسیده می‌شود",
+    "elsewhereApp": "در صفحه دیگری پرسیده می‌شود",
+    "withController": "همراه «{{field}}» است",
+    "newField": "فیلد جدید…",
+    "newFieldIn": "در {{section}} ساخته می‌شود",
+    "add_one": "افزودن {{count}} فیلد",
+    "add_other": "افزودن {{count}} فیلد",
+    "addNone": "افزودن",
+    "failed": "همه فیلدها افزوده نشدند. دوباره تلاش کنید."
+  },
+  "placement": {
+    "fromApp": "فیلد برنامه · {{section}}",
+    "fromAppAlone": "فیلد برنامه",
+    "fromRamassa": "فیلد Ramassà · {{section}}",
+    "askHer": "چگونه از او می‌پرسیم (اختیاری)",
+    "saveWording": "ذخیره",
+    "removeNamed": "حذف {{field}} از صفحه",
+    "removeTitle": "«{{field}}» از این صفحه حذف شود؟",
+    "removeBody": "فیلد در پرونده می‌ماند.",
+    "remove": "حذف",
+    "removeConditionFirst": "اول «{{field}}» را حذف کنید، که به آن وابسته است."
   }
 }
