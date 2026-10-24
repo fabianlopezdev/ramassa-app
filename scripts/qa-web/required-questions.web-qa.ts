@@ -1,8 +1,9 @@
 /**
  * Required or optional for every question (RAPP-611), end to end in real
- * browsers. On the onboarding page the design role sees her first name
- * locked as required with the reason, makes both sizes optional and makes a
- * staff question required; every change is audited. The seeded test player,
+ * browsers. In the onboarding screen editors the design role sees her first
+ * name locked as required with the reason, makes both sizes optional and
+ * makes a Ramassà field required where it is placed (RAPP-651); every change
+ * is audited. The seeded test player,
  * with her name, background and document already answered, then continues
  * past the sizes without choosing one, and her summary refuses to confirm
  * until she answers the staff question, sending her to that screen.
@@ -14,7 +15,7 @@ import { PLAYER_ORIGIN, queryDatabase, signIn, signInPlayer } from './session';
 
 const ORG = '5eed0000-0000-4000-8000-000000000000';
 const HER = `(select id from auth.users where email = '${TEST_PLAYER_EMAIL}')`;
-// The seeded "public transport?" question on the travel screen: her wizard and the referral form.
+// The seeded "public transport?" field, placed on the travel screen and the referral form.
 const SCREEN = '5eed0000-0000-4000-8044-000000000001';
 const QUESTION = '5eed0000-0000-4000-8045-000000000001';
 const onboardingIn = (language: string) =>
@@ -30,7 +31,8 @@ function resetHer(): void {
   queryDatabase(`
     begin;
     delete from public.intake_required_questions where org_id = '${ORG}' and question <> 'phone';
-    update public.custom_questions set is_required = false where id = '${QUESTION}';
+    update public.field_placements set required = false
+     where field_id = '${QUESTION}' and surface = 'onboarding';
     update public.profiles set date_of_birth = null, place_of_birth = null, nationality = null,
            document_type = null where id = ${HER};
     delete from public.profile_answers where profile_id = ${HER};
@@ -56,21 +58,21 @@ test.beforeAll(() => {
 });
 test.afterAll(resetHer);
 
-test('the design role makes the sizes optional and a staff question required', async ({ page }) => {
+test('the design role makes the sizes optional and a Ramassà field required', async ({ page }) => {
   await signIn(page, ONBOARDING_DESIGNER_EMAIL);
-  await page.goto('/onboarding');
-  const builder = page.getByTestId('question-builder');
-  await expect(builder).toBeVisible({ timeout: 30_000 });
+  await page.goto('/onboarding/screens/identity');
 
   // Her first name is always required, and the switch says why.
-  const firstName = builder.getByTestId('builtin-required-first_name');
-  await expect(firstName).toBeChecked();
+  const firstName = page.getByTestId('builtin-required-first_name');
+  await expect(firstName).toBeChecked({ timeout: 30_000 });
   await expect(firstName).toBeDisabled();
-  await expect(builder.locator('#builtin-required-first_name-lock')).toBeVisible();
+  await expect(firstName).toHaveAttribute('aria-describedby', 'builtin-required-first_name-lock');
+  await expect(page.locator('#builtin-required-first_name-lock')).toHaveCount(1);
 
+  await page.goto('/onboarding/screens/equipment');
   for (const question of ['clothing_size', 'shoe_size']) {
-    const size = builder.getByTestId(`builtin-required-${question}`);
-    await expect(size).toBeChecked();
+    const size = page.getByTestId(`builtin-required-${question}`);
+    await expect(size).toBeChecked({ timeout: 30_000 });
     await size.click();
     await expect
       .poll(() =>
@@ -80,21 +82,25 @@ test('the design role makes the sizes optional and a staff question required', a
         ),
       )
       .toBe('f');
-    await expect(builder.getByTestId(`builtin-required-${question}`)).not.toBeChecked();
+    await expect(page.getByTestId(`builtin-required-${question}`)).not.toBeChecked();
   }
 
-  const own = builder.getByTestId(`custom-required-${QUESTION}`);
-  await expect(own).not.toBeChecked();
+  await page.goto(`/onboarding/screens/${SCREEN}`);
+  const own = page.getByTestId(`required-${QUESTION}`);
+  await expect(own).not.toBeChecked({ timeout: 30_000 });
   await own.click();
   await expect
     .poll(() =>
-      queryDatabase(`select is_required from public.custom_questions where id = '${QUESTION}'`),
+      queryDatabase(
+        `select required from public.field_placements
+          where field_id = '${QUESTION}' and surface = 'onboarding'`,
+      ),
     )
     .toBe('t');
   expect(
     queryDatabase(
       `select count(*) from public.audit_log
-        where action in ('intake.required_question_save', 'intake.custom_required_save')
+        where action in ('intake.required_question_save', 'intake.placement_save')
           and created_at > now() - interval '5 minutes'`,
     ),
   ).not.toBe('0');

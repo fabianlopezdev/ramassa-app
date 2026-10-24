@@ -105,7 +105,7 @@ test.describe.serial('moving the onboarding setup', () => {
     await download.saveAs(downloadedPath);
     const text = readFileSync(downloadedPath, 'utf8');
     const document = JSON.parse(text) as { schema_version: number; screens: unknown[] };
-    expect(document.schema_version).toBe(2);
+    expect(document.schema_version).toBe(3);
     expect(document.screens.length).toBe(
       countInDatabase(`select count(*) from public.intake_screens where org_id = '${SOURCE_ORG}'`),
     );
@@ -151,9 +151,9 @@ test.describe.serial('moving the onboarding setup', () => {
     // A file of another version is named before anything is sent.
     const other = test.info().outputPath('other.json');
     const text = readFileSync(downloadedPath, 'utf8');
-    writeFileSync(other, text.replace('"schema_version": 2', '"schema_version": 3'));
+    writeFileSync(other, text.replace('"schema_version": 3', '"schema_version": 4'));
     await transfer.getByTestId('setup-import-file').setInputFiles(other);
-    await expect(transfer.getByTestId('setup-import-refused')).toContainText('version 3');
+    await expect(transfer.getByTestId('setup-import-refused')).toContainText('version 4');
 
     // A file the database refuses reads in her language, without its English
     // sentence: a screen twice is caught only by the database.
@@ -172,7 +172,7 @@ test.describe.serial('moving the onboarding setup', () => {
     const preview = transfer.getByTestId('setup-import-preview');
     await expect(preview).toBeVisible({ timeout: 30_000 });
     const questions = countInDatabase(
-      `select count(*) from public.custom_questions where org_id = '${SOURCE_ORG}'`,
+      `select count(*) from public.profile_fields where org_id = '${SOURCE_ORG}' and kind = 'custom'`,
     );
     await expect(preview.getByTestId('setup-count-questions')).toContainText(String(questions));
     await expect(preview.getByTestId('setup-warnings')).toContainText('drafts');
@@ -189,7 +189,9 @@ test.describe.serial('moving the onboarding setup', () => {
     await expect(report.getByTestId('setup-must-publish')).toBeVisible();
 
     expect(
-      countInDatabase(`select count(*) from public.custom_questions where org_id = '${NEW_ORG}'`),
+      countInDatabase(
+        `select count(*) from public.profile_fields where org_id = '${NEW_ORG}' and kind = 'custom'`,
+      ),
     ).toBe(questions);
     expect(
       countInDatabase(

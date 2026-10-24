@@ -1,9 +1,9 @@
 /**
  * Builder question types match every field kind the app uses (RAPP-610), end
  * to end in real browsers:
- *   - an admin builds a number question with its range and a long searchable
- *     list pasted one per line, reading what each type asks and her phone's
- *     preview in Arabic, right to left;
+ *   - an admin adds a number field with its range and a long searchable list
+ *     pasted one per line on the Fitxa, reading what each type asks; the
+ *     spec places them and the other types on a new Ramassà screen (RAPP-656);
  *   - the design role fills the test player's staff questions of every type
  *     with valid samples from her page, and her page reads each one: a date
  *     and a number in words, a list joined, a consent with its time, a
@@ -36,13 +36,16 @@ const screenId = () =>
   queryDatabase(`select id from public.intake_screens where title ->> 'ca' = '${SCREEN_TITLE}'`);
 const questionId = (label: string) =>
   queryDatabase(
-    `select id from public.custom_questions where label ->> 'ca' = '${label} ${runTag}'`,
+    `select id from public.profile_fields where kind = 'custom' and label ->> 'ca' = '${label} ${runTag}'`,
   );
 
 test.afterAll(() => {
   queryDatabase(`
     begin;
     delete from public.custom_answers where profile_id = ${HER};
+    delete from public.staff_notifications where event = 'field_created' and source_id in (
+      select id from public.profile_fields where org_id = '${ORG}' and label ->> 'ca' like '% ${runTag}');
+    delete from public.profile_fields where org_id = '${ORG}' and label ->> 'ca' like '% ${runTag}';
     update public.intake_flow_orders
        set step_order = array_remove(step_order, 'custom:' || (
          select id::text from public.intake_screens where title ->> 'ca' = '${SCREEN_TITLE}'))
@@ -55,90 +58,83 @@ test.afterAll(() => {
   `);
 });
 
-test('an admin builds a number and a long list, and previews her phone in Arabic', async ({
+test('an admin adds a number and a long list on the Fitxa, placed with the others on a screen', async ({
   page,
 }) => {
   await signIn(page, ADMIN_EMAIL);
-  await page.goto('/onboarding');
-  const builder = page.getByTestId('question-builder');
-  await expect(builder).toBeVisible({ timeout: 30_000 });
-  await builder
-    .getByRole('button', { name: /^(new screen|pantalla nova|pantalla nueva)$/i })
-    .click();
-  const screenForm = page.getByTestId('screen-form');
-  await screenForm.locator('[name="screen-title.ca"]').fill(SCREEN_TITLE);
-  await screenForm.locator('[name="screen-after"]').selectOption('logistics');
-  await screenForm.getByRole('button', { name: /save the screen|desa la pantalla/i }).click();
-  await expect.poll(screenId, { timeout: 15_000 }).toMatch(/^[0-9a-f-]{36}$/);
+  await page.goto('/profile-layout');
+  await expect(page.getByTestId('profile-layout')).toBeVisible({ timeout: 30_000 });
 
-  const screen = page.getByTestId(`builder-screen-${screenId()}`);
-  await screen.getByRole('button', { name: /add a question|afegeix una pregunta/i }).click();
-  let form = page.getByTestId('question-form');
-  await form.locator('[name="question-type"]').selectOption('number');
-  await expect(form.getByTestId('type-description')).toContainText(
+  await page.getByTestId('profile-section-add-support').click();
+  let dialog = page.getByRole('dialog');
+  await dialog.getByTestId('question-type-change').click();
+  await dialog.getByTestId('question-type-option-number').click();
+  await expect(dialog.getByTestId('type-description')).toContainText(
     /whole or decimal|sencer o amb decimals/i,
   );
-  await form.locator('[name="question-label.ca"]').fill(`Fills ${runTag}`);
-  await form.locator('[name="setting-integer"]').check();
-  await form.locator('[name="setting-min"]').fill('0');
-  await form.locator('[name="setting-max"]').fill('15');
-
-  // Her phone in Arabic: right to left, and the Catalan label until one is written.
-  const preview = page.getByTestId('question-preview');
-  await expect(preview).toHaveAttribute('dir', 'ltr');
-  await page.getByTestId('question-preview-language').selectOption('ar');
-  await expect(preview).toHaveAttribute('dir', 'rtl');
-  await expect(page.getByTestId('question-preview-fallback')).toBeVisible();
-  await expect(page.getByTestId('question-preview-label')).toHaveText(`Fills ${runTag}`);
-  await form.locator('[name="question-label.ar"]').fill('كم عدد الأطفال؟');
-  await expect(page.getByTestId('question-preview-label')).toHaveText('كم عدد الأطفال؟');
-  await expect(page.getByTestId('question-preview-fallback')).toHaveCount(0);
-
-  await form.getByRole('button', { name: /save the question|desa la pregunta/i }).click();
+  await dialog.locator('[name="question-label.ca"]').fill(`Fills ${runTag}`);
+  await dialog.locator('[name="setting-integer"]').check();
+  await dialog.locator('[name="setting-min"]').fill('0');
+  await dialog.locator('[name="setting-max"]').fill('15');
+  await dialog.getByTestId('field-form-save').click();
   await expect
     .poll(
       () =>
         queryDatabase(
-          `select question_type || '|' || settings::text from public.custom_questions
+          `select question_type || '|' || settings::text from public.profile_fields
             where label ->> 'ca' = 'Fills ${runTag}'`,
         ),
       { timeout: 15_000 },
     )
     .toBe('number|{"max": 15, "min": 0, "integer": true}');
 
-  await screen.getByRole('button', { name: /add a question|afegeix una pregunta/i }).click();
-  form = page.getByTestId('question-form');
-  await form.locator('[name="question-type"]').selectOption('search_choice');
-  await form.locator('[name="question-label.ca"]').fill(`Barri ${runTag}`);
-  await form.locator('[name="options-paste"]').fill('Gràcia\nSants\nHorta\nGràcia');
-  // This stack runs the media service: no warning on a file question.
-  await form.getByRole('button', { name: /save the question|desa la pregunta/i }).click();
+  await page.getByTestId('profile-section-add-support').click();
+  dialog = page.getByRole('dialog');
+  await dialog.getByTestId('question-type-change').click();
+  await dialog.getByTestId('question-type-option-search_choice').click();
+  await dialog.locator('[name="question-label.ca"]').fill(`Barri ${runTag}`);
+  await dialog.locator('[name="options-paste"]').fill('Gràcia\nSants\nHorta\nGràcia');
+  await dialog.getByTestId('field-form-save').click();
   await expect
     .poll(
       () =>
         queryDatabase(
           `select string_agg(o.label ->> 'ca', ',' order by o.sort_order)
              from public.custom_question_options o
-             join public.custom_questions q on q.id = o.question_id
-            where q.label ->> 'ca' = 'Barri ${runTag}'`,
+             join public.profile_fields f on f.id = o.question_id
+            where f.label ->> 'ca' = 'Barri ${runTag}'`,
         ),
       { timeout: 15_000 },
     )
     .toBe('Gràcia,Sants,Horta');
 
-  // The other types, straight into the screen, as the builder saves them.
+  // A Ramassà screen after the logistics step, with the other types, as the
+  // Fitxa writes them; then every field is placed on it in order.
   queryDatabase(`
-    insert into public.custom_questions (org_id, screen_id, question_type, label, privacy, placements, settings, sort_order)
-    values
-      ('${ORG}', '${screenId()}', 'date', '{"ca": "Arribada ${runTag}"}', 'personal', '{wizard}', '{"min_age": 16}', 2),
-      ('${ORG}', '${screenId()}', 'item_list', '{"ca": "Idiomes ${runTag}"}', 'normal', '{wizard}', '{"max_items": 3}', 3),
-      ('${ORG}', '${screenId()}', 'consent', '{"ca": "Cotxe ${runTag}"}', 'normal', '{wizard}', '{"text": {"ca": "Accepto que em portin"}}', 4),
-      ('${ORG}', '${screenId()}', 'signature', '{"ca": "Signatura ${runTag}"}', 'personal', '{wizard}', '{}', 5),
-      ('${ORG}', '${screenId()}', 'file_upload', '{"ca": "Informe ${runTag}"}', 'sensitive', '{wizard}', '{"accept": "document"}', 6),
-      ('${ORG}', '${screenId()}', 'yes_no', '{"ca": "Bici ${runTag}"}', 'normal', '{wizard}', '{}', 7),
-      ('${ORG}', '${screenId()}', 'phone', '{"ca": "Telèfon ${runTag}"}', 'personal', '{wizard}', '{}', 8),
-      ('${ORG}', '${screenId()}', 'email', '{"ca": "Correu ${runTag}"}', 'personal', '{wizard}', '{}', 9);
+    begin;
+    insert into public.intake_screens (org_id, title, after_screen, sort_order)
+    values ('${ORG}', '{"ca": "${SCREEN_TITLE}"}', 'logistics', 99);
+    insert into public.profile_fields (org_id, section_id, kind, question_type, label, privacy, settings, sort_order)
+    select '${ORG}', s.id, 'custom', v.type, jsonb_build_object('ca', v.label || ' ${runTag}'), v.privacy, v.settings::jsonb, v.position
+      from (values
+        ('date', 'Arribada', 'personal', '{"min_age": 16}', 902),
+        ('item_list', 'Idiomes', 'normal', '{"max_items": 3}', 903),
+        ('consent', 'Cotxe', 'normal', '{"text": {"ca": "Accepto que em portin"}}', 904),
+        ('signature', 'Signatura', 'personal', '{}', 905),
+        ('file_upload', 'Informe', 'sensitive', '{"accept": "document"}', 906),
+        ('yes_no', 'Bici', 'normal', '{}', 907),
+        ('phone', 'Telèfon', 'personal', '{}', 908),
+        ('email', 'Correu', 'personal', '{}', 909)
+      ) as v(type, label, privacy, settings, position)
+      join public.profile_sections s on s.org_id = '${ORG}' and s.key = 'support';
+    insert into public.field_placements (org_id, field_id, surface, screen_key, sort_order)
+    select '${ORG}', f.id, 'onboarding', (select id::text from public.intake_screens where title ->> 'ca' = '${SCREEN_TITLE}'),
+           row_number() over (order by f.sort_order, f.created_at) - 1
+      from public.profile_fields f
+     where f.org_id = '${ORG}' and f.label ->> 'ca' like '% ${runTag}';
+    commit;
   `);
+  await expect.poll(screenId, { timeout: 15_000 }).toMatch(/^[0-9a-f-]{36}$/);
 });
 
 test('the design role fills every type for the test player, and her page reads each one', async ({
@@ -165,9 +161,11 @@ test('the design role fills every type for the test player, and her page reads e
   // Every type of this screen got a valid sample, the database checked each.
   expect(
     queryDatabase(`
-      select string_agg(q.question_type, ',' order by q.sort_order)
-        from public.custom_answers a join public.custom_questions q on q.id = a.question_id
-       where a.profile_id = ${HER} and q.screen_id = '${screenId()}'`),
+      select string_agg(f.question_type, ',' order by p.sort_order)
+        from public.custom_answers a
+        join public.profile_fields f on f.id = a.question_id
+        join public.field_placements p on p.field_id = f.id and p.surface = 'onboarding'
+       where a.profile_id = ${HER} and p.screen_key = '${screenId()}'`),
   ).toBe('number,search_choice,date,item_list,consent,signature,file_upload,yes_no,phone,email');
 
   // Her answers sit on their Fitxa fields (RAPP-653).
@@ -192,8 +190,9 @@ test('in Arabic, the new screen refuses a number out of range in her words', asy
 }) => {
   // Her answers to this screen go, so her wizard opens on it.
   queryDatabase(`
-    delete from public.custom_answers a using public.custom_questions q
-     where q.id = a.question_id and a.profile_id = ${HER} and q.screen_id = '${screenId()}'`);
+    delete from public.custom_answers a using public.field_placements p
+     where p.field_id = a.question_id and p.surface = 'onboarding' and a.profile_id = ${HER}
+       and p.screen_key = '${screenId()}'`);
   const player = await (await browser.newContext({ locale: 'ar' })).newPage();
   await signInPlayer(player, TEST_PLAYER_EMAIL, 'ar');
   const screen = player.getByTestId(`wizard-custom-${screenId()}`);

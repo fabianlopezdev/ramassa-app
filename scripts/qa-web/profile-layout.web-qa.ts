@@ -151,10 +151,10 @@ test.describe.serial('the Fitxa de la jugadora', () => {
           where n.event = 'field_created' and u.email = '${ADMIN_EMAIL}'
             and n.source_id = (select id from public.profile_fields where label ->> 'ca' = '${FIELD_NAME}')`,
       ),
-    ).toBe('/settings?tab=profile-layout');
+    ).toBe('/profile-layout');
 
     await signIn(page, ADMIN_EMAIL);
-    // The bell's address from before the Fitxa had its own page forwards to it.
+    // An address from before the Fitxa had its own page still forwards to it.
     await page.goto('/settings?tab=profile-layout');
     await expect(page).toHaveURL(/\/profile-layout$/, { timeout: 30_000 });
     await page.getByRole('button', { name: /Notifications/ }).click();

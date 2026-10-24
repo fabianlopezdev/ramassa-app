@@ -1,10 +1,12 @@
 /**
  * Built-in onboarding screens editable (RAPP-612), end to end in real
- * browsers: the design role moves the season screen to the front of the flow
- * on the onboarding page, words its title and help in Arabic, sees the phone
- * preview right to left, and the seeded test player, opening the app in
+ * browsers: with the season screen first in the flow, the design role words
+ * its title and help in Arabic in its screen editor (RAPP-641), sees the
+ * phone preview right to left, and the seeded test player, opening the app in
  * Arabic, starts her registration on that screen as step 1 with the staff
- * wording. A language staff left empty shows the app's own text.
+ * wording. A language staff left empty shows the app's own text. The old
+ * order list of Settings is gone (RAPP-656): the Onboarding board orders the
+ * screens.
  */
 import { readFileSync } from 'node:fs';
 import { expect, test } from '@playwright/test';
@@ -42,45 +44,28 @@ test.afterAll(() => {
   `);
 });
 
-test('the design role puts the season first and words it in Arabic, previewed right to left', async ({
+test('the design role words the season screen in Arabic, previewed right to left', async ({
   page,
 }) => {
+  // The season first, as the board saves an order.
+  queryDatabase(`
+    update public.intake_flow_orders
+       set step_order = array['season'] || array_remove(${SEED_ORDER}, 'season')
+     where org_id = '${ORG}'`);
   await signIn(page, ONBOARDING_DESIGNER_EMAIL);
-  await page.goto('/onboarding');
-  const order = page.getByTestId('flow-order');
-  await expect(order).toBeVisible({ timeout: 30_000 });
+  await page.goto('/onboarding/screens/season');
+  const wording = page.getByTestId('wording-season');
+  await expect(wording).toBeVisible({ timeout: 30_000 });
 
-  // The seed order has eight steps before the season.
-  const season = order.getByTestId('flow-step-season');
-  for (let step = 0; step < 8; step += 1) {
-    await season.getByRole('button').first().click();
-  }
-  await expect(order.getByTestId('flow-order-steps').locator('li').first()).toHaveAttribute(
-    'data-testid',
-    'flow-step-season',
-  );
-  // The summary and the terms stay locked at the end.
-  await expect(order.getByTestId('flow-order-fixed')).toBeVisible();
-  await order.getByTestId('flow-order-save').click();
-  await expect
-    .poll(() =>
-      queryDatabase(`select step_order[1] from public.intake_flow_orders where org_id = '${ORG}'`),
-    )
-    .toBe('season');
-
-  const wording = page.getByTestId('screen-wording');
-  await wording.locator('#builtin-screen-select').selectOption('season');
-  await wording.locator('#builtin-screen-language').selectOption('ar');
-  await expect(wording.locator('#builtin-screen-title')).toHaveAttribute('dir', 'rtl');
-  await wording.locator('#builtin-screen-title').fill(ARABIC_TITLE);
-  await wording.locator('#builtin-screen-help').fill(ARABIC_HELP);
-  const preview = wording.getByTestId('builtin-screen-preview');
-  await expect(preview).toHaveAttribute('dir', 'rtl');
-  await expect(preview.getByTestId('preview-title')).toHaveText(ARABIC_TITLE);
-  await expect(preview.getByTestId('preview-help')).toHaveText(ARABIC_HELP);
-  // The button has no Arabic wording of its own: the app's text shows.
-  await expect(preview.getByTestId('preview-continue')).toHaveText(onboardingAr.continueAction!);
-  await wording.getByTestId('builtin-screen-save').click();
+  await page.getByTestId('editor-language').getByRole('tab').filter({ hasText: /^ar$/ }).click();
+  await expect(wording.locator('#wording-season-title')).toHaveAttribute('dir', 'rtl');
+  await wording.locator('#wording-season-title').fill(ARABIC_TITLE);
+  await wording.locator('#wording-season-help').fill(ARABIC_HELP);
+  const preview = page.getByTestId('phone-preview');
+  await expect(preview.locator('[dir]').first()).toHaveAttribute('dir', 'rtl');
+  await expect(preview.getByTestId('phone-title')).toHaveText(ARABIC_TITLE);
+  await expect(preview).toContainText(ARABIC_HELP);
+  await page.getByTestId('wording-save-season').click();
   await expect
     .poll(() =>
       queryDatabase(
