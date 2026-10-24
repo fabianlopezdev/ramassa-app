@@ -284,12 +284,14 @@ export function placementsOnSurface(
   screenKey: string | null = null,
 ): readonly FieldPlacement[] {
   const live = new Set(layout.fields.filter((field) => !field.isArchived).map((field) => field.id));
-  return layout.placements.filter(
-    (placement) =>
-      placement.surface === surface &&
-      (surface !== 'onboarding' || placement.screenKey === screenKey) &&
-      live.has(placement.fieldId),
-  );
+  return layout.placements
+    .filter(
+      (placement) =>
+        placement.surface === surface &&
+        (surface !== 'onboarding' || placement.screenKey === screenKey) &&
+        live.has(placement.fieldId),
+    )
+    .sort((a, b) => a.sortOrder - b.sortOrder);
 }
 
 /** No surface asks it: the team fills it in on her page. */
