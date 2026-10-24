@@ -17,15 +17,15 @@
  * help line staff wrote shows first in the body. Validation messages are the
  * screens' own and never change.
  *
- * The questions staff added to a built-in screen (RAPP-642) follow the
- * screen's own questions. Continue checks and saves them before the screen's
- * own Continue runs; Back saves them.
+ * The Fitxa fields placed on a built-in screen (RAPP-655) follow the screen's
+ * own questions. Continue checks and saves them before the screen's own
+ * Continue runs; Back saves them.
  */
 
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTitle } from '@/components/auth/auth-title';
 import { FormScreen } from '@/components/layout/form-screen';
-import { useAddedQuestions } from '@/components/onboarding/added-questions';
+import { usePlacedFields } from '@/components/onboarding/placed-fields';
 import { QuestionHelp } from '@/components/onboarding/question-help';
 import { WizardProgress } from '@/components/onboarding/wizard-progress';
 import { WizardValidationSummary } from '@/components/onboarding/wizard-validation-summary';
@@ -89,7 +89,7 @@ function WizardFrameContent({
   const entranceMode = useOnboardingEntrance(screenId, entrance !== 'none' && edit !== '1');
   const wording = useScreenWording(screenId);
   const { t } = useTranslation('onboarding');
-  const added = useAddedQuestions(screenId);
+  const added = usePlacedFields(screenId);
 
   return (
     <FormScreen

@@ -12,7 +12,6 @@ import type { Href } from 'expo-router';
 import {
   customStepId,
   isCustomStep,
-  type CustomWizardScreen,
   type IntakeQuestion,
   type WizardScreen,
   type WizardStepKey,
@@ -20,10 +19,9 @@ import {
 import {
   customAnswerError,
   isEmptyAnswer,
-  isScreenAnswered,
   type CustomAnswers,
   type CustomAnswerValue,
-  type IntakeScreen,
+  type CustomQuestion,
 } from '@ramassa/shared/intake-builder';
 import type {
   OnboardingDraft,
@@ -92,27 +90,6 @@ export function wizardDraftStep(step: WizardStepKey | OnboardingDraftStep): Onbo
   return isCustomStep(step) ? step : WIZARD_SCREEN_DRAFT_STEP[step as WizardScreen];
 }
 
-/**
- * The staff screens in the shape the wizard planner takes (RAPP-307). The
- * questions staff added to an app screen (RAPP-642) keep that screen showing
- * while one is unanswered, and are never a step of their own.
- */
-export function customWizardPlan(
-  screens: readonly IntakeScreen[],
-  stored: CustomAnswers,
-  // The staff questions set to Ask for her (RAPP-643): asked even when answered.
-  asked: ReadonlySet<string> = new Set(),
-): CustomWizardScreen[] {
-  return screens.map((screen) => ({
-    id: screen.id,
-    afterScreen: screen.afterScreen,
-    isAnswered:
-      isScreenAnswered(screen, stored) &&
-      !screen.questions.some((question) => asked.has(question.id)),
-    builtinScreen: screen.builtinScreen ?? null,
-  }));
-}
-
 /** Her answers as the wizard shows them: the stored ones, with her draft on top. */
 export function mergedCustomAnswers(
   stored: CustomAnswers,
@@ -142,16 +119,16 @@ function sameAnswer(a: CustomAnswerValue | undefined, b: CustomAnswerValue | und
  * The staff answers to send (RAPP-307), as the built-in ones (RAPP-300): only
  * what she gave or changed, so an answer staff or her entity gave and she only
  * confirmed keeps its source. An answer she emptied is sent as null, which
- * removes it. A question no longer on her screens, or a value the server would
- * refuse (a kept archived option), is left out.
+ * removes it. A field no longer asked of her here, or a value the server
+ * would refuse (a kept archived option), is left out.
  */
 export function customAnswersToSave(
-  screens: readonly IntakeScreen[],
+  questions: readonly CustomQuestion[],
   draft: Readonly<Record<string, CustomAnswerValue>> | undefined,
   stored: CustomAnswers,
 ): Record<string, CustomAnswerValue | null> {
   const toSave: Record<string, CustomAnswerValue | null> = {};
-  for (const question of screens.flatMap((screen) => screen.questions)) {
+  for (const question of questions) {
     const value = draft?.[question.id];
     if (value === undefined || sameAnswer(value, stored[question.id])) continue;
     if (isEmptyAnswer(value)) {

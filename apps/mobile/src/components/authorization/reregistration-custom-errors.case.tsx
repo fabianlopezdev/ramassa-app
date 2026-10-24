@@ -77,6 +77,7 @@ mock.module('@tanstack/react-query', () => ({
   QueryClient: class {},
 }));
 mock.module('@/lib/supabase', () => ({ supabase: {} }));
+mock.module('@/lib/observability', () => ({ logger: { warn: () => {}, error: () => {} } }));
 mock.module('@ramassa/shared/auth', () => ({ useAuth: () => ({ user: { id: 'her' } }) }));
 mock.module('expo-router', () => ({ useRouter: () => ({ push: () => {} }) }));
 mock.module('react-i18next', () => ({
@@ -106,7 +107,7 @@ mock.module('@/components/profile/season-answer-fields', () => ({
 }));
 let answer: (value: CustomAnswerValue) => void = () => {};
 mock.module('@/components/onboarding/custom-question-field', () => ({
-  CustomQuestionSections: ({
+  CustomQuestionList: ({
     errors = {},
     onChange,
   }: {

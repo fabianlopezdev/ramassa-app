@@ -1,9 +1,9 @@
 /**
- * A screen of questions staff added in the question builder (RAPP-307). It
- * sits right after the built-in step staff chose, one topic per screen like
- * the others, and asks only its questions for her wizard or for this season.
- * Every question is optional. A screen she already answered completely is
- * skipped (RAPP-300), unless she opens it from the summary to correct it.
+ * A Ramassà screen of her onboarding (RAPP-307): it sits where staff put it in
+ * her flow, one topic per screen like the others, and asks the Fitxa fields
+ * placed on it, in their order, worded and required as each placement says
+ * (RAPP-655). A screen she already answered completely is skipped (RAPP-300),
+ * unless staff set a field to Ask or she opens it from the summary to correct it.
  *
  * Her answers stay in the draft until the terms step sends them.
  */

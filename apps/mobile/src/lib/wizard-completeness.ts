@@ -24,6 +24,7 @@ import {
   type WizardStepKey,
 } from '@ramassa/shared/intake';
 import {
+  appScreenFields,
   isCustomQuestionRequired,
   isCustomQuestionVisible,
   isEmptyAnswer,
@@ -138,9 +139,9 @@ export function firstIncompleteStep(
     }
     if (!isQuestionScreen(step) || context.flow.hiddenScreens.has(step)) continue;
     if (!isScreenComplete(step, draft, required)) return step;
-    // The questions staff added to this screen (RAPP-642).
-    const holder = context.customScreens?.find((candidate) => candidate.builtinScreen === step);
-    if (holder !== undefined && !isCustomScreenComplete(holder, answers)) return step;
+    // The Fitxa fields placed on this screen (RAPP-655).
+    const placed = appScreenFields(context.customScreens ?? [], step);
+    if (placed !== undefined && !isCustomScreenComplete(placed, answers)) return step;
   }
   return null;
 }

@@ -53,10 +53,11 @@ export interface WizardIntake {
   /** Staff's note under the document step (RAPP-302), or null when none is written. */
   readonly documentExplanation: LocalizedText | null;
   /**
-   * The staff question builder (RAPP-307): the catalog, her stored answers to
-   * the staff questions, the staff screens she is asked with only their wizard
-   * and season questions, and those screens as the planner takes them. An
-   * empty catalog when it could not load: the wizard then runs without them.
+   * The Fitxa fields placed on her onboarding (RAPP-307, RAPP-655): the
+   * catalog, her stored answers to them, her Ramassà screens and the groups of
+   * fields on app screens in flow order (`herOnboarding`), and those screens
+   * as the planner takes them. An empty catalog when it could not load: the
+   * wizard then runs with the app's own questions only.
    */
   readonly catalog: IntakeCatalog;
   readonly customAnswers: CustomAnswers;

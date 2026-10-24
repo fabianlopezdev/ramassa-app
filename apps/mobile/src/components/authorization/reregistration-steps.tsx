@@ -5,14 +5,15 @@
  * questions. Her answers are kept for this season; last season's stay as they
  * were.
  *
- * The seasonal questions staff added (RAPP-307) follow the built-in ones and
- * save with them. When they cannot load, the built-in ones still work.
+ * The Fitxa fields placed on the season form (RAPP-655) follow the built-in
+ * ones, in their order and worded for her, and save with them. When they
+ * cannot load, the built-in ones still work and the failure is logged.
  */
 
 import { PageWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import {
-  CustomQuestionSections,
+  CustomQuestionList,
   type CustomAnswerDraft,
 } from '@/components/onboarding/custom-question-field';
 import { ProfileRow, ProfileSection } from '@/components/profile/profile-section';
@@ -25,6 +26,7 @@ import {
 import { continuousCorners } from '@/lib/continuous-corners';
 import { checkCustomAnswers } from '@/lib/custom-answer-errors';
 import { playHaptic } from '@/lib/haptics/haptics';
+import { logger } from '@/lib/observability';
 import { customAnswersToSave, mergedCustomAnswers } from '@/lib/onboarding-intake';
 import { useBuiltinWording } from '@/lib/onboarding-intake-context';
 import { supabase } from '@/lib/supabase';
@@ -42,6 +44,7 @@ import {
   type AuthorizationContent,
   type AuthorizationTextField,
 } from '@ramassa/shared/authorization';
+import { toAppError } from '@ramassa/shared/errors';
 import { countryLabelForCanonical } from '@ramassa/shared/i18n/countries';
 import { municipalityLabelForCanonical } from '@ramassa/shared/i18n/municipalities';
 import { isRequiredQuestion, type IntakeQuestion } from '@ramassa/shared/intake';
@@ -52,7 +55,7 @@ import {
   requiredBuiltinQuestions,
   reregistrationAsks,
   saveMyCustomAnswers,
-  seasonScreens,
+  seasonFormQuestions,
   type CustomAnswers,
   type IntakeCatalog,
 } from '@ramassa/shared/intake-builder';
@@ -145,7 +148,8 @@ export function ReregistrationSteps({
           fetchMyCustomAnswers(supabase),
         ]);
         return { catalog, answers };
-      } catch {
+      } catch (error) {
+        logger.warn('reregistration.catalog.load_failed', { error: toAppError(error) });
         return { catalog: EMPTY_INTAKE_CATALOG, answers: {} };
       }
     },
@@ -153,7 +157,7 @@ export function ReregistrationSteps({
   });
   const catalog = staffQuestions.data?.catalog ?? EMPTY_INTAKE_CATALOG;
   const storedCustom = staffQuestions.data?.answers ?? {};
-  const customScreens = seasonScreens(catalog);
+  const customQuestions = seasonFormQuestions(catalog);
   // The same hide rule as her wizard (RAPP-612): a hidden season screen hides its question here too.
   const asks = reregistrationAsks(catalog);
   const wording = useBuiltinWording(catalog);
@@ -167,7 +171,10 @@ export function ReregistrationSteps({
     }) => {
       // Her staff answers first: the season call ends the re-registration and
       // re-checks every required answer, staff ones included (RAPP-611).
-      await saveMyCustomAnswers(supabase, customAnswersToSave(customScreens, custom, storedCustom));
+      await saveMyCustomAnswers(
+        supabase,
+        customAnswersToSave(customQuestions, custom, storedCustom),
+      );
       await updateMySeasonAnswers(supabase, {
         applicantStatus: value.applicantStatus ?? undefined,
         supportingEntities: [...value.supportingEntities],
@@ -280,8 +287,9 @@ export function ReregistrationSteps({
                 shows={(question: IntakeQuestion) => asks(question)}
                 wording={wording}
               />
-              <CustomQuestionSections
-                screens={customScreens}
+              <CustomQuestionList
+                testID="reregistration-fields"
+                questions={customQuestions}
                 answers={mergedCustomAnswers(storedCustom, customDraft)}
                 errors={customErrors}
                 onChange={(questionId, value) => {
@@ -313,7 +321,7 @@ export function ReregistrationSteps({
                   // The same check and words as her wizard: nothing is sent
                   // while an answer does not fit its question.
                   const checked = checkCustomAnswers(
-                    customScreens.flatMap((screen) => screen.questions),
+                    customQuestions,
                     mergedCustomAnswers(storedCustom, customDraft),
                     t,
                   );

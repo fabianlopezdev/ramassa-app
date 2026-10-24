@@ -201,7 +201,7 @@ mock.module('@/components/forms/form-text-area', () => ({
       onChange: (event: { target: { value: string } }) => onChangeText(event.target.value),
     }),
 }));
-const { CustomQuestionField, CustomQuestionSections } = await import('./custom-question-field');
+const { CustomQuestionField, CustomQuestionList } = await import('./custom-question-field');
 const base: CustomQuestion = {
   id: 'question',
   screenId: 'screen',
@@ -281,17 +281,8 @@ test('conditional participation begins unanswered, reveals details for Yes, and 
   };
   function Section() {
     const [answers, setAnswers] = useState<Record<string, CustomAnswerValue>>({});
-    return createElement(CustomQuestionSections, {
-      screens: [
-        {
-          id: 'screen',
-          title: { ca: 'Participació' },
-          intro: null,
-          afterScreen: 'logistics',
-          isArchived: false,
-          questions: [gate, detail],
-        },
-      ],
+    return createElement(CustomQuestionList, {
+      questions: [gate, detail],
       answers,
       onChange: (id, value) => setAnswers((current) => ({ ...current, [id]: value })),
     });

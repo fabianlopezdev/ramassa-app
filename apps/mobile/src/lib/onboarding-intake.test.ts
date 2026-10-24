@@ -9,7 +9,6 @@ import type { CustomQuestion, IntakeScreen } from '@ramassa/shared/intake-builde
 import type { ProfileRow } from '@ramassa/shared/schemas';
 import {
   customAnswersToSave,
-  customWizardPlan,
   draftForScenario,
   mergedCustomAnswers,
   seedDraftFromProfile,
@@ -142,34 +141,29 @@ describe('staff screens in the wizard (RAPP-307)', () => {
     expect(String(wizardStepRoute('custom:s-transport'))).toBe('/onboarding/custom/s-transport');
   });
 
-  test('the plan marks a staff screen answered only when every question has an answer', () => {
-    expect(customWizardPlan([screen], { 'q-choice': 'o-bus' })).toEqual([
-      { id: 's-transport', afterScreen: 'logistics', isAnswered: false },
-    ]);
-    expect(customWizardPlan([screen], { 'q-choice': 'o-bus', 'q-note': 'Res' })).toEqual([
-      { id: 's-transport', afterScreen: 'logistics', isAnswered: true },
-    ]);
-  });
-
   test('only new or changed answers are sent, so a confirmed staff answer keeps its source', () => {
     const stored = { 'q-choice': 'o-bus', 'q-note': 'Res' };
     expect(
-      customAnswersToSave([screen], { 'q-choice': 'o-bus', 'q-note': ' Res ' }, stored),
+      customAnswersToSave(screen.questions, { 'q-choice': 'o-bus', 'q-note': ' Res ' }, stored),
     ).toEqual({});
-    expect(customAnswersToSave([screen], { 'q-note': 'Vinc amb la meva filla' }, stored)).toEqual({
+    expect(
+      customAnswersToSave(screen.questions, { 'q-note': 'Vinc amb la meva filla' }, stored),
+    ).toEqual({
       'q-note': 'Vinc amb la meva filla',
     });
   });
 
   test('an answer she emptied is sent as null, which removes it', () => {
-    expect(customAnswersToSave([screen], { 'q-note': '  ' }, { 'q-note': 'Res' })).toEqual({
+    expect(customAnswersToSave(screen.questions, { 'q-note': '  ' }, { 'q-note': 'Res' })).toEqual({
       'q-note': null,
     });
-    expect(customAnswersToSave([screen], { 'q-note': '' }, {})).toEqual({});
+    expect(customAnswersToSave(screen.questions, { 'q-note': '' }, {})).toEqual({});
   });
 
   test('a kept archived option and an unknown question are not sent', () => {
-    expect(customAnswersToSave([screen], { 'q-choice': 'o-old', 'q-gone': 'x' }, {})).toEqual({});
+    expect(
+      customAnswersToSave(screen.questions, { 'q-choice': 'o-old', 'q-gone': 'x' }, {}),
+    ).toEqual({});
   });
 
   test('the answers she sees are the stored ones with her draft on top', () => {

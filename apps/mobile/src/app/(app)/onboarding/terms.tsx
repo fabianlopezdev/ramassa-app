@@ -208,7 +208,7 @@ export default function TermsStepScreen() {
       // so a woman who started on her own keeps them too, and the required
       // ones are checked there before anything is kept.
       const customAnswers = customAnswersToSave(
-        intake.customScreens,
+        intake.customScreens.flatMap((screen) => screen.questions),
         draft?.custom,
         intake.customAnswers,
       );

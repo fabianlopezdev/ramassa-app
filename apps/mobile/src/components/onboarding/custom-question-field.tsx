@@ -63,7 +63,6 @@ import {
   type CustomAnswerValue,
   type CustomQuestion,
   type FileAnswer,
-  type IntakeScreen,
 } from '@ramassa/shared/intake-builder';
 import { tokens } from '@ramassa/shared/tokens';
 
@@ -536,62 +535,43 @@ export function CustomQuestionField(props: CustomQuestionFieldProps) {
 }
 
 /**
- * Staff screens as sections of a longer form (re-registration, the entity's
- * referral): each screen's title, its intro, then its questions.
+ * Fitxa fields as part of a longer form (re-registration, the entity's
+ * referral), in their order, each worded for that form (RAPP-655). A field
+ * whose condition does not apply is not shown.
  */
-export function CustomQuestionSections({
-  screens,
+export function CustomQuestionList({
+  questions,
   answers,
   onChange,
   errors = {},
   onDrawingChange,
+  testID,
 }: {
-  readonly screens: readonly IntakeScreen[];
+  readonly questions: readonly CustomQuestion[];
   readonly answers: CustomAnswerDraft;
   readonly onChange: (questionId: string, value: CustomAnswerValue) => void;
   readonly errors?: Readonly<Record<string, string>>;
   readonly onDrawingChange?: (isDrawing: boolean) => void;
+  readonly testID?: string;
 }) {
-  const { language } = useLanguage();
-  const fontClass = useLanguageFontClass();
   return (
-    <>
-      {screens.map((screen) => {
-        const intro = textIn(screen.intro, language);
-        return (
-          <View key={screen.id} testID={`custom-screen-${screen.id}`} className="gap-lg">
-            <View className="gap-xs">
-              <Text
-                accessibilityRole="header"
-                className={`text-start text-form font-bold text-neutral-900 ${fontClass}`}
-              >
-                {textIn(screen.title, language)}
-              </Text>
-              {intro === '' ? null : (
-                <Text className={`text-start text-form text-neutral-700 ${fontClass}`}>
-                  {intro}
-                </Text>
-              )}
-            </View>
-            {screen.questions
-              .filter((question) => isCustomQuestionVisible(question, answers))
-              .map((question) => (
-                <CustomQuestionField
-                  key={question.id}
-                  question={question}
-                  value={answers[question.id]}
-                  errorMessage={errors[question.id]}
-                  onDrawingChange={onDrawingChange}
-                  onChange={(value) => {
-                    const next = updateCustomAnswer(screen.questions, answers, question.id, value);
-                    for (const [id, answer] of Object.entries(next))
-                      if (answer !== answers[id]) onChange(id, answer);
-                  }}
-                />
-              ))}
-          </View>
-        );
-      })}
-    </>
+    <View testID={testID} className="gap-lg">
+      {questions
+        .filter((question) => isCustomQuestionVisible(question, answers))
+        .map((question) => (
+          <CustomQuestionField
+            key={question.id}
+            question={question}
+            value={answers[question.id]}
+            errorMessage={errors[question.id]}
+            onDrawingChange={onDrawingChange}
+            onChange={(value) => {
+              const next = updateCustomAnswer(questions, answers, question.id, value);
+              for (const [id, answer] of Object.entries(next))
+                if (answer !== answers[id]) onChange(id, answer);
+            }}
+          />
+        ))}
+    </View>
   );
 }

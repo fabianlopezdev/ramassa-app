@@ -2,9 +2,9 @@ import {
   AnnouncementFeedError,
   AnnouncementFeedSkeleton,
 } from '@/components/announcements/feed-states';
+import { logger } from '@/lib/observability';
 import { onboardingDraftStore } from '@/lib/onboarding';
 import {
-  customWizardPlan,
   draftForScenario,
   seedDraftFromProfile,
   withSelectedLanguage,
@@ -35,11 +35,10 @@ import {
   fetchIntakeCatalog,
   fetchMyCustomAnswers,
   fetchMyCustomQuestionAsking,
+  herOnboarding,
   hiddenBuiltinQuestions,
   requiredBuiltinQuestions,
-  withCustomAsking,
   wizardFlow,
-  wizardScreens,
   type CustomAnswers,
   type IntakeCatalog,
 } from '@ramassa/shared/intake-builder';
@@ -50,9 +49,10 @@ import type { LanguageCode } from '@ramassa/shared/schemas';
 const hiddenHeaderScreenOptions = { headerShown: false } as const;
 
 /**
- * The staff questions and her answers to them (RAPP-307). They never block the
- * wizard: when either fails to load, it runs with the built-in questions only,
- * as it did before staff could add their own.
+ * The Fitxa fields placed on her onboarding and her answers to them (RAPP-307,
+ * RAPP-655). They never block the wizard: when either fails to load, it runs
+ * with the built-in questions only, as it did before staff could add their
+ * own, and the failure is logged.
  */
 async function loadStaffQuestions(): Promise<{
   readonly catalog: IntakeCatalog;
@@ -65,10 +65,14 @@ async function loadStaffQuestions(): Promise<{
       fetchMyCustomAnswers(supabase),
       // Staff's Ask or Don't ask on their questions for her (RAPP-643). Without
       // it every staff question is asked, as before.
-      fetchMyCustomQuestionAsking(supabase).catch(() => new Map<string, boolean>()),
+      fetchMyCustomQuestionAsking(supabase).catch((error: unknown) => {
+        logger.warn('onboarding.asking.load_failed', { error: toAppError(error) });
+        return new Map<string, boolean>();
+      }),
     ]);
     return { catalog, answers, asking };
-  } catch {
+  } catch (error) {
+    logger.warn('onboarding.catalog.load_failed', { error: toAppError(error) });
     return { catalog: EMPTY_INTAKE_CATALOG, answers: {}, asking: new Map() };
   }
 }
@@ -143,12 +147,10 @@ function OnboardingScreens() {
         ]);
       const { catalog, answers, asking } = staffQuestions;
       const hidden = hiddenBuiltinQuestions(catalog);
-      // A staff question set to Don't ask is never asked; a screen with none
-      // left is skipped (RAPP-643).
-      const customScreens = withCustomAsking(wizardScreens(catalog), asking);
-      const asked = new Set(
-        [...asking].flatMap(([questionId, isAsked]) => (isAsked ? [questionId] : [])),
-      );
+      // Her screens from the placements (RAPP-655): a field set to Don't ask is
+      // never asked, a screen with none left is skipped (RAPP-643), and one on
+      // Ask shows even when answered. The staff phone preview reads the same.
+      const custom = herOnboarding(catalog, answers, asking);
       return {
         profile,
         answered,
@@ -159,8 +161,8 @@ function OnboardingScreens() {
         documentExplanation,
         catalog,
         customAnswers: answers,
-        customScreens,
-        customPlan: customWizardPlan(customScreens, answers, asked),
+        customScreens: custom.screens,
+        customPlan: custom.plan,
         // The order and hidden screens staff arranged (RAPP-612). The staff
         // preview of a new invitation reads the same flow.
         flow: wizardFlow(catalog),

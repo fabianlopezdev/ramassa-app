@@ -7,7 +7,8 @@
  *
  * The sections follow the wizard's order as staff arranged it (RAPP-612):
  * built-in screens and staff screens (RAPP-307), each under its title with its
- * own Change button. A built-in question staff removed, or a screen staff hid,
+ * own Change button. Her answers to Fitxa fields show under the screen they
+ * are placed on, worded as they were asked (RAPP-655). A built-in question staff removed, or a screen staff hid,
  * shows no row: it is never asked.
  */
 
@@ -46,6 +47,7 @@ import {
 } from '@ramassa/shared/intake';
 import {
   answerText,
+  appScreenFields,
   isCustomQuestionVisible,
   isEmptyAnswer,
   textIn,
@@ -224,18 +226,17 @@ export default function SummaryStepScreen() {
   const show = (value: string | null) => value ?? notGiven;
   const answers = mergedCustomAnswers(customAnswers, draft?.custom);
   const shows = (question: IntakeQuestion) => !hidden.has(question);
-  // The questions staff added to a built-in screen (RAPP-642), under its own rows.
-  const holderOf = (screen: WizardQuestionScreen) =>
-    customScreens.find((candidate) => candidate.builtinScreen === screen);
+  // The Fitxa fields placed on a built-in screen (RAPP-655), under its own rows.
   const added = (screen: WizardQuestionScreen): ReactNode => {
-    const holder = holderOf(screen);
-    return holder === undefined ? null : (
-      <CustomRows screen={holder} answers={answers} language={locale} />
+    const placed = appScreenFields(customScreens, screen);
+    return placed === undefined ? null : (
+      <CustomRows screen={placed} answers={answers} language={locale} />
     );
   };
   // A built-in screen whose every question staff removed has nothing to correct.
   const hasQuestions = (screen: WizardQuestionScreen) =>
-    WIZARD_SCREEN_QUESTIONS[screen].some(shows) || holderOf(screen) !== undefined;
+    WIZARD_SCREEN_QUESTIONS[screen].some(shows) ||
+    appScreenFields(customScreens, screen) !== undefined;
 
   const edit = (screen: WizardQuestionScreen) =>
     router.push(`${String(WIZARD_SCREEN_ROUTES[screen])}?edit=1` as Href);

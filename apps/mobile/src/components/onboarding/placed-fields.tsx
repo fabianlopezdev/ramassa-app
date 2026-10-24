@@ -1,9 +1,10 @@
 /**
- * The questions staff added to an app screen (RAPP-642), after the screen's
- * own questions. The wizard frame draws them on every built-in question
- * screen that has some, so no screen needs its own code for them.
+ * The Fitxa fields placed on an app screen (RAPP-651, RAPP-655), after the
+ * screen's own questions, in their order and worded for her. The wizard frame
+ * draws them on every app screen that has some, so no screen needs its own
+ * code for them.
  *
- * They behave as on a staff screen (RAPP-307): the same fields, the same
+ * They behave as on a Ramassà screen (RAPP-307): the same fields, the same
  * checks before she leaves (a required one included, RAPP-611), and her
  * answers kept in the draft until the terms step sends them with the others.
  * Continue checks them first and saves them before the screen's own Continue
@@ -22,14 +23,14 @@ import { useWizardIntake } from '@/lib/onboarding-intake-context';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
-import { WIZARD_QUESTION_SCREENS, type WizardQuestionScreen } from '@ramassa/shared/intake';
-import { isCustomQuestionVisible, updateCustomAnswer } from '@ramassa/shared/intake-builder';
+import type { WizardQuestionScreen } from '@ramassa/shared/intake';
+import {
+  appScreenFields,
+  isCustomQuestionVisible,
+  updateCustomAnswer,
+} from '@ramassa/shared/intake-builder';
 
-function isQuestionScreen(screen: string | undefined): screen is WizardQuestionScreen {
-  return (WIZARD_QUESTION_SCREENS as readonly string[]).includes(screen ?? '');
-}
-
-export interface AddedQuestions {
+export interface PlacedFields {
   /** Whether the screen has any: nothing else here matters when it has none. */
   readonly hasQuestions: boolean;
   readonly fields: ReactNode;
@@ -42,13 +43,10 @@ export interface AddedQuestions {
   readonly save: () => void;
 }
 
-export function useAddedQuestions(screenId: string | undefined): AddedQuestions {
+export function usePlacedFields(screenId: string | undefined): PlacedFields {
   const { t } = useTranslation('onboarding');
   const { customScreens, customAnswers } = useWizardIntake();
-  const holder = isQuestionScreen(screenId)
-    ? customScreens.find((screen) => screen.builtinScreen === screenId)
-    : undefined;
-  const questions = holder?.questions ?? [];
+  const questions = appScreenFields(customScreens, screenId)?.questions ?? [];
   const [answers, setAnswers] = useState<CustomAnswerDraft>(() =>
     mergedCustomAnswers(customAnswers, onboardingDraftStore.loadDraft()?.custom),
   );
