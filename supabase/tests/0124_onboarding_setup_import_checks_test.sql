@@ -196,12 +196,12 @@ select ok(
 select throws_ok(
   $$ select public.preview_onboarding_setup_import(
        jsonb_set((select doc from run where label = 'base'), '{schema_version}', '"1"')) $$,
-  '22023', 'ONBOARDING_SETUP/MALFORMED: schema_version must be the number 1',
+  '22023', 'ONBOARDING_SETUP/MALFORMED: schema_version must be the number 1 or 2',
   'schema_version as a string is refused as not the number 1'
 );
 select throws_ok(
   $$ select public.import_onboarding_setup((select doc from run where label = 'base') - 'schema_version') $$,
-  '22023', 'ONBOARDING_SETUP/MALFORMED: schema_version must be the number 1',
+  '22023', 'ONBOARDING_SETUP/MALFORMED: schema_version must be the number 1 or 2',
   'and so is a file without it'
 );
 

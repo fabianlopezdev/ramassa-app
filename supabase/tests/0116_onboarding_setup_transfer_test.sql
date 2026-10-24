@@ -158,7 +158,7 @@ reset role;
 -- 2. Never people data ----------------------------------------------------------------------------------
 
 select ok(
-  (select doc ->> 'format' = 'ramassa.onboarding-setup' and (doc ->> 'schema_version')::integer = 1
+  (select doc ->> 'format' = 'ramassa.onboarding-setup' and (doc ->> 'schema_version')::integer = 2
           and doc ->> 'app_commit' = 'abc1234' from run where label = 'first'),
   'one versioned document with the app commit'
 );
@@ -231,7 +231,7 @@ set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-0000000006a1", 
 select throws_ok(
   $$ select public.preview_onboarding_setup_import(
        jsonb_set((select doc from run where label = 'first'), '{schema_version}', '99')) $$,
-  '22023', 'ONBOARDING_SETUP/UNKNOWN_SCHEMA_VERSION: this file uses onboarding setup schema version 99; this app reads version 1. Export it again from an app at the same version.',
+  '22023', 'ONBOARDING_SETUP/UNKNOWN_SCHEMA_VERSION: this file uses onboarding setup schema version 99; this app reads versions 1 and 2. Export it again from an app at the same version.',
   'an unknown schema version is refused with a clear message'
 );
 select throws_ok(

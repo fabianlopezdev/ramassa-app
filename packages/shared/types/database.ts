@@ -872,6 +872,13 @@ export type Database = {
             referencedColumns: ['id'];
           },
           {
+            foreignKeyName: 'custom_answers_question_id_fkey';
+            columns: ['question_id'];
+            isOneToOne: false;
+            referencedRelation: 'profile_fields';
+            referencedColumns: ['id'];
+          },
+          {
             foreignKeyName: 'custom_answers_season_id_fkey';
             columns: ['season_id'];
             isOneToOne: false;
@@ -1005,6 +1012,13 @@ export type Database = {
             referencedRelation: 'custom_questions';
             referencedColumns: ['id'];
           },
+          {
+            foreignKeyName: 'custom_question_options_question_id_fkey';
+            columns: ['question_id'];
+            isOneToOne: false;
+            referencedRelation: 'profile_fields';
+            referencedColumns: ['id'];
+          },
         ];
       };
       custom_question_states: {
@@ -1054,90 +1068,11 @@ export type Database = {
             referencedRelation: 'custom_questions';
             referencedColumns: ['id'];
           },
-        ];
-      };
-      custom_questions: {
-        Row: {
-          created_at: string;
-          help: Json | null;
-          id: string;
-          is_archived: boolean;
-          is_required: boolean;
-          label: Json;
-          org_id: string;
-          placements: string[];
-          privacy: string;
-          question_type: string;
-          screen_id: string;
-          settings: Json;
-          show_when_option_id: string | null;
-          show_when_question_id: string | null;
-          sort_order: number;
-          updated_at: string;
-        };
-        Insert: {
-          created_at?: string;
-          help?: Json | null;
-          id?: string;
-          is_archived?: boolean;
-          is_required?: boolean;
-          label: Json;
-          org_id: string;
-          placements: string[];
-          privacy: string;
-          question_type: string;
-          screen_id: string;
-          settings?: Json;
-          show_when_option_id?: string | null;
-          show_when_question_id?: string | null;
-          sort_order?: number;
-          updated_at?: string;
-        };
-        Update: {
-          created_at?: string;
-          help?: Json | null;
-          id?: string;
-          is_archived?: boolean;
-          is_required?: boolean;
-          label?: Json;
-          org_id?: string;
-          placements?: string[];
-          privacy?: string;
-          question_type?: string;
-          screen_id?: string;
-          settings?: Json;
-          show_when_option_id?: string | null;
-          show_when_question_id?: string | null;
-          sort_order?: number;
-          updated_at?: string;
-        };
-        Relationships: [
           {
-            foreignKeyName: 'custom_questions_org_id_fkey';
-            columns: ['org_id'];
+            foreignKeyName: 'custom_question_states_question_id_fkey';
+            columns: ['question_id'];
             isOneToOne: false;
-            referencedRelation: 'organizations';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'custom_questions_screen_id_fkey';
-            columns: ['screen_id'];
-            isOneToOne: false;
-            referencedRelation: 'intake_screens';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'custom_questions_show_when_option_id_fkey';
-            columns: ['show_when_option_id'];
-            isOneToOne: false;
-            referencedRelation: 'custom_question_options';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'custom_questions_show_when_question_id_fkey';
-            columns: ['show_when_question_id'];
-            isOneToOne: false;
-            referencedRelation: 'custom_questions';
+            referencedRelation: 'profile_fields';
             referencedColumns: ['id'];
           },
         ];
@@ -1849,6 +1784,70 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'profiles';
             referencedColumns: ['org_id', 'id'];
+          },
+        ];
+      };
+      field_placements: {
+        Row: {
+          created_at: string;
+          field_id: string;
+          help_override: Json | null;
+          id: string;
+          label_override: Json | null;
+          org_id: string;
+          required: boolean;
+          screen_key: string | null;
+          sort_order: number;
+          surface: string;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          field_id: string;
+          help_override?: Json | null;
+          id?: string;
+          label_override?: Json | null;
+          org_id: string;
+          required?: boolean;
+          screen_key?: string | null;
+          sort_order?: number;
+          surface: string;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          field_id?: string;
+          help_override?: Json | null;
+          id?: string;
+          label_override?: Json | null;
+          org_id?: string;
+          required?: boolean;
+          screen_key?: string | null;
+          sort_order?: number;
+          surface?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'field_placements_field_id_fkey';
+            columns: ['field_id'];
+            isOneToOne: false;
+            referencedRelation: 'custom_questions';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'field_placements_field_id_fkey';
+            columns: ['field_id'];
+            isOneToOne: false;
+            referencedRelation: 'profile_fields';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'field_placements_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
           },
         ];
       };
@@ -3253,6 +3252,163 @@ export type Database = {
           },
         ];
       };
+      profile_fields: {
+        Row: {
+          builtin_key: string | null;
+          created_at: string;
+          created_by: string | null;
+          default_required: boolean;
+          help: Json | null;
+          id: string;
+          is_archived: boolean;
+          kind: string;
+          label: Json;
+          legacy_screen_id: string | null;
+          org_id: string;
+          privacy: string;
+          question_type: string;
+          section_id: string;
+          settings: Json;
+          show_when_field_id: string | null;
+          show_when_option_id: string | null;
+          sort_order: number;
+          updated_at: string;
+        };
+        Insert: {
+          builtin_key?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          default_required?: boolean;
+          help?: Json | null;
+          id?: string;
+          is_archived?: boolean;
+          kind: string;
+          label: Json;
+          legacy_screen_id?: string | null;
+          org_id: string;
+          privacy: string;
+          question_type: string;
+          section_id: string;
+          settings?: Json;
+          show_when_field_id?: string | null;
+          show_when_option_id?: string | null;
+          sort_order?: number;
+          updated_at?: string;
+        };
+        Update: {
+          builtin_key?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          default_required?: boolean;
+          help?: Json | null;
+          id?: string;
+          is_archived?: boolean;
+          kind?: string;
+          label?: Json;
+          legacy_screen_id?: string | null;
+          org_id?: string;
+          privacy?: string;
+          question_type?: string;
+          section_id?: string;
+          settings?: Json;
+          show_when_field_id?: string | null;
+          show_when_option_id?: string | null;
+          sort_order?: number;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'profile_fields_created_by_fkey';
+            columns: ['created_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'profile_fields_legacy_screen_id_fkey';
+            columns: ['legacy_screen_id'];
+            isOneToOne: false;
+            referencedRelation: 'intake_screens';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'profile_fields_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'profile_fields_section_id_fkey';
+            columns: ['section_id'];
+            isOneToOne: false;
+            referencedRelation: 'profile_sections';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'profile_fields_show_when_field_id_fkey';
+            columns: ['show_when_field_id'];
+            isOneToOne: false;
+            referencedRelation: 'custom_questions';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'profile_fields_show_when_field_id_fkey';
+            columns: ['show_when_field_id'];
+            isOneToOne: false;
+            referencedRelation: 'profile_fields';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'profile_fields_show_when_option_id_fkey';
+            columns: ['show_when_option_id'];
+            isOneToOne: false;
+            referencedRelation: 'custom_question_options';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      profile_sections: {
+        Row: {
+          created_at: string;
+          id: string;
+          is_builtin: boolean;
+          key: string;
+          org_id: string;
+          sort_order: number;
+          title: Json;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          is_builtin?: boolean;
+          key: string;
+          org_id: string;
+          sort_order?: number;
+          title: Json;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          is_builtin?: boolean;
+          key?: string;
+          org_id?: string;
+          sort_order?: number;
+          title?: Json;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'profile_sections_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       profiles: {
         Row: {
           address: string | null;
@@ -3662,6 +3818,13 @@ export type Database = {
             columns: ['question_id'];
             isOneToOne: false;
             referencedRelation: 'custom_questions';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'referral_custom_answers_question_id_fkey';
+            columns: ['question_id'];
+            isOneToOne: false;
+            referencedRelation: 'profile_fields';
             referencedColumns: ['id'];
           },
           {
@@ -4334,45 +4497,6 @@ export type Database = {
           },
         ];
       };
-      staff_notifications: {
-        Row: {
-          created_at: string;
-          deleted_at: string | null;
-          event: string;
-          id: string;
-          org_id: string;
-          params: Json;
-          path: string;
-          read_at: string | null;
-          recipient_id: string;
-          source_id: string | null;
-        };
-        Insert: {
-          created_at?: string;
-          deleted_at?: string | null;
-          event: string;
-          id?: string;
-          org_id: string;
-          params?: Json;
-          path: string;
-          read_at?: string | null;
-          recipient_id: string;
-          source_id?: string | null;
-        };
-        Update: {
-          created_at?: string;
-          deleted_at?: string | null;
-          event?: string;
-          id?: string;
-          org_id?: string;
-          params?: Json;
-          path?: string;
-          read_at?: string | null;
-          recipient_id?: string;
-          source_id?: string | null;
-        };
-        Relationships: [];
-      };
       staff_invitations: {
         Row: {
           accepted_at: string | null;
@@ -4426,6 +4550,60 @@ export type Database = {
             foreignKeyName: 'staff_invitations_profile_id_fkey';
             columns: ['profile_id'];
             isOneToOne: true;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      staff_notifications: {
+        Row: {
+          created_at: string;
+          deleted_at: string | null;
+          event: string;
+          id: string;
+          org_id: string;
+          params: Json;
+          path: string;
+          read_at: string | null;
+          recipient_id: string;
+          source_id: string | null;
+        };
+        Insert: {
+          created_at?: string;
+          deleted_at?: string | null;
+          event: string;
+          id?: string;
+          org_id: string;
+          params?: Json;
+          path: string;
+          read_at?: string | null;
+          recipient_id: string;
+          source_id?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          deleted_at?: string | null;
+          event?: string;
+          id?: string;
+          org_id?: string;
+          params?: Json;
+          path?: string;
+          read_at?: string | null;
+          recipient_id?: string;
+          source_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'staff_notifications_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'staff_notifications_recipient_id_fkey';
+            columns: ['recipient_id'];
+            isOneToOne: false;
             referencedRelation: 'profiles';
             referencedColumns: ['id'];
           },
@@ -5280,6 +5458,56 @@ export type Database = {
           },
         ];
       };
+      custom_questions: {
+        Row: {
+          created_at: string | null;
+          help: Json | null;
+          id: string | null;
+          is_archived: boolean | null;
+          is_required: boolean | null;
+          label: Json | null;
+          org_id: string | null;
+          placements: string[] | null;
+          privacy: string | null;
+          question_type: string | null;
+          screen_id: string | null;
+          settings: Json | null;
+          show_when_option_id: string | null;
+          show_when_question_id: string | null;
+          sort_order: number | null;
+          updated_at: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'profile_fields_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'profile_fields_show_when_field_id_fkey';
+            columns: ['show_when_question_id'];
+            isOneToOne: false;
+            referencedRelation: 'custom_questions';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'profile_fields_show_when_field_id_fkey';
+            columns: ['show_when_question_id'];
+            isOneToOne: false;
+            referencedRelation: 'profile_fields';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'profile_fields_show_when_option_id_fkey';
+            columns: ['show_when_option_id'];
+            isOneToOne: false;
+            referencedRelation: 'custom_question_options';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       municipality_compatibility_report: {
         Row: {
           legacy_value: string | null;
@@ -5320,6 +5548,7 @@ export type Database = {
       };
       archive_custom_question: { Args: { p_id: string }; Returns: undefined };
       archive_intake_screen: { Args: { p_id: string }; Returns: undefined };
+      archive_profile_field: { Args: { p_id: string }; Returns: undefined };
       assert_within_hourly_limit: {
         Args: { limited_action: string; maximum_per_hour: number };
         Returns: undefined;
@@ -5639,10 +5868,6 @@ export type Database = {
       current_org_id: { Args: never; Returns: string };
       decrypt_field: { Args: { ciphertext: string }; Returns: string };
       default_organization_id: { Args: never; Returns: string };
-      delete_staff_notifications: {
-        Args: { p_ids: string[] };
-        Returns: number;
-      };
       delete_custom_notification_group: {
         Args: { p_id: string };
         Returns: undefined;
@@ -5665,6 +5890,7 @@ export type Database = {
         Args: { p_preset_id: string };
         Returns: undefined;
       };
+      delete_staff_notifications: { Args: { p_ids: string[] }; Returns: number };
       delete_test_player: {
         Args: { p_participant_id: string };
         Returns: undefined;
@@ -5930,8 +6156,8 @@ export type Database = {
       get_staff_cards: {
         Args: { p_profile_ids: string[] };
         Returns: {
-          avatar_url: string | null;
-          first_name: string | null;
+          avatar_url: string;
+          first_name: string;
           id: string;
         }[];
       };
@@ -6033,22 +6259,6 @@ export type Database = {
         Returns: boolean;
       };
       is_team_member: { Args: never; Returns: boolean };
-      mark_staff_notification_read: {
-        Args: { p_id: string };
-        Returns: undefined;
-      };
-      list_staff_notifications: {
-        Args: { p_limit?: number };
-        Returns: {
-          created_at: string;
-          event: string;
-          id: string;
-          name: string | null;
-          params: Json;
-          path: string;
-          read_at: string | null;
-        }[];
-      };
       list_app_terms_versions: {
         Args: never;
         Returns: {
@@ -6355,6 +6565,18 @@ export type Database = {
           updated_at: string;
         }[];
       };
+      list_staff_notifications: {
+        Args: { p_limit?: number };
+        Returns: {
+          created_at: string;
+          event: string;
+          id: string;
+          name: string;
+          params: Json;
+          path: string;
+          read_at: string;
+        }[];
+      };
       list_staff_referrals: {
         Args: { p_status?: string };
         Returns: {
@@ -6442,6 +6664,10 @@ export type Database = {
         Args: { p_conversation_id: string; p_message_id: string };
         Returns: undefined;
       };
+      mark_staff_notification_read: {
+        Args: { p_id: string };
+        Returns: undefined;
+      };
       merge_walk_in: {
         Args: { p_id: string; p_profile_id: string };
         Returns: undefined;
@@ -6457,6 +6683,10 @@ export type Database = {
           item_type_id: string;
           last_counted_at: string;
         }[];
+      };
+      move_profile_field: {
+        Args: { p_id: string; p_ids: string[]; p_section_id: string };
+        Returns: undefined;
       };
       my_answered_questions: { Args: never; Returns: string[] };
       my_authorization_status: {
@@ -6489,6 +6719,13 @@ export type Database = {
           value: Json;
         }[];
       };
+      my_custom_question_asking: {
+        Args: never;
+        Returns: {
+          is_asked: boolean;
+          question_id: string;
+        }[];
+      };
       my_entity_invitation: {
         Args: never;
         Returns: {
@@ -6507,10 +6744,6 @@ export type Database = {
         }[];
       };
       my_permissions: { Args: never; Returns: string[] };
-      my_custom_question_asking: {
-        Args: never;
-        Returns: { is_asked: boolean; question_id: string }[];
-      };
       my_questions_to_ask: { Args: never; Returns: string[] };
       my_second_factor_waived: { Args: never; Returns: boolean };
       my_session_is_current: { Args: never; Returns: boolean };
@@ -6643,6 +6876,15 @@ export type Database = {
           reason: string;
           table_name: string;
         }[];
+      };
+      place_field: {
+        Args: {
+          p_field_id: string;
+          p_required?: boolean;
+          p_screen_key?: string;
+          p_surface: string;
+        };
+        Returns: string;
       };
       prepare_media_item_deletion: {
         Args: { p_media_item_id: string };
@@ -6800,6 +7042,7 @@ export type Database = {
         };
         Returns: string;
       };
+      remove_placement: { Args: { p_placement_id: string }; Returns: undefined };
       remove_staff_member: {
         Args: { p_profile_id: string };
         Returns: undefined;
@@ -6814,6 +7057,14 @@ export type Database = {
       };
       reorder_intake_screens: {
         Args: { p_after_screen: string; p_ids: string[] };
+        Returns: undefined;
+      };
+      reorder_placements: {
+        Args: { p_ids: string[]; p_screen_key: string; p_surface: string };
+        Returns: undefined;
+      };
+      reorder_profile_sections: {
+        Args: { p_ids: string[] };
         Returns: undefined;
       };
       reorder_service_categories: {
@@ -6946,6 +7197,33 @@ export type Database = {
           p_permission_codes: string[];
           p_preset_id: string;
         };
+        Returns: string;
+      };
+      save_placement: {
+        Args: {
+          p_help_override?: Json;
+          p_label_override?: Json;
+          p_placement_id: string;
+          p_required: boolean;
+        };
+        Returns: undefined;
+      };
+      save_profile_field: {
+        Args: {
+          p_default_required?: boolean;
+          p_help: Json;
+          p_id: string;
+          p_label: Json;
+          p_options?: Json;
+          p_privacy: string;
+          p_section_id: string;
+          p_settings?: Json;
+          p_type: string;
+        };
+        Returns: string;
+      };
+      save_profile_section: {
+        Args: { p_id: string; p_title: Json };
         Returns: string;
       };
       save_referral_custom_answers: {

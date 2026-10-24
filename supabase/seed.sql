@@ -1537,30 +1537,49 @@ values
    null, 'logistics', 2)
 on conflict (id) do nothing;
 
-insert into public.custom_questions
-  (id, org_id, screen_id, question_type, label, help, privacy, placements, sort_order)
-values
-  ('5eed0000-0000-4000-8045-000000000001', '5eed0000-0000-4000-8000-000000000000',
-   '5eed0000-0000-4000-8044-000000000001', 'yes_no_maybe',
-   '{"ca":"Vens amb transport públic?","es":"¿Vienes en transporte público?","en":"Do you come by public transport?","ar":"هل تأتين بالمواصلات العامة؟","fa":"آیا با حمل و نقل عمومی می‌آیید؟"}'::jsonb,
-   null, 'normal', array['wizard', 'entity_form'], 0),
-  ('5eed0000-0000-4000-8045-000000000002', '5eed0000-0000-4000-8000-000000000000',
-   '5eed0000-0000-4000-8044-000000000002', 'single_choice',
-   '{"ca":"Com et vas assabentar de Ramassà?","es":"¿Cómo te enteraste de Ramassà?","en":"How did you hear about Ramassà?","ar":"كيف سمعتِ عن راماسا؟","fa":"چطور با راماسا آشنا شدید؟"}'::jsonb,
-   null, 'normal', array['wizard'], 0),
-  ('5eed0000-0000-4000-8045-000000000003', '5eed0000-0000-4000-8000-000000000000',
-   '5eed0000-0000-4000-8044-000000000003', 'long_text',
-   '{"ca":"Què et dificulta venir als entrenaments?","es":"¿Qué te dificulta venir a los entrenamientos?","en":"What makes it difficult for you to attend training?","ar":"ما الذي يصعّب عليكِ الحضور إلى التدريبات؟","fa":"چه چیزی آمدن شما به تمرین را دشوار می‌کند؟"}'::jsonb,
-   null, 'sensitive', array['season'], 1),
-  ('5eed0000-0000-4000-8045-000000000004', '5eed0000-0000-4000-8000-000000000000',
-   '5eed0000-0000-4000-8044-000000000001', 'short_text',
-   '{"ca":"Parada de metro més propera"}'::jsonb,
-   null, 'personal', array['staff'], 3),
-  ('5eed0000-0000-4000-8045-000000000005', '5eed0000-0000-4000-8000-000000000000',
-   '5eed0000-0000-4000-8044-000000000003', 'single_choice',
-   '{"ca":"Hi ha res que dificulti venir aquesta temporada?","es":"¿Hay algo que te dificulte venir esta temporada?","en":"Is anything making it hard to come this season?","ar":"هل هناك ما يصعّب عليكِ الحضور هذا الموسم؟","fa":"آیا چیزی آمدن شما را در این فصل دشوار می‌کند؟"}'::jsonb,
-   null, 'sensitive', array['season'], 0)
+-- The fields Ramassà added (RAPP-649): the seeded organization's Support
+-- section, then where each is asked. The fourth is filled in by the team only.
+insert into public.profile_fields
+  (id, org_id, section_id, kind, question_type, label, help, privacy, sort_order, legacy_screen_id)
+select v.id::uuid, '5eed0000-0000-4000-8000-000000000000', s.id, 'custom', v.question_type, v.label::jsonb,
+       null, v.privacy, v.sort_order, v.screen_id::uuid
+  from (values
+  ('5eed0000-0000-4000-8045-000000000001', '5eed0000-0000-4000-8044-000000000001', 'yes_no_maybe',
+   '{"ca":"Vens amb transport públic?","es":"¿Vienes en transporte público?","en":"Do you come by public transport?","ar":"هل تأتين بالمواصلات العامة؟","fa":"آیا با حمل و نقل عمومی می‌آیید؟"}',
+   'normal', 100),
+  ('5eed0000-0000-4000-8045-000000000002', '5eed0000-0000-4000-8044-000000000002', 'single_choice',
+   '{"ca":"Com et vas assabentar de Ramassà?","es":"¿Cómo te enteraste de Ramassà?","en":"How did you hear about Ramassà?","ar":"كيف سمعتِ عن راماسا؟","fa":"چطور با راماسا آشنا شدید؟"}',
+   'normal', 101),
+  ('5eed0000-0000-4000-8045-000000000003', '5eed0000-0000-4000-8044-000000000003', 'long_text',
+   '{"ca":"Què et dificulta venir als entrenaments?","es":"¿Qué te dificulta venir a los entrenamientos?","en":"What makes it difficult for you to attend training?","ar":"ما الذي يصعّب عليكِ الحضور إلى التدريبات؟","fa":"چه چیزی آمدن شما به تمرین را دشوار می‌کند؟"}',
+   'sensitive', 103),
+  ('5eed0000-0000-4000-8045-000000000004', '5eed0000-0000-4000-8044-000000000001', 'short_text',
+   '{"ca":"Parada de metro més propera"}',
+   'personal', 104),
+  ('5eed0000-0000-4000-8045-000000000005', '5eed0000-0000-4000-8044-000000000003', 'single_choice',
+   '{"ca":"Hi ha res que dificulti venir aquesta temporada?","es":"¿Hay algo que te dificulte venir esta temporada?","en":"Is anything making it hard to come this season?","ar":"هل هناك ما يصعّب عليكِ الحضور هذا الموسم؟","fa":"آیا چیزی آمدن شما را در این فصل دشوار می‌کند؟"}',
+   'sensitive', 102)
+  ) as v(id, screen_id, question_type, label, privacy, sort_order)
+  join public.profile_sections s
+    on s.org_id = '5eed0000-0000-4000-8000-000000000000' and s.key = 'support'
 on conflict (id) do nothing;
+
+-- Her onboarding asks the first three and the fifth on their screens; the
+-- entity form asks the first; the third and the fifth come back every season.
+insert into public.field_placements (org_id, field_id, surface, screen_key, sort_order)
+values
+  ('5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-8045-000000000001', 'onboarding',
+   '5eed0000-0000-4000-8044-000000000001', 0),
+  ('5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-8045-000000000002', 'onboarding',
+   '5eed0000-0000-4000-8044-000000000002', 0),
+  ('5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-8045-000000000003', 'onboarding',
+   '5eed0000-0000-4000-8044-000000000003', 1),
+  ('5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-8045-000000000005', 'onboarding',
+   '5eed0000-0000-4000-8044-000000000003', 0),
+  ('5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-8045-000000000001', 'entity_form', null, 0),
+  ('5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-8045-000000000003', 'season', null, 1),
+  ('5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-8045-000000000005', 'season', null, 0)
+on conflict (field_id, surface) do nothing;
 
 insert into public.custom_question_options (id, org_id, question_id, label, sort_order, is_archived)
 values
@@ -1577,8 +1596,8 @@ values
 on conflict (id) do nothing;
 
 -- Conditional participation follow-up, with existing encrypted answers retained (RAPP-572).
-update public.custom_questions
-   set show_when_question_id='5eed0000-0000-4000-8045-000000000005', show_when_option_id='5eed0000-0000-4000-8046-000000000004'
+update public.profile_fields
+   set show_when_field_id='5eed0000-0000-4000-8045-000000000005', show_when_option_id='5eed0000-0000-4000-8046-000000000004'
  where id='5eed0000-0000-4000-8045-000000000003' and org_id='5eed0000-0000-4000-8000-000000000000';
 
 insert into public.custom_answers
