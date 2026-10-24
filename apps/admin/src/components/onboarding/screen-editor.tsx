@@ -43,7 +43,7 @@ import type { OnboardingDesignData } from '@/lib/onboarding-design';
 import { supabase } from '@/lib/supabase';
 import { Link, useNavigate, useRouter } from '@tanstack/react-router';
 import { ChevronLeft, Trash2 } from 'lucide-react';
-import { useState, type ReactNode } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { getLanguageDirection } from '@ramassa/shared/i18n/languages';

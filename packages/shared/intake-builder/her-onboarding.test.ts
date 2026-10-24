@@ -17,7 +17,6 @@ import type { FieldPlacement, ProfileField, ProfileLayout } from './profile-layo
 
 const SECTION = '5eed0000-0000-4000-8096-000000000001';
 const TRANSPORT_SCREEN = '5eed0000-0000-4000-8096-000000000002';
-const OLD_SCREEN = '5eed0000-0000-4000-8096-000000000003';
 
 function field(overrides: Partial<ProfileField> & Pick<ProfileField, 'id'>): ProfileField {
   return {

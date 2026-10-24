@@ -43,7 +43,6 @@ import {
   flowStepName,
   saveIntakeScreen,
   saveWizardFlowOrder,
-  textIn,
   wizardFlow,
   type IntakeCatalog,
 } from '@ramassa/shared/intake-builder';

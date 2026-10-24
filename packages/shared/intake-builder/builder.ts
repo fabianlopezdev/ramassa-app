@@ -23,13 +23,10 @@ import { AppError, databaseErrorCode } from '../errors';
 import { resolveLocalizedText } from '../i18n/localized-content';
 import { appTermsFromCatalog, type CurrentAppTerms } from '../onboarding/app-terms';
 import {
-  customStepKey,
   isCustomStep,
   QUESTION_SCREENS,
   WIZARD_QUESTION_SCREENS,
   WIZARD_SCREEN_QUESTIONS,
-  wizardFlowOrder,
-  type CustomWizardScreen,
   type IntakeQuestion,
   type WizardFlow,
   type WizardQuestionScreen,
