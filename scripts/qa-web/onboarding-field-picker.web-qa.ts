@@ -148,7 +148,7 @@ test.describe.serial('the onboarding field picker', () => {
       .poll(() => placementOf(FREE_FIELD), { timeout: 15_000 })
       .toBe(`equipment|${WORDING}|`);
 
-    await page.getByTestId('phone-language').getByRole('tab').filter({ hasText: /^ar$/ }).click();
+    await page.getByTestId('phone-language').getByRole('radio').filter({ hasText: /^ar$/ }).click();
     await expect(page.getByTestId(`phone-question-${id}`)).toContainText(FREE_FIELD_AR);
     await expect(page.getByTestId('phone-preview').locator('[dir]').first()).toHaveAttribute(
       'dir',

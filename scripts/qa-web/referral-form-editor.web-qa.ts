@@ -122,7 +122,11 @@ test.describe.serial('the entity referral form', () => {
     await row.getByTestId(`entity-wording-${PERSONAL}-save`).click();
     await expect.poll(() => placementOf(PERSONAL), { timeout: 15_000 }).toBe(`true|${WORDING}`);
     // The entity reads its own language: the English wording too.
-    await page.getByTestId('editor-language').getByRole('tab').filter({ hasText: /^en$/ }).click();
+    await page
+      .getByTestId('editor-language')
+      .getByRole('radio')
+      .filter({ hasText: /^en$/ })
+      .click();
     await row.getByTestId(`entity-placement-${PERSONAL}-edit`).click();
     await row.locator('[name="placement-label.en"]').fill(WORDING_EN);
     await row.getByTestId(`entity-wording-${PERSONAL}-save`).click();
@@ -139,7 +143,7 @@ test.describe.serial('the entity referral form', () => {
     // The preview in Arabic reads right to left, the field's own Arabic name or its Catalan one.
     await page
       .getByTestId('referral-preview-language')
-      .getByRole('tab')
+      .getByRole('radio')
       .filter({ hasText: /^ar$/ })
       .click();
     await expect(preview).toHaveAttribute('dir', 'rtl');

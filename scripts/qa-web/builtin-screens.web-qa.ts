@@ -57,7 +57,7 @@ test('the design role words the season screen in Arabic, previewed right to left
   const wording = page.getByTestId('wording-season');
   await expect(wording).toBeVisible({ timeout: 30_000 });
 
-  await page.getByTestId('editor-language').getByRole('tab').filter({ hasText: /^ar$/ }).click();
+  await page.getByTestId('editor-language').getByRole('radio').filter({ hasText: /^ar$/ }).click();
   await expect(wording.locator('#wording-season-title')).toHaveAttribute('dir', 'rtl');
   await wording.locator('#wording-season-title').fill(ARABIC_TITLE);
   await wording.locator('#wording-season-help').fill(ARABIC_HELP);
