@@ -5,12 +5,13 @@ name: smoke-onboarding-invited
 #
 # The seed gives her name, date of birth, nationality, referring entity and
 # clothing size as staff answers. So the wizard must open on the background
-# screen with only place of birth and language left, skip the entity on the
-# logistics screen, and show what staff entered on the summary. Staff also set
-# two choices (RAPP-301): she reviews the clothing size, which opens on the
-# staff answer M, and she is not asked her phone. Six screens in all, with
-# the registration questions (RAPP-306),
-# numbered from 1, because the step count shows only what she sees.
+# screen with only place of birth left (her language is the app's since
+# RAPP-553), skip the entity on the logistics screen, and show what staff
+# entered on the summary. Staff also set two choices (RAPP-301): she reviews
+# the clothing size on the equipment screen, which opens on the staff answer
+# M, and she is not asked her phone. Steps are numbered from 1, because the
+# step count shows only what she sees; after logistics the flow follows the
+# screens by their content, so a staff screen added later does not break it.
 #
 # iOS lists a button below the fold in the accessibility tree, so a tap can
 # report success and press nothing. Each "until the next step" loop therefore
@@ -31,12 +32,11 @@ env:
   DOC_NONE: '{{onboarding:documentTypeNone}}'
   NO_OPTION: '{{onboarding:noOption}}'
   TERMS_ACCEPT: '{{onboarding:termsAcceptLabel}}'
+  TERMS_READ_FULL: '{{onboarding:termsReadFullAction}}'
   PUSH_DECLINE: '{{push:rationaleDecline}}'
   HOME_FEED_TITLE: '{{home:feedTitle}}'
   TAB_HOME: '{{nav:tabs.home}}'
-  # Data, not copy: the language chip shows the native name in every locale,
-  # and the shoe size chips show the catalogue value.
-  LANGUAGE_CHIP: Català
+  # Data, not copy: the shoe size chips show the catalogue value.
   SHOE_SIZE: '38'
   CLOTHING_SIZE: M
 ---
@@ -110,32 +110,6 @@ env:
     duration: 600
 - waitForAnimationToEnd:
     timeout: 1500
-- repeat:
-    times: 10
-    while:
-      notVisible: '^${LANGUAGE_CHIP}$'
-    commands:
-      - swipe:
-          start: 50%, 45%
-          end: 50%, 20%
-          duration: 600
-      - waitForAnimationToEnd:
-          timeout: 1200
-- repeat:
-    times: 4
-    while:
-      notVisible:
-        text: '^${LANGUAGE_CHIP}$'
-        selected: true
-    commands:
-      - tapOn:
-          text: '^${LANGUAGE_CHIP}$'
-          optional: true
-      - waitForAnimationToEnd:
-          timeout: 2000
-- assertVisible:
-    text: '^${LANGUAGE_CHIP}$'
-    selected: true
 - repeat:
     times: 12
     while:
@@ -243,11 +217,12 @@ env:
       id: 'wizard-step-3'
     timeout: 20000
 
-# ── Step 3: logistics, without the entity, with the clothing size to review ─
+# ── Step 3: logistics, without the entity question (staff gave it) ─────────
 - repeat:
     times: 10
     while:
-      notVisible: '^${NO_OPTION}$'
+      notVisible:
+        id: 'question-dependents'
     commands:
       - swipe:
           start: 50%, 45%
@@ -255,21 +230,48 @@ env:
           duration: 600
       - waitForAnimationToEnd:
           timeout: 1200
+- assertNotVisible:
+    id: 'question-reference_entity'
 - repeat:
     times: 4
     while:
       notVisible:
         text: '^${NO_OPTION}$'
-        selected: true
+        checked: true
     commands:
       - tapOn:
           text: '^${NO_OPTION}$'
-          optional: true
       - waitForAnimationToEnd:
           timeout: 2000
 - assertVisible:
     text: '^${NO_OPTION}$'
-    selected: true
+    checked: true
+
+# ── Step 4: equipment, with the clothing size to review ────────────────────
+- repeat:
+    times: 10
+    while:
+      notVisible:
+        id: 'question-clothing_size'
+    commands:
+      - tapOn:
+          text: '^${CONTINUE}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 2000
+      # Only while the step has not changed yet: on Android the next step
+      # opens within the wait, and a swipe would scroll it (RAPP-530).
+      - runFlow:
+          when:
+            notVisible:
+              id: 'question-clothing_size'
+          commands:
+            - swipe:
+                start: 50%, 45%
+                end: 50%, 20%
+                duration: 600
+            - waitForAnimationToEnd:
+                timeout: 1200
 # Ask (RAPP-301): the clothing size is asked, filled with the staff answer.
 - repeat:
     times: 10
@@ -317,22 +319,13 @@ env:
 - assertVisible:
     text: '^${SHOE_SIZE}$'
     selected: true
+
+# ── The staff screen seeded after logistics (RAPP-307) ─────────────────────
 - repeat:
-    times: 12
-    while:
-      notVisible: '^${CONTINUE}$'
-    commands:
-      - swipe:
-          start: 50%, 45%
-          end: 50%, 15%
-          duration: 600
-      - waitForAnimationToEnd:
-          timeout: 1500
-- repeat:
-    times: 8
+    times: 10
     while:
       notVisible:
-        id: 'wizard-step-4'
+        text: '.*${CUSTOM_SCREEN_TITLE}.*'
     commands:
       - tapOn:
           text: '^${CONTINUE}$'
@@ -344,7 +337,7 @@ env:
       - runFlow:
           when:
             notVisible:
-              id: 'wizard-step-4'
+              text: '.*${CUSTOM_SCREEN_TITLE}.*'
           commands:
             - swipe:
                 start: 50%, 45%
@@ -352,12 +345,6 @@ env:
                 duration: 600
             - waitForAnimationToEnd:
                 timeout: 1200
-- extendedWaitUntil:
-    visible:
-      id: 'wizard-step-4'
-    timeout: 20000
-
-# ── Step 4: the staff screen seeded after logistics (RAPP-307) ─────────────
 # Its field comes from the screen's placements, with the field's own name
 # where the placement has no wording of its own (RAPP-655).
 - assertVisible:
@@ -370,11 +357,14 @@ env:
     id: 'custom-question-5eed0000-0000-4000-8045-000000000001-yes'
 - waitForAnimationToEnd:
     timeout: 1500
+
+# ── The other staff screens and the registration questions (RAPP-306) ─────
+# All optional, left empty. Continue until the summary names her.
 - repeat:
-    times: 8
+    times: 24
     while:
       notVisible:
-        id: 'wizard-step-5'
+        text: '.*Mariam.*'
     commands:
       - tapOn:
           text: '^${CONTINUE}$'
@@ -386,7 +376,7 @@ env:
       - runFlow:
           when:
             notVisible:
-              id: 'wizard-step-5'
+              text: '.*Mariam.*'
           commands:
             - swipe:
                 start: 50%, 45%
@@ -394,53 +384,8 @@ env:
                 duration: 600
             - waitForAnimationToEnd:
                 timeout: 1200
-- extendedWaitUntil:
-    visible:
-      id: 'wizard-step-5'
-    timeout: 20000
 
-# ── The registration questions (RAPP-306): all optional, left empty ──────────
-- repeat:
-    times: 12
-    while:
-      notVisible: '^${CONTINUE}$'
-    commands:
-      - swipe:
-          start: 50%, 45%
-          end: 50%, 15%
-          duration: 600
-      - waitForAnimationToEnd:
-          timeout: 1500
-- repeat:
-    times: 8
-    while:
-      notVisible:
-        id: 'wizard-step-6'
-    commands:
-      - tapOn:
-          text: '^${CONTINUE}$'
-          optional: true
-      - waitForAnimationToEnd:
-          timeout: 2000
-      # Only while the step has not changed yet: on Android the next step
-      # opens within the wait, and a swipe would scroll it (RAPP-530).
-      - runFlow:
-          when:
-            notVisible:
-              id: 'wizard-step-6'
-          commands:
-            - swipe:
-                start: 50%, 45%
-                end: 50%, 20%
-                duration: 600
-            - waitForAnimationToEnd:
-                timeout: 1200
-- extendedWaitUntil:
-    visible:
-      id: 'wizard-step-6'
-    timeout: 20000
-
-# ── Step 6: summary ────────────────────────────────────────────────────────────
+# ── The summary ────────────────────────────────────────────────────────────
 # What staff entered is on it, next to what she just answered.
 - assertVisible: '.*Mariam.*'
 - repeat:
@@ -466,29 +411,33 @@ env:
           duration: 600
       - waitForAnimationToEnd:
           timeout: 1500
+# Confirming opens the note before the terms, which opens the terms themselves.
 - repeat:
     times: 8
     while:
-      notVisible:
-        id: 'wizard-step-7'
+      notVisible: '^${TERMS_READ_FULL}$'
     commands:
       - tapOn:
           text: '^${SUMMARY_CONFIRM}$'
           optional: true
       - waitForAnimationToEnd:
           timeout: 2000
-      - swipe:
-          start: 50%, 45%
-          end: 50%, 20%
-          duration: 600
-      - waitForAnimationToEnd:
-          timeout: 1200
-- extendedWaitUntil:
-    visible:
-      id: 'wizard-step-7'
-    timeout: 20000
+      - runFlow:
+          when:
+            notVisible: '^${TERMS_READ_FULL}$'
+          commands:
+            - swipe:
+                start: 50%, 45%
+                end: 50%, 20%
+                duration: 600
+            - waitForAnimationToEnd:
+                timeout: 1200
+- tapOn:
+    text: '^${TERMS_READ_FULL}$'
+- waitForAnimationToEnd:
+    timeout: 3000
 
-# ── Step 7: terms ──────────────────────────────────────────────────────────────
+# ── The terms ──────────────────────────────────────────────────────────────
 - repeat:
     times: 10
     while:
@@ -573,4 +522,4 @@ env:
 - assertVisible:
     text: '^${TAB_HOME}$'
 - assertNotVisible:
-    id: 'wizard-step-7'
+    id: 'terms-acceptance'

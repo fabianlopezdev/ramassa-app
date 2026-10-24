@@ -35,9 +35,9 @@ env:
   FINISH: '{{onboarding:finishAction}}'
   SUMMARY_CONFIRM: '{{onboarding:summaryConfirmAction}}'
   DOC_NONE: '{{onboarding:documentTypeNone}}'
-  ENTITY_NONE: '{{onboarding:referenceEntityNone}}'
   NO_OPTION: '{{onboarding:noOption}}'
   TERMS_ACCEPT: '{{onboarding:termsAcceptLabel}}'
+  TERMS_READ_FULL: '{{onboarding:termsReadFullAction}}'
   NATIONALITY_CHIP: '{{country:SY}}'
   PUSH_DECLINE: '{{push:rationaleDecline}}'
   HOME_FEED_TITLE: '{{home:feedTitle}}'
@@ -177,37 +177,21 @@ env:
 - waitForAnimationToEnd:
     timeout: 2000
 
-# Nationality is a PICKER (contract rule 18): one tap on a pinned chip. Tap
-# UNTIL selected rather than tap-then-assert - a tap reporting COMPLETED only
-# proves a touch was dispatched at the resolved bounds, and these chips wrap,
-# so a touch into the padding between rows changes nothing and still reports
-# success. The loop's condition IS the outcome.
-- repeat:
-    times: 12
-    while:
-      notVisible: '^${NATIONALITY_CHIP}$'
-    commands:
-      - swipe:
-          start: 50%, 45%
-          end: 50%, 15%
-          duration: 600
-      - waitForAnimationToEnd:
-          timeout: 1500
-- repeat:
-    times: 4
-    while:
-      notVisible:
-        text: '^${NATIONALITY_CHIP}$'
-        selected: true
-    commands:
-      - tapOn:
-          text: '^${NATIONALITY_CHIP}$'
-          optional: true
-      - waitForAnimationToEnd:
-          timeout: 2000
-- assertVisible:
+# Nationality is a PICKER (contract rule 18): a searchable list of countries
+# since RAPP-553. The search ignores accents, so ASCII finds Síria.
+- hideKeyboard
+- tapOn:
+    id: 'country-picker-open'
+- tapOn:
+    id: 'country-picker-search'
+- inputText: 'Siri'
+- tapOn:
     text: '^${NATIONALITY_CHIP}$'
-    selected: true
+- waitForAnimationToEnd:
+    timeout: 1500
+- assertVisible:
+    id: 'country-picker-open'
+    text: '.*${NATIONALITY_CHIP}.*'
 
 - repeat:
     times: 12
@@ -377,39 +361,16 @@ env:
     timeout: 15000
 - assertVisible: '^Girona$'
 
-# Four required answers, all chips: referring entity, dependants, clothing size
-# and shoe size. Other contact fields are optional and left empty on purpose.
+# Two required answers, both yes or no radios: whether an entity accompanies
+# her (a yes or no since the entity question split) and dependants. Other
+# contact fields are optional and left empty on purpose. Android lays the
+# radios beside their question rather than inside it, so they are told apart
+# by order once both questions are on screen: the entity's "No" comes first.
 - repeat:
     times: 10
-    while:
-      notVisible: '^${ENTITY_NONE}$'
-    commands:
-      - swipe:
-          start: 50%, 45%
-          end: 50%, 20%
-          duration: 600
-      - waitForAnimationToEnd:
-          timeout: 1200
-- repeat:
-    times: 4
     while:
       notVisible:
-        text: '^${ENTITY_NONE}$'
-        selected: true
-    commands:
-      - tapOn:
-          text: '^${ENTITY_NONE}$'
-          optional: true
-      - waitForAnimationToEnd:
-          timeout: 2000
-- assertVisible:
-    text: '^${ENTITY_NONE}$'
-    selected: true
-
-- repeat:
-    times: 10
-    while:
-      notVisible: '^${NO_OPTION}$'
+        id: 'question-dependents'
     commands:
       - swipe:
           start: 50%, 45%
@@ -422,19 +383,57 @@ env:
     while:
       notVisible:
         text: '^${NO_OPTION}$'
-        selected: true
+        checked: true
+        index: 1
     commands:
       - tapOn:
           text: '^${NO_OPTION}$'
-          optional: true
+          index: 0
+      - tapOn:
+          text: '^${NO_OPTION}$'
+          index: 1
       - waitForAnimationToEnd:
           timeout: 2000
 - assertVisible:
     text: '^${NO_OPTION}$'
-    selected: true
+    checked: true
+    index: 0
+- assertVisible:
+    text: '^${NO_OPTION}$'
+    checked: true
+    index: 1
 
-# Sizes: the equipment questions (they are what the kit hand-out is planned
-# from, so an intake that cannot record them is not finished).
+# ── Step 5: equipment, its own screen ───────────────────────────────────────
+# Sizes are what the kit hand-out is planned from, so an intake that cannot
+# record them is not finished.
+- repeat:
+    times: 10
+    while:
+      notVisible:
+        id: 'question-clothing_size'
+    commands:
+      - tapOn:
+          text: '^${CONTINUE}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 2000
+      # Only while the step has not changed yet: on Android the next step
+      # opens within the wait, and a swipe would scroll it (RAPP-530).
+      - runFlow:
+          when:
+            notVisible:
+              id: 'question-clothing_size'
+          commands:
+            - swipe:
+                start: 50%, 45%
+                end: 50%, 20%
+                duration: 600
+            - waitForAnimationToEnd:
+                timeout: 1200
+- extendedWaitUntil:
+    visible:
+      id: 'question-clothing_size'
+    timeout: 20000
 - repeat:
     times: 10
     while:
@@ -499,22 +498,12 @@ env:
     text: '^${SHOE_SIZE}$'
     selected: true
 
+# ── The staff screens seeded after logistics (RAPP-307) ────────────────────
 - repeat:
-    times: 12
-    while:
-      notVisible: '^${CONTINUE}$'
-    commands:
-      - swipe:
-          start: 50%, 45%
-          end: 50%, 15%
-          duration: 600
-      - waitForAnimationToEnd:
-          timeout: 1500
-- repeat:
-    times: 8
+    times: 10
     while:
       notVisible:
-        id: 'wizard-step-5'
+        text: '.*${CUSTOM_SCREEN_TITLE}.*'
     commands:
       - tapOn:
           text: '^${CONTINUE}$'
@@ -526,7 +515,7 @@ env:
       - runFlow:
           when:
             notVisible:
-              id: 'wizard-step-5'
+              text: '.*${CUSTOM_SCREEN_TITLE}.*'
           commands:
             - swipe:
                 start: 50%, 45%
@@ -534,12 +523,6 @@ env:
                 duration: 600
             - waitForAnimationToEnd:
                 timeout: 1200
-- extendedWaitUntil:
-    visible:
-      id: 'wizard-step-5'
-    timeout: 20000
-
-# ── Step 5: the staff screen seeded after logistics (RAPP-307) ─────────────
 # Its field comes from the screen's placements, with the field's own name
 # where the placement has no wording of its own (RAPP-655).
 - assertVisible:
@@ -552,11 +535,14 @@ env:
     id: 'custom-question-5eed0000-0000-4000-8045-000000000001-yes'
 - waitForAnimationToEnd:
     timeout: 1500
+
+# ── The other staff screens and the registration questions (RAPP-306) ─────
+# All optional, left empty. Continue until the summary names her.
 - repeat:
-    times: 8
+    times: 24
     while:
       notVisible:
-        id: 'wizard-step-6'
+        text: '.*Nadia.*'
     commands:
       - tapOn:
           text: '^${CONTINUE}$'
@@ -568,7 +554,7 @@ env:
       - runFlow:
           when:
             notVisible:
-              id: 'wizard-step-6'
+              text: '.*Nadia.*'
           commands:
             - swipe:
                 start: 50%, 45%
@@ -576,53 +562,8 @@ env:
                 duration: 600
             - waitForAnimationToEnd:
                 timeout: 1200
-- extendedWaitUntil:
-    visible:
-      id: 'wizard-step-6'
-    timeout: 20000
 
-# ── The registration questions (RAPP-306): all optional, left empty ──────────
-- repeat:
-    times: 12
-    while:
-      notVisible: '^${CONTINUE}$'
-    commands:
-      - swipe:
-          start: 50%, 45%
-          end: 50%, 15%
-          duration: 600
-      - waitForAnimationToEnd:
-          timeout: 1500
-- repeat:
-    times: 8
-    while:
-      notVisible:
-        id: 'wizard-step-7'
-    commands:
-      - tapOn:
-          text: '^${CONTINUE}$'
-          optional: true
-      - waitForAnimationToEnd:
-          timeout: 2000
-      # Only while the step has not changed yet: on Android the next step
-      # opens within the wait, and a swipe would scroll it (RAPP-530).
-      - runFlow:
-          when:
-            notVisible:
-              id: 'wizard-step-7'
-          commands:
-            - swipe:
-                start: 50%, 45%
-                end: 50%, 20%
-                duration: 600
-            - waitForAnimationToEnd:
-                timeout: 1200
-- extendedWaitUntil:
-    visible:
-      id: 'wizard-step-7'
-    timeout: 20000
-
-# ── Step 7: summary ───────────────────────────────────────────────────────
+# ── The summary ───────────────────────────────────────────────────────
 # Everything she is about to save, before the terms (RAPP-300). The name she
 # typed on step 1 must be on it: that proves the summary reads the draft.
 - assertVisible: '.*Nadia.*'
@@ -637,23 +578,23 @@ env:
           duration: 600
       - waitForAnimationToEnd:
           timeout: 1500
+# Confirming opens the note before the terms, which opens the terms themselves.
 - repeat:
     times: 8
     while:
-      notVisible:
-        id: 'wizard-step-8'
+      notVisible: '^${TERMS_READ_FULL}$'
     commands:
       - tapOn:
           text: '^${SUMMARY_CONFIRM}$'
           optional: true
       - waitForAnimationToEnd:
           timeout: 2000
-- extendedWaitUntil:
-    visible:
-      id: 'wizard-step-8'
-    timeout: 20000
+- tapOn:
+    text: '^${TERMS_READ_FULL}$'
+- waitForAnimationToEnd:
+    timeout: 3000
 
-# ── Step 8: terms ─────────────────────────────────────────────────────────────────
+# ── The terms ─────────────────────────────────────────────────────────────────
 # Consent is REQUIRED and the media consent beside it is not: accepting only
 # the terms is the minimum lawful path, so it is the one driven here. Selected
 # state again, because this chip looks identical pressed or not to a matcher
@@ -758,4 +699,4 @@ env:
 # so run on its own it would pass against a wizard that simply had not rendered
 # yet.
 - assertNotVisible:
-    id: 'wizard-step-8'
+    id: 'terms-acceptance'
