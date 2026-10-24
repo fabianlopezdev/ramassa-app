@@ -1,27 +1,26 @@
 /**
- * A new referral from the phone (RAPP-413), as the web portal's referral form:
- * first and last name, an optional phone and email, the documentation status
- * and optional notes. Since RAPP-303 it also asks the season registration
- * questions entities answered in their own form until now, every one optional,
- * and the entity confirms she agreed to share her data. A field the form
- * refuses says why until it changes; once sent, the referral opens.
- *
- * The questions staff added for the referral form (RAPP-307) follow, grouped
- * by screen. Their answers are saved right after the referral; when that
- * fails, the form says the referral is saved and offers to try again.
+ * A new referral from the phone (RAPP-413), as the web portal's referral form
+ * (RAPP-652, RAPP-655): the Fitxa fields staff placed on the form, in their
+ * order, worded for the entity and marked when required, then the referral's
+ * own parts (her address, her documentation, her season, the entity's notes)
+ * and her consent. The answers to Ramassà's own fields travel with the
+ * referral in one call, so it is never saved without them, and the database
+ * checks every required field again. A field the form refuses says why until
+ * it changes; once sent, the referral opens.
  */
 import { AuthTextField } from '@/components/auth/auth-text-field';
+import {
+  ReferralBuiltinField,
+  type ReferralCheckedField,
+} from '@/components/entity/referral-builtin-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { PageWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
-import { CountryPicker } from '@/components/onboarding/country-picker';
 import {
-  CustomQuestionSections,
+  CustomQuestionField,
   type CustomAnswerDraft,
 } from '@/components/onboarding/custom-question-field';
-import { MunicipalityPicker } from '@/components/onboarding/municipality-picker';
 import { OptionChip } from '@/components/onboarding/option-chip';
-import { BirthDateField } from '@/components/profile/profile-form-fields';
 import {
   EMPTY_SEASON_ANSWERS,
   SeasonAnswerFields,
@@ -31,26 +30,39 @@ import { continuousCorners } from '@/lib/continuous-corners';
 import { checkCustomAnswers } from '@/lib/custom-answer-errors';
 import {
   useReferralActions,
-  useReferralQuestions,
+  useReferralFormItems,
   useSupportingEntityNames,
 } from '@/lib/entity-referrals';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { customAnswersToSave } from '@/lib/onboarding-intake';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useRouter, type Href } from 'expo-router';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useLanguage } from '@ramassa/shared/i18n';
+import {
+  entityFormQuestions,
+  isCustomQuestionVisible,
+  missingEntityFormFields,
+  updateCustomAnswer,
+  type BuilderText,
+  type CustomQuestion,
+  type EntityFormItem,
+} from '@ramassa/shared/intake-builder';
 import {
   createReferralSchema,
   DOCUMENTATION_STATUSES,
   type CreateReferralInput,
 } from '@ramassa/shared/referrals';
-import { DOCUMENT_TYPES, type DocumentType } from '@ramassa/shared/schemas';
+import type { DocumentType } from '@ramassa/shared/schemas';
+import { tokens } from '@ramassa/shared/tokens';
 
-type Field =
-  'firstName' | 'lastName' | 'email' | 'dateOfBirth' | 'documentNumber' | 'consentConfirmed';
+/** Only the season number is asked here: the season questions are placed fields. */
+const hidesSeasonQuestions = () => false;
+
+type Field = ReferralCheckedField | 'email' | 'consentConfirmed';
 
 const FIELDS: readonly Field[] = [
   'firstName',
@@ -60,13 +72,6 @@ const FIELDS: readonly Field[] = [
   'documentNumber',
   'consentConfirmed',
 ];
-
-const DOCUMENT_TYPE_KEYS: Readonly<Record<DocumentType, string>> = {
-  nie: 'onboarding:documentTypeNie',
-  passport: 'onboarding:documentTypePassport',
-  other: 'onboarding:documentTypeOther',
-  none: 'onboarding:documentTypeNone',
-};
 
 /** The form's own state; the season answers are kept in the block's shape. */
 interface FormState {
@@ -109,19 +114,30 @@ function toInput(form: FormState): Record<string, unknown> {
   };
 }
 
+/** A required Ramassà field reads with an asterisk, as on the portal. */
+function markedRequired(item: Extract<EntityFormItem, { kind: 'custom' }>): CustomQuestion {
+  if (!item.placement.required) return item.question;
+  const label = Object.fromEntries(
+    Object.entries(item.question.label).map(([language, text]) => [language, `${text} *`]),
+  ) as BuilderText;
+  return { ...item.question, label };
+}
+
 export default function EntityReferralNewScreen() {
   const { t } = useTranslation(['referrals', 'onboarding']);
+  const { language } = useLanguage();
   const entityNames = useSupportingEntityNames();
   const fontClass = useLanguageFontClass();
   const { back, replace } = useRouter();
-  const { create, saveAnswers } = useReferralActions();
-  const questions = useReferralQuestions();
-  const customScreens = questions.data ?? [];
+  const { create } = useReferralActions();
+  const formItems = useReferralFormItems();
+  const items = useMemo(() => formItems.data ?? [], [formItems.data]);
+  const questions = useMemo(() => entityFormQuestions(items), [items]);
   const [customAnswers, setCustomAnswers] = useState<CustomAnswerDraft>({});
-  // Each staff answer that does not fit its question, with the wizard's words (RAPP-610).
+  // Each Ramassà answer that does not fit its field, with the wizard's words (RAPP-610).
   const [customErrors, setCustomErrors] = useState<Readonly<Record<string, string>>>({});
-  // Set when the referral is saved and its custom answers are not.
-  const [savedReferralId, setSavedReferralId] = useState<string | null>(null);
+  // The required fields left empty, by field id.
+  const [missing, setMissing] = useState<ReadonlySet<string>>(new Set());
   const [form, setForm] = useState<FormState>({
     firstName: '',
     lastName: '',
@@ -147,23 +163,31 @@ export default function EntityReferralNewScreen() {
       for (const field of Object.keys(patch)) next.delete(field as Field);
       return next.size === current.size ? current : next;
     });
-    setForm((current) => ({ ...current, ...patch }));
+    const next = { ...form, ...patch };
+    setForm(next);
+    // A required field she filled in no longer says it is missing.
+    setMissing((current) =>
+      current.size === 0
+        ? current
+        : new Set(
+            missingEntityFormFields(items, toInput(next), customAnswers).filter((id) =>
+              current.has(id),
+            ),
+          ),
+    );
   };
 
   const submit = () => {
-    const parsed = createReferralSchema.safeParse(toInput(form));
-    // The staff questions are checked with the same words as her wizard, and
-    // nothing is sent while one does not fit.
-    const checked = checkCustomAnswers(
-      customScreens.flatMap((screen) => screen.questions),
-      customAnswers,
-      t,
-      // An entity gives what it knows: nothing is required here (RAPP-611).
-      { enforceRequired: false },
-    );
+    const input = toInput(form);
+    const parsed = createReferralSchema.safeParse(input);
+    // The Ramassà fields are checked with the same words as her wizard; a
+    // required field left empty says so, as the database would refuse it.
+    const checked = checkCustomAnswers(questions, customAnswers, t, { enforceRequired: false });
+    const empty = new Set(missingEntityFormFields(items, input, checked.answers));
     setCustomErrors(checked.errors);
-    const customFit = Object.keys(checked.errors).length === 0;
-    if (customFit) setCustomAnswers(checked.answers);
+    setMissing(empty);
+    const fieldsFit = Object.keys(checked.errors).length === 0 && empty.size === 0;
+    if (fieldsFit) setCustomAnswers(checked.answers);
     if (!parsed.success) {
       setInvalid(
         new Set(
@@ -176,42 +200,40 @@ export default function EntityReferralNewScreen() {
       return;
     }
     setInvalid(new Set());
-    if (!customFit) {
+    if (!fieldsFit) {
       playHaptic('warning');
       return;
     }
-    create.mutate(parsed.data, {
-      onSuccess: (referralId) => saveCustomAnswers(referralId, checked.answers),
-      onError: () => {
-        playHaptic('error');
-        setHasFailed(true);
-      },
-    });
-  };
-
-  const openReferral = (referralId: string) => replace(`/entity-referral/${referralId}` as Href);
-
-  function saveCustomAnswers(referralId: string, tidied: CustomAnswerDraft = customAnswers) {
-    const answers = customAnswersToSave(customScreens, tidied, {});
-    if (Object.keys(answers).length === 0) {
-      playHaptic('success');
-      openReferral(referralId);
-      return;
-    }
-    saveAnswers.mutate(
-      { referralId, answers },
+    create.mutate(
+      { referral: parsed.data, fields: customAnswersToSave(questions, checked.answers, {}) },
       {
-        onSuccess: () => {
+        onSuccess: (referralId) => {
           playHaptic('success');
-          openReferral(referralId);
+          replace(`/entity-referral/${referralId}` as Href);
         },
         onError: () => {
           playHaptic('error');
-          setSavedReferralId(referralId);
+          setHasFailed(true);
         },
       },
     );
-  }
+  };
+
+  const changeAnswer = (questionId: string, value: CustomAnswerDraft[string]) => {
+    setHasFailed(false);
+    setCustomAnswers((current) => updateCustomAnswer(questions, current, questionId, value));
+    setCustomErrors((current) =>
+      current[questionId] === undefined
+        ? current
+        : Object.fromEntries(Object.entries(current).filter(([id]) => id !== questionId)),
+    );
+    setMissing((current) => {
+      if (!current.has(questionId)) return current;
+      const next = new Set(current);
+      next.delete(questionId);
+      return next;
+    });
+  };
 
   const ERROR_KEYS: Readonly<Record<Field, string>> = {
     firstName: 'referrals:requiredError',
@@ -222,6 +244,17 @@ export default function EntityReferralNewScreen() {
     consentConfirmed: 'referrals:consentRequired',
   };
   const errorFor = (field: Field) => (invalid.has(field) ? t(ERROR_KEYS[field]) : undefined);
+
+  if (formItems.isPending) {
+    return (
+      <View className="flex-1 items-center justify-center bg-neutral-50">
+        <ActivityIndicator
+          accessibilityLabel={t('formTitle')}
+          color={tokens.colors.primary.DEFAULT}
+        />
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView
@@ -238,6 +271,7 @@ export default function EntityReferralNewScreen() {
         <PageWidth className="gap-lg p-lg">
           <PressableScale
             testID="entity-referral-form-back"
+            accessibilityRole="button"
             accessibilityLabel={t('back')}
             onPress={back}
             haptic="tapLight"
@@ -256,34 +290,41 @@ export default function EntityReferralNewScreen() {
               {t('formIntro')}
             </Text>
           </View>
-          <AuthTextField
-            testID="entity-referral-first-name"
-            label={t('firstName')}
-            value={form.firstName}
-            onChangeText={(firstName) => set({ firstName })}
-            errorMessage={errorFor('firstName')}
-            maxLength={100}
-          />
-          <AuthTextField
-            testID="entity-referral-last-name"
-            label={t('lastName')}
-            value={form.lastName}
-            onChangeText={(lastName) => set({ lastName })}
-            errorMessage={errorFor('lastName')}
-            maxLength={100}
-          />
-          <AuthTextField
-            testID="entity-referral-phone"
-            label={t('phone')}
-            value={form.phone ?? ''}
-            onChangeText={(phone) => set({ phone })}
-            keyboardType="phone-pad"
-            maxLength={50}
-          />
+
+          {items.map((item) => {
+            if (item.kind === 'builtin') {
+              return (
+                <ReferralBuiltinField
+                  key={item.placement.id}
+                  item={item}
+                  values={form}
+                  onChange={set}
+                  errorFor={errorFor}
+                  isMissing={missing.has(item.field.id)}
+                  language={language}
+                  entityNames={entityNames.data ?? []}
+                />
+              );
+            }
+            if (!isCustomQuestionVisible(item.question, customAnswers)) return null;
+            return (
+              <CustomQuestionField
+                key={item.placement.id}
+                question={markedRequired(item)}
+                value={customAnswers[item.field.id]}
+                errorMessage={
+                  customErrors[item.field.id] ??
+                  (missing.has(item.field.id) ? t('requiredError') : undefined)
+                }
+                onChange={(value) => changeAnswer(item.field.id, value)}
+              />
+            );
+          })}
+
           <AuthTextField
             testID="entity-referral-email"
             label={t('email')}
-            value={form.email ?? ''}
+            value={form.email}
             onChangeText={(email) => set({ email })}
             errorMessage={errorFor('email')}
             keyboardType="email-address"
@@ -292,7 +333,7 @@ export default function EntityReferralNewScreen() {
             maxLength={254}
           />
           <View className="gap-sm">
-            <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
+            <Text className={`text-start text-form font-medium text-neutral-800 ${fontClass}`}>
               {t('documentationLabel')}
             </Text>
             <View className="flex-row flex-wrap gap-sm">
@@ -309,119 +350,28 @@ export default function EntityReferralNewScreen() {
               ))}
             </View>
           </View>
+          <SeasonAnswerFields
+            testIDPrefix="entity-referral"
+            value={form.season}
+            onChange={(patch) => set({ season: { ...form.season, ...patch } })}
+            entityNames={[]}
+            showSensitive={false}
+            showSeasonNumber
+            shows={hidesSeasonQuestions}
+          />
           <AuthTextField
             testID="entity-referral-notes"
             label={t('notes')}
-            value={form.notes ?? ''}
+            value={form.notes}
             onChangeText={(notes) => set({ notes })}
             multiline
             maxLength={4000}
           />
 
           <View className="gap-xs">
-            <Text
-              accessibilityRole="header"
-              className={`text-start text-xl font-bold text-neutral-900 ${fontClass}`}
-            >
-              {t('onboarding:seasonSectionTitle')}
-            </Text>
-            <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
-              {t('referrals:seasonSectionIntro')}
-            </Text>
-          </View>
-          <BirthDateField
-            testIDPrefix="entity-referral"
-            value={form.dateOfBirth}
-            onChange={(dateOfBirth) => set({ dateOfBirth })}
-            errorMessage={errorFor('dateOfBirth')}
-          />
-          <CountryPicker
-            label={t('onboarding:nationalityLabel')}
-            value={form.nationality}
-            onChange={(nationality) => set({ nationality })}
-          />
-          <View className="gap-sm">
-            <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-              {t('onboarding:documentTypeLabel')}
-            </Text>
-            <View className="flex-row flex-wrap gap-sm">
-              {DOCUMENT_TYPES.map((type) => (
-                <OptionChip
-                  key={type}
-                  testID={`entity-referral-document-${type}`}
-                  label={t(DOCUMENT_TYPE_KEYS[type])}
-                  accessibilityHint={t('onboarding:documentTypeLabel')}
-                  isSelected={form.documentType === type}
-                  onPress={() => set({ documentType: form.documentType === type ? null : type })}
-                />
-              ))}
-            </View>
-          </View>
-          {form.documentType === null || form.documentType === 'none' ? null : (
-            <AuthTextField
-              testID="entity-referral-document-number"
-              label={t('onboarding:documentNumberLabel')}
-              value={form.documentNumber}
-              onChangeText={(documentNumber) => set({ documentNumber })}
-              errorMessage={errorFor('documentNumber')}
-              autoCapitalize="characters"
-              autoCorrect={false}
-              maxLength={50}
-            />
-          )}
-          <MunicipalityPicker
-            label={t('onboarding:optionalFieldLabel', { label: t('onboarding:cityLabel') })}
-            value={form.city}
-            onChange={(city) => set({ city })}
-          />
-          <AuthTextField
-            testID="entity-referral-contact-name"
-            label={t('onboarding:optionalFieldLabel', {
-              label: t('onboarding:referenceContactNameLabel'),
-            })}
-            value={form.referenceContactName}
-            onChangeText={(referenceContactName) => set({ referenceContactName })}
-            maxLength={200}
-          />
-          <SeasonAnswerFields
-            testIDPrefix="entity-referral"
-            value={form.season}
-            onChange={(patch) => set({ season: { ...form.season, ...patch } })}
-            entityNames={entityNames.data ?? []}
-            showSensitive
-            showSeasonNumber
-          />
-
-          {customScreens.length === 0 ? null : (
-            <View className="gap-lg">
-              <Text
-                accessibilityRole="header"
-                className={`text-start text-xl font-bold text-neutral-900 ${fontClass}`}
-              >
-                {t('onboarding:customQuestionsTitle')}
-              </Text>
-              <CustomQuestionSections
-                screens={customScreens}
-                answers={customAnswers}
-                errors={customErrors}
-                onChange={(questionId, value) => {
-                  setCustomAnswers((current) => ({ ...current, [questionId]: value }));
-                  setCustomErrors((current) =>
-                    current[questionId] === undefined
-                      ? current
-                      : Object.fromEntries(
-                          Object.entries(current).filter(([id]) => id !== questionId),
-                        ),
-                  );
-                }}
-              />
-            </View>
-          )}
-
-          <View className="gap-xs">
             <OptionChip
               testID="entity-referral-consent"
-              label={t('referrals:consentLabel')}
+              label={t('consentLabel')}
               isSelected={form.consentConfirmed}
               onPress={() => set({ consentConfirmed: !form.consentConfirmed })}
             />
@@ -434,7 +384,7 @@ export default function EntityReferralNewScreen() {
               </Text>
             )}
             <Text className={`text-start text-sm text-neutral-500 ${fontClass}`}>
-              {t('referrals:privacyNote')}
+              {t('privacyNote')}
             </Text>
           </View>
           {hasFailed ? (
@@ -445,62 +395,21 @@ export default function EntityReferralNewScreen() {
               {t('saveError')}
             </Text>
           ) : null}
-          {savedReferralId === null ? (
-            <PressableScale
-              testID="entity-referral-save"
-              accessibilityRole="button"
-              accessibilityLabel={t('save')}
-              onPress={submit}
-              isBusy={create.isPending || saveAnswers.isPending}
-              isDisabled={create.isPending || saveAnswers.isPending}
-              haptic="tapLight"
-              style={continuousCorners}
-              className="min-h-recommended items-center justify-center rounded-md bg-primary px-lg"
-            >
-              <Text className={`text-center text-md font-bold text-white ${fontClass}`}>
-                {t('save')}
-              </Text>
-            </PressableScale>
-          ) : (
-            // The referral exists: saving the form again would send it twice.
-            <View className="gap-sm">
-              <Text
-                testID="entity-referral-custom-answers-failed"
-                accessibilityLiveRegion="polite"
-                className={`text-start text-md text-error ${fontClass}`}
-              >
-                {t('onboarding:customReferralAnswersFailed')}
-              </Text>
-              <PressableScale
-                testID="entity-referral-custom-answers-retry"
-                accessibilityRole="button"
-                accessibilityLabel={t('onboarding:customReferralRetryAction')}
-                onPress={() => saveCustomAnswers(savedReferralId)}
-                isBusy={saveAnswers.isPending}
-                isDisabled={saveAnswers.isPending}
-                haptic="tapLight"
-                style={continuousCorners}
-                className="min-h-recommended items-center justify-center rounded-md bg-primary px-lg"
-              >
-                <Text className={`text-center text-md font-bold text-white ${fontClass}`}>
-                  {t('onboarding:customReferralRetryAction')}
-                </Text>
-              </PressableScale>
-              <PressableScale
-                testID="entity-referral-open-saved"
-                accessibilityRole="button"
-                accessibilityLabel={t('onboarding:customReferralOpenAction')}
-                onPress={() => openReferral(savedReferralId)}
-                haptic="tapLight"
-                style={continuousCorners}
-                className="min-h-recommended items-center justify-center rounded-md border border-primary bg-white px-lg"
-              >
-                <Text className={`text-center text-md font-bold text-primary-dark ${fontClass}`}>
-                  {t('onboarding:customReferralOpenAction')}
-                </Text>
-              </PressableScale>
-            </View>
-          )}
+          <PressableScale
+            testID="entity-referral-save"
+            accessibilityRole="button"
+            accessibilityLabel={t('save')}
+            onPress={submit}
+            isBusy={create.isPending}
+            isDisabled={create.isPending}
+            haptic="tapLight"
+            style={continuousCorners}
+            className="min-h-recommended items-center justify-center rounded-md bg-primary px-lg"
+          >
+            <Text className={`text-center text-md font-bold text-white ${fontClass}`}>
+              {t('save')}
+            </Text>
+          </PressableScale>
         </PageWidth>
       </ScrollView>
     </SafeAreaView>

@@ -98,12 +98,15 @@ export function BirthDateField({
   onChange,
   errorMessage,
   testIDPrefix = 'participant-edit',
+  label,
 }: {
   readonly value: string | undefined;
   readonly onChange: (iso: string) => void;
   readonly errorMessage: string | undefined;
   /** Prefix of the three boxes' test ids. */
   readonly testIDPrefix?: string;
+  /** The question's wording; the app's own label without it. */
+  readonly label?: string;
 }) {
   const { t } = useTranslation('onboarding');
   const languageFontClass = useLanguageFontClass();
@@ -126,7 +129,7 @@ export function BirthDateField({
   return (
     <View className="gap-xs">
       <Text className={`text-start text-md font-medium text-neutral-800 ${languageFontClass}`}>
-        {t('dateOfBirthLabel')}
+        {label ?? t('dateOfBirthLabel')}
       </Text>
       <View className="flex-row flex-wrap gap-sm">
         <View className="min-w-[72px] flex-1">
