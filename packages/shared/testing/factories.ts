@@ -1295,6 +1295,7 @@ export function buildProfileAnswer(overrides: Partial<ProfileAnswerRow> = {}): P
     org_id: SEED_ORGANIZATION_ID,
     question: 'nationality',
     source: 'staff',
+    answered_by: seedUserId(2),
     answered_at: FIXTURE_TIMESTAMP,
     ...overrides,
   };
@@ -1669,6 +1670,7 @@ export function buildCustomAnswer(overrides: Partial<CustomAnswerRow> = {}): Cus
     value: 'yes',
     value_encrypted: null,
     source: 'player',
+    answered_by: null,
     answered_at: FIXTURE_TIMESTAMP,
     ...overrides,
   };

@@ -57,6 +57,7 @@ import {
   legacyPlacementsOf,
   parseProfileLayout,
   placementOn,
+  placementsOf,
   placementsOnSurface,
   QUESTION_PRIVACY_LEVELS,
   type BuilderText,
@@ -449,15 +450,18 @@ export function withPlacementsOf(catalog: IntakeCatalog, question: CustomQuestio
   };
 }
 
-/** A custom field as a question of the old shape, for a screen that has no holder row. */
+/**
+ * A custom field as a question of the old shape, for a screen that has no
+ * holder row, or for a field no surface asks (her page, RAPP-653).
+ */
 export function questionFromField(
   layout: ProfileLayout,
   field: ProfileField,
-  placement: FieldPlacement,
+  placement: FieldPlacement | undefined,
 ): CustomQuestion {
   return {
     id: field.id,
-    screenId: placement.screenKey ?? '',
+    screenId: placement?.screenKey ?? '',
     type: field.type,
     ...(field.showWhen === undefined
       ? {}
@@ -468,9 +472,14 @@ export function questionFromField(
     placements: legacyPlacementsOf(layout, field.id),
     isArchived: field.isArchived,
     settings: parseQuestionSettings(field.type, field.settings),
-    isRequired: placement.required,
+    isRequired: placement?.required ?? false,
     options: field.options,
   };
+}
+
+/** A custom field as a question, wherever it is asked: her page reads and writes every field. */
+export function questionOfField(layout: ProfileLayout, field: ProfileField): CustomQuestion {
+  return questionFromField(layout, field, placementsOf(layout, field.id)[0]);
 }
 
 /**
@@ -772,6 +781,8 @@ export interface ParticipantCustomAnswer {
   readonly value: CustomAnswerValue;
   readonly source: 'player' | 'entity' | 'staff';
   readonly answeredAt: string;
+  /** The team member's name, or the entity's (RAPP-653); null for hers or when unknown. */
+  readonly answeredByName: string | null;
 }
 
 /** Her answers for the staff page, each season apart, by the reader's levels. */
@@ -792,6 +803,8 @@ export async function fetchParticipantCustomAnswers(
         value: answerValueSchema,
         source: z.enum(['player', 'entity', 'staff']),
         answered_at: z.string(),
+        // An older server sends none.
+        answered_by_name: z.string().nullable().optional(),
       }),
     )
     .parse(data ?? [])
@@ -802,6 +815,7 @@ export async function fetchParticipantCustomAnswers(
       value: row.value,
       source: row.source,
       answeredAt: row.answered_at,
+      answeredByName: row.answered_by_name ?? null,
     }));
 }
 

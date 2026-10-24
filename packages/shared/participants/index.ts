@@ -47,3 +47,10 @@ export {
   type ProfilePrefillPayload,
 } from './participant-prefill';
 export * from './test-scenario';
+export {
+  ANSWER_SOURCES,
+  fetchParticipantProfileAnswers,
+  type AnswerOrigin,
+  type AnswerSource,
+  type ProfileAnswerOrigin,
+} from './answer-sources';
