@@ -818,6 +818,7 @@ export type Database = {
       custom_answers: {
         Row: {
           answered_at: string;
+          answered_by: string | null;
           org_id: string;
           profile_id: string;
           question_id: string;
@@ -829,6 +830,7 @@ export type Database = {
         };
         Insert: {
           answered_at?: string;
+          answered_by?: string | null;
           org_id: string;
           profile_id: string;
           question_id: string;
@@ -840,6 +842,7 @@ export type Database = {
         };
         Update: {
           answered_at?: string;
+          answered_by?: string | null;
           org_id?: string;
           profile_id?: string;
           question_id?: string;
@@ -850,6 +853,13 @@ export type Database = {
           value_encrypted?: string | null;
         };
         Relationships: [
+          {
+            foreignKeyName: 'custom_answers_answered_by_fkey';
+            columns: ['answered_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
           {
             foreignKeyName: 'custom_answers_org_id_fkey';
             columns: ['org_id'];
@@ -3216,6 +3226,7 @@ export type Database = {
       profile_answers: {
         Row: {
           answered_at: string;
+          answered_by: string | null;
           org_id: string;
           profile_id: string;
           question: string;
@@ -3223,6 +3234,7 @@ export type Database = {
         };
         Insert: {
           answered_at?: string;
+          answered_by?: string | null;
           org_id: string;
           profile_id: string;
           question: string;
@@ -3230,12 +3242,20 @@ export type Database = {
         };
         Update: {
           answered_at?: string;
+          answered_by?: string | null;
           org_id?: string;
           profile_id?: string;
           question?: string;
           source?: string;
         };
         Relationships: [
+          {
+            foreignKeyName: 'profile_answers_answered_by_fkey';
+            columns: ['answered_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
           {
             foreignKeyName: 'profile_answers_org_id_fkey';
             columns: ['org_id'];
@@ -6807,6 +6827,7 @@ export type Database = {
         Args: { p_profile_id: string };
         Returns: {
           answered_at: string;
+          answered_by_name: string;
           question_id: string;
           season_id: string;
           season_name: string;
@@ -6846,6 +6867,15 @@ export type Database = {
           signature_reason: string;
           signature_state: string;
           statement_language: string;
+        }[];
+      };
+      participant_profile_answers: {
+        Args: { p_profile_id: string };
+        Returns: {
+          answered_at: string;
+          answered_by_name: string;
+          question: string;
+          source: string;
         }[];
       };
       participant_question_states: {
