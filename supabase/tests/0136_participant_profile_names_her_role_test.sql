@@ -1,0 +1,91 @@
+-- Her page reads whether she joined the way the database decides it (RAPP-653).
+-- Run with: bunx supabase test db
+--
+-- What these assertions defend:
+--   1. `get_participant_profile` returns her role: `invited` for a woman who
+--      has not joined, `player` for a joined player, whether or not she ever
+--      accepted the terms. The apps decide "joined" from it, as
+--      `update_participant_profile` does.
+--   2. The role adds no exposure: a team member with participants.view alone
+--      reads it while her Personal fields stay empty, a player reads nobody
+--      else's record, and anon cannot call the function.
+--
+-- Seed: staff ...002 (Marta Puig, every level) and ...003 (Núria Serra);
+-- invited ...098; joined player ...028 who never accepted the terms; joined
+-- player ...025 who did.
+
+begin;
+create extension if not exists pgtap with schema extensions;
+set local search_path = public, extensions;
+select plan(9);
+
+-- 1. The role, as the writers read it ------------------------------------------------------------
+
+set local role authenticated;
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
+
+select is(
+  (select role from public.get_participant_profile('5eed0000-0000-4000-8000-000000000098')),
+  'invited', 'an invited woman reads as invited');
+
+select is(
+  (select role || '/' || (terms_accepted_at is null)::text
+     from public.get_participant_profile('5eed0000-0000-4000-8000-000000000028')),
+  'player/true', 'a joined player who never accepted the terms reads as a player');
+
+select is(
+  (select role || '/' || (terms_accepted_at is null)::text
+     from public.get_participant_profile('5eed0000-0000-4000-8000-000000000025')),
+  'player/false', 'a joined player who accepted the terms reads as a player');
+
+-- The whole-record save that "player" asks the apps to send works for her.
+select lives_ok(
+  $$ select public.update_participant_profile(
+       '5eed0000-0000-4000-8000-000000000028',
+       (select jsonb_build_object(
+          'first_name', first_name, 'last_name', last_name,
+          'place_of_birth', 'Dakar Medina', 'preferred_language', preferred_language)
+          from public.get_participant_profile('5eed0000-0000-4000-8000-000000000028'))) $$,
+  'her record saves whole');
+
+-- 2. No new exposure -----------------------------------------------------------------------------
+
+reset role;
+delete from public.team_member_permissions where profile_id = '5eed0000-0000-4000-8000-000000000003';
+insert into public.team_member_permissions (org_id, profile_id, permission_code)
+values ('5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-8000-000000000003', 'participants.view');
+
+set local role authenticated;
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000003", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
+
+select is(
+  (select role || '/' || coalesce(place_of_birth, 'hidden')
+     from public.get_participant_profile('5eed0000-0000-4000-8000-000000000025')),
+  'player/hidden', 'participants.view alone reads her role and still not her Personal fields');
+
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000011", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
+
+select is(
+  (select count(*)::integer from public.get_participant_profile('5eed0000-0000-4000-8000-000000000025')),
+  0, 'a player reads nobody else''s record, role included');
+
+reset role;
+
+select ok(
+  not has_function_privilege('anon', 'public.get_participant_profile(uuid)', 'execute'),
+  'anon holds no execute right');
+
+select ok(
+  has_function_privilege('authenticated', 'public.get_participant_profile(uuid)', 'execute'),
+  'a signed-in caller keeps it');
+
+set local role anon;
+set local request.jwt.claims = '{"role": "anon"}';
+
+select throws_ok(
+  $$ select * from public.get_participant_profile('5eed0000-0000-4000-8000-000000000025') $$,
+  '42501', null::text,
+  'anon cannot read a record');
+
+select * from finish();
+rollback;

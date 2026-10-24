@@ -6022,6 +6022,7 @@ export type Database = {
           preferred_language: string;
           reference_contact_name: string;
           reference_entity: string;
+          role: string;
           season_number: number;
           shoe_size: string;
           specific_needs: string;
