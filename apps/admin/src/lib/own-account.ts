@@ -33,7 +33,7 @@ export interface OwnAccount {
 
 export { accountDisplayName, accountInitials } from '@/lib/initials';
 
-export async function fetchOwnAccountRow(userId: string) {
+async function fetchOwnAccountRow(userId: string) {
   const { data, error } = await supabase
     .from('profiles')
     .select('first_name, last_name, avatar_url')
@@ -127,7 +127,7 @@ export async function fetchOwnEmailState(sessionEmail: string): Promise<OwnEmail
 const OWN_ACCOUNT_CHANGED = 'ramassa:own-account-changed';
 
 /** Tells every mounted `useOwnAccount` to read her row again. */
-export function announceOwnAccountChanged(): void {
+function announceOwnAccountChanged(): void {
   if (typeof window !== 'undefined') window.dispatchEvent(new Event(OWN_ACCOUNT_CHANGED));
 }
 

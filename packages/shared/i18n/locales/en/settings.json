@@ -513,8 +513,7 @@
     }
   },
   "onboardingPage": {
-    "title": "Onboarding",
-    "intro": "Everything a player sees when she opens the app for the first time. Changes reach the app at once, with no new version."
+    "title": "Onboarding"
   },
   "appTerms": {
     "sectionTitle": "App terms",
@@ -555,8 +554,6 @@
     "previewFallback": "This language has no text yet: it shows in {{language}}."
   },
   "builtinScreens": {
-    "sectionTitle": "Screens and order",
-    "sectionIntro": "The order of every registration screen and the text of each app screen, in each language. A language with no text of its own shows the app's text.",
     "hiddenBadge": "Hidden",
     "field": {
       "title": "Title",
@@ -666,8 +663,6 @@
     "listLabel": "Registration screens",
     "step": "Step {{number}}",
     "stepOf": "Step {{number}} of {{total}}",
-    "questionCount_one": "{{count}} question",
-    "questionCount_other": "{{count}} questions",
     "fixed": "Fixed at the end",
     "notShown": "Not shown",
     "dragHandle": "Move {{screen}}",
@@ -681,11 +676,6 @@
     "cancel": "Cancel",
     "createFailed": "The screen could not be created. Try again.",
     "orderFailed": "The order could not be saved. Try again.",
-    "more": "More",
-    "export": "Export",
-    "import": "Import",
-    "resetTitle": "Go back to the app's order?",
-    "reset": "Go back",
     "notFound": "This screen does not exist",
     "screen": "Screen",
     "wording": "Text",

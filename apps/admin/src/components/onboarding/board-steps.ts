@@ -27,13 +27,7 @@ import {
   type IntakeCatalog,
 } from '@ramassa/shared/intake-builder';
 
-export {
-  isShownToHer,
-  liveScreens,
-  LOCKED_STEPS,
-  movableOrder,
-  type LockedStep,
-} from '@ramassa/shared/intake-builder';
+export { isShownToHer, LOCKED_STEPS, movableOrder } from '@ramassa/shared/intake-builder';
 
 export type BoardStep = FlowStep;
 

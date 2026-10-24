@@ -37,7 +37,7 @@ const styles = StyleSheet.create({
 });
 
 /** The first letter of the name, or nothing for an empty one. */
-export function personInitial(name: string | null | undefined): string {
+function personInitial(name: string | null | undefined): string {
   const first = [...(name ?? '').trim()][0];
   return first === undefined ? '' : first.toLocaleUpperCase();
 }

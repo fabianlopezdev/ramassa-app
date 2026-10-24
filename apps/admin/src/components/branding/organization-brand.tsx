@@ -13,7 +13,7 @@ import { cn } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@ramassa/shared/auth';
 
-export function OrganizationLogoTile({ className }: { readonly className?: string }) {
+function OrganizationLogoTile({ className }: { readonly className?: string }) {
   const { t } = useTranslation('common');
   const { session } = useAuth();
   const organization = useAdminBranding();

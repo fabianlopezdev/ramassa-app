@@ -513,8 +513,7 @@
     }
   },
   "onboardingPage": {
-    "title": "Onboarding",
-    "intro": "Tot el que veu una jugadora quan obre l'app per primera vegada. Els canvis arriben a l'app de seguida, sense cap versió nova."
+    "title": "Onboarding"
   },
   "appTerms": {
     "sectionTitle": "Termes de l'app",
@@ -555,8 +554,6 @@
     "previewFallback": "Aquesta llengua encara no té text: es mostra en {{language}}."
   },
   "builtinScreens": {
-    "sectionTitle": "Pantalles i ordre",
-    "sectionIntro": "L'ordre de totes les pantalles del registre i el text de cada pantalla de l'app, en cada llengua. Una llengua sense text propi mostra el text de l'app.",
     "hiddenBadge": "Amagada",
     "field": {
       "title": "Títol",
@@ -666,8 +663,6 @@
     "listLabel": "Pantalles de la inscripció",
     "step": "Pas {{number}}",
     "stepOf": "Pas {{number}} de {{total}}",
-    "questionCount_one": "{{count}} pregunta",
-    "questionCount_other": "{{count}} preguntes",
     "fixed": "Fixa al final",
     "notShown": "No es mostra",
     "dragHandle": "Mou {{screen}}",
@@ -681,11 +676,6 @@
     "cancel": "Cancel·la",
     "createFailed": "No s'ha pogut crear la pantalla. Torna-ho a provar.",
     "orderFailed": "No s'ha pogut desar l'ordre. Torna-ho a provar.",
-    "more": "Més",
-    "export": "Exporta",
-    "import": "Importa",
-    "resetTitle": "Vols tornar a l'ordre de l'app?",
-    "reset": "Torna-hi",
     "notFound": "Aquesta pantalla no existeix",
     "screen": "Pantalla",
     "wording": "Text",

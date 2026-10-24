@@ -58,8 +58,5 @@
   "consentRequired": "Tienes que confirmar que ha aceptado compartir sus datos.",
   "privacyNote": "Ramassà trata estos datos para gestionar su inscripción y participación, con su consentimiento. Solo los ve el equipo de Ramassà.",
   "dateOfBirthError": "Escribe una fecha válida.",
-  "documentNumberError": "Escribe el número del documento.",
-  "additionalQuestions": "Preguntas adicionales",
-  "additionalAnswersFailed": "La derivación se ha enviado, pero las respuestas adicionales no se han guardado.",
-  "openReferral": "Abrir la derivación"
+  "documentNumberError": "Escribe el número del documento."
 }

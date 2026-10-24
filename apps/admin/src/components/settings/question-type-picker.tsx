@@ -37,7 +37,7 @@ function useUiLanguage(): LanguageCode {
 }
 
 /** One type drawn small, answered with sample words in the admin's language. */
-export function TypeMiniature({
+function TypeMiniature({
   type,
   language,
 }: {

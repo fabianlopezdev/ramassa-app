@@ -201,7 +201,7 @@ export function placedPhoneQuestions(
 }
 
 /** The built-in questions a screen asks, without the ones staff hid. */
-export function builtinScreenQuestions(
+function builtinScreenQuestions(
   catalog: IntakeCatalog,
   screen: keyof typeof WIZARD_SCREEN_QUESTIONS,
 ): readonly IntakeQuestion[] {

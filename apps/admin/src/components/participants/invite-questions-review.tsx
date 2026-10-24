@@ -68,7 +68,7 @@ const ASKING_LABEL_KEYS: Readonly<Record<WizardQuestionAsking, string>> = {
   'not-asked': 'participants:inviteQuestionNotAsked',
 };
 
-export interface PlayerQuestionsBoardProps {
+interface PlayerQuestionsBoardProps {
   readonly catalog: IntakeCatalog;
   /** What is recorded as answered on her profile. */
   readonly answered: AnsweredQuestions;
@@ -84,7 +84,7 @@ export interface PlayerQuestionsBoardProps {
 }
 
 /** Her screens as cards, with the count, the presets and a sheet per screen. */
-export function PlayerQuestionsBoard({
+function PlayerQuestionsBoard({
   catalog,
   answered,
   customAnswers = {},

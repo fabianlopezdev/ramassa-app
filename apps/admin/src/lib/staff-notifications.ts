@@ -12,7 +12,7 @@ import { z } from 'zod';
 import { useAuth } from '@ramassa/shared/auth';
 import { AppError } from '@ramassa/shared/errors';
 
-export const STAFF_NOTIFICATION_EVENTS = [
+const STAFF_NOTIFICATION_EVENTS = [
   'message',
   'referral',
   'walk_in',
@@ -23,7 +23,7 @@ export const STAFF_NOTIFICATION_EVENTS = [
   'gallery_report',
   'field_created',
 ] as const;
-export type StaffNotificationEvent = (typeof STAFF_NOTIFICATION_EVENTS)[number];
+type StaffNotificationEvent = (typeof STAFF_NOTIFICATION_EVENTS)[number];
 
 const BELL_LIMIT = 30;
 const REFRESH_INTERVAL_MS = 60_000;
@@ -50,7 +50,7 @@ export interface StaffNotification {
   readonly readAt: Date | null;
 }
 
-export type StaffNotificationsStatus = 'loading' | 'error' | 'ready';
+type StaffNotificationsStatus = 'loading' | 'error' | 'ready';
 
 export interface StaffNotificationsState {
   readonly items: readonly StaffNotification[];

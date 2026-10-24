@@ -47,7 +47,7 @@ async function fetchStaffCards(
 }
 
 /** The distinct, sorted ids, so the same people make the same cache key. */
-export function staffCardIds(ids: readonly (string | null | undefined)[]): readonly string[] {
+function staffCardIds(ids: readonly (string | null | undefined)[]): readonly string[] {
   return [...new Set(ids.filter((id): id is string => typeof id === 'string' && id.length > 0))]
     .sort()
     .slice(0, 200);

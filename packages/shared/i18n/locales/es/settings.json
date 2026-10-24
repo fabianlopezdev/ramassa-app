@@ -513,8 +513,7 @@
     }
   },
   "onboardingPage": {
-    "title": "Onboarding",
-    "intro": "Todo lo que ve una jugadora cuando abre la app por primera vez. Los cambios llegan a la app enseguida, sin ninguna versión nueva."
+    "title": "Onboarding"
   },
   "appTerms": {
     "sectionTitle": "Términos de la app",
@@ -555,8 +554,6 @@
     "previewFallback": "Este idioma aún no tiene texto: se muestra en {{language}}."
   },
   "builtinScreens": {
-    "sectionTitle": "Pantallas y orden",
-    "sectionIntro": "El orden de todas las pantallas del registro y el texto de cada pantalla de la app, en cada idioma. Un idioma sin texto propio muestra el texto de la app.",
     "hiddenBadge": "Oculta",
     "field": {
       "title": "Título",
@@ -666,8 +663,6 @@
     "listLabel": "Pantallas de la inscripción",
     "step": "Paso {{number}}",
     "stepOf": "Paso {{number}} de {{total}}",
-    "questionCount_one": "{{count}} pregunta",
-    "questionCount_other": "{{count}} preguntas",
     "fixed": "Fija al final",
     "notShown": "No se muestra",
     "dragHandle": "Mover {{screen}}",
@@ -681,11 +676,6 @@
     "cancel": "Cancelar",
     "createFailed": "No se ha podido crear la pantalla. Vuelve a intentarlo.",
     "orderFailed": "No se ha podido guardar el orden. Vuelve a intentarlo.",
-    "more": "Más",
-    "export": "Exportar",
-    "import": "Importar",
-    "resetTitle": "¿Volver al orden de la app?",
-    "reset": "Volver",
     "notFound": "Esta pantalla no existe",
     "screen": "Pantalla",
     "wording": "Texto",
