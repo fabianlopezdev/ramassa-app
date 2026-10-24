@@ -5,6 +5,7 @@
  */
 
 import type { FieldFormValue } from '@/components/fields/field-form';
+import { PROFILE_LAYOUT_PERMISSIONS } from '@/lib/nav-items';
 import {
   EMPTY_PROFILE_LAYOUT,
   fieldsOfSection,
@@ -19,28 +20,12 @@ import {
 } from '@ramassa/shared/intake-builder';
 import type { PermissionCode } from '@ramassa/shared/permissions';
 
-/** The permissions that design the layout, as `private.require_question_builder` checks. */
-const PROFILE_LAYOUT_DESIGN_PERMISSIONS = [
-  'settings.organization',
-  'onboarding.design',
-] as const satisfies readonly PermissionCode[];
-
 export function canDesignProfileLayout(permissions: ReadonlySet<PermissionCode>): boolean {
-  return PROFILE_LAYOUT_DESIGN_PERMISSIONS.some((code) => permissions.has(code));
+  return PROFILE_LAYOUT_PERMISSIONS.some((code) => permissions.has(code));
 }
 
 export function profileLayoutOf(catalog: IntakeCatalog): ProfileLayout {
   return catalog.layout ?? EMPTY_PROFILE_LAYOUT;
-}
-
-/** Each section's live field ids, in order: the board's starting state. */
-export function fieldIdsBySection(layout: ProfileLayout): Record<string, readonly string[]> {
-  return Object.fromEntries(
-    layout.sections.map((section) => [
-      section.id,
-      fieldsOfSection(layout, section.id).map((field) => field.id),
-    ]),
-  );
 }
 
 export interface ProfileLayoutCounts {
@@ -85,24 +70,4 @@ export function fieldFormValue(field: ProfileField): FieldFormValue {
  */
 export function isPrivacyLocked(field: ProfileField | null): boolean {
   return field !== null && field.hasAnswers !== false;
-}
-
-/**
- * The new order of the fields after a drag, by section, read against the
- * order before it: the section a field landed in, with its full new order.
- * Null when nothing moved.
- */
-export function fieldMove(
-  before: Record<string, readonly string[]>,
-  after: Record<string, readonly string[]>,
-  fieldId: string,
-): { readonly sectionId: string; readonly order: readonly string[] } | null {
-  const sectionId = Object.keys(after).find((id) => after[id]?.includes(fieldId));
-  if (sectionId === undefined) return null;
-  const order = after[sectionId] ?? [];
-  const previous = before[sectionId] ?? [];
-  if (previous.length === order.length && previous.every((id, index) => order[index] === id)) {
-    return null;
-  }
-  return { sectionId, order };
 }

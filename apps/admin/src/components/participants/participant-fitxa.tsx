@@ -39,7 +39,7 @@ import {
   type ProfilePrefillPayload,
 } from '@ramassa/shared/participants';
 import type { PermissionCode } from '@ramassa/shared/permissions';
-import type { UpdateOwnProfilePayload } from '@ramassa/shared/schemas';
+import type { LanguageCode, UpdateOwnProfilePayload } from '@ramassa/shared/schemas';
 
 export interface ParticipantFitxaProps {
   readonly participant: ParticipantDetailRow;
@@ -101,7 +101,7 @@ export function ParticipantFitxa({
     [customAnswers],
   );
   const plan = playerPlan(catalog, answered, choices, wizardAnswers);
-  const sections = fitxaSections(layout, new Set(answers.keys()));
+  const sections = fitxaSections(layout, new Set(answers.keys()), locale as LanguageCode);
 
   async function saveChoices(next: PlayerChoices) {
     setIsChoiceBusy(true);

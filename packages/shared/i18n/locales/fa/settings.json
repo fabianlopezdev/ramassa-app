@@ -176,7 +176,6 @@
     "fieldCount_one": "{{count}} فیلد",
     "fieldCount_other": "{{count}} فیلد",
     "emptySection": "هنوز فیلدی نیست.",
-    "moveSection": "جابه‌جایی بخش {{section}}",
     "moveField": "جابه‌جایی فیلد {{field}}",
     "renameSection": "تغییر نام {{section}}",
     "editNamed": "ویرایش {{field}}",

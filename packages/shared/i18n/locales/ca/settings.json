@@ -715,7 +715,6 @@
     "fieldCount_one": "{{count}} camp",
     "fieldCount_other": "{{count}} camps",
     "emptySection": "Cap camp encara.",
-    "moveSection": "Mou la secció {{section}}",
     "moveField": "Mou el camp {{field}}",
     "renameSection": "Canvia el nom de {{section}}",
     "editNamed": "Edita {{field}}",

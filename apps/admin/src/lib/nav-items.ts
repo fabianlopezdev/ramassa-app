@@ -99,17 +99,13 @@ export const SETTINGS_PERMISSIONS = [
 ] as const satisfies readonly PermissionCode[];
 
 /**
- * Dades de les jugadores (RAPP-650, its own page since RAPP-654): edited by
- * its designers (`PROFILE_LAYOUT_DESIGN_PERMISSIONS`), read by everyone who
- * reached it from Settings before. It holds no answers.
+ * Dades de les jugadores (RAPP-650, its own page since RAPP-654): it decides
+ * which data Ramassà asks for, so only its designers see it (RAPP-658), the
+ * same permissions `private.require_question_builder` checks. It holds no answers.
  */
 export const PROFILE_LAYOUT_PERMISSIONS = [
   'settings.organization',
   'onboarding.design',
-  'settings.branding',
-  'settings.documents',
-  'entities.manage',
-  'team.manage',
 ] as const satisfies readonly PermissionCode[];
 
 /** The team page (RAPP-654): people, presets and toggles. */

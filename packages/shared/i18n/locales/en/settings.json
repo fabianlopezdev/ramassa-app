@@ -715,7 +715,6 @@
     "fieldCount_one": "{{count}} field",
     "fieldCount_other": "{{count}} fields",
     "emptySection": "No fields yet.",
-    "moveSection": "Move section {{section}}",
     "moveField": "Move field {{field}}",
     "renameSection": "Rename {{section}}",
     "editNamed": "Edit {{field}}",

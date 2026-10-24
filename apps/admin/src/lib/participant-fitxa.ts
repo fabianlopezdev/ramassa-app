@@ -5,16 +5,18 @@
  * each field from her plan.
  */
 
-import type {
-  ParticipantCustomAnswer,
-  PlanQuestion,
-  PlayerPlan,
-  ProfileField,
-  ProfileLayout,
-  ProfileSection,
-  QuestionPrivacy,
+import {
+  fieldsOfSection,
+  type ParticipantCustomAnswer,
+  type PlanQuestion,
+  type PlayerPlan,
+  type ProfileField,
+  type ProfileLayout,
+  type ProfileSection,
+  type QuestionPrivacy,
 } from '@ramassa/shared/intake-builder';
 import type { PermissionCode } from '@ramassa/shared/permissions';
+import type { LanguageCode } from '@ramassa/shared/schemas';
 
 export interface FitxaSection {
   readonly section: ProfileSection;
@@ -29,13 +31,13 @@ export interface FitxaSection {
 export function fitxaSections(
   layout: ProfileLayout,
   answeredFieldIds: ReadonlySet<string>,
+  language: LanguageCode = 'ca',
 ): readonly FitxaSection[] {
   return layout.sections
     .map((section) => ({
       section,
-      fields: layout.fields.filter(
-        (field) =>
-          field.sectionId === section.id && (!field.isArchived || answeredFieldIds.has(field.id)),
+      fields: fieldsOfSection(layout, section.id, true, language).filter(
+        (field) => !field.isArchived || answeredFieldIds.has(field.id),
       ),
     }))
     .filter((entry) => entry.fields.length > 0);

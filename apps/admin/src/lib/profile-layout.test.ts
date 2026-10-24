@@ -1,15 +1,14 @@
 import { describe, expect, test } from 'bun:test';
-import type {
-  FieldPlacement,
-  ProfileField,
-  ProfileLayout,
-  ProfileSection,
+import {
+  fieldsOfSection,
+  type FieldPlacement,
+  type ProfileField,
+  type ProfileLayout,
+  type ProfileSection,
 } from '@ramassa/shared/intake-builder';
 import type { PermissionCode } from '@ramassa/shared/permissions';
 import {
   canDesignProfileLayout,
-  fieldIdsBySection,
-  fieldMove,
   isPrivacyLocked,
   profileLayoutCounts,
   surfacesOfField,
@@ -74,11 +73,20 @@ const LAYOUT: ProfileLayout = {
 };
 
 describe('Dades de les jugadores reads the layout (RAPP-650)', () => {
-  test('each section lists its live fields in order', () => {
-    expect(fieldIdsBySection(LAYOUT)).toEqual({
-      [SIZES]: ['gloves'],
-      [SUPPORT]: ['allergies', 'notes'],
-    });
+  test('each section lists its live fields: app fields first, then A to Z (RAPP-658)', () => {
+    const ids = (layout: ProfileLayout, sectionId: string) =>
+      fieldsOfSection(layout, sectionId).map((each) => each.id);
+    expect(ids(LAYOUT, SIZES)).toEqual(['gloves']);
+    const mixed: ProfileLayout = {
+      ...LAYOUT,
+      fields: [
+        field('zinc', SUPPORT, { label: { ca: 'Zinc' } }),
+        field('shoe', SUPPORT, { kind: 'builtin', builtinKey: 'shoe_size', sortOrder: 2 }),
+        field('alpha', SUPPORT, { label: { ca: 'Àlies' } }),
+        field('shirt', SUPPORT, { kind: 'builtin', builtinKey: 'clothing_size', sortOrder: 1 }),
+      ],
+    };
+    expect(ids(mixed, SUPPORT)).toEqual(['shirt', 'shoe', 'alpha', 'zinc']);
   });
 
   test('the count line leaves archived fields out', () => {
@@ -107,29 +115,5 @@ describe('Dades de les jugadores reads the layout (RAPP-650)', () => {
     expect(canDesignProfileLayout(held('settings.organization'))).toBe(true);
     expect(canDesignProfileLayout(held('onboarding.design'))).toBe(true);
     expect(canDesignProfileLayout(held('participants.view', 'settings.branding'))).toBe(false);
-  });
-});
-
-describe('a drop is read as one move (RAPP-650)', () => {
-  const before = { [SIZES]: ['gloves'], [SUPPORT]: ['allergies', 'notes'] };
-
-  test('across sections: the target section and its full new order', () => {
-    const after = { [SIZES]: [], [SUPPORT]: ['allergies', 'gloves', 'notes'] };
-    expect(fieldMove(before, after, 'gloves')).toEqual({
-      sectionId: SUPPORT,
-      order: ['allergies', 'gloves', 'notes'],
-    });
-  });
-
-  test('within a section: its new order', () => {
-    const after = { [SIZES]: ['gloves'], [SUPPORT]: ['notes', 'allergies'] };
-    expect(fieldMove(before, after, 'notes')).toEqual({
-      sectionId: SUPPORT,
-      order: ['notes', 'allergies'],
-    });
-  });
-
-  test('back where it was: nothing to save', () => {
-    expect(fieldMove(before, before, 'notes')).toBeNull();
   });
 });

@@ -132,7 +132,7 @@ function PickerBody({
     ? searchFields(layout, query)
     : section === undefined
       ? []
-      : fieldsOfSection(layout, section.id);
+      : fieldsOfSection(layout, section.id, false, language);
   // Search results under their sections' names, in the Fitxa's order.
   const groups: readonly { readonly section: ProfileSection; readonly fields: ProfileField[] }[] =
     layout.sections.flatMap((each) => {
@@ -268,7 +268,7 @@ function PickerBody({
                 >
                   <span className="truncate">{sectionName(each)}</span>
                   <span className="text-xs font-normal text-muted-foreground tabular-nums">
-                    {fieldsOfSection(layout, each.id).length}
+                    {fieldsOfSection(layout, each.id, false, language).length}
                   </span>
                 </button>
               );

@@ -247,15 +247,31 @@ export function builtinField(
   return layout.fields.find((field) => field.builtinKey === question);
 }
 
-/** A section's fields in their order; archived ones only when asked. */
+/**
+ * The order fields are listed in (RAPP-658): the app's own fields first, in
+ * their natural order, then the fields staff created, A to Z in the reader's
+ * language. Nobody reorders them by hand.
+ */
+export function compareFields(language: LanguageCode) {
+  const name = (field: ProfileField) => resolveLocalizedText(field.label, language)?.text ?? '';
+  return (a: ProfileField, b: ProfileField): number => {
+    const aIsApp = a.builtinKey !== null;
+    if (aIsApp !== (b.builtinKey !== null)) return aIsApp ? -1 : 1;
+    if (aIsApp) return a.sortOrder - b.sortOrder;
+    return name(a).localeCompare(name(b), language, { sensitivity: 'base' });
+  };
+}
+
+/** A section's fields in that order; archived ones only when asked. */
 export function fieldsOfSection(
   layout: ProfileLayout,
   sectionId: string,
   withArchived = false,
+  language: LanguageCode = 'ca',
 ): readonly ProfileField[] {
-  return layout.fields.filter(
-    (field) => field.sectionId === sectionId && (withArchived || !field.isArchived),
-  );
+  return layout.fields
+    .filter((field) => field.sectionId === sectionId && (withArchived || !field.isArchived))
+    .sort(compareFields(language));
 }
 
 /** Every placement of one field. */
@@ -375,14 +391,6 @@ export async function saveProfileSection(
   return z.uuid().parse(data);
 }
 
-export async function reorderProfileSections(
-  client: Client,
-  ids: readonly string[],
-): Promise<void> {
-  const { error } = await client.rpc('reorder_profile_sections', { p_ids: [...ids] });
-  if (error) throw databaseError(error);
-}
-
 export interface ProfileFieldDraft {
   readonly id: string | null;
   /** Null keeps the field where it is. */
@@ -422,21 +430,6 @@ export async function profileFieldAnswerCount(client: Client, id: string): Promi
 
 export async function archiveProfileField(client: Client, id: string): Promise<void> {
   const { error } = await client.rpc('archive_profile_field', { p_id: id });
-  if (error) throw databaseError(error);
-}
-
-/** Moves a field into a section; `order` is that section's fields, the moved one included. */
-export async function moveProfileField(
-  client: Client,
-  id: string,
-  sectionId: string,
-  order: readonly string[],
-): Promise<void> {
-  const { error } = await client.rpc('move_profile_field', {
-    p_id: id,
-    p_section_id: sectionId,
-    p_ids: [...order],
-  });
   if (error) throw databaseError(error);
 }
 

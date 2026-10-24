@@ -37,7 +37,7 @@ test('a Ramassà field opens with Edit for a designer', () => {
   const onEdit = mock(() => undefined);
   const view = render(
     <I18nextProvider i18n={createAdminI18n('ca')}>
-      <ProfileFieldRow field={field()} surfaces={[]} handle={null} canEdit onEdit={onEdit} />
+      <ProfileFieldRow field={field()} surfaces={[]} canEdit onEdit={onEdit} />
     </I18nextProvider>,
   );
   expect(view.container.textContent).toContain('creat per Pau Dissenya');
@@ -50,7 +50,6 @@ test('a reader gets no button', () => {
     <ProfileFieldRow
       field={field()}
       surfaces={['onboarding']}
-      handle={null}
       canEdit={false}
       onEdit={() => undefined}
     />,
@@ -63,7 +62,6 @@ test('a built-in field ends in a lock, never Edit', () => {
     <ProfileFieldRow
       field={field({ kind: 'builtin', builtinKey: 'first_name', createdByName: null })}
       surfaces={['onboarding', 'entity_form']}
-      handle={null}
       canEdit
       onEdit={() => undefined}
     />,

@@ -10,12 +10,10 @@ import { supabase } from '@/lib/supabase';
 import { useRouter } from '@tanstack/react-router';
 import {
   archiveProfileField,
-  moveProfileField,
   placeField,
   profileFieldAnswerCount,
   removePlacement,
   reorderPlacements,
-  reorderProfileSections,
   savePlacement,
   saveProfileField,
   saveProfileSection,
@@ -34,10 +32,6 @@ export function useProfileLayoutActions() {
       await saveProfileSection(supabase, id, title);
       await reload();
     },
-    async reorderSections(ids: readonly string[]): Promise<void> {
-      await reorderProfileSections(supabase, ids);
-      await reload();
-    },
     async saveField(
       field: ProfileField | null,
       section: ProfileSection,
@@ -45,7 +39,7 @@ export function useProfileLayoutActions() {
     ): Promise<string> {
       const id = await saveProfileField(supabase, {
         id: field?.id ?? null,
-        // An edit keeps the field where it is; dragging moves it.
+        // An edit keeps the field in its section.
         sectionId: field === null ? section.id : null,
         type: draft.type,
         label: draft.label,
@@ -62,10 +56,6 @@ export function useProfileLayoutActions() {
     },
     async archiveField(id: string): Promise<void> {
       await archiveProfileField(supabase, id);
-      await reload();
-    },
-    async moveField(id: string, sectionId: string, order: readonly string[]): Promise<void> {
-      await moveProfileField(supabase, id, sectionId, order);
       await reload();
     },
     answerCount(id: string): Promise<number> {

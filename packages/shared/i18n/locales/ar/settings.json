@@ -180,7 +180,6 @@
     "fieldCount_one": "{{count}} حقل",
     "fieldCount_other": "{{count}} حقول",
     "emptySection": "لا توجد حقول بعد.",
-    "moveSection": "انقل القسم {{section}}",
     "moveField": "انقل الحقل {{field}}",
     "renameSection": "غيّر اسم {{section}}",
     "editNamed": "عدّل {{field}}",
