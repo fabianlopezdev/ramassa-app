@@ -29,6 +29,7 @@ let query: {
 const box = ({ children }: { children?: ReactNode }) => createElement('div', null, children);
 mock.module('@/lib/onboarding', () => ({ onboardingDraftStore: store }));
 mock.module('@/lib/supabase', () => ({ supabase: {} }));
+mock.module('@/lib/observability', () => ({ logger: { warn: () => {}, error: () => {} } }));
 mock.module('@ramassa/shared/profile', () => ({ fetchOwnProfile: mock(async () => null) }));
 mock.module('@/lib/use-language-font-class', () => ({ useLanguageFontClass: () => '' }));
 mock.module('@tanstack/react-query', () => ({ useQuery: () => ({ ...query, refetch }) }));
