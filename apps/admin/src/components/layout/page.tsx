@@ -1,8 +1,9 @@
 /**
- * The frame of every Control Center page (RAPP-636): the full width beside the
- * sidebar with one shared padding. A page, its header and its cards never cap
- * their own width, so an intro runs as wide as the page and a card reaches the
- * far edge. Dialogs, sheets and menus keep their own widths.
+ * The frame of every Control Center page: one centred column beside the
+ * sidebar, at most 1280 px wide, with one shared padding, the way Fabián's HQ
+ * uses the space (RAPP-659, replacing the full width of RAPP-636). A page, its
+ * header and its cards never cap their own width inside it, so every page has
+ * the same width. Dialogs, sheets and menus keep their own widths.
  *
  *   <Page>
  *     <PageHeader title={...} description={...} actions={...} />
@@ -14,7 +15,7 @@
 import { cn } from '@/lib/utils';
 import type { ComponentProps, ReactNode } from 'react';
 
-const PAGE_FRAME = 'flex w-full min-w-0 flex-col gap-6 p-4 sm:p-6';
+const PAGE_FRAME = 'mx-auto flex w-full max-w-7xl min-w-0 flex-col gap-6 p-4 sm:p-6 lg:px-10';
 
 export function pageClassName(className?: string): string {
   return cn(PAGE_FRAME, className);
