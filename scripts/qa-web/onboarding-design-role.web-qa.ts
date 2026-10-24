@@ -14,6 +14,7 @@ import {
   TEST_PLAYER_EMAIL,
   TEST_PLAYER_NAME,
 } from '@ramassa/shared/testing';
+import { choose } from './invite-review';
 import {
   completeSecondFactor,
   countInDatabase,
@@ -29,16 +30,17 @@ test.describe.serial('the onboarding design role', () => {
     await signIn(page, ONBOARDING_DESIGNER_EMAIL);
     await expect(page).toHaveURL(/\/onboarding$/, { timeout: 30_000 });
     await expect(page.getByTestId('onboarding-design-page')).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Registration', level: 1 })).toBeVisible();
-    // The question builder and the authorization are both on the page.
-    await expect(page.getByRole('heading', { name: 'Questions', level: 2 })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Authorization', level: 2 })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Onboarding', level: 1 })).toBeVisible();
+    // Her screens as a board (RAPP-641); the legal texts open from their cards.
+    await expect(page.getByTestId('screen-board')).toBeVisible();
+    await expect(page.getByTestId('board-step-terms')).toBeVisible();
+    await expect(page.getByTestId('board-step-authorization')).toBeVisible();
 
     const menu = page.getByRole('navigation', { name: 'Staff navigation' });
     const items = menu.getByRole('link');
     await expect(items).toHaveCount(3);
     await expect(menu.getByRole('link', { name: 'Participants' })).toBeVisible();
-    await expect(menu.getByRole('link', { name: 'Registration' })).toBeVisible();
+    await expect(menu.getByRole('link', { name: 'Onboarding' })).toBeVisible();
     await expect(menu.getByRole('link', { name: 'Player profile' })).toBeVisible();
     await expect(menu.getByRole('link', { name: 'Settings' })).toHaveCount(0);
 
@@ -178,8 +180,9 @@ test.describe.serial('the onboarding design role', () => {
     // The last step shows what she will be asked (RAPP-618); the design role
     // chooses for its test player too.
     await page.getByRole('button', { name: 'Next: what she will be asked' }).click();
-    const review = page.getByTestId('invite-questions-review');
-    await review.locator('#invite-question-phone').selectOption('skip');
+    await expect(page.getByTestId('invite-questions-review')).toBeVisible();
+    await choose(page, 'phone', 'skip');
+    await page.keyboard.press('Escape');
     await page.getByRole('button', { name: 'Create the invitation' }).click();
     await expect(page.getByRole('heading', { name: 'Invitation created', level: 2 })).toBeVisible({
       timeout: 20_000,
