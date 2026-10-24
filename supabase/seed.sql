@@ -1600,6 +1600,13 @@ update public.profile_fields
    set show_when_field_id='5eed0000-0000-4000-8045-000000000005', show_when_option_id='5eed0000-0000-4000-8046-000000000004'
  where id='5eed0000-0000-4000-8045-000000000003' and org_id='5eed0000-0000-4000-8000-000000000000';
 
+-- Staff's choice on a Ramassà field for the invited woman (RAPP-643): asked
+-- even if answered. She has not answered it, so her wizard is unchanged.
+insert into public.custom_question_states (profile_id, org_id, question_id, state)
+values ('5eed0000-0000-4000-8000-000000000098', '5eed0000-0000-4000-8000-000000000000',
+        '5eed0000-0000-4000-8045-000000000001', 'ask')
+on conflict (profile_id, question_id) do nothing;
+
 insert into public.custom_answers
   (profile_id, question_id, season_key, season_id, org_id, value, value_encrypted, source)
 values

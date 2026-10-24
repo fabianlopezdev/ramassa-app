@@ -84,6 +84,7 @@ export type AuthorizationSignatureRow =
 export type AuthorizationConsentEventRow =
   Database['public']['Tables']['authorization_consent_events']['Row'];
 export type IntakeQuestionStateRow = Database['public']['Tables']['intake_question_states']['Row'];
+export type CustomQuestionStateRow = Database['public']['Tables']['custom_question_states']['Row'];
 export type ServiceCategoryRow = Database['public']['Tables']['service_categories']['Row'];
 export type ServiceRow = Database['public']['Tables']['services']['Row'];
 export type ServiceImageRow = Database['public']['Tables']['service_images']['Row'];
@@ -1312,6 +1313,24 @@ export function buildIntakeQuestionState(
     profile_id: INVITED_ACCOUNT_ID,
     org_id: SEED_ORGANIZATION_ID,
     question: 'clothing_size',
+    state: 'ask',
+    updated_at: FIXTURE_TIMESTAMP,
+    updated_by: null,
+    ...overrides,
+  };
+}
+
+/**
+ * A staff choice for one Ramassà field (RAPP-643): the seeded invited woman is
+ * asked the transport field even if she answered it.
+ */
+export function buildCustomQuestionState(
+  overrides: Partial<CustomQuestionStateRow> = {},
+): CustomQuestionStateRow {
+  return {
+    profile_id: INVITED_ACCOUNT_ID,
+    org_id: SEED_ORGANIZATION_ID,
+    question_id: SEED_CUSTOM_QUESTION_ID,
     state: 'ask',
     updated_at: FIXTURE_TIMESTAMP,
     updated_by: null,

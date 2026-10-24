@@ -60,7 +60,9 @@ set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", 
 select is(
   (select string_agg(question || ':' || state, ',' order by question)
      from public.participant_question_states('5eed0000-0000-4000-8000-000000000098')),
-  'clothing_size:ask,phone:skip', 'staff read her states'
+  -- The seed also asks her one Ramassà field (RAPP-643), keyed custom:<field id>.
+  'clothing_size:ask,custom:5eed0000-0000-4000-8045-000000000001:ask,phone:skip',
+  'staff read her states'
 );
 select throws_ok(
   $$ select public.set_intake_question_states('5eed0000-0000-4000-8000-000000000098', '{"shoe_size": "skip"}') $$,
@@ -74,7 +76,7 @@ select lives_ok(
 select is(
   (select string_agg(question || ':' || state, ',' order by question)
      from public.participant_question_states('5eed0000-0000-4000-8000-000000000098')),
-  'document:skip,nationality:skip,phone:skip,reference_entity:ask',
+  'custom:5eed0000-0000-4000-8045-000000000001:ask,document:skip,nationality:skip,phone:skip,reference_entity:ask',
   'Auto is stored as no row'
 );
 

@@ -13,6 +13,7 @@ import {
   buildBuiltinQuestionOverride,
   buildCustomAnswer,
   buildCustomQuestionOption,
+  buildCustomQuestionState,
   buildEquipmentDelivery,
   buildEvent,
   buildEventCategory,
@@ -54,6 +55,7 @@ import {
   buildTestPlayer,
   buildTypedProfileField,
   buildWalkInSigning,
+  SEED_CUSTOM_QUESTION_ID,
 } from './factories';
 import {
   INVITED_ACCOUNT_ID,
@@ -456,6 +458,16 @@ describe('buildIntakeQuestionState', () => {
     const state = buildIntakeQuestionState();
     expect(state.profile_id).toBe(INVITED_ACCOUNT_ID);
     expect(state.org_id).toBe(SEED_ORGANIZATION_ID);
+    expect(['ask', 'skip']).toContain(state.state);
+  });
+});
+
+describe('buildCustomQuestionState', () => {
+  test('is a staff choice on the seeded Ramassà field for the invited woman', () => {
+    const state = buildCustomQuestionState();
+    expect(state.profile_id).toBe(INVITED_ACCOUNT_ID);
+    expect(state.org_id).toBe(SEED_ORGANIZATION_ID);
+    expect(state.question_id).toBe(SEED_CUSTOM_QUESTION_ID);
     expect(['ask', 'skip']).toContain(state.state);
   });
 });
