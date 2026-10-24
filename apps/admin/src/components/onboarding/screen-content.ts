@@ -26,11 +26,9 @@ import {
   builtinOptions,
   fieldById,
   hiddenBuiltinQuestions,
-  holderOf,
-  isAskedOfHer,
   isCustomQuestionRequired,
   liveOptions,
-  placedQuestions,
+  onboardingScreenQuestions,
   placementOn,
   placementWordingIn,
   requiredBuiltinQuestions,
@@ -169,42 +167,37 @@ export interface TypedWording {
 /**
  * The fields her phone asks on one screen (an app screen's key or a Ramassà
  * screen's id) after its own questions, in their order, worded as their
- * placements say (RAPP-651): the wording for her in each language that has
- * one, else the field's own name. `fallback` is the screen's questions in the
- * old shape, for a server that sends no layout.
+ * placements say: the same shared reader her app plans with (RAPP-655).
+ * `typed` is the wording of one open placement row, shown as typed.
  */
 export function placedPhoneQuestions(
   catalog: IntakeCatalog,
   screenKey: string,
-  fallback: readonly CustomQuestion[],
   language: LanguageCode,
   typed: TypedWording | null = null,
 ): PhoneQuestion[] {
   const layout = catalog.layout;
-  return placedQuestions(catalog, screenKey, fallback)
-    .filter(isAskedOfHer)
-    .map((question) => {
-      const shown = customPhoneQuestion(question, language);
-      const field = layout === undefined ? undefined : fieldById(layout, question.id);
-      const saved =
-        layout === undefined ? undefined : placementOn(layout, question.id, 'onboarding');
-      if (field === undefined || saved === undefined) return shown;
-      const placement =
-        typed?.fieldId === question.id
-          ? { ...saved, labelOverride: typed.label, helpOverride: typed.help }
-          : saved;
-      const wording = placementWordingIn(placement, field, language);
-      return {
-        ...shown,
-        label: wording.label,
-        help: wording.help,
-        draft: {
-          ...shown.draft,
-          label: only(language, wording.label),
-          help: only(language, wording.help),
-        },
-      };
-    });
+  return onboardingScreenQuestions(catalog, screenKey).map((question) => {
+    const shown = customPhoneQuestion(question, language);
+    const field = layout === undefined ? undefined : fieldById(layout, question.id);
+    const saved = layout === undefined ? undefined : placementOn(layout, question.id, 'onboarding');
+    if (typed?.fieldId !== question.id || field === undefined || saved === undefined) return shown;
+    const wording = placementWordingIn(
+      { ...saved, labelOverride: typed.label, helpOverride: typed.help },
+      field,
+      language,
+    );
+    return {
+      ...shown,
+      label: wording.label,
+      help: wording.help,
+      draft: {
+        ...shown.draft,
+        label: only(language, wording.label),
+        help: only(language, wording.help),
+      },
+    };
+  });
 }
 
 /** The built-in questions a screen asks, without the ones staff hid. */
@@ -280,8 +273,7 @@ export function stepContent(
       ...empty,
       title: textIn(overrides.title ?? screen.title, language),
       intro: textIn(overrides.intro ?? screen.intro, language),
-      questions:
-        overrides.questions ?? placedPhoneQuestions(catalog, screen.id, screen.questions, language),
+      questions: overrides.questions ?? placedPhoneQuestions(catalog, screen.id, language),
       continueLabel: phone('continueAction'),
     };
   }
@@ -342,12 +334,7 @@ export function stepContent(
         builtinPhoneQuestion(catalog, question, language, t),
       ),
       // Then the fields staff placed on it (RAPP-642, RAPP-651).
-      ...placedPhoneQuestions(
-        catalog,
-        step.key,
-        holderOf(catalog, step.key)?.questions ?? [],
-        language,
-      ),
+      ...placedPhoneQuestions(catalog, step.key, language),
     ],
     lines:
       step.key === 'documentation' && (overrides.documentNote ?? '') !== ''

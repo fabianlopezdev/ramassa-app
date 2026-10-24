@@ -63,7 +63,6 @@ import {
   canHideBuiltin,
   canHideBuiltinScreen,
   hasRequiredAddedQuestion,
-  holderOf,
   requiredBuiltinQuestions,
   saveBuiltinScreen,
   saveIntakeScreen,
@@ -276,13 +275,7 @@ function CustomScreenEditor({
   const content = stepContent(catalog, step, previewLanguage, t, {
     title,
     intro,
-    questions: placedPhoneQuestions(
-      catalog,
-      screen.id,
-      screen.questions,
-      previewLanguage,
-      row.wording,
-    ),
+    questions: placedPhoneQuestions(catalog, screen.id, previewLanguage, row.wording),
   });
 
   const direction = getLanguageDirection(language);
@@ -429,13 +422,7 @@ function AppScreenEditor({
               ),
             ),
           // Then the fields placed on it, the wording being typed as typed.
-          ...placedPhoneQuestions(
-            catalog,
-            step.key,
-            holderOf(catalog, step.key)?.questions ?? [],
-            previewLanguage,
-            row.wording,
-          ),
+          ...placedPhoneQuestions(catalog, step.key, previewLanguage, row.wording),
         ]
       : [];
   const detailContent = (): PhoneContent => {
