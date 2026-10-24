@@ -31,9 +31,18 @@ test('invite, renew an expired invite, and cancel it', async ({ page }) => {
 
     // The last step shows what she will be asked before the invite exists (RAPP-618).
     await expect(page.getByTestId('invite-questions-step')).toBeVisible({ timeout: 30_000 });
+    // Each screen opens to show its questions (RAPP-643).
+    const show = async (screen: string, question: string) => {
+      if ((await page.getByTestId(`invite-question-${question}`).count()) === 0) {
+        await page.getByTestId(`invite-screen-open-${screen}`).click();
+      }
+      await expect(page.getByTestId(`invite-question-${question}`)).toBeVisible();
+    };
+    await show('logistics', 'reference_entity');
     await expect(page.getByTestId('invite-question-reference_entity-status')).toContainText(
       'She is not asked',
     );
+    await show('background', 'date_of_birth');
     await expect(page.getByTestId('invite-question-date_of_birth-status')).toContainText(
       'She is asked',
     );
@@ -42,6 +51,7 @@ test('invite, renew an expired invite, and cancel it', async ({ page }) => {
     expect(
       queryDatabase(`select count(*) from public.invites where email = '${email}';`).trim(),
     ).toBe('0');
+    await show('logistics', 'phone');
     await page.getByTestId('invite-question-phone-skip').click();
     await expect(page.getByTestId('invite-question-phone-status')).toContainText(
       'She is not asked',

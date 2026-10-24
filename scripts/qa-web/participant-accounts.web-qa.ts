@@ -16,6 +16,7 @@
  */
 
 import { expect, test, type Page } from '@playwright/test';
+import { choose, expectAsking, questionRow } from './invite-review';
 import {
   countInDatabase,
   ENTITY_EMAIL,
@@ -278,42 +279,25 @@ test.describe('inviting a participant', () => {
     // Nothing exists yet: the step only shows the plan.
     expect(countInDatabase(`select count(*) from auth.users where email = '${email}'`)).toBe(0);
     // Staff gave her name and entity: Auto skips them. Nobody answered the rest.
-    await expect(review.getByTestId('invite-question-first_name')).toHaveAttribute(
-      'data-asked',
-      'false',
-    );
-    await expect(review.getByTestId('invite-question-reference_entity')).toHaveAttribute(
-      'data-asked',
-      'false',
-    );
-    await expect(review.getByTestId('invite-question-date_of_birth')).toHaveAttribute(
-      'data-asked',
-      'true',
-    );
+    await expect(review).toBeVisible();
+    await expectAsking(page, 'first_name', 'not-asked');
+    await expectAsking(page, 'reference_entity', 'not-asked');
+    await expectAsking(page, 'date_of_birth', 'asked');
     // Don't ask is not offered on a required question nobody answered.
-    await expect(review.locator('#invite-question-shoe_size option[value="skip"]')).toBeDisabled();
+    await expect(
+      (await questionRow(page, 'shoe_size')).getByTestId('invite-question-shoe_size-skip'),
+    ).toBeDisabled();
 
-    await review.locator('#invite-question-first_name').selectOption('ask');
-    await review.locator('#invite-question-phone').selectOption('skip');
-    await review.locator('#invite-question-reference_entity').selectOption('skip');
-    await expect(review.getByTestId('invite-question-first_name')).toHaveAttribute(
-      'data-asked',
-      'true',
-    );
+    await choose(page, 'first_name', 'ask');
+    await choose(page, 'phone', 'skip');
+    await choose(page, 'reference_entity', 'skip');
+    await expectAsking(page, 'first_name', 'asked');
     // Her name screen shows both names, as on her phone (RAPP-618).
-    await expect(review.getByTestId('invite-question-last_name')).toHaveAttribute(
-      'data-asked',
-      'true',
-    );
+    await expectAsking(page, 'last_name', 'asked');
     // Her contact shows only once she has an entity.
-    await expect(review.getByTestId('invite-question-reference_contact_name')).toHaveAttribute(
-      'data-asking',
-      'when-it-applies',
-    );
-    await expect(review.getByTestId('invite-question-phone')).toHaveAttribute(
-      'data-asked',
-      'false',
-    );
+    await expectAsking(page, 'reference_contact_name', 'when-it-applies');
+    await expectAsking(page, 'phone', 'not-asked');
+    await page.keyboard.press('Escape');
 
     // Back to her details keeps what staff typed.
     await page
@@ -327,8 +311,9 @@ test.describe('inviting a participant', () => {
         name: /què se li preguntarà|what she will be asked|qué se le preguntará/i,
       })
       .click();
-    await review.locator('#invite-question-first_name').selectOption('ask');
-    await review.locator('#invite-question-phone').selectOption('skip');
+    await choose(page, 'first_name', 'ask');
+    await choose(page, 'phone', 'skip');
+    await page.keyboard.press('Escape');
     await createInvitation(page);
     await expect(page.getByRole('heading', { name: INVITED })).toBeVisible({ timeout: 15_000 });
 
@@ -357,19 +342,13 @@ test.describe('inviting a participant', () => {
     await page.goto(`/participants/new?referral=${PENDING_REFERRAL_ID}`);
     await expect(page.getByTestId('referral-prefill')).toBeVisible({ timeout: 15_000 });
     await fillDetails(page, `referred.preview.${RUN_TAG}@example.test`);
-    const review = page.getByTestId('invite-questions-review');
+    await expect(page.getByTestId('invite-questions-review')).toBeVisible();
     // The entity gave her date of birth, her phone and her applicant status:
     // she is not asked them again. Nobody gave her address.
     for (const question of ['date_of_birth', 'phone', 'applicant_status']) {
-      await expect(review.getByTestId(`invite-question-${question}`)).toHaveAttribute(
-        'data-asked',
-        'false',
-      );
+      await expectAsking(page, question, 'not-asked');
     }
-    await expect(review.getByTestId('invite-question-address')).toHaveAttribute(
-      'data-asked',
-      'true',
-    );
+    await expectAsking(page, 'address', 'asked');
     // Nothing is created until staff confirm.
     expect(
       countInDatabase(
