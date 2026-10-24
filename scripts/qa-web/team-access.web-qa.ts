@@ -69,7 +69,7 @@ test.describe.serial('the Team screen', () => {
       queryDatabase(`select string_agg(permission_code, ',' order by permission_code)
         from public.team_member_permissions where profile_id = '${MEMBER_ID}'`),
     ).toBe(
-      'attendance.mark,attendance.reports,equipment.handover,feedback.view,messages.inbox,participants.view',
+      'attendance.mark,attendance.reports,consents.collect,equipment.handover,feedback.view,messages.inbox,participants.view',
     );
     expect(
       queryDatabase(`select count(*) from public.audit_log

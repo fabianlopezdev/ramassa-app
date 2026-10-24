@@ -75,7 +75,7 @@ test('a person gets a preset plus a switch, and a new preset is applied by choic
   await expect(page.getByTestId('staff-notice')).toHaveText('Access saved.', { timeout: 30_000 });
   await expect(page.getByTestId(`staff-access-${MEMBER_ID}`)).toContainText('Coach, adjusted');
   expect(grants()).toBe(
-    'attendance.mark,attendance.reports,equipment.handover,feedback.view,messages.inbox,participants.view',
+    'attendance.mark,attendance.reports,consents.collect,equipment.handover,feedback.view,messages.inbox,participants.view',
   );
 
   // React Native's Switch renders its checkbox inside the element with the test id.
