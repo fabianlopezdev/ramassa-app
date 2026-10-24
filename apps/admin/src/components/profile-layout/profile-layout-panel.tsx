@@ -1,5 +1,5 @@
 /**
- * Organització › Fitxa de la jugadora (RAPP-650; its own page in the menu since
+ * Organització › Dades de les jugadores (RAPP-650; its own page in the menu since
  * RAPP-654): the player profile layout, the pool every surface picks from
  * (RAPP-649). Sections in the team's reading order, each a card of field rows;
  * a count line above them.

@@ -163,7 +163,7 @@
       "feedback": "New feedback from {{name}}",
       "forum_report": "Forum content reported",
       "gallery_report": "Gallery photo reported",
-      "field_created": "New field in the player profile: {{name}}"
+      "field_created": "New field in Player data: {{name}}"
     }
   }
 }

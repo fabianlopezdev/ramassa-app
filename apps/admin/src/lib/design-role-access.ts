@@ -2,7 +2,7 @@
  * Where the onboarding design role may go in the admin (RAPP-615).
  *
  * A person whose only access is `onboarding.design` and `test_players.manage`
- * reaches the onboarding page, the Fitxa de la jugadora (RAPP-650, its own
+ * reaches the onboarding page, Dades de les jugadores (RAPP-650, its own
  * page since RAPP-654), the test players and her own account page (RAPP-634),
  * and every other admin URL sends her back. This is the screen half: the
  * database refuses her every other read and write on its own
@@ -33,7 +33,7 @@ function isOnboardingPath(pathname: string): boolean {
   return pathname === '/onboarding' || pathname.startsWith('/onboarding/');
 }
 
-/** The Fitxa de la jugadora (RAPP-650, RAPP-654). */
+/** Dades de les jugadores (RAPP-650, RAPP-654). */
 function isProfileLayoutPath(pathname: string): boolean {
   return pathname === '/profile-layout' || pathname === '/profile-layout/';
 }

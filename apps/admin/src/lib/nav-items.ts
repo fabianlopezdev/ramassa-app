@@ -89,7 +89,7 @@ export const DATA_PERMISSIONS = [
 
 /**
  * The Settings area: one tab per permission (organization and branding,
- * documents). The team, the partner entities and the Fitxa de la jugadora have
+ * documents). The team, the partner entities and Dades de les jugadores have
  * their own pages since RAPP-654.
  */
 export const SETTINGS_PERMISSIONS = [
@@ -99,7 +99,7 @@ export const SETTINGS_PERMISSIONS = [
 ] as const satisfies readonly PermissionCode[];
 
 /**
- * The Fitxa de la jugadora (RAPP-650, its own page since RAPP-654): edited by
+ * Dades de les jugadores (RAPP-650, its own page since RAPP-654): edited by
  * its designers (`PROFILE_LAYOUT_DESIGN_PERMISSIONS`), read by everyone who
  * reached it from Settings before. It holds no answers.
  */

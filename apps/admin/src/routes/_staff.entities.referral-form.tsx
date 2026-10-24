@@ -1,6 +1,6 @@
 /**
  * Entitats › Formulari de derivació (RAPP-652): what an entity fills in when
- * it refers a woman, composed from the Fitxa de la jugadora. Linked from the
+ * it refers a woman, composed from Dades de les jugadores. Linked from the
  * Entitats group of the menu (RAPP-654); `/settings?tab=referral-form` still
  * forwards here.
  *

@@ -108,5 +108,5 @@ test('a staff member cannot see the admin export product or navigation item', as
 
   await expect(page.getByRole('heading', { name: 'Data exports and audit log' })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Download CSV', exact: true })).toHaveCount(0);
-  await expect(page.getByRole('link', { name: 'Data and audit' })).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'Exports and audit' })).toHaveCount(0);
 });

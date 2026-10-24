@@ -163,7 +163,7 @@
     "cancelled": "جابه‌جایی لغو شد. {{item}} به جای خود برگشت."
   },
   "profileLayout": {
-    "title": "پرونده بازیکن",
+    "title": "داده‌های بازیکنان",
     "addSection": "افزودن بخش",
     "newSection": "بخش تازه",
     "sectionName": "نام بخش",
@@ -209,11 +209,11 @@
   },
   "fieldPicker": {
     "title": "افزودن فیلد به {{screen}}",
-    "description": "فیلدهایی از پرونده بازیکن برای این صفحه انتخاب کنید.",
+    "description": "برای این صفحه از داده‌های بازیکنان فیلد انتخاب کنید.",
     "close": "بستن",
     "search": "جست‌وجوی فیلد",
     "searchPlaceholder": "جست‌وجوی فیلد…",
-    "sections": "بخش‌های پرونده",
+    "sections": "بخش‌ها",
     "results": "نتایج",
     "noResults": "هیچ فیلدی پیدا نشد.",
     "here": "در همین صفحه هست",
@@ -235,7 +235,7 @@
     "saveWording": "ذخیره",
     "removeNamed": "حذف {{field}} از صفحه",
     "removeTitle": "«{{field}}» از این صفحه حذف شود؟",
-    "removeBody": "فیلد در پرونده می‌ماند.",
+    "removeBody": "فیلد در داده‌های بازیکنان می‌ماند.",
     "remove": "حذف",
     "removeConditionFirst": "اول «{{field}}» را حذف کنید، که به آن وابسته است."
   },

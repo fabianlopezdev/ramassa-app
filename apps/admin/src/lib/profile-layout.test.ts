@@ -73,7 +73,7 @@ const LAYOUT: ProfileLayout = {
   ],
 };
 
-describe('the Fitxa de la jugadora reads the layout (RAPP-650)', () => {
+describe('Dades de les jugadores reads the layout (RAPP-650)', () => {
   test('each section lists its live fields in order', () => {
     expect(fieldIdsBySection(LAYOUT)).toEqual({
       [SIZES]: ['gloves'],

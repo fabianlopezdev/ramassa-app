@@ -1,7 +1,7 @@
 /**
  * A titled card of an editor (RAPP-641): a header row with the title and its
  * actions, the content, and an optional footer for Save. The screen editor
- * stacks them; the Fitxa de la jugadora (RAPP-650) draws each section as one,
+ * stacks them; Dades de les jugadores (RAPP-650) draws each section as one,
  * with a grip before the title and its rows flush with the edges.
  */
 

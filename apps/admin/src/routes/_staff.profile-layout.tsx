@@ -1,5 +1,5 @@
 /**
- * Organització › Fitxa de la jugadora (RAPP-650): the player profile layout,
+ * Organització › Dades de les jugadores (RAPP-650): the player profile layout,
  * the pool every surface picks from. A Settings tab until the menu grouped by
  * audience (RAPP-654); `/settings?tab=profile-layout` still forwards here.
  *

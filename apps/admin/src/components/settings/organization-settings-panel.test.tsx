@@ -116,7 +116,7 @@ test('the pages with their own menu item are no longer Settings tabs (RAPP-654, 
     /tabQuestions|^Questions$/,
     /tabTeam|^Team$/,
     /tabEntities|^Entities$/,
-    /tabProfileLayout|Player profile/,
+    /tabProfileLayout|Player data/,
     /tabReferralForm|Referral form/,
   ]) {
     expect(view.queryByRole('tab', { name })).toBeNull();

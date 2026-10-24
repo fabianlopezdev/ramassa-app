@@ -1,5 +1,5 @@
 /**
- * The Fitxa de la jugadora's data (RAPP-650): the layout the catalog sends
+ * The Dades de les jugadores page's data (RAPP-650): the layout the catalog sends
  * (sections, fields, placements, RAPP-649), read for the page. Pure, so it is
  * tested without a database; its changes are in `profile-layout-actions.ts`.
  */

@@ -702,7 +702,7 @@
     "cancelled": "Move cancelled. {{item}} is back in its place."
   },
   "profileLayout": {
-    "title": "Player profile",
+    "title": "Player data",
     "addSection": "Add a section",
     "newSection": "New section",
     "sectionName": "Section name",
@@ -748,11 +748,11 @@
   },
   "fieldPicker": {
     "title": "Add a field to {{screen}}",
-    "description": "Pick fields from the player profile for this screen.",
+    "description": "Pick fields from Player data for this screen.",
     "close": "Close",
     "search": "Search for a field",
     "searchPlaceholder": "Search for a field…",
-    "sections": "Profile sections",
+    "sections": "Sections",
     "results": "Results",
     "noResults": "No field matches.",
     "here": "Already on this screen",
@@ -774,7 +774,7 @@
     "saveWording": "Save",
     "removeNamed": "Remove {{field}} from the screen",
     "removeTitle": "Remove “{{field}}” from this screen?",
-    "removeBody": "The field stays on the player profile.",
+    "removeBody": "The field stays in Player data.",
     "remove": "Remove",
     "removeConditionFirst": "First remove “{{field}}”, which depends on it."
   },

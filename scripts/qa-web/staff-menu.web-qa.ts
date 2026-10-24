@@ -50,10 +50,10 @@ test.describe.serial('the staff menu', () => {
       'Collaborating entities',
     ]);
     await expect(groupLinks(menu, 'organisation')).toHaveText([
-      'Player profile',
+      'Player data',
       'Team',
       'Seasons',
-      'Data and audit',
+      'Exports and audit',
       'Settings',
     ]);
     // Each group names its list for screen readers.
@@ -83,7 +83,7 @@ test.describe.serial('the staff menu', () => {
     await signIn(page, ADMIN_EMAIL);
     await page.goto('/settings');
     await expect(page.getByTestId('organization-settings-form')).toBeVisible({ timeout: 30_000 });
-    for (const name of ['Team', 'Entities', 'Player profile', 'Referral form']) {
+    for (const name of ['Team', 'Entities', 'Player data', 'Referral form']) {
       await expect(page.getByRole('tab', { name, exact: true })).toHaveCount(0);
     }
     for (const [from, to, ready] of [
@@ -109,6 +109,6 @@ test.describe.serial('the staff menu', () => {
       await expect(label).toHaveCSS('opacity', '0');
     }
     await menu.locator('a[href="/profile-layout"]').hover();
-    await expect(page.getByRole('tooltip')).toHaveText('Player profile');
+    await expect(page.getByRole('tooltip')).toHaveText('Player data');
   });
 });

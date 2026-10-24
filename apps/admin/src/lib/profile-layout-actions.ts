@@ -1,5 +1,5 @@
 /**
- * The changes to the profile layout: the Fitxa de la jugadora's (RAPP-650)
+ * The changes to the profile layout: the Dades de les jugadores page's (RAPP-650)
  * and the placements a surface editor makes (RAPP-651). Each one is written
  * through the database's own function (RAPP-649), then the route reloads, as
  * the onboarding editor does.

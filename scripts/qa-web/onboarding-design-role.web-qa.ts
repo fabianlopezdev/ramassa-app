@@ -1,7 +1,7 @@
 /**
  * The onboarding design role in the admin (RAPP-615), signed in as the seeded
  * design account: it lands on the onboarding page, its menu holds the test
- * players, the onboarding and the Fitxa de la jugadora (RAPP-650, its own page
+ * players, the onboarding and Dades de les jugadores (RAPP-650, its own page
  * since RAPP-654), every other admin URL sends it back, and its roster holds
  * test players only.
  */
@@ -41,11 +41,11 @@ test.describe.serial('the onboarding design role', () => {
     await expect(items).toHaveCount(3);
     await expect(menu.getByRole('link', { name: 'Participants' })).toBeVisible();
     await expect(menu.getByRole('link', { name: 'Onboarding' })).toBeVisible();
-    await expect(menu.getByRole('link', { name: 'Player profile' })).toBeVisible();
+    await expect(menu.getByRole('link', { name: 'Player data' })).toBeVisible();
     await expect(menu.getByRole('link', { name: 'Settings' })).toHaveCount(0);
 
     // The Fitxa opens from the menu, and its old Settings address forwards to it.
-    await menu.getByRole('link', { name: 'Player profile' }).click();
+    await menu.getByRole('link', { name: 'Player data' }).click();
     await expect(page).toHaveURL(/\/profile-layout$/, { timeout: 20_000 });
     await expect(page.getByTestId('profile-layout')).toBeVisible({ timeout: 20_000 });
     await page.goto('/settings?tab=profile-layout');

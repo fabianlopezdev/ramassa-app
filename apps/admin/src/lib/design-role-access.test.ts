@@ -15,7 +15,7 @@ describe('the onboarding design role reaches its two areas only (RAPP-615)', () 
       '/participants/new',
       `/participants/${PLAYER_ID}`,
       '/account',
-      // The Fitxa de la jugadora (RAPP-650, its own page since RAPP-654).
+      // Dades de les jugadores (RAPP-650, its own page since RAPP-654).
       '/profile-layout',
     ]) {
       expect(designRoleRedirect(path, DESIGN)).toBeNull();

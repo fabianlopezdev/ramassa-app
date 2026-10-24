@@ -702,7 +702,7 @@
     "cancelled": "Movimiento cancelado. {{item}} vuelve a su sitio."
   },
   "profileLayout": {
-    "title": "Ficha de la jugadora",
+    "title": "Datos de las jugadoras",
     "addSection": "Añade una sección",
     "newSection": "Sección nueva",
     "sectionName": "Nombre de la sección",
@@ -748,11 +748,11 @@
   },
   "fieldPicker": {
     "title": "Añade un campo a {{screen}}",
-    "description": "Elige campos de la ficha para esta pantalla.",
+    "description": "Elige campos de Datos de las jugadoras para esta pantalla.",
     "close": "Cerrar",
     "search": "Busca un campo",
     "searchPlaceholder": "Busca un campo…",
-    "sections": "Secciones de la ficha",
+    "sections": "Secciones",
     "results": "Resultados",
     "noResults": "Ningún campo coincide.",
     "here": "Ya está en esta pantalla",
@@ -774,7 +774,7 @@
     "saveWording": "Guardar",
     "removeNamed": "Quita {{field}} de la pantalla",
     "removeTitle": "¿Quieres quitar «{{field}}» de esta pantalla?",
-    "removeBody": "El campo se queda en la ficha.",
+    "removeBody": "El campo se queda en Datos de las jugadoras.",
     "remove": "Quitar",
     "removeConditionFirst": "Primero quita «{{field}}», que depende de él."
   },

@@ -1,5 +1,5 @@
 /**
- * The Fitxa de la jugadora (RAPP-650), Organization › Player profile: the
+ * Dades de les jugadores (RAPP-650), Organization › Player data: the
  * onboarding design account adds a field, which records her as its creator
  * and rings the admin's bell; she drags it into another section, renames a
  * section and moves it with the keyboard. The admin then reads the creator,
@@ -69,16 +69,16 @@ async function expectSymmetry(page: Page) {
   expect(headerHeights.size).toBe(1);
 }
 
-test.describe.serial('the Fitxa de la jugadora', () => {
+test.describe.serial('Dades de les jugadores', () => {
   test('the design role opens it from the menu and adds, drags and renames', async ({ page }) => {
     await signIn(page, ONBOARDING_DESIGNER_EMAIL);
     // Its own item in the Organization group (RAPP-654).
     const menu = page.getByRole('navigation', { name: 'Staff navigation' });
-    await menu.getByRole('link', { name: 'Player profile' }).click();
+    await menu.getByRole('link', { name: 'Player data' }).click();
     await expect(page).toHaveURL(/\/profile-layout$/, { timeout: 30_000 });
     const layout = page.getByTestId('profile-layout');
     await expect(layout).toBeVisible({ timeout: 30_000 });
-    await expect(page.getByRole('heading', { name: 'Player profile', level: 1 })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Player data', level: 1 })).toBeVisible();
     await expectSymmetry(page);
 
     await page.getByTestId('profile-section-add-sizes').click();
@@ -163,7 +163,7 @@ test.describe.serial('the Fitxa de la jugadora', () => {
     await page.goto('/settings?tab=profile-layout');
     await expect(page).toHaveURL(/\/profile-layout$/, { timeout: 30_000 });
     await page.getByRole('button', { name: /Notifications/ }).click();
-    await expect(page.getByText(`New field in the player profile: ${FIELD_NAME}`)).toBeVisible({
+    await expect(page.getByText(`New field in Player data: ${FIELD_NAME}`)).toBeVisible({
       timeout: 20_000,
     });
     await page.keyboard.press('Escape');

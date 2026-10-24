@@ -3,7 +3,7 @@
  * in the five languages, its type from the tiles (RAPP-646), its privacy from
  * the cards (RAPP-647), the type's settings and, for a choice, its options.
  *
- * The Fitxa de la jugadora and the onboarding picker open it for a field
+ * Dades de les jugadores and the onboarding picker open it for a field
  * (RAPP-650, RAPP-651). Where a field is asked is never part of it: that is
  * a placement. The type never changes once saved, and the privacy level is locked by the caller (once answers
  * exist for a field). A removed option is archived and the answers that

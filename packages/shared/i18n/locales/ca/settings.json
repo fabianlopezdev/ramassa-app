@@ -702,7 +702,7 @@
     "cancelled": "Moviment cancel·lat. {{item}} torna al seu lloc."
   },
   "profileLayout": {
-    "title": "Fitxa de la jugadora",
+    "title": "Dades de les jugadores",
     "addSection": "Afegeix una secció",
     "newSection": "Secció nova",
     "sectionName": "Nom de la secció",
@@ -748,11 +748,11 @@
   },
   "fieldPicker": {
     "title": "Afegeix un camp a {{screen}}",
-    "description": "Tria camps de la fitxa per a aquesta pantalla.",
+    "description": "Tria camps de Dades de les jugadores per a aquesta pantalla.",
     "close": "Tanca",
     "search": "Cerca un camp",
     "searchPlaceholder": "Cerca un camp…",
-    "sections": "Seccions de la fitxa",
+    "sections": "Seccions",
     "results": "Resultats",
     "noResults": "Cap camp coincideix.",
     "here": "Ja és en aquesta pantalla",
@@ -774,7 +774,7 @@
     "saveWording": "Desa",
     "removeNamed": "Treu {{field}} de la pantalla",
     "removeTitle": "Vols treure «{{field}}» d'aquesta pantalla?",
-    "removeBody": "El camp es queda a la fitxa.",
+    "removeBody": "El camp es queda a Dades de les jugadores.",
     "remove": "Treu",
     "removeConditionFirst": "Primer treu «{{field}}», que en depèn."
   },

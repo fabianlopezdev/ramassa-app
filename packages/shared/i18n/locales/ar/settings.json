@@ -167,7 +167,7 @@
     "cancelled": "أُلغي النقل. عادت {{item}} إلى مكانها."
   },
   "profileLayout": {
-    "title": "ملف اللاعبة",
+    "title": "بيانات اللاعبات",
     "addSection": "أضف قسمًا",
     "newSection": "قسم جديد",
     "sectionName": "اسم القسم",
@@ -213,11 +213,11 @@
   },
   "fieldPicker": {
     "title": "أضف حقلًا إلى {{screen}}",
-    "description": "اختر حقولًا من ملف اللاعبة لهذه الشاشة.",
+    "description": "اختر حقولاً من بيانات اللاعبات لهذه الشاشة.",
     "close": "إغلاق",
     "search": "ابحث عن حقل",
     "searchPlaceholder": "ابحث عن حقل…",
-    "sections": "أقسام الملف",
+    "sections": "الأقسام",
     "results": "النتائج",
     "noResults": "لا يوجد حقل مطابق.",
     "here": "موجود في هذه الشاشة",
@@ -243,7 +243,7 @@
     "saveWording": "حفظ",
     "removeNamed": "أزل {{field}} من الشاشة",
     "removeTitle": "هل تريد إزالة «{{field}}» من هذه الشاشة؟",
-    "removeBody": "يبقى الحقل في الملف.",
+    "removeBody": "يبقى الحقل في بيانات اللاعبات.",
     "remove": "إزالة",
     "removeConditionFirst": "أزل أولًا «{{field}}»، فهو يعتمد عليه."
   },
