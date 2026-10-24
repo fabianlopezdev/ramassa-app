@@ -37,6 +37,9 @@ function resetHer(): void {
            document_type = null where id = ${HER};
     delete from public.profile_answers where profile_id = ${HER};
     delete from public.custom_answers where profile_id = ${HER};
+    -- Her per-player choices too: another spec may have left Don't ask on her phone.
+    delete from public.intake_question_states where profile_id = ${HER};
+    delete from public.custom_question_states where profile_id = ${HER};
     commit;
   `);
 }
