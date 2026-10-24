@@ -52,6 +52,20 @@ import {
 import type { LanguageCode } from '../schemas/language';
 import type { Database, Json } from '../types/database';
 import {
+  anyLanguageTextSchema,
+  fieldById,
+  legacyPlacementsOf,
+  parseProfileLayout,
+  placementOn,
+  placementsOnSurface,
+  QUESTION_PRIVACY_LEVELS,
+  type BuilderText,
+  type FieldPlacement,
+  type ProfileField,
+  type ProfileLayout,
+  type QuestionPrivacy,
+} from './profile-layout';
+import {
   CUSTOM_QUESTION_TYPES,
   customAnswerSchema,
   customAnswerValueSchema,
@@ -82,9 +96,6 @@ function databaseError(error: { readonly message: string; readonly code?: string
   return new AppError(databaseErrorCode(error.message, error.code), { message: error.message });
 }
 
-export const QUESTION_PRIVACY_LEVELS = ['normal', 'personal', 'sensitive'] as const;
-export type QuestionPrivacy = (typeof QUESTION_PRIVACY_LEVELS)[number];
-
 export const YES_NO_MAYBE = ['yes', 'no', 'maybe'] as const;
 
 /** The built-in wizard steps a staff screen can follow, in wizard order. */
@@ -95,16 +106,6 @@ export type BuiltinScreen = (typeof BUILTIN_SCREENS)[number];
 export function isChoiceType(type: CustomQuestionType): boolean {
   return isOptionType(type);
 }
-
-// Localized text as stored: any of the five languages, Catalan required for a label.
-const anyLanguageTextSchema = z.object({
-  ca: z.string().optional(),
-  es: z.string().optional(),
-  en: z.string().optional(),
-  ar: z.string().optional(),
-  fa: z.string().optional(),
-});
-export type BuilderText = z.infer<typeof anyLanguageTextSchema>;
 
 export const catalanTextSchema = anyLanguageTextSchema.refine(
   (text) => (text.ca ?? '').trim().length > 0,
@@ -203,6 +204,11 @@ export const intakeCatalogSchema = z.object({
   // The built-in questions that need an answer (RAPP-611). An older server
   // sends none: the app's own list.
   required_questions: z.array(z.string()).optional(),
+  // The profile layout (RAPP-649), read by `parseProfileLayout`. An older
+  // server sends none: the old question shape is all there is.
+  sections: z.unknown().optional(),
+  fields: z.unknown().optional(),
+  placements: z.unknown().optional(),
 });
 
 export interface CustomOption {
@@ -282,6 +288,8 @@ export interface IntakeCatalog {
   readonly terms?: CurrentAppTerms | null;
   /** The built-in questions that need an answer (RAPP-611); absent means the app's own list. */
   readonly requiredQuestions?: readonly IntakeQuestion[];
+  /** Sections, fields and placements (RAPP-649); absent from an older server. */
+  readonly layout?: ProfileLayout;
 }
 
 export const EMPTY_INTAKE_CATALOG: IntakeCatalog = {
@@ -362,7 +370,12 @@ export function parseIntakeCatalog(data: unknown): IntakeCatalog {
     ...(raw.required_questions === undefined
       ? {}
       : { requiredQuestions: [...requiredQuestionsFrom(raw.required_questions)] }),
+    ...withLayout(parseProfileLayout(raw)),
   };
+}
+
+function withLayout(layout: ProfileLayout | undefined): { readonly layout?: ProfileLayout } {
+  return layout === undefined ? {} : { layout };
 }
 
 /**
@@ -411,9 +424,79 @@ export function screensFor(
     .filter((screen) => afterScreen === undefined || screen.afterScreen === afterScreen)
     .map((screen) => ({
       ...screen,
-      questions: screen.questions.filter((question) => !question.isArchived && shows(question)),
+      questions: screen.questions
+        .map((question) => withPlacementsOf(catalog, question))
+        .filter((question) => !question.isArchived && shows(question)),
     }))
     .filter((screen) => screen.questions.length > 0);
+}
+
+/**
+ * A question with where it is asked and whether it is required as its
+ * placements say (RAPP-649), when the server sends them.
+ */
+export function withPlacementsOf(catalog: IntakeCatalog, question: CustomQuestion): CustomQuestion {
+  const layout = catalog.layout;
+  if (layout === undefined || fieldById(layout, question.id) === undefined) return question;
+  // Required where she answers it: her onboarding, else each season.
+  const required = (
+    placementOn(layout, question.id, 'onboarding') ?? placementOn(layout, question.id, 'season')
+  )?.required;
+  return {
+    ...question,
+    placements: legacyPlacementsOf(layout, question.id),
+    ...(required === undefined ? {} : { isRequired: required }),
+  };
+}
+
+/** A custom field as a question of the old shape, for a screen that has no holder row. */
+function questionFromField(
+  layout: ProfileLayout,
+  field: ProfileField,
+  placement: FieldPlacement,
+): CustomQuestion {
+  return {
+    id: field.id,
+    screenId: placement.screenKey ?? '',
+    type: field.type,
+    ...(field.showWhen === undefined
+      ? {}
+      : { showWhen: { questionId: field.showWhen.fieldId, optionId: field.showWhen.optionId } }),
+    label: field.label,
+    help: field.help,
+    privacy: field.privacy,
+    placements: legacyPlacementsOf(layout, field.id),
+    isArchived: field.isArchived,
+    settings: parseQuestionSettings(field.type, field.settings),
+    isRequired: placement.required,
+    options: field.options,
+  };
+}
+
+/**
+ * The live custom questions her onboarding asks on one screen (an app screen
+ * key, or a Ramassà screen's id), in their order. They come from the
+ * placements when the server sends them (RAPP-649), else from `fallback`, the
+ * screen's questions in the old shape.
+ */
+export function placedQuestions(
+  catalog: IntakeCatalog,
+  screenKey: string,
+  fallback: readonly CustomQuestion[],
+): readonly CustomQuestion[] {
+  const layout = catalog.layout;
+  if (layout === undefined) return fallback.filter((question) => !question.isArchived);
+  const known = new Map(fallback.map((question) => [question.id, question]));
+  return placementsOnSurface(layout, 'onboarding', screenKey).flatMap((placement) => {
+    const field = fieldById(layout, placement.fieldId);
+    if (field === undefined || field.kind !== 'custom') return [];
+    const question = known.get(field.id);
+    return [
+      question === undefined
+        ? questionFromField(layout, field, placement)
+        : { ...withPlacementsOf(catalog, question), isRequired: placement.required },
+    ];
+  });
 }
 
 export const wizardScreens = (catalog: IntakeCatalog, afterScreen?: BuiltinScreen) =>
@@ -464,7 +547,7 @@ export function addedQuestions(
   catalog: IntakeCatalog,
   screen: WizardQuestionScreen,
 ): readonly CustomQuestion[] {
-  return holderOf(catalog, screen)?.questions.filter((question) => !question.isArchived) ?? [];
+  return placedQuestions(catalog, screen, holderOf(catalog, screen)?.questions ?? []);
 }
 
 /** Whether an added question on the app screen is required: then it always shows. */

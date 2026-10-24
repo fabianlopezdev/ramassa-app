@@ -129,10 +129,10 @@ describe('reading a setup file', () => {
   });
 
   test('an unknown schema version is refused by number', () => {
-    expect(readOnboardingSetupFile(asFile(document({ schema_version: 2 })))).toEqual({
+    expect(readOnboardingSetupFile(asFile(document({ schema_version: 3 })))).toEqual({
       ok: false,
       reason: 'unknown_version',
-      version: 2,
+      version: 3,
     });
   });
 

@@ -44,14 +44,15 @@ import {
 import type { LanguageCode } from '../schemas/language';
 import type { Database } from '../types/database';
 import {
+  addedQuestions,
   allowedCustomQuestionStates,
   canSkipCustomQuestion,
   customStateKey,
   hiddenBuiltinQuestions,
-  holderOf,
   isAskedOfHer,
   isCustomQuestionRequired,
   isOwnScreen,
+  placedQuestions,
   requiredBuiltinQuestions,
   textIn,
   wizardFlow,
@@ -253,11 +254,8 @@ export function playerPlan(
       if (step.kind === 'builtin' && flow.hiddenScreens.has(step.key)) return [];
       const questions =
         step.kind === 'custom'
-          ? customQuestions(step.screen.questions)
-          : [
-              ...builtinQuestions(step.key),
-              ...customQuestions(holderOf(catalog, step.key)?.questions ?? []),
-            ];
+          ? customQuestions(placedQuestions(catalog, step.screen.id, step.screen.questions))
+          : [...builtinQuestions(step.key), ...customQuestions(addedQuestions(catalog, step.key))];
       return questions.length === 0 ? [] : [{ step, questions }];
     })
     .map(({ step, questions }, index): PlanScreen => ({
@@ -325,11 +323,9 @@ export function presetChoices(
 ): PlayerChoices {
   if (!askAll) return { states, customStates: {} };
   const ids = liveScreens(catalog)
-    .flatMap((screen) => liveForHer(screen.questions))
+    .flatMap((screen) => liveForHer(placedQuestions(catalog, screen.id, screen.questions)))
     .concat(
-      catalog.screens
-        .filter((screen) => !screen.isArchived && !isOwnScreen(screen))
-        .flatMap((screen) => liveForHer(screen.questions)),
+      WIZARD_QUESTION_SCREENS.flatMap((screen) => liveForHer(addedQuestions(catalog, screen))),
     )
     .map((question) => question.id);
   return {

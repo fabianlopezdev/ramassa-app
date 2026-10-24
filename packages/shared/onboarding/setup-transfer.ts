@@ -23,8 +23,10 @@ import { appTermsDraftSchema } from './app-terms';
 type Client = SupabaseClient<Database>;
 
 export const ONBOARDING_SETUP_FORMAT = 'ramassa.onboarding-setup';
-/** The one schema version this build reads and writes. */
-export const ONBOARDING_SETUP_SCHEMA_VERSION = 1;
+/** The schema version this build writes: 2 adds the profile layout (RAPP-649). */
+export const ONBOARDING_SETUP_SCHEMA_VERSION = 2;
+/** The versions this build reads: a version 1 file still imports. */
+export const ONBOARDING_SETUP_READABLE_VERSIONS: readonly number[] = [1, 2];
 
 /** Text in any of the five languages (help lines, intros, overrides). */
 const anyLanguageText = z.partialRecord(languageCodeSchema, z.string());
@@ -82,10 +84,16 @@ const screenSchema = z.strictObject({
 export const onboardingSetupDocumentSchema = z
   .strictObject({
     format: z.literal(ONBOARDING_SETUP_FORMAT),
-    schema_version: z.literal(ONBOARDING_SETUP_SCHEMA_VERSION),
+    schema_version: z.union([z.literal(1), z.literal(2)]),
     app_commit: z.string().max(64).nullable(),
     exported_at: z.string().min(1),
     screens: z.array(screenSchema),
+    // The profile layout (RAPP-649), in a version 2 file; the database checks each row.
+    sections: z.array(z.record(z.string(), z.unknown())).optional(),
+    fields: z
+      .array(z.looseObject({ options: z.array(z.record(z.string(), z.unknown())) }))
+      .optional(),
+    placements: z.array(z.record(z.string(), z.unknown())).optional(),
     builtin_question_overrides: z.array(
       z.strictObject({
         question: z.string().min(1),
@@ -144,6 +152,14 @@ export const onboardingSetupDocumentSchema = z
     }),
   })
   .superRefine((document, context) => {
+    if (
+      document.schema_version === 2 &&
+      (document.sections === undefined ||
+        document.fields === undefined ||
+        document.placements === undefined)
+    ) {
+      context.addIssue({ code: 'custom', message: 'a version 2 file carries the profile layout' });
+    }
     const screens = new Set(document.screens.map((screen) => screen.id));
     const questions = document.screens.flatMap((screen) => screen.questions);
     const questionIds = new Set(questions.map((question) => question.id));
@@ -248,7 +264,7 @@ export function readOnboardingSetupFile(text: string): OnboardingSetupFileRead {
   const raw = value as Record<string, unknown>;
   // "1" as a string is not a version (pending fix 33).
   if (typeof raw.schema_version !== 'number') return { ok: false, reason: 'version_not_number' };
-  if (raw.schema_version !== ONBOARDING_SETUP_SCHEMA_VERSION) {
+  if (!ONBOARDING_SETUP_READABLE_VERSIONS.includes(raw.schema_version)) {
     return { ok: false, reason: 'unknown_version', version: raw.schema_version };
   }
   const parsed = onboardingSetupDocumentSchema.safeParse(raw);

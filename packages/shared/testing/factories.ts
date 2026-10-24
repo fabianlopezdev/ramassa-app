@@ -1485,7 +1485,30 @@ export function buildWalkInSigning(overrides: Partial<WalkInSigningRow> = {}): W
 type PublicRow<Name extends keyof Database['public']['Tables']> =
   Database['public']['Tables'][Name]['Row'];
 export type IntakeScreenRow = PublicRow<'intake_screens'>;
-export type CustomQuestionRow = PublicRow<'custom_questions'>;
+type CustomQuestionViewRow = Database['public']['Views']['custom_questions']['Row'];
+type AlwaysSetQuestionColumn =
+  | 'id'
+  | 'org_id'
+  | 'question_type'
+  | 'label'
+  | 'privacy'
+  | 'placements'
+  | 'sort_order'
+  | 'is_archived'
+  | 'settings'
+  | 'is_required'
+  | 'created_at'
+  | 'updated_at';
+/**
+ * The old question shape, a view over fields and placements since RAPP-649.
+ * Generated view columns are all nullable; these never are.
+ */
+export type CustomQuestionRow = Omit<CustomQuestionViewRow, AlwaysSetQuestionColumn> & {
+  [Column in AlwaysSetQuestionColumn]: NonNullable<CustomQuestionViewRow[Column]>;
+};
+export type ProfileSectionRow = PublicRow<'profile_sections'>;
+export type ProfileFieldRow = PublicRow<'profile_fields'>;
+export type FieldPlacementRow = PublicRow<'field_placements'>;
 export type CustomQuestionOptionRow = PublicRow<'custom_question_options'>;
 export type CustomAnswerRow = PublicRow<'custom_answers'>;
 export type ReferralCustomAnswerRow = PublicRow<'referral_custom_answers'>;
@@ -1558,6 +1581,67 @@ export function buildTypedCustomQuestion(
       type === 'file_upload' || type === 'signature' ? ['wizard'] : ['wizard', 'entity_form'],
     ...overrides,
   });
+}
+
+export const SEED_SUPPORT_SECTION_KEY = 'support';
+
+/** A section of the profile layout (RAPP-649): the seeded organization's Support. */
+export function buildProfileSection(overrides: Partial<ProfileSectionRow> = {}): ProfileSectionRow {
+  return {
+    id: '5eed0000-0000-4000-8047-000000000007',
+    org_id: SEED_ORGANIZATION_ID,
+    key: SEED_SUPPORT_SECTION_KEY,
+    title: { ca: 'Suport', es: 'Apoyo', en: 'Support' },
+    sort_order: 6,
+    is_builtin: true,
+    created_at: FIXTURE_TIMESTAMP,
+    updated_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+/** The seeded transport field (RAPP-649): the first seeded question, same id. */
+export function buildProfileField(overrides: Partial<ProfileFieldRow> = {}): ProfileFieldRow {
+  return {
+    id: SEED_CUSTOM_QUESTION_ID,
+    org_id: SEED_ORGANIZATION_ID,
+    section_id: '5eed0000-0000-4000-8047-000000000007',
+    kind: 'custom',
+    builtin_key: null,
+    question_type: 'yes_no_maybe',
+    label: { ca: 'Vens amb transport públic?' },
+    help: null,
+    privacy: 'normal',
+    default_required: false,
+    settings: {},
+    show_when_field_id: null,
+    show_when_option_id: null,
+    sort_order: 100,
+    legacy_screen_id: SEED_INTAKE_SCREEN_ID,
+    created_by: null,
+    is_archived: false,
+    created_at: FIXTURE_TIMESTAMP,
+    updated_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+/** The transport field on its onboarding screen (RAPP-649). */
+export function buildFieldPlacement(overrides: Partial<FieldPlacementRow> = {}): FieldPlacementRow {
+  return {
+    id: '5eed0000-0000-4000-8048-000000000001',
+    org_id: SEED_ORGANIZATION_ID,
+    field_id: SEED_CUSTOM_QUESTION_ID,
+    surface: 'onboarding',
+    screen_key: SEED_INTAKE_SCREEN_ID,
+    sort_order: 0,
+    required: false,
+    label_override: null,
+    help_override: null,
+    created_at: FIXTURE_TIMESTAMP,
+    updated_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
 }
 
 export function buildCustomQuestionOption(

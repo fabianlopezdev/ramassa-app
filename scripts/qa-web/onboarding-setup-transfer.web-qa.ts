@@ -105,7 +105,7 @@ test.describe.serial('moving the onboarding setup', () => {
     await download.saveAs(downloadedPath);
     const text = readFileSync(downloadedPath, 'utf8');
     const document = JSON.parse(text) as { schema_version: number; screens: unknown[] };
-    expect(document.schema_version).toBe(1);
+    expect(document.schema_version).toBe(2);
     expect(document.screens.length).toBe(
       countInDatabase(`select count(*) from public.intake_screens where org_id = '${SOURCE_ORG}'`),
     );
@@ -151,9 +151,9 @@ test.describe.serial('moving the onboarding setup', () => {
     // A file of another version is named before anything is sent.
     const other = test.info().outputPath('other.json');
     const text = readFileSync(downloadedPath, 'utf8');
-    writeFileSync(other, text.replace('"schema_version": 1', '"schema_version": 2'));
+    writeFileSync(other, text.replace('"schema_version": 2', '"schema_version": 3'));
     await transfer.getByTestId('setup-import-file').setInputFiles(other);
-    await expect(transfer.getByTestId('setup-import-refused')).toContainText('version 2');
+    await expect(transfer.getByTestId('setup-import-refused')).toContainText('version 3');
 
     // A file the database refuses reads in her language, without its English
     // sentence: a screen twice is caught only by the database.
