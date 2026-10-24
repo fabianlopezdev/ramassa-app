@@ -18,7 +18,10 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { AppError, databaseErrorCode } from '../errors';
+import { SUPPORTED_LANGUAGES } from '../i18n/languages';
+import { resolveLocalizedText } from '../i18n/localized-content';
 import { INTAKE_QUESTIONS, type IntakeQuestion } from '../onboarding/intake';
+import type { LanguageCode } from '../schemas/language';
 import type { Database, Json } from '../types/database';
 import {
   CUSTOM_QUESTION_TYPES,
@@ -326,18 +329,56 @@ export function ramassaScreenIdOf(screenKey: string | null): string | null {
 }
 
 /**
- * The wording she sees for a placement: its override in each language that
- * has one, else the field's own name and help in that language.
+ * The wording she sees for a placement, in the five languages: its override
+ * in each language that has one, else the field's own name and help in that
+ * language (as the field's own text falls back, never to the override).
  */
 export function placementWording(
   placement: FieldPlacement,
   field: ProfileField,
 ): { readonly label: BuilderText; readonly help: BuilderText | null } {
-  const help =
-    field.help === null && placement.helpOverride === null
-      ? null
-      : { ...(field.help ?? {}), ...(placement.helpOverride ?? {}) };
-  return { label: { ...field.label, ...(placement.labelOverride ?? {}) }, help };
+  return {
+    label: overlaid(field.label, placement.labelOverride) ?? {},
+    help: overlaid(field.help, placement.helpOverride),
+  };
+}
+
+/** The wording she sees for a placement in one language. */
+export function placementWordingIn(
+  placement: FieldPlacement,
+  field: ProfileField,
+  language: LanguageCode,
+): { readonly label: string; readonly help: string } {
+  const wording = placementWording(placement, field);
+  return {
+    label: wording.label[language] ?? '',
+    help: wording.help?.[language] ?? '',
+  };
+}
+
+function overlaid(own: BuilderText | null, override: BuilderText | null): BuilderText | null {
+  const written = (text: string | undefined) => (text ?? '').trim();
+  if (override === null || SUPPORTED_LANGUAGES.every((code) => written(override[code]) === '')) {
+    return own === null ? null : resolvedIn(own);
+  }
+  return Object.fromEntries(
+    SUPPORTED_LANGUAGES.flatMap((code) => {
+      const text =
+        written(override[code]) ||
+        (own === null ? '' : (resolveLocalizedText(own, code)?.text ?? ''));
+      return text === '' ? [] : [[code, text]];
+    }),
+  ) as BuilderText;
+}
+
+/** Each language as it reads, the fallbacks filled in. */
+function resolvedIn(text: BuilderText): BuilderText {
+  return Object.fromEntries(
+    SUPPORTED_LANGUAGES.flatMap((code) => {
+      const resolved = resolveLocalizedText(text, code)?.text ?? '';
+      return resolved === '' ? [] : [[code, resolved]];
+    }),
+  ) as BuilderText;
 }
 
 // Writing ---------------------------------------------------------------------------------------
