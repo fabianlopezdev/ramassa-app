@@ -158,7 +158,9 @@ select is(
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select is(
   array(select public.referral_answer_keys('5eed0000-0000-4000-8010-000000000001')),
-  array['applicant_status', 'childcare_need', 'city', 'date_of_birth', 'document_type',
+  -- Built-in keys, then the id of the Ramassà field the seeded referral answers (RAPP-652).
+  array['5eed0000-0000-4000-8045-000000000001',
+        'applicant_status', 'childcare_need', 'city', 'date_of_birth', 'document_type',
         'nationality', 'phone', 'reference_contact_name', 'season_number', 'specific_needs',
         'supporting_entities'],
   'staff who invite learn which fields the referral answers, sensitive ones included'
