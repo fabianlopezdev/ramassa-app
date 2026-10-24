@@ -3,12 +3,16 @@
 // The explicit localhost URL gives the DOM a real origin; without one,
 // about:blank silently refuses document.cookie writes (RAPP-76).
 import { GlobalRegistrator } from '@happy-dom/global-registrator';
-import { cleanup } from '@testing-library/react';
 import { afterEach } from 'bun:test';
 import type { i18n } from 'i18next';
 import { setI18n } from 'react-i18next';
 
 GlobalRegistrator.register({ url: 'http://localhost/' });
+
+// Loaded after the DOM exists: React DOM decides at load time whether the
+// browser has `input` events. Imported before the DOM, it took the legacy
+// path, and a typed value never reached a controlled input's onChange.
+const { cleanup } = await import('@testing-library/react');
 
 // One global unmount-after-each for every RTL test file (RAPP-13). React
 // Testing Library registers its own auto-cleanup only in the first test file
