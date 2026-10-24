@@ -61,6 +61,19 @@ bun test
 
 The local Supabase PostgreSQL 17.6 ARM image crashes inside supautils when an anonymous caller executes a function whose execute grant has been revoked. Two existing denial assertions now inspect the same execute privilege directly instead of invoking that upstream crash. The execute grant remains revoked. The issue is documented upstream in [supautils 214](https://github.com/supabase/supautils/issues/214) and [supabase/postgres 2112](https://github.com/supabase/postgres/issues/2112). This is a test workaround, not a weakened policy or a claimed PostgreSQL fix.
 
+Root cause and fix (2026-10-24, RAPP-656 final QA). Supabase CLI 2.90 starts image `public.ecr.aws/supabase/postgres:17.6.1.106`. Its supautils adds a GRANT hint to permission errors for the roles in `supautils.hint_roles` (anon, authenticated, service_role), and the function branch of that hint crashes the backend with signal 11. Our SQL is not involved. Smallest reproducer, run as `postgres` in a rolled-back transaction:
+
+```sql
+begin;
+create function public.qa_repro_revoked() returns int language sql security definer set search_path = '' as $$ select 1 $$;
+revoke all on function public.qa_repro_revoked() from public, anon, authenticated;
+set local role anon;
+select public.qa_repro_revoked(); -- 17.6.1.106: signal 11; fixed images: 42501
+rollback;
+```
+
+Evidence on 17.6.1.106: the same crash for an invoker SQL function, a plpgsql function, the built-in `pg_read_file`, and as authenticated or service_role; a revoked table as anon gives a clean 42501 with the hint; a revoked function for a role outside `hint_roles` gives a clean error; with `supautils.hint_roles` emptied (local only, then reset) anon gets 42501. supautils 3.2.3 fixed it, shipped from image 17.6.1.155. Hosted staging (PostgreSQL 17.11) answers 42501. `scripts/qa-smoke/supabase-stack.ts` now writes `17.6.1.155` to the QA workdir's `supabase/.temp/postgres-version`, the file the CLI reads to pick a linked project's image, so only the isolated `ramassa-qa` stack changes image; the shared `ramassa` stack and `supabase/config.toml` stay as they are. The full pgTAP suite now runs every anon denial for real on that stack.
+
 ### Hosted slow-loading regression
 
 The first extra hosted accessibility run caught unnamed native ActivityIndicators in transient account/authorization gates, although the initial local run had passed. The gates now use the existing common loading label in all five languages. A browser regression deliberately holds the real authorization-status response, verifies the visible named progressbar and runs axe before releasing the request. It failed before the label fix and passed afterward; all 15 accessibility browser cases passed locally after the loading follow-ups. A held login request also exposed the decorative spinner inside the busy shared action. Its native/web hiding semantics now leave the visual spinner mounted while the labeled owning action exposes busy and disabled state. A native regression failed before this fix, and a second held-request browser case checks the busy state with axe before allowing the code screen to open. The independent verifier reviewed both focused follow-ups. The two browser loading cases request reduced motion before navigation, matching the existing player-route cases: a hosted scan caught a heading midway through its intended fade. Contrast is checked at full opacity without changing the product animation, adding a sleep or hiding a failed rule. The shipping web export also passed direct Enter/Space language selection and Enter-to-Continue activation probes.

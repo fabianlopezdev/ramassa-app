@@ -26,6 +26,16 @@ export const QA_PROJECT_ID = 'ramassa-qa';
 /** 543xx in the dev config becomes 573xx here. 55xxx is taken by another isolated stack. */
 const QA_PORT_OFFSET = 3000;
 
+/**
+ * The Postgres image tag the QA stack runs, written where the Supabase CLI reads
+ * a linked project's version (`supabase/.temp/postgres-version`). CLI 2.90 starts
+ * 17.6.1.106, whose supautils crashes the backend (signal 11) when anon,
+ * authenticated or service_role call a function they cannot execute
+ * (supabase/supautils#214, fixed from image 17.6.1.155). Hosted projects answer
+ * 42501. Pinning only the QA stack keeps the dev stack and its config as they are.
+ */
+export const QA_POSTGRES_IMAGE_VERSION = '17.6.1.155';
+
 /** Services nothing in the smoke suite calls. Skipping them saves memory and boot time. */
 const EXCLUDED_SERVICES = ['studio', 'postgres-meta', 'logflare', 'vector', 'imgproxy'];
 
@@ -100,7 +110,8 @@ async function syncWorkdir(): Promise<string> {
   const devConfig = await Bun.file(path.join(source, 'config.toml')).text();
   const config = qaConfigToml(devConfig);
   await Bun.write(path.join(target, 'config.toml'), config);
-  return createHash('sha256').update(config).digest('hex');
+  await Bun.write(path.join(target, '.temp', 'postgres-version'), QA_POSTGRES_IMAGE_VERSION);
+  return createHash('sha256').update(config).update(QA_POSTGRES_IMAGE_VERSION).digest('hex');
 }
 
 function supabase(args: readonly string[]): string[] {
