@@ -20,6 +20,8 @@ name: smoke-onboarding-invited
 # `bun run db:reset` first, which `bun run qa:smoke` does before each platform.
 env:
   CUSTOM_SCREEN_TITLE: Com arribes als entrenaments
+  # The seeded field placed on that screen, worded as its placement says (RAPP-655).
+  CUSTOM_FIELD_LABEL: Vens amb transport públic
   DEV_MENU_LABEL: Developer menu
   DEV_MENU_LINK: ramassa://dev-menu
   INVITED_EMAIL: '{{invited:email}}'
@@ -356,8 +358,14 @@ env:
     timeout: 20000
 
 # ── Step 4: the staff screen seeded after logistics (RAPP-307) ─────────────
+# Its field comes from the screen's placements, with the field's own name
+# where the placement has no wording of its own (RAPP-655).
 - assertVisible:
     text: '.*${CUSTOM_SCREEN_TITLE}.*'
+- assertVisible:
+    id: 'custom-question-5eed0000-0000-4000-8045-000000000001'
+- assertVisible:
+    text: '.*${CUSTOM_FIELD_LABEL}.*'
 - tapOn:
     id: 'custom-question-5eed0000-0000-4000-8045-000000000001-yes'
 - waitForAnimationToEnd:
