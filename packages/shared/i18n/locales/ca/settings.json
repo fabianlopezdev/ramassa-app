@@ -702,7 +702,7 @@
     "cancelled": "Moviment cancel·lat. {{item}} torna al seu lloc."
   },
   "profileLayout": {
-    "title": "Dades de les jugadores",
+    "title": "Dades de les jugadores a recopilar",
     "addSection": "Afegeix una secció",
     "newSection": "Secció nova",
     "sectionName": "Nom de la secció",

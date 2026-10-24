@@ -702,7 +702,7 @@
     "cancelled": "Movimiento cancelado. {{item}} vuelve a su sitio."
   },
   "profileLayout": {
-    "title": "Datos de las jugadoras",
+    "title": "Datos de las jugadoras a recopilar",
     "addSection": "Añade una sección",
     "newSection": "Sección nueva",
     "sectionName": "Nombre de la sección",

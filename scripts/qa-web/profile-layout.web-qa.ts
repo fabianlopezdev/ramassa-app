@@ -78,7 +78,7 @@ test.describe.serial('Dades de les jugadores', () => {
     await expect(page).toHaveURL(/\/profile-layout$/, { timeout: 30_000 });
     const layout = page.getByTestId('profile-layout');
     await expect(layout).toBeVisible({ timeout: 30_000 });
-    await expect(page.getByRole('heading', { name: 'Player data', level: 1 })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Player data to collect', level: 1 })).toBeVisible();
     await expectSymmetry(page);
 
     await page.getByTestId('profile-section-add-sizes').click();

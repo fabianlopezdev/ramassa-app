@@ -702,7 +702,7 @@
     "cancelled": "Move cancelled. {{item}} is back in its place."
   },
   "profileLayout": {
-    "title": "Player data",
+    "title": "Player data to collect",
     "addSection": "Add a section",
     "newSection": "New section",
     "sectionName": "Section name",

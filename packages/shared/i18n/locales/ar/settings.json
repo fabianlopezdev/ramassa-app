@@ -167,7 +167,7 @@
     "cancelled": "أُلغي النقل. عادت {{item}} إلى مكانها."
   },
   "profileLayout": {
-    "title": "بيانات اللاعبات",
+    "title": "بيانات اللاعبات المطلوب جمعها",
     "addSection": "أضف قسمًا",
     "newSection": "قسم جديد",
     "sectionName": "اسم القسم",
