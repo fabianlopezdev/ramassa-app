@@ -194,6 +194,8 @@ test.describe.serial('admin organization settings', () => {
     await expect(invitedPage.getByRole('heading', { name: 'Staff dashboard' })).toHaveCount(0);
     await invitedContext.close();
 
+    // The documents are a Settings tab; the team has its own page (RAPP-654).
+    await page.goto('/settings');
     await page.getByRole('tab', { name: 'Documents' }).click();
     await expect(page).toHaveURL(/tab=documents/);
     const search = page.getByLabel('Search documents');
