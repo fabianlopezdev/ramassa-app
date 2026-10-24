@@ -18,7 +18,7 @@
  * Farsi right to left.
  */
 
-import { EditingLanguageContext } from '@/components/fields/language-fields';
+import { EditorColumns } from '@/components/layout/editor-columns';
 import { EditorSection } from '@/components/layout/editor-section';
 import { Page, PageHeader } from '@/components/layout/page';
 import {
@@ -76,7 +76,6 @@ import {
 import type { LanguageCode } from '@ramassa/shared/schemas';
 import { allSteps, editableScreenOf, stepFromRouteId, type BoardStep } from './board-steps';
 import { ConfirmDialog } from './confirm-dialog';
-import { LanguageTabs } from './language-tabs';
 import { PhoneFrame } from './phone-preview';
 import { stepName } from './screen-board';
 import {
@@ -193,54 +192,6 @@ function DeleteScreen({ screen, name }: { readonly screen: IntakeScreen; readonl
   );
 }
 
-/** The two columns: the form, and her phone kept in view while the form scrolls. */
-function EditorColumns({
-  language,
-  onLanguageChange,
-  previewLanguage,
-  onPreviewLanguageChange,
-  form,
-  phone,
-}: {
-  readonly language: LanguageCode;
-  readonly onLanguageChange: (language: LanguageCode) => void;
-  readonly previewLanguage: LanguageCode;
-  readonly onPreviewLanguageChange: (language: LanguageCode) => void;
-  readonly form: ReactNode;
-  readonly phone: ReactNode;
-}) {
-  const { t } = useTranslation('settings');
-  return (
-    <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_22rem] 2xl:grid-cols-[minmax(0,56rem)_22rem]">
-      <div className="flex min-w-0 flex-col gap-6">
-        <LanguageTabs
-          value={language}
-          onChange={(next) => {
-            onLanguageChange(next);
-            // The phone follows, so staff see what they type; its own switch stays free.
-            onPreviewLanguageChange(next);
-          }}
-          label={t('onboardingBoard.editingLanguage')}
-          testId="editor-language"
-        />
-        <EditingLanguageContext.Provider value={language}>{form}</EditingLanguageContext.Provider>
-      </div>
-      <aside
-        className="flex flex-col items-center gap-6 lg:sticky lg:top-6"
-        aria-label={t('onboardingBoard.phone')}
-      >
-        <LanguageTabs
-          value={previewLanguage}
-          onChange={onPreviewLanguageChange}
-          label={t('onboardingBoard.phoneLanguage')}
-          testId="phone-language"
-        />
-        {phone}
-      </aside>
-    </div>
-  );
-}
-
 function EditorBody({
   data,
   step,
@@ -341,7 +292,9 @@ function CustomScreenEditor({
       onLanguageChange={setLanguage}
       previewLanguage={previewLanguage}
       onPreviewLanguageChange={setPreviewLanguage}
-      phone={
+      previewLabel={t('onboardingBoard.phone')}
+      previewLanguageLabel={t('onboardingBoard.phoneLanguage')}
+      preview={
         <PhoneFrame
           content={content}
           language={previewLanguage}
@@ -549,7 +502,9 @@ function AppScreenEditor({
         onLanguageChange={setLanguage}
         previewLanguage={previewLanguage}
         onPreviewLanguageChange={setPreviewLanguage}
-        phone={phone}
+        previewLabel={t('onboardingBoard.phone')}
+        previewLanguageLabel={t('onboardingBoard.phoneLanguage')}
+        preview={phone}
         form={
           <>
             {screen === null ? null : (

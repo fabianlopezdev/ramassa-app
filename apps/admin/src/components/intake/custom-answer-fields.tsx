@@ -77,8 +77,21 @@ export function customAnswerErrors(
   answers: Readonly<Record<string, CustomAnswerValue | null>>,
   t: AnswerTranslate,
 ): Record<string, string> {
+  return customAnswerErrorsOf(
+    screens.flatMap((screen) => screen.questions),
+    answers,
+    t,
+  );
+}
+
+/** As `customAnswerErrors`, for questions in a list (the entity form, RAPP-652). */
+export function customAnswerErrorsOf(
+  questions: readonly CustomQuestion[],
+  answers: Readonly<Record<string, CustomAnswerValue | null>>,
+  t: AnswerTranslate,
+): Record<string, string> {
   const errors: Record<string, string> = {};
-  for (const question of screens.flatMap((screen) => screen.questions)) {
+  for (const question of questions) {
     const value = answers[question.id];
     const message = value == null ? undefined : customAnswerMessage(question, value, t);
     if (message !== undefined) errors[question.id] = message;
@@ -92,20 +105,36 @@ export function readCustomAnswers(
   screens: readonly IntakeScreen[],
   prefix: string,
 ): Record<string, CustomAnswerValue | null> {
+  return readCustomAnswersOf(
+    fields,
+    screens.flatMap((screen) => screen.questions),
+    prefix,
+  );
+}
+
+/** As `readCustomAnswers`, for questions in a list (the entity form, RAPP-652). */
+export function readCustomAnswersOf(
+  fields: FormData,
+  questions: readonly CustomQuestion[],
+  prefix: string,
+): Record<string, CustomAnswerValue | null> {
   const answers: Record<string, CustomAnswerValue | null> = {};
-  for (const question of screens.flatMap((screen) => screen.questions)) {
+  for (const question of questions) {
     if (!isStaffWritable(question.type)) continue;
     answers[question.id] = readOne(fields, fieldName(prefix, question), question);
   }
   return answers;
 }
 
-function QuestionInput({
+/** One question's input, also drawn alone in the entity form's order (RAPP-652). */
+export function CustomAnswerInput({
   question,
   value,
   prefix,
   language,
   error,
+  isRequired = false,
+  inputClassName = inputClass,
 }: {
   readonly question: CustomQuestion;
   readonly value: CustomAnswerValue | undefined;
@@ -113,10 +142,15 @@ function QuestionInput({
   readonly language: LanguageCode;
   /** What does not fit, in the words her wizard uses (RAPP-610). */
   readonly error?: string;
+  /** Marked with an asterisk; the form checks it on sending. */
+  readonly isRequired?: boolean;
+  /** The text inputs' and list's look, to match the form around them. */
+  readonly inputClassName?: string;
 }) {
-  const { t } = useTranslation('settings');
+  // Its words follow the form's language, as the entity form's preview shows it (RAPP-652).
+  const { t } = useTranslation('settings', { lng: language });
   const name = fieldName(prefix, question);
-  const label = textIn(question.label, language);
+  const label = `${textIn(question.label, language)}${isRequired ? ' *' : ''}`;
   const help = question.help === null ? '' : textIn(question.help, language);
   const helpId = help === '' ? undefined : `${name}-help`;
   const current =
@@ -205,7 +239,8 @@ function QuestionInput({
             maxLength={SHORT_TEXT_MAX_LENGTH}
             defaultValue={current}
             aria-describedby={helpId}
-            className={inputClass}
+            aria-required={isRequired}
+            className={inputClassName}
           />
         );
       case 'long_text':
@@ -226,7 +261,7 @@ function QuestionInput({
             placeholder={
               question.type === 'item_list' ? t('questions.answers.onePerLine') : undefined
             }
-            className={`${inputClass} h-auto py-2`}
+            className={`${inputClassName} h-auto py-2`}
           />
         );
       case 'number':
@@ -240,7 +275,8 @@ function QuestionInput({
             max={number.max}
             defaultValue={current}
             aria-describedby={helpId}
-            className={inputClass}
+            aria-required={isRequired}
+            className={inputClassName}
           />
         );
       case 'date': {
@@ -254,7 +290,7 @@ function QuestionInput({
             aria-describedby={helpId}
             data-min-age={ages.min_age}
             data-max-age={ages.max_age}
-            className={inputClass}
+            className={inputClassName}
           />
         );
       }
@@ -268,7 +304,8 @@ function QuestionInput({
             dir="ltr"
             defaultValue={current}
             aria-describedby={helpId}
-            className={inputClass}
+            aria-required={isRequired}
+            className={inputClassName}
           />
         );
       default:
@@ -278,7 +315,8 @@ function QuestionInput({
             name={name}
             defaultValue={current}
             aria-describedby={helpId}
-            className={inputClass}
+            aria-required={isRequired}
+            className={inputClassName}
           >
             <option value="">{t('questions.noAnswer')}</option>
             {question.type === 'yes_no_maybe' || question.type === 'yes_no'
@@ -330,7 +368,7 @@ export function CustomAnswerFields({
             {textIn(screen.title, language)}
           </legend>
           {screen.questions.map((question) => (
-            <QuestionInput
+            <CustomAnswerInput
               key={question.id}
               question={question}
               value={values[question.id]}

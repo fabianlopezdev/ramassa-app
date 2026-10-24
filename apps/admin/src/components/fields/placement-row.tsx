@@ -79,6 +79,8 @@ export interface PlacementRowProps {
   readonly onToggleEdit: () => void;
   /** Takes the field off the surface; left out when the surface keeps it. */
   readonly onRemove?: () => void;
+  /** The remove button's name; "take it off the screen" when left out. */
+  readonly removeLabel?: string;
   /** The panel under the row while editing. */
   readonly children?: ReactNode;
   readonly testId: string;
@@ -95,6 +97,7 @@ export function PlacementRow({
   isEditing,
   onToggleEdit,
   onRemove,
+  removeLabel,
   children,
   testId,
 }: PlacementRowProps) {
@@ -143,7 +146,7 @@ export function PlacementRow({
             size="icon-sm"
             className="shrink-0 text-muted-foreground hover:text-destructive"
             disabled={isBusy}
-            aria-label={t('placement.removeNamed', { field: name })}
+            aria-label={removeLabel ?? t('placement.removeNamed', { field: name })}
             onClick={onRemove}
             data-testid={`${testId}-remove`}
           >

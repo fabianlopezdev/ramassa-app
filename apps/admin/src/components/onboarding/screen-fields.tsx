@@ -30,6 +30,7 @@ import { onboardingPick, pickerSectionFor } from '@/lib/field-picker';
 import { profileLayoutOf } from '@/lib/profile-layout';
 import { useProfileLayoutActions } from '@/lib/profile-layout-actions';
 import { supabase } from '@/lib/supabase';
+import { usePlacementOrder } from '@/lib/use-placement-order';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -103,7 +104,7 @@ export function ScreenFieldsSection({
   const actions = useProfileLayoutActions();
   const [isPicking, setIsPicking] = useState(false);
   const placed = placedFields(layout, screenKey);
-  const { ordered, reorder } = usePlacementOrder(screenKey, placed);
+  const { ordered, reorder } = usePlacementOrder('onboarding', screenKey, placed);
   const sectionOf = (field: ProfileField) =>
     layout.sections.find((section) => section.id === field.sectionId);
   // Sections and the picker are the team's words, in the staff member's language.
@@ -222,33 +223,6 @@ export function ScreenFieldsSection({
       />
     </EditorSection>
   );
-}
-
-/**
- * The saved order of a screen's placements, moved at once when staff drop
- * one and put back with a toast when saving fails.
- */
-function usePlacementOrder(screenKey: string, placed: readonly Placed[]) {
-  const { t } = useTranslation('settings');
-  const actions = useProfileLayoutActions();
-  const ids = placed.map((row) => row.placement.id);
-  const [order, setOrder] = useState<readonly string[]>(ids);
-  // A field added or removed since: the saved order again.
-  const ordered =
-    [...order].sort().join() === [...ids].sort().join()
-      ? order.flatMap((id) => placed.filter((row) => row.placement.id === id))
-      : placed;
-  async function reorder(next: readonly string[]) {
-    const previous = order;
-    setOrder(next);
-    try {
-      await actions.reorderPlacements('onboarding', screenKey, next);
-    } catch {
-      setOrder(previous);
-      toast.error(t('onboardingBoard.orderFailed'));
-    }
-  }
-  return { ordered, reorder };
 }
 
 function CustomPlacementRow({
