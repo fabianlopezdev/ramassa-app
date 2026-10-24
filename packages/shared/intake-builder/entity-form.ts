@@ -14,18 +14,13 @@
  *     does not apply asks nothing.
  */
 import type { CreateReferralInput } from '../referrals';
-import {
-  questionFromField,
-  type CustomAnswerValue,
-  type CustomQuestion,
-  type IntakeCatalog,
-} from './builder';
+import type { CustomAnswerValue, CustomQuestion, IntakeCatalog } from './builder';
+import { placedQuestion } from './her-onboarding';
 import {
   EMPTY_PROFILE_LAYOUT,
   fieldById,
   placementOn,
   placementsOnSurface,
-  placementWording,
   type FieldPlacement,
   type ProfileField,
   type ProfileLayout,
@@ -105,21 +100,58 @@ export function entityFormItems(layout: ProfileLayout): readonly EntityFormItem[
         : [];
     }
     if (!isStaffWritable(field.type)) return [];
-    const wording = placementWording(placement, field);
-    const question = questionFromField(layout, field, placement);
     return [
-      {
-        kind: 'custom',
-        question: { ...question, label: wording.label, help: wording.help },
-        field,
-        placement,
-      },
+      { kind: 'custom', question: placedQuestion(layout, field, placement), field, placement },
     ];
   });
 }
 
 export function entityFormItemsOf(catalog: IntakeCatalog): readonly EntityFormItem[] {
   return entityFormItems(catalog.layout ?? EMPTY_PROFILE_LAYOUT);
+}
+
+/**
+ * The form when the layout cannot be read (an older server, or the catalog
+ * failed to load): the built-in fields in the app's order, her names
+ * required, with no wording of their own, so each app shows its own label.
+ */
+export function entityFormFallbackItems(): readonly EntityFormItem[] {
+  return ENTITY_FORM_BUILTIN_FIELDS.map((key, index): EntityFormItem => {
+    const field: ProfileField = {
+      id: `builtin:${key}`,
+      sectionId: '',
+      kind: 'builtin',
+      builtinKey: key,
+      type: 'short_text',
+      label: {},
+      help: null,
+      privacy: 'normal',
+      defaultRequired: false,
+      settings: {},
+      sortOrder: index,
+      isArchived: false,
+      createdAt: '',
+      createdBy: null,
+      createdByName: null,
+      hasAnswers: null,
+      options: [],
+    };
+    return {
+      kind: 'builtin',
+      key,
+      field,
+      placement: {
+        id: `fallback:${key}`,
+        fieldId: field.id,
+        surface: 'entity_form',
+        screenKey: null,
+        sortOrder: index,
+        required: ENTITY_FORM_ALWAYS_ASKED.includes(key),
+        labelOverride: null,
+        helpOverride: null,
+      },
+    };
+  });
 }
 
 /** The Ramassà fields of the form as questions, for reading and checking their answers. */
