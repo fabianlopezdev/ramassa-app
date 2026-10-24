@@ -7,7 +7,7 @@
 --   2. The export never carries anything about a person: no profile id, no
 --      address, no test player, answer, acceptance or signature, and no
 --      `*_by` column. Every export is audited with its counts.
---   3. A round trip: a rich setup (every question type, a condition, archived
+--   3. A round trip: a rich setup (a field of every type, a condition, archived
 --      rows, a moved flow, a hidden screen, required flags, presets, the
 --      document note, terms and authorization drafts) exported, imported into
 --      a fresh organization and exported again gives the same document apart
@@ -15,7 +15,9 @@
 --      published.
 --   4. The import runs once: an organization with onboarding settings is
 --      refused, in the preview and in the import. A preview writes nothing.
---   5. An unknown schema version is refused with a clear message.
+--   5. An unknown schema version is refused with a clear message. The file is
+--      version 3 (RAPP-656): screens, sections, fields and placements, and
+--      nothing of the old question shape.
 --
 -- Seed: admin ...001, staff ...002 (no settings.organization), design role
 -- ...097, real player ...011, test player ...096, organization ...000.
@@ -29,12 +31,18 @@ create temp table run (label text primary key, doc jsonb) on commit drop;
 grant all on run to authenticated;
 
 -- Normalizes a document for comparison: every id becomes its order of first
--- appearance, and the times and the legal texts (compared apart) go.
+-- appearance, and the times and the legal texts (compared apart) go. Fields
+-- and placements are compared as sets: built-in fields tie on their order.
 create function pg_temp.normalized(p_doc jsonb) returns jsonb language plpgsql as $$
 declare
-  body text := (p_doc - 'exported_at' - 'app_commit' - 'app_terms' - 'authorization')::text;
+  stable jsonb := (p_doc - 'exported_at' - 'app_commit' - 'app_terms' - 'authorization' - 'placements')
+    || jsonb_build_object('fields', (
+         select coalesce(jsonb_agg(f order by f ->> 'kind', f ->> 'builtin_key', f -> 'label' ->> 'ca', f ->> 'sort_order'), '[]'::jsonb)
+           from jsonb_array_elements(p_doc -> 'fields') f));
+  body text := stable::text || chr(10) || (p_doc -> 'placements')::text;
   found_id text;
   position integer := 0;
+  result jsonb;
 begin
   for found_id in
     select m.id from (
@@ -47,7 +55,10 @@ begin
     position := position + 1;
     body := replace(body, found_id, 'ref-' || position);
   end loop;
-  return body::jsonb;
+  result := split_part(body, chr(10), 1)::jsonb;
+  return result || jsonb_build_object('placements', (
+    select coalesce(jsonb_agg(p order by p::text), '[]'::jsonb)
+      from jsonb_array_elements(split_part(body, chr(10), 2)::jsonb) p));
 end;
 $$;
 grant execute on function pg_temp.normalized(jsonb) to authenticated;
@@ -60,31 +71,37 @@ values ('5eed0000-0000-4000-8044-0000000006b1', '5eed0000-0000-4000-8000-0000000
        ('5eed0000-0000-4000-8044-0000000006b2', '5eed0000-0000-4000-8000-000000000000',
         '{"ca": "Pantalla arxivada"}', null, 'identity', 3);
 update public.intake_screens set is_archived = true where id = '5eed0000-0000-4000-8044-0000000006b2';
-insert into public.custom_questions (id, org_id, screen_id, question_type, label, privacy, placements, settings, is_required, sort_order)
-select ('5eed0000-0000-4000-8045-0000000006' || lpad(t.n::text, 2, '0'))::uuid,
-       '5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-8044-0000000006b1',
-       t.question_type, jsonb_build_object('ca', 'Pregunta ' || t.question_type), 'normal', array['wizard'],
-       t.settings::jsonb, t.n = 1, t.n
-  from (values
+-- Fifteen Fitxa fields, one of each type, placed on that screen; the first required there.
+create temp table every_type (n integer, question_type text, settings jsonb) on commit drop;
+insert into every_type values
     (1, 'short_text', '{}'), (2, 'long_text', '{}'), (3, 'yes_no_maybe', '{}'), (4, 'single_choice', '{}'),
     (5, 'multiple_choice', '{}'), (6, 'number', '{"integer": true, "min": 1, "max": 10}'),
     (7, 'date', '{"min_age": 16}'), (8, 'yes_no', '{}'), (9, 'phone', '{}'), (10, 'email', '{}'),
     (11, 'search_choice', '{}'), (12, 'item_list', '{"max_items": 5}'),
     (13, 'consent', '{"text": {"ca": "Hi estic d''acord"}}'), (14, 'file_upload', '{"accept": "photo"}'),
-    (15, 'signature', '{}')
-  ) as t(n, question_type, settings);
+    (15, 'signature', '{}');
+insert into public.profile_fields (id, org_id, section_id, kind, question_type, label, privacy, settings, sort_order)
+select ('5eed0000-0000-4000-8045-0000000006' || lpad(t.n::text, 2, '0'))::uuid,
+       '5eed0000-0000-4000-8000-000000000000', s.id, 'custom',
+       t.question_type, jsonb_build_object('ca', 'Pregunta ' || t.question_type), 'normal', t.settings, 200 + t.n
+  from every_type t
+  join public.profile_sections s on s.org_id = '5eed0000-0000-4000-8000-000000000000' and s.key = 'support';
+insert into public.field_placements (org_id, field_id, surface, screen_key, sort_order, required)
+select '5eed0000-0000-4000-8000-000000000000', ('5eed0000-0000-4000-8045-0000000006' || lpad(t.n::text, 2, '0'))::uuid,
+       'onboarding', '5eed0000-0000-4000-8044-0000000006b1', t.n, t.n = 1
+  from every_type t;
 insert into public.custom_question_options (id, org_id, question_id, label, sort_order, is_archived)
 values ('5eed0000-0000-4000-8046-0000000006c1', '5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-8045-000000000604', '{"ca": "Sí, molt"}', 0, false),
        ('5eed0000-0000-4000-8046-0000000006c2', '5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-8045-000000000604', '{"ca": "Gens"}', 1, false),
        ('5eed0000-0000-4000-8046-0000000006c3', '5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-8045-000000000604', '{"ca": "Antiga"}', 2, true),
        ('5eed0000-0000-4000-8046-0000000006c4', '5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-8045-000000000605', '{"ca": "A"}', 0, false),
        ('5eed0000-0000-4000-8046-0000000006c5', '5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-8045-000000000611', '{"ca": "B"}', 0, false);
--- A condition on the same screen, and an archived question.
-update public.custom_questions
-   set show_when_question_id = '5eed0000-0000-4000-8045-000000000604',
+-- A condition on the same screen, and an archived field.
+update public.profile_fields
+   set show_when_field_id = '5eed0000-0000-4000-8045-000000000604',
        show_when_option_id = '5eed0000-0000-4000-8046-0000000006c1'
  where id = '5eed0000-0000-4000-8045-000000000602';
-update public.custom_questions set is_archived = true where id = '5eed0000-0000-4000-8045-000000000603';
+update public.profile_fields set is_archived = true where id = '5eed0000-0000-4000-8045-000000000603';
 update public.organizations
    set document_step_explanation = '{"ca": "Porta el teu document si el tens.", "en": "Bring your document if you have it."}'
  where id = '5eed0000-0000-4000-8000-000000000000';
@@ -158,7 +175,7 @@ reset role;
 -- 2. Never people data ----------------------------------------------------------------------------------
 
 select ok(
-  (select doc ->> 'format' = 'ramassa.onboarding-setup' and (doc ->> 'schema_version')::integer = 2
+  (select doc ->> 'format' = 'ramassa.onboarding-setup' and (doc ->> 'schema_version')::integer = 3
           and doc ->> 'app_commit' = 'abc1234' from run where label = 'first'),
   'one versioned document with the app commit'
 );
@@ -198,13 +215,16 @@ select is(
 );
 select ok(
   (select jsonb_array_length(doc -> 'screens') = 5
-          and (select count(*) from jsonb_array_elements(doc -> 'screens') s, jsonb_array_elements(s -> 'questions')) = 20
+          and (select count(*) from jsonb_array_elements(doc -> 'fields') f where f ->> 'kind' = 'custom') = 20
+          and not exists (select 1 from jsonb_array_elements(doc -> 'screens') s
+                           where s ? 'questions' or s ? 'builtin_screen')
+          and not exists (select 1 from jsonb_array_elements(doc -> 'fields') f where f ? 'legacy_screen_id')
           and doc -> 'app_terms' -> 'draft' -> 'content' -> 'body' ->> 'ca' = 'Termes dissenyats per en Marc.'
           and doc -> 'authorization' -> 'draft' -> 'content' -> 'title' ->> 'ca' = 'Autorització dissenyada'
           and jsonb_array_length(doc -> 'app_terms' -> 'published') = 1
           and jsonb_array_length(doc -> 'authorization' -> 'published') = 1
      from run where label = 'first'),
-  'screens, questions, archived rows and both legal drafts are in it'
+  'screens, fields, archived rows and both legal drafts are in it, and nothing of the old question shape'
 );
 select is(
   (select changes -> 'counts' ->> 'questions' from public.audit_log
@@ -231,7 +251,7 @@ set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-0000000006a1", 
 select throws_ok(
   $$ select public.preview_onboarding_setup_import(
        jsonb_set((select doc from run where label = 'first'), '{schema_version}', '99')) $$,
-  '22023', 'ONBOARDING_SETUP/UNKNOWN_SCHEMA_VERSION: this file uses onboarding setup schema version 99; this app reads versions 1 and 2. Export it again from an app at the same version.',
+  '22023', 'ONBOARDING_SETUP/UNKNOWN_SCHEMA_VERSION: this file uses onboarding setup schema version 99; this app reads versions 1, 2 and 3. Export it again from an app at the same version.',
   'an unknown schema version is refused with a clear message'
 );
 select throws_ok(
@@ -307,13 +327,13 @@ select is(
   'every screen has a new id'
 );
 select is(
-  (select count(*)::integer from public.custom_questions q
-     join public.custom_questions gate on gate.id = q.show_when_question_id
+  (select count(*)::integer from public.profile_fields q
+     join public.profile_fields gate on gate.id = q.show_when_field_id
      join public.custom_question_options o on o.id = q.show_when_option_id
     where q.org_id = '5eed0000-0000-4000-8000-0000000006a0'
       and gate.org_id = q.org_id and o.org_id = q.org_id),
-  (select count(*)::integer from public.custom_questions
-    where org_id = '5eed0000-0000-4000-8000-000000000000' and show_when_question_id is not null),
+  (select count(*)::integer from public.profile_fields
+    where org_id = '5eed0000-0000-4000-8000-000000000000' and show_when_field_id is not null),
   'every condition points inside the new organization'
 );
 select ok(
@@ -364,6 +384,7 @@ select throws_ok(
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-0000000006a1", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 reset role;
 delete from public.intake_screens where org_id = '5eed0000-0000-4000-8000-0000000006a0';
+delete from public.profile_fields where org_id = '5eed0000-0000-4000-8000-0000000006a0' and kind = 'custom';
 delete from public.builtin_question_overrides where org_id = '5eed0000-0000-4000-8000-0000000006a0';
 delete from public.intake_builtin_screens where org_id = '5eed0000-0000-4000-8000-0000000006a0';
 delete from public.intake_flow_orders where org_id = '5eed0000-0000-4000-8000-0000000006a0';
@@ -382,13 +403,20 @@ select ok(
 select ok(
   (select not (p ->> 'can_import')::boolean
           and p ->> 'problem' like 'ONBOARDING_SETUP/REFUSED_VALUE: a question in the file%'
-     from public.preview_onboarding_setup_import(jsonb_set((select doc from run where label = 'first'),
-       '{screens,1,questions,0,question_type}', '"not_a_type"')) p),
+     from public.preview_onboarding_setup_import((
+       select jsonb_set(r.doc,
+                array['fields', (select (f.ordinality - 1)::text
+                                   from jsonb_array_elements(r.doc -> 'fields') with ordinality as f(field, ordinality)
+                                  where f.field ->> 'kind' = 'custom' order by f.ordinality limit 1),
+                      'question_type'],
+                '"not_a_type"')
+         from run r where r.label = 'first')) p),
   'a file the database would refuse is reported by the preview'
 );
 reset role;
 select is(
-  (select count(*)::integer from public.custom_questions where org_id = '5eed0000-0000-4000-8000-0000000006a0'),
+  (select count(*)::integer from public.profile_fields
+    where org_id = '5eed0000-0000-4000-8000-0000000006a0' and kind = 'custom'),
   0,
   'and nothing was written'
 );

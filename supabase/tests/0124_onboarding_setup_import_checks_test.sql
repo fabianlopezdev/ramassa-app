@@ -25,11 +25,22 @@ select plan(23);
 create temp table run (label text primary key, doc jsonb) on commit drop;
 grant all on run to authenticated;
 
+-- The file with its first Ramassà field's type broken.
+create function pg_temp.bad_type(p_doc jsonb) returns jsonb language sql as $$
+  select jsonb_set(p_doc,
+           array['fields', (select (f.ordinality - 1)::text
+                              from jsonb_array_elements(p_doc -> 'fields') with ordinality as f(field, ordinality)
+                             where f.field ->> 'kind' = 'custom' order by f.ordinality limit 1),
+                 'question_type'],
+           '"not_a_type"');
+$$;
+grant execute on function pg_temp.bad_type(jsonb) to authenticated;
+
 set local role authenticated;
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000001", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 insert into run (label, doc) values ('base', public.export_onboarding_setup('abc1234'));
 reset role;
--- The first staff screen of the file and one question built for the checks.
+-- The first staff screen of the file, for the checks.
 insert into run (label, doc)
 select 'screen', jsonb_build_object('id', doc -> 'screens' -> 0 ->> 'id') from run where label = 'base';
 
@@ -156,6 +167,7 @@ select ok(
 
 -- Empty the organization again for the refusals.
 delete from public.intake_screens where org_id = '5eed0000-0000-4000-8000-0000000006c0';
+delete from public.profile_fields where org_id = '5eed0000-0000-4000-8000-0000000006c0' and kind = 'custom';
 delete from public.builtin_question_overrides where org_id = '5eed0000-0000-4000-8000-0000000006c0';
 delete from public.intake_builtin_screens where org_id = '5eed0000-0000-4000-8000-0000000006c0';
 delete from public.intake_flow_orders where org_id = '5eed0000-0000-4000-8000-0000000006c0';
@@ -172,18 +184,18 @@ set local role authenticated;
 select ok(
   (select p ->> 'problem' = 'ONBOARDING_SETUP/REFUSED_VALUE: a question in the file has a value this app does not accept. Download the file again from an app at the same version.'
      from public.preview_onboarding_setup_import(
-       jsonb_set((select doc from run where label = 'base'), '{screens,0,questions,0,question_type}', '"not_a_type"')) p),
+       pg_temp.bad_type((select doc from run where label = 'base'))) p),
   'a constraint the file breaks is named as the part of the file it concerns'
 );
 select ok(
-  (select p ->> 'problem' not like '%custom_questions%' and p ->> 'problem' not like '%constraint%'
+  (select p ->> 'problem' not like '%profile_fields%' and p ->> 'problem' not like '%constraint%'
      from public.preview_onboarding_setup_import(
-       jsonb_set((select doc from run where label = 'base'), '{screens,0,questions,0,question_type}', '"not_a_type"')) p),
+       pg_temp.bad_type((select doc from run where label = 'base'))) p),
   'with no table or constraint name in it'
 );
 select throws_ok(
   $$ select public.import_onboarding_setup(
-       jsonb_set((select doc from run where label = 'base'), '{screens,0,questions,0,question_type}', '"not_a_type"')) $$,
+       pg_temp.bad_type((select doc from run where label = 'base'))) $$,
   '22023', 'ONBOARDING_SETUP/REFUSED_VALUE: a question in the file has a value this app does not accept. Download the file again from an app at the same version.',
   'the import says the same'
 );
@@ -196,12 +208,12 @@ select ok(
 select throws_ok(
   $$ select public.preview_onboarding_setup_import(
        jsonb_set((select doc from run where label = 'base'), '{schema_version}', '"1"')) $$,
-  '22023', 'ONBOARDING_SETUP/MALFORMED: schema_version must be the number 1 or 2',
+  '22023', 'ONBOARDING_SETUP/MALFORMED: schema_version must be the number 1, 2 or 3',
   'schema_version as a string is refused as not the number 1'
 );
 select throws_ok(
   $$ select public.import_onboarding_setup((select doc from run where label = 'base') - 'schema_version') $$,
-  '22023', 'ONBOARDING_SETUP/MALFORMED: schema_version must be the number 1 or 2',
+  '22023', 'ONBOARDING_SETUP/MALFORMED: schema_version must be the number 1, 2 or 3',
   'and so is a file without it'
 );
 

@@ -6,11 +6,11 @@
 --     built-in and staff ones. A staff tablet signing is not refused: signing
 --     mode has no season questions (RAPP-305, RAPP-306), and a refused
 --     offline signing would lose a witnessed signature.
--- 19. Joining re-checks a required staff question placed every season, as
---     her wizard asks it, not only the wizard-placed ones.
+-- 19. Joining re-checks a required field placed on the season form too,
+--     besides the ones placed on her onboarding.
 --
 -- Seed: design role ...097, staff ...002, player ...022 (has not signed this
--- season), screen ...8044...001, organization ...000.
+-- season), organization ...000.
 
 begin;
 create extension if not exists pgtap with schema extensions;
@@ -21,7 +21,7 @@ select vault.create_secret('test-encryption-key', 'app_encryption_key', 'pgTAP t
 where not exists (select 1 from vault.secrets where name = 'app_encryption_key');
 
 -- Setup: a past season she signed on paper (she is returning), the applicant
--- status required, and a required staff question asked every season.
+-- status required, and a field required on the season form.
 insert into public.seasons (id, org_id, name, starts_on, is_current)
 values ('00000000-0000-0000-0000-0000000007a1', '5eed0000-0000-4000-8000-000000000000',
         '2025/26', '2025-09-01', false);
@@ -29,15 +29,18 @@ insert into public.authorization_signatures (org_id, profile_id, season_id, meth
 values ('5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-8000-000000000022',
         '00000000-0000-0000-0000-0000000007a1', 'paper', '2025-09-15');
 update public.profiles set applicant_status = null where id = '5eed0000-0000-4000-8000-000000000022';
-insert into public.custom_questions (id, org_id, screen_id, question_type, label, privacy, placements, sort_order)
-values ('00000000-0000-0000-0000-0000000007c1', '5eed0000-0000-4000-8000-000000000000',
-        '5eed0000-0000-4000-8044-000000000001', 'short_text', '{"ca": "Com vas aquesta temporada?"}',
-        'normal', array['season'], 92);
+-- A Fitxa field placed on the season form only, required there.
+insert into public.profile_fields (id, org_id, section_id, kind, question_type, label, privacy, sort_order)
+select '00000000-0000-0000-0000-0000000007c1', '5eed0000-0000-4000-8000-000000000000', s.id, 'custom',
+       'short_text', '{"ca": "Com vas aquesta temporada?"}', 'normal', 92
+  from public.profile_sections s
+ where s.org_id = '5eed0000-0000-4000-8000-000000000000' and s.key = 'situation';
+insert into public.field_placements (org_id, field_id, surface, sort_order, required)
+values ('5eed0000-0000-4000-8000-000000000000', '00000000-0000-0000-0000-0000000007c1', 'season', 92, true);
 
 set local role authenticated;
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000097", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select public.save_builtin_question_required('applicant_status', true);
-select public.save_custom_question_required('00000000-0000-0000-0000-0000000007c1', true);
 reset role;
 
 -- 18. Re-registration ----------------------------------------------------------------------------------
@@ -96,7 +99,7 @@ select lives_ok(
   'a witnessed tablet signing is never refused for her season answers'
 );
 
--- 19. Joining checks the questions asked every season --------------------------------------------------
+-- 19. Joining checks the fields on the season form --------------------------------------------------
 
 reset role;
 insert into auth.users (id, email) values

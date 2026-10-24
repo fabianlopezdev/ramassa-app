@@ -2,8 +2,8 @@
 -- Run with: bunx supabase test db
 --
 -- What these assertions defend:
---   1. A field the designer creates records her as its creator, also through
---      the old question writer (the compatibility view has no creator).
+--   1. A field the designer creates records her as its creator, also when it
+--      is written with no creator named (the creator trigger).
 --   2. The admin's bell gets `field_created` with the field's name and the
 --      Fitxa's path; the designer who created it gets nothing, nor does a
 --      staff member without a design permission.
@@ -29,12 +29,15 @@ set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000097", 
 insert into run select 'gloves', public.save_profile_field(
   null, (select id from public.profile_sections where org_id = '5eed0000-0000-4000-8000-000000000000' and key = 'sizes'),
   'short_text', '{"ca": "Talla de guants"}'::jsonb, null, 'normal');
-insert into run select 'legacy', public.save_custom_question(
-  p_id => null,
-  p_screen_id => (select id from public.intake_screens where org_id = '5eed0000-0000-4000-8000-000000000000' limit 1),
-  p_type => 'short_text', p_label => '{"ca": "Pregunta antiga"}'::jsonb, p_help => null,
-  p_privacy => 'personal', p_placements => array['wizard'], p_settings => '{}'::jsonb, p_options => '[]'::jsonb);
 reset role;
+-- Written directly, as an import does, with the designer signed in.
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000097", "role": "authenticated"}';
+insert into public.profile_fields (org_id, section_id, kind, question_type, label, privacy)
+select '5eed0000-0000-4000-8000-000000000000', s.id, 'custom', 'short_text', '{"ca": "Camp escrit directament"}', 'personal'
+  from public.profile_sections s
+ where s.org_id = '5eed0000-0000-4000-8000-000000000000' and s.key = 'support';
+insert into run select 'direct', id from public.profile_fields
+ where org_id = '5eed0000-0000-4000-8000-000000000000' and label ->> 'ca' = 'Camp escrit directament';
 
 select is(
   (select created_by from public.profile_fields where id = (select id from run where label = 'gloves')),
@@ -42,9 +45,9 @@ select is(
   'a new field records who created it'
 );
 select is(
-  (select created_by from public.profile_fields where id = (select id from run where label = 'legacy')),
+  (select created_by from public.profile_fields where id = (select id from run where label = 'direct')),
   '5eed0000-0000-4000-8000-000000000097'::uuid,
-  'so does a question written through the old form'
+  'so does a field written with no creator named'
 );
 
 -- 2. The bell ------------------------------------------------------------------------------------------
@@ -76,7 +79,7 @@ select results_eq(
              where event = 'field_created' and id in (
                select n.id from public.staff_notifications n where n.source_id = '%s') $$,
          (select id from run where label = 'gloves')),
-  $$ values ('Talla de guants'::text, '/settings?tab=profile-layout'::text) $$,
+  $$ values ('Talla de guants'::text, '/profile-layout'::text) $$,
   'her bell names the field and opens the Fitxa'
 );
 reset role;
@@ -90,6 +93,8 @@ select is(
   0,
   'built-in fields ring nothing'
 );
+-- Nobody signed in, as a seed or a new organization writes.
+set local request.jwt.claims = '{}';
 with quiet as (
   insert into public.profile_fields (org_id, section_id, kind, question_type, label, privacy)
   select '5eed0000-0000-4000-8000-000000000000', id, 'custom', 'short_text', '{"ca": "Sense ningú"}'::jsonb, 'normal'

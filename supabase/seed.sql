@@ -1540,26 +1540,26 @@ on conflict (id) do nothing;
 -- The fields Ramassà added (RAPP-649): the seeded organization's Support
 -- section, then where each is asked. The fourth is filled in by the team only.
 insert into public.profile_fields
-  (id, org_id, section_id, kind, question_type, label, help, privacy, sort_order, legacy_screen_id)
+  (id, org_id, section_id, kind, question_type, label, help, privacy, sort_order)
 select v.id::uuid, '5eed0000-0000-4000-8000-000000000000', s.id, 'custom', v.question_type, v.label::jsonb,
-       null, v.privacy, v.sort_order, v.screen_id::uuid
+       null, v.privacy, v.sort_order
   from (values
-  ('5eed0000-0000-4000-8045-000000000001', '5eed0000-0000-4000-8044-000000000001', 'yes_no_maybe',
+  ('5eed0000-0000-4000-8045-000000000001', 'yes_no_maybe',
    '{"ca":"Vens amb transport públic?","es":"¿Vienes en transporte público?","en":"Do you come by public transport?","ar":"هل تأتين بالمواصلات العامة؟","fa":"آیا با حمل و نقل عمومی می‌آیید؟"}',
    'normal', 100),
-  ('5eed0000-0000-4000-8045-000000000002', '5eed0000-0000-4000-8044-000000000002', 'single_choice',
+  ('5eed0000-0000-4000-8045-000000000002', 'single_choice',
    '{"ca":"Com et vas assabentar de Ramassà?","es":"¿Cómo te enteraste de Ramassà?","en":"How did you hear about Ramassà?","ar":"كيف سمعتِ عن راماسا؟","fa":"چطور با راماسا آشنا شدید؟"}',
    'normal', 101),
-  ('5eed0000-0000-4000-8045-000000000003', '5eed0000-0000-4000-8044-000000000003', 'long_text',
+  ('5eed0000-0000-4000-8045-000000000003', 'long_text',
    '{"ca":"Què et dificulta venir als entrenaments?","es":"¿Qué te dificulta venir a los entrenamientos?","en":"What makes it difficult for you to attend training?","ar":"ما الذي يصعّب عليكِ الحضور إلى التدريبات؟","fa":"چه چیزی آمدن شما به تمرین را دشوار می‌کند؟"}',
    'sensitive', 103),
-  ('5eed0000-0000-4000-8045-000000000004', '5eed0000-0000-4000-8044-000000000001', 'short_text',
+  ('5eed0000-0000-4000-8045-000000000004', 'short_text',
    '{"ca":"Parada de metro més propera"}',
    'personal', 104),
-  ('5eed0000-0000-4000-8045-000000000005', '5eed0000-0000-4000-8044-000000000003', 'single_choice',
+  ('5eed0000-0000-4000-8045-000000000005', 'single_choice',
    '{"ca":"Hi ha res que dificulti venir aquesta temporada?","es":"¿Hay algo que te dificulte venir esta temporada?","en":"Is anything making it hard to come this season?","ar":"هل هناك ما يصعّب عليكِ الحضور هذا الموسم؟","fa":"آیا چیزی آمدن شما را در این فصل دشوار می‌کند؟"}',
    'sensitive', 102)
-  ) as v(id, screen_id, question_type, label, privacy, sort_order)
+  ) as v(id, question_type, label, privacy, sort_order)
   join public.profile_sections s
     on s.org_id = '5eed0000-0000-4000-8000-000000000000' and s.key = 'support'
 on conflict (id) do nothing;

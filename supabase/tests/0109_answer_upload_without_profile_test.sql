@@ -50,10 +50,14 @@ select lives_ok(
 reset role;
 insert into public.intake_screens (id, org_id, title, after_screen)
 values ('00000000-0000-0000-0000-0000000006b2', '5eed0000-0000-4000-8000-000000000000', '{"ca": "Documents"}', 'logistics');
-insert into public.custom_questions (id, org_id, screen_id, question_type, label, privacy, placements, settings)
-values ('00000000-0000-0000-0000-0000000006b3', '5eed0000-0000-4000-8000-000000000000',
-        '00000000-0000-0000-0000-0000000006b2', 'file_upload', '{"ca": "Un document"}', 'personal',
-        array['wizard'], '{"accept": "document"}');
+insert into public.profile_fields (id, org_id, section_id, kind, question_type, label, privacy, settings)
+select '00000000-0000-0000-0000-0000000006b3', '5eed0000-0000-4000-8000-000000000000', s.id, 'custom',
+       'file_upload', '{"ca": "Un document"}', 'personal', '{"accept": "document"}'
+  from public.profile_sections s
+ where s.org_id = '5eed0000-0000-4000-8000-000000000000' and s.key = 'identity';
+insert into public.field_placements (org_id, field_id, surface, screen_key, sort_order)
+values ('5eed0000-0000-4000-8000-000000000000', '00000000-0000-0000-0000-0000000006b3', 'onboarding',
+        '00000000-0000-0000-0000-0000000006b2', 0);
 
 set local role authenticated;
 set local request.jwt.claims = '{"sub": "00000000-0000-0000-0000-0000000006b1", "role": "authenticated"}';

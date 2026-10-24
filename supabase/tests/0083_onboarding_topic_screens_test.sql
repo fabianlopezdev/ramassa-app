@@ -4,10 +4,11 @@ set local search_path = public, extensions;
 select plan(5);
 
 select results_eq(
-  $$ select id::text, screen_id::text from public.custom_questions
-      where id in ('5eed0000-0000-4000-8045-000000000001',
-                   '5eed0000-0000-4000-8045-000000000002',
-                   '5eed0000-0000-4000-8045-000000000003') order by id $$,
+  $$ select field_id::text, screen_key from public.field_placements
+      where surface = 'onboarding'
+        and field_id in ('5eed0000-0000-4000-8045-000000000001',
+                         '5eed0000-0000-4000-8045-000000000002',
+                         '5eed0000-0000-4000-8045-000000000003') order by field_id $$,
   $$ values ('5eed0000-0000-4000-8045-000000000001', '5eed0000-0000-4000-8044-000000000001'),
             ('5eed0000-0000-4000-8045-000000000002', '5eed0000-0000-4000-8044-000000000002'),
             ('5eed0000-0000-4000-8045-000000000003', '5eed0000-0000-4000-8044-000000000003') $$,
@@ -30,7 +31,7 @@ select ok(
   'topic titles are translated into all five languages'
 );
 select ok(
-  not exists (select 1 from public.custom_questions
+  not exists (select 1 from public.profile_fields
     where id in ('5eed0000-0000-4000-8045-000000000001',
                  '5eed0000-0000-4000-8045-000000000002',
                  '5eed0000-0000-4000-8045-000000000003')
@@ -41,7 +42,7 @@ select ok(
   'question and offered option labels are translated into all five languages'
 );
 select ok(
-  (select help is null and privacy = 'sensitive' from public.custom_questions
+  (select help is null and privacy = 'sensitive' from public.profile_fields
     where id = '5eed0000-0000-4000-8045-000000000003'),
   'participation omits the helper sentence while keeping sensitive access rules'
 );

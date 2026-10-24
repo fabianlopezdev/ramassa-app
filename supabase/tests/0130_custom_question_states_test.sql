@@ -22,20 +22,25 @@ select plan(11);
 create temp table run (label text primary key, id uuid) on commit drop;
 grant all on run to authenticated;
 
--- Two staff questions on one screen: one optional, one required.
+-- Two Fitxa fields placed on one screen: one optional, one required there.
 set local role authenticated;
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000001", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 insert into run (label, id)
 values ('screen', public.save_intake_screen(null, '{"ca": "Preferències"}'::jsonb, null, 'logistics'));
 insert into run (label, id)
-select 'optional', public.save_custom_question(
-  null, (select id from run where label = 'screen'), 'short_text', '{"ca": "Un dia preferit"}'::jsonb,
-  null, 'normal', array['wizard']);
+select 'optional', public.save_profile_field(
+  null, (select id from public.profile_sections
+          where org_id = '5eed0000-0000-4000-8000-000000000000' and key = 'support'),
+  'short_text', '{"ca": "Un dia preferit"}'::jsonb, null, 'normal');
 insert into run (label, id)
-select 'required', public.save_custom_question(
-  null, (select id from run where label = 'screen'), 'short_text', '{"ca": "Talla de samarreta"}'::jsonb,
-  null, 'normal', array['wizard']);
-select public.save_custom_question_required((select id from run where label = 'required'), true);
+select 'required', public.save_profile_field(
+  null, (select id from public.profile_sections
+          where org_id = '5eed0000-0000-4000-8000-000000000000' and key = 'sizes'),
+  'short_text', '{"ca": "Talla de samarreta"}'::jsonb, null, 'normal');
+select public.place_field((select id from run where label = 'optional'), 'onboarding',
+                          (select id::text from run where label = 'screen'));
+select public.place_field((select id from run where label = 'required'), 'onboarding',
+                          (select id::text from run where label = 'screen'), true);
 
 -- 1. The invitation carries them ----------------------------------------------------------------------
 

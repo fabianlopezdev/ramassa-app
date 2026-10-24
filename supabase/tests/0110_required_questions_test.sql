@@ -9,7 +9,8 @@
 --      language are refused; every change is audited.
 --   4. Every reader follows the one list: the catalog, the RAPP-301 Don't ask
 --      rule, the RAPP-612 screen hide, the question hide.
---   5. A staff question is required only where she answers it herself.
+--   5. A Ramassà field is required only on a placement where she answers it
+--      herself, and only designers make a placement required.
 --   6. The server re-checks: joining refuses a missing required answer,
 --      built-in or staff, and saves her staff answers in the same call;
 --      an optional dependants question left unanswered is unknown, not "no";
@@ -39,7 +40,7 @@ select ok(
 );
 select ok(
   not has_function_privilege('anon', 'public.save_builtin_question_required(text, boolean)', 'execute')
-  and not has_function_privilege('anon', 'public.save_custom_question_required(uuid, boolean)', 'execute'),
+  and not has_function_privilege('anon', 'public.save_placement(uuid, boolean, jsonb, jsonb)', 'execute'),
   'the new functions need an account'
 );
 select ok(
@@ -164,34 +165,44 @@ select lives_ok(
   'back to optional'
 );
 
--- 5. Staff questions --------------------------------------------------------------------------------------
+-- 5. Ramassà fields --------------------------------------------------------------------------------------
 
 reset role;
-insert into public.custom_questions (id, org_id, screen_id, question_type, label, privacy, placements, sort_order)
-values ('00000000-0000-0000-0000-0000000006c1', '5eed0000-0000-4000-8000-000000000000',
-        '5eed0000-0000-4000-8044-000000000001', 'short_text', '{"ca": "Només l''equip"}', 'normal',
-        array['staff'], 90),
-       ('00000000-0000-0000-0000-0000000006c2', '5eed0000-0000-4000-8000-000000000000',
-        '5eed0000-0000-4000-8044-000000000001', 'short_text', '{"ca": "Com ens vas conèixer?"}', 'normal',
-        array['wizard', 'entity_form'], 91);
-select is(
-  (select is_required from public.custom_questions where id = '00000000-0000-0000-0000-0000000006c2'),
-  false,
-  'a staff question is optional unless staff say so'
+insert into public.profile_fields (id, org_id, section_id, kind, question_type, label, privacy, default_required, sort_order)
+select v.id::uuid, '5eed0000-0000-4000-8000-000000000000', s.id, 'custom', 'short_text', v.label::jsonb, 'normal',
+       v.default_required, v.sort_order
+  from (values ('00000000-0000-0000-0000-0000000006c1', '{"ca": "Només l''equip"}', true, 90),
+               ('00000000-0000-0000-0000-0000000006c2', '{"ca": "Com ens vas conèixer?"}', false, 91))
+       as v(id, label, default_required, sort_order)
+  join public.profile_sections s
+    on s.org_id = '5eed0000-0000-4000-8000-000000000000' and s.key = 'support';
+insert into public.field_placements (id, org_id, field_id, surface, screen_key, sort_order)
+values ('00000000-0000-0000-0000-0000000006d2', '5eed0000-0000-4000-8000-000000000000',
+        '00000000-0000-0000-0000-0000000006c2', 'onboarding', '5eed0000-0000-4000-8044-000000000001', 91),
+       ('00000000-0000-0000-0000-0000000006d3', '5eed0000-0000-4000-8000-000000000000',
+        '00000000-0000-0000-0000-0000000006c2', 'entity_form', null, 91);
+select ok(
+  not private.field_required_for_her('00000000-0000-0000-0000-0000000006c1')
+  and not private.field_required_for_her('00000000-0000-0000-0000-0000000006c2'),
+  'a field is optional for her unless a placement she answers says so, a team-only one always'
 );
 set local role authenticated;
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select throws_ok(
-  $$ select public.save_custom_question_required('00000000-0000-0000-0000-0000000006c1', true) $$,
-  '23514', null::text, 'a staff-only question cannot be required: she never answers it'
+  $$ select public.save_placement('00000000-0000-0000-0000-0000000006d2', true, null, null) $$,
+  '42501', null::text, 'staff without the design permission cannot make a placement required'
 );
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000097", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select lives_ok(
-  $$ select public.save_custom_question_required('00000000-0000-0000-0000-0000000006c2', true) $$,
-  'a wizard question can'
+  $$ select public.save_placement('00000000-0000-0000-0000-0000000006d2', true, null, null) $$,
+  'the design role makes it required on her onboarding'
 );
 reset role;
 select ok(
-  exists (select 1 from public.audit_log where action = 'intake.custom_required_save'
-           and target_id = '00000000-0000-0000-0000-0000000006c2'),
+  exists (select 1 from public.audit_log where action = 'intake.placement_save'
+           and target_id = '00000000-0000-0000-0000-0000000006c2'
+           and (changes ->> 'required')::boolean)
+  and private.field_required_for_her('00000000-0000-0000-0000-0000000006c2'),
   'and the change is audited'
 );
 

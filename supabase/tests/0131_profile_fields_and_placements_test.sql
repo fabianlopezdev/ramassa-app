@@ -4,14 +4,14 @@
 -- What these assertions defend:
 --   1. The copy kept every id: each seeded question is a custom field with the
 --      same id, the answers' foreign keys point at the fields, and the
---      compatibility view gives the old shape back.
+--      placements say where each is asked (the view is gone since RAPP-656).
 --   2. Every organization has the seven sections and the built-in fields,
 --      placed where the app asks them.
 --   3. A Ramassà field placed on an app screen is asked there; a required one
 --      keeps that screen shown.
 --   4. The entity form and the season are surfaces like onboarding.
 --   5. A field with no placement is the team's only: her onboarding never
---      takes an answer to it, and the view calls it staff.
+--      takes an answer to it, and it has no placement.
 --   6. Privacy reads are unchanged: a Sensitive answer needs
 --      participants.view_sensitive, a Personal one participants.view_personal.
 --   7. Nobody but the designers writes the layout: anon and players are
@@ -46,23 +46,21 @@ select is(
   array['profile_fields'],
   'answers, options, referral answers and per-player choices point at the fields'
 );
-select is(
-  (select relkind::text from pg_class where oid = 'public.custom_questions'::regclass),
-  'v',
-  'custom_questions is the compatibility view'
-);
+select hasnt_view('public', 'custom_questions', 'the old question shape is gone');
 select results_eq(
-  $$ select placements from public.custom_questions
-      where id in ('5eed0000-0000-4000-8045-000000000001', '5eed0000-0000-4000-8045-000000000004',
-                   '5eed0000-0000-4000-8045-000000000005')
-      order by id $$,
-  $$ values (array['wizard', 'entity_form']), (array['staff']), (array['wizard', 'season']) $$,
-  'the view gives back where each question shows'
+  $$ select array(select p.surface from public.field_placements p where p.field_id = f.id order by p.surface)
+       from public.profile_fields f
+      where f.id in ('5eed0000-0000-4000-8045-000000000001', '5eed0000-0000-4000-8045-000000000004',
+                     '5eed0000-0000-4000-8045-000000000005')
+      order by f.id $$,
+  $$ values (array['entity_form', 'onboarding']), (array[]::text[]), (array['onboarding', 'season']) $$,
+  'the placements say where each field is asked'
 );
 select is(
-  (select screen_id from public.custom_questions where id = '5eed0000-0000-4000-8045-000000000004'),
-  '5eed0000-0000-4000-8044-000000000001'::uuid,
-  'a staff-only question keeps the screen it was filed under'
+  (select s.key from public.profile_fields f join public.profile_sections s on s.id = f.section_id
+    where f.id = '5eed0000-0000-4000-8045-000000000004'),
+  'support',
+  'a team-only field sits in its Fitxa section'
 );
 
 -- 2. Sections and built-in fields ------------------------------------------------------------------------
@@ -142,9 +140,10 @@ select lives_ok(
   'and on the season re-registration'
 );
 select is(
-  (select placements from public.custom_questions where id = (select id from run where label = 'gloves')),
-  array['wizard', 'entity_form', 'season'],
-  'the view lists the three surfaces'
+  array(select surface from public.field_placements
+         where field_id = (select id from run where label = 'gloves') order by surface),
+  array['entity_form', 'onboarding', 'season'],
+  'the field is placed on the three surfaces'
 );
 select throws_ok(
   $$ select public.place_field((select id from public.profile_fields where builtin_key = 'phone'
@@ -160,8 +159,9 @@ select 'team_note', public.save_profile_field(
   null, (select id from public.profile_sections where org_id = '5eed0000-0000-4000-8000-000000000000' and key = 'support'),
   'short_text', '{"ca": "Nota de l''equip"}'::jsonb, null, 'personal');
 select is(
-  (select placements from public.custom_questions where id = (select id from run where label = 'team_note')),
-  array['staff'],
+  (select count(*)::integer from public.field_placements
+    where field_id = (select id from run where label = 'team_note')),
+  0,
   'a field with no placement is the team''s only'
 );
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000011", "role": "authenticated", "aal": "aal1"}';

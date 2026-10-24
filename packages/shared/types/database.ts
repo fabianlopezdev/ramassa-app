@@ -878,13 +878,6 @@ export type Database = {
             foreignKeyName: 'custom_answers_question_id_fkey';
             columns: ['question_id'];
             isOneToOne: false;
-            referencedRelation: 'custom_questions';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'custom_answers_question_id_fkey';
-            columns: ['question_id'];
-            isOneToOne: false;
             referencedRelation: 'profile_fields';
             referencedColumns: ['id'];
           },
@@ -1019,13 +1012,6 @@ export type Database = {
             foreignKeyName: 'custom_question_options_question_id_fkey';
             columns: ['question_id'];
             isOneToOne: false;
-            referencedRelation: 'custom_questions';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'custom_question_options_question_id_fkey';
-            columns: ['question_id'];
-            isOneToOne: false;
             referencedRelation: 'profile_fields';
             referencedColumns: ['id'];
           },
@@ -1069,13 +1055,6 @@ export type Database = {
             columns: ['profile_id'];
             isOneToOne: false;
             referencedRelation: 'profiles';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'custom_question_states_question_id_fkey';
-            columns: ['question_id'];
-            isOneToOne: false;
-            referencedRelation: 'custom_questions';
             referencedColumns: ['id'];
           },
           {
@@ -1842,13 +1821,6 @@ export type Database = {
             foreignKeyName: 'field_placements_field_id_fkey';
             columns: ['field_id'];
             isOneToOne: false;
-            referencedRelation: 'custom_questions';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'field_placements_field_id_fkey';
-            columns: ['field_id'];
-            isOneToOne: false;
             referencedRelation: 'profile_fields';
             referencedColumns: ['id'];
           },
@@ -2289,7 +2261,6 @@ export type Database = {
       intake_screens: {
         Row: {
           after_screen: string;
-          builtin_screen: string | null;
           created_at: string;
           home_after_screen: string;
           home_sort_order: number;
@@ -2303,7 +2274,6 @@ export type Database = {
         };
         Insert: {
           after_screen: string;
-          builtin_screen?: string | null;
           created_at?: string;
           home_after_screen: string;
           home_sort_order: number;
@@ -2317,7 +2287,6 @@ export type Database = {
         };
         Update: {
           after_screen?: string;
-          builtin_screen?: string | null;
           created_at?: string;
           home_after_screen?: string;
           home_sort_order?: number;
@@ -3283,7 +3252,6 @@ export type Database = {
           is_archived: boolean;
           kind: string;
           label: Json;
-          legacy_screen_id: string | null;
           org_id: string;
           privacy: string;
           question_type: string;
@@ -3304,7 +3272,6 @@ export type Database = {
           is_archived?: boolean;
           kind: string;
           label: Json;
-          legacy_screen_id?: string | null;
           org_id: string;
           privacy: string;
           question_type: string;
@@ -3325,7 +3292,6 @@ export type Database = {
           is_archived?: boolean;
           kind?: string;
           label?: Json;
-          legacy_screen_id?: string | null;
           org_id?: string;
           privacy?: string;
           question_type?: string;
@@ -3345,13 +3311,6 @@ export type Database = {
             referencedColumns: ['id'];
           },
           {
-            foreignKeyName: 'profile_fields_legacy_screen_id_fkey';
-            columns: ['legacy_screen_id'];
-            isOneToOne: false;
-            referencedRelation: 'intake_screens';
-            referencedColumns: ['id'];
-          },
-          {
             foreignKeyName: 'profile_fields_org_id_fkey';
             columns: ['org_id'];
             isOneToOne: false;
@@ -3363,13 +3322,6 @@ export type Database = {
             columns: ['section_id'];
             isOneToOne: false;
             referencedRelation: 'profile_sections';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'profile_fields_show_when_field_id_fkey';
-            columns: ['show_when_field_id'];
-            isOneToOne: false;
-            referencedRelation: 'custom_questions';
             referencedColumns: ['id'];
           },
           {
@@ -3831,13 +3783,6 @@ export type Database = {
             columns: ['org_id'];
             isOneToOne: false;
             referencedRelation: 'organizations';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'referral_custom_answers_question_id_fkey';
-            columns: ['question_id'];
-            isOneToOne: false;
-            referencedRelation: 'custom_questions';
             referencedColumns: ['id'];
           },
           {
@@ -5478,56 +5423,6 @@ export type Database = {
           },
         ];
       };
-      custom_questions: {
-        Row: {
-          created_at: string | null;
-          help: Json | null;
-          id: string | null;
-          is_archived: boolean | null;
-          is_required: boolean | null;
-          label: Json | null;
-          org_id: string | null;
-          placements: string[] | null;
-          privacy: string | null;
-          question_type: string | null;
-          screen_id: string | null;
-          settings: Json | null;
-          show_when_option_id: string | null;
-          show_when_question_id: string | null;
-          sort_order: number | null;
-          updated_at: string | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'profile_fields_org_id_fkey';
-            columns: ['org_id'];
-            isOneToOne: false;
-            referencedRelation: 'organizations';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'profile_fields_show_when_field_id_fkey';
-            columns: ['show_when_question_id'];
-            isOneToOne: false;
-            referencedRelation: 'custom_questions';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'profile_fields_show_when_field_id_fkey';
-            columns: ['show_when_question_id'];
-            isOneToOne: false;
-            referencedRelation: 'profile_fields';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'profile_fields_show_when_option_id_fkey';
-            columns: ['show_when_option_id'];
-            isOneToOne: false;
-            referencedRelation: 'custom_question_options';
-            referencedColumns: ['id'];
-          },
-        ];
-      };
       municipality_compatibility_report: {
         Row: {
           legacy_value: string | null;
@@ -5566,7 +5461,6 @@ export type Database = {
         Args: { p_preset_id: string; p_profile_ids: string[] };
         Returns: number;
       };
-      archive_custom_question: { Args: { p_id: string }; Returns: undefined };
       archive_intake_screen: { Args: { p_id: string }; Returns: undefined };
       archive_profile_field: { Args: { p_id: string }; Returns: undefined };
       assert_within_hourly_limit: {
@@ -5924,10 +5818,6 @@ export type Database = {
       };
       encrypt_field: { Args: { plaintext: string }; Returns: string };
       encryption_key: { Args: never; Returns: string };
-      ensure_builtin_screen_holder: {
-        Args: { p_screen: string; p_title: Json };
-        Returns: string;
-      };
       export_onboarding_setup: {
         Args: { p_app_commit?: string };
         Returns: Json;
@@ -7082,10 +6972,6 @@ export type Database = {
         Args: { p_invite_id: string };
         Returns: string;
       };
-      reorder_custom_questions: {
-        Args: { p_ids: string[]; p_screen_id: string };
-        Returns: undefined;
-      };
       reorder_intake_screens: {
         Args: { p_after_screen: string; p_ids: string[] };
         Returns: undefined;
@@ -7151,24 +7037,6 @@ export type Database = {
       save_custom_notification_group: {
         Args: { p_id: string; p_name: string; p_participant_ids: string[] };
         Returns: string;
-      };
-      save_custom_question: {
-        Args: {
-          p_help: Json;
-          p_id: string;
-          p_label: Json;
-          p_options?: Json;
-          p_placements: string[];
-          p_privacy: string;
-          p_screen_id: string;
-          p_settings?: Json;
-          p_type: string;
-        };
-        Returns: string;
-      };
-      save_custom_question_required: {
-        Args: { p_id: string; p_is_required: boolean };
-        Returns: undefined;
       };
       save_entity_service: { Args: { p_payload: Json }; Returns: string };
       save_forum_category: {
@@ -7256,10 +7124,6 @@ export type Database = {
       save_profile_section: {
         Args: { p_id: string; p_title: Json };
         Returns: string;
-      };
-      save_referral_custom_answers: {
-        Args: { p_answers: Json; p_referral_id: string };
-        Returns: undefined;
       };
       save_survey: {
         Args: {
