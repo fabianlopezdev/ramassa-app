@@ -193,16 +193,6 @@
     "archiveBodyNone": "لن يُسأل عنه في أي مكان. ليست له أي إجابة.",
     "archiveBodyCount_one": "لن يُسأل عنه في أي مكان. تُحفظ إجابته.",
     "archiveBodyCount_other": "لن يُسأل عنه في أي مكان. تُحفظ إجاباته البالغة {{count}}.",
-    "counts": {
-      "sections_one": "{{count}} قسم",
-      "sections_other": "{{count}} أقسام",
-      "fields_one": "{{count}} حقل",
-      "fields_other": "{{count}} حقول",
-      "sensitive_one": "{{count}} حساس",
-      "sensitive_other": "{{count}} حساسة",
-      "teamOnly_one": "{{count}} للفريق فقط",
-      "teamOnly_other": "{{count}} للفريق فقط"
-    },
     "surface": {
       "onboarding": "التطبيق",
       "entity_form": "الجهة",

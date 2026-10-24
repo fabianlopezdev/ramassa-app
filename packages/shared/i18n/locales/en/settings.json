@@ -728,16 +728,6 @@
     "archiveBodyNone": "It will not be asked anywhere. It has no answers.",
     "archiveBodyCount_one": "It will not be asked anywhere. Its answer is kept.",
     "archiveBodyCount_other": "It will not be asked anywhere. Its {{count}} answers are kept.",
-    "counts": {
-      "sections_one": "{{count}} section",
-      "sections_other": "{{count}} sections",
-      "fields_one": "{{count}} field",
-      "fields_other": "{{count}} fields",
-      "sensitive_one": "{{count}} sensitive",
-      "sensitive_other": "{{count}} sensitive",
-      "teamOnly_one": "{{count}} team only",
-      "teamOnly_other": "{{count}} team only"
-    },
     "surface": {
       "onboarding": "App",
       "entity_form": "Entity",

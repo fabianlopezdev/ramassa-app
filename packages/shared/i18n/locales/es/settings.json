@@ -728,16 +728,6 @@
     "archiveBodyNone": "Ya no se preguntará en ningún sitio. No tiene ninguna respuesta.",
     "archiveBodyCount_one": "Ya no se preguntará en ningún sitio. Se conserva su respuesta.",
     "archiveBodyCount_other": "Ya no se preguntará en ningún sitio. Se conservan sus {{count}} respuestas.",
-    "counts": {
-      "sections_one": "{{count}} sección",
-      "sections_other": "{{count}} secciones",
-      "fields_one": "{{count}} campo",
-      "fields_other": "{{count}} campos",
-      "sensitive_one": "{{count}} sensible",
-      "sensitive_other": "{{count}} sensibles",
-      "teamOnly_one": "{{count}} solo equipo",
-      "teamOnly_other": "{{count}} solo equipo"
-    },
     "surface": {
       "onboarding": "App",
       "entity_form": "Entidad",

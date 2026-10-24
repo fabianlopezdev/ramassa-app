@@ -189,16 +189,6 @@
     "archiveBodyNone": "دیگر در هیچ جا پرسیده نمی‌شود. هیچ پاسخی ندارد.",
     "archiveBodyCount_one": "دیگر در هیچ جا پرسیده نمی‌شود. پاسخ آن نگه داشته می‌شود.",
     "archiveBodyCount_other": "دیگر در هیچ جا پرسیده نمی‌شود. {{count}} پاسخ آن نگه داشته می‌شود.",
-    "counts": {
-      "sections_one": "{{count}} بخش",
-      "sections_other": "{{count}} بخش",
-      "fields_one": "{{count}} فیلد",
-      "fields_other": "{{count}} فیلد",
-      "sensitive_one": "{{count}} حساس",
-      "sensitive_other": "{{count}} حساس",
-      "teamOnly_one": "{{count}} فقط تیم",
-      "teamOnly_other": "{{count}} فقط تیم"
-    },
     "surface": {
       "onboarding": "برنامه",
       "entity_form": "نهاد",

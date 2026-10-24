@@ -4,7 +4,7 @@
  * (RAPP-649). Only the people who decide which data Ramassà asks for open it
  * (RAPP-658).
  *
- * A search on top, a count line, then the sections as cards of field rows.
+ * A search on top, then the sections as cards of field rows.
  * Sections are labels that help read the list: nothing is dragged. Inside a
  * section the app's own fields come first, then the ones staff created, A to
  * Z (`fieldsOfSection`). An admin renames a section in place, adds sections
@@ -20,12 +20,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { searchFields } from '@/lib/field-picker';
-import {
-  profileLayoutCounts,
-  profileLayoutOf,
-  surfacesOfField,
-  type ProfileLayoutCounts,
-} from '@/lib/profile-layout';
+import { profileLayoutOf, surfacesOfField } from '@/lib/profile-layout';
 import { useProfileLayoutActions } from '@/lib/profile-layout-actions';
 import { Plus, Search } from 'lucide-react';
 import { useId, useState } from 'react';
@@ -97,12 +92,11 @@ export function ProfileLayoutPanel({
           type="search"
           value={query}
           placeholder={t('fieldPicker.searchPlaceholder')}
-          className="h-11 ps-9"
+          className="h-11 bg-card ps-9 dark:bg-card"
           onChange={(event) => setQuery(event.target.value)}
           data-testid="profile-layout-search"
         />
       </div>
-      <CountLine counts={profileLayoutCounts(layout)} />
       {shown.length === 0 ? (
         <p
           className="text-start text-sm text-muted-foreground"
@@ -161,27 +155,5 @@ export function ProfileLayoutPanel({
         </DialogContent>
       </Dialog>
     </Page>
-  );
-}
-
-function CountLine({ counts }: { readonly counts: ProfileLayoutCounts }) {
-  const { t } = useTranslation('settings');
-  const items = [
-    { key: 'sections', text: t('profileLayout.counts.sections', { count: counts.sections }) },
-    { key: 'fields', text: t('profileLayout.counts.fields', { count: counts.fields }) },
-    { key: 'sensitive', text: t('profileLayout.counts.sensitive', { count: counts.sensitive }) },
-    { key: 'teamOnly', text: t('profileLayout.counts.teamOnly', { count: counts.teamOnly }) },
-  ];
-  return (
-    <ul className="flex flex-wrap gap-3" data-testid="profile-layout-counts">
-      {items.map((item) => (
-        <li
-          key={item.key}
-          className="flex h-10 items-center rounded-xl border bg-card px-4 text-sm text-muted-foreground"
-        >
-          {item.text}
-        </li>
-      ))}
-    </ul>
   );
 }

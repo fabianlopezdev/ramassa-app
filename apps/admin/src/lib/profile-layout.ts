@@ -9,7 +9,6 @@ import { PROFILE_LAYOUT_PERMISSIONS } from '@/lib/nav-items';
 import {
   EMPTY_PROFILE_LAYOUT,
   fieldsOfSection,
-  isTeamOnly,
   parseQuestionSettings,
   placementsOf,
   PROFILE_SURFACES,
@@ -26,24 +25,6 @@ export function canDesignProfileLayout(permissions: ReadonlySet<PermissionCode>)
 
 export function profileLayoutOf(catalog: IntakeCatalog): ProfileLayout {
   return catalog.layout ?? EMPTY_PROFILE_LAYOUT;
-}
-
-export interface ProfileLayoutCounts {
-  readonly sections: number;
-  readonly fields: number;
-  readonly sensitive: number;
-  readonly teamOnly: number;
-}
-
-/** The count line over the sections; archived fields do not count. */
-export function profileLayoutCounts(layout: ProfileLayout): ProfileLayoutCounts {
-  const live = layout.fields.filter((field) => !field.isArchived);
-  return {
-    sections: layout.sections.length,
-    fields: live.length,
-    sensitive: live.filter((field) => field.privacy === 'sensitive').length,
-    teamOnly: live.filter((field) => isTeamOnly(layout, field.id)).length,
-  };
 }
 
 /** The surfaces that ask a field, in one fixed order; none means the team's only. */

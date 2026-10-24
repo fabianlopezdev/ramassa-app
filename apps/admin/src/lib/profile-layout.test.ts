@@ -7,12 +7,7 @@ import {
   type ProfileSection,
 } from '@ramassa/shared/intake-builder';
 import type { PermissionCode } from '@ramassa/shared/permissions';
-import {
-  canDesignProfileLayout,
-  isPrivacyLocked,
-  profileLayoutCounts,
-  surfacesOfField,
-} from './profile-layout';
+import { canDesignProfileLayout, isPrivacyLocked, surfacesOfField } from './profile-layout';
 
 const SIZES = '5eed0000-0000-4000-8090-000000000001';
 const SUPPORT = '5eed0000-0000-4000-8090-000000000002';
@@ -87,15 +82,6 @@ describe('Dades de les jugadores reads the layout (RAPP-650)', () => {
       ],
     };
     expect(ids(mixed, SUPPORT)).toEqual(['shirt', 'shoe', 'alpha', 'zinc']);
-  });
-
-  test('the count line leaves archived fields out', () => {
-    expect(profileLayoutCounts(LAYOUT)).toEqual({
-      sections: 2,
-      fields: 3,
-      sensitive: 2,
-      teamOnly: 1,
-    });
   });
 
   test('surfaces come in one fixed order, none for a team-only field', () => {

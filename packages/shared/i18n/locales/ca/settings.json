@@ -728,16 +728,6 @@
     "archiveBodyNone": "Ja no es preguntarà enlloc. No té cap resposta.",
     "archiveBodyCount_one": "Ja no es preguntarà enlloc. Es conserva la seva resposta.",
     "archiveBodyCount_other": "Ja no es preguntarà enlloc. Es conserven les seves {{count}} respostes.",
-    "counts": {
-      "sections_one": "{{count}} secció",
-      "sections_other": "{{count}} seccions",
-      "fields_one": "{{count}} camp",
-      "fields_other": "{{count}} camps",
-      "sensitive_one": "{{count}} sensible",
-      "sensitive_other": "{{count}} sensibles",
-      "teamOnly_one": "{{count}} només equip",
-      "teamOnly_other": "{{count}} només equip"
-    },
     "surface": {
       "onboarding": "App",
       "entity_form": "Entitat",
