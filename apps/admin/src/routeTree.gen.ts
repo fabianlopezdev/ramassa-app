@@ -34,6 +34,7 @@ import { Route as EntityPortalServicesRouteImport } from './routes/_entity.porta
 import { Route as StaffAttendanceIndexRouteImport } from './routes/_staff.attendance.index'
 import { Route as StaffAttendanceOccurrenceIdRouteImport } from './routes/_staff.attendance.$occurrenceId'
 import { Route as StaffContentIndexRouteImport } from './routes/_staff.content.index'
+import { Route as StaffEntitiesReferralFormRouteImport } from './routes/_staff.entities.referral-form'
 import { Route as StaffMessagesIndexRouteImport } from './routes/_staff.messages.index'
 import { Route as StaffMessagesConversationIdRouteImport } from './routes/_staff.messages.$conversationId'
 import { Route as StaffOnboardingIndexRouteImport } from './routes/_staff.onboarding.index'
@@ -194,6 +195,12 @@ const StaffContentIndexRoute = StaffContentIndexRouteImport.update({
   path: '/',
   getParentRoute: () => StaffContentRoute,
 } as any)
+const StaffEntitiesReferralFormRoute =
+  StaffEntitiesReferralFormRouteImport.update({
+    id: '/entities/referral-form',
+    path: '/entities/referral-form',
+    getParentRoute: () => StaffRoute,
+  } as any)
 const StaffMessagesIndexRoute = StaffMessagesIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -417,6 +424,7 @@ export interface FileRoutesByFullPath {
   '/portal/referrals': typeof EntityPortalReferralsRouteWithChildren
   '/portal/services': typeof EntityPortalServicesRouteWithChildren
   '/attendance/$occurrenceId': typeof StaffAttendanceOccurrenceIdRoute
+  '/entities/referral-form': typeof StaffEntitiesReferralFormRoute
   '/messages/$conversationId': typeof StaffMessagesConversationIdRoute
   '/participants/$participantId': typeof StaffParticipantsParticipantIdRoute
   '/participants/deletion-requests': typeof StaffParticipantsDeletionRequestsRoute
@@ -472,6 +480,7 @@ export interface FileRoutesByTo {
   '/portal/events': typeof EntityPortalEventsRoute
   '/portal/messages': typeof EntityPortalMessagesRoute
   '/attendance/$occurrenceId': typeof StaffAttendanceOccurrenceIdRoute
+  '/entities/referral-form': typeof StaffEntitiesReferralFormRoute
   '/messages/$conversationId': typeof StaffMessagesConversationIdRoute
   '/participants/$participantId': typeof StaffParticipantsParticipantIdRoute
   '/participants/deletion-requests': typeof StaffParticipantsDeletionRequestsRoute
@@ -535,6 +544,7 @@ export interface FileRoutesById {
   '/_entity/portal/referrals': typeof EntityPortalReferralsRouteWithChildren
   '/_entity/portal/services': typeof EntityPortalServicesRouteWithChildren
   '/_staff/attendance/$occurrenceId': typeof StaffAttendanceOccurrenceIdRoute
+  '/_staff/entities/referral-form': typeof StaffEntitiesReferralFormRoute
   '/_staff/messages/$conversationId': typeof StaffMessagesConversationIdRoute
   '/_staff/participants/$participantId': typeof StaffParticipantsParticipantIdRoute
   '/_staff/participants/deletion-requests': typeof StaffParticipantsDeletionRequestsRoute
@@ -597,6 +607,7 @@ export interface FileRouteTypes {
     | '/portal/referrals'
     | '/portal/services'
     | '/attendance/$occurrenceId'
+    | '/entities/referral-form'
     | '/messages/$conversationId'
     | '/participants/$participantId'
     | '/participants/deletion-requests'
@@ -652,6 +663,7 @@ export interface FileRouteTypes {
     | '/portal/events'
     | '/portal/messages'
     | '/attendance/$occurrenceId'
+    | '/entities/referral-form'
     | '/messages/$conversationId'
     | '/participants/$participantId'
     | '/participants/deletion-requests'
@@ -714,6 +726,7 @@ export interface FileRouteTypes {
     | '/_entity/portal/referrals'
     | '/_entity/portal/services'
     | '/_staff/attendance/$occurrenceId'
+    | '/_staff/entities/referral-form'
     | '/_staff/messages/$conversationId'
     | '/_staff/participants/$participantId'
     | '/_staff/participants/deletion-requests'
@@ -937,6 +950,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/content/'
       preLoaderRoute: typeof StaffContentIndexRouteImport
       parentRoute: typeof StaffContentRoute
+    }
+    '/_staff/entities/referral-form': {
+      id: '/_staff/entities/referral-form'
+      path: '/entities/referral-form'
+      fullPath: '/entities/referral-form'
+      preLoaderRoute: typeof StaffEntitiesReferralFormRouteImport
+      parentRoute: typeof StaffRoute
     }
     '/_staff/messages/': {
       id: '/_staff/messages/'
@@ -1325,6 +1345,7 @@ interface StaffRouteChildren {
   StaffNotificationsRoute: typeof StaffNotificationsRoute
   StaffSettingsRoute: typeof StaffSettingsRoute
   StaffSurveysRoute: typeof StaffSurveysRoute
+  StaffEntitiesReferralFormRoute: typeof StaffEntitiesReferralFormRoute
   StaffParticipantsParticipantIdRoute: typeof StaffParticipantsParticipantIdRoute
   StaffParticipantsDeletionRequestsRoute: typeof StaffParticipantsDeletionRequestsRoute
   StaffParticipantsInvitesRoute: typeof StaffParticipantsInvitesRoute
@@ -1352,6 +1373,7 @@ const StaffRouteChildren: StaffRouteChildren = {
   StaffNotificationsRoute: StaffNotificationsRoute,
   StaffSettingsRoute: StaffSettingsRoute,
   StaffSurveysRoute: StaffSurveysRoute,
+  StaffEntitiesReferralFormRoute: StaffEntitiesReferralFormRoute,
   StaffParticipantsParticipantIdRoute: StaffParticipantsParticipantIdRoute,
   StaffParticipantsDeletionRequestsRoute:
     StaffParticipantsDeletionRequestsRoute,

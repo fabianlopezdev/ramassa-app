@@ -855,5 +855,19 @@
     "removeBody": "El camp es queda a la fitxa.",
     "remove": "Treu",
     "removeConditionFirst": "Primer treu «{{field}}», que en depèn."
+  },
+  "tabReferralForm": "Formulari de derivació",
+  "referralForm": {
+    "title": "Formulari de derivació",
+    "fields": "Camps que demanem a l'entitat",
+    "wording": "Com ho veu l'entitat (opcional)",
+    "preview": "Com ho veu l'entitat",
+    "previewLanguage": "Llengua de la vista prèvia",
+    "pickerTitle": "Afegeix un camp al formulari",
+    "here": "Ja és al formulari",
+    "hers": "Només ella ho pot donar",
+    "notOnForm": "El formulari no ho pot demanar",
+    "removeNamed": "Treu {{field}} del formulari",
+    "removeTitle": "Vols treure «{{field}}» del formulari?"
   }
 }

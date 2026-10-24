@@ -2,6 +2,8 @@ import { RequireAuth } from '@/components/auth/require-auth';
 import { useStepUp } from '@/components/auth/step-up';
 import { ORGANIZATION_BRANDING_CHANGED_EVENT } from '@/components/branding/organization-branding-provider';
 import { EntityManagementPanel } from '@/components/entity/entity-management-panel';
+import { ProfileLayoutPanel } from '@/components/profile-layout/profile-layout-panel';
+import { ReferralFormEditor } from '@/components/referrals/referral-form-editor';
 import {
   OnboardingAppTermsSection,
   OnboardingAuthorizationSection,
@@ -11,7 +13,6 @@ import {
 } from '@/components/settings/onboarding-design-sections';
 import { OrganizationSettingsPanel } from '@/components/settings/organization-settings-panel';
 import { PhotoHandoffButton } from '@/components/settings/photo-handoff-dialog';
-import { ProfileLayoutPanel } from '@/components/profile-layout/profile-layout-panel';
 import { TeamAccessPanel } from '@/components/team/team-access-panel';
 import { sendEmailOtp } from '@/lib/auth';
 import { SETTINGS_PERMISSIONS } from '@/lib/nav-items';
@@ -50,6 +51,7 @@ import {
   savePermissionPreset,
   setTeamMemberPermissions,
 } from '@ramassa/shared/permissions';
+import { fetchSupportingEntityNames } from '@ramassa/shared/referrals';
 import { fetchSeasons } from '@ramassa/shared/seasons';
 
 export const Route = createFileRoute('/_staff/settings')({
@@ -62,6 +64,7 @@ export const Route = createFileRoute('/_staff/settings')({
         'organization',
         'authorization',
         'profile-layout',
+        'referral-form',
         'questions',
         'staff',
         'documents',
@@ -92,6 +95,7 @@ export const Route = createFileRoute('/_staff/settings')({
       seasons,
       appTermsVersions,
       intakeCatalog,
+      entityNames,
     ] = await Promise.all([
       permissions.has('team.manage') ? fetchStaffMembers(supabase) : Promise.resolve([]),
       permissions.has('team.manage')
@@ -120,6 +124,10 @@ export const Route = createFileRoute('/_staff/settings')({
       // (RAPP-650); the catalog holds no answers, and who created a field
       // only for the people who design it.
       fetchIntakeCatalog(supabase),
+      // The referral form's preview lists the partner entities (RAPP-652).
+      permissions.has('settings.organization')
+        ? fetchSupportingEntityNames(supabase).catch(() => [])
+        : Promise.resolve([]),
     ]);
     const selectedEntityId = entities.some((entity) => entity.id === deps.entityId)
       ? (deps.entityId ?? null)
@@ -134,6 +142,7 @@ export const Route = createFileRoute('/_staff/settings')({
       appTermsVersions,
       authorizationVersions,
       intakeCatalog,
+      entityNames,
       seasons,
       collaborators,
       documentExplanation,
@@ -310,6 +319,11 @@ function OrganizationSettingsScreen() {
           catalog={data.intakeCatalog}
           canEdit={canDesignProfileLayout(permissions)}
         />
+      }
+      referralForm={
+        permissions.has('settings.organization') ? (
+          <ReferralFormEditor catalog={data.intakeCatalog} entityNames={data.entityNames} />
+        ) : undefined
       }
       documentExplanation={
         permissions.has('settings.organization') ? (

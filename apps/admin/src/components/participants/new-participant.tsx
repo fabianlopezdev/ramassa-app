@@ -48,6 +48,7 @@ import {
 } from '@ramassa/shared/intake';
 import {
   allowedCustomQuestionStates,
+  fieldsAnsweredByEntity,
   requiredBuiltinQuestions,
   type CustomQuestionStates,
   type IntakeCatalog,
@@ -360,6 +361,10 @@ function InviteQuestionsStep({
         onChange={setStates}
         customStates={customStates}
         onCustomChange={setCustomStates}
+        // Her fields the entity answered land on her profile with the invitation (RAPP-652).
+        customAnswers={
+          basePayload.referral_id === null ? {} : fieldsAnsweredByEntity(entityAnswerKeys)
+        }
         catalog={catalog}
       />
       <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">

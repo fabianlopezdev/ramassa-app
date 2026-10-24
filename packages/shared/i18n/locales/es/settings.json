@@ -855,5 +855,19 @@
     "removeBody": "El campo se queda en la ficha.",
     "remove": "Quitar",
     "removeConditionFirst": "Primero quita «{{field}}», que depende de él."
+  },
+  "tabReferralForm": "Formulario de derivación",
+  "referralForm": {
+    "title": "Formulario de derivación",
+    "fields": "Campos que pedimos a la entidad",
+    "wording": "Cómo lo ve la entidad (opcional)",
+    "preview": "Cómo lo ve la entidad",
+    "previewLanguage": "Idioma de la vista previa",
+    "pickerTitle": "Añade un campo al formulario",
+    "here": "Ya está en el formulario",
+    "hers": "Solo ella puede darlo",
+    "notOnForm": "El formulario no puede pedirlo",
+    "removeNamed": "Quita {{field}} del formulario",
+    "removeTitle": "¿Quieres quitar «{{field}}» del formulario?"
   }
 }

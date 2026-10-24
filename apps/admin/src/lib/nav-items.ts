@@ -49,6 +49,11 @@ export const ONBOARDING_PERMISSIONS = [
   'onboarding.design',
 ] as const satisfies readonly PermissionCode[];
 
+/** The entity referral form (RAPP-652): the organization's own settings. */
+export const REFERRAL_FORM_PERMISSIONS = [
+  'settings.organization',
+] as const satisfies readonly PermissionCode[];
+
 /** The Data area: exports and the audit log. */
 export const DATA_PERMISSIONS = [
   'export.participants',

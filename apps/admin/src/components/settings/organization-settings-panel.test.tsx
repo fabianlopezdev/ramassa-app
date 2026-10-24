@@ -107,9 +107,15 @@ test('a tab shows only to a holder of its permission (RAPP-231)', () => {
   });
   expect(view.queryByRole('tab', { name: /tabTeam|Team/ })).toBeNull();
   expect(view.queryByRole('tab', { name: /tabOrganization|Organization/ })).toBeNull();
+  expect(view.queryByRole('tab', { name: /tabReferralForm|Referral form/ })).toBeNull();
   expect(
     view.getByRole('tab', { name: /tabDocuments|Documents/ }).getAttribute('aria-selected'),
   ).toBe('true');
+});
+
+test('the referral form tab is for settings.organization until it has its menu item (RAPP-652)', () => {
+  const { view } = renderPanel({ permissions: new Set(['settings.organization']) });
+  expect(view.getByRole('tab', { name: /tabReferralForm|Referral form/ })).toBeTruthy();
 });
 
 test('branding alone changes the colours but not the organization details', () => {

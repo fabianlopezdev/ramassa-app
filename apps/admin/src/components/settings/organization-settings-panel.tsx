@@ -50,6 +50,8 @@ interface OrganizationSettingsPanelProps {
   readonly questions?: ReactNode;
   /** The Fitxa de la jugadora (RAPP-650): every team member who opens Settings reads it. */
   readonly profileLayout?: ReactNode;
+  /** The entity referral form (RAPP-652), here until the menu groups the entity pages (RAPP-654). */
+  readonly referralForm?: ReactNode;
   readonly documents: readonly InternalDocument[];
   readonly documentQuery: string;
   readonly entityManagement: ReactNode;
@@ -74,6 +76,7 @@ export type SettingsTab =
   | 'organization'
   | 'authorization'
   | 'profile-layout'
+  | 'referral-form'
   | 'questions'
   | 'staff'
   | 'documents'
@@ -89,6 +92,8 @@ function visibleSettingsTabs(permissions: ReadonlySet<PermissionCode>): readonly
   if (permissions.has('settings.organization')) tabs.push('authorization');
   // The player profile layout (RAPP-650): read by all, edited by its designers.
   tabs.push('profile-layout');
+  // The entity referral form (RAPP-652), until RAPP-654 gives it its menu item.
+  if (permissions.has('settings.organization')) tabs.push('referral-form');
   // The registration questions staff add and reword (RAPP-307).
   if (permissions.has('settings.organization')) tabs.push('questions');
   if (permissions.has('team.manage')) tabs.push('staff');
@@ -128,6 +133,7 @@ export function OrganizationSettingsPanel({
   authorization,
   questions,
   profileLayout,
+  referralForm,
   documents,
   documentQuery,
   entityManagement,
@@ -336,6 +342,9 @@ export function OrganizationSettingsPanel({
           ) : null}
           {tabs.includes('profile-layout') ? (
             <TabsTrigger value="profile-layout">{t('tabProfileLayout')}</TabsTrigger>
+          ) : null}
+          {tabs.includes('referral-form') ? (
+            <TabsTrigger value="referral-form">{t('tabReferralForm')}</TabsTrigger>
           ) : null}
           {tabs.includes('questions') ? (
             <TabsTrigger value="questions">{t('tabQuestions')}</TabsTrigger>
@@ -574,6 +583,9 @@ export function OrganizationSettingsPanel({
         </TabsContent>
         <TabsContent value="profile-layout" className="space-y-6">
           {profileLayout}
+        </TabsContent>
+        <TabsContent value="referral-form" className="space-y-6">
+          {referralForm}
         </TabsContent>
         <TabsContent value="questions" className="space-y-6">
           <SectionHeader title={t('tabQuestions')} intro={t('questionsIntro')} />

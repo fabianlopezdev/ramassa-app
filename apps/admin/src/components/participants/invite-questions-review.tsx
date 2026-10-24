@@ -232,6 +232,8 @@ export interface InviteQuestionsReviewProps {
   /** Her choices on Ramassà's own questions (RAPP-643); none means Auto on each. */
   readonly customStates?: CustomQuestionStates;
   readonly onCustomChange?: (next: CustomQuestionStates) => void;
+  /** The Fitxa fields an entity already answered (RAPP-652): Auto skips them. */
+  readonly customAnswers?: CustomAnswers;
   readonly catalog: IntakeCatalog;
 }
 
@@ -242,12 +244,14 @@ export function InviteQuestionsReview({
   onChange,
   customStates = {},
   onCustomChange = () => undefined,
+  customAnswers = {},
   catalog,
 }: InviteQuestionsReviewProps) {
   return (
     <PlayerQuestionsBoard
       catalog={catalog}
       answered={answered}
+      customAnswers={customAnswers}
       choices={{ states, customStates }}
       onChange={(next) => {
         onChange(next.states);

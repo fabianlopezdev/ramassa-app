@@ -258,5 +258,19 @@
     "removeBody": "يبقى الحقل في الملف.",
     "remove": "إزالة",
     "removeConditionFirst": "أزل أولًا «{{field}}»، فهو يعتمد عليه."
+  },
+  "tabReferralForm": "نموذج الإحالة",
+  "referralForm": {
+    "title": "نموذج الإحالة",
+    "fields": "الحقول التي نطلبها من الجهة",
+    "wording": "كيف تراه الجهة (اختياري)",
+    "preview": "كيف تراه الجهة",
+    "previewLanguage": "لغة المعاينة",
+    "pickerTitle": "أضف حقلاً إلى النموذج",
+    "here": "موجود في النموذج",
+    "hers": "هي وحدها من يمكنها تقديمه",
+    "notOnForm": "لا يمكن للنموذج أن يطلبه",
+    "removeNamed": "أزل {{field}} من النموذج",
+    "removeTitle": "هل تريد إزالة «{{field}}» من النموذج؟"
   }
 }
