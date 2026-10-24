@@ -9,6 +9,7 @@
  * rebuilt from the form on every change (`readPreviewDraft`).
  */
 
+import { textFromForm } from '@/components/fields/language-fields';
 import { cn } from '@/lib/utils';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -33,16 +34,6 @@ import {
 import type { LanguageCode } from '@ramassa/shared/schemas';
 
 const inputClass = 'h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm';
-
-/** Reads `<name>.<language>` inputs back into localized text. */
-function textFromForm(fields: FormData, name: string): BuilderText {
-  return Object.fromEntries(
-    SUPPORTED_LANGUAGES.flatMap((language) => {
-      const value = fields.get(`${name}.${language}`);
-      return typeof value === 'string' && value.trim() !== '' ? [[language, value.trim()]] : [];
-    }),
-  ) as BuilderText;
-}
 
 function numberFrom(fields: FormData, name: string): number | undefined {
   const raw = fields.get(name);

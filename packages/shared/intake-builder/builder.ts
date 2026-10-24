@@ -897,28 +897,44 @@ export interface QuestionDraft {
   readonly options: readonly { readonly id: string | null; readonly label: BuilderText }[];
 }
 
+/** What every field and question needs, wherever it is asked: a name, options, settings. */
+const fieldShape = {
+  label: catalanTextSchema,
+  type: z.enum(CUSTOM_QUESTION_TYPES),
+  settings: z.unknown().optional(),
+  options: z.array(z.object({ id: z.string().nullable(), label: catalanTextSchema })),
+};
+
+function checkFieldShape(
+  draft: {
+    readonly type: CustomQuestionType;
+    readonly settings?: unknown;
+    readonly options: readonly unknown[];
+  },
+  context: z.RefinementCtx,
+): void {
+  const choice = isChoiceType(draft.type);
+  if (choice && draft.options.length < 2) {
+    context.addIssue({ code: 'custom', path: ['options'], message: 'two options' });
+  }
+  if (choice && draft.options.length > maxOptionsFor(draft.type)) {
+    context.addIssue({ code: 'custom', path: ['options'], message: 'too many options' });
+  }
+  if (!choice && draft.options.length > 0) {
+    context.addIssue({ code: 'custom', path: ['options'], message: 'no options' });
+  }
+  if (!questionSettingsSchema(draft.type).safeParse(draft.settings ?? {}).success) {
+    context.addIssue({ code: 'custom', path: ['settings'], message: 'settings of the type' });
+  }
+}
+
+/** A field of the profile layout (RAPP-650): the question's rules without the places. */
+export const profileFieldDraftSchema = z.object(fieldShape).superRefine(checkFieldShape);
+
 export const questionDraftSchema = z
-  .object({
-    label: catalanTextSchema,
-    placements: z.array(z.enum(QUESTION_PLACEMENTS)).min(1),
-    type: z.enum(CUSTOM_QUESTION_TYPES),
-    settings: z.unknown().optional(),
-    options: z.array(z.object({ id: z.string().nullable(), label: catalanTextSchema })),
-  })
+  .object({ ...fieldShape, placements: z.array(z.enum(QUESTION_PLACEMENTS)).min(1) })
   .superRefine((draft, context) => {
-    const choice = isChoiceType(draft.type);
-    if (choice && draft.options.length < 2) {
-      context.addIssue({ code: 'custom', path: ['options'], message: 'two options' });
-    }
-    if (choice && draft.options.length > maxOptionsFor(draft.type)) {
-      context.addIssue({ code: 'custom', path: ['options'], message: 'too many options' });
-    }
-    if (!choice && draft.options.length > 0) {
-      context.addIssue({ code: 'custom', path: ['options'], message: 'no options' });
-    }
-    if (!questionSettingsSchema(draft.type).safeParse(draft.settings ?? {}).success) {
-      context.addIssue({ code: 'custom', path: ['settings'], message: 'settings of the type' });
-    }
+    checkFieldShape(draft, context);
     const allowed = placementsAllowedFor(draft.type);
     if (draft.placements.some((placement) => !allowed.includes(placement))) {
       context.addIssue({ code: 'custom', path: ['placements'], message: 'placements of the type' });

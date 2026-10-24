@@ -1,0 +1,104 @@
+/**
+ * Text written in the five languages (RAPP-307, RAPP-641), shared by every
+ * form that names a field, a question, a screen or a section.
+ *
+ * Inside an `EditingLanguageContext` a form shows one box per text, in the
+ * language being edited; the other languages stay in the form, hidden, so
+ * FormData still reads all five. Without it, each text shows its five boxes.
+ * Arabic and Farsi write right to left.
+ */
+
+import { createContext, useContext } from 'react';
+import { useTranslation } from 'react-i18next';
+import { LANGUAGE_NATIVE_NAMES, SUPPORTED_LANGUAGES } from '@ramassa/shared/i18n/languages';
+import type { BuilderText } from '@ramassa/shared/intake-builder';
+import type { LanguageCode } from '@ramassa/shared/schemas';
+
+export const TEXT_INPUT_CLASS =
+  'h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm';
+
+/** The language a form writes in; null shows every language at once. */
+export const EditingLanguageContext = createContext<LanguageCode | null>(null);
+
+/** Reads `<name>.<language>` inputs back into localized text, empty languages left out. */
+export function textFromForm(fields: FormData, name: string): BuilderText {
+  return Object.fromEntries(
+    SUPPORTED_LANGUAGES.flatMap((language) => {
+      const value = fields.get(`${name}.${language}`);
+      return typeof value === 'string' && value.trim() !== '' ? [[language, value.trim()]] : [];
+    }),
+  ) as BuilderText;
+}
+
+export function LanguageFields({
+  name,
+  legend,
+  value,
+  isCatalanRequired,
+  isLong = false,
+}: {
+  readonly name: string;
+  readonly legend: string;
+  readonly value: BuilderText | null | undefined;
+  readonly isCatalanRequired: boolean;
+  readonly isLong?: boolean;
+}) {
+  const { t } = useTranslation('settings');
+  const editing = useContext(EditingLanguageContext);
+  const inputClass = isLong ? `${TEXT_INPUT_CLASS} h-auto min-h-16 py-2` : TEXT_INPUT_CLASS;
+  if (editing !== null) {
+    return (
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor={`${name}.${editing}`} className="text-start text-sm font-medium">
+          {legend}
+          {editing === 'ca' && isCatalanRequired ? (
+            <span className="text-muted-foreground"> ({t('questions.required')})</span>
+          ) : null}
+        </label>
+        {SUPPORTED_LANGUAGES.map((language) => {
+          const id = `${name}.${language}`;
+          const shared = {
+            id,
+            name: id,
+            defaultValue: value?.[language] ?? '',
+            dir: language === 'ar' || language === 'fa' ? 'rtl' : 'auto',
+            lang: language,
+            hidden: language !== editing,
+            className: inputClass,
+          } as const;
+          return isLong ? (
+            <textarea key={language} {...shared} rows={2} />
+          ) : (
+            <input key={language} {...shared} type="text" />
+          );
+        })}
+      </div>
+    );
+  }
+  return (
+    <fieldset className="flex flex-col gap-2 rounded-lg border p-3">
+      <legend className="px-1 text-start text-sm font-medium">{legend}</legend>
+      {SUPPORTED_LANGUAGES.map((language) => {
+        const id = `${name}.${language}`;
+        const label = `${LANGUAGE_NATIVE_NAMES[language]}${
+          language === 'ca' && isCatalanRequired ? ` (${t('questions.required')})` : ''
+        }`;
+        const shared = {
+          id,
+          name: id,
+          defaultValue: value?.[language] ?? '',
+          dir: language === 'ar' || language === 'fa' ? 'rtl' : 'auto',
+          lang: language,
+          required: language === 'ca' && isCatalanRequired,
+          className: inputClass,
+        } as const;
+        return (
+          <label key={language} htmlFor={id} className="flex flex-col gap-1 text-xs font-medium">
+            <span className="text-start">{label}</span>
+            {isLong ? <textarea {...shared} rows={2} /> : <input {...shared} type="text" />}
+          </label>
+        );
+      })}
+    </fieldset>
+  );
+}

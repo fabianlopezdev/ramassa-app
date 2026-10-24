@@ -768,14 +768,14 @@
     "deleteFailed": "No se ha podido eliminar. Vuelve a intentarlo.",
     "deleteQuestion": "Eliminar {{question}}",
     "deleteQuestionTitle": "¿Eliminar esta pregunta?",
-    "deleteQuestionBody": "Dejará de salir en la app. Las respuestas ya dadas se conservan.",
-    "dnd": {
-      "instructions": "Para moverla, pulsa espacio o intro, usa las flechas y vuelve a pulsar espacio o intro para soltarla. Escape cancela.",
-      "picked": "Has cogido {{screen}}, en la posición {{position}}.",
-      "over": "{{screen}} está en la posición {{position}}.",
-      "outside": "{{screen}} está fuera de la lista.",
-      "dropped": "Has soltado {{screen}} en la posición {{position}}.",
-      "cancelled": "Movimiento cancelado. {{screen}} vuelve a su sitio."
-    }
+    "deleteQuestionBody": "Dejará de salir en la app. Las respuestas ya dadas se conservan."
+  },
+  "sortable": {
+    "instructions": "Para mover un elemento, pulsa espacio o intro, usa las flechas y vuelve a pulsar espacio o intro para soltarlo. Escape cancela.",
+    "picked": "Has cogido {{item}}, en la posición {{position}}.",
+    "over": "{{item}} está en la posición {{position}}.",
+    "outside": "{{item}} está fuera de la lista.",
+    "dropped": "Has soltado {{item}} en la posición {{position}}.",
+    "cancelled": "Movimiento cancelado. {{item}} vuelve a su sitio."
   }
 }

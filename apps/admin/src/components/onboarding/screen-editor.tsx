@@ -17,6 +17,8 @@
  * switch, Arabic and Farsi right to left.
  */
 
+import { EditingLanguageContext } from '@/components/fields/language-fields';
+import { EditorSection } from '@/components/layout/editor-section';
 import { Page, PageHeader } from '@/components/layout/page';
 import {
   OnboardingAppTermsSection,
@@ -26,11 +28,15 @@ import {
 } from '@/components/settings/onboarding-design-sections';
 import {
   BuiltinForm,
-  EditingLanguageContext,
   QuestionForm,
   type BuiltinQuestionInfo,
 } from '@/components/settings/question-builder';
 import type { PreviewDraft } from '@/components/settings/question-type-fields';
+import {
+  DragHandle,
+  SortableList,
+  type SortableHandle,
+} from '@/components/ui-patterns/sortable-list';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -58,26 +64,8 @@ import { builtinQuestionOptions, QUESTION_LABEL_KEYS } from '@/lib/builtin-quest
 import { mediaWorkerUrl } from '@/lib/media-worker';
 import type { OnboardingDesignData } from '@/lib/onboarding-design';
 import { supabase } from '@/lib/supabase';
-import { cn } from '@/lib/utils';
-import {
-  closestCenter,
-  DndContext,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-} from '@dnd-kit/core';
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  useSortable,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
 import { Link, useNavigate, useRouter } from '@tanstack/react-router';
-import { ChevronLeft, GripVertical, Plus, Trash2 } from 'lucide-react';
+import { ChevronLeft, Plus, Trash2 } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -325,33 +313,6 @@ function EditorColumns({
         {phone}
       </aside>
     </div>
-  );
-}
-
-function EditorSection({
-  title,
-  actions,
-  footer,
-  children,
-  testId,
-}: {
-  readonly title: string;
-  readonly actions?: ReactNode;
-  readonly footer?: ReactNode;
-  readonly children: ReactNode;
-  readonly testId?: string;
-}) {
-  return (
-    <section className="rounded-xl border bg-card" data-testid={testId}>
-      <header className="flex min-h-14 items-center justify-between gap-3 border-b px-5 py-3">
-        <h2 className="text-start text-base font-semibold">{title}</h2>
-        {actions}
-      </header>
-      <div className="p-5">{children}</div>
-      {footer === undefined ? null : (
-        <footer className="flex items-center justify-end gap-2 border-t px-5 py-3">{footer}</footer>
-      )}
-    </section>
   );
 }
 
@@ -685,80 +646,38 @@ function CustomQuestionList({
   readonly onClose: () => void;
   readonly onPreviewChange: (draft: PreviewDraft) => void;
 }) {
-  const { t } = useTranslation('settings');
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
-  );
-  const ids = questions.map((question) => question.id);
-  const labelOf = (id: unknown) =>
-    textIn(questions.find((question) => question.id === id)?.label, language);
-  const positionOf = (id: unknown) => ids.indexOf(String(id)) + 1;
-
-  function drop({ active, over }: DragEndEvent) {
-    if (over === null || active.id === over.id) return;
-    void onReorder(arrayMove(ids, ids.indexOf(String(active.id)), ids.indexOf(String(over.id))));
-  }
-
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCenter}
-      onDragEnd={drop}
-      accessibility={{
-        screenReaderInstructions: { draggable: t('onboardingBoard.dnd.instructions') },
-        announcements: {
-          onDragStart: ({ active }) =>
-            t('onboardingBoard.dnd.picked', {
-              screen: labelOf(active.id),
-              position: positionOf(active.id),
-            }),
-          onDragOver: ({ active, over }) =>
-            over === null
-              ? t('onboardingBoard.dnd.outside', { screen: labelOf(active.id) })
-              : t('onboardingBoard.dnd.over', {
-                  screen: labelOf(active.id),
-                  position: positionOf(over.id),
-                }),
-          onDragEnd: ({ active, over }) =>
-            over === null
-              ? t('onboardingBoard.dnd.cancelled', { screen: labelOf(active.id) })
-              : t('onboardingBoard.dnd.dropped', {
-                  screen: labelOf(active.id),
-                  position: positionOf(over.id),
-                }),
-          onDragCancel: ({ active }) =>
-            t('onboardingBoard.dnd.cancelled', { screen: labelOf(active.id) }),
-        },
-      }}
+    <SortableList
+      items={questions}
+      idOf={(question) => question.id}
+      nameOf={(question) => textIn(question.label, language)}
+      onReorder={(ids) => void onReorder(ids)}
+      leading={leading}
+      className="group/list flex flex-col divide-y rounded-lg border"
+      itemClassName="flex flex-col gap-3 p-3"
+      itemTestId={(question) => `question-row-${question.id}`}
+      testId="question-list"
     >
-      <SortableContext items={ids} strategy={verticalListSortingStrategy}>
-        <ol
-          className="group/list flex flex-col divide-y rounded-lg border"
-          data-testid="question-list"
-        >
-          {leading}
-          {questions.map((question) => (
-            <CustomQuestionRow
-              key={question.id}
-              screenId={screenId}
-              question={question}
-              language={language}
-              isEditing={editing === question.id}
-              onEdit={() => onEdit(question.id)}
-              onClose={onClose}
-              onPreviewChange={onPreviewChange}
-            />
-          ))}
-        </ol>
-      </SortableContext>
-    </DndContext>
+      {(question, handle) => (
+        <CustomQuestionRow
+          screenId={screenId}
+          question={question}
+          handle={handle}
+          language={language}
+          isEditing={editing === question.id}
+          onEdit={() => onEdit(question.id)}
+          onClose={onClose}
+          onPreviewChange={onPreviewChange}
+        />
+      )}
+    </SortableList>
   );
 }
 
 function CustomQuestionRow({
   screenId,
   question,
+  handle,
   language,
   isEditing,
   onEdit,
@@ -767,6 +686,7 @@ function CustomQuestionRow({
 }: {
   readonly screenId: string;
   readonly question: CustomQuestion;
+  readonly handle: SortableHandle;
   readonly language: LanguageCode;
   readonly isEditing: boolean;
   readonly onEdit: () => void;
@@ -777,15 +697,6 @@ function CustomQuestionRow({
   const reload = useReload();
   const [isBusy, setIsBusy] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    setActivatorNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: question.id });
   const label = textIn(question.label, language);
   const canRequire = canRequireCustomQuestion(question);
 
@@ -802,26 +713,9 @@ function CustomQuestionRow({
   }
 
   return (
-    <li
-      ref={setNodeRef}
-      style={{ transform: CSS.Translate.toString(transform), transition }}
-      className={cn('relative flex flex-col gap-3 bg-card p-3', isDragging && 'z-10 shadow-lg')}
-      data-testid={`question-row-${question.id}`}
-    >
+    <>
       <div className="flex items-center gap-3">
-        <Button
-          ref={setActivatorNodeRef}
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          className="cursor-grab touch-none text-muted-foreground active:cursor-grabbing"
-          aria-label={t('onboardingBoard.dragHandle', { screen: label })}
-          data-question-handle=""
-          {...attributes}
-          {...listeners}
-        >
-          <GripVertical aria-hidden />
-        </Button>
+        <DragHandle handle={handle} label={t('onboardingBoard.dragHandle', { screen: label })} />
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
           <p className="truncate text-start text-sm font-medium">{label}</p>
           <p className="truncate text-start text-xs text-muted-foreground">
@@ -888,7 +782,7 @@ function CustomQuestionRow({
           void run(() => archiveCustomQuestion(supabase, question.id), t('questions.failed'))
         }
       />
-    </li>
+    </>
   );
 }
 
@@ -1379,7 +1273,7 @@ function BuiltinQuestionRow({
         {/* Keeps every name in the list on one line when staff rows carry a grip. */}
         <span
           aria-hidden
-          className="hidden size-7 shrink-0 group-has-[[data-question-handle]]/list:block"
+          className="hidden size-7 shrink-0 group-has-[[data-sortable-handle]]/list:block"
         />
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
           <p className="truncate text-start text-sm font-medium">{reworded || appLabel}</p>

@@ -14,6 +14,10 @@
  */
 
 import { useReload } from '@/components/settings/onboarding-design-sections';
+import {
+  useSortableAccessibility,
+  useSortableSensors,
+} from '@/components/ui-patterns/sortable-list';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
@@ -24,21 +28,10 @@ import {
   closestCenter,
   DndContext,
   DragOverlay,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  type Announcements,
   type DragEndEvent,
   type UniqueIdentifier,
 } from '@dnd-kit/core';
-import {
-  arrayMove,
-  rectSortingStrategy,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  useSortable,
-} from '@dnd-kit/sortable';
+import { arrayMove, rectSortingStrategy, SortableContext, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { EyeOff, GripVertical, Lock, Plus } from 'lucide-react';
@@ -94,10 +87,7 @@ function BoardGrid({
   const reload = useReload();
   const [order, setOrder] = useState<readonly WizardStepKey[]>(initial);
   const [activeKey, setActiveKey] = useState<UniqueIdentifier | null>(null);
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
-  );
+  const sensors = useSortableSensors();
   const steps = new Map(
     [...order, ...LOCKED_STEPS].flatMap((key) => {
       const step = boardStep(catalog, key);
@@ -110,28 +100,7 @@ function BoardGrid({
   };
   const positionOf = (id: UniqueIdentifier): number => order.indexOf(id as WizardStepKey) + 1;
 
-  const announcements: Announcements = {
-    onDragStart: ({ active }) =>
-      t('onboardingBoard.dnd.picked', {
-        screen: nameOf(active.id),
-        position: positionOf(active.id),
-      }),
-    onDragOver: ({ active, over }) =>
-      over === null
-        ? t('onboardingBoard.dnd.outside', { screen: nameOf(active.id) })
-        : t('onboardingBoard.dnd.over', {
-            screen: nameOf(active.id),
-            position: positionOf(over.id),
-          }),
-    onDragEnd: ({ active, over }) =>
-      over === null
-        ? t('onboardingBoard.dnd.cancelled', { screen: nameOf(active.id) })
-        : t('onboardingBoard.dnd.dropped', {
-            screen: nameOf(active.id),
-            position: positionOf(over.id),
-          }),
-    onDragCancel: ({ active }) => t('onboardingBoard.dnd.cancelled', { screen: nameOf(active.id) }),
-  };
+  const accessibility = useSortableAccessibility(nameOf, positionOf);
 
   async function drop({ active, over }: DragEndEvent) {
     setActiveKey(null);
@@ -179,10 +148,7 @@ function BoardGrid({
     <DndContext
       sensors={sensors}
       collisionDetection={closestCenter}
-      accessibility={{
-        announcements,
-        screenReaderInstructions: { draggable: t('onboardingBoard.dnd.instructions') },
-      }}
+      accessibility={accessibility}
       onDragStart={({ active: started }) => setActiveKey(started.id)}
       onDragCancel={() => setActiveKey(null)}
       onDragEnd={(event) => void drop(event)}

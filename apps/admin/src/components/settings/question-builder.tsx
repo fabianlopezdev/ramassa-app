@@ -14,30 +14,17 @@
  * why. Forms are uncontrolled and read with FormData.
  */
 
-import { QuestionPrivacyPicker } from '@/components/settings/question-privacy-picker';
+import { ErrorLine, FieldForm, useAction } from '@/components/fields/field-form';
 import {
-  pastedOptions,
-  QuestionPreview,
-  QuestionSettingsFields,
-  readPreviewDraft,
-  readQuestionSettings,
-  type PreviewDraft,
-} from '@/components/settings/question-type-fields';
-import { QuestionTypePicker } from '@/components/settings/question-type-picker';
+  LanguageFields,
+  TEXT_INPUT_CLASS,
+  textFromForm,
+} from '@/components/fields/language-fields';
+import type { PreviewDraft } from '@/components/settings/question-type-fields';
 import { RequiredSwitch } from '@/components/settings/required-switch';
 import { Button } from '@/components/ui/button';
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-  type FormEvent,
-  type ReactNode,
-} from 'react';
+import { useState, type FormEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { getErrorMessageKey, isAppError } from '@ramassa/shared/errors';
-import { LANGUAGE_NATIVE_NAMES, SUPPORTED_LANGUAGES } from '@ramassa/shared/i18n/languages';
 import {
   isRequiredQuestion,
   type IntakeQuestion,
@@ -49,28 +36,23 @@ import {
   builtinRequiredLock,
   canHideBuiltin,
   canRequireCustomQuestion,
-  isChoiceType,
   isCustomQuestionRequired,
   liveOptions,
   overrideFor,
   placementsAllowedFor,
   QUESTION_PLACEMENTS,
-  questionDraftSchema,
   requiredBuiltinQuestions,
   textIn,
   type BuilderText,
   type BuiltinOverride,
   type BuiltinScreen,
   type CustomQuestion,
-  type CustomQuestionType,
   type IntakeCatalog,
   type IntakeScreen,
   type QuestionDraft,
   type QuestionPlacement,
-  type QuestionPrivacy,
   type ScreenDraft,
 } from '@ramassa/shared/intake-builder';
-import type { LanguageCode } from '@ramassa/shared/schemas';
 
 export interface BuiltinQuestionInfo {
   readonly question: IntakeQuestion;
@@ -110,127 +92,6 @@ type Editing =
     }
   | { readonly kind: 'builtin'; readonly question: IntakeQuestion }
   | null;
-
-const inputClass = 'h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm';
-
-/** Reads `<name>.<language>` inputs back into localized text. */
-function textFromForm(fields: FormData, name: string): BuilderText {
-  return Object.fromEntries(
-    SUPPORTED_LANGUAGES.flatMap((language) => {
-      const value = fields.get(`${name}.${language}`);
-      return typeof value === 'string' && value.trim() !== '' ? [[language, value.trim()]] : [];
-    }),
-  ) as BuilderText;
-}
-
-/**
- * The language a screen editor writes in (RAPP-641). Inside it the forms show
- * one box per text, in that language; the other languages stay in the form,
- * hidden, so FormData still reads all five.
- */
-export const EditingLanguageContext = createContext<LanguageCode | null>(null);
-
-function LanguageFields({
-  name,
-  legend,
-  value,
-  isCatalanRequired,
-  isLong = false,
-}: {
-  readonly name: string;
-  readonly legend: string;
-  readonly value: BuilderText | null | undefined;
-  readonly isCatalanRequired: boolean;
-  readonly isLong?: boolean;
-}) {
-  const { t } = useTranslation('settings');
-  const editing = useContext(EditingLanguageContext);
-  if (editing !== null) {
-    return (
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor={`${name}.${editing}`} className="text-start text-sm font-medium">
-          {legend}
-          {editing === 'ca' && isCatalanRequired ? (
-            <span className="text-muted-foreground"> ({t('questions.required')})</span>
-          ) : null}
-        </label>
-        {SUPPORTED_LANGUAGES.map((language) => {
-          const id = `${name}.${language}`;
-          const shared = {
-            id,
-            name: id,
-            defaultValue: value?.[language] ?? '',
-            dir: language === 'ar' || language === 'fa' ? 'rtl' : 'auto',
-            lang: language,
-            hidden: language !== editing,
-            className: isLong ? `${inputClass} h-auto min-h-16 py-2` : inputClass,
-          } as const;
-          return isLong ? (
-            <textarea key={language} {...shared} rows={2} />
-          ) : (
-            <input key={language} {...shared} type="text" />
-          );
-        })}
-      </div>
-    );
-  }
-  return (
-    <fieldset className="flex flex-col gap-2 rounded-lg border p-3">
-      <legend className="px-1 text-start text-sm font-medium">{legend}</legend>
-      {SUPPORTED_LANGUAGES.map((language) => {
-        const id = `${name}.${language}`;
-        const label = `${LANGUAGE_NATIVE_NAMES[language]}${
-          language === 'ca' && isCatalanRequired ? ` (${t('questions.required')})` : ''
-        }`;
-        const shared = {
-          id,
-          name: id,
-          defaultValue: value?.[language] ?? '',
-          dir: language === 'ar' || language === 'fa' ? 'rtl' : 'auto',
-          lang: language,
-          required: language === 'ca' && isCatalanRequired,
-          className: isLong ? `${inputClass} h-auto min-h-16 py-2` : inputClass,
-        } as const;
-        return (
-          <label key={language} htmlFor={id} className="flex flex-col gap-1 text-xs font-medium">
-            <span className="text-start">{label}</span>
-            {isLong ? <textarea {...shared} rows={2} /> : <input {...shared} type="text" />}
-          </label>
-        );
-      })}
-    </fieldset>
-  );
-}
-
-export function ErrorLine({ message }: { readonly message: string | null }) {
-  return message === null ? null : (
-    <p aria-live="polite" className="text-start text-sm text-destructive">
-      {message}
-    </p>
-  );
-}
-
-export function useAction() {
-  const { t } = useTranslation(['settings', 'errors']);
-  const [isBusy, setIsBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  async function run(action: () => Promise<void>): Promise<boolean> {
-    setIsBusy(true);
-    setError(null);
-    try {
-      await action();
-      return true;
-    } catch (thrown) {
-      setError(
-        isAppError(thrown) ? t(getErrorMessageKey(thrown.code)) : t('settings:questions.failed'),
-      );
-      return false;
-    } finally {
-      setIsBusy(false);
-    }
-  }
-  return { isBusy, error, setError, run };
-}
 
 function ScreenForm({
   screen,
@@ -292,7 +153,7 @@ function ScreenForm({
         <select
           name="screen-after"
           defaultValue={screen?.afterScreen ?? 'logistics'}
-          className={inputClass}
+          className={TEXT_INPUT_CLASS}
         >
           {BUILTIN_SCREENS.map((step) => (
             <option key={step} value={step}>
@@ -314,6 +175,11 @@ function ScreenForm({
   );
 }
 
+/**
+ * A question on a screen (RAPP-307): the field form with the places it shows
+ * (RAPP-650 shares the form with the Fitxa de la jugadora). Type and privacy
+ * are set once, so an existing question locks both.
+ */
 export function QuestionForm({
   screenId,
   question,
@@ -341,229 +207,86 @@ export function QuestionForm({
   readonly onPreviewChange?: (draft: PreviewDraft) => void;
 }) {
   const { t } = useTranslation('settings');
-  const action = useAction();
   const isNew = question === null;
-  const [type, setType] = useState<CustomQuestionType>(question?.type ?? 'short_text');
-  const [privacy, setPrivacy] = useState<QuestionPrivacy>(question?.privacy ?? 'personal');
-  const kept = question === null ? [] : liveOptions(question);
-  const [newOptions, setNewOptions] = useState(isNew ? 2 : 0);
-  const allowedPlacements = placementsAllowedFor(type);
-  const formRef = useRef<HTMLFormElement>(null);
-  const [previewLanguage, setPreviewLanguage] = useState<LanguageCode>('ca');
-  const optionNames = [
-    ...kept.map((option) => `option-${option.id}`),
-    ...Array.from({ length: newOptions }, (_, index) => `option-new-${index}`),
-  ];
-  const [preview, setPreview] = useState<PreviewDraft>(() => ({
-    type,
-    label: question?.label ?? {},
-    help: question?.help ?? {},
-    settings: question?.settings ?? {},
-    options: kept.map((option) => option.label),
-  }));
-  const refreshPreview = () => {
-    if (formRef.current === null) return;
-    const next = readPreviewDraft(formRef.current, type, optionNames);
-    setPreview(next);
-    onPreviewChange?.(next);
-  };
-  // The type and the number of option fields change what the form holds.
-  useEffect(refreshPreview, [type, newOptions]);
-
-  async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const fields = new FormData(event.currentTarget);
-    const options = isChoiceType(type)
-      ? [
-          ...kept
-            .filter((option) => fields.get(`option-remove-${option.id}`) !== 'on')
-            .map((option) => ({
-              id: option.id,
-              label: textFromForm(fields, `option-${option.id}`),
-            })),
-          ...Array.from({ length: newOptions }, (_, index) => ({
-            id: null,
-            label: textFromForm(fields, `option-new-${index}`),
-          })).filter((option) => Object.keys(option.label).length > 0),
-          // A long list pasted one per line, in Catalan.
-          ...(type === 'search_choice'
-            ? pastedOptions(fields).map((ca) => ({ id: null, label: { ca } }))
-            : []),
-        ]
-      : [];
-    const draft: QuestionDraft = {
-      id: question?.id ?? null,
-      screenId,
-      type,
-      label: textFromForm(fields, 'question-label'),
-      help: (() => {
-        const help = textFromForm(fields, 'question-help');
-        return Object.keys(help).length === 0 ? null : help;
-      })(),
-      privacy: question?.privacy ?? privacy,
-      placements: withPlacements
-        ? QUESTION_PLACEMENTS.filter(
-            (placement) => fields.get(`question-placement-${placement}`) === 'on',
-          )
-        : (question?.placements ?? ['wizard']),
-      settings: readQuestionSettings(fields, type),
-      options,
-    };
-    const checked = questionDraftSchema.safeParse(draft);
-    if (!checked.success) {
-      const issue = checked.error.issues[0];
-      const path = issue?.path[0];
-      action.setError(
-        path === 'placements'
-          ? issue?.message === 'placements of the type'
-            ? t('questions.placementNotForType')
-            : t('questions.placementNeeded')
-          : path === 'options'
-            ? issue?.message === 'too many options'
-              ? t('questions.tooManyOptions')
-              : t('questions.optionsNeeded')
-            : path === 'settings'
-              ? t('questions.settingsInvalid')
-              : t('questions.catalanNeeded'),
-      );
-      return;
-    }
-    if (await action.run(() => onSave(draft))) onCancel();
-  }
-
+  const placementsOf = (fields: FormData): readonly QuestionPlacement[] =>
+    withPlacements
+      ? QUESTION_PLACEMENTS.filter(
+          (placement) => fields.get(`question-placement-${placement}`) === 'on',
+        )
+      : (question?.placements ?? ['wizard']);
   return (
-    <div
-      className={
-        withPreview ? 'grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,20rem)]' : 'grid gap-4'
+    <FieldForm
+      testId="question-form"
+      value={
+        question === null
+          ? null
+          : {
+              type: question.type,
+              label: question.label,
+              help: question.help,
+              privacy: question.privacy,
+              settings: question.settings,
+              options: liveOptions(question),
+            }
       }
-    >
-      <form
-        ref={formRef}
-        className="flex flex-col gap-3 rounded-xl border bg-card p-4"
-        data-testid="question-form"
-        onSubmit={(event) => void submit(event)}
-        onChange={refreshPreview}
-        onInput={refreshPreview}
-      >
-        <h3 className="text-start font-semibold">
-          {isNew ? t('questions.newQuestion') : t('questions.editQuestion')}
-        </h3>
-        <QuestionTypePicker
-          value={type}
-          onChange={setType}
-          isLocked={!isNew}
-          warnings={
-            canStoreFiles ? {} : { file_upload: t('questions.settings.uploadsUnavailable') }
-          }
-        />
-        <QuestionPrivacyPicker value={privacy} onChange={setPrivacy} isLocked={!isNew} />
-        <fieldset className="flex flex-col gap-2 rounded-lg border p-3" hidden={!withPlacements}>
-          <legend className="px-1 text-start text-sm font-medium">
-            {t('questions.placements')}
-          </legend>
-          {QUESTION_PLACEMENTS.map((placement) => (
-            <label key={placement} className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                name={`question-placement-${placement}`}
-                defaultChecked={question?.placements.includes(placement) ?? placement === 'wizard'}
-                disabled={!allowedPlacements.includes(placement)}
-              />
-              <span>{t(`questions.placement.${placement}`)}</span>
-            </label>
-          ))}
-          {allowedPlacements.length < QUESTION_PLACEMENTS.length ? (
-            <p className="text-start text-xs text-muted-foreground">
-              {t('questions.placementHers')}
-            </p>
-          ) : null}
-        </fieldset>
-        <LanguageFields
-          name="question-label"
-          legend={t('questions.label')}
-          value={question?.label}
-          isCatalanRequired
-        />
-        <LanguageFields
-          name="question-help"
-          legend={t('questions.help')}
-          value={question?.help}
-          isCatalanRequired={false}
-          isLong
-        />
-        <QuestionSettingsFields
-          key={type}
-          type={type}
-          settings={question?.type === type ? question.settings : undefined}
-          uploadsAvailable={canStoreFiles}
-          consentTextField={
-            <LanguageFields
-              name="setting-consent-text"
-              legend={t('questions.settings.consentText')}
-              value={
-                question !== null && 'text' in question.settings
-                  ? (question.settings as { readonly text: BuilderText }).text
-                  : null
-              }
-              isCatalanRequired
-              isLong
-            />
-          }
-        />
-        {isChoiceType(type) ? (
-          <div className="flex flex-col gap-3" data-testid="question-options">
-            <p className="text-start text-sm font-medium">{t('questions.options')}</p>
-            {kept.map((option) => (
-              <div key={option.id} className="flex flex-col gap-1">
-                <LanguageFields
-                  name={`option-${option.id}`}
-                  legend={textIn(option.label, 'ca')}
-                  value={option.label}
-                  isCatalanRequired
+      title={isNew ? t('questions.newQuestion') : t('questions.editQuestion')}
+      nameLegend={t('questions.label')}
+      submitLabel={t('questions.saveQuestion')}
+      isPrivacyLocked={!isNew}
+      canStoreFiles={canStoreFiles}
+      withPreview={withPreview}
+      onPreviewChange={onPreviewChange}
+      onCancel={onCancel}
+      extra={(type) => {
+        const allowedPlacements = placementsAllowedFor(type);
+        return (
+          <fieldset className="flex flex-col gap-2 rounded-lg border p-3" hidden={!withPlacements}>
+            <legend className="px-1 text-start text-sm font-medium">
+              {t('questions.placements')}
+            </legend>
+            {QUESTION_PLACEMENTS.map((placement) => (
+              <label key={placement} className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  name={`question-placement-${placement}`}
+                  defaultChecked={
+                    question?.placements.includes(placement) ?? placement === 'wizard'
+                  }
+                  disabled={!allowedPlacements.includes(placement)}
                 />
-                <label className="flex items-center gap-2 text-xs">
-                  <input type="checkbox" name={`option-remove-${option.id}`} />
-                  <span>{t('questions.removeOption')}</span>
-                </label>
-              </div>
+                <span>{t(`questions.placement.${placement}`)}</span>
+              </label>
             ))}
-            {Array.from({ length: newOptions }, (_, index) => (
-              <LanguageFields
-                key={`new-${index}`}
-                name={`option-new-${index}`}
-                legend={t('questions.newOption', { number: kept.length + index + 1 })}
-                value={null}
-                isCatalanRequired={false}
-              />
-            ))}
-            <Button
-              type="button"
-              variant="outline"
-              className="self-start"
-              onClick={() => setNewOptions((count) => count + 1)}
-            >
-              {t('questions.addOption')}
-            </Button>
-          </div>
-        ) : null}
-        <ErrorLine message={action.error} />
-        <div className="flex gap-2">
-          <Button type="submit" disabled={action.isBusy}>
-            {t('questions.saveQuestion')}
-          </Button>
-          <Button type="button" variant="ghost" onClick={onCancel}>
-            {t('questions.cancel')}
-          </Button>
-        </div>
-      </form>
-      {withPreview ? (
-        <QuestionPreview
-          draft={preview}
-          language={previewLanguage}
-          onLanguageChange={setPreviewLanguage}
-        />
-      ) : null}
-    </div>
+            {allowedPlacements.length < QUESTION_PLACEMENTS.length ? (
+              <p className="text-start text-xs text-muted-foreground">
+                {t('questions.placementHers')}
+              </p>
+            ) : null}
+          </fieldset>
+        );
+      }}
+      validate={(fields, type) => {
+        const placements = placementsOf(fields);
+        if (placements.length === 0) return t('questions.placementNeeded');
+        const allowed = placementsAllowedFor(type);
+        return placements.some((placement) => !allowed.includes(placement))
+          ? t('questions.placementNotForType')
+          : null;
+      }}
+      onSave={(draft, fields) =>
+        onSave({
+          id: question?.id ?? null,
+          screenId,
+          type: draft.type,
+          label: draft.label,
+          help: draft.help,
+          privacy: question?.privacy ?? draft.privacy,
+          placements: placementsOf(fields),
+          settings: draft.settings,
+          options: draft.options,
+        })
+      }
+    />
   );
 }
 

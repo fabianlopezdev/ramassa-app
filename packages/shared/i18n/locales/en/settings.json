@@ -768,14 +768,14 @@
     "deleteFailed": "It could not be deleted. Try again.",
     "deleteQuestion": "Delete {{question}}",
     "deleteQuestionTitle": "Delete this question?",
-    "deleteQuestionBody": "It stops showing in the app. Answers already given are kept.",
-    "dnd": {
-      "instructions": "To move it, press space or enter, use the arrow keys, then press space or enter again to drop it. Escape cancels.",
-      "picked": "Picked up {{screen}} at position {{position}}.",
-      "over": "{{screen}} is at position {{position}}.",
-      "outside": "{{screen}} is outside the list.",
-      "dropped": "Dropped {{screen}} at position {{position}}.",
-      "cancelled": "Move cancelled. {{screen}} is back in its place."
-    }
+    "deleteQuestionBody": "It stops showing in the app. Answers already given are kept."
+  },
+  "sortable": {
+    "instructions": "To move it, press space or enter, use the arrow keys, then press space or enter again to drop it. Escape cancels.",
+    "picked": "Picked up {{item}} at position {{position}}.",
+    "over": "{{item}} is at position {{position}}.",
+    "outside": "{{item}} is outside the list.",
+    "dropped": "Dropped {{item}} at position {{position}}.",
+    "cancelled": "Move cancelled. {{item}} is back in its place."
   }
 }
