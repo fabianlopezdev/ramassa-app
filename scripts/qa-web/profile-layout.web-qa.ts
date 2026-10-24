@@ -134,10 +134,15 @@ test.describe.serial('the Fitxa de la jugadora', () => {
       .getByTestId('profile-section-sizes')
       .getByRole('button', { name: /Move section/ })
       .focus();
-    await page.keyboard.press('Space');
-    await page.keyboard.press('ArrowUp');
-    await page.keyboard.press('Space');
     const index = before.indexOf('sizes');
+    // Each key waits for its announcement: an arrow pressed before the drag
+    // has started is dropped, and the section lands where it was.
+    const live = page.locator('[id^="DndLiveRegion-"]');
+    await page.keyboard.press('Space');
+    await expect(live).toContainText(`at position ${index + 1}.`);
+    await page.keyboard.press('ArrowUp');
+    await expect(live).toContainText(`at position ${index}.`);
+    await page.keyboard.press('Space');
     const expected = [...before];
     expected.splice(index, 1);
     expected.splice(index - 1, 0, 'sizes');
