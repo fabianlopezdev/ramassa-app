@@ -55,7 +55,8 @@ test.describe.serial('test players see the drafts', () => {
     page,
   }) => {
     await signIn(page, ONBOARDING_DESIGNER_EMAIL);
-    await page.goto('/onboarding');
+    // The legal text has its own screen editor on the board (RAPP-641).
+    await page.goto('/onboarding/screens/terms');
     const editor = page.getByTestId('app-terms-editor');
     await expect(editor).toBeVisible({ timeout: 30_000 });
     await editor.locator('#app-terms-body').fill(DRAFT_BODY);
