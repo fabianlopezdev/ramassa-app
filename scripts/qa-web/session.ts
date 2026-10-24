@@ -225,7 +225,9 @@ export async function acceptInvitationFromEmail(
   await page.getByLabel(copy.emailLabel, { exact: true }).fill(email);
   await page.getByLabel(copy.emailOtpCodeLabel, { exact: true }).fill(code);
   await page.getByRole('button', { name: copy.emailOtpVerifyAction, exact: true }).click();
-  await expect(page).not.toHaveURL(/\/login/, { timeout: 30_000 });
+  // The code was accepted: the login page moves on to the second factor, on the
+  // same URL since RAPP-615.
+  await expect(page.getByTestId('second-factor')).toBeVisible({ timeout: 30_000 });
   // A new team member or entity contact sets up her authenticator (RAPP-233).
   await completeSecondFactor(page, email);
   // Her own code was enough: signing in sent her no second email.
