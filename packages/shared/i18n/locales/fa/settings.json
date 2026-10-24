@@ -3,8 +3,6 @@
   "intro": "هویت بصری، زبان‌ها، کارکنان و اسناد داخلی را مدیریت کنید.",
   "tabOrganization": "سازمان",
   "tabDocuments": "اسناد",
-  "tabEntities": "نهادها",
-  "tabProfileLayout": "پرونده بازیکن",
   "organizationName": "نام سازمان",
   "contactEmail": "ایمیل تماس",
   "contactPhone": "تلفن تماس",
@@ -251,7 +249,6 @@
     "remove": "حذف",
     "removeConditionFirst": "اول «{{field}}» را حذف کنید، که به آن وابسته است."
   },
-  "tabReferralForm": "فرم ارجاع",
   "referralForm": {
     "title": "فرم ارجاع",
     "fields": "فیلدهایی که از نهاد می‌خواهیم",

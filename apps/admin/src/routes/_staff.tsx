@@ -7,9 +7,10 @@ import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/s
 import { Toaster } from '@/components/ui/sonner';
 import { logout } from '@/lib/auth';
 import { designRoleRedirect } from '@/lib/design-role-access';
+import { movedSettingsTab } from '@/lib/moved-settings-tabs';
 import { guardStaffRoute } from '@/lib/staff-route-guard';
 import { supabase } from '@/lib/supabase';
-import { createFileRoute, Navigate, Outlet, useLocation } from '@tanstack/react-router';
+import { createFileRoute, Navigate, Outlet, redirect, useLocation } from '@tanstack/react-router';
 import { useEffect, type ReactNode } from 'react';
 import { assuranceLevelOf, useAuth } from '@ramassa/shared/auth';
 
@@ -20,8 +21,13 @@ export const Route = createFileRoute('/_staff')({
   ssr: false,
   // The second-factor step and the design role's redirect are thrown before
   // any child loader runs, so a page never asks the database for data it
-  // would refuse (RAPP-615).
-  beforeLoad: ({ location, context }) => guardStaffRoute(supabase, context.staffAccess, location),
+  // would refuse (RAPP-615). A Settings tab that became its own page
+  // (RAPP-654) forwards first, so the guard judges the page it now lives on.
+  beforeLoad: ({ location, context }) => {
+    const moved = movedSettingsTab(location.pathname, location.search);
+    if (moved !== null) throw redirect({ ...moved, replace: true });
+    return guardStaffRoute(supabase, context.staffAccess, location);
+  },
   component: StaffLayout,
 });
 

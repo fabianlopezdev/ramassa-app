@@ -2,10 +2,7 @@
   "title": "Organization settings",
   "intro": "Manage visual identity, languages, staff, and internal documents.",
   "tabOrganization": "Organization",
-  "tabTeam": "Team",
   "tabDocuments": "Documents",
-  "tabEntities": "Entities",
-  "tabProfileLayout": "Player profile",
   "organizationName": "Organization name",
   "contactEmail": "Contact email",
   "contactPhone": "Contact phone",
@@ -852,7 +849,6 @@
     "remove": "Remove",
     "removeConditionFirst": "First remove “{{field}}”, which depends on it."
   },
-  "tabReferralForm": "Referral form",
   "referralForm": {
     "title": "Referral form",
     "fields": "Fields we ask the organization",

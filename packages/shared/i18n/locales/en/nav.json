@@ -20,7 +20,18 @@
     "notifications": "Notifications",
     "surveys": "Surveys",
     "data": "Data and audit",
-    "settings": "Settings"
+    "settings": "Settings",
+    "referrals": "Referrals",
+    "referralForm": "Referral form",
+    "entities": "Collaborating entities",
+    "profileLayout": "Player profile",
+    "team": "Team",
+    "seasons": "Seasons",
+    "groups": {
+      "app": "Players' app",
+      "entities": "Entities",
+      "organisation": "Organization"
+    }
   },
   "entity": {
     "dashboard": "Impact",

@@ -2,10 +2,11 @@
  * Where the onboarding design role may go in the admin (RAPP-615).
  *
  * A person whose only access is `onboarding.design` and `test_players.manage`
- * reaches the onboarding page, the Fitxa de la jugadora in Settings
- * (RAPP-650), the test players and her own account page (RAPP-634), and every
- * other admin URL sends her back. In Settings she sees the Fitxa tab only. This is the screen half: the database refuses her every
- * other read and write on its own (`private.limited_to_test_players`).
+ * reaches the onboarding page, the Fitxa de la jugadora (RAPP-650, its own
+ * page since RAPP-654), the test players and her own account page (RAPP-634),
+ * and every other admin URL sends her back. This is the screen half: the
+ * database refuses her every other read and write on its own
+ * (`private.limited_to_test_players`).
  *
  * A pure function, like `resolveRouteAccess`, so the whole URL table is tested
  * without a router.
@@ -32,9 +33,9 @@ function isOnboardingPath(pathname: string): boolean {
   return pathname === '/onboarding' || pathname.startsWith('/onboarding/');
 }
 
-/** Settings, where her only tab is the Fitxa de la jugadora (RAPP-650). */
-function isSettingsPath(pathname: string): boolean {
-  return pathname === '/settings' || pathname === '/settings/';
+/** The Fitxa de la jugadora (RAPP-650, RAPP-654). */
+function isProfileLayoutPath(pathname: string): boolean {
+  return pathname === '/profile-layout' || pathname === '/profile-layout/';
 }
 
 export function designRoleLanding(permissions: ReadonlySet<PermissionCode>): DesignRoleLanding {
@@ -49,7 +50,7 @@ export function designRoleRedirect(
   if (!isLimitedToTestPlayers(permissions)) return null;
   if (isOwnAccountPath(pathname)) return null;
   if (permissions.has('onboarding.design') && isOnboardingPath(pathname)) return null;
-  if (permissions.has('onboarding.design') && isSettingsPath(pathname)) return null;
+  if (permissions.has('onboarding.design') && isProfileLayoutPath(pathname)) return null;
   if (permissions.has('test_players.manage') && isTestPlayerPath(pathname)) return null;
   return designRoleLanding(permissions);
 }

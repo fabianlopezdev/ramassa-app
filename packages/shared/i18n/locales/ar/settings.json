@@ -3,8 +3,6 @@
   "intro": "إدارة الهوية البصرية واللغات وفريق العمل والوثائق الداخلية.",
   "tabOrganization": "المؤسسة",
   "tabDocuments": "الوثائق",
-  "tabEntities": "الجهات",
-  "tabProfileLayout": "ملف اللاعبة",
   "organizationName": "اسم المؤسسة",
   "contactEmail": "بريد التواصل",
   "contactPhone": "هاتف التواصل",
@@ -259,7 +257,6 @@
     "remove": "إزالة",
     "removeConditionFirst": "أزل أولًا «{{field}}»، فهو يعتمد عليه."
   },
-  "tabReferralForm": "نموذج الإحالة",
   "referralForm": {
     "title": "نموذج الإحالة",
     "fields": "الحقول التي نطلبها من الجهة",

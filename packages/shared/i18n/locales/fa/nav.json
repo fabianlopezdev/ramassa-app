@@ -20,7 +20,18 @@
     "notifications": "اعلان‌ها",
     "surveys": "نظرسنجی‌ها",
     "data": "داده و ممیزی",
-    "settings": "تنظیمات"
+    "settings": "تنظیمات",
+    "referrals": "ارجاع‌ها",
+    "referralForm": "فرم ارجاع",
+    "entities": "نهادهای همکار",
+    "profileLayout": "پرونده بازیکن",
+    "team": "تیم",
+    "seasons": "فصل‌ها",
+    "groups": {
+      "app": "اپ بازیکنان",
+      "entities": "نهادها",
+      "organisation": "سازمان"
+    }
   },
   "entity": {
     "dashboard": "تأثیر",

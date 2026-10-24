@@ -1,7 +1,8 @@
 /**
- * Settings › Fitxa de la jugadora (RAPP-650): the player profile layout, the
- * pool every surface picks from (RAPP-649). Sections in the team's reading
- * order, each a card of field rows; a count line above them.
+ * Organització › Fitxa de la jugadora (RAPP-650; its own page in the menu since
+ * RAPP-654): the player profile layout, the pool every surface picks from
+ * (RAPP-649). Sections in the team's reading order, each a card of field rows;
+ * a count line above them.
  *
  * The people who design the layout (settings.organization, onboarding.design)
  * drag sections, drag fields within and across sections, rename a section in
@@ -12,7 +13,7 @@
  */
 
 import type { FieldFormDraft } from '@/components/fields/field-form';
-import { PageSection } from '@/components/layout/page';
+import { Page, PageHeader } from '@/components/layout/page';
 import { FieldDialog } from '@/components/profile-layout/field-dialog';
 import { ProfileFieldRow } from '@/components/profile-layout/profile-field-row';
 import { ProfileSectionCard } from '@/components/profile-layout/profile-section-card';
@@ -246,22 +247,22 @@ function ProfileLayoutBoard({
   const liftedSection = active?.type === 'section' ? sections.get(active.id) : undefined;
 
   return (
-    <PageSection
-      title={t('profileLayout.title')}
-      data-testid="profile-layout"
-      actions={
-        canEdit ? (
-          <Button
-            type="button"
-            onClick={() => setIsAddingSection(true)}
-            data-testid="profile-layout-add-section"
-          >
-            <Plus aria-hidden data-icon="inline-start" />
-            {t('profileLayout.addSection')}
-          </Button>
-        ) : undefined
-      }
-    >
+    <Page data-testid="profile-layout">
+      <PageHeader
+        title={t('profileLayout.title')}
+        actions={
+          canEdit ? (
+            <Button
+              type="button"
+              onClick={() => setIsAddingSection(true)}
+              data-testid="profile-layout-add-section"
+            >
+              <Plus aria-hidden data-icon="inline-start" />
+              {t('profileLayout.addSection')}
+            </Button>
+          ) : undefined
+        }
+      />
       <CountLine counts={counts} />
       <DndContext
         sensors={sensors}
@@ -374,6 +375,6 @@ function ProfileLayoutBoard({
           />
         </DialogContent>
       </Dialog>
-    </PageSection>
+    </Page>
   );
 }

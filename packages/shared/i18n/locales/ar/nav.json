@@ -20,7 +20,18 @@
     "notifications": "الإشعارات",
     "surveys": "الاستبيانات",
     "data": "البيانات والتدقيق",
-    "settings": "الإعدادات"
+    "settings": "الإعدادات",
+    "referrals": "الإحالات",
+    "referralForm": "نموذج الإحالة",
+    "entities": "الجهات المتعاونة",
+    "profileLayout": "ملف اللاعبة",
+    "team": "الفريق",
+    "seasons": "المواسم",
+    "groups": {
+      "app": "تطبيق اللاعبات",
+      "entities": "الجهات",
+      "organisation": "المؤسسة"
+    }
   },
   "entity": {
     "dashboard": "الأثر",

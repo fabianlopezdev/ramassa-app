@@ -6,9 +6,12 @@ import {
 } from '@ramassa/shared/i18n';
 import type { PermissionCode } from '@ramassa/shared/permissions';
 import {
+  activeStaffNavPath,
   ENTITY_NAV_ITEMS,
   holdsAnyPermission,
+  STAFF_NAV_GROUPS,
   STAFF_NAV_ITEMS,
+  visibleStaffNavGroups,
   visibleStaffNavItems,
 } from './nav-items';
 
@@ -93,22 +96,27 @@ test('gallery moderators reach the gallery from primary navigation', () => {
   expect(holdsAnyPermission(new Set(['forum.moderate']), gallery?.anyPermission)).toBe(false);
 });
 
-test('the onboarding design role sees the onboarding, the test players and the Fitxa (RAPP-615, RAPP-650)', () => {
+test('the onboarding design role sees the test players, the onboarding and the Fitxa (RAPP-615, RAPP-654)', () => {
   const design = new Set<PermissionCode>(['onboarding.design', 'test_players.manage']);
   expect(visibleStaffNavItems(design).map((item) => item.to)).toEqual([
     '/participants',
     '/onboarding',
-    '/settings',
+    '/profile-layout',
   ]);
 });
 
-test('the onboarding page is in the menu for Settings, and unchanged for everyone else', () => {
+test('Settings holds the organization tabs only; the team, entities and Fitxa have their own items', () => {
   const settings = new Set<PermissionCode>(['settings.organization']);
   expect(visibleStaffNavItems(settings).map((item) => item.to)).toEqual([
     '/dashboard',
     '/onboarding',
+    '/entities/referral-form',
+    '/profile-layout',
     '/settings',
   ]);
+  expect(
+    visibleStaffNavItems(new Set<PermissionCode>(['team.manage'])).map((item) => item.to),
+  ).toEqual(['/dashboard', '/profile-layout', '/team']);
   const coach = new Set<PermissionCode>(['participants.view', 'attendance.mark']);
   expect(visibleStaffNavItems(coach).map((item) => item.to)).toEqual([
     '/dashboard',
@@ -116,3 +124,70 @@ test('the onboarding page is in the menu for Settings, and unchanged for everyon
     '/attendance',
   ]);
 });
+
+test('the menu groups by audience in the agreed order (RAPP-654)', () => {
+  const byGroup = Object.fromEntries(
+    STAFF_NAV_GROUPS.map((group) => [
+      group.id,
+      STAFF_NAV_ITEMS.filter((item) => item.group === group.id).map((item) => item.to),
+    ]),
+  );
+  expect(byGroup).toEqual({
+    top: ['/dashboard', '/participants'],
+    app: [
+      '/onboarding',
+      '/content',
+      '/attendance',
+      '/messages',
+      '/forum',
+      '/gallery',
+      '/mentoring',
+      '/feedback',
+      '/surveys',
+      '/notifications',
+    ],
+    entities: ['/participants/referrals', '/entities/referral-form', '/entities'],
+    organisation: ['/profile-layout', '/team', '/participants/season', '/data', '/settings'],
+  });
+});
+
+test('a group with nothing she may open is left out', () => {
+  const coach = new Set<PermissionCode>(['participants.view', 'attendance.mark']);
+  expect(visibleStaffNavGroups(coach).map((group) => group.id)).toEqual(['top', 'app']);
+  const referrals = new Set<PermissionCode>(['referrals.manage']);
+  expect(
+    visibleStaffNavGroups(referrals).map((group) => [group.id, group.items.map((item) => item.to)]),
+  ).toEqual([
+    ['top', ['/dashboard', '/participants']],
+    ['entities', ['/participants/referrals']],
+  ]);
+});
+
+test('only the deepest item the path sits in is marked as the current page', () => {
+  expect(activeStaffNavPath('/participants/referrals', STAFF_NAV_ITEMS)).toBe(
+    '/participants/referrals',
+  );
+  expect(activeStaffNavPath('/participants/season', STAFF_NAV_ITEMS)).toBe('/participants/season');
+  expect(activeStaffNavPath('/participants/invites', STAFF_NAV_ITEMS)).toBe('/participants');
+  expect(activeStaffNavPath('/entities/referral-form', STAFF_NAV_ITEMS)).toBe(
+    '/entities/referral-form',
+  );
+  expect(activeStaffNavPath('/entities', STAFF_NAV_ITEMS)).toBe('/entities');
+  expect(activeStaffNavPath('/account', STAFF_NAV_ITEMS)).toBeNull();
+  // Without the Derivacions item, its page still marks Participants.
+  expect(
+    activeStaffNavPath('/participants/referrals', [{ to: '/dashboard' }, { to: '/participants' }]),
+  ).toBe('/participants');
+});
+
+test.each(SUPPORTED_LANGUAGES.map((language) => [language] as const))(
+  'every group label resolves in %s',
+  (language) => {
+    const i18n = createI18n({ languageStorage: createInMemoryLanguageStorage() });
+    const translate = i18n.getFixedT(language);
+    for (const group of STAFF_NAV_GROUPS) {
+      if (group.labelKey === null) continue;
+      expect(translate(group.labelKey)).not.toBe(group.labelKey.replace(/^nav:/, ''));
+    }
+  },
+);

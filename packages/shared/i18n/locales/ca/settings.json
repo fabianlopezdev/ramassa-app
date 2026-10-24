@@ -2,10 +2,7 @@
   "title": "Configuració de l'organització",
   "intro": "Gestiona la identitat visual, els idiomes, l'equip i els documents interns.",
   "tabOrganization": "Organització",
-  "tabTeam": "Equip",
   "tabDocuments": "Documents",
-  "tabEntities": "Entitats",
-  "tabProfileLayout": "Fitxa de la jugadora",
   "organizationName": "Nom de l'organització",
   "contactEmail": "Correu de contacte",
   "contactPhone": "Telèfon de contacte",
@@ -852,7 +849,6 @@
     "remove": "Treu",
     "removeConditionFirst": "Primer treu «{{field}}», que en depèn."
   },
-  "tabReferralForm": "Formulari de derivació",
   "referralForm": {
     "title": "Formulari de derivació",
     "fields": "Camps que demanem a l'entitat",

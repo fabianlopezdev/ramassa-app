@@ -1,7 +1,8 @@
 /**
  * Entitats › Formulari de derivació (RAPP-652): what an entity fills in when
- * it refers a woman, composed from the Fitxa de la jugadora. Until the left
- * menu groups the entity pages (RAPP-654), Settings reaches it as a tab.
+ * it refers a woman, composed from the Fitxa de la jugadora. Linked from the
+ * Entitats group of the menu (RAPP-654); `/settings?tab=referral-form` still
+ * forwards here.
  *
  * Staff who hold settings.organization edit it; the database checks every
  * change again. `ssr: false` for the reason every staff screen gives (the

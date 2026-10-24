@@ -2,10 +2,7 @@
   "title": "Configuración de la organización",
   "intro": "Gestiona la identidad visual, los idiomas, el equipo y los documentos internos.",
   "tabOrganization": "Organización",
-  "tabTeam": "Equipo",
   "tabDocuments": "Documentos",
-  "tabEntities": "Entidades",
-  "tabProfileLayout": "Ficha de la jugadora",
   "organizationName": "Nombre de la organización",
   "contactEmail": "Correo de contacto",
   "contactPhone": "Teléfono de contacto",
@@ -852,7 +849,6 @@
     "remove": "Quitar",
     "removeConditionFirst": "Primero quita «{{field}}», que depende de él."
   },
-  "tabReferralForm": "Formulario de derivación",
   "referralForm": {
     "title": "Formulario de derivación",
     "fields": "Campos que pedimos a la entidad",

@@ -20,7 +20,18 @@
     "notifications": "Notificacions",
     "surveys": "Enquestes",
     "data": "Dades i auditoria",
-    "settings": "Configuració"
+    "settings": "Configuració",
+    "referrals": "Derivacions",
+    "referralForm": "Formulari de derivació",
+    "entities": "Entitats col·laboradores",
+    "profileLayout": "Fitxa de la jugadora",
+    "team": "Equip",
+    "seasons": "Temporades",
+    "groups": {
+      "app": "App de les jugadores",
+      "entities": "Entitats",
+      "organisation": "Organització"
+    }
   },
   "entity": {
     "dashboard": "Impacte",

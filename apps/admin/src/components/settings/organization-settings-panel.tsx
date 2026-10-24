@@ -38,8 +38,6 @@ interface OrganizationSettingsPanelProps {
   readonly organization: OrganizationRow;
   /** Which tabs and fields the caller may use (RAPP-231); the database enforces them again. */
   readonly permissions: ReadonlySet<PermissionCode>;
-  /** The Team tab (RAPP-231): people, presets and toggles. */
-  readonly team: ReactNode;
   /** "Take photo with phone" for a document (RAPP-254). */
   readonly photoHandoff: ReactNode;
   /** The note under the wizard's document step (RAPP-302), for settings.organization. */
@@ -48,13 +46,8 @@ interface OrganizationSettingsPanelProps {
   readonly authorization?: ReactNode;
   /** The question builder (RAPP-307). */
   readonly questions?: ReactNode;
-  /** The Fitxa de la jugadora (RAPP-650): every team member who opens Settings reads it. */
-  readonly profileLayout?: ReactNode;
-  /** The entity referral form (RAPP-652), here until the menu groups the entity pages (RAPP-654). */
-  readonly referralForm?: ReactNode;
   readonly documents: readonly InternalDocument[];
   readonly documentQuery: string;
-  readonly entityManagement: ReactNode;
   readonly accessToken: string | undefined;
   readonly initialTab?: SettingsTab;
   readonly onTabChange?: (tab: SettingsTab) => void;
@@ -72,17 +65,19 @@ interface OrganizationSettingsPanelProps {
 
 type PendingAction = 'organization' | 'document' | 'download';
 
-export type SettingsTab =
-  | 'organization'
-  | 'authorization'
-  | 'profile-layout'
-  | 'referral-form'
-  | 'questions'
-  | 'staff'
-  | 'documents'
-  | 'entities';
+export const SETTINGS_TABS = ['organization', 'authorization', 'questions', 'documents'] as const;
 
-/** The tabs a person may open, in display order (RAPP-231). */
+export type SettingsTab = (typeof SETTINGS_TABS)[number];
+
+export function isSettingsTab(value: string | undefined): value is SettingsTab {
+  return SETTINGS_TABS.some((tab) => tab === value);
+}
+
+/**
+ * The tabs a person may open, in display order (RAPP-231). The Fitxa, the
+ * referral form, the team and the entities have their own menu items and
+ * pages since RAPP-654, so each is reachable from one place.
+ */
 function visibleSettingsTabs(permissions: ReadonlySet<PermissionCode>): readonly SettingsTab[] {
   const tabs: SettingsTab[] = [];
   if (permissions.has('settings.organization') || permissions.has('settings.branding')) {
@@ -90,15 +85,9 @@ function visibleSettingsTabs(permissions: ReadonlySet<PermissionCode>): readonly
   }
   // The season's participation authorization (RAPP-304).
   if (permissions.has('settings.organization')) tabs.push('authorization');
-  // The player profile layout (RAPP-650): read by all, edited by its designers.
-  tabs.push('profile-layout');
-  // The entity referral form (RAPP-652), until RAPP-654 gives it its menu item.
-  if (permissions.has('settings.organization')) tabs.push('referral-form');
   // The registration questions staff add and reword (RAPP-307).
   if (permissions.has('settings.organization')) tabs.push('questions');
-  if (permissions.has('team.manage')) tabs.push('staff');
   if (permissions.has('settings.documents')) tabs.push('documents');
-  if (permissions.has('entities.manage')) tabs.push('entities');
   return tabs;
 }
 
@@ -127,16 +116,12 @@ function fileContentType(file: File): UploadContentType {
 export function OrganizationSettingsPanel({
   organization,
   permissions,
-  team,
   photoHandoff,
   documentExplanation,
   authorization,
   questions,
-  profileLayout,
-  referralForm,
   documents,
   documentQuery,
-  entityManagement,
   accessToken,
   initialTab = 'organization',
   onTabChange,
@@ -340,21 +325,11 @@ export function OrganizationSettingsPanel({
           {tabs.includes('authorization') ? (
             <TabsTrigger value="authorization">{t('tabAuthorization')}</TabsTrigger>
           ) : null}
-          {tabs.includes('profile-layout') ? (
-            <TabsTrigger value="profile-layout">{t('tabProfileLayout')}</TabsTrigger>
-          ) : null}
-          {tabs.includes('referral-form') ? (
-            <TabsTrigger value="referral-form">{t('tabReferralForm')}</TabsTrigger>
-          ) : null}
           {tabs.includes('questions') ? (
             <TabsTrigger value="questions">{t('tabQuestions')}</TabsTrigger>
           ) : null}
-          {tabs.includes('staff') ? <TabsTrigger value="staff">{t('tabTeam')}</TabsTrigger> : null}
           {tabs.includes('documents') ? (
             <TabsTrigger value="documents">{t('tabDocuments')}</TabsTrigger>
-          ) : null}
-          {tabs.includes('entities') ? (
-            <TabsTrigger value="entities">{t('tabEntities')}</TabsTrigger>
           ) : null}
         </TabsList>
 
@@ -492,10 +467,6 @@ export function OrganizationSettingsPanel({
           {documentExplanation}
         </TabsContent>
 
-        <TabsContent value="staff" className="space-y-6">
-          {team}
-        </TabsContent>
-
         <TabsContent value="documents" className="space-y-6">
           <SectionHeader title={t('documentsTitle')} intro={t('documentsIntro')} />
           <form
@@ -581,17 +552,10 @@ export function OrganizationSettingsPanel({
           <SectionHeader title={t('tabAuthorization')} intro={t('authorizationIntro')} />
           {authorization}
         </TabsContent>
-        <TabsContent value="profile-layout" className="space-y-6">
-          {profileLayout}
-        </TabsContent>
-        <TabsContent value="referral-form" className="space-y-6">
-          {referralForm}
-        </TabsContent>
         <TabsContent value="questions" className="space-y-6">
           <SectionHeader title={t('tabQuestions')} intro={t('questionsIntro')} />
           {questions}
         </TabsContent>
-        <TabsContent value="entities">{entityManagement}</TabsContent>
       </Tabs>
     </Page>
   );

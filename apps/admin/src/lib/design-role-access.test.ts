@@ -15,8 +15,8 @@ describe('the onboarding design role reaches its two areas only (RAPP-615)', () 
       '/participants/new',
       `/participants/${PLAYER_ID}`,
       '/account',
-      // The Fitxa de la jugadora (RAPP-650).
-      '/settings',
+      // The Fitxa de la jugadora (RAPP-650, its own page since RAPP-654).
+      '/profile-layout',
     ]) {
       expect(designRoleRedirect(path, DESIGN)).toBeNull();
     }
@@ -25,7 +25,12 @@ describe('the onboarding design role reaches its two areas only (RAPP-615)', () 
   test('every other admin URL goes back to the onboarding', () => {
     for (const path of [
       '/dashboard',
+      // Settings is no longer hers (RAPP-654).
+      '/settings',
       '/settings/elsewhere',
+      '/profile-layout/elsewhere',
+      '/entities/referral-form',
+      '/team',
       '/data',
       '/content',
       '/messages',
@@ -44,7 +49,7 @@ describe('the onboarding design role reaches its two areas only (RAPP-615)', () 
   test('each half of the pair opens only its own area', () => {
     const testPlayersOnly = held('test_players.manage');
     expect(designRoleRedirect('/onboarding', testPlayersOnly)).toBe('/participants');
-    expect(designRoleRedirect('/settings', testPlayersOnly)).toBe('/participants');
+    expect(designRoleRedirect('/profile-layout', testPlayersOnly)).toBe('/participants');
     expect(designRoleRedirect('/participants/new', testPlayersOnly)).toBeNull();
     const onboardingOnly = held('onboarding.design');
     expect(designRoleRedirect('/participants', onboardingOnly)).toBe('/onboarding');

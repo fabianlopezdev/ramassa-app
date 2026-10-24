@@ -7,6 +7,7 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
@@ -14,8 +15,9 @@ import {
   SidebarRail,
 } from '@/components/ui/sidebar';
 import { useUnreadMessageCount } from '@/lib/messaging';
-import { visibleStaffNavItems } from '@/lib/nav-items';
+import { activeStaffNavPath, visibleStaffNavGroups, type StaffNavGroup } from '@/lib/nav-items';
 import { Link, useLocation } from '@tanstack/react-router';
+import { useId } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@ramassa/shared/auth';
 import type { LayoutDirection } from '@ramassa/shared/i18n';
@@ -33,8 +35,13 @@ export function sidebarSideForDirection(direction: LayoutDirection): 'left' | 'r
 }
 
 /**
- * The staff CMS navigation shell (RAPP-16): the six-section sidebar every staff
- * feature mounts beside, collapsible to an icon rail (SPEC: desktop, data-dense).
+ * The staff CMS navigation shell (RAPP-16): the sidebar every staff feature
+ * mounts beside, collapsible to an icon rail (SPEC: desktop, data-dense). Its
+ * items group by audience (RAPP-654): Tauler and Participants on top, then
+ * App de les jugadores, Entitats and Organització, each under its label; a
+ * group with nothing she may open is left out. In the icon rail the labels
+ * fold away and every icon keeps its tooltip.
+ *
  * Each item pairs a lucide icon with a translated label (SPEC UX rule: never
  * icon-only) and marks the active route with `aria-current` for both screen
  * readers and the visual active state. Reachable only by staff/admin: the
@@ -47,7 +54,11 @@ export function StaffSidebar() {
   const { permissions } = useAuth();
   // Only for someone with the inbox, so the design role asks nothing.
   const unread = useUnreadMessageCount(permissions.has('messages.inbox'));
-  const visibleItems = visibleStaffNavItems(permissions);
+  const groups = visibleStaffNavGroups(permissions);
+  const activePath = activeStaffNavPath(
+    pathname,
+    groups.flatMap((group) => group.items),
+  );
 
   return (
     <Sidebar collapsible="icon" side={sidebarSideForDirection(i18n.dir())}>
@@ -62,43 +73,17 @@ export function StaffSidebar() {
         />
       </SidebarHeader>
       <SidebarContent className="pt-2">
-        {/* role + aria-label makes this a named navigation landmark. */}
-        <SidebarGroup role="navigation" aria-label={t('nav:a11y.staffSidebar')}>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {visibleItems.map((item) => {
-                const label = t(item.labelKey);
-                const isActive = pathname === item.to || pathname.startsWith(`${item.to}/`);
-                const Icon = item.icon;
-                return (
-                  <SidebarMenuItem key={item.to}>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={isActive}
-                      tooltip={label}
-                      className={NAV_BUTTON_CLASS}
-                    >
-                      <Link to={item.to} aria-current={isActive ? 'page' : undefined}>
-                        <Icon aria-hidden="true" />
-                        <span>{label}</span>
-                        {item.to === '/messages' && unread > 0 ? (
-                          <Badge
-                            variant="secondary"
-                            className="ms-auto"
-                            data-testid="staff-message-badge"
-                            aria-label={t('messaging:unread', { count: unread })}
-                          >
-                            {Math.min(unread, 99)}
-                          </Badge>
-                        ) : null}
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {/* One named navigation landmark around every group. */}
+        <nav aria-label={t('nav:a11y.staffSidebar')} className="flex flex-col">
+          {groups.map((group) => (
+            <StaffNavGroupSection
+              key={group.id}
+              group={group}
+              activePath={activePath}
+              unread={unread}
+            />
+          ))}
+        </nav>
       </SidebarContent>
       {/* Sign out moved to the top bar (RAPP-632). */}
       <SidebarFooter className="p-3 group-data-[collapsible=icon]:hidden">
@@ -111,5 +96,65 @@ export function StaffSidebar() {
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
+  );
+}
+
+function StaffNavGroupSection({
+  group,
+  activePath,
+  unread,
+}: {
+  readonly group: StaffNavGroup;
+  readonly activePath: string | null;
+  readonly unread: number;
+}) {
+  const { t } = useTranslation(['nav', 'messaging']);
+  const labelId = useId();
+  const hasLabel = group.labelKey !== null;
+  return (
+    <SidebarGroup data-testid={`staff-nav-group-${group.id}`}>
+      {hasLabel ? <SidebarGroupLabel id={labelId}>{t(group.labelKey)}</SidebarGroupLabel> : null}
+      <SidebarGroupContent>
+        <SidebarMenu aria-labelledby={hasLabel ? labelId : undefined}>
+          {group.items.map((item) => {
+            const label = t(item.labelKey);
+            const isActive = item.to === activePath;
+            const Icon = item.icon;
+            return (
+              <SidebarMenuItem key={item.to}>
+                <SidebarMenuButton
+                  asChild
+                  isActive={isActive}
+                  tooltip={label}
+                  className={NAV_BUTTON_CLASS}
+                >
+                  {/* The router would mark every link the path sits in (Participants
+                    under /participants/referrals); exact matching leaves the
+                    marking to the one item chosen above. */}
+                  <Link
+                    to={item.to}
+                    activeOptions={{ exact: true, includeSearch: false }}
+                    aria-current={isActive ? 'page' : undefined}
+                  >
+                    <Icon aria-hidden="true" />
+                    <span>{label}</span>
+                    {item.to === '/messages' && unread > 0 ? (
+                      <Badge
+                        variant="secondary"
+                        className="ms-auto"
+                        data-testid="staff-message-badge"
+                        aria-label={t('messaging:unread', { count: unread })}
+                      >
+                        {Math.min(unread, 99)}
+                      </Badge>
+                    ) : null}
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            );
+          })}
+        </SidebarMenu>
+      </SidebarGroupContent>
+    </SidebarGroup>
   );
 }

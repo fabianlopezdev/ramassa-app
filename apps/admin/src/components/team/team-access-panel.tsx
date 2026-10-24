@@ -1,6 +1,6 @@
 /**
- * The Team tab (RAPP-231): who is on the team, what each person may do, and the
- * presets that set it up quickly.
+ * Organització › Equip (RAPP-231; its own page since RAPP-654): who is on the
+ * team, what each person may do, and the presets that set it up quickly.
  *
  * Every rule lives in the database (RAPP-229): team.manage is required, nobody
  * changes a toggle they do not hold, the organization keeps at least one
@@ -8,6 +8,7 @@
  * rules before the database has to refuse: a toggle the reader does not hold is
  * visible but locked, with the reason next to it.
  */
+import { PageHeader } from '@/components/layout/page';
 import { TeamTestAccountToggle } from '@/components/team/team-test-account-toggle';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -163,10 +164,8 @@ export function TeamAccessPanel({
       <MessageToast message={message} onClose={() => setMessage(null)} />
 
       <section className="space-y-4">
-        <header className="space-y-2">
-          <h2 className="text-xl font-semibold text-foreground">{t('team.title')}</h2>
-          <p className="text-sm leading-6 text-muted-foreground">{t('team.intro')}</p>
-        </header>
+        {/* Its own page in the menu since RAPP-654, so the page title. */}
+        <PageHeader title={t('team.title')} description={t('team.intro')} />
         <form
           className="grid gap-3 rounded-xl border bg-card p-4 sm:grid-cols-2 lg:grid-cols-5"
           onSubmit={submitInvite}

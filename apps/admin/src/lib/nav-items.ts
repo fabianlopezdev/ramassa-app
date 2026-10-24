@@ -11,12 +11,16 @@
 
 import {
   BellRing,
+  Building2,
   CalendarCheck,
   CalendarDays,
+  CalendarRange,
   ClipboardList,
+  ClipboardPen,
   Database,
   FileText,
   HeartHandshake,
+  IdCard,
   Images,
   Inbox,
   LayoutDashboard,
@@ -25,6 +29,7 @@ import {
   Settings,
   Share2,
   Users,
+  UsersRound,
   Wrench,
   type LucideIcon,
 } from 'lucide-react';
@@ -42,6 +47,25 @@ export interface NavItem {
    */
   readonly anyPermission?: readonly PermissionCode[];
 }
+
+/**
+ * The staff menu groups by audience (RAPP-654): the two pages everyone starts
+ * from on top, then what the players see in their app, what the partner
+ * entities use, and how the organization itself is run.
+ */
+export type StaffNavGroupId = 'top' | 'app' | 'entities' | 'organisation';
+
+export interface StaffNavItem extends NavItem {
+  readonly group: StaffNavGroupId;
+}
+
+/** The groups in menu order; the top group has no label. */
+export const STAFF_NAV_GROUPS = [
+  { id: 'top', labelKey: null },
+  { id: 'app', labelKey: 'nav:staff.groups.app' },
+  { id: 'entities', labelKey: 'nav:staff.groups.entities' },
+  { id: 'organisation', labelKey: 'nav:staff.groups.organisation' },
+] as const satisfies readonly { id: StaffNavGroupId; labelKey: string | null }[];
 
 /** The onboarding page: Settings' own permission, or the design role (RAPP-615). */
 export const ONBOARDING_PERMISSIONS = [
@@ -64,10 +88,22 @@ export const DATA_PERMISSIONS = [
 ] as const satisfies readonly PermissionCode[];
 
 /**
- * The Settings area: one tab per permission (organization, team, documents,
- * entities), and the Fitxa de la jugadora for the design role (RAPP-650).
+ * The Settings area: one tab per permission (organization and branding,
+ * documents). The team, the partner entities and the Fitxa de la jugadora have
+ * their own pages since RAPP-654.
  */
 export const SETTINGS_PERMISSIONS = [
+  'settings.organization',
+  'settings.branding',
+  'settings.documents',
+] as const satisfies readonly PermissionCode[];
+
+/**
+ * The Fitxa de la jugadora (RAPP-650, its own page since RAPP-654): edited by
+ * its designers (`PROFILE_LAYOUT_DESIGN_PERMISSIONS`), read by everyone who
+ * reached it from Settings before. It holds no answers.
+ */
+export const PROFILE_LAYOUT_PERMISSIONS = [
   'settings.organization',
   'onboarding.design',
   'settings.branding',
@@ -76,12 +112,21 @@ export const SETTINGS_PERMISSIONS = [
   'team.manage',
 ] as const satisfies readonly PermissionCode[];
 
+/** The team page (RAPP-654): people, presets and toggles. */
+export const TEAM_PERMISSIONS = ['team.manage'] as const satisfies readonly PermissionCode[];
+
+/** The partner entities and their contacts (RAPP-654). */
+export const ENTITIES_PERMISSIONS = [
+  'entities.manage',
+] as const satisfies readonly PermissionCode[];
+
 export const STAFF_NAV_ITEMS = [
-  { to: '/dashboard', icon: LayoutDashboard, labelKey: 'nav:staff.dashboard' },
+  { to: '/dashboard', icon: LayoutDashboard, labelKey: 'nav:staff.dashboard', group: 'top' },
   {
     to: '/participants',
     icon: Users,
     labelKey: 'nav:staff.participants',
+    group: 'top',
     anyPermission: [
       'participants.view',
       'participants.invite',
@@ -95,12 +140,14 @@ export const STAFF_NAV_ITEMS = [
     to: '/onboarding',
     icon: ListChecks,
     labelKey: 'nav:staff.onboarding',
+    group: 'app',
     anyPermission: ONBOARDING_PERMISSIONS,
   },
   {
     to: '/content',
     icon: FileText,
     labelKey: 'nav:staff.content',
+    group: 'app',
     anyPermission: [
       'announcements.edit',
       'announcements.publish',
@@ -117,58 +164,117 @@ export const STAFF_NAV_ITEMS = [
     to: '/attendance',
     icon: CalendarCheck,
     labelKey: 'nav:staff.attendance',
+    group: 'app',
     anyPermission: ['attendance.mark', 'attendance.reports'],
   },
   {
     to: '/messages',
     icon: MessageSquare,
     labelKey: 'nav:staff.messages',
+    group: 'app',
     anyPermission: ['messages.inbox'],
   },
   {
     to: '/forum',
     icon: MessageSquare,
     labelKey: 'nav:staff.forum',
+    group: 'app',
     anyPermission: ['forum.moderate', 'gallery.moderate'],
   },
   {
     to: '/gallery',
     icon: Images,
     labelKey: 'nav:staff.gallery',
+    group: 'app',
     anyPermission: ['gallery.moderate'],
   },
   {
     to: '/mentoring',
     icon: HeartHandshake,
     labelKey: 'nav:staff.mentoring',
+    group: 'app',
     anyPermission: ['mentoring.manage'],
   },
   {
     to: '/feedback',
     icon: Inbox,
     labelKey: 'nav:staff.feedback',
+    group: 'app',
     anyPermission: ['feedback.view'],
-  },
-  {
-    to: '/notifications',
-    icon: BellRing,
-    labelKey: 'nav:staff.notifications',
-    anyPermission: ['notifications.send'],
   },
   {
     to: '/surveys',
     icon: ClipboardList,
     labelKey: 'nav:staff.surveys',
+    group: 'app',
     anyPermission: ['surveys.manage', 'surveys.results'],
   },
-  { to: '/data', icon: Database, labelKey: 'nav:staff.data', anyPermission: DATA_PERMISSIONS },
+  {
+    to: '/notifications',
+    icon: BellRing,
+    labelKey: 'nav:staff.notifications',
+    group: 'app',
+    anyPermission: ['notifications.send'],
+  },
+  {
+    // The review queue keeps its URL under the roster (RAPP-654).
+    to: '/participants/referrals',
+    icon: Share2,
+    labelKey: 'nav:staff.referrals',
+    group: 'entities',
+    anyPermission: ['referrals.manage'],
+  },
+  {
+    to: '/entities/referral-form',
+    icon: ClipboardPen,
+    labelKey: 'nav:staff.referralForm',
+    group: 'entities',
+    anyPermission: REFERRAL_FORM_PERMISSIONS,
+  },
+  {
+    to: '/entities',
+    icon: Building2,
+    labelKey: 'nav:staff.entities',
+    group: 'entities',
+    anyPermission: ENTITIES_PERMISSIONS,
+  },
+  {
+    to: '/profile-layout',
+    icon: IdCard,
+    labelKey: 'nav:staff.profileLayout',
+    group: 'organisation',
+    anyPermission: PROFILE_LAYOUT_PERMISSIONS,
+  },
+  {
+    to: '/team',
+    icon: UsersRound,
+    labelKey: 'nav:staff.team',
+    group: 'organisation',
+    anyPermission: TEAM_PERMISSIONS,
+  },
+  {
+    // Who has re-registered for the current season (RAPP-306), under the roster.
+    to: '/participants/season',
+    icon: CalendarRange,
+    labelKey: 'nav:staff.seasons',
+    group: 'organisation',
+    anyPermission: ['participants.view_personal'],
+  },
+  {
+    to: '/data',
+    icon: Database,
+    labelKey: 'nav:staff.data',
+    group: 'organisation',
+    anyPermission: DATA_PERMISSIONS,
+  },
   {
     to: '/settings',
     icon: Settings,
     labelKey: 'nav:staff.settings',
+    group: 'organisation',
     anyPermission: SETTINGS_PERMISSIONS,
   },
-] as const satisfies readonly NavItem[];
+] as const satisfies readonly StaffNavItem[];
 
 /** Whether a permission-filtered item or route is open to this person. */
 export function holdsAnyPermission(
@@ -178,18 +284,55 @@ export function holdsAnyPermission(
   return anyPermission === undefined || anyPermission.some((code) => permissions.has(code));
 }
 
+type StaffNavEntry = (typeof STAFF_NAV_ITEMS)[number];
+
 /**
  * The items a team member sees: those whose permissions she holds, and for the
- * onboarding design role only her two areas (RAPP-615).
+ * onboarding design role only her three areas (RAPP-615, RAPP-654).
  */
 export function visibleStaffNavItems(
   permissions: ReadonlySet<PermissionCode>,
-): readonly (typeof STAFF_NAV_ITEMS)[number][] {
+): readonly StaffNavEntry[] {
   return STAFF_NAV_ITEMS.filter(
     (item) =>
       holdsAnyPermission(permissions, 'anyPermission' in item ? item.anyPermission : undefined) &&
       designRoleRedirect(item.to, permissions) === null,
   );
+}
+
+export interface StaffNavGroup {
+  readonly id: StaffNavGroupId;
+  readonly labelKey: string | null;
+  readonly items: readonly StaffNavEntry[];
+}
+
+/** The menu's groups in order, each with its visible items; an empty group is left out. */
+export function visibleStaffNavGroups(
+  permissions: ReadonlySet<PermissionCode>,
+): readonly StaffNavGroup[] {
+  const visible = visibleStaffNavItems(permissions);
+  return STAFF_NAV_GROUPS.map((group) => ({
+    id: group.id,
+    labelKey: group.labelKey,
+    items: visible.filter((item) => item.group === group.id),
+  })).filter((group) => group.items.length > 0);
+}
+
+/**
+ * The one item marked as the current page: the longest destination the path
+ * sits in, so `/participants/referrals` marks Derivacions and leaves
+ * Participants unmarked.
+ */
+export function activeStaffNavPath(
+  pathname: string,
+  items: readonly Pick<NavItem, 'to'>[],
+): string | null {
+  let best: string | null = null;
+  for (const item of items) {
+    const isInside = pathname === item.to || pathname.startsWith(`${item.to}/`);
+    if (isInside && (best === null || item.to.length > best.length)) best = item.to;
+  }
+  return best;
 }
 
 export const ENTITY_NAV_ITEMS = [
