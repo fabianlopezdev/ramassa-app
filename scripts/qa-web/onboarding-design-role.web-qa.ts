@@ -1,8 +1,9 @@
 /**
  * The onboarding design role in the admin (RAPP-615), signed in as the seeded
  * design account: it lands on the onboarding page, its menu holds the
- * onboarding and the test players only, every other admin URL sends it back,
- * and its roster holds test players only.
+ * onboarding, the test players and Settings (where its only tab is the Fitxa
+ * de la jugadora, RAPP-650), every other admin URL sends it back, and its
+ * roster holds test players only.
  */
 
 import { expect, test } from '@playwright/test';
@@ -24,7 +25,7 @@ import {
 test.setTimeout(120_000);
 
 test.describe.serial('the onboarding design role', () => {
-  test('lands on the onboarding page and its menu holds its two areas only', async ({ page }) => {
+  test('lands on the onboarding page and its menu holds its three areas only', async ({ page }) => {
     await signIn(page, ONBOARDING_DESIGNER_EMAIL);
     await expect(page).toHaveURL(/\/onboarding$/, { timeout: 30_000 });
     await expect(page.getByTestId('onboarding-design-page')).toBeVisible();
@@ -35,9 +36,10 @@ test.describe.serial('the onboarding design role', () => {
 
     const menu = page.getByRole('navigation', { name: 'Staff navigation' });
     const items = menu.getByRole('link');
-    await expect(items).toHaveCount(2);
+    await expect(items).toHaveCount(3);
     await expect(menu.getByRole('link', { name: 'Participants' })).toBeVisible();
     await expect(menu.getByRole('link', { name: 'Registration' })).toBeVisible();
+    await expect(menu.getByRole('link', { name: 'Settings' })).toBeVisible();
   });
 
   test('every other admin URL sends it back to the onboarding', async ({ page }) => {
@@ -58,7 +60,7 @@ test.describe.serial('the onboarding design role', () => {
     });
     await signIn(page, ONBOARDING_DESIGNER_EMAIL);
     await expect(page).toHaveURL(/\/onboarding$/, { timeout: 30_000 });
-    for (const path of ['/dashboard', '/settings', '/data', '/participants/invites', '/messages']) {
+    for (const path of ['/dashboard', '/data', '/participants/invites', '/messages']) {
       await page.goto(path);
       await expect(page).toHaveURL(/\/onboarding$/, { timeout: 20_000 });
       await expect(page.getByTestId('onboarding-design-page')).toBeVisible({ timeout: 20_000 });
