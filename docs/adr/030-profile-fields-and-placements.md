@@ -66,3 +66,26 @@ is worded. As Marc designed the onboarding (RAPP-641 to RAPP-647), this showed t
   read-only for `authenticated`.
 - The old `placements[]` could say `season` without `wizard`; both always meant she is asked in
   her onboarding too, so the view now says `wizard, season` for both.
+
+### After the contract step (RAPP-656, 2026-10-24)
+
+- One shape remains. The view `custom_questions`, its INSTEAD OF trigger, the old writers
+  (`save_custom_question`, `archive_custom_question`, `reorder_custom_questions`,
+  `save_custom_question_required`, `ensure_builtin_screen_holder`, `save_referral_custom_answers`),
+  the holder screens, `intake_screens.builtin_screen` and `profile_fields.legacy_screen_id` are
+  gone (migration `20261024000000_remove_the_old_question_model.sql`).
+- A Ramassà field reaches her only through a placement. Required for her means a required
+  placement on her onboarding or her season form; seasonal means placed on the season form.
+  `private.write_custom_answer` takes a `profile_fields` row.
+- Archiving a Ramassà screen removes the placements on it. The fields stay on the Fitxa with their
+  answers, and the team can place them again.
+- The setup file is schema version 3: screens, sections, fields and placements, nothing else about
+  them. Versions 1 and 2 still import, read as version 3 by
+  `private.onboarding_setup_as_version_3`: a holder becomes the app screen it held, a version 1
+  question becomes a field with its placements, and the organization keeps its own built-in
+  placements.
+- The custom answers export names the Fitxa section of each answer in place of a screen.
+- The Settings question builder and its Questions tab are gone; `/settings?tab=questions` opens
+  the Fitxa. The Onboarding board orders and words the screens.
+- The entity's answers to Ramassà fields travel only inside `create_entity_referral`; a required
+  one left out refuses the referral.
