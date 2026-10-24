@@ -43,7 +43,11 @@ select is(
         'checkout_recipients', 'record_staff_checkout',
         -- Only a team account is marked as a test account; a player is a test
         -- player from her creation or never (RAPP-615).
-        'set_team_member_test_account'
+        'set_team_member_test_account',
+        -- Players see the first name and photo of team members only (RAPP-639).
+        'get_staff_cards', 'can_read_profile_photo_object',
+        -- The bell rings for team members only (RAPP-640).
+        'staff_notification_recipients'
       )),
   '{}'::text[], 'a literal staff/admin role check remains only where it defines team membership'
 );

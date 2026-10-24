@@ -34,8 +34,8 @@ delete from public.staff_notifications;
 
 -- 1. A player's messages -----------------------------------------------------------------------------
 
-insert into public.messages (org_id, conversation_id, sender_id, content)
-values ('5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-800c-000000000001',
+insert into public.messages (id, org_id, conversation_id, sender_id, content)
+values ('12800000-0000-4000-8000-000000000001', '5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-800c-000000000001',
         '5eed0000-0000-4000-8000-000000000011', 'Hola');
 
 select is(
@@ -49,8 +49,8 @@ select is(
     where recipient_id = '5eed0000-0000-4000-8000-000000000011'),
   0, 'the player who wrote is never notified');
 
-insert into public.messages (org_id, conversation_id, sender_id, content)
-values ('5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-800c-000000000001',
+insert into public.messages (id, org_id, conversation_id, sender_id, content)
+values ('12800000-0000-4000-8000-000000000002', '5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-800c-000000000001',
         '5eed0000-0000-4000-8000-000000000011', 'Hi ha algú?');
 
 select results_eq(
@@ -62,8 +62,8 @@ select results_eq(
 
 -- 2. A team member's message, then a read notification ----------------------------------------------
 
-insert into public.messages (org_id, conversation_id, sender_id, content)
-values ('5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-800c-000000000001',
+insert into public.messages (id, org_id, conversation_id, sender_id, content)
+values ('12800000-0000-4000-8000-000000000003', '5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-800c-000000000001',
         '5eed0000-0000-4000-8000-000000000002', 'Hola, Fatima');
 
 select is(
@@ -73,8 +73,8 @@ select is(
 
 update public.staff_notifications set read_at = now()
  where recipient_id = '5eed0000-0000-4000-8000-000000000002';
-insert into public.messages (org_id, conversation_id, sender_id, content)
-values ('5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-800c-000000000001',
+insert into public.messages (id, org_id, conversation_id, sender_id, content)
+values ('12800000-0000-4000-8000-000000000004', '5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-800c-000000000001',
         '5eed0000-0000-4000-8000-000000000011', 'Gràcies');
 
 select is(
