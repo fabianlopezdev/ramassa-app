@@ -22,8 +22,13 @@ import {
   type ProfileLayout,
 } from '@ramassa/shared/intake-builder';
 
+// Diacritic also covers the Catalan middle dot, so "allergies" finds "Al·lèrgies".
 function folded(text: string): string {
-  return text.normalize('NFD').replace(/\p{M}/gu, '').toLocaleLowerCase('ca').trim();
+  return text
+    .normalize('NFD')
+    .replace(/[\p{M}\p{Diacritic}]/gu, '')
+    .toLocaleLowerCase('ca')
+    .trim();
 }
 
 /** The live fields whose name, in any language, holds the search. */
