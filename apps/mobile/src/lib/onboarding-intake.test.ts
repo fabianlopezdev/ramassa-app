@@ -107,12 +107,10 @@ describe('storedPayloadFromProfile', () => {
 describe('staff screens in the wizard (RAPP-307)', () => {
   const choice: CustomQuestion = {
     id: 'q-choice',
-    screenId: 's-transport',
     type: 'single_choice',
     label: { ca: 'Com vens?' },
     help: null,
     privacy: 'normal',
-    placements: ['wizard'],
     isArchived: false,
     settings: {},
     options: [

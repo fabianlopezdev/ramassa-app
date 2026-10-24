@@ -138,12 +138,10 @@ describe('the required list staff chose (RAPP-611)', () => {
       questions: [
         {
           id: 'q1',
-          screenId: 'transport',
           type: 'short_text',
           label: { ca: 'Com arribes?' },
           help: null,
           privacy: 'normal',
-          placements: ['wizard'],
           isArchived: false,
           isRequired: true,
           settings: {},

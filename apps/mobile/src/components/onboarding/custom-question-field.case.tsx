@@ -204,12 +204,10 @@ mock.module('@/components/forms/form-text-area', () => ({
 const { CustomQuestionField, CustomQuestionList } = await import('./custom-question-field');
 const base: CustomQuestion = {
   id: 'question',
-  screenId: 'screen',
   type: 'yes_no_maybe',
   label: { ca: 'Transport?' },
   help: null,
   privacy: 'normal',
-  placements: ['wizard'],
   isArchived: false,
   settings: {},
   options: [],

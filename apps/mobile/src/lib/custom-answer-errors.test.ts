@@ -17,12 +17,10 @@ function question(
 ): CustomQuestion {
   return {
     id,
-    screenId: 'screen',
     type,
     label: { ca: 'Pregunta' },
     help: null,
     privacy: 'normal',
-    placements: ['wizard'],
     isArchived: false,
     settings,
     options: [],

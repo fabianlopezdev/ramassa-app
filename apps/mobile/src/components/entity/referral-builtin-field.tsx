@@ -55,7 +55,7 @@ const APP_LABEL_KEYS: Readonly<Record<EntityFormBuiltin, string>> = {
 };
 
 /** The referral's answers to the app fields, as the screen keeps them. */
-export interface ReferralBuiltinValues {
+interface ReferralBuiltinValues {
   readonly firstName: string;
   readonly lastName: string;
   readonly phone: string;
