@@ -21,14 +21,18 @@ import {
   type ScreenTextField,
 } from '@ramassa/shared/intake';
 import {
-  addedQuestions,
   builtinHelp,
   builtinLabel,
   builtinOptions,
+  fieldById,
   hiddenBuiltinQuestions,
+  holderOf,
   isAskedOfHer,
   isCustomQuestionRequired,
   liveOptions,
+  placedQuestions,
+  placementOn,
+  placementWordingIn,
   requiredBuiltinQuestions,
   screenSettingsFor,
   textIn,
@@ -88,6 +92,11 @@ const BUILTIN_TYPES: Readonly<Record<IntakeQuestion, CustomQuestionType>> = {
   childcare_need: 'single_choice',
   specific_needs: 'search_choice',
 };
+
+/** The control her phone shows for a built-in question; the type icon of its row. */
+export function builtinQuestionType(question: IntakeQuestion): CustomQuestionType {
+  return BUILTIN_TYPES[question];
+}
 
 /** One language as localized text, so the shared control reads it as typed. */
 function only(language: LanguageCode, text: string): BuilderText {
@@ -150,20 +159,52 @@ export function customPhoneQuestion(
   };
 }
 
-/** A question form's draft on her phone, while staff type. */
-export function draftPhoneQuestion(
-  id: string,
-  draft: PreviewDraft,
+/** A wording typed in an open placement row, in place of the saved one. */
+export interface TypedWording {
+  readonly fieldId: string;
+  readonly label: BuilderText;
+  readonly help: BuilderText;
+}
+
+/**
+ * The fields her phone asks on one screen (an app screen's key or a Ramassà
+ * screen's id) after its own questions, in their order, worded as their
+ * placements say (RAPP-651): the wording for her in each language that has
+ * one, else the field's own name. `fallback` is the screen's questions in the
+ * old shape, for a server that sends no layout.
+ */
+export function placedPhoneQuestions(
+  catalog: IntakeCatalog,
+  screenKey: string,
+  fallback: readonly CustomQuestion[],
   language: LanguageCode,
-  isRequired: boolean,
-): PhoneQuestion {
-  return {
-    id,
-    label: textIn(draft.label, language),
-    help: textIn(draft.help, language),
-    isRequired,
-    draft,
-  };
+  typed: TypedWording | null = null,
+): PhoneQuestion[] {
+  const layout = catalog.layout;
+  return placedQuestions(catalog, screenKey, fallback)
+    .filter(isAskedOfHer)
+    .map((question) => {
+      const shown = customPhoneQuestion(question, language);
+      const field = layout === undefined ? undefined : fieldById(layout, question.id);
+      const saved =
+        layout === undefined ? undefined : placementOn(layout, question.id, 'onboarding');
+      if (field === undefined || saved === undefined) return shown;
+      const placement =
+        typed?.fieldId === question.id
+          ? { ...saved, labelOverride: typed.label, helpOverride: typed.help }
+          : saved;
+      const wording = placementWordingIn(placement, field, language);
+      return {
+        ...shown,
+        label: wording.label,
+        help: wording.help,
+        draft: {
+          ...shown.draft,
+          label: only(language, wording.label),
+          help: only(language, wording.help),
+        },
+      };
+    });
 }
 
 /** The built-in questions a screen asks, without the ones staff hid. */
@@ -240,10 +281,7 @@ export function stepContent(
       title: textIn(overrides.title ?? screen.title, language),
       intro: textIn(overrides.intro ?? screen.intro, language),
       questions:
-        overrides.questions ??
-        screen.questions
-          .filter((question) => !question.isArchived && isAskedOfHer(question))
-          .map((question) => customPhoneQuestion(question, language)),
+        overrides.questions ?? placedPhoneQuestions(catalog, screen.id, screen.questions, language),
       continueLabel: phone('continueAction'),
     };
   }
@@ -303,10 +341,13 @@ export function stepContent(
       ...builtinScreenQuestions(catalog, step.key).map((question) =>
         builtinPhoneQuestion(catalog, question, language, t),
       ),
-      // Then the questions staff added to it (RAPP-642).
-      ...addedQuestions(catalog, step.key)
-        .filter(isAskedOfHer)
-        .map((question) => customPhoneQuestion(question, language)),
+      // Then the fields staff placed on it (RAPP-642, RAPP-651).
+      ...placedPhoneQuestions(
+        catalog,
+        step.key,
+        holderOf(catalog, step.key)?.questions ?? [],
+        language,
+      ),
     ],
     lines:
       step.key === 'documentation' && (overrides.documentNote ?? '') !== ''
