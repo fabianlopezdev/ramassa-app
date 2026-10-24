@@ -41,7 +41,7 @@ async function passwordLoginIsDenied(page: Page, email: string): Promise<boolean
 }
 
 async function openCreatedEntity(page: Page): Promise<void> {
-  await page.goto('/settings?tab=entities');
+  await page.goto('/entities');
   await page
     .getByRole('combobox', { name: /select entity|selecciona una entitat|selecciona una entidad/i })
     .selectOption(createdEntityId);
@@ -136,7 +136,7 @@ test.describe.serial('entity tracking, impact, events and administration', () =>
   }) => {
     test.setTimeout(120_000);
     await signIn(page, ADMIN_EMAIL);
-    await page.goto('/settings?tab=entities');
+    await page.goto('/entities');
     await page.getByLabel(/entity name|nom de l'entitat|nombre de la entidad/i).fill(ENTITY_NAME);
     await page.getByRole('button', { name: /add entity|afegeix entitat|añadir entidad/i }).click();
     await expect(page.getByRole('status').filter({ hasText: /\S/ })).toContainText(

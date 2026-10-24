@@ -1,9 +1,9 @@
 /**
  * The onboarding design role in the admin (RAPP-615), signed in as the seeded
- * design account: it lands on the onboarding page, its menu holds the
- * onboarding, the test players and Settings (where its only tab is the Fitxa
- * de la jugadora, RAPP-650), every other admin URL sends it back, and its
- * roster holds test players only.
+ * design account: it lands on the onboarding page, its menu holds the test
+ * players, the onboarding and the Fitxa de la jugadora (RAPP-650, its own page
+ * since RAPP-654), every other admin URL sends it back, and its roster holds
+ * test players only.
  */
 
 import { expect, test } from '@playwright/test';
@@ -39,7 +39,16 @@ test.describe.serial('the onboarding design role', () => {
     await expect(items).toHaveCount(3);
     await expect(menu.getByRole('link', { name: 'Participants' })).toBeVisible();
     await expect(menu.getByRole('link', { name: 'Registration' })).toBeVisible();
-    await expect(menu.getByRole('link', { name: 'Settings' })).toBeVisible();
+    await expect(menu.getByRole('link', { name: 'Player profile' })).toBeVisible();
+    await expect(menu.getByRole('link', { name: 'Settings' })).toHaveCount(0);
+
+    // The Fitxa opens from the menu, and its old Settings address forwards to it.
+    await menu.getByRole('link', { name: 'Player profile' }).click();
+    await expect(page).toHaveURL(/\/profile-layout$/, { timeout: 20_000 });
+    await expect(page.getByTestId('profile-layout')).toBeVisible({ timeout: 20_000 });
+    await page.goto('/settings?tab=profile-layout');
+    await expect(page).toHaveURL(/\/profile-layout$/, { timeout: 20_000 });
+    await expect(page.getByTestId('profile-layout')).toBeVisible({ timeout: 20_000 });
   });
 
   test('every other admin URL sends it back to the onboarding', async ({ page }) => {
@@ -60,7 +69,7 @@ test.describe.serial('the onboarding design role', () => {
     });
     await signIn(page, ONBOARDING_DESIGNER_EMAIL);
     await expect(page).toHaveURL(/\/onboarding$/, { timeout: 30_000 });
-    for (const path of ['/dashboard', '/data', '/participants/invites', '/messages']) {
+    for (const path of ['/dashboard', '/data', '/participants/invites', '/messages', '/settings']) {
       await page.goto(path);
       await expect(page).toHaveURL(/\/onboarding$/, { timeout: 20_000 });
       await expect(page.getByTestId('onboarding-design-page')).toBeVisible({ timeout: 20_000 });

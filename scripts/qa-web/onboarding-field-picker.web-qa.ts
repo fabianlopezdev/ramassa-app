@@ -160,7 +160,7 @@ test.describe.serial('the onboarding field picker', () => {
     await expect.poll(() => placementOf(FREE_FIELD), { timeout: 15_000 }).toBe('');
     // The field stays on the Fitxa.
     expect(fieldId(FREE_FIELD)).toBe(id);
-    await page.goto('/settings?tab=profile-layout');
+    await page.goto('/profile-layout');
     await expect(page.getByTestId(`profile-field-${id}`)).toBeVisible({ timeout: 30_000 });
   });
 });

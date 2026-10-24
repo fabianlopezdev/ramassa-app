@@ -38,7 +38,7 @@ test.afterAll(() => {
 });
 
 async function openTeam(page: Page): Promise<void> {
-  await page.goto('/settings?tab=staff');
+  await page.goto('/team');
   await expect(page.getByTestId('team-access')).toBeVisible({ timeout: 30_000 });
 }
 

@@ -1,5 +1,5 @@
 /**
- * The Fitxa de la jugadora (RAPP-650), Settings › Player profile: the
+ * The Fitxa de la jugadora (RAPP-650), Organization › Player profile: the
  * onboarding design account adds a field, which records her as its creator
  * and rings the admin's bell; she drags it into another section, renames a
  * section and moves it with the keyboard. The admin then reads the creator,
@@ -70,13 +70,15 @@ async function expectSymmetry(page: Page) {
 }
 
 test.describe.serial('the Fitxa de la jugadora', () => {
-  test('the design role opens it from Settings and adds, drags and renames', async ({ page }) => {
+  test('the design role opens it from the menu and adds, drags and renames', async ({ page }) => {
     await signIn(page, ONBOARDING_DESIGNER_EMAIL);
-    await page.goto('/settings');
+    // Its own item in the Organization group (RAPP-654).
+    const menu = page.getByRole('navigation', { name: 'Staff navigation' });
+    await menu.getByRole('link', { name: 'Player profile' }).click();
+    await expect(page).toHaveURL(/\/profile-layout$/, { timeout: 30_000 });
     const layout = page.getByTestId('profile-layout');
     await expect(layout).toBeVisible({ timeout: 30_000 });
-    // Her only Settings tab.
-    await expect(page.getByRole('tab')).toHaveText(['Player profile']);
+    await expect(page.getByRole('heading', { name: 'Player profile', level: 1 })).toBeVisible();
     await expectSymmetry(page);
 
     await page.getByTestId('profile-section-add-sizes').click();
@@ -152,7 +154,9 @@ test.describe.serial('the Fitxa de la jugadora', () => {
     ).toBe('/settings?tab=profile-layout');
 
     await signIn(page, ADMIN_EMAIL);
+    // The bell's address from before the Fitxa had its own page forwards to it.
     await page.goto('/settings?tab=profile-layout');
+    await expect(page).toHaveURL(/\/profile-layout$/, { timeout: 30_000 });
     await page.getByRole('button', { name: /Notifications/ }).click();
     await expect(page.getByText(`New field in the player profile: ${FIELD_NAME}`)).toBeVisible({
       timeout: 20_000,
@@ -179,13 +183,13 @@ test.describe.serial('the Fitxa de la jugadora', () => {
   test('a staff member who does not design it reads it without grips or buttons', async ({
     page,
   }) => {
-    // Settings opens for her through another tab's permission, given for this test.
+    // The Fitxa opens for her through a Settings permission, given for this test.
     queryDatabase(`
       insert into public.team_member_permissions (org_id, profile_id, permission_code)
       values ('${ORG_ID}', '${STAFF_ID}', 'settings.documents') on conflict do nothing;
     `);
     await signIn(page, STAFF_EMAIL);
-    await page.goto('/settings?tab=profile-layout');
+    await page.goto('/profile-layout');
     const layout = page.getByTestId('profile-layout');
     await expect(layout).toBeVisible({ timeout: 30_000 });
     await expect(layout.getByRole('button')).toHaveCount(0);

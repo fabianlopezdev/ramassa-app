@@ -68,7 +68,7 @@ test.describe.serial('the second factor', () => {
     browser,
   }) => {
     await signIn(page, ADMIN_EMAIL);
-    await page.goto('/settings?tab=staff');
+    await page.goto('/team');
     await page.getByRole('button', { name: `Reset second factor ${STAFF_EMAIL}` }).click();
     await page.getByRole('alertdialog').getByRole('button', { name: 'Confirm' }).click();
     await expect(page.getByRole('status').filter({ hasText: /\S/ })).toContainText(

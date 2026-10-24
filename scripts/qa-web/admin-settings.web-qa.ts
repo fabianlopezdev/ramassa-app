@@ -139,7 +139,7 @@ test.describe.serial('admin organization settings', () => {
     browser,
   }) => {
     await signIn(page, ADMIN_EMAIL);
-    await page.goto('/settings?tab=staff');
+    await page.goto('/team');
     await page.getByLabel('First name').fill('نورا');
     await page.getByLabel('Last name').fill('Коваль');
     await page.getByLabel('Email').fill(invitedEmail);
