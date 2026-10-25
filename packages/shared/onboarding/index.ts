@@ -8,3 +8,4 @@ export * from './field-label';
 export * from './app-terms';
 export * from './screen-texts';
 export * from './setup-transfer';
+export * from './system-fields';
