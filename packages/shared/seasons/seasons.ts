@@ -16,12 +16,7 @@ import {
   type AppFormKey,
 } from '../intake-builder/app-field-form';
 import { answerPayload } from '../intake-builder/builder';
-import {
-  columnsFromFieldAnswers,
-  fetchSystemFieldIndex,
-  fieldAnswersReadSchema,
-  type SystemFieldIndex,
-} from '../intake-builder/field-answers';
+import type { SystemFieldIndex } from '../intake-builder/field-answers';
 import type { CustomAnswerValue } from '../intake-builder/question-types';
 import {
   createTargetedNotificationSend,
@@ -141,45 +136,6 @@ export async function updateMySeasonAnswers(
     p_payload: { answers: answerPayload(answers) } as Json,
   });
   if (error) failure(error.message);
-}
-
-const seasonAnswersRowSchema = z.object({
-  season_name: z.string(),
-  starts_on: z.string(),
-  // That season's answers by field (RAPP-662), each by the reader's level.
-  answers: fieldAnswersReadSchema,
-  updated_at: z.string(),
-});
-
-export interface ParticipantSeasonAnswers {
-  readonly seasonName: string;
-  readonly applicantStatus: string | null;
-  readonly supportingEntities: readonly string[];
-  readonly childcareNeed: string | null;
-  readonly specificNeeds: string | null;
-}
-
-export async function fetchParticipantSeasonAnswers(
-  client: Client,
-  profileId: string,
-): Promise<readonly ParticipantSeasonAnswers[]> {
-  const { data, error } = await client.rpc('participant_season_answers', {
-    p_profile_id: profileId,
-  });
-  if (error) failure(error.message);
-  const rows = z.array(seasonAnswersRowSchema).parse(data ?? []);
-  // Read as the app's season columns until her page renders every field (RAPP-664).
-  const fields = rows.length === 0 ? new Map() : await fetchSystemFieldIndex(client);
-  return rows.map((row) => {
-    const columns = columnsFromFieldAnswers(fields, row.answers);
-    return {
-      seasonName: row.season_name,
-      applicantStatus: columns.applicant_status as string | null,
-      supportingEntities: (columns.supporting_entities as string[] | null) ?? [],
-      childcareNeed: columns.childcare_need as string | null,
-      specificNeeds: columns.specific_needs as string | null,
-    };
-  });
 }
 
 const registrationRowSchema = z.object({

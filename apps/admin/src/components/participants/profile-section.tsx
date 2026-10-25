@@ -1,58 +1,55 @@
 /**
- * One section of the Fitxa on her page (RAPP-653): its fields in the Fitxa's
- * order, each with her answer, who gave it and when, the per-player choice
- * and Edit. The app's own fields read her record and save through the profile
- * update path; Ramassà fields read her answers and save through
- * `set_participant_custom_answers`. A field no surface asks (team only) is
- * filled in here and nowhere else.
+ * One section of the Fitxa on her page (RAPP-653, RAPP-664): its fields in the
+ * Fitxa's order, each with her answer, who gave it and when, the per-player
+ * choice and Edit. Every field reads her answers by field and saves through
+ * her record (`update_participant_profile`), the app's fields and the team's
+ * alike, with one editor. Her names stay on her account (D2).
  *
  * Privacy stays the database's: an answer above the reader's level never
- * reaches the page, and its row says which level it needs.
+ * reaches the page, and its row says which level it needs (from the field's
+ * level in the layout).
  */
 
 import { EditorSection } from '@/components/layout/editor-section';
 import { answerSourceText } from '@/components/participants/answer-source';
-import { shownBuiltinAnswer } from '@/components/participants/builtin-answer-text';
-import { isBuiltinEditKey } from '@/components/participants/builtin-field-controls';
-import { BuiltinFieldEditor } from '@/components/participants/builtin-field-editor';
 import {
   CustomAnswerValueView,
   useAnswerWords,
 } from '@/components/participants/custom-answer-value';
-import { CustomFieldEditor } from '@/components/participants/custom-field-editor';
+import {
+  FieldAnswerEditor,
+  type FieldAnswerChanges,
+} from '@/components/participants/field-answer-editor';
 import { ProfileAnswerRow, type RowChoice } from '@/components/participants/profile-answer-row';
-import { missingLevel, type FieldAnswers } from '@/lib/participant-fitxa';
+import {
+  fieldsEditedWith,
+  isNameField,
+  missingLevel,
+  type FieldAnswers,
+} from '@/lib/participant-fitxa';
 import { useTranslation } from 'react-i18next';
-import type { AnsweredQuestions, IntakeQuestionState } from '@ramassa/shared/intake';
+import type { IntakeQuestionState } from '@ramassa/shared/intake';
 import {
   answerText,
   isStaffWritable,
   questionOfField,
   textIn,
-  type CustomAnswerValue,
   type PlanQuestion,
   type ProfileField,
   type ProfileLayout,
   type ProfileSection as Section,
 } from '@ramassa/shared/intake-builder';
-import type {
-  ParticipantDetailRow,
-  ProfileAnswerOrigin,
-  ProfilePrefillPayload,
-} from '@ramassa/shared/participants';
+import type { ParticipantUpdate } from '@ramassa/shared/participants';
 import type { PermissionCode } from '@ramassa/shared/permissions';
-import type { LanguageCode, UpdateOwnProfilePayload } from '@ramassa/shared/schemas';
+import type { LanguageCode } from '@ramassa/shared/schemas';
 
 /** What every row of her page reads and writes through. */
 export interface FitxaContext {
-  readonly participant: ParticipantDetailRow;
+  /** Her names, on her account. */
+  readonly names: { readonly first_name: string; readonly last_name: string };
   readonly layout: ProfileLayout;
-  /** Her answers to Ramassà fields, by field. */
+  /** Her answers, by field. */
   readonly answers: ReadonlyMap<string, FieldAnswers>;
-  /** Who answered each of the app's questions, by question. */
-  readonly origins: ReadonlyMap<string, ProfileAnswerOrigin>;
-  /** What somebody answered, for a woman who has not joined; null once she joined. */
-  readonly answered: AnsweredQuestions | null;
   readonly sees: (code: PermissionCode) => boolean;
   /** participants.view_personal: the team completes and corrects her answers. */
   readonly canEdit: boolean;
@@ -62,10 +59,8 @@ export interface FitxaContext {
   readonly onChoice: (question: PlanQuestion, state: IntakeQuestionState) => void;
   readonly editingId: string | null;
   readonly onEditingChange: (id: string | null) => void;
-  readonly onSaveBuiltin: (
-    payload: UpdateOwnProfilePayload | ProfilePrefillPayload,
-  ) => Promise<void>;
-  readonly onSaveCustom: (fieldId: string, value: CustomAnswerValue | null) => Promise<void>;
+  /** Throws when the database refuses, so the editor stays open and says why. */
+  readonly onSave: (update: ParticipantUpdate) => Promise<void>;
   readonly onOpenFile?: (objectKey: string) => Promise<void>;
 }
 
@@ -106,7 +101,6 @@ function FitxaFieldRow({
   const locale = i18n.resolvedLanguage ?? 'ca';
   const language = locale as LanguageCode;
   const words = useAnswerWords();
-  const name = textIn(field.label, language);
   const lockedLevel = missingLevel(field, context.sees);
   const question = context.choices?.get(field.id) ?? null;
   const choice: RowChoice | null =
@@ -118,55 +112,47 @@ function FitxaFieldRow({
           onChange: (state) => context.onChoice(question, state),
         };
   const isEditing = context.editingId === field.id;
-  const onToggleEdit = () => context.onEditingChange(isEditing ? null : field.id);
   const close = () => context.onEditingChange(null);
-  const common = {
-    name,
-    lockedLevel,
-    choice,
-    hasChoiceColumn: context.choices !== null,
-    isEditing,
-    onToggleEdit,
-    testId: `fitxa-field-${field.builtinKey ?? field.id}`,
-  };
-
-  if (field.kind === 'builtin' && field.builtinKey !== null) {
-    const key = field.builtinKey;
-    const origin = context.origins.get(key);
-    return (
-      <ProfileAnswerRow
-        {...common}
-        value={shownBuiltinAnswer(key, context.participant, context.answered, t, locale)}
-        source={origin === undefined ? null : answerSourceText(origin, t, locale)}
-        canEdit={context.canEdit && lockedLevel === null && isBuiltinEditKey(key)}
-        editor={
-          isBuiltinEditKey(key) ? (
-            <BuiltinFieldEditor
-              fieldKey={key}
-              participant={context.participant}
-              answered={context.answered}
-              canSeeSensitive={context.sees('participants.view_sensitive')}
-              onSave={async (payload) => {
-                await context.onSaveBuiltin(payload);
-                close();
-              }}
-              onCancel={close}
-            />
-          ) : undefined
-        }
-      />
-    );
-  }
-
   const asked = questionOfField(context.layout, field);
+  const isName = isNameField(field);
+  const name = isName ? (field.systemKey as 'first_name' | 'last_name') : null;
   const answers = context.answers.get(field.id);
   const current = answers?.current;
   const seasonOf = (seasonName: string | null) => (seasonName === null ? '' : ` · ${seasonName}`);
+  // The fields that go with this one, edited in the same form; only those she may read.
+  const partners = fieldsEditedWith(context.layout, field)
+    .filter((partner) => missingLevel(partner.field, context.sees) === null)
+    .map((partner) => ({
+      ...partner,
+      question: questionOfField(context.layout, partner.field),
+      value: context.answers.get(partner.field.id)?.current.value,
+    }));
+
+  async function save(changes: FieldAnswerChanges) {
+    const typed = String(changes[field.id] ?? '');
+    if (name === 'first_name') {
+      await context.onSave({ first_name: typed, answers: {} });
+    } else if (name === 'last_name') {
+      await context.onSave({ last_name: typed, answers: {} });
+    } else {
+      await context.onSave({ answers: changes });
+    }
+    close();
+  }
+
   return (
     <ProfileAnswerRow
-      {...common}
+      name={textIn(field.label, language)}
+      lockedLevel={lockedLevel}
+      choice={choice}
+      hasChoiceColumn={context.choices !== null}
+      isEditing={isEditing}
+      onToggleEdit={() => context.onEditingChange(isEditing ? null : field.id)}
+      testId={`fitxa-field-${field.builtinKey ?? field.systemKey ?? field.id}`}
       value={
-        current === undefined ? null : (
+        name !== null ? (
+          context.names[name]
+        ) : current === undefined ? null : (
           <CustomAnswerValueView
             question={asked}
             value={current.value}
@@ -190,14 +176,13 @@ function FitxaFieldRow({
         context.canEdit && lockedLevel === null && !field.isArchived && isStaffWritable(field.type)
       }
       editor={
-        <CustomFieldEditor
+        <FieldAnswerEditor
           question={asked}
-          value={current?.value}
+          value={name !== null ? context.names[name] : current?.value}
+          partners={partners}
+          isRequired={name !== null}
           language={language}
-          onSave={async (value) => {
-            await context.onSaveCustom(field.id, value);
-            close();
-          }}
+          onSave={save}
           onCancel={close}
         />
       }

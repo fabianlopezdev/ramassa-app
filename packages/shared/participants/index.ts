@@ -15,17 +15,14 @@ export {
   type ParticipantActivityEntry,
   type ParticipantActivityFilter,
   type ParticipantActivityKind,
-  type ParticipantDetailRow,
   type ParticipantNoteRow,
 } from './participant-detail';
 export {
   addParticipantNote,
   fetchParticipantActivity,
-  fetchParticipantDetail,
   fetchParticipantNotes,
   fetchParticipantRecord,
   setParticipantActive,
-  updateParticipantProfile,
   updateParticipantRecord,
   type AddParticipantNoteParams,
   type ParticipantRecord,
@@ -55,10 +52,4 @@ export {
   type ProfilePrefillPayload,
 } from './participant-prefill';
 export * from './test-scenario';
-export {
-  ANSWER_SOURCES,
-  fetchParticipantProfileAnswers,
-  type AnswerOrigin,
-  type AnswerSource,
-  type ProfileAnswerOrigin,
-} from './answer-sources';
+export { ANSWER_SOURCES, type AnswerOrigin, type AnswerSource } from './answer-sources';

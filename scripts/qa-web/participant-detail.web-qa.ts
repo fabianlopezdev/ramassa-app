@@ -155,9 +155,9 @@ test.describe('the participant detail view', () => {
 
     await openDetail(page, participantId);
 
-    // Her page on the Fitxa layout (RAPP-653): the document field reads its type and number.
+    // Her page on the Fitxa layout: the document number is a field of its own (RAPP-664).
     await expect(page.getByTestId('fitxa-field-phone-value')).toHaveText(phone);
-    await expect(page.getByTestId('fitxa-field-document-value')).toContainText(documentNumber);
+    await expect(page.getByTestId('fitxa-field-document_number-value')).toHaveText(documentNumber);
     // The screen says the look was logged, rather than logging it silently.
     await expect(page.getByText(/registrada|logged|registrado/i)).toBeVisible();
   });
@@ -181,9 +181,10 @@ test.describe('the participant detail view', () => {
     await openDetail(page, participantId);
     // Inline, on the field's own row (RAPP-653).
     const editor = await editField(page, 'city');
-    const cityField = editor.locator('#participant-city');
+    // The municipality is picked from the list the app ships (RAPP-664).
+    const cityField = editor.locator('select');
     await expect(cityField).toBeVisible();
-    await cityField.fill(nextCity);
+    await cityField.selectOption(nextCity);
     await editor.getByRole('button', { name: /^(desa|save|guardar)$/i }).click();
 
     await expect
@@ -221,8 +222,9 @@ test.describe('the participant detail view', () => {
     try {
       await openDetail(page, participantId);
       const editor = await editField(page, 'document');
-      await editor.locator('#participant-documentType').selectOption({ label: 'Not given' });
-      await expect(editor.locator('#participant-documentNumber')).toHaveCount(0);
+      // No answer to the type asks no number (RAPP-664).
+      await editor.locator('select').selectOption('');
+      await expect(editor.getByRole('textbox')).toHaveCount(0);
       await editor.getByRole('button', { name: /^(desa|save|guardar)$/i }).click();
 
       await expect
@@ -285,7 +287,7 @@ test.describe('the participant detail view', () => {
 
     await openDetail(page, participantId);
     const editor = await editField(page, 'place_of_birth');
-    await editor.locator('#participant-placeOfBirth').fill('Sant Julià de Vilatorta');
+    await editor.getByRole('textbox').fill('Sant Julià de Vilatorta');
     await editor.getByRole('button', { name: /^(desa|save|guardar)$/i }).click();
 
     await expect

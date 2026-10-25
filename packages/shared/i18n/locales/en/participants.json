@@ -454,7 +454,6 @@
   "invitedCompleteAction": "Complete her details",
   "statusInvited": "Invited, not joined",
   "rowInvited": "Invited, not joined yet",
-  "prefillNotGiven": "Not given",
   "questionStatesPresetMissing": "Only what is missing",
   "questionStatesPresetReview": "She reviews everything",
   "questionStatesFailed": "The questions could not be saved. Try again.",

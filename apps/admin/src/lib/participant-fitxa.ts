@@ -1,12 +1,19 @@
 /**
- * Her participant page on the Fitxa layout (RAPP-653), as pure readers: the
- * sections and fields in the Fitxa's order, her answer to each field with the
- * older seasons apart, the level a reader needs, and the per-player choice of
- * each field from her plan.
+ * Her participant page on the Fitxa layout (RAPP-653, RAPP-664), as pure
+ * readers: the sections and fields in the Fitxa's order, her answer to each
+ * field with the older seasons apart, the level a reader needs, the fields
+ * one editor changes together, her season answers in words, and the
+ * per-player choice of each field from her plan.
  */
 
 import {
+  answerText,
+  fieldById,
   fieldsOfSection,
+  questionOfField,
+  systemField,
+  textIn,
+  type CustomAnswerValue,
   type ParticipantCustomAnswer,
   type PlanQuestion,
   type PlayerPlan,
@@ -25,22 +32,121 @@ export interface FitxaSection {
 
 /**
  * Her page's sections, in the Fitxa's order: every live field, and an
- * archived one only while it holds an answer of hers. A section left with no
- * field is not drawn.
+ * archived one only while it holds an answer of hers. A field shown only on
+ * an answer (`show_when`) shows when that answer holds, or while it keeps an
+ * answer of hers. A section left with no field is not drawn.
  */
 export function fitxaSections(
   layout: ProfileLayout,
-  answeredFieldIds: ReadonlySet<string>,
+  answers: ReadonlyMap<string, FieldAnswers>,
   language: LanguageCode = 'ca',
 ): readonly FitxaSection[] {
+  const applies = (field: ProfileField) =>
+    field.showWhen === undefined ||
+    answers.get(field.showWhen.fieldId)?.current.value === field.showWhen.optionId;
   return layout.sections
     .map((section) => ({
       section,
       fields: fieldsOfSection(layout, section.id, true, language).filter(
-        (field) => !field.isArchived || answeredFieldIds.has(field.id),
+        (field) => answers.has(field.id) || (!field.isArchived && applies(field)),
       ),
     }))
     .filter((entry) => entry.fields.length > 0);
+}
+
+/** Her names stay on her account (D2): their fields hold no answer. */
+export function isNameField(field: Pick<ProfileField, 'systemKey'>): boolean {
+  return field.systemKey === 'first_name' || field.systemKey === 'last_name';
+}
+
+/**
+ * When a field that goes with another one is asked, in the editor of that
+ * other one: a field shown on one of its answers (`show_when`), on that
+ * answer; the document's number, on any document type but none, because the
+ * database refuses a joined player's document without its number
+ * (`private.apply_document_rule`).
+ */
+export type PartnerCondition = (value: CustomAnswerValue | null | undefined) => boolean;
+
+export interface EditPartner {
+  readonly field: ProfileField;
+  readonly asksWhen: PartnerCondition;
+}
+
+/** The live fields one editor changes together with this one, each with when it is asked. */
+export function fieldsEditedWith(
+  layout: ProfileLayout,
+  field: ProfileField,
+): readonly EditPartner[] {
+  const conditioned = layout.fields
+    .filter((other) => !other.isArchived && other.showWhen?.fieldId === field.id)
+    .map((other) => ({
+      field: other,
+      asksWhen: (value: CustomAnswerValue | null | undefined) => value === other.showWhen?.optionId,
+    }));
+  const number = systemField(layout, 'document_number');
+  const document =
+    field.systemKey === 'document_type' && number !== undefined && !number.isArchived
+      ? [
+          {
+            field: number,
+            asksWhen: (value: CustomAnswerValue | null | undefined) => {
+              const key = field.options.find((option) => option.id === value)?.key ?? null;
+              return typeof value === 'string' && value !== '' && key !== 'none';
+            },
+          },
+        ]
+      : [];
+  return [...conditioned, ...document].filter(
+    (partner, index, all) =>
+      all.findIndex((other) => other.field.id === partner.field.id) === index,
+  );
+}
+
+/** One season's answers of hers, in words, for her authorization panel. */
+export interface SeasonAnswersLine {
+  readonly seasonName: string;
+  readonly text: string;
+}
+
+/** The types whose answer says nothing without the field's name ("Sí"). */
+const NAMED_TYPES: ReadonlySet<string> = new Set(['yes_no', 'yes_no_maybe', 'consent', 'number']);
+
+/**
+ * Her answers by season, newest season first, each season's answers in the
+ * Fitxa's order and joined in one line. Her answers of no season are not
+ * here: the sections above show them.
+ */
+export function seasonAnswersLines(
+  layout: ProfileLayout,
+  rows: readonly ParticipantCustomAnswer[],
+  language: LanguageCode,
+  words: Parameters<typeof answerText>[3],
+): readonly SeasonAnswersLine[] {
+  const order = fitxaSections(layout, new Map(), language).flatMap((entry) =>
+    entry.fields.map((each) => each.id),
+  );
+  const position = (id: string) => {
+    const index = order.indexOf(id);
+    return index < 0 ? order.length : index;
+  };
+  const seasons = new Map<string, ParticipantCustomAnswer[]>();
+  for (const row of rows) {
+    if (row.seasonName === null) continue;
+    seasons.set(row.seasonName, [...(seasons.get(row.seasonName) ?? []), row]);
+  }
+  return [...seasons].map(([seasonName, answers]) => ({
+    seasonName,
+    text: [...answers]
+      .sort((a, b) => position(a.questionId) - position(b.questionId))
+      .flatMap((row) => {
+        const field = fieldById(layout, row.questionId);
+        if (field === undefined) return [];
+        const text = answerText(questionOfField(layout, field), row.value, language, words);
+        return [NAMED_TYPES.has(field.type) ? `${textIn(field.label, language)} ${text}` : text];
+      })
+      .join(' · '),
+  }));
 }
 
 /** Her answer to one field: the current one, and the older seasons, newest first. */

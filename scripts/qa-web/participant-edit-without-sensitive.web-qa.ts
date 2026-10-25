@@ -77,7 +77,7 @@ test.describe('editing a record without the sensitive fields', () => {
       await expect(page.getByRole('heading', { level: 1, name: /Mamani/ })).toBeVisible();
       await page.getByTestId('fitxa-field-place_of_birth-edit').click();
       const editor = page.getByTestId('fitxa-field-place_of_birth-editor');
-      await editor.locator('#participant-placeOfBirth').fill(nextPlace);
+      await editor.getByRole('textbox').fill(nextPlace);
       await editor.getByRole('button', { name: /^(desa|save|guardar)$/i }).click();
 
       await expect.poll(() => placeOfBirth(id), { timeout: 15_000 }).toBe(nextPlace);

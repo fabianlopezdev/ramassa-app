@@ -178,8 +178,8 @@ test.describe('inviting a participant', () => {
 
     await page.getByTestId('fitxa-field-clothing_size-edit').click();
     const editor = page.getByTestId('fitxa-field-clothing_size-editor');
-    await expect(editor.locator('#participant-clothingSize')).toHaveValue('');
-    await editor.locator('#participant-clothingSize').selectOption('L');
+    await expect(editor.locator('select')).toHaveValue('');
+    await editor.locator('select').selectOption({ label: 'L' });
     await editor.getByRole('button', { name: /^(desa|save|guardar)$/i }).click();
     await expect(page.getByTestId('fitxa-field-clothing_size-value')).toHaveText('L');
 

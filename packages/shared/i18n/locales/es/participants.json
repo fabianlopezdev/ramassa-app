@@ -454,7 +454,6 @@
   "invitedCompleteAction": "Completa sus datos",
   "statusInvited": "Invitadas sin entrar",
   "rowInvited": "Invitada, aún no ha entrado",
-  "prefillNotGiven": "Sin indicar",
   "questionStatesPresetMissing": "Solo lo que falta",
   "questionStatesPresetReview": "Que lo revise todo",
   "questionStatesFailed": "No se han podido guardar las preguntas. Vuelve a intentarlo.",

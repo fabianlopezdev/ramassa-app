@@ -10,27 +10,12 @@
  */
 
 import { Button } from '@/components/ui/button';
+import type { SeasonAnswersLine } from '@/lib/participant-fitxa';
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ParticipantAuthorization, ParticipantConsent } from '@ramassa/shared/authorization';
 import type { SignatureStrokes } from '@ramassa/shared/equipment';
-import type { ParticipantDetailRow } from '@ramassa/shared/participants';
-import { formatSupportNeeds } from '@ramassa/shared/schemas';
-import type { ParticipantSeasonAnswers } from '@ramassa/shared/seasons';
-
-const APPLICANT_STATUS_KEYS = {
-  asylum_seeker: 'applicantStatusAsylumSeeker',
-  refugee: 'applicantStatusRefugee',
-  migrant: 'applicantStatusMigrant',
-  other: 'applicantStatusOther',
-  prefer_not_to_say: 'applicantStatusPreferNotToSay',
-} as const;
-
-const CHILDCARE_KEYS = {
-  yes: 'childcareNeedYes',
-  no: 'childcareNeedNo',
-  maybe: 'childcareNeedMaybe',
-} as const;
+import type { ParticipantRecord } from '@ramassa/shared/participants';
 
 /** The strokes are 0..1000 on both axes, so they fill any box the same way. */
 export function SignatureDrawing({
@@ -78,13 +63,13 @@ export function healthAnswerState(
 }
 
 export interface ParticipantAuthorizationPanelProps {
-  readonly participant: ParticipantDetailRow;
+  readonly participant: ParticipantRecord;
   readonly authorizations: readonly ParticipantAuthorization[];
   readonly consents: readonly ParticipantConsent[];
   readonly canSeeHealth: boolean;
   readonly onRecordPaper: (signedOn: string) => Promise<void>;
-  /** Her answers by season (RAPP-306). */
-  readonly seasonAnswers?: readonly ParticipantSeasonAnswers[];
+  /** Her answers by season (RAPP-306), in words, read by field (RAPP-664). */
+  readonly seasonAnswers?: readonly SeasonAnswersLine[];
   readonly onSetPriorSeasons?: (count: number) => Promise<void>;
 }
 
@@ -298,22 +283,7 @@ export function ParticipantAuthorizationPanel({
               <li key={answers.seasonName} className="text-start text-sm">
                 <span className="font-medium">{answers.seasonName}</span>
                 {': '}
-                {[
-                  answers.applicantStatus === null
-                    ? null
-                    : t(
-                        `onboarding:${APPLICANT_STATUS_KEYS[answers.applicantStatus as keyof typeof APPLICANT_STATUS_KEYS] ?? 'applicantStatusOther'}`,
-                      ),
-                  answers.childcareNeed === null
-                    ? null
-                    : `${t('onboarding:childcareNeedLabel')} ${t(`onboarding:${CHILDCARE_KEYS[answers.childcareNeed as keyof typeof CHILDCARE_KEYS] ?? 'childcareNeedMaybe'}`)}`,
-                  answers.supportingEntities.length === 0
-                    ? null
-                    : answers.supportingEntities.join(', '),
-                  formatSupportNeeds(answers.specificNeeds, t),
-                ]
-                  .filter((part) => part !== null && part !== '')
-                  .join(' · ') || notProvided}
+                {answers.text === '' ? notProvided : answers.text}
               </li>
             ))}
           </ul>

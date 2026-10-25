@@ -31,10 +31,11 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { mediaWorkerUrl } from '@/lib/media-worker';
 import { safeAsync } from '@/lib/observability';
+import { seasonAnswersLines } from '@/lib/participant-fitxa';
 import { supabase } from '@/lib/supabase';
 import { Link, useNavigate, useRouter } from '@tanstack/react-router';
 import { ArrowLeft } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { AttendanceParticipantStats, AttendanceReportRow } from '@ramassa/shared/attendance';
 import { useAuth } from '@ramassa/shared/auth';
@@ -59,8 +60,8 @@ import {
   choiceChanges,
   deleteIntakePreset,
   EMPTY_INTAKE_CATALOG,
+  EMPTY_PROFILE_LAYOUT,
   saveIntakePreset,
-  setParticipantCustomAnswers,
   uploadsAvailable,
   type CustomQuestionStates,
   type IntakeCatalog,
@@ -73,12 +74,11 @@ import {
   scenarioCustomQuestions,
   setParticipantActive,
   setTestPlayerScenario,
-  updateParticipantProfile,
+  updateParticipantRecord,
   type ParticipantActivityEntry,
-  type ParticipantDetailRow,
   type ParticipantNoteRow,
-  type ProfileAnswerOrigin,
-  type ProfilePrefillPayload,
+  type ParticipantRecord,
+  type ParticipantUpdate,
   type TestPlayerScenario,
 } from '@ramassa/shared/participants';
 import {
@@ -87,12 +87,12 @@ import {
   type PermissionCode,
 } from '@ramassa/shared/permissions';
 import { deleteTestPlayer, eraseParticipant } from '@ramassa/shared/rgpd';
-import type { EquipmentDeliveryInput, UpdateOwnProfilePayload } from '@ramassa/shared/schemas';
-import { setPriorSeasons, type ParticipantSeasonAnswers } from '@ramassa/shared/seasons';
+import type { EquipmentDeliveryInput, LanguageCode } from '@ramassa/shared/schemas';
+import { setPriorSeasons } from '@ramassa/shared/seasons';
 import { purgeParticipantMedia } from '@ramassa/shared/upload-client';
 
 export interface ParticipantDetailProps {
-  readonly participant: ParticipantDetailRow;
+  readonly participant: ParticipantRecord;
   readonly notes: readonly ParticipantNoteRow[];
   readonly activity: readonly ParticipantActivityEntry[];
   readonly deliveries: readonly EquipmentDeliveryRow[];
@@ -115,12 +115,9 @@ export interface ParticipantDetailProps {
   /** Her season authorizations and consents (RAPP-304). */
   readonly authorizations?: readonly ParticipantAuthorization[];
   readonly consents?: readonly ParticipantConsent[];
-  readonly seasonAnswers?: readonly ParticipantSeasonAnswers[];
-  /** The questions staff added, and her answers to them (RAPP-307). */
+  /** The Fitxa layout, and her answers to every field with who gave each (RAPP-664). */
   readonly intakeCatalog?: IntakeCatalog;
   readonly customAnswers?: readonly ParticipantCustomAnswer[];
-  /** Who gave her answers to the app's own fields (RAPP-653). */
-  readonly profileOrigins?: readonly ProfileAnswerOrigin[];
   /** A test player's situation, for the scenario switches (RAPP-619); null for a real woman. */
   readonly testScenario?: TestPlayerScenario | null;
 }
@@ -139,14 +136,28 @@ export function ParticipantDetail({
   customQuestionStates = {},
   authorizations = [],
   consents = [],
-  seasonAnswers = [],
   intakeCatalog = EMPTY_INTAKE_CATALOG,
   customAnswers = [],
-  profileOrigins = [],
   testScenario = null,
 }: ParticipantDetailProps) {
-  const { t, i18n } = useTranslation(['participants', 'common', 'profile']);
+  const { t, i18n } = useTranslation(['participants', 'common', 'profile', 'settings']);
   const locale = i18n.resolvedLanguage ?? 'ca';
+  // Her answers by season, for her authorization panel (RAPP-306), read by field.
+  const seasonAnswers = useMemo(
+    () =>
+      seasonAnswersLines(
+        intakeCatalog.layout ?? EMPTY_PROFILE_LAYOUT,
+        customAnswers,
+        locale as LanguageCode,
+        {
+          yes: t('settings:questions.answers.yes'),
+          no: t('settings:questions.answers.no'),
+          maybe: t('settings:questions.answers.maybe'),
+          archived: t('settings:questions.archivedOption'),
+        },
+      ),
+    [intakeCatalog, customAnswers, locale, t],
+  );
   const router = useRouter();
   const navigate = useNavigate();
   const { user, permissions } = useAuth();
@@ -201,10 +212,8 @@ export function ParticipantDetail({
   }
 
   // Throws on failure, so the field's editor stays open and says so.
-  async function saveProfile(payload: UpdateOwnProfilePayload | ProfilePrefillPayload) {
-    const result = await safeAsync(() =>
-      updateParticipantProfile(supabase, participant.id, payload),
-    );
+  async function saveRecord(update: ParticipantUpdate) {
+    const result = await safeAsync(() => updateParticipantRecord(supabase, participant.id, update));
     if (!result.ok) throw result.error;
     await router.invalidate();
   }
@@ -372,18 +381,13 @@ export function ParticipantDetail({
         participant={participant}
         catalog={intakeCatalog}
         customAnswers={customAnswers}
-        origins={profileOrigins}
         answeredQuestions={answeredQuestions}
         choices={{ states: questionStates, customStates: customQuestionStates }}
         // Set only before she joins (RAPP-301); the design role chooses a test
         // player's too (RAPP-618). The database needs participants.view_personal.
         showChoices={!joined && (teamTools || isTestPlayer) && sees('participants.view_personal')}
         sees={sees}
-        onSaveBuiltin={saveProfile}
-        onSaveCustom={async (fieldId, value) => {
-          await setParticipantCustomAnswers(supabase, participant.id, { [fieldId]: value });
-          await router.invalidate();
-        }}
+        onSave={saveRecord}
         onSaveChoices={saveQuestionStates}
         choicesError={questionStatesErrorMessage}
         onSavePreset={async (name, states) => {

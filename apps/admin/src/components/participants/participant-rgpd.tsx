@@ -25,7 +25,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@ramassa/shared/auth';
 import { AppError, getErrorMessageKey } from '@ramassa/shared/errors';
-import type { ParticipantDetailRow } from '@ramassa/shared/participants';
+import type { ParticipantRecord } from '@ramassa/shared/participants';
 import {
   anonymizeParticipant,
   deleteParticipantPermanently,
@@ -34,7 +34,7 @@ import {
 import { purgeParticipantMedia } from '@ramassa/shared/upload-client';
 
 export interface ParticipantRgpdProps {
-  readonly participant: ParticipantDetailRow;
+  readonly participant: ParticipantRecord;
   /** Her outstanding erasure request, when she has raised one (RAPP-22). */
   readonly openDeletionRequestReason?: string | null;
 }

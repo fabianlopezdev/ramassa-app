@@ -38,25 +38,27 @@ import {
   fetchParticipantChoices,
   fetchParticipantCustomAnswers,
   NO_CHOICES,
+  systemFieldsOf,
 } from '@ramassa/shared/intake-builder';
 import {
   fetchParticipantActivity,
   fetchParticipantAnsweredQuestions,
-  fetchParticipantDetail,
   fetchParticipantNotes,
-  fetchParticipantProfileAnswers,
+  fetchParticipantRecord,
   fetchTestPlayerScenario,
   hasJoined,
 } from '@ramassa/shared/participants';
 import { fetchMyPermissions, isLimitedToTestPlayers } from '@ramassa/shared/permissions';
 import { fetchDeletionRequests } from '@ramassa/shared/rgpd';
-import { fetchParticipantSeasonAnswers } from '@ramassa/shared/seasons';
 
 export const Route = createFileRoute('/_staff/participants/$participantId')({
   ssr: false,
   loader: async ({ params }) => {
+    // The Fitxa layout plans her page; her record reads its fields from it, so
+    // the catalog is read once.
+    const catalog = fetchIntakeCatalog(supabase).catch(() => EMPTY_INTAKE_CATALOG);
     const [participant, permissions] = await Promise.all([
-      fetchParticipantDetail(supabase, params.participantId),
+      fetchParticipantRecord(supabase, params.participantId, catalog.then(systemFieldsOf)),
       fetchMyPermissions(supabase),
     ]);
     // Nobody by that id, or nobody this staff member may read. The screen tells
@@ -77,10 +79,8 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
         customQuestionStates: {},
         authorizations: [],
         consents: [],
-        seasonAnswers: [],
         intakeCatalog: EMPTY_INTAKE_CATALOG,
         customAnswers: [],
-        profileOrigins: [],
         testScenario: null,
       };
     }
@@ -93,21 +93,19 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
     // with her record and her answers: the team's notes, material, attendance
     // and authorization belong to real participants and are not read at all.
     if (isLimitedToTestPlayers(permissions)) {
-      const [answered, choices, intakeCatalog, customAnswers, profileOrigins, scenario] =
-        await Promise.all([
-          !hasJoined(participant)
-            ? fetchParticipantAnsweredQuestions(supabase, params.participantId)
-            : Promise.resolve(new Set<never>()),
-          // What a test player's wizard asks (RAPP-618): the design role sets it too.
-          !hasJoined(participant)
-            ? fetchParticipantChoices(supabase, params.participantId).catch(() => NO_CHOICES)
-            : Promise.resolve(NO_CHOICES),
-          fetchIntakeCatalog(supabase).catch(() => EMPTY_INTAKE_CATALOG),
-          fetchParticipantCustomAnswers(supabase, params.participantId).catch(() => []),
-          // Who gave her answers to the app's own fields (RAPP-653).
-          fetchParticipantProfileAnswers(supabase, params.participantId).catch(() => []),
-          testScenario,
-        ]);
+      const [answered, choices, intakeCatalog, customAnswers, scenario] = await Promise.all([
+        !hasJoined(participant)
+          ? fetchParticipantAnsweredQuestions(supabase, params.participantId)
+          : Promise.resolve(new Set<never>()),
+        // What a test player's wizard asks (RAPP-618): the design role sets it too.
+        !hasJoined(participant)
+          ? fetchParticipantChoices(supabase, params.participantId).catch(() => NO_CHOICES)
+          : Promise.resolve(NO_CHOICES),
+        catalog,
+        // Her answers to every field, with who gave each (RAPP-664).
+        fetchParticipantCustomAnswers(supabase, params.participantId).catch(() => []),
+        testScenario,
+      ]);
       return {
         participant,
         notes: [],
@@ -123,10 +121,8 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
         customQuestionStates: choices.customStates,
         authorizations: [],
         consents: [],
-        seasonAnswers: [],
         intakeCatalog,
         customAnswers,
-        profileOrigins,
         testScenario: scenario,
       };
     }
@@ -142,10 +138,8 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
       choices,
       authorizations,
       consents,
-      seasonAnswers,
       intakeCatalog,
       customAnswers,
-      profileOrigins,
       scenario,
     ] = await Promise.all([
       fetchParticipantNotes(supabase, params.participantId),
@@ -170,13 +164,9 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
       // participants.view_personal; without it the panel simply shows none.
       fetchParticipantAuthorizations(supabase, params.participantId).catch(() => []),
       fetchParticipantConsents(supabase, params.participantId).catch(() => []),
-      // Her answers by season (RAPP-306).
-      fetchParticipantSeasonAnswers(supabase, params.participantId).catch(() => []),
-      // The questions staff added and her answers (RAPP-307); the page works without them.
-      fetchIntakeCatalog(supabase).catch(() => EMPTY_INTAKE_CATALOG),
+      catalog,
+      // Her answers to every field, every season, with who gave each (RAPP-664).
       fetchParticipantCustomAnswers(supabase, params.participantId).catch(() => []),
-      // Who gave her answers to the app's own fields (RAPP-653).
-      fetchParticipantProfileAnswers(supabase, params.participantId).catch(() => []),
       testScenario,
     ]);
     // Filtered here rather than asked for by participant: the queue read is one
@@ -200,10 +190,8 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
       customQuestionStates: choices.customStates,
       authorizations,
       consents,
-      seasonAnswers,
       intakeCatalog,
       customAnswers,
-      profileOrigins,
       testScenario: scenario,
     };
   },
@@ -225,10 +213,8 @@ function ParticipantDetailPage() {
     customQuestionStates,
     authorizations,
     consents,
-    seasonAnswers,
     intakeCatalog,
     customAnswers,
-    profileOrigins,
     testScenario,
   } = Route.useLoaderData();
 
@@ -250,10 +236,8 @@ function ParticipantDetailPage() {
       customQuestionStates={customQuestionStates}
       authorizations={authorizations}
       consents={consents}
-      seasonAnswers={seasonAnswers}
       intakeCatalog={intakeCatalog}
       customAnswers={customAnswers}
-      profileOrigins={profileOrigins}
       testScenario={testScenario}
     />
   );

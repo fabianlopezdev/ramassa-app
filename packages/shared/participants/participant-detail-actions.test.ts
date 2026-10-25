@@ -19,10 +19,8 @@ import type { Database } from '../types/database';
 import {
   addParticipantNote,
   fetchParticipantActivity,
-  fetchParticipantDetail,
   fetchParticipantRecord,
   setParticipantActive,
-  updateParticipantProfile,
   updateParticipantRecord,
 } from './participant-detail-actions';
 
@@ -74,63 +72,6 @@ function rpcClient(result: { data: unknown; error: unknown }, calls: RpcCall[] =
     },
   } as unknown as Client;
 }
-
-test('fetchParticipantDetail returns the decrypted row the RPC produced', async () => {
-  const detail = await fetchParticipantDetail(
-    rpcClient({ data: [readerRowFixture(decryptedRow)], error: null }),
-    PARTICIPANT_ID,
-  );
-
-  expect(detail?.document_number).toBe('Y0000026Z');
-  expect(detail?.phone).toBe('+34600000026');
-  // The staff-only fields the player-side row does not carry.
-  expect(detail?.is_active).toBe(false);
-});
-
-test('fetchParticipantDetail names the subject by the parameter the RPC declares', async () => {
-  const calls: RpcCall[] = [];
-  await fetchParticipantDetail(
-    rpcClient({ data: [readerRowFixture(decryptedRow)], error: null }, calls),
-    PARTICIPANT_ID,
-  );
-
-  expect(calls[0]?.name).toBe('get_participant_profile');
-  expect(calls[0]?.args).toEqual({ participant_id: PARTICIPANT_ID });
-});
-
-/**
- * Nobody by that id, or nobody this caller may read. Both are "there is no
- * participant here" as far as the screen is concerned, and both must be told
- * apart from a read that broke.
- */
-test('fetchParticipantDetail reports an unreadable participant as absent', async () => {
-  expect(
-    await fetchParticipantDetail(rpcClient({ data: [], error: null }), PARTICIPANT_ID),
-  ).toBeNull();
-});
-
-test('fetchParticipantDetail reports a FAILED read as a failure, never as an empty profile', async () => {
-  const failing = fetchParticipantDetail(
-    rpcClient({ data: null, error: { message: 'connection reset' } }),
-    PARTICIPANT_ID,
-  );
-
-  await expect(failing).rejects.toBeInstanceOf(AppError);
-});
-
-test('updateParticipantProfile sends the subject and the payload the RPC declares', async () => {
-  const calls: RpcCall[] = [];
-  await updateParticipantProfile(rpcClient({ data: null, error: null }, calls), PARTICIPANT_ID, {
-    first_name: 'Rosa',
-  } as never);
-
-  expect(calls[0]?.name).toBe('update_participant_profile');
-  expect(calls[0]?.args).toEqual({
-    participant_id: PARTICIPANT_ID,
-    // Her names stay on her account; every other answer travels by field (RAPP-661).
-    payload: { first_name: 'Rosa', answers: {} },
-  });
-});
 
 test('setParticipantActive sends the state it is moving to', async () => {
   const calls: RpcCall[] = [];
@@ -201,10 +142,48 @@ test('fetchParticipantRecord reads her answers by field, with her organization f
   expect(record?.role).toBe('player');
 });
 
+test('fetchParticipantRecord reads the fields once when the caller already has them', async () => {
+  const calls: RpcCall[] = [];
+  const fields = new Map();
+  const record = await fetchParticipantRecord(
+    rpcClient(
+      {
+        data: [
+          {
+            ...readerRowFixture(decryptedRow),
+            anonymized_at: null,
+            is_test_account: false,
+            role: 'invited',
+          },
+        ],
+        error: null,
+      },
+      calls,
+    ),
+    PARTICIPANT_ID,
+    Promise.resolve(fields),
+  );
+  expect(calls.map((call) => call.name)).toEqual(['get_participant_profile']);
+  expect(record?.fields).toBe(fields);
+});
+
+/**
+ * Nobody by that id, or nobody this caller may read. Both are "there is no
+ * participant here" as far as the screen is concerned, and both must be told
+ * apart from a read that broke.
+ */
 test('fetchParticipantRecord reports a participant she may not read as absent', async () => {
   expect(
     await fetchParticipantRecord(rpcClient({ data: [], error: null }), PARTICIPANT_ID),
   ).toBeNull();
+});
+
+test('fetchParticipantRecord reports a FAILED read as a failure, never as an empty record', async () => {
+  const failing = fetchParticipantRecord(
+    rpcClient({ data: null, error: { message: 'connection reset' } }),
+    PARTICIPANT_ID,
+  );
+  await expect(failing).rejects.toBeInstanceOf(AppError);
 });
 
 test('a record that does not parse is a typed failure that names fields, never values', async () => {

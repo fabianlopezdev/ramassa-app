@@ -1,9 +1,9 @@
 /**
- * Her record on the Fitxa layout (RAPP-653): the Fitxa's sections in their
- * order, each field with her answer, who gave it and when, inline editing by
- * the team, and, while she has not joined, the per-player choice on each
- * field. Below them, her account: app language, photo consent, terms and
- * season, which are not Fitxa fields.
+ * Her record on the Fitxa layout (RAPP-653, RAPP-664): the Fitxa's sections in
+ * their order, each field with her answer, who gave it and when, inline
+ * editing by the team with one editor for every field, and, while she has not
+ * joined, the per-player choice on each field. Below them, her account: app
+ * language, photo consent, terms and season, which are not Fitxa fields.
  *
  * Her choices plan through the shared `playerPlan`, the one the invitation's
  * board and her phone use, and save through `set_intake_question_states`
@@ -11,22 +11,21 @@
  */
 
 import { EditorSection } from '@/components/layout/editor-section';
-import { answerSourceText } from '@/components/participants/answer-source';
-import { builtinAnswerText } from '@/components/participants/builtin-answer-text';
-import { BuiltinFieldEditor } from '@/components/participants/builtin-field-editor';
+import { EditorForm } from '@/components/participants/field-answer-editor';
 import { PlayerChoicesBar } from '@/components/participants/player-choices-bar';
 import { ProfileAnswerRow } from '@/components/participants/profile-answer-row';
 import { ProfileSection, type FitxaContext } from '@/components/participants/profile-section';
 import { answersByField, fitxaSections, planQuestionsByField } from '@/lib/participant-fitxa';
+import { cn } from '@/lib/utils';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { LANGUAGE_NATIVE_NAMES, SUPPORTED_LANGUAGES } from '@ramassa/shared/i18n';
 import type { IntakeQuestion, QuestionStates } from '@ramassa/shared/intake';
 import {
   EMPTY_PROFILE_LAYOUT,
   playerPlan,
   withQuestionChoice,
   type CustomAnswers,
-  type CustomAnswerValue,
   type IntakeCatalog,
   type IntakePreset,
   type ParticipantCustomAnswer,
@@ -34,18 +33,17 @@ import {
 } from '@ramassa/shared/intake-builder';
 import {
   hasJoined,
-  type ParticipantDetailRow,
-  type ProfileAnswerOrigin,
-  type ProfilePrefillPayload,
+  type ParticipantRecord,
+  type ParticipantUpdate,
 } from '@ramassa/shared/participants';
 import type { PermissionCode } from '@ramassa/shared/permissions';
-import type { LanguageCode, UpdateOwnProfilePayload } from '@ramassa/shared/schemas';
+import type { LanguageCode } from '@ramassa/shared/schemas';
 
 export interface ParticipantFitxaProps {
-  readonly participant: ParticipantDetailRow;
+  readonly participant: ParticipantRecord;
   readonly catalog: IntakeCatalog;
+  /** Her answers to every field, each season apart, by the reader's levels. */
   readonly customAnswers: readonly ParticipantCustomAnswer[];
-  readonly origins: readonly ProfileAnswerOrigin[];
   /** What somebody answered, for a woman who has not joined (RAPP-300). */
   readonly answeredQuestions: readonly IntakeQuestion[];
   /** Her saved choices (RAPP-301, RAPP-645). */
@@ -53,10 +51,8 @@ export interface ParticipantFitxaProps {
   /** Choices are shown: she has not joined, and this reader may set them. */
   readonly showChoices: boolean;
   readonly sees: (code: PermissionCode) => boolean;
-  readonly onSaveBuiltin: (
-    payload: UpdateOwnProfilePayload | ProfilePrefillPayload,
-  ) => Promise<void>;
-  readonly onSaveCustom: (fieldId: string, value: CustomAnswerValue | null) => Promise<void>;
+  /** Her names, settings and answers by field; throws when the database refuses. */
+  readonly onSave: (update: ParticipantUpdate) => Promise<void>;
   /** Throws when the database refuses, so the row keeps the saved choice. */
   readonly onSaveChoices: (next: PlayerChoices) => Promise<void>;
   readonly choicesError?: string;
@@ -69,13 +65,11 @@ export function ParticipantFitxa({
   participant,
   catalog,
   customAnswers,
-  origins,
   answeredQuestions,
   choices,
   showChoices,
   sees,
-  onSaveBuiltin,
-  onSaveCustom,
+  onSave,
   onSaveChoices,
   choicesError,
   onSavePreset,
@@ -101,7 +95,7 @@ export function ParticipantFitxa({
     [customAnswers],
   );
   const plan = playerPlan(catalog, answered, choices, wizardAnswers);
-  const sections = fitxaSections(layout, new Set(answers.keys()), locale as LanguageCode);
+  const sections = fitxaSections(layout, answers, locale as LanguageCode);
 
   async function saveChoices(next: PlayerChoices) {
     setIsChoiceBusy(true);
@@ -115,11 +109,9 @@ export function ParticipantFitxa({
   }
 
   const context: FitxaContext = {
-    participant,
+    names: { first_name: participant.first_name, last_name: participant.last_name },
     layout,
     answers,
-    origins: new Map(origins.map((origin) => [origin.question, origin])),
-    answered: joined ? null : answered,
     sees,
     canEdit: sees('participants.view_personal'),
     choices: showChoices ? planQuestionsByField(plan, layout.fields) : null,
@@ -127,18 +119,14 @@ export function ParticipantFitxa({
     onChoice: (question, state) => void saveChoices(withQuestionChoice(choices, question, state)),
     editingId,
     onEditingChange: setEditingId,
-    onSaveBuiltin,
-    onSaveCustom,
+    onSave,
     onOpenFile,
-  };
-  const originText = (question: string) => {
-    const origin = context.origins.get(question);
-    return origin === undefined ? null : answerSourceText(origin, t, locale);
   };
   const accountRow = {
     lockedLevel: null,
     choice: null,
     hasChoiceColumn: showChoices,
+    source: null,
     onToggleEdit: () => undefined,
     isEditing: false,
     canEdit: false,
@@ -148,13 +136,11 @@ export function ParticipantFitxa({
     isEditing: editingId === key,
     onToggleEdit: () => setEditingId(editingId === key ? null : key),
     editor: (
-      <BuiltinFieldEditor
-        fieldKey={key}
+      <AccountSettingEditor
+        setting={key}
         participant={participant}
-        answered={context.answered}
-        canSeeSensitive={sees('participants.view_sensitive')}
-        onSave={async (payload) => {
-          await onSaveBuiltin(payload);
+        onSave={async (update) => {
+          await onSave(update);
           setEditingId(null);
         }}
         onCancel={() => setEditingId(null)}
@@ -191,8 +177,7 @@ export function ParticipantFitxa({
             {...accountRow}
             {...editable('preferred_language')}
             name={t('profile:languageLabel')}
-            value={builtinAnswerText('preferred_language', participant, t, locale)}
-            source={originText('preferred_language')}
+            value={t(`common:languageName.${participant.preferred_language}`)}
             testId="fitxa-field-preferred_language"
           />
           <ProfileAnswerRow
@@ -205,7 +190,6 @@ export function ParticipantFitxa({
                 ? t('participants:mediaConsentGranted')
                 : t('participants:mediaConsentDenied')
             }
-            source={null}
             testId="fitxa-field-media_consent"
           />
           <ProfileAnswerRow
@@ -218,18 +202,101 @@ export function ParticipantFitxa({
                     date: new Date(participant.terms_accepted_at).toLocaleDateString(locale),
                   })
             }
-            source={null}
             testId="fitxa-field-terms"
           />
           <ProfileAnswerRow
             {...accountRow}
             name={t('onboarding:seasonNumberLabel')}
-            value={builtinAnswerText('season_number', participant, t, locale)}
-            source={originText('season_number')}
+            value={
+              participant.season_number == null
+                ? null
+                : t(`onboarding:seasonNumber${participant.season_number}`)
+            }
             testId="fitxa-field-season_number"
           />
         </ul>
       </EditorSection>
     </div>
+  );
+}
+
+/** Her app language or her photo consent: settings on her account, never field answers (D2). */
+function AccountSettingEditor({
+  setting,
+  participant,
+  onSave,
+  onCancel,
+}: {
+  readonly setting: 'preferred_language' | 'media_consent';
+  readonly participant: ParticipantRecord;
+  readonly onSave: (update: ParticipantUpdate) => Promise<void>;
+  readonly onCancel: () => void;
+}) {
+  const { t } = useTranslation(['profile', 'onboarding']);
+  const [value, setValue] = useState(
+    setting === 'preferred_language'
+      ? participant.preferred_language
+      : String(participant.media_consent),
+  );
+  const [isSaving, setIsSaving] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const options =
+    setting === 'preferred_language'
+      ? SUPPORTED_LANGUAGES.map((language) => ({
+          value: language,
+          label: LANGUAGE_NATIVE_NAMES[language],
+        }))
+      : [
+          { value: 'true', label: t('onboarding:yesOption') },
+          { value: 'false', label: t('onboarding:noOption') },
+        ];
+
+  async function submit() {
+    setIsSaving(true);
+    setFailed(false);
+    try {
+      await onSave(
+        setting === 'preferred_language'
+          ? { preferred_language: value, answers: {} }
+          : { media_consent: value === 'true', answers: {} },
+      );
+    } catch {
+      setFailed(true);
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  const id = `fitxa-account-${setting}`;
+  return (
+    <EditorForm
+      onSubmit={() => void submit()}
+      onCancel={onCancel}
+      isSubmitting={isSaving}
+      message={failed ? t('profile:saveFailed') : null}
+    >
+      <label htmlFor={id} className="flex flex-col gap-1.5">
+        <span className="text-start text-sm font-medium text-foreground">
+          {setting === 'preferred_language'
+            ? t('profile:languageLabel')
+            : t('profile:fieldMediaConsent')}
+        </span>
+        <select
+          id={id}
+          value={value}
+          onChange={(event) => setValue(event.target.value)}
+          className={cn(
+            'h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs',
+            'focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 outline-none',
+          )}
+        >
+          {options.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </label>
+    </EditorForm>
   );
 }
