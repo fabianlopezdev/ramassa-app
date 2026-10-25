@@ -253,17 +253,16 @@ export function buildProfilePrefillPayload(
   return payload;
 }
 
-/** Her answered questions, read under the team policy on `profile_answers`. */
+/** Her answered questions, from her answers (RAPP-662), for a caller who may list her. */
 export async function fetchParticipantAnsweredQuestions(
   client: Client,
   participantId: string,
 ): Promise<AnsweredQuestions> {
-  const { data, error } = await client
-    .from('profile_answers')
-    .select('question')
-    .eq('profile_id', participantId);
+  const { data, error } = await client.rpc('participant_answered_questions', {
+    p_profile_id: participantId,
+  });
   if (error) {
     throw new AppError('DB-1', { message: error.message });
   }
-  return new Set(answeredQuestionsSchema.parse((data ?? []).map((row) => row.question)));
+  return new Set(answeredQuestionsSchema.parse(data ?? []));
 }

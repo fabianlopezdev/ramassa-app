@@ -140,30 +140,22 @@ describe('buildProfilePrefillPayload', () => {
 });
 
 describe('fetchParticipantAnsweredQuestions', () => {
-  test('reads her answered questions as a set', async () => {
+  test('reads her answered questions as a set, from her answers', async () => {
     const calls: unknown[] = [];
     const client = {
-      from: (table: string) => ({
-        select: (columns: string) => ({
-          eq: (column: string, value: string) => {
-            calls.push([table, columns, column, value]);
-            return Promise.resolve({ data: [{ question: 'nationality' }], error: null });
-          },
-        }),
-      }),
+      rpc: (name: string, args: unknown) => {
+        calls.push([name, args]);
+        return Promise.resolve({ data: ['nationality'], error: null });
+      },
     };
     const result = await fetchParticipantAnsweredQuestions(client as never, 'p1');
     expect(result).toEqual(new Set(['nationality']));
-    expect(calls).toEqual([['profile_answers', 'question', 'profile_id', 'p1']]);
+    expect(calls).toEqual([['participant_answered_questions', { p_profile_id: 'p1' }]]);
   });
 
   test('a failed read is a typed DB-1 error', async () => {
     const client = {
-      from: () => ({
-        select: () => ({
-          eq: () => Promise.resolve({ data: null, error: { message: 'boom' } }),
-        }),
-      }),
+      rpc: () => Promise.resolve({ data: null, error: { message: 'boom' } }),
     };
     await expect(fetchParticipantAnsweredQuestions(client as never, 'p1')).rejects.toMatchObject({
       code: 'DB-1',

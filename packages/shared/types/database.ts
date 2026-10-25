@@ -6682,6 +6682,10 @@ export type Database = {
           title: string;
         }[];
       };
+      participant_answered_questions: {
+        Args: { p_profile_id: string };
+        Returns: string[];
+      };
       participant_authorizations: {
         Args: { p_profile_id: string };
         Returns: {
