@@ -14,8 +14,9 @@
 --
 --   1. `public.participant_search_documents`: one row per profile with two
 --      documents, Normal (her names and her Normal text answers) and Personal
---      (those plus her Personal text answers). RLS on and forced with no
---      policy, and no client grant: only the definer functions read it.
+--      (those plus her Personal text answers). RLS on and forced with an
+--      explicit deny policy, and no client grant: only the definer functions
+--      read it.
 --      Triggers refresh a profile's row when her names, one of her answers, or
 --      the level or type of an answered field change. The text answers are
 --      short and long text, country, municipality and list answers, of every
@@ -57,6 +58,13 @@ create index participant_search_documents_normal_idx on public.participant_searc
 create index participant_search_documents_personal_idx on public.participant_search_documents using gin (personal_document);
 alter table public.participant_search_documents enable row level security;
 alter table public.participant_search_documents force row level security;
+-- An explicit deny, like the other tables only definer functions read.
+create policy participant_search_documents_deny_client
+  on public.participant_search_documents
+  for all
+  to public
+  using (false)
+  with check (false);
 revoke all on table public.participant_search_documents from public, anon, authenticated;
 
 -- Her names and her text answers at the given levels, as one text.

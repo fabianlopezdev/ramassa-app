@@ -212,12 +212,16 @@ select is(
 
 -- 5. The readers ----------------------------------------------------------------------------------------------
 
+-- Since RAPP-662 her page reads every field's answers, the app's included.
+create temp table expected_answers on commit drop as
+  select count(*)::integer as n from public.custom_answers where profile_id = '5eed0000-0000-4000-8000-000000000098';
+grant select on expected_answers to authenticated;
 set local role authenticated;
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select is(
   (select count(*)::integer from public.participant_custom_answers('5eed0000-0000-4000-8000-000000000098')),
-  0,
-  'her page reads only Ramassà''s answers (the seed gave her none)'
+  (select n from expected_answers),
+  'her page reads every field''s answers, the app''s included'
 );
 reset role;
 
