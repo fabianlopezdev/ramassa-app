@@ -140,10 +140,7 @@ const raw = {
       label: { ca: 'Necessites que et cuidem els fills?' },
       help: null,
       is_hidden: false,
-      option_overrides: {
-        daily: { hidden: true },
-        sometimes: { label: { ca: 'De tant en tant' } },
-      },
+      option_overrides: {},
     },
     { question: 'phone', label: null, help: null, is_hidden: true, option_overrides: {} },
   ],
@@ -238,18 +235,62 @@ describe('built-in questions', () => {
     expect(builtinLabel(catalog, 'childcare_need', 'ar')).toBeNull();
   });
 
-  test('options are relabelled or hidden, and her stored value stays visible', () => {
+  test("an app question's options come from its field: its order, its words, archived ones out (RAPP-665)", () => {
+    const sizes = parseIntakeCatalog({
+      ...raw,
+      fields: [
+        ...raw.fields,
+        {
+          ...fieldRow(
+            '5eed0000-0000-4000-8045-000000000009',
+            'single_choice',
+            { ca: 'Talla' },
+            'normal',
+            4,
+            [
+              {
+                id: '5eed0000-0000-4000-8046-000000000011',
+                key: 'M',
+                label: { ca: 'Mitjana', en: 'Medium' },
+                sort_order: 0,
+                is_archived: false,
+              },
+              {
+                id: '5eed0000-0000-4000-8046-000000000012',
+                key: 'S',
+                label: { ca: 'Petita' },
+                sort_order: 1,
+                is_archived: false,
+              },
+              {
+                id: '5eed0000-0000-4000-8046-000000000013',
+                key: 'L',
+                label: { ca: 'Gran' },
+                sort_order: 2,
+                is_archived: true,
+              },
+            ],
+          ),
+          kind: 'builtin',
+          system_key: 'clothing_size',
+        },
+      ],
+    });
     const options = [
-      { value: 'no', label: 'No' },
-      { value: 'sometimes', label: 'A vegades' },
-      { value: 'daily', label: 'Cada dia' },
+      { value: 'S', label: 'S' },
+      { value: 'M', label: 'M' },
+      { value: 'L', label: 'L' },
     ];
+    expect(builtinOptions(sizes, 'clothing_size', options, 'ca').map(({ label }) => label)).toEqual(
+      ['Mitjana', 'Petita'],
+    );
+    // No English word for Petita: the app's own label stays.
+    expect(builtinOptions(sizes, 'clothing_size', options, 'en').map(({ label }) => label)).toEqual(
+      ['Medium', 'S'],
+    );
     expect(
-      builtinOptions(catalog, 'childcare_need', options, 'ca').map(({ label }) => label),
-    ).toEqual(['No', 'De tant en tant']);
-    expect(
-      builtinOptions(catalog, 'childcare_need', options, 'ca', 'daily').map(({ value }) => value),
-    ).toEqual(['no', 'sometimes', 'daily']);
+      builtinOptions(sizes, 'clothing_size', options, 'ca', 'L').map(({ value }) => value),
+    ).toEqual(['M', 'S', 'L']);
   });
 });
 

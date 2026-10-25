@@ -35,7 +35,7 @@ import {
   type SystemFieldIndex,
 } from '@ramassa/shared/intake-builder';
 import {
-  createReferralSchema,
+  createReferralSchemaFor,
   referralAppAnswers,
   sendReferral,
   type CreateReferral,
@@ -146,7 +146,7 @@ export function ReferralForm({
     setError,
     formState: { errors, isSubmitting },
   } = useForm<CreateReferralInput, unknown, CreateReferral>({
-    resolver: zodResolver(createReferralSchema),
+    resolver: zodResolver(createReferralSchemaFor(fields)),
     defaultValues: EMPTY_REFERRAL,
   });
   const documentType = watch('documentType') as string | null | undefined;

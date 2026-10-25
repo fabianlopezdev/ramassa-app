@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import { systemFieldIndexFromCatalog } from './intake-builder/field-answers';
 import {
   createReferralSchema,
+  createReferralSchemaFor,
   fetchEntityReferrals,
   fetchReferralRecord,
   fetchSupportingEntityNames,
@@ -104,6 +105,44 @@ describe('the season registration questions (RAPP-303)', () => {
   test('a chosen document type that takes a number needs one', () => {
     expect(createReferralSchema.safeParse({ ...minimal, documentType: 'nie' }).success).toBe(false);
     expect(createReferralSchema.safeParse({ ...minimal, documentType: 'none' }).success).toBe(true);
+  });
+});
+
+describe('the referral form reads the options of her organization (RAPP-665)', () => {
+  const minimal = {
+    firstName: 'Awa',
+    lastName: 'Sylla',
+    documentationStatus: 'missing' as const,
+    consentConfirmed: true as const,
+  };
+  const raw = systemFieldsCatalogFixture();
+  const withArchivedNone = {
+    fields: raw.fields.map((field) => {
+      const row = field as { system_key: string; options: { key: string; is_archived: boolean }[] };
+      return row.system_key !== 'document_type'
+        ? row
+        : {
+            ...row,
+            options: row.options.map((option) => ({
+              ...option,
+              is_archived: option.key === 'none',
+            })),
+          };
+    }),
+  };
+
+  test('a live option of the field is accepted', () => {
+    const fields = systemFieldIndexFromCatalog(raw);
+    expect(
+      createReferralSchemaFor(fields).safeParse({ ...minimal, documentType: 'none' }).success,
+    ).toBe(true);
+  });
+
+  test('an option staff archived on the field is refused', () => {
+    const fields = systemFieldIndexFromCatalog(withArchivedNone);
+    const parsed = createReferralSchemaFor(fields).safeParse({ ...minimal, documentType: 'none' });
+    expect(parsed.success).toBe(false);
+    expect(parsed.error?.issues[0]?.path).toEqual(['documentType']);
   });
 });
 

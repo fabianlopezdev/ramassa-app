@@ -2,7 +2,7 @@
  * The wording of one of the app's own questions on its onboarding screen
  * (RAPP-307, RAPP-641): label and help, and whether it is hidden. A question
  * the app needs cannot be hidden, and the form says why. Its options are the
- * options of its field, named on Dades de les jugadores (RAPP-664). The form
+ * options of its field, named on Dades de les jugadores (RAPP-664, RAPP-665). The form
  * is uncontrolled and read with FormData.
  */
 
@@ -55,9 +55,6 @@ export function BuiltinForm({
       label: Object.keys(label).length === 0 ? null : label,
       help: Object.keys(help).length === 0 ? null : help,
       isHidden: canHideBuiltin(info.question, required) && fields.get('builtin-hidden') === 'on',
-      // Kept as stored: the options are the field's now, and her phone's app
-      // screens still read these until they read the field (RAPP-665).
-      optionOverrides: override?.optionOverrides ?? {},
     };
     if (await action.run(() => onSave(next))) onCancel();
   }

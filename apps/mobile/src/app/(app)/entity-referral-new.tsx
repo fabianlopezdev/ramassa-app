@@ -56,7 +56,7 @@ import {
   type SystemFieldIndex,
 } from '@ramassa/shared/intake-builder';
 import {
-  createReferralSchema,
+  createReferralSchemaFor,
   DOCUMENTATION_STATUSES,
   type CreateReferralInput,
 } from '@ramassa/shared/referrals';
@@ -220,7 +220,7 @@ export default function EntityReferralNewScreen() {
 
   const submit = () => {
     const input = toInput(form);
-    const parsed = createReferralSchema.safeParse(input);
+    const parsed = createReferralSchemaFor(fields).safeParse(input);
     // The Ramassà fields are checked with the same words as her wizard; a
     // required field left empty says so, as the database would refuse it.
     const checked = checkCustomAnswers(questions, customAnswers, t, { enforceRequired: false });

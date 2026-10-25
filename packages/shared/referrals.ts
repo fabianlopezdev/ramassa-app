@@ -126,6 +126,34 @@ export const createReferralSchema = z
     }
   });
 
+/** The form names of the referral's choices and the app fields they answer. */
+const REFERRAL_CHOICE_FIELDS = {
+  documentType: 'document_type',
+  applicantStatus: 'applicant_status',
+  childcareNeed: 'childcare_need',
+} as const;
+
+/**
+ * The referral form's schema for her organization's fields (RAPP-665): each
+ * choice must be a live option of its field, named on Dades de les jugadores,
+ * as the database checks it. A field the organization does not have, or one
+ * without options (a yes/no/maybe), keeps the app's own list.
+ */
+export function createReferralSchemaFor(fields: SystemFieldIndex) {
+  return createReferralSchema.superRefine((referral, context) => {
+    for (const [name, systemKey] of Object.entries(REFERRAL_CHOICE_FIELDS) as [
+      keyof typeof REFERRAL_CHOICE_FIELDS,
+      (typeof REFERRAL_CHOICE_FIELDS)[keyof typeof REFERRAL_CHOICE_FIELDS],
+    ][]) {
+      const chosen = referral[name];
+      const field = fields.get(systemKey);
+      if (chosen === null || field === undefined || field.options.length === 0) continue;
+      const live = field.options.some((option) => option.key === chosen && !option.isArchived);
+      if (!live) context.addIssue({ code: 'custom', path: [name], message: 'not an option' });
+    }
+  });
+}
+
 export type CreateReferralInput = z.input<typeof createReferralSchema>;
 export type CreateReferral = z.output<typeof createReferralSchema>;
 

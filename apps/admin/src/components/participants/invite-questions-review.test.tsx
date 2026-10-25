@@ -94,9 +94,7 @@ test('the presets fill every choice, the organization ones too', () => {
 test('a question removed in Settings is never asked and cannot be changed', () => {
   const catalog: IntakeCatalog = {
     ...EMPTY_INTAKE_CATALOG,
-    overrides: [
-      { question: 'phone', label: null, help: null, isHidden: true, optionOverrides: {} },
-    ],
+    overrides: [{ question: 'phone', label: null, help: null, isHidden: true }],
   };
   const view = render(
     <InviteQuestionsReview

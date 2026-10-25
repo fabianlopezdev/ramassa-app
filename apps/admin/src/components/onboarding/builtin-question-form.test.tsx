@@ -32,7 +32,7 @@ test('a question the app needs cannot be hidden, and the form says why', () => {
   expect(view.getByText(/questions\.lock\.required|needs this answer/)).toBeTruthy();
 });
 
-test('the options stay the field’s: the form keeps the stored ones as they are (RAPP-664)', async () => {
+test('the options are the field’s: the form sends none (RAPP-664, RAPP-665)', async () => {
   const onSave = mock(async () => undefined);
   const view = render(
     <BuiltinForm
@@ -42,7 +42,6 @@ test('the options stay the field’s: the form keeps the stored ones as they are
         label: null,
         help: null,
         isHidden: false,
-        optionOverrides: { no: { label: { ca: 'Ara no' } } },
       }}
       required={DEFAULT_REQUIRED_QUESTIONS}
       onSave={onSave}
@@ -53,9 +52,7 @@ test('the options stay the field’s: the form keeps the stored ones as they are
   input(view, 'builtin-label.ca').value = 'Cangur';
   fireEvent.submit(view.getByTestId('builtin-form'));
   await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1));
-  const [override] = onSave.mock.calls[0] as unknown as [
-    { optionOverrides: Record<string, unknown>; label: unknown },
-  ];
+  const [override] = onSave.mock.calls[0] as unknown as [Record<string, unknown>];
   expect(override.label).toEqual({ ca: 'Cangur' });
-  expect(override.optionOverrides).toEqual({ no: { label: { ca: 'Ara no' } } });
+  expect(override).not.toHaveProperty('optionOverrides');
 });

@@ -54,6 +54,7 @@ import type { Database, Json } from '../types/database';
 import { systemFieldIndexFromCatalog, type SystemFieldIndex } from './field-answers';
 import {
   anyLanguageTextSchema,
+  builtinField,
   EMPTY_PROFILE_LAYOUT,
   fieldById,
   parseProfileLayout,
@@ -138,7 +139,8 @@ const overrideSchema = z.object({
   label: anyLanguageTextSchema.nullable(),
   help: anyLanguageTextSchema.nullable(),
   is_hidden: z.boolean(),
-  option_overrides: z.record(z.string(), optionOverrideSchema),
+  // Always empty since RAPP-665: an option is named on its field.
+  option_overrides: z.record(z.string(), optionOverrideSchema).optional(),
 });
 
 const presetSchema = z.object({
@@ -221,9 +223,6 @@ export interface BuiltinOverride {
   readonly label: BuilderText | null;
   readonly help: BuilderText | null;
   readonly isHidden: boolean;
-  readonly optionOverrides: Readonly<
-    Record<string, { readonly label?: BuilderText; readonly hidden?: boolean }>
-  >;
 }
 
 /** Staff wording and the hide switch of one built-in screen (RAPP-612). */
@@ -287,7 +286,6 @@ export function parseIntakeCatalog(data: unknown): IntakeCatalog {
         label: override.label,
         help: override.help,
         isHidden: override.is_hidden,
-        optionOverrides: override.option_overrides,
       })),
     presets: raw.presets,
     screenSettings: (raw.builtin_screens ?? []).flatMap((entry) =>
@@ -783,28 +781,13 @@ export async function saveBuiltinOverride(
 ): Promise<void> {
   const label = override.label === null ? null : cleanText(override.label);
   const help = override.help === null ? null : cleanText(override.help);
-  const options = Object.fromEntries(
-    Object.entries(override.optionOverrides).flatMap(([value, change]) => {
-      const optionLabel = change.label === undefined ? undefined : cleanText(change.label);
-      const hasLabel = optionLabel !== undefined && Object.keys(optionLabel).length > 0;
-      if (!hasLabel && change.hidden !== true) return [];
-      return [
-        [
-          value,
-          {
-            ...(hasLabel ? { label: optionLabel } : {}),
-            ...(change.hidden ? { hidden: true } : {}),
-          },
-        ],
-      ];
-    }),
-  );
   const { error } = await client.rpc('save_builtin_question_override', {
     p_question: override.question,
     p_label: (label !== null && Object.keys(label).length > 0 ? label : null) as Json,
     p_help: (help !== null && Object.keys(help).length > 0 ? help : null) as Json,
     p_is_hidden: override.isHidden,
-    p_option_overrides: options as Json,
+    // An option is named on its field (RAPP-665): nothing is kept on the question.
+    p_option_overrides: {},
   });
   if (error) throw databaseError(error);
 }
@@ -869,8 +852,11 @@ export function reregistrationAsks(catalog: IntakeCatalog): (question: IntakeQue
 }
 
 /**
- * The options of a built-in choice question as she sees them: hidden ones left
- * out (unless it is her stored value), relabelled ones in staff wording.
+ * The options of a built-in choice question as she sees them (RAPP-665): in the
+ * order of its field's options, named as the field names them in her language,
+ * archived ones left out (unless it is her stored value). The options are the
+ * field's, edited on Dades de les jugadores; an option the field does not have
+ * keeps the app's own label.
  */
 export function builtinOptions<Option extends { readonly value: string; readonly label: string }>(
   catalog: IntakeCatalog,
@@ -879,12 +865,20 @@ export function builtinOptions<Option extends { readonly value: string; readonly
   language: LanguageCode,
   keep: string | null = null,
 ): readonly Option[] {
-  const changes = overrideFor(catalog, question)?.optionOverrides ?? {};
-  return options
-    .filter((option) => changes[option.value]?.hidden !== true || option.value === keep)
-    .map((option) => {
-      const label = exactText(changes[option.value]?.label, language);
-      return label === '' ? option : { ...option, label };
+  const field = catalog.layout === undefined ? undefined : builtinField(catalog.layout, question);
+  if (field === undefined || field.options.length === 0) return options;
+  const position = (value: string) => {
+    const index = field.options.findIndex((option) => option.key === value);
+    return index === -1 ? field.options.length : index;
+  };
+  return [...options]
+    .sort((a, b) => position(a.value) - position(b.value))
+    .flatMap((option) => {
+      const own = field.options.find((candidate) => candidate.key === option.value);
+      if (own === undefined) return [option];
+      if (own.isArchived && option.value !== keep) return [];
+      const label = exactText(own.label, language);
+      return [label === '' ? option : { ...option, label }];
     });
 }
 
