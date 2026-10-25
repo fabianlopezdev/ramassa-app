@@ -11,13 +11,14 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { expect, test } from 'bun:test';
 import { AppError } from '../errors';
+import { systemFieldIndexFromCatalog } from '../intake-builder/field-answers';
 import { systemFieldFixtureId, systemFieldsCatalogFixture } from '../testing';
 import type { Database } from '../types/database';
 import {
-  createParticipantInvite,
   fetchInvites,
   fetchMyPendingInvite,
   INVITE_ALREADY_HAS_ACCOUNT,
+  inviteParticipant,
   renewParticipantInvite,
   revokeParticipantInvite,
 } from './invite-actions';
@@ -36,17 +37,20 @@ interface RpcCall {
   readonly args: unknown;
 }
 
-/** Every RPC answers `result`, but the catalog the writer reads its field ids from (RAPP-661). */
 function rpcClient(result: { data: unknown; error: unknown }, calls: RpcCall[] = []): Client {
   return {
     rpc: async (name: string, args: unknown) => {
       calls.push({ name, args });
-      return name === 'intake_catalog'
-        ? { data: systemFieldsCatalogFixture(), error: null }
-        : result;
+      return result;
     },
   } as unknown as Client;
 }
+
+/** Her organization's app fields, which the invitation names her entity by (RAPP-663). */
+const FIELDS = systemFieldIndexFromCatalog(systemFieldsCatalogFixture());
+
+const create = (client: Client, payload: Parameters<typeof inviteParticipant>[1]) =>
+  inviteParticipant(client, payload, FIELDS);
 
 const createdInvite = {
   invite_id: '11110000-0000-4000-8000-000000000001',
@@ -55,7 +59,7 @@ const createdInvite = {
   profile_id: '5eed0000-0000-4000-8000-000000000098',
 };
 
-test('createParticipantInvite sends the payload under the name the RPC declares', async () => {
+test('inviteParticipant sends the payload under the name the RPC declares', async () => {
   const calls: RpcCall[] = [];
   const payload = {
     email: 'fatou.ndiaye@example.com',
@@ -65,25 +69,25 @@ test('createParticipantInvite sends the payload under the name the RPC declares'
     referral_id: null,
     is_test_account: false,
   };
-  await createParticipantInvite(rpcClient({ data: [createdInvite], error: null }, calls), payload);
+  await create(rpcClient({ data: [createdInvite], error: null }, calls), payload);
 
   // Her answers travel by field (RAPP-661); the entity stays the invitation's own too.
-  expect(calls.map((call) => call.name)).toEqual(['intake_catalog', 'create_participant_invite']);
-  expect(calls[1]?.args).toEqual({
+  expect(calls.map((call) => call.name)).toEqual(['create_participant_invite']);
+  expect(calls[0]?.args).toEqual({
     payload: {
       email: 'fatou.ndiaye@example.com',
       first_name: 'Fatou',
       last_name: 'Ndiaye',
+      reference_entity: 'CEAR Catalunya',
       referral_id: null,
       is_test_account: false,
-      reference_entity: 'CEAR Catalunya',
       answers: { [systemFieldFixtureId('reference_entity')]: 'CEAR Catalunya' },
     },
   });
 });
 
-test('createParticipantInvite returns the recorded invite with its expiry', async () => {
-  const invite = await createParticipantInvite(rpcClient({ data: [createdInvite], error: null }), {
+test('inviteParticipant returns the recorded invite with its expiry', async () => {
+  const invite = await create(rpcClient({ data: [createdInvite], error: null }), {
     email: 'fatou.ndiaye@example.com',
     first_name: 'Fatou',
     last_name: 'Ndiaye',
@@ -96,7 +100,7 @@ test('createParticipantInvite returns the recorded invite with its expiry', asyn
 });
 
 test('an address that already has an account is tagged so staff get a clear message', async () => {
-  const refused = createParticipantInvite(
+  const refused = create(
     rpcClient({ data: null, error: { code: '23505', message: 'already belongs to an account' } }),
     {
       email: 'fatou.ndiaye@example.com',
@@ -113,9 +117,9 @@ test('an address that already has an account is tagged so staff get a clear mess
   );
 });
 
-test('createParticipantInvite treats an empty result or a refusal as a failure', async () => {
+test('inviteParticipant treats an empty result or a refusal as a failure', async () => {
   await expect(
-    createParticipantInvite(rpcClient({ data: [], error: null }), {
+    create(rpcClient({ data: [], error: null }), {
       email: 'fatou.ndiaye@example.com',
       first_name: 'Fatou',
       last_name: 'Ndiaye',
@@ -126,7 +130,7 @@ test('createParticipantInvite treats an empty result or a refusal as a failure',
   ).rejects.toBeInstanceOf(AppError);
 
   await expect(
-    createParticipantInvite(rpcClient({ data: null, error: { message: 'rate limit reached' } }), {
+    create(rpcClient({ data: null, error: { message: 'rate limit reached' } }), {
       email: 'fatou.ndiaye@example.com',
       first_name: 'Fatou',
       last_name: 'Ndiaye',

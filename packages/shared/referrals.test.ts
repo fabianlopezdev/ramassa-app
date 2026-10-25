@@ -30,7 +30,6 @@ const REFERRALS: readonly Referral[] = [
     entityName: 'Creu Roja Osona',
     createdAt: '2026-08-14T10:00:00Z',
     updatedAt: '2026-08-14T10:00:00Z',
-    answers: null,
     consentConfirmedAt: null,
   },
 ];

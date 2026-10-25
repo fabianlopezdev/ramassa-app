@@ -1,9 +1,5 @@
 import { Page } from '@/components/layout/page';
-import { ReferralAnswersList } from '@/components/referrals/referral-answers';
-import {
-  ReferralCustomAnswers,
-  type ReferralCustomAnswersProps,
-} from '@/components/referrals/referral-custom-answers';
+import { ReferralAnswers } from '@/components/referrals/referral-answers';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { safeAsync } from '@/lib/observability';
@@ -11,12 +7,13 @@ import { supabase } from '@/lib/supabase';
 import { Link } from '@tanstack/react-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { IntakeCatalog } from '@ramassa/shared/intake-builder';
 import {
   fetchReferralUpdates,
   REFERRAL_UPDATE_TYPES,
   referralUpdateSchema,
   submitReferralUpdate,
-  type Referral,
+  type ReferralRecord,
   type ReferralUpdateEntry,
 } from '@ramassa/shared/referrals';
 import { ReferralStatus } from './referral-status';
@@ -24,12 +21,13 @@ import { ReferralStatus } from './referral-status';
 export function ReferralDetail({
   referral,
   initialUpdates,
-  custom,
+  catalog,
 }: {
-  readonly referral: Referral;
+  /** The referral with the entity's answers by field (RAPP-664). */
+  readonly referral: ReferralRecord;
   readonly initialUpdates: readonly ReferralUpdateEntry[];
-  /** What the entity answered to the questions staff added (RAPP-307). */
-  readonly custom?: ReferralCustomAnswersProps;
+  /** The Fitxa layout, to read the answers by field. */
+  readonly catalog: IntakeCatalog;
 }) {
   const { t, i18n } = useTranslation('referrals');
   const locale = i18n.resolvedLanguage ?? 'ca';
@@ -96,16 +94,13 @@ export function ReferralDetail({
           </div>
         </dl>
         {/* What the entity sent, while the referral is pending (RAPP-303). */}
-        {referral.answers === null ? null : (
-          <div className="mt-4">
-            <ReferralAnswersList answers={referral.answers} />
-          </div>
-        )}
-        {custom === undefined ? null : (
-          <div className="mt-4">
-            <ReferralCustomAnswers {...custom} />
-          </div>
-        )}
+        <div className="mt-4 empty:hidden">
+          <ReferralAnswers
+            catalog={catalog}
+            answers={referral.answers}
+            seasonNumber={referral.seasonNumber}
+          />
+        </div>
         {referral.notes === null ? null : (
           <p className="mt-4 whitespace-pre-wrap text-start text-sm">{referral.notes}</p>
         )}

@@ -1,40 +1,23 @@
 import { describe, expect, test } from 'bun:test';
-import { buildCreateParticipantInvitePayload } from '../schemas/accounts';
 import { INTAKE_STATE_PRESETS, WIZARD_QUESTIONS } from './question-states';
 import {
   allowedQuestionStates,
-  answeredAtInvitation,
   answeredByInvitation,
   fetchReferralAnswerKeys,
   previewWizardQuestions,
   wizardNotAsked,
 } from './wizard-preview';
 
-const invitation = (referenceEntity?: string) =>
-  buildCreateParticipantInvitePayload({
-    email: 'nova@example.test',
-    firstName: 'Nova',
-    lastName: 'Prova',
-    referenceEntity,
-  });
-
 const asked = (rows: ReturnType<typeof previewWizardQuestions>) =>
   rows.filter((row) => row.isAsked).map((row) => row.question);
 
-describe('what an invitation records as answered (RAPP-618)', () => {
+describe('what an invitation records as answered (RAPP-618, RAPP-663, RAPP-664)', () => {
   test('her names always; the entity only when staff typed one', () => {
-    expect([...answeredAtInvitation(invitation())]).toEqual(['first_name', 'last_name']);
-    expect([...answeredAtInvitation(invitation('Creu Roja'))]).toEqual([
+    expect([...answeredByInvitation({})]).toEqual(['first_name', 'last_name']);
+    expect([...answeredByInvitation({ referenceEntity: 'Creu Roja' })]).toEqual([
       'first_name',
       'last_name',
       'reference_entity',
-    ]);
-  });
-
-  test('by the invitation itself: her names, and her entity when named (RAPP-663)', () => {
-    expect([...answeredByInvitation({})]).toEqual([...answeredAtInvitation(invitation())]);
-    expect([...answeredByInvitation({ referenceEntity: 'Creu Roja' })]).toEqual([
-      ...answeredAtInvitation(invitation('Creu Roja')),
     ]);
     expect([...answeredByInvitation({ referenceEntity: '  ' })]).toEqual([
       'first_name',
@@ -42,25 +25,26 @@ describe('what an invitation records as answered (RAPP-618)', () => {
     ]);
   });
 
-  test("the entity's answers count for the questions staff did not send", () => {
-    const answered = answeredAtInvitation(invitation(), [
+  test("the referral's answers count by the questions of their fields", () => {
+    const answered = answeredByInvitation({}, [
       'date_of_birth',
       'phone',
-      'document_type',
       'document_number',
-      // Staff sent the entity field (empty), so the entity's copy is dropped.
+      'season_number',
+      // A Ramassà field's id counts for no app question.
+      '5eed0000-0000-4000-8045-000000000001',
+      // Her entity is the invitation's to name.
       'reference_entity',
     ]);
-    expect(answered.has('date_of_birth')).toBe(true);
-    expect(answered.has('phone')).toBe(true);
-    expect(answered.has('document')).toBe(true);
-    expect(answered.has('reference_entity')).toBe(false);
+    expect([...answered].sort() as string[]).toEqual(
+      ['date_of_birth', 'document', 'first_name', 'last_name', 'phone', 'season_number'].sort(),
+    );
   });
 });
 
 describe('the preview staff confirm before inviting (RAPP-618)', () => {
   test('Auto: she is asked every question nobody answered', () => {
-    const rows = previewWizardQuestions(answeredAtInvitation(invitation()), {});
+    const rows = previewWizardQuestions(answeredByInvitation({}), {});
     expect(rows.map((row) => row.question)).toEqual([...WIZARD_QUESTIONS]);
     expect(asked(rows)).toEqual(
       WIZARD_QUESTIONS.filter((question) => question !== 'first_name' && question !== 'last_name'),
@@ -68,7 +52,7 @@ describe('the preview staff confirm before inviting (RAPP-618)', () => {
   });
 
   test('Ask and Don’t ask change single questions, as her phone will', () => {
-    const answered = answeredAtInvitation(invitation());
+    const answered = answeredByInvitation({});
     const rows = previewWizardQuestions(answered, { date_of_birth: 'ask', phone: 'skip' });
     expect(asked(rows)).toEqual(
       WIZARD_QUESTIONS.filter(
@@ -79,7 +63,7 @@ describe('the preview staff confirm before inviting (RAPP-618)', () => {
   });
 
   test('her name screen shows both names: asking one asks the other too', () => {
-    const answered = answeredAtInvitation(invitation());
+    const answered = answeredByInvitation({});
     const rows = previewWizardQuestions(answered, { first_name: 'ask' });
     // my_questions_to_ask() lists first_name only, but the identity screen
     // always shows both fields, so the preview says both are asked.
@@ -93,12 +77,12 @@ describe('the preview staff confirm before inviting (RAPP-618)', () => {
     const contact = (rows: ReturnType<typeof previewWizardQuestions>) =>
       rows.find((row) => row.question === 'reference_contact_name');
     // Nobody answered the entity: the phone asks it, then the contact after "Yes".
-    expect(contact(previewWizardQuestions(answeredAtInvitation(invitation()), {}))?.asking).toBe(
+    expect(contact(previewWizardQuestions(answeredByInvitation({}), {}))?.asking).toBe(
       'when-it-applies',
     );
     // Staff answered both: nothing to ask.
     const both = new Set([
-      ...answeredAtInvitation(invitation('Creu Roja')),
+      ...answeredByInvitation({ referenceEntity: 'Creu Roja' }),
       'reference_contact_name' as const,
     ]);
     expect(contact(previewWizardQuestions(both, {}))?.asking).toBe('not-asked');
@@ -109,25 +93,21 @@ describe('the preview staff confirm before inviting (RAPP-618)', () => {
     // Removed in Settings: never shown, even with the entity.
     expect(
       contact(
-        previewWizardQuestions(
-          answeredAtInvitation(invitation()),
-          {},
-          new Set(['reference_contact_name']),
-        ),
+        previewWizardQuestions(answeredByInvitation({}), {}, new Set(['reference_contact_name'])),
       )?.asking,
     ).toBe('not-asked');
   });
 
   test('the review preset asks everything', () => {
     const rows = previewWizardQuestions(
-      answeredAtInvitation(invitation('Creu Roja')),
+      answeredByInvitation({ referenceEntity: 'Creu Roja' }),
       INTAKE_STATE_PRESETS.review,
     );
     expect(asked(rows)).toEqual([...WIZARD_QUESTIONS]);
   });
 
   test('Don’t ask is not allowed on an unanswered required question', () => {
-    const answered = answeredAtInvitation(invitation());
+    const answered = answeredByInvitation({});
     const rows = previewWizardQuestions(answered, {});
     expect(rows.find((row) => row.question === 'date_of_birth')?.canSkip).toBe(false);
     expect(rows.find((row) => row.question === 'first_name')?.canSkip).toBe(true);
@@ -138,7 +118,7 @@ describe('the preview staff confirm before inviting (RAPP-618)', () => {
   });
 
   test('a question removed in Settings is never asked, as on her phone', () => {
-    const answered = answeredAtInvitation(invitation());
+    const answered = answeredByInvitation({});
     const rows = previewWizardQuestions(answered, { phone: 'ask' }, new Set(['phone']));
     const phone = rows.find((row) => row.question === 'phone');
     expect(phone?.isAsked).toBe(false);

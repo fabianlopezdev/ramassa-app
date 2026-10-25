@@ -8,7 +8,6 @@ import {
 } from './intake-builder/app-field-form';
 import { isEmptyAnswer } from './intake-builder/builder';
 import {
-  columnsFromFieldAnswers,
   fetchSystemFieldIndex,
   fieldAnswersFromColumns,
   fieldAnswersReadSchema,
@@ -270,17 +269,22 @@ export async function sendReferral(
 }
 
 /** One referral with the entity's answers by field, and the fields to read them by. */
-export interface ReferralRecord extends Omit<Referral, 'answers'> {
+export interface ReferralRecord extends Referral {
   /** The entity's answers by field id, each one the reader may read (RAPP-662). */
   readonly answers: Readonly<Record<string, unknown>>;
   readonly seasonNumber: number | null;
   readonly fields: SystemFieldIndex;
 }
 
-/** One referral as the entity's phone reads it (RAPP-663): her answers by field. */
+/**
+ * One referral with the entity's answers by field (RAPP-663, RAPP-664). A
+ * caller that already reads her organization's fields (the catalog) passes
+ * them, so they are not read twice.
+ */
 export async function fetchReferralRecord(
   client: Pick<Client, 'rpc'>,
   referralId: string,
+  fields?: SystemFieldIndex | Promise<SystemFieldIndex>,
 ): Promise<ReferralRecord> {
   const { data, error } = await client.rpc('get_entity_referral', {
     p_referral_id: z.uuid().parse(referralId),
@@ -292,7 +296,7 @@ export async function fetchReferralRecord(
     ...referralFromRow(row),
     answers: row.answers ?? {},
     seasonNumber: row.season_number ?? null,
-    fields: await fetchSystemFieldIndex(client),
+    fields: await (fields ?? fetchSystemFieldIndex(client)),
   };
 }
 
@@ -326,42 +330,6 @@ const referralRpcRowSchema = z.object({
   consent_confirmed_at: z.string().nullable().optional(),
 });
 
-/**
- * The season registration answers the entity gave, in her profile's keys.
- * The database returns them by field, each by the reader's level; the
- * referral screens read these keys until they render every field (RAPP-663,
- * RAPP-664).
- */
-const referralAnswersSchema = z
-  .object({
-    date_of_birth: z.string().optional(),
-    nationality: z.string().optional(),
-    document_type: z.enum(DOCUMENT_TYPES).optional(),
-    document_number: z.string().optional(),
-    city: z.string().optional(),
-    applicant_status: z.enum(APPLICANT_STATUSES).optional(),
-    supporting_entities: z.array(z.string()).optional(),
-    reference_contact_name: z.string().optional(),
-    season_number: z.number().int().optional(),
-    childcare_need: z.enum(CHILDCARE_NEEDS).optional(),
-    specific_needs: z.string().optional(),
-  })
-  .transform((answers) => ({
-    dateOfBirth: answers.date_of_birth ?? null,
-    nationality: answers.nationality ?? null,
-    documentType: answers.document_type ?? null,
-    documentNumber: answers.document_number ?? null,
-    city: answers.city ?? null,
-    applicantStatus: answers.applicant_status ?? null,
-    supportingEntities: answers.supporting_entities ?? [],
-    referenceContactName: answers.reference_contact_name ?? null,
-    seasonNumber: answers.season_number ?? null,
-    childcareNeed: answers.childcare_need ?? null,
-    specificNeeds: answers.specific_needs ?? null,
-  }));
-
-export type ReferralAnswers = z.output<typeof referralAnswersSchema>;
-
 export interface Referral {
   readonly id: string;
   readonly entityUserId: string;
@@ -377,8 +345,6 @@ export interface Referral {
   readonly entityName: string | null;
   readonly createdAt: string;
   readonly updatedAt: string;
-  /** The season registration answers, until acceptance moves them to her profile. */
-  readonly answers: ReferralAnswers | null;
   readonly consentConfirmedAt: string | null;
 }
 
@@ -405,27 +371,7 @@ export function filterReferrals(
   return referrals.filter((referral) => searchableReferralText(referral).includes(normalizedQuery));
 }
 
-/** The entity's answers in her profile's keys, or null when the referral holds none. */
-function referralAnswersFromRow(
-  row: z.infer<typeof referralRpcRowSchema>,
-  fields: SystemFieldIndex,
-): ReferralAnswers | null {
-  const answers = row.answers ?? {};
-  const seasonNumber = row.season_number ?? null;
-  if (Object.keys(answers).length === 0 && seasonNumber === null) return null;
-  const columns = Object.entries(columnsFromFieldAnswers(fields, answers)).filter(
-    ([, value]) => value !== null && !(Array.isArray(value) && value.length === 0),
-  );
-  return referralAnswersSchema.parse({
-    ...Object.fromEntries(columns),
-    ...(seasonNumber === null ? {} : { season_number: seasonNumber }),
-  });
-}
-
-function referralFromRow(
-  row: z.infer<typeof referralRpcRowSchema>,
-  answers: ReferralAnswers | null = null,
-): Referral {
+function referralFromRow(row: z.infer<typeof referralRpcRowSchema>): Referral {
   return {
     id: row.id,
     entityUserId: row.entity_user_id,
@@ -441,7 +387,6 @@ function referralFromRow(
     entityName: row.entity_name,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
-    answers,
     consentConfirmedAt: row.consent_confirmed_at ?? null,
   };
 }
@@ -476,21 +421,6 @@ export async function fetchStaffReferrals(
     .array(referralRpcRowSchema)
     .parse(data ?? [])
     .map((row) => referralFromRow(row));
-}
-
-export async function fetchReferral(
-  client: Pick<Client, 'rpc'>,
-  referralId: string,
-): Promise<Referral> {
-  const { data, error } = await client.rpc('get_entity_referral', {
-    p_referral_id: z.uuid().parse(referralId),
-  });
-  if (error) databaseFailure(error.message);
-  const row = z.array(referralRpcRowSchema).min(1).max(1).parse(data)[0];
-  if (row === undefined) databaseFailure('Referral was not returned');
-  const fields =
-    Object.keys(row.answers ?? {}).length === 0 ? new Map() : await fetchSystemFieldIndex(client);
-  return referralFromRow(row, referralAnswersFromRow(row, fields));
 }
 
 /**

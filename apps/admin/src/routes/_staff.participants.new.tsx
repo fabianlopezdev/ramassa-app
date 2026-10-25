@@ -16,9 +16,9 @@ import { fetchReferralAnswerKeys } from '@ramassa/shared/intake';
 import {
   EMPTY_INTAKE_CATALOG,
   fetchIntakeCatalog,
-  fetchReferralCustomAnswers,
+  systemFieldsOf,
 } from '@ramassa/shared/intake-builder';
-import { fetchReferral } from '@ramassa/shared/referrals';
+import { fetchReferralRecord } from '@ramassa/shared/referrals';
 
 export const Route = createFileRoute('/_staff/participants/new')({
   ssr: false,
@@ -30,31 +30,25 @@ export const Route = createFileRoute('/_staff/participants/new')({
     // The question catalog plans the last step, what she will be asked
     // (RAPP-618). Without it the step shows the built-in questions only, as
     // her wizard does when it cannot load the catalog.
+    const catalogRead = fetchIntakeCatalog(supabase).catch(() => EMPTY_INTAKE_CATALOG);
     if (deps.referral === undefined) {
-      const catalog = await fetchIntakeCatalog(supabase).catch(() => EMPTY_INTAKE_CATALOG);
-      return { referral: null, custom: undefined, catalog, entityAnswerKeys: [] };
+      return { referral: null, catalog: await catalogRead, entityAnswerKeys: [] };
     }
-    // With the answers to the questions staff added to the form (RAPP-307),
-    // and which fields the entity answered, so the last step counts them.
-    const [referral, catalog, answers, entityAnswerKeys] = await Promise.all([
-      fetchReferral(supabase, deps.referral),
-      fetchIntakeCatalog(supabase).catch(() => EMPTY_INTAKE_CATALOG),
-      fetchReferralCustomAnswers(supabase, deps.referral).catch(() => ({})),
+    // With the entity's answers by field (RAPP-664), and which fields it
+    // answered, so the last step counts them.
+    const [referral, catalog, entityAnswerKeys] = await Promise.all([
+      fetchReferralRecord(supabase, deps.referral, catalogRead.then(systemFieldsOf)),
+      catalogRead,
       fetchReferralAnswerKeys(supabase, deps.referral),
     ]);
-    return { referral, custom: { catalog, answers }, catalog, entityAnswerKeys };
+    return { referral, catalog, entityAnswerKeys };
   },
   component: NewParticipantPage,
 });
 
 function NewParticipantPage() {
-  const { referral, custom, catalog, entityAnswerKeys } = Route.useLoaderData();
+  const { referral, catalog, entityAnswerKeys } = Route.useLoaderData();
   return (
-    <NewParticipant
-      referral={referral}
-      custom={custom}
-      catalog={catalog}
-      entityAnswerKeys={entityAnswerKeys}
-    />
+    <NewParticipant referral={referral} catalog={catalog} entityAnswerKeys={entityAnswerKeys} />
   );
 }

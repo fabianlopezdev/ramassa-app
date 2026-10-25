@@ -11,12 +11,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { AppError } from '../errors';
 import { appFormField } from '../intake-builder/app-field-form';
-import {
-  fetchSystemFieldIndex,
-  hasFieldColumns,
-  withFieldAnswers,
-  type SystemFieldIndex,
-} from '../intake-builder/field-answers';
+import type { SystemFieldIndex } from '../intake-builder/field-answers';
 import { withCancellation, type CancellableRequest } from '../lib/cancellation';
 import type { CreateParticipantInvitePayload } from '../schemas/accounts';
 import type { Database, Json } from '../types/database';
@@ -35,22 +30,6 @@ export interface CreatedParticipantInvite {
 
 /** Set on the thrown error when the address already belongs to an account. */
 export const INVITE_ALREADY_HAS_ACCOUNT = 'already_has_account';
-
-export async function createParticipantInvite(
-  client: Client,
-  payload: CreateParticipantInvitePayload,
-): Promise<CreatedParticipantInvite> {
-  // Her names and her answers by field (RAPP-661). The entity her wizard
-  // offers first stays the invitation's own, and is her answer too.
-  const fields = hasFieldColumns(payload) ? await fetchSystemFieldIndex(client) : new Map();
-  const shared = withFieldAnswers(fields, payload) as Record<string, Json>;
-  return sendParticipantInvite(
-    client,
-    payload.reference_entity === undefined
-      ? shared
-      : { ...shared, reference_entity: payload.reference_entity },
-  );
-}
 
 /**
  * The invitation with her answers by field (RAPP-663): the entity staff name is

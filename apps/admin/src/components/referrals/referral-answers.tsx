@@ -1,95 +1,89 @@
 /**
- * The season registration answers an entity gave on a referral (RAPP-303),
- * read-only. Staff see them before accepting, because accepting fills her
- * record with them; the sending entity sees what it sent while the referral is
- * pending. Staff without participants.view_sensitive receive the answers
- * without applicant status, specific needs and the document number, so those
- * rows simply do not appear.
+ * What an entity answered on a referral (RAPP-303, RAPP-652), read-only and by
+ * field (RAPP-664): the fields of the referral form in its order, the app's
+ * and Ramassà's alike, then any answered field taken off the form since, then
+ * her season count. Staff see them before accepting, because accepting fills
+ * her record with them; the sending entity sees what it sent while the
+ * referral is pending. Staff read each answer as its field's level allows, so
+ * a field above their level simply does not appear.
  */
 
 import { useTranslation } from 'react-i18next';
-import type { SupportedLanguage } from '@ramassa/shared/i18n';
-import { countryLabelForCanonical } from '@ramassa/shared/i18n/countries';
-import { municipalityLabelForCanonical } from '@ramassa/shared/i18n/municipalities';
-import type { ReferralAnswers } from '@ramassa/shared/referrals';
-import { formatSupportNeeds } from '@ramassa/shared/schemas';
+import {
+  answerText,
+  fieldById,
+  placementsOnSurface,
+  questionOfField,
+  textIn,
+  type CustomAnswerValue,
+  type IntakeCatalog,
+} from '@ramassa/shared/intake-builder';
+import type { LanguageCode } from '@ramassa/shared/schemas';
 
-const APPLICANT_STATUS_KEYS = {
-  asylum_seeker: 'onboarding:applicantStatusAsylumSeeker',
-  refugee: 'onboarding:applicantStatusRefugee',
-  migrant: 'onboarding:applicantStatusMigrant',
-  other: 'onboarding:applicantStatusOther',
-  prefer_not_to_say: 'onboarding:applicantStatusPreferNotToSay',
-} as const;
+export interface ReferralAnswersProps {
+  readonly catalog: IntakeCatalog;
+  /** The entity's answers by field id, as the referral read returns them. */
+  readonly answers: Readonly<Record<string, unknown>>;
+  readonly seasonNumber: number | null;
+}
 
-const CHILDCARE_KEYS = {
-  yes: 'onboarding:childcareNeedYes',
-  no: 'onboarding:childcareNeedNo',
-  maybe: 'onboarding:childcareNeedMaybe',
-} as const;
+/** The answered fields: the form's in its order, then the others in the Fitxa's order. */
+function answeredFieldIds(catalog: IntakeCatalog, answers: Readonly<Record<string, unknown>>) {
+  const layout = catalog.layout;
+  if (layout === undefined) return [];
+  const onForm = placementsOnSurface(layout, 'entity_form').map((placement) => placement.fieldId);
+  const others = layout.fields.map((field) => field.id).filter((id) => !onForm.includes(id));
+  return [...onForm, ...others].filter((id) => answers[id] !== undefined && answers[id] !== null);
+}
 
-const DOCUMENT_TYPE_KEYS = {
-  nie: 'onboarding:documentTypeNie',
-  passport: 'onboarding:documentTypePassport',
-  other: 'onboarding:documentTypeOther',
-  none: 'onboarding:documentTypeNone',
-} as const;
-
-export function ReferralAnswersList({ answers }: { readonly answers: ReferralAnswers }) {
-  const { t, i18n } = useTranslation(['onboarding']);
-  const locale = (i18n.resolvedLanguage ?? 'ca') as SupportedLanguage;
-  const rows: { readonly label: string; readonly value: string }[] = [];
-  const add = (label: string, value: string | null) => {
-    if (value !== null && value !== '') rows.push({ label, value });
+export function ReferralAnswers({ catalog, answers, seasonNumber }: ReferralAnswersProps) {
+  const { t, i18n } = useTranslation(['settings', 'onboarding']);
+  const language = (i18n.resolvedLanguage ?? 'ca') as LanguageCode;
+  const words = {
+    yes: t('settings:questions.answers.yes'),
+    no: t('settings:questions.answers.no'),
+    maybe: t('settings:questions.answers.maybe'),
+    archived: t('settings:questions.archivedOption'),
   };
-
-  add(
-    t('onboarding:dateOfBirthLabel'),
-    answers.dateOfBirth === null ? null : new Date(answers.dateOfBirth).toLocaleDateString(locale),
-  );
-  add(
-    t('onboarding:nationalityLabel'),
-    answers.nationality === null
-      ? null
-      : (countryLabelForCanonical(answers.nationality, locale) ?? answers.nationality),
-  );
-  add(
-    t('onboarding:documentTypeLabel'),
-    answers.documentType === null ? null : t(DOCUMENT_TYPE_KEYS[answers.documentType]),
-  );
-  add(t('onboarding:documentNumberLabel'), answers.documentNumber);
-  add(
-    t('onboarding:cityLabel'),
-    answers.city === null
-      ? null
-      : (municipalityLabelForCanonical(answers.city, locale) ?? answers.city),
-  );
-  add(
-    t('onboarding:applicantStatusLabel'),
-    answers.applicantStatus === null ? null : t(APPLICANT_STATUS_KEYS[answers.applicantStatus]),
-  );
-  add(
-    t('onboarding:supportingEntitiesLabel'),
-    answers.supportingEntities.length === 0 ? null : answers.supportingEntities.join(', '),
-  );
-  add(t('onboarding:referenceContactNameLabel'), answers.referenceContactName);
-  add(
-    t('onboarding:seasonNumberLabel'),
-    answers.seasonNumber === null ? null : t(`onboarding:seasonNumber${answers.seasonNumber}`),
-  );
-  add(
-    t('onboarding:childcareNeedLabel'),
-    answers.childcareNeed === null ? null : t(CHILDCARE_KEYS[answers.childcareNeed]),
-  );
-  add(t('onboarding:specificNeedsLabel'), formatSupportNeeds(answers.specificNeeds, t));
-
+  const layout = catalog.layout;
+  const rows = [
+    ...(layout === undefined
+      ? []
+      : answeredFieldIds(catalog, answers).flatMap((id) => {
+          const field = fieldById(layout, id);
+          if (field === undefined) return [];
+          return [
+            {
+              key: id,
+              label: textIn(field.label, language),
+              value: answerText(
+                questionOfField(layout, field),
+                answers[id] as CustomAnswerValue,
+                language,
+                words,
+              ),
+            },
+          ];
+        })),
+    ...(seasonNumber === null
+      ? []
+      : [
+          {
+            key: 'season_number',
+            label: t('onboarding:seasonNumberLabel'),
+            value: t(`onboarding:seasonNumber${seasonNumber}`),
+          },
+        ]),
+  ];
   if (rows.length === 0) return null;
   return (
     <dl className="grid gap-x-6 gap-y-2 sm:grid-cols-2" data-testid="referral-answers">
       {rows.map((row) => (
-        <div key={row.label} className="flex flex-col">
+        <div key={row.key} className="flex flex-col">
           <dt className="text-start text-xs text-muted-foreground">{row.label}</dt>
-          <dd className="text-start text-sm">{row.value}</dd>
+          <dd className="text-start text-sm" dir="auto">
+            {row.value}
+          </dd>
         </div>
       ))}
     </dl>

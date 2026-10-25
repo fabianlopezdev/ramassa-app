@@ -21,11 +21,7 @@ import { AdminAuthField } from '@/components/auth/admin-auth-field';
 import { Page } from '@/components/layout/page';
 import { InviteQuestionsReview } from '@/components/participants/invite-questions-review';
 import { TestPlayerOption } from '@/components/participants/test-player-option';
-import { ReferralAnswersList } from '@/components/referrals/referral-answers';
-import {
-  ReferralCustomAnswers,
-  type ReferralCustomAnswersProps,
-} from '@/components/referrals/referral-custom-answers';
+import { ReferralAnswers } from '@/components/referrals/referral-answers';
 import { Button } from '@/components/ui/button';
 import { safeAsync } from '@/lib/observability';
 import { supabase } from '@/lib/supabase';
@@ -36,25 +32,27 @@ import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import {
-  createParticipantInvite,
   INVITE_ALREADY_HAS_ACCOUNT,
+  inviteParticipant,
   type CreatedParticipantInvite,
 } from '@ramassa/shared/accounts';
 import { useAuth } from '@ramassa/shared/auth';
 import {
   allowedQuestionStates,
-  answeredAtInvitation,
+  answeredByInvitation,
   type QuestionStates,
 } from '@ramassa/shared/intake';
 import {
   allowedCustomQuestionStates,
+  fetchSystemFieldIndex,
   fieldsAnsweredByEntity,
   requiredBuiltinQuestions,
+  systemFieldsOf,
   type CustomQuestionStates,
   type IntakeCatalog,
 } from '@ramassa/shared/intake-builder';
 import { isLimitedToTestPlayers, testPlayerOption } from '@ramassa/shared/permissions';
-import type { Referral } from '@ramassa/shared/referrals';
+import type { ReferralRecord } from '@ramassa/shared/referrals';
 import {
   buildCreateParticipantInvitePayload,
   createParticipantInviteSchema,
@@ -64,13 +62,11 @@ import {
 
 export function NewParticipant({
   referral = null,
-  custom,
   catalog,
   entityAnswerKeys = [],
 }: {
-  readonly referral?: Referral | null;
-  /** What the entity answered to the questions staff added (RAPP-307). */
-  readonly custom?: ReferralCustomAnswersProps;
+  /** The referral she answers, with the entity's answers by field (RAPP-664). */
+  readonly referral?: ReferralRecord | null;
   /** The organization's question catalog, which plans her wizard (RAPP-307). */
   readonly catalog: IntakeCatalog;
   /** Her profile fields the referral answers (RAPP-618). */
@@ -126,16 +122,13 @@ export function NewParticipant({
                 {t('referrals:completionHelp')}
               </p>
               {/* What the entity answered fills her record when she is invited (RAPP-303). */}
-              {referral.answers === null ? null : (
-                <div className="mt-3">
-                  <ReferralAnswersList answers={referral.answers} />
-                </div>
-              )}
-              {custom === undefined ? null : (
-                <div className="mt-3">
-                  <ReferralCustomAnswers {...custom} />
-                </div>
-              )}
+              <div className="mt-3 empty:hidden">
+                <ReferralAnswers
+                  catalog={catalog}
+                  answers={referral.answers}
+                  seasonNumber={referral.seasonNumber}
+                />
+              </div>
             </div>
           )}
           <InviteForm
@@ -318,23 +311,26 @@ function InviteQuestionsStep({
   const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
   const basePayload = buildCreateParticipantInvitePayload(details, referralId);
   // A test player answers no referral, so the entity's answers do not reach her.
-  const answered = answeredAtInvitation(
-    basePayload,
+  const answered = answeredByInvitation(
+    { referenceEntity: basePayload.reference_entity },
     basePayload.referral_id === null ? [] : entityAnswerKeys,
   );
 
   async function create() {
     setErrorMessage(undefined);
     setIsCreating(true);
-    const result = await safeAsync(() =>
-      createParticipantInvite(
+    const result = await safeAsync(async () => {
+      // Her entity is her answer by field too (RAPP-664); the catalog has the fields.
+      const known = systemFieldsOf(catalog);
+      return inviteParticipant(
         supabase,
         buildCreateParticipantInvitePayload(details, referralId, {
           ...allowedQuestionStates(states, answered, requiredBuiltinQuestions(catalog)),
           ...allowedCustomQuestionStates(customStates, catalog),
         }),
-      ),
-    );
+        known.size === 0 ? await fetchSystemFieldIndex(supabase) : known,
+      );
+    });
     setIsCreating(false);
     if (!result.ok) {
       setErrorMessage(
