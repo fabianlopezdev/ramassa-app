@@ -329,7 +329,7 @@ select is(
     where a.profile_id = '5eed0000-0000-4000-8000-000000000012'::uuid
       and f.system_key in ('document_number', 'phone', 'address', 'postal_code')),
   0,
-  'the four encrypted answers are deleted, not merely re-encrypted'
+  'the four encrypted answers are deleted: no ciphertext of them is left'
 );
 
 select ok(
