@@ -274,15 +274,14 @@ export default function SummaryStepScreen() {
           shows={(question) =>
             WIZARD_SCREEN_QUESTIONS[screen].includes(question) && shows(question)
           }
-          profile={{
-            applicant_status: (season.applicantStatus as never) ?? null,
-            applicant_status_details: text(season.applicantStatusDetails),
-            supporting_entities: Array.isArray(season.supportingEntities)
+          answers={{
+            applicantStatus: text(season.applicantStatus),
+            applicantStatusDetails: text(season.applicantStatusDetails),
+            supportingEntities: Array.isArray(season.supportingEntities)
               ? (season.supportingEntities as string[])
               : null,
-            season_number: null,
-            childcare_need: (season.childcareNeed as never) ?? null,
-            specific_needs: text(season.specificNeeds),
+            childcareNeed: text(season.childcareNeed),
+            specificNeeds: text(season.specificNeeds),
           }}
         />
         {added(screen)}

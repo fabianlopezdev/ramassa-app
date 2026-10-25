@@ -12,6 +12,12 @@
  */
 
 import { describe, expect, test } from 'bun:test';
+import { systemFieldIndexFromCatalog } from '../intake-builder/field-answers';
+import {
+  systemFieldFixtureId,
+  systemFieldsCatalogFixture,
+  systemOptionFixtureId,
+} from '../testing/system-fields';
 import {
   documentationFields,
   documentationStepSchema,
@@ -22,7 +28,9 @@ import {
   buildUpdateOwnProfilePayload,
   profileEditSchema,
   profileEditWithoutSensitiveSchema,
+  profileFormOf,
   profileFromRow,
+  profileUpdateOf,
   type ProfileRow,
 } from './profile';
 
@@ -230,6 +238,72 @@ describe('profileFromRow', () => {
     expect(buildUpdateOwnProfilePayload(parsed)).toMatchObject({
       document_type: null,
       document_number: null,
+    });
+  });
+});
+
+describe('her record by field (RAPP-663)', () => {
+  const fields = systemFieldIndexFromCatalog(systemFieldsCatalogFixture());
+  const record = {
+    id: '5eed0000-0000-4000-8000-000000000001',
+    first_name: 'Amina',
+    last_name: 'Al-Hassan',
+    preferred_language: 'ar',
+    avatar_url: null,
+    media_consent: true,
+    terms_accepted_at: null,
+    season_number: 2,
+    answers: {
+      [systemFieldFixtureId('date_of_birth')]: '1995-03-14',
+      [systemFieldFixtureId('document_type')]: systemOptionFixtureId('document_type', 'nie'),
+      [systemFieldFixtureId('document_number')]: 'X1234567L',
+      [systemFieldFixtureId('has_dependents')]: systemOptionFixtureId('has_dependents', 'yes'),
+      [systemFieldFixtureId('num_dependents')]: 2,
+      [systemFieldFixtureId('reference_entity')]: 'Creu Roja Osona',
+    },
+    fields,
+  };
+
+  test('her answers read into the edit form; an answer nobody gave stays absent', () => {
+    const form = profileFormOf(record);
+    expect(form).toMatchObject({
+      firstName: 'Amina',
+      dateOfBirth: '1995-03-14',
+      documentType: 'nie',
+      documentNumber: 'X1234567L',
+      hasDependents: true,
+      numDependents: 2,
+      referenceEntity: 'Creu Roja Osona',
+      seasonNumber: 2,
+      mediaConsent: true,
+      clothingSize: '',
+    });
+    expect(form.phone).toBeUndefined();
+    expect(profileEditSchema.safeParse(form).success).toBe(true);
+  });
+
+  test('a saved edit sends every answer by field with the shared rules', () => {
+    const edit = profileEditSchema.parse({
+      ...profileFormOf(record),
+      documentType: 'none',
+      hasDependents: false,
+      phone: '+34 600 111 222',
+    });
+    const update = profileUpdateOf(fields, edit);
+    expect(update).toMatchObject({
+      first_name: 'Amina',
+      preferred_language: 'ar',
+      media_consent: true,
+      season_number: 2,
+    });
+    expect(update.answers).toMatchObject({
+      [systemFieldFixtureId('document_type')]: systemOptionFixtureId('document_type', 'none'),
+      // No number without a document, no count without dependants.
+      [systemFieldFixtureId('document_number')]: null,
+      [systemFieldFixtureId('has_dependents')]: systemOptionFixtureId('has_dependents', 'no'),
+      [systemFieldFixtureId('num_dependents')]: null,
+      [systemFieldFixtureId('phone')]: '+34600111222',
+      [systemFieldFixtureId('date_of_birth')]: '1995-03-14',
     });
   });
 });

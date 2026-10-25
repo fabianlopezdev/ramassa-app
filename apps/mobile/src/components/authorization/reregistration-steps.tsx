@@ -54,14 +54,14 @@ import {
   fetchMyCustomAnswers,
   requiredBuiltinQuestions,
   reregistrationAsks,
-  saveMyCustomAnswers,
   seasonFormQuestions,
   type CustomAnswers,
   type IntakeCatalog,
+  type SystemFieldIndex,
 } from '@ramassa/shared/intake-builder';
 import { fetchOwnProfile } from '@ramassa/shared/profile';
-import type { LanguageCode } from '@ramassa/shared/schemas';
-import { updateMySeasonAnswers } from '@ramassa/shared/seasons';
+import { profileFormOf, type LanguageCode } from '@ramassa/shared/schemas';
+import { mySeasonAnswers, updateMySeasonAnswers } from '@ramassa/shared/seasons';
 import { tokens } from '@ramassa/shared/tokens';
 
 function ActionButton({
@@ -155,6 +155,8 @@ export function ReregistrationSteps({
     },
     refetchOnMount: 'always',
   });
+  // Her answers are read and written by field, through her organization's fields (RAPP-663).
+  const fields: SystemFieldIndex = profile.data?.fields ?? new Map();
   const catalog = staffQuestions.data?.catalog ?? EMPTY_INTAKE_CATALOG;
   const storedCustom = staffQuestions.data?.answers ?? {};
   const customQuestions = seasonFormQuestions(catalog);
@@ -169,23 +171,24 @@ export function ReregistrationSteps({
       readonly season: SeasonAnswers;
       readonly custom: CustomAnswerDraft;
     }) => {
-      // Her staff answers first: the season call ends the re-registration and
-      // re-checks every required answer, staff ones included (RAPP-611).
-      await saveMyCustomAnswers(
-        supabase,
-        customAnswersToSave(customQuestions, custom, storedCustom),
-      );
+      // The app's season questions and the team's, by field, in the one call
+      // that ends her re-registration and re-checks every required answer
+      // (RAPP-611, RAPP-663).
       await updateMySeasonAnswers(supabase, {
-        applicantStatus: value.applicantStatus ?? undefined,
-        supportingEntities: [...value.supportingEntities],
-        childcareNeed: value.childcareNeed ?? undefined,
-        specificNeeds: value.specificNeeds.trim() === '' ? undefined : value.specificNeeds,
+        ...mySeasonAnswers(fields, {
+          applicantStatus: value.applicantStatus ?? undefined,
+          supportingEntities: [...value.supportingEntities],
+          childcareNeed: value.childcareNeed ?? undefined,
+          specificNeeds: value.specificNeeds.trim() === '' ? undefined : value.specificNeeds,
+        }),
+        ...customAnswersToSave(customQuestions, custom, storedCustom),
       });
     },
   });
 
   const data = profile.data;
-  if (profile.isPending || staffQuestions.isPending || data === undefined || data === null) {
+  const her = data === undefined || data === null ? null : profileFormOf(data);
+  if (profile.isPending || staffQuestions.isPending || her === null) {
     return (
       <View className="flex-1 items-center justify-center bg-neutral-50">
         <ActivityIndicator color={tokens.colors.primary.DEFAULT} />
@@ -196,11 +199,11 @@ export function ReregistrationSteps({
   const shown = (value: string | null | undefined) =>
     value === null || value === undefined || value === '' ? notGiven : value;
   const current: SeasonAnswers = answers ?? {
-    applicantStatus: data.applicant_status ?? null,
-    supportingEntities: data.supporting_entities ?? [],
+    applicantStatus: (her.applicantStatus as SeasonAnswers['applicantStatus']) ?? null,
+    supportingEntities: her.supportingEntities,
     seasonNumber: null,
-    childcareNeed: data.childcare_need ?? null,
-    specificNeeds: data.specific_needs ?? '',
+    childcareNeed: (her.childcareNeed as SeasonAnswers['childcareNeed']) ?? null,
+    specificNeeds: her.specificNeeds ?? '',
   };
 
   return (
@@ -233,31 +236,31 @@ export function ReregistrationSteps({
           {phase === 'review' ? (
             <>
               <ProfileSection title={t('summarySectionName')}>
-                <ProfileRow label={t('firstNameLabel')} value={data.first_name} />
-                <ProfileRow label={t('lastNameLabel')} value={data.last_name} />
-                <ProfileRow label={t('dateOfBirthLabel')} value={shown(data.date_of_birth)} />
+                <ProfileRow label={t('firstNameLabel')} value={her.firstName} />
+                <ProfileRow label={t('lastNameLabel')} value={her.lastName} />
+                <ProfileRow label={t('dateOfBirthLabel')} value={shown(her.dateOfBirth)} />
                 <ProfileRow
                   label={t('nationalityLabel')}
                   value={shown(
-                    data.nationality === null
+                    her.nationality === ''
                       ? null
-                      : (countryLabelForCanonical(data.nationality, locale) ?? data.nationality),
+                      : (countryLabelForCanonical(her.nationality, locale) ?? her.nationality),
                   )}
                 />
               </ProfileSection>
               <ProfileSection title={t('logisticsTitle')}>
-                <ProfileRow label={t('phoneLabel')} value={shown(data.phone)} />
-                <ProfileRow label={t('addressLabel')} value={shown(data.address)} />
+                <ProfileRow label={t('phoneLabel')} value={shown(her.phone)} />
+                <ProfileRow label={t('addressLabel')} value={shown(her.address)} />
                 <ProfileRow
                   label={t('cityLabel')}
                   value={shown(
-                    data.city === null
+                    her.city === undefined
                       ? null
-                      : (municipalityLabelForCanonical(data.city, locale) ?? data.city),
+                      : (municipalityLabelForCanonical(her.city, locale) ?? her.city),
                   )}
                 />
-                <ProfileRow label={t('clothingSizeLabel')} value={shown(data.clothing_size)} />
-                <ProfileRow label={t('shoeSizeLabel')} value={shown(data.shoe_size)} />
+                <ProfileRow label={t('clothingSizeLabel')} value={shown(her.clothingSize)} />
+                <ProfileRow label={t('shoeSizeLabel')} value={shown(her.shoeSize)} />
               </ProfileSection>
               <ActionButton
                 testID="reregistration-correct"

@@ -70,19 +70,16 @@ mock.module('@tanstack/react-query', () => ({
     data:
       queryKey[0] === 'reregistration-profile'
         ? {
+            // Her record by field (RAPP-663): nothing answered yet.
+            id: 'her',
             first_name: 'Amina',
             last_name: 'Diallo',
-            date_of_birth: null,
-            nationality: null,
-            phone: null,
-            address: null,
-            city: null,
-            clothing_size: null,
-            shoe_size: null,
-            applicant_status: null,
-            supporting_entities: null,
-            childcare_need: null,
-            specific_needs: null,
+            preferred_language: 'ca',
+            avatar_url: null,
+            media_consent: false,
+            terms_accepted_at: null,
+            answers: {},
+            fields: new Map(),
           }
         : { catalog, answers: {} },
   }),

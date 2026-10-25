@@ -37,7 +37,7 @@ import { Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { toAppError, type AppErrorCode } from '@ramassa/shared/errors';
 import { useOwnProfile, useUpdateOwnProfile } from '@ramassa/shared/profile';
-import { profileEditSchema, profileFromRow, type ProfileEdit } from '@ramassa/shared/schemas';
+import { profileEditSchema, profileFormOf, type ProfileEdit } from '@ramassa/shared/schemas';
 
 /**
  * How many label+field pairs the loading placeholder draws. A skeleton, not a
@@ -55,7 +55,7 @@ export default function ProfileEditScreen() {
   const update = useUpdateOwnProfile();
 
   const defaultValues = useMemo(
-    () => (profile === null || profile === undefined ? undefined : profileFromRow(profile)),
+    () => (profile === null || profile === undefined ? undefined : profileFormOf(profile)),
     [profile],
   );
 

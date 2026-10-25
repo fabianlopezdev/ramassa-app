@@ -73,8 +73,10 @@ test('fetchOwnProfile returns the decrypted row the RPC produced', async () => {
   const profile = await fetchOwnProfile(
     rpcClient({ data: [readerRowFixture(decryptedRow)], error: null }),
   );
-  expect(profile?.document_number).toBe('X1234567L');
-  expect(profile?.place_of_birth).toBe('حلب');
+  // Her answers by field (RAPP-662), with her organization's fields to read them by (RAPP-663).
+  expect(profile?.answers[systemFieldFixtureId('document_number')]).toBe('X1234567L');
+  expect(profile?.answers[systemFieldFixtureId('place_of_birth')]).toBe('حلب');
+  expect(profile?.fields.get('place_of_birth')?.id).toBe(systemFieldFixtureId('place_of_birth'));
 });
 
 /**
@@ -98,46 +100,37 @@ test('fetchOwnProfile reports a failure as a failure, never as an empty profile'
   ).rejects.toBeInstanceOf(AppError);
 });
 
-test('updateOwnProfile hands the payload to the re-encrypting RPC untouched', async () => {
+test('updateOwnProfile sends her names, her settings and her answers by field', async () => {
   let received: { name: string; args: unknown } | undefined;
   const client = rpcClient({ data: null, error: null }, (call) => {
     received = call as { name: string; args: unknown };
   });
-  const payload = { first_name: 'Amina', last_name: 'Al-Hassan' } as never;
-
-  await updateOwnProfile(client, payload);
-
-  expect(received?.name).toBe('update_own_profile');
-  // Her names stay on her account; every other answer travels by field (RAPP-661).
-  expect(received?.args).toEqual({
-    payload: { first_name: 'Amina', last_name: 'Al-Hassan', answers: {} },
-  });
-});
-
-test('updateOwnProfile sends an app field as its answer, by the field id the catalog names', async () => {
-  const calls: { name: string; args: unknown }[] = [];
-  const client = {
-    rpc: async (name: string, args: unknown) => {
-      calls.push({ name, args });
-      return name === 'intake_catalog'
-        ? { data: systemFieldsCatalogFixture(), error: null }
-        : { data: null, error: null };
-    },
-  } as unknown as Client;
 
   await updateOwnProfile(client, {
     first_name: 'Amina',
-    city: 'Vic',
-    document_type: 'nie',
-  } as never);
+    last_name: 'Al-Hassan',
+    preferred_language: 'ar',
+    media_consent: false,
+    season_number: null,
+    answers: {
+      [systemFieldFixtureId('city')]: ' Vic ',
+      [systemFieldFixtureId('document_type')]: systemOptionFixtureId('document_type', 'nie'),
+      [systemFieldFixtureId('phone')]: null,
+    },
+  });
 
-  expect(calls.map((call) => call.name)).toEqual(['intake_catalog', 'update_own_profile']);
-  expect(calls[1]?.args).toEqual({
+  expect(received?.name).toBe('update_own_profile');
+  expect(received?.args).toEqual({
     payload: {
       first_name: 'Amina',
+      last_name: 'Al-Hassan',
+      preferred_language: 'ar',
+      media_consent: false,
+      season_number: null,
       answers: {
         [systemFieldFixtureId('city')]: 'Vic',
         [systemFieldFixtureId('document_type')]: systemOptionFixtureId('document_type', 'nie'),
+        [systemFieldFixtureId('phone')]: null,
       },
     },
   });
@@ -145,10 +138,14 @@ test('updateOwnProfile sends an app field as its answer, by the field id the cat
 
 test('updateOwnProfile surfaces a rejected edit as an error, not as a silent no-op', async () => {
   expect(
-    updateOwnProfile(
-      rpcClient({ data: null, error: { message: 'not_null_violation' } }),
-      {} as never,
-    ),
+    updateOwnProfile(rpcClient({ data: null, error: { message: 'not_null_violation' } }), {
+      first_name: 'Amina',
+      last_name: 'Al-Hassan',
+      preferred_language: 'ar',
+      media_consent: false,
+      season_number: null,
+      answers: {},
+    }),
   ).rejects.toBeInstanceOf(AppError);
 });
 
@@ -263,7 +260,7 @@ test('fetchOwnProfile without a signal never reaches for abortSignal', async () 
   );
 
   expect(seen.signal).toBeUndefined();
-  expect(profile?.document_number).toBe('X1234567L');
+  expect(profile?.answers[systemFieldFixtureId('document_number')]).toBe('X1234567L');
 });
 
 /**

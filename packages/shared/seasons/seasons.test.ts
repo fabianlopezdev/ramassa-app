@@ -3,14 +3,15 @@
  * reminder group name, and the payload of her season answers.
  */
 import { describe, expect, test } from 'bun:test';
+import { systemFieldIndexFromCatalog } from '../intake-builder/field-answers';
 import {
   systemFieldFixtureId,
   systemFieldsCatalogFixture,
   systemOptionFixtureId,
 } from '../testing';
 import {
-  buildMySeasonAnswersPayload,
   filterRegistrations,
+  mySeasonAnswers,
   newSeasonSchema,
   reminderGroupName,
   updateMySeasonAnswers,
@@ -43,42 +44,49 @@ describe('newSeasonSchema', () => {
 });
 
 describe('her season answers', () => {
-  test('only the four questions travel, an empty list as nothing', () => {
-    expect(buildMySeasonAnswersPayload({ childcareNeed: 'yes', supportingEntities: [] })).toEqual({
-      applicant_status: null,
-      supporting_entities: null,
-      childcare_need: 'yes',
-      specific_needs: null,
+  const fields = systemFieldIndexFromCatalog(systemFieldsCatalogFixture());
+
+  test('the four questions are her answers by field, an empty list as nothing', () => {
+    expect(
+      mySeasonAnswers(fields, {
+        childcareNeed: 'yes',
+        applicantStatus: 'refugee',
+        supportingEntities: [],
+      }),
+    ).toEqual({
+      [systemFieldFixtureId('applicant_status')]: systemOptionFixtureId(
+        'applicant_status',
+        'refugee',
+      ),
+      [systemFieldFixtureId('supporting_entities')]: null,
+      [systemFieldFixtureId('childcare_need')]: 'yes',
+      [systemFieldFixtureId('specific_needs')]: null,
+      [systemFieldFixtureId('specific_needs_details')]: null,
     });
   });
 
-  test('they are saved by field (RAPP-661)', async () => {
+  test('they are saved by field in one call (RAPP-663)', async () => {
     const calls: unknown[] = [];
     const client = {
       rpc: async (name: string, args?: unknown) => {
         calls.push([name, args]);
-        return name === 'intake_catalog'
-          ? { data: systemFieldsCatalogFixture(), error: null }
-          : { data: null, error: null };
+        return { data: null, error: null };
       },
     } as unknown as Parameters<typeof updateMySeasonAnswers>[0];
-    await updateMySeasonAnswers(client, { childcareNeed: 'yes', applicantStatus: 'refugee' });
-    expect(calls[1]).toEqual([
-      'update_my_season_answers',
-      {
-        p_payload: {
-          answers: {
-            [systemFieldFixtureId('applicant_status')]: systemOptionFixtureId(
-              'applicant_status',
-              'refugee',
-            ),
-            [systemFieldFixtureId('supporting_entities')]: null,
-            [systemFieldFixtureId('childcare_need')]: 'yes',
-            [systemFieldFixtureId('specific_needs')]: null,
-            [systemFieldFixtureId('specific_needs_details')]: null,
+    await updateMySeasonAnswers(client, {
+      [systemFieldFixtureId('childcare_need')]: 'yes',
+      team: ' text ',
+      gone: null,
+    });
+    expect(calls).toEqual([
+      [
+        'update_my_season_answers',
+        {
+          p_payload: {
+            answers: { [systemFieldFixtureId('childcare_need')]: 'yes', team: 'text', gone: null },
           },
         },
-      },
+      ],
     ]);
   });
 });

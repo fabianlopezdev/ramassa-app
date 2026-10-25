@@ -20,34 +20,24 @@ import { expect, test } from 'bun:test';
 import { createElement, type ReactNode } from 'react';
 import { useForm } from 'react-hook-form';
 import { AppError, toAppError } from '@ramassa/shared/errors';
+import { systemFieldIndexFromCatalog } from '@ramassa/shared/intake-builder';
 import { ownProfileQueryKey, useUpdateOwnProfile } from '@ramassa/shared/profile';
-import type { ProfileRow } from '@ramassa/shared/schemas';
+import type { ProfileRecordWithFields } from '@ramassa/shared/schemas';
+import { systemFieldFixtureId, systemFieldsCatalogFixture } from '@ramassa/shared/testing';
 import { profileFormResetOptions, profileSaveCallbacks } from './profile-save';
 
+// Her record by field (RAPP-663): her account, her answers by field id, her fields.
 const savedRow = {
   id: '5eed0000-0000-4000-8000-000000000001',
   first_name: 'Amina',
   last_name: 'Al-Hassan',
-  date_of_birth: '1995-03-14',
-  place_of_birth: 'حلب',
-  nationality: 'Síria',
   preferred_language: 'ar',
-  document_type: 'nie',
-  document_number: 'X1234567L',
-  phone: '+34600111222',
-  address: 'Carrer Major 1',
-  city: 'Vic',
-  postal_code: '08500',
-  reference_entity: 'Creu Roja Osona',
-  reference_contact_name: null,
-  has_dependents: false,
-  num_dependents: 0,
-  clothing_size: 'M',
-  shoe_size: '38',
   avatar_url: null,
   media_consent: false,
   terms_accepted_at: '2026-07-31T10:00:00Z',
-} satisfies ProfileRow;
+  answers: { [systemFieldFixtureId('phone')]: '+34600111222' },
+  fields: systemFieldIndexFromCatalog(systemFieldsCatalogFixture()),
+} satisfies ProfileRecordWithFields;
 
 function makeClient(): QueryClient {
   return new QueryClient({

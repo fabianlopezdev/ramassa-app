@@ -13,6 +13,7 @@ import { queryClient } from '@/lib/query-client';
 import { supabase } from '@/lib/supabase';
 import type { QueryClient } from '@tanstack/react-query';
 import type { AppError, Result } from '@ramassa/shared/errors';
+import { fetchSystemFieldIndex } from '@ramassa/shared/intake-builder';
 import {
   fetchOwnDeletionRequest,
   fetchOwnProfile,
@@ -22,7 +23,11 @@ import {
   updateOwnProfile,
   updateOwnProfileMutationKey,
 } from '@ramassa/shared/profile';
-import { buildUpdateOwnProfilePayload, type ProfileEdit } from '@ramassa/shared/schemas';
+import {
+  profileUpdateOf,
+  type ProfileEdit,
+  type ProfileRecordWithFields,
+} from '@ramassa/shared/schemas';
 
 /**
  * Called once at app start. The profile is read fresh on every entry to the tab
@@ -53,8 +58,12 @@ export function registerProfileQueries(
   });
 
   client.setMutationDefaults(updateOwnProfileMutationKey, {
-    mutationFn: (edit: ProfileEdit) =>
-      updateOwnProfile(supabase, buildUpdateOwnProfilePayload(edit)),
+    // Her answers travel by field (RAPP-663), by the fields her record was read with.
+    mutationFn: async (edit: ProfileEdit) => {
+      const cached = client.getQueryData<ProfileRecordWithFields | null>(ownProfileQueryKey);
+      const fields = cached?.fields ?? (await fetchSystemFieldIndex(supabase));
+      return updateOwnProfile(supabase, profileUpdateOf(fields, edit));
+    },
     onError: (error: unknown) => {
       logger.error('profile.update.failed', { error });
     },

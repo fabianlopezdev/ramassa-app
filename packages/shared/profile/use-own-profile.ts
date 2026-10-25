@@ -14,15 +14,15 @@
  */
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { documentNumberToSend } from '../schemas/onboarding';
-import type { ProfileEdit, ProfileRow } from '../schemas/profile';
+import { appAnswersFromForm, appFormToSend, isAppFormKey } from '../intake-builder/app-field-form';
+import type { ProfileEdit, ProfileRecordWithFields } from '../schemas/profile';
 
 export const ownProfileQueryKey = ['own-profile'] as const;
 export const updateOwnProfileMutationKey = ['own-profile', 'update'] as const;
 export const ownDeletionRequestQueryKey = ['own-deletion-request'] as const;
 
 export function useOwnProfile() {
-  return useQuery<ProfileRow | null>({ queryKey: ownProfileQueryKey });
+  return useQuery<ProfileRecordWithFields | null>({ queryKey: ownProfileQueryKey });
 }
 
 /** The pending erasure request, so the screen can say it arrived. */
@@ -43,16 +43,22 @@ export function useOwnDeletionRequest() {
 export function useUpdateOwnProfile() {
   const queryClient = useQueryClient();
 
-  return useMutation<unknown, Error, Partial<ProfileEdit>, { previous: ProfileRow | null }>({
+  return useMutation<
+    unknown,
+    Error,
+    Partial<ProfileEdit>,
+    { previous: ProfileRecordWithFields | null }
+  >({
     mutationKey: updateOwnProfileMutationKey,
     onMutate: async (edit) => {
       await queryClient.cancelQueries({ queryKey: ownProfileQueryKey });
-      const previous = queryClient.getQueryData<ProfileRow | null>(ownProfileQueryKey) ?? null;
+      const previous =
+        queryClient.getQueryData<ProfileRecordWithFields | null>(ownProfileQueryKey) ?? null;
       if (previous !== null) {
-        queryClient.setQueryData<ProfileRow>(ownProfileQueryKey, {
-          ...previous,
-          ...toRowShape(edit),
-        });
+        queryClient.setQueryData<ProfileRecordWithFields>(
+          ownProfileQueryKey,
+          paintedEdit(previous, edit),
+        );
       }
       return { previous };
     },
@@ -68,36 +74,28 @@ export function useUpdateOwnProfile() {
 }
 
 /**
- * The camelCase form values painted onto the snake_case cached row. Only the
- * keys the edit actually carries are mapped, so a partial edit does not blank
- * the fields it never touched.
+ * The edit painted onto the cached record: her names and settings, and her
+ * answers by field (RAPP-663). Only what the edit carries is painted, so a
+ * partial edit does not blank what it never touched; an emptied answer is
+ * removed.
  */
-function toRowShape(edit: Partial<ProfileEdit>): Partial<ProfileRow> {
-  const row: Partial<ProfileRow> = {};
-  if (edit.firstName !== undefined) row.first_name = edit.firstName;
-  if (edit.lastName !== undefined) row.last_name = edit.lastName;
-  if (edit.dateOfBirth !== undefined) row.date_of_birth = edit.dateOfBirth;
-  if (edit.placeOfBirth !== undefined) row.place_of_birth = edit.placeOfBirth;
-  if (edit.nationality !== undefined) row.nationality = edit.nationality;
-  if (edit.preferredLanguage !== undefined) row.preferred_language = edit.preferredLanguage;
-  // An emptied document is a real edit (RAPP-302), so the type is painted
-  // whenever the edit carries the documentation fields.
-  if ('documentType' in edit || edit.documentNumber !== undefined) {
-    row.document_type = edit.documentType ?? null;
-    row.document_number = documentNumberToSend(edit);
+function paintedEdit(
+  previous: ProfileRecordWithFields,
+  edit: Partial<ProfileEdit>,
+): ProfileRecordWithFields {
+  const keys = Object.keys(edit).filter(isAppFormKey);
+  const written = appAnswersFromForm(previous.fields, appFormToSend(edit, keys));
+  const answers: Record<string, unknown> = { ...previous.answers };
+  for (const [id, value] of Object.entries(written)) {
+    if (value === null) delete answers[id];
+    else answers[id] = value;
   }
-  if (edit.phone !== undefined) row.phone = edit.phone;
-  if (edit.address !== undefined) row.address = edit.address;
-  if (edit.city !== undefined) row.city = edit.city;
-  if (edit.postalCode !== undefined) row.postal_code = edit.postalCode;
-  if (edit.referenceEntity !== undefined) row.reference_entity = edit.referenceEntity;
-  if (edit.referenceContactName !== undefined) {
-    row.reference_contact_name = edit.referenceContactName;
-  }
-  if (edit.hasDependents !== undefined) row.has_dependents = edit.hasDependents;
-  if (edit.numDependents !== undefined) row.num_dependents = edit.numDependents;
-  if (edit.clothingSize !== undefined) row.clothing_size = edit.clothingSize;
-  if (edit.shoeSize !== undefined) row.shoe_size = edit.shoeSize;
-  if (edit.mediaConsent !== undefined) row.media_consent = edit.mediaConsent;
-  return row;
+  return {
+    ...previous,
+    ...(edit.firstName === undefined ? {} : { first_name: edit.firstName }),
+    ...(edit.lastName === undefined ? {} : { last_name: edit.lastName }),
+    ...(edit.preferredLanguage === undefined ? {} : { preferred_language: edit.preferredLanguage }),
+    ...(edit.mediaConsent === undefined ? {} : { media_consent: edit.mediaConsent }),
+    answers,
+  };
 }

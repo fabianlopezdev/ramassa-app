@@ -14,32 +14,27 @@ import { render, waitFor } from '@testing-library/react';
 import { expect, test } from 'bun:test';
 import { createElement, type ReactNode } from 'react';
 import { AppError } from '../errors';
-import type { ProfileRow } from '../schemas/profile';
+import { systemFieldIndexFromCatalog } from '../intake-builder/field-answers';
+import type { ProfileRecordWithFields } from '../schemas/profile';
+import { systemFieldFixtureId, systemFieldsCatalogFixture } from '../testing/system-fields';
 import { ownProfileQueryKey, useOwnProfile, useUpdateOwnProfile } from './use-own-profile';
 
-const savedRow: ProfileRow = {
+// Her record by field (RAPP-663): her account, her answers by field id, her fields.
+const fields = systemFieldIndexFromCatalog(systemFieldsCatalogFixture());
+const phoneId = systemFieldFixtureId('phone');
+const savedRow: ProfileRecordWithFields = {
   id: '5eed0000-0000-4000-8000-000000000001',
   first_name: 'Amina',
   last_name: 'Al-Hassan',
-  date_of_birth: '1995-03-14',
-  place_of_birth: 'حلب',
-  nationality: 'Síria',
   preferred_language: 'ar',
-  document_type: 'nie',
-  document_number: 'X1234567L',
-  phone: '+34600111222',
-  address: 'Carrer Major 1',
-  city: 'Vic',
-  postal_code: '08500',
-  reference_entity: 'Creu Roja Osona',
-  reference_contact_name: null,
-  has_dependents: false,
-  num_dependents: 0,
-  clothing_size: 'M',
-  shoe_size: '38',
   avatar_url: null,
   media_consent: false,
   terms_accepted_at: '2026-07-31T10:00:00Z',
+  answers: {
+    [phoneId]: '+34600111222',
+    [systemFieldFixtureId('city')]: 'Vic',
+  },
+  fields,
 };
 
 function makeClient(): QueryClient {
@@ -57,7 +52,10 @@ function wrapper(client: QueryClient) {
 function Probe({
   onState,
 }: {
-  onState: (state: { profile: ProfileRow | null | undefined; isLoading: boolean }) => void;
+  onState: (state: {
+    profile: ProfileRecordWithFields | null | undefined;
+    isLoading: boolean;
+  }) => void;
 }) {
   const { data, isLoading } = useOwnProfile();
   onState({ profile: data, isLoading });
@@ -67,13 +65,13 @@ function Probe({
 test('useOwnProfile exposes the decrypted profile under a stable key', async () => {
   const client = makeClient();
   client.setQueryDefaults(ownProfileQueryKey, { queryFn: async () => savedRow });
-  let latest: ProfileRow | null | undefined;
+  let latest: ProfileRecordWithFields | null | undefined;
 
   render(createElement(Probe, { onState: (state) => (latest = state.profile) }), {
     wrapper: wrapper(client),
   });
 
-  await waitFor(() => expect(latest?.phone).toBe('+34600111222'));
+  await waitFor(() => expect(latest?.answers[phoneId]).toBe('+34600111222'));
 });
 
 function EditProbe({ onReady }: { onReady: (mutate: (edit: { phone: string }) => void) => void }) {
@@ -109,13 +107,17 @@ test('a failed edit rolls the cache back to what is actually stored', async () =
   fire?.({ phone: '+34600999888' });
 
   await waitFor(() => {
-    expect(client.getQueryData<ProfileRow>(ownProfileQueryKey)?.phone).toBe('+34600999888');
+    expect(client.getQueryData<ProfileRecordWithFields>(ownProfileQueryKey)?.answers[phoneId]).toBe(
+      '+34600999888',
+    );
   });
 
   failTheWrite?.();
 
   await waitFor(() => {
-    expect(client.getQueryData<ProfileRow>(ownProfileQueryKey)?.phone).toBe('+34600111222');
+    expect(client.getQueryData<ProfileRecordWithFields>(ownProfileQueryKey)?.answers[phoneId]).toBe(
+      '+34600111222',
+    );
   });
 });
 
@@ -132,7 +134,9 @@ test('a successful edit leaves the new value in the cache', async () => {
   fire?.({ phone: '+34600999888' });
 
   await waitFor(() => {
-    const cached = client.getQueryData<ProfileRow>(ownProfileQueryKey);
-    expect(cached?.phone).toBe('+34600999888');
+    const cached = client.getQueryData<ProfileRecordWithFields>(ownProfileQueryKey);
+    expect(cached?.answers[phoneId]).toBe('+34600999888');
+    // What the edit did not carry stays as stored.
+    expect(cached?.answers[systemFieldFixtureId('city')]).toBe('Vic');
   });
 });

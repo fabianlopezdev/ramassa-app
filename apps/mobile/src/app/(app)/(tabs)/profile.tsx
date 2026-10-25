@@ -36,6 +36,7 @@ import { useAuth } from '@ramassa/shared/auth';
 import { toAppError } from '@ramassa/shared/errors';
 import { DEFAULT_LANGUAGE } from '@ramassa/shared/i18n';
 import { useOwnDeletionRequest, useOwnProfile } from '@ramassa/shared/profile';
+import { profileFormOf } from '@ramassa/shared/schemas';
 
 // The dev-menu entry, required inside a __DEV__ branch so neither the component
 // nor its label reaches a production bundle (RAPP-19). The SPEC puts the menu on
@@ -57,6 +58,11 @@ export default function ProfileScreen() {
   const languageFontClass = useLanguageFontClass();
   const { push } = useRouter();
   const { data: profile, isLoading, isError, error, refetch } = useOwnProfile();
+  // Her answers by field, read through her organization's fields (RAPP-663).
+  const answers = useMemo(
+    () => (profile === null || profile === undefined ? null : profileFormOf(profile)),
+    [profile],
+  );
   const { data: deletionRequest } = useOwnDeletionRequest();
   const { session } = useAuth();
   const organization = useOrganizationBranding();
@@ -175,7 +181,7 @@ export default function ProfileScreen() {
             </View>
           ))}
         </View>
-      ) : isError || profile === null || profile === undefined ? (
+      ) : isError || profile === null || profile === undefined || answers === null ? (
         // A failed read says so and offers a retry. It must never render as an
         // empty profile: "we hold nothing about you" is a different statement,
         // and a false one.
@@ -202,15 +208,15 @@ export default function ProfileScreen() {
               <ProfileRow label={t('onboarding:lastNameLabel')} value={profile.last_name} />
               <ProfileRow
                 label={t('onboarding:dateOfBirthLabel')}
-                value={formatDate(profile.date_of_birth)}
+                value={formatDate(answers.dateOfBirth || null)}
               />
               <ProfileRow
                 label={t('onboarding:placeOfBirthLabel')}
-                value={shown(profile.place_of_birth)}
+                value={shown(answers.placeOfBirth)}
               />
               <ProfileRow
                 label={t('onboarding:nationalityLabel')}
-                value={shown(profile.nationality)}
+                value={shown(answers.nationality)}
               />
             </ProfileSection>
           </FadeSlideIn>
@@ -220,14 +226,14 @@ export default function ProfileScreen() {
               <ProfileRow
                 label={t('onboarding:documentTypeLabel')}
                 value={
-                  profile.document_type === 'other' && profile.document_name
-                    ? profile.document_name
-                    : documentTypeLabel(profile.document_type, t)
+                  answers.documentType === 'other' && answers.documentName
+                    ? answers.documentName
+                    : documentTypeLabel(answers.documentType ?? null, t)
                 }
               />
               <ProfileRow
                 label={t('onboarding:documentNumberLabel')}
-                value={shown(profile.document_number)}
+                value={shown(answers.documentNumber)}
               />
             </ProfileSection>
           </FadeSlideIn>
@@ -237,21 +243,21 @@ export default function ProfileScreen() {
               {/* Read-view labels, not the form's: "(optional)" is an
                   instruction for someone filling a field in, and reads as noise
                   next to an answer she already gave. */}
-              <ProfileRow label={t('fieldPhone')} value={shown(profile.phone)} />
-              <ProfileRow label={t('fieldAddress')} value={shown(profile.address)} />
-              <ProfileRow label={t('fieldCity')} value={shown(profile.city)} />
-              <ProfileRow label={t('fieldPostalCode')} value={shown(profile.postal_code)} />
+              <ProfileRow label={t('fieldPhone')} value={shown(answers.phone)} />
+              <ProfileRow label={t('fieldAddress')} value={shown(answers.address)} />
+              <ProfileRow label={t('fieldCity')} value={shown(answers.city)} />
+              <ProfileRow label={t('fieldPostalCode')} value={shown(answers.postalCode)} />
               <ProfileRow
                 label={t('onboarding:clothingSizeLabel')}
-                value={shown(profile.clothing_size)}
+                value={shown(answers.clothingSize)}
               />
-              <ProfileRow label={t('onboarding:shoeSizeLabel')} value={shown(profile.shoe_size)} />
+              <ProfileRow label={t('onboarding:shoeSizeLabel')} value={shown(answers.shoeSize)} />
             </ProfileSection>
             {/* Her optional consents from the season authorization (RAPP-304). */}
             <MyConsentsSection mediaConsent={profile.media_consent} />
             {/* The season registration answers (RAPP-303): hers to see and correct. */}
             <ProfileSection title={t('onboarding:seasonSectionTitle')}>
-              <SeasonAnswerRows profile={profile} emptyLabel={t('notProvided')} />
+              <SeasonAnswerRows answers={answers} emptyLabel={t('notProvided')} />
             </ProfileSection>
           </FadeSlideIn>
 

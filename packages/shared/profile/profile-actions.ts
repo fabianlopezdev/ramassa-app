@@ -15,21 +15,17 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { z } from 'zod';
 import { AppError } from '../errors';
-import {
-  fetchSystemFieldIndex,
-  hasFieldColumns,
-  withAppColumns,
-  withFieldAnswers,
-} from '../intake-builder/field-answers';
+import { answerPayload } from '../intake-builder/builder';
+import { fetchSystemFieldIndex } from '../intake-builder/field-answers';
 import { withCancellation, type CancellableRequest } from '../lib/cancellation';
 import {
   ownDeletionRequestSchema,
-  profileRowSchema,
+  profileRecordSchema,
   type OwnDeletionRequest,
-  type ProfileRow,
-  type UpdateOwnProfilePayload,
+  type ProfileRecordWithFields,
+  type ProfileUpdate,
 } from '../schemas/profile';
-import type { Database } from '../types/database';
+import type { Database, Json } from '../types/database';
 
 type Client = SupabaseClient<Database>;
 
@@ -58,14 +54,16 @@ function parseRow<Schema extends z.ZodType>(
 }
 
 /**
- * The caller's own profile with the encrypted columns decrypted server-side, or
- * null when she has none yet. The RPC takes no argument: there is no id to pass
- * and therefore no id to get wrong.
+ * The caller's own record, or null when she has none yet: her account, her
+ * answers by field id (RAPP-662), each decrypted server-side, and her
+ * organization's app fields, so her screens read each answer by field
+ * (RAPP-663). The RPC takes no argument: there is no id to pass and therefore
+ * no id to get wrong.
  */
 export async function fetchOwnProfile(
   client: Client,
   options: CancellableRequest = {},
-): Promise<ProfileRow | null> {
+): Promise<ProfileRecordWithFields | null> {
   const { data, error } = await withCancellation(client.rpc('get_own_profile'), options);
   if (error) {
     throw new AppError('DB-1', { message: error.message });
@@ -75,24 +73,14 @@ export async function fetchOwnProfile(
   // Absent stays absent: no row is the expected state for a woman who has not
   // finished onboarding, and it must not be parsed as a malformed one.
   if (first === undefined || first === null) return null;
-  // Her answers arrive by field (RAPP-662); her screens still read her
-  // profile's column names until they render every field (RAPP-663).
-  const row = await withAppColumns(client, first as { readonly answers?: unknown });
-  return parseRow(profileRowSchema, row, 'get_own_profile');
+  const record = parseRow(profileRecordSchema, first, 'get_own_profile');
+  return { ...record, fields: await fetchSystemFieldIndex(client) };
 }
 
-/**
- * Writes an edited profile: her names and settings on her account, every other
- * answer by field (RAPP-661). The edit form still speaks in her profile's
- * column names until it renders every field (RAPP-663).
- */
-export async function updateOwnProfile(
-  client: Client,
-  payload: UpdateOwnProfilePayload,
-): Promise<void> {
-  const fields = hasFieldColumns(payload) ? await fetchSystemFieldIndex(client) : new Map();
+/** Writes an edited profile: her names and settings on her account, every answer by field. */
+export async function updateOwnProfile(client: Client, update: ProfileUpdate): Promise<void> {
   const { error } = await client.rpc('update_own_profile', {
-    payload: withFieldAnswers(fields, payload),
+    payload: { ...update, answers: answerPayload(update.answers) } as Json,
   });
   if (error) {
     throw new AppError('DB-1', { message: error.message });

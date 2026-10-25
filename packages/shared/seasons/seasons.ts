@@ -11,11 +11,18 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { AppError, databaseErrorCode } from '../errors';
 import {
+  appAnswersFromForm,
+  appFormToSend,
+  type AppFormKey,
+} from '../intake-builder/app-field-form';
+import { answerPayload } from '../intake-builder/builder';
+import {
   columnsFromFieldAnswers,
   fetchSystemFieldIndex,
   fieldAnswersReadSchema,
-  withFieldAnswers,
+  type SystemFieldIndex,
 } from '../intake-builder/field-answers';
+import type { CustomAnswerValue } from '../intake-builder/question-types';
 import {
   createTargetedNotificationSend,
   fetchCustomNotificationGroups,
@@ -23,7 +30,7 @@ import {
   saveCustomNotificationGroup,
   type NotificationContent,
 } from '../notifications';
-import { seasonAnswersPayload, type SeasonAnswerFields } from '../schemas/season';
+import type { SeasonAnswerFields } from '../schemas/season';
 import type { Database, Json } from '../types/database';
 
 type Client = SupabaseClient<Database>;
@@ -101,28 +108,37 @@ export async function setPriorSeasons(
   if (error) failure(error.message);
 }
 
-/** Her season answers, from the re-registration flow. Only the four questions travel. */
-export function buildMySeasonAnswersPayload(answers: Partial<SeasonAnswerFields>): Json {
-  const payload = seasonAnswersPayload(answers);
-  return {
-    applicant_status: payload.applicant_status,
-    supporting_entities: payload.supporting_entities,
-    childcare_need: payload.childcare_need,
-    specific_needs: payload.specific_needs,
-  };
+/** The app's season questions her re-registration asks. Her status details stay as they are. */
+const MY_SEASON_FORM_KEYS = [
+  'applicantStatus',
+  'supportingEntities',
+  'childcareNeed',
+  'specificNeeds',
+] as const satisfies readonly AppFormKey[];
+
+/**
+ * Her answers to the app's season questions, by field (RAPP-663). A question
+ * she left empty is null, which removes its answer.
+ */
+export function mySeasonAnswers(
+  fields: SystemFieldIndex,
+  values: Partial<SeasonAnswerFields>,
+): Record<string, CustomAnswerValue | null> {
+  return appAnswersFromForm(fields, appFormToSend(values, MY_SEASON_FORM_KEYS));
 }
 
-/** Her season answers, saved by field (RAPP-661). */
+/**
+ * Her season answers by field (RAPP-661, RAPP-663): the app's season fields and
+ * the team's alike, every one placed on the season form. Null removes an
+ * answer. The call ends her re-registration: every required season answer is
+ * checked there.
+ */
 export async function updateMySeasonAnswers(
   client: Client,
-  answers: Partial<SeasonAnswerFields>,
+  answers: Readonly<Record<string, CustomAnswerValue | null>>,
 ): Promise<void> {
-  const fields = await fetchSystemFieldIndex(client);
   const { error } = await client.rpc('update_my_season_answers', {
-    p_payload: withFieldAnswers(
-      fields,
-      buildMySeasonAnswersPayload(answers) as Record<string, unknown>,
-    ),
+    p_payload: { answers: answerPayload(answers) } as Json,
   });
   if (error) failure(error.message);
 }
