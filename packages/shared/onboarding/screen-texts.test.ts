@@ -36,9 +36,23 @@ function rows(block: string): [string, string[]][] {
   ]);
 }
 
+/**
+ * The app screen of each app question, from the database's field catalog
+ * (`private.system_profile_fields()`, ADR-031): each first part's tuple ends
+ * with the screen whose own control asks it.
+ */
+function screensOfFields(block: string): [string, string[]][] {
+  const screens = new Map<string, string[]>();
+  for (const match of block.matchAll(/\('[a-z_]+', null, '([a-z_]+)',.*, '([a-z-]+)'\),?$/gm)) {
+    const questions = screens.get(match[2]!) ?? [];
+    screens.set(match[2]!, [...questions, match[1]!]);
+  }
+  return [...screens.entries()];
+}
+
 describe('the database lists match the app (parity)', () => {
   test("each built-in screen asks the same questions, in the app's own order", () => {
-    expect(rows(lastBlock('wizard-screen-questions'))).toEqual(
+    expect(screensOfFields(lastBlock('system-profile-fields'))).toEqual(
       WIZARD_QUESTION_SCREENS.map((screen) => [screen, [...WIZARD_SCREEN_QUESTIONS[screen]]]),
     );
   });

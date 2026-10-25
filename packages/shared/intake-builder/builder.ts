@@ -130,18 +130,11 @@ const screenSchema = z.object({
   is_archived: z.boolean(),
 });
 
-const optionOverrideSchema = z.object({
-  label: anyLanguageTextSchema.optional(),
-  hidden: z.boolean().optional(),
-});
-
 const overrideSchema = z.object({
   question: z.string(),
   label: anyLanguageTextSchema.nullable(),
   help: anyLanguageTextSchema.nullable(),
   is_hidden: z.boolean(),
-  // Always empty since RAPP-665: an option is named on its field.
-  option_overrides: z.record(z.string(), optionOverrideSchema).optional(),
 });
 
 const presetSchema = z.object({
@@ -787,8 +780,6 @@ export async function saveBuiltinOverride(
     p_label: (label !== null && Object.keys(label).length > 0 ? label : null) as Json,
     p_help: (help !== null && Object.keys(help).length > 0 ? help : null) as Json,
     p_is_hidden: override.isHidden,
-    // An option is named on its field (RAPP-665): nothing is kept on the question.
-    p_option_overrides: {},
   });
   if (error) throw databaseError(error);
 }

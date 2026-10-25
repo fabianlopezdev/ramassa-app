@@ -547,54 +547,6 @@ export type Database = {
           },
         ];
       };
-      builtin_question_overrides: {
-        Row: {
-          help: Json | null;
-          is_hidden: boolean;
-          label: Json | null;
-          option_overrides: Json;
-          org_id: string;
-          question: string;
-          updated_at: string;
-          updated_by: string | null;
-        };
-        Insert: {
-          help?: Json | null;
-          is_hidden?: boolean;
-          label?: Json | null;
-          option_overrides?: Json;
-          org_id: string;
-          question: string;
-          updated_at?: string;
-          updated_by?: string | null;
-        };
-        Update: {
-          help?: Json | null;
-          is_hidden?: boolean;
-          label?: Json | null;
-          option_overrides?: Json;
-          org_id?: string;
-          question?: string;
-          updated_at?: string;
-          updated_by?: string | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'builtin_question_overrides_org_id_fkey';
-            columns: ['org_id'];
-            isOneToOne: false;
-            referencedRelation: 'organizations';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'builtin_question_overrides_updated_by_fkey';
-            columns: ['updated_by'];
-            isOneToOne: false;
-            referencedRelation: 'profiles';
-            referencedColumns: ['id'];
-          },
-        ];
-      };
       collaborating_entities: {
         Row: {
           created_at: string;
@@ -2180,87 +2132,6 @@ export type Database = {
           },
         ];
       };
-      intake_question_states: {
-        Row: {
-          org_id: string;
-          profile_id: string;
-          question: string;
-          state: string;
-          updated_at: string;
-          updated_by: string | null;
-        };
-        Insert: {
-          org_id: string;
-          profile_id: string;
-          question: string;
-          state: string;
-          updated_at?: string;
-          updated_by?: string | null;
-        };
-        Update: {
-          org_id?: string;
-          profile_id?: string;
-          question?: string;
-          state?: string;
-          updated_at?: string;
-          updated_by?: string | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'intake_question_states_org_id_fkey';
-            columns: ['org_id'];
-            isOneToOne: false;
-            referencedRelation: 'organizations';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'intake_question_states_profile_id_fkey';
-            columns: ['profile_id'];
-            isOneToOne: false;
-            referencedRelation: 'profiles';
-            referencedColumns: ['id'];
-          },
-        ];
-      };
-      intake_required_questions: {
-        Row: {
-          is_required: boolean;
-          org_id: string;
-          question: string;
-          updated_at: string;
-          updated_by: string | null;
-        };
-        Insert: {
-          is_required: boolean;
-          org_id: string;
-          question: string;
-          updated_at?: string;
-          updated_by?: string | null;
-        };
-        Update: {
-          is_required?: boolean;
-          org_id?: string;
-          question?: string;
-          updated_at?: string;
-          updated_by?: string | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'intake_required_questions_org_id_fkey';
-            columns: ['org_id'];
-            isOneToOne: false;
-            referencedRelation: 'organizations';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'intake_required_questions_updated_by_fkey';
-            columns: ['updated_by'];
-            isOneToOne: false;
-            referencedRelation: 'profiles';
-            referencedColumns: ['id'];
-          },
-        ];
-      };
       intake_screens: {
         Row: {
           after_screen: string;
@@ -3234,55 +3105,6 @@ export type Database = {
           },
         ];
       };
-      profile_answers: {
-        Row: {
-          answered_at: string;
-          answered_by: string | null;
-          org_id: string;
-          profile_id: string;
-          question: string;
-          source: string;
-        };
-        Insert: {
-          answered_at?: string;
-          answered_by?: string | null;
-          org_id: string;
-          profile_id: string;
-          question: string;
-          source: string;
-        };
-        Update: {
-          answered_at?: string;
-          answered_by?: string | null;
-          org_id?: string;
-          profile_id?: string;
-          question?: string;
-          source?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'profile_answers_answered_by_fkey';
-            columns: ['answered_by'];
-            isOneToOne: false;
-            referencedRelation: 'profiles';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'profile_answers_org_id_fkey';
-            columns: ['org_id'];
-            isOneToOne: false;
-            referencedRelation: 'organizations';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'profile_answers_profile_id_fkey';
-            columns: ['profile_id'];
-            isOneToOne: false;
-            referencedRelation: 'profiles';
-            referencedColumns: ['id'];
-          },
-        ];
-      };
       profile_fields: {
         Row: {
           created_at: string;
@@ -3425,26 +3247,15 @@ export type Database = {
       };
       profiles: {
         Row: {
-          address: string | null;
           anonymized_at: string | null;
-          applicant_status: string | null;
-          applicant_status_details: string | null;
           avatar_url: string | null;
-          childcare_need: string | null;
-          city: string | null;
-          clothing_size: string | null;
           collaborating_entity_id: string | null;
           created_at: string;
-          date_of_birth: string | null;
-          document_name: string | null;
-          document_number: string | null;
-          document_type: string | null;
           emergency_contact_name: string | null;
           emergency_contact_phone: string | null;
           emergency_contact_privacy: string | null;
           emergency_contact_relation: string | null;
           first_name: string;
-          has_dependents: boolean | null;
           health_info: string | null;
           id: string;
           is_active: boolean;
@@ -3452,48 +3263,26 @@ export type Database = {
           is_test_account: boolean;
           last_name: string;
           media_consent_at: string | null;
-          nationality: string | null;
-          num_dependents: number;
           org_id: string;
-          phone: string | null;
-          place_of_birth: string | null;
-          postal_code: string | null;
           preferred_language: string;
           prior_seasons: number;
           push_notifications_enabled: boolean;
-          reference_contact_name: string | null;
-          reference_entity: string | null;
           role: string;
-          search_document: unknown;
           season_number: number | null;
           sessions_valid_after: string | null;
-          shoe_size: string | null;
-          specific_needs: string | null;
-          supporting_entities: string[] | null;
           terms_accepted_at: string | null;
           updated_at: string;
         };
         Insert: {
-          address?: string | null;
           anonymized_at?: string | null;
-          applicant_status?: string | null;
-          applicant_status_details?: string | null;
           avatar_url?: string | null;
-          childcare_need?: string | null;
-          city?: string | null;
-          clothing_size?: string | null;
           collaborating_entity_id?: string | null;
           created_at?: string;
-          date_of_birth?: string | null;
-          document_name?: string | null;
-          document_number?: string | null;
-          document_type?: string | null;
           emergency_contact_name?: string | null;
           emergency_contact_phone?: string | null;
           emergency_contact_privacy?: string | null;
           emergency_contact_relation?: string | null;
           first_name: string;
-          has_dependents?: boolean | null;
           health_info?: string | null;
           id: string;
           is_active?: boolean;
@@ -3501,48 +3290,26 @@ export type Database = {
           is_test_account?: boolean;
           last_name: string;
           media_consent_at?: string | null;
-          nationality?: string | null;
-          num_dependents?: number;
           org_id: string;
-          phone?: string | null;
-          place_of_birth?: string | null;
-          postal_code?: string | null;
           preferred_language?: string;
           prior_seasons?: number;
           push_notifications_enabled?: boolean;
-          reference_contact_name?: string | null;
-          reference_entity?: string | null;
           role?: string;
-          search_document?: unknown;
           season_number?: number | null;
           sessions_valid_after?: string | null;
-          shoe_size?: string | null;
-          specific_needs?: string | null;
-          supporting_entities?: string[] | null;
           terms_accepted_at?: string | null;
           updated_at?: string;
         };
         Update: {
-          address?: string | null;
           anonymized_at?: string | null;
-          applicant_status?: string | null;
-          applicant_status_details?: string | null;
           avatar_url?: string | null;
-          childcare_need?: string | null;
-          city?: string | null;
-          clothing_size?: string | null;
           collaborating_entity_id?: string | null;
           created_at?: string;
-          date_of_birth?: string | null;
-          document_name?: string | null;
-          document_number?: string | null;
-          document_type?: string | null;
           emergency_contact_name?: string | null;
           emergency_contact_phone?: string | null;
           emergency_contact_privacy?: string | null;
           emergency_contact_relation?: string | null;
           first_name?: string;
-          has_dependents?: boolean | null;
           health_info?: string | null;
           id?: string;
           is_active?: boolean;
@@ -3550,35 +3317,17 @@ export type Database = {
           is_test_account?: boolean;
           last_name?: string;
           media_consent_at?: string | null;
-          nationality?: string | null;
-          num_dependents?: number;
           org_id?: string;
-          phone?: string | null;
-          place_of_birth?: string | null;
-          postal_code?: string | null;
           preferred_language?: string;
           prior_seasons?: number;
           push_notifications_enabled?: boolean;
-          reference_contact_name?: string | null;
-          reference_entity?: string | null;
           role?: string;
-          search_document?: unknown;
           season_number?: number | null;
           sessions_valid_after?: string | null;
-          shoe_size?: string | null;
-          specific_needs?: string | null;
-          supporting_entities?: string[] | null;
           terms_accepted_at?: string | null;
           updated_at?: string;
         };
         Relationships: [
-          {
-            foreignKeyName: 'profiles_city_municipality_canonical_fkey';
-            columns: ['city'];
-            isOneToOne: false;
-            referencedRelation: 'municipality_catalog';
-            referencedColumns: ['canonical'];
-          },
           {
             foreignKeyName: 'profiles_collaborating_entity_tenant_fkey';
             columns: ['org_id', 'collaborating_entity_id'];
@@ -3892,64 +3641,6 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'entity_referrals';
             referencedColumns: ['org_id', 'id'];
-          },
-        ];
-      };
-      season_answers: {
-        Row: {
-          applicant_status: string | null;
-          applicant_status_details: string | null;
-          childcare_need: string | null;
-          org_id: string;
-          profile_id: string;
-          season_id: string;
-          specific_needs: string | null;
-          supporting_entities: string[] | null;
-          updated_at: string;
-        };
-        Insert: {
-          applicant_status?: string | null;
-          applicant_status_details?: string | null;
-          childcare_need?: string | null;
-          org_id: string;
-          profile_id: string;
-          season_id: string;
-          specific_needs?: string | null;
-          supporting_entities?: string[] | null;
-          updated_at?: string;
-        };
-        Update: {
-          applicant_status?: string | null;
-          applicant_status_details?: string | null;
-          childcare_need?: string | null;
-          org_id?: string;
-          profile_id?: string;
-          season_id?: string;
-          specific_needs?: string | null;
-          supporting_entities?: string[] | null;
-          updated_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'season_answers_org_id_fkey';
-            columns: ['org_id'];
-            isOneToOne: false;
-            referencedRelation: 'organizations';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'season_answers_profile_id_fkey';
-            columns: ['profile_id'];
-            isOneToOne: false;
-            referencedRelation: 'profiles';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'season_answers_season_id_fkey';
-            columns: ['season_id'];
-            isOneToOne: false;
-            referencedRelation: 'seasons';
-            referencedColumns: ['id'];
           },
         ];
       };
@@ -5592,26 +5283,15 @@ export type Database = {
       complete_onboarding: {
         Args: { payload: Json };
         Returns: {
-          address: string | null;
           anonymized_at: string | null;
-          applicant_status: string | null;
-          applicant_status_details: string | null;
           avatar_url: string | null;
-          childcare_need: string | null;
-          city: string | null;
-          clothing_size: string | null;
           collaborating_entity_id: string | null;
           created_at: string;
-          date_of_birth: string | null;
-          document_name: string | null;
-          document_number: string | null;
-          document_type: string | null;
           emergency_contact_name: string | null;
           emergency_contact_phone: string | null;
           emergency_contact_privacy: string | null;
           emergency_contact_relation: string | null;
           first_name: string;
-          has_dependents: boolean | null;
           health_info: string | null;
           id: string;
           is_active: boolean;
@@ -5619,24 +5299,13 @@ export type Database = {
           is_test_account: boolean;
           last_name: string;
           media_consent_at: string | null;
-          nationality: string | null;
-          num_dependents: number;
           org_id: string;
-          phone: string | null;
-          place_of_birth: string | null;
-          postal_code: string | null;
           preferred_language: string;
           prior_seasons: number;
           push_notifications_enabled: boolean;
-          reference_contact_name: string | null;
-          reference_entity: string | null;
           role: string;
-          search_document: unknown;
           season_number: number | null;
           sessions_valid_after: string | null;
-          shoe_size: string | null;
-          specific_needs: string | null;
-          supporting_entities: string[] | null;
           terms_accepted_at: string | null;
           updated_at: string;
         };
@@ -5650,26 +5319,15 @@ export type Database = {
       complete_onboarding_signed: {
         Args: { p_signing: Json; payload: Json };
         Returns: {
-          address: string | null;
           anonymized_at: string | null;
-          applicant_status: string | null;
-          applicant_status_details: string | null;
           avatar_url: string | null;
-          childcare_need: string | null;
-          city: string | null;
-          clothing_size: string | null;
           collaborating_entity_id: string | null;
           created_at: string;
-          date_of_birth: string | null;
-          document_name: string | null;
-          document_number: string | null;
-          document_type: string | null;
           emergency_contact_name: string | null;
           emergency_contact_phone: string | null;
           emergency_contact_privacy: string | null;
           emergency_contact_relation: string | null;
           first_name: string;
-          has_dependents: boolean | null;
           health_info: string | null;
           id: string;
           is_active: boolean;
@@ -5677,24 +5335,13 @@ export type Database = {
           is_test_account: boolean;
           last_name: string;
           media_consent_at: string | null;
-          nationality: string | null;
-          num_dependents: number;
           org_id: string;
-          phone: string | null;
-          place_of_birth: string | null;
-          postal_code: string | null;
           preferred_language: string;
           prior_seasons: number;
           push_notifications_enabled: boolean;
-          reference_contact_name: string | null;
-          reference_entity: string | null;
           role: string;
-          search_document: unknown;
           season_number: number | null;
           sessions_valid_after: string | null;
-          shoe_size: string | null;
-          specific_needs: string | null;
-          supporting_entities: string[] | null;
           terms_accepted_at: string | null;
           updated_at: string;
         };
@@ -7030,7 +6677,6 @@ export type Database = {
           p_help: Json;
           p_is_hidden: boolean;
           p_label: Json;
-          p_option_overrides: Json;
           p_question: string;
         };
         Returns: undefined;

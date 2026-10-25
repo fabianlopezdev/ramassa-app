@@ -2,14 +2,11 @@
  * The intake questions and how the wizard walks them (RAPP-300).
  *
  * Staff or a partner entity may answer part of a woman's intake before her
- * first login. `public.profile_answers` records which questions somebody
- * really answered, because profile defaults (no dependants, Catalan) look like
- * answers. The wizard then asks only the rest, shows a summary of everything,
- * and sends only what is new or changed, so a stored value is never replaced
- * by something she was not asked.
- *
- * `INTAKE_QUESTIONS` mirrors the CHECK on `profile_answers.question`; a parity
- * test reads the migration block marked `intake-questions`.
+ * first login. Each answer is stored by field and records who gave it
+ * (ADR-031), so an answer somebody really gave is told apart from a question
+ * nobody asked. The wizard then asks only the rest, shows a summary of
+ * everything, and sends only what is new or changed, so a stored value is
+ * never replaced by something she was not asked.
  */
 import { z } from 'zod';
 

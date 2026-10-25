@@ -140,9 +140,8 @@ const raw = {
       label: { ca: 'Necessites que et cuidem els fills?' },
       help: null,
       is_hidden: false,
-      option_overrides: {},
     },
-    { question: 'phone', label: null, help: null, is_hidden: true, option_overrides: {} },
+    { question: 'phone', label: null, help: null, is_hidden: true },
   ],
   presets: [
     {
@@ -454,7 +453,6 @@ describe('re-registration follows the hide rule of her wizard (RAPP-612)', () =>
             label: null,
             help: null,
             is_hidden: true,
-            option_overrides: {},
           },
         ],
       ),

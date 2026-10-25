@@ -1,42 +1,23 @@
 /**
- * The intake question list lives in two places (RAPP-300): the TypeScript list
- * the wizard plans with, and the CHECK on `public.profile_answers.question`
- * that the database enforces. This keeps them equal without a database, so it
- * also runs in CI: it reads the block marked `intake-questions` from the
- * newest migration that defines it, so a later migration can extend the list.
+ * The app's intake question lists live in two places: the TypeScript lists the
+ * wizard plans with, and the database functions that check them. These tests
+ * keep them equal without a database, so they also run in CI: each reads the
+ * block between its markers from the newest migration that defines it.
+ *
+ * The full question list was also a CHECK on `profile_answers.question`; that
+ * table is gone since RAPP-666 (ADR-031): each answer is by field and records
+ * who gave it.
  */
 import { readdirSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { expect, test } from 'bun:test';
 import {
   DEFAULT_REQUIRED_INTAKE_QUESTIONS,
-  INTAKE_QUESTIONS,
   LOCKED_REQUIRED_INTAKE_QUESTIONS,
   WIZARD_QUESTIONS,
 } from '@ramassa/shared/intake';
 
 const migrationsDirectory = resolve(import.meta.dir, '../supabase/migrations');
-
-function newestQuestionBlock(): string {
-  const withBlock = readdirSync(migrationsDirectory)
-    .filter((name) => name.endsWith('.sql'))
-    .sort()
-    .map((name) => readFileSync(resolve(migrationsDirectory, name), 'utf8'))
-    .filter((sql) => sql.includes('-- intake-questions:start'));
-  const sql = withBlock.at(-1);
-  expect(sql).toBeDefined();
-  const start = sql!.indexOf('-- intake-questions:start');
-  const end = sql!.indexOf('-- intake-questions:end');
-  expect(end).toBeGreaterThan(start);
-  return sql!.slice(start, end);
-}
-
-test('the database question list has the same questions, in the same order, as the code', () => {
-  const fromSql = [...newestQuestionBlock().matchAll(/'([a-z_]+)'/g)].map(
-    ([, question]) => question,
-  );
-  expect(fromSql).toEqual([...INTAKE_QUESTIONS]);
-});
 
 /** The newest migration block between two markers, as the list of names it holds. */
 function newestBlock(marker: string): string[] {

@@ -4,13 +4,13 @@ import { SUPPORTED_LANGUAGES } from '../i18n/languages';
 import { questionSettingsSchema } from '../intake-builder/question-types';
 import {
   buildAnnouncement,
+  buildAppAnswersFromFixture,
   buildAppTermsSignature,
   buildAttendance,
   buildAuditLogEntry,
   buildAuthorizationConsentEvent,
   buildAuthorizationSignature,
   buildAuthorizationVersion,
-  buildBuiltinQuestionOverride,
   buildCustomAnswer,
   buildCustomQuestionOption,
   buildCustomQuestionState,
@@ -26,8 +26,6 @@ import {
   buildForumReply,
   buildIntakeBuiltinScreen,
   buildIntakeFlowOrder,
-  buildIntakeQuestionState,
-  buildIntakeRequiredQuestion,
   buildIntakeScreen,
   buildIntakeStatePreset,
   buildInvite,
@@ -41,12 +39,10 @@ import {
   buildParticipants,
   buildParticipantStory,
   buildProfile,
-  buildProfileAnswer,
   buildProfileField,
   buildPushToken,
   buildReferralCustomAnswer,
   buildSeason,
-  buildSeasonAnswers,
   buildService,
   buildServiceCategory,
   buildServiceImage,
@@ -292,7 +288,32 @@ describe('buildParticipant', () => {
   });
 
   test('overrides win over the fixture', () => {
-    expect(buildParticipant({ city: 'Manlleu' }).city).toBe('Manlleu');
+    expect(buildParticipant({ preferred_language: 'es' }).preferred_language).toBe('es');
+  });
+
+  test('her profile holds her names and her account settings only (ADR-031)', () => {
+    const participant = buildParticipant();
+    for (const key of ['nationality', 'city', 'phone', 'date_of_birth', 'document_type']) {
+      expect(participant).not.toHaveProperty(key);
+    }
+  });
+});
+
+describe('buildAppAnswersFromFixture', () => {
+  test('her answers by system key, a choice by its option key, as the seed writes them', () => {
+    const answers = buildAppAnswersFromFixture(PARTICIPANT_FIXTURES[0]!);
+    expect(answers.nationality).toBe(PARTICIPANT_FIXTURES[0]!.nationality);
+    expect(answers.city).toBe(PARTICIPANT_FIXTURES[0]!.city);
+    expect(answers.document_type).toBe('nie');
+    expect(answers.phone).toMatch(/^\+346\d{8}$/);
+    expect(['yes', 'no']).toContain(String(answers.has_dependents));
+  });
+
+  test('an answer she never gave is left out', () => {
+    const noDocument = PARTICIPANT_FIXTURES.find((fixture) => fixture.ordinal % 5 === 0)!;
+    const answers = buildAppAnswersFromFixture(noDocument);
+    expect(answers.document_type).toBe('none');
+    expect(answers).not.toHaveProperty('document_number');
   });
 });
 
@@ -442,7 +463,6 @@ describe('the authorization factories (RAPP-304)', () => {
     expect(buildAuthorizationConsentEvent().wording).toBe('Participo.');
     // The factory version is a valid editable version (RAPP-614).
     expect(authorizationContentSchema.safeParse(version.content).success).toBe(true);
-    expect(buildSeasonAnswers().season_id).toBe(buildSeason().id);
   });
 
   test('a walk-in waits for review on the current version, with no profile yet', () => {
@@ -453,15 +473,6 @@ describe('the authorization factories (RAPP-304)', () => {
   });
 });
 
-describe('buildIntakeQuestionState', () => {
-  test("is a staff choice for the seeded invited woman's wizard", () => {
-    const state = buildIntakeQuestionState();
-    expect(state.profile_id).toBe(INVITED_ACCOUNT_ID);
-    expect(state.org_id).toBe(SEED_ORGANIZATION_ID);
-    expect(['ask', 'skip']).toContain(state.state);
-  });
-});
-
 describe('buildCustomQuestionState', () => {
   test('is a staff choice on the seeded Ramassà field for the invited woman', () => {
     const state = buildCustomQuestionState();
@@ -469,16 +480,6 @@ describe('buildCustomQuestionState', () => {
     expect(state.org_id).toBe(SEED_ORGANIZATION_ID);
     expect(state.question_id).toBe(SEED_CUSTOM_QUESTION_ID);
     expect(['ask', 'skip']).toContain(state.state);
-  });
-});
-
-describe('buildProfileAnswer', () => {
-  test('is a staff answer for the seeded invited woman, the state the wizard skips', () => {
-    const answer = buildProfileAnswer();
-
-    expect(answer.source).toBe('staff');
-    expect(answer.profile_id).toBe(INVITED_ACCOUNT_ID);
-    expect(answer.org_id).toBe(SEED_ORGANIZATION_ID);
   });
 });
 
@@ -505,14 +506,12 @@ describe('the question builder rows (RAPP-307)', () => {
     expect(buildProfileField().settings).toEqual({});
   });
 
-  test('the override rewords and the preset asks the sizes', () => {
-    expect(buildBuiltinQuestionOverride().is_hidden).toBe(false);
+  test('the preset asks the sizes', () => {
     expect(buildIntakeStatePreset().states).toEqual({ clothing_size: 'ask', shoe_size: 'ask' });
   });
 });
 
-test('the required choice matches the seed and stays optional by default (RAPP-611)', () => {
-  expect(buildIntakeRequiredQuestion()).toMatchObject({ question: 'phone', is_required: false });
+test('a placement stays optional by default (RAPP-611)', () => {
   expect(buildFieldPlacement().required).toBe(false);
 });
 

@@ -10,17 +10,19 @@
  *    returns the same object, so a failing assertion is reproducible.
  * 2. **Overrides win.** Every factory takes a partial row and merges it last,
  *    so a test states only the field it is actually about.
- * 3. **Encrypted columns carry PLAINTEXT here.** `phone`, `address`,
- *    `postal_code`, and `document_number` are `bytea` in the database
- *    (ADR-004), but a factory models the object app code handles once it is
- *    past `decrypt_field`. A ciphertext blob would make a redaction test or a
- *    rendering test prove nothing.
+ * 3. **Sensitive answers carry PLAINTEXT here.** Her phone, address, postal
+ *    code and document number are stored encrypted (ADR-004), but a factory
+ *    models what app code handles once it is past `decrypt_field`. A
+ *    ciphertext blob would make a redaction test or a rendering test prove
+ *    nothing.
  *
  * The identity fields come from `fixtures.ts`, which `supabase/seed.sql`
- * mirrors; the derived filler below is generated from the same ordinal on both
- * sides, so a factory-built participant and the seeded row agree.
+ * mirrors. Her answers to the app's fields are by field (ADR-031):
+ * `buildAppAnswersFromFixture` derives them from the same ordinal the seed
+ * uses, so a factory-built participant and the seeded one agree.
  */
 
+import type { SystemFieldKey } from '../onboarding/system-fields';
 import {
   serializeServiceCategoryMetadataSchema,
   SERVICE_CATEGORY_DEFINITIONS,
@@ -75,7 +77,6 @@ export type EquipmentDeliveryRow = Database['public']['Tables']['equipment_deliv
 export type StockAlertRow = Database['public']['Tables']['stock_alerts']['Row'];
 export type AuditLogRow = Database['public']['Tables']['audit_log']['Row'];
 export type InviteRow = Database['public']['Tables']['invites']['Row'];
-export type ProfileAnswerRow = Database['public']['Tables']['profile_answers']['Row'];
 export type SeasonRow = Database['public']['Tables']['seasons']['Row'];
 export type AuthorizationVersionRow = Database['public']['Tables']['authorization_versions']['Row'];
 export type AppTermsVersionRow = Database['public']['Tables']['app_terms_versions']['Row'];
@@ -83,7 +84,6 @@ export type AuthorizationSignatureRow =
   Database['public']['Tables']['authorization_signatures']['Row'];
 export type AuthorizationConsentEventRow =
   Database['public']['Tables']['authorization_consent_events']['Row'];
-export type IntakeQuestionStateRow = Database['public']['Tables']['intake_question_states']['Row'];
 export type CustomQuestionStateRow = Database['public']['Tables']['custom_question_states']['Row'];
 export type ServiceCategoryRow = Database['public']['Tables']['service_categories']['Row'];
 export type ServiceRow = Database['public']['Tables']['services']['Row'];
@@ -150,39 +150,15 @@ const REFERRING_ENTITIES = [
 ] as const;
 
 /**
- * The filler fields, derived from the ordinal exactly as `supabase/seed.sql`
- * derives them. Deriving beats listing: twenty rows of hand-written sizes and
- * postal codes would be noise to read and a second place to update.
+ * The account settings, derived from the ordinal exactly as `supabase/seed.sql`
+ * derives them. A handful of accounts are deliberately imperfect: the app has
+ * to cope with a participant who never accepted the terms, one who was
+ * deactivated, and one banned from the forum. A uniformly happy dataset hides
+ * those screens.
  */
-function derivedProfileFields(fixture: PersonFixture) {
+function derivedAccountFields(fixture: PersonFixture) {
   const { ordinal } = fixture;
-  const hasNoDocument = ordinal % 5 === 0;
-  const hasNoPlaceOfBirth = ordinal % 11 === 0;
-  const hasDependents = ordinal % 3 === 0;
-  const referral = REFERRING_ENTITIES[ordinal % REFERRING_ENTITIES.length]!;
-
   return {
-    date_of_birth: `${1985 + (ordinal % 15)}-${pad(1 + (ordinal % 12), 2)}-${pad(1 + (ordinal % 28), 2)}`,
-    // Two participants keep a NULL birthplace, as the seed leaves them: a
-    // profile created before the field was required carries one, and staff have
-    // to supply it before they can save anything else about her.
-    place_of_birth: hasNoPlaceOfBirth
-      ? null
-      : (PLACES_OF_BIRTH_BY_NATIONALITY[fixture.nationality] ?? 'Vic'),
-    phone: `+346${pad(ordinal, 8)}`,
-    address: `Carrer de Prova, ${ordinal}`,
-    postal_code: POSTAL_CODES_BY_CITY[fixture.city] ?? '08500',
-    document_type: hasNoDocument ? 'none' : 'nie',
-    document_number: hasNoDocument ? null : `Y${pad(ordinal, 7)}Z`,
-    reference_entity: referral.entity,
-    reference_contact_name: referral.contact,
-    has_dependents: hasDependents,
-    num_dependents: hasDependents ? 1 + (ordinal % 4) : 0,
-    clothing_size: CLOTHING_SIZES[ordinal % CLOTHING_SIZES.length]!,
-    shoe_size: String(36 + (ordinal % 6)),
-    // A handful of accounts are deliberately imperfect: the app has to cope with
-    // a participant who never accepted the terms, one who was deactivated, and
-    // one banned from the forum. A uniformly happy dataset hides those screens.
     terms_accepted_at: ordinal % 7 === 0 ? null : FIXTURE_TIMESTAMP,
     is_active: ordinal % 13 !== 0,
     is_forum_banned: ordinal % 17 === 0,
@@ -190,6 +166,51 @@ function derivedProfileFields(fixture: PersonFixture) {
     // goes in RAPP-211.
     sessions_valid_after: null,
   };
+}
+
+/** One answer of an app field as the seed gives it: a choice by its option key. */
+export type AppAnswerFixture = string | number | readonly string[];
+
+/**
+ * A participant's answers to the app's fields, by system key, derived from the
+ * ordinal exactly as `supabase/seed.sql` derives them (ADR-031: her answers
+ * are by field, her profile holds her names and her account settings). A
+ * choice is its option key, as the seed writes it. Deriving beats listing:
+ * twenty rows of hand-written sizes and postal codes would be noise to read
+ * and a second place to update.
+ */
+export function buildAppAnswersFromFixture(
+  fixture: PersonFixture,
+): Readonly<Partial<Record<SystemFieldKey, AppAnswerFixture>>> {
+  const { ordinal } = fixture;
+  const hasNoDocument = ordinal % 5 === 0;
+  const hasDependents = ordinal % 3 === 0;
+  const referral = REFERRING_ENTITIES[ordinal % REFERRING_ENTITIES.length]!;
+  // Two participants have no birthplace, as the seed leaves them: a profile
+  // from before the field was required has none, and staff have to supply it
+  // before they can save anything else about her.
+  const placeOfBirth =
+    ordinal % 11 === 0 ? null : (PLACES_OF_BIRTH_BY_NATIONALITY[fixture.nationality] ?? 'Vic');
+  const answers: Partial<Record<SystemFieldKey, AppAnswerFixture | null>> = {
+    date_of_birth: `${1985 + (ordinal % 15)}-${pad(1 + (ordinal % 12), 2)}-${pad(1 + (ordinal % 28), 2)}`,
+    place_of_birth: placeOfBirth,
+    nationality: fixture.nationality,
+    address: `Carrer de Prova, ${ordinal}`,
+    city: fixture.city,
+    postal_code: POSTAL_CODES_BY_CITY[fixture.city] ?? '08500',
+    phone: `+346${pad(ordinal, 8)}`,
+    document_type: hasNoDocument ? 'none' : 'nie',
+    document_number: hasNoDocument ? null : `Y${pad(ordinal, 7)}Z`,
+    reference_entity: referral.entity,
+    reference_contact_name: referral.contact,
+    has_dependents: hasDependents ? 'yes' : 'no',
+    num_dependents: hasDependents ? 1 + (ordinal % 4) : null,
+    clothing_size: CLOTHING_SIZES[ordinal % CLOTHING_SIZES.length]!,
+    shoe_size: String(36 + (ordinal % 6)),
+  };
+  return Object.fromEntries(
+    Object.entries(answers).filter(([, value]) => value !== null && value !== undefined),
+  ) as Partial<Record<SystemFieldKey, AppAnswerFixture>>;
 }
 
 function pad(value: number, length: number): string {
@@ -688,14 +709,8 @@ export function buildProfileFromFixture(
     org_id: SEED_ORGANIZATION_ID,
     role: 'player',
     collaborating_entity_id: null,
-    // Postgres GENERATES this from the searchable fields (RAPP-23), so a
-    // fixture cannot meaningfully supply one: null stands for "whatever the
-    // database will derive", and no test should assert on it.
-    search_document: null,
     first_name: fixture.firstName,
     last_name: fixture.lastName,
-    nationality: fixture.nationality,
-    city: fixture.city,
     preferred_language: fixture.preferredLanguage,
     avatar_url: null,
     // Media consent defaults to NOT granted, which is the only defensible
@@ -710,13 +725,8 @@ export function buildProfileFromFixture(
     push_notifications_enabled: true,
     created_at: FIXTURE_TIMESTAMP,
     updated_at: FIXTURE_TIMESTAMP,
-    // The season registration answers (RAPP-303): not given unless a test says so.
-    applicant_status: null,
-    applicant_status_details: null,
-    supporting_entities: null,
+    // Her season count (RAPP-303): not given unless a test says so.
     season_number: null,
-    childcare_need: null,
-    specific_needs: null,
     // The authorization's medical answer and emergency contact (RAPP-304).
     health_info: null,
     emergency_contact_name: null,
@@ -725,10 +735,9 @@ export function buildProfileFromFixture(
     emergency_contact_privacy: null,
     // Seasons played before the app (RAPP-306).
     prior_seasons: 0,
-    document_name: null,
     // A real person unless a test says otherwise (RAPP-615).
     is_test_account: false,
-    ...derivedProfileFields(fixture),
+    ...derivedAccountFields(fixture),
     ...overrides,
   };
 }
@@ -1287,40 +1296,6 @@ export function buildInternalDocument(
 }
 
 /**
- * One answered intake question (RAPP-300). Defaults to a staff answer for the
- * seeded invited woman, the state the wizard reads to skip a question.
- */
-export function buildProfileAnswer(overrides: Partial<ProfileAnswerRow> = {}): ProfileAnswerRow {
-  return {
-    profile_id: INVITED_ACCOUNT_ID,
-    org_id: SEED_ORGANIZATION_ID,
-    question: 'nationality',
-    source: 'staff',
-    answered_by: seedUserId(2),
-    answered_at: FIXTURE_TIMESTAMP,
-    ...overrides,
-  };
-}
-
-/**
- * A staff choice for one wizard question (RAPP-301): the seeded invited woman
- * reviews her clothing size although staff answered it.
- */
-export function buildIntakeQuestionState(
-  overrides: Partial<IntakeQuestionStateRow> = {},
-): IntakeQuestionStateRow {
-  return {
-    profile_id: INVITED_ACCOUNT_ID,
-    org_id: SEED_ORGANIZATION_ID,
-    question: 'clothing_size',
-    state: 'ask',
-    updated_at: FIXTURE_TIMESTAMP,
-    updated_by: null,
-    ...overrides,
-  };
-}
-
-/**
  * A staff choice for one Ramassà field (RAPP-643): the seeded invited woman is
  * asked the transport field even if she answered it.
  */
@@ -1511,7 +1486,6 @@ export type FieldPlacementRow = PublicRow<'field_placements'>;
 export type CustomQuestionOptionRow = PublicRow<'custom_question_options'>;
 export type CustomAnswerRow = PublicRow<'custom_answers'>;
 export type ReferralCustomAnswerRow = PublicRow<'referral_custom_answers'>;
-export type BuiltinQuestionOverrideRow = PublicRow<'builtin_question_overrides'>;
 export type IntakeStatePresetRow = PublicRow<'intake_state_presets'>;
 
 export const SEED_INTAKE_SCREEN_ID = '5eed0000-0000-4000-8044-000000000001';
@@ -1655,38 +1629,6 @@ export function buildReferralCustomAnswer(
   };
 }
 
-export function buildBuiltinQuestionOverride(
-  overrides: Partial<BuiltinQuestionOverrideRow> = {},
-): BuiltinQuestionOverrideRow {
-  return {
-    org_id: SEED_ORGANIZATION_ID,
-    question: 'reference_entity',
-    label: { ca: "Quina entitat t'acompanya?" },
-    help: null,
-    is_hidden: false,
-    option_overrides: {},
-    updated_at: FIXTURE_TIMESTAMP,
-    updated_by: null,
-    ...overrides,
-  };
-}
-
-export type IntakeRequiredQuestionRow = PublicRow<'intake_required_questions'>;
-
-/** The seeded choice (RAPP-611): the phone stays optional, as by default. */
-export function buildIntakeRequiredQuestion(
-  overrides: Partial<IntakeRequiredQuestionRow> = {},
-): IntakeRequiredQuestionRow {
-  return {
-    org_id: SEED_ORGANIZATION_ID,
-    question: 'phone',
-    is_required: false,
-    updated_at: FIXTURE_TIMESTAMP,
-    updated_by: null,
-    ...overrides,
-  };
-}
-
 export type IntakeBuiltinScreenRow = PublicRow<'intake_builtin_screens'>;
 export type IntakeFlowOrderRow = PublicRow<'intake_flow_orders'>;
 
@@ -1741,24 +1683,6 @@ export function buildIntakeStatePreset(
     states: { clothing_size: 'ask', shoe_size: 'ask' },
     created_at: FIXTURE_TIMESTAMP,
     created_by: null,
-    ...overrides,
-  };
-}
-
-export type SeasonAnswersRow = Database['public']['Tables']['season_answers']['Row'];
-
-/** Her registration answers for the current season (RAPP-306). */
-export function buildSeasonAnswers(overrides: Partial<SeasonAnswersRow> = {}): SeasonAnswersRow {
-  return {
-    profile_id: seedUserId(PARTICIPANT_FIXTURES[0]!.ordinal),
-    season_id: SEED_SEASON_ID,
-    org_id: SEED_ORGANIZATION_ID,
-    applicant_status: null,
-    applicant_status_details: null,
-    supporting_entities: null,
-    childcare_need: 'no',
-    specific_needs: null,
-    updated_at: FIXTURE_TIMESTAMP,
     ...overrides,
   };
 }

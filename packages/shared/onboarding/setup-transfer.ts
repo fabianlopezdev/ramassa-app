@@ -101,6 +101,9 @@ export const onboardingSetupDocumentSchema = z
       )
       .optional(),
     placements: z.array(z.record(z.string(), z.unknown())).optional(),
+    // The wording, hiding and required flag of the app's questions live on
+    // their placements (ADR-031). An export writes these two lists empty; an
+    // older file may fill them, and the database applies them on import.
     builtin_question_overrides: z.array(
       z.strictObject({
         question: z.string().min(1),
