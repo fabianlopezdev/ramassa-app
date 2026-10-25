@@ -66,7 +66,7 @@ export function isNameField(field: Pick<ProfileField, 'systemKey'>): boolean {
  * database refuses a joined player's document without its number
  * (`private.apply_document_rule`).
  */
-export type PartnerCondition = (value: CustomAnswerValue | null | undefined) => boolean;
+type PartnerCondition = (value: CustomAnswerValue | null | undefined) => boolean;
 
 export interface EditPartner {
   readonly field: ProfileField;

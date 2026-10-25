@@ -270,10 +270,7 @@ export function storedDraftOfView(
 }
 
 /** A version 1 draft on her phone, converted: nothing she typed is lost. */
-export function upgradedDraft(
-  fields: SystemFieldIndex,
-  legacy: OnboardingDraft,
-): StoredOnboardingDraft {
+function upgradedDraft(fields: SystemFieldIndex, legacy: OnboardingDraft): StoredOnboardingDraft {
   return storedDraftOfView(fields, legacy, null);
 }
 

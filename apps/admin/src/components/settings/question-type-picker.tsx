@@ -18,7 +18,7 @@ import { TriangleAlert } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { getLanguageDirection, SUPPORTED_LANGUAGES } from '@ramassa/shared/i18n/languages';
 import {
-  BUILDER_QUESTION_TYPES,
+  CUSTOM_QUESTION_TYPES,
   type BuilderText,
   type CustomQuestionType,
 } from '@ramassa/shared/intake-builder';
@@ -119,7 +119,7 @@ export function QuestionTypePicker({
       hiddenName="question-type"
       renderGroup={({ cardRefs, pick }) => (
         <CardRadioGroup
-          values={BUILDER_QUESTION_TYPES}
+          values={CUSTOM_QUESTION_TYPES}
           value={value}
           label={t('questions.type')}
           disabled={disabled}

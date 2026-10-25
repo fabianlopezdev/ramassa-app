@@ -80,7 +80,7 @@ export interface SortableHandle {
 }
 
 /** One sortable row. `data` tells a board what kind of item moves. */
-export function SortableItem({
+function SortableItem({
   id,
   data,
   className,

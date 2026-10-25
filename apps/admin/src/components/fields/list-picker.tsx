@@ -41,7 +41,7 @@ export function appListMatches(
 }
 
 /** The label of a stored canonical name; a name the list no longer has reads as stored. */
-export function appListLabel(kind: AppListKind, language: LanguageCode, value: string): string {
+function appListLabel(kind: AppListKind, language: LanguageCode, value: string): string {
   const options =
     kind === 'country' ? getCountryOptions(language) : getMunicipalityOptions(language);
   return options.find((option) => option.canonical === value)?.label ?? value;

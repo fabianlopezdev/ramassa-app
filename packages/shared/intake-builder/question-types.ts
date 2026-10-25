@@ -57,12 +57,6 @@ export type CustomQuestionType = (typeof CUSTOM_QUESTION_TYPES)[number];
  */
 export const LIST_TYPES = ['country', 'municipality'] as const;
 
-/**
- * The types the field form offers: every type, the two lists included, since
- * her phone and the team's pages render them all (RAPP-663, RAPP-664).
- */
-export const BUILDER_QUESTION_TYPES: readonly CustomQuestionType[] = CUSTOM_QUESTION_TYPES;
-
 /** Types answered by picking options staff wrote. */
 export const OPTION_TYPES = ['single_choice', 'multiple_choice', 'search_choice'] as const;
 
