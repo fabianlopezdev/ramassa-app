@@ -1,8 +1,7 @@
 import { describe, expect, test } from 'bun:test';
+import { systemFieldIndexFromCatalog } from '../intake-builder/field-answers';
+import { customAnswerSchema } from '../intake-builder/question-types';
 import { WIZARD_QUESTIONS } from '../onboarding/question-states';
-import { questionPayloadKeys } from '../onboarding/system-fields';
-import { profileEditSchema } from '../schemas/profile';
-import { decodeSupportNeeds } from '../schemas/support-needs';
 import {
   systemFieldFixtureId,
   systemFieldsCatalogFixture,
@@ -11,53 +10,59 @@ import {
 import {
   fetchMyTestScenarioStamp,
   fetchTestPlayerScenario,
-  sampleAnswerPayload,
-  sampleAnswersFor,
-  sampleProfileAnswers,
+  sampleFillByField,
+  sampleSystemAnswers,
   setTestPlayerScenario,
 } from './test-scenario';
 
 const LANGUAGES = ['ca', 'es', 'en', 'ar', 'fa'] as const;
-const camel = (key: string) =>
-  key.replace(/_([a-z])/g, (_match, letter: string) => letter.toUpperCase());
 
-describe('the sample answers of a test player (RAPP-619)', () => {
-  test('pass the shared profile schema in every language', () => {
+describe('the sample answers of a test player (RAPP-619, by field RAPP-664)', () => {
+  const fields = systemFieldIndexFromCatalog(systemFieldsCatalogFixture());
+
+  test('pass each field’s own check in every language', () => {
     for (const language of LANGUAGES) {
-      const sample = sampleProfileAnswers(language);
-      const parsed = profileEditSchema.safeParse({
-        ...Object.fromEntries(Object.entries(sample).map(([key, value]) => [camel(key), value])),
-        mediaConsent: false,
-      });
-      expect(parsed.success).toBe(true);
-      expect(sample.preferred_language).toBe(language);
+      const fill = sampleFillByField(fields, WIZARD_QUESTIONS, language);
+      for (const [id, value] of Object.entries(fill.answers)) {
+        const field = [...fields.values()].find((each) => each.id === id)!;
+        const question = {
+          type: field.type,
+          settings: {},
+          options: field.options.map((option) => ({ ...option, label: option.label })),
+        };
+        expect(customAnswerSchema(question as never).safeParse(value).success).toBe(true);
+      }
+      expect(fill.first_name).toBe('Prova');
     }
   });
 
   test('are in her language where the answer is text', () => {
-    expect(sampleProfileAnswers('ca').address).not.toBe(sampleProfileAnswers('ar').address);
-    expect(
-      decodeSupportNeeds(sampleProfileAnswers('fa').specific_needs as string)?.categories,
-    ).toEqual(['other']);
+    expect(sampleSystemAnswers('ca').address).not.toBe(sampleSystemAnswers('ar').address);
+    expect(sampleSystemAnswers('fa').specific_needs).toEqual(['other']);
   });
 
-  test('cover every wizard question, with that question’s keys only', () => {
+  test('cover every wizard question, through that question’s fields only', () => {
     for (const question of WIZARD_QUESTIONS) {
-      const payload = sampleAnswerPayload(question, 'ca');
-      expect(Object.keys(payload).length).toBeGreaterThan(0);
-      for (const key of Object.keys(payload)) {
-        expect(questionPayloadKeys(question)).toContain(key);
-      }
+      const fill = sampleFillByField(fields, [question], 'ca');
+      const sent = [
+        ...Object.keys(fill.answers),
+        ...Object.keys(fill).filter((key) => key !== 'answers'),
+      ];
+      expect(sent.length).toBeGreaterThan(0);
     }
-    expect(sampleAnswersFor(['phone', 'dependents'], 'en')).toEqual({
-      phone: '+34600111222',
-      has_dependents: false,
-      num_dependents: 0,
+    expect(sampleFillByField(fields, ['phone', 'dependents', 'preferred_language'], 'en')).toEqual({
+      preferred_language: 'en',
+      answers: {
+        [systemFieldFixtureId('phone')]: '+34600111222',
+        [systemFieldFixtureId('has_dependents')]: systemOptionFixtureId('has_dependents', 'no'),
+      },
     });
   });
 
-  test('are the same every time', () => {
-    expect(sampleProfileAnswers('es')).toEqual(sampleProfileAnswers('es'));
+  test('a field whose type no longer has the sample’s option is left out', () => {
+    const changed = new Map(fields);
+    changed.set('clothing_size', { ...fields.get('clothing_size')!, options: [] });
+    expect(sampleFillByField(changed, ['clothing_size'], 'ca').answers).toEqual({});
   });
 });
 
@@ -97,7 +102,7 @@ describe('the scenario calls (RAPP-619)', () => {
     } as unknown as Parameters<typeof setTestPlayerScenario>[0];
     await setTestPlayerScenario(fake, id, {
       kind: 'answers',
-      fill: { first_name: 'Joana', clothing_size: 'M' },
+      fill: ['first_name', 'clothing_size'],
       clear: ['document'],
     });
     expect(calls[1]).toEqual([
@@ -107,7 +112,7 @@ describe('the scenario calls (RAPP-619)', () => {
         p_change: {
           kind: 'answers',
           fill: {
-            first_name: 'Joana',
+            first_name: 'Prova',
             answers: {
               [systemFieldFixtureId('clothing_size')]: systemOptionFixtureId('clothing_size', 'M'),
             },

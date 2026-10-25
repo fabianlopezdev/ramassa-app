@@ -132,7 +132,8 @@ test('a question is filled with the sample in her language, or cleared', async (
   await waitFor(() =>
     expect(onChange).toHaveBeenLastCalledWith({
       kind: 'answers',
-      fill: { address: 'شارع الاختبار 1' },
+      fill: ['address'],
+      language: 'ar',
     }),
   );
   const firstName = view.getByTestId('test-scenario-answer-first_name');
@@ -146,9 +147,10 @@ test('fill all answers her language too', async () => {
   const { view, onChange } = renderPanel();
   fireEvent.click(view.getByText('testScenarioFillAll'));
   await waitFor(() => expect(onChange).toHaveBeenCalledTimes(1));
-  const change = onChange.mock.calls[0]?.[0] as { fill: Record<string, unknown> };
-  expect(change.fill.preferred_language).toBe('ar');
-  expect(change.fill.shoe_size).toBe('38');
+  const change = onChange.mock.calls[0]?.[0] as { fill: readonly string[]; language: string };
+  expect(change.language).toBe('ar');
+  expect(change.fill).toContain('preferred_language');
+  expect(change.fill).toContain('shoe_size');
 });
 
 test('a refusal is explained', async () => {

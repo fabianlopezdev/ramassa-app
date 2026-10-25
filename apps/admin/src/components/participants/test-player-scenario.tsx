@@ -21,8 +21,6 @@ import { useTranslation } from 'react-i18next';
 import { WIZARD_QUESTIONS, type IntakeQuestion } from '@ramassa/shared/intake';
 import { textIn, type CustomQuestion } from '@ramassa/shared/intake-builder';
 import {
-  sampleAnswerPayload,
-  sampleAnswersFor,
   sampleCustomAnswersFor,
   type TestPlayerScenario,
   type TestPlayerScenarioChange,
@@ -172,9 +170,7 @@ export function TestPlayerScenarioPanel({
             type="button"
             variant="outline"
             disabled={working}
-            onClick={() =>
-              void apply({ kind: 'answers', fill: sampleAnswersFor(FILL_ALL_QUESTIONS, language) })
-            }
+            onClick={() => void apply({ kind: 'answers', fill: FILL_ALL_QUESTIONS, language })}
           >
             {t('testScenarioFillAll')}
           </Button>
@@ -223,7 +219,7 @@ export function TestPlayerScenarioPanel({
                     void apply(
                       isAnswered
                         ? { kind: 'answers', clear: [question] }
-                        : { kind: 'answers', fill: sampleAnswerPayload(question, language) },
+                        : { kind: 'answers', fill: [question], language },
                     )
                   }
                 >
