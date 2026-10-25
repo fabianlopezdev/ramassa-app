@@ -8,6 +8,8 @@
  *   - a date: day, month and year fields, as her date of birth;
  *   - yes / no / maybe, yes / no, a choice: option chips; several: chips too;
  *   - a long list: the searchable picker, as her country;
+ *   - a country, a municipality of Catalonia: the app's own pickers, the
+ *     ones of her nationality and her municipality (RAPP-663);
  *   - a list she adds to: the supporting organizations list;
  *   - one consent: the consent row of the authorization, with its own text;
  *   - a file: a photo or a PDF, uploaded to her private folder;
@@ -27,7 +29,9 @@ import { SignaturePad } from '@/components/equipment/signature-pad';
 import { FormTextArea } from '@/components/forms/form-text-area';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PressableScale } from '@/components/motion/pressable-scale';
+import { CountryPicker } from '@/components/onboarding/country-picker';
 import { FieldErrorText } from '@/components/onboarding/field-error-text';
+import { MunicipalityPicker } from '@/components/onboarding/municipality-picker';
 import { OptionChip } from '@/components/onboarding/option-chip';
 import { ChoiceGrid } from '@/components/onboarding/option-grid';
 import { OptionSearchPicker } from '@/components/onboarding/option-search-picker';
@@ -445,6 +449,30 @@ export function CustomQuestionField(props: CustomQuestionFieldProps) {
             maxLength={LIST_ITEM_MAX_LENGTH}
           />
           <FieldErrorText message={errorMessage} />
+        </View>
+      );
+    case 'country':
+      return (
+        <View testID={testID} className="gap-xs">
+          <CountryPicker
+            label={label}
+            value={asText(value)}
+            onChange={onChange}
+            errorMessage={errorMessage}
+          />
+          <QuestionHelp text={help} />
+        </View>
+      );
+    case 'municipality':
+      return (
+        <View testID={testID} className="gap-xs">
+          <MunicipalityPicker
+            label={label}
+            value={asText(value)}
+            onChange={onChange}
+            errorMessage={errorMessage}
+          />
+          <QuestionHelp text={help} />
         </View>
       );
     case 'search_choice': {

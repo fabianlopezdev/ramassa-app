@@ -110,6 +110,29 @@ mock.module('@/components/onboarding/option-search-picker', () => ({
       ),
     ),
 }));
+// The app's own pickers, as buttons that choose one canonical name.
+const pickerOf =
+  (name: string, canonical: string) =>
+  ({
+    label,
+    value,
+    onChange,
+  }: {
+    label: string;
+    value: string;
+    onChange: (canonical: string) => void;
+  }) =>
+    createElement(
+      'button',
+      { 'data-testid': name, 'data-value': value, onClick: () => onChange(canonical) },
+      label,
+    );
+mock.module('@/components/onboarding/country-picker', () => ({
+  CountryPicker: pickerOf('country-picker', 'Síria'),
+}));
+mock.module('@/components/onboarding/municipality-picker', () => ({
+  MunicipalityPicker: pickerOf('municipality-picker', 'Vic'),
+}));
 mock.module('@/components/profile/supporting-entities-field', () => ({
   SupportingEntitiesField: ({
     maxItems,
@@ -319,6 +342,17 @@ test('a date is asked as day, month and year, as her date of birth', () => {
   act(() => typing.get(ca.monthLabel)!('2'));
   act(() => typing.get(ca.yearLabel)!('2001'));
   expect(lastValue).toBe('2001-02-05');
+});
+
+test('a country and a municipality use the pickers of her own screens, by canonical name', () => {
+  const country = render(typed('country'));
+  fireEvent.click(country.getByTestId('country-picker'));
+  expect(lastValue).toBe('Síria');
+  expect(country.getByTestId('country-picker').getAttribute('data-value')).toBe('Síria');
+  const municipality = render(typed('municipality'));
+  expect(municipality.getByTestId('municipality-picker').textContent).toBe('Transport?');
+  fireEvent.click(municipality.getByTestId('municipality-picker'));
+  expect(lastValue).toBe('Vic');
 });
 
 test('a phone and an email open their own keyboards', () => {
