@@ -19,8 +19,10 @@
  */
 
 import { ParticipantsTable } from '@/components/participants/participants-table';
+import { participantListColumns } from '@/lib/participant-list';
 import { supabase } from '@/lib/supabase';
 import { createFileRoute } from '@tanstack/react-router';
+import { fetchSystemFieldIndex } from '@ramassa/shared/intake-builder';
 import {
   fetchParticipantFilterOptions,
   fetchParticipants,
@@ -42,18 +44,27 @@ export const Route = createFileRoute('/_staff/participants/')({
   validateSearch: participantSearchSchema,
   loaderDeps: ({ search }) => search,
   loader: async ({ deps }) => {
-    const [page, filterOptions] = await Promise.all([
+    const [page, filterOptions, fields] = await Promise.all([
       fetchParticipants(supabase, deps),
       fetchParticipantFilterOptions(supabase),
+      // Which columns the feature registry reads (RAPP-664); the list works without them.
+      fetchSystemFieldIndex(supabase).catch(() => new Map()),
     ]);
-    return { page, filterOptions };
+    return { page, filterOptions, columns: participantListColumns(fields) };
   },
   component: ParticipantsPage,
 });
 
 function ParticipantsPage() {
-  const { page, filterOptions } = Route.useLoaderData();
+  const { page, filterOptions, columns } = Route.useLoaderData();
   const search = Route.useSearch();
 
-  return <ParticipantsTable page={page} filterOptions={filterOptions} search={search} />;
+  return (
+    <ParticipantsTable
+      page={page}
+      filterOptions={filterOptions}
+      search={search}
+      columns={columns}
+    />
+  );
 }

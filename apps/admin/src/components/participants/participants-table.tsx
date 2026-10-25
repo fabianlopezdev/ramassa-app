@@ -19,6 +19,7 @@ import { Page } from '@/components/layout/page';
 import { ParticipantsFilters } from '@/components/participants/participants-filters';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import type { ParticipantListColumns } from '@/lib/participant-list';
 import { Link, useNavigate } from '@tanstack/react-router';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
 import { useMemo } from 'react';
@@ -39,9 +40,23 @@ export interface ParticipantsTableProps {
   readonly page: ParticipantPage;
   readonly filterOptions: ParticipantFilterOptions;
   readonly search: ParticipantSearch;
+  /** The columns the feature registry reads (RAPP-664); every one when absent. */
+  readonly columns?: ParticipantListColumns;
 }
 
-export function ParticipantsTable({ page, filterOptions, search }: ParticipantsTableProps) {
+const ALL_COLUMNS: ParticipantListColumns = {
+  nationality: true,
+  city: true,
+  entity: true,
+  dependents: true,
+};
+
+export function ParticipantsTable({
+  page,
+  filterOptions,
+  search,
+  columns: shown = ALL_COLUMNS,
+}: ParticipantsTableProps) {
   const { permissions } = useAuth();
   const { t, i18n } = useTranslation(['participants', 'common', 'referrals', 'profile']);
   const navigate = useNavigate({ from: '/participants/' });
@@ -50,8 +65,8 @@ export function ParticipantsTable({ page, filterOptions, search }: ParticipantsT
   const pages = Math.max(1, Math.ceil(page.total / PARTICIPANT_PAGE_SIZE));
   const none = t('rowNone');
 
-  const columns = useMemo<ColumnDef<ParticipantListRow, unknown>[]>(
-    () => [
+  const columns = useMemo<ColumnDef<ParticipantListRow, unknown>[]>(() => {
+    const all: (ColumnDef<ParticipantListRow, unknown> | null)[] = [
       {
         // `accessorKey`, not a bare id: a column with no accessor is a DISPLAY
         // column, and TanStack refuses to sort those, so the header renders as
@@ -78,43 +93,54 @@ export function ParticipantsTable({ page, filterOptions, search }: ParticipantsT
           </span>
         ),
       },
-      {
-        accessorKey: 'nationality' satisfies ParticipantSortColumn,
-        header: t('columnNationality'),
-        cell: ({ row }) => row.original.nationality ?? none,
-      },
-      {
-        accessorKey: 'city' satisfies ParticipantSortColumn,
-        header: t('columnCity'),
-        cell: ({ row }) => row.original.city ?? none,
-      },
-      {
-        accessorKey: 'reference_entity' satisfies ParticipantSortColumn,
-        header: t('columnEntity'),
-        cell: ({ row }) => row.original.reference_entity ?? none,
-      },
+      shown.nationality
+        ? {
+            accessorKey: 'nationality' satisfies ParticipantSortColumn,
+            header: t('columnNationality'),
+            cell: ({ row }) => row.original.nationality ?? none,
+          }
+        : null,
+      shown.city
+        ? {
+            accessorKey: 'city' satisfies ParticipantSortColumn,
+            header: t('columnCity'),
+            cell: ({ row }) => row.original.city ?? none,
+          }
+        : null,
+      shown.entity
+        ? {
+            accessorKey: 'reference_entity' satisfies ParticipantSortColumn,
+            header: t('columnEntity'),
+            cell: ({ row }) => row.original.reference_entity ?? none,
+          }
+        : null,
       {
         accessorKey: 'created_at' satisfies ParticipantSortColumn,
         header: t('columnJoined'),
         cell: ({ row }) => new Date(row.original.created_at).toLocaleDateString(locale),
       },
-      {
-        id: 'dependents',
-        header: t('columnDependents'),
-        // Not sortable: the roster is not ordered by how many children someone
-        // has, and offering it would suggest the team works that way.
-        enableSorting: false,
-        // Unknown is not "none" (RAPP-611): an optional dependants question
-        // she did not answer reads as not given.
-        cell: ({ row }) => {
-          const shown = dependentsShown(row.original.has_dependents, row.original.num_dependents);
-          return shown.kind === 'count'
-            ? shown.count
-            : shown.kind === 'unknown'
-              ? t('profile:notProvided')
-              : none;
-        },
-      },
+      shown.dependents
+        ? {
+            id: 'dependents',
+            header: t('columnDependents'),
+            // Not sortable: the roster is not ordered by how many children someone
+            // has, and offering it would suggest the team works that way.
+            enableSorting: false,
+            // Unknown is not "none" (RAPP-611): an optional dependants question
+            // she did not answer reads as not given.
+            cell: ({ row }) => {
+              const shown = dependentsShown(
+                row.original.has_dependents,
+                row.original.num_dependents,
+              );
+              return shown.kind === 'count'
+                ? shown.count
+                : shown.kind === 'unknown'
+                  ? t('profile:notProvided')
+                  : none;
+            },
+          }
+        : null,
       {
         id: 'status',
         header: t('columnStatus'),
@@ -126,9 +152,11 @@ export function ParticipantsTable({ page, filterOptions, search }: ParticipantsT
               ? t('rowActive')
               : t('rowInactive'),
       },
-    ],
-    [t, none, locale],
-  );
+    ];
+    return all.filter(
+      (column): column is ColumnDef<ParticipantListRow, unknown> => column !== null,
+    );
+  }, [t, none, locale, shown]);
 
   /**
    * Any change to a filter or the sort returns to page 1. Staying on page 7
@@ -185,7 +213,12 @@ export function ParticipantsTable({ page, filterOptions, search }: ParticipantsT
         </div>
       </header>
 
-      <ParticipantsFilters search={search} filterOptions={filterOptions} onChange={applySearch} />
+      <ParticipantsFilters
+        search={search}
+        filterOptions={filterOptions}
+        onChange={applySearch}
+        shown={shown}
+      />
 
       <DataTable
         columns={columns}

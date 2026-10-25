@@ -12,6 +12,7 @@
  */
 
 import { Input } from '@/components/ui/input';
+import type { ParticipantListColumns } from '@/lib/participant-list';
 import { cn } from '@/lib/utils';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -28,9 +29,18 @@ export interface ParticipantsFiltersProps {
   readonly search: ParticipantSearch;
   readonly filterOptions: ParticipantFilterOptions;
   readonly onChange: (next: Partial<ParticipantSearch>) => void;
+  /** The filters the feature registry reads (RAPP-664); every one when absent. */
+  readonly shown?: Pick<ParticipantListColumns, 'nationality' | 'entity' | 'dependents'>;
 }
 
-export function ParticipantsFilters({ search, filterOptions, onChange }: ParticipantsFiltersProps) {
+const ALL_FILTERS = { nationality: true, entity: true, dependents: true } as const;
+
+export function ParticipantsFilters({
+  search,
+  filterOptions,
+  onChange,
+  shown = ALL_FILTERS,
+}: ParticipantsFiltersProps) {
   const { t } = useTranslation('participants');
   const [draftQuery, setDraftQuery] = useState(search.q);
 
@@ -63,20 +73,24 @@ export function ParticipantsFilters({ search, filterOptions, onChange }: Partici
         <span className="text-xs text-muted-foreground">{t('searchHint')}</span>
       </label>
 
-      <FilterSelect
-        label={t('filterEntity')}
-        value={search.entity ?? ''}
-        allLabel={t('optionAll')}
-        options={filterOptions.entities}
-        onSelect={(value) => onChange({ entity: value === '' ? null : value })}
-      />
-      <FilterSelect
-        label={t('filterNationality')}
-        value={search.nationality ?? ''}
-        allLabel={t('optionAll')}
-        options={filterOptions.nationalities}
-        onSelect={(value) => onChange({ nationality: value === '' ? null : value })}
-      />
+      {shown.entity ? (
+        <FilterSelect
+          label={t('filterEntity')}
+          value={search.entity ?? ''}
+          allLabel={t('optionAll')}
+          options={filterOptions.entities}
+          onSelect={(value) => onChange({ entity: value === '' ? null : value })}
+        />
+      ) : null}
+      {shown.nationality ? (
+        <FilterSelect
+          label={t('filterNationality')}
+          value={search.nationality ?? ''}
+          allLabel={t('optionAll')}
+          options={filterOptions.nationalities}
+          onSelect={(value) => onChange({ nationality: value === '' ? null : value })}
+        />
+      ) : null}
       <FilterSelect
         label={t('filterStatus')}
         value={search.status}
@@ -89,17 +103,19 @@ export function ParticipantsFilters({ search, filterOptions, onChange }: Partici
         allValue="all"
         onSelect={(value) => onChange({ status: value as ParticipantSearch['status'] })}
       />
-      <FilterSelect
-        label={t('filterDependents')}
-        value={search.dependents}
-        allLabel={t('optionAll')}
-        options={[
-          { value: 'with', label: t('dependentsWith') },
-          { value: 'without', label: t('dependentsWithout') },
-        ]}
-        allValue="all"
-        onSelect={(value) => onChange({ dependents: value as ParticipantSearch['dependents'] })}
-      />
+      {shown.dependents ? (
+        <FilterSelect
+          label={t('filterDependents')}
+          value={search.dependents}
+          allLabel={t('optionAll')}
+          options={[
+            { value: 'with', label: t('dependentsWith') },
+            { value: 'without', label: t('dependentsWithout') },
+          ]}
+          allValue="all"
+          onSelect={(value) => onChange({ dependents: value as ParticipantSearch['dependents'] })}
+        />
+      ) : null}
     </div>
   );
 }
