@@ -537,9 +537,9 @@ begin
     'invite.create',
     'invite',
     new_invite_id,
-    -- The referring entity and the referral are programme data, not personal
-    -- data, so they are recorded. The invited ADDRESS is not: the audit trail
-    -- says who invited and when, and the invite row itself holds who was invited.
+    -- The referring entity and the referral are programme data, so they are
+    -- recorded. The invited ADDRESS stays out: the audit trail says who invited
+    -- and when, and the invite row itself holds who was invited.
     jsonb_build_object(
       'reference_entity', reference_entity_value,
       'referral_id', referral_value,
