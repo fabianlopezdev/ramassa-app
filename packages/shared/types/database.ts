@@ -979,6 +979,7 @@ export type Database = {
         Row: {
           id: string;
           is_archived: boolean;
+          key: string | null;
           label: Json;
           org_id: string;
           question_id: string;
@@ -987,6 +988,7 @@ export type Database = {
         Insert: {
           id?: string;
           is_archived?: boolean;
+          key?: string | null;
           label: Json;
           org_id: string;
           question_id: string;
@@ -995,6 +997,7 @@ export type Database = {
         Update: {
           id?: string;
           is_archived?: boolean;
+          key?: string | null;
           label?: Json;
           org_id?: string;
           question_id?: string;
@@ -3243,7 +3246,6 @@ export type Database = {
       };
       profile_fields: {
         Row: {
-          builtin_key: string | null;
           created_at: string;
           created_by: string | null;
           default_required: boolean;
@@ -3260,10 +3262,10 @@ export type Database = {
           show_when_field_id: string | null;
           show_when_option_id: string | null;
           sort_order: number;
+          system_key: string | null;
           updated_at: string;
         };
         Insert: {
-          builtin_key?: string | null;
           created_at?: string;
           created_by?: string | null;
           default_required?: boolean;
@@ -3280,10 +3282,10 @@ export type Database = {
           show_when_field_id?: string | null;
           show_when_option_id?: string | null;
           sort_order?: number;
+          system_key?: string | null;
           updated_at?: string;
         };
         Update: {
-          builtin_key?: string | null;
           created_at?: string;
           created_by?: string | null;
           default_required?: boolean;
@@ -3300,6 +3302,7 @@ export type Database = {
           show_when_field_id?: string | null;
           show_when_option_id?: string | null;
           sort_order?: number;
+          system_key?: string | null;
           updated_at?: string;
         };
         Relationships: [

@@ -179,7 +179,7 @@ describe('her onboarding after the entity answered', () => {
         id: QUESTION,
         section_id: SECTION,
         kind: 'custom',
-        builtin_key: null,
+        system_key: null,
         question_type: 'yes_no_maybe',
         label: { ca: 'Transport públic?' },
         help: null,

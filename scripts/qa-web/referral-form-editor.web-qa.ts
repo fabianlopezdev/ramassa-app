@@ -84,7 +84,7 @@ test.describe.serial('the entity referral form', () => {
 
     // Her names stay on the form, required.
     const firstName = queryDatabase(
-      `select id from public.profile_fields where org_id = '${ORG_ID}' and builtin_key = 'first_name'`,
+      `select id from public.profile_fields where org_id = '${ORG_ID}' and system_key = 'first_name'`,
     );
     await expect(page.getByTestId(`entity-placement-${firstName}-remove`)).toHaveCount(0);
     await expect(page.getByTestId(`entity-required-${firstName}`)).toBeDisabled();

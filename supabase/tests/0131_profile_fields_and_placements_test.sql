@@ -73,14 +73,14 @@ select results_eq(
 select is(
   (select count(*)::integer from public.profile_fields
     where org_id = '5eed0000-0000-4000-8000-000000000000' and kind = 'builtin'),
-  cardinality(private.wizard_intake_questions()),
-  'every built-in question is a built-in field'
+  cardinality(private.system_field_keys()),
+  'every app field is a built-in field (the composite questions split since RAPP-660)'
 );
 select results_eq(
-  $$ select f.builtin_key, f.privacy from public.profile_fields f
+  $$ select f.system_key, f.privacy from public.profile_fields f
       where f.org_id = '5eed0000-0000-4000-8000-000000000000'
-        and f.builtin_key in ('first_name', 'date_of_birth', 'phone', 'specific_needs')
-      order by f.builtin_key $$,
+        and f.system_key in ('first_name', 'date_of_birth', 'phone', 'specific_needs')
+      order by f.system_key $$,
   $$ values ('date_of_birth', 'personal'), ('first_name', 'normal'), ('phone', 'sensitive'),
             ('specific_needs', 'sensitive') $$,
   'with the level the database fixes for their columns'
@@ -88,7 +88,7 @@ select results_eq(
 select is(
   (select p.screen_key from public.field_placements p
      join public.profile_fields f on f.id = p.field_id
-    where f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.builtin_key = 'clothing_size'
+    where f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.system_key = 'clothing_size'
       and p.surface = 'onboarding'),
   'equipment',
   'and placed on the screen the app asks them on'
@@ -146,7 +146,7 @@ select is(
   'the field is placed on the three surfaces'
 );
 select throws_ok(
-  $$ select public.place_field((select id from public.profile_fields where builtin_key = 'phone'
+  $$ select public.place_field((select id from public.profile_fields where system_key = 'phone'
                                   and org_id = '5eed0000-0000-4000-8000-000000000000'), 'onboarding', 'identity') $$,
   '23514', 'the app asks a built-in field on its own screen',
   'a built-in field stays on its own screen'

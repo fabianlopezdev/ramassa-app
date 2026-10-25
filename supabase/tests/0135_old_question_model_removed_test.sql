@@ -175,9 +175,9 @@ values ('5eed0000-0000-4000-8000-0000000007d0', '5eed0000-0000-4000-8000-0000000
 on conflict do nothing;
 
 insert into run (label, doc)
-select 'builtin before', jsonb_agg(jsonb_build_object('key', f.builtin_key, 'surface', p.surface,
+select 'builtin before', jsonb_agg(jsonb_build_object('key', f.system_key, 'surface', p.surface,
                                                        'screen', p.screen_key, 'required', p.required)
-                                    order by f.builtin_key, p.surface)
+                                    order by f.system_key, p.surface)
   from public.field_placements p join public.profile_fields f on f.id = p.field_id
  where p.org_id = '5eed0000-0000-4000-8000-0000000007d0' and f.kind = 'builtin';
 
@@ -307,9 +307,9 @@ select is(
   'the flow names the new screen and leaves the holder out'
 );
 select is(
-  (select jsonb_agg(jsonb_build_object('key', f.builtin_key, 'surface', p.surface,
+  (select jsonb_agg(jsonb_build_object('key', f.system_key, 'surface', p.surface,
                                        'screen', p.screen_key, 'required', p.required)
-                    order by f.builtin_key, p.surface)
+                    order by f.system_key, p.surface)
      from public.field_placements p join public.profile_fields f on f.id = p.field_id
     where p.org_id = '5eed0000-0000-4000-8000-0000000007d0' and f.kind = 'builtin'),
   (select doc from run where label = 'builtin before'),
@@ -399,10 +399,10 @@ select ok(
 select throws_ok(
   $$ select private.write_custom_answer('5eed0000-0000-4000-8000-000000000011',
        (select f from public.profile_fields f
-         where f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.builtin_key = 'city'),
-       '"Vic"'::jsonb, 'staff') $$,
-  '23514', 'the app keeps its own fields in her profile',
-  'a built-in field is never written as a custom answer'
+         where f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.system_key = 'first_name'),
+       '"Anna"'::jsonb, 'staff') $$,
+  '23514', 'her names stay on her account',
+  'her names are never written as an answer (RAPP-660: every other app field is)'
 );
 
 select * from finish();

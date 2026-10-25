@@ -30,19 +30,19 @@ insert into run values
   ('option', (select id from public.custom_question_options
                where question_id = '5eed0000-0000-4000-8045-000000000005' order by sort_order limit 1)),
   ('clothing', (select id from public.profile_fields
-                 where org_id = '5eed0000-0000-4000-8000-000000000000' and builtin_key = 'clothing_size')),
+                 where org_id = '5eed0000-0000-4000-8000-000000000000' and system_key = 'clothing_size')),
   ('first_name_placement', (select p.id from public.field_placements p
                               join public.profile_fields f on f.id = p.field_id
                              where f.org_id = '5eed0000-0000-4000-8000-000000000000'
-                               and f.builtin_key = 'first_name' and p.surface = 'entity_form')),
+                               and f.system_key = 'first_name' and p.surface = 'entity_form')),
   ('last_name_placement', (select p.id from public.field_placements p
                              join public.profile_fields f on f.id = p.field_id
                             where f.org_id = '5eed0000-0000-4000-8000-000000000000'
-                              and f.builtin_key = 'last_name' and p.surface = 'entity_form')),
+                              and f.system_key = 'last_name' and p.surface = 'entity_form')),
   ('nationality_placement', (select p.id from public.field_placements p
                                join public.profile_fields f on f.id = p.field_id
                               where f.org_id = '5eed0000-0000-4000-8000-000000000000'
-                                and f.builtin_key = 'nationality' and p.surface = 'entity_form'));
+                                and f.system_key = 'nationality' and p.surface = 'entity_form'));
 
 -- 1. The form's limits ------------------------------------------------------------------------------
 

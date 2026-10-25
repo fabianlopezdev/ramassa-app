@@ -59,7 +59,7 @@ const catalog = parseIntakeCatalog({
     id,
     section_id: SECTION,
     kind: 'custom',
-    builtin_key: null,
+    system_key: null,
     question_type: type,
     label: { ca: `Pregunta ${type}` },
     help: null,

@@ -71,7 +71,7 @@ const fieldSchema = z.object({
   id: z.uuid(),
   section_id: z.uuid(),
   kind: z.enum(PROFILE_FIELD_KINDS),
-  builtin_key: z.string().nullable(),
+  system_key: z.string().nullable(),
   question_type: z.enum(CUSTOM_QUESTION_TYPES),
   label: anyLanguageTextSchema,
   help: anyLanguageTextSchema.nullable(),
@@ -177,6 +177,36 @@ function isIntakeQuestion(key: string | null): key is IntakeQuestion {
   return key !== null && (INTAKE_QUESTIONS as readonly string[]).includes(key);
 }
 
+/**
+ * The app's fields have system keys (RAPP-660): `date_of_birth`, `nationality`,
+ * and the parts of the fields that were composite (`document_type`,
+ * `document_number`...). Until her phone and the team's pages render every
+ * field (RAPP-663, RAPP-664), the apps keep asking and showing the app's
+ * questions their own way: a split question stands for itself through its
+ * first part, and its other parts stay out of the layout.
+ */
+const SPLIT_QUESTION_FIRST_PARTS: Readonly<Record<string, IntakeQuestion>> = {
+  document_type: 'document',
+  has_dependents: 'dependents',
+};
+
+/** The parts of a split app question the apps do not show yet (RAPP-663, RAPP-664). */
+export const SPLIT_QUESTION_OTHER_PARTS: readonly string[] = [
+  'document_number',
+  'document_name',
+  'num_dependents',
+  'applicant_status_details',
+  'specific_needs_details',
+];
+
+/** The app question a system field stands for; null for a Ramassà field. */
+function questionOfSystemKey(systemKey: string | null): IntakeQuestion | null {
+  if (systemKey === null) return null;
+  const firstPartOf = SPLIT_QUESTION_FIRST_PARTS[systemKey];
+  if (firstPartOf !== undefined) return firstPartOf;
+  return isIntakeQuestion(systemKey) ? systemKey : null;
+}
+
 /** The layout from the catalog; undefined when the catalog sends none. */
 export function parseProfileLayout(raw: {
   readonly sections?: unknown;
@@ -187,6 +217,14 @@ export function parseProfileLayout(raw: {
     return undefined;
   }
   const layout = layoutSchema.parse(raw);
+  const shownLater = new Set(
+    layout.fields
+      .filter(
+        (field) =>
+          field.system_key !== null && SPLIT_QUESTION_OTHER_PARTS.includes(field.system_key),
+      )
+      .map((field) => field.id),
+  );
   return {
     sections: byOrder(layout.sections).map((section) => ({
       id: section.id,
@@ -194,11 +232,11 @@ export function parseProfileLayout(raw: {
       title: section.title,
       isBuiltin: section.is_builtin,
     })),
-    fields: byOrder(layout.fields).map((field) => ({
+    fields: byOrder(layout.fields.filter((field) => !shownLater.has(field.id))).map((field) => ({
       id: field.id,
       sectionId: field.section_id,
       kind: field.kind,
-      builtinKey: isIntakeQuestion(field.builtin_key) ? field.builtin_key : null,
+      builtinKey: questionOfSystemKey(field.system_key),
       type: field.question_type,
       label: field.label,
       help: field.help,
@@ -220,7 +258,9 @@ export function parseProfileLayout(raw: {
         isArchived: option.is_archived,
       })),
     })),
-    placements: byOrder(layout.placements).map((placement) => ({
+    placements: byOrder(
+      layout.placements.filter((placement) => !shownLater.has(placement.field_id)),
+    ).map((placement) => ({
       id: placement.id,
       fieldId: placement.field_id,
       surface: placement.surface,

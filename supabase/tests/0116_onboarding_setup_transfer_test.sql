@@ -37,7 +37,7 @@ create function pg_temp.normalized(p_doc jsonb) returns jsonb language plpgsql a
 declare
   stable jsonb := (p_doc - 'exported_at' - 'app_commit' - 'app_terms' - 'authorization' - 'placements')
     || jsonb_build_object('fields', (
-         select coalesce(jsonb_agg(f order by f ->> 'kind', f ->> 'builtin_key', f -> 'label' ->> 'ca', f ->> 'sort_order'), '[]'::jsonb)
+         select coalesce(jsonb_agg(f order by f ->> 'kind', f ->> 'system_key', f -> 'label' ->> 'ca', f ->> 'sort_order'), '[]'::jsonb)
            from jsonb_array_elements(p_doc -> 'fields') f));
   body text := stable::text || chr(10) || (p_doc -> 'placements')::text;
   found_id text;
