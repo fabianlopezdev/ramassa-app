@@ -19,11 +19,10 @@
 --      objects are removed first, by the media Worker, which records a receipt in
 --      the audit trail. This function refuses to run without a fresh one. A
 --      client that skips that call cannot delete the rows.
---   5. **Anonymization keeps the aggregate and drops the person.** She still
---      counts in a report by nationality; her name, papers, contact details and
---      the team's notes about her are gone, and her birth date is coarsened to a
---      year because an exact date plus a nationality plus a town identifies one
---      woman in a roster this size.
+--   5. **Anonymization drops the person and keeps one aggregate.** Her name,
+--      every answer of hers (the app's fields and the team's, RAPP-662 D11) and
+--      the team's notes about her are gone; her birth date survives only as its
+--      year, so she still counts in an age band.
 --   6. **The audit trail survives her**, as target. Decided by Fabián
 --      2026-08-01 and recorded in ADR-023: those rows carry opaque IDs and no
 --      personal data (ADR-021), they are the evidence the erasure happened and
@@ -336,25 +335,28 @@ select ok(
 
 -- An exact birth date next to a nationality and a town identifies one woman in a
 -- roster this size. The year alone still answers every age-band question a
--- funder report asks.
+-- funder report asks. It is the one answer left, in her date of birth field.
 select is(
-  (select date_of_birth from public.profiles where id = '5eed0000-0000-4000-8000-000000000012'::uuid),
-  '1997-01-01'::date,
+  private.system_field_answer('5eed0000-0000-4000-8000-000000000012'::uuid, 'date_of_birth') #>> '{}',
+  '1997-01-01',
   'her birth date is coarsened to the first of her birth year'
 );
 
--- THE OTHER HALF OF ANONYMIZATION, and the reason it is not just deletion: the
--- row still carries what a report counts.
+-- Every other answer goes (RAPP-662, D11): nationality, entity, the team's
+-- fields, every season.
 select is(
-  (select nationality from public.profiles where id = '5eed0000-0000-4000-8000-000000000012'::uuid),
-  'Marroc',
-  'her nationality survives, because the impact report counts it'
+  (select count(*)::int from public.custom_answers a
+     join public.profile_fields f on f.id = a.question_id
+    where a.profile_id = '5eed0000-0000-4000-8000-000000000012'::uuid
+      and f.system_key is distinct from 'date_of_birth'),
+  0,
+  'no other answer of hers survives, the team''s fields included'
 );
 
-select is(
-  (select reference_entity from public.profiles where id = '5eed0000-0000-4000-8000-000000000012'::uuid),
-  'Creu Roja Osona',
-  'and so does the entity that referred her'
+select ok(
+  (select nationality is null and reference_entity is null and date_of_birth is null
+     from public.profiles where id = '5eed0000-0000-4000-8000-000000000012'::uuid),
+  'and the old columns keep no copy of them'
 );
 
 -- Consent to appear in photographs cannot outlive the person it belonged to: a
