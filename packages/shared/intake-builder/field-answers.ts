@@ -28,7 +28,12 @@ import {
   type SupportNeedChoice,
 } from '../schemas/support-needs';
 import type { Database, Json } from '../types/database';
-import { anyLanguageTextSchema, type BuilderText } from './profile-layout';
+import {
+  anyLanguageTextSchema,
+  QUESTION_PRIVACY_LEVELS,
+  type BuilderText,
+  type QuestionPrivacy,
+} from './profile-layout';
 import {
   CUSTOM_QUESTION_TYPES,
   customAnswerValueSchema,
@@ -65,6 +70,8 @@ export interface SystemFieldOption {
 export interface SystemField {
   readonly id: string;
   readonly type: CustomQuestionType;
+  /** Who reads its answers (D9): the layout says, never the app. */
+  readonly privacy: QuestionPrivacy;
   readonly options: readonly SystemFieldOption[];
 }
 
@@ -77,6 +84,8 @@ const catalogFieldsSchema = z.object({
       id: z.uuid(),
       system_key: z.string().nullable(),
       question_type: z.enum(CUSTOM_QUESTION_TYPES),
+      // A catalog without it (an older server) reads as the strictest level.
+      privacy: z.enum(QUESTION_PRIVACY_LEVELS).default('sensitive'),
       options: z.array(
         z.object({
           id: z.uuid(),
@@ -98,6 +107,7 @@ export function systemFieldIndexFromCatalog(raw: unknown): SystemFieldIndex {
     index.set(field.system_key, {
       id: field.id,
       type: field.question_type,
+      privacy: field.privacy,
       options: [...field.options]
         .sort((a, b) => a.sort_order - b.sort_order)
         .map((option) => ({

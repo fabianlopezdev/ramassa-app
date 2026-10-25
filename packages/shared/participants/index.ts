@@ -23,9 +23,13 @@ export {
   fetchParticipantActivity,
   fetchParticipantDetail,
   fetchParticipantNotes,
+  fetchParticipantRecord,
   setParticipantActive,
   updateParticipantProfile,
+  updateParticipantRecord,
   type AddParticipantNoteParams,
+  type ParticipantRecord,
+  type ParticipantUpdate,
 } from './participant-detail-actions';
 export {
   PARTICIPANT_PAGE_SIZE,
@@ -39,12 +43,15 @@ export {
 export {
   buildProfilePrefillPayload,
   fetchParticipantAnsweredQuestions,
+  prefillFormOf,
   prefillFromRow,
+  prefillUpdateOf,
   profilePrefillSchema,
   type PrefillRow,
   type ProfilePrefill,
   type ProfilePrefillField,
   type ProfilePrefillInput,
+  type ParticipantPrefillUpdate,
   type ProfilePrefillPayload,
 } from './participant-prefill';
 export * from './test-scenario';

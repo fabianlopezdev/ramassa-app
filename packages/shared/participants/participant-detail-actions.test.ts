@@ -14,14 +14,16 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { expect, test } from 'bun:test';
 import { AppError } from '../errors';
-import { readerRowFixture, systemFieldsCatalogFixture } from '../testing';
+import { readerRowFixture, systemFieldFixtureId, systemFieldsCatalogFixture } from '../testing';
 import type { Database } from '../types/database';
 import {
   addParticipantNote,
   fetchParticipantActivity,
   fetchParticipantDetail,
+  fetchParticipantRecord,
   setParticipantActive,
   updateParticipantProfile,
+  updateParticipantRecord,
 } from './participant-detail-actions';
 
 type Client = SupabaseClient<Database>;
@@ -169,4 +171,67 @@ test('addParticipantNote files the note against the subject AND its author', asy
     author_id: '5eed0000-0000-4000-8000-000000000002',
     body: 'Ha demanat canviar l horari.',
   });
+});
+
+// Her record by field (RAPP-663) ---------------------------------------------------------------
+
+test('fetchParticipantRecord reads her answers by field, with her organization fields', async () => {
+  const calls: RpcCall[] = [];
+  const record = await fetchParticipantRecord(
+    rpcClient(
+      {
+        data: [
+          {
+            ...readerRowFixture(decryptedRow),
+            anonymized_at: null,
+            is_test_account: false,
+            role: 'player',
+          },
+        ],
+        error: null,
+      },
+      calls,
+    ),
+    PARTICIPANT_ID,
+  );
+  expect(calls.map((call) => call.name)).toEqual(['get_participant_profile', 'intake_catalog']);
+  expect(calls[0]?.args).toEqual({ participant_id: PARTICIPANT_ID });
+  expect(record?.answers[systemFieldFixtureId('phone')]).toBe('+34600000026');
+  expect(record?.fields.get('phone')?.privacy).toBe('sensitive');
+  expect(record?.role).toBe('player');
+});
+
+test('fetchParticipantRecord reports a participant she may not read as absent', async () => {
+  expect(
+    await fetchParticipantRecord(rpcClient({ data: [], error: null }), PARTICIPANT_ID),
+  ).toBeNull();
+});
+
+test('a record that does not parse is a typed failure that names fields, never values', async () => {
+  const error = (await fetchParticipantRecord(
+    rpcClient({ data: [{ ...readerRowFixture(decryptedRow), role: 7 }], error: null }),
+    PARTICIPANT_ID,
+  ).catch((thrown: unknown) => thrown)) as AppError;
+  expect(error).toBeInstanceOf(AppError);
+  expect(JSON.stringify(error.context)).not.toContain('Y0000026Z');
+});
+
+test('updateParticipantRecord sends her answers by field, an emptied one as null', async () => {
+  const calls: RpcCall[] = [];
+  await updateParticipantRecord(rpcClient({ data: null, error: null }, calls), PARTICIPANT_ID, {
+    last_name: 'Mamani',
+    answers: { [systemFieldFixtureId('city')]: 'Vic', [systemFieldFixtureId('phone')]: '' },
+  });
+  expect(calls).toEqual([
+    {
+      name: 'update_participant_profile',
+      args: {
+        participant_id: PARTICIPANT_ID,
+        payload: {
+          last_name: 'Mamani',
+          answers: { [systemFieldFixtureId('city')]: 'Vic', [systemFieldFixtureId('phone')]: null },
+        },
+      },
+    },
+  ]);
 });

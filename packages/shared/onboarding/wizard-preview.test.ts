@@ -4,6 +4,7 @@ import { INTAKE_STATE_PRESETS, WIZARD_QUESTIONS } from './question-states';
 import {
   allowedQuestionStates,
   answeredAtInvitation,
+  answeredByInvitation,
   fetchReferralAnswerKeys,
   previewWizardQuestions,
   wizardNotAsked,
@@ -27,6 +28,17 @@ describe('what an invitation records as answered (RAPP-618)', () => {
       'first_name',
       'last_name',
       'reference_entity',
+    ]);
+  });
+
+  test('by the invitation itself: her names, and her entity when named (RAPP-663)', () => {
+    expect([...answeredByInvitation({})]).toEqual([...answeredAtInvitation(invitation())]);
+    expect([...answeredByInvitation({ referenceEntity: 'Creu Roja' })]).toEqual([
+      ...answeredAtInvitation(invitation('Creu Roja')),
+    ]);
+    expect([...answeredByInvitation({ referenceEntity: '  ' })]).toEqual([
+      'first_name',
+      'last_name',
     ]);
   });
 

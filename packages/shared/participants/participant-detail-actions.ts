@@ -16,15 +16,22 @@
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { z } from 'zod';
 import { AppError } from '../errors';
+import { answerPayload } from '../intake-builder/builder';
 import {
   fetchSystemFieldIndex,
   hasFieldColumns,
   withAppColumns,
   withFieldAnswers,
 } from '../intake-builder/field-answers';
-import type { UpdateOwnProfilePayload } from '../schemas/profile';
-import type { Database } from '../types/database';
+import {
+  profileRecordSchema,
+  type ProfileRecordWithFields,
+  type ProfileUpdate,
+  type UpdateOwnProfilePayload,
+} from '../schemas/profile';
+import type { Database, Json } from '../types/database';
 import {
   PARTICIPANT_NOTE_COLUMNS,
   type ParticipantActivityEntry,
@@ -79,6 +86,82 @@ export async function updateParticipantProfile(
   const { error } = await client.rpc('update_participant_profile', {
     participant_id: participantId,
     payload: withFieldAnswers(fields, payload),
+  });
+  if (error) {
+    throw new AppError('DB-1', { message: error.message });
+  }
+}
+
+/** Her record as staff read it (RAPP-662): her account, the team's columns, her answers by field. */
+const participantRecordSchema = profileRecordSchema.extend({
+  is_active: z.boolean(),
+  is_forum_banned: z.boolean(),
+  anonymized_at: z.string().nullable(),
+  created_at: z.string(),
+  updated_at: z.string(),
+  is_test_account: z.boolean(),
+  role: z.string(),
+});
+
+/**
+ * A participant as the staff phone reads her (RAPP-663): her record, with her
+ * organization's app fields, so each answer is read by field and shown at its
+ * field's level.
+ */
+export interface ParticipantRecord
+  extends z.infer<typeof participantRecordSchema>, ProfileRecordWithFields {}
+
+/**
+ * One participant with her answers by field, each one the caller may read, or
+ * null when there is no such participant this caller may read. Reading her
+ * WRITES an audit row, as `fetchParticipantDetail` does.
+ */
+export async function fetchParticipantRecord(
+  client: Client,
+  participantId: string,
+): Promise<ParticipantRecord | null> {
+  const { data, error } = await client.rpc('get_participant_profile', {
+    participant_id: participantId,
+  });
+  if (error) {
+    throw new AppError('DB-1', { message: error.message });
+  }
+  const row: unknown = (data ?? [])[0];
+  if (row === undefined) return null;
+  const parsed = participantRecordSchema.safeParse(row);
+  if (!parsed.success) {
+    // The field names only: her record is personal data.
+    throw new AppError('DB-1', {
+      message: 'get_participant_profile returned a row this app does not understand',
+      context: { invalidFields: parsed.error.issues.map((issue) => issue.path.join('.')) },
+    });
+  }
+  return { ...parsed.data, fields: await fetchSystemFieldIndex(client) };
+}
+
+/**
+ * What staff send for her record: her names and settings when they changed
+ * them, and her answers by field. A Sensitive answer stays as stored for a
+ * caller who may not read it.
+ */
+export interface ParticipantUpdate {
+  readonly first_name?: string;
+  readonly last_name?: string;
+  readonly preferred_language?: string | null;
+  readonly media_consent?: boolean;
+  readonly season_number?: number | null;
+  readonly answers: ProfileUpdate['answers'];
+}
+
+/** Writes her record by field through the re-encrypting staff RPC (RAPP-663). */
+export async function updateParticipantRecord(
+  client: Client,
+  participantId: string,
+  update: ParticipantUpdate,
+): Promise<void> {
+  const { error } = await client.rpc('update_participant_profile', {
+    participant_id: participantId,
+    payload: { ...update, answers: answerPayload(update.answers) } as Json,
   });
   if (error) {
     throw new AppError('DB-1', { message: error.message });

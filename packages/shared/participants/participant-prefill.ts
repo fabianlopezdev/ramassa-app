@@ -13,6 +13,14 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { AppError } from '../errors';
 import {
+  appAnswersFromForm,
+  appFormToSend,
+  appFormValues,
+  isAppFormKey,
+} from '../intake-builder/app-field-form';
+import type { SystemFieldIndex } from '../intake-builder/field-answers';
+import type { CustomAnswerValue } from '../intake-builder/question-types';
+import {
   answeredQuestionsSchema,
   type AnsweredQuestions,
   type IntakeQuestion,
@@ -26,6 +34,7 @@ import {
   NIE_PATTERN,
   SHOE_SIZES,
 } from '../schemas/onboarding';
+import type { ProfileRecordWithFields } from '../schemas/profile';
 import { seasonAnswerFields } from '../schemas/season';
 import type { Database } from '../types/database';
 
@@ -251,6 +260,75 @@ export function buildProfilePrefillPayload(
     payload[PAYLOAD_KEY[field]] = value ?? null;
   }
   return payload;
+}
+
+// By field (RAPP-663) ---------------------------------------------------------------------------
+
+/** Her account settings in the prefill form, and the column each one is. */
+const ACCOUNT_FIELDS = {
+  firstName: 'first_name',
+  lastName: 'last_name',
+  preferredLanguage: 'preferred_language',
+  seasonNumber: 'season_number',
+} as const satisfies Partial<Record<ProfilePrefillField, string>>;
+
+/**
+ * The prefill form's starting values from her record by field (RAPP-663):
+ * her names always, a setting when it was answered, and every answer she has,
+ * read by field. A question nobody answered stays empty.
+ */
+export function prefillFormOf(
+  record: ProfileRecordWithFields,
+  answered: AnsweredQuestions,
+): ProfilePrefillInput {
+  const values = appFormValues(record.fields, record.answers);
+  return {
+    ...(values as Partial<ProfilePrefillInput>),
+    firstName: record.first_name,
+    lastName: record.last_name,
+    preferredLanguage: answered.has('preferred_language')
+      ? (record.preferred_language as ProfilePrefillInput['preferredLanguage'])
+      : undefined,
+    seasonNumber: answered.has('season_number') ? (record.season_number ?? undefined) : undefined,
+    supportingEntities: values.supportingEntities ?? [],
+  };
+}
+
+/**
+ * What to send for the fields staff changed (RAPP-663): each setting, and each
+ * answer by field. Fields that travel together go together, and the rules of
+ * every screen apply (`appFormToSend`).
+ */
+export function prefillUpdateOf(
+  fields: SystemFieldIndex,
+  values: Partial<ProfilePrefill>,
+  changed: ReadonlySet<string>,
+): ParticipantPrefillUpdate {
+  const sent = new Set<ProfilePrefillField>();
+  for (const name of changed) {
+    if (!(name in PAYLOAD_KEY)) continue;
+    const field = name as ProfilePrefillField;
+    sent.add(field);
+    const partner = TRAVELS_WITH[field];
+    if (partner !== undefined) sent.add(partner);
+  }
+  const update: Record<string, unknown> = {};
+  for (const [field, column] of Object.entries(ACCOUNT_FIELDS)) {
+    if (sent.has(field as ProfilePrefillField)) {
+      update[column] = values[field as keyof typeof ACCOUNT_FIELDS] ?? null;
+    }
+  }
+  const answers = appAnswersFromForm(fields, appFormToSend(values, [...sent].filter(isAppFormKey)));
+  return { ...update, answers } as ParticipantPrefillUpdate;
+}
+
+/** The changed settings and answers of a woman who has not joined yet. */
+export interface ParticipantPrefillUpdate {
+  readonly first_name?: string;
+  readonly last_name?: string;
+  readonly preferred_language?: string | null;
+  readonly season_number?: number | null;
+  readonly answers: Readonly<Record<string, CustomAnswerValue | null>>;
 }
 
 /** Her answered questions, from her answers (RAPP-662), for a caller who may list her. */

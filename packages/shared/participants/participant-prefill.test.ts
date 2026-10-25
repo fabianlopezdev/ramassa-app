@@ -5,11 +5,19 @@
  * an untouched default must never travel.
  */
 import { describe, expect, test } from 'bun:test';
+import { systemFieldIndexFromCatalog } from '../intake-builder/field-answers';
 import type { IntakeQuestion } from '../onboarding/intake';
+import {
+  systemFieldFixtureId,
+  systemFieldsCatalogFixture,
+  systemOptionFixtureId,
+} from '../testing/system-fields';
 import {
   buildProfilePrefillPayload,
   fetchParticipantAnsweredQuestions,
+  prefillFormOf,
   prefillFromRow,
+  prefillUpdateOf,
   profilePrefillSchema,
   type PrefillRow,
 } from './participant-prefill';
@@ -160,5 +168,62 @@ describe('fetchParticipantAnsweredQuestions', () => {
     await expect(fetchParticipantAnsweredQuestions(client as never, 'p1')).rejects.toMatchObject({
       code: 'DB-1',
     });
+  });
+});
+
+describe('by field (RAPP-663)', () => {
+  const fields = systemFieldIndexFromCatalog(systemFieldsCatalogFixture());
+  const record = {
+    id: '5eed0000-0000-4000-8000-000000000001',
+    first_name: 'Mariam',
+    last_name: 'Keita',
+    preferred_language: 'ca',
+    avatar_url: null,
+    media_consent: false,
+    terms_accepted_at: null,
+    season_number: 1,
+    answers: {
+      [systemFieldFixtureId('date_of_birth')]: '1999-03-14',
+      [systemFieldFixtureId('reference_entity')]: 'Creu Roja Osona',
+    },
+    fields,
+  };
+
+  test('only what somebody answered shows; a setting only when it was answered', () => {
+    const form = prefillFormOf(record, new Set<IntakeQuestion>(['first_name', 'season_number']));
+    expect(form).toEqual({
+      firstName: 'Mariam',
+      lastName: 'Keita',
+      dateOfBirth: '1999-03-14',
+      referenceEntity: 'Creu Roja Osona',
+      preferredLanguage: undefined,
+      seasonNumber: 1,
+      supportingEntities: [],
+    });
+  });
+
+  test('only the changed fields travel, with their partners, as answers by field', () => {
+    const values = profilePrefillSchema.parse({
+      firstName: 'Mariam',
+      lastName: 'Keita',
+      documentType: 'passport',
+      documentNumber: 'p123',
+      hasDependents: false,
+      numDependents: 2,
+      city: 'Vic',
+    });
+    expect(
+      prefillUpdateOf(fields, values, new Set(['documentType', 'hasDependents', 'lastName'])),
+    ).toEqual({
+      last_name: 'Keita',
+      answers: {
+        [systemFieldFixtureId('document_type')]: systemOptionFixtureId('document_type', 'passport'),
+        [systemFieldFixtureId('document_number')]: 'P123',
+        [systemFieldFixtureId('has_dependents')]: systemOptionFixtureId('has_dependents', 'no'),
+        // No count without dependants.
+        [systemFieldFixtureId('num_dependents')]: null,
+      },
+    });
+    expect(prefillUpdateOf(fields, values, new Set())).toEqual({ answers: {} });
   });
 });

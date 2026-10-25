@@ -32,6 +32,27 @@ const TYPES: Partial<Record<SystemFieldKey, string>> = {
   specific_needs_details: 'long_text',
 };
 
+/** Each app field's level as the seeded layout has it (`private.system_profile_fields()`). */
+const NORMAL: readonly SystemFieldKey[] = [
+  'first_name',
+  'last_name',
+  'reference_entity',
+  'clothing_size',
+  'shoe_size',
+];
+const SENSITIVE: readonly SystemFieldKey[] = [
+  'document_number',
+  'phone',
+  'address',
+  'postal_code',
+  'applicant_status',
+  'applicant_status_details',
+  'specific_needs',
+  'specific_needs_details',
+];
+const privacyOf = (key: SystemFieldKey) =>
+  NORMAL.includes(key) ? 'normal' : SENSITIVE.includes(key) ? 'sensitive' : 'personal';
+
 const KEYS = Object.keys(SYSTEM_FIELD_QUESTIONS) as SystemFieldKey[];
 
 const pad = (n: number) => String(n).padStart(12, '0');
@@ -55,6 +76,7 @@ export function systemFieldsCatalogFixture(): { readonly fields: readonly unknow
       id: systemFieldFixtureId(key),
       system_key: key,
       question_type: TYPES[key] ?? (CHOICES[key] === undefined ? 'short_text' : 'single_choice'),
+      privacy: privacyOf(key),
       options: (CHOICES[key] ?? []).map((option, index) => ({
         id: systemOptionFixtureId(key, option),
         key: option,

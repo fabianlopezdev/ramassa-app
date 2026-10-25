@@ -10,10 +10,12 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { AppError } from '../errors';
+import { appFormField } from '../intake-builder/app-field-form';
 import {
   fetchSystemFieldIndex,
   hasFieldColumns,
   withFieldAnswers,
+  type SystemFieldIndex,
 } from '../intake-builder/field-answers';
 import { withCancellation, type CancellableRequest } from '../lib/cancellation';
 import type { CreateParticipantInvitePayload } from '../schemas/accounts';
@@ -42,12 +44,36 @@ export async function createParticipantInvite(
   // offers first stays the invitation's own, and is her answer too.
   const fields = hasFieldColumns(payload) ? await fetchSystemFieldIndex(client) : new Map();
   const shared = withFieldAnswers(fields, payload) as Record<string, Json>;
-  const { data, error } = await client.rpc('create_participant_invite', {
-    payload:
-      payload.reference_entity === undefined
-        ? shared
-        : { ...shared, reference_entity: payload.reference_entity },
-  });
+  return sendParticipantInvite(
+    client,
+    payload.reference_entity === undefined
+      ? shared
+      : { ...shared, reference_entity: payload.reference_entity },
+  );
+}
+
+/**
+ * The invitation with her answers by field (RAPP-663): the entity staff name is
+ * the invitation's own (her wizard offers it first) and her answer to the
+ * entity question.
+ */
+export async function inviteParticipant(
+  client: Client,
+  payload: CreateParticipantInvitePayload,
+  fields: SystemFieldIndex,
+): Promise<CreatedParticipantInvite> {
+  const entity = appFormField(fields, 'referenceEntity');
+  return sendParticipantInvite(client, {
+    ...payload,
+    answers: entity === undefined ? {} : { [entity.id]: payload.reference_entity },
+  } as Json);
+}
+
+async function sendParticipantInvite(
+  client: Client,
+  payload: Json,
+): Promise<CreatedParticipantInvite> {
+  const { data, error } = await client.rpc('create_participant_invite', { payload });
   if (error) {
     // 23505: the RPC refuses an address that already has a profile, so staff
     // can be told to find her in the list rather than see a generic failure.

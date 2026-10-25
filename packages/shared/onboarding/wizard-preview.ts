@@ -82,6 +82,19 @@ export function answeredAtInvitation(
 }
 
 /**
+ * The questions an invitation answers (RAPP-663): her names, and her entity
+ * when staff name one. The staff preview plans her wizard with it.
+ */
+export function answeredByInvitation(invite: {
+  readonly referenceEntity?: string | null;
+}): AnsweredQuestions {
+  const entity = invite.referenceEntity?.trim() ?? '';
+  return new Set<IntakeQuestion>(
+    entity === '' ? ['first_name', 'last_name'] : ['first_name', 'last_name', 'reference_entity'],
+  );
+}
+
+/**
  * What her phone does with a question: shows it, shows it only when an
  * earlier answer makes it apply, or never shows it.
  */
