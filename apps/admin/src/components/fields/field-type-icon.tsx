@@ -11,10 +11,12 @@ import {
   CircleDot,
   CircleHelp,
   FileCheck,
+  Globe,
   Hash,
   List,
   ListChecks,
   Mail,
+  MapPin,
   Paperclip,
   PenLine,
   Phone,
@@ -42,6 +44,8 @@ const TYPE_ICONS: Readonly<Record<CustomQuestionType, LucideIcon>> = {
   consent: FileCheck,
   file_upload: Paperclip,
   signature: PenLine,
+  country: Globe,
+  municipality: MapPin,
 };
 
 export function FieldTypeIcon({

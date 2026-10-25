@@ -84,6 +84,8 @@ describe('the types', () => {
       'consent',
       'file_upload',
       'signature',
+      'country',
+      'municipality',
     ]);
   });
 
@@ -217,6 +219,10 @@ describe('one answer schema per type', () => {
       },
       false,
     ],
+    ['a country by its canonical name', question('country'), 'Síria', true],
+    ['a country in another language', question('country'), 'Syria', false],
+    ['a municipality of Catalonia', question('municipality'), 'Vic', true],
+    ['a place that is not a municipality', question('municipality'), 'Madrid', false],
     ['a drawn signature', question('signature'), strokes, true],
     ['a signature off the pad', question('signature'), [[[10, 2000]]], false],
   ];

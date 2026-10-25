@@ -388,7 +388,9 @@
       "item_list": "Lista que ella rellena",
       "consent": "Una autorización",
       "file_upload": "Foto o archivo",
-      "signature": "Firma"
+      "signature": "Firma",
+      "country": "País",
+      "municipality": "Municipio de Cataluña"
     },
     "typeLocked": "El tipo no puede cambiar, porque las respuestas ya dadas deben mantener su sentido.",
     "privacy": "Privacidad",

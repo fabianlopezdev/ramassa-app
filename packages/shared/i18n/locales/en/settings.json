@@ -388,7 +388,9 @@
       "item_list": "A list she fills in",
       "consent": "One consent",
       "file_upload": "Photo or file",
-      "signature": "Signature"
+      "signature": "Signature",
+      "country": "Country",
+      "municipality": "Municipality of Catalonia"
     },
     "typeLocked": "The type cannot change, because answers already given must keep their meaning.",
     "privacy": "Privacy",

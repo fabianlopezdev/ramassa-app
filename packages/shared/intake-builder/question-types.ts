@@ -18,12 +18,15 @@
  * phone (E.164), email and a choice are strings; a list is a list of strings; a
  * consent is `true`; a signature is the strokes of the authorization pad; a
  * file is `{key, name, content_type, size}`, its key in the private folder of
- * the woman who answered. Sensitive answers are encrypted as before.
+ * the woman who answered; a country or a municipality is its canonical name.
+ * Sensitive answers are encrypted as before.
  *
  * Docs: https://zod.dev/api (z.iso.date, refinements, discriminated settings).
  */
 import { z } from 'zod';
 import { signatureStrokesSchema, type SignatureStrokes } from '../equipment/handover';
+import { isCanonicalCountry } from '../i18n/countries';
+import { isCanonicalMunicipality } from '../i18n/municipalities';
 import type { LanguageCode } from '../schemas/language';
 
 export const CUSTOM_QUESTION_TYPES = [
@@ -42,8 +45,26 @@ export const CUSTOM_QUESTION_TYPES = [
   'consent',
   'file_upload',
   'signature',
+  'country',
+  'municipality',
 ] as const;
 export type CustomQuestionType = (typeof CUSTOM_QUESTION_TYPES)[number];
+
+/**
+ * The two lists the app ships (D6, RAPP-660): every country and every
+ * municipality of Catalonia. The answer is the canonical name the pickers
+ * already store (`Síria`, `Vic`), whatever language she reads.
+ */
+export const LIST_TYPES = ['country', 'municipality'] as const;
+
+/**
+ * The types the field form offers. The two lists join once her phone and the
+ * team's pages render them (RAPP-663 to RAPP-665); until then only the app's
+ * own fields use them.
+ */
+export const BUILDER_QUESTION_TYPES = CUSTOM_QUESTION_TYPES.filter(
+  (type) => !(LIST_TYPES as readonly string[]).includes(type),
+);
 
 /** Types answered by picking options staff wrote. */
 export const OPTION_TYPES = ['single_choice', 'multiple_choice', 'search_choice'] as const;
@@ -359,6 +380,10 @@ export function customAnswerSchema(question: AnswerQuestionShape): z.ZodType<Cus
     }
     case 'signature':
       return signatureStrokesSchema;
+    case 'country':
+      return z.string().refine(isCanonicalCountry);
+    case 'municipality':
+      return z.string().refine(isCanonicalMunicipality);
   }
 }
 
@@ -439,6 +464,10 @@ export function sampleCustomAnswer(
       return [text.item];
     case 'consent':
       return true;
+    case 'country':
+      return 'Espanya';
+    case 'municipality':
+      return 'Vic';
     case 'file_upload': {
       const isPhoto = fileSettings(question.settings).accept === 'photo';
       return {

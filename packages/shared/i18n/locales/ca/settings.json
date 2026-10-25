@@ -388,7 +388,9 @@
       "item_list": "Llista que ella omple",
       "consent": "Una autorització",
       "file_upload": "Foto o fitxer",
-      "signature": "Signatura"
+      "signature": "Signatura",
+      "country": "País",
+      "municipality": "Municipi de Catalunya"
     },
     "typeLocked": "El tipus no pot canviar, perquè les respostes ja donades han de mantenir el seu sentit.",
     "privacy": "Privacitat",

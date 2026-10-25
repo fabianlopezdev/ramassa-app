@@ -152,6 +152,13 @@ const CASES: readonly Case[] = [
   ['yes_no_maybe', {}, ' maybe '],
   ['yes_no', {}, ' yes'],
   ['single_choice', {}, ` ${LIVE[0]}`],
+  // The two lists the app ships (RAPP-660): the canonical name only.
+  ['country', {}, 'Síria'],
+  ['country', {}, 'Syria'],
+  ['country', {}, ' Síria'],
+  ['municipality', {}, 'Vic'],
+  ['municipality', {}, 'Madrid'],
+  ['municipality', {}, 3],
 ];
 
 function container(): string | null {
@@ -237,10 +244,12 @@ begin
   insert into public.intake_screens (org_id, title, after_screen)
   values ('${ORG}', '{"ca": "Paritat"}', 'logistics') returning id into screen;
   for entry in select value from jsonb_array_elements(p_cases) with ordinality as c(value, n) order by n loop
-    insert into public.custom_questions (org_id, screen_id, question_type, label, privacy, placements, settings)
-    values ('${ORG}', screen, entry ->> 'type', '{"ca": "Pregunta"}', 'normal', array['wizard'],
-            entry -> 'settings')
+    insert into public.profile_fields (org_id, section_id, kind, question_type, label, privacy, settings)
+    values ('${ORG}', (select id from public.profile_sections where org_id = '${ORG}' and key = 'support'),
+            'custom', entry ->> 'type', '{"ca": "Pregunta"}', 'normal', entry -> 'settings')
     returning id into question;
+    insert into public.field_placements (org_id, field_id, surface, screen_key)
+    values ('${ORG}', question, 'onboarding', screen::text);
     if entry ->> 'type' in ('${CHOICE_TYPES.join("','")}') then
       insert into public.custom_question_options (id, org_id, question_id, label, sort_order)
       values ('${LIVE[0]}', '${ORG}', question, '{"ca": "A"}', 0),
