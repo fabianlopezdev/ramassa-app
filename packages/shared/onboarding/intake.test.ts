@@ -15,7 +15,6 @@ import {
   nextWizardScreen,
   previousWizardScreen,
   screensToAsk,
-  trimPayloadToAnswers,
   wizardFlowOrder,
   wizardScreenPosition,
   type CustomWizardScreen,
@@ -289,68 +288,6 @@ describe('the flow staff arrange (RAPP-612)', () => {
     });
     expect(wizardScreenPosition('identity', nobody, [], moved)).toEqual({ step: 5, total: 12 });
     expect(wizardScreenPosition('summary', nobody, [], moved)).toEqual({ step: 10, total: 12 });
-  });
-});
-
-describe('trimPayloadToAnswers', () => {
-  const full = {
-    first_name: 'Mariam',
-    last_name: 'Keita',
-    date_of_birth: '1999-03-14',
-    place_of_birth: 'Bamako',
-    nationality: 'Mali',
-    preferred_language: 'ca',
-    document_type: 'none',
-    document_number: null,
-    phone: null,
-    address: null,
-    city: 'Vic',
-    postal_code: null,
-    reference_entity: 'Creu Roja Osona',
-    reference_contact_name: null,
-    has_dependents: false,
-    num_dependents: 0,
-    clothing_size: 'M',
-    shoe_size: '39',
-    media_consent: false,
-    terms_version: '2026-07-01',
-    locale_shown: 'ca',
-  };
-
-  test('with nothing answered, everything is sent', () => {
-    expect(trimPayloadToAnswers(full, answered(), {})).toEqual(full);
-  });
-
-  test('an answered question she left as stored is not sent, so the stored value stays', () => {
-    const trimmed = trimPayloadToAnswers(full, answered('nationality', 'clothing_size'), {
-      nationality: 'Mali',
-      clothing_size: 'M',
-    });
-    expect(trimmed).not.toHaveProperty('nationality');
-    expect(trimmed).not.toHaveProperty('clothing_size');
-    expect(trimmed.shoe_size).toBe('39');
-  });
-
-  test('an answered question she changed on the summary is sent', () => {
-    const trimmed = trimPayloadToAnswers(full, answered('nationality'), { nationality: 'Guinea' });
-    expect(trimmed.nationality).toBe('Mali');
-  });
-
-  test('a two-field question travels whole', () => {
-    const trimmed = trimPayloadToAnswers(full, answered('dependents', 'document'), {
-      has_dependents: false,
-      num_dependents: 2,
-      document_type: 'none',
-      document_number: null,
-    });
-    expect(trimmed).toMatchObject({ has_dependents: false, num_dependents: 0 });
-    expect(trimmed).not.toHaveProperty('document_type');
-    expect(trimmed).not.toHaveProperty('document_number');
-  });
-
-  test('consent and the terms context are always sent', () => {
-    const trimmed = trimPayloadToAnswers(full, new Set(INTAKE_QUESTIONS), full);
-    expect(Object.keys(trimmed).sort()).toEqual(['locale_shown', 'media_consent', 'terms_version']);
   });
 });
 

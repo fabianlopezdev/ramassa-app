@@ -8,6 +8,7 @@ import {
 import {
   appAnswersFromForm,
   appFieldIds,
+  appFormToSend,
   appFormValues,
   supportNeedsAnswerParts,
 } from './app-field-form';
@@ -171,4 +172,44 @@ test('per category details of an older value join her explanation, named in Cata
 test('appFieldIds lists every app field', () => {
   expect(appFieldIds(index).has(fieldId('specific_needs_details'))).toBe(true);
   expect(appFieldIds(index).size).toBe(index.size);
+});
+
+describe('appFormToSend', () => {
+  test('a number travels only with a document that takes one, a name only for another', () => {
+    expect(
+      appFormToSend({ documentType: 'none', documentNumber: 'X1234567L', documentName: 'Carta' }, [
+        'documentType',
+        'documentNumber',
+        'documentName',
+      ]),
+    ).toEqual({ documentType: 'none', documentNumber: null, documentName: null });
+    // A skipped document sends no stray number.
+    expect(appFormToSend({ documentNumber: 'X1234567L' }, ['documentNumber'])).toEqual({
+      documentNumber: null,
+    });
+    expect(
+      appFormToSend({ documentType: 'other', documentName: ' Carta ' }, ['documentName']),
+    ).toEqual({ documentName: 'Carta' });
+  });
+
+  test('no count without dependants, no details without another status', () => {
+    expect(
+      appFormToSend(
+        {
+          hasDependents: false,
+          numDependents: 2,
+          applicantStatus: 'refugee',
+          applicantStatusDetails: 'x',
+        },
+        ['numDependents', 'applicantStatusDetails'],
+      ),
+    ).toEqual({ numDependents: null, applicantStatusDetails: null });
+  });
+
+  test('her entity left out stays out, her "None" is null, an unanswered value is null', () => {
+    expect(appFormToSend({}, ['referenceEntity', 'phone'])).toEqual({ phone: null });
+    expect(appFormToSend({ referenceEntity: null }, ['referenceEntity'])).toEqual({
+      referenceEntity: null,
+    });
+  });
 });

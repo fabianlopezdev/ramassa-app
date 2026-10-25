@@ -12,7 +12,6 @@
  * test reads the migration block marked `intake-questions`.
  */
 import { z } from 'zod';
-import { questionPayloadKeys } from './system-fields';
 
 export const INTAKE_QUESTIONS = [
   'first_name',
@@ -324,42 +323,4 @@ export function wizardScreenPosition(
 ): { step: number; total: number } {
   const screens = visibleScreens(answered, custom, flow);
   return { step: Math.max(screens.indexOf(screen), 0) + 1, total: screens.length };
-}
-
-/** Keys the server always needs, whatever was answered before. */
-const ALWAYS_SENT_KEYS = ['media_consent', 'terms_version', 'locale_shown'] as const;
-
-/**
- * The payload with only the questions that were unanswered or that she
- * changed. `complete_onboarding` keeps the stored value of every question the
- * payload leaves out, so a question she only confirmed on the summary is not
- * sent and its staff or entity record stays.
- */
-export function trimPayloadToAnswers<T extends Record<string, unknown>>(
-  payload: T,
-  answered: AnsweredQuestions,
-  stored: Readonly<Record<string, unknown>>,
-): Partial<T> {
-  const kept: Record<string, unknown> = {};
-  for (const key of ALWAYS_SENT_KEYS) {
-    if (key in payload) kept[key] = payload[key];
-  }
-  for (const question of INTAKE_QUESTIONS) {
-    const keys = questionPayloadKeys(question);
-    const presentKeys = keys.filter((key) => key in payload);
-    if (presentKeys.length === 0) continue;
-    const isChanged = presentKeys.some(
-      (key) => normalizeForComparison(payload[key]) !== normalizeForComparison(stored[key]),
-    );
-    if (!answered.has(question) || isChanged) {
-      for (const key of presentKeys) kept[key] = payload[key];
-    }
-  }
-  return kept as Partial<T>;
-}
-
-/** An empty string and a missing value are the same answer: none. */
-function normalizeForComparison(value: unknown): unknown {
-  if (value === undefined || value === null || value === '') return null;
-  return value;
 }

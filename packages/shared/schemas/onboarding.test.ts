@@ -16,7 +16,6 @@
 
 import { describe, expect, setSystemTime, test } from 'bun:test';
 import {
-  buildCompleteOnboardingPayload,
   documentationStepSchema,
   identityStepSchema,
   logisticsStepSchema,
@@ -205,90 +204,6 @@ describe('termsStepSchema', () => {
     expect(parsed.mediaConsent).toBe(false);
     expect(termsStepSchema.safeParse({ termsAccepted: false }).success).toBe(false);
     expect(termsStepSchema.safeParse({}).success).toBe(false);
-  });
-});
-
-describe('buildCompleteOnboardingPayload', () => {
-  test('maps every field to the exact snake_case keys the SQL contract reads', () => {
-    const payload = buildCompleteOnboardingPayload(
-      {
-        identity: identityStepSchema.parse(validIdentity),
-        documentation: documentationStepSchema.parse({
-          documentType: 'nie',
-          documentNumber: 'X1234567L',
-        }),
-        logistics: logisticsStepSchema.parse(validLogistics),
-        terms: termsStepSchema.parse({ termsAccepted: true, mediaConsent: true }),
-      },
-      { termsVersion: '2026-07-01', localeShown: 'ar' },
-    );
-
-    expect(payload).toEqual({
-      first_name: 'أمينة',
-      last_name: 'الحسن',
-      date_of_birth: '1995-03-14',
-      place_of_birth: 'حلب',
-      nationality: 'Síria',
-      preferred_language: 'ar',
-      document_type: 'nie',
-      document_number: 'X1234567L',
-      document_name: null,
-      phone: '+34600111222',
-      address: 'Carrer Major 1, 2n',
-      city: 'Vic',
-      postal_code: '08500',
-      reference_entity: 'Creu Roja Osona',
-      reference_contact_name: 'Sílvia Bosch',
-      has_dependents: true,
-      num_dependents: 2,
-      clothing_size: 'M',
-      shoe_size: '38',
-      media_consent: true,
-      terms_version: '2026-07-01',
-      locale_shown: 'ar',
-    });
-  });
-
-  test('a no-document, no-contact, no-entity completion produces a payload the RPC accepts', () => {
-    const payload = buildCompleteOnboardingPayload(
-      {
-        identity: identityStepSchema.parse(validIdentity),
-        documentation: documentationStepSchema.parse({ documentType: 'none' }),
-        logistics: logisticsStepSchema.parse({
-          referenceEntity: null,
-          hasDependents: false,
-          clothingSize: 'L',
-          shoeSize: '40',
-        }),
-        terms: termsStepSchema.parse({ termsAccepted: true }),
-      },
-      { termsVersion: '2026-07-01', localeShown: 'ca' },
-    );
-
-    expect(payload.document_type).toBe('none');
-    expect(payload.document_number).toBeNull();
-    expect(payload.phone).toBeNull();
-    expect(payload.reference_entity).toBeNull();
-    expect(payload.media_consent).toBe(false);
-  });
-
-  test('a skipped document is sent empty, and a stray number is not sent without its type', () => {
-    const payload = buildCompleteOnboardingPayload(
-      {
-        identity: identityStepSchema.parse(validIdentity),
-        documentation: { documentNumber: 'X1234567L' },
-        logistics: logisticsStepSchema.parse({
-          referenceEntity: null,
-          hasDependents: false,
-          clothingSize: 'L',
-          shoeSize: '40',
-        }),
-        terms: termsStepSchema.parse({ termsAccepted: true }),
-      },
-      { termsVersion: '2026-07-01', localeShown: 'ca' },
-    );
-    expect(payload.document_type).toBeNull();
-    expect(payload.document_number).toBeNull();
   });
 });
 
