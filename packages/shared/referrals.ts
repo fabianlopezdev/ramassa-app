@@ -1,6 +1,11 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { AppError } from './errors';
+import {
+  appAnswersFromForm,
+  appFormToSend,
+  type AppFormKey,
+} from './intake-builder/app-field-form';
 import { isEmptyAnswer } from './intake-builder/builder';
 import {
   columnsFromFieldAnswers,
@@ -9,7 +14,7 @@ import {
   fieldAnswersReadSchema,
   type SystemFieldIndex,
 } from './intake-builder/field-answers';
-import type { CustomAnswerValue } from './intake-builder/question-types';
+import { internationalPhone, type CustomAnswerValue } from './intake-builder/question-types';
 import { DOCUMENT_TYPES, NIE_PATTERN } from './schemas/onboarding';
 import { personNameSchema, trimPersonName } from './schemas/person-name';
 import {
@@ -189,6 +194,105 @@ export function buildReferralPayload(
     seasonNumber: referral.seasonNumber,
     consentConfirmed: referral.consentConfirmed,
     answers: Object.fromEntries(answers) as Json,
+  };
+}
+
+// By field (RAPP-663) ---------------------------------------------------------------------------
+
+/** The app's fields the referral form can ask, by the form's names. */
+const REFERRAL_FORM_KEYS = [
+  'phone',
+  'dateOfBirth',
+  'nationality',
+  'documentType',
+  'documentNumber',
+  'city',
+  'applicantStatus',
+  'supportingEntities',
+  'referenceContactName',
+  'childcareNeed',
+  'specificNeeds',
+] as const satisfies readonly AppFormKey[];
+
+/**
+ * The referral's answers to the app's fields, by field (RAPP-663): a phone in
+ * its international form (a Spanish number typed without +34 gets it), a
+ * document number only with a type that takes one. A referral starts empty,
+ * so an empty answer is left out.
+ */
+export function referralAppAnswers(
+  fields: SystemFieldIndex,
+  referral: CreateReferral,
+): Record<string, CustomAnswerValue> {
+  const form = {
+    ...referral,
+    phone: referral.phone === null ? null : internationalPhone(referral.phone),
+    documentType: referral.documentType ?? undefined,
+    documentNumber: referral.documentNumber ?? undefined,
+  };
+  return Object.fromEntries(
+    Object.entries(appAnswersFromForm(fields, appFormToSend(form, REFERRAL_FORM_KEYS))).flatMap(
+      ([id, value]) => (value === null || isEmptyAnswer(value) ? [] : [[id, value]]),
+    ),
+  );
+}
+
+/**
+ * The referral as `create_entity_referral` takes it: her names, every answer
+ * by field (the app's and Ramassà's), and the referral's own data.
+ */
+export function referralRequest(referral: CreateReferral, answers: ReferralFieldAnswers): Json {
+  return {
+    first_name: referral.firstName,
+    last_name: referral.lastName,
+    email: referral.email,
+    documentationStatus: referral.documentationStatus,
+    notes: referral.notes,
+    seasonNumber: referral.seasonNumber,
+    consentConfirmed: referral.consentConfirmed,
+    answers: Object.fromEntries(
+      Object.entries(answers).filter(([, value]) => !isEmptyAnswer(value)),
+    ) as Json,
+  };
+}
+
+/** Sends a referral with every answer by field; the database checks the required ones. */
+export async function sendReferral(
+  client: Pick<Client, 'rpc'>,
+  referral: CreateReferral,
+  answers: ReferralFieldAnswers,
+): Promise<string> {
+  const { data, error } = await client.rpc('create_entity_referral', {
+    p_payload: referralRequest(referral, answers),
+  });
+  if (error) databaseFailure(error.message);
+  return z.uuid().parse(data);
+}
+
+/** One referral with the entity's answers by field, and the fields to read them by. */
+export interface ReferralRecord extends Omit<Referral, 'answers'> {
+  /** The entity's answers by field id, each one the reader may read (RAPP-662). */
+  readonly answers: Readonly<Record<string, unknown>>;
+  readonly seasonNumber: number | null;
+  readonly fields: SystemFieldIndex;
+}
+
+/** One referral as the entity's phone reads it (RAPP-663): her answers by field. */
+export async function fetchReferralRecord(
+  client: Pick<Client, 'rpc'>,
+  referralId: string,
+): Promise<ReferralRecord> {
+  const { data, error } = await client.rpc('get_entity_referral', {
+    p_referral_id: z.uuid().parse(referralId),
+  });
+  if (error) databaseFailure(error.message);
+  const row = z.array(referralRpcRowSchema).min(1).max(1).parse(data)[0];
+  if (row === undefined) databaseFailure('Referral was not returned');
+  return {
+    ...referralFromRow(row),
+    answers: row.answers ?? {},
+    seasonNumber: row.season_number ?? null,
+    fields: await fetchSystemFieldIndex(client),
   };
 }
 

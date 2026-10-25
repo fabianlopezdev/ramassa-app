@@ -11,6 +11,7 @@ import {
   fieldsAnsweredByEntity,
   isAlwaysOnEntityForm,
   missingEntityFormFields,
+  requiredEntityFormFieldsLeftEmpty,
 } from './entity-form';
 import { NO_CHOICES, playerPlan } from './player-plan';
 import type { FieldPlacement, ProfileField, ProfileLayout } from './profile-layout';
@@ -219,4 +220,23 @@ describe('her onboarding after the entity answered', () => {
     const choices = { ...NO_CHOICES, customStates: { [QUESTION]: 'ask' as const } };
     expect(questionIn(playerPlan(catalog, new Set(), choices, answered))?.asking).toBe('asked');
   });
+});
+
+test('a required field left empty is named by its field id, her names included (RAPP-663)', () => {
+  const items = [
+    { kind: 'builtin', key: 'first_name', field: { id: 'first' }, placement: { required: true } },
+    { kind: 'builtin', key: 'document', field: { id: 'type' }, placement: { required: true } },
+    { kind: 'builtin', key: 'city', field: { id: 'city' }, placement: { required: false } },
+    {
+      kind: 'custom',
+      field: { id: 'details' },
+      placement: { required: true },
+      question: { showWhen: { questionId: 'gate', optionId: 'yes' } },
+    },
+  ] as unknown as Parameters<typeof requiredEntityFormFieldsLeftEmpty>[0];
+  expect(requiredEntityFormFieldsLeftEmpty(items, { first: 'Amina', type: '' })).toEqual(['type']);
+  // A condition that holds asks the field.
+  expect(
+    requiredEntityFormFieldsLeftEmpty(items, { first: 'Amina', type: 'x', gate: 'yes' }),
+  ).toEqual(['details']);
 });

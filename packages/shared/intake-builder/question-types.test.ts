@@ -15,6 +15,7 @@ import {
   CUSTOM_ANSWER_FILE_FOLDER,
   CUSTOM_QUESTION_TYPES,
   customAnswerSchema,
+  internationalPhone,
   isOptionType,
   normalizeCustomAnswerInput,
   parseQuestionSettings,
@@ -310,4 +311,13 @@ describe('the scenario tool fills every type with a valid sample', () => {
       expect(customAnswerError(asked, sample)).toBeNull();
     });
   }
+});
+
+test('a phone takes its international form: +34 before a local Spanish number (RAPP-663)', () => {
+  expect(internationalPhone('612 345 678')).toBe('+34612345678');
+  expect(internationalPhone('93-000-54-99')).toBe('+34930005499');
+  expect(internationalPhone('0034 612 345 678')).toBe('+34612345678');
+  expect(internationalPhone('+212 6 12 34 56 78')).toBe('+212612345678');
+  // Not a Spanish number: left as typed, for the check to refuse.
+  expect(internationalPhone('12345')).toBe('12345');
 });

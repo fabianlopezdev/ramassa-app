@@ -387,6 +387,19 @@ export function customAnswerSchema(question: AnswerQuestionShape): z.ZodType<Cus
   }
 }
 
+/**
+ * A phone as the field stores it (E.164, RAPP-663): separators out, a leading
+ * 00 as +, and a Spanish number typed without its country code (nine digits,
+ * 6 to 9 first) with +34 in front. Anything else stays as typed, so the check
+ * refuses it.
+ */
+export function internationalPhone(value: string): string {
+  const tidy = value.replace(/[\s\-.()]/g, '');
+  if (tidy.startsWith('00')) return `+${tidy.slice(2)}`;
+  if (/^[6-9]\d{8}$/.test(tidy)) return `+34${tidy}`;
+  return tidy;
+}
+
 /** What she typed, tidied the way the field shows it: separators out of a phone, an email lowercased, list items trimmed. */
 export function normalizeCustomAnswerInput(
   question: Pick<AnswerQuestionShape, 'type'>,

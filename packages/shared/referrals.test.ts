@@ -4,8 +4,11 @@ import {
   buildReferralPayload,
   createReferralSchema,
   fetchEntityReferrals,
+  fetchReferralRecord,
   fetchSupportingEntityNames,
   filterReferrals,
+  referralAppAnswers,
+  sendReferral,
   submitReferralUpdate,
   type Referral,
 } from './referrals';
@@ -217,5 +220,102 @@ describe('fetchSupportingEntityNames', () => {
       'Creu Roja Osona',
     ]);
     expect(calls).toEqual(['list_supporting_entity_names']);
+  });
+});
+
+describe('the referral by field (RAPP-663)', () => {
+  const fields = systemFieldIndexFromCatalog(systemFieldsCatalogFixture());
+  const referral = createReferralSchema.parse({
+    firstName: 'Amina',
+    lastName: 'Haddad',
+    phone: '612 345 678',
+    documentationStatus: 'missing',
+    documentType: 'none',
+    documentNumber: 'X1',
+    city: 'Vic',
+    applicantStatus: 'refugee',
+    supportingEntities: [],
+    specificNeeds: 'Una cadira de rodes',
+    seasonNumber: 2,
+    consentConfirmed: true,
+  });
+
+  test('her answers by field: a local phone gets +34, no number without a document', () => {
+    expect(referralAppAnswers(fields, referral)).toEqual({
+      [systemFieldFixtureId('phone')]: '+34612345678',
+      [systemFieldFixtureId('document_type')]: systemOptionFixtureId('document_type', 'none'),
+      [systemFieldFixtureId('city')]: 'Vic',
+      [systemFieldFixtureId('applicant_status')]: systemOptionFixtureId(
+        'applicant_status',
+        'refugee',
+      ),
+      // Her own words read as another circumstance, in the one details text.
+      [systemFieldFixtureId('specific_needs')]: [systemOptionFixtureId('specific_needs', 'other')],
+      [systemFieldFixtureId('specific_needs_details')]: 'Una cadira de rodes',
+    });
+  });
+
+  test('the request carries her names, her answers by field and the referral itself', async () => {
+    let call: unknown;
+    const rpc = async (name: string, args: unknown) => {
+      call = [name, args];
+      return { data: '5eed0000-0000-4000-8010-000000000009', error: null };
+    };
+    await sendReferral({ rpc } as never, referral, {
+      [systemFieldFixtureId('city')]: 'Vic',
+      team: '',
+    });
+    expect(call).toEqual([
+      'create_entity_referral',
+      {
+        p_payload: {
+          first_name: 'Amina',
+          last_name: 'Haddad',
+          email: null,
+          documentationStatus: 'missing',
+          notes: null,
+          seasonNumber: 2,
+          consentConfirmed: true,
+          answers: { [systemFieldFixtureId('city')]: 'Vic' },
+        },
+      },
+    ]);
+  });
+
+  test('one referral reads with its answers by field and the fields to read them by', async () => {
+    const rpc = async (name: string) =>
+      name === 'intake_catalog'
+        ? { data: systemFieldsCatalogFixture(), error: null }
+        : {
+            data: [
+              {
+                id: '5eed0000-0000-4000-8010-000000000001',
+                entity_user_id: '5eed0000-0000-4000-8000-000000000004',
+                referred_profile_id: null,
+                assigned_staff_id: null,
+                referred_first_name: 'Amina',
+                referred_last_name: 'Haddad',
+                referred_phone: null,
+                referred_email: null,
+                documentation_status: 'missing',
+                notes: null,
+                status: 'pending',
+                entity_name: 'Creu Roja Osona',
+                created_at: '2026-08-14T10:00:00Z',
+                updated_at: '2026-08-14T10:00:00Z',
+                answers: { [systemFieldFixtureId('phone')]: '+34612345678' },
+                season_number: 2,
+                consent_confirmed_at: null,
+              },
+            ],
+            error: null,
+          };
+    const record = await fetchReferralRecord(
+      { rpc } as never,
+      '5eed0000-0000-4000-8010-000000000001',
+    );
+    expect(record.answers).toEqual({ [systemFieldFixtureId('phone')]: '+34612345678' });
+    expect(record.seasonNumber).toBe(2);
+    expect(record.fields.get('phone')?.id).toBe(systemFieldFixtureId('phone'));
   });
 });

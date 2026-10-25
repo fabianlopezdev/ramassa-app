@@ -195,6 +195,28 @@ export function missingEntityFormFields(
   });
 }
 
+/**
+ * The ids of the required fields left empty, every one read by its field id
+ * (RAPP-663): an app field by the id of its first part (the document by its
+ * type), her names under their fields' ids too. A condition that does not
+ * apply asks nothing.
+ */
+export function requiredEntityFormFieldsLeftEmpty(
+  items: readonly EntityFormItem[],
+  answers: Readonly<Record<string, unknown>>,
+): readonly string[] {
+  return items.flatMap((item) => {
+    if (!item.placement.required) return [];
+    if (item.kind === 'custom') {
+      const condition = item.question.showWhen;
+      if (condition !== undefined && answers[condition.questionId] !== condition.optionId) {
+        return [];
+      }
+    }
+    return isEmpty(answers[item.field.id]) ? [item.field.id] : [];
+  });
+}
+
 const FIELD_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
 /**
