@@ -1,9 +1,22 @@
+import { wizardDraftStoreOn } from '@/lib/wizard-draft';
 import { fireEvent, render } from '@testing-library/react';
 import { afterAll, beforeEach, expect, mock, test } from 'bun:test';
 import { createElement, type ReactNode } from 'react';
+import { systemFieldIndexFromCatalog } from '@ramassa/shared/intake-builder';
 import { createInMemoryOnboardingDraftStore } from '@ramassa/shared/onboarding-drafts';
+import { encodeSupportNeeds } from '@ramassa/shared/schemas';
+import { systemFieldsCatalogFixture } from '@ramassa/shared/testing';
 
-const store = createInMemoryOnboardingDraftStore();
+// Her draft is kept by field (RAPP-663): the screens save through her fields.
+const store = wizardDraftStoreOn(
+  createInMemoryOnboardingDraftStore(),
+  systemFieldIndexFromCatalog(systemFieldsCatalogFixture()),
+);
+const quietRoom = encodeSupportNeeds({
+  categories: ['other'],
+  details: {},
+  explanation: 'Quiet room',
+});
 const push = mock(() => {});
 const replace = mock(() => {});
 const goNext = mock(() => {});
@@ -102,7 +115,7 @@ test('a situation other than Other goes directly to the next main screen', () =>
 test('Other opens its explanation on Continue, and Back preserves text in the same question', () => {
   store.saveDraft({
     currentStep: 'season',
-    season: { applicantStatus: 'migrant', specificNeeds: 'Quiet room' },
+    season: { applicantStatus: 'migrant', specificNeeds: quietRoom },
   });
   const picker = render(createElement(SeasonWizardStep, { screen: 'season' }));
   expect(picker.queryByText('seasonStepIntro')).toBeNull();
@@ -118,7 +131,7 @@ test('Other opens its explanation on Continue, and Back preserves text in the sa
   fireEvent.input(input, { target: { value: 'Example situation' } });
   fireEvent.click(details.getByRole('button', { name: 'Back' }));
   expect(store.loadDraft()?.season?.applicantStatusDetails).toBe('Example situation');
-  expect(store.loadDraft()?.season?.specificNeeds).toBe('Quiet room');
+  expect(store.loadDraft()?.season?.specificNeeds).toBe(quietRoom);
   expect(replace).toHaveBeenCalledWith('/onboarding/season?entrance=none');
   details.unmount();
   const reopened = render(createElement(Details));

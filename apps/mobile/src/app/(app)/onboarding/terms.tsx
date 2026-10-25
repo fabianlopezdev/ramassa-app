@@ -27,11 +27,7 @@ import {
   identityFormSchemaFor,
   logisticsFormSchemaFor,
 } from '@/lib/onboarding-form';
-import {
-  customAnswersToSave,
-  storedPayloadFromProfile,
-  wizardStepRoute,
-} from '@/lib/onboarding-intake';
+import { appAnswersToSave, customAnswersToSave, wizardStepRoute } from '@/lib/onboarding-intake';
 import { useWizardIntake, useWizardStep } from '@/lib/onboarding-intake-context';
 import { useScreenWording } from '@/lib/screen-wording';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
@@ -43,18 +39,10 @@ import { Text } from 'react-native';
 import { useAuth } from '@ramassa/shared/auth';
 import { signatureStrokesSchema, type SignatureStrokes } from '@ramassa/shared/equipment';
 import type { AppErrorCode } from '@ramassa/shared/errors';
-import {
-  DEFAULT_REQUIRED_QUESTIONS,
-  DEFAULT_WIZARD_FLOW,
-  trimPayloadToAnswers,
-} from '@ramassa/shared/intake';
+import { DEFAULT_REQUIRED_QUESTIONS, DEFAULT_WIZARD_FLOW } from '@ramassa/shared/intake';
+import { appAnswersFromForm, appFormField, appFormToSend } from '@ramassa/shared/intake-builder';
 import type { OnboardingDraftStep } from '@ramassa/shared/onboarding-drafts';
-import {
-  buildCompleteOnboardingPayload,
-  seasonAnswerFields,
-  termsSigningSchema,
-  termsStepSchema,
-} from '@ramassa/shared/schemas';
+import { seasonAnswerFields, termsSigningSchema, termsStepSchema } from '@ramassa/shared/schemas';
 import type { LanguageCode } from '@ramassa/shared/schemas';
 
 export default function TermsStepScreen() {
@@ -190,17 +178,23 @@ export default function TermsStepScreen() {
         mediaConsent: hasMediaConsent,
       });
 
-      const payload = buildCompleteOnboardingPayload(
-        {
-          identity: identity.data,
-          documentation: documentation.data,
-          logistics: logistics.data,
-          season: draft?.season === undefined ? undefined : season.data,
-          terms,
-        },
-        // The version and the language she was shown (RAPP-613): a newer
-        // version published while she read this one asks her again.
-        { termsVersion: wording.termsVersion, localeShown: wording.localeShown },
+      // Her answers to the app's fields, by field (RAPP-663): the checked
+      // forms with the rules every screen shares, then only what is new or
+      // changed (RAPP-300). The server keeps every stored answer the payload
+      // leaves out, so a staff answer she only confirmed on the summary keeps
+      // its source.
+      const sent = appFormToSend({
+        ...identity.data,
+        ...documentation.data,
+        ...logistics.data,
+        ...season.data,
+      });
+      const entity = appFormField(intake.fields, 'referenceEntity');
+      const appAnswers = appAnswersToSave(
+        appAnswersFromForm(intake.fields, sent),
+        intake.customAnswers,
+        // "None" to the entity question is an answer with no value.
+        sent.referenceEntity === null && entity !== undefined ? new Set([entity.id]) : new Set(),
       );
 
       // Her answers to the staff questions (RAPP-307), only the new or changed
@@ -213,17 +207,19 @@ export default function TermsStepScreen() {
         intake.customAnswers,
       );
 
-      // Only what is new or changed travels (RAPP-300): the server keeps every
-      // stored value the payload leaves out, so a staff answer she only
-      // confirmed on the summary is never overwritten.
       const result = await completeOnboarding(
-        trimPayloadToAnswers(
-          payload,
-          intake.answered,
-          intake.profile === null ? {} : storedPayloadFromProfile(intake.profile),
-        ),
+        {
+          first_name: identity.data.firstName,
+          last_name: identity.data.lastName,
+          preferred_language: identity.data.preferredLanguage,
+          media_consent: terms.mediaConsent,
+          // The version and the language she was shown (RAPP-613): a newer
+          // version published while she read this one asks her again.
+          terms_version: wording.termsVersion,
+          locale_shown: wording.localeShown,
+          answers: { ...appAnswers, ...customAnswers },
+        },
         signing.data,
-        customAnswers,
       );
       if (!result.ok) {
         // The shake and its buzz come from the code, so a system failure feels

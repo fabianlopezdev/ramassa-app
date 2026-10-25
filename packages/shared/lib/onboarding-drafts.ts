@@ -52,18 +52,24 @@ export type OnboardingStepName = (typeof ONBOARDING_STEPS)[number];
 export type OnboardingDraftStep =
   OnboardingStepName | `custom:${string}` | `needs-detail:${SupportNeedCategory}`;
 
+const currentStepSchema = z.union([
+  z.enum(ONBOARDING_STEPS),
+  z.templateLiteral(['custom:', z.string()]),
+  z.templateLiteral(['needs-detail:', z.enum(SUPPORT_NEED_CATEGORIES)]),
+]);
+
 /**
  * Partial, permissive shapes on purpose: a draft holds whatever the player has
  * typed SO FAR, which by definition need not validate yet. The step schemas
  * (schemas/onboarding.ts) judge completeness when the player presses Continue;
  * this schema only guards against structural drift from older app versions.
+ *
+ * Version 1 kept each screen's form. It is still the shape the screens edit
+ * (`OnboardingDraft`), and a version 1 draft on her phone is converted, never
+ * dropped (RAPP-663).
  */
-const draftSchema = z.object({
-  currentStep: z.union([
-    z.enum(ONBOARDING_STEPS),
-    z.templateLiteral(['custom:', z.string()]),
-    z.templateLiteral(['needs-detail:', z.enum(SUPPORT_NEED_CATEGORIES)]),
-  ]),
+const legacyDraftSchema = z.object({
+  currentStep: currentStepSchema,
   identity: z.record(z.string(), z.unknown()).optional(),
   documentation: z.record(z.string(), z.unknown()).optional(),
   logistics: z.record(z.string(), z.unknown()).optional(),
@@ -77,6 +83,34 @@ const draftSchema = z.object({
   scenarioStamp: z.string().optional(),
 });
 
+/**
+ * Version 2 (RAPP-663): her answers by field id, every field alike, the app's
+ * and the team's. Her names and her app language stay on her account (D2).
+ * `screen` keeps what a screen shows that no answer holds, such as her "No"
+ * to the entity question.
+ */
+const storedDraftSchema = z.object({
+  version: z.literal(2),
+  currentStep: currentStepSchema,
+  account: z
+    .object({
+      firstName: z.string().optional(),
+      lastName: z.string().optional(),
+      preferredLanguage: z.string().optional(),
+    })
+    .optional(),
+  answers: z.record(z.string(), customAnswerValueSchema).optional(),
+  screen: z.record(z.string(), z.unknown()).optional(),
+  terms: z.record(z.string(), z.unknown()).optional(),
+  scenarioStamp: z.string().optional(),
+});
+
+const draftSchema = z.union([storedDraftSchema, legacyDraftSchema]);
+
+/**
+ * The wizard screens' view of her draft: each screen's form, and her answers
+ * to the team's fields by id. Version 1 stored exactly this.
+ */
 export interface OnboardingDraft {
   currentStep: OnboardingDraftStep;
   identity?: Record<string, unknown>;
@@ -88,9 +122,29 @@ export interface OnboardingDraft {
   scenarioStamp?: string;
 }
 
+/** Her draft as her phone keeps it since RAPP-663: answers by field id. */
+export interface StoredOnboardingDraft {
+  version: 2;
+  currentStep: OnboardingDraftStep;
+  account?: { firstName?: string; lastName?: string; preferredLanguage?: string };
+  answers?: Record<string, CustomAnswerValue>;
+  screen?: Record<string, unknown>;
+  terms?: Record<string, unknown>;
+  scenarioStamp?: string;
+}
+
+/** What may be on her phone: the current version, or a version 1 draft to convert. */
+export type PersistedOnboardingDraft = StoredOnboardingDraft | OnboardingDraft;
+
+export function isStoredOnboardingDraft(
+  draft: PersistedOnboardingDraft,
+): draft is StoredOnboardingDraft {
+  return 'version' in draft && draft.version === 2;
+}
+
 export interface OnboardingDraftStore {
-  loadDraft(): OnboardingDraft | null;
-  saveDraft(draft: OnboardingDraft): void;
+  loadDraft(): PersistedOnboardingDraft | null;
+  saveDraft(draft: PersistedOnboardingDraft): void;
   clearDraft(): void;
 }
 
@@ -99,11 +153,11 @@ export interface AccountOnboardingDraftStore extends OnboardingDraftStore {
   clearUserDraft(userId: string): void;
 }
 
-function parseStoredDraft(raw: string | undefined | null): OnboardingDraft | null {
+function parseStoredDraft(raw: string | undefined | null): PersistedOnboardingDraft | null {
   if (raw === undefined || raw === null) return null;
   try {
     const parsed = draftSchema.safeParse(JSON.parse(raw));
-    return parsed.success ? (parsed.data as OnboardingDraft) : null;
+    return parsed.success ? (parsed.data as PersistedOnboardingDraft) : null;
   } catch {
     return null;
   }
@@ -159,7 +213,7 @@ export function createLocalStorageOnboardingDraftStore(): OnboardingDraftStore {
 
 /** Non-persisting store for tests and storage-less environments. */
 export function createInMemoryOnboardingDraftStore(): OnboardingDraftStore {
-  let storedDraft: OnboardingDraft | null = null;
+  let storedDraft: PersistedOnboardingDraft | null = null;
   return {
     loadDraft: () => (storedDraft === null ? null : structuredClone(storedDraft)),
     saveDraft: (draft) => {

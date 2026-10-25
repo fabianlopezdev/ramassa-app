@@ -1,20 +1,28 @@
 import type { WizardIntake } from '@/lib/onboarding-intake-context';
+import { createWizardDraftStore } from '@/lib/wizard-draft';
 import { fireEvent, render } from '@testing-library/react';
 import { afterAll, beforeEach, expect, mock, test } from 'bun:test';
 import { createElement, type ReactNode } from 'react';
+import { systemFieldIndexFromCatalog } from '@ramassa/shared/intake-builder';
 import { createAccountOnboardingDraftStore } from '@ramassa/shared/onboarding-drafts';
+import { systemFieldsCatalogFixture } from '@ramassa/shared/testing';
 
 const backing = new Map<string, string>();
-const store = createAccountOnboardingDraftStore({
+const accountStore = createAccountOnboardingDraftStore({
   getString: (key) => backing.get(key),
   set: (key, value) => void backing.set(key, value),
   remove: (key) => backing.delete(key),
 });
+const store = createWizardDraftStore(accountStore);
+const fields = systemFieldIndexFromCatalog(systemFieldsCatalogFixture());
 let userId = 'player-a';
 const refetch = mock(async () => {});
 const observed: { userId: string; firstName: unknown }[] = [];
 const ready = {
-  profile: null,
+  names: {},
+  fields,
+  customAnswers: {},
+  customScreens: [],
   answered: new Set(),
   notAsked: new Set(),
   customPlan: [],
@@ -77,11 +85,16 @@ beforeEach(() => {
 });
 
 test('the wizard binds each account before children read its draft and restores only that account', () => {
-  store.setUser('player-a');
-  store.saveDraft({ currentStep: 'terms', identity: { firstName: 'Amina' } });
-  store.setUser(null);
+  // A draft from before RAPP-663, as her phone kept it: converted when she comes back.
+  accountStore.setUser('player-a');
+  accountStore.saveDraft({ currentStep: 'terms', identity: { firstName: 'Amina' } });
+  accountStore.setUser(null);
   const view = render(createElement(OnboardingLayout));
   expect(view.getByTestId('wizard').textContent).toBe('Amina');
+  expect(store.loadStoredDraft()).toMatchObject({
+    version: 2,
+    account: { firstName: 'Amina', preferredLanguage: 'ca' },
+  });
   userId = 'player-b';
   view.rerender(createElement(OnboardingLayout));
   expect(view.getByTestId('wizard').textContent).toBe('new player');

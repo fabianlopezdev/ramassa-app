@@ -36,13 +36,19 @@ import {
   type CustomAnswers,
   type IntakeCatalog,
   type IntakeScreen,
+  type SystemFieldIndex,
 } from '@ramassa/shared/intake-builder';
 import type { OnboardingDraftStep } from '@ramassa/shared/onboarding-drafts';
-import type { LocalizedText, ProfileRow } from '@ramassa/shared/schemas';
+import type { LocalizedText } from '@ramassa/shared/schemas';
 
 export interface WizardIntake {
-  /** Her stored profile, or null when she has none yet (a self-started intake). */
-  readonly profile: ProfileRow | null;
+  /** Her names when staff or an entity gave them; none for a self-started intake. */
+  readonly names: { readonly firstName?: string; readonly lastName?: string };
+  /**
+   * Her organization's app fields by system key (RAPP-663): the app's own
+   * screens read and write her answers by these field ids.
+   */
+  readonly fields: SystemFieldIndex;
   readonly answered: AnsweredQuestions;
   /**
    * The questions her wizard does not ask (RAPP-301): answered ones on Auto,
@@ -54,10 +60,9 @@ export interface WizardIntake {
   readonly documentExplanation: LocalizedText | null;
   /**
    * The Fitxa fields placed on her onboarding (RAPP-307, RAPP-655): the
-   * catalog, her stored answers to them, her Ramassà screens and the groups of
-   * fields on app screens in flow order (`herOnboarding`), and those screens
-   * as the planner takes them. An empty catalog when it could not load: the
-   * wizard then runs with the app's own questions only.
+   * catalog, her stored answers to every field (the app's included), her
+   * Ramassà screens and the groups of fields on app screens in flow order
+   * (`herOnboarding`), and those screens as the planner takes them.
    */
   readonly catalog: IntakeCatalog;
   readonly customAnswers: CustomAnswers;
@@ -83,7 +88,8 @@ export interface WizardIntake {
 }
 
 const EMPTY_INTAKE: WizardIntake = {
-  profile: null,
+  names: {},
+  fields: new Map(),
   answered: new Set(),
   notAsked: new Set(),
   documentExplanation: null,

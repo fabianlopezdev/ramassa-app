@@ -1,10 +1,19 @@
+import { wizardDraftStoreOn } from '@/lib/wizard-draft';
 import { fireEvent, render, waitFor } from '@testing-library/react';
 import { afterAll, beforeEach, expect, mock, spyOn, test } from 'bun:test';
 import { createElement, type ReactNode } from 'react';
 import type { AlertButton, AlertOptions } from 'react-native';
+import { systemFieldIndexFromCatalog } from '@ramassa/shared/intake-builder';
 import { createInMemoryOnboardingDraftStore } from '@ramassa/shared/onboarding-drafts';
+import {
+  systemFieldFixtureId as fieldId,
+  systemOptionFixtureId as optionId,
+  systemFieldsCatalogFixture,
+} from '@ramassa/shared/testing';
 
-const store = createInMemoryOnboardingDraftStore();
+// Her draft is kept by field (RAPP-663): the screens save through her fields.
+const fields = systemFieldIndexFromCatalog(systemFieldsCatalogFixture());
+const store = wizardDraftStoreOn(createInMemoryOnboardingDraftStore(), fields);
 const platform = { OS: 'ios' };
 const alert = mock<
   (title: string, message?: string, buttons?: AlertButton[], options?: AlertOptions) => void
@@ -64,7 +73,8 @@ mock.module('@ramassa/shared/auth', () => ({
 mock.module('@/lib/onboarding-intake-context', () => ({
   useWizardIntake: () => ({
     catalog: { screens: [], overrides: [], presets: [], terms: null },
-    profile: null,
+    names: {},
+    fields,
     answered: new Set(),
     customScreens: [],
     customAnswers: {},
@@ -303,6 +313,25 @@ test('app terms end at 15 of 15 and require their own saved signature', async ()
   fireEvent.click(view.getByRole('button', { name: 'finishAction' }));
   await waitFor(() => expect(refreshProfile).toHaveBeenCalledTimes(1));
   expect(complete).toHaveBeenCalledTimes(1);
+  // Her names and settings, then her answers by field (RAPP-663). Her "None"
+  // to the entity travels with no value; what she left empty is not sent.
+  expect(complete.mock.calls[0]?.[0]).toMatchObject({
+    first_name: 'Laia',
+    last_name: 'Coromines',
+    preferred_language: 'ca',
+    media_consent: false,
+    answers: {
+      [fieldId('date_of_birth')]: '1995-12-30',
+      [fieldId('place_of_birth')]: 'Vic',
+      [fieldId('nationality')]: 'Espanya',
+      [fieldId('document_type')]: optionId('document_type', 'none'),
+      [fieldId('reference_entity')]: null,
+      [fieldId('has_dependents')]: optionId('has_dependents', 'no'),
+      [fieldId('clothing_size')]: optionId('clothing_size', 'M'),
+      [fieldId('shoe_size')]: optionId('shoe_size', '38'),
+    },
+  });
+  expect(Object.keys((complete.mock.calls[0]?.[0] as { answers: object }).answers)).toHaveLength(8);
   expect(complete.mock.calls[0]?.[1]).toMatchObject({
     termsAccepted: true,
     mediaConsent: false,

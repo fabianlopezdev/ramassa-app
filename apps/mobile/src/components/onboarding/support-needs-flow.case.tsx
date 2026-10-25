@@ -1,10 +1,17 @@
+import { wizardDraftStoreOn } from '@/lib/wizard-draft';
 import { fireEvent, render } from '@testing-library/react';
 import { afterAll, beforeEach, expect, mock, test } from 'bun:test';
 import { createElement, type ReactNode } from 'react';
+import { systemFieldIndexFromCatalog } from '@ramassa/shared/intake-builder';
 import { createInMemoryOnboardingDraftStore } from '@ramassa/shared/onboarding-drafts';
 import { decodeSupportNeeds } from '@ramassa/shared/schemas';
+import { systemFieldsCatalogFixture } from '@ramassa/shared/testing';
 
-const store = createInMemoryOnboardingDraftStore();
+// Her draft is kept by field (RAPP-663): the screens save through her fields.
+const store = wizardDraftStoreOn(
+  createInMemoryOnboardingDraftStore(),
+  systemFieldIndexFromCatalog(systemFieldsCatalogFixture()),
+);
 const push = mock(() => {});
 const replace = mock(() => {});
 const goNext = mock(() => {});
@@ -127,7 +134,8 @@ test('multiple needs share one explanation screen, preserve Back answers and fin
   expect(details.getByRole('heading').textContent).toContain('supportNeedsCombinedQuestion');
   expect(details.getByRole('heading').textContent).toContain('supportNeedAccessibility');
   expect(details.getByRole('heading').textContent).toContain('supportNeedCommunication');
-  expect((details.getByRole('textbox') as HTMLTextAreaElement).maxLength).toBe(2000);
+  // The details field's long text limit (RAPP-663).
+  expect((details.getByRole('textbox') as HTMLTextAreaElement).maxLength).toBe(4000);
   fireEvent.input(details.getByRole('textbox'), {
     target: { value: 'Step-free access and an interpreter' },
   });
