@@ -45,7 +45,7 @@ function StaffLayout() {
           <StaffSidebar />
           {/* SidebarInset renders the page's single `main` landmark, so child
             routes render sections rather than nesting another `main`. */}
-          <SidebarInset id="main-content" tabIndex={-1} className="bg-canvas">
+          <SidebarInset id="main-content" tabIndex={-1} className="min-w-0 bg-canvas">
             {/* The top bar (RAPP-632): the sidebar toggle at the start, the
               notification bell (RAPP-640) and her user menu at the end. The language
               moved to her account page (RAPP-634). */}
