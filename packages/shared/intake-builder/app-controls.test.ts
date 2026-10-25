@@ -5,11 +5,16 @@
  * renderer where they are placed, on her onboarding and on the entity form.
  */
 import { describe, expect, test } from 'bun:test';
-import { isAskedGenerically, layoutSystemFields, questionsOffTheirControl } from './app-controls';
+import {
+  isAskedGenerically,
+  layoutSystemFields,
+  questionsOffTheirControl,
+  withGenericAnswers,
+} from './app-controls';
 import { appControlFits } from './app-field-form';
 import type { IntakeCatalog } from './builder';
 import { entityFormItems } from './entity-form';
-import { onboardingScreenQuestions } from './her-onboarding';
+import { editScreenQuestions, onboardingScreenQuestions } from './her-onboarding';
 import type { FieldPlacement, ProfileField, ProfileLayout } from './profile-layout';
 
 const SECTION = '5eed0000-0000-4000-8096-000000000001';
@@ -171,5 +176,45 @@ describe('the generic renderer asks a field off its control', () => {
       );
     expect(kinds(BIRTH)).toEqual(['builtin', 'custom']);
     expect(kinds(retyped)).toEqual(['custom', 'custom']);
+  });
+});
+
+describe('an edit screen asks a field off its control (RAPP-666)', () => {
+  test('her edit draws the app controls when every field fits them', () => {
+    expect(editScreenQuestions(layoutWith([BIRTH, SIZE, NAME]), true)).toEqual([]);
+  });
+
+  test('a retyped field is asked with the generic renderer, so it never leaves the screen', () => {
+    const retyped = { ...BIRTH, type: 'short_text' as const };
+    const questions = editScreenQuestions(layoutWith([retyped, SIZE, NAME]), true);
+    expect(questions.map((question) => [question.id, question.type])).toEqual([
+      [retyped.id, 'short_text'],
+    ]);
+  });
+
+  test('a field placed nowhere on her onboarding is still edited; an archived one is not', () => {
+    const unplaced = layoutWith([BIRTH, SIZE, NAME], [onboarding(NAME, 'identity')]);
+    expect(editScreenQuestions(unplaced, true).map((question) => question.id)).toEqual([
+      BIRTH.id,
+      SIZE.id,
+    ]);
+    const archived = layoutWith([{ ...BIRTH, isArchived: true }, SIZE, NAME]);
+    expect(editScreenQuestions(archived, true)).toEqual([]);
+  });
+
+  test('a reader without Sensitive gets no Sensitive field', () => {
+    const secret = { ...BIRTH, type: 'short_text' as const, privacy: 'sensitive' as const };
+    expect(editScreenQuestions(layoutWith([secret, SIZE, NAME]), false)).toEqual([]);
+  });
+
+  test('the app form never answers a field the generic renderer asked', () => {
+    const update = { first_name: 'Nora', answers: { [BIRTH.id]: null, [SIZE.id]: 'M' } };
+    expect(
+      withGenericAnswers(update, { fieldIds: [BIRTH.id], answers: { [BIRTH.id]: 'Primavera' } }),
+    ).toEqual({ first_name: 'Nora', answers: { [SIZE.id]: 'M', [BIRTH.id]: 'Primavera' } });
+    expect(withGenericAnswers(update, { fieldIds: [BIRTH.id], answers: {} }).answers).toEqual({
+      [SIZE.id]: 'M',
+    });
+    expect(withGenericAnswers(update, undefined)).toBe(update);
   });
 });

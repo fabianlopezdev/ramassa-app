@@ -23,10 +23,12 @@
 import { FailureNotice } from '@/components/error-code-line';
 import { ShakeOnError } from '@/components/motion/shake-on-error';
 import { SkeletonPulse } from '@/components/motion/skeleton-pulse';
+import { CustomQuestionList } from '@/components/onboarding/custom-question-field';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
 import { ProfileFormFields, type ProfileEditInput } from '@/components/profile/profile-form-fields';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { profileFormResetOptions, profileSaveCallbacks } from '@/lib/profile-save';
+import { useGenericAppFields } from '@/lib/use-generic-app-fields';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'expo-router';
@@ -36,6 +38,7 @@ import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { toAppError, type AppErrorCode } from '@ramassa/shared/errors';
+import type { IntakeQuestion } from '@ramassa/shared/intake';
 import { useOwnProfile, useUpdateOwnProfile } from '@ramassa/shared/profile';
 import { profileEditSchema, profileFormOf, type ProfileEdit } from '@ramassa/shared/schemas';
 
@@ -47,12 +50,26 @@ import { profileEditSchema, profileFormOf, type ProfileEdit } from '@ramassa/sha
  */
 const LOADING_FIELD_COUNT = 5;
 
+/** What the team sets on her record, whatever its control: her edit never asks it. */
+const TEAM_ONLY_QUESTIONS: ReadonlySet<IntakeQuestion> = new Set([
+  'date_of_birth',
+  'reference_entity',
+  'reference_contact_name',
+]);
+
 export default function ProfileEditScreen() {
   const { t } = useTranslation(['profile', 'onboarding']);
   const languageFontClass = useLanguageFontClass();
   const router = useRouter();
   const { data: profile, isLoading, isFetching, isError, error, refetch } = useOwnProfile();
   const update = useUpdateOwnProfile();
+  // The app fields off their own control, asked with the generic renderer (RAPP-666).
+  const generic = useGenericAppFields({
+    stored: profile?.answers ?? {},
+    showSensitive: true,
+    enforceRequired: true,
+    notOnThisScreen: TEAM_ONLY_QUESTIONS,
+  });
 
   const defaultValues = useMemo(
     () => (profile === null || profile === undefined ? undefined : profileFormOf(profile)),
@@ -88,10 +105,16 @@ export default function ProfileEditScreen() {
 
   const save = handleSubmit(
     (edit) => {
+      const genericAnswers = generic.check(t);
+      if (genericAnswers === null) {
+        setIsBlocked(true);
+        playHaptic('warning');
+        return;
+      }
       setIsBlocked(false);
       setFailureCode(null);
       update.mutate(
-        edit,
+        { ...edit, generic: genericAnswers },
         profileSaveCallbacks({
           // The completed primary action, confirmed when the SERVER says so
           // rather than when the button was pressed: an optimistic buzz on a
@@ -123,7 +146,7 @@ export default function ProfileEditScreen() {
     },
   );
 
-  if (isLoading) {
+  if (isLoading || generic.isLoading) {
     return (
       // Announced as LOADING and busy, not as the screen's title: over a
       // skeleton, "Edit my information" reads as a form that is ready and
@@ -202,6 +225,18 @@ export default function ProfileEditScreen() {
         hasDependents={hasDependents}
         audience="self"
         testIDPrefix="profile-edit"
+        offTheirControl={generic.offTheirControl}
+        offControlFields={
+          generic.questions.length === 0 ? null : (
+            <CustomQuestionList
+              testID="profile-edit-fields"
+              questions={generic.questions}
+              answers={generic.answers}
+              errors={generic.errors}
+              onChange={generic.onChange}
+            />
+          )
+        }
       />
       {/* Rendered LAST, so it sits directly above the Save button. Put at the
           top of a form this long it would be off-screen at the moment it

@@ -15,6 +15,7 @@
  */
 import { AnnouncementFeedSkeleton } from '@/components/announcements/feed-states';
 import { FailureNotice } from '@/components/error-code-line';
+import { CustomQuestionList } from '@/components/onboarding/custom-question-field';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
 import { ProfileFormFields, type ProfileEditInput } from '@/components/profile/profile-form-fields';
 import { playHaptic } from '@/lib/haptics/haptics';
@@ -23,6 +24,7 @@ import { participantFieldAccess } from '@/lib/participant-profile';
 import { profileFormResetOptions } from '@/lib/profile-save';
 import { supabase } from '@/lib/supabase';
 import { useAccountAccess } from '@/lib/use-account-access';
+import { useGenericAppFields } from '@/lib/use-generic-app-fields';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery } from '@tanstack/react-query';
@@ -33,6 +35,7 @@ import { useTranslation } from 'react-i18next';
 import { Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { toAppError, type AppErrorCode } from '@ramassa/shared/errors';
+import { withGenericAnswers } from '@ramassa/shared/intake-builder';
 import {
   fetchParticipantAnsweredQuestions,
   hasJoined,
@@ -72,6 +75,12 @@ export default function ParticipantEditScreen() {
     queryFn: () => fetchParticipantAnsweredQuestions(supabase, id),
     enabled: isPrefill,
   });
+  // The app fields off their own control, asked with the generic renderer (RAPP-666).
+  const generic = useGenericAppFields({
+    stored: card.data?.answers ?? {},
+    showSensitive: access.sensitive,
+    enforceRequired: !isPrefill,
+  });
   const values = useMemo(() => {
     if (card.data === null || card.data === undefined) return undefined;
     // Her answers read by field, through her organization's fields (RAPP-663).
@@ -98,17 +107,27 @@ export default function ParticipantEditScreen() {
 
   const save = handleSubmit(
     (edit) => {
+      const genericAnswers = generic.check(t);
+      if (genericAnswers === null) {
+        setIsBlocked(true);
+        playHaptic('warning');
+        return;
+      }
       setIsBlocked(false);
       setFailureCode(null);
       const fields = card.data?.fields ?? new Map();
-      // Her answers travel by field (RAPP-663).
-      const payload = isPrefill
-        ? prefillUpdateOf(
-            fields,
-            edit as unknown as ProfilePrefill,
-            new Set(Object.keys(dirtyFields)),
-          )
-        : profileUpdateOf(fields, edit);
+      // Her answers travel by field (RAPP-663), the fields asked with the
+      // generic renderer as staff gave them (RAPP-666).
+      const payload = withGenericAnswers(
+        isPrefill
+          ? prefillUpdateOf(
+              fields,
+              edit as unknown as ProfilePrefill,
+              new Set(Object.keys(dirtyFields)),
+            )
+          : profileUpdateOf(fields, edit),
+        genericAnswers,
+      );
       if (
         isPrefill &&
         Object.keys(payload).length === 1 &&
@@ -131,7 +150,7 @@ export default function ParticipantEditScreen() {
     },
   );
 
-  if (values === undefined) {
+  if (values === undefined || generic.isLoading) {
     return (
       <SafeAreaView className="flex-1 bg-white" edges={['top', 'bottom']}>
         <AnnouncementFeedSkeleton accessibilityLabel={t('profile.editTitle')} />
@@ -157,6 +176,18 @@ export default function ParticipantEditScreen() {
         showSensitive={access.sensitive}
         showMediaConsent={!isPrefill}
         testIDPrefix="participant-edit"
+        offTheirControl={generic.offTheirControl}
+        offControlFields={
+          generic.questions.length === 0 ? null : (
+            <CustomQuestionList
+              testID="participant-edit-fields"
+              questions={generic.questions}
+              answers={generic.answers}
+              errors={generic.errors}
+              onChange={generic.onChange}
+            />
+          )
+        }
       />
       {access.sensitive ? null : (
         <Text className={`text-start text-sm text-neutral-600 ${languageFontClass}`}>

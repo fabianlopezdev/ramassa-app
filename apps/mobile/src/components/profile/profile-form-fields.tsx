@@ -14,7 +14,11 @@ import { AuthTextField } from '@/components/auth/auth-text-field';
 import { CountryPicker } from '@/components/onboarding/country-picker';
 import { MunicipalityPicker } from '@/components/onboarding/municipality-picker';
 import { OptionChip } from '@/components/onboarding/option-chip';
-import { SeasonAnswerFields, type SeasonAnswers } from '@/components/profile/season-answer-fields';
+import {
+  SeasonAnswerFields,
+  type SeasonAnswers,
+  type SeasonQuestion,
+} from '@/components/profile/season-answer-fields';
 import { useSupportingEntityNames } from '@/lib/entity-referrals';
 import { composeIsoBirthDate } from '@/lib/onboarding-form';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
@@ -24,6 +28,7 @@ import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import type { z } from 'zod';
 import { LANGUAGE_NATIVE_NAMES, SUPPORTED_LANGUAGES } from '@ramassa/shared/i18n';
+import type { IntakeQuestion } from '@ramassa/shared/intake';
 import {
   CLOTHING_SIZES,
   DOCUMENT_TYPES,
@@ -63,6 +68,9 @@ export const DOCUMENT_TYPE_LABEL_KEYS = {
  * `.test()` is the one that would carry state between calls.
  */
 const NON_DIGITS = /\D/g;
+
+/** Every question keeps its own control. */
+const NONE_OFF_THEIR_CONTROL: ReadonlySet<IntakeQuestion> = new Set();
 
 /** The stored ISO date as the three boxes show it; blank parts stay blank. */
 function birthDateParts(iso: string | undefined) {
@@ -187,10 +195,13 @@ function SeasonAnswerControllers({
   control,
   showSensitive,
   testIDPrefix,
+  shows,
 }: {
   readonly control: Control<ProfileEditInput, unknown, ProfileEdit>;
   readonly showSensitive: boolean;
   readonly testIDPrefix: string;
+  /** Whether a season question keeps its own control here. */
+  readonly shows: (question: SeasonQuestion) => boolean;
 }) {
   const { t } = useTranslation(['onboarding']);
   const languageFontClass = useLanguageFontClass();
@@ -220,6 +231,7 @@ function SeasonAnswerControllers({
         value={value}
         entityNames={entityNames.data ?? []}
         showSensitive={showSensitive}
+        shows={shows}
         onChange={(patch) => {
           if ('applicantStatus' in patch)
             applicantStatus.field.onChange(patch.applicantStatus ?? undefined);
@@ -244,6 +256,8 @@ export function ProfileFormFields({
   showSensitive = true,
   showMediaConsent = true,
   testIDPrefix,
+  offTheirControl = NONE_OFF_THEIR_CONTROL,
+  offControlFields = null,
 }: {
   readonly control: Control<ProfileEditInput, unknown, ProfileEdit>;
   readonly errors: FieldErrors<ProfileEditInput>;
@@ -256,9 +270,17 @@ export function ProfileFormFields({
   /** False for a woman who has not joined yet (RAPP-300): that consent is hers to give. */
   readonly showMediaConsent?: boolean;
   readonly testIDPrefix: string;
+  /**
+   * The app questions whose own control no longer fits their field
+   * (RAPP-666, `questionsOffTheirControl`): their controls are hidden.
+   */
+  readonly offTheirControl?: ReadonlySet<IntakeQuestion>;
+  /** Their fields, drawn by the generic renderer after the app's own controls. */
+  readonly offControlFields?: ReactNode;
 }) {
   const { t } = useTranslation(['profile', 'onboarding', 'participants']);
   const isStaff = audience === 'staff';
+  const asks = (question: IntakeQuestion) => !offTheirControl.has(question);
 
   return (
     <>
@@ -298,7 +320,7 @@ export function ProfileFormFields({
           />
         )}
       />
-      {isStaff ? (
+      {isStaff && asks('date_of_birth') ? (
         <Controller
           control={control}
           name="dateOfBirth"
@@ -317,38 +339,42 @@ export function ProfileFormFields({
           )}
         />
       ) : null}
-      <Controller
-        control={control}
-        name="placeOfBirth"
-        render={({ field }) => (
-          <AuthTextField
-            // The field the smoke suite edits. Chosen because the seed leaves it
-            // NULL for the participant the suite signs in as (deliberately: two
-            // rows keep a null so the "created before this field existed" case
-            // is covered), so the flow can type into it without first erasing
-            // what is there - and erasing an Arabic-script value through the
-            // Android driver hangs until Maestro's own two-minute deadline.
-            testID={`${testIDPrefix}-place-of-birth`}
-            label={t('onboarding:placeOfBirthLabel')}
-            value={field.value}
-            onChangeText={field.onChange}
-            onBlur={field.onBlur}
-            errorMessage={errors.placeOfBirth ? t('onboarding:errorRequired') : undefined}
-          />
-        )}
-      />
-      <Controller
-        control={control}
-        name="nationality"
-        render={({ field }) => (
-          <CountryPicker
-            label={t('onboarding:nationalityLabel')}
-            value={field.value ?? ''}
-            onChange={field.onChange}
-            errorMessage={errors.nationality ? t('onboarding:errorRequired') : undefined}
-          />
-        )}
-      />
+      {asks('place_of_birth') ? (
+        <Controller
+          control={control}
+          name="placeOfBirth"
+          render={({ field }) => (
+            <AuthTextField
+              // The field the smoke suite edits. Chosen because the seed leaves it
+              // NULL for the participant the suite signs in as (deliberately: two
+              // rows keep a null so the "created before this field existed" case
+              // is covered), so the flow can type into it without first erasing
+              // what is there - and erasing an Arabic-script value through the
+              // Android driver hangs until Maestro's own two-minute deadline.
+              testID={`${testIDPrefix}-place-of-birth`}
+              label={t('onboarding:placeOfBirthLabel')}
+              value={field.value}
+              onChangeText={field.onChange}
+              onBlur={field.onBlur}
+              errorMessage={errors.placeOfBirth ? t('onboarding:errorRequired') : undefined}
+            />
+          )}
+        />
+      ) : null}
+      {asks('nationality') ? (
+        <Controller
+          control={control}
+          name="nationality"
+          render={({ field }) => (
+            <CountryPicker
+              label={t('onboarding:nationalityLabel')}
+              value={field.value ?? ''}
+              onChange={field.onChange}
+              errorMessage={errors.nationality ? t('onboarding:errorRequired') : undefined}
+            />
+          )}
+        />
+      ) : null}
       {isStaff ? (
         <Controller
           control={control}
@@ -369,33 +395,35 @@ export function ProfileFormFields({
         />
       ) : null}
 
-      <Controller
-        control={control}
-        name="documentType"
-        render={({ field }) => (
-          <ChoiceGroup label={t('onboarding:documentTypeLabel')}>
-            {DOCUMENT_TYPES.map((type) => (
+      {asks('document') ? (
+        <Controller
+          control={control}
+          name="documentType"
+          render={({ field }) => (
+            <ChoiceGroup label={t('onboarding:documentTypeLabel')}>
+              {DOCUMENT_TYPES.map((type) => (
+                <OptionChip
+                  key={type}
+                  label={t(DOCUMENT_TYPE_LABEL_KEYS[type])}
+                  accessibilityHint={t('onboarding:documentTypeLabel')}
+                  isSelected={field.value === type}
+                  onPress={() => field.onChange(type)}
+                />
+              ))}
+              {/* The document is optional (RAPP-302). "Not given" is not "I have
+                  none": choosing it empties the type and the number. */}
               <OptionChip
-                key={type}
-                label={t(DOCUMENT_TYPE_LABEL_KEYS[type])}
+                label={t('onboarding:documentTypeNotGiven')}
                 accessibilityHint={t('onboarding:documentTypeLabel')}
-                isSelected={field.value === type}
-                onPress={() => field.onChange(type)}
+                isSelected={field.value === undefined}
+                onPress={() => field.onChange(undefined)}
               />
-            ))}
-            {/* The document is optional (RAPP-302). "Not given" is not "I have
-                none": choosing it empties the type and the number. */}
-            <OptionChip
-              label={t('onboarding:documentTypeNotGiven')}
-              accessibilityHint={t('onboarding:documentTypeLabel')}
-              isSelected={field.value === undefined}
-              onPress={() => field.onChange(undefined)}
-            />
-          </ChoiceGroup>
-        )}
-      />
+            </ChoiceGroup>
+          )}
+        />
+      ) : null}
 
-      {documentType !== 'other' ? null : (
+      {documentType !== 'other' || !asks('document') ? null : (
         <Controller
           control={control}
           name="documentName"
@@ -411,7 +439,10 @@ export function ProfileFormFields({
         />
       )}
       {/* No number without a type: an unanswered document (RAPP-300) asks the type first. */}
-      {documentType === undefined || documentType === 'none' || !showSensitive ? null : (
+      {documentType === undefined ||
+      documentType === 'none' ||
+      !showSensitive ||
+      !asks('document') ? null : (
         <Controller
           control={control}
           name="documentNumber"
@@ -434,7 +465,7 @@ export function ProfileFormFields({
         />
       )}
 
-      {showSensitive ? (
+      {showSensitive && asks('phone') ? (
         <Controller
           control={control}
           name="phone"
@@ -457,7 +488,7 @@ export function ProfileFormFields({
           )}
         />
       ) : null}
-      {showSensitive ? (
+      {showSensitive && asks('address') ? (
         <Controller
           control={control}
           name="address"
@@ -471,19 +502,21 @@ export function ProfileFormFields({
           )}
         />
       ) : null}
-      <Controller
-        control={control}
-        name="city"
-        render={({ field }) => (
-          <MunicipalityPicker
-            label={t('onboarding:optionalFieldLabel', { label: t('onboarding:cityLabel') })}
-            value={field.value ?? ''}
-            onChange={field.onChange}
-            errorMessage={errors.city ? t('onboarding:errorMunicipalityInvalid') : undefined}
-          />
-        )}
-      />
-      {showSensitive ? (
+      {asks('city') ? (
+        <Controller
+          control={control}
+          name="city"
+          render={({ field }) => (
+            <MunicipalityPicker
+              label={t('onboarding:optionalFieldLabel', { label: t('onboarding:cityLabel') })}
+              value={field.value ?? ''}
+              onChange={field.onChange}
+              errorMessage={errors.city ? t('onboarding:errorMunicipalityInvalid') : undefined}
+            />
+          )}
+        />
+      ) : null}
+      {showSensitive && asks('postal_code') ? (
         <Controller
           control={control}
           name="postalCode"
@@ -500,7 +533,7 @@ export function ProfileFormFields({
         />
       ) : null}
 
-      {isStaff ? (
+      {isStaff && asks('reference_entity') ? (
         <Controller
           control={control}
           name="referenceEntity"
@@ -516,7 +549,7 @@ export function ProfileFormFields({
           )}
         />
       ) : null}
-      {isStaff ? (
+      {isStaff && asks('reference_contact_name') ? (
         <Controller
           control={control}
           name="referenceContactName"
@@ -533,35 +566,37 @@ export function ProfileFormFields({
         />
       ) : null}
 
-      <Controller
-        control={control}
-        name="hasDependents"
-        render={({ field }) => {
-          // The wizard asks her "do you have anyone in your care?"; the team's
-          // form names the field instead, because it talks about her.
-          const label = isStaff
-            ? t('participants:columnDependents')
-            : t('onboarding:hasDependentsLabel');
-          return (
-            <ChoiceGroup label={label}>
-              <OptionChip
-                label={t('onboarding:yesOption')}
-                accessibilityHint={label}
-                isSelected={field.value === true}
-                onPress={() => field.onChange(true)}
-              />
-              <OptionChip
-                label={t('onboarding:noOption')}
-                accessibilityHint={label}
-                isSelected={field.value === false}
-                onPress={() => field.onChange(false)}
-              />
-            </ChoiceGroup>
-          );
-        }}
-      />
+      {asks('dependents') ? (
+        <Controller
+          control={control}
+          name="hasDependents"
+          render={({ field }) => {
+            // The wizard asks her "do you have anyone in your care?"; the team's
+            // form names the field instead, because it talks about her.
+            const label = isStaff
+              ? t('participants:columnDependents')
+              : t('onboarding:hasDependentsLabel');
+            return (
+              <ChoiceGroup label={label}>
+                <OptionChip
+                  label={t('onboarding:yesOption')}
+                  accessibilityHint={label}
+                  isSelected={field.value === true}
+                  onPress={() => field.onChange(true)}
+                />
+                <OptionChip
+                  label={t('onboarding:noOption')}
+                  accessibilityHint={label}
+                  isSelected={field.value === false}
+                  onPress={() => field.onChange(false)}
+                />
+              </ChoiceGroup>
+            );
+          }}
+        />
+      ) : null}
 
-      {hasDependents ? (
+      {hasDependents && asks('dependents') ? (
         <Controller
           control={control}
           name="numDependents"
@@ -578,41 +613,45 @@ export function ProfileFormFields({
         />
       ) : null}
 
-      <Controller
-        control={control}
-        name="clothingSize"
-        render={({ field }) => (
-          <ChoiceGroup label={t('onboarding:clothingSizeLabel')}>
-            {CLOTHING_SIZES.map((size) => (
-              <OptionChip
-                key={size}
-                label={size}
-                accessibilityHint={t('onboarding:clothingSizeLabel')}
-                isSelected={field.value === size}
-                onPress={() => field.onChange(size)}
-              />
-            ))}
-          </ChoiceGroup>
-        )}
-      />
+      {asks('clothing_size') ? (
+        <Controller
+          control={control}
+          name="clothingSize"
+          render={({ field }) => (
+            <ChoiceGroup label={t('onboarding:clothingSizeLabel')}>
+              {CLOTHING_SIZES.map((size) => (
+                <OptionChip
+                  key={size}
+                  label={size}
+                  accessibilityHint={t('onboarding:clothingSizeLabel')}
+                  isSelected={field.value === size}
+                  onPress={() => field.onChange(size)}
+                />
+              ))}
+            </ChoiceGroup>
+          )}
+        />
+      ) : null}
 
-      <Controller
-        control={control}
-        name="shoeSize"
-        render={({ field }) => (
-          <ChoiceGroup label={t('onboarding:shoeSizeLabel')}>
-            {SHOE_SIZES.map((size) => (
-              <OptionChip
-                key={size}
-                label={size}
-                accessibilityHint={t('onboarding:shoeSizeLabel')}
-                isSelected={field.value === size}
-                onPress={() => field.onChange(size)}
-              />
-            ))}
-          </ChoiceGroup>
-        )}
-      />
+      {asks('shoe_size') ? (
+        <Controller
+          control={control}
+          name="shoeSize"
+          render={({ field }) => (
+            <ChoiceGroup label={t('onboarding:shoeSizeLabel')}>
+              {SHOE_SIZES.map((size) => (
+                <OptionChip
+                  key={size}
+                  label={size}
+                  accessibilityHint={t('onboarding:shoeSizeLabel')}
+                  isSelected={field.value === size}
+                  onPress={() => field.onChange(size)}
+                />
+              ))}
+            </ChoiceGroup>
+          )}
+        />
+      ) : null}
 
       {/* The revocable consent, in both directions. The wizard told her she
           could change this from her profile; this is the control that keeps
@@ -621,7 +660,12 @@ export function ProfileFormFields({
         control={control}
         showSensitive={showSensitive}
         testIDPrefix={testIDPrefix}
+        shows={asks}
       />
+
+      {/* The app fields off their own control (RAPP-666): the generic renderer
+          asks them, where her wizard would. */}
+      {offControlFields}
 
       {showMediaConsent ? (
         <Controller

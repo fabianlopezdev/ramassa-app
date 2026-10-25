@@ -140,3 +140,27 @@ test('a successful edit leaves the new value in the cache', async () => {
     expect(cached?.answers[systemFieldFixtureId('city')]).toBe('Vic');
   });
 });
+
+test('a field asked with the generic renderer is painted as she gave it (RAPP-666)', async () => {
+  const client = makeClient();
+  client.setQueryData(ownProfileQueryKey, savedRow);
+  client.setMutationDefaults(['own-profile', 'update'], { mutationFn: async () => undefined });
+  const cityId = systemFieldFixtureId('city');
+
+  let fire: ((edit: { phone: string }) => void) | undefined;
+  render(createElement(EditProbe, { onReady: (mutate) => (fire = mutate) }), {
+    wrapper: wrapper(client),
+  });
+
+  // Her municipality is off its control: the form never answers it, the generic renderer does.
+  fire?.({
+    phone: '+34600999888',
+    generic: { fieldIds: [cityId], answers: { [cityId]: 'Manlleu' } },
+  } as never);
+
+  await waitFor(() => {
+    const cached = client.getQueryData<ProfileRecordWithFields>(ownProfileQueryKey);
+    expect(cached?.answers[phoneId]).toBe('+34600999888');
+    expect(cached?.answers[cityId]).toBe('Manlleu');
+  });
+});

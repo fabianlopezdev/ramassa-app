@@ -16,13 +16,16 @@ import {
   WIZARD_QUESTION_SCREENS,
   wizardFlowOrder,
   type CustomWizardScreen,
+  type IntakeQuestion,
   type QuestionScreen,
   type WizardQuestionScreen,
 } from '../onboarding/intake';
+import { SYSTEM_FIELD_QUESTIONS } from '../onboarding/system-fields';
 import { isAskedGenerically, questionsOffTheirControl } from './app-controls';
 import {
   isScreenAnswered,
   questionFromField,
+  questionOfField,
   withCustomAsking,
   wizardFlow,
   type CustomAnswers,
@@ -32,6 +35,7 @@ import {
 } from './builder';
 import {
   fieldById,
+  fieldsOfSection,
   placementsOnSurface,
   placementWording,
   type FieldPlacement,
@@ -84,6 +88,36 @@ export function onboardingScreenQuestions(
   return catalog.layout === undefined
     ? []
     : placedQuestionsOn(catalog.layout, 'onboarding', screenKey);
+}
+
+/**
+ * The app's fields an edit screen asks with the generic renderer (RAPP-666):
+ * every live field of a question off its own control (`app-controls.ts`), in
+ * the Fitxa's order, by the field's own name. Her own edit and the staff
+ * phone's edit draw the app's controls for every other question, so a field
+ * staff retyped, gave new options or moved never leaves an edit screen. A
+ * reader without Sensitive gets no Sensitive field, and a question the screen
+ * never asks (`notOnThisScreen`: her own edit leaves her birth date and her
+ * entity to the team) stays off it.
+ */
+export function editScreenQuestions(
+  layout: ProfileLayout,
+  showSensitive: boolean,
+  notOnThisScreen: ReadonlySet<IntakeQuestion> = new Set(),
+): readonly CustomQuestion[] {
+  const offTheirControl = questionsOffTheirControl(layout);
+  return layout.sections.flatMap((section) =>
+    fieldsOfSection(layout, section.id)
+      .filter(
+        (field) =>
+          field.kind === 'builtin' &&
+          isAskedGenerically(field, offTheirControl) &&
+          (showSensitive || field.privacy !== 'sensitive') &&
+          (field.systemKey == null ||
+            !notOnThisScreen.has(SYSTEM_FIELD_QUESTIONS[field.systemKey])),
+      )
+      .map((field) => questionOfField(layout, field)),
+  );
 }
 
 /** The fields her season re-registration asks again, in their order, worded for her. */

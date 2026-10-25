@@ -14,8 +14,15 @@
  */
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { withGenericAnswers, type GenericFieldAnswers } from '../intake-builder/app-controls';
 import { appAnswersFromForm, appFormToSend, isAppFormKey } from '../intake-builder/app-field-form';
 import type { ProfileEdit, ProfileRecordWithFields } from '../schemas/profile';
+
+/**
+ * Her edit: the form's values, and what she gave the app fields her screen
+ * asked with the generic renderer (RAPP-666).
+ */
+export type OwnProfileEdit = Partial<ProfileEdit> & { readonly generic?: GenericFieldAnswers };
 
 export const ownProfileQueryKey = ['own-profile'] as const;
 export const updateOwnProfileMutationKey = ['own-profile', 'update'] as const;
@@ -43,12 +50,7 @@ export function useOwnDeletionRequest() {
 export function useUpdateOwnProfile() {
   const queryClient = useQueryClient();
 
-  return useMutation<
-    unknown,
-    Error,
-    Partial<ProfileEdit>,
-    { previous: ProfileRecordWithFields | null }
-  >({
+  return useMutation<unknown, Error, OwnProfileEdit, { previous: ProfileRecordWithFields | null }>({
     mutationKey: updateOwnProfileMutationKey,
     onMutate: async (edit) => {
       await queryClient.cancelQueries({ queryKey: ownProfileQueryKey });
@@ -81,10 +83,13 @@ export function useUpdateOwnProfile() {
  */
 function paintedEdit(
   previous: ProfileRecordWithFields,
-  edit: Partial<ProfileEdit>,
+  edit: OwnProfileEdit,
 ): ProfileRecordWithFields {
   const keys = Object.keys(edit).filter(isAppFormKey);
-  const written = appAnswersFromForm(previous.fields, appFormToSend(edit, keys));
+  const written = withGenericAnswers(
+    { answers: appAnswersFromForm(previous.fields, appFormToSend(edit, keys)) },
+    edit.generic,
+  ).answers;
   const answers: Record<string, unknown> = { ...previous.answers };
   for (const [id, value] of Object.entries(written)) {
     if (value === null) delete answers[id];

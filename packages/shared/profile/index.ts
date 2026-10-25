@@ -13,4 +13,5 @@ export {
   useOwnDeletionRequest,
   useOwnProfile,
   useUpdateOwnProfile,
+  type OwnProfileEdit,
 } from './use-own-profile';

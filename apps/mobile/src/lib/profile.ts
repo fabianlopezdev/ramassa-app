@@ -13,7 +13,7 @@ import { queryClient } from '@/lib/query-client';
 import { supabase } from '@/lib/supabase';
 import type { QueryClient } from '@tanstack/react-query';
 import type { AppError, Result } from '@ramassa/shared/errors';
-import { fetchSystemFieldIndex } from '@ramassa/shared/intake-builder';
+import { fetchSystemFieldIndex, withGenericAnswers } from '@ramassa/shared/intake-builder';
 import {
   fetchOwnDeletionRequest,
   fetchOwnProfile,
@@ -22,6 +22,7 @@ import {
   requestOwnDeletion,
   updateOwnProfile,
   updateOwnProfileMutationKey,
+  type OwnProfileEdit,
 } from '@ramassa/shared/profile';
 import {
   profileUpdateOf,
@@ -58,11 +59,16 @@ export function registerProfileQueries(
   });
 
   client.setMutationDefaults(updateOwnProfileMutationKey, {
-    // Her answers travel by field (RAPP-663), by the fields her record was read with.
-    mutationFn: async (edit: ProfileEdit) => {
+    // Her answers travel by field (RAPP-663), by the fields her record was read
+    // with; the fields her screen asked with the generic renderer go as she
+    // gave them (RAPP-666).
+    mutationFn: async (edit: ProfileEdit & OwnProfileEdit) => {
       const cached = client.getQueryData<ProfileRecordWithFields | null>(ownProfileQueryKey);
       const fields = cached?.fields ?? (await fetchSystemFieldIndex(supabase));
-      return updateOwnProfile(supabase, profileUpdateOf(fields, edit));
+      return updateOwnProfile(
+        supabase,
+        withGenericAnswers(profileUpdateOf(fields, edit), edit.generic),
+      );
     },
     onError: (error: unknown) => {
       logger.error('profile.update.failed', { error });

@@ -32,6 +32,7 @@ import {
 import { appControlFits } from './app-field-form';
 import type { SystemField, SystemFieldIndex } from './field-answers';
 import type { ProfileField, ProfileLayout } from './profile-layout';
+import type { CustomAnswerValue } from './question-types';
 
 /** The app's fields of a layout by system key, as the app's forms read them. */
 export function layoutSystemFields(layout: ProfileLayout): SystemFieldIndex {
@@ -95,4 +96,35 @@ export function isAskedGenerically(
   const question =
     field.builtinKey ?? (field.systemKey == null ? null : SYSTEM_FIELD_QUESTIONS[field.systemKey]);
   return question !== null && offTheirControl.has(question);
+}
+
+/**
+ * What an edit screen sends for the app fields it asked with the generic
+ * renderer (RAPP-666): her own edit and the staff phone's edit draw the app's
+ * controls for every other question.
+ */
+export interface GenericFieldAnswers {
+  /** Every app field the screen asked with the generic renderer. */
+  readonly fieldIds: readonly string[];
+  /** What changed among them, by field id; null removes an answer. */
+  readonly answers: Readonly<Record<string, CustomAnswerValue | null>>;
+}
+
+/**
+ * An edit's answers with the app fields the generic renderer asked: the app's
+ * form never answers one of them (its control did not draw it), and their own
+ * answers go instead.
+ */
+export function withGenericAnswers<
+  Update extends { readonly answers: Readonly<Record<string, CustomAnswerValue | null>> },
+>(update: Update, generic: GenericFieldAnswers | undefined): Update {
+  if (generic === undefined || generic.fieldIds.length === 0) return update;
+  const asked = new Set(generic.fieldIds);
+  return {
+    ...update,
+    answers: {
+      ...Object.fromEntries(Object.entries(update.answers).filter(([id]) => !asked.has(id))),
+      ...generic.answers,
+    },
+  };
 }
