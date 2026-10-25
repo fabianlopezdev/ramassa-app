@@ -2,8 +2,8 @@
 -- Run with: bunx supabase test db
 --
 -- What these assertions defend:
---   1. The entity form's limits: a built-in field the form cannot ask stays
---      off it, and her names never leave it and stay required.
+--   1. The entity form's limits: an app field goes on it like any field
+--      (RAPP-665), and her names never leave it and stay required.
 --   2. A referral sends its field answers in the same call, and the database
 --      refuses one that leaves out a required field, built-in or Ramassà.
 --   3. The invitation's last step learns which fields the entity answered.
@@ -49,10 +49,10 @@ insert into run values
 set local role authenticated;
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000001", "role": "authenticated", "aal": "aal2"}';
 
-select throws_ok(
-  $$ select public.place_field((select id from run where label = 'clothing'), 'entity_form') $$,
-  '23514', 'the entity form does not ask this built-in field',
-  'a built-in field the form cannot ask stays off the entity form'
+select lives_ok(
+  $$ select public.remove_placement(
+       public.place_field((select id from run where label = 'clothing'), 'entity_form', null, false)) $$,
+  'an app field goes on the entity form like any field (RAPP-665)'
 );
 select throws_ok(
   $$ select public.remove_placement((select id from run where label = 'first_name_placement')) $$,

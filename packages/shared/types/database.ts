@@ -6812,6 +6812,16 @@ export type Database = {
           thumbnail_object_key: string;
         }[];
       };
+      preview_field_change: {
+        Args: {
+          p_field_id: string;
+          p_options?: Json;
+          p_privacy: string;
+          p_settings?: Json;
+          p_type: string;
+        };
+        Returns: Json;
+      };
       preview_notification_audience: {
         Args: { p_audience_config?: Json; p_audience_kind: string };
         Returns: {

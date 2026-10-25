@@ -110,11 +110,10 @@ select throws_ok(
   '23514', 'a choice question needs at least two options',
   'a searchable list needs two options too'
 );
-select throws_ok(
-  $$ select public.save_profile_field((select id from q where label = 'number'), null,
-       'date', '{"ca": "X"}'::jsonb, null, 'normal', false, '[]'::jsonb, '{}'::jsonb) $$,
-  '23514', 'the type of a question never changes',
-  'the type still never changes'
+select is(
+  public.preview_field_change((select id from q where label = 'number'), 'date', 'normal') ->> 'type_to',
+  'date',
+  'a new type is previewed before it is saved (RAPP-665)'
 );
 select lives_ok(
   $$ select public.save_profile_field((select id from q where label = 'number'), null,

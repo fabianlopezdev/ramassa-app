@@ -146,10 +146,10 @@ select is(
   'the field is placed on the three surfaces'
 );
 select throws_ok(
-  $$ select public.place_field((select id from public.profile_fields where system_key = 'phone'
-                                  and org_id = '5eed0000-0000-4000-8000-000000000000'), 'onboarding', 'identity') $$,
-  '23514', 'the app asks a built-in field on its own screen',
-  'a built-in field stays on its own screen'
+  $$ select public.place_field((select id from public.profile_fields where system_key = 'first_name'
+                                  and org_id = '5eed0000-0000-4000-8000-000000000000'), 'season') $$,
+  '23514', 'her names are asked on her identity screen',
+  'her names stay on her identity screen (RAPP-665)'
 );
 
 -- 5. A team-only field -----------------------------------------------------------------------------------------

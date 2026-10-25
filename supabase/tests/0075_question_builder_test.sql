@@ -3,8 +3,9 @@
 --
 -- What these assertions defend:
 --   1. Only settings.organization builds; every change is audited.
---   2. A field's type never changes, its privacy level is fixed once it has
---      answers; a removed option is archived and the answer that chose it keeps it.
+--   2. Her names keep their type and are never archived (RAPP-665 lets every
+--      other field change); a removed option is archived and the answer that
+--      chose it keeps it.
 --   3. Sensitive answers are encrypted, and each level gates its readers.
 --   4. A seasonal question keeps one answer per season.
 --   5. A built-in question the app needs cannot be hidden.
@@ -53,17 +54,16 @@ select is(
 );
 select throws_ok(
   $$ select public.save_profile_field(
-       (select id from run where label = 'choice'), null,
-       'single_choice', '{"ca":"Qui viu amb tu?"}'::jsonb, null, 'personal', false,
-       '[{"label":{"ca":"A"}},{"label":{"ca":"B"}}]'::jsonb) $$,
-  '23514', 'the type of a question never changes', 'the type never changes'
+       (select id from public.profile_fields
+         where org_id = '5eed0000-0000-4000-8000-000000000000' and system_key = 'first_name'), null,
+       'long_text', '{"ca":"Nom"}'::jsonb, null, 'normal', false, '[]'::jsonb) $$,
+  '23514', 'her names keep their type and privacy', 'her names keep their type (RAPP-665)'
 );
 select throws_ok(
-  $$ select public.save_profile_field(
-       '5eed0000-0000-4000-8045-000000000002', null, 'single_choice',
-       '{"ca":"Com et vas assabentar de Ramassà?"}'::jsonb, null, 'sensitive', false,
-       '[{"id":"5eed0000-0000-4000-8046-000000000002","label":{"ca":"Xarxes"}},{"label":{"ca":"Una amiga"}}]'::jsonb) $$,
-  '23514', 'the privacy level of a field is fixed once it has answers', 'the privacy level is fixed once answered'
+  $$ select public.archive_profile_field(
+       (select id from public.profile_fields
+         where org_id = '5eed0000-0000-4000-8000-000000000000' and system_key = 'last_name')) $$,
+  '23514', 'her names are always asked', 'her names are never archived (RAPP-665)'
 );
 select throws_ok(
   $$ select public.save_profile_field(
