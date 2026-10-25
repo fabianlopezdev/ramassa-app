@@ -6655,6 +6655,7 @@ export type Database = {
       my_session_is_current: { Args: never; Returns: boolean };
       my_terms_acceptance_needed: { Args: never; Returns: boolean };
       my_test_scenario_stamp: { Args: never; Returns: string };
+      notification_audience_entities: { Args: never; Returns: string[] };
       open_staff_checkouts: {
         Args: never;
         Returns: {

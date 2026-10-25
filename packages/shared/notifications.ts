@@ -208,7 +208,7 @@ export function filterNotificationGroupParticipants(
 }
 
 export async function fetchNotificationAudienceOptions(
-  client: QueryClient,
+  client: Pick<Client, 'from' | 'rpc'>,
   signal?: AbortSignal,
 ): Promise<NotificationAudienceOptions> {
   let categoryQuery = client
@@ -223,7 +223,7 @@ export async function fetchNotificationAudienceOptions(
     .limit(100);
   let participantQuery = client
     .from('profiles')
-    .select('id, first_name, last_name, preferred_language, reference_entity')
+    .select('id, first_name, last_name, preferred_language')
     .eq('role', 'player')
     .eq('is_active', true)
     .order('last_name')
@@ -233,14 +233,19 @@ export async function fetchNotificationAudienceOptions(
     eventQuery = eventQuery.abortSignal(signal);
     participantQuery = participantQuery.abortSignal(signal);
   }
-  const [categoryResult, eventResult, participantResult] = await Promise.all([
+  // Her entity is a field answer read at its level (RAPP-662, D9).
+  let entityQuery = client.rpc('notification_audience_entities');
+  if (signal !== undefined) entityQuery = entityQuery.abortSignal(signal);
+  const [categoryResult, eventResult, participantResult, entityResult] = await Promise.all([
     categoryQuery,
     eventQuery,
     participantQuery,
+    entityQuery,
   ]);
   if (categoryResult.error) databaseFailure(categoryResult.error.message);
   if (eventResult.error) databaseFailure(eventResult.error.message);
   if (participantResult.error) databaseFailure(participantResult.error.message);
+  if (entityResult.error) databaseFailure(entityResult.error.message);
 
   const participants = z
     .array(
@@ -249,7 +254,6 @@ export async function fetchNotificationAudienceOptions(
         first_name: z.string(),
         last_name: z.string(),
         preferred_language: z.string(),
-        reference_entity: z.string().nullable(),
       }),
     )
     .parse(participantResult.data ?? []);
@@ -262,13 +266,9 @@ export async function fetchNotificationAudienceOptions(
       id: event.id,
       title: localizedLabel(event.title),
     })),
-    entities: [
-      ...new Set(
-        participants.flatMap((participant) =>
-          participant.reference_entity === null ? [] : [participant.reference_entity],
-        ),
-      ),
-    ].sort((left, right) => left.localeCompare(right)),
+    entities: [...new Set(z.array(z.string()).parse(entityResult.data ?? []))].sort((left, right) =>
+      left.localeCompare(right),
+    ),
     participants: participants.map((participant) => ({
       id: participant.id,
       fullName: `${participant.first_name} ${participant.last_name}`.trim(),

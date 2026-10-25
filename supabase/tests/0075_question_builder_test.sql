@@ -175,8 +175,10 @@ delete from public.team_member_permissions
 set local role authenticated;
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000003", "role": "authenticated", "aal": "aal2"}';
 select is(
+  -- Ramassà's own fields here; every field's levels are in 0143 (RAPP-662).
   (select array_agg(question_id::text order by question_id)
-     from public.participant_custom_answers('5eed0000-0000-4000-8000-000000000011')),
+     from public.participant_custom_answers('5eed0000-0000-4000-8000-000000000011')
+    where question_id::text like '5eed0000-0000-4000-8045-%'),
   array['5eed0000-0000-4000-8045-000000000001', '5eed0000-0000-4000-8045-000000000002'],
   'without the Sensitive level, a Sensitive answer is not read'
 );

@@ -50,11 +50,11 @@ insert into public.profiles (
   is_active, created_at
 ) values
   ('62000000-0000-4000-8100-000000000001', '62000000-0000-4000-8000-000000000001', 'staff', 'Alba', 'Staff', null, null, true, '2026-01-01T00:00:00Z'),
-  ('62000000-0000-4000-8200-000000000001', '62000000-0000-4000-8000-000000000001', 'player', 'Amina', 'One', '2004-01-10', 'Syria', true, '2026-03-01T09:00:00Z'),
-  ('62000000-0000-4000-8200-000000000002', '62000000-0000-4000-8000-000000000001', 'player', 'Berta', 'Two', '2005-02-10', 'Syria', true, '2026-03-29T00:30:00Z'),
-  ('62000000-0000-4000-8200-000000000003', '62000000-0000-4000-8000-000000000001', 'player', 'Carla', 'Three', '2006-03-10', 'Syria', true, '2026-03-29T20:00:00Z'),
-  ('62000000-0000-4000-8200-000000000004', '62000000-0000-4000-8000-000000000001', 'player', 'Dina', 'Four', '1994-01-10', 'Bolivia', true, '2026-03-30T08:00:00Z'),
-  ('62000000-0000-4000-8200-000000000005', '62000000-0000-4000-8000-000000000001', 'player', 'Eva', 'Five', '1980-01-10', 'Bolivia', true, '2026-03-31T08:00:00Z'),
+  ('62000000-0000-4000-8200-000000000001', '62000000-0000-4000-8000-000000000001', 'player', 'Amina', 'One', '2004-01-10', 'Síria', true, '2026-03-01T09:00:00Z'),
+  ('62000000-0000-4000-8200-000000000002', '62000000-0000-4000-8000-000000000001', 'player', 'Berta', 'Two', '2005-02-10', 'Síria', true, '2026-03-29T00:30:00Z'),
+  ('62000000-0000-4000-8200-000000000003', '62000000-0000-4000-8000-000000000001', 'player', 'Carla', 'Three', '2006-03-10', 'Síria', true, '2026-03-29T20:00:00Z'),
+  ('62000000-0000-4000-8200-000000000004', '62000000-0000-4000-8000-000000000001', 'player', 'Dina', 'Four', '1994-01-10', 'Bolívia', true, '2026-03-30T08:00:00Z'),
+  ('62000000-0000-4000-8200-000000000005', '62000000-0000-4000-8000-000000000001', 'player', 'Eva', 'Five', '1980-01-10', 'Bolívia', true, '2026-03-31T08:00:00Z'),
   ('62000000-0000-4000-8300-000000000001', '62000000-0000-4000-8000-000000000002', 'staff', 'Other', 'Staff', null, null, true, '2026-01-01T00:00:00Z'),
   ('62000000-0000-4000-8300-000000000002', '62000000-0000-4000-8000-000000000002', 'player', 'Other', 'Player', '2000-01-01', 'Other', true, '2026-03-30T08:00:00Z');
 
@@ -217,14 +217,14 @@ select is(
 select is(
   (select (bucket ->> 'count')::integer
    from jsonb_array_elements(public.get_impact_report('2026-03-29', '2026-03-31', null, null) #> '{demographics,nationalities}') as bucket
-   where bucket ->> 'label' = 'Syria'),
+   where bucket ->> 'label' = 'Síria'),
   3,
   'a nationality bucket of three is visible'
 );
 select ok(
   (select (bucket ->> 'suppressed')::boolean and not (bucket ? 'count')
    from jsonb_array_elements(public.get_impact_report('2026-03-29', '2026-03-31', null, null) #> '{demographics,nationalities}') as bucket
-   where bucket ->> 'label' = 'Bolivia'),
+   where bucket ->> 'label' = 'Bolívia'),
   'a nationality bucket below three keeps its label but suppresses its value'
 );
 select is(

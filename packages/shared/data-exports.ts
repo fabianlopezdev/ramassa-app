@@ -3,7 +3,8 @@ import { z } from 'zod';
 import { AppError, databaseErrorCode } from './errors';
 import type { Database } from './types/database';
 
-// `custom_answers`: answers to the questions staff added (RAPP-307), one row per answer.
+// `participants`: one row per player, one column per field (RAPP-662).
+// `custom_answers`: every answer to every field (RAPP-307, RAPP-662), one row per answer.
 // `consents`: every consent decision with the words she was shown (RAPP-614).
 export const DATA_EXPORT_DATASETS = [
   'participants',
@@ -14,12 +15,6 @@ export const DATA_EXPORT_DATASETS = [
 ] as const;
 export const DATA_EXPORT_SCOPES = ['default', 'full'] as const;
 export const DATA_EXPORT_FORMATS = ['csv', 'xlsx'] as const;
-export const SENSITIVE_EXPORT_COLUMNS = [
-  'address',
-  'postal_code',
-  'phone',
-  'document_number',
-] as const;
 
 const exportCellSchema = z.union([z.string(), z.number(), z.boolean(), z.null()]);
 
@@ -34,19 +29,9 @@ export const dataExportResponseSchema = z
     columns: z.array(z.string().min(1)).min(1),
     rows: z.array(z.record(z.string(), exportCellSchema)),
   })
+  // Which fields a scope holds is the database's call, by each field's level
+  // (RAPP-662, D9): the default scope never holds a Sensitive field.
   .superRefine((exportData, context) => {
-    if (
-      exportData.scope === 'default' &&
-      exportData.columns.some((column) =>
-        (SENSITIVE_EXPORT_COLUMNS as readonly string[]).includes(column),
-      )
-    ) {
-      context.addIssue({
-        code: 'custom',
-        path: ['columns'],
-        message: 'Default exports cannot contain sensitive columns',
-      });
-    }
     for (const [rowIndex, row] of exportData.rows.entries()) {
       const unexpected = Object.keys(row).find((key) => !exportData.columns.includes(key));
       if (unexpected !== undefined) {
