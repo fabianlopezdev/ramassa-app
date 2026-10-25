@@ -122,7 +122,8 @@ test('updateParticipantProfile sends the subject and the payload the RPC declare
   expect(calls[0]?.name).toBe('update_participant_profile');
   expect(calls[0]?.args).toEqual({
     participant_id: PARTICIPANT_ID,
-    payload: { first_name: 'Rosa' },
+    // Her names stay on her account; every other answer travels by field (RAPP-661).
+    payload: { first_name: 'Rosa', answers: {} },
   });
 });
 

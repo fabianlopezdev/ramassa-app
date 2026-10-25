@@ -79,16 +79,16 @@ set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000004", 
 
 select throws_ok(
   $$ select public.create_entity_referral(
-       '{"firstName": "Qa", "lastName": "Entitat", "documentationStatus": "none",
-         "consentConfirmed": true, "fields": {}}'::jsonb) $$,
+       '{"first_name": "Qa", "last_name": "Entitat", "documentationStatus": "none",
+         "consentConfirmed": true, "answers": {}}'::jsonb) $$,
   '23514', 'a required field of the referral form is missing',
   'a referral without a required Ramassà field is refused'
 );
 
 insert into run values ('referral', public.create_entity_referral(jsonb_build_object(
-  'firstName', 'Qa', 'lastName', 'Entitat', 'email', 'qa.rapp652@example.test',
+  'first_name', 'Qa', 'last_name', 'Entitat', 'email', 'qa.rapp652@example.test',
   'documentationStatus', 'none', 'consentConfirmed', true,
-  'fields', jsonb_build_object(
+  'answers', jsonb_build_object(
     '5eed0000-0000-4000-8045-000000000004', 'Sants',
     '5eed0000-0000-4000-8045-000000000005', (select id from run where label = 'option')))));
 
@@ -107,7 +107,7 @@ set local role authenticated;
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000004", "role": "authenticated", "aal": "aal2"}';
 select throws_ok(
   $$ select public.create_entity_referral(
-       '{"firstName": "Qa", "lastName": "Sense", "documentationStatus": "none", "consentConfirmed": true}'::jsonb) $$,
+       '{"first_name": "Qa", "last_name": "Sense", "documentationStatus": "none", "consentConfirmed": true}'::jsonb) $$,
   '23514', 'a required field of the referral form is missing',
   'a referral without a required built-in field is refused'
 );

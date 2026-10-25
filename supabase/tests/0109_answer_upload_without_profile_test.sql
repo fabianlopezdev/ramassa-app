@@ -15,6 +15,23 @@ create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 select plan(7);
 
+-- Her answers travel by field (RAPP-661). Helpers: the app's keys of a payload
+-- keyed by their fields (a choice by its option), a field's id, and her stored
+-- answer to an app field (decrypted).
+create function pg_temp.answers(p jsonb) returns jsonb language sql security definer as $$
+  select coalesce(jsonb_object_agg(f.id::text, private.app_answer_value(f, e.value)), '{}'::jsonb)
+    from jsonb_each(p) e
+    join public.profile_fields f on f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.system_key = e.key;
+$$;
+create function pg_temp.field(p_key text) returns text language sql security definer as $$
+  select id::text from public.profile_fields
+   where org_id = '5eed0000-0000-4000-8000-000000000000' and system_key = p_key;
+$$;
+create function pg_temp.stored(p_profile uuid, p_key text) returns jsonb language sql security definer as $$
+  select private.system_field_answer(p_profile, p_key);
+$$;
+grant execute on all functions in schema pg_temp to authenticated;
+
 select ok(
   not has_function_privilege('anon', 'public.my_intake_upload_org()', 'execute'),
   'anon cannot ask'
@@ -38,11 +55,12 @@ select is(public.my_intake_upload_org(), null::uuid, 'a player uploads through h
 set local request.jwt.claims = '{"sub": "00000000-0000-0000-0000-0000000006b1", "role": "authenticated"}';
 select lives_ok(
   $$ select public.complete_onboarding_signed(
-       '{"first_name": "Nadia", "last_name": "Khoury", "date_of_birth": "1993-11-02",
-         "place_of_birth": "Homs", "nationality": "Síria", "document_type": "none",
-         "reference_entity": null, "has_dependents": false, "num_dependents": 0,
-         "clothing_size": "M", "shoe_size": "38", "media_consent": false,
-         "terms_version": "2026-07-01", "locale_shown": "ca"}'::jsonb,
+       jsonb_build_object('first_name', 'Nadia', 'last_name', 'Khoury', 'media_consent', false,
+         'terms_version', '2026-07-01', 'locale_shown', 'ca',
+         'answers', pg_temp.answers('{"date_of_birth": "1993-11-02",
+           "place_of_birth": "Homs", "nationality": "Síria", "document_type": "none",
+           "reference_entity": null, "has_dependents": "no",
+           "clothing_size": "M", "shoe_size": "38"}')),
        '{"terms_accepted": true, "media_consent": false, "unable_to_draw": true}'::jsonb) $$,
   'she completes her registration'
 );

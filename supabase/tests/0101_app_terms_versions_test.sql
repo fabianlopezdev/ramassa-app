@@ -25,6 +25,23 @@ create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 select plan(40);
 
+-- Her answers travel by field (RAPP-661). Helpers: the app's keys of a payload
+-- keyed by their fields (a choice by its option), a field's id, and her stored
+-- answer to an app field (decrypted).
+create function pg_temp.answers(p jsonb) returns jsonb language sql security definer as $$
+  select coalesce(jsonb_object_agg(f.id::text, private.app_answer_value(f, e.value)), '{}'::jsonb)
+    from jsonb_each(p) e
+    join public.profile_fields f on f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.system_key = e.key;
+$$;
+create function pg_temp.field(p_key text) returns text language sql security definer as $$
+  select id::text from public.profile_fields
+   where org_id = '5eed0000-0000-4000-8000-000000000000' and system_key = p_key;
+$$;
+create function pg_temp.stored(p_profile uuid, p_key text) returns jsonb language sql security definer as $$
+  select private.system_field_answer(p_profile, p_key);
+$$;
+grant execute on all functions in schema pg_temp to authenticated;
+
 create temp table ids (label text primary key, id uuid) on commit drop;
 grant all on ids to authenticated;
 insert into ids select 'v1', id from public.app_terms_versions
@@ -246,15 +263,15 @@ select is(
 set local role authenticated;
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000097", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select lives_ok(
-  $$ select public.set_test_player_scenario('5eed0000-0000-4000-8000-000000000096', '{
-       "kind": "answers",
-       "fill": {
-         "first_name": "Joana", "last_name": "Prova", "date_of_birth": "1995-05-15",
-         "place_of_birth": "Marroc", "nationality": "Marroc", "preferred_language": "ca",
-         "reference_entity": "Entitat de prova", "has_dependents": false, "num_dependents": 0,
-         "clothing_size": "M", "shoe_size": "38"
-       }
-     }'::jsonb) $$,
+  $$ select public.set_test_player_scenario('5eed0000-0000-4000-8000-000000000096', jsonb_build_object(
+       'kind', 'answers',
+       'fill', jsonb_build_object(
+         'first_name', 'Joana', 'last_name', 'Prova', 'preferred_language', 'ca',
+         -- Her answers by field (RAPP-661).
+         'answers', pg_temp.answers('{
+           "date_of_birth": "1995-05-15", "place_of_birth": "Marroc", "nationality": "Marroc",
+           "reference_entity": "Entitat de prova", "has_dependents": "no",
+           "clothing_size": "M", "shoe_size": "38"}')))) $$,
   'the design role fills the test player''s answers'
 );
 select lives_ok(

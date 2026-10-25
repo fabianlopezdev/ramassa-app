@@ -152,6 +152,9 @@ select is_empty(
        from information_schema.tables t
        where t.table_schema = 'public'
          and t.table_type = 'BASE TABLE'
+         -- No writer fills it since season answers are rows of their season
+         -- (RAPP-661); RAPP-666 drops it.
+         and t.table_name <> 'season_answers'
      )
      select table_name
      from public_tables

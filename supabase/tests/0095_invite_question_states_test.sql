@@ -21,6 +21,23 @@ create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 select plan(19);
 
+-- Her answers travel by field (RAPP-661). Helpers: the app's keys of a payload
+-- keyed by their fields (a choice by its option), a field's id, and her stored
+-- answer to an app field (decrypted).
+create function pg_temp.answers(p jsonb) returns jsonb language sql security definer as $$
+  select coalesce(jsonb_object_agg(f.id::text, private.app_answer_value(f, e.value)), '{}'::jsonb)
+    from jsonb_each(p) e
+    join public.profile_fields f on f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.system_key = e.key;
+$$;
+create function pg_temp.field(p_key text) returns text language sql security definer as $$
+  select id::text from public.profile_fields
+   where org_id = '5eed0000-0000-4000-8000-000000000000' and system_key = p_key;
+$$;
+create function pg_temp.stored(p_profile uuid, p_key text) returns jsonb language sql security definer as $$
+  select private.system_field_answer(p_profile, p_key);
+$$;
+grant execute on all functions in schema pg_temp to authenticated;
+
 set local role authenticated;
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 
@@ -113,9 +130,10 @@ set local role authenticated;
 
 -- Don't ask on a required question staff answered is allowed.
 select lives_ok(
-  $$ select * from public.create_participant_invite(
-       '{"email":"nova.entitat@example.test","first_name":"Nova","last_name":"Entitat",
-         "reference_entity":"Creu Roja","question_states":{"reference_entity":"skip"}}'::jsonb) $$,
+  $$ select * from public.create_participant_invite(jsonb_build_object(
+       'email', 'nova.entitat@example.test', 'first_name', 'Nova', 'last_name', 'Entitat',
+       'reference_entity', 'Creu Roja', 'answers', pg_temp.answers('{"reference_entity":"Creu Roja"}'),
+       'question_states', '{"reference_entity":"skip"}'::jsonb)) $$,
   'Don''t ask on a required question staff answered is saved'
 );
 

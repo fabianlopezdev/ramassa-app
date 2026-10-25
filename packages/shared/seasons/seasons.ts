@@ -10,6 +10,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { AppError, databaseErrorCode } from '../errors';
+import { fetchSystemFieldIndex, withFieldAnswers } from '../intake-builder/field-answers';
 import {
   createTargetedNotificationSend,
   fetchCustomNotificationGroups,
@@ -106,12 +107,17 @@ export function buildMySeasonAnswersPayload(answers: Partial<SeasonAnswerFields>
   };
 }
 
+/** Her season answers, saved by field (RAPP-661). */
 export async function updateMySeasonAnswers(
   client: Client,
   answers: Partial<SeasonAnswerFields>,
 ): Promise<void> {
+  const fields = await fetchSystemFieldIndex(client);
   const { error } = await client.rpc('update_my_season_answers', {
-    p_payload: buildMySeasonAnswersPayload(answers),
+    p_payload: withFieldAnswers(
+      fields,
+      buildMySeasonAnswersPayload(answers) as Record<string, unknown>,
+    ),
   });
   if (error) failure(error.message);
 }

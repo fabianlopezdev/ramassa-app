@@ -18,6 +18,23 @@
 begin;
 select plan(18);
 
+-- Her answers travel by field (RAPP-661). Helpers: the app's keys of a payload
+-- keyed by their fields (a choice by its option), a field's id, and her stored
+-- answer to an app field (decrypted).
+create function pg_temp.answers(p jsonb) returns jsonb language sql security definer as $$
+  select coalesce(jsonb_object_agg(f.id::text, private.app_answer_value(f, e.value)), '{}'::jsonb)
+    from jsonb_each(p) e
+    join public.profile_fields f on f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.system_key = e.key;
+$$;
+create function pg_temp.field(p_key text) returns text language sql security definer as $$
+  select id::text from public.profile_fields
+   where org_id = '5eed0000-0000-4000-8000-000000000000' and system_key = p_key;
+$$;
+create function pg_temp.stored(p_profile uuid, p_key text) returns jsonb language sql security definer as $$
+  select private.system_field_answer(p_profile, p_key);
+$$;
+grant execute on all functions in schema pg_temp to authenticated;
+
 set local role authenticated;
 
 -- 1. What her wizard asks ---------------------------------------------------------------------------
@@ -106,7 +123,8 @@ select throws_ok(
 
 -- 1. A hidden required question whose answer is cleared is asked after all ------------------------------
 
-select public.update_participant_profile('5eed0000-0000-4000-8000-000000000098', '{"nationality": ""}'::jsonb);
+select public.update_participant_profile('5eed0000-0000-4000-8000-000000000098',
+  jsonb_build_object('answers', pg_temp.answers('{"nationality": ""}')));
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000098", "role": "authenticated", "aal": "aal1"}';
 select ok(
   'nationality' in (select public.my_questions_to_ask()),

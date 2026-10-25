@@ -10,9 +10,14 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { AppError } from '../errors';
+import {
+  fetchSystemFieldIndex,
+  hasFieldColumns,
+  withFieldAnswers,
+} from '../intake-builder/field-answers';
 import { withCancellation, type CancellableRequest } from '../lib/cancellation';
 import type { CreateParticipantInvitePayload } from '../schemas/accounts';
-import type { Database } from '../types/database';
+import type { Database, Json } from '../types/database';
 import { INVITE_COLUMNS, type InviteRow } from './invites';
 
 type Client = SupabaseClient<Database>;
@@ -33,7 +38,16 @@ export async function createParticipantInvite(
   client: Client,
   payload: CreateParticipantInvitePayload,
 ): Promise<CreatedParticipantInvite> {
-  const { data, error } = await client.rpc('create_participant_invite', { payload });
+  // Her names and her answers by field (RAPP-661). The entity her wizard
+  // offers first stays the invitation's own, and is her answer too.
+  const fields = hasFieldColumns(payload) ? await fetchSystemFieldIndex(client) : new Map();
+  const shared = withFieldAnswers(fields, payload) as Record<string, Json>;
+  const { data, error } = await client.rpc('create_participant_invite', {
+    payload:
+      payload.reference_entity === undefined
+        ? shared
+        : { ...shared, reference_entity: payload.reference_entity },
+  });
   if (error) {
     // 23505: the RPC refuses an address that already has a profile, so staff
     // can be told to find her in the list rather than see a generic failure.

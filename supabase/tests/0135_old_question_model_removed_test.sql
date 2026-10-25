@@ -367,15 +367,15 @@ set local role authenticated;
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000004", "role": "authenticated", "aal": "aal2"}';
 select throws_ok(
   $$ select public.create_entity_referral(
-       '{"firstName": "Qa", "lastName": "Sense camps", "documentationStatus": "none",
+       '{"first_name": "Qa", "last_name": "Sense camps", "documentationStatus": "none",
          "consentConfirmed": true}'::jsonb) $$,
   '23514', 'a required field of the referral form is missing',
   'a referral without its required Ramassà field is refused, even with no fields at all'
 );
 select lives_ok(
   $$ select public.create_entity_referral(
-       '{"firstName": "Qa", "lastName": "Amb camps", "documentationStatus": "none",
-         "consentConfirmed": true, "fields": {"5eed0000-0000-4000-8045-000000000001": "yes"}}'::jsonb) $$,
+       '{"first_name": "Qa", "last_name": "Amb camps", "documentationStatus": "none",
+         "consentConfirmed": true, "answers": {"5eed0000-0000-4000-8045-000000000001": "yes"}}'::jsonb) $$,
   'with it, the referral is sent'
 );
 reset role;

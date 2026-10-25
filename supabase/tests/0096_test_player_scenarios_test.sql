@@ -30,39 +30,59 @@ grant select on real_rows to authenticated;
 create temp table her_status (label text, required boolean, is_returning boolean) on commit drop;
 grant all on her_status to authenticated;
 
+-- Her answers travel by field (RAPP-661). Helpers: the app's keys of a payload
+-- keyed by their fields (a choice by its option), a field's id, and her stored
+-- answer to an app field (decrypted).
+create function pg_temp.answers(p jsonb) returns jsonb language sql security definer as $$
+  select coalesce(jsonb_object_agg(f.id::text, private.app_answer_value(f, e.value)), '{}'::jsonb)
+    from jsonb_each(p) e
+    join public.profile_fields f on f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.system_key = e.key;
+$$;
+create function pg_temp.field(p_key text) returns text language sql security definer as $$
+  select id::text from public.profile_fields
+   where org_id = '5eed0000-0000-4000-8000-000000000000' and system_key = p_key;
+$$;
+create function pg_temp.stored(p_profile uuid, p_key text) returns jsonb language sql security definer as $$
+  select private.system_field_answer(p_profile, p_key);
+$$;
+-- Her answers' system keys and sources, read as the database owner.
+create function pg_temp.sources(p_profile uuid) returns text[] language sql security definer as $$
+  select array_agg(f.system_key || ':' || a.source order by f.system_key) from public.custom_answers a
+    join public.profile_fields f on f.id = a.question_id where a.profile_id = p_profile;
+$$;
+grant execute on all functions in schema pg_temp to authenticated;
+
 set local role authenticated;
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000097", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 
 -- 1. Answers -------------------------------------------------------------------------------------------
 
 select lives_ok(
-  $$ select public.set_test_player_scenario('5eed0000-0000-4000-8000-000000000096', '{
-       "kind": "answers",
-       "fill": {
-         "first_name": "Joana", "last_name": "Prova", "date_of_birth": "1995-05-15",
-         "place_of_birth": "Marroc", "nationality": "Marroc", "preferred_language": "ca",
-         "reference_entity": "Entitat de prova", "has_dependents": false, "num_dependents": 0,
-         "clothing_size": "M", "shoe_size": "38", "phone": "+34600111222"
-       }
-     }'::jsonb) $$,
+  $$ select public.set_test_player_scenario('5eed0000-0000-4000-8000-000000000096', jsonb_build_object(
+       'kind', 'answers',
+       'fill', jsonb_build_object(
+         'first_name', 'Joana', 'last_name', 'Prova', 'preferred_language', 'ca',
+         -- Her answers by field (RAPP-661).
+         'answers', pg_temp.answers('{
+           "date_of_birth": "1995-05-15", "place_of_birth": "Marroc", "nationality": "Marroc",
+           "reference_entity": "Entitat de prova", "has_dependents": "no",
+           "clothing_size": "M", "shoe_size": "38", "phone": "+34600111222"}')))) $$,
   'the design role fills her answers'
 );
 select is(
-  (select array_agg(a.question || ':' || a.source order by a.question) from public.profile_answers a
-    where a.profile_id = '5eed0000-0000-4000-8000-000000000096'),
-  array['clothing_size:staff', 'date_of_birth:staff', 'dependents:staff', 'first_name:staff',
-        'last_name:staff', 'nationality:staff', 'phone:staff', 'place_of_birth:staff',
-        'preferred_language:staff', 'reference_entity:staff', 'shoe_size:staff'],
+  pg_temp.sources('5eed0000-0000-4000-8000-000000000096'),
+  array['clothing_size:staff', 'date_of_birth:staff', 'has_dependents:staff', 'nationality:staff',
+        'phone:staff', 'place_of_birth:staff', 'reference_entity:staff', 'shoe_size:staff'],
   'filled answers are staff answers, so her wizard skips them'
 );
 select lives_ok(
   $$ select public.set_test_player_scenario('5eed0000-0000-4000-8000-000000000096',
-       '{"kind": "answers", "clear": ["phone", "first_name"]}'::jsonb) $$,
+       jsonb_build_object('kind', 'answers', 'clear', jsonb_build_array(pg_temp.field('phone'), pg_temp.field('date_of_birth')))) $$,
   'and clears some'
 );
 select is(
-  (select count(*)::integer from public.profile_answers a
-    where a.profile_id = '5eed0000-0000-4000-8000-000000000096' and a.question in ('phone', 'first_name')),
+  (select count(*)::integer from unnest(pg_temp.sources('5eed0000-0000-4000-8000-000000000096')) s
+    where s like 'phone:%' or s like 'date_of_birth:%'),
   0,
   'a cleared question is unanswered again'
 );
@@ -74,7 +94,7 @@ select is(
 select throws_ok(
   $$ select public.set_test_player_scenario('5eed0000-0000-4000-8000-000000000096',
        '{"kind": "answers", "fill": {"role": "admin"}}'::jsonb) $$,
-  '22023', 'a sample answer has an unknown field',
+  '22023', null::text,
   'a field that is not a wizard answer is refused'
 );
 
@@ -87,9 +107,9 @@ select throws_ok(
   'she joins only with every required answer, as in the app'
 );
 select lives_ok(
-  $$ select public.set_test_player_scenario('5eed0000-0000-4000-8000-000000000096', '{
-       "kind": "answers", "fill": {"first_name": "Joana"}}'::jsonb) $$,
-  'her name answered again'
+  $$ select public.set_test_player_scenario('5eed0000-0000-4000-8000-000000000096', jsonb_build_object(
+       'kind', 'answers', 'fill', jsonb_build_object('answers', pg_temp.answers('{"date_of_birth": "1995-05-15"}')))) $$,
+  'her date of birth answered again'
 );
 select lives_ok(
   $$ select public.set_test_player_scenario('5eed0000-0000-4000-8000-000000000096',
@@ -113,7 +133,7 @@ select is(
 set local role authenticated;
 select throws_ok(
   $$ select public.set_test_player_scenario('5eed0000-0000-4000-8000-000000000096',
-       '{"kind": "answers", "clear": ["date_of_birth"]}'::jsonb) $$,
+       jsonb_build_object('kind', 'answers', 'clear', jsonb_build_array(pg_temp.field('date_of_birth')))) $$,
   '55000', 'she has joined: set the app terms to not accepted before clearing a required answer',
   'a joined woman keeps a complete profile'
 );
@@ -190,10 +210,9 @@ select is(
   'not joined, nothing answered'
 );
 select is(
-  (select array_agg(question order by question) from public.profile_answers
-    where profile_id = '5eed0000-0000-4000-8000-000000000096'),
-  array['first_name', 'last_name'],
-  'only the name the invitation gave her stays answered'
+  (select count(*)::integer from public.custom_answers where profile_id = '5eed0000-0000-4000-8000-000000000096'),
+  0,
+  'only the name the invitation gave her stays: no answer is left'
 );
 select is(
   (select count(*)::integer from public.authorization_signatures

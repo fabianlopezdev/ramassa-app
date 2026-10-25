@@ -11,6 +11,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { expect, test } from 'bun:test';
 import { AppError } from '../errors';
+import { systemFieldFixtureId, systemFieldsCatalogFixture } from '../testing';
 import type { Database } from '../types/database';
 import {
   createParticipantInvite,
@@ -35,11 +36,14 @@ interface RpcCall {
   readonly args: unknown;
 }
 
+/** Every RPC answers `result`, but the catalog the writer reads its field ids from (RAPP-661). */
 function rpcClient(result: { data: unknown; error: unknown }, calls: RpcCall[] = []): Client {
   return {
     rpc: async (name: string, args: unknown) => {
       calls.push({ name, args });
-      return result;
+      return name === 'intake_catalog'
+        ? { data: systemFieldsCatalogFixture(), error: null }
+        : result;
     },
   } as unknown as Client;
 }
@@ -63,8 +67,19 @@ test('createParticipantInvite sends the payload under the name the RPC declares'
   };
   await createParticipantInvite(rpcClient({ data: [createdInvite], error: null }, calls), payload);
 
-  expect(calls[0]?.name).toBe('create_participant_invite');
-  expect(calls[0]?.args).toEqual({ payload });
+  // Her answers travel by field (RAPP-661); the entity stays the invitation's own too.
+  expect(calls.map((call) => call.name)).toEqual(['intake_catalog', 'create_participant_invite']);
+  expect(calls[1]?.args).toEqual({
+    payload: {
+      email: 'fatou.ndiaye@example.com',
+      first_name: 'Fatou',
+      last_name: 'Ndiaye',
+      referral_id: null,
+      is_test_account: false,
+      reference_entity: 'CEAR Catalunya',
+      answers: { [systemFieldFixtureId('reference_entity')]: 'CEAR Catalunya' },
+    },
+  });
 });
 
 test('createParticipantInvite returns the recorded invite with its expiry', async () => {

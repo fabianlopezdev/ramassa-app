@@ -17,6 +17,11 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { AppError } from '../errors';
+import {
+  fetchSystemFieldIndex,
+  hasFieldColumns,
+  withFieldAnswers,
+} from '../intake-builder/field-answers';
 import type { UpdateOwnProfilePayload } from '../schemas/profile';
 import type { Database } from '../types/database';
 import {
@@ -63,9 +68,13 @@ export async function updateParticipantProfile(
   // A full record, or only the changed fields of a woman who has not joined yet (RAPP-300).
   payload: UpdateOwnProfilePayload | ProfilePrefillPayload,
 ): Promise<void> {
+  // Her names and settings on her account, every other answer by field
+  // (RAPP-661). Her page still speaks in her profile's column names until it
+  // renders every field (RAPP-664).
+  const fields = hasFieldColumns(payload) ? await fetchSystemFieldIndex(client) : new Map();
   const { error } = await client.rpc('update_participant_profile', {
     participant_id: participantId,
-    payload,
+    payload: withFieldAnswers(fields, payload),
   });
   if (error) {
     throw new AppError('DB-1', { message: error.message });

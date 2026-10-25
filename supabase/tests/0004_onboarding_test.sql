@@ -25,6 +25,20 @@ grant execute on function public.complete_onboarding(jsonb) to authenticated;
 
 -- Setup ------------------------------------------------------------------------
 
+-- Her answers travel by field (RAPP-661): the app's keys of this payload, keyed
+-- by their fields, a choice by its option.
+create function pg_temp.answers(p jsonb) returns jsonb language sql security definer as $$
+  select coalesce(jsonb_object_agg(f.id::text, private.app_answer_value(f, e.value)), '{}'::jsonb)
+    from jsonb_each(p) e
+    join public.profile_fields f on f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.system_key = e.key;
+$$;
+-- Her stored answer to an app field, as stored.
+create function pg_temp.stored(p_profile uuid, p_key text) returns public.custom_answers language sql security definer as $$
+  select a.* from public.custom_answers a join public.profile_fields f on f.id = a.question_id
+   where a.profile_id = p_profile and f.system_key = p_key;
+$$;
+grant execute on all functions in schema pg_temp to authenticated;
+
 select vault.create_secret('test-encryption-key', 'app_encryption_key', 'pgTAP test key')
 where not exists (select 1 from vault.secrets where name = 'app_encryption_key');
 
@@ -56,13 +70,15 @@ set local request.jwt.claims = '{"sub": "00000000-0000-0000-0000-0000000000c1", 
 select throws_like(
   $$ select public.complete_onboarding(
        jsonb_build_object(
-         'first_name', 'X', 'last_name', 'Y', 'date_of_birth', '1995-03-14',
-         'nationality', 'Síria', 'document_type', 'none',
-         'clothing_size', 'M', 'shoe_size', '38',
-         'terms_version', '2026-07-01', 'locale_shown', 'ca'
+         'first_name', 'X', 'last_name', 'Y',
+         'terms_version', '2026-07-01', 'locale_shown', 'ca',
+         'answers', pg_temp.answers(jsonb_build_object(
+           'date_of_birth', '1995-03-14', 'nationality', 'Síria', 'document_type', 'none',
+           'clothing_size', 'M', 'shoe_size', '38', 'reference_entity', 'Creu Roja Osona',
+           'has_dependents', 'no'))
        )
      ) $$,
-  '%requires place_of_birth%',
+  '%requires an answer to a required question%',
   'the RPC rejects a payload with no place of birth'
 );
 
@@ -71,59 +87,63 @@ select lives_ok(
        jsonb_build_object(
          'first_name', 'أمينة',
          'last_name', 'الحسن',
-         'date_of_birth', '1995-03-14',
-         'place_of_birth', 'حلب',
-         'nationality', 'Síria',
          'preferred_language', 'ar',
-         'document_type', 'nie',
-         'document_number', 'X1234567L',
-         'phone', '+34600111222',
-         'address', 'Carrer Major 1',
-         'city', 'Vic',
-         'postal_code', '08500',
-         'reference_entity', 'Creu Roja Osona',
-         'has_dependents', true,
-         'num_dependents', 2,
-         'clothing_size', 'M',
-         'shoe_size', '38',
          'terms_version', '2026-07-01',
-         'locale_shown', 'ar'
+         'locale_shown', 'ar',
+         'answers', pg_temp.answers(jsonb_build_object(
+           'date_of_birth', '1995-03-14',
+           'place_of_birth', 'حلب',
+           'nationality', 'Síria',
+           'document_type', 'nie',
+           'document_number', 'X1234567L',
+           'phone', '+34600111222',
+           'address', 'Carrer Major 1',
+           'city', 'Vic',
+           'postal_code', '08500',
+           'reference_entity', 'Creu Roja Osona',
+           'has_dependents', 'yes',
+           'num_dependents', 2,
+           'clothing_size', 'M',
+           'shoe_size', '38'))
        )
      ) $$,
   'a player can complete their own onboarding'
 );
 
--- Encryption at rest: the raw columns must NOT contain the plaintext.
+-- Encryption at rest: her Sensitive answers must NOT be stored as plaintext
+-- (RAPP-661: they are answers by field).
 set local role postgres;
 
-select isnt(
-  (select encode(document_number, 'escape') from public.profiles where id = '00000000-0000-0000-0000-0000000000c1'),
-  'X1234567L',
+select is(
+  (select row(value, encode(value_encrypted, 'escape') like '%X1234567L%')::text
+     from pg_temp.stored('00000000-0000-0000-0000-0000000000c1', 'document_number')),
+  '(,f)',
   'document_number is ciphertext at rest, not the plaintext NIE'
 );
 
-select isnt(
-  (select encode(phone, 'escape') from public.profiles where id = '00000000-0000-0000-0000-0000000000c1'),
-  '+34600111222',
+select is(
+  (select row(value, encode(value_encrypted, 'escape') like '%+34600111222%')::text
+     from pg_temp.stored('00000000-0000-0000-0000-0000000000c1', 'phone')),
+  '(,f)',
   'phone is ciphertext at rest'
 );
 
 select is(
-  (select public.decrypt_field(document_number) from public.profiles where id = '00000000-0000-0000-0000-0000000000c1'),
-  'X1234567L',
+  (select public.decrypt_field(value_encrypted) from pg_temp.stored('00000000-0000-0000-0000-0000000000c1', 'document_number')),
+  '"X1234567L"',
   'document_number round-trips through the decrypt helper'
 );
 
 select is(
-  (select public.decrypt_field(postal_code) from public.profiles where id = '00000000-0000-0000-0000-0000000000c1'),
-  '08500',
+  (select public.decrypt_field(value_encrypted) from pg_temp.stored('00000000-0000-0000-0000-0000000000c1', 'postal_code')),
+  '"08500"',
   'postal_code round-trips through the decrypt helper'
 );
 
 -- City stays cleartext on purpose: aggregate impact reporting needs it.
 select is(
-  (select city from public.profiles where id = '00000000-0000-0000-0000-0000000000c1'),
-  'Vic',
+  (select value from pg_temp.stored('00000000-0000-0000-0000-0000000000c1', 'city')),
+  '"Vic"'::jsonb,
   'city is deliberately cleartext for aggregate reporting'
 );
 

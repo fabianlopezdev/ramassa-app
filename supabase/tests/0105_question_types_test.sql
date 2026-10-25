@@ -253,11 +253,12 @@ select is(
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000097", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select lives_ok(
   $$ select public.set_test_player_scenario('5eed0000-0000-4000-8000-000000000096', jsonb_build_object(
-       'kind', 'custom_answers',
-       'fill', jsonb_build_object(
+       -- The staff fields' switch folded into answers (RAPP-661).
+       'kind', 'answers',
+       'fill', jsonb_build_object('answers', jsonb_build_object(
          (select id::text from q where label = 'signature'), '[[[100, 500], [300, 400]]]'::jsonb,
          (select id::text from q where label = 'file'), '{"key": "5eed0000-0000-4000-8000-000000000000/intake-answers/5eed0000-0000-4000-8000-000000000096/2026/01/00000000000000000000000000000000.pdf", "name": "prova.pdf", "content_type": "application/pdf", "size": 1024}'::jsonb,
-         (select id::text from q where label = 'number'), '2'::jsonb))) $$,
+         (select id::text from q where label = 'number'), '2'::jsonb)))) $$,
   'the scenario tool fills a test player''s file, signature and number'
 );
 select is(
@@ -267,18 +268,18 @@ select is(
 );
 select lives_ok(
   $$ select public.set_test_player_scenario('5eed0000-0000-4000-8000-000000000096', jsonb_build_object(
-       'kind', 'custom_answers', 'clear', jsonb_build_array((select id::text from q where label = 'number')))) $$,
+       'kind', 'answers', 'clear', jsonb_build_array((select id::text from q where label = 'number')))) $$,
   'and clears one'
 );
 select throws_ok(
   $$ select public.set_test_player_scenario('5eed0000-0000-4000-8000-000000000096', jsonb_build_object(
-       'kind', 'custom_answers', 'fill', jsonb_build_object((select id::text from q where label = 'number'), '99'::jsonb))) $$,
+       'kind', 'answers', 'fill', jsonb_build_object('answers', jsonb_build_object((select id::text from q where label = 'number'), '99'::jsonb)))) $$,
   '23514', 'the answer does not fit the question',
   'a sample that does not fit is refused like any answer'
 );
 select throws_ok(
   $$ select public.set_test_player_scenario('5eed0000-0000-4000-8000-000000000011', jsonb_build_object(
-       'kind', 'custom_answers', 'clear', '[]'::jsonb)) $$,
+       'kind', 'answers', 'clear', '[]'::jsonb)) $$,
   '42501', 'scenario switches are for test players only',
   'never on a real woman'
 );

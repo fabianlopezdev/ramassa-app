@@ -1,24 +1,41 @@
 begin;
 select plan(17);
 
+-- Her answers travel by field (RAPP-661). Helpers: the app's keys of a payload
+-- keyed by their fields (a choice by its option), a field's id, and her stored
+-- answer to an app field (decrypted).
+create function pg_temp.answers(p jsonb) returns jsonb language sql security definer as $$
+  select coalesce(jsonb_object_agg(f.id::text, private.app_answer_value(f, e.value)), '{}'::jsonb)
+    from jsonb_each(p) e
+    join public.profile_fields f on f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.system_key = e.key;
+$$;
+create function pg_temp.field(p_key text) returns text language sql security definer as $$
+  select id::text from public.profile_fields
+   where org_id = '5eed0000-0000-4000-8000-000000000000' and system_key = p_key;
+$$;
+create function pg_temp.stored(p_profile uuid, p_key text) returns jsonb language sql security definer as $$
+  select private.system_field_answer(p_profile, p_key);
+$$;
+grant execute on all functions in schema pg_temp to authenticated;
+
 -- The unsigned path is closed to clients (RAPP-624); this file checks its merge
 -- rules as the participant, so it grants it inside this rolled-back transaction.
 grant execute on function public.complete_onboarding(jsonb) to authenticated;
 
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000011","role":"authenticated","aal":"aal1"}';
-select lives_ok($$ select public.update_own_profile(
-  (select to_jsonb(p) from public.get_own_profile() p) ||
-  '{"place_of_birth":"Aleppo","document_type":"other","document_name":"Residence permit","document_number":null}'::jsonb) $$,
+-- Her answers travel by field (RAPP-661); what she saved is read from them.
+select lives_ok($$ select public.update_own_profile(jsonb_build_object('answers', pg_temp.answers(
+  '{"place_of_birth":"Aleppo","document_type":"other","document_name":"Residence permit","document_number":null}'))) $$,
   'Other has a name and may omit its number');
-select is((select document_name from public.get_own_profile()), 'Residence permit', 'the document name survives the own-profile RPC');
-select is((select document_number from public.get_own_profile()), null, 'no number is fabricated for Other');
-select lives_ok($$ select public.update_own_profile(
-  (select to_jsonb(p) - 'document_name' from public.get_own_profile() p) || '{"place_of_birth":"Aleppo"}'::jsonb) $$,
+select is(pg_temp.stored('5eed0000-0000-4000-8000-000000000011', 'document_name') #>> '{}', 'Residence permit', 'the document name survives the own-profile RPC');
+select is(pg_temp.stored('5eed0000-0000-4000-8000-000000000011', 'document_number'), null, 'no number is fabricated for Other');
+select lives_ok($$ select public.update_own_profile(jsonb_build_object('answers', pg_temp.answers(
+  '{"place_of_birth":"Aleppo"}'))) $$,
   'an older client may omit the new field');
-select is((select document_name from public.get_own_profile()), 'Residence permit', 'an unrelated edit preserves its name');
-select lives_ok($$ select public.update_own_profile(
-  (select to_jsonb(p) from public.get_own_profile() p) || '{"document_name":""}'::jsonb) $$, 'legacy edits may clear the optional metadata');
+select is(pg_temp.stored('5eed0000-0000-4000-8000-000000000011', 'document_name') #>> '{}', 'Residence permit', 'an unrelated edit preserves its name');
+select lives_ok($$ select public.update_own_profile(jsonb_build_object('answers', pg_temp.answers(
+  '{"document_name":""}'))) $$, 'legacy edits may clear the optional metadata');
 reset role;
 -- Inspect the denied ACL: invoking it crashes the local Supabase 17.6 image.
 -- https://github.com/supabase/supautils/issues/214
@@ -30,21 +47,21 @@ select is((select count(*)::integer from public.get_participant_profile('5eed000
 reset role;
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000011","role":"authenticated","aal":"aal1"}';
-select lives_ok($$ select public.update_own_profile(
-  (select to_jsonb(p) from public.get_own_profile() p) || '{"document_type":"passport","document_number":"AB12345"}'::jsonb) $$, 'passport still accepts a number');
-select is((select document_name from public.get_own_profile()), null, 'changing type clears the old document name');
-select throws_ok($$ select public.update_own_profile(
-  (select to_jsonb(p) from public.get_own_profile() p) || '{"document_number":null}'::jsonb) $$,
+select lives_ok($$ select public.update_own_profile(jsonb_build_object('answers', pg_temp.answers(
+  '{"document_type":"passport","document_number":"AB12345"}'))) $$, 'passport still accepts a number');
+select is(pg_temp.stored('5eed0000-0000-4000-8000-000000000011', 'document_name'), null, 'changing type clears the old document name');
+select throws_ok($$ select public.update_own_profile(jsonb_build_object('answers', pg_temp.answers(
+  '{"document_number":null}'))) $$,
   '23502', null::text, 'passport still requires its number');
-select is((select document_number from public.get_own_profile()), 'AB12345', 'a rejected edit preserves the document');
+select is(pg_temp.stored('5eed0000-0000-4000-8000-000000000011', 'document_number') #>> '{}', 'AB12345', 'a rejected edit preserves the document');
 reset role;
 create temp table onboarding_account as select id from auth.users where email = 'onboarding@example.test';
 grant select on onboarding_account to authenticated;
 set local role authenticated;
 select set_config('request.jwt.claims', json_build_object('sub', (select id from onboarding_account), 'role', 'authenticated', 'aal', 'aal1')::text, true);
-select lives_ok($$ select public.complete_onboarding('{"first_name":"Nadia","last_name":"Khoury","date_of_birth":"1993-11-02","place_of_birth":"Homs","nationality":"Síria","preferred_language":"ca","document_type":"other","document_name":"Residence permit","document_number":null,"has_dependents":false,"num_dependents":0,"reference_entity":null,"clothing_size":"M","shoe_size":"38","media_consent":false,"terms_version":"2026-07-01","locale_shown":"ca"}'::jsonb) $$, 'wizard completion stores Other with an optional number');
-select is((select document_name from public.get_own_profile()), 'Residence permit', 'wizard document name is returned on the next read');
-select throws_ok($$ select public.complete_onboarding('{"document_type":"other","document_name":"","document_number":null,"media_consent":false,"terms_version":"2026-07-01","locale_shown":"ca"}'::jsonb) $$, '23502', null::text, 'a new Other choice requires its document name');
+select lives_ok($$ select public.complete_onboarding(jsonb_build_object('first_name','Nadia','last_name','Khoury','preferred_language','ca','media_consent',false,'terms_version','2026-07-01','locale_shown','ca','answers',pg_temp.answers('{"date_of_birth":"1993-11-02","place_of_birth":"Homs","nationality":"Síria","document_type":"other","document_name":"Residence permit","document_number":null,"has_dependents":"no","reference_entity":null,"clothing_size":"M","shoe_size":"38"}'))) $$, 'wizard completion stores Other with an optional number');
+select is(pg_temp.stored((select id from onboarding_account), 'document_name') #>> '{}', 'Residence permit', 'wizard document name is returned on the next read');
+select throws_ok($$ select public.complete_onboarding(jsonb_build_object('media_consent',false,'terms_version','2026-07-01','locale_shown','ca','answers',pg_temp.answers('{"document_type":"other","document_name":"","document_number":null}'))) $$, '23502', null::text, 'a new Other choice requires its document name');
 reset role;
 -- An erasure clears this added personal field as well as the existing ones.
 update public.profiles set document_type = 'other', document_name = 'Permit' where id = '5eed0000-0000-4000-8000-000000000011';

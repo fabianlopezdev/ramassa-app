@@ -25,6 +25,23 @@ select plan(14);
 create temp table run (label text primary key, id uuid) on commit drop;
 grant all on run to authenticated;
 
+-- Her answers travel by field (RAPP-661). Helpers: the app's keys of a payload
+-- keyed by their fields (a choice by its option), a field's id, and her stored
+-- answer to an app field (decrypted).
+create function pg_temp.answers(p jsonb) returns jsonb language sql security definer as $$
+  select coalesce(jsonb_object_agg(f.id::text, private.app_answer_value(f, e.value)), '{}'::jsonb)
+    from jsonb_each(p) e
+    join public.profile_fields f on f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.system_key = e.key;
+$$;
+create function pg_temp.field(p_key text) returns text language sql security definer as $$
+  select id::text from public.profile_fields
+   where org_id = '5eed0000-0000-4000-8000-000000000000' and system_key = p_key;
+$$;
+create function pg_temp.stored(p_profile uuid, p_key text) returns jsonb language sql security definer as $$
+  select private.system_field_answer(p_profile, p_key);
+$$;
+grant execute on all functions in schema pg_temp to authenticated;
+
 -- 1. A team member's answer ----------------------------------------------------------------------
 
 set local role authenticated;
@@ -87,7 +104,8 @@ select is(
 
 set local role authenticated;
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated", "aal": "aal2"}';
-select public.update_participant_profile('5eed0000-0000-4000-8000-000000000098', '{"city": "Olot"}'::jsonb);
+select public.update_participant_profile('5eed0000-0000-4000-8000-000000000098',
+  jsonb_build_object('answers', pg_temp.answers('{"city": "Olot"}')));
 
 select is(
   (select source || '/' || answered_by_name
@@ -104,13 +122,15 @@ select public.place_field('5eed0000-0000-4000-8045-000000000004', 'entity_form')
 
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000004", "role": "authenticated", "aal": "aal2"}';
 insert into run values ('referral', public.create_entity_referral(jsonb_build_object(
-  'firstName', 'Qa', 'lastName', 'Font', 'email', 'qa.rapp653@example.test',
-  'documentationStatus', 'none', 'consentConfirmed', true, 'nationality', 'Marroc',
-  'fields', jsonb_build_object('5eed0000-0000-4000-8045-000000000004', 'Gràcia'))));
+  'first_name', 'Qa', 'last_name', 'Font', 'email', 'qa.rapp653@example.test',
+  'documentationStatus', 'none', 'consentConfirmed', true,
+  'answers', pg_temp.answers('{"nationality": "Marroc"}')
+             || jsonb_build_object('5eed0000-0000-4000-8045-000000000004', 'Gràcia'))));
 
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000001", "role": "authenticated", "aal": "aal2"}';
 insert into run values ('invited', (select profile_id from public.create_participant_invite(jsonb_build_object(
   'email', 'qa.rapp653@example.test', 'first_name', 'Qa', 'last_name', 'Font',
+  'answers', pg_temp.answers('{"date_of_birth": "1999-09-09"}'),
   'referral_id', (select id from run where label = 'referral')))));
 
 reset role;
@@ -121,15 +141,16 @@ select is(
   'entity/5eed0000-0000-4000-8000-000000000004',
   'an entity''s answer to a Ramassà field records the entity contact'
 );
+-- Every answer by field since RAPP-661, the app's own included.
 select is(
-  (select source || '/' || answered_by::text from public.profile_answers
-    where profile_id = (select id from run where label = 'invited') and question = 'nationality'),
+  (select source || '/' || answered_by::text from public.custom_answers
+    where profile_id = (select id from run where label = 'invited') and question_id::text = pg_temp.field('nationality')),
   'entity/5eed0000-0000-4000-8000-000000000004',
   'and so does its answer to the app''s own field'
 );
 select is(
-  (select source || '/' || answered_by::text from public.profile_answers
-    where profile_id = (select id from run where label = 'invited') and question = 'first_name'),
+  (select source || '/' || answered_by::text from public.custom_answers
+    where profile_id = (select id from run where label = 'invited') and question_id::text = pg_temp.field('date_of_birth')),
   'staff/5eed0000-0000-4000-8000-000000000001',
   'what the team typed at the invitation names the team member'
 );

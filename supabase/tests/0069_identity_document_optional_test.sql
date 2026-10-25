@@ -28,6 +28,23 @@ union all
 select 'invited', id from auth.users where email = 'invited@example.test';
 grant select on account to authenticated;
 
+-- Her answers travel by field (RAPP-661). Helpers: the app's keys of a payload
+-- keyed by their fields (a choice by its option), a field's id, and her stored
+-- answer to an app field (decrypted).
+create function pg_temp.answers(p jsonb) returns jsonb language sql security definer as $$
+  select coalesce(jsonb_object_agg(f.id::text, private.app_answer_value(f, e.value)), '{}'::jsonb)
+    from jsonb_each(p) e
+    join public.profile_fields f on f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.system_key = e.key;
+$$;
+create function pg_temp.field(p_key text) returns text language sql security definer as $$
+  select id::text from public.profile_fields
+   where org_id = '5eed0000-0000-4000-8000-000000000000' and system_key = p_key;
+$$;
+create function pg_temp.stored(p_profile uuid, p_key text) returns jsonb language sql security definer as $$
+  select private.system_field_answer(p_profile, p_key);
+$$;
+grant execute on all functions in schema pg_temp to authenticated;
+
 -- 1 and 3. The wizard ------------------------------------------------------------------------------
 
 set local role authenticated;
@@ -37,37 +54,41 @@ select set_config('request.jwt.claims',
 
 select throws_ok(
   $$ select public.complete_onboarding(jsonb_build_object(
-       'first_name', 'Nadia', 'last_name', 'Khoury', 'date_of_birth', '1993-11-02',
-       'place_of_birth', 'Homs', 'nationality', 'Síria', 'preferred_language', 'ca',
-       'document_type', 'passport',
-       'has_dependents', false, 'num_dependents', 0, 'reference_entity', null,
-       'clothing_size', 'M', 'shoe_size', '38',
-       'media_consent', false, 'terms_version', '2026-07-01', 'locale_shown', 'ca')) $$,
+       'first_name', 'Nadia', 'last_name', 'Khoury', 'preferred_language', 'ca',
+       'media_consent', false, 'terms_version', '2026-07-01', 'locale_shown', 'ca',
+       'answers', pg_temp.answers(jsonb_build_object(
+         'date_of_birth', '1993-11-02', 'place_of_birth', 'Homs', 'nationality', 'Síria',
+         'document_type', 'passport',
+         'has_dependents', 'no', 'reference_entity', null,
+         'clothing_size', 'M', 'shoe_size', '38')))) $$,
   '23502', null::text, 'a chosen type that needs a number still needs one'
 );
 
 select lives_ok(
   $$ select public.complete_onboarding(jsonb_build_object(
-       'first_name', 'Nadia', 'last_name', 'Khoury', 'date_of_birth', '1993-11-02',
-       'place_of_birth', 'Homs', 'nationality', 'Síria', 'preferred_language', 'ca',
-       'document_type', null, 'document_number', 'Y1234567X',
-       'has_dependents', false, 'num_dependents', 0, 'reference_entity', null,
-       'clothing_size', 'M', 'shoe_size', '38',
-       'media_consent', false, 'terms_version', '2026-07-01', 'locale_shown', 'ca')) $$,
+       'first_name', 'Nadia', 'last_name', 'Khoury', 'preferred_language', 'ca',
+       'media_consent', false, 'terms_version', '2026-07-01', 'locale_shown', 'ca',
+       'answers', pg_temp.answers(jsonb_build_object(
+         'date_of_birth', '1993-11-02', 'place_of_birth', 'Homs', 'nationality', 'Síria',
+         'document_type', null, 'document_number', 'Y1234567X',
+         'has_dependents', 'no', 'reference_entity', null,
+         'clothing_size', 'M', 'shoe_size', '38')))) $$,
   'she can finish the wizard without a document'
 );
 
 reset role;
 select is(
-  (select coalesce(document_type, 'empty') || ' ' || coalesce(public.decrypt_field(document_number), 'empty')
-     from public.profiles where id = (select id from account where label = 'onboarding')),
+  (select coalesce((select o.key from public.custom_question_options o
+                     where o.id::text = pg_temp.stored((select id from account where label = 'onboarding'), 'document_type') #>> '{}'), 'empty')
+          || ' ' || coalesce(pg_temp.stored((select id from account where label = 'onboarding'), 'document_number') #>> '{}', 'empty')),
   'empty empty', 'a skipped document stays empty, and a number without a type is dropped'
 );
+-- An empty answer leaves no record since answers are by field (RAPP-661): she
+-- has joined, and her wizard does not run again.
 select is(
-  (select source from public.profile_answers
-    where profile_id = (select id from account where label = 'onboarding')
-      and question = 'document'),
-  'player', 'the skipped step is recorded as asked, so the wizard does not ask it again'
+  (select count(*)::integer from public.custom_answers
+    where profile_id = (select id from account where label = 'onboarding') and question_id::text in (pg_temp.field('document_type'), pg_temp.field('document_number'))),
+  0, 'the skipped step leaves no answer behind'
 );
 
 -- 1. Her own profile ---------------------------------------------------------------------------------
@@ -77,29 +98,21 @@ set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000011", 
 
 select lives_ok(
   $$ select public.update_own_profile(jsonb_build_object(
-       'first_name', 'Amina', 'last_name', 'Al-Hassan',
-       'date_of_birth', '1995-03-14', 'place_of_birth', 'Alep',
-       'nationality', 'Síria', 'preferred_language', 'ca',
-       'document_type', null,
-       'has_dependents', false, 'num_dependents', 0,
-       'clothing_size', 'L', 'shoe_size', '39', 'media_consent', true)) $$,
+       'first_name', 'Amina', 'last_name', 'Al-Hassan', 'preferred_language', 'ca', 'media_consent', true,
+       'answers', pg_temp.answers(jsonb_build_object('document_type', null)))) $$,
   'she can clear her document in her own profile'
 );
 reset role;
 select is(
-  (select coalesce(document_type, 'empty') || ' ' || coalesce(public.decrypt_field(document_number), 'empty')
-     from public.profiles where id = '5eed0000-0000-4000-8000-000000000011'),
+  (select coalesce((select o.key from public.custom_question_options o
+                     where o.id::text = pg_temp.stored('5eed0000-0000-4000-8000-000000000011', 'document_type') #>> '{}'), 'empty')
+          || ' ' || coalesce(pg_temp.stored('5eed0000-0000-4000-8000-000000000011', 'document_number') #>> '{}', 'empty')),
   'empty empty', 'and both the type and the number are cleared'
 );
 set local role authenticated;
 select throws_ok(
   $$ select public.update_own_profile(jsonb_build_object(
-       'first_name', 'Amina', 'last_name', 'Al-Hassan',
-       'date_of_birth', '1995-03-14', 'place_of_birth', 'Alep',
-       'nationality', 'Síria', 'preferred_language', 'ca',
-       'document_type', 'nie',
-       'has_dependents', false, 'num_dependents', 0,
-       'clothing_size', 'L', 'shoe_size', '39', 'media_consent', true)) $$,
+       'answers', pg_temp.answers(jsonb_build_object('document_type', 'nie')))) $$,
   '23502', null::text, 'her own edit still needs a number for a chosen type'
 );
 
@@ -109,28 +122,18 @@ set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", 
 
 select lives_ok(
   $$ select public.update_participant_profile('5eed0000-0000-4000-8000-000000000012', jsonb_build_object(
-       'first_name', 'Fatima', 'last_name', 'Benali',
-       'date_of_birth', '1990-05-01', 'place_of_birth', 'Fes',
-       'nationality', 'Marroc', 'preferred_language', 'ca',
-       'document_type', null,
-       'has_dependents', false, 'num_dependents', 0,
-       'clothing_size', 'M', 'shoe_size', '38', 'media_consent', false)) $$,
+       'answers', pg_temp.answers(jsonb_build_object('document_type', null, 'document_number', null)))) $$,
   'staff can leave the document empty when an entity does not share it'
 );
 reset role;
 select is(
-  (select coalesce(document_type, 'empty') from public.profiles where id = '5eed0000-0000-4000-8000-000000000012'),
+  coalesce(pg_temp.stored('5eed0000-0000-4000-8000-000000000012', 'document_type') #>> '{}', 'empty'),
   'empty', 'the staff edit stores it empty'
 );
 set local role authenticated;
 select throws_ok(
   $$ select public.update_participant_profile('5eed0000-0000-4000-8000-000000000012', jsonb_build_object(
-       'first_name', 'Fatima', 'last_name', 'Benali',
-       'date_of_birth', '1990-05-01', 'place_of_birth', 'Fes',
-       'nationality', 'Marroc', 'preferred_language', 'ca',
-       'document_type', 'passport',
-       'has_dependents', false, 'num_dependents', 0,
-       'clothing_size', 'M', 'shoe_size', '38', 'media_consent', false)) $$,
+       'answers', pg_temp.answers(jsonb_build_object('document_type', 'passport')))) $$,
   '23502', null::text, 'the staff edit still needs a number for a chosen type'
 );
 
@@ -143,18 +146,14 @@ set local role authenticated;
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000003", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select lives_ok(
   $$ select public.update_participant_profile('5eed0000-0000-4000-8000-000000000013', jsonb_build_object(
-       'first_name', 'Mariam', 'last_name', 'Sow',
-       'date_of_birth', '1992-02-02', 'place_of_birth', 'Dakar',
-       'nationality', 'Senegal', 'preferred_language', 'ca',
-       'document_type', null,
-       'has_dependents', false, 'num_dependents', 0,
-       'clothing_size', 'M', 'shoe_size', '38', 'media_consent', false)) $$,
+       'answers', pg_temp.answers(jsonb_build_object('document_type', null)))) $$,
   'a staff member without the sensitive fields can leave the document empty'
 );
 reset role;
 select is(
-  (select coalesce(document_type, 'empty') || ' ' || coalesce(public.decrypt_field(document_number), 'empty')
-     from public.profiles where id = '5eed0000-0000-4000-8000-000000000013'),
+  (select coalesce((select o.key from public.custom_question_options o
+                     where o.id::text = pg_temp.stored('5eed0000-0000-4000-8000-000000000013', 'document_type') #>> '{}'), 'empty')
+          || ' ' || coalesce(pg_temp.stored('5eed0000-0000-4000-8000-000000000013', 'document_number') #>> '{}', 'empty')),
   'empty empty', 'and the stored number is cleared with the type'
 );
 

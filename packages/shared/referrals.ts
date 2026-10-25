@@ -1,6 +1,12 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { AppError } from './errors';
+import { isEmptyAnswer } from './intake-builder/builder';
+import {
+  fetchSystemFieldIndex,
+  fieldAnswersFromColumns,
+  type SystemFieldIndex,
+} from './intake-builder/field-answers';
 import type { CustomAnswerValue } from './intake-builder/question-types';
 import { DOCUMENT_TYPES, NIE_PATTERN } from './schemas/onboarding';
 import { personNameSchema, trimPersonName } from './schemas/person-name';
@@ -121,38 +127,53 @@ export type CreateReferral = z.output<typeof createReferralSchema>;
 /** Answers to the Ramassà fields of the form (RAPP-652), by field id; empty ones left out. */
 export type ReferralFieldAnswers = Readonly<Record<string, CustomAnswerValue | null>>;
 
-export function buildReferralPayload(
-  referral: CreateReferral,
-  fields: ReferralFieldAnswers | null = null,
-): Json {
+/**
+ * TEMPORARY, until the portal renders every field (RAPP-663, RAPP-664): the
+ * form's app answers in her profile's column names, which
+ * `fieldAnswersFromColumns` turns into answers by field. A number travels only
+ * with a type that takes one.
+ */
+export function referralColumns(referral: CreateReferral): Record<string, unknown> {
   const hasNumber = referral.documentType !== null && referral.documentType !== 'none';
   return {
-    // Saved with the referral in the same call, so it is never left without them.
-    ...(fields === null
-      ? {}
-      : {
-          fields: Object.fromEntries(
-            Object.entries(fields).filter(([, value]) => value !== null),
-          ) as Json,
-        }),
-    firstName: referral.firstName,
-    lastName: referral.lastName,
     phone: referral.phone,
+    date_of_birth: referral.dateOfBirth,
+    nationality: referral.nationality,
+    document_type: referral.documentType,
+    document_number: hasNumber ? referral.documentNumber : null,
+    city: referral.city,
+    applicant_status: referral.applicantStatus,
+    supporting_entities: referral.supportingEntities,
+    reference_contact_name: referral.referenceContactName,
+    childcare_need: referral.childcareNeed,
+    specific_needs: referral.specificNeeds,
+  };
+}
+
+/**
+ * The referral as `create_entity_referral` takes it (RAPP-661): her names,
+ * every answer by field (the app's and Ramassà's), and the referral's own
+ * data. A referral starts empty, so an empty answer is left out: there is
+ * nothing to remove, and a field the form does not ask stays out.
+ */
+export function buildReferralPayload(
+  referral: CreateReferral,
+  systemFields: SystemFieldIndex = new Map(),
+  fields: ReferralFieldAnswers | null = null,
+): Json {
+  const answers = Object.entries({
+    ...fieldAnswersFromColumns(systemFields, referralColumns(referral)).answers,
+    ...fields,
+  }).filter(([, value]) => !isEmptyAnswer(value));
+  return {
+    first_name: referral.firstName,
+    last_name: referral.lastName,
     email: referral.email,
     documentationStatus: referral.documentationStatus,
     notes: referral.notes,
-    dateOfBirth: referral.dateOfBirth,
-    nationality: referral.nationality,
-    documentType: referral.documentType,
-    documentNumber: hasNumber ? referral.documentNumber : null,
-    city: referral.city,
-    applicantStatus: referral.applicantStatus,
-    supportingEntities: referral.supportingEntities,
-    referenceContactName: referral.referenceContactName,
     seasonNumber: referral.seasonNumber,
-    childcareNeed: referral.childcareNeed,
-    specificNeeds: referral.specificNeeds,
     consentConfirmed: referral.consentConfirmed,
+    answers: Object.fromEntries(answers) as Json,
   };
 }
 
@@ -353,7 +374,7 @@ export async function createReferral(
   fields: ReferralFieldAnswers | null = null,
 ): Promise<string> {
   const { data, error } = await client.rpc('create_entity_referral', {
-    p_payload: buildReferralPayload(input, fields),
+    p_payload: buildReferralPayload(input, await fetchSystemFieldIndex(client), fields),
   });
   if (error) databaseFailure(error.message);
   return z.uuid().parse(data);

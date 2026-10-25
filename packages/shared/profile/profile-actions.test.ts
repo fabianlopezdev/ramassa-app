@@ -14,6 +14,11 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { expect, test } from 'bun:test';
 import { AppError } from '../errors';
+import {
+  systemFieldFixtureId,
+  systemFieldsCatalogFixture,
+  systemOptionFixtureId,
+} from '../testing';
 import type { Database } from '../types/database';
 import {
   fetchOwnDeletionRequest,
@@ -98,7 +103,39 @@ test('updateOwnProfile hands the payload to the re-encrypting RPC untouched', as
   await updateOwnProfile(client, payload);
 
   expect(received?.name).toBe('update_own_profile');
-  expect(received?.args).toEqual({ payload });
+  // Her names stay on her account; every other answer travels by field (RAPP-661).
+  expect(received?.args).toEqual({
+    payload: { first_name: 'Amina', last_name: 'Al-Hassan', answers: {} },
+  });
+});
+
+test('updateOwnProfile sends an app field as its answer, by the field id the catalog names', async () => {
+  const calls: { name: string; args: unknown }[] = [];
+  const client = {
+    rpc: async (name: string, args: unknown) => {
+      calls.push({ name, args });
+      return name === 'intake_catalog'
+        ? { data: systemFieldsCatalogFixture(), error: null }
+        : { data: null, error: null };
+    },
+  } as unknown as Client;
+
+  await updateOwnProfile(client, {
+    first_name: 'Amina',
+    city: 'Vic',
+    document_type: 'nie',
+  } as never);
+
+  expect(calls.map((call) => call.name)).toEqual(['intake_catalog', 'update_own_profile']);
+  expect(calls[1]?.args).toEqual({
+    payload: {
+      first_name: 'Amina',
+      answers: {
+        [systemFieldFixtureId('city')]: 'Vic',
+        [systemFieldFixtureId('document_type')]: systemOptionFixtureId('document_type', 'nie'),
+      },
+    },
+  });
 });
 
 test('updateOwnProfile surfaces a rejected edit as an error, not as a silent no-op', async () => {

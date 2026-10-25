@@ -24,10 +24,15 @@ import {
   type CustomQuestion,
   type IntakeCatalog,
 } from '../intake-builder';
+import {
+  fetchSystemFieldIndex,
+  systemFieldIdsOfQuestions,
+  withFieldAnswers,
+} from '../intake-builder/field-answers';
 import { QUESTION_PAYLOAD_KEYS, type IntakeQuestion } from '../onboarding/intake';
 import type { LanguageCode } from '../schemas/language';
 import { encodeSupportNeeds } from '../schemas/support-needs';
-import type { Database } from '../types/database';
+import type { Database, Json } from '../types/database';
 
 type Client = SupabaseClient<Database>;
 
@@ -179,6 +184,32 @@ export type TestPlayerScenarioChange =
   | { readonly kind: 'returning'; readonly returning: boolean }
   | { readonly kind: 'reset' };
 
+/**
+ * The change as the database takes it (RAPP-661): answers by field. The app
+ * questions' samples are in her profile's column names and their clears in
+ * questions until her page renders every field (RAPP-664); the staff fields'
+ * switch is the same `answers` switch.
+ */
+async function scenarioChangeByField(
+  client: Client,
+  change: TestPlayerScenarioChange,
+): Promise<Json> {
+  if (change.kind === 'custom_answers') {
+    return {
+      kind: 'answers',
+      fill: { answers: { ...change.fill } as Json },
+      clear: [...(change.clear ?? [])],
+    };
+  }
+  if (change.kind !== 'answers') return change as unknown as Json;
+  const fields = await fetchSystemFieldIndex(client);
+  return {
+    kind: 'answers',
+    fill: withFieldAnswers(fields, change.fill ?? {}),
+    clear: [...systemFieldIdsOfQuestions(fields, change.clear ?? [])],
+  };
+}
+
 export async function setTestPlayerScenario(
   client: Client,
   profileId: string,
@@ -186,8 +217,7 @@ export async function setTestPlayerScenario(
 ): Promise<void> {
   const { error } = await client.rpc('set_test_player_scenario', {
     p_profile_id: z.uuid().parse(profileId),
-    p_change:
-      change as unknown as Database['public']['Functions']['set_test_player_scenario']['Args']['p_change'],
+    p_change: await scenarioChangeByField(client, change),
   });
   if (error) throw new AppError(databaseErrorCode(error.message), { message: error.message });
 }

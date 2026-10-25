@@ -26,6 +26,23 @@ create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 select plan(43);
 
+-- Her answers travel by field (RAPP-661). Helpers: the app's keys of a payload
+-- keyed by their fields (a choice by its option), a field's id, and her stored
+-- answer to an app field (decrypted).
+create function pg_temp.answers(p jsonb) returns jsonb language sql security definer as $$
+  select coalesce(jsonb_object_agg(f.id::text, private.app_answer_value(f, e.value)), '{}'::jsonb)
+    from jsonb_each(p) e
+    join public.profile_fields f on f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.system_key = e.key;
+$$;
+create function pg_temp.field(p_key text) returns text language sql security definer as $$
+  select id::text from public.profile_fields
+   where org_id = '5eed0000-0000-4000-8000-000000000000' and system_key = p_key;
+$$;
+create function pg_temp.stored(p_profile uuid, p_key text) returns jsonb language sql security definer as $$
+  select private.system_field_answer(p_profile, p_key);
+$$;
+grant execute on all functions in schema pg_temp to authenticated;
+
 -- 1. Row security -----------------------------------------------------------------------------------------
 
 select ok(
@@ -214,31 +231,34 @@ set local role authenticated;
 set local request.jwt.claims = '{"sub": "00000000-0000-0000-0000-0000000006c3", "role": "authenticated"}';
 select throws_like(
   $$ select public.complete_onboarding_signed(
-       '{"first_name": "Nadia", "last_name": "Khoury", "date_of_birth": "1993-11-02",
-         "place_of_birth": "Homs", "nationality": "Síria", "reference_entity": null,
-         "has_dependents": false, "media_consent": false,
-         "terms_version": "2026-07-01", "locale_shown": "ca"}'::jsonb,
+       jsonb_build_object('first_name', 'Nadia', 'last_name', 'Khoury', 'media_consent', false,
+         'terms_version', '2026-07-01', 'locale_shown', 'ca',
+         'answers', pg_temp.answers('{"date_of_birth": "1993-11-02", "place_of_birth": "Homs",
+           "nationality": "Síria", "reference_entity": null, "has_dependents": "no"}')),
        '{"terms_accepted": true, "media_consent": false, "unable_to_draw": true}'::jsonb) $$,
-  '%requires phone%',
+  -- Built-in and staff fields are required the same way since RAPP-661.
+  '%requires an answer to a required question%',
   'joining is refused while a built-in question made required has no answer'
 );
 select throws_like(
   $$ select public.complete_onboarding_signed(
-       '{"first_name": "Nadia", "last_name": "Khoury", "date_of_birth": "1993-11-02",
-         "place_of_birth": "Homs", "nationality": "Síria", "reference_entity": null,
-         "has_dependents": false, "phone": "+34600111222", "media_consent": false,
-         "terms_version": "2026-07-01", "locale_shown": "ca"}'::jsonb,
+       jsonb_build_object('first_name', 'Nadia', 'last_name', 'Khoury', 'media_consent', false,
+         'terms_version', '2026-07-01', 'locale_shown', 'ca',
+         'answers', pg_temp.answers('{"date_of_birth": "1993-11-02", "place_of_birth": "Homs",
+           "nationality": "Síria", "reference_entity": null, "has_dependents": "no",
+           "phone": "+34600111222"}')),
        '{"terms_accepted": true, "media_consent": false, "unable_to_draw": true}'::jsonb) $$,
-  '%required staff question%',
+  '%requires an answer to a required question%',
   'and while a required staff question has no answer'
 );
 select lives_ok(
   $$ select public.complete_onboarding_signed(
-       '{"first_name": "Nadia", "last_name": "Khoury", "date_of_birth": "1993-11-02",
-         "place_of_birth": "Homs", "nationality": "Síria", "reference_entity": null,
-         "has_dependents": false, "phone": "+34600111222", "media_consent": false,
-         "custom_answers": {"00000000-0000-0000-0000-0000000006c2": " Per una amiga "},
-         "terms_version": "2026-07-01", "locale_shown": "ca"}'::jsonb,
+       jsonb_build_object('first_name', 'Nadia', 'last_name', 'Khoury', 'media_consent', false,
+         'terms_version', '2026-07-01', 'locale_shown', 'ca',
+         'answers', pg_temp.answers('{"date_of_birth": "1993-11-02", "place_of_birth": "Homs",
+           "nationality": "Síria", "reference_entity": null, "has_dependents": "no",
+           "phone": "+34600111222"}')
+           || '{"00000000-0000-0000-0000-0000000006c2": " Per una amiga "}'),
        '{"terms_accepted": true, "media_consent": false, "unable_to_draw": true}'::jsonb) $$,
   'with every required answer, optional sizes left out, she joins'
 );
@@ -269,11 +289,11 @@ insert into auth.users (id, email) values
 set local role authenticated;
 set local request.jwt.claims = '{"sub": "00000000-0000-0000-0000-0000000006c4", "role": "authenticated"}';
 select public.complete_onboarding_signed(
-  '{"first_name": "Aya", "last_name": "Haddad", "date_of_birth": "1990-01-02",
-    "place_of_birth": "Alep", "nationality": "Síria", "reference_entity": null,
-    "phone": "+34600111223", "media_consent": false,
-    "custom_answers": {"00000000-0000-0000-0000-0000000006c2": "Instagram"},
-    "terms_version": "2026-07-01", "locale_shown": "ca"}'::jsonb,
+  jsonb_build_object('first_name', 'Aya', 'last_name', 'Haddad', 'media_consent', false,
+    'terms_version', '2026-07-01', 'locale_shown', 'ca',
+    'answers', pg_temp.answers('{"date_of_birth": "1990-01-02", "place_of_birth": "Alep",
+      "nationality": "Síria", "reference_entity": null, "phone": "+34600111223"}')
+      || '{"00000000-0000-0000-0000-0000000006c2": "Instagram"}'),
   '{"terms_accepted": true, "media_consent": false, "unable_to_draw": true}'::jsonb);
 reset role;
 select is(
@@ -307,8 +327,8 @@ select ok(
 -- Her own edit is never stricter than registration, and keeps unknown unknown.
 set local request.jwt.claims = '{"sub": "00000000-0000-0000-0000-0000000006c4", "role": "authenticated"}';
 select lives_ok(
-  $$ select public.update_own_profile('{"first_name": "Aya", "last_name": "Haddad",
-       "place_of_birth": "", "media_consent": false}'::jsonb) $$,
+  $$ select public.update_own_profile(jsonb_build_object('first_name', 'Aya', 'last_name', 'Haddad',
+       'media_consent', false, 'answers', pg_temp.answers('{"place_of_birth": ""}'))) $$,
   'she saves her profile with her place of birth left empty'
 );
 reset role;
@@ -330,7 +350,7 @@ update public.profiles set childcare_need = null where id = '5eed0000-0000-4000-
 set local role authenticated;
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000011", "role": "authenticated"}';
 select throws_ok(
-  $$ select public.update_my_season_answers('{"applicant_status": "refugee"}'::jsonb) $$,
+  $$ select public.update_my_season_answers(jsonb_build_object('answers', pg_temp.answers('{"applicant_status": "refugee"}'))) $$,
   '23502', null::text,
   'her re-registration is refused while it has no answer'
 );

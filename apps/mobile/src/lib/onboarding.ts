@@ -11,7 +11,11 @@ import { useEffect, useState } from 'react';
 import { Platform } from 'react-native';
 import { fetchMyPendingInvite } from '@ramassa/shared/accounts';
 import { AppError, type Result } from '@ramassa/shared/errors';
-import { answerPayload, type CustomAnswerValue } from '@ramassa/shared/intake-builder';
+import {
+  fetchSystemFieldIndex,
+  withFieldAnswers,
+  type CustomAnswerValue,
+} from '@ramassa/shared/intake-builder';
 import { createAccountOnboardingDraftStore } from '@ramassa/shared/onboarding-drafts';
 import type { CompleteOnboardingPayload } from '@ramassa/shared/schemas';
 import { termsSigningPayload, type TermsSigning } from '@ramassa/shared/schemas';
@@ -33,13 +37,13 @@ export function completeOnboarding(
 ): Promise<Result<void, AppError>> {
   return safeAsync(
     async () => {
+      // Every answer travels by field (RAPP-661), the staff fields' included:
+      // saved with her account in one transaction, and the required ones
+      // checked there. The wizard still builds the app's answers in her
+      // profile's column names until it renders every field (RAPP-663).
+      const fields = await fetchSystemFieldIndex(supabase);
       const { error } = await supabase.rpc('complete_onboarding_signed', {
-        // Her staff answers travel in the same call (RAPP-611): saved with her
-        // profile in one transaction, and the required ones re-checked there.
-        payload:
-          Object.keys(customAnswers).length === 0
-            ? payload
-            : { ...payload, custom_answers: answerPayload(customAnswers) },
+        payload: withFieldAnswers(fields, payload, customAnswers),
         p_signing: termsSigningPayload(signing, `${Platform.OS} ${String(Platform.Version)}`),
       });
       if (error) {

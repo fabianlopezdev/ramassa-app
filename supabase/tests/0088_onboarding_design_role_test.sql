@@ -20,6 +20,23 @@
 begin;
 select plan(49);
 
+-- Her answers travel by field (RAPP-661). Helpers: the app's keys of a payload
+-- keyed by their fields (a choice by its option), a field's id, and her stored
+-- answer to an app field (decrypted).
+create function pg_temp.answers(p jsonb) returns jsonb language sql security definer as $$
+  select coalesce(jsonb_object_agg(f.id::text, private.app_answer_value(f, e.value)), '{}'::jsonb)
+    from jsonb_each(p) e
+    join public.profile_fields f on f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.system_key = e.key;
+$$;
+create function pg_temp.field(p_key text) returns text language sql security definer as $$
+  select id::text from public.profile_fields
+   where org_id = '5eed0000-0000-4000-8000-000000000000' and system_key = p_key;
+$$;
+create function pg_temp.stored(p_profile uuid, p_key text) returns jsonb language sql security definer as $$
+  select private.system_field_answer(p_profile, p_key);
+$$;
+grant execute on all functions in schema pg_temp to authenticated;
+
 -- 1. The preset ---------------------------------------------------------------------------------
 
 select has_column('public', 'profiles', 'is_test_account', 'profiles carry the test account flag');
@@ -166,7 +183,8 @@ select throws_ok(
 );
 select lives_ok(
   $$ select public.update_participant_profile('5eed0000-0000-4000-8000-000000000096',
-       '{"first_name":"Joana","last_name":"Prova","clothing_size":"M"}'::jsonb) $$,
+       jsonb_build_object('first_name', 'Joana', 'last_name', 'Prova',
+                          'answers', pg_temp.answers('{"clothing_size":"M"}'))) $$,
   'the design role edits a test player'
 );
 select throws_ok(

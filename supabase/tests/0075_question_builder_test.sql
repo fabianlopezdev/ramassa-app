@@ -124,7 +124,9 @@ select lives_ok(
 -- 3 and 4. Answers ---------------------------------------------------------------------------------------------
 
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000011", "role": "authenticated", "aal": "aal1"}';
+-- The details open on Sí: since RAPP-661 an answer whose condition does not hold goes.
 select public.save_my_custom_answers(jsonb_build_object(
+  '5eed0000-0000-4000-8045-000000000005', '5eed0000-0000-4000-8046-000000000004',
   '5eed0000-0000-4000-8045-000000000003', 'Ara treballo els dimarts.',
   '5eed0000-0000-4000-8045-000000000001', 'no'));
 select throws_ok(
@@ -156,7 +158,8 @@ update public.seasons set is_current = (id = '0b5e0000-0000-4000-8000-0000000003
  where org_id = '5eed0000-0000-4000-8000-000000000000';
 set local role authenticated;
 select public.save_my_custom_answers(
-  '{"5eed0000-0000-4000-8045-000000000003":"Res, tot bé."}'::jsonb);
+  '{"5eed0000-0000-4000-8045-000000000005":"5eed0000-0000-4000-8046-000000000004",
+    "5eed0000-0000-4000-8045-000000000003":"Res, tot bé."}'::jsonb);
 reset role;
 select is(
   (select count(*)::integer from public.custom_answers

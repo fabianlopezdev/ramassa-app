@@ -15,6 +15,11 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { z } from 'zod';
 import { AppError } from '../errors';
+import {
+  fetchSystemFieldIndex,
+  hasFieldColumns,
+  withFieldAnswers,
+} from '../intake-builder/field-answers';
 import { withCancellation, type CancellableRequest } from '../lib/cancellation';
 import {
   ownDeletionRequestSchema,
@@ -73,12 +78,19 @@ export async function fetchOwnProfile(
     : parseRow(profileRowSchema, first, 'get_own_profile');
 }
 
-/** Writes an edited profile through the re-encrypting RPC. */
+/**
+ * Writes an edited profile: her names and settings on her account, every other
+ * answer by field (RAPP-661). The edit form still speaks in her profile's
+ * column names until it renders every field (RAPP-663).
+ */
 export async function updateOwnProfile(
   client: Client,
   payload: UpdateOwnProfilePayload,
 ): Promise<void> {
-  const { error } = await client.rpc('update_own_profile', { payload });
+  const fields = hasFieldColumns(payload) ? await fetchSystemFieldIndex(client) : new Map();
+  const { error } = await client.rpc('update_own_profile', {
+    payload: withFieldAnswers(fields, payload),
+  });
   if (error) {
     throw new AppError('DB-1', { message: error.message });
   }

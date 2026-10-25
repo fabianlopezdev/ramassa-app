@@ -17,6 +17,23 @@ create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 select plan(10);
 
+-- Her answers travel by field (RAPP-661). Helpers: the app's keys of a payload
+-- keyed by their fields (a choice by its option), a field's id, and her stored
+-- answer to an app field (decrypted).
+create function pg_temp.answers(p jsonb) returns jsonb language sql security definer as $$
+  select coalesce(jsonb_object_agg(f.id::text, private.app_answer_value(f, e.value)), '{}'::jsonb)
+    from jsonb_each(p) e
+    join public.profile_fields f on f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.system_key = e.key;
+$$;
+create function pg_temp.field(p_key text) returns text language sql security definer as $$
+  select id::text from public.profile_fields
+   where org_id = '5eed0000-0000-4000-8000-000000000000' and system_key = p_key;
+$$;
+create function pg_temp.stored(p_profile uuid, p_key text) returns jsonb language sql security definer as $$
+  select private.system_field_answer(p_profile, p_key);
+$$;
+grant execute on all functions in schema pg_temp to authenticated;
+
 select vault.create_secret('test-encryption-key', 'app_encryption_key', 'pgTAP test key')
 where not exists (select 1 from vault.secrets where name = 'app_encryption_key');
 
@@ -45,9 +62,11 @@ reset role;
 
 -- 18. Re-registration ----------------------------------------------------------------------------------
 
+-- Every field by its id since RAPP-661, the app's and the staff's alike.
 select is(
-  private.missing_required_season_answers('5eed0000-0000-4000-8000-000000000022'),
-  array['applicant_status', 'custom:00000000-0000-0000-0000-0000000007c1'],
+  (select array_agg(m order by m) from unnest(private.missing_required_season_answers('5eed0000-0000-4000-8000-000000000022')) m),
+  (select array_agg(m order by m) from unnest(array['custom:' || pg_temp.field('applicant_status'),
+                                                   'custom:00000000-0000-0000-0000-0000000007c1']) m),
   'her missing required season answers, built-in and staff'
 );
 
@@ -77,7 +96,7 @@ select throws_ok(
   '23502', null::text, 'the built-in one is still missing'
 );
 select lives_ok(
-  $$ select public.update_my_season_answers('{"applicant_status": "refugee"}'::jsonb) $$,
+  $$ select public.update_my_season_answers(jsonb_build_object('answers', pg_temp.answers('{"applicant_status": "refugee"}'))) $$,
   'she answers it'
 );
 select lives_ok(
@@ -108,23 +127,23 @@ set local role authenticated;
 set local request.jwt.claims = '{"sub": "00000000-0000-0000-0000-0000000007c3", "role": "authenticated"}';
 select throws_like(
   $$ select public.complete_onboarding_signed(
-       '{"first_name": "Nadia", "last_name": "Khoury", "date_of_birth": "1993-11-02",
-         "place_of_birth": "Homs", "nationality": "Síria", "reference_entity": null,
-         "has_dependents": false, "applicant_status": "refugee", "clothing_size": "M",
-         "shoe_size": "38", "media_consent": false,
-         "terms_version": "2026-07-01", "locale_shown": "ca"}'::jsonb,
+       jsonb_build_object('first_name', 'Nadia', 'last_name', 'Khoury', 'media_consent', false,
+         'terms_version', '2026-07-01', 'locale_shown', 'ca',
+         'answers', pg_temp.answers('{"date_of_birth": "1993-11-02", "place_of_birth": "Homs",
+           "nationality": "Síria", "reference_entity": null, "has_dependents": "no",
+           "applicant_status": "refugee", "clothing_size": "M", "shoe_size": "38"}')),
        '{"terms_accepted": true, "media_consent": false, "unable_to_draw": true}'::jsonb) $$,
-  '%required staff question%',
+  '%requires an answer to a required question%',
   'joining is refused while a required question asked every season has no answer'
 );
 select lives_ok(
   $$ select public.complete_onboarding_signed(
-       '{"first_name": "Nadia", "last_name": "Khoury", "date_of_birth": "1993-11-02",
-         "place_of_birth": "Homs", "nationality": "Síria", "reference_entity": null,
-         "has_dependents": false, "applicant_status": "refugee", "clothing_size": "M",
-         "shoe_size": "38", "media_consent": false,
-         "custom_answers": {"00000000-0000-0000-0000-0000000007c1": "Bé"},
-         "terms_version": "2026-07-01", "locale_shown": "ca"}'::jsonb,
+       jsonb_build_object('first_name', 'Nadia', 'last_name', 'Khoury', 'media_consent', false,
+         'terms_version', '2026-07-01', 'locale_shown', 'ca',
+         'answers', pg_temp.answers('{"date_of_birth": "1993-11-02", "place_of_birth": "Homs",
+           "nationality": "Síria", "reference_entity": null, "has_dependents": "no",
+           "applicant_status": "refugee", "clothing_size": "M", "shoe_size": "38"}')
+           || '{"00000000-0000-0000-0000-0000000007c1": "Bé"}'),
        '{"terms_accepted": true, "media_consent": false, "unable_to_draw": true}'::jsonb) $$,
   'with it answered, she joins'
 );

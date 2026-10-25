@@ -3,6 +3,23 @@
 begin;
 select plan(38);
 
+-- Her answers travel by field (RAPP-661). Helpers: the app's keys of a payload
+-- keyed by their fields (a choice by its option), a field's id, and her stored
+-- answer to an app field (decrypted).
+create function pg_temp.answers(p jsonb) returns jsonb language sql security definer as $$
+  select coalesce(jsonb_object_agg(f.id::text, private.app_answer_value(f, e.value)), '{}'::jsonb)
+    from jsonb_each(p) e
+    join public.profile_fields f on f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.system_key = e.key;
+$$;
+create function pg_temp.field(p_key text) returns text language sql security definer as $$
+  select id::text from public.profile_fields
+   where org_id = '5eed0000-0000-4000-8000-000000000000' and system_key = p_key;
+$$;
+create function pg_temp.stored(p_profile uuid, p_key text) returns jsonb language sql security definer as $$
+  select private.system_field_answer(p_profile, p_key);
+$$;
+grant execute on all functions in schema pg_temp to authenticated;
+
 select has_table('public', 'entity_referrals', 'entity referrals exist');
 select has_table('public', 'referral_updates', 'referral updates exist');
 select col_type_is('public', 'entity_referrals', 'referred_phone', 'bytea', 'phone is ciphertext');
@@ -78,9 +95,10 @@ select isnt(
 
 select lives_ok(
   $$ select public.create_entity_referral(jsonb_build_object(
-    'firstName', 'Наталія',
-    'lastName', 'Àlvarez',
-    'phone', '+34930005499',
+    'first_name', 'Наталія',
+    'last_name', 'Àlvarez',
+    -- Her answers travel by field (RAPP-661).
+    'answers', pg_temp.answers(jsonb_build_object('phone', '+34930005499')),
     'email', 'nataliia.rapp54@example.test',
     'documentationStatus', 'in_progress',
     'notes', 'Suport en العربية',
@@ -90,7 +108,7 @@ select lives_ok(
   'an entity can submit one validated multilingual referral'
 );
 select throws_ok(
-  $$ select public.create_entity_referral('{"firstName":"","lastName":"Test","documentationStatus":"unknown"}') $$,
+  $$ select public.create_entity_referral('{"first_name":"","last_name":"Test","documentationStatus":"unknown"}') $$,
   '23514',
   null::text,
   'invalid referral input is refused at the database boundary'
@@ -292,7 +310,7 @@ select is(
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000011","role":"authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select throws_ok(
-  $$ select public.create_entity_referral('{"firstName":"No","lastName":"Player","documentationStatus":"none"}') $$,
+  $$ select public.create_entity_referral('{"first_name":"No","last_name":"Player","documentationStatus":"none"}') $$,
   '42501',
   null::text,
   'DENIAL: a participant cannot submit an entity referral'

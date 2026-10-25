@@ -4,6 +4,11 @@ import { WIZARD_QUESTIONS } from '../onboarding/question-states';
 import { profileEditSchema } from '../schemas/profile';
 import { decodeSupportNeeds } from '../schemas/support-needs';
 import {
+  systemFieldFixtureId,
+  systemFieldsCatalogFixture,
+  systemOptionFixtureId,
+} from '../testing';
+import {
   fetchMyTestScenarioStamp,
   fetchTestPlayerScenario,
   sampleAnswerPayload,
@@ -76,6 +81,65 @@ describe('the scenario calls (RAPP-619)', () => {
       [
         'set_test_player_scenario',
         { p_profile_id: id, p_change: { kind: 'season_signature', signed: true } },
+      ],
+    ]);
+  });
+
+  test("the app questions' samples and clears travel by field (RAPP-661)", async () => {
+    const calls: unknown[] = [];
+    const fake = {
+      rpc: async (name: string, args?: unknown) => {
+        calls.push([name, args]);
+        return name === 'intake_catalog'
+          ? { data: systemFieldsCatalogFixture(), error: null }
+          : { data: null, error: null };
+      },
+    } as unknown as Parameters<typeof setTestPlayerScenario>[0];
+    await setTestPlayerScenario(fake, id, {
+      kind: 'answers',
+      fill: { first_name: 'Joana', clothing_size: 'M' },
+      clear: ['document'],
+    });
+    expect(calls[1]).toEqual([
+      'set_test_player_scenario',
+      {
+        p_profile_id: id,
+        p_change: {
+          kind: 'answers',
+          fill: {
+            first_name: 'Joana',
+            answers: {
+              [systemFieldFixtureId('clothing_size')]: systemOptionFixtureId('clothing_size', 'M'),
+            },
+          },
+          clear: [
+            systemFieldFixtureId('document_type'),
+            systemFieldFixtureId('document_number'),
+            systemFieldFixtureId('document_name'),
+          ],
+        },
+      },
+    ]);
+  });
+
+  test("the staff fields' switch is the same answers switch", async () => {
+    const fake = client(null);
+    await setTestPlayerScenario(fake, id, {
+      kind: 'custom_answers',
+      fill: { '5eed0000-0000-4000-8045-000000000001': 'yes' },
+      clear: ['5eed0000-0000-4000-8045-000000000002'],
+    });
+    expect(fake.calls).toEqual([
+      [
+        'set_test_player_scenario',
+        {
+          p_profile_id: id,
+          p_change: {
+            kind: 'answers',
+            fill: { answers: { '5eed0000-0000-4000-8045-000000000001': 'yes' } },
+            clear: ['5eed0000-0000-4000-8045-000000000002'],
+          },
+        },
       ],
     ]);
   });

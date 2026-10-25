@@ -1,15 +1,19 @@
 begin;
 select plan(22);
 select has_function('public', 'complete_onboarding_signed', array['jsonb','jsonb']);
+-- Her one missing required answer, given before (RAPP-661: answers are by field).
+select private.write_custom_answer('5eed0000-0000-4000-8000-000000000022', f, '"Vic"', 'player')
+  from public.profile_fields f
+ where f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.system_key = 'place_of_birth';
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000022","role":"authenticated","aal":"aal1"}';
-select throws_ok($$select public.complete_onboarding_signed('{"place_of_birth":"Vic","terms_version":"signature-test","locale_shown":"ca","media_consent":false}', '{"terms_accepted":false,"media_consent":false,"signature":[[[1,2]]],"unable_to_draw":false}')$$, '23514', null::text, 'explicit app terms acceptance is required');
-select throws_ok($$select public.complete_onboarding_signed('{"place_of_birth":"Vic","terms_version":"signature-test","locale_shown":"ca","media_consent":false}', '{"terms_accepted":true,"media_consent":false,"signature":[],"unable_to_draw":false}')$$, '23514', null::text, 'empty signature fails');
-select throws_ok($$select public.complete_onboarding_signed('{"place_of_birth":"Vic","terms_version":"signature-test","locale_shown":"ca","media_consent":false}', '{"terms_accepted":true,"media_consent":false,"signature":[[[1001,2]]],"unable_to_draw":false}')$$, '23514', null::text, 'invalid coordinate fails');
-select lives_ok($$select public.complete_onboarding_signed('{"place_of_birth":"Vic","terms_version":"signature-test","locale_shown":"ca","media_consent":false}', '{"terms_accepted":true,"media_consent":false,"signature":[[[1,2],[3,4]]],"unable_to_draw":false,"device":"test"}')$$, 'signing does not require optional media permission');
+select throws_ok($$select public.complete_onboarding_signed('{"answers":{},"terms_version":"signature-test","locale_shown":"ca","media_consent":false}', '{"terms_accepted":false,"media_consent":false,"signature":[[[1,2]]],"unable_to_draw":false}')$$, '23514', null::text, 'explicit app terms acceptance is required');
+select throws_ok($$select public.complete_onboarding_signed('{"answers":{},"terms_version":"signature-test","locale_shown":"ca","media_consent":false}', '{"terms_accepted":true,"media_consent":false,"signature":[],"unable_to_draw":false}')$$, '23514', null::text, 'empty signature fails');
+select throws_ok($$select public.complete_onboarding_signed('{"answers":{},"terms_version":"signature-test","locale_shown":"ca","media_consent":false}', '{"terms_accepted":true,"media_consent":false,"signature":[[[1001,2]]],"unable_to_draw":false}')$$, '23514', null::text, 'invalid coordinate fails');
+select lives_ok($$select public.complete_onboarding_signed('{"answers":{},"terms_version":"signature-test","locale_shown":"ca","media_consent":false}', '{"terms_accepted":true,"media_consent":false,"signature":[[[1,2],[3,4]]],"unable_to_draw":false,"device":"test"}')$$, 'signing does not require optional media permission');
 select is((select count(*)::int from public.app_terms_signatures where profile_id=auth.uid()),1,'owner can read her own signature');
 select is((select media_consent from public.app_terms_signatures where profile_id=auth.uid()),false,'the signed media refusal is retained');
-select lives_ok($$select public.complete_onboarding_signed('{"place_of_birth":"Vic","terms_version":"signature-test-2","locale_shown":"ca","media_consent":false}', '{"terms_accepted":true,"media_consent":false,"signature":null,"unable_to_draw":true}')$$, 'accessible signing without drawing is supported');
+select lives_ok($$select public.complete_onboarding_signed('{"answers":{},"terms_version":"signature-test-2","locale_shown":"ca","media_consent":false}', '{"terms_accepted":true,"media_consent":false,"signature":null,"unable_to_draw":true}')$$, 'accessible signing without drawing is supported');
 select is((select count(*)::int from public.app_terms_signatures where profile_id=auth.uid()),2,'separate acceptances keep separate signatures');
 select is((select count(*)::int from public.terms_acceptances where profile_id=auth.uid() and terms_version like 'signature-test%'),2,'failed calls never created an acceptance');
 select is((select count(*)::int from public.authorization_signatures where profile_id=auth.uid()),0,'app signing creates no seasonal signature');
@@ -25,13 +29,13 @@ select is((select count(*)::int from public.app_terms_signatures),0,'personal ac
 set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000001","role":"authenticated","aal":"aal2","amr":[{"method":"totp","timestamp":4102444800}]}';
 select is((select count(*)::int from public.app_terms_signatures where profile_id='5eed0000-0000-4000-8000-000000000022'),2,'sensitive staff can read the signature');
 set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000022","role":"authenticated","aal":"aal1"}';
-select throws_ok($$select public.complete_onboarding_signed('{"first_name":"Must roll back","place_of_birth":"Vic","terms_version":"signature-rollback","locale_shown":"xx","media_consent":false}', '{"terms_accepted":true,"media_consent":false,"signature":null,"unable_to_draw":true}')$$,'23514',null::text,'a later acceptance failure rolls back profile changes');
+select throws_ok($$select public.complete_onboarding_signed('{"first_name":"Must roll back","answers":{},"terms_version":"signature-rollback","locale_shown":"xx","media_consent":false}', '{"terms_accepted":true,"media_consent":false,"signature":null,"unable_to_draw":true}')$$,'23514',null::text,'a later acceptance failure rolls back profile changes');
 select ok((select first_name <> 'Must roll back' from public.profiles where id=auth.uid()),'profile changes were rolled back with the failed acceptance');
 reset role;
 select is((select disposition from public.personal_data_disposition() where table_name='app_terms_signatures'),'purge','signature is registered for participant erasure');
 select ok(not has_function_privilege('anon','public.complete_onboarding_signed(jsonb,jsonb)','EXECUTE'),'anonymous signing is denied');
 set local request.jwt.claims = '{}';
-select throws_ok($$select public.complete_onboarding_signed('{"place_of_birth":"Vic","terms_version":"signature-rollback","locale_shown":"xx","media_consent":false}', '{"terms_accepted":true,"media_consent":false,"signature":null,"unable_to_draw":true}')$$,'42501',null::text,'unsigned unauthenticated calls fail');
+select throws_ok($$select public.complete_onboarding_signed('{"answers":{},"terms_version":"signature-rollback","locale_shown":"xx","media_consent":false}', '{"terms_accepted":true,"media_consent":false,"signature":null,"unable_to_draw":true}')$$,'42501',null::text,'unsigned unauthenticated calls fail');
 delete from public.terms_acceptances where profile_id='5eed0000-0000-4000-8000-000000000022' and terms_version like 'signature-test%';
 select is((select count(*)::int from public.app_terms_signatures where profile_id='5eed0000-0000-4000-8000-000000000022'),0,'deleting acceptances cascades to signatures');
 select * from finish();

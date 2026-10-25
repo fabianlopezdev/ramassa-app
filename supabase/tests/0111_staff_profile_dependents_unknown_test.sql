@@ -17,6 +17,23 @@ create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 select plan(8);
 
+-- Her answers travel by field (RAPP-661). Helpers: the app's keys of a payload
+-- keyed by their fields (a choice by its option), a field's id, and her stored
+-- answer to an app field (decrypted).
+create function pg_temp.answers(p jsonb) returns jsonb language sql security definer as $$
+  select coalesce(jsonb_object_agg(f.id::text, private.app_answer_value(f, e.value)), '{}'::jsonb)
+    from jsonb_each(p) e
+    join public.profile_fields f on f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.system_key = e.key;
+$$;
+create function pg_temp.field(p_key text) returns text language sql security definer as $$
+  select id::text from public.profile_fields
+   where org_id = '5eed0000-0000-4000-8000-000000000000' and system_key = p_key;
+$$;
+create function pg_temp.stored(p_profile uuid, p_key text) returns jsonb language sql security definer as $$
+  select private.system_field_answer(p_profile, p_key);
+$$;
+grant execute on all functions in schema pg_temp to authenticated;
+
 select vault.create_secret('test-encryption-key', 'app_encryption_key', 'pgTAP test key')
 where not exists (select 1 from vault.secrets where name = 'app_encryption_key');
 
@@ -74,9 +91,10 @@ select ok(
 update public.profiles set is_test_account = true, has_dependents = true, num_dependents = 2
  where id = (select profile_id from sent_invite);
 select private.scenario_reset((select p from public.profiles p where p.id = (select profile_id from sent_invite)));
+-- Her answers are by field since RAPP-661: the reset leaves none.
 select ok(
-  (select p.has_dependents is null and p.num_dependents = 0
-     from public.profiles p where p.id = (select profile_id from sent_invite)),
+  pg_temp.stored((select profile_id from sent_invite), 'has_dependents') is null
+  and pg_temp.stored((select profile_id from sent_invite), 'num_dependents') is null,
   'the test player reset clears her dependants to unknown'
 );
 

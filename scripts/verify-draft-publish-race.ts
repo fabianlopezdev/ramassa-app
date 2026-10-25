@@ -150,15 +150,22 @@ set local role authenticated;
 select set_config('request.jwt.claims', ${quote(designerClaims)}, true);
 select public.discard_app_terms_draft();
 select public.discard_authorization_draft();
-select public.set_test_player_scenario(${quote(testPlayerId)}, '{
-  "kind": "answers",
-  "fill": {
-    "first_name": "Joana", "last_name": "Prova", "date_of_birth": "1995-05-15",
-    "place_of_birth": "Marroc", "nationality": "Marroc", "preferred_language": "ca",
-    "reference_entity": "Entitat de prova", "has_dependents": false, "num_dependents": 0,
-    "clothing_size": "M", "shoe_size": "38"
-  }
-}'::jsonb);
+-- Her answers travel by field (RAPP-661): each app key becomes its field's
+-- answer, a choice its option with that key.
+select public.set_test_player_scenario(${quote(testPlayerId)}, jsonb_build_object(
+  'kind', 'answers',
+  'fill', jsonb_build_object(
+    'first_name', 'Joana', 'last_name', 'Prova', 'preferred_language', 'ca',
+    'answers', (
+      select jsonb_object_agg(f.id::text, coalesce(
+               (select to_jsonb(o.id::text) from public.custom_question_options o
+                 where o.question_id = f.id and o.key = v.value #>> '{}'),
+               v.value))
+        from jsonb_each('{
+          "date_of_birth": "1995-05-15", "place_of_birth": "Marroc", "nationality": "Marroc",
+          "reference_entity": "Entitat de prova", "has_dependents": "no",
+          "clothing_size": "M", "shoe_size": "38"}'::jsonb) v
+        join public.profile_fields f on f.system_key = v.key and f.org_id = ${quote(organizationId)}))));
 select public.set_test_player_scenario(${quote(testPlayerId)}, '{"kind": "terms", "accepted": true}'::jsonb);
 reset role;
 create temp table published_terms on commit drop as

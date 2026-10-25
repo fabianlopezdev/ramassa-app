@@ -19,6 +19,23 @@ select plan(23);
 create temp table referral_run (label text primary key, id uuid);
 grant all on referral_run to authenticated;
 
+-- Her answers travel by field (RAPP-661). Helpers: the app's keys of a payload
+-- keyed by their fields (a choice by its option), a field's id, and her stored
+-- answer to an app field (decrypted).
+create function pg_temp.answers(p jsonb) returns jsonb language sql security definer as $$
+  select coalesce(jsonb_object_agg(f.id::text, private.app_answer_value(f, e.value)), '{}'::jsonb)
+    from jsonb_each(p) e
+    join public.profile_fields f on f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.system_key = e.key;
+$$;
+create function pg_temp.field(p_key text) returns text language sql security definer as $$
+  select id::text from public.profile_fields
+   where org_id = '5eed0000-0000-4000-8000-000000000000' and system_key = p_key;
+$$;
+create function pg_temp.stored(p_profile uuid, p_key text) returns jsonb language sql security definer as $$
+  select private.system_field_answer(p_profile, p_key);
+$$;
+grant execute on all functions in schema pg_temp to authenticated;
+
 set local role authenticated;
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000004", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 
@@ -31,42 +48,46 @@ select ok(
 
 select throws_ok(
   $$ select public.create_entity_referral(jsonb_build_object(
-       'firstName', 'Awa', 'lastName', 'Sylla', 'documentationStatus', 'missing')) $$,
+       'first_name', 'Awa', 'last_name', 'Sylla', 'documentationStatus', 'missing')) $$,
   '23514', null::text, 'a referral needs the entity''s consent'
 );
 
 insert into referral_run (label, id)
 select 'full', public.create_entity_referral(jsonb_build_object(
-  'firstName', 'Awa', 'lastName', 'Sylla',
-  'email', 'awa.sylla.rapp303@example.test', 'phone', '+34600303303',
+  'first_name', 'Awa', 'last_name', 'Sylla',
+  'email', 'awa.sylla.rapp303@example.test',
   'documentationStatus', 'in_progress',
   'notes', 'Ve els dimarts.',
-  'dateOfBirth', '1997-06-12',
-  'nationality', 'Mali',
-  'documentType', 'passport', 'documentNumber', 'ML123456',
-  'city', 'Vic',
-  'applicantStatus', 'refugee',
-  'supportingEntities', jsonb_build_array('Càritas Vic', 'SOS Racisme'),
-  'referenceContactName', 'Sílvia Bosch',
   'seasonNumber', 3,
-  'childcareNeed', 'maybe',
-  'specificNeeds', 'Necessita pauses.',
-  'consentConfirmed', true));
+  'consentConfirmed', true,
+  -- Every answer by field (RAPP-661).
+  'answers', pg_temp.answers(jsonb_build_object(
+    'phone', '+34600303303',
+    'date_of_birth', '1997-06-12',
+    'nationality', 'Mali',
+    'document_type', 'passport', 'document_number', 'ML123456',
+    'city', 'Vic',
+    'applicant_status', 'refugee',
+    'supporting_entities', jsonb_build_array('Càritas Vic', 'SOS Racisme'),
+    'reference_contact_name', 'Sílvia Bosch',
+    'childcare_need', 'maybe',
+    'specific_needs', jsonb_build_array('other'),
+    'specific_needs_details', 'Necessita pauses.'))));
 
 select isnt((select id from referral_run where label = 'full'), null, 'the full form is accepted with consent');
 
 select throws_ok(
   $$ select public.create_entity_referral(jsonb_build_object(
-       'firstName', 'Awa', 'lastName', 'Sylla', 'documentationStatus', 'missing',
-       'applicantStatus', 'tourist', 'consentConfirmed', true)) $$,
+       'first_name', 'Awa', 'last_name', 'Sylla', 'documentationStatus', 'missing',
+       'answers', pg_temp.answers('{"applicant_status": "tourist"}'), 'consentConfirmed', true)) $$,
   '23514', null::text, 'an answer outside its choices is refused'
 );
 
 reset role;
 select ok(
-  (select encode(intake_answers, 'escape') not like '%refugee%'
-      and encode(intake_answers, 'escape') not like '%pauses%'
-     from public.entity_referrals where id = (select id from referral_run where label = 'full')),
+  not exists (select 1 from public.referral_custom_answers
+               where referral_id = (select id from referral_run where label = 'full')
+                 and encode(value_encrypted, 'escape') like any (array['%Mali%', '%pauses%'])),
   'the answers are stored encrypted'
 );
 select is(
@@ -118,22 +139,26 @@ select 'profile', profile_id from public.create_participant_invite(jsonb_build_o
 
 reset role;
 select is(
-  (select role || '|' || nationality || '|' || city || '|' || season_number || '|' || childcare_need
-          || '|' || public.decrypt_field(applicant_status) || '|' || public.decrypt_field(phone)
-          || '|' || array_to_string(supporting_entities, ',')
-     from public.profiles where id = (select id from referral_run where label = 'profile')),
+  (select p.role || '|' || (pg_temp.stored(p.id, 'nationality') #>> '{}') || '|' || (pg_temp.stored(p.id, 'city') #>> '{}')
+          || '|' || p.season_number || '|' || (pg_temp.stored(p.id, 'childcare_need') #>> '{}')
+          || '|' || (select o.key from public.custom_question_options o
+                      where o.id::text = pg_temp.stored(p.id, 'applicant_status') #>> '{}')
+          || '|' || (pg_temp.stored(p.id, 'phone') #>> '{}')
+          || '|' || (select string_agg(e, ',') from jsonb_array_elements_text(pg_temp.stored(p.id, 'supporting_entities')) e)
+     from public.profiles p where p.id = (select id from referral_run where label = 'profile')),
   'invited|Mali|Vic|3|maybe|refugee|+34600303303|Càritas Vic,SOS Racisme',
   'accepting creates her profile with the entity''s answers'
 );
 select is(
-  (select public.decrypt_field(specific_needs) from public.profiles where id = (select id from referral_run where label = 'profile')),
-  'Necessita pauses.', 'specific needs are stored encrypted on her profile'
+  (select value is null and public.decrypt_field(value_encrypted) = '"Necessita pauses."' from public.custom_answers
+    where profile_id = (select id from referral_run where label = 'profile') and question_id::text = pg_temp.field('specific_needs_details')),
+  true, 'specific needs are stored encrypted on her profile'
 );
 select is(
-  (select string_agg(question || ':' || source, ',' order by question) from public.profile_answers
-    where profile_id = (select id from referral_run where label = 'profile')
-      and question in ('applicant_status', 'nationality', 'season_number', 'first_name', 'document')),
-  'applicant_status:entity,document:entity,first_name:staff,nationality:entity,season_number:entity',
+  (select string_agg(f.system_key || ':' || a.source, ',' order by f.system_key) from public.custom_answers a
+     join public.profile_fields f on f.id = a.question_id
+    where a.profile_id = (select id from referral_run where label = 'profile') and f.system_key in ('applicant_status', 'nationality', 'document_type')),
+  'applicant_status:entity,document_type:entity,nationality:entity',
   'the entity''s answers are recorded as given by the entity'
 );
 select is(
@@ -161,17 +186,18 @@ select is(
 
 select throws_ok(
   $$ select public.update_participant_profile((select id from referral_run where label = 'profile'),
-       '{"childcare_need": "often"}'::jsonb) $$,
-  '22023', null::text, 'a value outside its choices is refused on edit too'
+       jsonb_build_object('answers', pg_temp.answers('{"childcare_need": "often"}'))) $$,
+  '23514', null::text, 'a value outside its choices is refused on edit too'
 );
 
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000003", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select public.update_participant_profile((select id from referral_run where label = 'profile'),
-  '{"specific_needs": "", "season_number": 4}'::jsonb);
+  jsonb_build_object('season_number', 4,
+                     'answers', pg_temp.answers('{"specific_needs": null, "specific_needs_details": ""}')));
 reset role;
 select is(
-  (select public.decrypt_field(specific_needs) || '|' || season_number
-     from public.profiles where id = (select id from referral_run where label = 'profile')),
+  (select (pg_temp.stored(p.id, 'specific_needs_details') #>> '{}') || '|' || p.season_number
+     from public.profiles p where p.id = (select id from referral_run where label = 'profile')),
   'Necessita pauses.|4', 'staff without the sensitive fields cannot clear them, and change the rest'
 );
 
@@ -194,17 +220,16 @@ update public.profiles set childcare_need = 'yes', season_number = 2 where id = 
 set local role authenticated;
 select lives_ok(
   $$ select public.update_own_profile(jsonb_build_object(
-       'first_name', 'Amina', 'last_name', 'Al-Hassan',
-       'date_of_birth', '1995-03-14', 'place_of_birth', 'Alep',
-       'nationality', 'Síria', 'preferred_language', 'ca',
-       'document_type', 'none',
-       'has_dependents', false, 'num_dependents', 0,
-       'clothing_size', 'L', 'shoe_size', '39', 'media_consent', true)) $$,
+       'first_name', 'Amina', 'last_name', 'Al-Hassan', 'preferred_language', 'ca', 'media_consent', true,
+       'answers', pg_temp.answers(jsonb_build_object(
+         'date_of_birth', '1995-03-14', 'place_of_birth', 'Alep', 'nationality', 'Síria',
+         'document_type', 'none', 'has_dependents', 'no', 'clothing_size', 'L', 'shoe_size', '39')))) $$,
   'an older build saves her profile without the new fields'
 );
 reset role;
 select is(
-  (select childcare_need || '|' || season_number from public.profiles where id = '5eed0000-0000-4000-8000-000000000011'),
+  (select (pg_temp.stored(p.id, 'childcare_need') #>> '{}') || '|' || p.season_number
+     from public.profiles p where p.id = '5eed0000-0000-4000-8000-000000000011'),
   'yes|2', 'and the new fields are kept'
 );
 

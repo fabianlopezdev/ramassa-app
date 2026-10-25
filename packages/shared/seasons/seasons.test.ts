@@ -4,10 +4,16 @@
  */
 import { describe, expect, test } from 'bun:test';
 import {
+  systemFieldFixtureId,
+  systemFieldsCatalogFixture,
+  systemOptionFixtureId,
+} from '../testing';
+import {
   buildMySeasonAnswersPayload,
   filterRegistrations,
   newSeasonSchema,
   reminderGroupName,
+  updateMySeasonAnswers,
   type SeasonRegistration,
 } from './seasons';
 
@@ -44,6 +50,36 @@ describe('her season answers', () => {
       childcare_need: 'yes',
       specific_needs: null,
     });
+  });
+
+  test('they are saved by field (RAPP-661)', async () => {
+    const calls: unknown[] = [];
+    const client = {
+      rpc: async (name: string, args?: unknown) => {
+        calls.push([name, args]);
+        return name === 'intake_catalog'
+          ? { data: systemFieldsCatalogFixture(), error: null }
+          : { data: null, error: null };
+      },
+    } as unknown as Parameters<typeof updateMySeasonAnswers>[0];
+    await updateMySeasonAnswers(client, { childcareNeed: 'yes', applicantStatus: 'refugee' });
+    expect(calls[1]).toEqual([
+      'update_my_season_answers',
+      {
+        p_payload: {
+          answers: {
+            [systemFieldFixtureId('applicant_status')]: systemOptionFixtureId(
+              'applicant_status',
+              'refugee',
+            ),
+            [systemFieldFixtureId('supporting_entities')]: null,
+            [systemFieldFixtureId('childcare_need')]: 'yes',
+            [systemFieldFixtureId('specific_needs')]: null,
+            [systemFieldFixtureId('specific_needs_details')]: null,
+          },
+        },
+      },
+    ]);
   });
 });
 

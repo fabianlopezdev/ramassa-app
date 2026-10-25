@@ -16,6 +16,23 @@
 begin;
 select plan(33);
 
+-- Her answers travel by field (RAPP-661). Helpers: the app's keys of a payload
+-- keyed by their fields (a choice by its option), a field's id, and her stored
+-- answer to an app field (decrypted).
+create function pg_temp.answers(p jsonb) returns jsonb language sql security definer as $$
+  select coalesce(jsonb_object_agg(f.id::text, private.app_answer_value(f, e.value)), '{}'::jsonb)
+    from jsonb_each(p) e
+    join public.profile_fields f on f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.system_key = e.key;
+$$;
+create function pg_temp.field(p_key text) returns text language sql security definer as $$
+  select id::text from public.profile_fields
+   where org_id = '5eed0000-0000-4000-8000-000000000000' and system_key = p_key;
+$$;
+create function pg_temp.stored(p_profile uuid, p_key text) returns jsonb language sql security definer as $$
+  select private.system_field_answer(p_profile, p_key);
+$$;
+grant execute on all functions in schema pg_temp to authenticated;
+
 -- 1. Structure -------------------------------------------------------------------------------
 
 select hasnt_function('public', 'is_staff_or_admin', array[]::text[], 'the staff-or-admin helper is gone');
@@ -199,17 +216,14 @@ set local role authenticated;
 set local request.jwt.claims = '{"sub": "47000000-0000-4000-8000-000000000003", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select lives_ok(
   $$ select public.update_participant_profile('5eed0000-0000-4000-8000-000000000026',
-       (select jsonb_build_object(
-          'first_name', first_name, 'last_name', last_name, 'date_of_birth', date_of_birth,
-          'place_of_birth', place_of_birth, 'nationality', nationality, 'document_type', document_type,
-          'city', 'Manlleu', 'phone', '', 'address', '', 'postal_code', '', 'document_number', '')
-        from public.get_participant_profile('5eed0000-0000-4000-8000-000000000026'))) $$,
+       jsonb_build_object('answers', pg_temp.answers(jsonb_build_object(
+          'city', 'Manlleu', 'phone', '', 'address', '', 'postal_code', '', 'document_number', '')))) $$,
   'an editor without sensitive access saves the Personal fields'
 );
 reset role;
 select is(
-  (select public.decrypt_field(phone) is not null and city = 'Manlleu'
-     from public.profiles where id = '5eed0000-0000-4000-8000-000000000026'),
+  pg_temp.stored('5eed0000-0000-4000-8000-000000000026', 'phone') is not null
+    and pg_temp.stored('5eed0000-0000-4000-8000-000000000026', 'city') = '"Manlleu"'::jsonb,
   true, 'and the phone she could not see is kept, not wiped'
 );
 

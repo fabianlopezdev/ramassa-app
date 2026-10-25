@@ -3,6 +3,23 @@
 begin;
 select plan(14);
 
+-- Her answers travel by field (RAPP-661). Helpers: the app's keys of a payload
+-- keyed by their fields (a choice by its option), a field's id, and her stored
+-- answer to an app field (decrypted).
+create function pg_temp.answers(p jsonb) returns jsonb language sql security definer as $$
+  select coalesce(jsonb_object_agg(f.id::text, private.app_answer_value(f, e.value)), '{}'::jsonb)
+    from jsonb_each(p) e
+    join public.profile_fields f on f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.system_key = e.key;
+$$;
+create function pg_temp.field(p_key text) returns text language sql security definer as $$
+  select id::text from public.profile_fields
+   where org_id = '5eed0000-0000-4000-8000-000000000000' and system_key = p_key;
+$$;
+create function pg_temp.stored(p_profile uuid, p_key text) returns jsonb language sql security definer as $$
+  select private.system_field_answer(p_profile, p_key);
+$$;
+grant execute on all functions in schema pg_temp to authenticated;
+
 -- The unsigned path is closed to clients (RAPP-624); this file checks its merge
 -- rules as the participant, so it grants it inside this rolled-back transaction.
 grant execute on function public.complete_onboarding(jsonb) to authenticated;
@@ -74,12 +91,13 @@ select lives_ok(
   $$ select public.complete_onboarding(
        jsonb_build_object(
          'first_name', 'Nadia', 'last_name', 'Khoury',
-         'date_of_birth', '1993-11-02', 'place_of_birth', 'Homs',
-         'nationality', 'Síria', 'document_type', 'none',
-         'city', 'Vic', 'has_dependents', false, 'num_dependents', 0,
-         'clothing_size', 'M', 'shoe_size', '38',
-    'reference_entity', null,
-         'terms_version', '2026-07-01', 'locale_shown', 'ca'
+         'terms_version', '2026-07-01', 'locale_shown', 'ca',
+         'answers', pg_temp.answers(jsonb_build_object(
+           'date_of_birth', '1993-11-02', 'place_of_birth', 'Homs',
+           'nationality', 'Síria', 'document_type', 'none',
+           'city', 'Vic', 'has_dependents', 'no',
+           'clothing_size', 'M', 'shoe_size', '38',
+           'reference_entity', null))
        )
      ) $$,
   'onboarding persists a canonical municipality'
@@ -90,15 +108,17 @@ select throws_like(
   $$ select public.complete_onboarding(
        jsonb_build_object(
          'first_name', 'Bad', 'last_name', 'Bucket',
-         'date_of_birth', '1993-11-02', 'place_of_birth', 'Homs',
-         'nationality', 'Síria', 'document_type', 'none',
-         'city', 'Vich', 'has_dependents', false, 'num_dependents', 0,
-         'clothing_size', 'M', 'shoe_size', '38',
-    'reference_entity', null,
-         'terms_version', '2026-07-01', 'locale_shown', 'ca'
+         'terms_version', '2026-07-01', 'locale_shown', 'ca',
+         'answers', pg_temp.answers(jsonb_build_object(
+           'date_of_birth', '1993-11-02', 'place_of_birth', 'Homs',
+           'nationality', 'Síria', 'document_type', 'none',
+           'city', 'Vich', 'has_dependents', 'no',
+           'clothing_size', 'M', 'shoe_size', '38',
+           'reference_entity', null))
        )
      ) $$,
-  '%profiles_city_municipality_canonical_fkey%',
+  -- Her municipality is a field of the municipality type (RAPP-660, RAPP-661).
+  '%does not fit the question%',
   'onboarding cannot create a new free-text reporting bucket'
 );
 
