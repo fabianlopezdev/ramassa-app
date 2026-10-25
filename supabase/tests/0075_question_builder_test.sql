@@ -197,7 +197,10 @@ update public.entity_referrals
  where id = '5eed0000-0000-4000-8010-000000000001';
 select is(
   (select string_agg(question_id::text || '=' || (value #>> '{}') || '/' || source, ',' order by question_id)
-     from public.custom_answers where profile_id = '5eed0000-0000-4000-8000-000000000022'),
+     from public.custom_answers a
+    -- Ramassà's fields: the app's answers are hers already (RAPP-660).
+    where a.profile_id = '5eed0000-0000-4000-8000-000000000022'
+      and exists (select 1 from public.profile_fields f where f.id = a.question_id and f.kind = 'custom')),
   '5eed0000-0000-4000-8045-000000000001=yes/staff,5eed0000-0000-4000-8045-000000000002=5eed0000-0000-4000-8046-000000000002/entity',
   'referral answers become hers when she is invited, and what staff typed wins'
 );
