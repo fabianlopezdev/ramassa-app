@@ -13,7 +13,7 @@
  *   - a required field left empty refuses the referral, a condition that
  *     does not apply asks nothing.
  */
-import type { CreateReferralInput } from '../referrals';
+import { systemKeysOfQuestion } from '../onboarding/system-fields';
 import type { CustomAnswerValue, CustomQuestion, IntakeCatalog } from './builder';
 import { placedQuestion } from './her-onboarding';
 import {
@@ -46,22 +46,6 @@ export type EntityFormBuiltin = (typeof ENTITY_FORM_BUILTIN_FIELDS)[number];
 
 /** A referral names her: these never leave the form and stay required. */
 export const ENTITY_FORM_ALWAYS_ASKED: readonly EntityFormBuiltin[] = ['first_name', 'last_name'];
-
-/** Where each built-in field's answer travels in the referral payload. */
-export const ENTITY_FORM_PAYLOAD_KEYS = {
-  first_name: 'firstName',
-  last_name: 'lastName',
-  phone: 'phone',
-  date_of_birth: 'dateOfBirth',
-  nationality: 'nationality',
-  document: 'documentType',
-  city: 'city',
-  applicant_status: 'applicantStatus',
-  supporting_entities: 'supportingEntities',
-  reference_contact_name: 'referenceContactName',
-  childcare_need: 'childcareNeed',
-  specific_needs: 'specificNeeds',
-} as const satisfies Record<EntityFormBuiltin, keyof CreateReferralInput>;
 
 export function isEntityFormBuiltin(key: string | null): key is EntityFormBuiltin {
   return key !== null && (ENTITY_FORM_BUILTIN_FIELDS as readonly string[]).includes(key);
@@ -185,19 +169,23 @@ function isEmpty(value: unknown): boolean {
 }
 
 /**
- * The ids of the required fields left empty: built-in answers by their
- * payload key, Ramassà ones by field id. A condition that does not apply
- * asks nothing.
+ * The ids of the required fields left empty: the app's fields by the system
+ * key of their first part (`document_type` for the document,
+ * `referralSystemValues` gives them), Ramassà ones by field id. A condition
+ * that does not apply asks nothing.
  */
 export function missingEntityFormFields(
   items: readonly EntityFormItem[],
-  builtinValues: Readonly<Partial<Record<string, unknown>>>,
+  systemValues: Readonly<Partial<Record<string, unknown>>>,
   customAnswers: Readonly<Record<string, CustomAnswerValue | null>>,
 ): readonly string[] {
   return items.flatMap((item) => {
     if (!item.placement.required) return [];
     if (item.kind === 'builtin') {
-      return isEmpty(builtinValues[ENTITY_FORM_PAYLOAD_KEYS[item.key]]) ? [item.field.id] : [];
+      const firstPart = systemKeysOfQuestion(item.key)[0];
+      return isEmpty(firstPart === undefined ? undefined : systemValues[firstPart])
+        ? [item.field.id]
+        : [];
     }
     const condition = item.question.showWhen;
     if (condition !== undefined && customAnswers[condition.questionId] !== condition.optionId) {

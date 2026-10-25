@@ -130,19 +130,19 @@ describe('entityFormPick', () => {
 describe('missingEntityFormFields', () => {
   const items = entityFormItems(LAYOUT);
 
-  test('a required built-in by its payload key, a required Ramassà field by id', () => {
-    expect(missingEntityFormFields(items, { firstName: '  ' }, {})).toEqual([
+  test('a required built-in by its system key, a required Ramassà field by id', () => {
+    expect(missingEntityFormFields(items, { first_name: '  ' }, {})).toEqual([
       FIRST_NAME.id,
       STOP.id,
     ]);
-    expect(missingEntityFormFields(items, { firstName: 'Amina' }, { [STOP.id]: 'Sants' })).toEqual(
+    expect(missingEntityFormFields(items, { first_name: 'Amina' }, { [STOP.id]: 'Sants' })).toEqual(
       [],
     );
   });
 
   test('a condition that applies asks its required field', () => {
     const answers = { [STOP.id]: 'Sants', [SITUATION.id]: '5eed0000-0000-4000-8095-000000000001' };
-    expect(missingEntityFormFields(items, { firstName: 'Amina' }, answers)).toEqual([DETAIL.id]);
+    expect(missingEntityFormFields(items, { first_name: 'Amina' }, answers)).toEqual([DETAIL.id]);
   });
 });
 

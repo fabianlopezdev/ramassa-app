@@ -29,6 +29,7 @@ import {
 import {
   createReferral,
   createReferralSchema,
+  referralSystemValues,
   type CreateReferral,
   type CreateReferralInput,
 } from '@ramassa/shared/referrals';
@@ -116,11 +117,11 @@ export function ReferralForm({
     const empty = new Set(
       missingEntityFormFields(
         items,
-        {
+        referralSystemValues({
           ...values,
           supportingEntities: withTypedEntities(values as CreateReferral, otherEntities)
             .supportingEntities,
-        },
+        }),
         answers,
       ),
     );

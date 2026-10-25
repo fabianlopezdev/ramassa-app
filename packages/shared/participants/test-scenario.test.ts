@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
-import { QUESTION_PAYLOAD_KEYS } from '../onboarding/intake';
 import { WIZARD_QUESTIONS } from '../onboarding/question-states';
+import { questionPayloadKeys } from '../onboarding/system-fields';
 import { profileEditSchema } from '../schemas/profile';
 import { decodeSupportNeeds } from '../schemas/support-needs';
 import {
@@ -46,7 +46,7 @@ describe('the sample answers of a test player (RAPP-619)', () => {
       const payload = sampleAnswerPayload(question, 'ca');
       expect(Object.keys(payload).length).toBeGreaterThan(0);
       for (const key of Object.keys(payload)) {
-        expect(QUESTION_PAYLOAD_KEYS[question]).toContain(key);
+        expect(questionPayloadKeys(question)).toContain(key);
       }
     }
     expect(sampleAnswersFor(['phone', 'dependents'], 'en')).toEqual({

@@ -29,7 +29,8 @@ import {
   systemFieldIdsOfQuestions,
   withFieldAnswers,
 } from '../intake-builder/field-answers';
-import { QUESTION_PAYLOAD_KEYS, type IntakeQuestion } from '../onboarding/intake';
+import type { IntakeQuestion } from '../onboarding/intake';
+import { questionPayloadKeys } from '../onboarding/system-fields';
 import type { LanguageCode } from '../schemas/language';
 import { encodeSupportNeeds } from '../schemas/support-needs';
 import type { Database, Json } from '../types/database';
@@ -121,7 +122,9 @@ export function sampleAnswerPayload(
 ): Readonly<Record<string, unknown>> {
   const sample = sampleProfileAnswers(language);
   return Object.fromEntries(
-    QUESTION_PAYLOAD_KEYS[question].filter((key) => key in sample).map((key) => [key, sample[key]]),
+    questionPayloadKeys(question)
+      .filter((key) => key in sample)
+      .map((key) => [key, sample[key]]),
   );
 }
 

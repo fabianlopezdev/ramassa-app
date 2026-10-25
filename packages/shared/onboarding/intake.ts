@@ -12,6 +12,7 @@
  * test reads the migration block marked `intake-questions`.
  */
 import { z } from 'zod';
+import { questionPayloadKeys } from './system-fields';
 
 export const INTAKE_QUESTIONS = [
   'first_name',
@@ -104,36 +105,6 @@ export const WIZARD_SCREEN_QUESTIONS: Readonly<
   'supporting-entities': ['supporting_entities'],
   'participation-support': ['childcare_need'],
   'specific-needs': ['specific_needs'],
-};
-
-/**
- * The `complete_onboarding` payload keys behind each question. Two-field
- * questions travel whole: a document type without its number, or a count
- * without its yes or no, means nothing on its own.
- */
-export const QUESTION_PAYLOAD_KEYS: Readonly<Record<IntakeQuestion, readonly string[]>> = {
-  first_name: ['first_name'],
-  last_name: ['last_name'],
-  date_of_birth: ['date_of_birth'],
-  place_of_birth: ['place_of_birth'],
-  nationality: ['nationality'],
-  preferred_language: ['preferred_language'],
-  document: ['document_type', 'document_number', 'document_name'],
-  phone: ['phone'],
-  address: ['address'],
-  city: ['city'],
-  postal_code: ['postal_code'],
-  reference_entity: ['reference_entity'],
-  reference_contact_name: ['reference_contact_name'],
-  dependents: ['has_dependents', 'num_dependents'],
-  clothing_size: ['clothing_size'],
-  shoe_size: ['shoe_size'],
-  avatar: ['avatar_url'],
-  applicant_status: ['applicant_status', 'applicant_status_details'],
-  supporting_entities: ['supporting_entities'],
-  season_number: ['season_number'],
-  childcare_need: ['childcare_need'],
-  specific_needs: ['specific_needs'],
 };
 
 /**
@@ -374,7 +345,7 @@ export function trimPayloadToAnswers<T extends Record<string, unknown>>(
     if (key in payload) kept[key] = payload[key];
   }
   for (const question of INTAKE_QUESTIONS) {
-    const keys = QUESTION_PAYLOAD_KEYS[question];
+    const keys = questionPayloadKeys(question);
     const presentKeys = keys.filter((key) => key in payload);
     if (presentKeys.length === 0) continue;
     const isChanged = presentKeys.some(

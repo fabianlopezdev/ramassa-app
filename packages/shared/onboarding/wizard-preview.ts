@@ -22,7 +22,6 @@ import {
   DEFAULT_WIZARD_FLOW,
   INTAKE_QUESTIONS,
   isCustomStep,
-  QUESTION_PAYLOAD_KEYS,
   SCREEN_QUESTIONS,
   WIZARD_SCREEN_QUESTIONS,
   wizardFlowOrder,
@@ -43,6 +42,7 @@ import {
   type QuestionStates,
   type RequiredQuestions,
 } from './question-states';
+import { questionPayloadKeys } from './system-fields';
 
 /** The questions her wizard does not ask: not asked by the rules, or removed in Settings. */
 export function wizardNotAsked(
@@ -73,7 +73,7 @@ export function answeredAtInvitation(
   const fromEntity = new Set(entityAnswerKeys.filter((key) => !sent.has(key)));
   return new Set(
     INTAKE_QUESTIONS.filter((question) => {
-      const keys = QUESTION_PAYLOAD_KEYS[question];
+      const keys = questionPayloadKeys(question);
       const staffSent = keys.filter((key) => sent.has(key));
       if (staffSent.length > 0) return staffSent.some((key) => hasValue(payload[key]));
       return keys.some((key) => fromEntity.has(key));

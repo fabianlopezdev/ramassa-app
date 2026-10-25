@@ -54,6 +54,7 @@ import {
 import {
   createReferralSchema,
   DOCUMENTATION_STATUSES,
+  referralSystemValues,
   type CreateReferralInput,
 } from '@ramassa/shared/referrals';
 import type { DocumentType } from '@ramassa/shared/schemas';
@@ -170,9 +171,11 @@ export default function EntityReferralNewScreen() {
       current.size === 0
         ? current
         : new Set(
-            missingEntityFormFields(items, toInput(next), customAnswers).filter((id) =>
-              current.has(id),
-            ),
+            missingEntityFormFields(
+              items,
+              referralSystemValues(toInput(next)),
+              customAnswers,
+            ).filter((id) => current.has(id)),
           ),
     );
   };
@@ -183,7 +186,9 @@ export default function EntityReferralNewScreen() {
     // The Ramassà fields are checked with the same words as her wizard; a
     // required field left empty says so, as the database would refuse it.
     const checked = checkCustomAnswers(questions, customAnswers, t, { enforceRequired: false });
-    const empty = new Set(missingEntityFormFields(items, input, checked.answers));
+    const empty = new Set(
+      missingEntityFormFields(items, referralSystemValues(input), checked.answers),
+    );
     setCustomErrors(checked.errors);
     setMissing(empty);
     const fieldsFit = Object.keys(checked.errors).length === 0 && empty.size === 0;

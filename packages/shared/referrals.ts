@@ -129,24 +129,37 @@ export type ReferralFieldAnswers = Readonly<Record<string, CustomAnswerValue | n
 
 /**
  * TEMPORARY, until the portal renders every field (RAPP-663, RAPP-664): the
- * form's app answers in her profile's column names, which
- * `fieldAnswersFromColumns` turns into answers by field. A number travels only
- * with a type that takes one.
+ * form's values under the system keys of the app's fields (`first_name`,
+ * `document_type`...), the one place the form's own names meet the fields.
+ * `fieldAnswersFromColumns` turns them into answers by field, and
+ * `missingEntityFormFields` reads them.
  */
-export function referralColumns(referral: CreateReferral): Record<string, unknown> {
+export function referralSystemValues(
+  form: Readonly<Partial<Record<keyof CreateReferralInput, unknown>>>,
+): Record<string, unknown> {
+  return {
+    first_name: form.firstName,
+    last_name: form.lastName,
+    phone: form.phone,
+    date_of_birth: form.dateOfBirth,
+    nationality: form.nationality,
+    document_type: form.documentType,
+    document_number: form.documentNumber,
+    city: form.city,
+    applicant_status: form.applicantStatus,
+    supporting_entities: form.supportingEntities,
+    reference_contact_name: form.referenceContactName,
+    childcare_need: form.childcareNeed,
+    specific_needs: form.specificNeeds,
+  };
+}
+
+/** The form's values to answer from: a number travels only with a type that takes one. */
+function referralColumns(referral: CreateReferral): Record<string, unknown> {
   const hasNumber = referral.documentType !== null && referral.documentType !== 'none';
   return {
-    phone: referral.phone,
-    date_of_birth: referral.dateOfBirth,
-    nationality: referral.nationality,
-    document_type: referral.documentType,
+    ...referralSystemValues(referral),
     document_number: hasNumber ? referral.documentNumber : null,
-    city: referral.city,
-    applicant_status: referral.applicantStatus,
-    supporting_entities: referral.supportingEntities,
-    reference_contact_name: referral.referenceContactName,
-    childcare_need: referral.childcareNeed,
-    specific_needs: referral.specificNeeds,
   };
 }
 
