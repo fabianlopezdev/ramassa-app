@@ -19,6 +19,7 @@ import {
   type QuestionScreen,
   type WizardQuestionScreen,
 } from '../onboarding/intake';
+import { isAskedGenerically, questionsOffTheirControl } from './app-controls';
 import {
   isScreenAnswered,
   questionFromField,
@@ -53,15 +54,20 @@ export function placedQuestion(
   };
 }
 
-/** The Ramassà fields placed on a surface (and screen), in their order, worded for it. */
+/**
+ * The fields placed on a surface (and screen) that the generic renderer asks,
+ * in their order, worded for it: the Ramassà fields, and the app fields whose
+ * question is off its own control (RAPP-665, `app-controls.ts`).
+ */
 function placedQuestionsOn(
   layout: ProfileLayout,
   surface: ProfileSurface,
   screenKey: string | null = null,
 ): readonly CustomQuestion[] {
+  const offTheirControl = questionsOffTheirControl(layout);
   return placementsOnSurface(layout, surface, screenKey).flatMap((placement) => {
     const field = fieldById(layout, placement.fieldId);
-    return field === undefined || field.kind !== 'custom'
+    return field === undefined || !isAskedGenerically(field, offTheirControl)
       ? []
       : [placedQuestion(layout, field, placement)];
   });

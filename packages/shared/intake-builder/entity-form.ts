@@ -5,14 +5,19 @@
  * optional wording for the entity. The portal draws the form from those
  * placements in their order, and the database checks the same rules:
  *
- *   - a built-in field goes on the form only when the form can ask it (the
- *     twelve the referral asks, `private.builtin_entity_form_fields`);
+ *   - an app field the form knows (the twelve the referral asks) is asked with
+ *     the form's own control while that control can read it; any other app
+ *     field, or one staff changed past its control, is asked like a Ramassà
+ *     field (RAPP-665);
  *   - her first and last name never leave it and stay required, because a
  *     referral names her;
  *   - a file or a signature is hers to give, never the entity's;
  *   - a required field left empty refuses the referral, a condition that
  *     does not apply asks nothing.
  */
+import { SYSTEM_FIELD_QUESTIONS } from '../onboarding/system-fields';
+import { layoutSystemFields } from './app-controls';
+import { appControlFits } from './app-field-form';
 import type { CustomAnswerValue, CustomQuestion, IntakeCatalog } from './builder';
 import { placedQuestion } from './her-onboarding';
 import {
@@ -74,13 +79,21 @@ export function entityFormItems(layout: ProfileLayout): readonly EntityFormItem[
   const ordered = [...placementsOnSurface(layout, 'entity_form')].sort(
     (a, b) => a.sortOrder - b.sortOrder || isBuiltin(a) - isBuiltin(b),
   );
+  const index = layoutSystemFields(layout);
   return ordered.flatMap((placement): EntityFormItem[] => {
     const field = fieldById(layout, placement.fieldId);
     if (field === undefined) return [];
     if (field.kind === 'builtin') {
-      return isEntityFormBuiltin(field.builtinKey)
-        ? [{ kind: 'builtin', key: field.builtinKey, field, placement }]
-        : [];
+      const question =
+        field.builtinKey ??
+        (field.systemKey == null ? null : SYSTEM_FIELD_QUESTIONS[field.systemKey]);
+      // The form's own control asks a question it knows while it can read its
+      // fields; its other parts ride with the first (RAPP-665).
+      if (question !== null && isEntityFormBuiltin(question) && appControlFits(index, question)) {
+        return isEntityFormBuiltin(field.builtinKey)
+          ? [{ kind: 'builtin', key: field.builtinKey, field, placement }]
+          : [];
+      }
     }
     if (!isStaffWritable(field.type)) return [];
     return [
@@ -146,13 +159,10 @@ export type EntityFormPick =
   | 'here'
   /** A file or a signature: hers to give. */
   | 'hers'
-  /** A built-in field the referral form cannot ask. */
-  | 'notOnForm'
   | 'free';
 
 export function entityFormPick(layout: ProfileLayout, field: ProfileField): EntityFormPick {
   if (placementOn(layout, field.id, 'entity_form') !== undefined) return 'here';
-  if (field.kind === 'builtin') return isEntityFormBuiltin(field.builtinKey) ? 'free' : 'notOnForm';
   return isStaffWritable(field.type) ? 'free' : 'hers';
 }
 

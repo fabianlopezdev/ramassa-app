@@ -809,7 +809,6 @@
     "pickerTitle": "Add a field to the form",
     "here": "Already on the form",
     "hers": "Only she can give it",
-    "notOnForm": "The form cannot ask it",
     "removeNamed": "Remove {{field}} from the form",
     "removeTitle": "Remove “{{field}}” from the form?"
   }

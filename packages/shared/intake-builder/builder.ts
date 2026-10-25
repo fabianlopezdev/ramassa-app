@@ -51,6 +51,7 @@ import {
 } from '../onboarding/screen-texts';
 import type { LanguageCode } from '../schemas/language';
 import type { Database, Json } from '../types/database';
+import { questionsOffTheirControl } from './app-controls';
 import { systemFieldIndexFromCatalog, type SystemFieldIndex } from './field-answers';
 import {
   anyLanguageTextSchema,
@@ -837,6 +838,8 @@ export function hiddenBuiltinQuestions(catalog: IntakeCatalog): ReadonlySet<Inta
       .filter((override) => override.isHidden && canHideBuiltin(override.question, required))
       .map((override) => override.question),
     ...[...wizardFlow(catalog).hiddenScreens].flatMap((screen) => WIZARD_SCREEN_QUESTIONS[screen]),
+    // Off their own control (RAPP-665): the generic renderer asks their fields.
+    ...(catalog.layout === undefined ? [] : questionsOffTheirControl(catalog.layout)),
   ]);
 }
 

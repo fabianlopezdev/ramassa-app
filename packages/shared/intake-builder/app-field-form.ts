@@ -14,11 +14,22 @@
  * choice as its option's key, `nie` or `M`), and turns what the control gives
  * back into the field's answer (the option's id).
  *
- * A field whose type the control cannot read (staff changed it on Dades de les
- * jugadores) reads as no answer, as the features do (D7). Nothing fails.
+ * A field whose type the control cannot read, or with an option the control
+ * does not know (staff changed it on Dades de les jugadores), reads as no
+ * answer here, as the features do (D7). Nothing fails: the screen asks that
+ * field with the generic renderer instead (RAPP-665, `app-controls.ts`).
  */
-import type { SystemFieldKey } from '../onboarding/system-fields';
-import { documentNameToSend, documentNumberToSend, type DocumentType } from '../schemas/onboarding';
+import type { IntakeQuestion } from '../onboarding/intake';
+import { SYSTEM_FIELD_QUESTIONS, type SystemFieldKey } from '../onboarding/system-fields';
+import {
+  CLOTHING_SIZES,
+  DOCUMENT_TYPES,
+  documentNameToSend,
+  documentNumberToSend,
+  SHOE_SIZES,
+  type DocumentType,
+} from '../schemas/onboarding';
+import { APPLICANT_STATUSES, CHILDCARE_NEEDS } from '../schemas/season';
 import {
   decodeSupportNeeds,
   encodeSupportNeeds,
@@ -113,10 +124,50 @@ const READS: Readonly<Record<AppFormKey, readonly CustomQuestionType[]>> = {
   specificNeeds: ['multiple_choice'],
 };
 
-/** The app field a form name edits, when its type is one the control reads. */
+/** The option keys each choice control knows: an option without one it cannot draw. */
+const KNOWS: Partial<Readonly<Record<AppFormKey, readonly string[]>>> = {
+  documentType: DOCUMENT_TYPES,
+  clothingSize: CLOTHING_SIZES,
+  shoeSize: SHOE_SIZES,
+  applicantStatus: APPLICANT_STATUSES,
+  hasDependents: ['yes', 'no'],
+  childcareNeed: CHILDCARE_NEEDS,
+  specificNeeds: [...SUPPORT_NEED_CATEGORIES, 'none'],
+};
+
+/** Whether a form name's control can still ask its field: its type, and every live option's key. */
+function controlReads(key: AppFormKey, field: SystemField): boolean {
+  if (!READS[key].includes(field.type)) return false;
+  const known = KNOWS[key];
+  return (
+    known === undefined ||
+    field.options.every(
+      (option) => option.isArchived || (option.key != null && known.includes(option.key)),
+    )
+  );
+}
+
+/** The app field a form name edits, when its control can still ask it. */
 export function appFormField(index: SystemFieldIndex, key: AppFormKey): SystemField | undefined {
   const field = index.get(APP_FORM_FIELDS[key]);
-  return field !== undefined && READS[key].includes(field.type) ? field : undefined;
+  return field !== undefined && controlReads(key, field) ? field : undefined;
+}
+
+const FORM_KEYS = Object.keys(APP_FORM_FIELDS) as AppFormKey[];
+
+/**
+ * Whether the app's own control can still ask one of its questions (RAPP-665):
+ * every field of the question the organization has is one the control reads.
+ * When staff give a field a type or an option the control cannot draw, the
+ * screen asks the question's fields with the generic renderer.
+ */
+export function appControlFits(index: SystemFieldIndex, question: IntakeQuestion): boolean {
+  return FORM_KEYS.filter((key) => SYSTEM_FIELD_QUESTIONS[APP_FORM_FIELDS[key]] === question).every(
+    (key) => {
+      const field = index.get(APP_FORM_FIELDS[key]);
+      return field === undefined || controlReads(key, field);
+    },
+  );
 }
 
 /** The ids of the app's fields: every answer that is not a team field's. */

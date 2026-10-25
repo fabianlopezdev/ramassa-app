@@ -809,7 +809,6 @@
     "pickerTitle": "Añade un campo al formulario",
     "here": "Ya está en el formulario",
     "hers": "Solo ella puede darlo",
-    "notOnForm": "El formulario no puede pedirlo",
     "removeNamed": "Quita {{field}} del formulario",
     "removeTitle": "¿Quieres quitar «{{field}}» del formulario?"
   }

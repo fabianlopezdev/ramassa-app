@@ -114,10 +114,10 @@ describe('entityFormItems', () => {
 });
 
 describe('entityFormPick', () => {
-  test('placed, hers, not on the form, or free', () => {
+  test('placed, hers, or free: an app field goes on the form like any field (RAPP-665)', () => {
     expect(entityFormPick(LAYOUT, STOP)).toBe('here');
     expect(entityFormPick(LAYOUT, PHOTO)).toBe('hers');
-    expect(entityFormPick(LAYOUT, CLOTHING)).toBe('notOnForm');
+    expect(entityFormPick(LAYOUT, CLOTHING)).toBe('free');
     expect(entityFormPick({ ...LAYOUT, placements: [] }, FIRST_NAME)).toBe('free');
   });
 

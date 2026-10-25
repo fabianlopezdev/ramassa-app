@@ -80,8 +80,6 @@ export function ReferralFormEditor({
         return { kind: 'placed', note: t('referralForm.here') };
       case 'hers':
         return { kind: 'blocked', note: t('referralForm.hers') };
-      case 'notOnForm':
-        return { kind: 'blocked', note: t('referralForm.notOnForm') };
       case 'free':
         return { kind: 'free' };
     }

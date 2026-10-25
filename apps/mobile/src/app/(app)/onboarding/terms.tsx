@@ -201,11 +201,10 @@ export default function TermsStepScreen() {
       // ones. They travel with her profile in the one signed call (RAPP-611),
       // so a woman who started on her own keeps them too, and the required
       // ones are checked there before anything is kept.
-      const customAnswers = customAnswersToSave(
-        intake.customScreens.flatMap((screen) => screen.questions),
-        draft?.custom,
-        intake.customAnswers,
-      );
+      const placed = intake.customScreens.flatMap((screen) => screen.questions);
+      const customAnswers = customAnswersToSave(placed, draft?.custom, intake.customAnswers);
+      // An app field the generic renderer asks (RAPP-665) is saved from there only.
+      for (const question of placed) delete appAnswers[question.id];
 
       const result = await completeOnboarding(
         {

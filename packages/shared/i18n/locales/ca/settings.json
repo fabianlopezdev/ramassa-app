@@ -809,7 +809,6 @@
     "pickerTitle": "Afegeix un camp al formulari",
     "here": "Ja és al formulari",
     "hers": "Només ella ho pot donar",
-    "notOnForm": "El formulari no ho pot demanar",
     "removeNamed": "Treu {{field}} del formulari",
     "removeTitle": "Vols treure «{{field}}» del formulari?"
   }
