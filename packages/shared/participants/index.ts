@@ -38,18 +38,14 @@ export {
   type ParticipantSortColumn,
 } from './participant-query';
 export {
-  buildProfilePrefillPayload,
   fetchParticipantAnsweredQuestions,
   prefillFormOf,
-  prefillFromRow,
   prefillUpdateOf,
   profilePrefillSchema,
-  type PrefillRow,
   type ProfilePrefill,
   type ProfilePrefillField,
   type ProfilePrefillInput,
   type ParticipantPrefillUpdate,
-  type ProfilePrefillPayload,
 } from './participant-prefill';
 export * from './test-scenario';
 export { ANSWER_SOURCES, type AnswerOrigin, type AnswerSource } from './answer-sources';

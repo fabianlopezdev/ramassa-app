@@ -13,63 +13,11 @@ import {
   systemOptionFixtureId,
 } from '../testing/system-fields';
 import {
-  buildProfilePrefillPayload,
   fetchParticipantAnsweredQuestions,
   prefillFormOf,
-  prefillFromRow,
   prefillUpdateOf,
   profilePrefillSchema,
-  type PrefillRow,
 } from './participant-prefill';
-
-const row: PrefillRow = {
-  first_name: 'Mariam',
-  last_name: 'Keita',
-  date_of_birth: '1999-03-14',
-  place_of_birth: null,
-  nationality: 'Mali',
-  preferred_language: 'ca',
-  document_type: null,
-  document_number: null,
-  phone: null,
-  address: null,
-  city: null,
-  postal_code: null,
-  reference_entity: 'Creu Roja Osona',
-  reference_contact_name: null,
-  has_dependents: false,
-  num_dependents: 0,
-  clothing_size: 'M',
-  shoe_size: null,
-};
-
-const answered = (...questions: IntakeQuestion[]) => new Set<IntakeQuestion>(questions);
-
-describe('prefillFromRow', () => {
-  test('shows what somebody answered and leaves the rest empty, defaults included', () => {
-    const values = prefillFromRow(
-      row,
-      answered('first_name', 'last_name', 'date_of_birth', 'nationality', 'clothing_size'),
-    );
-    expect(values).toMatchObject({
-      firstName: 'Mariam',
-      lastName: 'Keita',
-      dateOfBirth: '1999-03-14',
-      nationality: 'Mali',
-      clothingSize: 'M',
-    });
-    expect(values.preferredLanguage).toBeUndefined();
-    expect(values.hasDependents).toBeUndefined();
-    expect(values.shoeSize).toBeUndefined();
-  });
-
-  test('the names always show, because the invitation set them', () => {
-    expect(prefillFromRow(row, answered())).toMatchObject({
-      firstName: 'Mariam',
-      lastName: 'Keita',
-    });
-  });
-});
 
 describe('profilePrefillSchema', () => {
   test('only the names are required', () => {
@@ -98,52 +46,6 @@ describe('profilePrefillSchema', () => {
         numDependents: 0,
       }).success,
     ).toBe(false);
-  });
-});
-
-describe('buildProfilePrefillPayload', () => {
-  const values = {
-    firstName: 'Mariam',
-    lastName: 'Keita',
-    nationality: 'Guinea',
-    preferredLanguage: 'ca' as const,
-    hasDependents: true,
-    numDependents: 2,
-    documentType: 'none' as const,
-    clothingSize: 'L' as const,
-  };
-
-  test('sends only the fields staff changed', () => {
-    expect(buildProfilePrefillPayload(values, new Set(['nationality', 'clothingSize']))).toEqual({
-      nationality: 'Guinea',
-      clothing_size: 'L',
-    });
-  });
-
-  test('two-field questions travel whole', () => {
-    expect(buildProfilePrefillPayload(values, new Set(['numDependents']))).toEqual({
-      has_dependents: true,
-      num_dependents: 2,
-    });
-    expect(buildProfilePrefillPayload(values, new Set(['documentType']))).toEqual({
-      document_type: 'none',
-      document_number: null,
-    });
-  });
-
-  test('an emptied document type takes its number with it (RAPP-302)', () => {
-    expect(
-      buildProfilePrefillPayload(
-        { ...values, documentType: undefined, documentNumber: 'X1234567L' },
-        new Set(['documentType']),
-      ),
-    ).toEqual({ document_type: null, document_number: null });
-  });
-
-  test('a field emptied by staff is sent empty, so the database clears it', () => {
-    expect(
-      buildProfilePrefillPayload({ ...values, nationality: undefined }, new Set(['nationality'])),
-    ).toEqual({ nationality: null });
   });
 });
 

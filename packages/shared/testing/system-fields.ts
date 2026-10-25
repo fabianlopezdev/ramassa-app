@@ -1,13 +1,9 @@
 /**
- * The app's fields as `intake_catalog` sends them (RAPP-661), for unit tests of
- * the writers that turn a column payload into answers by field. Ids are made
- * up and stable; each choice field carries the option keys the app stores.
+ * The app's fields as `intake_catalog` sends them (RAPP-661), for unit tests
+ * of the code that reads and writes her answers by field. Ids are made up and
+ * stable; each choice field carries the option keys the app stores.
  */
 import { AppError } from '../errors';
-import {
-  fieldAnswersFromColumns,
-  systemFieldIndexFromCatalog,
-} from '../intake-builder/field-answers';
 import { SYSTEM_FIELD_QUESTIONS, type SystemFieldKey } from '../onboarding/system-fields';
 
 const CHOICES: Partial<Record<SystemFieldKey, readonly string[]>> = {
@@ -89,19 +85,22 @@ export function systemFieldsCatalogFixture(): { readonly fields: readonly unknow
 }
 
 /**
- * A reader's row as the database returns it since RAPP-662: the account
- * columns as they are and every app column given as its answer by field id
- * (the fixture's ids), from a row in the app's old column names.
+ * Her answers by field id, as the readers return them since RAPP-662, from
+ * values by system key: a choice is given by its option's key (`nie`, `M`)
+ * and stored as that option's fixture id.
  */
-export function readerRowFixture(
-  columns: Readonly<Record<string, unknown>>,
+export function systemAnswersFixture(
+  values: Readonly<Partial<Record<SystemFieldKey, string | number | readonly string[]>>>,
 ): Record<string, unknown> {
-  const { answers, rest } = fieldAnswersFromColumns(
-    systemFieldIndexFromCatalog(systemFieldsCatalogFixture()),
-    columns,
+  return Object.fromEntries(
+    (Object.entries(values) as [SystemFieldKey, string | number | readonly string[]][]).map(
+      ([key, value]) => {
+        if (CHOICES[key] === undefined) return [systemFieldFixtureId(key), value];
+        const ids = (Array.isArray(value) ? value : [value]).map((option) =>
+          systemOptionFixtureId(key, String(option)),
+        );
+        return [systemFieldFixtureId(key), TYPES[key] === 'multiple_choice' ? ids : ids[0]];
+      },
+    ),
   );
-  return {
-    ...rest,
-    answers: Object.fromEntries(Object.entries(answers).filter(([, value]) => value !== null)),
-  };
 }

@@ -44,26 +44,6 @@ export function isSystemFieldKey(key: string): key is SystemFieldKey {
   return Object.prototype.hasOwnProperty.call(SYSTEM_FIELD_QUESTIONS, key);
 }
 
-/**
- * The app questions with no field: her account settings (D2). Her language
- * and photo stay on her account; her season count is a number of seasons.
- */
-const ACCOUNT_SETTING_KEYS: Partial<Readonly<Record<IntakeQuestion, string>>> = {
-  preferred_language: 'preferred_language',
-  avatar: 'avatar_url',
-  season_number: 'season_number',
-};
-
-/**
- * Where an app question travels in the apps' column payloads, until they send
- * answers by field themselves (RAPP-663, RAPP-664): the system keys of its
- * fields (a composite question has several), or the account setting.
- */
-export function questionPayloadKeys(question: IntakeQuestion): readonly string[] {
-  const setting = ACCOUNT_SETTING_KEYS[question];
-  return setting === undefined ? systemKeysOfQuestion(question) : [setting];
-}
-
 /** The system keys of one app question's fields, in the catalog's order. */
 export function systemKeysOfQuestion(question: IntakeQuestion): readonly SystemFieldKey[] {
   return (Object.keys(SYSTEM_FIELD_QUESTIONS) as SystemFieldKey[]).filter(

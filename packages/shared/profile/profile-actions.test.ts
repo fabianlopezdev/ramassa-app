@@ -15,7 +15,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { expect, test } from 'bun:test';
 import { AppError } from '../errors';
 import {
-  readerRowFixture,
+  systemAnswersFixture,
   systemFieldFixtureId,
   systemFieldsCatalogFixture,
   systemOptionFixtureId,
@@ -34,25 +34,26 @@ const decryptedRow = {
   id: '5eed0000-0000-4000-8000-000000000001',
   first_name: 'Amina',
   last_name: 'Al-Hassan',
-  date_of_birth: '1995-03-14',
-  place_of_birth: 'حلب',
-  nationality: 'Síria',
   preferred_language: 'ar',
-  document_type: 'nie',
-  document_number: 'X1234567L',
-  phone: '+34600111222',
-  address: 'Carrer Major 1',
-  city: 'Vic',
-  postal_code: '08500',
-  reference_entity: 'Creu Roja Osona',
-  reference_contact_name: null,
-  has_dependents: false,
-  num_dependents: 0,
-  clothing_size: 'M',
-  shoe_size: '38',
   avatar_url: null,
   media_consent: false,
   terms_accepted_at: '2026-07-31T10:00:00Z',
+  // Her answers by field (RAPP-662), choices by their option key.
+  answers: systemAnswersFixture({
+    date_of_birth: '1995-03-14',
+    place_of_birth: 'حلب',
+    nationality: 'Síria',
+    document_type: 'nie',
+    document_number: 'X1234567L',
+    phone: '+34600111222',
+    address: 'Carrer Major 1',
+    city: 'Vic',
+    postal_code: '08500',
+    reference_entity: 'Creu Roja Osona',
+    has_dependents: 'no',
+    clothing_size: 'M',
+    shoe_size: '38',
+  }),
 };
 
 function rpcClient(
@@ -70,9 +71,7 @@ function rpcClient(
 }
 
 test('fetchOwnProfile returns the decrypted row the RPC produced', async () => {
-  const profile = await fetchOwnProfile(
-    rpcClient({ data: [readerRowFixture(decryptedRow)], error: null }),
-  );
+  const profile = await fetchOwnProfile(rpcClient({ data: [decryptedRow], error: null }));
   // Her answers by field (RAPP-662), with her organization's fields to read them by (RAPP-663).
   expect(profile?.answers[systemFieldFixtureId('document_number')]).toBe('X1234567L');
   expect(profile?.answers[systemFieldFixtureId('place_of_birth')]).toBe('حلب');
@@ -242,12 +241,9 @@ test('fetchOwnProfile hands the caller cancellation to the request', async () =>
   const controller = new AbortController();
   const seen: { signal?: AbortSignal } = {};
 
-  await fetchOwnProfile(
-    cancellableRpcClient({ data: [readerRowFixture(decryptedRow)], error: null }, seen),
-    {
-      signal: controller.signal,
-    },
-  );
+  await fetchOwnProfile(cancellableRpcClient({ data: [decryptedRow], error: null }, seen), {
+    signal: controller.signal,
+  });
 
   expect(seen.signal).toBe(controller.signal);
 });
@@ -256,7 +252,7 @@ test('fetchOwnProfile without a signal never reaches for abortSignal', async () 
   const seen: { signal?: AbortSignal } = {};
 
   const profile = await fetchOwnProfile(
-    cancellableRpcClient({ data: [readerRowFixture(decryptedRow)], error: null }, seen),
+    cancellableRpcClient({ data: [decryptedRow], error: null }, seen),
   );
 
   expect(seen.signal).toBeUndefined();
@@ -271,7 +267,7 @@ test('fetchOwnProfile without a signal never reaches for abortSignal', async () 
  */
 test('a row that does not match the schema is a typed failure, not a blank profile', async () => {
   const renamedColumn = {
-    ...readerRowFixture(decryptedRow),
+    ...decryptedRow,
     preferred_language: undefined,
     language: 'ar',
   };
@@ -283,7 +279,7 @@ test('a row that does not match the schema is a typed failure, not a blank profi
 
 test('the parse failure carries the field names but never the values', async () => {
   const renamedColumn = {
-    ...readerRowFixture(decryptedRow),
+    ...decryptedRow,
     preferred_language: undefined,
     language: 'ar',
   };

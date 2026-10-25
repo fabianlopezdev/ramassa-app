@@ -14,7 +14,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { expect, test } from 'bun:test';
 import { AppError } from '../errors';
-import { readerRowFixture, systemFieldFixtureId, systemFieldsCatalogFixture } from '../testing';
+import { systemAnswersFixture, systemFieldFixtureId, systemFieldsCatalogFixture } from '../testing';
 import type { Database } from '../types/database';
 import {
   addParticipantNote,
@@ -32,22 +32,7 @@ const decryptedRow = {
   id: PARTICIPANT_ID,
   first_name: 'Rosa',
   last_name: 'Mamani',
-  date_of_birth: '1996-03-27',
-  place_of_birth: 'Oruro',
-  nationality: 'Bolívia',
   preferred_language: 'es',
-  document_type: 'nie',
-  document_number: 'Y0000026Z',
-  phone: '+34600000026',
-  address: 'Carrer de Prova, 26',
-  city: 'Vic',
-  postal_code: '08500',
-  reference_entity: null,
-  reference_contact_name: null,
-  has_dependents: false,
-  num_dependents: 0,
-  clothing_size: 'L',
-  shoe_size: '38',
   avatar_url: null,
   media_consent: false,
   terms_accepted_at: '2026-01-15T09:00:00Z',
@@ -55,6 +40,21 @@ const decryptedRow = {
   is_forum_banned: false,
   created_at: '2026-01-15T09:00:00Z',
   updated_at: '2026-01-15T09:00:00Z',
+  // Her answers by field (RAPP-662), choices by their option key.
+  answers: systemAnswersFixture({
+    date_of_birth: '1996-03-27',
+    place_of_birth: 'Oruro',
+    nationality: 'Bolívia',
+    document_type: 'nie',
+    document_number: 'Y0000026Z',
+    phone: '+34600000026',
+    address: 'Carrer de Prova, 26',
+    city: 'Vic',
+    postal_code: '08500',
+    has_dependents: 'no',
+    clothing_size: 'L',
+    shoe_size: '38',
+  }),
 };
 
 interface RpcCall {
@@ -123,7 +123,7 @@ test('fetchParticipantRecord reads her answers by field, with her organization f
       {
         data: [
           {
-            ...readerRowFixture(decryptedRow),
+            ...decryptedRow,
             anonymized_at: null,
             is_test_account: false,
             role: 'player',
@@ -150,7 +150,7 @@ test('fetchParticipantRecord reads the fields once when the caller already has t
       {
         data: [
           {
-            ...readerRowFixture(decryptedRow),
+            ...decryptedRow,
             anonymized_at: null,
             is_test_account: false,
             role: 'invited',
@@ -188,7 +188,7 @@ test('fetchParticipantRecord reports a FAILED read as a failure, never as an emp
 
 test('a record that does not parse is a typed failure that names fields, never values', async () => {
   const error = (await fetchParticipantRecord(
-    rpcClient({ data: [{ ...readerRowFixture(decryptedRow), role: 7 }], error: null }),
+    rpcClient({ data: [{ ...decryptedRow, role: 7 }], error: null }),
     PARTICIPANT_ID,
   ).catch((thrown: unknown) => thrown)) as AppError;
   expect(error).toBeInstanceOf(AppError);
