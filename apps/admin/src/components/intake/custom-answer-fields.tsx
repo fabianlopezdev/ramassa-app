@@ -6,15 +6,14 @@
  * Every type has its input (RAPP-610): a number and a date input, yes / no, a
  * phone and an email field, a list of options however long, a list typed one
  * item per line, one consent tick, and the two lists the app ships (every
- * country, every municipality of Catalonia, RAPP-664) by their canonical name. A file or a signature is hers to give, so
+ * country, every municipality of Catalonia, RAPP-664) by their canonical name,
+ * picked with a search (`ListPicker`, RAPP-665). A file or a signature is hers to give, so
  * staff read it and never write it: it is not an input here, and
  * `readCustomAnswersOf` leaves it out.
  */
 
-import { useMemo } from 'react';
+import { ListPicker } from '@/components/fields/list-picker';
 import { useTranslation } from 'react-i18next';
-import { getCountryOptions } from '@ramassa/shared/i18n/countries';
-import { getMunicipalityOptions } from '@ramassa/shared/i18n/municipalities';
 import {
   consentSettings,
   customAnswerMessage,
@@ -138,7 +137,6 @@ export function CustomAnswerInput({
   const options = question.options.filter(
     (option) => !option.isArchived || option.id === value || chosenIds.includes(option.id),
   );
-  const listOptions = useAppList(question.type, language);
   const errorLine =
     error === undefined ? null : (
       <span
@@ -288,25 +286,18 @@ export function CustomAnswerInput({
       case 'country':
       case 'municipality':
         return (
-          <select
+          <ListPicker
+            kind={question.type}
+            language={language}
             id={name}
             name={name}
-            defaultValue={current}
-            aria-describedby={helpId}
-            aria-required={isRequired}
+            value={current}
+            noneLabel={t('questions.noAnswer')}
+            isRequired={isRequired}
+            describedBy={helpId}
             className={inputClassName}
-          >
-            <option value="">{t('questions.noAnswer')}</option>
-            {/* A stored name the list no longer has stays selectable, so saving never drops it. */}
-            {current !== '' && !listOptions.some((option) => option.value === current) ? (
-              <option value={current}>{current}</option>
-            ) : null}
-            {listOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+            testId={`${name}-list`}
+          />
         );
       default:
         return (
@@ -344,26 +335,4 @@ export function CustomAnswerInput({
       {errorLine}
     </label>
   );
-}
-
-/** The options of a list the app ships, in her language, valued by the canonical name. */
-function useAppList(
-  type: CustomQuestion['type'],
-  language: LanguageCode,
-): readonly { readonly value: string; readonly label: string }[] {
-  return useMemo(() => {
-    if (type === 'country') {
-      return getCountryOptions(language).map((option) => ({
-        value: option.canonical,
-        label: option.label,
-      }));
-    }
-    if (type === 'municipality') {
-      return getMunicipalityOptions(language).map((option) => ({
-        value: option.canonical,
-        label: option.label,
-      }));
-    }
-    return [];
-  }, [type, language]);
 }

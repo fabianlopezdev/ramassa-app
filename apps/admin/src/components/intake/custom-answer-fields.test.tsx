@@ -75,7 +75,7 @@ test('the message shows under its own question', () => {
   expect(view.queryByTestId('referral-custom-email-error')).toBeNull();
 });
 
-test('a country and a municipality are picked from the lists the app ships (RAPP-664)', () => {
+test('a country and a municipality are picked from the lists the app ships (RAPP-664, RAPP-665)', () => {
   const lists = (['country', 'municipality'] as const).map((type) => ({
     id: type,
     type,
@@ -99,14 +99,13 @@ test('a country and a municipality are picked from the lists the app ships (RAPP
       ))}
     </form>,
   );
-  const country = view.container.querySelector<HTMLSelectElement>('#fitxa-country');
-  const city = view.container.querySelector<HTMLSelectElement>('#fitxa-municipality');
+  const country = view.container.querySelector<HTMLInputElement>('#fitxa-country');
+  const city = view.container.querySelector<HTMLInputElement>('#fitxa-municipality');
   // The canonical name is stored; she reads it in her language.
-  expect(country?.value).toBe('Marroc');
-  expect(country?.selectedOptions[0]?.textContent).toBe('Marruecos');
+  expect(country?.value).toBe('Marruecos');
   expect(city?.value).toBe('Vic');
-  expect(country?.options.length).toBeGreaterThan(200);
-  expect(city?.options.length).toBeGreaterThan(900);
+  // A search over the whole list (RAPP-665).
+  expect(country?.getAttribute('role')).toBe('combobox');
   const answers = readCustomAnswersOf(
     new FormData(view.getByTestId('form') as HTMLFormElement),
     lists,

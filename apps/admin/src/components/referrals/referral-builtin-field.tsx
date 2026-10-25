@@ -9,12 +9,10 @@
  */
 
 import { AdminAuthField } from '@/components/auth/admin-auth-field';
+import { ListPicker } from '@/components/fields/list-picker';
 import { Textarea } from '@/components/ui/textarea';
-import { useMemo } from 'react';
 import { Controller, type Control, type FieldErrors } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { getCountryOptions } from '@ramassa/shared/i18n/countries';
-import { getMunicipalityOptions } from '@ramassa/shared/i18n/municipalities';
 import {
   placementWordingIn,
   textIn,
@@ -110,8 +108,6 @@ export function ReferralBuiltinField({
   documentType,
 }: ReferralBuiltinFieldProps) {
   const { t } = useTranslation(['referrals', 'onboarding'], { lng: language });
-  const countries = useMemo(() => getCountryOptions(language), [language]);
-  const municipalities = useMemo(() => getMunicipalityOptions(language), [language]);
   const wording = placementWordingIn(item.placement, item.field, language);
   const isRequired = item.placement.required;
   const label = `${wording.label}${isRequired ? ' *' : ''}`;
@@ -189,27 +185,23 @@ export function ReferralBuiltinField({
     case 'nationality':
     case 'city': {
       const name = item.key;
-      const options = name === 'nationality' ? countries : municipalities;
       return (
         <Controller
           name={name}
           control={control}
           render={({ field }) => (
             <Labelled id={id(name)} label={label} hint={wording.help} errorMessage={missing}>
-              <select
-                {...field}
-                value={field.value ?? ''}
+              <ListPicker
+                kind={name === 'nationality' ? 'country' : 'municipality'}
+                language={language}
                 id={id(name)}
-                required={isRequired}
+                value={field.value ?? ''}
+                onChange={field.onChange}
+                noneLabel="—"
+                isRequired={isRequired}
                 className={REFERRAL_CONTROL_CLASS}
-              >
-                <option value="">—</option>
-                {options.map((option) => (
-                  <option key={option.code} value={option.canonical}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+                testId={id(`${name}-list`)}
+              />
             </Labelled>
           )}
         />
