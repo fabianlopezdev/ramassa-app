@@ -423,12 +423,10 @@
     "cancel": "Cancel·la",
     "catalanNeeded": "Escriu-ho almenys en català.",
     "optionsNeeded": "Una pregunta d'opcions necessita almenys dues opcions.",
-    "oneOptionStays": "Deixa almenys una opció visible.",
     "failed": "No s'ha pogut fer. Torna-ho a provar.",
     "builtinIntro": "Deixa un idioma buit per mantenir-hi el text de l'app.",
     "hidden": "Amagada",
     "hideQuestion": "No facis aquesta pregunta",
-    "hideOption": "Amaga aquesta opció",
     "lock": {
       "required": "Aquesta pregunta és obligatòria, així que sempre es pregunta. Fes-la opcional abans d'amagar-la.",
       "optionsList": "Les respostes surten d'una llista fixa que fa servir l'app (països, municipis o talles), així que només es pot canviar el text de la pregunta.",

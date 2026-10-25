@@ -25,7 +25,6 @@ import { FieldDialog } from '@/components/profile-layout/field-dialog';
 import { useReload } from '@/components/settings/onboarding-design-sections';
 import { SortableList, type SortableHandle } from '@/components/ui-patterns/sortable-list';
 import { Button } from '@/components/ui/button';
-import { builtinQuestionOptions, QUESTION_LABEL_KEYS } from '@/lib/builtin-questions';
 import { onboardingPick, pickerSectionFor } from '@/lib/field-picker';
 import { profileLayoutOf } from '@/lib/profile-layout';
 import { useProfileLayoutActions } from '@/lib/profile-layout-actions';
@@ -35,7 +34,12 @@ import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { customStepKey, isRequiredQuestion, type IntakeQuestion } from '@ramassa/shared/intake';
+import {
+  customStepKey,
+  INTAKE_QUESTION_LABEL_KEYS,
+  isRequiredQuestion,
+  type IntakeQuestion,
+} from '@ramassa/shared/intake';
 import {
   builtinField,
   builtinRequiredLock,
@@ -386,7 +390,7 @@ function BuiltinPlacementRow({
   const [isBusy, setIsBusy] = useState(false);
   const required = requiredBuiltinQuestions(catalog);
   const override = overrideFor(catalog, question);
-  const appLabel = t(QUESTION_LABEL_KEYS[question] ?? question);
+  const appLabel = t(INTAKE_QUESTION_LABEL_KEYS[question] ?? question);
   const reworded = override?.label == null ? '' : textIn(override.label, language);
   const isHidden = override?.isHidden === true && canHideBuiltin(question, required);
   const detail = [
@@ -424,7 +428,7 @@ function BuiltinPlacementRow({
       testId={`builtin-row-${question}`}
     >
       <BuiltinForm
-        info={{ question, label: appLabel, options: builtinQuestionOptions(question, t) }}
+        info={{ question, label: appLabel }}
         override={override}
         required={required}
         onLabelChange={onLabelChange}

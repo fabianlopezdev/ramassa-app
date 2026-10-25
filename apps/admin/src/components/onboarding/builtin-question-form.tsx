@@ -1,8 +1,9 @@
 /**
  * The wording of one of the app's own questions on its onboarding screen
- * (RAPP-307, RAPP-641): label, help, option labels and hidden options. A
- * question the app needs cannot be hidden, and the form says why. The form is
- * uncontrolled and read with FormData.
+ * (RAPP-307, RAPP-641): label and help, and whether it is hidden. A question
+ * the app needs cannot be hidden, and the form says why. Its options are the
+ * options of its field, named on Dades de les jugadores (RAPP-664). The form
+ * is uncontrolled and read with FormData.
  */
 
 import { ErrorLine, useAction } from '@/components/fields/field-form';
@@ -22,8 +23,6 @@ export interface BuiltinQuestionInfo {
   readonly question: IntakeQuestion;
   /** The app's own label, in the staff member's language. */
   readonly label: string;
-  /** The options staff may relabel or hide; none for a picker list. */
-  readonly options: readonly { readonly value: string; readonly label: string }[];
 }
 
 export function BuiltinForm({
@@ -56,23 +55,10 @@ export function BuiltinForm({
       label: Object.keys(label).length === 0 ? null : label,
       help: Object.keys(help).length === 0 ? null : help,
       isHidden: canHideBuiltin(info.question, required) && fields.get('builtin-hidden') === 'on',
-      optionOverrides: Object.fromEntries(
-        info.options.map((option) => [
-          option.value,
-          {
-            label: textFromForm(fields, `builtin-option-${option.value}`),
-            hidden: fields.get(`builtin-option-hidden-${option.value}`) === 'on',
-          },
-        ]),
-      ),
+      // Kept as stored: the options are the field's now, and her phone's app
+      // screens still read these until they read the field (RAPP-665).
+      optionOverrides: override?.optionOverrides ?? {},
     };
-    if (
-      info.options.length > 0 &&
-      info.options.every((option) => next.optionOverrides[option.value]?.hidden)
-    ) {
-      action.setError(t('questions.oneOptionStays'));
-      return;
-    }
     if (await action.run(() => onSave(next))) onCancel();
   }
   return (
@@ -113,36 +99,6 @@ export function BuiltinForm({
         <p id="builtin-hidden-lock" className="text-start text-xs text-muted-foreground">
           {t(`questions.lock.${lock}`)}
         </p>
-      )}
-      {info.options.length === 0 ? (
-        <p className="text-start text-xs text-muted-foreground">
-          {t('questions.lock.optionsList')}
-        </p>
-      ) : (
-        <div className="flex flex-col gap-3">
-          <p className="text-start text-sm font-medium">{t('questions.options')}</p>
-          <p className="text-start text-xs text-muted-foreground">
-            {t('questions.lock.optionValues')}
-          </p>
-          {info.options.map((option) => (
-            <div key={option.value} className="flex flex-col gap-1">
-              <LanguageFields
-                name={`builtin-option-${option.value}`}
-                legend={option.label}
-                value={override?.optionOverrides[option.value]?.label}
-                isCatalanRequired={false}
-              />
-              <label className="flex items-center gap-2 text-xs">
-                <input
-                  type="checkbox"
-                  name={`builtin-option-hidden-${option.value}`}
-                  defaultChecked={override?.optionOverrides[option.value]?.hidden ?? false}
-                />
-                <span>{t('questions.hideOption')}</span>
-              </label>
-            </div>
-          ))}
-        </div>
       )}
       <ErrorLine message={action.error} />
       <div className="flex gap-2">

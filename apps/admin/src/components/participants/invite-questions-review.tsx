@@ -35,11 +35,11 @@ import {
 } from '@/components/ui/sheet';
 import { Switch } from '@/components/ui/switch';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { QUESTION_LABEL_KEYS } from '@/lib/builtin-questions';
 import { cn } from '@/lib/utils';
 import { EyeOff, Lock } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { INTAKE_QUESTION_LABEL_KEYS } from '@ramassa/shared/intake';
 import type {
   AnsweredQuestions,
   IntakeQuestionState,
@@ -102,7 +102,7 @@ function PlayerQuestionsBoard({
   const labelOf = (question: PlanQuestion): string =>
     question.kind === 'builtin'
       ? (builtinLabel(catalog, question.question, language) ??
-        t(QUESTION_LABEL_KEYS[question.question] ?? question.question))
+        t(INTAKE_QUESTION_LABEL_KEYS[question.question] ?? question.question))
       : textIn(question.question.label, language);
 
   return (

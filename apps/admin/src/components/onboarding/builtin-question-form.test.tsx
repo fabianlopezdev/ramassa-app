@@ -27,42 +27,35 @@ function form(info: BuiltinQuestionInfo, onSave = mock(async () => undefined)) {
 }
 
 test('a question the app needs cannot be hidden, and the form says why', () => {
-  const view = form({ question: 'first_name', label: 'Nom', options: [] });
+  const view = form({ question: 'first_name', label: 'Nom' });
   expect(input(view, 'builtin-hidden').disabled).toBe(true);
   expect(view.getByText(/questions\.lock\.required|needs this answer/)).toBeTruthy();
 });
 
-test('a built-in option is relabelled or hidden, but one stays visible', async () => {
+test('the options stay the field’s: the form keeps the stored ones as they are (RAPP-664)', async () => {
   const onSave = mock(async () => undefined);
-  const view = form(
-    {
-      question: 'childcare_need',
-      label: 'Cura dels fills',
-      options: [
-        { value: 'yes', label: 'Sí' },
-        { value: 'no', label: 'No' },
-      ],
-    },
-    onSave,
+  const view = render(
+    <BuiltinForm
+      info={{ question: 'childcare_need', label: 'Cura dels fills' }}
+      override={{
+        question: 'childcare_need',
+        label: null,
+        help: null,
+        isHidden: false,
+        optionOverrides: { no: { label: { ca: 'Ara no' } } },
+      }}
+      required={DEFAULT_REQUIRED_QUESTIONS}
+      onSave={onSave}
+      onCancel={() => undefined}
+    />,
   );
-  input(view, 'builtin-option-hidden-yes').checked = true;
-  input(view, 'builtin-option-hidden-no').checked = true;
-  fireEvent.submit(view.getByTestId('builtin-form'));
-  await waitFor(() =>
-    expect(view.getByText(/questions\.oneOptionStays|one option visible/)).toBeTruthy(),
-  );
-  expect(onSave).not.toHaveBeenCalled();
-
-  input(view, 'builtin-option-hidden-no').checked = false;
-  input(view, 'builtin-option-no.ca').value = 'Ara no';
+  expect(view.container.querySelector('[name^="builtin-option-"]')).toBeNull();
+  input(view, 'builtin-label.ca').value = 'Cangur';
   fireEvent.submit(view.getByTestId('builtin-form'));
   await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1));
   const [override] = onSave.mock.calls[0] as unknown as [
-    { optionOverrides: Record<string, unknown>; isHidden: boolean },
+    { optionOverrides: Record<string, unknown>; label: unknown },
   ];
-  expect(override.isHidden).toBe(false);
-  expect(override.optionOverrides).toEqual({
-    yes: { label: {}, hidden: true },
-    no: { label: { ca: 'Ara no' }, hidden: false },
-  });
+  expect(override.label).toEqual({ ca: 'Cangur' });
+  expect(override.optionOverrides).toEqual({ no: { label: { ca: 'Ara no' } } });
 });

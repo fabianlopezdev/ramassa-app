@@ -423,12 +423,10 @@
     "cancel": "Cancel",
     "catalanNeeded": "Write it in Catalan at least.",
     "optionsNeeded": "A choice question needs at least two options.",
-    "oneOptionStays": "Keep at least one option visible.",
     "failed": "That did not work. Try again.",
     "builtinIntro": "Leave a language empty to keep the app's own wording in it.",
     "hidden": "Hidden",
     "hideQuestion": "Do not ask this question",
-    "hideOption": "Hide this option",
     "lock": {
       "required": "This question is required, so it is always asked. Make it optional first to hide it.",
       "optionsList": "The answers come from a fixed list the app uses (countries, municipalities or sizes), so only the question can be reworded.",

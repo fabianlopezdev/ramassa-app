@@ -9,9 +9,10 @@
  */
 
 import type { PreviewDraft } from '@/components/settings/question-type-fields';
-import { builtinQuestionOptions, QUESTION_LABEL_KEYS } from '@/lib/builtin-questions';
+import { LANGUAGE_NATIVE_NAMES, SUPPORTED_LANGUAGES } from '@ramassa/shared/i18n/languages';
 import {
   BUNDLED_SCREEN_TEXT_KEYS,
+  INTAKE_QUESTION_LABEL_KEYS,
   isRequiredQuestion,
   resolveAppTerms,
   screenTextFields,
@@ -21,9 +22,9 @@ import {
   type ScreenTextField,
 } from '@ramassa/shared/intake';
 import {
+  builtinField,
   builtinHelp,
   builtinLabel,
-  builtinOptions,
   fieldById,
   hiddenBuiltinQuestions,
   isCustomQuestionRequired,
@@ -101,6 +102,25 @@ function only(language: LanguageCode, text: string): BuilderText {
   return { [language]: text } as BuilderText;
 }
 
+/**
+ * The options of a built-in question on her phone: the live options of its
+ * field, by their labels in her language (RAPP-664); her app language lists
+ * the app's languages.
+ */
+function builtinOptionLabels(
+  catalog: IntakeCatalog,
+  question: IntakeQuestion,
+  language: LanguageCode,
+): readonly string[] {
+  if (question === 'preferred_language') {
+    return SUPPORTED_LANGUAGES.map((code) => LANGUAGE_NATIVE_NAMES[code]);
+  }
+  const field = catalog.layout === undefined ? undefined : builtinField(catalog.layout, question);
+  return (field?.options ?? [])
+    .filter((option) => !option.isArchived)
+    .map((option) => textIn(option.label, language));
+}
+
 /** A built-in question on her phone. `label` is a label typed in an open form, if any. */
 export function builtinPhoneQuestion(
   catalog: IntakeCatalog,
@@ -110,29 +130,26 @@ export function builtinPhoneQuestion(
   label?: BuilderText,
 ): PhoneQuestion {
   const inLanguage: Translate = (key, options) => t(key, { ...options, lng: language });
-  const appLabel = inLanguage(QUESTION_LABEL_KEYS[question] ?? question);
+  const appLabel = inLanguage(INTAKE_QUESTION_LABEL_KEYS[question] ?? question);
   const typed = label?.[language]?.trim() ?? '';
   const shownLabel =
     label === undefined
       ? (builtinLabel(catalog, question, language) ?? appLabel)
       : typed || appLabel;
-  const options = builtinOptions(
-    catalog,
-    question,
-    builtinQuestionOptions(question, inLanguage),
-    language,
-  );
+  const field = catalog.layout === undefined ? undefined : builtinField(catalog.layout, question);
+  // A yes, no or maybe field draws its own three answers.
+  const isYesNo = field?.type === 'yes_no' || field?.type === 'yes_no_maybe';
   return {
     id: question,
     label: shownLabel,
     help: builtinHelp(catalog, question, language) ?? '',
     isRequired: isRequiredQuestion(question, requiredBuiltinQuestions(catalog)),
     draft: {
-      type: BUILTIN_TYPES[question],
+      type: isYesNo ? field.type : BUILTIN_TYPES[question],
       label: only(language, shownLabel),
       help: {},
       settings: {},
-      options: options.map((option) => only(language, option.label)),
+      options: builtinOptionLabels(catalog, question, language).map((text) => only(language, text)),
     },
   };
 }
