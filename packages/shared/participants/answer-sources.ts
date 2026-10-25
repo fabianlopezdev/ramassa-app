@@ -28,7 +28,9 @@ export interface ProfileAnswerOrigin extends AnswerOrigin {
 }
 
 const rowSchema = z.object({
-  question: z.string(),
+  field_id: z.uuid(),
+  // The app question the field belongs to; null for a field the team added.
+  question: z.string().nullable(),
   source: z.enum(ANSWER_SOURCES),
   answered_at: z.string(),
   answered_by_name: z.string().nullable(),
@@ -43,13 +45,19 @@ export async function fetchParticipantProfileAnswers(
     p_profile_id: participantId,
   });
   if (error) throw new AppError('DB-1', { message: error.message });
-  return z
-    .array(rowSchema)
-    .parse(data ?? [])
-    .map((row) => ({
+  // One origin per app question (RAPP-662 reads them per field): the latest
+  // answer among its fields, as `profile_answers` kept one row per question.
+  const latest = new Map<string, ProfileAnswerOrigin>();
+  for (const row of z.array(rowSchema).parse(data ?? [])) {
+    if (row.question === null) continue;
+    const known = latest.get(row.question);
+    if (known !== undefined && known.answeredAt >= row.answered_at) continue;
+    latest.set(row.question, {
       question: row.question,
       source: row.source,
       answeredAt: row.answered_at,
       answeredByName: row.answered_by_name,
-    }));
+    });
+  }
+  return [...latest.values()].sort((a, b) => a.question.localeCompare(b.question));
 }

@@ -18,6 +18,7 @@ import { AppError } from '../errors';
 import {
   fetchSystemFieldIndex,
   hasFieldColumns,
+  withAppColumns,
   withFieldAnswers,
 } from '../intake-builder/field-answers';
 import { withCancellation, type CancellableRequest } from '../lib/cancellation';
@@ -73,9 +74,11 @@ export async function fetchOwnProfile(
   const first: unknown = Array.isArray(rows) ? rows[0] : undefined;
   // Absent stays absent: no row is the expected state for a woman who has not
   // finished onboarding, and it must not be parsed as a malformed one.
-  return first === undefined || first === null
-    ? null
-    : parseRow(profileRowSchema, first, 'get_own_profile');
+  if (first === undefined || first === null) return null;
+  // Her answers arrive by field (RAPP-662); her screens still read her
+  // profile's column names until they render every field (RAPP-663).
+  const row = await withAppColumns(client, first as { readonly answers?: unknown });
+  return parseRow(profileRowSchema, row, 'get_own_profile');
 }
 
 /**

@@ -34,6 +34,16 @@ $$;
 create function pg_temp.stored(p_profile uuid, p_key text) returns jsonb language sql security definer as $$
   select private.system_field_answer(p_profile, p_key);
 $$;
+-- Her answer to an app field in a reader's `answers` (RAPP-662): a choice by its
+-- option's key, anything else as text.
+create function pg_temp.column_of(p_answers jsonb, p_key text) returns text language sql security definer as $$
+  select coalesce(
+    (select o.key from public.custom_question_options o
+      where o.question_id = f.id and o.id::text = p_answers ->> f.id::text),
+    p_answers ->> f.id::text)
+    from public.profile_fields f
+   where f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.system_key = p_key;
+$$;
 grant execute on all functions in schema pg_temp to authenticated;
 
 set local role authenticated;
@@ -99,7 +109,7 @@ select is(
 
 set local role authenticated;
 select is(
-  (select intake_answers ->> 'applicant_status' || '|' || (intake_answers ->> 'season_number')
+  (select pg_temp.column_of(answers, 'applicant_status') || '|' || season_number::text
      from public.get_entity_referral((select id from referral_run where label = 'full'))),
   'refugee|3', 'the sender reads what it sent while the referral is pending'
 );
@@ -116,13 +126,13 @@ delete from public.team_member_permissions
 set local role authenticated;
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000003", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select is(
-  (select (intake_answers ? 'applicant_status') or (intake_answers ? 'specific_needs')
-          or (intake_answers ? 'document_number')
+  (select (pg_temp.column_of(answers, 'applicant_status') is not null) or (pg_temp.column_of(answers, 'specific_needs') is not null)
+          or (pg_temp.column_of(answers, 'document_number') is not null)
      from public.get_entity_referral((select id from referral_run where label = 'full'))),
   false, 'staff without the sensitive fields do not see the sensitive answers'
 );
 select is(
-  (select intake_answers ->> 'childcare_need'
+  (select pg_temp.column_of(answers, 'childcare_need')
      from public.get_entity_referral((select id from referral_run where label = 'full'))),
   'maybe', 'but see the others, to accept her'
 );
@@ -173,13 +183,13 @@ select is(
 set local role authenticated;
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000003", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select is(
-  (select coalesce(applicant_status, 'hidden') || '|' || coalesce(specific_needs, 'hidden') || '|' || childcare_need
+  (select coalesce(pg_temp.column_of(answers, 'applicant_status'), 'hidden') || '|' || coalesce(pg_temp.column_of(answers, 'specific_needs'), 'hidden') || '|' || pg_temp.column_of(answers, 'childcare_need')
      from public.get_participant_profile((select id from referral_run where label = 'profile'))),
   'hidden|hidden|maybe', 'without participants.view_sensitive the sensitive answers stay hidden'
 );
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select is(
-  (select applicant_status || '|' || specific_needs
+  (select pg_temp.column_of(answers, 'applicant_status') || '|' || pg_temp.column_of(answers, 'specific_needs_details')
      from public.get_participant_profile((select id from referral_run where label = 'profile'))),
   'refugee|Necessita pauses.', 'with it, staff read them'
 );
@@ -210,7 +220,7 @@ select set_config('request.jwt.claims',
 -- The season number is counted since RAPP-306: "her fourth season" is three
 -- earlier ones, and the fourth counts once she signs it.
 select is(
-  (select applicant_status || '|' || childcare_need || '|' || season_number from public.get_own_profile()),
+  (select pg_temp.column_of(answers, 'applicant_status') || '|' || pg_temp.column_of(answers, 'childcare_need') || '|' || season_number from public.get_own_profile()),
   'refugee|maybe|3', 'she reads her own answers'
 );
 

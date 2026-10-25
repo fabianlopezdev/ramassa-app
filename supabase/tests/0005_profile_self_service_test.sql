@@ -37,6 +37,16 @@ create function pg_temp.answers(p jsonb) returns jsonb language sql security def
     from jsonb_each(p) e
     join public.profile_fields f on f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.system_key = e.key;
 $$;
+-- Her answer to an app field in a reader's `answers` (RAPP-662): a choice by its
+-- option's key, anything else as text.
+create function pg_temp.column_of(p_answers jsonb, p_key text) returns text language sql security definer as $$
+  select coalesce(
+    (select o.key from public.custom_question_options o
+      where o.question_id = f.id and o.id::text = p_answers ->> f.id::text),
+    p_answers ->> f.id::text)
+    from public.profile_fields f
+   where f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.system_key = p_key;
+$$;
 grant execute on all functions in schema pg_temp to authenticated;
 
 select vault.create_secret('test-encryption-key', 'app_encryption_key', 'pgTAP test key')
@@ -79,12 +89,12 @@ select has_function('public', 'update_own_profile', array['jsonb'], 'the re-encr
 -- Reading own profile ----------------------------------------------------------
 
 select is(
-  (select document_number from public.get_own_profile()), 'X1234567L',
+  (select pg_temp.column_of(answers, 'document_number') from public.get_own_profile()), 'X1234567L',
   'the owner reads her own document number in clear'
 );
 
 select is(
-  (select phone from public.get_own_profile()), '+34600111222',
+  (select pg_temp.column_of(answers, 'phone') from public.get_own_profile()), '+34600111222',
   'the owner reads her own phone in clear'
 );
 
@@ -125,7 +135,7 @@ select lives_ok(
 );
 
 select is(
-  (select document_number from public.get_own_profile()), 'Y7654321X',
+  (select pg_temp.column_of(answers, 'document_number') from public.get_own_profile()), 'Y7654321X',
   'the edited document number round-trips through encryption'
 );
 

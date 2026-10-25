@@ -54,6 +54,16 @@ $$;
 create function pg_temp.stored(p_profile uuid, p_key text) returns jsonb language sql security definer as $$
   select private.system_field_answer(p_profile, p_key);
 $$;
+-- Her answer to an app field in a reader's `answers` (RAPP-662): a choice by its
+-- option's key, anything else as text.
+create function pg_temp.column_of(p_answers jsonb, p_key text) returns text language sql security definer as $$
+  select coalesce(
+    (select o.key from public.custom_question_options o
+      where o.question_id = f.id and o.id::text = p_answers ->> f.id::text),
+    p_answers ->> f.id::text)
+    from public.profile_fields f
+   where f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.system_key = p_key;
+$$;
 grant execute on all functions in schema pg_temp to authenticated;
 
 select vault.create_secret('test-encryption-key', 'app_encryption_key', 'pgTAP test key')
@@ -100,13 +110,13 @@ set local role authenticated;
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 
 select is(
-  (select document_number from public.get_participant_profile('5eed0000-0000-4000-8000-000000000026')),
+  (select pg_temp.column_of(answers, 'document_number') from public.get_participant_profile('5eed0000-0000-4000-8000-000000000026')),
   'Y0000026Z',
   'staff read a participant document number in clear'
 );
 
 select is(
-  (select phone from public.get_participant_profile('5eed0000-0000-4000-8000-000000000026')),
+  (select pg_temp.column_of(answers, 'phone') from public.get_participant_profile('5eed0000-0000-4000-8000-000000000026')),
   '+34600000026',
   'and her phone, decrypted server-side'
 );

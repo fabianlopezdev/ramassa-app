@@ -27,12 +27,30 @@ test('reads who answered each question, by the profile id', async () => {
   const { client, calls } = clientReturning({
     data: [
       {
+        field_id: '00000000-0000-4000-8000-000000000001',
         question: 'city',
         source: 'staff',
         answered_at: '2026-10-20T09:00:00Z',
         answered_by_name: 'Marta Puig',
       },
       {
+        // A split question: the latest of its parts is her question's origin.
+        field_id: '00000000-0000-4000-8000-000000000002',
+        question: 'phone',
+        source: 'entity',
+        answered_at: '2026-10-01T09:00:00Z',
+        answered_by_name: 'Creu Roja',
+      },
+      {
+        // A field the team added has no app question.
+        field_id: '00000000-0000-4000-8000-000000000003',
+        question: null,
+        source: 'staff',
+        answered_at: '2026-10-21T09:00:00Z',
+        answered_by_name: 'Marta Puig',
+      },
+      {
+        field_id: '00000000-0000-4000-8000-000000000004',
         question: 'phone',
         source: 'player',
         answered_at: '2026-10-12T09:00:00Z',

@@ -10,7 +10,12 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { AppError, databaseErrorCode } from '../errors';
-import { fetchSystemFieldIndex, withFieldAnswers } from '../intake-builder/field-answers';
+import {
+  columnsFromFieldAnswers,
+  fetchSystemFieldIndex,
+  fieldAnswersReadSchema,
+  withFieldAnswers,
+} from '../intake-builder/field-answers';
 import {
   createTargetedNotificationSend,
   fetchCustomNotificationGroups,
@@ -125,10 +130,8 @@ export async function updateMySeasonAnswers(
 const seasonAnswersRowSchema = z.object({
   season_name: z.string(),
   starts_on: z.string(),
-  applicant_status: z.string().nullable(),
-  supporting_entities: z.array(z.string()).nullable(),
-  childcare_need: z.string().nullable(),
-  specific_needs: z.string().nullable(),
+  // That season's answers by field (RAPP-662), each by the reader's level.
+  answers: fieldAnswersReadSchema,
   updated_at: z.string(),
 });
 
@@ -148,16 +151,19 @@ export async function fetchParticipantSeasonAnswers(
     p_profile_id: profileId,
   });
   if (error) failure(error.message);
-  return z
-    .array(seasonAnswersRowSchema)
-    .parse(data ?? [])
-    .map((row) => ({
+  const rows = z.array(seasonAnswersRowSchema).parse(data ?? []);
+  // Read as the app's season columns until her page renders every field (RAPP-664).
+  const fields = rows.length === 0 ? new Map() : await fetchSystemFieldIndex(client);
+  return rows.map((row) => {
+    const columns = columnsFromFieldAnswers(fields, row.answers);
+    return {
       seasonName: row.season_name,
-      applicantStatus: row.applicant_status,
-      supportingEntities: row.supporting_entities ?? [],
-      childcareNeed: row.childcare_need,
-      specificNeeds: row.specific_needs,
-    }));
+      applicantStatus: columns.applicant_status as string | null,
+      supportingEntities: (columns.supporting_entities as string[] | null) ?? [],
+      childcareNeed: columns.childcare_need as string | null,
+      specificNeeds: columns.specific_needs as string | null,
+    };
+  });
 }
 
 const registrationRowSchema = z.object({

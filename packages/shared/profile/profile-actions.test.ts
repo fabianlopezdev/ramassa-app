@@ -15,6 +15,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { expect, test } from 'bun:test';
 import { AppError } from '../errors';
 import {
+  readerRowFixture,
   systemFieldFixtureId,
   systemFieldsCatalogFixture,
   systemOptionFixtureId,
@@ -61,13 +62,17 @@ function rpcClient(
   return {
     rpc: async (name: string, args: unknown) => {
       spy?.({ name, args });
-      return result;
+      return name === 'intake_catalog'
+        ? { data: systemFieldsCatalogFixture(), error: null }
+        : result;
     },
   } as unknown as Client;
 }
 
 test('fetchOwnProfile returns the decrypted row the RPC produced', async () => {
-  const profile = await fetchOwnProfile(rpcClient({ data: [decryptedRow], error: null }));
+  const profile = await fetchOwnProfile(
+    rpcClient({ data: [readerRowFixture(decryptedRow)], error: null }),
+  );
   expect(profile?.document_number).toBe('X1234567L');
   expect(profile?.place_of_birth).toBe('حلب');
 });
@@ -223,13 +228,16 @@ function cancellableRpcClient(
   seen: { signal?: AbortSignal },
 ): Client {
   return {
-    rpc: () => ({
-      then: (resolve: (value: unknown) => unknown) => Promise.resolve(result).then(resolve),
-      abortSignal(signal: AbortSignal) {
-        seen.signal = signal;
-        return Promise.resolve(result);
-      },
-    }),
+    rpc: (name: string) =>
+      name === 'intake_catalog'
+        ? Promise.resolve({ data: systemFieldsCatalogFixture(), error: null })
+        : {
+            then: (resolve: (value: unknown) => unknown) => Promise.resolve(result).then(resolve),
+            abortSignal(signal: AbortSignal) {
+              seen.signal = signal;
+              return Promise.resolve(result);
+            },
+          },
   } as unknown as Client;
 }
 
@@ -237,9 +245,12 @@ test('fetchOwnProfile hands the caller cancellation to the request', async () =>
   const controller = new AbortController();
   const seen: { signal?: AbortSignal } = {};
 
-  await fetchOwnProfile(cancellableRpcClient({ data: [decryptedRow], error: null }, seen), {
-    signal: controller.signal,
-  });
+  await fetchOwnProfile(
+    cancellableRpcClient({ data: [readerRowFixture(decryptedRow)], error: null }, seen),
+    {
+      signal: controller.signal,
+    },
+  );
 
   expect(seen.signal).toBe(controller.signal);
 });
@@ -248,7 +259,7 @@ test('fetchOwnProfile without a signal never reaches for abortSignal', async () 
   const seen: { signal?: AbortSignal } = {};
 
   const profile = await fetchOwnProfile(
-    cancellableRpcClient({ data: [decryptedRow], error: null }, seen),
+    cancellableRpcClient({ data: [readerRowFixture(decryptedRow)], error: null }, seen),
   );
 
   expect(seen.signal).toBeUndefined();
@@ -262,7 +273,11 @@ test('fetchOwnProfile without a signal never reaches for abortSignal', async () 
  * one place whose entire job is showing her what it holds. Contract rule 6.
  */
 test('a row that does not match the schema is a typed failure, not a blank profile', async () => {
-  const renamedColumn = { ...decryptedRow, document_number: undefined, docNumber: 'X1234567L' };
+  const renamedColumn = {
+    ...readerRowFixture(decryptedRow),
+    preferred_language: undefined,
+    language: 'ar',
+  };
 
   await expect(fetchOwnProfile(rpcClient({ data: [renamedColumn], error: null }))).rejects.toThrow(
     AppError,
@@ -270,13 +285,17 @@ test('a row that does not match the schema is a typed failure, not a blank profi
 });
 
 test('the parse failure carries the field names but never the values', async () => {
-  const renamedColumn = { ...decryptedRow, document_number: undefined, docNumber: 'X1234567L' };
+  const renamedColumn = {
+    ...readerRowFixture(decryptedRow),
+    preferred_language: undefined,
+    language: 'ar',
+  };
 
   const error = (await fetchOwnProfile(rpcClient({ data: [renamedColumn], error: null })).catch(
     (thrown: unknown) => thrown,
   )) as AppError;
 
   expect(error.code).toBe('DB-1');
-  expect(error.context.invalidFields).toEqual(['document_number']);
+  expect(error.context.invalidFields).toEqual(['preferred_language']);
   expect(JSON.stringify(error.context)).not.toContain('X1234567L');
 });

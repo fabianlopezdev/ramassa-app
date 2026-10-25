@@ -3,8 +3,10 @@ import { z } from 'zod';
 import { AppError } from './errors';
 import { isEmptyAnswer } from './intake-builder/builder';
 import {
+  columnsFromFieldAnswers,
   fetchSystemFieldIndex,
   fieldAnswersFromColumns,
+  fieldAnswersReadSchema,
   type SystemFieldIndex,
 } from './intake-builder/field-answers';
 import type { CustomAnswerValue } from './intake-builder/question-types';
@@ -213,15 +215,18 @@ const referralRpcRowSchema = z.object({
   entity_name: z.string().nullable(),
   created_at: z.string(),
   updated_at: z.string(),
-  // Only the single-referral read returns these (RAPP-303).
-  intake_answers: z.unknown().optional(),
+  // Only the single-referral read returns these (RAPP-303): the entity's
+  // answers by field (RAPP-662) and her season count.
+  answers: fieldAnswersReadSchema.optional(),
+  season_number: z.number().int().nullable().optional(),
   consent_confirmed_at: z.string().nullable().optional(),
 });
 
 /**
- * The season registration answers the entity gave, as the database returns
- * them (profile keys). Staff without participants.view_sensitive receive them
- * without the applicant status, the specific needs and the document number.
+ * The season registration answers the entity gave, in her profile's keys.
+ * The database returns them by field, each by the reader's level; the
+ * referral screens read these keys until they render every field (RAPP-663,
+ * RAPP-664).
  */
 const referralAnswersSchema = z
   .object({
@@ -296,7 +301,27 @@ export function filterReferrals(
   return referrals.filter((referral) => searchableReferralText(referral).includes(normalizedQuery));
 }
 
-function referralFromRow(row: z.infer<typeof referralRpcRowSchema>): Referral {
+/** The entity's answers in her profile's keys, or null when the referral holds none. */
+function referralAnswersFromRow(
+  row: z.infer<typeof referralRpcRowSchema>,
+  fields: SystemFieldIndex,
+): ReferralAnswers | null {
+  const answers = row.answers ?? {};
+  const seasonNumber = row.season_number ?? null;
+  if (Object.keys(answers).length === 0 && seasonNumber === null) return null;
+  const columns = Object.entries(columnsFromFieldAnswers(fields, answers)).filter(
+    ([, value]) => value !== null && !(Array.isArray(value) && value.length === 0),
+  );
+  return referralAnswersSchema.parse({
+    ...Object.fromEntries(columns),
+    ...(seasonNumber === null ? {} : { season_number: seasonNumber }),
+  });
+}
+
+function referralFromRow(
+  row: z.infer<typeof referralRpcRowSchema>,
+  answers: ReferralAnswers | null = null,
+): Referral {
   return {
     id: row.id,
     entityUserId: row.entity_user_id,
@@ -312,10 +337,7 @@ function referralFromRow(row: z.infer<typeof referralRpcRowSchema>): Referral {
     entityName: row.entity_name,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
-    answers:
-      row.intake_answers === undefined || row.intake_answers === null
-        ? null
-        : referralAnswersSchema.parse(row.intake_answers),
+    answers,
     consentConfirmedAt: row.consent_confirmed_at ?? null,
   };
 }
@@ -334,7 +356,7 @@ export async function fetchEntityReferrals(
   return z
     .array(referralRpcRowSchema)
     .parse(data ?? [])
-    .map(referralFromRow);
+    .map((row) => referralFromRow(row));
 }
 
 export async function fetchStaffReferrals(
@@ -349,7 +371,7 @@ export async function fetchStaffReferrals(
   return z
     .array(referralRpcRowSchema)
     .parse(data ?? [])
-    .map(referralFromRow);
+    .map((row) => referralFromRow(row));
 }
 
 export async function fetchReferral(
@@ -362,7 +384,9 @@ export async function fetchReferral(
   if (error) databaseFailure(error.message);
   const row = z.array(referralRpcRowSchema).min(1).max(1).parse(data)[0];
   if (row === undefined) databaseFailure('Referral was not returned');
-  return referralFromRow(row);
+  const fields =
+    Object.keys(row.answers ?? {}).length === 0 ? new Map() : await fetchSystemFieldIndex(client);
+  return referralFromRow(row, referralAnswersFromRow(row, fields));
 }
 
 /**

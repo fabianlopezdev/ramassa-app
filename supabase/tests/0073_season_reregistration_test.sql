@@ -36,6 +36,16 @@ $$;
 create function pg_temp.stored(p_profile uuid, p_key text) returns jsonb language sql security definer as $$
   select private.system_field_answer(p_profile, p_key);
 $$;
+-- Her answer to an app field in a reader's `answers` (RAPP-662): a choice by its
+-- option's key, anything else as text.
+create function pg_temp.column_of(p_answers jsonb, p_key text) returns text language sql security definer as $$
+  select coalesce(
+    (select o.key from public.custom_question_options o
+      where o.question_id = f.id and o.id::text = p_answers ->> f.id::text),
+    p_answers ->> f.id::text)
+    from public.profile_fields f
+   where f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.system_key = p_key;
+$$;
 grant execute on all functions in schema pg_temp to authenticated;
 
 -- 4. The counted season number, before anything changes ---------------------------------------------
@@ -136,7 +146,7 @@ delete from public.team_member_permissions
  where profile_id = '5eed0000-0000-4000-8000-000000000003' and permission_code = 'participants.view_sensitive';
 set local role authenticated;
 select is(
-  (select coalesce(applicant_status, 'hidden') || '|' || childcare_need
+  (select coalesce(pg_temp.column_of(answers, 'applicant_status'), 'hidden') || '|' || pg_temp.column_of(answers, 'childcare_need')
      from public.participant_season_answers('5eed0000-0000-4000-8000-000000000011') where season_name = '2026/27'),
   'hidden|yes', 'without participants.view_sensitive the sensitive season answers stay hidden'
 );

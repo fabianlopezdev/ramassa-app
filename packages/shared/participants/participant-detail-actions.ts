@@ -20,6 +20,7 @@ import { AppError } from '../errors';
 import {
   fetchSystemFieldIndex,
   hasFieldColumns,
+  withAppColumns,
   withFieldAnswers,
 } from '../intake-builder/field-answers';
 import type { UpdateOwnProfilePayload } from '../schemas/profile';
@@ -49,8 +50,11 @@ export async function fetchParticipantDetail(
   if (error) {
     throw new AppError('DB-1', { message: error.message });
   }
-  const rows = (data ?? []) as ParticipantDetailRow[];
-  return rows[0] ?? null;
+  const row = (data ?? [])[0];
+  if (row === undefined) return null;
+  // Her answers arrive by field (RAPP-662); her page still reads her profile's
+  // column names until it renders every field (RAPP-664).
+  return (await withAppColumns(client, row)) as unknown as ParticipantDetailRow;
 }
 
 /**

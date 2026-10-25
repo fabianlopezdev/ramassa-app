@@ -4,6 +4,10 @@
  * up and stable; each choice field carries the option keys the app stores.
  */
 import { AppError } from '../errors';
+import {
+  fieldAnswersFromColumns,
+  systemFieldIndexFromCatalog,
+} from '../intake-builder/field-answers';
 import { SYSTEM_FIELD_QUESTIONS, type SystemFieldKey } from '../onboarding/system-fields';
 
 const CHOICES: Partial<Record<SystemFieldKey, readonly string[]>> = {
@@ -59,5 +63,23 @@ export function systemFieldsCatalogFixture(): { readonly fields: readonly unknow
         is_archived: false,
       })),
     })),
+  };
+}
+
+/**
+ * A reader's row as the database returns it since RAPP-662: the account
+ * columns as they are and every app column given as its answer by field id
+ * (the fixture's ids), from a row in the app's old column names.
+ */
+export function readerRowFixture(
+  columns: Readonly<Record<string, unknown>>,
+): Record<string, unknown> {
+  const { answers, rest } = fieldAnswersFromColumns(
+    systemFieldIndexFromCatalog(systemFieldsCatalogFixture()),
+    columns,
+  );
+  return {
+    ...rest,
+    answers: Object.fromEntries(Object.entries(answers).filter(([, value]) => value !== null)),
   };
 }

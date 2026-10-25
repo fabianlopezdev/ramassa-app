@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
-import { encodeSupportNeeds } from '../schemas/support-needs';
+import { decodeSupportNeeds, encodeSupportNeeds } from '../schemas/support-needs';
 import {
+  columnsFromFieldAnswers,
   fieldAnswersFromColumns,
   fieldAnswersPayloadSchema,
   hasFieldColumns,
@@ -170,5 +171,66 @@ describe('TEMPORARY: from a column payload', () => {
   test('knows when a payload needs the field ids', () => {
     expect(hasFieldColumns({ first_name: 'Fatou', email: 'f@example.com' })).toBe(false);
     expect(hasFieldColumns({ first_name: 'Fatou', reference_entity: 'CEAR' })).toBe(true);
+  });
+});
+
+describe('TEMPORARY: back to the column shapes', () => {
+  test('turns answers by field into the app columns, a choice by its option key', () => {
+    const columns = columnsFromFieldAnswers(index, {
+      [id(2)]: '1990-04-02',
+      [id(3)]: id(32),
+      [id(4)]: 'PA123',
+      [id(5)]: id(51),
+      [id(6)]: 2,
+      [id(9)]: ['Càritas'],
+      [id(10)]: 'Mali',
+      [id(11)]: 'a staff answer',
+    });
+    expect(columns).toMatchObject({
+      date_of_birth: '1990-04-02',
+      document_type: 'passport',
+      document_number: 'PA123',
+      has_dependents: true,
+      num_dependents: 2,
+      supporting_entities: ['Càritas'],
+      nationality: 'Mali',
+      city: null,
+    });
+  });
+
+  test('every column is there, null without an answer, and no dependents count is 0', () => {
+    const columns = columnsFromFieldAnswers(index, {});
+    expect(columns.date_of_birth).toBeNull();
+    expect(columns.has_dependents).toBeNull();
+    expect(columns.num_dependents).toBe(0);
+    expect(Object.keys(columns)).toContain('postal_code');
+  });
+
+  test('the needs and their details become the encoded specific needs', () => {
+    const encoded = columnsFromFieldAnswers(index, {
+      [id(7)]: [id(71), id(73)],
+      [id(8)]: 'Necessita pauses.',
+    }).specific_needs as string;
+    expect(decodeSupportNeeds(encoded)).toEqual({
+      categories: ['accessibility', 'other'],
+      details: {},
+      explanation: 'Necessita pauses.',
+    });
+  });
+
+  test('round-trips a column payload through answers by field', () => {
+    const payload = { date_of_birth: '1990-04-02', document_type: 'nie', has_dependents: false };
+    const { answers } = fieldAnswersFromColumns(index, payload);
+    expect(columnsFromFieldAnswers(index, answers)).toMatchObject(payload);
+  });
+
+  test('a field whose type no longer fits its column reads as no answer', () => {
+    const changed = systemFieldIndexFromCatalog({
+      fields: [field(2, 'date_of_birth', 'short_text'), field(3, 'document_type', 'short_text')],
+    });
+    expect(columnsFromFieldAnswers(changed, { [id(2)]: 'fa molt', [id(3)]: 'nie' })).toMatchObject({
+      date_of_birth: null,
+      document_type: null,
+    });
   });
 });

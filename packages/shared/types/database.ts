@@ -5884,6 +5884,7 @@ export type Database = {
       get_entity_referral: {
         Args: { p_referral_id: string };
         Returns: {
+          answers: Json;
           assigned_staff_id: string;
           consent_confirmed_at: string;
           created_at: string;
@@ -5891,13 +5892,13 @@ export type Database = {
           entity_name: string;
           entity_user_id: string;
           id: string;
-          intake_answers: Json;
           notes: string;
           referred_email: string;
           referred_first_name: string;
           referred_last_name: string;
           referred_phone: string;
           referred_profile_id: string;
+          season_number: number;
           status: string;
           updated_at: string;
         }[];
@@ -5934,38 +5935,18 @@ export type Database = {
       get_own_profile: {
         Args: never;
         Returns: {
-          address: string;
-          applicant_status: string;
-          applicant_status_details: string;
+          answers: Json;
           avatar_url: string;
-          childcare_need: string;
-          city: string;
-          clothing_size: string;
-          date_of_birth: string;
-          document_name: string;
-          document_number: string;
-          document_type: string;
           emergency_contact_name: string;
           emergency_contact_phone: string;
           emergency_contact_relation: string;
           first_name: string;
-          has_dependents: boolean;
           health_info: string;
           id: string;
           last_name: string;
           media_consent: boolean;
-          nationality: string;
-          num_dependents: number;
-          phone: string;
-          place_of_birth: string;
-          postal_code: string;
           preferred_language: string;
-          reference_contact_name: string;
-          reference_entity: string;
           season_number: number;
-          shoe_size: string;
-          specific_needs: string;
-          supporting_entities: string[];
           terms_accepted_at: string;
         }[];
       };
@@ -5992,24 +5973,14 @@ export type Database = {
       get_participant_profile: {
         Args: { participant_id: string };
         Returns: {
-          address: string;
           anonymized_at: string;
-          applicant_status: string;
-          applicant_status_details: string;
+          answers: Json;
           avatar_url: string;
-          childcare_need: string;
-          city: string;
-          clothing_size: string;
           created_at: string;
-          date_of_birth: string;
-          document_name: string;
-          document_number: string;
-          document_type: string;
           emergency_contact_name: string;
           emergency_contact_phone: string;
           emergency_contact_relation: string;
           first_name: string;
-          has_dependents: boolean;
           health_info: string;
           id: string;
           is_active: boolean;
@@ -6017,19 +5988,9 @@ export type Database = {
           is_test_account: boolean;
           last_name: string;
           media_consent: boolean;
-          nationality: string;
-          num_dependents: number;
-          phone: string;
-          place_of_birth: string;
-          postal_code: string;
           preferred_language: string;
-          reference_contact_name: string;
-          reference_entity: string;
           role: string;
           season_number: number;
-          shoe_size: string;
-          specific_needs: string;
-          supporting_entities: string[];
           terms_accepted_at: string;
           updated_at: string;
         }[];
@@ -6768,6 +6729,7 @@ export type Database = {
         Returns: {
           answered_at: string;
           answered_by_name: string;
+          field_id: string;
           question: string;
           source: string;
         }[];
@@ -6782,13 +6744,10 @@ export type Database = {
       participant_season_answers: {
         Args: { p_profile_id: string };
         Returns: {
-          applicant_status: string;
-          applicant_status_details: string;
-          childcare_need: string;
+          answers: Json;
+          season_id: string;
           season_name: string;
-          specific_needs: string;
           starts_on: string;
-          supporting_entities: string[];
           updated_at: string;
         }[];
       };

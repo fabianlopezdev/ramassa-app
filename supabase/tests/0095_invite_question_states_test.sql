@@ -175,12 +175,15 @@ select is(
 
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select is(
-  array(select public.referral_answer_keys('5eed0000-0000-4000-8010-000000000001')),
-  -- Built-in keys, then the id of the Ramassà field the seeded referral answers (RAPP-652).
-  array['5eed0000-0000-4000-8045-000000000001',
-        'applicant_status', 'childcare_need', 'city', 'date_of_birth', 'document_type',
-        'nationality', 'phone', 'reference_contact_name', 'season_number', 'specific_needs',
-        'supporting_entities'],
+  -- The app's fields by system key (RAPP-662), then every answered field by id
+  -- (the Ramassà field of RAPP-652 among them).
+  (select array_to_string(array_agg(k order by k) filter (where k !~ '^[0-9a-f]{8}-'), ',')
+          || '|' || bool_or(k = '5eed0000-0000-4000-8045-000000000001')::text
+          -- One id per answered field: the app's eleven and the Ramassà one.
+          || '|' || (count(*) filter (where k ~ '^[0-9a-f]{8}-'))::text
+     from public.referral_answer_keys('5eed0000-0000-4000-8010-000000000001') k),
+  'applicant_status,childcare_need,city,date_of_birth,document_type,nationality,phone,'
+    || 'reference_contact_name,season_number,specific_needs,specific_needs_details,supporting_entities|true|12',
   'staff who invite learn which fields the referral answers, sensitive ones included'
 );
 

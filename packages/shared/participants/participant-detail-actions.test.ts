@@ -14,6 +14,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { expect, test } from 'bun:test';
 import { AppError } from '../errors';
+import { readerRowFixture, systemFieldsCatalogFixture } from '../testing';
 import type { Database } from '../types/database';
 import {
   addParticipantNote,
@@ -65,14 +66,16 @@ function rpcClient(result: { data: unknown; error: unknown }, calls: RpcCall[] =
   return {
     rpc: async (name: string, args: unknown) => {
       calls.push({ name, args });
-      return result;
+      return name === 'intake_catalog'
+        ? { data: systemFieldsCatalogFixture(), error: null }
+        : result;
     },
   } as unknown as Client;
 }
 
 test('fetchParticipantDetail returns the decrypted row the RPC produced', async () => {
   const detail = await fetchParticipantDetail(
-    rpcClient({ data: [decryptedRow], error: null }),
+    rpcClient({ data: [readerRowFixture(decryptedRow)], error: null }),
     PARTICIPANT_ID,
   );
 
@@ -85,7 +88,7 @@ test('fetchParticipantDetail returns the decrypted row the RPC produced', async 
 test('fetchParticipantDetail names the subject by the parameter the RPC declares', async () => {
   const calls: RpcCall[] = [];
   await fetchParticipantDetail(
-    rpcClient({ data: [decryptedRow], error: null }, calls),
+    rpcClient({ data: [readerRowFixture(decryptedRow)], error: null }, calls),
     PARTICIPANT_ID,
   );
 

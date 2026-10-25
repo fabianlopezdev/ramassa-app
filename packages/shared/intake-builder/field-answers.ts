@@ -18,7 +18,15 @@ import {
   systemKeysOfQuestion,
   type SystemFieldKey,
 } from '../onboarding/system-fields';
-import { decodeSupportNeeds } from '../schemas/support-needs';
+import { DOCUMENT_TYPES } from '../schemas/onboarding';
+import { APPLICANT_STATUSES, CHILDCARE_NEEDS } from '../schemas/season';
+import {
+  decodeSupportNeeds,
+  encodeSupportNeeds,
+  SUPPORT_NEED_CATEGORIES,
+  SUPPORT_NEED_DETAIL_MAX_LENGTH,
+  type SupportNeedChoice,
+} from '../schemas/support-needs';
 import type { Database, Json } from '../types/database';
 import { anyLanguageTextSchema, type BuilderText } from './profile-layout';
 import {
@@ -287,4 +295,143 @@ function answerOfField(field: SystemField, raw: Raw): CustomAnswerValue | null {
     return ids.every((id): id is string => id !== undefined) ? ids : [...raw];
   }
   return Array.isArray(raw) ? [...raw] : (raw as CustomAnswerValue);
+}
+
+// TEMPORARY: back to the app's old column shapes ------------------------------------------------------
+
+/** Her answers by field id, as the readers return them since RAPP-662. */
+export const fieldAnswersReadSchema = z.record(z.string(), z.json());
+
+/** The app's old column of each of its fields (her names travel on their own). */
+export type AppFieldColumn = Exclude<
+  SystemFieldKey,
+  'first_name' | 'last_name' | 'specific_needs_details'
+>;
+
+/**
+ * TEMPORARY, until her phone and the Control Center render every field
+ * (RAPP-663, RAPP-664). The readers return her answers by field id (RAPP-662);
+ * the screens still read her profile's column names. This turns the answers
+ * back into those columns, the inverse of `fieldAnswersFromColumns`:
+ *
+ *   - a choice is its option's key, and a key the old column never held
+ *     (an option staff added) reads as no answer;
+ *   - dependents is true on yes and false on no; how many is 0 when unknown;
+ *   - the needs and their details become the encoded specific needs, the
+ *     details as her explanation (up to the envelope's 2000 characters);
+ *   - a field whose type no longer fits its column reads as no answer.
+ *
+ * Every app column is in the result, null when there is no answer the caller
+ * may read.
+ */
+export function columnsFromFieldAnswers(
+  index: SystemFieldIndex,
+  answers: Readonly<Record<string, unknown>>,
+): Record<AppFieldColumn, unknown> {
+  const raw = (key: SystemFieldKey): unknown => {
+    const field = index.get(key);
+    return field === undefined ? undefined : answers[field.id];
+  };
+  const text = (key: SystemFieldKey, types: readonly CustomQuestionType[]): string | null => {
+    const field = index.get(key);
+    const value = raw(key);
+    return field !== undefined && types.includes(field.type) && typeof value === 'string'
+      ? value
+      : null;
+  };
+  const optionKey = (key: SystemFieldKey): string | null => {
+    const field = index.get(key);
+    const value = raw(key);
+    if (field === undefined || typeof value !== 'string') return null;
+    if (field.type === 'yes_no' || field.type === 'yes_no_maybe') return value;
+    if (field.type !== 'single_choice' && field.type !== 'search_choice') return null;
+    return field.options.find((option) => option.id === value)?.key ?? null;
+  };
+  const oneOf = <T extends string>(value: string | null, allowed: readonly T[]): T | null =>
+    value !== null && (allowed as readonly string[]).includes(value) ? (value as T) : null;
+  const TEXT: readonly CustomQuestionType[] = ['short_text', 'long_text'];
+
+  const dependents = optionKey('has_dependents');
+  const count = raw('num_dependents');
+  const entities = raw('supporting_entities');
+  return {
+    date_of_birth: text('date_of_birth', ['date']),
+    place_of_birth: text('place_of_birth', TEXT),
+    nationality: text('nationality', ['country', ...TEXT]),
+    document_type: oneOf(optionKey('document_type'), DOCUMENT_TYPES),
+    document_number: text('document_number', TEXT),
+    document_name: text('document_name', TEXT),
+    phone: text('phone', ['phone', ...TEXT]),
+    address: text('address', TEXT),
+    city: text('city', ['municipality', ...TEXT]),
+    postal_code: text('postal_code', TEXT),
+    reference_entity: text('reference_entity', TEXT),
+    reference_contact_name: text('reference_contact_name', TEXT),
+    has_dependents: dependents === 'yes' ? true : dependents === 'no' ? false : null,
+    num_dependents:
+      index.get('num_dependents')?.type === 'number' && typeof count === 'number' ? count : 0,
+    clothing_size: optionKey('clothing_size'),
+    shoe_size: optionKey('shoe_size'),
+    applicant_status: oneOf(optionKey('applicant_status'), APPLICANT_STATUSES),
+    applicant_status_details: text('applicant_status_details', TEXT),
+    supporting_entities:
+      index.get('supporting_entities')?.type === 'item_list' && Array.isArray(entities)
+        ? entities.filter((item): item is string => typeof item === 'string')
+        : null,
+    childcare_need: oneOf(optionKey('childcare_need'), CHILDCARE_NEEDS),
+    specific_needs: specificNeedsColumn(
+      index,
+      raw('specific_needs'),
+      raw('specific_needs_details'),
+    ),
+  };
+}
+
+/** The needs and their details as the encoded string the old column held. */
+function specificNeedsColumn(
+  index: SystemFieldIndex,
+  needs: unknown,
+  details: unknown,
+): string | null {
+  const field = index.get('specific_needs');
+  if (field?.type !== 'multiple_choice' || !Array.isArray(needs)) return null;
+  const choices = [
+    ...new Set(
+      needs.flatMap((id) => {
+        const key = field.options.find((option) => option.id === id)?.key;
+        return key === 'none' || (SUPPORT_NEED_CATEGORIES as readonly string[]).includes(key ?? '')
+          ? [key as SupportNeedChoice]
+          : [];
+      }),
+    ),
+  ];
+  if (choices.length === 0) return null;
+  const explanation =
+    typeof details === 'string' && details.trim() !== '' && !choices.includes('none')
+      ? details.trim().slice(0, SUPPORT_NEED_DETAIL_MAX_LENGTH)
+      : undefined;
+  const categories: readonly SupportNeedChoice[] = choices.includes('none') ? ['none'] : choices;
+  return encodeSupportNeeds({
+    categories,
+    details: {},
+    ...(explanation === undefined ? {} : { explanation }),
+  });
+}
+
+/**
+ * TEMPORARY (RAPP-663, RAPP-664): a reader's row with its `answers` turned back
+ * into the app's columns. Reads the app's fields of her organization only when
+ * there is an answer to turn.
+ */
+export async function withAppColumns<Row extends { readonly answers?: unknown }>(
+  client: Pick<Client, 'rpc'>,
+  row: Row,
+  index?: SystemFieldIndex,
+): Promise<Omit<Row, 'answers'> & Record<AppFieldColumn, unknown>> {
+  const { answers, ...rest } = row;
+  const parsed = fieldAnswersReadSchema.safeParse(answers ?? {});
+  const values = parsed.success ? parsed.data : {};
+  const fields =
+    index ?? (Object.keys(values).length === 0 ? new Map() : await fetchSystemFieldIndex(client));
+  return { ...rest, ...columnsFromFieldAnswers(fields, values) };
 }

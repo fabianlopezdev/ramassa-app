@@ -31,6 +31,16 @@ $$;
 create function pg_temp.stored(p_profile uuid, p_key text) returns jsonb language sql security definer as $$
   select private.system_field_answer(p_profile, p_key);
 $$;
+-- Her answer to an app field in a reader's `answers` (RAPP-662): a choice by its
+-- option's key, anything else as text.
+create function pg_temp.column_of(p_answers jsonb, p_key text) returns text language sql security definer as $$
+  select coalesce(
+    (select o.key from public.custom_question_options o
+      where o.question_id = f.id and o.id::text = p_answers ->> f.id::text),
+    p_answers ->> f.id::text)
+    from public.profile_fields f
+   where f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.system_key = p_key;
+$$;
 grant execute on all functions in schema pg_temp to authenticated;
 
 -- 1. Structure -------------------------------------------------------------------------------
@@ -108,7 +118,7 @@ select is((select count(*)::int from public.audit_log), 0, 'no audit log');
 select is((select count(*)::int from public.internal_documents), 0, 'no internal documents');
 select is((select count(*)::int from public.entity_invitations), 0, 'no entity invitations');
 select is(
-  (select first_name is not null and date_of_birth is not null and phone is null and document_number is null
+  (select first_name is not null and pg_temp.column_of(answers, 'date_of_birth') is not null and pg_temp.column_of(answers, 'phone') is null and pg_temp.column_of(answers, 'document_number') is null
      from public.get_participant_profile('5eed0000-0000-4000-8000-000000000026')),
   true, 'a participant profile shows her Personal fields and hides the Sensitive ones'
 );
@@ -120,7 +130,7 @@ select throws_ok(
 -- Today's staff keep both (the adjustment).
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select is(
-  (select phone is not null from public.get_participant_profile('5eed0000-0000-4000-8000-000000000026')),
+  (select pg_temp.column_of(answers, 'phone') is not null from public.get_participant_profile('5eed0000-0000-4000-8000-000000000026')),
   true, 'today''s staff still see the sensitive fields'
 );
 select ok((select count(*) from public.deletion_requests) >= 0 and (select public.has_permission('rgpd.erase')),
@@ -139,7 +149,7 @@ select is((select count(*)::int from public.feedback_submissions), 0, 'but no pr
 select is((select count(*)::int from public.mentoring_requests), 0, 'no mentoring requests');
 select is((select count(*)::int from public.notification_templates), 0, 'no notification templates');
 select is(
-  (select first_name is not null and date_of_birth is null and phone is null
+  (select first_name is not null and pg_temp.column_of(answers, 'date_of_birth') is null and pg_temp.column_of(answers, 'phone') is null
      from public.get_participant_profile('5eed0000-0000-4000-8000-000000000026')),
   true, 'a coach sees a participant''s Basic fields only'
 );

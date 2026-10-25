@@ -18,6 +18,16 @@ $$;
 create function pg_temp.stored(p_profile uuid, p_key text) returns jsonb language sql security definer as $$
   select private.system_field_answer(p_profile, p_key);
 $$;
+-- Her answer to an app field in a reader's `answers` (RAPP-662): a choice by its
+-- option's key, anything else as text.
+create function pg_temp.column_of(p_answers jsonb, p_key text) returns text language sql security definer as $$
+  select coalesce(
+    (select o.key from public.custom_question_options o
+      where o.question_id = f.id and o.id::text = p_answers ->> f.id::text),
+    p_answers ->> f.id::text)
+    from public.profile_fields f
+   where f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.system_key = p_key;
+$$;
 grant execute on all functions in schema pg_temp to authenticated;
 
 -- The unsigned path is closed to clients (RAPP-624); this file checks its merge
@@ -29,7 +39,7 @@ set local role authenticated;
 set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000011","role":"authenticated","aal":"aal1"}';
 -- Her season answers travel by field (RAPP-661).
 select lives_ok($$ select public.update_my_season_answers(jsonb_build_object('answers', pg_temp.answers('{"applicant_status":"other","applicant_status_details":"Example explanation"}'))) $$, 'a player can save their explanation through the existing validated API');
-select is((select applicant_status_details from public.get_own_profile()), 'Example explanation', 'the owner can recover their explanation');
+select is((select pg_temp.column_of(answers, 'applicant_status_details') from public.get_own_profile()), 'Example explanation', 'the owner can recover their explanation');
 select throws_ok($$ select public.update_my_season_answers(jsonb_build_object('answers', pg_temp.answers(jsonb_build_object('applicant_status_details',repeat('x',4001))))) $$, '23514', null::text, 'the server rejects text beyond the long text limit');
 reset role;
 select ok((select value is null and encode(value_encrypted,'escape') not like '%Example explanation%' from public.custom_answers where profile_id='5eed0000-0000-4000-8000-000000000011' and question_id::text=pg_temp.field('applicant_status_details')), 'the explanation is encrypted at rest');
@@ -59,7 +69,7 @@ reset role;
 update public.profiles set applicant_status=public.encrypt_field('other'),applicant_status_details=public.encrypt_field('Example explanation') where id='5eed0000-0000-4000-8000-000000000011';
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000001","role":"authenticated","aal":"aal2","amr":[{"method":"totp","timestamp":4102444800}]}';
-select is((select applicant_status_details from public.get_participant_profile('5eed0000-0000-4000-8000-000000000011')),'Example explanation','staff with sensitive access can read the explanation');
+select is((select pg_temp.column_of(answers, 'applicant_status_details') from public.get_participant_profile('5eed0000-0000-4000-8000-000000000011')),'Example explanation','staff with sensitive access can read the explanation');
 select lives_ok($$ select public.anonymize_participant('5eed0000-0000-4000-8000-000000000011') $$,'existing erasure includes the explanation');
 reset role;
 select ok((select applicant_status_details is null from public.profiles where id='5eed0000-0000-4000-8000-000000000011'),'erasure clears the profile explanation');
