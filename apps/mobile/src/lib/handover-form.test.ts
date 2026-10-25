@@ -1,5 +1,11 @@
 import { describe, expect, test } from 'bun:test';
-import { handoverSignature, statementLanguageFor, suggestedSize } from './handover-form';
+import { systemFieldIndexFromCatalog } from '@ramassa/shared/intake-builder';
+import {
+  systemFieldFixtureId as fieldId,
+  systemOptionFixtureId as optionId,
+  systemFieldsCatalogFixture,
+} from '@ramassa/shared/testing';
+import { handoverSignature, herSizes, statementLanguageFor, suggestedSize } from './handover-form';
 
 describe('suggestedSize', () => {
   const her = { clothingSize: 'M', shoeSize: '39' };
@@ -13,6 +19,31 @@ describe('suggestedSize', () => {
     expect(suggestedSize('boots', ['40', '41'], her)).toBeNull();
     expect(suggestedSize('water_bottle', [], her)).toBeNull();
     expect(suggestedSize('jersey', ['S', 'M'], { clothingSize: null, shoeSize: null })).toBeNull();
+  });
+});
+
+describe('herSizes', () => {
+  const fields = systemFieldIndexFromCatalog(systemFieldsCatalogFixture());
+
+  test('her sizes are the keys of the options she chose, read through the features', () => {
+    expect(
+      herSizes(fields, {
+        [fieldId('clothing_size')]: optionId('clothing_size', 'M'),
+        [fieldId('shoe_size')]: optionId('shoe_size', '39'),
+      }),
+    ).toEqual({ clothingSize: 'M', shoeSize: '39' });
+    expect(herSizes(fields, {})).toEqual({ clothingSize: null, shoeSize: null });
+  });
+
+  test('a size field changed to a type the handover cannot read suggests nothing', () => {
+    const changed = systemFieldIndexFromCatalog({
+      fields: systemFieldsCatalogFixture().fields.map((field) =>
+        (field as { system_key: string }).system_key === 'shoe_size'
+          ? { ...(field as object), question_type: 'short_text' }
+          : field,
+      ),
+    });
+    expect(herSizes(changed, { [fieldId('shoe_size')]: '39' }).shoeSize).toBeNull();
   });
 });
 

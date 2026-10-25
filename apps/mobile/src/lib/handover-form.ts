@@ -10,6 +10,12 @@ import {
   type StatementLanguage,
   type UnsignedState,
 } from '@ramassa/shared/equipment';
+import {
+  fieldOfFeature,
+  optionKeyOf,
+  type FieldFeatureKey,
+  type SystemFieldIndex,
+} from '@ramassa/shared/intake-builder';
 
 const SHOE_SIZED = new Set(['boots']);
 
@@ -24,6 +30,25 @@ export function suggestedSize(
 ): string | null {
   const size = SHOE_SIZED.has(itemKey) ? her.shoeSize : her.clothingSize;
   return size !== null && sizes.includes(size) ? size : null;
+}
+
+/**
+ * Her sizes from her answers, through the features that read them (D7,
+ * RAPP-663): each one the key of the option she chose. A size field staff
+ * changed to a type the handover cannot read suggests nothing.
+ */
+export function herSizes(
+  fields: SystemFieldIndex,
+  answers: Readonly<Record<string, unknown>>,
+): { readonly clothingSize: string | null; readonly shoeSize: string | null } {
+  const sizeOf = (feature: FieldFeatureKey): string | null => {
+    const field = fieldOfFeature(feature, fields);
+    return field === undefined ? null : (optionKeyOf(field, answers[field.id]) ?? null);
+  };
+  return {
+    clothingSize: sizeOf('equipment.clothing_size'),
+    shoeSize: sizeOf('equipment.shoe_size'),
+  };
 }
 
 /** She reads the statement in her own language; Catalan when it is unknown. */
