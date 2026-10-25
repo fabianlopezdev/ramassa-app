@@ -20,10 +20,7 @@ import {
 } from '../intake-builder/app-field-form';
 import type { SystemFieldIndex } from '../intake-builder/field-answers';
 import type { CustomAnswerValue } from '../intake-builder/question-types';
-import {
-  answeredQuestionsSchema,
-  type AnsweredQuestions,
-} from '../onboarding/intake';
+import { answeredQuestionsSchema, type AnsweredQuestions } from '../onboarding/intake';
 import {
   CLOTHING_SIZES,
   DOCUMENT_TYPES,
