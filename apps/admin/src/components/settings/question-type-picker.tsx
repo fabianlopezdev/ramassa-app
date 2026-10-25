@@ -82,7 +82,7 @@ function TypeMiniature({
 
 /**
  * The type field of the question form: the chosen tile, and Change for the
- * grid while the question is new. A hidden `question-type` input carries the
+ * grid on every field but her names. A hidden `question-type` input carries the
  * value in the form, as the dropdown did.
  */
 export function QuestionTypePicker({
@@ -94,7 +94,7 @@ export function QuestionTypePicker({
 }: {
   readonly value: CustomQuestionType;
   readonly onChange: (type: CustomQuestionType) => void;
-  /** An existing question keeps its type: the tile shows without Change. */
+  /** Her names keep their type (D2): the tile shows without Change. */
   readonly isLocked: boolean;
   readonly disabled?: TypeNotes;
   readonly warnings?: TypeNotes;
@@ -107,7 +107,6 @@ export function QuestionTypePicker({
       value={value}
       onChange={onChange}
       isLocked={isLocked}
-      lockedMessage={t('questions.typeLocked')}
       media={
         <div className="w-28 shrink-0">
           <TypeMiniature type={value} language={language} />

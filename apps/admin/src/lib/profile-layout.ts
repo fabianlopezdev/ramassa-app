@@ -8,7 +8,6 @@ import type { FieldFormValue } from '@/components/fields/field-form';
 import { PROFILE_LAYOUT_PERMISSIONS } from '@/lib/nav-items';
 import {
   EMPTY_PROFILE_LAYOUT,
-  fieldsOfSection,
   parseQuestionSettings,
   placementsOf,
   PROFILE_SURFACES,
@@ -45,10 +44,17 @@ export function fieldFormValue(field: ProfileField): FieldFormValue {
   };
 }
 
+const RAMASSA_SCREEN_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 /**
- * The privacy level is fixed once anything was answered. A reader the
- * catalog does not tell (null) is not a designer and edits nothing.
+ * The app screen that asks an app field with its own control (the date boxes,
+ * the document cards...), or null. A new type changes what that screen shows
+ * (RAPP-665), so the change dialog names it.
  */
-export function isPrivacyLocked(field: ProfileField | null): boolean {
-  return field !== null && field.hasAnswers !== false;
+export function appScreenOfField(layout: ProfileLayout, field: ProfileField): string | null {
+  if (field.kind !== 'builtin') return null;
+  const screen = placementsOf(layout, field.id).find(
+    (placement) => placement.surface === 'onboarding',
+  )?.screenKey;
+  return screen === undefined || screen === null || RAMASSA_SCREEN_ID.test(screen) ? null : screen;
 }

@@ -9,7 +9,7 @@ import { PlacementRow, type PlacementRowProps } from './placement-row';
 function props(overrides: Partial<PlacementRowProps> = {}): PlacementRowProps {
   return {
     name: 'Talla de guants',
-    detail: 'Camp de Ramassà · Talles',
+    detail: 'Talles',
     type: 'short_text',
     privacy: 'normal',
     handle: null,

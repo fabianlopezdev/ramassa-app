@@ -179,8 +179,7 @@
     "moveField": "جابه‌جایی فیلد {{field}}",
     "renameSection": "تغییر نام {{section}}",
     "editNamed": "ویرایش {{field}}",
-    "builtinLock": "ثابت‌شده توسط برنامه",
-    "fromApp": "از برنامه",
+    "namesLock": "نام و نام خانوادگی همیشه متن کوتاه با سطح عادی هستند، چون برنامه با آن‌ها به او سلام می‌کند و با او تماس می‌گیرد.",
     "createdBy": "ساخته‌شده توسط {{name}}، {{date}}",
     "createdOn": "ساخته‌شده در {{date}}",
     "archived": "فیلد بایگانی شد.",
@@ -194,6 +193,43 @@
       "entity_form": "نهاد",
       "season": "فصل",
       "teamOnly": "فقط تیم"
+    }
+  },
+  "fieldChange": {
+    "title": "«{{field}}» تغییر کند؟",
+    "answers_one": "{{count}} پاسخ دارد.",
+    "answers_other": "{{count}} پاسخ دارد.",
+    "converted_one": "{{count}} پاسخ به نوع جدید تبدیل می‌شود.",
+    "converted_other": "{{count}} پاسخ به نوع جدید تبدیل می‌شوند.",
+    "notConverted_one": "{{count}} پاسخ با نوع جدید جور نیست. از فیلد خارج می‌شود و در سابقهٔ او می‌ماند.",
+    "notConverted_other": "{{count}} پاسخ با نوع جدید جور نیستند. از فیلد خارج می‌شوند و در سابقهٔ او می‌مانند.",
+    "appScreen": "گوشی آن را در صفحهٔ «{{screen}}» می‌پرسد. با نوع جدید پرسیده می‌شود.",
+    "privacy": "حریم خصوصی از {{from}} به {{to}} تغییر می‌کند.",
+    "encrypt_one": "{{count}} پاسخ رمزگذاری‌شده ذخیره می‌شود.",
+    "encrypt_other": "{{count}} پاسخ رمزگذاری‌شده ذخیره می‌شوند.",
+    "decrypt_one": "{{count}} پاسخ بدون رمزگذاری ذخیره می‌شود.",
+    "decrypt_other": "{{count}} پاسخ بدون رمزگذاری ذخیره می‌شوند.",
+    "readersLosing_one": "{{count}} نفر از تیم دیگر این پاسخ‌ها را نمی‌بیند.",
+    "readersLosing_other": "{{count}} نفر از تیم دیگر این پاسخ‌ها را نمی‌بینند.",
+    "readersGaining_one": "{{count}} نفر از تیم این پاسخ‌ها را خواهد دید.",
+    "readersGaining_other": "{{count}} نفر از تیم این پاسخ‌ها را خواهند دید.",
+    "conditions_one": "{{count}} فیلد که با یکی از گزینه‌هایش باز می‌شد، همیشه پرسیده می‌شود.",
+    "conditions_other": "{{count}} فیلد که با یکی از گزینه‌هایش باز می‌شدند، همیشه پرسیده می‌شوند.",
+    "featuresLost": "از کار می‌افتد:",
+    "featuresRegained": "دوباره کار می‌کند:",
+    "confirm": "ذخیرهٔ تغییر",
+    "features": {
+      "impact.age_bands": "گزارش اثر: گروه‌های سنی",
+      "impact.nationalities": "گزارش اثر: ملیت‌ها",
+      "participants.nationality": "فهرست شرکت‌کنندگان: ملیت",
+      "participants.city": "فهرست شرکت‌کنندگان و گفتگوها: شهرداری",
+      "participants.entity": "فهرست شرکت‌کنندگان: سازمان",
+      "participants.has_dependents": "فهرست شرکت‌کنندگان: فیلتر افراد تحت تکفل",
+      "participants.dependents_count": "فهرست شرکت‌کنندگان: تعداد افراد تحت تکفل",
+      "notifications.entity": "اعلان‌ها و نظرسنجی‌ها: زنان یک سازمان",
+      "equipment.clothing_size": "تحویل تجهیزات: سایز لباس پیشنهادی",
+      "equipment.shoe_size": "تحویل تجهیزات: سایز کفش پیشنهادی",
+      "erasure.birth_year": "ناشناس‌سازی: سال تولد که برای گزارش‌ها می‌ماند"
     }
   },
   "fieldPicker": {
@@ -217,9 +253,6 @@
     "failed": "همه فیلدها افزوده نشدند. دوباره تلاش کنید."
   },
   "placement": {
-    "fromApp": "فیلد برنامه · {{section}}",
-    "fromAppAlone": "فیلد برنامه",
-    "fromRamassa": "فیلد Ramassà · {{section}}",
     "askHer": "چگونه از او می‌پرسیم (اختیاری)",
     "saveWording": "ذخیره",
     "removeNamed": "حذف {{field}} از صفحه",

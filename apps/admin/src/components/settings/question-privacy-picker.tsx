@@ -36,7 +36,7 @@ export function QuestionPrivacyPicker({
 }: {
   readonly value: QuestionPrivacy;
   readonly onChange: (level: QuestionPrivacy) => void;
-  /** Answers are saved at this level: the card shows without Change. */
+  /** Her names keep their level (D2): the card shows without Change. */
   readonly isLocked: boolean;
 }) {
   const { t } = useTranslation('settings');
@@ -50,7 +50,6 @@ export function QuestionPrivacyPicker({
       value={value}
       onChange={onChange}
       isLocked={isLocked}
-      lockedMessage={t('questions.privacyLocked')}
       media={
         <div className="flex aspect-[4/3] w-28 shrink-0 items-center justify-center rounded-lg border bg-canvas">
           <LevelIcon level={value} />

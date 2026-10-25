@@ -80,9 +80,7 @@ export function EntityPlacementRow({
     <>
       <PlacementRow
         name={name}
-        detail={t(field.kind === 'builtin' ? 'placement.fromApp' : 'placement.fromRamassa', {
-          section: sectionName,
-        })}
+        detail={sectionName}
         type={field.type}
         privacy={field.privacy}
         handle={handle}

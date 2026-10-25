@@ -1,7 +1,7 @@
 /**
  * The field form (RAPP-650): a new field sends its name, type and privacy
- * with no places; a field whose privacy is locked keeps its level and offers
- * no Change for it; each type asks for its own settings (RAPP-610).
+ * with no places; a saved field changes type and privacy, her names excepted
+ * (RAPP-665, D2); each type asks for its own settings (RAPP-610).
  */
 import { fireEvent, render, waitFor } from '@testing-library/react';
 import { expect, mock, test } from 'bun:test';
@@ -19,7 +19,6 @@ test('a new field is sent with its Catalan name and the privacy chosen', async (
       title="New field"
       nameLegend="Name"
       submitLabel="Save field"
-      isPrivacyLocked={false}
       canStoreFiles
       onSave={onSave}
       onCancel={() => undefined}
@@ -46,7 +45,6 @@ test('a field without a Catalan name is not sent', async () => {
       title="New field"
       nameLegend="Name"
       submitLabel="Save field"
-      isPrivacyLocked={false}
       canStoreFiles
       onSave={onSave}
       onCancel={() => undefined}
@@ -57,21 +55,23 @@ test('a field without a Catalan name is not sent', async () => {
   expect(onSave).not.toHaveBeenCalled();
 });
 
-test('a locked privacy keeps its level and offers no Change', () => {
+const SAVED = {
+  type: 'long_text',
+  label: { ca: 'Al·lèrgies' },
+  help: null,
+  privacy: 'sensitive',
+  settings: {},
+  options: [],
+} as const;
+
+test('her names keep their type and privacy, with one sentence saying why (D2)', () => {
   const view = render(
     <FieldForm
-      value={{
-        type: 'long_text',
-        label: { ca: 'Al·lèrgies' },
-        help: null,
-        privacy: 'sensitive',
-        settings: {},
-        options: [],
-      }}
+      value={{ ...SAVED, type: 'short_text', label: { ca: 'Nom' }, privacy: 'normal' }}
       title="Edit field"
       nameLegend="Name"
       submitLabel="Save field"
-      isPrivacyLocked
+      isNameField
       canStoreFiles
       onSave={async () => undefined}
       onCancel={() => undefined}
@@ -79,6 +79,57 @@ test('a locked privacy keeps its level and offers no Change', () => {
   );
   expect(view.queryByTestId('question-privacy-change')).toBeNull();
   expect(view.queryByTestId('question-type-change')).toBeNull();
+  expect(view.getByTestId('field-names-lock')).toBeTruthy();
+});
+
+test('every other saved field changes type and privacy (RAPP-665)', async () => {
+  const onSave = mock(async () => undefined);
+  const view = render(
+    <FieldForm
+      value={SAVED}
+      title="Edit field"
+      nameLegend="Name"
+      submitLabel="Save field"
+      canStoreFiles
+      onSave={onSave}
+      onCancel={() => undefined}
+    />,
+  );
+  expect(view.queryByTestId('field-names-lock')).toBeNull();
+  fireEvent.click(view.getByTestId('question-type-change'));
+  fireEvent.click(view.getByTestId('question-type-option-single_choice'));
+  // A field that becomes a choice offers two empty options to fill.
+  inputOf(view, 'option-new-0.ca').value = 'Cap';
+  inputOf(view, 'option-new-1.ca').value = 'Fruits secs';
+  fireEvent.submit(view.getByTestId('field-form'));
+  await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1));
+  const [draft] = onSave.mock.calls[0] as unknown as [Record<string, unknown>];
+  expect(draft).toMatchObject({
+    type: 'single_choice',
+    privacy: 'sensitive',
+    options: [
+      { id: null, label: { ca: 'Cap' } },
+      { id: null, label: { ca: 'Fruits secs' } },
+    ],
+  });
+});
+
+test('a save the caller holds back keeps the form open', async () => {
+  const onCancel = mock(() => undefined);
+  const view = render(
+    <FieldForm
+      value={SAVED}
+      title="Edit field"
+      nameLegend="Name"
+      submitLabel="Save field"
+      canStoreFiles
+      onSave={async () => false}
+      onCancel={onCancel}
+    />,
+  );
+  fireEvent.submit(view.getByTestId('field-form'));
+  await new Promise((resolve) => setTimeout(resolve, 20));
+  expect(onCancel).not.toHaveBeenCalled();
 });
 
 // Every field kind the app uses (RAPP-610).
@@ -94,7 +145,6 @@ function newField(
       title="New field"
       nameLegend="Name"
       submitLabel="Save field"
-      isPrivacyLocked={false}
       canStoreFiles={props.canStoreFiles ?? false}
       withPreview={props.withPreview ?? false}
       onSave={onSave}

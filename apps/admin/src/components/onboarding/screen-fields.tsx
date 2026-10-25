@@ -291,7 +291,7 @@ function CustomPlacementRow({
     <>
       <PlacementRow
         name={name}
-        detail={t('placement.fromRamassa', { section: sectionName })}
+        detail={sectionName}
         type={field.type}
         privacy={field.privacy}
         handle={handle}
@@ -394,9 +394,7 @@ function BuiltinPlacementRow({
   const reworded = override?.label == null ? '' : textIn(override.label, language);
   const isHidden = override?.isHidden === true && canHideBuiltin(question, required);
   const detail = [
-    field === undefined
-      ? t('settings:placement.fromAppAlone')
-      : t('settings:placement.fromApp', { section: sectionName(field) }),
+    field === undefined ? null : sectionName(field),
     isHidden ? t('settings:questions.hidden') : null,
   ]
     .filter(Boolean)

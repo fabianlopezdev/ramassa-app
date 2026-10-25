@@ -1,12 +1,11 @@
 /**
  * One field of Dades de les jugadores (RAPP-650): type, name, its type and who
- * created it, its privacy, where it is asked, then "Fixed by the app" on a
- * built-in field (the app fixes its type and privacy) or Edit on a Ramassà one. Rows do not
+ * created it (nothing for the fields Ramassà started with), its privacy, where
+ * it is asked, then Edit. Every field opens with Edit (RAPP-665). Rows do not
  * move (RAPP-658).
  *
  * Every row has one height and fixed columns, so names, badges and chips line
- * up down a section and across sections, whether a row ends in those words or a
- * button.
+ * up down a section and across sections.
  */
 
 import { FieldTypeIcon } from '@/components/fields/field-type-icon';
@@ -41,22 +40,20 @@ export function ProfileFieldRow({
   const { t, i18n } = useTranslation('settings');
   const locale = i18n.resolvedLanguage ?? 'ca';
   const name = textIn(field.label, locale as LanguageCode);
+  const date = shortDate(field.createdAt, locale);
   const origin =
     field.kind === 'builtin'
-      ? t('profileLayout.fromApp')
+      ? null
       : field.createdByName === null
-        ? t('profileLayout.createdOn', { date: shortDate(field.createdAt, locale) })
-        : t('profileLayout.createdBy', {
-            name: field.createdByName,
-            date: shortDate(field.createdAt, locale),
-          });
+        ? t('profileLayout.createdOn', { date })
+        : t('profileLayout.createdBy', { name: field.createdByName, date });
   return (
     <div className="flex h-16 items-center gap-3 px-5" data-testid={`profile-field-${field.id}`}>
       <FieldTypeIcon type={field.type} />
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <p className="truncate text-start text-sm font-medium">{name}</p>
         <p className="truncate text-start text-xs text-muted-foreground">
-          {t(`questions.types.${field.type}`)} · {origin}
+          {[t(`questions.types.${field.type}`), origin].filter(Boolean).join(' · ')}
         </p>
       </div>
       <span className="flex w-20 shrink-0 justify-start">
@@ -64,11 +61,7 @@ export function ProfileFieldRow({
       </span>
       <SurfaceChips surfaces={surfaces} className="hidden w-56 shrink-0 md:flex" />
       <span className="flex w-36 shrink-0 justify-end">
-        {field.kind === 'builtin' ? (
-          <span className="text-end text-xs whitespace-nowrap text-muted-foreground">
-            {t('profileLayout.builtinLock')}
-          </span>
-        ) : canEdit ? (
+        {canEdit ? (
           <Button
             type="button"
             variant="outline"

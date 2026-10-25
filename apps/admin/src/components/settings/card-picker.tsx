@@ -153,7 +153,8 @@ export function CardPickerField<T extends string>({
   readonly value: T;
   readonly onChange: (value: T) => void;
   readonly isLocked: boolean;
-  readonly lockedMessage: string;
+  /** Why the value cannot change, under it; the caller may say it elsewhere. */
+  readonly lockedMessage?: string;
   /** The chosen card's picture or icon. */
   readonly media: ReactNode;
   readonly name: string;
@@ -234,7 +235,7 @@ export function CardPickerField<T extends string>({
           </Dialog>
         )}
       </div>
-      {isLocked ? (
+      {isLocked && lockedMessage !== undefined ? (
         <span className="text-start text-xs font-normal text-muted-foreground">
           {lockedMessage}
         </span>

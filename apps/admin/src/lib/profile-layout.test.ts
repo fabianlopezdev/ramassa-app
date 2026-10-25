@@ -7,7 +7,7 @@ import {
   type ProfileSection,
 } from '@ramassa/shared/intake-builder';
 import type { PermissionCode } from '@ramassa/shared/permissions';
-import { canDesignProfileLayout, isPrivacyLocked, surfacesOfField } from './profile-layout';
+import { appScreenOfField, canDesignProfileLayout, surfacesOfField } from './profile-layout';
 
 const SIZES = '5eed0000-0000-4000-8090-000000000001';
 const SUPPORT = '5eed0000-0000-4000-8090-000000000002';
@@ -89,11 +89,23 @@ describe('Dades de les jugadores reads the layout (RAPP-650)', () => {
     expect(surfacesOfField(LAYOUT, 'notes')).toEqual([]);
   });
 
-  test('privacy is open only while the catalog says there are no answers', () => {
-    expect(isPrivacyLocked(null)).toBe(false);
-    expect(isPrivacyLocked(field('a', SIZES, { hasAnswers: false }))).toBe(false);
-    expect(isPrivacyLocked(field('a', SIZES, { hasAnswers: true }))).toBe(true);
-    expect(isPrivacyLocked(field('a', SIZES, { hasAnswers: null }))).toBe(true);
+  test('the app screen that asks an app field is named, a Ramassà field has none (RAPP-665)', () => {
+    const shoe = field('shoe', SIZES, { kind: 'builtin', builtinKey: 'shoe_size' });
+    const layout: ProfileLayout = {
+      ...LAYOUT,
+      fields: [...LAYOUT.fields, shoe],
+      placements: [...LAYOUT.placements, placement('shoe', 'onboarding')],
+    };
+    expect(appScreenOfField(layout, shoe)).toBe('equipment');
+    expect(appScreenOfField(layout, field('gloves', SIZES))).toBeNull();
+    const moved: ProfileLayout = {
+      ...layout,
+      placements: [
+        ...LAYOUT.placements,
+        { ...placement('shoe', 'onboarding'), screenKey: '5eed0000-0000-4000-8091-000000000001' },
+      ],
+    };
+    expect(appScreenOfField(moved, shoe)).toBeNull();
   });
 
   test('the designers are settings.organization and the onboarding design role', () => {

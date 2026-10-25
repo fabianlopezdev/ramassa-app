@@ -183,8 +183,7 @@
     "moveField": "انقل الحقل {{field}}",
     "renameSection": "غيّر اسم {{section}}",
     "editNamed": "عدّل {{field}}",
-    "builtinLock": "يحدده التطبيق",
-    "fromApp": "من التطبيق",
+    "namesLock": "الاسم واسم العائلة دائمًا نص قصير بمستوى عادي، لأن التطبيق يحييها ويتواصل معها بهما.",
     "createdBy": "أنشأه {{name}}، {{date}}",
     "createdOn": "أُنشئ في {{date}}",
     "archived": "أُرشف الحقل.",
@@ -198,6 +197,43 @@
       "entity_form": "الجهة",
       "season": "الموسم",
       "teamOnly": "للفريق فقط"
+    }
+  },
+  "fieldChange": {
+    "title": "هل تريد تغيير «{{field}}»؟",
+    "answers_one": "فيه إجابة واحدة.",
+    "answers_other": "فيه {{count}} إجابات.",
+    "converted_one": "إجابة واحدة تنتقل إلى النوع الجديد.",
+    "converted_other": "{{count}} إجابات تنتقل إلى النوع الجديد.",
+    "notConverted_one": "إجابة واحدة لا تناسب النوع الجديد. تخرج من الحقل وتبقى في سجلها.",
+    "notConverted_other": "{{count}} إجابات لا تناسب النوع الجديد. تخرج من الحقل وتبقى في سجلها.",
+    "appScreen": "يسأل الهاتف عنه في شاشة «{{screen}}». سيسأل عنه بالنوع الجديد.",
+    "privacy": "تنتقل الخصوصية من {{from}} إلى {{to}}.",
+    "encrypt_one": "ستُحفظ إجابة واحدة مشفرة.",
+    "encrypt_other": "ستُحفظ {{count}} إجابات مشفرة.",
+    "decrypt_one": "ستُحفظ إجابة واحدة بدون تشفير.",
+    "decrypt_other": "ستُحفظ {{count}} إجابات بدون تشفير.",
+    "readersLosing_one": "عضو واحد من الفريق سيتوقف عن رؤية هذه الإجابات.",
+    "readersLosing_other": "{{count}} أعضاء من الفريق سيتوقفون عن رؤية هذه الإجابات.",
+    "readersGaining_one": "عضو واحد من الفريق سيبدأ برؤية هذه الإجابات.",
+    "readersGaining_other": "{{count}} أعضاء من الفريق سيبدؤون برؤية هذه الإجابات.",
+    "conditions_one": "حقل واحد كان يظهر مع أحد خياراته سيُسأل دائمًا.",
+    "conditions_other": "{{count}} حقول كانت تظهر مع أحد خياراته ستُسأل دائمًا.",
+    "featuresLost": "يتوقف عن العمل:",
+    "featuresRegained": "يعمل من جديد:",
+    "confirm": "احفظ التغيير",
+    "features": {
+      "impact.age_bands": "تقرير الأثر: الفئات العمرية",
+      "impact.nationalities": "تقرير الأثر: الجنسيات",
+      "participants.nationality": "قائمة المشاركات: الجنسية",
+      "participants.city": "قائمة المشاركات والمحادثات: البلدية",
+      "participants.entity": "قائمة المشاركات: الجمعية",
+      "participants.has_dependents": "قائمة المشاركات: تصفية الأشخاص المعالين",
+      "participants.dependents_count": "قائمة المشاركات: عدد الأشخاص المعالين",
+      "notifications.entity": "الإشعارات والاستبيانات: نساء جمعية ما",
+      "equipment.clothing_size": "تسليم المعدات: مقاس الملابس المقترح",
+      "equipment.shoe_size": "تسليم المعدات: مقاس الحذاء المقترح",
+      "erasure.birth_year": "إخفاء الهوية: سنة الميلاد المحفوظة للتقارير"
     }
   },
   "fieldPicker": {
@@ -225,9 +261,6 @@
     "failed": "تعذّرت إضافة كل الحقول. حاول مرة أخرى."
   },
   "placement": {
-    "fromApp": "حقل من التطبيق · {{section}}",
-    "fromAppAlone": "حقل من التطبيق",
-    "fromRamassa": "حقل من Ramassà · {{section}}",
     "askHer": "كيف نسألها (اختياري)",
     "saveWording": "حفظ",
     "removeNamed": "أزل {{field}} من الشاشة",

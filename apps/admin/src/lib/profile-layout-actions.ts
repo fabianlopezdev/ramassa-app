@@ -11,6 +11,7 @@ import { useRouter } from '@tanstack/react-router';
 import {
   archiveProfileField,
   placeField,
+  previewFieldChange,
   profileFieldAnswerCount,
   removePlacement,
   reorderPlacements,
@@ -18,6 +19,7 @@ import {
   saveProfileField,
   saveProfileSection,
   type BuilderText,
+  type FieldChangePreview,
   type ProfileField,
   type ProfileSection,
   type ProfileSurface,
@@ -60,6 +62,10 @@ export function useProfileLayoutActions() {
     },
     answerCount(id: string): Promise<number> {
       return profileFieldAnswerCount(supabase, id);
+    },
+    /** What saving the draft would do to the field's answers (RAPP-665). */
+    previewChange(id: string, draft: FieldFormDraft): Promise<FieldChangePreview> {
+      return previewFieldChange(supabase, id, draft);
     },
     /**
      * Puts fields on a surface (and screen), in the order given, each

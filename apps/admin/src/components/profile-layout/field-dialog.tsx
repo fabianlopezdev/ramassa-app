@@ -1,14 +1,18 @@
 /**
  * A field of the Fitxa in a dialog (RAPP-650): new from a section's "Add a
- * field", or opened with Edit. The form writes one language at a time. Its
- * privacy card is locked once the field has answers, and Archive asks first,
- * saying how many answers the field keeps. The onboarding picker (RAPP-651)
- * opens it for a new field, with the section chosen there.
+ * field", or opened with Edit. The form writes one language at a time. Every
+ * field but her names changes type, privacy and options (RAPP-665): when a
+ * field with answers changes type or privacy, saving first shows what happens
+ * to them (`FieldChangeDialog`) and waits for Confirm. Archive asks first,
+ * saying how many answers the field keeps; her names are never archived. The
+ * onboarding picker (RAPP-651) opens it for a new field, with the section
+ * chosen there.
  */
 
 import { FieldForm, type FieldFormDraft } from '@/components/fields/field-form';
 import { EditingLanguageContext } from '@/components/fields/language-fields';
 import { LanguageTabs } from '@/components/onboarding/language-tabs';
+import { FieldChangeDialog } from '@/components/profile-layout/field-change-dialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,13 +26,16 @@ import {
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { mediaWorkerUrl } from '@/lib/media-worker';
-import { fieldFormValue, isPrivacyLocked } from '@/lib/profile-layout';
-import { useState } from 'react';
+import { fieldFormValue } from '@/lib/profile-layout';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import {
+  isNameField,
+  needsChangeConfirmation,
   textIn,
   uploadsAvailable,
+  type FieldChangePreview,
   type ProfileField,
   type ProfileSection,
 } from '@ramassa/shared/intake-builder';
@@ -42,6 +49,8 @@ export function FieldDialog({
   onSave,
   onArchive,
   answerCount,
+  previewChange,
+  appScreen = null,
 }: {
   readonly section: ProfileSection;
   /** Null for a new field in this section. */
@@ -52,6 +61,10 @@ export function FieldDialog({
   /** Left out where a field is never archived, such as a new one. */
   readonly onArchive?: () => Promise<void>;
   readonly answerCount?: () => Promise<number>;
+  /** What saving a change to this field would do to its answers. */
+  readonly previewChange?: (draft: FieldFormDraft) => Promise<FieldChangePreview>;
+  /** The app screen that asks the field with its own control, if any. */
+  readonly appScreen?: string | null;
 }) {
   const { t, i18n } = useTranslation('settings');
   const [language, setLanguage] = useState<LanguageCode>('ca');
@@ -59,6 +72,33 @@ export function FieldDialog({
   const [answers, setAnswers] = useState<number | null>(null);
   const uiLanguage = (i18n.resolvedLanguage ?? 'ca') as LanguageCode;
   const sectionName = textIn(section.title, uiLanguage);
+  const isName = field !== null && isNameField(field);
+  const [change, setChange] = useState<FieldChangePreview | null>(null);
+  const decide = useRef<((confirmed: boolean) => void) | null>(null);
+
+  /** Shows what the change does and resolves with her decision. */
+  function confirmChange(preview: FieldChangePreview): Promise<boolean> {
+    return new Promise((resolve) => {
+      decide.current = resolve;
+      setChange(preview);
+    });
+  }
+
+  function settle(confirmed: boolean) {
+    decide.current?.(confirmed);
+    decide.current = null;
+    setChange(null);
+  }
+
+  async function save(draft: FieldFormDraft): Promise<void | false> {
+    if (field !== null && previewChange !== undefined && needsChangeConfirmation(field, draft)) {
+      const preview = await previewChange(draft);
+      if (preview.answers > 0 || preview.conditionsCleared > 0) {
+        if (!(await confirmChange(preview))) return false;
+      }
+    }
+    await onSave(draft);
+  }
 
   async function confirmArchive() {
     setAnswers(null);
@@ -110,15 +150,13 @@ export function FieldDialog({
             title={field === null ? t('profileLayout.newField') : t('profileLayout.editField')}
             nameLegend={t('profileLayout.fieldName')}
             submitLabel={t('profileLayout.saveField')}
-            isPrivacyLocked={isPrivacyLocked(field)}
+            isNameField={isName}
             canStoreFiles={uploadsAvailable(mediaWorkerUrl)}
             isFramed={false}
-            onSave={async (draft) => {
-              await onSave(draft);
-            }}
+            onSave={save}
             onCancel={() => onOpenChange(false)}
             secondaryAction={
-              field === null || onArchive === undefined ? undefined : (
+              field === null || onArchive === undefined || isName ? undefined : (
                 <Button
                   type="button"
                   variant="ghost"
@@ -132,6 +170,13 @@ export function FieldDialog({
             }
           />
         </EditingLanguageContext.Provider>
+        <FieldChangeDialog
+          fieldName={field === null ? '' : textIn(field.label, uiLanguage)}
+          preview={change}
+          appScreen={appScreen}
+          onConfirm={() => settle(true)}
+          onCancel={() => settle(false)}
+        />
         <AlertDialog open={isConfirming} onOpenChange={setIsConfirming}>
           <AlertDialogContent>
             <AlertDialogHeader>

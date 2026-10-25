@@ -392,7 +392,6 @@
       "country": "País",
       "municipality": "Municipi de Catalunya"
     },
-    "typeLocked": "El tipus no pot canviar, perquè les respostes ja donades han de mantenir el seu sentit.",
     "privacy": "Privacitat",
     "privacyLevels": {
       "normal": "Normal",
@@ -410,7 +409,6 @@
       "sensitive": "Per exemple: salut, situació legal, religió."
     },
     "privacyPermanent": "Tria-ho bé: després no es pot canviar.",
-    "privacyLocked": "El nivell de privacitat no pot canviar, perquè ja hi ha respostes desades amb aquest nivell.",
     "label": "Pregunta",
     "help": "Text d'ajuda (opcional)",
     "required": "obligatori",
@@ -720,8 +718,7 @@
     "moveField": "Mou el camp {{field}}",
     "renameSection": "Canvia el nom de {{section}}",
     "editNamed": "Edita {{field}}",
-    "builtinLock": "Fixat per l'app",
-    "fromApp": "de l'app",
+    "namesLock": "El nom i els cognoms són sempre text curt i nivell Normal, perquè l'app la saluda i la contacta amb ells.",
     "createdBy": "creat per {{name}}, {{date}}",
     "createdOn": "creat el {{date}}",
     "archived": "Camp arxivat.",
@@ -735,6 +732,43 @@
       "entity_form": "Entitat",
       "season": "Temporada",
       "teamOnly": "Només equip"
+    }
+  },
+  "fieldChange": {
+    "title": "Canviar «{{field}}»?",
+    "answers_one": "Té {{count}} resposta.",
+    "answers_other": "Té {{count}} respostes.",
+    "converted_one": "{{count}} resposta passa al nou tipus.",
+    "converted_other": "{{count}} respostes passen al nou tipus.",
+    "notConverted_one": "{{count}} resposta no encaixa amb el nou tipus. Surt del camp i es queda al seu historial.",
+    "notConverted_other": "{{count}} respostes no encaixen amb el nou tipus. Surten del camp i es queden al seu historial.",
+    "appScreen": "El mòbil ho pregunta a la pantalla «{{screen}}». Ho preguntarà amb el nou tipus.",
+    "privacy": "La privacitat passa de {{from}} a {{to}}.",
+    "encrypt_one": "{{count}} resposta es guardarà xifrada.",
+    "encrypt_other": "{{count}} respostes es guardaran xifrades.",
+    "decrypt_one": "{{count}} resposta es guardarà sense xifrar.",
+    "decrypt_other": "{{count}} respostes es guardaran sense xifrar.",
+    "readersLosing_one": "{{count}} persona de l'equip deixarà de veure aquestes respostes.",
+    "readersLosing_other": "{{count}} persones de l'equip deixaran de veure aquestes respostes.",
+    "readersGaining_one": "{{count}} persona de l'equip començarà a veure aquestes respostes.",
+    "readersGaining_other": "{{count}} persones de l'equip començaran a veure aquestes respostes.",
+    "conditions_one": "{{count}} camp que s'obria amb una de les seves opcions es preguntarà sempre.",
+    "conditions_other": "{{count}} camps que s'obrien amb una de les seves opcions es preguntaran sempre.",
+    "featuresLost": "Deixa de funcionar:",
+    "featuresRegained": "Torna a funcionar:",
+    "confirm": "Desa el canvi",
+    "features": {
+      "impact.age_bands": "Informe d'impacte: franges d'edat",
+      "impact.nationalities": "Informe d'impacte: nacionalitats",
+      "participants.nationality": "Llista de participants: nacionalitat",
+      "participants.city": "Llista de participants i converses: municipi",
+      "participants.entity": "Llista de participants: entitat",
+      "participants.has_dependents": "Llista de participants: filtre de persones a càrrec",
+      "participants.dependents_count": "Llista de participants: nombre de persones a càrrec",
+      "notifications.entity": "Notificacions i enquestes: les dones d'una entitat",
+      "equipment.clothing_size": "Lliurament de material: talla de roba suggerida",
+      "equipment.shoe_size": "Lliurament de material: talla de calçat suggerida",
+      "erasure.birth_year": "Anonimització: l'any de naixement que es queda per als informes"
     }
   },
   "fieldPicker": {
@@ -758,9 +792,6 @@
     "failed": "No s'han pogut afegir tots els camps. Torna-ho a provar."
   },
   "placement": {
-    "fromApp": "Camp de l'app · {{section}}",
-    "fromAppAlone": "Camp de l'app",
-    "fromRamassa": "Camp de Ramassà · {{section}}",
     "askHer": "Com li ho preguntem (opcional)",
     "saveWording": "Desa",
     "removeNamed": "Treu {{field}} de la pantalla",

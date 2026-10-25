@@ -1,7 +1,7 @@
 /**
- * A field row of the Fitxa (RAPP-650): a built-in field says the app fixes it, a
- * Ramassà one in Edit for a designer and in nothing for a reader; the creator
- * line names who added it.
+ * A field row of the Fitxa (RAPP-650): every field ends in Edit for a
+ * designer and in nothing for a reader (RAPP-665); the creator line names who
+ * added it, and says nothing for the fields Ramassà started with.
  */
 import { createAdminI18n } from '@/lib/i18n';
 import { fireEvent, render } from '@testing-library/react';
@@ -57,18 +57,19 @@ test('a reader gets no button', () => {
   expect(view.queryAllByRole('button')).toHaveLength(0);
 });
 
-test('a built-in field says the app fixes it, never Edit', () => {
+test('an app field opens with Edit and names no origin (RAPP-665)', () => {
+  const onEdit = mock(() => undefined);
   const view = render(
     <ProfileFieldRow
       field={field({ kind: 'builtin', builtinKey: 'first_name', createdByName: null })}
       surfaces={['onboarding', 'entity_form']}
       canEdit
-      onEdit={() => undefined}
+      onEdit={onEdit}
     />,
   );
-  expect(view.queryAllByRole('button')).toHaveLength(0);
-  expect(view.queryByTestId(`profile-field-edit-${field().id}`)).toBeNull();
-  expect(view.getByText('profileLayout.builtinLock')).toBeTruthy();
+  fireEvent.click(view.getByTestId(`profile-field-edit-${field().id}`));
+  expect(onEdit).toHaveBeenCalledTimes(1);
+  expect(view.queryByText(/profileLayout\.(builtinLock|fromApp|createdOn|createdBy)/)).toBeNull();
 });
 
 test('a date shows its year only when it is not this year', () => {

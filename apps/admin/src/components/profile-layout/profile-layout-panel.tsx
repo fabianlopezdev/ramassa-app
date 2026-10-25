@@ -8,7 +8,8 @@
  * Sections are labels that help read the list: nothing is dragged. Inside a
  * section the app's own fields come first, then the ones staff created, A to
  * Z (`fieldsOfSection`). An admin renames a section in place, adds sections
- * and fields, and edits or archives a Ramassà field in a dialog.
+ * and fields, and edits or archives every field in a dialog (RAPP-665): its
+ * name, answer type, options and privacy, her names excepted (D2).
  */
 
 import type { FieldFormDraft } from '@/components/fields/field-form';
@@ -20,7 +21,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { searchFields } from '@/lib/field-picker';
-import { profileLayoutOf, surfacesOfField } from '@/lib/profile-layout';
+import { appScreenOfField, profileLayoutOf, surfacesOfField } from '@/lib/profile-layout';
 import { useProfileLayoutActions } from '@/lib/profile-layout-actions';
 import { Plus, Search } from 'lucide-react';
 import { useId, useState } from 'react';
@@ -139,6 +140,12 @@ export function ProfileLayoutPanel({
           answerCount={() =>
             editing.field === null ? Promise.resolve(0) : actions.answerCount(editing.field.id)
           }
+          previewChange={
+            editing.field === null
+              ? undefined
+              : (draft) => actions.previewChange(editing.field?.id ?? '', draft)
+          }
+          appScreen={editing.field === null ? null : appScreenOfField(layout, editing.field)}
         />
       )}
 

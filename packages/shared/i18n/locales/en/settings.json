@@ -392,7 +392,6 @@
       "country": "Country",
       "municipality": "Municipality of Catalonia"
     },
-    "typeLocked": "The type cannot change, because answers already given must keep their meaning.",
     "privacy": "Privacy",
     "privacyLevels": {
       "normal": "Normal",
@@ -410,7 +409,6 @@
       "sensitive": "For example: health, legal situation, religion."
     },
     "privacyPermanent": "Choose with care: it cannot change later.",
-    "privacyLocked": "The privacy level cannot change, because answers are already stored at this level.",
     "label": "Question",
     "help": "Help text (optional)",
     "required": "required",
@@ -720,8 +718,7 @@
     "moveField": "Move field {{field}}",
     "renameSection": "Rename {{section}}",
     "editNamed": "Edit {{field}}",
-    "builtinLock": "Fixed by the app",
-    "fromApp": "from the app",
+    "namesLock": "Her first and last name are always short text at the Normal level, because the app greets and contacts her by them.",
     "createdBy": "created by {{name}}, {{date}}",
     "createdOn": "created on {{date}}",
     "archived": "Field archived.",
@@ -735,6 +732,43 @@
       "entity_form": "Entity",
       "season": "Season",
       "teamOnly": "Team only"
+    }
+  },
+  "fieldChange": {
+    "title": "Change “{{field}}”?",
+    "answers_one": "It has {{count}} answer.",
+    "answers_other": "It has {{count}} answers.",
+    "converted_one": "{{count}} answer changes to the new type.",
+    "converted_other": "{{count}} answers change to the new type.",
+    "notConverted_one": "{{count}} answer does not fit the new type. It leaves the field and stays in her history.",
+    "notConverted_other": "{{count}} answers do not fit the new type. They leave the field and stay in her history.",
+    "appScreen": "Her phone asks it on the “{{screen}}” screen. It will ask it with the new type.",
+    "privacy": "Privacy goes from {{from}} to {{to}}.",
+    "encrypt_one": "{{count}} answer will be stored encrypted.",
+    "encrypt_other": "{{count}} answers will be stored encrypted.",
+    "decrypt_one": "{{count}} answer will be stored without encryption.",
+    "decrypt_other": "{{count}} answers will be stored without encryption.",
+    "readersLosing_one": "{{count}} team member will stop seeing these answers.",
+    "readersLosing_other": "{{count}} team members will stop seeing these answers.",
+    "readersGaining_one": "{{count}} team member will start seeing these answers.",
+    "readersGaining_other": "{{count}} team members will start seeing these answers.",
+    "conditions_one": "{{count}} field that opened on one of its options will always be asked.",
+    "conditions_other": "{{count}} fields that opened on one of its options will always be asked.",
+    "featuresLost": "Stops working:",
+    "featuresRegained": "Works again:",
+    "confirm": "Save the change",
+    "features": {
+      "impact.age_bands": "Impact report: age bands",
+      "impact.nationalities": "Impact report: nationalities",
+      "participants.nationality": "Participants list: nationality",
+      "participants.city": "Participants list and conversations: municipality",
+      "participants.entity": "Participants list: organisation",
+      "participants.has_dependents": "Participants list: dependants filter",
+      "participants.dependents_count": "Participants list: number of dependants",
+      "notifications.entity": "Notifications and surveys: the women of an organisation",
+      "equipment.clothing_size": "Equipment handover: suggested clothing size",
+      "equipment.shoe_size": "Equipment handover: suggested shoe size",
+      "erasure.birth_year": "Anonymizing: the birth year kept for the reports"
     }
   },
   "fieldPicker": {
@@ -758,9 +792,6 @@
     "failed": "Some fields could not be added. Try again."
   },
   "placement": {
-    "fromApp": "App field · {{section}}",
-    "fromAppAlone": "App field",
-    "fromRamassa": "Ramassà field · {{section}}",
     "askHer": "How we ask her (optional)",
     "saveWording": "Save",
     "removeNamed": "Remove {{field}} from the screen",

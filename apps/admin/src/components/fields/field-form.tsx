@@ -5,9 +5,11 @@
  *
  * Dades de les jugadores and the onboarding picker open it for a field
  * (RAPP-650, RAPP-651). Where a field is asked is never part of it: that is
- * a placement. The type never changes once saved, and the privacy level is locked by the caller (once answers
- * exist for a field). A removed option is archived and the answers that
- * chose it keep it. The form is uncontrolled and read with FormData.
+ * a placement. Every field changes type, privacy and options (RAPP-665); the
+ * caller confirms a change to answered ones. Her names keep their type and
+ * privacy (D2), with one sentence saying so. A removed option is archived and
+ * the answers that chose it keep it. The form is uncontrolled and read with
+ * FormData.
  */
 
 import { LanguageFields, textFromForm } from '@/components/fields/language-fields';
@@ -95,7 +97,7 @@ export function FieldForm({
   title,
   nameLegend,
   submitLabel,
-  isPrivacyLocked,
+  isNameField = false,
   canStoreFiles,
   onSave,
   onCancel,
@@ -111,9 +113,11 @@ export function FieldForm({
   /** The legend of the name input. */
   readonly nameLegend: string;
   readonly submitLabel: string;
-  readonly isPrivacyLocked: boolean;
+  /** Her names: type and privacy stay (D2). */
+  readonly isNameField?: boolean;
   readonly canStoreFiles: boolean;
-  readonly onSave: (draft: FieldFormDraft, fields: FormData) => Promise<void>;
+  /** Resolves false when the caller kept the form open, such as a cancelled confirmation. */
+  readonly onSave: (draft: FieldFormDraft, fields: FormData) => Promise<void | false>;
   readonly onCancel: () => void;
   /** A preview of her phone beside the form. */
   readonly withPreview?: boolean;
@@ -180,7 +184,7 @@ export function FieldForm({
       type,
       label: textFromForm(fields, 'question-label'),
       help: Object.keys(help).length === 0 ? null : help,
-      privacy: isPrivacyLocked && value !== null ? value.privacy : privacy,
+      privacy: isNameField && value !== null ? value.privacy : privacy,
       settings: readQuestionSettings(fields, type),
       options,
     };
@@ -199,7 +203,11 @@ export function FieldForm({
       );
       return;
     }
-    if (await action.run(() => onSave(draft, fields))) onCancel();
+    let isDone = true;
+    const saved = await action.run(async () => {
+      isDone = (await onSave(draft, fields)) !== false;
+    });
+    if (saved && isDone) onCancel();
   }
 
   return (
@@ -223,18 +231,28 @@ export function FieldForm({
           value={value?.label}
           isCatalanRequired
         />
+        {isNameField ? (
+          <p className="text-start text-sm text-muted-foreground" data-testid="field-names-lock">
+            {t('profileLayout.namesLock')}
+          </p>
+        ) : null}
         <QuestionTypePicker
           value={type}
-          onChange={setType}
-          isLocked={!isNew}
+          onChange={(next) => {
+            setType(next);
+            // A field that becomes a choice starts with two empty options.
+            if (isChoiceType(next) && kept.length === 0)
+              setNewOptions((count) => Math.max(count, 2));
+          }}
+          isLocked={isNameField}
           warnings={
             canStoreFiles ? {} : { file_upload: t('questions.settings.uploadsUnavailable') }
           }
         />
         <QuestionPrivacyPicker
-          value={isPrivacyLocked && value !== null ? value.privacy : privacy}
+          value={isNameField && value !== null ? value.privacy : privacy}
           onChange={setPrivacy}
-          isLocked={isPrivacyLocked}
+          isLocked={isNameField}
         />
         <LanguageFields
           name="question-help"

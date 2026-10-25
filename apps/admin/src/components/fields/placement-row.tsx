@@ -1,7 +1,7 @@
 /**
  * One field placed on a surface (RAPP-651): the onboarding screen editor's
  * Questions list, and the entity form editor's (RAPP-652). Grip, type, the
- * field's name, where it comes from ("Camp de l'app · Talles"), its privacy,
+ * field's name, its section on Dades de les jugadores ("Talles"), its privacy,
  * Required for this surface, Edit, and remove (×), which takes the field off
  * the surface and never deletes it. Edit opens the row's own panel under it
  * (`children`): the wording for this surface, or a built-in's reword form.

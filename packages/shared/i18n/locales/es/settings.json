@@ -392,7 +392,6 @@
       "country": "País",
       "municipality": "Municipio de Cataluña"
     },
-    "typeLocked": "El tipo no puede cambiar, porque las respuestas ya dadas deben mantener su sentido.",
     "privacy": "Privacidad",
     "privacyLevels": {
       "normal": "Normal",
@@ -410,7 +409,6 @@
       "sensitive": "Por ejemplo: salud, situación legal, religión."
     },
     "privacyPermanent": "Elígelo bien: después no se puede cambiar.",
-    "privacyLocked": "El nivel de privacidad no puede cambiar, porque ya hay respuestas guardadas con este nivel.",
     "label": "Pregunta",
     "help": "Texto de ayuda (opcional)",
     "required": "obligatorio",
@@ -720,8 +718,7 @@
     "moveField": "Mueve el campo {{field}}",
     "renameSection": "Cambia el nombre de {{section}}",
     "editNamed": "Edita {{field}}",
-    "builtinLock": "Fijado por la app",
-    "fromApp": "de la app",
+    "namesLock": "El nombre y los apellidos son siempre texto corto y nivel Normal, porque la app la saluda y la contacta con ellos.",
     "createdBy": "creado por {{name}}, {{date}}",
     "createdOn": "creado el {{date}}",
     "archived": "Campo archivado.",
@@ -735,6 +732,43 @@
       "entity_form": "Entidad",
       "season": "Temporada",
       "teamOnly": "Solo equipo"
+    }
+  },
+  "fieldChange": {
+    "title": "¿Cambiar «{{field}}»?",
+    "answers_one": "Tiene {{count}} respuesta.",
+    "answers_other": "Tiene {{count}} respuestas.",
+    "converted_one": "{{count}} respuesta pasa al nuevo tipo.",
+    "converted_other": "{{count}} respuestas pasan al nuevo tipo.",
+    "notConverted_one": "{{count}} respuesta no encaja con el nuevo tipo. Sale del campo y se queda en su historial.",
+    "notConverted_other": "{{count}} respuestas no encajan con el nuevo tipo. Salen del campo y se quedan en su historial.",
+    "appScreen": "El móvil lo pregunta en la pantalla «{{screen}}». Lo preguntará con el nuevo tipo.",
+    "privacy": "La privacidad pasa de {{from}} a {{to}}.",
+    "encrypt_one": "{{count}} respuesta se guardará cifrada.",
+    "encrypt_other": "{{count}} respuestas se guardarán cifradas.",
+    "decrypt_one": "{{count}} respuesta se guardará sin cifrar.",
+    "decrypt_other": "{{count}} respuestas se guardarán sin cifrar.",
+    "readersLosing_one": "{{count}} persona del equipo dejará de ver estas respuestas.",
+    "readersLosing_other": "{{count}} personas del equipo dejarán de ver estas respuestas.",
+    "readersGaining_one": "{{count}} persona del equipo empezará a ver estas respuestas.",
+    "readersGaining_other": "{{count}} personas del equipo empezarán a ver estas respuestas.",
+    "conditions_one": "{{count}} campo que se abría con una de sus opciones se preguntará siempre.",
+    "conditions_other": "{{count}} campos que se abrían con una de sus opciones se preguntarán siempre.",
+    "featuresLost": "Deja de funcionar:",
+    "featuresRegained": "Vuelve a funcionar:",
+    "confirm": "Guardar el cambio",
+    "features": {
+      "impact.age_bands": "Informe de impacto: franjas de edad",
+      "impact.nationalities": "Informe de impacto: nacionalidades",
+      "participants.nationality": "Lista de participantes: nacionalidad",
+      "participants.city": "Lista de participantes y conversaciones: municipio",
+      "participants.entity": "Lista de participantes: entidad",
+      "participants.has_dependents": "Lista de participantes: filtro de personas a cargo",
+      "participants.dependents_count": "Lista de participantes: número de personas a cargo",
+      "notifications.entity": "Notificaciones y encuestas: las mujeres de una entidad",
+      "equipment.clothing_size": "Entrega de material: talla de ropa sugerida",
+      "equipment.shoe_size": "Entrega de material: talla de calzado sugerida",
+      "erasure.birth_year": "Anonimización: el año de nacimiento que se queda para los informes"
     }
   },
   "fieldPicker": {
@@ -758,9 +792,6 @@
     "failed": "No se han podido añadir todos los campos. Vuelve a intentarlo."
   },
   "placement": {
-    "fromApp": "Campo de la app · {{section}}",
-    "fromAppAlone": "Campo de la app",
-    "fromRamassa": "Campo de Ramassà · {{section}}",
     "askHer": "Cómo se lo preguntamos (opcional)",
     "saveWording": "Guardar",
     "removeNamed": "Quita {{field}} de la pantalla",
