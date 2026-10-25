@@ -118,9 +118,20 @@ describe('onboardingPick', () => {
     expect(pick('allergies', SCREEN)).toEqual({ kind: 'free' });
   });
 
-  test('a built-in field stays on its own app screen', () => {
+  test('an app field is picked like any field: off its screen it is free (RAPP-665)', () => {
     expect(pick('shirt', 'equipment')).toEqual({ kind: 'here' });
     expect(pick('shirt', SCREEN)).toEqual({ kind: 'elsewhere', screenKey: 'equipment' });
+    const unplaced = {
+      ...LAYOUT,
+      placements: LAYOUT.placements.filter((each) => each.fieldId !== 'shirt'),
+    };
+    expect(
+      onboardingPick(
+        unplaced,
+        unplaced.fields.find((each) => each.id === 'shirt')!,
+        SCREEN,
+      ),
+    ).toEqual({ kind: 'free' });
   });
 
   test('a condition goes where its controlling field is, or with it', () => {

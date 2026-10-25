@@ -109,8 +109,6 @@ export function onboardingPick(
       ? { kind: 'here' }
       : { kind: 'elsewhere', screenKey: placement.screenKey };
   }
-  // The app asks a built-in field on its own screen only.
-  if (field.kind === 'builtin') return { kind: 'elsewhere', screenKey: null };
   const controllerId = field.showWhen?.fieldId;
   if (controllerId !== undefined) {
     const controller = fieldById(layout, controllerId);

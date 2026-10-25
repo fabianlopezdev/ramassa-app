@@ -45,8 +45,11 @@ import {
   builtinRequiredLock,
   canHideBuiltin,
   fieldById,
+  isAskedGenerically,
+  isNameField,
   overrideFor,
   placementsOnSurface,
+  questionsOffTheirControl,
   ramassaScreenIdOf,
   requiredBuiltinQuestions,
   saveBuiltinOverride,
@@ -69,11 +72,21 @@ interface Placed {
   readonly field: ProfileField;
 }
 
-/** The custom fields placed on a screen, in their order. */
-function placedFields(layout: ProfileLayout, screenKey: string): readonly Placed[] {
+/**
+ * The fields placed on a screen that her phone asks with the generic
+ * renderer, in their order: the Ramassà fields, and the app fields off their
+ * own control (RAPP-665).
+ */
+function placedFields(
+  layout: ProfileLayout,
+  screenKey: string,
+  offTheirControl: ReadonlySet<IntakeQuestion>,
+): readonly Placed[] {
   return placementsOnSurface(layout, 'onboarding', screenKey).flatMap((placement) => {
     const field = fieldById(layout, placement.fieldId);
-    return field === undefined || field.kind !== 'custom' ? [] : [{ placement, field }];
+    return field === undefined || !isAskedGenerically(field, offTheirControl)
+      ? []
+      : [{ placement, field }];
   });
 }
 
@@ -107,7 +120,8 @@ export function ScreenFieldsSection({
   const layout = profileLayoutOf(catalog);
   const actions = useProfileLayoutActions();
   const [isPicking, setIsPicking] = useState(false);
-  const placed = placedFields(layout, screenKey);
+  const offTheirControl = questionsOffTheirControl(layout);
+  const placed = placedFields(layout, screenKey, offTheirControl);
   const { ordered, reorder } = usePlacementOrder('onboarding', screenKey, placed);
   const sectionOf = (field: ProfileField) =>
     layout.sections.find((section) => section.id === field.sectionId);
@@ -151,21 +165,25 @@ export function ScreenFieldsSection({
     };
   };
 
-  const builtinRows = builtinQuestions.map((question) => (
-    <li key={question} className="bg-card">
-      <BuiltinPlacementRow
-        catalog={catalog}
-        question={question}
-        field={builtinField(layout, question)}
-        sectionName={(field) => sectionName(field)}
-        language={language}
-        isEditing={editing === question}
-        onToggleEdit={() => toggle(question)}
-        onClose={close}
-        onLabelChange={onBuiltinLabelChange}
-      />
-    </li>
-  ));
+  // A question off its own control is asked by its fields' rows instead (RAPP-665).
+  const builtinRows = builtinQuestions
+    .filter((question) => !offTheirControl.has(question))
+    .map((question) => (
+      <li key={question} className="bg-card">
+        <BuiltinPlacementRow
+          catalog={catalog}
+          question={question}
+          field={builtinField(layout, question)}
+          sectionName={(field) => sectionName(field)}
+          language={language}
+          screenKey={screenKey}
+          isEditing={editing === question}
+          onToggleEdit={() => toggle(question)}
+          onClose={close}
+          onLabelChange={onBuiltinLabelChange}
+        />
+      </li>
+    ));
 
   return (
     <EditorSection title={t('tabQuestions')} testId="screen-questions" isFlush>
@@ -368,6 +386,7 @@ function BuiltinPlacementRow({
   question,
   field,
   sectionName,
+  screenKey,
   language,
   isEditing,
   onToggleEdit,
@@ -376,6 +395,7 @@ function BuiltinPlacementRow({
 }: {
   readonly catalog: IntakeCatalog;
   readonly question: IntakeQuestion;
+  readonly screenKey: string;
   /** Its field on the Fitxa; absent while the catalog has no layout. */
   readonly field: ProfileField | undefined;
   readonly sectionName: (field: ProfileField) => string;
@@ -387,8 +407,17 @@ function BuiltinPlacementRow({
 }) {
   const { t } = useTranslation(['settings', 'onboarding']);
   const reload = useReload();
+  const actions = useProfileLayoutActions();
   const [isBusy, setIsBusy] = useState(false);
+  const [isConfirming, setIsConfirming] = useState(false);
   const required = requiredBuiltinQuestions(catalog);
+  // Every app field but her names leaves its screen like any field (RAPP-665).
+  const placement =
+    field === undefined || isNameField(field)
+      ? undefined
+      : placementsOnSurface(profileLayoutOf(catalog), 'onboarding', screenKey).find(
+          (candidate) => candidate.fieldId === field.id,
+        );
   const override = overrideFor(catalog, question);
   const appLabel = t(INTAKE_QUESTION_LABEL_KEYS[question] ?? question);
   const reworded = override?.label == null ? '' : textIn(override.label, language);
@@ -423,6 +452,7 @@ function BuiltinPlacementRow({
       isBusy={isBusy}
       isEditing={isEditing}
       onToggleEdit={onToggleEdit}
+      {...(placement === undefined ? {} : { onRemove: () => setIsConfirming(true) })}
       testId={`builtin-row-${question}`}
     >
       <BuiltinForm
@@ -436,6 +466,22 @@ function BuiltinPlacementRow({
         }}
         onCancel={onClose}
       />
+      {placement === undefined ? null : (
+        <ConfirmDialog
+          isOpen={isConfirming}
+          onOpenChange={setIsConfirming}
+          title={t('settings:placement.removeTitle', { field: reworded || appLabel })}
+          description={t('settings:placement.removeBody')}
+          action={t('settings:placement.remove')}
+          onConfirm={() => {
+            setIsBusy(true);
+            actions
+              .removePlacement(placement.id)
+              .catch(() => toast.error(t('settings:questions.failed')))
+              .finally(() => setIsBusy(false));
+          }}
+        />
+      )}
     </PlacementRow>
   );
 }
