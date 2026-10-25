@@ -122,12 +122,14 @@ select throws_like(
   'onboarding cannot create a new free-text reporting bucket'
 );
 
+-- Her municipality is an answer since RAPP-662: an answer the catalog does not
+-- know (a value from before the type check, or after a type change) shows up.
 set local role postgres;
-set local session_replication_role = replica;
-update public.profiles
-set city = 'Vich'
-where id = '00000000-0000-0000-0000-0000000000f1';
-set local session_replication_role = origin;
+update public.custom_answers a
+   set value = '"Vich"'
+  from public.profile_fields f
+ where f.id = a.question_id and f.system_key = 'city'
+   and a.profile_id = '00000000-0000-0000-0000-0000000000f1';
 
 select is(
   (select profile_count from public.municipality_compatibility_report where legacy_value = 'Vich'),

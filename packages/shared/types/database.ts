@@ -3035,6 +3035,45 @@ export type Database = {
           },
         ];
       };
+      participant_search_documents: {
+        Row: {
+          normal_document: unknown;
+          org_id: string;
+          personal_document: unknown;
+          profile_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          normal_document: unknown;
+          org_id: string;
+          personal_document: unknown;
+          profile_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          normal_document?: unknown;
+          org_id?: string;
+          personal_document?: unknown;
+          profile_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'participant_search_documents_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'participant_search_documents_profile_id_fkey';
+            columns: ['profile_id'];
+            isOneToOne: true;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       permission_preset_defaults: {
         Row: {
           builtin_key: string;
@@ -5431,15 +5470,7 @@ export type Database = {
           legacy_value: string | null;
           profile_count: number | null;
         };
-        Relationships: [
-          {
-            foreignKeyName: 'profiles_city_municipality_canonical_fkey';
-            columns: ['legacy_value'];
-            isOneToOne: false;
-            referencedRelation: 'municipality_catalog';
-            referencedColumns: ['canonical'];
-          },
-        ];
+        Relationships: [];
       };
     };
     Functions: {
