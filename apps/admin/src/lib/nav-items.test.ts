@@ -114,9 +114,10 @@ test('Settings holds the organization tabs only; the team, entities and Fitxa ha
     '/profile-layout',
     '/settings',
   ]);
+  // Dades de les jugadores is for the people who design it (RAPP-658).
   expect(
     visibleStaffNavItems(new Set<PermissionCode>(['team.manage'])).map((item) => item.to),
-  ).toEqual(['/dashboard', '/profile-layout', '/team']);
+  ).toEqual(['/dashboard', '/team']);
   const coach = new Set<PermissionCode>(['participants.view', 'attendance.mark']);
   expect(visibleStaffNavItems(coach).map((item) => item.to)).toEqual([
     '/dashboard',
