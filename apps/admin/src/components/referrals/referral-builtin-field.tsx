@@ -1,9 +1,11 @@
 /**
- * One built-in field of the entity referral form (RAPP-303, RAPP-652), with
- * its own control: a country or municipality list, the app's choices, a
- * document type with its number. The label is the placement's wording for
- * the entity, else the field's own name, in the form's language; an asterisk
- * marks a field the form requires.
+ * One of the app's fields on the entity referral form (RAPP-303, RAPP-652),
+ * with its own control: a country or municipality list, the field's own
+ * choices, a document type with its number, a phone. The label is the
+ * placement's wording for the entity, else the field's own name, in the
+ * form's language; an asterisk marks a field the form requires. A choice
+ * lists the field's live options by their labels and keeps the option's key
+ * (RAPP-664), so the referral sends it as its option.
  */
 
 import { AdminAuthField } from '@/components/auth/admin-auth-field';
@@ -13,23 +15,18 @@ import { Controller, type Control, type FieldErrors } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { getCountryOptions } from '@ramassa/shared/i18n/countries';
 import { getMunicipalityOptions } from '@ramassa/shared/i18n/municipalities';
-import { placementWordingIn, type EntityFormItem } from '@ramassa/shared/intake-builder';
+import {
+  placementWordingIn,
+  textIn,
+  type EntityFormItem,
+  type ProfileField,
+} from '@ramassa/shared/intake-builder';
 import type { CreateReferral, CreateReferralInput } from '@ramassa/shared/referrals';
 import {
-  APPLICANT_STATUSES,
   CHILDCARE_NEEDS,
-  DOCUMENT_TYPES,
-  SPECIFIC_NEEDS_MAX_LENGTH,
+  SUPPORT_NEED_DETAIL_MAX_LENGTH,
+  type LanguageCode,
 } from '@ramassa/shared/schemas';
-import type { LanguageCode } from '@ramassa/shared/schemas';
-
-const APPLICANT_STATUS_KEYS = {
-  asylum_seeker: 'onboarding:applicantStatusAsylumSeeker',
-  refugee: 'onboarding:applicantStatusRefugee',
-  migrant: 'onboarding:applicantStatusMigrant',
-  other: 'onboarding:applicantStatusOther',
-  prefer_not_to_say: 'onboarding:applicantStatusPreferNotToSay',
-} as const;
 
 const CHILDCARE_KEYS = {
   yes: 'onboarding:childcareNeedYes',
@@ -37,12 +34,17 @@ const CHILDCARE_KEYS = {
   maybe: 'onboarding:childcareNeedMaybe',
 } as const;
 
-const DOCUMENT_TYPE_KEYS = {
-  nie: 'onboarding:documentTypeNie',
-  passport: 'onboarding:documentTypePassport',
-  other: 'onboarding:documentTypeOther',
-  none: 'onboarding:documentTypeNone',
-} as const;
+/** A choice field's live options as the form lists them: valued by key, named in her language. */
+function keyedOptions(
+  field: ProfileField,
+  language: LanguageCode,
+): readonly (readonly [string, string])[] {
+  return field.options.flatMap((option) =>
+    option.isArchived || option.key == null
+      ? []
+      : [[option.key, textIn(option.label, language)] as const],
+  );
+}
 
 /** Every control of the form has this height and look. */
 export const REFERRAL_CONTROL_CLASS =
@@ -118,14 +120,8 @@ export function ReferralBuiltinField({
 
   switch (item.key) {
     case 'first_name':
-    case 'last_name':
-    case 'phone': {
-      const name =
-        item.key === 'first_name' ? 'firstName' : item.key === 'last_name' ? 'lastName' : 'phone';
-      const fieldId =
-        item.key === 'phone'
-          ? id('phone')
-          : id(item.key === 'first_name' ? 'first-name' : 'last-name');
+    case 'last_name': {
+      const name = item.key === 'first_name' ? 'firstName' : 'lastName';
       return (
         <Controller
           name={name}
@@ -134,8 +130,7 @@ export function ReferralBuiltinField({
             <AdminAuthField
               {...field}
               value={field.value ?? ''}
-              id={fieldId}
-              type={item.key === 'phone' ? 'tel' : 'text'}
+              id={id(item.key === 'first_name' ? 'first-name' : 'last-name')}
               label={label}
               required={isRequired}
               errorMessage={errors[name] ? t('referrals:requiredError') : missing}
@@ -144,6 +139,29 @@ export function ReferralBuiltinField({
         />
       );
     }
+    case 'phone':
+      // The phone input (RAPP-664): a local Spanish number is sent with +34.
+      return (
+        <Controller
+          name="phone"
+          control={control}
+          render={({ field }) => (
+            <AdminAuthField
+              {...field}
+              value={field.value ?? ''}
+              id={id('phone')}
+              type="tel"
+              inputMode="tel"
+              dir="ltr"
+              autoComplete="tel"
+              placeholder={t('onboarding:phonePlaceholder')}
+              label={label}
+              required={isRequired}
+              errorMessage={errors.phone ? t('onboarding:errorPhoneFormat') : missing}
+            />
+          )}
+        />
+      );
     case 'date_of_birth':
       return (
         <Controller
@@ -218,9 +236,9 @@ export function ReferralBuiltinField({
                   className={REFERRAL_CONTROL_CLASS}
                 >
                   <option value="">—</option>
-                  {DOCUMENT_TYPES.map((type) => (
-                    <option key={type} value={type}>
-                      {t(DOCUMENT_TYPE_KEYS[type])}
+                  {keyedOptions(item.field, language).map(([key, text]) => (
+                    <option key={key} value={key}>
+                      {text}
                     </option>
                   ))}
                 </select>
@@ -251,9 +269,11 @@ export function ReferralBuiltinField({
       const isStatus = item.key === 'applicant_status';
       const name = isStatus ? 'applicantStatus' : 'childcareNeed';
       const fieldId = id(isStatus ? 'applicant-status' : 'childcare');
-      const choices = isStatus
-        ? APPLICANT_STATUSES.map((value) => [value, t(APPLICANT_STATUS_KEYS[value])] as const)
-        : CHILDCARE_NEEDS.map((value) => [value, t(CHILDCARE_KEYS[value])] as const);
+      // Her status lists the field's own options; the childcare need is yes, no or maybe.
+      const choices =
+        isStatus || item.field.type !== 'yes_no_maybe'
+          ? keyedOptions(item.field, language)
+          : CHILDCARE_NEEDS.map((value) => [value, t(CHILDCARE_KEYS[value])] as const);
       return (
         <Controller
           name={name}
@@ -354,7 +374,7 @@ export function ReferralBuiltinField({
                 id={id('specific-needs')}
                 rows={4}
                 required={isRequired}
-                maxLength={SPECIFIC_NEEDS_MAX_LENGTH}
+                maxLength={SUPPORT_NEED_DETAIL_MAX_LENGTH}
               />
             </Labelled>
           )}

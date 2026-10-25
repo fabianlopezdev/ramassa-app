@@ -1,13 +1,13 @@
 import { describe, expect, test } from 'bun:test';
 import { systemFieldIndexFromCatalog } from './intake-builder/field-answers';
 import {
-  buildReferralPayload,
   createReferralSchema,
   fetchEntityReferrals,
   fetchReferralRecord,
   fetchSupportingEntityNames,
   filterReferrals,
   referralAppAnswers,
+  referralRequest,
   sendReferral,
   submitReferralUpdate,
   type Referral,
@@ -48,7 +48,10 @@ describe('referral intake validation', () => {
 
     // Her names and the referral's own data; an empty answer is left out (RAPP-661).
     expect(
-      buildReferralPayload(parsed, systemFieldIndexFromCatalog(systemFieldsCatalogFixture())),
+      referralRequest(
+        parsed,
+        referralAppAnswers(systemFieldIndexFromCatalog(systemFieldsCatalogFixture()), parsed),
+      ),
     ).toEqual({
       first_name: 'Наталія',
       last_name: 'Àlvarez',
@@ -80,47 +83,6 @@ describe('the season registration questions (RAPP-303)', () => {
     documentationStatus: 'missing' as const,
     consentConfirmed: true as const,
   };
-
-  test('the full form becomes the database payload', () => {
-    const parsed = createReferralSchema.parse({
-      ...minimal,
-      dateOfBirth: '1997-06-12',
-      nationality: ' Mali ',
-      documentType: 'passport',
-      documentNumber: ' ml123456 ',
-      city: 'Vic',
-      applicantStatus: 'refugee',
-      supportingEntities: [' Càritas Vic ', '', 'SOS Racisme'],
-      referenceContactName: 'Sílvia Bosch',
-      seasonNumber: '3',
-      childcareNeed: 'maybe',
-      specificNeeds: ' Necessita pauses. ',
-    });
-    const field = systemFieldFixtureId;
-    expect(
-      buildReferralPayload(parsed, systemFieldIndexFromCatalog(systemFieldsCatalogFixture()), {
-        '5eed0000-0000-4000-8045-000000000001': 'yes',
-        '5eed0000-0000-4000-8045-000000000002': null,
-      }),
-    ).toMatchObject({
-      seasonNumber: 3,
-      // Every answer by field, the app's and Ramassà's (RAPP-661).
-      answers: {
-        [field('date_of_birth')]: '1997-06-12',
-        [field('nationality')]: 'Mali',
-        [field('document_type')]: systemOptionFixtureId('document_type', 'passport'),
-        [field('document_number')]: 'ML123456',
-        [field('city')]: 'Vic',
-        [field('applicant_status')]: systemOptionFixtureId('applicant_status', 'refugee'),
-        [field('supporting_entities')]: ['Càritas Vic', 'SOS Racisme'],
-        [field('reference_contact_name')]: 'Sílvia Bosch',
-        [field('childcare_need')]: 'maybe',
-        [field('specific_needs')]: [systemOptionFixtureId('specific_needs', 'other')],
-        [field('specific_needs_details')]: 'Necessita pauses.',
-        '5eed0000-0000-4000-8045-000000000001': 'yes',
-      },
-    });
-  });
 
   test('only the names and the consent are required', () => {
     expect(createReferralSchema.safeParse(minimal).success).toBe(true);

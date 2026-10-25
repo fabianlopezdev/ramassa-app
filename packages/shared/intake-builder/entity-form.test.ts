@@ -10,7 +10,6 @@ import {
   entityFormPick,
   fieldsAnsweredByEntity,
   isAlwaysOnEntityForm,
-  missingEntityFormFields,
   requiredEntityFormFieldsLeftEmpty,
 } from './entity-form';
 import { NO_CHOICES, playerPlan } from './player-plan';
@@ -128,22 +127,26 @@ describe('entityFormPick', () => {
   });
 });
 
-describe('missingEntityFormFields', () => {
+describe('requiredEntityFormFieldsLeftEmpty on the placed form (RAPP-664)', () => {
   const items = entityFormItems(LAYOUT);
 
-  test('a required built-in by its system key, a required Ramassà field by id', () => {
-    expect(missingEntityFormFields(items, { first_name: '  ' }, {})).toEqual([
+  test('every required field by its id, her names included', () => {
+    expect(requiredEntityFormFieldsLeftEmpty(items, { [FIRST_NAME.id]: '  ' })).toEqual([
       FIRST_NAME.id,
       STOP.id,
     ]);
-    expect(missingEntityFormFields(items, { first_name: 'Amina' }, { [STOP.id]: 'Sants' })).toEqual(
-      [],
-    );
+    expect(
+      requiredEntityFormFieldsLeftEmpty(items, { [FIRST_NAME.id]: 'Amina', [STOP.id]: 'Sants' }),
+    ).toEqual([]);
   });
 
   test('a condition that applies asks its required field', () => {
-    const answers = { [STOP.id]: 'Sants', [SITUATION.id]: '5eed0000-0000-4000-8095-000000000001' };
-    expect(missingEntityFormFields(items, { first_name: 'Amina' }, answers)).toEqual([DETAIL.id]);
+    const answers = {
+      [FIRST_NAME.id]: 'Amina',
+      [STOP.id]: 'Sants',
+      [SITUATION.id]: '5eed0000-0000-4000-8095-000000000001',
+    };
+    expect(requiredEntityFormFieldsLeftEmpty(items, answers)).toEqual([DETAIL.id]);
   });
 });
 

@@ -1,9 +1,11 @@
 /**
  * The referral an entity sends (RAPP-54, RAPP-303), drawn from the fields
  * staff placed on the form (RAPP-652): their order, their wording for the
- * entity, required or not. Her names are always on it. The answers to
- * Ramassà's own fields travel with the referral in one call, and the
- * database checks every required field again.
+ * entity, required or not. Her names are always on it. Every answer travels
+ * by field id, the app's fields and Ramassà's alike (RAPP-664), in one call,
+ * and the database checks every required field again. A local Spanish phone
+ * (612...) is sent with +34; a phone the field refuses says so before
+ * anything is sent.
  */
 
 import {
@@ -20,16 +22,22 @@ import { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import {
+  appAnswersFromForm,
   EMPTY_INTAKE_CATALOG,
   entityFormItemsOf,
   entityFormQuestions,
-  missingEntityFormFields,
+  fetchSystemFieldIndex,
+  internationalPhone,
+  PHONE_PATTERN,
+  requiredEntityFormFieldsLeftEmpty,
+  systemFieldsOf,
   type IntakeCatalog,
+  type SystemFieldIndex,
 } from '@ramassa/shared/intake-builder';
 import {
-  createReferral,
   createReferralSchema,
-  referralSystemValues,
+  referralAppAnswers,
+  sendReferral,
   type CreateReferral,
   type CreateReferralInput,
 } from '@ramassa/shared/referrals';
@@ -60,6 +68,41 @@ export const EMPTY_REFERRAL: CreateReferralInput = {
   consentConfirmed: false as never,
 };
 
+/**
+ * What the form holds, by field id, to tell a required field left empty
+ * (RAPP-664): the app's fields as their answers, her names under their
+ * fields' ids.
+ */
+function formAnswers(
+  fields: SystemFieldIndex,
+  values: Partial<CreateReferralInput>,
+): Record<string, unknown> {
+  const answers: Record<string, unknown> = appAnswersFromForm(fields, {
+    phone: values.phone,
+    dateOfBirth: values.dateOfBirth,
+    nationality: values.nationality,
+    documentType: values.documentType ?? '',
+    documentNumber: values.documentNumber,
+    city: values.city,
+    referenceContactName: values.referenceContactName,
+    applicantStatus: values.applicantStatus ?? '',
+    supportingEntities: values.supportingEntities,
+    childcareNeed: values.childcareNeed ?? '',
+    specificNeeds: values.specificNeeds,
+  });
+  const names = { first_name: values.firstName, last_name: values.lastName } as const;
+  for (const [key, value] of Object.entries(names)) {
+    const field = fields.get(key as keyof typeof names);
+    if (field !== undefined) answers[field.id] = value;
+  }
+  return answers;
+}
+
+/** A phone she typed that the field refuses, even with +34 in front of a local number. */
+function isRefusedPhone(phone: string | undefined): boolean {
+  return (phone ?? '').trim() !== '' && !PHONE_PATTERN.test(internationalPhone(phone ?? ''));
+}
+
 /** "Other" entities typed as a comma-separated list join the ticked ones. */
 function withTypedEntities(referral: CreateReferral, typed: string): CreateReferral {
   const names = typed
@@ -85,6 +128,7 @@ export function ReferralForm({
 }: ReferralFormProps) {
   const items = entityFormItemsOf(catalog);
   const questions = entityFormQuestions(items);
+  const fields = systemFieldsOf(catalog);
   const formRef = useRef<HTMLFormElement>(null);
   const { t, i18n } = useTranslation(['referrals', 'onboarding']);
   const language = (i18n.resolvedLanguage ?? 'ca') as LanguageCode;
@@ -99,6 +143,7 @@ export function ReferralForm({
     handleSubmit,
     watch,
     getValues,
+    setError,
     formState: { errors, isSubmitting },
   } = useForm<CreateReferralInput, unknown, CreateReferral>({
     resolver: zodResolver(createReferralSchema),
@@ -115,15 +160,14 @@ export function ReferralForm({
     const fieldErrors = customAnswerErrorsOf(questions, answers, t);
     const values = getValues();
     const empty = new Set(
-      missingEntityFormFields(
-        items,
-        referralSystemValues({
+      requiredEntityFormFieldsLeftEmpty(items, {
+        ...answers,
+        ...formAnswers(fields, {
           ...values,
           supportingEntities: withTypedEntities(values as CreateReferral, otherEntities)
             .supportingEntities,
         }),
-        answers,
-      ),
+      }),
     );
     setCustomErrors(fieldErrors);
     setMissing(empty);
@@ -134,9 +178,21 @@ export function ReferralForm({
     setFailed(false);
     // Nothing is sent while a field is missing or does not fit.
     const answers = checkedFieldAnswers();
+    // The phone field takes an international number; a local Spanish one gets +34.
+    if (isRefusedPhone(parsed.phone ?? undefined)) {
+      setError('phone', { type: 'format' });
+      return;
+    }
     if (answers === null) return;
+    const referral = withTypedEntities(parsed, otherEntities);
     const result = await safeAsync(
-      () => createReferral(supabase, withTypedEntities(parsed, otherEntities), answers),
+      async () => {
+        const known = fields.size === 0 ? await fetchSystemFieldIndex(supabase) : fields;
+        return sendReferral(supabase, referral, {
+          ...answers,
+          ...referralAppAnswers(known, referral),
+        });
+      },
       { context: { operation: 'entity-referral-create' } },
     );
     if (!result.ok) {

@@ -13,7 +13,6 @@
  *   - a required field left empty refuses the referral, a condition that
  *     does not apply asks nothing.
  */
-import { systemKeysOfQuestion } from '../onboarding/system-fields';
 import type { CustomAnswerValue, CustomQuestion, IntakeCatalog } from './builder';
 import { placedQuestion } from './her-onboarding';
 import {
@@ -166,33 +165,6 @@ function isEmpty(value: unknown): boolean {
   if (value === null || value === undefined || value === false) return true;
   if (typeof value === 'string') return value.trim() === '';
   return Array.isArray(value) && value.length === 0;
-}
-
-/**
- * The ids of the required fields left empty: the app's fields by the system
- * key of their first part (`document_type` for the document,
- * `referralSystemValues` gives them), Ramassà ones by field id. A condition
- * that does not apply asks nothing.
- */
-export function missingEntityFormFields(
-  items: readonly EntityFormItem[],
-  systemValues: Readonly<Partial<Record<string, unknown>>>,
-  customAnswers: Readonly<Record<string, CustomAnswerValue | null>>,
-): readonly string[] {
-  return items.flatMap((item) => {
-    if (!item.placement.required) return [];
-    if (item.kind === 'builtin') {
-      const firstPart = systemKeysOfQuestion(item.key)[0];
-      return isEmpty(firstPart === undefined ? undefined : systemValues[firstPart])
-        ? [item.field.id]
-        : [];
-    }
-    const condition = item.question.showWhen;
-    if (condition !== undefined && customAnswers[condition.questionId] !== condition.optionId) {
-      return [];
-    }
-    return isEmpty(customAnswers[item.field.id]) ? [item.field.id] : [];
-  });
 }
 
 /**

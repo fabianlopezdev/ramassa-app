@@ -9,7 +9,6 @@ import {
 import { isEmptyAnswer } from './intake-builder/builder';
 import {
   fetchSystemFieldIndex,
-  fieldAnswersFromColumns,
   fieldAnswersReadSchema,
   type SystemFieldIndex,
 } from './intake-builder/field-answers';
@@ -132,69 +131,6 @@ export type CreateReferral = z.output<typeof createReferralSchema>;
 
 /** Answers to the Ramassà fields of the form (RAPP-652), by field id; empty ones left out. */
 export type ReferralFieldAnswers = Readonly<Record<string, CustomAnswerValue | null>>;
-
-/**
- * TEMPORARY, until the portal renders every field (RAPP-663, RAPP-664): the
- * form's values under the system keys of the app's fields (`first_name`,
- * `document_type`...), the one place the form's own names meet the fields.
- * `fieldAnswersFromColumns` turns them into answers by field, and
- * `missingEntityFormFields` reads them.
- */
-export function referralSystemValues(
-  form: Readonly<Partial<Record<keyof CreateReferralInput, unknown>>>,
-): Record<string, unknown> {
-  return {
-    first_name: form.firstName,
-    last_name: form.lastName,
-    phone: form.phone,
-    date_of_birth: form.dateOfBirth,
-    nationality: form.nationality,
-    document_type: form.documentType,
-    document_number: form.documentNumber,
-    city: form.city,
-    applicant_status: form.applicantStatus,
-    supporting_entities: form.supportingEntities,
-    reference_contact_name: form.referenceContactName,
-    childcare_need: form.childcareNeed,
-    specific_needs: form.specificNeeds,
-  };
-}
-
-/** The form's values to answer from: a number travels only with a type that takes one. */
-function referralColumns(referral: CreateReferral): Record<string, unknown> {
-  const hasNumber = referral.documentType !== null && referral.documentType !== 'none';
-  return {
-    ...referralSystemValues(referral),
-    document_number: hasNumber ? referral.documentNumber : null,
-  };
-}
-
-/**
- * The referral as `create_entity_referral` takes it (RAPP-661): her names,
- * every answer by field (the app's and Ramassà's), and the referral's own
- * data. A referral starts empty, so an empty answer is left out: there is
- * nothing to remove, and a field the form does not ask stays out.
- */
-export function buildReferralPayload(
-  referral: CreateReferral,
-  systemFields: SystemFieldIndex = new Map(),
-  fields: ReferralFieldAnswers | null = null,
-): Json {
-  const answers = Object.entries({
-    ...fieldAnswersFromColumns(systemFields, referralColumns(referral)).answers,
-    ...fields,
-  }).filter(([, value]) => !isEmptyAnswer(value));
-  return {
-    first_name: referral.firstName,
-    last_name: referral.lastName,
-    email: referral.email,
-    documentationStatus: referral.documentationStatus,
-    notes: referral.notes,
-    seasonNumber: referral.seasonNumber,
-    consentConfirmed: referral.consentConfirmed,
-    answers: Object.fromEntries(answers) as Json,
-  };
-}
 
 // By field (RAPP-663) ---------------------------------------------------------------------------
 
@@ -433,22 +369,6 @@ export async function fetchSupportingEntityNames(
   const { data, error } = await client.rpc('list_supporting_entity_names');
   if (error) databaseFailure(error.message);
   return z.array(z.string()).parse(data ?? []);
-}
-
-/**
- * Sends a referral. `fields` carries the answers to the Ramassà fields of the
- * form (RAPP-652); the database then checks every required field at once.
- */
-export async function createReferral(
-  client: Pick<Client, 'rpc'>,
-  input: CreateReferral,
-  fields: ReferralFieldAnswers | null = null,
-): Promise<string> {
-  const { data, error } = await client.rpc('create_entity_referral', {
-    p_payload: buildReferralPayload(input, await fetchSystemFieldIndex(client), fields),
-  });
-  if (error) databaseFailure(error.message);
-  return z.uuid().parse(data);
 }
 
 export async function completeReferral(
