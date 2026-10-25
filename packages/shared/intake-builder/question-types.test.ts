@@ -239,6 +239,8 @@ describe('one answer schema per type', () => {
 
   test('a phone, an email and a list are tidied before they are checked', () => {
     expect(normalizeCustomAnswerInput(question('phone'), '+34 600 11-12-22')).toBe('+34600111222');
+    // A local Spanish number gets +34, as the team and the entities type it (RAPP-664).
+    expect(normalizeCustomAnswerInput(question('phone'), '612 345 678')).toBe('+34612345678');
     expect(normalizeCustomAnswerInput(question('email'), '  Ana@Example.ORG ')).toBe(
       'ana@example.org',
     );

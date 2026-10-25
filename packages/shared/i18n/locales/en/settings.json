@@ -464,7 +464,9 @@
       "item_list": "She adds items one by one, like the organizations that help her.",
       "consent": "One tick box to accept the text you write.",
       "file_upload": "She sends a photo or a PDF. It is private: only staff who may read this level see it.",
-      "signature": "She signs with her finger, as in the authorization."
+      "signature": "She signs with her finger, as in the authorization.",
+      "country": "A country from the list of every country.",
+      "municipality": "A municipality of Catalonia, from the official list."
     },
     "tooManyOptions": "There are too many options for this type. For a long list, choose \"One choice from a long list\".",
     "settingsInvalid": "Check the settings: the lowest cannot be above the highest, and ages are whole years.",

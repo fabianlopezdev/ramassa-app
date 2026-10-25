@@ -13,11 +13,13 @@ import { textFromForm } from '@/components/fields/language-fields';
 import { cn } from '@/lib/utils';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { getCountryOptions } from '@ramassa/shared/i18n/countries';
 import {
   getLanguageDirection,
   LANGUAGE_NATIVE_NAMES,
   SUPPORTED_LANGUAGES,
 } from '@ramassa/shared/i18n/languages';
+import { getMunicipalityOptions } from '@ramassa/shared/i18n/municipalities';
 import {
   consentSettings,
   dateSettings,
@@ -470,6 +472,28 @@ export function QuestionControl({
           ) : null}
         </div>
       );
+    case 'country':
+    case 'municipality': {
+      // The lists the app ships (D6): she searches every country, or every municipality.
+      const list =
+        draft.type === 'country' ? getCountryOptions(language) : getMunicipalityOptions(language);
+      return (
+        <div className="flex flex-col gap-1">
+          <div className={boxClass}>{phone('customSearchPlaceholder')}</div>
+          {isExample ? (
+            list.slice(0, 2).map((option) => (
+              <div key={option.code} className="rounded-md border px-3 py-1.5 text-start text-sm">
+                {option.label}
+              </div>
+            ))
+          ) : showOptionCount ? (
+            <span className="text-xs text-muted-foreground">
+              {t('settings:questions.preview.optionCount', { count: list.length })}
+            </span>
+          ) : null}
+        </div>
+      );
+    }
     case 'item_list':
       return (
         <div className="flex flex-col gap-2">

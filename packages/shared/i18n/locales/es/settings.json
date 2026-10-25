@@ -464,7 +464,9 @@
       "item_list": "Ella añade elementos uno por uno, como las entidades que la ayudan.",
       "consent": "Una sola casilla para aceptar el texto que escribas.",
       "file_upload": "Ella envía una foto o un PDF. Es privado: solo lo ve el equipo que puede leer este nivel.",
-      "signature": "Ella firma con el dedo, como en la autorización."
+      "signature": "Ella firma con el dedo, como en la autorización.",
+      "country": "Un país de la lista de todos los países.",
+      "municipality": "Un municipio de Cataluña, de la lista oficial."
     },
     "tooManyOptions": "Hay demasiadas opciones para este tipo. Para una lista larga, elige \"Una opción de una lista larga\".",
     "settingsInvalid": "Revisa los ajustes: el mínimo no puede ser mayor que el máximo, y las edades son años enteros.",

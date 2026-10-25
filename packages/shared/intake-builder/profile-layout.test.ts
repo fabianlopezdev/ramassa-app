@@ -121,18 +121,29 @@ describe('parseProfileLayout and the app fields (RAPP-660)', () => {
     ],
   })!;
 
-  test('a split question stands for itself through its first part', () => {
+  test('every part of a split question is a field with its system key', () => {
+    expect(layout.fields.map((field) => field.systemKey)).toEqual([
+      'document_type',
+      'document_number',
+      'nationality',
+      null,
+    ]);
+    expect(layout.placements.map((placement) => placement.fieldId)).toEqual([
+      '5eed0000-0000-4000-8091-000000000011',
+      '5eed0000-0000-4000-8091-000000000012',
+    ]);
+  });
+
+  test('a split question stands in her plan through its first part only', () => {
     expect(layout.fields.map((field) => field.builtinKey)).toEqual([
       'document',
+      null,
       'nationality',
       null,
     ]);
   });
 
-  test('the other parts and their placements stay out until the apps render them', () => {
-    expect(layout.fields.some((field) => field.id.endsWith('12'))).toBe(false);
-    expect(layout.placements.map((placement) => placement.fieldId)).toEqual([
-      '5eed0000-0000-4000-8091-000000000011',
-    ]);
+  test('an option keeps its stable key', () => {
+    expect(layout.fields[0]?.options[0]?.key).toBe('nie');
   });
 });

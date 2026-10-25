@@ -464,7 +464,9 @@
       "item_list": "Ella afegeix elements un per un, com les entitats que l’ajuden.",
       "consent": "Una sola casella per acceptar el text que escriguis.",
       "file_upload": "Ella envia una foto o un PDF. És privat: només el veu l’equip que pot llegir aquest nivell.",
-      "signature": "Ella signa amb el dit, com a l’autorització."
+      "signature": "Ella signa amb el dit, com a l’autorització.",
+      "country": "Un país de la llista de tots els països.",
+      "municipality": "Un municipi de Catalunya, de la llista oficial."
     },
     "tooManyOptions": "Hi ha massa opcions per a aquest tipus. Per a una llista llarga, tria \"Una opció d’una llista llarga\".",
     "settingsInvalid": "Revisa els ajustos: el mínim no pot ser més gran que el màxim, i les edats són anys sencers.",

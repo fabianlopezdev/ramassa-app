@@ -20,7 +20,9 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { AppError, databaseErrorCode } from '../errors';
+import { countryLabelForCanonical } from '../i18n/countries';
 import { resolveLocalizedText } from '../i18n/localized-content';
+import { municipalityLabelForCanonical } from '../i18n/municipalities';
 import { appTermsFromCatalog, type CurrentAppTerms } from '../onboarding/app-terms';
 import {
   isCustomStep,
@@ -553,6 +555,13 @@ export function answerText(
     );
   }
   if (typeof value === 'boolean') return value ? words.yes : words.no;
+  // A list the app ships stores the canonical name; she reads it in her language.
+  if (question.type === 'country' && typeof value === 'string') {
+    return countryLabelForCanonical(value, language) ?? value;
+  }
+  if (question.type === 'municipality' && typeof value === 'string') {
+    return municipalityLabelForCanonical(value, language) ?? value;
+  }
   if (!isChoiceType(question.type)) {
     return typeof value === 'string' ? value : (value as readonly unknown[]).map(String).join(', ');
   }

@@ -21,6 +21,11 @@ import { AppError, databaseErrorCode } from '../errors';
 import { SUPPORTED_LANGUAGES } from '../i18n/languages';
 import { resolveLocalizedText } from '../i18n/localized-content';
 import { INTAKE_QUESTIONS, type IntakeQuestion } from '../onboarding/intake';
+import {
+  isSystemFieldKey,
+  SYSTEM_FIELD_QUESTIONS,
+  type SystemFieldKey,
+} from '../onboarding/system-fields';
 import type { LanguageCode } from '../schemas/language';
 import type { Database, Json } from '../types/database';
 import { CUSTOM_QUESTION_TYPES, type CustomQuestionType } from './question-types';
@@ -62,6 +67,8 @@ const sectionSchema = z.object({
 
 const fieldOptionSchema = z.object({
   id: z.uuid(),
+  // The stable key of an app field's option (D5): `nie`, `M`, `yes`.
+  key: z.string().nullable().optional(),
   label: anyLanguageTextSchema,
   sort_order: z.number().int(),
   is_archived: z.boolean(),
@@ -110,6 +117,8 @@ export interface ProfileSection {
 
 export interface ProfileFieldOption {
   readonly id: string;
+  /** The stable key of an app field's option (`nie`, `M`); null for one staff added. */
+  readonly key?: string | null;
   readonly label: BuilderText;
   readonly isArchived: boolean;
 }
@@ -118,7 +127,17 @@ export interface ProfileField {
   readonly id: string;
   readonly sectionId: string;
   readonly kind: ProfileFieldKind;
-  /** The app's own question a built-in field is; null for a custom one. */
+  /**
+   * The stable name features and the app's screens find the field by (D1):
+   * `date_of_birth`, `document_number`... Null for a field staff created.
+   */
+  readonly systemKey?: SystemFieldKey | null;
+  /**
+   * The app question a field stands for in her plan (the per-player choice):
+   * the field itself, or the first part of a question that was composite (the
+   * document type for the document). Null for the other parts and for a field
+   * staff created.
+   */
   readonly builtinKey: IntakeQuestion | null;
   readonly type: CustomQuestionType;
   readonly label: BuilderText;
@@ -178,33 +197,22 @@ function isIntakeQuestion(key: string | null): key is IntakeQuestion {
 }
 
 /**
- * The app's fields have system keys (RAPP-660): `date_of_birth`, `nationality`,
- * and the parts of the fields that were composite (`document_type`,
- * `document_number`...). Until her phone and the team's pages render every
- * field (RAPP-663, RAPP-664), the apps keep asking and showing the app's
- * questions their own way: a split question stands for itself through its
- * first part, and its other parts stay out of the layout.
+ * The app question a system field stands for in her plan: the field itself,
+ * or the first part of a question that was composite. The other parts
+ * (`document_number`, `num_dependents`...) are fields of their own with no
+ * question; null for a Ramassà field.
  */
-const SPLIT_QUESTION_FIRST_PARTS: Readonly<Record<string, IntakeQuestion>> = {
-  document_type: 'document',
-  has_dependents: 'dependents',
-};
-
-/** The parts of a split app question the apps do not show yet (RAPP-663, RAPP-664). */
-export const SPLIT_QUESTION_OTHER_PARTS: readonly string[] = [
-  'document_number',
-  'document_name',
-  'num_dependents',
-  'applicant_status_details',
-  'specific_needs_details',
-];
-
-/** The app question a system field stands for; null for a Ramassà field. */
-function questionOfSystemKey(systemKey: string | null): IntakeQuestion | null {
+function questionOfSystemKey(systemKey: SystemFieldKey | null): IntakeQuestion | null {
   if (systemKey === null) return null;
-  const firstPartOf = SPLIT_QUESTION_FIRST_PARTS[systemKey];
-  if (firstPartOf !== undefined) return firstPartOf;
-  return isIntakeQuestion(systemKey) ? systemKey : null;
+  const question = SYSTEM_FIELD_QUESTIONS[systemKey];
+  const firstPart = (Object.keys(SYSTEM_FIELD_QUESTIONS) as SystemFieldKey[]).find(
+    (key) => SYSTEM_FIELD_QUESTIONS[key] === question,
+  );
+  return firstPart === systemKey && isIntakeQuestion(question) ? question : null;
+}
+
+function systemKeyOf(raw: string | null): SystemFieldKey | null {
+  return raw !== null && isSystemFieldKey(raw) ? raw : null;
 }
 
 /** The layout from the catalog; undefined when the catalog sends none. */
@@ -217,14 +225,6 @@ export function parseProfileLayout(raw: {
     return undefined;
   }
   const layout = layoutSchema.parse(raw);
-  const shownLater = new Set(
-    layout.fields
-      .filter(
-        (field) =>
-          field.system_key !== null && SPLIT_QUESTION_OTHER_PARTS.includes(field.system_key),
-      )
-      .map((field) => field.id),
-  );
   return {
     sections: byOrder(layout.sections).map((section) => ({
       id: section.id,
@@ -232,11 +232,12 @@ export function parseProfileLayout(raw: {
       title: section.title,
       isBuiltin: section.is_builtin,
     })),
-    fields: byOrder(layout.fields.filter((field) => !shownLater.has(field.id))).map((field) => ({
+    fields: byOrder(layout.fields).map((field) => ({
       id: field.id,
       sectionId: field.section_id,
       kind: field.kind,
-      builtinKey: questionOfSystemKey(field.system_key),
+      systemKey: systemKeyOf(field.system_key),
+      builtinKey: questionOfSystemKey(systemKeyOf(field.system_key)),
       type: field.question_type,
       label: field.label,
       help: field.help,
@@ -254,13 +255,12 @@ export function parseProfileLayout(raw: {
       hasAnswers: field.has_answers ?? null,
       options: byOrder(field.options).map((option) => ({
         id: option.id,
+        key: option.key ?? null,
         label: option.label,
         isArchived: option.is_archived,
       })),
     })),
-    placements: byOrder(
-      layout.placements.filter((placement) => !shownLater.has(placement.field_id)),
-    ).map((placement) => ({
+    placements: byOrder(layout.placements).map((placement) => ({
       id: placement.id,
       fieldId: placement.field_id,
       surface: placement.surface,
@@ -287,6 +287,14 @@ export function builtinField(
   return layout.fields.find((field) => field.builtinKey === question);
 }
 
+/** The app field with this system key. */
+export function systemField(
+  layout: ProfileLayout,
+  systemKey: SystemFieldKey,
+): ProfileField | undefined {
+  return layout.fields.find((field) => field.systemKey === systemKey);
+}
+
 /**
  * The order fields are listed in (RAPP-658): the app's own fields first, in
  * their natural order, then the fields staff created, A to Z in the reader's
@@ -294,9 +302,11 @@ export function builtinField(
  */
 export function compareFields(language: LanguageCode) {
   const name = (field: ProfileField) => resolveLocalizedText(field.label, language)?.text ?? '';
+  const isApp = (field: ProfileField) =>
+    (field.systemKey ?? null) !== null || field.builtinKey !== null;
   return (a: ProfileField, b: ProfileField): number => {
-    const aIsApp = a.builtinKey !== null;
-    if (aIsApp !== (b.builtinKey !== null)) return aIsApp ? -1 : 1;
+    const aIsApp = isApp(a);
+    if (aIsApp !== isApp(b)) return aIsApp ? -1 : 1;
     if (aIsApp) return a.sortOrder - b.sortOrder;
     return name(a).localeCompare(name(b), language, { sensitivity: 'base' });
   };

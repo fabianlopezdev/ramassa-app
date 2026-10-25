@@ -58,13 +58,10 @@ export type CustomQuestionType = (typeof CUSTOM_QUESTION_TYPES)[number];
 export const LIST_TYPES = ['country', 'municipality'] as const;
 
 /**
- * The types the field form offers. The two lists join once her phone and the
- * team's pages render them (RAPP-663 to RAPP-665); until then only the app's
- * own fields use them.
+ * The types the field form offers: every type, the two lists included, since
+ * her phone and the team's pages render them all (RAPP-663, RAPP-664).
  */
-export const BUILDER_QUESTION_TYPES = CUSTOM_QUESTION_TYPES.filter(
-  (type) => !(LIST_TYPES as readonly string[]).includes(type),
-);
+export const BUILDER_QUESTION_TYPES: readonly CustomQuestionType[] = CUSTOM_QUESTION_TYPES;
 
 /** Types answered by picking options staff wrote. */
 export const OPTION_TYPES = ['single_choice', 'multiple_choice', 'search_choice'] as const;
@@ -400,13 +397,16 @@ export function internationalPhone(value: string): string {
   return tidy;
 }
 
-/** What she typed, tidied the way the field shows it: separators out of a phone, an email lowercased, list items trimmed. */
+/**
+ * What she typed, tidied the way the field shows it: a phone in its
+ * international form (a Spanish number typed without +34 gets it), an email
+ * lowercased, list items trimmed.
+ */
 export function normalizeCustomAnswerInput(
   question: Pick<AnswerQuestionShape, 'type'>,
   value: CustomAnswerValue,
 ): CustomAnswerValue {
-  if (question.type === 'phone' && typeof value === 'string')
-    return value.replace(/[\s\-.()]/g, '');
+  if (question.type === 'phone' && typeof value === 'string') return internationalPhone(value);
   if (question.type === 'email' && typeof value === 'string') return value.trim().toLowerCase();
   if (question.type === 'item_list' && Array.isArray(value))
     return (value as unknown as readonly string[])

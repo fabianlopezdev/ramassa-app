@@ -5,7 +5,11 @@
 import { render } from '@testing-library/react';
 import { expect, test } from 'bun:test';
 import type { IntakeScreen } from '@ramassa/shared/intake-builder';
-import { customAnswerErrorsOf, CustomAnswerInput } from './custom-answer-fields';
+import {
+  customAnswerErrorsOf,
+  CustomAnswerInput,
+  readCustomAnswersOf,
+} from './custom-answer-fields';
 
 const t = (key: string, values?: Record<string, unknown>) =>
   values === undefined ? key : `${key} ${JSON.stringify(values)}`;
@@ -69,4 +73,44 @@ test('the message shows under its own question', () => {
     'Escriu un nombre sencer.',
   );
   expect(view.queryByTestId('referral-custom-email-error')).toBeNull();
+});
+
+test('a country and a municipality are picked from the lists the app ships (RAPP-664)', () => {
+  const lists = (['country', 'municipality'] as const).map((type) => ({
+    id: type,
+    type,
+    label: { ca: type },
+    help: null,
+    privacy: 'personal' as const,
+    isArchived: false,
+    settings: {},
+    options: [],
+  }));
+  const view = render(
+    <form data-testid="form">
+      {lists.map((question) => (
+        <CustomAnswerInput
+          key={question.id}
+          question={question}
+          value={question.type === 'country' ? 'Marroc' : 'Vic'}
+          prefix="fitxa"
+          language="es"
+        />
+      ))}
+    </form>,
+  );
+  const country = view.container.querySelector<HTMLSelectElement>('#fitxa-country');
+  const city = view.container.querySelector<HTMLSelectElement>('#fitxa-municipality');
+  // The canonical name is stored; she reads it in her language.
+  expect(country?.value).toBe('Marroc');
+  expect(country?.selectedOptions[0]?.textContent).toBe('Marruecos');
+  expect(city?.value).toBe('Vic');
+  expect(country?.options.length).toBeGreaterThan(200);
+  expect(city?.options.length).toBeGreaterThan(900);
+  const answers = readCustomAnswersOf(
+    new FormData(view.getByTestId('form') as HTMLFormElement),
+    lists,
+    'fitxa',
+  );
+  expect(answers).toEqual({ country: 'Marroc', municipality: 'Vic' });
 });
