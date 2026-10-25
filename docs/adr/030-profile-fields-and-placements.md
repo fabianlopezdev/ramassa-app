@@ -89,3 +89,10 @@ is worded. As Marc designed the onboarding (RAPP-641 to RAPP-647), this showed t
   the Fitxa. The Onboarding board orders and words the screens.
 - The entity's answers to Ramassà fields travel only inside `create_entity_referral`; a required
   one left out refuses the referral.
+
+### After the app's own fields became fields (RAPP-666, 2026-10-25)
+
+- Decision 4 is replaced by [ADR-031](031-one-field-model-for-every-answer.md): the required flag
+  of an app question lives on its first field's placements, and `intake_required_questions` is
+  gone. Built-in fields are now any field with a `system_key`, editable like a Ramassà field except
+  her names.
