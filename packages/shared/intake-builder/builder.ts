@@ -49,6 +49,7 @@ import {
 } from '../onboarding/screen-texts';
 import type { LanguageCode } from '../schemas/language';
 import type { Database, Json } from '../types/database';
+import { systemFieldIndexFromCatalog, type SystemFieldIndex } from './field-answers';
 import {
   anyLanguageTextSchema,
   EMPTY_PROFILE_LAYOUT,
@@ -250,6 +251,12 @@ export interface IntakeCatalog {
   readonly requiredQuestions?: readonly IntakeQuestion[];
   /** Sections, fields and placements (RAPP-649); absent when the catalog could not load. */
   readonly layout?: ProfileLayout;
+  /**
+   * The app's fields by system key, every part of a split question included
+   * (RAPP-663): the app's own screens read and write their answers by these
+   * ids. Absent when the catalog could not load.
+   */
+  readonly systemFields?: SystemFieldIndex;
 }
 
 export const EMPTY_INTAKE_CATALOG: IntakeCatalog = {
@@ -302,7 +309,15 @@ export function parseIntakeCatalog(data: unknown): IntakeCatalog {
       ? {}
       : { requiredQuestions: [...requiredQuestionsFrom(raw.required_questions)] }),
     ...withLayout(parseProfileLayout(raw)),
+    ...(raw.fields === undefined
+      ? {}
+      : { systemFields: systemFieldIndexFromCatalog({ fields: raw.fields }) }),
   };
+}
+
+/** The app's fields of a catalog by system key; none when it could not load. */
+export function systemFieldsOf(catalog: IntakeCatalog): SystemFieldIndex {
+  return catalog.systemFields ?? new Map();
 }
 
 function withLayout(layout: ProfileLayout | undefined): { readonly layout?: ProfileLayout } {
