@@ -40,7 +40,8 @@ test.afterAll(() => {
     begin;
     delete from public.authorization_signatures where profile_id = ${HER};
     delete from public.terms_acceptances where profile_id = ${HER};
-    delete from public.profile_answers where profile_id = ${HER};
+    -- Her answers by field (ADR-031): the seed gives her none.
+    delete from public.custom_answers where profile_id = ${HER};
     update public.profiles set role = 'invited', terms_accepted_at = null where id = ${HER};
     update public.invites set accepted_at = null, accepted_by = null, expires_at = now() + interval '30 days'
      where email = '${TEST_PLAYER_EMAIL}';
@@ -86,10 +87,12 @@ test.describe.serial('scenario switches on a test player', () => {
       'true',
       { timeout: 20_000 },
     );
-    // Recorded as staff answers, so her wizard treats them as answered.
+    // Recorded as staff answers, so her wizard treats them as answered: some
+    // answers, none of them hers (-1 would mean none at all).
     expect(
       countInDatabase(
-        `select count(*) from public.profile_answers where profile_id = ${HER} and source <> 'staff'`,
+        `select case when count(*) = 0 then -1 else count(*) filter (where source <> 'staff') end
+           from public.custom_answers where profile_id = ${HER}`,
       ),
     ).toBe(0);
 

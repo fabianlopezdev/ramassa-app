@@ -4,7 +4,14 @@
  */
 
 import { expect, test, type Page } from '@playwright/test';
-import { ENTITY_EMAIL, OTHER_ENTITY_EMAIL, queryDatabase, signIn, STAFF_EMAIL } from './session';
+import {
+  ENTITY_EMAIL,
+  OTHER_ENTITY_EMAIL,
+  queryDatabase,
+  referralAnswerSql,
+  signIn,
+  STAFF_EMAIL,
+} from './session';
 
 const RUN_TAG = `rapp54${Date.now().toString(36)}`;
 const ENTITY_USER_ID = '5eed0000-0000-4000-8000-000000000004';
@@ -137,7 +144,7 @@ test.describe.serial('entity referral product flow', () => {
     ).toBe(`${FIRST_NAME}|${LAST_NAME}|${EMAIL}|in_progress|${NOTES}|pending`);
     expect(
       queryDatabase(
-        `select (public.decrypt_field(intake_answers)::jsonb ->> 'applicant_status') || '|' ||
+        `select ${referralAnswerSql(sqlLiteral(referralId), 'applicant_status')} || '|' ||
                 (public.decrypt_field(intake_answers)::jsonb ->> 'season_number') || '|' ||
                 (consent_confirmed_at is not null)::text
            from public.entity_referrals where id = ${sqlLiteral(referralId)}`,

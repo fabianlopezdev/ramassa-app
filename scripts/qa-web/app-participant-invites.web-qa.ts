@@ -5,7 +5,13 @@
  * sign in.
  */
 import { expect, test } from '@playwright/test';
-import { completeSecondFactor, queryDatabase, signInPlayer, STAFF_EMAIL } from './session';
+import {
+  completeSecondFactor,
+  queryDatabase,
+  questionStatesSql,
+  signInPlayer,
+  STAFF_EMAIL,
+} from './session';
 
 test.setTimeout(240_000);
 
@@ -63,8 +69,7 @@ test('invite, renew an expired invite, and cancel it', async ({ page }) => {
     ).toBe('Creu Roja Osona');
     expect(
       queryDatabase(
-        `select string_agg(s.question || ':' || s.state, ',') from public.intake_question_states s
-           join auth.users u on u.id = s.profile_id where u.email = '${email}';`,
+        `select ${questionStatesSql(`(select id from auth.users where email = '${email}')`)};`,
       ).trim(),
     ).toBe('phone:skip');
     await page.getByTestId('invite-done').click();

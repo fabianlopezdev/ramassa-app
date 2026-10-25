@@ -4,7 +4,13 @@
  * the tablet table. Counts come from the database so the spec follows the seed.
  */
 import { expect, test } from '@playwright/test';
-import { completeSecondFactor, queryDatabase, signInPlayer, STAFF_EMAIL } from './session';
+import {
+  appAnswerSql,
+  completeSecondFactor,
+  queryDatabase,
+  signInPlayer,
+  STAFF_EMAIL,
+} from './session';
 
 test.setTimeout(180_000);
 
@@ -12,7 +18,7 @@ test.setTimeout(180_000);
 const count = (where: string) =>
   Number(
     queryDatabase(`
-      select count(*) from public.profiles
+      select count(*) from public.profiles r
        where role in ('player', 'invited') and org_id = '5eed0000-0000-4000-8000-000000000000'
          and anonymized_at is null ${where};
     `).trim(),
@@ -37,7 +43,7 @@ test('the roster with search, chips, filters and sorting', async ({ page }) => {
   await page.getByTestId('filter-done').click();
   await expect(page.getByTestId('participant-filters')).toHaveText('Filters (1)');
   await expect(total).toHaveText(
-    `${count("and reference_entity = 'Creu Roja Osona'")} participants`,
+    `${count(`and ${appAnswerSql('r.id', 'reference_entity')} = 'Creu Roja Osona'`)} participants`,
   );
 
   // The tablet table sorts by its headers.

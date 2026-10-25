@@ -14,7 +14,7 @@
  */
 
 import { expect, test } from '@playwright/test';
-import { queryDatabase, signIn } from './session';
+import { appAnswerSql, queryDatabase, signIn, writeAppAnswerSql } from './session';
 
 const LIMITED_EMAIL = 'nuria.serra@example.test';
 const SEED_ORG_ID = '5eed0000-0000-4000-8000-000000000000';
@@ -23,19 +23,20 @@ const SENSITIVE_PERMISSION = 'participants.view_sensitive';
 /** A participant with a NIE, so the document rule applies to her. */
 const participantId = () =>
   queryDatabase(`
-    select id from public.profiles
-     where role = 'player' and last_name = 'Mamani' and document_type = 'nie';
+    select r.id from public.profiles r
+     where r.role = 'player' and r.last_name = 'Mamani'
+       and ${appAnswerSql('r.id', 'document_type')} = 'nie';
   `).trim();
 
 const storedSensitiveValues = (id: string) =>
   queryDatabase(`
-    select concat_ws('|', public.decrypt_field(document_number), public.decrypt_field(phone),
-                     public.decrypt_field(address), public.decrypt_field(postal_code))
-      from public.profiles where id = '${id}';
+    select concat_ws('|', ${appAnswerSql(`'${id}'`, 'document_number')},
+                     ${appAnswerSql(`'${id}'`, 'phone')}, ${appAnswerSql(`'${id}'`, 'address')},
+                     ${appAnswerSql(`'${id}'`, 'postal_code')});
   `);
 
 const placeOfBirth = (id: string) =>
-  queryDatabase(`select place_of_birth from public.profiles where id = '${id}';`);
+  queryDatabase(`select ${appAnswerSql(`'${id}'`, 'place_of_birth')};`);
 
 test.describe('editing a record without the sensitive fields', () => {
   let hadSensitivePermission = false;
@@ -83,17 +84,17 @@ test.describe('editing a record without the sensitive fields', () => {
       await expect.poll(() => placeOfBirth(id), { timeout: 15_000 }).toBe(nextPlace);
       expect(storedSensitiveValues(id)).toBe(sensitiveBefore);
     } finally {
-      queryDatabase(
-        `update public.profiles set place_of_birth = '${originalPlace}' where id = '${id}';`,
-      );
+      queryDatabase(`
+        begin;
+        ${writeAppAnswerSql(`'${id}'`, 'place_of_birth', originalPlace === '' ? null : originalPlace, 'player')}
+        commit;
+      `);
     }
   });
 
   test('her page locks the Sensible fields and says which level they need', async ({ page }) => {
     const id = participantId();
-    const phone = queryDatabase(
-      `select public.decrypt_field(phone) from public.profiles where id = '${id}';`,
-    );
+    const phone = queryDatabase(`select ${appAnswerSql(`'${id}'`, 'phone')};`);
 
     await signIn(page, LIMITED_EMAIL);
     await page.goto(`/participants/${id}`);

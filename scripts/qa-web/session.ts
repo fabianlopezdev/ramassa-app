@@ -364,6 +364,122 @@ export function queryDatabase(sql: string): string {
   ).trim();
 }
 
+/**
+ * Her current answer to an app field (ADR-031), as SQL that reads one text:
+ * decrypted, a choice by its option key (several choices joined by commas),
+ * anything else as text; null when she has none. Her answers live by field in
+ * `custom_answers` since RAPP-666, so the specs read them here. `profileId` is
+ * an SQL expression: a quoted uuid or a subquery.
+ */
+export function appAnswerSql(profileId: string, systemKey: string): string {
+  return `(select case
+      when f.question_type in ('single_choice', 'search_choice', 'multiple_choice') then (
+        select string_agg(coalesce(o.key, o.id::text), ',' order by o.sort_order)
+          from public.custom_question_options o
+         where o.question_id = f.id
+           and o.id::text in (select jsonb_array_elements_text(
+                 case when jsonb_typeof(a.v) = 'array' then a.v else jsonb_build_array(a.v) end)))
+      when jsonb_typeof(a.v) = 'string' then a.v #>> '{}'
+      else a.v::text end
+    from public.profiles p
+    join public.profile_fields f on f.org_id = p.org_id and f.system_key = '${systemKey}'
+    cross join lateral (select private.field_answer_now(p.id, f) as v) a
+   where p.id = ${profileId})`;
+}
+
+/**
+ * Staff's Ask or Don't ask for her, as SQL listing `question:state` by question
+ * name, comma separated: an app question's state lives on its first field
+ * since RAPP-666, a Ramassà field's as `custom:<id>`. `profileId` is an SQL
+ * expression.
+ */
+export function questionStatesSql(profileId: string): string {
+  return `(select string_agg(q.question || ':' || s.state, ',' order by q.question)
+     from public.custom_question_states s
+     join public.profile_fields f on f.id = s.question_id
+     cross join lateral (select case when f.kind = 'custom' then 'custom:' || f.id::text
+                                     else private.system_key_question(f.system_key) end as question) q
+    where s.profile_id = ${profileId})`;
+}
+
+/**
+ * A referral's answer to an app field, as SQL that reads one text: decrypted
+ * (a referral's answers are always encrypted), a choice by its option key.
+ * `referralId` is an SQL expression.
+ */
+export function referralAnswerSql(referralId: string, systemKey: string): string {
+  return `(select case
+      when f.question_type in ('single_choice', 'search_choice', 'multiple_choice') then (
+        select string_agg(coalesce(o.key, o.id::text), ',' order by o.sort_order)
+          from public.custom_question_options o
+         where o.question_id = f.id
+           and o.id::text in (select jsonb_array_elements_text(
+                 case when jsonb_typeof(a.v) = 'array' then a.v else jsonb_build_array(a.v) end)))
+      when jsonb_typeof(a.v) = 'string' then a.v #>> '{}'
+      else a.v::text end
+    from public.referral_custom_answers r
+    join public.profile_fields f on f.id = r.question_id and f.system_key = '${systemKey}'
+    cross join lateral (select public.decrypt_field(r.value_encrypted)::jsonb as v) a
+   where r.referral_id = ${referralId})`;
+}
+
+/** An app answer the way the specs give it: a choice by its option key. */
+export type AppAnswerFixture = string | number | boolean | readonly string[] | null;
+
+/**
+ * SQL that sets her answer to an app field through the app's own writer
+ * (`private.write_custom_answer`, Sensitive answers encrypted), or removes it
+ * when `value` is null. A choice is given by its option key.
+ */
+export function writeAppAnswerSql(
+  profileId: string,
+  systemKey: string,
+  value: AppAnswerFixture,
+  source: 'staff' | 'player' = 'staff',
+): string {
+  const field = `public.profile_fields f join public.profiles p
+      on p.org_id = f.org_id and p.id = ${profileId} and f.system_key = '${systemKey}'`;
+  const remove = `delete from public.custom_answers a using ${field}
+     where a.profile_id = p.id and a.question_id = f.id;`;
+  if (value === null) return remove;
+  const raw = `'${JSON.stringify(value).replaceAll("'", "''")}'::jsonb`;
+  return `${remove}
+    select private.write_custom_answer(p.id, f, case
+        when f.question_type in ('single_choice', 'search_choice') then (
+          select to_jsonb(o.id::text) from public.custom_question_options o
+           where o.question_id = f.id and o.key = ${raw} #>> '{}')
+        when f.question_type = 'multiple_choice' then (
+          select jsonb_agg(o.id::text order by o.sort_order) from public.custom_question_options o
+           where o.question_id = f.id and o.key in (select jsonb_array_elements_text(${raw})))
+        else ${raw} end, '${source}', null)
+      from ${field};`;
+}
+
+/**
+ * SQL that gives a referral an answer to an app field, encrypted as every
+ * referral answer is, unless it has one. A choice is given by its option key.
+ */
+export function writeReferralAnswerSql(
+  referralId: string,
+  systemKey: string,
+  value: Exclude<AppAnswerFixture, null>,
+): string {
+  const raw = `'${JSON.stringify(value).replaceAll("'", "''")}'::jsonb`;
+  return `insert into public.referral_custom_answers (referral_id, question_id, org_id, value_encrypted)
+    select r.id, f.id, f.org_id, public.encrypt_field((case
+        when f.question_type in ('single_choice', 'search_choice') then (
+          select to_jsonb(o.id::text) from public.custom_question_options o
+           where o.question_id = f.id and o.key = ${raw} #>> '{}')
+        when f.question_type = 'multiple_choice' then (
+          select jsonb_agg(o.id::text order by o.sort_order) from public.custom_question_options o
+           where o.question_id = f.id and o.key in (select jsonb_array_elements_text(${raw})))
+        else ${raw} end)::text)
+      from public.entity_referrals r
+      join public.profile_fields f on f.org_id = r.org_id and f.system_key = '${systemKey}'
+     where r.id = ${referralId}
+    on conflict do nothing;`;
+}
+
 export function countInDatabase(sql: string): number {
   return Number(queryDatabase(sql));
 }

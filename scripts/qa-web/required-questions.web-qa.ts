@@ -11,7 +11,7 @@
 import { readFileSync } from 'node:fs';
 import { expect, test } from '@playwright/test';
 import { ONBOARDING_DESIGNER_EMAIL, TEST_PLAYER_EMAIL } from '@ramassa/shared/testing';
-import { PLAYER_ORIGIN, queryDatabase, signIn, signInPlayer } from './session';
+import { PLAYER_ORIGIN, queryDatabase, signIn, signInPlayer, writeAppAnswerSql } from './session';
 
 const ORG = '5eed0000-0000-4000-8000-000000000000';
 const HER = `(select id from auth.users where email = '${TEST_PLAYER_EMAIL}')`;
@@ -30,15 +30,15 @@ test.describe.configure({ mode: 'serial' });
 function resetHer(): void {
   queryDatabase(`
     begin;
-    delete from public.intake_required_questions where org_id = '${ORG}' and question <> 'phone';
+    -- The app's own required list, on the placements (ADR-031).
+    select private.set_app_question_required('${ORG}', q.question,
+             q.question = any (private.default_required_intake_questions()))
+      from unnest(private.wizard_intake_questions()) q(question)
+     where not (q.question = any (private.locked_required_intake_questions()));
     update public.field_placements set required = false
      where field_id = '${QUESTION}' and surface = 'onboarding';
-    update public.profiles set date_of_birth = null, place_of_birth = null, nationality = null,
-           document_type = null where id = ${HER};
-    delete from public.profile_answers where profile_id = ${HER};
     delete from public.custom_answers where profile_id = ${HER};
     -- Her per-player choices too: another spec may have left Don't ask on her phone.
-    delete from public.intake_question_states where profile_id = ${HER};
     delete from public.custom_question_states where profile_id = ${HER};
     commit;
   `);
@@ -49,13 +49,10 @@ test.beforeAll(() => {
   // Staff gave her name, background and document (RAPP-300).
   queryDatabase(`
     begin;
-    update public.profiles set date_of_birth = '1999-03-04', place_of_birth = 'Bamako',
-           nationality = 'Mali', document_type = 'none' where id = ${HER};
-    insert into public.profile_answers (profile_id, org_id, question, source)
-    select ${HER}, '${ORG}', question, 'staff'
-      from unnest(array['first_name', 'last_name', 'date_of_birth', 'place_of_birth',
-                        'nationality', 'document']) question
-    on conflict (profile_id, question) do nothing;
+    ${writeAppAnswerSql(HER, 'date_of_birth', '1999-03-04')}
+    ${writeAppAnswerSql(HER, 'place_of_birth', 'Bamako')}
+    ${writeAppAnswerSql(HER, 'nationality', 'Mali')}
+    ${writeAppAnswerSql(HER, 'document_type', 'none')}
     commit;
   `);
 });
@@ -79,9 +76,11 @@ test('the design role makes the sizes optional and a Ramassà field required', a
     await size.click();
     await expect
       .poll(() =>
+        // Required is the flag of its field's onboarding placement (ADR-031).
         queryDatabase(
-          `select is_required from public.intake_required_questions
-            where org_id = '${ORG}' and question = '${question}'`,
+          `select p.required from public.field_placements p
+             join public.profile_fields f on f.id = p.field_id
+            where f.org_id = '${ORG}' and f.system_key = '${question}' and p.surface = 'onboarding'`,
         ),
       )
       .toBe('f');

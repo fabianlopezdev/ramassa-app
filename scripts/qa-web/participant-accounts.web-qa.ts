@@ -18,18 +18,36 @@
 import { expect, test, type Page } from '@playwright/test';
 import { choose, expectAsking, questionRow } from './invite-review';
 import {
+  appAnswerSql,
   countInDatabase,
   ENTITY_EMAIL,
   PLAYER_ORIGIN,
   queryDatabase,
   queryDatabaseAsAddress,
+  questionStatesSql,
   signIn,
   signInPlayer,
   STAFF_EMAIL,
+  writeReferralAnswerSql,
+  type AppAnswerFixture,
 } from './session';
 
 const RUN_TAG = `qa${Date.now().toString(36)}`;
 const PENDING_REFERRAL_ID = '5eed0000-0000-4000-8010-000000000001';
+/** The seeded pending referral's answers by field (ADR-031), a choice by its option key. */
+const SEED_REFERRAL_ANSWERS: readonly (readonly [string, Exclude<AppAnswerFixture, null>])[] = [
+  ['date_of_birth', '1996-02-20'],
+  ['nationality', 'Marroc'],
+  ['document_type', 'none'],
+  ['city', 'Vic'],
+  ['phone', '+34930005401'],
+  ['applicant_status', 'migrant'],
+  ['supporting_entities', ['Càritas Vic']],
+  ['reference_contact_name', 'Sílvia Bosch'],
+  ['childcare_need', 'yes'],
+  ['specific_needs', ['other']],
+  ['specific_needs_details', 'Prefereix entrenar a la tarda.'],
+];
 
 test.afterAll(() => {
   // One transaction. Invited addresses carry the run tag, so the accounts the
@@ -48,17 +66,24 @@ test.afterAll(() => {
        set referred_profile_id = null, assigned_staff_id = null, status = 'pending'
      where id = '${PENDING_REFERRAL_ID}'
        and referred_profile_id in (select id from qa_run_accounts);
-    -- Accepting it moved the seeded answers to her profile (RAPP-303): put them back.
+    -- Accepting it moved the seeded answers to her profile (RAPP-303): put them
+    -- back, by field (ADR-031), only when they were moved.
+    create temporary table qa_run_referral_used on commit drop as
+      select id from public.entity_referrals
+       where id = '${PENDING_REFERRAL_ID}' and intake_answers is null;
+    ${SEED_REFERRAL_ANSWERS.map(([key, value]) =>
+      writeReferralAnswerSql(`(select id from qa_run_referral_used)`, key, value),
+    ).join('\n')}
+    insert into public.referral_custom_answers (referral_id, question_id, org_id, value_encrypted)
+    select id, '5eed0000-0000-4000-8045-000000000001', '5eed0000-0000-4000-8000-000000000000',
+           public.encrypt_field('"maybe"')
+      from qa_run_referral_used
+    on conflict do nothing;
     update public.entity_referrals
        set referred_phone = public.encrypt_field('+34930005401'),
            referred_email = public.encrypt_field('amina.referral@example.test'),
-           intake_answers = public.encrypt_field(jsonb_build_object(
-             'date_of_birth', '1996-02-20', 'nationality', 'Marroc', 'document_type', 'none',
-             'city', 'Vic', 'applicant_status', 'migrant',
-             'supporting_entities', jsonb_build_array('Càritas Vic'),
-             'reference_contact_name', 'Sílvia Bosch', 'season_number', 2,
-             'childcare_need', 'yes', 'specific_needs', 'Prefereix entrenar a la tarda.')::text)
-     where id = '${PENDING_REFERRAL_ID}' and intake_answers is null;
+           intake_answers = public.encrypt_field(jsonb_build_object('season_number', 2)::text)
+     where id in (select id from qa_run_referral_used);
     delete from public.profiles where id in (select id from qa_run_accounts);
     delete from auth.identities where user_id in (select id from qa_run_accounts);
     delete from auth.users where id in (select id from qa_run_accounts);
@@ -188,11 +213,15 @@ test.describe('inviting a participant', () => {
       .poll(
         () =>
           queryDatabase(
-            `select string_agg(a.question || ':' || a.source, ',' order by a.question) from public.profile_answers a join auth.users u on u.id = a.profile_id where u.email = '${email}'`,
+            // Her names are on her account (ADR-031): only her answers by field.
+            `select string_agg(f.system_key || ':' || a.source, ',' order by f.system_key)
+               from public.custom_answers a
+               join public.profile_fields f on f.id = a.question_id
+               join auth.users u on u.id = a.profile_id where u.email = '${email}'`,
           ),
         { timeout: 15_000 },
       )
-      .toBe('clothing_size:staff,first_name:staff,last_name:staff');
+      .toBe('clothing_size:staff');
   });
 
   /**
@@ -244,8 +273,11 @@ test.describe('inviting a participant', () => {
       .poll(
         () =>
           queryDatabase(
+            // An app question's state lives on its first field (ADR-031).
             `select count(*) filter (where s.state = 'ask') || ':' || count(*) filter (where s.state = 'skip')
-               from public.intake_question_states s join auth.users u on u.id = s.profile_id
+               from public.custom_question_states s
+               join public.profile_fields f on f.id = s.question_id and f.kind = 'builtin'
+               join auth.users u on u.id = s.profile_id
               where u.email = '${email}'`,
           ),
         { timeout: 15_000 },
@@ -319,9 +351,7 @@ test.describe('inviting a participant', () => {
 
     expect(
       queryDatabase(
-        `select string_agg(s.question || ':' || s.state, ',' order by s.question)
-           from public.intake_question_states s join auth.users u on u.id = s.profile_id
-          where u.email = '${email}'`,
+        `select ${questionStatesSql(`(select id from auth.users where email = '${email}')`)}`,
       ),
     ).toBe('first_name:ask,phone:skip');
     // Audited like a change on her page (RAPP-301).
@@ -364,6 +394,7 @@ test.describe('inviting a participant', () => {
     await expect(page.getByTestId('referral-answers')).toBeVisible();
 
     const email = `referred.${RUN_TAG}@example.test`;
+    const HER_ID = `(select id from auth.users where email = '${email}')`;
     await invite(page, email);
     await expect(page.getByRole('heading', { name: INVITED })).toBeVisible({ timeout: 15_000 });
     await expect(
@@ -377,15 +408,16 @@ test.describe('inviting a participant', () => {
     // referral keeps no copy of them (RAPP-303).
     expect(
       queryDatabase(
-        `select p.childcare_need || '|' || p.season_number || '|' || p.city || '|'
-                || public.decrypt_field(p.applicant_status)
-           from public.profiles p join auth.users u on u.id = p.id where u.email = '${email}'`,
+        `select ${appAnswerSql(HER_ID, 'childcare_need')} || '|' || p.season_number || '|'
+                || ${appAnswerSql(HER_ID, 'city')} || '|' || ${appAnswerSql(HER_ID, 'applicant_status')}
+           from public.profiles p where p.id = ${HER_ID}`,
       ),
     ).toBe('yes|2|Vic|migrant');
     expect(
       queryDatabase(
-        `select a.source from public.profile_answers a join auth.users u on u.id = a.profile_id
-          where u.email = '${email}' and a.question = 'season_number'`,
+        `select a.source from public.custom_answers a
+           join public.profile_fields f on f.id = a.question_id and f.system_key = 'city'
+          where a.profile_id = ${HER_ID}`,
       ),
     ).toBe('entity');
     expect(

@@ -19,7 +19,13 @@
  */
 
 import { expect, test, type Page } from '@playwright/test';
-import { countInDatabase as countRows, ENTITY_EMAIL, signIn, STAFF_EMAIL } from './session';
+import {
+  appAnswerSql,
+  countInDatabase as countRows,
+  ENTITY_EMAIL,
+  signIn,
+  STAFF_EMAIL,
+} from './session';
 
 /**
  * Participants matching a predicate, as the DATABASE counts them. The roster
@@ -27,7 +33,7 @@ import { countInDatabase as countRows, ENTITY_EMAIL, signIn, STAFF_EMAIL } from 
  */
 function countInDatabase(where: string): number {
   return countRows(
-    `select count(*) from public.profiles where role in ('player', 'invited') and ${where}`,
+    `select count(*) from public.profiles r where role in ('player', 'invited') and ${where}`,
   );
 }
 
@@ -122,13 +128,22 @@ test.describe('participants roster', () => {
   for (const filter of [
     { name: 'status', query: 'status=inactive', where: "role = 'player' and is_active = false" },
     { name: 'invited status', query: 'status=invited', where: "role = 'invited'" },
-    { name: 'dependants', query: 'dependents=with', where: 'has_dependents = true' },
+    // Her answers by field (ADR-031), a choice by its option key.
+    {
+      name: 'dependants',
+      query: 'dependents=with',
+      where: `${appAnswerSql('r.id', 'has_dependents')} = 'yes'`,
+    },
     {
       name: 'entity',
       query: 'entity=Creu%20Roja%20Osona',
-      where: `reference_entity = 'Creu Roja Osona'`,
+      where: `${appAnswerSql('r.id', 'reference_entity')} = 'Creu Roja Osona'`,
     },
-    { name: 'nationality', query: 'nationality=Ucra%C3%AFna', where: `nationality = 'Ucraïna'` },
+    {
+      name: 'nationality',
+      query: 'nationality=Ucra%C3%AFna',
+      where: `${appAnswerSql('r.id', 'nationality')} = 'Ucraïna'`,
+    },
   ]) {
     test(`the ${filter.name} filter shows exactly what the database holds`, async ({ page }) => {
       const expected = countInDatabase(filter.where);

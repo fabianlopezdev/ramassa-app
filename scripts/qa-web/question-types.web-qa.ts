@@ -51,7 +51,6 @@ test.afterAll(() => {
          select id::text from public.intake_screens where title ->> 'ca' = '${SCREEN_TITLE}'))
      where org_id = '${ORG}';
     delete from public.intake_screens where title ->> 'ca' = '${SCREEN_TITLE}';
-    delete from public.profile_answers where profile_id = ${HER};
     update public.profiles set preferred_language = 'ca', role = 'invited', terms_accepted_at = null
      where id = ${HER};
     commit;

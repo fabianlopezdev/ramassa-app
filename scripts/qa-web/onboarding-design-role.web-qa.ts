@@ -193,9 +193,12 @@ test.describe.serial('the onboarding design role', () => {
       ),
     ).toBe(1);
     expect(
+      // An app question's state lives on its first field (ADR-031).
       countInDatabase(
-        `select count(*) from public.intake_question_states s join auth.users u on u.id = s.profile_id
-          where u.email = '${TEST_PLAYER_EMAIL}' and s.question = 'phone' and s.state = 'skip'`,
+        `select count(*) from public.custom_question_states s
+           join auth.users u on u.id = s.profile_id
+           join public.profile_fields f on f.id = s.question_id and f.system_key = 'phone'
+          where u.email = '${TEST_PLAYER_EMAIL}' and s.state = 'skip'`,
       ),
     ).toBe(1);
   });

@@ -32,7 +32,8 @@ test.afterAll(() => {
     begin;
     delete from public.authorization_signatures where profile_id = ${HER};
     delete from public.terms_acceptances where profile_id = ${HER};
-    delete from public.profile_answers where profile_id = ${HER};
+    -- Her answers by field (ADR-031): the seed gives her none.
+    delete from public.custom_answers where profile_id = ${HER};
     update public.profiles set role = 'invited', terms_accepted_at = null where id = ${HER};
     update public.invites set accepted_at = null, accepted_by = null, expires_at = now() + interval '30 days'
      where email = '${TEST_PLAYER_EMAIL}';

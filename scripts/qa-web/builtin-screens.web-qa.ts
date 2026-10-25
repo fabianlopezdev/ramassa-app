@@ -39,7 +39,8 @@ test.afterAll(() => {
            sort_order = right(id::text, 1)::integer - 1
      where org_id = '${ORG}' and id::text like '5eed0000-0000-4000-8044-%';
     delete from public.intake_builtin_screens where org_id = '${ORG}' and screen = 'season';
-    delete from public.profile_answers where profile_id = ${HER};
+    -- Her answers by field (ADR-031): the seed gives her none.
+    delete from public.custom_answers where profile_id = ${HER};
     commit;
   `);
 });
