@@ -21,16 +21,15 @@ import { setForumPostingDisabled } from '@ramassa/shared/forum';
 import {
   addParticipantNote,
   fetchParticipantActivity,
-  fetchParticipantDetail,
   fetchParticipantFilterOptions,
   fetchParticipantNotes,
+  fetchParticipantRecord,
   fetchParticipants,
   PARTICIPANT_PAGE_SIZE,
   setParticipantActive,
-  updateParticipantProfile,
+  updateParticipantRecord,
+  type ParticipantUpdate,
 } from '@ramassa/shared/participants';
-import type { ProfilePrefillPayload } from '@ramassa/shared/participants';
-import type { UpdateOwnProfilePayload } from '@ramassa/shared/schemas';
 import type { ParticipantListSearch } from './participant-filters';
 import { supabase } from './supabase';
 
@@ -69,7 +68,8 @@ export function useParticipantCard(participantId: string) {
   const { user } = useAuth();
   return useQuery({
     queryKey: ['participants', user?.id ?? SIGNED_OUT, 'card', participantId],
-    queryFn: () => fetchParticipantDetail(supabase, participantId),
+    // Her answers by field, with her organization's fields to read them by (RAPP-663).
+    queryFn: () => fetchParticipantRecord(supabase, participantId),
     enabled: user !== null && participantId.length > 0,
     staleTime: CARD_STALE_MS,
   });
@@ -86,9 +86,10 @@ export function useParticipantWrites(participantId: string) {
   const refresh = () =>
     queryClient.invalidateQueries({ queryKey: ['participants', user?.id ?? SIGNED_OUT] });
   const updateProfile = useMutation({
-    // A full record, or only the changed fields of a woman who has not joined yet (RAPP-300).
-    mutationFn: (payload: UpdateOwnProfilePayload | ProfilePrefillPayload) =>
-      updateParticipantProfile(supabase, participantId, payload),
+    // A full record, or only the changed fields of a woman who has not joined yet
+    // (RAPP-300), her answers by field (RAPP-663).
+    mutationFn: (update: ParticipantUpdate) =>
+      updateParticipantRecord(supabase, participantId, update),
     onSuccess: refresh,
   });
   const setActive = useMutation({

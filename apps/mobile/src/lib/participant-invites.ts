@@ -6,13 +6,13 @@
  */
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  createParticipantInvite,
   fetchInvites,
+  inviteParticipant,
   renewParticipantInvite,
   revokeParticipantInvite,
 } from '@ramassa/shared/accounts';
 import { useAuth } from '@ramassa/shared/auth';
-import { fetchIntakeCatalog } from '@ramassa/shared/intake-builder';
+import { fetchIntakeCatalog, fetchSystemFieldIndex } from '@ramassa/shared/intake-builder';
 import {
   buildCreateParticipantInvitePayload,
   type CreateParticipantInvite,
@@ -34,14 +34,16 @@ export function useParticipantInvites() {
   // With the questions staff confirmed she is asked (RAPP-618), saved in the
   // same database call as the invitation.
   const create = useMutation({
-    mutationFn: (request: {
+    mutationFn: async (request: {
       readonly input: CreateParticipantInvite;
       // A Ramassà question travels as `custom:<id>` (RAPP-644).
       readonly questionStates: Readonly<Record<string, 'ask' | 'skip'>>;
     }) =>
-      createParticipantInvite(
+      // Her entity is her answer by field too (RAPP-663).
+      inviteParticipant(
         supabase,
         buildCreateParticipantInvitePayload(request.input, null, request.questionStates),
+        await fetchSystemFieldIndex(supabase),
       ),
     onSuccess: refresh,
   });

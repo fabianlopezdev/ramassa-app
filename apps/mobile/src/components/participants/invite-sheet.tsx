@@ -34,7 +34,7 @@ import {
 import { isAppError } from '@ramassa/shared/errors';
 import { MADRID_TIME_ZONE } from '@ramassa/shared/events';
 import { DEFAULT_LANGUAGE } from '@ramassa/shared/i18n';
-import { answeredAtInvitation } from '@ramassa/shared/intake';
+import { answeredByInvitation } from '@ramassa/shared/intake';
 import {
   choicesPayload,
   EMPTY_INTAKE_CATALOG,
@@ -42,7 +42,6 @@ import {
   type PlayerChoices,
 } from '@ramassa/shared/intake-builder';
 import {
-  buildCreateParticipantInvitePayload,
   createParticipantInviteSchema,
   type CreateParticipantInvite,
 } from '@ramassa/shared/schemas';
@@ -114,10 +113,7 @@ export function InviteSheet({
   // Her choices on every question, the app's and Ramassà's (RAPP-644).
   const [choices, setChoices] = useState<PlayerChoices>(NO_CHOICES);
   const catalog = useInviteIntakeCatalog(visible).data ?? EMPTY_INTAKE_CATALOG;
-  const answered =
-    details === null
-      ? new Set<never>()
-      : answeredAtInvitation(buildCreateParticipantInvitePayload(details));
+  const answered = details === null ? new Set<never>() : answeredByInvitation(details);
   const formatDate = useMemo(() => {
     const format = new Intl.DateTimeFormat(i18n.resolvedLanguage ?? DEFAULT_LANGUAGE, {
       dateStyle: 'long',

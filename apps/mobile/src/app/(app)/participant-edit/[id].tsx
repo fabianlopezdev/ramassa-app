@@ -34,18 +34,18 @@ import { Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { toAppError, type AppErrorCode } from '@ramassa/shared/errors';
 import {
-  buildProfilePrefillPayload,
   fetchParticipantAnsweredQuestions,
   hasJoined,
-  prefillFromRow,
+  prefillFormOf,
+  prefillUpdateOf,
   profilePrefillSchema,
   type ProfilePrefill,
 } from '@ramassa/shared/participants';
 import {
-  buildUpdateOwnProfilePayload,
   profileEditSchema,
   profileEditWithoutSensitiveSchema,
-  profileFromRow,
+  profileFormOf,
+  profileUpdateOf,
   type ProfileEdit,
 } from '@ramassa/shared/schemas';
 
@@ -74,10 +74,11 @@ export default function ParticipantEditScreen() {
   });
   const values = useMemo(() => {
     if (card.data === null || card.data === undefined) return undefined;
-    if (!isPrefill) return profileFromRow(card.data) as ProfileEditInput;
+    // Her answers read by field, through her organization's fields (RAPP-663).
+    if (!isPrefill) return profileFormOf(card.data) as unknown as ProfileEditInput;
     return answered.data === undefined
       ? undefined
-      : (prefillFromRow(card.data, answered.data) as unknown as ProfileEditInput);
+      : (prefillFormOf(card.data, answered.data) as unknown as ProfileEditInput);
   }, [answered.data, card.data, isPrefill]);
   const {
     control,
@@ -99,13 +100,20 @@ export default function ParticipantEditScreen() {
     (edit) => {
       setIsBlocked(false);
       setFailureCode(null);
+      const fields = card.data?.fields ?? new Map();
+      // Her answers travel by field (RAPP-663).
       const payload = isPrefill
-        ? buildProfilePrefillPayload(
+        ? prefillUpdateOf(
+            fields,
             edit as unknown as ProfilePrefill,
             new Set(Object.keys(dirtyFields)),
           )
-        : buildUpdateOwnProfilePayload(edit);
-      if (isPrefill && Object.keys(payload).length === 0) {
+        : profileUpdateOf(fields, edit);
+      if (
+        isPrefill &&
+        Object.keys(payload).length === 1 &&
+        Object.keys(payload.answers).length === 0
+      ) {
         back();
         return;
       }
