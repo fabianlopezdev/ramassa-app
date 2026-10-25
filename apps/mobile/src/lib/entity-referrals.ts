@@ -12,14 +12,18 @@ import {
   entityFormFallbackItems,
   entityFormItemsOf,
   fetchIntakeCatalog,
+  fetchSystemFieldIndex,
+  systemFieldsOf,
   type EntityFormItem,
+  type SystemFieldIndex,
 } from '@ramassa/shared/intake-builder';
 import {
-  createReferral,
   fetchEntityReferrals,
-  fetchReferral,
+  fetchReferralRecord,
   fetchReferralUpdates,
   fetchSupportingEntityNames,
+  referralAppAnswers,
+  sendReferral,
   submitReferralUpdate,
   type CreateReferral,
   type ReferralFieldAnswers,
@@ -44,7 +48,8 @@ export function useEntityReferral(referralId: string) {
   const root = referralsRoot(user?.id ?? 'signed-out');
   const referral = useQuery({
     queryKey: [...root, 'detail', referralId],
-    queryFn: () => fetchReferral(supabase, referralId),
+    // The entity's answers by field, with the fields to read them by (RAPP-663).
+    queryFn: () => fetchReferralRecord(supabase, referralId),
     enabled: user !== null,
   });
   const updates = useQuery({
@@ -65,25 +70,35 @@ export function useSupportingEntityNames() {
   });
 }
 
+/** The referral form: its items, and the app's fields its answers are saved by. */
+export interface ReferralForm {
+  readonly items: readonly EntityFormItem[];
+  /** Empty when the catalog could not load: the save reads them again. */
+  readonly fields: SystemFieldIndex;
+}
+
 /**
  * The fields staff placed on the referral form (RAPP-652, RAPP-655), in their
- * order and worded for the entity, as the web portal draws them. When the
- * catalog cannot load, the form asks the app's own fields, her names
- * required, as it did before staff could place any, and the failure is logged.
+ * order and worded for the entity, as the web portal draws them, and the
+ * app's fields by system key (RAPP-663). When the catalog cannot load, the
+ * form asks the app's own fields, her names required, as it did before staff
+ * could place any, and the failure is logged.
  */
 export function useReferralFormItems() {
   const { user } = useAuth();
   return useQuery({
     queryKey: ['referral-form-items', user?.id ?? 'signed-out'],
-    queryFn: async (): Promise<readonly EntityFormItem[]> => {
+    queryFn: async (): Promise<ReferralForm> => {
       try {
         const catalog = await fetchIntakeCatalog(supabase);
-        return catalog.layout === undefined
-          ? entityFormFallbackItems()
-          : entityFormItemsOf(catalog);
+        return {
+          items:
+            catalog.layout === undefined ? entityFormFallbackItems() : entityFormItemsOf(catalog),
+          fields: systemFieldsOf(catalog),
+        };
       } catch (error) {
         logger.warn('entity_referral.form_load_failed', { error: toAppError(error) });
-        return entityFormFallbackItems();
+        return { items: entityFormFallbackItems(), fields: new Map() };
       }
     },
     enabled: user !== null,
@@ -95,13 +110,21 @@ export function useReferralActions() {
   const queryClient = useQueryClient();
   const refresh = () =>
     queryClient.invalidateQueries({ queryKey: referralsRoot(user?.id ?? 'signed-out') });
-  // The answers to Ramassà's fields travel with the referral in one call, so
+  // Every answer travels by field with the referral in one call (RAPP-663), so
   // it is never saved without them, and the database checks the required ones.
   const create = useMutation({
-    mutationFn: (input: {
+    mutationFn: async (input: {
       readonly referral: CreateReferral;
-      readonly fields: ReferralFieldAnswers;
-    }) => createReferral(supabase, input.referral, input.fields),
+      /** The answers to Ramassà's fields. */
+      readonly custom: ReferralFieldAnswers;
+      readonly fields: SystemFieldIndex;
+    }) => {
+      const fields = input.fields.size > 0 ? input.fields : await fetchSystemFieldIndex(supabase);
+      return sendReferral(supabase, input.referral, {
+        ...referralAppAnswers(fields, input.referral),
+        ...input.custom,
+      });
+    },
     onSuccess: refresh,
   });
   const addUpdate = useMutation({

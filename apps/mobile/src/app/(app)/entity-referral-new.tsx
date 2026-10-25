@@ -43,22 +43,27 @@ import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLanguage } from '@ramassa/shared/i18n';
 import {
+  appAnswersFromForm,
   entityFormQuestions,
+  internationalPhone,
   isCustomQuestionVisible,
-  missingEntityFormFields,
+  PHONE_PATTERN,
+  requiredEntityFormFieldsLeftEmpty,
   updateCustomAnswer,
   type BuilderText,
   type CustomQuestion,
   type EntityFormItem,
+  type SystemFieldIndex,
 } from '@ramassa/shared/intake-builder';
 import {
   createReferralSchema,
   DOCUMENTATION_STATUSES,
-  referralSystemValues,
   type CreateReferralInput,
 } from '@ramassa/shared/referrals';
 import type { DocumentType } from '@ramassa/shared/schemas';
 import { tokens } from '@ramassa/shared/tokens';
+
+const NO_FIELDS: SystemFieldIndex = new Map();
 
 /** Only the season number is asked here: the season questions are placed fields. */
 const hidesSeasonQuestions = () => false;
@@ -68,6 +73,7 @@ type Field = ReferralCheckedField | 'email' | 'consentConfirmed';
 const FIELDS: readonly Field[] = [
   'firstName',
   'lastName',
+  'phone',
   'email',
   'dateOfBirth',
   'documentNumber',
@@ -90,6 +96,38 @@ interface FormState {
   readonly referenceContactName: string;
   readonly season: SeasonAnswers;
   readonly consentConfirmed: boolean;
+}
+
+/**
+ * What the form holds, by field id, to tell a required field left empty
+ * (RAPP-663): the app's fields as their answers, her names under their
+ * fields' ids.
+ */
+function formAnswers(fields: SystemFieldIndex, form: FormState): Record<string, unknown> {
+  const answers: Record<string, unknown> = appAnswersFromForm(fields, {
+    phone: form.phone,
+    dateOfBirth: form.dateOfBirth,
+    nationality: form.nationality,
+    documentType: form.documentType ?? '',
+    documentNumber: form.documentNumber,
+    city: form.city,
+    referenceContactName: form.referenceContactName,
+    applicantStatus: form.season.applicantStatus ?? '',
+    supportingEntities: form.season.supportingEntities,
+    childcareNeed: form.season.childcareNeed ?? '',
+    specificNeeds: form.season.specificNeeds,
+  });
+  const names = { first_name: form.firstName, last_name: form.lastName } as const;
+  for (const [key, value] of Object.entries(names)) {
+    const field = fields.get(key as keyof typeof names);
+    if (field !== undefined) answers[field.id] = value;
+  }
+  return answers;
+}
+
+/** A phone she typed that the field refuses, even with +34 in front of a local number. */
+function isRefusedPhone(phone: string): boolean {
+  return phone.trim() !== '' && !PHONE_PATTERN.test(internationalPhone(phone));
 }
 
 function toInput(form: FormState): Record<string, unknown> {
@@ -132,7 +170,8 @@ export default function EntityReferralNewScreen() {
   const { back, replace } = useRouter();
   const { create } = useReferralActions();
   const formItems = useReferralFormItems();
-  const items = useMemo(() => formItems.data ?? [], [formItems.data]);
+  const items = useMemo(() => formItems.data?.items ?? [], [formItems.data]);
+  const fields: SystemFieldIndex = formItems.data?.fields ?? NO_FIELDS;
   const questions = useMemo(() => entityFormQuestions(items), [items]);
   const [customAnswers, setCustomAnswers] = useState<CustomAnswerDraft>({});
   // Each Ramassà answer that does not fit its field, with the wizard's words (RAPP-610).
@@ -171,11 +210,10 @@ export default function EntityReferralNewScreen() {
       current.size === 0
         ? current
         : new Set(
-            missingEntityFormFields(
-              items,
-              referralSystemValues(toInput(next)),
-              customAnswers,
-            ).filter((id) => current.has(id)),
+            requiredEntityFormFieldsLeftEmpty(items, {
+              ...customAnswers,
+              ...formAnswers(fields, next),
+            }).filter((id) => current.has(id)),
           ),
     );
   };
@@ -187,19 +225,27 @@ export default function EntityReferralNewScreen() {
     // required field left empty says so, as the database would refuse it.
     const checked = checkCustomAnswers(questions, customAnswers, t, { enforceRequired: false });
     const empty = new Set(
-      missingEntityFormFields(items, referralSystemValues(input), checked.answers),
+      requiredEntityFormFieldsLeftEmpty(items, {
+        ...checked.answers,
+        ...formAnswers(fields, form),
+      }),
     );
+    // The phone field takes an international number; a local Spanish one gets +34.
+    const refusedPhone = isRefusedPhone(form.phone);
     setCustomErrors(checked.errors);
     setMissing(empty);
     const fieldsFit = Object.keys(checked.errors).length === 0 && empty.size === 0;
     if (fieldsFit) setCustomAnswers(checked.answers);
-    if (!parsed.success) {
+    if (!parsed.success || refusedPhone) {
       setInvalid(
-        new Set(
-          parsed.error.issues
-            .map((issue) => issue.path[0])
-            .filter((path): path is Field => FIELDS.includes(path as Field)),
-        ),
+        new Set([
+          ...(parsed.success
+            ? []
+            : parsed.error.issues
+                .map((issue) => issue.path[0])
+                .filter((path): path is Field => FIELDS.includes(path as Field))),
+          ...(refusedPhone ? (['phone'] as const) : []),
+        ]),
       );
       playHaptic('warning');
       return;
@@ -210,7 +256,11 @@ export default function EntityReferralNewScreen() {
       return;
     }
     create.mutate(
-      { referral: parsed.data, fields: customAnswersToSave(questions, checked.answers, {}) },
+      {
+        referral: parsed.data,
+        custom: customAnswersToSave(questions, checked.answers, {}),
+        fields,
+      },
       {
         onSuccess: (referralId) => {
           playHaptic('success');
@@ -243,6 +293,7 @@ export default function EntityReferralNewScreen() {
   const ERROR_KEYS: Readonly<Record<Field, string>> = {
     firstName: 'referrals:requiredError',
     lastName: 'referrals:requiredError',
+    phone: 'onboarding:errorPhoneFormat',
     email: 'referrals:emailError',
     dateOfBirth: 'referrals:dateOfBirthError',
     documentNumber: 'referrals:documentNumberError',

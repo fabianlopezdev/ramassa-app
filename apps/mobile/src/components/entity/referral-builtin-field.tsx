@@ -69,7 +69,8 @@ interface ReferralBuiltinValues {
 }
 
 /** The fields whose value the form's own schema can refuse. */
-export type ReferralCheckedField = 'firstName' | 'lastName' | 'dateOfBirth' | 'documentNumber';
+export type ReferralCheckedField =
+  'firstName' | 'lastName' | 'phone' | 'dateOfBirth' | 'documentNumber';
 
 export interface ReferralBuiltinFieldProps {
   readonly item: Extract<EntityFormItem, { kind: 'builtin' }>;
@@ -143,8 +144,14 @@ export function ReferralBuiltinField({
           hint={hint}
           value={values.phone}
           onChangeText={(phone) => onChange({ phone })}
-          errorMessage={missing}
+          errorMessage={errorFor('phone') ?? missing}
+          // The phone input every phone field uses (RAPP-663): the field takes
+          // an international number, and a local Spanish one gets +34.
           keyboardType="phone-pad"
+          inputMode="tel"
+          autoComplete="tel"
+          textContentType="telephoneNumber"
+          placeholder={t('onboarding:phonePlaceholder')}
           maxLength={50}
         />
       );
