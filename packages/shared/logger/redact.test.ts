@@ -9,13 +9,15 @@ const uuidFixtures = [
 ] as const;
 
 describe('redactPii — key-based redaction', () => {
-  test('scrubs every PII column of a real participant row, nested in a log payload', () => {
+  test('scrubs her names and her answers, nested in a log payload', () => {
     // The factory row is the same shape the app actually logs (RAPP-18), so this
     // asserts against the real column names rather than a hand-picked subset.
     const participant = buildParticipant();
     const fixture = {
       userId: participant.id,
       profile: participant,
+      // Her answers travel by field id (ADR-031), so no key names the answer.
+      answers: { '5eed0000-0000-4000-8045-000000000001': 'Síria' },
       attendees: buildParticipants(2).map((attendee) => ({
         name: `${attendee.first_name} ${attendee.last_name}`,
         present: true,
@@ -26,11 +28,7 @@ describe('redactPii — key-based redaction', () => {
 
     expect(redacted.profile.first_name).toBe(REDACTED);
     expect(redacted.profile.last_name).toBe(REDACTED);
-    expect(redacted.profile.phone).toBe(REDACTED);
-    expect(redacted.profile.address).toBe(REDACTED);
-    expect(redacted.profile.document_number).toBe(REDACTED);
-    expect(redacted.profile.date_of_birth).toBe(REDACTED);
-    expect(redacted.profile.nationality).toBe(REDACTED);
+    expect(redacted.answers as unknown).toBe(REDACTED);
     expect(redacted.attendees[0]?.name).toBe(REDACTED);
     expect(redacted.attendees[1]?.name).toBe(REDACTED);
 

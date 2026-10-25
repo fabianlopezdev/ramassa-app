@@ -47,6 +47,11 @@ const piiKeys = new Set([
   'dateofbirth',
   'birthday',
   'nationality',
+  // Her answers by field (ADR-031): an object of field id to answer, so no
+  // key inside it names what it holds. The whole object goes.
+  'answers',
+  'fieldanswers',
+  'intakeanswers',
   // Mentoring (RAPP-57). The controlled topic is reportable inside the
   // authorized product, but it can reveal gender violence, asylum, or another
   // sensitive support need. Neither the topic nor either note field may enter
