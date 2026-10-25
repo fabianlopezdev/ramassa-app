@@ -3,7 +3,9 @@
  * onboarding design account adds a field, which records her as its creator
  * and rings the admin's bell; she drags it into another section, renames a
  * section and moves it with the keyboard. The admin then reads the creator,
- * and archives the field behind a confirm that says what it keeps. Rows and
+ * and archives the field behind a confirm that says what it keeps. An app
+ * field opens with Edit, and a new type asks first with the database's counts
+ * (RAPP-665); Cancel saves nothing. Rows and
  * section headers keep one height and names one start, whether a row ends in
  * a lock or a button. A staff member without a design permission reads the
  * page with no grips and no buttons. Every expected value comes from psql;
@@ -78,7 +80,9 @@ test.describe.serial('Dades de les jugadores', () => {
     await expect(page).toHaveURL(/\/profile-layout$/, { timeout: 30_000 });
     const layout = page.getByTestId('profile-layout');
     await expect(layout).toBeVisible({ timeout: 30_000 });
-    await expect(page.getByRole('heading', { name: 'Player data to collect', level: 1 })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'Player data to collect', level: 1 }),
+    ).toBeVisible();
     await expectSymmetry(page);
 
     await page.getByTestId('profile-section-add-sizes').click();
@@ -183,6 +187,34 @@ test.describe.serial('Dades de les jugadores', () => {
         `select is_archived from public.profile_fields where label ->> 'ca' = '${FIELD_NAME}'`,
       ),
     ).toBe('t');
+  });
+
+  test('an app field opens with Edit, and a new type asks first with real counts (RAPP-665)', async ({
+    page,
+  }) => {
+    const nationality = queryDatabase(
+      `select id from public.profile_fields where org_id = '${ORG_ID}' and system_key = 'nationality'`,
+    );
+    const answers = queryDatabase(
+      `select count(*) from public.custom_answers where question_id = '${nationality}'`,
+    );
+    await signIn(page, ADMIN_EMAIL);
+    await page.goto('/profile-layout');
+    await expect(page.getByText('Fixed by the app')).toHaveCount(0, { timeout: 30_000 });
+    await page.getByTestId(`profile-field-edit-${nationality}`).click();
+    const dialog = page.getByRole('dialog');
+    await dialog.getByTestId('question-type-change').click();
+    await page.getByTestId('question-type-option-short_text').click();
+    await dialog.getByTestId('field-form-save').click();
+    const change = page.getByTestId('field-change-dialog');
+    await expect(change).toContainText(`It has ${answers} answers.`, { timeout: 20_000 });
+    await expect(change).toContainText('Impact report: nationalities');
+    await page.getByTestId('field-change-cancel').click();
+    await expect(change).toHaveCount(0);
+    // Cancel saves nothing.
+    expect(
+      queryDatabase(`select question_type from public.profile_fields where id = '${nationality}'`),
+    ).toBe('country');
   });
 
   test('a staff member who does not design it reads it without grips or buttons', async ({
