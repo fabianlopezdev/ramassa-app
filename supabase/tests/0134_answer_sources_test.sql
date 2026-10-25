@@ -25,11 +25,24 @@ select plan(14);
 create temp table run (label text primary key, id uuid) on commit drop;
 grant all on run to authenticated;
 
+-- An app answer given by option key, as the app's screens send it by option id.
+create function pg_temp.by_option_key(f public.profile_fields, v jsonb) returns jsonb language sql stable security definer as $$
+  select case
+    when f.question_type in ('single_choice', 'search_choice') and jsonb_typeof(v) = 'string' then
+      coalesce((select to_jsonb(o.id::text) from public.custom_question_options o
+                 where o.question_id = f.id and o.key = v #>> '{}'), v)
+    when f.question_type = 'multiple_choice' and jsonb_typeof(v) = 'array' then
+      coalesce((select jsonb_agg(o.id::text order by o.sort_order) from public.custom_question_options o
+                 where o.question_id = f.id and o.key in (select jsonb_array_elements_text(v))
+                having count(*) = jsonb_array_length(v)), v)
+    else v
+  end;
+$$;
 -- Her answers travel by field (RAPP-661). Helpers: the app's keys of a payload
 -- keyed by their fields (a choice by its option), a field's id, and her stored
 -- answer to an app field (decrypted).
 create function pg_temp.answers(p jsonb) returns jsonb language sql security definer as $$
-  select coalesce(jsonb_object_agg(f.id::text, private.app_answer_value(f, e.value)), '{}'::jsonb)
+  select coalesce(jsonb_object_agg(f.id::text, pg_temp.by_option_key(f, e.value)), '{}'::jsonb)
     from jsonb_each(p) e
     join public.profile_fields f on f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.system_key = e.key;
 $$;
@@ -70,32 +83,34 @@ select is(
 
 -- 2. A joined player's record ---------------------------------------------------------------------
 
--- The staff function writes her whole record; the trigger sees what changed.
--- Here the change is made as the database would, with the team member signed in.
-reset role;
-delete from public.profile_answers where profile_id = '5eed0000-0000-4000-8000-000000000025';
-select set_config('ramassa.trusted_profile_write', 'on', true);
-update public.profiles
-   set city = 'Vic',
-       phone = public.encrypt_field(public.decrypt_field(phone)),
-       postal_code = public.encrypt_field('08500')
- where id = '5eed0000-0000-4000-8000-000000000025';
-select set_config('ramassa.trusted_profile_write', '', true);
+-- The team's edit saves by field: a changed answer names the team member, an
+-- answer given again unchanged keeps whoever gave it (RAPP-661).
+set local role authenticated;
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated", "aal": "aal2"}';
+select public.update_participant_profile('5eed0000-0000-4000-8000-000000000025',
+  jsonb_build_object('answers', pg_temp.answers(jsonb_build_object(
+    'city', 'Vic', 'postal_code', '08500',
+    'phone', pg_temp.stored('5eed0000-0000-4000-8000-000000000025', 'phone')))));
 
+reset role;
 select is(
-  (select string_agg(question || '/' || source || '/' || coalesce(answered_by::text, '-'), ',' order by question)
-     from public.profile_answers where profile_id = '5eed0000-0000-4000-8000-000000000025'),
-  'city/staff/5eed0000-0000-4000-8000-000000000002,postal_code/staff/5eed0000-0000-4000-8000-000000000002',
-  'the team''s change records the changed answers only, an unchanged encrypted one included'
+  (select string_agg(f.system_key || '/' || a.source || '/' || coalesce(a.answered_by::text, '-'), ',' order by f.system_key)
+     from public.custom_answers a join public.profile_fields f on f.id = a.question_id
+    where a.profile_id = '5eed0000-0000-4000-8000-000000000025'
+      and f.system_key in ('city', 'phone', 'postal_code')),
+  'city/staff/5eed0000-0000-4000-8000-000000000002,phone/player/-,'
+    || 'postal_code/staff/5eed0000-0000-4000-8000-000000000002',
+  'the team''s change names the team member on the changed answers only, an unchanged encrypted one included'
 );
 
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000025", "role": "authenticated", "aal": "aal2"}';
-select set_config('ramassa.trusted_profile_write', 'on', true);
-update public.profiles set city = 'Manlleu' where id = '5eed0000-0000-4000-8000-000000000025';
-select set_config('ramassa.trusted_profile_write', '', true);
+set local role authenticated;
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000025", "role": "authenticated", "aal": "aal1"}';
+select public.update_own_profile(jsonb_build_object('first_name', 'Yolanda', 'last_name', 'Quispe',
+  'answers', pg_temp.answers('{"city": "Manlleu"}')));
+reset role;
 select is(
-  (select source || '/' || coalesce(answered_by::text, '-') from public.profile_answers
-    where profile_id = '5eed0000-0000-4000-8000-000000000025' and question = 'city'),
+  (select a.source || '/' || coalesce(a.answered_by::text, '-') from public.custom_answers a
+    where a.profile_id = '5eed0000-0000-4000-8000-000000000025' and a.question_id::text = pg_temp.field('city')),
   'player/-',
   'her own change is recorded as hers'
 );

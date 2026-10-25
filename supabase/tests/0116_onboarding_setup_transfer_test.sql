@@ -27,11 +27,24 @@ create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 select plan(42);
 
+-- An app answer given by option key, as the app's screens send it by option id.
+create function pg_temp.by_option_key(f public.profile_fields, v jsonb) returns jsonb language sql stable security definer as $$
+  select case
+    when f.question_type in ('single_choice', 'search_choice') and jsonb_typeof(v) = 'string' then
+      coalesce((select to_jsonb(o.id::text) from public.custom_question_options o
+                 where o.question_id = f.id and o.key = v #>> '{}'), v)
+    when f.question_type = 'multiple_choice' and jsonb_typeof(v) = 'array' then
+      coalesce((select jsonb_agg(o.id::text order by o.sort_order) from public.custom_question_options o
+                 where o.question_id = f.id and o.key in (select jsonb_array_elements_text(v))
+                having count(*) = jsonb_array_length(v)), v)
+    else v
+  end;
+$$;
 -- Her answers travel by field (RAPP-661). Helpers: the app's keys of a payload
 -- keyed by their fields (a choice by its option), a field's id, and her stored
 -- answer to an app field (decrypted).
 create function pg_temp.answers(p jsonb) returns jsonb language sql security definer as $$
-  select coalesce(jsonb_object_agg(f.id::text, private.app_answer_value(f, e.value)), '{}'::jsonb)
+  select coalesce(jsonb_object_agg(f.id::text, pg_temp.by_option_key(f, e.value)), '{}'::jsonb)
     from jsonb_each(p) e
     join public.profile_fields f on f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.system_key = e.key;
 $$;
@@ -402,10 +415,17 @@ set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-0000000006a1", 
 reset role;
 delete from public.intake_screens where org_id = '5eed0000-0000-4000-8000-0000000006a0';
 delete from public.profile_fields where org_id = '5eed0000-0000-4000-8000-0000000006a0' and kind = 'custom';
-delete from public.builtin_question_overrides where org_id = '5eed0000-0000-4000-8000-0000000006a0';
+-- The app questions' wording and required flags live on their placements (RAPP-666).
+update public.field_placements p
+   set label_override = null, help_override = null
+  from public.profile_fields f
+ where f.id = p.field_id and f.org_id = '5eed0000-0000-4000-8000-0000000006a0' and f.kind = 'builtin';
+select private.set_app_question_required('5eed0000-0000-4000-8000-0000000006a0', q.question,
+         q.question = any (private.default_required_intake_questions()))
+  from unnest(private.wizard_intake_questions()) q(question)
+ where not (q.question = any (private.locked_required_intake_questions()));
 delete from public.intake_builtin_screens where org_id = '5eed0000-0000-4000-8000-0000000006a0';
 delete from public.intake_flow_orders where org_id = '5eed0000-0000-4000-8000-0000000006a0';
-delete from public.intake_required_questions where org_id = '5eed0000-0000-4000-8000-0000000006a0';
 delete from public.intake_state_presets where org_id = '5eed0000-0000-4000-8000-0000000006a0';
 update public.organizations set document_step_explanation = null where id = '5eed0000-0000-4000-8000-0000000006a0';
 delete from public.app_terms_versions where org_id = '5eed0000-0000-4000-8000-0000000006a0' and published_at is null;

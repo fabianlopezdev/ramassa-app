@@ -3,11 +3,24 @@ create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 select plan(18);
 
+-- An app answer given by option key, as the app's screens send it by option id.
+create function pg_temp.by_option_key(f public.profile_fields, v jsonb) returns jsonb language sql stable security definer as $$
+  select case
+    when f.question_type in ('single_choice', 'search_choice') and jsonb_typeof(v) = 'string' then
+      coalesce((select to_jsonb(o.id::text) from public.custom_question_options o
+                 where o.question_id = f.id and o.key = v #>> '{}'), v)
+    when f.question_type = 'multiple_choice' and jsonb_typeof(v) = 'array' then
+      coalesce((select jsonb_agg(o.id::text order by o.sort_order) from public.custom_question_options o
+                 where o.question_id = f.id and o.key in (select jsonb_array_elements_text(v))
+                having count(*) = jsonb_array_length(v)), v)
+    else v
+  end;
+$$;
 -- Her answers travel by field (RAPP-661). Helpers: the app's keys of a payload
 -- keyed by their fields (a choice by its option), a field's id, and her stored
 -- answer to an app field (decrypted).
 create function pg_temp.answers(p jsonb) returns jsonb language sql security definer as $$
-  select coalesce(jsonb_object_agg(f.id::text, private.app_answer_value(f, e.value)), '{}'::jsonb)
+  select coalesce(jsonb_object_agg(f.id::text, pg_temp.by_option_key(f, e.value)), '{}'::jsonb)
     from jsonb_each(p) e
     join public.profile_fields f on f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.system_key = e.key;
 $$;
@@ -33,8 +46,13 @@ grant execute on all functions in schema pg_temp to authenticated;
 -- The unsigned path is closed to clients (RAPP-624); this file checks its merge
 -- rules as the participant, so it grants it inside this rolled-back transaction.
 grant execute on function public.complete_onboarding(jsonb) to authenticated;
-select has_column('public', 'profiles', 'applicant_status_details', 'Other situation has its own encrypted field');
-select has_column('public', 'season_answers', 'applicant_status_details', 'the explanation belongs to the seasonal record too');
+select is((select question_type || '|' || privacy from public.profile_fields
+            where org_id = '5eed0000-0000-4000-8000-000000000000' and system_key = 'applicant_status_details'),
+          'long_text|sensitive', 'Other situation has its own encrypted field');
+select ok(exists (select 1 from public.field_placements p join public.profile_fields f on f.id = p.field_id
+                   where f.org_id = '5eed0000-0000-4000-8000-000000000000'
+                     and f.system_key = 'applicant_status_details' and p.surface = 'season'),
+          'the explanation belongs to the seasonal record too');
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000011","role":"authenticated","aal":"aal1"}';
 -- Her season answers travel by field (RAPP-661).
@@ -66,14 +84,18 @@ select set_config('request.jwt.claims',json_build_object('sub',(select id from o
 select lives_ok($$ select public.complete_onboarding(jsonb_build_object('first_name','Nadia','last_name','Khoury','preferred_language','ca','media_consent',false,'terms_version','2026-07-01','locale_shown','ca','answers',pg_temp.answers('{"date_of_birth":"1993-11-02","place_of_birth":"Homs","nationality":"Síria","document_type":"none","has_dependents":"no","reference_entity":null,"clothing_size":"M","shoe_size":"38","applicant_status":"other","applicant_status_details":"Wizard explanation"}'))) $$,'wizard completion saves the explanation atomically');
 select is(pg_temp.stored((select id from onboarding_account), 'applicant_status_details') #>> '{}','Wizard explanation','wizard explanation is recoverable after completion');
 reset role;
-update public.profiles set applicant_status=public.encrypt_field('other'),applicant_status_details=public.encrypt_field('Example explanation') where id='5eed0000-0000-4000-8000-000000000011';
+select private.write_custom_answer('5eed0000-0000-4000-8000-000000000011', f, answer.value, 'player')
+  from (values ('applicant_status', (select to_jsonb(o.id::text) from public.custom_question_options o
+                                      where o.question_id = pg_temp.field('applicant_status')::uuid and o.key = 'other')),
+               ('applicant_status_details', '"Example explanation"'::jsonb)) as answer(system_key, value)
+  join public.profile_fields f on f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.system_key = answer.system_key;
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"5eed0000-0000-4000-8000-000000000001","role":"authenticated","aal":"aal2","amr":[{"method":"totp","timestamp":4102444800}]}';
 select is((select pg_temp.column_of(answers, 'applicant_status_details') from public.get_participant_profile('5eed0000-0000-4000-8000-000000000011')),'Example explanation','staff with sensitive access can read the explanation');
 select lives_ok($$ select public.anonymize_participant('5eed0000-0000-4000-8000-000000000011') $$,'existing erasure includes the explanation');
 reset role;
-select ok((select applicant_status_details is null from public.profiles where id='5eed0000-0000-4000-8000-000000000011'),'erasure clears the profile explanation');
-select is((select count(*)::integer from public.season_answers where profile_id='5eed0000-0000-4000-8000-000000000011' and applicant_status_details is not null),0,'erasure clears every seasonal copy');
+select is(pg_temp.stored('5eed0000-0000-4000-8000-000000000011', 'applicant_status_details'),null,'erasure clears the explanation');
+select is((select count(*)::integer from public.custom_answers where profile_id='5eed0000-0000-4000-8000-000000000011' and season_id is not null),0,'erasure clears every seasonal answer');
 
 select * from finish();
 rollback;

@@ -23,18 +23,31 @@ select plan(35);
 create temp table real_rows on commit drop as
   select
     (select count(*) from public.authorization_signatures where profile_id = '5eed0000-0000-4000-8000-000000000011') as signatures,
-    (select count(*) from public.profile_answers where profile_id = '5eed0000-0000-4000-8000-000000000011') as answers,
+    (select count(*) from public.custom_answers where profile_id = '5eed0000-0000-4000-8000-000000000011') as answers,
     (select role || ':' || coalesce(terms_accepted_at::text, '') from public.profiles where id = '5eed0000-0000-4000-8000-000000000011') as player_state;
 grant select on real_rows to authenticated;
 
 create temp table her_status (label text, required boolean, is_returning boolean) on commit drop;
 grant all on her_status to authenticated;
 
+-- An app answer given by option key, as the app's screens send it by option id.
+create function pg_temp.by_option_key(f public.profile_fields, v jsonb) returns jsonb language sql stable security definer as $$
+  select case
+    when f.question_type in ('single_choice', 'search_choice') and jsonb_typeof(v) = 'string' then
+      coalesce((select to_jsonb(o.id::text) from public.custom_question_options o
+                 where o.question_id = f.id and o.key = v #>> '{}'), v)
+    when f.question_type = 'multiple_choice' and jsonb_typeof(v) = 'array' then
+      coalesce((select jsonb_agg(o.id::text order by o.sort_order) from public.custom_question_options o
+                 where o.question_id = f.id and o.key in (select jsonb_array_elements_text(v))
+                having count(*) = jsonb_array_length(v)), v)
+    else v
+  end;
+$$;
 -- Her answers travel by field (RAPP-661). Helpers: the app's keys of a payload
 -- keyed by their fields (a choice by its option), a field's id, and her stored
 -- answer to an app field (decrypted).
 create function pg_temp.answers(p jsonb) returns jsonb language sql security definer as $$
-  select coalesce(jsonb_object_agg(f.id::text, private.app_answer_value(f, e.value)), '{}'::jsonb)
+  select coalesce(jsonb_object_agg(f.id::text, pg_temp.by_option_key(f, e.value)), '{}'::jsonb)
     from jsonb_each(p) e
     join public.profile_fields f on f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.system_key = e.key;
 $$;
@@ -204,10 +217,10 @@ select lives_ok(
 );
 reset role;
 select is(
-  (select p.role || ':' || (p.terms_accepted_at is null)::text || ':' || coalesce(p.clothing_size, '-')
+  (select p.role || ':' || (p.terms_accepted_at is null)::text
      from public.profiles p where p.id = '5eed0000-0000-4000-8000-000000000096'),
-  'invited:true:-',
-  'not joined, nothing answered'
+  'invited:true',
+  'not joined'
 );
 select is(
   (select count(*)::integer from public.custom_answers where profile_id = '5eed0000-0000-4000-8000-000000000096'),
@@ -303,7 +316,7 @@ select is(
   (select signatures || ':' || answers || ':' || player_state from real_rows),
   (select
      (select count(*) from public.authorization_signatures where profile_id = '5eed0000-0000-4000-8000-000000000011')
-     || ':' || (select count(*) from public.profile_answers where profile_id = '5eed0000-0000-4000-8000-000000000011')
+     || ':' || (select count(*) from public.custom_answers where profile_id = '5eed0000-0000-4000-8000-000000000011')
      || ':' || (select role || ':' || coalesce(terms_accepted_at::text, '') from public.profiles
                  where id = '5eed0000-0000-4000-8000-000000000011')),
   'the real player''s rows are exactly as before'

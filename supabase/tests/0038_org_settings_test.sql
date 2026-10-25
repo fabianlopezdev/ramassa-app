@@ -56,15 +56,15 @@ insert into public.collaborating_entities (id, org_id, name) values
   ('64000000-0000-4000-8300-000000000001', '64000000-0000-4000-8000-000000000001', 'RAPP-64 Entity');
 
 insert into public.profiles (
-  id, org_id, role, first_name, last_name, preferred_language, document_type,
+  id, org_id, role, first_name, last_name, preferred_language,
   is_active, terms_accepted_at, collaborating_entity_id
 ) values
-  ('64000000-0000-4000-8100-000000000001', '64000000-0000-4000-8000-000000000001', 'admin', 'Admin', 'One', 'ca', 'none', true, now(), null),
-  ('64000000-0000-4000-8100-000000000002', '64000000-0000-4000-8000-000000000001', 'admin', 'Admin', 'Two', 'ca', 'none', true, now(), null),
-  ('64000000-0000-4000-8100-000000000003', '64000000-0000-4000-8000-000000000001', 'staff', 'Núria', 'Serra', 'ca', 'none', true, now(), null),
-  ('64000000-0000-4000-8100-000000000004', '64000000-0000-4000-8000-000000000001', 'player', 'أمينة', 'الحسن', 'ar', 'none', true, now(), null),
-  ('64000000-0000-4000-8100-000000000005', '64000000-0000-4000-8000-000000000001', 'entity', 'Sílvia', 'Bosch', 'ca', 'none', true, now(), '64000000-0000-4000-8300-000000000001'),
-  ('64000000-0000-4000-8100-000000000006', '64000000-0000-4000-8000-000000000002', 'admin', 'Other', 'Admin', 'ca', 'none', true, now(), null);
+  ('64000000-0000-4000-8100-000000000001', '64000000-0000-4000-8000-000000000001', 'admin', 'Admin', 'One', 'ca', true, now(), null),
+  ('64000000-0000-4000-8100-000000000002', '64000000-0000-4000-8000-000000000001', 'admin', 'Admin', 'Two', 'ca', true, now(), null),
+  ('64000000-0000-4000-8100-000000000003', '64000000-0000-4000-8000-000000000001', 'staff', 'Núria', 'Serra', 'ca', true, now(), null),
+  ('64000000-0000-4000-8100-000000000004', '64000000-0000-4000-8000-000000000001', 'player', 'أمينة', 'الحسن', 'ar', true, now(), null),
+  ('64000000-0000-4000-8100-000000000005', '64000000-0000-4000-8000-000000000001', 'entity', 'Sílvia', 'Bosch', 'ca', true, now(), '64000000-0000-4000-8300-000000000001'),
+  ('64000000-0000-4000-8100-000000000006', '64000000-0000-4000-8000-000000000002', 'admin', 'Other', 'Admin', 'ca', true, now(), null);
 
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"64000000-0000-4000-8100-000000000001","role":"authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';

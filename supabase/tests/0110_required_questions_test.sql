@@ -2,8 +2,8 @@
 -- Run with: bunx supabase test db
 --
 -- What these assertions defend:
---   1. The staff choices keep row level security; anon reaches nothing; only
---      the functions write them; the table is in the RGPD register.
+--   1. The staff choices live on the placements (RAPP-666): the old table is
+--      gone, and only the functions write them.
 --   2. With no choice the required list is the app's own (the default block).
 --   3. Only onboarding designers change it; her first name, last name and app
 --      language are refused; every change is audited.
@@ -24,13 +24,26 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
-select plan(43);
+select plan(41);
 
+-- An app answer given by option key, as the app's screens send it by option id.
+create function pg_temp.by_option_key(f public.profile_fields, v jsonb) returns jsonb language sql stable security definer as $$
+  select case
+    when f.question_type in ('single_choice', 'search_choice') and jsonb_typeof(v) = 'string' then
+      coalesce((select to_jsonb(o.id::text) from public.custom_question_options o
+                 where o.question_id = f.id and o.key = v #>> '{}'), v)
+    when f.question_type = 'multiple_choice' and jsonb_typeof(v) = 'array' then
+      coalesce((select jsonb_agg(o.id::text order by o.sort_order) from public.custom_question_options o
+                 where o.question_id = f.id and o.key in (select jsonb_array_elements_text(v))
+                having count(*) = jsonb_array_length(v)), v)
+    else v
+  end;
+$$;
 -- Her answers travel by field (RAPP-661). Helpers: the app's keys of a payload
 -- keyed by their fields (a choice by its option), a field's id, and her stored
 -- answer to an app field (decrypted).
 create function pg_temp.answers(p jsonb) returns jsonb language sql security definer as $$
-  select coalesce(jsonb_object_agg(f.id::text, private.app_answer_value(f, e.value)), '{}'::jsonb)
+  select coalesce(jsonb_object_agg(f.id::text, pg_temp.by_option_key(f, e.value)), '{}'::jsonb)
     from jsonb_each(p) e
     join public.profile_fields f on f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.system_key = e.key;
 $$;
@@ -46,23 +59,13 @@ grant execute on all functions in schema pg_temp to authenticated;
 -- 1. Row security -----------------------------------------------------------------------------------------
 
 select ok(
-  (select relrowsecurity from pg_class where oid = 'public.intake_required_questions'::regclass),
-  'the required choices keep row level security'
-);
-select ok(
-  not has_table_privilege('anon', 'public.intake_required_questions', 'select')
-  and not has_table_privilege('authenticated', 'public.intake_required_questions', 'insert')
-  and not has_table_privilege('authenticated', 'public.intake_required_questions', 'update'),
-  'anon reads nothing and nobody writes it directly'
+  to_regclass('public.intake_required_questions') is null,
+  'the required choices live on the placements: the old table is gone'
 );
 select ok(
   not has_function_privilege('anon', 'public.save_builtin_question_required(text, boolean)', 'execute')
   and not has_function_privilege('anon', 'public.save_placement(uuid, boolean, jsonb, jsonb)', 'execute'),
   'the new functions need an account'
-);
-select ok(
-  exists (select 1 from public.personal_data_disposition() where table_name = 'intake_required_questions'),
-  'the table is in the RGPD register'
 );
 
 -- 2. The default ------------------------------------------------------------------------------------------
@@ -126,11 +129,12 @@ select ok(
                and changes = '{"question": "clothing_size", "required": false}'::jsonb),
   'every change is audited'
 );
-select is(
-  (select count(*)::integer from public.intake_required_questions
-    where org_id = '5eed0000-0000-4000-8000-000000000000' and question = 'phone'),
-  1,
-  'a choice equal to the default keeps no extra row'
+select ok(
+  (select bool_and(p.required) from public.field_placements p
+     join public.profile_fields f on f.id = p.field_id
+    where f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.system_key = 'phone'
+      and p.surface = 'onboarding'),
+  'the phone''s onboarding placement carries the choice'
 );
 
 -- 4. Every reader follows ---------------------------------------------------------------------------------
@@ -159,11 +163,11 @@ select lives_ok(
   'the sizes screen hides once both sizes are optional (RAPP-612)'
 );
 select throws_ok(
-  $$ select public.save_builtin_question_override('phone', null, null, true, '{}'::jsonb) $$,
+  $$ select public.save_builtin_question_override('phone', null, null, true) $$,
   '23514', null::text, 'a required question cannot be hidden'
 );
 select lives_ok(
-  $$ select public.save_builtin_question_override('address', null, null, true, '{}'::jsonb) $$,
+  $$ select public.save_builtin_question_override('address', null, null, true) $$,
   'an optional one can'
 );
 select lives_ok(
@@ -171,11 +175,11 @@ select lives_ok(
   'then made required'
 );
 select is(
-  (select (entry ->> 'is_hidden')::boolean
-     from jsonb_array_elements(public.intake_catalog() -> 'overrides') entry
-    where entry ->> 'question' = 'address'),
+  coalesce((select (entry ->> 'is_hidden')::boolean
+              from jsonb_array_elements(public.intake_catalog() -> 'overrides') entry
+             where entry ->> 'question' = 'address'), false),
   false,
-  'its hide stops counting while it is required'
+  'a required question is asked again: it is placed back on its screen'
 );
 select lives_ok(
   $$ select public.save_builtin_question_required('address', false) $$,
@@ -271,8 +275,8 @@ select is(
   'her staff answer is saved in the same call'
 );
 select is(
-  (select clothing_size from public.profiles where id = '00000000-0000-0000-0000-0000000006c3'),
-  null::text,
+  pg_temp.stored('00000000-0000-0000-0000-0000000006c3', 'clothing_size'),
+  null::jsonb,
   'an optional size she did not give stays unknown'
 );
 
@@ -297,8 +301,8 @@ select public.complete_onboarding_signed(
   '{"terms_accepted": true, "media_consent": false, "unable_to_draw": true}'::jsonb);
 reset role;
 select is(
-  (select has_dependents from public.profiles where id = '00000000-0000-0000-0000-0000000006c4'),
-  null::boolean,
+  pg_temp.stored('00000000-0000-0000-0000-0000000006c4', 'has_dependents'),
+  null::jsonb,
   'an optional dependants question she did not answer is unknown, not "no"'
 );
 
@@ -333,8 +337,8 @@ select lives_ok(
 );
 reset role;
 select is(
-  (select has_dependents from public.profiles where id = '00000000-0000-0000-0000-0000000006c4'),
-  null::boolean,
+  pg_temp.stored('00000000-0000-0000-0000-0000000006c4', 'has_dependents'),
+  null::jsonb,
   'and her dependants stay unknown'
 );
 
@@ -346,7 +350,10 @@ select lives_ok(
   'the design role makes the childcare question required'
 );
 reset role;
-update public.profiles set childcare_need = null where id = '5eed0000-0000-4000-8000-000000000011';
+delete from public.custom_answers a
+ using public.profile_fields f
+ where f.id = a.question_id and f.system_key = 'childcare_need'
+   and a.profile_id = '5eed0000-0000-4000-8000-000000000011';
 set local role authenticated;
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000011", "role": "authenticated"}';
 select throws_ok(

@@ -19,11 +19,24 @@ select plan(23);
 create temp table referral_run (label text primary key, id uuid);
 grant all on referral_run to authenticated;
 
+-- An app answer given by option key, as the app's screens send it by option id.
+create function pg_temp.by_option_key(f public.profile_fields, v jsonb) returns jsonb language sql stable security definer as $$
+  select case
+    when f.question_type in ('single_choice', 'search_choice') and jsonb_typeof(v) = 'string' then
+      coalesce((select to_jsonb(o.id::text) from public.custom_question_options o
+                 where o.question_id = f.id and o.key = v #>> '{}'), v)
+    when f.question_type = 'multiple_choice' and jsonb_typeof(v) = 'array' then
+      coalesce((select jsonb_agg(o.id::text order by o.sort_order) from public.custom_question_options o
+                 where o.question_id = f.id and o.key in (select jsonb_array_elements_text(v))
+                having count(*) = jsonb_array_length(v)), v)
+    else v
+  end;
+$$;
 -- Her answers travel by field (RAPP-661). Helpers: the app's keys of a payload
 -- keyed by their fields (a choice by its option), a field's id, and her stored
 -- answer to an app field (decrypted).
 create function pg_temp.answers(p jsonb) returns jsonb language sql security definer as $$
-  select coalesce(jsonb_object_agg(f.id::text, private.app_answer_value(f, e.value)), '{}'::jsonb)
+  select coalesce(jsonb_object_agg(f.id::text, pg_temp.by_option_key(f, e.value)), '{}'::jsonb)
     from jsonb_each(p) e
     join public.profile_fields f on f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.system_key = e.key;
 $$;
@@ -226,7 +239,10 @@ select is(
 
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000011", "role": "authenticated", "aal": "aal1"}';
 reset role;
-update public.profiles set childcare_need = 'yes', season_number = 2 where id = '5eed0000-0000-4000-8000-000000000011';
+update public.profiles set season_number = 2 where id = '5eed0000-0000-4000-8000-000000000011';
+select private.write_custom_answer('5eed0000-0000-4000-8000-000000000011', f, '"yes"', 'player')
+  from public.profile_fields f
+ where f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.system_key = 'childcare_need';
 set local role authenticated;
 select lives_ok(
   $$ select public.update_own_profile(jsonb_build_object(

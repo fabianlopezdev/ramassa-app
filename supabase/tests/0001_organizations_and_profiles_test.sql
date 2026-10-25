@@ -38,10 +38,12 @@ insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-0000000000a4', 'entityA@test.local'),
   ('00000000-0000-0000-0000-0000000000b1', 'playerB1@test.local');
 
--- Profiles. playerA1 carries encrypted PII to exercise the crypto helpers.
+-- Profiles. playerA1 carries encrypted personal data to exercise the crypto
+-- helpers: her emergency contact phone and her health answer stay encrypted
+-- columns of her account (her field answers are tested in 0091).
 insert into public.profiles (
   id, org_id, role, collaborating_entity_id,
-  first_name, last_name, phone, document_number
+  first_name, last_name, emergency_contact_phone, health_info
 ) values
   ('00000000-0000-0000-0000-0000000000a1', '00000000-0000-0000-0000-00000000a001', 'player',
     null, 'Amina', 'One', public.encrypt_field('600111222'), public.encrypt_field('X1234567L')),
@@ -56,23 +58,23 @@ insert into public.profiles (
 
 -- Encryption assertions (read raw column as superuser; crypto is independent of RLS)
 select is(
-  pg_typeof(phone)::text, 'bytea',
-  'phone is stored as bytea (encrypted), not text'
+  pg_typeof(emergency_contact_phone)::text, 'bytea',
+  'the emergency contact phone is stored as bytea (encrypted)'
 ) from public.profiles where id = '00000000-0000-0000-0000-0000000000a1';
 
 select isnt(
-  encode(phone, 'escape'), '600111222',
-  'raw phone column contents are ciphertext, not the plaintext'
+  encode(emergency_contact_phone, 'escape'), '600111222',
+  'the raw column holds ciphertext, never the plaintext'
 ) from public.profiles where id = '00000000-0000-0000-0000-0000000000a1';
 
 select is(
-  public.decrypt_field(phone), '600111222',
-  'phone round-trips back to plaintext through decrypt_field'
+  public.decrypt_field(emergency_contact_phone), '600111222',
+  'the phone round-trips back to plaintext through decrypt_field'
 ) from public.profiles where id = '00000000-0000-0000-0000-0000000000a1';
 
 select is(
-  public.decrypt_field(document_number), 'X1234567L',
-  'document_number round-trips back to plaintext through decrypt_field'
+  public.decrypt_field(health_info), 'X1234567L',
+  'the health answer round-trips back to plaintext through decrypt_field'
 ) from public.profiles where id = '00000000-0000-0000-0000-0000000000a1';
 
 -- Impersonation helper macro is inline: set the authenticated role + JWT sub.

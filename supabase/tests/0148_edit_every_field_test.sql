@@ -15,8 +15,8 @@
 --      fields that opened on it.
 --   5. Privacy up encrypts the answers and a reader loses them; privacy down
 --      decrypts them and a reader gains them. The preview counts both.
---   6. An app field is archived and placed on any screen; staff option
---      wording lands on the field's options.
+--   6. An app field is archived and placed on any screen; an older setup
+--      file's option wording lands on the field's options.
 --   7. Erasure removes what a change set aside about her.
 --   8. The helpers stay private; the preview is for signed-in builders only.
 --
@@ -27,7 +27,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
-select plan(50);
+select plan(49);
 
 create temp table run (label text primary key, id uuid);
 grant all on run to authenticated;
@@ -291,20 +291,17 @@ select lives_ok(
   $$ select public.place_field(pg_temp.sys('postal_code'), 'onboarding',
        public.save_intake_screen(null, '{"ca": "Adreça"}'::jsonb, null, 'logistics')::text) $$,
   'and is placed on a Ramassà screen');
-select lives_ok(
-  $$ select public.save_builtin_question_override('clothing_size', null, null, false,
-       '{"M": {"label": {"ca": "Mitjana"}}}'::jsonb) $$,
-  'an older admin still saves option wording on the app question');
-
+-- An older setup file still carries option wording on the app question
+-- (RAPP-666): its import folds it into the field's options.
 reset role;
+select lives_ok(
+  $$ select private.fold_app_option_overrides('5eed0000-0000-4000-8000-000000000000', 'clothing_size',
+       '{"M": {"label": {"ca": "Mitjana"}}}'::jsonb) $$,
+  'an older setup file''s option wording is applied');
 select is(
   (select o.label ->> 'ca' from public.custom_question_options o
     where o.question_id = pg_temp.sys('clothing_size') and o.key = 'M'),
   'Mitjana', 'the wording lands on the field''s option');
-select is(
-  (select option_overrides from public.builtin_question_overrides
-    where org_id = '5eed0000-0000-4000-8000-000000000000' and question = 'clothing_size'),
-  '{}'::jsonb, 'and is not kept on the override');
 
 -- 7. Erasure ---------------------------------------------------------------------------------------------------
 
@@ -330,7 +327,7 @@ select is(
      'private.answer_items(text, jsonb)',
      'private.matching_option(jsonb, text, text, text)',
      'private.field_options_json(uuid)',
-     'private.fold_option_overrides()',
+     'private.fold_app_option_overrides(uuid, text, jsonb)',
      'private.is_name_field(public.profile_fields)',
      'private.privacy_permission(text)']) fn
     where has_function_privilege('authenticated', fn, 'execute')

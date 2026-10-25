@@ -21,7 +21,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
-select plan(38);
+select plan(37);
 
 -- Her answer to an app field in a reader's `answers` (RAPP-662): a choice by its
 -- option's key, anything else as text.
@@ -81,21 +81,15 @@ select ok(not has_function_privilege('anon', 'private.referral_update_content(uu
 select ok(not has_function_privilege('anon', 'private.feedback_content(uuid)', 'execute'),
   'anon cannot run the feedback helper');
 
--- The trigger decrypts as its owner; a trigger function cannot be called directly.
-select ok(
-  (select prosecdef from pg_proc where oid = 'private.normalize_applicant_status_details()'::regprocedure),
-  'the applicant status trigger decrypts as its owner'
-);
-
 -- 3. No ciphertext transplant ------------------------------------------------------------------------
 
--- A player copies a ciphertext she can read into her own phone field: her
+-- A player copies a ciphertext she can read into her own health answer: her
 -- own profile read would decrypt it. The guard refuses the direct write.
 set local role authenticated;
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000011", "role": "authenticated", "aal": "aal1"}';
 select throws_ok(
   $$ update public.profiles
-        set phone = (select content_encrypted from public.feedback_submissions
+        set health_info = (select content_encrypted from public.feedback_submissions
                       where id = '5eed0000-0000-4000-8017-000000000001')
       where id = '5eed0000-0000-4000-8000-000000000011' $$,
   '42501', 'PROFILES/PRIVILEGED_COLUMN', 'a player cannot write a ciphertext into her own profile'
@@ -110,7 +104,7 @@ select throws_ok(
 );
 select throws_ok(
   $$ update public.profiles
-        set specific_needs = (select intake_answers from public.entity_referrals
+        set emergency_contact_phone = (select intake_answers from public.entity_referrals
                                where id = '5eed0000-0000-4000-8010-000000000001')
       where id = '5eed0000-0000-4000-8000-000000000012' $$,
   '42501', 'PROFILES/PRIVILEGED_COLUMN', 'a staff member cannot write a ciphertext into a player''s profile'

@@ -219,14 +219,20 @@ select cmp_ok(
 -- column entirely.
 update public.profiles
    set media_consent_at = now(),
-       reference_entity = 'Creu Roja Osona',
-       reference_contact_name = 'Marta Vidal',
-       phone = public.encrypt_field('600111222'),
-       address = public.encrypt_field('Carrer de la Riera 14'),
-       postal_code = public.encrypt_field('08500'),
-       document_number = public.encrypt_field('X1234567L'),
        avatar_url = 'profile-photos/fatima.jpg'
  where id = '5eed0000-0000-4000-8000-000000000012'::uuid;
+
+-- The seed gives her every encrypted answer and the free-text ones that name
+-- or place her (her entity contact, her place of birth).
+select is(
+  (select count(*)::int from public.custom_answers a
+     join public.profile_fields f on f.id = a.question_id
+    where a.profile_id = '5eed0000-0000-4000-8000-000000000012'::uuid
+      and f.system_key in ('document_number', 'phone', 'address', 'postal_code',
+                           'reference_contact_name', 'place_of_birth')),
+  6,
+  'the erasure subject starts with her encrypted and free-text answers'
+);
 
 -- And one staff note about her. The seeds give this participant none, so
 -- without it the "the notes are removed" assertion below would compare zero to
@@ -317,20 +323,25 @@ select ok(
   'her name no longer appears on the row'
 );
 
-select ok(
-  (
-    select document_number is null and phone is null and address is null and postal_code is null
-    from public.profiles where id = '5eed0000-0000-4000-8000-000000000012'::uuid
-  ),
-  'the four encrypted fields are emptied, not merely re-encrypted'
+select is(
+  (select count(*)::int from public.custom_answers a
+     join public.profile_fields f on f.id = a.question_id
+    where a.profile_id = '5eed0000-0000-4000-8000-000000000012'::uuid
+      and f.system_key in ('document_number', 'phone', 'address', 'postal_code')),
+  0,
+  'the four encrypted answers are deleted, not merely re-encrypted'
 );
 
 select ok(
   (
-    select reference_contact_name is null and place_of_birth is null and avatar_url is null
-    from public.profiles where id = '5eed0000-0000-4000-8000-000000000012'::uuid
+    select avatar_url is null
+       and not exists (
+         select 1 from public.custom_answers a
+           join public.profile_fields f on f.id = a.question_id
+          where a.profile_id = p.id and f.system_key in ('reference_contact_name', 'place_of_birth'))
+    from public.profiles p where p.id = '5eed0000-0000-4000-8000-000000000012'::uuid
   ),
-  'and so are the free-text fields that name her or place her'
+  'and so are the free-text answers that name her or place her, and her photo'
 );
 
 -- An exact birth date next to a nationality and a town identifies one woman in a
@@ -351,12 +362,6 @@ select is(
       and f.system_key is distinct from 'date_of_birth'),
   0,
   'no other answer of hers survives, the team''s fields included'
-);
-
-select ok(
-  (select nationality is null and reference_entity is null and date_of_birth is null
-     from public.profiles where id = '5eed0000-0000-4000-8000-000000000012'::uuid),
-  'and the old columns keep no copy of them'
 );
 
 -- Consent to appear in photographs cannot outlive the person it belonged to: a

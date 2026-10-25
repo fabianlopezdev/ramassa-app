@@ -729,22 +729,17 @@ join seed_roster r on r.email = u.email
 on conflict (provider_id, provider) do nothing;
 
 -- Profiles -----------------------------------------------------------------------
--- The RGPD-sensitive columns go through public.encrypt_field, the same helper the
--- app uses (ADR-004), so a detail view exercises real decryption instead of
--- reading plaintext that a broken decrypt would still render.
+-- A profile holds her names and her account settings (ADR-031, D2). Everything
+-- else she answers is an answer by field, written below.
 --
 -- A handful of rows are deliberately imperfect: three accounts never accepted the
--- terms, two participants are deactivated, one is forum-banned, and five hold no
--- identity document, four of them participants (the just-arrived case). A
--- uniformly happy dataset hides exactly the screens that break.
+-- terms, two participants are deactivated, one is forum-banned, and four
+-- participants hold no identity document (the just-arrived case). A uniformly
+-- happy dataset hides exactly the screens that break.
 
 insert into public.profiles (
-  id, org_id, role, first_name, last_name, date_of_birth, place_of_birth, nationality,
-  address, city, postal_code, phone, document_type, document_number,
-  reference_entity, collaborating_entity_id, reference_contact_name,
-  has_dependents, num_dependents,
-  clothing_size, shoe_size, preferred_language, is_active, is_forum_banned,
-  terms_accepted_at
+  id, org_id, role, first_name, last_name, collaborating_entity_id,
+  preferred_language, is_active, is_forum_banned, terms_accepted_at
 )
 select
   ('5eed0000-0000-4000-8000-' || lpad(r.ordinal::text, 12, '0'))::uuid,
@@ -752,19 +747,94 @@ select
   r.app_role,
   r.first_name,
   r.last_name,
-  make_date(1985 + (r.ordinal % 15), 1 + (r.ordinal % 12), 1 + (r.ordinal % 28)),
-  -- Where she was born, in the script she writes it in. Required at intake
-  -- since 2026-07-31 (RAPP-21), so a roster of NULLs would leave the staff edit
-  -- form (RAPP-24) unable to save ANY seeded participant without inventing a
-  -- birthplace first: the form re-validates the same rule the wizard applies.
-  --
-  -- Two participants keep a NULL on purpose. Profiles created before the field
-  -- existed carry one, and that case has its own behaviour (staff must supply
-  -- it before they can save anything else); a uniformly complete dataset would
-  -- hide it, exactly as the deactivated and undocumented rows exist to stop
-  -- their screens hiding.
-  case when r.ordinal % 11 = 0 then null else
-    case r.nationality
+  case r.ordinal
+    when 4 then '5eed0000-0000-4000-8030-000000000001'::uuid
+    when 5 then '5eed0000-0000-4000-8030-000000000002'::uuid
+    else null
+  end,
+  r.preferred_language,
+  r.ordinal % 13 <> 0,
+  r.ordinal % 17 = 0,
+  case when r.ordinal % 7 = 0 then null else now() end
+from seed_roster r
+on conflict (id) do nothing;
+
+-- Her answers, by field (ADR-031) ------------------------------------------------
+-- Written the way the app's writers write them: through
+-- `private.write_custom_answer`, so a Sensitive answer (phone, address, postal
+-- code, document number) is stored with public.encrypt_field (ADR-004) and a
+-- detail view exercises real decryption. A choice is given by its option key.
+-- Only players carry a participant record; the team's own profiles hold none.
+
+create function pg_temp.seed_app_answer(
+  p_profile_id uuid, p_system_key text, p_value jsonb, p_source text, p_answered_by uuid default null)
+returns void
+language plpgsql
+as $$
+declare
+  field public.profile_fields;
+  stored jsonb := p_value;
+begin
+  if p_value is null or jsonb_typeof(p_value) = 'null' then
+    return;
+  end if;
+  select * into field from public.profile_fields f
+   where f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.system_key = p_system_key;
+  if field.question_type in ('single_choice', 'search_choice') then
+    select to_jsonb(o.id::text) into stored from public.custom_question_options o
+     where o.question_id = field.id and o.key = p_value #>> '{}';
+  elsif field.question_type = 'multiple_choice' then
+    select jsonb_agg(o.id::text order by o.sort_order) into stored from public.custom_question_options o
+     where o.question_id = field.id and o.key in (select jsonb_array_elements_text(p_value));
+  end if;
+  if stored is null then
+    raise exception 'seed: % has no option %', p_system_key, p_value;
+  end if;
+  perform private.write_custom_answer(p_profile_id, field, stored, p_source, p_answered_by);
+end;
+$$;
+
+-- The same answers for a referral, encrypted as every referral answer is.
+create function pg_temp.seed_referral_answer(p_referral_id uuid, p_system_key text, p_value jsonb)
+returns void
+language plpgsql
+as $$
+declare
+  field public.profile_fields;
+  stored jsonb := p_value;
+begin
+  select * into field from public.profile_fields f
+   where f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.system_key = p_system_key;
+  if field.question_type in ('single_choice', 'search_choice') then
+    select to_jsonb(o.id::text) into stored from public.custom_question_options o
+     where o.question_id = field.id and o.key = p_value #>> '{}';
+  elsif field.question_type = 'multiple_choice' then
+    select jsonb_agg(o.id::text order by o.sort_order) into stored from public.custom_question_options o
+     where o.question_id = field.id and o.key in (select jsonb_array_elements_text(p_value));
+  end if;
+  insert into public.referral_custom_answers (referral_id, question_id, org_id, value_encrypted)
+  values (p_referral_id, field.id, field.org_id, public.encrypt_field(stored::text))
+  on conflict do nothing;
+end;
+$$;
+
+perform pg_temp.seed_app_answer(player.id, answer.system_key, answer.value, 'player')
+from (
+  select r.*, ('5eed0000-0000-4000-8000-' || lpad(r.ordinal::text, 12, '0'))::uuid as id,
+         coalesce(
+           r.own_reference_entity,
+           case r.ordinal % 3 when 0 then 'Creu Roja Osona' when 1 then 'CEAR Catalunya' else null end
+         ) as reference_entity
+    from seed_roster r
+   where r.app_role = 'player'
+) player
+cross join lateral (values
+  ('date_of_birth', to_jsonb(make_date(1985 + (player.ordinal % 15), 1 + (player.ordinal % 12), 1 + (player.ordinal % 28))::text)),
+  -- Where she was born, in the script she writes it in. Two participants have
+  -- none on purpose: a profile from before the field existed, whose staff edit
+  -- must supply it first.
+  ('place_of_birth', case when player.ordinal % 11 = 0 then null else to_jsonb(
+    case player.nationality
       when 'Síria'      then 'حلب'
       when 'Marroc'     then 'الرباط'
       when 'Tunísia'    then 'تونس'
@@ -778,45 +848,30 @@ select
       when 'Senegal'    then 'Dakar'
       when 'Gàmbia'     then 'Banjul'
       else 'Vic'
-    end
-  end,
-  r.nationality,
-  public.encrypt_field('Carrer de Prova, ' || r.ordinal),
-  r.city,
-  public.encrypt_field(
-    case r.city
+    end) end),
+  ('nationality', to_jsonb(player.nationality)),
+  ('address', to_jsonb('Carrer de Prova, ' || player.ordinal)),
+  ('city', to_jsonb(player.city)),
+  ('postal_code', to_jsonb(
+    case player.city
       when 'Vic' then '08500'
       when 'Manlleu' then '08560'
       when 'Torelló' then '08570'
       when 'Roda de Ter' then '08510'
       else '08500'
-    end
-  ),
-  public.encrypt_field('+346' || lpad(r.ordinal::text, 8, '0')),
-  case when r.ordinal % 5 = 0 then 'none' else 'nie' end,
-  case when r.ordinal % 5 = 0 then null
-       else public.encrypt_field('Y' || lpad(r.ordinal::text, 7, '0') || 'Z') end,
-  coalesce(
-    r.own_reference_entity,
-    case r.ordinal % 3 when 0 then 'Creu Roja Osona' when 1 then 'CEAR Catalunya' else null end
-  ),
-  case r.ordinal
-    when 4 then '5eed0000-0000-4000-8030-000000000001'::uuid
-    when 5 then '5eed0000-0000-4000-8030-000000000002'::uuid
-    else null
-  end,
-  case when r.own_reference_entity is not null then null
-       else case r.ordinal % 3 when 0 then 'Sílvia Bosch' when 1 then 'Jordi Camps' else null end end,
-  r.ordinal % 3 = 0,
-  case when r.ordinal % 3 = 0 then 1 + (r.ordinal % 4) else 0 end,
-  (array['S', 'M', 'L', 'XL'])[1 + (r.ordinal % 4)],
-  (36 + (r.ordinal % 6))::text,
-  r.preferred_language,
-  r.ordinal % 13 <> 0,
-  r.ordinal % 17 = 0,
-  case when r.ordinal % 7 = 0 then null else now() end
-from seed_roster r
-on conflict (id) do nothing;
+    end)),
+  ('phone', to_jsonb('+346' || lpad(player.ordinal::text, 8, '0'))),
+  ('document_type', to_jsonb(case when player.ordinal % 5 = 0 then 'none' else 'nie' end)),
+  ('document_number', case when player.ordinal % 5 = 0 then null
+                           else to_jsonb('Y' || lpad(player.ordinal::text, 7, '0') || 'Z') end),
+  ('reference_entity', to_jsonb(player.reference_entity)),
+  ('reference_contact_name', case player.ordinal % 3 when 0 then '"Sílvia Bosch"'::jsonb
+                                                     when 1 then '"Jordi Camps"'::jsonb end),
+  ('has_dependents', to_jsonb(case when player.ordinal % 3 = 0 then 'yes' else 'no' end)),
+  ('num_dependents', case when player.ordinal % 3 = 0 then to_jsonb(1 + (player.ordinal % 4)) end),
+  ('clothing_size', to_jsonb((array['S', 'M', 'L', 'XL'])[1 + (player.ordinal % 4)])),
+  ('shoe_size', to_jsonb((36 + (player.ordinal % 6))::text))
+) as answer(system_key, value);
 
 -- Entity referrals and encrypted participant updates (RAPP-54) -----------------
 -- Creu Roja has one pending and three linked referrals. Its linked denominator
@@ -928,24 +983,38 @@ values
 on conflict (id) do nothing;
 
 -- The pending referral carries the season registration answers and the
--- entity's consent (RAPP-303), so accepting it fills her profile.
+-- entity's consent (RAPP-303), so accepting it fills her profile. Its answers
+-- are by field (ADR-031); its blob keeps only her season count.
 update public.entity_referrals
 set
-  intake_answers = public.encrypt_field(jsonb_build_object(
-    'date_of_birth', '1996-02-20',
-    'nationality', 'Marroc',
-    'document_type', 'none',
-    'city', 'Vic',
-    'applicant_status', 'migrant',
-    'supporting_entities', jsonb_build_array('Càritas Vic'),
-    'reference_contact_name', 'Sílvia Bosch',
-    'season_number', 2,
-    'childcare_need', 'yes',
-    'specific_needs', 'Prefereix entrenar a la tarda.'
-  )::text),
+  intake_answers = public.encrypt_field(jsonb_build_object('season_number', 2)::text),
   consent_confirmed_at = now() - interval '2 days',
   consent_confirmed_by = '5eed0000-0000-4000-8000-000000000004'
 where id = '5eed0000-0000-4000-8010-000000000001';
+
+perform pg_temp.seed_referral_answer('5eed0000-0000-4000-8010-000000000001', answer.system_key, answer.value)
+from (values
+  ('date_of_birth', '"1996-02-20"'::jsonb),
+  ('nationality', '"Marroc"'),
+  ('document_type', '"none"'),
+  ('city', '"Vic"'),
+  ('phone', '"+34930005401"'),
+  ('applicant_status', '"migrant"'),
+  ('supporting_entities', '["Càritas Vic"]'),
+  ('reference_contact_name', '"Sílvia Bosch"'),
+  ('childcare_need', '"yes"'),
+  ('specific_needs', '["other"]'),
+  ('specific_needs_details', '"Prefereix entrenar a la tarda."')
+) as answer(system_key, value);
+
+-- The phone each linked referral was sent with.
+perform pg_temp.seed_referral_answer(referral.id, 'phone', to_jsonb(referral.phone))
+from (values
+  ('5eed0000-0000-4000-8010-000000000002'::uuid, '+34600000011'),
+  ('5eed0000-0000-4000-8010-000000000003'::uuid, '+34600000012'),
+  ('5eed0000-0000-4000-8010-000000000004'::uuid, '+34600000013'),
+  ('5eed0000-0000-4000-8010-000000000005'::uuid, '+34600000014')
+) as referral(id, phone);
 
 insert into public.entity_invitations (
   id, org_id, collaborating_entity_id, email, profile_id, invited_by,
@@ -1149,38 +1218,35 @@ values (
 )
 on conflict (provider_id, provider) do nothing;
 
-insert into public.profiles (
-  id, org_id, role, first_name, last_name, date_of_birth, nationality,
-  reference_entity, clothing_size, preferred_language
-)
+insert into public.profiles (id, org_id, role, first_name, last_name, preferred_language)
 values (
   '5eed0000-0000-4000-8000-000000000098',
   '5eed0000-0000-4000-8000-000000000000',
   'invited',
   'Mariam',
   'Keita',
-  '1999-03-14',
-  'Mali',
-  'Creu Roja Osona',
-  'M',
   'ca'
 )
 on conflict (id) do nothing;
 
-insert into public.profile_answers (profile_id, org_id, question, source)
-select '5eed0000-0000-4000-8000-000000000098', '5eed0000-0000-4000-8000-000000000000', question, 'staff'
-from unnest(array[
-  'first_name', 'last_name', 'date_of_birth', 'nationality', 'reference_entity', 'clothing_size'
-]) as question
-on conflict (profile_id, question) do nothing;
+-- What staff filled in before she joined: answers by field, given by the team.
+perform pg_temp.seed_app_answer('5eed0000-0000-4000-8000-000000000098', answer.system_key, answer.value, 'staff',
+                               '5eed0000-0000-4000-8000-000000000002')
+from (values
+  ('date_of_birth', '"1999-03-14"'::jsonb),
+  ('nationality', '"Mali"'),
+  ('reference_entity', '"Creu Roja Osona"'),
+  ('clothing_size', '"M"')
+) as answer(system_key, value);
 
--- Staff choices for her wizard (RAPP-301): she reviews the clothing size staff
--- entered, and she is not asked her phone.
-insert into public.intake_question_states (profile_id, org_id, question, state)
-values
-  ('5eed0000-0000-4000-8000-000000000098', '5eed0000-0000-4000-8000-000000000000', 'clothing_size', 'ask'),
-  ('5eed0000-0000-4000-8000-000000000098', '5eed0000-0000-4000-8000-000000000000', 'phone', 'skip')
-on conflict (profile_id, question) do nothing;
+-- Staff choices for her wizard (RAPP-301), on the fields: she reviews the
+-- clothing size staff entered, and she is not asked her phone.
+insert into public.custom_question_states (profile_id, org_id, question_id, state)
+select '5eed0000-0000-4000-8000-000000000098', f.org_id, f.id, choice.state
+from (values ('clothing_size', 'ask'), ('phone', 'skip')) as choice(system_key, state)
+join public.profile_fields f
+  on f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.system_key = choice.system_key
+on conflict (profile_id, question_id) do nothing;
 
 -- The participation authorization (RAPP-304) -----------------------------------
 -- The 2026/27 season and version 1 of Ramassà's authorization: the text of the
@@ -1628,11 +1694,12 @@ values ('5eed0000-0000-4000-8010-000000000001', '5eed0000-0000-4000-8045-0000000
         '5eed0000-0000-4000-8000-000000000000', public.encrypt_field('"maybe"'))
 on conflict do nothing;
 
-insert into public.builtin_question_overrides (org_id, question, label, help, option_overrides)
-values ('5eed0000-0000-4000-8000-000000000000', 'reference_entity',
-        '{"ca":"Quina entitat t''acompanya?","es":"¿Qué entidad te acompaña?","en":"Which organization supports you?"}'::jsonb,
-        null, '{}'::jsonb)
-on conflict do nothing;
+-- Staff wording of an app question: on its field's onboarding placement.
+update public.field_placements p
+   set label_override = '{"ca":"Quina entitat t''acompanya?","es":"¿Qué entidad te acompaña?","en":"Which organization supports you?"}'::jsonb
+  from public.profile_fields f
+ where f.id = p.field_id and p.surface = 'onboarding'
+   and f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.system_key = 'reference_entity';
 
 -- Built-in screen wording and the flow order (RAPP-612). The order is the app's
 -- own, with the three staff screens after the equipment step, so the seeded
@@ -1650,12 +1717,6 @@ values ('5eed0000-0000-4000-8000-000000000000',
               'custom:5eed0000-0000-4000-8044-000000000002',
               'custom:5eed0000-0000-4000-8044-000000000003',
               'season', 'supporting-entities', 'participation-support', 'specific-needs'])
-on conflict do nothing;
-
--- Which built-in questions are required (RAPP-611): the seed keeps the app's
--- own list; one explicit row says the phone stays optional, as by default.
-insert into public.intake_required_questions (org_id, question, is_required)
-values ('5eed0000-0000-4000-8000-000000000000', 'phone', false)
 on conflict do nothing;
 
 insert into public.intake_state_presets (id, org_id, name, states)

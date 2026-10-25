@@ -3,7 +3,7 @@
 --
 -- What these assertions defend:
 --   1. Anonymizing deletes every answer of hers: the app's fields, the team's
---      fields, every season, and the old stores; only her birth year stays, in
+--      fields, every season; only her birth year stays, in
 --      her date of birth field.
 --   2. A date of birth field that is no longer a date keeps nothing, and the
 --      erasure still runs.
@@ -16,7 +16,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
-select plan(12);
+select plan(11);
 
 select ok(
   (select count(*) from public.custom_answers a join public.profile_fields f on f.id = a.question_id
@@ -39,16 +39,10 @@ select results_eq(
      where a.profile_id = '5eed0000-0000-4000-8000-000000000011'$$,
   $$values ('date_of_birth'::text, '1996-01-01'::text)$$,
   'one answer is left: the first of January of her birth year');
-select is(
-  (select count(*)::int from public.season_answers where profile_id = '5eed0000-0000-4000-8000-000000000011')
-    + (select count(*)::int from public.profile_answers where profile_id = '5eed0000-0000-4000-8000-000000000011'),
-  0, 'the old season and source rows go too');
 select ok(
-  (select first_name = '' and last_name = '' and nationality is null and city is null and phone is null
-          and document_number is null and applicant_status is null and specific_needs is null
-          and supporting_entities is null and date_of_birth is null
+  (select first_name = '' and last_name = ''
      from public.profiles where id = '5eed0000-0000-4000-8000-000000000011'),
-  'her names are empty and the old columns hold nothing');
+  'her names are empty');
 
 -- 3. Search and audit ------------------------------------------------------------------------------------------
 

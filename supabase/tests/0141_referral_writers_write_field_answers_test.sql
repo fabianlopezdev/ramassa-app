@@ -12,17 +12,18 @@
 --   3. The invitation adopts the entity's answers on the fields the team left
 --      empty, named after the entity's contact, and her season count; the
 --      referral keeps no copy.
---   4. TEMPORARY: a referral written the old way (the seed) has its answers by
---      field, and they reach her profile.
---   5. The old payload key map is gone; the helpers stay private.
+--   4. The seed's pending referral has its answers by field, and they reach
+--      her profile.
+--   5. The old payload key map and the blob reader are gone (RAPP-666); the
+--      helpers stay private.
 --
 -- Seed: organization ...000, admin ...001, staff ...002, entity contact ...004
--- (Creu Roja Osona), pending referral ...8010-...001 (written the old way).
+-- (Creu Roja Osona), pending referral ...8010-...001.
 
 begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
-select plan(23);
+select plan(22);
 
 create temp table run (label text primary key, id uuid) on commit drop;
 grant all on run to authenticated;
@@ -157,10 +158,8 @@ select is((select season_number::text || '/' || prior_seasons from public.profil
 select is(
   (select count(*)::integer from public.referral_custom_answers where referral_id = (select id from run where label = 'referral')),
   0, 'the referral keeps no copy');
-select is((select row(city, nationality, phone)::text from public.profiles where id = (select id from run where label = 'hiba')),
-          '(,,)', 'no app column is written');
 
--- 4. TEMPORARY: a referral written the old way ---------------------------------------------------------------
+-- 4. The seed referral ---------------------------------------------------------------------------------------
 
 select is(pg_temp.referral_answer('5eed0000-0000-4000-8010-000000000001', pg_temp.field('nationality')),
           '"Marroc"'::jsonb, 'a seed referral has its answers by field');
@@ -178,8 +177,8 @@ select is(pg_temp.answer((select id from run where label = 'amina'), pg_temp.fie
 select hasnt_function('private', 'entity_form_payload_key', 'the old payload key map is gone');
 select ok(not has_function_privilege('authenticated', 'private.check_entity_form_required(public.entity_referrals)', 'execute')
           and not has_function_privilege('authenticated', 'private.referral_answer(uuid, uuid)', 'execute')
-          and not has_function_privilege('authenticated', 'private.referral_blob_answers(public.entity_referrals)', 'execute'),
-          'the helpers stay private');
+          and to_regproc('private.referral_blob_answers') is null,
+          'the helpers stay private, and the old blob reader is gone');
 
 select * from finish();
 rollback;

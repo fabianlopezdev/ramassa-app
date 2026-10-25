@@ -107,19 +107,23 @@ select ok(
 
 set local role authenticated;
 select throws_ok(
-  $$ select public.save_builtin_question_override('clothing_size', null, null, true, '{}'::jsonb) $$,
+  $$ select public.save_builtin_question_override('clothing_size', null, null, true) $$,
   '23514', 'the app needs this question, so it cannot be hidden', 'a size the stock reads cannot be hidden'
 );
 select lives_ok(
-  $$ select public.save_builtin_question_override(
-       'phone', '{"ca":"Mòbil"}'::jsonb, null, true, '{}'::jsonb) $$,
+  $$ select public.save_builtin_question_override('phone', '{"ca":"Mòbil"}'::jsonb, null, true) $$,
   'an optional built-in question is reworded and hidden'
 );
-select lives_ok(
-  $$ select public.save_builtin_question_override(
-       'childcare_need', null, null, false, '{"daily":{"hidden":true}}'::jsonb) $$,
-  'an option of a built-in question is hidden, its stored value unchanged'
+-- Hidden is a field placed nowhere on her onboarding (RAPP-666).
+reset role;
+select is(
+  (select count(*)::int from public.field_placements p
+     join public.profile_fields f on f.id = p.field_id
+    where f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.system_key = 'phone'
+      and p.surface = 'onboarding'),
+  0, 'the hidden question leaves her onboarding'
 );
+set local role authenticated;
 
 -- 3 and 4. Answers ---------------------------------------------------------------------------------------------
 

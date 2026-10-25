@@ -17,11 +17,24 @@ create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 select plan(10);
 
+-- An app answer given by option key, as the app's screens send it by option id.
+create function pg_temp.by_option_key(f public.profile_fields, v jsonb) returns jsonb language sql stable security definer as $$
+  select case
+    when f.question_type in ('single_choice', 'search_choice') and jsonb_typeof(v) = 'string' then
+      coalesce((select to_jsonb(o.id::text) from public.custom_question_options o
+                 where o.question_id = f.id and o.key = v #>> '{}'), v)
+    when f.question_type = 'multiple_choice' and jsonb_typeof(v) = 'array' then
+      coalesce((select jsonb_agg(o.id::text order by o.sort_order) from public.custom_question_options o
+                 where o.question_id = f.id and o.key in (select jsonb_array_elements_text(v))
+                having count(*) = jsonb_array_length(v)), v)
+    else v
+  end;
+$$;
 -- Her answers travel by field (RAPP-661). Helpers: the app's keys of a payload
 -- keyed by their fields (a choice by its option), a field's id, and her stored
 -- answer to an app field (decrypted).
 create function pg_temp.answers(p jsonb) returns jsonb language sql security definer as $$
-  select coalesce(jsonb_object_agg(f.id::text, private.app_answer_value(f, e.value)), '{}'::jsonb)
+  select coalesce(jsonb_object_agg(f.id::text, pg_temp.by_option_key(f, e.value)), '{}'::jsonb)
     from jsonb_each(p) e
     join public.profile_fields f on f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.system_key = e.key;
 $$;
@@ -45,7 +58,9 @@ values ('00000000-0000-0000-0000-0000000007a1', '5eed0000-0000-4000-8000-0000000
 insert into public.authorization_signatures (org_id, profile_id, season_id, method, paper_signed_on)
 values ('5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-8000-000000000022',
         '00000000-0000-0000-0000-0000000007a1', 'paper', '2025-09-15');
-update public.profiles set applicant_status = null where id = '5eed0000-0000-4000-8000-000000000022';
+delete from public.custom_answers
+ where profile_id = '5eed0000-0000-4000-8000-000000000022'
+   and question_id = pg_temp.field('applicant_status')::uuid;
 -- A Fitxa field placed on the season form only, required there.
 insert into public.profile_fields (id, org_id, section_id, kind, question_type, label, privacy, sort_order)
 select '00000000-0000-0000-0000-0000000007c1', '5eed0000-0000-4000-8000-000000000000', s.id, 'custom',
@@ -107,7 +122,9 @@ select lives_ok(
 
 -- A staff tablet signing still syncs: signing mode has no season questions.
 reset role;
-update public.profiles set applicant_status = null where id = '5eed0000-0000-4000-8000-000000000022';
+delete from public.custom_answers
+ where profile_id = '5eed0000-0000-4000-8000-000000000022'
+   and question_id = pg_temp.field('applicant_status')::uuid;
 delete from public.authorization_signatures
  where profile_id = '5eed0000-0000-4000-8000-000000000022' and season_id <> '00000000-0000-0000-0000-0000000007a1';
 set local role authenticated;

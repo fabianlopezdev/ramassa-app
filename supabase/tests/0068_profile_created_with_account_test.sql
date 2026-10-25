@@ -24,11 +24,24 @@ grant execute on function public.complete_onboarding(jsonb) to authenticated;
 create temp table invited (label text primary key, invite_id uuid, account_id uuid, returned_profile_id uuid);
 grant all on invited to authenticated;
 
+-- An app answer given by option key, as the app's screens send it by option id.
+create function pg_temp.by_option_key(f public.profile_fields, v jsonb) returns jsonb language sql stable security definer as $$
+  select case
+    when f.question_type in ('single_choice', 'search_choice') and jsonb_typeof(v) = 'string' then
+      coalesce((select to_jsonb(o.id::text) from public.custom_question_options o
+                 where o.question_id = f.id and o.key = v #>> '{}'), v)
+    when f.question_type = 'multiple_choice' and jsonb_typeof(v) = 'array' then
+      coalesce((select jsonb_agg(o.id::text order by o.sort_order) from public.custom_question_options o
+                 where o.question_id = f.id and o.key in (select jsonb_array_elements_text(v))
+                having count(*) = jsonb_array_length(v)), v)
+    else v
+  end;
+$$;
 -- Her answers travel by field (RAPP-661). Helpers: the app's keys of a payload
 -- keyed by their fields (a choice by its option), a field's id, and her stored
 -- answer to an app field (decrypted).
 create function pg_temp.answers(p jsonb) returns jsonb language sql security definer as $$
-  select coalesce(jsonb_object_agg(f.id::text, private.app_answer_value(f, e.value)), '{}'::jsonb)
+  select coalesce(jsonb_object_agg(f.id::text, pg_temp.by_option_key(f, e.value)), '{}'::jsonb)
     from jsonb_each(p) e
     join public.profile_fields f on f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.system_key = e.key;
 $$;
@@ -154,8 +167,10 @@ select is(
   'she reads which questions are already answered'
 );
 select throws_ok(
-  $$ insert into public.profile_answers (profile_id, org_id, question, source)
-     values ((select auth.uid()), '5eed0000-0000-4000-8000-000000000000', 'avatar', 'player') $$,
+  $$ insert into public.custom_answers (profile_id, question_id, org_id, value, source)
+     select (select auth.uid()), f.id, f.org_id, '"Vic"', 'player'
+       from public.profile_fields f
+      where f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.system_key = 'place_of_birth' $$,
   '42501', null::text, 'nobody writes answers directly'
 );
 

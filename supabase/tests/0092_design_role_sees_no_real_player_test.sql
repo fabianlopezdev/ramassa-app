@@ -15,7 +15,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
-select plan(54);
+select plan(53);
 
 -- Real players and the rows that point at them, computed before any role switch.
 create temp table real_player as
@@ -82,9 +82,8 @@ select is((select count(*)::int from public.deletion_requests where profile_id i
 select is((select count(*)::int from public.authorization_signatures where profile_id in (select id from real_player)), 0, 'authorization signatures: none');
 select is((select count(*)::int from public.authorization_consent_events where profile_id in (select id from real_player)), 0, 'consent events: none');
 select is((select count(*)::int from public.app_terms_signatures where profile_id in (select id from real_player)), 0, 'app terms signatures: none');
-select is((select count(*)::int from public.season_answers where profile_id in (select id from real_player)), 0, 'season answers: none');
 select is((select count(*)::int from public.custom_answers where profile_id in (select id from real_player)), 0, 'custom answers: none');
-select is((select count(*)::int from public.profile_answers where profile_id in (select id from real_player)), 0, 'prefilled answers: none');
+select is((select count(*)::int from public.custom_question_states where profile_id in (select id from real_player)), 0, 'question states: none');
 select is((select count(*)::int from public.entity_referrals), 0, 'referrals: none');
 select is((select count(*)::int from public.walk_in_signings), 0, 'walk-in signings: none');
 select is((select count(*)::int from public.invites), 0, 'invitations: none');

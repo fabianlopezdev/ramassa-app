@@ -3,8 +3,8 @@
 --
 -- What these assertions defend, writer by writer:
 --   1. Registration (`complete_onboarding_signed`): her names on her account,
---      every other answer by field, hers, Sensitive ones encrypted; the old
---      columns untouched; a column key refused; required placements, the
+--      every other answer by field, hers, Sensitive ones encrypted; a column
+--      key refused; required placements, the
 --      entity question's "none", the document rule and conditions applied.
 --   2. Her own edit (`update_own_profile`).
 --   3. The team's edit (`update_participant_profile`): answers named after
@@ -26,7 +26,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
-select plan(54);
+select plan(52);
 
 create temp table run (label text primary key, id uuid) on commit drop;
 grant all on run to authenticated;
@@ -116,10 +116,6 @@ select is(
   (select first_name || ' ' || last_name || ' ' || role || ' ' || preferred_language
      from public.profiles where id = '5eed0000-0000-4000-8000-0000000006b1'),
   'Nora Prova player es', 'her names and language are on her account');
-select is(
-  (select row(date_of_birth, nationality, document_type, phone, clothing_size)::text
-     from public.profiles where id = '5eed0000-0000-4000-8000-0000000006b1'),
-  '(,,,,)', 'no app column is written');
 select is(pg_temp.answer('5eed0000-0000-4000-8000-0000000006b1', pg_temp.field('date_of_birth')),
           '"1996-03-04"'::jsonb, 'a date is her answer by field');
 select is(pg_temp.source('5eed0000-0000-4000-8000-0000000006b1', pg_temp.field('nationality')),
@@ -147,8 +143,6 @@ select lives_ok(
 reset role;
 select is(pg_temp.answer('5eed0000-0000-4000-8000-000000000011', pg_temp.field('city')), '"Manlleu"'::jsonb,
           'her answer changed');
-select is((select city from public.profiles where id = '5eed0000-0000-4000-8000-000000000011'), 'Vic',
-          'and her old column did not');
 select is(pg_temp.answer('5eed0000-0000-4000-8000-000000000011', pg_temp.field('document_number')), null,
           'no document takes the number away');
 select is((select media_consent_at is not null from public.profiles where id = '5eed0000-0000-4000-8000-000000000011'),
@@ -248,8 +242,9 @@ select is(pg_temp.source((select id from run where label = 'invited'), pg_temp.f
           'staff/5eed0000-0000-4000-8000-000000000002', 'the team''s answers land on her fields as theirs');
 select is((select reference_entity from public.invites where email = 'rapp661.invite@example.test'),
           'CEAR Catalunya', 'the invitation keeps the entity her wizard offers first');
-select is((select state from public.intake_question_states
-            where profile_id = (select id from run where label = 'invited') and question = 'date_of_birth'),
+select is((select state from public.custom_question_states
+            where profile_id = (select id from run where label = 'invited')
+              and question_id = pg_temp.field('date_of_birth')),
           'skip', 'and a required question she has an answer to can be hidden');
 
 -- 5. Her season answers --------------------------------------------------------------------------------------

@@ -4,7 +4,8 @@
 -- Her app language is set by the language picker before the wizard and saved
 -- with her answers; no wizard screen asks it. `my_questions_to_ask()` listed
 -- it anyway, so the staff preview said she would be asked something her phone
--- never shows. Staff can still reword it (the summary shows it).
+-- never shows. It is an account setting and no field (RAPP-666, D2), so its
+-- wording is the app's own: staff reword the questions of the wizard's fields.
 
 begin;
 create extension if not exists pgtap with schema extensions;
@@ -28,10 +29,11 @@ select ok(
 );
 
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000001", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
-select lives_ok(
+select throws_ok(
   $$ select public.save_builtin_question_override(
-       'preferred_language', '{"ca": "La llengua de l''app"}'::jsonb, null, false, '{}'::jsonb) $$,
-  'staff still reword her app language for the summary'
+       'preferred_language', '{"ca": "La llengua de l''app"}'::jsonb, null, false) $$,
+  '23514', 'not a built-in question',
+  'her app language is no field, so it keeps the app''s own wording'
 );
 select throws_ok(
   $$ select public.set_intake_question_states('5eed0000-0000-4000-8000-000000000098',

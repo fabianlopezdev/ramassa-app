@@ -90,20 +90,27 @@ select cmp_ok(
 -- exercise that path: plaintext in the column would let a broken decrypt pass.
 
 select is_empty(
-  $$ select id from public.profiles
-     where phone is not null and public.decrypt_field(phone) !~ '^\+34'
-       and id <> '5eed0000-0000-4000-8000-000000000099' $$,
-  'every seeded phone decrypts back to a well-formed number through decrypt_field'
+  $$ select a.profile_id from public.custom_answers a
+       join public.profile_fields f on f.id = a.question_id and f.system_key = 'phone'
+      where a.value is not null
+         or public.decrypt_field(a.value_encrypted)::jsonb #>> '{}' !~ '^\+34' $$,
+  'every seeded phone answer is encrypted and decrypts back to a well-formed number'
 );
 
 select cmp_ok(
-  (select count(*) from public.profiles where document_number is not null)::int,
+  (select count(*) from public.custom_answers a
+     join public.profile_fields f on f.id = a.question_id and f.system_key = 'document_number'
+    where a.value_encrypted is not null and a.value is null)::int,
   '>=', 1,
   'at least one seeded participant carries an encrypted document number'
 );
 
 select is_empty(
-  $$ select id from public.profiles where document_type = 'none' and document_number is not null $$,
+  $$ select t.profile_id from public.custom_answers t
+       join public.profile_fields tf on tf.id = t.question_id and tf.system_key = 'document_type'
+       join public.custom_question_options o on o.id::text = t.value #>> '{}' and o.key = 'none'
+       join public.custom_answers n on n.profile_id = t.profile_id
+       join public.profile_fields nf on nf.id = n.question_id and nf.system_key = 'document_number' $$,
   'participants with no document have no document number (the not-yet-documented case is seeded too)'
 );
 
@@ -152,9 +159,6 @@ select is_empty(
        from information_schema.tables t
        where t.table_schema = 'public'
          and t.table_type = 'BASE TABLE'
-         -- No writer fills it since season answers are rows of their season
-         -- (RAPP-661); RAPP-666 drops it.
-         and t.table_name <> 'season_answers'
      )
      select table_name
      from public_tables

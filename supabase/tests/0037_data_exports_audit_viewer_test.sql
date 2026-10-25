@@ -36,14 +36,28 @@ insert into auth.users (id, email) values
   ('63000000-0000-4000-8100-000000000004', 'rapp63.other.admin@example.test');
 
 insert into public.profiles (
-  id, org_id, role, first_name, last_name, preferred_language, address,
-  postal_code, phone, document_type, document_number, city, nationality,
-  place_of_birth, is_active, created_at
+  id, org_id, role, first_name, last_name, preferred_language, is_active, created_at
 ) values
-  ('63000000-0000-4000-8100-000000000001', '63000000-0000-4000-8000-000000000001', 'admin', 'Nuria', 'Admin', 'ca', null, null, null, 'none', null, 'Granollers', null, null, true, '2026-08-01T08:00:00Z'),
-  ('63000000-0000-4000-8100-000000000002', '63000000-0000-4000-8000-000000000001', 'staff', 'Staff', 'Member', 'ca', null, null, null, 'none', null, 'Granollers', null, null, true, '2026-08-01T08:00:00Z'),
-  ('63000000-0000-4000-8100-000000000003', '63000000-0000-4000-8000-000000000001', 'player', 'أمينة', 'Torelló', 'ar', public.encrypt_field('Carrer Major 1'), public.encrypt_field('08401'), public.encrypt_field('+34600000000'), 'passport', public.encrypt_field('SECRET-63'), 'Granollers', 'Syria', 'Aleppo', true, '2026-08-03T08:00:00Z'),
-  ('63000000-0000-4000-8100-000000000004', '63000000-0000-4000-8000-000000000002', 'admin', 'Other', 'Admin', 'ca', null, null, null, 'none', null, 'Vic', null, null, true, '2026-08-01T08:00:00Z');
+  ('63000000-0000-4000-8100-000000000001', '63000000-0000-4000-8000-000000000001', 'admin', 'Nuria', 'Admin', 'ca', true, '2026-08-01T08:00:00Z'),
+  ('63000000-0000-4000-8100-000000000002', '63000000-0000-4000-8000-000000000001', 'staff', 'Staff', 'Member', 'ca', true, '2026-08-01T08:00:00Z'),
+  ('63000000-0000-4000-8100-000000000003', '63000000-0000-4000-8000-000000000001', 'player', 'أمينة', 'Torelló', 'ar', true, '2026-08-03T08:00:00Z'),
+  ('63000000-0000-4000-8100-000000000004', '63000000-0000-4000-8000-000000000002', 'admin', 'Other', 'Admin', 'ca', true, '2026-08-01T08:00:00Z');
+
+-- Her answers by field (RAPP-666); the Sensitive ones are stored encrypted.
+select private.write_custom_answer(
+         '63000000-0000-4000-8100-000000000003', f,
+         case when f.question_type = 'single_choice'
+              then (select to_jsonb(o.id::text) from public.custom_question_options o
+                     where o.question_id = f.id and o.key = answer.value)
+              else to_jsonb(answer.value) end,
+         'player')
+  from (values
+    ('address', 'Carrer Major 1'), ('postal_code', '08401'), ('phone', '+34600000000'),
+    ('document_type', 'passport'), ('document_number', 'SECRET-63'), ('city', 'Granollers'),
+    ('nationality', 'Síria'), ('place_of_birth', 'Aleppo')
+  ) as answer(system_key, value)
+  join public.profile_fields f
+    on f.org_id = '63000000-0000-4000-8000-000000000001' and f.system_key = answer.system_key;
 
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"63000000-0000-4000-8100-000000000001","role":"authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';

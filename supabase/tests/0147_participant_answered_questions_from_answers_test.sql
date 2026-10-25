@@ -2,8 +2,8 @@
 -- Run with: bunx supabase test db
 --
 -- What these assertions defend: the team learns which app questions she has
--- an answer to from her answers (`profile_answers` is no longer read), a
--- removed answer stops counting, and only a caller who may list her asks.
+-- an answer to from her answers (`profile_answers` is gone since RAPP-666),
+-- a removed answer stops counting, and only a caller who may list her asks.
 --
 -- Seed: organization ...000, staff ...003, player ...011, entity ...004.
 
@@ -11,8 +11,6 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 select plan(5);
-
-delete from public.profile_answers where profile_id = '5eed0000-0000-4000-8000-000000000011';
 
 set local role authenticated;
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000003", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';

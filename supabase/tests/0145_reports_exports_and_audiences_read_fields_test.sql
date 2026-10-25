@@ -82,13 +82,15 @@ select ok(
   'the answers export holds the app''s fields too');
 
 -- 2. The impact report ---------------------------------------------------------------------------------------
+-- The period ends tomorrow: between midnight in Madrid and midnight UTC, today's
+-- profiles would otherwise fall after its end.
 
 reset role;
 update public.profile_fields set privacy = 'personal'
  where org_id = '5eed0000-0000-4000-8000-000000000000' and system_key = 'nationality';
 set local role authenticated;
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000003", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
-insert into run values ('report', public.get_impact_report(current_date - 3650, current_date));
+insert into run values ('report', public.get_impact_report(current_date - 3650, current_date + 1));
 select ok(
   (select sum((b ->> 'count')::int) filter (where b ->> 'label' <> 'unknown') from run,
           jsonb_array_elements(doc #> '{demographics,age_bands}') b where label = 'report') > 0
@@ -105,7 +107,7 @@ update public.profile_fields set question_type = 'short_text'
  where org_id = '5eed0000-0000-4000-8000-000000000000' and system_key in ('date_of_birth', 'nationality');
 set local role authenticated;
 select lives_ok(
-  $$insert into run values ('changed', public.get_impact_report(current_date - 3650, current_date))$$,
+  $$insert into run values ('changed', public.get_impact_report(current_date - 3650, current_date + 1))$$,
   'the report keeps working when its fields changed type');
 select is(
   (select array_agg(distinct b ->> 'label') from run,
