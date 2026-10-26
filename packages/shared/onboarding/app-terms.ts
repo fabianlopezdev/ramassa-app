@@ -26,6 +26,7 @@ import { AppError, databaseErrorCode } from '../errors';
 import { resolveLocalizedText } from '../i18n/localized-content';
 import type { LanguageCode } from '../schemas/language';
 import type { Database, Json } from '../types/database';
+import type { SaveKind } from '../authorization/authorization';
 
 type Client = SupabaseClient<Database>;
 
@@ -205,6 +206,8 @@ export interface AppTermsVersion {
   readonly publishedAt: string | null;
   readonly updatedAt: string;
   readonly acceptanceCount: number;
+  /** Published as a correction (RAPP-696): acceptances of the version before it still count. */
+  readonly isCorrection: boolean;
 }
 
 const versionRowSchema = z.object({
@@ -214,6 +217,7 @@ const versionRowSchema = z.object({
   published_at: z.string().nullable(),
   updated_at: z.string(),
   acceptance_count: z.number().int(),
+  is_correction: z.boolean().default(false),
 });
 
 /** Every version of the organization, newest first, the draft on top. */
@@ -230,6 +234,7 @@ export async function fetchAppTermsVersions(client: Client): Promise<readonly Ap
       publishedAt: row.published_at,
       updatedAt: row.updated_at,
       acceptanceCount: row.acceptance_count,
+      isCorrection: row.is_correction,
     }));
 }
 
@@ -272,9 +277,18 @@ export async function discardAppTermsDraft(client: Client): Promise<void> {
   if (error) throw databaseError(error);
 }
 
-/** Publishes the draft and returns its number. Only settings.organization may. */
-export async function publishAppTermsDraft(client: Client): Promise<number> {
-  const { data, error } = await client.rpc('publish_app_terms_draft');
+/**
+ * Publishes the draft and returns its number. Only settings.organization may.
+ * A correction (RAPP-696) keeps whoever accepted the version before it
+ * covered; a new version asks every player again.
+ */
+export async function publishAppTermsDraft(
+  client: Client,
+  kind: SaveKind = 'new',
+): Promise<number> {
+  const { data, error } = await client.rpc('publish_app_terms_draft', {
+    p_is_correction: kind === 'correction',
+  });
   if (error) throw databaseError(error);
   return z.number().int().min(1).parse(data);
 }

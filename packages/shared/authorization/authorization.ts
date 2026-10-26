@@ -48,6 +48,14 @@ export const authorizationTextSchema = z
 
 export type AuthorizationText = z.infer<typeof authorizationTextSchema>;
 
+/**
+ * The authorization's screens staff may reorder (RAPP-696), in their default
+ * order. The consents and signature screen always ends the form.
+ */
+export const AUTHORIZATION_MOVABLE_SCREENS = ['document', 'health'] as const;
+
+export type AuthorizationMovableScreen = (typeof AUTHORIZATION_MOVABLE_SCREENS)[number];
+
 /** A wording override: as above, at most 2000 characters per language. */
 const overrideTextSchema = authorizationTextSchema.refine((text) =>
   Object.values(text).every((value) => (value ?? '').length <= 2000),
@@ -195,6 +203,12 @@ export const authorizationContentSchema = z
       .array(z.object({ label: authorizationTextSchema, url: z.url().startsWith('https://') }))
       .max(10)
       .default([]),
+    /** The movable screens' order (RAPP-696); absent is the document, then health. */
+    screen_order: z
+      .array(z.enum(AUTHORIZATION_MOVABLE_SCREENS))
+      .length(2)
+      .refine((order) => new Set(order).size === order.length, 'each screen once')
+      .optional(),
   })
   .superRefine((content, context) => {
     const entries = Object.entries(content.consents);
@@ -244,6 +258,17 @@ export function orderedConsents(
   return Object.entries(content.consents)
     .map(([key, consent]) => ({ key, ...consent }))
     .sort((left, right) => left.position - right.position || left.key.localeCompare(right.key));
+}
+
+/**
+ * The authorization's screens her form walks, in order (RAPP-696): the
+ * document and the health screen in the version's order, then the consents
+ * and her signature, always last.
+ */
+export function authorizationScreenOrder(
+  content: Pick<AuthorizationContent, 'screen_order'>,
+): readonly (AuthorizationMovableScreen | 'consents')[] {
+  return [...(content.screen_order ?? AUTHORIZATION_MOVABLE_SCREENS), 'consents'];
 }
 
 /** The health and emergency phase shows while the version asks either question. */
@@ -494,6 +519,8 @@ const versionRowSchema = z.object({
   published_at: z.string().nullable(),
   is_current: z.boolean(),
   updated_at: z.string().optional(),
+  is_correction: z.boolean().default(false),
+  signature_count: z.number().int().default(0),
 });
 
 export interface AuthorizationVersion {
@@ -509,6 +536,10 @@ export interface AuthorizationVersion {
   readonly publishedAt: string | null;
   readonly isCurrent: boolean;
   readonly updatedAt: string | null;
+  /** Published as a correction (RAPP-696): signatures on the version before it still count. */
+  readonly isCorrection: boolean;
+  /** Real players' signatures on this version (RAPP-696). */
+  readonly signatureCount: number;
 }
 
 /** The draft first, then the published versions, newest first. */
@@ -529,6 +560,8 @@ export async function fetchAuthorizationVersions(
       publishedAt: row.published_at,
       isCurrent: row.is_current,
       updatedAt: row.updated_at ?? null,
+      isCorrection: row.is_correction,
+      signatureCount: row.signature_count,
     }));
 }
 
@@ -550,19 +583,28 @@ export async function discardAuthorizationDraft(client: Client): Promise<void> {
 }
 
 /**
+ * How a saved change reaches whoever already answered a form (RAPP-696): a
+ * correction leaves them covered, a new version asks everyone again.
+ */
+export type SaveKind = 'correction' | 'new';
+
+/**
  * Publishes the draft (settings.organization) for a season: the current one
- * when none is given, or a future one (RAPP-694). Every player signs a current
- * season's version on her next app open; a future season's version waits
- * until that season is marked current. Returns its number in its season.
+ * when none is given, or a future one (RAPP-694). A new version makes every
+ * player sign a current season's version on her next app open; a correction
+ * (RAPP-696) keeps whoever signed the version before it covered. A future
+ * season's version waits until that season is marked current. Returns its
+ * number in its season.
  */
 export async function publishAuthorizationDraft(
   client: Client,
   seasonId: string | null = null,
+  kind: SaveKind = 'new',
 ): Promise<number> {
-  const { data, error } = await client.rpc(
-    'publish_authorization_draft',
-    seasonId === null ? {} : { p_season_id: seasonId },
-  );
+  const { data, error } = await client.rpc('publish_authorization_draft', {
+    ...(seasonId === null ? {} : { p_season_id: seasonId }),
+    p_is_correction: kind === 'correction',
+  });
   if (error) throw new AppError(databaseErrorCode(error.message), { message: error.message });
   return z.number().int().parse(data);
 }

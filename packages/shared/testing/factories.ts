@@ -1370,6 +1370,7 @@ export function buildAuthorizationVersion(
     published_by: null,
     updated_at: FIXTURE_TIMESTAMP,
     updated_by: null,
+    is_correction: false,
     ...overrides,
   };
 }
@@ -1401,6 +1402,7 @@ export function buildAppTermsVersion(
     published_by: null,
     updated_at: FIXTURE_TIMESTAMP,
     updated_by: null,
+    is_correction: false,
     ...overrides,
   };
 }

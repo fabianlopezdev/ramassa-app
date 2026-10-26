@@ -308,7 +308,7 @@ select is(public.my_terms_acceptance_needed(), false, 'an invited woman meets th
 select ok(
   not has_function_privilege('anon', 'public.accept_current_app_terms(uuid, text, jsonb)', 'execute')
   and not has_function_privilege('anon', 'public.save_app_terms_draft(jsonb)', 'execute')
-  and not has_function_privilege('anon', 'public.publish_app_terms_draft()', 'execute')
+  and not has_function_privilege('anon', 'public.publish_app_terms_draft(boolean)', 'execute')
   and not has_function_privilege('anon', 'public.discard_app_terms_draft()', 'execute')
   and not has_function_privilege('anon', 'public.list_app_terms_versions()', 'execute')
   and not has_function_privilege('anon', 'public.my_terms_acceptance_needed()', 'execute'),

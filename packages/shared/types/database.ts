@@ -150,6 +150,7 @@ export type Database = {
         Row: {
           content: Json;
           id: string;
+          is_correction: boolean;
           org_id: string;
           published_at: string | null;
           published_by: string | null;
@@ -160,6 +161,7 @@ export type Database = {
         Insert: {
           content: Json;
           id?: string;
+          is_correction?: boolean;
           org_id: string;
           published_at?: string | null;
           published_by?: string | null;
@@ -170,6 +172,7 @@ export type Database = {
         Update: {
           content?: Json;
           id?: string;
+          is_correction?: boolean;
           org_id?: string;
           published_at?: string | null;
           published_by?: string | null;
@@ -486,6 +489,7 @@ export type Database = {
         Row: {
           content: Json;
           id: string;
+          is_correction: boolean;
           org_id: string;
           published_at: string | null;
           published_by: string | null;
@@ -497,6 +501,7 @@ export type Database = {
         Insert: {
           content: Json;
           id?: string;
+          is_correction?: boolean;
           org_id: string;
           published_at?: string | null;
           published_by?: string | null;
@@ -508,6 +513,7 @@ export type Database = {
         Update: {
           content?: Json;
           id?: string;
+          is_correction?: boolean;
           org_id?: string;
           published_at?: string | null;
           published_by?: string | null;
@@ -6035,6 +6041,7 @@ export type Database = {
           acceptance_count: number;
           content: Json;
           id: string;
+          is_correction: boolean;
           published_at: string;
           updated_at: string;
           version_number: number;
@@ -6045,10 +6052,12 @@ export type Database = {
         Returns: {
           content: Json;
           id: string;
+          is_correction: boolean;
           is_current: boolean;
           published_at: string;
           season_id: string;
           season_name: string;
+          signature_count: number;
           updated_at: string;
           version_number: number;
         }[];
@@ -6529,6 +6538,7 @@ export type Database = {
       my_terms_acceptance_needed: { Args: never; Returns: boolean };
       my_test_scenario_stamp: { Args: never; Returns: string };
       notification_audience_entities: { Args: never; Returns: string[] };
+      onboarding_finished_count: { Args: never; Returns: number };
       open_staff_checkouts: {
         Args: never;
         Returns: {
@@ -6726,9 +6736,12 @@ export type Database = {
         Returns: Json;
       };
       profile_field_answer_count: { Args: { p_id: string }; Returns: number };
-      publish_app_terms_draft: { Args: never; Returns: number };
+      publish_app_terms_draft: {
+        Args: { p_is_correction?: boolean };
+        Returns: number;
+      };
       publish_authorization_draft: {
-        Args: { p_season_id?: string };
+        Args: { p_is_correction?: boolean; p_season_id?: string };
         Returns: number;
       };
       publish_authorization_version: {

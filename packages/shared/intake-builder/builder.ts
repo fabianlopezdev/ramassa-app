@@ -346,6 +346,16 @@ export async function fetchIntakeCatalog(client: Client): Promise<IntakeCatalog>
   return parseIntakeCatalog(data);
 }
 
+/**
+ * How many real players finished Onboarding (RAPP-696): once anyone has, a
+ * screen save asks whether it is a correction or a new version.
+ */
+export async function fetchOnboardingFinishedCount(client: Client): Promise<number> {
+  const { data, error } = await client.rpc('onboarding_finished_count');
+  if (error) throw databaseError(error);
+  return z.number().int().min(0).parse(data ?? 0);
+}
+
 // Where fields are asked ---------------------------------------------------------------------
 
 /** A custom field as a question, worded by its own name, required as the placement says. */

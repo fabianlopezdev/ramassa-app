@@ -134,8 +134,8 @@ select is(
 reset role;
 
 select ok(
-  not has_function_privilege('anon', 'public.publish_authorization_draft(uuid)', 'execute')
-  and has_function_privilege('authenticated', 'public.publish_authorization_draft(uuid)', 'execute'),
+  not has_function_privilege('anon', 'public.publish_authorization_draft(uuid, boolean)', 'execute')
+  and has_function_privilege('authenticated', 'public.publish_authorization_draft(uuid, boolean)', 'execute'),
   'publishing needs an account'
 );
 
