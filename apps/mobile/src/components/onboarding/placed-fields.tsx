@@ -35,7 +35,7 @@ export interface PlacedFields {
   readonly hasQuestions: boolean;
   readonly fields: ReactNode;
   readonly hasErrors: boolean;
-  /** A signature is being drawn: the screen must not scroll under her finger. */
+  /** A signature is being drawn (a consent she signs): the screen must not scroll under her finger. */
   readonly isDrawing: boolean;
   /** Checks them; when they pass, saves them to the draft and returns true. */
   readonly checkAndSave: () => boolean;

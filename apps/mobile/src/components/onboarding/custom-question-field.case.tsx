@@ -427,16 +427,24 @@ test('without the upload service a file question says so and offers nothing to p
   uploadsOn = true;
 });
 
-test('a signature uses the authorization pad and keeps her strokes', () => {
-  const view = render(typed('signature'));
+test('a consent that asks for her signature takes the tick and the pad together (RAPP-671)', () => {
+  const view = render(
+    typed('consent', { text: { ca: 'Accepto les condicions' }, requires_signature: true }),
+  );
+  fireEvent.click(view.getByRole('checkbox', { name: 'Accepto les condicions' }));
+  expect(lastValue).toEqual({ accepted: true, signature: null });
   fireEvent.click(view.getByTestId('signature-pad'));
-  expect(lastValue).toEqual([
+  const strokes: [number, number][][] = [
     [
       [10, 20],
       [30, 40],
     ],
-  ]);
-  expect(view.getByRole('button', { name: ca.authorizationClearSignature })).toBeTruthy();
+  ];
+  expect(lastValue).toEqual({ accepted: true, signature: strokes });
+  fireEvent.click(view.getByRole('button', { name: ca.authorizationClearSignature }));
+  expect(lastValue).toEqual({ accepted: true, signature: null });
+  fireEvent.click(view.getByRole('checkbox'));
+  expect(lastValue).toBe('');
 });
 
 test('an answer that does not fit shows its message under the control', () => {

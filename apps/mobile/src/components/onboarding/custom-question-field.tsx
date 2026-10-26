@@ -11,9 +11,10 @@
  *   - a country, a municipality of Catalonia: the app's own pickers, the
  *     ones of her nationality and her municipality (RAPP-663);
  *   - a list she adds to: the supporting organizations list;
- *   - one consent: the consent row of the authorization, with its own text;
- *   - a file: a photo or a PDF, uploaded to her private folder;
- *   - a signature: the authorization signature pad.
+ *   - one consent: the consent row of the authorization, with its own text,
+ *     and the authorization signature pad under it when staff ask for her
+ *     signature (RAPP-671);
+ *   - a file: a photo or a PDF, uploaded to her private folder.
  *
  * Every staff question is optional (RAPP-611 adds required ones), so tapping a
  * chosen chip again clears it. The texts are staff's, in her app language with
@@ -51,6 +52,9 @@ import type { SignatureStrokes } from '@ramassa/shared/equipment';
 import { toAppError } from '@ramassa/shared/errors';
 import { useLanguage } from '@ramassa/shared/i18n';
 import {
+  asksForSignature,
+  consentDraft,
+  consentDraftValue,
   consentSettings,
   fileSettings,
   isCustomQuestionVisible,
@@ -87,7 +91,7 @@ export interface CustomQuestionFieldProps {
   readonly onChange: (value: CustomAnswerValue) => void;
   /** Shown under the control when her answer does not fit the question. */
   readonly errorMessage?: string;
-  /** A signature question stops the screen scrolling while she draws. */
+  /** A consent she signs stops the screen scrolling while she draws. */
   readonly onDrawingChange?: (isDrawing: boolean) => void;
 }
 
@@ -292,7 +296,13 @@ function FileField({ question, value, onChange, errorMessage, label, help, testI
   );
 }
 
-function SignatureField({
+/**
+ * A consent that asks for her signature (RAPP-671): she ticks the text, then
+ * signs under the tick on the authorization pad. Her answer is the tick and
+ * the drawing together; with neither it is empty.
+ */
+function SignedConsentField({
+  question,
   value,
   onChange,
   errorMessage,
@@ -302,18 +312,25 @@ function SignatureField({
   onDrawingChange,
 }: FieldProps) {
   const { t } = useTranslation('onboarding');
+  const { language } = useLanguage();
   const fontClass = useLanguageFontClass();
-  const strokes =
-    Array.isArray(value) && value.length > 0 && Array.isArray(value[0])
-      ? (value as unknown as SignatureStrokes)
-      : null;
+  const draft = consentDraft(value);
+  const strokes: SignatureStrokes | null = draft.signature;
   return (
     <View className="gap-sm" testID={testID}>
       <QuestionLabel text={label} />
       <QuestionHelp text={help} />
+      <ConsentRow
+        testID={`${testID}-tick`}
+        label={textIn(consentSettings(question.settings).text, language)}
+        required={false}
+        requiredMark=""
+        checked={draft.accepted}
+        onToggle={() => onChange(consentDraftValue({ ...draft, accepted: !draft.accepted }))}
+      />
       <SignaturePad
         strokes={strokes}
-        onChange={(next) => onChange(next === null ? '' : next)}
+        onChange={(next) => onChange(consentDraftValue({ ...draft, signature: next }))}
         onDrawingChange={onDrawingChange}
         prompt={t('authorizationSignaturePrompt')}
         promptClassName={fontClass}
@@ -323,7 +340,7 @@ function SignatureField({
         <PressableScale
           accessibilityRole="button"
           accessibilityLabel={t('authorizationClearSignature')}
-          onPress={() => onChange('')}
+          onPress={() => onChange(consentDraftValue({ ...draft, signature: null }))}
           haptic="tapLight"
           className="min-h-recommended justify-center self-start"
         >
@@ -415,9 +432,8 @@ export function CustomQuestionField(props: CustomQuestionFieldProps) {
       return <DateField {...field} />;
     case 'file_upload':
       return <FileField {...field} />;
-    case 'signature':
-      return <SignatureField {...field} />;
     case 'consent':
+      if (asksForSignature(question)) return <SignedConsentField {...field} />;
       return (
         <View testID={testID} className="gap-sm">
           <QuestionLabel text={label} />

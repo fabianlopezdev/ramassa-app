@@ -102,7 +102,7 @@ function sameAnswer(a: CustomAnswerValue | undefined, b: CustomAnswerValue | und
     return typeof a === 'string' && typeof b === 'string' && a.trim() === b.trim();
   }
   // A choice of several is the same answer in any order; every other value
-  // (a list she ordered, a number, a signature, a file) compares as written.
+  // (a list she ordered, a number, a signed consent, a file) compares as written.
   if (isStringList(a) && isStringList(b)) {
     return [...a].sort().join('\n') === [...b].sort().join('\n');
   }

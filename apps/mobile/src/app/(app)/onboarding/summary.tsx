@@ -116,7 +116,7 @@ function CustomRows({
     no: t('noOption'),
     maybe: t('customMaybeOption'),
     archived: t('customArchivedOption'),
-    signed: t('customSigned'),
+    signedOn: (date: string) => t('customSignedOn', { date }),
   };
   return screen.questions
     .filter((question) => isCustomQuestionVisible(question, answers))
