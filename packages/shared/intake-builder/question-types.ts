@@ -143,11 +143,7 @@ export type DateSettings = z.infer<typeof dateSettingsSchema>;
 export type ItemListSettings = z.infer<typeof itemListSettingsSchema>;
 export type FileSettings = z.infer<typeof fileSettingsSchema>;
 export type QuestionSettings =
-  | NumberSettings
-  | DateSettings
-  | ItemListSettings
-  | FileSettings
-  | Readonly<Record<string, never>>;
+  NumberSettings | DateSettings | ItemListSettings | FileSettings | Readonly<Record<string, never>>;
 
 /** The settings a type takes; every other type takes none. */
 export function questionSettingsSchema(type: CustomQuestionType): z.ZodType<QuestionSettings> {

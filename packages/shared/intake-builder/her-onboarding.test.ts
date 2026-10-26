@@ -5,14 +5,16 @@
  */
 import { describe, expect, test } from 'bun:test';
 import type { CustomQuestion, IntakeCatalog, IntakeScreen } from './builder';
-import { textIn } from './builder';
+import { EMPTY_INTAKE_CATALOG, textIn } from './builder';
 import {
+  APP_SCREEN_ANCHORS,
   appScreenFields,
   appScreenGroupId,
   herOnboarding,
   onboardingScreenQuestions,
   seasonFormQuestions,
 } from './her-onboarding';
+import { NO_CHOICES, playerPlan } from './player-plan';
 import type { FieldPlacement, ProfileField, ProfileLayout } from './profile-layout';
 
 const SECTION = '5eed0000-0000-4000-8096-000000000001';
@@ -214,5 +216,57 @@ describe('seasonFormQuestions', () => {
 
   test('a catalog that could not load asks nothing again', () => {
     expect(seasonFormQuestions({ screens: [], overrides: [], presets: [] })).toEqual([]);
+  });
+});
+
+describe('a screen with a signature block always shows (RAPP-690)', () => {
+  const block = (id: string, screenKey: string) => ({
+    id,
+    surface: 'onboarding' as const,
+    screenKey,
+    kind: 'signature' as const,
+    body: { ca: 'Accepto les normes' },
+    sortOrder: 0,
+  });
+  const catalog = {
+    ...EMPTY_INTAKE_CATALOG,
+    screens: [
+      {
+        id: 'normes',
+        title: { ca: 'Normes' },
+        intro: null,
+        afterScreen: 'logistics' as const,
+        isArchived: false,
+      },
+    ],
+    blocks: [block('b1', 'normes'), block('b2', 'equipment')],
+  };
+
+  test('a Ramassà screen and an app screen with only a block are planned, unanswered', () => {
+    const planned = herOnboarding(catalog);
+    // In the flow order: the app screen's group, then the Ramassà screen after logistics.
+    expect(planned.plan.map((screen) => [screen.id, screen.isAnswered])).toEqual([
+      ['app:equipment', false],
+      ['normes', false],
+    ]);
+    expect(planned.screens.map((screen) => screen.questions)).toEqual([[], []]);
+  });
+
+  test('the staff preview of her plan shows them, never skippable', () => {
+    const shown = playerPlan(catalog, new Set(), NO_CHOICES).screens.filter(
+      (screen) => screen.hasSignature,
+    );
+    expect(shown.map((screen) => [screen.step.key, screen.mustAsk, screen.isSkipped])).toEqual([
+      ['equipment', true, false],
+      ['custom:normes', true, false],
+    ]);
+  });
+
+  test('an app screen is anchored on its step of the app order', () => {
+    expect(APP_SCREEN_ANCHORS.equipment).toBe('logistics');
+  });
+
+  test('without blocks a screen with no field is no screen', () => {
+    expect(herOnboarding({ ...catalog, blocks: [] }).plan).toEqual([]);
   });
 });

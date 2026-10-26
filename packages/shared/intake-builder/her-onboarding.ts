@@ -10,6 +10,10 @@
  * Her phone plans with `herOnboarding`, the staff phone preview with
  * `onboardingScreenQuestions`, so both show the same fields with the same
  * words. A catalog that could not load has no layout: no Ramassà field.
+ *
+ * A screen with a signature block (RAPP-690) always shows: she signs it only
+ * when she finishes, so it is never answered before, and it shows even when
+ * no field is left on it.
  */
 import {
   customStepKey,
@@ -33,6 +37,7 @@ import {
   type IntakeCatalog,
   type IntakeScreen,
 } from './builder';
+import { hasSignatureBlocks } from './form-blocks';
 import {
   fieldById,
   fieldsOfSection,
@@ -126,7 +131,7 @@ export function seasonFormQuestions(catalog: IntakeCatalog): readonly CustomQues
 }
 
 /** The step of the app's own order an app screen belongs to. */
-const ANCHOR_SCREEN: Readonly<Record<WizardQuestionScreen, QuestionScreen>> = {
+export const APP_SCREEN_ANCHORS: Readonly<Record<WizardQuestionScreen, QuestionScreen>> = {
   identity: 'identity',
   background: 'background',
   documentation: 'documentation',
@@ -146,17 +151,18 @@ export function appScreenGroupId(screen: WizardQuestionScreen): string {
 /**
  * The fields placed on an app screen, as one group that names the screen. It
  * is never a step of its own: the app screen shows them after its own
- * questions, and while one is unanswered that screen shows.
+ * questions, and while one is unanswered that screen shows. A screen with
+ * only signature blocks (RAPP-690) is a group with no field.
  */
 function appScreenGroup(catalog: IntakeCatalog, screen: WizardQuestionScreen): IntakeScreen | null {
   const questions = onboardingScreenQuestions(catalog, screen);
-  return questions.length === 0
+  return questions.length === 0 && !hasSignatureBlocks(catalog.blocks, screen)
     ? null
     : {
         id: appScreenGroupId(screen),
         title: {},
         intro: null,
-        afterScreen: ANCHOR_SCREEN[screen],
+        afterScreen: APP_SCREEN_ANCHORS[screen],
         isArchived: false,
         builtinScreen: screen,
         questions,
@@ -211,11 +217,21 @@ export function herOnboarding(
     const group = appScreenGroup(catalog, screen);
     return group === null ? [] : [group];
   });
-  const shown = withCustomAsking([...own, ...onAppScreens], asking);
+  const signs = (screen: IntakeScreen) =>
+    hasSignatureBlocks(catalog.blocks, screen.builtinScreen ?? screen.id);
+  // A screen with no field left to ask still shows for its signature blocks.
+  const all = [...own, ...onAppScreens];
+  const asked = new Map(withCustomAsking(all, asking).map((screen) => [screen.id, screen]));
+  const shown = all.flatMap((screen) => {
+    const kept = asked.get(screen.id);
+    if (kept !== undefined) return [kept];
+    return signs(screen) ? [{ ...screen, questions: [] }] : [];
+  });
   const plan = shown.map((screen): CustomWizardScreen => ({
     id: screen.id,
     afterScreen: screen.afterScreen,
     isAnswered:
+      !signs(screen) &&
       isScreenAnswered(screen, answers) &&
       !screen.questions.some((question) => asking.get(question.id) === true),
     builtinScreen: screen.builtinScreen ?? null,

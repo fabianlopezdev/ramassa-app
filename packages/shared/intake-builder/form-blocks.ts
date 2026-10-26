@@ -81,6 +81,14 @@ export function formBlocksOn(
     .sort((a, b) => a.sortOrder - b.sortOrder);
 }
 
+/** Whether a screen of her Onboarding holds a signature block: she is always shown it. */
+export function hasSignatureBlocks(
+  blocks: readonly FormBlock[] | undefined,
+  screenKey: string,
+): boolean {
+  return formBlocksOn(blocks, 'onboarding', screenKey).length > 0;
+}
+
 /** The text of a block as she reads it, and the language it is shown in. */
 export function formBlockText(
   block: Pick<FormBlock, 'body'>,

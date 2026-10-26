@@ -228,5 +228,6 @@
   "customFileUploadFailed": "No hemos podido enviar el archivo. Vuelve a intentarlo.",
   "customFileUnavailable": "Todavía no se pueden enviar archivos. Puedes continuar sin él.",
   "customFileRemove": "Quita {{name}}",
-  "customErrorSignature": "Firma con el dedo."
+  "customErrorSignature": "Firma con el dedo.",
+  "summarySigned": "Firmado"
 }

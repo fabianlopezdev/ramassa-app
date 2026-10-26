@@ -228,5 +228,6 @@
   "customFileUploadFailed": "No hem pogut enviar el fitxer. Torna-ho a provar.",
   "customFileUnavailable": "Encara no es poden enviar fitxers. Pots continuar sense.",
   "customFileRemove": "Treu {{name}}",
-  "customErrorSignature": "Signa amb el dit."
+  "customErrorSignature": "Signa amb el dit.",
+  "summarySigned": "Signat"
 }

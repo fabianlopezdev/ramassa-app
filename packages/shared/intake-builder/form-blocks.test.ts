@@ -58,7 +58,10 @@ describe('signature blocks (RAPP-690)', () => {
 
   test('the text shows in her language, or in Catalan when it has none', () => {
     const [first, second] = formBlocksOn(blocks, 'onboarding', SCREEN);
-    expect(formBlockText(second!, 'es')).toEqual({ text: 'Autorizo el transporte', language: 'es' });
+    expect(formBlockText(second!, 'es')).toEqual({
+      text: 'Autorizo el transporte',
+      language: 'es',
+    });
     expect(formBlockText(first!, 'ar')).toEqual({ text: 'Accepto les normes', language: 'ca' });
   });
 

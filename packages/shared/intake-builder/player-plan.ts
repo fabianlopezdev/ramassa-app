@@ -59,6 +59,7 @@ import {
   type IntakeCatalog,
   type RamassaScreen,
 } from './builder';
+import { hasSignatureBlocks } from './form-blocks';
 
 // Her screens in order -------------------------------------------------------------------------------
 
@@ -128,9 +129,11 @@ export function flowStepName(
   return t(`settings:builtinScreens.screenName.${step.key}`);
 }
 
-/** A Ramassà screen her phone shows: a live field is placed on it. */
+/** A Ramassà screen her phone shows: a live field or a signature block (RAPP-690) is on it. */
 export function isShownToHer(catalog: IntakeCatalog, screen: RamassaScreen): boolean {
-  return placedQuestions(catalog, screen.id).length > 0;
+  return (
+    placedQuestions(catalog, screen.id).length > 0 || hasSignatureBlocks(catalog.blocks, screen.id)
+  );
 }
 
 // Her choices --------------------------------------------------------------------------------------
@@ -171,6 +174,8 @@ export interface PlanScreen {
   readonly mustAsk: boolean;
   /** How many of its questions she will be asked. */
   readonly askedCount: number;
+  /** She signs a signature block on it (RAPP-690): it always shows. */
+  readonly hasSignature: boolean;
 }
 
 export interface PlayerPlan {
@@ -242,22 +247,28 @@ export function playerPlan(
     });
 
   const screens = flowSteps(catalog)
-    .flatMap((step): { step: FlowStep; questions: PlanQuestion[] }[] => {
-      if (step.kind === 'locked') return [{ step, questions: [] }];
+    .flatMap((step): { step: FlowStep; questions: PlanQuestion[]; signs: boolean }[] => {
+      if (step.kind === 'locked') return [{ step, questions: [], signs: false }];
       if (step.kind === 'builtin' && flow.hiddenScreens.has(step.key)) return [];
       const questions =
         step.kind === 'custom'
           ? customQuestions(placedQuestions(catalog, step.screen.id))
           : [...builtinQuestions(step.key), ...customQuestions(placedQuestions(catalog, step.key))];
-      return questions.length === 0 ? [] : [{ step, questions }];
+      const signs = hasSignatureBlocks(
+        catalog.blocks,
+        step.kind === 'custom' ? step.screen.id : step.key,
+      );
+      return questions.length === 0 && !signs ? [] : [{ step, questions, signs }];
     })
-    .map(({ step, questions }, index): PlanScreen => ({
+    .map(({ step, questions, signs }, index): PlanScreen => ({
       step,
       number: index + 1,
       questions,
-      isSkipped: questions.length > 0 && questions.every((question) => question.state === 'skip'),
-      mustAsk: questions.some((question) => !question.canSkip),
+      isSkipped:
+        !signs && questions.length > 0 && questions.every((question) => question.state === 'skip'),
+      mustAsk: signs || questions.some((question) => !question.canSkip),
       askedCount: questions.filter((question) => question.asking !== 'not-asked').length,
+      hasSignature: signs,
     }));
   const all = screens.flatMap((screen) => screen.questions);
   return {

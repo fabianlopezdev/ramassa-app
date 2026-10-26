@@ -228,5 +228,6 @@
   "customFileUploadFailed": "تعذّر إرسال الملف. حاولي مرة أخرى.",
   "customFileUnavailable": "إرسال الملفات غير متاح بعد. يمكنكِ المتابعة بدونه.",
   "customFileRemove": "أزيلي {{name}}",
-  "customErrorSignature": "وقّعي بإصبعكِ."
+  "customErrorSignature": "وقّعي بإصبعكِ.",
+  "summarySigned": "تمّ التوقيع"
 }

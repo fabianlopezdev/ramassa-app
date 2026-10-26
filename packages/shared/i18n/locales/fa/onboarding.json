@@ -228,5 +228,6 @@
   "customFileUploadFailed": "ارسال فایل ممکن نشد. دوباره تلاش کنید.",
   "customFileUnavailable": "ارسال فایل هنوز ممکن نیست. می‌توانید بدون آن ادامه دهید.",
   "customFileRemove": "حذف {{name}}",
-  "customErrorSignature": "با انگشت امضا کنید."
+  "customErrorSignature": "با انگشت امضا کنید.",
+  "summarySigned": "امضا شد"
 }
