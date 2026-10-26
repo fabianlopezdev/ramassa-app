@@ -33,12 +33,13 @@ import {
   AUTHORIZATION_MOVABLE_SCREENS,
   authorizationScreenOrder,
   discardAuthorizationDraft,
-  isMiddlePhaseShown,
+  isHealthScreenShown,
   publishAuthorizationDraft,
   saveAuthorizationDraft,
   type AuthorizationMovableScreen,
   type AuthorizationVersion,
 } from '@ramassa/shared/authorization';
+import { AppError } from '@ramassa/shared/errors';
 import {
   cleanAppTermsContent,
   discardAppTermsDraft,
@@ -46,6 +47,7 @@ import {
   resolveAppTerms,
   saveAppTermsDraft,
 } from '@ramassa/shared/intake';
+import { authorizationQuestions } from '@ramassa/shared/intake-builder';
 import type { LanguageCode } from '@ramassa/shared/schemas';
 import { createSeason, setCurrentSeason } from '@ramassa/shared/seasons';
 
@@ -81,7 +83,9 @@ export function AuthorizationBoard({ data }: { readonly data: LegalFormsData }) 
   const shown = shownAuthorization(data.versions);
   const seasonName = data.seasons.find((season) => season.isCurrent)?.name ?? '';
   const card = (step: AuthorizationPhoneStep): BoardCard => {
-    const isHidden = step === 'health' && shown !== null && !isMiddlePhaseShown(shown.content);
+    // The Health screen shows while staff place any field on it (RAPP-698).
+    const isHidden =
+      step === 'health' && !isHealthScreenShown(authorizationQuestions(data.intakeCatalog));
     return {
       key: step,
       name: t(`authorizationEditor.phoneStep.${step}`),
@@ -117,7 +121,7 @@ export function AuthorizationBoard({ data }: { readonly data: LegalFormsData }) 
         trailing={[card('consents')]}
         onReorder={async (keys) => {
           // The order is part of the version: it goes into the draft (RAPP-696).
-          if (shown === null) throw new Error('nothing to reorder');
+          if (shown === null) throw new AppError('DB-1', { message: 'no version to reorder' });
           await saveAuthorizationDraft(supabase, {
             ...shown.content,
             screen_order: keys as AuthorizationMovableScreen[],

@@ -9,9 +9,10 @@
  *
  * Staff edit the draft language by language: the document (title, sections,
  * season documents), the consents (add, remove, reorder, reword, mark
- * required), the health question and the emergency contact (asked or not,
- * required or not, their privacy level and wording), and the wording of the
- * form and of re-registration. A wording field left empty shows the app's own
+ * required), and the wording of the form and of re-registration. The Health
+ * screen asks fields of Dades de les jugadores (RAPP-698): her health and her
+ * emergency contact among them, placed, reworded and required with the
+ * shared field picker, saved at once like any screen's. A wording field left empty shows the app's own
  * text in her language, and the phone shows that text. Onboarding
  * designers save and discard the draft. Desa publishes it and needs
  * settings.organization: once anyone signed the season's version, it asks
@@ -32,6 +33,7 @@ import {
 } from '@/components/legal/legal-phone-content';
 import { SteppedPhone } from '@/components/onboarding/phone-preview';
 import { useSaveKind } from '@/components/onboarding/save-kind-dialog';
+import { ScreenFieldsSection } from '@/components/onboarding/screen-fields';
 import { RequiredSwitch } from '@/components/settings/required-switch';
 import { Button } from '@/components/ui/button';
 import {
@@ -48,7 +50,6 @@ import {
   AUTHORIZATION_BUNDLED_TEXT_KEYS,
   AUTHORIZATION_TEXT_FIELDS,
   authorizationContentSchema,
-  EMERGENCY_TITLE_REQUIRED_KEY,
   HEALTH_DATA_CONSENT,
   IMAGE_RIGHTS_CONSENT,
   newConsentKey,
@@ -56,11 +57,15 @@ import {
   type AuthorizationContent,
   type AuthorizationText,
   type AuthorizationVersion,
-  type EmergencyContactPrivacy,
   type SaveKind,
 } from '@ramassa/shared/authorization';
 import { getLanguageDirection } from '@ramassa/shared/i18n/languages';
-import { EMPTY_INTAKE_CATALOG, type IntakeCatalog } from '@ramassa/shared/intake-builder';
+import {
+  authorizationFieldId,
+  authorizationQuestions,
+  EMPTY_INTAKE_CATALOG,
+  type IntakeCatalog,
+} from '@ramassa/shared/intake-builder';
 import type { LanguageCode } from '@ramassa/shared/schemas';
 import { publishableSeasons, type Season } from '@ramassa/shared/seasons';
 
@@ -75,10 +80,6 @@ const EMPTY_CONTENT: AuthorizationContent = {
     code_of_conduct: { label: { ca: '' }, required: true, position: 2 },
     health_data: { label: { ca: '' }, required: true, position: 3 },
     image_rights: { label: { ca: '' }, required: false, position: 4 },
-  },
-  questions: {
-    health: { asked: true, required: true, privacy: 'health', texts: {} },
-    emergency_contact: { asked: true, required: false, privacy: 'personal', texts: {} },
   },
   texts: {},
   attachments: [],
@@ -119,16 +120,7 @@ export function cleanAuthorizationContent(content: AuthorizationContent): Author
         { label: cleanText(consent.label), required: consent.required, position },
       ]),
     ),
-    questions: {
-      health: {
-        ...content.questions.health,
-        texts: cleanTexts(content.questions.health.texts),
-      },
-      emergency_contact: {
-        ...content.questions.emergency_contact,
-        texts: cleanTexts(content.questions.emergency_contact.texts),
-      },
-    },
+    // The Health screen asks fields since RAPP-698: a new version has no questions.
     texts: cleanTexts(content.texts),
     attachments: content.attachments.map((attachment) => ({
       label: cleanText(attachment.label),
@@ -189,6 +181,7 @@ export function AuthorizationEditor({
     draft?.content ?? current?.content ?? EMPTY_CONTENT,
   );
   const [isDirty, setIsDirty] = useState(false);
+  const [editingField, setEditingField] = useState<string | null>(null);
   const [status, setStatus] = useState<Status>('idle');
   // Anyone who signed the target season's versions makes Desa ask (RAPP-696).
   const saveKind = useSaveKind({
@@ -255,7 +248,6 @@ export function AuthorizationEditor({
   }
 
   const consents = orderedConsents(content);
-  const { health, emergency_contact: emergency } = content.questions;
   const setConsents = (next: typeof consents) =>
     edit({
       ...content,
@@ -266,25 +258,6 @@ export function AuthorizationEditor({
         ]),
       ),
     });
-  const setHealth = (next: Partial<typeof health>) => {
-    const merged = { ...health, ...next };
-    const healthConsent = content.consents[HEALTH_DATA_CONSENT];
-    edit({
-      ...content,
-      // A required health question needs its consent required too: set it with it.
-      consents:
-        merged.required && healthConsent !== undefined
-          ? { ...content.consents, [HEALTH_DATA_CONSENT]: { ...healthConsent, required: true } }
-          : content.consents,
-      questions: { ...content.questions, health: merged },
-    });
-  };
-  const setEmergency = (next: Partial<typeof emergency>) =>
-    edit({
-      ...content,
-      questions: { ...content.questions, emergency_contact: { ...emergency, ...next } },
-    });
-
   // Her phone on this screen, worded as typed.
   const { content: phoneContent, ...position } = authorizationPhoneScreen(
     content,
@@ -294,6 +267,10 @@ export function AuthorizationEditor({
     { seasonName, catalog },
   );
   const isOn = (...steps: readonly AuthorizationPhoneStep[]) => steps.includes(step);
+  // Her health is asked: its consent stays (RAPP-698).
+  const hasHealthField = authorizationQuestions(catalog).some(
+    (question) => question.id === authorizationFieldId(catalog, 'health_info'),
+  );
   const canSave = draft !== null || isDirty;
 
   return (
@@ -449,9 +426,7 @@ export function AuthorizationEditor({
                         lockReason={
                           consent.key === IMAGE_RIGHTS_CONSENT
                             ? t('authorizationEditor.imageRightsLock')
-                            : consent.key === HEALTH_DATA_CONSENT && health.asked && health.required
-                              ? t('authorizationEditor.healthConsentLock')
-                              : undefined
+                            : undefined
                         }
                         onChange={(required) =>
                           setConsents(
@@ -491,7 +466,7 @@ export function AuthorizationEditor({
                           {t('authorizationEditor.moveDownShort')}
                         </Button>
                         {consents.length > 1 &&
-                        !(consent.key === HEALTH_DATA_CONSENT && health.asked) ? (
+                        !(consent.key === HEALTH_DATA_CONSENT && hasHealthField) ? (
                           <Button
                             type="button"
                             variant="outline"
@@ -528,124 +503,6 @@ export function AuthorizationEditor({
                       {t('authorizationEditor.addConsent')}
                     </Button>
                   ) : null}
-                </fieldset>
-              ) : null}
-
-              {isOn('health') ? (
-                <fieldset className="flex flex-col gap-3" data-testid="authorization-health">
-                  <legend className="text-start text-sm font-semibold">
-                    {t('authorizationEditor.healthTitle')}
-                  </legend>
-                  <label className="flex items-center gap-2 text-start text-xs font-medium">
-                    <input
-                      id="authorization-health-asked"
-                      data-testid="authorization-health-asked"
-                      type="checkbox"
-                      checked={health.asked}
-                      disabled={health.required}
-                      aria-describedby="authorization-hide-note"
-                      onChange={(event) => setHealth({ asked: event.target.checked })}
-                    />
-                    <span>{t('authorizationEditor.asked')}</span>
-                  </label>
-                  <RequiredSwitch
-                    id="authorization-health-required"
-                    checked={health.required}
-                    disabled={isBusy || !health.asked}
-                    onChange={(required) => setHealth({ required })}
-                  />
-                  <p className="text-start text-xs text-muted-foreground">
-                    {t('authorizationEditor.healthPrivacy')}
-                  </p>
-                  {AUTHORIZATION_TEXT_FIELDS.health.map((field) => (
-                    <AdminAuthField
-                      key={field}
-                      id={`authorization-health-${field}`}
-                      label={t(`authorizationEditor.healthField.${field}`)}
-                      dir={direction}
-                      placeholder={bundled(AUTHORIZATION_BUNDLED_TEXT_KEYS.health[field])}
-                      value={inLanguage(health.texts[field])}
-                      onChange={(event) =>
-                        setHealth({
-                          texts: {
-                            ...health.texts,
-                            [field]: withLanguage(health.texts[field], event.target.value),
-                          },
-                        })
-                      }
-                    />
-                  ))}
-                </fieldset>
-              ) : null}
-
-              {isOn('health') ? (
-                <fieldset className="flex flex-col gap-3" data-testid="authorization-emergency">
-                  <legend className="text-start text-sm font-semibold">
-                    {t('authorizationEditor.emergencyTitle')}
-                  </legend>
-                  <label className="flex items-center gap-2 text-start text-xs font-medium">
-                    <input
-                      id="authorization-emergency-asked"
-                      data-testid="authorization-emergency-asked"
-                      type="checkbox"
-                      checked={emergency.asked}
-                      disabled={emergency.required}
-                      aria-describedby="authorization-hide-note"
-                      onChange={(event) => setEmergency({ asked: event.target.checked })}
-                    />
-                    <span>{t('authorizationEditor.asked')}</span>
-                  </label>
-                  <RequiredSwitch
-                    id="authorization-emergency-required"
-                    checked={emergency.required}
-                    disabled={isBusy || !emergency.asked}
-                    onChange={(required) => setEmergency({ required })}
-                  />
-                  <label className="flex flex-col gap-1.5 text-sm font-medium">
-                    <span>{t('authorizationEditor.privacy')}</span>
-                    <select
-                      id="authorization-emergency-privacy"
-                      value={emergency.privacy}
-                      onChange={(event) =>
-                        setEmergency({ privacy: event.target.value as EmergencyContactPrivacy })
-                      }
-                      className="h-9 max-w-xs rounded-md border border-input bg-transparent px-3 text-sm"
-                    >
-                      <option value="personal">{t('questions.privacyLevels.personal')}</option>
-                      <option value="sensitive">{t('questions.privacyLevels.sensitive')}</option>
-                    </select>
-                    <span className="text-xs font-normal text-muted-foreground">
-                      {t('authorizationEditor.emergencyPrivacyNote')}
-                    </span>
-                  </label>
-                  {AUTHORIZATION_TEXT_FIELDS.emergency_contact.map((field) => (
-                    <AdminAuthField
-                      key={field}
-                      id={`authorization-emergency-${field}`}
-                      label={t(`authorizationEditor.emergencyField.${field}`)}
-                      dir={direction}
-                      placeholder={bundled(
-                        field === 'title' && emergency.required
-                          ? EMERGENCY_TITLE_REQUIRED_KEY
-                          : AUTHORIZATION_BUNDLED_TEXT_KEYS.emergency_contact[field],
-                      )}
-                      value={inLanguage(emergency.texts[field])}
-                      onChange={(event) =>
-                        setEmergency({
-                          texts: {
-                            ...emergency.texts,
-                            [field]: withLanguage(emergency.texts[field], event.target.value),
-                          },
-                        })
-                      }
-                    />
-                  ))}
-                  <p
-                    id="authorization-hide-note"
-                    className="text-start text-xs text-muted-foreground"
-                  >
-                    {t('authorizationEditor.hideNote')}
-                  </p>
                 </fieldset>
               ) : null}
 
@@ -734,6 +591,22 @@ export function AuthorizationEditor({
                 </fieldset>
               ) : null}
             </section>
+
+            {isOn('health') ? (
+              // The Health screen's fields, placed with the field picker like any screen's (RAPP-698).
+              <ScreenFieldsSection
+                surface="authorization"
+                catalog={catalog}
+                screenKey="health"
+                screenName={t('authorizationEditor.phoneStep.health')}
+                builtinQuestions={[]}
+                language={language}
+                editing={editingField}
+                onEdit={setEditingField}
+                onBuiltinLabelChange={() => undefined}
+                onWordingChange={() => undefined}
+              />
+            ) : null}
 
             <div className="sticky bottom-0 z-10 flex flex-col gap-3 rounded-xl border bg-card p-5 shadow-sm">
               {canPublish ? (

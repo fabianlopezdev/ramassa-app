@@ -15,26 +15,23 @@ import {
   customPhoneQuestion,
   stepContent,
   type PhoneContent,
-  type PhoneQuestion,
   type Translate,
 } from '@/components/onboarding/screen-content';
 import {
   AUTHORIZATION_BUNDLED_TEXT_KEYS,
   authorizationScreenOrder,
   authorizationWording,
-  EMERGENCY_TITLE_REQUIRED_KEY,
-  isMiddlePhaseShown,
+  isHealthScreenShown,
   numberAuthorizationDocument,
   orderedConsents,
   type AuthorizationContent,
   type AuthorizationText,
   type AuthorizationTextField,
-  type EmergencyTextField,
-  type HealthTextField,
 } from '@ramassa/shared/authorization';
 import { resolveLocalizedText } from '@ramassa/shared/i18n';
 import type { resolveAppTerms } from '@ramassa/shared/intake';
 import {
+  authorizationQuestions,
   reregistrationAsks,
   seasonFormQuestions,
   type IntakeCatalog,
@@ -98,11 +95,10 @@ const EMPTY: Omit<PhoneContent, 'title' | 'continueLabel'> = {
 const withSeason = (text: string, seasonName: string) =>
   text.replace(/\{\{\s*season\s*\}\}/gu, seasonName);
 
-/** The form's screens her phone walks for this content, in order: health only while it asks something. */
-function walkedScreens(content: AuthorizationContent) {
-  return authorizationScreenOrder(content).filter(
-    (screen) => screen !== 'health' || isMiddlePhaseShown(content),
-  );
+/** The form's screens her phone walks, in order: health only while it asks a field (RAPP-698). */
+function walkedScreens(content: AuthorizationContent, catalog: IntakeCatalog) {
+  const isHealthShown = isHealthScreenShown(authorizationQuestions(catalog));
+  return authorizationScreenOrder(content).filter((screen) => screen !== 'health' || isHealthShown);
 }
 
 /** One screen of the authorization, worded as her app words it in `language`. */
@@ -121,35 +117,9 @@ export function authorizationPhoneScreen(
         app(AUTHORIZATION_BUNDLED_TEXT_KEYS.texts[field]),
       seasonName,
     );
-  const { health, emergency_contact: emergency } = content.questions;
-  const healthWords = (field: HealthTextField) =>
-    authorizationWording(health.texts, field, language) ??
-    app(AUTHORIZATION_BUNDLED_TEXT_KEYS.health[field]);
-  const emergencyWords = (field: EmergencyTextField) =>
-    authorizationWording(emergency.texts, field, language) ??
-    app(
-      field === 'title' && emergency.required
-        ? EMERGENCY_TITLE_REQUIRED_KEY
-        : AUTHORIZATION_BUNDLED_TEXT_KEYS.emergency_contact[field],
-    );
   const text = (value: AuthorizationText) => resolveLocalizedText(value, language)?.text ?? '';
-  const only = (value: string) => ({ [language]: value });
-  const field = (
-    id: string,
-    label: string,
-    type: 'short_text' | 'phone',
-    heading?: string,
-  ): PhoneQuestion => ({
-    id,
-    label,
-    help: '',
-    isRequired: false,
-    draft: { type, label: only(label), help: {}, settings: {}, options: [] },
-    ...(heading === undefined ? {} : { heading }),
-  });
-
   // Her form's screens in the version's order (RAPP-696), health when it asks something.
-  const walked = walkedScreens(content);
+  const walked = walkedScreens(content, catalog);
   const progress = (screen: (typeof walked)[number]) => ({
     step: Math.max(1, walked.indexOf(screen) + 1),
     total: walked.length,
@@ -175,34 +145,10 @@ export function authorizationPhoneScreen(
   }
 
   if (step === 'health') {
-    const questions: PhoneQuestion[] = [];
-    if (health.asked) {
-      questions.push({
-        id: 'health',
-        label: healthWords('question'),
-        help: '',
-        isRequired: false,
-        draft: {
-          type: 'single_choice',
-          label: only(healthWords('question')),
-          help: {},
-          settings: {},
-          options: [only(healthWords('no_label')), only(healthWords('yes_label'))],
-        },
-      });
-    }
-    if (emergency.asked) {
-      questions.push(
-        field(
-          'emergency-name',
-          emergencyWords('name_label'),
-          'short_text',
-          emergencyWords('title'),
-        ),
-        field('emergency-relation', emergencyWords('relation_label'), 'short_text'),
-        field('emergency-phone', emergencyWords('phone_label'), 'phone'),
-      );
-    }
+    // The fields staff placed on the Health screen (RAPP-698).
+    const questions = authorizationQuestions(catalog).map((question) =>
+      customPhoneQuestion(question, language),
+    );
     return {
       ...progress('health'),
       content: {

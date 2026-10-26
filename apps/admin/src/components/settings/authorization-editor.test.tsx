@@ -20,7 +20,13 @@ import {
 } from '@ramassa/shared/authorization';
 import type { Season } from '@ramassa/shared/seasons';
 import { buildAuthorizationVersion } from '@ramassa/shared/testing';
-import { AuthorizationEditor, cleanAuthorizationContent } from './authorization-editor';
+
+// The Health screen's field picker writes through the database client; this
+// test only needs to see that the screen shows it (RAPP-698).
+mock.module('@/components/onboarding/screen-fields', () => ({
+  ScreenFieldsSection: () => <div data-testid="screen-questions" />,
+}));
+const { AuthorizationEditor, cleanAuthorizationContent } = await import('./authorization-editor');
 
 const CURRENT: Season = {
   id: '5eed0000-0000-4000-8040-000000000001',
@@ -154,41 +160,22 @@ test('staff add a consent, mark it required, move it up and remove another', asy
   expect(onSaveDraft).not.toHaveBeenCalled();
 });
 
-test('image rights never become required, and the health consent is required with its question', () => {
+test('image rights never become required; the health consent stays while her health is asked', () => {
   const { view } = renderEditor([version()], { step: 'consents' });
   expect(field(view, 'authorization-consent-required-image_rights').disabled).toBe(true);
-  expect(field(view, 'authorization-consent-required-health_data').disabled).toBe(true);
-  expect(view.queryByTestId('authorization-consent-remove-health_data')).toBeNull();
+  // No health field placed in this catalog: the health consent is an ordinary consent (RAPP-698).
+  expect(field(view, 'authorization-consent-required-health_data').disabled).toBe(false);
+  expect(view.getByTestId('authorization-consent-remove-health_data')).toBeTruthy();
 });
 
-test('a question stops being asked only when optional', async () => {
+test('a draft saved from the Health screen carries no questions: its fields are placements (RAPP-698)', async () => {
   const { view, onSaveDraft } = renderEditor([version()], { step: 'health' });
-  expect(field(view, 'authorization-health-asked').disabled).toBe(true);
-  fireEvent.click(field(view, 'authorization-health-required'));
-  expect(field(view, 'authorization-health-asked').disabled).toBe(false);
-  fireEvent.click(field(view, 'authorization-health-asked'));
-  fireEvent.click(field(view, 'authorization-emergency-asked'));
+  expect(view.getByTestId('screen-questions')).toBeTruthy();
   fireEvent.click(view.getByTestId('authorization-save'));
   await waitFor(() => expect(onSaveDraft).toHaveBeenCalledTimes(1));
   const saved = onSaveDraft.mock.calls[0]![0];
-  expect(saved.questions.health).toMatchObject({ asked: false, required: false });
-  expect(saved.questions.emergency_contact.asked).toBe(false);
+  expect('questions' in saved).toBe(false);
   expect(authorizationContentSchema.safeParse(saved).success).toBe(true);
-});
-
-test('the emergency contact takes a privacy level', async () => {
-  const { view, onSaveDraft } = renderEditor([version()], { step: 'health' });
-  fireEvent.change(field(view, 'authorization-emergency-privacy'), {
-    target: { value: 'sensitive' },
-  });
-  fireEvent.click(field(view, 'authorization-emergency-required'));
-  fireEvent.click(view.getByTestId('authorization-save'));
-  await waitFor(() => expect(onSaveDraft).toHaveBeenCalledTimes(1));
-  expect(onSaveDraft.mock.calls[0]![0].questions.emergency_contact).toMatchObject({
-    asked: true,
-    required: true,
-    privacy: 'sensitive',
-  });
 });
 
 test('nobody signed yet: Desa saves the draft and publishes it at once; the design role has no Desa', async () => {

@@ -581,32 +581,12 @@
     "consentsIntro": "Afegeix, treu, ordena i redacta cada autorització, i marca les obligatòries. Cada signatura guarda el text que ella va veure.",
     "consentLabel": "Autorització {{number}}",
     "imageRightsLock": "Els drets d'imatge sempre són opcionals: decideixen el permís de fotos, que ella pot retirar.",
-    "healthConsentLock": "És obligatòria mentre la pregunta de salut ho sigui.",
     "moveUp": "Puja l'autorització {{number}}",
     "moveDown": "Baixa l'autorització {{number}}",
     "moveUpShort": "Puja",
     "moveDownShort": "Baixa",
     "removeConsent": "Treu l'autorització",
     "addConsent": "Afegeix una autorització",
-    "healthTitle": "Pregunta de salut",
-    "asked": "Es pregunta",
-    "healthPrivacy": "Nivell de privacitat: salut. Xifrada i visible només amb el permís de dades de salut.",
-    "healthField": {
-      "question": "Pregunta",
-      "no_label": "Resposta No",
-      "yes_label": "Resposta Sí",
-      "details_label": "Camp per explicar-ho"
-    },
-    "emergencyTitle": "Contacte d'emergència",
-    "privacy": "Nivell de privacitat",
-    "emergencyPrivacyNote": "El nom i la relació segueixen aquest nivell. El telèfon sempre és sensible.",
-    "emergencyField": {
-      "title": "Títol",
-      "name_label": "Camp del nom",
-      "relation_label": "Camp de la relació",
-      "phone_label": "Camp del telèfon"
-    },
-    "hideNote": "Una pregunta només es pot deixar de preguntar si no és obligatòria. Si no se'n pregunta cap, la pantalla de salut no surt.",
     "textsTitle": "Textos del formulari",
     "textsIntro": "La introducció, els títols de cada pas, els botons, el pas final de signatura i la reinscripció. Pots escriure {{season}} per posar el nom de la temporada.",
     "textField": {
@@ -716,6 +696,7 @@
       "onboarding": "App",
       "entity_form": "Entitat",
       "season": "Temporada",
+      "authorization": "Autorització",
       "teamOnly": "Només equip"
     },
     "columnField": "Camp",

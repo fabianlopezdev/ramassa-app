@@ -581,32 +581,12 @@
     "consentsIntro": "Añade, quita, ordena y redacta cada autorización, y marca las obligatorias. Cada firma guarda el texto que ella vio.",
     "consentLabel": "Autorización {{number}}",
     "imageRightsLock": "Los derechos de imagen siempre son opcionales: deciden el permiso de fotos, que ella puede retirar.",
-    "healthConsentLock": "Es obligatoria mientras la pregunta de salud lo sea.",
     "moveUp": "Sube la autorización {{number}}",
     "moveDown": "Baja la autorización {{number}}",
     "moveUpShort": "Sube",
     "moveDownShort": "Baja",
     "removeConsent": "Quita la autorización",
     "addConsent": "Añade una autorización",
-    "healthTitle": "Pregunta de salud",
-    "asked": "Se pregunta",
-    "healthPrivacy": "Nivel de privacidad: salud. Cifrada y visible solo con el permiso de datos de salud.",
-    "healthField": {
-      "question": "Pregunta",
-      "no_label": "Respuesta No",
-      "yes_label": "Respuesta Sí",
-      "details_label": "Campo para explicarlo"
-    },
-    "emergencyTitle": "Contacto de emergencia",
-    "privacy": "Nivel de privacidad",
-    "emergencyPrivacyNote": "El nombre y la relación siguen este nivel. El teléfono siempre es sensible.",
-    "emergencyField": {
-      "title": "Título",
-      "name_label": "Campo del nombre",
-      "relation_label": "Campo de la relación",
-      "phone_label": "Campo del teléfono"
-    },
-    "hideNote": "Una pregunta solo se puede dejar de preguntar si no es obligatoria. Si no se pregunta ninguna, la pantalla de salud no aparece.",
     "textsTitle": "Textos del formulario",
     "textsIntro": "La introducción, los títulos de cada paso, los botones, el paso final de firma y la reinscripción. Puedes escribir {{season}} para poner el nombre de la temporada.",
     "textField": {
@@ -716,6 +696,7 @@
       "onboarding": "App",
       "entity_form": "Entidad",
       "season": "Temporada",
+      "authorization": "Autorización",
       "teamOnly": "Solo equipo"
     },
     "columnField": "Campo",

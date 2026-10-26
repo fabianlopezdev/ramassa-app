@@ -108,10 +108,11 @@ function screenItems(placed: readonly Placed[], blocks: readonly FormBlock[]): S
  */
 function placedFields(
   layout: ProfileLayout,
-  screenKey: string,
+  surface: FieldsSurface,
+  screenKey: string | null,
   offTheirControl: ReadonlySet<IntakeQuestion>,
 ): readonly Placed[] {
-  return placementsOnSurface(layout, 'onboarding', screenKey).flatMap((placement) => {
+  return placementsOnSurface(layout, surface, screenKey).flatMap((placement) => {
     const field = fieldById(layout, placement.fieldId);
     return field === undefined || !isAskedGenerically(field, offTheirControl)
       ? []
@@ -119,7 +120,11 @@ function placedFields(
   });
 }
 
+/** The screens this section edits: an Onboarding screen, or the authorization's Health screen (RAPP-698). */
+type FieldsSurface = 'onboarding' | 'authorization';
+
 export function ScreenFieldsSection({
+  surface = 'onboarding',
   catalog,
   screenKey,
   screenName,
@@ -130,6 +135,8 @@ export function ScreenFieldsSection({
   onBuiltinLabelChange,
   onWordingChange,
 }: {
+  /** Onboarding by default; the authorization's Health screen is its surface's one screen. */
+  readonly surface?: FieldsSurface;
   readonly catalog: IntakeCatalog;
   /** An app screen's key, or a Ramassà screen's id. */
   readonly screenKey: string;
@@ -150,9 +157,15 @@ export function ScreenFieldsSection({
   const actions = useProfileLayoutActions();
   const [isPicking, setIsPicking] = useState(false);
   const offTheirControl = questionsOffTheirControl(layout);
-  const placed = placedFields(layout, screenKey, offTheirControl);
-  const items = screenItems(placed, formBlocksOn(catalog.blocks, 'onboarding', screenKey));
-  const { ordered, reorder } = usePlacementOrder('onboarding', screenKey, items, (item) => item.id);
+  const isOnboarding = surface === 'onboarding';
+  // The Health screen is its surface's one screen: its placements name none.
+  const placementKey = isOnboarding ? screenKey : null;
+  const placed = placedFields(layout, surface, placementKey, offTheirControl);
+  const items = screenItems(
+    placed,
+    isOnboarding ? formBlocksOn(catalog.blocks, 'onboarding', screenKey) : [],
+  );
+  const { ordered, reorder } = usePlacementOrder(surface, placementKey, items, (item) => item.id);
   const sectionOf = (field: ProfileField) =>
     layout.sections.find((section) => section.id === field.sectionId);
   // Sections and the picker are the team's words, in the staff member's language.
@@ -170,6 +183,14 @@ export function ScreenFieldsSection({
   };
 
   const stateOf = (field: ProfileField): FieldPickState => {
+    if (!isOnboarding) {
+      // A field is asked once per surface: here, or free to place.
+      return placementsOnSurface(layout, surface).some(
+        (placement) => placement.fieldId === field.id,
+      )
+        ? { kind: 'placed', note: t('fieldPicker.here') }
+        : { kind: 'free' };
+    }
     const pick = onboardingPick(layout, field, screenKey);
     if (pick.kind === 'here') return { kind: 'placed', note: t('fieldPicker.here') };
     if (pick.kind === 'free') return { kind: 'free' };
@@ -285,20 +306,26 @@ export function ScreenFieldsSection({
           <Plus aria-hidden data-icon="inline-start" />
           {t('profileLayout.addField')}
         </Button>
-        <AddSignatureButton
-          surface="onboarding"
-          screenKey={screenKey}
-          onAdded={(id) => toggle(id)}
-        />
+        {isOnboarding ? (
+          <AddSignatureButton
+            surface="onboarding"
+            screenKey={screenKey}
+            onAdded={(id) => toggle(id)}
+          />
+        ) : null}
       </div>
       <FieldPicker
         layout={layout}
         isOpen={isPicking}
         onOpenChange={setIsPicking}
         title={t('fieldPicker.title', { screen: screenName })}
-        initialSectionId={pickerSectionFor(layout, screenKey)}
+        initialSectionId={
+          isOnboarding
+            ? pickerSectionFor(layout, screenKey)
+            : (layout.sections.find((section) => section.key === 'health_needs')?.id ?? null)
+        }
         stateOf={stateOf}
-        onConfirm={(ids) => actions.placeFields('onboarding', screenKey, ids)}
+        onConfirm={(ids) => actions.placeFields(surface, placementKey, ids)}
         onCreateField={(section, draft) => actions.saveField(null, section, draft)}
       />
     </EditorSection>

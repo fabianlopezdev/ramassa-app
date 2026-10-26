@@ -581,32 +581,12 @@
     "consentsIntro": "Add, remove, order and word each consent, and mark the required ones. Every signature keeps the words she saw.",
     "consentLabel": "Consent {{number}}",
     "imageRightsLock": "Image rights are always optional: they decide the photo consent, which she can withdraw.",
-    "healthConsentLock": "Required while the health question is required.",
     "moveUp": "Move consent {{number}} up",
     "moveDown": "Move consent {{number}} down",
     "moveUpShort": "Up",
     "moveDownShort": "Down",
     "removeConsent": "Remove the consent",
     "addConsent": "Add a consent",
-    "healthTitle": "Health question",
-    "asked": "Asked",
-    "healthPrivacy": "Privacy level: health. Encrypted, and readable only with the health data permission.",
-    "healthField": {
-      "question": "Question",
-      "no_label": "No answer",
-      "yes_label": "Yes answer",
-      "details_label": "Field to explain"
-    },
-    "emergencyTitle": "Emergency contact",
-    "privacy": "Privacy level",
-    "emergencyPrivacyNote": "The name and relation follow this level. The phone is always sensitive.",
-    "emergencyField": {
-      "title": "Title",
-      "name_label": "Name field",
-      "relation_label": "Relation field",
-      "phone_label": "Phone field"
-    },
-    "hideNote": "A question can stop being asked only when it is not required. When neither is asked, the health screen does not show.",
     "textsTitle": "Form wording",
     "textsIntro": "The introduction, each step's title, the buttons, the final signing step and re-registration. Write {{season}} to show the season's name.",
     "textField": {
@@ -716,6 +696,7 @@
       "onboarding": "App",
       "entity_form": "Entity",
       "season": "Season",
+      "authorization": "Authorization",
       "teamOnly": "Team only"
     },
     "columnField": "Field",

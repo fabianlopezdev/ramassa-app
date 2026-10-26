@@ -420,7 +420,6 @@ export function ParticipantDetail({
           participant={participant}
           authorizations={authorizations}
           consents={consents}
-          canSeeHealth={permissions.has('participants.view_health')}
           onRecordPaper={async (signedOn) => {
             await recordPaperAuthorization(supabase, participant.id, signedOn);
             await router.invalidate();

@@ -161,8 +161,6 @@
   "authorizationConsentVersion": "{{date}}، موسم {{season}}، النسخة {{number}}",
   "authorizationGranted": "نعم",
   "authorizationNotGranted": "لا",
-  "authorizationEmergencyContact": "جهة اتصال للطوارئ",
-  "authorizationHealth": "البيانات الطبية",
   "authorizationPaperDate": "تاريخ التوقيع الورقي",
   "authorizationPaperAction": "سجّل التوقيع الورقي",
   "authorizationPaperSaved": "سُجّل التوقيع الورقي.",

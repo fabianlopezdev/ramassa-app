@@ -3,8 +3,9 @@
  *
  * Each season she signed: how (in the app, on a staff device, on paper), which
  * version, when, and whether she signed with a drawing or with the ticks alone.
- * The drawn signature shows only with participants.view_sensitive; the medical
- * answer only with participants.view_health. Staff record a paper signature
+ * The drawn signature shows only with participants.view_sensitive. Her health
+ * and her emergency contact are answers since RAPP-698: they show with her
+ * other answers, each by its field's level. Staff record a paper signature
  * for the current season here, so a player who signed in September is not
  * asked again.
  */
@@ -49,24 +50,10 @@ export function SignatureDrawing({
   );
 }
 
-/**
- * What her health line shows: her answer, that she withdrew the health data
- * consent (her answer was then deleted, pending fix 25), or nothing given.
- */
-export function healthAnswerState(
-  healthInfo: string | null | undefined,
-  consents: readonly ParticipantConsent[],
-): 'answer' | 'withdrawn' | 'none' {
-  if (healthInfo != null && healthInfo !== '') return 'answer';
-  const health = consents.find((consent) => consent.key === 'health_data');
-  return health !== undefined && !health.granted ? 'withdrawn' : 'none';
-}
-
 export interface ParticipantAuthorizationPanelProps {
   readonly participant: ParticipantRecord;
   readonly authorizations: readonly ParticipantAuthorization[];
   readonly consents: readonly ParticipantConsent[];
-  readonly canSeeHealth: boolean;
   readonly onRecordPaper: (signedOn: string) => Promise<void>;
   /** Her answers by season (RAPP-306), in words, read by field (RAPP-664). */
   readonly seasonAnswers?: readonly SeasonAnswersLine[];
@@ -77,7 +64,6 @@ export function ParticipantAuthorizationPanel({
   participant,
   authorizations,
   consents,
-  canSeeHealth,
   onRecordPaper,
   seasonAnswers = [],
   onSetPriorSeasons,
@@ -199,37 +185,6 @@ export function ParticipantAuthorizationPanel({
           </ul>
         </div>
       )}
-
-      <dl className="grid gap-2 sm:grid-cols-2">
-        <div className="flex flex-col">
-          <dt className="text-start text-xs text-muted-foreground">
-            {t('participants:authorizationEmergencyContact')}
-          </dt>
-          <dd className="text-start text-sm">
-            {participant.emergency_contact_name == null
-              ? notProvided
-              : [
-                  participant.emergency_contact_name,
-                  participant.emergency_contact_relation,
-                  participant.emergency_contact_phone,
-                ]
-                  .filter((part) => part != null && part !== '')
-                  .join(' · ')}
-          </dd>
-        </div>
-        {canSeeHealth ? (
-          <div className="flex flex-col" data-testid="participant-health">
-            <dt className="text-start text-xs text-muted-foreground">
-              {t('participants:authorizationHealth')}
-            </dt>
-            <dd className="whitespace-pre-wrap text-start text-sm">
-              {healthAnswerState(participant.health_info, consents) === 'withdrawn'
-                ? t('participants:authorizationHealthConsentWithdrawn')
-                : (participant.health_info ?? notProvided)}
-            </dd>
-          </div>
-        ) : null}
-      </dl>
 
       {/* The season number is counted: earlier seasons plus the seasons she
           signed (RAPP-306). Staff enter the seasons before the app. */}

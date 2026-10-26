@@ -161,8 +161,6 @@
   "authorizationConsentVersion": "{{date}}، فصل {{season}}، نسخه {{number}}",
   "authorizationGranted": "بله",
   "authorizationNotGranted": "نه",
-  "authorizationEmergencyContact": "تماس اضطراری",
-  "authorizationHealth": "اطلاعات پزشکی",
   "authorizationPaperDate": "تاریخ امضای کاغذی",
   "authorizationPaperAction": "ثبت امضای کاغذی",
   "authorizationPaperSaved": "امضای کاغذی ثبت شد.",
