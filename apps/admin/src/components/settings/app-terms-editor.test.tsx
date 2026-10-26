@@ -1,6 +1,7 @@
 /**
  * The app terms editor (RAPP-613): staff edit a draft per language and see
- * the phone's two screens in that language, right to left for Arabic and
+ * the phone's two screens in that language, in the screen editor's phone
+ * (RAPP-695), right to left for Arabic and
  * Farsi; Catalan is required; only an admin publishes, after a second click.
  */
 import { fireEvent, render, waitFor } from '@testing-library/react';
@@ -38,6 +39,19 @@ function renderEditor(versions: readonly AppTermsVersion[], canPublish = true) {
   return { view, onSaveDraft, onDiscardDraft, onPublish };
 }
 
+/** The phone's text, on the screen picked above it (RAPP-695). */
+function phoneOn(view: ReturnType<typeof render>, step: string) {
+  fireEvent.mouseDown(view.getByTestId(`phone-step-${step}`));
+  return view.getByTestId('phone-screen');
+}
+
+function chooseLanguage(view: ReturnType<typeof render>, name: string) {
+  const group = view.getByTestId('editor-language');
+  const item = group.querySelector<HTMLButtonElement>(`[aria-label="${name}"]`);
+  if (item === null) throw new Error(`no ${name}`);
+  fireEvent.click(item);
+}
+
 function input(view: ReturnType<typeof render>, id: string) {
   const field = view.container.querySelector<HTMLInputElement | HTMLTextAreaElement>(`#${id}`);
   if (field === null) throw new Error(`no ${id}`);
@@ -50,21 +64,19 @@ function input(view: ReturnType<typeof render>, id: string) {
 test('the draft starts from the current version, shown as the phone shows it', () => {
   const { view } = renderEditor([version()]);
   expect(input(view, 'app-terms-body').value).toBe('Text dels termes.');
-  expect(view.getByTestId('app-terms-preview-terms').textContent).toContain('Text dels termes.');
-  expect(view.getByTestId('app-terms-preview-intro').textContent).toContain(
-    'Per organitzar l’activitat.',
-  );
-  expect(view.getByTestId('app-terms-preview-terms').getAttribute('dir')).toBe('ltr');
+  expect(view.getByTestId('phone-screen').textContent).toContain('Text dels termes.');
+  expect(view.getByTestId('phone-screen').getAttribute('dir')).toBe('ltr');
+  expect(phoneOn(view, 'terms-intro').textContent).toContain('Per organitzar l’activitat.');
 });
 
-test('in Arabic the fields and the preview read right to left, and say when they show Catalan', () => {
+test('in Arabic the fields and her phone read right to left, the phone in Catalan', () => {
   const { view } = renderEditor([version()]);
-  fireEvent.change(input(view, 'app-terms-language'), { target: { value: 'ar' } });
-  expect(view.getByTestId('app-terms-preview-terms').getAttribute('dir')).toBe('rtl');
-  expect(view.getByTestId('app-terms-preview-intro').getAttribute('lang')).toBe('ar');
+  chooseLanguage(view, 'العربية');
+  expect(view.getByTestId('phone-screen').getAttribute('dir')).toBe('rtl');
+  expect(view.getByTestId('phone-screen').getAttribute('lang')).toBe('ar');
+  expect(view.getByTestId('phone-screen').textContent).toContain('Text dels termes.');
   expect(input(view, 'app-terms-body').getAttribute('dir')).toBe('rtl');
   expect(input(view, 'app-terms-body').value).toBe('');
-  expect(view.getByTestId('app-terms-fallback')).toBeTruthy();
 });
 
 test('saving sends the draft; a draft without Catalan is not sent', async () => {

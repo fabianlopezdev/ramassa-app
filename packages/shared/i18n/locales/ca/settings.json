@@ -336,7 +336,6 @@
   "authorizationPublishSeason": "Temporada",
   "authorizationCurrentSeasonBadge": "Temporada vigent",
   "authorizationEditorTitle": "Nova versió",
-  "authorizationLanguage": "Idioma que edites",
   "authorizationDocumentTitle": "Títol del document",
   "authorizationSections": "Apartats",
   "authorizationSectionTitle": "Títol de l'apartat {{number}}",
@@ -523,7 +522,6 @@
     "currentBadge": "Vigent",
     "editorTitle": "Esborrany de la versió següent",
     "editorIntro": "Escriu cada text en cada llengua. El català és obligatori; una llengua buida mostra el text en català.",
-    "language": "Llengua",
     "field": {
       "intro_title": "Títol de la pantalla d'introducció",
       "intro": "Text de la pantalla d'introducció",
@@ -548,9 +546,7 @@
     "failed": "No s'ha pogut desar. Torna-ho a provar.",
     "saved": "Esborrany desat.",
     "discarded": "Esborrany descartat.",
-    "published": "Versió publicada. Cada jugadora l'acceptarà en obrir l'app.",
-    "previewTitle": "Com ho veurà al mòbil",
-    "previewFallback": "Aquesta llengua encara no té text: es mostra en {{language}}."
+    "published": "Versió publicada. Cada jugadora l'acceptarà en obrir l'app."
   },
   "builtinScreens": {
     "hiddenBadge": "Amagada",
@@ -650,11 +646,13 @@
     "saved": "Esborrany desat.",
     "discarded": "Esborrany descartat.",
     "published": "Versió publicada.",
-    "previewTitle": "Com ho veu ella",
-    "previewAppText_one": "{{count}} text del formulari mostra el text de l'app en aquest idioma.",
-    "previewAppText_other": "{{count}} textos del formulari mostren el text de l'app en aquest idioma.",
-    "previewTablet": "A la tauleta de l'equip, el botó final diu: {{label}}",
-    "previewStep": "{{label}} · pas {{step}} de {{total}}"
+    "phoneStep": {
+      "document": "Document",
+      "health": "Salut",
+      "consents": "Autoritzacions",
+      "reregistration": "Reinscripció",
+      "reregistrationSeason": "Temporada"
+    }
   },
   "draftSeenByTestPlayers": "Versió en esborrany (només la veuen les jugadores de prova)",
   "onboardingBoard": {

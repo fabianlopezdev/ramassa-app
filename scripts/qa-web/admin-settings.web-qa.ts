@@ -298,7 +298,7 @@ test('an admin publishes a new authorization version', async ({ page }) => {
     await expect(editor).toBeVisible();
     await expect(editor.getByTestId('authorization-versions')).toContainText('2026/27');
 
-    await editor.locator('#authorization-language').selectOption('ca');
+    await editor.getByTestId('editor-language').getByRole('radio', { name: 'Català' }).click();
     await editor.locator('#authorization-title').fill(`Autorització ${runTag}`);
     await editor.getByTestId('authorization-save').click();
     await expect(editor.getByTestId('authorization-draft-row')).toBeVisible();

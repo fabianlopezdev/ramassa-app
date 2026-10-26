@@ -336,7 +336,6 @@
   "authorizationPublishSeason": "Temporada",
   "authorizationCurrentSeasonBadge": "Temporada vigente",
   "authorizationEditorTitle": "Nueva versión",
-  "authorizationLanguage": "Idioma que editas",
   "authorizationDocumentTitle": "Título del documento",
   "authorizationSections": "Apartados",
   "authorizationSectionTitle": "Título del apartado {{number}}",
@@ -523,7 +522,6 @@
     "currentBadge": "Vigente",
     "editorTitle": "Borrador de la versión siguiente",
     "editorIntro": "Escribe cada texto en cada idioma. El catalán es obligatorio; un idioma vacío muestra el texto en catalán.",
-    "language": "Idioma",
     "field": {
       "intro_title": "Título de la pantalla de introducción",
       "intro": "Texto de la pantalla de introducción",
@@ -548,9 +546,7 @@
     "failed": "No se ha podido guardar. Vuelve a intentarlo.",
     "saved": "Borrador guardado.",
     "discarded": "Borrador descartado.",
-    "published": "Versión publicada. Cada jugadora la aceptará al abrir la app.",
-    "previewTitle": "Cómo lo verá en el móvil",
-    "previewFallback": "Este idioma aún no tiene texto: se muestra en {{language}}."
+    "published": "Versión publicada. Cada jugadora la aceptará al abrir la app."
   },
   "builtinScreens": {
     "hiddenBadge": "Oculta",
@@ -650,11 +646,13 @@
     "saved": "Borrador guardado.",
     "discarded": "Borrador descartado.",
     "published": "Versión publicada.",
-    "previewTitle": "Cómo lo ve ella",
-    "previewAppText_one": "{{count}} texto del formulario muestra el texto de la app en este idioma.",
-    "previewAppText_other": "{{count}} textos del formulario muestran el texto de la app en este idioma.",
-    "previewTablet": "En la tableta del equipo, el botón final dice: {{label}}",
-    "previewStep": "{{label}} · paso {{step}} de {{total}}"
+    "phoneStep": {
+      "document": "Documento",
+      "health": "Salud",
+      "consents": "Autorizaciones",
+      "reregistration": "Reinscripción",
+      "reregistrationSeason": "Temporada"
+    }
   },
   "draftSeenByTestPlayers": "Versión en borrador (solo la ven las jugadoras de prueba)",
   "onboardingBoard": {

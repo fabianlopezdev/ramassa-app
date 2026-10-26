@@ -1,27 +1,30 @@
 /**
  * The app terms, versioned (RAPP-613): the published versions, the draft and
- * a live preview of what a player reads.
+ * a live preview of what a player reads, her phone in the screen editor's
+ * frame with a tab per screen (RAPP-695).
  *
  * Staff edit one draft, language by language: the introduction screen (title,
  * intro, points) and the terms screen (title, the legal text, the acceptance
  * wording, the photo and video choice and its note). Catalan is required in
- * every field; another language left empty shows the Catalan text, and the
- * preview says so. The draft is saved as often as needed. Publishing is final
+ * every field; another language left empty shows the Catalan text. The draft is saved as often as needed. Publishing is final
  * and needs settings.organization: a published version never changes, and
  * every player accepts the new one on her next app open, so the button asks
  * once more before it publishes.
  */
 
 import { AdminAuthField } from '@/components/auth/admin-auth-field';
+import { EditorColumns } from '@/components/layout/editor-columns';
+import {
+  TERMS_PHONE_STEPS,
+  termsPhoneScreen,
+  type TermsPhoneStep,
+} from '@/components/legal/legal-phone-content';
+import { SteppedPhone } from '@/components/onboarding/phone-preview';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  getLanguageDirection,
-  LANGUAGE_NATIVE_NAMES,
-  SUPPORTED_LANGUAGES,
-} from '@ramassa/shared/i18n/languages';
+import { getLanguageDirection } from '@ramassa/shared/i18n/languages';
 import {
   APP_TERMS_MAX_POINTS,
   appTermsDraftSchema,
@@ -32,6 +35,7 @@ import {
   type AppTermsTextField,
   type AppTermsVersion,
 } from '@ramassa/shared/intake';
+import { EMPTY_INTAKE_CATALOG, type IntakeCatalog } from '@ramassa/shared/intake-builder';
 import type { LanguageCode } from '@ramassa/shared/schemas';
 
 const EMPTY_CONTENT: AppTermsContent = {
@@ -65,6 +69,8 @@ export interface AppTermsEditorProps {
   readonly onSaveDraft: (content: AppTermsContent) => Promise<void>;
   readonly onDiscardDraft: () => Promise<void>;
   readonly onPublish: () => Promise<number>;
+  /** Her onboarding's screens: the terms' place in it and their buttons. */
+  readonly catalog?: IntakeCatalog;
 }
 
 export function AppTermsEditor({
@@ -73,12 +79,15 @@ export function AppTermsEditor({
   onSaveDraft,
   onDiscardDraft,
   onPublish,
+  catalog = EMPTY_INTAKE_CATALOG,
 }: AppTermsEditorProps) {
-  const { t, i18n } = useTranslation('settings');
+  const { t, i18n } = useTranslation(['settings', 'onboarding']);
   const draft = versions.find((version) => version.versionNumber === null) ?? null;
   const published = versions.filter((version) => version.versionNumber !== null);
   const current = published[0] ?? null;
   const [language, setLanguage] = useState<LanguageCode>('ca');
+  const [previewLanguage, setPreviewLanguage] = useState<LanguageCode>('ca');
+  const [phoneStep, setPhoneStep] = useState<TermsPhoneStep>('terms');
   const [content, setContent] = useState<AppTermsContent>(
     draft?.content ?? current?.content ?? EMPTY_CONTENT,
   );
@@ -125,302 +134,260 @@ export function AppTermsEditor({
     await run('publishing', onPublish, 'published');
   }
 
-  const preview = resolveAppTerms(cleanAppTermsContent(content), language);
+  // Her phone: the screen picked above it, worded as typed.
+  const { content: phoneContent, ...position } = termsPhoneScreen(
+    resolveAppTerms(cleanAppTermsContent(content), previewLanguage),
+    phoneStep,
+    previewLanguage,
+    t,
+    catalog,
+  );
   const direction = getLanguageDirection(language);
   const isBusy = status === 'saving' || status === 'publishing';
 
   return (
-    <div className="flex flex-col gap-6" data-testid="app-terms-editor">
-      <section className="flex flex-col gap-2 rounded-xl border bg-card p-5">
-        <h3 className="text-start text-base font-semibold">{t('appTerms.versionsTitle')}</h3>
-        <ul className="flex flex-col gap-1" data-testid="app-terms-versions">
-          {draft === null ? null : (
-            <li className="text-start text-sm">
-              {t('appTerms.draftRow', {
-                date: new Date(draft.updatedAt).toLocaleDateString(i18n.resolvedLanguage),
-              })}
-              <span
-                className="ms-2 rounded border border-dashed px-1.5 py-0.5 text-xs"
-                data-testid="app-terms-draft-note"
-              >
-                {t('draftSeenByTestPlayers')}
-              </span>
-            </li>
-          )}
-          {published.map((version, index) => (
-            <li key={version.id} className="text-start text-sm">
-              {t('appTerms.versionRow', {
-                number: version.versionNumber,
-                date: new Date(version.publishedAt ?? version.updatedAt).toLocaleDateString(
-                  i18n.resolvedLanguage,
-                ),
-                count: version.acceptanceCount,
-              })}
-              {index === 0 ? (
-                <span className="ms-2 rounded bg-muted px-1.5 py-0.5 text-xs">
-                  {t('appTerms.currentBadge')}
-                </span>
-              ) : null}
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,24rem)]">
-        <section className="flex flex-col gap-4 rounded-xl border bg-card p-5">
-          <div className="flex flex-col gap-1">
-            <h3 className="text-start text-base font-semibold">{t('appTerms.editorTitle')}</h3>
-            <p className="text-start text-sm text-muted-foreground">{t('appTerms.editorIntro')}</p>
-          </div>
-          <label className="flex flex-col gap-1.5 text-sm font-medium">
-            <span>{t('appTerms.language')}</span>
-            <select
-              id="app-terms-language"
-              value={language}
-              onChange={(event) => setLanguage(event.target.value as LanguageCode)}
-              className="h-9 max-w-xs rounded-md border border-input bg-transparent px-3 text-sm"
-            >
-              {SUPPORTED_LANGUAGES.map((code) => (
-                <option key={code} value={code}>
-                  {LANGUAGE_NATIVE_NAMES[code]}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          {LINE_FIELDS.map((field) => (
-            <AdminAuthField
-              key={field}
-              id={`app-terms-${field}`}
-              label={t(`appTerms.field.${field}`)}
-              dir={direction}
-              value={inLanguage(content[field])}
-              onChange={(event) =>
-                edit({ ...content, [field]: withLanguage(content[field], event.target.value) })
-              }
-            />
-          ))}
-
-          <label className="flex flex-col gap-1.5 text-sm font-medium">
-            <span>{t('appTerms.field.body')}</span>
-            <Textarea
-              id="app-terms-body"
-              rows={10}
-              dir={direction}
-              value={inLanguage(content.body)}
-              onChange={(event) =>
-                edit({ ...content, body: withLanguage(content.body, event.target.value) })
-              }
-            />
-          </label>
-
-          <fieldset className="flex flex-col gap-3">
-            <legend className="text-start text-sm font-semibold">{t('appTerms.points')}</legend>
-            {content.points.map((point, index) => (
-              <div key={index} className="flex flex-col gap-2 rounded-lg border p-3">
-                <AdminAuthField
-                  id={`app-terms-point-title-${index}`}
-                  label={t('appTerms.pointTitle', { number: index + 1 })}
-                  dir={direction}
-                  value={inLanguage(point.title)}
-                  onChange={(event) =>
-                    edit({
-                      ...content,
-                      points: content.points.map((entry, at) =>
-                        at === index
-                          ? { ...entry, title: withLanguage(entry.title, event.target.value) }
-                          : entry,
+    <div data-testid="app-terms-editor">
+      <EditorColumns
+        language={language}
+        onLanguageChange={setLanguage}
+        previewLanguage={previewLanguage}
+        onPreviewLanguageChange={setPreviewLanguage}
+        previewLabel={t('onboardingBoard.phone')}
+        previewLanguageLabel={t('onboardingBoard.phoneLanguage')}
+        preview={
+          <SteppedPhone
+            steps={TERMS_PHONE_STEPS.map((step) => ({
+              value: step,
+              label: t(`builtinScreens.screenName.${step}`),
+            }))}
+            shown={phoneStep}
+            onShow={setPhoneStep}
+            label={t('onboardingBoard.phone')}
+            content={phoneContent}
+            language={previewLanguage}
+            {...position}
+          />
+        }
+        form={
+          <>
+            <section className="flex flex-col gap-2 rounded-xl border bg-card p-5">
+              <h3 className="text-start text-base font-semibold">{t('appTerms.versionsTitle')}</h3>
+              <ul className="flex flex-col gap-1" data-testid="app-terms-versions">
+                {draft === null ? null : (
+                  <li className="text-start text-sm">
+                    {t('appTerms.draftRow', {
+                      date: new Date(draft.updatedAt).toLocaleDateString(i18n.resolvedLanguage),
+                    })}
+                    <span
+                      className="ms-2 rounded border border-dashed px-1.5 py-0.5 text-xs"
+                      data-testid="app-terms-draft-note"
+                    >
+                      {t('draftSeenByTestPlayers')}
+                    </span>
+                  </li>
+                )}
+                {published.map((version, index) => (
+                  <li key={version.id} className="text-start text-sm">
+                    {t('appTerms.versionRow', {
+                      number: version.versionNumber,
+                      date: new Date(version.publishedAt ?? version.updatedAt).toLocaleDateString(
+                        i18n.resolvedLanguage,
                       ),
-                    })
+                      count: version.acceptanceCount,
+                    })}
+                    {index === 0 ? (
+                      <span className="ms-2 rounded bg-muted px-1.5 py-0.5 text-xs">
+                        {t('appTerms.currentBadge')}
+                      </span>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            </section>
+
+            <section
+              className="flex flex-col gap-4 rounded-xl border bg-card p-5"
+              // The phone turns to the screen of the field being edited.
+              onFocus={(event) => {
+                const field = event.target.id;
+                if (field === '') return;
+                setPhoneStep(
+                  field.startsWith('app-terms-point-') || field.startsWith('app-terms-intro')
+                    ? 'terms-intro'
+                    : 'terms',
+                );
+              }}
+            >
+              <div className="flex flex-col gap-1">
+                <h3 className="text-start text-base font-semibold">{t('appTerms.editorTitle')}</h3>
+                <p className="text-start text-sm text-muted-foreground">
+                  {t('appTerms.editorIntro')}
+                </p>
+              </div>
+
+              {LINE_FIELDS.map((field) => (
+                <AdminAuthField
+                  key={field}
+                  id={`app-terms-${field}`}
+                  label={t(`appTerms.field.${field}`)}
+                  dir={direction}
+                  value={inLanguage(content[field])}
+                  onChange={(event) =>
+                    edit({ ...content, [field]: withLanguage(content[field], event.target.value) })
                   }
                 />
-                <label className="flex flex-col gap-1.5 text-sm font-medium">
-                  <span>{t('appTerms.pointBody', { number: index + 1 })}</span>
-                  <Textarea
-                    id={`app-terms-point-body-${index}`}
-                    rows={2}
-                    dir={direction}
-                    value={inLanguage(point.body)}
-                    onChange={(event) =>
-                      edit({
-                        ...content,
-                        points: content.points.map((entry, at) =>
-                          at === index
-                            ? { ...entry, body: withLanguage(entry.body, event.target.value) }
-                            : entry,
-                        ),
-                      })
-                    }
-                  />
-                </label>
-                {content.points.length > 1 ? (
+              ))}
+
+              <label className="flex flex-col gap-1.5 text-sm font-medium">
+                <span>{t('appTerms.field.body')}</span>
+                <Textarea
+                  id="app-terms-body"
+                  rows={10}
+                  dir={direction}
+                  value={inLanguage(content.body)}
+                  onChange={(event) =>
+                    edit({ ...content, body: withLanguage(content.body, event.target.value) })
+                  }
+                />
+              </label>
+
+              <fieldset className="flex flex-col gap-3">
+                <legend className="text-start text-sm font-semibold">{t('appTerms.points')}</legend>
+                {content.points.map((point, index) => (
+                  <div key={index} className="flex flex-col gap-2 rounded-lg border p-3">
+                    <AdminAuthField
+                      id={`app-terms-point-title-${index}`}
+                      label={t('appTerms.pointTitle', { number: index + 1 })}
+                      dir={direction}
+                      value={inLanguage(point.title)}
+                      onChange={(event) =>
+                        edit({
+                          ...content,
+                          points: content.points.map((entry, at) =>
+                            at === index
+                              ? { ...entry, title: withLanguage(entry.title, event.target.value) }
+                              : entry,
+                          ),
+                        })
+                      }
+                    />
+                    <label className="flex flex-col gap-1.5 text-sm font-medium">
+                      <span>{t('appTerms.pointBody', { number: index + 1 })}</span>
+                      <Textarea
+                        id={`app-terms-point-body-${index}`}
+                        rows={2}
+                        dir={direction}
+                        value={inLanguage(point.body)}
+                        onChange={(event) =>
+                          edit({
+                            ...content,
+                            points: content.points.map((entry, at) =>
+                              at === index
+                                ? { ...entry, body: withLanguage(entry.body, event.target.value) }
+                                : entry,
+                            ),
+                          })
+                        }
+                      />
+                    </label>
+                    {content.points.length > 1 ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-fit"
+                        onClick={() =>
+                          edit({
+                            ...content,
+                            points: content.points.filter((_, at) => at !== index),
+                          })
+                        }
+                      >
+                        {t('appTerms.removePoint')}
+                      </Button>
+                    ) : null}
+                  </div>
+                ))}
+                {content.points.length < APP_TERMS_MAX_POINTS ? (
                   <Button
                     type="button"
                     variant="outline"
                     className="w-fit"
                     onClick={() =>
-                      edit({ ...content, points: content.points.filter((_, at) => at !== index) })
+                      edit({ ...content, points: [...content.points, { title: {}, body: {} }] })
                     }
                   >
-                    {t('appTerms.removePoint')}
+                    {t('appTerms.addPoint')}
+                  </Button>
+                ) : null}
+              </fieldset>
+            </section>
+
+            <div className="sticky bottom-0 z-10 flex flex-col gap-3 rounded-xl border bg-card p-5 shadow-sm">
+              {isConfirming ? (
+                <p role="alert" className="text-start text-sm font-medium">
+                  {t('appTerms.publishConfirm')}
+                </p>
+              ) : null}
+              {status === 'invalid' ? (
+                <p role="alert" className="text-start text-sm text-destructive">
+                  {t('appTerms.invalid')}
+                </p>
+              ) : null}
+              {status === 'failed' ? (
+                <p role="alert" className="text-start text-sm text-destructive">
+                  {t('appTerms.failed')}
+                </p>
+              ) : null}
+              {status === 'saved' || status === 'discarded' || status === 'published' ? (
+                <p aria-live="polite" className="text-start text-sm text-muted-foreground">
+                  {t(`appTerms.${status}`)}
+                </p>
+              ) : null}
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  disabled={isBusy}
+                  onClick={() => void saveDraft()}
+                  data-testid="app-terms-save"
+                >
+                  {t('appTerms.saveDraft')}
+                </Button>
+                {draft === null ? null : (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={isBusy}
+                    onClick={() => void run('saving', onDiscardDraft, 'discarded')}
+                    data-testid="app-terms-discard"
+                  >
+                    {t('appTerms.discardDraft')}
+                  </Button>
+                )}
+                {canPublish && draft !== null ? (
+                  <Button
+                    type="button"
+                    variant={isConfirming ? 'destructive' : 'secondary'}
+                    disabled={isBusy}
+                    onClick={() => void publish()}
+                    data-testid="app-terms-publish"
+                  >
+                    {isConfirming
+                      ? t('appTerms.publishConfirmAction', {
+                          number: (current?.versionNumber ?? 0) + 1,
+                        })
+                      : t('appTerms.publishAction')}
                   </Button>
                 ) : null}
               </div>
-            ))}
-            {content.points.length < APP_TERMS_MAX_POINTS ? (
-              <Button
-                type="button"
-                variant="outline"
-                className="w-fit"
-                onClick={() =>
-                  edit({ ...content, points: [...content.points, { title: {}, body: {} }] })
-                }
-              >
-                {t('appTerms.addPoint')}
-              </Button>
-            ) : null}
-          </fieldset>
-
-          {isConfirming ? (
-            <p role="alert" className="text-start text-sm font-medium">
-              {t('appTerms.publishConfirm')}
-            </p>
-          ) : null}
-          {status === 'invalid' ? (
-            <p role="alert" className="text-start text-sm text-destructive">
-              {t('appTerms.invalid')}
-            </p>
-          ) : null}
-          {status === 'failed' ? (
-            <p role="alert" className="text-start text-sm text-destructive">
-              {t('appTerms.failed')}
-            </p>
-          ) : null}
-          {status === 'saved' || status === 'discarded' || status === 'published' ? (
-            <p aria-live="polite" className="text-start text-sm text-muted-foreground">
-              {t(`appTerms.${status}`)}
-            </p>
-          ) : null}
-          <div className="flex flex-wrap gap-2">
-            <Button
-              type="button"
-              disabled={isBusy}
-              onClick={() => void saveDraft()}
-              data-testid="app-terms-save"
-            >
-              {t('appTerms.saveDraft')}
-            </Button>
-            {draft === null ? null : (
-              <Button
-                type="button"
-                variant="outline"
-                disabled={isBusy}
-                onClick={() => void run('saving', onDiscardDraft, 'discarded')}
-                data-testid="app-terms-discard"
-              >
-                {t('appTerms.discardDraft')}
-              </Button>
-            )}
-            {canPublish && draft !== null ? (
-              <Button
-                type="button"
-                variant={isConfirming ? 'destructive' : 'secondary'}
-                disabled={isBusy}
-                onClick={() => void publish()}
-                data-testid="app-terms-publish"
-              >
-                {isConfirming
-                  ? t('appTerms.publishConfirmAction', {
-                      number: (current?.versionNumber ?? 0) + 1,
-                    })
-                  : t('appTerms.publishAction')}
-              </Button>
-            ) : null}
-          </div>
-          {canPublish ? null : (
-            <p className="text-start text-sm text-muted-foreground">
-              {t('appTerms.publishNeedsAdmin')}
-            </p>
-          )}
-        </section>
-
-        <AppTermsPreview
-          preview={preview}
-          language={language}
-          direction={direction}
-          fallbackNote={
-            preview.localeShown === language
-              ? null
-              : t('appTerms.previewFallback', { language: LANGUAGE_NATIVE_NAMES.ca })
-          }
-        />
-      </div>
+              {canPublish ? null : (
+                <p className="text-start text-sm text-muted-foreground">
+                  {t('appTerms.publishNeedsAdmin')}
+                </p>
+              )}
+            </div>
+          </>
+        }
+      />
     </div>
-  );
-}
-
-/** What she reads on her phone, screen by screen, in the chosen language. */
-function AppTermsPreview({
-  preview,
-  language,
-  direction,
-  fallbackNote,
-}: {
-  readonly preview: ReturnType<typeof resolveAppTerms>;
-  readonly language: LanguageCode;
-  readonly direction: 'ltr' | 'rtl';
-  readonly fallbackNote: string | null;
-}) {
-  const { t } = useTranslation('settings');
-  return (
-    <aside
-      className="flex flex-col gap-4 rounded-xl border bg-muted/40 p-5"
-      aria-label={t('appTerms.previewTitle')}
-      data-testid="app-terms-preview"
-    >
-      <h3 className="text-start text-base font-semibold">{t('appTerms.previewTitle')}</h3>
-      {fallbackNote === null ? null : (
-        <p className="text-start text-xs text-muted-foreground" data-testid="app-terms-fallback">
-          {fallbackNote}
-        </p>
-      )}
-      <div
-        lang={language}
-        dir={direction}
-        className="flex flex-col gap-3 rounded-lg border bg-background p-4"
-        data-testid="app-terms-preview-intro"
-      >
-        <p className="text-start text-lg font-semibold">{preview.introTitle}</p>
-        <p className="text-start text-sm">{preview.intro}</p>
-        <ul className="flex flex-col gap-2">
-          {preview.points.map((point, index) => (
-            <li key={index} className="flex flex-col">
-              <span className="text-start text-sm font-semibold">{point.title}</span>
-              <span className="text-start text-sm text-muted-foreground">{point.body}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
-      <div
-        lang={language}
-        dir={direction}
-        className="flex flex-col gap-3 rounded-lg border bg-background p-4"
-        data-testid="app-terms-preview-terms"
-      >
-        <p className="text-start text-lg font-semibold">{preview.title}</p>
-        <p className="text-start text-sm text-muted-foreground">{preview.mediaHint}</p>
-        <p className="whitespace-pre-line rounded-md bg-muted p-3 text-start text-sm">
-          {preview.body}
-        </p>
-        <p className="flex items-start gap-2 text-start text-sm">
-          <span aria-hidden="true" className="mt-0.5 inline-block size-4 shrink-0 rounded border" />
-          {preview.acceptLabel}
-        </p>
-        <p className="flex items-start gap-2 text-start text-sm">
-          <span aria-hidden="true" className="mt-0.5 inline-block size-4 shrink-0 rounded border" />
-          {preview.mediaLabel}
-        </p>
-      </div>
-    </aside>
   );
 }

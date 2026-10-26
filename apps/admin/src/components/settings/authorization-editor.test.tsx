@@ -1,7 +1,7 @@
 /**
  * The season authorization editor (RAPP-614): staff shape the consents and
  * the questions of a draft and see her phone's phases in each language, right
- * to left for Arabic and Farsi; only an admin publishes, after a second click,
+ * to left for Arabic and Farsi, in the screen editor's phone (RAPP-695); only an admin publishes, after a second click,
  * to the current season or a future one (RAPP-694).
  *
  * Typing into a controlled field does not reach React in this test DOM (no
@@ -84,27 +84,49 @@ function renderEditor(
   return { view, onSaveDraft, onDiscardDraft, onPublish };
 }
 
+/** The phone's text, on the screen picked above it (RAPP-695). */
+function phoneOn(view: ReturnType<typeof render>, step: string) {
+  fireEvent.mouseDown(view.getByTestId(`phone-step-${step}`));
+  return view.getByTestId('phone-screen');
+}
+
+function chooseLanguage(view: ReturnType<typeof render>, name: string) {
+  const group = view.getByTestId('editor-language');
+  const item = group.querySelector<HTMLButtonElement>(`[aria-label="${name}"]`);
+  if (item === null) throw new Error(`no ${name}`);
+  fireEvent.click(item);
+}
+
 function field(view: ReturnType<typeof render>, id: string) {
   const element = view.container.querySelector<HTMLInputElement | HTMLSelectElement>(`#${id}`);
   if (element === null) throw new Error(`no ${id}`);
   return element;
 }
 
-test('the draft starts from the current version, its consents in order, in the preview too', () => {
+test('the draft starts from the current version, its consents in order, on her phone too', () => {
   const { view } = renderEditor([version()]);
   expect(field(view, 'authorization-consent-label-participation').value).toBe('Participo.');
-  const preview = view.getByTestId('authorization-preview-consents').textContent ?? '';
-  expect(preview.indexOf('Participo.')).toBeLessThan(preview.indexOf('Grups.'));
-  expect(view.getByTestId('authorization-preview-health')).toBeTruthy();
+  const phone = phoneOn(view, 'consents').textContent ?? '';
+  expect(phone.indexOf('Participo.')).toBeLessThan(phone.indexOf('Grups.'));
+  expect(view.getByTestId('phone-step-health')).toBeTruthy();
+  expect(view.getByTestId('phone-step-reregistration')).toBeTruthy();
 });
 
-test('in Arabic the fields and the preview read right to left, and say when the app text shows', () => {
+test('in Arabic the fields and her phone read right to left (RAPP-695)', () => {
   const { view } = renderEditor([version()]);
-  fireEvent.change(field(view, 'authorization-language'), { target: { value: 'ar' } });
-  expect(view.getByTestId('authorization-preview-document').getAttribute('dir')).toBe('rtl');
-  expect(view.getByTestId('authorization-preview-consents').getAttribute('lang')).toBe('ar');
+  chooseLanguage(view, 'العربية');
+  expect(view.getByTestId('phone-screen').getAttribute('dir')).toBe('rtl');
+  expect(view.getByTestId('phone-screen').getAttribute('lang')).toBe('ar');
   expect(field(view, 'authorization-text-intro').getAttribute('dir')).toBe('rtl');
-  expect(view.getByTestId('authorization-app-text')).toBeTruthy();
+});
+
+test('editing a field turns her phone to the screen that shows it (RAPP-695)', () => {
+  const { view } = renderEditor([version()]);
+  expect(view.getByTestId('phone-step-document').getAttribute('data-state')).toBe('active');
+  fireEvent.focusIn(field(view, 'authorization-consent-label-participation'));
+  expect(view.getByTestId('phone-step-consents').getAttribute('data-state')).toBe('active');
+  fireEvent.focusIn(field(view, 'authorization-text-reregistration_intro'));
+  expect(view.getByTestId('phone-step-reregistration').getAttribute('data-state')).toBe('active');
 });
 
 test('staff add a consent, mark it required, move it up and remove another', async () => {
@@ -114,8 +136,8 @@ test('staff add a consent, mark it required, move it up and remove another', asy
   fireEvent.click(field(view, 'authorization-consent-required-consent_8'));
   const ups = view.getAllByRole('button', { name: 'authorizationEditor.moveUp' });
   fireEvent.click(ups.at(-1)!);
-  const preview = view.getByTestId('authorization-preview-consents').textContent ?? '';
-  expect(preview.indexOf('Grups.')).toBeGreaterThan(preview.indexOf('Imatge.'));
+  const phone = phoneOn(view, 'consents').textContent ?? '';
+  expect(phone.indexOf('Grups.')).toBeGreaterThan(phone.indexOf('Imatge.'));
   fireEvent.click(view.getByTestId('authorization-consent-remove-newsletter'));
   fireEvent.click(view.getByTestId('authorization-save'));
   // The new consent has no words yet: the draft is refused until it has.
@@ -137,7 +159,7 @@ test('a question stops being asked only when optional, and the middle phase hide
   expect(field(view, 'authorization-health-asked').disabled).toBe(false);
   fireEvent.click(field(view, 'authorization-health-asked'));
   fireEvent.click(field(view, 'authorization-emergency-asked'));
-  expect(view.queryByTestId('authorization-preview-health')).toBeNull();
+  expect(view.queryByTestId('phone-step-health')).toBeNull();
   fireEvent.click(view.getByTestId('authorization-save'));
   await waitFor(() => expect(onSaveDraft).toHaveBeenCalledTimes(1));
   const saved = onSaveDraft.mock.calls[0]![0];

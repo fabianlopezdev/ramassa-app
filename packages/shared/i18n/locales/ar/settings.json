@@ -54,7 +54,6 @@
   "authorizationNoVersions": "لم تُنشر أي نسخة بعد.",
   "authorizationCurrentBadge": "سارية",
   "authorizationEditorTitle": "نسخة جديدة",
-  "authorizationLanguage": "اللغة التي تعدّلها",
   "authorizationDocumentTitle": "عنوان الوثيقة",
   "authorizationSections": "الأقسام",
   "authorizationSectionTitle": "عنوان القسم {{number}}",

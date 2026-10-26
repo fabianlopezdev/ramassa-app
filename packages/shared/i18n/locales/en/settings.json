@@ -336,7 +336,6 @@
   "authorizationPublishSeason": "Season",
   "authorizationCurrentSeasonBadge": "Current season",
   "authorizationEditorTitle": "New version",
-  "authorizationLanguage": "Language you are editing",
   "authorizationDocumentTitle": "Document title",
   "authorizationSections": "Sections",
   "authorizationSectionTitle": "Section {{number}} title",
@@ -523,7 +522,6 @@
     "currentBadge": "Current",
     "editorTitle": "Draft of the next version",
     "editorIntro": "Write each text in each language. Catalan is required; an empty language shows the Catalan text.",
-    "language": "Language",
     "field": {
       "intro_title": "Introduction screen title",
       "intro": "Introduction screen text",
@@ -548,9 +546,7 @@
     "failed": "Could not save. Try again.",
     "saved": "Draft saved.",
     "discarded": "Draft discarded.",
-    "published": "Version published. Every player will accept it when she opens the app.",
-    "previewTitle": "How she will see it on her phone",
-    "previewFallback": "This language has no text yet: it shows in {{language}}."
+    "published": "Version published. Every player will accept it when she opens the app."
   },
   "builtinScreens": {
     "hiddenBadge": "Hidden",
@@ -650,11 +646,13 @@
     "saved": "Draft saved.",
     "discarded": "Draft discarded.",
     "published": "Version published.",
-    "previewTitle": "What she sees",
-    "previewAppText_one": "{{count}} form text shows the app's own text in this language.",
-    "previewAppText_other": "{{count}} form texts show the app's own text in this language.",
-    "previewTablet": "On the team tablet, the final button says: {{label}}",
-    "previewStep": "{{label}} · step {{step}} of {{total}}"
+    "phoneStep": {
+      "document": "Document",
+      "health": "Health",
+      "consents": "Consents",
+      "reregistration": "Re-registration",
+      "reregistrationSeason": "Season"
+    }
   },
   "draftSeenByTestPlayers": "Draft version (only test players see it)",
   "onboardingBoard": {

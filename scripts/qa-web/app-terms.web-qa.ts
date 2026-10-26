@@ -66,18 +66,18 @@ test('an admin previews the draft in each language and publishes it', async ({ p
   await expect(editor.locator('#app-terms-body')).toHaveValue(`Esborrany del disseny ${RUN_TAG}.`);
   await editor.locator('#app-terms-body').fill(`Text legal nou ${RUN_TAG}.`);
 
-  await editor.locator('#app-terms-language').selectOption('es');
+  await editor.getByTestId('editor-language').getByRole('radio', { name: 'Español' }).click();
   await editor.locator('#app-terms-body').fill(NEW_BODY);
-  const preview = editor.getByTestId('app-terms-preview-terms');
+  // Her phone shows the terms screen, in the editor's frame (RAPP-695).
+  const preview = editor.getByTestId('phone-screen');
   await expect(preview).toContainText(NEW_BODY);
   await expect(preview).toHaveAttribute('dir', 'ltr');
 
-  await editor.locator('#app-terms-language').selectOption('ar');
+  await editor.getByTestId('editor-language').getByRole('radio', { name: 'العربية' }).click();
   await expect(preview).toHaveAttribute('dir', 'rtl');
   await expect(editor.locator('#app-terms-body')).toHaveAttribute('dir', 'rtl');
-  // Arabic emptied: the preview shows the Catalan text, and says so.
+  // Arabic emptied: her phone shows the Catalan text.
   await editor.locator('#app-terms-body').fill('');
-  await expect(editor.getByTestId('app-terms-fallback')).toBeVisible();
   await expect(preview).toContainText(`Text legal nou ${RUN_TAG}.`);
 
   await editor.getByTestId('app-terms-save').click();

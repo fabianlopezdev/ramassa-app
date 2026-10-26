@@ -11,6 +11,7 @@
 import { supabase } from '@/lib/supabase';
 import { fetchAuthorizationVersions } from '@ramassa/shared/authorization';
 import { fetchAppTermsVersions } from '@ramassa/shared/intake';
+import { EMPTY_INTAKE_CATALOG, fetchIntakeCatalog } from '@ramassa/shared/intake-builder';
 import { canDesignOnboarding, fetchMyPermissions } from '@ramassa/shared/permissions';
 import { fetchSeasons } from '@ramassa/shared/seasons';
 
@@ -22,17 +23,26 @@ export type LegalTab = (typeof LEGAL_TABS)[number];
 export async function loadLegalTexts() {
   const permissions = await fetchMyPermissions(supabase);
   if (!canDesignOnboarding(permissions)) {
-    return { seasons: [], versions: [], termsVersions: [], canPublish: false };
+    return {
+      seasons: [],
+      versions: [],
+      termsVersions: [],
+      intakeCatalog: EMPTY_INTAKE_CATALOG,
+      canPublish: false,
+    };
   }
-  const [seasons, versions, termsVersions] = await Promise.all([
+  const [seasons, versions, termsVersions, intakeCatalog] = await Promise.all([
     fetchSeasons(supabase),
     fetchAuthorizationVersions(supabase),
     fetchAppTermsVersions(supabase),
+    // Her onboarding, for the phone previews' step line, buttons and season questions (RAPP-695).
+    fetchIntakeCatalog(supabase),
   ]);
   return {
     seasons,
     versions,
     termsVersions,
+    intakeCatalog,
     // A publish asks every player again, so it stays with admins.
     canPublish: permissions.has('settings.organization'),
   };

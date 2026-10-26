@@ -24,6 +24,7 @@ import {
   saveAppTermsDraft,
   type AppTermsVersion,
 } from '@ramassa/shared/intake';
+import type { IntakeCatalog } from '@ramassa/shared/intake-builder';
 import { createSeason, setCurrentSeason, type Season } from '@ramassa/shared/seasons';
 
 /**
@@ -35,10 +36,12 @@ export function AuthorizationSection({
   seasons,
   versions,
   canPublish,
+  catalog,
 }: {
   readonly seasons: readonly Season[];
   readonly versions: readonly AuthorizationVersion[];
   readonly canPublish: boolean;
+  readonly catalog: IntakeCatalog;
 }) {
   const reload = useReload();
   const withStepUp = useStepUp();
@@ -59,6 +62,7 @@ export function AuthorizationSection({
         versions={versions}
         seasons={seasons}
         canPublish={canPublish}
+        catalog={catalog}
         onSaveDraft={async (content) => {
           await saveAuthorizationDraft(supabase, content);
           await reload();
@@ -84,9 +88,11 @@ export function AuthorizationSection({
 export function AppTermsSection({
   versions,
   canPublish,
+  catalog,
 }: {
   readonly versions: readonly AppTermsVersion[];
   readonly canPublish: boolean;
+  readonly catalog: IntakeCatalog;
 }) {
   const reload = useReload();
   const withStepUp = useStepUp();
@@ -94,6 +100,7 @@ export function AppTermsSection({
     <AppTermsEditor
       versions={versions}
       canPublish={canPublish}
+      catalog={catalog}
       onSaveDraft={async (content) => {
         await saveAppTermsDraft(supabase, content);
         await reload();

@@ -36,7 +36,6 @@ import {
 } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import type { OnboardingDesignData } from '@/lib/onboarding-design';
 import { supabase } from '@/lib/supabase';
@@ -74,7 +73,7 @@ import {
 import type { LanguageCode } from '@ramassa/shared/schemas';
 import { allSteps, editableScreenOf, stepFromRouteId, type BoardStep } from './board-steps';
 import { ConfirmDialog } from './confirm-dialog';
-import { PhoneFrame } from './phone-preview';
+import { PhoneFrame, SteppedPhone } from './phone-preview';
 import { stepName } from './screen-board';
 import {
   builtinPhoneQuestion,
@@ -459,26 +458,24 @@ function AppScreenEditor({
         });
 
   const phone = (
-    <div className="flex w-full flex-col items-center gap-4">
-      {detail === null || screen === null ? null : (
-        <Tabs
-          value={shownScreen}
-          onValueChange={(next) => setShownScreen(next as 'main' | 'detail')}
-        >
-          <TabsList aria-label={t('onboardingBoard.phone')}>
-            <TabsTrigger value="main">{t(`builtinScreens.screenName.${screen}`)}</TabsTrigger>
-            <TabsTrigger value="detail">{t(`builtinScreens.screenName.${detail}`)}</TabsTrigger>
-          </TabsList>
-        </Tabs>
-      )}
-      <PhoneFrame
-        content={content}
-        language={previewLanguage}
-        step={number}
-        total={total}
-        highlight={row.editing ?? undefined}
-      />
-    </div>
+    <SteppedPhone
+      steps={
+        detail === null || screen === null
+          ? []
+          : [
+              { value: 'main', label: t(`builtinScreens.screenName.${screen}`) },
+              { value: 'detail', label: t(`builtinScreens.screenName.${detail}`) },
+            ]
+      }
+      shown={shownScreen}
+      onShow={setShownScreen}
+      label={t('onboardingBoard.phone')}
+      content={content}
+      language={previewLanguage}
+      step={number}
+      total={total}
+      highlight={row.editing ?? undefined}
+    />
   );
 
   return (

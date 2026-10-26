@@ -66,6 +66,7 @@ function LegalTexts() {
             seasons={data.seasons}
             versions={data.versions}
             canPublish={data.canPublish}
+            catalog={data.intakeCatalog}
           />
         </TabsContent>
         <TabsContent value="terms" className="flex flex-col gap-6">
@@ -75,7 +76,11 @@ function LegalTexts() {
               {t('onboardingBoard.editScreen', { screen: t('builtinScreens.screenName.terms') })}
             </Link>
           </Button>
-          <AppTermsSection versions={data.termsVersions} canPublish={data.canPublish} />
+          <AppTermsSection
+            versions={data.termsVersions}
+            canPublish={data.canPublish}
+            catalog={data.intakeCatalog}
+          />
         </TabsContent>
       </Tabs>
     </Page>

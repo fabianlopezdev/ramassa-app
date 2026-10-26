@@ -56,6 +56,14 @@ export interface PhoneQuestion {
   readonly draft: PreviewDraft;
   /** A signature block (RAPP-690): its text, then an empty box to sign in. */
   readonly isSignature?: boolean;
+  /** A heading drawn above it: the emergency contact's title (RAPP-695). */
+  readonly heading?: string;
+}
+
+/** A tick she makes, with the mark a required one carries (RAPP-695). */
+interface PhoneCheckbox {
+  readonly label: string;
+  readonly requiredMark: string | null;
 }
 
 export interface PhoneContent {
@@ -69,6 +77,28 @@ export interface PhoneContent {
   readonly signature: boolean;
   readonly continueLabel: string;
   readonly declineLabel: string | null;
+  /*
+   * What the legal screens add (RAPP-695): the authorization's document
+   * sections, drawn closed as her phone first shows them, and its season
+   * documents; the terms text and the terms' points; her details on
+   * re-registration; several ticks; the signature with its own wording; and an
+   * outlined second button.
+   */
+  readonly sections?: readonly string[];
+  readonly links?: { readonly title: string; readonly labels: readonly string[] };
+  readonly body?: string;
+  readonly blocks?: readonly { readonly title: string; readonly body: string }[];
+  readonly details?: readonly {
+    readonly title: string;
+    readonly rows: readonly { readonly label: string; readonly value: string }[];
+  }[];
+  readonly checkboxes?: readonly PhoneCheckbox[];
+  readonly signatureTexts?: {
+    readonly title: string;
+    readonly prompt: string;
+    readonly cannotDraw: string;
+  };
+  readonly secondaryLabel?: string;
 }
 
 /** The control her phone shows for each built-in question, close enough to spot it. */

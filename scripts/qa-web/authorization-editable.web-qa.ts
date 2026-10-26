@@ -58,21 +58,23 @@ test('the design role adds a required consent and saves a draft she cannot publi
   const editor = page.getByTestId('authorization-editor');
   await expect(editor).toBeVisible({ timeout: 30_000 });
 
-  await editor.locator('#authorization-language').selectOption('ca');
+  await editor.getByTestId('editor-language').getByRole('radio', { name: 'Català' }).click();
   await editor.getByTestId('authorization-consent-add').click();
   await editor.locator('#authorization-consent-label-consent_8').fill(CONSENT_CA);
   await editor.locator('#authorization-consent-required-consent_8').check();
   await editor.locator('#authorization-text-sign_and_enter_label').fill('Signa i juga');
   // The health question optional: its consent may stay required.
   await editor.locator('#authorization-health-required').uncheck();
-  await editor.locator('#authorization-language').selectOption('ar');
+  await editor.getByTestId('editor-language').getByRole('radio', { name: 'العربية' }).click();
   await expect(editor.locator('#authorization-consent-label-consent_8')).toHaveAttribute(
     'dir',
     'rtl',
   );
   await editor.locator('#authorization-consent-label-consent_8').fill(CONSENT_AR);
-  await expect(page.getByTestId('authorization-preview-consents')).toContainText(CONSENT_AR);
-  await expect(page.getByTestId('authorization-preview-consents')).toHaveAttribute('dir', 'rtl');
+  // Her phone, on the consents screen, in the editor's frame (RAPP-695).
+  await page.getByTestId('phone-step-consents').click();
+  await expect(page.getByTestId('phone-screen')).toContainText(CONSENT_AR);
+  await expect(page.getByTestId('phone-screen')).toHaveAttribute('dir', 'rtl');
 
   await editor.getByTestId('authorization-save').click();
   await expect
