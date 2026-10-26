@@ -220,6 +220,30 @@ describe('reading a setup file', () => {
     ).toBe(false);
   });
 
+  test('the consents of Dades legals travel by key; an older file has none (RAPP-699)', () => {
+    const consent = {
+      key: 'transport',
+      system_key: null,
+      name: { ca: 'Transport' },
+      body: { ca: 'Accepto el transport.' },
+      is_archived: false,
+    };
+    const placement = {
+      consent_key: 'transport',
+      screen_key: 'logistics',
+      sort_order: 2,
+      required: true,
+    };
+    expect(
+      readOnboardingSetupFile(
+        asFile(document({ consents: [consent], consent_placements: [placement] })),
+      ).ok,
+    ).toBe(true);
+    expect(
+      readOnboardingSetupFile(asFile(document({ consents: [{ ...consent, key: 'Bad Key' }] }))).ok,
+    ).toBe(false);
+  });
+
   test('the flow order passes the same checks as the screen order editor', () => {
     for (const flow_order of [
       ['identity', 'identity'],

@@ -172,6 +172,29 @@ export const onboardingSetupDocumentSchema = z
         }),
       )
       .optional(),
+    // Dades legals (RAPP-699): the consents by key and where Onboarding asks
+    // them. An older file has none; the database checks each row.
+    consents: z
+      .array(
+        z.strictObject({
+          key: z.string().regex(/^[a-z][a-z0-9_]{0,39}$/),
+          system_key: z.string().nullable(),
+          name: catalanText,
+          body: catalanText,
+          is_archived: z.boolean(),
+        }),
+      )
+      .optional(),
+    consent_placements: z
+      .array(
+        z.strictObject({
+          consent_key: z.string().min(1),
+          screen_key: z.string().min(1),
+          sort_order: position,
+          required: z.boolean(),
+        }),
+      )
+      .optional(),
   })
   .superRefine((document, context) => {
     if (

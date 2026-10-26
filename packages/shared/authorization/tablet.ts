@@ -91,6 +91,8 @@ export interface TabletSigning {
   readonly signedAt: string;
   /** A walk-in's Onboarding block signatures, `{block: {strokes, language}}` (RAPP-691). */
   readonly blockSignatures?: Json;
+  /** A walk-in's ticks of the Onboarding consents, by key (RAPP-699). */
+  readonly consents?: Readonly<Record<string, boolean>>;
 }
 
 export function signerName(signer: TabletSigner): string {
@@ -116,6 +118,10 @@ export async function sendTabletSigning(client: Client, signing: TabletSigning):
           p_payload: signing.payload,
           p_signed_at: signing.signedAt,
           p_block_signatures: signing.blockSignatures ?? {},
+          // Sent only when Onboarding asks a consent, so an older server still takes it.
+          ...(signing.consents === undefined || Object.keys(signing.consents).length === 0
+            ? {}
+            : { p_consents: signing.consents }),
         });
   if (error) throw databaseError(error);
   return z.uuid().parse(data);
