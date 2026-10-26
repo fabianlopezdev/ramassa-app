@@ -61,6 +61,8 @@ import {
   canHideBuiltin,
   canHideBuiltinScreen,
   hasRequiredPlacedField,
+  markOnboardingScreenChanged,
+  newVersionScreenKey,
   requiredBuiltinQuestions,
   saveBuiltinScreen,
   saveIntakeScreen,
@@ -254,7 +256,7 @@ function CustomScreenEditor({
   const [intro, setIntro] = useState<BuilderText>(screen.intro ?? {});
   const [isSaving, setIsSaving] = useState(false);
   const row = useRowEditing();
-  const saveKind = useOnboardingSaveKind(data.finishedCount);
+  const saveKind = useOnboardingSaveKind(data.finishedCount, screen.id);
 
   async function saveScreen() {
     if ((title.ca ?? '').trim() === '') {
@@ -265,8 +267,8 @@ function CustomScreenEditor({
     await saveKind.request(storeScreen);
   }
 
-  // Every kind saves as today: a new version is not offered yet (RAPP-696).
-  async function storeScreen() {
+  // Both kinds save the same way; a Nova versió then marks the screen (RAPP-697).
+  async function storeScreen(): Promise<boolean> {
     setIsSaving(true);
     try {
       await saveIntakeScreen(supabase, {
@@ -277,8 +279,10 @@ function CustomScreenEditor({
       });
       await reload();
       toast.success(t('onboardingBoard.saved'));
+      return true;
     } catch {
       toast.error(t('builtinScreens.failed'));
+      return false;
     } finally {
       setIsSaving(false);
     }
@@ -583,7 +587,7 @@ export function WordingSection({
   );
   const [isHidden, setIsHidden] = useState(saved?.isHidden ?? false);
   const [isSaving, setIsSaving] = useState(false);
-  const saveKind = useOnboardingSaveKind(finishedCount);
+  const saveKind = useOnboardingSaveKind(finishedCount, screen);
   const fields = screenTextFields(screen);
   const direction = getLanguageDirection(language);
   const hideable =
@@ -602,15 +606,17 @@ export function WordingSection({
     onChange(next);
   };
 
-  // Every kind saves as today: a new version is not offered yet (RAPP-696).
-  async function store() {
+  // Both kinds save the same way; a Nova versió then marks the screen (RAPP-697).
+  async function store(): Promise<boolean> {
     setIsSaving(true);
     try {
       await saveBuiltinScreen(supabase, { screen, texts, isHidden: hideable && isHidden });
       await reload();
       toast.success(t('builtinScreens.saved'));
+      return true;
     } catch {
       toast.error(t('builtinScreens.failed'));
+      return false;
     } finally {
       setIsSaving(false);
     }
@@ -694,14 +700,30 @@ export function WordingSection({
 
 /**
  * Onboarding's Desa dialog (RAPP-696): once anyone finished Onboarding, a
- * screen save asks Correcció or Nova versió. Asking finished players again is
- * not built yet, so Nova versió shows disabled with the reason, and every save
- * stays a correction.
+ * screen save asks Correcció or Nova versió. A Nova versió (RAPP-697) saves,
+ * then marks the screen, so every player who finished goes through it again
+ * before using the app; the dialog says how many. The summary and the terms
+ * screens have their own forms, so they save without the dialog.
  */
-function useOnboardingSaveKind(finishedCount: number) {
+function useOnboardingSaveKind(finishedCount: number, screen: string) {
   const { t } = useTranslation('settings');
-  return useSaveKind({
-    hasAnswers: finishedCount > 0,
-    newVersionBlockedReason: t('saveDialog.newVersionLater'),
+  const markedKey = newVersionScreenKey(screen);
+  const saveKind = useSaveKind({
+    hasAnswers: finishedCount > 0 && markedKey !== null,
+    newVersionNote: t('saveDialog.newVersionCount', { count: finishedCount }),
   });
+  return {
+    dialog: saveKind.dialog,
+    request: (save: () => Promise<boolean>) =>
+      saveKind.request(async (kind) => {
+        const isSaved = await save();
+        if (!isSaved || kind !== 'new' || markedKey === null) return;
+        try {
+          await markOnboardingScreenChanged(supabase, markedKey);
+          toast.success(t('saveDialog.newVersionSaved'));
+        } catch {
+          toast.error(t('builtinScreens.failed'));
+        }
+      }),
+  };
 }

@@ -636,5 +636,6 @@
     "drawing": "Signature of {{name}}",
     "onTabletWith": "Signed on the tablet, with {{name}}",
     "onTablet": "Signed on the tablet"
-  }
+  },
+  "reviewPendingBadge": "Welcome review pending"
 }

@@ -38,6 +38,7 @@ import {
   fetchParticipantChoices,
   fetchParticipantCustomAnswers,
   fetchParticipantFormSignatures,
+  fetchParticipantOnboardingReviewPending,
   NO_CHOICES,
   systemFieldsOf,
 } from '@ramassa/shared/intake-builder';
@@ -148,6 +149,7 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
       customAnswers,
       scenario,
       formSignatures,
+      isReviewPending,
     ] = await Promise.all([
       fetchParticipantNotes(supabase, params.participantId),
       fetchParticipantActivity(supabase, params.participantId),
@@ -177,6 +179,10 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
       testScenario,
       // Her signatures of the form blocks (RAPP-690); participants.view_personal.
       fetchParticipantFormSignatures(supabase, params.participantId).catch(() => []),
+      // Onboarding screens saved as a Nova versió she still has to review (RAPP-697).
+      hasJoined(participant)
+        ? fetchParticipantOnboardingReviewPending(supabase, params.participantId).catch(() => false)
+        : Promise.resolve(false),
     ]);
     // Filtered here rather than asked for by participant: the queue read is one
     // round trip either way, and the same call feeds the staff-wide queue, so
@@ -203,6 +209,7 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
       customAnswers,
       testScenario: scenario,
       formSignatures,
+      isReviewPending,
     };
   },
   component: ParticipantDetailPage,
@@ -227,6 +234,7 @@ function ParticipantDetailPage() {
     customAnswers,
     testScenario,
     formSignatures,
+    isReviewPending,
   } = Route.useLoaderData();
 
   if (participant === null) {
@@ -251,6 +259,7 @@ function ParticipantDetailPage() {
       customAnswers={customAnswers}
       testScenario={testScenario}
       formSignatures={formSignatures}
+      isReviewPending={isReviewPending}
     />
   );
 }

@@ -636,5 +636,6 @@
     "drawing": "Firma de {{name}}",
     "onTabletWith": "Firmada en la tableta, con {{name}}",
     "onTablet": "Firmada en la tableta"
-  }
+  },
+  "reviewPendingBadge": "Pendiente de revisar la bienvenida"
 }

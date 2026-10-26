@@ -815,7 +815,8 @@
     "correctionBody": "Arregla el text. Qui ja l'ha respost no ha de fer res.",
     "newVersion": "Nova versió",
     "newVersionBody": "Tothom l'haurà de tornar a respondre.",
-    "newVersionLater": "Encara no es pot tornar a preguntar a qui ja ha acabat l'Onboarding.",
-    "save": "Desa"
+    "save": "Desa",
+    "newVersionCount": "Jugadores que ho tornaran a veure: {{count}}",
+    "newVersionSaved": "Desat. Qui ja havia acabat l'Onboarding ho tornarà a veure."
   }
 }

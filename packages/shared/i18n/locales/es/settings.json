@@ -815,7 +815,8 @@
     "correctionBody": "Arregla el texto. Quien ya lo ha respondido no tiene que hacer nada.",
     "newVersion": "Nueva versión",
     "newVersionBody": "Todo el mundo tendrá que volver a responderlo.",
-    "newVersionLater": "Todavía no se puede volver a preguntar a quien ya ha terminado el Onboarding.",
-    "save": "Guardar"
+    "save": "Guardar",
+    "newVersionCount": "Jugadoras que lo volverán a ver: {{count}}",
+    "newVersionSaved": "Guardado. Quien ya había terminado el Onboarding lo volverá a ver."
   }
 }

@@ -815,7 +815,8 @@
     "correctionBody": "Fixes the text. Whoever already answered has nothing to do.",
     "newVersion": "New version",
     "newVersionBody": "Everyone will have to answer it again.",
-    "newVersionLater": "Players who finished Onboarding cannot be asked again yet.",
-    "save": "Save"
+    "save": "Save",
+    "newVersionCount": "Players who will see it again: {{count}}",
+    "newVersionSaved": "Saved. Players who had finished Onboarding will see it again."
   }
 }

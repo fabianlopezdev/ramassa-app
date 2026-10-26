@@ -35,7 +35,7 @@ import {
 import type { OnboardingDraft } from '@ramassa/shared/onboarding-drafts';
 import { seasonAnswerFields, type LanguageCode } from '@ramassa/shared/schemas';
 
-export interface OnboardingAnswers {
+interface OnboardingAnswers {
   readonly first_name: string;
   readonly last_name: string;
   readonly preferred_language: string;

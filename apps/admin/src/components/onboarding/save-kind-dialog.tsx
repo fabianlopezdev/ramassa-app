@@ -6,9 +6,8 @@
  *     anything. The old version stays recorded.
  *   - Nova versió: everybody answers again.
  *
- * A form where a new version cannot reach them yet passes the reason, and the
- * choice shows disabled with it. A form nobody has answered saves at once,
- * with no dialog.
+ * A form may say under Nova versió how many will answer again (Onboarding,
+ * RAPP-697). A form nobody has answered saves at once, with no dialog.
  */
 
 import { Button } from '@/components/ui/button';
@@ -27,12 +26,12 @@ type Save = (kind: SaveKind) => Promise<void>;
  */
 export function useSaveKind({
   hasAnswers,
-  newVersionBlockedReason = null,
+  newVersionNote = null,
 }: {
   /** Players (or entities) already answered this form. */
   readonly hasAnswers: boolean;
-  /** Why a new version cannot be chosen here yet; null when it can. */
-  readonly newVersionBlockedReason?: string | null;
+  /** A line under Nova versió, such as how many will answer again; null for none. */
+  readonly newVersionNote?: string | null;
 }): { readonly request: (save: Save) => Promise<void>; readonly dialog: ReactNode } {
   const [pending, setPending] = useState<{ readonly save: Save } | null>(null);
   async function request(save: Save) {
@@ -50,7 +49,7 @@ export function useSaveKind({
         onOpenChange={(open) => {
           if (!open) setPending(null);
         }}
-        newVersionBlockedReason={newVersionBlockedReason}
+        newVersionNote={newVersionNote}
         onSave={async (kind) => {
           const save = pending?.save;
           setPending(null);
@@ -64,12 +63,12 @@ export function useSaveKind({
 function SaveKindDialog({
   isOpen,
   onOpenChange,
-  newVersionBlockedReason,
+  newVersionNote,
   onSave,
 }: {
   readonly isOpen: boolean;
   readonly onOpenChange: (open: boolean) => void;
-  readonly newVersionBlockedReason: string | null;
+  readonly newVersionNote: string | null;
   readonly onSave: (kind: SaveKind) => Promise<void>;
 }) {
   const { t } = useTranslation('settings');
@@ -80,13 +79,13 @@ function SaveKindDialog({
       kind: 'new',
       title: t('saveDialog.newVersion'),
       body: t('saveDialog.newVersionBody'),
-      blocked: newVersionBlockedReason,
+      note: newVersionNote,
     },
   ] as const satisfies readonly {
     kind: SaveKind;
     title: string;
     body: string;
-    blocked?: string | null;
+    note?: string | null;
   }[];
   return (
     <Dialog
@@ -101,7 +100,7 @@ function SaveKindDialog({
         <DialogDescription className="sr-only">{t('saveDialog.title')}</DialogDescription>
         <div role="radiogroup" aria-label={t('saveDialog.title')} className="flex flex-col gap-3">
           {choices.map((choice) => {
-            const blocked = 'blocked' in choice ? choice.blocked : null;
+            const note = 'note' in choice ? choice.note : null;
             const isChosen = kind === choice.kind;
             return (
               <button
@@ -109,18 +108,17 @@ function SaveKindDialog({
                 type="button"
                 role="radio"
                 aria-checked={isChosen}
-                disabled={blocked !== null}
                 onClick={() => setKind(choice.kind)}
                 data-testid={`save-kind-${choice.kind}`}
                 className={cn(
-                  'flex flex-col gap-1 rounded-xl border p-4 text-start transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-60',
+                  'flex flex-col gap-1 rounded-xl border p-4 text-start transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
                   isChosen ? 'border-primary bg-primary/5' : 'hover:bg-muted',
                 )}
               >
                 <span className="text-sm font-semibold">{choice.title}</span>
                 <span className="text-sm text-muted-foreground">{choice.body}</span>
-                {blocked === null ? null : (
-                  <span className="text-xs text-muted-foreground">{blocked}</span>
+                {note === null ? null : (
+                  <span className="text-xs font-medium text-muted-foreground">{note}</span>
                 )}
               </button>
             );
