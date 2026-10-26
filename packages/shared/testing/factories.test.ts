@@ -14,6 +14,9 @@ import {
   buildConsentEvent,
   buildConsentPlacement,
   buildCustomAnswer,
+  buildCustomForm,
+  buildCustomFormResponse,
+  buildCustomFormScreen,
   buildCustomQuestionOption,
   buildCustomQuestionState,
   buildEquipmentDelivery,
@@ -469,6 +472,10 @@ describe('the authorization factories (RAPP-304)', () => {
     expect(buildConsent().system_key).toBeNull();
     expect(buildConsentPlacement().consent_id).toBe(buildConsent().id);
     expect(buildWalkInConsent().consent_id).toBe(buildConsent().id);
+    // Nou formulari (RAPP-700): a form, its screen and a pending ask.
+    expect(buildCustomFormScreen().form_id).toBe(buildCustomForm().id);
+    expect(buildCustomFormResponse().status).toBe('pending');
+    expect(buildCustomFormResponse().answered_at).toBeNull();
     // The factory version is a valid editable version (RAPP-614).
     expect(authorizationContentSchema.safeParse(version.content).success).toBe(true);
   });

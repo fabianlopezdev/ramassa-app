@@ -528,6 +528,7 @@ export type Database = {
         Row: {
           consent_id: string;
           consent_key: string;
+          custom_form_id: string | null;
           decided_at: string;
           form: string | null;
           granted: boolean;
@@ -547,6 +548,7 @@ export type Database = {
         Insert: {
           consent_id: string;
           consent_key: string;
+          custom_form_id?: string | null;
           decided_at?: string;
           form?: string | null;
           granted: boolean;
@@ -566,6 +568,7 @@ export type Database = {
         Update: {
           consent_id?: string;
           consent_key?: string;
+          custom_form_id?: string | null;
           decided_at?: string;
           form?: string | null;
           granted?: boolean;
@@ -588,6 +591,13 @@ export type Database = {
             columns: ['consent_id'];
             isOneToOne: false;
             referencedRelation: 'consents';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'consent_events_custom_form_id_fkey';
+            columns: ['custom_form_id'];
+            isOneToOne: false;
+            referencedRelation: 'custom_forms';
             referencedColumns: ['id'];
           },
           {
@@ -631,6 +641,7 @@ export type Database = {
         Row: {
           consent_id: string;
           created_at: string;
+          custom_form_id: string | null;
           id: string;
           org_id: string;
           required: boolean;
@@ -642,6 +653,7 @@ export type Database = {
         Insert: {
           consent_id: string;
           created_at?: string;
+          custom_form_id?: string | null;
           id?: string;
           org_id: string;
           required?: boolean;
@@ -653,6 +665,7 @@ export type Database = {
         Update: {
           consent_id?: string;
           created_at?: string;
+          custom_form_id?: string | null;
           id?: string;
           org_id?: string;
           required?: boolean;
@@ -667,6 +680,13 @@ export type Database = {
             columns: ['consent_id'];
             isOneToOne: false;
             referencedRelation: 'consents';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'consent_placements_custom_form_id_fkey';
+            columns: ['custom_form_id'];
+            isOneToOne: false;
+            referencedRelation: 'custom_forms';
             referencedColumns: ['id'];
           },
           {
@@ -978,6 +998,198 @@ export type Database = {
             columns: ['season_id'];
             isOneToOne: false;
             referencedRelation: 'seasons';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      custom_form_responses: {
+        Row: {
+          answered_at: string | null;
+          answered_by: string | null;
+          asked_at: string;
+          filled_by: string | null;
+          form_id: string;
+          id: string;
+          org_id: string;
+          profile_id: string;
+          season_id: string | null;
+          status: string;
+          version: number;
+        };
+        Insert: {
+          answered_at?: string | null;
+          answered_by?: string | null;
+          asked_at?: string;
+          filled_by?: string | null;
+          form_id: string;
+          id?: string;
+          org_id: string;
+          profile_id: string;
+          season_id?: string | null;
+          status?: string;
+          version: number;
+        };
+        Update: {
+          answered_at?: string | null;
+          answered_by?: string | null;
+          asked_at?: string;
+          filled_by?: string | null;
+          form_id?: string;
+          id?: string;
+          org_id?: string;
+          profile_id?: string;
+          season_id?: string | null;
+          status?: string;
+          version?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'custom_form_responses_answered_by_fkey';
+            columns: ['answered_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'custom_form_responses_form_id_fkey';
+            columns: ['form_id'];
+            isOneToOne: false;
+            referencedRelation: 'custom_forms';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'custom_form_responses_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'custom_form_responses_profile_id_fkey';
+            columns: ['profile_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'custom_form_responses_season_id_fkey';
+            columns: ['season_id'];
+            isOneToOne: false;
+            referencedRelation: 'seasons';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      custom_form_screens: {
+        Row: {
+          created_at: string;
+          form_id: string;
+          id: string;
+          intro: Json | null;
+          is_archived: boolean;
+          org_id: string;
+          sort_order: number;
+          title: Json;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          form_id: string;
+          id?: string;
+          intro?: Json | null;
+          is_archived?: boolean;
+          org_id: string;
+          sort_order?: number;
+          title: Json;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          form_id?: string;
+          id?: string;
+          intro?: Json | null;
+          is_archived?: boolean;
+          org_id?: string;
+          sort_order?: number;
+          title?: Json;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'custom_form_screens_form_id_fkey';
+            columns: ['form_id'];
+            isOneToOne: false;
+            referencedRelation: 'custom_forms';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'custom_form_screens_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      custom_forms: {
+        Row: {
+          appears: string;
+          created_at: string;
+          created_by: string | null;
+          deadline: string | null;
+          filled_by: string;
+          id: string;
+          is_archived: boolean;
+          mandatory: string;
+          name: Json;
+          org_id: string;
+          published_at: string | null;
+          updated_at: string;
+          version: number;
+        };
+        Insert: {
+          appears: string;
+          created_at?: string;
+          created_by?: string | null;
+          deadline?: string | null;
+          filled_by: string;
+          id?: string;
+          is_archived?: boolean;
+          mandatory?: string;
+          name: Json;
+          org_id: string;
+          published_at?: string | null;
+          updated_at?: string;
+          version?: number;
+        };
+        Update: {
+          appears?: string;
+          created_at?: string;
+          created_by?: string | null;
+          deadline?: string | null;
+          filled_by?: string;
+          id?: string;
+          is_archived?: boolean;
+          mandatory?: string;
+          name?: Json;
+          org_id?: string;
+          published_at?: string | null;
+          updated_at?: string;
+          version?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'custom_forms_created_by_fkey';
+            columns: ['created_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'custom_forms_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
             referencedColumns: ['id'];
           },
         ];
@@ -1874,6 +2086,7 @@ export type Database = {
       field_placements: {
         Row: {
           created_at: string;
+          custom_form_id: string | null;
           field_id: string;
           help_override: Json | null;
           id: string;
@@ -1887,6 +2100,7 @@ export type Database = {
         };
         Insert: {
           created_at?: string;
+          custom_form_id?: string | null;
           field_id: string;
           help_override?: Json | null;
           id?: string;
@@ -1900,6 +2114,7 @@ export type Database = {
         };
         Update: {
           created_at?: string;
+          custom_form_id?: string | null;
           field_id?: string;
           help_override?: Json | null;
           id?: string;
@@ -1912,6 +2127,13 @@ export type Database = {
           updated_at?: string;
         };
         Relationships: [
+          {
+            foreignKeyName: 'field_placements_custom_form_id_fkey';
+            columns: ['custom_form_id'];
+            isOneToOne: false;
+            referencedRelation: 'custom_forms';
+            referencedColumns: ['id'];
+          },
           {
             foreignKeyName: 'field_placements_field_id_fkey';
             columns: ['field_id'];
@@ -1932,6 +2154,7 @@ export type Database = {
         Row: {
           body: Json;
           created_at: string;
+          custom_form_id: string | null;
           id: string;
           kind: string;
           org_id: string;
@@ -1943,6 +2166,7 @@ export type Database = {
         Insert: {
           body: Json;
           created_at?: string;
+          custom_form_id?: string | null;
           id?: string;
           kind?: string;
           org_id: string;
@@ -1954,6 +2178,7 @@ export type Database = {
         Update: {
           body?: Json;
           created_at?: string;
+          custom_form_id?: string | null;
           id?: string;
           kind?: string;
           org_id?: string;
@@ -1963,6 +2188,13 @@ export type Database = {
           updated_at?: string;
         };
         Relationships: [
+          {
+            foreignKeyName: 'form_blocks_custom_form_id_fkey';
+            columns: ['custom_form_id'];
+            isOneToOne: false;
+            referencedRelation: 'custom_forms';
+            referencedColumns: ['id'];
+          },
           {
             foreignKeyName: 'form_blocks_org_id_fkey';
             columns: ['org_id'];
@@ -1976,6 +2208,7 @@ export type Database = {
         Row: {
           block_id: string | null;
           body: string;
+          custom_form_id: string | null;
           id: string;
           language: string;
           org_id: string;
@@ -1994,6 +2227,7 @@ export type Database = {
         Insert: {
           block_id?: string | null;
           body: string;
+          custom_form_id?: string | null;
           id?: string;
           language: string;
           org_id: string;
@@ -2012,6 +2246,7 @@ export type Database = {
         Update: {
           block_id?: string | null;
           body?: string;
+          custom_form_id?: string | null;
           id?: string;
           language?: string;
           org_id?: string;
@@ -2033,6 +2268,13 @@ export type Database = {
             columns: ['block_id'];
             isOneToOne: false;
             referencedRelation: 'form_blocks';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'form_signatures_custom_form_id_fkey';
+            columns: ['custom_form_id'];
+            isOneToOne: false;
+            referencedRelation: 'custom_forms';
             referencedColumns: ['id'];
           },
           {
@@ -5646,6 +5888,11 @@ export type Database = {
         Args: { p_archived: boolean; p_id: string };
         Returns: undefined;
       };
+      archive_custom_form: {
+        Args: { p_archived: boolean; p_id: string };
+        Returns: undefined;
+      };
+      archive_custom_form_screen: { Args: { p_id: string }; Returns: undefined };
       archive_intake_screen: { Args: { p_id: string }; Returns: undefined };
       archive_profile_field: { Args: { p_id: string }; Returns: undefined };
       assert_within_hourly_limit: {
@@ -5723,6 +5970,10 @@ export type Database = {
           receipt_attempt_count: number;
           ticket_id: string;
         }[];
+      };
+      complete_custom_form: {
+        Args: { p_response_id: string; payload: Json };
+        Returns: undefined;
       };
       complete_entity_referral: {
         Args: { p_profile_id: string; p_referral_id: string };
@@ -5810,6 +6061,10 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      complete_participant_custom_form: {
+        Args: { p_response_id: string };
+        Returns: undefined;
+      };
       complete_photo_handoff: {
         Args: {
           p_content_type: string;
@@ -5828,6 +6083,16 @@ export type Database = {
         Returns: number;
       };
       create_collaborating_entity: { Args: { p_name: string }; Returns: string };
+      create_custom_form: {
+        Args: {
+          p_appears: string;
+          p_deadline: string;
+          p_filled_by: string;
+          p_mandatory: string;
+          p_name: Json;
+        };
+        Returns: string;
+      };
       create_data_export: {
         Args: {
           p_confirmed?: boolean;
@@ -5919,6 +6184,22 @@ export type Database = {
       };
       current_collaborating_entity_id: { Args: never; Returns: string };
       current_org_id: { Args: never; Returns: string };
+      custom_form_responses_of: {
+        Args: { p_form_id: string };
+        Returns: {
+          answered_at: string;
+          answered_by_name: string;
+          asked_at: string;
+          display_name: string;
+          filled_by: string;
+          member_number: number;
+          profile_id: string;
+          response_id: string;
+          season_name: string;
+          status: string;
+          version: number;
+        }[];
+      };
       decrypt_field: { Args: { ciphertext: string }; Returns: string };
       default_organization_id: { Args: never; Returns: string };
       delete_custom_notification_group: {
@@ -5951,6 +6232,10 @@ export type Database = {
       discard_app_terms_draft: { Args: never; Returns: undefined };
       discard_authorization_draft: { Args: never; Returns: undefined };
       discard_walk_in: { Args: { p_id: string }; Returns: undefined };
+      dismiss_custom_form: {
+        Args: { p_response_id: string };
+        Returns: undefined;
+      };
       edit_own_forum_post: {
         Args: { p_content: string; p_post_id: string };
         Returns: undefined;
@@ -6732,6 +7017,19 @@ export type Database = {
           value: Json;
         }[];
       };
+      my_custom_forms: {
+        Args: never;
+        Returns: {
+          asked_at: string;
+          deadline: string;
+          form_id: string;
+          is_blocking: boolean;
+          mandatory: string;
+          name: Json;
+          response_id: string;
+          version: number;
+        }[];
+      };
       my_custom_question_asking: {
         Args: never;
         Returns: {
@@ -6772,6 +7070,7 @@ export type Database = {
       my_session_is_current: { Args: never; Returns: boolean };
       my_terms_acceptance_needed: { Args: never; Returns: boolean };
       my_test_scenario_stamp: { Args: never; Returns: string };
+      new_custom_form_version: { Args: { p_id: string }; Returns: number };
       notification_audience_entities: { Args: never; Returns: string[] };
       onboarding_finished_count: { Args: never; Returns: number };
       open_staff_checkouts: {
@@ -6867,6 +7166,21 @@ export type Database = {
           season_name: string;
           source: string;
           value: Json;
+        }[];
+      };
+      participant_custom_forms: {
+        Args: { p_profile_id: string };
+        Returns: {
+          answered_at: string;
+          asked_at: string;
+          deadline: string;
+          filled_by: string;
+          form_id: string;
+          mandatory: string;
+          name: Json;
+          response_id: string;
+          status: string;
+          version: number;
         }[];
       };
       participant_filter_options: {
@@ -7021,6 +7335,7 @@ export type Database = {
         Args: { p_content: Json };
         Returns: string;
       };
+      publish_custom_form: { Args: { p_id: string }; Returns: number };
       purge_expired_entity_invitations: {
         Args: { p_now?: string };
         Returns: number;
@@ -7177,6 +7492,10 @@ export type Database = {
         Args: { p_invite_id: string };
         Returns: string;
       };
+      reorder_custom_form_screens: {
+        Args: { p_form_id: string; p_ids: string[] };
+        Returns: undefined;
+      };
       reorder_intake_screens: {
         Args: { p_after_screen: string; p_ids: string[] };
         Returns: undefined;
@@ -7245,6 +7564,21 @@ export type Database = {
       save_consent_placement: {
         Args: { p_placement_id: string; p_required: boolean };
         Returns: undefined;
+      };
+      save_custom_form: {
+        Args: {
+          p_appears: string;
+          p_deadline: string;
+          p_filled_by: string;
+          p_id: string;
+          p_mandatory: string;
+          p_name: Json;
+        };
+        Returns: undefined;
+      };
+      save_custom_form_screen: {
+        Args: { p_form_id: string; p_id: string; p_intro: Json; p_title: Json };
+        Returns: string;
       };
       save_custom_notification_group: {
         Args: { p_id: string; p_name: string; p_participant_ids: string[] };
@@ -7395,6 +7729,14 @@ export type Database = {
           registered: boolean;
           signed_at: string;
         }[];
+      };
+      send_custom_form: {
+        Args: {
+          p_audience_config?: Json;
+          p_audience_kind: string;
+          p_form_id: string;
+        };
+        Returns: number;
       };
       send_message: {
         Args: {

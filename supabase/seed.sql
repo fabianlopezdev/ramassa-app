@@ -1646,7 +1646,7 @@ values
   ('5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-8045-000000000001', 'entity_form', null, 0),
   ('5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-8045-000000000003', 'season', null, 1),
   ('5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-8045-000000000005', 'season', null, 0)
-on conflict (field_id, surface) do nothing;
+on conflict (field_id, surface, custom_form_id) do nothing;
 
 insert into public.custom_question_options (id, org_id, question_id, label, sort_order, is_archived)
 values
@@ -3010,4 +3010,54 @@ values ('5eed0000-0000-4000-8099-000000000003', '5eed0000-0000-4000-8043-0000000
         true, false, '5eed0000-0000-4000-8090-000000000001',
         'أوافق على أن يشارك الفريق صور المباريات في مجموعة الفريق.', 'ar',
         timestamptz '2026-09-15 19:12:00+02', '5eed0000-0000-4000-8000-000000000002')
+on conflict (id) do nothing;
+
+-- Forms the team created (RAPP-700): a player's form that appears once and is
+-- live, which Amina answered and Fàtima still has pending, and a team form the
+-- team fills in on Natàlia's page.
+insert into public.custom_forms
+  (id, org_id, name, filled_by, mandatory, deadline, appears, version, published_at, created_by)
+values
+  ('5eed0000-0000-4000-8100-000000000001', '5eed0000-0000-4000-8000-000000000000',
+   '{"ca":"Com véns als entrenaments","es":"Cómo vienes a los entrenamientos","en":"How you get to training"}'::jsonb,
+   'player', 'optional', null, 'once', 1, timestamptz '2026-10-01 10:00:00+02',
+   '5eed0000-0000-4000-8000-000000000002'),
+  ('5eed0000-0000-4000-8100-000000000002', '5eed0000-0000-4000-8000-000000000000',
+   '{"ca":"Seguiment social","es":"Seguimiento social","en":"Social follow-up"}'::jsonb,
+   'team', 'optional', null, 'once', 1, timestamptz '2026-10-01 10:00:00+02',
+   '5eed0000-0000-4000-8000-000000000002')
+on conflict (id) do nothing;
+
+insert into public.custom_form_screens (id, org_id, form_id, title, sort_order)
+values
+  ('5eed0000-0000-4000-8101-000000000001', '5eed0000-0000-4000-8000-000000000000',
+   '5eed0000-0000-4000-8100-000000000001', '{"ca":"Transport","es":"Transporte","en":"Transport"}'::jsonb, 0),
+  ('5eed0000-0000-4000-8101-000000000002', '5eed0000-0000-4000-8000-000000000000',
+   '5eed0000-0000-4000-8100-000000000002', '{"ca":"Seguiment","es":"Seguimiento","en":"Follow-up"}'::jsonb, 0)
+on conflict (id) do nothing;
+
+insert into public.field_placements
+  (id, org_id, field_id, surface, screen_key, custom_form_id, sort_order, required)
+values
+  ('5eed0000-0000-4000-8101-000000000011', '5eed0000-0000-4000-8000-000000000000',
+   '5eed0000-0000-4000-8045-000000000001', 'custom_form', '5eed0000-0000-4000-8101-000000000001',
+   '5eed0000-0000-4000-8100-000000000001', 0, true),
+  ('5eed0000-0000-4000-8101-000000000012', '5eed0000-0000-4000-8000-000000000000',
+   '5eed0000-0000-4000-8045-000000000004', 'custom_form', '5eed0000-0000-4000-8101-000000000002',
+   '5eed0000-0000-4000-8100-000000000002', 0, false)
+on conflict (id) do nothing;
+
+insert into public.custom_form_responses
+  (id, org_id, form_id, version, profile_id, status, asked_at, answered_at, answered_by, filled_by)
+values
+  ('5eed0000-0000-4000-8102-000000000001', '5eed0000-0000-4000-8000-000000000000',
+   '5eed0000-0000-4000-8100-000000000001', 1, '5eed0000-0000-4000-8000-000000000011', 'done',
+   timestamptz '2026-10-01 10:00:00+02', timestamptz '2026-10-02 18:30:00+02',
+   '5eed0000-0000-4000-8000-000000000011', 'player'),
+  ('5eed0000-0000-4000-8102-000000000002', '5eed0000-0000-4000-8000-000000000000',
+   '5eed0000-0000-4000-8100-000000000001', 1, '5eed0000-0000-4000-8000-000000000012', 'pending',
+   timestamptz '2026-10-01 10:00:00+02', null, null, null),
+  ('5eed0000-0000-4000-8102-000000000003', '5eed0000-0000-4000-8000-000000000000',
+   '5eed0000-0000-4000-8100-000000000002', 1, '5eed0000-0000-4000-8000-000000000022', 'pending',
+   timestamptz '2026-10-01 10:00:00+02', null, null, null)
 on conflict (id) do nothing;

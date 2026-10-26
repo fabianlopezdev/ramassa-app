@@ -1453,6 +1453,7 @@ export function buildConsentEvent(overrides: Partial<ConsentEventRow> = {}): Con
     required: true,
     recorded_by: null,
     reason: null,
+    custom_form_id: null,
     ...overrides,
   };
 }
@@ -1488,6 +1489,7 @@ export function buildConsentPlacement(
     required: false,
     created_at: FIXTURE_TIMESTAMP,
     updated_at: FIXTURE_TIMESTAMP,
+    custom_form_id: null,
     ...overrides,
   };
 }
@@ -1564,6 +1566,7 @@ export function buildFormBlock(overrides: Partial<FormBlockRow> = {}): FormBlock
     sort_order: 0,
     created_at: FIXTURE_TIMESTAMP,
     updated_at: FIXTURE_TIMESTAMP,
+    custom_form_id: null,
     ...overrides,
   };
 }
@@ -1587,6 +1590,7 @@ export function buildFormSignature(overrides: Partial<FormSignatureRow> = {}): F
     signed_at: FIXTURE_TIMESTAMP,
     signed_on_tablet: false,
     witnessed_by: null,
+    custom_form_id: null,
     ...overrides,
   };
 }
@@ -1714,6 +1718,7 @@ export function buildFieldPlacement(overrides: Partial<FieldPlacementRow> = {}):
     help_override: null,
     created_at: FIXTURE_TIMESTAMP,
     updated_at: FIXTURE_TIMESTAMP,
+    custom_form_id: null,
     ...overrides,
   };
 }
@@ -1793,6 +1798,74 @@ export function buildOnboardingScreenVersion(
     screen_key: 'equipment',
     changed_at: '2026-01-15T09:00:00.000Z',
     changed_by: null,
+    ...overrides,
+  };
+}
+
+export type CustomFormRow = PublicRow<'custom_forms'>;
+
+/** The seeded player's form that appears once and is live (RAPP-700). */
+export function buildCustomForm(overrides: Partial<CustomFormRow> = {}): CustomFormRow {
+  return {
+    id: '5eed0000-0000-4000-8100-000000000001',
+    org_id: SEED_ORGANIZATION_ID,
+    name: {
+      ca: 'Com véns als entrenaments',
+      es: 'Cómo vienes a los entrenamientos',
+      en: 'How you get to training',
+    },
+    filled_by: 'player',
+    mandatory: 'optional',
+    deadline: null,
+    appears: 'once',
+    version: 1,
+    published_at: '2026-10-01T08:00:00.000Z',
+    is_archived: false,
+    created_by: seedUserId(2),
+    created_at: FIXTURE_TIMESTAMP,
+    updated_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+export type CustomFormScreenRow = PublicRow<'custom_form_screens'>;
+
+/** The seeded form's one screen (RAPP-700). */
+export function buildCustomFormScreen(
+  overrides: Partial<CustomFormScreenRow> = {},
+): CustomFormScreenRow {
+  return {
+    id: '5eed0000-0000-4000-8101-000000000001',
+    org_id: SEED_ORGANIZATION_ID,
+    form_id: buildCustomForm().id,
+    title: { ca: 'Transport', es: 'Transporte', en: 'Transport' },
+    intro: null,
+    sort_order: 0,
+    is_archived: false,
+    created_at: FIXTURE_TIMESTAMP,
+    updated_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+export type CustomFormResponseRow = PublicRow<'custom_form_responses'>;
+
+/** Fàtima's pending ask of the seeded form (RAPP-700). */
+export function buildCustomFormResponse(
+  overrides: Partial<CustomFormResponseRow> = {},
+): CustomFormResponseRow {
+  return {
+    id: '5eed0000-0000-4000-8102-000000000002',
+    org_id: SEED_ORGANIZATION_ID,
+    form_id: buildCustomForm().id,
+    version: 1,
+    profile_id: seedUserId(12),
+    season_id: null,
+    status: 'pending',
+    asked_at: '2026-10-01T08:00:00.000Z',
+    answered_at: null,
+    answered_by: null,
+    filled_by: null,
     ...overrides,
   };
 }
