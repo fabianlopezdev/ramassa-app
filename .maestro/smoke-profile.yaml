@@ -332,18 +332,11 @@ env:
     point: 91%, 91%
 - waitForAnimationToEnd:
     timeout: 1500
-- runFlow:
-    when:
-      platform: ANDROID
-    commands:
-      - tapOn:
-          point: 20%, 29%
-- runFlow:
-    when:
-      platform: IOS
-    commands:
-      - tapOn:
-          point: 20%, 24%
+# By its id: she already has a municipality, so the list opens with a clear
+# row above the results, and a tap at a fixed point lands on that row on a
+# taller screen (the Fold AVD), clearing her answer instead of picking Gurb.
+- tapOn:
+    id: 'municipality-option-081000'
 - extendedWaitUntil:
     notVisible:
       id: 'municipality-search-input'
