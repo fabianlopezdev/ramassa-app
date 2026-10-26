@@ -44,6 +44,8 @@ export interface FieldFormValue {
   readonly label: BuilderText;
   readonly help: BuilderText | null;
   readonly privacy: QuestionPrivacy;
+  /** A permission a reader needs on top of the privacy level (RAPP-698). */
+  readonly readPermission?: string | null;
   readonly settings: QuestionSettings;
   /** The options still offered, in order. */
   readonly options: readonly { readonly id: string; readonly label: BuilderText }[];
@@ -240,6 +242,14 @@ export function FieldForm({
           }
         />
         <QuestionPrivacyPicker value={privacy} onChange={setPrivacy} />
+        {value?.readPermission === 'participants.view_health' ? (
+          <p
+            className="text-start text-sm text-muted-foreground"
+            data-testid="field-read-permission"
+          >
+            {t('questions.healthReadersOnly')}
+          </p>
+        ) : null}
         <QuestionSettingsFields
           key={type}
           type={type}

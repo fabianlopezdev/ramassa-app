@@ -39,6 +39,7 @@ export function fieldFormValue(field: ProfileField): FieldFormValue {
     label: field.label,
     help: field.help,
     privacy: field.privacy,
+    readPermission: field.readPermission ?? null,
     settings: parseQuestionSettings(field.type, field.settings),
     options: field.options.filter((option) => !option.isArchived),
   };

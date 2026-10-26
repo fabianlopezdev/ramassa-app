@@ -211,3 +211,29 @@ test('the preview shows her phone in each language, right to left in Arabic and 
   fireEvent.change(view.getByTestId('question-preview-language'), { target: { value: 'fa' } });
   expect(view.getByTestId('question-preview').getAttribute('dir')).toBe('rtl');
 });
+
+test('her health field says only people with the health permission read it (RAPP-698)', () => {
+  const health = {
+    type: 'long_text' as const,
+    label: { ca: 'Salut' },
+    help: null,
+    privacy: 'sensitive' as const,
+    settings: {},
+    options: [],
+  };
+  const form = (readPermission: string | null) => (
+    <FieldForm
+      value={{ ...health, readPermission }}
+      title="Field"
+      nameLegend="Name"
+      submitLabel="Save field"
+      canStoreFiles
+      onSave={async () => undefined}
+      onCancel={() => undefined}
+    />
+  );
+  const view = render(form('participants.view_health'));
+  expect(view.getByTestId('field-read-permission').textContent).toBe('questions.healthReadersOnly');
+  view.unmount();
+  expect(render(form(null)).queryByTestId('field-read-permission')).toBeNull();
+});
