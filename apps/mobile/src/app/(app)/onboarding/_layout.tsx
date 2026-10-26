@@ -17,6 +17,7 @@ import { Stack } from 'expo-router/stack';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@ramassa/shared/auth';
+import { fetchMyConsents, type MyConsent } from '@ramassa/shared/authorization';
 import { getErrorMessageKey, toAppError } from '@ramassa/shared/errors';
 import { useLanguage } from '@ramassa/shared/i18n';
 import {
@@ -76,14 +77,16 @@ function seedWizardDraft(intake: WizardIntake, language: LanguageCode): void {
     intake.review === undefined
       ? draftForScenario(onboardingDraftStore.loadStoredDraft(), scenarioStamp)
       : null;
+  const seeded = seededDraft(intake.fields, {
+    currentStep: wizardDraftStep(firstScreen),
+    scenarioStamp,
+    names: intake.names,
+    stored: intake.customAnswers,
+  });
   const draft = withSelectedLanguage(
     stored ??
-      seededDraft(intake.fields, {
-        currentStep: wizardDraftStep(firstScreen),
-        scenarioStamp,
-        names: intake.names,
-        stored: intake.customAnswers,
-      }),
+      // A review fills her consent ticks with her current state (RAPP-699).
+      (intake.consentTicks === undefined ? seeded : { ...seeded, consents: intake.consentTicks }),
     language,
   );
   onboardingDraftStore.saveStoredDraft(draft);
@@ -147,6 +150,7 @@ function OnboardingScreens() {
         asking,
         scenarioStamp,
         mySignatures,
+        myConsents,
       ] = await Promise.all([
         fetchOwnProfile(supabase, { signal }),
         fetchMyAnsweredQuestions(supabase, { signal }),
@@ -161,6 +165,11 @@ function OnboardingScreens() {
         // The blocks she signed on the walk-in tablet (RAPP-691). Unread, she
         // signs them all here, which the database accepts.
         fetchMyFormSignatures(supabase).catch(() => []),
+        // In a review, her consents as they stand fill her ticks (RAPP-699).
+        // Unread, she ticks them again, and an unchanged tick records nothing.
+        pending === undefined
+          ? Promise.resolve<Readonly<Record<string, MyConsent>>>({})
+          : fetchMyConsents(supabase).catch((): Readonly<Record<string, MyConsent>> => ({})),
       ]);
       // A block she signed, whose text has not changed since, is asked no more.
       const signedBlocks = (fullCatalog.blocks ?? []).filter((block) =>
@@ -215,7 +224,14 @@ function OnboardingScreens() {
         required: askedRequiredQuestions(catalog),
         scenarioStamp,
         signedBlocks,
-        ...(pending === undefined ? {} : { review: pending }),
+        ...(pending === undefined
+          ? {}
+          : {
+              review: pending,
+              consentTicks: Object.fromEntries(
+                Object.entries(myConsents).map(([key, consent]) => [key, consent.granted]),
+              ),
+            }),
       };
     },
     enabled: user !== null && (role !== 'player' || review.data !== undefined),

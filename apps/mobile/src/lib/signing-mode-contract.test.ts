@@ -50,6 +50,12 @@ describe('the layout in signing mode', () => {
 });
 
 describe('the signing mode screen', () => {
+  test("a walk-in ticks her Onboarding's consents after the authorization, sent with her signing (RAPP-699)", () => {
+    expect(screen).toContain('blocks.length > 0 || consents.length > 0');
+    expect(screen).toContain('untickedRequiredConsents(consents, ticks)');
+    expect(screen).toContain('consents: consentDecisionsPayload(consents, ticks)');
+  });
+
   test("Android's back button stays in signing mode", () => {
     expect(screen).toContain("BackHandler.addEventListener('hardwareBackPress', () => true)");
   });

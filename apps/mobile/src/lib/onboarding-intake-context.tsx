@@ -98,6 +98,11 @@ export interface WizardIntake {
    * answers and lets her into the app. Absent for her first Onboarding.
    */
   readonly review?: readonly WizardStepKey[];
+  /**
+   * In a review, her consents as they stand, by key (RAPP-699): her ticks
+   * start from them.
+   */
+  readonly consentTicks?: Readonly<Record<string, boolean>>;
 }
 
 const EMPTY_INTAKE: WizardIntake = {

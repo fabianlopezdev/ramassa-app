@@ -5,9 +5,10 @@
  *   1. she picks her language (any of the five, right to left where needed);
  *   2. she reads, answers, ticks and signs, as in her own app (RAPP-304);
  *   3. a walk-in then signs each signature block of the live Onboarding
- *      screens, in her language (RAPP-691). They travel with her signing and
- *      move to her profile when the team confirms her. With no block, or no
- *      connection to read them, this step is not shown;
+ *      screens, in her language (RAPP-691), and ticks the consents placed on
+ *      them (RAPP-699). They travel with her signing and move to her profile
+ *      when the team confirms her. With none, or no connection to read them,
+ *      this step is not shown;
  *   4. she is thanked and gives the tablet back. Her medical answer is gone
  *      from the screen.
  *
@@ -18,6 +19,7 @@
  */
 import { useAppLock } from '@/components/auth/app-lock';
 import { AuthorizationForm } from '@/components/authorization/authorization-form';
+import { ConsentRow } from '@/components/authorization/consent-row';
 import { PageWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { SignatureBlockField } from '@/components/onboarding/signature-block-field';
@@ -29,7 +31,7 @@ import {
   useAuthorizationForSigning,
   useSigningOutbox,
   useSigningSession,
-  useWalkInSignatureBlocks,
+  useWalkInOnboardingAsks,
 } from '@/lib/tablet-signing';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { randomUUID } from 'expo-crypto';
@@ -50,7 +52,13 @@ import {
   SUPPORTED_LANGUAGES,
   type SupportedLanguage,
 } from '@ramassa/shared/i18n';
-import { formSignaturesPayload, unsignedFormBlocks } from '@ramassa/shared/intake-builder';
+import {
+  consentDecisionsPayload,
+  consentText,
+  formSignaturesPayload,
+  unsignedFormBlocks,
+  untickedRequiredConsents,
+} from '@ramassa/shared/intake-builder';
 import { tokens } from '@ramassa/shared/tokens';
 
 type Step = 'language' | 'form' | 'blocks' | 'done';
@@ -100,8 +108,12 @@ export default function SigningModeScreen() {
   const [isWaiting, setIsWaiting] = useState(false);
   // A walk-in's Onboarding signature blocks (RAPP-691), signed after the authorization.
   const isWalkIn = session?.signer.kind === 'walk_in';
-  const walkInBlocks = useWalkInSignatureBlocks(isWalkIn);
-  const blocks = isWalkIn ? (walkInBlocks.data ?? []) : [];
+  const walkInAsks = useWalkInOnboardingAsks(isWalkIn);
+  const blocks = isWalkIn ? (walkInAsks.data?.blocks ?? []) : [];
+  // And the consents placed on her Onboarding screens (RAPP-699), in her language.
+  const consents = isWalkIn ? (walkInAsks.data?.consents ?? []) : [];
+  const [ticks, setTicks] = useState<Readonly<Record<string, boolean>>>({});
+  const [unticked, setUnticked] = useState<ReadonlySet<string>>(new Set());
   const [signed, setSigned] = useState<AuthorizationSigning | null>(null);
   const [strokes, setStrokes] = useState<Readonly<Record<string, SignatureStrokes | null>>>({});
   const [unsigned, setUnsigned] = useState<ReadonlySet<string>>(new Set());
@@ -224,7 +236,7 @@ export default function SigningModeScreen() {
       return;
     }
     // A walk-in signs the Onboarding blocks before anything is kept (RAPP-691).
-    if (blocks.length > 0) {
+    if (blocks.length > 0 || consents.length > 0) {
       setSigned(signing);
       setStep('blocks');
       return;
@@ -251,6 +263,7 @@ export default function SigningModeScreen() {
         ),
         signedAt: new Date().toISOString(),
         ...(blockSignatures === null ? {} : { blockSignatures }),
+        ...(consents.length === 0 ? {} : { consents: consentDecisionsPayload(consents, ticks) }),
       });
       setIsWaiting(outcome === 'waiting');
       playHaptic('success');
@@ -267,7 +280,9 @@ export default function SigningModeScreen() {
     const signBlocks = () => {
       const missing = unsignedFormBlocks(blocks, strokes);
       setUnsigned(new Set(missing));
-      if (missing.length > 0) {
+      const missingTicks = untickedRequiredConsents(consents, ticks);
+      setUnticked(new Set(missingTicks));
+      if (missing.length > 0 || missingTicks.length > 0) {
         playHaptic('warning');
         return;
       }
@@ -297,6 +312,26 @@ export default function SigningModeScreen() {
                   setStrokes((current) => ({ ...current, [block.id]: next }));
                   if (next !== null) {
                     setUnsigned((current) => new Set([...current].filter((id) => id !== block.id)));
+                  }
+                }}
+              />
+            ))}
+            {consents.map((consent) => (
+              <ConsentRow
+                key={consent.id}
+                testID={`signing-consent-${consent.key}`}
+                label={consentText(consent.body, language).text}
+                required={consent.required}
+                requiredMark={t('authorizationRequiredMark')}
+                checked={ticks[consent.key] === true}
+                errorMessage={unticked.has(consent.key) ? t('customErrorConsent') : undefined}
+                onToggle={() => {
+                  const next = ticks[consent.key] !== true;
+                  setTicks((current) => ({ ...current, [consent.key]: next }));
+                  if (next) {
+                    setUnticked(
+                      (current) => new Set([...current].filter((key) => key !== consent.key)),
+                    );
                   }
                 }}
               />

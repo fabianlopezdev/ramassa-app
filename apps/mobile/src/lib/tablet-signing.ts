@@ -20,7 +20,9 @@ import { AppError } from '@ramassa/shared/errors';
 import {
   fetchIntakeCatalog,
   liveOnboardingBlocks,
+  liveOnboardingConsents,
   type FormBlock,
+  type PlacedConsent,
 } from '@ramassa/shared/intake-builder';
 import { isNetworkStateOnline } from './network-status';
 import { finishesWithin, SCREEN_SEND_WAIT_MS } from './outbox-drain-loop';
@@ -182,20 +184,25 @@ export function useAuthorizationForSigning(enabled: boolean) {
 }
 
 /**
- * The Onboarding signature blocks a walk-in signs on the tablet after the
- * authorization (RAPP-691): those of the live screens. Read online; with no
- * connection there are none, and she signs them on her own phone later.
+ * What a walk-in answers of her Onboarding on the tablet after the
+ * authorization: the signature blocks of the live screens (RAPP-691) and the
+ * consents placed on them (RAPP-699). Read online; with no connection there
+ * are none, and she answers them on her own phone later.
  */
-export function useWalkInSignatureBlocks(enabled: boolean) {
+export function useWalkInOnboardingAsks(enabled: boolean) {
   const { user } = useAuth();
   const userId = user?.id ?? null;
   return useQuery({
-    queryKey: ['walk-in-signature-blocks', userId ?? 'signed-out'],
-    queryFn: async (): Promise<readonly FormBlock[]> => {
+    queryKey: ['walk-in-onboarding-asks', userId ?? 'signed-out'],
+    queryFn: async (): Promise<{
+      readonly blocks: readonly FormBlock[];
+      readonly consents: readonly PlacedConsent[];
+    }> => {
       try {
-        return liveOnboardingBlocks(await fetchIntakeCatalog(supabase));
+        const catalog = await fetchIntakeCatalog(supabase);
+        return { blocks: liveOnboardingBlocks(catalog), consents: liveOnboardingConsents(catalog) };
       } catch {
-        return [];
+        return { blocks: [], consents: [] };
       }
     },
     enabled: enabled && userId !== null,
