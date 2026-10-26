@@ -32,6 +32,16 @@ Every answer is an answer to a field. The decisions below are numbered as in the
 2. **D2. Names are the one exception.** `first_name` and `last_name` stay account columns on
    `profiles`; their wording is editable, their type, privacy and placement on her identity screen
    are not, and they are never archived. Her app language is an account setting, never a field.
+
+   > **Superseded 2026-10-26 by RAPP-693.** Fabián: "Everything can be editable and we can then
+   > make decisions for them." Her names are answers in `custom_answers` like every field, with an
+   > editable type, privacy and options; a type change follows D8. They stay never archived and on
+   > her identity screen. One display rule (`private.shown_name`, `private.display_name`) shows them
+   > to herself, to a team member with the permission of their level, and to a fellow player while
+   > they are Normal; anyone else reads her number, "Jugadora 0042" (`profiles.member_number`), in
+   > their own language. `profiles.first_name` and `last_name` stay for team accounts; for a player
+   > they are a copy that never holds more than the Normal level, kept by triggers. Migration
+   > `20261026160000_names_fully_editable.sql`. Her app language is still an account setting.
 3. **D3. One answer store.** Every other field answers into `custom_answers` through
    `private.write_custom_answer`: one row per field (per season for a seasonal field), Sensitive
    answers encrypted.
