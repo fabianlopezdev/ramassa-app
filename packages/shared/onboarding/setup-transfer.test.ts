@@ -199,6 +199,27 @@ describe('reading a setup file', () => {
     ).toBe(true);
   });
 
+  test('the signature blocks travel, each on its screen; an older file has none (RAPP-690)', () => {
+    const block = {
+      surface: 'onboarding',
+      screen_key: SCREEN,
+      body: { ca: 'Accepto' },
+      sort_order: 1,
+    };
+    expect(readOnboardingSetupFile(asFile(document({ signature_blocks: [block] }))).ok).toBe(true);
+    expect(readOnboardingSetupFile(asFile(document())).ok).toBe(true);
+    expect(
+      readOnboardingSetupFile(
+        asFile(document({ signature_blocks: [{ ...block, screen_key: null }] })),
+      ).ok,
+    ).toBe(false);
+    expect(
+      readOnboardingSetupFile(
+        asFile(document({ signature_blocks: [{ ...block, body: { es: 'Sí' } }] })),
+      ).ok,
+    ).toBe(false);
+  });
+
   test('the flow order passes the same checks as the screen order editor', () => {
     for (const flow_order of [
       ['identity', 'identity'],

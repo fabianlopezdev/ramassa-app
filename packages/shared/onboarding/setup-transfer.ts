@@ -160,6 +160,18 @@ export const onboardingSetupDocumentSchema = z
       ),
       draft: z.strictObject({ content: authorizationContentSchema }).nullable(),
     }),
+    // The signature blocks of the screens and the entity form (RAPP-690). An
+    // older file has none.
+    signature_blocks: z
+      .array(
+        z.strictObject({
+          surface: z.enum(['onboarding', 'entity_form']),
+          screen_key: z.string().min(1).nullable(),
+          body: catalanText,
+          sort_order: position,
+        }),
+      )
+      .optional(),
   })
   .superRefine((document, context) => {
     if (
@@ -227,6 +239,12 @@ export const onboardingSetupDocumentSchema = z
     if (document.seasons.filter((season) => season.is_current).length > 1) {
       context.addIssue({ code: 'custom', message: 'more than one current season' });
     }
+    for (const block of document.signature_blocks ?? []) {
+      // An Onboarding block names its screen; the entity form names none.
+      if ((block.surface === 'onboarding') !== (block.screen_key !== null)) {
+        context.addIssue({ code: 'custom', message: 'a signature block names its screen' });
+      }
+    }
   });
 export type OnboardingSetupDocument = z.infer<typeof onboardingSetupDocumentSchema>;
 
@@ -262,7 +280,8 @@ function holdsNoSetup(document: OnboardingSetupDocument): boolean {
     document.app_terms.draft === null &&
     document.seasons.length === 0 &&
     document.authorization.published.length === 0 &&
-    document.authorization.draft === null
+    document.authorization.draft === null &&
+    (document.signature_blocks ?? []).length === 0
   );
 }
 

@@ -25,7 +25,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
-select plan(42);
+select plan(44);
 
 -- An app answer given by option key, as the app's screens send it by option id.
 create function pg_temp.by_option_key(f public.profile_fields, v jsonb) returns jsonb language sql stable security definer as $$
@@ -135,6 +135,12 @@ update public.profile_fields set is_archived = true where id = '5eed0000-0000-40
 update public.organizations
    set document_step_explanation = '{"ca": "Porta el teu document si el tens.", "en": "Bring your document if you have it."}'
  where id = '5eed0000-0000-4000-8000-000000000000';
+-- Two signature blocks (RAPP-690): one among the fields of that screen, one on the entity form.
+insert into public.form_blocks (org_id, surface, screen_key, kind, body, sort_order)
+values ('5eed0000-0000-4000-8000-000000000000', 'onboarding', '5eed0000-0000-4000-8044-0000000006b1', 'signature',
+        '{"ca": "Autoritzo el transport", "ar": "أوافق على النقل"}', 2),
+       ('5eed0000-0000-4000-8000-000000000000', 'entity_form', null, 'signature',
+        '{"ca": "La jugadora hi està d''acord"}', 0);
 
 set local role authenticated;
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000097", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
@@ -319,6 +325,15 @@ select is(
   (select pg_temp.normalized(doc) from run where label = 'first'),
   'exported again, it is the same document apart from ids and times'
 );
+select results_eq(
+  $$ select b.surface, b.screen_key = s.id::text, b.body, b.sort_order
+       from public.form_blocks b
+       left join public.intake_screens s on s.org_id = b.org_id and s.title ->> 'ca' = 'Totes les preguntes'
+      where b.org_id = '5eed0000-0000-4000-8000-0000000006a0' order by b.surface $$,
+  $$ values ('entity_form', null::boolean, '{"ca": "La jugadora hi està d''acord"}'::jsonb, 0),
+            ('onboarding', true, '{"ca": "Autoritzo el transport", "ar": "أوافق على النقل"}'::jsonb, 2) $$,
+  'the signature blocks arrive on their new screen and form, text and place kept (RAPP-690)'
+);
 select is(
   (select doc -> 'app_terms' -> 'draft' from run where label = 'second'),
   (select doc -> 'app_terms' -> 'draft' from run where label = 'first'),
@@ -431,11 +446,17 @@ update public.organizations set document_step_explanation = null where id = '5ee
 delete from public.app_terms_versions where org_id = '5eed0000-0000-4000-8000-0000000006a0' and published_at is null;
 delete from public.authorization_versions where org_id = '5eed0000-0000-4000-8000-0000000006a0';
 delete from public.seasons where org_id = '5eed0000-0000-4000-8000-0000000006a0';
+delete from public.form_blocks where org_id = '5eed0000-0000-4000-8000-0000000006a0';
 set local role authenticated;
 select ok(
   (select (p ->> 'can_import')::boolean
      from public.preview_onboarding_setup_import((select doc from run where label = 'first')) p),
   'emptied again, the organization can import again'
+);
+select ok(
+  (select (p ->> 'can_import')::boolean
+     from public.preview_onboarding_setup_import((select doc - 'signature_blocks' from run where label = 'first')) p),
+  'a file from before the signature blocks still imports'
 );
 select ok(
   (select not (p ->> 'can_import')::boolean
