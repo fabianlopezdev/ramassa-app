@@ -8,8 +8,10 @@
  * screen editor shows a screen (RAPP-695).
  *
  * Staff edit the draft language by language: the document (title, sections,
- * season documents), the consents (add, remove, reorder, reword, mark
- * required), and the wording of the form and of re-registration. The Health
+ * season documents) and the wording of the form and of re-registration. The
+ * consents screen asks consents of Dades legals (RAPP-699): placed, ordered,
+ * reworded and required with the shared picker, saved at once; the draft and
+ * Desa take them as the catalogue holds them then. The Health
  * screen asks fields of Dades de les jugadores (RAPP-698): her health and her
  * emergency contact among them, placed, reworded and required with the
  * shared field picker, saved at once like any screen's. A wording field left empty shows the app's own
@@ -34,7 +36,6 @@ import {
 import { SteppedPhone } from '@/components/onboarding/phone-preview';
 import { useSaveKind } from '@/components/onboarding/save-kind-dialog';
 import { ScreenFieldsSection } from '@/components/onboarding/screen-fields';
-import { RequiredSwitch } from '@/components/settings/required-switch';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -50,9 +51,6 @@ import {
   AUTHORIZATION_BUNDLED_TEXT_KEYS,
   AUTHORIZATION_TEXT_FIELDS,
   authorizationContentSchema,
-  HEALTH_DATA_CONSENT,
-  IMAGE_RIGHTS_CONSENT,
-  newConsentKey,
   orderedConsents,
   type AuthorizationContent,
   type AuthorizationText,
@@ -61,8 +59,7 @@ import {
 } from '@ramassa/shared/authorization';
 import { getLanguageDirection } from '@ramassa/shared/i18n/languages';
 import {
-  authorizationFieldId,
-  authorizationQuestions,
+  authorizationConsentsFromCatalog,
   EMPTY_INTAKE_CATALOG,
   type IntakeCatalog,
 } from '@ramassa/shared/intake-builder';
@@ -177,9 +174,15 @@ export function AuthorizationEditor({
   const target = targets.find((season) => season.id === chosenSeasonId) ?? targets[0] ?? null;
   const [language, setLanguage] = useState<LanguageCode>('ca');
   const [previewLanguage, setPreviewLanguage] = useState<LanguageCode>('ca');
-  const [content, setContent] = useState<AuthorizationContent>(
+  const [typedContent, setContent] = useState<AuthorizationContent>(
     draft?.content ?? current?.content ?? EMPTY_CONTENT,
   );
+  // Its consents as the consents screen holds them now (RAPP-699): the phone
+  // shows them and the draft takes them.
+  const content: AuthorizationContent = {
+    ...typedContent,
+    consents: authorizationConsentsFromCatalog(catalog),
+  };
   const [isDirty, setIsDirty] = useState(false);
   const [editingField, setEditingField] = useState<string | null>(null);
   const [status, setStatus] = useState<Status>('idle');
@@ -247,17 +250,6 @@ export function AuthorizationEditor({
     );
   }
 
-  const consents = orderedConsents(content);
-  const setConsents = (next: typeof consents) =>
-    edit({
-      ...content,
-      consents: Object.fromEntries(
-        next.map((consent, position) => [
-          consent.key,
-          { label: consent.label, required: consent.required, position },
-        ]),
-      ),
-    });
   // Her phone on this screen, worded as typed.
   const { content: phoneContent, ...position } = authorizationPhoneScreen(
     content,
@@ -267,10 +259,6 @@ export function AuthorizationEditor({
     { seasonName, catalog },
   );
   const isOn = (...steps: readonly AuthorizationPhoneStep[]) => steps.includes(step);
-  // Her health is asked: its consent stays (RAPP-698).
-  const hasHealthField = authorizationQuestions(catalog).some(
-    (question) => question.id === authorizationFieldId(catalog, 'health_info'),
-  );
   const canSave = draft !== null || isDirty;
 
   return (
@@ -390,122 +378,6 @@ export function AuthorizationEditor({
                 </fieldset>
               ) : null}
 
-              {isOn('consents') ? (
-                <fieldset className="flex flex-col gap-3" data-testid="authorization-consents">
-                  <legend className="text-start text-sm font-semibold">
-                    {t('authorizationEditor.consentsTitle')}
-                  </legend>
-                  <p className="text-start text-xs text-muted-foreground">
-                    {t('authorizationEditor.consentsIntro')}
-                  </p>
-                  {consents.map((consent, index) => (
-                    <div
-                      key={consent.key}
-                      className="flex flex-col gap-2 rounded-lg border p-3"
-                      data-testid={`authorization-consent-${consent.key}`}
-                    >
-                      <AdminAuthField
-                        id={`authorization-consent-label-${consent.key}`}
-                        label={t('authorizationEditor.consentLabel', { number: index + 1 })}
-                        dir={direction}
-                        value={inLanguage(consent.label)}
-                        onChange={(event) =>
-                          setConsents(
-                            consents.map((entry) =>
-                              entry.key === consent.key
-                                ? { ...entry, label: withLanguage(entry.label, event.target.value) }
-                                : entry,
-                            ),
-                          )
-                        }
-                      />
-                      <RequiredSwitch
-                        id={`authorization-consent-required-${consent.key}`}
-                        checked={consent.required}
-                        disabled={isBusy}
-                        lockReason={
-                          consent.key === IMAGE_RIGHTS_CONSENT
-                            ? t('authorizationEditor.imageRightsLock')
-                            : undefined
-                        }
-                        onChange={(required) =>
-                          setConsents(
-                            consents.map((entry) =>
-                              entry.key === consent.key ? { ...entry, required } : entry,
-                            ),
-                          )
-                        }
-                      />
-                      <div className="flex flex-wrap gap-2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          disabled={index === 0}
-                          aria-label={t('authorizationEditor.moveUp', { number: index + 1 })}
-                          onClick={() => {
-                            const next = [...consents];
-                            [next[index - 1], next[index]] = [next[index]!, next[index - 1]!];
-                            setConsents(next);
-                          }}
-                        >
-                          {t('authorizationEditor.moveUpShort')}
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          disabled={index === consents.length - 1}
-                          aria-label={t('authorizationEditor.moveDown', { number: index + 1 })}
-                          onClick={() => {
-                            const next = [...consents];
-                            [next[index], next[index + 1]] = [next[index + 1]!, next[index]!];
-                            setConsents(next);
-                          }}
-                        >
-                          {t('authorizationEditor.moveDownShort')}
-                        </Button>
-                        {consents.length > 1 &&
-                        !(consent.key === HEALTH_DATA_CONSENT && hasHealthField) ? (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            data-testid={`authorization-consent-remove-${consent.key}`}
-                            onClick={() =>
-                              setConsents(consents.filter((entry) => entry.key !== consent.key))
-                            }
-                          >
-                            {t('authorizationEditor.removeConsent')}
-                          </Button>
-                        ) : null}
-                      </div>
-                    </div>
-                  ))}
-                  {consents.length < 20 ? (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="w-fit"
-                      data-testid="authorization-consent-add"
-                      onClick={() =>
-                        setConsents([
-                          ...consents,
-                          {
-                            key: newConsentKey(content),
-                            label: {},
-                            required: false,
-                            position: consents.length,
-                          },
-                        ])
-                      }
-                    >
-                      {t('authorizationEditor.addConsent')}
-                    </Button>
-                  ) : null}
-                </fieldset>
-              ) : null}
-
               <fieldset className="flex flex-col gap-3" data-testid="authorization-texts">
                 <legend className="text-start text-sm font-semibold">
                   {t('authorizationEditor.textsTitle')}
@@ -591,6 +463,22 @@ export function AuthorizationEditor({
                 </fieldset>
               ) : null}
             </section>
+
+            {isOn('consents') ? (
+              // The consents of Dades legals asked here, with the shared picker (RAPP-699).
+              <ScreenFieldsSection
+                surface="consents"
+                catalog={catalog}
+                screenKey="consents"
+                screenName={t('authorizationEditor.phoneStep.consents')}
+                builtinQuestions={[]}
+                language={language}
+                editing={editingField}
+                onEdit={setEditingField}
+                onBuiltinLabelChange={() => undefined}
+                onWordingChange={() => undefined}
+              />
+            ) : null}
 
             {isOn('health') ? (
               // The Health screen's fields, placed with the field picker like any screen's (RAPP-698).

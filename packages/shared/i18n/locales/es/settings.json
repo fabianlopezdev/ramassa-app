@@ -377,7 +377,9 @@
       "file_upload": "Foto o archivo",
       "country": "País",
       "municipality": "Municipio de Cataluña",
-      "signature": "Firma"
+      "signature": "Firma",
+      "consent": "Consentimiento",
+      "document": "Documento"
     },
     "privacy": "Privacidad",
     "privacyLevels": {
@@ -568,16 +570,7 @@
   "authorizationEditor": {
     "draftRow": "Borrador, guardado el {{date}}",
     "intro": "Empieza desde el borrador o la versión vigente. Edita idioma por idioma: un campo de texto de la app que dejes vacío muestra el texto de la app en el idioma de la jugadora.",
-    "consentsTitle": "Autorizaciones",
-    "consentsIntro": "Añade, quita, ordena y redacta cada autorización, y marca las obligatorias. Cada firma guarda el texto que ella vio.",
-    "consentLabel": "Autorización {{number}}",
     "imageRightsLock": "Los derechos de imagen siempre son opcionales: deciden el permiso de fotos, que ella puede retirar.",
-    "moveUp": "Sube la autorización {{number}}",
-    "moveDown": "Baja la autorización {{number}}",
-    "moveUpShort": "Sube",
-    "moveDownShort": "Baja",
-    "removeConsent": "Quita la autorización",
-    "addConsent": "Añade una autorización",
     "textsTitle": "Textos del formulario",
     "textsIntro": "La introducción, los títulos de cada paso, los botones, el paso final de firma y la reinscripción. Puedes escribir {{season}} para poner el nombre de la temporada.",
     "textField": {
@@ -688,7 +681,8 @@
       "entity_form": "Entidad",
       "season": "Temporada",
       "authorization": "Autorización",
-      "teamOnly": "Solo equipo"
+      "teamOnly": "Solo equipo",
+      "terms": "Condiciones"
     },
     "columnField": "Campo",
     "columnPrivacy": "Privacidad",
@@ -790,5 +784,29 @@
     "save": "Guardar",
     "newVersionCount": "Jugadoras que lo volverán a ver: {{count}}",
     "newVersionSaved": "Guardado. Quien ya había terminado el Onboarding lo volverá a ver."
+  },
+  "legalData": {
+    "title": "Datos legales",
+    "consents": "Consentimientos",
+    "signatures": "Firmas",
+    "documents": "Documentos aceptados",
+    "addConsent": "Añade un consentimiento",
+    "newConsent": "Consentimiento nuevo",
+    "consentName": "Nombre",
+    "consentText": "Texto que acepta",
+    "saveConsent": "Guarda el consentimiento",
+    "archive": "Archiva",
+    "unarchive": "Recupera",
+    "archived": "Archivado",
+    "archiveFailed": "No se ha podido archivar.",
+    "columnConsent": "Consentimiento",
+    "columnSignature": "Firma",
+    "columnDocument": "Documento",
+    "noConsents": "Ningún consentimiento todavía.",
+    "open": "Abre",
+    "openNamed": "Abre {{name}}",
+    "authorizationSignature": "Firma de la autorización",
+    "termsSignature": "Firma de las condiciones",
+    "removeBody": "Ya no se preguntará en este formulario. El consentimiento y las decisiones ya tomadas se conservan."
   }
 }

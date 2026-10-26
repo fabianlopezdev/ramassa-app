@@ -2,7 +2,7 @@
  * A field's type as a small icon tile (RAPP-650): the Fitxa's rows and the
  * onboarding picker (RAPP-651) show it before the name. The type's name is
  * the tile's title and its accessible name. A signature block (RAPP-690) has
- * its own tile in the same lists.
+ * its own tile in the same lists, and so do a consent and a document (RAPP-699).
  */
 
 import { cn } from '@/lib/utils';
@@ -11,6 +11,7 @@ import {
   Calendar,
   CircleDot,
   CircleHelp,
+  FileText,
   Globe,
   Hash,
   List,
@@ -21,6 +22,7 @@ import {
   PenLine,
   Phone,
   Search,
+  ShieldCheck,
   ToggleLeft,
   Type,
   type LucideIcon,
@@ -28,7 +30,10 @@ import {
 import { useTranslation } from 'react-i18next';
 import type { CustomQuestionType } from '@ramassa/shared/intake-builder';
 
-const TYPE_ICONS: Readonly<Record<CustomQuestionType | 'signature', LucideIcon>> = {
+/** A field's type, a signature block (RAPP-690) or a consent of Dades legals (RAPP-699). */
+export type CatalogItemType = CustomQuestionType | 'signature' | 'consent' | 'document';
+
+const TYPE_ICONS: Readonly<Record<CatalogItemType, LucideIcon>> = {
   short_text: Type,
   long_text: AlignLeft,
   yes_no_maybe: CircleHelp,
@@ -45,13 +50,15 @@ const TYPE_ICONS: Readonly<Record<CustomQuestionType | 'signature', LucideIcon>>
   country: Globe,
   municipality: MapPin,
   signature: PenLine,
+  consent: ShieldCheck,
+  document: FileText,
 };
 
 export function FieldTypeIcon({
   type,
   className,
 }: {
-  readonly type: CustomQuestionType | 'signature';
+  readonly type: CatalogItemType;
   readonly className?: string;
 }) {
   const { t } = useTranslation('settings');

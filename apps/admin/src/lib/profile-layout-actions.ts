@@ -9,18 +9,24 @@ import type { FieldFormDraft } from '@/components/fields/field-form';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from '@tanstack/react-router';
 import {
+  archiveConsent,
   archiveProfileField,
+  placeConsent,
   placeField,
   previewFieldChange,
   profileFieldAnswerCount,
+  removeConsentPlacement,
   removeFormBlock,
   removePlacement,
   reorderPlacements,
+  saveConsent,
+  saveConsentPlacement,
   saveFormBlock,
   savePlacement,
   saveProfileField,
   saveProfileSection,
   type BuilderText,
+  type ConsentSurface,
   type FieldChangePreview,
   type FormBlockSurface,
   type ProfileField,
@@ -114,6 +120,42 @@ export function useProfileLayoutActions() {
     },
     async removeBlock(id: string): Promise<void> {
       await removeFormBlock(supabase, id);
+      await reload();
+    },
+    /** Adds a consent to Dades legals, or renames and rewords one (RAPP-699). */
+    async saveConsent(consent: {
+      readonly id: string | null;
+      readonly name: BuilderText;
+      readonly body: BuilderText;
+    }): Promise<string> {
+      const id = await saveConsent(supabase, consent);
+      await reload();
+      return id;
+    },
+    async archiveConsent(id: string, archived: boolean): Promise<void> {
+      await archiveConsent(supabase, id, archived);
+      await reload();
+    },
+    /** Asks consents on the authorization or an Onboarding screen, optional at first. */
+    async placeConsents(
+      surface: ConsentSurface,
+      screenKey: string | null,
+      consentIds: readonly string[],
+    ): Promise<void> {
+      try {
+        for (const consentId of consentIds) {
+          await placeConsent(supabase, { consentId, surface, screenKey, required: false });
+        }
+      } finally {
+        await reload();
+      }
+    },
+    async saveConsentPlacement(placementId: string, required: boolean): Promise<void> {
+      await saveConsentPlacement(supabase, placementId, required);
+      await reload();
+    },
+    async removeConsentPlacement(placementId: string): Promise<void> {
+      await removeConsentPlacement(supabase, placementId);
       await reload();
     },
     /** Required on this surface and the wording per language. */

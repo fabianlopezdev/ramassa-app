@@ -11,7 +11,7 @@
  * removed (×) or not (room for one).
  */
 
-import { FieldTypeIcon } from '@/components/fields/field-type-icon';
+import { FieldTypeIcon, type CatalogItemType } from '@/components/fields/field-type-icon';
 import { PrivacyBadge } from '@/components/fields/privacy-badge';
 import { DragHandle, type SortableHandle } from '@/components/ui-patterns/sortable-list';
 import { Button } from '@/components/ui/button';
@@ -19,7 +19,7 @@ import { Switch } from '@/components/ui/switch';
 import { X } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { CustomQuestionType, QuestionPrivacy } from '@ramassa/shared/intake-builder';
+import type { QuestionPrivacy } from '@ramassa/shared/intake-builder';
 
 /** "Required" as a switch that saves at once (RAPP-611); a locked one says why. */
 function RequiredToggle({
@@ -63,9 +63,9 @@ export interface PlacementRowProps {
   readonly name: string;
   /** The line under the name: where the field comes from, and its section. */
   readonly detail: string;
-  /** The field's type, or a signature block's own tile (RAPP-690). */
-  readonly type: CustomQuestionType | 'signature';
-  /** The field's privacy; null for a signature block, which holds no data of hers. */
+  /** The field's type, or a signature block's or a consent's own tile (RAPP-690, RAPP-699). */
+  readonly type: CatalogItemType;
+  /** The field's privacy; null for a signature block or a consent, which hold no data of hers. */
   readonly privacy: QuestionPrivacy | null;
   /** The grip; null for a row that keeps its place (an app screen's own questions). */
   readonly handle: SortableHandle | null;

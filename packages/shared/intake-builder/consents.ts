@@ -293,3 +293,26 @@ export async function removeConsentPlacement(
   });
   if (error) throw databaseError(error);
 }
+
+/**
+ * The authorization's consents as its next version will hold them: each one
+ * placed on its consents screen, with the catalogue's text, flag and place.
+ * The database writes the same snapshot when the draft is saved
+ * (`private.authorization_consents_snapshot`); the editor's phone shows it.
+ */
+export function authorizationConsentsFromCatalog(catalog: {
+  readonly consents?: readonly Consent[];
+  readonly consentPlacements?: readonly ConsentPlacement[];
+}): Readonly<
+  Record<
+    string,
+    { readonly label: BuilderText; readonly required: boolean; readonly position: number }
+  >
+> {
+  return Object.fromEntries(
+    consentsOn(catalog, 'authorization', null).map((consent, position) => [
+      consent.key,
+      { label: consent.body, required: consent.required, position },
+    ]),
+  );
+}

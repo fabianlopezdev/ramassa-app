@@ -377,7 +377,9 @@
       "file_upload": "Photo or file",
       "country": "Country",
       "municipality": "Municipality of Catalonia",
-      "signature": "Signature"
+      "signature": "Signature",
+      "consent": "Consent",
+      "document": "Document"
     },
     "privacy": "Privacy",
     "privacyLevels": {
@@ -568,16 +570,7 @@
   "authorizationEditor": {
     "draftRow": "Draft, saved on {{date}}",
     "intro": "Start from the draft or the current version. Edit language by language: an app text field you leave empty shows the app's own text in her language.",
-    "consentsTitle": "Consents",
-    "consentsIntro": "Add, remove, order and word each consent, and mark the required ones. Every signature keeps the words she saw.",
-    "consentLabel": "Consent {{number}}",
     "imageRightsLock": "Image rights are always optional: they decide the photo consent, which she can withdraw.",
-    "moveUp": "Move consent {{number}} up",
-    "moveDown": "Move consent {{number}} down",
-    "moveUpShort": "Up",
-    "moveDownShort": "Down",
-    "removeConsent": "Remove the consent",
-    "addConsent": "Add a consent",
     "textsTitle": "Form wording",
     "textsIntro": "The introduction, each step's title, the buttons, the final signing step and re-registration. Write {{season}} to show the season's name.",
     "textField": {
@@ -688,7 +681,8 @@
       "entity_form": "Entity",
       "season": "Season",
       "authorization": "Authorization",
-      "teamOnly": "Team only"
+      "teamOnly": "Team only",
+      "terms": "Terms"
     },
     "columnField": "Field",
     "columnPrivacy": "Privacy",
@@ -790,5 +784,29 @@
     "save": "Save",
     "newVersionCount": "Players who will see it again: {{count}}",
     "newVersionSaved": "Saved. Players who had finished Onboarding will see it again."
+  },
+  "legalData": {
+    "title": "Legal data",
+    "consents": "Consents",
+    "signatures": "Signatures",
+    "documents": "Documents accepted",
+    "addConsent": "Add a consent",
+    "newConsent": "New consent",
+    "consentName": "Name",
+    "consentText": "Text she accepts",
+    "saveConsent": "Save the consent",
+    "archive": "Archive",
+    "unarchive": "Restore",
+    "archived": "Archived",
+    "archiveFailed": "It could not be archived.",
+    "columnConsent": "Consent",
+    "columnSignature": "Signature",
+    "columnDocument": "Document",
+    "noConsents": "No consent yet.",
+    "open": "Open",
+    "openNamed": "Open {{name}}",
+    "authorizationSignature": "Authorization signature",
+    "termsSignature": "Terms signature",
+    "removeBody": "It will no longer be asked on this form. The consent and the decisions already made are kept."
   }
 }

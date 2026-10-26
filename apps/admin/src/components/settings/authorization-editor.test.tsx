@@ -1,6 +1,6 @@
 /**
- * The season authorization editor (RAPP-614): staff shape the consents and
- * the questions of a draft, one screen of its board at a time (RAPP-696), and
+ * The season authorization editor (RAPP-614): staff shape the text and the
+ * questions of a draft, its consents coming from Dades legals (RAPP-699), one screen of its board at a time (RAPP-696), and
  * see her phone on that screen in each language, right to left for Arabic and
  * Farsi (RAPP-695). Only an admin saves it for the players, to the current
  * season or a future one (RAPP-694); once anyone signed, Desa asks Correcció
@@ -18,6 +18,7 @@ import {
   type AuthorizationVersion,
   type SaveKind,
 } from '@ramassa/shared/authorization';
+import { EMPTY_INTAKE_CATALOG, type IntakeCatalog } from '@ramassa/shared/intake-builder';
 import type { Season } from '@ramassa/shared/seasons';
 import { buildAuthorizationVersion } from '@ramassa/shared/testing';
 
@@ -64,6 +65,30 @@ function version(overrides: Partial<AuthorizationVersion> = {}): AuthorizationVe
   };
 }
 
+/** Dades legals holding a version's consents, placed on the consents screen in its order (RAPP-699). */
+function catalogOf(content: AuthorizationContent, order?: readonly string[]): IntakeCatalog {
+  const keys = order ?? Object.keys(content.consents);
+  return {
+    ...EMPTY_INTAKE_CATALOG,
+    consents: keys.map((key, index) => ({
+      id: `00000000-0000-4000-8000-${String(index).padStart(12, '0')}`,
+      key,
+      systemKey: key,
+      name: { ca: key },
+      body: content.consents[key]!.label,
+      isArchived: false,
+    })),
+    consentPlacements: keys.map((key, index) => ({
+      id: `00000000-0000-4000-8001-${String(index).padStart(12, '0')}`,
+      consentId: `00000000-0000-4000-8000-${String(index).padStart(12, '0')}`,
+      surface: 'authorization' as const,
+      screenKey: null,
+      sortOrder: index,
+      required: content.consents[key]!.required,
+    })),
+  };
+}
+
 const draftOf = (content?: AuthorizationContent) =>
   version({
     id: '5eed0000-0000-4000-8041-000000000099',
@@ -81,10 +106,12 @@ function renderEditor(
     step = 'document',
     canPublish = true,
     seasons = [NEXT, CURRENT, PAST],
+    catalog = catalogOf(version().content),
   }: {
     readonly step?: AuthorizationPhoneStep;
     readonly canPublish?: boolean;
     readonly seasons?: readonly Season[];
+    readonly catalog?: IntakeCatalog;
   } = {},
 ) {
   const onSaveDraft = mock(async (content: AuthorizationContent) => void content);
@@ -101,6 +128,7 @@ function renderEditor(
       onSaveDraft={onSaveDraft}
       onDiscardDraft={onDiscardDraft}
       onPublish={onPublish}
+      catalog={catalog}
     />,
   );
   return { view, onSaveDraft, onDiscardDraft, onPublish };
@@ -126,7 +154,8 @@ test('each screen edits its own fields, with her phone on that screen (RAPP-696)
   expect(document.queryByTestId('phone-step-consents')).toBeNull();
   document.unmount();
   const consents = renderEditor([version()], { step: 'consents' }).view;
-  expect(field(consents, 'authorization-consent-label-participation').value).toBe('Participo.');
+  // Its consents are placed with the shared picker (RAPP-699).
+  expect(consents.getByTestId('screen-questions')).toBeTruthy();
   expect(consents.container.querySelector('#authorization-title')).toBeNull();
   const phone = consents.getByTestId('phone-screen').textContent ?? '';
   expect(phone.indexOf('Participo.')).toBeLessThan(phone.indexOf('Grups.'));
@@ -144,28 +173,29 @@ test('in Arabic the fields and her phone read right to left (RAPP-695)', () => {
   expect(field(view, 'authorization-text-intro').getAttribute('dir')).toBe('rtl');
 });
 
-test('staff add a consent, mark it required, move it up and remove another', async () => {
-  const { view, onSaveDraft } = renderEditor([version()], { step: 'consents' });
-  fireEvent.click(view.getByTestId('authorization-consent-add'));
-  expect(view.getByTestId('authorization-consent-consent_8')).toBeTruthy();
-  fireEvent.click(field(view, 'authorization-consent-required-consent_8'));
-  const ups = view.getAllByRole('button', { name: 'authorizationEditor.moveUp' });
-  fireEvent.click(ups.at(-1)!);
+test('her phone and the draft take the consents as Dades legals places them (RAPP-699)', async () => {
+  const content = version().content;
+  const keys = Object.keys(content.consents);
+  const moved = [...keys.filter((key) => key !== 'messaging_groups'), 'messaging_groups'].reverse();
+  const { view, onSaveDraft } = renderEditor([version()], {
+    step: 'consents',
+    catalog: catalogOf(content, moved),
+  });
   const phone = view.getByTestId('phone-screen').textContent ?? '';
-  expect(phone.indexOf('Grups.')).toBeGreaterThan(phone.indexOf('Imatge.'));
-  fireEvent.click(view.getByTestId('authorization-consent-remove-newsletter'));
+  expect(phone.indexOf('Grups.')).toBeLessThan(phone.indexOf('Participo.'));
   fireEvent.click(view.getByTestId('authorization-save'));
-  // The new consent has no words yet: the draft is refused until it has.
-  expect(view.getByRole('alert').textContent).toBe('authorizationEditor.invalid');
-  expect(onSaveDraft).not.toHaveBeenCalled();
+  await waitFor(() => expect(onSaveDraft).toHaveBeenCalledTimes(1));
+  expect(onSaveDraft.mock.calls[0]![0].consents.messaging_groups?.position).toBe(0);
 });
 
-test('image rights never become required; the health consent stays while her health is asked', () => {
-  const { view } = renderEditor([version()], { step: 'consents' });
-  expect(field(view, 'authorization-consent-required-image_rights').disabled).toBe(true);
-  // No health field placed in this catalog: the health consent is an ordinary consent (RAPP-698).
-  expect(field(view, 'authorization-consent-required-health_data').disabled).toBe(false);
-  expect(view.getByTestId('authorization-consent-remove-health_data')).toBeTruthy();
+test('with no consent placed, the draft is refused', () => {
+  const { view, onSaveDraft } = renderEditor([version()], {
+    step: 'consents',
+    catalog: EMPTY_INTAKE_CATALOG,
+  });
+  fireEvent.click(view.getByTestId('authorization-save'));
+  expect(view.getByRole('alert').textContent).toBe('authorizationEditor.invalid');
+  expect(onSaveDraft).not.toHaveBeenCalled();
 });
 
 test('a draft saved from the Health screen carries no questions: its fields are placements (RAPP-698)', async () => {

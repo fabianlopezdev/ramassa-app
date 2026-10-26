@@ -12,6 +12,9 @@
  *   - "Add a signature" adds a signature block (RAPP-690): the text she
  *     accepts and a box to sign in. It moves among the fields, always
  *     required, and is edited and removed in its own row.
+ *   - Consents of Dades legals (RAPP-699) are picked in the same picker,
+ *     placed among the fields, required or not, reworded in their row. The
+ *     authorization's consents screen lists consents alone (`consents`).
  *
  * Type and privacy belong to the field, so this list never asks them.
  */
@@ -24,6 +27,7 @@ import {
 } from '@/components/fields/placement-wording-form';
 import { AddSignatureButton, SignatureBlockRow } from '@/components/fields/signature-block-row';
 import { EditorSection } from '@/components/layout/editor-section';
+import { ConsentForm } from '@/components/legal/consent-form';
 import { BuiltinForm } from '@/components/onboarding/builtin-question-form';
 import { FieldDialog } from '@/components/profile-layout/field-dialog';
 import { useReload } from '@/components/settings/onboarding-design-sections';
@@ -45,9 +49,11 @@ import {
   type IntakeQuestion,
 } from '@ramassa/shared/intake';
 import {
+  authorizationFieldId,
   builtinField,
   builtinRequiredLock,
   canHideBuiltin,
+  consentsOn,
   fieldById,
   formBlocksOn,
   formBlockText,
@@ -62,9 +68,11 @@ import {
   saveBuiltinQuestionRequired,
   textIn,
   type BuilderText,
+  type Consent,
   type FieldPlacement,
   type FormBlock,
   type IntakeCatalog,
+  type PlacedConsent,
   type ProfileField,
   type ProfileLayout,
   type ProfileSection,
@@ -79,13 +87,18 @@ interface Placed {
   readonly field: ProfileField;
 }
 
-/** One row of the list: a placed field, or a signature block (RAPP-690). */
+/** One row of the list: a placed field, a signature block (RAPP-690) or a consent (RAPP-699). */
 type ScreenItem =
   | { readonly kind: 'field'; readonly id: string; readonly placed: Placed }
-  | { readonly kind: 'block'; readonly id: string; readonly block: FormBlock };
+  | { readonly kind: 'block'; readonly id: string; readonly block: FormBlock }
+  | { readonly kind: 'consent'; readonly id: string; readonly consent: PlacedConsent };
 
-/** The fields and the blocks of a screen in the order they share, a field first on a tie. */
-function screenItems(placed: readonly Placed[], blocks: readonly FormBlock[]): ScreenItem[] {
+/** The fields, blocks and consents of a screen in the order they share, a field first on a tie. */
+function screenItems(
+  placed: readonly Placed[],
+  blocks: readonly FormBlock[],
+  consents: readonly PlacedConsent[],
+): ScreenItem[] {
   const items = [
     ...placed.map((row) => ({
       item: { kind: 'field', id: row.placement.id, placed: row } as ScreenItem,
@@ -96,6 +109,11 @@ function screenItems(placed: readonly Placed[], blocks: readonly FormBlock[]): S
       item: { kind: 'block', id: block.id, block } as ScreenItem,
       order: block.sortOrder,
       rank: 1,
+    })),
+    ...consents.map((consent) => ({
+      item: { kind: 'consent', id: consent.placementId, consent } as ScreenItem,
+      order: consent.sortOrder,
+      rank: 2,
     })),
   ];
   return items.sort((a, b) => a.order - b.order || a.rank - b.rank).map((entry) => entry.item);
@@ -108,7 +126,7 @@ function screenItems(placed: readonly Placed[], blocks: readonly FormBlock[]): S
  */
 function placedFields(
   layout: ProfileLayout,
-  surface: FieldsSurface,
+  surface: 'onboarding' | 'authorization',
   screenKey: string | null,
   offTheirControl: ReadonlySet<IntakeQuestion>,
 ): readonly Placed[] {
@@ -120,8 +138,11 @@ function placedFields(
   });
 }
 
-/** The screens this section edits: an Onboarding screen, or the authorization's Health screen (RAPP-698). */
-type FieldsSurface = 'onboarding' | 'authorization';
+/**
+ * The screens this section edits: an Onboarding screen, the authorization's
+ * Health screen (RAPP-698), or its consents screen (`consents`, RAPP-699).
+ */
+type FieldsSurface = 'onboarding' | 'authorization' | 'consents';
 
 export function ScreenFieldsSection({
   surface = 'onboarding',
@@ -158,14 +179,33 @@ export function ScreenFieldsSection({
   const [isPicking, setIsPicking] = useState(false);
   const offTheirControl = questionsOffTheirControl(layout);
   const isOnboarding = surface === 'onboarding';
-  // The Health screen is its surface's one screen: its placements name none.
+  const isConsents = surface === 'consents';
+  // The Health and consents screens are their surface's one screen: their placements name none.
   const placementKey = isOnboarding ? screenKey : null;
-  const placed = placedFields(layout, surface, placementKey, offTheirControl);
+  // The consents screen is the authorization's surface for consents (RAPP-699).
+  const orderSurface = surface === 'consents' ? 'authorization' : surface;
+  const placed = isConsents
+    ? []
+    : placedFields(layout, orderSurface, placementKey, offTheirControl);
+  const consentSurface = isOnboarding ? 'onboarding' : 'authorization';
+  const consents =
+    isOnboarding || isConsents ? consentsOn(catalog, consentSurface, placementKey) : [];
   const items = screenItems(
     placed,
     isOnboarding ? formBlocksOn(catalog.blocks, 'onboarding', screenKey) : [],
+    consents,
   );
-  const { ordered, reorder } = usePlacementOrder(surface, placementKey, items, (item) => item.id);
+  const { ordered, reorder } = usePlacementOrder(
+    orderSurface,
+    placementKey,
+    items,
+    (item) => item.id,
+  );
+  // The authorization asks her health: its consent stays (RAPP-698).
+  const healthFieldId = authorizationFieldId(catalog, 'health_info');
+  const asksHealth = placementsOnSurface(layout, 'authorization').some(
+    (placement) => placement.fieldId === healthFieldId,
+  );
   const sectionOf = (field: ProfileField) =>
     layout.sections.find((section) => section.id === field.sectionId);
   // Sections and the picker are the team's words, in the staff member's language.
@@ -185,7 +225,7 @@ export function ScreenFieldsSection({
   const stateOf = (field: ProfileField): FieldPickState => {
     if (!isOnboarding) {
       // A field is asked once per surface: here, or free to place.
-      return placementsOnSurface(layout, surface).some(
+      return placementsOnSurface(layout, orderSurface).some(
         (placement) => placement.fieldId === field.id,
       )
         ? { kind: 'placed', note: t('fieldPicker.here') }
@@ -209,6 +249,25 @@ export function ScreenFieldsSection({
         : ramassaScreenIdOf(pick.screenKey) === null
           ? pick.screenKey
           : customStepKey(pick.screenKey);
+    const number = steps.findIndex((step) => step.key === stepKey) + 1;
+    return {
+      kind: 'blocked',
+      note: number === 0 ? t('fieldPicker.elsewhereApp') : t('fieldPicker.elsewhere', { number }),
+    };
+  };
+
+  // A consent is asked once per form: here, on another Onboarding screen, or free (RAPP-699).
+  const consentStateOf = (consent: Consent): FieldPickState => {
+    const placement = (catalog.consentPlacements ?? []).find(
+      (each) => each.consentId === consent.id && each.surface === consentSurface,
+    );
+    if (placement === undefined) return { kind: 'free' };
+    if (placement.screenKey === placementKey)
+      return { kind: 'placed', note: t('fieldPicker.here') };
+    const stepKey =
+      placement.screenKey === null || ramassaScreenIdOf(placement.screenKey) === null
+        ? placement.screenKey
+        : customStepKey(placement.screenKey);
     const number = steps.findIndex((step) => step.key === stepKey) + 1;
     return {
       kind: 'blocked',
@@ -249,18 +308,37 @@ export function ScreenFieldsSection({
           nameOf={(item) =>
             item.kind === 'field'
               ? textIn(item.placed.field.label, language)
-              : formBlockText(item.block, language).text
+              : item.kind === 'consent'
+                ? textIn(item.consent.name, language)
+                : formBlockText(item.block, language).text
           }
           onReorder={(ids) => void reorder(ids)}
           leading={builtinRows}
           className="flex flex-col divide-y"
           itemTestId={(item) =>
-            item.kind === 'field' ? `placement-${item.placed.field.id}` : `block-${item.block.id}`
+            item.kind === 'field'
+              ? `placement-${item.placed.field.id}`
+              : item.kind === 'consent'
+                ? `consent-${item.consent.key}`
+                : `block-${item.block.id}`
           }
           testId="placement-list"
         >
           {(item, handle) =>
-            item.kind === 'block' ? (
+            item.kind === 'consent' ? (
+              <ConsentPlacementRow
+                consent={item.consent}
+                handle={handle}
+                language={language}
+                canRemove={
+                  !(isConsents && item.consent.key === 'health_data' && asksHealth) &&
+                  !(isConsents && consents.length === 1)
+                }
+                isEditing={editing === item.consent.placementId}
+                onToggleEdit={() => toggle(item.consent.placementId)}
+                onClose={close}
+              />
+            ) : item.kind === 'block' ? (
               <SignatureBlockRow
                 block={item.block}
                 handle={handle}
@@ -301,10 +379,10 @@ export function ScreenFieldsSection({
           variant="outline"
           size="sm"
           onClick={() => setIsPicking(true)}
-          data-testid="screen-questions-add"
+          data-testid={isConsents ? 'screen-consents-add' : 'screen-questions-add'}
         >
           <Plus aria-hidden data-icon="inline-start" />
-          {t('profileLayout.addField')}
+          {isConsents ? t('legalData.addConsent') : t('profileLayout.addField')}
         </Button>
         {isOnboarding ? (
           <AddSignatureButton
@@ -325,10 +403,99 @@ export function ScreenFieldsSection({
             : (layout.sections.find((section) => section.key === 'health_needs')?.id ?? null)
         }
         stateOf={stateOf}
-        onConfirm={(ids) => actions.placeFields(surface, placementKey, ids)}
+        onConfirm={(ids) => actions.placeFields(orderSurface, placementKey, ids)}
         onCreateField={(section, draft) => actions.saveField(null, section, draft)}
+        {...(isOnboarding || isConsents
+          ? {
+              consents: {
+                items: (catalog.consents ?? []).filter((consent) => !consent.isArchived),
+                stateOf: consentStateOf,
+                onConfirm: (ids) => actions.placeConsents(consentSurface, placementKey, ids),
+                isOnly: isConsents,
+              },
+            }
+          : {})}
       />
     </EditorSection>
+  );
+}
+
+/** A consent asked on the screen (RAPP-699): required here or not, reworded for every form. */
+function ConsentPlacementRow({
+  consent,
+  handle,
+  language,
+  canRemove,
+  isEditing,
+  onToggleEdit,
+  onClose,
+}: {
+  readonly consent: PlacedConsent;
+  readonly handle: SortableHandle;
+  readonly language: LanguageCode;
+  readonly canRemove: boolean;
+  readonly isEditing: boolean;
+  readonly onToggleEdit: () => void;
+  readonly onClose: () => void;
+}) {
+  const { t } = useTranslation('settings');
+  const actions = useProfileLayoutActions();
+  const [isBusy, setIsBusy] = useState(false);
+  const [isConfirming, setIsConfirming] = useState(false);
+  const name = textIn(consent.name, language);
+
+  async function run(action: () => Promise<void>) {
+    setIsBusy(true);
+    try {
+      await action();
+    } catch {
+      toast.error(t('questions.failed'));
+    } finally {
+      setIsBusy(false);
+    }
+  }
+
+  return (
+    <>
+      <PlacementRow
+        name={name}
+        detail={textIn(consent.body, language)}
+        type="consent"
+        privacy={null}
+        handle={handle}
+        required={{
+          id: `consent-required-${consent.key}`,
+          checked: consent.required,
+          // Image rights drive the photo consent, which she can always refuse.
+          ...(consent.key === 'image_rights'
+            ? { lockReason: t('authorizationEditor.imageRightsLock') }
+            : {}),
+          onChange: (next) =>
+            void run(() => actions.saveConsentPlacement(consent.placementId, next)),
+        }}
+        isBusy={isBusy}
+        isEditing={isEditing}
+        onToggleEdit={onToggleEdit}
+        {...(canRemove ? { onRemove: () => setIsConfirming(true) } : {})}
+        testId={`consent-row-${consent.key}`}
+      >
+        <ConsentForm
+          key={consent.id}
+          consent={consent}
+          onSave={(draft) => actions.saveConsent({ id: consent.id, ...draft })}
+          onCancel={onClose}
+          testId={`consent-row-${consent.key}-form`}
+        />
+      </PlacementRow>
+      <ConfirmDialog
+        isOpen={isConfirming}
+        onOpenChange={setIsConfirming}
+        title={t('placement.removeTitle', { field: name })}
+        description={t('legalData.removeBody')}
+        action={t('placement.remove')}
+        onConfirm={() => void run(() => actions.removeConsentPlacement(consent.placementId))}
+      />
+    </>
   );
 }
 

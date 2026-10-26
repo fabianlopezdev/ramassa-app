@@ -26,7 +26,7 @@ import {
 type Ticks = Readonly<Record<string, boolean>>;
 
 /** One consent of the screen, to draw at its place among the fields. */
-export interface PlacedConsentEntry {
+interface PlacedConsentEntry {
   readonly sortOrder: number;
   readonly node: ReactNode;
 }

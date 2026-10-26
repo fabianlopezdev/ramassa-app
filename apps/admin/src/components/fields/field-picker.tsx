@@ -16,6 +16,10 @@
  * sections to the fields and Left back (mirrored right to left), Space ticks
  * a field, Enter adds the picked ones, Escape closes. Down from the search
  * goes to the fields.
+ *
+ * A surface that asks consents (RAPP-699) passes them: Dades legals is one
+ * more section here, picked and added the same way. The authorization's
+ * consents screen shows that section alone.
  */
 
 import type { FieldFormDraft } from '@/components/fields/field-form';
@@ -40,6 +44,7 @@ import { toast } from 'sonner';
 import {
   fieldsOfSection,
   textIn,
+  type Consent,
   type ProfileField,
   type ProfileLayout,
   type ProfileSection,
@@ -54,6 +59,25 @@ export type FieldPickState =
   | { readonly kind: 'blocked'; readonly note: string }
   | { readonly kind: 'free' };
 
+/** The consents of Dades legals a surface may ask (RAPP-699). */
+interface ConsentPickOptions {
+  readonly items: readonly Consent[];
+  readonly stateOf: (consent: Consent) => FieldPickState;
+  readonly onConfirm: (consentIds: readonly string[]) => Promise<void>;
+  /** The picker holds only them: the authorization's consents screen. */
+  readonly isOnly?: boolean;
+}
+
+/** The section that lists the consents, beside the Fitxa's sections. */
+const CONSENTS_SECTION = 'consents';
+
+function consentMatches(consent: Consent, query: string): boolean {
+  const needle = query.trim().toLocaleLowerCase();
+  return [...Object.values(consent.name), ...Object.values(consent.body)].some((text) =>
+    (text ?? '').toLocaleLowerCase().includes(needle),
+  );
+}
+
 export interface FieldPickerProps {
   readonly layout: ProfileLayout;
   readonly isOpen: boolean;
@@ -66,6 +90,8 @@ export interface FieldPickerProps {
   readonly onConfirm: (fieldIds: readonly string[]) => Promise<void>;
   /** Creates a field in a section and returns its id; left out, there is no "New field…". */
   readonly onCreateField?: (section: ProfileSection, draft: FieldFormDraft) => Promise<string>;
+  /** Dades legals as one more section (RAPP-699). */
+  readonly consents?: ConsentPickOptions;
   readonly testId?: string;
 }
 
@@ -111,13 +137,15 @@ function PickerBody({
   stateOf,
   onConfirm,
   onCreateField,
+  consents,
   testId = 'field-picker',
 }: FieldPickerProps) {
   const { t, i18n } = useTranslation('settings');
   const language = (i18n.resolvedLanguage ?? 'ca') as LanguageCode;
   const ids = useId();
+  const isConsentsOnly = consents?.isOnly === true;
   const [sectionId, setSectionId] = useState<string | null>(
-    initialSectionId ?? layout.sections[0]?.id ?? null,
+    isConsentsOnly ? CONSENTS_SECTION : (initialSectionId ?? layout.sections[0]?.id ?? null),
   );
   const [query, setQuery] = useState('');
   const [picked, setPicked] = useState<ReadonlySet<string>>(new Set());
@@ -126,23 +154,43 @@ function PickerBody({
   const sectionsRef = useRef<HTMLDivElement>(null);
   const optionsRef = useRef<HTMLDivElement>(null);
 
-  const section = layout.sections.find((each) => each.id === sectionId) ?? layout.sections[0];
+  const isConsentsSection = sectionId === CONSENTS_SECTION;
+  const section =
+    isConsentsSection || isConsentsOnly
+      ? undefined
+      : (layout.sections.find((each) => each.id === sectionId) ?? layout.sections[0]);
   const isSearching = query.trim() !== '';
-  const shown: readonly ProfileField[] = isSearching
-    ? searchFields(layout, query)
-    : section === undefined
+  const shown: readonly ProfileField[] = isConsentsOnly
+    ? []
+    : isSearching
+      ? searchFields(layout, query)
+      : section === undefined
+        ? []
+        : fieldsOfSection(layout, section.id, false, language);
+  const shownConsents: readonly Consent[] =
+    consents === undefined
       ? []
-      : fieldsOfSection(layout, section.id, false, language);
+      : isSearching
+        ? consents.items.filter((consent) => consentMatches(consent, query))
+        : isConsentsSection
+          ? consents.items
+          : [];
   // Search results under their sections' names, in the Fitxa's order.
   const groups: readonly { readonly section: ProfileSection; readonly fields: ProfileField[] }[] =
     layout.sections.flatMap((each) => {
       const fields = shown.filter((field) => field.sectionId === each.id);
       return fields.length === 0 ? [] : [{ section: each, fields }];
     });
-  const canPick = (id: string) => {
+  const consentById = (id: string) => consents?.items.find((each) => each.id === id);
+  const canPickField = (id: string) => {
     const field = layout.fields.find((each) => each.id === id);
     return field !== undefined && stateOf(field).kind === 'free';
   };
+  const canPickConsent = (id: string) => {
+    const consent = consentById(id);
+    return consent !== undefined && consents?.stateOf(consent).kind === 'free';
+  };
+  const canPick = (id: string) => canPickField(id) || canPickConsent(id);
   const sectionName = (each: ProfileSection) => textIn(each.title, language);
   const isRtl = () => getComputedStyle(optionsRef.current ?? document.body).direction === 'rtl';
 
@@ -150,17 +198,29 @@ function PickerBody({
     container === null ? [] : [...container.querySelectorAll<HTMLElement>('[data-picker-item]')];
 
   function toggle(field: ProfileField) {
-    if (!canPick(field.id)) return;
-    setPicked((current) => togglePick(layout, current, field.id, canPick));
+    if (!canPickField(field.id)) return;
+    setPicked((current) => togglePick(layout, current, field.id, canPickField));
+  }
+
+  function toggleConsent(consent: Consent) {
+    if (!canPickConsent(consent.id)) return;
+    setPicked((current) => {
+      const next = new Set(current);
+      if (next.has(consent.id)) next.delete(consent.id);
+      else next.add(consent.id);
+      return next;
+    });
   }
 
   async function confirm() {
     // A field picked earlier may have been placed meanwhile (another tab).
-    const chosen = [...picked].filter(canPick);
-    if (chosen.length === 0 || isSaving) return;
+    const chosen = [...picked].filter(canPickField);
+    const chosenConsents = [...picked].filter(canPickConsent);
+    if ((chosen.length === 0 && chosenConsents.length === 0) || isSaving) return;
     setIsSaving(true);
     try {
-      await onConfirm(controllersFirst(layout, chosen));
+      if (chosen.length > 0) await onConfirm(controllersFirst(layout, chosen));
+      if (chosenConsents.length > 0) await consents?.onConfirm(chosenConsents);
       onOpenChange(false);
     } catch {
       toast.error(t('fieldPicker.failed'));
@@ -241,7 +301,7 @@ function PickerBody({
             className="flex max-h-36 flex-col gap-0.5 overflow-y-auto sm:max-h-none"
             onKeyDown={onSectionKey}
           >
-            {layout.sections.map((each) => {
+            {(isConsentsOnly ? [] : layout.sections).map((each) => {
               const isCurrent = !isSearching && each.id === section?.id;
               return (
                 <button
@@ -273,6 +333,34 @@ function PickerBody({
                 </button>
               );
             })}
+            {consents === undefined ? null : (
+              <button
+                type="button"
+                data-picker-item=""
+                data-current={!isSearching && isConsentsSection ? 'true' : 'false'}
+                aria-current={!isSearching && isConsentsSection ? 'true' : undefined}
+                tabIndex={isConsentsSection ? 0 : -1}
+                onFocus={() => {
+                  setQuery('');
+                  setSectionId(CONSENTS_SECTION);
+                }}
+                onClick={() => {
+                  setQuery('');
+                  setSectionId(CONSENTS_SECTION);
+                }}
+                className={cn(
+                  'flex h-9 shrink-0 items-center justify-between gap-2 rounded-md px-3 text-start text-sm outline-none',
+                  'hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50',
+                  !isSearching && isConsentsSection && 'bg-muted font-semibold text-primary',
+                )}
+                data-testid={`${testId}-section-consents`}
+              >
+                <span className="truncate">{t('legalData.title')}</span>
+                <span className="text-xs font-normal text-muted-foreground tabular-nums">
+                  {consents.items.length}
+                </span>
+              </button>
+            )}
           </div>
         </div>
         <div
@@ -282,15 +370,17 @@ function PickerBody({
           aria-label={
             isSearching
               ? t('fieldPicker.results')
-              : section === undefined
-                ? ''
-                : sectionName(section)
+              : isConsentsSection
+                ? t('legalData.title')
+                : section === undefined
+                  ? ''
+                  : sectionName(section)
           }
           className="flex min-h-48 flex-1 flex-col overflow-y-auto py-2"
           onKeyDown={onOptionKey}
           data-testid={`${testId}-fields`}
         >
-          {isSearching && groups.length === 0 ? (
+          {isSearching && groups.length === 0 && shownConsents.length === 0 ? (
             <p className="px-5 py-3 text-start text-sm text-muted-foreground">
               {t('fieldPicker.noResults')}
             </p>
@@ -326,7 +416,30 @@ function PickerBody({
               ))}
             </div>
           ))}
-          {!isSearching && section !== undefined && shown.length === 0 ? (
+          {shownConsents.length === 0 ? null : (
+            <div role="group" aria-labelledby={`${ids}-group-consents`}>
+              <p
+                id={`${ids}-group-consents`}
+                className="flex h-8 items-center px-5 text-start text-xs font-semibold text-muted-foreground uppercase"
+              >
+                {t('legalData.title')}
+              </p>
+              {shownConsents.map((consent, index) => (
+                <ConsentOption
+                  key={consent.id}
+                  consent={consent}
+                  state={consents?.stateOf(consent) ?? { kind: 'free' }}
+                  isPicked={picked.has(consent.id)}
+                  isFirst={groups.length === 0 && index === 0}
+                  onToggle={() => toggleConsent(consent)}
+                  testId={`${testId}-consent-${consent.key}`}
+                />
+              ))}
+            </div>
+          )}
+          {!isSearching &&
+          ((section !== undefined && shown.length === 0) ||
+            (isConsentsSection && shownConsents.length === 0)) ? (
             <p className="px-5 py-3 text-start text-sm text-muted-foreground">
               {t('profileLayout.emptySection')}
             </p>
@@ -470,6 +583,76 @@ function FieldOption({
         <span className="flex w-20 shrink-0 justify-end">
           <PrivacyBadge level={field.privacy} />
         </span>
+      </span>
+    </button>
+  );
+}
+
+function ConsentOption({
+  consent,
+  state,
+  isPicked,
+  isFirst,
+  onToggle,
+  testId,
+}: {
+  readonly consent: Consent;
+  readonly state: FieldPickState;
+  readonly isPicked: boolean;
+  readonly isFirst: boolean;
+  readonly onToggle: () => void;
+  readonly testId: string;
+}) {
+  const { i18n } = useTranslation('settings');
+  const language = (i18n.resolvedLanguage ?? 'ca') as LanguageCode;
+  const isTicked = state.kind === 'placed' || (state.kind === 'free' && isPicked);
+  const line = state.kind === 'free' ? textIn(consent.body, language) : state.note;
+  return (
+    <button
+      type="button"
+      role="option"
+      aria-selected={isTicked}
+      aria-disabled={state.kind === 'free' ? undefined : true}
+      data-picker-item=""
+      tabIndex={isFirst ? 0 : -1}
+      title={state.kind === 'free' ? undefined : state.note}
+      onClick={onToggle}
+      onKeyDown={(event) => {
+        if (event.key === ' ') {
+          event.preventDefault();
+          onToggle();
+        }
+      }}
+      className={cn(
+        'flex h-14 w-full shrink-0 items-center gap-3 px-5 text-start outline-none',
+        'hover:bg-muted/60 focus-visible:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset',
+        'aria-disabled:cursor-not-allowed',
+      )}
+      data-testid={testId}
+      data-state={state.kind}
+    >
+      <span
+        aria-hidden
+        className={cn(
+          'flex size-4 shrink-0 items-center justify-center rounded-[4px] border border-input',
+          isTicked && 'border-primary bg-primary text-primary-foreground',
+          state.kind !== 'free' && 'opacity-50',
+        )}
+      >
+        {isTicked ? <Check className="size-3" /> : null}
+      </span>
+      <span
+        className={cn(
+          'flex min-w-0 flex-1 items-center gap-3',
+          state.kind !== 'free' && 'opacity-50',
+        )}
+      >
+        <FieldTypeIcon type="consent" />
+        <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <span className="truncate text-sm font-medium">{textIn(consent.name, language)}</span>
+          <span className="truncate text-xs text-muted-foreground">{line}</span>
+        </span>
+        <span aria-hidden className="w-20 shrink-0" />
       </span>
     </button>
   );

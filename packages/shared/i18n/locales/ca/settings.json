@@ -377,7 +377,9 @@
       "file_upload": "Foto o fitxer",
       "country": "País",
       "municipality": "Municipi de Catalunya",
-      "signature": "Signatura"
+      "signature": "Signatura",
+      "consent": "Consentiment",
+      "document": "Document"
     },
     "privacy": "Privacitat",
     "privacyLevels": {
@@ -568,16 +570,7 @@
   "authorizationEditor": {
     "draftRow": "Esborrany, desat el {{date}}",
     "intro": "Comença des de l'esborrany o la versió vigent. Edita idioma per idioma: un camp de text de l'app que deixis buit mostra el text de l'app en l'idioma de la jugadora.",
-    "consentsTitle": "Autoritzacions",
-    "consentsIntro": "Afegeix, treu, ordena i redacta cada autorització, i marca les obligatòries. Cada signatura guarda el text que ella va veure.",
-    "consentLabel": "Autorització {{number}}",
     "imageRightsLock": "Els drets d'imatge sempre són opcionals: decideixen el permís de fotos, que ella pot retirar.",
-    "moveUp": "Puja l'autorització {{number}}",
-    "moveDown": "Baixa l'autorització {{number}}",
-    "moveUpShort": "Puja",
-    "moveDownShort": "Baixa",
-    "removeConsent": "Treu l'autorització",
-    "addConsent": "Afegeix una autorització",
     "textsTitle": "Textos del formulari",
     "textsIntro": "La introducció, els títols de cada pas, els botons, el pas final de signatura i la reinscripció. Pots escriure {{season}} per posar el nom de la temporada.",
     "textField": {
@@ -688,7 +681,8 @@
       "entity_form": "Entitat",
       "season": "Temporada",
       "authorization": "Autorització",
-      "teamOnly": "Només equip"
+      "teamOnly": "Només equip",
+      "terms": "Condicions"
     },
     "columnField": "Camp",
     "columnPrivacy": "Privacitat",
@@ -790,5 +784,29 @@
     "save": "Desa",
     "newVersionCount": "Jugadores que ho tornaran a veure: {{count}}",
     "newVersionSaved": "Desat. Qui ja havia acabat l'Onboarding ho tornarà a veure."
+  },
+  "legalData": {
+    "title": "Dades legals",
+    "consents": "Consentiments",
+    "signatures": "Signatures",
+    "documents": "Documents acceptats",
+    "addConsent": "Afegeix un consentiment",
+    "newConsent": "Consentiment nou",
+    "consentName": "Nom",
+    "consentText": "Text que accepta",
+    "saveConsent": "Desa el consentiment",
+    "archive": "Arxiva",
+    "unarchive": "Recupera",
+    "archived": "Arxivat",
+    "archiveFailed": "No s'ha pogut arxivar.",
+    "columnConsent": "Consentiment",
+    "columnSignature": "Signatura",
+    "columnDocument": "Document",
+    "noConsents": "Cap consentiment encara.",
+    "open": "Obre",
+    "openNamed": "Obre {{name}}",
+    "authorizationSignature": "Signatura de l'autorització",
+    "termsSignature": "Signatura de les condicions",
+    "removeBody": "Ja no es preguntarà en aquest formulari. El consentiment i les decisions ja preses es conserven."
   }
 }
