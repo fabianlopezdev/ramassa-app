@@ -28,6 +28,7 @@
 --      asks again). Then her Onboarding is up to date.
 --   6. `participant_onboarding_review_pending(profile)`: whether she still has
 --      screens to review, for her page in the Control Center.
+--   7. The erasure registry lists the new table: it holds no participant data.
 --
 -- A player who finishes Onboarding after a Nova versió is not asked again:
 -- her Onboarding is up to date from the moment she becomes a player.
@@ -53,8 +54,15 @@ comment on table public.onboarding_screen_versions is
 
 alter table public.onboarding_screen_versions enable row level security;
 alter table public.onboarding_screen_versions force row level security;
--- Written and read only through the functions below.
+-- Written only through the functions below; the people who design the
+-- onboarding read their organization's.
 revoke all on public.onboarding_screen_versions from anon, authenticated;
+grant select on public.onboarding_screen_versions to authenticated;
+create policy onboarding_screen_versions_read on public.onboarding_screen_versions
+  for select to authenticated
+  using (org_id = (select public.current_org_id())
+         and ((select public.has_permission('settings.organization'))
+              or (select public.has_permission('onboarding.design'))));
 
 -- 2. When her Onboarding was last up to date -------------------------------------------------------------
 
@@ -250,3 +258,110 @@ end;
 $$;
 revoke all on function public.participant_onboarding_review_pending(uuid) from public, anon;
 grant execute on function public.participant_onboarding_review_pending(uuid) to authenticated;
+
+-- 7. The erasure registry knows the new table ------------------------------------------------------------------
+
+-- The body of `20261026140000_walk_in_tablet_signs_the_onboarding_blocks.sql`,
+-- with `onboarding_screen_versions`: it holds no participant data.
+create or replace function public.personal_data_disposition()
+ RETURNS TABLE(table_name text, participant_column text, disposition text, reason text)
+ LANGUAGE sql
+ IMMUTABLE
+ SET search_path TO ''
+AS $function$
+  select * from (values
+    ('app_terms_signatures', 'profile_id', 'purge', 'The app terms signature and photo/video choice.'),
+    ('profiles', 'id', 'purge', 'The participant profile and its encrypted fields.'),
+    ('participant_notes', 'profile_id', 'purge', 'Staff prose about the participant.'),
+    ('push_tokens', 'user_id', 'purge', 'Registered participant devices.'),
+    ('push_deliveries', 'recipient_id', 'purge', 'Per-device notification delivery history.'),
+    ('custom_notification_group_members', 'participant_id', 'purge', 'Curated notification membership.'),
+    ('terms_acceptances', 'profile_id', 'purge', 'Participant consent records.'),
+    ('deletion_requests', 'profile_id', 'purge', 'Participant erasure requests.'),
+    ('invites', 'accepted_by', 'purge', 'The invitation that admitted the participant.'),
+    ('entity_invitations', 'profile_id', 'purge', 'The invitation that admitted an entity collaborator.'),
+    ('equipment_deliveries', 'profile_id', 'purge', 'Participant equipment history.'),
+    ('event_signups', 'player_id', 'purge', 'Participant event activity.'),
+    ('attendance', 'player_id', 'purge', 'Participant attendance history.'),
+    ('service_interests', 'user_id', 'purge', 'Participant service interests.'),
+    ('conversations', 'user_id', 'purge', 'Participant direct correspondence.'),
+    ('messages', 'sender_id', 'purge', 'Participant-authored messages.'),
+    ('conversation_read_states', 'user_id', 'purge', 'Participant message read history.'),
+    ('conversation_assignment_history', 'user_id', 'purge', 'Participant conversation handling history.'),
+    ('forum_posts', 'author_id', 'purge', 'Participant-authored forum posts.'),
+    ('forum_replies', 'author_id', 'purge', 'Participant-authored forum replies.'),
+    ('forum_flags', 'flagger_id', 'purge', 'Participant safety reports and optional comments.'),
+    ('media_items', 'uploaded_by', 'purge', 'Participant gallery media and its consent record.'),
+    ('entity_referrals', 'referred_profile_id', 'purge', 'Referral intake cascades with the linked participant.'),
+    ('referral_updates', 'author_id', 'purge', 'Referral updates authored by the participant.'),
+    ('mentoring_requests', 'player_id', 'purge', 'Private support requests belonging to the player.'),
+    ('mentoring_notification_events', 'recipient_id', 'purge', 'Technical mentoring schedule notifications.'),
+    ('feedback_submissions', 'author_id', 'purge', 'Encrypted feedback and its private attachment key.'),
+    ('survey_responses', 'player_id', 'purge', 'Attributed encrypted survey responses.'),
+    ('audit_log', 'actor_id', 'purge', 'Rows where the participant acted.'),
+    ('audit_log', 'target_id', 'retain', 'Opaque lawful-access and erasure record.'),
+    ('entity_referrals', null, 'retain_limited', 'Unlinked referral intake is purged after 24 months.'),
+    ('entity_invitations', null, 'retain_limited', 'Expired entity invitations are purged after 24 months.'),
+    ('notification_templates', null, 'not_personal', 'Organization-owned notification copy.'),
+    ('custom_notification_groups', null, 'not_personal', 'Organization-owned audience definitions.'),
+    ('targeted_notification_sends', null, 'not_personal', 'Aggregate organization send history.'),
+    ('surveys', null, 'not_personal', 'Organization-owned survey definitions.'),
+    ('survey_questions', null, 'not_personal', 'Organization-owned survey questions.'),
+    ('staff_invitations', null, 'not_personal', 'Organization staff access administration history.'),
+    ('internal_documents', null, 'not_personal', 'Organization-owned private operational documents.'),
+    ('announcements', null, 'not_personal', 'Organization-owned operational content.'),
+    ('event_categories', null, 'not_personal', 'Organization-owned event vocabulary.'),
+    ('events', null, 'not_personal', 'Organization-owned schedules.'),
+    ('event_occurrences', null, 'not_personal', 'Materialized organization schedules.'),
+    ('knowledge_categories', null, 'not_personal', 'Organization-owned knowledge vocabulary.'),
+    ('knowledge_articles', 'author_id', 'purge', 'Participant-authored knowledge stories.'),
+    ('push_publications', 'recipient_id', 'purge', 'Recipient-specific push publications.'),
+    ('service_categories', null, 'not_personal', 'Organization-owned service vocabulary.'),
+    ('services', null, 'not_personal', 'Organization-owned directory content.'),
+    ('service_images', null, 'not_personal', 'Organization-owned service media.'),
+    ('service_submission_comments', null, 'not_personal', 'Organization review correspondence.'),
+    ('service_submission_notifications', null, 'not_personal', 'Organization staff queue.'),
+    ('forum_categories', null, 'not_personal', 'Organization-owned forum vocabulary.'),
+    ('collaborating_entities', null, 'not_personal', 'A tenant-owned partner organization.'),
+    ('organizations', null, 'not_personal', 'A tenant, not a person.'),
+    ('municipality_catalog', null, 'not_personal', 'Official geography with no participant data.'),
+    ('permissions', null, 'not_personal', 'The product permission catalog.'),
+    ('permission_preset_defaults', null, 'not_personal', 'Product default permissions of the built-in presets.'),
+    ('permission_presets', null, 'not_personal', 'Organization-owned access presets.'),
+    ('permission_preset_permissions', null, 'not_personal', 'Organization-owned access presets.'),
+    ('team_member_access', null, 'not_personal', 'Team access administration; players never hold permissions.'),
+    ('team_member_permissions', null, 'not_personal', 'Team access administration; players never hold permissions.'),
+    ('equipment_item_types', null, 'not_personal', 'The organization''s material catalog.'),
+    ('stock_movements', 'participant_id', 'purge', 'Stock movements keep their quantity so stock stays right; her link is cleared by ON DELETE SET NULL.'),
+    ('stock_alerts', null, 'not_personal', 'Stock that went below zero, for the team to count.'),
+    ('equipment_arrivals', null, 'not_personal', 'Goods received: source, problems and cost. No participant data.'),
+    ('equipment_arrival_photos', null, 'not_personal', 'Photos of goods received and their receipts.'),
+    ('stock_counts', null, 'not_personal', 'Stock counts: what was expected and what was on the shelf.'),
+    ('staff_checkouts', null, 'not_personal', 'Material lent to a staff member for a trip or an event.'),
+    ('photo_handoffs', null, 'not_personal', 'A staff member''s request to take a document photo with the phone.'),
+    ('seasons', null, 'not_personal', 'The organization''s seasons.'),
+    ('authorization_versions', null, 'not_personal', 'The organization''s published authorization texts.'),
+    ('app_terms_versions', null, 'not_personal', 'The organization''s app terms texts, draft and published.'),
+    ('authorization_signatures', 'profile_id', 'purge', 'Her signed or paper authorizations, with her drawn signature.'),
+    ('authorization_consent_events', 'profile_id', 'purge', 'Each consent she gave or withdrew.'),
+    ('walk_in_signings', null, 'retain_limited', 'A walk-in''s tablet signing until staff confirm it; purged after 60 days.'),
+    ('intake_screens', null, 'not_personal', 'Registration screens staff built.'),
+    ('profile_sections', null, 'not_personal', 'Sections of the player profile layout.'),
+    ('profile_fields', null, 'not_personal', 'The pieces of information the profile holds, and who created each.'),
+    ('field_placements', null, 'not_personal', 'Where each piece of information is asked.'),
+    ('form_blocks', null, 'not_personal', 'The signature blocks of the forms and the text each asks to accept.'),
+    ('form_signatures', 'profile_id', 'purge', 'Her signatures of the form blocks, and the entity''s for her on a referral, with the strokes.'),
+    ('walk_in_form_signatures', null, 'retain_limited', 'A walk-in''s signatures of the Onboarding blocks until staff confirm her; moved to her profile then, or purged with the walk-in.'),
+    ('custom_question_options', null, 'not_personal', 'Options of those questions.'),
+    ('intake_builtin_screens', null, 'not_personal', 'Staff wording of the built-in onboarding screens and which are hidden.'),
+    ('intake_flow_orders', null, 'not_personal', 'The order of the onboarding screens staff arranged.'),
+    ('intake_state_presets', null, 'not_personal', 'Organization presets for which questions are asked.'),
+    ('custom_answers', 'profile_id', 'purge', 'Every answer of her record, the app''s fields and the team''s. Anonymizing deletes them all and keeps only her birth year.'),
+    ('referral_custom_answers', null, 'retain_limited', 'Extra answers sent with a referral; moved to her profile when she is invited, or purged with the referral.'),
+    ('custom_question_states', 'profile_id', 'purge', 'Which fields staff chose to ask or not ask her, the app''s and the team''s.'),
+    ('participant_search_documents', 'profile_id', 'purge', 'Her names and her Normal and Personal text answers, indexed for the participants search.'),
+    ('staff_notifications', null, 'not_personal', 'The team''s bell: one row per team member; names render live from the source row and params hold no personal value.'),
+    ('onboarding_screen_versions', null, 'not_personal', 'Which Onboarding screens were saved as a new version, and when.')
+  ) as disposition(table_name, participant_column, disposition, reason);
+$function$;
+

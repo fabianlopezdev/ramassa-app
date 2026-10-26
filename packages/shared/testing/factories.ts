@@ -1725,6 +1725,21 @@ export function buildIntakeBuiltinScreen(
   };
 }
 
+export type OnboardingScreenVersionRow = PublicRow<'onboarding_screen_versions'>;
+
+/** The seeded Nova versió of the equipment screen, from before every seeded player joined (RAPP-697). */
+export function buildOnboardingScreenVersion(
+  overrides: Partial<OnboardingScreenVersionRow> = {},
+): OnboardingScreenVersionRow {
+  return {
+    org_id: SEED_ORGANIZATION_ID,
+    screen_key: 'equipment',
+    changed_at: '2026-01-15T09:00:00.000Z',
+    changed_by: null,
+    ...overrides,
+  };
+}
+
 /** The seeded flow: the app's own order with the staff screens after equipment (RAPP-612). */
 export function buildIntakeFlowOrder(
   overrides: Partial<IntakeFlowOrderRow> = {},

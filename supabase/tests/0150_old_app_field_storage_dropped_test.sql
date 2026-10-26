@@ -30,7 +30,10 @@ select is(
         'emergency_contact_phone', 'emergency_contact_privacy', 'emergency_contact_relation', 'first_name',
         'health_info', 'is_active', 'is_forum_banned', 'is_test_account', 'last_name', 'media_consent_at',
         -- Her number, where her name is private (RAPP-693).
-        'member_number', 'preferred_language', 'prior_seasons', 'push_notifications_enabled', 'season_number',
+        'member_number',
+        -- When her Onboarding was last up to date (RAPP-697).
+        'onboarding_current_at',
+        'preferred_language', 'prior_seasons', 'push_notifications_enabled', 'season_number',
         'sessions_valid_after', 'terms_accepted_at'],
   'a profile holds her names and her account settings only'
 );
