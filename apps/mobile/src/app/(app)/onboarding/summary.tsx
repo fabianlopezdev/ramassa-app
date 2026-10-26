@@ -116,7 +116,6 @@ function CustomRows({
     no: t('noOption'),
     maybe: t('customMaybeOption'),
     archived: t('customArchivedOption'),
-    signedOn: (date: string) => t('customSignedOn', { date }),
   };
   return screen.questions
     .filter((question) => isCustomQuestionVisible(question, answers))
@@ -177,6 +176,7 @@ export default function SummaryStepScreen() {
     customPlan,
     flow = DEFAULT_WIZARD_FLOW,
     required,
+    catalog,
   } = useWizardIntake();
   const completeness = {
     custom: customPlan,
@@ -184,6 +184,7 @@ export default function SummaryStepScreen() {
     required,
     customScreens,
     storedCustom: customAnswers,
+    blocks: catalog.blocks,
   };
   const wording = useBuiltinWording();
   // A section is titled as staff worded its screen (RAPP-612), or as before.
@@ -213,9 +214,10 @@ export default function SummaryStepScreen() {
               required,
               customScreens,
               storedCustom: customAnswers,
+              blocks: catalog.blocks,
             }),
       );
-    }, [customPlan, flow, required, customScreens, customAnswers]),
+    }, [customPlan, flow, required, customScreens, customAnswers, catalog.blocks]),
   );
 
   const identity: Section = draft?.identity ?? {};

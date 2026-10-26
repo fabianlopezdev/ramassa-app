@@ -3,13 +3,19 @@
  * field, so a staff or entity answer she only confirmed keeps its source.
  */
 import { describe, expect, test } from 'bun:test';
-import type { CustomQuestion, IntakeScreen } from '@ramassa/shared/intake-builder';
+import {
+  EMPTY_INTAKE_CATALOG,
+  herOnboarding,
+  type CustomQuestion,
+  type IntakeScreen,
+} from '@ramassa/shared/intake-builder';
 import {
   appAnswersToSave,
   customAnswersToSave,
   draftForScenario,
   mergedCustomAnswers,
   withSelectedLanguage,
+  withSignatureScreens,
   wizardDraftStep,
   wizardStepRoute,
 } from './onboarding-intake';
@@ -157,5 +163,44 @@ describe('a test player whose situation staff changed (RAPP-619)', () => {
   test('a real woman has no stamp, so her draft always wins (RAPP-300)', () => {
     expect(draftForScenario(unstamped, null)).toEqual({ currentStep: 'logistics' });
     expect(draftForScenario(null, null)).toBeNull();
+  });
+});
+
+describe('a screen with a signature block always shows (RAPP-690)', () => {
+  const block = (id: string, screenKey: string) => ({
+    id,
+    surface: 'onboarding' as const,
+    screenKey,
+    kind: 'signature' as const,
+    body: { ca: 'Accepto les normes' },
+    sortOrder: 0,
+  });
+  const catalog = {
+    ...EMPTY_INTAKE_CATALOG,
+    screens: [
+      {
+        id: 'normes',
+        title: { ca: 'Normes' },
+        intro: null,
+        afterScreen: 'logistics' as const,
+        isArchived: false,
+      },
+    ],
+    blocks: [block('b1', 'normes'), block('b2', 'equipment')],
+  };
+
+  test('a Ramassà screen and an app screen with only a block are planned, unanswered', () => {
+    const planned = withSignatureScreens(catalog, herOnboarding(catalog));
+    // In the flow order: the app screen's group, then the Ramassà screen after logistics.
+    expect(planned.plan.map((screen) => [screen.id, screen.isAnswered])).toEqual([
+      ['app:equipment', false],
+      ['normes', false],
+    ]);
+    expect(planned.screens.map((screen) => screen.questions)).toEqual([[], []]);
+  });
+
+  test('without blocks her plan is as it was', () => {
+    const plain = { ...catalog, blocks: [] };
+    expect(withSignatureScreens(plain, herOnboarding(plain))).toEqual(herOnboarding(plain));
   });
 });

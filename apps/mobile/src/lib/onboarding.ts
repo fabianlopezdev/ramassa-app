@@ -12,7 +12,11 @@ import { useEffect, useState } from 'react';
 import { Platform } from 'react-native';
 import { fetchMyPendingInvite } from '@ramassa/shared/accounts';
 import { AppError, type Result } from '@ramassa/shared/errors';
-import { answerPayload, type FieldAnswers } from '@ramassa/shared/intake-builder';
+import {
+  answerPayload,
+  type FieldAnswers,
+  type formSignaturesPayload,
+} from '@ramassa/shared/intake-builder';
 import { createAccountOnboardingDraftStore } from '@ramassa/shared/onboarding-drafts';
 import { termsSigningPayload, type TermsSigning } from '@ramassa/shared/schemas';
 
@@ -26,7 +30,10 @@ export const onboardingDraftStore = createWizardDraftStore(
   createAccountOnboardingDraftStore(privateStorage),
 );
 
-/** What she sends when she finishes: her names, her settings and her answers by field. */
+/**
+ * What she sends when she finishes: her names, her settings, her answers by
+ * field and her signatures of the signature blocks, by block id (RAPP-690).
+ */
 export interface CompleteOnboardingRequest {
   readonly first_name: string;
   readonly last_name: string;
@@ -35,6 +42,7 @@ export interface CompleteOnboardingRequest {
   readonly terms_version: string;
   readonly locale_shown: string;
   readonly answers: FieldAnswers;
+  readonly signatures: ReturnType<typeof formSignaturesPayload>;
 }
 
 /**

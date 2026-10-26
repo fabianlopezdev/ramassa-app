@@ -5,13 +5,16 @@
  * (RAPP-655). A screen she already answered completely is skipped (RAPP-300),
  * unless staff set a field to Ask or she opens it from the summary to correct it.
  *
- * Her answers stay in the draft until the terms step sends them.
+ * Her answers stay in the draft until the terms step sends them, and so do
+ * her strokes on the screen's signature blocks, which show among the fields in
+ * their order, each required (RAPP-690).
  */
 
 import {
   CustomQuestionField,
   type CustomAnswerDraft,
 } from '@/components/onboarding/custom-question-field';
+import { useSignatureBlocks } from '@/components/onboarding/signature-blocks';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
 import { WizardValidationSummary } from '@/components/onboarding/wizard-validation-summary';
 import { checkCustomAnswers } from '@/lib/custom-answer-errors';
@@ -44,6 +47,7 @@ export default function CustomStepScreen() {
   );
   const [errors, setErrors] = useState<Readonly<Record<string, string>>>({});
   const [isDrawing, setIsDrawing] = useState(false);
+  const signatures = useSignatureBlocks(screenId, setIsDrawing);
   const screen = customScreens.find((candidate) => candidate.id === screenId);
 
   // Staff removed the screen since her draft was saved: the summary shows the rest.
@@ -62,6 +66,7 @@ export default function CustomStepScreen() {
       ...latest,
       currentStep,
       custom: { ...latest?.custom, ...mine },
+      signatures: signatures.drafted(latest?.signatures),
     });
   }
 
@@ -82,7 +87,8 @@ export default function CustomStepScreen() {
         const checked = checkCustomAnswers(screen.questions, answers, t);
         setAnswers(checked.answers);
         setErrors(checked.errors);
-        if (Object.keys(checked.errors).length > 0) {
+        const isSigned = signatures.check();
+        if (Object.keys(checked.errors).length > 0 || !isSigned) {
           playHaptic('warning');
           return;
         }
@@ -99,19 +105,18 @@ export default function CustomStepScreen() {
       }
     >
       <WizardValidationSummary
-        isVisible={Object.keys(errors).length > 0}
+        isVisible={Object.keys(errors).length > 0 || signatures.hasErrors}
         message={t('errorSummary')}
       />
       <View testID={`wizard-custom-${screen.id}`} className="gap-lg">
-        {screen.questions
-          .filter((question) => isCustomQuestionVisible(question, answers))
-          .map((question) => (
+        {signatures.interleave(
+          screen.questions.filter((question) => isCustomQuestionVisible(question, answers)),
+          (question) => (
             <CustomQuestionField
               key={question.id}
               question={question}
               value={answers[question.id]}
               errorMessage={errors[question.id]}
-              onDrawingChange={setIsDrawing}
               onChange={(value) => {
                 setAnswers((current) =>
                   updateCustomAnswer(screen.questions, current, question.id, value),
@@ -125,7 +130,8 @@ export default function CustomStepScreen() {
                 }
               }}
             />
-          ))}
+          ),
+        )}
       </View>
     </WizardFrame>
   );

@@ -8,7 +8,8 @@
  * form schema its Continue button uses, with the organization's required
  * list; a staff screen by its required questions. The first one in the flow
  * that does not pass is where she goes, on resume and when she confirms the
- * summary. Pure: no React, so bun tests run it.
+ * summary. A screen with a signature block she has not signed in her draft
+ * does not pass either (RAPP-690). Pure: no React, so bun tests run it.
  */
 import {
   customStepId,
@@ -25,10 +26,13 @@ import {
 } from '@ramassa/shared/intake';
 import {
   appScreenFields,
+  formBlocksOn,
   isCustomQuestionRequired,
   isCustomQuestionVisible,
   isEmptyAnswer,
+  unsignedFormBlocks,
   type CustomAnswers,
+  type FormBlock,
   type IntakeScreen,
 } from '@ramassa/shared/intake-builder';
 import type { OnboardingDraft, OnboardingDraftStep } from '@ramassa/shared/onboarding-drafts';
@@ -117,6 +121,8 @@ export interface CompletenessContext {
   /** Her staff screens with their questions, and her stored answers to them. */
   readonly customScreens?: readonly IntakeScreen[];
   readonly storedCustom?: CustomAnswers;
+  /** The signature blocks of her Onboarding (RAPP-690): each needs her strokes. */
+  readonly blocks?: readonly FormBlock[];
 }
 
 /**
@@ -130,15 +136,20 @@ export function firstIncompleteStep(
 ): WizardStepKey | null {
   const required = context.required ?? DEFAULT_REQUIRED_QUESTIONS;
   const answers: CustomAnswers = { ...context.storedCustom, ...draft?.custom };
+  const isUnsigned = (screenKey: string) =>
+    unsignedFormBlocks(formBlocksOn(context.blocks, 'onboarding', screenKey), draft?.signatures)
+      .length > 0;
   for (const step of wizardFlowOrder(context.custom, context.flow)) {
     const customId = customStepId(step);
     if (customId !== null) {
       const screen = context.customScreens?.find((candidate) => candidate.id === customId);
       if (screen !== undefined && !isCustomScreenComplete(screen, answers)) return step;
+      if (screen !== undefined && isUnsigned(customId)) return step;
       continue;
     }
     if (!isQuestionScreen(step) || context.flow.hiddenScreens.has(step)) continue;
     if (!isScreenComplete(step, draft, required)) return step;
+    if (isUnsigned(step)) return step;
     // The Fitxa fields placed on this screen (RAPP-655).
     const placed = appScreenFields(context.customScreens ?? [], step);
     if (placed !== undefined && !isCustomScreenComplete(placed, answers)) return step;

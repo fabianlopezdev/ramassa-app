@@ -6,16 +6,28 @@
 import type { Href } from 'expo-router';
 import {
   customStepId,
+  customStepKey,
   isCustomStep,
+  WIZARD_QUESTION_SCREENS,
+  wizardFlowOrder,
+  type CustomWizardScreen,
+  type QuestionScreen,
+  type WizardQuestionScreen,
   type WizardScreen,
   type WizardStepKey,
 } from '@ramassa/shared/intake';
 import {
+  appScreenGroupId,
   customAnswerError,
+  formBlocksOn,
   isEmptyAnswer,
+  wizardFlow,
   type CustomAnswers,
   type CustomAnswerValue,
   type CustomQuestion,
+  type HerOnboarding,
+  type IntakeCatalog,
+  type IntakeScreen,
 } from '@ramassa/shared/intake-builder';
 import type {
   OnboardingDraftStep,
@@ -102,7 +114,7 @@ function sameAnswer(a: CustomAnswerValue | undefined, b: CustomAnswerValue | und
     return typeof a === 'string' && typeof b === 'string' && a.trim() === b.trim();
   }
   // A choice of several is the same answer in any order; every other value
-  // (a list she ordered, a number, a signed consent, a file) compares as written.
+  // (a list she ordered, a number, a file) compares as written.
   if (isStringList(a) && isStringList(b)) {
     return [...a].sort().join('\n') === [...b].sort().join('\n');
   }
@@ -182,4 +194,73 @@ export function draftForScenario<Draft extends { readonly scenarioStamp?: string
 ): Draft | null {
   if (draft === null || scenarioStamp === null) return draft;
   return draft.scenarioStamp === scenarioStamp ? draft : null;
+}
+
+/** The step of the app's own order an app screen belongs to, as `herOnboarding` reads it. */
+const ANCHOR_SCREEN: Readonly<Record<WizardQuestionScreen, QuestionScreen>> = {
+  identity: 'identity',
+  background: 'background',
+  documentation: 'documentation',
+  logistics: 'logistics',
+  equipment: 'logistics',
+  season: 'season',
+  'supporting-entities': 'season',
+  'participation-support': 'season',
+  'specific-needs': 'season',
+};
+
+/**
+ * Her screens with their signature blocks (RAPP-690). A block is signed only
+ * when she finishes, so a screen that holds one always shows: one whose fields
+ * are all answered, and one with no field left to ask (a Ramassà screen, or
+ * the fields of an app screen), which `herOnboarding` leaves out.
+ */
+export function withSignatureScreens(
+  catalog: IntakeCatalog,
+  onboarding: HerOnboarding,
+): HerOnboarding {
+  const signed = (screenKey: string) =>
+    formBlocksOn(catalog.blocks, 'onboarding', screenKey).length > 0;
+  const keyOf = (screen: { readonly id: string; readonly builtinScreen?: string | null }) =>
+    screen.builtinScreen ?? screen.id;
+  const screens: IntakeScreen[] = [...onboarding.screens];
+  const plan: CustomWizardScreen[] = onboarding.plan.map((screen) =>
+    signed(keyOf(screen)) ? { ...screen, isAnswered: false } : screen,
+  );
+  const has = (key: string) => screens.some((screen) => keyOf(screen) === key);
+  for (const screen of catalog.screens) {
+    if (screen.isArchived || has(screen.id) || !signed(screen.id)) continue;
+    screens.push({ ...screen, questions: [] });
+    plan.push({
+      id: screen.id,
+      afterScreen: screen.afterScreen,
+      isAnswered: false,
+      builtinScreen: null,
+    });
+  }
+  for (const screen of WIZARD_QUESTION_SCREENS) {
+    if (has(screen) || !signed(screen)) continue;
+    const id = appScreenGroupId(screen);
+    const afterScreen = ANCHOR_SCREEN[screen];
+    screens.push({
+      id,
+      title: {},
+      intro: null,
+      afterScreen,
+      isArchived: false,
+      builtinScreen: screen,
+      questions: [],
+    });
+    plan.push({ id, afterScreen, isAnswered: false, builtinScreen: screen });
+  }
+  if (screens.length === onboarding.screens.length) return { screens, plan };
+  const order = wizardFlowOrder(plan, wizardFlow(catalog));
+  const position = (screen: {
+    readonly id: string;
+    readonly builtinScreen?: WizardQuestionScreen | null;
+  }) => order.indexOf(screen.builtinScreen ?? customStepKey(screen.id));
+  return {
+    screens: [...screens].sort((a, b) => position(a) - position(b)),
+    plan: [...plan].sort((a, b) => position(a) - position(b)),
+  };
 }

@@ -150,6 +150,7 @@ export function viewOfStoredDraft(
     season: { ...pick(values, SECTION_KEYS.season), ...screenValues(stored, 'season') },
     ...(Object.keys(custom).length === 0 ? {} : { custom }),
     ...(stored.terms === undefined ? {} : { terms: stored.terms }),
+    ...(stored.signatures === undefined ? {} : { signatures: stored.signatures }),
     ...(stored.scenarioStamp === undefined ? {} : { scenarioStamp: stored.scenarioStamp }),
   };
 }
@@ -265,6 +266,7 @@ export function storedDraftOfView(
     ...(Object.keys(answers).length === 0 ? {} : { answers }),
     ...(Object.keys(screen).length === 0 ? {} : { screen }),
     ...(view.terms === undefined ? {} : { terms: view.terms }),
+    ...(view.signatures === undefined ? {} : { signatures: view.signatures }),
     ...(view.scenarioStamp === undefined ? {} : { scenarioStamp: view.scenarioStamp }),
   };
 }

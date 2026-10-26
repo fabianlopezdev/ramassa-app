@@ -9,12 +9,16 @@
  * answers kept in the draft until the terms step sends them with the others.
  * Continue checks them first and saves them before the screen's own Continue
  * runs, which reads the draft afresh; Back saves them unchecked.
+ *
+ * The signature blocks staff put on the screen (RAPP-690) show among them in
+ * their order, each required, their strokes kept in the draft the same way.
  */
 
 import {
   CustomQuestionField,
   type CustomAnswerDraft,
 } from '@/components/onboarding/custom-question-field';
+import { useSignatureBlocks } from '@/components/onboarding/signature-blocks';
 import { checkCustomAnswers } from '@/lib/custom-answer-errors';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { onboardingDraftStore } from '@/lib/onboarding';
@@ -35,7 +39,7 @@ export interface PlacedFields {
   readonly hasQuestions: boolean;
   readonly fields: ReactNode;
   readonly hasErrors: boolean;
-  /** A signature is being drawn (a consent she signs): the screen must not scroll under her finger. */
+  /** A signature is being drawn (RAPP-690): the screen must not scroll under her finger. */
   readonly isDrawing: boolean;
   /** Checks them; when they pass, saves them to the draft and returns true. */
   readonly checkAndSave: () => boolean;
@@ -52,9 +56,11 @@ export function usePlacedFields(screenId: string | undefined): PlacedFields {
   );
   const [errors, setErrors] = useState<Readonly<Record<string, string>>>({});
   const [isDrawing, setIsDrawing] = useState(false);
+  const signatures = useSignatureBlocks(screenId, setIsDrawing);
+  const hasQuestions = questions.length > 0 || signatures.blocks.length > 0;
 
   function save(saved: CustomAnswerDraft = answers) {
-    if (questions.length === 0) return;
+    if (!hasQuestions) return;
     const mine = Object.fromEntries(
       questions.flatMap((question) => {
         const value = saved[question.id];
@@ -67,16 +73,18 @@ export function usePlacedFields(screenId: string | undefined): PlacedFields {
       // The screen's own Continue or Back sets the step next.
       currentStep: latest?.currentStep ?? wizardDraftStep(screenId as WizardQuestionScreen),
       custom: { ...latest?.custom, ...mine },
+      signatures: signatures.drafted(latest?.signatures),
     });
   }
 
   function checkAndSave(): boolean {
-    if (questions.length === 0) return true;
+    if (!hasQuestions) return true;
     // The shared schema checks each answer, as the database will (RAPP-610).
     const checked = checkCustomAnswers(questions, answers, t);
     setAnswers(checked.answers);
     setErrors(checked.errors);
-    if (Object.keys(checked.errors).length > 0) {
+    const isSigned = signatures.check();
+    if (Object.keys(checked.errors).length > 0 || !isSigned) {
       playHaptic('warning');
       return false;
     }
@@ -84,37 +92,34 @@ export function usePlacedFields(screenId: string | undefined): PlacedFields {
     return true;
   }
 
-  const fields =
-    questions.length === 0 ? null : (
-      <View testID={`wizard-added-${String(screenId)}`} className="gap-lg">
-        {questions
-          .filter((question) => isCustomQuestionVisible(question, answers))
-          .map((question) => (
-            <CustomQuestionField
-              key={question.id}
-              question={question}
-              value={answers[question.id]}
-              errorMessage={errors[question.id]}
-              onDrawingChange={setIsDrawing}
-              onChange={(value) => {
-                setAnswers((current) => updateCustomAnswer(questions, current, question.id, value));
-                if (errors[question.id] !== undefined) {
-                  setErrors((current) =>
-                    Object.fromEntries(
-                      Object.entries(current).filter(([id]) => id !== question.id),
-                    ),
-                  );
-                }
-              }}
-            />
-          ))}
-      </View>
-    );
+  const fields = !hasQuestions ? null : (
+    <View testID={`wizard-added-${String(screenId)}`} className="gap-lg">
+      {signatures.interleave(
+        questions.filter((question) => isCustomQuestionVisible(question, answers)),
+        (question) => (
+          <CustomQuestionField
+            key={question.id}
+            question={question}
+            value={answers[question.id]}
+            errorMessage={errors[question.id]}
+            onChange={(value) => {
+              setAnswers((current) => updateCustomAnswer(questions, current, question.id, value));
+              if (errors[question.id] !== undefined) {
+                setErrors((current) =>
+                  Object.fromEntries(Object.entries(current).filter(([id]) => id !== question.id)),
+                );
+              }
+            }}
+          />
+        ),
+      )}
+    </View>
+  );
 
   return {
-    hasQuestions: questions.length > 0,
+    hasQuestions,
     fields,
-    hasErrors: Object.keys(errors).length > 0,
+    hasErrors: Object.keys(errors).length > 0 || signatures.hasErrors,
     isDrawing,
     checkAndSave,
     save: () => save(),

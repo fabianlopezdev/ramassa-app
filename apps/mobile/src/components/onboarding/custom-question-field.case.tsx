@@ -55,22 +55,6 @@ mock.module('@/components/forms/raised-action-button', () => ({
     testID: string;
   }) => createElement('button', { onClick: onPress, 'data-testid': testID }, label),
 }));
-mock.module('@/components/authorization/consent-row', () => ({
-  ConsentRow: ({
-    label,
-    checked,
-    onToggle,
-  }: {
-    label: string;
-    checked: boolean;
-    onToggle: () => void;
-  }) =>
-    createElement(
-      'button',
-      { role: 'checkbox', 'aria-checked': checked, onClick: onToggle },
-      label,
-    ),
-}));
 mock.module('@/components/equipment/signature-pad', () => ({
   SignaturePad: ({ onChange, prompt }: { onChange: (strokes: unknown) => void; prompt: string }) =>
     createElement(
@@ -225,6 +209,7 @@ mock.module('@/components/forms/form-text-area', () => ({
     }),
 }));
 const { CustomQuestionField, CustomQuestionList } = await import('./custom-question-field');
+const { SignatureBlockField } = await import('./signature-block-field');
 const base: CustomQuestion = {
   id: 'question',
   type: 'yes_no_maybe',
@@ -397,15 +382,6 @@ test('a list she adds to uses the supporting organizations list with its own lim
   expect(lastValue).toEqual(['Creu Roja']);
 });
 
-test('one consent is a consent row with the text staff wrote', () => {
-  const view = render(typed('consent', { text: { ca: 'Accepto que em portin amb cotxe' } }));
-  const tick = view.getByRole('checkbox', { name: 'Accepto que em portin amb cotxe' });
-  fireEvent.click(tick);
-  expect(lastValue).toBe(true);
-  fireEvent.click(view.getByRole('checkbox'));
-  expect(lastValue).toBe(false);
-});
-
 test('a file offers a photo, and a PDF when documents are accepted; the upload becomes her answer', async () => {
   uploadsOn = true;
   const photoOnly = render(typed('file_upload', { accept: 'photo' }));
@@ -427,24 +403,39 @@ test('without the upload service a file question says so and offers nothing to p
   uploadsOn = true;
 });
 
-test('a consent that asks for her signature takes the tick and the pad together (RAPP-671)', () => {
-  const view = render(
-    typed('consent', { text: { ca: 'Accepto les condicions' }, requires_signature: true }),
-  );
-  fireEvent.click(view.getByRole('checkbox', { name: 'Accepto les condicions' }));
-  expect(lastValue).toEqual({ accepted: true, signature: null });
+test('a signature block shows its text in her language over the pad and keeps her strokes (RAPP-690)', () => {
+  let strokes: unknown = 'none';
+  function Block() {
+    const [value, setValue] = useState<[number, number][][] | null>(null);
+    return createElement(SignatureBlockField, {
+      block: {
+        id: 'b1',
+        surface: 'onboarding',
+        screenKey: 'logistics',
+        kind: 'signature',
+        body: { ca: 'Autoritzo el transport', es: 'Autorizo el transporte' },
+        sortOrder: 0,
+      },
+      strokes: value,
+      onChange: (next: [number, number][][] | null) => {
+        strokes = next;
+        setValue(next);
+      },
+      errorMessage: ca.customErrorSignature,
+    });
+  }
+  const view = render(createElement(Block));
+  expect(view.getByText('Autoritzo el transport')).toBeTruthy();
+  expect(view.getByText(ca.customErrorSignature)).toBeTruthy();
   fireEvent.click(view.getByTestId('signature-pad'));
-  const strokes: [number, number][][] = [
+  expect(strokes).toEqual([
     [
       [10, 20],
       [30, 40],
     ],
-  ];
-  expect(lastValue).toEqual({ accepted: true, signature: strokes });
+  ]);
   fireEvent.click(view.getByRole('button', { name: ca.authorizationClearSignature }));
-  expect(lastValue).toEqual({ accepted: true, signature: null });
-  fireEvent.click(view.getByRole('checkbox'));
-  expect(lastValue).toBe('');
+  expect(strokes).toBeNull();
 });
 
 test('an answer that does not fit shows its message under the control', () => {

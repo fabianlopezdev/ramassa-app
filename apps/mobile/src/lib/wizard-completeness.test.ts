@@ -159,3 +159,48 @@ describe('the required list staff chose (RAPP-611)', () => {
     expect(firstIncompleteStep(complete, { ...context, storedCustom: { q1: 'Tren' } })).toBeNull();
   });
 });
+
+describe('signature blocks (RAPP-690)', () => {
+  const block = (id: string, screenKey: string) => ({
+    id,
+    surface: 'onboarding' as const,
+    screenKey,
+    kind: 'signature' as const,
+    body: { ca: 'Autoritzo el transport' },
+    sortOrder: 0,
+  });
+  const strokes: [number, number][][] = [
+    [
+      [10, 20],
+      [30, 40],
+    ],
+  ];
+
+  test('an app screen with a block she has not signed is where she goes', () => {
+    const context = { custom: [], flow: appOrder, blocks: [block('b1', 'logistics')] };
+    expect(firstIncompleteStep(complete, context)).toBe('logistics');
+    expect(firstIncompleteStep({ ...complete, signatures: { b1: null } }, context)).toBe(
+      'logistics',
+    );
+    expect(firstIncompleteStep({ ...complete, signatures: { b1: strokes } }, context)).toBeNull();
+  });
+
+  test('so is a Ramassà screen with only a block', () => {
+    const screen: IntakeScreen = {
+      id: 'normes',
+      title: { ca: 'Normes' },
+      intro: null,
+      afterScreen: 'logistics',
+      isArchived: false,
+      questions: [],
+    };
+    const context = {
+      custom: [{ id: 'normes', afterScreen: 'logistics' as const, isAnswered: false }],
+      flow: appOrder,
+      customScreens: [screen],
+      blocks: [block('b2', 'normes')],
+    };
+    expect(firstIncompleteStep(complete, context)).toBe('custom:normes');
+    expect(firstIncompleteStep({ ...complete, signatures: { b2: strokes } }, context)).toBeNull();
+  });
+});

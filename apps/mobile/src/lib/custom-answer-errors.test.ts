@@ -47,9 +47,7 @@ describe('the message names the fix', () => {
 
   test('an empty answer is never an error: every staff question is optional', () => {
     expect(customAnswerMessage(question('email'), '', t)).toBeUndefined();
-    expect(
-      customAnswerMessage(question('consent', { text: { ca: 'Sí' } }), false, t),
-    ).toBeUndefined();
+    expect(customAnswerMessage(question('yes_no'), '', t)).toBeUndefined();
   });
 });
 
@@ -82,13 +80,10 @@ describe('a required staff question (RAPP-611)', () => {
     expect(checkCustomAnswers([required], {}, t, { enforceRequired: false }).errors).toEqual({});
   });
 
-  test('an unticked required consent is missing', () => {
-    const consent = {
-      ...question('consent', { text: { ca: 'Accepto' } }),
-      isRequired: true,
-    };
-    expect(checkCustomAnswers([consent], { consent: false }, t).errors).toEqual({
-      consent: 'onboarding:errorRequired',
+  test('a required yes or no left empty is missing', () => {
+    const yesNo = { ...question('yes_no'), isRequired: true };
+    expect(checkCustomAnswers([yesNo], { yes_no: '' }, t).errors).toEqual({
+      yes_no: 'onboarding:errorRequired',
     });
   });
 });

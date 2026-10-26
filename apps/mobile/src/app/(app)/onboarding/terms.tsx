@@ -39,8 +39,14 @@ import { Text } from 'react-native';
 import { useAuth } from '@ramassa/shared/auth';
 import { signatureStrokesSchema, type SignatureStrokes } from '@ramassa/shared/equipment';
 import type { AppErrorCode } from '@ramassa/shared/errors';
+import { useLanguage } from '@ramassa/shared/i18n';
 import { DEFAULT_REQUIRED_QUESTIONS, DEFAULT_WIZARD_FLOW } from '@ramassa/shared/intake';
-import { appAnswersFromForm, appFormField, appFormToSend } from '@ramassa/shared/intake-builder';
+import {
+  appAnswersFromForm,
+  appFormField,
+  appFormToSend,
+  formSignaturesPayload,
+} from '@ramassa/shared/intake-builder';
 import type { OnboardingDraftStep } from '@ramassa/shared/onboarding-drafts';
 import { seasonAnswerFields, termsSigningSchema, termsStepSchema } from '@ramassa/shared/schemas';
 import type { LanguageCode } from '@ramassa/shared/schemas';
@@ -48,6 +54,7 @@ import type { LanguageCode } from '@ramassa/shared/schemas';
 export default function TermsStepScreen() {
   const { t, i18n } = useTranslation('onboarding');
   const languageFontClass = useLanguageFontClass();
+  const { language } = useLanguage();
   const router = useRouter();
   const { user, refreshProfile } = useAuth();
   const intake = useWizardIntake();
@@ -137,6 +144,7 @@ export default function TermsStepScreen() {
         required: intake.required,
         customScreens: intake.customScreens,
         storedCustom: intake.customAnswers,
+        blocks: intake.catalog.blocks,
       });
       if (incomplete !== null) {
         router.replace(wizardStepRoute(incomplete, 'back'));
@@ -217,6 +225,13 @@ export default function TermsStepScreen() {
           terms_version: wording.termsVersion,
           locale_shown: wording.localeShown,
           answers: { ...appAnswers, ...customAnswers },
+          // Her signature of each block of her Onboarding (RAPP-690), with the
+          // language its text was shown in.
+          signatures: formSignaturesPayload(
+            (intake.catalog.blocks ?? []).filter((block) => block.surface === 'onboarding'),
+            draft?.signatures,
+            language,
+          ),
         },
         signing.data,
       );

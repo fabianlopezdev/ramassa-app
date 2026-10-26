@@ -11,10 +11,10 @@
  *   - a country, a municipality of Catalonia: the app's own pickers, the
  *     ones of her nationality and her municipality (RAPP-663);
  *   - a list she adds to: the supporting organizations list;
- *   - one consent: the consent row of the authorization, with its own text,
- *     and the authorization signature pad under it when staff ask for her
- *     signature (RAPP-671);
  *   - a file: a photo or a PDF, uploaded to her private folder.
+ *
+ * A signature is no question: it is a block of the screen (RAPP-690,
+ * `signature-block-field.tsx`).
  *
  * Every staff question is optional (RAPP-611 adds required ones), so tapping a
  * chosen chip again clears it. The texts are staff's, in her app language with
@@ -25,8 +25,6 @@
  */
 
 import { AuthTextField } from '@/components/auth/auth-text-field';
-import { ConsentRow } from '@/components/authorization/consent-row';
-import { SignaturePad } from '@/components/equipment/signature-pad';
 import { FormTextArea } from '@/components/forms/form-text-area';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PressableScale } from '@/components/motion/pressable-scale';
@@ -48,14 +46,9 @@ import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Text, View, type TextStyle } from 'react-native';
-import type { SignatureStrokes } from '@ramassa/shared/equipment';
 import { toAppError } from '@ramassa/shared/errors';
 import { useLanguage } from '@ramassa/shared/i18n';
 import {
-  asksForSignature,
-  consentDraft,
-  consentDraftValue,
-  consentSettings,
   fileSettings,
   isCustomQuestionVisible,
   itemListSettings,
@@ -91,8 +84,6 @@ export interface CustomQuestionFieldProps {
   readonly onChange: (value: CustomAnswerValue) => void;
   /** Shown under the control when her answer does not fit the question. */
   readonly errorMessage?: string;
-  /** A consent she signs stops the screen scrolling while she draws. */
-  readonly onDrawingChange?: (isDrawing: boolean) => void;
 }
 
 function QuestionLabel({ text }: { readonly text: string }) {
@@ -296,64 +287,6 @@ function FileField({ question, value, onChange, errorMessage, label, help, testI
   );
 }
 
-/**
- * A consent that asks for her signature (RAPP-671): she ticks the text, then
- * signs under the tick on the authorization pad. Her answer is the tick and
- * the drawing together; with neither it is empty.
- */
-function SignedConsentField({
-  question,
-  value,
-  onChange,
-  errorMessage,
-  label,
-  help,
-  testID,
-  onDrawingChange,
-}: FieldProps) {
-  const { t } = useTranslation('onboarding');
-  const { language } = useLanguage();
-  const fontClass = useLanguageFontClass();
-  const draft = consentDraft(value);
-  const strokes: SignatureStrokes | null = draft.signature;
-  return (
-    <View className="gap-sm" testID={testID}>
-      <QuestionLabel text={label} />
-      <QuestionHelp text={help} />
-      <ConsentRow
-        testID={`${testID}-tick`}
-        label={textIn(consentSettings(question.settings).text, language)}
-        required={false}
-        requiredMark=""
-        checked={draft.accepted}
-        onToggle={() => onChange(consentDraftValue({ ...draft, accepted: !draft.accepted }))}
-      />
-      <SignaturePad
-        strokes={strokes}
-        onChange={(next) => onChange(consentDraftValue({ ...draft, signature: next }))}
-        onDrawingChange={onDrawingChange}
-        prompt={t('authorizationSignaturePrompt')}
-        promptClassName={fontClass}
-        accessibilityLabel={label}
-      />
-      {strokes === null ? null : (
-        <PressableScale
-          accessibilityRole="button"
-          accessibilityLabel={t('authorizationClearSignature')}
-          onPress={() => onChange(consentDraftValue({ ...draft, signature: null }))}
-          haptic="tapLight"
-          className="min-h-recommended justify-center self-start"
-        >
-          <Text className={`text-form font-semibold text-primary-dark ${fontClass}`}>
-            {t('authorizationClearSignature')}
-          </Text>
-        </PressableScale>
-      )}
-      <FieldErrorText message={errorMessage} />
-    </View>
-  );
-}
-
 interface FieldProps extends CustomQuestionFieldProps {
   readonly label: string;
   readonly help: string | null;
@@ -432,23 +365,6 @@ export function CustomQuestionField(props: CustomQuestionFieldProps) {
       return <DateField {...field} />;
     case 'file_upload':
       return <FileField {...field} />;
-    case 'consent':
-      if (asksForSignature(question)) return <SignedConsentField {...field} />;
-      return (
-        <View testID={testID} className="gap-sm">
-          <QuestionLabel text={label} />
-          <QuestionHelp text={help} />
-          <ConsentRow
-            testID={`${testID}-tick`}
-            label={textIn(consentSettings(question.settings).text, language)}
-            required={false}
-            requiredMark=""
-            checked={value === true}
-            onToggle={() => onChange(value !== true)}
-          />
-          <FieldErrorText message={errorMessage} />
-        </View>
-      );
     case 'item_list':
       return (
         <View testID={testID}>
@@ -588,14 +504,12 @@ export function CustomQuestionList({
   answers,
   onChange,
   errors = {},
-  onDrawingChange,
   testID,
 }: {
   readonly questions: readonly CustomQuestion[];
   readonly answers: CustomAnswerDraft;
   readonly onChange: (questionId: string, value: CustomAnswerValue) => void;
   readonly errors?: Readonly<Record<string, string>>;
-  readonly onDrawingChange?: (isDrawing: boolean) => void;
   readonly testID?: string;
 }) {
   return (
@@ -608,7 +522,6 @@ export function CustomQuestionList({
             question={question}
             value={answers[question.id]}
             errorMessage={errors[question.id]}
-            onDrawingChange={onDrawingChange}
             onChange={(value) => {
               const next = updateCustomAnswer(questions, answers, question.id, value);
               for (const [id, answer] of Object.entries(next))
