@@ -188,10 +188,12 @@ test.describe('the participant detail view', () => {
     await openDetail(page, participantId);
     // Inline, on the field's own row (RAPP-653).
     const editor = await editField(page, 'city');
-    // The municipality is picked from the list the app ships (RAPP-664).
-    const cityField = editor.locator('select');
+    // The municipality is searched in the list the app ships (RAPP-665).
+    const cityField = editor.getByRole('combobox');
     await expect(cityField).toBeVisible();
-    await cityField.selectOption(nextCity);
+    await cityField.fill(nextCity);
+    await editor.getByRole('option', { name: nextCity, exact: true }).click();
+    await expect(cityField).toHaveValue(nextCity);
     await editor.getByRole('button', { name: /^(desa|save|guardar)$/i }).click();
 
     await expect
