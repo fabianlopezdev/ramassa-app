@@ -229,6 +229,7 @@
   "customFileUnavailable": "إرسال الملفات غير متاح بعد. يمكنكِ المتابعة بدونه.",
   "customFileRemove": "أزيلي {{name}}",
   "customErrorSignature": "وقّعي بإصبعكِ.",
+  "customErrorConsent": "ضعي علامة على هذه الموافقة للمتابعة.",
   "summarySigned": "تمّ التوقيع",
   "signingBlocksAction": "وقّعي",
   "summarySignaturesTitle": "التوقيعات",

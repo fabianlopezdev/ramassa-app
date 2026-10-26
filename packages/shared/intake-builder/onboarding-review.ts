@@ -90,6 +90,8 @@ export interface OnboardingReviewPayload {
   readonly last_name?: string;
   readonly answers: Parameters<typeof answerPayload>[0];
   readonly signatures: ReturnType<typeof formSignaturesPayload>;
+  /** Her ticks of the consents on the screens she reviews, by key (RAPP-699), when one is asked. */
+  readonly consents?: Readonly<Record<string, boolean>>;
 }
 
 export async function completeOnboardingReview(

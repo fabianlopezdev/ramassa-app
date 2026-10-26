@@ -68,6 +68,8 @@ export interface ConsentPlacement {
 /** A consent as a screen asks it: the consent and its placement there. */
 export interface PlacedConsent extends Consent {
   readonly placementId: string;
+  /** The Onboarding screen it sits on; null on the authorization. */
+  readonly screenKey: string | null;
   readonly required: boolean;
   readonly sortOrder: number;
 }
@@ -149,11 +151,38 @@ export function consentsOn(
             {
               ...consent,
               placementId: placement.id,
+              screenKey: placement.screenKey,
               required: placement.required,
               sortOrder: placement.sortOrder,
             },
           ];
     });
+}
+
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * The consents of her live Onboarding screens: an app screen's, or a Ramassà
+ * screen's that is not archived. Her Onboarding sends her ticks of these.
+ */
+export function liveOnboardingConsents(catalog: {
+  readonly consents?: readonly Consent[];
+  readonly consentPlacements?: readonly ConsentPlacement[];
+  readonly screens: readonly { readonly id: string; readonly isArchived: boolean }[];
+}): readonly PlacedConsent[] {
+  const live = new Set(catalog.screens.filter((screen) => !screen.isArchived).map((s) => s.id));
+  const screenKeys = [
+    ...new Set(
+      (catalog.consentPlacements ?? []).flatMap((placement) =>
+        placement.surface === 'onboarding' &&
+        placement.screenKey !== null &&
+        (!UUID_PATTERN.test(placement.screenKey) || live.has(placement.screenKey))
+          ? [placement.screenKey]
+          : [],
+      ),
+    ),
+  ].sort();
+  return screenKeys.flatMap((screenKey) => consentsOn(catalog, 'onboarding', screenKey));
 }
 
 /** Every form that asks a consent. */

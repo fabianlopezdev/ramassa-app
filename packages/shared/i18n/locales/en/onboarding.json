@@ -229,6 +229,7 @@
   "customFileUnavailable": "Sending files is not available yet. You can continue without it.",
   "customFileRemove": "Remove {{name}}",
   "customErrorSignature": "Sign with your finger.",
+  "customErrorConsent": "Tick this consent to continue.",
   "summarySigned": "Signed",
   "signingBlocksAction": "Sign",
   "summarySignaturesTitle": "Signatures",

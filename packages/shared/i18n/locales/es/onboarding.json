@@ -229,6 +229,7 @@
   "customFileUnavailable": "Todavía no se pueden enviar archivos. Puedes continuar sin él.",
   "customFileRemove": "Quita {{name}}",
   "customErrorSignature": "Firma con el dedo.",
+  "customErrorConsent": "Marca esta autorización para continuar.",
   "summarySigned": "Firmado",
   "signingBlocksAction": "Firma",
   "summarySignaturesTitle": "Firmas",

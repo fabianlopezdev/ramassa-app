@@ -82,6 +82,8 @@ const legacyDraftSchema = z.object({
   custom: z.record(z.string(), customAnswerValueSchema).optional(),
   // The strokes she drew on each signature block, not yet sent (RAPP-690).
   signatures: formSignatureDraftsSchema.optional(),
+  // Her ticks of the consents placed on her screens, by consent key (RAPP-699).
+  consents: z.record(z.string(), z.boolean()).optional(),
   // A test player's situation when the draft began (RAPP-619): a later change
   // on her page makes the draft stale.
   scenarioStamp: z.string().optional(),
@@ -108,6 +110,7 @@ const storedDraftSchema = z.object({
   screen: z.record(z.string(), z.unknown()).optional(),
   terms: z.record(z.string(), z.unknown()).optional(),
   signatures: formSignatureDraftsSchema.optional(),
+  consents: z.record(z.string(), z.boolean()).optional(),
   scenarioStamp: z.string().optional(),
 });
 
@@ -127,6 +130,8 @@ export interface OnboardingDraft {
   custom?: Record<string, CustomAnswerValue>;
   /** The strokes she drew on each signature block, by block id (RAPP-690). */
   signatures?: Record<string, SignatureStrokes | null>;
+  /** Her ticks of the consents placed on her screens, by consent key (RAPP-699). */
+  consents?: Record<string, boolean>;
   scenarioStamp?: string;
 }
 
@@ -139,6 +144,7 @@ export interface StoredOnboardingDraft {
   screen?: Record<string, unknown>;
   terms?: Record<string, unknown>;
   signatures?: Record<string, SignatureStrokes | null>;
+  consents?: Record<string, boolean>;
   scenarioStamp?: string;
 }
 

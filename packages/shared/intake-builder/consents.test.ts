@@ -3,6 +3,7 @@ import {
   consentDecisionsPayload,
   consentsOn,
   consentText,
+  liveOnboardingConsents,
   parseConsentPlacements,
   parseConsents,
   surfacesOfConsent,
@@ -105,5 +106,23 @@ describe('consents of Dades legals (RAPP-699)', () => {
     });
     expect(untickedRequiredConsents(asked, {})).toEqual(['sortides']);
     expect(untickedRequiredConsents(asked, { sortides: true })).toEqual([]);
+  });
+
+  test('her Onboarding sends the consents of its live screens only', () => {
+    const live = liveOnboardingConsents({
+      consents,
+      consentPlacements,
+      screens: [{ id: SCREEN, isArchived: false }],
+    });
+    expect(live.map((consent) => `${consent.key}@${String(consent.screenKey)}`)).toEqual([
+      `sortides@${SCREEN}`,
+    ]);
+    expect(
+      liveOnboardingConsents({
+        consents,
+        consentPlacements,
+        screens: [{ id: SCREEN, isArchived: true }],
+      }),
+    ).toEqual([]);
   });
 });
