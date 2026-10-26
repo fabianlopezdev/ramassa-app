@@ -69,7 +69,7 @@ select is(
 );
 select is(
   (select wording || '|' || language || '|' || required::text || '|' || (version_id = '5eed0000-0000-4000-8041-000000000001')::text
-     from public.authorization_consent_events
+     from public.consent_events
     where profile_id = '5eed0000-0000-4000-8000-000000000011' and consent_key = 'newsletter'),
   (select (content -> 'consents' -> 'newsletter' -> 'label' ->> 'ar') || '|ar|false|true' from run where label = 'v1'),
   'an earlier consent record carries the words its signature showed, in her language'
@@ -136,6 +136,21 @@ from run where label = 'v1';
 
 -- 3. Drafts -------------------------------------------------------------------------------------------------
 
+-- Staff shape the catalogue and the authorization's consents screen like a
+-- version's consents (RAPP-699): the draft takes its consents from there.
+create function pg_temp.catalogue_as(p_content jsonb) returns void language plpgsql security definer as $fn$
+begin
+  delete from public.consent_placements
+   where org_id = '5eed0000-0000-4000-8000-000000000000' and surface = 'authorization';
+  perform private.consents_from_authorization('5eed0000-0000-4000-8000-000000000000', p_content);
+  update public.consents c
+     set body = (p_content -> 'consents' -> c.key -> 'label')
+                || jsonb_build_object('ca', private.localized_text_in(p_content -> 'consents' -> c.key -> 'label', 'ca'))
+   where c.org_id = '5eed0000-0000-4000-8000-000000000000' and p_content -> 'consents' ? c.key;
+end;
+$fn$;
+select pg_temp.catalogue_as((select content from run where label = 'v2-content'));
+
 set local role authenticated;
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select throws_ok(
@@ -145,9 +160,10 @@ select throws_ok(
 
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000097", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select throws_ok(
-  $$ select public.save_authorization_draft(jsonb_set((select content from run where label = 'v2-content'),
-       '{consents,image_rights,required}', 'true')) $$,
-  '23514', null::text, 'a draft is checked like a version'
+  $$ select public.save_consent_placement(
+       (select p.id from public.consent_placements p join public.consents c on c.id = p.consent_id
+         where c.key = 'image_rights' and p.surface = 'authorization'), true) $$,
+  '23514', null::text, 'image rights are never required on the consents screen'
 );
 select lives_ok(
   $$ select public.save_authorization_draft((select content from run where label = 'v2-content')) $$,
@@ -260,7 +276,7 @@ select lives_ok(
 reset role;
 select is(
   (select array_agg(consent_key || ':' || granted || ':' || required order by consent_key)
-     from public.authorization_consent_events
+     from public.consent_events
     where profile_id = '5eed0000-0000-4000-8000-000000000022' and signature_id is not null),
   array['code_of_conduct:true:true', 'data_processing:true:true', 'health_data:false:false',
         'image_rights:false:false', 'messaging_groups:false:false', 'participation:true:true',
@@ -269,13 +285,13 @@ select is(
 );
 select is(
   (select wording || '|' || language || '|' || (version_id = (select id from run where label = 'v2'))::text
-     from public.authorization_consent_events
+     from public.consent_events
     where profile_id = '5eed0000-0000-4000-8000-000000000022' and consent_key = 'team_photos'),
   'أوافق على صور الفريق|ar|true',
   'and the words she was shown, in her language'
 );
 select is(
-  (select wording from public.authorization_consent_events
+  (select wording from public.consent_events
     where profile_id = '5eed0000-0000-4000-8000-000000000022' and consent_key = 'participation'),
   (select content -> 'consents' -> 'participation' -> 'label' ->> 'ar' from run where label = 'v1'),
   'a consent kept from version 1 keeps its words'
@@ -309,7 +325,7 @@ select lives_ok($$ select public.set_optional_consent('messaging_groups', false,
   'an optional consent of the current version changes from her profile');
 reset role;
 select is(
-  (select wording || '|' || language || '|' || method from public.authorization_consent_events
+  (select wording || '|' || language || '|' || method from public.consent_events
     where profile_id = '5eed0000-0000-4000-8000-000000000011' and consent_key = 'messaging_groups'
     order by decided_at desc, id desc limit 1),
   (select (content -> 'consents' -> 'messaging_groups' -> 'label' ->> 'es') || '|es|profile' from run where label = 'v1'),
@@ -381,7 +397,7 @@ select lives_ok(
 );
 reset role;
 select is(
-  (select array_agg(consent_key || ':' || granted order by consent_key) from public.authorization_consent_events
+  (select array_agg(consent_key || ':' || granted order by consent_key) from public.consent_events
     where profile_id = '5eed0000-0000-4000-8000-000000000096'
       and version_id = (select id from run where label = 'v2') and wording is not null),
   array['code_of_conduct:true', 'data_processing:true', 'health_data:false', 'image_rights:false',

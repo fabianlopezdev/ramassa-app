@@ -1553,7 +1553,7 @@ values (
 )
 on conflict (id) do nothing;
 
-insert into public.authorization_consent_events (org_id, profile_id, signature_id, consent_key, granted, method, decided_at)
+insert into public.consent_events (org_id, profile_id, signature_id, consent_key, granted, method, decided_at)
 select '5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-8000-000000000011',
        '5eed0000-0000-4000-8042-000000000011', consent.key, consent.granted, 'app',
        timestamptz '2026-09-20 18:30:00+02'
@@ -2967,3 +2967,35 @@ values ('5eed0000-0000-4000-8090-000000000004', '5eed0000-0000-4000-8043-0000000
         '[[[110,600],[210,470],[300,550],[390,420]]]'::jsonb,
         timestamptz '2026-09-15 19:12:00+02', '5eed0000-0000-4000-8000-000000000002')
 on conflict (id) do nothing;
+
+-- Dades legals (RAPP-699) -------------------------------------------------------------
+-- The seeded version brought its consents into the catalogue and placed them on the
+-- authorization. One consent the team added, asked on the archived screen above so no
+-- live flow asks it: Amina gave it on paper, then staff recorded her withdrawal.
+insert into public.consents (id, org_id, key, name, body, created_by, created_at, updated_at)
+values ('5eed0000-0000-4000-8099-000000000001', '5eed0000-0000-4000-8000-000000000000',
+        'fotos_de_partit',
+        '{"ca":"Fotos de partit","es":"Fotos de partido","en":"Match photos","ar":"صور المباريات","fa":"عکس‌های مسابقه"}'::jsonb,
+        '{"ca":"Accepto que l''equip comparteixi fotos dels partits al grup de l''equip.","es":"Acepto que el equipo comparta fotos de los partidos en el grupo del equipo.","en":"I agree that the team shares match photos in the team group.","ar":"أوافق على أن يشارك الفريق صور المباريات في مجموعة الفريق.","fa":"موافقم که تیم عکس‌های مسابقه را در گروه تیم به اشتراک بگذارد."}'::jsonb,
+        '5eed0000-0000-4000-8000-000000000001',
+        timestamptz '2026-09-01 10:00:00+02', timestamptz '2026-09-01 10:00:00+02')
+on conflict (id) do nothing;
+
+insert into public.consent_placements (id, org_id, consent_id, surface, screen_key, sort_order, required)
+values ('5eed0000-0000-4000-8099-000000000002', '5eed0000-0000-4000-8000-000000000000',
+        '5eed0000-0000-4000-8099-000000000001', 'onboarding', '5eed0000-0000-4000-8090-000000000001', 1, false)
+on conflict (id) do nothing;
+
+insert into public.consent_events
+  (org_id, profile_id, consent_id, consent_key, granted, method, decided_at, language, wording,
+   recorded_by, reason)
+select '5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-8000-000000000011',
+       '5eed0000-0000-4000-8099-000000000001', 'fotos_de_partit', e.granted, e.method, e.decided_at, 'ca',
+       'Accepto que l''equip comparteixi fotos dels partits al grup de l''equip.',
+       '5eed0000-0000-4000-8000-000000000002', e.reason
+  from (values (true, 'paper', timestamptz '2026-09-15 19:00:00+02', null::text),
+               (false, 'staff', timestamptz '2026-10-02 18:00:00+02', 'Ho va demanar a l''entrenament.'))
+       as e(granted, method, decided_at, reason)
+ where not exists (select 1 from public.consent_events x
+                    where x.profile_id = '5eed0000-0000-4000-8000-000000000011'
+                      and x.consent_key = 'fotos_de_partit');

@@ -106,7 +106,7 @@ select is(
 );
 select is(
   (select string_agg(consent_key || ':' || granted, ',' order by consent_key)
-     from public.authorization_consent_events
+     from public.consent_events
     where profile_id = '5eed0000-0000-4000-8000-000000000022' and signature_id is not null),
   'code_of_conduct:true,data_processing:true,health_data:true,image_rights:true,messaging_groups:false,newsletter:false,participation:true',
   'each consent is stored separately'
@@ -138,7 +138,7 @@ select throws_ok(
 reset role;
 select is(
   (select granted::text || '|' || (media_consent_at is null)::text
-     from public.authorization_consent_events e
+     from public.consent_events e
      join public.profiles p on p.id = e.profile_id
     where e.profile_id = '5eed0000-0000-4000-8000-000000000022' and e.consent_key = 'image_rights'
     order by e.decided_at desc, e.id desc limit 1),

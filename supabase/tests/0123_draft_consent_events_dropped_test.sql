@@ -46,6 +46,19 @@ $$;
 create function pg_temp.stored(p_profile uuid, p_key text) returns jsonb language sql security definer as $$
   select private.system_field_answer(p_profile, p_key);
 $$;
+-- Staff shape the catalogue and the authorization's consents screen like a
+-- version's consents (RAPP-699): the draft takes its consents from there.
+create function pg_temp.catalogue_as(p_content jsonb) returns void language plpgsql security definer as $fn$
+begin
+  delete from public.consent_placements
+   where org_id = '5eed0000-0000-4000-8000-000000000000' and surface = 'authorization';
+  perform private.consents_from_authorization('5eed0000-0000-4000-8000-000000000000', p_content);
+  update public.consents c
+     set body = (p_content -> 'consents' -> c.key -> 'label')
+                || jsonb_build_object('ca', private.localized_text_in(p_content -> 'consents' -> c.key -> 'label', 'ca'))
+   where c.org_id = '5eed0000-0000-4000-8000-000000000000' and p_content -> 'consents' ? c.key;
+end;
+$fn$;
 grant execute on all functions in schema pg_temp to authenticated;
 
 create temp table run (label text primary key, id uuid, content jsonb) on commit drop;
@@ -92,7 +105,8 @@ select lives_ok(
 
 -- 1. Publish.
 select lives_ok(
-  $$ select public.save_authorization_draft((select content from run where label = 'club-news')) $$,
+  $$ select pg_temp.catalogue_as((select content from run where label = 'club-news'));
+     select public.save_authorization_draft((select content from run where label = 'club-news')) $$,
   'the design role adds a consent in a draft'
 );
 reset role;
@@ -112,7 +126,7 @@ select lives_ok(
 );
 reset role;
 select is(
-  (select count(*)::integer from public.authorization_consent_events
+  (select count(*)::integer from public.consent_events
     where profile_id = '5eed0000-0000-4000-8000-000000000096' and consent_key = 'club_news'
       and signature_id is null and version_id = (select id from run where label = 'club-news')),
   1,
@@ -123,7 +137,7 @@ set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000001", 
 select lives_ok($$ select public.publish_authorization_draft() $$, 'an admin publishes the draft');
 reset role;
 select is(
-  (select count(*)::integer from public.authorization_consent_events
+  (select count(*)::integer from public.consent_events
     where version_id = (select id from run where label = 'club-news')),
   0,
   'the published version carries no consent decision made on the draft'
@@ -140,7 +154,8 @@ select is(
 set local role authenticated;
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000097", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select lives_ok(
-  $$ select public.save_authorization_draft((select content from run where label = 'club-trips')) $$,
+  $$ select pg_temp.catalogue_as((select content from run where label = 'club-trips'));
+     select public.save_authorization_draft((select content from run where label = 'club-trips')) $$,
   'the design role adds another consent in a new draft'
 );
 reset role;
@@ -159,7 +174,7 @@ set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000097", 
 select lives_ok($$ select public.discard_authorization_draft() $$, 'the design role discards the draft');
 reset role;
 select is(
-  (select count(*)::integer from public.authorization_consent_events
+  (select count(*)::integer from public.consent_events
     where profile_id = '5eed0000-0000-4000-8000-000000000096' and consent_key = 'club_trips'),
   0,
   'no consent decision of the discarded draft is left behind, with or without a version'

@@ -82,8 +82,9 @@ export type AuthorizationVersionRow = Database['public']['Tables']['authorizatio
 export type AppTermsVersionRow = Database['public']['Tables']['app_terms_versions']['Row'];
 export type AuthorizationSignatureRow =
   Database['public']['Tables']['authorization_signatures']['Row'];
-export type AuthorizationConsentEventRow =
-  Database['public']['Tables']['authorization_consent_events']['Row'];
+export type ConsentEventRow = Database['public']['Tables']['consent_events']['Row'];
+export type ConsentRow = Database['public']['Tables']['consents']['Row'];
+export type ConsentPlacementRow = Database['public']['Tables']['consent_placements']['Row'];
 export type CustomQuestionStateRow = Database['public']['Tables']['custom_question_states']['Row'];
 export type ServiceCategoryRow = Database['public']['Tables']['service_categories']['Row'];
 export type ServiceRow = Database['public']['Tables']['services']['Row'];
@@ -1428,24 +1429,64 @@ export function buildAuthorizationSignature(
   };
 }
 
-/** One consent given while signing (RAPP-304). */
-export function buildAuthorizationConsentEvent(
-  overrides: Partial<AuthorizationConsentEventRow> = {},
-): AuthorizationConsentEventRow {
+const SEED_STAFF_CONSENT_ID = '5eed0000-0000-4000-8099-000000000001';
+
+/** One consent given while signing (RAPP-304), on the seeded version (RAPP-699). */
+export function buildConsentEvent(overrides: Partial<ConsentEventRow> = {}): ConsentEventRow {
   return {
     id: 1,
     org_id: SEED_ORGANIZATION_ID,
     profile_id: seedUserId(PARTICIPANT_FIXTURES[0]!.ordinal),
     signature_id: '5eed0000-0000-4000-8042-000000000011',
+    consent_id: SEED_STAFF_CONSENT_ID,
     consent_key: 'participation',
     granted: true,
     method: 'app',
     decided_at: FIXTURE_TIMESTAMP,
     // The version and the words she was shown (RAPP-614).
     version_id: SEED_AUTHORIZATION_VERSION_ID,
+    form: 'authorization',
+    screen_key: null,
     language: 'ca',
     wording: 'Participo.',
     required: true,
+    recorded_by: null,
+    reason: null,
+    ...overrides,
+  };
+}
+
+/** The consent the team added in the seeds (RAPP-699): Dades legals' catalogue. */
+export function buildConsent(overrides: Partial<ConsentRow> = {}): ConsentRow {
+  return {
+    id: SEED_STAFF_CONSENT_ID,
+    org_id: SEED_ORGANIZATION_ID,
+    key: 'fotos_de_partit',
+    system_key: null,
+    name: { ca: 'Fotos de partit' },
+    body: { ca: "Accepto que l'equip comparteixi fotos dels partits al grup de l'equip." },
+    is_archived: false,
+    created_by: seedUserId(1),
+    created_at: FIXTURE_TIMESTAMP,
+    updated_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+/** Where the seeded consent is asked: the archived Onboarding screen (RAPP-699). */
+export function buildConsentPlacement(
+  overrides: Partial<ConsentPlacementRow> = {},
+): ConsentPlacementRow {
+  return {
+    id: '5eed0000-0000-4000-8099-000000000002',
+    org_id: SEED_ORGANIZATION_ID,
+    consent_id: SEED_STAFF_CONSENT_ID,
+    surface: 'onboarding',
+    screen_key: '5eed0000-0000-4000-8090-000000000001',
+    sort_order: 1,
+    required: false,
+    created_at: FIXTURE_TIMESTAMP,
+    updated_at: FIXTURE_TIMESTAMP,
     ...overrides,
   };
 }

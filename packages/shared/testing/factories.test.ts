@@ -8,9 +8,11 @@ import {
   buildAppTermsSignature,
   buildAttendance,
   buildAuditLogEntry,
-  buildAuthorizationConsentEvent,
   buildAuthorizationSignature,
   buildAuthorizationVersion,
+  buildConsent,
+  buildConsentEvent,
+  buildConsentPlacement,
   buildCustomAnswer,
   buildCustomQuestionOption,
   buildCustomQuestionState,
@@ -459,8 +461,12 @@ describe('the authorization factories (RAPP-304)', () => {
     const paper = buildAuthorizationSignature();
     expect(paper.method).toBe('paper');
     expect(paper.signature).toBeNull();
-    expect(buildAuthorizationConsentEvent().granted).toBe(true);
-    expect(buildAuthorizationConsentEvent().wording).toBe('Participo.');
+    expect(buildConsentEvent().granted).toBe(true);
+    expect(buildConsentEvent().wording).toBe('Participo.');
+    // Dades legals (RAPP-699): the catalogue and where a consent is asked.
+    expect(buildConsentEvent().form).toBe('authorization');
+    expect(buildConsent().system_key).toBeNull();
+    expect(buildConsentPlacement().consent_id).toBe(buildConsent().id);
     // The factory version is a valid editable version (RAPP-614).
     expect(authorizationContentSchema.safeParse(version.content).success).toBe(true);
   });

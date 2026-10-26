@@ -314,80 +314,6 @@ export type Database = {
           },
         ];
       };
-      authorization_consent_events: {
-        Row: {
-          consent_key: string;
-          decided_at: string;
-          granted: boolean;
-          id: number;
-          language: string | null;
-          method: string;
-          org_id: string;
-          profile_id: string;
-          required: boolean | null;
-          signature_id: string | null;
-          version_id: string | null;
-          wording: string | null;
-        };
-        Insert: {
-          consent_key: string;
-          decided_at?: string;
-          granted: boolean;
-          id?: never;
-          language?: string | null;
-          method: string;
-          org_id: string;
-          profile_id: string;
-          required?: boolean | null;
-          signature_id?: string | null;
-          version_id?: string | null;
-          wording?: string | null;
-        };
-        Update: {
-          consent_key?: string;
-          decided_at?: string;
-          granted?: boolean;
-          id?: never;
-          language?: string | null;
-          method?: string;
-          org_id?: string;
-          profile_id?: string;
-          required?: boolean | null;
-          signature_id?: string | null;
-          version_id?: string | null;
-          wording?: string | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'authorization_consent_events_org_id_fkey';
-            columns: ['org_id'];
-            isOneToOne: false;
-            referencedRelation: 'organizations';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'authorization_consent_events_profile_id_fkey';
-            columns: ['profile_id'];
-            isOneToOne: false;
-            referencedRelation: 'profiles';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'authorization_consent_events_signature_id_fkey';
-            columns: ['signature_id'];
-            isOneToOne: false;
-            referencedRelation: 'authorization_signatures';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'authorization_consent_events_version_id_fkey';
-            columns: ['version_id'];
-            isOneToOne: false;
-            referencedRelation: 'authorization_versions';
-            referencedColumns: ['id'];
-          },
-        ];
-      };
       authorization_signatures: {
         Row: {
           device: string | null;
@@ -591,6 +517,214 @@ export type Database = {
           },
           {
             foreignKeyName: 'collaborating_entities_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      consent_events: {
+        Row: {
+          consent_id: string;
+          consent_key: string;
+          decided_at: string;
+          form: string | null;
+          granted: boolean;
+          id: number;
+          language: string | null;
+          method: string;
+          org_id: string;
+          profile_id: string;
+          reason: string | null;
+          recorded_by: string | null;
+          required: boolean | null;
+          screen_key: string | null;
+          signature_id: string | null;
+          version_id: string | null;
+          wording: string | null;
+        };
+        Insert: {
+          consent_id: string;
+          consent_key: string;
+          decided_at?: string;
+          form?: string | null;
+          granted: boolean;
+          id?: never;
+          language?: string | null;
+          method: string;
+          org_id: string;
+          profile_id: string;
+          reason?: string | null;
+          recorded_by?: string | null;
+          required?: boolean | null;
+          screen_key?: string | null;
+          signature_id?: string | null;
+          version_id?: string | null;
+          wording?: string | null;
+        };
+        Update: {
+          consent_id?: string;
+          consent_key?: string;
+          decided_at?: string;
+          form?: string | null;
+          granted?: boolean;
+          id?: never;
+          language?: string | null;
+          method?: string;
+          org_id?: string;
+          profile_id?: string;
+          reason?: string | null;
+          recorded_by?: string | null;
+          required?: boolean | null;
+          screen_key?: string | null;
+          signature_id?: string | null;
+          version_id?: string | null;
+          wording?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'consent_events_consent_id_fkey';
+            columns: ['consent_id'];
+            isOneToOne: false;
+            referencedRelation: 'consents';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'consent_events_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'consent_events_profile_id_fkey';
+            columns: ['profile_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'consent_events_recorded_by_fkey';
+            columns: ['recorded_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'consent_events_signature_id_fkey';
+            columns: ['signature_id'];
+            isOneToOne: false;
+            referencedRelation: 'authorization_signatures';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'consent_events_version_id_fkey';
+            columns: ['version_id'];
+            isOneToOne: false;
+            referencedRelation: 'authorization_versions';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      consent_placements: {
+        Row: {
+          consent_id: string;
+          created_at: string;
+          id: string;
+          org_id: string;
+          required: boolean;
+          screen_key: string | null;
+          sort_order: number;
+          surface: string;
+          updated_at: string;
+        };
+        Insert: {
+          consent_id: string;
+          created_at?: string;
+          id?: string;
+          org_id: string;
+          required?: boolean;
+          screen_key?: string | null;
+          sort_order?: number;
+          surface: string;
+          updated_at?: string;
+        };
+        Update: {
+          consent_id?: string;
+          created_at?: string;
+          id?: string;
+          org_id?: string;
+          required?: boolean;
+          screen_key?: string | null;
+          sort_order?: number;
+          surface?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'consent_placements_consent_id_fkey';
+            columns: ['consent_id'];
+            isOneToOne: false;
+            referencedRelation: 'consents';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'consent_placements_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      consents: {
+        Row: {
+          body: Json;
+          created_at: string;
+          created_by: string | null;
+          id: string;
+          is_archived: boolean;
+          key: string;
+          name: Json;
+          org_id: string;
+          system_key: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          body: Json;
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          is_archived?: boolean;
+          key: string;
+          name: Json;
+          org_id: string;
+          system_key?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          body?: Json;
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          is_archived?: boolean;
+          key?: string;
+          name?: Json;
+          org_id?: string;
+          system_key?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'consents_created_by_fkey';
+            columns: ['created_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'consents_org_id_fkey';
             columns: ['org_id'];
             isOneToOne: false;
             referencedRelation: 'organizations';
@@ -5434,6 +5568,10 @@ export type Database = {
         Args: { p_preset_id: string; p_profile_ids: string[] };
         Returns: number;
       };
+      archive_consent: {
+        Args: { p_archived: boolean; p_id: string };
+        Returns: undefined;
+      };
       archive_intake_screen: { Args: { p_id: string }; Returns: undefined };
       archive_profile_field: { Args: { p_id: string }; Returns: undefined };
       assert_within_hourly_limit: {
@@ -6503,10 +6641,13 @@ export type Database = {
       my_consents: {
         Args: never;
         Returns: {
+          consent_id: string;
           consent_key: string;
           decided_at: string;
+          form: string;
           granted: boolean;
           language: string;
+          name: Json;
           wording: string;
         }[];
       };
@@ -6603,14 +6744,39 @@ export type Database = {
           version_number: number;
         }[];
       };
-      participant_consents: {
+      participant_consent_history: {
         Args: { p_profile_id: string };
         Returns: {
+          consent_id: string;
           consent_key: string;
           decided_at: string;
+          event_id: number;
+          form: string;
           granted: boolean;
           language: string;
           method: string;
+          name: Json;
+          reason: string;
+          recorded_by_name: string;
+          required: boolean;
+          season_name: string;
+          version_number: number;
+          wording: string;
+        }[];
+      };
+      participant_consents: {
+        Args: { p_profile_id: string };
+        Returns: {
+          consent_id: string;
+          consent_key: string;
+          decided_at: string;
+          form: string;
+          granted: boolean;
+          language: string;
+          method: string;
+          name: Json;
+          reason: string;
+          recorded_by_name: string;
           required: boolean;
           season_name: string;
           version_number: number;
@@ -6720,6 +6886,15 @@ export type Database = {
           table_name: string;
         }[];
       };
+      place_consent: {
+        Args: {
+          p_consent_id: string;
+          p_required?: boolean;
+          p_screen_key?: string;
+          p_surface: string;
+        };
+        Returns: string;
+      };
       place_field: {
         Args: {
           p_field_id: string;
@@ -6821,6 +6996,18 @@ export type Database = {
         Args: { p_profile_id: string; p_signed_on: string };
         Returns: string;
       };
+      record_participant_consent: {
+        Args: {
+          p_consent_id: string;
+          p_decided_on?: string;
+          p_granted: boolean;
+          p_language?: string;
+          p_method: string;
+          p_profile_id: string;
+          p_reason?: string;
+        };
+        Returns: number;
+      };
       record_push_delivery_results: {
         Args: {
           dispatch_secret: string;
@@ -6902,6 +7089,10 @@ export type Database = {
         };
         Returns: string;
       };
+      remove_consent_placement: {
+        Args: { p_placement_id: string };
+        Returns: undefined;
+      };
       remove_form_block: { Args: { p_id: string }; Returns: undefined };
       remove_placement: { Args: { p_placement_id: string }; Returns: undefined };
       remove_staff_member: {
@@ -6971,6 +7162,14 @@ export type Database = {
       };
       save_builtin_screen: {
         Args: { p_is_hidden: boolean; p_screen: string; p_texts: Json };
+        Returns: undefined;
+      };
+      save_consent: {
+        Args: { p_body: Json; p_id: string; p_name: Json };
+        Returns: string;
+      };
+      save_consent_placement: {
+        Args: { p_placement_id: string; p_required: boolean };
         Returns: undefined;
       };
       save_custom_notification_group: {

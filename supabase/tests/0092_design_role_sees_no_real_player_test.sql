@@ -80,7 +80,7 @@ select is((select count(*)::int from public.terms_acceptances where profile_id i
 select is((select count(*)::int from public.participant_notes where profile_id in (select id from real_player)), 0, 'participant notes: none');
 select is((select count(*)::int from public.deletion_requests where profile_id in (select id from real_player)), 0, 'deletion requests: none');
 select is((select count(*)::int from public.authorization_signatures where profile_id in (select id from real_player)), 0, 'authorization signatures: none');
-select is((select count(*)::int from public.authorization_consent_events where profile_id in (select id from real_player)), 0, 'consent events: none');
+select is((select count(*)::int from public.consent_events where profile_id in (select id from real_player)), 0, 'consent events: none');
 select is((select count(*)::int from public.app_terms_signatures where profile_id in (select id from real_player)), 0, 'app terms signatures: none');
 select is((select count(*)::int from public.custom_answers where profile_id in (select id from real_player)), 0, 'custom answers: none');
 select is((select count(*)::int from public.custom_question_states where profile_id in (select id from real_player)), 0, 'question states: none');

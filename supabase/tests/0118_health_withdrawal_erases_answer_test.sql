@@ -34,7 +34,7 @@ select private.write_custom_answer('5eed0000-0000-4000-8000-000000000011',
   private.authorization_field('5eed0000-0000-4000-8000-000000000000', 'health_info'), '"Asma lleu"', 'player', null);
 insert into run (label, content)
 select 'health', to_jsonb((private.authorization_field('5eed0000-0000-4000-8000-000000000000', 'health_info')).id);
-insert into public.authorization_consent_events (org_id, profile_id, consent_key, granted, method)
+insert into public.consent_events (org_id, profile_id, consent_key, granted, method)
 values ('5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-8000-000000000011', 'health_data', true, 'profile');
 
 set local role authenticated;
@@ -66,7 +66,7 @@ select is(
   'the erasure is audited with ids only'
 );
 select is(
-  (select granted from public.authorization_consent_events
+  (select granted from public.consent_events
     where profile_id = '5eed0000-0000-4000-8000-000000000011' and consent_key = 'health_data'
     order by decided_at desc, id desc limit 1),
   false,

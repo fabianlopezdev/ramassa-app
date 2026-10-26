@@ -180,7 +180,7 @@ test('in Arabic she meets the new consent, signs, and her page shows its words',
     .poll(() =>
       queryDatabase(
         `select e.wording || '|' || e.language || '|' || e.granted
-           from public.authorization_consent_events e
+           from public.consent_events e
           where e.profile_id = '${PLAYER}' and e.consent_key = 'consent_8'`,
       ),
     )
