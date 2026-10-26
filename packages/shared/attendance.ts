@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { AppError, databaseErrorCode } from './errors';
 import { MADRID_TIME_ZONE, toUtcInstant, type EventLocalizedText } from './events';
 import { realtimeTopic } from './lib/realtime-topic';
+import { withShownNames } from './participants/shown-names';
 import type { Database } from './types/database';
 
 export const ATTENDANCE_STATUSES = ['present', 'absent', 'excused'] as const;
@@ -407,7 +408,12 @@ export async function fetchAttendanceSheet(
   return buildAttendanceSheet({
     occurrence,
     event: eventResult.data as unknown as AttendanceEvent,
-    profiles: (profilesResult.data ?? []) as AttendanceProfile[],
+    // Her names at the level the reader may read (RAPP-693).
+    profiles: await withShownNames(
+      client,
+      (profilesResult.data ?? []) as AttendanceProfile[],
+      signal,
+    ),
     signups: (signupsResult.data ?? []) as AttendanceSignup[],
     marks: (marksResult.data ?? []) as unknown as AttendanceMark[],
   });
@@ -436,7 +442,7 @@ export async function fetchAttendanceOverview(
     buildAttendanceOverview({
       occurrences: (occurrencesResult.data ?? []) as AttendanceOccurrence[],
       events: (eventsResult.data ?? []) as unknown as AttendanceEvent[],
-      profiles: (profilesResult.data ?? []) as AttendanceProfile[],
+      profiles: await withShownNames(client, (profilesResult.data ?? []) as AttendanceProfile[]),
       signups: (signupsResult.data ?? []) as (AttendanceSignup & { event_id: string })[],
       marks: (marksResult.data ?? []) as unknown as AttendanceMark[],
     }),

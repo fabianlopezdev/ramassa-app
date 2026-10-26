@@ -180,7 +180,6 @@
     "moveField": "انقل الحقل {{field}}",
     "renameSection": "غيّر اسم {{section}}",
     "editNamed": "عدّل {{field}}",
-    "namesLock": "الاسم واسم العائلة دائمًا نص قصير بمستوى عادي، لأن التطبيق يحييها ويتواصل معها بهما.",
     "createdBy": "أنشأه {{name}}، {{date}}",
     "createdOn": "أُنشئ في {{date}}",
     "archived": "أُرشف الحقل.",

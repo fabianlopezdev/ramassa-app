@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { AppError } from './errors';
 import { isSupportedLanguage, type SupportedLanguage } from './i18n';
+import { withShownNames } from './participants/shown-names';
 import type { Database, Json } from './types/database';
 
 export const NOTIFICATION_AUDIENCE_KINDS = [
@@ -247,7 +248,7 @@ export async function fetchNotificationAudienceOptions(
   if (participantResult.error) databaseFailure(participantResult.error.message);
   if (entityResult.error) databaseFailure(entityResult.error.message);
 
-  const participants = z
+  const listed = z
     .array(
       z.object({
         id: z.uuid(),
@@ -257,6 +258,8 @@ export async function fetchNotificationAudienceOptions(
       }),
     )
     .parse(participantResult.data ?? []);
+  // Her names at the level the reader may read (RAPP-693).
+  const participants = await withShownNames(client, listed, signal);
   return {
     serviceCategories: (categoryResult.data ?? []).map((category) => ({
       id: category.id,

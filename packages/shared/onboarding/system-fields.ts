@@ -37,7 +37,10 @@ export const SYSTEM_FIELD_QUESTIONS = {
 
 export type SystemFieldKey = keyof typeof SYSTEM_FIELD_QUESTIONS;
 
-/** Her names stay on her account (D2): they are never field answers. */
+/**
+ * Her names keep the app's own name control: her phone asks them as text and
+ * the database stores the text as her answers, fitted to their type (RAPP-693).
+ */
 export const ACCOUNT_NAME_KEYS = ['first_name', 'last_name'] as const;
 
 export function isSystemFieldKey(key: string): key is SystemFieldKey {

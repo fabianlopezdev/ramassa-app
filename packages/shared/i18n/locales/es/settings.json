@@ -708,7 +708,6 @@
     "moveField": "Mueve el campo {{field}}",
     "renameSection": "Cambia el nombre de {{section}}",
     "editNamed": "Edita {{field}}",
-    "namesLock": "El nombre y los apellidos son siempre texto corto y nivel Normal, porque la app la saluda y la contacta con ellos.",
     "createdBy": "creado por {{name}}, {{date}}",
     "createdOn": "creado el {{date}}",
     "archived": "Campo archivado.",

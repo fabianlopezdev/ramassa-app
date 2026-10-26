@@ -170,7 +170,7 @@ export function needsChangeConfirmation(
   );
 }
 
-/** Her names keep their type and privacy and are always asked (D2). */
+/** Her names: never archived and never left empty (RAPP-693). */
 export function isNameField(field: Pick<ProfileField, 'systemKey'>): boolean {
   return field.systemKey === 'first_name' || field.systemKey === 'last_name';
 }

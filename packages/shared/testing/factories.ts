@@ -737,6 +737,8 @@ export function buildProfileFromFixture(
     prior_seasons: 0,
     // A real person unless a test says otherwise (RAPP-615).
     is_test_account: false,
+    // Her number in her organization (RAPP-693): "Jugadora 0042" where her name is private.
+    member_number: fixture.ordinal,
     ...derivedAccountFields(fixture),
     ...overrides,
   };

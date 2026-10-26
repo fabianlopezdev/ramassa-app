@@ -21,10 +21,10 @@
  */
 
 import { z } from 'zod';
+import type { SignatureStrokes } from '../equipment/handover';
 import { AppError } from '../errors';
 import { formSignatureDraftsSchema } from '../intake-builder/form-blocks';
 import { customAnswerValueSchema, type CustomAnswerValue } from '../intake-builder/question-types';
-import type { SignatureStrokes } from '../equipment/handover';
 import { SUPPORT_NEED_CATEGORIES, type SupportNeedCategory } from '../schemas/support-needs';
 import type { MmkvLike } from './supabase';
 
@@ -89,7 +89,8 @@ const legacyDraftSchema = z.object({
 
 /**
  * Version 2 (RAPP-663): her answers by field id, every field alike, the app's
- * and the team's. Her names and her app language stay on her account (D2).
+ * and the team's. Her names travel apart, as she typed them (the database
+ * keeps them as her answers, RAPP-693), and her app language is an account setting.
  * `screen` keeps what a screen shows that no answer holds, such as her "No"
  * to the entity question.
  */

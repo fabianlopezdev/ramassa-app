@@ -77,7 +77,7 @@ export async function fetchOwnProfile(
   return { ...record, fields: await fetchSystemFieldIndex(client) };
 }
 
-/** Writes an edited profile: her names and settings on her account, every answer by field. */
+/** Writes an edited profile: her names (stored as her answers), her settings, every answer by field. */
 export async function updateOwnProfile(client: Client, update: ProfileUpdate): Promise<void> {
   const { error } = await client.rpc('update_own_profile', {
     payload: { ...update, answers: answerPayload(update.answers) } as Json,

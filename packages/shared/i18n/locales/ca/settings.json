@@ -708,7 +708,6 @@
     "moveField": "Mou el camp {{field}}",
     "renameSection": "Canvia el nom de {{section}}",
     "editNamed": "Edita {{field}}",
-    "namesLock": "El nom i els cognoms són sempre text curt i nivell Normal, perquè l'app la saluda i la contacta amb ells.",
     "createdBy": "creat per {{name}}, {{date}}",
     "createdOn": "creat el {{date}}",
     "archived": "Camp arxivat.",

@@ -3407,6 +3407,7 @@ export type Database = {
           is_test_account: boolean;
           last_name: string;
           media_consent_at: string | null;
+          member_number: number;
           org_id: string;
           preferred_language: string;
           prior_seasons: number;
@@ -3434,6 +3435,7 @@ export type Database = {
           is_test_account?: boolean;
           last_name: string;
           media_consent_at?: string | null;
+          member_number?: number;
           org_id: string;
           preferred_language?: string;
           prior_seasons?: number;
@@ -3461,6 +3463,7 @@ export type Database = {
           is_test_account?: boolean;
           last_name?: string;
           media_consent_at?: string | null;
+          member_number?: number;
           org_id?: string;
           preferred_language?: string;
           prior_seasons?: number;
@@ -5511,6 +5514,7 @@ export type Database = {
           is_test_account: boolean;
           last_name: string;
           media_consent_at: string | null;
+          member_number: number;
           org_id: string;
           preferred_language: string;
           prior_seasons: number;
@@ -5547,6 +5551,7 @@ export type Database = {
           is_test_account: boolean;
           last_name: string;
           media_consent_at: string | null;
+          member_number: number;
           org_id: string;
           preferred_language: string;
           prior_seasons: number;
@@ -7181,6 +7186,15 @@ export type Database = {
       set_test_player_scenario: {
         Args: { p_change: Json; p_profile_id: string };
         Returns: undefined;
+      };
+      shown_names: {
+        Args: { p_ids: string[] };
+        Returns: {
+          first_name: string;
+          id: string;
+          last_name: string;
+          member_number: number;
+        }[];
       };
       sign_authorization: {
         Args: { p_payload: Json; p_version_id: string };

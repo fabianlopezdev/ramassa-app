@@ -708,7 +708,6 @@
     "moveField": "Move field {{field}}",
     "renameSection": "Rename {{section}}",
     "editNamed": "Edit {{field}}",
-    "namesLock": "Her first and last name are always short text at the Normal level, because the app greets and contacts her by them.",
     "createdBy": "created by {{name}}, {{date}}",
     "createdOn": "created on {{date}}",
     "archived": "Field archived.",

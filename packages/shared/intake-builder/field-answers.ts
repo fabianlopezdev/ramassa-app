@@ -1,11 +1,11 @@
 /**
  * Answers by field (RAPP-661): the one payload every writer of her data takes.
  *
- * Her names stay on her account (D2) and travel as `first_name` and
- * `last_name`. Every other answer travels in `answers`, keyed by the field's
- * id, in the shape that field's type stores (an option's id for a choice, a
- * canonical name for a country...). Null or an empty value removes the
- * answer. Each writer adds its own account settings beside them (her app
+ * Her names travel as `first_name` and `last_name`, and the database stores
+ * them as her answers (RAPP-693), or as answers by field like any other.
+ * Every other answer travels in `answers`, keyed by the field's id, in the
+ * shape that field's type stores (an option's id for a choice, a canonical
+ * name for a country...). Null or an empty value removes the answer. Each writer adds its own account settings beside them (her app
  * language, her media consent, her season count...), and the database refuses
  * any key it does not know.
  */

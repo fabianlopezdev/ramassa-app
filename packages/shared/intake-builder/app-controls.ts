@@ -15,7 +15,8 @@
  * Otherwise the question is off its control: the app screen hides the control
  * (`hiddenBuiltinQuestions` lists it), and every field of the question is asked
  * where it is placed with the generic renderer, as a Ramassà field is. Her
- * names stay on her account and are never off their control (D2).
+ * names keep their own control: her phone asks them as text and the database
+ * fits the text to their type (RAPP-693).
  */
 import {
   WIZARD_QUESTION_SCREENS,
