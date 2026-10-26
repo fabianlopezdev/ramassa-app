@@ -191,7 +191,15 @@ export function CardPickerField<T extends string>({
           'flex items-center gap-3 rounded-xl border bg-card p-2',
           !isLocked && 'cursor-pointer transition-colors hover:bg-muted/60',
         )}
-        onClick={isLocked ? undefined : () => setIsOpen(true)}
+        onClick={
+          isLocked
+            ? undefined
+            : (event) => {
+                // A pick in the dialog bubbles here through the portal: only a
+                // click on the card itself opens it.
+                if (event.currentTarget.contains(event.target as Node)) setIsOpen(true);
+              }
+        }
       >
         {media}
         <div className="flex min-w-0 flex-1 flex-col gap-1">

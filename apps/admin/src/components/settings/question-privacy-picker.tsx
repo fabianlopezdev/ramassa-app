@@ -6,7 +6,7 @@
  * existing question shows its card without Change.
  */
 
-import { PRIVACY_LEVEL_CLASSES } from '@/components/fields/privacy-badge';
+import { PRIVACY_LEVEL_CLASSES, PRIVACY_LEVEL_TEXT } from '@/components/fields/privacy-badge';
 import { CardPickerField, CardRadioGroup } from '@/components/settings/card-picker';
 import { cn } from '@/lib/utils';
 import { IdCard, LockKeyhole, Users, type LucideIcon } from 'lucide-react';
@@ -19,14 +19,21 @@ const LEVEL_ICONS: Readonly<Record<QuestionPrivacy, LucideIcon>> = {
   sensitive: LockKeyhole,
 };
 
-function LevelIcon({ level }: { readonly level: QuestionPrivacy }) {
+function LevelIcon({
+  level,
+  isOnTint = false,
+}: {
+  readonly level: QuestionPrivacy;
+  /** On a box already in the level's colour, the icon sits on the card colour. */
+  readonly isOnTint?: boolean;
+}) {
   const Icon = LEVEL_ICONS[level];
   return (
     <span
       aria-hidden
       className={cn(
         'flex size-10 shrink-0 items-center justify-center rounded-lg',
-        PRIVACY_LEVEL_CLASSES[level],
+        isOnTint ? cn('bg-card', PRIVACY_LEVEL_TEXT[level]) : PRIVACY_LEVEL_CLASSES[level],
       )}
     >
       <Icon className="size-5" />
@@ -56,8 +63,13 @@ export function QuestionPrivacyPicker({
       onChange={onChange}
       isLocked={isLocked}
       media={
-        <div className="flex aspect-[4/3] w-28 shrink-0 items-center justify-center rounded-lg border bg-canvas">
-          <LevelIcon level={value} />
+        <div
+          className={cn(
+            'flex aspect-[4/3] w-28 shrink-0 items-center justify-center rounded-lg',
+            PRIVACY_LEVEL_CLASSES[value],
+          )}
+        >
+          <LevelIcon level={value} isOnTint />
         </div>
       }
       name={t(`questions.privacyLevels.${value}`)}

@@ -16,6 +16,13 @@ export const PRIVACY_LEVEL_CLASSES: Readonly<Record<QuestionPrivacy, string>> = 
   sensitive: 'bg-destructive/10 text-destructive',
 };
 
+/** A level's colour on a light surface, such as the icon on its card (RAPP-670). */
+export const PRIVACY_LEVEL_TEXT: Readonly<Record<QuestionPrivacy, string>> = {
+  normal: 'text-foreground',
+  personal: 'text-primary',
+  sensitive: 'text-destructive',
+};
+
 export function PrivacyBadge({
   level,
   className,
