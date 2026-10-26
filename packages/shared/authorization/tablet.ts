@@ -12,6 +12,10 @@
  * queue. A staff member with participants.invite confirms it with an email and
  * a recent second factor (her account is created as for any invitation), merges
  * it into a player who already exists, or discards it.
+ *
+ * A walk-in also signs the Onboarding signature blocks on the tablet
+ * (RAPP-691): they wait with her signing and move to her profile when she is
+ * confirmed or merged.
  */
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
@@ -85,6 +89,8 @@ export interface TabletSigning {
   /** The payload built by `buildSignPayload`, with the tablet's language and device. */
   readonly payload: Json;
   readonly signedAt: string;
+  /** A walk-in's Onboarding block signatures, `{block: {strokes, language}}` (RAPP-691). */
+  readonly blockSignatures?: Json;
 }
 
 export function signerName(signer: TabletSigner): string {
@@ -109,6 +115,7 @@ export async function sendTabletSigning(client: Client, signing: TabletSigning):
           p_version_id: signing.versionId,
           p_payload: signing.payload,
           p_signed_at: signing.signedAt,
+          p_block_signatures: signing.blockSignatures ?? {},
         });
   if (error) throw databaseError(error);
   return z.uuid().parse(data);

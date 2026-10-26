@@ -633,6 +633,8 @@
     "signer": "Signed by",
     "date": "Date",
     "entitySigner": "{{name}} (entity)",
-    "drawing": "Signature of {{name}}"
+    "drawing": "Signature of {{name}}",
+    "onTabletWith": "Signed on the tablet, with {{name}}",
+    "onTablet": "Signed on the tablet"
   }
 }

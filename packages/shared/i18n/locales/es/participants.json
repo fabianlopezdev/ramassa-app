@@ -633,6 +633,8 @@
     "signer": "Firmado por",
     "date": "Fecha",
     "entitySigner": "{{name}} (entidad)",
-    "drawing": "Firma de {{name}}"
+    "drawing": "Firma de {{name}}",
+    "onTabletWith": "Firmada en la tableta, con {{name}}",
+    "onTablet": "Firmada en la tableta"
   }
 }

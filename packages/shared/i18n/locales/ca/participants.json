@@ -633,6 +633,8 @@
     "signer": "Signat per",
     "date": "Data",
     "entitySigner": "{{name}} (entitat)",
-    "drawing": "Signatura de {{name}}"
+    "drawing": "Signatura de {{name}}",
+    "onTabletWith": "Signada a la tauleta, amb {{name}}",
+    "onTablet": "Signada a la tauleta"
   }
 }

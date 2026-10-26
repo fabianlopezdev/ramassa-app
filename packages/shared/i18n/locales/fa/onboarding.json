@@ -229,5 +229,7 @@
   "customFileUnavailable": "ارسال فایل هنوز ممکن نیست. می‌توانید بدون آن ادامه دهید.",
   "customFileRemove": "حذف {{name}}",
   "customErrorSignature": "با انگشت امضا کنید.",
-  "summarySigned": "امضا شد"
+  "summarySigned": "امضا شد",
+  "signingBlocksAction": "امضا کنید",
+  "summarySignaturesTitle": "امضاها"
 }

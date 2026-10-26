@@ -171,6 +171,68 @@ export async function removeFormBlock(client: Pick<Client, 'rpc'>, id: string): 
   if (error) throw databaseError(error);
 }
 
+/**
+ * The Onboarding blocks of the live screens: an app screen's, or a Ramassà
+ * screen's that is not archived. The walk-in tablet asks these (RAPP-691).
+ */
+export function liveOnboardingBlocks(catalog: {
+  readonly blocks?: readonly FormBlock[];
+  readonly screens: readonly { readonly id: string; readonly isArchived: boolean }[];
+}): readonly FormBlock[] {
+  const live = new Set(catalog.screens.filter((screen) => !screen.isArchived).map((s) => s.id));
+  return (catalog.blocks ?? [])
+    .filter(
+      (block) =>
+        block.surface === 'onboarding' &&
+        block.screenKey !== null &&
+        (!UUID_PATTERN.test(block.screenKey) || live.has(block.screenKey)),
+    )
+    .sort(
+      (a, b) => (a.screenKey ?? '').localeCompare(b.screenKey ?? '') || a.sortOrder - b.sortOrder,
+    );
+}
+
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** One of her own signatures of an Onboarding block, as her phone reads it. */
+export interface MySignedBlock {
+  readonly blockId: string;
+  /** The text as she signed it, in `language`. */
+  readonly body: string;
+  readonly language: LanguageCode;
+}
+
+/**
+ * Whether she already signed this block (RAPP-691): one of her signatures
+ * holds the block's text exactly as it now reads in the language she signed
+ * it in. A changed text asks for a new signature; the database reads the same
+ * rule (`private.unsigned_form_blocks`).
+ */
+export function isFormBlockSigned(block: FormBlock, signed: readonly MySignedBlock[]): boolean {
+  return signed.some(
+    (signature) =>
+      signature.blockId === block.id && block.body[signature.language] === signature.body,
+  );
+}
+
+/** Her own signatures of the Onboarding blocks; none when they cannot be read. */
+export async function fetchMyFormSignatures(
+  client: Pick<Client, 'rpc'>,
+): Promise<readonly MySignedBlock[]> {
+  const { data, error } = await client.rpc('my_form_signatures');
+  if (error) throw databaseError(error);
+  return z
+    .array(
+      z.object({
+        block_id: z.uuid(),
+        body: z.string(),
+        language: z.enum(['ca', 'es', 'en', 'ar', 'fa']),
+      }),
+    )
+    .parse(data ?? [])
+    .map((row) => ({ blockId: row.block_id, body: row.body, language: row.language }));
+}
+
 /** One signature on her page. */
 export interface ParticipantFormSignature {
   readonly id: string;
@@ -184,6 +246,9 @@ export interface ParticipantFormSignature {
   readonly signerName: string;
   readonly strokes: SignatureStrokes | null;
   readonly signedAt: string;
+  /** Signed on the walk-in tablet (RAPP-691), with the team member present. */
+  readonly signedOnTablet: boolean;
+  readonly witnessedByName: string | null;
 }
 
 const signatureRowSchema = z.object({
@@ -196,6 +261,8 @@ const signatureRowSchema = z.object({
   signer_name: z.string(),
   strokes: z.unknown(),
   signed_at: z.string(),
+  signed_on_tablet: z.boolean().optional(),
+  witnessed_by_name: z.string().nullable().optional(),
 });
 
 /** Her signatures of the form blocks, for staff with participants.view_personal. */
@@ -222,6 +289,8 @@ export async function fetchParticipantFormSignatures(
         signerName: row.signer_name,
         strokes: strokes.success ? strokes.data : null,
         signedAt: row.signed_at,
+        signedOnTablet: row.signed_on_tablet ?? false,
+        witnessedByName: row.witnessed_by_name ?? null,
       };
     });
 }

@@ -3,6 +3,8 @@ import {
   formBlocksOn,
   formBlockText,
   formSignaturesPayload,
+  isFormBlockSigned,
+  liveOnboardingBlocks,
   parseFormBlocks,
   unsignedFormBlocks,
   type FormBlock,
@@ -72,5 +74,37 @@ describe('signature blocks (RAPP-690)', () => {
     expect(formSignaturesPayload(onScreen, drafts, 'es')).toEqual({
       [onScreen[1]!.id]: { strokes, language: 'es' },
     });
+  });
+});
+
+describe('signed on the tablet (RAPP-691)', () => {
+  const [block] = parseFormBlocks([
+    {
+      id: '5eed0000-0000-4000-8090-000000000009',
+      surface: 'onboarding',
+      screen_key: 'logistics',
+      kind: 'signature',
+      body: { ca: 'Autoritzo el transport', ar: 'أوافق' },
+      sort_order: 0,
+    },
+  ]);
+
+  test('a block counts as signed while its text in her language is the one she signed', () => {
+    const signed = [{ blockId: block!.id, body: 'أوافق', language: 'ar' as const }];
+    expect(isFormBlockSigned(block!, signed)).toBe(true);
+    expect(
+      isFormBlockSigned({ ...block!, body: { ca: 'Autoritzo el transport', ar: 'نعم' } }, signed),
+    ).toBe(false);
+  });
+
+  test('the tablet asks the blocks of app screens and of live Ramassà screens', () => {
+    const archived = '5eed0000-0000-4000-8044-000000000009';
+    const onArchived = { ...block!, id: 'x', screenKey: archived };
+    expect(
+      liveOnboardingBlocks({
+        blocks: [block!, onArchived],
+        screens: [{ id: archived, isArchived: true }],
+      }).map((each) => each.id),
+    ).toEqual([block!.id]);
   });
 });

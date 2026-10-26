@@ -92,6 +92,8 @@ describe('sendTabletSigning', () => {
         p_version_id: signing.versionId,
         p_payload: signing.payload,
         p_signed_at: signing.signedAt,
+        // No Onboarding block signed on this tablet (RAPP-691).
+        p_block_signatures: {},
       },
     ]);
   });
