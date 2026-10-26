@@ -13,6 +13,16 @@ const raw = {
   to_decrypt: 0,
   readers_gaining: 0,
   readers_losing: 2,
+  roles_gaining: [],
+  roles_losing: [
+    {
+      role_id: '69200000-0000-4000-8000-000000000001',
+      builtin_key: null,
+      name: 'Equip',
+      people: 1,
+    },
+    { role_id: null, builtin_key: null, name: null, people: 1 },
+  ],
   conditions_cleared: 0,
   features: [
     { feature: 'impact.nationalities', fits_now: true, fits_after: false },
@@ -28,6 +38,16 @@ describe('parseFieldChangePreview', () => {
     expect(preview.isPrivacyChange).toBe(true);
     expect(preview.toEncrypt).toBe(11);
     expect(preview.readersLosing).toBe(2);
+    expect(preview.rolesLosing).toEqual([
+      {
+        roleId: '69200000-0000-4000-8000-000000000001',
+        builtinKey: null,
+        name: 'Equip',
+        people: 1,
+      },
+      { roleId: null, builtinKey: null, name: null, people: 1 },
+    ]);
+    expect(preview.rolesGaining).toEqual([]);
     expect(preview.featuresLost).toEqual(['impact.nationalities', 'participants.nationality']);
     expect(preview.featuresRegained).toEqual([]);
   });
@@ -56,14 +76,23 @@ describe('needsChangeConfirmation', () => {
     expect(needsChangeConfirmation(field, { type: 'short_text', privacy: 'sensitive' })).toBe(true);
   });
 
-  test('does not ask for a rename or a field without answers', () => {
+  test('does not ask for a rename, or a new type on a field without answers', () => {
     expect(needsChangeConfirmation(field, { type: 'short_text', privacy: 'personal' })).toBe(false);
     expect(
       needsChangeConfirmation(
         { ...field, hasAnswers: false },
-        { type: 'number', privacy: 'normal' },
+        { type: 'number', privacy: 'personal' },
       ),
     ).toBe(false);
+  });
+
+  test('a new privacy level always asks, with no answers too (RAPP-692)', () => {
+    expect(
+      needsChangeConfirmation(
+        { ...field, hasAnswers: false },
+        { type: 'short_text', privacy: 'normal' },
+      ),
+    ).toBe(true);
   });
 
   test('asks when the page cannot tell whether answers exist', () => {

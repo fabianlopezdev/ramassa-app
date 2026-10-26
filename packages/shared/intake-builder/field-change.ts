@@ -6,12 +6,14 @@
  * saved, the page asks the database what it would do
  * (`public.preview_field_change`): how many answers convert to the new type
  * and how many leave the field for her history, how many get encrypted or
- * decrypted, how many team members gain or lose access, and which features
- * stop reading the field. Saving applies the same change in one transaction.
+ * decrypted, how many team members gain or lose access, by role (RAPP-692),
+ * and which features stop reading the field. Saving applies the same change
+ * in one transaction.
  */
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { AppError, databaseErrorCode } from '../errors';
+import { BUILTIN_PRESET_KEYS, type BuiltinPresetKey } from '../permissions/catalog';
 import type { Database, Json } from '../types/database';
 import { FIELD_FEATURES, type FieldFeatureKey } from './field-features';
 import type { ProfileField, QuestionPrivacy } from './profile-layout';
@@ -21,6 +23,14 @@ type Client = SupabaseClient<Database>;
 
 const privacySchema = z.enum(['normal', 'personal', 'sensitive']);
 const count = z.number().int().nonnegative();
+const roleReadersSchema = z.array(
+  z.object({
+    role_id: z.uuid().nullable(),
+    builtin_key: z.enum(BUILTIN_PRESET_KEYS).nullable(),
+    name: z.string().nullable(),
+    people: count,
+  }),
+);
 
 export const fieldChangePreviewSchema = z.object({
   type_from: z.enum(CUSTOM_QUESTION_TYPES),
@@ -34,11 +44,25 @@ export const fieldChangePreviewSchema = z.object({
   to_decrypt: count,
   readers_gaining: count,
   readers_losing: count,
+  roles_gaining: roleReadersSchema,
+  roles_losing: roleReadersSchema,
   conditions_cleared: count,
   features: z.array(
     z.object({ feature: z.string(), fits_now: z.boolean(), fits_after: z.boolean() }),
   ),
 });
+
+/**
+ * The people of one role whose access changes (RAPP-692). A built-in role
+ * has its key and is named in the reader's language unless renamed; people
+ * with no role come as one entry with no id, key or name.
+ */
+export interface RoleReaders {
+  readonly roleId: string | null;
+  readonly builtinKey: BuiltinPresetKey | null;
+  readonly name: string | null;
+  readonly people: number;
+}
 
 /** What saving a change would do to a field's answers. */
 export interface FieldChangePreview {
@@ -55,6 +79,9 @@ export interface FieldChangePreview {
   /** Team members who will read these answers, or stop reading them. */
   readonly readersGaining: number;
   readonly readersLosing: number;
+  /** The same people by role, for the warning that names them (RAPP-692). */
+  readonly rolesGaining: readonly RoleReaders[];
+  readonly rolesLosing: readonly RoleReaders[];
   /** Fields that opened on one of its options and will always show. */
   readonly conditionsCleared: number;
   /** The registry's features that read the field now and will not after. */
@@ -65,6 +92,10 @@ export interface FieldChangePreview {
 
 function isFeatureKey(key: string): key is FieldFeatureKey {
   return Object.prototype.hasOwnProperty.call(FIELD_FEATURES, key);
+}
+
+function roleReaders(row: z.infer<typeof roleReadersSchema>[number]): RoleReaders {
+  return { roleId: row.role_id, builtinKey: row.builtin_key, name: row.name, people: row.people };
 }
 
 export function parseFieldChangePreview(raw: unknown): FieldChangePreview {
@@ -85,6 +116,8 @@ export function parseFieldChangePreview(raw: unknown): FieldChangePreview {
     toDecrypt: preview.to_decrypt,
     readersGaining: preview.readers_gaining,
     readersLosing: preview.readers_losing,
+    rolesGaining: preview.roles_gaining.map(roleReaders),
+    rolesLosing: preview.roles_losing.map(roleReaders),
     conditionsCleared: preview.conditions_cleared,
     featuresLost: features
       .filter((feature) => feature.fits_now && !feature.fits_after)
@@ -124,15 +157,16 @@ export async function previewFieldChange(
 }
 
 /**
- * Whether saving needs the confirmation: the field has answers (or the page
- * cannot tell) and its type or privacy changes.
+ * Whether saving needs the confirmation: a new privacy level always asks,
+ * since it changes who reads the field (RAPP-692); a new type asks when the
+ * field has answers (or the page cannot tell).
  */
 export function needsChangeConfirmation(
   field: Pick<ProfileField, 'type' | 'privacy' | 'hasAnswers'>,
   change: Pick<FieldChange, 'type' | 'privacy'>,
 ): boolean {
   return (
-    field.hasAnswers !== false && (field.type !== change.type || field.privacy !== change.privacy)
+    field.privacy !== change.privacy || (field.hasAnswers !== false && field.type !== change.type)
   );
 }
 
