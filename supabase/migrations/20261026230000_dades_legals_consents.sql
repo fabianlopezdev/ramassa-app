@@ -956,7 +956,22 @@ $$;
 revoke all on function public.record_participant_consent(uuid, uuid, boolean, text, text, text, date) from public, anon;
 grant execute on function public.record_participant_consent(uuid, uuid, boolean, text, text, text, date) to authenticated;
 
--- Her decisions on the consents placed on her Onboarding screens: each one she
+-- Whether an Onboarding screen is live: an app screen, or a Ramassà screen
+-- that is not archived. Only a live screen is shown to her.
+create or replace function private.onboarding_screen_live(p_org_id uuid, p_screen_key text)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select not private.is_uuid_text(p_screen_key)
+      or exists (select 1 from public.intake_screens s
+                  where s.id = p_screen_key::uuid and s.org_id = p_org_id and not s.is_archived);
+$$;
+revoke all on function private.onboarding_screen_live(uuid, text) from public, anon, authenticated;
+
+-- Her decisions on the consents placed on her live Onboarding screens: each one she
 -- was shown, with its text in her language. `p_screens` limits them to the
 -- screens she was asked again (the review). A payload without `consents` (an
 -- older build) records nothing and checks nothing.
@@ -987,7 +1002,8 @@ begin
         where not exists (
           select 1 from public.consent_placements p
             join public.consents c on c.id = p.consent_id and not c.is_archived
-           where p.org_id = her.org_id and p.surface = 'onboarding' and c.key = given.key))
+           where p.org_id = her.org_id and p.surface = 'onboarding' and c.key = given.key
+             and private.onboarding_screen_live(her.org_id, p.screen_key)))
   then
     raise check_violation using message = 'her Onboarding consents are ticks of the consents it asks';
   end if;
@@ -996,6 +1012,7 @@ begin
       from public.consent_placements p
       join public.consents c on c.id = p.consent_id and not c.is_archived
      where p.org_id = her.org_id and p.surface = 'onboarding'
+       and private.onboarding_screen_live(her.org_id, p.screen_key)
        and (p_screens is null or p.screen_key = any (p_screens))
      order by p.screen_key, p.sort_order
   loop

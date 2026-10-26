@@ -24,7 +24,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
-select plan(47);
+select plan(48);
 
 select vault.create_secret('test-encryption-key', 'app_encryption_key', 'pgTAP test key')
 where not exists (select 1 from vault.secrets where name = 'app_encryption_key');
@@ -172,6 +172,11 @@ select lives_ok(
 select lives_ok(
   $$ select private.record_onboarding_consents('5eed0000-0000-4000-8000-000000000012', '{"sortides": true}'::jsonb, 'ar') $$,
   'her Onboarding ticks are recorded'
+);
+select is(
+  (select count(*)::integer from public.consent_events
+    where profile_id = '5eed0000-0000-4000-8000-000000000012' and consent_key = 'fotos_de_partit'),
+  0, 'a consent on an archived screen is never asked, so never recorded'
 );
 select is(
   (select wording || '|' || language || '|' || form || '|' || screen_key || '|' || method || '|' || required
