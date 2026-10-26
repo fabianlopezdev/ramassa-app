@@ -1,5 +1,5 @@
 /**
- * The form of one piece of player information (RAPP-650): its name and help
+ * The form of one piece of player information (RAPP-650): its name
  * in the five languages, its type from the tiles (RAPP-646), its privacy from
  * the cards (RAPP-647), the type's settings and, for a choice, its options.
  *
@@ -179,11 +179,11 @@ export function FieldForm({
             : []),
         ]
       : [];
-    const help = textFromForm(fields, 'question-help');
     const draft: FieldFormDraft = {
       type,
       label: textFromForm(fields, 'question-label'),
-      help: Object.keys(help).length === 0 ? null : help,
+      // Each screen and the entity form word their own help (RAPP-667).
+      help: value?.help ?? null,
       privacy: isNameField && value !== null ? value.privacy : privacy,
       settings: readQuestionSettings(fields, type),
       options,
@@ -253,13 +253,6 @@ export function FieldForm({
           value={isNameField && value !== null ? value.privacy : privacy}
           onChange={setPrivacy}
           isLocked={isNameField}
-        />
-        <LanguageFields
-          name="question-help"
-          legend={t('questions.help')}
-          value={value?.help}
-          isCatalanRequired={false}
-          isLong
         />
         <QuestionSettingsFields
           key={type}
