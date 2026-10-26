@@ -30,7 +30,10 @@ export function EditorSection({
   readonly testId?: string;
 }) {
   return (
-    <section className={cn('rounded-xl border bg-card', className)} data-testid={testId}>
+    <section
+      className={cn('rounded-xl border bg-card', isFlush && 'overflow-hidden', className)}
+      data-testid={testId}
+    >
       <header className="flex min-h-14 items-center gap-3 border-b px-5 py-3">
         {leading}
         <div className="flex min-w-0 flex-1 items-center">

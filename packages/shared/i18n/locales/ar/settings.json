@@ -177,8 +177,6 @@
     "editField": "عدّل الحقل",
     "fieldName": "الاسم",
     "saveField": "احفظ الحقل",
-    "fieldCount_one": "{{count}} حقل",
-    "fieldCount_other": "{{count}} حقول",
     "emptySection": "لا توجد حقول بعد.",
     "moveField": "انقل الحقل {{field}}",
     "renameSection": "غيّر اسم {{section}}",
@@ -197,7 +195,10 @@
       "entity_form": "الجهة",
       "season": "الموسم",
       "teamOnly": "للفريق فقط"
-    }
+    },
+    "columnField": "الحقل",
+    "columnPrivacy": "الخصوصية",
+    "columnAskedIn": "أين يُسأل"
   },
   "fieldChange": {
     "title": "هل تريد تغيير «{{field}}»؟",

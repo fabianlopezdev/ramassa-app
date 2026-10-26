@@ -712,8 +712,6 @@
     "editField": "Edit field",
     "fieldName": "Name",
     "saveField": "Save field",
-    "fieldCount_one": "{{count}} field",
-    "fieldCount_other": "{{count}} fields",
     "emptySection": "No fields yet.",
     "moveField": "Move field {{field}}",
     "renameSection": "Rename {{section}}",
@@ -732,7 +730,10 @@
       "entity_form": "Entity",
       "season": "Season",
       "teamOnly": "Team only"
-    }
+    },
+    "columnField": "Field",
+    "columnPrivacy": "Privacy",
+    "columnAskedIn": "Asked in"
   },
   "fieldChange": {
     "title": "Change “{{field}}”?",

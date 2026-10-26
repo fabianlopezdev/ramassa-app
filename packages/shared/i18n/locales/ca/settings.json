@@ -712,8 +712,6 @@
     "editField": "Edita el camp",
     "fieldName": "Nom",
     "saveField": "Desa el camp",
-    "fieldCount_one": "{{count}} camp",
-    "fieldCount_other": "{{count}} camps",
     "emptySection": "Cap camp encara.",
     "moveField": "Mou el camp {{field}}",
     "renameSection": "Canvia el nom de {{section}}",
@@ -732,7 +730,10 @@
       "entity_form": "Entitat",
       "season": "Temporada",
       "teamOnly": "Només equip"
-    }
+    },
+    "columnField": "Camp",
+    "columnPrivacy": "Privacitat",
+    "columnAskedIn": "On es pregunta"
   },
   "fieldChange": {
     "title": "Canviar «{{field}}»?",

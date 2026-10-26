@@ -173,8 +173,6 @@
     "editField": "ویرایش فیلد",
     "fieldName": "نام",
     "saveField": "ذخیره فیلد",
-    "fieldCount_one": "{{count}} فیلد",
-    "fieldCount_other": "{{count}} فیلد",
     "emptySection": "هنوز فیلدی نیست.",
     "moveField": "جابه‌جایی فیلد {{field}}",
     "renameSection": "تغییر نام {{section}}",
@@ -193,7 +191,10 @@
       "entity_form": "نهاد",
       "season": "فصل",
       "teamOnly": "فقط تیم"
-    }
+    },
+    "columnField": "فیلد",
+    "columnPrivacy": "حریم خصوصی",
+    "columnAskedIn": "کجا پرسیده می‌شود"
   },
   "fieldChange": {
     "title": "«{{field}}» تغییر کند؟",

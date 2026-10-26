@@ -1,7 +1,7 @@
 /**
  * One section of Dades de les jugadores (RAPP-650): a card with its name
- * (click to rename, in the five languages), how many fields it holds and
- * "Add a field", then its fields as rows. Sections are labels that help an
+ * (click to rename, in the five languages) and "Add a field", then column
+ * labels over its fields as rows (RAPP-668). Sections are labels that help an
  * admin read the list; nothing in them is dragged (RAPP-658).
  */
 
@@ -74,27 +74,33 @@ export function ProfileSectionCard({
         )
       }
       actions={
-        isRenaming ? undefined : (
-          <>
-            <span className="hidden shrink-0 text-xs text-muted-foreground tabular-nums sm:inline">
-              {t('profileLayout.fieldCount', { count: fields.length })}
-            </span>
-            {canEdit ? (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={onAddField}
-                data-testid={`profile-section-add-${section.key}`}
-              >
-                <Plus aria-hidden data-icon="inline-start" />
-                {t('profileLayout.addField')}
-              </Button>
-            ) : null}
-          </>
+        isRenaming || !canEdit ? undefined : (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={onAddField}
+            data-testid={`profile-section-add-${section.key}`}
+          >
+            <Plus aria-hidden data-icon="inline-start" />
+            {t('profileLayout.addField')}
+          </Button>
         )
       }
     >
+      {fields.length === 0 ? null : (
+        <div
+          aria-hidden
+          className="flex h-9 items-center gap-3 border-b bg-muted/40 px-5 text-start text-xs font-medium text-muted-foreground"
+        >
+          <span className="min-w-0 flex-1 truncate">{t('profileLayout.columnField')}</span>
+          <span className="w-20 shrink-0 truncate">{t('profileLayout.columnPrivacy')}</span>
+          <span className="hidden w-56 shrink-0 truncate md:block">
+            {t('profileLayout.columnAskedIn')}
+          </span>
+          <span className="w-36 shrink-0" />
+        </div>
+      )}
       <ol className="flex flex-col divide-y" aria-label={name}>
         {fields.map((field) => (
           <li key={field.id} className="bg-card">

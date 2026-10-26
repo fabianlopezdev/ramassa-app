@@ -712,8 +712,6 @@
     "editField": "Edita el campo",
     "fieldName": "Nombre",
     "saveField": "Guarda el campo",
-    "fieldCount_one": "{{count}} campo",
-    "fieldCount_other": "{{count}} campos",
     "emptySection": "Aún no hay campos.",
     "moveField": "Mueve el campo {{field}}",
     "renameSection": "Cambia el nombre de {{section}}",
@@ -732,7 +730,10 @@
       "entity_form": "Entidad",
       "season": "Temporada",
       "teamOnly": "Solo equipo"
-    }
+    },
+    "columnField": "Campo",
+    "columnPrivacy": "Privacidad",
+    "columnAskedIn": "Dónde se pregunta"
   },
   "fieldChange": {
     "title": "¿Cambiar «{{field}}»?",
