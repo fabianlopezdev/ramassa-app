@@ -4,6 +4,8 @@
  * onboarding screen. Staff add fields, drag them in order, make each one
  * required on this form or not, and word it for the entity ("Com ho veu
  * l'entitat"). The form as the entity sees it stays in view on the end side.
+ * "Add a signature" adds a signature block (RAPP-690) the entity person signs:
+ * it moves among the fields and is always required.
  *
  * Type and privacy belong to the field, so this editor never asks them. Her
  * answers land on her fields with the entity as their source.
@@ -11,6 +13,7 @@
 
 import { FieldPicker, type FieldPickState } from '@/components/fields/field-picker';
 import type { PlacementWordingDraft } from '@/components/fields/placement-wording-form';
+import { AddSignatureButton, SignatureBlockRow } from '@/components/fields/signature-block-row';
 import { EditorColumns } from '@/components/layout/editor-columns';
 import { EditorSection } from '@/components/layout/editor-section';
 import { SortableList } from '@/components/ui-patterns/sortable-list';
@@ -24,7 +27,12 @@ import { useTranslation } from 'react-i18next';
 import {
   entityFormItems,
   entityFormPick,
+  formBlocksOn,
+  formBlockText,
   textIn,
+  type BuilderText,
+  type EntityFormItem,
+  type FormBlock,
   type IntakeCatalog,
   type ProfileField,
   type ProfileLayout,
@@ -49,6 +57,29 @@ function withTypedWording(
   };
 }
 
+/** One row of the list: a placed field, or a signature block (RAPP-690). */
+type FormRow =
+  | { readonly kind: 'field'; readonly id: string; readonly item: EntityFormItem }
+  | { readonly kind: 'block'; readonly id: string; readonly block: FormBlock };
+
+/** The fields and the blocks in the order they share, a field first on a tie. */
+function formRows(items: readonly EntityFormItem[], blocks: readonly FormBlock[]): FormRow[] {
+  return [
+    ...items.map((item) => ({
+      row: { kind: 'field', id: item.placement.id, item } as FormRow,
+      order: item.placement.sortOrder,
+      rank: 0,
+    })),
+    ...blocks.map((block) => ({
+      row: { kind: 'block', id: block.id, block } as FormRow,
+      order: block.sortOrder,
+      rank: 1,
+    })),
+  ]
+    .sort((a, b) => a.order - b.order || a.rank - b.rank)
+    .map((entry) => entry.row);
+}
+
 export function ReferralFormEditor({
   catalog,
   entityNames,
@@ -69,7 +100,17 @@ export function ReferralFormEditor({
   >(null);
   const [isPicking, setIsPicking] = useState(false);
   const items = entityFormItems(layout);
-  const { ordered, reorder } = usePlacementOrder('entity_form', null, items);
+  const blocks = formBlocksOn(catalog.blocks, 'entity_form', null);
+  const [typedBlock, setTypedBlock] = useState<{
+    readonly id: string;
+    readonly body: BuilderText;
+  } | null>(null);
+  const { ordered, reorder } = usePlacementOrder(
+    'entity_form',
+    null,
+    formRows(items, blocks),
+    (row) => row.id,
+  );
   // Sections and the picker are the team's words, in the staff member's language.
   const sectionName = (field: ProfileField) =>
     textIn(layout.sections.find((section) => section.id === field.sectionId)?.title, uiLanguage);
@@ -89,31 +130,56 @@ export function ReferralFormEditor({
     <EditorSection title={t('referralForm.fields')} testId="referral-form-fields" isFlush>
       <SortableList
         items={ordered}
-        idOf={(item) => item.placement.id}
-        nameOf={(item) => textIn(item.field.label, language)}
+        idOf={(row) => row.id}
+        nameOf={(row) =>
+          row.kind === 'field'
+            ? textIn(row.item.field.label, language)
+            : formBlockText(row.block, language).text
+        }
         onReorder={(ids) => void reorder(ids)}
         className="flex flex-col divide-y"
-        itemTestId={(item) => `entity-placement-item-${item.field.id}`}
+        itemTestId={(row) =>
+          row.kind === 'field'
+            ? `entity-placement-item-${row.item.field.id}`
+            : `entity-block-${row.block.id}`
+        }
         testId="entity-placement-list"
       >
-        {(item, handle) => (
-          <EntityPlacementRow
-            item={item}
-            siblings={items}
-            sectionName={sectionName(item.field)}
-            handle={handle}
-            language={language}
-            isEditing={editing === item.placement.id}
-            onToggleEdit={() =>
-              setEditing((open) => (open === item.placement.id ? null : item.placement.id))
-            }
-            onWordingChange={(draft) =>
-              setTyped(draft === null ? null : { placementId: item.placement.id, ...draft })
-            }
-          />
-        )}
+        {(row, handle) =>
+          row.kind === 'block' ? (
+            <SignatureBlockRow
+              block={row.block}
+              handle={handle}
+              language={language}
+              isEditing={editing === row.block.id}
+              onToggleEdit={() =>
+                setEditing((open) => (open === row.block.id ? null : row.block.id))
+              }
+              onTextChange={(body) =>
+                setTypedBlock(body === null ? null : { id: row.block.id, body })
+              }
+            />
+          ) : (
+            <EntityPlacementRow
+              item={row.item}
+              siblings={items}
+              sectionName={sectionName(row.item.field)}
+              handle={handle}
+              language={language}
+              isEditing={editing === row.item.placement.id}
+              onToggleEdit={() =>
+                setEditing((open) =>
+                  open === row.item.placement.id ? null : row.item.placement.id,
+                )
+              }
+              onWordingChange={(draft) =>
+                setTyped(draft === null ? null : { placementId: row.item.placement.id, ...draft })
+              }
+            />
+          )
+        }
       </SortableList>
-      <div className="border-t px-5 py-3">
+      <div className="flex flex-wrap gap-2 border-t px-5 py-3">
         <Button
           type="button"
           variant="outline"
@@ -124,6 +190,7 @@ export function ReferralFormEditor({
           <Plus aria-hidden data-icon="inline-start" />
           {t('profileLayout.addField')}
         </Button>
+        <AddSignatureButton surface="entity_form" screenKey={null} onAdded={setEditing} />
       </div>
       <FieldPicker
         layout={layout}
@@ -154,6 +221,9 @@ export function ReferralFormEditor({
           layout={withTypedWording(layout, typed)}
           language={previewLanguage}
           entityNames={entityNames}
+          blocks={blocks.map((block) =>
+            typedBlock?.id === block.id ? { ...block, body: typedBlock.body } : block,
+          )}
         />
       }
     />

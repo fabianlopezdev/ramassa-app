@@ -63,8 +63,10 @@ export interface PlacementRowProps {
   readonly name: string;
   /** The line under the name: where the field comes from, and its section. */
   readonly detail: string;
-  readonly type: CustomQuestionType;
-  readonly privacy: QuestionPrivacy;
+  /** The field's type, or a signature block's own tile (RAPP-690). */
+  readonly type: CustomQuestionType | 'signature';
+  /** The field's privacy; null for a signature block, which holds no data of hers. */
+  readonly privacy: QuestionPrivacy | null;
   /** The grip; null for a row that keeps its place (an app screen's own questions). */
   readonly handle: SortableHandle | null;
   readonly required: {
@@ -116,7 +118,7 @@ export function PlacementRow({
           <p className="truncate text-start text-xs text-muted-foreground">{detail}</p>
         </div>
         <span className="hidden w-20 shrink-0 justify-start sm:flex">
-          <PrivacyBadge level={privacy} />
+          {privacy === null ? null : <PrivacyBadge level={privacy} />}
         </span>
         <RequiredToggle
           id={required.id}

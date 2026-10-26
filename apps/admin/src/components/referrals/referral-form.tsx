@@ -5,7 +5,8 @@
  * by field id, the app's fields and Ramassà's alike (RAPP-664), in one call,
  * and the database checks every required field again. A local Spanish phone
  * (612...) is sent with +34; a phone the field refuses says so before
- * anything is sent.
+ * anything is sent. The person from the entity signs each signature block of
+ * the form (RAPP-690); the referral goes only once every block is signed.
  */
 
 import {
@@ -27,10 +28,14 @@ import {
   entityFormItemsOf,
   entityFormQuestions,
   fetchSystemFieldIndex,
+  formBlocksOn,
+  formSignaturesPayload,
   internationalPhone,
   PHONE_PATTERN,
   requiredEntityFormFieldsLeftEmpty,
   systemFieldsOf,
+  unsignedFormBlocks,
+  type FormSignatureDrafts,
   type IntakeCatalog,
   type SystemFieldIndex,
 } from '@ramassa/shared/intake-builder';
@@ -138,6 +143,9 @@ export function ReferralForm({
   // Each Ramassà answer that does not fit its field, in her wizard's words (RAPP-610).
   const [customErrors, setCustomErrors] = useState<Readonly<Record<string, string>>>({});
   const [missing, setMissing] = useState<ReadonlySet<string>>(new Set());
+  const blocks = formBlocksOn(catalog.blocks, 'entity_form', null);
+  const [signatures, setSignatures] = useState<FormSignatureDrafts>({});
+  const [unsigned, setUnsigned] = useState<ReadonlySet<string>>(new Set());
   const {
     control,
     handleSubmit,
@@ -169,9 +177,13 @@ export function ReferralForm({
         }),
       }),
     );
+    const notSigned = new Set(unsignedFormBlocks(blocks, signatures));
     setCustomErrors(fieldErrors);
     setMissing(empty);
-    return Object.keys(fieldErrors).length === 0 && empty.size === 0 ? answers : null;
+    setUnsigned(notSigned);
+    return Object.keys(fieldErrors).length === 0 && empty.size === 0 && notSigned.size === 0
+      ? answers
+      : null;
   }
 
   const submit = handleSubmit(async (parsed) => {
@@ -188,10 +200,12 @@ export function ReferralForm({
     const result = await safeAsync(
       async () => {
         const known = fields.size === 0 ? await fetchSystemFieldIndex(supabase) : fields;
-        return sendReferral(supabase, referral, {
-          ...answers,
-          ...referralAppAnswers(known, referral),
-        });
+        return sendReferral(
+          supabase,
+          referral,
+          { ...answers, ...referralAppAnswers(known, referral) },
+          formSignaturesPayload(blocks, signatures, language),
+        );
       },
       { context: { operation: 'entity-referral-create' } },
     );
@@ -240,6 +254,15 @@ export function ReferralForm({
           documentType={documentType}
           customErrors={customErrors}
           missing={missing}
+          blocks={blocks}
+          signatures={signatures}
+          onSignatureChange={(blockId, strokes) => {
+            setSignatures((current) => ({ ...current, [blockId]: strokes }));
+            if (strokes !== null) {
+              setUnsigned((current) => new Set([...current].filter((id) => id !== blockId)));
+            }
+          }}
+          unsigned={unsigned}
         />
         {failed ? (
           <p role="alert" className="text-start text-sm text-destructive">

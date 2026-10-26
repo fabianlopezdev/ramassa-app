@@ -87,13 +87,20 @@ export function PhoneFrame({
               {question.help === '' ? null : (
                 <p className="text-start text-xs text-muted-foreground">{question.help}</p>
               )}
-              <div inert className="pointer-events-none">
-                <QuestionControl
-                  draft={question.draft}
-                  language={language}
-                  showOptionCount={false}
-                />
-              </div>
+              {question.isSignature === true ? (
+                // A signature block (RAPP-690): her text above, the box she signs in.
+                <div className="flex h-20 items-center justify-center rounded-md border border-dashed border-input bg-background text-sm text-muted-foreground">
+                  {phone('authorizationSignaturePrompt')}
+                </div>
+              ) : (
+                <div inert className="pointer-events-none">
+                  <QuestionControl
+                    draft={question.draft}
+                    language={language}
+                    showOptionCount={false}
+                  />
+                </div>
+              )}
             </div>
           ))}
           {content.lines.map((line, index) => (

@@ -811,6 +811,7 @@
     "alwaysRequired": "Una firma siempre es obligatoria",
     "removeNamed": "Quita la firma",
     "removeTitle": "¿Quieres quitar esta firma?",
-    "removeBody": "Las firmas ya dadas se conservan."
+    "removeBody": "Las firmas ya dadas se conservan.",
+    "defaultText": "Acepto"
   }
 }

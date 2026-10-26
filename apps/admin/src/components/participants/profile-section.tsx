@@ -167,8 +167,7 @@ function FitxaFieldRow({
           : `${answerSourceText(current, t, locale)}${seasonOf(current.seasonName)}`
       }
       older={(answers?.older ?? []).map(
-        (row) =>
-          `${row.seasonName ?? ''}: ${answerText(asked, row.value, language, words)}`,
+        (row) => `${row.seasonName ?? ''}: ${answerText(asked, row.value, language, words)}`,
       )}
       // A file is hers to give; an archived field keeps what she said.
       canEdit={

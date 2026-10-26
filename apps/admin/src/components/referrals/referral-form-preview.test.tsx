@@ -77,3 +77,24 @@ test('in Arabic it reads right to left, with the field names in Arabic', () => {
   expect(preview.getAttribute('dir')).toBe('rtl');
   expect(preview.textContent).toContain('الاسم *');
 });
+
+test('a signature block sits among the fields in its place, with its text and a pad (RAPP-690)', () => {
+  const block = {
+    id: '5eed0000-0000-4000-8099-000000000001',
+    surface: 'entity_form',
+    screenKey: null,
+    kind: 'signature',
+    body: { ca: 'La jugadora hi està d’acord' },
+    // A tie with her name: the field comes first.
+    sortOrder: 0,
+  } as const;
+  const view = render(
+    <ReferralFormPreview layout={LAYOUT} language="ca" entityNames={[]} blocks={[block]} />,
+  );
+  const text = view.getByTestId('referral-form-preview').textContent ?? '';
+  expect(text.indexOf('La jugadora hi està d’acord')).toBeGreaterThan(text.indexOf('Nom *'));
+  expect(text.indexOf('On agafa el metro? *')).toBeGreaterThan(
+    text.indexOf('La jugadora hi està d’acord'),
+  );
+  expect(view.getByTestId(`referral-block-${block.id}-pad`)).toBeTruthy();
+});

@@ -8,7 +8,11 @@ import { Button } from '@/components/ui/button';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { getLanguageDirection } from '@ramassa/shared/i18n/languages';
-import { entityFormItems, type ProfileLayout } from '@ramassa/shared/intake-builder';
+import {
+  entityFormItems,
+  type FormBlock,
+  type ProfileLayout,
+} from '@ramassa/shared/intake-builder';
 import type { CreateReferral, CreateReferralInput } from '@ramassa/shared/referrals';
 import type { LanguageCode } from '@ramassa/shared/schemas';
 import { EMPTY_REFERRAL } from './referral-form';
@@ -20,10 +24,13 @@ export function ReferralFormPreview({
   layout,
   language,
   entityNames,
+  blocks = [],
 }: {
   readonly layout: ProfileLayout;
   readonly language: LanguageCode;
   readonly entityNames: readonly string[];
+  /** The form's signature blocks (RAPP-690), the text being typed as typed. */
+  readonly blocks?: readonly FormBlock[];
 }) {
   const { t } = useTranslation('referrals', { lng: language });
   const { control, formState } = useForm<CreateReferralInput, unknown, CreateReferral>({
@@ -50,6 +57,7 @@ export function ReferralFormPreview({
           documentType={null}
           customErrors={{}}
           missing={NOTHING_MISSING}
+          blocks={blocks}
         />
         <Button type="button" size="lg">
           {t('save')}

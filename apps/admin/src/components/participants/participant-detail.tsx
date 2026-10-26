@@ -25,6 +25,7 @@ import { ParticipantEquipment } from '@/components/participants/participant-equi
 import { ParticipantFitxa } from '@/components/participants/participant-fitxa';
 import { ParticipantNotes } from '@/components/participants/participant-notes';
 import { ParticipantRgpd } from '@/components/participants/participant-rgpd';
+import { ParticipantSignatures } from '@/components/participants/participant-signatures';
 import { TestPlayerDelete } from '@/components/participants/test-player-delete';
 import { TestPlayerScenarioPanel } from '@/components/participants/test-player-scenario';
 import { Badge } from '@/components/ui/badge';
@@ -66,6 +67,7 @@ import {
   type CustomQuestionStates,
   type IntakeCatalog,
   type ParticipantCustomAnswer,
+  type ParticipantFormSignature,
   type PlayerChoices,
 } from '@ramassa/shared/intake-builder';
 import {
@@ -120,6 +122,8 @@ export interface ParticipantDetailProps {
   readonly customAnswers?: readonly ParticipantCustomAnswer[];
   /** A test player's situation, for the scenario switches (RAPP-619); null for a real woman. */
   readonly testScenario?: TestPlayerScenario | null;
+  /** Her signatures of the form blocks (RAPP-690), read with participants.view_personal. */
+  readonly formSignatures?: readonly ParticipantFormSignature[];
 }
 
 export function ParticipantDetail({
@@ -139,6 +143,7 @@ export function ParticipantDetail({
   intakeCatalog = EMPTY_INTAKE_CATALOG,
   customAnswers = [],
   testScenario = null,
+  formSignatures = [],
 }: ParticipantDetailProps) {
   const { t, i18n } = useTranslation(['participants', 'common', 'profile', 'settings']);
   const locale = i18n.resolvedLanguage ?? 'ca';
@@ -418,6 +423,10 @@ export function ParticipantDetail({
             await router.invalidate();
           }}
         />
+      ) : null}
+
+      {formSignatures.length > 0 && sees('participants.view_personal') ? (
+        <ParticipantSignatures signatures={formSignatures} catalog={intakeCatalog} />
       ) : null}
 
       {isTestPlayer && testScenario !== null ? (

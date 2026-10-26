@@ -811,6 +811,7 @@
     "alwaysRequired": "Una signatura sempre és obligatòria",
     "removeNamed": "Treu la signatura",
     "removeTitle": "Vols treure aquesta signatura?",
-    "removeBody": "Les signatures ja donades es conserven."
+    "removeBody": "Les signatures ja donades es conserven.",
+    "defaultText": "Accepto"
   }
 }

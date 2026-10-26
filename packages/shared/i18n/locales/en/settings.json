@@ -811,6 +811,7 @@
     "alwaysRequired": "A signature is always required",
     "removeNamed": "Remove the signature",
     "removeTitle": "Remove this signature?",
-    "removeBody": "Signatures already given are kept."
+    "removeBody": "Signatures already given are kept.",
+    "defaultText": "I accept"
   }
 }

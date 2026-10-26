@@ -13,13 +13,16 @@ import {
   placeField,
   previewFieldChange,
   profileFieldAnswerCount,
+  removeFormBlock,
   removePlacement,
   reorderPlacements,
+  saveFormBlock,
   savePlacement,
   saveProfileField,
   saveProfileSection,
   type BuilderText,
   type FieldChangePreview,
+  type FormBlockSurface,
   type ProfileField,
   type ProfileSection,
   type ProfileSurface,
@@ -96,6 +99,21 @@ export function useProfileLayoutActions() {
       ids: readonly string[],
     ): Promise<void> {
       await reorderPlacements(supabase, surface, screenKey, ids);
+      await reload();
+    },
+    /** Adds a signature block to a screen or the entity form, or saves its text (RAPP-690). */
+    async saveBlock(block: {
+      readonly id: string | null;
+      readonly surface: FormBlockSurface;
+      readonly screenKey: string | null;
+      readonly body: BuilderText;
+    }): Promise<string> {
+      const id = await saveFormBlock(supabase, block);
+      await reload();
+      return id;
+    },
+    async removeBlock(id: string): Promise<void> {
+      await removeFormBlock(supabase, id);
       await reload();
     },
     /** Required on this surface and the wording per language. */

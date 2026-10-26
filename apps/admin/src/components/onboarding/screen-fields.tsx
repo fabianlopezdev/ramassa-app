@@ -9,6 +9,9 @@
  *     the field off the screen. The field stays on the Fitxa.
  *   - "Add a field" opens the picker on the Fitxa; "New field…" in it makes a
  *     field there with the field form and ticks it.
+ *   - "Add a signature" adds a signature block (RAPP-690): the text she
+ *     accepts and a box to sign in. It moves among the fields, always
+ *     required, and is edited and removed in its own row.
  *
  * Type and privacy belong to the field, so this list never asks them.
  */
@@ -19,6 +22,7 @@ import {
   PlacementWordingForm,
   type PlacementWordingDraft,
 } from '@/components/fields/placement-wording-form';
+import { AddSignatureButton, SignatureBlockRow } from '@/components/fields/signature-block-row';
 import { EditorSection } from '@/components/layout/editor-section';
 import { BuiltinForm } from '@/components/onboarding/builtin-question-form';
 import { FieldDialog } from '@/components/profile-layout/field-dialog';
@@ -45,6 +49,8 @@ import {
   builtinRequiredLock,
   canHideBuiltin,
   fieldById,
+  formBlocksOn,
+  formBlockText,
   isAskedGenerically,
   isNameField,
   overrideFor,
@@ -57,6 +63,7 @@ import {
   textIn,
   type BuilderText,
   type FieldPlacement,
+  type FormBlock,
   type IntakeCatalog,
   type ProfileField,
   type ProfileLayout,
@@ -70,6 +77,28 @@ import { builtinQuestionType, type TypedWording } from './screen-content';
 interface Placed {
   readonly placement: FieldPlacement;
   readonly field: ProfileField;
+}
+
+/** One row of the list: a placed field, or a signature block (RAPP-690). */
+type ScreenItem =
+  | { readonly kind: 'field'; readonly id: string; readonly placed: Placed }
+  | { readonly kind: 'block'; readonly id: string; readonly block: FormBlock };
+
+/** The fields and the blocks of a screen in the order they share, a field first on a tie. */
+function screenItems(placed: readonly Placed[], blocks: readonly FormBlock[]): ScreenItem[] {
+  const items = [
+    ...placed.map((row) => ({
+      item: { kind: 'field', id: row.placement.id, placed: row } as ScreenItem,
+      order: row.placement.sortOrder,
+      rank: 0,
+    })),
+    ...blocks.map((block) => ({
+      item: { kind: 'block', id: block.id, block } as ScreenItem,
+      order: block.sortOrder,
+      rank: 1,
+    })),
+  ];
+  return items.sort((a, b) => a.order - b.order || a.rank - b.rank).map((entry) => entry.item);
 }
 
 /**
@@ -122,7 +151,8 @@ export function ScreenFieldsSection({
   const [isPicking, setIsPicking] = useState(false);
   const offTheirControl = questionsOffTheirControl(layout);
   const placed = placedFields(layout, screenKey, offTheirControl);
-  const { ordered, reorder } = usePlacementOrder('onboarding', screenKey, placed);
+  const items = screenItems(placed, formBlocksOn(catalog.blocks, 'onboarding', screenKey));
+  const { ordered, reorder } = usePlacementOrder('onboarding', screenKey, items, (item) => item.id);
   const sectionOf = (field: ProfileField) =>
     layout.sections.find((section) => section.id === field.sectionId);
   // Sections and the picker are the team's words, in the staff member's language.
@@ -194,34 +224,57 @@ export function ScreenFieldsSection({
       ) : (
         <SortableList
           items={ordered}
-          idOf={(row) => row.placement.id}
-          nameOf={(row) => textIn(row.field.label, language)}
+          idOf={(item) => item.id}
+          nameOf={(item) =>
+            item.kind === 'field'
+              ? textIn(item.placed.field.label, language)
+              : formBlockText(item.block, language).text
+          }
           onReorder={(ids) => void reorder(ids)}
           leading={builtinRows}
           className="flex flex-col divide-y"
-          itemTestId={(row) => `placement-${row.field.id}`}
+          itemTestId={(item) =>
+            item.kind === 'field' ? `placement-${item.placed.field.id}` : `block-${item.block.id}`
+          }
           testId="placement-list"
         >
-          {(row, handle) => (
-            <CustomPlacementRow
-              row={row}
-              screenKey={screenKey}
-              siblings={placed}
-              section={sectionOf(row.field)}
-              sectionName={sectionName(row.field)}
-              handle={handle}
-              language={language}
-              isEditing={editing === row.field.id}
-              onToggleEdit={() => toggle(row.field.id)}
-              onClose={close}
-              onWordingChange={(draft) =>
-                onWordingChange(draft === null ? null : { fieldId: row.field.id, ...draft })
-              }
-            />
-          )}
+          {(item, handle) =>
+            item.kind === 'block' ? (
+              <SignatureBlockRow
+                block={item.block}
+                handle={handle}
+                language={language}
+                isEditing={editing === item.block.id}
+                onToggleEdit={() => toggle(item.block.id)}
+                onTextChange={(body) =>
+                  onWordingChange(
+                    body === null ? null : { fieldId: item.block.id, label: body, help: {} },
+                  )
+                }
+              />
+            ) : (
+              <CustomPlacementRow
+                row={item.placed}
+                screenKey={screenKey}
+                siblings={placed}
+                section={sectionOf(item.placed.field)}
+                sectionName={sectionName(item.placed.field)}
+                handle={handle}
+                language={language}
+                isEditing={editing === item.placed.field.id}
+                onToggleEdit={() => toggle(item.placed.field.id)}
+                onClose={close}
+                onWordingChange={(draft) =>
+                  onWordingChange(
+                    draft === null ? null : { fieldId: item.placed.field.id, ...draft },
+                  )
+                }
+              />
+            )
+          }
         </SortableList>
       )}
-      <div className="border-t px-5 py-3">
+      <div className="flex flex-wrap gap-2 border-t px-5 py-3">
         <Button
           type="button"
           variant="outline"
@@ -232,6 +285,11 @@ export function ScreenFieldsSection({
           <Plus aria-hidden data-icon="inline-start" />
           {t('profileLayout.addField')}
         </Button>
+        <AddSignatureButton
+          surface="onboarding"
+          screenKey={screenKey}
+          onAdded={(id) => toggle(id)}
+        />
       </div>
       <FieldPicker
         layout={layout}

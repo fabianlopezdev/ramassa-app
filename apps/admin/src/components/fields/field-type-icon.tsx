@@ -1,7 +1,8 @@
 /**
  * A field's type as a small icon tile (RAPP-650): the Fitxa's rows and the
  * onboarding picker (RAPP-651) show it before the name. The type's name is
- * the tile's title and its accessible name.
+ * the tile's title and its accessible name. A signature block (RAPP-690) has
+ * its own tile in the same lists.
  */
 
 import { cn } from '@/lib/utils';
@@ -17,6 +18,7 @@ import {
   Mail,
   MapPin,
   Paperclip,
+  PenLine,
   Phone,
   Search,
   ToggleLeft,
@@ -26,7 +28,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import type { CustomQuestionType } from '@ramassa/shared/intake-builder';
 
-const TYPE_ICONS: Readonly<Record<CustomQuestionType, LucideIcon>> = {
+const TYPE_ICONS: Readonly<Record<CustomQuestionType | 'signature', LucideIcon>> = {
   short_text: Type,
   long_text: AlignLeft,
   yes_no_maybe: CircleHelp,
@@ -42,13 +44,14 @@ const TYPE_ICONS: Readonly<Record<CustomQuestionType, LucideIcon>> = {
   file_upload: Paperclip,
   country: Globe,
   municipality: MapPin,
+  signature: PenLine,
 };
 
 export function FieldTypeIcon({
   type,
   className,
 }: {
-  readonly type: CustomQuestionType;
+  readonly type: CustomQuestionType | 'signature';
   readonly className?: string;
 }) {
   const { t } = useTranslation('settings');

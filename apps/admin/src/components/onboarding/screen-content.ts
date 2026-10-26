@@ -26,6 +26,8 @@ import {
   builtinHelp,
   builtinLabel,
   fieldById,
+  formBlocksOn,
+  formBlockText,
   hiddenBuiltinQuestions,
   isCustomQuestionRequired,
   liveOptions,
@@ -38,6 +40,7 @@ import {
   type BuilderText,
   type CustomQuestion,
   type CustomQuestionType,
+  type FormBlock,
   type IntakeCatalog,
 } from '@ramassa/shared/intake-builder';
 import type { LanguageCode } from '@ramassa/shared/schemas';
@@ -51,6 +54,8 @@ export interface PhoneQuestion {
   readonly help: string;
   readonly isRequired: boolean;
   readonly draft: PreviewDraft;
+  /** A signature block (RAPP-690): its text, then an empty box to sign in. */
+  readonly isSignature?: boolean;
 }
 
 export interface PhoneContent {
@@ -174,7 +179,10 @@ export function customPhoneQuestion(
   };
 }
 
-/** A wording typed in an open placement row, in place of the saved one. */
+/**
+ * A wording typed in an open placement row, in place of the saved one. For a
+ * signature block (RAPP-690) `fieldId` is the block's id and `label` its text.
+ */
 export interface TypedWording {
   readonly fieldId: string;
   readonly label: BuilderText;
@@ -194,7 +202,7 @@ export function placedPhoneQuestions(
   typed: TypedWording | null = null,
 ): PhoneQuestion[] {
   const layout = catalog.layout;
-  return onboardingScreenQuestions(catalog, screenKey).map((question) => {
+  const fields = onboardingScreenQuestions(catalog, screenKey).map((question) => {
     const shown = customPhoneQuestion(question, language);
     const field = layout === undefined ? undefined : fieldById(layout, question.id);
     const saved = layout === undefined ? undefined : placementOn(layout, question.id, 'onboarding');
@@ -215,6 +223,36 @@ export function placedPhoneQuestions(
       },
     };
   });
+  // Her signature blocks among the fields, in the order they share (RAPP-690).
+  const order = (id: string) =>
+    (layout === undefined ? undefined : placementOn(layout, id, 'onboarding')?.sortOrder) ??
+    Number.POSITIVE_INFINITY;
+  const shown: PhoneQuestion[] = [];
+  const blocks = [...formBlocksOn(catalog.blocks, 'onboarding', screenKey)];
+  for (const question of fields) {
+    while (blocks.length > 0 && (blocks[0]?.sortOrder ?? 0) < order(question.id)) {
+      shown.push(signaturePhoneQuestion(blocks.shift() as FormBlock, language, typed));
+    }
+    shown.push(question);
+  }
+  return [...shown, ...blocks.map((block) => signaturePhoneQuestion(block, language, typed))];
+}
+
+/** A signature block on her phone: its text, typed or saved, and the box. */
+function signaturePhoneQuestion(
+  block: FormBlock,
+  language: LanguageCode,
+  typed: TypedWording | null,
+): PhoneQuestion {
+  const body = typed?.fieldId === block.id ? typed.label : block.body;
+  return {
+    id: block.id,
+    label: formBlockText({ body }, language).text,
+    help: '',
+    isRequired: true,
+    isSignature: true,
+    draft: { type: 'short_text', label: {}, help: {}, settings: {}, options: [] },
+  };
 }
 
 /** The built-in questions a screen asks, without the ones staff hid. */

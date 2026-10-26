@@ -37,6 +37,7 @@ import {
   fetchIntakeCatalog,
   fetchParticipantChoices,
   fetchParticipantCustomAnswers,
+  fetchParticipantFormSignatures,
   NO_CHOICES,
   systemFieldsOf,
 } from '@ramassa/shared/intake-builder';
@@ -82,6 +83,7 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
         intakeCatalog: EMPTY_INTAKE_CATALOG,
         customAnswers: [],
         testScenario: null,
+        formSignatures: [],
       };
     }
     // A test player's situation, for the scenario switches (RAPP-619). The
@@ -93,19 +95,22 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
     // with her record and her answers: the team's notes, material, attendance
     // and authorization belong to real participants and are not read at all.
     if (isLimitedToTestPlayers(permissions)) {
-      const [answered, choices, intakeCatalog, customAnswers, scenario] = await Promise.all([
-        !hasJoined(participant)
-          ? fetchParticipantAnsweredQuestions(supabase, params.participantId)
-          : Promise.resolve(new Set<never>()),
-        // What a test player's wizard asks (RAPP-618): the design role sets it too.
-        !hasJoined(participant)
-          ? fetchParticipantChoices(supabase, params.participantId).catch(() => NO_CHOICES)
-          : Promise.resolve(NO_CHOICES),
-        catalog,
-        // Her answers to every field, with who gave each (RAPP-664).
-        fetchParticipantCustomAnswers(supabase, params.participantId).catch(() => []),
-        testScenario,
-      ]);
+      const [answered, choices, intakeCatalog, customAnswers, scenario, formSignatures] =
+        await Promise.all([
+          !hasJoined(participant)
+            ? fetchParticipantAnsweredQuestions(supabase, params.participantId)
+            : Promise.resolve(new Set<never>()),
+          // What a test player's wizard asks (RAPP-618): the design role sets it too.
+          !hasJoined(participant)
+            ? fetchParticipantChoices(supabase, params.participantId).catch(() => NO_CHOICES)
+            : Promise.resolve(NO_CHOICES),
+          catalog,
+          // Her answers to every field, with who gave each (RAPP-664).
+          fetchParticipantCustomAnswers(supabase, params.participantId).catch(() => []),
+          testScenario,
+          // Her signatures of the form blocks (RAPP-690); participants.view_personal.
+          fetchParticipantFormSignatures(supabase, params.participantId).catch(() => []),
+        ]);
       return {
         participant,
         notes: [],
@@ -124,6 +129,7 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
         intakeCatalog,
         customAnswers,
         testScenario: scenario,
+        formSignatures,
       };
     }
     const [
@@ -141,6 +147,7 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
       intakeCatalog,
       customAnswers,
       scenario,
+      formSignatures,
     ] = await Promise.all([
       fetchParticipantNotes(supabase, params.participantId),
       fetchParticipantActivity(supabase, params.participantId),
@@ -168,6 +175,8 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
       // Her answers to every field, every season, with who gave each (RAPP-664).
       fetchParticipantCustomAnswers(supabase, params.participantId).catch(() => []),
       testScenario,
+      // Her signatures of the form blocks (RAPP-690); participants.view_personal.
+      fetchParticipantFormSignatures(supabase, params.participantId).catch(() => []),
     ]);
     // Filtered here rather than asked for by participant: the queue read is one
     // round trip either way, and the same call feeds the staff-wide queue, so
@@ -193,6 +202,7 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
       intakeCatalog,
       customAnswers,
       testScenario: scenario,
+      formSignatures,
     };
   },
   component: ParticipantDetailPage,
@@ -216,6 +226,7 @@ function ParticipantDetailPage() {
     intakeCatalog,
     customAnswers,
     testScenario,
+    formSignatures,
   } = Route.useLoaderData();
 
   if (participant === null) {
@@ -239,6 +250,7 @@ function ParticipantDetailPage() {
       intakeCatalog={intakeCatalog}
       customAnswers={customAnswers}
       testScenario={testScenario}
+      formSignatures={formSignatures}
     />
   );
 }
