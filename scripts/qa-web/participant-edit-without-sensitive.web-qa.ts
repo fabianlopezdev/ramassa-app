@@ -101,7 +101,10 @@ test.describe('editing a record without the sensitive fields', () => {
     await expect(page.getByRole('heading', { level: 1, name: /Mamani/ })).toBeVisible();
 
     await expect(page.getByTestId('fitxa-field-place_of_birth-edit')).toBeVisible();
-    for (const field of ['document', 'phone', 'address', 'postal_code']) {
+    // The document is three fields since RAPP-660 (D4): its type is Personal,
+    // so she reads and edits it; the number is Sensible.
+    await expect(page.getByTestId('fitxa-field-document-edit')).toBeVisible();
+    for (const field of ['document_number', 'phone', 'address', 'postal_code']) {
       await expect(page.getByTestId(`fitxa-field-${field}`)).toHaveAttribute(
         'data-locked',
         'sensitive',
