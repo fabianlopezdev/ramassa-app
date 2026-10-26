@@ -477,6 +477,26 @@ test('a version that asks neither question has two phases', () => {
   expect(view.getByText('1/2')).toBeTruthy();
 });
 
+test('the health screen comes first when the version orders it so (RAPP-696)', () => {
+  const view = render(
+    createElement(AuthorizationForm, {
+      ...props,
+      content: { ...content, screen_order: ['health', 'document'] },
+    }),
+  );
+  expect(view.getByText('1/3')).toBeTruthy();
+  fireEvent.click(view.getByRole('button', { name: 'authorizationHealthNo' }));
+  fireEvent.click(view.getByRole('button', { name: 'continueAction' }));
+  expect(view.getByText('2/3')).toBeTruthy();
+  expect(view.queryByRole('button', { name: 'authorizationHealthNo' })).toBeNull();
+  act(() => reachDocumentEnd?.());
+  fireEvent.click(view.getByRole('button', { name: 'continueAction' }));
+  expect(view.getByText('3/3')).toBeTruthy();
+  fireEvent.click(view.getByRole('button', { name: 'Back' }));
+  fireEvent.click(view.getByRole('button', { name: 'Back' }));
+  expect(view.getByText('1/3')).toBeTruthy();
+});
+
 test('staff wording shows in her language; a language they left empty shows the app text', () => {
   const worded: AuthorizationContent = {
     ...content,

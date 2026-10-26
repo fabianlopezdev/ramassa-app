@@ -34,6 +34,7 @@ import { useTranslation } from 'react-i18next';
 import { Linking, Text, View } from 'react-native';
 import {
   AUTHORIZATION_BUNDLED_TEXT_KEYS,
+  authorizationScreenOrder,
   authorizationSigningSchemaFor,
   authorizationWording,
   EMERGENCY_TITLE_REQUIRED_KEY,
@@ -54,6 +55,9 @@ import { isRtlLanguage, resolveLocalizedText, type SupportedLanguage } from '@ra
 import { trimPersonName } from '@ramassa/shared/schemas';
 
 type Problem = 'consents' | 'health' | 'healthConsent' | 'emergency' | 'signature';
+
+/** Each screen's phase: 1 the document, 2 health and emergency contact, 3 consents and signature. */
+const PHASE_OF_SCREEN = { document: 1, health: 2, consents: 3 } as const;
 
 // Her text runs in her script's direction, whatever the app's is.
 const rtlLayout = { direction: 'rtl' } as const;
@@ -100,9 +104,12 @@ export function AuthorizationForm({
   const consentList = useMemo(() => orderedConsents(displayContent), [displayContent]);
   const signingSchema = useMemo(() => authorizationSigningSchemaFor(content), [content]);
   const { health, emergency_contact: emergency } = content.questions;
-  // The phases she goes through: the middle one only while it asks something.
-  const phases = isMiddlePhaseShown(content) ? [1, 2, 3] : [1, 3];
-  const [phase, setPhase] = useState(1);
+  // The phases she goes through, in the version's order (RAPP-696): the
+  // health one only while it asks something, the signature always last.
+  const phases = authorizationScreenOrder(content)
+    .filter((screen) => screen !== 'health' || isMiddlePhaseShown(content))
+    .map((screen) => PHASE_OF_SCREEN[screen]);
+  const [phase, setPhase] = useState(phases[0] ?? 1);
   const phaseIndex = Math.max(0, phases.indexOf(phase));
   const words = (field: AuthorizationTextField, values?: { season: string }) =>
     withSeason(
