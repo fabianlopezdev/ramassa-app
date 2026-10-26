@@ -35,6 +35,10 @@ let query: {
   fetchStatus: 'fetching' | 'paused' | 'idle';
 };
 const box = ({ children }: { children?: ReactNode }) => createElement('div', null, children);
+// Her review of a Nova versió (RAPP-697) is not this test's.
+mock.module('@/lib/onboarding-review', () => ({
+  useOnboardingReview: () => ({ data: [] }),
+}));
 mock.module('@/lib/onboarding', () => ({ onboardingDraftStore: store }));
 mock.module('@/lib/supabase', () => ({ supabase: {} }));
 mock.module('@/lib/observability', () => ({ logger: { warn: () => {}, error: () => {} } }));

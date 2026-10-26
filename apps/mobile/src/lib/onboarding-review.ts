@@ -7,10 +7,16 @@
  * lock out a player who already joined.
  */
 
+import { safeAsync } from '@/lib/observability';
+import { onboardingDraftStore } from '@/lib/onboarding';
 import { supabase } from '@/lib/supabase';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@ramassa/shared/auth';
-import { fetchMyOnboardingReview } from '@ramassa/shared/intake-builder';
+import {
+  completeOnboardingReview,
+  fetchMyOnboardingReview,
+  type OnboardingReviewPayload,
+} from '@ramassa/shared/intake-builder';
 
 const reviewKey = (userId: string) => ['onboarding-review', userId] as const;
 
@@ -25,9 +31,21 @@ export function useOnboardingReview(enabled: boolean) {
   });
 }
 
-/** After she finishes: the gate reads her screens again and lets her in. */
-export function useRefreshOnboardingReview() {
+/**
+ * Saves her review. Once saved, her draft goes and the gate reads her screens
+ * again, which opens the app. False when the save failed.
+ */
+export function useFinishOnboardingReview() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  return () => queryClient.invalidateQueries({ queryKey: reviewKey(user?.id ?? 'signed-out') });
+  return async (payload: OnboardingReviewPayload): Promise<boolean> => {
+    const result = await safeAsync(() => completeOnboardingReview(supabase, payload), {
+      code: 'DB-1',
+    });
+    if (result.ok) {
+      if (user !== null) onboardingDraftStore.clearUserDraft(user.id);
+      await queryClient.invalidateQueries({ queryKey: reviewKey(user?.id ?? 'signed-out') });
+    }
+    return result.ok;
+  };
 }

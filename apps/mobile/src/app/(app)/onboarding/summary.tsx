@@ -19,7 +19,6 @@ import { WizardFrame } from '@/components/onboarding/wizard-frame';
 import { WizardValidationSummary } from '@/components/onboarding/wizard-validation-summary';
 import { SeasonAnswerRows } from '@/components/profile/season-answer-rows';
 import { playHaptic } from '@/lib/haptics/haptics';
-import { safeAsync } from '@/lib/observability';
 import { onboardingDraftStore } from '@/lib/onboarding';
 import { onboardingAnswersFromDraft } from '@/lib/onboarding-answers';
 import { normalizeDecimalDigits } from '@/lib/onboarding-form';
@@ -29,15 +28,13 @@ import {
   wizardStepRoute,
 } from '@/lib/onboarding-intake';
 import { useBuiltinWording, useWizardIntake, useWizardStep } from '@/lib/onboarding-intake-context';
-import { useRefreshOnboardingReview } from '@/lib/onboarding-review';
+import { useFinishOnboardingReview } from '@/lib/onboarding-review';
 import { useScreenTitle } from '@/lib/screen-wording';
 import { SEASON_SCREEN_TITLE_KEYS } from '@/lib/season-draft';
-import { supabase } from '@/lib/supabase';
 import { firstIncompleteStep } from '@/lib/wizard-completeness';
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import { Fragment, useCallback, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useAuth } from '@ramassa/shared/auth';
 import { LANGUAGE_NATIVE_NAMES } from '@ramassa/shared/i18n';
 import { countryLabelForCanonical } from '@ramassa/shared/i18n/countries';
 import { municipalityLabelForCanonical } from '@ramassa/shared/i18n/municipalities';
@@ -55,7 +52,6 @@ import {
 import {
   answerText,
   appScreenFields,
-  completeOnboardingReview,
   formBlocksOn,
   formBlockText,
   isCustomQuestionVisible,
@@ -200,8 +196,7 @@ export default function SummaryStepScreen() {
   const router = useRouter();
   const step = useWizardStep('summary');
   const intake = useWizardIntake();
-  const { user } = useAuth();
-  const refreshReview = useRefreshOnboardingReview();
+  const saveReview = useFinishOnboardingReview();
   const [isSaving, setIsSaving] = useState(false);
   const [hasSaveFailed, setHasSaveFailed] = useState(false);
   const {
@@ -611,26 +606,19 @@ export default function SummaryStepScreen() {
     setIsSaving(true);
     setHasSaveFailed(false);
     const { first_name, last_name, answers, signatures } = built.value;
-    const result = await safeAsync(
-      () =>
-        completeOnboardingReview(supabase, {
-          // Her names only when her review asked them.
-          ...(screens.includes('identity') ? { first_name, last_name } : {}),
-          answers,
-          signatures,
-        }),
-      { code: 'DB-1' },
-    );
+    const isSaved = await saveReview({
+      // Her names only when her review asked them.
+      ...(screens.includes('identity') ? { first_name, last_name } : {}),
+      answers,
+      signatures,
+    });
     setIsSaving(false);
-    if (!result.ok) {
+    if (!isSaved) {
       setHasSaveFailed(true);
       playHaptic('error');
       return;
     }
     playHaptic('success');
-    if (user !== null) onboardingDraftStore.clearUserDraft(user.id);
-    // The gate reads her screens again and opens the app.
-    await refreshReview();
   }
 
   return (

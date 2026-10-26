@@ -17,27 +17,15 @@ let wentNext = 0;
 let refreshed = 0;
 const calls: { name: string; args: Record<string, unknown> }[] = [];
 let failNext = false;
-mock.module('@/lib/supabase', () => ({
-  supabase: {
-    rpc: async (name: string, args: Record<string, unknown>) => {
-      calls.push({ name, args });
-      return failNext ? { error: { message: 'down' } } : { error: null };
-    },
-  },
-}));
 mock.module('@/lib/onboarding-review', () => ({
-  useRefreshOnboardingReview: () => async () => void (refreshed += 1),
-}));
-mock.module('@ramassa/shared/auth', () => ({ useAuth: () => ({ user: { id: 'her' } }) }));
-mock.module('@/lib/observability', () => ({
-  safeAsync: async (operation: () => Promise<unknown>) => {
-    try {
-      return { ok: true, value: await operation() };
-    } catch (error) {
-      return { ok: false, error };
-    }
+  useFinishOnboardingReview: () => async (payload: Record<string, unknown>) => {
+    calls.push({ name: 'complete_onboarding_review', args: { payload } });
+    if (failNext) return false;
+    refreshed += 1;
+    return true;
   },
 }));
+
 mock.module('@/lib/onboarding', () => ({ onboardingDraftStore: store }));
 mock.module('@/lib/haptics/haptics', () => ({
   playHaptic: (kind: string) => void haptics.push(kind),
