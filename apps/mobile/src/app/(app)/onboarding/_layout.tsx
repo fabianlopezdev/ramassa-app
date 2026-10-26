@@ -31,8 +31,10 @@ import {
   fetchIntakeCatalog,
   fetchMyCustomAnswers,
   fetchMyCustomQuestionAsking,
+  fetchMyFormSignatures,
   herOnboarding,
   hiddenBuiltinQuestions,
+  isFormBlockSigned,
   wizardFlow,
   wizardFormFields,
 } from '@ramassa/shared/intake-builder';
@@ -124,10 +126,11 @@ function OnboardingScreens() {
         answered,
         toAsk,
         documentExplanation,
-        catalog,
+        fullCatalog,
         answers,
         asking,
         scenarioStamp,
+        mySignatures,
       ] = await Promise.all([
         fetchOwnProfile(supabase, { signal }),
         fetchMyAnsweredQuestions(supabase, { signal }),
@@ -139,7 +142,18 @@ function OnboardingScreens() {
         // A test player's situation stamp (RAPP-619). It never blocks the
         // wizard: without it, her draft is kept as for anyone.
         fetchMyTestScenarioStamp(supabase).catch(() => null),
+        // The blocks she signed on the walk-in tablet (RAPP-691). Unread, she
+        // signs them all here, which the database accepts.
+        fetchMyFormSignatures(supabase).catch(() => []),
       ]);
+      // A block she signed, whose text has not changed since, is asked no more.
+      const signedBlocks = (fullCatalog.blocks ?? []).filter((block) =>
+        isFormBlockSigned(block, mySignatures),
+      );
+      const catalog = {
+        ...fullCatalog,
+        blocks: (fullCatalog.blocks ?? []).filter((block) => !signedBlocks.includes(block)),
+      };
       const hidden = hiddenBuiltinQuestions(catalog);
       // Her screens from the placements (RAPP-655): a field set to Don't ask is
       // never asked, a screen with none left is skipped (RAPP-643), and one on
@@ -177,6 +191,7 @@ function OnboardingScreens() {
         // renderer's to require (RAPP-665).
         required: askedRequiredQuestions(catalog),
         scenarioStamp,
+        signedBlocks,
       };
     },
     enabled: user !== null,

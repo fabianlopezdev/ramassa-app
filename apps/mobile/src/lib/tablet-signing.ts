@@ -17,6 +17,11 @@ import {
   type TabletSigning,
 } from '@ramassa/shared/authorization';
 import { AppError } from '@ramassa/shared/errors';
+import {
+  fetchIntakeCatalog,
+  liveOnboardingBlocks,
+  type FormBlock,
+} from '@ramassa/shared/intake-builder';
 import { isNetworkStateOnline } from './network-status';
 import { finishesWithin, SCREEN_SEND_WAIT_MS } from './outbox-drain-loop';
 import {
@@ -171,6 +176,28 @@ export function useAuthorizationForSigning(enabled: boolean) {
         ? undefined
         : (readAuthorizationForSigning(privateStorage, userId) ?? undefined),
     initialDataUpdatedAt: 0,
+    enabled: enabled && userId !== null,
+    retry: false,
+  });
+}
+
+/**
+ * The Onboarding signature blocks a walk-in signs on the tablet after the
+ * authorization (RAPP-691): those of the live screens. Read online; with no
+ * connection there are none, and she signs them on her own phone later.
+ */
+export function useWalkInSignatureBlocks(enabled: boolean) {
+  const { user } = useAuth();
+  const userId = user?.id ?? null;
+  return useQuery({
+    queryKey: ['walk-in-signature-blocks', userId ?? 'signed-out'],
+    queryFn: async (): Promise<readonly FormBlock[]> => {
+      try {
+        return liveOnboardingBlocks(await fetchIntakeCatalog(supabase));
+      } catch {
+        return [];
+      }
+    },
     enabled: enabled && userId !== null,
     retry: false,
   });

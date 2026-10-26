@@ -34,6 +34,7 @@ import {
   EMPTY_INTAKE_CATALOG,
   requiredBuiltinQuestions,
   type CustomAnswers,
+  type FormBlock,
   type IntakeCatalog,
   type IntakeScreen,
   type SystemFieldIndex,
@@ -85,6 +86,12 @@ export interface WizardIntake {
    * draft from before it is dropped. Null or absent for everyone else.
    */
   readonly scenarioStamp?: string | null;
+  /**
+   * The Onboarding blocks she already signed, on the walk-in tablet (RAPP-691),
+   * whose text has not changed since. They are out of `catalog.blocks`, so no
+   * screen asks them again; the summary lists them as signed.
+   */
+  readonly signedBlocks?: readonly FormBlock[];
 }
 
 const EMPTY_INTAKE: WizardIntake = {

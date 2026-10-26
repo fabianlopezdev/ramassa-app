@@ -9,11 +9,12 @@
 import { SignaturePad } from '@/components/equipment/signature-pad';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { FieldErrorText } from '@/components/onboarding/field-error-text';
+import { fontClassForLanguage } from '@/lib/language-font-class';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import type { SignatureStrokes } from '@ramassa/shared/equipment';
-import { useLanguage } from '@ramassa/shared/i18n';
+import { useLanguage, type SupportedLanguage } from '@ramassa/shared/i18n';
 import { formBlockText, type FormBlock } from '@ramassa/shared/intake-builder';
 
 export function SignatureBlockField({
@@ -22,6 +23,7 @@ export function SignatureBlockField({
   onChange,
   onDrawingChange,
   errorMessage,
+  language: shownLanguage,
 }: {
   readonly block: FormBlock;
   readonly strokes: SignatureStrokes | null;
@@ -29,10 +31,16 @@ export function SignatureBlockField({
   /** The screen stops scrolling while she draws. */
   readonly onDrawingChange?: (isDrawing: boolean) => void;
   readonly errorMessage?: string;
+  /** Her language when it is not the app's: the walk-in tablet (RAPP-691). */
+  readonly language?: SupportedLanguage;
 }) {
-  const { t } = useTranslation('onboarding');
-  const { language } = useLanguage();
-  const fontClass = useLanguageFontClass();
+  const { i18n } = useTranslation('onboarding');
+  const { language: appLanguage } = useLanguage();
+  const appFontClass = useLanguageFontClass();
+  const language = shownLanguage ?? appLanguage;
+  const t = i18n.getFixedT(language, 'onboarding');
+  const fontClass =
+    shownLanguage === undefined ? appFontClass : fontClassForLanguage(shownLanguage);
   const testID = `signature-block-${block.id}`;
   return (
     <View className="gap-sm" testID={testID}>

@@ -4,7 +4,11 @@
  *
  *   1. she picks her language (any of the five, right to left where needed);
  *   2. she reads, answers, ticks and signs, as in her own app (RAPP-304);
- *   3. she is thanked and gives the tablet back. Her medical answer is gone
+ *   3. a walk-in then signs each signature block of the live Onboarding
+ *      screens, in her language (RAPP-691). They travel with her signing and
+ *      move to her profile when the team confirms her. With no block, or no
+ *      connection to read them, this step is not shown;
+ *   4. she is thanked and gives the tablet back. Her medical answer is gone
  *      from the screen.
  *
  * While this screen is open, the layout turns every other screen off, so no
@@ -16,6 +20,7 @@ import { useAppLock } from '@/components/auth/app-lock';
 import { AuthorizationForm } from '@/components/authorization/authorization-form';
 import { PageWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
+import { SignatureBlockField } from '@/components/onboarding/signature-block-field';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { fontClassForLanguage } from '@/lib/language-font-class';
@@ -23,6 +28,7 @@ import {
   useAuthorizationForSigning,
   useSigningOutbox,
   useSigningSession,
+  useWalkInSignatureBlocks,
 } from '@/lib/tablet-signing';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { randomUUID } from 'expo-crypto';
@@ -36,15 +42,17 @@ import {
   signerName,
   type AuthorizationSigning,
 } from '@ramassa/shared/authorization';
+import type { SignatureStrokes } from '@ramassa/shared/equipment';
 import {
   isRtlLanguage,
   LANGUAGE_NATIVE_NAMES,
   SUPPORTED_LANGUAGES,
   type SupportedLanguage,
 } from '@ramassa/shared/i18n';
+import { formSignaturesPayload, unsignedFormBlocks } from '@ramassa/shared/intake-builder';
 import { tokens } from '@ramassa/shared/tokens';
 
-type Step = 'language' | 'form' | 'done';
+type Step = 'language' | 'form' | 'blocks' | 'done';
 
 // Her language for the open session, in memory only. A link or notification
 // that lands back on signing mode mounts this screen again; she keeps her
@@ -89,6 +97,14 @@ export default function SigningModeScreen() {
   const [hasFailed, setHasFailed] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isWaiting, setIsWaiting] = useState(false);
+  // A walk-in's Onboarding signature blocks (RAPP-691), signed after the authorization.
+  const isWalkIn = session?.signer.kind === 'walk_in';
+  const walkInBlocks = useWalkInSignatureBlocks(isWalkIn);
+  const blocks = isWalkIn ? (walkInBlocks.data ?? []) : [];
+  const [signed, setSigned] = useState<AuthorizationSigning | null>(null);
+  const [strokes, setStrokes] = useState<Readonly<Record<string, SignatureStrokes | null>>>({});
+  const [unsigned, setUnsigned] = useState<ReadonlySet<string>>(new Set());
+  const [isDrawing, setIsDrawing] = useState(false);
 
   // Android's back button stays in signing mode; iOS swipe back is off in the layout.
   useEffect(() => {
@@ -204,6 +220,20 @@ export default function SigningModeScreen() {
       playHaptic('warning');
       return;
     }
+    // A walk-in signs the Onboarding blocks before anything is kept (RAPP-691).
+    if (blocks.length > 0) {
+      setSigned(signing);
+      setStep('blocks');
+      return;
+    }
+    await save(signing, null);
+  };
+
+  const save = async (
+    signing: AuthorizationSigning,
+    blockSignatures: ReturnType<typeof formSignaturesPayload> | null,
+  ) => {
+    setHasFailed(false);
     setIsSaving(true);
     try {
       const outcome = await record({
@@ -217,6 +247,7 @@ export default function SigningModeScreen() {
           current.content,
         ),
         signedAt: new Date().toISOString(),
+        ...(blockSignatures === null ? {} : { blockSignatures }),
       });
       setIsWaiting(outcome === 'waiting');
       playHaptic('success');
@@ -228,6 +259,73 @@ export default function SigningModeScreen() {
       setIsSaving(false);
     }
   };
+
+  if (step === 'blocks' && signed !== null) {
+    const signBlocks = () => {
+      const missing = unsignedFormBlocks(blocks, strokes);
+      setUnsigned(new Set(missing));
+      if (missing.length > 0) {
+        playHaptic('warning');
+        return;
+      }
+      void save(signed, formSignaturesPayload(blocks, strokes, language));
+    };
+    return (
+      <SafeAreaView
+        testID="signing-blocks"
+        style={{ direction: isRtlLanguage(language) ? 'rtl' : 'ltr' }}
+        className="flex-1 bg-neutral-50"
+      >
+        <ScrollView scrollEnabled={!isDrawing} contentContainerClassName="pb-3xl">
+          <PageWidth className="gap-lg p-lg">
+            <ReturnToCoach onPress={() => void leave()} />
+            <Text className={`text-start text-md text-neutral-700 ${fontClass}`}>
+              {t('signingFor', { name })}
+            </Text>
+            {blocks.map((block) => (
+              <SignatureBlockField
+                key={block.id}
+                block={block}
+                language={language}
+                strokes={strokes[block.id] ?? null}
+                onDrawingChange={setIsDrawing}
+                errorMessage={unsigned.has(block.id) ? t('customErrorSignature') : undefined}
+                onChange={(next) => {
+                  setStrokes((current) => ({ ...current, [block.id]: next }));
+                  if (next !== null) {
+                    setUnsigned((current) => new Set([...current].filter((id) => id !== block.id)));
+                  }
+                }}
+              />
+            ))}
+            {hasFailed ? (
+              <Text
+                selectable
+                accessibilityLiveRegion="polite"
+                className={`text-start text-form text-error ${fontClass}`}
+              >
+                {t('authorizationSignFailed')}
+              </Text>
+            ) : null}
+            <PressableScale
+              testID="signing-blocks-submit"
+              accessibilityRole="button"
+              accessibilityLabel={t('signingBlocksAction')}
+              isDisabled={isSaving}
+              onPress={signBlocks}
+              haptic="tapLight"
+              style={continuousCorners}
+              className="min-h-recommended items-center justify-center rounded-md bg-primary px-lg"
+            >
+              <Text className={`text-center text-lg font-bold text-white ${fontClass}`}>
+                {t('signingBlocksAction')}
+              </Text>
+            </PressableScale>
+          </PageWidth>
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <AuthorizationForm

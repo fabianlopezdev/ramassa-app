@@ -10,7 +10,8 @@
  * own Change button. Her answers to Fitxa fields show under the screen they
  * are placed on, worded as they were asked (RAPP-655). A built-in question staff removed, or a screen staff hid,
  * shows no row: it is never asked. Each signature block she signed (RAPP-690)
- * shows its text, marked as signed, under its screen.
+ * shows its text, marked as signed, under its screen; the ones she signed on
+ * the walk-in tablet (RAPP-691) close the summary in a section of their own.
  */
 
 import { ReviewEditAction, ReviewRow, ReviewSection } from '@/components/onboarding/review-section';
@@ -200,6 +201,7 @@ export default function SummaryStepScreen() {
     flow = DEFAULT_WIZARD_FLOW,
     required,
     catalog,
+    signedBlocks = [],
   } = useWizardIntake();
   const completeness = {
     custom: customPlan,
@@ -629,6 +631,18 @@ export default function SummaryStepScreen() {
           </Fragment>
         );
       })}
+      {/* The blocks she signed on the walk-in tablet, unchanged since (RAPP-691). */}
+      {signedBlocks.length === 0 ? null : (
+        <ReviewSection title={t('summarySignaturesTitle')} action={null}>
+          {signedBlocks.map((block) => (
+            <ReviewRow
+              key={block.id}
+              label={formBlockText(block, locale).text}
+              value={t('summarySigned')}
+            />
+          ))}
+        </ReviewSection>
+      )}
     </WizardFrame>
   );
 }

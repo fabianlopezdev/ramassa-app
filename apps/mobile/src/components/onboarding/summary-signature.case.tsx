@@ -65,6 +65,17 @@ mock.module('@/lib/onboarding-intake-context', () => ({
     hidden,
     customScreens: [transport],
     customPlan: [{ id: 'transport', afterScreen: 'logistics', isAnswered: false }],
+    // Signed on the walk-in tablet, text unchanged (RAPP-691).
+    signedBlocks: [
+      {
+        id: 'b-tablet',
+        surface: 'onboarding',
+        screenKey: 'logistics',
+        kind: 'signature',
+        body: { ca: 'Accepto el codi de conducta' },
+        sortOrder: 0,
+      },
+    ],
     flow,
     catalog: {
       ...EMPTY_INTAKE_CATALOG,
@@ -123,5 +134,8 @@ test('the summary lists each signature block she signed, its text marked as sign
   const text = screen.container.textContent ?? '';
   expect(text).toContain('Autoritzo que em portin amb cotxe: summarySigned');
   expect(text).not.toContain('Accepto les normes');
+  // The ones she signed on the walk-in tablet close the summary (RAPP-691).
+  expect(text).toContain('summarySignaturesTitle');
+  expect(text).toContain('Accepto el codi de conducta: summarySigned');
   screen.unmount();
 });
