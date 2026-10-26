@@ -8,20 +8,23 @@
  * questions the version asks and draws her signature, or signs with the ticks
  * alone when she cannot draw, and the record says so.
  *
- * A version holds everything she reads and answers: the text, the consents
- * (staff add, remove, reword, reorder and mark required), the health question
- * and the emergency contact (asked or not, required or not, their privacy
- * level and wording), and the wording of the form itself. A wording field
- * left out shows the app's own text in her language. The database checks the
- * same rules (`private.authorization_content_valid`).
+ * A version holds everything she reads: the text, the consents (staff add,
+ * remove, reword, reorder and mark required) and the wording of the form
+ * itself. A wording field left out shows the app's own text in her language.
+ * The database checks the same rules (`private.authorization_content_valid`).
+ *
+ * Her health and her emergency contact are fields since RAPP-698, placed on
+ * the Health screen (`authorizationQuestions`): she answers them by field.
+ * A version published before keeps its `questions`, which nothing reads now.
  */
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { signatureStrokesSchema, type SignatureStrokes } from '../equipment/handover';
 import { AppError, databaseErrorCode } from '../errors';
+import { answerPayload } from '../intake-builder/builder';
+import { customAnswerValueSchema } from '../intake-builder/question-types';
 import { withCancellation, type CancellableRequest } from '../lib/cancellation';
 import type { LanguageCode } from '../schemas/language';
-import { trimPersonName } from '../schemas/person-name';
 import type { Database, Json } from '../types/database';
 
 type Client = SupabaseClient<Database>;
@@ -194,10 +197,13 @@ export const authorizationContentSchema = z
       .min(1)
       .max(20),
     consents: z.record(consentKeySchema, consentSchema),
-    questions: z.object({
-      health: healthQuestionSchema,
-      emergency_contact: emergencyQuestionSchema,
-    }),
+    /** Before RAPP-698 only: the Health screen asks fields now. */
+    questions: z
+      .object({
+        health: healthQuestionSchema,
+        emergency_contact: emergencyQuestionSchema,
+      })
+      .optional(),
     texts: textsOf(AUTHORIZATION_TEXT_FIELDS.texts),
     attachments: z
       .array(z.object({ label: authorizationTextSchema, url: z.url().startsWith('https://') }))
@@ -226,7 +232,8 @@ export const authorizationContentSchema = z
       });
     }
     for (const part of ['health', 'emergency_contact'] as const) {
-      const question = content.questions[part];
+      const question = content.questions?.[part];
+      if (question === undefined) continue;
       if (!question.asked && question.required) {
         context.addIssue({
           code: 'custom',
@@ -235,9 +242,10 @@ export const authorizationContentSchema = z
         });
       }
     }
-    const health = content.questions.health;
+    const health = content.questions?.health;
     const healthConsent = content.consents[HEALTH_DATA_CONSENT];
     if (
+      health !== undefined &&
       health.asked &&
       (healthConsent === undefined || (health.required && !healthConsent.required))
     ) {
@@ -271,9 +279,9 @@ export function authorizationScreenOrder(
   return [...(content.screen_order ?? AUTHORIZATION_MOVABLE_SCREENS), 'consents'];
 }
 
-/** The health and emergency phase shows while the version asks either question. */
-export function isMiddlePhaseShown(content: AuthorizationContent): boolean {
-  return content.questions.health.asked || content.questions.emergency_contact.asked;
+/** The Health screen shows while staff place any field on it (RAPP-698). */
+export function isHealthScreenShown(questions: readonly unknown[]): boolean {
+  return questions.length > 0;
 }
 
 /** A key for a consent staff add, used by no consent of the version. */
@@ -359,15 +367,8 @@ export function needsAuthorization(status: AuthorizationStatus | null): boolean 
 const signingShape = z.object({
   // Partial: an optional consent she never touched is simply absent.
   consents: z.partialRecord(consentKeySchema, z.boolean()),
-  healthInfo: z.string().trim().max(4000),
-  emergencyContact: z
-    .object({
-      // A name of only invisible characters is no name (RAPP-624).
-      name: z.string().overwrite(trimPersonName).max(200),
-      relation: z.string().trim().max(100),
-      phone: z.string().trim().max(50),
-    })
-    .optional(),
+  /** Her answers on the Health screen, by field (RAPP-698); the form checks each against its field. */
+  answers: z.record(z.string(), customAnswerValueSchema),
   strokes: signatureStrokesSchema.nullable(),
   unableToDraw: z.boolean(),
 });
@@ -376,11 +377,14 @@ export type AuthorizationSigning = z.infer<typeof signingShape>;
 
 /**
  * Her signing, checked against the version she signs: its required consents,
- * its questions, and the health data consent her health answer needs. The
- * database checks the same (`private.validate_signing_payload`).
+ * and the health data consent her health answer needs (the health field's id,
+ * when the organization has it). The database checks the same
+ * (`private.validate_signing_payload`, `private.check_signing_answers`).
  */
-export function authorizationSigningSchemaFor(content: AuthorizationContent) {
-  const { health, emergency_contact: contact } = content.questions;
+export function authorizationSigningSchemaFor(
+  content: AuthorizationContent,
+  healthFieldId: string | null = null,
+) {
   return signingShape.superRefine((signing, context) => {
     for (const consent of orderedConsents(content)) {
       if (consent.required && signing.consents[consent.key] !== true) {
@@ -396,29 +400,18 @@ export function authorizationSigningSchemaFor(content: AuthorizationContent) {
         });
       }
     }
-    if (health.asked) {
-      if (health.required && signing.healthInfo === '') {
-        context.addIssue({ code: 'custom', path: ['healthInfo'], message: 'required' });
-      }
-      if (
-        signing.healthInfo !== '' &&
-        HEALTH_DATA_CONSENT in content.consents &&
-        signing.consents[HEALTH_DATA_CONSENT] !== true
-      ) {
-        context.addIssue({
-          code: 'custom',
-          path: ['consents', HEALTH_DATA_CONSENT],
-          message: 'the health answer needs its consent',
-        });
-      }
-    }
+    const health = healthFieldId === null ? undefined : signing.answers[healthFieldId];
     if (
-      contact.asked &&
-      contact.required &&
-      ((signing.emergencyContact?.name ?? '') === '' ||
-        (signing.emergencyContact?.phone ?? '') === '')
+      typeof health === 'string' &&
+      health.trim() !== '' &&
+      HEALTH_DATA_CONSENT in content.consents &&
+      signing.consents[HEALTH_DATA_CONSENT] !== true
     ) {
-      context.addIssue({ code: 'custom', path: ['emergencyContact'], message: 'name and phone' });
+      context.addIssue({
+        code: 'custom',
+        path: ['consents', HEALTH_DATA_CONSENT],
+        message: 'the health answer needs its consent',
+      });
     }
     const hasDrawing = signing.strokes !== null && signing.strokes.length > 0;
     if (hasDrawing === signing.unableToDraw) {
@@ -437,11 +430,7 @@ export function buildSignPayload(
     consents: Object.fromEntries(
       orderedConsents(content).map(({ key }) => [key, signing.consents[key] === true]),
     ),
-    health_info:
-      content.questions.health.asked && signing.healthInfo !== '' ? signing.healthInfo : null,
-    emergency_contact: content.questions.emergency_contact.asked
-      ? (signing.emergencyContact ?? null)
-      : null,
+    answers: answerPayload(signing.answers),
     signature: signing.unableToDraw ? null : ((signing.strokes as Json | null) ?? null),
     unable_to_draw: signing.unableToDraw,
     language: context.language,

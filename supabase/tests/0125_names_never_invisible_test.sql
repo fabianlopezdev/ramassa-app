@@ -25,7 +25,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
-select plan(351);
+select plan(324);
 
 -- An app answer given by option key, as the app's screens send it by option id.
 create function pg_temp.by_option_key(f public.profile_fields, v jsonb) returns jsonb language sql stable security definer as $$
@@ -173,25 +173,10 @@ select throws_ok(
   '23514', null::text, 'a referral refuses a last name of ' || label)
   from blank order by ordinal;
 
--- A required emergency contact (the check every signing path runs).
-reset role;
-select throws_ok(
-  format($$ select private.validate_signing_payload(
-              jsonb_set((select payload from walk_in_payload), '{emergency_contact}',
-                        jsonb_build_object('name', %L, 'relation', 'Germana', 'phone', '+34600222333')),
-              (select content from contact_required_version)) $$, value),
-  '23514', null::text, 'a required emergency contact refuses a name of ' || label)
-  from blank order by ordinal;
+-- The emergency contact is an answer to a field since RAPP-698: its name is
+-- read through `name_trim` when an older build sends it (below).
 
 -- 2. A real letter with an invisible character is still a name -----------------------------------
-
-select lives_ok(
-  $$ select private.validate_signing_payload(
-       jsonb_set((select payload from walk_in_payload), '{emergency_contact}',
-                 jsonb_build_object('name', U&'Olena\200F', 'relation', 'Germana', 'phone', '+34600222333')),
-       (select content from contact_required_version)) $$,
-  'a required emergency contact accepts a name with a trailing direction mark'
-);
 
 set local role authenticated;
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
@@ -251,9 +236,11 @@ select is(
 
 -- 3. An optional contact's name of only invisible characters is no answer -------------------------
 
-select is(
-  (select emergency_contact_name from public.profiles where id = '5eed0000-0000-4000-8000-000000000022'),
-  null,
+select ok(
+  not exists (select 1 from public.custom_answers
+               where profile_id = '5eed0000-0000-4000-8000-000000000022'
+                 and question_id = (private.authorization_field('5eed0000-0000-4000-8000-000000000000',
+                                                                'emergency_contact_name')).id),
   'the emergency contact name of only invisible characters is saved as no answer'
 );
 select is(

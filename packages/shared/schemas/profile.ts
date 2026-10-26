@@ -57,8 +57,9 @@ export const profileEditWithoutSensitiveSchema = profileEditFields.superRefine(r
 
 /**
  * Her record as the readers return it since RAPP-662 (`get_own_profile`,
- * `get_participant_profile`): her account (names, app language, settings and
- * the season authorization's answers) and her answers by field id, each in the
+ * `get_participant_profile`): her account (names, app language and settings)
+ * and her answers by field id (her health and emergency contact among them
+ * since RAPP-698), each in the
  * shape its field stores. Unknown keys are stripped, so a column the server
  * adds does not break a phone that has not updated.
  */
@@ -71,12 +72,6 @@ export const profileRecordSchema = z.object({
   media_consent: z.boolean(),
   terms_accepted_at: z.string().nullable(),
   season_number: z.number().int().nullish(),
-  // From the season authorization (RAPP-304). The medical answer reaches staff
-  // only with participants.view_health.
-  health_info: z.string().nullish(),
-  emergency_contact_name: z.string().nullish(),
-  emergency_contact_relation: z.string().nullish(),
-  emergency_contact_phone: z.string().nullish(),
   answers: z.record(z.string(), z.unknown()).default({}),
 });
 

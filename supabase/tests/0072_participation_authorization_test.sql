@@ -8,8 +8,8 @@
 --      a drawn signature or a "could not draw" record. Each consent is stored
 --      separately with the version, language, time, device and method.
 --   3. A paper record for the season satisfies the gate.
---   4. Health data is encrypted and readable only with participants.view_health,
---      a permission only the Admin preset holds by default.
+--   4. Health data is encrypted. Since RAPP-698 it is an answer to a Sensible
+--      field, read at that level like every Sensible answer.
 --   5. Optional consents are revocable, and every change is recorded.
 --
 -- The seed publishes version 1 of 2026/27; every seeded player but Наталія
@@ -20,6 +20,10 @@ select plan(26);
 
 create temp table run (label text primary key, id uuid);
 grant all on run to authenticated;
+-- The authorization's fields (RAPP-698), named while the test is superuser.
+insert into run (label, id)
+select key, (private.authorization_field('5eed0000-0000-4000-8000-000000000000', key)).id
+  from unnest(private.authorization_field_keys()) key;
 
 -- 4. The permission ---------------------------------------------------------------------------------
 
@@ -68,7 +72,7 @@ select throws_ok(
        'consents', jsonb_build_object('participation', true, 'data_processing', true,
                                       'code_of_conduct', true, 'health_data', true),
        'health_info', '  ', 'signature', '[[[1,2],[3,4]]]'::jsonb, 'language', 'es')) $$,
-  '23514', null::text, 'the medical answer is required, "No" included'
+  '23502', null::text, 'the medical answer is required, "No" included'
 );
 select throws_ok(
   $$ select public.sign_authorization((select id from run where label = 'version'), jsonb_build_object(
@@ -112,8 +116,10 @@ select ok(
   'image rights keep the media consent'
 );
 select ok(
-  (select encode(health_info, 'escape') not like '%Asma%' from public.profiles
-    where id = '5eed0000-0000-4000-8000-000000000022'),
+  (select value is null and encode(value_encrypted, 'escape') not like '%Asma%'
+     from public.custom_answers
+    where profile_id = '5eed0000-0000-4000-8000-000000000022'
+      and question_id = (select id from run where label = 'health_info')),
   'the medical answer is encrypted'
 );
 
@@ -144,13 +150,15 @@ select is(
 set local role authenticated;
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select is(
-  (select coalesce(health_info, 'hidden') || '|' || emergency_contact_name
+  (select (answers ->> (select id::text from run where label = 'health_info')) || '|'
+          || (answers ->> (select id::text from run where label = 'emergency_contact_name'))
      from public.get_participant_profile('5eed0000-0000-4000-8000-000000000022')),
-  'hidden|Olena', 'staff without participants.view_health do not read it'
+  'Asma lleu, porto inhalador.|Olena', 'staff with participants.view_sensitive read them as answers'
 );
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000001", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select is(
-  (select health_info from public.get_participant_profile('5eed0000-0000-4000-8000-000000000022')),
+  (select answers ->> (select id::text from run where label = 'health_info')
+     from public.get_participant_profile('5eed0000-0000-4000-8000-000000000022')),
   'Asma lleu, porto inhalador.', 'an admin reads it'
 );
 select is(

@@ -727,12 +727,6 @@ export function buildProfileFromFixture(
     updated_at: FIXTURE_TIMESTAMP,
     // Her season count (RAPP-303): not given unless a test says so.
     season_number: null,
-    // The authorization's medical answer and emergency contact (RAPP-304).
-    health_info: null,
-    emergency_contact_name: null,
-    emergency_contact_relation: null,
-    emergency_contact_phone: null,
-    emergency_contact_privacy: null,
     // Seasons played before the app (RAPP-306).
     prior_seasons: 0,
     // A real person unless a test says otherwise (RAPP-615).

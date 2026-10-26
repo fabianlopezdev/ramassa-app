@@ -210,7 +210,8 @@ select is(
 insert into public.organizations (id, name, slug)
 values ('5eed0000-0000-4000-8000-0000000007f0', 'Organització nova', 'nova-660');
 select is(
-  (select count(*)::integer from public.profile_fields where org_id = '5eed0000-0000-4000-8000-0000000007f0'),
+  (select count(*)::integer from public.profile_fields
+    where org_id = '5eed0000-0000-4000-8000-0000000007f0' and kind = 'builtin'),
   cardinality(private.system_field_keys()),
   'a new organization gets every app field'
 );

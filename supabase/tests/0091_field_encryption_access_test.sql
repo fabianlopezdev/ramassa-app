@@ -21,7 +21,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
-select plan(37);
+select plan(34);
 
 -- Her answer to an app field in a reader's `answers` (RAPP-662): a choice by its
 -- option's key, anything else as text.
@@ -83,32 +83,10 @@ select ok(not has_function_privilege('anon', 'private.feedback_content(uuid)', '
 
 -- 3. No ciphertext transplant ------------------------------------------------------------------------
 
--- A player copies a ciphertext she can read into her own health answer: her
--- own profile read would decrypt it. The guard refuses the direct write.
+-- Her profile holds no encrypted column since RAPP-698: her Sensible answers
+-- are written only through the answer functions, which encrypt on the server.
 set local role authenticated;
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000011", "role": "authenticated", "aal": "aal1"}';
-select throws_ok(
-  $$ update public.profiles
-        set health_info = (select content_encrypted from public.feedback_submissions
-                      where id = '5eed0000-0000-4000-8017-000000000001')
-      where id = '5eed0000-0000-4000-8000-000000000011' $$,
-  '42501', 'PROFILES/PRIVILEGED_COLUMN', 'a player cannot write a ciphertext into her own profile'
-);
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
-select throws_ok(
-  $$ update public.profiles
-        set health_info = (select intake_answers from public.entity_referrals
-                            where id = '5eed0000-0000-4000-8010-000000000001')
-      where id = '5eed0000-0000-4000-8000-000000000002' $$,
-  '42501', 'PROFILES/PRIVILEGED_COLUMN', 'a staff member cannot write a ciphertext into her own profile'
-);
-select throws_ok(
-  $$ update public.profiles
-        set emergency_contact_phone = (select intake_answers from public.entity_referrals
-                               where id = '5eed0000-0000-4000-8010-000000000001')
-      where id = '5eed0000-0000-4000-8000-000000000012' $$,
-  '42501', 'PROFILES/PRIVILEGED_COLUMN', 'a staff member cannot write a ciphertext into a player''s profile'
-);
 
 -- 4. The six functions -------------------------------------------------------------------------------
 

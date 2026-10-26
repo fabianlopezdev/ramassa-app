@@ -1561,12 +1561,13 @@ select '5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-8000-00000000
                ('health_data', true), ('image_rights', false), ('newsletter', true),
                ('messaging_groups', true)) as consent(key, granted);
 
-update public.profiles
-set health_info = public.encrypt_field('No'),
-    emergency_contact_name = 'Layla Al-Hassan',
-    emergency_contact_relation = 'Germana',
-    emergency_contact_phone = public.encrypt_field('+34600000099')
-where id = '5eed0000-0000-4000-8000-000000000011';
+-- Her health answer and her emergency contact, as answers to the
+-- authorization's fields (RAPP-698).
+perform private.write_custom_answer('5eed0000-0000-4000-8000-000000000011',
+         private.authorization_field('5eed0000-0000-4000-8000-000000000000', d.key), d.value, 'player', null)
+  from (values ('health_info', '"No"'::jsonb), ('emergency_contact_name', '"Layla Al-Hassan"'::jsonb),
+               ('emergency_contact_relation', '"Germana"'::jsonb),
+               ('emergency_contact_phone', '"+34600000099"'::jsonb)) as d(key, value);
 
 -- A walk-in signed on a coach's tablet at the first training (RAPP-305): a new
 -- woman with only her name, waiting for staff to confirm her with her email.

@@ -20,7 +20,7 @@ import {
   fetchAuthorizationVersions,
   fetchMyAuthorizationStatus,
   fetchParticipantConsents,
-  isMiddlePhaseShown,
+  isHealthScreenShown,
   needsAuthorization,
   newConsentKey,
   orderedConsents,
@@ -47,7 +47,8 @@ const version1 = (): AuthorizationContent =>
 
 /** Version 1 with a staff consent, health optional, the contact required and sensitive. */
 function version2(): AuthorizationContent {
-  const content = version1();
+  // A version made since RAPP-698: no questions, the Health screen asks fields.
+  const { questions: _questions, ...content } = version1();
   const consents = Object.fromEntries(
     Object.entries(content.consents).filter(([key]) => key !== 'newsletter'),
   );
@@ -57,10 +58,6 @@ function version2(): AuthorizationContent {
       ...consents,
       health_data: { ...consents.health_data!, required: false },
       team_photos: { label: { ca: 'Fotos d’equip' }, required: true, position: 9 },
-    },
-    questions: {
-      health: { ...content.questions.health, required: false },
-      emergency_contact: { asked: true, required: true, privacy: 'sensitive', texts: {} },
     },
     texts: { sign_and_enter_label: { ca: 'Signa i juga' } },
   };
@@ -91,7 +88,8 @@ describe('a version', () => {
       'newsletter',
       'messaging_groups',
     ]);
-    expect(content.questions.health).toMatchObject({ asked: true, required: true });
+    // A version published before RAPP-698 keeps its questions; nothing reads them now.
+    expect(content.questions?.health).toMatchObject({ asked: true, required: true });
   });
 
   test('image rights are never required: they drive the photo consent she can refuse', () => {
@@ -138,15 +136,11 @@ describe('a version', () => {
         },
       }).success,
     ).toBe(false);
-    const hidden = authorizationContentSchema.parse({
-      ...content,
-      questions: {
-        health: { asked: false, required: false, privacy: 'health', texts: {} },
-        emergency_contact: { asked: false, required: false, privacy: 'personal', texts: {} },
-      },
-    });
-    expect(isMiddlePhaseShown(hidden)).toBe(false);
-    expect(isMiddlePhaseShown(content)).toBe(true);
+    // A version without questions is valid (RAPP-698): the Health screen asks fields.
+    const { questions: _questions, ...withoutQuestions } = content;
+    expect(authorizationContentSchema.safeParse(withoutQuestions).success).toBe(true);
+    expect(isHealthScreenShown([])).toBe(false);
+    expect(isHealthScreenShown(['health'])).toBe(true);
   });
 
   test('consent keys are lowercase letters, digits and underscores, and places are unique', () => {
@@ -227,13 +221,15 @@ describe('the wording', () => {
   });
 });
 
+const HEALTH = '5eed0000-0000-4000-8045-00000000aaaa';
+
 describe('signing against the version', () => {
   test('she signs with only the required consents; the optional ones may stay untouched', () => {
-    const schema = authorizationSigningSchemaFor(version1());
+    const schema = authorizationSigningSchemaFor(version1(), HEALTH);
     expect(
       schema.safeParse({
         consents: requiredOf1,
-        healthInfo: 'No',
+        answers: { [HEALTH]: 'No' },
         strokes: drawing,
         unableToDraw: false,
       }).success,
@@ -241,11 +237,10 @@ describe('signing against the version', () => {
   });
 
   test('a required consent staff added must be ticked', () => {
-    const schema = authorizationSigningSchemaFor(version2());
+    const schema = authorizationSigningSchemaFor(version2(), HEALTH);
     const base = {
       consents: { participation: true, data_processing: true, code_of_conduct: true },
-      healthInfo: '',
-      emergencyContact: { name: 'Olena', relation: '', phone: '600' },
+      answers: {},
       strokes: null,
       unableToDraw: true,
     };
@@ -257,16 +252,8 @@ describe('signing against the version', () => {
     ).toBe(true);
   });
 
-  test('the medical answer follows the question: required, optional, or not asked', () => {
-    expect(
-      authorizationSigningSchemaFor(version1()).safeParse({
-        consents: requiredOf1,
-        healthInfo: ' ',
-        strokes: drawing,
-        unableToDraw: false,
-      }).success,
-    ).toBe(false);
-    const optional = authorizationSigningSchemaFor(version2());
+  test('a health answer needs the health data consent (RAPP-698)', () => {
+    const optional = authorizationSigningSchemaFor(version2(), HEALTH);
     const answer = {
       consents: {
         participation: true,
@@ -274,8 +261,7 @@ describe('signing against the version', () => {
         code_of_conduct: true,
         team_photos: true,
       },
-      healthInfo: 'Asma',
-      emergencyContact: { name: 'Olena', relation: '', phone: '600' },
+      answers: { [HEALTH]: 'Asma' },
       strokes: null,
       unableToDraw: true,
     };
@@ -285,44 +271,27 @@ describe('signing against the version', () => {
       optional.safeParse({ ...answer, consents: { ...answer.consents, health_data: true } })
         .success,
     ).toBe(true);
-  });
-
-  test('a required emergency contact needs a name and a phone', () => {
-    const schema = authorizationSigningSchemaFor(version2());
-    const result = schema.safeParse({
-      consents: {
-        participation: true,
-        data_processing: true,
-        code_of_conduct: true,
-        team_photos: true,
-      },
-      healthInfo: '',
-      emergencyContact: { name: 'Olena', relation: '', phone: '' },
-      strokes: null,
-      unableToDraw: true,
-    });
-    expect(result.error?.issues[0]?.path).toEqual(['emergencyContact']);
+    expect(optional.safeParse({ ...answer, answers: { [HEALTH]: ' ' } }).success).toBe(true);
   });
 
   test('she signs with a drawing, or records that she could not draw', () => {
-    const schema = authorizationSigningSchemaFor(version1());
-    const signing = { consents: requiredOf1, healthInfo: 'No', strokes: null, unableToDraw: false };
+    const schema = authorizationSigningSchemaFor(version1(), HEALTH);
+    const signing = { consents: requiredOf1, answers: {}, strokes: null, unableToDraw: false };
     expect(schema.safeParse(signing).success).toBe(false);
     expect(schema.safeParse({ ...signing, unableToDraw: true }).success).toBe(true);
   });
 
-  test('the payload names every consent of the version and only those', () => {
+  test('the payload names every consent of the version and only those, and her answers by field', () => {
     const content = version2();
     const payload = buildSignPayload(
-      authorizationSigningSchemaFor(content).parse({
+      authorizationSigningSchemaFor(content, HEALTH).parse({
         consents: {
           participation: true,
           data_processing: true,
           code_of_conduct: true,
           team_photos: true,
         },
-        healthInfo: '',
-        emergencyContact: { name: 'Olena', relation: 'Germana', phone: '600' },
+        answers: { [HEALTH]: ' ', other: ' Olena ' },
         strokes: null,
         unableToDraw: true,
       }),
@@ -339,12 +308,12 @@ describe('signing against the version', () => {
       team_photos: true,
     });
     expect(payload).toMatchObject({
-      health_info: null,
+      answers: { [HEALTH]: null, other: 'Olena' },
       unable_to_draw: true,
       signature: null,
       language: 'ca',
-      emergency_contact: { name: 'Olena', relation: 'Germana', phone: '600' },
     });
+    expect('health_info' in payload).toBe(false);
   });
 });
 
@@ -497,9 +466,7 @@ describe('staff', () => {
     });
     const published = clientReturning({ data: 2, error: null });
     expect(await publishAuthorizationDraft(published.client)).toBe(2);
-    expect(published.calls).toEqual([
-      ['publish_authorization_draft', { p_is_correction: false }],
-    ]);
+    expect(published.calls).toEqual([['publish_authorization_draft', { p_is_correction: false }]]);
   });
 
   test('a draft is published to a chosen season (RAPP-694)', async () => {

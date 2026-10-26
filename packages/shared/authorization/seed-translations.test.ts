@@ -49,7 +49,7 @@ test('season authorization has all five languages without fallback in every publ
     'newsletter:false',
     'messaging_groups:false',
   ]);
-  expect(content.questions.health.required).toBe(true);
+  expect(content.questions?.health.required).toBe(true);
   expect(content.texts).toEqual({});
   expect(content.attachments).toEqual([]);
 });

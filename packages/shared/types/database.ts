@@ -3437,12 +3437,7 @@ export type Database = {
           avatar_url: string | null;
           collaborating_entity_id: string | null;
           created_at: string;
-          emergency_contact_name: string | null;
-          emergency_contact_phone: string | null;
-          emergency_contact_privacy: string | null;
-          emergency_contact_relation: string | null;
           first_name: string;
-          health_info: string | null;
           id: string;
           is_active: boolean;
           is_forum_banned: boolean;
@@ -3466,12 +3461,7 @@ export type Database = {
           avatar_url?: string | null;
           collaborating_entity_id?: string | null;
           created_at?: string;
-          emergency_contact_name?: string | null;
-          emergency_contact_phone?: string | null;
-          emergency_contact_privacy?: string | null;
-          emergency_contact_relation?: string | null;
           first_name: string;
-          health_info?: string | null;
           id: string;
           is_active?: boolean;
           is_forum_banned?: boolean;
@@ -3495,12 +3485,7 @@ export type Database = {
           avatar_url?: string | null;
           collaborating_entity_id?: string | null;
           created_at?: string;
-          emergency_contact_name?: string | null;
-          emergency_contact_phone?: string | null;
-          emergency_contact_privacy?: string | null;
-          emergency_contact_relation?: string | null;
           first_name?: string;
-          health_info?: string | null;
           id?: string;
           is_active?: boolean;
           is_forum_banned?: boolean;
@@ -5547,12 +5532,7 @@ export type Database = {
           avatar_url: string | null;
           collaborating_entity_id: string | null;
           created_at: string;
-          emergency_contact_name: string | null;
-          emergency_contact_phone: string | null;
-          emergency_contact_privacy: string | null;
-          emergency_contact_relation: string | null;
           first_name: string;
-          health_info: string | null;
           id: string;
           is_active: boolean;
           is_forum_banned: boolean;
@@ -5589,12 +5569,7 @@ export type Database = {
           avatar_url: string | null;
           collaborating_entity_id: string | null;
           created_at: string;
-          emergency_contact_name: string | null;
-          emergency_contact_phone: string | null;
-          emergency_contact_privacy: string | null;
-          emergency_contact_relation: string | null;
           first_name: string;
-          health_info: string | null;
           id: string;
           is_active: boolean;
           is_forum_banned: boolean;
@@ -5883,11 +5858,7 @@ export type Database = {
         Returns: {
           answers: Json;
           avatar_url: string;
-          emergency_contact_name: string;
-          emergency_contact_phone: string;
-          emergency_contact_relation: string;
           first_name: string;
-          health_info: string;
           id: string;
           last_name: string;
           media_consent: boolean;
@@ -5923,11 +5894,7 @@ export type Database = {
           answers: Json;
           avatar_url: string;
           created_at: string;
-          emergency_contact_name: string;
-          emergency_contact_phone: string;
-          emergency_contact_relation: string;
           first_name: string;
-          health_info: string;
           id: string;
           is_active: boolean;
           is_forum_banned: boolean;

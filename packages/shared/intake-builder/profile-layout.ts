@@ -49,7 +49,21 @@ export type BuilderText = z.infer<typeof anyLanguageTextSchema>;
 export const QUESTION_PRIVACY_LEVELS = ['normal', 'personal', 'sensitive'] as const;
 export type QuestionPrivacy = (typeof QUESTION_PRIVACY_LEVELS)[number];
 
-export const PROFILE_SURFACES = ['onboarding', 'entity_form', 'season'] as const;
+/** Where a field is asked; `authorization` is the season authorization's Health screen (RAPP-698). */
+export const PROFILE_SURFACES = ['onboarding', 'entity_form', 'season', 'authorization'] as const;
+
+/**
+ * The season authorization's own fields (RAPP-698): team fields the signing
+ * functions find by key. The database keeps the same list
+ * (`private.authorization_field_keys`).
+ */
+export const AUTHORIZATION_FIELD_KEYS = [
+  'health_info',
+  'emergency_contact_name',
+  'emergency_contact_relation',
+  'emergency_contact_phone',
+] as const;
+export type AuthorizationFieldKey = (typeof AUTHORIZATION_FIELD_KEYS)[number];
 export type ProfileSurface = (typeof PROFILE_SURFACES)[number];
 
 export const PROFILE_FIELD_KINDS = ['builtin', 'custom'] as const;
@@ -139,6 +153,8 @@ export interface ProfileField {
    * staff created.
    */
   readonly builtinKey: IntakeQuestion | null;
+  /** One of the authorization's own fields (RAPP-698), by its key; null for every other. */
+  readonly authorizationKey?: AuthorizationFieldKey | null;
   readonly type: CustomQuestionType;
   readonly label: BuilderText;
   readonly help: BuilderText | null;
@@ -238,6 +254,11 @@ export function parseProfileLayout(raw: {
       kind: field.kind,
       systemKey: systemKeyOf(field.system_key),
       builtinKey: questionOfSystemKey(systemKeyOf(field.system_key)),
+      authorizationKey: (AUTHORIZATION_FIELD_KEYS as readonly string[]).includes(
+        field.system_key ?? '',
+      )
+        ? (field.system_key as AuthorizationFieldKey)
+        : null,
       type: field.question_type,
       label: field.label,
       help: field.help,

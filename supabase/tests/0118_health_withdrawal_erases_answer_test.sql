@@ -29,8 +29,11 @@ select lives_ok($$ select public.publish_authorization_version((select content f
   'an admin publishes a version where the health consent is optional');
 reset role;
 
-update public.profiles set health_info = public.encrypt_field('Asma lleu')
- where id = '5eed0000-0000-4000-8000-000000000011';
+-- Her health answer, an answer to the authorization's field (RAPP-698).
+select private.write_custom_answer('5eed0000-0000-4000-8000-000000000011',
+  private.authorization_field('5eed0000-0000-4000-8000-000000000000', 'health_info'), '"Asma lleu"', 'player', null);
+insert into run (label, content)
+select 'health', to_jsonb((private.authorization_field('5eed0000-0000-4000-8000-000000000000', 'health_info')).id);
 insert into public.authorization_consent_events (org_id, profile_id, consent_key, granted, method)
 values ('5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-8000-000000000011', 'health_data', true, 'profile');
 
@@ -40,7 +43,9 @@ select lives_ok($$ select public.set_optional_consent('newsletter', false, 'ca')
   'she withdraws another consent');
 reset role;
 select ok(
-  (select health_info is not null from public.profiles where id = '5eed0000-0000-4000-8000-000000000011'),
+  exists (select 1 from public.custom_answers
+           where profile_id = '5eed0000-0000-4000-8000-000000000011'
+             and question_id = (select (content #>> '{}')::uuid from run where label = 'health')),
   'her health answer stays'
 );
 
@@ -49,7 +54,9 @@ select lives_ok($$ select public.set_optional_consent('health_data', false, 'ca'
   'she withdraws the health data consent');
 reset role;
 select ok(
-  (select health_info is null from public.profiles where id = '5eed0000-0000-4000-8000-000000000011'),
+  not exists (select 1 from public.custom_answers
+               where profile_id = '5eed0000-0000-4000-8000-000000000011'
+                 and question_id = (select (content #>> '{}')::uuid from run where label = 'health')),
   'her health answer is deleted in the same transaction'
 );
 select is(

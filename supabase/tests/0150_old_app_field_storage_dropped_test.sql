@@ -26,9 +26,9 @@ select is(
   (select array_agg(column_name::text order by column_name) from information_schema.columns
     where table_schema = 'public' and table_name = 'profiles'
       and column_name not in ('id', 'org_id', 'role', 'created_at', 'updated_at')),
-  array['anonymized_at', 'avatar_url', 'collaborating_entity_id', 'emergency_contact_name',
-        'emergency_contact_phone', 'emergency_contact_privacy', 'emergency_contact_relation', 'first_name',
-        'health_info', 'is_active', 'is_forum_banned', 'is_test_account', 'last_name', 'media_consent_at',
+  -- Her health and her emergency contact are answers since RAPP-698.
+  array['anonymized_at', 'avatar_url', 'collaborating_entity_id', 'first_name',
+        'is_active', 'is_forum_banned', 'is_test_account', 'last_name', 'media_consent_at',
         -- Her number, where her name is private (RAPP-693).
         'member_number',
         -- When her Onboarding was last up to date (RAPP-697).

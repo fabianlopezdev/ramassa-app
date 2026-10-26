@@ -204,6 +204,17 @@ select ok(
 
 -- 4. Signing version 2 ----------------------------------------------------------------------------------------
 
+-- Since RAPP-698 the Health screen's fields are placements: health optional,
+-- the emergency contact's name and phone required, as version 2 wanted.
+reset role;
+update public.field_placements pl
+   set required = f.system_key in ('emergency_contact_name', 'emergency_contact_phone')
+  from public.profile_fields f
+ where f.id = pl.field_id and pl.surface = 'authorization'
+   and f.org_id = '5eed0000-0000-4000-8000-000000000000';
+insert into run (label, id)
+select key, (private.authorization_field('5eed0000-0000-4000-8000-000000000000', key)).id
+  from unnest(private.authorization_field_keys()) key;
 set local role authenticated;
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000022", "role": "authenticated", "aal": "aal1"}';
 select throws_ok(
@@ -219,7 +230,7 @@ select throws_ok(
                                       'team_photos', true),
        'emergency_contact', jsonb_build_object('name', 'Olena'),
        'unable_to_draw', true, 'language', 'ar')) $$,
-  '23514', null::text, 'a required emergency contact needs a name and a phone'
+  '23502', null::text, 'a required emergency contact needs a name and a phone'
 );
 select throws_ok(
   $$ select public.sign_authorization((select id from run where label = 'v2'), jsonb_build_object(
@@ -270,9 +281,13 @@ select is(
   'a consent kept from version 1 keeps its words'
 );
 select ok(
-  (select health_info is null and emergency_contact_name = 'Olena' from public.profiles
-    where id = '5eed0000-0000-4000-8000-000000000022'),
-  'no health answer is stored when she gives none; the contact is'
+  not exists (select 1 from public.custom_answers
+               where profile_id = '5eed0000-0000-4000-8000-000000000022'
+                 and question_id = (select id from run where label = 'health_info'))
+  and (select public.decrypt_field(value_encrypted) from public.custom_answers
+        where profile_id = '5eed0000-0000-4000-8000-000000000022'
+          and question_id = (select id from run where label = 'emergency_contact_name')) = '"Olena"',
+  'no health answer is stored when she gives none; the contact is, as an answer'
 );
 
 -- 5. Old records ---------------------------------------------------------------------------------------------
@@ -313,17 +328,18 @@ select is(
 -- 6. Privacy levels ---------------------------------------------------------------------------------------------
 
 select is(
-  (select coalesce(emergency_contact_name, 'hidden') || '|' || coalesce(health_info, 'hidden')
+  (select coalesce(answers ->> (select id::text from run where label = 'emergency_contact_name'), 'hidden')
      from public.get_participant_profile('5eed0000-0000-4000-8000-000000000022')),
-  'Olena|hidden', 'staff with sensitive access read the sensitive contact, never her health'
+  'Olena', 'staff with sensitive access read the Sensible contact'
 );
 reset role;
 delete from public.team_member_permissions
  where profile_id = '5eed0000-0000-4000-8000-000000000002' and permission_code = 'participants.view_sensitive';
 set local role authenticated;
 select is(
-  (select coalesce(emergency_contact_name, 'hidden') from public.get_participant_profile('5eed0000-0000-4000-8000-000000000022')),
-  'hidden', 'without sensitive access the contact staff marked sensitive is hidden'
+  (select coalesce(answers ->> (select id::text from run where label = 'emergency_contact_name'), 'hidden')
+     from public.get_participant_profile('5eed0000-0000-4000-8000-000000000022')),
+  'hidden', 'without sensitive access the Sensible contact is hidden'
 );
 
 -- 7. Tablet, walk-ins, scenario, export ----------------------------------------------------------------------------
@@ -346,7 +362,8 @@ select lives_ok(
        '5eed0000-0000-4000-8041-000000000001', jsonb_build_object(
          'consents', jsonb_build_object('participation', true, 'data_processing', true,
                                         'code_of_conduct', true, 'health_data', true),
-         'health_info', 'No', 'unable_to_draw', true, 'language', 'ca'), now() - interval '1 day') $$,
+         'health_info', 'No', 'emergency_contact', jsonb_build_object('name', 'Ana', 'phone', '+34600111222'),
+         'unable_to_draw', true, 'language', 'ca'), now() - interval '1 day') $$,
   'a signing waiting offline on version 1 of this season still syncs, checked against version 1'
 );
 select throws_ok(

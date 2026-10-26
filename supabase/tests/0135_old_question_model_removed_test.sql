@@ -353,7 +353,9 @@ select is(
 );
 select is(
   (select count(*)::integer from public.profile_fields
-    where org_id = '5eed0000-0000-4000-8000-0000000007e0' and kind = 'custom'),
+    where org_id = '5eed0000-0000-4000-8000-0000000007e0' and kind = 'custom'
+      -- The authorization's own fields come with the organization (RAPP-698).
+      and not coalesce(system_key = any (private.authorization_field_keys()), false)),
   (select count(*)::integer from jsonb_array_elements((select doc -> 'fields' from run where label = 'base')) f
     where f ->> 'kind' = 'custom'),
   'every field arrives'
