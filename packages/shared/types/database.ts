@@ -2969,6 +2969,42 @@ export type Database = {
           },
         ];
       };
+      onboarding_screen_versions: {
+        Row: {
+          changed_at: string;
+          changed_by: string | null;
+          org_id: string;
+          screen_key: string;
+        };
+        Insert: {
+          changed_at?: string;
+          changed_by?: string | null;
+          org_id: string;
+          screen_key: string;
+        };
+        Update: {
+          changed_at?: string;
+          changed_by?: string | null;
+          org_id?: string;
+          screen_key?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'onboarding_screen_versions_changed_by_fkey';
+            columns: ['changed_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'onboarding_screen_versions_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       organizations: {
         Row: {
           available_languages: string[];
@@ -3414,6 +3450,7 @@ export type Database = {
           last_name: string;
           media_consent_at: string | null;
           member_number: number;
+          onboarding_current_at: string | null;
           org_id: string;
           preferred_language: string;
           prior_seasons: number;
@@ -3442,6 +3479,7 @@ export type Database = {
           last_name: string;
           media_consent_at?: string | null;
           member_number?: number;
+          onboarding_current_at?: string | null;
           org_id: string;
           preferred_language?: string;
           prior_seasons?: number;
@@ -3470,6 +3508,7 @@ export type Database = {
           last_name?: string;
           media_consent_at?: string | null;
           member_number?: number;
+          onboarding_current_at?: string | null;
           org_id?: string;
           preferred_language?: string;
           prior_seasons?: number;
@@ -5521,6 +5560,7 @@ export type Database = {
           last_name: string;
           media_consent_at: string | null;
           member_number: number;
+          onboarding_current_at: string | null;
           org_id: string;
           preferred_language: string;
           prior_seasons: number;
@@ -5537,6 +5577,10 @@ export type Database = {
           isOneToOne: true;
           isSetofReturn: false;
         };
+      };
+      complete_onboarding_review: {
+        Args: { payload: Json };
+        Returns: undefined;
       };
       complete_onboarding_signed: {
         Args: { p_signing: Json; payload: Json };
@@ -5558,6 +5602,7 @@ export type Database = {
           last_name: string;
           media_consent_at: string | null;
           member_number: number;
+          onboarding_current_at: string | null;
           org_id: string;
           preferred_language: string;
           prior_seasons: number;
@@ -6443,6 +6488,10 @@ export type Database = {
         Args: { p_conversation_id: string; p_message_id: string };
         Returns: undefined;
       };
+      mark_onboarding_screen_changed: {
+        Args: { p_screen_key: string };
+        Returns: undefined;
+      };
       mark_staff_notification_read: {
         Args: { p_id: string };
         Returns: undefined;
@@ -6524,6 +6573,7 @@ export type Database = {
         }[];
       };
       my_intake_upload_org: { Args: never; Returns: string };
+      my_onboarding_review: { Args: never; Returns: string[] };
       my_pending_invite: {
         Args: never;
         Returns: {
@@ -6659,6 +6709,10 @@ export type Database = {
           signature_state: string;
           statement_language: string;
         }[];
+      };
+      participant_onboarding_review_pending: {
+        Args: { p_profile_id: string };
+        Returns: boolean;
       };
       participant_profile_answers: {
         Args: { p_profile_id: string };
