@@ -335,7 +335,6 @@
   "authorizationPublishSeasonCurrent": "{{season}} (current)",
   "authorizationPublishSeason": "Season",
   "authorizationCurrentSeasonBadge": "Current season",
-  "authorizationEditorTitle": "New version",
   "authorizationDocumentTitle": "Document title",
   "authorizationSections": "Sections",
   "authorizationSectionTitle": "Section {{number}} title",
@@ -347,10 +346,6 @@
   "authorizationAttachmentLabel": "Document name",
   "authorizationAttachmentUrl": "Link (https://)",
   "authorizationAddAttachment": "Add a document",
-  "authorizationPublishAction": "Publish the version",
-  "authorizationPublishConfirm": "Once published, every player must sign it again when she opens the app.",
-  "authorizationPublishConfirmFuture": "Players will sign it once {{season}} is the current season.",
-  "authorizationPublishConfirmAction": "Yes, publish it",
   "authorizationPublishFailed": "The version could not be published. Try again.",
   "authorizationConsent": {
     "participation": "Participation and true information",
@@ -510,9 +505,6 @@
   "onboardingPage": {
     "title": "Onboarding"
   },
-  "legalPage": {
-    "terms": "App terms"
-  },
   "appTerms": {
     "sectionTitle": "App terms",
     "sectionIntro": "The text every player accepts before entering the app, with the introduction screen before it. A published version never changes; when you publish a new one, every player accepts it when she opens the app.",
@@ -557,7 +549,6 @@
       "continue_label": "Main button",
       "decline_label": "Leave button"
     },
-    "termsTitleNote": "This screen's title and intro come from the app terms: change them in Legal texts.",
     "detailNote": "This screen opens depending on the previous answer. A title of your own replaces the title of every case.",
     "hideLocked": "It has a required question, so it always shows.",
     "hideReregistrationNote": "Hiding it also stops re-registration asking its question each season, so the app and re-registration always ask the same.",
@@ -649,9 +640,9 @@
     "phoneStep": {
       "document": "Document",
       "health": "Health",
-      "consents": "Consents",
+      "consents": "Consents and signature",
       "reregistration": "Re-registration",
-      "reregistrationSeason": "Season"
+      "reregistrationSeason": "Season questions"
     }
   },
   "draftSeenByTestPlayers": "Draft version (only test players see it)",
@@ -817,5 +808,14 @@
     "removeTitle": "Remove this signature?",
     "removeBody": "Signatures already given are kept.",
     "defaultText": "I accept"
+  },
+  "saveDialog": {
+    "title": "Save changes",
+    "correction": "Correction",
+    "correctionBody": "Fixes the text. Whoever already answered has nothing to do.",
+    "newVersion": "New version",
+    "newVersionBody": "Everyone will have to answer it again.",
+    "newVersionLater": "Players who finished Onboarding cannot be asked again yet.",
+    "save": "Save"
   }
 }

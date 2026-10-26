@@ -335,7 +335,6 @@
   "authorizationPublishSeasonCurrent": "{{season}} (vigent)",
   "authorizationPublishSeason": "Temporada",
   "authorizationCurrentSeasonBadge": "Temporada vigent",
-  "authorizationEditorTitle": "Nova versió",
   "authorizationDocumentTitle": "Títol del document",
   "authorizationSections": "Apartats",
   "authorizationSectionTitle": "Títol de l'apartat {{number}}",
@@ -347,10 +346,6 @@
   "authorizationAttachmentLabel": "Nom del document",
   "authorizationAttachmentUrl": "Enllaç (https://)",
   "authorizationAddAttachment": "Afegeix un document",
-  "authorizationPublishAction": "Publica la versió",
-  "authorizationPublishConfirm": "En publicar-la, totes les jugadores l'hauran de signar de nou quan obrin l'app.",
-  "authorizationPublishConfirmFuture": "Les jugadores la signaran quan {{season}} sigui la temporada vigent.",
-  "authorizationPublishConfirmAction": "Sí, publica-la",
   "authorizationPublishFailed": "No s'ha pogut publicar. Torna-ho a provar.",
   "authorizationConsent": {
     "participation": "Participació i veracitat de les dades",
@@ -510,9 +505,6 @@
   "onboardingPage": {
     "title": "Onboarding"
   },
-  "legalPage": {
-    "terms": "Condicions de l'app"
-  },
   "appTerms": {
     "sectionTitle": "Termes de l'app",
     "sectionIntro": "El text que totes les jugadores accepten abans d'entrar a l'app, amb la pantalla d'introducció. Una versió publicada ja no canvia; quan en publiqueu una de nova, cada jugadora l'accepta en obrir l'app.",
@@ -557,7 +549,6 @@
       "continue_label": "Botó principal",
       "decline_label": "Botó per sortir"
     },
-    "termsTitleNote": "El títol i la introducció d'aquesta pantalla són els de les condicions de l'app: es canvien a Textos legals.",
     "detailNote": "Aquesta pantalla s'obre segons la resposta anterior. Un títol propi substitueix el títol de cada cas.",
     "hideLocked": "Té una pregunta obligatòria, així que sempre es mostra.",
     "hideReregistrationNote": "Si l'amagues, la reinscripció de cada temporada tampoc no en farà la pregunta, perquè l'aplicació i la reinscripció preguntin sempre el mateix.",
@@ -649,9 +640,9 @@
     "phoneStep": {
       "document": "Document",
       "health": "Salut",
-      "consents": "Autoritzacions",
+      "consents": "Autoritzacions i signatura",
       "reregistration": "Reinscripció",
-      "reregistrationSeason": "Temporada"
+      "reregistrationSeason": "Preguntes de la temporada"
     }
   },
   "draftSeenByTestPlayers": "Versió en esborrany (només la veuen les jugadores de prova)",
@@ -817,5 +808,14 @@
     "removeTitle": "Vols treure aquesta signatura?",
     "removeBody": "Les signatures ja donades es conserven.",
     "defaultText": "Accepto"
+  },
+  "saveDialog": {
+    "title": "Desa els canvis",
+    "correction": "Correcció",
+    "correctionBody": "Arregla el text. Qui ja l'ha respost no ha de fer res.",
+    "newVersion": "Nova versió",
+    "newVersionBody": "Tothom l'haurà de tornar a respondre.",
+    "newVersionLater": "Encara no es pot tornar a preguntar a qui ja ha acabat l'Onboarding.",
+    "save": "Desa"
   }
 }

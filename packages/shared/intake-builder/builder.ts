@@ -353,7 +353,11 @@ export async function fetchIntakeCatalog(client: Client): Promise<IntakeCatalog>
 export async function fetchOnboardingFinishedCount(client: Client): Promise<number> {
   const { data, error } = await client.rpc('onboarding_finished_count');
   if (error) throw databaseError(error);
-  return z.number().int().min(0).parse(data ?? 0);
+  return z
+    .number()
+    .int()
+    .min(0)
+    .parse(data ?? 0);
 }
 
 // Where fields are asked ---------------------------------------------------------------------

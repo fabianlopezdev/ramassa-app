@@ -12,6 +12,7 @@ import {
   AUTHORIZATION_BUNDLED_TEXT_KEYS,
   AUTHORIZATION_TEXT_FIELDS,
   authorizationContentSchema,
+  authorizationScreenOrder,
   authorizationSigningSchemaFor,
   authorizationWording,
   buildSignPayload,
@@ -496,14 +497,35 @@ describe('staff', () => {
     });
     const published = clientReturning({ data: 2, error: null });
     expect(await publishAuthorizationDraft(published.client)).toBe(2);
-    expect(published.calls).toEqual([['publish_authorization_draft', {}]]);
+    expect(published.calls).toEqual([
+      ['publish_authorization_draft', { p_is_correction: false }],
+    ]);
   });
 
   test('a draft is published to a chosen season (RAPP-694)', async () => {
     const published = clientReturning({ data: 1, error: null });
     expect(await publishAuthorizationDraft(published.client, 'season-2027')).toBe(1);
     expect(published.calls).toEqual([
-      ['publish_authorization_draft', { p_season_id: 'season-2027' }],
+      ['publish_authorization_draft', { p_season_id: 'season-2027', p_is_correction: false }],
     ]);
+  });
+
+  test('a correction is published as one (RAPP-696)', async () => {
+    const published = clientReturning({ data: 2, error: null });
+    expect(await publishAuthorizationDraft(published.client, null, 'correction')).toBe(2);
+    expect(published.calls).toEqual([['publish_authorization_draft', { p_is_correction: true }]]);
+  });
+
+  test('the form walks its screens in the stored order, the signature last (RAPP-696)', () => {
+    expect(authorizationScreenOrder({})).toEqual(['document', 'health', 'consents']);
+    expect(authorizationScreenOrder({ screen_order: ['health', 'document'] })).toEqual([
+      'health',
+      'document',
+      'consents',
+    ]);
+    expect(
+      authorizationContentSchema.safeParse({ ...version1(), screen_order: ['health', 'health'] })
+        .success,
+    ).toBe(false);
   });
 });

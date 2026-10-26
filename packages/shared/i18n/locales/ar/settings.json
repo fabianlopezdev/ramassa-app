@@ -53,7 +53,6 @@
   "authorizationVersionsTitle": "النسخ المنشورة",
   "authorizationNoVersions": "لم تُنشر أي نسخة بعد.",
   "authorizationCurrentBadge": "سارية",
-  "authorizationEditorTitle": "نسخة جديدة",
   "authorizationDocumentTitle": "عنوان الوثيقة",
   "authorizationSections": "الأقسام",
   "authorizationSectionTitle": "عنوان القسم {{number}}",
@@ -65,9 +64,6 @@
   "authorizationAttachmentLabel": "اسم الوثيقة",
   "authorizationAttachmentUrl": "الرابط (https://)",
   "authorizationAddAttachment": "أضف وثيقة",
-  "authorizationPublishAction": "انشر النسخة",
-  "authorizationPublishConfirm": "بعد نشرها، يجب على كل لاعبة توقيعها من جديد عند فتح التطبيق.",
-  "authorizationPublishConfirmAction": "نعم، انشرها",
   "authorizationPublishFailed": "تعذّر النشر. حاول مرة أخرى.",
   "authorizationConsent": {
     "participation": "المشاركة وصحة البيانات",
@@ -276,5 +272,14 @@
     "hers": "هي وحدها من يمكنها تقديمه",
     "removeNamed": "أزل {{field}} من النموذج",
     "removeTitle": "هل تريد إزالة «{{field}}» من النموذج؟"
+  },
+  "saveDialog": {
+    "title": "حفظ التغييرات",
+    "correction": "تصحيح",
+    "correctionBody": "يصلح النص. من أجابت عليه لا تحتاج إلى فعل أي شيء.",
+    "newVersion": "نسخة جديدة",
+    "newVersionBody": "سيتعين على الجميع الإجابة عليه من جديد.",
+    "newVersionLater": "لا يمكن بعد أن نسأل من جديد من أنهين التسجيل.",
+    "save": "حفظ"
   }
 }

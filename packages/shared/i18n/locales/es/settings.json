@@ -335,7 +335,6 @@
   "authorizationPublishSeasonCurrent": "{{season}} (vigente)",
   "authorizationPublishSeason": "Temporada",
   "authorizationCurrentSeasonBadge": "Temporada vigente",
-  "authorizationEditorTitle": "Nueva versión",
   "authorizationDocumentTitle": "Título del documento",
   "authorizationSections": "Apartados",
   "authorizationSectionTitle": "Título del apartado {{number}}",
@@ -347,10 +346,6 @@
   "authorizationAttachmentLabel": "Nombre del documento",
   "authorizationAttachmentUrl": "Enlace (https://)",
   "authorizationAddAttachment": "Añadir un documento",
-  "authorizationPublishAction": "Publicar la versión",
-  "authorizationPublishConfirm": "Al publicarla, todas las jugadoras tendrán que firmarla de nuevo al abrir la app.",
-  "authorizationPublishConfirmFuture": "Las jugadoras la firmarán cuando {{season}} sea la temporada vigente.",
-  "authorizationPublishConfirmAction": "Sí, publicarla",
   "authorizationPublishFailed": "No se ha podido publicar. Vuelve a intentarlo.",
   "authorizationConsent": {
     "participation": "Participación y veracidad de los datos",
@@ -510,9 +505,6 @@
   "onboardingPage": {
     "title": "Onboarding"
   },
-  "legalPage": {
-    "terms": "Condiciones de la app"
-  },
   "appTerms": {
     "sectionTitle": "Términos de la app",
     "sectionIntro": "El texto que todas las jugadoras aceptan antes de entrar en la app, con la pantalla de introducción. Una versión publicada ya no cambia; cuando publicáis una nueva, cada jugadora la acepta al abrir la app.",
@@ -557,7 +549,6 @@
       "continue_label": "Botón principal",
       "decline_label": "Botón para salir"
     },
-    "termsTitleNote": "El título y la introducción de esta pantalla son los de las condiciones de la app: se cambian en Textos legales.",
     "detailNote": "Esta pantalla se abre según la respuesta anterior. Un título propio sustituye el título de cada caso.",
     "hideLocked": "Tiene una pregunta obligatoria, así que siempre se muestra.",
     "hideReregistrationNote": "Si la ocultas, la reinscripción de cada temporada tampoco hará su pregunta, para que la aplicación y la reinscripción pregunten siempre lo mismo.",
@@ -649,9 +640,9 @@
     "phoneStep": {
       "document": "Documento",
       "health": "Salud",
-      "consents": "Autorizaciones",
+      "consents": "Autorizaciones y firma",
       "reregistration": "Reinscripción",
-      "reregistrationSeason": "Temporada"
+      "reregistrationSeason": "Preguntas de la temporada"
     }
   },
   "draftSeenByTestPlayers": "Versión en borrador (solo la ven las jugadoras de prueba)",
@@ -817,5 +808,14 @@
     "removeTitle": "¿Quieres quitar esta firma?",
     "removeBody": "Las firmas ya dadas se conservan.",
     "defaultText": "Acepto"
+  },
+  "saveDialog": {
+    "title": "Guardar los cambios",
+    "correction": "Corrección",
+    "correctionBody": "Arregla el texto. Quien ya lo ha respondido no tiene que hacer nada.",
+    "newVersion": "Nueva versión",
+    "newVersionBody": "Todo el mundo tendrá que volver a responderlo.",
+    "newVersionLater": "Todavía no se puede volver a preguntar a quien ya ha terminado el Onboarding.",
+    "save": "Guardar"
   }
 }

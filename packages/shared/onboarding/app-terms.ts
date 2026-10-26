@@ -22,11 +22,11 @@
  */
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
+import type { SaveKind } from '../authorization/authorization';
 import { AppError, databaseErrorCode } from '../errors';
 import { resolveLocalizedText } from '../i18n/localized-content';
 import type { LanguageCode } from '../schemas/language';
 import type { Database, Json } from '../types/database';
-import type { SaveKind } from '../authorization/authorization';
 
 type Client = SupabaseClient<Database>;
 

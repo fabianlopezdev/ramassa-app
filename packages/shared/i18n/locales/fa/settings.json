@@ -53,7 +53,6 @@
   "authorizationVersionsTitle": "نسخه‌های منتشرشده",
   "authorizationNoVersions": "هنوز هیچ نسخه‌ای منتشر نشده است.",
   "authorizationCurrentBadge": "فعلی",
-  "authorizationEditorTitle": "نسخه جدید",
   "authorizationDocumentTitle": "عنوان سند",
   "authorizationSections": "بخش‌ها",
   "authorizationSectionTitle": "عنوان بخش {{number}}",
@@ -65,9 +64,6 @@
   "authorizationAttachmentLabel": "نام سند",
   "authorizationAttachmentUrl": "پیوند (https://)",
   "authorizationAddAttachment": "افزودن سند",
-  "authorizationPublishAction": "انتشار نسخه",
-  "authorizationPublishConfirm": "پس از انتشار، هر بازیکن باید هنگام باز کردن برنامه دوباره آن را امضا کند.",
-  "authorizationPublishConfirmAction": "بله، منتشر کن",
   "authorizationPublishFailed": "انتشار انجام نشد. دوباره تلاش کنید.",
   "authorizationConsent": {
     "participation": "مشارکت و درستی اطلاعات",
@@ -268,5 +264,14 @@
     "hers": "فقط خودش می‌تواند آن را بدهد",
     "removeNamed": "{{field}} را از فرم بردارید",
     "removeTitle": "«{{field}}» از فرم برداشته شود؟"
+  },
+  "saveDialog": {
+    "title": "ذخیره تغییرات",
+    "correction": "اصلاح",
+    "correctionBody": "متن را اصلاح می‌کند. کسی که پیش‌تر پاسخ داده لازم نیست کاری بکند.",
+    "newVersion": "نسخه جدید",
+    "newVersionBody": "همه باید دوباره به آن پاسخ دهند.",
+    "newVersionLater": "هنوز نمی‌توان دوباره از کسانی که ثبت‌نام را تمام کرده‌اند پرسید.",
+    "save": "ذخیره"
   }
 }
