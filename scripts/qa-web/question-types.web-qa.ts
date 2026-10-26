@@ -6,9 +6,8 @@
  *     spec places them and the other types on a new Ramassà screen (RAPP-656);
  *   - the design role fills the test player's staff questions of every type
  *     with valid samples from her page, and her page reads each one: a date
- *     and a number in words, a list joined, a consent with its time, a
- *     consent she signs as accepted and signed on its day with the drawing on
- *     request (RAPP-671), a file by its name with a private link;
+ *     and a number in words, a list joined, a yes or no, a file by its name
+ *     with a private link (RAPP-690 took the consent type away);
  *   - the test player opens the app in Arabic on the new screen, and an
  *     answer out of range is refused in her words before she continues.
  * What this spec creates is removed again; she is left as the seed had her.
@@ -118,8 +117,7 @@ test('an admin adds a number and a long list on the Fitxa, placed with the other
       from (values
         ('date', 'Arribada', 'personal', '{"min_age": 16}', 902),
         ('item_list', 'Idiomes', 'normal', '{"max_items": 3}', 903),
-        ('consent', 'Cotxe', 'normal', '{"text": {"ca": "Accepto que em portin"}}', 904),
-        ('consent', 'Signatura', 'personal', '{"text": {"ca": "Accepto i signo"}, "requires_signature": true}', 905),
+        ('yes_no', 'Cotxe', 'normal', '{}', 904),
         ('file_upload', 'Informe', 'sensitive', '{"accept": "document"}', 906),
         ('yes_no', 'Bici', 'normal', '{}', 907),
         ('phone', 'Telèfon', 'personal', '{}', 908),
@@ -165,7 +163,7 @@ test('the design role fills every type for the test player, and her page reads e
         join public.profile_fields f on f.id = a.question_id
         join public.field_placements p on p.field_id = f.id and p.surface = 'onboarding'
        where a.profile_id = ${HER} and p.screen_key = '${screenId()}'`),
-  ).toBe('number,search_choice,date,item_list,consent,consent,file_upload,yes_no,phone,email');
+  ).toBe('number,search_choice,date,item_list,yes_no,file_upload,yes_no,phone,email');
 
   // Her answers sit on their Fitxa fields (RAPP-653).
   const answers = page.getByTestId('participant-fitxa');
@@ -173,14 +171,7 @@ test('the design role fills every type for the test player, and her page reads e
   await expect(answer('Fills')).toHaveText('0');
   await expect(answer('Idiomes')).toHaveText('عنصر اختبار');
   await expect(answer('Arribada')).toHaveText(/^\d{1,2}\/\d{1,2}\/\d{4}$/);
-  await expect(answer('Cotxe')).toHaveText(/^(Yes|Sí) \(.+\)$/);
-  const signature = answer('Signatura');
-  await expect(signature).toContainText(
-    /Accepted, signed on \d{2}\/\d{2}\/\d{4}|Acceptada, signada el \d{2}\/\d{2}\/\d{4}/,
-  );
-  await signature.getByRole('button', { name: /Show the signature|Mostra la signatura/ }).click();
-  await expect(page.getByRole('dialog').locator('svg')).toBeVisible();
-  await page.keyboard.press('Escape');
+  await expect(answer('Cotxe')).toHaveText(/^(Yes|Sí)/);
   const file = answer('Informe');
   await expect(file).toContainText('prova.pdf');
   await expect(file.getByRole('button', { name: /Open the file|Obre el fitxer/ })).toBeVisible();

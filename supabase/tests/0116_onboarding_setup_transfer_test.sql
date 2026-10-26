@@ -101,16 +101,15 @@ values ('5eed0000-0000-4000-8044-0000000006b1', '5eed0000-0000-4000-8000-0000000
        ('5eed0000-0000-4000-8044-0000000006b2', '5eed0000-0000-4000-8000-000000000000',
         '{"ca": "Pantalla arxivada"}', null, 'identity', 3);
 update public.intake_screens set is_archived = true where id = '5eed0000-0000-4000-8044-0000000006b2';
--- Fifteen Fitxa fields, one of each type and a consent she signs, placed on that screen;
--- the first required there.
+-- Fifteen Fitxa fields, one of each type, placed on that screen; the first required there.
 create temp table every_type (n integer, question_type text, settings jsonb) on commit drop;
 insert into every_type values
     (1, 'short_text', '{}'), (2, 'long_text', '{}'), (3, 'yes_no_maybe', '{}'), (4, 'single_choice', '{}'),
     (5, 'multiple_choice', '{}'), (6, 'number', '{"integer": true, "min": 1, "max": 10}'),
     (7, 'date', '{"min_age": 16}'), (8, 'yes_no', '{}'), (9, 'phone', '{}'), (10, 'email', '{}'),
     (11, 'search_choice', '{}'), (12, 'item_list', '{"max_items": 5}'),
-    (13, 'consent', '{"text": {"ca": "Hi estic d''acord"}}'), (14, 'file_upload', '{"accept": "photo"}'),
-    (15, 'consent', '{"text": {"ca": "Signo"}, "requires_signature": true}');
+    (13, 'country', '{}'), (14, 'file_upload', '{"accept": "photo"}'),
+    (15, 'municipality', '{}');
 insert into public.profile_fields (id, org_id, section_id, kind, question_type, label, privacy, settings, sort_order)
 select ('5eed0000-0000-4000-8045-0000000006' || lpad(t.n::text, 2, '0'))::uuid,
        '5eed0000-0000-4000-8000-000000000000', s.id, 'custom',

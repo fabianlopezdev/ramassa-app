@@ -1788,6 +1788,137 @@ export type Database = {
           },
         ];
       };
+      form_blocks: {
+        Row: {
+          body: Json;
+          created_at: string;
+          id: string;
+          kind: string;
+          org_id: string;
+          screen_key: string | null;
+          sort_order: number;
+          surface: string;
+          updated_at: string;
+        };
+        Insert: {
+          body: Json;
+          created_at?: string;
+          id?: string;
+          kind?: string;
+          org_id: string;
+          screen_key?: string | null;
+          sort_order?: number;
+          surface: string;
+          updated_at?: string;
+        };
+        Update: {
+          body?: Json;
+          created_at?: string;
+          id?: string;
+          kind?: string;
+          org_id?: string;
+          screen_key?: string | null;
+          sort_order?: number;
+          surface?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'form_blocks_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      form_signatures: {
+        Row: {
+          block_id: string | null;
+          body: string;
+          id: string;
+          language: string;
+          org_id: string;
+          profile_id: string | null;
+          referral_id: string | null;
+          screen_key: string | null;
+          signed_at: string;
+          signer_kind: string;
+          signer_name: string;
+          signer_user_id: string | null;
+          strokes: Json;
+          surface: string;
+        };
+        Insert: {
+          block_id?: string | null;
+          body: string;
+          id?: string;
+          language: string;
+          org_id: string;
+          profile_id?: string | null;
+          referral_id?: string | null;
+          screen_key?: string | null;
+          signed_at?: string;
+          signer_kind: string;
+          signer_name: string;
+          signer_user_id?: string | null;
+          strokes: Json;
+          surface: string;
+        };
+        Update: {
+          block_id?: string | null;
+          body?: string;
+          id?: string;
+          language?: string;
+          org_id?: string;
+          profile_id?: string | null;
+          referral_id?: string | null;
+          screen_key?: string | null;
+          signed_at?: string;
+          signer_kind?: string;
+          signer_name?: string;
+          signer_user_id?: string | null;
+          strokes?: Json;
+          surface?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'form_signatures_block_id_fkey';
+            columns: ['block_id'];
+            isOneToOne: false;
+            referencedRelation: 'form_blocks';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'form_signatures_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'form_signatures_profile_id_fkey';
+            columns: ['profile_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'form_signatures_referral_id_fkey';
+            columns: ['referral_id'];
+            isOneToOne: false;
+            referencedRelation: 'entity_referrals';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'form_signatures_signer_user_id_fkey';
+            columns: ['signer_user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       forum_categories: {
         Row: {
           color: string;
@@ -6380,6 +6511,21 @@ export type Database = {
           nationalities: string[];
         }[];
       };
+      participant_form_signatures: {
+        Args: { p_profile_id: string };
+        Returns: {
+          block_id: string;
+          body: string;
+          id: string;
+          language: string;
+          screen_key: string;
+          signed_at: string;
+          signer_kind: string;
+          signer_name: string;
+          strokes: Json;
+          surface: string;
+        }[];
+      };
       participant_material: {
         Args: { p_participant_id: string };
         Returns: {
@@ -6619,6 +6765,7 @@ export type Database = {
         };
         Returns: string;
       };
+      remove_form_block: { Args: { p_id: string }; Returns: undefined };
       remove_placement: { Args: { p_placement_id: string }; Returns: undefined };
       remove_staff_member: {
         Args: { p_profile_id: string };
@@ -6694,6 +6841,15 @@ export type Database = {
         Returns: string;
       };
       save_entity_service: { Args: { p_payload: Json }; Returns: string };
+      save_form_block: {
+        Args: {
+          p_body: Json;
+          p_id: string;
+          p_screen_key: string;
+          p_surface: string;
+        };
+        Returns: string;
+      };
       save_forum_category: {
         Args: {
           p_category_id: string;
