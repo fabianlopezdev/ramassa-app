@@ -662,10 +662,6 @@
       "pending": "Pendent",
       "done": "Respost",
       "dismissed": "Descartat"
-    },
-    "markDone": "Marca com a fet",
-    "markedDone": "Formulari fet.",
-    "markFailed": "Falten respostes obligatòries.",
-    "byHer": "Ho omple ella"
+    }
   }
 }

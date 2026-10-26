@@ -818,24 +818,16 @@
     "name": "Nom",
     "filledBy": "Qui l'omple",
     "filler": {
-      "player": "La jugadora, al mòbil",
-      "team": "L'equip, a la seva fitxa",
-      "entity": "Una entitat, al portal"
+      "player": "Ella, a l'app",
+      "entity": "Una entitat, al web"
     },
     "entityUnavailable": "Encara no disponible",
-    "mandatory": "Com d'obligatori és",
     "level": {
       "optional": "Opcional",
       "required_to_use_app": "Obligatori per fer servir l'app",
       "required_from_date": "Obligatori a partir d'una data"
     },
     "deadline": "Data",
-    "appears": "Quan apareix",
-    "appearance": {
-      "once": "Una vegada",
-      "every_season": "Cada temporada",
-      "sent": "Quan l'equip l'envia"
-    },
     "create": "Crea",
     "cancel": "Cancel·la",
     "nameNeeded": "Posa-li un nom en català.",
@@ -852,17 +844,12 @@
       "live": "Actiu",
       "archived": "Arxivat"
     },
-    "publish": "Activa",
-    "published": "Actiu. S'ha demanat a {{count}} jugadores.",
+    "publish": "Publica",
+    "published": "Publicat. S'ha demanat a {{count}} jugadores.",
     "needsScreen": "Afegeix una pantalla abans.",
     "actionFailed": "No s'ha pogut fer. Torna-ho a provar.",
-    "send": "Envia",
-    "sendTitle": "Envia el formulari",
-    "sent": "Enviat a {{count}} jugadores.",
     "archive": "Arxiva",
     "unarchive": "Recupera",
-    "saved": "Desat.",
-    "save": "Desa",
     "herFieldOnly": "Ho respon ella",
     "screenOf": "Pas {{number}} de {{total}}",
     "column": {
@@ -881,6 +868,26 @@
     "noResponses": "Encara no s'ha demanat a ningú.",
     "playerNumber": "Jugadora {{number}}",
     "versionOf": "Versió {{version}}",
-    "newVersionSaved": "Desat. Qui l'havia respost el tornarà a respondre."
+    "whenToAnswer": "Quan s'ha de respondre",
+    "levelLine": {
+      "optional": "Ho pot respondre quan vulgui.",
+      "required_to_use_app": "No pot fer servir res de l'app fins que el respongui.",
+      "required_from_date": "Fa servir l'app amb normalitat fins a la data. A partir d'aquell dia, és obligatori."
+    },
+    "audience": "A qui va dirigit",
+    "audienceOption": {
+      "all": "Totes les jugadores",
+      "chosen": "Escollir jugadores"
+    },
+    "repeats": "Es repeteix cada temporada?",
+    "repeatsYes": "Sí",
+    "repeatsNo": "No",
+    "repeatsLine": "Sí: cada temporada et recordarem que el revisis. No arriba a les jugadores fins que algú publiqui la versió de la nova temporada.",
+    "saveDraft": "Desa l'esborrany",
+    "draftSaved": "Esborrany desat.",
+    "publishSeason": "Temporada",
+    "recipients": "Jugadores escollides",
+    "recipientCount": "{{count}} jugadores",
+    "recipientsSaved": "Esborrany desat: {{count}} jugadores."
   }
 }

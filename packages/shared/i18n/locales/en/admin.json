@@ -163,7 +163,8 @@
       "feedback": "New feedback from {{name}}",
       "forum_report": "Forum content reported",
       "gallery_report": "Gallery photo reported",
-      "field_created": "New field in Player data: {{name}}"
+      "field_created": "New field in Player data: {{name}}",
+      "form_renewal": "This form renews soon: {{name}}. Check it is ready for when you need to publish it."
     }
   }
 }

@@ -65,5 +65,6 @@
   "error": "No se pudo completar la acción de notificación.",
   "newGroup": "Nuevo grupo",
   "groupSelected_one": "1 seleccionada",
-  "groupSelected_other": "{{count}} seleccionadas"
+  "groupSelected_other": "{{count}} seleccionadas",
+  "audiencePlayers": "Jugadoras una por una"
 }

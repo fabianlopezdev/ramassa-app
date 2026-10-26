@@ -163,7 +163,8 @@
       "feedback": "Suggeriment nou de {{name}}",
       "forum_report": "Contingut del fòrum denunciat",
       "gallery_report": "Foto de la galeria denunciada",
-      "field_created": "Camp nou a Dades de les jugadores: {{name}}"
+      "field_created": "Camp nou a Dades de les jugadores: {{name}}",
+      "form_renewal": "Aquest formulari es renova aviat: {{name}}. Revisa que estigui a punt per quan l'hagis de publicar."
     }
   }
 }

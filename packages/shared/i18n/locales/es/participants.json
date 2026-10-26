@@ -662,10 +662,6 @@
       "pending": "Pendiente",
       "done": "Respondido",
       "dismissed": "Descartado"
-    },
-    "markDone": "Marcar como hecho",
-    "markedDone": "Formulario hecho.",
-    "markFailed": "Faltan respuestas obligatorias.",
-    "byHer": "Lo rellena ella"
+    }
   }
 }

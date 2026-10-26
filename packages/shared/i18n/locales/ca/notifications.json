@@ -65,5 +65,6 @@
   "error": "No s'ha pogut completar l'acció de notificació.",
   "newGroup": "Nou grup",
   "groupSelected_one": "1 seleccionada",
-  "groupSelected_other": "{{count}} seleccionades"
+  "groupSelected_other": "{{count}} seleccionades",
+  "audiencePlayers": "Jugadores una per una"
 }

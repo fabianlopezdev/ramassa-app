@@ -1,11 +1,11 @@
 /**
- * The forms the team creates (RAPP-700), as the catalog sends them.
+ * The forms the team creates (RAPP-700, RAPP-701), as the catalog sends them.
  *
- * A form has a name in five languages (Catalan required) and three choices:
- * who fills it (`player` on her phone, `team` on her page; `entity` is not
- * available yet), how mandatory it is (`optional`, `required_to_use_app`,
- * `required_from_date` with its deadline) and when it appears (`once`,
- * `every_season`, `sent`). Its screens hold placements of fields, consents and
+ * A form has a name in five languages (Catalan required) and its choices:
+ * who fills it (`player` on her phone; `entity` is not available yet), when
+ * it must be answered (`optional`, `required_to_use_app`, `required_from_date`
+ * with its deadline), who it is for (`all` players, including those who join
+ * later, or the players `chosen`) and whether it repeats every season. Its screens hold placements of fields, consents and
  * signature blocks, the way Onboarding's screens do; the catalog sends those
  * with the other placements, each naming its form.
  *
@@ -14,7 +14,8 @@
 import { z } from 'zod';
 import { anyLanguageTextSchema, type BuilderText } from './profile-layout';
 
-export const CUSTOM_FORM_FILLERS = ['player', 'team', 'entity'] as const;
+/** Who fills a form in (RAPP-701): her on the app; an entity form is not available yet. */
+export const CUSTOM_FORM_FILLERS = ['player', 'entity'] as const;
 export type CustomFormFiller = (typeof CUSTOM_FORM_FILLERS)[number];
 
 export const CUSTOM_FORM_MANDATORY_LEVELS = [
@@ -24,8 +25,9 @@ export const CUSTOM_FORM_MANDATORY_LEVELS = [
 ] as const;
 export type CustomFormMandatory = (typeof CUSTOM_FORM_MANDATORY_LEVELS)[number];
 
-export const CUSTOM_FORM_APPEARANCES = ['once', 'every_season', 'sent'] as const;
-export type CustomFormAppears = (typeof CUSTOM_FORM_APPEARANCES)[number];
+/** Who a form is for (RAPP-701): every player, including those who join later, or the players picked. */
+export const CUSTOM_FORM_AUDIENCES = ['all', 'chosen'] as const;
+export type CustomFormAudience = (typeof CUSTOM_FORM_AUDIENCES)[number];
 
 /** One screen of a form, in the order she walks them. */
 export interface CustomFormScreen {
@@ -35,6 +37,18 @@ export interface CustomFormScreen {
   readonly sortOrder: number;
 }
 
+/** A Publica of a form (RAPP-701): its number, its season when it repeats, and whether it corrected. */
+export interface CustomFormVersion {
+  readonly version: number;
+  readonly seasonId: string | null;
+  readonly isCorrection: boolean;
+  readonly publishedAt: string;
+}
+
+/**
+ * A form. The team reads its draft; her phone reads the version published
+ * for now (name, when to answer, screens), so a draft never reaches her.
+ */
 export interface CustomForm {
   readonly id: string;
   readonly name: BuilderText;
@@ -42,11 +56,17 @@ export interface CustomForm {
   readonly mandatory: CustomFormMandatory;
   /** The date from which a form required from a date keeps her from the app (YYYY-MM-DD). */
   readonly deadline: string | null;
-  readonly appears: CustomFormAppears;
+  readonly audience: CustomFormAudience;
+  readonly repeatsEachSeason: boolean;
+  /** How many players were picked, for the team; null on her phone. */
+  readonly recipientCount: number | null;
+  /** The latest published version's number. */
   readonly version: number;
-  /** When it started asking; null while staff still build it. */
+  /** When it was first published; null while it is a draft only. */
   readonly publishedAt: string | null;
   readonly isArchived: boolean;
+  /** Its published versions, newest first, for the people who design it. */
+  readonly versions: readonly CustomFormVersion[];
   readonly screens: readonly CustomFormScreen[];
 }
 
@@ -60,13 +80,30 @@ const screenSchema = z.object({
 const formSchema = z.object({
   id: z.uuid(),
   name: anyLanguageTextSchema,
-  filled_by: z.enum(CUSTOM_FORM_FILLERS),
+  // A form the team filled in (RAPP-700) is hers to fill in since RAPP-701.
+  filled_by: z
+    .enum(['player', 'team', 'entity'])
+    .transform((value) => (value === 'team' ? 'player' : value)),
   mandatory: z.enum(CUSTOM_FORM_MANDATORY_LEVELS),
   deadline: z.string().nullable(),
-  appears: z.enum(CUSTOM_FORM_APPEARANCES),
+  // An older server sends `appears` only (RAPP-700).
+  appears: z.enum(['once', 'every_season', 'sent']).optional(),
+  audience: z.enum(CUSTOM_FORM_AUDIENCES).optional(),
+  repeats_each_season: z.boolean().optional(),
+  recipient_count: z.number().int().optional(),
   version: z.number().int().min(1),
   published_at: z.string().nullable(),
   is_archived: z.boolean(),
+  versions: z
+    .array(
+      z.object({
+        version: z.number().int(),
+        season_id: z.uuid().nullable(),
+        is_correction: z.boolean(),
+        published_at: z.string(),
+      }),
+    )
+    .optional(),
   screens: z.array(screenSchema),
 });
 
@@ -84,10 +121,18 @@ export function parseCustomForms(raw: unknown): readonly CustomForm[] {
         filledBy: form.filled_by,
         mandatory: form.mandatory,
         deadline: form.deadline,
-        appears: form.appears,
+        audience: form.audience ?? (form.appears === 'sent' ? 'chosen' : 'all'),
+        repeatsEachSeason: form.repeats_each_season ?? form.appears === 'every_season',
+        recipientCount: form.recipient_count ?? null,
         version: form.version,
         publishedAt: form.published_at,
         isArchived: form.is_archived,
+        versions: (form.versions ?? []).map((version) => ({
+          version: version.version,
+          seasonId: version.season_id,
+          isCorrection: version.is_correction,
+          publishedAt: version.published_at,
+        })),
         screens: [...form.screens]
           .sort((a, b) => a.sort_order - b.sort_order)
           .map((screen) => ({

@@ -662,10 +662,6 @@
       "pending": "Pending",
       "done": "Answered",
       "dismissed": "Dismissed"
-    },
-    "markDone": "Mark as done",
-    "markedDone": "Form done.",
-    "markFailed": "Required answers are missing.",
-    "byHer": "She fills it in"
+    }
   }
 }

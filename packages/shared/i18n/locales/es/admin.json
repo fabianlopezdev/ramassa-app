@@ -163,7 +163,8 @@
       "feedback": "Sugerencia nueva de {{name}}",
       "forum_report": "Contenido del foro denunciado",
       "gallery_report": "Foto de la galería denunciada",
-      "field_created": "Campo nuevo en Datos de las jugadoras: {{name}}"
+      "field_created": "Campo nuevo en Datos de las jugadoras: {{name}}",
+      "form_renewal": "Este formulario se renueva pronto: {{name}}. Revisa que esté listo para cuando lo tengas que publicar."
     }
   }
 }

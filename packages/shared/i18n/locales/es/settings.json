@@ -818,24 +818,16 @@
     "name": "Nombre",
     "filledBy": "Quién lo rellena",
     "filler": {
-      "player": "La jugadora, en el móvil",
-      "team": "El equipo, en su ficha",
-      "entity": "Una entidad, en el portal"
+      "player": "Ella, en la app",
+      "entity": "Una entidad, en la web"
     },
     "entityUnavailable": "Todavía no disponible",
-    "mandatory": "Cuán obligatorio es",
     "level": {
       "optional": "Opcional",
       "required_to_use_app": "Obligatorio para usar la app",
       "required_from_date": "Obligatorio a partir de una fecha"
     },
     "deadline": "Fecha",
-    "appears": "Cuándo aparece",
-    "appearance": {
-      "once": "Una vez",
-      "every_season": "Cada temporada",
-      "sent": "Cuando el equipo lo envía"
-    },
     "create": "Crear",
     "cancel": "Cancelar",
     "nameNeeded": "Ponle un nombre en catalán.",
@@ -852,17 +844,12 @@
       "live": "Activo",
       "archived": "Archivado"
     },
-    "publish": "Activar",
-    "published": "Activo. Se ha pedido a {{count}} jugadoras.",
+    "publish": "Publicar",
+    "published": "Publicado. Se ha pedido a {{count}} jugadoras.",
     "needsScreen": "Añade una pantalla antes.",
     "actionFailed": "No se ha podido hacer. Vuelve a intentarlo.",
-    "send": "Enviar",
-    "sendTitle": "Enviar el formulario",
-    "sent": "Enviado a {{count}} jugadoras.",
     "archive": "Archivar",
     "unarchive": "Recuperar",
-    "saved": "Guardado.",
-    "save": "Guardar",
     "herFieldOnly": "Lo responde ella",
     "screenOf": "Paso {{number}} de {{total}}",
     "column": {
@@ -881,6 +868,26 @@
     "noResponses": "Todavía no se ha pedido a nadie.",
     "playerNumber": "Jugadora {{number}}",
     "versionOf": "Versión {{version}}",
-    "newVersionSaved": "Guardado. Quien lo había respondido lo volverá a responder."
+    "whenToAnswer": "Cuándo hay que responderlo",
+    "levelLine": {
+      "optional": "Puede responderlo cuando quiera.",
+      "required_to_use_app": "No puede usar nada de la app hasta que lo responda.",
+      "required_from_date": "Usa la app con normalidad hasta la fecha. A partir de ese día, es obligatorio."
+    },
+    "audience": "A quién va dirigido",
+    "audienceOption": {
+      "all": "Todas las jugadoras",
+      "chosen": "Elegir jugadoras"
+    },
+    "repeats": "¿Se repite cada temporada?",
+    "repeatsYes": "Sí",
+    "repeatsNo": "No",
+    "repeatsLine": "Sí: cada temporada te recordaremos que lo revises. No llega a las jugadoras hasta que alguien publique la versión de la nueva temporada.",
+    "saveDraft": "Guardar el borrador",
+    "draftSaved": "Borrador guardado.",
+    "publishSeason": "Temporada",
+    "recipients": "Jugadoras elegidas",
+    "recipientCount": "{{count}} jugadoras",
+    "recipientsSaved": "Borrador guardado: {{count}} jugadoras."
   }
 }

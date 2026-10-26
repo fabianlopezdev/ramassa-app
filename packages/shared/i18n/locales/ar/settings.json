@@ -284,24 +284,16 @@
     "name": "الاسم",
     "filledBy": "من يملؤه",
     "filler": {
-      "player": "اللاعبة، على هاتفها",
-      "team": "الفريق، في صفحتها",
-      "entity": "جهة، في البوابة"
+      "player": "هي، في التطبيق",
+      "entity": "جهة، على الويب"
     },
     "entityUnavailable": "غير متاح بعد",
-    "mandatory": "مدى إلزاميته",
     "level": {
       "optional": "اختياري",
       "required_to_use_app": "إلزامي لاستخدام التطبيق",
       "required_from_date": "إلزامي ابتداءً من تاريخ"
     },
     "deadline": "التاريخ",
-    "appears": "متى يظهر",
-    "appearance": {
-      "once": "مرة واحدة",
-      "every_season": "كل موسم",
-      "sent": "عندما يرسله الفريق"
-    },
     "create": "إنشاء",
     "cancel": "إلغاء",
     "nameNeeded": "أعطه اسمًا بالكتالونية.",
@@ -318,17 +310,12 @@
       "live": "نشط",
       "archived": "مؤرشف"
     },
-    "publish": "تفعيل",
-    "published": "نشط. طُلب من {{count}} لاعبات.",
+    "publish": "نشر",
+    "published": "تم النشر. طُلب من {{count}} لاعبات.",
     "needsScreen": "أضف شاشة أولًا.",
     "actionFailed": "لم ينجح ذلك. حاول مرة أخرى.",
-    "send": "إرسال",
-    "sendTitle": "أرسل النموذج",
-    "sent": "أُرسل إلى {{count}} لاعبات.",
     "archive": "أرشفة",
     "unarchive": "استعادة",
-    "saved": "تم الحفظ.",
-    "save": "حفظ",
     "herFieldOnly": "هي من تجيب عنه",
     "screenOf": "الخطوة {{number}} من {{total}}",
     "column": {
@@ -347,6 +334,26 @@
     "noResponses": "لم يُطلب من أحد بعد.",
     "playerNumber": "اللاعبة {{number}}",
     "versionOf": "النسخة {{version}}",
-    "newVersionSaved": "تم الحفظ. من أجابت عليه ستجيب عليه من جديد."
+    "whenToAnswer": "متى يجب الإجابة عليه",
+    "levelLine": {
+      "optional": "يمكنها الإجابة عليه متى شاءت.",
+      "required_to_use_app": "لا يمكنها استخدام أي شيء في التطبيق حتى تجيب عليه.",
+      "required_from_date": "تستخدم التطبيق كالمعتاد حتى التاريخ. ابتداءً من ذلك اليوم يصبح إلزاميًا."
+    },
+    "audience": "لمن هو موجّه",
+    "audienceOption": {
+      "all": "جميع اللاعبات",
+      "chosen": "اختيار لاعبات"
+    },
+    "repeats": "هل يتكرر كل موسم؟",
+    "repeatsYes": "نعم",
+    "repeatsNo": "لا",
+    "repeatsLine": "نعم: سنذكّرك كل موسم بمراجعته. لا يصل إلى اللاعبات حتى ينشر أحدهم نسخة الموسم الجديد.",
+    "saveDraft": "حفظ المسودة",
+    "draftSaved": "تم حفظ المسودة.",
+    "publishSeason": "الموسم",
+    "recipients": "اللاعبات المختارات",
+    "recipientCount": "{{count}} لاعبات",
+    "recipientsSaved": "تم حفظ المسودة: {{count}} لاعبات."
   }
 }

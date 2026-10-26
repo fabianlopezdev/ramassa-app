@@ -818,24 +818,16 @@
     "name": "Name",
     "filledBy": "Who fills it in",
     "filler": {
-      "player": "The player, on her phone",
-      "team": "The team, on her page",
-      "entity": "An entity, on the portal"
+      "player": "Her, on the app",
+      "entity": "An entity, on the web"
     },
     "entityUnavailable": "Not available yet",
-    "mandatory": "How mandatory it is",
     "level": {
       "optional": "Optional",
       "required_to_use_app": "Required to use the app",
       "required_from_date": "Required from a date"
     },
     "deadline": "Date",
-    "appears": "When it appears",
-    "appearance": {
-      "once": "Once",
-      "every_season": "Every season",
-      "sent": "When the team sends it"
-    },
     "create": "Create",
     "cancel": "Cancel",
     "nameNeeded": "Give it a name in Catalan.",
@@ -852,17 +844,12 @@
       "live": "Live",
       "archived": "Archived"
     },
-    "publish": "Start",
-    "published": "Live. {{count}} players were asked.",
+    "publish": "Publish",
+    "published": "Published. {{count}} players were asked.",
     "needsScreen": "Add a screen first.",
     "actionFailed": "That did not work. Try again.",
-    "send": "Send",
-    "sendTitle": "Send the form",
-    "sent": "Sent to {{count}} players.",
     "archive": "Archive",
     "unarchive": "Restore",
-    "saved": "Saved.",
-    "save": "Save",
     "herFieldOnly": "She answers it",
     "screenOf": "Step {{number}} of {{total}}",
     "column": {
@@ -881,6 +868,26 @@
     "noResponses": "Nobody has been asked yet.",
     "playerNumber": "Player {{number}}",
     "versionOf": "Version {{version}}",
-    "newVersionSaved": "Saved. Whoever answered it will answer it again."
+    "whenToAnswer": "When it must be answered",
+    "levelLine": {
+      "optional": "She can answer it whenever she wants.",
+      "required_to_use_app": "She cannot use anything in the app until she answers it.",
+      "required_from_date": "She uses the app as usual until the date. From that day on, it is required."
+    },
+    "audience": "Who it is for",
+    "audienceOption": {
+      "all": "All players",
+      "chosen": "Choose players"
+    },
+    "repeats": "Does it repeat every season?",
+    "repeatsYes": "Yes",
+    "repeatsNo": "No",
+    "repeatsLine": "Yes: every season we will remind you to review it. It does not reach the players until someone publishes the new season’s version.",
+    "saveDraft": "Save draft",
+    "draftSaved": "Draft saved.",
+    "publishSeason": "Season",
+    "recipients": "Chosen players",
+    "recipientCount": "{{count}} players",
+    "recipientsSaved": "Draft saved: {{count}} players."
   }
 }

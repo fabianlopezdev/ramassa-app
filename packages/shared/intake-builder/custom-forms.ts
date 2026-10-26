@@ -4,15 +4,16 @@
  *
  *   - Design: create a form with its name and three choices, give it screens,
  *     place fields, consents and signature blocks on them with the shared
- *     placement calls (surface `custom_form`, the screen's id), then start it
- *     (`publishCustomForm`) or send it to a group (`sendCustomForm`). Desa's
- *     Nova versió (`newCustomFormVersion`) asks everyone again.
+ *     placement calls (surface `custom_form`, the screen's id), then publish it.
  *   - Her phone: her pending forms (`fetchMyCustomForms`), the ones that keep
  *     her from the app first; answering one (`completeCustomForm`) sends her
  *     answers by field, her signatures and her consent ticks; an optional one
  *     can be dismissed.
  *   - The team: who answered and who is pending (`fetchCustomFormResponses`),
- *     her forms on her page, and closing a team form once its answers are in.
+ *     and her forms on her page.
+ *   - Drafts (RAPP-701): every save is a draft; `publishCustomForm` makes it a
+ *     version (Correcció or Nova versió, of a season when it repeats) and asks
+ *     its audience (`setCustomFormRecipients` picks the players).
  *
  * Docs: https://zod.dev/api
  */
@@ -30,7 +31,7 @@ import {
 import { consentsOn, type PlacedConsent } from './consents';
 import type {
   CustomForm,
-  CustomFormAppears,
+  CustomFormAudience,
   CustomFormFiller,
   CustomFormMandatory,
 } from './custom-form-model';
@@ -103,14 +104,15 @@ export function isBlockingForm(
 
 // Designing a form ------------------------------------------------------------------------------------
 
-/** The name and the three choices of a form. */
+/** The name and the choices of a form (RAPP-701). */
 export interface CustomFormChoices {
   readonly name: BuilderText;
   readonly filledBy: CustomFormFiller;
   readonly mandatory: CustomFormMandatory;
   /** YYYY-MM-DD; only with `required_from_date`. */
   readonly deadline: string | null;
-  readonly appears: CustomFormAppears;
+  readonly audience: CustomFormAudience;
+  readonly repeatsEachSeason: boolean;
 }
 
 function choicesArgs(choices: CustomFormChoices) {
@@ -120,7 +122,8 @@ function choicesArgs(choices: CustomFormChoices) {
     p_mandatory: choices.mandatory,
     // The database takes a date only with its level.
     p_deadline: (choices.mandatory === 'required_from_date' ? choices.deadline : null) as string,
-    p_appears: choices.appears,
+    p_audience: choices.audience,
+    p_repeats_each_season: choices.repeatsEachSeason,
   };
 }
 
@@ -151,19 +154,21 @@ export async function archiveCustomForm(
   if (error) throw databaseError(error);
 }
 
-/** Starts a form that appears once or every season; returns how many players were asked. */
-export async function publishCustomForm(client: Client, id: string): Promise<number> {
-  const { data, error } = await client.rpc('publish_custom_form', { p_id: id });
-  if (error) throw databaseError(error);
-  return z
-    .number()
-    .int()
-    .parse(data ?? 0);
-}
-
-/** Desa's Nova versió: everyone who answered is asked again; returns how many. */
-export async function newCustomFormVersion(client: Client, id: string): Promise<number> {
-  const { data, error } = await client.rpc('new_custom_form_version', { p_id: id });
+/**
+ * Publica (RAPP-701): the draft becomes a version, a Correcció or a Nova
+ * versió, of a season when the form repeats. Returns how many players were
+ * asked now.
+ */
+export async function publishCustomForm(
+  client: Client,
+  id: string,
+  publish: { readonly isCorrection: boolean; readonly seasonId: string | null },
+): Promise<number> {
+  const { data, error } = await client.rpc('publish_custom_form', {
+    p_id: id,
+    p_is_correction: publish.isCorrection,
+    p_season_id: publish.seasonId as string,
+  });
   if (error) throw databaseError(error);
   return z
     .number()
@@ -207,25 +212,31 @@ export async function reorderCustomFormScreens(
   if (error) throw databaseError(error);
 }
 
-/** Envia: asks the players of a notification audience; returns how many were asked. */
-export async function sendCustomForm(
+/** The players a form is for: picked one by one, or by a notification audience (a group...). */
+export type CustomFormRecipients =
+  NotificationAudience | { readonly kind: 'players'; readonly participantIds: readonly string[] };
+
+/** Picks the players a form is for; the pick replaces the list. Returns how many are on it. */
+export async function setCustomFormRecipients(
   client: Client,
   formId: string,
-  audience: NotificationAudience,
+  recipients: CustomFormRecipients,
 ): Promise<number> {
   const config =
-    audience.kind === 'all'
-      ? {}
-      : audience.kind === 'interest'
-        ? { service_category_id: audience.serviceCategoryId }
-        : audience.kind === 'signup'
-          ? { event_id: audience.eventId }
-          : audience.kind === 'entity'
-            ? { entity_name: audience.entityName }
-            : { custom_group_id: audience.customGroupId };
-  const { data, error } = await client.rpc('send_custom_form', {
+    recipients.kind === 'players'
+      ? { participant_ids: [...recipients.participantIds] }
+      : recipients.kind === 'all'
+        ? {}
+        : recipients.kind === 'interest'
+          ? { service_category_id: recipients.serviceCategoryId }
+          : recipients.kind === 'signup'
+            ? { event_id: recipients.eventId }
+            : recipients.kind === 'entity'
+              ? { entity_name: recipients.entityName }
+              : { custom_group_id: recipients.customGroupId };
+  const { data, error } = await client.rpc('set_custom_form_recipients', {
     p_form_id: formId,
-    p_audience_kind: audience.kind,
+    p_audience_kind: recipients.kind,
     p_audience_config: config,
   });
   if (error) throw databaseError(error);
@@ -386,7 +397,9 @@ const participantFormSchema = z.object({
   response_id: z.uuid(),
   form_id: z.uuid(),
   name: anyLanguageTextSchema,
-  filled_by: z.enum(['player', 'team', 'entity']),
+  filled_by: z
+    .enum(['player', 'team', 'entity'])
+    .transform((value) => (value === 'team' ? 'player' : value)),
   status: z.enum(CUSTOM_FORM_RESPONSE_STATUSES),
   version: z.number().int(),
   mandatory: z.enum(['optional', 'required_to_use_app', 'required_from_date']),
@@ -418,15 +431,4 @@ export async function fetchParticipantCustomForms(
       askedAt: row.asked_at,
       answeredAt: row.answered_at,
     }));
-}
-
-/** The team closes a team form on her page once its required answers are in. */
-export async function completeParticipantCustomForm(
-  client: Client,
-  responseId: string,
-): Promise<void> {
-  const { error } = await client.rpc('complete_participant_custom_form', {
-    p_response_id: responseId,
-  });
-  if (error) throw databaseError(error);
 }
