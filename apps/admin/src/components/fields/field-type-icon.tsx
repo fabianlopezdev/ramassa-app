@@ -18,7 +18,6 @@ import {
   Mail,
   MapPin,
   Paperclip,
-  PenLine,
   Phone,
   Search,
   ToggleLeft,
@@ -43,7 +42,6 @@ const TYPE_ICONS: Readonly<Record<CustomQuestionType, LucideIcon>> = {
   item_list: List,
   consent: FileCheck,
   file_upload: Paperclip,
-  signature: PenLine,
   country: Globe,
   municipality: MapPin,
 };

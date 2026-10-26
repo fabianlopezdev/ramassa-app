@@ -154,6 +154,7 @@ export function ParticipantDetail({
           no: t('settings:questions.answers.no'),
           maybe: t('settings:questions.answers.maybe'),
           archived: t('settings:questions.archivedOption'),
+          signedOn: (date: string) => t('settings:questions.answers.signedOn', { date }),
         },
       ),
     [intakeCatalog, customAnswers, locale, t],

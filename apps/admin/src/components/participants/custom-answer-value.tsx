@@ -1,9 +1,9 @@
 /**
  * Her answer to a Ramassà field in words (RAPP-307, RAPP-610): an option's
  * label in the reader's language, a date and a number in her locale, a
- * consent with its time. A signature reads "signed" and opens the drawing; a
- * file reads by its name with a private link, when the deployment has the
- * media service.
+ * consent with its time. A consent she signed reads "accepted, signed on" its
+ * day and opens the drawing (RAPP-671); a file reads by its name with a private
+ * link, when the deployment has the media service.
  */
 
 import { SignatureDrawing } from '@/components/participants/participant-authorization-panel';
@@ -20,6 +20,7 @@ import { useTranslation } from 'react-i18next';
 import type { SignatureStrokes } from '@ramassa/shared/equipment';
 import {
   answerText,
+  consentSignature,
   textIn,
   type CustomAnswerValue,
   type CustomQuestion,
@@ -35,7 +36,7 @@ export function useAnswerWords() {
     no: t('settings:questions.answers.no'),
     maybe: t('settings:questions.answers.maybe'),
     archived: t('settings:questions.archivedOption'),
-    signed: t('settings:questions.answers.signed'),
+    signedOn: (date: string) => t('settings:questions.answers.signedOn', { date }),
   };
 }
 
@@ -54,8 +55,15 @@ export function CustomAnswerValueView({
   readonly onOpenFile?: (objectKey: string) => Promise<void>;
 }) {
   const words = useAnswerWords();
-  if (question.type === 'signature') {
-    return <SignatureAnswer strokes={value} label={textIn(question.label, language)} />;
+  const signature = question.type === 'consent' ? consentSignature(value) : null;
+  if (signature !== null) {
+    return (
+      <SignatureAnswer
+        text={answerText(question, value, language, words)}
+        strokes={signature}
+        label={textIn(question.label, language)}
+      />
+    );
   }
   if (question.type === 'file_upload' && typeof value === 'object' && !Array.isArray(value)) {
     return <FileAnswerLink file={value as FileAnswer} onOpenFile={onOpenFile} />;
@@ -64,20 +72,22 @@ export function CustomAnswerValueView({
 }
 
 /**
- * A signature reads "signed"; staff who may read the answer open the drawing
- * in a dialog, so the row keeps its height.
+ * A signed consent reads "accepted, signed on" its day; staff who may read the
+ * answer open the drawing in a dialog, so the row keeps its height.
  */
 function SignatureAnswer({
+  text,
   strokes,
   label,
 }: {
-  readonly strokes: unknown;
+  readonly text: string;
+  readonly strokes: SignatureStrokes;
   readonly label: string;
 }) {
   const { t } = useTranslation('settings');
   return (
     <span className="inline-flex items-center gap-2">
-      <span>{t('questions.answers.signed')}</span>
+      <span>{text}</span>
       <Dialog>
         <DialogTrigger asChild>
           <Button type="button" size="xs" variant="outline">
@@ -86,8 +96,8 @@ function SignatureAnswer({
         </DialogTrigger>
         <DialogContent className="max-w-lg">
           <DialogTitle>{label}</DialogTitle>
-          <DialogDescription className="sr-only">{t('questions.answers.signed')}</DialogDescription>
-          <SignatureDrawing strokes={strokes as SignatureStrokes} label={label} />
+          <DialogDescription className="sr-only">{text}</DialogDescription>
+          <SignatureDrawing strokes={strokes} label={label} />
         </DialogContent>
       </Dialog>
     </span>

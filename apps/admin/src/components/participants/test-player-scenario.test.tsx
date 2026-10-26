@@ -37,7 +37,11 @@ const SCREEN = '5eed0000-0000-4000-8044-0000000000b1';
 const SECTION = '5eed0000-0000-4000-8047-0000000000b1';
 const fields: readonly (readonly [string, string, unknown])[] = [
   ['5eed0000-0000-4000-8045-0000000000b1', 'number', { integer: true, min: 3 }],
-  ['5eed0000-0000-4000-8045-0000000000b2', 'signature', {}],
+  [
+    '5eed0000-0000-4000-8045-0000000000b2',
+    'consent',
+    { text: { ca: 'Signo' }, requires_signature: true },
+  ],
   ['5eed0000-0000-4000-8045-0000000000b3', 'file_upload', { accept: 'photo' }],
   ['5eed0000-0000-4000-8045-0000000000b4', 'consent', { text: { ca: 'Accepto' } }],
 ];

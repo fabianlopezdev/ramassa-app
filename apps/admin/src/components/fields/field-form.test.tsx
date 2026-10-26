@@ -203,6 +203,17 @@ test('a consent sends its own text', async () => {
   expect(draft.settings).toEqual({ text: { ca: 'Accepto que em portin amb cotxe' } });
 });
 
+test('a consent can ask for her signature, and the preview draws the box (RAPP-671)', async () => {
+  const { view, onSave } = newField('consent', { withPreview: true });
+  inputOf(view, 'question-label.ca').value = 'Drets d’imatge';
+  inputOf(view, 'setting-consent-text.ca').value = 'Accepto';
+  expect(view.queryByTestId('question-preview-signature')).toBeNull();
+  fireEvent.click(view.getByTestId('setting-requires-signature'));
+  await waitFor(() => expect(view.getByTestId('question-preview-signature')).toBeTruthy());
+  const draft = await savedDraft(view, onSave);
+  expect(draft.settings).toEqual({ text: { ca: 'Accepto' }, requires_signature: true });
+});
+
 test('a long searchable list takes options pasted one per line', async () => {
   const { view, onSave } = newField('search_choice');
   inputOf(view, 'question-label.ca').value = 'Barri';

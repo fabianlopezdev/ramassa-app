@@ -95,7 +95,7 @@ export function readCustomAnswersOf(
 ): Record<string, CustomAnswerValue | null> {
   const answers: Record<string, CustomAnswerValue | null> = {};
   for (const question of questions) {
-    if (!isStaffWritable(question.type)) continue;
+    if (!isStaffWritable(question)) continue;
     answers[question.id] = readOne(fields, fieldName(prefix, question), question);
   }
   return answers;
@@ -154,7 +154,7 @@ export function CustomAnswerInput({
       </span>
     );
 
-  if (!isStaffWritable(question.type)) {
+  if (!isStaffWritable(question)) {
     return (
       <p className="text-start text-sm text-muted-foreground" data-testid={`${name}-hers`}>
         {label}: {t('questions.answers.hersOnly')}

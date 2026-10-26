@@ -10,6 +10,7 @@
  */
 
 import { textFromForm } from '@/components/fields/language-fields';
+import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -21,6 +22,7 @@ import {
 } from '@ramassa/shared/i18n/languages';
 import { getMunicipalityOptions } from '@ramassa/shared/i18n/municipalities';
 import {
+  asksForSignature,
   consentSettings,
   dateSettings,
   fileSettings,
@@ -65,7 +67,11 @@ export function readQuestionSettings(fields: FormData, type: CustomQuestionType)
     case 'item_list':
       return { max_items: numberFrom(fields, 'setting-max-items') ?? LIST_DEFAULT_MAX_ITEMS };
     case 'consent':
-      return { text: textFromForm(fields, 'setting-consent-text') };
+      // The switch is left out when off, so a plain consent keeps its settings as before.
+      return {
+        text: textFromForm(fields, 'setting-consent-text'),
+        ...(fields.get('setting-requires-signature') === 'on' ? { requires_signature: true } : {}),
+      };
     case 'file_upload':
       return { accept: fields.get('setting-accept') === 'photo' ? 'photo' : 'document' };
     default:
@@ -223,7 +229,20 @@ export function QuestionSettingsFields({
         </fieldset>
       );
     case 'consent':
-      return consentTextField;
+      return (
+        <>
+          {consentTextField}
+          {/* She ticks, then signs under the tick (RAPP-671). */}
+          <label className="flex items-center gap-2 text-sm font-medium">
+            <Switch
+              name="setting-requires-signature"
+              defaultChecked={consentSettings(current).requires_signature === true}
+              data-testid="setting-requires-signature"
+            />
+            <span>{t('questions.settings.requiresSignature')}</span>
+          </label>
+        </>
+      );
     case 'file_upload':
       return (
         <fieldset className="flex flex-col gap-2 rounded-lg border p-3" data-testid="settings-file">
@@ -254,12 +273,6 @@ export function QuestionSettingsFields({
             </p>
           )}
         </fieldset>
-      );
-    case 'signature':
-      return (
-        <p className="text-start text-xs text-muted-foreground" data-testid="settings-signature">
-          {t('questions.settings.signatureNote')}
-        </p>
       );
     case 'search_choice':
       return (
@@ -353,8 +366,8 @@ function ChoiceMark({
  * it too; there a searchable list shows its box without the option count.
  *
  * `isExample` draws it answered, with sample words in that language, for the
- * type picker (RAPP-646): a filled box, chosen options, an added item, a
- * ticked consent and a drawn signature, so each type reads apart at a glance.
+ * type picker (RAPP-646): a filled box, chosen options, an added item and a
+ * ticked consent, so each type reads apart at a glance.
  */
 export function QuestionControl({
   draft,
@@ -515,16 +528,29 @@ export function QuestionControl({
       );
     case 'consent':
       return (
-        <label className="flex items-center gap-2 rounded-md border p-2 text-sm">
-          {isExample ? (
-            <ChoiceMark isMultiple isChosen />
-          ) : (
-            <span aria-hidden className="h-4 w-4 rounded border-2 border-primary" />
-          )}
-          <span>
-            {isExample ? sample('consent') : textIn(consentSettings(draft.settings).text, language)}
-          </span>
-        </label>
+        <div className="flex flex-col gap-2">
+          <label className="flex items-center gap-2 rounded-md border p-2 text-sm">
+            {isExample ? (
+              <ChoiceMark isMultiple isChosen />
+            ) : (
+              <span aria-hidden className="h-4 w-4 rounded border-2 border-primary" />
+            )}
+            <span>
+              {isExample
+                ? sample('consent')
+                : textIn(consentSettings(draft.settings).text, language)}
+            </span>
+          </label>
+          {/* With the switch on she signs under the tick (RAPP-671). */}
+          {asksForSignature(draft) ? (
+            <div
+              className={`${boxClass} flex h-20 items-center justify-center border-dashed`}
+              data-testid="question-preview-signature"
+            >
+              {phone('authorizationSignaturePrompt')}
+            </div>
+          ) : null}
+        </div>
       );
     case 'file_upload':
       return (
@@ -533,24 +559,6 @@ export function QuestionControl({
           {fileSettings(draft.settings).accept === 'document' ? (
             <span className={chipClass}>{phone('customChooseDocument')}</span>
           ) : null}
-        </div>
-      );
-    case 'signature':
-      return (
-        <div className={`${boxClass} flex h-20 items-center justify-center border-dashed`}>
-          {isExample ? (
-            <svg aria-hidden viewBox="0 0 120 40" className="h-10 w-28 text-foreground" fill="none">
-              <path
-                d="M6 28c8-14 14-20 18-16s-6 18 0 18 10-22 16-20-2 16 4 16 8-12 14-12 2 10 8 10 10-6 16-8 10 2 14 0"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          ) : (
-            phone('authorizationSignaturePrompt')
-          )}
         </div>
       );
   }

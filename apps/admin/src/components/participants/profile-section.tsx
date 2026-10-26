@@ -171,9 +171,9 @@ function FitxaFieldRow({
         (row) =>
           `${row.seasonName ?? ''}: ${answerText(asked, row.value, language, words, { answeredAt: row.answeredAt })}`,
       )}
-      // A file or a signature is hers to give; an archived field keeps what she said.
+      // A file or a consent she signs is hers to give; an archived field keeps what she said.
       canEdit={
-        context.canEdit && lockedLevel === null && !field.isArchived && isStaffWritable(field.type)
+        context.canEdit && lockedLevel === null && !field.isArchived && isStaffWritable(field)
       }
       editor={
         <FieldAnswerEditor
