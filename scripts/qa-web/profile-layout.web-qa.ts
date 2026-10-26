@@ -1,15 +1,15 @@
 /**
  * Dades de les jugadores (RAPP-650), Organization › Player data: the
  * onboarding design account adds a field, which records her as its creator
- * and rings the admin's bell; she drags it into another section, renames a
- * section and moves it with the keyboard. The admin then reads the creator,
- * and archives the field behind a confirm that says what it keeps. An app
- * field opens with Edit, and a new type asks first with the database's counts
- * (RAPP-665); Cancel saves nothing. Rows and
- * section headers keep one height and names one start, whether a row ends in
- * a lock or a button. A staff member without a design permission reads the
- * page with no grips and no buttons. Every expected value comes from psql;
- * what this spec changes is put back.
+ * and rings the admin's bell. Nothing moves on the page (RAPP-658): no grips,
+ * a staff field after the app's own fields, sections renamed in place, and a
+ * search that keeps only the sections with a match. The admin then reads the
+ * creator, and archives the field behind a confirm that says what it keeps.
+ * An app field opens with Edit, and a new type asks first with the database's
+ * counts (RAPP-665); Cancel saves nothing. Rows and section headers keep one
+ * height and names one start. A staff member without a design permission
+ * cannot open the page. Every expected value comes from psql; what this spec
+ * changes is put back.
  */
 
 import { expect, test, type Page } from '@playwright/test';
@@ -72,7 +72,7 @@ async function expectSymmetry(page: Page) {
 }
 
 test.describe.serial('Dades de les jugadores', () => {
-  test('the design role opens it from the menu and adds, drags and renames', async ({ page }) => {
+  test('the design role opens it from the menu, adds, renames and searches', async ({ page }) => {
     await signIn(page, ONBOARDING_DESIGNER_EMAIL);
     // Its own item in the Organization group (RAPP-654).
     const menu = page.getByRole('navigation', { name: 'Staff navigation' });
@@ -99,26 +99,13 @@ test.describe.serial('Dades de les jugadores', () => {
       ),
     ).toBe(ONBOARDING_DESIGNER_EMAIL);
 
-    // Dragged by its grip into Identity.
-    const grip = row.getByRole('button', { name: /Move field/ });
-    const target = page.locator('[data-testid="profile-section-identity"] li').first();
-    const from = (await grip.boundingBox())!;
-    const to = (await target.boundingBox())!;
-    await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
-    await page.mouse.down();
-    await page.mouse.move(from.x + 20, from.y - 30, { steps: 5 });
-    await page.mouse.move(to.x + 40, to.y + to.height / 2, { steps: 25 });
-    await page.mouse.up();
-    await expect
-      .poll(
-        () =>
-          queryDatabase(
-            `select s.key from public.profile_fields f join public.profile_sections s on s.id = f.section_id
-              where f.label ->> 'ca' = '${FIELD_NAME}'`,
-          ),
-        { timeout: 20_000 },
-      )
-      .toBe('identity');
+    // Nothing moves (RAPP-658): no grip on a field or a section.
+    await expect(layout.getByRole('button', { name: /Move field|Move section/ })).toHaveCount(0);
+    // A staff field comes after the app's own fields of its section.
+    const sizes = page.getByTestId('profile-section-sizes');
+    await expect(
+      sizes.locator('[data-testid^="profile-field-"]:not([data-testid*="edit"])').last(),
+    ).toContainText(FIELD_NAME);
 
     // Renamed in place, in Catalan.
     await page.getByTestId('profile-section-rename-sizes').click();
@@ -132,25 +119,14 @@ test.describe.serial('Dades de les jugadores', () => {
       )
       .toBe('Talles i mides');
 
-    // Moved up one place with the keyboard.
-    const before = sectionOrder().split(',');
-    await page
-      .getByTestId('profile-section-sizes')
-      .getByRole('button', { name: /Move section/ })
-      .focus();
-    const index = before.indexOf('sizes');
-    // Each key waits for its announcement: an arrow pressed before the drag
-    // has started is dropped, and the section lands where it was.
-    const live = page.locator('[id^="DndLiveRegion-"]');
-    await page.keyboard.press('Space');
-    await expect(live).toContainText(`at position ${index + 1}.`);
-    await page.keyboard.press('ArrowUp');
-    await expect(live).toContainText(`at position ${index}.`);
-    await page.keyboard.press('Space');
-    const expected = [...before];
-    expected.splice(index, 1);
-    expected.splice(index - 1, 0, 'sizes');
-    await expect.poll(sectionOrder, { timeout: 20_000 }).toBe(expected.join(','));
+    // The search keeps only the sections with a matching field.
+    await page.getByTestId('profile-layout-search').fill(runTag);
+    await expect(
+      layout.locator('[data-testid^="profile-field-"]:not([data-testid*="edit"])'),
+    ).toHaveCount(1);
+    await expect(sizes).toContainText(FIELD_NAME);
+    await page.getByTestId('profile-layout-search').fill(`${runTag}zz`);
+    await expect(page.getByTestId('profile-layout-no-results')).toBeVisible();
   });
 
   test('the admin is told, reads the creator, and archives the field', async ({ page }) => {
@@ -195,8 +171,10 @@ test.describe.serial('Dades de les jugadores', () => {
     const nationality = queryDatabase(
       `select id from public.profile_fields where org_id = '${ORG_ID}' and system_key = 'nationality'`,
     );
+    // Her answers and the pending referrals' answers: both convert (RAPP-665).
     const answers = queryDatabase(
-      `select count(*) from public.custom_answers where question_id = '${nationality}'`,
+      `select (select count(*) from public.custom_answers where question_id = '${nationality}')
+            + (select count(*) from public.referral_custom_answers where question_id = '${nationality}')`,
     );
     await signIn(page, ADMIN_EMAIL);
     await page.goto('/profile-layout');
@@ -217,19 +195,18 @@ test.describe.serial('Dades de les jugadores', () => {
     ).toBe('country');
   });
 
-  test('a staff member who does not design it reads it without grips or buttons', async ({
-    page,
-  }) => {
-    // The Fitxa opens for her through a Settings permission, given for this test.
+  test('a staff member who does not design it cannot open it (RAPP-658)', async ({ page }) => {
+    // A Settings permission no longer opens the page: only its editors see it.
     queryDatabase(`
       insert into public.team_member_permissions (org_id, profile_id, permission_code)
       values ('${ORG_ID}', '${STAFF_ID}', 'settings.documents') on conflict do nothing;
     `);
     await signIn(page, STAFF_EMAIL);
+    const menu = page.getByRole('navigation', { name: 'Staff navigation' });
+    await expect(menu).toBeVisible({ timeout: 30_000 });
+    await expect(menu.getByRole('link', { name: 'Player data' })).toHaveCount(0);
     await page.goto('/profile-layout');
-    const layout = page.getByTestId('profile-layout');
-    await expect(layout).toBeVisible({ timeout: 30_000 });
-    await expect(layout.getByRole('button')).toHaveCount(0);
-    await expectSymmetry(page);
+    await expect(page).not.toHaveURL(/\/profile-layout/, { timeout: 30_000 });
+    await expect(page.getByTestId('profile-layout')).toHaveCount(0);
   });
 });
