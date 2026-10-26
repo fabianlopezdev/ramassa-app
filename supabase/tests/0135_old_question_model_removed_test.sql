@@ -396,13 +396,12 @@ select ok(
       and season_id = private.current_season_id('5eed0000-0000-4000-8000-000000000000')),
   'stored encrypted, for the current season'
 );
-select throws_ok(
+select lives_ok(
   $$ select private.write_custom_answer('5eed0000-0000-4000-8000-000000000011',
        (select f from public.profile_fields f
          where f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.system_key = 'first_name'),
        '"Anna"'::jsonb, 'staff') $$,
-  '23514', 'her names stay on her account',
-  'her names are never written as an answer (RAPP-660: every other app field is)'
+  'her names are written as answers like every app field (RAPP-693)'
 );
 
 select * from finish();

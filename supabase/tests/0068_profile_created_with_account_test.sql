@@ -94,12 +94,12 @@ select is(
     where profile_id = (select account_id from invited where label = 'amina') and question_id::text = pg_temp.field('phone')),
   true, 'the phone staff gave is stored, encrypted'
 );
--- Answers by field (RAPP-661); her names are on her account.
+-- Answers by field (RAPP-661); her names are answers too (RAPP-693).
 select is(
   (select array_agg(f.system_key order by f.system_key) from public.custom_answers a
      join public.profile_fields f on f.id = a.question_id
     where a.profile_id = (select account_id from invited where label = 'amina')),
-  array['clothing_size', 'nationality', 'phone', 'reference_entity'],
+  array['clothing_size', 'first_name', 'last_name', 'nationality', 'phone', 'reference_entity'],
   'each answer staff gave is recorded, and nothing else'
 );
 select is(

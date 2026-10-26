@@ -255,7 +255,8 @@ select lives_ok(
 );
 select is(
   (select jsonb_array_length(public.test_player_scenario('5eed0000-0000-4000-8000-000000000096') -> 'custom_answered')),
-  2,
+  -- With her two names, answers too (RAPP-693).
+  4,
   'and her page lists them as answered'
 );
 select lives_ok(

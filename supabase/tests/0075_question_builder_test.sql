@@ -52,12 +52,12 @@ select is(
     where question_id = (select id from run where label = 'choice') and not is_archived),
   3, 'a choice field is saved with its options'
 );
-select throws_ok(
+select lives_ok(
   $$ select public.save_profile_field(
        (select id from public.profile_fields
          where org_id = '5eed0000-0000-4000-8000-000000000000' and system_key = 'first_name'), null,
        'long_text', '{"ca":"Nom"}'::jsonb, null, 'normal', false, '[]'::jsonb) $$,
-  '23514', 'her names keep their type and privacy', 'her names keep their type (RAPP-665)'
+  'her names change type like any field (RAPP-693)'
 );
 select throws_ok(
   $$ select public.archive_profile_field(

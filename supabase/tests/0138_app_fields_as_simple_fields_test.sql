@@ -264,13 +264,12 @@ select throws_ok(
   '23514', 'the answer does not fit the question',
   'an answer that does not fit the type is refused'
 );
-select throws_ok(
+select lives_ok(
   $$ select private.write_custom_answer('5eed0000-0000-4000-8000-000000000011',
        (select f from public.profile_fields f
          where f.id = pg_temp.field('5eed0000-0000-4000-8000-000000000000', 'last_name')),
        '"Puig"'::jsonb, 'staff') $$,
-  '23514', 'her names stay on her account',
-  'her names stay on her account'
+  'her names are answers (RAPP-693)'
 );
 
 -- 6. The catalog and the setup file ---------------------------------------------------------------------------

@@ -29,7 +29,8 @@ select is(
   array['anonymized_at', 'avatar_url', 'collaborating_entity_id', 'emergency_contact_name',
         'emergency_contact_phone', 'emergency_contact_privacy', 'emergency_contact_relation', 'first_name',
         'health_info', 'is_active', 'is_forum_banned', 'is_test_account', 'last_name', 'media_consent_at',
-        'preferred_language', 'prior_seasons', 'push_notifications_enabled', 'season_number',
+        -- Her number, where her name is private (RAPP-693).
+        'member_number', 'preferred_language', 'prior_seasons', 'push_notifications_enabled', 'season_number',
         'sessions_valid_after', 'terms_accepted_at'],
   'a profile holds her names and her account settings only'
 );

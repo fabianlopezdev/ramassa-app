@@ -3,8 +3,8 @@
 --
 -- What these assertions defend:
 --   1. Previewing and saving a change need the question builder's permission.
---   2. Her names keep their type and privacy and are never archived; they
---      can be renamed.
+--   2. Her names change type and privacy like any field (RAPP-693) and are
+--      never archived; they can be renamed.
 --   3. Each conversion: text to a number when it reads as one, a choice to
 --      text keeps its label, one choice to several keeps the option, text to
 --      a choice matches an option's label, a choice with keys yes and no
@@ -75,13 +75,13 @@ select throws_ok(
 -- 2. Her names -------------------------------------------------------------------------------------------------
 
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000001", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
-select throws_ok(
+-- Since RAPP-693 her names change type and privacy like any field.
+select lives_ok(
   $$ select public.preview_field_change(pg_temp.sys('first_name'), 'long_text', 'normal') $$,
-  '23514', 'her names keep their type and privacy', 'her first name keeps its type');
-select throws_ok(
-  $$ select public.save_profile_field(pg_temp.sys('last_name'), null, 'short_text',
-       pg_temp.label(pg_temp.sys('last_name')), null, 'sensitive') $$,
-  '23514', 'her names keep their type and privacy', 'her last name keeps its privacy');
+  'her first name may change type');
+select lives_ok(
+  $$ select public.preview_field_change(pg_temp.sys('last_name'), 'short_text', 'sensitive') $$,
+  'her last name may change privacy');
 select throws_ok(
   $$ select public.archive_profile_field(pg_temp.sys('first_name')) $$,
   '23514', 'her names are always asked', 'her names are never archived');

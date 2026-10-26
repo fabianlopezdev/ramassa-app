@@ -307,10 +307,10 @@ select throws_ok(
   format($$select public.set_participant_custom_answers('5eed0000-0000-4000-8000-000000000011', %L)$$,
     jsonb_build_object(pg_temp.field('phone'), '+34600000000')),
   '42501', null, 'and refuses a Sensitive one to a team member who cannot read it');
-select throws_ok(
+select lives_ok(
   format($$select public.set_participant_custom_answers('5eed0000-0000-4000-8000-000000000011', %L)$$,
     jsonb_build_object(pg_temp.field('first_name'), 'Una altra')),
-  '23514', 'her names stay on her account', 'her names are never answers');
+  'her names are answers like any field (RAPP-693)');
 reset role;
 select is(pg_temp.answer('5eed0000-0000-4000-8000-000000000011', pg_temp.field('city')), '"Olot"'::jsonb,
           'the app field changed');

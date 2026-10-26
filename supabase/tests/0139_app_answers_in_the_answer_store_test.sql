@@ -59,16 +59,16 @@ select is(
   true,
   'a Sensitive answer is stored encrypted'
 );
-select is(
+select ok(
   (select count(*)::integer from public.custom_answers
-    where question_id in (pg_temp.field('first_name'), pg_temp.field('last_name'))),
-  0,
-  'her names are never answers'
+    where question_id in (pg_temp.field('first_name'), pg_temp.field('last_name'))) > 0,
+  'her names are answers (RAPP-693)'
 );
 select is(
   (select string_agg(a.source, ',' order by a.source) from public.custom_answers a
     where a.profile_id = '5eed0000-0000-4000-8000-000000000098'),
-  'staff,staff,staff,staff',
+  -- Her two names included (RAPP-693).
+  'staff,staff,staff,staff,staff,staff',
   'an answer the team gave says so'
 );
 select is(

@@ -134,7 +134,9 @@ insert into run values ('player', (select profile_id from public.create_particip
 reset role;
 select is(
   (select string_agg(question_id::text || '/' || source, ',' order by question_id)
-     from public.custom_answers where profile_id = (select id from run where label = 'player')),
+     from public.custom_answers where profile_id = (select id from run where label = 'player')
+      -- Her names, the team's answers since RAPP-693, are not the entity's.
+      and question_id not in (select id from public.profile_fields where system_key in ('first_name', 'last_name'))),
   '5eed0000-0000-4000-8045-000000000004/entity,5eed0000-0000-4000-8045-000000000005/entity',
   'both entity answers are hers from the invitation on, with source entity'
 );
@@ -185,7 +187,8 @@ set local role authenticated;
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000003", "role": "authenticated", "aal": "aal2"}';
 select is(
   (select array_agg(question_id::text)
-     from public.participant_custom_answers((select id from run where label = 'player'))),
+     from public.participant_custom_answers((select id from run where label = 'player'))
+    where question_id not in (select id from public.profile_fields where system_key in ('first_name', 'last_name'))),
   array['5eed0000-0000-4000-8045-000000000004'],
   'without participants.view_sensitive, the Sensible entity answer is not read'
 );

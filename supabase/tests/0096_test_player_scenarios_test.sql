@@ -84,8 +84,10 @@ select lives_ok(
 );
 select is(
   pg_temp.sources('5eed0000-0000-4000-8000-000000000096'),
-  array['clothing_size:staff', 'date_of_birth:staff', 'has_dependents:staff', 'nationality:staff',
-        'phone:staff', 'place_of_birth:staff', 'reference_entity:staff', 'shoe_size:staff'],
+  -- Her names are answers too (RAPP-693).
+  array['clothing_size:staff', 'date_of_birth:staff', 'first_name:staff', 'has_dependents:staff',
+        'last_name:staff', 'nationality:staff', 'phone:staff', 'place_of_birth:staff',
+        'reference_entity:staff', 'shoe_size:staff'],
   'filled answers are staff answers, so her wizard skips them'
 );
 select lives_ok(
