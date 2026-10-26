@@ -1,6 +1,6 @@
 /**
  * A choice made from cards (RAPP-646, RAPP-647): the form shows the chosen
- * card with Change, and Change opens a dialog of every card.
+ * card with Change, and the card or Change opens a dialog of every card.
  *
  * The cards are a radio group. Arrow keys move across the grid, mirrored right
  * to left; Up and Down move one row, read from the live grid; Home and End
@@ -183,10 +183,15 @@ export function CardPickerField<T extends string>({
         {label}
       </span>
       <input type="hidden" name={hiddenName} value={value} disabled={isLocked} />
+      {/* The whole card opens the choices; Change is its keyboard way in (RAPP-669). */}
       <div
         role="group"
         aria-labelledby={`${labelId} ${nameId}`}
-        className="flex items-center gap-3 rounded-xl border bg-card p-2"
+        className={cn(
+          'flex items-center gap-3 rounded-xl border bg-card p-2',
+          !isLocked && 'cursor-pointer transition-colors hover:bg-muted/60',
+        )}
+        onClick={isLocked ? undefined : () => setIsOpen(true)}
       >
         {media}
         <div className="flex min-w-0 flex-1 flex-col gap-1">

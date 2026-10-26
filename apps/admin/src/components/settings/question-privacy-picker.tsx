@@ -6,7 +6,9 @@
  * existing question shows its card without Change.
  */
 
+import { PRIVACY_LEVEL_CLASSES } from '@/components/fields/privacy-badge';
 import { CardPickerField, CardRadioGroup } from '@/components/settings/card-picker';
+import { cn } from '@/lib/utils';
 import { IdCard, LockKeyhole, Users, type LucideIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { QUESTION_PRIVACY_LEVELS, type QuestionPrivacy } from '@ramassa/shared/intake-builder';
@@ -22,7 +24,10 @@ function LevelIcon({ level }: { readonly level: QuestionPrivacy }) {
   return (
     <span
       aria-hidden
-      className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"
+      className={cn(
+        'flex size-10 shrink-0 items-center justify-center rounded-lg',
+        PRIVACY_LEVEL_CLASSES[level],
+      )}
     >
       <Icon className="size-5" />
     </span>

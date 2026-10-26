@@ -9,7 +9,8 @@ import { cn } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
 import type { QuestionPrivacy } from '@ramassa/shared/intake-builder';
 
-const LEVEL_CLASSES: Readonly<Record<QuestionPrivacy, string>> = {
+/** The colours of a level, shared with the privacy cards (RAPP-669). */
+export const PRIVACY_LEVEL_CLASSES: Readonly<Record<QuestionPrivacy, string>> = {
   normal: 'bg-muted text-foreground',
   personal: 'bg-primary/10 text-primary',
   sensitive: 'bg-destructive/10 text-destructive',
@@ -24,7 +25,7 @@ export function PrivacyBadge({
 }) {
   const { t } = useTranslation('settings');
   return (
-    <Badge variant="muted" className={cn(LEVEL_CLASSES[level], className)}>
+    <Badge variant="muted" className={cn(PRIVACY_LEVEL_CLASSES[level], className)}>
       {t(`questions.privacyLevels.${level}`)}
     </Badge>
   );
