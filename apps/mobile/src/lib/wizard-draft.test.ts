@@ -185,6 +185,17 @@ describe('a screen saves only what it changed', () => {
     expect(store.loadStoredDraft()?.answers?.[TEAM_FIELD]).toBe('no');
     expect(store.loadDraft()?.custom).toEqual({ [TEAM_FIELD]: 'no' });
   });
+
+  test('an app field asked with the generic renderer is kept as she typed it (RAPP-665)', () => {
+    // Nationality made free text: the wizard's forms no longer ask it.
+    const formFields = new Map([...fields].filter(([key]) => key !== 'nationality'));
+    const store = wizardDraftStoreOn(createInMemoryOnboardingDraftStore(), formFields);
+    store.saveDraft(legacy);
+    const nationality = fieldId('nationality');
+    store.saveDraft({ ...store.loadDraft()!, custom: { [nationality]: 'Síria del nord' } });
+    expect(store.loadStoredDraft()?.answers?.[nationality]).toBe('Síria del nord');
+    expect(store.loadDraft()?.custom).toEqual({ [nationality]: 'Síria del nord' });
+  });
 });
 
 describe('her birth date in three boxes', () => {

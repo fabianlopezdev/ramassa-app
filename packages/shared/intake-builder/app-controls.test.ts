@@ -12,7 +12,13 @@ import {
   withGenericAnswers,
 } from './app-controls';
 import { appControlFits } from './app-field-form';
-import type { IntakeCatalog } from './builder';
+import {
+  askedRequiredQuestions,
+  EMPTY_INTAKE_CATALOG,
+  requiredBuiltinQuestions,
+  wizardFormFields,
+  type IntakeCatalog,
+} from './builder';
 import { entityFormItems } from './entity-form';
 import { editScreenQuestions, onboardingScreenQuestions } from './her-onboarding';
 import type { FieldPlacement, ProfileField, ProfileLayout } from './profile-layout';
@@ -104,6 +110,40 @@ const offOf = (layout: ProfileLayout) =>
       ['date_of_birth', 'clothing_size', 'first_name'].includes(question),
     ),
   );
+
+describe('askedRequiredQuestions', () => {
+  const catalogOf = (layout: ProfileLayout) =>
+    ({
+      ...EMPTY_INTAKE_CATALOG,
+      layout,
+      requiredQuestions: ['date_of_birth', 'clothing_size'],
+    }) as IntakeCatalog;
+
+  test('a required question on its control stays required on its app screen', () => {
+    const required = askedRequiredQuestions(catalogOf(layoutWith([BIRTH, SIZE, NAME])));
+    expect(required.has('date_of_birth')).toBe(true);
+    expect(required.has('clothing_size')).toBe(true);
+  });
+
+  test('off its control, the generic renderer requires it and the app screen does not', () => {
+    const catalog = catalogOf(layoutWith([{ ...BIRTH, type: 'short_text' }, SIZE, NAME]));
+    expect(requiredBuiltinQuestions(catalog).has('date_of_birth')).toBe(true);
+    expect(askedRequiredQuestions(catalog).has('date_of_birth')).toBe(false);
+    expect(askedRequiredQuestions(catalog).has('first_name')).toBe(true);
+  });
+});
+
+describe('wizardFormFields', () => {
+  test('the forms keep every app field but those of a question off its control', () => {
+    const layout = layoutWith([{ ...BIRTH, type: 'short_text' }, SIZE, NAME]);
+    const catalog = {
+      ...EMPTY_INTAKE_CATALOG,
+      layout,
+      systemFields: layoutSystemFields(layout),
+    } as IntakeCatalog;
+    expect([...wizardFormFields(catalog).keys()].sort()).toEqual(['clothing_size', 'first_name']);
+  });
+});
 
 describe('questionsOffTheirControl', () => {
   test('the seeded fields on their own screens stay on their controls', () => {

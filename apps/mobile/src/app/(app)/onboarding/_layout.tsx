@@ -27,14 +27,14 @@ import {
   wizardNotAsked,
 } from '@ramassa/shared/intake';
 import {
+  askedRequiredQuestions,
   fetchIntakeCatalog,
   fetchMyCustomAnswers,
   fetchMyCustomQuestionAsking,
   herOnboarding,
   hiddenBuiltinQuestions,
-  requiredBuiltinQuestions,
-  systemFieldsOf,
   wizardFlow,
+  wizardFormFields,
 } from '@ramassa/shared/intake-builder';
 import { fetchMyTestScenarioStamp } from '@ramassa/shared/participants';
 import { fetchOwnProfile } from '@ramassa/shared/profile';
@@ -153,7 +153,9 @@ function OnboardingScreens() {
                 ...(answered.has('first_name') ? { firstName: profile.first_name } : {}),
                 ...(answered.has('last_name') ? { lastName: profile.last_name } : {}),
               },
-        fields: systemFieldsOf(catalog),
+        // The app's fields her screens' forms ask; a question off its control
+        // is kept with the team's fields (RAPP-665).
+        fields: wizardFormFields(catalog),
         answered,
         // A built-in question staff removed is never asked, so it never keeps a
         // screen. The staff preview of a new invitation plans with the same
@@ -169,8 +171,9 @@ function OnboardingScreens() {
         flow: wizardFlow(catalog),
         hidden,
         // The one required list (RAPP-611): every screen, the summary and the
-        // final check read it.
-        required: requiredBuiltinQuestions(catalog),
+        // final check read it. A question off its control is the generic
+        // renderer's to require (RAPP-665).
+        required: askedRequiredQuestions(catalog),
         scenarioStamp,
       };
     },

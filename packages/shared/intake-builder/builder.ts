@@ -49,6 +49,7 @@ import {
   type EditableWizardScreen,
   type ScreenTextField,
 } from '../onboarding/screen-texts';
+import { SYSTEM_FIELD_QUESTIONS } from '../onboarding/system-fields';
 import type { LanguageCode } from '../schemas/language';
 import type { Database, Json } from '../types/database';
 import { questionsOffTheirControl } from './app-controls';
@@ -832,6 +833,35 @@ export function hiddenBuiltinQuestions(catalog: IntakeCatalog): ReadonlySet<Inta
     // Off their own control (RAPP-665): the generic renderer asks their fields.
     ...(catalog.layout === undefined ? [] : questionsOffTheirControl(catalog.layout)),
   ]);
+}
+
+/**
+ * The app's fields her wizard's own forms ask: every one but the fields of a
+ * question off its control (RAPP-665). The generic renderer asks those where
+ * they are placed, so her draft keeps their answers with the team's fields,
+ * and the forms neither read nor write them.
+ */
+export function wizardFormFields(catalog: IntakeCatalog): SystemFieldIndex {
+  const off: ReadonlySet<IntakeQuestion> =
+    catalog.layout === undefined ? new Set() : questionsOffTheirControl(catalog.layout);
+  return new Map(
+    [...systemFieldsOf(catalog)].filter(([key]) => !off.has(SYSTEM_FIELD_QUESTIONS[key])),
+  );
+}
+
+/**
+ * The required list her phone's app screens check: the organization's list
+ * without the questions those screens no longer ask. A question off its
+ * control (RAPP-665) is asked by the generic renderer, which checks its fields
+ * by their placements, so the app screen's own form never requires it.
+ */
+export function askedRequiredQuestions(catalog: IntakeCatalog): RequiredQuestions {
+  const hidden = hiddenBuiltinQuestions(catalog);
+  return new Set(
+    [...requiredBuiltinQuestions(catalog)].filter(
+      (question) => isLockedRequiredQuestion(question) || !hidden.has(question),
+    ),
+  );
 }
 
 /**
