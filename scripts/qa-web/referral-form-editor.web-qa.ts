@@ -2,8 +2,8 @@
  * The entity referral form, composed from the Fitxa (RAPP-652):
  *   - the admin opens Formulari de derivació, adds a Personal and a Sensible
  *     field with the picker, makes the Personal one required, words it for
- *     the entity, and sees the preview follow; a built-in field the form
- *     cannot ask is dimmed with the reason, and her names cannot be removed;
+ *     the entity, and sees the preview follow; the app's own fields are
+ *     offered like any other, and her names cannot be removed;
  *   - the entity's portal draws the form from those placements, refuses it
  *     while the required field is empty, then sends both answers in one call;
  *   - staff invite her from the referral: both answers are hers at once,
@@ -92,10 +92,15 @@ test.describe.serial('the entity referral form', () => {
     await fields.getByTestId('referral-form-add').click();
     const picker = page.getByTestId('referral-form-picker');
     await expect(picker).toBeVisible();
-    // A built-in field the form cannot ask is dimmed with the reason.
+    // The app's own fields go on the form like any field (RAPP-665): the
+    // sizes are offered. Only a file or a signature stays hers to give.
     await picker.getByTestId('referral-form-picker-section-sizes').click();
-    await expect(picker.locator('[data-state="blocked"]').first()).toContainText(
-      /cannot ask|no ho pot demanar/i,
+    const clothingSize = queryDatabase(
+      `select id from public.profile_fields where org_id = '${ORG_ID}' and system_key = 'clothing_size'`,
+    );
+    await expect(picker.getByTestId(`referral-form-picker-field-${clothingSize}`)).toHaveAttribute(
+      'data-state',
+      'free',
     );
     for (const id of [PERSONAL, SENSIBLE]) {
       const name = queryDatabase(
@@ -205,13 +210,23 @@ test.describe.serial('the entity referral form', () => {
       page.getByRole('heading', { name: /invitació creada|invitation created|invitación creada/i }),
     ).toBeVisible({ timeout: 20_000 });
 
+    // The form's answers come from the entity. Her entity is an answer by
+    // field since RAPP-661, given by the staff member who invites her.
     expect(
       queryDatabase(
         `select string_agg(a.question_id::text || '/' || a.source || '/' || (a.value is null)::text, ',' order by a.question_id)
            from public.custom_answers a join auth.users u on u.id = a.profile_id
-          where u.email = ${sql(EMAIL)}`,
+          where u.email = ${sql(EMAIL)} and a.question_id in ('${PERSONAL}', '${SENSIBLE}')`,
       ),
     ).toBe(`${PERSONAL}/entity/false,${SENSIBLE}/entity/true`);
+    expect(
+      queryDatabase(
+        `select a.source || '/' || (a.value #>> '{}') from public.custom_answers a
+           join auth.users u on u.id = a.profile_id
+           join public.profile_fields f on f.id = a.question_id and f.system_key = 'reference_entity'
+          where u.email = ${sql(EMAIL)}`,
+      ),
+    ).toBe('staff/Creu Roja Osona');
     expect(
       queryDatabase(
         `select count(*) from public.referral_custom_answers where referral_id = '${referralId}'`,
