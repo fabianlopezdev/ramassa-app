@@ -9,7 +9,7 @@
  * section the app's own fields come first, then the ones staff created, A to
  * Z (`fieldsOfSection`). An admin renames a section in place, adds sections
  * and fields, and edits or archives every field in a dialog (RAPP-665): its
- * name, answer type, options and privacy, her names excepted (D2).
+ * name, answer type, options and privacy, her names included (RAPP-693).
  */
 
 import type { FieldFormDraft } from '@/components/fields/field-form';

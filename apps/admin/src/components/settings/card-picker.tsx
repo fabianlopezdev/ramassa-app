@@ -132,14 +132,11 @@ export function CardRadioGroup<T extends string>({
 
 /**
  * The form field: its label, the chosen card with Change, and the dialog.
- * Locked, the card shows without Change and the field says why.
  */
 export function CardPickerField<T extends string>({
   label,
   value,
   onChange,
-  isLocked,
-  lockedMessage,
   media,
   name,
   description,
@@ -152,9 +149,6 @@ export function CardPickerField<T extends string>({
   readonly label: string;
   readonly value: T;
   readonly onChange: (value: T) => void;
-  readonly isLocked: boolean;
-  /** Why the value cannot change, under it; the caller may say it elsewhere. */
-  readonly lockedMessage?: string;
   /** The chosen card's picture or icon. */
   readonly media: ReactNode;
   readonly name: string;
@@ -182,24 +176,19 @@ export function CardPickerField<T extends string>({
       <span id={labelId} className="text-start">
         {label}
       </span>
-      <input type="hidden" name={hiddenName} value={value} disabled={isLocked} />
+      <input type="hidden" name={hiddenName} value={value} />
       {/* The whole card opens the choices; Change is its keyboard way in (RAPP-669). */}
       <div
         role="group"
         aria-labelledby={`${labelId} ${nameId}`}
         className={cn(
-          'flex items-center gap-3 rounded-xl border bg-card p-2',
-          !isLocked && 'cursor-pointer transition-colors hover:bg-muted/60',
+          'flex cursor-pointer items-center gap-3 rounded-xl border bg-card p-2 transition-colors hover:bg-muted/60',
         )}
-        onClick={
-          isLocked
-            ? undefined
-            : (event) => {
-                // A pick in the dialog bubbles here through the portal: only a
-                // click on the card itself opens it.
-                if (event.currentTarget.contains(event.target as Node)) setIsOpen(true);
-              }
-        }
+        onClick={(event) => {
+          // A pick in the dialog bubbles here through the portal: only a
+          // click on the card itself opens it.
+          if (event.currentTarget.contains(event.target as Node)) setIsOpen(true);
+        }}
       >
         {media}
         <div className="flex min-w-0 flex-1 flex-col gap-1">
@@ -208,51 +197,44 @@ export function CardPickerField<T extends string>({
           </span>
           {description}
         </div>
-        {isLocked ? null : (
-          <Dialog open={isOpen} onOpenChange={setIsOpen}>
-            <DialogTrigger asChild>
-              <Button
-                type="button"
-                variant="outline"
-                className="shrink-0 self-center"
-                aria-describedby={nameId}
-                data-testid={`${testId}-change`}
-              >
-                {t('questions.picker.change')}
-              </Button>
-            </DialogTrigger>
-            <DialogContent
-              className={dialogClassName}
-              aria-describedby={dialogNote === undefined ? undefined : noteId}
-              onOpenAutoFocus={(event) => {
-                event.preventDefault();
-                cardRefs.current.get(value)?.focus();
-              }}
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+          <DialogTrigger asChild>
+            <Button
+              type="button"
+              variant="outline"
+              className="shrink-0 self-center"
+              aria-describedby={nameId}
+              data-testid={`${testId}-change`}
             >
-              <div className="flex flex-col gap-1">
-                <DialogTitle>{label}</DialogTitle>
-                {dialogNote === undefined ? null : (
-                  <p id={noteId} className="text-start text-sm text-muted-foreground">
-                    {dialogNote}
-                  </p>
-                )}
-              </div>
-              {renderGroup({
-                cardRefs,
-                pick: (next) => {
-                  onChange(next);
-                  setIsOpen(false);
-                },
-              })}
-            </DialogContent>
-          </Dialog>
-        )}
+              {t('questions.picker.change')}
+            </Button>
+          </DialogTrigger>
+          <DialogContent
+            className={dialogClassName}
+            aria-describedby={dialogNote === undefined ? undefined : noteId}
+            onOpenAutoFocus={(event) => {
+              event.preventDefault();
+              cardRefs.current.get(value)?.focus();
+            }}
+          >
+            <div className="flex flex-col gap-1">
+              <DialogTitle>{label}</DialogTitle>
+              {dialogNote === undefined ? null : (
+                <p id={noteId} className="text-start text-sm text-muted-foreground">
+                  {dialogNote}
+                </p>
+              )}
+            </div>
+            {renderGroup({
+              cardRefs,
+              pick: (next) => {
+                onChange(next);
+                setIsOpen(false);
+              },
+            })}
+          </DialogContent>
+        </Dialog>
       </div>
-      {isLocked && lockedMessage !== undefined ? (
-        <span className="text-start text-xs font-normal text-muted-foreground">
-          {lockedMessage}
-        </span>
-      ) : null}
     </div>
   );
 }

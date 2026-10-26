@@ -3,7 +3,7 @@
  * Fitxa's order, each with her answer, who gave it and when, the per-player
  * choice and Edit. Every field reads her answers by field and saves through
  * her record (`update_participant_profile`), the app's fields and the team's
- * alike, with one editor. Her names stay on her account (D2).
+ * alike, with one editor. Her names are answers like any field (RAPP-693).
  *
  * Privacy stays the database's: an answer above the reader's level never
  * reaches the page, and its row says which level it needs (from the field's
@@ -45,8 +45,6 @@ import type { LanguageCode } from '@ramassa/shared/schemas';
 
 /** What every row of her page reads and writes through. */
 export interface FitxaContext {
-  /** Her names, on her account. */
-  readonly names: { readonly first_name: string; readonly last_name: string };
   readonly layout: ProfileLayout;
   /** Her answers, by field. */
   readonly answers: ReadonlyMap<string, FieldAnswers>;
@@ -114,8 +112,6 @@ function FitxaFieldRow({
   const isEditing = context.editingId === field.id;
   const close = () => context.onEditingChange(null);
   const asked = questionOfField(context.layout, field);
-  const isName = isNameField(field);
-  const name = isName ? (field.systemKey as 'first_name' | 'last_name') : null;
   const answers = context.answers.get(field.id);
   const current = answers?.current;
   const seasonOf = (seasonName: string | null) => (seasonName === null ? '' : ` · ${seasonName}`);
@@ -129,14 +125,7 @@ function FitxaFieldRow({
     }));
 
   async function save(changes: FieldAnswerChanges) {
-    const typed = String(changes[field.id] ?? '');
-    if (name === 'first_name') {
-      await context.onSave({ first_name: typed, answers: {} });
-    } else if (name === 'last_name') {
-      await context.onSave({ last_name: typed, answers: {} });
-    } else {
-      await context.onSave({ answers: changes });
-    }
+    await context.onSave({ answers: changes });
     close();
   }
 
@@ -150,9 +139,7 @@ function FitxaFieldRow({
       onToggleEdit={() => context.onEditingChange(isEditing ? null : field.id)}
       testId={`fitxa-field-${field.builtinKey ?? field.systemKey ?? field.id}`}
       value={
-        name !== null ? (
-          context.names[name]
-        ) : current === undefined ? null : (
+        current === undefined ? null : (
           <CustomAnswerValueView
             question={asked}
             value={current.value}
@@ -176,9 +163,9 @@ function FitxaFieldRow({
       editor={
         <FieldAnswerEditor
           question={asked}
-          value={name !== null ? context.names[name] : current?.value}
+          value={current?.value}
           partners={partners}
-          isRequired={name !== null}
+          isRequired={isNameField(field)}
           language={language}
           onSave={save}
           onCancel={close}

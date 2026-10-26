@@ -1,7 +1,7 @@
 /**
  * The field form (RAPP-650): a new field sends its name, type and privacy
- * with no places; a saved field changes type and privacy, her names excepted
- * (RAPP-665, D2); each type asks for its own settings (RAPP-610).
+ * with no places; a saved field changes type and privacy, her names included
+ * (RAPP-665, RAPP-693); each type asks for its own settings (RAPP-610).
  */
 import { fireEvent, render, waitFor } from '@testing-library/react';
 import { expect, mock, test } from 'bun:test';
@@ -64,25 +64,7 @@ const SAVED = {
   options: [],
 } as const;
 
-test('her names keep their type and privacy, with one sentence saying why (D2)', () => {
-  const view = render(
-    <FieldForm
-      value={{ ...SAVED, type: 'short_text', label: { ca: 'Nom' }, privacy: 'normal' }}
-      title="Edit field"
-      nameLegend="Name"
-      submitLabel="Save field"
-      isNameField
-      canStoreFiles
-      onSave={async () => undefined}
-      onCancel={() => undefined}
-    />,
-  );
-  expect(view.queryByTestId('question-privacy-change')).toBeNull();
-  expect(view.queryByTestId('question-type-change')).toBeNull();
-  expect(view.getByTestId('field-names-lock')).toBeTruthy();
-});
-
-test('every other saved field changes type and privacy (RAPP-665)', async () => {
+test('every saved field changes type and privacy, her names included (RAPP-665, RAPP-693)', async () => {
   const onSave = mock(async () => undefined);
   const view = render(
     <FieldForm
@@ -95,7 +77,6 @@ test('every other saved field changes type and privacy (RAPP-665)', async () => 
       onCancel={() => undefined}
     />,
   );
-  expect(view.queryByTestId('field-names-lock')).toBeNull();
   fireEvent.click(view.getByTestId('question-type-change'));
   fireEvent.click(view.getByTestId('question-type-option-single_choice'));
   // A field that becomes a choice offers two empty options to fill.

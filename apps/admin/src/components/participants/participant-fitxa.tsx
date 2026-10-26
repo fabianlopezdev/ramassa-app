@@ -109,7 +109,6 @@ export function ParticipantFitxa({
   }
 
   const context: FitxaContext = {
-    names: { first_name: participant.first_name, last_name: participant.last_name },
     layout,
     answers,
     sees,
@@ -220,7 +219,7 @@ export function ParticipantFitxa({
   );
 }
 
-/** Her app language or her photo consent: settings on her account, never field answers (D2). */
+/** Her app language or her photo consent: settings on her account, never field answers. */
 function AccountSettingEditor({
   setting,
   participant,

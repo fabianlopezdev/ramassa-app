@@ -44,12 +44,9 @@ function LevelIcon({
 export function QuestionPrivacyPicker({
   value,
   onChange,
-  isLocked,
 }: {
   readonly value: QuestionPrivacy;
   readonly onChange: (level: QuestionPrivacy) => void;
-  /** Her names keep their level (D2): the card shows without Change. */
-  readonly isLocked: boolean;
 }) {
   const { t } = useTranslation('settings');
   const note = (level: QuestionPrivacy) => t(`questions.privacyNotes.${level}`);
@@ -61,7 +58,6 @@ export function QuestionPrivacyPicker({
       label={t('questions.privacy')}
       value={value}
       onChange={onChange}
-      isLocked={isLocked}
       media={
         <div
           className={cn(

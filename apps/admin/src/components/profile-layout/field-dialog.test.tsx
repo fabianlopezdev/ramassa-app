@@ -183,12 +183,12 @@ test('a rename saves at once, even with answers', async () => {
   expect(previewChange).not.toHaveBeenCalled();
 });
 
-test('her names keep their type and privacy and have no Archive', () => {
+test('her names change type and privacy like any field, and have no Archive (RAPP-693)', () => {
   const { view } = open({
     field: field({ systemKey: 'first_name', builtinKey: 'first_name', type: 'short_text' }),
   });
-  expect(view.getByTestId('field-names-lock')).toBeTruthy();
-  expect(view.queryByTestId('question-type-change')).toBeNull();
+  expect(view.getByTestId('question-type-change')).toBeTruthy();
+  expect(view.getByTestId('question-privacy-change')).toBeTruthy();
   expect(view.queryByTestId('field-archive')).toBeNull();
 });
 

@@ -54,7 +54,7 @@ export function fitxaSections(
     .filter((entry) => entry.fields.length > 0);
 }
 
-/** Her names stay on her account (D2): their fields hold no answer. */
+/** Her names are never left empty (RAPP-693). */
 export function isNameField(field: Pick<ProfileField, 'systemKey'>): boolean {
   return field.systemKey === 'first_name' || field.systemKey === 'last_name';
 }

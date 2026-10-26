@@ -6,8 +6,8 @@
  * form (a detail shown on one answer, the document's number with its type),
  * each asked only while it applies.
  *
- * Her names stay on her account (D2): their editor is a text input like any
- * short text, saved as her name.
+ * Her names are answers like any field (RAPP-693): their editor is the one
+ * their type has, and they are never left empty.
  */
 
 import {

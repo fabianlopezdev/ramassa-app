@@ -1,12 +1,12 @@
 /**
  * A field of the Fitxa in a dialog (RAPP-650): new from a section's "Add a
  * field", or opened with Edit. The form writes one language at a time. Every
- * field but her names changes type, privacy and options (RAPP-665): when a
- * field with answers changes type, or any field changes privacy (RAPP-692),
- * saving first shows what happens (`FieldChangeDialog`) and waits for Confirm. Archive asks first,
- * saying how many answers the field keeps; her names are never archived. The
- * onboarding picker (RAPP-651) opens it for a new field, with the section
- * chosen there.
+ * field, her names included (RAPP-693), changes type, privacy and options
+ * (RAPP-665): when a field with answers changes type, or any field changes
+ * privacy (RAPP-692), saving first shows what happens (`FieldChangeDialog`)
+ * and waits for Confirm. Archive asks first, saying how many answers the
+ * field keeps; her names are never archived. The onboarding picker
+ * (RAPP-651) opens it for a new field, with the section chosen there.
  */
 
 import { FieldForm, type FieldFormDraft } from '@/components/fields/field-form';
@@ -151,7 +151,6 @@ export function FieldDialog({
             title={field === null ? t('profileLayout.newField') : t('profileLayout.editField')}
             nameLegend={t('profileLayout.fieldName')}
             submitLabel={t('profileLayout.saveField')}
-            isNameField={isName}
             canStoreFiles={uploadsAvailable(mediaWorkerUrl)}
             isFramed={false}
             onSave={save}

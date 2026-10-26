@@ -88,14 +88,11 @@ function TypeMiniature({
 export function QuestionTypePicker({
   value,
   onChange,
-  isLocked,
   disabled = {},
   warnings = {},
 }: {
   readonly value: CustomQuestionType;
   readonly onChange: (type: CustomQuestionType) => void;
-  /** Her names keep their type (D2): the tile shows without Change. */
-  readonly isLocked: boolean;
   readonly disabled?: TypeNotes;
   readonly warnings?: TypeNotes;
 }) {
@@ -106,7 +103,6 @@ export function QuestionTypePicker({
       label={t('questions.type')}
       value={value}
       onChange={onChange}
-      isLocked={isLocked}
       media={
         <div className="w-28 shrink-0">
           <TypeMiniature type={value} language={language} />
