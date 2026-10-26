@@ -2925,3 +2925,38 @@ select gen_random_uuid(), '5eed0000-0000-4000-8000-000000000097', 'Ramassà (see
 where not exists (
   select 1 from auth.mfa_factors where user_id = '5eed0000-0000-4000-8000-000000000097'
 );
+
+-- Signature blocks (RAPP-690, RAPP-691) ----------------------------------------------
+-- On an archived screen, so no live flow asks for a signature: one block, Amina's
+-- signature of it, and the pending tablet signature of the walk-in Salma.
+insert into public.intake_screens (id, org_id, title, intro, after_screen, sort_order, is_archived)
+values ('5eed0000-0000-4000-8090-000000000001', '5eed0000-0000-4000-8000-000000000000',
+        '{"ca":"Autoritzacions antigues","es":"Autorizaciones antiguas","en":"Old authorizations"}'::jsonb,
+        null, 'logistics', 90, true)
+on conflict (id) do nothing;
+
+insert into public.form_blocks (id, org_id, surface, screen_key, body, sort_order)
+values ('5eed0000-0000-4000-8090-000000000002', '5eed0000-0000-4000-8000-000000000000',
+        'onboarding', '5eed0000-0000-4000-8090-000000000001',
+        '{"ca":"Accepto les normes de convivència.","es":"Acepto las normas de convivencia.","en":"I accept the code of conduct.","ar":"أوافق على قواعد السلوك."}'::jsonb, 0)
+on conflict (id) do nothing;
+
+insert into public.form_signatures
+  (id, org_id, profile_id, surface, block_id, screen_key, body, language,
+   signer_kind, signer_user_id, signer_name, strokes, signed_at)
+values ('5eed0000-0000-4000-8090-000000000003', '5eed0000-0000-4000-8000-000000000000',
+        '5eed0000-0000-4000-8000-000000000011', 'wizard', '5eed0000-0000-4000-8090-000000000002',
+        '5eed0000-0000-4000-8090-000000000001', 'أوافق على قواعد السلوك.', 'ar',
+        'player', '5eed0000-0000-4000-8000-000000000011', 'أمينة الحسن',
+        '[[[120,620],[200,480],[290,560],[380,410],[470,590],[560,450]],[[640,520],[760,500],[880,540]]]'::jsonb,
+        timestamptz '2026-09-20 18:28:00+02')
+on conflict (id) do nothing;
+
+insert into public.walk_in_form_signatures
+  (id, walk_in_id, org_id, block_id, screen_key, body, language, strokes, signed_at, witnessed_by)
+values ('5eed0000-0000-4000-8090-000000000004', '5eed0000-0000-4000-8043-000000000001',
+        '5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-8090-000000000002',
+        '5eed0000-0000-4000-8090-000000000001', 'أوافق على قواعد السلوك.', 'ar',
+        '[[[110,600],[210,470],[300,550],[390,420]]]'::jsonb,
+        timestamptz '2026-09-15 19:12:00+02', '5eed0000-0000-4000-8000-000000000002')
+on conflict (id) do nothing;

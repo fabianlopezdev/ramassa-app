@@ -65,11 +65,15 @@ grant all on run to authenticated;
 -- and placements are compared as sets: built-in fields tie on their order.
 create function pg_temp.normalized(p_doc jsonb) returns jsonb language plpgsql as $$
 declare
-  stable jsonb := (p_doc - 'exported_at' - 'app_commit' - 'app_terms' - 'authorization' - 'placements')
+  stable jsonb := (p_doc - 'exported_at' - 'app_commit' - 'app_terms' - 'authorization' - 'placements'
+                   - 'signature_blocks')
     || jsonb_build_object('fields', (
          select coalesce(jsonb_agg(f order by f ->> 'kind', f ->> 'system_key', f -> 'label' ->> 'ca', f ->> 'sort_order'), '[]'::jsonb)
            from jsonb_array_elements(p_doc -> 'fields') f));
-  body text := stable::text || chr(10) || (p_doc -> 'placements')::text;
+  -- Blocks are ordered by their screen's id, which an import renews, so they
+  -- are compared as a set like the placements (RAPP-690).
+  body text := stable::text || chr(10) || (p_doc -> 'placements')::text
+    || chr(10) || coalesce(p_doc -> 'signature_blocks', '[]'::jsonb)::text;
   found_id text;
   position integer := 0;
   result jsonb;
@@ -88,7 +92,10 @@ begin
   result := split_part(body, chr(10), 1)::jsonb;
   return result || jsonb_build_object('placements', (
     select coalesce(jsonb_agg(p order by p::text), '[]'::jsonb)
-      from jsonb_array_elements(split_part(body, chr(10), 2)::jsonb) p));
+      from jsonb_array_elements(split_part(body, chr(10), 2)::jsonb) p),
+    'signature_blocks', (
+    select coalesce(jsonb_agg(b order by b::text), '[]'::jsonb)
+      from jsonb_array_elements(split_part(body, chr(10), 3)::jsonb) b));
 end;
 $$;
 grant execute on function pg_temp.normalized(jsonb) to authenticated;
@@ -250,7 +257,8 @@ select is(
   'no test fixture season'
 );
 select ok(
-  (select jsonb_array_length(doc -> 'screens') = 5
+  -- Six screens: the seed's archived one holds the seeded signature block (RAPP-690).
+  (select jsonb_array_length(doc -> 'screens') = 6
           and (select count(*) from jsonb_array_elements(doc -> 'fields') f where f ->> 'kind' = 'custom') = 20
           and not exists (select 1 from jsonb_array_elements(doc -> 'screens') s
                            where s ? 'questions' or s ? 'builtin_screen')
@@ -297,7 +305,7 @@ select throws_ok(
 );
 select ok(
   (select (p ->> 'can_import')::boolean and p -> 'blockers' = '[]'::jsonb and p ->> 'problem' is null
-          and (p -> 'counts' ->> 'questions')::integer = 20 and (p -> 'counts' ->> 'screens')::integer = 5
+          and (p -> 'counts' ->> 'questions')::integer = 20 and (p -> 'counts' ->> 'screens')::integer = 6
           and p -> 'legal' -> 'app_terms' ->> 'source' = 'draft'
           and p -> 'legal' -> 'authorization' ->> 'source' = 'draft'
           and p -> 'warnings' @> '[{"code": "legal_drafts"}]'
@@ -329,7 +337,8 @@ select results_eq(
   $$ select b.surface, b.screen_key = s.id::text, b.body, b.sort_order
        from public.form_blocks b
        left join public.intake_screens s on s.org_id = b.org_id and s.title ->> 'ca' = 'Totes les preguntes'
-      where b.org_id = '5eed0000-0000-4000-8000-0000000006a0' order by b.surface $$,
+      where b.org_id = '5eed0000-0000-4000-8000-0000000006a0'
+        and b.body ->> 'ca' <> 'Accepto les normes de convivència.' order by b.surface $$,
   $$ values ('entity_form', null::boolean, '{"ca": "La jugadora hi està d''acord"}'::jsonb, 0),
             ('onboarding', true, '{"ca": "Autoritzo el transport", "ar": "أوافق على النقل"}'::jsonb, 2) $$,
   'the signature blocks arrive on their new screen and form, text and place kept (RAPP-690)'

@@ -1479,6 +1479,78 @@ export function buildWalkInSigning(overrides: Partial<WalkInSigningRow> = {}): W
   };
 }
 
+export type FormBlockRow = Database['public']['Tables']['form_blocks']['Row'];
+export type FormSignatureRow = Database['public']['Tables']['form_signatures']['Row'];
+export type WalkInFormSignatureRow = Database['public']['Tables']['walk_in_form_signatures']['Row'];
+
+const SEED_SIGNATURE_BLOCK_ID = '5eed0000-0000-4000-8090-000000000002';
+const SEED_SIGNATURE_SCREEN_ID = '5eed0000-0000-4000-8090-000000000001';
+const SEED_STROKES = [
+  [
+    [120, 620],
+    [200, 480],
+    [290, 560],
+  ],
+];
+
+/** A signature block on the seeded archived Onboarding screen (RAPP-690). */
+export function buildFormBlock(overrides: Partial<FormBlockRow> = {}): FormBlockRow {
+  return {
+    id: SEED_SIGNATURE_BLOCK_ID,
+    org_id: SEED_ORGANIZATION_ID,
+    surface: 'onboarding',
+    screen_key: SEED_SIGNATURE_SCREEN_ID,
+    kind: 'signature',
+    body: { ca: 'Accepto les normes de convivència.' },
+    sort_order: 0,
+    created_at: FIXTURE_TIMESTAMP,
+    updated_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+/** Amina's signature of the seeded block, on her phone (RAPP-690). */
+export function buildFormSignature(overrides: Partial<FormSignatureRow> = {}): FormSignatureRow {
+  return {
+    id: '5eed0000-0000-4000-8090-000000000003',
+    org_id: SEED_ORGANIZATION_ID,
+    profile_id: seedUserId(11),
+    referral_id: null,
+    surface: 'wizard',
+    block_id: SEED_SIGNATURE_BLOCK_ID,
+    screen_key: SEED_SIGNATURE_SCREEN_ID,
+    body: 'Accepto les normes de convivència.',
+    language: 'ca',
+    signer_kind: 'player',
+    signer_user_id: seedUserId(11),
+    signer_name: 'Amina Al-Hassan',
+    strokes: SEED_STROKES,
+    signed_at: FIXTURE_TIMESTAMP,
+    signed_on_tablet: false,
+    witnessed_by: null,
+    ...overrides,
+  };
+}
+
+/** The walk-in's pending tablet signature of the seeded block (RAPP-691). */
+export function buildWalkInFormSignature(
+  overrides: Partial<WalkInFormSignatureRow> = {},
+): WalkInFormSignatureRow {
+  return {
+    id: '5eed0000-0000-4000-8090-000000000004',
+    walk_in_id: '5eed0000-0000-4000-8043-000000000001',
+    org_id: SEED_ORGANIZATION_ID,
+    block_id: SEED_SIGNATURE_BLOCK_ID,
+    screen_key: SEED_SIGNATURE_SCREEN_ID,
+    body: 'Accepto les normes de convivència.',
+    language: 'ca',
+    strokes: SEED_STROKES,
+    signed_at: FIXTURE_TIMESTAMP,
+    witnessed_by: seedUserId(2),
+    ...overrides,
+  };
+}
+
 type PublicRow<Name extends keyof Database['public']['Tables']> =
   Database['public']['Tables'][Name]['Row'];
 export type IntakeScreenRow = PublicRow<'intake_screens'>;

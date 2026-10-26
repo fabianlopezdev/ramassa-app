@@ -199,7 +199,10 @@ select is(
   (select count(*)::integer from public.participant_form_signatures('5eed0000-0000-4000-8000-0000000006c0')),
   2, 'staff with participants.view_personal read her signatures, the entity''s included');
 select is(
-  (select count(*)::integer from public.form_signatures), 2, 'and the rows themselves');
+  (select count(*)::integer from public.form_signatures
+    where profile_id = '5eed0000-0000-4000-8000-0000000006c0'
+       or referral_id = (select id from run where label = 'referral')),
+  2, 'and the rows themselves');
 
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000097", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select throws_ok(

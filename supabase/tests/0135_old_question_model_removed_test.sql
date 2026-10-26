@@ -185,7 +185,7 @@ select 'builtin before', jsonb_agg(jsonb_build_object('key', f.system_key, 'surf
 -- gate, a conditional detail, an entity-only one, one asked every season), a
 -- holder of the sizes screen, and an archived screen.
 insert into run (label, doc)
-select 'v1', (doc - 'sections' - 'fields' - 'placements') || jsonb_build_object(
+select 'v1', (doc - 'sections' - 'fields' - 'placements' - 'signature_blocks') || jsonb_build_object(
   'schema_version', 1,
   'flow_order', jsonb_build_array('identity', 'custom:5eed0000-0000-4000-8135-000000000001',
                                   'custom:5eed0000-0000-4000-8135-000000000002'),

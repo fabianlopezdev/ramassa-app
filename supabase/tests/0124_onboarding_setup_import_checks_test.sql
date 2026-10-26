@@ -168,6 +168,7 @@ select ok(
 -- Empty the organization again for the refusals.
 delete from public.intake_screens where org_id = '5eed0000-0000-4000-8000-0000000006c0';
 delete from public.profile_fields where org_id = '5eed0000-0000-4000-8000-0000000006c0' and kind = 'custom';
+delete from public.form_blocks where org_id = '5eed0000-0000-4000-8000-0000000006c0';
 -- The app questions' wording and required flags live on their placements (RAPP-666).
 update public.field_placements p
    set label_override = null, help_override = null

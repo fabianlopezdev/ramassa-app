@@ -53,7 +53,7 @@ select ok(
 select is(
   (select changes from public.audit_log
     where action = 'profile.anonymize' and target_id = '5eed0000-0000-4000-8000-000000000011'),
-  '{"fields_cleared": true, "notes_deleted": true, "answers_deleted": true, "birth_year_kept": true}'::jsonb,
+  '{"fields_cleared": true, "notes_deleted": true, "answers_deleted": true, "birth_year_kept": true, "signatures_deleted": true}'::jsonb,
   'the audit row says what went, never a value');
 
 -- 2. A date of birth that is no longer a date ------------------------------------------------------------------
