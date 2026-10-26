@@ -52,6 +52,7 @@ import {
   buildStockAlert,
   buildTestPlayer,
   buildTypedProfileField,
+  buildWalkInConsent,
   buildWalkInSigning,
   SEED_CUSTOM_QUESTION_ID,
 } from './factories';
@@ -467,6 +468,7 @@ describe('the authorization factories (RAPP-304)', () => {
     expect(buildConsentEvent().form).toBe('authorization');
     expect(buildConsent().system_key).toBeNull();
     expect(buildConsentPlacement().consent_id).toBe(buildConsent().id);
+    expect(buildWalkInConsent().consent_id).toBe(buildConsent().id);
     // The factory version is a valid editable version (RAPP-614).
     expect(authorizationContentSchema.safeParse(version.content).success).toBe(true);
   });

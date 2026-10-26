@@ -2999,3 +2999,15 @@ select '5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-8000-00000000
  where not exists (select 1 from public.consent_events x
                     where x.profile_id = '5eed0000-0000-4000-8000-000000000011'
                       and x.consent_key = 'fotos_de_partit');
+
+-- The walk-in Salma's tick of the team's consent on the tablet (RAPP-699), waiting
+-- with her signing until staff confirm her.
+insert into public.walk_in_consents
+  (id, walk_in_id, org_id, consent_id, consent_key, granted, required, screen_key, wording, language,
+   decided_at, recorded_by)
+values ('5eed0000-0000-4000-8099-000000000003', '5eed0000-0000-4000-8043-000000000001',
+        '5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-8099-000000000001', 'fotos_de_partit',
+        true, false, '5eed0000-0000-4000-8090-000000000001',
+        'أوافق على أن يشارك الفريق صور المباريات في مجموعة الفريق.', 'ar',
+        timestamptz '2026-09-15 19:12:00+02', '5eed0000-0000-4000-8000-000000000002')
+on conflict (id) do nothing;

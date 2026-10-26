@@ -85,6 +85,7 @@ export type AuthorizationSignatureRow =
 export type ConsentEventRow = Database['public']['Tables']['consent_events']['Row'];
 export type ConsentRow = Database['public']['Tables']['consents']['Row'];
 export type ConsentPlacementRow = Database['public']['Tables']['consent_placements']['Row'];
+export type WalkInConsentRow = Database['public']['Tables']['walk_in_consents']['Row'];
 export type CustomQuestionStateRow = Database['public']['Tables']['custom_question_states']['Row'];
 export type ServiceCategoryRow = Database['public']['Tables']['service_categories']['Row'];
 export type ServiceRow = Database['public']['Tables']['services']['Row'];
@@ -1487,6 +1488,25 @@ export function buildConsentPlacement(
     required: false,
     created_at: FIXTURE_TIMESTAMP,
     updated_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+/** The walk-in Salma's tick of the seeded consent on the tablet (RAPP-699). */
+export function buildWalkInConsent(overrides: Partial<WalkInConsentRow> = {}): WalkInConsentRow {
+  return {
+    id: '5eed0000-0000-4000-8099-000000000003',
+    walk_in_id: '5eed0000-0000-4000-8043-000000000001',
+    org_id: SEED_ORGANIZATION_ID,
+    consent_id: SEED_STAFF_CONSENT_ID,
+    consent_key: 'fotos_de_partit',
+    granted: true,
+    required: false,
+    screen_key: '5eed0000-0000-4000-8090-000000000001',
+    wording: 'أوافق على أن يشارك الفريق صور المباريات في مجموعة الفريق.',
+    language: 'ar',
+    decided_at: FIXTURE_TIMESTAMP,
+    recorded_by: seedUserId(2),
     ...overrides,
   };
 }

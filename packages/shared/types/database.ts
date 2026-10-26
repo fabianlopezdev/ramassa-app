@@ -5236,6 +5236,80 @@ export type Database = {
           },
         ];
       };
+      walk_in_consents: {
+        Row: {
+          consent_id: string;
+          consent_key: string;
+          decided_at: string;
+          granted: boolean;
+          id: string;
+          language: string;
+          org_id: string;
+          recorded_by: string | null;
+          required: boolean;
+          screen_key: string;
+          walk_in_id: string;
+          wording: string;
+        };
+        Insert: {
+          consent_id: string;
+          consent_key: string;
+          decided_at: string;
+          granted: boolean;
+          id?: string;
+          language: string;
+          org_id: string;
+          recorded_by?: string | null;
+          required: boolean;
+          screen_key: string;
+          walk_in_id: string;
+          wording: string;
+        };
+        Update: {
+          consent_id?: string;
+          consent_key?: string;
+          decided_at?: string;
+          granted?: boolean;
+          id?: string;
+          language?: string;
+          org_id?: string;
+          recorded_by?: string | null;
+          required?: boolean;
+          screen_key?: string;
+          walk_in_id?: string;
+          wording?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'walk_in_consents_consent_id_fkey';
+            columns: ['consent_id'];
+            isOneToOne: false;
+            referencedRelation: 'consents';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'walk_in_consents_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'walk_in_consents_recorded_by_fkey';
+            columns: ['recorded_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'walk_in_consents_walk_in_id_fkey';
+            columns: ['walk_in_id'];
+            isOneToOne: false;
+            referencedRelation: 'walk_in_signings';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       walk_in_form_signatures: {
         Row: {
           block_id: string | null;
@@ -7457,6 +7531,7 @@ export type Database = {
       submit_walk_in_signing: {
         Args: {
           p_block_signatures?: Json;
+          p_consents?: Json;
           p_first_name: string;
           p_id: string;
           p_last_name: string;
