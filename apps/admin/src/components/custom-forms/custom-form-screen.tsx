@@ -2,11 +2,12 @@
  * One screen of a form the team created (RAPP-700), opened from its card:
  * the shared screen editor (`StaffScreenEditor`) with its title, intro and the
  * shared fields section, beside her phone. Its fields, consents and signature
- * blocks are placed with the same picker as Onboarding; a team form holds
- * fields only. Deleting archives the screen, like an Onboarding screen.
+ * blocks are placed with the same picker as Onboarding. Every change is the
+ * form's draft (RAPP-701): players see it with the next Publica. Deleting
+ * archives the screen, like an Onboarding screen.
  */
 
-import { answeredCountOf, useCustomFormSaveKind } from '@/components/custom-forms/custom-form-page';
+import { DRAFT_SAVE } from '@/components/custom-forms/custom-form-page';
 import { Page } from '@/components/layout/page';
 import { placedPhoneQuestions } from '@/components/onboarding/screen-content';
 import {
@@ -92,13 +93,13 @@ function FormScreenBody({
   readonly number: number;
 }) {
   const catalog = data.intakeCatalog;
-  const saveKind = useCustomFormSaveKind(form, answeredCountOf(data));
   return (
     <StaffScreenEditor
       screen={screen}
       number={number}
       total={form.screens.length}
-      saveKind={saveKind}
+      // A draft: players see it with the next Publica (RAPP-701).
+      saveKind={DRAFT_SAVE}
       phoneQuestions={(language, wording) =>
         placedPhoneQuestions(catalog, screen.id, language, wording, 'custom_form')
       }

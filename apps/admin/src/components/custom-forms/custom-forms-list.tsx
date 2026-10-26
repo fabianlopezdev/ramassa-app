@@ -1,7 +1,7 @@
 /**
  * Formularis de l'equip (RAPP-700): every form the team created, with Nou
- * formulari. Nou formulari asks the name and the three choices, creates the
- * form and opens its board. Each row opens its form.
+ * formulari. Nou formulari asks the name and the choices (RAPP-701), creates
+ * the form as a draft and opens its board. Each row opens its form.
  */
 
 import { FormStatusBadge } from '@/components/custom-forms/custom-form-page';
@@ -61,9 +61,9 @@ export function CustomFormsList({ data }: { readonly data: CustomFormsData }) {
                     </span>
                     <span className="truncate text-start text-xs text-muted-foreground">
                       {[
-                        t(`customForms.filler.${form.filledBy}`),
                         t(`customForms.level.${form.mandatory}`),
-                        t(`customForms.appearance.${form.appears}`),
+                        t(`customForms.audienceOption.${form.audience}`),
+                        ...(form.repeatsEachSeason ? [t('customForms.repeatsYes')] : []),
                       ].join(' · ')}
                     </span>
                   </span>
@@ -84,7 +84,8 @@ const NEW_FORM: CustomFormChoices = {
   filledBy: 'player',
   mandatory: 'optional',
   deadline: null,
-  appears: 'once',
+  audience: 'all',
+  repeatsEachSeason: false,
 };
 
 function NewFormDialog({

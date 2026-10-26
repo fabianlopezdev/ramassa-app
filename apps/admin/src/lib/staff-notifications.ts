@@ -22,6 +22,8 @@ const STAFF_NOTIFICATION_EVENTS = [
   'forum_report',
   'gallery_report',
   'field_created',
+  // A repeating form to renew before the next season (RAPP-701).
+  'form_renewal',
 ] as const;
 type StaffNotificationEvent = (typeof STAFF_NOTIFICATION_EVENTS)[number];
 

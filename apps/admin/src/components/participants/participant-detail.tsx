@@ -61,7 +61,6 @@ import {
 } from '@ramassa/shared/intake';
 import {
   choiceChanges,
-  completeParticipantCustomForm,
   deleteIntakePreset,
   EMPTY_INTAKE_CATALOG,
   EMPTY_PROFILE_LAYOUT,
@@ -422,10 +421,6 @@ export function ParticipantDetail({
         }}
         onOpenFile={uploadsAvailable(mediaWorkerUrl) ? openAnswerFile : undefined}
         customForms={customForms}
-        onCompleteCustomForm={async (responseId) => {
-          await completeParticipantCustomForm(supabase, responseId);
-          await router.invalidate();
-        }}
       />
 
       {teamTools && permissions.has('participants.view_personal') ? (

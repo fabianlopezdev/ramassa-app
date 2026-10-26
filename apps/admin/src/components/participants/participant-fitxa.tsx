@@ -61,10 +61,8 @@ export interface ParticipantFitxaProps {
   readonly onSavePreset: (name: string, states: QuestionStates) => Promise<void>;
   readonly onDeletePreset: (preset: IntakePreset) => void;
   readonly onOpenFile?: (objectKey: string) => Promise<void>;
-  /** Her asks of the forms the team created (RAPP-700); a team form is filled in here. */
+  /** Her asks of the forms the team created (RAPP-700). */
   readonly customForms?: readonly ParticipantCustomForm[];
-  /** Closes a team form; throws when a required answer is missing. */
-  readonly onCompleteCustomForm?: (responseId: string) => Promise<void>;
 }
 
 export function ParticipantFitxa({
@@ -82,7 +80,6 @@ export function ParticipantFitxa({
   onDeletePreset,
   onOpenFile,
   customForms = [],
-  onCompleteCustomForm,
 }: ParticipantFitxaProps) {
   const { t, i18n } = useTranslation(['participants', 'onboarding', 'profile', 'common']);
   const locale = i18n.resolvedLanguage ?? 'ca';
@@ -178,14 +175,7 @@ export function ParticipantFitxa({
         <ProfileSection key={section.id} section={section} fields={fields} context={context} />
       ))}
 
-      {customForms.length === 0 || onCompleteCustomForm === undefined ? null : (
-        <ParticipantCustomForms
-          forms={customForms}
-          catalog={catalog}
-          context={context}
-          onComplete={onCompleteCustomForm}
-        />
-      )}
+      <ParticipantCustomForms forms={customForms} />
 
       <EditorSection title={t('participants:fitxa.accountTitle')} isFlush testId="fitxa-account">
         <ul className="flex flex-col divide-y">

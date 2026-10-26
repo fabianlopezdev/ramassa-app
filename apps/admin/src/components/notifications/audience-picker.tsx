@@ -35,15 +35,26 @@ export function AudiencePicker({
   groups,
   options,
   onChange,
+  players,
 }: {
   readonly idPrefix: string;
   readonly audience: NotificationAudience | null;
   readonly groups: readonly CustomNotificationGroup[];
   readonly options: NotificationAudienceOptions;
   readonly onChange: (audience: NotificationAudience | null) => void;
+  /**
+   * Picking players one by one too (RAPP-701): a form the team created is for
+   * the players picked, by group or one by one.
+   */
+  readonly players?: {
+    readonly chosen: readonly string[];
+    readonly onChange: (participantIds: readonly string[] | null) => void;
+  };
 }) {
   const { t } = useTranslation('notifications');
-  const [kind, setKind] = useState<'' | NotificationAudienceKind>(audience?.kind ?? '');
+  const [kind, setKind] = useState<'' | NotificationAudienceKind | 'players'>(
+    audience?.kind ?? (players !== undefined && players.chosen.length > 0 ? 'players' : ''),
+  );
   const value = audienceValue(audience);
   const choices =
     kind === 'interest'
@@ -66,13 +77,20 @@ export function AudiencePicker({
           data-testid={`${idPrefix}-audience-kind`}
           value={kind}
           onChange={(event) => {
-            const nextKind = event.target.value as '' | NotificationAudienceKind;
+            const nextKind = event.target.value as '' | NotificationAudienceKind | 'players';
             setKind(nextKind);
+            if (nextKind === 'players') {
+              onChange(null);
+              players?.onChange(players.chosen);
+              return;
+            }
+            players?.onChange(null);
             onChange(audienceFromSelection(nextKind, ''));
           }}
           className="min-h-11 rounded-lg border border-neutral-300 bg-white px-3"
         >
           <option value="">{t('selectOption')}</option>
+          {players === undefined ? null : <option value="players">{t('audiencePlayers')}</option>}
           {NOTIFICATION_AUDIENCE_KINDS.map((item) => (
             <option key={item} value={item}>
               {t(
@@ -82,7 +100,34 @@ export function AudiencePicker({
           ))}
         </select>
       </label>
-      {kind !== '' && kind !== 'all' ? (
+      {kind === 'players' && players !== undefined ? (
+        <fieldset
+          className="grid max-h-64 gap-1 overflow-y-auto rounded-lg border border-neutral-300 p-3"
+          data-testid={`${idPrefix}-audience-players`}
+        >
+          <legend className="sr-only">{t('audiencePlayers')}</legend>
+          {options.participants.map((participant) => {
+            const isChosen = players.chosen.includes(participant.id);
+            return (
+              <label key={participant.id} className="flex min-h-9 items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={isChosen}
+                  onChange={() =>
+                    players.onChange(
+                      isChosen
+                        ? players.chosen.filter((id) => id !== participant.id)
+                        : [...players.chosen, participant.id],
+                    )
+                  }
+                />
+                {participant.fullName}
+              </label>
+            );
+          })}
+        </fieldset>
+      ) : null}
+      {kind !== '' && kind !== 'all' && kind !== 'players' ? (
         <select
           id={`${idPrefix}-audience-value`}
           name={`${idPrefix}-audience-value`}

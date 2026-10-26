@@ -27,7 +27,6 @@ import {
   missingLevel,
   type FieldAnswers,
 } from '@/lib/participant-fitxa';
-import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { IntakeQuestionState } from '@ramassa/shared/intake';
 import {
@@ -67,26 +66,18 @@ export function ProfileSection({
   section,
   fields,
   context,
-  title,
-  footer,
-  testId,
 }: {
   readonly section: Section;
   readonly fields: readonly ProfileField[];
   readonly context: FitxaContext;
-  /** In place of the section's title: a form the team fills in on her page (RAPP-700). */
-  readonly title?: ReactNode;
-  readonly footer?: ReactNode;
-  readonly testId?: string;
 }) {
   const { i18n } = useTranslation();
   const language = (i18n.resolvedLanguage ?? 'ca') as LanguageCode;
   return (
     <EditorSection
-      title={title ?? textIn(section.title, language)}
+      title={textIn(section.title, language)}
       isFlush
-      footer={footer}
-      testId={testId ?? `fitxa-section-${section.key}`}
+      testId={`fitxa-section-${section.key}`}
     >
       <ul className="flex flex-col divide-y">
         {fields.map((field) => (

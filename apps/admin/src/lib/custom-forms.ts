@@ -1,9 +1,9 @@
 /**
  * What the pages of the forms the team creates load (RAPP-700): the catalog
- * (the forms, their screens and what each screen asks), the seasons for the
- * responses' season names, and what this person may do. The people who
- * design Onboarding build forms; the team who reads the participants sees who
- * answered (participants.view) and sends a form (participants.view_personal).
+ * (the forms, their screens and what each screen asks), the seasons a
+ * repeating form is published to, and what this person may do. The people who
+ * design Onboarding build and publish forms; the team who reads the
+ * participants sees who answered (participants.view).
  *
  * A person who may do none of it gets nothing loaded: the route guard sends
  * her away, and the database would refuse her anyway.
@@ -17,18 +17,23 @@ import {
   type CustomFormResponse,
 } from '@ramassa/shared/intake-builder';
 import { canDesignOnboarding, fetchMyPermissions } from '@ramassa/shared/permissions';
+import { fetchSeasons } from '@ramassa/shared/seasons';
 
 export async function loadCustomForms() {
   const permissions = await fetchMyPermissions(supabase);
   const access = {
     canDesign: canDesignOnboarding(permissions),
     canReadResponses: permissions.has('participants.view'),
-    canSend: permissions.has('participants.view_personal'),
   };
   if (!access.canDesign && !access.canReadResponses) {
-    return { intakeCatalog: EMPTY_INTAKE_CATALOG, ...access };
+    return { intakeCatalog: EMPTY_INTAKE_CATALOG, seasons: [], ...access };
   }
-  return { intakeCatalog: await fetchIntakeCatalog(supabase), ...access };
+  // The seasons a repeating form is published to (RAPP-701).
+  const [intakeCatalog, seasons] = await Promise.all([
+    fetchIntakeCatalog(supabase),
+    fetchSeasons(supabase),
+  ]);
+  return { intakeCatalog, seasons, ...access };
 }
 
 export type CustomFormsData = Awaited<ReturnType<typeof loadCustomForms>>;

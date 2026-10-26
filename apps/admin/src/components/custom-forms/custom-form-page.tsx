@@ -1,18 +1,19 @@
 /**
- * One form the team created (RAPP-700): its board of screens, its settings
- * and its responses, in tabs.
+ * One form the team created (RAPP-700, RAPP-701): its board of screens, its
+ * settings and its responses, in tabs.
  *
  *   - Pantalles: Onboarding's own board (`FormBoard`), each card opening its
  *     screen in the shared screen editor, with the add card after the last.
- *   - Configuració: the name and the three choices. Once the form started,
- *     Desa asks Correcció or Nova versió (the shared dialog); a Nova versió
- *     asks everyone who answered again.
+ *   - Configuració: the name and the choices, saved as a draft (Desa
+ *     l'esborrany), and the players it is for when the team picks them.
  *   - Respostes: who answered, who is pending and the deadline, each row
  *     opening her page.
  *
- * A form that appears once or every season starts with Activa; a sent form
- * starts with its first Envia, which picks the players with the notification
- * audience picker. Arxiva takes it off every phone.
+ * Every save is a draft: players see the version published last. Publica
+ * makes the draft a version and asks its players; once a version exists it
+ * asks Correcció or Nova versió (the shared Desa dialog), and a repeating
+ * form is published to a season, the current one or a future one, as the
+ * season authorization is. Arxiva takes it off every phone.
  */
 
 import { choicesProblem, FormChoicesFields } from '@/components/custom-forms/form-choices';
@@ -26,7 +27,13 @@ import { placedPhoneQuestions, staffScreenContent } from '@/components/onboardin
 import { useReload } from '@/components/settings/onboarding-design-sections';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   Table,
   TableBody,
@@ -45,15 +52,15 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import {
   archiveCustomForm,
-  newCustomFormVersion,
   publishCustomForm,
   reorderCustomFormScreens,
   saveCustomForm,
   saveCustomFormScreen,
-  sendCustomForm,
+  setCustomFormRecipients,
   textIn,
   type CustomForm,
   type CustomFormChoices,
+  type CustomFormRecipients,
   type CustomFormResponse,
 } from '@ramassa/shared/intake-builder';
 import {
@@ -80,36 +87,20 @@ export function FormStatusBadge({
   );
 }
 
-/** Desa on a form (RAPP-700): once it started, Correcció or Nova versió; a Nova versió asks again. */
-export function useCustomFormSaveKind(form: CustomForm, answeredCount: number | null) {
-  const { t } = useTranslation('settings');
-  const saveKind = useSaveKind({
-    hasAnswers: form.publishedAt !== null,
-    newVersionNote:
-      answeredCount === null ? null : t('saveDialog.newVersionCount', { count: answeredCount }),
-  });
-  return {
-    dialog: saveKind.dialog,
-    request: (save: () => Promise<boolean>) =>
-      saveKind.request(async (kind) => {
-        const isSaved = await save();
-        if (!isSaved || kind !== 'new') return;
-        try {
-          await newCustomFormVersion(supabase, form.id);
-          toast.success(t('customForms.newVersionSaved'));
-        } catch {
-          toast.error(t('customForms.actionFailed'));
-        }
-      }),
-  };
-}
-
 /** How many answered a form, for the Nova versió note; null when the reader cannot see them. */
-export function answeredCountOf(data: CustomFormData): number | null {
+function answeredCountOf(data: CustomFormData): number | null {
   return data.canReadResponses
     ? data.responses.filter((response) => response.status !== 'pending').length
     : null;
 }
+
+/** A screen of a form saves its draft at once: players see it with the next Publica. */
+export const DRAFT_SAVE = {
+  dialog: null,
+  request: async (save: () => Promise<boolean>) => {
+    await save();
+  },
+} as const;
 
 export function CustomFormPage({
   data,
@@ -138,10 +129,12 @@ export function CustomFormPage({
               <span className="flex flex-wrap items-center gap-2">
                 <FormStatusBadge form={form} />
                 {[
-                  t(`customForms.filler.${form.filledBy}`),
                   t(`customForms.level.${form.mandatory}`),
-                  t(`customForms.appearance.${form.appears}`),
-                  t('customForms.versionOf', { version: form.version }),
+                  t(`customForms.audienceOption.${form.audience}`),
+                  ...(form.repeatsEachSeason ? [t('customForms.repeatsYes')] : []),
+                  ...(form.publishedAt === null
+                    ? []
+                    : [t('customForms.versionOf', { version: form.version })]),
                 ].join(' · ')}
               </span>
             )
@@ -150,7 +143,7 @@ export function CustomFormPage({
         />
       </div>
       {form === undefined ? null : (
-        // Keyed by the form's version: a save starts from what the database holds.
+        // Keyed by the form's version: a Publica starts from what the database holds.
         <Tabs key={`${form.id}-${form.version}`} defaultValue={firstTab} className="gap-6">
           <TabsList className="max-w-full overflow-x-auto" variant="line">
             {data.canDesign ? (
@@ -170,8 +163,9 @@ export function CustomFormPage({
               <TabsContent value="screens">
                 <FormScreensBoard data={data} form={form} />
               </TabsContent>
-              <TabsContent value="settings">
-                <FormSettings data={data} form={form} />
+              <TabsContent value="settings" className="flex flex-col gap-6">
+                <FormSettings form={form} />
+                {form.audience === 'chosen' ? <FormRecipients form={form} /> : null}
               </TabsContent>
             </>
           ) : null}
@@ -190,8 +184,20 @@ function FormActions({ data, form }: { readonly data: CustomFormData; readonly f
   const { t } = useTranslation('settings');
   const reload = useReload();
   const [isBusy, setIsBusy] = useState(false);
-  const [isSending, setIsSending] = useState(false);
-  const hasScreens = form.screens.length > 0;
+  // A repeating form is published to the current season or a future one.
+  const current = data.seasons.find((season) => season.isCurrent);
+  const targets = data.seasons.filter(
+    (season) => season.isCurrent || current === undefined || season.startsOn > current.startsOn,
+  );
+  const [seasonId, setSeasonId] = useState<string | null>(current?.id ?? targets[0]?.id ?? null);
+  const hasVersion = form.versions.some(
+    (version) => !form.repeatsEachSeason || version.seasonId === seasonId,
+  );
+  const answered = answeredCountOf(data);
+  const saveKind = useSaveKind({
+    hasAnswers: hasVersion,
+    newVersionNote: answered === null ? null : t('saveDialog.newVersionCount', { count: answered }),
+  });
 
   async function run(action: () => Promise<void>) {
     setIsBusy(true);
@@ -207,42 +213,47 @@ function FormActions({ data, form }: { readonly data: CustomFormData; readonly f
 
   return (
     <>
-      {data.canDesign &&
-      form.appears !== 'sent' &&
-      form.publishedAt === null &&
-      !form.isArchived ? (
+      {saveKind.dialog}
+      {data.canDesign && form.repeatsEachSeason && !form.isArchived ? (
+        <Select value={seasonId ?? ''} onValueChange={setSeasonId} disabled={targets.length === 0}>
+          <SelectTrigger
+            className="w-48"
+            aria-label={t('customForms.publishSeason')}
+            data-testid="custom-form-publish-season"
+          >
+            <SelectValue placeholder={t('customForms.publishSeason')} />
+          </SelectTrigger>
+          <SelectContent>
+            {targets.map((season) => (
+              <SelectItem key={season.id} value={season.id}>
+                {season.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      ) : null}
+      {data.canDesign && !form.isArchived ? (
         <Button
           type="button"
-          disabled={isBusy}
+          disabled={isBusy || (form.repeatsEachSeason && seasonId === null)}
           onClick={() => {
-            if (!hasScreens) {
+            if (form.screens.length === 0) {
               toast.error(t('customForms.needsScreen'));
               return;
             }
-            void run(async () => {
-              const count = await publishCustomForm(supabase, form.id);
-              toast.success(t('customForms.published', { count }));
-            });
+            void saveKind.request((kind) =>
+              run(async () => {
+                const count = await publishCustomForm(supabase, form.id, {
+                  isCorrection: kind === 'correction',
+                  seasonId: form.repeatsEachSeason ? seasonId : null,
+                });
+                toast.success(t('customForms.published', { count }));
+              }),
+            );
           }}
           data-testid="custom-form-publish"
         >
           {t('customForms.publish')}
-        </Button>
-      ) : null}
-      {data.canSend && form.appears === 'sent' && !form.isArchived ? (
-        <Button
-          type="button"
-          disabled={isBusy}
-          onClick={() => {
-            if (!hasScreens) {
-              toast.error(t('customForms.needsScreen'));
-              return;
-            }
-            setIsSending(true);
-          }}
-          data-testid="custom-form-send"
-        >
-          {t('customForms.send')}
         </Button>
       ) : null}
       {data.canDesign ? (
@@ -255,9 +266,6 @@ function FormActions({ data, form }: { readonly data: CustomFormData; readonly f
         >
           {form.isArchived ? t('customForms.unarchive') : t('customForms.archive')}
         </Button>
-      ) : null}
-      {data.canSend ? (
-        <SendFormDialog form={form} isOpen={isSending} onOpenChange={setIsSending} />
       ) : null}
     </>
   );
@@ -330,13 +338,7 @@ function FormScreensBoard({
 
 // Configuració ----------------------------------------------------------------------------------------
 
-function FormSettings({
-  data,
-  form,
-}: {
-  readonly data: CustomFormData;
-  readonly form: CustomForm;
-}) {
+function FormSettings({ form }: { readonly form: CustomForm }) {
   const { t } = useTranslation('settings');
   const reload = useReload();
   const [choices, setChoices] = useState<CustomFormChoices>({
@@ -344,22 +346,23 @@ function FormSettings({
     filledBy: form.filledBy,
     mandatory: form.mandatory,
     deadline: form.deadline,
-    appears: form.appears,
+    audience: form.audience,
+    repeatsEachSeason: form.repeatsEachSeason,
   });
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const saveKind = useCustomFormSaveKind(form, answeredCountOf(data));
 
-  async function store(): Promise<boolean> {
+  async function saveDraft() {
+    const problem = choicesProblem(choices);
+    setError(problem === null ? null : t(problem));
+    if (problem !== null) return;
     setIsSaving(true);
     try {
       await saveCustomForm(supabase, form.id, choices);
       await reload();
-      toast.success(t('customForms.saved'));
-      return true;
+      toast.success(t('customForms.draftSaved'));
     } catch {
       toast.error(t('customForms.actionFailed'));
-      return false;
     } finally {
       setIsSaving(false);
     }
@@ -373,26 +376,100 @@ function FormSettings({
         <Button
           type="button"
           disabled={isSaving}
-          onClick={() => {
-            const problem = choicesProblem(choices);
-            setError(problem === null ? null : t(problem));
-            if (problem === null) void saveKind.request(store);
-          }}
+          onClick={() => void saveDraft()}
           data-testid="custom-form-settings-save"
         >
-          {t('customForms.save')}
+          {t('customForms.saveDraft')}
         </Button>
       }
     >
-      {saveKind.dialog}
       <FormChoicesFields
         choices={choices}
         onChange={setChoices}
         error={error}
         hasLanguages
-        isFillerLocked={form.publishedAt !== null}
-        isAppearanceLocked={form.publishedAt !== null}
+        isRepeatLocked={form.publishedAt !== null}
         idPrefix="form-settings"
+      />
+    </EditorSection>
+  );
+}
+
+/** The players a form is for when the team picks them: one by one or by group. */
+function FormRecipients({ form }: { readonly form: CustomForm }) {
+  const { t } = useTranslation('settings');
+  const reload = useReload();
+  const [audience, setAudience] = useState<NotificationAudience | null>(null);
+  const [players, setPlayers] = useState<readonly string[] | null>(null);
+  const [groups, setGroups] = useState<readonly CustomNotificationGroup[]>([]);
+  const [options, setOptions] = useState<NotificationAudienceOptions>({
+    serviceCategories: [],
+    events: [],
+    entities: [],
+    participants: [],
+  });
+  const [isBusy, setIsBusy] = useState(false);
+  const picked: CustomFormRecipients | null =
+    players !== null ? { kind: 'players', participantIds: players } : audience;
+
+  // The same lists the notifications page picks from.
+  useEffect(() => {
+    const controller = new AbortController();
+    void Promise.all([
+      fetchCustomNotificationGroups(supabase, controller.signal).catch(() => []),
+      fetchNotificationAudienceOptions(supabase, controller.signal),
+    ])
+      .then(([loadedGroups, loadedOptions]) => {
+        setGroups(loadedGroups);
+        setOptions(loadedOptions);
+      })
+      .catch(() => undefined);
+    return () => controller.abort();
+  }, []);
+
+  async function save() {
+    if (picked === null) return;
+    setIsBusy(true);
+    try {
+      const count = await setCustomFormRecipients(supabase, form.id, picked);
+      toast.success(t('customForms.recipientsSaved', { count }));
+      await reload();
+    } catch {
+      toast.error(t('customForms.actionFailed'));
+    } finally {
+      setIsBusy(false);
+    }
+  }
+
+  return (
+    <EditorSection
+      title={
+        <span className="flex flex-wrap items-center gap-x-4 gap-y-1 text-start">
+          <span className="text-base font-semibold">{t('customForms.recipients')}</span>
+          <span className="text-sm text-muted-foreground">
+            {t('customForms.recipientCount', { count: form.recipientCount ?? 0 })}
+          </span>
+        </span>
+      }
+      testId="custom-form-recipients"
+      footer={
+        <Button
+          type="button"
+          disabled={picked === null || isBusy}
+          onClick={() => void save()}
+          data-testid="custom-form-recipients-save"
+        >
+          {t('customForms.saveDraft')}
+        </Button>
+      }
+    >
+      <AudiencePicker
+        idPrefix="custom-form-recipients"
+        audience={audience}
+        groups={groups}
+        options={options}
+        onChange={setAudience}
+        players={{ chosen: players ?? [], onChange: setPlayers }}
       />
     </EditorSection>
   );
@@ -484,90 +561,5 @@ function FormResponses({
         </Table>
       )}
     </EditorSection>
-  );
-}
-
-// Envia -------------------------------------------------------------------------------------------------
-
-function SendFormDialog({
-  form,
-  isOpen,
-  onOpenChange,
-}: {
-  readonly form: CustomForm;
-  readonly isOpen: boolean;
-  readonly onOpenChange: (open: boolean) => void;
-}) {
-  const { t } = useTranslation('settings');
-  const reload = useReload();
-  const [audience, setAudience] = useState<NotificationAudience | null>(null);
-  const [groups, setGroups] = useState<readonly CustomNotificationGroup[]>([]);
-  const [options, setOptions] = useState<NotificationAudienceOptions>({
-    serviceCategories: [],
-    events: [],
-    entities: [],
-    participants: [],
-  });
-  const [isBusy, setIsBusy] = useState(false);
-
-  // The same lists the notifications page picks from, loaded when the dialog opens.
-  useEffect(() => {
-    if (!isOpen) return;
-    const controller = new AbortController();
-    void Promise.all([
-      fetchCustomNotificationGroups(supabase, controller.signal),
-      fetchNotificationAudienceOptions(supabase, controller.signal),
-    ])
-      .then(([loadedGroups, loadedOptions]) => {
-        setGroups(loadedGroups);
-        setOptions(loadedOptions);
-      })
-      .catch(() => undefined);
-    return () => controller.abort();
-  }, [isOpen]);
-
-  async function send() {
-    if (audience === null) return;
-    setIsBusy(true);
-    try {
-      const count = await sendCustomForm(supabase, form.id, audience);
-      toast.success(t('customForms.sent', { count }));
-      onOpenChange(false);
-      setAudience(null);
-      await reload();
-    } catch {
-      toast.error(t('customForms.actionFailed'));
-    } finally {
-      setIsBusy(false);
-    }
-  }
-
-  return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md" data-testid="custom-form-send-dialog">
-        <DialogTitle>{t('customForms.sendTitle')}</DialogTitle>
-        <DialogDescription className="sr-only">{t('customForms.sendTitle')}</DialogDescription>
-        <AudiencePicker
-          idPrefix="custom-form-send"
-          audience={audience}
-          groups={groups}
-          options={options}
-          onChange={setAudience}
-        />
-        <div className="flex justify-end gap-2">
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-            {t('customForms.cancel')}
-          </Button>
-          <Button
-            type="button"
-            disabled={audience === null || isBusy}
-            onClick={() => void send()}
-            data-testid="custom-form-send-confirm"
-          >
-            {t('customForms.send')}
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
   );
 }
