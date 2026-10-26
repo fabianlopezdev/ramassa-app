@@ -498,6 +498,8 @@ const versionRowSchema = z.object({
 
 export interface AuthorizationVersion {
   readonly id: string;
+  /** The season it was published for (RAPP-694). Null for the draft. */
+  readonly seasonId: string | null;
   /** Null for the draft. */
   readonly seasonName: string | null;
   /** Null for the draft. */
@@ -520,6 +522,7 @@ export async function fetchAuthorizationVersions(
     .parse(data ?? [])
     .map((row) => ({
       id: row.id,
+      seasonId: row.season_id,
       seasonName: row.season_name,
       versionNumber: row.version_number,
       content: row.content,
@@ -547,11 +550,19 @@ export async function discardAuthorizationDraft(client: Client): Promise<void> {
 }
 
 /**
- * Publishes the draft for the current season (settings.organization). Every
- * player signs it on her next app open. Returns its number.
+ * Publishes the draft (settings.organization) for a season: the current one
+ * when none is given, or a future one (RAPP-694). Every player signs a current
+ * season's version on her next app open; a future season's version waits
+ * until that season is marked current. Returns its number in its season.
  */
-export async function publishAuthorizationDraft(client: Client): Promise<number> {
-  const { data, error } = await client.rpc('publish_authorization_draft');
+export async function publishAuthorizationDraft(
+  client: Client,
+  seasonId: string | null = null,
+): Promise<number> {
+  const { data, error } = await client.rpc(
+    'publish_authorization_draft',
+    seasonId === null ? {} : { p_season_id: seasonId },
+  );
   if (error) throw new AppError(databaseErrorCode(error.message), { message: error.message });
   return z.number().int().parse(data);
 }

@@ -65,6 +65,25 @@ export async function fetchSeasons(client: Client): Promise<readonly Season[]> {
     }));
 }
 
+/**
+ * The seasons a season authorization can be published to (RAPP-694): the
+ * current one, then the later ones by start date. A season starting before
+ * the current one is past. With no current season, a season starting today
+ * or later. The database checks the same rule (`publish_authorization_draft`).
+ * `today` is an ISO date (YYYY-MM-DD).
+ */
+export function publishableSeasons(seasons: readonly Season[], today: string): readonly Season[] {
+  const current = seasons.find((season) => season.isCurrent);
+  const later = [
+    ...seasons.filter((season) =>
+      current === undefined
+        ? season.startsOn >= today
+        : !season.isCurrent && season.startsOn > current.startsOn,
+    ),
+  ].sort((a, b) => a.startsOn.localeCompare(b.startsOn));
+  return current === undefined ? later : [current, ...later];
+}
+
 export const newSeasonSchema = z.object({
   name: z.string().trim().min(1).max(50),
   startsOn: z.iso.date(),

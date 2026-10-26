@@ -436,6 +436,7 @@ describe('staff', () => {
     });
     const versions = await fetchAuthorizationVersions(client);
     expect(versions.map((row) => row.versionNumber)).toEqual([null, 1]);
+    expect(versions.map((row) => row.seasonId)).toEqual([null, version.season_id]);
     expect(versions[0]?.publishedAt).toBeNull();
   });
 
@@ -495,5 +496,14 @@ describe('staff', () => {
     });
     const published = clientReturning({ data: 2, error: null });
     expect(await publishAuthorizationDraft(published.client)).toBe(2);
+    expect(published.calls).toEqual([['publish_authorization_draft', {}]]);
+  });
+
+  test('a draft is published to a chosen season (RAPP-694)', async () => {
+    const published = clientReturning({ data: 1, error: null });
+    expect(await publishAuthorizationDraft(published.client, 'season-2027')).toBe(1);
+    expect(published.calls).toEqual([
+      ['publish_authorization_draft', { p_season_id: 'season-2027' }],
+    ]);
   });
 });

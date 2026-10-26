@@ -6727,7 +6727,10 @@ export type Database = {
       };
       profile_field_answer_count: { Args: { p_id: string }; Returns: number };
       publish_app_terms_draft: { Args: never; Returns: number };
-      publish_authorization_draft: { Args: never; Returns: number };
+      publish_authorization_draft: {
+        Args: { p_season_id?: string };
+        Returns: number;
+      };
       publish_authorization_version: {
         Args: { p_content: Json };
         Returns: string;

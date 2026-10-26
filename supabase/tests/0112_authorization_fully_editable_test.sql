@@ -390,7 +390,7 @@ reset role;
 select ok(
   not has_function_privilege('anon', 'public.save_authorization_draft(jsonb)', 'execute')
   and not has_function_privilege('anon', 'public.discard_authorization_draft()', 'execute')
-  and not has_function_privilege('anon', 'public.publish_authorization_draft()', 'execute')
+  and not has_function_privilege('anon', 'public.publish_authorization_draft(uuid)', 'execute')
   and not has_function_privilege('anon', 'public.set_optional_consent(text, boolean, text)', 'execute')
   and not has_function_privilege('public', 'public.save_authorization_draft(jsonb)', 'execute'),
   'the new functions need an account'
