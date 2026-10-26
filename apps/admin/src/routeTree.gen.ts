@@ -26,6 +26,7 @@ import { Route as StaffMentoringRouteImport } from './routes/_staff.mentoring'
 import { Route as StaffMessagesRouteImport } from './routes/_staff.messages'
 import { Route as StaffNotificationsRouteImport } from './routes/_staff.notifications'
 import { Route as StaffProfileLayoutRouteImport } from './routes/_staff.profile-layout'
+import { Route as StaffLegalDataRouteImport } from './routes/_staff.legal-data'
 import { Route as StaffSettingsRouteImport } from './routes/_staff.settings'
 import { Route as StaffSurveysRouteImport } from './routes/_staff.surveys'
 import { Route as StaffTeamRouteImport } from './routes/_staff.team'
@@ -160,6 +161,11 @@ const StaffNotificationsRoute = StaffNotificationsRouteImport.update({
 const StaffProfileLayoutRoute = StaffProfileLayoutRouteImport.update({
   id: '/profile-layout',
   path: '/profile-layout',
+  getParentRoute: () => StaffRoute,
+} as any)
+const StaffLegalDataRoute = StaffLegalDataRouteImport.update({
+  id: '/legal-data',
+  path: '/legal-data',
   getParentRoute: () => StaffRoute,
 } as any)
 const StaffSettingsRoute = StaffSettingsRouteImport.update({
@@ -469,6 +475,7 @@ export interface FileRoutesByFullPath {
   '/messages': typeof StaffMessagesRouteWithChildren
   '/notifications': typeof StaffNotificationsRoute
   '/profile-layout': typeof StaffProfileLayoutRoute
+  '/legal-data': typeof StaffLegalDataRoute
   '/settings': typeof StaffSettingsRoute
   '/surveys': typeof StaffSurveysRoute
   '/team': typeof StaffTeamRoute
@@ -535,6 +542,7 @@ export interface FileRoutesByTo {
   '/mentoring': typeof StaffMentoringRoute
   '/notifications': typeof StaffNotificationsRoute
   '/profile-layout': typeof StaffProfileLayoutRoute
+  '/legal-data': typeof StaffLegalDataRoute
   '/settings': typeof StaffSettingsRoute
   '/surveys': typeof StaffSurveysRoute
   '/team': typeof StaffTeamRoute
@@ -605,6 +613,7 @@ export interface FileRoutesById {
   '/_staff/messages': typeof StaffMessagesRouteWithChildren
   '/_staff/notifications': typeof StaffNotificationsRoute
   '/_staff/profile-layout': typeof StaffProfileLayoutRoute
+  '/_staff/legal-data': typeof StaffLegalDataRoute
   '/_staff/settings': typeof StaffSettingsRoute
   '/_staff/surveys': typeof StaffSurveysRoute
   '/_staff/team': typeof StaffTeamRoute
@@ -676,6 +685,7 @@ export interface FileRouteTypes {
     | '/messages'
     | '/notifications'
     | '/profile-layout'
+    | '/legal-data'
     | '/settings'
     | '/surveys'
     | '/team'
@@ -742,6 +752,7 @@ export interface FileRouteTypes {
     | '/mentoring'
     | '/notifications'
     | '/profile-layout'
+    | '/legal-data'
     | '/settings'
     | '/surveys'
     | '/team'
@@ -811,6 +822,7 @@ export interface FileRouteTypes {
     | '/_staff/messages'
     | '/_staff/notifications'
     | '/_staff/profile-layout'
+    | '/_staff/legal-data'
     | '/_staff/settings'
     | '/_staff/surveys'
     | '/_staff/team'
@@ -991,6 +1003,13 @@ declare module '@tanstack/react-router' {
       path: '/profile-layout'
       fullPath: '/profile-layout'
       preLoaderRoute: typeof StaffProfileLayoutRouteImport
+      parentRoute: typeof StaffRoute
+    }
+    '/_staff/legal-data': {
+      id: '/_staff/legal-data'
+      path: '/legal-data'
+      fullPath: '/legal-data'
+      preLoaderRoute: typeof StaffLegalDataRouteImport
       parentRoute: typeof StaffRoute
     }
     '/_staff/settings': {
@@ -1499,6 +1518,7 @@ interface StaffRouteChildren {
   StaffMessagesRoute: typeof StaffMessagesRouteWithChildren
   StaffNotificationsRoute: typeof StaffNotificationsRoute
   StaffProfileLayoutRoute: typeof StaffProfileLayoutRoute
+  StaffLegalDataRoute: typeof StaffLegalDataRoute
   StaffSettingsRoute: typeof StaffSettingsRoute
   StaffSurveysRoute: typeof StaffSurveysRoute
   StaffTeamRoute: typeof StaffTeamRoute
@@ -1535,6 +1555,7 @@ const StaffRouteChildren: StaffRouteChildren = {
   StaffMessagesRoute: StaffMessagesRouteWithChildren,
   StaffNotificationsRoute: StaffNotificationsRoute,
   StaffProfileLayoutRoute: StaffProfileLayoutRoute,
+  StaffLegalDataRoute: StaffLegalDataRoute,
   StaffSettingsRoute: StaffSettingsRoute,
   StaffSurveysRoute: StaffSurveysRoute,
   StaffTeamRoute: StaffTeamRoute,

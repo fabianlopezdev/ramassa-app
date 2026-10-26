@@ -49,9 +49,11 @@ function isLegalPath(pathname: string): boolean {
 
 const LEGAL_FORM_PATHS = ['/forms/authorization', '/forms/terms'] as const;
 
-/** Dades de les jugadores (RAPP-650, RAPP-654). */
+/** Dades de les jugadores (RAPP-650, RAPP-654) and Dades legals (RAPP-699). */
 function isProfileLayoutPath(pathname: string): boolean {
-  return pathname === '/profile-layout' || pathname === '/profile-layout/';
+  return ['/profile-layout', '/legal-data'].some(
+    (path) => pathname === path || pathname === `${path}/`,
+  );
 }
 
 export function designRoleLanding(permissions: ReadonlySet<PermissionCode>): DesignRoleLanding {

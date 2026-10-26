@@ -31,6 +31,7 @@ import {
   ScrollText,
   Settings,
   Share2,
+  ShieldCheck,
   Users,
   UsersRound,
   Wrench,
@@ -196,6 +197,14 @@ export const STAFF_NAV_ITEMS = [
     to: '/profile-layout',
     icon: IdCard,
     labelKey: 'nav:staff.profileLayout',
+    group: 'data',
+    anyPermission: PROFILE_LAYOUT_PERMISSIONS,
+  },
+  {
+    // Consents, signatures and documents accepted (RAPP-699), after the players' data.
+    to: '/legal-data',
+    icon: ShieldCheck,
+    labelKey: 'nav:staff.legalData',
     group: 'data',
     anyPermission: PROFILE_LAYOUT_PERMISSIONS,
   },

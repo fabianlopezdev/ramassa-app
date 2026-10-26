@@ -2,10 +2,11 @@
  * One section of Dades de les jugadores (RAPP-650): a card with its name
  * (click to rename, in the five languages) and "Add a field", then column
  * labels over its fields as rows (RAPP-668). Sections are labels that help an
- * admin read the list; nothing in them is dragged (RAPP-658).
+ * admin read the list; nothing in them is dragged (RAPP-658). Drawn with the
+ * catalogue section Dades legals shares (RAPP-699).
  */
 
-import { EditorSection } from '@/components/layout/editor-section';
+import { CatalogSection } from '@/components/profile-layout/catalog-section';
 import { ProfileFieldRow } from '@/components/profile-layout/profile-field-row';
 import { SectionTitleForm } from '@/components/profile-layout/section-title-form';
 import { Button } from '@/components/ui/button';
@@ -44,9 +45,9 @@ export function ProfileSectionCard({
   const [isRenaming, setIsRenaming] = useState(false);
 
   return (
-    <EditorSection
-      isFlush
+    <CatalogSection
       testId={`profile-section-${section.key}`}
+      label={name}
       title={
         isRenaming ? (
           <SectionTitleForm
@@ -87,37 +88,20 @@ export function ProfileSectionCard({
           </Button>
         )
       }
-    >
-      {fields.length === 0 ? null : (
-        <div
-          aria-hidden
-          className="flex h-9 items-center gap-3 border-b bg-muted/40 px-5 text-start text-xs font-medium text-muted-foreground"
-        >
-          <span className="min-w-0 flex-1 truncate">{t('profileLayout.columnField')}</span>
-          <span className="w-20 shrink-0 truncate">{t('profileLayout.columnPrivacy')}</span>
-          <span className="hidden w-56 shrink-0 truncate md:block">
-            {t('profileLayout.columnAskedIn')}
-          </span>
-          <span className="w-36 shrink-0" />
-        </div>
-      )}
-      <ol className="flex flex-col divide-y" aria-label={name}>
-        {fields.map((field) => (
-          <li key={field.id} className="bg-card">
-            <ProfileFieldRow
-              field={field}
-              surfaces={surfacesOf(field.id)}
-              canEdit={canEdit}
-              onEdit={() => onEditField(field)}
-            />
-          </li>
-        ))}
-        {fields.length === 0 ? (
-          <li className="flex h-16 items-center px-5 text-start text-sm text-muted-foreground">
-            {t('profileLayout.emptySection')}
-          </li>
-        ) : null}
-      </ol>
-    </EditorSection>
+      columnName={t('profileLayout.columnField')}
+      columnBadge={t('profileLayout.columnPrivacy')}
+      emptyLabel={t('profileLayout.emptySection')}
+      rows={fields.map((field) => ({
+        id: field.id,
+        row: (
+          <ProfileFieldRow
+            field={field}
+            surfaces={surfacesOf(field.id)}
+            canEdit={canEdit}
+            onEdit={() => onEditField(field)}
+          />
+        ),
+      }))}
+    />
   );
 }
