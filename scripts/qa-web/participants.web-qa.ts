@@ -84,7 +84,8 @@ test.describe('participants roster', () => {
    * beside it because the pair is the actual promise.
    */
   test('a town typed WITH its accents finds the same people as without', async ({ page }) => {
-    const expected = countInDatabase(`city = 'Torelló'`);
+    // Her municipality is an answer by field since RAPP-666.
+    const expected = countInDatabase(`${appAnswerSql('r.id', 'city')} = 'Torelló'`);
     expect(expected).toBeGreaterThan(0);
 
     await gotoRoster(page);
