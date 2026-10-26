@@ -655,5 +655,17 @@
     "failed": "No s'ha pogut registrar. Torna-ho a provar.",
     "cancel": "Cancel·la",
     "save": "Desa"
+  },
+  "herForms": {
+    "title": "Formularis",
+    "status": {
+      "pending": "Pendent",
+      "done": "Respost",
+      "dismissed": "Descartat"
+    },
+    "markDone": "Marca com a fet",
+    "markedDone": "Formulari fet.",
+    "markFailed": "Falten respostes obligatòries.",
+    "byHer": "Ho omple ella"
   }
 }

@@ -14,3 +14,4 @@ export * from './form-blocks';
 export * from './onboarding-review';
 export * from './authorization-fields';
 export * from './consents';
+export * from './custom-forms';

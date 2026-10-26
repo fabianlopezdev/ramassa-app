@@ -12,5 +12,6 @@
   "referralUpdateTitle": "تحديث جديد لإحالة",
   "referralUpdateBody": "افتحي سجل المشاركة لمراجعته.",
   "mentoringUpdateTitle": "تحديث لموعدك الخاص",
-  "mentoringUpdateBody": "افتحي Ramassà لرؤية اليوم والوقت."
+  "mentoringUpdateBody": "افتحي Ramassà لرؤية اليوم والوقت.",
+  "customFormFallbackBody": "اضغطي للإجابة عليه."
 }

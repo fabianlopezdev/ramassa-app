@@ -37,7 +37,8 @@
       "app": "App de las jugadoras",
       "entities": "Entidades",
       "organisation": "Organización"
-    }
+    },
+    "customForms": "Formularios del equipo"
   },
   "entity": {
     "dashboard": "Impacto",

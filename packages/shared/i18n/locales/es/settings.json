@@ -682,7 +682,8 @@
       "season": "Temporada",
       "authorization": "Autorización",
       "teamOnly": "Solo equipo",
-      "terms": "Condiciones"
+      "terms": "Condiciones",
+      "custom_form": "Formulario"
     },
     "columnField": "Campo",
     "columnPrivacy": "Privacidad",
@@ -808,5 +809,78 @@
     "authorizationSignature": "Firma de la autorización",
     "termsSignature": "Firma de las condiciones",
     "removeBody": "Ya no se preguntará en este formulario. El consentimiento y las decisiones ya tomadas se conservan."
+  },
+  "customForms": {
+    "title": "Formularios del equipo",
+    "newForm": "Nuevo formulario",
+    "empty": "Todavía no hay ningún formulario.",
+    "listLabel": "Formularios",
+    "name": "Nombre",
+    "filledBy": "Quién lo rellena",
+    "filler": {
+      "player": "La jugadora, en el móvil",
+      "team": "El equipo, en su ficha",
+      "entity": "Una entidad, en el portal"
+    },
+    "entityUnavailable": "Todavía no disponible",
+    "mandatory": "Cuán obligatorio es",
+    "level": {
+      "optional": "Opcional",
+      "required_to_use_app": "Obligatorio para usar la app",
+      "required_from_date": "Obligatorio a partir de una fecha"
+    },
+    "deadline": "Fecha",
+    "appears": "Cuándo aparece",
+    "appearance": {
+      "once": "Una vez",
+      "every_season": "Cada temporada",
+      "sent": "Cuando el equipo lo envía"
+    },
+    "create": "Crear",
+    "cancel": "Cancelar",
+    "nameNeeded": "Ponle un nombre en catalán.",
+    "deadlineNeeded": "Elige la fecha.",
+    "createFailed": "No se ha podido crear el formulario.",
+    "notFound": "No se ha encontrado el formulario.",
+    "tab": {
+      "screens": "Pantallas",
+      "settings": "Configuración",
+      "responses": "Respuestas"
+    },
+    "status": {
+      "draft": "Borrador",
+      "live": "Activo",
+      "archived": "Archivado"
+    },
+    "publish": "Activar",
+    "published": "Activo. Se ha pedido a {{count}} jugadoras.",
+    "needsScreen": "Añade una pantalla antes.",
+    "actionFailed": "No se ha podido hacer. Vuelve a intentarlo.",
+    "send": "Enviar",
+    "sendTitle": "Enviar el formulario",
+    "sent": "Enviado a {{count}} jugadoras.",
+    "archive": "Archivar",
+    "unarchive": "Recuperar",
+    "saved": "Guardado.",
+    "save": "Guardar",
+    "herFieldOnly": "Lo responde ella",
+    "screenOf": "Paso {{number}} de {{total}}",
+    "column": {
+      "player": "Jugadora",
+      "status": "Estado",
+      "asked": "Pedido",
+      "answered": "Respondido"
+    },
+    "response": {
+      "pending": "Pendiente",
+      "done": "Respondido",
+      "dismissed": "Descartado"
+    },
+    "responsesSummary": "Respuestas: {{done}} · Pendientes: {{pending}}",
+    "deadlineOn": "Fecha límite: {{date}}",
+    "noResponses": "Todavía no se ha pedido a nadie.",
+    "playerNumber": "Jugadora {{number}}",
+    "versionOf": "Versión {{version}}",
+    "newVersionSaved": "Guardado. Quien lo había respondido lo volverá a responder."
   }
 }

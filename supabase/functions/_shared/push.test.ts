@@ -122,6 +122,24 @@ describe('recipient language selection', () => {
     expect(JSON.stringify(resolved)).not.toContain('sala tranquil·la');
   });
 
+  test('a form the team created is titled by its name and opens her response (RAPP-700)', () => {
+    const content: PushContent = {
+      contentType: 'custom_form',
+      contentId: '5eed0000-0000-4000-8102-000000000002',
+      title: { ca: 'Com véns als entrenaments', ar: 'كيف تأتين إلى التدريبات' },
+      body: null,
+      expiresAt: null,
+    };
+
+    const resolved = buildExpoMessage('ExponentPushToken[test]', content, 'ar');
+    expect(resolved.title).toBe('كيف تأتين إلى التدريبات');
+    expect(resolved.body).toBe('اضغطي للإجابة عليه.');
+    expect(resolved.data).toEqual({
+      contentType: 'custom_form',
+      contentId: '5eed0000-0000-4000-8102-000000000002',
+    });
+  });
+
   test.each([
     ['ar', 'تم إلغاء التدريب', 'لا يوجد تدريب اليوم.'],
     ['fa', 'تمرین لغو شد', 'امروز تمرین نداریم.'],

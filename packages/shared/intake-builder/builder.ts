@@ -59,6 +59,7 @@ import {
   type Consent,
   type ConsentPlacement,
 } from './consents';
+import { parseCustomForms, type CustomForm } from './custom-form-model';
 import { systemFieldIndexFromCatalog, type SystemFieldIndex } from './field-answers';
 import { parseFormBlocks, type FormBlock } from './form-blocks';
 import {
@@ -181,6 +182,12 @@ export const intakeCatalogSchema = z.object({
   // Dades legals (RAPP-699): the consents and where each is asked.
   consents: z.unknown().optional(),
   consent_placements: z.unknown().optional(),
+  // The forms the team created (RAPP-700), apart so an older build never
+  // reads a surface it does not know; merged with the lists above.
+  custom_forms: z.unknown().optional(),
+  custom_form_placements: z.unknown().optional(),
+  custom_form_blocks: z.unknown().optional(),
+  custom_form_consent_placements: z.unknown().optional(),
 });
 
 export interface CustomOption {
@@ -271,6 +278,8 @@ export interface IntakeCatalog {
   readonly consents?: readonly Consent[];
   /** Where each consent is asked. */
   readonly consentPlacements?: readonly ConsentPlacement[];
+  /** The forms the team created (RAPP-700); their contents are in the lists above. */
+  readonly customForms?: readonly CustomForm[];
 }
 
 export const EMPTY_INTAKE_CATALOG: IntakeCatalog = {
@@ -321,14 +330,28 @@ export function parseIntakeCatalog(data: unknown): IntakeCatalog {
     ...(raw.required_questions === undefined
       ? {}
       : { requiredQuestions: [...requiredQuestionsFrom(raw.required_questions)] }),
-    ...withLayout(parseProfileLayout(raw)),
+    ...withLayout(
+      parseProfileLayout({
+        ...raw,
+        placements: withFormRows(raw.placements, raw.custom_form_placements),
+      }),
+    ),
     ...(raw.fields === undefined
       ? {}
       : { systemFields: systemFieldIndexFromCatalog({ fields: raw.fields }) }),
-    blocks: parseFormBlocks(raw.blocks),
+    blocks: parseFormBlocks(withFormRows(raw.blocks, raw.custom_form_blocks)),
     consents: parseConsents(raw.consents),
-    consentPlacements: parseConsentPlacements(raw.consent_placements),
+    consentPlacements: parseConsentPlacements(
+      withFormRows(raw.consent_placements, raw.custom_form_consent_placements),
+    ),
+    customForms: parseCustomForms(raw.custom_forms),
   };
+}
+
+/** A list of the catalog with the forms' rows after it (RAPP-700); absent stays absent. */
+function withFormRows(rows: unknown, formRows: unknown): unknown {
+  if (rows === undefined || !Array.isArray(formRows)) return rows;
+  return Array.isArray(rows) ? [...rows, ...formRows] : rows;
 }
 
 /** The app's fields of a catalog by system key; none when it could not load. */

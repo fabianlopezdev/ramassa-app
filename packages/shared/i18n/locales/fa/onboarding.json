@@ -234,5 +234,7 @@
   "signingBlocksAction": "امضا کنید",
   "summarySignaturesTitle": "امضاها",
   "reviewIntro": "برخی پرسش‌ها را تغییر داده‌ایم. پیش از ادامه، پاسخ‌هایتان را بررسی کنید.",
-  "reviewSaveFailed": "پاسخ‌ها ذخیره نشد. دوباره تلاش کنید."
+  "reviewSaveFailed": "پاسخ‌ها ذخیره نشد. دوباره تلاش کنید.",
+  "customFormSend": "ارسال",
+  "customFormFailed": "ارسال نشد. دوباره تلاش کن."
 }

@@ -12,5 +12,6 @@
   "referralUpdateTitle": "به‌روزرسانی جدید ارجاع",
   "referralUpdateBody": "پرونده شرکت‌کننده را برای بررسی باز کنید.",
   "mentoringUpdateTitle": "به‌روزرسانی قرار خصوصی شما",
-  "mentoringUpdateBody": "Ramassà را باز کنید تا روز و ساعت را ببینید."
+  "mentoringUpdateBody": "Ramassà را باز کنید تا روز و ساعت را ببینید.",
+  "customFormFallbackBody": "برای پاسخ دادن ضربه بزن."
 }

@@ -234,5 +234,7 @@
   "signingBlocksAction": "وقّعي",
   "summarySignaturesTitle": "التوقيعات",
   "reviewIntro": "غيّرنا بعض الأسئلة. راجعي إجاباتك قبل المتابعة.",
-  "reviewSaveFailed": "تعذّر حفظ الإجابات. حاولي مرة أخرى."
+  "reviewSaveFailed": "تعذّر حفظ الإجابات. حاولي مرة أخرى.",
+  "customFormSend": "إرسال",
+  "customFormFailed": "تعذّر الإرسال. حاولي مرة أخرى."
 }

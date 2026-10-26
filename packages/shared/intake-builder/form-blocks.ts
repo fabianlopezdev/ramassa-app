@@ -27,15 +27,17 @@ import { anyLanguageTextSchema, type BuilderText } from './profile-layout';
 
 type Client = SupabaseClient<Database>;
 
-export const FORM_BLOCK_SURFACES = ['onboarding', 'entity_form'] as const;
+export const FORM_BLOCK_SURFACES = ['onboarding', 'entity_form', 'custom_form'] as const;
 export type FormBlockSurface = (typeof FORM_BLOCK_SURFACES)[number];
 
 /** A signature block of a form. */
 export interface FormBlock {
   readonly id: string;
   readonly surface: FormBlockSurface;
-  /** The screen of her Onboarding it sits on; null on the entity form. */
+  /** The screen of her Onboarding or of a form it sits on; null on the entity form. */
   readonly screenKey: string | null;
+  /** The form the team created it sits on (RAPP-700); null everywhere else. */
+  readonly customFormId?: string | null;
   readonly kind: 'signature';
   /** The text to accept, in five languages, Catalan required. */
   readonly body: BuilderText;
@@ -46,6 +48,7 @@ const blockRowSchema = z.object({
   id: z.uuid(),
   surface: z.enum(FORM_BLOCK_SURFACES),
   screen_key: z.string().nullable(),
+  custom_form_id: z.uuid().nullable().optional(),
   kind: z.literal('signature'),
   body: anyLanguageTextSchema,
   sort_order: z.number().int(),
@@ -62,6 +65,7 @@ export function parseFormBlocks(raw: unknown): readonly FormBlock[] {
         id: parsed.data.id,
         surface: parsed.data.surface,
         screenKey: parsed.data.screen_key,
+        customFormId: parsed.data.custom_form_id ?? null,
         kind: parsed.data.kind,
         body: parsed.data.body,
         sortOrder: parsed.data.sort_order,
@@ -236,8 +240,9 @@ export async function fetchMyFormSignatures(
 /** One signature on her page. */
 export interface ParticipantFormSignature {
   readonly id: string;
-  readonly surface: 'wizard' | 'entity_form';
-  /** The Onboarding screen it was given on; null on the entity form. */
+  /** Onboarding, the entity form, or a form the team created (RAPP-700). */
+  readonly surface: 'wizard' | 'entity_form' | 'custom_form';
+  /** The Onboarding or form screen it was given on; null on the entity form. */
   readonly screenKey: string | null;
   /** The text exactly as shown, in the language it was shown in. */
   readonly body: string;
@@ -253,7 +258,7 @@ export interface ParticipantFormSignature {
 
 const signatureRowSchema = z.object({
   id: z.uuid(),
-  surface: z.enum(['wizard', 'entity_form']),
+  surface: z.enum(['wizard', 'entity_form', 'custom_form']),
   screen_key: z.string().nullable(),
   body: z.string(),
   language: z.enum(['ca', 'es', 'en', 'ar', 'fa']),

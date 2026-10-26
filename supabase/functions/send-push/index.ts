@@ -190,7 +190,8 @@ function parseDeliveryClaims(value: unknown): readonly PushDeliveryClaim[] {
         row.content_type !== 'message' &&
         row.content_type !== 'forum_flag' &&
         row.content_type !== 'referral_update' &&
-        row.content_type !== 'mentoring_update') ||
+        row.content_type !== 'mentoring_update' &&
+        row.content_type !== 'custom_form') ||
       typeof row.content_id !== 'string' ||
       (row.content_type === 'message' ||
       row.content_type === 'forum_flag' ||

@@ -254,5 +254,17 @@
     "olderSeasons_one": "{{count}} فصل دیگر",
     "olderSeasons_other": "{{count}} فصل دیگر"
   },
-  "reviewPendingBadge": "در انتظار بازبینی خوش‌آمد"
+  "reviewPendingBadge": "در انتظار بازبینی خوش‌آمد",
+  "herForms": {
+    "title": "فرم‌ها",
+    "status": {
+      "pending": "در انتظار",
+      "done": "پاسخ داده شد",
+      "dismissed": "رد شد"
+    },
+    "markDone": "علامت انجام‌شده",
+    "markedDone": "فرم انجام شد.",
+    "markFailed": "پاسخ‌های اجباری کامل نیست.",
+    "byHer": "خودش پر می‌کند"
+  }
 }

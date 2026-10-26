@@ -655,5 +655,17 @@
     "failed": "No se ha podido registrar. Vuelve a intentarlo.",
     "cancel": "Cancela",
     "save": "Guarda"
+  },
+  "herForms": {
+    "title": "Formularios",
+    "status": {
+      "pending": "Pendiente",
+      "done": "Respondido",
+      "dismissed": "Descartado"
+    },
+    "markDone": "Marcar como hecho",
+    "markedDone": "Formulario hecho.",
+    "markFailed": "Faltan respuestas obligatorias.",
+    "byHer": "Lo rellena ella"
   }
 }

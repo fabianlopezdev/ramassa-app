@@ -16,5 +16,11 @@
   "emptyBody": "Quan l'equip publiqui una novetat, la trobaràs aquí.",
   "loadFailed": "No hem pogut carregar els avisos.",
   "retryAction": "Torna-ho a provar",
-  "loading": "Carregant els avisos"
+  "loading": "Carregant els avisos",
+  "pendingForm": {
+    "eyebrow": "Formulari",
+    "deadline": "Fins al {{date}}",
+    "answer": "Respon",
+    "dismiss": "Ara no"
+  }
 }

@@ -234,5 +234,7 @@
   "signingBlocksAction": "Sign",
   "summarySignaturesTitle": "Signatures",
   "reviewIntro": "We changed some questions. Check your answers before you continue.",
-  "reviewSaveFailed": "Your answers could not be saved. Please try again."
+  "reviewSaveFailed": "Your answers could not be saved. Please try again.",
+  "customFormSend": "Send",
+  "customFormFailed": "It could not be sent. Try again."
 }

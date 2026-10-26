@@ -50,7 +50,14 @@ export const QUESTION_PRIVACY_LEVELS = ['normal', 'personal', 'sensitive'] as co
 export type QuestionPrivacy = (typeof QUESTION_PRIVACY_LEVELS)[number];
 
 /** Where a field is asked; `authorization` is the season authorization's Health screen (RAPP-698). */
-export const PROFILE_SURFACES = ['onboarding', 'entity_form', 'season', 'authorization'] as const;
+export const PROFILE_SURFACES = [
+  'onboarding',
+  'entity_form',
+  'season',
+  'authorization',
+  // A form the team created (RAPP-700): its screen and the form name the placement.
+  'custom_form',
+] as const;
 
 /**
  * The season authorization's own fields (RAPP-698): team fields the signing
@@ -118,6 +125,7 @@ const placementSchema = z.object({
   field_id: z.uuid(),
   surface: z.enum(PROFILE_SURFACES),
   screen_key: z.string().nullable(),
+  custom_form_id: z.uuid().nullable().optional(),
   sort_order: z.number().int(),
   required: z.boolean(),
   label_override: anyLanguageTextSchema.nullable(),
@@ -187,8 +195,10 @@ export interface FieldPlacement {
   readonly id: string;
   readonly fieldId: string;
   readonly surface: ProfileSurface;
-  /** On onboarding: an app screen (`equipment`) or a Ramassà screen's id. */
+  /** On onboarding: an app screen (`equipment`) or a Ramassà screen's id; on a form, its screen's id. */
   readonly screenKey: string | null;
+  /** The form the team created that asks it (RAPP-700); null everywhere else. */
+  readonly customFormId?: string | null;
   /** Its place on its surface (and screen). */
   readonly sortOrder: number;
   readonly required: boolean;
@@ -294,6 +304,7 @@ export function parseProfileLayout(raw: {
       fieldId: placement.field_id,
       surface: placement.surface,
       screenKey: placement.screen_key,
+      customFormId: placement.custom_form_id ?? null,
       sortOrder: placement.sort_order,
       required: placement.required,
       labelOverride: placement.label_override,
@@ -383,7 +394,8 @@ export function placementsOnSurface(
     .filter(
       (placement) =>
         placement.surface === surface &&
-        (surface !== 'onboarding' || placement.screenKey === screenKey) &&
+        ((surface !== 'onboarding' && surface !== 'custom_form') ||
+          placement.screenKey === screenKey) &&
         live.has(placement.fieldId),
     )
     .sort((a, b) => a.sortOrder - b.sortOrder);

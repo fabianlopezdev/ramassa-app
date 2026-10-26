@@ -37,7 +37,8 @@
       "app": "اپ بازیکنان",
       "entities": "نهادها",
       "organisation": "سازمان"
-    }
+    },
+    "customForms": "فرم‌های تیم"
   },
   "entity": {
     "dashboard": "تأثیر",

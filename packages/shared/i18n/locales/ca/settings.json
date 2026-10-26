@@ -682,7 +682,8 @@
       "season": "Temporada",
       "authorization": "Autorització",
       "teamOnly": "Només equip",
-      "terms": "Condicions"
+      "terms": "Condicions",
+      "custom_form": "Formulari"
     },
     "columnField": "Camp",
     "columnPrivacy": "Privacitat",
@@ -808,5 +809,78 @@
     "authorizationSignature": "Signatura de l'autorització",
     "termsSignature": "Signatura de les condicions",
     "removeBody": "Ja no es preguntarà en aquest formulari. El consentiment i les decisions ja preses es conserven."
+  },
+  "customForms": {
+    "title": "Formularis de l'equip",
+    "newForm": "Nou formulari",
+    "empty": "Encara no hi ha cap formulari.",
+    "listLabel": "Formularis",
+    "name": "Nom",
+    "filledBy": "Qui l'omple",
+    "filler": {
+      "player": "La jugadora, al mòbil",
+      "team": "L'equip, a la seva fitxa",
+      "entity": "Una entitat, al portal"
+    },
+    "entityUnavailable": "Encara no disponible",
+    "mandatory": "Com d'obligatori és",
+    "level": {
+      "optional": "Opcional",
+      "required_to_use_app": "Obligatori per fer servir l'app",
+      "required_from_date": "Obligatori a partir d'una data"
+    },
+    "deadline": "Data",
+    "appears": "Quan apareix",
+    "appearance": {
+      "once": "Una vegada",
+      "every_season": "Cada temporada",
+      "sent": "Quan l'equip l'envia"
+    },
+    "create": "Crea",
+    "cancel": "Cancel·la",
+    "nameNeeded": "Posa-li un nom en català.",
+    "deadlineNeeded": "Tria la data.",
+    "createFailed": "No s'ha pogut crear el formulari.",
+    "notFound": "No s'ha trobat el formulari.",
+    "tab": {
+      "screens": "Pantalles",
+      "settings": "Configuració",
+      "responses": "Respostes"
+    },
+    "status": {
+      "draft": "Esborrany",
+      "live": "Actiu",
+      "archived": "Arxivat"
+    },
+    "publish": "Activa",
+    "published": "Actiu. S'ha demanat a {{count}} jugadores.",
+    "needsScreen": "Afegeix una pantalla abans.",
+    "actionFailed": "No s'ha pogut fer. Torna-ho a provar.",
+    "send": "Envia",
+    "sendTitle": "Envia el formulari",
+    "sent": "Enviat a {{count}} jugadores.",
+    "archive": "Arxiva",
+    "unarchive": "Recupera",
+    "saved": "Desat.",
+    "save": "Desa",
+    "herFieldOnly": "Ho respon ella",
+    "screenOf": "Pas {{number}} de {{total}}",
+    "column": {
+      "player": "Jugadora",
+      "status": "Estat",
+      "asked": "Demanat",
+      "answered": "Respost"
+    },
+    "response": {
+      "pending": "Pendent",
+      "done": "Respost",
+      "dismissed": "Descartat"
+    },
+    "responsesSummary": "Respostes: {{done}} · Pendents: {{pending}}",
+    "deadlineOn": "Data límit: {{date}}",
+    "noResponses": "Encara no s'ha demanat a ningú.",
+    "playerNumber": "Jugadora {{number}}",
+    "versionOf": "Versió {{version}}",
+    "newVersionSaved": "Desat. Qui l'havia respost el tornarà a respondre."
   }
 }

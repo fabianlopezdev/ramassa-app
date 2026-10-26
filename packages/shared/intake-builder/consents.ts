@@ -28,7 +28,7 @@ import { anyLanguageTextSchema, type BuilderText } from './profile-layout';
 
 type Client = SupabaseClient<Database>;
 
-export const CONSENT_SURFACES = ['authorization', 'onboarding'] as const;
+export const CONSENT_SURFACES = ['authorization', 'onboarding', 'custom_form'] as const;
 export type ConsentSurface = (typeof CONSENT_SURFACES)[number];
 
 /** The consents the app reads by key. */
@@ -59,8 +59,10 @@ export interface ConsentPlacement {
   readonly id: string;
   readonly consentId: string;
   readonly surface: ConsentSurface;
-  /** The Onboarding screen; null on the authorization's consents screen. */
+  /** The Onboarding screen or a form's screen; null on the authorization's consents screen. */
   readonly screenKey: string | null;
+  /** The form the team created that asks it (RAPP-700); null everywhere else. */
+  readonly customFormId?: string | null;
   readonly sortOrder: number;
   readonly required: boolean;
 }
@@ -88,6 +90,7 @@ const placementRowSchema = z.object({
   consent_id: z.uuid(),
   surface: z.enum(CONSENT_SURFACES),
   screen_key: z.string().nullable(),
+  custom_form_id: z.uuid().nullable().optional(),
   sort_order: z.number().int(),
   required: z.boolean(),
 });
@@ -123,6 +126,7 @@ export function parseConsentPlacements(raw: unknown): readonly ConsentPlacement[
         consentId: parsed.data.consent_id,
         surface: parsed.data.surface,
         screenKey: parsed.data.screen_key,
+        customFormId: parsed.data.custom_form_id ?? null,
         sortOrder: parsed.data.sort_order,
         required: parsed.data.required,
       },

@@ -37,7 +37,8 @@
       "app": "Players' app",
       "entities": "Entities",
       "organisation": "Organization"
-    }
+    },
+    "customForms": "Team's forms"
   },
   "entity": {
     "dashboard": "Impact",

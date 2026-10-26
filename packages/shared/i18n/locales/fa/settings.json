@@ -173,7 +173,8 @@
       "entity_form": "نهاد",
       "season": "فصل",
       "authorization": "مجوز",
-      "teamOnly": "فقط تیم"
+      "teamOnly": "فقط تیم",
+      "custom_form": "فرم"
     },
     "columnField": "فیلد",
     "columnPrivacy": "حریم خصوصی",
@@ -266,5 +267,78 @@
     "save": "ذخیره",
     "newVersionCount": "بازیکنانی که دوباره آن را می‌بینند: {{count}}",
     "newVersionSaved": "ذخیره شد. کسانی که ثبت‌نام را تمام کرده بودند دوباره آن را می‌بینند."
+  },
+  "customForms": {
+    "title": "فرم‌های تیم",
+    "newForm": "فرم جدید",
+    "empty": "هنوز هیچ فرمی وجود ندارد.",
+    "listLabel": "فرم‌ها",
+    "name": "نام",
+    "filledBy": "چه کسی آن را پر می‌کند",
+    "filler": {
+      "player": "بازیکن، روی گوشی‌اش",
+      "team": "تیم، در صفحه او",
+      "entity": "یک نهاد، در پورتال"
+    },
+    "entityUnavailable": "هنوز در دسترس نیست",
+    "mandatory": "چقدر اجباری است",
+    "level": {
+      "optional": "اختیاری",
+      "required_to_use_app": "برای استفاده از اپ اجباری است",
+      "required_from_date": "از یک تاریخ به بعد اجباری است"
+    },
+    "deadline": "تاریخ",
+    "appears": "چه زمانی ظاهر می‌شود",
+    "appearance": {
+      "once": "یک بار",
+      "every_season": "هر فصل",
+      "sent": "وقتی تیم آن را می‌فرستد"
+    },
+    "create": "ایجاد",
+    "cancel": "لغو",
+    "nameNeeded": "یک نام به کاتالان برایش بگذارید.",
+    "deadlineNeeded": "تاریخ را انتخاب کنید.",
+    "createFailed": "فرم ایجاد نشد.",
+    "notFound": "فرم پیدا نشد.",
+    "tab": {
+      "screens": "صفحه‌ها",
+      "settings": "تنظیمات",
+      "responses": "پاسخ‌ها"
+    },
+    "status": {
+      "draft": "پیش‌نویس",
+      "live": "فعال",
+      "archived": "بایگانی‌شده"
+    },
+    "publish": "فعال‌سازی",
+    "published": "فعال شد. از {{count}} بازیکن خواسته شد.",
+    "needsScreen": "اول یک صفحه اضافه کنید.",
+    "actionFailed": "انجام نشد. دوباره تلاش کنید.",
+    "send": "ارسال",
+    "sendTitle": "فرم را بفرستید",
+    "sent": "برای {{count}} بازیکن فرستاده شد.",
+    "archive": "بایگانی",
+    "unarchive": "بازگردانی",
+    "saved": "ذخیره شد.",
+    "save": "ذخیره",
+    "herFieldOnly": "خودش پاسخ می‌دهد",
+    "screenOf": "مرحله {{number}} از {{total}}",
+    "column": {
+      "player": "بازیکن",
+      "status": "وضعیت",
+      "asked": "درخواست",
+      "answered": "پاسخ"
+    },
+    "response": {
+      "pending": "در انتظار",
+      "done": "پاسخ داده شد",
+      "dismissed": "رد شد"
+    },
+    "responsesSummary": "پاسخ: {{done}} · در انتظار: {{pending}}",
+    "deadlineOn": "مهلت: {{date}}",
+    "noResponses": "هنوز از کسی خواسته نشده است.",
+    "playerNumber": "بازیکن {{number}}",
+    "versionOf": "نسخه {{version}}",
+    "newVersionSaved": "ذخیره شد. کسانی که پاسخ داده بودند دوباره پاسخ می‌دهند."
   }
 }

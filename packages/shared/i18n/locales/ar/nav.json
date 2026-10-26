@@ -37,7 +37,8 @@
       "app": "تطبيق اللاعبات",
       "entities": "الجهات",
       "organisation": "المؤسسة"
-    }
+    },
+    "customForms": "نماذج الفريق"
   },
   "entity": {
     "dashboard": "الأثر",

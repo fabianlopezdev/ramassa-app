@@ -682,7 +682,8 @@
       "season": "Season",
       "authorization": "Authorization",
       "teamOnly": "Team only",
-      "terms": "Terms"
+      "terms": "Terms",
+      "custom_form": "Form"
     },
     "columnField": "Field",
     "columnPrivacy": "Privacy",
@@ -808,5 +809,78 @@
     "authorizationSignature": "Authorization signature",
     "termsSignature": "Terms signature",
     "removeBody": "It will no longer be asked on this form. The consent and the decisions already made are kept."
+  },
+  "customForms": {
+    "title": "Team's forms",
+    "newForm": "New form",
+    "empty": "There are no forms yet.",
+    "listLabel": "Forms",
+    "name": "Name",
+    "filledBy": "Who fills it in",
+    "filler": {
+      "player": "The player, on her phone",
+      "team": "The team, on her page",
+      "entity": "An entity, on the portal"
+    },
+    "entityUnavailable": "Not available yet",
+    "mandatory": "How mandatory it is",
+    "level": {
+      "optional": "Optional",
+      "required_to_use_app": "Required to use the app",
+      "required_from_date": "Required from a date"
+    },
+    "deadline": "Date",
+    "appears": "When it appears",
+    "appearance": {
+      "once": "Once",
+      "every_season": "Every season",
+      "sent": "When the team sends it"
+    },
+    "create": "Create",
+    "cancel": "Cancel",
+    "nameNeeded": "Give it a name in Catalan.",
+    "deadlineNeeded": "Choose the date.",
+    "createFailed": "The form could not be created.",
+    "notFound": "Form not found.",
+    "tab": {
+      "screens": "Screens",
+      "settings": "Settings",
+      "responses": "Responses"
+    },
+    "status": {
+      "draft": "Draft",
+      "live": "Live",
+      "archived": "Archived"
+    },
+    "publish": "Start",
+    "published": "Live. {{count}} players were asked.",
+    "needsScreen": "Add a screen first.",
+    "actionFailed": "That did not work. Try again.",
+    "send": "Send",
+    "sendTitle": "Send the form",
+    "sent": "Sent to {{count}} players.",
+    "archive": "Archive",
+    "unarchive": "Restore",
+    "saved": "Saved.",
+    "save": "Save",
+    "herFieldOnly": "She answers it",
+    "screenOf": "Step {{number}} of {{total}}",
+    "column": {
+      "player": "Player",
+      "status": "Status",
+      "asked": "Asked",
+      "answered": "Answered"
+    },
+    "response": {
+      "pending": "Pending",
+      "done": "Answered",
+      "dismissed": "Dismissed"
+    },
+    "responsesSummary": "Answered: {{done}} · Pending: {{pending}}",
+    "deadlineOn": "Deadline: {{date}}",
+    "noResponses": "Nobody has been asked yet.",
+    "playerNumber": "Player {{number}}",
+    "versionOf": "Version {{version}}",
+    "newVersionSaved": "Saved. Whoever answered it will answer it again."
   }
 }

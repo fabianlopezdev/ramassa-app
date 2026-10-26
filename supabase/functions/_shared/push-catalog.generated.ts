@@ -13,7 +13,8 @@ export const PUSH_NOTIFICATION_FALLBACK_BODIES = {
     "referralUpdateTitle": "Nova actualització d’una derivació",
     "referralUpdateBody": "Obre la fitxa de la participant per revisar-la.",
     "mentoringUpdateTitle": "Actualització de la teva cita privada",
-    "mentoringUpdateBody": "Obre Ramassà per veure el dia i l’hora."
+    "mentoringUpdateBody": "Obre Ramassà per veure el dia i l’hora.",
+    "customFormFallbackBody": "Toca per respondre'l."
   },
   "es": {
     "announcementFallbackBody": "Toca para leer el aviso.",
@@ -25,7 +26,8 @@ export const PUSH_NOTIFICATION_FALLBACK_BODIES = {
     "referralUpdateTitle": "Nueva actualización de una derivación",
     "referralUpdateBody": "Abre la ficha de la participante para revisarla.",
     "mentoringUpdateTitle": "Actualización de tu cita privada",
-    "mentoringUpdateBody": "Abre Ramassà para ver el día y la hora."
+    "mentoringUpdateBody": "Abre Ramassà para ver el día y la hora.",
+    "customFormFallbackBody": "Toca para responderlo."
   },
   "en": {
     "announcementFallbackBody": "Tap to read the notice.",
@@ -37,7 +39,8 @@ export const PUSH_NOTIFICATION_FALLBACK_BODIES = {
     "referralUpdateTitle": "New referral update",
     "referralUpdateBody": "Open the participant record to review it.",
     "mentoringUpdateTitle": "Update to your private appointment",
-    "mentoringUpdateBody": "Open Ramassà to see the date and time."
+    "mentoringUpdateBody": "Open Ramassà to see the date and time.",
+    "customFormFallbackBody": "Tap to answer it."
   },
   "ar": {
     "announcementFallbackBody": "اضغطي لقراءة الإشعار.",
@@ -49,7 +52,8 @@ export const PUSH_NOTIFICATION_FALLBACK_BODIES = {
     "referralUpdateTitle": "تحديث جديد لإحالة",
     "referralUpdateBody": "افتحي سجل المشاركة لمراجعته.",
     "mentoringUpdateTitle": "تحديث لموعدك الخاص",
-    "mentoringUpdateBody": "افتحي Ramassà لرؤية اليوم والوقت."
+    "mentoringUpdateBody": "افتحي Ramassà لرؤية اليوم والوقت.",
+    "customFormFallbackBody": "اضغطي للإجابة عليه."
   },
   "fa": {
     "announcementFallbackBody": "برای خواندن اطلاعیه ضربه بزنید.",
@@ -61,7 +65,8 @@ export const PUSH_NOTIFICATION_FALLBACK_BODIES = {
     "referralUpdateTitle": "به‌روزرسانی جدید ارجاع",
     "referralUpdateBody": "پرونده شرکت‌کننده را برای بررسی باز کنید.",
     "mentoringUpdateTitle": "به‌روزرسانی قرار خصوصی شما",
-    "mentoringUpdateBody": "Ramassà را باز کنید تا روز و ساعت را ببینید."
+    "mentoringUpdateBody": "Ramassà را باز کنید تا روز و ساعت را ببینید.",
+    "customFormFallbackBody": "برای پاسخ دادن ضربه بزن."
   }
 } as const;
 

@@ -258,5 +258,17 @@
     "olderSeasons_many": "{{count}} موسمًا آخر",
     "olderSeasons_other": "{{count}} موسم آخر"
   },
-  "reviewPendingBadge": "بانتظار مراجعة الترحيب"
+  "reviewPendingBadge": "بانتظار مراجعة الترحيب",
+  "herForms": {
+    "title": "النماذج",
+    "status": {
+      "pending": "معلّق",
+      "done": "أُجيب",
+      "dismissed": "مرفوض"
+    },
+    "markDone": "وضع علامة كمنجز",
+    "markedDone": "اكتمل النموذج.",
+    "markFailed": "تنقص إجابات إلزامية.",
+    "byHer": "هي من تملؤه"
+  }
 }

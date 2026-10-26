@@ -177,7 +177,8 @@
       "entity_form": "الجهة",
       "season": "الموسم",
       "authorization": "التفويض",
-      "teamOnly": "للفريق فقط"
+      "teamOnly": "للفريق فقط",
+      "custom_form": "نموذج"
     },
     "columnField": "الحقل",
     "columnPrivacy": "الخصوصية",
@@ -274,5 +275,78 @@
     "save": "حفظ",
     "newVersionCount": "اللاعبات اللواتي سيرينه من جديد: {{count}}",
     "newVersionSaved": "تم الحفظ. من أنهين التسجيل سيرينه من جديد."
+  },
+  "customForms": {
+    "title": "نماذج الفريق",
+    "newForm": "نموذج جديد",
+    "empty": "لا توجد نماذج بعد.",
+    "listLabel": "النماذج",
+    "name": "الاسم",
+    "filledBy": "من يملؤه",
+    "filler": {
+      "player": "اللاعبة، على هاتفها",
+      "team": "الفريق، في صفحتها",
+      "entity": "جهة، في البوابة"
+    },
+    "entityUnavailable": "غير متاح بعد",
+    "mandatory": "مدى إلزاميته",
+    "level": {
+      "optional": "اختياري",
+      "required_to_use_app": "إلزامي لاستخدام التطبيق",
+      "required_from_date": "إلزامي ابتداءً من تاريخ"
+    },
+    "deadline": "التاريخ",
+    "appears": "متى يظهر",
+    "appearance": {
+      "once": "مرة واحدة",
+      "every_season": "كل موسم",
+      "sent": "عندما يرسله الفريق"
+    },
+    "create": "إنشاء",
+    "cancel": "إلغاء",
+    "nameNeeded": "أعطه اسمًا بالكتالونية.",
+    "deadlineNeeded": "اختر التاريخ.",
+    "createFailed": "تعذّر إنشاء النموذج.",
+    "notFound": "لم يتم العثور على النموذج.",
+    "tab": {
+      "screens": "الشاشات",
+      "settings": "الإعدادات",
+      "responses": "الإجابات"
+    },
+    "status": {
+      "draft": "مسودة",
+      "live": "نشط",
+      "archived": "مؤرشف"
+    },
+    "publish": "تفعيل",
+    "published": "نشط. طُلب من {{count}} لاعبات.",
+    "needsScreen": "أضف شاشة أولًا.",
+    "actionFailed": "لم ينجح ذلك. حاول مرة أخرى.",
+    "send": "إرسال",
+    "sendTitle": "أرسل النموذج",
+    "sent": "أُرسل إلى {{count}} لاعبات.",
+    "archive": "أرشفة",
+    "unarchive": "استعادة",
+    "saved": "تم الحفظ.",
+    "save": "حفظ",
+    "herFieldOnly": "هي من تجيب عنه",
+    "screenOf": "الخطوة {{number}} من {{total}}",
+    "column": {
+      "player": "اللاعبة",
+      "status": "الحالة",
+      "asked": "طُلب",
+      "answered": "أُجيب"
+    },
+    "response": {
+      "pending": "معلّق",
+      "done": "أُجيب",
+      "dismissed": "مرفوض"
+    },
+    "responsesSummary": "أُجيب: {{done}} · معلّق: {{pending}}",
+    "deadlineOn": "الموعد النهائي: {{date}}",
+    "noResponses": "لم يُطلب من أحد بعد.",
+    "playerNumber": "اللاعبة {{number}}",
+    "versionOf": "النسخة {{version}}",
+    "newVersionSaved": "تم الحفظ. من أجابت عليه ستجيب عليه من جديد."
   }
 }
