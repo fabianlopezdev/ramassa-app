@@ -466,10 +466,6 @@
   "authorizationPaperRow": "Temporada {{season}}: signada en paper el {{date}}",
   "authorizationUnableToDraw": "Va signar només amb les caselles: no podia dibuixar la signatura.",
   "authorizationSignatureLabel": "La seva signatura",
-  "authorizationConsentsTitle": "Autoritzacions",
-  "authorizationConsentVersion": "{{date}}, temporada {{season}}, versió {{number}}",
-  "authorizationGranted": "Sí",
-  "authorizationNotGranted": "No",
   "authorizationPaperDate": "Data de la signatura en paper",
   "authorizationPaperAction": "Registra la signatura en paper",
   "authorizationPaperSaved": "Signatura en paper registrada.",
@@ -634,5 +630,30 @@
     "onTabletWith": "Signada a la tauleta, amb {{name}}",
     "onTablet": "Signada a la tauleta"
   },
-  "reviewPendingBadge": "Pendent de revisar la benvinguda"
+  "reviewPendingBadge": "Pendent de revisar la benvinguda",
+  "consents": {
+    "title": "Consentiments",
+    "none": "No hi ha cap consentiment.",
+    "undecided": "Sense decisió",
+    "granted": "Sí",
+    "notGranted": "No",
+    "version": "Temporada {{season}}, versió {{number}}",
+    "onboarding": "Onboarding",
+    "method": {
+      "app": "App",
+      "staff_device": "Tauleta",
+      "paper": "Paper",
+      "profile": "El seu perfil",
+      "staff": "Equip"
+    },
+    "recordPaper": "Registra en paper",
+    "withdraw": "Retira",
+    "decision": "Decisió",
+    "paperDate": "Data",
+    "reason": "Motiu",
+    "healthWarning": "S'esborrarà la seva resposta de salut.",
+    "failed": "No s'ha pogut registrar. Torna-ho a provar.",
+    "cancel": "Cancel·la",
+    "save": "Desa"
+  }
 }

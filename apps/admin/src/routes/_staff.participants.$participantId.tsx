@@ -29,7 +29,7 @@ import {
 } from '@ramassa/shared/attendance';
 import {
   fetchParticipantAuthorizations,
-  fetchParticipantConsents,
+  fetchParticipantConsentHistory,
 } from '@ramassa/shared/authorization';
 import { fetchEquipmentDeliveries, fetchHandoverItemTypes } from '@ramassa/shared/equipment';
 import {
@@ -80,7 +80,7 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
         questionStates: {},
         customQuestionStates: {},
         authorizations: [],
-        consents: [],
+        consentHistory: [],
         intakeCatalog: EMPTY_INTAKE_CATALOG,
         customAnswers: [],
         testScenario: null,
@@ -126,7 +126,7 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
         questionStates: choices.states,
         customQuestionStates: choices.customStates,
         authorizations: [],
-        consents: [],
+        consentHistory: [],
         intakeCatalog,
         customAnswers,
         testScenario: scenario,
@@ -144,7 +144,7 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
       answered,
       choices,
       authorizations,
-      consents,
+      consentHistory,
       intakeCatalog,
       customAnswers,
       scenario,
@@ -169,10 +169,11 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
       !hasJoined(participant)
         ? fetchParticipantChoices(supabase, params.participantId)
         : Promise.resolve(NO_CHOICES),
-      // Her season authorizations and consents (RAPP-304). They need
-      // participants.view_personal; without it the panel simply shows none.
+      // Her season authorizations (RAPP-304) and every consent decision
+      // (RAPP-699). They need participants.view_personal; without it the
+      // panels simply show none.
       fetchParticipantAuthorizations(supabase, params.participantId).catch(() => []),
-      fetchParticipantConsents(supabase, params.participantId).catch(() => []),
+      fetchParticipantConsentHistory(supabase, params.participantId).catch(() => []),
       catalog,
       // Her answers to every field, every season, with who gave each (RAPP-664).
       fetchParticipantCustomAnswers(supabase, params.participantId).catch(() => []),
@@ -204,7 +205,7 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
       questionStates: choices.states,
       customQuestionStates: choices.customStates,
       authorizations,
-      consents,
+      consentHistory,
       intakeCatalog,
       customAnswers,
       testScenario: scenario,
@@ -229,7 +230,7 @@ function ParticipantDetailPage() {
     questionStates,
     customQuestionStates,
     authorizations,
-    consents,
+    consentHistory,
     intakeCatalog,
     customAnswers,
     testScenario,
@@ -254,7 +255,7 @@ function ParticipantDetailPage() {
       questionStates={questionStates}
       customQuestionStates={customQuestionStates}
       authorizations={authorizations}
-      consents={consents}
+      consentHistory={consentHistory}
       intakeCatalog={intakeCatalog}
       customAnswers={customAnswers}
       testScenario={testScenario}

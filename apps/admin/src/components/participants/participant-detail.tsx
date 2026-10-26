@@ -21,6 +21,7 @@ import { loadAuthenticatedMediaObjectUrl } from '@/components/content/authentica
 import { Page } from '@/components/layout/page';
 import { ParticipantActivity } from '@/components/participants/participant-activity';
 import { ParticipantAuthorizationPanel } from '@/components/participants/participant-authorization-panel';
+import { ParticipantConsents } from '@/components/participants/participant-consents';
 import { ParticipantEquipment } from '@/components/participants/participant-equipment';
 import { ParticipantFitxa } from '@/components/participants/participant-fitxa';
 import { ParticipantNotes } from '@/components/participants/participant-notes';
@@ -42,6 +43,7 @@ import type { AttendanceParticipantStats, AttendanceReportRow } from '@ramassa/s
 import { useAuth } from '@ramassa/shared/auth';
 import {
   recordPaperAuthorization,
+  recordParticipantConsent,
   type ParticipantAuthorization,
   type ParticipantConsent,
 } from '@ramassa/shared/authorization';
@@ -114,9 +116,10 @@ export interface ParticipantDetailProps {
   readonly questionStates?: QuestionStates;
   /** Her choices on Ramassà's questions (RAPP-645). */
   readonly customQuestionStates?: CustomQuestionStates;
-  /** Her season authorizations and consents (RAPP-304). */
+  /** Her season authorizations (RAPP-304). */
   readonly authorizations?: readonly ParticipantAuthorization[];
-  readonly consents?: readonly ParticipantConsent[];
+  /** Every consent decision of hers, the newest first (RAPP-699). */
+  readonly consentHistory?: readonly ParticipantConsent[];
   /** The Fitxa layout, and her answers to every field with who gave each (RAPP-664). */
   readonly intakeCatalog?: IntakeCatalog;
   readonly customAnswers?: readonly ParticipantCustomAnswer[];
@@ -141,7 +144,7 @@ export function ParticipantDetail({
   questionStates = {},
   customQuestionStates = {},
   authorizations = [],
-  consents = [],
+  consentHistory = [],
   intakeCatalog = EMPTY_INTAKE_CATALOG,
   customAnswers = [],
   testScenario = null,
@@ -419,7 +422,6 @@ export function ParticipantDetail({
         <ParticipantAuthorizationPanel
           participant={participant}
           authorizations={authorizations}
-          consents={consents}
           onRecordPaper={async (signedOn) => {
             await recordPaperAuthorization(supabase, participant.id, signedOn);
             await router.invalidate();
@@ -427,6 +429,18 @@ export function ParticipantDetail({
           seasonAnswers={seasonAnswers}
           onSetPriorSeasons={async (count) => {
             await setPriorSeasons(supabase, participant.id, count);
+            await router.invalidate();
+          }}
+        />
+      ) : null}
+
+      {teamTools && permissions.has('participants.view_personal') ? (
+        <ParticipantConsents
+          history={consentHistory}
+          catalogue={intakeCatalog.consents ?? []}
+          canRecord={permissions.has('consents.collect')}
+          onRecord={async (recording) => {
+            await recordParticipantConsent(supabase, { profileId: participant.id, ...recording });
             await router.invalidate();
           }}
         />

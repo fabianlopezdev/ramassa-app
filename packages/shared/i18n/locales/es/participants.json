@@ -466,10 +466,6 @@
   "authorizationPaperRow": "Temporada {{season}}: firmada en papel el {{date}}",
   "authorizationUnableToDraw": "Firmó solo con las casillas: no podía dibujar la firma.",
   "authorizationSignatureLabel": "Su firma",
-  "authorizationConsentsTitle": "Autorizaciones",
-  "authorizationConsentVersion": "{{date}}, temporada {{season}}, versión {{number}}",
-  "authorizationGranted": "Sí",
-  "authorizationNotGranted": "No",
   "authorizationPaperDate": "Fecha de la firma en papel",
   "authorizationPaperAction": "Registrar la firma en papel",
   "authorizationPaperSaved": "Firma en papel registrada.",
@@ -634,5 +630,30 @@
     "onTabletWith": "Firmada en la tableta, con {{name}}",
     "onTablet": "Firmada en la tableta"
   },
-  "reviewPendingBadge": "Pendiente de revisar la bienvenida"
+  "reviewPendingBadge": "Pendiente de revisar la bienvenida",
+  "consents": {
+    "title": "Consentimientos",
+    "none": "No hay ningún consentimiento.",
+    "undecided": "Sin decisión",
+    "granted": "Sí",
+    "notGranted": "No",
+    "version": "Temporada {{season}}, versión {{number}}",
+    "onboarding": "Onboarding",
+    "method": {
+      "app": "App",
+      "staff_device": "Tableta",
+      "paper": "Papel",
+      "profile": "Su perfil",
+      "staff": "Equipo"
+    },
+    "recordPaper": "Registra en papel",
+    "withdraw": "Retira",
+    "decision": "Decisión",
+    "paperDate": "Fecha",
+    "reason": "Motivo",
+    "healthWarning": "Se borrará su respuesta de salud.",
+    "failed": "No se ha podido registrar. Vuelve a intentarlo.",
+    "cancel": "Cancela",
+    "save": "Guarda"
+  }
 }

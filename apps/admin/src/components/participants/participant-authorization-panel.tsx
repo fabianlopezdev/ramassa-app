@@ -5,7 +5,8 @@
  * version, when, and whether she signed with a drawing or with the ticks alone.
  * The drawn signature shows only with participants.view_sensitive. Her health
  * and her emergency contact are answers since RAPP-698: they show with her
- * other answers, each by its field's level. Staff record a paper signature
+ * other answers, each by its field's level. Her consents have their own
+ * section since RAPP-699 (`participant-consents.tsx`). Staff record a paper signature
  * for the current season here, so a player who signed in September is not
  * asked again.
  */
@@ -14,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import type { SeasonAnswersLine } from '@/lib/participant-fitxa';
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { ParticipantAuthorization, ParticipantConsent } from '@ramassa/shared/authorization';
+import type { ParticipantAuthorization } from '@ramassa/shared/authorization';
 import type { SignatureStrokes } from '@ramassa/shared/equipment';
 import type { ParticipantRecord } from '@ramassa/shared/participants';
 
@@ -53,7 +54,6 @@ export function SignatureDrawing({
 export interface ParticipantAuthorizationPanelProps {
   readonly participant: ParticipantRecord;
   readonly authorizations: readonly ParticipantAuthorization[];
-  readonly consents: readonly ParticipantConsent[];
   readonly onRecordPaper: (signedOn: string) => Promise<void>;
   /** Her answers by season (RAPP-306), in words, read by field (RAPP-664). */
   readonly seasonAnswers?: readonly SeasonAnswersLine[];
@@ -63,7 +63,6 @@ export interface ParticipantAuthorizationPanelProps {
 export function ParticipantAuthorizationPanel({
   participant,
   authorizations,
-  consents,
   onRecordPaper,
   seasonAnswers = [],
   onSetPriorSeasons,
@@ -85,11 +84,6 @@ export function ParticipantAuthorizationPanel({
     }
   }
   const date = (value: string) => new Date(value).toLocaleDateString(locale);
-  // A record from before the wording was kept (or a change outside the
-  // authorization) names the consent by its built-in name, or its key.
-  const consentName = (consent: ParticipantConsent) =>
-    consent.wording ??
-    t(`settings:authorizationConsent.${consent.key}`, { defaultValue: consent.key });
   const notProvided = t('profile:notProvided');
 
   async function recordPaper(event: FormEvent<HTMLFormElement>) {
@@ -150,40 +144,6 @@ export function ParticipantAuthorizationPanel({
             </li>
           ))}
         </ul>
-      )}
-
-      {consents.length === 0 ? null : (
-        <div className="flex flex-col gap-1">
-          <h3 className="text-start text-sm font-semibold">
-            {t('participants:authorizationConsentsTitle')}
-          </h3>
-          <ul className="flex flex-col gap-1" data-testid="participant-consents">
-            {consents.map((consent) => (
-              <li key={consent.key} className="flex flex-col text-start text-sm">
-                {/* The words she was shown (RAPP-614), in the language she read them. */}
-                <span lang={consent.language ?? undefined} dir="auto">
-                  {consentName(consent)}
-                </span>
-                <span>
-                  {consent.granted
-                    ? t('participants:authorizationGranted')
-                    : t('participants:authorizationNotGranted')}{' '}
-                  <span className="text-xs text-muted-foreground">
-                    (
-                    {consent.versionNumber === null
-                      ? date(consent.decidedAt)
-                      : t('participants:authorizationConsentVersion', {
-                          date: date(consent.decidedAt),
-                          season: consent.seasonName ?? '',
-                          number: consent.versionNumber,
-                        })}
-                    {consent.required === true ? ` · ${t('settings:authorizationRequired')}` : ''})
-                  </span>
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
       )}
 
       {/* The season number is counted: earlier seasons plus the seasons she

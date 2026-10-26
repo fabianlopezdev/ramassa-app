@@ -466,10 +466,6 @@
   "authorizationPaperRow": "Season {{season}}: signed on paper on {{date}}",
   "authorizationUnableToDraw": "She signed with the boxes only: she could not draw her signature.",
   "authorizationSignatureLabel": "Her signature",
-  "authorizationConsentsTitle": "Authorizations",
-  "authorizationConsentVersion": "{{date}}, {{season}} season, version {{number}}",
-  "authorizationGranted": "Yes",
-  "authorizationNotGranted": "No",
   "authorizationPaperDate": "Date signed on paper",
   "authorizationPaperAction": "Record the paper signature",
   "authorizationPaperSaved": "Paper signature recorded.",
@@ -634,5 +630,30 @@
     "onTabletWith": "Signed on the tablet, with {{name}}",
     "onTablet": "Signed on the tablet"
   },
-  "reviewPendingBadge": "Welcome review pending"
+  "reviewPendingBadge": "Welcome review pending",
+  "consents": {
+    "title": "Consents",
+    "none": "There are no consents.",
+    "undecided": "No decision",
+    "granted": "Yes",
+    "notGranted": "No",
+    "version": "Season {{season}}, version {{number}}",
+    "onboarding": "Onboarding",
+    "method": {
+      "app": "App",
+      "staff_device": "Tablet",
+      "paper": "Paper",
+      "profile": "Her profile",
+      "staff": "Team"
+    },
+    "recordPaper": "Record on paper",
+    "withdraw": "Withdraw",
+    "decision": "Decision",
+    "paperDate": "Date",
+    "reason": "Reason",
+    "healthWarning": "Her health answer will be deleted.",
+    "failed": "Could not record it. Try again.",
+    "cancel": "Cancel",
+    "save": "Save"
+  }
 }
