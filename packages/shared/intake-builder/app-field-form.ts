@@ -99,17 +99,21 @@ export function isAppFormKey(key: string): key is AppFormKey {
 
 const TEXT_TYPES: readonly CustomQuestionType[] = ['short_text', 'long_text'];
 
-/** The types each control reads. */
+/**
+ * The types each control reads. The country picker, the phone box and the
+ * municipality search each hold her to a list or a format, so they ask only
+ * their own type: a field staff turn into free text is asked as free text.
+ */
 const READS: Readonly<Record<AppFormKey, readonly CustomQuestionType[]>> = {
   dateOfBirth: ['date'],
   placeOfBirth: TEXT_TYPES,
-  nationality: ['country', ...TEXT_TYPES],
+  nationality: ['country'],
   documentType: ['single_choice', 'search_choice'],
   documentNumber: TEXT_TYPES,
   documentName: TEXT_TYPES,
-  phone: ['phone', ...TEXT_TYPES],
+  phone: ['phone'],
   address: TEXT_TYPES,
-  city: ['municipality', ...TEXT_TYPES],
+  city: ['municipality'],
   postalCode: TEXT_TYPES,
   referenceEntity: TEXT_TYPES,
   referenceContactName: TEXT_TYPES,

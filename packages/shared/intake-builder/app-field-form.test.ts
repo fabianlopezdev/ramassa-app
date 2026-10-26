@@ -7,6 +7,7 @@ import {
 } from '../testing/system-fields';
 import {
   appAnswersFromForm,
+  appControlFits,
   appFieldIds,
   appFormToSend,
   appFormValues,
@@ -58,6 +59,24 @@ describe('appFormValues', () => {
       ),
     });
     expect(appFormValues(changed, { [fieldId('date_of_birth')]: 'when I was young' })).toEqual({});
+  });
+
+  test('a list or phone control stops asking a field staff turned into free text', () => {
+    for (const [key, question] of [
+      ['nationality', 'nationality'],
+      ['phone', 'phone'],
+      ['city', 'city'],
+    ] as const) {
+      const changed = systemFieldIndexFromCatalog({
+        fields: systemFieldsCatalogFixture().fields.map((field) =>
+          (field as { system_key: string }).system_key === key
+            ? { ...(field as object), question_type: 'short_text' }
+            : field,
+        ),
+      });
+      expect(appControlFits(index, question)).toBe(true);
+      expect(appControlFits(changed, question)).toBe(false);
+    }
   });
 
   test('a need of none reads without its details', () => {
