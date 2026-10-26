@@ -328,7 +328,7 @@ function AddScreenCard({ order }: { readonly order: readonly WizardStepKey[] }) 
         className="group/add flex w-full rounded-2xl text-start outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
         data-testid="board-add-screen"
       >
-        <CardFrame className="h-full min-h-40 border-dashed border-foreground/20 bg-transparent transition-colors group-hover/add:border-primary/60 group-hover/add:bg-primary/5">
+        <CardFrame className="h-full min-h-40 border-dashed border-foreground/20 bg-muted transition-colors group-hover/add:border-primary/60 group-hover/add:bg-primary/5">
           <span className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-sm font-medium text-muted-foreground transition-colors group-hover/add:text-primary">
             <span className="flex size-11 items-center justify-center rounded-full border border-dashed border-current">
               <Plus aria-hidden className="size-5" />
